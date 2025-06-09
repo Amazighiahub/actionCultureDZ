@@ -112,25 +112,48 @@ class UserController {
   }
 
   // Créer un nouvel utilisateur
-  async createUser(req, res) {
+ async createUser(req, res) {
     try {
+      console.log('🔍 === DÉBUT CRÉATION UTILISATEUR ===');
+      console.log('📦 Body reçu:', { ...req.body, password: '[REDACTED]' });
+      
       const {
         nom,
         prenom,
         email,
         password,
         date_naissance,
+        sexe,
         biographie,
         type_user = 'visiteur',
         telephone,
-        roles = []
+        wilaya_residence,
+        photo_url,          // ✅ IMPORTANT : Vérifier que c'est bien reçu
+        specialites = [],
+        accepte_newsletter = false,
+        accepte_conditions = false,
+        documents_justificatifs = {}
       } = req.body;
+
+      // ✅ DEBUG SPÉCIAL PHOTO
+      console.log('🖼️ === DEBUG PHOTO_URL ===');
+      console.log('📷 photo_url reçue:', photo_url);
+      console.log('📷 Type:', typeof photo_url);
+      console.log('📷 Longueur:', photo_url ? photo_url.length : 'N/A');
+      console.log('📷 Valide?:', photo_url && photo_url.length > 0);
 
       // Validation des champs obligatoires
       if (!nom || !prenom || !email || !password) {
         return res.status(400).json({
           success: false,
           error: 'Les champs nom, prénom, email et mot de passe sont obligatoires'
+        });
+      }
+
+      if (!accepte_conditions) {
+        return res.status(400).json({
+          success: false,
+          error: 'Vous devez accepter les conditions d\'utilisation'
         });
       }
 
@@ -143,57 +166,216 @@ class UserController {
         });
       }
 
+      // Validations
+      if (sexe && !['M', 'F'].includes(sexe)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Sexe invalide. Doit être M ou F'
+        });
+      }
+
+      if (specialites && !Array.isArray(specialites)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Les spécialités doivent être un tableau'
+        });
+      }
+
       // Hasher le mot de passe
       const hashedPassword = await bcrypt.hash(password, 12);
 
-      // Créer l'utilisateur
-      const user = await this.models.User.create({
+      // Déterminer le statut initial selon le type
+      let statutCompte = 'actif';
+      let professionnelValide = false;
+
+      if (type_user !== 'visiteur') {
+        statutCompte = 'en_attente_validation';
+        professionnelValide = false;
+      }
+
+      // ✅ CORRIGÉ : Données utilisateur avec gestion explicite de photo_url
+      const userData = {
         nom,
         prenom,
         email,
         password: hashedPassword,
         date_naissance,
+        sexe,
         biographie,
         type_user,
-        telephone
-      });
+        telephone,
+        wilaya_residence,
+        specialites,
+        accepte_newsletter,
+        documents_justificatifs,
+        professionnel_valide: professionnelValide,
+        statut_compte: statutCompte
+      };
 
-      // Ajouter les rôles si spécifiés
-      if (roles.length > 0) {
-        const rolesExistants = await this.models.Role.findAll({
-          where: { id_role: { [Op.in]: roles } }
-        });
-        await user.addRoles(rolesExistants);
+      // ✅ CRITIQUE : Gérer photo_url explicitement
+      if (photo_url && photo_url.trim().length > 0) {
+        userData.photo_url = photo_url.trim();
+        console.log('✅ Photo URL ajoutée aux données:', userData.photo_url);
       } else {
-        // Ajouter le rôle "Utilisateur" par défaut
-        const defaultRole = await this.models.Role.findOne({ 
-          where: { nom_role: 'Utilisateur' } 
-        });
-        if (defaultRole) {
-          await user.addRole(defaultRole);
-        }
+        console.log('⚠️ Pas de photo_url valide, utilisateur créé sans photo');
+        // Ne pas ajouter photo_url du tout si elle est vide
       }
 
-      // Récupérer l'utilisateur complet pour la réponse
-      const userComplete = await this.models.User.findByPk(user.id_user, {
-        attributes: { exclude: ['password'] },
-        include: [
-          {
-            model: this.models.Role,
-            through: { model: this.models.UserRole },
-            attributes: ['nom_role']
-          }
-        ]
+      // ✅ CORRIGÉ : Nettoyer les valeurs undefined SAUF photo_url
+      Object.keys(userData).forEach(key => {
+        if (key !== 'photo_url' && (userData[key] === undefined || userData[key] === '')) {
+          console.log(`🧹 Suppression de ${key}: ${userData[key]}`);
+          delete userData[key];
+        }
       });
 
+      console.log('📤 === DONNÉES FINALES POUR LA DB ===');
+      console.log('📊 userData final:', { 
+        ...userData, 
+        password: '[REDACTED]',
+        photo_url: userData.photo_url ? `Photo présente: ${userData.photo_url}` : 'PAS DE PHOTO'
+      });
+
+      // Créer l'utilisateur
+      console.log('💾 Création en base de données...');
+      const user = await this.models.User.create(userData);
+      console.log('✅ Utilisateur créé avec ID:', user.id_user);
+      console.log('🖼️ Photo URL dans la DB après création:', user.photo_url);
+
+      // Assigner automatiquement le rôle approprié
+      await this.roleService.assignRoleToUser(user);
+
+      // ✅ SÉCURISÉ : Récupération avec gestion d'erreur
+      console.log('🔄 Récupération utilisateur complet...');
+      
+      const includeOptions = [
+        {
+          model: this.models.Role,
+          through: { model: this.models.UserRole },
+          attributes: ['nom_role']
+        }
+      ];
+
+      // ✅ SÉCURISÉ : Ajouter Wilaya seulement si le modèle existe et la relation est définie
+      try {
+        if (this.models.Wilaya && userData.wilaya_residence) {
+          includeOptions.push({
+            model: this.models.Wilaya,
+            as: 'WilayaResidence',
+            attributes: ['id_wilaya', 'nom', 'code'],
+            required: false // ✅ IMPORTANT : Left join au lieu d'inner join
+          });
+        }
+      } catch (wilayaError) {
+        console.log('⚠️ Erreur relation Wilaya (ignorée):', wilayaError.message);
+      }
+
+      const userComplete = await this.models.User.findByPk(user.id_user, {
+        attributes: { exclude: ['password'] },
+        include: includeOptions
+      });
+
+      console.log('🔍 === VÉRIFICATION FINALE ===');
+      console.log('📷 Photo URL dans userComplete:', userComplete.photo_url);
+      console.log('📷 Photo URL type:', typeof userComplete.photo_url);
+
+      // ✅ SÉCURISÉ : Génération token avec gestion d'erreur
+      const secret = process.env.JWT_SECRET;
+      if (!secret) {
+        console.error('❌ JWT_SECRET non défini dans les variables d\'environnement');
+        return res.status(500).json({
+          success: false,
+          error: 'Erreur de configuration serveur'
+        });
+      }
+
+      let token;
+      try {
+        token = jwt.sign(
+          {
+            id_user: user.id_user,
+            email: user.email,
+            type_user: user.type_user,
+            professionnel_valide: user.professionnel_valide,
+            roles: userComplete.Roles ? userComplete.Roles.map(role => role.nom_role) : []
+          },
+          secret,
+          { expiresIn: '24h' }
+        );
+        console.log('✅ Token JWT généré');
+      } catch (jwtError) {
+        console.error('❌ Erreur génération JWT:', jwtError);
+        return res.status(500).json({
+          success: false,
+          error: 'Erreur lors de la génération du token'
+        });
+      }
+
+      // Message différent selon le type
+      let message = 'Utilisateur créé avec succès';
+      if (type_user !== 'visiteur') {
+        message = 'Compte professionnel créé. En attente de validation par un administrateur.';
+      }
+
+      // ✅ Log détaillé pour debug
+      console.log(`✅ Nouvel utilisateur créé: ${userComplete.prenom} ${userComplete.nom} (${userComplete.type_user})`);
+      if (userComplete.photo_url) {
+        console.log(`📸 Photo URL finale: ${userComplete.photo_url}`);
+      } else {
+        console.log(`❌ PROBLÈME: Pas de photo_url dans userComplete!`);
+      }
+      if (specialites?.length > 0) console.log(`🎯 Spécialités: ${specialites.join(', ')}`);
+      if (wilaya_residence) console.log(`📍 Wilaya: ${wilaya_residence}`);
+
+      // ✅ Réponse avec le même format que la connexion
       res.status(201).json({
         success: true,
-        message: 'Utilisateur créé avec succès',
-        data: userComplete
+        message,
+        data: {
+          user: userComplete,
+          token
+        }
       });
 
     } catch (error) {
-      console.error('Erreur lors de la création de l\'utilisateur:', error);
+      console.error('❌ Erreur lors de la création de l\'utilisateur:', error);
+      console.error('❌ Stack trace:', error.stack);
+      
+      // ✅ Gestion d'erreurs spécifique et détaillée
+      if (error.name === 'SequelizeValidationError') {
+        const validationErrors = error.errors.map(err => err.message).join(', ');
+        console.error('❌ Erreurs de validation:', validationErrors);
+        return res.status(400).json({ 
+          success: false, 
+          error: `Erreur de validation: ${validationErrors}` 
+        });
+      }
+      
+      if (error.name === 'SequelizeUniqueConstraintError') {
+        console.error('❌ Contrainte d\'unicité violée');
+        return res.status(409).json({ 
+          success: false, 
+          error: 'Un utilisateur avec ces informations existe déjà' 
+        });
+      }
+
+      if (error.name === 'SequelizeForeignKeyConstraintError') {
+        console.error('❌ Contrainte de clé étrangère violée');
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Wilaya de résidence invalide' 
+        });
+      }
+
+      if (error.name === 'SequelizeDatabaseError') {
+        console.error('❌ Erreur de base de données:', error.message);
+        return res.status(500).json({ 
+          success: false, 
+          error: 'Erreur de base de données' 
+        });
+      }
+      
+      // Erreur générique
       res.status(500).json({ 
         success: false, 
         error: 'Erreur serveur lors de la création de l\'utilisateur' 
@@ -201,6 +383,57 @@ class UserController {
     }
   }
 
+  // ✅ Autres méthodes inchangées (getProfile, updateProfile, etc.)
+  async getProfile(req, res) {
+    try {
+      const { id_user } = req.user;
+
+      const includeOptions = [
+        {
+          model: this.models.Role,
+          through: { model: this.models.UserRole },
+          attributes: ['nom_role']
+        },
+        {
+          model: this.models.Organisation,
+          through: { model: this.models.UserOrganisation },
+          attributes: ['id_organisation', 'nom', 'type']
+        }
+      ];
+
+      if (this.models.Wilaya) {
+        includeOptions.push({
+          model: this.models.Wilaya,
+          as: 'WilayaResidence',
+          attributes: ['id_wilaya', 'nom', 'code']
+        });
+      }
+
+      const user = await this.models.User.findByPk(id_user, {
+        attributes: { exclude: ['password'] },
+        include: includeOptions
+      });
+
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          error: 'Utilisateur non trouvé'
+        });
+      }
+
+      res.json({
+        success: true,
+        data: user
+      });
+
+    } catch (error) {
+      console.error('Erreur lors de la récupération du profil:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Erreur serveur lors de la récupération du profil' 
+      });
+    }
+  }
   // Connexion utilisateur
   async loginUser(req, res) {
     try {
@@ -254,12 +487,21 @@ class UserController {
 
       // Retourner les données utilisateur (sans mot de passe) et le token
       const userData = {
-        id_user: user.id_user,
-        nom: user.nom,
-        prenom: user.prenom,
-        email: user.email,
-        type_user: user.type_user,
-        roles: user.Roles
+        nom,
+      prenom,
+      email,
+      password: hashedPassword,
+      date_naissance,
+      biographie,
+      type_user,
+      telephone,
+      photo_url,  // ✅ NOUVEAU : Ajout de photo_url
+      sexe,       // ✅ NOUVEAU : Ajout de sexe
+      wilaya_residence, // ✅ NOUVEAU : Ajout de wilaya
+      documents_justificatifs,
+      professionnel_valide: professionnelValide,
+      statut_compte: statutCompte,
+      accepte_newsletter, //
       };
 
       res.json({
@@ -279,6 +521,8 @@ class UserController {
       });
     }
   }
+
+  
 
   // Profil utilisateur (utilisateur connecté)
   async getProfile(req, res) {
@@ -386,6 +630,10 @@ class UserController {
       });
     }
   }
+
+
+
+  
 }
 
 module.exports = UserController;

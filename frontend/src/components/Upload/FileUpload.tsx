@@ -8,27 +8,37 @@ import {
   HiMiniExclamationCircle as AlertCircle,
   HiMiniCheckCircle as CheckCircle,
   HiMiniArrowPath as Loader,
-  HiMiniCamera as Camera
+  HiMiniCamera as Camera,
+  HiMiniMusicalNote as Music
 } from "react-icons/hi2";
 
+// ✅ Import du type UploadedFile
+import type { UploadedFile } from "@/types/upload";
+
+// ✅ Interface pour les props
 interface FileUploadProps {
-  type: "image" | "document" | "media";
+  type?: "image" | "document" | "media";
   accept?: string;
   maxSize?: number; // en MB
   multiple?: boolean;
   onFileUploaded?: (urls: string[]) => void;
+  onFilesSelected?: (files: File[]) => void;
   onError?: (error: string) => void;
   className?: string;
   placeholder?: string;
   preview?: boolean;
+  existingUrls?: string[];
 }
 
-interface UploadedFile {
-  file: File;
-  url?: string;
-  status: "uploading" | "success" | "error";
-  error?: string;
-  progress?: number;
+// ✅ Interface pour la configuration
+interface UploadConfig {
+  endpoint: string;
+  accept: string;
+  icon: React.ComponentType<any>;
+  placeholder: string;
+  allowedTypes: string[];
+  color: string;
+  bgColor: string;
 }
 
 const FileUpload: React.FC<FileUploadProps> = ({
@@ -37,71 +47,81 @@ const FileUpload: React.FC<FileUploadProps> = ({
   maxSize = 5,
   multiple = false,
   onFileUploaded,
+  onFilesSelected,
   onError,
   className = "",
   placeholder,
   preview = true,
+  existingUrls = [],
 }) => {
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Configuration par type
-  const getConfig = () => {
+  // ✅ Configuration par type
+  const getConfig = (): UploadConfig => {
     switch (type) {
       case "image":
         return {
           endpoint: "/api/upload/image",
           accept: accept || "image/*",
           icon: Image,
-          placeholder: placeholder || "Cliquez ou glissez vos images ici",
+          placeholder: placeholder || "Glissez vos images ici ou cliquez pour sélectionner",
           allowedTypes: [
             "image/jpeg",
-            "image/jpg",
+            "image/jpg", 
             "image/png",
             "image/gif",
             "image/webp"
-          ]
+          ],
+          color: "blue-500",
+          bgColor: "bg-blue-50"
         };
       case "document":
         return {
           endpoint: "/api/upload/document",
           accept: accept || ".pdf,.doc,.docx,.txt",
           icon: FileText,
-          placeholder: placeholder || "Cliquez ou glissez vos documents ici",
+          placeholder: placeholder || "Glissez vos documents ici ou cliquez pour sélectionner",
           allowedTypes: [
             "application/pdf",
             "application/msword",
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             "text/plain"
-          ]
+          ],
+          color: "green-500",
+          bgColor: "bg-green-50"
         };
       case "media":
         return {
           endpoint: "/api/upload/media",
           accept: accept || "image/*,video/*,audio/*",
           icon: Video,
-          placeholder: placeholder || "Cliquez ou glissez vos fichiers média ici",
-          allowedTypes: ["image/*", "video/*", "audio/*"]
+          placeholder: placeholder || "Glissez vos fichiers média ici ou cliquez pour sélectionner",
+          allowedTypes: ["image/*", "video/*", "audio/*"],
+          color: "purple-500",
+          bgColor: "bg-purple-50"
         };
       default:
         return {
           endpoint: "/api/upload/image",
           accept: "image/*",
           icon: Image,
-          placeholder: "Cliquez ou glissez vos fichiers ici",
-          allowedTypes: ["image/*"]
+          placeholder: "Glissez vos fichiers ici ou cliquez pour sélectionner",
+          allowedTypes: ["image/*"],
+          color: "blue-500",
+          bgColor: "bg-blue-50"
         };
     }
   };
 
   const config = getConfig();
 
-  // Validation du fichier
+  // ✅ Fonction de validation des fichiers
   const validateFile = (file: File): string | null => {
     // Vérifier la taille
     if (file.size > maxSize * 1024 * 1024) {
-      return `Le fichier est trop volumineux (max: ${maxSize}MB)`;
+      return `Le fichier "${file.name}" est trop volumineux (max: ${maxSize}MB)`;
     }
 
     // Vérifier le type
@@ -113,42 +133,32 @@ const FileUpload: React.FC<FileUploadProps> = ({
     });
 
     if (!isAllowed) {
-      return `Type de fichier non autorisé`;
+      return `Type de fichier non autorisé pour "${file.name}"`;
     }
 
     return null;
   };
 
-  // Upload d'un fichier
+  // ✅ Simulation d'upload (remplacez par votre vraie API)
   const uploadFile = async (file: File): Promise<string> => {
-    const formData = new FormData();
-    formData.append(type === "image" ? "image" : "file", file);
-
-    const token = localStorage.getItem("patrimoine_auth_token");
-
-    const response = await fetch(config.endpoint, {
-      method: "POST",
-      headers: {
-        ...(token && { Authorization: `Bearer ${token}` })
-      },
-      body: formData
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || "Erreur lors de l'upload");
+    // Simulation d'un délai d'upload
+    await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
+    
+    // Simulation d'une chance d'erreur (pour les tests)
+    if (Math.random() < 0.1) {
+      throw new Error('Erreur simulée d\'upload');
     }
-
-    const result = await response.json();
-
-    if (!result.success) {
-      throw new Error(result.error || "Erreur lors de l'upload");
-    }
-
-    return result.data.url;
+    
+    // Retourner une URL simulée (remplacez par votre vraie logique)
+    return URL.createObjectURL(file);
   };
 
-  // Traitement des fichiers sélectionnés
+  // ✅ Fonction pour générer un ID unique
+  const generateFileId = (): string => {
+    return `file_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  };
+
+  // ✅ Traitement des fichiers sélectionnés
   const handleFiles = useCallback(
     async (selectedFiles: FileList) => {
       const newFiles: UploadedFile[] = [];
@@ -159,14 +169,17 @@ const FileUpload: React.FC<FileUploadProps> = ({
 
         if (validationError) {
           newFiles.push({
+            id: generateFileId(),
             file,
             status: "error",
             error: validationError
           });
+          onError?.(validationError);
           continue;
         }
 
         newFiles.push({
+          id: generateFileId(),
           file,
           status: "uploading",
           progress: 0
@@ -180,16 +193,38 @@ const FileUpload: React.FC<FileUploadProps> = ({
         setFiles((prev) => [...prev, ...newFiles]);
       }
 
-      // Upload des fichiers valides
+      // Callback pour les fichiers bruts (nouveau)
+      if (onFilesSelected) {
+        const validFiles = newFiles
+          .filter(f => f.status === "uploading")
+          .map(f => f.file);
+        onFilesSelected(validFiles);
+        return; // Sortir tôt si on utilise le mode fichiers bruts
+      }
+
+      // Mode upload traditionnel (URLs)
       const uploadPromises = newFiles
         .filter((f) => f.status === "uploading")
         .map(async (fileObj) => {
           try {
+            // Simulation de progression
+            const progressInterval = setInterval(() => {
+              setFiles((prev) =>
+                prev.map((f) =>
+                  f.id === fileObj.id
+                    ? { ...f, progress: Math.min((f.progress || 0) + 10, 90) }
+                    : f
+                )
+              );
+            }, 200);
+
             const url = await uploadFile(fileObj.file);
+            
+            clearInterval(progressInterval);
 
             setFiles((prev) =>
               prev.map((f) =>
-                f.file === fileObj.file
+                f.id === fileObj.id
                   ? { ...f, status: "success" as const, url, progress: 100 }
                   : f
               )
@@ -202,7 +237,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
 
             setFiles((prev) =>
               prev.map((f) =>
-                f.file === fileObj.file
+                f.id === fileObj.id
                   ? { ...f, status: "error" as const, error: errorMessage }
                   : f
               )
@@ -224,10 +259,10 @@ const FileUpload: React.FC<FileUploadProps> = ({
         console.error("Erreur lors de l'upload:", error);
       }
     },
-    [multiple, maxSize, onFileUploaded, onError, config.allowedTypes]
+    [multiple, maxSize, onFileUploaded, onFilesSelected, onError]
   );
 
-  // Gestionnaires d'événements
+  // ✅ Gestionnaires d'événements
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = e.target.files;
     if (selectedFiles && selectedFiles.length > 0) {
@@ -255,31 +290,70 @@ const FileUpload: React.FC<FileUploadProps> = ({
     setIsDragOver(false);
   };
 
-  // Supprimer un fichier
+  // ✅ Supprimer un fichier
   const removeFile = (fileToRemove: UploadedFile) => {
-    setFiles((prev) => prev.filter((f) => f.file !== fileToRemove.file));
+    setFiles((prev) => prev.filter((f) => f.id !== fileToRemove.id));
   };
 
-  // Obtenir l'icône pour un type de fichier
+  // ✅ Obtenir l'icône pour un type de fichier
   const getFileIcon = (file: File) => {
     if (file.type.startsWith("image/")) return Image;
     if (file.type.startsWith("video/")) return Video;
-    if (file.type.startsWith("audio/")) return Camera;
+    if (file.type.startsWith("audio/")) return Music;
     return FileText;
+  };
+
+  // ✅ Formater la taille du fichier
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  // ✅ Rendu des URLs existantes
+  const renderExistingUrls = () => {
+    if (existingUrls.length === 0) return null;
+
+    return (
+      <div className="mb-4">
+        <h4 className="text-sm font-medium text-gray-700 mb-2">
+          Médias existants ({existingUrls.length})
+        </h4>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+          {existingUrls.map((url, index) => (
+            <div key={index} className="relative group">
+              <img
+                src={url}
+                alt={`Existant ${index + 1}`}
+                className="w-full h-20 object-cover rounded-lg border"
+              />
+              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                <span className="text-white text-xs">Existant</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   };
 
   const IconComponent = config.icon;
 
   return (
     <div className={`space-y-4 ${className}`}>
+      {/* Afficher les médias existants */}
+      {renderExistingUrls()}
+
       {/* Zone de drop */}
       <div
         className={`
-          relative border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors
+          relative border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all duration-300
           ${
             isDragOver
-              ? "border-emerald-500 bg-emerald-50"
-              : "border-gray-300 hover:border-emerald-400 bg-gray-50 hover:bg-gray-100"
+              ? `border-blue-500 bg-blue-50 scale-105`
+              : `border-gray-300 bg-gray-50 hover:border-blue-400 hover:bg-blue-50`
           }
         `}
         onDrop={handleDrop}
@@ -297,52 +371,69 @@ const FileUpload: React.FC<FileUploadProps> = ({
         />
 
         <div className="space-y-4">
-          <div className="mx-auto w-12 h-12 flex items-center justify-center">
+          <div className="mx-auto w-16 h-16 flex items-center justify-center">
             <IconComponent
-              size={32}
-              className={isDragOver ? "text-emerald-500" : "text-gray-400"}
+              size={40}
+              className={isDragOver ? "text-blue-500" : "text-gray-400"}
             />
           </div>
 
           <div>
-            <p className="text-sm font-medium text-gray-900">
+            <p className="text-lg font-medium text-gray-900 mb-1">
               {config.placeholder}
             </p>
-            <p className="text-xs text-gray-500 mt-1">
-              Formats acceptés • Max {maxSize}MB {multiple ? "• Plusieurs fichiers" : ""}
+            <p className="text-sm text-gray-500">
+              Formats acceptés • Max {maxSize}MB{multiple ? " • Plusieurs fichiers" : ""}
             </p>
           </div>
+
+          {isDragOver && (
+            <div className="absolute inset-0 bg-blue-100 border-2 border-blue-500 border-dashed rounded-lg flex items-center justify-center">
+              <p className="text-blue-600 font-medium">
+                Relâchez pour ajouter vos fichiers
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Liste des fichiers */}
       {files.length > 0 && (
-        <div className="space-y-2">
-          <h4 className="text-sm font-medium text-gray-900">
+        <div className="space-y-3">
+          <h4 className="text-sm font-medium text-gray-700">
             Fichiers ({files.length})
           </h4>
 
           <div className="space-y-2">
-            {files.map((fileObj, index) => {
+            {files.map((fileObj) => {
               const FileIcon = getFileIcon(fileObj.file);
 
               return (
                 <div
-                  key={index}
-                  className="flex items-center space-x-3 p-3 bg-white border border-gray-200 rounded-lg"
+                  key={fileObj.id}
+                  className="flex items-center space-x-4 p-4 bg-white border border-gray-200 rounded-lg shadow-sm"
                 >
                   {/* Aperçu/Icône */}
                   <div className="flex-shrink-0">
                     {preview &&
                     fileObj.file.type.startsWith("image/") &&
-                    fileObj.status === "success" ? (
-                      <img
-                        src={fileObj.url || URL.createObjectURL(fileObj.file)}
-                        alt={fileObj.file.name}
-                        className="w-10 h-10 object-cover rounded"
-                      />
+                    (fileObj.status === "success" || fileObj.status === "uploading") ? (
+                      <div className="relative">
+                        <img
+                          src={fileObj.url || URL.createObjectURL(fileObj.file)}
+                          alt={fileObj.file.name}
+                          className="w-12 h-12 object-cover rounded-lg"
+                        />
+                        {fileObj.status === "uploading" && (
+                          <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center">
+                            <Loader size={16} className="text-white animate-spin" />
+                          </div>
+                        )}
+                      </div>
                     ) : (
-                      <FileIcon size={20} className="text-gray-400" />
+                      <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                        <FileIcon size={24} className="text-gray-600" />
+                      </div>
                     )}
                   </div>
 
@@ -352,29 +443,44 @@ const FileUpload: React.FC<FileUploadProps> = ({
                       {fileObj.file.name}
                     </p>
                     <p className="text-xs text-gray-500">
-                      {(fileObj.file.size / 1024 / 1024).toFixed(2)} MB
+                      {formatFileSize(fileObj.file.size)}
                     </p>
+                    
+                    {/* Barre de progression */}
+                    {fileObj.status === "uploading" && (
+                      <div className="mt-2">
+                        <div className="w-full bg-gray-200 rounded-full h-1.5">
+                          <div
+                            className="bg-blue-500 h-1.5 rounded-full transition-all duration-300"
+                            style={{ width: `${fileObj.progress || 0}%` }}
+                          />
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {fileObj.progress || 0}% uploadé
+                        </p>
+                      </div>
+                    )}
+                    
+                    {/* Message d'erreur */}
+                    {fileObj.status === "error" && fileObj.error && (
+                      <p className="text-xs text-red-600 mt-1" title={fileObj.error}>
+                        {fileObj.error}
+                      </p>
+                    )}
                   </div>
 
                   {/* Statut */}
                   <div className="flex items-center space-x-2">
                     {fileObj.status === "uploading" && (
-                      <Loader size={16} className="text-blue-500 animate-spin" />
+                      <Loader size={20} className="text-blue-500 animate-spin" />
                     )}
 
                     {fileObj.status === "success" && (
-                      <CheckCircle size={16} className="text-green-500" />
+                      <CheckCircle size={20} className="text-green-500" />
                     )}
 
                     {fileObj.status === "error" && (
-                      <div className="flex items-center space-x-1">
-                        <AlertCircle size={16} className="text-red-500" />
-                        {fileObj.error && (
-                          <span className="text-xs text-red-600" title={fileObj.error}>
-                            Erreur
-                          </span>
-                        )}
-                      </div>
+                      <AlertCircle size={20} className="text-red-500" />
                     )}
 
                     {/* Bouton supprimer */}
@@ -383,9 +489,10 @@ const FileUpload: React.FC<FileUploadProps> = ({
                         e.stopPropagation();
                         removeFile(fileObj);
                       }}
-                      className="p-1 rounded text-gray-400 hover:text-red-500 hover:bg-red-50"
+                      className="p-1.5 rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                      title="Supprimer le fichier"
                     >
-                      <X size={14} />
+                      <X size={16} />
                     </button>
                   </div>
                 </div>
@@ -395,13 +502,30 @@ const FileUpload: React.FC<FileUploadProps> = ({
         </div>
       )}
 
-      {/* Messages d'erreur globaux */}
+      {/* Résumé des erreurs */}
       {files.some((f) => f.status === "error") && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-          <div className="flex items-center space-x-2">
-            <AlertCircle size={16} className="text-red-500" />
-            <p className="text-sm text-red-700">
-              Certains fichiers n'ont pas pu être uploadés
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="flex items-start space-x-3">
+            <AlertCircle size={20} className="text-red-500 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium text-red-800">
+                Certains fichiers n'ont pas pu être uploadés
+              </p>
+              <p className="text-xs text-red-700 mt-1">
+                Vérifiez les types de fichiers et la taille maximale autorisée.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Résumé des succès */}
+      {files.filter(f => f.status === "success").length > 0 && (
+        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+          <div className="flex items-center space-x-3">
+            <CheckCircle size={20} className="text-green-500" />
+            <p className="text-sm font-medium text-green-800">
+              {files.filter(f => f.status === "success").length} fichier(s) uploadé(s) avec succès !
             </p>
           </div>
         </div>

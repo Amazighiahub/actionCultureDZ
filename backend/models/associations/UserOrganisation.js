@@ -23,37 +23,99 @@ module.exports = (sequelize) => {
         key: 'id_organisation'
       }
     },
-    role_dans_organisation: {
+    role: {
       type: DataTypes.ENUM('membre', 'responsable', 'directeur', 'collaborateur'),
-      defaultValue: 'membre'
+      defaultValue: 'membre',
+      comment: 'Rôle dans l\'organisation'
     },
-    date_debut: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW
-    },
-    date_fin: {
-      type: DataTypes.DATE
-    },
+   
     actif: {
       type: DataTypes.BOOLEAN,
       defaultValue: true
-    }
+    },
+    
+    // ===== NOUVEAUX CHAMPS AJOUTÉS =====
+    
+    // Date de début du rôle
+    
+    
+    // Responsabilités
+   
+    
+   
+    
+    // Département/Service
+    departement: {
+      type: DataTypes.STRING(100),
+      comment: 'Département ou service au sein de l\'organisation'
+    },
+    
+    // Superviseur direct
+    id_superviseur: {
+      type: DataTypes.INTEGER,
+      references: {
+        model: 'user',
+        key: 'id_user'
+      },
+      comment: 'ID du superviseur direct'
+    },
+    
+   
+    
+    
+    
   }, {
-    tableName: 'user_organisation',
+    tableName: 'userorganisation',
     timestamps: true,
+    createdAt: 'date_creation',
+    updatedAt: 'date_modification',
     indexes: [
       {
         unique: true,
         fields: ['id_user', 'id_organisation']
+      },
+      {
+        fields: ['role']
+      },
+      {
+        fields: ['actif']
+      },
+      {
+        fields: ['departement']
       }
     ]
   });
 
-  // Associations
   UserOrganisation.associate = (models) => {
-    UserOrganisation.belongsTo(models.User, { foreignKey: 'id_user' });
-    UserOrganisation.belongsTo(models.Organisation, { foreignKey: 'id_organisation' });
+    UserOrganisation.belongsTo(models.User, { 
+      foreignKey: 'id_user',
+      as: 'User'
+    });
+    
+    UserOrganisation.belongsTo(models.Organisation, { 
+      foreignKey: 'id_organisation',
+      as: 'Organisation'
+    });
+    
+    UserOrganisation.belongsTo(models.User, { 
+      foreignKey: 'id_superviseur',
+      as: 'Superviseur'
+    });
   };
+  
+  // Hooks
+ 
+  
+  // Méthodes d'instance
+  
+ 
+  
 
+  
+  
+  
+  
+  // Méthodes de classe
+ 
   return UserOrganisation;
 };

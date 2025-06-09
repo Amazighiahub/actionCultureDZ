@@ -63,6 +63,47 @@ const validationMiddleware = {
     req.query.page = pageNum;
     req.query.limit = limitNum;
     next();
+  },
+  validateEventCreation: async (req, res, next) => {
+    try {
+      const { date_debut, date_fin, capacite_max } = req.body;
+      
+      if (new Date(date_debut) < new Date()) {
+        return res.status(400).json({
+          success: false,
+          error: 'La date de début ne peut pas être dans le passé'
+        });
+      }
+      
+      if (capacite_max && (capacite_max < 1 || capacite_max > 100000)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Capacité doit être entre 1 et 100 000'
+        });
+      }
+      
+      next();
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  validateWorkSubmission: async (req, res, next) => {
+    try {
+      const { annee_creation } = req.body;
+      const currentYear = new Date().getFullYear();
+      
+      if (annee_creation && (annee_creation < 1000 || annee_creation > currentYear)) {
+        return res.status(400).json({
+          success: false,
+          error: `Année de création invalide (entre 1000 et ${currentYear})`
+        });
+      }
+      
+      next();
+    } catch (error) {
+      next(error);
+    }
   }
 };
 

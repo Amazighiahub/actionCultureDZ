@@ -1,126 +1,138 @@
-// server.js - Point d'entrée du serveur
+// server.js - Point d'entrée principal de l'application
+require('dotenv').config();
+const http = require('http');
 const App = require('./app');
 
-const PORT = process.env.PORT || 3000;
+// Configuration du port
+const PORT = process.env.PORT || 3001;
 const HOST = process.env.HOST || '0.0.0.0';
 
-let server;
-let appInstance;
-
-const startServer = async () => {
+// Fonction principale pour démarrer le serveur
+async function startServer() {
   try {
-    // Initialiser l'application
-    appInstance = new App();
+    console.log('🚀 Démarrage du serveur Action Culture...');
+    
+    // Créer et initialiser l'application
+    const appInstance = new App();
     const app = await appInstance.initialize();
-
-    // Démarrer le serveur
-    server = app.listen(PORT, HOST, () => {
-      console.log(`🌟 Serveur Action Culture démarré !`);
-      console.log(`🔗 URL: http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}`);
-      console.log(`📊 Environnement: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`🔗 API: http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}/api`);
-      console.log(`❤️  Santé: http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}/api/health`);
-      console.log(`🔍 Recherche: http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}/api/search`);
+    
+    // Créer le serveur HTTP
+    const server = http.createServer(app);
+    
+    // Gérer les connexions WebSocket si nécessaire
+    server.on('upgrade', (request, socket, head) => {
+      console.log('WebSocket connection attempt');
+      // Implémenter la logique WebSocket si nécessaire
+    });
+    
+    // Gérer la fermeture gracieuse
+    const gracefulShutdown = async (signal) => {
+      console.log(`\n${signal} reçu, arrêt gracieux du serveur...`);
       
-      // Afficher les statistiques de base si disponibles
-      setTimeout(async () => {
+      server.close(async () => {
+        console.log('✅ Serveur HTTP fermé');
+        
         try {
-          const models = appInstance.getModels();
-          const stats = {
-            oeuvres: await models.Oeuvre.count({ where: { statut: 'publie' } }),
-            evenements: await models.Evenement.count(),
-            utilisateurs: await models.User.count(),
-            lieux: await models.Lieu.count()
-          };
-          console.log(`📈 Statistiques: ${stats.oeuvres} œuvres, ${stats.evenements} événements, ${stats.utilisateurs} utilisateurs, ${stats.lieux} lieux`);
+          // Fermer la base de données
+          await appInstance.closeDatabase();
+          
+          console.log('👋 Application arrêtée proprement');
+          process.exit(0);
         } catch (error) {
-          // Ignorer les erreurs de stats
+          console.error('❌ Erreur lors de l\'arrêt:', error);
+          process.exit(1);
         }
-      }, 2000);
-    });
-
-    server.on('error', (error) => {
-      if (error.code === 'EADDRINUSE') {
-        console.error(`❌ Le port ${PORT} est déjà utilisé`);
-      } else {
-        console.error('❌ Erreur du serveur:', error);
+      });
+      
+      // Forcer l'arrêt après 30 secondes
+      setTimeout(() => {
+        console.error('⚠️ Arrêt forcé après timeout');
+        process.exit(1);
+      }, 30000);
+    };
+    
+    // Écouter les signaux de fermeture
+    process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+    process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+    
+    // Démarrer le serveur
+    server.listen(PORT, HOST, () => {
+      console.log('═══════════════════════════════════════════════════');
+      console.log('🎉 Serveur Action Culture démarré avec succès !');
+      console.log('═══════════════════════════════════════════════════');
+      console.log(`📍 Adresse locale: http://localhost:${PORT}`);
+      console.log(`📍 Adresse réseau: http://${HOST}:${PORT}`);
+      console.log(`📍 Documentation API: http://localhost:${PORT}/api`);
+      console.log(`📍 Santé: http://localhost:${PORT}/health`);
+      console.log('═══════════════════════════════════════════════════');
+      console.log(`🌍 Environnement: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`🗄️  Base de données: ${process.env.DB_NAME || 'actionculture'}`);
+      console.log(`👤 Utilisateur DB: ${process.env.DB_USER || 'root'}`);
+      console.log('═══════════════════════════════════════════════════');
+      
+      // Afficher les routes disponibles en développement
+      if (process.env.NODE_ENV === 'development') {
+        console.log('\n📋 Routes principales:');
+        console.log('  - GET    /                    → Info API');
+        console.log('  - GET    /health              → Santé du serveur');
+        console.log('  - GET    /api                 → Documentation complète');
+        console.log('  - POST   /api/users/register  → Inscription');
+        console.log('  - POST   /api/users/login     → Connexion');
+        console.log('  - GET    /api/metadata/all    → Toutes les métadonnées');
+        console.log('  - GET    /api/oeuvres         → Liste des œuvres');
+        console.log('  - GET    /api/evenements      → Liste des événements');
+        console.log('  - POST   /api/upload/image/public → Upload public');
+        console.log('\n💡 Consultez /api pour la liste complète des endpoints');
       }
-      process.exit(1);
+      
+      // Afficher les avertissements
+      if (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'your-secret-key-change-in-production') {
+        console.warn('\n⚠️  ATTENTION: JWT_SECRET n\'est pas configuré correctement !');
+      }
+      
+      if (process.env.NODE_ENV === 'production' && !process.env.BASE_URL) {
+        console.warn('⚠️  ATTENTION: BASE_URL n\'est pas configuré pour la production !');
+      }
     });
-
+    
+    // Gérer les erreurs du serveur
+    server.on('error', (error) => {
+      if (error.syscall !== 'listen') {
+        throw error;
+      }
+      
+      switch (error.code) {
+        case 'EACCES':
+          console.error(`❌ Le port ${PORT} nécessite des privilèges élevés`);
+          process.exit(1);
+          break;
+        case 'EADDRINUSE':
+          console.error(`❌ Le port ${PORT} est déjà utilisé`);
+          process.exit(1);
+          break;
+        default:
+          throw error;
+      }
+    });
+    
   } catch (error) {
-    console.error('❌ Erreur lors du démarrage du serveur:', error);
+    console.error('❌ Erreur fatale lors du démarrage:', error);
     process.exit(1);
   }
-};
-
-// Gestion des arrêts gracieux
-const gracefulShutdown = async (signal) => {
-  console.log(`\n🛑 Signal ${signal} reçu, arrêt du serveur...`);
-  
-  if (server) {
-    server.close(async () => {
-      console.log('🔌 Serveur HTTP fermé');
-      
-      if (appInstance) {
-        await appInstance.closeDatabase();
-      }
-      
-      console.log('👋 Arrêt complet du serveur');
-      process.exit(0);
-    });
-  } else {
-    process.exit(0);
-  }
-};
-
-// Gestionnaires de signaux
-process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-process.on('SIGINT', () => gracefulShutdown('SIGINT'));
-
-// Gestionnaire d'erreurs non capturées
-process.on('uncaughtException', (error) => {
-  console.error('❌ Exception non capturée:', error);
-  process.exit(1);
-});
-
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('❌ Promesse rejetée non gérée:', reason);
-  process.exit(1);
-});
-
-// Démarrer le serveur si ce fichier est exécuté directement
-if (require.main === module) {
-  startServer();
 }
 
-module.exports = {
-  startServer,
-  gracefulShutdown
-};
+// Vérifier la version de Node.js
+const nodeVersion = process.versions.node;
+const majorVersion = parseInt(nodeVersion.split('.')[0]);
 
-// ecosystem.config.js - Configuration PM2 (optionnel)
-module.exports = {
-  apps: [
-    {
-      name: 'action-culture-api',
-      script: './server.js',
-      instances: process.env.NODE_ENV === 'production' ? 'max' : 1,
-      exec_mode: process.env.NODE_ENV === 'production' ? 'cluster' : 'fork',
-      env: {
-        NODE_ENV: 'development',
-        PORT: 3000
-      },
-      env_production: {
-        NODE_ENV: 'production',
-        PORT: 3000
-      },
-      error_file: './logs/err.log',
-      out_file: './logs/out.log',
-      log_file: './logs/combined.log',
-      time: true,
-      max_memory_restart: '1G',
-      node_args: '--max-old-space-size=1024'
-    }
-  ]
-};
+if (majorVersion < 14) {
+  console.error(`❌ Node.js version ${nodeVersion} détectée.`);
+  console.error('   Cette application nécessite Node.js 14.0.0 ou supérieur.');
+  process.exit(1);
+}
+
+// Démarrer le serveur
+startServer().catch(error => {
+  console.error('❌ Impossible de démarrer le serveur:', error);
+  process.exit(1);
+});

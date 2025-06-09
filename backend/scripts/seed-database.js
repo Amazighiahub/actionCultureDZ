@@ -16,7 +16,10 @@ const seedData = async (models) => {
         email: 'admin@actionculture.dz',
         password: adminPassword,
         type_user: 'visiteur',
-        biographie: 'Compte administrateur du système Action Culture'
+        biographie: 'Compte administrateur du système Action Culture',
+        accepte_conditions: true,  // ✅ OBLIGATOIRE
+        accepte_newsletter: false,
+        statut: 'actif'
       }
     });
 
@@ -36,21 +39,30 @@ const seedData = async (models) => {
         prenom: 'Yacine',
         email: 'kateb.yacine@test.com',
         type_user: 'ecrivain',
-        biographie: 'Écrivain algérien célèbre'
+        biographie: 'Écrivain algérien célèbre',
+        accepte_conditions: true,  // ✅ OBLIGATOIRE
+        accepte_newsletter: false,
+        statut: 'actif'
       },
       {
         nom: 'Dib',
         prenom: 'Mohammed',
         email: 'mohammed.dib@test.com',
         type_user: 'ecrivain',
-        biographie: 'Romancier et poète algérien'
+        biographie: 'Romancier et poète algérien',
+        accepte_conditions: true,  // ✅ OBLIGATOIRE
+        accepte_newsletter: false,
+        statut: 'actif'
       },
       {
         nom: 'Assia',
         prenom: 'Djebar',
         email: 'assia.djebar@test.com',
         type_user: 'ecrivain',
-        biographie: 'Romancière et cinéaste algérienne'
+        biographie: 'Romancière et cinéaste algérienne',
+        accepte_conditions: true,  // ✅ OBLIGATOIRE
+        accepte_newsletter: false,
+        statut: 'actif'
       }
     ];
 
@@ -60,7 +72,10 @@ const seedData = async (models) => {
       const password = await bcrypt.hash('password123', 12);
       const [user] = await models.User.findOrCreate({
         where: { email: userData.email },
-        defaults: { ...userData, password }
+        defaults: { 
+          ...userData, 
+          password
+        }
       });
 
       if (userRole) {

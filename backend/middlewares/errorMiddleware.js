@@ -1,6 +1,30 @@
 const errorMiddleware = {
   // Gestionnaire d'erreurs 404
   notFound: (req, res, next) => {
+    // Ignorer silencieusement certaines routes automatiques
+    const ignoredPaths = [
+      '/.well-known',
+      '/favicon.ico',
+      '/robots.txt',
+      '/sitemap.xml',
+      '/apple-touch-icon',
+      '/browserconfig.xml',
+      '/.env',
+      '/config.json'
+    ];
+    
+    // Vérifier si c'est une route à ignorer
+    const shouldIgnore = ignoredPaths.some(path => req.originalUrl.startsWith(path));
+    
+    if (shouldIgnore) {
+      // Répondre avec un 404 simple sans créer d'erreur
+      return res.status(404).json({
+        success: false,
+        error: 'Resource not found'
+      });
+    }
+    
+    // Pour les autres routes, créer une erreur
     const error = new Error(`Route non trouvée - ${req.originalUrl}`);
     error.status = 404;
     next(error);
@@ -8,6 +32,13 @@ const errorMiddleware = {
 
   // Gestionnaire d'erreurs global
   errorHandler: (error, req, res, next) => {
+    // Ne pas logger les erreurs 404 pour les chemins ignorés
+    const isIgnoredPath = [
+      '/.well-known',
+      '/favicon.ico',
+      '/robots.txt'
+    ].some(path => req.originalUrl.startsWith(path));
+    
     let statusCode = error.status || error.statusCode || 500;
     let message = error.message || 'Erreur interne du serveur';
 
@@ -66,8 +97,8 @@ const errorMiddleware = {
       message = 'Token expiré';
     }
 
-    // Log de l'erreur en développement
-    if (process.env.NODE_ENV === 'development') {
+    // Log de l'erreur en développement (sauf pour les 404 sur chemins ignorés)
+    if (process.env.NODE_ENV === 'development' && !(statusCode === 404 && isIgnoredPath)) {
       console.error('Erreur:', error);
     }
 

@@ -28,7 +28,9 @@ module.exports = (sequelize) => {
   Wilaya.associate = (models) => {
     Wilaya.hasMany(models.Daira, { foreignKey: 'wilayaId' });
     Wilaya.hasMany(models.Lieu, { foreignKey: 'wilayaId' });
+     Wilaya.hasMany(models.User, { foreignKey: 'wilaya_residence' });
   };
+
 
   return Wilaya;
 };

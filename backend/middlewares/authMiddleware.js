@@ -1,245 +1,472 @@
+// middlewares/authMiddleware.js
 const jwt = require('jsonwebtoken');
 
-class AuthMiddleware {
-  constructor(models) {
-    this.models = models;
+// Configuration JWT
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+
+// Fonction helper pour vérifier le token
+const verifyToken = (token) => {
+  try {
+    return jwt.verify(token, JWT_SECRET);
+  } catch (error) {
+    return null;
   }
+};
 
-  // Middleware d'authentification
-  authenticate = async (req, res, next) => {
+// Factory function qui crée les middlewares avec les modèles
+const createAuthMiddleware = (models) => {
+  const { User, Role, UserRole, Evenement, Oeuvre, Commentaire } = models;
+
+  // Middleware d'authentification principal
+  const authenticate = async (req, res, next) => {
     try {
+      // Récupérer le token depuis le header Authorization
       const authHeader = req.headers.authorization;
-      
-      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      const token = authHeader && authHeader.startsWith('Bearer ') 
+        ? authHeader.substring(7) 
+        : req.headers['x-access-token'] || req.cookies?.token;
+
+      if (!token) {
         return res.status(401).json({
           success: false,
-          error: 'Token d\'authentification requis'
+          message: 'Token d\'authentification manquant'
         });
       }
 
-      const token = authHeader.substring(7);
-      
-      try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        
-        const user = await this.models.User.findByPk(decoded.id_user, {
-          include: [
-            {
-              model: this.models.Role,
-              through: { model: this.models.UserRole },
-              attributes: ['nom_role']
-            }
-          ]
-        });
-
-        if (!user) {
-          return res.status(401).json({
-            success: false,
-            error: 'Utilisateur non trouvé'
-          });
-        }
-
-        // Vérifier si l'utilisateur professionnel est validé
-        if (user.type_user !== 'visiteur' && !user.professionnel_valide) {
-          return res.status(403).json({
-            success: false,
-            error: 'Compte professionnel en attente de validation par un administrateur'
-          });
-        }
-
-        req.user = {
-          id_user: user.id_user,
-          nom: user.nom,
-          prenom: user.prenom,
-          email: user.email,
-          type_user: user.type_user,
-          professionnel_valide: user.professionnel_valide,
-          roles: user.Roles.map(role => role.nom_role),
-          isAdmin: user.Roles.some(role => role.nom_role === 'Admin'),
-          isVisiteur: user.Roles.some(role => role.nom_role === 'Visiteur'),
-          isProfessionnel: user.Roles.some(role => role.nom_role === 'Professionnel')
-        };
-
-        next();
-      } catch (jwtError) {
+      // Vérifier le token
+      const decoded = verifyToken(token);
+      if (!decoded) {
         return res.status(401).json({
           success: false,
-          error: 'Token invalide ou expiré'
+          message: 'Token invalide ou expiré'
         });
       }
+
+      // Récupérer l'utilisateur avec ses rôles
+      const user = await User.findByPk(decoded.id || decoded.id_user, {
+        include: [{
+          model: Role,
+          as: 'Roles',
+          through: { attributes: [] }
+        }],
+        attributes: { exclude: ['password'] }
+      });
+
+      if (!user || user.statut !== 'actif') {
+        return res.status(401).json({
+          success: false,
+          message: 'Utilisateur non trouvé ou inactif'
+        });
+      }
+
+      // Ajouter l'utilisateur à la requête
+      req.user = user;
+      req.userId = user.id_user;
+      req.userRoles = user.Roles ? user.Roles.map(role => role.nom_role) : [];
+      
+      // Ajouter des helpers
+      req.user.isAdmin = req.userRoles.includes('Administrateur');
+      req.user.isProfessionnel = req.user.professionnel_valide && req.userRoles.includes('Professionnel');
+      
+      next();
     } catch (error) {
-      console.error('Erreur dans le middleware d\'authentification:', error);
+      console.error('Erreur authentification:', error);
       return res.status(500).json({
         success: false,
-        error: 'Erreur serveur lors de l\'authentification'
+        message: 'Erreur lors de l\'authentification'
       });
     }
   };
 
-  // Middleware pour vérifier les rôles spécifiques
-  requireRole = (allowedRoles) => {
-    return (req, res, next) => {
+  // Middleware pour vérifier si l'utilisateur est authentifié (optionnel)
+  const isAuthenticated = async (req, res, next) => {
+    try {
+      const authHeader = req.headers.authorization;
+      const token = authHeader && authHeader.startsWith('Bearer ') 
+        ? authHeader.substring(7) 
+        : req.headers['x-access-token'] || req.cookies?.token;
+
+      if (token) {
+        const decoded = verifyToken(token);
+        if (decoded) {
+          const user = await User.findByPk(decoded.id || decoded.id_user, {
+            include: [{
+              model: Role,
+              as: 'Roles',
+              through: { attributes: [] }
+            }],
+            attributes: { exclude: ['password'] }
+          });
+
+          if (user && user.statut === 'actif') {
+            req.user = user;
+            req.userId = user.id_user;
+            req.userRoles = user.Roles ? user.Roles.map(role => role.nom_role) : [];
+            req.user.isAdmin = req.userRoles.includes('Administrateur');
+          }
+        }
+      }
+      
+      next();
+    } catch (error) {
+      console.error('Erreur isAuthenticated:', error);
+      next();
+    }
+  };
+
+  // Middleware pour vérifier les rôles
+  const requireRole = (roles) => {
+    // Convertir en tableau si c'est une string
+    const rolesArray = Array.isArray(roles) ? roles : [roles];
+    
+    return async (req, res, next) => {
+      try {
+        if (!req.user) {
+          return res.status(401).json({
+            success: false,
+            message: 'Authentification requise'
+          });
+        }
+
+        const userRoles = req.userRoles || [];
+        const hasRole = rolesArray.some(role => userRoles.includes(role));
+
+        if (!hasRole && !userRoles.includes('Administrateur')) {
+          return res.status(403).json({
+            success: false,
+            message: 'Permissions insuffisantes'
+          });
+        }
+
+        next();
+      } catch (error) {
+        console.error('Erreur requireRole:', error);
+        return res.status(500).json({
+          success: false,
+          message: 'Erreur lors de la vérification des rôles'
+        });
+      }
+    };
+  };
+
+  // IMPORTANT: Créer des alias pour la compatibilité
+  const isAdmin = async (req, res, next) => {
+    try {
       if (!req.user) {
         return res.status(401).json({
           success: false,
-          error: 'Authentification requise'
+          message: 'Authentification requise'
         });
       }
 
-      const userRoles = req.user.roles || [];
-      const hasRequiredRole = allowedRoles.some(role => userRoles.includes(role));
-
-      if (!hasRequiredRole) {
+      if (!req.userRoles.includes('Administrateur')) {
         return res.status(403).json({
           success: false,
-          error: 'Permissions insuffisantes',
-          required_roles: allowedRoles,
-          user_roles: userRoles
+          message: 'Accès réservé aux administrateurs'
         });
       }
 
       next();
-    };
-  };
-
-  // Middleware pour les administrateurs uniquement
-  requireAdmin = (req, res, next) => {
-    if (!req.user || !req.user.isAdmin) {
-      return res.status(403).json({
+    } catch (error) {
+      console.error('Erreur isAdmin:', error);
+      return res.status(500).json({
         success: false,
-        error: 'Accès réservé aux administrateurs'
+        message: 'Erreur lors de la vérification admin'
       });
     }
-    next();
   };
 
-  // Middleware pour les professionnels validés
-  requireValidatedProfessional = (req, res, next) => {
-    if (!req.user) {
-      return res.status(401).json({
-        success: false,
-        error: 'Authentification requise'
-      });
-    }
+  // Alias pour requireAdmin
+  const requireAdmin = isAdmin;
 
-    if (!req.user.isProfessionnel || !req.user.professionnel_valide) {
-      return res.status(403).json({
-        success: false,
-        error: 'Accès réservé aux professionnels validés'
-      });
-    }
-
-    next();
-  };
-
-  // Middleware pour vérifier la propriété d'une ressource
-  requireOwnership = (resourceModel, resourceIdParam = 'id', userIdField = 'saisi_par') => {
-    return async (req, res, next) => {
+  // Middleware pour vérifier si l'utilisateur est professionnel validé
+  const isProfessional = async (req, res, next) => {
+    try {
       if (!req.user) {
         return res.status(401).json({
           success: false,
-          error: 'Authentification requise'
+          message: 'Authentification requise'
         });
       }
 
-      // Les admins peuvent tout modifier
-      if (req.user.isAdmin) {
-        return next();
+      if (!req.user.professionnel_valide || 
+          !req.userRoles.includes('Professionnel')) {
+        return res.status(403).json({
+          success: false,
+          message: 'Accès réservé aux professionnels validés'
+        });
       }
 
-      try {
-        const resourceId = req.params[resourceIdParam];
-        const resource = await this.models[resourceModel].findByPk(resourceId);
+      next();
+    } catch (error) {
+      console.error('Erreur isProfessional:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Erreur lors de la vérification professionnel'
+      });
+    }
+  };
 
-        if (!resource) {
-          return res.status(404).json({
+  // Alias pour requireValidatedProfessional
+  const requireValidatedProfessional = isProfessional;
+
+  // Middleware pour vérifier la propriété d'une ressource
+  const requireOwnership = (modelName, paramName = 'id', ownerField = 'id_user') => {
+    return async (req, res, next) => {
+      try {
+        if (!req.user) {
+          return res.status(401).json({
             success: false,
-            error: 'Ressource non trouvée'
+            message: 'Authentification requise'
           });
         }
 
-        if (resource[userIdField] !== req.user.id_user) {
+        // Les admins peuvent tout modifier
+        if (req.userRoles.includes('Administrateur')) {
+          return next();
+        }
+
+        const resourceId = req.params[paramName];
+        if (!resourceId) {
+          return res.status(400).json({
+            success: false,
+            message: 'ID de ressource manquant'
+          });
+        }
+
+        const Model = models[modelName];
+        if (!Model) {
+          return res.status(500).json({
+            success: false,
+            message: 'Modèle non trouvé'
+          });
+        }
+
+        const resource = await Model.findByPk(resourceId);
+        
+        if (!resource) {
+          return res.status(404).json({
+            success: false,
+            message: `${modelName} non trouvé`
+          });
+        }
+
+        if (resource[ownerField] !== req.user.id_user) {
           return res.status(403).json({
             success: false,
-            error: 'Vous ne pouvez modifier que vos propres ressources'
+            message: 'Vous n\'êtes pas autorisé à modifier cette ressource'
           });
         }
 
         req.resource = resource;
         next();
       } catch (error) {
-        console.error('Erreur lors de la vérification de propriété:', error);
+        console.error('Erreur requireOwnership:', error);
         return res.status(500).json({
           success: false,
-          error: 'Erreur serveur'
+          message: 'Erreur lors de la vérification des droits'
         });
       }
     };
   };
 
-  // Middleware pour vérifier l'appartenance à une organisation (pour les événements)
-  requireOrganizationMembership = async (req, res, next) => {
-    if (!req.user) {
-      return res.status(401).json({
-        success: false,
-        error: 'Authentification requise'
-      });
-    }
+  // Middleware pour vérifier si l'utilisateur peut modifier une ressource
+  const canModify = (resourceType) => {
+    return async (req, res, next) => {
+      try {
+        if (!req.user) {
+          return res.status(401).json({
+            success: false,
+            message: 'Authentification requise'
+          });
+        }
 
-    // Les admins peuvent créer des événements sans organisation
-    if (req.user.isAdmin) {
-      return next();
-    }
+        // Les admins peuvent tout modifier
+        if (req.userRoles.includes('Administrateur')) {
+          return next();
+        }
 
-    if (!req.user.isProfessionnel) {
-      return res.status(403).json({
-        success: false,
-        error: 'Seuls les professionnels peuvent créer des événements'
-      });
-    }
+        const resourceId = req.params.id;
+        if (!resourceId) {
+          return res.status(400).json({
+            success: false,
+            message: 'ID de ressource manquant'
+          });
+        }
 
-    try {
-      // Vérifier si l'utilisateur est lié à au moins une organisation
-      const userOrganizations = await this.models.User.findByPk(req.user.id_user, {
-        include: [
-          {
-            model: this.models.Organisation,
-            through: { model: this.models.UserOrganisation },
-            attributes: ['id_organisation', 'nom']
-          }
-        ]
-      });
+        let isOwner = false;
+        
+        switch (resourceType) {
+          case 'event':
+            const event = await Evenement.findByPk(resourceId);
+            isOwner = event && event.id_user === req.user.id_user;
+            break;
+            
+          case 'oeuvre':
+            const oeuvre = await Oeuvre.findByPk(resourceId);
+            isOwner = oeuvre && oeuvre.saisi_par === req.user.id_user;
+            break;
+            
+          case 'comment':
+            const comment = await Commentaire.findByPk(resourceId);
+            isOwner = comment && comment.id_user === req.user.id_user;
+            break;
+            
+          default:
+            return res.status(400).json({
+              success: false,
+              message: 'Type de ressource non supporté'
+            });
+        }
 
-      if (!userOrganizations.Organisations || userOrganizations.Organisations.length === 0) {
-        return res.status(403).json({
+        if (!isOwner) {
+          return res.status(403).json({
+            success: false,
+            message: 'Vous n\'êtes pas autorisé à modifier cette ressource'
+          });
+        }
+
+        next();
+      } catch (error) {
+        console.error('Erreur canModify:', error);
+        return res.status(500).json({
           success: false,
-          error: 'Vous devez être lié à une organisation pour créer des événements'
+          message: 'Erreur lors de la vérification des droits'
+        });
+      }
+    };
+  };
+
+  // Middleware pour limiter l'accès aux utilisateurs actifs
+  const requireActiveUser = async (req, res, next) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          message: 'Authentification requise'
         });
       }
 
-      req.userOrganizations = userOrganizations.Organisations;
+      if (req.user.statut !== 'actif') {
+        return res.status(403).json({
+          success: false,
+          message: 'Compte utilisateur inactif ou suspendu'
+        });
+      }
+
       next();
     } catch (error) {
-      console.error('Erreur lors de la vérification d\'organisation:', error);
+      console.error('Erreur requireActiveUser:', error);
       return res.status(500).json({
         success: false,
-        error: 'Erreur serveur'
+        message: 'Erreur lors de la vérification du statut'
       });
     }
   };
-}
 
-// Factory function pour créer le middleware avec les modèles
-const createAuthMiddleware = (models) => {
-  const authMiddleware = new AuthMiddleware(models);
+  // Middleware pour vérifier les permissions
+  const checkPermission = (resource, action) => {
+    return async (req, res, next) => {
+      try {
+        if (!req.user) {
+          return res.status(401).json({
+            success: false,
+            message: 'Authentification requise'
+          });
+        }
+
+        // Les administrateurs ont toutes les permissions
+        if (req.userRoles.includes('Administrateur')) {
+          return next();
+        }
+
+        // Définir les permissions par rôle
+        const permissions = {
+          'Modérateur': ['moderation', 'view_users', 'view_content'],
+          'Professionnel': ['create_content', 'manage_own_content', 'view_stats'],
+          'Visiteur': ['view_content', 'create_comments']
+        };
+
+        // Vérifier les permissions
+        let hasPermission = false;
+        for (const role of req.userRoles) {
+          const rolePerms = permissions[role] || [];
+          if (rolePerms.includes(`${resource}_${action}`) || 
+              rolePerms.includes(`${action}_${resource}`) ||
+              rolePerms.includes(action)) {
+            hasPermission = true;
+            break;
+          }
+        }
+
+        if (!hasPermission) {
+          return res.status(403).json({
+            success: false,
+            message: `Permission '${action}' sur '${resource}' requise`
+          });
+        }
+
+        next();
+      } catch (error) {
+        console.error('Erreur checkPermission:', error);
+        return res.status(500).json({
+          success: false,
+          message: 'Erreur lors de la vérification des permissions'
+        });
+      }
+    };
+  };
+
+  // Middleware pour vérifier l'appartenance à une organisation
+  const requireOrganizationMembership = async (req, res, next) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          message: 'Authentification requise'
+        });
+      }
+
+      // Les admins passent toujours
+      if (req.userRoles.includes('Administrateur')) {
+        return next();
+      }
+
+      // Vérifier si l'utilisateur a une organisation
+      if (!req.user.id_organisation) {
+        return res.status(403).json({
+          success: false,
+          message: 'Vous devez appartenir à une organisation pour cette action'
+        });
+      }
+
+      next();
+    } catch (error) {
+      console.error('Erreur requireOrganizationMembership:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Erreur lors de la vérification de l\'organisation'
+      });
+    }
+  };
+
+  // Retourner tous les middlewares
   return {
-    authenticate: authMiddleware.authenticate,
-    requireRole: authMiddleware.requireRole,
-    requireAdmin: authMiddleware.requireAdmin,
-    requireValidatedProfessional: authMiddleware.requireValidatedProfessional,
-    requireOwnership: authMiddleware.requireOwnership,
-    requireOrganizationMembership: authMiddleware.requireOrganizationMembership
+    authenticate,
+    isAuthenticated,
+    requireRole,
+    checkPermission,
+    isAdmin, // Alias pour compatibilité
+    requireAdmin,
+    isProfessional,
+    requireValidatedProfessional,
+    canModify,
+    requireActiveUser,
+    requireOwnership,
+    requireOrganizationMembership,
+    verifyToken
   };
 };
 
+// Export de la fonction factory
 module.exports = createAuthMiddleware;

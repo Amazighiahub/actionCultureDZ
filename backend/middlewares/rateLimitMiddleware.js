@@ -32,6 +32,32 @@ const rateLimitMiddleware = {
       success: false,
       error: 'Limite de création atteinte, veuillez réessayer plus tard'
     }
+  }),
+
+  adaptive: rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: (req) => {
+      if (req.user?.isAdmin) return 10000;
+      if (req.user?.isProfessionnel) return 5000;
+      return 1000;
+    },
+    keyGenerator: (req) => {
+      return req.user?.id_user || req.ip;
+    },
+    message: (req) => ({
+      success: false,
+      error: `Limite atteinte pour votre niveau (${req.user?.type_user || 'anonyme'})`
+    })
+  }),
+
+  // 🆕 NOUVEAU : Actions sensibles
+  sensitiveActions: rateLimit({
+    windowMs: 60 * 60 * 1000,
+    max: 10,
+    message: {
+      success: false,
+      error: 'Limite d\'actions sensibles atteinte'
+    }
   })
 };
 

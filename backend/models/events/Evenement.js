@@ -9,31 +9,49 @@ module.exports = (sequelize) => {
     },
     nom_evenement: {
       type: DataTypes.STRING(255),
-      allowNull: false
+      allowNull: false,
+      validate: {
+        notEmpty: true
+      }
     },
     description: {
       type: DataTypes.TEXT
     },
     date_debut: {
-      type: DataTypes.DATE
+      type: DataTypes.DATE,
+      allowNull: true
     },
     date_fin: {
-      type: DataTypes.DATE
+      type: DataTypes.DATE,
+      allowNull: true,
+      validate: {
+        isAfterDateDebut(value) {
+          if (value && this.date_debut && value < this.date_debut) {
+            throw new Error('La date de fin doit être après la date de début');
+          }
+        }
+      }
     },
     contact_email: {
-      type: DataTypes.STRING(255)
+      type: DataTypes.STRING(255),
+      validate: {
+        isEmail: true
+      }
     },
     contact_telephone: {
-      type: DataTypes.STRING(20)
+      type: DataTypes.STRING(20),
+      validate: {
+        is: /^[0-9+\-\s()]+$/
+      }
     },
     image_url: {
-      type: DataTypes.STRING(255)
+      type: DataTypes.STRING(500)
     },
     id_lieu: {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: 'lieux',
+        model: 'lieu',
         key: 'id_lieu'
       }
     },
@@ -43,7 +61,8 @@ module.exports = (sequelize) => {
       references: {
         model: 'user',
         key: 'id_user'
-      }
+      },
+      comment: 'Organisateur principal'
     },
     id_type_evenement: {
       type: DataTypes.INTEGER,
@@ -52,35 +71,336 @@ module.exports = (sequelize) => {
         model: 'type_evenement',
         key: 'id_type_evenement'
       }
+    },
+    statut: {
+      type: DataTypes.ENUM('planifie', 'en_cours', 'termine', 'annule', 'reporte'),
+      defaultValue: 'planifie'
+    },
+    capacite_max: {
+      type: DataTypes.INTEGER,
+      validate: {
+        min: 0
+      }
+    },
+    tarif: {
+      type: DataTypes.DECIMAL(10, 2),
+      defaultValue: 0,
+      validate: {
+        min: 0
+      }
+    },
+    inscription_requise: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    },
+    
+    // ===== CHAMPS SUPPLÉMENTAIRES DU TYPE TYPESCRIPT =====
+    
+    age_minimum: {
+      type: DataTypes.INTEGER,
+      validate: {
+        min: 0,
+        max: 120
+      },
+      comment: 'Âge minimum requis pour participer'
+    },
+    
+   
+    
+    accessibilite: {
+      type: DataTypes.TEXT,
+      comment: 'Informations sur l\'accessibilité (PMR, etc.)'
+    },
+    
+  
+    
+   
+    
+    certificat_delivre: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      comment: 'Un certificat sera-t-il délivré aux participants ?'
+    },
+    
+    date_limite_inscription: {
+      type: DataTypes.DATE,
+      comment: 'Date limite pour s\'inscrire',
+      validate: {
+        isBeforeEvent(value) {
+          if (value && this.date_debut && value > this.date_debut) {
+            throw new Error('La date limite d\'inscription doit être avant le début de l\'événement');
+          }
+        }
+      }
+    },
+    
+    // ===== MÉTADONNÉES CALCULÉES (Virtual Fields) =====
+    
+    nombre_participants: {
+      type: DataTypes.VIRTUAL,
+      async get() {
+        if (!this.id_evenement) return 0;
+        const count = await sequelize.models.EvenementUser.count({
+          where: { 
+            id_evenement: this.id_evenement,
+            statut_participation: ['confirme', 'present']
+          }
+        });
+        return count;
+      }
+    },
+    
+    nombre_inscrits: {
+      type: DataTypes.VIRTUAL,
+      async get() {
+        if (!this.id_evenement) return 0;
+        const count = await sequelize.models.EvenementUser.count({
+          where: { id_evenement: this.id_evenement }
+        });
+        return count;
+      }
+    },
+    
+    est_complet: {
+      type: DataTypes.VIRTUAL,
+      async get() {
+        if (!this.capacite_max) return false;
+        const inscrits = await this.get('nombre_inscrits');
+        return inscrits >= this.capacite_max;
+      }
+    },
+    
+    duree_totale: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        if (!this.date_debut || !this.date_fin) return null;
+        const diff = new Date(this.date_fin) - new Date(this.date_debut);
+        return Math.round(diff / (1000 * 60 * 60)); // en heures
+      }
+    },
+    
+    note_moyenne: {
+      type: DataTypes.VIRTUAL,
+      async get() {
+        if (!this.id_evenement) return null;
+        const result = await sequelize.models.EvenementUser.findOne({
+          where: { 
+            id_evenement: this.id_evenement,
+            evaluation_evenement: { [sequelize.Op.not]: null }
+          },
+          attributes: [
+            [sequelize.fn('AVG', sequelize.col('evaluation_evenement')), 'moyenne']
+          ],
+          raw: true
+        });
+        return result?.moyenne ? parseFloat(result.moyenne).toFixed(1) : null;
+      }
     }
+    
   }, {
     tableName: 'evenement',
     timestamps: true,
     createdAt: 'date_creation',
-    updatedAt: 'date_modification'
+    updatedAt: 'date_modification',
+    
+    indexes: [
+      {
+        fields: ['id_lieu']
+      },
+      {
+        fields: ['id_user']
+      },
+      {
+        fields: ['id_type_evenement']
+      },
+      {
+        fields: ['statut']
+      },
+      {
+        fields: ['date_debut']
+      },
+      {
+        fields: ['date_fin']
+      },
+      {
+        fields: ['date_limite_inscription']
+      }
+    ],
+    
+    hooks: {
+      beforeValidate: (evenement) => {
+        // Mise à jour automatique du statut selon les dates
+        const now = new Date();
+        
+        if (evenement.date_debut && evenement.date_fin) {
+          if (now < new Date(evenement.date_debut)) {
+            evenement.statut = 'planifie';
+          } else if (now >= new Date(evenement.date_debut) && now <= new Date(evenement.date_fin)) {
+            evenement.statut = 'en_cours';
+          } else if (now > new Date(evenement.date_fin)) {
+            evenement.statut = 'termine';
+          }
+        }
+      },
+      
+      afterCreate: async (evenement) => {
+        // Créer automatiquement une participation pour l'organisateur
+        await sequelize.models.EvenementUser.create({
+          id_evenement: evenement.id_evenement,
+          id_user: evenement.id_user,
+          role_participation: 'organisateur',
+          statut_participation: 'confirme'
+        });
+      }
+    }
   });
 
   // Associations
   Evenement.associate = (models) => {
-    Evenement.belongsTo(models.TypeEvenement, { foreignKey: 'id_type_evenement' });
-    Evenement.belongsTo(models.Lieu, { foreignKey: 'id_lieu' });
-    Evenement.belongsTo(models.User, { foreignKey: 'id_user' });
+    // Relations One-to-Many
+    Evenement.belongsTo(models.TypeEvenement, { 
+      foreignKey: 'id_type_evenement',
+      as: 'TypeEvenement'
+    });
     
-    Evenement.hasMany(models.Programme, { foreignKey: 'id_evenement' });
-    Evenement.hasMany(models.Media, { foreignKey: 'id_evenement' });
+    Evenement.belongsTo(models.Lieu, { 
+      foreignKey: 'id_lieu',
+      as: 'Lieu'
+    });
     
-    Evenement.belongsToMany(models.Oeuvre, { 
-      through: models.EvenementOeuvre, 
-      foreignKey: 'id_evenement' 
+    Evenement.belongsTo(models.User, { 
+      foreignKey: 'id_user',
+      as: 'Organisateur'
     });
-    Evenement.belongsToMany(models.User, { 
-      through: models.EvenementUser, 
-      foreignKey: 'id_evenement' 
+    
+    // Relations Many-to-Many via tables de liaison
+    Evenement.hasMany(models.EvenementUser, {
+      foreignKey: 'id_evenement',
+      as: 'EvenementUsers'
     });
-    Evenement.belongsToMany(models.Organisation, { 
-      through: models.EvenementOrganisation, 
-      foreignKey: 'id_evenement' 
+    
+    Evenement.hasMany(models.EvenementOeuvre, {
+      foreignKey: 'id_evenement',
+      as: 'EvenementOeuvres'
     });
+    
+    Evenement.hasMany(models.EvenementOrganisation, {
+      foreignKey: 'id_evenement',
+      as: 'EvenementOrganisations'
+    });
+    
+    // Relations directes pour faciliter l'accès
+    Evenement.belongsToMany(models.User, {
+      through: models.EvenementUser,
+      foreignKey: 'id_evenement',
+      otherKey: 'id_user',
+      as: 'Participants'
+    });
+    
+    Evenement.belongsToMany(models.Oeuvre, {
+      through: models.EvenementOeuvre,
+      foreignKey: 'id_evenement',
+      otherKey: 'id_oeuvre',
+      as: 'Oeuvres'
+    });
+    
+    Evenement.belongsToMany(models.Organisation, {
+      through: models.EvenementOrganisation,
+      foreignKey: 'id_evenement',
+      otherKey: 'id_organisation',
+      as: 'Organisations'
+    });
+    
+    // Relations avec Programme et Media
+    Evenement.hasMany(models.Programme, {
+      foreignKey: 'id_evenement',
+      as: 'Programmes'
+    });
+    
+    Evenement.hasMany(models.Media, {
+      foreignKey: 'id_evenement',
+      as: 'Medias'
+    });
+  };
+  
+  // Méthodes d'instance
+  Evenement.prototype.isActive = function() {
+    if (!this.date_fin) return false;
+    return new Date(this.date_fin) >= new Date();
+  };
+  
+  Evenement.prototype.isUpcoming = function() {
+    if (!this.date_debut) return false;
+    return new Date(this.date_debut) > new Date();
+  };
+  
+  Evenement.prototype.canRegister = function() {
+    if (!this.isActive()) return false;
+    if (this.date_limite_inscription && new Date() > new Date(this.date_limite_inscription)) {
+      return false;
+    }
+    return !this.est_complet;
+  };
+  
+  Evenement.prototype.updateStatus = async function() {
+    const now = new Date();
+    let newStatus = this.statut;
+    
+    if (this.date_debut && this.date_fin) {
+      if (now < new Date(this.date_debut)) {
+        newStatus = 'planifie';
+      } else if (now >= new Date(this.date_debut) && now <= new Date(this.date_fin)) {
+        newStatus = 'en_cours';
+      } else {
+        newStatus = 'termine';
+      }
+    }
+    
+    if (newStatus !== this.statut) {
+      this.statut = newStatus;
+      await this.save();
+    }
+    
+    return this;
+  };
+  
+  // Méthodes de classe
+  Evenement.getActiveEvents = function() {
+    return this.findAll({
+      where: {
+        [sequelize.Op.or]: [
+          { statut: 'en_cours' },
+          {
+            statut: 'planifie',
+            date_fin: { [sequelize.Op.gte]: new Date() }
+          }
+        ]
+      },
+      order: [['date_debut', 'ASC']]
+    });
+  };
+  
+  Evenement.getUpcomingEvents = function(limit = 10) {
+    return this.findAll({
+      where: {
+        statut: 'planifie',
+        date_debut: { [sequelize.Op.gt]: new Date() }
+      },
+      order: [['date_debut', 'ASC']],
+      limit
+    });
+  };
+  
+  Evenement.updateAllStatuses = async function() {
+    const events = await this.findAll({
+      where: {
+        statut: { [sequelize.Op.notIn]: ['annule', 'reporte'] }
+      }
+    });
+    
+    for (const event of events) {
+      await event.updateStatus();
+    }
   };
 
   return Evenement;

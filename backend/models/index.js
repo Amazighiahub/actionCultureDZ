@@ -104,7 +104,9 @@ const loadModels = (sequelize) => {
 
   console.log('📦 Chargement des modèles...');
 
-  // Modèles géographiques
+  // ORDRE IMPORTANT : Charger les modèles référencés en premier
+
+  // 1. Modèles géographiques (référencés par Lieu)
   const wilayaModel = loadModelSafely('./geography/Wilaya', 'Wilaya', sequelize);
   if (wilayaModel) models.Wilaya = wilayaModel;
   
@@ -117,17 +119,36 @@ const loadModels = (sequelize) => {
   const localiteModel = loadModelSafely('./geography/Localite', 'Localite', sequelize);
   if (localiteModel) models.Localite = localiteModel;
 
-  // Modèles utilisateurs
-  const userModel = loadModelSafely('./users/User', 'User', sequelize);
-  if (userModel) models.User = userModel;
-  
+  // 2. Modèles de base (User, Role) - référencés par beaucoup d'autres
   const roleModel = loadModelSafely('./users/Role', 'Role', sequelize);
   if (roleModel) models.Role = roleModel;
+  
+  const userModel = loadModelSafely('./users/User', 'User', sequelize);
+  if (userModel) models.User = userModel;
   
   const userRoleModel = loadModelSafely('./users/UserRole', 'UserRole', sequelize);
   if (userRoleModel) models.UserRole = userRoleModel;
 
-  // Modèles de classification
+  // 3. Modèles de lieux - IMPORTANT: Charger avant Evenement
+  const lieuModel = loadModelSafely('./places/Lieu', 'Lieu', sequelize);
+  if (lieuModel) models.Lieu = lieuModel;
+  
+  const detailLieuModel = loadModelSafely('./places/DetailLieu', 'DetailLieu', sequelize);
+  if (detailLieuModel) models.DetailLieu = detailLieuModel;
+  
+  const serviceModel = loadModelSafely('./places/Service', 'Service', sequelize);
+  if (serviceModel) models.Service = serviceModel;
+  
+  const lieuMediaModel = loadModelSafely('./places/LieuMedia', 'LieuMedia', sequelize);
+  if (lieuMediaModel) models.LieuMedia = lieuMediaModel;
+  
+  const monumentModel = loadModelSafely('./places/Monument', 'Monument', sequelize);
+  if (monumentModel) models.Monument = monumentModel;
+  
+  const vestigeModel = loadModelSafely('./places/Vestige', 'Vestige', sequelize);
+  if (vestigeModel) models.Vestige = vestigeModel;
+
+  // 4. Types et classifications
   const langueModel = loadModelSafely('./classifications/Langue', 'Langue', sequelize);
   if (langueModel) models.Langue = langueModel;
   
@@ -149,7 +170,11 @@ const loadModels = (sequelize) => {
   const techniqueModel = loadModelSafely('./classifications/Technique', 'Technique', sequelize);
   if (techniqueModel) models.Technique = techniqueModel;
 
-  // Modèles d'organisations
+  // 5. Types d'événements (référencé par Evenement)
+  const typeEvenementModel = loadModelSafely('./events/TypeEvenement', 'TypeEvenement', sequelize);
+  if (typeEvenementModel) models.TypeEvenement = typeEvenementModel;
+
+  // 6. Organisations
   const typeOrganisationModel = loadModelSafely('./organisations/TypeOrganisation', 'TypeOrganisation', sequelize);
   if (typeOrganisationModel) models.TypeOrganisation = typeOrganisationModel;
   
@@ -159,7 +184,7 @@ const loadModels = (sequelize) => {
   const editeurModel = loadModelSafely('./organisations/Editeur', 'Editeur', sequelize);
   if (editeurModel) models.Editeur = editeurModel;
 
-  // Modèles d'œuvres
+  // 7. Œuvres
   const oeuvreModel = loadModelSafely('./oeuvres/Oeuvre', 'Oeuvre', sequelize);
   if (oeuvreModel) models.Oeuvre = oeuvreModel;
   
@@ -184,29 +209,14 @@ const loadModels = (sequelize) => {
   const oeuvreArtModel = loadModelSafely('./oeuvres/OeuvreArt', 'OeuvreArt', sequelize);
   if (oeuvreArtModel) models.OeuvreArt = oeuvreArtModel;
 
-  // Modèles de lieux
-  const lieuModel = loadModelSafely('./places/Lieu', 'Lieu', sequelize);
-  if (lieuModel) models.Lieu = lieuModel;
+  // 8. Specialite et Intervenant - IMPORTANT: Charger avant Programme et Evenement
+  const specialiteModel = loadModelSafely('./misc/Specialite', 'Specialite', sequelize);
+  if (specialiteModel) models.Specialite = specialiteModel;
   
-  const detailLieuModel = loadModelSafely('./places/DetailLieu', 'DetailLieu', sequelize);
-  if (detailLieuModel) models.DetailLieu = detailLieuModel;
-  
-  const serviceModel = loadModelSafely('./places/Service', 'Service', sequelize);
-  if (serviceModel) models.Service = serviceModel;
-  
-  const lieuMediaModel = loadModelSafely('./places/LieuMedia', 'LieuMedia', sequelize);
-  if (lieuMediaModel) models.LieuMedia = lieuMediaModel;
-  
-  const monumentModel = loadModelSafely('./places/Monument', 'Monument', sequelize);
-  if (monumentModel) models.Monument = monumentModel;
-  
-  const vestigeModel = loadModelSafely('./places/Vestige', 'Vestige', sequelize);
-  if (vestigeModel) models.Vestige = vestigeModel;
+  const intervenantModel = loadModelSafely('./misc/Intervenant', 'Intervenant', sequelize);
+  if (intervenantModel) models.Intervenant = intervenantModel;
 
-  // Modèles d'événements
-  const typeEvenementModel = loadModelSafely('./events/TypeEvenement', 'TypeEvenement', sequelize);
-  if (typeEvenementModel) models.TypeEvenement = typeEvenementModel;
-  
+  // 9. Événements (après Lieu, User, TypeEvenement)
   const evenementModel = loadModelSafely('./events/Evenement', 'Evenement', sequelize);
   if (evenementModel) models.Evenement = evenementModel;
   
@@ -216,7 +226,7 @@ const loadModels = (sequelize) => {
   const parcoursModel = loadModelSafely('./events/Parcours', 'Parcours', sequelize);
   if (parcoursModel) models.Parcours = parcoursModel;
 
-  // Tables de liaison
+  // 10. Tables de liaison (après tous les modèles principaux)
   const oeuvreUserModel = loadModelSafely('./associations/OeuvreUser', 'OeuvreUser', sequelize);
   if (oeuvreUserModel) models.OeuvreUser = oeuvreUserModel;
   
@@ -244,19 +254,48 @@ const loadModels = (sequelize) => {
   const parcoursLieuModel = loadModelSafely('./associations/ParcoursLieu', 'ParcoursLieu', sequelize);
   if (parcoursLieuModel) models.ParcoursLieu = parcoursLieuModel;
   
-  // IMPORTANT: Modèle UserOrganisation
   const userOrganisationModel = loadModelSafely('./associations/UserOrganisation', 'UserOrganisation', sequelize);
   if (userOrganisationModel) models.UserOrganisation = userOrganisationModel;
+  
+  const userSpecialiteModel = loadModelSafely('./associations/UserSpecialite', 'UserSpecialite', sequelize);
+  if (userSpecialiteModel) models.UserSpecialite = userSpecialiteModel;
 
-  // Modèles divers
+  // 11. Modèles de certifications
+  const userCertificationModel = loadModelSafely('./misc/UserCertification', 'UserCertification', sequelize);
+  if (userCertificationModel) models.UserCertification = userCertificationModel;
+
+  // 12. Modèles divers
   const mediaModel = loadModelSafely('./misc/Media', 'Media', sequelize);
   if (mediaModel) models.Media = mediaModel;
+  
+  const favoriModel = loadModelSafely('./misc/Favori', 'Favori', sequelize);
+  if (favoriModel) models.Favori = favoriModel;
   
   const commentaireModel = loadModelSafely('./misc/Commentaire', 'Commentaire', sequelize);
   if (commentaireModel) models.Commentaire = commentaireModel;
   
   const critiqueEvaluationModel = loadModelSafely('./misc/CritiqueEvaluation', 'CritiqueEvaluation', sequelize);
   if (critiqueEvaluationModel) models.CritiqueEvaluation = critiqueEvaluationModel;
+
+  // 13. Modèles de tracking et modération
+  const vueModel = loadModelSafely('./misc/Vue', 'Vue', sequelize);
+  if (vueModel) models.Vue = vueModel;
+  
+  const signalementModel = loadModelSafely('./misc/Signalement', 'Signalement', sequelize);
+  if (signalementModel) models.Signalement = signalementModel;
+  
+  const notificationModel = loadModelSafely('./misc/Notification', 'Notification', sequelize);
+  if (notificationModel) models.Notification = notificationModel;
+  
+  const auditLogModel = loadModelSafely('./misc/AuditLog', 'AuditLog', sequelize);
+  if (auditLogModel) models.AuditLog = auditLogModel;
+
+  // 14. Modèles QR Code
+  const qrCodeModel = loadModelSafely('./misc/QRCode', 'QRCode', sequelize);
+  if (qrCodeModel) models.QRCode = qrCodeModel;
+  
+  const qrScanModel = loadModelSafely('./misc/QRScan', 'QRScan', sequelize);
+  if (qrScanModel) models.QRScan = qrScanModel;
 
   console.log(`📦 ${Object.keys(models).length} modèles chargés avec succès`);
   
@@ -265,11 +304,33 @@ const loadModels = (sequelize) => {
 
 // Initialiser les associations
 const initializeAssociations = (models) => {
+  console.log('🔗 Initialisation des associations...');
+  
+  // Vérifier les modèles disponibles avant les associations
+  console.log('Modèles disponibles:', Object.keys(models));
+  
+  // Vérifier spécifiquement les modèles problématiques
+  if (!models.Intervenant) {
+    console.error('⚠️  Le modèle Intervenant n\'est pas chargé !');
+  }
+  
+  if (!models.Specialite) {
+    console.error('⚠️  Le modèle Specialite n\'est pas chargé !');
+  }
+  
   Object.keys(models).forEach(modelName => {
     if (models[modelName].associate) {
-      models[modelName].associate(models);
+      try {
+        console.log(`  → Associations pour ${modelName}`);
+        models[modelName].associate(models);
+      } catch (error) {
+        console.error(`  ❌ Erreur associations ${modelName}:`, error.message);
+        // Continuer avec les autres modèles même en cas d'erreur
+      }
     }
   });
+  
+  console.log('✅ Associations terminées');
 };
 
 // Fonction utilitaire pour insérer des données si le modèle existe
@@ -410,11 +471,9 @@ const insertDefaultData = async (models) => {
     // Rôles par défaut
     const defaultRoles = [
       { nom_role: 'Administrateur', description: 'Accès complet au système' },
-      { nom_role: 'Modérateur', description: 'Modération du contenu' },
-      { nom_role: 'Contributeur', description: 'Ajout et modification de contenu' },
-      { nom_role: 'Utilisateur', description: 'Consultation et participation' },
-      { nom_role: 'Organisateur', description: 'Organisation d\'événements' },
-      { nom_role: 'Critique', description: 'Évaluation des œuvres' }
+      { nom_role: 'Visiteur', description: 'Utilisateur standard' },
+      { nom_role: 'Professionnel', description: 'Professionnel de la culture' },
+      { nom_role: 'Modérateur', description: 'Modération du contenu' }
     ];
     
     await insertDataIfModelExists(models, 'Role', defaultRoles, async (model, data) => {
@@ -471,6 +530,29 @@ const insertDefaultData = async (models) => {
       }
     });
     
+    // Spécialités par défaut
+    const defaultSpecialites = [
+      { nom_specialite: 'Arts visuels', description: 'Peinture, sculpture, photographie', categorie: 'Arts' },
+      { nom_specialite: 'Musique', description: 'Composition, interprétation', categorie: 'Arts' },
+      { nom_specialite: 'Littérature', description: 'Écriture, poésie', categorie: 'Arts' },
+      { nom_specialite: 'Théâtre', description: 'Mise en scène, jeu d\'acteur', categorie: 'Arts' },
+      { nom_specialite: 'Danse', description: 'Chorégraphie, interprétation', categorie: 'Arts' },
+      { nom_specialite: 'Artisanat', description: 'Techniques traditionnelles', categorie: 'Métiers' },
+      { nom_specialite: 'Conservation', description: 'Préservation du patrimoine', categorie: 'Métiers' },
+      { nom_specialite: 'Médiation culturelle', description: 'Animation, pédagogie', categorie: 'Métiers' },
+      { nom_specialite: 'Production', description: 'Organisation d\'événements', categorie: 'Métiers' },
+      { nom_specialite: 'Communication', description: 'Promotion culturelle', categorie: 'Métiers' }
+    ];
+    
+    await insertDataIfModelExists(models, 'Specialite', defaultSpecialites, async (model, data) => {
+      for (const specialite of data) {
+        await model.findOrCreate({
+          where: { nom_specialite: specialite.nom_specialite },
+          defaults: specialite
+        });
+      }
+    });
+    
     console.log('✅ Données par défaut insérées avec succès.');
     
   } catch (error) {
@@ -500,8 +582,26 @@ const initializeDatabase = async (config = {}) => {
     console.log('✅ Associations entre modèles configurées.');
     
     // 5. Synchroniser avec la base de données
-    await sequelize.sync({ force: false }); // Changer à true pour recréer les tables
+    // Désactiver temporairement les contraintes de clés étrangères pour MySQL
+    try {
+      await sequelize.query('SET FOREIGN_KEY_CHECKS = 0');
+      console.log('🔧 Contraintes de clés étrangères désactivées temporairement');
+    } catch (error) {
+      console.log('⚠️  Impossible de désactiver les contraintes FK (normal si pas MySQL)');
+    }
+    
+    // Corriger le problème de référence 'lieu' vs 'lieux'
+    // Créer d'abord toutes les tables sans contraintes
+    await sequelize.sync({ force: false, alter: false });
     console.log('✅ Base de données synchronisée.');
+    
+    // Réactiver les contraintes de clés étrangères
+    try {
+      await sequelize.query('SET FOREIGN_KEY_CHECKS = 1');
+      console.log('🔧 Contraintes de clés étrangères réactivées');
+    } catch (error) {
+      console.log('⚠️  Impossible de réactiver les contraintes FK');
+    }
     
     // 6. Insérer les données par défaut (inclut maintenant l'import géographique)
     await insertDefaultData(models);
@@ -521,21 +621,81 @@ const initializeDatabase = async (config = {}) => {
 const resetDatabase = async (config = {}) => {
   console.log('⚠️  ATTENTION: Remise à zéro de la base de données !');
   
-  const sequelize = createDatabaseConnection(config);
+  let sequelize = createDatabaseConnection(config);
   
   try {
+    // Désactiver les contraintes FK
     await sequelize.query('SET FOREIGN_KEY_CHECKS = 0;');
-    await sequelize.drop();
-    await sequelize.query('SET FOREIGN_KEY_CHECKS = 1;');
-    console.log('✅ Base de données remise à zéro.');
+    console.log('🔧 Contraintes FK désactivées');
     
-    return await initializeDatabase(config);
+    // Obtenir la liste de toutes les tables
+    const [tables] = await sequelize.query(
+      "SELECT table_name FROM information_schema.tables WHERE table_schema = DATABASE();"
+    );
+    
+    // Supprimer toutes les tables une par une
+    for (const { table_name } of tables) {
+      try {
+        await sequelize.query(`DROP TABLE IF EXISTS \`${table_name}\`;`);
+        console.log(`  🗑️  Table ${table_name} supprimée`);
+      } catch (err) {
+        console.log(`  ⚠️  Impossible de supprimer ${table_name}: ${err.message}`);
+      }
+    }
+    
+    console.log('🗑️  Toutes les tables supprimées');
+    
+    // Fermer la connexion actuelle
+    await sequelize.close();
+    
+    // Créer une nouvelle connexion pour éviter les problèmes de cache
+    sequelize = createDatabaseConnection(config);
+    
+    // Charger les modèles
+    const models = loadModels(sequelize);
+    console.log(`✅ ${Object.keys(models).length} modèles chargés.`);
+    
+    // Vérifier que les modèles critiques sont chargés
+    const requiredModels = ['User', 'Lieu', 'Intervenant', 'Programme', 'Evenement', 'Specialite'];
+    for (const modelName of requiredModels) {
+      if (!models[modelName]) {
+        console.error(`❌ Modèle requis manquant : ${modelName}`);
+      }
+    }
+    
+    // Initialiser les associations
+    initializeAssociations(models);
+    console.log('✅ Associations configurées.');
+    
+    // Désactiver à nouveau les FK pour la synchronisation
+    await sequelize.query('SET FOREIGN_KEY_CHECKS = 0;');
+    
+    // Synchroniser avec force: true pour créer toutes les tables
+    // Utiliser alter: false pour éviter les erreurs d'index
+    await sequelize.sync({ force: true, alter: false });
+    console.log('✅ Tables recréées.');
+    
+    // Réactiver les contraintes FK
+    await sequelize.query('SET FOREIGN_KEY_CHECKS = 1;');
+    console.log('🔧 Contraintes FK réactivées');
+    
+    // Insérer les données par défaut
+    await insertDefaultData(models);
+    console.log('✅ Données par défaut insérées.');
+    
+    console.log('🎉 Base de données réinitialisée avec succès !');
+    
+    return { sequelize, models };
     
   } catch (error) {
     console.error('❌ Erreur lors de la remise à zéro:', error);
+    // Essayer de réactiver les FK en cas d'erreur
+    try {
+      await sequelize.query('SET FOREIGN_KEY_CHECKS = 1;');
+    } catch (e) {
+      // Ignorer si échec
+    }
     throw error;
-  } finally {
-    await sequelize.close();
   }
 };
 

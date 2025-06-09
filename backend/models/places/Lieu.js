@@ -56,7 +56,7 @@ module.exports = (sequelize) => {
       allowNull: false
     }
   }, {
-    tableName: 'lieux',
+    tableName: 'lieu',
     timestamps: true
   });
 

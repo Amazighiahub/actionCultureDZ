@@ -2,6 +2,7 @@ const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
   const Programme = sequelize.define('Programme', {
+    // ... [TOUS LES CHAMPS RESTENT IDENTIQUES] ...
     id_programme: {
       type: DataTypes.INTEGER,
       primaryKey: true,
@@ -9,7 +10,10 @@ module.exports = (sequelize) => {
     },
     titre: {
       type: DataTypes.STRING(255),
-      allowNull: false
+      allowNull: false,
+      validate: {
+        notEmpty: true
+      }
     },
     description: {
       type: DataTypes.TEXT
@@ -25,27 +29,44 @@ module.exports = (sequelize) => {
     id_lieu: {
       type: DataTypes.INTEGER,
       references: {
-        model: 'lieux',
+        model: 'lieu',
         key: 'id_lieu'
       }
     },
     heure_debut: {
-      type: DataTypes.DATE
+      type: DataTypes.TIME
     },
     heure_fin: {
-      type: DataTypes.DATE
+      type: DataTypes.TIME
     },
     lieu_specifique: {
       type: DataTypes.STRING(255)
     },
     ordre: {
-      type: DataTypes.INTEGER
+      type: DataTypes.INTEGER,
+      defaultValue: 0
     },
     statut: {
-      type: DataTypes.ENUM('planifie', 'en_cours', 'termine', 'annule', 'reporte')
+      type: DataTypes.ENUM('planifie', 'en_cours', 'termine', 'annule', 'reporte'),
+      defaultValue: 'planifie'
     },
     type_activite: {
-      type: DataTypes.ENUM('conference', 'atelier', 'spectacle', 'exposition', 'visite', 'degustation', 'projection', 'concert', 'lecture', 'debat', 'formation', 'ceremonie', 'autre')
+      type: DataTypes.ENUM(
+        'conference',
+        'atelier',
+        'spectacle',
+        'exposition',
+        'visite',
+        'degustation',
+        'projection',
+        'concert',
+        'lecture',
+        'debat',
+        'formation',
+        'ceremonie',
+        'autre'
+      ),
+      defaultValue: 'autre'
     },
     duree_estimee: {
       type: DataTypes.INTEGER
@@ -54,28 +75,112 @@ module.exports = (sequelize) => {
       type: DataTypes.INTEGER
     },
     materiel_requis: {
-      type: DataTypes.TEXT
+      type: DataTypes.JSON,
+      defaultValue: []
+    },
+    niveau_requis: {
+      type: DataTypes.ENUM('debutant', 'intermediaire', 'avance', 'expert')
+    },
+    langue_principale: {
+      type: DataTypes.STRING(10),
+      defaultValue: 'ar'
+    },
+    traduction_disponible: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    },
+    enregistrement_autorise: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    },
+    diffusion_live: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    },
+    support_numerique: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
     },
     notes_organisateur: {
       type: DataTypes.TEXT
     }
+    
   }, {
     tableName: 'programme',
     timestamps: true,
     createdAt: 'date_creation',
-    updatedAt: 'date_modification'
+    updatedAt: 'date_modification',
+    
+    indexes: [
+      {
+        fields: ['id_evenement']
+      },
+      {
+        fields: ['ordre']
+      },
+      {
+        fields: ['statut']
+      },
+      {
+        fields: ['type_activite']
+      }
+    ]
   });
 
-  // Associations
+  // Associations CORRIGÉES
   Programme.associate = (models) => {
-    Programme.belongsTo(models.Evenement, { foreignKey: 'id_evenement' });
-    Programme.belongsTo(models.Lieu, { foreignKey: 'id_lieu' });
+    Programme.belongsTo(models.Evenement, { 
+      foreignKey: 'id_evenement',
+      as: 'Evenement'
+    });
     
-    Programme.belongsToMany(models.User, { 
-      through: models.ProgrammeIntervenant, 
-      foreignKey: 'id_programme' 
+    Programme.belongsTo(models.Lieu, { 
+      foreignKey: 'id_lieu',
+      as: 'Lieu'
+    });
+    
+    // Relation avec Intervenant (pas User)
+    Programme.belongsToMany(models.Intervenant, {
+      through: models.ProgrammeIntervenant,
+      foreignKey: 'id_programme',
+      otherKey: 'id_intervenant',
+      as: 'Intervenants'
+    });
+    
+    Programme.hasMany(models.ProgrammeIntervenant, {
+      foreignKey: 'id_programme',
+      as: 'ProgrammeIntervenants'
     });
   };
+  
+  // Méthodes de classe CORRIGÉES
+  Programme.getProgrammeByEvenement = function(id_evenement) {
+    return this.findAll({
+      where: { id_evenement },
+      order: [
+        ['ordre', 'ASC'],
+        ['heure_debut', 'ASC']
+      ],
+      include: [
+        {
+          model: sequelize.models.Lieu,
+          as: 'Lieu',
+          attributes: ['id_lieu', 'nom', 'adresse']
+        },
+        {
+          model: sequelize.models.ProgrammeIntervenant,
+          as: 'ProgrammeIntervenants',
+          include: [{
+            model: sequelize.models.Intervenant,
+            as: 'Intervenant',
+            attributes: ['id_intervenant', 'nom', 'prenom', 'titre_professionnel', 'organisation', 'photo_url']
+          }]
+        }
+      ]
+    });
+  };
+  
+  // Autres méthodes restent identiques...
 
   return Programme;
-};
+}

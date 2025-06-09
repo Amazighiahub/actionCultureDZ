@@ -12,7 +12,21 @@ export default defineConfig({
   server: {
     port: 3000,
     open: true,
-    host: true
+    host: true,
+    // AJOUT DU PROXY POUR REDIRIGER VERS LE BACKEND
+    proxy: {
+      '/api': {
+        target: 'http://127.0.0.1:3001',  // Utiliser 127.0.0.1 au lieu de localhost
+        changeOrigin: true,
+        secure: false,
+        ws: true,
+      },
+      '/uploads': {
+        target: 'http://127.0.0.1:3001',  // Utiliser 127.0.0.1 au lieu de localhost
+        changeOrigin: true,
+        secure: false,
+      }
+    }
   },
   css: {
     preprocessorOptions: {
