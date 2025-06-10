@@ -18,8 +18,19 @@ jobs:
         ssh-keyscan -H 82.25.119.112 >> ~/.ssh/known_hosts
 
         ssh -o StrictHostKeyChecking=no root@82.25.119.112 << 'EOF'
-          cd /home/EventCulture
-          git pull origin main
-          cd frontend && npm install && npm run build
-          pm2 restart back-eventculture
+            echo "📦 Pulling latest changes..."
+            cd /home/EventCulture
+            git pull origin main
+            
+            echo "🔧 Installing frontend dependencies..."
+            cd frontend
+            npm install
+            
+            echo "🏗️ Building frontend..."
+            npm run build
+            
+            echo "🔄 Restarting backend..."
+            pm2 restart back-eventculture
+            
+            echo "✅ Deployment complete!"
         EOF
