@@ -196,7 +196,41 @@ export class OeuvreService {
       data
     );
   }
-
+async getByUser(userId: number): Promise<ApiResponse<Oeuvre[]>> {
+    try {
+      // Essayer d'abord l'endpoint spécifique si disponible
+      try {
+        const response = await apiService.get<Oeuvre[]>(`/oeuvres/user/${userId}`);
+        return response;
+      } catch (error: any) {
+        // Si l'endpoint n'existe pas, utiliser l'endpoint standard avec filtre
+        if (error.status === 404) {
+          const response = await apiService.get<any>('/oeuvres', {
+            saisiPar: userId, // ou saisi_par selon votre API
+            limit: 100,
+            page: 1
+          });
+          
+          // Si la réponse est paginée
+          if (response.data?.data) {
+            return {
+              success: true,
+              data: response.data.data
+            };
+          }
+          
+          return response;
+        }
+        throw error;
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: 'Erreur lors de la récupération des œuvres'
+      };
+    }
+  }
+  
   /**
    * Uploader plusieurs médias
    */

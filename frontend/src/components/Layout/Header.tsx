@@ -73,8 +73,8 @@ const Header: React.FC<HeaderProps> = ({
 
   // ✅ CORRECTION : Fonction pour vérifier si l'utilisateur est admin
   const isUserAdmin = (): boolean => {
-    if (!user?.Roles) return false;
-    return user.Roles.some(role => role.nom_role === 'Admin');
+    if (!user?.roles) return false;
+    return user.roles.some(role => role.nomRole === 'Admin');
   };
 
   return (
@@ -154,7 +154,7 @@ const Header: React.FC<HeaderProps> = ({
                   <p className="font-semibold text-gray-900">{user?.prenom} {user?.nom}</p>
                   <p className="text-sm text-gray-500">{user?.email}</p>
                   <p className="text-xs text-gray-400 mt-1">
-                    {user?.Roles?.[0]?.nom_role || 'Visiteur'}
+                    {user?.roles?.[0]?.nomRole || 'Visiteur'}
                   </p>
                 </div>
                 
