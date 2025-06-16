@@ -202,26 +202,8 @@ module.exports = (sequelize) => {
   };
   
   // Méthodes statiques
-  Intervenant.getIntervenantsActifs = function() {
-    return this.findAll({
-      where: { 
-        actif: true,
-        verifie: true 
-      },
-      order: [['nom', 'ASC'], ['prenom', 'ASC']]
-    });
-  };
   
-  Intervenant.rechercherParSpecialite = function(specialite) {
-    return this.findAll({
-      where: {
-        actif: true,
-        specialites: {
-          [Op.contains]: specialite // Utiliser Op directement
-        }
-      }
-    });
-  };
-
+  
+  
   return Intervenant;
 };

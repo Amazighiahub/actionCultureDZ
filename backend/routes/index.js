@@ -1,8 +1,10 @@
-// routes/index.js - VERSION CORRIGÉE
+// routes/index.js - VERSION AMÉLIORÉE AVEC DOCUMENTATION DYNAMIQUE
 const express = require('express');
 const router = express.Router();
 
-// Import de toutes les routes
+// ========================================================================
+// IMPORTS DES ROUTES
+// ========================================================================
 const initOeuvreRoutes = require('./oeuvreRoutes');
 const initUserRoutes = require('./userRoutes');
 const initEvenementRoutes = require('./evenementRoutes');
@@ -19,93 +21,185 @@ const initProgrammeRoutes = require('./programmeRoutes');
 const initParcoursIntelligentRoutes = require('./parcoursIntelligentRoutes');
 const initNotificationRoutes = require('./notificationRoutes');
 
+// ========================================================================
+// FONCTIONS UTILITAIRES
+// ========================================================================
+
+/**
+ * Extrait toutes les routes d'un router Express de manière récursive
+ * @param {Router} router - Le router Express à analyser
+ * @param {string} basePath - Le chemin de base
+ * @returns {Array} Liste des routes avec leurs métadonnées
+ */
+const extractRoutes = (router, basePath = '') => {
+  const routes = [];
+  
+  router.stack.forEach(layer => {
+    if (layer.route) {
+      // Route directe
+      const path = basePath + layer.route.path;
+      const methods = Object.keys(layer.route.methods).map(m => m.toUpperCase());
+      
+      methods.forEach(method => {
+        routes.push({
+          method,
+          path,
+          middlewares: layer.route.stack
+            .filter(l => l.name && l.name !== '<anonymous>')
+            .map(l => l.name)
+        });
+      });
+    } else if (layer.name === 'router' && layer.handle.stack) {
+      // Sous-router
+      const regexp = layer.regexp.source;
+      let subPath = regexp
+        .replace(/\\/g, '')
+        .replace(/\^/g, '')
+        .replace(/\$/g, '')
+        .replace(/\?(?=\()/g, '')
+        .replace(/\(\?\:/g, '(')
+        .replace(/\(\?=/g, '(')
+        .replace(/[()]/g, '');
+      
+      // Nettoyer le path
+      if (subPath && !subPath.startsWith('/')) {
+        subPath = '/' + subPath;
+      }
+      
+      // Récursion pour les sous-routers
+      routes.push(...extractRoutes(layer.handle, basePath + subPath));
+    }
+  });
+  
+  return routes;
+};
+
+/**
+ * Groupe les routes par module
+ * @param {Array} routes - Liste des routes
+ * @returns {Object} Routes groupées par module
+ */
+const groupRoutesByModule = (routes) => {
+  const grouped = {};
+  
+  routes.forEach(route => {
+    // Extraire le module depuis le path
+    const pathParts = route.path.split('/').filter(p => p && p !== 'api');
+    const module = pathParts[0] || 'root';
+    
+    if (!grouped[module]) {
+      grouped[module] = [];
+    }
+    
+    grouped[module].push({
+      method: route.method,
+      path: route.path,
+      auth: route.middlewares.includes('authenticate') ? 'required' : 'public',
+      admin: route.middlewares.includes('requireAdmin'),
+      professional: route.middlewares.includes('requireValidatedProfessional')
+    });
+  });
+  
+  return grouped;
+};
+
+// ========================================================================
+// FONCTION PRINCIPALE D'INITIALISATION
+// ========================================================================
+
 const initRoutes = (models, authMiddleware) => {
-  // Vérifier que models contient sequelize
+  // Validation des paramètres
   if (!models || !models.sequelize) {
     throw new Error('models doit contenir une instance sequelize');
   }
 
-  // Vérifier que authMiddleware est correctement passé
   if (!authMiddleware || typeof authMiddleware !== 'object') {
     throw new Error('authMiddleware doit être un objet avec les méthodes authenticate, isAdmin, etc.');
   }
 
-  // IMPORTANT: Charger tous les middlewares nécessaires
+  console.log('🔧 Initialisation des routes API...');
+
+  // ========================================================================
+  // CHARGEMENT DES MIDDLEWARES
+  // ========================================================================
+  
   const middlewares = {
     auth: authMiddleware
   };
 
-  // Charger le cache middleware
-  try {
-    middlewares.cache = require('../middlewares/cacheMiddleware');
-    console.log('✅ Cache middleware chargé');
-  } catch (error) {
-    console.warn('⚠️ Cache middleware non disponible, utilisation de mocks');
-    middlewares.cache = {
-      cacheStrategy: {
-        short: (req, res, next) => next(),
-        medium: (req, res, next) => next(),
-        long: (req, res, next) => next(),
-        veryLong: (req, res, next) => next()
-      },
-      conditionalCache: () => (req, res, next) => next(),
-      invalidateCache: () => (req, res, next) => next(),
-      invalidateOnChange: () => (req, res, next) => next(),
-      userCache: () => (req, res, next) => next(),
-      noCache: (req, res, next) => next(),
-      clearCache: (req, res) => res.json({ success: true }),
-      getCacheStats: (req, res) => res.json({ success: true, data: {} })
-    };
-  }
+  // Charger les middlewares additionnels avec gestion d'erreur
+  const middlewareLoaders = [
+    {
+      name: 'cache',
+      loader: () => require('../middlewares/cacheMiddleware'),
+      fallback: {
+        cacheStrategy: {
+          short: (req, res, next) => next(),
+          medium: (req, res, next) => next(),
+          long: (req, res, next) => next(),
+          veryLong: (req, res, next) => next()
+        },
+        conditionalCache: () => (req, res, next) => next(),
+        invalidateCache: () => (req, res, next) => next(),
+        invalidateOnChange: () => (req, res, next) => next(),
+        userCache: () => (req, res, next) => next(),
+        noCache: (req, res, next) => next()
+      }
+    },
+    {
+      name: 'validation',
+      loader: () => require('../middlewares/validationMiddleware'),
+      fallback: {
+        validatePagination: (req, res, next) => next(),
+        validateId: () => (req, res, next) => next(),
+        handleValidationErrors: (req, res, next) => next(),
+        validateEventCreation: (req, res, next) => next(),
+        validateWorkSubmission: (req, res, next) => next()
+      }
+    },
+    {
+      name: 'rateLimit',
+      loader: () => require('../middlewares/rateLimitMiddleware'),
+      fallback: {
+        general: (req, res, next) => next(),
+        auth: (req, res, next) => next(),
+        creation: (req, res, next) => next(),
+        adaptive: (req, res, next) => next(),
+        sensitiveActions: (req, res, next) => next()
+      }
+    },
+    {
+      name: 'security',
+      loader: () => require('../middlewares/securityMiddleware'),
+      fallback: {
+        sanitizeInput: (req, res, next) => next()
+      }
+    }
+  ];
 
-  // Charger le validation middleware
-  try {
-    middlewares.validation = require('../middlewares/validationMiddleware');
-  } catch (error) {
-    console.warn('⚠️ Validation middleware non disponible');
-    middlewares.validation = {
-      validatePagination: (req, res, next) => next(),
-      validateId: () => (req, res, next) => next(),
-      handleValidationErrors: (req, res, next) => next(),
-      validateEventCreation: (req, res, next) => next(),
-      validateWorkSubmission: (req, res, next) => next()
-    };
-  }
+  // Charger chaque middleware
+  middlewareLoaders.forEach(({ name, loader, fallback }) => {
+    try {
+      middlewares[name] = loader();
+      console.log(`✅ Middleware ${name} chargé`);
+    } catch (error) {
+      console.warn(`⚠️ Middleware ${name} non disponible, utilisation du fallback`);
+      middlewares[name] = fallback;
+    }
+  });
 
-  // Charger le rate limit middleware
-  try {
-    middlewares.rateLimit = require('../middlewares/rateLimitMiddleware');
-  } catch (error) {
-    console.warn('⚠️ RateLimit middleware non disponible');
-    middlewares.rateLimit = {
-      general: (req, res, next) => next(),
-      auth: (req, res, next) => next(),
-      creation: (req, res, next) => next(),
-      adaptive: (req, res, next) => next(),
-      sensitiveActions: (req, res, next) => next()
-    };
-  }
-
-  // Charger l'audit middleware - VERSION CORRIGÉE
+  // Gestion spéciale pour le middleware d'audit
   try {
     const auditMiddlewareModule = require('../middlewares/auditMiddleware');
     
-    // IMPORTANT: Initialiser le middleware d'audit avec les modèles
     if (auditMiddlewareModule.create) {
-      // Utiliser la factory function pour créer une instance avec les modèles
       middlewares.audit = auditMiddlewareModule.create(models);
-      console.log('✅ Audit middleware initialisé avec les modèles');
     } else if (auditMiddlewareModule.initialize) {
-      // Ou utiliser la fonction d'initialisation
       middlewares.audit = auditMiddlewareModule.initialize(models);
-      console.log('✅ Audit middleware initialisé via initialize');
     } else {
-      // Fallback si l'ancien format est utilisé
       middlewares.audit = auditMiddlewareModule;
-      console.warn('⚠️ Audit middleware utilisé sans initialisation des modèles');
     }
     
-    // Ajouter les actions au middleware
     middlewares.audit.actions = auditMiddlewareModule.actions || {
       CREATE_EVENT: 'create_event',
       UPDATE_EVENT: 'update_event',
@@ -115,49 +209,40 @@ const initRoutes = (models, authMiddleware) => {
       UPDATE_OEUVRE: 'update_oeuvre',
       DELETE_OEUVRE: 'delete_oeuvre'
     };
+    
+    console.log('✅ Middleware audit initialisé');
   } catch (error) {
-    console.warn('⚠️ Audit middleware non disponible:', error.message);
+    console.warn('⚠️ Middleware audit non disponible');
     middlewares.audit = {
       logAction: () => (req, res, next) => next(),
       logCriticalAction: () => (req, res, next) => next(),
       logDataAccess: () => (req, res, next) => next(),
       logUnauthorizedAccess: (req, res, next) => next(),
-      actions: {
-        CREATE_EVENT: 'create_event',
-        UPDATE_EVENT: 'update_event',
-        DELETE_EVENT: 'delete_event',
-        CANCEL_EVENT: 'cancel_event',
-        CREATE_OEUVRE: 'create_oeuvre',
-        UPDATE_OEUVRE: 'update_oeuvre',
-        DELETE_OEUVRE: 'delete_oeuvre'
-      }
+      actions: {}
     };
   }
 
-  // Charger le security middleware
-  try {
-    middlewares.security = require('../middlewares/securityMiddleware');
-  } catch (error) {
-    console.warn('⚠️ Security middleware non disponible');
-    middlewares.security = {
-      sanitizeInput: (req, res, next) => next()
-    };
-  }
+  // ========================================================================
+  // ROUTES SYSTÈME
+  // ========================================================================
 
   // Route de santé
   router.get('/health', async (req, res) => {
     try {
-      // Test de la connexion à la base de données
       await models.sequelize.authenticate();
       
-      res.json({ 
-        status: 'OK', 
+      const health = {
+        status: 'OK',
         timestamp: new Date().toISOString(),
         version: '1.0.0',
-        database: 'Connected',
         environment: process.env.NODE_ENV || 'development',
+        database: 'Connected',
+        uptime: process.uptime(),
+        memory: process.memoryUsage(),
         models: Object.keys(models).filter(key => key !== 'sequelize' && key !== 'Sequelize').length
-      });
+      };
+      
+      res.json(health);
     } catch (error) {
       res.status(503).json({
         status: 'ERROR',
@@ -168,147 +253,241 @@ const initRoutes = (models, authMiddleware) => {
     }
   });
 
-  // Documentation API simplifiée
+  // Documentation API dynamique
   router.get('/', (req, res) => {
-    res.json({
-      message: 'API Action Culture - Documentation',
+    // Extraire toutes les routes dynamiquement
+    const allRoutes = extractRoutes(router, '/api');
+    const groupedRoutes = groupRoutesByModule(allRoutes);
+    
+    // Statistiques
+    const stats = {
+      total: allRoutes.length,
+      public: allRoutes.filter(r => !r.middlewares.includes('authenticate')).length,
+      authenticated: allRoutes.filter(r => r.middlewares.includes('authenticate')).length,
+      admin: allRoutes.filter(r => r.middlewares.includes('requireAdmin')).length,
+      professional: allRoutes.filter(r => r.middlewares.includes('requireValidatedProfessional')).length
+    };
+    
+    const documentation = {
+      message: 'API Action Culture - Documentation complète',
       version: '1.0.0',
       baseUrl: process.env.BASE_URL || `http://localhost:${process.env.PORT || 3001}`,
-      documentation: '/api/docs',
-      health: '/api/health',
       
-      endpoints: {
-        // Authentification & Utilisateurs
-        users: {
-          base: '/api/users',
-          description: 'Gestion des utilisateurs et authentification',
-          principales: [
-            'POST /api/users/register - Inscription',
-            'POST /api/users/login - Connexion',
-            'GET /api/users/profile - Profil utilisateur',
-            'GET /api/users/types-utilisateurs - Types disponibles'
-          ]
-        },
-        
-        // Métadonnées
-        metadata: {
-          base: '/api/metadata',
-          description: 'Données de référence (langues, catégories, etc.)',
-          principales: [
-            'GET /api/metadata/all - Toutes les métadonnées',
-            'GET /api/metadata/wilayas - Liste des wilayas',
-            'GET /api/metadata/langues - Langues disponibles',
-            'GET /api/metadata/categories - Catégories'
-          ]
-        },
-        
-        // Œuvres
-        oeuvres: {
-          base: '/api/oeuvres',
-          description: 'Gestion des œuvres culturelles',
-          principales: [
-            'GET /api/oeuvres - Liste des œuvres',
-            'GET /api/oeuvres/:id - Détails d\'une œuvre',
-            'POST /api/oeuvres - Créer une œuvre (auth)',
-            'GET /api/oeuvres/recent - Œuvres récentes'
-          ]
-        },
-        
-        // Événements
-        evenements: {
-          base: '/api/evenements',
-          description: 'Événements culturels',
-          principales: [
-            'GET /api/evenements - Liste des événements',
-            'GET /api/evenements/upcoming - À venir',
-            'POST /api/evenements/:id/inscription - S\'inscrire (auth)',
-            'GET /api/evenements/:id - Détails'
-          ]
-        },
-        
-        // Autres services
-        patrimoine: '/api/patrimoine - Sites patrimoniaux',
-        artisanat: '/api/artisanat - Artisanat traditionnel',
-        commentaires: '/api/commentaires - Système de commentaires',
-        favoris: '/api/favoris - Gestion des favoris (auth)',
-        notifications: '/api/notifications - Notifications (auth)',
-        parcours: '/api/parcours - Parcours intelligents',
-        programmes: '/api/programmes - Programmes d\'événements',
-        professionnel: '/api/professionnel - Espace pro (auth)',
-        dashboard: '/api/dashboard - Admin (auth)',
-        upload: '/api/upload - Upload de fichiers',
-        lieux: '/api/lieux - Gestion des lieux'
+      statistics: stats,
+      
+      endpoints: Object.keys(groupedRoutes).sort().reduce((acc, module) => {
+        acc[module] = {
+          total: groupedRoutes[module].length,
+          description: getModuleDescription(module),
+          routes: groupedRoutes[module]
+            .sort((a, b) => {
+              const methodOrder = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
+              if (a.method !== b.method) {
+                return methodOrder.indexOf(a.method) - methodOrder.indexOf(b.method);
+              }
+              return a.path.localeCompare(b.path);
+            })
+            .map(route => formatRouteDescription(route))
+        };
+        return acc;
+      }, {}),
+      
+      authentication: {
+        type: 'Bearer Token (JWT)',
+        header: 'Authorization: Bearer YOUR_TOKEN',
+        endpoints: {
+          register: 'POST /api/users/register',
+          login: 'POST /api/users/login',
+          refresh: 'POST /api/users/refresh-token'
+        }
+      },
+      
+      legend: {
+        '🔓': 'Endpoint public',
+        '🔒': 'Authentification requise',
+        '👨‍💼': 'Rôle administrateur requis',
+        '💼': 'Professionnel validé requis'
       }
+    };
+    
+    res.json(documentation);
+  });
+
+  // Liste simple des endpoints
+  router.get('/endpoints', (req, res) => {
+    const allRoutes = extractRoutes(router, '/api');
+    const format = req.query.format || 'simple';
+    
+    if (format === 'detailed') {
+      res.json({
+        success: true,
+        total: allRoutes.length,
+        endpoints: allRoutes
+      });
+    } else {
+      const simpleList = allRoutes
+        .map(route => `${route.method.padEnd(7)} ${route.path}`)
+        .sort();
+      
+      res.json({
+        success: true,
+        total: simpleList.length,
+        endpoints: simpleList
+      });
+    }
+  });
+
+  // Documentation par module
+  router.get('/docs/:module', (req, res) => {
+    const { module } = req.params;
+    const allRoutes = extractRoutes(router, '/api');
+    
+    const moduleRoutes = allRoutes.filter(route => {
+      const pathParts = route.path.split('/').filter(p => p && p !== 'api');
+      return pathParts[0] === module;
+    });
+    
+    if (moduleRoutes.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: `Module '${module}' non trouvé`,
+        availableModules: getAvailableModules(allRoutes)
+      });
+    }
+    
+    res.json({
+      success: true,
+      module,
+      description: getModuleDescription(module),
+      total: moduleRoutes.length,
+      routes: moduleRoutes.map(route => ({
+        method: route.method,
+        path: route.path,
+        description: generateRouteDescription(route),
+        requiresAuth: route.middlewares.includes('authenticate'),
+        requiresAdmin: route.middlewares.includes('requireAdmin'),
+        requiresProfessional: route.middlewares.includes('requireValidatedProfessional'),
+        middlewares: route.middlewares
+      }))
     });
   });
 
-  // Monter toutes les routes
-  console.log('🔧 Montage des routes...');
-  
-  try {
-    // Routes qui nécessitent uniquement models
-    if (typeof initUploadRoutes === 'function') {
-      router.use('/upload', initUploadRoutes(models));
-    }
+  // Routes de débogage
+  router.get('/debug/routes', (req, res) => {
+    const debug = {
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'development',
+      
+      modulesStatus: {
+        oeuvres: typeof initOeuvreRoutes === 'function' ? '✅ Chargé' : '❌ Non chargé',
+        users: typeof initUserRoutes === 'function' ? '✅ Chargé' : '❌ Non chargé',
+        evenements: typeof initEvenementRoutes === 'function' ? '✅ Chargé' : '❌ Non chargé',
+        lieux: typeof initLieuRoutes === 'function' ? '✅ Chargé' : '❌ Non chargé',
+        patrimoine: typeof initPatrimoineRoutes === 'function' ? '✅ Chargé' : '❌ Non chargé',
+        commentaires: typeof initCommentaireRoutes === 'function' ? '✅ Chargé' : '❌ Non chargé',
+        metadata: typeof initMetadataRoutes === 'function' ? '✅ Chargé' : '❌ Non chargé',
+        upload: typeof initUploadRoutes === 'function' ? '✅ Chargé' : '❌ Non chargé',
+        artisanat: typeof initArtisanatRoutes === 'function' ? '✅ Chargé' : '❌ Non chargé',
+        favoris: typeof initFavoriRoutes === 'function' ? '✅ Chargé' : '❌ Non chargé',
+        dashboard: typeof initDashboardRoutes === 'function' ? '✅ Chargé' : '❌ Non chargé',
+        professionnel: typeof initProfessionnelRoutes === 'function' ? '✅ Chargé' : '❌ Non chargé',
+        programmes: typeof initProgrammeRoutes === 'function' ? '✅ Chargé' : '❌ Non chargé',
+        parcours: typeof initParcoursIntelligentRoutes === 'function' ? '✅ Chargé' : '❌ Non chargé',
+        notifications: typeof initNotificationRoutes === 'function' ? '✅ Chargé' : '❌ Non chargé'
+      },
+      
+      middlewares: {
+        auth: authMiddleware ? '✅ Disponible' : '❌ Non disponible',
+        authMethods: authMiddleware ? Object.keys(authMiddleware).filter(k => typeof authMiddleware[k] === 'function') : [],
+        loadedMiddlewares: Object.keys(middlewares)
+      },
+      
+      models: {
+        available: models ? Object.keys(models).filter(key => key !== 'sequelize' && key !== 'Sequelize').length : 0,
+        list: models ? Object.keys(models).filter(key => key !== 'sequelize' && key !== 'Sequelize') : []
+      },
+      
+      routes: {}
+    };
     
-    // Routes qui nécessitent models et authMiddleware seulement
-    if (typeof initMetadataRoutes === 'function') {
-      router.use('/metadata', initMetadataRoutes(models, authMiddleware));
-    }
-    
-    if (typeof initUserRoutes === 'function') {
-      router.use('/users', initUserRoutes(models, authMiddleware));
-    }
-    
-    // Routes qui nécessitent tous les middlewares
-    if (typeof initOeuvreRoutes === 'function') {
-      router.use('/oeuvres', initOeuvreRoutes(models, authMiddleware));
-    }
-    
-    // IMPORTANT: Passer tous les middlewares à evenementRoutes
-    if (typeof initEvenementRoutes === 'function') {
-      router.use('/evenements', initEvenementRoutes(models, middlewares));
-    }
-    
-    // Autres routes
-    const routesToInit = [
-      { path: '/lieux', init: initLieuRoutes },
-      { path: '/patrimoine', init: initPatrimoineRoutes },
-      { path: '/artisanat', init: initArtisanatRoutes },
-      { path: '/commentaires', init: initCommentaireRoutes },
-      { path: '/favoris', init: initFavoriRoutes },
-      { path: '/notifications', init: initNotificationRoutes },
-      { path: '/parcours', init: initParcoursIntelligentRoutes },
-      { path: '/programmes', init: initProgrammeRoutes },
-      { path: '/professionnel', init: initProfessionnelRoutes },
-      { path: '/dashboard', init: initDashboardRoutes }
-    ];
-    
-    routesToInit.forEach(({ path, init }) => {
-      if (typeof init === 'function') {
-        // Certaines routes peuvent avoir besoin de tous les middlewares
-        router.use(path, init(models, authMiddleware));
-      } else {
-        console.warn(`⚠️  Route ${path} non disponible (module non trouvé)`);
-        // Route temporaire pour les modules manquants
-        router.use(path, (req, res) => {
-          res.status(501).json({
-            success: false,
-            error: 'Module non implémenté',
-            message: `Le module ${path} est en cours de développement`
-          });
-        });
-      }
+    // Compter les routes par module
+    const allRoutes = extractRoutes(router, '/api');
+    allRoutes.forEach(route => {
+      const module = route.path.split('/').filter(p => p && p !== 'api')[0] || 'root';
+      debug.routes[module] = (debug.routes[module] || 0) + 1;
     });
     
-    console.log('✅ Routes montées avec succès');
+    debug.totalRoutes = allRoutes.length;
     
-  } catch (error) {
-    console.error('❌ Erreur lors du montage des routes:', error);
-    // Ne pas lancer l'erreur pour permettre au serveur de démarrer
-  }
+    res.json(debug);
+  });
 
-  // Gestion des erreurs 404
+  // ========================================================================
+  // MONTAGE DES ROUTES MÉTIER
+  // ========================================================================
+
+  console.log('🔧 Montage des routes métier...');
+  
+  const routeDefinitions = [
+    // Routes qui nécessitent uniquement models
+    { path: '/upload', init: initUploadRoutes, args: [models, authMiddleware] },
+    
+    // Routes qui nécessitent models et authMiddleware
+    { path: '/metadata', init: initMetadataRoutes, args: [models, authMiddleware] },
+    { path: '/users', init: initUserRoutes, args: [models, authMiddleware] },
+    { path: '/oeuvres', init: initOeuvreRoutes, args: [models, authMiddleware] },
+    
+    // Routes qui nécessitent tous les middlewares
+    { path: '/evenements', init: initEvenementRoutes, args: [models, middlewares] },
+    
+    // Autres routes
+    { path: '/lieux', init: initLieuRoutes, args: [models] },
+    { path: '/patrimoine', init: initPatrimoineRoutes, args: [models] },
+    { path: '/artisanat', init: initArtisanatRoutes, args: [models] },
+    { path: '/commentaires', init: initCommentaireRoutes, args: [models] },
+    { path: '/favoris', init: initFavoriRoutes, args: [models] },
+    { path: '/notifications', init: initNotificationRoutes, args: [models] },
+    { path: '/parcours', init: initParcoursIntelligentRoutes, args: [models] },
+    { path: '/programmes', init: initProgrammeRoutes, args: [models] },
+    { path: '/professionnel', init: initProfessionnelRoutes, args: [models] },
+    { path: '/dashboard', init: initDashboardRoutes, args: [models] }
+  ];
+
+  let successCount = 0;
+  let errorCount = 0;
+
+  routeDefinitions.forEach(({ path, init, args }) => {
+    try {
+      if (typeof init === 'function') {
+        router.use(path, init(...args));
+        successCount++;
+        console.log(`  ✅ ${path}`);
+      } else {
+        throw new Error(`Module non trouvé: ${path}`);
+      }
+    } catch (error) {
+      errorCount++;
+      console.error(`  ❌ ${path}: ${error.message}`);
+      
+      // Route de fallback pour les modules manquants
+      router.use(path, (req, res) => {
+        res.status(501).json({
+          success: false,
+          error: 'Module non implémenté',
+          message: `Le module ${path} est en cours de développement`,
+          details: error.message
+        });
+      });
+    }
+  });
+
+  console.log(`✅ Routes montées: ${successCount} succès, ${errorCount} erreurs`);
+
+  // ========================================================================
+  // GESTION DES ERREURS
+  // ========================================================================
+
+  // 404 pour les routes non trouvées
   router.use('*', (req, res) => {
     // Ignorer certaines routes automatiques
     const ignoredPaths = ['/favicon.ico', '/robots.txt', '/.well-known'];
@@ -320,28 +499,107 @@ const initRoutes = (models, authMiddleware) => {
       success: false,
       error: 'Route non trouvée',
       message: `La route ${req.method} ${req.originalUrl} n'existe pas`,
-      suggestion: 'Consultez GET /api/ pour la documentation'
+      suggestion: 'Consultez GET /api/ pour la documentation complète',
+      availableEndpoints: '/api/endpoints'
     });
   });
 
   return router;
 };
 
-// Export avec gestion d'erreur
+// ========================================================================
+// FONCTIONS HELPERS
+// ========================================================================
+
+function getModuleDescription(module) {
+  const descriptions = {
+    users: 'Gestion des utilisateurs et authentification',
+    oeuvres: 'Gestion des œuvres culturelles',
+    evenements: 'Événements culturels et inscriptions',
+    patrimoine: 'Sites patrimoniaux et parcours touristiques',
+    artisanat: 'Artisanat traditionnel algérien',
+    commentaires: 'Système de commentaires et notations',
+    favoris: 'Gestion des favoris utilisateurs',
+    notifications: 'Système de notifications',
+    metadata: 'Données de référence (langues, catégories, etc.)',
+    upload: 'Upload de fichiers et médias',
+    lieux: 'Gestion des lieux et localisation',
+    dashboard: 'Tableau de bord administrateur',
+    professionnel: 'Espace professionnel',
+    programmes: 'Programmes d\'événements',
+    parcours: 'Parcours touristiques intelligents'
+  };
+  
+  return descriptions[module] || 'Module de l\'API Action Culture';
+}
+
+function formatRouteDescription(route) {
+  let description = `${route.method} ${route.path}`;
+  const icons = [];
+  
+  if (route.auth === 'public') icons.push('🔓');
+  else icons.push('🔒');
+  
+  if (route.admin) icons.push('👨‍💼');
+  if (route.professional) icons.push('💼');
+  
+  return `${icons.join(' ')} ${description}`;
+}
+
+function generateRouteDescription(route) {
+  // Générer une description basée sur le path et la méthode
+  const pathParts = route.path.split('/').filter(p => p && p !== 'api');
+  const module = pathParts[0];
+  const resource = pathParts[1];
+  
+  if (route.method === 'GET' && !resource) return `Liste des ${module}`;
+  if (route.method === 'GET' && resource === ':id') return `Détails d'un ${module}`;
+  if (route.method === 'POST' && !resource) return `Créer un ${module}`;
+  if (route.method === 'PUT' && resource === ':id') return `Modifier un ${module}`;
+  if (route.method === 'DELETE' && resource === ':id') return `Supprimer un ${module}`;
+  
+  return `${route.method} ${route.path}`;
+}
+
+function getAvailableModules(routes) {
+  const modules = new Set();
+  routes.forEach(route => {
+    const pathParts = route.path.split('/').filter(p => p && p !== 'api');
+    if (pathParts[0]) modules.add(pathParts[0]);
+  });
+  return Array.from(modules).sort();
+}
+
+// ========================================================================
+// EXPORT
+// ========================================================================
+
 module.exports = (models, authMiddleware) => {
   try {
     return initRoutes(models, authMiddleware);
   } catch (error) {
     console.error('❌ Erreur critique lors de l\'initialisation des routes:', error);
-    // Retourner un router minimal en cas d'erreur
+    
+    // Router d'urgence en cas d'erreur critique
     const emergencyRouter = express.Router();
+    
+    emergencyRouter.get('/health', (req, res) => {
+      res.status(503).json({
+        status: 'ERROR',
+        message: 'Service en maintenance',
+        error: error.message
+      });
+    });
+    
     emergencyRouter.all('*', (req, res) => {
       res.status(503).json({
         success: false,
         error: 'Service temporairement indisponible',
-        message: 'L\'API est en cours de maintenance'
+        message: 'L\'API est en cours de maintenance',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
       });
     });
+    
     return emergencyRouter;
   }
 };

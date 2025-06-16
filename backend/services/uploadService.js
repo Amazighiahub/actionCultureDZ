@@ -1,209 +1,242 @@
-// services/uploadService.js - Service d'upload pour Action Culture
-
+// services/uploadService.js
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 
-console.log('🔧 Initialisation du service d\'upload...');
+class UploadService {
+  constructor() {
+    this.uploadDir = path.join(__dirname, '..', 'uploads');
+    this.imagesDir = path.join(this.uploadDir, 'images');
+    this.documentsDir = path.join(this.uploadDir, 'documents');
+    this.videosDir = path.join(this.uploadDir, 'videos');
 
-// ✅ Configuration selon votre .env
-const UPLOAD_IMAGES_DIR = process.env.UPLOAD_IMAGES_DIR || 'uploads/images';
-const UPLOAD_DOCUMENTS_DIR = process.env.UPLOAD_DOCUMENTS_DIR || 'uploads/documents';
-const UPLOAD_VIDEOS_DIR = process.env.UPLOAD_VIDEOS_DIR || 'uploads/videos';
+    // Créer les dossiers s'ils n'existent pas
+    this.ensureDirectoriesExist();
+  }
 
-console.log('📁 Configuration des dossiers:');
-console.log(`  - Images: ${UPLOAD_IMAGES_DIR}`);
-console.log(`  - Documents: ${UPLOAD_DOCUMENTS_DIR}`);
-console.log(`  - Vidéos: ${UPLOAD_VIDEOS_DIR}`);
-
-// ✅ Créer les dossiers s'ils n'existent pas
-const createUploadDirs = () => {
-  const dirs = [UPLOAD_IMAGES_DIR, UPLOAD_DOCUMENTS_DIR, UPLOAD_VIDEOS_DIR];
-  
-  dirs.forEach(dir => {
-    try {
+  ensureDirectoriesExist() {
+    const dirs = [this.uploadDir, this.imagesDir, this.documentsDir, this.videosDir];
+    
+    dirs.forEach(dir => {
       if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
         console.log(`📁 Dossier créé: ${dir}`);
+      }
+    });
+  }
+
+  // Générer un nom de fichier unique
+  generateFilename(originalname) {
+    const ext = path.extname(originalname);
+    const name = path.basename(originalname, ext);
+    const timestamp = Date.now();
+    const random = crypto.randomBytes(8).toString('hex');
+    
+    // Nettoyer le nom (supprimer caractères spéciaux)
+    const cleanName = name
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '-')
+      .replace(/-+/g, '-')
+      .substring(0, 50);
+    
+    return `${cleanName}-${timestamp}-${random}${ext}`;
+  }
+
+  // Configuration pour les images
+  uploadImage() {
+    const storage = multer.diskStorage({
+      destination: (req, file, cb) => {
+        cb(null, this.imagesDir);
+      },
+      filename: (req, file, cb) => {
+        const filename = this.generateFilename(file.originalname);
+        cb(null, filename);
+      }
+    });
+
+    const fileFilter = (req, file, cb) => {
+      const allowedTypes = /jpeg|jpg|png|gif|webp|bmp/;
+      const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+      const mimetype = allowedTypes.test(file.mimetype);
+
+      if (mimetype && extname) {
+        return cb(null, true);
       } else {
-        console.log(`📁 Dossier existant: ${dir}`);
+        cb(new Error('Format d\'image non supporté. Formats acceptés: JPG, JPEG, PNG, GIF, WEBP, BMP'));
+      }
+    };
+
+    return multer({
+      storage: storage,
+      limits: {
+        fileSize: 10 * 1024 * 1024 // 10MB
+      },
+      fileFilter: fileFilter
+    });
+  }
+
+  // Configuration pour les documents
+  uploadDocument() {
+    const storage = multer.diskStorage({
+      destination: (req, file, cb) => {
+        cb(null, this.documentsDir);
+      },
+      filename: (req, file, cb) => {
+        const filename = this.generateFilename(file.originalname);
+        cb(null, filename);
+      }
+    });
+
+    const fileFilter = (req, file, cb) => {
+      const allowedTypes = /pdf|doc|docx|txt|odt|rtf|xls|xlsx|ppt|pptx/;
+      const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+      
+      const allowedMimeTypes = [
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'text/plain',
+        'application/vnd.oasis.opendocument.text',
+        'application/rtf',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-powerpoint',
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+      ];
+
+      if (extname && allowedMimeTypes.includes(file.mimetype)) {
+        return cb(null, true);
+      } else {
+        cb(new Error('Format de document non supporté'));
+      }
+    };
+
+    return multer({
+      storage: storage,
+      limits: {
+        fileSize: 50 * 1024 * 1024 // 50MB
+      },
+      fileFilter: fileFilter
+    });
+  }
+
+  // Configuration pour les vidéos
+  uploadVideo() {
+    const storage = multer.diskStorage({
+      destination: (req, file, cb) => {
+        cb(null, this.videosDir);
+      },
+      filename: (req, file, cb) => {
+        const filename = this.generateFilename(file.originalname);
+        cb(null, filename);
+      }
+    });
+
+    const fileFilter = (req, file, cb) => {
+      const allowedTypes = /mp4|avi|mov|wmv|flv|mkv|webm/;
+      const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+      
+      const allowedMimeTypes = [
+        'video/mp4',
+        'video/avi',
+        'video/quicktime',
+        'video/x-ms-wmv',
+        'video/x-flv',
+        'video/x-matroska',
+        'video/webm'
+      ];
+
+      if (extname && allowedMimeTypes.includes(file.mimetype)) {
+        return cb(null, true);
+      } else {
+        cb(new Error('Format de vidéo non supporté'));
+      }
+    };
+
+    return multer({
+      storage: storage,
+      limits: {
+        fileSize: 200 * 1024 * 1024 // 200MB
+      },
+      fileFilter: fileFilter
+    });
+  }
+
+  // Upload générique (accepte tout)
+  uploadAny() {
+    const storage = multer.diskStorage({
+      destination: (req, file, cb) => {
+        // Déterminer le dossier selon le type
+        let destDir = this.uploadDir;
+        
+        if (file.mimetype.startsWith('image/')) {
+          destDir = this.imagesDir;
+        } else if (file.mimetype.startsWith('video/')) {
+          destDir = this.videosDir;
+        } else {
+          destDir = this.documentsDir;
+        }
+        
+        cb(null, destDir);
+      },
+      filename: (req, file, cb) => {
+        const filename = this.generateFilename(file.originalname);
+        cb(null, filename);
+      }
+    });
+
+    return multer({
+      storage: storage,
+      limits: {
+        fileSize: 200 * 1024 * 1024 // 200MB max
+      }
+    });
+  }
+
+  // Supprimer un fichier
+  async deleteFile(filePath) {
+    try {
+      const fullPath = path.join(__dirname, '..', filePath);
+      
+      if (fs.existsSync(fullPath)) {
+        fs.unlinkSync(fullPath);
+        console.log(`🗑️ Fichier supprimé: ${fullPath}`);
+        return true;
+      } else {
+        console.log(`⚠️ Fichier non trouvé: ${fullPath}`);
+        return false;
       }
     } catch (error) {
-      console.error(`❌ Erreur création dossier ${dir}:`, error.message);
+      console.error('❌ Erreur suppression fichier:', error);
+      throw error;
     }
-  });
-};
-
-// Initialiser les dossiers
-createUploadDirs();
-
-// ✅ Configuration de stockage pour les images
-const imageStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    console.log(`📁 Destination pour ${file.originalname}: ${UPLOAD_IMAGES_DIR}`);
-    cb(null, UPLOAD_IMAGES_DIR);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const extension = path.extname(file.originalname);
-    const filename = `${uniqueSuffix}${extension}`;
-    
-    console.log(`📝 Nom généré pour ${file.originalname}: ${filename}`);
-    cb(null, filename);
   }
-});
 
-// ✅ Filtre pour valider les types d'images
-const imageFilter = (req, file, cb) => {
-  console.log(`🔍 Validation du fichier: ${file.originalname} (${file.mimetype})`);
-  
-  const allowedTypes = [
-    'image/jpeg', 
-    'image/jpg', 
-    'image/png', 
-    'image/gif', 
-    'image/webp',
-    'image/bmp'
-  ];
-  
-  if (allowedTypes.includes(file.mimetype)) {
-    console.log('✅ Type de fichier autorisé');
-    cb(null, true);
-  } else {
-    console.log(`❌ Type non autorisé: ${file.mimetype}`);
-    cb(new Error(`Type de fichier non autorisé: ${file.mimetype}. Types acceptés: ${allowedTypes.join(', ')}`), false);
-  }
-};
+  // Obtenir les infos d'un fichier
+  async getFileInfo(filePath) {
+    try {
+      const fullPath = path.join(__dirname, '..', filePath);
+      
+      if (!fs.existsSync(fullPath)) {
+        return null;
+      }
 
-// ✅ FONCTION PRINCIPALE : uploadImage (celle utilisée par votre app.js)
-const uploadImage = () => {
-  console.log('⚙️ Configuration multer pour images...');
-  
-  return multer({
-    storage: imageStorage,
-    fileFilter: imageFilter,
-    limits: {
-      fileSize: 5 * 1024 * 1024, // 5MB max
-      files: 1
+      const stats = fs.statSync(fullPath);
+      
+      return {
+        path: filePath,
+        size: stats.size,
+        created: stats.birthtime,
+        modified: stats.mtime,
+        exists: true
+      };
+    } catch (error) {
+      console.error('❌ Erreur lecture fichier:', error);
+      return null;
     }
-  });
-};
-
-// ✅ Configuration pour documents
-const documentStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, UPLOAD_DOCUMENTS_DIR);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const extension = path.extname(file.originalname);
-    cb(null, `${uniqueSuffix}${extension}`);
   }
-});
-
-const uploadDocument = () => {
-  return multer({
-    storage: documentStorage,
-    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
-  });
-};
-
-// ✅ Configuration pour vidéos
-const videoStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, UPLOAD_VIDEOS_DIR);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const extension = path.extname(file.originalname);
-    cb(null, `${uniqueSuffix}${extension}`);
-  }
-});
-
-const uploadVideo = () => {
-  return multer({
-    storage: videoStorage,
-    limits: { fileSize: 100 * 1024 * 1024 }, // 100MB
-  });
-};
-
-// ✅ FONCTION IMPORTANTE : getFileUrl (utilisée par votre app.js actuel)
-const getFileUrl = (filename) => {
-  const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
-  // ✅ CORRIGÉ : Inclure le bon chemin avec uploads/images
-  const url = `${baseUrl}/${UPLOAD_IMAGES_DIR}/${filename}`;
-  console.log(`🔗 URL générée pour ${filename}: ${url}`);
-  return url;
-};
-
-// ✅ Fonction pour générer l'URL à partir du chemin complet
-const getFileUrlFromPath = (filePath) => {
-  const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
-  const url = `${baseUrl}/${filePath.replace(/\\/g, '/')}`;
-  console.log(`🔗 URL générée pour chemin ${filePath}: ${url}`);
-  return url;
-};
-
-// ✅ Fonction pour supprimer un fichier
-const deleteFile = async (filePath) => {
-  try {
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-      console.log(`🗑️ Fichier supprimé: ${filePath}`);
-      return true;
-    }
-    console.log(`⚠️ Fichier introuvable: ${filePath}`);
-    return false;
-  } catch (error) {
-    console.error(`❌ Erreur suppression: ${error.message}`);
-    return false;
-  }
-};
-
-// ✅ Fonction pour obtenir le type de fichier
-const getFileType = (mimetype) => {
-  if (mimetype.startsWith('image/')) return 'image';
-  if (mimetype.startsWith('video/')) return 'video';
-  if (mimetype.includes('pdf') || mimetype.includes('document')) return 'document';
-  return 'other';
-};
-
-// ✅ Export du service
-const exportedService = {
-  uploadImage,        // ← OBLIGATOIRE pour votre app.js
-  uploadDocument,
-  uploadVideo,
-  getFileUrl,         // ← OBLIGATOIRE pour votre app.js
-  getFileUrlFromPath,
-  deleteFile,
-  getFileType,
-  
-  // Constantes
-  UPLOAD_IMAGES_DIR,
-  UPLOAD_DOCUMENTS_DIR,
-  UPLOAD_VIDEOS_DIR,
-};
-
-// ✅ Validation de l'export (debug)
-console.log('🔍 Validation des exports:');
-console.log(`  ✅ uploadImage: ${typeof exportedService.uploadImage}`);
-console.log(`  ✅ getFileUrl: ${typeof exportedService.getFileUrl}`);
-
-// ✅ Test spécifique
-if (typeof exportedService.uploadImage !== 'function') {
-  console.error('❌ ERREUR CRITIQUE: uploadImage n\'est pas une fonction!');
-  process.exit(1);
-} else {
-  console.log('✅ uploadImage est bien une fonction');
 }
 
-if (typeof exportedService.getFileUrl !== 'function') {
-  console.error('❌ ERREUR CRITIQUE: getFileUrl n\'est pas une fonction!');
-  process.exit(1);
-} else {
-  console.log('✅ getFileUrl est bien une fonction');
-}
-
-console.log('✅ Service d\'upload initialisé avec succès');
-
-module.exports = exportedService;
+// Export singleton
+module.exports = new UploadService();

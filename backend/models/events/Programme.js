@@ -154,31 +154,6 @@ module.exports = (sequelize) => {
   };
   
   // Méthodes de classe CORRIGÉES
-  Programme.getProgrammeByEvenement = function(id_evenement) {
-    return this.findAll({
-      where: { id_evenement },
-      order: [
-        ['ordre', 'ASC'],
-        ['heure_debut', 'ASC']
-      ],
-      include: [
-        {
-          model: sequelize.models.Lieu,
-          as: 'Lieu',
-          attributes: ['id_lieu', 'nom', 'adresse']
-        },
-        {
-          model: sequelize.models.ProgrammeIntervenant,
-          as: 'ProgrammeIntervenants',
-          include: [{
-            model: sequelize.models.Intervenant,
-            as: 'Intervenant',
-            attributes: ['id_intervenant', 'nom', 'prenom', 'titre_professionnel', 'organisation', 'photo_url']
-          }]
-        }
-      ]
-    });
-  };
   
   // Autres méthodes restent identiques...
 

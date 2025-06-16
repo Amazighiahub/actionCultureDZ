@@ -1,8 +1,12 @@
-// config/api.ts - Configuration de l'API alignée avec les routes backend
-
+// config/api.ts - Configuration de l'API avec tous les types intégrés
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { API_BASE_URL as ENV_API_URL } from './env';
 
-// Base URL de l'API (utilise la configuration d'environnement)
+// ================================================
+// CONFIGURATION DE BASE
+// ================================================
+
+// Base URL de l'API
 export const API_BASE_URL = ENV_API_URL;
 
 // Configuration de l'authentification
@@ -11,8 +15,10 @@ export const AUTH_CONFIG = {
   header: 'Authorization',
   headerPrefix: 'Bearer',
   tokenKey: 'auth_token',
+  refreshTokenKey: 'refresh_token',
+  tokenExpiryKey: 'token_expires_at',
   expiration: 24 * 60 * 60 * 1000, // 24 heures en millisecondes
-};
+} as const;
 
 // Limites de taux
 export const RATE_LIMITS = {
@@ -20,16 +26,55 @@ export const RATE_LIMITS = {
   creation: 20, // requêtes par minute
   sensitiveActions: 5, // requêtes par minute
   auth: 10, // tentatives par heure
-};
+} as const;
 
 // Configuration de la pagination
 export const PAGINATION_CONFIG = {
   defaultLimit: 10,
   maxLimit: 100,
   defaultPage: 1,
-};
+} as const;
 
-// Types pour les paramètres d'API
+// Codes d'erreur HTTP
+export const HTTP_STATUS = {
+  OK: 200,
+  CREATED: 201,
+  NO_CONTENT: 204,
+  BAD_REQUEST: 400,
+  UNAUTHORIZED: 401,
+  FORBIDDEN: 403,
+  NOT_FOUND: 404,
+  CONFLICT: 409,
+  UNPROCESSABLE_ENTITY: 422,
+  TOO_MANY_REQUESTS: 429,
+  INTERNAL_SERVER_ERROR: 500,
+  NOT_IMPLEMENTED: 501,
+  SERVICE_UNAVAILABLE: 503,
+} as const;
+
+// Messages d'erreur par code
+export const ERROR_MESSAGES: Record<number, string> = {
+  400: 'Requête invalide',
+  401: 'Authentification requise',
+  403: 'Permissions insuffisantes',
+  404: 'Ressource non trouvée',
+  409: 'Conflit avec l\'état actuel',
+  422: 'Erreur de validation',
+  429: 'Limite de taux dépassée',
+  500: 'Erreur serveur',
+  501: 'Fonctionnalité non implémentée',
+  503: 'Service temporairement indisponible',
+};
+// Dans config/api.ts ou un fichier de types
+
+// ================================================
+// TYPES DE BASE
+// ================================================
+
+// Types pour les paramètres de requête
+export type QueryParamValue = string | number | boolean | null | undefined;
+
+// Types pour les paramètres de pagination
 export interface PaginationParams {
   page?: number;
   limit?: number;
@@ -37,17 +82,124 @@ export interface PaginationParams {
   order?: 'asc' | 'desc';
 }
 
+// Types pour les paramètres de recherche
 export interface SearchParams extends PaginationParams {
   q?: string;
   search?: string;
 }
-
+export interface UploadOptions<T = Record<string, any>> {
+  fieldName?: string;
+  onProgress?: (progress: UploadProgress) => void;
+  additionalData?: T;
+  headers?: Record<string, string>;
+}
+// Types pour les filtres (sans Date qui sera passée en string)
 export interface FilterParams extends PaginationParams {
-  [key: string]: any;
+  [key: string]: string | number | boolean | null | undefined;
 }
 
+// Types pour les réponses API
+export interface ApiResponse<T = unknown> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  message?: string;
+  details?: ValidationError[] | Record<string, unknown>;
+  pagination?: PaginationInfo;
+}
+
+// Information de pagination
+export interface PaginationInfo {
+  total: number;
+  page: number;
+  pages: number;
+  limit: number;
+  hasNext?: boolean;
+  hasPrev?: boolean;
+}
+
+// Erreur de validation
+export interface ValidationError {
+  field: string;
+  message: string;
+  value?: string | number | boolean;
+  code?: string;
+}
+
+// Erreur API structurée
+export interface ApiError {
+  status: number;
+  message: string;
+  errors?: ValidationError[];
+  details?: ValidationError[] | Record<string, unknown>;
+  timestamp?: string;
+  path?: string;
+  code?: string;
+}
+
+// Réponse paginée
+export interface PaginatedResponse<T = unknown> {
+  items: T[];
+  pagination: PaginationInfo;
+}
+
+// Types pour l'authentification
+export interface AuthTokenData {
+  token: string;
+  refreshToken?: string;
+  expiresAt?: string;
+  user?: {
+    id: number;
+    email: string;
+    nom: string;
+    prenom: string;
+    type_user: string;
+  };
+}
+
+export interface LoginCredentials {
+  email: string;
+  password: string;
+  remember?: boolean;
+}
+
+export interface RefreshTokenRequest {
+  refreshToken: string;
+}
+
+export interface RegisterCredentials {
+  email: string;
+  password: string;
+  nom: string;
+  prenom: string;
+  type_user: string;
+  telephone?: string;
+}
+
+// Types pour les uploads
+export interface UploadProgress {
+  loaded: number;
+  total: number;
+  percentage: number;
+}
+
+
+
+// Types pour les permissions
+export type UserRole = 'Admin' | 'Professionnel' | 'Visiteur' | 'Moderateur' | 'Super Admin';
+
+export interface Permission {
+  resource: string;
+  action: string;
+  granted: boolean;
+}
+
+// ================================================
+// HELPERS
+// ================================================
+
 // Helper pour construire les URLs avec paramètres
-export const buildUrl = (endpoint: string, params?: Record<string, any>): string => {
+export const buildUrl = (endpoint: string, params?: Record<string, QueryParamValue>): string => {
   if (!params) return endpoint;
   
   const queryParams = new URLSearchParams();
@@ -61,7 +213,63 @@ export const buildUrl = (endpoint: string, params?: Record<string, any>): string
   return queryString ? `${endpoint}?${queryString}` : endpoint;
 };
 
-// Configuration des endpoints de l'API - ALIGNÉE AVEC index.js
+// Types pour les fonctions d'endpoint
+type EndpointFunction1 = (id: number) => string;
+type EndpointFunction2 = (id1: number, id2: number) => string;
+type EndpointFunction = EndpointFunction1 | EndpointFunction2;
+
+// Helper pour créer l'URL complète
+export const getApiUrl = (
+  endpoint: string | EndpointFunction, 
+  ...ids: number[]
+): string => {
+  let path: string;
+  
+  if (typeof endpoint === 'function') {
+    if (ids.length === 1) {
+      path = (endpoint as EndpointFunction1)(ids[0]);
+    } else if (ids.length === 2) {
+      path = (endpoint as EndpointFunction2)(ids[0], ids[1]);
+    } else {
+      throw new Error('Nombre d\'arguments incorrect pour la fonction d\'endpoint');
+    }
+  } else {
+    path = endpoint;
+  }
+  
+  return `${API_BASE_URL}${path}`;
+};
+
+// Helper pour les headers d'authentification
+export const getAuthHeaders = (token?: string): Record<string, string> => {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  
+  if (token) {
+    headers[AUTH_CONFIG.header] = `${AUTH_CONFIG.headerPrefix} ${token}`;
+  }
+  
+  return headers;
+};
+
+// Helper pour formater les dates en ISO 8601
+export const formatDateForApi = (date: Date | string): string => {
+  if (typeof date === 'string') return date;
+  return date.toISOString();
+};
+
+// Helper pour parser les dates de l'API
+export const parseDateFromApi = (dateStr: string | null | undefined): Date | null => {
+  if (!dateStr) return null;
+  const date = new Date(dateStr);
+  return isNaN(date.getTime()) ? null : date;
+};
+
+// ================================================
+// ENDPOINTS DE L'API
+// ================================================
+
 export const API_ENDPOINTS = {
   // Santé et documentation
   health: '/health',
@@ -70,45 +278,47 @@ export const API_ENDPOINTS = {
   // ================================================
   // AUTHENTIFICATION & UTILISATEURS
   // ================================================
-  users: {
+ 
+
+  auth: {
     // Authentification
     register: '/users/register',
     login: '/users/login',
-    logout: '/users/logout', // AJOUT
-    verifyEmail: (token: string) => `/users/verify-email/${token}`, // AJOUT
-    forgotPassword: '/users/password/forgot', // CORRECTION
-    resetPassword: '/users/password/reset', // CORRECTION
-    
+    logout: '/users/logout',
+    verifyEmail: (token: string) => `/users/verify-email/${token}`,
+    forgotPassword: '/users/password/forgot',
+    resetPassword: '/users/password/reset',
+   
     // Profil
-    profile: '/users/profile',
+    me: '/users/profile',
     updateProfile: '/users/profile',
-    updatePhoto: '/users/profile/photo', // AJOUT
-    deletePhoto: '/users/profile/photo', // AJOUT
+    updatePhoto: '/users/profile/photo',
+    deletePhoto: '/users/profile/photo',
     changePassword: '/users/change-password',
     
     // Professionnel
-    submitProfessional: '/users/professional/submit', // AJOUT
-    professionalStatus: '/users/professional/status', // AJOUT
+    submitProfessional: '/users/professional/submit',
+    professionalStatus: '/users/professional/status',
     
     // Préférences
-    updatePreferences: '/users/preferences', // AJOUT
-    updatePrivacy: '/users/privacy', // AJOUT
+    updatePreferences: '/users/preferences',
+    updatePrivacy: '/users/privacy',
     
     // Autres
-    sendVerificationEmail: '/users/send-verification-email', // AJOUT
-    statistics: '/users/statistics', // AJOUT
+    sendVerificationEmail: '/users/send-verification-email',
+    statistics: '/users/statistics',
     typesUtilisateurs: '/users/types-utilisateurs',
     
     // Administration
     admin: {
-      getAllUsers: '/users/admin/users', // AJOUT
-      getUserById: (id: number) => `/users/admin/users/${id}`, // AJOUT
-      getPendingProfessionals: '/users/admin/professionals/pending', // AJOUT
-      validateProfessional: (id: number) => `/users/admin/users/${id}/validate`, // AJOUT
-      updateUserStatus: (id: number) => `/users/admin/users/${id}/status`, // AJOUT
-      assignRole: (id: number) => `/users/admin/users/${id}/roles`, // AJOUT
-      removeRole: (id: number) => `/users/admin/users/${id}/roles`, // AJOUT
-      globalStatistics: '/users/admin/statistics', // AJOUT
+      getAllUsers: '/users/admin/users',
+      getUserById: (id: number) => `/users/admin/users/${id}`,
+      getPendingProfessionals: '/users/admin/professionals/pending',
+      validateProfessional: (id: number) => `/users/admin/users/${id}/validate`,
+      updateUserStatus: (id: number) => `/users/admin/users/${id}/status`,
+      assignRole: (id: number) => `/users/admin/users/${id}/roles`,
+      removeRole: (id: number) => `/users/admin/users/${id}/roles`,
+      globalStatistics: '/users/admin/statistics',
     }
   },
 
@@ -172,7 +382,7 @@ export const API_ENDPOINTS = {
     detail: (id: number) => `/oeuvres/${id}`,
     shareLinks: (id: number) => `/oeuvres/${id}/share-links`,
     medias: (id: number) => `/oeuvres/${id}/medias`,
-    documentation: '/oeuvres/api/documentation', // AJOUT
+    documentation: '/oeuvres/api/documentation',
     
     // Authentifié
     create: '/oeuvres',
@@ -196,7 +406,7 @@ export const API_ENDPOINTS = {
     // Public
     list: '/evenements',
     upcoming: '/evenements/upcoming',
-    statistics: '/evenements/statistics',
+    statistics: '/evenements/statistics', // AJOUT
     detail: (id: number) => `/evenements/${id}`,
     shareData: (id: number) => `/evenements/${id}/share-data`,
     medias: (id: number) => `/evenements/${id}/medias`,
@@ -263,9 +473,9 @@ export const API_ENDPOINTS = {
     noterSite: (id: number) => `/patrimoine/sites/${id}/noter`,
     ajouterFavoris: (id: number) => `/patrimoine/sites/${id}/favoris`,
     retirerFavoris: (id: number) => `/patrimoine/sites/${id}/favoris`,
-    uploadMedias: (id: number) => `/patrimoine/sites/${id}/medias`, // AJOUT
-    deleteMedia: (id: number, mediaId: number) => `/patrimoine/sites/${id}/medias/${mediaId}`, // AJOUT
-    updateHoraires: (id: number) => `/patrimoine/sites/${id}/horaires`, // AJOUT
+    uploadMedias: (id: number) => `/patrimoine/sites/${id}/medias`,
+    deleteMedia: (id: number, mediaId: number) => `/patrimoine/sites/${id}/medias/${mediaId}`,
+    updateHoraires: (id: number) => `/patrimoine/sites/${id}/horaires`,
     
     // Mobile
     nearbyMobile: '/patrimoine/mobile/nearby',
@@ -289,7 +499,7 @@ export const API_ENDPOINTS = {
     create: '/artisanat',
     update: (id: number) => `/artisanat/${id}`,
     delete: (id: number) => `/artisanat/${id}`,
-    uploadMedias: (id: number) => `/artisanat/${id}/medias`,
+    uploadMedias: (id: number) => `/artisanat/${id}/medias`, // CORRIGÉ
   },
 
   // ================================================
@@ -322,18 +532,19 @@ export const API_ENDPOINTS = {
   // NOTIFICATIONS
   // ================================================
   notifications: {
-    list: '/notifications',
-    summary: '/notifications/summary',
-    markAsRead: (id: number) => `/notifications/${id}/read`,
-    markAllAsRead: '/notifications/read-all',
-    markMultipleAsRead: '/notifications/read-multiple', // CORRECTION
-    delete: (id: number) => `/notifications/${id}`,
-    deleteRead: '/notifications/read/all',
-    preferences: '/notifications/preferences',
-    updatePreferences: '/notifications/preferences', // PUT
-    testEmail: '/notifications/test-email',
-  },
-
+     info: '/notifications',
+  list: '/notifications/list',
+  summary: '/notifications/summary',
+  preferences: '/notifications/preferences',
+  updatePreferences: '/notifications/preferences',
+  markAsRead: (id: number) => `/notifications/${id}/read`,
+  markAllAsRead: '/notifications/read-all',
+  markMultipleAsRead: '/notifications/read-multiple',
+  delete: (id: number) => `/notifications/${id}`,
+  deleteRead: '/notifications/read/all',
+  testEmail: '/notifications/test-email',
+  wsStatus: '/notifications/ws/status',
+},
   // ================================================
   // PARCOURS INTELLIGENT
   // ================================================
@@ -362,10 +573,16 @@ export const API_ENDPOINTS = {
   // UPLOAD
   // ================================================
   upload: {
-    info: '/upload/', // CORRECTION
+    info: '/upload/',
     imagePublic: '/upload/image/public',
     image: '/upload/image',
-    // Note: document et video ne sont pas dans les routes backend
+    document: '/upload/document',
+    video: '/upload/video',
+    audio: '/upload/audio',
+    chunk: '/upload/chunk',
+    complete: '/upload/complete',
+    chunkStatus: (uploadId: string) => `/upload/chunk/${uploadId}/status`, // AJOUT
+    cancelChunk: (uploadId: string) => `/upload/chunk/${uploadId}`, // AJOUT (DELETE)
   },
 
   // ================================================
@@ -377,6 +594,8 @@ export const API_ENDPOINTS = {
     statistiques: '/lieux/statistiques',
     detail: (id: number) => `/lieux/${id}`,
     create: '/lieux',
+    update: (id: number) => `/lieux/${id}`,
+    delete: (id: number) => `/lieux/${id}`,
   },
 
   // ================================================
@@ -404,8 +623,8 @@ export const API_ENDPOINTS = {
     // Profil
     updateProfile: '/professionnel/profile',
     portfolioUpload: '/professionnel/portfolio/upload',
-    deletePortfolioMedia: (mediaId: number) => `/professionnel/portfolio/${mediaId}`, // AJOUT
-    updatePortfolioMedia: (mediaId: number) => `/professionnel/portfolio/${mediaId}`, // AJOUT
+    deletePortfolioMedia: (mediaId: number) => `/professionnel/portfolio/${mediaId}`,
+    updatePortfolioMedia: (mediaId: number) => `/professionnel/portfolio/${mediaId}`,
     
     // Export
     export: '/professionnel/export',
@@ -419,13 +638,13 @@ export const API_ENDPOINTS = {
     analyticsTrends: '/professionnel/analytics/trends',
     analyticsDemographics: '/professionnel/analytics/demographics',
     
-    // Avancé (à implémenter)
-    benchmark: '/professionnel/benchmark', // AJOUT
-    recommendations: '/professionnel/recommendations', // AJOUT
-    collaborationSuggestions: '/professionnel/collaboration/suggestions', // AJOUT
+    // Avancé
+    benchmark: '/professionnel/benchmark',
+    recommendations: '/professionnel/recommendations',
+    collaborationSuggestions: '/professionnel/collaboration/suggestions',
     
     // Support
-    createTicket: '/professionnel/support/ticket', // AJOUT
+    createTicket: '/professionnel/support/ticket',
     helpFaq: '/professionnel/help/faq',
   },
 
@@ -440,7 +659,7 @@ export const API_ENDPOINTS = {
     // Patrimoine
     patrimoine: '/dashboard/patrimoine',
     qrStats: '/dashboard/patrimoine/qr-stats',
-    parcours: '/dashboard/patrimoine/parcours', // AJOUT
+    parcours: '/dashboard/patrimoine/parcours',
     
     // Utilisateurs
     pendingUsers: '/dashboard/users/pending',
@@ -460,7 +679,7 @@ export const API_ENDPOINTS = {
     // Actions
     performAction: '/dashboard/actions',
     bulkActions: '/dashboard/actions/bulk',
-    validateUser: (id: number) => `/dashboard/users/${id}/validate`,
+    validateUser: (id: number) => `/users/${id}/validate`,
     validateOeuvre: (id: number) => `/dashboard/oeuvres/${id}/validate`,
     moderateSignalement: (id: number) => `/dashboard/signalements/${id}/moderate`,
     suspendUser: (id: number) => `/dashboard/users/${id}/suspend`,
@@ -478,140 +697,54 @@ export const API_ENDPOINTS = {
     // Rapports
     activityReport: '/dashboard/reports/activity',
     moderationReport: '/dashboard/reports/moderation',
-    patrimoineReport: '/dashboard/reports/patrimoine', // AJOUT
+    patrimoineReport: '/dashboard/reports/patrimoine',
     
     // Configuration
     permissions: '/dashboard/config/permissions',
     metrics: '/dashboard/config/metrics',
     
     // Notifications
-    notifications: '/dashboard/notifications', // AJOUT
-    broadcastNotification: '/dashboard/notifications/broadcast', // AJOUT
+    notifications: '/dashboard/notifications',
+    broadcastNotification: '/dashboard/notifications/broadcast',
     
-    // Monitoring
-    health: '/dashboard/monitoring/health',
-    alerts: '/dashboard/monitoring/alerts', // AJOUT
-    
-    // Cache
-    clearCache: '/dashboard/cache/clear', // AJOUT
-    cacheStatus: '/dashboard/cache/status', // AJOUT
+    // Monitoring (AJOUT)
+    monitoring: {
+      health: '/dashboard/monitoring/health',
+      alerts: '/dashboard/monitoring/alerts',
+    },
+     users: {
+    list: '/dashboard/users',
+    detail: (id: number) => `/dashboard/users/${id}`,
+    update: (id: number) => `/dashboard/users/${id}`,
+    delete: (id: number) => `/dashboard/users/${id}`,
+    validate: (id: number) => `/dashboard/users/${id}/validate`,
+    suspend: (id: number) => `/dashboard/users/${id}/suspend`,
+    reactivate: (id: number) => `/dashboard/users/${id}/reactivate`,
+    changeRole: (id: number) => `/dashboard/users/${id}/role`,
+    resetPassword: (id: number) => `/dashboard/users/${id}/reset-password`,
+    bulkAction: '/dashboard/users/bulk-action',
+    search: '/dashboard/users/search',
+    export: '/dashboard/users/export',
   },
-};
-
-// Helper pour créer l'URL complète
-export const getApiUrl = (endpoint: string | ((id: number) => string) | ((id1: number, id2: number) => string), ...ids: number[]): string => {
-  let path: string;
   
-  if (typeof endpoint === 'function') {
-    // Gestion des fonctions avec un ou plusieurs paramètres
-    path = (endpoint as any)(...ids);
-  } else {
-    path = endpoint;
-  }
-  
-  return `${API_BASE_URL}${path}`;
-};
-
-// Helper pour les headers d'authentification
-export const getAuthHeaders = (token?: string | undefined): Record<string, string> => {
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
-  
-  if (token) {
-    headers[AUTH_CONFIG.header] = `${AUTH_CONFIG.headerPrefix} ${token}`;
-  }
-  
-  return headers;
-};
-
-// Types pour les permissions
-export type UserRole = 'Admin' | 'Professionnel' | 'Visiteur' | 'Moderateur' | 'Super Admin';
-
-// Codes d'erreur HTTP
-export const HTTP_STATUS = {
-  OK: 200,
-  CREATED: 201,
-  NO_CONTENT: 204,
-  BAD_REQUEST: 400,
-  UNAUTHORIZED: 401,
-  FORBIDDEN: 403,
-  NOT_FOUND: 404,
-  CONFLICT: 409,
-  UNPROCESSABLE_ENTITY: 422,
-  TOO_MANY_REQUESTS: 429,
-  INTERNAL_SERVER_ERROR: 500,
-  NOT_IMPLEMENTED: 501,
-  SERVICE_UNAVAILABLE: 503,
+  // Validation du contenu
+  content: {
+    validateOeuvre: (id: number) => `/dashboard/oeuvres/${id}/validate`,
+    moderateSignalement: (id: number) => `/dashboard/signalements/${id}/moderate`,
+  },
+    
+    // Cache (AJOUT)
+    cache: {
+      clear: '/dashboard/cache/clear',
+      status: '/dashboard/cache/status',
+    },
+  },
 } as const;
 
-// Messages d'erreur par code
-export const ERROR_MESSAGES: Record<number, string> = {
-  400: 'Requête invalide',
-  401: 'Authentification requise',
-  403: 'Permissions insuffisantes',
-  404: 'Ressource non trouvée',
-  409: 'Conflit avec l\'état actuel',
-  422: 'Erreur de validation',
-  429: 'Limite de taux dépassée',
-  500: 'Erreur serveur',
-  501: 'Fonctionnalité non implémentée',
-  503: 'Service temporairement indisponible',
-};
+// ================================================
+// CONFIGURATION EXPORTÉE
+// ================================================
 
-// Types pour les réponses API
-export interface ApiResponse<T = any> {
-  success: boolean;
-  data?: T;
-  error?: string;
-  message?: string;
-  details?: any;
-  pagination?: PaginationInfo;
-}
-
-export interface PaginationInfo {
-  total: number;
-  page: number;
-  pages: number;
-  limit: number;
-}
-
-export interface ValidationError {
-  field: string;
-  message: string;
-  value?: any;
-}
-
-export interface ApiError {
-  status: number;
-  message: string;
-  errors?: ValidationError[];
-  details?: ValidationError[];
-  timestamp?: string;
-  path?: string;
-}
-// Types pour les réponses API
-export interface ApiResponse<T = any> {
-  success: boolean;
-  data?: T;
-  error?: string;
-  message?: string;
-  details?: any;
-  pagination?: PaginationInfo;
-}
-
-export interface PaginationInfo {
-  total: number;
-  page: number;
-  pages: number;
-  limit: number;
-}
-
-export interface PaginatedApiResponse<T = any> extends ApiResponse<T[]> {
-  data: T[];
-  pagination: PaginationInfo;
-}
-// Configuration API exportée
 export const API_CONFIG = {
   baseUrl: API_BASE_URL,
   endpoints: API_ENDPOINTS,
@@ -624,8 +757,10 @@ export const API_CONFIG = {
     buildUrl,
     getApiUrl,
     getAuthHeaders,
+    formatDateForApi,
+    parseDateFromApi,
   },
-};
+} as const;
 
 // Export par défaut
 export default API_CONFIG;

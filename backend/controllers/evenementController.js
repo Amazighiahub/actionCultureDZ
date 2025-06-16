@@ -1,4 +1,5 @@
 const { Op } = require('sequelize');
+const uploadService = require('../services/uploadService');
 
 // Factory function to create the controller with injected models
 const createEvenementController = (models) => {
@@ -14,6 +15,9 @@ const createEvenementController = (models) => {
     Programme
   } = models;
   const sequelize = models.sequelize;
+
+  // Middleware d'upload pour les routes qui en ont besoin
+  const uploadMiddleware = uploadService.uploadImage().single('image');
 
   // ============= PUBLIC ENDPOINTS =============
 
@@ -154,44 +158,187 @@ const createEvenementController = (models) => {
 
   // ============= AUTHENTICATED ENDPOINTS =============
 
-  // POST /evenements
-  const createEvenement = async (req, res) => {
-    const transaction = await sequelize.transaction();
-    try {
-      if (!req.body.nom_evenement || !req.body.id_lieu || !req.body.id_type_evenement) {
-        await transaction.rollback();
-        return res.status(400).json({ success: false, error: 'Données manquantes' });
-      }
-      const evenement = await Evenement.create({ ...req.body, id_user: req.user.id_user, statut: 'planifie' }, { transaction });
-      if (EvenementUser) {
-        await EvenementUser.create({ id_evenement: evenement.id_evenement, id_user: req.user.id_user, role_participation: 'organisateur', statut_participation: 'confirme', date_inscription: new Date() }, { transaction });
-      }
-      await transaction.commit();
-      res.status(201).json({ success: true, data: evenement, message: 'Événement créé' });
-    } catch (error) {
-      await transaction.rollback();
-      console.error('Erreur createEvenement:', error);
-      res.status(500).json({ success: false, error: 'Erreur lors de la création', details: error.message });
-    }
-  };
+  // POST /evenements - Wrapper pour gérer l'upload avant la création
+  const createEvenement = [
+    uploadMiddleware,
+    async (req, res) => {
+      const transaction = await sequelize.transaction();
+      
+      try {
+        console.log('📋 Création événement - Body:', req.body);
+        console.log('📋 Fichier reçu:', req.file ? 'OUI' : 'NON');
+        
+        // Validation des données requises
+        if (!req.body.nom_evenement || !req.body.id_lieu || !req.body.id_type_evenement) {
+          // Si un fichier a été uploadé mais la validation échoue, le supprimer
+          if (req.file) {
+            await uploadService.deleteFile(req.file.path);
+          }
+          await transaction.rollback();
+          return res.status(400).json({ 
+            success: false, 
+            error: 'Données manquantes: nom_evenement, id_lieu et id_type_evenement sont requis' 
+          });
+        }
 
-  // PUT /evenements/:id
-  const updateEvenement = async (req, res) => {
-    const transaction = await sequelize.transaction();
-    try {
-      const { id } = req.params;
-      const evenement = await Evenement.findByPk(id);
-      if (!evenement) { await transaction.rollback(); return res.status(404).json({ success: false, error: 'Événement non trouvé' }); }
-      if (evenement.id_user !== req.user.id_user && !req.user.isAdmin) { await transaction.rollback(); return res.status(403).json({ success: false, error: 'Non autorisé' }); }
-      await evenement.update(req.body, { transaction });
-      await transaction.commit();
-      res.json({ success: true, data: evenement, message: 'Événement mis à jour' });
-    } catch (error) {
-      await transaction.rollback();
-      console.error('Erreur updateEvenement:', error);
-      res.status(500).json({ success: false, error: 'Erreur lors de la mise à jour', details: error.message });
+        // Préparer les données de l'événement
+        const evenementData = {
+          ...req.body,
+          id_user: req.user.id_user,
+          statut: 'planifie'
+        };
+
+        // Si un fichier image a été uploadé, utiliser le service pour générer l'URL
+        if (req.file) {
+          evenementData.image_url = uploadService.getFileUrlFromPath(req.file.path);
+          console.log('✅ Image uploadée:', evenementData.image_url);
+        }
+
+        // Créer l'événement
+        const evenement = await Evenement.create(evenementData, { transaction });
+        
+        // Ajouter l'organisateur comme participant
+      
+
+        // Si une image a été uploadée, créer aussi une entrée dans Media
+        if (req.file && Media) {
+          await Media.create({
+            id_evenement: evenement.id_evenement,
+            type_media: 'image',
+            url: evenementData.image_url,
+            nom: req.file.originalname,
+            description: 'Image principale de l\'événement',
+            ordre: 1
+          }, { transaction });
+        }
+
+        await transaction.commit();
+        
+        console.log('✅ Événement créé avec succès:', evenement.id_evenement);
+        
+        res.status(201).json({ 
+          success: true, 
+          data: evenement, 
+          message: 'Événement créé avec succès' 
+        });
+        
+      } catch (error) {
+        await transaction.rollback();
+        
+        // Si l'upload a réussi mais la création a échoué, supprimer le fichier
+        if (req.file) {
+          await uploadService.deleteFile(req.file.path);
+        }
+        
+        console.error('❌ Erreur createEvenement:', error);
+        res.status(500).json({ 
+          success: false, 
+          error: 'Erreur lors de la création de l\'événement', 
+          details: error.message 
+        });
+      }
     }
-  };
+  ];
+
+  // PUT /evenements/:id - Wrapper pour gérer l'upload avant la mise à jour
+  const updateEvenement = [
+    uploadMiddleware,
+    async (req, res) => {
+      const transaction = await sequelize.transaction();
+      let oldImagePath = null;
+      
+      try {
+        const { id } = req.params;
+        const evenement = await Evenement.findByPk(id);
+        
+        if (!evenement) { 
+          if (req.file) {
+            await uploadService.deleteFile(req.file.path);
+          }
+          await transaction.rollback(); 
+          return res.status(404).json({ success: false, error: 'Événement non trouvé' }); 
+        }
+        
+        if (evenement.id_user !== req.user.id_user && !req.user.isAdmin) { 
+          if (req.file) {
+            await uploadService.deleteFile(req.file.path);
+          }
+          await transaction.rollback(); 
+          return res.status(403).json({ success: false, error: 'Non autorisé' }); 
+        }
+
+        // Préparer les données de mise à jour
+        const updateData = { ...req.body };
+
+        // Si une nouvelle image est uploadée
+        if (req.file) {
+          updateData.image_url = uploadService.getFileUrlFromPath(req.file.path);
+          
+          // Extraire le chemin de l'ancienne image pour la supprimer
+          if (evenement.image_url) {
+            const urlParts = evenement.image_url.split('/');
+            const filename = urlParts[urlParts.length - 1];
+            oldImagePath = `${uploadService.UPLOAD_IMAGES_DIR}/${filename}`;
+          }
+          
+          console.log('✅ Nouvelle image uploadée:', updateData.image_url);
+        }
+
+        await evenement.update(updateData, { transaction });
+
+        // Si une nouvelle image a été uploadée et qu'il y avait une ancienne, supprimer l'ancienne
+        if (req.file && oldImagePath) {
+          await uploadService.deleteFile(oldImagePath);
+          console.log('🗑️ Ancienne image supprimée');
+        }
+
+        // Mettre à jour l'entrée Media si nécessaire
+        if (req.file && Media) {
+          const existingMedia = await Media.findOne({
+            where: { 
+              id_evenement: id,
+              type_media: 'image',
+              ordre: 1
+            }
+          });
+
+          if (existingMedia) {
+            await existingMedia.update({
+              url: updateData.image_url,
+              nom: req.file.originalname
+            }, { transaction });
+          } else {
+            await Media.create({
+              id_evenement: id,
+              type_media: 'image',
+              url: updateData.image_url,
+              nom: req.file.originalname,
+              description: 'Image principale de l\'événement',
+              ordre: 1
+            }, { transaction });
+          }
+        }
+
+        await transaction.commit();
+        res.json({ success: true, data: evenement, message: 'Événement mis à jour' });
+        
+      } catch (error) {
+        await transaction.rollback();
+        
+        // Si le nouvel upload a réussi mais la mise à jour a échoué
+        if (req.file) {
+          await uploadService.deleteFile(req.file.path);
+        }
+        
+        console.error('❌ Erreur updateEvenement:', error);
+        res.status(500).json({ 
+          success: false, 
+          error: 'Erreur lors de la mise à jour', 
+          details: error.message 
+        });
+      }
+    }
+  ];
 
   // DELETE /evenements/:id
   const deleteEvenement = async (req, res) => {
@@ -201,6 +348,20 @@ const createEvenementController = (models) => {
       const evenement = await Evenement.findByPk(id);
       if (!evenement) { await transaction.rollback(); return res.status(404).json({ success: false, error: 'Événement non trouvé' }); }
       if (evenement.id_user !== req.user.id_user && !req.user.isAdmin) { await transaction.rollback(); return res.status(403).json({ success: false, error: 'Non autorisé' }); }
+      
+      // Supprimer l'image si elle existe
+      if (evenement.image_url) {
+        try {
+          const urlParts = evenement.image_url.split('/');
+          const filename = urlParts[urlParts.length - 1];
+          const imagePath = `${uploadService.UPLOAD_IMAGES_DIR}/${filename}`;
+          
+          await uploadService.deleteFile(imagePath);
+        } catch (err) {
+          console.error('⚠️ Erreur suppression image:', err.message);
+        }
+      }
+      
       await evenement.destroy({ transaction });
       await transaction.commit();
       res.json({ success: true, message: 'Événement supprimé' });
@@ -303,26 +464,63 @@ const createEvenementController = (models) => {
     }
   };
 
-  // POST /evenements/:id/medias
-  const addMedias = async (req, res) => {
-    try {
-      const { id } = req.params;
-      const { medias } = req.body;
-      if (!Array.isArray(medias)) return res.status(400).json({ success: false, error: 'Données invalides' });
-      const created = await Promise.all(medias.map(m => Media.create({ id_evenement: id, ...m })));
-      res.status(201).json({ success: true, data: created, message: 'Médias ajoutés' });
-    } catch (error) {
-      console.error('Erreur addMedias:', error);
-      res.status(500).json({ success: false, error: 'Erreur lors de l\'ajout des médias', details: error.message });
+  // POST /evenements/:id/medias - Wrapper pour gérer l'upload de médias multiples
+  const addMedias = [
+    uploadService.uploadImage().array('medias', 10), // Maximum 10 images
+    async (req, res) => {
+      try {
+        const { id } = req.params;
+        
+        if (!req.files || req.files.length === 0) {
+          return res.status(400).json({ success: false, error: 'Aucun média fourni' });
+        }
+
+        const mediaPromises = req.files.map((file, index) => {
+          const mediaUrl = uploadService.getFileUrlFromPath(file.path);
+          return Media.create({
+            id_evenement: id,
+            type_media: 'image',
+            url: mediaUrl,
+            nom: file.originalname,
+            description: req.body.descriptions ? req.body.descriptions[index] : null,
+            ordre: index + 2 // Commence à 2 car 1 est réservé pour l'image principale
+          });
+        });
+
+        const createdMedias = await Promise.all(mediaPromises);
+        res.status(201).json({ 
+          success: true, 
+          data: createdMedias, 
+          message: `${createdMedias.length} médias ajoutés avec succès` 
+        });
+      } catch (error) {
+        // En cas d'erreur, supprimer les fichiers uploadés
+        if (req.files) {
+          req.files.forEach(file => uploadService.deleteFile(file.path));
+        }
+        console.error('Erreur addMedias:', error);
+        res.status(500).json({ success: false, error: 'Erreur lors de l\'ajout des médias', details: error.message });
+      }
     }
-  };
+  ];
 
   // DELETE /evenements/:id/medias/:mediaId
   const deleteMedia = async (req, res) => {
     try {
       const { id, mediaId } = req.params;
-      const count = await Media.destroy({ where: { id_media: mediaId, id_evenement: id } });
-      if (!count) return res.status(404).json({ success: false, error: 'Média non trouvé' });
+      
+      const media = await Media.findOne({ where: { id_media: mediaId, id_evenement: id } });
+      if (!media) return res.status(404).json({ success: false, error: 'Média non trouvé' });
+
+      // Extraire le chemin du fichier et le supprimer
+      if (media.url) {
+        const urlParts = media.url.split('/');
+        const filename = urlParts[urlParts.length - 1];
+        const filePath = `${uploadService.UPLOAD_IMAGES_DIR}/${filename}`;
+        await uploadService.deleteFile(filePath);
+      }
+
+      await media.destroy();
       res.json({ success: true, message: 'Média supprimé' });
     } catch (error) {
       console.error('Erreur deleteMedia:', error);

@@ -22,6 +22,14 @@ module.exports = (sequelize) => {
       through: models.OeuvreCategorie, 
       foreignKey: 'id_categorie' 
     });
+    
+    // NOUVELLE ASSOCIATION POUR LA HIÉRARCHIE
+    Categorie.belongsToMany(models.Genre, { 
+      through: models.GenreCategorie,
+      foreignKey: 'id_categorie',
+      otherKey: 'id_genre',
+      as: 'GenresAssocies'
+    });
   };
 
   return Categorie;

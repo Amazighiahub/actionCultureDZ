@@ -33,6 +33,9 @@ module.exports = (sequelize) => {
     description: {
       type: DataTypes.TEXT
     },
+     prix: {
+      type: DataTypes.FLOAT
+    },
     saisi_par: {
       type: DataTypes.INTEGER,
       references: {

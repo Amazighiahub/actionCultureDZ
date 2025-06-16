@@ -1,131 +1,161 @@
-// routes/uploadRoutes.js - Version simplifiée pour commencer
-
+// routes/uploadRoutes.js
 const express = require('express');
 const router = express.Router();
 const uploadService = require('../services/uploadService');
-const createAuthMiddleware = require('../middlewares/authMiddleware');
+const auditMiddleware = require('../middlewares/auditMiddleware');
+const rateLimitMiddleware = require('../middlewares/rateLimitMiddleware');
 
-const initUploadRoutes = (models) => {
-  const authMiddleware = createAuthMiddleware(models);
+const initUploadRoutes = (models, authMiddleware) => {
+  const UploadController = require('../controllers/UploadController');
+  const uploadController = new UploadController(models);
 
   console.log('🔧 Initialisation des routes upload...');
 
-  // ✅ ROUTE DE TEST : Vérifier que les routes upload fonctionnent
+  // ========================================================================
+  // ROUTE INFO
+  // ========================================================================
+
   router.get('/', (req, res) => {
     res.json({
-      message: 'Routes upload actives',
-      routes: [
-        'GET /api/upload/ - Cette route',
-        'POST /api/upload/image/public - Upload public pour inscription',
-        'POST /api/upload/image - Upload avec authentification'
-      ],
+      message: 'API Upload - Action Culture',
+      endpoints: {
+        public: {
+          'POST /image/public': 'Upload public (inscription)',
+          'POST /document/public': 'Upload document public'
+        },
+        authenticated: {
+          'POST /image': 'Upload image générique',
+          'POST /profile-photo': 'Upload photo profil (mise à jour auto)',
+          'POST /document': 'Upload document',
+          'GET /:id': 'Obtenir infos média',
+          'DELETE /:id': 'Supprimer média'
+        }
+      },
       config: {
-        images_dir: process.env.UPLOAD_IMAGES_DIR || 'uploads/images',
-        max_size: '10MB'
-      }
-    });
-  });
-
-  // ✅ ROUTE PUBLIQUE : Upload sans authentification (pour inscription)
-  router.post('/image/public', (req, res) => {
-    console.log('📤 Route /image/public appelée');
-    console.log('📋 Headers:', req.headers);
-    console.log('📋 Body keys:', Object.keys(req.body || {}));
-    
-    // Utiliser le middleware d'upload
-    const upload = uploadService.uploadImage().single('image');
-    
-    upload(req, res, (err) => {
-      if (err) {
-        console.error('❌ Erreur middleware upload:', err);
-        return res.status(400).json({
-          success: false,
-          error: `Erreur upload: ${err.message}`
-        });
-      }
-
-      console.log('📁 Fichier reçu:', req.file ? 'OUI' : 'NON');
-      
-      if (!req.file) {
-        return res.status(400).json({
-          success: false,
-          error: 'Aucune image fournie'
-        });
-      }
-
-      // Générer l'URL complète
-      const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
-      const fileUrl = `${baseUrl}/${req.file.path.replace(/\\/g, '/')}`;
-      
-      console.log('✅ Upload réussi:');
-      console.log('  📁 Fichier:', req.file.filename);
-      console.log('  📁 Chemin:', req.file.path);
-      console.log('  🔗 URL:', fileUrl);
-
-      res.json({
-        success: true,
-        message: 'Image uploadée avec succès',
-        data: {
-          filename: req.file.filename,
-          originalName: req.file.originalname,
-          url: fileUrl,
-          size: req.file.size,
-          path: req.file.path
+        maxSize: {
+          image: '10MB',
+          document: '50MB'
+        },
+        formats: {
+          image: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'],
+          document: ['pdf', 'doc', 'docx', 'txt']
         }
-      });
+      }
     });
   });
 
-  // ✅ ROUTE AVEC AUTH : Upload pour utilisateurs connectés
-  router.post('/image', 
+  // ========================================================================
+  // ROUTES PUBLIQUES
+  // ========================================================================
+
+  // Upload public d'image (pour inscription)
+  router.post('/image/public',
+    rateLimitMiddleware.creation,
+    uploadService.uploadImage().single('image'),
+    auditMiddleware.logAction('upload_image_public', { entityType: 'media' }),
+    (req, res) => uploadController.uploadPublicImage(req, res)
+  );
+
+  // Upload public de document
+  router.post('/document/public',
+    rateLimitMiddleware.creation,
+    uploadService.uploadDocument().single('document'),
+    auditMiddleware.logAction('upload_document_public', { entityType: 'media' }),
+    (req, res) => uploadController.uploadPublicImage(req, res) // Réutilise la même logique
+  );
+
+  // ========================================================================
+  // ROUTES AUTHENTIFIÉES
+  // ========================================================================
+
+  // Upload photo de profil avec mise à jour automatique
+  router.post('/profile-photo',
     authMiddleware.authenticate,
-    (req, res) => {
-      console.log('📤 Route /image (avec auth) appelée');
-      console.log('👤 Utilisateur:', req.user?.email);
-      
-      const upload = uploadService.uploadImage().single('image');
-      
-      upload(req, res, (err) => {
-        if (err) {
-          console.error('❌ Erreur middleware upload:', err);
+    rateLimitMiddleware.creation,
+    uploadService.uploadImage().single('image'),
+    auditMiddleware.logAction('upload_profile_photo', { entityType: 'media' }),
+    (req, res) => uploadController.uploadProfilePhoto(req, res)
+  );
+
+  // Upload image générique
+  router.post('/image',
+    authMiddleware.authenticate,
+    rateLimitMiddleware.creation,
+    uploadService.uploadImage().single('image'),
+    auditMiddleware.logAction('upload_image', { entityType: 'media' }),
+    (req, res) => uploadController.uploadImage(req, res)
+  );
+
+  // Upload document
+  router.post('/document',
+    authMiddleware.authenticate,
+    rateLimitMiddleware.creation,
+    uploadService.uploadDocument().single('document'),
+    auditMiddleware.logAction('upload_document', { entityType: 'media' }),
+    (req, res) => uploadController.uploadImage(req, res) // Même logique avec document
+  );
+
+  // Obtenir les infos d'un média
+  router.get('/:id',
+    authMiddleware.authenticate,
+    (req, res) => uploadController.getMediaInfo(req, res)
+  );
+
+  // Supprimer un média
+  router.delete('/:id',
+    authMiddleware.authenticate,
+    auditMiddleware.logAction('delete_media', { entityType: 'media' }),
+    (req, res) => uploadController.deleteMedia(req, res)
+  );
+
+  // ========================================================================
+  // ROUTES POUR GESTION AVANCÉE (si nécessaire)
+  // ========================================================================
+
+  // Upload multiple
+  router.post('/multiple',
+    authMiddleware.authenticate,
+    rateLimitMiddleware.creation,
+    uploadService.uploadImage().array('images', 10), // Max 10 images
+    auditMiddleware.logAction('upload_multiple', { entityType: 'media' }),
+    async (req, res) => {
+      try {
+        if (!req.files || req.files.length === 0) {
           return res.status(400).json({
             success: false,
-            error: `Erreur upload: ${err.message}`
+            error: 'Aucun fichier fourni'
           });
         }
 
-        if (!req.file) {
-          return res.status(400).json({
-            success: false,
-            error: 'Aucune image fournie'
-          });
-        }
-
-        // Générer l'URL complète
-        const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
-        const fileUrl = `${baseUrl}/${req.file.path.replace(/\\/g, '/')}`;
-        
-        console.log('✅ Upload réussi (avec auth):', fileUrl);
+        const uploadedFiles = req.files.map(file => ({
+          filename: file.filename,
+          originalName: file.originalname,
+          url: `/uploads/images/${file.filename}`,
+          size: file.size,
+          mimetype: file.mimetype
+        }));
 
         res.json({
           success: true,
-          message: 'Image uploadée avec succès',
-          data: {
-            filename: req.file.filename,
-            originalName: req.file.originalname,
-            url: fileUrl,
-            size: req.file.size,
-            path: req.file.path
-          }
+          message: `${uploadedFiles.length} fichiers uploadés`,
+          data: uploadedFiles
         });
-      });
+      } catch (error) {
+        console.error('Erreur upload multiple:', error);
+        res.status(500).json({
+          success: false,
+          error: 'Erreur lors de l\'upload'
+        });
+      }
     }
   );
 
-  console.log('✅ Routes upload initialisées');
-  console.log('  📍 GET /api/upload/');
-  console.log('  📍 POST /api/upload/image/public');
-  console.log('  📍 POST /api/upload/image');
+  // ========================================================================
+  // LOG DES ROUTES
+  // ========================================================================
+
+  const routeCount = router.stack.filter(layer => layer.route).length;
+  console.log(`✅ Routes upload initialisées: ${routeCount} routes`);
 
   return router;
 };

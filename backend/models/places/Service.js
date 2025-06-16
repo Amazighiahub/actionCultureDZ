@@ -11,17 +11,11 @@ module.exports = (sequelize) => {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: 'lieux',
+        model: 'lieu',
         key: 'id_lieu'
       }
     },
-    lieuId: {
-      type: DataTypes.INTEGER,
-      references: {
-        model: 'lieux',
-        key: 'id_lieu'
-      }
-    },
+   
     nom: {
       type: DataTypes.STRING(255),
       allowNull: false

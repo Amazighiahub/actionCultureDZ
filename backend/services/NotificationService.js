@@ -59,7 +59,265 @@ class NotificationService {
       throw error;
     }
   }
+// Notifications manquantes à ajouter dans NotificationService.js
 
+// 1. RAPPEL D'ÉVÉNEMENT (24h avant)
+async envoyerRappelEvenement(evenementId) {
+  try {
+    const evenement = await this.models.Evenement.findByPk(evenementId, {
+      include: [
+        { model: this.models.Lieu },
+        { model: this.models.TypeEvenement }
+      ]
+    });
+
+    // Vérifier que l'événement est dans 24h
+    const maintenant = new Date();
+    const dateEvenement = new Date(evenement.date_debut);
+    const heuresAvant = (dateEvenement - maintenant) / (1000 * 60 * 60);
+    
+    if (heuresAvant < 23 || heuresAvant > 25) {
+      console.log('Pas le bon moment pour le rappel');
+      return;
+    }
+
+    // Récupérer les participants confirmés
+    const participants = await this.models.EvenementUser.findAll({
+      where: {
+        id_evenement: evenementId,
+        statut_participation: 'confirme'
+      },
+      include: [{
+        model: this.models.User,
+        where: { notification_rappels: true } // Respecter les préférences
+      }]
+    });
+
+    for (const participant of participants) {
+      await this.emailService.sendEmail(
+        participant.User.email,
+        `🔔 Rappel : ${evenement.nom_evenement} demain !`,
+        `Rappel : L'événement "${evenement.nom_evenement}" aura lieu demain à ${dateEvenement.toLocaleTimeString()}.`
+      );
+
+      await this.enregistrerNotification({
+        id_user: participant.id_user,
+        type_notification: 'rappel_evenement',
+        titre: 'Rappel d\'événement',
+        message: `L'événement "${evenement.nom_evenement}" est demain !`,
+        id_evenement: evenementId
+      });
+    }
+  } catch (error) {
+    console.error('Erreur rappel événement:', error);
+  }
+}
+
+// 2. NOTIFICATION NOUVEAU COMMENTAIRE
+async notifierNouveauCommentaire(commentaireId) {
+  try {
+    const commentaire = await this.models.Commentaire.findByPk(commentaireId, {
+      include: [
+        { model: this.models.User, as: 'Auteur' },
+        { model: this.models.Oeuvre, include: [{ model: this.models.User, as: 'Createurs' }] }
+      ]
+    });
+
+    // Notifier le créateur de l'œuvre
+    for (const createur of commentaire.Oeuvre.Createurs) {
+      if (createur.id_user !== commentaire.id_user && createur.notifications_commentaires) {
+        await this.enregistrerNotification({
+          id_user: createur.id_user,
+          type_notification: 'nouveau_commentaire',
+          titre: 'Nouveau commentaire',
+          message: `${commentaire.Auteur.prenom} a commenté votre œuvre "${commentaire.Oeuvre.titre}"`,
+          id_oeuvre: commentaire.id_oeuvre
+        });
+
+        // Email optionnel
+        if (createur.notifications_email) {
+          await this.emailService.sendEmail(
+            createur.email,
+            `💬 Nouveau commentaire sur votre œuvre`,
+            `${commentaire.Auteur.prenom} ${commentaire.Auteur.nom} a commenté : "${commentaire.contenu.substring(0, 100)}..."`
+          );
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Erreur notification commentaire:', error);
+  }
+}
+
+// 3. NOTIFICATION NOUVELLE ŒUVRE D'UN ARTISTE SUIVI
+async notifierNouvelleOeuvre(oeuvreId) {
+  try {
+    const oeuvre = await this.models.Oeuvre.findByPk(oeuvreId, {
+      include: [
+        { model: this.models.User, as: 'Createurs' },
+        { model: this.models.TypeOeuvre }
+      ]
+    });
+
+    // Pour chaque créateur de l'œuvre
+    for (const createur of oeuvre.Createurs) {
+      // Trouver les followers (si vous avez un système de suivi)
+      const followers = await this.models.UserFollow.findAll({
+        where: { id_user_suivi: createur.id_user },
+        include: [{
+          model: this.models.User,
+          as: 'Follower',
+          where: { notification_nouveaux_contenus: true }
+        }]
+      });
+
+      for (const follow of followers) {
+        await this.enregistrerNotification({
+          id_user: follow.id_user_follower,
+          type_notification: 'nouvelle_oeuvre',
+          titre: 'Nouvelle œuvre',
+          message: `${createur.prenom} ${createur.nom} a publié "${oeuvre.titre}"`,
+          id_oeuvre: oeuvreId
+        });
+      }
+    }
+  } catch (error) {
+    console.error('Erreur notification nouvelle œuvre:', error);
+  }
+}
+
+// 4. NOTIFICATION DE MODÉRATION
+async notifierModeration(userId, type, raison) {
+  try {
+    const messages = {
+      'contenu_supprime': 'Un de vos contenus a été supprimé',
+      'compte_suspendu': 'Votre compte a été temporairement suspendu',
+      'avertissement': 'Vous avez reçu un avertissement'
+    };
+
+    await this.enregistrerNotification({
+      id_user: userId,
+      type_notification: 'message_admin',
+      titre: messages[type] || 'Message de modération',
+      message: raison,
+      priorite: 'haute'
+    });
+
+    // Email obligatoire pour les notifications importantes
+    const user = await this.models.User.findByPk(userId);
+    await this.emailService.sendEmail(
+      user.email,
+      `⚠️ ${messages[type]}`,
+      `Bonjour,\n\n${raison}\n\nL'équipe de modération`
+    );
+  } catch (error) {
+    console.error('Erreur notification modération:', error);
+  }
+}
+
+// 5. NOTIFICATION FAVORI AJOUTÉ
+async notifierFavoriAjoute(favoriId) {
+  try {
+    const favori = await this.models.Favori.findByPk(favoriId, {
+      include: [
+        { model: this.models.User, as: 'Utilisateur' },
+        { 
+          model: this.models.Oeuvre, 
+          include: [{ model: this.models.User, as: 'Createurs' }] 
+        }
+      ]
+    });
+
+    // Notifier les créateurs
+    for (const createur of favori.Oeuvre.Createurs) {
+      if (createur.notifications_favoris) {
+        await this.enregistrerNotification({
+          id_user: createur.id_user,
+          type_notification: 'nouveau_favori',
+          titre: 'Œuvre ajoutée aux favoris',
+          message: `${favori.Utilisateur.prenom} a ajouté "${favori.Oeuvre.titre}" à ses favoris`,
+          id_oeuvre: favori.id_oeuvre
+        });
+      }
+    }
+  } catch (error) {
+    console.error('Erreur notification favori:', error);
+  }
+}
+
+// 6. CRON JOB POUR LES RAPPELS
+async planifierRappels() {
+  // À exécuter toutes les heures
+  const demain = new Date();
+  demain.setDate(demain.getDate() + 1);
+  
+  const evenements = await this.models.Evenement.findAll({
+    where: {
+      date_debut: {
+        [Op.between]: [
+          new Date(demain.setHours(0, 0, 0, 0)),
+          new Date(demain.setHours(23, 59, 59, 999))
+        ]
+      },
+      statut: 'publie'
+    }
+  });
+
+  for (const evenement of evenements) {
+    await this.envoyerRappelEvenement(evenement.id_evenement);
+  }
+}
+
+// 7. NOTIFICATION BATCH (Newsletter)
+async envoyerNewsletter(contenu, filtres = {}) {
+  try {
+    const whereClause = {
+      accepte_newsletter: true,
+      statut: 'actif',
+      email_verifie: true
+    };
+
+    if (filtres.wilaya) {
+      whereClause.wilaya_residence = filtres.wilaya;
+    }
+
+    if (filtres.type_user) {
+      whereClause.type_user = filtres.type_user;
+    }
+
+    const users = await this.models.User.findAll({
+      where: whereClause,
+      attributes: ['id_user', 'email', 'nom', 'prenom'],
+      limit: 1000 // Traiter par batch
+    });
+
+    const results = [];
+    for (const user of users) {
+      const result = await this.emailService.sendEmail(
+        user.email,
+        contenu.sujet,
+        contenu.texte,
+        contenu.html
+      );
+      
+      results.push({
+        userId: user.id_user,
+        success: result.success
+      });
+
+      // Pause entre les envois pour éviter le spam
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+
+    return {
+      total: users.length,
+      success: results.filter(r => r.success).length
+    };
+  } catch (error) {
+    console.error('Erreur newsletter:', error);
+    throw error;
+  }
+}
   // Notifier l'annulation d'un événement
   async notifierAnnulationEvenement(evenementId, raison) {
     try {

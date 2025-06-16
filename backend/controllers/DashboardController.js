@@ -1,66 +1,131 @@
-const { Op } = require('sequelize');
-const redis = require('redis');
+// controllers/DashboardController.js
 
+const { Op, fn, col, literal } = require('sequelize');
+const moment = require('moment');
+const TYPE_USER_IDS = {
+  VISITEUR: 1,
+  ECRIVAIN: 2,
+  JOURNALISTE: 3,
+  SCIENTIFIQUE: 4,
+  ACTEUR: 5,
+  ARTISTE: 6,
+  ARTISAN: 7,
+  REALISATEUR: 8,
+  MUSICIEN: 9,
+  PHOTOGRAPHE: 10,
+  DANSEUR: 11,
+  SCULPTEUR: 12,
+  AUTRE: 13
+};
 class DashboardController {
   constructor(models) {
     this.models = models;
     this.sequelize = models.sequelize || Object.values(models)[0]?.sequelize;
-    this.redis = redis.createClient();
+    this.cache = new Map(); // Cache en mémoire simple
     this.adminPermissions = this.setupPermissions();
   }
 
   setupPermissions() {
     return {
-      'super_admin': ['*'],
-      'content_admin': ['validate_oeuvre', 'moderate_comment', 'manage_patrimoine'],
-      'user_admin': ['validate_user', 'suspend_user', 'view_users'],
-      'event_admin': ['manage_events', 'export_participants'],
-      'moderator': ['moderate_comment', 'moderate_signalement'],
-      'patrimoine_admin': ['manage_patrimoine', 'manage_parcours', 'view_qr_stats']
+      'Admin': [
+        'view_dashboard', 'validate_user', 'validate_oeuvre',
+        'moderate_comment', 'moderate_signalement', 'view_reports',
+        'manage_events', 'manage_patrimoine'
+      ],
+      'Super Admin': ['*'], // Tous les droits
+      'Moderateur': [
+        'view_dashboard', 'moderate_comment', 'moderate_signalement',
+        'view_reports'
+      ]
     };
   }
 
-  // Cache helper
-  async getCachedStats(key, generator, ttl = 3600) {
+  // ========================================
+  // MÉTHODES DE CACHE SIMPLIFIÉES
+  // ========================================
+
+  async getCachedData(key, generator, ttl = 300) {
     try {
-      const cached = await this.redis.get(key);
-      if (cached) return JSON.parse(cached);
-      
+      // Vérifier le cache en mémoire
+      const cached = this.cache.get(key);
+      if (cached && cached.expires > Date.now()) {
+        return cached.data;
+      }
+
+      // Générer les nouvelles données
       const data = await generator();
-      await this.redis.setex(key, ttl, JSON.stringify(data));
+      
+      // Mettre en cache
+      this.cache.set(key, {
+        data,
+        expires: Date.now() + (ttl * 1000)
+      });
+      
       return data;
     } catch (error) {
       console.error('Erreur cache:', error);
-      return await generator(); // Fallback sans cache
+      return await generator();
     }
   }
 
-  // Vérification des permissions
+  clearCache(pattern = null) {
+    if (pattern) {
+      for (const key of this.cache.keys()) {
+        if (key.includes(pattern)) {
+          this.cache.delete(key);
+        }
+      }
+    } else {
+      this.cache.clear();
+    }
+  }
+
+  // ========================================
+  // VÉRIFICATION DES PERMISSIONS
+  // ========================================
+
   async checkAdminPermission(userId, action) {
     try {
       const user = await this.models.User.findByPk(userId, {
-        include: [{ 
+        include: [{
           model: this.models.Role,
-          through: { model: this.models.UserRole },
+          as: 'Roles',
+          through: { attributes: [] },
           attributes: ['nom_role']
         }]
       });
 
-      const userRole = user.Roles?.find(r => r.nom_role.includes('admin') || r.nom_role.includes('moderator'));
-      if (!userRole) return false;
+      if (!user || !user.Roles) return false;
 
-      const permissions = this.adminPermissions[userRole.nom_role] || [];
-      return permissions.includes('*') || permissions.includes(action);
+      // Vérifier les rôles
+      for (const role of user.Roles) {
+        const permissions = this.adminPermissions[role.nom_role];
+        if (permissions) {
+          if (permissions.includes('*') || permissions.includes(action)) {
+            return true;
+          }
+        }
+      }
+
+      return false;
     } catch (error) {
       console.error('Erreur vérification permissions:', error);
       return false;
     }
   }
 
-  // Vue d'ensemble du dashboard
+  // ========================================
+  // MÉTHODES PRINCIPALES
+  // ========================================
+
+  /**
+   * Vue d'ensemble du dashboard
+   */
   async getOverview(req, res) {
     try {
-      const stats = await this.getCachedStats(
+      console.log('📊 Dashboard overview demandé par:', req.user.email);
+
+      const stats = await this.getCachedData(
         'dashboard:overview',
         () => this.generateOverviewStats(),
         300 // 5 minutes
@@ -70,23 +135,23 @@ class DashboardController {
         success: true,
         data: stats
       });
-
     } catch (error) {
-      console.error('Erreur lors de la récupération du dashboard:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: 'Erreur serveur' 
+      console.error('Erreur getOverview:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur lors de la récupération des statistiques',
+        message: error.message
       });
     }
   }
 
   async generateOverviewStats() {
+    console.log('📈 Génération des statistiques overview...');
+    
     const [
       totalUsers,
       totalOeuvres,
       totalEvenements,
-      totalLieux,
-      totalCommentaires,
       totalArtisanats,
       newUsersToday,
       oeuvresEnAttente,
@@ -98,40 +163,30 @@ class DashboardController {
       this.models.User.count(),
       this.models.Oeuvre.count({ where: { statut: 'publie' } }),
       this.models.Evenement.count(),
-      this.models.Lieu.count(),
-      this.models.Commentaire.count({ where: { statut: 'publie' } }),
-      this.models.Artisanat.count(),
+      this.models.Artisanat?.count() || 0,
       this.models.User.count({
         where: {
           date_creation: {
-            [Op.gte]: new Date(new Date().setHours(0, 0, 0, 0))
+            [Op.gte]: moment().startOf('day').toDate()
           }
         }
       }),
       this.models.Oeuvre.count({ where: { statut: 'en_attente' } }),
       this.models.User.count({
         where: {
-          type_user: { [Op.ne]: 'visiteur' },
-          professionnel_valide: false,
-          statut_compte: 'en_attente_validation'
+          id_type_user: { [Op.ne]: TYPE_USER_IDS.VISITEUR },
+          statut_validation: 'en_attente'
         }
       }),
-      this.models.Signalement.count({
-        where: { statut: 'en_attente' }
-      }),
-      this.models.Lieu.count({
-        include: [{
-          model: this.models.DetailLieu,
-          required: true
-        }]
-      }),
-      this.models.Vue.count({
+      this.models.Signalement?.count({ where: { statut: 'en_attente' } }) || 0,
+      this.models.Lieu?.count() || 0,
+      this.models.Vue?.count({
         where: {
           date_vue: {
-            [Op.gte]: new Date(new Date().setHours(0, 0, 0, 0))
+            [Op.gte]: moment().startOf('day').toDate()
           }
         }
-      })
+      }) || 0
     ]);
 
     return {
@@ -139,8 +194,6 @@ class DashboardController {
         totalUsers,
         totalOeuvres,
         totalEvenements,
-        totalLieux,
-        totalCommentaires,
         totalArtisanats,
         newUsersToday,
         sitesPatrimoniaux,
@@ -154,67 +207,134 @@ class DashboardController {
     };
   }
 
-  // Statistiques détaillées
-  async getDetailedStats(req, res) {
+  /**
+   * Statistiques détaillées
+   */
+  // Dans votre fichier backend/controllers/DashboardController.js
+// Autour de la ligne 208 dans getDetailedStats
+
+// SOLUTION : Nettoyer les données avant de les envoyer
+// Dans DashboardController.js, remplacez la méthode getDetailedStats (lignes ~195-270) par :
+
+async getDetailedStats(req, res) {
+  try {
+    const { period = 'month' } = req.query;
+    
+    console.log('📊 Génération des statistiques détaillées pour la période:', period);
+    
+    const stats = await this.getCachedData(
+      `dashboard:stats:${period}`,
+      () => this.generateDetailedStats(period),
+      600 // 10 minutes
+    );
+
+    res.json({
+      success: true,
+      data: stats
+    });
+  } catch (error) {
+    console.error('Erreur getDetailedStats:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la récupération des statistiques',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+}
+
+// Ajouter cette méthode comme méthode de classe (pas avec const) :
+cleanSequelizeResponse(data) {
+  if (!data) return data;
+  
+  // Si c'est un tableau
+  if (Array.isArray(data)) {
+    return data.map(item => this.cleanSequelizeResponse(item));
+  }
+  
+  // Si c'est une instance Sequelize
+  if (data.dataValues || data.get) {
     try {
-      const { period = 'month' } = req.query;
-      const dateLimit = this.getDateLimit(period);
-
-      const stats = await this.getCachedStats(
-        `dashboard:detailed:${period}`,
-        async () => ({
-          // Évolution des inscriptions
-          userGrowth: await this.getUserGrowth(dateLimit),
-          
-          // Contenu par type
-          contentByType: await this.getContentByType(),
-          
-          // Activité récente
-          recentActivity: await this.getRecentActivity(),
-          
-          // Top contributeurs
-          topContributors: await this.getTopContributors(),
-          
-          // Événements à venir
-          upcomingEvents: await this.getUpcomingEvents(),
-          
-          // Répartition géographique
-          geographicDistribution: await this.getGeographicDistribution(),
-          
-          // Analytics des vues
-          viewsAnalytics: await this.getViewsAnalytics(dateLimit),
-          
-          // Statistiques modération
-          moderationStats: await this.getModerationStats(dateLimit)
-        }),
-        1800 // 30 minutes
-      );
-
-      res.json({
-        success: true,
-        data: stats
-      });
-
+      return data.get({ plain: true });
     } catch (error) {
-      console.error('Erreur lors de la récupération des statistiques:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: 'Erreur serveur' 
-      });
+      console.error('Erreur de sérialisation:', error);
+      return {};
     }
   }
+  
+  // Si c'est un objet simple
+  if (typeof data === 'object') {
+    const cleaned = {};
+    for (const [key, value] of Object.entries(data)) {
+      // Éviter les références circulaires et les fonctions
+      if (typeof value !== 'function' && key !== '_previousDataValues') {
+        cleaned[key] = this.cleanSequelizeResponse(value);
+      }
+    }
+    return cleaned;
+  }
+  
+  return data;
+}
 
-  // Dashboard patrimoine
+// Puis modifiez generateDetailedStats pour utiliser les bonnes méthodes :
+async generateDetailedStats(period) {
+  const dateLimit = this.getDateLimit(period);
+  
+  const [
+    userGrowth,
+    contentByType,
+    recentActivity,
+    topContributors
+  ] = await Promise.all([
+    this.getUserGrowth(dateLimit),
+    this.getContentByType(),
+    this.getRecentActivity(),
+    this.getTopContributors()
+  ]);
+
+  // Nettoyer les données avant de les retourner
+  const cleanedData = {
+    period,
+    dateLimit,
+    userGrowth: this.cleanSequelizeResponse(userGrowth),
+    contentByType: this.cleanSequelizeResponse(contentByType),
+    recentActivity: this.cleanSequelizeResponse(recentActivity),
+    topContributors: this.cleanSequelizeResponse(topContributors)
+  };
+
+  return cleanedData;
+}
+  async generateDetailedStats(period) {
+    const dateLimit = this.getDateLimit(period);
+    
+    const [
+      userGrowth,
+      contentByType,
+      recentActivity,
+      topContributors
+    ] = await Promise.all([
+      this.getUserGrowth(dateLimit),
+      this.getContentByType(),
+      this.getRecentActivity(),
+      this.getTopContributors()
+    ]);
+
+    return {
+      period,
+      dateLimit,
+      userGrowth,
+      contentByType,
+      recentActivity,
+      topContributors
+    };
+  }
+
+  /**
+   * Dashboard patrimoine
+   */
   async getPatrimoineDashboard(req, res) {
     try {
-      if (!await this.checkAdminPermission(req.user.id_user, 'manage_patrimoine')) {
-        return res.status(403).json({
-          success: false,
-          error: 'Permissions insuffisantes'
-        });
-      }
-
-      const stats = await this.getCachedStats(
+      const stats = await this.getCachedData(
         'dashboard:patrimoine',
         () => this.generatePatrimoineStats(),
         600 // 10 minutes
@@ -224,547 +344,632 @@ class DashboardController {
         success: true,
         data: stats
       });
-
     } catch (error) {
-      console.error('Erreur lors de la récupération du dashboard patrimoine:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: 'Erreur serveur' 
+      console.error('Erreur getPatrimoineDashboard:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur lors de la récupération des statistiques patrimoine'
       });
     }
   }
 
   async generatePatrimoineStats() {
-    const [
-      totalSites,
-      sitesParType,
-      sitesParWilaya,
-      parcoursActifs,
-      qrCodesGeneres,
-      qrCodesScannnes,
-      visitesRecentes,
-      sitesPopulaires,
-      nouveauxSites
-    ] = await Promise.all([
-      // Total sites patrimoniaux
-      this.models.Lieu.count({
-        include: [{
-          model: this.models.DetailLieu,
-          required: true
-        }]
-      }),
-
-      // Sites par type
-      this.models.Lieu.findAll({
-        attributes: [
-          'typeLieu',
-          [this.sequelize.fn('COUNT', '*'), 'count']
-        ],
-        include: [{
-          model: this.models.DetailLieu,
-          required: true
-        }],
-        group: ['typeLieu'],
-        order: [[this.sequelize.literal('count'), 'DESC']]
-      }),
-
-      // Sites par wilaya
-      this.models.Lieu.findAll({
-        attributes: [
-          'wilaya',
-          [this.sequelize.fn('COUNT', '*'), 'count']
-        ],
-        include: [{
-          model: this.models.DetailLieu,
-          required: true
-        }],
-        group: ['wilaya'],
-        order: [[this.sequelize.literal('count'), 'DESC']]
-      }),
-
-      // Parcours actifs
-      this.models.Parcours?.count({
-        where: { statut: 'actif' }
-      }) || 0,
-
-      // QR codes générés
-      this.models.QRCode?.count() || 0,
-
-      // QR codes scannés (last 30 days)
-      this.models.QRScan?.count({
-        where: {
-          date_scan: {
-            [Op.gte]: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-          }
-        }
-      }) || 0,
-
-      // Visites récentes des sites
-      this.models.Vue.count({
-        where: {
-          type_entite: 'lieu',
-          date_vue: {
-            [Op.gte]: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-          }
-        }
-      }),
-
-      // Sites les plus populaires
-      this.models.Lieu.findAll({
-        include: [{
-          model: this.models.DetailLieu,
-          required: true
-        }],
-        attributes: [
-          'id_lieu',
-          'nom',
-          'typeLieu',
-          [
-            this.sequelize.literal(`(
-              SELECT COUNT(*) FROM vue 
-              WHERE vue.type_entite = 'lieu' 
-              AND vue.id_entite = Lieu.id_lieu
-            )`),
-            'vues_count'
-          ]
-        ],
-        order: [[this.sequelize.literal('vues_count'), 'DESC']],
-        limit: 10
-      }),
-
-      // Nouveaux sites ce mois
-      this.models.Lieu.count({
-        include: [{
-          model: this.models.DetailLieu,
-          required: true
-        }],
-        where: {
-          date_creation: {
-            [Op.gte]: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
-          }
-        }
-      })
-    ]);
-
-    return {
-      overview: {
-        totalSites,
-        parcoursActifs,
-        qrCodesGeneres,
-        qrCodesScannnes,
-        visitesRecentes,
-        nouveauxSites
-      },
-      distribution: {
-        parType: sitesParType,
-        parWilaya: sitesParWilaya
-      },
-      populaires: sitesPopulaires
-    };
-  }
-
-  // Gestion des utilisateurs en attente
-  async getPendingUsers(req, res) {
     try {
-      if (!await this.checkAdminPermission(req.user.id_user, 'validate_user')) {
-        return res.status(403).json({
-          success: false,
-          error: 'Permissions insuffisantes'
+      const totalSites = await this.models.Lieu?.count() || 0;
+      
+      let sitesParType = [];
+      let sitesParWilaya = [];
+      let sitesRecents = [];
+      let qrScans = 0;
+      
+      if (this.models.Lieu) {
+        [sitesParType, sitesParWilaya, sitesRecents] = await Promise.all([
+          this.models.Lieu.findAll({
+            attributes: [
+              'typeLieu',
+              [this.sequelize.fn('COUNT', '*'), 'count']
+            ],
+            group: ['typeLieu'],
+            raw: true
+          }),
+          this.models.Lieu.findAll({
+            attributes: [
+              'wilaya',
+              [this.sequelize.fn('COUNT', '*'), 'count']
+            ],
+            where: { wilaya: { [Op.ne]: null } },
+            group: ['wilaya'],
+            order: [[literal('count'), 'DESC']],
+            limit: 10,
+            raw: true
+          }),
+          this.models.Lieu.findAll({
+            attributes: ['id_lieu', 'nom_fr', 'nom_ar', 'typeLieu', 'date_creation'],
+            order: [['date_creation', 'DESC']],
+            limit: 5
+          })
+        ]);
+      }
+
+      // Statistiques QR si disponible
+      if (this.models.QRScan) {
+        qrScans = await this.models.QRScan.count({
+          where: {
+            scan_date: {
+              [Op.gte]: moment().subtract(30, 'days').toDate()
+            }
+          }
         });
       }
 
+      return {
+        overview: {
+          totalSites,
+          parcoursActifs: await this.getActiveParcoursCount(),
+          qrCodesGeneres: totalSites, // Chaque site a un QR code
+          visitesRecentes: qrScans
+        },
+        distribution: {
+          parType: sitesParType,
+          parWilaya: sitesParWilaya
+        },
+        recentSites: sitesRecents,
+        trends: {
+          evolution: await this.getPatrimoineEvolution(),
+          popularSites: await this.getPopularPatrimoineSites()
+        }
+      };
+    } catch (error) {
+      console.error('Erreur generatePatrimoineStats:', error);
+      return {
+        overview: { totalSites: 0 },
+        distribution: { parType: [], parWilaya: [] }
+      };
+    }
+  }
+
+  /**
+   * Statistiques QR complètes
+   */
+  async getQRStats(req, res) {
+    try {
+      const { period = 30 } = req.query;
+      const startDate = moment().subtract(period, 'days').toDate();
+      
+      const stats = await this.getCachedData(
+        `dashboard:qr:${period}`,
+        () => this.generateQRStats(startDate),
+        900
+      );
+
+      res.json({
+        success: true,
+        data: stats
+      });
+    } catch (error) {
+      console.error('Erreur getQRStats:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur lors de la récupération des stats QR'
+      });
+    }
+  }
+
+  async generateQRStats(startDate) {
+    try {
+      if (!this.models.QRScan) {
+        return {
+          overview: {
+            totalScans: 0,
+            uniqueScans: 0,
+            uniqueRate: 0
+          },
+          evolution: [],
+          topSites: [],
+          devices: [],
+          locations: []
+        };
+      }
+
+      const [totalScans, uniqueScans, evolution, topSites, devices] = await Promise.all([
+        this.models.QRScan.count({
+          where: { scan_date: { [Op.gte]: startDate } }
+        }),
+        this.models.QRScan.count({
+          where: { scan_date: { [Op.gte]: startDate } },
+          distinct: true,
+          col: 'user_id'
+        }),
+        this.models.QRScan.findAll({
+          attributes: [
+            [fn('DATE', col('scan_date')), 'date'],
+            [fn('COUNT', '*'), 'scans']
+          ],
+          where: { scan_date: { [Op.gte]: startDate } },
+          group: [fn('DATE', col('scan_date'))],
+          order: [[fn('DATE', col('scan_date')), 'ASC']],
+          raw: true
+        }),
+        this.models.QRScan.findAll({
+          attributes: [
+            'lieu_id',
+            [fn('COUNT', '*'), 'scan_count']
+          ],
+          where: { scan_date: { [Op.gte]: startDate } },
+          group: ['lieu_id'],
+          order: [[literal('scan_count'), 'DESC']],
+          limit: 10,
+          include: [{
+            model: this.models.Lieu,
+            attributes: ['nom_fr', 'nom_ar', 'typeLieu']
+          }]
+        }),
+        this.models.QRScan.findAll({
+          attributes: [
+            'device_type',
+            [fn('COUNT', '*'), 'count']
+          ],
+          where: { scan_date: { [Op.gte]: startDate } },
+          group: ['device_type'],
+          raw: true
+        })
+      ]);
+
+      return {
+        overview: {
+          totalScans,
+          uniqueScans,
+          uniqueRate: totalScans > 0 ? ((uniqueScans / totalScans) * 100).toFixed(2) : 0,
+          averageScansPerDay: Math.round(totalScans / moment().diff(startDate, 'days'))
+        },
+        evolution,
+        topSites,
+        devices,
+        peakHours: await this.getQRScanPeakHours(startDate)
+      };
+    } catch (error) {
+      console.error('Erreur generateQRStats:', error);
+      return {
+        overview: { totalScans: 0, uniqueScans: 0, uniqueRate: 0 },
+        evolution: [],
+        topSites: [],
+        devices: []
+      };
+    }
+  }
+
+  /**
+   * Utilisateurs en attente
+   */
+  async getPendingUsers(req, res) {
+    try {
       const { page = 1, limit = 10 } = req.query;
       const offset = (page - 1) * limit;
 
       const users = await this.models.User.findAndCountAll({
         where: {
-          type_user: { [Op.ne]: 'visiteur' },
-          professionnel_valide: false,
-          statut_compte: 'en_attente_validation'
+          id_type_user: { [Op.ne]: TYPE_USER_IDS.VISITEUR },
+          statut_validation: 'en_attente'
         },
         attributes: { exclude: ['password'] },
-        include: [
-          {
-            model: this.models.Role,
-            through: { model: this.models.UserRole },
-            attributes: ['nom_role']
-          }
-        ],
         limit: parseInt(limit),
         offset: parseInt(offset),
-        order: [['date_creation', 'ASC']]
+        order: [['date_creation', 'DESC']]
       });
 
       res.json({
         success: true,
         data: {
-          users: users.rows,
+          items: users.rows,
           pagination: {
             total: users.count,
             page: parseInt(page),
             pages: Math.ceil(users.count / limit),
-            limit: parseInt(limit)
+            limit: parseInt(limit),
+            hasNext: page < Math.ceil(users.count / limit),
+            hasPrev: page > 1
           }
         }
       });
-
     } catch (error) {
-      console.error('Erreur lors de la récupération des utilisateurs en attente:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: 'Erreur serveur' 
+      console.error('Erreur getPendingUsers:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur lors de la récupération des utilisateurs en attente'
       });
     }
   }
 
-  // Gestion des œuvres en attente
+  /**
+   * Œuvres en attente
+   */
   async getPendingOeuvres(req, res) {
     try {
-      if (!await this.checkAdminPermission(req.user.id_user, 'validate_oeuvre')) {
-        return res.status(403).json({
-          success: false,
-          error: 'Permissions insuffisantes'
-        });
-      }
-
       const { page = 1, limit = 10 } = req.query;
       const offset = (page - 1) * limit;
 
       const oeuvres = await this.models.Oeuvre.findAndCountAll({
         where: { statut: 'en_attente' },
         include: [
-          { model: this.models.TypeOeuvre },
-          { model: this.models.Langue },
-          { 
-            model: this.models.User, 
-            as: 'Saiseur', 
-            attributes: ['nom', 'prenom', 'email'] 
+          {
+            model: this.models.User,
+            as: 'Saiseur',
+            attributes: ['id_user', 'nom', 'prenom', 'email']
           },
           {
             model: this.models.Media,
-            limit: 3,
+            limit: 1,
             attributes: ['url', 'type_media']
           }
         ],
         limit: parseInt(limit),
         offset: parseInt(offset),
-        order: [['date_creation', 'ASC']]
+        order: [['date_creation', 'DESC']]
       });
+
+      // Formatter les données
+      const items = oeuvres.rows.map(oeuvre => ({
+        id_oeuvre: oeuvre.id_oeuvre,
+        titre: oeuvre.titre,
+        description: oeuvre.description,
+        type_oeuvre: oeuvre.type_oeuvre,
+        date_creation: oeuvre.date_creation,
+        auteur: oeuvre.Saiseur ? {
+          id: oeuvre.Saiseur.id_user,
+          nom: oeuvre.Saiseur.nom,
+          prenom: oeuvre.Saiseur.prenom
+        } : null,
+        medias: oeuvre.Media || []
+      }));
 
       res.json({
         success: true,
         data: {
-          oeuvres: oeuvres.rows,
+          items,
           pagination: {
             total: oeuvres.count,
             page: parseInt(page),
             pages: Math.ceil(oeuvres.count / limit),
-            limit: parseInt(limit)
+            limit: parseInt(limit),
+            hasNext: page < Math.ceil(oeuvres.count / limit),
+            hasPrev: page > 1
           }
         }
       });
-
     } catch (error) {
-      console.error('Erreur lors de la récupération des œuvres en attente:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: 'Erreur serveur' 
+      console.error('Erreur getPendingOeuvres:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur lors de la récupération des œuvres en attente'
       });
     }
   }
 
-  // Gestion des signalements
-  async getReportedContent(req, res) {
+  /**
+   * File de modération
+   */
+  async getModerationQueue(req, res) {
     try {
-      if (!await this.checkAdminPermission(req.user.id_user, 'moderate_signalement')) {
-        return res.status(403).json({
-          success: false,
-          error: 'Permissions insuffisantes'
-        });
-      }
-
-      const { page = 1, limit = 10, type, priorite, statut = 'en_attente' } = req.query;
+      const { page = 1, limit = 10 } = req.query;
       const offset = (page - 1) * limit;
 
-      const where = { statut };
-      if (type) where.type_entite = type;
-      if (priorite) where.priorite = priorite;
-
       const signalements = await this.models.Signalement.findAndCountAll({
-        where,
+        where: { statut: 'en_attente' },
         include: [
-          { 
-            model: this.models.User, 
+          {
+            model: this.models.User,
             as: 'Signalant',
-            attributes: ['nom', 'prenom', 'email'] 
-          },
-          { 
-            model: this.models.User, 
-            as: 'Moderateur',
-            attributes: ['nom', 'prenom'] 
+            attributes: ['nom', 'prenom']
           }
         ],
         limit: parseInt(limit),
         offset: parseInt(offset),
-        order: [
-          ['priorite', 'DESC'],
-          ['date_signalement', 'ASC']
-        ]
+        order: [['priorite', 'DESC'], ['date_signalement', 'ASC']]
       });
 
-      // Enrichir avec les détails du contenu signalé
-      for (const signalement of signalements.rows) {
-        try {
-          switch (signalement.type_entite) {
-            case 'commentaire':
-              const commentaire = await this.models.Commentaire.findByPk(signalement.id_entite, {
-                include: [
-                  { model: this.models.User, attributes: ['nom', 'prenom'] },
-                  { model: this.models.Oeuvre, attributes: ['titre'] }
-                ]
-              });
-              signalement.dataValues.contenu = commentaire;
-              break;
-            
-            case 'oeuvre':
-              const oeuvre = await this.models.Oeuvre.findByPk(signalement.id_entite, {
-                attributes: ['titre', 'description'],
-                include: [{ model: this.models.User, as: 'Saiseur', attributes: ['nom', 'prenom'] }]
-              });
-              signalement.dataValues.contenu = oeuvre;
-              break;
-              
-            case 'user':
-              const user = await this.models.User.findByPk(signalement.id_entite, {
-                attributes: ['nom', 'prenom', 'email', 'type_user']
-              });
-              signalement.dataValues.contenu = user;
-              break;
-          }
-        } catch (error) {
-          console.error('Erreur enrichissement signalement:', error);
-        }
-      }
+      // Formatter les données
+      const items = signalements.rows.map(s => ({
+        id: s.id_signalement,
+        type: s.type_entite,
+        entity_id: s.id_entite,
+        entity_title: s.titre || 'Non disponible',
+        reason: s.motif,
+        reported_by: s.Signalant ? {
+          id: s.Signalant.id_user,
+          nom: s.Signalant.nom
+        } : null,
+        date_signalement: s.date_signalement,
+        status: s.statut
+      }));
 
       res.json({
         success: true,
         data: {
-          signalements: signalements.rows,
+          items,
           pagination: {
             total: signalements.count,
             page: parseInt(page),
             pages: Math.ceil(signalements.count / limit),
-            limit: parseInt(limit)
+            limit: parseInt(limit),
+            hasNext: page < Math.ceil(signalements.count / limit),
+            hasPrev: page > 1
           }
         }
       });
-
     } catch (error) {
-      console.error('Erreur lors de la récupération des signalements:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: 'Erreur serveur' 
+      console.error('Erreur getModerationQueue:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur lors de la récupération de la file de modération'
       });
     }
   }
 
-  // File d'attente de modération
-  async getModerationQueue(req, res) {
+  /**
+   * Signalements
+   */
+  async getReportedContent(req, res) {
     try {
-      if (!await this.checkAdminPermission(req.user.id_user, 'moderate_signalement')) {
-        return res.status(403).json({
-          success: false,
-          error: 'Permissions insuffisantes'
-        });
-      }
-
-      const moderatorId = req.user.id_user;
-      
-      const [
-        assignedToMe,
-        highPriority,
-        unassigned,
-        recentActions
-      ] = await Promise.all([
-        // Signalements assignés à moi
-        this.models.Signalement.findAll({
-          where: {
-            id_moderateur: moderatorId,
-            statut: 'en_cours'
-          },
-          include: [
-            { model: this.models.User, as: 'Signalant', attributes: ['nom', 'prenom'] }
-          ],
-          order: [['date_signalement', 'ASC']],
-          limit: 10
-        }),
-
-        // Haute priorité non assignés
-        this.models.Signalement.findAll({
-          where: {
-            priorite: 'haute',
-            statut: 'en_attente',
-            id_moderateur: null
-          },
-          include: [
-            { model: this.models.User, as: 'Signalant', attributes: ['nom', 'prenom'] }
-          ],
-          order: [['date_signalement', 'ASC']],
-          limit: 5
-        }),
-
-        // Non assignés
-        this.models.Signalement.findAll({
-          where: {
-            statut: 'en_attente',
-            id_moderateur: null
-          },
-          include: [
-            { model: this.models.User, as: 'Signalant', attributes: ['nom', 'prenom'] }
-          ],
-          order: [
-            ['priorite', 'DESC'],
-            ['date_signalement', 'ASC']
-          ],
-          limit: 15
-        }),
-
-        // Actions récentes du modérateur
-        this.models.Signalement.findAll({
-          where: {
-            id_moderateur: moderatorId,
-            statut: 'traite',
-            date_traitement: {
-              [Op.gte]: new Date(Date.now() - 24 * 60 * 60 * 1000)
-            }
-          },
-          order: [['date_traitement', 'DESC']],
-          limit: 10
-        })
-      ]);
-
-      res.json({
-        success: true,
-        data: {
-          assignedToMe,
-          highPriority,
-          unassigned,
-          recentActions,
-          stats: {
-            assignedCount: assignedToMe.length,
-            highPriorityCount: highPriority.length,
-            unassignedCount: unassigned.length
-          }
-        }
-      });
-
+      return this.getModerationQueue(req, res);
     } catch (error) {
-      console.error('Erreur lors de la récupération de la file de modération:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: 'Erreur serveur' 
+      console.error('Erreur getReportedContent:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur lors de la récupération des signalements'
       });
     }
   }
 
-  // Actions administratives
+  /**
+   * Actions administratives principales
+   */
   async performAdminAction(req, res) {
     try {
       const { action, entityType, entityId, data = {} } = req.body;
-
-      // Vérifier les permissions selon l'action
-      if (!await this.checkAdminPermission(req.user.id_user, action)) {
-        return res.status(403).json({
-          success: false,
-          error: 'Permissions insuffisantes'
-        });
-      }
+      
+      console.log('🔧 Action admin demandée:', {
+        action,
+        entityType,
+        entityId,
+        userId: req.user.id_user
+      });
 
       let result;
+      
       switch (action) {
         case 'validate_user':
-          result = await this.validateUser(entityId, data);
+          result = await this.validateUserAction(entityId, data);
           break;
+          
         case 'validate_oeuvre':
-          result = await this.validateOeuvre(entityId, data);
+          result = await this.validateOeuvreAction(entityId, data);
           break;
-        case 'moderate_comment':
-          result = await this.moderateComment(entityId, data);
-          break;
+          
         case 'moderate_signalement':
-          result = await this.moderateSignalement(entityId, data, req.user.id_user);
+          result = await this.moderateSignalementAction(entityId, data, req.user.id_user);
           break;
+          
         case 'suspend_user':
-          result = await this.suspendUser(entityId, data);
+          result = await this.suspendUserAction(entityId, data);
           break;
+          
         case 'bulk_moderate':
-          result = await this.bulkModerate(data, req.user.id_user);
+          result = await this.bulkModerateAction(data, req.user.id_user);
           break;
+          
         default:
           return res.status(400).json({
             success: false,
-            error: 'Action non reconnue'
+            error: `Action non reconnue: ${action}`
           });
       }
 
-      // Log de l'action
-      await this.logAdminAction(req.user.id_user, action, entityType, entityId, data);
+      // Vider le cache concerné
+      this.clearCache(entityType);
 
       res.json({
         success: true,
-        message: `Action "${action}" effectuée avec succès`,
-        data: result
+        message: result.message || `Action "${action}" effectuée avec succès`,
+        data: result.data || result
       });
 
     } catch (error) {
-      console.error('Erreur lors de l\'action administrative:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: 'Erreur serveur' 
+      console.error('Erreur performAdminAction:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Erreur lors de l\'action administrative'
       });
     }
   }
 
-  // Modération en lot
-  async bulkModerate(data, moderatorId) {
-    const { signalements, action, notes } = data;
-    const results = [];
+  /**
+   * Validation d'un utilisateur
+   */
+  async validateUserAction(userId, data) {
+    const { valide, validateur_id, raison } = data;
+    
+    console.log(`📋 Validation utilisateur ${userId}:`, { valide, validateur_id, raison });
+    
+    const user = await this.models.User.findByPk(userId);
+    if (!user) {
+      throw new Error('Utilisateur non trouvé');
+    }
+    
+    const updateData = {
+      statut_validation: valide ? 'valide' : 'rejete',
+      date_validation: new Date(),
+      validateur_id: validateur_id
+    };
+    
+    if (!valide && raison) {
+      updateData.raison_rejet = raison;
+    }
+    
+    if (user.type_user !== 'visiteur') {
+      updateData.statut = valide ? 'actif' : 'inactif';
+    }
+    
+    await user.update(updateData);
+    await user.reload();
+    
+    console.log('✅ Utilisateur mis à jour:', {
+      id: user.id_user,
+      statut_validation: user.statut_validation,
+      statut: user.statut
+    });
+    
+    // Notification
+    if (this.models.Notification) {
+      try {
+        await this.models.Notification.create({
+          user_id: userId,
+          type: valide ? 'validation_acceptee' : 'validation_refusee',
+          titre: valide ? 'Votre compte a été validé' : 'Validation refusée',
+          message: valide 
+            ? 'Félicitations ! Votre compte professionnel a été validé.'
+            : `Votre demande a été refusée. ${raison ? `Raison : ${raison}` : ''}`,
+          lue: false
+        });
+      } catch (err) {
+        console.error('Erreur notification:', err);
+      }
+    }
+    
+    return {
+      message: valide ? 'Utilisateur validé avec succès' : 'Utilisateur rejeté',
+      data: {
+        id_user: user.id_user,
+        nom: user.nom,
+        prenom: user.prenom,
+        email: user.email,
+        id_type_user: user.id_type_user,
+        statut: user.statut,
+        statut_validation: user.statut_validation
+      }
+    };
+  }
 
+  /**
+   * Méthode validateUser pour compatibilité
+   */
+  async validateUser(userId, data) {
+    return this.validateUserAction(userId, data);
+  }
+
+  /**
+   * Validation d'une œuvre
+   */
+  async validateOeuvreAction(oeuvreId, data) {
+    const { valide, validateur_id, raison_rejet } = data;
+    
+    const oeuvre = await this.models.Oeuvre.findByPk(oeuvreId);
+    if (!oeuvre) {
+      throw new Error('Œuvre non trouvée');
+    }
+    
+    await oeuvre.update({
+      statut: valide ? 'publie' : 'rejete',
+      date_validation: new Date(),
+      validateur_id: validateur_id,
+      raison_rejet: !valide ? raison_rejet : null
+    });
+    
+    return {
+      message: valide ? 'Œuvre validée avec succès' : 'Œuvre rejetée',
+      data: oeuvre
+    };
+  }
+
+  /**
+   * Méthode validateOeuvre pour compatibilité
+   */
+  async validateOeuvre(oeuvreId, data) {
+    return this.validateOeuvreAction(oeuvreId, data);
+  }
+
+  /**
+   * Modération d'un signalement
+   */
+  async moderateSignalementAction(signalementId, data, moderatorId) {
+    const signalement = await this.models.Signalement.findByPk(signalementId);
+    if (!signalement) {
+      throw new Error('Signalement non trouvé');
+    }
+    
+    await signalement.update({
+      statut: 'traite',
+      id_moderateur: moderatorId,
+      date_traitement: new Date(),
+      action_prise: data.action,
+      notes_moderation: data.notes
+    });
+    
+    return {
+      message: 'Signalement traité avec succès',
+      data: signalement
+    };
+  }
+
+  /**
+   * Suspension d'un utilisateur
+   */
+  async suspendUserAction(userId, data) {
+    const { raison, duree } = data;
+    
+    const user = await this.models.User.findByPk(userId);
+    if (!user) {
+      throw new Error('Utilisateur non trouvé');
+    }
+    
+    await user.update({
+      statut: 'suspendu',
+      date_suspension: new Date(),
+      raison_suspension: raison,
+      duree_suspension: duree || null
+    });
+    
+    return {
+      message: 'Utilisateur suspendu avec succès',
+      data: user
+    };
+  }
+
+  /**
+   * Modération en lot
+   */
+  async bulkModerateAction(data, moderatorId) {
+    const { signalements = [], action, notes } = data;
+    const results = [];
+    
     for (const signalementId of signalements) {
       try {
-        const result = await this.moderateSignalement(signalementId, { action, notes }, moderatorId);
+        const result = await this.moderateSignalementAction(
+          signalementId,
+          { action, notes },
+          moderatorId
+        );
         results.push({ id: signalementId, success: true, result });
       } catch (error) {
         results.push({ id: signalementId, success: false, error: error.message });
       }
     }
-
-    return results;
+    
+    return {
+      message: `${results.filter(r => r.success).length} signalements traités avec succès`,
+      data: results
+    };
   }
 
-  // Analytics avancées
+  /**
+   * Analytics avancées
+   */
   async getAdvancedAnalytics(req, res) {
     try {
-      if (!await this.checkAdminPermission(req.user.id_user, 'view_analytics')) {
-        return res.status(403).json({
-          success: false,
-          error: 'Permissions insuffisantes'
-        });
-      }
-
       const { period = 30 } = req.query;
-      const startDate = new Date(Date.now() - period * 24 * 60 * 60 * 1000);
-
-      const analytics = await this.getCachedStats(
+      
+      const analytics = await this.getCachedData(
         `dashboard:analytics:${period}`,
-        async () => ({
-          retention: await this.getRetentionMetrics(startDate),
-          funnel: await this.getConversionFunnel(startDate),
-          engagement: await this.getEngagementMetrics(startDate),
-          devices: await this.getDeviceStats(startDate),
-          geographic: await this.getGeoAnalytics(startDate),
-          content: await this.getContentPerformance(startDate)
-        }),
+        () => this.generateAdvancedAnalytics(period),
         3600 // 1 heure
       );
 
@@ -772,47 +977,52 @@ class DashboardController {
         success: true,
         data: analytics
       });
-
     } catch (error) {
-      console.error('Erreur lors de la récupération des analytics:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: 'Erreur serveur' 
+      console.error('Erreur getAdvancedAnalytics:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur lors de la récupération des analytics'
       });
     }
   }
 
-  // Logs d'audit
+  async generateAdvancedAnalytics(period) {
+    const startDate = moment().subtract(period, 'days').toDate();
+    
+    const [userStats, contentStats, engagementStats] = await Promise.all([
+      this.getUserAnalytics(startDate),
+      this.getContentAnalytics(startDate),
+      this.getEngagementAnalytics(startDate)
+    ]);
+
+    return {
+      period,
+      startDate,
+      userStats,
+      contentStats,
+      engagementStats
+    };
+  }
+
+  /**
+   * Logs d'audit
+   */
   async getAuditLogs(req, res) {
     try {
-      if (!await this.checkAdminPermission(req.user.id_user, 'view_audit')) {
-        return res.status(403).json({
-          success: false,
-          error: 'Permissions insuffisantes'
-        });
-      }
-
-      const { page = 1, limit = 50, action, userId, startDate, endDate } = req.query;
+      const { page = 1, limit = 50, userId, action } = req.query;
       const offset = (page - 1) * limit;
-
+      
       const where = {};
-      if (action) where.action = action;
       if (userId) where.id_admin = userId;
-      if (startDate && endDate) {
-        where.date_action = {
-          [Op.between]: [new Date(startDate), new Date(endDate)]
-        };
-      }
+      if (action) where.action = action;
 
       const logs = await this.models.AuditLog.findAndCountAll({
         where,
-        include: [
-          {
-            model: this.models.User,
-            as: 'Admin',
-            attributes: ['nom', 'prenom', 'email']
-          }
-        ],
+        include: [{
+          model: this.models.User,
+          as: 'Admin',
+          attributes: ['nom', 'prenom', 'email']
+        }],
         limit: parseInt(limit),
         offset: parseInt(offset),
         order: [['date_action', 'DESC']]
@@ -830,828 +1040,1455 @@ class DashboardController {
           }
         }
       });
-
     } catch (error) {
-      console.error('Erreur lors de la récupération des logs:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: 'Erreur serveur' 
+      console.error('Erreur getAuditLogs:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur lors de la récupération des logs'
       });
     }
   }
 
-  // QR Code Statistics
-  async getQRStats(req, res) {
-    try {
-      if (!await this.checkAdminPermission(req.user.id_user, 'view_qr_stats')) {
-        return res.status(403).json({
-          success: false,
-          error: 'Permissions insuffisantes'
-        });
-      }
-
-      const { period = 30 } = req.query;
-      const startDate = new Date(Date.now() - period * 24 * 60 * 60 * 1000);
-
-      const [
-        totalScans,
-        uniqueScans,
-        scansByDay,
-        topScannedSites,
-        scansByDevice,
-        scansByLocation
-      ] = await Promise.all([
-        this.models.QRScan?.count({
-          where: { date_scan: { [Op.gte]: startDate } }
-        }) || 0,
-
-        this.models.QRScan?.count({
-          where: { 
-            date_scan: { [Op.gte]: startDate },
-            is_unique: true 
-          }
-        }) || 0,
-
-        this.models.QRScan?.findAll({
-          where: { date_scan: { [Op.gte]: startDate } },
-          attributes: [
-            [this.sequelize.fn('DATE', this.sequelize.col('date_scan')), 'date'],
-            [this.sequelize.fn('COUNT', '*'), 'scans']
-          ],
-          group: [this.sequelize.fn('DATE', this.sequelize.col('date_scan'))],
-          order: [[this.sequelize.fn('DATE', this.sequelize.col('date_scan')), 'ASC']]
-        }) || [],
-
-        this.models.QRScan?.findAll({
-          where: { date_scan: { [Op.gte]: startDate } },
-          include: [{
-            model: this.models.QRCode,
-            include: [{ model: this.models.Lieu, attributes: ['nom'] }]
-          }],
-          attributes: [
-            'id_qr_code',
-            [this.sequelize.fn('COUNT', '*'), 'scan_count']
-          ],
-          group: ['id_qr_code'],
-          order: [[this.sequelize.literal('scan_count'), 'DESC']],
-          limit: 10
-        }) || [],
-
-        this.models.QRScan?.findAll({
-          where: { date_scan: { [Op.gte]: startDate } },
-          attributes: [
-            'device_type',
-            [this.sequelize.fn('COUNT', '*'), 'count']
-          ],
-          group: ['device_type'],
-          order: [[this.sequelize.literal('count'), 'DESC']]
-        }) || [],
-
-        this.models.QRScan?.findAll({
-          where: { 
-            date_scan: { [Op.gte]: startDate },
-            ville: { [Op.ne]: null }
-          },
-          attributes: [
-            'ville',
-            [this.sequelize.fn('COUNT', '*'), 'count']
-          ],
-          group: ['ville'],
-          order: [[this.sequelize.literal('count'), 'DESC']],
-          limit: 15
-        }) || []
-      ]);
-
-      res.json({
-        success: true,
-        data: {
-          overview: {
-            totalScans,
-            uniqueScans,
-            uniqueRate: totalScans > 0 ? ((uniqueScans / totalScans) * 100).toFixed(2) : 0
-          },
-          evolution: scansByDay,
-          topSites: topScannedSites,
-          devices: scansByDevice,
-          locations: scansByLocation,
-          period: {
-            days: period,
-            startDate,
-            endDate: new Date()
-          }
-        }
-      });
-
-    } catch (error) {
-      console.error('Erreur lors de la récupération des stats QR:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: 'Erreur serveur' 
-      });
-    }
-  }
-
-  // Rapport d'activité
+  /**
+   * Rapport d'activité
+   */
   async generateActivityReport(req, res) {
     try {
       const { startDate, endDate, format = 'json' } = req.query;
-      const start = startDate ? new Date(startDate) : this.getDateLimit('month');
+      const start = startDate ? new Date(startDate) : moment().subtract(1, 'month').toDate();
       const end = endDate ? new Date(endDate) : new Date();
 
-      const report = {
-        period: {
-          start: start.toISOString(),
-          end: end.toISOString()
-        },
-        users: {
-          nouveaux: await this.models.User.count({
-            where: {
-              date_creation: { [Op.between]: [start, end] }
-            }
-          }),
-          parType: await this.models.User.findAll({
-            attributes: [
-              'type_user',
-              [this.sequelize.fn('COUNT', '*'), 'count']
-            ],
-            where: {
-              date_creation: { [Op.between]: [start, end] }
-            },
-            group: ['type_user']
-          }),
-          actifs: await this.models.User.count({
-            where: {
-              derniere_connexion: { [Op.between]: [start, end] }
-            }
-          })
-        },
-        content: {
-          oeuvres: await this.models.Oeuvre.count({
-            where: {
-              date_creation: { [Op.between]: [start, end] },
-              statut: 'publie'
-            }
-          }),
-          evenements: await this.models.Evenement.count({
-            where: {
-              date_creation: { [Op.between]: [start, end] }
-            }
-          }),
-          commentaires: await this.models.Commentaire.count({
-            where: {
-              date_creation: { [Op.between]: [start, end] },
-              statut: 'publie'
-            }
-          }),
-          artisanats: await this.models.Artisanat.count({
-            where: {
-              date_creation: { [Op.between]: [start, end] }
-            }
-          })
-        },
-        engagement: {
-          favoris: await this.models.Favori.count({
-            where: {
-              date_ajout: { [Op.between]: [start, end] }
-            }
-          }),
-          participations: await this.models.EvenementUser.count({
-            where: {
-              date_inscription: { [Op.between]: [start, end] }
-            }
-          }),
-          vues: await this.models.Vue.count({
-            where: {
-              date_vue: { [Op.between]: [start, end] }
-            }
-          })
-        },
-        moderation: {
-          signalements: await this.models.Signalement.count({
-            where: {
-              date_signalement: { [Op.between]: [start, end] }
-            }
-          }),
-          signalementsTraites: await this.models.Signalement.count({
-            where: {
-              date_traitement: { [Op.between]: [start, end] },
-              statut: 'traite'
-            }
-          }),
-          oeuvresValidees: await this.models.Oeuvre.count({
-            where: {
-              date_validation: { [Op.between]: [start, end] },
-              statut: 'publie'
-            }
-          })
-        }
-      };
+      const report = await this.generateReport(start, end);
 
       if (format === 'excel') {
-        // Export Excel du rapport
-        await this.exportReportToExcel(report, res);
-      } else {
-        res.json({
-          success: true,
-          data: report
+        // TODO: Implémenter l'export Excel
+        return res.status(501).json({
+          success: false,
+          error: 'Export Excel non implémenté'
         });
       }
 
+      res.json({
+        success: true,
+        data: report
+      });
     } catch (error) {
-      console.error('Erreur lors de la génération du rapport:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: 'Erreur serveur' 
+      console.error('Erreur generateActivityReport:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur lors de la génération du rapport'
       });
     }
   }
 
-  // Méthodes utilitaires
+  /**
+   * Obtenir les détails d'un utilisateur
+   */
+  async getUserDetails(req, res) {
+    try {
+      const { id } = req.params;
+      
+      const user = await this.models.User.findByPk(id, {
+        attributes: { exclude: ['password'] },
+        include: [
+          {
+            model: this.models.Role,
+            as: 'Roles',
+            through: { attributes: [] },
+            attributes: ['id_role', 'nom_role']
+          }
+        ]
+      });
+      
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          error: 'Utilisateur non trouvé'
+        });
+      }
+      
+      res.json({
+        success: true,
+        data: user
+      });
+    } catch (error) {
+      console.error('Erreur getUserDetails:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur lors de la récupération de l\'utilisateur'
+      });
+    }
+  }
+
+  /**
+   * Mettre à jour un utilisateur
+   */
+  async updateUser(req, res) {
+    try {
+      const { id } = req.params;
+      const updateData = req.body;
+      
+      // Retirer les champs sensibles
+      delete updateData.password;
+      delete updateData.id_user;
+      delete updateData.date_creation;
+      
+      const user = await this.models.User.findByPk(id);
+      
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          error: 'Utilisateur non trouvé'
+        });
+      }
+      
+      // Mettre à jour l'utilisateur
+      await user.update(updateData);
+      
+      // Recharger avec les associations
+      await user.reload({
+        include: [{
+          model: this.models.Role,
+          as: 'Roles',
+          through: { attributes: [] }
+        }]
+      });
+      
+      // Log de l'action
+      console.log(`✅ Utilisateur ${id} mis à jour par ${req.user.email}`);
+      
+      res.json({
+        success: true,
+        message: 'Utilisateur mis à jour avec succès',
+        data: user
+      });
+    } catch (error) {
+      console.error('Erreur updateUser:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur lors de la mise à jour de l\'utilisateur'
+      });
+    }
+  }
+
+  /**
+   * Supprimer un utilisateur (soft delete)
+   */
+  /**
+   * Supprimer un utilisateur (soft delete)
+   */
+  /**
+   * Supprimer un utilisateur (hard delete - suppression définitive)
+   */
+  /**
+ * Version simplifiée de deleteUser - suppression directe sans gérer les relations
+ * À utiliser si la version complète génère des erreurs
+ */
+/**
+   * Supprimer un utilisateur (hard delete - suppression définitive)
+   */
+  async deleteUser(req, res) {
+    try {
+      const { id } = req.params;
+      
+      // Charger l'utilisateur avec ses rôles
+      const user = await this.models.User.findByPk(id, {
+        include: [{
+          model: this.models.Role,
+          as: 'Roles',
+          through: { attributes: [] }
+        }]
+      });
+      
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          error: 'Utilisateur non trouvé'
+        });
+      }
+      
+      // Vérifier qu'on ne supprime pas un admin
+      if (user.Roles && user.Roles.some(r => r.nom_role === 'Admin' || r.nom_role === 'Super Admin')) {
+        return res.status(403).json({
+          success: false,
+          error: 'Impossible de supprimer un administrateur'
+        });
+      }
+      
+      // Vérifier qu'on ne se supprime pas soi-même
+      if (user.id_user === req.user.id_user) {
+        return res.status(403).json({
+          success: false,
+          error: 'Vous ne pouvez pas supprimer votre propre compte'
+        });
+      }
+      
+      // SUPPRESSION DÉFINITIVE (Hard Delete)
+      console.log(`🗑️ Suppression DÉFINITIVE de l'utilisateur ${id} par ${req.user.email}`);
+      
+      // 1. Gérer les logs d'audit - IMPORTANT: faire ceci EN PREMIER
+      if (this.models.AuditLog) {
+        try {
+          const auditCount = await this.models.AuditLog.count({ where: { id_admin: id } });
+          if (auditCount > 0) {
+            // Anonymiser les logs au lieu de les supprimer pour garder l'historique
+            await this.models.AuditLog.update(
+              { id_admin: null },
+              { where: { id_admin: id } }
+            );
+            console.log(`✅ ${auditCount} logs d'audit anonymisés`);
+          }
+        } catch (e) {
+          console.log('⚠️ Erreur avec AuditLog:', e.message);
+        }
+      }
+      
+      // 2. Supprimer les relations many-to-many
+      
+      // Relations UserRole
+      if (this.models.UserRole) {
+        await this.models.UserRole.destroy({
+          where: { id_user: id }
+        });
+        console.log('✅ Relations UserRole supprimées');
+      }
+      
+      // Relations UserOrganisation
+      if (this.models.UserOrganisation) {
+        await this.models.UserOrganisation.destroy({
+          where: { id_user: id }
+        });
+        console.log('✅ Relations UserOrganisation supprimées');
+      }
+      
+      // Relations OeuvreUser
+      if (this.models.OeuvreUser) {
+        await this.models.OeuvreUser.destroy({
+          where: { id_user: id }
+        });
+        console.log('✅ Relations OeuvreUser supprimées');
+      }
+      
+      // Relations EvenementUser
+      if (this.models.EvenementUser) {
+        await this.models.EvenementUser.destroy({
+          where: { id_user: id }
+        });
+        console.log('✅ Relations EvenementUser supprimées');
+      }
+      
+      // 3. Gérer les contenus associés - ANONYMISER au lieu de supprimer
+      const anonymousUserId = null; // Mettre null pour anonymiser
+      
+      // Œuvres saisies
+      if (this.models.Oeuvre) {
+        const oeuvresCount = await this.models.Oeuvre.count({ where: { saisi_par: id } });
+        if (oeuvresCount > 0) {
+          await this.models.Oeuvre.update(
+            { saisi_par: anonymousUserId },
+            { where: { saisi_par: id } }
+          );
+          console.log(`✅ ${oeuvresCount} œuvres saisies anonymisées`);
+        }
+        
+        // Œuvres validées
+        const validatedCount = await this.models.Oeuvre.count({ where: { validateur_id: id } });
+        if (validatedCount > 0) {
+          await this.models.Oeuvre.update(
+            { validateur_id: anonymousUserId },
+            { where: { validateur_id: id } }
+          );
+          console.log(`✅ ${validatedCount} œuvres validées anonymisées`);
+        }
+      }
+      
+      // Événements organisés
+      if (this.models.Evenement) {
+        const evenementsCount = await this.models.Evenement.count({ where: { id_user: id } });
+        if (evenementsCount > 0) {
+          await this.models.Evenement.update(
+            { id_user: anonymousUserId },
+            { where: { id_user: id } }
+          );
+          console.log(`✅ ${evenementsCount} événements anonymisés`);
+        }
+      }
+      
+      // Commentaires
+      if (this.models.Commentaire) {
+        const commentairesCount = await this.models.Commentaire.count({ where: { id_user: id } });
+        if (commentairesCount > 0) {
+          await this.models.Commentaire.update(
+            { id_user: anonymousUserId },
+            { where: { id_user: id } }
+          );
+          console.log(`✅ ${commentairesCount} commentaires anonymisés`);
+        }
+      }
+      
+      // Critiques et évaluations
+      if (this.models.CritiqueEvaluation) {
+        const critiquesCount = await this.models.CritiqueEvaluation.count({ where: { id_user: id } });
+        if (critiquesCount > 0) {
+          await this.models.CritiqueEvaluation.update(
+            { id_user: anonymousUserId },
+            { where: { id_user: id } }
+          );
+          console.log(`✅ ${critiquesCount} critiques anonymisées`);
+        }
+      }
+      
+      // Signalements (si l'utilisateur a fait des signalements)
+      if (this.models.Signalement) {
+        try {
+          const signalementsCount = await this.models.Signalement.count({ where: { id_user: id } });
+          if (signalementsCount > 0) {
+            await this.models.Signalement.update(
+              { id_user: anonymousUserId },
+              { where: { id_user: id } }
+            );
+            console.log(`✅ ${signalementsCount} signalements anonymisés`);
+          }
+          
+          // Signalements modérés par cet utilisateur
+          const moderatedCount = await this.models.Signalement.count({ where: { id_moderateur: id } });
+          if (moderatedCount > 0) {
+            await this.models.Signalement.update(
+              { id_moderateur: anonymousUserId },
+              { where: { id_moderateur: id } }
+            );
+            console.log(`✅ ${moderatedCount} signalements modérés anonymisés`);
+          }
+        } catch (e) {
+          console.log('⚠️ Erreur avec Signalement:', e.message);
+        }
+      }
+      
+      // 4. Supprimer les favoris
+      if (this.models.Favori) {
+        const favorisCount = await this.models.Favori.count({ where: { id_user: id } });
+        if (favorisCount > 0) {
+          await this.models.Favori.destroy({
+            where: { id_user: id }
+          });
+          console.log(`✅ ${favorisCount} favoris supprimés`);
+        }
+      }
+      
+      // 5. Supprimer les notifications
+      if (this.models.Notification) {
+        try {
+          const notifCount = await this.models.Notification.count({ where: { id_user: id } });
+          if (notifCount > 0) {
+            await this.models.Notification.destroy({
+              where: { id_user: id }
+            });
+            console.log(`✅ ${notifCount} notifications supprimées`);
+          }
+        } catch (e) {
+          console.log('⚠️ Table Notification non trouvée ou erreur:', e.message);
+        }
+      }
+      
+      // 6. Supprimer les sessions
+      if (this.models.Session) {
+        try {
+          await this.models.Session.destroy({
+            where: { id_user: id }
+          });
+          console.log('✅ Sessions supprimées');
+        } catch (e) {
+          console.log('⚠️ Table Session non trouvée ou erreur:', e.message);
+        }
+      }
+      
+      // 7. Enregistrer la suppression dans les logs AVANT de supprimer l'utilisateur
+      if (this.models.AuditLog) {
+        try {
+          await this.models.AuditLog.create({
+            id_admin: req.user.id_user,
+            action: 'DELETE_USER',
+            type_entite: 'user',
+            id_entite: id,
+            details: JSON.stringify({
+              method: 'hard_delete',
+              user_email: user.email,
+              user_type: user.type_user,
+              user_name: `${user.nom} ${user.prenom}`,
+              deleted_at: new Date().toISOString()
+            }),
+            date_action: new Date()
+          });
+        } catch (e) {
+          console.log('⚠️ Erreur lors de l\'enregistrement du log de suppression:', e.message);
+        }
+      }
+      
+      // 8. SUPPRIMER DÉFINITIVEMENT L'UTILISATEUR
+      await user.destroy();
+      console.log(`✅ Utilisateur ${id} supprimé définitivement de la base de données`);
+      
+      // 9. Vider le cache
+      this.clearCache(`user:${id}`);
+      this.clearCache('users');
+      
+      res.json({
+        success: true,
+        message: 'Utilisateur supprimé définitivement avec succès',
+        data: {
+          method: 'hard_delete',
+          userId: parseInt(id),
+          deletedBy: req.user.id_user,
+          timestamp: new Date().toISOString()
+        }
+      });
+      
+    } catch (error) {
+      console.error('❌ Erreur deleteUser:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur lors de la suppression de l\'utilisateur',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  }
+  /**
+   * Réactiver un utilisateur suspendu
+   */
+  async reactivateUser(req, res) {
+    try {
+      const { id } = req.params;
+      
+      const user = await this.models.User.findByPk(id);
+      
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          error: 'Utilisateur non trouvé'
+        });
+      }
+      
+      await user.update({
+        statut: 'actif',
+        date_suspension: null,
+        date_fin_suspension: null,
+        raison_suspension: null,
+        suspendu_par: null
+      });
+      
+      console.log(`▶️ Utilisateur ${id} réactivé`);
+      
+      res.json({
+        success: true,
+        message: 'Utilisateur réactivé avec succès',
+        data: user
+      });
+    } catch (error) {
+      console.error('Erreur reactivateUser:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur lors de la réactivation de l\'utilisateur'
+      });
+    }
+  }
+
+  /**
+   * Changer le rôle d'un utilisateur
+   */
+  async changeUserRole(req, res) {
+    try {
+      const { id } = req.params;
+      const { role_id } = req.body;
+      
+      const [user, role] = await Promise.all([
+        this.models.User.findByPk(id),
+        this.models.Role.findByPk(role_id)
+      ]);
+      
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          error: 'Utilisateur non trouvé'
+        });
+      }
+      
+      if (!role) {
+        return res.status(404).json({
+          success: false,
+          error: 'Rôle non trouvé'
+        });
+      }
+      
+      // Supprimer les rôles existants
+      await this.models.UserRole.destroy({
+        where: { id_user: id }
+      });
+      
+      // Ajouter le nouveau rôle
+      await this.models.UserRole.create({
+        id_user: id,
+        id_role: role_id
+      });
+      
+      console.log(`🎭 Rôle de l'utilisateur ${id} changé en ${role.nom_role}`);
+      
+      res.json({
+        success: true,
+        message: `Rôle changé en ${role.nom_role}`,
+        data: { user_id: id, role: role.nom_role }
+      });
+    } catch (error) {
+      console.error('Erreur changeUserRole:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur lors du changement de rôle'
+      });
+    }
+  }
+
+  /**
+   * Réinitialiser le mot de passe d'un utilisateur
+   */
+  async resetUserPassword(req, res) {
+    try {
+      const { id } = req.params;
+      const crypto = require('crypto');
+      
+      const user = await this.models.User.findByPk(id);
+      
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          error: 'Utilisateur non trouvé'
+        });
+      }
+      
+      // Générer un mot de passe temporaire
+      const temporaryPassword = crypto.randomBytes(8).toString('hex');
+      
+      // Hasher le mot de passe
+      const bcrypt = require('bcrypt');
+      const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
+      
+      await user.update({
+        password: hashedPassword,
+        doit_changer_mdp: true
+      });
+      
+      // Envoyer un email avec le nouveau mot de passe
+      // TODO: Implémenter l'envoi d'email
+      
+      console.log(`🔑 Mot de passe réinitialisé pour l'utilisateur ${id}`);
+      
+      res.json({
+        success: true,
+        message: 'Mot de passe réinitialisé',
+        data: {
+          temporaryPassword,
+          note: 'L\'utilisateur devra changer ce mot de passe à sa prochaine connexion'
+        }
+      });
+    } catch (error) {
+      console.error('Erreur resetUserPassword:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur lors de la réinitialisation du mot de passe'
+      });
+    }
+  }
+
+  /**
+   * Rechercher des utilisateurs
+   */
+  async searchUsers(req, res) {
+    try {
+      const { q, type = 'nom' } = req.query;
+      
+      let whereClause = {};
+      switch (type) {
+        case 'email':
+          whereClause = { email: { [Op.like]: `%${q}%` } };
+          break;
+        case 'telephone':
+          whereClause = { telephone: { [Op.like]: `%${q}%` } };
+          break;
+        default:
+          whereClause = {
+            [Op.or]: [
+              { nom: { [Op.like]: `%${q}%` } },
+              { prenom: { [Op.like]: `%${q}%` } }
+            ]
+          };
+      }
+      
+      const users = await this.models.User.findAll({
+        where: whereClause,
+        attributes: { exclude: ['password'] },
+        limit: 20,
+        order: [['nom', 'ASC'], ['prenom', 'ASC']]
+      });
+      
+      res.json({
+        success: true,
+        data: users
+      });
+    } catch (error) {
+      console.error('Erreur searchUsers:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur lors de la recherche'
+      });
+    }
+  }
+
+  /**
+   * Actions en masse sur les utilisateurs
+   */
+  async bulkUserAction(req, res) {
+    try {
+      const { user_ids, action, role_id } = req.body;
+      
+      let updateData = {};
+      let message = '';
+      
+      switch (action) {
+        case 'activate':
+          updateData = { statut: 'actif' };
+          message = 'Utilisateurs activés';
+          break;
+        case 'deactivate':
+          updateData = { statut: 'inactif' };
+          message = 'Utilisateurs désactivés';
+          break;
+        case 'delete':
+          updateData = { 
+            statut: 'supprime',
+            date_suppression: new Date()
+          };
+          message = 'Utilisateurs supprimés';
+          break;
+        case 'change_role':
+          if (!role_id) {
+            return res.status(400).json({
+              success: false,
+              error: 'ID de rôle requis pour cette action'
+            });
+          }
+          // Gérer le changement de rôle différemment
+          break;
+      }
+      
+      if (action === 'change_role') {
+        // Changement de rôle en masse
+        await this.models.UserRole.destroy({
+          where: { id_user: user_ids }
+        });
+        
+        const roleAssignments = user_ids.map(id => ({
+          id_user: id,
+          id_role: role_id
+        }));
+        
+        await this.models.UserRole.bulkCreate(roleAssignments);
+        message = 'Rôles mis à jour';
+      } else {
+        // Autres actions
+        await this.models.User.update(updateData, {
+          where: { id_user: user_ids }
+        });
+      }
+      
+      console.log(`📋 Action en masse '${action}' sur ${user_ids.length} utilisateurs`);
+      
+      res.json({
+        success: true,
+        message: `${message} pour ${user_ids.length} utilisateurs`
+      });
+    } catch (error) {
+      console.error('Erreur bulkUserAction:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur lors de l\'action en masse'
+      });
+    }
+  }
+
+  /**
+   * Export des utilisateurs
+   */
+  async exportUsers(req, res) {
+    try {
+      const { format = 'excel', type_user, statut, start_date, end_date } = req.query;
+      
+      // Construire les conditions
+      const where = {};
+      if (type_user) where.id_type_user = type_user;
+      if (statut) where.statut = statut;
+      if (start_date && end_date) {
+        where.date_creation = {
+          [Op.between]: [new Date(start_date), new Date(end_date)]
+        };
+      }
+      
+      const users = await this.models.User.findAll({
+        where,
+        attributes: { exclude: ['password'] },
+        include: [{
+          model: this.models.Role,
+          as: 'Roles',
+          through: { attributes: [] }
+        }],
+        order: [['date_creation', 'DESC']]
+      });
+      
+      if (format === 'csv') {
+        // Export CSV
+        const csv = this.generateCSV(users);
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', 'attachment; filename=users_export.csv');
+        res.send(csv);
+      } else {
+        // Export Excel
+        const ExcelJS = require('exceljs');
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('Utilisateurs');
+        
+        // En-têtes
+        worksheet.columns = [
+          { header: 'ID', key: 'id_user', width: 10 },
+          { header: 'Nom', key: 'nom', width: 20 },
+          { header: 'Prénom', key: 'prenom', width: 20 },
+          { header: 'Email', key: 'email', width: 30 },
+          { header: 'Type', key: 'id_type_user', width: 15 },
+          { header: 'Statut', key: 'statut', width: 15 },
+          { header: 'Date inscription', key: 'date_creation', width: 20 },
+          { header: 'Rôles', key: 'roles', width: 30 }
+        ];
+        
+        // Données
+        users.forEach(user => {
+          worksheet.addRow({
+            ...user.toJSON(),
+            roles: user.Roles ? user.Roles.map(r => r.nom_role).join(', ') : ''
+          });
+        });
+        
+        // Style
+        worksheet.getRow(1).font = { bold: true };
+        worksheet.getRow(1).fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'FFE0E0E0' }
+        };
+        
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', 'attachment; filename=users_export.xlsx');
+        
+        await workbook.xlsx.write(res);
+        res.end();
+      }
+      
+      console.log(`📊 Export de ${users.length} utilisateurs en ${format}`);
+      
+    } catch (error) {
+      console.error('Erreur exportUsers:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur lors de l\'export'
+      });
+    }
+  }
+
+  /**
+   * Obtenir les alertes système
+   */
+  async getAlerts(req, res) {
+    try {
+      const alerts = await this.getCachedData(
+        'dashboard:alerts',
+        () => this.generateAlerts(),
+        300
+      );
+
+      res.json({
+        success: true,
+        data: alerts
+      });
+    } catch (error) {
+      console.error('Erreur getAlerts:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur lors de la récupération des alertes'
+      });
+    }
+  }
+
+  async generateAlerts() {
+    const alerts = [];
+    
+    // Vérifier les utilisateurs en attente depuis longtemps
+    const pendingUsersCount = await this.models.User.count({
+      where: {
+        statut_validation: 'en_attente',
+        date_creation: {
+          [Op.lt]: moment().subtract(7, 'days').toDate()
+        }
+      }
+    });
+    
+    if (pendingUsersCount > 0) {
+      alerts.push({
+        type: 'warning',
+        category: 'users',
+        message: `${pendingUsersCount} utilisateurs en attente depuis plus de 7 jours`,
+        priority: 'high',
+        timestamp: new Date()
+      });
+    }
+    
+    // Vérifier les œuvres en attente
+    const pendingOeuvresCount = await this.models.Oeuvre.count({
+      where: {
+        statut: 'en_attente',
+        date_creation: {
+          [Op.lt]: moment().subtract(3, 'days').toDate()
+        }
+      }
+    });
+    
+    if (pendingOeuvresCount > 10) {
+      alerts.push({
+        type: 'warning',
+        category: 'content',
+        message: `${pendingOeuvresCount} œuvres en attente de validation`,
+        priority: 'medium',
+        timestamp: new Date()
+      });
+    }
+    
+    // Vérifier les signalements non traités
+    const untreatedReports = await this.models.Signalement?.count({
+      where: {
+        statut: 'en_attente',
+        priorite: 'urgente',
+        date_signalement: {
+          [Op.lt]: moment().subtract(24, 'hours').toDate()
+        }
+      }
+    }) || 0;
+    
+    if (untreatedReports > 0) {
+      alerts.push({
+        type: 'error',
+        category: 'moderation',
+        message: `${untreatedReports} signalements urgents non traités depuis 24h`,
+        priority: 'critical',
+        timestamp: new Date()
+      });
+    }
+    
+    // Vérifier l'espace disque (exemple)
+    const diskSpace = await this.checkDiskSpace();
+    if (diskSpace && diskSpace.percentUsed > 90) {
+      alerts.push({
+        type: 'error',
+        category: 'system',
+        message: `Espace disque critique: ${diskSpace.percentUsed}% utilisé`,
+        priority: 'critical',
+        timestamp: new Date()
+      });
+    }
+    
+    // Vérifier les performances
+    const avgResponseTime = await this.getAverageResponseTime();
+    if (avgResponseTime > 2000) { // 2 secondes
+      alerts.push({
+        type: 'warning',
+        category: 'performance',
+        message: `Temps de réponse moyen élevé: ${avgResponseTime}ms`,
+        priority: 'medium',
+        timestamp: new Date()
+      });
+    }
+    
+    return alerts;
+  }
+
+  /**
+   * Obtenir les notifications administrateur
+   */
+  async getNotifications(req, res) {
+    try {
+      const { page = 1, limit = 20, unreadOnly = false } = req.query;
+      const offset = (page - 1) * limit;
+      
+      const where = { 
+        user_id: req.user.id_user,
+        type: { 
+          [Op.in]: ['admin_alert', 'system_notification', 'moderation_required'] 
+        }
+      };
+      
+      if (unreadOnly === 'true') {
+        where.lue = false;
+      }
+      
+      const notifications = await this.models.Notification?.findAndCountAll({
+        where,
+        order: [['date_creation', 'DESC']],
+        limit: parseInt(limit),
+        offset: parseInt(offset)
+      }) || { count: 0, rows: [] };
+      
+      res.json({
+        success: true,
+        data: {
+          items: notifications.rows,
+          pagination: {
+            total: notifications.count,
+            page: parseInt(page),
+            pages: Math.ceil(notifications.count / limit),
+            limit: parseInt(limit),
+            hasNext: page < Math.ceil(notifications.count / limit),
+            hasPrev: page > 1
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Erreur getNotifications:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur lors de la récupération des notifications'
+      });
+    }
+  }
+
+  /**
+   * Envoyer une notification broadcast
+   */
+  async broadcastNotification(req, res) {
+    try {
+      const { title, message, target, type = 'info' } = req.body;
+      
+      console.log('📢 Broadcast notification:', { title, target, type });
+      
+      // Validation supplémentaire
+      if (!title || !message) {
+        return res.status(400).json({
+          success: false,
+          error: 'Titre et message requis'
+        });
+      }
+      
+      // Déterminer les destinataires
+      let whereClause = {};
+      switch (target) {
+        case 'professionals':
+          whereClause = { id_type_user: { [Op.ne]: TYPE_USER_IDS.VISITEUR } };
+          break;
+        case 'visitors':
+          whereClause = { id_type_user: TYPE_USER_IDS.VISITEUR };
+          break;
+        case 'all':
+        default:
+          whereClause = {};
+      }
+      
+      // Récupérer les utilisateurs cibles
+      const users = await this.models.User.findAll({
+        where: {
+          ...whereClause,
+          statut: 'actif',
+          email_verifie: true // Ne notifier que les emails vérifiés
+        },
+        attributes: ['id_user', 'email', 'preferences_notification']
+      });
+      
+      if (users.length === 0) {
+        return res.status(400).json({
+          success: false,
+          error: 'Aucun utilisateur correspondant trouvé'
+        });
+      }
+      
+      // Filtrer selon les préférences de notification
+      const usersToNotify = users.filter(user => {
+        if (!user.preferences_notification) return true;
+        const prefs = JSON.parse(user.preferences_notification);
+        return prefs.admin_notifications !== false;
+      });
+      
+      // Créer les notifications en masse
+      const notifications = usersToNotify.map(user => ({
+        user_id: user.id_user,
+        type: 'broadcast',
+        titre: title,
+        message: message,
+        lue: false,
+        date_creation: new Date(),
+        metadata: JSON.stringify({
+          sender_id: req.user.id_user,
+          target_group: target,
+          notification_type: type
+        })
+      }));
+      
+      if (this.models.Notification) {
+        await this.models.Notification.bulkCreate(notifications, {
+          validate: true,
+          individualHooks: false
+        });
+      }
+      
+      // Log dans l'audit
+      if (this.models.AuditLog) {
+        await this.models.AuditLog.create({
+          id_admin: req.user.id_user,
+          action: 'BROADCAST_NOTIFICATION',
+          type_entite: 'notification',
+          details: JSON.stringify({
+            title,
+            target,
+            recipients_count: usersToNotify.length
+          }),
+          date_action: new Date()
+        });
+      }
+      
+      // Statistiques de l'envoi
+      const stats = {
+        total_users: users.length,
+        notified: usersToNotify.length,
+        skipped: users.length - usersToNotify.length
+      };
+      
+      console.log(`✅ Notification broadcast envoyée:`, stats);
+      
+      res.json({
+        success: true,
+        message: `Notification envoyée à ${usersToNotify.length} utilisateurs`,
+        data: {
+          ...stats,
+          target,
+          type,
+          timestamp: new Date()
+        }
+      });
+    } catch (error) {
+      console.error('Erreur broadcastNotification:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur lors de l\'envoi de la notification',
+        message: error.message
+      });
+    }
+  }
+
+  // ========================================
+  // MÉTHODES UTILITAIRES
+  // ========================================
 
   getDateLimit(period) {
-    const now = new Date();
     switch (period) {
       case 'day':
-        return new Date(now.setDate(now.getDate() - 1));
+        return moment().subtract(1, 'day').toDate();
       case 'week':
-        return new Date(now.setDate(now.getDate() - 7));
+        return moment().subtract(1, 'week').toDate();
       case 'month':
-        return new Date(now.setMonth(now.getMonth() - 1));
+        return moment().subtract(1, 'month').toDate();
       case 'year':
-        return new Date(now.setFullYear(now.getFullYear() - 1));
+        return moment().subtract(1, 'year').toDate();
       default:
-        return new Date(now.setMonth(now.getMonth() - 1));
+        return moment().subtract(1, 'month').toDate();
     }
   }
 
   async getUserGrowth(dateLimit) {
-    return await this.models.User.findAll({
-      where: {
-        date_creation: { [Op.gte]: dateLimit }
-      },
-      attributes: [
-        [this.sequelize.fn('DATE', this.sequelize.col('date_creation')), 'date'],
-        [this.sequelize.fn('COUNT', '*'), 'count']
-      ],
-      group: [this.sequelize.fn('DATE', this.sequelize.col('date_creation'))],
-      order: [[this.sequelize.fn('DATE', this.sequelize.col('date_creation')), 'ASC']]
-    });
+    try {
+      return await this.models.User.findAll({
+        where: {
+          date_creation: { [Op.gte]: dateLimit }
+        },
+        attributes: [
+          [fn('DATE', col('date_creation')), 'date'],
+          [fn('COUNT', '*'), 'count']
+        ],
+        group: [fn('DATE', col('date_creation'))],
+        order: [[fn('DATE', col('date_creation')), 'ASC']],
+        raw: true
+      });
+    } catch (error) {
+      console.error('Erreur getUserGrowth:', error);
+      return [];
+    }
   }
 
   async getContentByType() {
-    const [oeuvres, evenements, lieux, artisanats] = await Promise.all([
+    try {
+      const [oeuvres, evenements, artisanats] = await Promise.all([
+        this.models.Oeuvre.count({ group: ['type_oeuvre'] }),
+        this.models.Evenement.count(),
+        this.models.Artisanat?.count() || 0
+      ]);
+
+      return {
+        oeuvres,
+        evenements,
+        artisanats
+      };
+    } catch (error) {
+      console.error('Erreur getContentByType:', error);
+      return { oeuvres: [], evenements: 0, artisanats: 0 };
+    }
+  }
+
+  async getRecentActivity() {
+    try {
+      const [oeuvres, evenements, commentaires] = await Promise.all([
+        this.models.Oeuvre.findAll({
+          limit: 5,
+          order: [['date_creation', 'DESC']],
+          include: [{
+            model: this.models.User,
+            as: 'Saiseur',
+            attributes: ['nom', 'prenom']
+          }]
+        }),
+        this.models.Evenement.findAll({
+          limit: 5,
+          order: [['date_creation', 'DESC']]
+        }),
+        this.models.Commentaire?.findAll({
+          limit: 5,
+          order: [['date_creation', 'DESC']],
+          include: [{
+            model: this.models.User,
+            attributes: ['nom', 'prenom']
+          }]
+        }) || []
+      ]);
+
+      return { oeuvres, evenements, commentaires };
+    } catch (error) {
+      console.error('Erreur getRecentActivity:', error);
+      return { oeuvres: [], evenements: [], commentaires: [] };
+    }
+  }
+
+  async getTopContributors() {
+    try {
+      return await this.models.User.findAll({
+        attributes: [
+          'id_user',
+          'nom',
+          'prenom',
+          'id_type_user',
+          [
+            literal(`(
+              SELECT COUNT(*) FROM oeuvre 
+              WHERE oeuvre.saisi_par = User.id_user 
+              AND oeuvre.statut = 'publie'
+            )`),
+            'oeuvres_count'
+          ],
+          [
+            literal(`(
+              SELECT COUNT(*) FROM evenement 
+              WHERE evenement.id_user = User.id_user
+            )`),
+            'evenements_count'
+          ]
+        ],
+        order: [[literal('oeuvres_count + evenements_count'), 'DESC']],
+        limit: 10,
+        raw: true
+      });
+    } catch (error) {
+      console.error('Erreur getTopContributors:', error);
+      return [];
+    }
+  }
+
+  async getUserAnalytics(startDate) {
+    const totalUsers = await this.models.User.count();
+    const newUsers = await this.models.User.count({
+      where: { date_creation: { [Op.gte]: startDate } }
+    });
+    const activeUsers = await this.models.User.count({
+      where: { derniere_connexion: { [Op.gte]: startDate } }
+    });
+
+    return {
+      total: totalUsers,
+      new: newUsers,
+      active: activeUsers,
+      retentionRate: totalUsers > 0 ? ((activeUsers / totalUsers) * 100).toFixed(2) : 0
+    };
+  }
+
+  async getContentAnalytics(startDate) {
+    const [oeuvres, evenements, commentaires] = await Promise.all([
       this.models.Oeuvre.count({
-        where: { statut: 'publie' },
-        group: ['id_type_oeuvre'],
-        include: [{ model: this.models.TypeOeuvre, attributes: ['nom_type'] }]
+        where: { date_creation: { [Op.gte]: startDate } }
       }),
       this.models.Evenement.count({
-        group: ['id_type_evenement'],
-        include: [{ model: this.models.TypeEvenement, attributes: ['nom_type'] }]
+        where: { date_creation: { [Op.gte]: startDate } }
       }),
-      this.models.Lieu.count({
-        group: ['typeLieu']
-      }),
-      this.models.Artisanat.count()
+      this.models.Commentaire?.count({
+        where: { date_creation: { [Op.gte]: startDate } }
+      }) || 0
     ]);
 
     return {
       oeuvres,
       evenements,
-      lieux,
-      artisanats
+      commentaires,
+      total: oeuvres + evenements + commentaires
     };
   }
 
-  async getRecentActivity() {
-    const [recentOeuvres, recentEvenements, recentCommentaires, recentSignalements] = await Promise.all([
-      this.models.Oeuvre.findAll({
-        limit: 5,
-        order: [['date_creation', 'DESC']],
-        include: [
-          { model: this.models.TypeOeuvre, attributes: ['nom_type'] },
-          { model: this.models.User, as: 'Saiseur', attributes: ['nom', 'prenom'] }
-        ]
-      }),
-      this.models.Evenement.findAll({
-        limit: 5,
-        order: [['date_creation', 'DESC']],
-        include: [
-          { model: this.models.TypeEvenement, attributes: ['nom_type'] },
-          { model: this.models.User, attributes: ['nom', 'prenom'] }
-        ]
-      }),
-      this.models.Commentaire.findAll({
-        limit: 5,
-        order: [['date_creation', 'DESC']],
-        include: [
-          { model: this.models.User, attributes: ['nom', 'prenom'] }
-        ]
-      }),
-      this.models.Signalement.findAll({
-        limit: 5,
-        order: [['date_signalement', 'DESC']],
-        include: [
-          { model: this.models.User, as: 'Signalant', attributes: ['nom', 'prenom'] }
-        ]
-      })
+  async getEngagementAnalytics(startDate) {
+    const [vues, favoris, participations] = await Promise.all([
+      this.models.Vue?.count({
+        where: { date_vue: { [Op.gte]: startDate } }
+      }) || 0,
+      this.models.Favori?.count({
+        where: { date_ajout: { [Op.gte]: startDate } }
+      }) || 0,
+      this.models.EvenementUser?.count({
+        where: { date_inscription: { [Op.gte]: startDate } }
+      }) || 0
+    ]);
+
+    return { vues, favoris, participations };
+  }
+
+  async generateReport(startDate, endDate) {
+    const [users, content, engagement] = await Promise.all([
+      this.getUserReportData(startDate, endDate),
+      this.getContentReportData(startDate, endDate),
+      this.getEngagementReportData(startDate, endDate)
     ]);
 
     return {
-      oeuvres: recentOeuvres,
-      evenements: recentEvenements,
-      commentaires: recentCommentaires,
-      signalements: recentSignalements
+      period: {
+        start: startDate.toISOString(),
+        end: endDate.toISOString()
+      },
+      users,
+      content,
+      engagement
     };
   }
 
-  async getTopContributors() {
-    return await this.models.User.findAll({
-      attributes: [
-        'id_user',
-        'nom',
-        'prenom',
-        'type_user',
-        [
-          this.sequelize.literal(`(
-            SELECT COUNT(*) FROM oeuvre 
-            WHERE oeuvre.saisi_par = User.id_user 
-            AND oeuvre.statut = 'publie'
-          )`),
-          'oeuvres_count'
-        ],
-        [
-          this.sequelize.literal(`(
-            SELECT COUNT(*) FROM evenement 
-            WHERE evenement.id_user = User.id_user
-          )`),
-          'evenements_count'
-        ]
-      ],
-      order: [[this.sequelize.literal('oeuvres_count + evenements_count'), 'DESC']],
-      limit: 10
-    });
-  }
+  async getUserReportData(startDate, endDate) {
+    const where = {
+      date_creation: { [Op.between]: [startDate, endDate] }
+    };
 
-  async getUpcomingEvents() {
-    return await this.models.Evenement.findAll({
-      where: {
-        date_debut: { [Op.gte]: new Date() }
-      },
-      include: [
-        { model: this.models.TypeEvenement, attributes: ['nom_type'] },
-        { model: this.models.Lieu, attributes: ['nom'] }
-      ],
-      order: [['date_debut', 'ASC']],
-      limit: 10
-    });
-  }
-
-  async getGeographicDistribution() {
-    return await this.models.User.findAll({
-      attributes: [
-        'wilaya_residence',
-        [this.sequelize.fn('COUNT', '*'), 'count']
-      ],
-      group: ['wilaya_residence'],
-      order: [[this.sequelize.literal('count'), 'DESC']]
-    });
-  }
-
-  async getViewsAnalytics(dateLimit) {
-    return await this.models.Vue.findAll({
-      where: {
-        date_vue: { [Op.gte]: dateLimit }
-      },
-      attributes: [
-        [this.sequelize.fn('DATE', this.sequelize.col('date_vue')), 'date'],
-        'type_entite',
-        [this.sequelize.fn('COUNT', '*'), 'vues'],
-        [this.sequelize.fn('COUNT', this.sequelize.literal('CASE WHEN is_unique = true THEN 1 END')), 'vues_uniques']
-      ],
-      group: [
-        this.sequelize.fn('DATE', this.sequelize.col('date_vue')),
-        'type_entite'
-      ],
-      order: [[this.sequelize.fn('DATE', this.sequelize.col('date_vue')), 'ASC']]
-    });
-  }
-
-  async getModerationStats(dateLimit) {
-    const [
-      signalementsParJour,
-      signalementsParType,
-      tempsTraitement
-    ] = await Promise.all([
-      this.models.Signalement.findAll({
-        where: {
-          date_signalement: { [Op.gte]: dateLimit }
-        },
+    const [total, byType, active] = await Promise.all([
+      this.models.User.count({ where }),
+      this.models.User.findAll({
+        where,
         attributes: [
-          [this.sequelize.fn('DATE', this.sequelize.col('date_signalement')), 'date'],
-          'statut',
-          [this.sequelize.fn('COUNT', '*'), 'count']
+          'id_type_user',
+          [fn('COUNT', '*'), 'count']
         ],
-        group: [
-          this.sequelize.fn('DATE', this.sequelize.col('date_signalement')),
-          'statut'
-        ],
-        order: [[this.sequelize.fn('DATE', this.sequelize.col('date_signalement')), 'ASC']]
+        group: ['id_type_user'],
+        raw: true
       }),
-
-      this.models.Signalement.findAll({
+      this.models.User.count({
         where: {
-          date_signalement: { [Op.gte]: dateLimit }
-        },
-        attributes: [
-          'type_entite',
-          'motif',
-          [this.sequelize.fn('COUNT', '*'), 'count']
-        ],
-        group: ['type_entite', 'motif'],
-        order: [[this.sequelize.literal('count'), 'DESC']]
-      }),
-
-      this.models.Signalement.aggregate('duree_traitement_heures', 'AVG', {
-        where: {
-          statut: 'traite',
-          date_traitement: { [Op.gte]: dateLimit }
+          derniere_connexion: { [Op.between]: [startDate, endDate] }
         }
       })
     ]);
 
-    return {
-      evolution: signalementsParJour,
-      parType: signalementsParType,
-      tempsTraitementMoyen: tempsTraitement ? parseFloat(tempsTraitement).toFixed(2) : null
-    };
+    return { total, byType, active };
   }
 
-  // Analytics helpers
-  async getRetentionMetrics(startDate) {
-    // Calcul des métriques de rétention
-    const newUsers = await this.models.User.findAll({
-      where: {
-        date_creation: { [Op.gte]: startDate }
-      },
-      attributes: ['id_user', 'date_creation']
-    });
+  async getContentReportData(startDate, endDate) {
+    const where = {
+      date_creation: { [Op.between]: [startDate, endDate] }
+    };
 
-    const retentionData = [];
-    for (const user of newUsers) {
-      const hasReturned = await this.models.Vue.findOne({
-        where: {
-          id_user: user.id_user,
-          date_vue: {
-            [Op.between]: [
-              new Date(user.date_creation.getTime() + 24 * 60 * 60 * 1000),
-              new Date(user.date_creation.getTime() + 7 * 24 * 60 * 60 * 1000)
-            ]
-          }
-        }
-      });
-      
-      retentionData.push({
-        userId: user.id_user,
-        creationDate: user.date_creation,
-        returned: !!hasReturned
-      });
-    }
+    const [oeuvres, evenements, commentaires] = await Promise.all([
+      this.models.Oeuvre.count({ where: { ...where, statut: 'publie' } }),
+      this.models.Evenement.count({ where }),
+      this.models.Commentaire?.count({ where: { ...where, statut: 'publie' } }) || 0
+    ]);
 
-    const totalNew = newUsers.length;
-    const returned = retentionData.filter(u => u.returned).length;
+    return { oeuvres, evenements, commentaires };
+  }
+
+  async getEngagementReportData(startDate, endDate) {
+    const [favoris, participations, vues] = await Promise.all([
+      this.models.Favori?.count({
+        where: { date_ajout: { [Op.between]: [startDate, endDate] } }
+      }) || 0,
+      this.models.EvenementUser?.count({
+        where: { date_inscription: { [Op.between]: [startDate, endDate] } }
+      }) || 0,
+      this.models.Vue?.count({
+        where: { date_vue: { [Op.between]: [startDate, endDate] } }
+      }) || 0
+    ]);
+
+    return { favoris, participations, vues };
+  }
+
+  // Méthode helper pour générer le CSV
+  generateCSV(users) {
+    const headers = ['ID', 'Nom', 'Prénom', 'Email', 'Type', 'Statut', 'Date inscription', 'Rôles'];
+    const rows = users.map(user => [
+      user.id_user,
+      user.nom,
+      user.prenom,
+      user.email,
+      user.id_type_user,
+      user.statut,
+      user.date_creation,
+      user.Roles ? user.Roles.map(r => r.nom_role).join(';') : ''
+    ]);
     
-    return {
-      totalNewUsers: totalNew,
-      returnedUsers: returned,
-      retentionRate: totalNew > 0 ? ((returned / totalNew) * 100).toFixed(2) : 0,
-      details: retentionData
-    };
-  }
-
-  async getConversionFunnel(startDate) {
-    const [
-      visitors,
-      registered,
-      activeUsers,
-      contributors
-    ] = await Promise.all([
-      this.models.Vue.count({
-        where: { date_vue: { [Op.gte]: startDate } },
-        distinct: ['session_id']
-      }),
-      
-      this.models.User.count({
-        where: { date_creation: { [Op.gte]: startDate } }
-      }),
-      
-      this.models.User.count({
-        where: {
-          date_creation: { [Op.gte]: startDate },
-          derniere_connexion: { [Op.gte]: startDate }
-        }
-      }),
-      
-      this.models.User.count({
-        where: {
-          date_creation: { [Op.gte]: startDate },
-          [Op.or]: [
-            {
-              id_user: {
-                [Op.in]: this.sequelize.literal(`(
-                  SELECT DISTINCT saisi_par FROM oeuvre 
-                  WHERE date_creation >= '${startDate.toISOString()}'
-                )`)
-              }
-            },
-            {
-              id_user: {
-                [Op.in]: this.sequelize.literal(`(
-                  SELECT DISTINCT id_user FROM evenement 
-                  WHERE date_creation >= '${startDate.toISOString()}'
-                )`)
-              }
-            }
-          ]
-        }
-      })
-    ]);
-
-    return {
-      visitors,
-      registered,
-      activeUsers,
-      contributors,
-      conversionRates: {
-        visitorToRegistered: visitors > 0 ? ((registered / visitors) * 100).toFixed(2) : 0,
-        registeredToActive: registered > 0 ? ((activeUsers / registered) * 100).toFixed(2) : 0,
-        activeToContributor: activeUsers > 0 ? ((contributors / activeUsers) * 100).toFixed(2) : 0
-      }
-    };
-  }
-
-  async getEngagementMetrics(startDate) {
-    const [
-      avgSessionDuration,
-      pagesPerSession,
-      bounceRate,
-      topPages
-    ] = await Promise.all([
-      this.models.Vue.aggregate('duree_secondes', 'AVG', {
-        where: {
-          date_vue: { [Op.gte]: startDate },
-          duree_secondes: { [Op.ne]: null }
-        }
-      }),
-
-      this.models.Vue.findAll({
-        where: { date_vue: { [Op.gte]: startDate } },
-        attributes: [
-          'session_id',
-          [this.sequelize.fn('COUNT', '*'), 'pages']
-        ],
-        group: ['session_id']
-      }),
-
-      this.models.Vue.count({
-        where: {
-          date_vue: { [Op.gte]: startDate },
-          duree_secondes: { [Op.lt]: 30 }
-        }
-      }),
-
-      this.models.Vue.findAll({
-        where: { date_vue: { [Op.gte]: startDate } },
-        attributes: [
-          'type_entite',
-          'id_entite',
-          [this.sequelize.fn('COUNT', '*'), 'vues']
-        ],
-        group: ['type_entite', 'id_entite'],
-        order: [[this.sequelize.literal('vues'), 'DESC']],
-        limit: 10
-      })
-    ]);
-
-    const avgPages = pagesPerSession.length > 0 
-      ? pagesPerSession.reduce((sum, session) => sum + parseInt(session.dataValues.pages), 0) / pagesPerSession.length
-      : 0;
-
-    const totalSessions = pagesPerSession.length;
+    const csv = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell || ''}"`).join(','))
+    ].join('\n');
     
-    return {
-      avgSessionDuration: avgSessionDuration ? parseFloat(avgSessionDuration).toFixed(2) : null,
-      avgPagesPerSession: avgPages.toFixed(2),
-      bounceRate: totalSessions > 0 ? ((bounceRate / totalSessions) * 100).toFixed(2) : 0,
-      topPages
-    };
+    return csv;
   }
 
-  async getDeviceStats(startDate) {
-    return await this.models.Vue.findAll({
-      where: { date_vue: { [Op.gte]: startDate } },
-      attributes: [
-        'device_type',
-        [this.sequelize.fn('COUNT', '*'), 'count'],
-        [this.sequelize.fn('COUNT', this.sequelize.literal('DISTINCT session_id')), 'unique_sessions']
-      ],
-      group: ['device_type'],
-      order: [[this.sequelize.literal('count'), 'DESC']]
-    });
-  }
-
-  async getGeoAnalytics(startDate) {
-    return await this.models.Vue.findAll({
-      where: {
-        date_vue: { [Op.gte]: startDate },
-        pays: { [Op.ne]: null }
-      },
-      attributes: [
-        'pays',
-        'ville',
-        [this.sequelize.fn('COUNT', '*'), 'vues'],
-        [this.sequelize.fn('COUNT', this.sequelize.literal('DISTINCT session_id')), 'sessions']
-      ],
-      group: ['pays', 'ville'],
-      order: [[this.sequelize.literal('vues'), 'DESC']],
-      limit: 20
-    });
-  }
-
-  async getContentPerformance(startDate) {
-    const [topOeuvres, topEvenements] = await Promise.all([
-      this.models.Vue.findAll({
-        where: {
-          type_entite: 'oeuvre',
-          date_vue: { [Op.gte]: startDate }
-        },
-        include: [{
-          model: this.models.Oeuvre,
-          attributes: ['titre'],
-          include: [{ model: this.models.User, as: 'Saiseur', attributes: ['nom', 'prenom'] }]
-        }],
-        attributes: [
-          'id_entite',
-          [this.sequelize.fn('COUNT', '*'), 'vues'],
-          [this.sequelize.fn('COUNT', this.sequelize.literal('DISTINCT session_id')), 'sessions'],
-          [this.sequelize.fn('AVG', this.sequelize.col('duree_secondes')), 'avg_duration']
-        ],
-        group: ['id_entite'],
-        order: [[this.sequelize.literal('vues'), 'DESC']],
-        limit: 10
-      }),
-
-      this.models.Vue.findAll({
-        where: {
-          type_entite: 'evenement',
-          date_vue: { [Op.gte]: startDate }
-        },
-        include: [{
-          model: this.models.Evenement,
-          attributes: ['nom_evenement'],
-          include: [{ model: this.models.User, attributes: ['nom', 'prenom'] }]
-        }],
-        attributes: [
-          'id_entite',
-          [this.sequelize.fn('COUNT', '*'), 'vues'],
-          [this.sequelize.fn('COUNT', this.sequelize.literal('DISTINCT session_id')), 'sessions']
-        ],
-        group: ['id_entite'],
-        order: [[this.sequelize.literal('vues'), 'DESC']],
-        limit: 10
-      })
-    ]);
-
-    return { topOeuvres, topEvenements };
-  }
-
-  // Actions de modération
-  async validateUser(userId, data) {
-    const user = await this.models.User.findByPk(userId);
-    if (!user) throw new Error('Utilisateur non trouvé');
-
-    await user.update({
-      professionnel_valide: data.valide,
-      statut_compte: data.valide ? 'actif' : 'suspendu',
-      date_validation_professionnel: new Date(),
-      validateur_professionnel_id: data.validateur_id
-    });
-
-    return user;
-  }
-
-  async validateOeuvre(oeuvreId, data) {
-    const oeuvre = await this.models.Oeuvre.findByPk(oeuvreId);
-    if (!oeuvre) throw new Error('Œuvre non trouvée');
-
-    await oeuvre.update({
-      statut: data.valide ? 'publie' : 'rejete',
-      date_validation: new Date(),
-      validateur_id: data.validateur_id,
-      raison_rejet: data.raison_rejet
-    });
-
-    return oeuvre;
-  }
-
-  async moderateComment(commentId, data) {
-    const comment = await this.models.Commentaire.findByPk(commentId);
-    if (!comment) throw new Error('Commentaire non trouvé');
-
-    await comment.update({
-      statut: data.statut,
-      date_modification: new Date()
-    });
-
-    return comment;
-  }
-
-  async moderateSignalement(signalementId, data, moderatorId) {
-    const signalement = await this.models.Signalement.findByPk(signalementId);
-    if (!signalement) throw new Error('Signalement non trouvé');
-
-    const dureeTraitement = signalement.date_signalement 
-      ? (new Date() - signalement.date_signalement) / (1000 * 60 * 60)
-      : null;
-
-    await signalement.update({
-      statut: 'traite',
-      id_moderateur: moderatorId,
-      date_traitement: new Date(),
-      action_prise: data.action,
-      notes_moderation: data.notes,
-      duree_traitement_heures: dureeTraitement
-    });
-
-    // Appliquer l'action selon le type
-    await this.applyModerationAction(signalement, data.action, data.notes);
-
-    return signalement;
-  }
-
-  async applyModerationAction(signalement, action, notes) {
-    switch (action) {
-      case 'suppression_contenu':
-        await this.deleteReportedContent(signalement);
-        break;
-      case 'suspension_temporaire':
-      case 'suspension_permanente':
-        await this.suspendReportedUser(signalement, action, notes);
-        break;
-      case 'avertissement':
-        await this.warnUser(signalement, notes);
-        break;
-      case 'signalement_autorites':
-        await this.notifyAuthorities(signalement);
-        break;
-    }
-  }
-
-  async deleteReportedContent(signalement) {
-    switch (signalement.type_entite) {
-      case 'commentaire':
-        await this.models.Commentaire.update(
-          { statut: 'supprime', date_suppression: new Date() },
-          { where: { id_commentaire: signalement.id_entite } }
-        );
-        break;
-      case 'oeuvre':
-        await this.models.Oeuvre.update(
-          { statut: 'supprime', date_suppression: new Date() },
-          { where: { id_oeuvre: signalement.id_entite } }
-        );
-        break;
-    }
-  }
-
-  async suspendUser(userId, data) {
-    const user = await this.models.User.findByPk(userId);
-    if (!user) throw new Error('Utilisateur non trouvé');
-
-    await user.update({
-      statut_compte: 'suspendu',
-      date_suspension: new Date(),
-      raison_suspension: data.raison,
-      duree_suspension: data.duree
-    });
-
-    return user;
-  }
-
-  async logAdminAction(adminId, action, entityType, entityId, data) {
+  // Méthodes helper supplémentaires
+  async checkDiskSpace() {
     try {
-      await this.models.AuditLog.create({
-        id_admin: adminId,
-        action,
-        entity_type: entityType,
-        entity_id: entityId,
-        details: JSON.stringify(data),
-        ip_address: data.ip || null,
-        user_agent: data.userAgent || null,
-        date_action: new Date()
+      // Implémentation basique - à adapter selon votre système
+      // const diskUsage = require('diskusage');
+      // const path = require('os').platform() === 'win32' ? 'c:' : '/';
+      // const info = await diskUsage.check(path);
+      
+      // return {
+      //   total: info.total,
+      //   used: info.total - info.free,
+      //   free: info.free,
+      //   percentUsed: Math.round((info.total - info.free) / info.total * 100)
+      // };
+      
+      // Version simplifiée pour éviter les erreurs
+      return {
+        total: 100000000000, // 100GB
+        used: 50000000000,   // 50GB
+        free: 50000000000,   // 50GB
+        percentUsed: 50
+      };
+    } catch (error) {
+      console.error('Erreur checkDiskSpace:', error);
+      return null;
+    }
+  }
+
+  async getAverageResponseTime() {
+    try {
+      // Récupérer les logs de performance des dernières 24h
+      if (!this.models.PerformanceLog) return 0;
+      
+      const result = await this.models.PerformanceLog.findOne({
+        attributes: [
+          [this.sequelize.fn('AVG', this.sequelize.col('response_time')), 'avg_time']
+        ],
+        where: {
+          created_at: {
+            [Op.gte]: moment().subtract(24, 'hours').toDate()
+          }
+        },
+        raw: true
+      });
+      
+      return result?.avg_time || 0;
+    } catch (error) {
+      console.error('Erreur getAverageResponseTime:', error);
+      return 0;
+    }
+  }
+
+  async getActiveParcoursCount() {
+    try {
+      if (!this.models.Parcours) return 0;
+      return await this.models.Parcours.count({
+        where: { statut: 'actif' }
       });
     } catch (error) {
-      console.error('Erreur lors du log audit:', error);
+      return 0;
+    }
+  }
+
+  async getPatrimoineEvolution() {
+    try {
+      if (!this.models.Lieu) return [];
+      
+      return await this.models.Lieu.findAll({
+        attributes: [
+          [fn('DATE_FORMAT', col('date_creation'), '%Y-%m'), 'month'],
+          [fn('COUNT', '*'), 'count']
+        ],
+        where: {
+          date_creation: {
+            [Op.gte]: moment().subtract(12, 'months').toDate()
+          }
+        },
+        group: [fn('DATE_FORMAT', col('date_creation'), '%Y-%m')],
+        order: [[literal('month'), 'ASC']],
+        raw: true
+      });
+    } catch (error) {
+      return [];
+    }
+  }
+
+  async getPopularPatrimoineSites() {
+    try {
+      if (!this.models.Lieu || !this.models.Favori) return [];
+      
+      return await this.models.Lieu.findAll({
+        attributes: [
+          'id_lieu',
+          'nom_fr',
+          'nom_ar',
+          'typeLieu',
+          [
+            literal(`(
+              SELECT COUNT(*) FROM favori 
+              WHERE favori.entity_type = 'lieu' 
+              AND favori.entity_id = Lieu.id_lieu
+            )`),
+            'favorites_count'
+          ]
+        ],
+        order: [[literal('favorites_count'), 'DESC']],
+        limit: 10,
+        raw: true
+      });
+    } catch (error) {
+      return [];
+    }
+  }
+
+  async getQRScanPeakHours(startDate) {
+    try {
+      if (!this.models.QRScan) return [];
+      
+      return await this.models.QRScan.findAll({
+        attributes: [
+          [fn('HOUR', col('scan_date')), 'hour'],
+          [fn('COUNT', '*'), 'scans']
+        ],
+        where: { scan_date: { [Op.gte]: startDate } },
+        group: [fn('HOUR', col('scan_date'))],
+        order: [[literal('hour'), 'ASC']],
+        raw: true
+      });
+    } catch (error) {
+      return [];
     }
   }
 }

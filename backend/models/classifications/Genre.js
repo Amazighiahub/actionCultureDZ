@@ -21,6 +21,25 @@ module.exports = (sequelize) => {
     Genre.hasMany(models.Livre, { foreignKey: 'id_genre' });
     Genre.hasMany(models.Film, { foreignKey: 'id_genre' });
     Genre.hasMany(models.AlbumMusical, { foreignKey: 'id_genre' });
+    
+    // NOUVELLES ASSOCIATIONS POUR ARTICLES
+    Genre.hasMany(models.Article, { foreignKey: 'id_genre' });
+    Genre.hasMany(models.ArticleScientifique, { foreignKey: 'id_genre' });
+    
+    // NOUVELLES ASSOCIATIONS POUR LA HIÉRARCHIE
+    Genre.belongsToMany(models.TypeOeuvre, { 
+      through: models.TypeOeuvreGenre,
+      foreignKey: 'id_genre',
+      otherKey: 'id_type_oeuvre',
+      as: 'TypesAssocies'
+    });
+    
+    Genre.belongsToMany(models.Categorie, { 
+      through: models.GenreCategorie,
+      foreignKey: 'id_genre',
+      otherKey: 'id_categorie',
+      as: 'CategoriesDisponibles'
+    });
   };
 
   return Genre;

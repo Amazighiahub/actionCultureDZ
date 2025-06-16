@@ -296,7 +296,7 @@ class UserController {
             id_user: user.id_user,
             email: user.email,
             type_user: user.type_user,
-            professionnel_valide: user.professionnel_valide,
+            statut_validation: user.statut_validation,
             roles: userComplete.Roles ? userComplete.Roles.map(role => role.nom_role) : []
           },
           secret,

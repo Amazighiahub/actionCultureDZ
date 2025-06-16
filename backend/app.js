@@ -9,6 +9,8 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const compression = require('compression');
 const path = require('path');
+const csrf = require('csurf');
+const cookieParser = require('cookie-parser');
 
 // Importation des middlewares
 const corsMiddleware = require('./middlewares/corsMiddleware');
@@ -32,7 +34,35 @@ class App {
     this.models = null;
     this.authMiddleware = null;
     this.sequelize = null;
-    this.config = config; // Stocker la configuration adaptée
+    this.config = config;
+    this.csrfProtection = null;
+  }
+
+  // Vérifier les variables requises
+  checkRequiredEnvVars() {
+    if (!this.config.database.name || !this.config.database.username) {
+      throw new Error('Configuration de base de données manquante');
+    }
+    
+    if (!this.config.jwt.secret || this.config.jwt.secret === 'your-secret-key-change-in-production') {
+      if (this.config.server.environment === 'production') {
+        throw new Error('JWT_SECRET doit être configuré en production');
+      } else {
+        console.warn('⚠️ JWT_SECRET utilise la valeur par défaut (non sécurisé)');
+      }
+    }
+  }
+
+  initializeCSRFProtection() {
+    // Configuration du CSRF protection
+    this.csrfProtection = csrf({
+      cookie: {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict'
+      }
+    });
+    console.log('✅ CSRF Protection initialisée');
   }
 
   // Initialisation des middlewares de base
@@ -62,14 +92,16 @@ class App {
 
     // CORS
     this.app.use(corsMiddleware);
- this.app.use((req, res, next) => {
-    if (req.path === '/.well-known/appspecific/com.chrome.devtools.json' ||
-        req.path === '/favicon.ico' ||
-        req.path === '/robots.txt') {
-      return res.status(404).end();
-    }
-    next();
-  });
+    
+    this.app.use((req, res, next) => {
+      if (req.path === '/.well-known/appspecific/com.chrome.devtools.json' ||
+          req.path === '/favicon.ico' ||
+          req.path === '/robots.txt') {
+        return res.status(404).end();
+      }
+      next();
+    });
+
     // Compression
     this.app.use(compression({
       filter: (req, res) => {
@@ -87,6 +119,9 @@ class App {
     } else {
       this.app.use(morgan(':remote-addr - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent" - :response-time ms'));
     }
+
+    // Cookie Parser (nécessaire pour CSRF)
+    this.app.use(cookieParser());
 
     // Parsing des données
     this.app.use(express.json({ 
@@ -118,6 +153,11 @@ class App {
 
     // Log des accès non autorisés
     this.app.use(auditMiddleware.logUnauthorizedAccess);
+    
+    this.app.use((req, res, next) => {
+      console.log(`${req.method} ${req.path} - ${req.ip}`);
+      next();
+    });
 
     // Headers de sécurité supplémentaires
     this.app.use((req, res, next) => {
@@ -133,79 +173,87 @@ class App {
   }
 
   // Initialisation de la base de données
-  // Dans app.js, méthode initializeDatabase
-async initializeDatabase() {
-  try {
-    const dbConfig = {
-      database: this.config.database.name,
-      username: this.config.database.username,
-      password: this.config.database.password,
-      host: this.config.database.host,
-      port: this.config.database.port,
-      dialect: this.config.database.dialect,
-      logging: this.config.server.environment === 'development' ? console.log : false,
-      pool: this.config.database.pool
-    };
+  async initializeDatabase() {
+    try {
+      const dbConfig = {
+        database: this.config.database.name,
+        username: this.config.database.username,
+        password: this.config.database.password,
+        host: this.config.database.host,
+        port: this.config.database.port,
+        dialect: this.config.database.dialect,
+        logging: this.config.server.environment === 'development' ? console.log : false,
+        pool: this.config.database.pool
+      };
 
-    // Créer la base de données si elle n'existe pas
-    await createDatabase(dbConfig);
+      // Créer la base de données si elle n'existe pas
+      await createDatabase(dbConfig);
 
-    // Initialiser la connexion et les modèles
-    const { sequelize, models } = await initializeDatabase(dbConfig);
-    
-    // IMPORTANT: Ajouter sequelize aux modèles AVANT de les stocker
-    models.sequelize = sequelize;
-    models.Sequelize = require('sequelize');
-    
-    this.models = models;
-    this.sequelize = sequelize;
+      // Initialiser la connexion et les modèles
+      const { sequelize, models } = await initializeDatabase(dbConfig);
+      
+      // IMPORTANT: Ajouter sequelize aux modèles AVANT de les stocker
+      models.sequelize = sequelize;
+      models.Sequelize = require('sequelize');
+      
+      this.models = models;
+      this.sequelize = sequelize;
 
-    // Initialiser le middleware d'authentification avec les modèles
-    this.authMiddleware = createAuthMiddleware(models);
+      // Initialiser le middleware d'authentification avec les modèles
+      this.authMiddleware = createAuthMiddleware(models);
 
-    // Vérifier la connexion
-    await sequelize.authenticate();
-    console.log('✅ Connexion à la base de données établie avec succès');
-    console.log('✅ sequelize ajouté aux modèles');
+      // Vérifier la connexion
+      await sequelize.authenticate();
+      console.log('✅ Connexion à la base de données établie avec succès');
+      console.log('✅ sequelize ajouté aux modèles');
 
-    // Synchroniser les modèles si configuré
-    if (this.config.server.environment === 'development' && this.config.database.sync) {
-      await sequelize.sync({ alter: true });
-      console.log('✅ Modèles synchronisés avec la base de données');
+      // Synchroniser les modèles si configuré
+      if (this.config.server.environment === 'development' && this.config.database.sync) {
+        await sequelize.sync({ alter: true });
+        console.log('✅ Modèles synchronisés avec la base de données');
+      }
+
+      return { sequelize, models };
+    } catch (error) {
+      console.error('❌ Erreur lors de l\'initialisation de la base de données:', error);
+      throw error;
     }
-
-    return { sequelize, models };
-  } catch (error) {
-    console.error('❌ Erreur lors de l\'initialisation de la base de données:', error);
-    throw error;
   }
-}
 
   // Initialisation des rate limiters
-  initializeRateLimiters() {
-    // Rate limiting pour l'authentification
-    this.app.use('/api/users/login', rateLimitMiddleware.auth);
-    this.app.use('/api/users/register', rateLimitMiddleware.auth);
-    this.app.use('/api/users/forgot-password', rateLimitMiddleware.auth);
-    this.app.use('/api/users/reset-password', rateLimitMiddleware.auth);
+  // Remplacez la méthode initializeRateLimiters() dans app.js par celle-ci :
 
-    // Rate limiting pour les créations
-    this.app.use('/api/oeuvres', rateLimitMiddleware.creation);
-    this.app.use('/api/evenements', rateLimitMiddleware.creation);
-    this.app.use('/api/artisanat', rateLimitMiddleware.creation);
-    this.app.use('/api/patrimoine/sites', rateLimitMiddleware.creation);
-    
-    // Rate limiting pour les actions sensibles
-    this.app.use('/api/dashboard/actions', rateLimitMiddleware.sensitiveActions);
-    this.app.use('/api/users/change-password', rateLimitMiddleware.sensitiveActions);
-    this.app.use('/api/professionnel/export', rateLimitMiddleware.sensitiveActions);
-    
-    // Rate limiting adaptatif général
-    this.app.use('/api/', rateLimitMiddleware.adaptive);
+// Dans app.js, remplacez la méthode initializeRateLimiters() par celle-ci :
 
-    console.log('✅ Rate limiters initialisés');
+initializeRateLimiters() {
+  // Vérifier que CSRF est initialisé
+  if (!this.csrfProtection) {
+    console.warn('⚠️ CSRF Protection non initialisée, initialisation...');
+    this.initializeCSRFProtection();
   }
+  
+  // Rate limiting pour l'authentification (avec CSRF)
+  this.app.use('/api/users/login', ...rateLimitMiddleware.auth);
+  this.app.use('/api/users/register', ...rateLimitMiddleware.auth);
+  this.app.use('/api/users/forgot-password', this.csrfProtection, ...rateLimitMiddleware.auth);
+  this.app.use('/api/users/reset-password', this.csrfProtection, ...rateLimitMiddleware.auth);
 
+  // Rate limiting pour les créations
+  this.app.use('/api/oeuvres', ...rateLimitMiddleware.creation);
+  this.app.use('/api/evenements', ...rateLimitMiddleware.creation);
+  this.app.use('/api/artisanat', ...rateLimitMiddleware.creation);
+  this.app.use('/api/patrimoine/sites', ...rateLimitMiddleware.creation);
+  
+  // Rate limiting pour les actions sensibles (avec CSRF)
+  this.app.use('/api/dashboard/actions', ...rateLimitMiddleware.sensitiveActions);
+  this.app.use('/api/users/change-password', this.csrfProtection, ...rateLimitMiddleware.sensitiveActions);
+  this.app.use('/api/professionnel/export', ...rateLimitMiddleware.sensitiveActions);
+  
+  // Rate limiting général - utiliser 'general' au lieu de 'adaptive'
+  this.app.use('/api/', ...rateLimitMiddleware.general);
+
+  console.log('✅ Rate limiters initialisés avec CSRF protection');
+}
   // Initialisation des routes
   initializeRoutes() {
     if (!this.models) {
@@ -214,6 +262,11 @@ async initializeDatabase() {
     if (!this.authMiddleware) {
       throw new Error('Le middleware d\'authentification doit être initialisé avant les routes');
     }
+
+    // Route pour obtenir le token CSRF
+    this.app.get('/api/csrf-token', (req, res) => {
+      res.json({ csrfToken: req.csrfToken ? req.csrfToken() : null });
+    });
 
     // Route de santé
     this.app.get('/health', (req, res) => {
@@ -560,6 +613,7 @@ async initializeDatabase() {
       
       // Initialiser dans l'ordre
       this.initializeMiddlewares();
+      this.initializeCSRFProtection();
       await this.initializeDatabase();
       this.initializeRateLimiters();
       this.initializeRoutes();
@@ -573,21 +627,6 @@ async initializeDatabase() {
     } catch (error) {
       console.error('❌ Erreur lors de l\'initialisation de l\'application:', error);
       throw error;
-    }
-  }
-
-  // Vérifier les variables requises
-  checkRequiredEnvVars() {
-    if (!this.config.database.name || !this.config.database.username) {
-      throw new Error('Configuration de base de données manquante');
-    }
-    
-    if (!this.config.jwt.secret || this.config.jwt.secret === 'your-secret-key-change-in-production') {
-      if (this.config.server.environment === 'production') {
-        throw new Error('JWT_SECRET doit être configuré en production');
-      } else {
-        console.warn('⚠️ JWT_SECRET utilise la valeur par défaut (non sécurisé)');
-      }
     }
   }
 

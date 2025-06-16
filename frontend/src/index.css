@@ -1,377 +1,113 @@
-@import 'tailwindcss/base';
-@import 'tailwindcss/components';
-@import 'tailwindcss/utilities';
 
-/* =============================================================================
-   PALETTE PATRIMOINE ALGÉRIEN - VARIABLES CSS
-   ============================================================================= */
-:root {
-  /* Couleurs principales */
-  --patrimoine-creme: #F6F0EA;
-  --patrimoine-canard: #013D3B;
-  --patrimoine-canard-light: #2D5A57;
-  --patrimoine-canard-dark: #001F1D;
-  --patrimoine-or: #F2C572;
-  --patrimoine-or-light: #F5D499;
-  --patrimoine-or-dark: #E6B347;
-  --patrimoine-emeraude: #059669;
-  --patrimoine-emeraude-light: #10B981;
-  --patrimoine-emeraude-dark: #047857;
-  --patrimoine-datte: #EA4335;
-  --patrimoine-datte-light: #F87171;
-  --patrimoine-datte-dark: #DC2626;
-  --patrimoine-sombre: #232323;
-  --patrimoine-sombre-light: #4B5563;
-  
-  /* Gradients */
-  --gradient-patrimoine: linear-gradient(135deg, var(--patrimoine-canard) 0%, var(--patrimoine-emeraude) 100%);
-  --gradient-sunset: linear-gradient(135deg, var(--patrimoine-or) 0%, var(--patrimoine-datte) 100%);
-  --gradient-creme: linear-gradient(135deg, var(--patrimoine-creme) 0%, #FFFFFF 100%);
-  
-  /* Ombres */
-  --shadow-patrimoine: 0 4px 14px 0 rgba(1, 61, 59, 0.1);
-  --shadow-patrimoine-lg: 0 10px 25px -3px rgba(1, 61, 59, 0.1), 0 4px 6px -2px rgba(1, 61, 59, 0.05);
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-/* =============================================================================
-   STYLES DE BASE
-   ============================================================================= */
-html {
-  scroll-behavior: smooth;
-}
+/* Système de design pour la plateforme culturelle algérienne */
 
-body {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  background-color: var(--patrimoine-creme);
-  color: var(--patrimoine-sombre);
-  line-height: 1.6;
-}
+@layer base {
+  :root {
+    --background: 42 21% 97%;
+    --foreground: 210 40% 8%;
 
-/* =============================================================================
-   CLASSES UTILITAIRES PATRIMOINE
-   ============================================================================= */
+    --card: 0 0% 100%;
+    --card-foreground: 210 40% 8%;
 
-/* Couleurs de fond */
-.bg-patrimoine-creme { background-color: var(--patrimoine-creme) !important; }
-.bg-patrimoine-canard { background-color: var(--patrimoine-canard) !important; }
-.bg-patrimoine-canard-light { background-color: var(--patrimoine-canard-light) !important; }
-.bg-patrimoine-canard-dark { background-color: var(--patrimoine-canard-dark) !important; }
-.bg-patrimoine-or { background-color: var(--patrimoine-or) !important; }
-.bg-patrimoine-or-light { background-color: var(--patrimoine-or-light) !important; }
-.bg-patrimoine-or-dark { background-color: var(--patrimoine-or-dark) !important; }
-.bg-patrimoine-emeraude { background-color: var(--patrimoine-emeraude) !important; }
-.bg-patrimoine-emeraude-light { background-color: var(--patrimoine-emeraude-light) !important; }
-.bg-patrimoine-emeraude-dark { background-color: var(--patrimoine-emeraude-dark) !important; }
-.bg-patrimoine-datte { background-color: var(--patrimoine-datte) !important; }
-.bg-patrimoine-datte-light { background-color: var(--patrimoine-datte-light) !important; }
-.bg-patrimoine-datte-dark { background-color: var(--patrimoine-datte-dark) !important; }
-.bg-patrimoine-sombre { background-color: var(--patrimoine-sombre) !important; }
-.bg-patrimoine-sombre-light { background-color: var(--patrimoine-sombre-light) !important; }
+    --popover: 0 0% 100%;
+    --popover-foreground: 210 40% 8%;
 
-/* Couleurs de texte */
-.text-patrimoine-creme { color: var(--patrimoine-creme) !important; }
-.text-patrimoine-canard { color: var(--patrimoine-canard) !important; }
-.text-patrimoine-canard-light { color: var(--patrimoine-canard-light) !important; }
-.text-patrimoine-canard-dark { color: var(--patrimoine-canard-dark) !important; }
-.text-patrimoine-or { color: var(--patrimoine-or) !important; }
-.text-patrimoine-or-light { color: var(--patrimoine-or-light) !important; }
-.text-patrimoine-or-dark { color: var(--patrimoine-or-dark) !important; }
-.text-patrimoine-emeraude { color: var(--patrimoine-emeraude) !important; }
-.text-patrimoine-emeraude-light { color: var(--patrimoine-emeraude-light) !important; }
-.text-patrimoine-emeraude-dark { color: var(--patrimoine-emeraude-dark) !important; }
-.text-patrimoine-datte { color: var(--patrimoine-datte) !important; }
-.text-patrimoine-datte-light { color: var(--patrimoine-datte-light) !important; }
-.text-patrimoine-datte-dark { color: var(--patrimoine-datte-dark) !important; }
-.text-patrimoine-sombre { color: var(--patrimoine-sombre) !important; }
-.text-patrimoine-sombre-light { color: var(--patrimoine-sombre-light) !important; }
+    /* Couleurs principales inspirées du Maghreb */
+    --primary: 75 27% 34%; /* Olive #6B8E23 */
+    --primary-foreground: 42 21% 97%;
 
-/* Couleurs avec opacité */
-.bg-patrimoine-canard\/10 { background-color: rgba(1, 61, 59, 0.1) !important; }
-.bg-patrimoine-canard\/20 { background-color: rgba(1, 61, 59, 0.2) !important; }
-.bg-patrimoine-canard\/30 { background-color: rgba(1, 61, 59, 0.3) !important; }
-.bg-patrimoine-emeraude\/10 { background-color: rgba(5, 150, 105, 0.1) !important; }
-.bg-patrimoine-emeraude\/20 { background-color: rgba(5, 150, 105, 0.2) !important; }
-.bg-patrimoine-or\/10 { background-color: rgba(242, 197, 114, 0.1) !important; }
-.bg-patrimoine-or\/20 { background-color: rgba(242, 197, 114, 0.2) !important; }
-.bg-patrimoine-datte\/10 { background-color: rgba(234, 67, 53, 0.1) !important; }
-.bg-patrimoine-creme\/30 { background-color: rgba(246, 240, 234, 0.3) !important; }
-.bg-patrimoine-creme\/50 { background-color: rgba(246, 240, 234, 0.5) !important; }
+    --secondary: 42 62% 90%; /* Beige doré #F4EBD0 */
+    --secondary-foreground: 75 27% 34%;
 
-.text-patrimoine-sombre\/60 { color: rgba(35, 35, 35, 0.6) !important; }
-.text-patrimoine-sombre\/70 { color: rgba(35, 35, 35, 0.7) !important; }
-.text-patrimoine-canard\/40 { color: rgba(1, 61, 59, 0.4) !important; }
-.text-patrimoine-canard\/60 { color: rgba(1, 61, 59, 0.6) !important; }
+    --muted: 42 62% 95%;
+    --muted-foreground: 210 15% 46%;
 
-/* Bordures */
-.border-patrimoine-canard { border-color: var(--patrimoine-canard) !important; }
-.border-patrimoine-canard\/10 { border-color: rgba(1, 61, 59, 0.1) !important; }
-.border-patrimoine-canard\/20 { border-color: rgba(1, 61, 59, 0.2) !important; }
-.border-patrimoine-emeraude { border-color: var(--patrimoine-emeraude) !important; }
-.border-patrimoine-emeraude\/30 { border-color: rgba(5, 150, 105, 0.3) !important; }
-.border-patrimoine-emeraude\/40 { border-color: rgba(5, 150, 105, 0.4) !important; }
+    --accent: 215 38% 51%; /* Bleu profond #4A6FA5 */
+    --accent-foreground: 42 21% 97%;
 
-/* Gradients */
-.bg-gradient-patrimoine { background: var(--gradient-patrimoine) !important; }
-.bg-gradient-sunset { background: var(--gradient-sunset) !important; }
-.bg-gradient-creme { background: var(--gradient-creme) !important; }
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
 
-/* Ombres */
-.shadow-patrimoine { box-shadow: var(--shadow-patrimoine) !important; }
-.shadow-patrimoine-lg { box-shadow: var(--shadow-patrimoine-lg) !important; }
+    --border: 42 32% 88%;
+    --input: 42 32% 88%;
+    --ring: 75 27% 34%;
 
-/* =============================================================================
-   ANIMATIONS PERSONNALISÉES
-   ============================================================================= */
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
+    --radius: 0.75rem;
 
-@keyframes slideUp {
-  from { 
-    transform: translateY(10px); 
-    opacity: 0; 
+    /* Couleurs culturelles supplémentaires */
+    --cultural-sand: 42 62% 85%;
+    --cultural-terracotta: 16 65% 65%;
+    --cultural-mint: 158 25% 75%;
   }
-  to { 
-    transform: translateY(0); 
-    opacity: 1; 
+
+  .dark {
+    --background: 210 40% 8%;
+    --foreground: 42 21% 97%;
+
+    --card: 210 40% 10%;
+    --card-foreground: 42 21% 97%;
+
+    --popover: 210 40% 10%;
+    --popover-foreground: 42 21% 97%;
+
+    --primary: 75 27% 45%;
+    --primary-foreground: 210 40% 8%;
+
+    --secondary: 42 32% 20%;
+    --secondary-foreground: 42 21% 97%;
+
+    --muted: 210 40% 15%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 215 38% 61%;
+    --accent-foreground: 210 40% 8%;
+
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 210 40% 15%;
+    --input: 210 40% 15%;
+    --ring: 75 27% 45%;
   }
 }
 
-@keyframes scaleIn {
-  from { 
-    transform: scale(0.95); 
-    opacity: 0; 
+@layer base {
+  * {
+    @apply border-border;
   }
-  to { 
-    transform: scale(1); 
-    opacity: 1; 
+
+  body {
+    @apply bg-background text-foreground font-sans;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 
-.animate-fade-in { animation: fadeIn 0.5s ease-in-out; }
-.animate-slide-up { animation: slideUp 0.3s ease-out; }
-.animate-scale-in { animation: scaleIn 0.2s ease-out; }
+/* Animations et motifs culturels */
+@layer utilities {
+  .pattern-geometric {
+    background-image: 
+      radial-gradient(circle at 25% 25%, hsl(var(--primary) / 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 75% 75%, hsl(var(--accent) / 0.1) 0%, transparent 50%);
+  }
 
-/* =============================================================================
-   CLASSES DE COMPOSANTS PERSONNALISÉS
-   ============================================================================= */
+  .text-gradient {
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
 
-/* Boutons patrimoine */
-.btn-primary {
-  @apply px-6 py-3 text-white rounded-lg font-medium transition-all duration-200;
-  background: var(--gradient-patrimoine);
-  box-shadow: var(--shadow-patrimoine);
-}
+  .shadow-cultural {
+    box-shadow: 
+      0 4px 6px -1px hsl(var(--primary) / 0.1),
+      0 2px 4px -1px hsl(var(--primary) / 0.06);
+  }
 
-.btn-primary:hover {
-  box-shadow: var(--shadow-patrimoine-lg);
-  transform: translateY(-1px);
-}
-
-.btn-secondary {
-  @apply px-6 py-3 text-white rounded-lg font-medium transition-all duration-200;
-  background-color: var(--patrimoine-or);
-}
-
-.btn-secondary:hover {
-  background-color: var(--patrimoine-or-dark);
-  transform: translateY(-1px);
-}
-
-.btn-outline {
-  @apply px-6 py-3 bg-transparent rounded-lg font-medium transition-all duration-200;
-  color: var(--patrimoine-canard);
-  border: 2px solid var(--patrimoine-canard);
-}
-
-.btn-outline:hover {
-  background-color: var(--patrimoine-canard);
-  color: white;
-}
-
-/* Cards patrimoine */
-.card-patrimoine {
-  @apply bg-white rounded-lg shadow-sm border transition-all duration-300;
-  border-color: rgba(1, 61, 59, 0.1);
-}
-
-.card-patrimoine:hover {
-  box-shadow: var(--shadow-patrimoine-lg);
-  transform: translateY(-2px);
-}
-
-/* Inputs patrimoine */
-.input-patrimoine {
-  @apply w-full px-4 py-3 border rounded-lg transition-colors;
-  border-color: rgba(1, 61, 59, 0.2);
-  background-color: rgba(246, 240, 234, 0.3);
-}
-
-.input-patrimoine:focus {
-  outline: none;
-  border-color: var(--patrimoine-emeraude);
-  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
-}
-
-/* Text gradients */
-.text-gradient-patrimoine {
-  background: var(--gradient-patrimoine);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-/* =============================================================================
-   UTILITAIRES RESPONSIVE
-   ============================================================================= */
-
-/* Masquer/Afficher selon la taille d'écran */
-@media (max-width: 768px) {
-  .mobile-hidden { display: none; }
-  .mobile-visible { display: block; }
-}
-
-@media (min-width: 769px) {
-  .desktop-hidden { display: none; }
-  .desktop-visible { display: block; }
-}
-
-/* =============================================================================
-   STYLES POUR LES COMPOSANTS SPÉCIFIQUES
-   ============================================================================= */
-
-/* Loading spinner avec couleur patrimoine */
-.spinner-patrimoine {
-  border: 3px solid rgba(5, 150, 105, 0.1);
-  border-top: 3px solid var(--patrimoine-emeraude);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* Scrollbar personnalisée */
-::-webkit-scrollbar {
-  width: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: var(--patrimoine-creme);
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--patrimoine-canard);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--patrimoine-canard-light);
-}
-
-/* =============================================================================
-   STYLES POUR LA TYPOGRAPHIE
-   ============================================================================= */
-
-/* Headers avec patrimoine */
-.heading-patrimoine {
-  color: var(--patrimoine-canard);
-  font-weight: 600;
-  line-height: 1.2;
-}
-
-.heading-patrimoine-gradient {
-  background: var(--gradient-patrimoine);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  font-weight: 700;
-}
-
-/* Liens avec patrimoine */
-.link-patrimoine {
-  color: var(--patrimoine-emeraude);
-  text-decoration: none;
-  transition: color 0.2s ease;
-}
-
-.link-patrimoine:hover {
-  color: var(--patrimoine-emeraude-dark);
-  text-decoration: underline;
-}
-
-/* =============================================================================
-   STYLES POUR LES ALERTES
-   ============================================================================= */
-
-.alert-success {
-  @apply p-4 rounded-lg border;
-  background-color: rgba(5, 150, 105, 0.1);
-  border-color: var(--patrimoine-emeraude);
-  color: var(--patrimoine-emeraude-dark);
-}
-
-.alert-error {
-  @apply p-4 rounded-lg border;
-  background-color: rgba(234, 67, 53, 0.1);
-  border-color: var(--patrimoine-datte);
-  color: var(--patrimoine-datte-dark);
-}
-
-.alert-warning {
-  @apply p-4 rounded-lg border;
-  background-color: rgba(242, 197, 114, 0.1);
-  border-color: var(--patrimoine-or);
-  color: var(--patrimoine-or-dark);
-}
-
-/* =============================================================================
-   UTILITAIRES DE LIGNE CLAMPING
-   ============================================================================= */
-.line-clamp-1 {
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.line-clamp-3 {
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-/* =============================================================================
-   STYLES POUR LES ÉTATS DE CHARGEMENT
-   ============================================================================= */
-.skeleton {
-  @apply animate-pulse rounded;
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-  background-size: 200% 100%;
-  animation: loading 1.5s infinite;
-}
-
-@keyframes loading {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-
-/* =============================================================================
-   PRINT STYLES
-   ============================================================================= */
-@media print {
-  .no-print { display: none !important; }
-  body { background: white !important; }
-  .card-patrimoine { box-shadow: none !important; border: 1px solid #ddd !important; }
+  .hover-lift {
+    @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-cultural;
+  }
 }

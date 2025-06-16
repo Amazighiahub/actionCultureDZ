@@ -1,517 +1,186 @@
-// services/oeuvre.service.ts - Service de gestion des œuvres corrigé
+// services/oeuvre.service.ts
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { API_ENDPOINTS, ApiResponse, PaginatedResponse, FilterParams, UploadProgress } from '@/config/api';
+import { BaseService } from './base.service';
+import { httpClient } from './httpClient';
 
-import { apiService, ApiResponse, PaginatedResponse } from './api.service';
-import { API_ENDPOINTS } from '../config/api';
-import { 
-  Oeuvre, 
-  OeuvreStatut,
-  Livre,
-  Film,
-  AlbumMusical,
-  Article,
-  Artisanat,
-  OeuvreArt
-} from '../types/Oeuvre.types';
-import { Media } from '../types/Media.types';
-
-export interface OeuvreForm {
+interface Oeuvre {
+  id: number;
   titre: string;
-  idTypeOeuvre: number;
-  idLangue: number;
   description?: string;
-  anneeCreation?: number;
+  id_type_oeuvre: number;
+  id_langue: number;
+  statut: string;
+  date_creation?: string;
+  user_id: number;
+  views_count?: number;
+  likes_count?: number;
+  medias?: Media[];
+  categories?: any[];
+  tags?: any[];
+  created_at: string;
+  updated_at: string;
+}
+
+interface CreateOeuvreData {
+  titre: string;
+  description?: string;
+  id_type_oeuvre: number;
+  id_langue: number;
+  date_creation?: string;
   categories?: number[];
   tags?: string[];
   // Champs spécifiques selon le type
   isbn?: string;
-  dureeMinutes?: number;
+  pages?: number;
+  duree?: number;
   realisateur?: string;
+  label?: string;
+  doi?: string;
+  peer_reviewed?: boolean;
 }
 
-export interface OeuvreFilters {
-  typeOeuvre?: number;
-  langue?: number;
-  categorie?: number[];
-  tags?: string[];
-  statut?: OeuvreStatut;
-  anneeMin?: number;
-  anneeMax?: number;
-  saisiPar?: number;
-  page?: number;
-  limit?: number;
-  sort?: string;
-  order?: 'asc' | 'desc';
+interface UpdateOeuvreData extends Partial<CreateOeuvreData> {
+  statut?: string;
 }
 
-export interface OeuvreStats {
-  total: number;
-  parType: Record<number, number>;
-  parStatut: Record<string, number>;
-  vuesTotal: number;
-  favorisTotal: number;
-  commentairesTotal: number;
-  noteMoyenne: number;
+interface Media {
+  id: number;
+  url: string;
+  type: string;
+  titre?: string;
+  description?: string;
+  ordre: number;
+  is_principal: boolean;
 }
 
-export interface ShareLinks {
+interface OeuvreStatistics {
+  total_views: number;
+  total_likes: number;
+  total_comments: number;
+  views_by_day: Array<{ date: string; count: number }>;
+  engagement_rate: number;
+}
+
+interface ShareLinks {
   facebook: string;
   twitter: string;
+  linkedin: string;
   whatsapp: string;
-  telegram: string;
   email: string;
-  permalink: string;
+  embed_code?: string;
 }
 
-export interface ApiDocumentation {
-  version: string;
-  endpoints: Array<{
-    method: string;
-    path: string;
-    description: string;
-    parameters?: Array<{
-      name: string;
-      type: string;
-      required: boolean;
-      description: string;
-    }>;
-    response?: {
-      schema: any;
-      example: any;
-    };
-  }>;
-  schemas: Record<string, any>;
-  authentication: {
-    type: string;
-    description: string;
-  };
-}
-
-export interface SearchParams {
+interface SearchOeuvresParams extends FilterParams {
   q?: string;
-  type?: string;
-  limit?: number;
-  page?: number;
+  type_oeuvre?: number;
+  langue?: number;
+  categorie?: number;
+  user_id?: number;
+  statut?: string;
+  date_debut?: string;
+  date_fin?: string;
 }
 
-export class OeuvreService {
-  /**
-   * Récupérer la liste des œuvres avec pagination et filtres
-   */
-  static async getAll(filters?: OeuvreFilters): Promise<PaginatedResponse<Oeuvre>> {
-    return apiService.getPaginated<Oeuvre>(API_ENDPOINTS.oeuvres.list, filters);
+class OeuvreService extends BaseService<Oeuvre, CreateOeuvreData, UpdateOeuvreData> {
+  constructor() {
+    super(API_ENDPOINTS.oeuvres.list);
   }
 
-  /**
-   * Récupérer une œuvre par son ID
-   */
-  static async getById(id: number): Promise<ApiResponse<Oeuvre>> {
-    return apiService.get<Oeuvre>(API_ENDPOINTS.oeuvres.detail(id));
+  // Recherche et listing
+  async search(params: SearchOeuvresParams): Promise<ApiResponse<PaginatedResponse<Oeuvre>>> {
+    return httpClient.getPaginated<Oeuvre>(API_ENDPOINTS.oeuvres.search, params);
   }
 
-  /**
-   * Créer une nouvelle œuvre
-   */
-  static async create(data: OeuvreForm): Promise<ApiResponse<Oeuvre>> {
-    return apiService.post<Oeuvre>(API_ENDPOINTS.oeuvres.create, data);
+  async getRecent(limit?: number): Promise<ApiResponse<Oeuvre[]>> {
+    return httpClient.get<Oeuvre[]>(API_ENDPOINTS.oeuvres.recent, {
+      params: { limit: limit || 10 }
+    });
   }
 
-  /**
-   * Mettre à jour une œuvre
-   */
-  static async update(id: number, data: Partial<OeuvreForm>): Promise<ApiResponse<Oeuvre>> {
-    return apiService.put<Oeuvre>(API_ENDPOINTS.oeuvres.update(id), data);
+  async getPopular(limit?: number): Promise<ApiResponse<Oeuvre[]>> {
+    return httpClient.get<Oeuvre[]>(API_ENDPOINTS.oeuvres.popular, {
+      params: { limit: limit || 10 }
+    });
   }
 
-  /**
-   * Supprimer une œuvre
-   */
-  static async delete(id: number): Promise<ApiResponse<void>> {
-    return apiService.delete<void>(API_ENDPOINTS.oeuvres.delete(id));
+  // Détails et partage
+  async getDetail(id: number): Promise<ApiResponse<Oeuvre>> {
+    return httpClient.get<Oeuvre>(API_ENDPOINTS.oeuvres.detail(id));
   }
 
-  /**
-   * Rechercher des œuvres
-   */
-  static async search(params: SearchParams): Promise<ApiResponse<Oeuvre[]>> {
-    return apiService.get<Oeuvre[]>(API_ENDPOINTS.oeuvres.search, params);
+  async getShareLinks(id: number): Promise<ApiResponse<ShareLinks>> {
+    return httpClient.get<ShareLinks>(API_ENDPOINTS.oeuvres.shareLinks(id));
   }
 
-  /**
-   * Récupérer les œuvres récentes
-   */
-  static async getRecent(limit = 10): Promise<ApiResponse<Oeuvre[]>> {
-    return apiService.get<Oeuvre[]>(API_ENDPOINTS.oeuvres.recent, { limit });
+  // Médias
+  async getMedias(id: number): Promise<ApiResponse<Media[]>> {
+    return httpClient.get<Media[]>(API_ENDPOINTS.oeuvres.medias(id));
   }
 
-  /**
-   * Récupérer les œuvres populaires
-   */
-  static async getPopular(limit = 10): Promise<ApiResponse<Oeuvre[]>> {
-    return apiService.get<Oeuvre[]>(API_ENDPOINTS.oeuvres.popular, { limit });
-  }
-
-  /**
-   * Récupérer les statistiques des œuvres
-   */
-  static async getStatistics(): Promise<ApiResponse<OeuvreStats>> {
-    return apiService.get<OeuvreStats>(API_ENDPOINTS.oeuvres.statistics);
-  }
-
-  /**
-   * Récupérer les liens de partage pour une œuvre
-   */
-  static async getShareLinks(id: number): Promise<ApiResponse<ShareLinks>> {
-    return apiService.get<ShareLinks>(API_ENDPOINTS.oeuvres.shareLinks(id));
-  }
-
-  /**
-   * Récupérer la documentation de l'API des œuvres
-   */
-  static async getApiDocumentation(): Promise<ApiResponse<ApiDocumentation>> {
-    return apiService.get<ApiDocumentation>(API_ENDPOINTS.oeuvres.documentation);
-  }
-
-  /**
-   * GESTION DES MÉDIAS
-   */
-  
-  /**
-   * Récupérer les médias d'une œuvre
-   */
-  static async getMedias(id: number): Promise<ApiResponse<Media[]>> {
-    return apiService.get<Media[]>(API_ENDPOINTS.oeuvres.medias(id));
-  }
-
-  /**
-   * Uploader un média pour une œuvre
-   */
-  static async uploadMedia(
-    id: number, 
+  async uploadMedia(
+    oeuvreId: number, 
     file: File, 
-    data?: { titre?: string; description?: string; ordre?: number }
+    data?: { titre?: string; description?: string; is_principal?: boolean },
+    onProgress?: (progress: UploadProgress) => void
   ): Promise<ApiResponse<Media>> {
-    return apiService.upload<Media>(
-      API_ENDPOINTS.oeuvres.uploadMedia(id), 
-      file, 
-      data
-    );
-  }
-async getByUser(userId: number): Promise<ApiResponse<Oeuvre[]>> {
-    try {
-      // Essayer d'abord l'endpoint spécifique si disponible
-      try {
-        const response = await apiService.get<Oeuvre[]>(`/oeuvres/user/${userId}`);
-        return response;
-      } catch (error: any) {
-        // Si l'endpoint n'existe pas, utiliser l'endpoint standard avec filtre
-        if (error.status === 404) {
-          const response = await apiService.get<any>('/oeuvres', {
-            saisiPar: userId, // ou saisi_par selon votre API
-            limit: 100,
-            page: 1
-          });
-          
-          // Si la réponse est paginée
-          if (response.data?.data) {
-            return {
-              success: true,
-              data: response.data.data
-            };
-          }
-          
-          return response;
-        }
-        throw error;
+    return httpClient.uploadFile<Media>(
+      API_ENDPOINTS.oeuvres.uploadMedia(oeuvreId),
+      file,
+      {
+        additionalData: data,
+        onProgress
       }
-    } catch (error) {
-      return {
-        success: false,
-        error: 'Erreur lors de la récupération des œuvres'
-      };
-    }
-  }
-  
-  /**
-   * Uploader plusieurs médias
-   */
-  static async uploadMultipleMedias(
-    id: number, 
-    files: File[]
-  ): Promise<ApiResponse<Media[]>> {
-    const results: Media[] = [];
-    const errors: string[] = [];
-    
-    for (const file of files) {
-      try {
-        const response = await this.uploadMedia(id, file);
-        if (response.success && response.data) {
-          results.push(response.data);
-        }
-      } catch (error) {
-        console.error('Erreur upload média:', error);
-        errors.push(`Erreur pour ${file.name}`);
-      }
-    }
-    
-    return { 
-      success: errors.length === 0, 
-      data: results,
-      error: errors.length > 0 ? errors.join(', ') : undefined
-    };
-  }
-
-  /**
-   * Supprimer un média
-   */
-  static async deleteMedia(oeuvreId: number, mediaId: number): Promise<ApiResponse<void>> {
-    return apiService.delete<void>(
-      API_ENDPOINTS.oeuvres.deleteMedia(oeuvreId, mediaId)
     );
   }
 
-  /**
-   * ROUTES UTILISATEUR
-   */
-  
-  /**
-   * Récupérer mes œuvres
-   */
-  static async getMyWorks(filters?: OeuvreFilters): Promise<PaginatedResponse<Oeuvre>> {
-    return apiService.getPaginated<Oeuvre>(API_ENDPOINTS.oeuvres.myWorks, filters);
+  async deleteMedia(oeuvreId: number, mediaId: number): Promise<ApiResponse<void>> {
+    return httpClient.delete<void>(API_ENDPOINTS.oeuvres.deleteMedia(oeuvreId, mediaId));
   }
 
-  /**
-   * Récupérer mes statistiques
-   */
-  static async getMyStatistics(): Promise<ApiResponse<OeuvreStats>> {
-    return apiService.get<OeuvreStats>(API_ENDPOINTS.oeuvres.myStats);
+  // Statistiques
+  async getStatistics(): Promise<ApiResponse<{
+    total_oeuvres: number;
+    oeuvres_by_type: Record<string, number>;
+    oeuvres_by_status: Record<string, number>;
+    top_categories: Array<{ categorie: string; count: number }>;
+  }>> {
+    return httpClient.get<any>(API_ENDPOINTS.oeuvres.statistics);
   }
 
-  /**
-   * ROUTES ADMIN
-   */
-  
-  /**
-   * Valider ou rejeter une œuvre
-   */
-  static async validate(
-    id: number, 
-    validated: boolean, 
-    reason?: string
-  ): Promise<ApiResponse<Oeuvre>> {
-    return apiService.patch<Oeuvre>(
-      API_ENDPOINTS.oeuvres.validate(id), 
-      { validated, reason }
-    );
+  // Espace utilisateur
+  async getMyWorks(params?: FilterParams): Promise<ApiResponse<PaginatedResponse<Oeuvre>>> {
+    return httpClient.getPaginated<Oeuvre>(API_ENDPOINTS.oeuvres.myWorks, params);
   }
 
-  /**
-   * Récupérer les œuvres en attente de validation
-   */
-  static async getPending(page = 1, limit = 10): Promise<PaginatedResponse<Oeuvre>> {
-    return apiService.getPaginated<Oeuvre>(
-      API_ENDPOINTS.oeuvres.pending, 
-      { page, limit }
-    );
+  async getMyStatistics(): Promise<ApiResponse<OeuvreStatistics>> {
+    return httpClient.get<OeuvreStatistics>(API_ENDPOINTS.oeuvres.myStats);
   }
 
-  /**
-   * Récupérer les œuvres rejetées
-   */
-  static async getRejected(page = 1, limit = 10): Promise<PaginatedResponse<Oeuvre>> {
-    return apiService.getPaginated<Oeuvre>(
-      API_ENDPOINTS.oeuvres.rejected, 
-      { page, limit }
-    );
+  // Administration
+  async validate(id: number, validated: boolean, comment?: string): Promise<ApiResponse<Oeuvre>> {
+    return httpClient.post<Oeuvre>(API_ENDPOINTS.oeuvres.validate(id), {
+      validated,
+      comment
+    });
   }
 
-  /**
-   * MÉTHODES SPÉCIFIQUES PAR TYPE
-   */
-
-  /**
-   * Créer un livre
-   */
-  static async createLivre(data: OeuvreForm & Partial<Livre>): Promise<ApiResponse<Oeuvre>> {
-    return this.create({ ...data, idTypeOeuvre: 1 }); // Assumant que 1 = Livre
+  async getPending(params?: FilterParams): Promise<ApiResponse<PaginatedResponse<Oeuvre>>> {
+    return httpClient.getPaginated<Oeuvre>(API_ENDPOINTS.oeuvres.pending, params);
   }
 
-  /**
-   * Créer un film
-   */
-  static async createFilm(data: OeuvreForm & Partial<Film>): Promise<ApiResponse<Oeuvre>> {
-    return this.create({ ...data, idTypeOeuvre: 2 }); // Assumant que 2 = Film
+  async getRejected(params?: FilterParams): Promise<ApiResponse<PaginatedResponse<Oeuvre>>> {
+    return httpClient.getPaginated<Oeuvre>(API_ENDPOINTS.oeuvres.rejected, params);
   }
 
-  /**
-   * Créer un album musical
-   */
-  static async createAlbumMusical(data: OeuvreForm & Partial<AlbumMusical>): Promise<ApiResponse<Oeuvre>> {
-    return this.create({ ...data, idTypeOeuvre: 3 }); // Assumant que 3 = Album Musical
-  }
-
-  /**
-   * Créer un article
-   */
-  static async createArticle(data: OeuvreForm & Partial<Article>): Promise<ApiResponse<Oeuvre>> {
-    return this.create({ ...data, idTypeOeuvre: 4 }); // Assumant que 4 = Article
-  }
-
-  /**
-   * HELPERS
-   */
-
-  /**
-   * Vérifier si une œuvre appartient à l'utilisateur connecté
-   */
-  static isOwner(oeuvre: Oeuvre, userId: number): boolean {
-    return oeuvre.saisiPar === userId;
-  }
-
-  /**
-   * Vérifier si une œuvre peut être modifiée
-   */
-  static canEdit(oeuvre: Oeuvre, userId: number, isAdmin: boolean): boolean {
-    return this.isOwner(oeuvre, userId) || isAdmin;
-  }
-
-  /**
-   * Vérifier si une œuvre peut être supprimée
-   */
-  static canDelete(oeuvre: Oeuvre, userId: number, isAdmin: boolean): boolean {
-    return (this.isOwner(oeuvre, userId) && oeuvre.statut === 'brouillon') || isAdmin;
-  }
-
-  /**
-   * Formater une œuvre pour l'affichage
-   */
-  static formatForDisplay(oeuvre: Oeuvre): any {
-    return {
-      ...oeuvre,
-      typeLabel: oeuvre.typeOeuvre?.nomType || 'Non défini',
-      langueLabel: oeuvre.langue?.nom || 'Non définie',
-      statutLabel: this.getStatutLabel(oeuvre.statut),
-      canBeEdited: oeuvre.statut === 'brouillon' || oeuvre.statut === 'refuse'
-    };
-  }
-
-  /**
-   * Obtenir le label d'un statut
-   */
-  static getStatutLabel(statut: OeuvreStatut): string {
-    const labels: Record<OeuvreStatut, string> = {
-      brouillon: 'Brouillon',
-      en_attente: 'En attente de validation',
-      valide: 'Validée',
-      refuse: 'Refusée',
-      archive: 'Archivée'
-    };
-    return labels[statut] || statut;
-  }
-
-  /**
-   * Obtenir la couleur d'un statut
-   */
-  static getStatutColor(statut: OeuvreStatut): string {
-    const colors: Record<OeuvreStatut, string> = {
-      brouillon: 'gray',
-      en_attente: 'orange',
-      valide: 'green',
-      refuse: 'red',
-      archive: 'blue'
-    };
-    return colors[statut] || 'gray';
-  }
-
-  /**
-   * Obtenir l'icône selon le type d'œuvre
-   */
-  static getTypeIcon(typeId?: number): string {
-    const icons: Record<number, string> = {
-      1: '📚', // Livre
-      2: '🎬', // Film
-      3: '🎵', // Album Musical
-      4: '📰', // Article
-      5: '🎨', // Œuvre d'Art
-      6: '🏺'  // Artisanat
-    };
-    return icons[typeId || 0] || '📄';
-  }
-
-  /**
-   * Vérifier si une œuvre est publique
-   */
-  static isPublic(oeuvre: Oeuvre): boolean {
-    return oeuvre.statut === 'valide';
-  }
-
-  /**
-   * Obtenir un résumé de l'œuvre
-   */
-  static getSummary(oeuvre: Oeuvre): string {
-    const parts = [];
-    
-    if (oeuvre.typeOeuvre) {
-      parts.push(oeuvre.typeOeuvre.nomType);
-    }
-    
-    if (oeuvre.langue) {
-      parts.push(oeuvre.langue.nom);
-    }
-    
-    if (oeuvre.anneeCreation) {
-      parts.push(oeuvre.anneeCreation.toString());
-    }
-    
-    return parts.join(' • ');
-  }
-
-  /**
-   * Filtrer les œuvres par statut
-   */
-  static filterByStatus(oeuvres: Oeuvre[], statut: OeuvreStatut): Oeuvre[] {
-    return oeuvres.filter(o => o.statut === statut);
-  }
-
-  /**
-   * Grouper les œuvres par type
-   */
-  static groupByType(oeuvres: Oeuvre[]): Record<string, Oeuvre[]> {
-    return oeuvres.reduce((acc, oeuvre) => {
-      const type = oeuvre.typeOeuvre?.nomType || 'Sans type';
-      if (!acc[type]) acc[type] = [];
-      acc[type].push(oeuvre);
-      return acc;
-    }, {} as Record<string, Oeuvre[]>);
-  }
-
-  /**
-   * Exporter les œuvres en format JSON
-   */
-  static exportToJSON(oeuvres: Oeuvre[]): string {
-    return JSON.stringify(oeuvres, null, 2);
-  }
-
-  /**
-   * Exporter les œuvres en format CSV
-   */
-  static exportToCSV(oeuvres: Oeuvre[]): string {
-    const headers = ['ID', 'Titre', 'Type', 'Langue', 'Année', 'Statut'];
-    const rows = oeuvres.map(o => [
-      o.idOeuvre,
-      o.titre,
-      o.typeOeuvre?.nomType || '',
-      o.langue?.nom || '',
-      o.anneeCreation || '',
-      o.statut
-    ]);
-    
-    const csv = [headers, ...rows]
-      .map(row => row.map(cell => `"${cell}"`).join(','))
-      .join('\n');
-    
-    return csv;
+  // Documentation API
+  async getApiDocumentation(): Promise<ApiResponse<any>> {
+    return httpClient.get<any>(API_ENDPOINTS.oeuvres.documentation);
   }
 }
 
-export default OeuvreService;
+export const oeuvreService = new OeuvreService();
+export type { 
+  Oeuvre, CreateOeuvreData, UpdateOeuvreData, Media, 
+  OeuvreStatistics, ShareLinks, SearchOeuvresParams 
+};
