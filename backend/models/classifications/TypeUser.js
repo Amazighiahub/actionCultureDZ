@@ -33,6 +33,11 @@ module.exports = (sequelize) => {
       foreignKey: 'id_type_user',
       as: 'Users'
     });
+    TypeUser.hasMany(models.OeuvreUser, { 
+  foreignKey: 'id_type_user',
+  as: 'OeuvreUsers'
+});
+
   };
 
   return TypeUser;

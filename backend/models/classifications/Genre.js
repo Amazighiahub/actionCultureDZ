@@ -10,6 +10,10 @@ module.exports = (sequelize) => {
     nom: {
       type: DataTypes.STRING(100),
       allowNull: false
+    },
+    description: {
+      type: DataTypes.STRING(100),
+      allowNull: false
     }
   }, {
     tableName: 'genre',

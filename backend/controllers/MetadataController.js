@@ -1,15 +1,448 @@
-// controllers/MetadataController.js - Controller pour les métadonnées
+// controllers/MetadataController.js - Controller pour les métadonnées (version améliorée)
 
 const { Op } = require('sequelize');
+const hierarchieService = require('../services/HierarchieService');
 
 class MetadataController {
   constructor(models) {
+    if (!models) {
+      throw new Error('MetadataController: Les modèles sont requis');
+    }
+    
     this.models = models;
     this.sequelize = models.sequelize || Object.values(models)[0]?.sequelize;
+    
+    // Initialiser le service de hiérarchie
+    this.initializeHierarchieService();
   }
 
-  // ===== MATÉRIAUX =====
+  /**
+   * Initialise le service de hiérarchie avec gestion d'erreur robuste
+   */
+  initializeHierarchieService() {
+    try {
+      // Vérifier si le service est déjà initialisé
+      if (hierarchieService.isInitialized) {
+        console.log('✅ HierarchieService déjà initialisé');
+        return;
+      }
+      
+      // Initialiser avec les modèles
+      hierarchieService.initialize(this.models);
+      console.log('✅ HierarchieService initialisé dans MetadataController');
+      
+    } catch (error) {
+      console.error('⚠️ Erreur initialisation HierarchieService:', error.message);
+      
+      // Créer des méthodes de fallback pour éviter les erreurs
+      this.hierarchieServiceAvailable = false;
+      
+      // Log des modèles disponibles pour debug
+      const availableModels = Object.keys(this.models).filter(k => k !== 'sequelize' && k !== 'Sequelize');
+      console.error('   Modèles disponibles:', availableModels.join(', '));
+      
+      // Vérifier spécifiquement les modèles requis
+      const requiredModels = ['TypeOeuvre', 'Genre', 'Categorie', 'TypeOeuvreGenre', 'GenreCategorie'];
+      const missingModels = requiredModels.filter(m => !this.models[m]);
+      if (missingModels.length > 0) {
+        console.error('   Modèles manquants:', missingModels.join(', '));
+      }
+    }
+  }
+
+  /**
+   * Wrapper pour appeler les méthodes du HierarchieService avec gestion d'erreur
+   */
+  async callHierarchieService(methodName, ...args) {
+    try {
+      if (!hierarchieService.isInitialized) {
+        // Tenter une réinitialisation
+        this.initializeHierarchieService();
+      }
+      
+      if (!hierarchieService[methodName]) {
+        throw new Error(`Méthode ${methodName} non disponible dans HierarchieService`);
+      }
+      
+      return await hierarchieService[methodName](...args);
+      
+    } catch (error) {
+      console.error(`Erreur lors de l'appel à HierarchieService.${methodName}:`, error.message);
+      
+      // Retourner une réponse d'erreur appropriée selon la méthode
+      if (methodName === 'getTypesOeuvres' || methodName === 'getGenresParType' || methodName === 'getCategoriesParGenre') {
+        return [];
+      }
+      if (methodName === 'validerSelection') {
+        return { valide: false, erreur: 'Service de validation temporairement indisponible' };
+      }
+      if (methodName === 'getHierarchieComplete') {
+        return [];
+      }
+      if (methodName === 'getStatistiquesUtilisation') {
+        return { global: [], detaille: {} };
+      }
+      
+      throw error;
+    }
+  }
+
+  /**
+   * GET /api/metadata/types-oeuvres
+   * Obtenir tous les types d'œuvres
+   */
+  async getTypesOeuvres(req, res) {
+    try {
+      const types = await this.callHierarchieService('getTypesOeuvres');
+      
+      res.json({
+        success: true,
+        data: types,
+        total: types.length
+      });
+    } catch (error) {
+      console.error('Erreur getTypesOeuvres:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Une erreur est survenue'
+      });
+    }
+  }
+
+  /**
+   * GET /api/metadata/types/:typeId/genres
+   * Obtenir les genres disponibles pour un type d'œuvre
+   */
+  async getGenresParType(req, res) {
+    try {
+      const { typeId } = req.params;
+      
+      if (!typeId || isNaN(typeId)) {
+        return res.status(400).json({
+          success: false,
+          error: 'ID du type invalide'
+        });
+      }
+
+      const genres = await this.callHierarchieService('getGenresParType', parseInt(typeId));
+      
+      res.json({
+        success: true,
+        data: genres,
+        total: genres.length
+      });
+    } catch (error) {
+      console.error('Erreur getGenresParType:', error);
+      res.status(error.message.includes('non trouvé') ? 404 : 500).json({
+        success: false,
+        error: error.message || 'Une erreur est survenue. Veuillez réessayer plus tard.'
+      });
+    }
+  }
+
+  /**
+   * GET /api/metadata/genres/:genreId/categories
+   * Obtenir les catégories disponibles pour un genre
+   */
+ async getCategoriesParGenre(req, res) {
+  try {
+    const { genreId } = req.params;
+    console.log('🔍 Recherche des catégories pour le genre:', genreId);
+
+    // Option 1 : Via le modèle Genre avec le BON alias
+    const genre = await this.models.Genre.findByPk(genreId, {
+      include: [{
+        model: this.models.Categorie,
+        as: 'CategoriesDisponibles', // ✅ Utiliser le bon alias !
+        through: {
+          attributes: ['ordre_affichage']
+          // Retirer where: { actif: true } si ça pose problème
+        }
+      }]
+    });
+
+    if (!genre) {
+      return res.status(404).json({
+        success: false,
+        error: 'Genre non trouvé'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: genre.CategoriesDisponibles || []
+    });
+
+  } catch (error) {
+    console.error('❌ Erreur getCategoriesParGenre:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+}
+
+  /**
+   * POST /api/metadata/validate-hierarchy
+   * Valider une sélection hiérarchique Type → Genre → Catégories
+   */
+  async validerHierarchie(req, res) {
+    try {
+      const { id_type_oeuvre, id_genre, categories = [] } = req.body;
+      
+      // Validation des paramètres
+      if (!id_type_oeuvre || !id_genre) {
+        return res.status(400).json({
+          success: false,
+          error: 'Type et genre sont obligatoires'
+        });
+      }
+
+      if (!Array.isArray(categories)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Les catégories doivent être un tableau'
+        });
+      }
+
+      const validation = await this.callHierarchieService(
+        'validerSelection',
+        id_type_oeuvre,
+        id_genre,
+        categories
+      );
+
+      if (!validation.valide) {
+        return res.status(400).json({
+          success: false,
+          error: validation.erreur,
+          details: {
+            id_type_oeuvre,
+            id_genre,
+            categories
+          }
+        });
+      }
+
+      res.json({
+        success: true,
+        message: 'Hiérarchie valide',
+        data: {
+          id_type_oeuvre,
+          id_genre,
+          categories
+        }
+      });
+    } catch (error) {
+      console.error('Erreur validerHierarchie:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Une erreur est survenue'
+      });
+    }
+  }
+
+  /**
+   * GET /api/metadata/hierarchy
+   * Obtenir la hiérarchie complète Type → Genre → Catégorie
+   */
+  async getHierarchieComplete(req, res) {
+    try {
+      const { simplified = false } = req.query;
+      const hierarchie = await this.callHierarchieService('getHierarchieComplete');
+      
+      if (simplified === 'true' && Array.isArray(hierarchie)) {
+        // Version simplifiée pour les formulaires
+        const simplifiedData = hierarchie.map(type => ({
+          id: type.id_type_oeuvre,
+          nom: type.nom_type,
+          genres: (type.GenresDisponibles || []).map(genre => ({
+            id: genre.id_genre,
+            nom: genre.nom,
+            categories: (genre.CategoriesDisponibles || []).map(cat => ({
+              id: cat.id_categorie,
+              nom: cat.nom
+            }))
+          }))
+        }));
+        
+        return res.json({
+          success: true,
+          data: simplifiedData
+        });
+      }
+
+      res.json({
+        success: true,
+        data: hierarchie
+      });
+    } catch (error) {
+      console.error('Erreur getHierarchieComplete:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Une erreur est survenue'
+      });
+    }
+  }
+
+  /**
+   * GET /api/metadata/hierarchy/statistics
+   * Obtenir les statistiques d'utilisation de la hiérarchie
+   */
+  async getHierarchieStatistics(req, res) {
+    try {
+      const stats = await this.callHierarchieService('getStatistiquesUtilisation');
+      
+      res.json({
+        success: true,
+        data: stats
+      });
+    } catch (error) {
+      console.error('Erreur getHierarchieStatistics:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Une erreur est survenue'
+      });
+    }
+  }
+
+  /**
+   * POST /api/metadata/types/:typeId/genres
+   * Ajouter un genre à un type (Admin uniquement)
+   */
+  async ajouterGenreAuType(req, res) {
+    try {
+      const { typeId } = req.params;
+      const { id_genre, ordre_affichage = 0 } = req.body;
+
+      if (!id_genre) {
+        return res.status(400).json({
+          success: false,
+          error: 'ID du genre requis'
+        });
+      }
+
+      const result = await this.callHierarchieService(
+        'ajouterGenreAuType',
+        parseInt(typeId),
+        id_genre,
+        ordre_affichage
+      );
+
+      res.status(201).json({
+        success: true,
+        message: 'Genre ajouté au type avec succès',
+        data: result
+      });
+    } catch (error) {
+      console.error('Erreur ajouterGenreAuType:', error);
+      res.status(400).json({
+        success: false,
+        error: error.message || 'Une erreur est survenue'
+      });
+    }
+  }
+
+  /**
+   * POST /api/metadata/genres/:genreId/categories
+   * Ajouter une catégorie à un genre (Admin uniquement)
+   */
+  async ajouterCategorieAuGenre(req, res) {
+    try {
+      const { genreId } = req.params;
+      const { id_categorie, ordre_affichage = 0 } = req.body;
+
+      if (!id_categorie) {
+        return res.status(400).json({
+          success: false,
+          error: 'ID de la catégorie requis'
+        });
+      }
+
+      const result = await this.callHierarchieService(
+        'ajouterCategorieAuGenre',
+        parseInt(genreId),
+        id_categorie,
+        ordre_affichage
+      );
+
+      res.status(201).json({
+        success: true,
+        message: 'Catégorie ajoutée au genre avec succès',
+        data: result
+      });
+    } catch (error) {
+      console.error('Erreur ajouterCategorieAuGenre:', error);
+      res.status(400).json({
+        success: false,
+        error: error.message || 'Une erreur est survenue'
+      });
+    }
+  }
+
+  /**
+   * PUT /api/metadata/types/:typeId/genres/:genreId
+   * Modifier l'ordre d'affichage ou l'état actif d'un genre dans un type
+   */
+  async modifierGenreDansType(req, res) {
+    try {
+      const { typeId, genreId } = req.params;
+      const { ordre_affichage, actif } = req.body;
+
+      const result = await this.callHierarchieService(
+        'modifierRelation',
+        'TypeOeuvreGenre',
+        { id_type_oeuvre: parseInt(typeId), id_genre: parseInt(genreId) },
+        { ordre_affichage, actif }
+      );
+
+      res.json({
+        success: true,
+        message: 'Relation mise à jour avec succès',
+        data: result
+      });
+    } catch (error) {
+      console.error('Erreur modifierGenreDansType:', error);
+      res.status(400).json({
+        success: false,
+        error: error.message || 'Une erreur est survenue'
+      });
+    }
+  }
+
+  /**
+   * DELETE /api/metadata/types/:typeId/genres/:genreId
+   * Désactiver un genre pour un type (soft delete)
+   */
+  async desactiverGenrePourType(req, res) {
+    try {
+      const { typeId, genreId } = req.params;
+
+      const result = await this.callHierarchieService(
+        'desactiverRelation',
+        'TypeOeuvreGenre',
+        { id_type_oeuvre: parseInt(typeId), id_genre: parseInt(genreId) }
+      );
+
+      res.json({
+        success: true,
+        message: 'Genre désactivé pour ce type',
+        data: result
+      });
+    } catch (error) {
+      console.error('Erreur desactiverGenrePourType:', error);
+      res.status(400).json({
+        success: false,
+        error: error.message || 'Une erreur est survenue'
+      });
+    }
+  }
+
+  // ===== MÉTHODES POUR LES AUTRES MÉTADONNÉES =====
   
+  /**
+   * GET /api/metadata/materiaux
+   */
   async getMateriaux(req, res) {
     try {
       const materiaux = await this.models.Materiau.findAll({
@@ -18,7 +451,8 @@ class MetadataController {
       
       res.json({
         success: true,
-        data: materiaux
+        data: materiaux,
+        total: materiaux.length
       });
     } catch (error) {
       console.error('Erreur lors de la récupération des matériaux:', error);
@@ -29,6 +463,9 @@ class MetadataController {
     }
   }
 
+  /**
+   * POST /api/metadata/materiaux
+   */
   async createMateriau(req, res) {
     try {
       const { nom, description } = req.body;
@@ -65,6 +502,9 @@ class MetadataController {
     }
   }
 
+  /**
+   * PUT /api/metadata/materiaux/:id
+   */
   async updateMateriau(req, res) {
     try {
       const { id } = req.params;
@@ -95,6 +535,9 @@ class MetadataController {
     }
   }
 
+  /**
+   * DELETE /api/metadata/materiaux/:id
+   */
   async deleteMateriau(req, res) {
     try {
       const { id } = req.params;
@@ -134,6 +577,9 @@ class MetadataController {
       });
     }
   }
+
+  // Méthodes similaires pour techniques, langues, catégories, etc.
+  // (Les autres méthodes restent inchangées car elles n'utilisent pas HierarchieService)
 
   // ===== TECHNIQUES =====
   
@@ -300,27 +746,6 @@ class MetadataController {
       res.status(500).json({
         success: false,
         error: 'Erreur serveur lors de la récupération des catégories'
-      });
-    }
-  }
-
-  // ===== TYPES D'ŒUVRES =====
-  
-  async getTypesOeuvres(req, res) {
-    try {
-      const typesOeuvres = await this.models.TypeOeuvre.findAll({
-        order: [['nom_type', 'ASC']]
-      });
-      
-      res.json({
-        success: true,
-        data: typesOeuvres
-      });
-    } catch (error) {
-      console.error('Erreur lors de la récupération des types d\'œuvres:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Erreur serveur lors de la récupération des types d\'œuvres'
       });
     }
   }
@@ -598,7 +1023,7 @@ class MetadataController {
         this.models.Langue.findAll({ order: [['nom', 'ASC']] }),
         this.models.Categorie.findAll({ order: [['nom', 'ASC']] }),
         this.models.Genre.findAll({ order: [['nom', 'ASC']] }),
-        this.models.TypeOeuvre.findAll({ order: [['nom_type', 'ASC']] }),
+        this.callHierarchieService('getTypesOeuvres').catch(() => []),
         this.models.TypeEvenement ? 
           this.models.TypeEvenement.findAll({ order: [['nom_type', 'ASC']] }) : 
           [],
@@ -771,6 +1196,14 @@ class MetadataController {
           raw: true
         })
       };
+      
+      // Ajouter les statistiques de hiérarchie si disponibles
+      try {
+        const hierarchyStats = await this.callHierarchieService('getStatistiquesUtilisation');
+        statistics.hierarchy = hierarchyStats;
+      } catch (err) {
+        console.warn('Impossible d\'obtenir les statistiques de hiérarchie:', err.message);
+      }
       
       res.json({
         success: true,

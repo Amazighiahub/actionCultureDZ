@@ -89,12 +89,16 @@ module.exports = (sequelize) => {
     Oeuvre.belongsTo(models.User, { as: 'Saiseur', foreignKey: 'saisi_par' });
     Oeuvre.belongsTo(models.User, { as: 'Validateur', foreignKey: 'validateur_id' });
     Oeuvre.belongsTo(models.Oeuvre, { as: 'OeuvreOriginale', foreignKey: 'id_oeuvre_originale' });
-    
+    Oeuvre.hasMany(models.OeuvreIntervenant, { 
+  foreignKey: 'id_oeuvre' 
+});
     // Relations many-to-many
+   
     Oeuvre.belongsToMany(models.User, { 
-      through: models.OeuvreUser, 
-      foreignKey: 'id_oeuvre' 
-    });
+  through: models.OeuvreUser, 
+  foreignKey: 'id_oeuvre',
+  as: 'Users'  // Ajouter un alias
+});
     Oeuvre.belongsToMany(models.Editeur, { 
       through: models.OeuvreEditeur, 
       foreignKey: 'id_oeuvre' 

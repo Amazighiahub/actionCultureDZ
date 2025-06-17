@@ -127,7 +127,8 @@ const genreCategorieModel = loadModelSafely('./associations/GenreCategorie', 'Ge
 if (genreCategorieModel) models.GenreCategorie = genreCategorieModel;
   const localiteModel = loadModelSafely('./geography/Localite', 'Localite', sequelize);
   if (localiteModel) models.Localite = localiteModel;
-
+const oeuvreIntervenantModel = loadModelSafely('./associations/OeuvreIntervenant', 'OeuvreIntervenant', sequelize);
+if (oeuvreIntervenantModel) models.OeuvreIntervenant = oeuvreIntervenantModel;
   // 2. Modèles de base (User, Role) - référencés par beaucoup d'autres
   const roleModel = loadModelSafely('./users/Role', 'Role', sequelize);
   if (roleModel) models.Role = roleModel;

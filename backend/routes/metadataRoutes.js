@@ -6,12 +6,116 @@ const { body } = require('express-validator');
 
 const initMetadataRoutes = (models, authMiddleware) => {
   const router = express.Router();
+  
+  // Vérification initiale des modèles
+  console.log('📋 Initialisation des routes metadata...');
+  console.log('   Modèles reçus:', Object.keys(models).filter(key => key !== 'sequelize' && key !== 'Sequelize').length);
+  
+  // Vérifier les modèles essentiels
+  const requiredModels = ['TypeOeuvre', 'Genre', 'Categorie', 'TypeOeuvreGenre', 'GenreCategorie'];
+  const missingModels = requiredModels.filter(modelName => !models[modelName]);
+  
+  if (missingModels.length > 0) {
+    console.error('❌ Modèles manquants pour les routes metadata:', missingModels.join(', '));
+    console.error('   Cela peut causer des erreurs dans certaines routes');
+  } else {
+    console.log('✅ Tous les modèles requis sont disponibles');
+  }
+  
+  // Créer le contrôleur (qui initialise automatiquement le HierarchieService)
   const metadataController = new MetadataController(models);
 
   // ===== RÉCUPÉRATION GLOBALE =====
   
   // Route pour récupérer toutes les métadonnées d'un coup
   router.get('/all', (req, res) => metadataController.getAllMetadata(req, res));
+
+  // ===== HIÉRARCHIE TYPE → GENRE → CATÉGORIE =====
+  
+  // Obtenir tous les types d'œuvres
+  router.get('/types-oeuvres', (req, res) => metadataController.getTypesOeuvres(req, res));
+  
+  // Obtenir les genres disponibles pour un type d'œuvre
+ router.get('/types-oeuvres/:typeId/genres',
+  validationMiddleware.validateId('typeId'),
+  (req, res) => metadataController.getGenresParType(req, res)
+);
+
+// Route alternative pour les catégories par genre (au cas où)
+router.get('/genres/:genreId/categories',
+  validationMiddleware.validateId('genreId'),
+  (req, res) => metadataController.getCategoriesParGenre(req, res)
+);
+
+  // Valider une sélection hiérarchique
+  router.post('/validate-hierarchy',
+    [
+      body('id_type_oeuvre').isInt({ min: 1 }).withMessage('ID du type d\'œuvre invalide'),
+      body('id_genre').isInt({ min: 1 }).withMessage('ID du genre invalide'),
+      body('categories').optional().isArray().withMessage('Les catégories doivent être un tableau'),
+      body('categories.*').optional().isInt({ min: 1 }).withMessage('ID de catégorie invalide')
+    ],
+    validationMiddleware.handleValidationErrors,
+    (req, res) => metadataController.validerHierarchie(req, res)
+  );
+
+  // Obtenir la hiérarchie complète
+  router.get('/hierarchy',
+    (req, res) => metadataController.getHierarchieComplete(req, res)
+  );
+
+  // Statistiques d'utilisation de la hiérarchie (admin only)
+  router.get('/hierarchy/statistics',
+    authMiddleware.authenticate,
+    authMiddleware.requireAdmin,
+    (req, res) => metadataController.getHierarchieStatistics(req, res)
+  );
+
+  // Gestion admin de la hiérarchie
+  router.post('/types/:typeId/genres',
+    authMiddleware.authenticate,
+    authMiddleware.requireAdmin,
+    validationMiddleware.validateId('typeId'),
+    [
+      body('id_genre').isInt({ min: 1 }).withMessage('ID du genre requis'),
+      body('ordre_affichage').optional().isInt({ min: 0 }).withMessage('Ordre d\'affichage invalide')
+    ],
+    validationMiddleware.handleValidationErrors,
+    (req, res) => metadataController.ajouterGenreAuType(req, res)
+  );
+
+  router.post('/genres/:genreId/categories',
+    authMiddleware.authenticate,
+    authMiddleware.requireAdmin,
+    validationMiddleware.validateId('genreId'),
+    [
+      body('id_categorie').isInt({ min: 1 }).withMessage('ID de la catégorie requis'),
+      body('ordre_affichage').optional().isInt({ min: 0 }).withMessage('Ordre d\'affichage invalide')
+    ],
+    validationMiddleware.handleValidationErrors,
+    (req, res) => metadataController.ajouterCategorieAuGenre(req, res)
+  );
+
+  router.put('/types/:typeId/genres/:genreId',
+    authMiddleware.authenticate,
+    authMiddleware.requireAdmin,
+    validationMiddleware.validateId('typeId'),
+    validationMiddleware.validateId('genreId'),
+    [
+      body('ordre_affichage').optional().isInt({ min: 0 }),
+      body('actif').optional().isBoolean()
+    ],
+    validationMiddleware.handleValidationErrors,
+    (req, res) => metadataController.modifierGenreDansType(req, res)
+  );
+
+  router.delete('/types/:typeId/genres/:genreId',
+    authMiddleware.authenticate,
+    authMiddleware.requireAdmin,
+    validationMiddleware.validateId('typeId'),
+    validationMiddleware.validateId('genreId'),
+    (req, res) => metadataController.desactiverGenrePourType(req, res)
+  );
 
   // ===== MATÉRIAUX =====
   
@@ -102,11 +206,6 @@ const initMetadataRoutes = (models, authMiddleware) => {
   // Rechercher des catégories
   router.get('/categories/search', (req, res) => metadataController.searchCategories(req, res));
 
-  // ===== TYPES D'ŒUVRES =====
-  
-  // Récupérer tous les types d'œuvres
-  router.get('/types-oeuvres', (req, res) => metadataController.getTypesOeuvres(req, res));
-
   // ===== GENRES =====
   
   // Récupérer tous les genres
@@ -173,6 +272,27 @@ const initMetadataRoutes = (models, authMiddleware) => {
     (req, res) => metadataController.getUsageStatistics(req, res)
   );
 
+  // ===== ROUTE DE DEBUG (développement uniquement) =====
+  
+  if (process.env.NODE_ENV !== 'production') {
+    // Route de test pour vérifier l'état du service
+    router.get('/debug/service-status', (req, res) => {
+      const hierarchieService = require('../services/HierarchieService');
+      
+      res.json({
+        success: true,
+        debug: {
+          environment: process.env.NODE_ENV,
+          models_count: Object.keys(models).filter(k => k !== 'sequelize' && k !== 'Sequelize').length,
+          required_models_present: requiredModels.every(m => !!models[m]),
+          missing_models: missingModels,
+          service_initialized: hierarchieService.isInitialized,
+          timestamp: new Date().toISOString()
+        }
+      });
+    });
+  }
+
   // ===== ROUTE RACINE =====
   
   // Documentation des routes metadata
@@ -180,10 +300,25 @@ const initMetadataRoutes = (models, authMiddleware) => {
     res.json({
       success: true,
       message: 'API Metadata - Gestion des métadonnées',
+      version: '1.0.0',
       endpoints: {
         global: {
           all: 'GET /api/metadata/all - Récupérer toutes les métadonnées',
           statistics: 'GET /api/metadata/statistics - Statistiques d\'utilisation (admin)'
+        },
+        hierarchie: {
+          types: 'GET /api/metadata/types-oeuvres - Liste des types d\'œuvres',
+          genres_by_type: 'GET /api/metadata/types/:typeId/genres - Genres disponibles pour un type',
+          categories_by_genre: 'GET /api/metadata/genres/:genreId/categories - Catégories disponibles pour un genre',
+          validate: 'POST /api/metadata/validate-hierarchy - Valider une sélection hiérarchique',
+          complete: 'GET /api/metadata/hierarchy - Hiérarchie complète',
+          statistics: 'GET /api/metadata/hierarchy/statistics - Statistiques de la hiérarchie (admin)',
+          admin: {
+            add_genre_to_type: 'POST /api/metadata/types/:typeId/genres - Ajouter un genre à un type (admin)',
+            add_category_to_genre: 'POST /api/metadata/genres/:genreId/categories - Ajouter une catégorie à un genre (admin)',
+            update_relation: 'PUT /api/metadata/types/:typeId/genres/:genreId - Modifier une relation (admin)',
+            disable_relation: 'DELETE /api/metadata/types/:typeId/genres/:genreId - Désactiver une relation (admin)'
+          }
         },
         materiaux: {
           list: 'GET /api/metadata/materiaux',
@@ -204,9 +339,6 @@ const initMetadataRoutes = (models, authMiddleware) => {
           list: 'GET /api/metadata/categories',
           search: 'GET /api/metadata/categories/search?q=term'
         },
-        types_oeuvres: {
-          list: 'GET /api/metadata/types-oeuvres'
-        },
         genres: {
           list: 'GET /api/metadata/genres'
         },
@@ -219,12 +351,11 @@ const initMetadataRoutes = (models, authMiddleware) => {
         },
         geographie: {
           wilayas: 'GET /api/metadata/wilayas',
-          wilayasWithDairas: 'GET /api/metadata/wilayas?includeDairas=true',
-          wilayasWithAll: 'GET /api/metadata/wilayas?includeDairas=true&includeCommunes=true',
-          searchWilayas: 'GET /api/metadata/wilayas/search?q=term',
-          dairasByWilaya: 'GET /api/metadata/wilayas/:id/dairas',
-          communesByDaira: 'GET /api/metadata/dairas/:id/communes',
-          localitesByCommune: 'GET /api/metadata/communes/:id/localites'
+          wilayas_with_details: 'GET /api/metadata/wilayas?includeDairas=true&includeCommunes=true',
+          search_wilayas: 'GET /api/metadata/wilayas/search?q=term',
+          dairas_by_wilaya: 'GET /api/metadata/wilayas/:id/dairas',
+          communes_by_daira: 'GET /api/metadata/dairas/:id/communes',
+          localites_by_commune: 'GET /api/metadata/communes/:id/localites'
         },
         tags: {
           list: 'GET /api/metadata/tags',
@@ -234,14 +365,14 @@ const initMetadataRoutes = (models, authMiddleware) => {
         permissions: {
           public: 'Les routes GET sont accessibles publiquement',
           authenticated: 'La création de tags nécessite une authentification',
-          admin: 'Les routes POST/PUT/DELETE pour matériaux et techniques nécessitent le rôle Admin',
+          admin: 'Les routes POST/PUT/DELETE nécessitent le rôle Admin',
           statistics: 'Les statistiques nécessitent le rôle Admin'
         }
       }
     });
   });
 
-  console.log('✅ Routes metadata initialisées avec protections d\'authentification');
+  console.log('✅ Routes metadata initialisées avec succès');
   
   return router;
 };

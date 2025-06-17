@@ -24,12 +24,12 @@ module.exports = (sequelize) => {
     });
     
     // NOUVELLE ASSOCIATION POUR LA HIÉRARCHIE
-    Categorie.belongsToMany(models.Genre, { 
-      through: models.GenreCategorie,
-      foreignKey: 'id_categorie',
-      otherKey: 'id_genre',
-      as: 'GenresAssocies'
-    });
+    Categorie.belongsToMany(models.Genre, {
+    through: models.GenreCategorie,
+    foreignKey: 'id_categorie',
+    otherKey: 'id_genre',
+    as: 'GenresAssocies' // ou un autre alias cohérent
+  });
   };
 
   return Categorie;

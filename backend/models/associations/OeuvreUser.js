@@ -23,9 +23,15 @@ module.exports = (sequelize) => {
         key: 'id_user'
       }
     },
-    role_dans_oeuvre: {
-      type: DataTypes.ENUM('auteur', 'realisateur', 'acteur', 'musicien', 'artiste', 'artisan', 'journaliste', 'scientifique', 'collaborateur', 'autre'),
-      allowNull: false
+    // CHANGEMENT : Remplacer role_dans_oeuvre par id_type_user
+    id_type_user: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'type_user',
+        key: 'id_type_user'
+      },
+      onDelete: 'RESTRICT'
     },
     personnage: {
       type: DataTypes.STRING(255)
@@ -46,7 +52,7 @@ module.exports = (sequelize) => {
     indexes: [
       {
         unique: true,
-        fields: ['id_oeuvre', 'id_user', 'role_dans_oeuvre']
+        fields: ['id_oeuvre', 'id_user', 'id_type_user']
       }
     ]
   });
@@ -55,6 +61,7 @@ module.exports = (sequelize) => {
   OeuvreUser.associate = (models) => {
     OeuvreUser.belongsTo(models.Oeuvre, { foreignKey: 'id_oeuvre' });
     OeuvreUser.belongsTo(models.User, { foreignKey: 'id_user' });
+    OeuvreUser.belongsTo(models.TypeUser, { foreignKey: 'id_type_user' });
   };
 
   return OeuvreUser;
