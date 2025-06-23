@@ -913,3 +913,6 @@ if (require.main === module) {
 }
 
 module.exports = App;
+
+// FOR TEST PURPOSES
+module.exports.appInstance = new App().app;

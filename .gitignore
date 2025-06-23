@@ -13,7 +13,7 @@ package-lock.json
 */package-lock.json
 
 backend/.DS_Store
-
+.env
 .env.local
 .env.development.local
 .env.production.local
