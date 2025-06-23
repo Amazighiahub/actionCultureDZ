@@ -8,7 +8,7 @@ const createDatabaseConnection = (config = {}) => {
   const {
     database = process.env.DB_NAME || 'actionculture',
     username = process.env.DB_USER || 'root',
-    password = process.env.DB_PASSWORD || '',
+    password = process.env.DB_PASSWORD || 'root',
     host = process.env.DB_HOST || 'localhost',
     port = parseInt(process.env.DB_PORT) || 3306,
     dialect = process.env.DB_DIALECT || 'mysql',
@@ -23,7 +23,7 @@ const createDatabaseConnection = (config = {}) => {
     logging,
     define: {
       charset: 'utf8mb4',
-      collate: 'utf8mb4_0900_ai_ci',
+      collate: 'utf8mb4_unicode_ci',
       timestamps: true,
       underscored: false,
     },
@@ -54,7 +54,7 @@ const createDatabase = async (config = {}) => {
     host = process.env.DB_HOST || 'localhost',
     port = parseInt(process.env.DB_PORT) || 3306,
     charset = 'utf8mb4',
-    collate = 'utf8mb4_0900_ai_ci'
+    collate = 'utf8mb4_unicode_ci'
   } = config;
 
   // Connexion sans spécifier de base de données
