@@ -20,17 +20,11 @@ module.exports = (sequelize) => {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: 'lieux',
+        model: 'lieu',
         key: 'id_lieu'
       }
     },
-    lieuId: {
-      type: DataTypes.INTEGER,
-      references: {
-        model: 'lieux',
-        key: 'id_lieu'
-      }
-    },
+   
     referencesHistoriques: {
       type: DataTypes.TEXT
     },
@@ -47,6 +41,7 @@ module.exports = (sequelize) => {
     DetailLieu.belongsTo(models.Lieu, { foreignKey: 'id_lieu' });
     DetailLieu.hasMany(models.Monument, { foreignKey: 'detailLieuId' });
     DetailLieu.hasMany(models.Vestige, { foreignKey: 'detailLieuId' });
+    DetailLieu.hasMany(models.Service, { foreignKey: 'id_detailLieu' });
   };
 
   return DetailLieu;

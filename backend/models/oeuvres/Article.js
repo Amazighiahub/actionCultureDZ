@@ -15,19 +15,23 @@ module.exports = (sequelize) => {
         key: 'id_oeuvre'
       }
     },
+    // NOUVEAU CHAMP AJOUTÉ
+    id_genre: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'genre',
+        key: 'id_genre'
+      }
+    },
     auteur: {
       type: DataTypes.STRING(255)
     },
     source: {
       type: DataTypes.STRING(255)
     },
-    type_article: {
-      type: DataTypes.ENUM('presse', 'blog', 'magazine', 'newsletter', 'communique', 'editorial', 'interview', 'reportage', 'autre'),
-      defaultValue: 'presse'
-    },
-    categorie: {
-      type: DataTypes.STRING(100)
-    },
+   
+    // CHAMP SUPPRIMÉ : categorie
     sous_titre: {
       type: DataTypes.STRING(500)
     },
@@ -98,6 +102,8 @@ module.exports = (sequelize) => {
   // Associations
   Article.associate = (models) => {
     Article.belongsTo(models.Oeuvre, { foreignKey: 'id_oeuvre' });
+    // NOUVELLE ASSOCIATION AJOUTÉE
+    Article.belongsTo(models.Genre, { foreignKey: 'id_genre' });
   };
 
   return Article;

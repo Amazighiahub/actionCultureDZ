@@ -1,378 +1,347 @@
-// hooks/useNotifications.ts
+// hooks/useNotifications.ts - Hook React pour gérer les notifications
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useState, useEffect, useCallback } from 'react';
-import { useAuthForNotifications } from '@/hooks/useAuthForNotifications';
-import NotificationService from '@/services/notification.service';
-import {
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { socketService } from '../services/socketService';
+import { notificationService } from '../services/notification.service';
+import type {
   Notification,
   NotificationSummary,
   NotificationPreferences,
-  NotificationFilters,
-  NotificationType,
-  MarkAsReadDto,
-} from '@/types/Notification.types';
-import { PaginationParams } from '@/config/api';
+  LoadNotificationsOptions,
+  UpdatePreferencesData
+} from '../types/models/notification.types';
+
+// Types pour les événements de notification
+type NotificationEventMap = {
+  'notification:new': Notification;
+  'notification:updated': { id: number; lu: boolean };
+  'notifications:allRead': void;
+};
 
 interface UseNotificationsReturn {
   // État
   notifications: Notification[];
   summary: NotificationSummary | null;
-  preferences: NotificationPreferences | null;
   isLoading: boolean;
   error: string | null;
+  isConnected: boolean;
   
-  // Pagination
-  total: number;
-  page: number;
-  pages: number;
-  limit: number;
-  
-  // Actions
-  fetchNotifications: (params?: PaginationParams & NotificationFilters) => Promise<void>;
-  fetchSummary: () => Promise<void>;
-  fetchPreferences: () => Promise<void>;
+  // Méthodes
+  loadNotifications: (options?: LoadNotificationsOptions) => Promise<void>;
   markAsRead: (notificationId: number) => Promise<void>;
   markAllAsRead: () => Promise<void>;
-  markMultipleAsRead: (ids: number[]) => Promise<void>;
   deleteNotification: (notificationId: number) => Promise<void>;
   deleteAllRead: () => Promise<void>;
-  updatePreferences: (prefs: Partial<NotificationPreferences>) => Promise<void>;
-  refreshAll: () => Promise<void>;
-  
-  // Helpers
-  hasUnread: boolean;
-  unreadCount: number;
-  urgentCount: number;
-  getNotificationsByType: (type: NotificationType) => Notification[];
+  updatePreferences: (preferences: UpdatePreferencesData) => Promise<void>;
+  refreshSummary: () => Promise<void>;
+  requestNotificationPermission: () => Promise<boolean>;
 }
 
-export const useNotifications = (): UseNotificationsReturn => {
-  const { token } = useAuthForNotifications();
-  
-  // État principal
+export function useNotifications(): UseNotificationsReturn {
+  // État local
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [summary, setSummary] = useState<NotificationSummary | null>(null);
-  const [preferences, setPreferences] = useState<NotificationPreferences | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
   
-  // État de pagination
-  const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
-  const [pages, setPages] = useState(1);
-  const [limit, setLimit] = useState(10);
+  // Ref pour éviter les re-rendus inutiles
+  const isMountedRef = useRef(true);
 
-  /**
-   * Récupère la liste des notifications
-   */
-  const fetchNotifications = useCallback(async (
-    params?: PaginationParams & NotificationFilters
-  ) => {
-    if (!token) return;
-    
-    setIsLoading(true);
-    setError(null);
+  // Fonction utilitaire pour les appels sécurisés
+  const safeCall = useCallback(async (fn: () => Promise<void>) => {
+    if (!isMountedRef.current) return;
     
     try {
-      const response = await NotificationService.getNotifications(token, params);
-      
-      if (response.success && response.data) {
-        setNotifications(response.data.notifications);
-        setTotal(response.data.total);
-        setPage(response.data.page);
-        setPages(response.data.pages);
-        setLimit(response.data.limit);
+      setError(null);
+      await fn();
+    } catch (err: any) {
+      if (isMountedRef.current) {
+        const errorMessage = err.message || 'Une erreur est survenue';
+        setError(errorMessage);
+        console.error('Erreur notification:', err);
       }
-    } catch (err: any) {
-      setError(err.message || 'Erreur lors du chargement des notifications');
-      console.error('Erreur fetchNotifications:', err);
-    } finally {
-      setIsLoading(false);
     }
-  }, [token]);
+  }, []);
 
-  /**
-   * Récupère le résumé des notifications
-   */
-  const fetchSummary = useCallback(async () => {
-    if (!token) return;
-    
-    try {
-      const response = await NotificationService.getSummary(token);
-      if (response.success && response.data) {
-        setSummary(response.data);
-      }
-    } catch (err: any) {
-      console.error('Erreur fetchSummary:', err);
-    }
-  }, [token]);
-
-  /**
-   * Récupère les préférences
-   */
-  const fetchPreferences = useCallback(async () => {
-    if (!token) return;
-    
-    try {
-      const response = await NotificationService.getPreferences(token);
-      if (response.success && response.data) {
-        setPreferences(response.data);
-      }
-    } catch (err: any) {
-      console.error('Erreur fetchPreferences:', err);
-    }
-  }, [token]);
-
-  /**
-   * Marque une notification comme lue
-   */
-  const markAsRead = useCallback(async (notificationId: number) => {
-    if (!token) return;
-    
-    try {
-      await NotificationService.markAsRead(token, notificationId);
-      
-      // Mise à jour locale
-      setNotifications(prev =>
-        prev.map(n => 
-          n.id_notification === notificationId 
-            ? { ...n, lu: true, date_lecture: new Date().toISOString() }
-            : n
-        )
-      );
-      
-      // Mise à jour du résumé
-      await fetchSummary();
-    } catch (err: any) {
-      setError(err.message || 'Erreur lors du marquage comme lu');
-      throw err;
-    }
-  }, [token, fetchSummary]);
-
-  /**
-   * Marque toutes les notifications comme lues
-   */
-  const markAllAsRead = useCallback(async () => {
-    if (!token) return;
-    
-    setIsLoading(true);
-    try {
-      await NotificationService.markAllAsRead(token);
-      
-      // Mise à jour locale
-      setNotifications(prev =>
-        prev.map(n => ({ 
-          ...n, 
-          lu: true, 
-          date_lecture: new Date().toISOString() 
-        }))
-      );
-      
-      // Mise à jour du résumé
-      await fetchSummary();
-    } catch (err: any) {
-      setError(err.message || 'Erreur lors du marquage comme lues');
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  }, [token, fetchSummary]);
-
-  /**
-   * Marque plusieurs notifications comme lues
-   */
-  const markMultipleAsRead = useCallback(async (ids: number[]) => {
-    if (!token || ids.length === 0) return;
-    
-    try {
-      const dto: MarkAsReadDto = { notification_ids: ids };
-      await NotificationService.markMultipleAsRead(token, dto);
-      
-      // Mise à jour locale
-      setNotifications(prev =>
-        prev.map(n => 
-          ids.includes(n.id_notification)
-            ? { ...n, lu: true, date_lecture: new Date().toISOString() }
-            : n
-        )
-      );
-      
-      // Mise à jour du résumé
-      await fetchSummary();
-    } catch (err: any) {
-      setError(err.message || 'Erreur lors du marquage comme lues');
-      throw err;
-    }
-  }, [token, fetchSummary]);
-
-  /**
-   * Supprime une notification
-   */
-  const deleteNotification = useCallback(async (notificationId: number) => {
-    if (!token) return;
-    
-    try {
-      await NotificationService.deleteNotification(token, notificationId);
-      
-      // Mise à jour locale
-      setNotifications(prev => 
-        prev.filter(n => n.id_notification !== notificationId)
-      );
-      
-      // Mise à jour du résumé
-      await fetchSummary();
-    } catch (err: any) {
-      setError(err.message || 'Erreur lors de la suppression');
-      throw err;
-    }
-  }, [token, fetchSummary]);
-
-  /**
-   * Supprime toutes les notifications lues
-   */
-  const deleteAllRead = useCallback(async () => {
-    if (!token) return;
-    
-    setIsLoading(true);
-    try {
-      await NotificationService.deleteAllRead(token);
-      
-      // Mise à jour locale
-      setNotifications(prev => prev.filter(n => !n.lu));
-      
-      // Mise à jour du résumé
-      await fetchSummary();
-    } catch (err: any) {
-      setError(err.message || 'Erreur lors de la suppression');
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  }, [token, fetchSummary]);
-
-  /**
-   * Met à jour les préférences
-   */
-  const updatePreferences = useCallback(async (
-    prefs: Partial<NotificationPreferences>
-  ) => {
-    if (!token) return;
-    
-    try {
-      const response = await NotificationService.updatePreferences(token, prefs);
-      if (response.success && response.data) {
-        setPreferences(response.data);
-      }
-    } catch (err: any) {
-      setError(err.message || 'Erreur lors de la mise à jour des préférences');
-      throw err;
-    }
-  }, [token]);
-
-  /**
-   * Rafraîchit toutes les données
-   */
-  const refreshAll = useCallback(async () => {
-    await Promise.all([
-      fetchNotifications(),
-      fetchSummary(),
-      fetchPreferences(),
-    ]);
-  }, [fetchNotifications, fetchSummary, fetchPreferences]);
-
-  /**
-   * Filtre les notifications par type
-   */
-  const getNotificationsByType = useCallback((type: NotificationType) => {
-    return notifications.filter(n => n.type_notification === type);
-  }, [notifications]);
-
-  // Chargement initial
-  useEffect(() => {
-    if (token) {
-      refreshAll();
-    }
-  }, [token]);
-
-  // Helpers calculés
-  const hasUnread = (summary?.non_lues ?? 0) > 0;
-  const unreadCount = summary?.non_lues ?? 0;
-  const urgentCount = summary?.urgentes ?? 0;
-
-  return {
-    // État
-    notifications,
-    summary,
-    preferences,
-    isLoading,
-    error,
-    
-    // Pagination
-    total,
-    page,
-    pages,
-    limit,
-    
-    // Actions
-    fetchNotifications,
-    fetchSummary,
-    fetchPreferences,
-    markAsRead,
-    markAllAsRead,
-    markMultipleAsRead,
-    deleteNotification,
-    deleteAllRead,
-    updatePreferences,
-    refreshAll,
-    
-    // Helpers
-    hasUnread,
-    unreadCount,
-    urgentCount,
-    getNotificationsByType,
-  };
-};
-
-/**
- * Hook pour le polling des notifications
- */
-export const useNotificationPolling = (
-  intervalMs: number = 30000 // 30 secondes par défaut
-) => {
-  const { token } = useAuthForNotifications();
-  const [lastCheck, setLastCheck] = useState<Date>(new Date());
-  const [unreadCount, setUnreadCount] = useState(0);
-
-  useEffect(() => {
-    if (!token) return;
-
-    const checkNotifications = async () => {
+  // Charger les notifications
+  const loadNotifications = useCallback(async (options: LoadNotificationsOptions = {}) => {
+    await safeCall(async () => {
+      setIsLoading(true);
       try {
-        const hasUnread = await NotificationService.hasUnreadNotifications(token);
-        const response = await NotificationService.getSummary(token);
-        
-        if (response.success && response.data) {
-          setUnreadCount(response.data.non_lues);
-          setLastCheck(new Date());
+        const response = await notificationService.getNotifications(options);
+        if (isMountedRef.current) {
+          setNotifications(response.notifications);
         }
+      } finally {
+        if (isMountedRef.current) {
+          setIsLoading(false);
+        }
+      }
+    });
+  }, [safeCall]);
+
+  // Rafraîchir le résumé
+  const refreshSummary = useCallback(async () => {
+    await safeCall(async () => {
+      const newSummary = await notificationService.getSummary();
+      if (isMountedRef.current) {
+        setSummary(newSummary);
+      }
+    });
+  }, [safeCall]);
+
+  // Marquer comme lu
+  const markAsRead = useCallback(async (notificationId: number) => {
+    await safeCall(async () => {
+      await notificationService.markAsRead(notificationId);
+      
+      // Mettre à jour l'état local immédiatement
+      if (isMountedRef.current) {
+        setNotifications(prev => 
+          prev.map(notif => 
+            notif.id_notification === notificationId 
+              ? { ...notif, lu: true } 
+              : notif
+          )
+        );
+        
+        // Mettre à jour le résumé
+        setSummary(prev => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            nonLues: Math.max(0, prev.nonLues - 1)
+          };
+        });
+      }
+    });
+  }, [safeCall]);
+
+  // Marquer tout comme lu
+  const markAllAsRead = useCallback(async () => {
+    await safeCall(async () => {
+      const result = await notificationService.markAllAsRead();
+      
+      // Mettre à jour l'état local
+      if (isMountedRef.current) {
+        setNotifications(prev => prev.map(notif => ({ ...notif, lu: true })));
+        
+        // Mettre à jour le résumé
+        setSummary(prev => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            nonLues: 0
+          };
+        });
+      }
+      
+      console.log(`${result.updated} notifications marquées comme lues`);
+    });
+  }, [safeCall]);
+
+  // Supprimer une notification
+  const deleteNotification = useCallback(async (notificationId: number) => {
+    await safeCall(async () => {
+      await notificationService.deleteNotification(notificationId);
+      
+      // Mettre à jour l'état local
+      if (isMountedRef.current) {
+        setNotifications(prev => prev.filter(n => n.id_notification !== notificationId));
+        
+        // Rafraîchir le résumé
+        await refreshSummary();
+      }
+    });
+  }, [safeCall, refreshSummary]);
+
+  // Supprimer toutes les lues
+  const deleteAllRead = useCallback(async () => {
+    await safeCall(async () => {
+      const result = await notificationService.deleteAllRead();
+      
+      // Mettre à jour l'état local
+      if (isMountedRef.current) {
+        setNotifications(prev => prev.filter(n => !n.lu));
+      }
+      
+      console.log(`${result.deleted} notifications supprimées`);
+    });
+  }, [safeCall]);
+
+  // Mettre à jour les préférences
+  const updatePreferences = useCallback(async (preferences: UpdatePreferencesData) => {
+    await safeCall(async () => {
+      await notificationService.updatePreferences(preferences);
+    });
+  }, [safeCall]);
+
+  // Demander la permission pour les notifications navigateur
+  const requestNotificationPermission = useCallback(async (): Promise<boolean> => {
+    try {
+      return await notificationService.requestBrowserPermission();
+    } catch (error) {
+      console.error('Erreur permission notifications:', error);
+      return false;
+    }
+  }, []);
+
+  // Configuration WebSocket avec une approche alternative
+  useEffect(() => {
+    const token = localStorage.getItem('auth_token');
+    if (!token) return;
+
+    // Se connecter au WebSocket
+    socketService.connect(token);
+
+    // Créer un wrapper pour écouter les événements de manière type-safe
+    const addEventListener = <K extends keyof NotificationEventMap>(
+      event: K,
+      handler: (data: NotificationEventMap[K]) => void
+    ) => {
+      // Si socketService.on accepte seulement certains types, on peut essayer différentes approches
+      try {
+        // Approche 1: Cast vers un type plus général
+        (socketService as any).on(event, handler);
       } catch (error) {
-        console.error('Erreur polling notifications:', error);
+        console.warn(`Impossible d'écouter l'événement ${event}:`, error);
       }
     };
 
-    // Vérification initiale
-    checkNotifications();
+    // Gérer l'état de connexion via polling
+    const connectionCheckInterval = setInterval(() => {
+      const connected = socketService.isConnected || false;
+      setIsConnected(connected);
+      
+      if (connected && !isConnected) {
+        console.log('✅ WebSocket connecté pour les notifications');
+      } else if (!connected && isConnected) {
+        console.log('❌ WebSocket déconnecté');
+      }
+    }, 1000);
 
-    // Mise en place du polling
-    const interval = setInterval(checkNotifications, intervalMs);
+    // Handlers pour les événements de notification
+    const handlers = {
+      'notification:new': (notification: Notification) => {
+        console.log('🔔 Nouvelle notification reçue:', notification);
+        
+        setNotifications(prev => [notification, ...prev]);
+        
+        setSummary(prev => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            total: prev.total + 1,
+            nonLues: prev.nonLues + 1
+          };
+        });
+        
+        notificationService.showBrowserNotification(notification);
+      },
+      
+      'notification:updated': (data: { id: number; lu: boolean }) => {
+        setNotifications(prev =>
+          prev.map(notif =>
+            notif.id_notification === data.id
+              ? { ...notif, lu: data.lu }
+              : notif
+          )
+        );
+        
+        if (data.lu) {
+          setSummary(prev => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              nonLues: Math.max(0, prev.nonLues - 1)
+            };
+          });
+        }
+      },
+      
+      'notifications:allRead': () => {
+        setNotifications(prev => prev.map(n => ({ ...n, lu: true })));
+        setSummary(prev => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            nonLues: 0
+          };
+        });
+      }
+    };
+
+    // Enregistrer les événements
+    Object.entries(handlers).forEach(([event, handler]) => {
+      addEventListener(event as keyof NotificationEventMap, handler as any);
+    });
+
+    // Charger les données initiales
+    const initData = async () => {
+      try {
+        await Promise.all([
+          loadNotifications({ limit: 20 }),
+          refreshSummary()
+        ]);
+      } catch (error) {
+        console.error('Erreur initialisation notifications:', error);
+      }
+    };
+
+    initData();
+
+    // Nettoyage
+    return () => {
+      clearInterval(connectionCheckInterval);
+      
+      // Essayer de se désinscrire des événements
+      if ('off' in socketService) {
+        Object.keys(handlers).forEach(event => {
+          try {
+            (socketService as any).off(event);
+          } catch (error) {
+            console.warn(`Erreur lors de la désinscription de ${event}:`, error);
+          }
+        });
+      }
+      
+      socketService.disconnect();
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Rafraîchir le résumé périodiquement
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!error && isConnected) {
+        refreshSummary();
+      }
+    }, 60000); // Toutes les minutes
 
     return () => clearInterval(interval);
-  }, [token, intervalMs]);
+  }, [refreshSummary, error, isConnected]);
+
+  // Cleanup au démontage
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   return {
-    unreadCount,
-    lastCheck,
+    notifications,
+    summary,
+    isLoading,
+    error,
+    isConnected,
+    loadNotifications,
+    markAsRead,
+    markAllAsRead,
+    deleteNotification,
+    deleteAllRead,
+    updatePreferences,
+    refreshSummary,
+    requestNotificationPermission
   };
-};
-
-export default useNotifications;
+}

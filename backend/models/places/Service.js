@@ -7,21 +7,15 @@ module.exports = (sequelize) => {
       primaryKey: true,
       autoIncrement: true
     },
-    id_lieu: {
+    id_detailLieu: {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: 'lieux',
-        key: 'id_lieu'
+        model: 'detail_lieux',
+        key: 'id_detailLieu'
       }
     },
-    lieuId: {
-      type: DataTypes.INTEGER,
-      references: {
-        model: 'lieux',
-        key: 'id_lieu'
-      }
-    },
+   
     nom: {
       type: DataTypes.STRING(255),
       allowNull: false
@@ -33,7 +27,7 @@ module.exports = (sequelize) => {
 
   // Associations
   Service.associate = (models) => {
-    Service.belongsTo(models.Lieu, { foreignKey: 'id_lieu' });
+    Service.belongsTo(models.DetailLieu, { foreignKey: 'id_detailLieu' });
   };
 
   return Service;

@@ -15,6 +15,15 @@ module.exports = (sequelize) => {
         key: 'id_oeuvre'
       }
     },
+    // NOUVEAU CHAMP AJOUTÉ
+    id_genre: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'genre',
+        key: 'id_genre'
+      }
+    },
     journal: {
       type: DataTypes.STRING(255)
     },
@@ -74,6 +83,8 @@ module.exports = (sequelize) => {
   // Associations
   ArticleScientifique.associate = (models) => {
     ArticleScientifique.belongsTo(models.Oeuvre, { foreignKey: 'id_oeuvre' });
+    // NOUVELLE ASSOCIATION AJOUTÉE
+    ArticleScientifique.belongsTo(models.Genre, { foreignKey: 'id_genre' });
   };
 
   return ArticleScientifique;

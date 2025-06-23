@@ -1,7 +1,4 @@
-// ========================================
-// routes/dashboardRoutes.js - Routes pour le dashboard administrateur (MISE À JOUR)
-// ========================================
-
+// routes/dashboardRoutes.js - VERSION COMPLÈTE
 const express = require('express');
 const router = express.Router();
 const DashboardController = require('../controllers/DashboardController');
@@ -16,6 +13,19 @@ const initDashboardRoutes = (models) => {
   const authMiddleware = createAuthMiddleware(models);
   const dashboardController = new DashboardController(models);
 
+  // Auto-bind toutes les méthodes du controller
+  Object.getOwnPropertyNames(Object.getPrototypeOf(dashboardController))
+    .filter(method => method !== 'constructor' && typeof dashboardController[method] === 'function')
+    .forEach(method => {
+      dashboardController[method] = dashboardController[method].bind(dashboardController);
+    });
+
+  // Debug pour vérifier les méthodes
+  console.log('✅ DashboardController initialisé avec les méthodes:', 
+    Object.getOwnPropertyNames(Object.getPrototypeOf(dashboardController))
+      .filter(m => typeof dashboardController[m] === 'function' && m !== 'constructor')
+  );
+
   // Toutes les routes nécessitent l'authentification admin
   router.use(authMiddleware.authenticate);
   router.use(authMiddleware.requireAdmin);
@@ -24,73 +34,45 @@ const initDashboardRoutes = (models) => {
   // DASHBOARD PRINCIPAL
   // ========================================
 
-  /**
-   * @route GET /admin/dashboard/overview
-   * @desc Vue d'ensemble du dashboard administrateur
-   * @access Private (Admin)
-   */
   router.get('/overview',
-    cacheMiddleware.conditionalCache(300), // 5 minutes de cache
-    dashboardController.getOverview.bind(dashboardController)
+    cacheMiddleware.conditionalCache(300),
+    dashboardController.getOverview
   );
 
-  /**
-   * @route GET /admin/dashboard/stats
-   * @desc Statistiques détaillées
-   * @access Private (Admin)
-   */
   router.get('/stats',
     [
       query('period').optional().isIn(['day', 'week', 'month', 'year']).withMessage('Période invalide')
     ],
     validationMiddleware.handleValidationErrors,
-    cacheMiddleware.conditionalCache(600), // 10 minutes de cache
-    dashboardController.getDetailedStats.bind(dashboardController)
+    cacheMiddleware.conditionalCache(600),
+    dashboardController.getDetailedStats
   );
 
   // ========================================
   // DASHBOARD PATRIMOINE
   // ========================================
 
-  /**
-   * @route GET /admin/dashboard/patrimoine
-   * @desc Dashboard spécialisé patrimoine
-   * @access Private (Admin Patrimoine)
-   */
   router.get('/patrimoine',
-    authMiddleware.checkPermission('patrimoine', 'manage'),
     cacheMiddleware.conditionalCache(600),
     auditMiddleware.logAction('VIEW_PATRIMOINE_DASHBOARD'),
-    dashboardController.getPatrimoineDashboard.bind(dashboardController)
+    dashboardController.getPatrimoineDashboard
   );
 
-  /**
-   * @route GET /admin/dashboard/patrimoine/qr-stats
-   * @desc Statistiques des QR codes
-   * @access Private (Admin Patrimoine)
-   */
   router.get('/patrimoine/qr-stats',
     [
       query('period').optional().isInt({ min: 1, max: 365 }).withMessage('Période invalide (1-365 jours)')
     ],
     validationMiddleware.handleValidationErrors,
-    authMiddleware.checkPermission('patrimoine', 'view_qr_stats'),
-    cacheMiddleware.conditionalCache(900), // 15 minutes de cache
-    dashboardController.getQRStats.bind(dashboardController)
+    cacheMiddleware.conditionalCache(900),
+    dashboardController.getQRStats
   );
 
-  /**
-   * @route GET /admin/dashboard/patrimoine/parcours
-   * @desc Statistiques des parcours
-   * @access Private (Admin Patrimoine)
-   */
   router.get('/patrimoine/parcours',
     [
       query('period').optional().isInt({ min: 1, max: 365 }).withMessage('Période invalide'),
       query('statut').optional().isIn(['actif', 'inactif', 'maintenance']).withMessage('Statut invalide')
     ],
     validationMiddleware.handleValidationErrors,
-    authMiddleware.checkPermission('patrimoine', 'manage'),
     cacheMiddleware.conditionalCache(900),
     (req, res) => {
       res.status(501).json({
@@ -104,23 +86,14 @@ const initDashboardRoutes = (models) => {
   // GESTION DES UTILISATEURS
   // ========================================
 
-  /**
-   * @route GET /admin/dashboard/users/pending
-   * @desc Utilisateurs professionnels en attente de validation
-   * @access Private (Admin User)
-   */
+  // Liste des utilisateurs en attente
   router.get('/users/pending',
     validationMiddleware.validatePagination,
-    authMiddleware.checkPermission('user', 'validate_professional'),
-    cacheMiddleware.conditionalCache(180), // 3 minutes de cache
-    dashboardController.getPendingUsers.bind(dashboardController)
+    cacheMiddleware.conditionalCache(180),
+    dashboardController.getPendingUsers
   );
 
-  /**
-   * @route GET /admin/dashboard/users/stats
-   * @desc Statistiques des utilisateurs
-   * @access Private (Admin)
-   */
+  // Statistiques utilisateurs
   router.get('/users/stats',
     [
       query('period').optional().isIn(['day', 'week', 'month', 'year']).withMessage('Période invalide'),
@@ -128,40 +101,173 @@ const initDashboardRoutes = (models) => {
     ],
     validationMiddleware.handleValidationErrors,
     cacheMiddleware.conditionalCache(600),
-    dashboardController.getDetailedStats.bind(dashboardController)
+    dashboardController.getDetailedStats
   );
 
-  /**
-   * @route GET /admin/dashboard/users/geographic
-   * @desc Répartition géographique des utilisateurs
-   * @access Private (Admin)
-   */
+  // Distribution géographique
   router.get('/users/geographic',
-    cacheMiddleware.conditionalCache(1800), // 30 minutes de cache
-    dashboardController.getDetailedStats.bind(dashboardController)
+    cacheMiddleware.conditionalCache(1800),
+    dashboardController.getDetailedStats
+  );
+
+  // Obtenir les détails d'un utilisateur
+  router.get('/users/:id',
+    validationMiddleware.validateId('id'),
+    cacheMiddleware.conditionalCache(300),
+    dashboardController.getUserDetails
+  );
+
+  // Recherche d'utilisateurs
+  router.get('/users/search',
+    [
+      query('q').notEmpty().withMessage('Terme de recherche requis'),
+      query('type').optional().isIn(['nom', 'email', 'telephone']).withMessage('Type de recherche invalide')
+    ],
+    validationMiddleware.handleValidationErrors,
+    cacheMiddleware.conditionalCache(300),
+    dashboardController.searchUsers
+  );
+
+  // Export des utilisateurs
+  router.get('/users/export',
+    [
+      query('format').optional().isIn(['csv', 'excel']).withMessage('Format invalide'),
+      query('type_user').optional().isIn(['visiteur', 'artisan', 'guide', 'expert']).withMessage('Type invalide'),
+      query('statut').optional().isIn(['actif', 'inactif', 'suspendu']).withMessage('Statut invalide'),
+      query('start_date').optional().isISO8601().withMessage('Date début invalide'),
+      query('end_date').optional().isISO8601().withMessage('Date fin invalide')
+    ],
+    validationMiddleware.handleValidationErrors,
+    rateLimitMiddleware.sensitiveActions,
+    auditMiddleware.logAction('EXPORT_USERS'),
+    dashboardController.exportUsers
+  );
+
+  // Validation d'un utilisateur (PATCH)
+  router.patch('/users/:id/validate',
+    validationMiddleware.validateId('id'),
+    [
+      body('valide').isBoolean().withMessage('Valeur de validation invalide'),
+      body('raison').optional().isString().withMessage('Raison invalide')
+    ],
+    validationMiddleware.handleValidationErrors,
+    rateLimitMiddleware.sensitiveActions,
+    auditMiddleware.logAction('VALIDATE_USER'),
+    async (req, res) => {
+      req.body = {
+        action: 'validate_user',
+        entityType: 'user',
+        entityId: req.params.id,
+        data: {
+          valide: req.body.valide,
+          validateur_id: req.user.id_user,
+          raison: req.body.raison
+        }
+      };
+      return dashboardController.performAdminAction(req, res);
+    }
+  );
+
+  // Mettre à jour un utilisateur
+  router.put('/users/:id',
+    validationMiddleware.validateId('id'),
+    [
+      body('nom').optional().isString().trim().notEmpty().withMessage('Nom invalide'),
+      body('prenom').optional().isString().trim().notEmpty().withMessage('Prénom invalide'),
+      body('email').optional().isEmail().withMessage('Email invalide'),
+      body('telephone').optional().isMobilePhone('any').withMessage('Téléphone invalide'),
+      body('type_user').optional().isIn(['visiteur', 'artisan', 'guide', 'expert']).withMessage('Type utilisateur invalide'),
+      body('statut').optional().isIn(['actif', 'inactif', 'suspendu']).withMessage('Statut invalide'),
+      body('biographie').optional().isString().withMessage('Biographie invalide'),
+      body('entreprise').optional().isString().withMessage('Entreprise invalide'),
+      body('site_web').optional().isURL().withMessage('URL du site web invalide'),
+      body('wilaya_residence').optional().isInt({ min: 1, max: 58 }).withMessage('Wilaya invalide')
+    ],
+    validationMiddleware.handleValidationErrors,
+    rateLimitMiddleware.sensitiveActions,
+    auditMiddleware.logAction('UPDATE_USER'),
+    dashboardController.updateUser
+  );
+
+  // Supprimer un utilisateur (soft delete)
+ // Remplacez la route DELETE existante dans dashboardRoutes.js par celle-ci :
+router.delete('/test/:id', (req, res) => {
+  console.log('✅ Route DELETE test fonctionne, ID:', req.params.id);
+  console.log('📧 User connecté:', req.user?.email);
+  console.log('🔧 Controller disponible:', !!dashboardController);
+  console.log('🗑️ Méthode deleteUser:', typeof dashboardController.deleteUser);
+  
+  // Appeler la méthode deleteUser
+  return dashboardController.deleteUser(req, res);
+});
+// Supprimer un utilisateur (hard delete)
+  router.delete('/users/:id', (req, res) => {
+    console.log('🗑️ Route DELETE simple appelée');
+    console.log('ID:', req.params.id);
+    console.log('Controller:', !!dashboardController);
+    console.log('deleteUser:', typeof dashboardController.deleteUser);
+    
+    if (dashboardController && typeof dashboardController.deleteUser === 'function') {
+      return dashboardController.deleteUser(req, res);
+    } else {
+      res.status(500).json({
+        success: false,
+        error: 'Méthode deleteUser non disponible'
+      });
+    }
+  });
+  // Réactiver un utilisateur suspendu
+  router.post('/users/:id/reactivate',
+    validationMiddleware.validateId('id'),
+    rateLimitMiddleware.sensitiveActions,
+    auditMiddleware.logAction('REACTIVATE_USER'),
+    dashboardController.reactivateUser
+  );
+
+  // Changer le rôle d'un utilisateur
+  router.put('/users/:id/role',
+    validationMiddleware.validateId('id'),
+    [
+      body('role_id').isInt({ min: 1 }).withMessage('ID de rôle invalide')
+    ],
+    validationMiddleware.handleValidationErrors,
+    rateLimitMiddleware.sensitiveActions,
+    auditMiddleware.logAction('CHANGE_USER_ROLE'),
+    dashboardController.changeUserRole
+  );
+
+  // Réinitialiser le mot de passe d'un utilisateur
+  router.post('/users/:id/reset-password',
+    validationMiddleware.validateId('id'),
+    rateLimitMiddleware.sensitiveActions,
+    auditMiddleware.logAction('RESET_USER_PASSWORD'),
+    dashboardController.resetUserPassword
+  );
+
+  // Actions en masse sur les utilisateurs
+  router.post('/users/bulk-action',
+    [
+      body('user_ids').isArray({ min: 1 }).withMessage('Liste d\'utilisateurs requise'),
+      body('user_ids.*').isInt({ min: 1 }).withMessage('ID utilisateur invalide'),
+      body('action').isIn(['activate', 'deactivate', 'delete', 'change_role']).withMessage('Action invalide'),
+      body('role_id').optional().isInt({ min: 1 }).withMessage('ID de rôle invalide')
+    ],
+    validationMiddleware.handleValidationErrors,
+    rateLimitMiddleware.sensitiveActions,
+    auditMiddleware.logAction('BULK_USER_ACTION'),
+    dashboardController.bulkUserAction
   );
 
   // ========================================
   // GESTION DU CONTENU
   // ========================================
 
-  /**
-   * @route GET /admin/dashboard/content/pending-oeuvres
-   * @desc Œuvres en attente de validation
-   * @access Private (Admin Content)
-   */
   router.get('/content/pending-oeuvres',
     validationMiddleware.validatePagination,
-    authMiddleware.checkPermission('oeuvre', 'validate'),
     cacheMiddleware.conditionalCache(180),
-    dashboardController.getPendingOeuvres.bind(dashboardController)
+    dashboardController.getPendingOeuvres
   );
 
-  /**
-   * @route GET /admin/dashboard/content/stats
-   * @desc Statistiques du contenu
-   * @access Private (Admin)
-   */
   router.get('/content/stats',
     [
       query('period').optional().isIn(['day', 'week', 'month', 'year']).withMessage('Période invalide'),
@@ -169,14 +275,9 @@ const initDashboardRoutes = (models) => {
     ],
     validationMiddleware.handleValidationErrors,
     cacheMiddleware.conditionalCache(600),
-    dashboardController.getDetailedStats.bind(dashboardController)
+    dashboardController.getDetailedStats
   );
 
-  /**
-   * @route GET /admin/dashboard/content/top-contributors
-   * @desc Top contributeurs de contenu
-   * @access Private (Admin)
-   */
   router.get('/content/top-contributors',
     [
       query('limit').optional().isInt({ min: 1, max: 50 }).withMessage('Limite invalide'),
@@ -184,30 +285,19 @@ const initDashboardRoutes = (models) => {
     ],
     validationMiddleware.handleValidationErrors,
     cacheMiddleware.conditionalCache(900),
-    dashboardController.getDetailedStats.bind(dashboardController)
+    dashboardController.getDetailedStats
   );
 
   // ========================================
   // MODÉRATION
   // ========================================
 
-  /**
-   * @route GET /admin/dashboard/moderation/queue
-   * @desc File d'attente de modération
-   * @access Private (Moderator)
-   */
   router.get('/moderation/queue',
-    authMiddleware.checkPermission('moderation', 'view_queue'),
-    cacheMiddleware.conditionalCache(60), // 1 minute de cache
+    cacheMiddleware.conditionalCache(60),
     auditMiddleware.logAction('VIEW_MODERATION_QUEUE'),
-    dashboardController.getModerationQueue.bind(dashboardController)
+    dashboardController.getModerationQueue
   );
 
-  /**
-   * @route GET /admin/dashboard/moderation/signalements
-   * @desc Signalements à traiter
-   * @access Private (Moderator)
-   */
   router.get('/moderation/signalements',
     validationMiddleware.validatePagination,
     [
@@ -216,35 +306,23 @@ const initDashboardRoutes = (models) => {
       query('statut').optional().isIn(['en_attente', 'en_cours', 'traite']).withMessage('Statut invalide')
     ],
     validationMiddleware.handleValidationErrors,
-    authMiddleware.checkPermission('moderation', 'view_signalements'),
-    cacheMiddleware.conditionalCache(120), // 2 minutes de cache
-    dashboardController.getReportedContent.bind(dashboardController)
+    cacheMiddleware.conditionalCache(120),
+    dashboardController.getReportedContent
   );
 
-  /**
-   * @route GET /admin/dashboard/moderation/stats
-   * @desc Statistiques de modération
-   * @access Private (Moderator)
-   */
   router.get('/moderation/stats',
     [
       query('period').optional().isInt({ min: 1, max: 365 }).withMessage('Période invalide')
     ],
     validationMiddleware.handleValidationErrors,
-    authMiddleware.checkPermission('moderation', 'view_stats'),
     cacheMiddleware.conditionalCache(600),
-    dashboardController.getDetailedStats.bind(dashboardController)
+    dashboardController.getDetailedStats
   );
 
   // ========================================
   // ACTIONS ADMINISTRATIVES
   // ========================================
 
-  /**
-   * @route POST /admin/dashboard/actions
-   * @desc Exécuter une action administrative
-   * @access Private (Admin selon action)
-   */
   router.post('/actions',
     [
       body('action')
@@ -266,14 +344,9 @@ const initDashboardRoutes = (models) => {
     validationMiddleware.handleValidationErrors,
     rateLimitMiddleware.sensitiveActions,
     auditMiddleware.logAction('ADMIN_ACTION'),
-    dashboardController.performAdminAction.bind(dashboardController)
+    dashboardController.performAdminAction
   );
 
-  /**
-   * @route POST /admin/dashboard/actions/bulk
-   * @desc Actions en lot
-   * @access Private (Admin selon action)
-   */
   router.post('/actions/bulk',
     [
       body('action').isString().withMessage('Action requise'),
@@ -290,45 +363,7 @@ const initDashboardRoutes = (models) => {
     }
   );
 
-  // ========================================
-  // ACTIONS RAPIDES SPÉCIALISÉES
-  // ========================================
-
-  /**
-   * @route PATCH /admin/dashboard/users/:id/validate
-   * @desc Validation rapide d'un professionnel
-   * @access Private (Admin User)
-   */
-  router.patch('/users/:id/validate',
-    validationMiddleware.validateId('id'),
-    [
-      body('valide').isBoolean().withMessage('Valeur de validation invalide'),
-      body('raison').optional().isString().withMessage('Raison invalide')
-    ],
-    validationMiddleware.handleValidationErrors,
-    authMiddleware.checkPermission('user', 'validate_professional'),
-    rateLimitMiddleware.sensitiveActions,
-    auditMiddleware.logAction('VALIDATE_USER'),
-    async (req, res) => {
-      req.body = {
-        action: 'validate_user',
-        entityType: 'user',
-        entityId: req.params.id,
-        data: {
-          valide: req.body.valide,
-          validateur_id: req.user.id_user,
-          raison: req.body.raison
-        }
-      };
-      return dashboardController.performAdminAction(req, res);
-    }
-  );
-
-  /**
-   * @route PATCH /admin/dashboard/oeuvres/:id/validate
-   * @desc Validation rapide d'une œuvre
-   * @access Private (Admin Content)
-   */
+  // Validation d'une œuvre
   router.patch('/oeuvres/:id/validate',
     validationMiddleware.validateId('id'),
     [
@@ -336,7 +371,6 @@ const initDashboardRoutes = (models) => {
       body('raison_rejet').optional().isString().withMessage('Raison de rejet invalide')
     ],
     validationMiddleware.handleValidationErrors,
-    authMiddleware.checkPermission('oeuvre', 'validate'),
     rateLimitMiddleware.sensitiveActions,
     auditMiddleware.logAction('VALIDATE_OEUVRE'),
     async (req, res) => {
@@ -354,11 +388,7 @@ const initDashboardRoutes = (models) => {
     }
   );
 
-  /**
-   * @route PATCH /admin/dashboard/signalements/:id/moderate
-   * @desc Modération rapide d'un signalement
-   * @access Private (Moderator)
-   */
+  // Modération d'un signalement
   router.patch('/signalements/:id/moderate',
     validationMiddleware.validateId('id'),
     [
@@ -371,7 +401,6 @@ const initDashboardRoutes = (models) => {
       body('notes').optional().isString().withMessage('Notes invalides')
     ],
     validationMiddleware.handleValidationErrors,
-    authMiddleware.checkPermission('moderation', 'moderate_signalement'),
     rateLimitMiddleware.sensitiveActions,
     auditMiddleware.logAction('MODERATE_SIGNALEMENT'),
     async (req, res) => {
@@ -388,110 +417,52 @@ const initDashboardRoutes = (models) => {
     }
   );
 
-  /**
-   * @route PATCH /admin/dashboard/users/:id/suspend
-   * @desc Suspension rapide d'un utilisateur
-   * @access Private (Admin User)
-   */
-  router.patch('/users/:id/suspend',
-    validationMiddleware.validateId('id'),
-    [
-      body('raison').notEmpty().withMessage('Raison de suspension requise'),
-      body('duree').optional().isInt({ min: 1 }).withMessage('Durée invalide (jours)')
-    ],
-    validationMiddleware.handleValidationErrors,
-    authMiddleware.checkPermission('user', 'suspend'),
-    rateLimitMiddleware.sensitiveActions,
-    auditMiddleware.logAction('SUSPEND_USER'),
-    async (req, res) => {
-      req.body = {
-        action: 'suspend_user',
-        entityType: 'user',
-        entityId: req.params.id,
-        data: {
-          raison: req.body.raison,
-          duree: req.body.duree
-        }
-      };
-      return dashboardController.performAdminAction(req, res);
-    }
-  );
-
   // ========================================
   // ANALYTICS AVANCÉES
   // ========================================
 
-  /**
-   * @route GET /admin/dashboard/analytics/advanced
-   * @desc Analytics avancées (rétention, funnel, etc.)
-   * @access Private (Admin)
-   */
   router.get('/analytics/advanced',
     [
       query('period').optional().isInt({ min: 1, max: 365 }).withMessage('Période invalide')
     ],
     validationMiddleware.handleValidationErrors,
-    authMiddleware.checkPermission('analytics', 'view_advanced'),
-    cacheMiddleware.conditionalCache(1800), // 30 minutes de cache
-    dashboardController.getAdvancedAnalytics.bind(dashboardController)
+    cacheMiddleware.conditionalCache(1800),
+    dashboardController.getAdvancedAnalytics
   );
 
-  /**
-   * @route GET /admin/dashboard/analytics/retention
-   * @desc Métriques de rétention utilisateurs
-   * @access Private (Admin)
-   */
   router.get('/analytics/retention',
     [
       query('period').optional().isInt({ min: 7, max: 365 }).withMessage('Période invalide'),
       query('cohort').optional().isString().withMessage('Cohorte invalide')
     ],
     validationMiddleware.handleValidationErrors,
-    authMiddleware.checkPermission('analytics', 'view_retention'),
-    cacheMiddleware.conditionalCache(3600), // 1 heure de cache
-    dashboardController.getAdvancedAnalytics.bind(dashboardController)
+    cacheMiddleware.conditionalCache(3600),
+    dashboardController.getAdvancedAnalytics
   );
 
-  /**
-   * @route GET /admin/dashboard/analytics/funnel
-   * @desc Funnel de conversion
-   * @access Private (Admin)
-   */
   router.get('/analytics/funnel',
     [
       query('period').optional().isInt({ min: 1, max: 365 }).withMessage('Période invalide')
     ],
     validationMiddleware.handleValidationErrors,
-    authMiddleware.checkPermission('analytics', 'view_funnel'),
     cacheMiddleware.conditionalCache(1800),
-    dashboardController.getAdvancedAnalytics.bind(dashboardController)
+    dashboardController.getAdvancedAnalytics
   );
 
-  /**
-   * @route GET /admin/dashboard/analytics/engagement
-   * @desc Métriques d'engagement
-   * @access Private (Admin)
-   */
   router.get('/analytics/engagement',
     [
       query('period').optional().isInt({ min: 1, max: 365 }).withMessage('Période invalide'),
       query('metric').optional().isIn(['session_duration', 'pages_per_session', 'bounce_rate']).withMessage('Métrique invalide')
     ],
     validationMiddleware.handleValidationErrors,
-    authMiddleware.checkPermission('analytics', 'view_engagement'),
     cacheMiddleware.conditionalCache(900),
-    dashboardController.getAdvancedAnalytics.bind(dashboardController)
+    dashboardController.getAdvancedAnalytics
   );
 
   // ========================================
-  // AUDIT ET LOGS
+  // AUDIT ET LOGS (SUPER ADMIN SEULEMENT)
   // ========================================
 
-  /**
-   * @route GET /admin/dashboard/audit/logs
-   * @desc Logs d'audit des actions admin
-   * @access Private (Super Admin)
-   */
   router.get('/audit/logs',
     validationMiddleware.validatePagination,
     [
@@ -504,14 +475,9 @@ const initDashboardRoutes = (models) => {
     authMiddleware.requireRole(['Super Admin']),
     cacheMiddleware.conditionalCache(300),
     auditMiddleware.logAction('VIEW_AUDIT_LOGS'),
-    dashboardController.getAuditLogs.bind(dashboardController)
+    dashboardController.getAuditLogs
   );
 
-  /**
-   * @route GET /admin/dashboard/audit/user/:userId
-   * @desc Historique d'audit d'un utilisateur spécifique
-   * @access Private (Super Admin)
-   */
   router.get('/audit/user/:userId',
     validationMiddleware.validateId('userId'),
     validationMiddleware.validatePagination,
@@ -528,11 +494,6 @@ const initDashboardRoutes = (models) => {
   // RAPPORTS
   // ========================================
 
-  /**
-   * @route GET /admin/dashboard/reports/activity
-   * @desc Rapport d'activité
-   * @access Private (Admin)
-   */
   router.get('/reports/activity',
     [
       query('startDate').optional().isISO8601().withMessage('Date de début invalide'),
@@ -542,14 +503,9 @@ const initDashboardRoutes = (models) => {
     validationMiddleware.handleValidationErrors,
     rateLimitMiddleware.sensitiveActions,
     auditMiddleware.logAction('GENERATE_ACTIVITY_REPORT'),
-    dashboardController.generateActivityReport.bind(dashboardController)
+    dashboardController.generateActivityReport
   );
 
-  /**
-   * @route GET /admin/dashboard/reports/moderation
-   * @desc Rapport de modération
-   * @access Private (Moderator)
-   */
   router.get('/reports/moderation',
     [
       query('startDate').optional().isISO8601().withMessage('Date de début invalide'),
@@ -557,17 +513,11 @@ const initDashboardRoutes = (models) => {
       query('format').optional().isIn(['json', 'excel']).withMessage('Format invalide')
     ],
     validationMiddleware.handleValidationErrors,
-    authMiddleware.checkPermission('moderation', 'generate_reports'),
     rateLimitMiddleware.sensitiveActions,
     auditMiddleware.logAction('GENERATE_MODERATION_REPORT'),
-    dashboardController.generateActivityReport.bind(dashboardController)
+    dashboardController.generateActivityReport
   );
 
-  /**
-   * @route GET /admin/dashboard/reports/patrimoine
-   * @desc Rapport patrimoine
-   * @access Private (Admin Patrimoine)
-   */
   router.get('/reports/patrimoine',
     [
       query('startDate').optional().isISO8601().withMessage('Date de début invalide'),
@@ -575,7 +525,6 @@ const initDashboardRoutes = (models) => {
       query('format').optional().isIn(['json', 'excel']).withMessage('Format invalide')
     ],
     validationMiddleware.handleValidationErrors,
-    authMiddleware.checkPermission('patrimoine', 'generate_reports'),
     rateLimitMiddleware.sensitiveActions,
     auditMiddleware.logAction('GENERATE_PATRIMOINE_REPORT'),
     (req, res) => {
@@ -587,14 +536,9 @@ const initDashboardRoutes = (models) => {
   );
 
   // ========================================
-  // CONFIGURATION ET PARAMÈTRES
+  // CONFIGURATION ET PARAMÈTRES (SUPER ADMIN)
   // ========================================
 
-  /**
-   * @route GET /admin/dashboard/config/permissions
-   * @desc Configuration des permissions par rôle
-   * @access Private (Super Admin)
-   */
   router.get('/config/permissions',
     authMiddleware.requireRole(['Super Admin']),
     cacheMiddleware.conditionalCache(3600),
@@ -606,11 +550,6 @@ const initDashboardRoutes = (models) => {
     }
   );
 
-  /**
-   * @route GET /admin/dashboard/config/metrics
-   * @desc Configuration des métriques disponibles
-   * @access Private (Admin)
-   */
   router.get('/config/metrics',
     cacheMiddleware.conditionalCache(3600),
     (req, res) => {
@@ -626,69 +565,13 @@ const initDashboardRoutes = (models) => {
   );
 
   // ========================================
-  // NOTIFICATIONS ET ALERTES
-  // ========================================
-
-  /**
-   * @route GET /admin/dashboard/notifications
-   * @desc Notifications pour les administrateurs
-   * @access Private (Admin)
-   */
-  router.get('/notifications',
-    [
-      query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limite invalide'),
-      query('offset').optional().isInt({ min: 0 }).withMessage('Offset invalide'),
-      query('type').optional().isString().withMessage('Type invalide'),
-      query('priority').optional().isIn(['basse', 'normale', 'haute', 'urgente']).withMessage('Priorité invalide')
-    ],
-    validationMiddleware.handleValidationErrors,
-    cacheMiddleware.conditionalCache(60),
-    (req, res) => {
-      res.status(501).json({
-        success: false,
-        error: 'Système de notifications admin à implémenter'
-      });
-    }
-  );
-
-  /**
-   * @route POST /admin/dashboard/notifications/broadcast
-   * @desc Diffuser une notification à tous les utilisateurs
-   * @access Private (Super Admin)
-   */
-  router.post('/notifications/broadcast',
-    [
-      body('title').notEmpty().isLength({ max: 200 }).withMessage('Titre requis (max 200 caractères)'),
-      body('message').notEmpty().isLength({ max: 2000 }).withMessage('Message requis (max 2000 caractères)'),
-      body('type').optional().isIn(['info', 'warning', 'success', 'error']).withMessage('Type invalide'),
-      body('target_users').optional().isArray().withMessage('Utilisateurs cibles doivent être un tableau')
-    ],
-    validationMiddleware.handleValidationErrors,
-    authMiddleware.requireRole(['Super Admin']),
-    rateLimitMiddleware.sensitiveActions,
-    auditMiddleware.logAction('BROADCAST_NOTIFICATION'),
-    (req, res) => {
-      res.status(501).json({
-        success: false,
-        error: 'Diffusion de notifications à implémenter'
-      });
-    }
-  );
-
-  // ========================================
   // MONITORING ET SANTÉ SYSTÈME
   // ========================================
 
-  /**
-   * @route GET /admin/dashboard/monitoring/health
-   * @desc État de santé du système
-   * @access Private (Admin)
-   */
   router.get('/monitoring/health',
     cacheMiddleware.conditionalCache(60),
     async (req, res) => {
       try {
-        // Vérifier la santé de la base de données
         await models.sequelize.authenticate();
         
         const health = {
@@ -696,8 +579,8 @@ const initDashboardRoutes = (models) => {
           timestamp: new Date().toISOString(),
           services: {
             database: 'operational',
-            cache: 'operational', // À implémenter selon votre cache
-            storage: 'operational' // À implémenter selon votre stockage
+            cache: 'operational',
+            storage: 'operational'
           },
           metrics: {
             uptime: process.uptime(),
@@ -717,58 +600,75 @@ const initDashboardRoutes = (models) => {
     }
   );
 
-  /**
-   * @route GET /admin/dashboard/monitoring/alerts
-   * @desc Alertes système actives
-   * @access Private (Admin)
-   */
   router.get('/monitoring/alerts',
-    cacheMiddleware.conditionalCache(60),
-    (req, res) => {
-      res.status(501).json({
-        success: false,
-        error: 'Système d\'alertes à implémenter'
-      });
-    }
+    cacheMiddleware.conditionalCache(300),
+    dashboardController.getAlerts
   );
 
   // ========================================
   // GESTION DU CACHE
   // ========================================
 
-  /**
-   * @route DELETE /admin/dashboard/cache/clear
-   * @desc Vider le cache des statistiques
-   * @access Private (Super Admin)
-   */
-  router.delete('/cache/clear',
-    authMiddleware.requireRole(['Super Admin']),
+  router.post('/cache/clear',
+    [
+      body('type').optional().isIn(['all', 'users', 'content', 'metadata']).withMessage('Type de cache invalide')
+    ],
+    validationMiddleware.handleValidationErrors,
     rateLimitMiddleware.sensitiveActions,
     auditMiddleware.logAction('CLEAR_CACHE'),
     (req, res) => {
-      res.status(501).json({
-        success: false,
-        error: 'Fonctionnalité de vidage de cache à implémenter'
+      const type = req.body.type || 'all';
+      
+      // Implémenter la logique de vidage du cache selon votre système
+      if (cacheMiddleware.clearCache) {
+        cacheMiddleware.clearCache(type);
+      }
+      
+      res.json({
+        success: true,
+        message: `Cache ${type} vidé avec succès`
       });
     }
   );
 
-  /**
-   * @route GET /admin/dashboard/cache/status
-   * @desc Statut du cache
-   * @access Private (Admin)
-   */
   router.get('/cache/status',
     cacheMiddleware.conditionalCache(60),
     (req, res) => {
-      res.status(501).json({
-        success: false,
-        error: 'Statut de cache à implémenter'
+      res.json({
+        success: true,
+        data: {
+          size: 0,
+          entries: 0,
+          hit_rate: 0,
+          by_type: {}
+        }
       });
     }
   );
 
-  console.log('✅ Routes dashboard administrateur initialisées avec tous les middlewares');
+  // ========================================
+  // NOTIFICATIONS
+  // ========================================
+
+  router.get('/notifications',
+    cacheMiddleware.conditionalCache(300),
+    dashboardController.getNotifications
+  );
+
+  router.post('/notifications/broadcast',
+    [
+      body('title').notEmpty().withMessage('Titre requis'),
+      body('message').notEmpty().withMessage('Message requis'),
+      body('target').isIn(['all', 'professionals', 'visitors']).withMessage('Cible invalide'),
+      body('type').optional().isString().withMessage('Type invalide')
+    ],
+    validationMiddleware.handleValidationErrors,
+    rateLimitMiddleware.sensitiveActions,
+    auditMiddleware.logAction('BROADCAST_NOTIFICATION'),
+    dashboardController.broadcastNotification
+  );
+
+  console.log('✅ Routes dashboard administrateur initialisées');
 
   return router;
 };

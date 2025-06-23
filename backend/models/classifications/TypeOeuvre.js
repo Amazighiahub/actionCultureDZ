@@ -1,3 +1,4 @@
+// models/TypeOeuvre.js
 const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
@@ -21,7 +22,25 @@ module.exports = (sequelize) => {
 
   // Associations
   TypeOeuvre.associate = (models) => {
-    TypeOeuvre.hasMany(models.Oeuvre, { foreignKey: 'id_type_oeuvre' });
+    // Relation avec les œuvres
+    TypeOeuvre.hasMany(models.Oeuvre, { 
+      foreignKey: 'id_type_oeuvre',
+      as: 'oeuvres'
+    });
+    
+    // Relation Many-to-Many avec Genre via TypeOeuvreGenre
+    TypeOeuvre.belongsToMany(models.Genre, { 
+      through: models.TypeOeuvreGenre,
+      foreignKey: 'id_type_oeuvre',
+      otherKey: 'id_genre',
+      as: 'genres'
+    });
+    
+    // Relation directe avec la table de liaison pour les requêtes complexes
+    TypeOeuvre.hasMany(models.TypeOeuvreGenre, { 
+      foreignKey: 'id_type_oeuvre',
+      as: 'typeOeuvreGenres'
+    });
   };
 
   return TypeOeuvre;

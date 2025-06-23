@@ -243,15 +243,7 @@ module.exports = (sequelize) => {
         }
       },
       
-      afterCreate: async (evenement) => {
-        // Créer automatiquement une participation pour l'organisateur
-        await sequelize.models.EvenementUser.create({
-          id_evenement: evenement.id_evenement,
-          id_user: evenement.id_user,
-          role_participation: 'organisateur',
-          statut_participation: 'confirme'
-        });
-      }
+      
     }
   });
 
@@ -380,28 +372,7 @@ module.exports = (sequelize) => {
     });
   };
   
-  Evenement.getUpcomingEvents = function(limit = 10) {
-    return this.findAll({
-      where: {
-        statut: 'planifie',
-        date_debut: { [sequelize.Op.gt]: new Date() }
-      },
-      order: [['date_debut', 'ASC']],
-      limit
-    });
-  };
   
-  Evenement.updateAllStatuses = async function() {
-    const events = await this.findAll({
-      where: {
-        statut: { [sequelize.Op.notIn]: ['annule', 'reporte'] }
-      }
-    });
-    
-    for (const event of events) {
-      await event.updateStatus();
-    }
-  };
 
   return Evenement;
 };

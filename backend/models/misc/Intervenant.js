@@ -9,6 +9,7 @@ module.exports = (sequelize) => {
       primaryKey: true,
       autoIncrement: true
     },
+
     nom: {
       type: DataTypes.STRING(100),
       allowNull: false
@@ -17,6 +18,39 @@ module.exports = (sequelize) => {
       type: DataTypes.STRING(100),
       allowNull: false
     },
+      date_naissance: {
+      type: DataTypes.DATEONLY,
+      comment: 'Date de naissance'
+    },
+    lieu_naissance: {
+      type: DataTypes.STRING(255),
+      comment: 'Ville et pays de naissance'
+    },
+    date_deces: {
+      type: DataTypes.DATEONLY,
+      comment: 'Date de décès si applicable'
+    },
+    lieu_deces: {
+      type: DataTypes.STRING(255),
+      comment: 'Ville et pays de décès'
+    },
+    prix_distinctions: {
+      type: DataTypes.JSON,
+      defaultValue: [],
+      comment: 'Liste des prix et distinctions [{nom, annee, description}]'
+    },
+    wikipedia_url: {
+      type: DataTypes.STRING(500),
+      comment: 'Lien vers la page Wikipedia'
+    },
+    reseaux_sociaux: {
+      type: DataTypes.JSON,
+      defaultValue: {},
+      comment: 'Liens vers réseaux sociaux {twitter, linkedin, instagram, etc.}'
+    },
+    
+    // MÉDIAS
+   
     titre_professionnel: {
       type: DataTypes.STRING(255),
       comment: 'Ex: Dr., Prof., Maître, etc.'
@@ -49,11 +83,7 @@ module.exports = (sequelize) => {
     site_web: {
       type: DataTypes.STRING(500)
     },
-    reseaux_sociaux: {
-      type: DataTypes.JSON,
-      defaultValue: {},
-      comment: 'Liens vers réseaux sociaux'
-    },
+   
     pays_origine: {
       type: DataTypes.STRING(100)
     },
@@ -115,7 +145,9 @@ module.exports = (sequelize) => {
       as: 'UserAccount',
       constraints: false
     });
-    
+    Intervenant.hasMany(models.OeuvreIntervenant, { 
+  foreignKey: 'id_intervenant' 
+});
     // Relation Many-to-Many avec Programme via ProgrammeIntervenant
     Intervenant.belongsToMany(models.Programme, {
       through: models.ProgrammeIntervenant,
@@ -202,26 +234,8 @@ module.exports = (sequelize) => {
   };
   
   // Méthodes statiques
-  Intervenant.getIntervenantsActifs = function() {
-    return this.findAll({
-      where: { 
-        actif: true,
-        verifie: true 
-      },
-      order: [['nom', 'ASC'], ['prenom', 'ASC']]
-    });
-  };
   
-  Intervenant.rechercherParSpecialite = function(specialite) {
-    return this.findAll({
-      where: {
-        actif: true,
-        specialites: {
-          [Op.contains]: specialite // Utiliser Op directement
-        }
-      }
-    });
-  };
-
+  
+  
   return Intervenant;
 };

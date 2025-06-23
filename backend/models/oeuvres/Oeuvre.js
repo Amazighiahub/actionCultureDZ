@@ -33,6 +33,9 @@ module.exports = (sequelize) => {
     description: {
       type: DataTypes.TEXT
     },
+     prix: {
+      type: DataTypes.FLOAT
+    },
     saisi_par: {
       type: DataTypes.INTEGER,
       references: {
@@ -86,12 +89,19 @@ module.exports = (sequelize) => {
     Oeuvre.belongsTo(models.User, { as: 'Saiseur', foreignKey: 'saisi_par' });
     Oeuvre.belongsTo(models.User, { as: 'Validateur', foreignKey: 'validateur_id' });
     Oeuvre.belongsTo(models.Oeuvre, { as: 'OeuvreOriginale', foreignKey: 'id_oeuvre_originale' });
-    
+    Oeuvre.hasMany(models.OeuvreIntervenant, { 
+  foreignKey: 'id_oeuvre' 
+});
     // Relations many-to-many
+    Oeuvre.hasMany(models.Oeuvre, { 
+    as: 'Traductions', 
+    foreignKey: 'id_oeuvre_originale' 
+  });
     Oeuvre.belongsToMany(models.User, { 
-      through: models.OeuvreUser, 
-      foreignKey: 'id_oeuvre' 
-    });
+  through: models.OeuvreUser, 
+  foreignKey: 'id_oeuvre',
+  as: 'Users'  // Ajouter un alias
+});
     Oeuvre.belongsToMany(models.Editeur, { 
       through: models.OeuvreEditeur, 
       foreignKey: 'id_oeuvre' 
@@ -122,6 +132,50 @@ module.exports = (sequelize) => {
     Oeuvre.hasMany(models.Media, { foreignKey: 'id_oeuvre' });
     Oeuvre.hasMany(models.CritiqueEvaluation, { foreignKey: 'id_oeuvre' });
   };
+Oeuvre.prototype.estUneTraduction = function() {
+  return this.id_oeuvre_originale !== null;
+};
 
+Oeuvre.prototype.getTraductions = async function() {
+  if (this.estUneTraduction()) {
+    // Si c'est déjà une traduction, récupérer toutes les autres traductions
+    // de la même œuvre originale
+    return await Oeuvre.findAll({
+      where: {
+        id_oeuvre_originale: this.id_oeuvre_originale,
+        id_oeuvre: { [Op.ne]: this.id_oeuvre } // Exclure l'œuvre actuelle
+      },
+      include: [{ model: models.Langue }]
+    });
+  } else {
+    // Si c'est l'œuvre originale, récupérer toutes ses traductions
+    return await Oeuvre.findAll({
+      where: { id_oeuvre_originale: this.id_oeuvre },
+      include: [{ model: models.Langue }]
+    });
+  }
+};
+
+// Hook pour valider l'unicité de la combinaison titre + langue + œuvre originale
+Oeuvre.beforeCreate(async (oeuvre, options) => {
+  const existing = await Oeuvre.findOne({
+    where: {
+      titre: oeuvre.titre,
+      id_langue: oeuvre.id_langue,
+      id_oeuvre_originale: oeuvre.id_oeuvre_originale || null
+    }
+  });
+  
+  if (existing) {
+    throw new Error('Une œuvre avec ce titre existe déjà dans cette langue');
+  }
+});
+
+// Validation pour éviter qu'une œuvre soit sa propre traduction
+Oeuvre.beforeUpdate(async (oeuvre, options) => {
+  if (oeuvre.id_oeuvre_originale === oeuvre.id_oeuvre) {
+    throw new Error("Une œuvre ne peut pas être sa propre traduction");
+  }
+});
   return Oeuvre;
 };

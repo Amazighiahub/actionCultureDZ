@@ -62,7 +62,45 @@ class EmailService {
   // ========================================================================
   // MÉTHODE D'ENVOI PRINCIPALE
   // ========================================================================
+async sendVerificationEmail(user, token) {
+  const verificationUrl = `${process.env.BASE_URL}/verify-email/${token}`;
+  
+  const subject = '✉️ Vérifiez votre adresse email - Action Culture';
+  const text = `
+Bonjour ${user.prenom} ${user.nom},
 
+Merci de vous être inscrit sur Action Culture !
+
+Pour finaliser votre inscription, veuillez vérifier votre adresse email en cliquant sur le lien suivant :
+
+${verificationUrl}
+
+Ce lien est valable pendant 24 heures.
+
+Si vous n'avez pas créé de compte sur Action Culture, ignorez cet email.
+
+Cordialement,
+L'équipe Action Culture
+  `;
+
+  const html = `
+    <h2>✉️ Vérification de votre email</h2>
+    <p>Bonjour ${user.prenom} ${user.nom},</p>
+    <p>Cliquez sur le bouton ci-dessous pour vérifier votre email :</p>
+    <a href="${verificationUrl}" style="
+      display: inline-block;
+      padding: 12px 24px;
+      background-color: #2c3e50;
+      color: white;
+      text-decoration: none;
+      border-radius: 5px;
+      margin: 20px 0;
+    ">Vérifier mon email</a>
+    <p><small>Ou copiez ce lien : ${verificationUrl}</small></p>
+  `;
+
+  return await this.sendEmail(user.email, subject, text, html);
+}
   async sendEmail(to, subject, text, html = null, attachments = null) {
     // Mode pause - Simulation d'envoi
     if (this.isPaused) {

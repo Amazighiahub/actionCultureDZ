@@ -1,429 +1,511 @@
-// services/metadata.service.ts - Service de gestion des métadonnées corrigé
-
-import { apiService, ApiResponse } from './api.service';
-import { TypeOrganisation } from '../types/User.types';
+// services/metadata.service.ts - Version complète réécrite
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { httpClient } from './httpClient';
 import { API_ENDPOINTS } from '../config/api';
-import {
-  Wilaya,
-  Daira,
-  Commune,
-  Localite
-} from '../types/Geographie.types';
-import {
+import type { ApiResponse } from '../config/api';
+import type {
+  TypeOeuvre,
+  TypeEvenement,
+  Genre,
   Langue,
   Categorie,
-  Genre,
-  TypeOeuvre,
   TagMotCle,
   Materiau,
   Technique,
   Editeur,
-} from '../types/Classification.types';
+  
+} from '../types/models/references.types';
+import { Wilaya } from '@/types';
+import { TypeUser } from '@/types/models/type-user.types';
 
-export interface AllMetadata {
-  langues: Langue[];
+// Types pour la hiérarchie des catégories
+export interface CategoryGroupedByGenre {
+  id_genre: number;
+  nom: string;
+  description?: string;
   categories: Categorie[];
-  genres: Genre[];
-  typesOeuvres: TypeOeuvre[];
-  materiaux: Materiau[];
-  techniques: Technique[];
-  editeurs: Editeur[];
-  typesOrganisations: TypeOrganisation[];
-  wilayas: Wilaya[];
 }
 
-export interface MetadataStats {
-  totalOeuvres: number;
-  totalEvenements: number;
-  totalUtilisateurs: number;
-  totalLieux: number;
-  parWilaya: Record<number, {
-    oeuvres: number;
-    evenements: number;
-    utilisateurs: number;
-    lieux: number;
+export interface GenreFromCategories {
+  id_genre: number;
+  nom: string;
+  description?: string;
+  categories_count: number;
+}
+
+export interface HierarchyValidationResult {
+  valid: boolean;
+  invalidCategories?: Array<{
+    id: number;
+    nom: string;
   }>;
 }
 
+// Type pour toutes les métadonnées
+interface AllMetadata {
+  types_oeuvres: TypeOeuvre[];
+  types_evenements: TypeEvenement[];
+  genres: Genre[];
+  langues: Langue[];
+  categories: Categorie[];
+  materiaux: Materiau[];
+  techniques: Technique[];
+  editeurs: Editeur[];
+  wilayas: Wilaya[];
+  tags: TagMotCle[];
+  types_users: TypeUser[];
+}
+
 export class MetadataService {
-  private static cache: Map<string, { data: any; timestamp: number }> = new Map();
-  private static CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+  // Cache pour éviter les requêtes répétées
+  private cache: Map<string, { data: any; timestamp: number }> = new Map();
+  private cacheTimeout = 5 * 60 * 1000; // 5 minutes
 
   /**
-   * Récupérer toutes les métadonnées en une seule requête
+   * Obtenir toutes les métadonnées d'un coup
    */
-  static async getAll(): Promise<ApiResponse<AllMetadata>> {
-    const cached = this.getFromCache('all-metadata');
-    if (cached) return { success: true, data: cached };
-
-    const response = await apiService.get<AllMetadata>(
-      API_ENDPOINTS.metadata.all
-    );
-
-    if (response.success && response.data) {
-      this.setCache('all-metadata', response.data);
-    }
-
-    return response;
-  }
-
-  /**
-   * MATÉRIAUX
-   */
-  static async getMateriaux(): Promise<ApiResponse<Materiau[]>> {
-    const cached = this.getFromCache('materiaux');
-    if (cached) return { success: true, data: cached };
-
-    const response = await apiService.get<Materiau[]>(
-      API_ENDPOINTS.metadata.materiaux.list
-    );
-
-    if (response.success && response.data) {
-      this.setCache('materiaux', response.data);
-    }
-
-    return response;
-  }
-
-  static async createMateriau(data: { nom: string; description?: string }): Promise<ApiResponse<Materiau>> {
-    const response = await apiService.post<Materiau>(
-      API_ENDPOINTS.metadata.materiaux.create,
-      data
-    );
-    this.clearCache('materiaux');
-    return response;
-  }
-
-  static async updateMateriau(id: number, data: Partial<Materiau>): Promise<ApiResponse<Materiau>> {
-    const response = await apiService.put<Materiau>(
-      API_ENDPOINTS.metadata.materiaux.update(id),
-      data
-    );
-    this.clearCache('materiaux');
-    return response;
-  }
-
-  static async deleteMateriau(id: number): Promise<ApiResponse<void>> {
-    const response = await apiService.delete<void>(
-      API_ENDPOINTS.metadata.materiaux.delete(id)
-    );
-    this.clearCache('materiaux');
-    return response;
-  }
-
-  /**
-   * TECHNIQUES
-   */
-  static async getTechniques(): Promise<ApiResponse<Technique[]>> {
-    const cached = this.getFromCache('techniques');
-    if (cached) return { success: true, data: cached };
-
-    const response = await apiService.get<Technique[]>(
-      API_ENDPOINTS.metadata.techniques.list
-    );
-
-    if (response.success && response.data) {
-      this.setCache('techniques', response.data);
-    }
-
-    return response;
-  }
-
-  static async createTechnique(data: { nom: string; description?: string }): Promise<ApiResponse<Technique>> {
-    const response = await apiService.post<Technique>(
-      API_ENDPOINTS.metadata.techniques.create,
-      data
-    );
-    this.clearCache('techniques');
-    return response;
-  }
-
-  static async updateTechnique(id: number, data: Partial<Technique>): Promise<ApiResponse<Technique>> {
-    const response = await apiService.put<Technique>(
-      API_ENDPOINTS.metadata.techniques.update(id),
-      data
-    );
-    this.clearCache('techniques');
-    return response;
-  }
-
-  static async deleteTechnique(id: number): Promise<ApiResponse<void>> {
-    const response = await apiService.delete<void>(
-      API_ENDPOINTS.metadata.techniques.delete(id)
-    );
-    this.clearCache('techniques');
-    return response;
-  }
-
-  /**
-   * LANGUES
-   */
-  static async getLangues(): Promise<ApiResponse<Langue[]>> {
-    const cached = this.getFromCache('langues');
-    if (cached) return { success: true, data: cached };
-
-    const response = await apiService.get<Langue[]>(
-      API_ENDPOINTS.metadata.langues
-    );
-
-    if (response.success && response.data) {
-      this.setCache('langues', response.data);
-    }
-
-    return response;
-  }
-
-  /**
-   * CATÉGORIES
-   */
-  static async getCategories(): Promise<ApiResponse<Categorie[]>> {
-    const cached = this.getFromCache('categories');
-    if (cached) return { success: true, data: cached };
-
-    const response = await apiService.get<Categorie[]>(
-      API_ENDPOINTS.metadata.categories.list
-    );
-
-    if (response.success && response.data) {
-      this.setCache('categories', response.data);
-    }
-
-    return response;
-  }
-
-  static async searchCategories(query: string): Promise<ApiResponse<Categorie[]>> {
-    return apiService.get<Categorie[]>(
-      API_ENDPOINTS.metadata.categories.search,
-      { q: query }
-    );
-  }
-
-  /**
-   * TYPES D'ŒUVRES
-   */
-  static async getTypesOeuvres(): Promise<ApiResponse<TypeOeuvre[]>> {
-    const cached = this.getFromCache('types-oeuvres');
-    if (cached) return { success: true, data: cached };
-
-    const response = await apiService.get<TypeOeuvre[]>(
-      API_ENDPOINTS.metadata.typesOeuvres
-    );
-
-    if (response.success && response.data) {
-      this.setCache('types-oeuvres', response.data);
-    }
-
-    return response;
-  }
-
-  /**
-   * GENRES
-   */
-  static async getGenres(): Promise<ApiResponse<Genre[]>> {
-    const cached = this.getFromCache('genres');
-    if (cached) return { success: true, data: cached };
-
-    const response = await apiService.get<Genre[]>(
-      API_ENDPOINTS.metadata.genres
-    );
-
-    if (response.success && response.data) {
-      this.setCache('genres', response.data);
-    }
-
-    return response;
-  }
-
-  /**
-   * ÉDITEURS
-   */
-  static async getEditeurs(typeEditeur?: string): Promise<ApiResponse<Editeur[]>> {
-    const cacheKey = typeEditeur ? `editeurs-${typeEditeur}` : 'editeurs';
-    const cached = this.getFromCache(cacheKey);
-    if (cached) return { success: true, data: cached };
-
-    const response = await apiService.get<Editeur[]>(
-      API_ENDPOINTS.metadata.editeurs,
-      typeEditeur ? { type_editeur: typeEditeur } : undefined
-    );
-
-    if (response.success && response.data) {
-      this.setCache(cacheKey, response.data);
-    }
-
-    return response;
-  }
-
-  /**
-   * TYPES D'ORGANISATIONS
-   */
-  static async getTypesOrganisations(): Promise<ApiResponse<TypeOrganisation[]>> {
-    const cached = this.getFromCache('types-organisations');
-    if (cached) return { success: true, data: cached };
-
-    const response = await apiService.get<TypeOrganisation[]>(
-      API_ENDPOINTS.metadata.typesOrganisations
-    );
-
-    if (response.success && response.data) {
-      this.setCache('types-organisations', response.data);
-    }
-
-    return response;
-  }
-
-  /**
-   * GÉOGRAPHIE
-   */
-  static async getWilayas(includeDetails = false): Promise<ApiResponse<Wilaya[]>> {
-    const cacheKey = includeDetails ? 'wilayas-complete' : 'wilayas';
-    const cached = this.getFromCache(cacheKey);
-    if (cached) return { success: true, data: cached };
-
-    const params = includeDetails 
-      ? { includeDairas: true, includeCommunes: true } 
-      : undefined;
-
-    const response = await apiService.get<Wilaya[]>(
-      API_ENDPOINTS.metadata.geographie.wilayas,
-      params
-    );
-
-    if (response.success && response.data) {
-      this.setCache(cacheKey, response.data);
-    }
-
-    return response;
-  }
-
-  static async searchWilayas(query: string): Promise<ApiResponse<Wilaya[]>> {
-    return apiService.get<Wilaya[]>(
-      API_ENDPOINTS.metadata.geographie.searchWilayas,
-      { q: query }
-    );
-  }
-
-  static async getDairasByWilaya(wilayaId: number): Promise<ApiResponse<Daira[]>> {
-    const cacheKey = `dairas-wilaya-${wilayaId}`;
-    const cached = this.getFromCache(cacheKey);
-    if (cached) return { success: true, data: cached };
-
-    const response = await apiService.get<Daira[]>(
-      API_ENDPOINTS.metadata.geographie.dairasByWilaya(wilayaId)
-    );
-
-    if (response.success && response.data) {
-      this.setCache(cacheKey, response.data);
-    }
-
-    return response;
-  }
-
-  static async getCommunesByDaira(dairaId: number): Promise<ApiResponse<Commune[]>> {
-    const cacheKey = `communes-daira-${dairaId}`;
-    const cached = this.getFromCache(cacheKey);
-    if (cached) return { success: true, data: cached };
-
-    const response = await apiService.get<Commune[]>(
-      API_ENDPOINTS.metadata.geographie.communesByDaira(dairaId)
-    );
-
-    if (response.success && response.data) {
-      this.setCache(cacheKey, response.data);
-    }
-
-    return response;
-  }
-
-  static async getLocalitesByCommune(communeId: number): Promise<ApiResponse<Localite[]>> {
-    return apiService.get<Localite[]>(
-      API_ENDPOINTS.metadata.geographie.localitesByCommune(communeId)
-    );
-  }
-
-  /**
-   * TAGS
-   */
-  static async getTags(search?: string, limit = 50): Promise<ApiResponse<TagMotCle[]>> {
-    return apiService.get<TagMotCle[]>(
-      API_ENDPOINTS.metadata.tags.list,
-      { search, limit }
-    );
-  }
-
-  static async createTag(nom: string): Promise<ApiResponse<TagMotCle>> {
-    return apiService.post<TagMotCle>(
-      API_ENDPOINTS.metadata.tags.create,
-      { nom }
-    );
-  }
-
-  /**
-   * STATISTIQUES
-   */
-  static async getStatistics(): Promise<ApiResponse<MetadataStats>> {
-    return apiService.get<MetadataStats>(
-      API_ENDPOINTS.metadata.statistics
-    );
-  }
-
-  /**
-   * MÉTHODES DE CACHE
-   */
-  private static getFromCache(key: string): any {
-    const cached = this.cache.get(key);
-    if (!cached) return null;
-
-    const isExpired = Date.now() - cached.timestamp > this.CACHE_DURATION;
-    if (isExpired) {
-      this.cache.delete(key);
-      return null;
-    }
-
-    return cached.data;
-  }
-
-  private static setCache(key: string, data: any): void {
-    this.cache.set(key, {
-      data,
-      timestamp: Date.now()
-    });
-  }
-
-  static clearCache(key?: string): void {
-    if (key) {
-      this.cache.delete(key);
-      // Aussi supprimer all-metadata car elle contient tout
-      this.cache.delete('all-metadata');
-    } else {
-      this.cache.clear();
-    }
-  }
-
-  /**
-   * Précharger toutes les métadonnées essentielles
-   */
-  static async preload(): Promise<void> {
+  async getAll(): Promise<ApiResponse<AllMetadata>> {
     try {
-      await Promise.all([
-        this.getAll(),
-        this.getWilayas(),
-        this.getLangues(),
-        this.getCategories(),
-        this.getTypesOeuvres()
-      ]);
-    } catch (error) {
-      console.error('Erreur lors du préchargement des métadonnées:', error);
+      const response = await httpClient.get<AllMetadata>('/metadata/all');
+      return response;
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Erreur lors du chargement des métadonnées'
+      };
     }
   }
 
   /**
-   * Rafraîchir le cache
+   * Obtenir toutes les métadonnées avec cache
    */
-  static async refresh(): Promise<void> {
-    this.clearCache();
-    await this.preload();
+  async getAllCached(): Promise<ApiResponse<AllMetadata>> {
+    const cacheKey = 'all-metadata';
+    const cached = this.cache.get(cacheKey);
+    
+    if (cached && Date.now() - cached.timestamp < this.cacheTimeout) {
+      return {
+        success: true,
+        data: cached.data as AllMetadata
+      };
+    }
+
+    const response = await this.getAll();
+    
+    if (response.success && response.data) {
+      this.cache.set(cacheKey, {
+        data: response.data,
+        timestamp: Date.now()
+      });
+    }
+
+    return response;
+  }
+
+  /**
+   * Vider le cache
+   */
+  clearCache(): void {
+    this.cache.clear();
+  }
+
+  // ================================================
+  // HIÉRARCHIE TYPE → CATÉGORIES (groupées par genre)
+  // ================================================
+
+  /**
+   * Récupérer les catégories valides pour un type d'œuvre
+   * Retourne les catégories groupées par genre
+   */
+  async getCategoriesForType(typeOeuvreId: number): Promise<ApiResponse<CategoryGroupedByGenre[]>> {
+    try {
+      const response = await httpClient.get<CategoryGroupedByGenre[]>(
+        `/metadata/types-oeuvres/${typeOeuvreId}/categories`
+      );
+      return response;
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Erreur lors de la récupération des catégories'
+      };
+    }
+  }
+
+  /**
+   * Vérifier si un type d'œuvre a des catégories disponibles
+   */
+  async checkIfTypeHasCategories(typeOeuvreId: number): Promise<boolean> {
+    try {
+      const response = await httpClient.get<{ hasCategories: boolean; requiresCategories: boolean }>(
+        `/metadata/types-oeuvres/${typeOeuvreId}/has-categories`
+      );
+      return response.success && response.data ? response.data.hasCategories : false;
+    } catch (error) {
+      console.error('Erreur vérification catégories:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Récupérer les genres associés à une liste de catégories
+   * Utile pour afficher les genres déduits des catégories sélectionnées
+   */
+  async getGenresFromCategories(categoryIds: number[]): Promise<ApiResponse<{ genres: GenreFromCategories[] }>> {
+    try {
+      const response = await httpClient.post<{ genres: GenreFromCategories[] }>(
+        '/metadata/genres-from-categories',
+        { categories: categoryIds }
+      );
+      return response;
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Erreur lors de la récupération des genres'
+      };
+    }
+  }
+
+  /**
+   * Valider la hiérarchie type/catégories
+   * Vérifie que les catégories sélectionnées sont valides pour le type d'œuvre
+   */
+  async validateHierarchy(
+    typeOeuvreId: number, 
+    categoryIds: number[]
+  ): Promise<ApiResponse<HierarchyValidationResult>> {
+    try {
+      const response = await httpClient.post<HierarchyValidationResult>(
+        '/metadata/validate-hierarchy',
+        {
+          id_type_oeuvre: typeOeuvreId,
+          categories: categoryIds
+        }
+      );
+      return response;
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Erreur lors de la validation'
+      };
+    }
+  }
+
+  // ================================================
+  // TYPES D'ŒUVRES
+  // ================================================
+
+  /**
+   * Obtenir les types d'œuvres
+   */
+  async getTypesOeuvres(): Promise<ApiResponse<TypeOeuvre[]>> {
+    try {
+      const response = await httpClient.get<TypeOeuvre[]>('/metadata/types-oeuvres');
+      return response;
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Erreur lors du chargement des types d\'œuvres'
+      };
+    }
+  }
+
+  // ================================================
+  // LANGUES
+  // ================================================
+
+  /**
+   * Obtenir la liste des langues
+   */
+  async getLangues(): Promise<ApiResponse<Langue[]>> {
+    try {
+      const response = await httpClient.get<Langue[]>('/metadata/langues');
+      return response;
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Erreur lors du chargement des langues'
+      };
+    }
+  }
+
+  // ================================================
+  // TYPES USERS (INTERVENANTS)
+  // ================================================
+
+  /**
+   * Obtenir les types d'utilisateurs/intervenants
+   */
+  async getTypesUsers(): Promise<ApiResponse<TypeUser[]>> {
+    try {
+      const response = await httpClient.get<TypeUser[]>('/metadata/types-users');
+      return response;
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Erreur lors du chargement des types d\'utilisateurs'
+      };
+    }
+  }
+
+  // ================================================
+  // ÉDITEURS
+  // ================================================
+
+  /**
+   * Obtenir les éditeurs
+   */
+  async getEditeurs(): Promise<ApiResponse<Editeur[]>> {
+    try {
+      const response = await httpClient.get<Editeur[]>('/metadata/editeurs');
+      return response;
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Erreur lors du chargement des éditeurs'
+      };
+    }
+  }
+
+  /**
+   * Créer un nouvel éditeur
+   */
+  async createEditeur(data: { 
+    nom: string; 
+    type_editeur?: string;
+    site_web?: string;
+    email?: string; 
+    telephone?: string;
+    description?: string;
+  }): Promise<ApiResponse<Editeur>> {
+    try {
+      const response = await httpClient.post<Editeur>('/metadata/editeurs', data);
+      
+      // Invalider le cache après création
+      this.clearCache();
+      
+      return response;
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Erreur lors de la création de l\'éditeur'
+      };
+    }
+  }
+
+  // ================================================
+  // TAGS
+  // ================================================
+
+  /**
+   * Obtenir la liste des tags
+   */
+  async getTags(search?: string, limit = 50): Promise<ApiResponse<TagMotCle[]>> {
+    try {
+      const params: any = { limit };
+      if (search) {
+        params.search = search;
+      }
+      
+      const response = await httpClient.get<TagMotCle[]>('/metadata/tags', params);
+      return response;
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Erreur lors du chargement des tags'
+      };
+    }
+  }
+
+  /**
+   * Créer un nouveau tag
+   */
+  async createTag(data: { nom: string }): Promise<ApiResponse<TagMotCle>> {
+    try {
+      const response = await httpClient.post<TagMotCle>('/metadata/tags', data);
+      
+      // Invalider le cache après création
+      this.clearCache();
+      
+      return response;
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Erreur lors de la création du tag'
+      };
+    }
+  }
+
+  // ================================================
+  // MATÉRIAUX ET TECHNIQUES (ARTISANAT)
+  // ================================================
+
+  /**
+   * Obtenir la liste des matériaux
+   */
+  async getMateriaux(): Promise<ApiResponse<Materiau[]>> {
+    try {
+      const response = await httpClient.get<Materiau[]>('/metadata/materiaux');
+      return response;
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Erreur lors du chargement des matériaux'
+      };
+    }
+  }
+
+  /**
+   * Obtenir la liste des techniques
+   */
+  async getTechniques(): Promise<ApiResponse<Technique[]>> {
+    try {
+      const response = await httpClient.get<Technique[]>('/metadata/techniques');
+      return response;
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Erreur lors du chargement des techniques'
+      };
+    }
+  }
+
+  // ================================================
+  // CATÉGORIES ET GENRES (SANS FILTRE)
+  // ================================================
+
+  /**
+   * Obtenir toutes les catégories
+   */
+  async getCategories(): Promise<ApiResponse<Categorie[]>> {
+    try {
+      const response = await httpClient.get<Categorie[]>('/metadata/categories');
+      return response;
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Erreur lors du chargement des catégories'
+      };
+    }
+  }
+
+  /**
+   * Obtenir tous les genres
+   */
+  async getGenres(): Promise<ApiResponse<Genre[]>> {
+    try {
+      const response = await httpClient.get<Genre[]>('/metadata/genres');
+      return response;
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Erreur lors du chargement des genres'
+      };
+    }
+  }
+
+  // ================================================
+  // WILAYAS
+  // ================================================
+
+  /**
+   * Obtenir toutes les wilayas
+   */
+  async getWilayas(): Promise<ApiResponse<Wilaya[]>> {
+    try {
+      const response = await httpClient.get<Wilaya[]>('/metadata/wilayas');
+      return response;
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Erreur lors du chargement des wilayas'
+      };
+    }
+  }
+
+  // ================================================
+  // HELPERS
+  // ================================================
+
+  /**
+   * Helper: Construire un arbre de sélection pour les catégories
+   */
+  buildCategoryTree(categoriesGrouped: CategoryGroupedByGenre[]): Array<{
+    label: string;
+    value: string;
+    children: Array<{
+      label: string;
+      value: number;
+    }>;
+  }> {
+    return categoriesGrouped.map(genre => ({
+      label: genre.nom,
+      value: `genre-${genre.id_genre}`,
+      children: genre.categories.map(cat => ({
+        label: cat.nom,
+        value: cat.id_categorie
+      }))
+    }));
+  }
+
+  /**
+   * Helper: Obtenir les IDs de genres depuis une liste de catégories
+   */
+  async getGenreIdsFromCategories(categoryIds: number[]): Promise<number[]> {
+    const response = await this.getGenresFromCategories(categoryIds);
+    if (response.success && response.data) {
+      return response.data.genres.map(g => g.id_genre);
+    }
+    return [];
+  }
+
+  /**
+   * Helper: Vérifier si au moins une catégorie est sélectionnée pour un genre
+   */
+  hasGenreRepresentation(
+    selectedCategories: number[], 
+    genreId: number,
+    categoriesGrouped: CategoryGroupedByGenre[]
+  ): boolean {
+    const genre = categoriesGrouped.find(g => g.id_genre === genreId);
+    if (!genre) return false;
+    
+    return genre.categories.some(cat => 
+      selectedCategories.includes(cat.id_categorie)
+    );
+  }
+
+  /**
+   * Helper: Récupérer les catégories d'un genre spécifique
+   */
+  getCategoriesOfGenre(
+    genreId: number,
+    categoriesGrouped: CategoryGroupedByGenre[]
+  ): Categorie[] {
+    const genre = categoriesGrouped.find(g => g.id_genre === genreId);
+    return genre ? genre.categories : [];
+  }
+
+  /**
+   * Helper: Compter les catégories sélectionnées par genre
+   */
+  countCategoriesByGenre(
+    selectedCategories: number[],
+    categoriesGrouped: CategoryGroupedByGenre[]
+  ): Map<number, number> {
+    const countMap = new Map<number, number>();
+    
+    categoriesGrouped.forEach(genre => {
+      const count = genre.categories.filter(cat => 
+        selectedCategories.includes(cat.id_categorie)
+      ).length;
+      if (count > 0) {
+        countMap.set(genre.id_genre, count);
+      }
+    });
+    
+    return countMap;
   }
 }
 
-export default MetadataService;
+// Export de l'instance singleton
+export const metadataService = new MetadataService();

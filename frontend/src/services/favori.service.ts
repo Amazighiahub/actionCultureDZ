@@ -1,280 +1,147 @@
-// services/favori.service.ts - Service de gestion des favoris
+// services/favori.service.ts
+import { API_ENDPOINTS, ApiResponse, PaginatedResponse, PaginationParams } from '@/config/api';
+import { httpClient } from './httpClient';
 
-import { apiService, ApiResponse, PaginatedResponse } from './api.service';
-import { API_ENDPOINTS } from '../config/api';
-import { Favori } from '../types/User.types';
-
-export type FavoriType = 'oeuvre' | 'evenement' | 'lieu' | 'user' | 'artisanat';
-
-export interface FavoriFilters {
-  typeEntite?: FavoriType;
-  dateMin?: string;
-  dateMax?: string;
-  page?: number;
-  limit?: number;
-  sort?: string;
-  order?: 'asc' | 'desc';
+interface Favori {
+  id: number;
+  user_id: number;
+  entity_type: 'oeuvre' | 'evenement' | 'lieu' | 'artisanat';
+  entity_id: number;
+  entity: {
+    id: number;
+    titre: string;
+    description?: string;
+    image_url?: string;
+    type?: string;
+  };
+  created_at: string;
 }
 
-export interface FavoriStats {
-  total: number;
-  parType: Record<FavoriType, number>;
-  recentlyAdded: number;
-  topFavoris: Array<{
-    typeEntite: FavoriType;
-    idEntite: number;
-    count: number;
-    entity?: any;
-  }>;
+interface AddFavoriData {
+  entity_type: 'oeuvre' | 'evenement' | 'lieu' | 'artisanat';
+  entity_id: number;
 }
 
-export interface PopularItem {
-  typeEntite: FavoriType;
-  idEntite: number;
-  count: number;
-  entity: any;
+interface FavoriStats {
+  total_favoris: number;
+  favoris_par_type: {
+    oeuvres: number;
+    evenements: number;
+    lieux: number;
+    artisanats: number;
+  };
+  derniers_ajouts: Favori[];
 }
 
-export class FavoriService {
-  /**
-   * Récupérer la liste de mes favoris
-   */
-  static async getAll(filters?: FavoriFilters): Promise<ApiResponse<Favori[]>> {
-    return apiService.get<Favori[]>(API_ENDPOINTS.favoris.list, filters);
+interface PopularItem {
+  entity_type: string;
+  entity_id: number;
+  titre: string;
+  favoris_count: number;
+  image_url?: string;
+}
+
+interface GroupedFavoris {
+  oeuvres: Favori[];
+  evenements: Favori[];
+  lieux: Favori[];
+  artisanats: Favori[];
+}
+
+class FavoriService {
+  // Listing
+  async getAll(params?: PaginationParams & { type?: string }): Promise<ApiResponse<PaginatedResponse<Favori>>> {
+    return httpClient.getPaginated<Favori>(API_ENDPOINTS.favoris.list, params);
   }
 
-  /**
-   * Récupérer les statistiques de mes favoris
-   */
-  static async getStats(): Promise<ApiResponse<FavoriStats>> {
-    return apiService.get<FavoriStats>(API_ENDPOINTS.favoris.stats);
-  }
-
-  /**
-   * Récupérer les éléments les plus populaires
-   */
-  static async getPopular(
-    type?: FavoriType, 
-    limit = 10
-  ): Promise<ApiResponse<PopularItem[]>> {
-    return apiService.get<PopularItem[]>(
-      API_ENDPOINTS.favoris.popular, 
-      { type, limit }
-    );
-  }
-
-  /**
-   * Vérifier si un élément est dans mes favoris
-   */
-  static async check(type: FavoriType, id: number): Promise<ApiResponse<{ isFavorite: boolean; favoriId?: number }>> {
-    return apiService.get<{ isFavorite: boolean; favoriId?: number }>(
-      API_ENDPOINTS.favoris.check(type, id)
-    );
-  }
-
-  /**
-   * Ajouter un élément aux favoris
-   */
-  static async add(
-    typeEntite: FavoriType, 
-    idEntite: number, 
-    notes?: string
-  ): Promise<ApiResponse<Favori>> {
-    return apiService.post<Favori>(
-      API_ENDPOINTS.favoris.add, 
-      { typeEntite, idEntite, notes }
-    );
-  }
-
-  /**
-   * Supprimer un favori par son ID
-   */
-  static async remove(id: number): Promise<ApiResponse<void>> {
-    return apiService.delete<void>(API_ENDPOINTS.favoris.removeById(id));
-  }
-
-  /**
-   * Supprimer un favori par type et ID d'entité
-   */
-  static async removeByEntity(type: FavoriType, id: number): Promise<ApiResponse<void>> {
-    return apiService.delete<void>(API_ENDPOINTS.favoris.removeByEntity(type, id));
-  }
-
-  /**
-   * Basculer l'état favori d'un élément
-   */
-  static async toggle(
-    type: FavoriType, 
-    id: number, 
-    notes?: string
-  ): Promise<ApiResponse<{ added: boolean; favori?: Favori }>> {
-    const checkResponse = await this.check(type, id);
-    
-    if (checkResponse.success && checkResponse.data?.isFavorite) {
-      // Retirer des favoris
-      await this.removeByEntity(type, id);
-      return { success: true, data: { added: false } };
-    } else {
-      // Ajouter aux favoris
-      const addResponse = await this.add(type, id, notes);
-      return { 
-        success: addResponse.success, 
-        data: { added: true, favori: addResponse.data },
-        error: addResponse.error
+  async getAllGrouped(): Promise<ApiResponse<GroupedFavoris>> {
+    const response = await httpClient.get<Favori[]>(API_ENDPOINTS.favoris.list);
+    if (response.success && response.data) {
+      const grouped: GroupedFavoris = {
+        oeuvres: [],
+        evenements: [],
+        lieux: [],
+        artisanats: []
       };
+      
+      response.data.forEach(fav => {
+        switch (fav.entity_type) {
+          case 'oeuvre':
+            grouped.oeuvres.push(fav);
+            break;
+          case 'evenement':
+            grouped.evenements.push(fav);
+            break;
+          case 'lieu':
+            grouped.lieux.push(fav);
+            break;
+          case 'artisanat':
+            grouped.artisanats.push(fav);
+            break;
+        }
+      });
+      
+      return { success: true, data: grouped };
     }
+    return { success: false, error: response.error };
   }
 
-  /**
-   * HELPERS
-   */
-
-  /**
-   * Obtenir l'icône selon le type
-   */
-  static getTypeIcon(type: FavoriType): string {
-    const icons: Record<FavoriType, string> = {
-      'oeuvre': '📚',
-      'evenement': '📅',
-      'lieu': '📍',
-      'user': '👤',
-      'artisanat': '🎨'
-    };
-    return icons[type] || '⭐';
+  // Statistiques
+  async getStats(): Promise<ApiResponse<FavoriStats>> {
+    return httpClient.get<FavoriStats>(API_ENDPOINTS.favoris.stats);
   }
 
-  /**
-   * Obtenir le label selon le type
-   */
-  static getTypeLabel(type: FavoriType): string {
-    const labels: Record<FavoriType, string> = {
-      'oeuvre': 'Œuvre',
-      'evenement': 'Événement',
-      'lieu': 'Lieu',
-      'user': 'Utilisateur',
-      'artisanat': 'Artisanat'
-    };
-    return labels[type] || type;
-  }
-
-  /**
-   * Grouper les favoris par type
-   */
-  static groupByType(favoris: Favori[]): Record<FavoriType, Favori[]> {
-    return favoris.reduce((acc, favori) => {
-      const type = favori.typeEntite as FavoriType;
-      if (!acc[type]) acc[type] = [];
-      acc[type].push(favori);
-      return acc;
-    }, {} as Record<FavoriType, Favori[]>);
-  }
-
-  /**
-   * Gérer le cache local des favoris
-   */
-  private static favoritesCache = new Map<string, boolean>();
-
-  static getCacheKey(type: FavoriType, id: number): string {
-    return `${type}-${id}`;
-  }
-
-  static isCachedFavorite(type: FavoriType, id: number): boolean | undefined {
-    return this.favoritesCache.get(this.getCacheKey(type, id));
-  }
-
-  static setCachedFavorite(type: FavoriType, id: number, isFavorite: boolean): void {
-    this.favoritesCache.set(this.getCacheKey(type, id), isFavorite);
-  }
-
-  static clearCache(): void {
-    this.favoritesCache.clear();
-  }
-
-  /**
-   * Vérifier rapidement si un élément est favori (avec cache)
-   */
-  static async isFavorite(type: FavoriType, id: number): Promise<boolean> {
-    // Vérifier le cache d'abord
-    const cached = this.isCachedFavorite(type, id);
-    if (cached !== undefined) return cached;
-
-    // Sinon faire la requête
-    const response = await this.check(type, id);
-    const isFavorite = response.success && response.data?.isFavorite || false;
-    
-    // Mettre en cache
-    this.setCachedFavorite(type, id, isFavorite);
-    
-    return isFavorite;
-  }
-
-  /**
-   * Récupérer plusieurs états de favoris en une fois
-   */
-  static async checkMultiple(
-    items: Array<{ type: FavoriType; id: number }>
-  ): Promise<Map<string, boolean>> {
-    const results = new Map<string, boolean>();
-    
-    // Pour l'instant, on fait des requêtes individuelles
-    // Une amélioration future serait d'avoir un endpoint pour vérifier plusieurs à la fois
-    const promises = items.map(async ({ type, id }) => {
-      const isFavorite = await this.isFavorite(type, id);
-      results.set(this.getCacheKey(type, id), isFavorite);
+  async getPopular(type?: string, limit: number = 10): Promise<ApiResponse<PopularItem[]>> {
+    return httpClient.get<PopularItem[]>(API_ENDPOINTS.favoris.popular, {
+      params: { type, limit }
     });
-    
-    await Promise.all(promises);
-    return results;
   }
 
-  /**
-   * Exporter les favoris
-   */
-  static async export(format: 'json' | 'csv' = 'json'): Promise<void> {
-    const response = await this.getAll({ limit: 1000 });
+  // Vérification
+  async check(type: string, entityId: number): Promise<ApiResponse<{ is_favorite: boolean; favori_id?: number }>> {
+    return httpClient.get<any>(API_ENDPOINTS.favoris.check(type, entityId));
+  }
+
+  // Actions
+  async add(data: AddFavoriData): Promise<ApiResponse<Favori>> {
+    return httpClient.post<Favori>(API_ENDPOINTS.favoris.add, data);
+  }
+
+  async removeById(id: number): Promise<ApiResponse<void>> {
+    return httpClient.delete<void>(API_ENDPOINTS.favoris.removeById(id));
+  }
+
+  async removeByEntity(type: string, entityId: number): Promise<ApiResponse<void>> {
+    return httpClient.delete<void>(API_ENDPOINTS.favoris.removeByEntity(type, entityId));
+  }
+
+  // Toggle helper
+  async toggle(type: 'oeuvre' | 'evenement' | 'lieu' | 'artisanat', entityId: number): Promise<ApiResponse<{ added: boolean; favori?: Favori }>> {
+    const checkResponse = await this.check(type, entityId);
     
-    if (!response.success || !response.data) {
-      throw new Error('Impossible de récupérer les favoris');
+    if (checkResponse.success && checkResponse.data) {
+      if (checkResponse.data.is_favorite && checkResponse.data.favori_id) {
+        // Retirer des favoris
+        const removeResponse = await this.removeById(checkResponse.data.favori_id);
+        return {
+          success: removeResponse.success,
+          data: { added: false },
+          error: removeResponse.error
+        };
+      } else {
+        // Ajouter aux favoris
+        const addResponse = await this.add({ entity_type: type, entity_id: entityId });
+        return {
+          success: addResponse.success,
+          data: { added: true, favori: addResponse.data },
+          error: addResponse.error
+        };
+      }
     }
-
-    const favoris = response.data;
-    let content: string;
-    let filename: string;
-    let mimeType: string;
-
-    if (format === 'json') {
-      content = JSON.stringify(favoris, null, 2);
-      filename = 'mes-favoris.json';
-      mimeType = 'application/json';
-    } else {
-      // Format CSV
-      const headers = ['Type', 'ID', 'Notes', 'Date d\'ajout'];
-      const rows = favoris.map(f => [
-        this.getTypeLabel(f.typeEntite as FavoriType),
-        f.idEntite,
-        f.notes || '',
-        new Date(f.dateAjout || '').toLocaleDateString('fr-FR')
-      ]);
-      
-      content = [headers, ...rows]
-        .map(row => row.map(cell => `"${cell}"`).join(','))
-        .join('\n');
-      
-      filename = 'mes-favoris.csv';
-      mimeType = 'text/csv';
-    }
-
-    // Télécharger le fichier
-    const blob = new Blob([content], { type: mimeType });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    window.URL.revokeObjectURL(url);
-    document.body.removeChild(a);
+    
+    return { success: false, error: 'Erreur lors de la vérification du favori' };
   }
 }
 
-export default FavoriService;
+export const favoriService = new FavoriService();
+export type { Favori, AddFavoriData, FavoriStats, PopularItem, GroupedFavoris };

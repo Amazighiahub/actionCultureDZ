@@ -115,10 +115,20 @@ const loadModels = (sequelize) => {
   
   const communeModel = loadModelSafely('./geography/Commune', 'Commune', sequelize);
   if (communeModel) models.Commune = communeModel;
-  
+  // 1. Après les modèles de base (User, Role) - Ajouter TypeUser
+const typeUserModel = loadModelSafely('./classifications/TypeUser.js', 'TypeUser', sequelize);
+if (typeUserModel) models.TypeUser = typeUserModel;
+
+// 2. Après TypeOeuvre et Genre - Ajouter les tables de liaison pour la hiérarchie
+const typeOeuvreGenreModel = loadModelSafely('./associations/TypeOeuvreGenre', 'TypeOeuvreGenre', sequelize);
+if (typeOeuvreGenreModel) models.TypeOeuvreGenre = typeOeuvreGenreModel;
+
+const genreCategorieModel = loadModelSafely('./associations/GenreCategorie', 'GenreCategorie', sequelize);
+if (genreCategorieModel) models.GenreCategorie = genreCategorieModel;
   const localiteModel = loadModelSafely('./geography/Localite', 'Localite', sequelize);
   if (localiteModel) models.Localite = localiteModel;
-
+const oeuvreIntervenantModel = loadModelSafely('./associations/OeuvreIntervenant', 'OeuvreIntervenant', sequelize);
+if (oeuvreIntervenantModel) models.OeuvreIntervenant = oeuvreIntervenantModel;
   // 2. Modèles de base (User, Role) - référencés par beaucoup d'autres
   const roleModel = loadModelSafely('./users/Role', 'Role', sequelize);
   if (roleModel) models.Role = roleModel;
@@ -263,7 +273,8 @@ const loadModels = (sequelize) => {
   // 11. Modèles de certifications
   const userCertificationModel = loadModelSafely('./misc/UserCertification', 'UserCertification', sequelize);
   if (userCertificationModel) models.UserCertification = userCertificationModel;
-
+const emailVerificationModel = loadModelSafely('./misc/EmailVerification', 'EmailVerification', sequelize);
+if (emailVerificationModel) models.EmailVerification = emailVerificationModel;
   // 12. Modèles divers
   const mediaModel = loadModelSafely('./misc/Media', 'Media', sequelize);
   if (mediaModel) models.Media = mediaModel;
@@ -380,46 +391,14 @@ const insertDefaultData = async (models) => {
     });
     
     // Catégories par défaut
-    const defaultCategories = [
-      'Roman', 'Poésie', 'Bande dessinée', 'Essai', 'Histoire', 'Biographie',
-      'Peinture', 'Sculpture', 'Documentaire', 'Fiction', 'Jazz', 'Classique',
-      'Musique traditionnelle', 'Cinéma d\'auteur', 'Comédie', 'Drame',
-      'Court métrage', 'Photographie'
-    ];
     
-    await insertDataIfModelExists(models, 'Categorie', defaultCategories, async (model, data) => {
-      for (const nom of data) {
-        await model.findOrCreate({
-          where: { nom },
-          defaults: { nom }
-        });
-      }
-    });
     
-    // Types d'œuvres par défaut
-    const defaultTypesOeuvres = [
-      { nom_type: 'Livre', description: 'Œuvres littéraires et ouvrages' },
-      { nom_type: 'Film', description: 'Œuvres cinématographiques' },
-      { nom_type: 'Album Musical', description: 'Œuvres musicales' },
-      { nom_type: 'Article', description: 'Articles de presse et blogs' },
-      { nom_type: 'Article Scientifique', description: 'Publications scientifiques' },
-      { nom_type: 'Artisanat', description: 'Œuvres artisanales' },
-      { nom_type: 'Œuvre d\'Art', description: 'Œuvres d\'art visuel' },
-      { nom_type: 'Photographie', description: 'Œuvres photographiques' },
-      { nom_type: 'Théâtre', description: 'Pièces de théâtre' },
-      { nom_type: 'Danse', description: 'Spectacles de danse' },
-      { nom_type: 'Performance', description: 'Art performance' },
-      { nom_type: 'Installation', description: 'Installations artistiques' }
-    ];
     
-    await insertDataIfModelExists(models, 'TypeOeuvre', defaultTypesOeuvres, async (model, data) => {
-      for (const typeOeuvre of data) {
-        await model.findOrCreate({
-          where: { nom_type: typeOeuvre.nom_type },
-          defaults: typeOeuvre
-        });
-      }
-    });
+    
+    
+  
+    
+    
     
     // Types d'événements par défaut
     const defaultTypesEvenements = [
@@ -471,7 +450,7 @@ const insertDefaultData = async (models) => {
     // Rôles par défaut
     const defaultRoles = [
       { nom_role: 'Administrateur', description: 'Accès complet au système' },
-      { nom_role: 'Visiteur', description: 'Utilisateur standard' },
+      { nom_role: 'User', description: 'Utilisateur standard' },
       { nom_role: 'Professionnel', description: 'Professionnel de la culture' },
       { nom_role: 'Modérateur', description: 'Modération du contenu' }
     ];
@@ -529,7 +508,447 @@ const insertDefaultData = async (models) => {
         });
       }
     });
+     const typesUtilisateurs = [
+      { nom_type: 'visiteur', description: 'Utilisateur standard du site' },
+      { nom_type: 'ecrivain', description: 'Auteur de livres et œuvres littéraires' },
+      { nom_type: 'journaliste', description: 'Professionnel de l\'information et des médias' },
+      { nom_type: 'scientifique', description: 'Chercheur ou académique' },
+      { nom_type: 'acteur', description: 'Professionnel du cinéma et du théâtre' },
+      { nom_type: 'artiste', description: 'Créateur d\'œuvres artistiques' },
+      { nom_type: 'artisan', description: 'Créateur d\'objets artisanaux' },
+      { nom_type: 'realisateur', description: 'Professionnel de la réalisation audiovisuelle' },
+      { nom_type: 'musicien', description: 'Compositeur ou interprète musical' },
+      { nom_type: 'photographe', description: 'Professionnel de la photographie' },
+      { nom_type: 'danseur', description: 'Professionnel de la danse' },
+      { nom_type: 'sculpteur', description: 'Créateur de sculptures' },
+      { nom_type: 'autre', description: 'Autre type de professionnel' }
+    ];
+
+     await insertDataIfModelExists(models, 'TypeUser', typesUtilisateurs, async (model, data) => {
+      for (const typeUser of data) {
+        await model.findOrCreate({
+          where: { nom_type: typeUser.nom_type },
+          defaults: typeUser
+        });
+      }
+    });
+
+    // =====================================================
+    // 2. TYPES D'ŒUVRES
+    // =====================================================
+    console.log('📚 Création des types d\'œuvres...');
     
+    const typesOeuvres = [
+      { nom_type: 'Livre', description: 'Œuvres littéraires écrites' },
+      { nom_type: 'Film', description: 'Œuvres cinématographiques' },
+      { nom_type: 'Album Musical', description: 'Œuvres musicales' },
+      { nom_type: 'Article', description: 'Articles de presse et blog' },
+      { nom_type: 'Article Scientifique', description: 'Publications académiques' },
+      { nom_type: 'Œuvre d\'Art', description: 'Peintures, dessins, installations' },
+      { nom_type: 'Artisanat', description: 'Créations artisanales traditionnelles' }
+    ];
+
+    const typeOeuvreMap = {};
+    for (const typeData of typesOeuvres) {
+      const [type] = await models.TypeOeuvre.findOrCreate({
+        where: { nom_type: typeData.nom_type },
+        defaults: typeData
+      });
+      typeOeuvreMap[typeData.nom_type] = type.id_type_oeuvre;
+    }
+
+    // =====================================================
+    // 3. GENRES
+    // =====================================================
+    console.log('🎭 Création des genres...');
+    
+    const genres = [
+      // Genres littéraires (1-10)
+      { nom: 'Roman', description: 'Récit long en prose', slug: 'roman' },
+      { nom: 'Nouvelle', description: 'Récit court', slug: 'nouvelle' },
+      { nom: 'Essai', description: 'Texte argumentatif', slug: 'essai' },
+      { nom: 'Poésie', description: 'Œuvre en vers', slug: 'poesie' },
+      { nom: 'Biographie', description: 'Récit de vie', slug: 'biographie' },
+      { nom: 'Théâtre', description: 'Texte destiné à être joué', slug: 'theatre' },
+      { nom: 'Bande Dessinée', description: 'Récit graphique', slug: 'bande-dessinee' },
+      { nom: 'Conte', description: 'Récit merveilleux', slug: 'conte' },
+      { nom: 'Chronique', description: 'Récits d\'événements', slug: 'chronique' },
+      { nom: 'Mémoires', description: 'Souvenirs personnels', slug: 'memoires' },
+      
+      // Genres cinématographiques (11-25)
+      { nom: 'Action', description: 'Films d\'action et d\'aventure', slug: 'action' },
+      { nom: 'Comédie', description: 'Films humoristiques', slug: 'comedie' },
+      { nom: 'Drame', description: 'Films dramatiques', slug: 'drame' },
+      { nom: 'Thriller', description: 'Films à suspense', slug: 'thriller-film' },
+      { nom: 'Science-Fiction', description: 'Films de SF', slug: 'science-fiction-film' },
+      { nom: 'Fantastique', description: 'Films fantastiques', slug: 'fantastique-film' },
+      { nom: 'Horreur', description: 'Films d\'épouvante', slug: 'horreur' },
+      { nom: 'Documentaire', description: 'Films documentaires', slug: 'documentaire' },
+      { nom: 'Animation', description: 'Films d\'animation', slug: 'animation' },
+      { nom: 'Romance', description: 'Films romantiques', slug: 'romance-film' },
+      { nom: 'Western', description: 'Films de western', slug: 'western' },
+      { nom: 'Guerre', description: 'Films de guerre', slug: 'guerre' },
+      { nom: 'Historique', description: 'Films historiques', slug: 'historique-film' },
+      { nom: 'Musical', description: 'Films musicaux', slug: 'musical-film' },
+      { nom: 'Policier', description: 'Films policiers', slug: 'policier-film' },
+      
+      // Genres musicaux (26-40)
+      { nom: 'Rock', description: 'Musique rock', slug: 'rock' },
+      { nom: 'Pop', description: 'Musique pop', slug: 'pop' },
+      { nom: 'Jazz', description: 'Musique jazz', slug: 'jazz' },
+      { nom: 'Classique', description: 'Musique classique', slug: 'classique' },
+      { nom: 'Électronique', description: 'Musique électronique', slug: 'electronique' },
+      { nom: 'Hip-Hop', description: 'Musique hip-hop', slug: 'hip-hop' },
+      { nom: 'Folk', description: 'Musique folk', slug: 'folk' },
+      { nom: 'Metal', description: 'Musique metal', slug: 'metal' },
+      { nom: 'R&B', description: 'Rhythm and blues', slug: 'rnb' },
+      { nom: 'Reggae', description: 'Musique reggae', slug: 'reggae' },
+      { nom: 'Blues', description: 'Musique blues', slug: 'blues' },
+      { nom: 'Country', description: 'Musique country', slug: 'country' },
+      { nom: 'Raï', description: 'Musique raï algérienne', slug: 'rai' },
+      { nom: 'Chaâbi', description: 'Musique chaâbi algérienne', slug: 'chaabi' },
+      { nom: 'Andalou', description: 'Musique andalouse', slug: 'andalou' },
+      
+      // Genres pour Articles (41-50)
+      { nom: 'Actualité', description: 'Articles d\'actualité', slug: 'actualite' },
+      { nom: 'Opinion', description: 'Articles d\'opinion', slug: 'opinion' },
+      { nom: 'Analyse', description: 'Articles d\'analyse', slug: 'analyse' },
+      { nom: 'Interview', description: 'Interviews', slug: 'interview' },
+      { nom: 'Reportage', description: 'Reportages', slug: 'reportage' },
+      { nom: 'Éditorial', description: 'Éditoriaux', slug: 'editorial' },
+      { nom: 'Critique', description: 'Critiques', slug: 'critique' },
+      { nom: 'Portrait', description: 'Portraits', slug: 'portrait' },
+      { nom: 'Enquête', description: 'Articles d\'enquête', slug: 'enquete' },
+      { nom: 'Tribune', description: 'Tribunes', slug: 'tribune' },
+      
+      // Genres pour Articles Scientifiques (51-58)
+      { nom: 'Recherche', description: 'Articles de recherche', slug: 'recherche' },
+      { nom: 'Méta-analyse', description: 'Méta-analyses', slug: 'meta-analyse' },
+      { nom: 'Revue systématique', description: 'Revues systématiques', slug: 'revue-systematique' },
+      { nom: 'Étude de cas', description: 'Études de cas', slug: 'etude-de-cas' },
+      { nom: 'Article de synthèse', description: 'Articles de synthèse', slug: 'article-synthese' },
+      { nom: 'Communication courte', description: 'Communications courtes', slug: 'communication-courte' },
+      { nom: 'Lettre à l\'éditeur', description: 'Lettres à l\'éditeur', slug: 'lettre-editeur' },
+      { nom: 'Rapport technique', description: 'Rapports techniques', slug: 'rapport-technique' },
+      
+      // Genres pour Arts visuels (59-68)
+      { nom: 'Peinture', description: 'Œuvres peintes', slug: 'peinture' },
+      { nom: 'Sculpture', description: 'Œuvres sculptées', slug: 'sculpture' },
+      { nom: 'Photographie', description: 'Œuvres photographiques', slug: 'photographie' },
+      { nom: 'Dessin', description: 'Œuvres dessinées', slug: 'dessin' },
+      { nom: 'Gravure', description: 'Œuvres gravées', slug: 'gravure' },
+      { nom: 'Installation', description: 'Installations artistiques', slug: 'installation' },
+      { nom: 'Art numérique', description: 'Œuvres numériques', slug: 'art-numerique' },
+      { nom: 'Street Art', description: 'Art urbain', slug: 'street-art' },
+      { nom: 'Calligraphie', description: 'Art de la calligraphie', slug: 'calligraphie' },
+      { nom: 'Collage', description: 'Œuvres en collage', slug: 'collage' },
+      
+      // Genres pour Artisanat (69-80)
+      { nom: 'Poterie', description: 'Poterie traditionnelle', slug: 'poterie' },
+      { nom: 'Tissage', description: 'Tissage traditionnel', slug: 'tissage' },
+      { nom: 'Bijouterie', description: 'Création de bijoux', slug: 'bijouterie' },
+      { nom: 'Maroquinerie', description: 'Travail du cuir', slug: 'maroquinerie' },
+      { nom: 'Vannerie', description: 'Travail de vannerie', slug: 'vannerie' },
+      { nom: 'Ébénisterie', description: 'Travail du bois', slug: 'ebenisterie' },
+      { nom: 'Ferronnerie', description: 'Travail du métal', slug: 'ferronnerie' },
+      { nom: 'Céramique', description: 'Art de la céramique', slug: 'ceramique' },
+      { nom: 'Broderie', description: 'Art de la broderie', slug: 'broderie' },
+      { nom: 'Tapisserie', description: 'Art de la tapisserie', slug: 'tapisserie' },
+      { nom: 'Dinanderie', description: 'Travail du cuivre', slug: 'dinanderie' },
+      { nom: 'Zellige', description: 'Mosaïque traditionnelle', slug: 'zellige' }
+    ];
+
+    const genreMap = {};
+    for (const genreData of genres) {
+      const [genre] = await models.Genre.findOrCreate({
+        where: { nom: genreData.nom },
+        defaults: genreData
+      });
+      genreMap[genreData.nom] = genre.id_genre;
+    }
+
+    // =====================================================
+    // 4. CATÉGORIES
+    // =====================================================
+    console.log('📁 Création des catégories...');
+    
+    const categories = [
+      // Catégories littéraires (1-20)
+      { nom: 'Romance', description: 'Histoires d\'amour' },
+      { nom: 'Thriller', description: 'Suspense et tension' },
+      { nom: 'Fantasy', description: 'Mondes imaginaires' },
+      { nom: 'Science-Fiction', description: 'Futur et technologie' },
+      { nom: 'Historique', description: 'Basé sur l\'histoire' },
+      { nom: 'Policier', description: 'Enquêtes et mystères' },
+      { nom: 'Horreur', description: 'Épouvante et terreur' },
+      { nom: 'Contemporain', description: 'Époque actuelle' },
+      { nom: 'Jeunesse', description: 'Pour les jeunes' },
+      { nom: 'Young Adult', description: 'Jeunes adultes' },
+      { nom: 'Dystopie', description: 'Sociétés futures sombres' },
+      { nom: 'Aventure', description: 'Récits d\'aventures' },
+      { nom: 'Guerre', description: 'Récits de guerre' },
+      { nom: 'Espionnage', description: 'Histoires d\'espions' },
+      { nom: 'Psychologique', description: 'Exploration psychologique' },
+      { nom: 'Social', description: 'Questions sociales' },
+      { nom: 'Philosophique', description: 'Réflexions philosophiques' },
+      { nom: 'Satirique', description: 'Satire sociale' },
+      { nom: 'Épistolaire', description: 'Roman par lettres' },
+      { nom: 'Autobiographique', description: 'Basé sur la vie de l\'auteur' },
+      
+      // Catégories cinéma (21-40)
+      { nom: 'Super-héros', description: 'Films de super-héros' },
+      { nom: 'Arts martiaux', description: 'Films d\'arts martiaux' },
+      { nom: 'Catastrophe', description: 'Films catastrophe' },
+      { nom: 'Biographique', description: 'Biographies filmées' },
+      { nom: 'Sport', description: 'Films de sport' },
+      { nom: 'Road Movie', description: 'Films de voyage' },
+      { nom: 'Film noir', description: 'Genre noir classique' },
+      { nom: 'Néo-noir', description: 'Noir moderne' },
+      { nom: 'Zombie', description: 'Films de zombies' },
+      { nom: 'Vampire', description: 'Films de vampires' },
+      { nom: 'Space Opera', description: 'Épopées spatiales' },
+      { nom: 'Cyberpunk', description: 'Futur dystopique high-tech' },
+      { nom: 'Steampunk', description: 'Rétro-futurisme vapeur' },
+      { nom: 'Post-apocalyptique', description: 'Après l\'apocalypse' },
+      { nom: 'Survival', description: 'Films de survie' },
+      { nom: 'Slasher', description: 'Films slasher' },
+      { nom: 'Found Footage', description: 'Faux documentaires' },
+      { nom: 'Mockumentary', description: 'Faux documentaires comiques' },
+      { nom: 'Anthologie', description: 'Films à sketches' },
+      { nom: 'Expérimental', description: 'Cinéma expérimental' },
+      
+      // Catégories musique (41-60)
+      { nom: 'Rock Alternatif', description: 'Rock alternatif' },
+      { nom: 'Hard Rock', description: 'Rock dur' },
+      { nom: 'Punk Rock', description: 'Punk rock' },
+      { nom: 'Rock Progressif', description: 'Rock progressif' },
+      { nom: 'Indie Rock', description: 'Rock indépendant' },
+      { nom: 'Pop Rock', description: 'Pop rock' },
+      { nom: 'Electro Pop', description: 'Pop électronique' },
+      { nom: 'K-Pop', description: 'Pop coréenne' },
+      { nom: 'Indie Pop', description: 'Pop indépendante' },
+      { nom: 'Bebop', description: 'Jazz bebop' },
+      { nom: 'Smooth Jazz', description: 'Jazz doux' },
+      { nom: 'Jazz Fusion', description: 'Jazz fusion' },
+      { nom: 'Free Jazz', description: 'Jazz libre' },
+      { nom: 'House', description: 'Musique house' },
+      { nom: 'Techno', description: 'Musique techno' },
+      { nom: 'Dubstep', description: 'Musique dubstep' },
+      { nom: 'Ambient', description: 'Musique ambiante' },
+      { nom: 'Trap', description: 'Musique trap' },
+      { nom: 'Drill', description: 'Musique drill' },
+      { nom: 'Afrobeat', description: 'Musique afrobeat' },
+      
+      // Catégories articles (61-80)
+      { nom: 'Politique', description: 'Articles politiques' },
+      { nom: 'Économie', description: 'Articles économiques' },
+      { nom: 'Société', description: 'Articles de société' },
+      { nom: 'International', description: 'Actualité internationale' },
+      { nom: 'Sport', description: 'Articles sportifs' },
+      { nom: 'Culture', description: 'Articles culturels' },
+      { nom: 'Technologie', description: 'Articles tech' },
+      { nom: 'Environnement', description: 'Articles environnement' },
+      { nom: 'Santé', description: 'Articles santé' },
+      { nom: 'Éducation', description: 'Articles éducation' },
+      { nom: 'Sciences', description: 'Articles scientifiques' },
+      { nom: 'Justice', description: 'Articles justice' },
+      { nom: 'Faits divers', description: 'Faits divers' },
+      { nom: 'Médias', description: 'Articles sur les médias' },
+      { nom: 'Lifestyle', description: 'Art de vivre' },
+      { nom: 'Gastronomie', description: 'Articles gastronomie' },
+      { nom: 'Tourisme', description: 'Articles tourisme' },
+      { nom: 'Mode', description: 'Articles mode' },
+      { nom: 'People', description: 'Célébrités' },
+      { nom: 'Gaming', description: 'Jeux vidéo' },
+      
+      // Catégories sciences (81-95)
+      { nom: 'Biologie', description: 'Sciences de la vie' },
+      { nom: 'Physique', description: 'Sciences physiques' },
+      { nom: 'Chimie', description: 'Sciences chimiques' },
+      { nom: 'Mathématiques', description: 'Sciences mathématiques' },
+      { nom: 'Informatique', description: 'Sciences informatiques' },
+      { nom: 'Médecine', description: 'Sciences médicales' },
+      { nom: 'Psychologie', description: 'Sciences psychologiques' },
+      { nom: 'Sociologie', description: 'Sciences sociales' },
+      { nom: 'Anthropologie', description: 'Sciences anthropologiques' },
+      { nom: 'Archéologie', description: 'Sciences archéologiques' },
+      { nom: 'Géologie', description: 'Sciences de la Terre' },
+      { nom: 'Astronomie', description: 'Sciences astronomiques' },
+      { nom: 'Écologie', description: 'Sciences écologiques' },
+      { nom: 'Génétique', description: 'Sciences génétiques' },
+      { nom: 'Neurosciences', description: 'Sciences du cerveau' },
+      
+      // Catégories arts (96-110)
+      { nom: 'Portrait', description: 'Portraits artistiques' },
+      { nom: 'Paysage', description: 'Paysages' },
+      { nom: 'Nature morte', description: 'Natures mortes' },
+      { nom: 'Abstrait', description: 'Art abstrait' },
+      { nom: 'Figuratif', description: 'Art figuratif' },
+      { nom: 'Surréaliste', description: 'Art surréaliste' },
+      { nom: 'Impressionniste', description: 'Style impressionniste' },
+      { nom: 'Expressionniste', description: 'Style expressionniste' },
+      { nom: 'Cubiste', description: 'Style cubiste' },
+      { nom: 'Minimaliste', description: 'Art minimaliste' },
+      { nom: 'Pop Art', description: 'Pop art' },
+      { nom: 'Art Déco', description: 'Style art déco' },
+      { nom: 'Art Nouveau', description: 'Style art nouveau' },
+      { nom: 'Contemporain', description: 'Art contemporain' },
+      { nom: 'Traditionnel', description: 'Art traditionnel' },
+      
+      // Catégories artisanat (111-125)
+      { nom: 'Utilitaire', description: 'Objets utilitaires' },
+      { nom: 'Décoratif', description: 'Objets décoratifs' },
+      { nom: 'Rituel', description: 'Objets rituels' },
+      { nom: 'Mobilier', description: 'Meubles artisanaux' },
+      { nom: 'Vestimentaire', description: 'Vêtements artisanaux' },
+      { nom: 'Accessoires', description: 'Accessoires artisanaux' },
+      { nom: 'Instruments', description: 'Instruments artisanaux' },
+      { nom: 'Jouets', description: 'Jouets artisanaux' },
+      { nom: 'Cuisine', description: 'Ustensiles de cuisine' },
+      { nom: 'Jardin', description: 'Objets de jardin' },
+      { nom: 'Architecture', description: 'Éléments architecturaux' },
+      { nom: 'Religieux', description: 'Objets religieux' },
+      { nom: 'Festif', description: 'Objets festifs' },
+      { nom: 'Traditionnel Algérien', description: 'Artisanat algérien' },
+      { nom: 'Moderne', description: 'Artisanat moderne' }
+    ];
+
+    const categorieMap = {};
+    for (const catData of categories) {
+      const [cat] = await models.Categorie.findOrCreate({
+        where: { nom: catData.nom },
+        defaults: catData
+      });
+      categorieMap[catData.nom] = cat.id_categorie;
+    }
+
+    // =====================================================
+    // 5. ASSOCIATIONS TYPE_OEUVRE → GENRE
+    // =====================================================
+    console.log('🔗 Création des associations Type → Genre...');
+    
+    const typeGenreAssociations = [
+      // Livre
+      { type: 'Livre', genres: ['Roman', 'Nouvelle', 'Essai', 'Poésie', 'Biographie', 'Théâtre', 'Bande Dessinée', 'Conte', 'Chronique', 'Mémoires'] },
+      
+      // Film
+      { type: 'Film', genres: ['Action', 'Comédie', 'Drame', 'Thriller', 'Science-Fiction', 'Fantastique', 'Horreur', 'Documentaire', 'Animation', 'Romance', 'Western', 'Guerre', 'Historique', 'Musical', 'Policier'] },
+      
+      // Album Musical
+      { type: 'Album Musical', genres: ['Rock', 'Pop', 'Jazz', 'Classique', 'Électronique', 'Hip-Hop', 'Folk', 'Metal', 'R&B', 'Reggae', 'Blues', 'Country', 'Raï', 'Chaâbi', 'Andalou'] },
+      
+      // Article
+      { type: 'Article', genres: ['Actualité', 'Opinion', 'Analyse', 'Interview', 'Reportage', 'Éditorial', 'Critique', 'Portrait', 'Enquête', 'Tribune'] },
+      
+      // Article Scientifique
+      { type: 'Article Scientifique', genres: ['Recherche', 'Méta-analyse', 'Revue systématique', 'Étude de cas', 'Article de synthèse', 'Communication courte', 'Lettre à l\'éditeur', 'Rapport technique'] },
+      
+      // Œuvre d'Art
+      { type: 'Œuvre d\'Art', genres: ['Peinture', 'Sculpture', 'Photographie', 'Dessin', 'Gravure', 'Installation', 'Art numérique', 'Street Art', 'Calligraphie', 'Collage'] },
+      
+      // Artisanat
+      { type: 'Artisanat', genres: ['Poterie', 'Tissage', 'Bijouterie', 'Maroquinerie', 'Vannerie', 'Ébénisterie', 'Ferronnerie', 'Céramique', 'Broderie', 'Tapisserie', 'Dinanderie', 'Zellige'] }
+    ];
+
+    for (const assoc of typeGenreAssociations) {
+      const typeId = typeOeuvreMap[assoc.type];
+      if (!typeId) continue;
+      
+      for (let i = 0; i < assoc.genres.length; i++) {
+        const genreId = genreMap[assoc.genres[i]];
+        if (!genreId) continue;
+        
+        await models.TypeOeuvreGenre.findOrCreate({
+          where: { 
+            id_type_oeuvre: typeId,
+            id_genre: genreId
+          },
+          defaults: {
+            id_type_oeuvre: typeId,
+            id_genre: genreId,
+            ordre_affichage: i + 1,
+            actif: true
+          }
+        });
+      }
+    }
+
+    // =====================================================
+    // 6. ASSOCIATIONS GENRE → CATÉGORIE
+    // =====================================================
+    console.log('🔗 Création des associations Genre → Catégorie...');
+    
+    const genreCategorieAssociations = [
+      // Genres littéraires
+      { genre: 'Roman', categories: ['Romance', 'Thriller', 'Fantasy', 'Science-Fiction', 'Historique', 'Policier', 'Horreur', 'Contemporain', 'Jeunesse', 'Young Adult', 'Dystopie', 'Aventure', 'Guerre', 'Espionnage', 'Psychologique', 'Social', 'Philosophique', 'Satirique', 'Épistolaire', 'Autobiographique'] },
+      { genre: 'Nouvelle', categories: ['Fantasy', 'Science-Fiction', 'Policier', 'Horreur', 'Contemporain', 'Psychologique', 'Social'] },
+      { genre: 'Essai', categories: ['Philosophique', 'Social', 'Politique', 'Économie', 'Culture', 'Sciences', 'Historique'] },
+      { genre: 'Poésie', categories: ['Contemporain', 'Classique', 'Romance', 'Social', 'Philosophique'] },
+      { genre: 'Biographie', categories: ['Historique', 'Politique', 'Culture', 'Sport', 'Sciences', 'Autobiographique'] },
+      
+      // Genres cinématographiques
+      { genre: 'Action', categories: ['Super-héros', 'Arts martiaux', 'Espionnage', 'Guerre', 'Aventure', 'Catastrophe', 'Survival'] },
+      { genre: 'Comédie', categories: ['Romance', 'Satirique', 'Mockumentary', 'Sport', 'Road Movie'] },
+      { genre: 'Drame', categories: ['Psychologique', 'Social', 'Historique', 'Biographique', 'Guerre', 'Romance'] },
+      { genre: 'Thriller', categories: ['Policier', 'Psychologique', 'Espionnage', 'Film noir', 'Néo-noir', 'Survival'] },
+      { genre: 'Science-Fiction', categories: ['Space Opera', 'Cyberpunk', 'Steampunk', 'Post-apocalyptique', 'Dystopie', 'Super-héros'] },
+      { genre: 'Horreur', categories: ['Zombie', 'Vampire', 'Slasher', 'Found Footage', 'Psychologique', 'Survival'] },
+      
+      // Genres musicaux
+      { genre: 'Rock', categories: ['Rock Alternatif', 'Hard Rock', 'Punk Rock', 'Rock Progressif', 'Indie Rock', 'Pop Rock'] },
+      { genre: 'Pop', categories: ['Pop Rock', 'Electro Pop', 'K-Pop', 'Indie Pop'] },
+      { genre: 'Jazz', categories: ['Bebop', 'Smooth Jazz', 'Jazz Fusion', 'Free Jazz'] },
+      { genre: 'Électronique', categories: ['House', 'Techno', 'Dubstep', 'Ambient'] },
+      { genre: 'Hip-Hop', categories: ['Trap', 'Drill', 'Afrobeat'] },
+      
+      // Genres articles
+      { genre: 'Actualité', categories: ['Politique', 'Économie', 'Société', 'International', 'Sport', 'Culture', 'Technologie', 'Environnement', 'Santé', 'Éducation', 'Justice', 'Faits divers'] },
+      { genre: 'Opinion', categories: ['Politique', 'Société', 'Culture', 'Économie', 'International', 'Environnement'] },
+      { genre: 'Analyse', categories: ['Politique', 'Économie', 'Société', 'International', 'Culture', 'Technologie', 'Sciences'] },
+      { genre: 'Interview', categories: ['Politique', 'Culture', 'Sport', 'Sciences', 'Économie', 'People'] },
+      { genre: 'Reportage', categories: ['International', 'Société', 'Environnement', 'Culture', 'Sport', 'Guerre'] },
+      
+      // Genres scientifiques
+      { genre: 'Recherche', categories: ['Biologie', 'Physique', 'Chimie', 'Mathématiques', 'Informatique', 'Médecine', 'Psychologie', 'Sociologie', 'Anthropologie', 'Archéologie', 'Géologie', 'Astronomie', 'Écologie', 'Génétique', 'Neurosciences'] },
+      { genre: 'Méta-analyse', categories: ['Médecine', 'Psychologie', 'Biologie', 'Sciences sociales'] },
+      { genre: 'Étude de cas', categories: ['Médecine', 'Psychologie', 'Sociologie', 'Anthropologie', 'Éducation'] },
+      
+      // Genres arts visuels
+      { genre: 'Peinture', categories: ['Portrait', 'Paysage', 'Nature morte', 'Abstrait', 'Figuratif', 'Surréaliste', 'Impressionniste', 'Expressionniste', 'Cubiste', 'Minimaliste', 'Pop Art', 'Contemporain', 'Traditionnel'] },
+      { genre: 'Photographie', categories: ['Portrait', 'Paysage', 'Nature morte', 'Street Art', 'Documentaire', 'Abstrait', 'Contemporain'] },
+      { genre: 'Sculpture', categories: ['Abstrait', 'Figuratif', 'Minimaliste', 'Contemporain', 'Traditionnel'] },
+      
+      // Genres artisanat
+      { genre: 'Poterie', categories: ['Utilitaire', 'Décoratif', 'Rituel', 'Traditionnel Algérien', 'Moderne'] },
+      { genre: 'Tissage', categories: ['Vestimentaire', 'Décoratif', 'Mobilier', 'Traditionnel Algérien'] },
+      { genre: 'Bijouterie', categories: ['Accessoires', 'Décoratif', 'Rituel', 'Traditionnel Algérien', 'Moderne'] },
+      { genre: 'Ébénisterie', categories: ['Mobilier', 'Décoratif', 'Utilitaire', 'Architecture'] },
+      { genre: 'Céramique', categories: ['Utilitaire', 'Décoratif', 'Architecture', 'Traditionnel Algérien'] }
+    ];
+
+    for (const assoc of genreCategorieAssociations) {
+      const genreId = genreMap[assoc.genre];
+      if (!genreId) continue;
+      
+      for (let i = 0; i < assoc.categories.length; i++) {
+        const catId = categorieMap[assoc.categories[i]];
+        if (!catId) continue;
+        
+        await models.GenreCategorie.findOrCreate({
+          where: { 
+            id_genre: genreId,
+            id_categorie: catId
+          },
+          defaults: {
+            id_genre: genreId,
+            id_categorie: catId,
+            ordre_affichage: i + 1,
+            actif: true
+          }
+        });
+      }
+    }
+
     // Spécialités par défaut
     const defaultSpecialites = [
       { nom_specialite: 'Arts visuels', description: 'Peinture, sculpture, photographie', categorie: 'Arts' },

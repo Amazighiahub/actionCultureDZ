@@ -9,7 +9,7 @@ class RoleService {
    */
   getRoleByUserType(type_user) {
     const roleMapping = {
-      'visiteur': 'Visiteur',
+      'visiteur': 'User',
       'ecrivain': 'Professionnel',
       'journaliste': 'Professionnel',
       'scientifique': 'Professionnel',
@@ -24,7 +24,7 @@ class RoleService {
       'autre': 'Professionnel'
     };
 
-    return roleMapping[type_user] || 'Visiteur';
+    return roleMapping[type_user] || 'User';
   }
 
   /**

@@ -34,14 +34,16 @@ module.exports = (sequelize) => {
     // =============================================================================
     // INFORMATIONS PERSONNELLES
     // =============================================================================
-    type_user: {
-      type: DataTypes.ENUM(
-        'visiteur', 'ecrivain', 'journaliste', 'scientifique', 
-        'acteur', 'artiste', 'artisan', 'realisateur', 'musicien', 
-        'photographe', 'danseur', 'sculpteur','autre'
-      ),
+    // MODIFICATION : Remplacer l'ENUM par une référence à la table type_user
+    id_type_user: {
+      type: DataTypes.INTEGER,
       allowNull: false,
-      defaultValue: 'visiteur'
+      defaultValue: 1, // 1 = visiteur par défaut
+      references: {
+        model: 'type_user',
+        key: 'id_type_user'
+      },
+      comment: 'Référence au type d\'utilisateur'
     },
     date_naissance: {
       type: DataTypes.DATEONLY,
@@ -87,15 +89,11 @@ module.exports = (sequelize) => {
     // STATUTS ET VALIDATION
     // =============================================================================
     statut: {
-      type: DataTypes.ENUM('actif', 'inactif', 'suspendu', 'banni'),
+      type: DataTypes.ENUM('actif','en_attente_validation' , 'inactif', 'suspendu', 'banni'),
       defaultValue: 'actif',
       allowNull: false
     },
-    professionnel_valide: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false,
-      comment: 'Indique si le professionnel a été validé par un admin'
-    },
+   
     statut_validation: {
       type: DataTypes.ENUM('en_attente', 'valide', 'rejete', 'suspendu'),
       allowNull: true,
@@ -105,6 +103,16 @@ module.exports = (sequelize) => {
       type: DataTypes.DATE,
       allowNull: true,
       comment: 'Date de validation du statut professionnel'
+    },
+    // NOUVEAU CHAMP : Utilisateur qui a validé
+    id_user_validate: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'user',
+        key: 'id_user'
+      },
+      comment: 'ID de l\'utilisateur qui a validé ce compte'
     },
 
     // =============================================================================
@@ -294,13 +302,10 @@ module.exports = (sequelize) => {
         unique: true
       },
       {
-        fields: ['type_user']
+        fields: ['id_type_user'] // Modifié
       },
       {
         fields: ['statut']
-      },
-      {
-        fields: ['professionnel_valide']
       },
       {
         fields: ['wilaya_residence']
@@ -310,19 +315,20 @@ module.exports = (sequelize) => {
       },
       {
         fields: ['derniere_connexion']
+      },
+      {
+        fields: ['id_user_validate'] // Nouveau
       }
     ],
     
     // Hooks
     hooks: {
-      beforeCreate: (user) => {
-        // Valider automatiquement les visiteurs
-        if (user.type_user === 'visiteur') {
-          user.professionnel_valide = true;
+      beforeCreate: async (user) => {
+        // Valider automatiquement les visiteurs (id_type_user = 1)
+        if (user.id_type_user === 1) {
           user.statut_validation = 'valide';
         } else {
-          // Les professionnels doivent être validés
-          user.professionnel_valide = false;
+          // Les autres types doivent être validés
           user.statut_validation = 'en_attente';
         }
         
@@ -334,7 +340,7 @@ module.exports = (sequelize) => {
       
       beforeUpdate: (user) => {
         // Mettre à jour les statistiques si nécessaire
-        if (user.changed('professionnel_valide') && user.professionnel_valide) {
+        if (user.changed('statut_validation') && user.statut_validation === "valide") {
           user.date_validation = new Date();
         }
       }
@@ -345,6 +351,24 @@ module.exports = (sequelize) => {
   // ASSOCIATIONS
   // =============================================================================
   User.associate = (models) => {
+    // NOUVELLE ASSOCIATION : Type d'utilisateur
+    User.belongsTo(models.TypeUser, {
+      foreignKey: 'id_type_user',
+      as: 'TypeUser'
+    });
+    
+    // NOUVELLE ASSOCIATION : Utilisateur validateur
+    User.belongsTo(models.User, {
+      foreignKey: 'id_user_validate',
+      as: 'Validateur'
+    });
+    
+    // NOUVELLE ASSOCIATION : Utilisateurs validés par cet utilisateur
+    User.hasMany(models.User, {
+      foreignKey: 'id_user_validate',
+      as: 'UsersValides'
+    });
+    
     // Relations avec les rôles
     User.belongsToMany(models.Role, { 
       through: models.UserRole, 
@@ -372,8 +396,6 @@ module.exports = (sequelize) => {
       foreignKey: 'id_user',
       as: 'Evenements'
     });
-    
-   
     
     // Relation avec Wilaya
     User.belongsTo(models.Wilaya, { 
@@ -414,17 +436,6 @@ module.exports = (sequelize) => {
       foreignKey: 'id_user',
       as: 'Favoris'
     });
-    
-    // Relations de validation
-    User.hasMany(models.User, { 
-      as: 'ProfessionnelsValides', 
-      foreignKey: 'validateur_professionnel_id' 
-    });
-    
-    User.belongsTo(models.User, { 
-      as: 'ValidateurProfessionnel', 
-      foreignKey: 'validateur_professionnel_id' 
-    });
   };
 
   // =============================================================================
@@ -448,25 +459,6 @@ module.exports = (sequelize) => {
     if (!values.telephone_public) delete values.telephone;
     
     return values;
-  };
-
-  User.prototype.isProfessional = function() {
-    const professionalTypes = [
-      'ecrivain', 'journaliste', 'scientifique', 'acteur', 
-      'artiste', 'artisan', 'realisateur', 'musicien', 
-      'photographe', 'danseur', 'sculpteur'
-    ];
-    return professionalTypes.includes(this.type_user) && this.professionnel_valide;
-  };
-
-  User.prototype.isAdmin = function() {
-    // Les rôles admin sont gérés uniquement via la table des rôles
-    return false;
-  };
-
-  User.prototype.canCreateContent = function() {
-    return this.statut === 'actif' && 
-           (this.type_user === 'visiteur' || this.professionnel_valide);
   };
 
   return User;

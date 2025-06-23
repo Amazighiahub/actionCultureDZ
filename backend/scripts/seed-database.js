@@ -7,7 +7,7 @@ const seedData = async (models) => {
     console.log('🌱 Insertion des données de test...');
 
     // Créer un utilisateur administrateur
-    const adminPassword = await bcrypt.hash('admin123456', 12);
+    const adminPassword = await bcrypt.hash('Admin12345', 12);
     const [admin] = await models.User.findOrCreate({
       where: { email: 'admin@actionculture.dz' },
       defaults: {
@@ -15,7 +15,7 @@ const seedData = async (models) => {
         prenom: 'Système',
         email: 'admin@actionculture.dz',
         password: adminPassword,
-        type_user: 'visiteur',
+        id_type_user: 1,
         biographie: 'Compte administrateur du système Action Culture',
         accepte_conditions: true,  // ✅ OBLIGATOIRE
         accepte_newsletter: false,
@@ -38,7 +38,7 @@ const seedData = async (models) => {
         nom: 'Kateb',
         prenom: 'Yacine',
         email: 'kateb.yacine@test.com',
-        type_user: 'ecrivain',
+        id_type_user: 2,
         biographie: 'Écrivain algérien célèbre',
         accepte_conditions: true,  // ✅ OBLIGATOIRE
         accepte_newsletter: false,
@@ -48,7 +48,7 @@ const seedData = async (models) => {
         nom: 'Dib',
         prenom: 'Mohammed',
         email: 'mohammed.dib@test.com',
-        type_user: 'ecrivain',
+        id_type_user: 2,
         biographie: 'Romancier et poète algérien',
         accepte_conditions: true,  // ✅ OBLIGATOIRE
         accepte_newsletter: false,
@@ -58,7 +58,7 @@ const seedData = async (models) => {
         nom: 'Assia',
         prenom: 'Djebar',
         email: 'assia.djebar@test.com',
-        type_user: 'ecrivain',
+        id_type_user: 2,
         biographie: 'Romancière et cinéaste algérienne',
         accepte_conditions: true,  // ✅ OBLIGATOIRE
         accepte_newsletter: false,
@@ -66,7 +66,7 @@ const seedData = async (models) => {
       }
     ];
 
-    const userRole = await models.Role.findOne({ where: { nom_role: 'Utilisateur' } });
+    const userRole = await models.Role.findOne({ where: { nom_role: 'Visiteur' } });
     
     for (const userData of testUsers) {
       const password = await bcrypt.hash('password123', 12);

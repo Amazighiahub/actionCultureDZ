@@ -1,483 +1,577 @@
-// services/oeuvre.service.ts - Service de gestion des œuvres corrigé
-
-import { apiService, ApiResponse, PaginatedResponse } from './api.service';
-import { API_ENDPOINTS } from '../config/api';
+// services/oeuvre.service.ts - Version complètement corrigée
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { 
-  Oeuvre, 
-  OeuvreStatut,
-  Livre,
-  Film,
-  AlbumMusical,
-  Article,
-  Artisanat,
-  OeuvreArt
-} from '../types/Oeuvre.types';
-import { Media } from '../types/Media.types';
+  CreateOeuvreCompleteDTO, 
+  CreateOeuvreResponse,
+  IntervenantSearchResult,
+  CheckUserByEmailResponse,
+  IntervenantExistant,
+  NouvelIntervenant,
+  EditeurOeuvre
+} from '@/types/api/oeuvre-creation.types';
+import { Oeuvre } from '@/types/models/oeuvre.types';
+import { httpClient } from './httpClient';
+import { API_ENDPOINTS, type ApiResponse } from '@/config/api';
+import { mediaService } from './media.service';
+import { CreateOeuvreBackendDTO } from '@/types/api/create-oeuvre-backend.dto';
 
-export interface OeuvreForm {
-  titre: string;
-  idTypeOeuvre: number;
-  idLangue: number;
-  description?: string;
-  anneeCreation?: number;
-  categories?: number[];
-  tags?: string[];
-  // Champs spécifiques selon le type
-  isbn?: string;
-  dureeMinutes?: number;
-  realisateur?: string;
-}
+class OeuvreService {
+  /**
+   * Créer une nouvelle œuvre AVEC médias
+   */
+  async createOeuvreWithMedias(
+    data: CreateOeuvreBackendDTO | CreateOeuvreCompleteDTO, 
+    mediaFiles?: File[]
+  ): Promise<ApiResponse<CreateOeuvreResponse>> {
+    try {
+      console.log('📝 Création œuvre avec médias:', {
+        titre: data.titre,
+        nb_medias: mediaFiles?.length || 0
+      });
 
-export interface OeuvreFilters {
-  typeOeuvre?: number;
-  langue?: number;
-  categorie?: number[];
-  tags?: string[];
-  statut?: OeuvreStatut;
-  anneeMin?: number;
-  anneeMax?: number;
-  saisiPar?: number;
-  page?: number;
-  limit?: number;
-  sort?: string;
-  order?: 'asc' | 'desc';
-}
+      // ÉTAPE 1 : Créer l'œuvre d'abord
+      const oeuvreResult = await this.createOeuvre(data);
+      
+      if (!oeuvreResult.success || !oeuvreResult.data) {
+        return oeuvreResult;
+      }
 
-export interface OeuvreStats {
-  total: number;
-  parType: Record<number, number>;
-  parStatut: Record<string, number>;
-  vuesTotal: number;
-  favorisTotal: number;
-  commentairesTotal: number;
-  noteMoyenne: number;
-}
+      const oeuvreId = oeuvreResult.data.oeuvre.id_oeuvre;
+      console.log('✅ Œuvre créée avec ID:', oeuvreId);
 
-export interface ShareLinks {
-  facebook: string;
-  twitter: string;
-  whatsapp: string;
-  telegram: string;
-  email: string;
-  permalink: string;
-}
+      // ÉTAPE 2 : Upload des médias si présents
+      if (mediaFiles && mediaFiles.length > 0) {
+        console.log('📤 Upload de', mediaFiles.length, 'médias...');
+        
+        const uploadResult = await mediaService.uploadMultiple(
+          mediaFiles,
+          'oeuvre',
+          oeuvreId,
+          (progress) => {
+            console.log(`Upload ${progress.file}: ${progress.percentage}%`);
+          }
+        );
 
-export interface ApiDocumentation {
-  version: string;
-  endpoints: Array<{
-    method: string;
-    path: string;
-    description: string;
-    parameters?: Array<{
-      name: string;
-      type: string;
-      required: boolean;
-      description: string;
-    }>;
-    response?: {
-      schema: any;
-      example: any;
+        if (!uploadResult.success) {
+          console.error('⚠️ Erreur upload médias:', uploadResult.error);
+          // L'œuvre est créée mais les médias n'ont pas pu être uploadés
+          console.warn('⚠️ Œuvre créée mais certains médias n\'ont pas pu être uploadés');
+          return oeuvreResult;
+        }
+
+        console.log('✅ Médias uploadés avec succès');
+      }
+
+      return oeuvreResult;
+      
+    } catch (error: any) {
+      console.error('❌ Erreur création œuvre avec médias:', error);
+      return {
+        success: false,
+        error: error.message || 'Erreur lors de la création'
+      };
+    }
+  }
+
+  /**
+   * Créer une nouvelle œuvre (sans médias)
+   */
+  async createOeuvre(data: CreateOeuvreBackendDTO | CreateOeuvreCompleteDTO): Promise<ApiResponse<CreateOeuvreResponse>> {
+    try {
+      // S'assurer que les catégories sont toujours un tableau
+      const normalizedData = {
+        ...data,
+        categories: Array.isArray(data.categories) ? data.categories : data.categories ? [data.categories] : []
+      };
+
+      console.log('📝 Création œuvre:', {
+        titre: normalizedData.titre,
+        type: normalizedData.id_type_oeuvre,
+        categories: normalizedData.categories
+      });
+
+      const response = await httpClient.post<CreateOeuvreResponse>('/oeuvres', normalizedData);
+      
+      return response;
+    } catch (error: any) {
+      console.error('❌ Erreur création œuvre:', error);
+      
+      // Gestion du timeout
+      if (error.message && 
+          (error.message.includes('timeout') || 
+           error.message.includes('Timeout') ||
+           error.code === 'ECONNABORTED')) {
+        
+        console.log('⏱️ Timeout détecté, vérification de la création...');
+        
+        // Attendre un peu et vérifier si l'œuvre a été créée
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        const checkResult = await this.checkRecentOeuvre(data.titre);
+        if (checkResult.success && checkResult.data) {
+          console.log('✅ Œuvre trouvée malgré le timeout');
+          return {
+            success: true,
+            data: {
+              oeuvre: checkResult.data,
+              message: 'Œuvre créée (récupérée après timeout)'
+            }
+          };
+        }
+      }
+      
+      return {
+        success: false,
+        error: error.response?.data?.error || error.message || 'Erreur lors de la création'
+      };
+    }
+  }
+
+  /**
+   * Alternative : Créer une œuvre avec FormData (pour upload direct)
+   */
+ async createOeuvreFormData(
+  data: CreateOeuvreBackendDTO | CreateOeuvreCompleteDTO,
+  mediaFiles?: File[]
+): Promise<ApiResponse<CreateOeuvreResponse>> {
+  try {
+    const formData = new FormData();
+    
+    // Ajouter les champs simples directement
+    formData.append('titre', data.titre);
+    formData.append('description', data.description || '');
+    formData.append('id_type_oeuvre', data.id_type_oeuvre.toString());
+    formData.append('id_langue', data.id_langue.toString());
+    
+    if (data.annee_creation) {
+      formData.append('annee_creation', data.annee_creation.toString());
+    }
+    if (data.prix) {
+      formData.append('prix', data.prix.toString());
+    }
+
+    // Pour les tableaux et objets, les stringifier
+    if (data.categories && data.categories.length > 0) {
+      // Option 1: Envoyer comme JSON
+      formData.append('categories', JSON.stringify(data.categories));
+      
+      // Option 2: Envoyer chaque élément séparément
+      // data.categories.forEach((cat, index) => {
+      //   formData.append(`categories[${index}]`, cat.toString());
+      // });
+    }
+
+    if (data.tags && data.tags.length > 0) {
+      formData.append('tags', JSON.stringify(data.tags));
+    }
+
+    // Contributeurs
+    if ('utilisateurs_inscrits' in data && data.utilisateurs_inscrits?.length) {
+      formData.append('utilisateurs_inscrits', JSON.stringify(data.utilisateurs_inscrits));
+    }
+    
+    if ('intervenants_non_inscrits' in data && data.intervenants_non_inscrits?.length) {
+      formData.append('intervenants_non_inscrits', JSON.stringify(data.intervenants_non_inscrits));
+    }
+    
+    if ('nouveaux_intervenants' in data && data.nouveaux_intervenants?.length) {
+      formData.append('nouveaux_intervenants', JSON.stringify(data.nouveaux_intervenants));
+    }
+
+    if ('editeurs' in data && data.editeurs?.length) {
+      formData.append('editeurs', JSON.stringify(data.editeurs));
+    }
+
+    // Détails spécifiques
+    if (data.details_specifiques && Object.keys(data.details_specifiques).length > 0) {
+      formData.append('details_specifiques', JSON.stringify(data.details_specifiques));
+    }
+
+    // Ajouter les fichiers médias
+    if (mediaFiles && mediaFiles.length > 0) {
+      mediaFiles.forEach((file) => {
+        formData.append('medias', file);
+      });
+    }
+
+    // Debug
+    console.log('📋 FormData entries:');
+    for (const [key, value] of formData.entries()) {
+      if (value instanceof File) {
+        console.log(`- ${key}: File(${value.name}, ${value.size} bytes, ${value.type})`);
+      } else {
+        console.log(`- ${key}:`, value);
+      }
+    }
+
+    const response = await httpClient.postFormData<CreateOeuvreResponse>(
+      '/oeuvres',
+      formData
+    );
+
+    return response;
+    
+  } catch (error: any) {
+    console.error('❌ Erreur création œuvre FormData:', error);
+    
+    if (error.response?.data) {
+      console.error('Détails de l\'erreur:', error.response.data);
+    }
+    
+    return {
+      success: false,
+      error: error.response?.data?.error || error.message || 'Erreur lors de la création'
     };
-  }>;
-  schemas: Record<string, any>;
-  authentication: {
-    type: string;
-    description: string;
-  };
+  }
 }
 
-export interface SearchParams {
-  q?: string;
-  type?: string;
-  limit?: number;
+  /**
+   * Upload de médias pour une œuvre existante
+   */
+  async uploadMedias(oeuvreId: number, files: File[]): Promise<ApiResponse<any>> {
+    try {
+      console.log('📤 Upload médias pour œuvre', oeuvreId);
+      
+      return await mediaService.uploadMultiple(
+        files,
+        'oeuvre',
+        oeuvreId,
+        (progress) => {
+          console.log(`Upload ${progress.file}: ${progress.percentage}%`);
+        }
+      );
+    } catch (error: any) {
+      console.error('❌ Erreur upload médias:', error);
+      return {
+        success: false,
+        error: error.message || 'Erreur lors de l\'upload'
+      };
+    }
+  }
+
+  /**
+   * Rechercher des intervenants
+   */
+  async searchIntervenants(params: { q: string }): Promise<IntervenantSearchResult[]> {
+    try {
+      console.log('🔍 Recherche intervenants avec:', params);
+      
+      const response = await httpClient.get<IntervenantSearchResult[]>('/intervenants/search', params);
+      
+      if (response.success && response.data) {
+        return response.data;
+      }
+      
+      return [];
+    } catch (error) {
+      console.error('❌ Erreur recherche intervenants:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Vérifier si un email existe
+   */
+  async checkUserByEmail(email: string): Promise<CheckUserByEmailResponse> {
+    try {
+      const response = await httpClient.post<CheckUserByEmailResponse>('/users/check-email', { email });
+      
+      if (response.success && response.data) {
+        return response.data;
+      }
+      
+      return { success: false, exists: false };
+    } catch (error) {
+      console.error('Erreur vérification email:', error);
+      return { success: false, exists: false };
+    }
+  }
+
+  /**
+   * Vérifier si une œuvre récente existe
+   */
+  async checkRecentOeuvre(titre: string): Promise<ApiResponse<any>> {
+    try {
+      const response = await httpClient.get<any>('/oeuvres', {
+        search: titre,
+        sort: 'recent',
+        limit: 1
+      });
+      
+      if (response.success && response.data?.oeuvres?.length > 0) {
+        const oeuvre = response.data.oeuvres[0];
+        
+        const createdAt = new Date(oeuvre.date_creation);
+        const now = new Date();
+        const diffMinutes = (now.getTime() - createdAt.getTime()) / (1000 * 60);
+        
+        if (diffMinutes <= 5) {
+          return {
+            success: true,
+            data: oeuvre
+          };
+        }
+      }
+      
+      return {
+        success: false,
+        error: 'Aucune œuvre récente trouvée'
+      };
+    } catch (error) {
+      console.error('Erreur vérification œuvre:', error);
+      return {
+        success: false,
+        error: 'Erreur lors de la vérification'
+      };
+    }
+  }
+
+  /**
+   * Récupérer une œuvre par ID
+   */
+  async getOeuvreById(id: number): Promise<ApiResponse<Oeuvre>> {
+    try {
+      return await httpClient.get<Oeuvre>(`/oeuvres/${id}`);
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Erreur lors de la récupération'
+      };
+    }
+  }
+
+  /**
+   * Récupérer la liste des œuvres avec filtres
+   */
+  async getOeuvres(params?: {
+    page?: number;
+    limit?: number;
+    statut?: string;
+    type?: number;
+    langue?: number;
+    categorie?: number;
+    search?: string;
+    sort?: string;
+  }): Promise<ApiResponse<{
+    oeuvres: Oeuvre[];
+    pagination: {
+      total: number;
+      page: number;
+      pages: number;
+      limit: number;
+    };
+  }>> {
+    try {
+      return await httpClient.get('/oeuvres', params);
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Erreur lors de la récupération'
+      };
+    }
+  }
+
+  /**
+   * Récupérer mes œuvres
+   */
+  /**
+ * Récupérer mes œuvres (œuvres de l'utilisateur connecté)
+ */
+/**
+ * Récupérer mes œuvres (œuvres de l'utilisateur connecté)
+ */
+async getMyOeuvres(params?: {
   page?: number;
+  limit?: number;
+  statut?: string;
+}): Promise<ApiResponse<{
+  oeuvres: Oeuvre[];
+  pagination: {
+    total: number;
+    page: number;
+    pages: number;
+    limit: number;
+  };
+}>> {
+  try {
+    console.log('🔍 Appel API getMyOeuvres avec params:', params);
+    
+    // Spécifier le type attendu pour httpClient.get
+    const response = await httpClient.get<{
+      oeuvres: Oeuvre[];
+      pagination: {
+        total: number;
+        page: number;
+        pages: number;
+        limit: number;
+      };
+    }>(API_ENDPOINTS.oeuvres.myWorks, params);
+    
+    console.log('📚 Réponse API getMyOeuvres:', response);
+    
+    if (!response.success) {
+      console.error('❌ Erreur API:', response.error);
+      
+      // Si c'est une erreur 401, afficher plus d'infos
+      if (response.error?.includes('401') || response.error?.includes('auth')) {
+        const token = localStorage.getItem('auth_token');
+        console.error('🔐 Problème d\'authentification:', {
+          tokenPresent: !!token,
+          tokenLength: token?.length,
+          error: response.error
+        });
+      }
+    }
+    
+    return response;
+  } catch (error: any) {
+    console.error('❌ Erreur getMyOeuvres:', error);
+    
+    // Vérifier si c'est une erreur réseau
+    if (error.message?.includes('Network') || error.message?.includes('fetch')) {
+      console.error('🌐 Erreur réseau détectée');
+    }
+    
+    return {
+      success: false,
+      error: error.message || 'Erreur lors de la récupération'
+    };
+  }
 }
-
-export class OeuvreService {
-  /**
-   * Récupérer la liste des œuvres avec pagination et filtres
-   */
-  static async getAll(filters?: OeuvreFilters): Promise<PaginatedResponse<Oeuvre>> {
-    return apiService.getPaginated<Oeuvre>(API_ENDPOINTS.oeuvres.list, filters);
-  }
-
-  /**
-   * Récupérer une œuvre par son ID
-   */
-  static async getById(id: number): Promise<ApiResponse<Oeuvre>> {
-    return apiService.get<Oeuvre>(API_ENDPOINTS.oeuvres.detail(id));
-  }
-
-  /**
-   * Créer une nouvelle œuvre
-   */
-  static async create(data: OeuvreForm): Promise<ApiResponse<Oeuvre>> {
-    return apiService.post<Oeuvre>(API_ENDPOINTS.oeuvres.create, data);
-  }
 
   /**
    * Mettre à jour une œuvre
    */
-  static async update(id: number, data: Partial<OeuvreForm>): Promise<ApiResponse<Oeuvre>> {
-    return apiService.put<Oeuvre>(API_ENDPOINTS.oeuvres.update(id), data);
+  async updateOeuvre(id: number, data: Partial<CreateOeuvreBackendDTO | CreateOeuvreCompleteDTO>): Promise<ApiResponse<any>> {
+    try {
+      return await httpClient.put(`/oeuvres/${id}`, data);
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Erreur lors de la mise à jour'
+      };
+    }
   }
 
   /**
    * Supprimer une œuvre
    */
-  static async delete(id: number): Promise<ApiResponse<void>> {
-    return apiService.delete<void>(API_ENDPOINTS.oeuvres.delete(id));
+  async deleteOeuvre(id: number): Promise<ApiResponse<void>> {
+    try {
+      return await httpClient.delete(`/oeuvres/${id}`);
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Erreur lors de la suppression'
+      };
+    }
   }
 
   /**
-   * Rechercher des œuvres
+   * Recherche avancée
    */
-  static async search(params: SearchParams): Promise<ApiResponse<Oeuvre[]>> {
-    return apiService.get<Oeuvre[]>(API_ENDPOINTS.oeuvres.search, params);
+  async searchOeuvres(params: {
+    q?: string;
+    type?: number;
+    langue?: number;
+    categorie?: number;
+    annee_min?: number;
+    annee_max?: number;
+    prix_min?: number;
+    prix_max?: number;
+    editeur?: number;
+    tag?: string;
+    intervenant?: string;
+    limit?: number;
+    page?: number;
+  }): Promise<ApiResponse<{
+    oeuvres: Oeuvre[];
+    pagination: {
+      total: number;
+      page: number;
+      pages: number;
+      limit: number;
+    };
+  }>> {
+    try {
+      return await httpClient.get('/oeuvres/search', params);
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Erreur lors de la recherche'
+      };
+    }
+  }
+
+  /**
+   * Récupérer les statistiques
+   */
+  async getStatistics(): Promise<ApiResponse<{
+    total: number;
+    parType: Array<{ type: string; count: number }>;
+    parLangue: Array<{ langue: string; count: number }>;
+    noteMoyenneGlobale: number;
+  }>> {
+    try {
+      return await httpClient.get('/oeuvres/statistics');
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Erreur lors de la récupération des statistiques'
+      };
+    }
   }
 
   /**
    * Récupérer les œuvres récentes
    */
-  static async getRecent(limit = 10): Promise<ApiResponse<Oeuvre[]>> {
-    return apiService.get<Oeuvre[]>(API_ENDPOINTS.oeuvres.recent, { limit });
+  async getRecentOeuvres(limit = 6): Promise<ApiResponse<{
+    oeuvres: Oeuvre[];
+    pagination: {
+      total: number;
+      page: number;
+      pages: number;
+      limit: number;
+    };
+  }>> {
+    try {
+      return await httpClient.get('/oeuvres/recent', { limit });
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Erreur lors de la récupération'
+      };
+    }
   }
 
-  /**
-   * Récupérer les œuvres populaires
-   */
-  static async getPopular(limit = 10): Promise<ApiResponse<Oeuvre[]>> {
-    return apiService.get<Oeuvre[]>(API_ENDPOINTS.oeuvres.popular, { limit });
-  }
-
-  /**
-   * Récupérer les statistiques des œuvres
-   */
-  static async getStatistics(): Promise<ApiResponse<OeuvreStats>> {
-    return apiService.get<OeuvreStats>(API_ENDPOINTS.oeuvres.statistics);
-  }
-
-  /**
-   * Récupérer les liens de partage pour une œuvre
-   */
-  static async getShareLinks(id: number): Promise<ApiResponse<ShareLinks>> {
-    return apiService.get<ShareLinks>(API_ENDPOINTS.oeuvres.shareLinks(id));
-  }
-
-  /**
-   * Récupérer la documentation de l'API des œuvres
-   */
-  static async getApiDocumentation(): Promise<ApiResponse<ApiDocumentation>> {
-    return apiService.get<ApiDocumentation>(API_ENDPOINTS.oeuvres.documentation);
-  }
-
-  /**
-   * GESTION DES MÉDIAS
-   */
-  
   /**
    * Récupérer les médias d'une œuvre
    */
-  static async getMedias(id: number): Promise<ApiResponse<Media[]>> {
-    return apiService.get<Media[]>(API_ENDPOINTS.oeuvres.medias(id));
-  }
-
-  /**
-   * Uploader un média pour une œuvre
-   */
-  static async uploadMedia(
-    id: number, 
-    file: File, 
-    data?: { titre?: string; description?: string; ordre?: number }
-  ): Promise<ApiResponse<Media>> {
-    return apiService.upload<Media>(
-      API_ENDPOINTS.oeuvres.uploadMedia(id), 
-      file, 
-      data
-    );
-  }
-
-  /**
-   * Uploader plusieurs médias
-   */
-  static async uploadMultipleMedias(
-    id: number, 
-    files: File[]
-  ): Promise<ApiResponse<Media[]>> {
-    const results: Media[] = [];
-    const errors: string[] = [];
-    
-    for (const file of files) {
-      try {
-        const response = await this.uploadMedia(id, file);
-        if (response.success && response.data) {
-          results.push(response.data);
-        }
-      } catch (error) {
-        console.error('Erreur upload média:', error);
-        errors.push(`Erreur pour ${file.name}`);
-      }
+  async getMedias(oeuvreId: number): Promise<ApiResponse<any[]>> {
+    try {
+      return await httpClient.get(`/oeuvres/${oeuvreId}/medias`);
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Erreur lors de la récupération des médias'
+      };
     }
-    
-    return { 
-      success: errors.length === 0, 
-      data: results,
-      error: errors.length > 0 ? errors.join(', ') : undefined
-    };
   }
 
   /**
    * Supprimer un média
    */
-  static async deleteMedia(oeuvreId: number, mediaId: number): Promise<ApiResponse<void>> {
-    return apiService.delete<void>(
-      API_ENDPOINTS.oeuvres.deleteMedia(oeuvreId, mediaId)
-    );
-  }
-
-  /**
-   * ROUTES UTILISATEUR
-   */
-  
-  /**
-   * Récupérer mes œuvres
-   */
-  static async getMyWorks(filters?: OeuvreFilters): Promise<PaginatedResponse<Oeuvre>> {
-    return apiService.getPaginated<Oeuvre>(API_ENDPOINTS.oeuvres.myWorks, filters);
-  }
-
-  /**
-   * Récupérer mes statistiques
-   */
-  static async getMyStatistics(): Promise<ApiResponse<OeuvreStats>> {
-    return apiService.get<OeuvreStats>(API_ENDPOINTS.oeuvres.myStats);
-  }
-
-  /**
-   * ROUTES ADMIN
-   */
-  
-  /**
-   * Valider ou rejeter une œuvre
-   */
-  static async validate(
-    id: number, 
-    validated: boolean, 
-    reason?: string
-  ): Promise<ApiResponse<Oeuvre>> {
-    return apiService.patch<Oeuvre>(
-      API_ENDPOINTS.oeuvres.validate(id), 
-      { validated, reason }
-    );
-  }
-
-  /**
-   * Récupérer les œuvres en attente de validation
-   */
-  static async getPending(page = 1, limit = 10): Promise<PaginatedResponse<Oeuvre>> {
-    return apiService.getPaginated<Oeuvre>(
-      API_ENDPOINTS.oeuvres.pending, 
-      { page, limit }
-    );
-  }
-
-  /**
-   * Récupérer les œuvres rejetées
-   */
-  static async getRejected(page = 1, limit = 10): Promise<PaginatedResponse<Oeuvre>> {
-    return apiService.getPaginated<Oeuvre>(
-      API_ENDPOINTS.oeuvres.rejected, 
-      { page, limit }
-    );
-  }
-
-  /**
-   * MÉTHODES SPÉCIFIQUES PAR TYPE
-   */
-
-  /**
-   * Créer un livre
-   */
-  static async createLivre(data: OeuvreForm & Partial<Livre>): Promise<ApiResponse<Oeuvre>> {
-    return this.create({ ...data, idTypeOeuvre: 1 }); // Assumant que 1 = Livre
-  }
-
-  /**
-   * Créer un film
-   */
-  static async createFilm(data: OeuvreForm & Partial<Film>): Promise<ApiResponse<Oeuvre>> {
-    return this.create({ ...data, idTypeOeuvre: 2 }); // Assumant que 2 = Film
-  }
-
-  /**
-   * Créer un album musical
-   */
-  static async createAlbumMusical(data: OeuvreForm & Partial<AlbumMusical>): Promise<ApiResponse<Oeuvre>> {
-    return this.create({ ...data, idTypeOeuvre: 3 }); // Assumant que 3 = Album Musical
-  }
-
-  /**
-   * Créer un article
-   */
-  static async createArticle(data: OeuvreForm & Partial<Article>): Promise<ApiResponse<Oeuvre>> {
-    return this.create({ ...data, idTypeOeuvre: 4 }); // Assumant que 4 = Article
-  }
-
-  /**
-   * HELPERS
-   */
-
-  /**
-   * Vérifier si une œuvre appartient à l'utilisateur connecté
-   */
-  static isOwner(oeuvre: Oeuvre, userId: number): boolean {
-    return oeuvre.saisiPar === userId;
-  }
-
-  /**
-   * Vérifier si une œuvre peut être modifiée
-   */
-  static canEdit(oeuvre: Oeuvre, userId: number, isAdmin: boolean): boolean {
-    return this.isOwner(oeuvre, userId) || isAdmin;
-  }
-
-  /**
-   * Vérifier si une œuvre peut être supprimée
-   */
-  static canDelete(oeuvre: Oeuvre, userId: number, isAdmin: boolean): boolean {
-    return (this.isOwner(oeuvre, userId) && oeuvre.statut === 'brouillon') || isAdmin;
-  }
-
-  /**
-   * Formater une œuvre pour l'affichage
-   */
-  static formatForDisplay(oeuvre: Oeuvre): any {
-    return {
-      ...oeuvre,
-      typeLabel: oeuvre.typeOeuvre?.nomType || 'Non défini',
-      langueLabel: oeuvre.langue?.nom || 'Non définie',
-      statutLabel: this.getStatutLabel(oeuvre.statut),
-      canBeEdited: oeuvre.statut === 'brouillon' || oeuvre.statut === 'refuse'
-    };
-  }
-
-  /**
-   * Obtenir le label d'un statut
-   */
-  static getStatutLabel(statut: OeuvreStatut): string {
-    const labels: Record<OeuvreStatut, string> = {
-      brouillon: 'Brouillon',
-      en_attente: 'En attente de validation',
-      valide: 'Validée',
-      refuse: 'Refusée',
-      archive: 'Archivée'
-    };
-    return labels[statut] || statut;
-  }
-
-  /**
-   * Obtenir la couleur d'un statut
-   */
-  static getStatutColor(statut: OeuvreStatut): string {
-    const colors: Record<OeuvreStatut, string> = {
-      brouillon: 'gray',
-      en_attente: 'orange',
-      valide: 'green',
-      refuse: 'red',
-      archive: 'blue'
-    };
-    return colors[statut] || 'gray';
-  }
-
-  /**
-   * Obtenir l'icône selon le type d'œuvre
-   */
-  static getTypeIcon(typeId?: number): string {
-    const icons: Record<number, string> = {
-      1: '📚', // Livre
-      2: '🎬', // Film
-      3: '🎵', // Album Musical
-      4: '📰', // Article
-      5: '🎨', // Œuvre d'Art
-      6: '🏺'  // Artisanat
-    };
-    return icons[typeId || 0] || '📄';
-  }
-
-  /**
-   * Vérifier si une œuvre est publique
-   */
-  static isPublic(oeuvre: Oeuvre): boolean {
-    return oeuvre.statut === 'valide';
-  }
-
-  /**
-   * Obtenir un résumé de l'œuvre
-   */
-  static getSummary(oeuvre: Oeuvre): string {
-    const parts = [];
-    
-    if (oeuvre.typeOeuvre) {
-      parts.push(oeuvre.typeOeuvre.nomType);
+  async deleteMedia(oeuvreId: number, mediaId: number): Promise<ApiResponse<void>> {
+    try {
+      return await httpClient.delete(`/oeuvres/${oeuvreId}/medias/${mediaId}`);
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Erreur lors de la suppression du média'
+      };
     }
-    
-    if (oeuvre.langue) {
-      parts.push(oeuvre.langue.nom);
-    }
-    
-    if (oeuvre.anneeCreation) {
-      parts.push(oeuvre.anneeCreation.toString());
-    }
-    
-    return parts.join(' • ');
-  }
-
-  /**
-   * Filtrer les œuvres par statut
-   */
-  static filterByStatus(oeuvres: Oeuvre[], statut: OeuvreStatut): Oeuvre[] {
-    return oeuvres.filter(o => o.statut === statut);
-  }
-
-  /**
-   * Grouper les œuvres par type
-   */
-  static groupByType(oeuvres: Oeuvre[]): Record<string, Oeuvre[]> {
-    return oeuvres.reduce((acc, oeuvre) => {
-      const type = oeuvre.typeOeuvre?.nomType || 'Sans type';
-      if (!acc[type]) acc[type] = [];
-      acc[type].push(oeuvre);
-      return acc;
-    }, {} as Record<string, Oeuvre[]>);
-  }
-
-  /**
-   * Exporter les œuvres en format JSON
-   */
-  static exportToJSON(oeuvres: Oeuvre[]): string {
-    return JSON.stringify(oeuvres, null, 2);
-  }
-
-  /**
-   * Exporter les œuvres en format CSV
-   */
-  static exportToCSV(oeuvres: Oeuvre[]): string {
-    const headers = ['ID', 'Titre', 'Type', 'Langue', 'Année', 'Statut'];
-    const rows = oeuvres.map(o => [
-      o.idOeuvre,
-      o.titre,
-      o.typeOeuvre?.nomType || '',
-      o.langue?.nom || '',
-      o.anneeCreation || '',
-      o.statut
-    ]);
-    
-    const csv = [headers, ...rows]
-      .map(row => row.map(cell => `"${cell}"`).join(','))
-      .join('\n');
-    
-    return csv;
   }
 }
 
-export default OeuvreService;
+// Instance singleton
+export const oeuvreService = new OeuvreService();

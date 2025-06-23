@@ -1,53 +1,25 @@
+// controllers/OeuvreController.js - Version complète régénérée
 const { Op } = require('sequelize');
-const multer = require('multer');
 const path = require('path');
 const fs = require('fs').promises;
+const crypto = require('crypto');
 
 class OeuvreController {
   constructor(models) {
     this.models = models;
     this.sequelize = models.sequelize || Object.values(models)[0]?.sequelize;
     
-    // Configuration pour l'upload de médias
-    this.storage = multer.diskStorage({
-      destination: async (req, file, cb) => {
-        const dir = path.join('uploads', 'oeuvres', req.params.id || 'temp');
-        await fs.mkdir(dir, { recursive: true });
-        cb(null, dir);
-      },
-      filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-      }
-    });
-
-    this.upload = multer({
-      storage: this.storage,
-      limits: {
-        fileSize: 50 * 1024 * 1024 // 50MB max
-      },
-      fileFilter: (req, file, cb) => {
-        const allowedTypes = /jpeg|jpg|png|gif|pdf|mp4|mp3|doc|docx/;
-        const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-        const mimetype = allowedTypes.test(file.mimetype);
-        
-        if (mimetype && extname) {
-          return cb(null, true);
-        } else {
-          cb(new Error('Type de fichier non autorisé'));
-        }
-      }
-    });
+    if (!this.sequelize) {
+      console.error('❌ Sequelize non trouvé dans les modèles!');
+    } else {
+      console.log('✅ OeuvreController initialisé avec succès');
+    }
   }
 
-  // ========================================================================
-  // CRUD DE BASE
-  // ========================================================================
-
   /**
-   * Récupérer toutes les œuvres avec pagination et filtres
+   * Liste des œuvres avec pagination
    */
-  async getAllOeuvres(req, res) {
+  async list(req, res) {
     try {
       const { 
         page = 1, 
@@ -55,93 +27,24 @@ class OeuvreController {
         type, 
         langue, 
         statut = 'publie',
-        annee_min,
-        annee_max,
-        auteur,
         search,
-        sort = 'recent',
-        with_critiques = false,
-        editeur_id
+        sort = 'recent'
       } = req.query;
 
       const offset = (page - 1) * limit;
       const where = {};
 
-      // Exclure l'artisanat (qui a son propre module)
-      where.id_type_oeuvre = {
-        [Op.ne]: await this.getArtisanatTypeId()
-      };
-
-      // Filtres de base
+      // Filtres
       if (type) where.id_type_oeuvre = type;
       if (langue) where.id_langue = langue;
       if (statut) where.statut = statut;
       
-      // Filtre par année
-      if (annee_min || annee_max) {
-        where.annee_creation = {};
-        if (annee_min) where.annee_creation[Op.gte] = parseInt(annee_min);
-        if (annee_max) where.annee_creation[Op.lte] = parseInt(annee_max);
-      }
-
-      // Recherche textuelle
+      // Recherche
       if (search) {
         where[Op.or] = [
-          { titre: { [Op.like]: '%' + search + '%' } },
-          { description: { [Op.like]: '%' + search + '%' } }
+          { titre: { [Op.like]: `%${search}%` } },
+          { description: { [Op.like]: `%${search}%` } }
         ];
-      }
-
-      // Inclusions de base
-      const include = [
-        { 
-          model: this.models.TypeOeuvre,
-          attributes: ['nom_type', 'description']
-        },
-        { 
-          model: this.models.Langue,
-          attributes: ['nom', 'code']
-        },
-        { 
-          model: this.models.User, 
-          as: 'Saiseur', 
-          attributes: ['nom', 'prenom', 'type_user']
-        },
-        {
-          model: this.models.Categorie,
-          through: { attributes: [] },
-          attributes: ['id_categorie', 'nom']
-        },
-        {
-          model: this.models.Media,
-          attributes: ['id_media', 'type_media', 'url', 'titre', 'thumbnail_url'],
-          required: false
-        }
-      ];
-
-      // Inclure les critiques si demandé
-      if (with_critiques === 'true') {
-        include.push({
-          model: this.models.CritiqueEvaluation,
-          attributes: ['note', 'commentaire', 'date_creation'],
-          include: [{
-            model: this.models.User,
-            attributes: ['nom', 'prenom']
-          }],
-          required: false
-        });
-      }
-
-      // Filtre par éditeur
-      if (editeur_id) {
-        include.push({
-          model: this.models.Editeur,
-          through: { 
-            model: this.models.OeuvreEditeur,
-            where: { id_editeur: editeur_id }
-          },
-          required: true
-        });
       }
 
       // Tri
@@ -157,46 +60,57 @@ class OeuvreController {
           order = [['annee_creation', 'DESC']];
           break;
         case 'rating':
-          // Tri par note moyenne des critiques
-          order = [[this.sequelize.literal('(SELECT AVG(note) FROM critique_evaluation WHERE critique_evaluation.id_oeuvre = Oeuvre.id_oeuvre)'), 'DESC NULLS LAST']];
+          order = [['note_moyenne', 'DESC']];
           break;
         default:
           order = [['date_creation', 'DESC']];
       }
 
-      const oeuvres = await this.models.Oeuvre.findAndCountAll({
+      const result = await this.models.Oeuvre.findAndCountAll({
         where,
         limit: parseInt(limit),
         offset: parseInt(offset),
-        include,
         order,
+        include: [
+          { 
+            model: this.models.TypeOeuvre,
+            attributes: ['id_type_oeuvre', 'nom_type']
+          },
+          { 
+            model: this.models.Langue,
+            attributes: ['id_langue', 'nom', 'code']
+          },
+          {
+            model: this.models.Categorie,
+            through: { attributes: [] },
+            attributes: ['id_categorie', 'nom']
+          },
+          {
+            model: this.models.Media,
+            where: { visible_public: true },
+            required: false,
+            limit: 1,
+            order: [['ordre', 'ASC']]
+          }
+        ],
         distinct: true
       });
-
-      // Ajouter les statistiques pour chaque œuvre
-      const oeuvresWithStats = await Promise.all(oeuvres.rows.map(async (oeuvre) => {
-        const stats = await this.getOeuvreStatistics(oeuvre.id_oeuvre);
-        return {
-          ...oeuvre.toJSON(),
-          statistiques: stats
-        };
-      }));
 
       res.json({
         success: true,
         data: {
-          oeuvres: oeuvresWithStats,
+          oeuvres: result.rows,
           pagination: {
-            total: oeuvres.count,
+            total: result.count,
             page: parseInt(page),
-            pages: Math.ceil(oeuvres.count / limit),
+            pages: Math.ceil(result.count / limit),
             limit: parseInt(limit)
           }
         }
       });
 
     } catch (error) {
-      console.error('Erreur lors de la récupération des œuvres:', error);
+      console.error('❌ Erreur récupération œuvres:', error);
       res.status(500).json({ 
         success: false, 
         error: 'Erreur serveur lors de la récupération des œuvres' 
@@ -205,83 +119,60 @@ class OeuvreController {
   }
 
   /**
-   * Récupérer une œuvre par ID avec TOUTES ses relations
+   * Alias pour list
    */
-  async getOeuvreById(req, res) {
+  async getAllOeuvres(req, res) {
+    return this.list(req, res);
+  }
+
+  /**
+   * Récupérer une œuvre par ID
+   */
+  async getById(req, res) {
     try {
       const { id } = req.params;
-
+      
       const oeuvre = await this.models.Oeuvre.findByPk(id, {
         include: [
-          // Informations de base
-          { model: this.models.TypeOeuvre },
-          { model: this.models.Langue },
-          { model: this.models.User, as: 'Saiseur', attributes: ['nom', 'prenom', 'email'] },
-          { model: this.models.User, as: 'Validateur', attributes: ['nom', 'prenom'] },
-          
-          // Œuvre originale (pour les traductions)
+          // Type et langue
           {
-            model: this.models.Oeuvre,
-            as: 'OeuvreOriginale',
-            attributes: ['id_oeuvre', 'titre', 'id_langue'],
-            include: [{
-              model: this.models.Langue,
-              attributes: ['nom', 'code']
-            }]
+            model: this.models.TypeOeuvre,
+            attributes: ['id_type_oeuvre', 'nom_type']
+          },
+          {
+            model: this.models.Langue,
+            attributes: ['id_langue', 'nom', 'code']
           },
           
           // Catégories et tags
           {
             model: this.models.Categorie,
-            through: { attributes: [] }
+            through: { attributes: [] },
+            attributes: ['id_categorie', 'nom', 'description']
           },
           {
             model: this.models.TagMotCle,
-            through: { attributes: [] }
+            through: { attributes: [] },
+            attributes: ['id_tag', 'nom']
           },
           
-          // Éditeurs avec détails de liaison
+          // Éditeurs
           {
             model: this.models.Editeur,
-            through: { 
+            through: {
               model: this.models.OeuvreEditeur,
-              attributes: ['role_editeur', 'date_edition', 'isbn_editeur', 'tirage', 'prix_vente']
-            }
+              attributes: ['role_editeur', 'date_edition', 'isbn_editeur', 'prix_vente', 'statut_edition']
+            },
+            attributes: ['id_editeur', 'nom', 'pays', 'ville']
           },
-          
-          // Détails spécialisés selon le type (SANS ARTISANAT)
-          { model: this.models.Livre },
-          { model: this.models.Film },
-          { model: this.models.AlbumMusical },
-          { model: this.models.Article },
-          { model: this.models.ArticleScientifique },
-          { model: this.models.OeuvreArt },
           
           // Médias
-          { 
+          {
             model: this.models.Media,
+            where: { visible_public: true },
+            required: false,
+            attributes: ['id_media', 'type_media', 'url', 'titre', 'description', 'thumbnail_url', 'ordre'],
             order: [['ordre', 'ASC']]
-          },
-          
-          // Critiques et évaluations
-          {
-            model: this.models.CritiqueEvaluation,
-            include: [{
-              model: this.models.User,
-              attributes: ['nom', 'prenom', 'photo_url']
-            }],
-            order: [['date_creation', 'DESC']]
-          },
-          
-          // Événements associés
-          {
-            model: this.models.Evenement,
-            through: { 
-              model: this.models.EvenementOeuvre,
-              attributes: ['ordre_presentation', 'duree_presentation', 'description_presentation']
-            },
-            attributes: ['id_evenement', 'nom_evenement', 'date_debut', 'statut'],
-            required: false
           }
         ]
       });
@@ -293,19 +184,13 @@ class OeuvreController {
         });
       }
 
-      // Ajouter les statistiques
-      const stats = await this.getOeuvreStatistics(id);
-      
       res.json({
         success: true,
-        data: {
-          ...oeuvre.toJSON(),
-          statistiques: stats
-        }
+        data: oeuvre
       });
 
     } catch (error) {
-      console.error('Erreur lors de la récupération de l\'œuvre:', error);
+      console.error('❌ Erreur récupération œuvre:', error);
       res.status(500).json({ 
         success: false, 
         error: 'Erreur serveur lors de la récupération de l\'œuvre' 
@@ -314,12 +199,22 @@ class OeuvreController {
   }
 
   /**
-   * Créer une nouvelle œuvre COMPLÈTE
+   * Alias pour getById
    */
-  async createOeuvre(req, res) {
-    const transaction = await this.sequelize.transaction();
+  async getOeuvreById(req, res) {
+    return this.getById(req, res);
+  }
+
+  /**
+   * Créer une nouvelle œuvre
+   */
+  async create(req, res) {
+    let transaction;
 
     try {
+      // Démarrer la transaction
+      transaction = await this.sequelize.transaction();
+
       const {
         // Champs de base
         titre,
@@ -327,18 +222,35 @@ class OeuvreController {
         id_langue,
         annee_creation,
         description,
-        id_oeuvre_originale, // Pour les traductions
+        prix,
+        id_oeuvre_originale,
         
         // Relations
         categories = [],
         tags = [],
-        editeurs = [], // [{id_editeur, role_editeur, date_edition, isbn_editeur, ...}]
+        editeurs = [],
         
-        // Détails spécifiques selon le type
+        // Contributeurs
+        utilisateurs_inscrits = [],
+        intervenants_non_inscrits = [],
+        nouveaux_intervenants = [],
+        
+        // Médias
+        medias = [],
+        
+        // Détails spécifiques
         details_specifiques = {}
       } = req.body;
 
-      // Validation des champs obligatoires
+      console.log('📝 Création œuvre:', {
+        titre,
+        id_type_oeuvre,
+        nb_categories: categories.length,
+        nb_medias: medias.length,
+        nb_files: req.files ? req.files.length : 0
+      });
+
+      // 1. Validation basique
       if (!titre || !id_type_oeuvre || !id_langue) {
         await transaction.rollback();
         return res.status(400).json({
@@ -347,128 +259,286 @@ class OeuvreController {
         });
       }
 
-      // Vérifier que ce n'est pas un artisanat
-      const artisanatTypeId = await this.getArtisanatTypeId();
-      if (id_type_oeuvre === artisanatTypeId) {
-        await transaction.rollback();
-        return res.status(400).json({
-          success: false,
-          error: 'L\'artisanat doit être créé via le module dédié'
-        });
-      }
+      // 2. S'assurer que categories est un tableau
+      const categoriesArray = Array.isArray(categories) ? categories : categories ? [categories] : [];
 
-      // Vérifier l'unicité du titre pour cette langue et œuvre originale
-      const existingOeuvre = await this.models.Oeuvre.findOne({
-        where: { 
-          titre, 
-          id_langue,
-          id_oeuvre_originale: id_oeuvre_originale || null
-        }
-      });
-
-      if (existingOeuvre) {
-        await transaction.rollback();
-        return res.status(409).json({
-          success: false,
-          error: 'Une œuvre avec ce titre existe déjà dans cette langue'
-        });
-      }
-
-      // Créer l'œuvre principale
+      // 3. Créer l'œuvre principale
       const oeuvre = await this.models.Oeuvre.create({
         titre,
         id_type_oeuvre,
         id_langue,
         annee_creation,
         description,
+        prix,
         id_oeuvre_originale,
         saisi_par: req.user?.id_user,
         statut: 'brouillon',
         date_creation: new Date()
       }, { transaction });
 
-      // Ajouter les catégories
-      if (categories.length > 0) {
-        const categoriesExistantes = await this.models.Categorie.findAll({
-          where: { id_categorie: { [Op.in]: categories } }
-        });
-        await oeuvre.addCategories(categoriesExistantes, { transaction });
-      }
+      console.log('✅ Œuvre créée avec ID:', oeuvre.id_oeuvre);
 
-      // Ajouter les tags
+      // 4. Ajouter les catégories
+      if (categoriesArray.length > 0) {
+  for (const catId of categoriesArray) {
+    await this.models.OeuvreCategorie.findOrCreate({
+      where: {
+        id_oeuvre: oeuvre.id_oeuvre,
+        id_categorie: catId
+      },
+      defaults: {
+        id_oeuvre: oeuvre.id_oeuvre,
+        id_categorie: catId
+      },
+      transaction
+    });
+  }
+  console.log(`✅ ${categoriesArray.length} catégorie(s) ajoutée(s)`);
+}
+
+      // 5. Ajouter les tags
       if (tags.length > 0) {
-        const tagObjects = [];
         for (const tagNom of tags) {
           const [tag] = await this.models.TagMotCle.findOrCreate({
             where: { nom: tagNom },
             defaults: { nom: tagNom },
             transaction
           });
-          tagObjects.push(tag);
+          
+          await this.models.OeuvreTag.create({
+            id_oeuvre: oeuvre.id_oeuvre,
+            id_tag: tag.id_tag
+          }, { transaction });
         }
-        await oeuvre.addTagMotCles(tagObjects, { transaction });
+        console.log(`✅ ${tags.length} tag(s) ajouté(s)`);
       }
 
-      // Ajouter les éditeurs avec leurs détails
+      // 6. Gérer les utilisateurs inscrits
+      if (utilisateurs_inscrits.length > 0) {
+        for (const user of utilisateurs_inscrits) {
+          await this.models.OeuvreUser.create({
+            id_oeuvre: oeuvre.id_oeuvre,
+            id_user: user.id_user,
+            id_type_user: user.id_type_user,
+            personnage: user.personnage,
+            ordre_apparition: user.ordre_apparition || 1,
+            role_principal: user.role_principal ?? true,
+            description_role: user.description_role
+          }, { transaction });
+        }
+        console.log(`✅ ${utilisateurs_inscrits.length} utilisateur(s) inscrit(s) ajouté(s)`);
+      }
+
+      // 7. Gérer les intervenants non inscrits existants
+      if (intervenants_non_inscrits.length > 0) {
+        for (const intervenant of intervenants_non_inscrits) {
+          await this.models.OeuvreIntervenant.create({
+            id_oeuvre: oeuvre.id_oeuvre,
+            id_intervenant: intervenant.id_intervenant,
+            id_type_user: intervenant.id_type_user,
+            personnage: intervenant.personnage,
+            ordre_apparition: intervenant.ordre_apparition || 1,
+            role_principal: intervenant.role_principal ?? true,
+            description_role: intervenant.description_role
+          }, { transaction });
+        }
+        console.log(`✅ ${intervenants_non_inscrits.length} intervenant(s) existant(s) ajouté(s)`);
+      }
+
+      // 8. Créer les nouveaux intervenants
+      if (nouveaux_intervenants.length > 0) {
+        for (const nouvelIntervenant of nouveaux_intervenants) {
+          const intervenant = await this.findOrCreateIntervenant(nouvelIntervenant, transaction);
+
+          await this.models.OeuvreIntervenant.create({
+            id_oeuvre: oeuvre.id_oeuvre,
+            id_intervenant: intervenant.id_intervenant,
+            id_type_user: nouvelIntervenant.id_type_user,
+            personnage: nouvelIntervenant.personnage,
+            ordre_apparition: nouvelIntervenant.ordre_apparition || 1,
+            role_principal: nouvelIntervenant.role_principal ?? true,
+            description_role: nouvelIntervenant.description_role
+          }, { transaction });
+        }
+        console.log(`✅ ${nouveaux_intervenants.length} nouvel(aux) intervenant(s) créé(s)`);
+      }
+
+      // 9. Ajouter les éditeurs
       if (editeurs.length > 0) {
         for (const editeur of editeurs) {
           await this.models.OeuvreEditeur.create({
             id_oeuvre: oeuvre.id_oeuvre,
             id_editeur: editeur.id_editeur,
-            role_editeur: editeur.role_editeur || 'principal',
+            role_editeur: editeur.role_editeur || 'editeur_principal',
             date_edition: editeur.date_edition,
             isbn_editeur: editeur.isbn_editeur,
             tirage: editeur.tirage,
             prix_vente: editeur.prix_vente,
             langue_edition: editeur.langue_edition,
             format: editeur.format,
-            statut_edition: editeur.statut_edition || 'disponible',
+            statut_edition: editeur.statut_edition || 'en_cours',
             notes: editeur.notes
           }, { transaction });
         }
+        console.log(`✅ ${editeurs.length} éditeur(s) ajouté(s)`);
       }
 
-      // Créer les détails spécifiques selon le type
-      const typeOeuvre = await this.models.TypeOeuvre.findByPk(id_type_oeuvre);
-      if (typeOeuvre && details_specifiques) {
+      // 10. Traitement des médias
+      let ordre = 1;
+      
+      // 10.1 Traiter les fichiers uploadés via multipart/form-data
+      if (req.files && req.files.length > 0) {
+        console.log(`📎 ${req.files.length} fichier(s) uploadé(s) à traiter`);
+        
+        for (const file of req.files) {
+          try {
+            const mediaData = {
+              id_oeuvre: oeuvre.id_oeuvre,
+              type_media: this.detectMediaType(file.originalname || file.filename),
+              titre: file.originalname || `Media ${ordre}`,
+              description: `Fichier uploadé pour ${titre}`,
+              url: `/uploads/oeuvres/${file.filename}`,
+              thumbnail_url: null,
+              nom_fichier: file.originalname,
+              taille_fichier: file.size,
+              mime_type: file.mimetype,
+              ordre: ordre++,
+              visible_public: true,
+              date_creation: new Date()
+            };
+
+            // Générer thumbnail pour les images
+            if (mediaData.type_media === 'image') {
+              mediaData.thumbnail_url = mediaData.url;
+            }
+
+            await this.models.Media.create(mediaData, { transaction });
+            console.log(`✅ Fichier média créé: ${file.originalname}`);
+            
+          } catch (fileError) {
+            console.error(`❌ Erreur traitement fichier ${file.originalname}:`, fileError);
+          }
+        }
+      }
+      
+      // 10.2 Traiter les médias passés dans le body
+      if (medias.length > 0) {
+        console.log(`📎 ${medias.length} média(s) dans le body à traiter`);
+        
+        for (const media of medias) {
+          try {
+            const mediaData = {
+              id_oeuvre: oeuvre.id_oeuvre,
+              type_media: media.type_media || this.detectMediaType(media.filename || media.url || 'default.jpg'),
+              titre: media.titre || `Media ${ordre}`,
+              description: media.description,
+              ordre: media.ordre || ordre++,
+              visible_public: media.visible_public ?? true,
+              date_creation: new Date()
+            };
+
+            // Cas 1: URL externe
+            if (media.url && (media.url.startsWith('http://') || media.url.startsWith('https://'))) {
+              mediaData.url = media.url;
+              mediaData.thumbnail_url = media.thumbnail_url || media.url;
+            }
+            // Cas 2: Fichier déjà uploadé (chemin relatif)
+            else if (media.url && media.url.startsWith('/uploads/')) {
+              mediaData.url = media.url;
+              mediaData.thumbnail_url = media.thumbnail_url || media.url;
+            }
+            // Cas 3: Base64
+            else if (media.base64) {
+              const uploadResult = await this.processBase64Media(
+                media.base64, 
+                media.filename || `media-${Date.now()}.jpg`,
+                oeuvre.id_oeuvre
+              );
+              mediaData.url = uploadResult.url;
+              mediaData.thumbnail_url = uploadResult.thumbnail_url || uploadResult.url;
+              mediaData.taille_fichier = uploadResult.size;
+              mediaData.mime_type = uploadResult.mime_type;
+              mediaData.nom_fichier = uploadResult.filename;
+            }
+
+            await this.models.Media.create(mediaData, { transaction });
+            console.log(`✅ Média créé: ${mediaData.titre}`);
+            
+          } catch (mediaError) {
+            console.error(`❌ Erreur ajout média ${media.titre}:`, mediaError);
+          }
+        }
+      }
+
+      // 11. Créer les détails spécifiques selon le type
+      const typeOeuvre = await this.models.TypeOeuvre.findByPk(id_type_oeuvre, { transaction });
+      if (typeOeuvre && details_specifiques && Object.keys(details_specifiques).length > 0) {
         await this.createSpecificDetails(oeuvre, typeOeuvre, details_specifiques, transaction);
       }
 
+      // 12. Commit de la transaction
       await transaction.commit();
+      console.log('✅ Transaction committée avec succès');
 
-      // Créer une notification pour l'administrateur
-      await this.notifyNewOeuvre(oeuvre);
+      // 13. Récupérer l'œuvre complète
+      const oeuvreComplete = await this.models.Oeuvre.findByPk(oeuvre.id_oeuvre, {
+  include: [
+    { model: this.models.TypeOeuvre },
+    { model: this.models.Langue },
+    { model: this.models.Categorie },
+    { model: this.models.TagMotCle },
+    { model: this.models.Editeur },
+    { model: this.models.Media, where: { visible_public: true }, required: false }
+  ]
+});
 
-      // Récupérer l'œuvre complète pour la réponse
-      const oeuvreComplete = await this.getOeuvreComplete(oeuvre.id_oeuvre);
-
-      res.status(201).json({
-        success: true,
-        message: 'Œuvre créée avec succès',
-        data: oeuvreComplete
-      });
+res.status(201).json({
+  success: true,
+  message: 'Œuvre créée avec succès',
+  data: { 
+    oeuvre: oeuvreComplete || oeuvre
+  }
+});
 
     } catch (error) {
-      await transaction.rollback();
-      console.error('Erreur lors de la création de l\'œuvre:', error);
+      // Rollback si la transaction existe
+      if (transaction && !transaction.finished) {
+        try {
+          await transaction.rollback();
+          console.log('✅ Transaction rollback effectué');
+        } catch (rollbackError) {
+          console.error('❌ Erreur lors du rollback:', rollbackError);
+        }
+      }
+      
+      console.error('❌ Erreur création œuvre:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Erreur serveur lors de la création de l\'œuvre' 
+        error: error.message || 'Erreur serveur lors de la création de l\'œuvre' 
       });
     }
   }
 
   /**
-   * Mettre à jour une œuvre complètement
+   * Alias pour create
    */
-  async updateOeuvre(req, res) {
+  async createOeuvre(req, res) {
+    return this.create(req, res);
+  }
+
+  /**
+   * Mettre à jour une œuvre
+   */
+  async update(req, res) {
     const transaction = await this.sequelize.transaction();
 
     try {
       const { id } = req.params;
       const updates = req.body;
 
-      const oeuvre = await this.models.Oeuvre.findByPk(id);
+      // Récupérer l'œuvre existante
+      const oeuvre = await this.models.Oeuvre.findByPk(id, { transaction });
+
       if (!oeuvre) {
         await transaction.rollback();
         return res.status(404).json({ 
@@ -477,106 +547,147 @@ class OeuvreController {
         });
       }
 
-      // Vérifier les permissions (déjà fait par le middleware requireOwnership)
-
       // Mettre à jour les champs de base
-      const { 
-        categories, 
-        tags, 
-        editeurs,
-        details_specifiques, 
-        ...baseUpdates 
-      } = updates;
-      
-      await oeuvre.update({
-        ...baseUpdates,
-        date_modification: new Date()
-      }, { transaction });
+      const fieldsToUpdate = [
+        'titre', 'description', 'annee_creation', 'prix',
+        'id_langue', 'id_type_oeuvre', 'details_specifiques'
+      ];
 
-      // Mettre à jour les catégories
-      if (categories !== undefined) {
-        await oeuvre.setCategories(categories, { transaction });
+      fieldsToUpdate.forEach(field => {
+        if (updates[field] !== undefined) {
+          oeuvre[field] = updates[field];
+        }
+      });
+
+      oeuvre.date_modification = new Date();
+      await oeuvre.save({ transaction });
+
+      // Gérer les catégories
+      if (updates.categories !== undefined) {
+        await this.models.OeuvreCategorie.destroy({
+          where: { id_oeuvre: id },
+          transaction
+        });
+
+        for (const catId of updates.categories) {
+          await this.models.OeuvreCategorie.create({
+            id_oeuvre: id,
+            id_categorie: catId
+          }, { transaction });
+        }
       }
 
-      // Mettre à jour les tags
-      if (tags !== undefined) {
-        const tagObjects = [];
-        for (const tagNom of tags) {
+      // Gérer les tags
+      if (updates.tags !== undefined) {
+        await this.models.OeuvreTag.destroy({
+          where: { id_oeuvre: id },
+          transaction
+        });
+
+        for (const tagNom of updates.tags) {
           const [tag] = await this.models.TagMotCle.findOrCreate({
             where: { nom: tagNom },
             defaults: { nom: tagNom },
             transaction
           });
-          tagObjects.push(tag);
+
+          await this.models.OeuvreTag.create({
+            id_oeuvre: id,
+            id_tag: tag.id_tag
+          }, { transaction });
         }
-        await oeuvre.setTagMotCles(tagObjects, { transaction });
       }
 
-      // Mettre à jour les éditeurs
-      if (editeurs !== undefined) {
-        // Supprimer les liaisons existantes
+      // Gérer les éditeurs
+      if (updates.editeurs !== undefined) {
         await this.models.OeuvreEditeur.destroy({
           where: { id_oeuvre: id },
           transaction
         });
 
-        // Créer les nouvelles liaisons
-        for (const editeur of editeurs) {
+        for (const editeur of updates.editeurs) {
           await this.models.OeuvreEditeur.create({
             id_oeuvre: id,
-            ...editeur
+            id_editeur: editeur.id_editeur,
+            role_editeur: editeur.role_editeur || 'editeur_principal',
+            date_edition: editeur.date_edition,
+            isbn_editeur: editeur.isbn_editeur,
+            prix_vente: editeur.prix_vente,
+            statut_edition: editeur.statut_edition || 'en_cours',
+            notes: editeur.notes
           }, { transaction });
-        }
-      }
-
-      // Mettre à jour les détails spécifiques
-      if (details_specifiques) {
-        const typeOeuvre = await this.models.TypeOeuvre.findByPk(oeuvre.id_type_oeuvre);
-        if (typeOeuvre) {
-          await this.updateSpecificDetails(oeuvre, typeOeuvre, details_specifiques, transaction);
         }
       }
 
       await transaction.commit();
 
-      const oeuvreComplete = await this.getOeuvreComplete(id);
+      // Récupérer l'œuvre mise à jour
+      const oeuvreComplete = await this.getById({ params: { id } }, { json: (data) => data });
 
       res.json({
         success: true,
         message: 'Œuvre mise à jour avec succès',
-        data: oeuvreComplete
+        data: oeuvreComplete.data || oeuvre
       });
 
     } catch (error) {
       await transaction.rollback();
-      console.error('Erreur lors de la mise à jour de l\'œuvre:', error);
+      console.error('❌ Erreur mise à jour œuvre:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Erreur serveur lors de la mise à jour de l\'œuvre' 
+        error: 'Erreur serveur lors de la mise à jour' 
       });
     }
   }
 
   /**
-   * Supprimer une œuvre (soft delete)
+   * Alias pour update
    */
-  async deleteOeuvre(req, res) {
+  async updateOeuvre(req, res) {
+    return this.update(req, res);
+  }
+
+  /**
+   * Supprimer une œuvre
+   */
+  async delete(req, res) {
+    const transaction = await this.sequelize.transaction();
+
     try {
       const { id } = req.params;
 
-      const oeuvre = await this.models.Oeuvre.findByPk(id);
+      const oeuvre = await this.models.Oeuvre.findByPk(id, { transaction });
+
       if (!oeuvre) {
+        await transaction.rollback();
         return res.status(404).json({ 
           success: false, 
           error: 'Œuvre non trouvée' 
         });
       }
 
-      // Soft delete
-      await oeuvre.update({ 
-        statut: 'supprime',
-        date_modification: new Date()
+      // Supprimer les médias associés
+      const medias = await this.models.Media.findAll({
+        where: { id_oeuvre: id },
+        transaction
       });
+
+      // TODO: Supprimer les fichiers physiques
+      for (const media of medias) {
+        if (media.url && media.url.startsWith('/uploads/')) {
+          const filePath = path.join(__dirname, '..', media.url);
+          try {
+            await fs.unlink(filePath);
+          } catch (err) {
+            console.warn(`Impossible de supprimer le fichier: ${filePath}`);
+          }
+        }
+      }
+
+      // Suppression de l'œuvre (cascade supprimera les relations)
+      await oeuvre.destroy({ transaction });
+
+      await transaction.commit();
 
       res.json({
         success: true,
@@ -584,143 +695,250 @@ class OeuvreController {
       });
 
     } catch (error) {
-      console.error('Erreur lors de la suppression de l\'œuvre:', error);
+      await transaction.rollback();
+      console.error('❌ Erreur suppression œuvre:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Erreur serveur lors de la suppression de l\'œuvre' 
+        error: 'Erreur serveur lors de la suppression' 
       });
     }
   }
 
-  // ========================================================================
-  // VALIDATION ET MODÉRATION
-  // ========================================================================
+  /**
+   * Alias pour delete
+   */
+  async deleteOeuvre(req, res) {
+    return this.delete(req, res);
+  }
 
   /**
-   * Valider ou rejeter une œuvre (admin)
+   * Récupérer les œuvres récentes
    */
-  async validateOeuvre(req, res) {
+  async getRecent(req, res) {
     try {
-      const { id } = req.params;
-      const { statut, raison_rejet } = req.body;
-
-      if (!['publie', 'rejete'].includes(statut)) {
-        return res.status(400).json({
-          success: false,
-          error: 'Statut invalide. Doit être "publie" ou "rejete"'
-        });
-      }
-
-      const oeuvre = await this.models.Oeuvre.findByPk(id);
-      if (!oeuvre) {
-        return res.status(404).json({ 
-          success: false, 
-          error: 'Œuvre non trouvée' 
-        });
-      }
-
-      const updateData = {
-        statut,
-        validateur_id: req.user?.id_user,
-        date_validation: new Date(),
-        date_modification: new Date()
-      };
-
-      if (statut === 'rejete' && raison_rejet) {
-        updateData.raison_rejet = raison_rejet;
-      }
-
-      await oeuvre.update(updateData);
-
-      // Notifier l'auteur
-      await this.notifyValidationStatus(oeuvre, statut, raison_rejet);
+      const limit = parseInt(req.query.limit) || 6;
+      
+      const oeuvres = await this.models.Oeuvre.findAll({
+        where: { statut: 'publie' },
+        order: [['date_creation', 'DESC']],
+        limit,
+        include: [
+          { 
+            model: this.models.TypeOeuvre,
+            attributes: ['id_type_oeuvre', 'nom_type']
+          },
+          { 
+            model: this.models.Langue,
+            attributes: ['id_langue', 'nom']
+          },
+          {
+            model: this.models.Media,
+            where: { visible_public: true },
+            required: false,
+            limit: 1,
+            order: [['ordre', 'ASC']]
+          }
+        ]
+      });
 
       res.json({
         success: true,
-        message: `Œuvre ${statut === 'publie' ? 'publiée' : 'rejetée'} avec succès`,
-        data: oeuvre
+        data: {
+          oeuvres,
+          pagination: {
+            total: oeuvres.length,
+            page: 1,
+            pages: 1,
+            limit
+          }
+        }
       });
-
     } catch (error) {
-      console.error('Erreur lors de la validation de l\'œuvre:', error);
+      console.error('❌ Erreur récupération œuvres récentes:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Erreur serveur lors de la validation de l\'œuvre' 
+        error: 'Erreur serveur' 
       });
     }
   }
 
-  // ========================================================================
-  // GESTION DES MÉDIAS
-  // ========================================================================
+  /**
+   * Récupérer les statistiques
+   */
+  async getStatistics(req, res) {
+    try {
+      const [
+        totalOeuvres,
+        parType,
+        parLangue,
+        noteMoyenne
+      ] = await Promise.all([
+        // Total des œuvres publiées
+        this.models.Oeuvre.count({ where: { statut: 'publie' } }),
+        
+        // Par type
+        this.models.Oeuvre.findAll({
+          attributes: [
+            [this.sequelize.fn('COUNT', this.sequelize.col('Oeuvre.id_oeuvre')), 'count']
+          ],
+          include: [{
+            model: this.models.TypeOeuvre,
+            attributes: ['nom_type']
+          }],
+          where: { statut: 'publie' },
+          group: ['TypeOeuvre.id_type_oeuvre', 'TypeOeuvre.nom_type'],
+          raw: true
+        }),
+        
+        // Par langue
+        this.models.Oeuvre.findAll({
+          attributes: [
+            [this.sequelize.fn('COUNT', this.sequelize.col('Oeuvre.id_oeuvre')), 'count']
+          ],
+          include: [{
+            model: this.models.Langue,
+            attributes: ['nom']
+          }],
+          where: { statut: 'publie' },
+          group: ['Langue.id_langue', 'Langue.nom'],
+          raw: true
+        }),
+        
+        // Note moyenne (si vous avez un système de notation)
+        Promise.resolve(0)
+      ]);
+
+      res.json({
+        success: true,
+        data: {
+          total: totalOeuvres,
+          parType: parType.map(item => ({
+            type: item['TypeOeuvre.nom_type'],
+            count: parseInt(item.count)
+          })),
+          parLangue: parLangue.map(item => ({
+            langue: item['Langue.nom'],
+            count: parseInt(item.count)
+          })),
+          noteMoyenneGlobale: noteMoyenne
+        }
+      });
+    } catch (error) {
+      console.error('❌ Erreur statistiques:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Erreur serveur' 
+      });
+    }
+  }
 
   /**
-   * Uploader des médias pour une œuvre
+   * Recherche avancée
    */
-  async uploadMedia(req, res) {
-    const transaction = await this.sequelize.transaction();
-    
+  async search(req, res) {
     try {
-      const { id } = req.params;
-      const files = req.files;
+      const {
+        q,
+        type,
+        categorie,
+        langue,
+        annee_min,
+        annee_max,
+        editeur,
+        prix_min,
+        prix_max,
+        page = 1,
+        limit = 20
+      } = req.query;
+
+      const where = { statut: 'publie' };
+      const include = [
+        { model: this.models.TypeOeuvre },
+        { model: this.models.Langue }
+      ];
+
+      // Recherche textuelle
+      if (q) {
+        where[Op.or] = [
+          { titre: { [Op.like]: `%${q}%` } },
+          { description: { [Op.like]: `%${q}%` } }
+        ];
+      }
+
+      // Filtres
+      if (type) where.id_type_oeuvre = type;
+      if (langue) where.id_langue = langue;
       
-      if (!files || files.length === 0) {
-        return res.status(400).json({
-          success: false,
-          error: 'Aucun fichier fourni'
+      // Filtre par année
+      if (annee_min || annee_max) {
+        where.annee_creation = {};
+        if (annee_min) where.annee_creation[Op.gte] = annee_min;
+        if (annee_max) where.annee_creation[Op.lte] = annee_max;
+      }
+
+      // Filtre par prix
+      if (prix_min || prix_max) {
+        where.prix = {};
+        if (prix_min) where.prix[Op.gte] = prix_min;
+        if (prix_max) where.prix[Op.lte] = prix_max;
+      }
+
+      // Filtre par catégorie
+      if (categorie) {
+        include.push({
+          model: this.models.Categorie,
+          where: { id_categorie: categorie },
+          through: { attributes: [] }
         });
       }
 
-      const oeuvre = await this.models.Oeuvre.findByPk(id);
-      if (!oeuvre) {
-        return res.status(404).json({
-          success: false,
-          error: 'Œuvre non trouvée'
+      // Filtre par éditeur
+      if (editeur) {
+        include.push({
+          model: this.models.Editeur,
+          where: { id_editeur: editeur },
+          through: { attributes: [] }
         });
       }
 
-      // Vérifier les permissions
-      if (oeuvre.saisi_par !== req.user.id_user && !req.user.isAdmin) {
-        return res.status(403).json({
-          success: false,
-          error: 'Accès refusé'
-        });
-      }
+      const offset = (page - 1) * limit;
 
-      const mediaCreated = [];
+      const result = await this.models.Oeuvre.findAndCountAll({
+        where,
+        include,
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        distinct: true,
+        order: [['date_creation', 'DESC']]
+      });
 
-      for (const file of files) {
-        const media = await this.models.Media.create({
-          id_oeuvre: id,
-          type_media: this.getMediaType(file.mimetype),
-          url: `/uploads/oeuvres/${id}/${file.filename}`,
-          titre: req.body.titre || file.originalname,
-          description: req.body.description,
-          taille_fichier: file.size,
-          mime_type: file.mimetype,
-          visible_public: true,
-          ordre: req.body.ordre || 0
-        }, { transaction });
-
-        mediaCreated.push(media);
-      }
-
-      await transaction.commit();
-
-      res.status(201).json({
+      res.json({
         success: true,
-        message: `${mediaCreated.length} média(s) ajouté(s) avec succès`,
-        data: mediaCreated
+        data: {
+          oeuvres: result.rows,
+          pagination: {
+            total: result.count,
+            page: parseInt(page),
+            pages: Math.ceil(result.count / limit),
+            limit: parseInt(limit)
+          }
+        }
       });
 
     } catch (error) {
-      await transaction.rollback();
-      console.error('Erreur lors de l\'upload:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Erreur serveur lors de l\'upload'
+      console.error('❌ Erreur recherche œuvres:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Erreur serveur lors de la recherche' 
       });
     }
+  }
+
+  /**
+   * Alias pour search
+   */
+  async searchOeuvres(req, res) {
+    return this.search(req, res);
   }
 
   /**
@@ -729,10 +947,10 @@ class OeuvreController {
   async getMedias(req, res) {
     try {
       const { id } = req.params;
-
+      
       const medias = await this.models.Media.findAll({
         where: { id_oeuvre: id },
-        order: [['ordre', 'ASC'], ['id_media', 'DESC']]
+        order: [['ordre', 'ASC'], ['date_creation', 'ASC']]
       });
 
       res.json({
@@ -741,7 +959,128 @@ class OeuvreController {
       });
 
     } catch (error) {
-      console.error('Erreur lors de la récupération des médias:', error);
+      console.error('❌ Erreur récupération médias:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Erreur serveur' 
+      });
+    }
+  }
+
+  /**
+   * Upload de médias pour une œuvre
+   */
+  async uploadMedia(req, res) {
+    const transaction = await this.sequelize.transaction();
+
+    try {
+      const { id } = req.params;
+      const files = req.files;
+
+      if (!files || files.length === 0) {
+        await transaction.rollback();
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Aucun fichier fourni' 
+        });
+      }
+
+      // Vérifier que l'œuvre existe
+      const oeuvre = await this.models.Oeuvre.findByPk(id, { transaction });
+      if (!oeuvre) {
+        await transaction.rollback();
+        return res.status(404).json({ 
+          success: false, 
+          error: 'Œuvre non trouvée' 
+        });
+      }
+
+      const medias = [];
+      let ordre = await this.models.Media.count({ where: { id_oeuvre: id } }) + 1;
+
+      for (const file of files) {
+        const media = await this.models.Media.create({
+          id_oeuvre: id,
+          type_media: this.detectMediaType(file.originalname),
+          url: `/uploads/oeuvres/${file.filename}`,
+          titre: file.originalname,
+          nom_fichier: file.originalname,
+          taille_fichier: file.size,
+          mime_type: file.mimetype,
+          ordre: ordre++,
+          visible_public: true,
+          date_creation: new Date()
+        }, { transaction });
+
+        medias.push(media);
+      }
+
+      await transaction.commit();
+
+      res.json({
+        success: true,
+        message: `${medias.length} média(s) ajouté(s) avec succès`,
+        data: medias
+      });
+
+    } catch (error) {
+      await transaction.rollback();
+      console.error('❌ Erreur upload médias:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Erreur serveur lors de l\'upload' 
+      });
+    }
+  }
+
+  /**
+   * Alias pour uploadMedia
+   */
+  async uploadMedias(req, res) {
+    return this.uploadMedia(req, res);
+  }
+
+  /**
+   * Réorganiser l'ordre des médias
+   */
+  async reorderMedias(req, res) {
+    const transaction = await this.sequelize.transaction();
+    
+    try {
+      const { id } = req.params;
+      const { mediaIds } = req.body;
+
+      if (!Array.isArray(mediaIds)) {
+        await transaction.rollback();
+        return res.status(400).json({
+          success: false,
+          error: 'mediaIds doit être un tableau'
+        });
+      }
+
+      // Mettre à jour l'ordre
+      for (let i = 0; i < mediaIds.length; i++) {
+        await this.models.Media.update(
+          { ordre: i + 1 },
+          { 
+            where: { 
+              id_media: mediaIds[i],
+              id_oeuvre: id 
+            },
+            transaction 
+          }
+        );
+      }
+
+      await transaction.commit();
+
+      res.json({
+        success: true,
+        message: 'Ordre des médias mis à jour'
+      });
+    } catch (error) {
+      await transaction.rollback();
+      console.error('❌ Erreur réorganisation médias:', error);
       res.status(500).json({ 
         success: false, 
         error: 'Erreur serveur' 
@@ -753,40 +1092,39 @@ class OeuvreController {
    * Supprimer un média
    */
   async deleteMedia(req, res) {
+    const transaction = await this.sequelize.transaction();
+
     try {
       const { id, mediaId } = req.params;
 
       const media = await this.models.Media.findOne({
         where: { 
           id_media: mediaId,
-          id_oeuvre: id
-        }
+          id_oeuvre: id 
+        },
+        transaction
       });
 
       if (!media) {
-        return res.status(404).json({
-          success: false,
-          error: 'Média non trouvé'
-        });
-      }
-
-      // Vérifier les permissions via l'œuvre
-      const oeuvre = await this.models.Oeuvre.findByPk(id);
-      if (oeuvre.saisi_par !== req.user.id_user && !req.user.isAdmin) {
-        return res.status(403).json({
-          success: false,
-          error: 'Accès refusé'
+        await transaction.rollback();
+        return res.status(404).json({ 
+          success: false, 
+          error: 'Média non trouvé' 
         });
       }
 
       // Supprimer le fichier physique
-      try {
-        await fs.unlink(path.join(__dirname, '..', media.url));
-      } catch (err) {
-        console.warn('Fichier introuvable:', err.message);
+      if (media.url && media.url.startsWith('/uploads/')) {
+        const filePath = path.join(__dirname, '..', media.url);
+        try {
+          await fs.unlink(filePath);
+        } catch (err) {
+          console.warn(`Impossible de supprimer le fichier: ${filePath}`);
+        }
       }
 
-      await media.destroy();
+      await media.destroy({ transaction });
+      await transaction.commit();
 
       res.json({
         success: true,
@@ -794,182 +1132,325 @@ class OeuvreController {
       });
 
     } catch (error) {
-      console.error('Erreur lors de la suppression du média:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Erreur serveur'
+      await transaction.rollback();
+      console.error('❌ Erreur suppression média:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Erreur serveur' 
       });
     }
   }
 
-  // ========================================================================
-  // RECHERCHE ET FILTRES
-  // ========================================================================
-
   /**
-   * Recherche avancée d'œuvres
+   * Valider ou rejeter une œuvre (admin)
    */
-  async searchOeuvres(req, res) {
+  async validate(req, res) {
+    const transaction = await this.sequelize.transaction();
+
     try {
-      const { 
-        q,
-        type,
-        langue,
-        annee_debut,
-        annee_fin,
-        categorie,
-        editeur,
-        note_min,
-        limit = 20
-      } = req.query;
+      const { id } = req.params;
+      const { statut, raison_rejet } = req.body;
 
-      const where = {
-        statut: 'publie',
-        // Exclure l'artisanat
-        id_type_oeuvre: {
-          [Op.ne]: await this.getArtisanatTypeId()
-        }
-      };
-      
-      const include = [
-        { model: this.models.TypeOeuvre },
-        { model: this.models.Langue },
-        {
-          model: this.models.Categorie,
-          through: { attributes: [] }
-        }
-      ];
+      const oeuvre = await this.models.Oeuvre.findByPk(id, { transaction });
 
-      // Recherche textuelle générale
-      if (q) {
-        where[Op.or] = [
-          { titre: { [Op.like]: '%' + q + '%' } },
-          { description: { [Op.like]: '%' + q + '%' } },
-          this.sequelize.literal(`EXISTS (
-            SELECT 1 FROM oeuvretags ot 
-            INNER JOIN tagmotcle t ON ot.id_tag = t.id_tag 
-            WHERE ot.id_oeuvre = Oeuvre.id_oeuvre 
-            AND t.nom LIKE '%${q}%'
-          )`)
-        ];
-      }
-
-      // Filtres spécifiques
-      if (type) where.id_type_oeuvre = type;
-      if (langue) where.id_langue = langue;
-      
-      if (annee_debut || annee_fin) {
-        where.annee_creation = {};
-        if (annee_debut) where.annee_creation[Op.gte] = parseInt(annee_debut);
-        if (annee_fin) where.annee_creation[Op.lte] = parseInt(annee_fin);
-      }
-
-      // Filtre par catégorie
-      if (categorie) {
-        include.push({
-          model: this.models.Categorie,
-          where: { id_categorie: categorie },
-          through: { attributes: [] },
-          required: true
+      if (!oeuvre) {
+        await transaction.rollback();
+        return res.status(404).json({ 
+          success: false, 
+          error: 'Œuvre non trouvée' 
         });
       }
 
-      // Filtre par éditeur
-      if (editeur) {
-        include.push({
-          model: this.models.Editeur,
-          where: { id_editeur: editeur },
-          through: { attributes: [] },
-          required: true
-        });
+      oeuvre.statut = statut;
+      oeuvre.date_validation = new Date();
+      oeuvre.id_user_validate = req.user.id_user;
+
+      if (statut === 'rejete') {
+        oeuvre.raison_rejet = raison_rejet;
       }
 
-      // Filtre par note minimum
-      if (note_min) {
-        where[Op.and] = [
-          this.sequelize.literal(`(
-            SELECT AVG(note) FROM critique_evaluation 
-            WHERE critique_evaluation.id_oeuvre = Oeuvre.id_oeuvre
-          ) >= ${parseInt(note_min)}`)
-        ];
+      await oeuvre.save({ transaction });
+
+      // Créer une notification si le modèle existe
+      if (this.models.Notification) {
+        await this.models.Notification.create({
+          id_user: oeuvre.saisi_par,
+          type_notification: statut === 'publie' ? 'oeuvre_validee' : 'oeuvre_rejetee',
+          titre: statut === 'publie' ? 'Œuvre validée' : 'Œuvre rejetée',
+          message: statut === 'publie' 
+            ? `Votre œuvre "${oeuvre.titre}" a été validée et est maintenant publiée.`
+            : `Votre œuvre "${oeuvre.titre}" a été rejetée. Raison: ${raison_rejet}`,
+          id_oeuvre: id,
+          date_creation: new Date()
+        }, { transaction });
       }
 
-      const oeuvres = await this.models.Oeuvre.findAll({
-        where,
-        include,
-        limit: parseInt(limit),
-        order: [['date_creation', 'DESC']],
-        subQuery: false
-      });
+      await transaction.commit();
 
       res.json({
         success: true,
-        data: oeuvres,
-        count: oeuvres.length
+        message: `Œuvre ${statut === 'publie' ? 'validée' : 'rejetée'} avec succès`
       });
 
     } catch (error) {
-      console.error('Erreur lors de la recherche d\'œuvres:', error);
+      await transaction.rollback();
+      console.error('❌ Erreur validation œuvre:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Erreur serveur lors de la recherche' 
+        error: 'Erreur serveur' 
       });
     }
   }
 
-  // ========================================================================
-  // PARTAGE SOCIAL
-  // ========================================================================
+  /**
+   * Alias pour validate
+   */
+  async validateOeuvre(req, res) {
+    return this.validate(req, res);
+  }
 
   /**
-   * Générer les liens de partage social pour une œuvre
+   * Obtenir les liens de partage social
    */
   async getShareLinks(req, res) {
     try {
       const { id } = req.params;
-      
       const oeuvre = await this.models.Oeuvre.findByPk(id, {
-        attributes: ['id_oeuvre', 'titre', 'description']
+        include: [{ model: this.models.TypeOeuvre }]
       });
-      
+
       if (!oeuvre) {
-        return res.status(404).json({
-          success: false,
-          error: 'Œuvre non trouvée'
+        return res.status(404).json({ 
+          success: false, 
+          error: 'Œuvre non trouvée' 
         });
       }
 
       const baseUrl = process.env.FRONTEND_URL || 'https://actionculture.dz';
       const url = `${baseUrl}/oeuvres/${id}`;
       const title = encodeURIComponent(oeuvre.titre);
-      const description = encodeURIComponent(oeuvre.description?.substring(0, 100) || '');
+      const description = encodeURIComponent(oeuvre.description || '');
 
       const shareLinks = {
-        facebook: `https://facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
-        twitter: `https://twitter.com/intent/tweet?text=${title}&url=${encodeURIComponent(url)}`,
-        linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`,
-        whatsapp: `https://wa.me/?text=${title}%20${encodeURIComponent(url)}`,
-        telegram: `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${title}`,
-        email: `mailto:?subject=${title}&body=${description}%0A%0A${encodeURIComponent(url)}`
+        facebook: `https://www.facebook.com/sharer/sharer.php?u=${url}`,
+        twitter: `https://twitter.com/intent/tweet?url=${url}&text=${title}`,
+        linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${url}`,
+        whatsapp: `https://wa.me/?text=${title}%20${url}`,
+        email: `mailto:?subject=${title}&body=${description}%20${url}`
       };
 
-      res.json({ 
-        success: true, 
-        data: shareLinks 
+      res.json({
+        success: true,
+        data: shareLinks
       });
 
     } catch (error) {
-      console.error('Erreur lors de la génération des liens:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Erreur serveur'
+      console.error('❌ Erreur génération liens partage:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Erreur serveur' 
       });
     }
   }
 
-  // ========================================================================
-  // MÉTHODES UTILITAIRES PRIVÉES
-  // ========================================================================
+  /**
+   * Récupérer les œuvres de l'utilisateur connecté
+   */
+  async getMyWorks(req, res) {
+    try {
+      const userId = req.user.id_user;
+      const { page = 1, limit = 10, statut } = req.query;
+      const offset = (page - 1) * limit;
+
+      const where = { saisi_par: userId };
+      if (statut) where.statut = statut;
+
+      const result = await this.models.Oeuvre.findAndCountAll({
+        where,
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        order: [['date_creation', 'DESC']],
+        include: [
+          { 
+            model: this.models.TypeOeuvre,
+            attributes: ['nom_type']
+          },
+          { 
+            model: this.models.Langue,
+            attributes: ['nom']
+          },
+          {
+            model: this.models.Media,
+            where: { visible_public: true },
+            required: false,
+            limit: 1,
+            order: [['ordre', 'ASC']]
+          }
+        ]
+      });
+
+      res.json({
+        success: true,
+        data: {
+          oeuvres: result.rows,
+          pagination: {
+            total: result.count,
+            page: parseInt(page),
+            pages: Math.ceil(result.count / limit),
+            limit: parseInt(limit)
+          }
+        }
+      });
+    } catch (error) {
+      console.error('❌ Erreur mes œuvres:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Erreur serveur' 
+      });
+    }
+  }
+
+  /**
+   * Rechercher des intervenants
+   */
+  async searchIntervenants(req, res) {
+    try {
+      const { q } = req.query;
+
+      if (!q || q.length < 2) {
+        return res.json({
+          success: true,
+          data: []
+        });
+      }
+
+      const intervenants = await this.models.Intervenant.findAll({
+        where: {
+          [Op.or]: [
+            { nom: { [Op.like]: `%${q}%` } },
+            { prenom: { [Op.like]: `%${q}%` } },
+            { email: { [Op.like]: `%${q}%` } },
+            { organisation: { [Op.like]: `%${q}%` } }
+          ]
+        },
+        limit: 10,
+        order: [['nom', 'ASC'], ['prenom', 'ASC']]
+      });
+
+      // Formatter les résultats pour le frontend
+      const results = intervenants.map(intervenant => ({
+        id: intervenant.id_intervenant,
+        label: `${intervenant.titre_professionnel ? intervenant.titre_professionnel + ' ' : ''}${intervenant.prenom} ${intervenant.nom}`,
+        titre: intervenant.titre_professionnel,
+        organisation: intervenant.organisation,
+        specialites: intervenant.specialites || [],
+        photo_url: intervenant.photo_url
+      }));
+
+      res.json(results);
+
+    } catch (error) {
+      console.error('❌ Erreur recherche intervenants:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Erreur serveur' 
+      });
+    }
+  }
+
+  /**
+   * Vérifier si un email existe
+   */
+  async checkEmail(req, res) {
+    try {
+      const { email } = req.body;
+
+      const user = await this.models.User.findOne({
+        where: { email },
+        attributes: ['id_user', 'nom', 'prenom', 'email']
+      });
+
+      res.json({
+        success: true,
+        exists: !!user,
+        user: user ? {
+          id_user: user.id_user,
+          nom: user.nom,
+          prenom: user.prenom,
+          email: user.email
+        } : null
+      });
+
+    } catch (error) {
+      console.error('❌ Erreur vérification email:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Erreur serveur' 
+      });
+    }
+  }
+
+  // ==================================================
+  // MÉTHODES HELPER
+  // ==================================================
+
+  /**
+   * Détecter le type de média à partir du nom de fichier
+   */
+  detectMediaType(filename) {
+    if (!filename) return 'document';
+    
+    const ext = filename.split('.').pop().toLowerCase();
+    const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'];
+    const videoExts = ['mp4', 'avi', 'mov', 'wmv', 'webm', 'mkv', 'flv'];
+    const audioExts = ['mp3', 'wav', 'ogg', 'm4a', 'aac', 'flac'];
+    
+    if (imageExts.includes(ext)) return 'image';
+    if (videoExts.includes(ext)) return 'video';
+    if (audioExts.includes(ext)) return 'audio';
+    return 'document';
+  }
+
+  /**
+   * Traiter un média base64
+   */
+  async processBase64Media(base64String, filename, oeuvreId) {
+    const matches = base64String.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+    if (!matches) throw new Error('Format base64 invalide');
+    
+    const mimeType = matches[1];
+    const data = matches[2];
+    const buffer = Buffer.from(data, 'base64');
+    
+    // Générer un nom unique
+    const ext = mimeType.split('/')[1] || 'jpg';
+    const uniqueSuffix = Date.now() + '-' + crypto.randomBytes(8).toString('hex');
+    const uniqueFilename = `oeuvre-${oeuvreId}-${uniqueSuffix}.${ext}`;
+    
+    // Déterminer le dossier
+    let subDir = 'images';
+    if (mimeType.startsWith('video/')) subDir = 'videos';
+    else if (mimeType.startsWith('audio/')) subDir = 'audios';
+    else if (!mimeType.startsWith('image/')) subDir = 'documents';
+    
+    // Créer le dossier si nécessaire
+    const uploadDir = path.join(__dirname, '..', 'uploads', 'oeuvres', subDir);
+    await fs.mkdir(uploadDir, { recursive: true });
+    
+    // Sauvegarder le fichier
+    const filePath = path.join(uploadDir, uniqueFilename);
+    await fs.writeFile(filePath, buffer);
+    
+    console.log(`✅ Fichier base64 sauvegardé: ${filePath}`);
+    
+    return {
+      url: `/uploads/oeuvres/${subDir}/${uniqueFilename}`,
+      thumbnail_url: mimeType.startsWith('image/') ? `/uploads/oeuvres/${subDir}/${uniqueFilename}` : null,
+      size: buffer.length,
+      mime_type: mimeType,
+      filename: uniqueFilename
+    };
+  }
 
   /**
    * Créer les détails spécifiques selon le type d'œuvre
@@ -979,249 +1460,172 @@ class OeuvreController {
     
     switch (typeName) {
       case 'livre':
-        if (details.livre) {
+        if (details.livre && this.models.Livre) {
           await this.models.Livre.create({
             id_oeuvre: oeuvre.id_oeuvre,
             isbn: details.livre.isbn,
             nb_pages: details.livre.nb_pages,
-            id_genre: details.livre.id_genre
+            format: details.livre.format,
+            collection: details.livre.collection
           }, { transaction });
         }
         break;
         
       case 'film':
-        if (details.film) {
+        if (details.film && this.models.Film) {
           await this.models.Film.create({
             id_oeuvre: oeuvre.id_oeuvre,
             duree_minutes: details.film.duree_minutes,
             realisateur: details.film.realisateur,
-            id_genre: details.film.id_genre
+            producteur: details.film.producteur,
+            studio: details.film.studio
           }, { transaction });
         }
         break;
         
-      case 'album musical':
-        if (details.album) {
-          await this.models.AlbumMusical.create({
-            id_oeuvre: oeuvre.id_oeuvre,
-            duree: details.album.duree,
-            id_genre: details.album.id_genre,
-            label: details.album.label
-          }, { transaction });
-        }
-        break;
-        
-      case 'article':
-        if (details.article) {
-          await this.models.Article.create({
-            id_oeuvre: oeuvre.id_oeuvre,
-            auteur: details.article.auteur,
-            source: details.article.source,
-            type_article: details.article.type_article,
-            categorie: details.article.categorie,
-            date_publication: details.article.date_publication,
-            url_source: details.article.url_source
-          }, { transaction });
-        }
-        break;
-        
-      case 'article scientifique':
-        if (details.article_scientifique) {
-          await this.models.ArticleScientifique.create({
-            id_oeuvre: oeuvre.id_oeuvre,
-            journal: details.article_scientifique.journal,
-            doi: details.article_scientifique.doi,
-            pages: details.article_scientifique.pages,
-            volume: details.article_scientifique.volume,
-            numero: details.article_scientifique.numero,
-            peer_reviewed: details.article_scientifique.peer_reviewed || false,
-            open_access: details.article_scientifique.open_access || false
-          }, { transaction });
-        }
-        break;
-        
-      case 'oeuvre art':
-      case 'art':
-        if (details.oeuvre_art) {
-          await this.models.OeuvreArt.create({
-            id_oeuvre: oeuvre.id_oeuvre,
-            technique: details.oeuvre_art.technique,
-            dimensions: details.oeuvre_art.dimensions,
-            support: details.oeuvre_art.support
-          }, { transaction });
-        }
-        break;
+      // Ajouter d'autres types selon vos besoins
     }
   }
 
   /**
-   * Mettre à jour les détails spécifiques
+   * Rechercher ou créer un intervenant
    */
-  async updateSpecificDetails(oeuvre, typeOeuvre, details, transaction) {
-    const typeName = typeOeuvre.nom_type.toLowerCase();
+  async findOrCreateIntervenant(intervenantData, transaction) {
+    let intervenant = null;
     
-    switch (typeName) {
-      case 'livre':
-        const livre = await this.models.Livre.findOne({ 
-          where: { id_oeuvre: oeuvre.id_oeuvre } 
-        });
-        if (livre && details.livre) {
-          await livre.update(details.livre, { transaction });
-        } else if (!livre && details.livre) {
-          await this.models.Livre.create({
-            id_oeuvre: oeuvre.id_oeuvre,
-            ...details.livre
-          }, { transaction });
-        }
-        break;
-        
-      case 'film':
-        const film = await this.models.Film.findOne({ 
-          where: { id_oeuvre: oeuvre.id_oeuvre } 
-        });
-        if (film && details.film) {
-          await film.update(details.film, { transaction });
-        } else if (!film && details.film) {
-          await this.models.Film.create({
-            id_oeuvre: oeuvre.id_oeuvre,
-            ...details.film
-          }, { transaction });
-        }
-        break;
-        
-      // Ajouter les autres cas de la même manière...
-    }
-  }
-
-  /**
-   * Récupérer une œuvre complète avec toutes ses relations
-   */
-  async getOeuvreComplete(id) {
-    return await this.models.Oeuvre.findByPk(id, {
-      include: [
-        { model: this.models.TypeOeuvre },
-        { model: this.models.Langue },
-        { model: this.models.User, as: 'Saiseur', attributes: ['nom', 'prenom'] },
-        {
-          model: this.models.Categorie,
-          through: { attributes: [] }
-        },
-        {
-          model: this.models.TagMotCle,
-          through: { attributes: [] }
-        },
-        {
-          model: this.models.Editeur,
-          through: { 
-            model: this.models.OeuvreEditeur,
-            attributes: ['role_editeur', 'date_edition']
-          }
-        },
-        { model: this.models.Media }
-      ]
-    });
-  }
-
-  /**
-   * Obtenir les statistiques d'une œuvre
-   */
-  async getOeuvreStatistics(oeuvreId) {
-    const [
-      noteMoyenne,
-      nombreCritiques,
-      nombreFavoris,
-      nombreCommentaires
-    ] = await Promise.all([
-      this.models.CritiqueEvaluation.findOne({
-        where: { id_oeuvre: oeuvreId },
-        attributes: [[this.sequelize.fn('AVG', this.sequelize.col('note')), 'moyenne']]
-      }),
-      this.models.CritiqueEvaluation.count({ where: { id_oeuvre: oeuvreId } }),
-      this.models.Favori.count({ 
-        where: { 
-          type_entite: 'oeuvre',
-          id_entite: oeuvreId 
-        } 
-      }),
-      this.models.Commentaire.count({ where: { id_oeuvre: oeuvreId } })
-    ]);
-
-    return {
-      note_moyenne: noteMoyenne?.dataValues?.moyenne || 0,
-      nombre_critiques: nombreCritiques,
-      nombre_favoris: nombreFavoris,
-      nombre_commentaires: nombreCommentaires
+    // Normaliser les données
+    const normalizedData = {
+      ...intervenantData,
+      nom: intervenantData.nom?.trim(),
+      prenom: intervenantData.prenom?.trim(),
+      email: intervenantData.email?.trim().toLowerCase()
     };
-  }
-
-  /**
-   * Obtenir l'ID du type artisanat
-   */
-  async getArtisanatTypeId() {
-    const type = await this.models.TypeOeuvre.findOne({
-      where: { nom_type: { [Op.like]: '%artisanat%' } }
-    });
-    return type?.id_type_oeuvre || -1;
-  }
-
-  /**
-   * Déterminer le type de média selon le mimetype
-   */
-  getMediaType(mimetype) {
-    if (mimetype.startsWith('image/')) return 'image';
-    if (mimetype.startsWith('video/')) return 'video';
-    if (mimetype.startsWith('audio/')) return 'audio';
-    if (mimetype.includes('pdf')) return 'document';
-    return 'autre';
-  }
-
-  /**
-   * Créer une notification pour une nouvelle œuvre
-   */
-  async notifyNewOeuvre(oeuvre) {
-    try {
-      // Notifier les admins
-      const admins = await this.models.User.findAll({
-        include: [{
-          model: this.models.Role,
-          where: { nom_role: 'Admin' },
-          through: { attributes: [] }
-        }]
+    
+    // 1. Recherche par email
+    if (normalizedData.email) {
+      intervenant = await this.models.Intervenant.findOne({
+        where: { email: normalizedData.email },
+        transaction
       });
-
-      for (const admin of admins) {
-        await this.models.Notification.create({
-          id_user: admin.id_user,
-          type_notification: 'nouvelle_oeuvre',
-          titre: 'Nouvelle œuvre à valider',
-          message: `Une nouvelle œuvre "${oeuvre.titre}" a été soumise et attend validation.`,
-          id_oeuvre: oeuvre.id_oeuvre,
-          url_action: `/admin/oeuvres/${oeuvre.id_oeuvre}/validate`
-        });
+      
+      if (intervenant) {
+        console.log(`ℹ️ Intervenant trouvé par email: ${normalizedData.email}`);
+        return intervenant;
       }
-    } catch (error) {
-      console.error('Erreur notification:', error);
     }
+    
+    // 2. Recherche par nom/prénom
+    if (!intervenant && normalizedData.nom && normalizedData.prenom) {
+      intervenant = await this.models.Intervenant.findOne({
+        where: {
+          nom: normalizedData.nom,
+          prenom: normalizedData.prenom
+        },
+        transaction
+      });
+      
+      if (intervenant) {
+        console.log(`ℹ️ Intervenant trouvé par nom/prénom: ${normalizedData.nom} ${normalizedData.prenom}`);
+        
+        // Mettre à jour l'email si fourni et absent
+        if (normalizedData.email && !intervenant.email) {
+          intervenant.email = normalizedData.email;
+          await intervenant.save({ transaction });
+          console.log(`✅ Email ajouté à l'intervenant existant`);
+        }
+        
+        return intervenant;
+      }
+    }
+    
+    // 3. Création si non trouvé
+    try {
+      intervenant = await this.models.Intervenant.create({
+        nom: normalizedData.nom || '',
+        prenom: normalizedData.prenom || '',
+        email: normalizedData.email || null,
+        telephone: normalizedData.telephone || null,
+        titre_professionnel: normalizedData.titre_professionnel || '',
+        organisation: normalizedData.organisation || '',
+        biographie: normalizedData.biographie || '',
+        site_web: normalizedData.site_web || null,
+        pays_origine: normalizedData.pays_origine || null,
+        date_naissance: normalizedData.date_naissance || null,
+        date_deces: normalizedData.date_deces || null,
+        statut: normalizedData.statut || 'actif'
+      }, { transaction });
+      
+      console.log(`✅ Nouvel intervenant créé: ${intervenant.nom} ${intervenant.prenom}`);
+      
+    } catch (error) {
+      if (error.name === 'SequelizeUniqueConstraintError') {
+        console.error('⚠️ Contrainte d\'unicité violée:', error.fields);
+        throw new Error('Un intervenant avec ces informations existe déjà');
+      }
+      throw error;
+    }
+    
+    return intervenant;
   }
 
   /**
-   * Notifier le statut de validation
+   * Configuration Multer pour l'upload de fichiers
    */
-  async notifyValidationStatus(oeuvre, statut, raison) {
-    try {
-      await this.models.Notification.create({
-        id_user: oeuvre.saisi_par,
-        type_notification: 'validation_oeuvre',
-        titre: statut === 'publie' ? 'Œuvre publiée' : 'Œuvre rejetée',
-        message: statut === 'publie' 
-          ? `Votre œuvre "${oeuvre.titre}" a été publiée avec succès.`
-          : `Votre œuvre "${oeuvre.titre}" a été rejetée. ${raison || ''}`,
-        id_oeuvre: oeuvre.id_oeuvre,
-        url_action: `/mes-oeuvres/${oeuvre.id_oeuvre}`
-      });
-    } catch (error) {
-      console.error('Erreur notification:', error);
-    }
+  static getMulterConfig() {
+    const multer = require('multer');
+    const fsSyc = require('fs');
+    
+    const storage = multer.diskStorage({
+      destination: (req, file, cb) => {
+        const uploadDir = path.join(__dirname, '..', 'uploads', 'oeuvres');
+        
+        // Créer le dossier s'il n'existe pas
+        if (!fsSyc.existsSync(uploadDir)) {
+          fsSyc.mkdirSync(uploadDir, { recursive: true });
+        }
+        
+        cb(null, uploadDir);
+      },
+      filename: (req, file, cb) => {
+        // Générer un nom unique
+        const uniqueSuffix = Date.now() + '-' + crypto.randomBytes(8).toString('hex');
+        const ext = path.extname(file.originalname);
+        cb(null, `oeuvre-${uniqueSuffix}${ext}`);
+      }
+    });
+
+    const fileFilter = (req, file, cb) => {
+      // Types MIME autorisés
+      const allowedMimes = [
+        'image/jpeg',
+        'image/jpg',
+        'image/png',
+        'image/gif',
+        'image/webp',
+        'video/mp4',
+        'video/mpeg',
+        'audio/mpeg',
+        'audio/mp3',
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      ];
+
+      if (allowedMimes.includes(file.mimetype)) {
+        cb(null, true);
+      } else {
+        cb(new Error(`Type de fichier non autorisé: ${file.mimetype}`));
+      }
+    };
+
+    return multer({
+      storage,
+      limits: { 
+        fileSize: 100 * 1024 * 1024, // 100MB max
+        files: 10 // Max 10 fichiers
+      },
+      fileFilter
+    });
   }
 }
 
