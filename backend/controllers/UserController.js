@@ -36,7 +36,7 @@ class UserController {
         prenom,
         email,
         password,
-        id_type_user = 'visiteur',
+        id_type_user = TYPE_USER_IDS.VISITEUR,
         accepte_conditions = false,
         accepte_newsletter = false,
         photo_url, // NOUVEAU: Accepte photo_url dans le body
