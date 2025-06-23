@@ -1,4 +1,4 @@
-// services/media.service.ts
+// services/media.service.ts - Version corrigée
 import { uploadService, type UploadResponse } from './upload.service';
 import { httpClient } from './httpClient';
 import { API_ENDPOINTS } from '@/config/api';
@@ -9,23 +9,63 @@ interface MediaUploadResponse extends UploadResponse {
   media_id?: number;
 }
 
+interface MediaUploadOptions {
+  titre?: string;
+  description?: string;
+  is_principal?: boolean;
+  ordre?: number;
+}
+
 export class MediaService {
   /**
    * Upload d'un fichier image pour un profil utilisateur
    */
   async uploadProfilePhoto(file: File): Promise<ApiResponse<MediaUploadResponse>> {
-    // Valider le fichier
-    const validation = uploadService.validateFile(file, 'image');
-    if (!validation.valid) {
-      return {
-        success: false,
-        error: validation.error
-      };
+    console.log('📸 MediaService: Upload photo de profil');
+    
+    // Utiliser directement uploadService pour l'upload
+    const result = await uploadService.uploadProfilePhoto(file);
+
+    if (result.success && result.data) {
+      console.log('✅ Photo uploadée avec succès:', result.data.url);
+      
+      // Mise à jour du profil avec la nouvelle photo
+      try {
+        const updateResult = await httpClient.put<{ media_id: number }>(
+          API_ENDPOINTS.auth.updatePhoto,
+          { photo_url: result.data.url }
+        );
+
+        return {
+          ...result,
+          data: {
+            ...result.data,
+            media_id: updateResult.data?.media_id
+          } as MediaUploadResponse
+        };
+      } catch (error) {
+        console.error('❌ Erreur lors de la mise à jour du profil:', error);
+        // L'upload a réussi mais la mise à jour du profil a échoué
+        // On retourne quand même le résultat de l'upload
+        return {
+          ...result,
+          data: result.data as MediaUploadResponse
+        };
+      }
     }
 
-    // Utiliser uploadService pour l'upload
+    return result as ApiResponse<MediaUploadResponse>;
+  }
+
+  /**
+   * Upload d'une photo de profil lors de l'inscription (sans authentification)
+   */
+  async uploadProfilePhotoForRegistration(file: File): Promise<ApiResponse<UploadResponse>> {
+    console.log('📸 MediaService: Upload photo pour inscription (sans auth)');
+    
+    // Utiliser directement uploadService avec l'endpoint public
     const result = await uploadService.uploadImage(file, {
-      isPublic: false,
+      isPublic: true,
       generateThumbnail: true,
       maxWidth: 500,
       maxHeight: 500,
@@ -33,28 +73,24 @@ export class MediaService {
     });
 
     if (result.success && result.data) {
-      // Mise à jour du profil avec la nouvelle photo
-      const updateResult = await httpClient.put<{ media_id: number }>(
-        API_ENDPOINTS.auth.updatePhoto,
-        { photo_url: result.data.url }
-      );
-
-      return {
-        ...result,
-        data: {
-          ...result.data,
-          media_id: updateResult.data?.media_id
-        } as MediaUploadResponse
-      };
+      console.log('✅ Photo inscription uploadée:', result.data.url);
+    } else {
+      console.error('❌ Échec upload photo inscription:', result.error);
     }
 
-    return result as ApiResponse<MediaUploadResponse>;
+    return result;
   }
 
   /**
    * Upload d'un fichier pour une œuvre
    */
-  async uploadOeuvreMedia(file: File, oeuvreId: number): Promise<ApiResponse<MediaUploadResponse>> {
+  async uploadOeuvreMedia(
+    file: File, 
+    oeuvreId: number,
+    options?: MediaUploadOptions
+  ): Promise<ApiResponse<MediaUploadResponse>> {
+    console.log('🎨 MediaService: Upload média pour œuvre', oeuvreId);
+    
     // Déterminer le type de fichier
     const fileType = uploadService.getFileType(file);
     
@@ -77,59 +113,76 @@ export class MediaService {
     // Upload selon le type
     let uploadResult: ApiResponse<UploadResponse>;
     
-    switch (fileType) {
-      case 'image':
-        uploadResult = await uploadService.uploadImage(file, {
-          generateThumbnail: true,
-          maxWidth: 1920,
-          maxHeight: 1080
-        });
-        break;
-      case 'video':
-        uploadResult = await uploadService.uploadVideo(file);
-        break;
-      case 'audio':
-        uploadResult = await uploadService.uploadAudio(file);
-        break;
-      case 'document':
-        uploadResult = await uploadService.uploadDocument(file);
-        break;
-      default:
+    try {
+      switch (fileType) {
+        case 'image':
+          uploadResult = await uploadService.uploadImage(file, {
+            generateThumbnail: true,
+            maxWidth: 1920,
+            maxHeight: 1080
+          });
+          break;
+        case 'video':
+          uploadResult = await uploadService.uploadVideo(file);
+          break;
+        case 'audio':
+          uploadResult = await uploadService.uploadAudio(file);
+          break;
+        case 'document':
+          uploadResult = await uploadService.uploadDocument(file);
+          break;
+        default:
+          return {
+            success: false,
+            error: 'Type de fichier non supporté'
+          };
+      }
+
+      if (uploadResult.success && uploadResult.data) {
+        // Associer le média à l'œuvre via l'API
+        const associateResult = await httpClient.post<{ media_id: number }>(
+          API_ENDPOINTS.oeuvres.uploadMedia(oeuvreId),
+          {
+            url: uploadResult.data.url,
+            filename: uploadResult.data.filename,
+            size: uploadResult.data.size,
+            type: uploadResult.data.type || fileType,
+            titre: options?.titre,
+            description: options?.description,
+            is_principal: options?.is_principal,
+            ordre: options?.ordre
+          }
+        );
+
         return {
-          success: false,
-          error: 'Type de fichier non supporté'
+          ...uploadResult,
+          data: {
+            ...uploadResult.data,
+            media_id: associateResult.data?.media_id
+          } as MediaUploadResponse
         };
-    }
+      }
 
-    if (uploadResult.success && uploadResult.data) {
-      // Associer le média à l'œuvre via l'API
-      const associateResult = await httpClient.post<{ media_id: number }>(
-        API_ENDPOINTS.oeuvres.uploadMedia(oeuvreId),
-        {
-          url: uploadResult.data.url,
-          filename: uploadResult.data.filename,
-          size: uploadResult.data.size,
-          type: uploadResult.data.type
-        }
-      );
-
+      return uploadResult as ApiResponse<MediaUploadResponse>;
+    } catch (error) {
+      console.error('❌ Erreur upload média œuvre:', error);
       return {
-        ...uploadResult,
-        data: {
-          ...uploadResult.data,
-          media_id: associateResult.data?.media_id
-        } as MediaUploadResponse
+        success: false,
+        error: error instanceof Error ? error.message : 'Erreur lors de l\'upload'
       };
     }
-
-    return uploadResult as ApiResponse<MediaUploadResponse>;
   }
 
   /**
    * Upload d'un fichier pour un événement
    */
-  async uploadEvenementMedia(file: File, evenementId: number): Promise<ApiResponse<MediaUploadResponse>> {
-    // Même logique que pour les œuvres
+  async uploadEvenementMedia(
+    file: File, 
+    evenementId: number,
+    options?: MediaUploadOptions
+  ): Promise<ApiResponse<MediaUploadResponse>> {
+    console.log('🎭 MediaService: Upload média pour événement', evenementId);
+    
     const fileType = uploadService.getFileType(file);
     
     if (fileType === 'unknown') {
@@ -147,54 +200,66 @@ export class MediaService {
       };
     }
 
-    let uploadResult: ApiResponse<UploadResponse>;
-    
-    switch (fileType) {
-      case 'image':
-        uploadResult = await uploadService.uploadImage(file, {
-          generateThumbnail: true,
-          maxWidth: 1920,
-          maxHeight: 1080
-        });
-        break;
-      case 'video':
-        uploadResult = await uploadService.uploadVideo(file);
-        break;
-      case 'audio':
-        uploadResult = await uploadService.uploadAudio(file);
-        break;
-      case 'document':
-        uploadResult = await uploadService.uploadDocument(file);
-        break;
-      default:
+    try {
+      let uploadResult: ApiResponse<UploadResponse>;
+      
+      switch (fileType) {
+        case 'image':
+          uploadResult = await uploadService.uploadImage(file, {
+            generateThumbnail: true,
+            maxWidth: 1920,
+            maxHeight: 1080
+          });
+          break;
+        case 'video':
+          uploadResult = await uploadService.uploadVideo(file);
+          break;
+        case 'audio':
+          uploadResult = await uploadService.uploadAudio(file);
+          break;
+        case 'document':
+          uploadResult = await uploadService.uploadDocument(file);
+          break;
+        default:
+          return {
+            success: false,
+            error: 'Type de fichier non supporté'
+          };
+      }
+
+      if (uploadResult.success && uploadResult.data) {
+        // Associer le média à l'événement
+        const associateResult = await httpClient.post<{ media_id: number }>(
+          API_ENDPOINTS.evenements.addMedias(evenementId),
+          {
+            url: uploadResult.data.url,
+            filename: uploadResult.data.filename,
+            size: uploadResult.data.size,
+            type: uploadResult.data.type || fileType,
+            titre: options?.titre,
+            description: options?.description,
+            is_principal: options?.is_principal,
+            ordre: options?.ordre
+          }
+        );
+
         return {
-          success: false,
-          error: 'Type de fichier non supporté'
+          ...uploadResult,
+          data: {
+            ...uploadResult.data,
+            media_id: associateResult.data?.media_id
+          } as MediaUploadResponse
         };
-    }
+      }
 
-    if (uploadResult.success && uploadResult.data) {
-      // Associer le média à l'événement
-      const associateResult = await httpClient.post<{ media_id: number }>(
-        API_ENDPOINTS.evenements.addMedias(evenementId),
-        {
-          url: uploadResult.data.url,
-          filename: uploadResult.data.filename,
-          size: uploadResult.data.size,
-          type: uploadResult.data.type
-        }
-      );
-
+      return uploadResult as ApiResponse<MediaUploadResponse>;
+    } catch (error) {
+      console.error('❌ Erreur upload média événement:', error);
       return {
-        ...uploadResult,
-        data: {
-          ...uploadResult.data,
-          media_id: associateResult.data?.media_id
-        } as MediaUploadResponse
+        success: false,
+        error: error instanceof Error ? error.message : 'Erreur lors de l\'upload'
       };
     }
-
-    return uploadResult as ApiResponse<MediaUploadResponse>;
   }
 
   /**
@@ -206,27 +271,30 @@ export class MediaService {
     entityId: number,
     onProgress?: (progress: { file: string; percentage: number }) => void
   ): Promise<ApiResponse<MediaUploadResponse[]>> {
+    console.log(`📦 MediaService: Upload multiple pour ${entityType} ${entityId}`);
+    
     const results: MediaUploadResponse[] = [];
     const errors: string[] = [];
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
+      const isPrincipal = i === 0; // Premier fichier principal par défaut
       
       try {
         let result: ApiResponse<MediaUploadResponse>;
         
         switch (entityType) {
           case 'oeuvre':
-            result = await this.uploadOeuvreMedia(file, entityId);
+            result = await this.uploadOeuvreMedia(file, entityId, { is_principal: isPrincipal });
             break;
           case 'evenement':
-            result = await this.uploadEvenementMedia(file, entityId);
+            result = await this.uploadEvenementMedia(file, entityId, { is_principal: isPrincipal });
             break;
           case 'patrimoine':
-            result = await this.uploadPatrimoineMedia(file, entityId);
+            result = await this.uploadPatrimoineMedia(file, entityId, { is_principal: isPrincipal });
             break;
           case 'artisanat':
-            result = await this.uploadArtisanatMedia(file, entityId);
+            result = await this.uploadArtisanatMedia(file, entityId, { is_principal: isPrincipal });
             break;
         }
 
@@ -247,6 +315,8 @@ export class MediaService {
       }
     }
 
+    console.log(`✅ Upload multiple terminé: ${results.length} succès, ${errors.length} erreurs`);
+
     return {
       success: errors.length === 0,
       data: results,
@@ -257,7 +327,13 @@ export class MediaService {
   /**
    * Upload pour patrimoine
    */
-  async uploadPatrimoineMedia(file: File, siteId: number): Promise<ApiResponse<MediaUploadResponse>> {
+  async uploadPatrimoineMedia(
+    file: File, 
+    siteId: number,
+    options?: MediaUploadOptions
+  ): Promise<ApiResponse<MediaUploadResponse>> {
+    console.log('🏛️ MediaService: Upload média pour patrimoine', siteId);
+    
     const fileType = uploadService.getFileType(file);
     
     if (fileType !== 'image') {
@@ -267,39 +343,57 @@ export class MediaService {
       };
     }
 
-    const uploadResult = await uploadService.uploadImage(file, {
-      generateThumbnail: true,
-      maxWidth: 1920,
-      maxHeight: 1080
-    });
+    try {
+      const uploadResult = await uploadService.uploadImage(file, {
+        generateThumbnail: true,
+        maxWidth: 1920,
+        maxHeight: 1080
+      });
 
-    if (uploadResult.success && uploadResult.data) {
-      const associateResult = await httpClient.post<{ media_id: number }>(
-        API_ENDPOINTS.patrimoine.uploadMedias(siteId),
-        {
-          url: uploadResult.data.url,
-          filename: uploadResult.data.filename,
-          size: uploadResult.data.size,
-          type: uploadResult.data.type
-        }
-      );
+      if (uploadResult.success && uploadResult.data) {
+        const associateResult = await httpClient.post<{ media_id: number }>(
+          API_ENDPOINTS.patrimoine.uploadMedias(siteId),
+          {
+            url: uploadResult.data.url,
+            filename: uploadResult.data.filename,
+            size: uploadResult.data.size,
+            type: 'image',
+            titre: options?.titre,
+            description: options?.description,
+            is_principal: options?.is_principal,
+            ordre: options?.ordre
+          }
+        );
 
+        return {
+          ...uploadResult,
+          data: {
+            ...uploadResult.data,
+            media_id: associateResult.data?.media_id
+          } as MediaUploadResponse
+        };
+      }
+
+      return uploadResult as ApiResponse<MediaUploadResponse>;
+    } catch (error) {
+      console.error('❌ Erreur upload média patrimoine:', error);
       return {
-        ...uploadResult,
-        data: {
-          ...uploadResult.data,
-          media_id: associateResult.data?.media_id
-        } as MediaUploadResponse
+        success: false,
+        error: error instanceof Error ? error.message : 'Erreur lors de l\'upload'
       };
     }
-
-    return uploadResult as ApiResponse<MediaUploadResponse>;
   }
 
   /**
    * Upload pour artisanat
    */
-  async uploadArtisanatMedia(file: File, artisanatId: number): Promise<ApiResponse<MediaUploadResponse>> {
+  async uploadArtisanatMedia(
+    file: File, 
+    artisanatId: number,
+    options?: MediaUploadOptions
+  ): Promise<ApiResponse<MediaUploadResponse>> {
+    console.log('🎨 MediaService: Upload média pour artisanat', artisanatId);
+    
     const fileType = uploadService.getFileType(file);
     
     if (fileType !== 'image') {
@@ -309,33 +403,45 @@ export class MediaService {
       };
     }
 
-    const uploadResult = await uploadService.uploadImage(file, {
-      generateThumbnail: true,
-      maxWidth: 1920,
-      maxHeight: 1080
-    });
+    try {
+      const uploadResult = await uploadService.uploadImage(file, {
+        generateThumbnail: true,
+        maxWidth: 1920,
+        maxHeight: 1080
+      });
 
-    if (uploadResult.success && uploadResult.data) {
-      const associateResult = await httpClient.post<{ media_id: number }>(
-        API_ENDPOINTS.artisanat.uploadMedias(artisanatId),
-        {
-          url: uploadResult.data.url,
-          filename: uploadResult.data.filename,
-          size: uploadResult.data.size,
-          type: uploadResult.data.type
-        }
-      );
+      if (uploadResult.success && uploadResult.data) {
+        const associateResult = await httpClient.post<{ media_id: number }>(
+          API_ENDPOINTS.artisanat.uploadMedias(artisanatId),
+          {
+            url: uploadResult.data.url,
+            filename: uploadResult.data.filename,
+            size: uploadResult.data.size,
+            type: 'image',
+            titre: options?.titre,
+            description: options?.description,
+            is_principal: options?.is_principal,
+            ordre: options?.ordre
+          }
+        );
 
+        return {
+          ...uploadResult,
+          data: {
+            ...uploadResult.data,
+            media_id: associateResult.data?.media_id
+          } as MediaUploadResponse
+        };
+      }
+
+      return uploadResult as ApiResponse<MediaUploadResponse>;
+    } catch (error) {
+      console.error('❌ Erreur upload média artisanat:', error);
       return {
-        ...uploadResult,
-        data: {
-          ...uploadResult.data,
-          media_id: associateResult.data?.media_id
-        } as MediaUploadResponse
+        success: false,
+        error: error instanceof Error ? error.message : 'Erreur lors de l\'upload'
       };
     }
-
-    return uploadResult as ApiResponse<MediaUploadResponse>;
   }
 
   /**
@@ -346,6 +452,8 @@ export class MediaService {
     entityType: 'oeuvre' | 'evenement' | 'patrimoine' | 'artisanat',
     entityId: number
   ): Promise<ApiResponse<void>> {
+    console.log(`🗑️ MediaService: Suppression média ${mediaId} de ${entityType} ${entityId}`);
+    
     let endpoint: string;
     
     switch (entityType) {
@@ -364,7 +472,19 @@ export class MediaService {
         break;
     }
 
-    return httpClient.delete<void>(endpoint);
+    try {
+      const result = await httpClient.delete<void>(endpoint);
+      if (result.success) {
+        console.log('✅ Média supprimé avec succès');
+      }
+      return result;
+    } catch (error) {
+      console.error('❌ Erreur suppression média:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Erreur lors de la suppression'
+      };
+    }
   }
 
   /**
@@ -374,6 +494,8 @@ export class MediaService {
     entityType: 'oeuvre' | 'evenement' | 'patrimoine',
     entityId: number
   ): Promise<ApiResponse<Media[]>> {
+    console.log(`📂 MediaService: Récupération médias de ${entityType} ${entityId}`);
+    
     let endpoint: string;
     
     switch (entityType) {
@@ -388,17 +510,28 @@ export class MediaService {
         break;
     }
 
-    return httpClient.get<Media[]>(endpoint);
+    try {
+      return await httpClient.get<Media[]>(endpoint);
+    } catch (error) {
+      console.error('❌ Erreur récupération médias:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Erreur lors de la récupération'
+      };
+    }
   }
 
   /**
-   * Valider le type et la taille d'un fichier (gardé pour compatibilité)
+   * Valider le type et la taille d'un fichier
    */
   validateFile(file: File, options?: {
     maxSize?: number;
     allowedTypes?: string[];
   }): { valid: boolean; error?: string } {
-    const { maxSize = 5 * 1024 * 1024, allowedTypes = ['image/jpeg', 'image/png', 'image/gif'] } = options || {};
+    const { 
+      maxSize = 10 * 1024 * 1024, // 10MB par défaut
+      allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'] 
+    } = options || {};
     
     if (file.size > maxSize) {
       return {
@@ -440,10 +573,16 @@ export class MediaService {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       
+      if (!ctx) {
+        reject(new Error('Impossible de créer le contexte canvas'));
+        return;
+      }
+      
       img.onload = () => {
         let width = img.width;
         let height = img.height;
         
+        // Calculer les nouvelles dimensions en gardant le ratio
         if (width > height) {
           if (width > maxWidth) {
             height = height * (maxWidth / width);
@@ -459,7 +598,7 @@ export class MediaService {
         canvas.width = width;
         canvas.height = height;
         
-        ctx?.drawImage(img, 0, 0, width, height);
+        ctx.drawImage(img, 0, 0, width, height);
         
         canvas.toBlob((blob) => {
           if (blob) {
@@ -467,70 +606,29 @@ export class MediaService {
           } else {
             reject(new Error('Impossible de redimensionner l\'image'));
           }
-        }, file.type);
+        }, file.type, 0.9);
       };
       
-      img.onerror = reject;
+      img.onerror = () => {
+        reject(new Error('Impossible de charger l\'image'));
+      };
+      
       img.src = URL.createObjectURL(file);
     });
   }
 
   /**
- * Upload d'une photo de profil lors de l'inscription (sans authentification)
- * Cette méthode est différente de uploadProfilePhoto car elle n'essaie pas
- * de mettre à jour le profil (qui n'existe pas encore)
- */
-async uploadProfilePhotoForRegistration(file: File): Promise<ApiResponse<UploadResponse>> {
-  // Validation
-  const validation = uploadService.validateFile(file, 'image');
-  if (!validation.valid) {
-    return {
-      success: false,
-      error: validation.error
-    };
-  }
-
-  console.log('📷 Upload photo pour inscription:', {
-    fileName: file.name,
-    fileSize: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
-    fileType: file.type,
-    endpoint: 'PUBLIC (sans auth)'
-  });
-
-  try {
-    // Upload PUBLIC
-    const result = await uploadService.uploadImage(file, {
-      isPublic: true,
-      generateThumbnail: true,
-      maxWidth: 500,
-      maxHeight: 500,
-      quality: 0.9
-    });
-
-    if (result.success && result.data) {
-      console.log('✅ Upload réussi:', {
-        url: result.data.url,
-        isFullUrl: result.data.url.startsWith('http'),
-        filename: result.data.filename
-      });
-      
-      // Vérifier que l'URL est complète
-      if (!result.data.url.startsWith('http')) {
-        console.warn('⚠️ URL retournée n\'est pas complète:', result.data.url);
-      }
-    } else {
-      console.error('❌ Échec upload:', result.error);
+   * Obtenir une preview d'image
+   */
+  async getImagePreview(file: File, maxSize?: number): Promise<string> {
+    if (maxSize && file.size > maxSize) {
+      // Redimensionner si nécessaire
+      const resizedBlob = await this.resizeImage(file, 800, 800);
+      return this.fileToBase64(new File([resizedBlob], file.name, { type: file.type }));
     }
-
-    return result;
-  } catch (error) {
-    console.error('❌ Exception upload:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Erreur inconnue'
-    };
+    
+    return this.fileToBase64(file);
   }
-}
 }
 
 // Export de l'instance singleton

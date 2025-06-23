@@ -1,9 +1,11 @@
 // types/models/references.types.ts
 
+import { Oeuvre } from "./oeuvre.types";
+
 /**
  * Types pour les tables de référence
  */
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export interface Role {
   id_role: number;
   nom_role: string;
@@ -67,18 +69,68 @@ export interface Langue {
   code?: string;
 }
 
+// Types pour l'entité Editeur
+
+export enum TypeEditeur {
+  MAISON_EDITION = 'maison_edition',
+  LABEL_MUSIQUE = 'label_musique',
+  STUDIO_CINEMA = 'studio_cinema',
+  GALERIE_ART = 'galerie_art',
+  EDITEUR_SCIENTIFIQUE = 'editeur_scientifique',
+  PRESSE = 'presse',
+  EDITEUR_NUMERIQUE = 'editeur_numerique',
+  AUTRE = 'autre'
+}
+
 export interface Editeur {
   id_editeur: number;
   nom: string;
-  adresse?: string;
-  telephone?: string;
-  email?: string;
-  site_web?: string;
-  logo_url?: string;
-  description?: string;
+  type_editeur: TypeEditeur;
+  pays?: string | null;
+  ville?: string | null;
+  adresse?: string | null;
+  site_web?: string | null;
+  email?: string | null;
+  
+  telephone?: string | null;
+  description?: string | null;
+  annee_creation?: number | null;
   actif: boolean;
-  date_creation: string;
-  date_modification: string;
+  date_creation: Date | string;
+  date_modification: Date | string;
+  
+  // Relations optionnelles
+  Oeuvres?: Oeuvre[];
+}
+
+// Type pour la création d'un éditeur (sans id et timestamps)
+export interface CreateEditeurDto {
+  nom: string;
+  type_editeur: TypeEditeur;
+  pays?: string;
+  ville?: string;
+  adresse?: string;
+  site_web?: string;
+  email?: string;
+  telephone?: string;
+  description?: string;
+  annee_creation?: number;
+  actif?: boolean;
+}
+
+// Type pour la mise à jour d'un éditeur (tous les champs optionnels)
+export interface UpdateEditeurDto {
+  nom?: string;
+  type_editeur?: TypeEditeur;
+  pays?: string;
+  ville?: string;
+  adresse?: string;
+  site_web?: string;
+  email?: string;
+  telephone?: string;
+  description?: string;
+  annee_creation?: number;
+  actif?: boolean;
 }
 
 export interface Specialite {
@@ -101,30 +153,29 @@ export interface Technique {
   description?: string;
 }
 
-export interface Wilaya {
-  id_wilaya: number;
-  code_wilaya: string;
-  nom_fr: string;
-  nom_ar?: string;
-  nom_en?: string;
-  latitude?: number;
-  longitude?: number;
-}
 
-export interface Commune {
-  id_commune: number;
-  id_wilaya: number;
-  code_commune: string;
-  nom_fr: string;
-  nom_ar?: string;
-  nom_en?: string;
-  code_postal?: string;
-  latitude?: number;
-  longitude?: number;
+
+export interface TypeEvenement {
+  id_type_evenement: number;
+  nom_type: string;
+  description?: string;
   // Relations
-  Wilaya?: Wilaya;
+  Evenements?: any[]; // Remplacer 'any' par le type Evenement quand disponible
 }
 
+export interface TypeOrganisation {
+  id_type_organisation: number;
+  nom: string;
+  // Relations
+  Organisations?: any[]; // Remplacer 'any' par le type Organisation quand disponible
+}
+
+// Types pour les créations/mises à jour
+export type CreateTypeEvenementDTO = Omit<TypeEvenement, 'id_type_evenement' | 'Evenements'>;
+export type UpdateTypeEvenementDTO = Partial<CreateTypeEvenementDTO>;
+
+export type CreateTypeOrganisationDTO = Omit<TypeOrganisation, 'id_type_organisation' | 'Organisations'>;
+export type UpdateTypeOrganisationDTO = Partial<CreateTypeOrganisationDTO>;
 // Types pour les créations/mises à jour
 export type CreateRoleDTO = Omit<Role, 'id_role' | 'date_creation' | 'date_modification'>;
 export type UpdateRoleDTO = Partial<CreateRoleDTO>;

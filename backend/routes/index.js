@@ -20,6 +20,14 @@ const initProfessionnelRoutes = require('./professionnelRoutes');
 const initProgrammeRoutes = require('./programmeRoutes');
 const initParcoursIntelligentRoutes = require('./parcoursIntelligentRoutes');
 const initNotificationRoutes = require('./notificationRoutes');
+const initIntervenantRoutes = require('./intervenantRoutes');
+const initServiceRoutes = require('./servicesRoutes');
+
+// CORRECTION: Les routes admin sont dans le dossier admin/
+const initAdminOeuvresRoutes = require('./admin/adminOeuvresRoutes');
+const initAdminEvenementsRoutes = require('./admin/adminEvenementsRoutes');
+const initAdminPatrimoineRoutes = require('./admin/adminPatrimoineRoutes');
+const initAdminServicesRoutes = require('./admin/adminServicesRoutes');
 
 // ========================================================================
 // FONCTIONS UTILITAIRES
@@ -379,6 +387,7 @@ const initRoutes = (models, authMiddleware) => {
       environment: process.env.NODE_ENV || 'development',
       
       modulesStatus: {
+        // Routes principales
         oeuvres: typeof initOeuvreRoutes === 'function' ? '✅ Chargé' : '❌ Non chargé',
         users: typeof initUserRoutes === 'function' ? '✅ Chargé' : '❌ Non chargé',
         evenements: typeof initEvenementRoutes === 'function' ? '✅ Chargé' : '❌ Non chargé',
@@ -393,7 +402,15 @@ const initRoutes = (models, authMiddleware) => {
         professionnel: typeof initProfessionnelRoutes === 'function' ? '✅ Chargé' : '❌ Non chargé',
         programmes: typeof initProgrammeRoutes === 'function' ? '✅ Chargé' : '❌ Non chargé',
         parcours: typeof initParcoursIntelligentRoutes === 'function' ? '✅ Chargé' : '❌ Non chargé',
-        notifications: typeof initNotificationRoutes === 'function' ? '✅ Chargé' : '❌ Non chargé'
+        notifications: typeof initNotificationRoutes === 'function' ? '✅ Chargé' : '❌ Non chargé',
+        intervenants: typeof initIntervenantRoutes === 'function' ? '✅ Chargé' : '❌ Non chargé',
+        services: typeof initServiceRoutes === 'function' ? '✅ Chargé' : '❌ Non chargé',
+        
+        // Routes admin
+        'admin/oeuvres': typeof initAdminOeuvresRoutes === 'function' ? '✅ Chargé' : '❌ Non chargé',
+        'admin/evenements': typeof initAdminEvenementsRoutes === 'function' ? '✅ Chargé' : '❌ Non chargé',
+        'admin/patrimoine': typeof initAdminPatrimoineRoutes === 'function' ? '✅ Chargé' : '❌ Non chargé',
+        'admin/services': typeof initAdminServicesRoutes === 'function' ? '✅ Chargé' : '❌ Non chargé'
       },
       
       middlewares: {
@@ -436,9 +453,11 @@ const initRoutes = (models, authMiddleware) => {
     { path: '/metadata', init: initMetadataRoutes, args: [models, authMiddleware] },
     { path: '/users', init: initUserRoutes, args: [models, authMiddleware] },
     { path: '/oeuvres', init: initOeuvreRoutes, args: [models, authMiddleware] },
+    { path: '/services', init: initServiceRoutes, args: [models, authMiddleware] },
     
     // Routes qui nécessitent tous les middlewares
     { path: '/evenements', init: initEvenementRoutes, args: [models, middlewares] },
+    { path: '/intervenants', init: initIntervenantRoutes, args: [models, authMiddleware] },
     
     // Autres routes
     { path: '/lieux', init: initLieuRoutes, args: [models] },
@@ -450,7 +469,15 @@ const initRoutes = (models, authMiddleware) => {
     { path: '/parcours', init: initParcoursIntelligentRoutes, args: [models] },
     { path: '/programmes', init: initProgrammeRoutes, args: [models] },
     { path: '/professionnel', init: initProfessionnelRoutes, args: [models] },
-    { path: '/dashboard', init: initDashboardRoutes, args: [models] }
+    { path: '/dashboard', init: initDashboardRoutes, args: [models] },
+    
+    // ========================================================================
+    // ROUTES ADMIN - AJOUT
+    // ========================================================================
+    { path: '/admin/oeuvres', init: initAdminOeuvresRoutes, args: [models] },
+    { path: '/admin/evenements', init: initAdminEvenementsRoutes, args: [models] },
+    { path: '/admin/patrimoine', init: initAdminPatrimoineRoutes, args: [models] },
+    { path: '/admin/services', init: initAdminServicesRoutes, args: [models] }
   ];
 
   let successCount = 0;
@@ -513,6 +540,7 @@ const initRoutes = (models, authMiddleware) => {
 
 function getModuleDescription(module) {
   const descriptions = {
+    // Routes principales
     users: 'Gestion des utilisateurs et authentification',
     oeuvres: 'Gestion des œuvres culturelles',
     evenements: 'Événements culturels et inscriptions',
@@ -527,8 +555,22 @@ function getModuleDescription(module) {
     dashboard: 'Tableau de bord administrateur',
     professionnel: 'Espace professionnel',
     programmes: 'Programmes d\'événements',
-    parcours: 'Parcours touristiques intelligents'
+    parcours: 'Parcours touristiques intelligents',
+    intervenants: 'Gestion des intervenants (artistes, conférenciers, formateurs)',
+    services: 'Gestion des services culturels',
+    
+    // Routes admin - AJOUT
+    'admin': 'Interface d\'administration complète',
+    'admin/oeuvres': 'Administration des œuvres : validation, modération, statistiques',
+    'admin/evenements': 'Administration des événements : gestion participants, annulations',
+    'admin/patrimoine': 'Administration du patrimoine : QR codes, parcours, statistiques',
+    'admin/services': 'Administration des services : validations, suspensions, revenus'
   };
+  
+  // Gérer les sous-modules admin
+  if (module.startsWith('admin/')) {
+    return descriptions[module] || `Administration des ${module.split('/')[1]}`;
+  }
   
   return descriptions[module] || 'Module de l\'API Action Culture';
 }

@@ -21,10 +21,47 @@ import { Commentaire, Favori } from '../models/tracking.types';
 /**
  * Interface pour TypeUser
  */
+import { OeuvreUser, OeuvreIntervenant } from './associations.types';
+
 export interface TypeUser {
   id_type_user: number;
   nom_type: string;
   description?: string;
+  
+  // Relations (optionnelles)
+  Users?: User[];
+  OeuvreUsers?: OeuvreUser[];
+}
+
+// Type pour la création d'un type user
+export type CreateTypeUserDTO = Omit<TypeUser, 'id_type_user' | 'Users' | 'OeuvreUsers'>;
+
+// Type pour la mise à jour d'un type user
+export type UpdateTypeUserDTO = Partial<CreateTypeUserDTO>;
+
+// Types prédéfinis courants (à adapter selon vos besoins)
+export enum TypeUserEnum {
+  ADMIN = 'admin',
+  MODERATEUR = 'moderateur',
+  CONTRIBUTEUR = 'contributeur',
+  MEMBRE = 'membre',
+  INVITE = 'invite'
+}
+
+// Helper pour vérifier les permissions d'un type
+export function hasPermission(typeUser: TypeUser, permission: string): boolean {
+  // Logique à implémenter selon vos besoins
+  // Exemple simple :
+  const permissions: Record<string, string[]> = {
+    'admin': ['*'], // Toutes les permissions
+    'moderateur': ['read', 'write', 'moderate'],
+    'contributeur': ['read', 'write'],
+    'membre': ['read'],
+    'invite': ['read_limited']
+  };
+  
+  const userPermissions = permissions[typeUser.nom_type.toLowerCase()] || [];
+  return userPermissions.includes('*') || userPermissions.includes(permission);
 }
 
 /**

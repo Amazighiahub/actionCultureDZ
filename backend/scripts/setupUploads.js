@@ -1,177 +1,103 @@
-// backend/setupUploads.js - Script pour initialiser la structure des uploads
+// scripts/setupUploads.js - Script pour créer la structure des dossiers uploads
 const fs = require('fs');
 const path = require('path');
-require('dotenv').config();
-
-console.log('📁 Configuration de la structure des uploads...\n');
 
 // Structure des dossiers à créer
 const uploadStructure = {
-  base: process.env.UPLOAD_DIR || 'uploads',
-  subdirs: {
-    images: {
-      path: process.env.UPLOAD_IMAGES_DIR || 'uploads/images',
-      description: 'Images (photos, illustrations)',
-      gitkeep: true
+  uploads: {
+    images: {},
+    videos: {},
+    audios: {},
+    documents: {},
+    oeuvres: {
+      images: {},
+      videos: {},
+      audios: {},
+      documents: {}
     },
-    documents: {
-      path: process.env.UPLOAD_DOCUMENTS_DIR || 'uploads/documents',
-      description: 'Documents (PDF, Word, Excel)',
-      gitkeep: true
-    },
-    videos: {
-      path: process.env.UPLOAD_VIDEOS_DIR || 'uploads/videos',
-      description: 'Vidéos',
-      gitkeep: true
-    },
-    temp: {
-      path: process.env.UPLOAD_TEMP_DIR || 'uploads/temp',
-      description: 'Fichiers temporaires',
-      gitkeep: true
-    }
+    profiles: {},
+    temp: {}
   }
 };
 
-// Créer les dossiers
-function createDirectories() {
-  // Créer le dossier principal
-  if (!fs.existsSync(uploadStructure.base)) {
-    fs.mkdirSync(uploadStructure.base, { recursive: true });
-    console.log(`✅ Dossier principal créé: ${uploadStructure.base}`);
-  } else {
-    console.log(`📂 Dossier principal existe: ${uploadStructure.base}`);
-  }
-
-  // Créer les sous-dossiers
-  Object.entries(uploadStructure.subdirs).forEach(([key, config]) => {
-    if (!fs.existsSync(config.path)) {
-      fs.mkdirSync(config.path, { recursive: true });
-      console.log(`✅ Sous-dossier créé: ${config.path} - ${config.description}`);
+// Fonction récursive pour créer les dossiers
+function createDirectoryStructure(basePath, structure) {
+  Object.keys(structure).forEach(dir => {
+    const dirPath = path.join(basePath, dir);
+    
+    // Créer le dossier s'il n'existe pas
+    if (!fs.existsSync(dirPath)) {
+      fs.mkdirSync(dirPath, { recursive: true });
+      console.log(`✅ Dossier créé: ${dirPath}`);
     } else {
-      console.log(`📂 Sous-dossier existe: ${config.path} - ${config.description}`);
+      console.log(`📁 Dossier existant: ${dirPath}`);
     }
-
-    // Créer un fichier .gitkeep pour garder les dossiers vides dans git
-    if (config.gitkeep) {
-      const gitkeepPath = path.join(config.path, '.gitkeep');
-      if (!fs.existsSync(gitkeepPath)) {
-        fs.writeFileSync(gitkeepPath, '# Keep this directory in git\n');
-      }
+    
+    // Créer les sous-dossiers
+    if (Object.keys(structure[dir]).length > 0) {
+      createDirectoryStructure(dirPath, structure[dir]);
+    }
+    
+    // Ajouter un fichier .gitkeep pour que Git track les dossiers vides
+    const gitkeepPath = path.join(dirPath, '.gitkeep');
+    if (!fs.existsSync(gitkeepPath)) {
+      fs.writeFileSync(gitkeepPath, '');
     }
   });
 }
 
-// Créer le fichier .gitignore pour les uploads
+// Créer aussi un .gitignore pour ignorer les fichiers uploadés mais garder la structure
 function createGitignore() {
-  const gitignorePath = path.join(uploadStructure.base, '.gitignore');
-  const gitignoreContent = `# Ignorer tous les fichiers uploadés
+  const gitignorePath = path.join(__dirname, '..', 'uploads', '.gitignore');
+  const gitignoreContent = `# Ignorer tous les fichiers
 *
-*/
-
-# Mais garder les fichiers .gitkeep
+# Mais garder les dossiers et .gitkeep
+!*/
 !.gitkeep
 !.gitignore
-
-# Garder la structure des dossiers
-!images/
-!documents/
-!videos/
-!temp/
 `;
-
-  if (!fs.existsSync(gitignorePath)) {
-    fs.writeFileSync(gitignorePath, gitignoreContent);
-    console.log(`\n✅ Fichier .gitignore créé dans ${uploadStructure.base}`);
-  }
+  
+  fs.writeFileSync(gitignorePath, gitignoreContent);
+  console.log('✅ Fichier .gitignore créé pour uploads/');
 }
 
-// Créer un fichier README pour documenter la structure
-function createReadme() {
-  const readmePath = path.join(uploadStructure.base, 'README.md');
-  const readmeContent = `# Structure des Uploads
-
-## Organisation des fichiers
-
-- **images/** : Photos, illustrations, logos
-  - Formats acceptés : JPG, PNG, GIF, WebP
-  - Taille max : ${process.env.UPLOAD_IMAGE_MAX_SIZE || '5MB'}
+// Script principal
+function setupUploads() {
+  console.log('🚀 Configuration des dossiers uploads...\n');
   
-- **documents/** : Documents texte
-  - Formats acceptés : PDF, DOC, DOCX, XLS, XLSX
-  - Taille max : ${process.env.UPLOAD_DOCUMENT_MAX_SIZE || '10MB'}
+  const basePath = path.join(__dirname, '..');
   
-- **videos/** : Vidéos
-  - Formats acceptés : MP4, WebM, MOV, AVI
-  - Taille max : ${process.env.UPLOAD_VIDEO_MAX_SIZE || '100MB'}
-  
-- **temp/** : Fichiers temporaires (nettoyés automatiquement)
-
-## Sécurité
-
-- Les noms de fichiers sont automatiquement sécurisés
-- Les types MIME sont vérifiés
-- Les extensions sont validées
-- Organisation par date (YYYY-MM) pour éviter trop de fichiers par dossier
-
-## Configuration
-
-Voir le fichier \`.env\` pour modifier les limites et types autorisés.
-`;
-
-  if (!fs.existsSync(readmePath)) {
-    fs.writeFileSync(readmePath, readmeContent);
-    console.log(`✅ README créé dans ${uploadStructure.base}`);
-  }
-}
-
-// Afficher les statistiques actuelles
-function displayStats() {
-  console.log('\n📊 Statistiques des uploads existants:\n');
-  
-  Object.entries(uploadStructure.subdirs).forEach(([key, config]) => {
-    if (fs.existsSync(config.path)) {
-      const files = getAllFiles(config.path);
-      const totalSize = files.reduce((sum, file) => {
-        try {
-          return sum + fs.statSync(file).size;
-        } catch {
-          return sum;
-        }
-      }, 0);
-
-      console.log(`📁 ${key}:`);
-      console.log(`   - Fichiers: ${files.length}`);
-      console.log(`   - Taille totale: ${(totalSize / (1024 * 1024)).toFixed(2)} MB`);
-    }
-  });
-}
-
-// Helper pour obtenir tous les fichiers
-function getAllFiles(dirPath, arrayOfFiles = []) {
-  const files = fs.readdirSync(dirPath);
-
-  files.forEach(file => {
-    if (file === '.gitkeep' || file === '.gitignore' || file === 'README.md') return;
+  try {
+    // Créer la structure
+    createDirectoryStructure(basePath, uploadStructure);
     
-    const filePath = path.join(dirPath, file);
-    if (fs.statSync(filePath).isDirectory()) {
-      arrayOfFiles = getAllFiles(filePath, arrayOfFiles);
-    } else {
-      arrayOfFiles.push(filePath);
-    }
-  });
-
-  return arrayOfFiles;
+    // Créer le .gitignore
+    createGitignore();
+    
+    console.log('\n✅ Configuration terminée avec succès!');
+    console.log('\n📌 Structure créée:');
+    console.log('uploads/');
+    console.log('├── images/');
+    console.log('├── videos/');
+    console.log('├── audios/');
+    console.log('├── documents/');
+    console.log('├── oeuvres/');
+    console.log('│   ├── images/');
+    console.log('│   ├── videos/');
+    console.log('│   ├── audios/');
+    console.log('│   └── documents/');
+    console.log('├── profiles/');
+    console.log('└── temp/');
+    
+  } catch (error) {
+    console.error('❌ Erreur lors de la configuration:', error);
+    process.exit(1);
+  }
 }
 
-// Exécuter le setup
-console.log('🚀 Démarrage de la configuration...\n');
+// Exécuter si appelé directement
+if (require.main === module) {
+  setupUploads();
+}
 
-createDirectories();
-createGitignore();
-createReadme();
-displayStats();
-
-console.log('\n✅ Configuration des uploads terminée !');
-console.log('\n💡 Pour nettoyer les fichiers temporaires, utilisez:');
-console.log('   node cleanTempUploads.js\n');
+module.exports = setupUploads;

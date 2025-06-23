@@ -317,155 +317,172 @@ class ProfessionnelController {
   }
 
   // Gestion des événements du professionnel
-  async getMyEvenements(req, res) {
-    try {
-      const { page = 1, limit = 10, statut } = req.query;
-      const offset = (page - 1) * limit;
-      const where = { id_user: req.user.id_user };
+  // Corrections pour ProfessionnelController.js
+// Ces méthodes corrigent les problèmes d'alias Sequelize
 
-      if (statut === 'avenir') {
-        where.date_debut = { [Op.gte]: new Date() };
-      } else if (statut === 'passe') {
-        where.date_fin = { [Op.lt]: new Date() };
-      } else if (statut === 'en_cours') {
-        where.date_debut = { [Op.lte]: new Date() };
-        where.date_fin = { [Op.gte]: new Date() };
-      }
+// 1. Méthode getMyEvenements corrigée
+async getMyEvenements(req, res) {
+  try {
+    const { page = 1, limit = 10, statut } = req.query;
+    const offset = (page - 1) * limit;
+    const where = { id_user: req.user.id_user };
 
-      const evenements = await this.models.Evenement.findAndCountAll({
-        where,
-        include: [
-          { model: this.models.TypeEvenement, attributes: ['nom_type'] },
-          { model: this.models.Lieu, attributes: ['nom', 'adresse'] },
-          {
-            model: this.models.User,
-            through: { 
-              model: this.models.EvenementUser,
-              attributes: ['statut_participation']
-            },
-            attributes: ['nom', 'prenom']
-          }
-        ],
-        limit: parseInt(limit),
-        offset: parseInt(offset),
-        order: [['date_debut', 'DESC']],
-        distinct: true
-      });
-
-      // Ajouter le nombre de participants pour chaque événement
-      for (const evenement of evenements.rows) {
-        const [participantsCount, confirmes, presents, vues] = await Promise.all([
-          this.models.EvenementUser.count({
-            where: { id_evenement: evenement.id_evenement }
-          }),
-          this.models.EvenementUser.count({
-            where: { 
-              id_evenement: evenement.id_evenement,
-              statut_participation: 'confirme'
-            }
-          }),
-          this.models.EvenementUser.count({
-            where: { 
-              id_evenement: evenement.id_evenement,
-              statut_participation: 'present'
-            }
-          }),
-          this.models.Vue.count({
-            where: { type_entite: 'evenement', id_entite: evenement.id_evenement }
-          })
-        ]);
-        
-        evenement.dataValues.stats = {
-          participantsCount,
-          confirmes,
-          presents,
-          vues,
-          tauxPresence: participantsCount > 0 ? ((presents / participantsCount) * 100).toFixed(2) : 0
-        };
-      }
-
-      res.json({
-        success: true,
-        data: {
-          evenements: evenements.rows,
-          pagination: {
-            total: evenements.count,
-            page: parseInt(page),
-            pages: Math.ceil(evenements.count / limit),
-            limit: parseInt(limit)
-          }
-        }
-      });
-
-    } catch (error) {
-      console.error('Erreur lors de la récupération des événements:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: 'Erreur serveur' 
-      });
+    if (statut === 'avenir') {
+      where.date_debut = { [Op.gte]: new Date() };
+    } else if (statut === 'passe') {
+      where.date_fin = { [Op.lt]: new Date() };
+    } else if (statut === 'en_cours') {
+      where.date_debut = { [Op.lte]: new Date() };
+      where.date_fin = { [Op.gte]: new Date() };
     }
-  }
 
-  // Calendrier des événements
-  async getEventCalendar(req, res) {
-    try {
-      const { year, month } = req.query;
-      const startDate = new Date(year || new Date().getFullYear(), month ? month - 1 : 0, 1);
-      const endDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0);
-
-      const evenements = await this.models.Evenement.findAll({
-        where: {
-          id_user: req.user.id_user,
-          [Op.or]: [
-            {
-              date_debut: {
-                [Op.between]: [startDate, endDate]
-              }
-            },
-            {
-              date_fin: {
-                [Op.between]: [startDate, endDate]
-              }
-            }
-          ]
+    const evenements = await this.models.Evenement.findAndCountAll({
+      where,
+      include: [
+        { 
+          model: this.models.TypeEvenement, 
+          as: 'TypeEvenement',  // Ajout de l'alias
+          attributes: ['nom_type'],
+          required: false
         },
-        include: [
-          { model: this.models.TypeEvenement, attributes: ['nom_type'] },
-          { model: this.models.Lieu, attributes: ['nom'] }
-        ],
-        order: [['date_debut', 'ASC']]
-      });
-
-      // Formatter pour calendrier
-      const calendar = evenements.map(event => ({
-        id: event.id_evenement,
-        title: event.nom_evenement,
-        start: event.date_debut,
-        end: event.date_fin,
-        type: event.TypeEvenement?.nom_type,
-        lieu: event.Lieu?.nom,
-        allDay: !event.heure_debut
-      }));
-
-      res.json({
-        success: true,
-        data: {
-          events: calendar,
-          period: {
-            start: startDate,
-            end: endDate
-          }
+        { 
+          model: this.models.Lieu, 
+          as: 'Lieu',  // Ajout de l'alias
+          attributes: ['nom', 'adresse'],
+          required: false
         }
-      });
+        // Retrait de l'include pour User car il sera géré séparément dans les statistiques
+      ],
+      limit: parseInt(limit),
+      offset: parseInt(offset),
+      order: [['date_debut', 'DESC']],
+      distinct: true
+    });
 
-    } catch (error) {
-      console.error('Erreur lors de la récupération du calendrier:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: 'Erreur serveur' 
-      });
+    // Ajouter le nombre de participants pour chaque événement
+    for (const evenement of evenements.rows) {
+      const [participantsCount, confirmes, presents, vues] = await Promise.all([
+        this.models.EvenementUser.count({
+          where: { id_evenement: evenement.id_evenement }
+        }),
+        this.models.EvenementUser.count({
+          where: { 
+            id_evenement: evenement.id_evenement,
+            statut_participation: 'confirme'
+          }
+        }),
+        this.models.EvenementUser.count({
+          where: { 
+            id_evenement: evenement.id_evenement,
+            statut_participation: 'present'
+          }
+        }),
+        this.models.Vue.count({
+          where: { type_entite: 'evenement', id_entite: evenement.id_evenement }
+        })
+      ]);
+      
+      evenement.dataValues.stats = {
+        participantsCount,
+        confirmes,
+        presents,
+        vues,
+        tauxPresence: participantsCount > 0 ? ((presents / participantsCount) * 100).toFixed(2) : 0
+      };
     }
+
+    res.json({
+      success: true,
+      data: {
+        evenements: evenements.rows,
+        pagination: {
+          total: evenements.count,
+          page: parseInt(page),
+          pages: Math.ceil(evenements.count / limit),
+          limit: parseInt(limit)
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Erreur lors de la récupération des événements:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Erreur serveur' 
+    });
   }
+}
+
+// 2. Méthode getEventCalendar corrigée
+async getEventCalendar(req, res) {
+  try {
+    const { year, month } = req.query;
+    const startDate = new Date(year || new Date().getFullYear(), month ? month - 1 : 0, 1);
+    const endDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0);
+
+    const evenements = await this.models.Evenement.findAll({
+      where: {
+        id_user: req.user.id_user,
+        [Op.or]: [
+          {
+            date_debut: {
+              [Op.between]: [startDate, endDate]
+            }
+          },
+          {
+            date_fin: {
+              [Op.between]: [startDate, endDate]
+            }
+          }
+        ]
+      },
+      include: [
+        { 
+          model: this.models.TypeEvenement, 
+          as: 'TypeEvenement',  // Ajout de l'alias
+          attributes: ['nom_type'],
+          required: false
+        },
+        { 
+          model: this.models.Lieu, 
+          as: 'Lieu',  // Ajout de l'alias
+          attributes: ['nom'],
+          required: false
+        }
+      ],
+      order: [['date_debut', 'ASC']]
+    });
+
+    // Formatter pour calendrier
+    const calendar = evenements.map(event => ({
+      id: event.id_evenement,
+      title: event.nom_evenement,
+      start: event.date_debut,
+      end: event.date_fin,
+      type: event.TypeEvenement?.nom_type,
+      lieu: event.Lieu?.nom,
+      allDay: !event.heure_debut
+    }));
+
+    res.json({
+      success: true,
+      data: {
+        events: calendar,
+        period: {
+          start: startDate,
+          end: endDate
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Erreur lors de la récupération du calendrier:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Erreur serveur' 
+    });
+  }
+}
 
   // Statistiques détaillées pour une œuvre
   async getOeuvreStats(req, res) {

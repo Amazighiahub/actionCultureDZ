@@ -1,3 +1,4 @@
+// models/GenreCategorie.js
 const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
@@ -30,6 +31,20 @@ module.exports = (sequelize) => {
     tableName: 'genre_categorie',
     timestamps: false
   });
+
+  // Associations
+  GenreCategorie.associate = (models) => {
+    // Relations belongsTo pour les jointures
+    GenreCategorie.belongsTo(models.Genre, { 
+      foreignKey: 'id_genre',
+      as: 'genre'
+    });
+    
+    GenreCategorie.belongsTo(models.Categorie, { 
+      foreignKey: 'id_categorie',
+      as: 'categorie'
+    });
+  };
 
   return GenreCategorie;
 };

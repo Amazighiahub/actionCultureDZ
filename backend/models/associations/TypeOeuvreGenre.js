@@ -1,3 +1,4 @@
+// models/TypeOeuvreGenre.js
 const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
@@ -30,6 +31,20 @@ module.exports = (sequelize) => {
     tableName: 'type_oeuvre_genre',
     timestamps: false
   });
+
+  // Associations
+  TypeOeuvreGenre.associate = (models) => {
+    // Relations belongsTo pour les jointures
+    TypeOeuvreGenre.belongsTo(models.TypeOeuvre, { 
+      foreignKey: 'id_type_oeuvre',
+      as: 'typeOeuvre'
+    });
+    
+    TypeOeuvreGenre.belongsTo(models.Genre, { 
+      foreignKey: 'id_genre',
+      as: 'genre'
+    });
+  };
 
   return TypeOeuvreGenre;
 };

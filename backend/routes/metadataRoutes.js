@@ -1,4 +1,4 @@
-// routes/metadataRoutes.js - Routes pour les métadonnées
+// routes/metadataRoutes.js - Routes pour les métadonnées (Version avec accès professionnel)
 const express = require('express');
 const MetadataController = require('../controllers/MetadataController');
 const validationMiddleware = require('../middlewares/validationMiddleware');
@@ -25,6 +25,61 @@ const initMetadataRoutes = (models, authMiddleware) => {
   // Créer le contrôleur (qui initialise automatiquement le HierarchieService)
   const metadataController = new MetadataController(models);
 
+  // ===== MIDDLEWARE PERSONNALISÉ POUR ADMIN OU PROFESSIONNEL =====
+  
+  // Middleware qui permet l'accès aux administrateurs OU aux professionnels validés
+  const requireAdminOrProfessional = async (req, res, next) => {
+    try {
+      // Vérifier que l'utilisateur est authentifié
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          error: 'Authentification requise'
+        });
+      }
+
+      // Vérifier si l'utilisateur est admin (plusieurs façons de vérifier)
+      if (req.user.role === 'Admin' || req.user.isAdmin || 
+          (req.user.roleNames && req.user.roleNames.includes('Administrateur'))) {
+        return next();
+      }
+      
+      // Vérifier si l'utilisateur est un professionnel
+      if (req.user.role === 'Professionnel' || req.user.isProfessionnel || 
+          (req.user.roleNames && req.user.roleNames.includes('Professionnel'))) {
+        
+        // Vérifier le statut de validation
+        if (req.user.statut_validation === 'valide') {
+          return next();
+        } else if (req.user.statut_validation === 'en_attente') {
+          return res.status(403).json({
+            success: false,
+            error: 'Votre compte professionnel est en attente de validation',
+            statut: req.user.statut_validation
+          });
+        } else if (req.user.statut_validation === 'rejete') {
+          return res.status(403).json({
+            success: false,
+            error: 'Votre demande de validation professionnelle a été rejetée',
+            statut: req.user.statut_validation
+          });
+        }
+      }
+      
+      // Si ni admin ni professionnel validé
+      return res.status(403).json({
+        success: false,
+        error: 'Accès réservé aux administrateurs et professionnels validés'
+      });
+    } catch (error) {
+      console.error('Erreur lors de la vérification des permissions:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Erreur lors de la vérification des permissions'
+      });
+    }
+  };
+
   // ===== RÉCUPÉRATION GLOBALE =====
   
   // Route pour récupérer toutes les métadonnées d'un coup
@@ -36,17 +91,71 @@ const initMetadataRoutes = (models, authMiddleware) => {
   router.get('/types-oeuvres', (req, res) => metadataController.getTypesOeuvres(req, res));
   
   // Obtenir les genres disponibles pour un type d'œuvre
- router.get('/types-oeuvres/:typeId/genres',
-  validationMiddleware.validateId('typeId'),
-  (req, res) => metadataController.getGenresParType(req, res)
-);
+  router.get('/types-oeuvres/:typeId/genres',
+    validationMiddleware.validateId('typeId'),
+    (req, res) => metadataController.getGenresParType(req, res)
+  );
 
-// Route alternative pour les catégories par genre (au cas où)
-router.get('/genres/:genreId/categories',
-  validationMiddleware.validateId('genreId'),
-  (req, res) => metadataController.getCategoriesParGenre(req, res)
-);
+  // ===== TYPES D'UTILISATEURS =====
 
+  // Récupérer tous les types d'utilisateurs
+  router.get('/types-users', (req, res) => metadataController.getTypesUsers(req, res));
+
+  // ===== ÉDITEURS (CRUD avec accès Admin + Professionnel) =====
+
+  // Récupérer tous les éditeurs (accès public pour consultation)
+  router.get('/editeurs', (req, res) => metadataController.getEditeurs(req, res));
+
+  // Créer un nouvel éditeur (admin + professionnel validé)
+  router.post('/editeurs',
+    authMiddleware.authenticate,
+    authMiddleware.requireValidatedProfessionalForContent,
+    [
+      body('nom').trim().notEmpty().withMessage('Le nom est obligatoire'),
+      body('type_editeur').optional().trim(),
+      body('site_web').optional().isURL().withMessage('URL invalide'),
+      body('actif').optional().isBoolean()
+    ],
+    validationMiddleware.handleValidationErrors,
+    (req, res) => metadataController.createEditeur(req, res)
+  );
+
+  // Modifier un éditeur (admin + professionnel validé)
+  router.put('/editeurs/:id',
+    authMiddleware.authenticate,
+    requireAdminOrProfessional,
+    validationMiddleware.validateId('id'),
+    [
+      body('nom').optional().trim().notEmpty().withMessage('Le nom ne peut pas être vide'),
+      body('type_editeur').optional().trim(),
+      body('site_web').optional().isURL().withMessage('URL invalide'),
+      body('actif').optional().isBoolean()
+    ],
+    validationMiddleware.handleValidationErrors,
+    (req, res) => metadataController.updateEditeur(req, res)
+  );
+
+  // Supprimer/désactiver un éditeur (admin only - action critique)
+  router.delete('/editeurs/:id',
+    authMiddleware.authenticate,
+    authMiddleware.requireAdmin, // Garde admin only pour la suppression
+    validationMiddleware.validateId('id'),
+    (req, res) => metadataController.deleteEditeur(req, res)
+  );
+
+  // Route alternative pour les catégories par genre (au cas où)
+  router.get('/genres/:genreId/categories',
+    validationMiddleware.validateId('genreId'),
+    (req, res) => metadataController.getCategoriesParGenre(req, res)
+  );
+  router.get('/types-oeuvres/:id/categories',
+  validationMiddleware.validateId('id'),
+  (req, res) => metadataController.getCategoriesForType(req, res)
+);
+ router.get('/types-oeuvres/:typeId/has-categories',
+    validationMiddleware.validateId('typeId'),
+    (req, res) => metadataController.checkIfTypeHasCategories(req, res)
+  );
   // Valider une sélection hiérarchique
   router.post('/validate-hierarchy',
     [
@@ -122,10 +231,10 @@ router.get('/genres/:genreId/categories',
   // Récupérer tous les matériaux
   router.get('/materiaux', (req, res) => metadataController.getMateriaux(req, res));
 
-  // Créer un nouveau matériau (admin only)
+  // Créer un nouveau matériau (admin + professionnel validé)
   router.post('/materiaux',
     authMiddleware.authenticate,
-    authMiddleware.requireAdmin,
+    requireAdminOrProfessional,
     [
       body('nom').trim().notEmpty().withMessage('Le nom est obligatoire'),
       body('description').optional().trim()
@@ -134,10 +243,10 @@ router.get('/genres/:genreId/categories',
     (req, res) => metadataController.createMateriau(req, res)
   );
 
-  // Modifier un matériau (admin only)
+  // Modifier un matériau (admin + professionnel validé)
   router.put('/materiaux/:id',
     authMiddleware.authenticate,
-    authMiddleware.requireAdmin,
+    requireAdminOrProfessional,
     validationMiddleware.validateId('id'),
     [
       body('nom').optional().trim().notEmpty().withMessage('Le nom ne peut pas être vide'),
@@ -160,10 +269,10 @@ router.get('/genres/:genreId/categories',
   // Récupérer toutes les techniques
   router.get('/techniques', (req, res) => metadataController.getTechniques(req, res));
 
-  // Créer une nouvelle technique (admin only)
+  // Créer une nouvelle technique (admin + professionnel validé)
   router.post('/techniques',
     authMiddleware.authenticate,
-    authMiddleware.requireAdmin,
+    requireAdminOrProfessional,
     [
       body('nom').trim().notEmpty().withMessage('Le nom est obligatoire'),
       body('description').optional().trim()
@@ -172,10 +281,10 @@ router.get('/genres/:genreId/categories',
     (req, res) => metadataController.createTechnique(req, res)
   );
 
-  // Modifier une technique (admin only)
+  // Modifier une technique (admin + professionnel validé)
   router.put('/techniques/:id',
     authMiddleware.authenticate,
-    authMiddleware.requireAdmin,
+    requireAdminOrProfessional,
     validationMiddleware.validateId('id'),
     [
       body('nom').optional().trim().notEmpty().withMessage('Le nom ne peut pas être vide'),
@@ -210,11 +319,6 @@ router.get('/genres/:genreId/categories',
   
   // Récupérer tous les genres
   router.get('/genres', (req, res) => metadataController.getGenres(req, res));
-
-  // ===== ÉDITEURS =====
-  
-  // Récupérer tous les éditeurs (avec filtre optionnel par type)
-  router.get('/editeurs', (req, res) => metadataController.getEditeurs(req, res));
 
   // ===== TYPES D'ORGANISATIONS =====
   
@@ -322,14 +426,14 @@ router.get('/genres/:genreId/categories',
         },
         materiaux: {
           list: 'GET /api/metadata/materiaux',
-          create: 'POST /api/metadata/materiaux (admin)',
-          update: 'PUT /api/metadata/materiaux/:id (admin)',
+          create: 'POST /api/metadata/materiaux (admin + professionnel)',
+          update: 'PUT /api/metadata/materiaux/:id (admin + professionnel)',
           delete: 'DELETE /api/metadata/materiaux/:id (admin)'
         },
         techniques: {
           list: 'GET /api/metadata/techniques',
-          create: 'POST /api/metadata/techniques (admin)',
-          update: 'PUT /api/metadata/techniques/:id (admin)',
+          create: 'POST /api/metadata/techniques (admin + professionnel)',
+          update: 'PUT /api/metadata/techniques/:id (admin + professionnel)',
           delete: 'DELETE /api/metadata/techniques/:id (admin)'
         },
         langues: {
@@ -344,7 +448,10 @@ router.get('/genres/:genreId/categories',
         },
         editeurs: {
           list: 'GET /api/metadata/editeurs',
-          filtered: 'GET /api/metadata/editeurs?type_editeur=type'
+          filtered: 'GET /api/metadata/editeurs?type_editeur=type',
+          create: 'POST /api/metadata/editeurs (admin + professionnel validé)',
+          update: 'PUT /api/metadata/editeurs/:id (admin + professionnel validé)',
+          delete: 'DELETE /api/metadata/editeurs/:id (admin only)'
         },
         types_organisations: {
           list: 'GET /api/metadata/types-organisations'
@@ -365,8 +472,9 @@ router.get('/genres/:genreId/categories',
         permissions: {
           public: 'Les routes GET sont accessibles publiquement',
           authenticated: 'La création de tags nécessite une authentification',
-          admin: 'Les routes POST/PUT/DELETE nécessitent le rôle Admin',
-          statistics: 'Les statistiques nécessitent le rôle Admin'
+          admin: 'Les routes de suppression et statistiques nécessitent le rôle Admin',
+          professional: 'Les routes de création/modification des éditeurs, matériaux et techniques sont accessibles aux professionnels validés',
+          combined: 'Éditeurs, matériaux et techniques : création/modification = Admin + Professionnel validé, suppression = Admin uniquement'
         }
       }
     });
@@ -378,3 +486,67 @@ router.get('/genres/:genreId/categories',
 };
 
 module.exports = initMetadataRoutes;
+const requireAdminOrProfessional = async (req, res, next) => {
+  try {
+    // Vérifier que l'utilisateur est authentifié
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        error: 'Authentification requise'
+      });
+    }
+
+    // Debug (à retirer en production)
+    if (process.env.NODE_ENV === 'development') {
+      console.log('User auth check:', {
+        id: req.user.id_user,
+        roleNames: req.user.roleNames,
+        isProfessionnel: req.user.isProfessionnel,
+        statut_validation: req.user.statut_validation
+      });
+    }
+
+    // Vérifier si l'utilisateur est admin
+    if (req.user.isAdmin) {
+      return next();
+    }
+    
+    // Vérifier si l'utilisateur est un professionnel validé
+    if (req.user.isProfessionnel) {
+      // Vérifier le statut de validation
+      if (req.user.statut_validation === 'valide') {
+        return next();
+      } else if (req.user.statut_validation === 'en_attente') {
+        return res.status(403).json({
+          success: false,
+          error: 'Votre compte professionnel est en attente de validation',
+          statut: req.user.statut_validation
+        });
+      } else if (req.user.statut_validation === 'rejete') {
+        return res.status(403).json({
+          success: false,
+          error: 'Votre demande de validation professionnelle a été rejetée',
+          statut: req.user.statut_validation
+        });
+      }
+    }
+    
+    // Si ni admin ni professionnel validé
+    return res.status(403).json({
+      success: false,
+      error: 'Accès réservé aux administrateurs et professionnels validés',
+      debug: process.env.NODE_ENV === 'development' ? {
+        hasRoles: !!req.user.roleNames,
+        roles: req.user.roleNames || [],
+        isProfessionnel: req.user.isProfessionnel,
+        statut: req.user.statut_validation
+      } : undefined
+    });
+  } catch (error) {
+    console.error('Erreur lors de la vérification des permissions:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Erreur lors de la vérification des permissions'
+    });
+  }
+};

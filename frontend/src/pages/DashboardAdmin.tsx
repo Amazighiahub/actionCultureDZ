@@ -1,6 +1,6 @@
-// pages/DashboardAdmin.tsx
+// pages/DashboardAdmin.tsx - VERSION COMPLÈTE ET CORRIGÉE
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -78,10 +78,32 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
-  Loader2
+  Loader2,
+  Star,
+  DollarSign,
+  Calendar as CalendarIcon,
+  MapPin as MapPinIcon,
+  Tag,
+  Heart,
+  Share2,
+  Play,
+  Pause,
+  Ban,
+  Award,
+  Briefcase,
+  Package,
+  ShoppingBag,
+  Hammer,
+  Image,
+  Clock3,
+  Euro,
+  ChevronDown,
+  SlidersHorizontal,
+  X as XIcon,
+  Plus
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
-import { useDashboardAdmin } from '@/hooks/useDashboardAdmin';
+import { useDashboardAdmin, useAdminFilters } from '@/hooks/useDashboardAdmin';
 import { useConfirmedActionWithDialog } from '@/hooks/useConfirmedAction';
 import { cn } from '@/lib/utils';
 
@@ -89,7 +111,7 @@ import { cn } from '@/lib/utils';
 const useDebouncedValue = <T,>(value: T, delay: number = 500): T => {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedValue(value);
     }, delay);
@@ -102,15 +124,84 @@ const useDebouncedValue = <T,>(value: T, delay: number = 500): T => {
   return debouncedValue;
 };
 
+// Constantes pour les options de filtres
+const TYPES_OEUVRE = [
+  'peinture', 'sculpture', 'photographie', 'artisanat', 'calligraphie', 'ceramique', 'textile', 'bijouterie'
+];
+
+const TYPES_EVENEMENT = [
+  'exposition', 'concert', 'festival', 'conference', 'atelier', 'visite_guidee', 'spectacle', 'concours'
+];
+
+const TYPES_PATRIMOINE = [
+  'monument', 'site_archeologique', 'musee', 'batiment_historique', 'site_naturel', 'medina', 'kasbah'
+];
+
+const TYPES_SERVICE = [
+  'guide_touristique', 'transport', 'hebergement', 'restauration', 'artisanat', 'formation', 'consultation'
+];
+
+const WILAYAS = [
+  'Adrar', 'Chlef', 'Laghouat', 'Oum El Bouaghi', 'Batna', 'Béjaïa', 'Biskra', 'Béchar',
+  'Blida', 'Bouira', 'Tamanrasset', 'Tébessa', 'Tlemcen', 'Tiaret', 'Tizi Ouzou', 'Alger',
+  'Djelfa', 'Jijel', 'Sétif', 'Saïda', 'Skikda', 'Sidi Bel Abbès', 'Annaba', 'Guelma',
+  'Constantine', 'Médéa', 'Mostaganem', 'MSila', 'Mascara', 'Ouargla', 'Oran', 'El Bayadh',
+  'Illizi', 'Bordj Bou Arréridj', 'Boumerdès', 'El Tarf', 'Tindouf', 'Tissemsilt', 'El Oued',
+  'Khenchela', 'Souk Ahras', 'Tipaza', 'Mila', 'Aïn Defla', 'Naâma', 'Aïn Témouchent',
+  'Ghardaïa', 'Relizane'
+];
+
 const DashboardAdmin = () => {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('overview');
-  const [searchQuery, setSearchQuery] = useState('');
-  const debouncedSearchQuery = useDebouncedValue(searchQuery, 500);
   
-  // États pour la sélection multiple
+  // États pour les recherches de chaque onglet
+  const [searchOeuvres, setSearchOeuvres] = useState('');
+  const [searchEvenements, setSearchEvenements] = useState('');
+  const [searchPatrimoine, setSearchPatrimoine] = useState('');
+  const [searchServices, setSearchServices] = useState('');
+  const [searchUsers, setSearchUsers] = useState('');
+  
+  // Debounced searches
+  const debouncedSearchOeuvres = useDebouncedValue(searchOeuvres, 500);
+  const debouncedSearchEvenements = useDebouncedValue(searchEvenements, 500);
+  const debouncedSearchPatrimoine = useDebouncedValue(searchPatrimoine, 500);
+  const debouncedSearchServices = useDebouncedValue(searchServices, 500);
+  const debouncedSearchUsers = useDebouncedValue(searchUsers, 500);
+  
+  // États pour les filtres
+  const {
+    oeuvreFilters,
+    setOeuvreFilters,
+    resetOeuvreFilters,
+    evenementFilters,
+    setEvenementFilters,
+    resetEvenementFilters,
+    patrimoineFilters,
+    setPatrimoineFilters,
+    resetPatrimoineFilters,
+    serviceFilters,
+    setServiceFilters,
+    resetServiceFilters
+  } = useAdminFilters();
+  
+  // États pour les sélections multiples
+  const [selectedOeuvres, setSelectedOeuvres] = useState<number[]>([]);
+  const [selectedEvenements, setSelectedEvenements] = useState<number[]>([]);
+  const [selectedServices, setSelectedServices] = useState<number[]>([]);
   const [selectedUsers, setSelectedUsers] = useState<number[]>([]);
-  const [isSelectMode, setIsSelectMode] = useState(false);
+  
+  // États pour les modes sélection
+  const [isSelectModeOeuvres, setIsSelectModeOeuvres] = useState(false);
+  const [isSelectModeEvenements, setIsSelectModeEvenements] = useState(false);
+  const [isSelectModeServices, setIsSelectModeServices] = useState(false);
+  const [isSelectModeUsers, setIsSelectModeUsers] = useState(false);
+  
+  // États pour l'affichage des filtres
+  const [showOeuvreFilters, setShowOeuvreFilters] = useState(false);
+  const [showEvenementFilters, setShowEvenementFilters] = useState(false);
+  const [showPatrimoineFilters, setShowPatrimoineFilters] = useState(false);
+  const [showServiceFilters, setShowServiceFilters] = useState(false);
   
   // États pour les modals
   const [editUserModal, setEditUserModal] = useState<{ open: boolean; user: any | null }>({ open: false, user: null });
@@ -136,11 +227,15 @@ const DashboardAdmin = () => {
   });
 
   // État pour la pagination
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPageOeuvres, setCurrentPageOeuvres] = useState(1);
+  const [currentPageEvenements, setCurrentPageEvenements] = useState(1);
+  const [currentPagePatrimoine, setCurrentPagePatrimoine] = useState(1);
+  const [currentPageServices, setCurrentPageServices] = useState(1);
+  const [currentPageUsers, setCurrentPageUsers] = useState(1);
   const itemsPerPage = 10;
 
   const {
-    // Données
+    // Données existantes
     overview,
     stats,
     patrimoineStats,
@@ -149,14 +244,26 @@ const DashboardAdmin = () => {
     moderationQueue,
     alerts,
     
-    // États
+    // Nouvelles données
+    oeuvres,
+    evenements,
+    patrimoineItems,
+    services,
+    
+    // États de chargement existants
     loading,
     loadingOverview,
     loadingPendingUsers,
     loadingPendingOeuvres,
     loadingModeration,
     
-    // Actions
+    // Nouveaux états de chargement
+    loadingOeuvres,
+    loadingEvenements,
+    loadingPatrimoine,
+    loadingServices,
+    
+    // Actions existantes
     validateUser,
     validateOeuvre,
     moderateSignalement,
@@ -171,11 +278,98 @@ const DashboardAdmin = () => {
     clearCache,
     bulkUserAction,
     exportUsers,
-    searchUsers,
+    
+    // Nouvelles actions
+    updateOeuvreStatus,
+    deleteOeuvre,
+    updateEvenementStatus,
+    deleteEvenement,
+    updateServiceStatus,
+    deleteService,
+    
+    // Nouvelles fonctions de chargement avec filtres
+    loadOeuvres,
+    loadEvenements,
+    loadPatrimoineItems,
+    loadServices,
     
     // État
     selectedPeriod,
   } = useDashboardAdmin();
+
+  // Charger les données initiales quand l'onglet devient actif
+  useEffect(() => {
+    if (activeTab === 'oeuvres' && !oeuvres) {
+      loadOeuvres({ page: 1, limit: itemsPerPage });
+    }
+  }, [activeTab, oeuvres, loadOeuvres]);
+
+  useEffect(() => {
+    if (activeTab === 'evenements' && !evenements) {
+      loadEvenements({ page: 1, limit: itemsPerPage });
+    }
+  }, [activeTab, evenements, loadEvenements]);
+
+  useEffect(() => {
+    if (activeTab === 'patrimoine' && !patrimoineItems) {
+      loadPatrimoineItems({ page: 1, limit: itemsPerPage });
+    }
+  }, [activeTab, patrimoineItems, loadPatrimoineItems]);
+
+  useEffect(() => {
+    if (activeTab === 'services' && !services) {
+      loadServices({ page: 1, limit: itemsPerPage });
+    }
+  }, [activeTab, services, loadServices]);
+
+  // Appliquer les filtres seulement quand l'onglet est actif
+  useEffect(() => {
+    if (activeTab === 'oeuvres' && debouncedSearchOeuvres !== undefined) {
+      const filters = {
+        ...oeuvreFilters,
+        search: debouncedSearchOeuvres || undefined,
+        page: currentPageOeuvres,
+        limit: itemsPerPage
+      };
+      loadOeuvres(filters);
+    }
+  }, [oeuvreFilters, debouncedSearchOeuvres, currentPageOeuvres, activeTab]);
+
+  useEffect(() => {
+    if (activeTab === 'evenements' && debouncedSearchEvenements !== undefined) {
+      const filters = {
+        ...evenementFilters,
+        search: debouncedSearchEvenements || undefined,
+        page: currentPageEvenements,
+        limit: itemsPerPage
+      };
+      loadEvenements(filters);
+    }
+  }, [evenementFilters, debouncedSearchEvenements, currentPageEvenements, activeTab]);
+
+  useEffect(() => {
+    if (activeTab === 'patrimoine' && debouncedSearchPatrimoine !== undefined) {
+      const filters = {
+        ...patrimoineFilters,
+        search: debouncedSearchPatrimoine || undefined,
+        page: currentPagePatrimoine,
+        limit: itemsPerPage
+      };
+      loadPatrimoineItems(filters);
+    }
+  }, [patrimoineFilters, debouncedSearchPatrimoine, currentPagePatrimoine, activeTab]);
+
+  useEffect(() => {
+    if (activeTab === 'services' && debouncedSearchServices !== undefined) {
+      const filters = {
+        ...serviceFilters,
+        search: debouncedSearchServices || undefined,
+        page: currentPageServices,
+        limit: itemsPerPage
+      };
+      loadServices(filters);
+    }
+  }, [serviceFilters, debouncedSearchServices, currentPageServices, activeTab]);
 
   // Actions confirmées avec dialog
   const deleteUserAction = useConfirmedActionWithDialog(
@@ -208,18 +402,45 @@ const DashboardAdmin = () => {
     }
   );
 
-  const bulkDeleteAction = useConfirmedActionWithDialog(
-    async (userIds: number[]) => {
-      await bulkUserAction(userIds, 'delete');
-      setSelectedUsers([]);
-      setIsSelectMode(false);
+  const deleteOeuvreAction = useConfirmedActionWithDialog(
+    async ({ oeuvreId }: { oeuvreId: number }) => {
+      await deleteOeuvre(oeuvreId);
+      setSelectedOeuvres(prev => prev.filter(id => id !== oeuvreId));
     },
     {
-      dialogTitle: 'Supprimer plusieurs utilisateurs',
-      dialogDescription: `Êtes-vous sûr de vouloir supprimer ${selectedUsers.length} utilisateur(s) ? Cette action est irréversible.`,
-      confirmButtonText: 'Supprimer tout',
+      dialogTitle: 'Supprimer l\'œuvre',
+      dialogDescription: 'Cette action est irréversible. L\'œuvre sera définitivement supprimée.',
+      confirmButtonText: 'Supprimer',
       confirmButtonVariant: 'destructive',
-      cooldownPeriod: 5000,
+      cooldownPeriod: 2000,
+    }
+  );
+
+  const deleteEvenementAction = useConfirmedActionWithDialog(
+    async ({ evenementId }: { evenementId: number }) => {
+      await deleteEvenement(evenementId);
+      setSelectedEvenements(prev => prev.filter(id => id !== evenementId));
+    },
+    {
+      dialogTitle: 'Supprimer l\'événement',
+      dialogDescription: 'Cette action est irréversible. L\'événement sera définitivement supprimé.',
+      confirmButtonText: 'Supprimer',
+      confirmButtonVariant: 'destructive',
+      cooldownPeriod: 2000,
+    }
+  );
+
+  const deleteServiceAction = useConfirmedActionWithDialog(
+    async ({ serviceId }: { serviceId: number }) => {
+      await deleteService(serviceId);
+      setSelectedServices(prev => prev.filter(id => id !== serviceId));
+    },
+    {
+      dialogTitle: 'Supprimer le service',
+      dialogDescription: 'Cette action est irréversible. Le service sera définitivement supprimé.',
+      confirmButtonText: 'Supprimer',
+      confirmButtonVariant: 'destructive',
+      cooldownPeriod: 2000,
     }
   );
 
@@ -228,13 +449,72 @@ const DashboardAdmin = () => {
   const pendingOeuvresData = pendingOeuvres as any;
   const moderationQueueData = moderationQueue as any;
 
-  // Filtrer et paginer les utilisateurs
+  // Nouvelles données filtrées et paginées
+  const filteredAndPaginatedOeuvres = useMemo(() => {
+    const items = oeuvres?.items || [];
+    const totalItems = oeuvres?.pagination?.total || items.length;
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+    return {
+      items: items,
+      totalItems,
+      totalPages,
+      currentPage: currentPageOeuvres,
+      hasNext: currentPageOeuvres < totalPages,
+      hasPrev: currentPageOeuvres > 1
+    };
+  }, [oeuvres, currentPageOeuvres]);
+
+  const filteredAndPaginatedEvenements = useMemo(() => {
+    const items = evenements?.items || [];
+    const totalItems = evenements?.pagination?.total || items.length;
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+    return {
+      items: items,
+      totalItems,
+      totalPages,
+      currentPage: currentPageEvenements,
+      hasNext: currentPageEvenements < totalPages,
+      hasPrev: currentPageEvenements > 1
+    };
+  }, [evenements, currentPageEvenements]);
+
+  const filteredAndPaginatedPatrimoine = useMemo(() => {
+    const items = patrimoineItems?.items || [];
+    const totalItems = patrimoineItems?.pagination?.total || items.length;
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+    return {
+      items: items,
+      totalItems,
+      totalPages,
+      currentPage: currentPagePatrimoine,
+      hasNext: currentPagePatrimoine < totalPages,
+      hasPrev: currentPagePatrimoine > 1
+    };
+  }, [patrimoineItems, currentPagePatrimoine]);
+
+  const filteredAndPaginatedServices = useMemo(() => {
+    const items = services?.items || [];
+    const totalItems = services?.pagination?.total || items.length;
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+    return {
+      items: items,
+      totalItems,
+      totalPages,
+      currentPage: currentPageServices,
+      hasNext: currentPageServices < totalPages,
+      hasPrev: currentPageServices > 1
+    };
+  }, [services, currentPageServices]);
+
   const filteredAndPaginatedUsers = useMemo(() => {
     let users = pendingUsersData?.items || pendingUsersData?.users || [];
     
-    // Appliquer la recherche
-    if (debouncedSearchQuery) {
-      const query = debouncedSearchQuery.toLowerCase();
+    if (debouncedSearchUsers) {
+      const query = debouncedSearchUsers.toLowerCase();
       users = users.filter((user: any) => 
         user.nom?.toLowerCase().includes(query) ||
         user.prenom?.toLowerCase().includes(query) ||
@@ -244,10 +524,9 @@ const DashboardAdmin = () => {
       );
     }
 
-    // Calculer la pagination
     const totalItems = users.length;
     const totalPages = Math.ceil(totalItems / itemsPerPage);
-    const startIndex = (currentPage - 1) * itemsPerPage;
+    const startIndex = (currentPageUsers - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
     const paginatedUsers = users.slice(startIndex, endIndex);
 
@@ -255,13 +534,13 @@ const DashboardAdmin = () => {
       users: paginatedUsers,
       totalItems,
       totalPages,
-      currentPage,
-      hasNext: currentPage < totalPages,
-      hasPrev: currentPage > 1
+      currentPage: currentPageUsers,
+      hasNext: currentPageUsers < totalPages,
+      hasPrev: currentPageUsers > 1
     };
-  }, [pendingUsersData, debouncedSearchQuery, currentPage, itemsPerPage]);
+  }, [pendingUsersData, debouncedSearchUsers, currentPageUsers]);
 
-  // Fonction pour formater les nombres
+  // Fonctions utilitaires
   const formatNumber = (num?: number): string => {
     if (num === undefined || num === null) return '0';
     if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
@@ -269,7 +548,6 @@ const DashboardAdmin = () => {
     return num.toString();
   };
 
-  // Fonction pour formater les dates
   const formatDate = (dateString?: string) => {
     if (!dateString) return '';
     try {
@@ -285,7 +563,41 @@ const DashboardAdmin = () => {
     }
   };
 
-  // Gérer la sélection d'utilisateurs
+  const formatPrice = (price?: number, unit?: string) => {
+    if (!price) return 'Gratuit';
+    return `${price} ${unit || 'DA'}`;
+  };
+
+  const formatRating = (rating?: number) => {
+    if (!rating) return 'N/A';
+    return `${rating.toFixed(1)}/5`;
+  };
+
+  // Gérer la sélection d'éléments
+  const toggleOeuvreSelection = useCallback((oeuvreId: number) => {
+    setSelectedOeuvres(prev => 
+      prev.includes(oeuvreId) 
+        ? prev.filter(id => id !== oeuvreId)
+        : [...prev, oeuvreId]
+    );
+  }, []);
+
+  const toggleEvenementSelection = useCallback((evenementId: number) => {
+    setSelectedEvenements(prev => 
+      prev.includes(evenementId) 
+        ? prev.filter(id => id !== evenementId)
+        : [...prev, evenementId]
+    );
+  }, []);
+
+  const toggleServiceSelection = useCallback((serviceId: number) => {
+    setSelectedServices(prev => 
+      prev.includes(serviceId) 
+        ? prev.filter(id => id !== serviceId)
+        : [...prev, serviceId]
+    );
+  }, []);
+
   const toggleUserSelection = useCallback((userId: number) => {
     setSelectedUsers(prev => 
       prev.includes(userId) 
@@ -293,16 +605,6 @@ const DashboardAdmin = () => {
         : [...prev, userId]
     );
   }, []);
-
-  const selectAllUsers = useCallback(() => {
-    const currentUserIds = filteredAndPaginatedUsers.users.map((u: any) => u.id_user);
-    if (selectedUsers.length === currentUserIds.length && 
-        selectedUsers.every(id => currentUserIds.includes(id))) {
-      setSelectedUsers([]);
-    } else {
-      setSelectedUsers(currentUserIds);
-    }
-  }, [filteredAndPaginatedUsers.users, selectedUsers]);
 
   // Gérer la modification d'un utilisateur
   const handleEditUser = (user: any) => {
@@ -320,13 +622,11 @@ const DashboardAdmin = () => {
     setEditUserModal({ open: true, user });
   };
 
-  // Gérer la suspension d'un utilisateur
   const handleSuspendUser = (user: any) => {
     setSuspendFormData({ duree: 7, raison: '' });
     setSuspendUserModal({ open: true, user });
   };
 
-  // Soumettre la modification
   const handleUpdateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -340,7 +640,6 @@ const DashboardAdmin = () => {
     setEditUserModal({ open: false, user: null });
   };
 
-  // Confirmer la suspension
   const confirmSuspendUser = async () => {
     if (!suspendUserModal.user || !suspendFormData.raison) {
       toast({
@@ -360,14 +659,12 @@ const DashboardAdmin = () => {
     setSuspendUserModal({ open: false, user: null });
   };
 
-  // Gérer la réinitialisation du mot de passe
   const handleResetPassword = async (user: any) => {
     if (confirm(`Réinitialiser le mot de passe de ${user.prenom} ${user.nom} ?`)) {
       await resetUserPassword({ userId: user.id_user });
     }
   };
 
-  // Gérer la réactivation d'un utilisateur
   const handleReactivateUser = async (user: any) => {
     if (confirm(`Réactiver l'utilisateur ${user.prenom} ${user.nom} ?`)) {
       await reactivateUser({ userId: user.id_user });
@@ -412,45 +709,53 @@ const DashboardAdmin = () => {
     );
   };
 
-  // Composant de pagination
-  const PaginationControls = () => (
+  // Composant de pagination générique
+  const PaginationControls = ({ 
+    currentPage, 
+    totalPages, 
+    totalItems, 
+    hasNext, 
+    hasPrev, 
+    onPageChange,
+    itemsPerPage 
+  }: any) => (
     <div className="flex items-center justify-between mt-6">
       <p className="text-sm text-muted-foreground">
-        Affichage de {((currentPage - 1) * itemsPerPage) + 1} à {Math.min(currentPage * itemsPerPage, filteredAndPaginatedUsers.totalItems)} sur {filteredAndPaginatedUsers.totalItems} résultats
+        Affichage de {((currentPage - 1) * itemsPerPage) + 1} à {Math.min(currentPage * itemsPerPage, totalItems)} sur {totalItems} résultats
       </p>
       <div className="flex items-center gap-2">
         <Button
           variant="outline"
           size="sm"
-          onClick={() => setCurrentPage(1)}
-          disabled={!filteredAndPaginatedUsers.hasPrev}
+          onClick={() => onPageChange(1)}
+          disabled={!hasPrev}
         >
           <ChevronsLeft className="h-4 w-4" />
         </Button>
         <Button
           variant="outline"
           size="sm"
-          onClick={() => setCurrentPage(prev => prev - 1)}
-          disabled={!filteredAndPaginatedUsers.hasPrev}
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={!hasPrev}
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
         <span className="flex items-center px-3 text-sm">
-          Page {currentPage} sur {filteredAndPaginatedUsers.totalPages}
+          Page {currentPage} sur {totalPages}
         </span>
         <Button
           variant="outline"
           size="sm"
-          onClick={() => setCurrentPage(prev => prev + 1)}
-          disabled={!filteredAndPaginatedUsers.hasNext}
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={!hasNext}
         >
           <ChevronRight className="h-4 w-4" />
         </Button>
         <Button
           variant="outline"
           size="sm"
-          onClick={() => setCurrentPage(filteredAndPaginatedUsers.totalPages)}
-          disabled={!filteredAndPaginatedUsers.hasNext}
+          onClick={() => onPageChange(totalPages)}
+          disabled={!hasNext}
         >
           <ChevronsRight className="h-4 w-4" />
         </Button>
@@ -560,7 +865,7 @@ const DashboardAdmin = () => {
               />
               
               <StatCard
-                title="Contenus"
+                title="Œuvres"
                 value={formatNumber(overview.content?.oeuvres_total)}
                 subtitle={`${overview.content?.oeuvres_en_attente || 0} en attente`}
                 icon={BookOpen}
@@ -627,7 +932,7 @@ const DashboardAdmin = () => {
                           disabled={validateUserAction.isLoading}
                           title="Valider"
                         >
-                          {validateUserAction.isLoading && validateUserAction.isLoading ? (
+                          {validateUserAction.isLoading ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
                           ) : (
                             <UserCheck className="h-4 w-4" />
@@ -716,9 +1021,9 @@ const DashboardAdmin = () => {
                     <Button 
                       variant="link" 
                       className="w-full" 
-                      onClick={() => setActiveTab('content')}
+                      onClick={() => setActiveTab('oeuvres')}
                     >
-                      Voir toutes les œuvres en attente →
+                      Voir toutes les œuvres →
                     </Button>
                   )}
                 </div>
@@ -783,12 +1088,14 @@ const DashboardAdmin = () => {
 
         {/* Onglets détaillés */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
-            <TabsTrigger value="users">Utilisateurs</TabsTrigger>
-            <TabsTrigger value="content">Contenu</TabsTrigger>
-            <TabsTrigger value="moderation">Modération</TabsTrigger>
-            <TabsTrigger value="patrimoine">Patrimoine</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-7">
+            <TabsTrigger value="overview" type="button">Vue d'ensemble</TabsTrigger>
+            <TabsTrigger value="users" type="button">Utilisateurs</TabsTrigger>
+            <TabsTrigger value="oeuvres" type="button">Œuvres</TabsTrigger>
+            <TabsTrigger value="evenements" type="button">Événements</TabsTrigger>
+            <TabsTrigger value="patrimoine" type="button">Patrimoine</TabsTrigger>
+            <TabsTrigger value="services" type="button">Services</TabsTrigger>
+            <TabsTrigger value="moderation" type="button">Modération</TabsTrigger>
           </TabsList>
 
           {/* Vue d'ensemble */}
@@ -868,10 +1175,10 @@ const DashboardAdmin = () => {
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       placeholder="Rechercher par nom, email, entreprise..."
-                      value={searchQuery}
+                      value={searchUsers}
                       onChange={(e) => {
-                        setSearchQuery(e.target.value);
-                        setCurrentPage(1); // Reset à la première page lors d'une recherche
+                        setSearchUsers(e.target.value);
+                        setCurrentPageUsers(1);
                       }}
                       className="pl-10"
                     />
@@ -879,57 +1186,54 @@ const DashboardAdmin = () => {
                   
                   <div className="flex gap-2">
                     <Button
-                      variant={isSelectMode ? "secondary" : "outline"}
+                      variant={isSelectModeUsers ? "secondary" : "outline"}
                       onClick={() => {
-                        setIsSelectMode(!isSelectMode);
+                        setIsSelectModeUsers(!isSelectModeUsers);
                         setSelectedUsers([]);
                       }}
                     >
                       <CheckCircle className="h-4 w-4 mr-2" />
-                      {isSelectMode ? 'Annuler sélection' : 'Mode sélection'}
+                      {isSelectModeUsers ? 'Annuler sélection' : 'Mode sélection'}
                     </Button>
                     
-                    {isSelectMode && selectedUsers.length > 0 && (
-                      <>
-                        <Button
-                          variant="outline"
-                          onClick={selectAllUsers}
-                        >
-                          {selectedUsers.length === filteredAndPaginatedUsers.users.length ? 'Désélectionner' : 'Sélectionner'} tout
-                        </Button>
-                        
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="secondary">
-                              Actions ({selectedUsers.length})
-                              <MoreVertical className="h-4 w-4 ml-2" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent>
-                            <DropdownMenuItem onClick={() => bulkUserAction(selectedUsers, 'activate')}>
-                              <UserCheck className="h-4 w-4 mr-2" />
-                              Activer
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => bulkUserAction(selectedUsers, 'deactivate')}>
-                              <UserX className="h-4 w-4 mr-2" />
-                              Désactiver
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem 
-                              onClick={() => bulkDeleteAction.execute(selectedUsers)}
-                              className="text-red-600"
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Supprimer
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </>
+                    {isSelectModeUsers && selectedUsers.length > 0 && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="secondary">
+                            Actions ({selectedUsers.length})
+                            <MoreVertical className="h-4 w-4 ml-2" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                          <DropdownMenuItem onClick={() => bulkUserAction(selectedUsers, 'activate')}>
+                            <UserCheck className="h-4 w-4 mr-2" />
+                            Activer
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => bulkUserAction(selectedUsers, 'deactivate')}>
+                            <UserX className="h-4 w-4 mr-2" />
+                            Désactiver
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem 
+                            onClick={() => {
+                              if (selectedUsers.length > 0) {
+                                bulkUserAction(selectedUsers, 'delete');
+                                setSelectedUsers([]);
+                                setIsSelectModeUsers(false);
+                              }
+                            }}
+                            className="text-red-600"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Supprimer
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     )}
                     
                     <Button
                       variant="outline"
-                      onClick={() => exportUsers('excel', { search: searchQuery })}
+                      onClick={() => exportUsers('excel', { search: searchUsers })}
                     >
                       <Download className="h-4 w-4 mr-2" />
                       Exporter
@@ -953,7 +1257,7 @@ const DashboardAdmin = () => {
                           selectedUsers.includes(user.id_user) && "ring-2 ring-primary shadow-lg"
                         )}>
                           <div className="flex items-start justify-between">
-                            {isSelectMode && (
+                            {isSelectModeUsers && (
                               <Checkbox
                                 checked={selectedUsers.includes(user.id_user)}
                                 onCheckedChange={() => toggleUserSelection(user.id_user)}
@@ -1020,7 +1324,6 @@ const DashboardAdmin = () => {
                               )}
                             </div>
                             <div className="flex gap-2 ml-4 flex-shrink-0">
-                              {/* Boutons principaux */}
                               <Button 
                                 size="sm" 
                                 onClick={() => validateUserAction.execute({ userId: user.id_user, validated: true })}
@@ -1053,7 +1356,6 @@ const DashboardAdmin = () => {
                                 )}
                               </Button>
                               
-                              {/* Menu déroulant pour plus d'actions */}
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                   <Button size="sm" variant="ghost">
@@ -1109,15 +1411,22 @@ const DashboardAdmin = () => {
                       ))}
                     </div>
                     
-                    {/* Pagination */}
-                    <PaginationControls />
+                    <PaginationControls 
+                      currentPage={filteredAndPaginatedUsers.currentPage}
+                      totalPages={filteredAndPaginatedUsers.totalPages}
+                      totalItems={filteredAndPaginatedUsers.totalItems}
+                      hasNext={filteredAndPaginatedUsers.hasNext}
+                      hasPrev={filteredAndPaginatedUsers.hasPrev}
+                      onPageChange={setCurrentPageUsers}
+                      itemsPerPage={itemsPerPage}
+                    />
                   </>
                 ) : (
                   <div className="text-center py-12">
                     <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                     <p className="text-muted-foreground">
-                      {searchQuery 
-                        ? `Aucun résultat pour "${searchQuery}"`
+                      {searchUsers 
+                        ? `Aucun résultat pour "${searchUsers}"`
                         : 'Aucun utilisateur à afficher'
                       }
                     </p>
@@ -1127,89 +1436,1195 @@ const DashboardAdmin = () => {
             </Card>
           </TabsContent>
 
-          {/* Contenu */}
-          <TabsContent value="content" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Gestion du contenu</CardTitle>
-                <CardDescription>
-                  Œuvres en attente de validation
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {loadingPendingOeuvres ? (
-                  <div className="space-y-3">
-                    <Skeleton className="h-24" />
-                    <Skeleton className="h-24" />
-                    <Skeleton className="h-24" />
+          {/* Œuvres */}
+          <TabsContent value="oeuvres" className="mt-6">
+            <div className="space-y-6">
+              {/* Panneau de filtres */}
+              {showOeuvreFilters && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center justify-between">
+                      Filtres avancés
+                      <Button variant="ghost" size="sm" onClick={() => setShowOeuvreFilters(false)}>
+                        <XIcon className="h-4 w-4" />
+                      </Button>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                      <div className="space-y-2">
+                        <Label>Type d'œuvre</Label>
+                        <Select 
+                          value={oeuvreFilters.type_oeuvre || ''} 
+                          onValueChange={(value) => setOeuvreFilters({ ...oeuvreFilters, type_oeuvre: value || undefined })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Tous les types" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="">Tous les types</SelectItem>
+                            {TYPES_OEUVRE.map(type => (
+                              <SelectItem key={type} value={type}>{type}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label>Statut</Label>
+                        <Select 
+                          value={oeuvreFilters.statut || ''} 
+                          onValueChange={(value) => setOeuvreFilters({ ...oeuvreFilters, statut: value || undefined })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Tous les statuts" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="">Tous les statuts</SelectItem>
+                            <SelectItem value="en_attente">En attente</SelectItem>
+                            <SelectItem value="valide">Validé</SelectItem>
+                            <SelectItem value="rejete">Rejeté</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label>Wilaya</Label>
+                        <Select 
+                          value={oeuvreFilters.wilaya || ''} 
+                          onValueChange={(value) => setOeuvreFilters({ ...oeuvreFilters, wilaya: value || undefined })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Toutes les wilayas" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="">Toutes les wilayas</SelectItem>
+                            {WILAYAS.map(wilaya => (
+                              <SelectItem key={wilaya} value={wilaya}>{wilaya}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label>Prix maximum</Label>
+                        <Input
+                          type="number"
+                          placeholder="Prix max"
+                          value={oeuvreFilters.prix_max || ''}
+                          onChange={(e) => setOeuvreFilters({ ...oeuvreFilters, prix_max: e.target.value ? Number(e.target.value) : undefined })}
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="flex gap-2 mt-4">
+                      <Button onClick={() => {
+                        resetOeuvreFilters();
+                        setCurrentPageOeuvres(1);
+                      }}>
+                        Réinitialiser
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle>Gestion des œuvres</CardTitle>
+                  <CardDescription>
+                    Liste complète des œuvres ({filteredAndPaginatedOeuvres.totalItems} résultats)
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {/* Barre de recherche et actions */}
+                  <div className="flex flex-col md:flex-row gap-4 mb-6">
+                    <div className="flex-1 relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Rechercher par titre, auteur, type..."
+                        value={searchOeuvres}
+                        onChange={(e) => {
+                          setSearchOeuvres(e.target.value);
+                          setCurrentPageOeuvres(1);
+                        }}
+                        className="pl-10"
+                      />
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => setShowOeuvreFilters(!showOeuvreFilters)}
+                      >
+                        <SlidersHorizontal className="h-4 w-4 mr-2" />
+                        Filtres
+                      </Button>
+                      
+                      <Button
+                        variant={isSelectModeOeuvres ? "secondary" : "outline"}
+                        onClick={() => {
+                          setIsSelectModeOeuvres(!isSelectModeOeuvres);
+                          setSelectedOeuvres([]);
+                        }}
+                      >
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        {isSelectModeOeuvres ? 'Annuler sélection' : 'Mode sélection'}
+                      </Button>
+                      
+                      <Button variant="outline">
+                        <Download className="h-4 w-4 mr-2" />
+                        Exporter
+                      </Button>
+                    </div>
                   </div>
-                ) : (pendingOeuvresData?.items || pendingOeuvresData?.oeuvres) && (pendingOeuvresData?.items?.length > 0 || pendingOeuvresData?.oeuvres?.length > 0) ? (
-                  <div className="space-y-4">
-                    {(pendingOeuvresData.items || pendingOeuvresData.oeuvres).map((oeuvre: any) => (
-                      <Card key={oeuvre.id_oeuvre} className="p-4">
-                        <div className="flex items-start justify-between">
-                          <div className="space-y-2 flex-1">
-                            <div className="flex items-center gap-2">
-                              <h4 className="font-semibold">{oeuvre.titre}</h4>
-                              <Badge variant="outline">{oeuvre.type_oeuvre}</Badge>
+
+                  {/* Liste des œuvres */}
+                  {loadingOeuvres ? (
+                    <div className="space-y-3">
+                      <Skeleton className="h-24" />
+                      <Skeleton className="h-24" />
+                      <Skeleton className="h-24" />
+                    </div>
+                  ) : filteredAndPaginatedOeuvres.items.length > 0 ? (
+                    <>
+                      <div className="space-y-4">
+                        {filteredAndPaginatedOeuvres.items.map((oeuvre: any) => (
+                          <Card key={oeuvre.id_oeuvre} className={cn(
+                            "p-4 transition-all duration-200",
+                            selectedOeuvres.includes(oeuvre.id_oeuvre) && "ring-2 ring-primary shadow-lg"
+                          )}>
+                            <div className="flex items-start justify-between">
+                              {isSelectModeOeuvres && (
+                                <Checkbox
+                                  checked={selectedOeuvres.includes(oeuvre.id_oeuvre)}
+                                  onCheckedChange={() => toggleOeuvreSelection(oeuvre.id_oeuvre)}
+                                  className="mt-1 mr-3"
+                                />
+                              )}
+                              
+                              <div className="space-y-2 flex-1">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <h4 className="font-semibold">{oeuvre.titre}</h4>
+                                  <Badge variant="outline">{oeuvre.type_oeuvre}</Badge>
+                                  <Badge 
+                                    variant={oeuvre.statut === 'valide' ? 'default' : 
+                                            oeuvre.statut === 'en_attente' ? 'secondary' : 'destructive'}
+                                  >
+                                    {oeuvre.statut?.replace('_', ' ')}
+                                  </Badge>
+                                  {oeuvre.prix && (
+                                    <Badge variant="outline">
+                                      <Euro className="h-3 w-3 mr-1" />
+                                      {formatPrice(oeuvre.prix)}
+                                    </Badge>
+                                  )}
+                                </div>
+                                
+                                <div className="space-y-1">
+                                  <p className="text-sm text-muted-foreground">
+                                    Par {oeuvre.auteur?.prenom} {oeuvre.auteur?.nom} 
+                                    {oeuvre.auteur?.type_user && ` (${oeuvre.auteur.type_user})`}
+                                  </p>
+                                  
+                                  {oeuvre.description && (
+                                    <p className="text-sm line-clamp-2">{oeuvre.description}</p>
+                                  )}
+                                  
+                                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                    <span className="flex items-center gap-1">
+                                      <CalendarIcon className="h-3 w-3" />
+                                      {formatDate(oeuvre.date_creation)}
+                                    </span>
+                                    
+                                    {oeuvre.wilaya && (
+                                      <span className="flex items-center gap-1">
+                                        <MapPinIcon className="h-3 w-3" />
+                                        {oeuvre.wilaya}
+                                      </span>
+                                    )}
+                                    
+                                    {oeuvre.nombre_vues && (
+                                      <span className="flex items-center gap-1">
+                                        <Eye className="h-3 w-3" />
+                                        {oeuvre.nombre_vues} vues
+                                      </span>
+                                    )}
+                                    
+                                    {oeuvre.note_moyenne && (
+                                      <span className="flex items-center gap-1">
+                                        <Star className="h-3 w-3" />
+                                        {formatRating(oeuvre.note_moyenne)}
+                                      </span>
+                                    )}
+                                  </div>
+                                  
+                                  {oeuvre.tags && oeuvre.tags.length > 0 && (
+                                    <div className="flex gap-1 mt-2 flex-wrap">
+                                      {oeuvre.tags.slice(0, 3).map((tag: string, idx: number) => (
+                                        <Badge key={idx} variant="secondary" className="text-xs">
+                                          <Tag className="h-2 w-2 mr-1" />
+                                          {tag}
+                                        </Badge>
+                                      ))}
+                                      {oeuvre.tags.length > 3 && (
+                                        <Badge variant="secondary" className="text-xs">
+                                          +{oeuvre.tags.length - 3}
+                                        </Badge>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              
+                              {oeuvre.medias && oeuvre.medias.length > 0 && (
+                                <div className="ml-4">
+                                  <img 
+                                    src={oeuvre.medias[0].url} 
+                                    alt={oeuvre.titre}
+                                    className="w-24 h-24 object-cover rounded"
+                                  />
+                                </div>
+                              )}
                             </div>
-                            <p className="text-sm text-muted-foreground">
-                              Par {oeuvre.auteur?.prenom} {oeuvre.auteur?.nom}
-                            </p>
-                            {oeuvre.description && (
-                              <p className="text-sm line-clamp-2">{oeuvre.description}</p>
-                            )}
-                            <p className="text-sm text-muted-foreground">
-                              Soumis le {formatDate(oeuvre.date_creation)}
-                            </p>
-                          </div>
-                          {oeuvre.medias && oeuvre.medias.length > 0 && (
-                            <div className="ml-4">
-                              <img 
-                                src={oeuvre.medias[0].url} 
-                                alt={oeuvre.titre}
-                                className="w-24 h-24 object-cover rounded"
-                              />
+                            
+                            <div className="flex gap-2 mt-4">
+                              {oeuvre.statut === 'en_attente' && (
+                                <>
+                                  <Button 
+                                    size="sm" 
+                                    onClick={() => updateOeuvreStatus(oeuvre.id_oeuvre, 'valide')}
+                                  >
+                                    <CheckCircle className="h-4 w-4 mr-1" />
+                                    Approuver
+                                  </Button>
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline"
+                                    onClick={() => updateOeuvreStatus(oeuvre.id_oeuvre, 'rejete')}
+                                  >
+                                    <XCircle className="h-4 w-4 mr-1" />
+                                    Rejeter
+                                  </Button>
+                                </>
+                              )}
+                              
+                              <Button size="sm" variant="ghost">
+                                <Eye className="h-4 w-4 mr-1" />
+                                Voir détails
+                              </Button>
+                              
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button size="sm" variant="ghost">
+                                    <MoreVertical className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem>
+                                    <Edit className="h-4 w-4 mr-2" />
+                                    Modifier
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem>
+                                    <Award className="h-4 w-4 mr-2" />
+                                    Mettre en avant
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem 
+                                    onClick={() => deleteOeuvreAction.execute({ oeuvreId: oeuvre.id_oeuvre })}
+                                    className="text-red-600 focus:text-red-600"
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Supprimer
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                             </div>
-                          )}
-                        </div>
-                        <div className="flex gap-2 mt-4">
-                          <Button 
-                            size="sm" 
-                            onClick={() => validateOeuvre && validateOeuvre({ oeuvreId: oeuvre.id_oeuvre, validated: true })}
-                          >
-                            <CheckCircle className="h-4 w-4 mr-1" />
-                            Approuver
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => validateOeuvre && validateOeuvre({ oeuvreId: oeuvre.id_oeuvre, validated: false })}
-                          >
-                            <XCircle className="h-4 w-4 mr-1" />
-                            Rejeter
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="ghost"
-                          >
-                            <Eye className="h-4 w-4 mr-1" />
-                            Voir détails
-                          </Button>
-                        </div>
-                      </Card>
-                    ))}
+                          </Card>
+                        ))}
+                      </div>
+                      
+                      <PaginationControls 
+                        currentPage={filteredAndPaginatedOeuvres.currentPage}
+                        totalPages={filteredAndPaginatedOeuvres.totalPages}
+                        totalItems={filteredAndPaginatedOeuvres.totalItems}
+                        hasNext={filteredAndPaginatedOeuvres.hasNext}
+                        hasPrev={filteredAndPaginatedOeuvres.hasPrev}
+                        onPageChange={setCurrentPageOeuvres}
+                        itemsPerPage={itemsPerPage}
+                      />
+                    </>
+                  ) : (
+                    <div className="text-center py-12">
+                      <BookOpen className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                      <p className="text-muted-foreground">
+                        {searchOeuvres 
+                          ? `Aucun résultat pour "${searchOeuvres}"`
+                          : 'Aucune œuvre à afficher'
+                        }
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Événements */}
+          <TabsContent value="evenements" className="mt-6">
+            <div className="space-y-6">
+              {/* Panneau de filtres */}
+              {showEvenementFilters && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center justify-between">
+                      Filtres avancés
+                      <Button variant="ghost" size="sm" onClick={() => setShowEvenementFilters(false)}>
+                        <XIcon className="h-4 w-4" />
+                      </Button>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                      <div className="space-y-2">
+                        <Label>Type d'événement</Label>
+                        <Select 
+                          value={evenementFilters.type_evenement || ''} 
+                          onValueChange={(value) => setEvenementFilters({ ...evenementFilters, type_evenement: value || undefined })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Tous les types" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="">Tous les types</SelectItem>
+                            {TYPES_EVENEMENT.map(type => (
+                              <SelectItem key={type} value={type}>{type}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label>Statut</Label>
+                        <Select 
+                          value={evenementFilters.statut || ''} 
+                          onValueChange={(value) => setEvenementFilters({ ...evenementFilters, statut: value || undefined })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Tous les statuts" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="">Tous les statuts</SelectItem>
+                            <SelectItem value="a_venir">À venir</SelectItem>
+                            <SelectItem value="en_cours">En cours</SelectItem>
+                            <SelectItem value="termine">Terminé</SelectItem>
+                            <SelectItem value="annule">Annulé</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label>Wilaya</Label>
+                        <Select 
+                          value={evenementFilters.wilaya || ''} 
+                          onValueChange={(value) => setEvenementFilters({ ...evenementFilters, wilaya: value || undefined })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Toutes les wilayas" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="">Toutes les wilayas</SelectItem>
+                            {WILAYAS.map(wilaya => (
+                              <SelectItem key={wilaya} value={wilaya}>{wilaya}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label>Date de début</Label>
+                        <Input
+                          type="date"
+                          value={evenementFilters.date_debut || ''}
+                          onChange={(e) => setEvenementFilters({ ...evenementFilters, date_debut: e.target.value || undefined })}
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="flex gap-2 mt-4">
+                      <Button onClick={() => {
+                        resetEvenementFilters();
+                        setCurrentPageEvenements(1);
+                      }}>
+                        Réinitialiser
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle>Gestion des événements</CardTitle>
+                  <CardDescription>
+                    Liste complète des événements ({filteredAndPaginatedEvenements.totalItems} résultats)
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {/* Barre de recherche et actions */}
+                  <div className="flex flex-col md:flex-row gap-4 mb-6">
+                    <div className="flex-1 relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Rechercher par titre, organisateur, lieu..."
+                        value={searchEvenements}
+                        onChange={(e) => {
+                          setSearchEvenements(e.target.value);
+                          setCurrentPageEvenements(1);
+                        }}
+                        className="pl-10"
+                      />
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => setShowEvenementFilters(!showEvenementFilters)}
+                      >
+                        <SlidersHorizontal className="h-4 w-4 mr-2" />
+                        Filtres
+                      </Button>
+                      
+                      <Button
+                        variant={isSelectModeEvenements ? "secondary" : "outline"}
+                        onClick={() => {
+                          setIsSelectModeEvenements(!isSelectModeEvenements);
+                          setSelectedEvenements([]);
+                        }}
+                      >
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        {isSelectModeEvenements ? 'Annuler sélection' : 'Mode sélection'}
+                      </Button>
+                      
+                      <Button variant="outline">
+                        <Download className="h-4 w-4 mr-2" />
+                        Exporter
+                      </Button>
+                    </div>
                   </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <BookOpen className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground">
-                      Aucune œuvre en attente de validation
-                    </p>
+
+                  {/* Liste des événements */}
+                  {loadingEvenements ? (
+                    <div className="space-y-3">
+                      <Skeleton className="h-24" />
+                      <Skeleton className="h-24" />
+                      <Skeleton className="h-24" />
+                    </div>
+                  ) : filteredAndPaginatedEvenements.items.length > 0 ? (
+                    <>
+                      <div className="space-y-4">
+                        {filteredAndPaginatedEvenements.items.map((evenement: any) => (
+                          <Card key={evenement.id_evenement} className={cn(
+                            "p-4 transition-all duration-200",
+                            selectedEvenements.includes(evenement.id_evenement) && "ring-2 ring-primary shadow-lg"
+                          )}>
+                            <div className="flex items-start justify-between">
+                              {isSelectModeEvenements && (
+                                <Checkbox
+                                  checked={selectedEvenements.includes(evenement.id_evenement)}
+                                  onCheckedChange={() => toggleEvenementSelection(evenement.id_evenement)}
+                                  className="mt-1 mr-3"
+                                />
+                              )}
+                              
+                              <div className="space-y-2 flex-1">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <h4 className="font-semibold">{evenement.titre}</h4>
+                                  <Badge variant="outline">{evenement.type_evenement}</Badge>
+                                  <Badge 
+                                    variant={evenement.statut === 'en_cours' ? 'default' : 
+                                            evenement.statut === 'a_venir' ? 'secondary' : 
+                                            evenement.statut === 'termine' ? 'outline' : 'destructive'}
+                                  >
+                                    {evenement.statut?.replace('_', ' ')}
+                                  </Badge>
+                                  {evenement.prix && (
+                                    <Badge variant="outline">
+                                      <Euro className="h-3 w-3 mr-1" />
+                                      {formatPrice(evenement.prix)}
+                                    </Badge>
+                                  )}
+                                </div>
+                                
+                                <div className="space-y-1">
+                                  <p className="text-sm text-muted-foreground">
+                                    Organisé par {evenement.organisateur?.prenom} {evenement.organisateur?.nom}
+                                  </p>
+                                  
+                                  {evenement.description && (
+                                    <p className="text-sm line-clamp-2">{evenement.description}</p>
+                                  )}
+                                  
+                                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                    <span className="flex items-center gap-1">
+                                      <CalendarIcon className="h-3 w-3" />
+                                      {formatDate(evenement.date_debut)}
+                                    </span>
+                                    
+                                    <span className="flex items-center gap-1">
+                                      <MapPinIcon className="h-3 w-3" />
+                                      {evenement.lieu}, {evenement.wilaya}
+                                    </span>
+                                    
+                                    <span className="flex items-center gap-1">
+                                      <Users className="h-3 w-3" />
+                                      {evenement.participants_count} participants
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              {evenement.image && (
+                                <div className="ml-4">
+                                  <img 
+                                    src={evenement.image} 
+                                    alt={evenement.titre}
+                                    className="w-24 h-24 object-cover rounded"
+                                  />
+                                </div>
+                              )}
+                            </div>
+                            
+                            <div className="flex gap-2 mt-4">
+                              {evenement.statut === 'a_venir' && (
+                                <>
+                                  <Button 
+                                    size="sm" 
+                                    onClick={() => updateEvenementStatus(evenement.id_evenement, 'en_cours')}
+                                  >
+                                    <Play className="h-4 w-4 mr-1" />
+                                    Démarrer
+                                  </Button>
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline"
+                                    onClick={() => updateEvenementStatus(evenement.id_evenement, 'annule')}
+                                  >
+                                    <Ban className="h-4 w-4 mr-1" />
+                                    Annuler
+                                  </Button>
+                                </>
+                              )}
+                              
+                              {evenement.statut === 'en_cours' && (
+                                <Button 
+                                  size="sm" 
+                                  onClick={() => updateEvenementStatus(evenement.id_evenement, 'termine')}
+                                >
+                                  <Pause className="h-4 w-4 mr-1" />
+                                  Terminer
+                                </Button>
+                              )}
+                              
+                              <Button size="sm" variant="ghost">
+                                <Eye className="h-4 w-4 mr-1" />
+                                Voir détails
+                              </Button>
+                              
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button size="sm" variant="ghost">
+                                    <MoreVertical className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem>
+                                    <Edit className="h-4 w-4 mr-2" />
+                                    Modifier
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem>
+                                    <Award className="h-4 w-4 mr-2" />
+                                    Mettre en avant
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem 
+                                    onClick={() => deleteEvenementAction.execute({ evenementId: evenement.id_evenement })}
+                                    className="text-red-600 focus:text-red-600"
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Supprimer
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                          </Card>
+                        ))}
+                      </div>
+                      
+                      <PaginationControls 
+                        currentPage={filteredAndPaginatedEvenements.currentPage}
+                        totalPages={filteredAndPaginatedEvenements.totalPages}
+                        totalItems={filteredAndPaginatedEvenements.totalItems}
+                        hasNext={filteredAndPaginatedEvenements.hasNext}
+                        hasPrev={filteredAndPaginatedEvenements.hasPrev}
+                        onPageChange={setCurrentPageEvenements}
+                        itemsPerPage={itemsPerPage}
+                      />
+                    </>
+                  ) : (
+                    <div className="text-center py-12">
+                      <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                      <p className="text-muted-foreground">
+                        {searchEvenements 
+                          ? `Aucun résultat pour "${searchEvenements}"`
+                          : 'Aucun événement à afficher'
+                        }
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Patrimoine */}
+          <TabsContent value="patrimoine" className="mt-6">
+            <div className="space-y-6">
+              {/* Panneau de filtres patrimoine */}
+              {showPatrimoineFilters && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center justify-between">
+                      Filtres avancés
+                      <Button variant="ghost" size="sm" onClick={() => setShowPatrimoineFilters(false)}>
+                        <XIcon className="h-4 w-4" />
+                      </Button>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                      <div className="space-y-2">
+                        <Label>Type de patrimoine</Label>
+                        <Select 
+                          value={patrimoineFilters.type_patrimoine || ''} 
+                          onValueChange={(value) => setPatrimoineFilters({ ...patrimoineFilters, type_patrimoine: value || undefined })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Tous les types" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="">Tous les types</SelectItem>
+                            {TYPES_PATRIMOINE.map(type => (
+                              <SelectItem key={type} value={type}>{type}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label>Wilaya</Label>
+                        <Select 
+                          value={patrimoineFilters.wilaya || ''} 
+                          onValueChange={(value) => setPatrimoineFilters({ ...patrimoineFilters, wilaya: value || undefined })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Toutes les wilayas" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="">Toutes les wilayas</SelectItem>
+                            {WILAYAS.map(wilaya => (
+                              <SelectItem key={wilaya} value={wilaya}>{wilaya}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label>Classement</Label>
+                        <Select 
+                          value={patrimoineFilters.classement || ''} 
+                          onValueChange={(value) => setPatrimoineFilters({ ...patrimoineFilters, classement: value || undefined })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Tous les classements" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="">Tous</SelectItem>
+                            <SelectItem value="unesco">UNESCO</SelectItem>
+                            <SelectItem value="national">National</SelectItem>
+                            <SelectItem value="local">Local</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    
+                    <div className="flex gap-2 mt-4">
+                      <Button onClick={() => {
+                        resetPatrimoineFilters();
+                        setCurrentPagePatrimoine(1);
+                      }}>
+                        Réinitialiser
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle>Gestion du patrimoine</CardTitle>
+                  <CardDescription>
+                    Liste des sites patrimoniaux ({filteredAndPaginatedPatrimoine.totalItems} résultats)
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {/* Barre de recherche */}
+                  <div className="flex flex-col md:flex-row gap-4 mb-6">
+                    <div className="flex-1 relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Rechercher par nom, wilaya, type..."
+                        value={searchPatrimoine}
+                        onChange={(e) => {
+                          setSearchPatrimoine(e.target.value);
+                          setCurrentPagePatrimoine(1);
+                        }}
+                        className="pl-10"
+                      />
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => setShowPatrimoineFilters(!showPatrimoineFilters)}
+                      >
+                        <SlidersHorizontal className="h-4 w-4 mr-2" />
+                        Filtres
+                      </Button>
+                      
+                      <Button variant="outline">
+                        <Download className="h-4 w-4 mr-2" />
+                        Exporter
+                      </Button>
+                    </div>
                   </div>
-                )}
-              </CardContent>
-            </Card>
+
+                  {/* Liste */}
+                  {loadingPatrimoine ? (
+                    <div className="space-y-3">
+                      <Skeleton className="h-24" />
+                      <Skeleton className="h-24" />
+                      <Skeleton className="h-24" />
+                    </div>
+                  ) : filteredAndPaginatedPatrimoine.items.length > 0 ? (
+                    <>
+                      <div className="space-y-4">
+                        {filteredAndPaginatedPatrimoine.items.map((site: any) => (
+                          <Card key={site.id_patrimoine} className="p-4">
+                            <div className="flex items-start justify-between">
+                              <div className="space-y-2 flex-1">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <h4 className="font-semibold">{site.nom}</h4>
+                                  <Badge variant="outline">{site.type_patrimoine}</Badge>
+                                  {site.classement_unesco && (
+                                    <Badge variant="default">UNESCO</Badge>
+                                  )}
+                                </div>
+                                
+                                <div className="space-y-1">
+                                  {site.description && (
+                                    <p className="text-sm line-clamp-2">{site.description}</p>
+                                  )}
+                                  
+                                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                    <span className="flex items-center gap-1">
+                                      <MapPinIcon className="h-3 w-3" />
+                                      {site.commune}, {site.wilaya}
+                                    </span>
+                                    
+                                    {site.date_construction && (
+                                      <span className="flex items-center gap-1">
+                                        <CalendarIcon className="h-3 w-3" />
+                                        {site.date_construction}
+                                      </span>
+                                    )}
+                                    
+                                    {site.nombre_visites && (
+                                      <span className="flex items-center gap-1">
+                                        <Eye className="h-3 w-3" />
+                                        {site.nombre_visites} visites
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              {site.image_principale && (
+                                <div className="ml-4">
+                                  <img 
+                                    src={site.image_principale} 
+                                    alt={site.nom}
+                                    className="w-24 h-24 object-cover rounded"
+                                  />
+                                </div>
+                              )}
+                            </div>
+                            
+                            <div className="flex gap-2 mt-4">
+                              <Button size="sm" variant="ghost">
+                                <Eye className="h-4 w-4 mr-1" />
+                                Voir détails
+                              </Button>
+                              
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button size="sm" variant="ghost">
+                                    <MoreVertical className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem>
+                                    <Edit className="h-4 w-4 mr-2" />
+                                    Modifier
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem>
+                                    <Award className="h-4 w-4 mr-2" />
+                                    Mettre en avant
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem className="text-red-600">
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Supprimer
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                          </Card>
+                        ))}
+                      </div>
+                      
+                      <PaginationControls 
+                        currentPage={filteredAndPaginatedPatrimoine.currentPage}
+                        totalPages={filteredAndPaginatedPatrimoine.totalPages}
+                        totalItems={filteredAndPaginatedPatrimoine.totalItems}
+                        hasNext={filteredAndPaginatedPatrimoine.hasNext}
+                        hasPrev={filteredAndPaginatedPatrimoine.hasPrev}
+                        onPageChange={setCurrentPagePatrimoine}
+                        itemsPerPage={itemsPerPage}
+                      />
+                    </>
+                  ) : (
+                    <div className="text-center py-12">
+                      <MapPin className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                      <p className="text-muted-foreground">
+                        {searchPatrimoine 
+                          ? `Aucun résultat pour "${searchPatrimoine}"`
+                          : 'Aucun site patrimonial à afficher'
+                        }
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Services */}
+          <TabsContent value="services" className="mt-6">
+            <div className="space-y-6">
+              {/* Panneau de filtres services */}
+              {showServiceFilters && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center justify-between">
+                      Filtres avancés
+                      <Button variant="ghost" size="sm" onClick={() => setShowServiceFilters(false)}>
+                        <XIcon className="h-4 w-4" />
+                      </Button>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                      <div className="space-y-2">
+                        <Label>Type de service</Label>
+                        <Select 
+                          value={serviceFilters.type_service || ''} 
+                          onValueChange={(value) => setServiceFilters({ ...serviceFilters, type_service: value || undefined })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Tous les types" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="">Tous les types</SelectItem>
+                            {TYPES_SERVICE.map(type => (
+                              <SelectItem key={type} value={type}>{type}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label>Statut</Label>
+                        <Select 
+                          value={serviceFilters.statut || ''} 
+                          onValueChange={(value) => setServiceFilters({ ...serviceFilters, statut: value || undefined })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Tous les statuts" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="">Tous</SelectItem>
+                            <SelectItem value="actif">Actif</SelectItem>
+                            <SelectItem value="inactif">Inactif</SelectItem>
+                            <SelectItem value="suspendu">Suspendu</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label>Wilaya</Label>
+                        <Select 
+                          value={serviceFilters.wilaya || ''} 
+                          onValueChange={(value) => setServiceFilters({ ...serviceFilters, wilaya: value || undefined })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Toutes les wilayas" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="">Toutes les wilayas</SelectItem>
+                            {WILAYAS.map(wilaya => (
+                              <SelectItem key={wilaya} value={wilaya}>{wilaya}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label>Prix maximum</Label>
+                        <Input
+                          type="number"
+                          placeholder="Prix max"
+                          value={serviceFilters.prix_max || ''}
+                          onChange={(e) => setServiceFilters({ ...serviceFilters, prix_max: e.target.value ? Number(e.target.value) : undefined })}
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="flex gap-2 mt-4">
+                      <Button onClick={() => {
+                        resetServiceFilters();
+                        setCurrentPageServices(1);
+                      }}>
+                        Réinitialiser
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle>Gestion des services</CardTitle>
+                  <CardDescription>
+                    Liste des services proposés ({filteredAndPaginatedServices.totalItems} résultats)
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {/* Barre de recherche */}
+                  <div className="flex flex-col md:flex-row gap-4 mb-6">
+                    <div className="flex-1 relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Rechercher par titre, prestataire, type..."
+                        value={searchServices}
+                        onChange={(e) => {
+                          setSearchServices(e.target.value);
+                          setCurrentPageServices(1);
+                        }}
+                        className="pl-10"
+                      />
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => setShowServiceFilters(!showServiceFilters)}
+                      >
+                        <SlidersHorizontal className="h-4 w-4 mr-2" />
+                        Filtres
+                      </Button>
+                      
+                      <Button
+                        variant={isSelectModeServices ? "secondary" : "outline"}
+                        onClick={() => {
+                          setIsSelectModeServices(!isSelectModeServices);
+                          setSelectedServices([]);
+                        }}
+                      >
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        {isSelectModeServices ? 'Annuler sélection' : 'Mode sélection'}
+                      </Button>
+                      
+                      <Button variant="outline">
+                        <Download className="h-4 w-4 mr-2" />
+                        Exporter
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Liste */}
+                  {loadingServices ? (
+                    <div className="space-y-3">
+                      <Skeleton className="h-24" />
+                      <Skeleton className="h-24" />
+                      <Skeleton className="h-24" />
+                    </div>
+                  ) : filteredAndPaginatedServices.items.length > 0 ? (
+                    <>
+                      <div className="space-y-4">
+                        {filteredAndPaginatedServices.items.map((service: any) => (
+                          <Card key={service.id_service} className={cn(
+                            "p-4 transition-all duration-200",
+                            selectedServices.includes(service.id_service) && "ring-2 ring-primary shadow-lg"
+                          )}>
+                            <div className="flex items-start justify-between">
+                              {isSelectModeServices && (
+                                <Checkbox
+                                  checked={selectedServices.includes(service.id_service)}
+                                  onCheckedChange={() => toggleServiceSelection(service.id_service)}
+                                  className="mt-1 mr-3"
+                                />
+                              )}
+                              
+                              <div className="space-y-2 flex-1">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <h4 className="font-semibold">{service.titre}</h4>
+                                  <Badge variant="outline">{service.type_service}</Badge>
+                                  <Badge 
+                                    variant={service.statut === 'actif' ? 'default' : 
+                                            service.statut === 'suspendu' ? 'destructive' : 'secondary'}
+                                  >
+                                    {service.statut}
+                                  </Badge>
+                                  {service.prix && (
+                                    <Badge variant="outline">
+                                      <Euro className="h-3 w-3 mr-1" />
+                                      {formatPrice(service.prix, service.unite_prix)}
+                                    </Badge>
+                                  )}
+                                </div>
+                                
+                                <div className="space-y-1">
+                                  <p className="text-sm text-muted-foreground">
+                                    Par {service.prestataire?.prenom} {service.prestataire?.nom}
+                                    {service.prestataire?.entreprise && ` - ${service.prestataire.entreprise}`}
+                                  </p>
+                                  
+                                  {service.description && (
+                                    <p className="text-sm line-clamp-2">{service.description}</p>
+                                  )}
+                                  
+                                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                    <span className="flex items-center gap-1">
+                                      <MapPinIcon className="h-3 w-3" />
+                                      {service.wilaya}
+                                    </span>
+                                    
+                                    {service.note_moyenne && (
+                                      <span className="flex items-center gap-1">
+                                        <Star className="h-3 w-3" />
+                                        {formatRating(service.note_moyenne)}
+                                      </span>
+                                    )}
+                                    
+                                    {service.nombre_reservations && (
+                                      <span className="flex items-center gap-1">
+                                        <ShoppingBag className="h-3 w-3" />
+                                        {service.nombre_reservations} réservations
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div className="flex gap-2 mt-4">
+                              {service.statut === 'actif' && (
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => updateServiceStatus(service.id_service, 'suspendu')}
+                                >
+                                  <Pause className="h-4 w-4 mr-1" />
+                                  Suspendre
+                                </Button>
+                              )}
+                              
+                              {service.statut === 'suspendu' && (
+                                <Button 
+                                  size="sm" 
+                                  onClick={() => updateServiceStatus(service.id_service, 'actif')}
+                                >
+                                  <Play className="h-4 w-4 mr-1" />
+                                  Réactiver
+                                </Button>
+                              )}
+                              
+                              <Button size="sm" variant="ghost">
+                                <Eye className="h-4 w-4 mr-1" />
+                                Voir détails
+                              </Button>
+                              
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button size="sm" variant="ghost">
+                                    <MoreVertical className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem>
+                                    <Edit className="h-4 w-4 mr-2" />
+                                    Modifier
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem 
+                                    onClick={() => deleteServiceAction.execute({ serviceId: service.id_service })}
+                                    className="text-red-600 focus:text-red-600"
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Supprimer
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                          </Card>
+                        ))}
+                      </div>
+                      
+                      <PaginationControls 
+                        currentPage={filteredAndPaginatedServices.currentPage}
+                        totalPages={filteredAndPaginatedServices.totalPages}
+                        totalItems={filteredAndPaginatedServices.totalItems}
+                        hasNext={filteredAndPaginatedServices.hasNext}
+                        hasPrev={filteredAndPaginatedServices.hasPrev}
+                        onPageChange={setCurrentPageServices}
+                        itemsPerPage={itemsPerPage}
+                      />
+                    </>
+                  ) : (
+                    <div className="text-center py-12">
+                      <Briefcase className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                      <p className="text-muted-foreground">
+                        {searchServices 
+                          ? `Aucun résultat pour "${searchServices}"`
+                          : 'Aucun service à afficher'
+                        }
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           {/* Modération */}
@@ -1233,53 +2648,58 @@ const DashboardAdmin = () => {
                     {(moderationQueueData.items || moderationQueueData.signalements).map((item: any) => (
                       <Card key={item.id} className="p-4">
                         <div className="flex items-start justify-between">
-                          <div className="space-y-2 flex-1">
-                            <div className="flex items-center gap-2">
-                              <h4 className="font-semibold">{item.entity_title}</h4>
-                              <Badge variant="destructive">{item.type}</Badge>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Badge variant="outline">{item.type}</Badge>
+                              <Badge 
+                                variant={item.status === 'pending' ? 'secondary' : 
+                                        item.status === 'reviewed' ? 'default' : 'outline'}
+                              >
+                                {item.status}
+                              </Badge>
                             </div>
-                            <p className="text-sm text-muted-foreground">
+                            <h4 className="font-semibold">{item.entity_title}</h4>
+                            <p className="text-sm text-muted-foreground mt-1">
                               Raison : {item.reason}
                             </p>
                             <p className="text-sm text-muted-foreground">
-                              Signalé par : {item.reported_by?.nom || 'Anonyme'}
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              Date : {formatDate(item.date_signalement)}
+                              Signalé par {item.reported_by?.nom} le {formatDate(item.date_signalement)}
                             </p>
                           </div>
-                          <Badge 
-                            variant={item.status === 'pending' ? 'secondary' : 
-                                    item.status === 'reviewed' ? 'default' : 'outline'}
-                          >
-                            {item.status === 'pending' ? 'En attente' :
-                             item.status === 'reviewed' ? 'Examiné' : 'Résolu'}
-                          </Badge>
-                        </div>
-                        <div className="flex gap-2 mt-4">
-                          <Button 
-                            size="sm"
-                            onClick={() => moderateSignalement && moderateSignalement({ signalementId: item.id, action: 'approve' })}
-                          >
-                            <CheckCircle className="h-4 w-4 mr-1" />
-                            Approuver
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => moderateSignalement && moderateSignalement({ signalementId: item.id, action: 'reject' })}
-                          >
-                            <XCircle className="h-4 w-4 mr-1" />
-                            Rejeter
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="secondary"
-                            onClick={() => moderateSignalement && moderateSignalement({ signalementId: item.id, action: 'warn' })}
-                          >
-                            <AlertTriangle className="h-4 w-4 mr-1" />
-                            Avertir
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              onClick={() => moderateSignalement && moderateSignalement({ 
+                                signalementId: item.id, 
+                                action: 'approve' 
+                              })}
+                            >
+                              <CheckCircle className="h-4 w-4 mr-1" />
+                              Approuver
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => moderateSignalement && moderateSignalement({ 
+                                signalementId: item.id, 
+                                action: 'reject' 
+                              })}
+                            >
+                              <XCircle className="h-4 w-4 mr-1" />
+                              Rejeter
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => moderateSignalement && moderateSignalement({ 
+                                signalementId: item.id, 
+                                action: 'warn' 
+                              })}
+                            >
+                              <AlertTriangle className="h-4 w-4 mr-1" />
+                              Avertir
+                            </Button>
+                          </div>
                         </div>
                       </Card>
                     ))}
@@ -1295,105 +2715,34 @@ const DashboardAdmin = () => {
               </CardContent>
             </Card>
           </TabsContent>
-
-          {/* Patrimoine */}
-          <TabsContent value="patrimoine" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Gestion du patrimoine</CardTitle>
-                <CardDescription>
-                  Sites patrimoniaux et statistiques
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {patrimoineStats ? (
-                  <div className="space-y-6">
-                    {/* Statistiques générales */}
-                    <div className="grid gap-4 md:grid-cols-3">
-                      <div className="space-y-2">
-                        <p className="text-sm font-medium text-muted-foreground">Total sites</p>
-                        <p className="text-2xl font-bold">{patrimoineStats.total_sites}</p>
-                      </div>
-                      <div className="space-y-2">
-                        <p className="text-sm font-medium text-muted-foreground">Sites UNESCO</p>
-                        <p className="text-2xl font-bold">{patrimoineStats.sites_unesco}</p>
-                      </div>
-                      <div className="space-y-2">
-                        <p className="text-sm font-medium text-muted-foreground">Visites ce mois</p>
-                        <p className="text-2xl font-bold">{formatNumber(patrimoineStats.visites_mois)}</p>
-                      </div>
-                    </div>
-                    
-                    {/* Répartition par type */}
-                    {Object.keys(patrimoineStats.sites_par_type || {}).length > 0 && (
-                      <div>
-                        <h4 className="text-sm font-medium mb-3">Répartition par type</h4>
-                        <div className="space-y-2">
-                          {Object.entries(patrimoineStats.sites_par_type).map(([type, count]) => (
-                            <div key={type} className="flex items-center justify-between p-2 bg-muted rounded">
-                              <span className="text-sm capitalize">{type}</span>
-                              <Badge variant="secondary">{count as number}</Badge>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Top wilayas */}
-                    {patrimoineStats.sites_par_wilaya && patrimoineStats.sites_par_wilaya.length > 0 && (
-                      <div>
-                        <h4 className="text-sm font-medium mb-3">Top wilayas</h4>
-                        <div className="space-y-2">
-                          {patrimoineStats.sites_par_wilaya.slice(0, 5).map((item, idx) => (
-                            <div key={idx} className="flex items-center justify-between p-2 bg-muted rounded">
-                              <span className="text-sm">{item.wilaya}</span>
-                              <Badge variant="secondary">{item.count} sites</Badge>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <MapPin className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground">
-                      Chargement des données du patrimoine...
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
         </Tabs>
       </main>
 
-      {/* Modal de modification */}
-      <Dialog open={editUserModal.open} onOpenChange={(open) => !open && setEditUserModal({ open: false, user: null })}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Modifier l'utilisateur</DialogTitle>
-            <DialogDescription>
-              Modifiez les informations de l'utilisateur
-            </DialogDescription>
-          </DialogHeader>
-          
-          {editUserModal.user && (
+      {/* Modals */}
+      {editUserModal.open && (
+        <Dialog open={editUserModal.open} onOpenChange={(open) => !open && setEditUserModal({ open: false, user: null })}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Modifier l'utilisateur</DialogTitle>
+              <DialogDescription>
+                Modifiez les informations de l'utilisateur
+              </DialogDescription>
+            </DialogHeader>
             <form onSubmit={handleUpdateUser}>
-              <div className="grid gap-4 py-4">
+              <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="nom">Nom</Label>
-                    <Input 
-                      id="nom" 
+                    <Input
+                      id="nom"
                       value={editFormData.nom}
                       onChange={(e) => setEditFormData({ ...editFormData, nom: e.target.value })}
                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="prenom">Prénom</Label>
-                    <Input 
-                      id="prenom" 
+                    <Input
+                      id="prenom"
                       value={editFormData.prenom}
                       onChange={(e) => setEditFormData({ ...editFormData, prenom: e.target.value })}
                     />
@@ -1402,8 +2751,8 @@ const DashboardAdmin = () => {
                 
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
-                  <Input 
-                    id="email" 
+                  <Input
+                    id="email"
                     type="email"
                     value={editFormData.email}
                     onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
@@ -1412,8 +2761,8 @@ const DashboardAdmin = () => {
                 
                 <div className="space-y-2">
                   <Label htmlFor="telephone">Téléphone</Label>
-                  <Input 
-                    id="telephone" 
+                  <Input
+                    id="telephone"
                     value={editFormData.telephone}
                     onChange={(e) => setEditFormData({ ...editFormData, telephone: e.target.value })}
                   />
@@ -1422,8 +2771,8 @@ const DashboardAdmin = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="type_user">Type d'utilisateur</Label>
-                    <Select 
-                      value={editFormData.type_user} 
+                    <Select
+                      value={editFormData.type_user}
                       onValueChange={(value) => setEditFormData({ ...editFormData, type_user: value })}
                     >
                       <SelectTrigger>
@@ -1431,16 +2780,17 @@ const DashboardAdmin = () => {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="visiteur">Visiteur</SelectItem>
+                        <SelectItem value="artiste">Artiste</SelectItem>
                         <SelectItem value="artisan">Artisan</SelectItem>
+                        <SelectItem value="organisateur">Organisateur</SelectItem>
                         <SelectItem value="guide">Guide</SelectItem>
-                        <SelectItem value="expert">Expert</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   
                   <div className="space-y-2">
                     <Label htmlFor="statut">Statut</Label>
-                    <Select 
+                    <Select
                       value={editFormData.statut}
                       onValueChange={(value) => setEditFormData({ ...editFormData, statut: value })}
                     >
@@ -1456,116 +2806,111 @@ const DashboardAdmin = () => {
                   </div>
                 </div>
                 
-                {editFormData.type_user !== 'visiteur' && (
-                  <>
-                    <div className="space-y-2">
-                      <Label htmlFor="entreprise">Entreprise</Label>
-                      <Input 
-                        id="entreprise" 
-                        value={editFormData.entreprise}
-                        onChange={(e) => setEditFormData({ ...editFormData, entreprise: e.target.value })}
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="site_web">Site web</Label>
-                      <Input 
-                        id="site_web" 
-                        type="url"
-                        value={editFormData.site_web}
-                        onChange={(e) => setEditFormData({ ...editFormData, site_web: e.target.value })}
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="biographie">Biographie</Label>
-                      <Textarea 
-                        id="biographie" 
-                        rows={4}
-                        value={editFormData.biographie}
-                        onChange={(e) => setEditFormData({ ...editFormData, biographie: e.target.value })}
-                      />
-                    </div>
-                  </>
-                )}
+                <div className="space-y-2">
+                  <Label htmlFor="entreprise">Entreprise</Label>
+                  <Input
+                    id="entreprise"
+                    value={editFormData.entreprise}
+                    onChange={(e) => setEditFormData({ ...editFormData, entreprise: e.target.value })}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="site_web">Site web</Label>
+                  <Input
+                    id="site_web"
+                    value={editFormData.site_web}
+                    onChange={(e) => setEditFormData({ ...editFormData, site_web: e.target.value })}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="biographie">Biographie</Label>
+                  <Textarea
+                    id="biographie"
+                    value={editFormData.biographie}
+                    onChange={(e) => setEditFormData({ ...editFormData, biographie: e.target.value })}
+                    rows={3}
+                  />
+                </div>
               </div>
               
-              <DialogFooter>
+              <DialogFooter className="mt-6">
                 <Button type="button" variant="outline" onClick={() => setEditUserModal({ open: false, user: null })}>
                   Annuler
                 </Button>
                 <Button type="submit">
-                  <UserCog className="h-4 w-4 mr-2" />
                   Enregistrer
                 </Button>
               </DialogFooter>
             </form>
-          )}
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* Modal de suspension */}
-      <Dialog open={suspendUserModal.open} onOpenChange={(open) => !open && setSuspendUserModal({ open: false, user: null })}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Suspendre l'utilisateur</DialogTitle>
-            <DialogDescription>
-              Suspendre temporairement l'accès de cet utilisateur
-            </DialogDescription>
-          </DialogHeader>
-          
-          {suspendUserModal.user && (
-            <div className="space-y-4 py-4">
-              <Alert>
-                <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>Suspension de compte</AlertTitle>
-                <AlertDescription>
-                  Vous allez suspendre l'utilisateur <strong>{suspendUserModal.user.prenom} {suspendUserModal.user.nom}</strong>
-                </AlertDescription>
-              </Alert>
-              
+      {suspendUserModal.open && (
+        <Dialog open={suspendUserModal.open} onOpenChange={(open) => !open && setSuspendUserModal({ open: false, user: null })}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Suspendre l'utilisateur</DialogTitle>
+              <DialogDescription>
+                Suspendre {suspendUserModal.user?.prenom} {suspendUserModal.user?.nom}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="duree">Durée de suspension (jours)</Label>
-                <Input 
-                  id="duree" 
-                  type="number"
-                  min="1"
-                  max="365"
-                  value={suspendFormData.duree}
-                  onChange={(e) => setSuspendFormData({ ...suspendFormData, duree: parseInt(e.target.value) || 7 })}
-                />
+                <Select
+                  value={suspendFormData.duree.toString()}
+                  onValueChange={(value) => setSuspendFormData({ ...suspendFormData, duree: parseInt(value) })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">1 jour</SelectItem>
+                    <SelectItem value="3">3 jours</SelectItem>
+                    <SelectItem value="7">7 jours</SelectItem>
+                    <SelectItem value="14">14 jours</SelectItem>
+                    <SelectItem value="30">30 jours</SelectItem>
+                    <SelectItem value="90">90 jours</SelectItem>
+                    <SelectItem value="365">1 an</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="raison">Raison de la suspension *</Label>
-                <Textarea 
-                  id="raison" 
-                  rows={3}
-                  placeholder="Indiquez la raison de la suspension..."
+                <Label htmlFor="raison">Raison de la suspension</Label>
+                <Textarea
+                  id="raison"
                   value={suspendFormData.raison}
                   onChange={(e) => setSuspendFormData({ ...suspendFormData, raison: e.target.value })}
+                  placeholder="Décrivez la raison de la suspension..."
+                  rows={4}
                   required
                 />
               </div>
             </div>
-          )}
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setSuspendUserModal({ open: false, user: null })}>
-              Annuler
-            </Button>
-            <Button variant="destructive" onClick={confirmSuspendUser}>
-              <Lock className="h-4 w-4 mr-2" />
-              Suspendre pour {suspendFormData.duree} jours
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            
+            <DialogFooter className="mt-6">
+              <Button type="button" variant="outline" onClick={() => setSuspendUserModal({ open: false, user: null })}>
+                Annuler
+              </Button>
+              <Button type="button" variant="destructive" onClick={confirmSuspendUser}>
+                Suspendre
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* Ajouter les dialogs des actions confirmées */}
       {deleteUserAction.dialog}
       {validateUserAction.dialog}
-      {bulkDeleteAction.dialog}
+      {deleteOeuvreAction.dialog}
+      {deleteEvenementAction.dialog}
+      {deleteServiceAction.dialog}
 
       <Footer />
     </div>

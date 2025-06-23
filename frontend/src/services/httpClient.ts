@@ -1,8 +1,17 @@
 // services/httpClient.ts
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import axios, { AxiosInstance, AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
-import { API_BASE_URL, AUTH_CONFIG, ApiResponse, PaginatedResponse, FilterParams, buildUrl } from '@/config/api';
-
+import { API_BASE_URL, AUTH_CONFIG, ApiResponse, PaginatedResponse, FilterParams, buildUrl, UploadProgress } from '@/config/api';
+interface ApiUploadOptions<T = any> {
+  fieldName?: string;
+  additionalData?: Record<string, any>;
+  headers?: Record<string, string>;
+  onProgress?: (progress: UploadProgress) => void;
+  validation?: {
+    maxSize?: number;
+    allowedTypes?: string[];
+  };
+}
 // Types pour la réponse d'erreur
 interface ErrorResponse {
   success: false;
@@ -341,10 +350,16 @@ class HttpClient {
   async get<T>(url: string, params?: any): Promise<ApiResponse<T>> {
     return this.requestQueue.add(async () => {
       const response = await this.axiosInstance.get<ApiResponse<T>>(url, { params });
+      console.log(response);
       return response.data;
     });
   }
-
+async getBlob(url: string): Promise<Blob> {
+  const response = await this.axiosInstance.get(url, {
+    responseType: 'blob'
+  });
+  return response.data;
+}
   async post<T>(url: string, data?: any): Promise<ApiResponse<T>> {
     return this.requestQueue.add(async () => {
       const response = await this.axiosInstance.post<ApiResponse<T>>(url, data);
@@ -439,6 +454,86 @@ class HttpClient {
     }
     return null;
   }
+
+/**
+ * Upload d'un fichier avec options avancées
+ */
+async uploadFile<T>(
+  url: string, 
+  file: File, 
+  options?: ApiUploadOptions<any>
+): Promise<ApiResponse<T>> {
+  const formData = new FormData();
+  
+  // Ajouter le fichier avec le nom de champ spécifié
+  const fieldName = options?.fieldName || 'file';
+  formData.append(fieldName, file);
+  
+  // Ajouter les données additionnelles
+  if (options?.additionalData) {
+    Object.entries(options.additionalData).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        formData.append(key, typeof value === 'object' ? JSON.stringify(value) : String(value));
+      }
+    });
+  }
+  
+  // Headers supplémentaires
+  const headers = {
+    ...options?.headers
+  };
+  
+  return this.requestQueue.add(async () => {
+    const response = await this.axiosInstance.post<ApiResponse<T>>(url, formData, {
+      headers,
+      onUploadProgress: (progressEvent) => {
+        if (options?.onProgress && progressEvent.total) {
+          const percentage = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          options.onProgress({
+            loaded: progressEvent.loaded,
+            total: progressEvent.total,
+            percentage
+          });
+        }
+      },
+    });
+    return response.data;
+  });
+}
+async postFormData<T = any>(
+  endpoint: string,
+  formData: FormData,
+  config?: AxiosRequestConfig
+): Promise<ApiResponse<T>> {
+  return this.requestQueue.add(async () => {
+    console.log('📤 POST FormData:', endpoint);
+    
+    const response = await this.axiosInstance.post<ApiResponse<T>>(
+      endpoint,
+      formData,
+      {
+        ...config,
+        headers: {
+          ...config?.headers,
+          'Content-Type': 'multipart/form-data',
+        },
+        onUploadProgress: (progressEvent) => {
+          if (progressEvent.total) {
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            console.log(`Upload progress: ${percentCompleted}%`);
+            
+            if (config?.onUploadProgress) {
+              config.onUploadProgress(progressEvent);
+            }
+          }
+        },
+        timeout: 300000, // 5 minutes
+      }
+    );
+
+    return response.data;
+  });
+}
 }
 
 // Instance singleton

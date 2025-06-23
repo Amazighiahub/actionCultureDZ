@@ -455,3 +455,11 @@ export const notificationService = new UnifiedNotificationService();
 
 // Export du type pour l'injection de dépendances
 export type { UnifiedNotificationService };
+export type { 
+  Notification,
+  NotificationSummary,
+  NotificationPreferences,
+  NotificationListResponse,
+  WebSocketStatus,
+  TestEmailType 
+} from '../types/models/notification.types';

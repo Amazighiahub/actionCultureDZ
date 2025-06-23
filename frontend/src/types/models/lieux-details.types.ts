@@ -1,3 +1,4 @@
+
 // types/models/lieux-details.types.ts
 
 import { Lieu } from './lieu.types';
@@ -18,6 +19,7 @@ export interface DetailLieu {
   Lieu?: Lieu;
   Monuments?: Monument[];
   Vestiges?: Vestige[];
+  Service?: Service[];
 }
 
 export interface Monument {
@@ -48,13 +50,13 @@ export interface Vestige {
 
 export interface Service {
   id: number;
-  id_lieu: number;
+  id_detailLieu: number;
   nom: string;
   createdAt: string;
   updatedAt: string;
   
   // Relations (optionnelles)
-  Lieu?: Lieu;
+  DetailLieu: DetailLieu;
 }
 
 export interface LieuMedia {

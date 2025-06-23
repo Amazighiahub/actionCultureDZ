@@ -65,7 +65,7 @@ let wilayasCache: Wilaya[] = [];
 // Helper pour obtenir le nom de la wilaya
 const getWilayaName = (wilayaId: number): string => {
   const wilaya = wilayasCache.find(w => w.id_wilaya === wilayaId);
-  return wilaya ? wilaya.nom : `Wilaya ${wilayaId}`;
+  return wilaya ? wilaya.wilaya_name : `Wilaya ${wilayaId}`;
 };
 
 // Helper pour extraire les données d'une réponse (paginée ou directe)
@@ -526,7 +526,7 @@ const OeuvresDynamique = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await oeuvreService.getPopular(6);
+      const response = await oeuvreService.getRecentOeuvres();
       console.log('Oeuvres response:', response);
       
       if (response.success && response.data) {
@@ -851,7 +851,7 @@ const Index = () => {
 
       // Charger les métadonnées (wilayas) en cache
       console.log('Loading wilayas...');
-      const wilayasResponse = await metadataService.getWilayasCached();
+      const wilayasResponse = await metadataService.getWilayas();
       console.log('Wilayas response:', wilayasResponse);
       if (wilayasResponse.success && wilayasResponse.data) {
         wilayasCache = wilayasResponse.data;
@@ -877,10 +877,28 @@ const Index = () => {
       // Charger les notifications si connecté
       if (authenticated) {
         console.log('Loading notifications...');
-        const notifResponse = await notificationService.getSummary();
-        console.log('Notifications response:', notifResponse);
-        if (notifResponse.success && notifResponse.data) {
-          setNotifications(notifResponse.data.recent_unread || []);
+        try {
+          const notifSummary = await notificationService.getSummary();
+          console.log('Notifications summary:', notifSummary);
+          // getSummary retourne directement NotificationSummary, pas ApiResponse
+          if (authenticated) {
+        console.log('Loading notifications...');
+        try {
+          const notifSummary = await notificationService.getSummary();
+          console.log('Notifications summary:', notifSummary);
+          // getSummary retourne directement NotificationSummary, pas ApiResponse
+          if (notifSummary && notifSummary.dernieres && Array.isArray(notifSummary.dernieres)) {
+            // Les notifications du résumé sont une version simplifiée
+            setNotifications((notifSummary.dernieres as any) || []);
+          }
+        } catch (notifError) {
+          console.log('Notifications error:', notifError);
+          // On ne bloque pas le chargement si les notifications échouent
+        }
+      }
+        } catch (notifError) {
+          console.log('Notifications error:', notifError);
+          // On ne bloque pas le chargement si les notifications échouent
         }
       }
       console.log('=== checkAuthAndLoadData END ===');

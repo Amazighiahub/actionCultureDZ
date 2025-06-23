@@ -219,13 +219,13 @@ class PatrimoineService extends BaseService<SitePatrimoine, CreateSiteData, Upda
     return httpClient.delete<void>(API_ENDPOINTS.patrimoine.retirerFavoris(id));
   }
 
-  async uploadMedias(siteId: number, files: File[]): Promise<ApiResponse<MediaSite[]>> {
+  /*async uploadMedias(siteId: number, files: File[]): Promise<ApiResponse<MediaSite[]>> {
     return httpClient.uploadMultipleFiles<MediaSite[]>(
       API_ENDPOINTS.patrimoine.uploadMedias(siteId),
       files,
       { fieldName: 'medias' }
     );
-  }
+  }*/
 
   async deleteMedia(siteId: number, mediaId: number): Promise<ApiResponse<void>> {
     return httpClient.delete<void>(API_ENDPOINTS.patrimoine.deleteMedia(siteId, mediaId));
@@ -255,14 +255,14 @@ class PatrimoineService extends BaseService<SitePatrimoine, CreateSiteData, Upda
   }
 
   // Administration
-  async importSites(file: File): Promise<ApiResponse<{
+ /* async importSites(file: File): Promise<ApiResponse<{
     imported: number;
     errors: Array<{ line: number; error: string }>;
   }>> {
     return httpClient.upload<any>(API_ENDPOINTS.patrimoine.import, file, {
       fieldName: 'file'
     });
-  }
+  }*/
 
   async exportSites(format: 'excel' | 'csv' | 'json' = 'excel'): Promise<ApiResponse<Blob>> {
     return httpClient.download(
@@ -270,6 +270,12 @@ class PatrimoineService extends BaseService<SitePatrimoine, CreateSiteData, Upda
       `sites_patrimoine.${format}`
     );
   }
+  async getMySites(params?: FilterParams): Promise<ApiResponse<PaginatedResponse<SitePatrimoine>>> {
+  return this.getAll({
+    ...params,
+    user_id: 'current'
+  });
+}
 }
 
 export const patrimoineService = new PatrimoineService();

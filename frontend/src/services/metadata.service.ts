@@ -1,41 +1,50 @@
-// services/metadata.service.ts
+// services/metadata.service.ts - Version complète réécrite
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { httpClient } from './httpClient';
 import { API_ENDPOINTS } from '../config/api';
-import type { ApiResponse, PaginatedResponse } from '../config/api';
-import type {
-  Wilaya,
-  Daira,
-  Commune,
-  Localite
-} from '../types/models/geography.types';
+import type { ApiResponse } from '../config/api';
 import type {
   TypeOeuvre,
   TypeEvenement,
-  TypeOrganisation,
   Genre,
   Langue,
   Categorie,
   TagMotCle,
   Materiau,
   Technique,
-  Editeur
+  Editeur,
+  
 } from '../types/models/references.types';
-import { UploadResponse, uploadService } from './upload.service';
+import { Wilaya } from '@/types';
+import { TypeUser } from '@/types/models/type-user.types';
 
-interface MetadataStatistics {
-  total_categories: number;
-  total_tags: number;
-  total_materiaux: number;
-  total_techniques: number;
-  total_langues: number;
-  total_genres: number;
+// Types pour la hiérarchie des catégories
+export interface CategoryGroupedByGenre {
+  id_genre: number;
+  nom: string;
+  description?: string;
+  categories: Categorie[];
 }
 
+export interface GenreFromCategories {
+  id_genre: number;
+  nom: string;
+  description?: string;
+  categories_count: number;
+}
+
+export interface HierarchyValidationResult {
+  valid: boolean;
+  invalidCategories?: Array<{
+    id: number;
+    nom: string;
+  }>;
+}
+
+// Type pour toutes les métadonnées
 interface AllMetadata {
   types_oeuvres: TypeOeuvre[];
   types_evenements: TypeEvenement[];
-  types_organisations: TypeOrganisation[];
   genres: Genre[];
   langues: Langue[];
   categories: Categorie[];
@@ -43,244 +52,48 @@ interface AllMetadata {
   techniques: Technique[];
   editeurs: Editeur[];
   wilayas: Wilaya[];
+  tags: TagMotCle[];
+  types_users: TypeUser[];
 }
 
 export class MetadataService {
-  /**
-   * Obtenir toutes les métadonnées
-   */
-  async getAll(): Promise<ApiResponse<AllMetadata>> {
-    return httpClient.get<AllMetadata>(API_ENDPOINTS.metadata.all);
-  }
-
-  /**
-   * Obtenir les statistiques des métadonnées
-   */
-  async getStatistics(): Promise<ApiResponse<MetadataStatistics>> {
-    return httpClient.get<MetadataStatistics>(API_ENDPOINTS.metadata.statistics);
-  }
-
-  // ================================================
-  // MATÉRIAUX
-  // ================================================
-
-  /**
-   * Obtenir la liste des matériaux
-   */
-  async getMateriaux(): Promise<ApiResponse<Materiau[]>> {
-    return httpClient.get<Materiau[]>(API_ENDPOINTS.metadata.materiaux.list);
-  }
-
-  /**
-   * Créer un nouveau matériau
-   */
-  async createMateriau(data: { nom: string; description?: string }): Promise<ApiResponse<Materiau>> {
-    return httpClient.post<Materiau>(API_ENDPOINTS.metadata.materiaux.create, data);
-  }
-
-  /**
-   * Mettre à jour un matériau
-   */
-  async updateMateriau(id: number, data: { nom?: string; description?: string }): Promise<ApiResponse<Materiau>> {
-    return httpClient.put<Materiau>(API_ENDPOINTS.metadata.materiaux.update(id), data);
-  }
-
-  /**
-   * Supprimer un matériau
-   */
-  async deleteMateriau(id: number): Promise<ApiResponse<void>> {
-    return httpClient.delete<void>(API_ENDPOINTS.metadata.materiaux.delete(id));
-  }
-
-  // ================================================
-  // TECHNIQUES
-  // ================================================
-
-  /**
-   * Obtenir la liste des techniques
-   */
-  async getTechniques(): Promise<ApiResponse<Technique[]>> {
-    return httpClient.get<Technique[]>(API_ENDPOINTS.metadata.techniques.list);
-  }
-
-  /**
-   * Créer une nouvelle technique
-   */
-  async createTechnique(data: { nom: string; description?: string }): Promise<ApiResponse<Technique>> {
-    return httpClient.post<Technique>(API_ENDPOINTS.metadata.techniques.create, data);
-  }
-
-  /**
-   * Mettre à jour une technique
-   */
-  async updateTechnique(id: number, data: { nom?: string; description?: string }): Promise<ApiResponse<Technique>> {
-    return httpClient.put<Technique>(API_ENDPOINTS.metadata.techniques.update(id), data);
-  }
-
-  /**
-   * Supprimer une technique
-   */
-  async deleteTechnique(id: number): Promise<ApiResponse<void>> {
-    return httpClient.delete<void>(API_ENDPOINTS.metadata.techniques.delete(id));
-  }
-
-  // ================================================
-  // LANGUES
-  // ================================================
-
-  /**
-   * Obtenir la liste des langues
-   */
-  async getLangues(): Promise<ApiResponse<Langue[]>> {
-    return httpClient.get<Langue[]>(API_ENDPOINTS.metadata.langues);
-  }
-
-  // ================================================
-  // CATÉGORIES
-  // ================================================
-
-  /**
-   * Obtenir la liste des catégories
-   */
-  async getCategories(): Promise<ApiResponse<Categorie[]>> {
-    return httpClient.get<Categorie[]>(API_ENDPOINTS.metadata.categories.list);
-  }
-
-  /**
-   * Rechercher des catégories
-   */
-  async searchCategories(query: string): Promise<ApiResponse<Categorie[]>> {
-    return httpClient.get<Categorie[]>(
-      API_ENDPOINTS.metadata.categories.search,
-      { q: query }  // ✅ Correction: passer directement les paramètres
-    );
-  }
-
-  // ================================================
-  // TYPES
-  // ================================================
-
-  /**
-   * Obtenir les types d'œuvres
-   */
-  async getTypesOeuvres(): Promise<ApiResponse<TypeOeuvre[]>> {
-    return httpClient.get<TypeOeuvre[]>(API_ENDPOINTS.metadata.typesOeuvres);
-  }
-
-  /**
-   * Obtenir les genres
-   */
-  async getGenres(): Promise<ApiResponse<Genre[]>> {
-    return httpClient.get<Genre[]>(API_ENDPOINTS.metadata.genres);
-  }
-
-  /**
-   * Obtenir les éditeurs
-   */
-  async getEditeurs(): Promise<ApiResponse<Editeur[]>> {
-    return httpClient.get<Editeur[]>(API_ENDPOINTS.metadata.editeurs);
-  }
-
-  /**
-   * Obtenir les types d'organisations
-   */
-  async getTypesOrganisations(): Promise<ApiResponse<TypeOrganisation[]>> {
-    return httpClient.get<TypeOrganisation[]>(API_ENDPOINTS.metadata.typesOrganisations);
-  }
-
-  // ================================================
-  // GÉOGRAPHIE
-  // ================================================
-
-  /**
-   * Obtenir toutes les wilayas
-   */
-  async getWilayas(): Promise<ApiResponse<Wilaya[]>> {
-    return httpClient.get<Wilaya[]>(API_ENDPOINTS.metadata.geographie.wilayas);
-  }
-
-  /**
-   * Rechercher des wilayas
-   */
-  async searchWilayas(query: string): Promise<ApiResponse<Wilaya[]>> {
-    return httpClient.get<Wilaya[]>(
-      API_ENDPOINTS.metadata.geographie.searchWilayas,
-      { q: query }  // ✅ Correction: passer directement les paramètres
-    );
-  }
-
-  /**
-   * Obtenir les dairas d'une wilaya
-   */
-  async getDairasByWilaya(wilayaId: number): Promise<ApiResponse<Daira[]>> {
-    return httpClient.get<Daira[]>(
-      API_ENDPOINTS.metadata.geographie.dairasByWilaya(wilayaId)
-    );
-  }
-
-  /**
-   * Obtenir les communes d'une daira
-   */
-  async getCommunesByDaira(dairaId: number): Promise<ApiResponse<Commune[]>> {
-    return httpClient.get<Commune[]>(
-      API_ENDPOINTS.metadata.geographie.communesByDaira(dairaId)
-    );
-  }
-
-  /**
-   * Obtenir les localités d'une commune
-   */
-  async getLocalitesByCommune(communeId: number): Promise<ApiResponse<Localite[]>> {
-    return httpClient.get<Localite[]>(
-      API_ENDPOINTS.metadata.geographie.localitesByCommune(communeId)
-    );
-  }
-
-  // ================================================
-  // TAGS
-  // ================================================
-
-  /**
-   * Obtenir la liste des tags
-   */
-  async getTags(): Promise<ApiResponse<TagMotCle[]>> {
-    return httpClient.get<TagMotCle[]>(API_ENDPOINTS.metadata.tags.list);
-  }
-
-  /**
-   * Créer un nouveau tag
-   */
-  async createTag(data: { nom: string }): Promise<ApiResponse<TagMotCle>> {
-    return httpClient.post<TagMotCle>(API_ENDPOINTS.metadata.tags.create, data);
-  }
-
-  // ================================================
-  // HELPERS
-  // ================================================
-
-  /**
-   * Cache local des métadonnées (pour éviter les requêtes répétées)
-   */
+  // Cache pour éviter les requêtes répétées
   private cache: Map<string, { data: any; timestamp: number }> = new Map();
   private cacheTimeout = 5 * 60 * 1000; // 5 minutes
 
   /**
-   * Obtenir des données avec cache
+   * Obtenir toutes les métadonnées d'un coup
    */
-  private async getWithCache<T>(key: string, fetcher: () => Promise<ApiResponse<T>>): Promise<ApiResponse<T>> {
-    const cached = this.cache.get(key);
+  async getAll(): Promise<ApiResponse<AllMetadata>> {
+    try {
+      const response = await httpClient.get<AllMetadata>('/metadata/all');
+      return response;
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Erreur lors du chargement des métadonnées'
+      };
+    }
+  }
+
+  /**
+   * Obtenir toutes les métadonnées avec cache
+   */
+  async getAllCached(): Promise<ApiResponse<AllMetadata>> {
+    const cacheKey = 'all-metadata';
+    const cached = this.cache.get(cacheKey);
     
     if (cached && Date.now() - cached.timestamp < this.cacheTimeout) {
       return {
         success: true,
-        data: cached.data as T
+        data: cached.data as AllMetadata
       };
     }
 
-    const response = await fetcher();
+    const response = await this.getAll();
     
     if (response.success && response.data) {
-      this.cache.set(key, {
+      this.cache.set(cacheKey, {
         data: response.data,
         timestamp: Date.now()
       });
@@ -296,65 +109,402 @@ export class MetadataService {
     this.cache.clear();
   }
 
-  /**
-   * Obtenir toutes les métadonnées avec cache
-   */
-  async getAllCached(): Promise<ApiResponse<AllMetadata>> {
-    return this.getWithCache('all-metadata', () => this.getAll());
-  }
+  // ================================================
+  // HIÉRARCHIE TYPE → CATÉGORIES (groupées par genre)
+  // ================================================
 
   /**
-   * Obtenir les wilayas avec cache
+   * Récupérer les catégories valides pour un type d'œuvre
+   * Retourne les catégories groupées par genre
    */
-  async getWilayasCached(): Promise<ApiResponse<Wilaya[]>> {
-    return this.getWithCache('wilayas', () => this.getWilayas());
-  }
-  // Ajoutez cette méthode dans la classe MediaService de media.service.ts
-
-/**
- * Upload d'une photo de profil lors de l'inscription (sans authentification)
- * Cette méthode est différente de uploadProfilePhoto car elle n'essaie pas
- * de mettre à jour le profil (qui n'existe pas encore)
- */
-async uploadProfilePhotoForRegistration(file: File): Promise<ApiResponse<UploadResponse>> {
-  // Valider le fichier
-  const validation = uploadService.validateFile(file, 'image');
-  if (!validation.valid) {
-    return {
-      success: false,
-      error: validation.error
-    };
+  async getCategoriesForType(typeOeuvreId: number): Promise<ApiResponse<CategoryGroupedByGenre[]>> {
+    try {
+      const response = await httpClient.get<CategoryGroupedByGenre[]>(
+        `/metadata/types-oeuvres/${typeOeuvreId}/categories`
+      );
+      return response;
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Erreur lors de la récupération des catégories'
+      };
+    }
   }
 
-  console.log('📷 Upload photo pour inscription:', {
-    fileName: file.name,
-    fileSize: file.size,
-    fileType: file.type
-  });
+  /**
+   * Vérifier si un type d'œuvre a des catégories disponibles
+   */
+  async checkIfTypeHasCategories(typeOeuvreId: number): Promise<boolean> {
+    try {
+      const response = await httpClient.get<{ hasCategories: boolean; requiresCategories: boolean }>(
+        `/metadata/types-oeuvres/${typeOeuvreId}/has-categories`
+      );
+      return response.success && response.data ? response.data.hasCategories : false;
+    } catch (error) {
+      console.error('Erreur vérification catégories:', error);
+      return false;
+    }
+  }
 
-  // Utiliser uploadService pour l'upload PUBLIC (pas d'auth requise)
-  const result = await uploadService.uploadImage(file, {
-    isPublic: true,  // IMPORTANT: endpoint public car pas encore authentifié
-    generateThumbnail: true,
-    maxWidth: 500,
-    maxHeight: 500,
-    quality: 0.9
-  });
+  /**
+   * Récupérer les genres associés à une liste de catégories
+   * Utile pour afficher les genres déduits des catégories sélectionnées
+   */
+  async getGenresFromCategories(categoryIds: number[]): Promise<ApiResponse<{ genres: GenreFromCategories[] }>> {
+    try {
+      const response = await httpClient.post<{ genres: GenreFromCategories[] }>(
+        '/metadata/genres-from-categories',
+        { categories: categoryIds }
+      );
+      return response;
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Erreur lors de la récupération des genres'
+      };
+    }
+  }
 
-  // Log pour debug
-  if (result.success && result.data) {
-    console.log('✅ Photo uploadée pour inscription:', {
-      url: result.data.url,
-      filename: result.data.filename
+  /**
+   * Valider la hiérarchie type/catégories
+   * Vérifie que les catégories sélectionnées sont valides pour le type d'œuvre
+   */
+  async validateHierarchy(
+    typeOeuvreId: number, 
+    categoryIds: number[]
+  ): Promise<ApiResponse<HierarchyValidationResult>> {
+    try {
+      const response = await httpClient.post<HierarchyValidationResult>(
+        '/metadata/validate-hierarchy',
+        {
+          id_type_oeuvre: typeOeuvreId,
+          categories: categoryIds
+        }
+      );
+      return response;
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Erreur lors de la validation'
+      };
+    }
+  }
+
+  // ================================================
+  // TYPES D'ŒUVRES
+  // ================================================
+
+  /**
+   * Obtenir les types d'œuvres
+   */
+  async getTypesOeuvres(): Promise<ApiResponse<TypeOeuvre[]>> {
+    try {
+      const response = await httpClient.get<TypeOeuvre[]>('/metadata/types-oeuvres');
+      return response;
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Erreur lors du chargement des types d\'œuvres'
+      };
+    }
+  }
+
+  // ================================================
+  // LANGUES
+  // ================================================
+
+  /**
+   * Obtenir la liste des langues
+   */
+  async getLangues(): Promise<ApiResponse<Langue[]>> {
+    try {
+      const response = await httpClient.get<Langue[]>('/metadata/langues');
+      return response;
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Erreur lors du chargement des langues'
+      };
+    }
+  }
+
+  // ================================================
+  // TYPES USERS (INTERVENANTS)
+  // ================================================
+
+  /**
+   * Obtenir les types d'utilisateurs/intervenants
+   */
+  async getTypesUsers(): Promise<ApiResponse<TypeUser[]>> {
+    try {
+      const response = await httpClient.get<TypeUser[]>('/metadata/types-users');
+      return response;
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Erreur lors du chargement des types d\'utilisateurs'
+      };
+    }
+  }
+
+  // ================================================
+  // ÉDITEURS
+  // ================================================
+
+  /**
+   * Obtenir les éditeurs
+   */
+  async getEditeurs(): Promise<ApiResponse<Editeur[]>> {
+    try {
+      const response = await httpClient.get<Editeur[]>('/metadata/editeurs');
+      return response;
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Erreur lors du chargement des éditeurs'
+      };
+    }
+  }
+
+  /**
+   * Créer un nouvel éditeur
+   */
+  async createEditeur(data: { 
+    nom: string; 
+    type_editeur?: string;
+    site_web?: string;
+    email?: string; 
+    telephone?: string;
+    description?: string;
+  }): Promise<ApiResponse<Editeur>> {
+    try {
+      const response = await httpClient.post<Editeur>('/metadata/editeurs', data);
+      
+      // Invalider le cache après création
+      this.clearCache();
+      
+      return response;
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Erreur lors de la création de l\'éditeur'
+      };
+    }
+  }
+
+  // ================================================
+  // TAGS
+  // ================================================
+
+  /**
+   * Obtenir la liste des tags
+   */
+  async getTags(search?: string, limit = 50): Promise<ApiResponse<TagMotCle[]>> {
+    try {
+      const params: any = { limit };
+      if (search) {
+        params.search = search;
+      }
+      
+      const response = await httpClient.get<TagMotCle[]>('/metadata/tags', params);
+      return response;
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Erreur lors du chargement des tags'
+      };
+    }
+  }
+
+  /**
+   * Créer un nouveau tag
+   */
+  async createTag(data: { nom: string }): Promise<ApiResponse<TagMotCle>> {
+    try {
+      const response = await httpClient.post<TagMotCle>('/metadata/tags', data);
+      
+      // Invalider le cache après création
+      this.clearCache();
+      
+      return response;
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Erreur lors de la création du tag'
+      };
+    }
+  }
+
+  // ================================================
+  // MATÉRIAUX ET TECHNIQUES (ARTISANAT)
+  // ================================================
+
+  /**
+   * Obtenir la liste des matériaux
+   */
+  async getMateriaux(): Promise<ApiResponse<Materiau[]>> {
+    try {
+      const response = await httpClient.get<Materiau[]>('/metadata/materiaux');
+      return response;
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Erreur lors du chargement des matériaux'
+      };
+    }
+  }
+
+  /**
+   * Obtenir la liste des techniques
+   */
+  async getTechniques(): Promise<ApiResponse<Technique[]>> {
+    try {
+      const response = await httpClient.get<Technique[]>('/metadata/techniques');
+      return response;
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Erreur lors du chargement des techniques'
+      };
+    }
+  }
+
+  // ================================================
+  // CATÉGORIES ET GENRES (SANS FILTRE)
+  // ================================================
+
+  /**
+   * Obtenir toutes les catégories
+   */
+  async getCategories(): Promise<ApiResponse<Categorie[]>> {
+    try {
+      const response = await httpClient.get<Categorie[]>('/metadata/categories');
+      return response;
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Erreur lors du chargement des catégories'
+      };
+    }
+  }
+
+  /**
+   * Obtenir tous les genres
+   */
+  async getGenres(): Promise<ApiResponse<Genre[]>> {
+    try {
+      const response = await httpClient.get<Genre[]>('/metadata/genres');
+      return response;
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Erreur lors du chargement des genres'
+      };
+    }
+  }
+
+  // ================================================
+  // WILAYAS
+  // ================================================
+
+  /**
+   * Obtenir toutes les wilayas
+   */
+  async getWilayas(): Promise<ApiResponse<Wilaya[]>> {
+    try {
+      const response = await httpClient.get<Wilaya[]>('/metadata/wilayas');
+      return response;
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Erreur lors du chargement des wilayas'
+      };
+    }
+  }
+
+  // ================================================
+  // HELPERS
+  // ================================================
+
+  /**
+   * Helper: Construire un arbre de sélection pour les catégories
+   */
+  buildCategoryTree(categoriesGrouped: CategoryGroupedByGenre[]): Array<{
+    label: string;
+    value: string;
+    children: Array<{
+      label: string;
+      value: number;
+    }>;
+  }> {
+    return categoriesGrouped.map(genre => ({
+      label: genre.nom,
+      value: `genre-${genre.id_genre}`,
+      children: genre.categories.map(cat => ({
+        label: cat.nom,
+        value: cat.id_categorie
+      }))
+    }));
+  }
+
+  /**
+   * Helper: Obtenir les IDs de genres depuis une liste de catégories
+   */
+  async getGenreIdsFromCategories(categoryIds: number[]): Promise<number[]> {
+    const response = await this.getGenresFromCategories(categoryIds);
+    if (response.success && response.data) {
+      return response.data.genres.map(g => g.id_genre);
+    }
+    return [];
+  }
+
+  /**
+   * Helper: Vérifier si au moins une catégorie est sélectionnée pour un genre
+   */
+  hasGenreRepresentation(
+    selectedCategories: number[], 
+    genreId: number,
+    categoriesGrouped: CategoryGroupedByGenre[]
+  ): boolean {
+    const genre = categoriesGrouped.find(g => g.id_genre === genreId);
+    if (!genre) return false;
+    
+    return genre.categories.some(cat => 
+      selectedCategories.includes(cat.id_categorie)
+    );
+  }
+
+  /**
+   * Helper: Récupérer les catégories d'un genre spécifique
+   */
+  getCategoriesOfGenre(
+    genreId: number,
+    categoriesGrouped: CategoryGroupedByGenre[]
+  ): Categorie[] {
+    const genre = categoriesGrouped.find(g => g.id_genre === genreId);
+    return genre ? genre.categories : [];
+  }
+
+  /**
+   * Helper: Compter les catégories sélectionnées par genre
+   */
+  countCategoriesByGenre(
+    selectedCategories: number[],
+    categoriesGrouped: CategoryGroupedByGenre[]
+  ): Map<number, number> {
+    const countMap = new Map<number, number>();
+    
+    categoriesGrouped.forEach(genre => {
+      const count = genre.categories.filter(cat => 
+        selectedCategories.includes(cat.id_categorie)
+      ).length;
+      if (count > 0) {
+        countMap.set(genre.id_genre, count);
+      }
     });
-  } else {
-    console.error('❌ Échec upload photo inscription:', result.error);
+    
+    return countMap;
   }
-
-  // Retourner simplement le résultat de l'upload
-  // PAS de mise à jour du profil car l'utilisateur n'existe pas encore
-  return result;
-}
 }
 
 // Export de l'instance singleton

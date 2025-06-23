@@ -21,7 +21,23 @@ import { MaterielRequis } from './specific-types';
 // =====================================================
 // NOUVELLES ASSOCIATIONS POUR LA HIÉRARCHIE
 // =====================================================
-
+export interface OeuvreIntervenant {
+  id: number;
+  id_oeuvre: number;
+  id_intervenant: number;
+  id_type_user: number;
+  personnage?: string;
+  ordre_apparition?: number;
+  role_principal: boolean;
+  description_role?: string;
+  date_creation: string;
+  date_modification: string;
+  
+  // Relations
+  Oeuvre?: Oeuvre;
+  Intervenant?: Intervenant;
+  TypeUser?: TypeUser;
+}
 /**
  * Association TypeOeuvre ↔ Genre
  * Définit quels genres sont disponibles pour chaque type d'œuvre
@@ -123,13 +139,16 @@ export interface OeuvreUser {
   id: number;
   id_oeuvre: number;
   id_user: number;
-  role_dans_oeuvre: RoleDansOeuvre;
+  id_type_user: number; // ⚠️ CHANGEMENT : Remplace role_dans_oeuvre
   personnage?: string;
   ordre_apparition?: number;
   role_principal: boolean;
   description_role?: string;
+  
+  // Relations
   Oeuvre?: Oeuvre;
   User?: User;
+  TypeUser?: TypeUser;
 }
 
 export interface OeuvreEditeur {
@@ -317,3 +336,9 @@ export function isCategoryAvailableForGenre(
           gc.actif
   );
 }
+export type CreateOeuvreIntervenantDTO = Omit<OeuvreIntervenant, 'id' | 'date_creation' | 'date_modification' | 'Oeuvre' | 'Intervenant' | 'TypeUser'>;
+export type CreateOeuvreUserDTO = Omit<OeuvreUser, 'id' | 'Oeuvre' | 'User' | 'TypeUser'>;
+
+// Pour mettre à jour
+export type UpdateOeuvreIntervenantDTO = Partial<CreateOeuvreIntervenantDTO>;
+export type UpdateOeuvreUserDTO = Partial<CreateOeuvreUserDTO>;

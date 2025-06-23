@@ -41,6 +41,7 @@ module.exports = (sequelize) => {
     DetailLieu.belongsTo(models.Lieu, { foreignKey: 'id_lieu' });
     DetailLieu.hasMany(models.Monument, { foreignKey: 'detailLieuId' });
     DetailLieu.hasMany(models.Vestige, { foreignKey: 'detailLieuId' });
+    DetailLieu.hasMany(models.Service, { foreignKey: 'id_detailLieu' });
   };
 
   return DetailLieu;

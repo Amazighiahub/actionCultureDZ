@@ -138,7 +138,10 @@ export function mapNotificationToAPI(notif: Notification): Partial<NotificationA
 export interface NotificationSummary {
   total: number;
   nonLues: number;
-  parType: Record<NotificationType | string, number>;
+ 
+  parType: Record<string, number>;
+ 
+
   dernieres: Array<{
     id_notification: number;
     titre: string;

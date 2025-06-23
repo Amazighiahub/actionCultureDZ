@@ -328,14 +328,57 @@ export const API_ENDPOINTS = {
   metadata: {
     all: '/metadata/all',
     statistics: '/metadata/statistics',
+    // Hiérarchie Type → Genre → Catégorie
+categoriesForType: (typeId: number) => `/metadata/types-oeuvres/${typeId}/categories`,
+    typesUsers: '/metadata/types-users',
+    hasCategories: (typeOeuvreId: number) => `/metadata/types-oeuvres/${typeOeuvreId}/has-categories`,
     
+  editeurs: {
+    list: '/metadata/editeurs',
+    create: '/metadata/editeurs',
+    update: (id: number) => `/metadata/editeurs/${id}`,
+    delete: (id: number) => `/metadata/editeurs/${id}`
+  },
+    hierarchy: {
+      complete: '/metadata/hierarchy',
+      simplified: '/metadata/hierarchy?simplified=true',
+      statistics: '/metadata/hierarchy/statistics',
+      validate: '/metadata/validate-hierarchy',
+    },
+    
+    // Types d'œuvres et navigation hiérarchique
+    typesOeuvres: '/metadata/types-oeuvres',
+    genresParType: (typeId: number) => `/metadata/types/${typeId}/genres`,
+    categoriesParGenre: (genreId: number) => `/metadata/genres/${genreId}/categories`,
+    
+    // Gestion admin de la hiérarchie
+    hierarchyAdmin: {
+      addGenreToType: (typeId: number) => `/metadata/types/${typeId}/genres`,
+      addCategoryToGenre: (genreId: number) => `/metadata/genres/${genreId}/categories`,
+      updateRelation: (typeId: number, genreId: number) => `/metadata/types/${typeId}/genres/${genreId}`,
+      disableRelation: (typeId: number, genreId: number) => `/metadata/types/${typeId}/genres/${genreId}`,
+    },
     materiaux: {
       list: '/metadata/materiaux',
       create: '/metadata/materiaux',
       update: (id: number) => `/metadata/materiaux/${id}`,
       delete: (id: number) => `/metadata/materiaux/${id}`,
     },
+     intervenants: {
+    // Public
+    list: '/intervenants',
+    search: '/intervenants/search',
+    types: '/intervenants/types',
+    detail: (id: number) => `/intervenants/${id}`,
     
+    // Gestion (Admin + Professionnel validé)
+    create: '/intervenants',
+    update: (id: number) => `/intervenants/${id}`,
+    
+    // Admin uniquement
+    delete: (id: number) => `/intervenants/${id}`,
+    statistics: '/intervenants/stats/overview',
+  },
     techniques: {
       list: '/metadata/techniques',
       create: '/metadata/techniques',
@@ -350,11 +393,11 @@ export const API_ENDPOINTS = {
       search: '/metadata/categories/search',
     },
     
-    typesOeuvres: '/metadata/types-oeuvres',
-    genres: '/metadata/genres',
-    editeurs: '/metadata/editeurs',
-    typesOrganisations: '/metadata/types-organisations',
     
+    genres: '/metadata/genres',
+   
+    typesOrganisations: '/metadata/types-organisations',
+   
     geographie: {
       wilayas: '/metadata/wilayas',
       searchWilayas: '/metadata/wilayas/search',
@@ -386,6 +429,7 @@ export const API_ENDPOINTS = {
     
     // Authentifié
     create: '/oeuvres',
+    
     update: (id: number) => `/oeuvres/${id}`,
     delete: (id: number) => `/oeuvres/${id}`,
     uploadMedia: (id: number) => `/oeuvres/${id}/medias/upload`,
@@ -657,7 +701,7 @@ export const API_ENDPOINTS = {
     stats: '/dashboard/stats',
     
     // Patrimoine
-    patrimoine: '/dashboard/patrimoine',
+   
     qrStats: '/dashboard/patrimoine/qr-stats',
     parcours: '/dashboard/patrimoine/parcours',
     
@@ -713,20 +757,80 @@ export const API_ENDPOINTS = {
       alerts: '/dashboard/monitoring/alerts',
     },
      users: {
-    list: '/dashboard/users',
-    detail: (id: number) => `/dashboard/users/${id}`,
-    update: (id: number) => `/dashboard/users/${id}`,
-    delete: (id: number) => `/dashboard/users/${id}`,
-    validate: (id: number) => `/dashboard/users/${id}/validate`,
-    suspend: (id: number) => `/dashboard/users/${id}/suspend`,
-    reactivate: (id: number) => `/dashboard/users/${id}/reactivate`,
-    changeRole: (id: number) => `/dashboard/users/${id}/role`,
-    resetPassword: (id: number) => `/dashboard/users/${id}/reset-password`,
-    bulkAction: '/dashboard/users/bulk-action',
-    search: '/dashboard/users/search',
-    export: '/dashboard/users/export',
+    list: '/admin/users',
+    detail: (id: number) => `/admin/users/${id}`,
+    update: (id: number) => `/admin/users/${id}`,
+    delete: (id: number) => `/admin/users/${id}`,
+    validate: (id: number) => `/admin/users/${id}/validate`,
+    suspend: (id: number) => `/admin/users/${id}/suspend`,
+    reactivate: (id: number) => `/admin/users/${id}/reactivate`,
+    changeRole: (id: number) => `/admin/users/${id}/role`,
+    resetPassword: (id: number) => `/admin/users/${id}/reset-password`,
+    bulkAction: '/admin/users/bulk-action',
+    search: '/admin/users/search',
+    export: '/admin/users/export',
   },
   
+  // Gestion des œuvres
+  oeuvres: {
+    list: '/admin/oeuvres',
+    detail: (id: number) => `/admin/oeuvres/${id}`,
+    updateStatus: (id: number) => `/admin/oeuvres/${id}/status`,
+    delete: (id: number) => `/admin/oeuvres/${id}`,
+    bulkAction: '/admin/oeuvres/bulk-action',
+    export: '/admin/oeuvres/export',
+    featured: {
+      add: (id: number) => `/admin/oeuvres/${id}/featured`,
+      remove: (id: number) => `/admin/oeuvres/${id}/featured`,
+      list: '/admin/oeuvres/featured',
+    },
+  },
+  
+  // Gestion des événements
+  evenements: {
+    list: '/admin/evenements',
+    detail: (id: number) => `/admin/evenements/${id}`,
+    updateStatus: (id: number) => `/admin/evenements/${id}/status`,
+    delete: (id: number) => `/admin/evenements/${id}`,
+    bulkAction: '/admin/evenements/bulk-action',
+    export: '/admin/evenements/export',
+    participants: {
+      list: (id: number) => `/admin/evenements/${id}/participants`,
+      export: (id: number) => `/admin/evenements/${id}/participants/export`,
+    },
+  },
+  
+  // Gestion du patrimoine
+  patrimoine: {
+    list: '/admin/patrimoine',
+    detail: (id: number) => `/admin/patrimoine/${id}`,
+    update: (id: number) => `/admin/patrimoine/${id}`,
+    delete: (id: number) => `/admin/patrimoine/${id}`,
+    updateStatus: (id: number) => `/admin/patrimoine/${id}/status`,
+    bulkAction: '/admin/patrimoine/bulk-action',
+    export: '/admin/patrimoine/export',
+    unesco: {
+      mark: (id: number) => `/admin/patrimoine/${id}/unesco`,
+      unmark: (id: number) => `/admin/patrimoine/${id}/unesco`,
+      list: '/admin/patrimoine/unesco',
+    },
+    statistics: '/admin/patrimoine/statistics',
+  },
+  
+  // Gestion des services
+  services: {
+    list: '/admin/services',
+    detail: (id: number) => `/admin/services/${id}`,
+    updateStatus: (id: number) => `/admin/services/${id}/status`,
+    delete: (id: number) => `/admin/services/${id}`,
+    bulkAction: '/admin/services/bulk-action',
+    export: '/admin/services/export',
+    verify: (id: number) => `/admin/services/${id}/verify`,
+    reviews: {
+      list: (id: number) => `/admin/services/${id}/reviews`,
+      moderate: (serviceId: number, reviewId: number) => `/admin/services/${serviceId}/reviews/${reviewId}/moderate`,
+    },
+  },
   // Validation du contenu
   content: {
     validateOeuvre: (id: number) => `/dashboard/oeuvres/${id}/validate`,

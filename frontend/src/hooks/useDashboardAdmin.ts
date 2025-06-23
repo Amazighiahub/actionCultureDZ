@@ -1,42 +1,102 @@
-// hooks/useDashboardAdmin.ts
+// hooks/useDashboardAdmin.ts - VERSION SIMPLIFIÉE
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { adminService } from '@/services/admin.service';
+import { httpClient } from '@/services/httpClient';
 import type { 
-  OverviewStats, 
-  DashboardStats, 
-  PatrimoineStats, 
-  PendingUser, 
+  OverviewStats,
+  DashboardStats,
+  PatrimoineStats,
+  PendingUser,
   PendingOeuvre,
   ModerationItem,
-  Alert
+  Alert,
+  OeuvreFilters,
+  EvenementFilters,
+  PatrimoineFilters,
+  ServiceFilters
 } from '@/services/admin.service';
-import type { PaginatedResponse, FilterParams } from '@/config/api';
+
+// Types pour les filtres
+export type { OeuvreFilters, EvenementFilters, PatrimoineFilters, ServiceFilters };
+
+// Hook pour gérer les filtres
+export const useAdminFilters = () => {
+  const [oeuvreFilters, setOeuvreFilters] = useState<OeuvreFilters>({});
+  const [evenementFilters, setEvenementFilters] = useState<EvenementFilters>({});
+  const [patrimoineFilters, setPatrimoineFilters] = useState<PatrimoineFilters>({});
+  const [serviceFilters, setServiceFilters] = useState<ServiceFilters>({});
+
+  const resetOeuvreFilters = () => setOeuvreFilters({});
+  const resetEvenementFilters = () => setEvenementFilters({});
+  const resetPatrimoineFilters = () => setPatrimoineFilters({});
+  const resetServiceFilters = () => setServiceFilters({});
+
+  return {
+    oeuvreFilters,
+    setOeuvreFilters,
+    resetOeuvreFilters,
+    evenementFilters,
+    setEvenementFilters,
+    resetEvenementFilters,
+    patrimoineFilters,
+    setPatrimoineFilters,
+    resetPatrimoineFilters,
+    serviceFilters,
+    setServiceFilters,
+    resetServiceFilters
+  };
+};
 
 export const useDashboardAdmin = () => {
   const { toast } = useToast();
   
-  // États
+  // États pour les données
+  const [overview, setOverview] = useState<OverviewStats | null>(null);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [patrimoineStats, setPatrimoineStats] = useState<PatrimoineStats | null>(null);
+  const [pendingUsers, setPendingUsers] = useState<any>(null);
+  const [pendingOeuvres, setPendingOeuvres] = useState<any>(null);
+  const [moderationQueue, setModerationQueue] = useState<any>(null);
+  const [alerts, setAlerts] = useState<Alert[]>([]);
+  
+  // États pour les données étendues (depuis les endpoints publics)
+  const [oeuvres, setOeuvres] = useState<any>(null);
+  const [evenements, setEvenements] = useState<any>(null);
+  const [patrimoineItems, setPatrimoineItems] = useState<any>(null);
+  const [services, setServices] = useState<any>(null);
+  
+  // États de chargement
   const [loading, setLoading] = useState(false);
   const [loadingOverview, setLoadingOverview] = useState(false);
   const [loadingPendingUsers, setLoadingPendingUsers] = useState(false);
   const [loadingPendingOeuvres, setLoadingPendingOeuvres] = useState(false);
   const [loadingModeration, setLoadingModeration] = useState(false);
+  const [loadingOeuvres, setLoadingOeuvres] = useState(false);
+  const [loadingEvenements, setLoadingEvenements] = useState(false);
+  const [loadingPatrimoine, setLoadingPatrimoine] = useState(false);
+  const [loadingServices, setLoadingServices] = useState(false);
   
-  const [overview, setOverview] = useState<OverviewStats | null>(null);
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [patrimoineStats, setPatrimoineStats] = useState<PatrimoineStats | null>(null);
-  const [pendingUsers, setPendingUsers] = useState<PaginatedResponse<PendingUser> | null>(null);
-  const [pendingOeuvres, setPendingOeuvres] = useState<PaginatedResponse<PendingOeuvre> | null>(null);
-  const [moderationQueue, setModerationQueue] = useState<PaginatedResponse<ModerationItem> | null>(null);
-  const [alerts, setAlerts] = useState<Alert[]>([]);
-  
+  // État pour la période sélectionnée
   const [selectedPeriod, setSelectedPeriod] = useState<'day' | 'week' | 'month' | 'year'>('month');
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  // Charger la vue d'ensemble
-  const loadOverview = useCallback(async () => {
+  // Chargement initial
+  useEffect(() => {
+    loadOverview();
+    loadStats();
+    loadPatrimoineStats();
+    loadPendingUsers();
+    loadPendingOeuvres();
+    loadModerationQueue();
+    loadAlerts();
+  }, []);
+
+  // ========================================
+  // FONCTIONS DE CHARGEMENT DES DONNÉES
+  // ========================================
+
+  const loadOverview = async () => {
     setLoadingOverview(true);
     try {
       const response = await adminService.getOverview();
@@ -48,15 +108,14 @@ export const useDashboardAdmin = () => {
       toast({
         title: "Erreur",
         description: "Impossible de charger la vue d'ensemble",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setLoadingOverview(false);
     }
-  }, [toast]);
+  };
 
-  // Charger les statistiques
-  const loadStats = useCallback(async () => {
+  const loadStats = async () => {
     try {
       const response = await adminService.getStats(selectedPeriod);
       if (response.success && response.data) {
@@ -65,10 +124,9 @@ export const useDashboardAdmin = () => {
     } catch (error) {
       console.error('Erreur chargement stats:', error);
     }
-  }, [selectedPeriod]);
+  };
 
-  // Charger les statistiques patrimoine
-  const loadPatrimoineStats = useCallback(async () => {
+  const loadPatrimoineStats = async () => {
     try {
       const response = await adminService.getPatrimoineStats();
       if (response.success && response.data) {
@@ -77,70 +135,51 @@ export const useDashboardAdmin = () => {
     } catch (error) {
       console.error('Erreur chargement patrimoine stats:', error);
     }
-  }, []);
+  };
 
-  // Charger les utilisateurs en attente
-  const loadPendingUsers = useCallback(async (params?: FilterParams) => {
+  const loadPendingUsers = async () => {
     setLoadingPendingUsers(true);
     try {
-      const response = await adminService.getPendingUsers(params);
+      const response = await adminService.getPendingUsers({ page: 1, limit: 100 });
       if (response.success && response.data) {
         setPendingUsers(response.data);
       }
     } catch (error) {
-      console.error('Erreur chargement utilisateurs en attente:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de charger les utilisateurs en attente",
-        variant: "destructive",
-      });
+      console.error('Erreur chargement utilisateurs:', error);
     } finally {
       setLoadingPendingUsers(false);
     }
-  }, [toast]);
+  };
 
-  // Charger les œuvres en attente
-  const loadPendingOeuvres = useCallback(async (params?: FilterParams) => {
+  const loadPendingOeuvres = async () => {
     setLoadingPendingOeuvres(true);
     try {
-      const response = await adminService.getPendingOeuvres(params);
+      const response = await adminService.getPendingOeuvres({ page: 1, limit: 100 });
       if (response.success && response.data) {
         setPendingOeuvres(response.data);
       }
     } catch (error) {
       console.error('Erreur chargement œuvres en attente:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de charger les œuvres en attente",
-        variant: "destructive",
-      });
     } finally {
       setLoadingPendingOeuvres(false);
     }
-  }, [toast]);
+  };
 
-  // Charger la file de modération
-  const loadModerationQueue = useCallback(async (params?: FilterParams) => {
+  const loadModerationQueue = async () => {
     setLoadingModeration(true);
     try {
-      const response = await adminService.getModerationQueue(params);
+      const response = await adminService.getModerationQueue({ page: 1, limit: 100 });
       if (response.success && response.data) {
         setModerationQueue(response.data);
       }
     } catch (error) {
       console.error('Erreur chargement modération:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de charger la file de modération",
-        variant: "destructive",
-      });
     } finally {
       setLoadingModeration(false);
     }
-  }, [toast]);
+  };
 
-  // Charger les alertes
-  const loadAlerts = useCallback(async () => {
+  const loadAlerts = async () => {
     try {
       const response = await adminService.getAlerts();
       if (response.success && response.data) {
@@ -148,536 +187,542 @@ export const useDashboardAdmin = () => {
       }
     } catch (error) {
       console.error('Erreur chargement alertes:', error);
+      setAlerts([]);
     }
-  }, []);
+  };
 
-  // Valider un utilisateur
-  const validateUser = useCallback(async ({ userId, validated, comment }: { 
-    userId: number; 
-    validated: boolean; 
-    comment?: string 
-  }) => {
+  // ========================================
+  // CHARGEMENT DES DONNÉES ÉTENDUES (via endpoints publics)
+  // ========================================
+
+ 
+
+  // ========================================
+  // ACTIONS UTILISATEURS
+  // ========================================
+
+  const validateUser = async ({ userId, validated }: { userId: number; validated: boolean }) => {
     try {
-      const response = await adminService.validateUser(userId, validated, comment);
-      
+      const response = await adminService.validateUser(userId, validated);
       if (response.success) {
         toast({
           title: "Succès",
-          description: validated ? "Utilisateur validé avec succès" : "Utilisateur rejeté",
+          description: validated ? "Utilisateur validé" : "Utilisateur rejeté"
         });
-        
-        // Rafraîchir les données après validation
-        setRefreshTrigger(prev => prev + 1);
-        
-        // Mettre à jour localement la liste pour retirer l'utilisateur validé
-        setPendingUsers(prev => {
-          if (!prev) return null;
-          return {
-            ...prev,
-            items: prev.items.filter(user => user.id_user !== userId),
-            pagination: {
-              ...prev.pagination,
-              total: prev.pagination.total - 1
-            }
-          };
-        });
-        
-        // Mettre à jour le compteur dans overview
-        setOverview(prev => {
-          if (!prev) return null;
-          return {
-            ...prev,
-            users: {
-              ...prev.users,
-              en_attente_validation: Math.max(0, prev.users.en_attente_validation - 1)
-            }
-          };
-        });
-      } else {
-        throw new Error(response.error || 'Erreur lors de la validation');
+        await loadPendingUsers();
       }
     } catch (error) {
       console.error('Erreur validation utilisateur:', error);
       toast({
         title: "Erreur",
-        description: error instanceof Error ? error.message : "Impossible de valider l'utilisateur",
-        variant: "destructive",
+        description: "Impossible de valider l'utilisateur",
+        variant: "destructive"
       });
     }
-  }, [toast]);
+  };
 
-  // Mettre à jour un utilisateur
-  const updateUser = useCallback(async ({ userId, data }: { 
-    userId: number; 
-    data: Partial<PendingUser> 
-  }) => {
+  const updateUser = async ({ userId, data }: { userId: number; data: any }) => {
     try {
       const response = await adminService.updateUser(userId, data);
-      
       if (response.success) {
         toast({
           title: "Succès",
-          description: "Utilisateur mis à jour avec succès",
+          description: "Utilisateur mis à jour"
         });
-        
-        // Rafraîchir les données
-        setRefreshTrigger(prev => prev + 1);
-        
-        // Mettre à jour localement si l'utilisateur est dans la liste
-        setPendingUsers(prev => {
-          if (!prev) return null;
-          return {
-            ...prev,
-            items: prev.items.map(user => 
-              user.id_user === userId 
-                ? { ...user, ...data }
-                : user
-            )
-          };
-        });
-      } else {
-        throw new Error(response.error || 'Erreur lors de la mise à jour');
+        await loadPendingUsers();
       }
     } catch (error) {
-      console.error('Erreur update utilisateur:', error);
+      console.error('Erreur mise à jour utilisateur:', error);
       toast({
         title: "Erreur",
-        description: error instanceof Error ? error.message : "Impossible de mettre à jour l'utilisateur",
-        variant: "destructive",
+        description: "Impossible de mettre à jour l'utilisateur",
+        variant: "destructive"
       });
     }
-  }, [toast]);
+  };
 
-  // Supprimer un utilisateur
-  const deleteUser = useCallback(async ({ userId }: { userId: number }) => {
+  const deleteUser = async ({ userId }: { userId: number }) => {
     try {
       const response = await adminService.deleteUser(userId);
-      
       if (response.success) {
         toast({
           title: "Succès",
-          description: "Utilisateur supprimé avec succès",
+          description: "Utilisateur supprimé"
         });
-        
-        // Rafraîchir les données
-        setRefreshTrigger(prev => prev + 1);
-        
-        // Retirer l'utilisateur de la liste locale
-        setPendingUsers(prev => {
-          if (!prev) return null;
-          return {
-            ...prev,
-            items: prev.items.filter(user => user.id_user !== userId),
-            pagination: {
-              ...prev.pagination,
-              total: prev.pagination.total - 1
-            }
-          };
-        });
-        
-        // Mettre à jour le compteur dans overview
-        setOverview(prev => {
-          if (!prev) return null;
-          return {
-            ...prev,
-            users: {
-              ...prev.users,
-              total: Math.max(0, prev.users.total - 1)
-            }
-          };
-        });
-      } else {
-        throw new Error(response.error || 'Erreur lors de la suppression');
+        await loadPendingUsers();
       }
     } catch (error) {
       console.error('Erreur suppression utilisateur:', error);
       toast({
-        title: "Erreur",
-        description: error instanceof Error ? error.message : "Impossible de supprimer l'utilisateur",
-        variant: "destructive",
+        title: "Erreur", 
+        description: "Impossible de supprimer l'utilisateur",
+        variant: "destructive"
       });
     }
-  }, [toast]);
+  };
 
-  // Suspendre un utilisateur
-  const suspendUser = useCallback(async ({ userId, duration, reason }: { 
-    userId: number; 
-    duration: number; 
-    reason: string 
-  }) => {
+  const suspendUser = async ({ userId, duration, reason }: { userId: number; duration: number; reason: string }) => {
     try {
       const response = await adminService.suspendUser(userId, duration, reason);
-      
       if (response.success) {
         toast({
           title: "Succès",
-          description: `Utilisateur suspendu pour ${duration} jours`,
+          description: "Utilisateur suspendu"
         });
-        
-        // Rafraîchir les données
-        setRefreshTrigger(prev => prev + 1);
-      } else {
-        throw new Error(response.error || 'Erreur lors de la suspension');
+        await loadPendingUsers();
       }
     } catch (error) {
       console.error('Erreur suspension utilisateur:', error);
       toast({
         title: "Erreur",
-        description: error instanceof Error ? error.message : "Impossible de suspendre l'utilisateur",
-        variant: "destructive",
+        description: "Impossible de suspendre l'utilisateur",
+        variant: "destructive"
       });
     }
-  }, [toast]);
+  };
 
-  // Réactiver un utilisateur
-  const reactivateUser = useCallback(async ({ userId }: { userId: number }) => {
+  const reactivateUser = async ({ userId }: { userId: number }) => {
     try {
       const response = await adminService.reactivateUser(userId);
-      
       if (response.success) {
         toast({
           title: "Succès",
-          description: "Utilisateur réactivé avec succès",
+          description: "Utilisateur réactivé"
         });
-        
-        // Rafraîchir les données
-        setRefreshTrigger(prev => prev + 1);
-      } else {
-        throw new Error(response.error || 'Erreur lors de la réactivation');
+        await loadPendingUsers();
       }
     } catch (error) {
       console.error('Erreur réactivation utilisateur:', error);
       toast({
         title: "Erreur",
-        description: error instanceof Error ? error.message : "Impossible de réactiver l'utilisateur",
-        variant: "destructive",
+        description: "Impossible de réactiver l'utilisateur",
+        variant: "destructive"
       });
     }
-  }, [toast]);
+  };
 
-  // Changer le rôle d'un utilisateur
-  const changeUserRole = useCallback(async ({ userId, roleId }: { 
-    userId: number; 
-    roleId: number 
-  }) => {
-    try {
-      const response = await adminService.changeUserRole(userId, roleId);
-      
-      if (response.success) {
-        toast({
-          title: "Succès",
-          description: "Rôle utilisateur mis à jour",
-        });
-        
-        // Rafraîchir les données
-        setRefreshTrigger(prev => prev + 1);
-      } else {
-        throw new Error(response.error || 'Erreur lors du changement de rôle');
-      }
-    } catch (error) {
-      console.error('Erreur changement rôle:', error);
-      toast({
-        title: "Erreur",
-        description: error instanceof Error ? error.message : "Impossible de changer le rôle",
-        variant: "destructive",
-      });
-    }
-  }, [toast]);
-
-  // Réinitialiser le mot de passe
-  const resetUserPassword = useCallback(async ({ userId }: { userId: number }) => {
+  const resetUserPassword = async ({ userId }: { userId: number }) => {
     try {
       const response = await adminService.resetUserPassword(userId);
-      
-      if (response.success && response.data) {
-        toast({
-          title: "Succès",
-          description: `Mot de passe temporaire : ${response.data.temporaryPassword}`,
-        });
-      } else {
-        throw new Error(response.error || 'Erreur lors de la réinitialisation');
-      }
-    } catch (error) {
-      console.error('Erreur reset password:', error);
-      toast({
-        title: "Erreur",
-        description: error instanceof Error ? error.message : "Impossible de réinitialiser le mot de passe",
-        variant: "destructive",
-      });
-    }
-  }, [toast]);
-
-  // Valider une œuvre
-  const validateOeuvre = useCallback(async ({ oeuvreId, validated, comment }: { 
-    oeuvreId: number; 
-    validated: boolean; 
-    comment?: string 
-  }) => {
-    try {
-      const response = await adminService.validateOeuvre(oeuvreId, validated, comment);
-      
       if (response.success) {
         toast({
           title: "Succès",
-          description: validated ? "Œuvre validée avec succès" : "Œuvre rejetée",
+          description: "Mot de passe réinitialisé"
         });
-        
-        // Rafraîchir les données
-        setRefreshTrigger(prev => prev + 1);
-        
-        // Mettre à jour localement
-        setPendingOeuvres(prev => {
-          if (!prev) return null;
-          return {
-            ...prev,
-            items: prev.items.filter(oeuvre => oeuvre.id_oeuvre !== oeuvreId),
-            pagination: {
-              ...prev.pagination,
-              total: prev.pagination.total - 1
-            }
-          };
-        });
-        
-        // Mettre à jour le compteur dans overview
-        setOverview(prev => {
-          if (!prev) return null;
-          return {
-            ...prev,
-            content: {
-              ...prev.content,
-              oeuvres_en_attente: Math.max(0, prev.content.oeuvres_en_attente - 1)
-            }
-          };
-        });
-      } else {
-        throw new Error(response.error || 'Erreur lors de la validation');
       }
     } catch (error) {
-      console.error('Erreur validation œuvre:', error);
+      console.error('Erreur réinitialisation mot de passe:', error);
       toast({
         title: "Erreur",
-        description: error instanceof Error ? error.message : "Impossible de valider l'œuvre",
-        variant: "destructive",
+        description: "Impossible de réinitialiser le mot de passe",
+        variant: "destructive"
       });
     }
-  }, [toast]);
+  };
 
-  // Modérer un signalement
-  const moderateSignalement = useCallback(async ({ signalementId, action, comment }: { 
-    signalementId: number; 
-    action: 'approve' | 'reject' | 'warn';
-    comment?: string;
-  }) => {
+  const bulkUserAction = async (userIds: number[], action: string) => {
     try {
-      const response = await adminService.moderateSignalement(signalementId, action, comment);
-      
+      const response = await adminService.bulkUserAction(userIds, action as any);
       if (response.success) {
         toast({
           title: "Succès",
-          description: "Signalement traité avec succès",
+          description: `Action ${action} appliquée à ${userIds.length} utilisateurs`
         });
-        
-        // Rafraîchir les données
-        setRefreshTrigger(prev => prev + 1);
-        
-        // Mettre à jour localement
-        setModerationQueue(prev => {
-          if (!prev) return null;
-          return {
-            ...prev,
-            items: prev.items.filter(item => item.id !== signalementId),
-            pagination: {
-              ...prev.pagination,
-              total: prev.pagination.total - 1
-            }
-          };
-        });
-      } else {
-        throw new Error(response.error || 'Erreur lors de la modération');
+        await loadPendingUsers();
       }
     } catch (error) {
-      console.error('Erreur modération signalement:', error);
+      console.error('Erreur action bulk:', error);
       toast({
         title: "Erreur",
-        description: error instanceof Error ? error.message : "Impossible de traiter le signalement",
-        variant: "destructive",
+        description: "Impossible d'appliquer l'action",
+        variant: "destructive"
       });
     }
-  }, [toast]);
+  };
 
-  // Rechercher des utilisateurs
-  const searchUsers = useCallback(async (query: string, type: 'nom' | 'email' | 'telephone' = 'nom') => {
-    try {
-      const response = await adminService.searchUsers(query, type);
-      
-      if (response.success && response.data) {
-        return response.data;
-      } else {
-        throw new Error(response.error || 'Erreur lors de la recherche');
-      }
-    } catch (error) {
-      console.error('Erreur recherche utilisateurs:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de rechercher les utilisateurs",
-        variant: "destructive",
-      });
-      return [];
-    }
-  }, [toast]);
-
-  // Actions en masse
-  const bulkUserAction = useCallback(async (userIds: number[], action: 'activate' | 'deactivate' | 'delete' | 'change_role', roleId?: number) => {
-    try {
-      const response = await adminService.bulkUserAction(userIds, action, roleId);
-      
-      if (response.success) {
-        toast({
-          title: "Succès",
-          description: `Action effectuée sur ${userIds.length} utilisateurs`,
-        });
-        
-        // Rafraîchir les données
-        setRefreshTrigger(prev => prev + 1);
-      } else {
-        throw new Error(response.error || 'Erreur lors de l\'action en masse');
-      }
-    } catch (error) {
-      console.error('Erreur action en masse:', error);
-      toast({
-        title: "Erreur",
-        description: error instanceof Error ? error.message : "Impossible d'effectuer l'action en masse",
-        variant: "destructive",
-      });
-    }
-  }, [toast]);
-
-  // Export des utilisateurs
-  const exportUsers = useCallback(async (format: 'csv' | 'excel' = 'excel', filters?: any) => {
+  const exportUsers = async (format: 'csv' | 'excel', filters?: any) => {
     try {
       const response = await adminService.exportUsers(format, filters);
-      
       if (response.success) {
         toast({
           title: "Succès",
-          description: "Export téléchargé avec succès",
+          description: "Export des utilisateurs terminé"
         });
-      } else {
-        throw new Error(response.error || 'Erreur lors de l\'export');
       }
     } catch (error) {
       console.error('Erreur export utilisateurs:', error);
       toast({
         title: "Erreur",
-        description: error instanceof Error ? error.message : "Impossible d'exporter les utilisateurs",
-        variant: "destructive",
+        description: "Impossible d'exporter les utilisateurs",
+        variant: "destructive"
       });
     }
-  }, [toast]);
+  };
 
-  // Rafraîchir toutes les données
-  const refreshAll = useCallback(async () => {
-    setLoading(true);
+  // ========================================
+  // ACTIONS ŒUVRES
+  // ========================================
+
+  const validateOeuvre = async ({ oeuvreId, validated }: { oeuvreId: number; validated: boolean }) => {
     try {
-      await Promise.all([
-        loadOverview(),
-        loadStats(),
-        loadPatrimoineStats(),
-        loadPendingUsers(),
-        loadPendingOeuvres(),
-        loadModerationQueue(),
-        loadAlerts()
-      ]);
-      
-      toast({
-        title: "Succès",
-        description: "Données actualisées",
-      });
-    } catch (error) {
-      console.error('Erreur rafraîchissement:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible d'actualiser toutes les données",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [loadOverview, loadStats, loadPatrimoineStats, loadPendingUsers, loadPendingOeuvres, loadModerationQueue, loadAlerts, toast]);
-
-  // Changer la période
-  const changePeriod = useCallback((period: 'day' | 'week' | 'month' | 'year') => {
-    setSelectedPeriod(period);
-  }, []);
-
-  // Exporter un rapport
-  const exportReport = useCallback(async (type: 'activity' | 'moderation' | 'patrimoine') => {
-    try {
-      let response;
-      switch (type) {
-        case 'activity':
-          response = await adminService.getActivityReport(selectedPeriod);
-          break;
-        case 'moderation':
-          response = await adminService.getModerationReport(selectedPeriod);
-          break;
-        case 'patrimoine':
-          response = await adminService.getPatrimoineReport();
-          break;
-        default:
-          throw new Error('Type de rapport invalide');
-      }
-      
+      const response = await adminService.validateOeuvre(oeuvreId, validated);
       if (response.success) {
         toast({
           title: "Succès",
-          description: "Rapport téléchargé avec succès",
+          description: validated ? "Œuvre validée" : "Œuvre rejetée"
+        });
+        await loadPendingOeuvres();
+      }
+    } catch (error) {
+      console.error('Erreur validation œuvre:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de valider l'œuvre",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const updateOeuvreStatus = async (oeuvreId: number, status: string) => {
+    try {
+      const response = await httpClient.patch(`/oeuvres/${oeuvreId}/status`, {
+        statut: status,
+        admin_action: true
+      });
+      if (response.success) {
+        toast({
+          title: "Succès",
+          description: "Statut de l'œuvre mis à jour"
+        });
+        await loadOeuvres();
+      }
+    } catch (error) {
+      console.error('Erreur mise à jour statut œuvre:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour le statut",
+        variant: "destructive"
+      });
+    }
+  };
+
+  
+
+  // ========================================
+  // ACTIONS ÉVÉNEMENTS
+  // ========================================
+
+  const updateEvenementStatus = async (evenementId: number, status: string) => {
+    try {
+      const response = await httpClient.patch(`/evenements/${evenementId}/status`, {
+        statut: status,
+        admin_action: true
+      });
+      if (response.success) {
+        toast({
+          title: "Succès",
+          description: "Statut de l'événement mis à jour"
+        });
+        await loadEvenements();
+      }
+    } catch (error) {
+      console.error('Erreur mise à jour statut événement:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour le statut",
+        variant: "destructive"
+      });
+    }
+  };
+
+  
+  // ========================================
+  // ACTIONS SERVICES
+  // ========================================
+
+  const updateServiceStatus = async (serviceId: number, status: string) => {
+    try {
+      const response = await httpClient.patch(`/services/${serviceId}/status`, {
+        statut: status,
+        admin_action: true
+      });
+      if (response.success) {
+        toast({
+          title: "Succès",
+          description: "Statut du service mis à jour"
+        });
+        await loadServices();
+      }
+    } catch (error) {
+      console.error('Erreur mise à jour statut service:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour le statut",
+        variant: "destructive"
+      });
+    }
+  };
+
+  
+const loadOeuvres = useCallback(async (filters?: OeuvreFilters) => {
+  if (loadingOeuvres) return; // Éviter les appels multiples
+  
+  setLoadingOeuvres(true);
+  try {
+    const response = await adminService.getOeuvres(filters);
+    
+    if (response.success && response.data) {
+      setOeuvres(response.data);
+    }
+  } catch (error: any) {
+    console.error('Erreur chargement œuvres:', error);
+    
+    // Gérer l'erreur sans redirection
+    if (error.response?.status !== 401) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger les œuvres",
+        variant: "destructive"
+      });
+    }
+    
+    setOeuvres({ items: [], pagination: { total: 0, page: 1, limit: filters?.limit || 10, totalPages: 1 } });
+  } finally {
+    setLoadingOeuvres(false);
+  }
+}, [loadingOeuvres, toast]);
+
+const loadEvenements = useCallback(async (filters?: EvenementFilters) => {
+  if (loadingEvenements) return;
+  
+  setLoadingEvenements(true);
+  try {
+    const response = await adminService.getEvenements(filters);
+    
+    if (response.success && response.data) {
+      setEvenements(response.data);
+    }
+  } catch (error: any) {
+    console.error('Erreur chargement événements:', error);
+    
+    if (error.response?.status !== 401) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger les événements",
+        variant: "destructive"
+      });
+    }
+    
+    setEvenements({ items: [], pagination: { total: 0, page: 1, limit: filters?.limit || 10, totalPages: 1 } });
+  } finally {
+    setLoadingEvenements(false);
+  }
+}, [loadingEvenements, toast]);
+
+const loadPatrimoineItems = useCallback(async (filters?: PatrimoineFilters) => {
+  if (loadingPatrimoine) return;
+  
+  setLoadingPatrimoine(true);
+  try {
+    const response = await adminService.getPatrimoineItems(filters);
+    
+    if (response.success && response.data) {
+      setPatrimoineItems(response.data);
+    }
+  } catch (error: any) {
+    console.error('Erreur chargement sites patrimoniaux:', error);
+    
+    if (error.response?.status !== 401) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger les sites patrimoniaux",
+        variant: "destructive"
+      });
+    }
+    
+    setPatrimoineItems({ items: [], pagination: { total: 0, page: 1, limit: filters?.limit || 10, totalPages: 1 } });
+  } finally {
+    setLoadingPatrimoine(false);
+  }
+}, [loadingPatrimoine, toast]);
+
+const loadServices = useCallback(async (filters?: ServiceFilters) => {
+  if (loadingServices) return;
+  
+  setLoadingServices(true);
+  try {
+    const response = await adminService.getServices(filters);
+    
+    if (response.success && response.data) {
+      setServices(response.data);
+    }
+  } catch (error: any) {
+    console.error('Erreur chargement services:', error);
+    
+    if (error.response?.status !== 401) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger les services",
+        variant: "destructive"
+      });
+    }
+    
+    setServices({ items: [], pagination: { total: 0, page: 1, limit: filters?.limit || 10, totalPages: 1 } });
+  } finally {
+    setLoadingServices(false);
+  }
+}, [loadingServices, toast]);
+
+// Mettez aussi à jour les fonctions de suppression :
+const deleteOeuvre = async (oeuvreId: number) => {
+  try {
+    const response = await adminService.deleteOeuvre(oeuvreId);
+    if (response.success) {
+      toast({
+        title: "Succès",
+        description: "Œuvre supprimée"
+      });
+      await loadOeuvres();
+    }
+  } catch (error) {
+    console.error('Erreur suppression œuvre:', error);
+    toast({
+      title: "Erreur",
+      description: "Impossible de supprimer l'œuvre",
+      variant: "destructive"
+    });
+  }
+};
+
+const deleteEvenement = async (evenementId: number) => {
+  try {
+    const response = await adminService.deleteEvenement(evenementId);
+    if (response.success) {
+      toast({
+        title: "Succès",
+        description: "Événement supprimé"
+      });
+      await loadEvenements();
+    }
+  } catch (error) {
+    console.error('Erreur suppression événement:', error);
+    toast({
+      title: "Erreur",
+      description: "Impossible de supprimer l'événement",
+      variant: "destructive"
+    });
+  }
+};
+
+const deleteService = async (serviceId: number) => {
+  try {
+    const response = await adminService.deleteService(serviceId);
+    if (response.success) {
+      toast({
+        title: "Succès",
+        description: "Service supprimé"
+      });
+      await loadServices();
+    }
+  } catch (error) {
+    console.error('Erreur suppression service:', error);
+    toast({
+      title: "Erreur",
+      description: "Impossible de supprimer le service",
+      variant: "destructive"
+    });
+  }
+};
+  // ========================================
+  // ACTIONS MODÉRATION
+  // ========================================
+
+  const moderateSignalement = async ({ signalementId, action }: { signalementId: number; action: string }) => {
+    try {
+      const response = await adminService.moderateSignalement(signalementId, action as any);
+      if (response.success) {
+        toast({
+          title: "Succès",
+          description: "Signalement traité"
+        });
+        await loadModerationQueue();
+      }
+    } catch (error) {
+      console.error('Erreur modération signalement:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de traiter le signalement",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // ========================================
+  // ACTIONS GLOBALES
+  // ========================================
+
+  const refreshAll = async () => {
+    setLoading(true);
+    await Promise.all([
+      loadOverview(),
+      loadStats(),
+      loadPatrimoineStats(),
+      loadPendingUsers(),
+      loadPendingOeuvres(),
+      loadModerationQueue(),
+      loadAlerts()
+    ]);
+    setLoading(false);
+  };
+
+  const changePeriod = async (period: 'day' | 'week' | 'month' | 'year') => {
+    setSelectedPeriod(period);
+    await loadStats();
+  };
+
+  const exportReport = async (type: string) => {
+    try {
+      const response = type === 'activity' 
+        ? await adminService.getActivityReport(selectedPeriod)
+        : type === 'moderation'
+        ? await adminService.getModerationReport(selectedPeriod)
+        : await adminService.getPatrimoineReport();
+        
+      if (response.success) {
+        toast({
+          title: "Succès",
+          description: "Rapport exporté"
         });
       }
     } catch (error) {
       console.error('Erreur export rapport:', error);
       toast({
         title: "Erreur",
-        description: "Impossible de télécharger le rapport",
-        variant: "destructive",
+        description: "Impossible d'exporter le rapport",
+        variant: "destructive"
       });
     }
-  }, [selectedPeriod, toast]);
+  };
 
-  // Vider le cache
-  const clearCache = useCallback(async (type?: 'all' | 'users' | 'content' | 'metadata') => {
+  const clearCache = async () => {
     try {
-      const response = await adminService.clearCache(type);
-      
+      const response = await adminService.clearCache();
       if (response.success) {
         toast({
           title: "Succès",
-          description: "Cache vidé avec succès",
+          description: "Cache vidé"
         });
-        
-        // Rafraîchir les données
-        refreshAll();
+        await refreshAll();
       }
     } catch (error) {
       console.error('Erreur vidage cache:', error);
       toast({
         title: "Erreur",
         description: "Impossible de vider le cache",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
-  }, [toast, refreshAll]);
-
-  // Charger les données au montage et lors du changement de période ou refresh
-  useEffect(() => {
-    loadOverview();
-    loadStats();
-    loadPatrimoineStats();
-    loadPendingUsers();
-    loadPendingOeuvres();
-    loadModerationQueue();
-    loadAlerts();
-  }, [selectedPeriod, refreshTrigger, loadOverview, loadStats, loadPatrimoineStats, loadPendingUsers, loadPendingOeuvres, loadModerationQueue, loadAlerts]);
+  };
 
   return {
     // Données
@@ -688,35 +733,59 @@ export const useDashboardAdmin = () => {
     pendingOeuvres,
     moderationQueue,
     alerts,
+    oeuvres,
+    evenements,
+    patrimoineItems,
+    services,
     
-    // États
+    // États de chargement
     loading,
     loadingOverview,
     loadingPendingUsers,
     loadingPendingOeuvres,
     loadingModeration,
+    loadingOeuvres,
+    loadingEvenements,
+    loadingPatrimoine,
+    loadingServices,
     
-    // Actions - Utilisateurs
+    // Actions utilisateurs
     validateUser,
     updateUser,
     deleteUser,
     suspendUser,
     reactivateUser,
-    changeUserRole,
     resetUserPassword,
-    searchUsers,
     bulkUserAction,
     exportUsers,
     
-    // Actions - Contenu
+    // Actions œuvres
     validateOeuvre,
+    updateOeuvreStatus,
+    deleteOeuvre,
+    
+    // Actions événements
+    updateEvenementStatus,
+    deleteEvenement,
+    
+    // Actions services
+    updateServiceStatus,
+    deleteService,
+    
+    // Actions modération
     moderateSignalement,
     
-    // Actions - Système
+    // Actions globales
     refreshAll,
     changePeriod,
     exportReport,
     clearCache,
+    
+    // Fonctions de chargement
+    loadOeuvres,
+    loadEvenements,
+    loadPatrimoineItems,
+    loadServices,
     
     // État
     selectedPeriod,

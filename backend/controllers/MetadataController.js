@@ -1,89 +1,69 @@
-// controllers/MetadataController.js - Controller pour les métadonnées (version améliorée)
-
+// controllers/MetadataController.js - Version complète avec toutes les méthodes
 const { Op } = require('sequelize');
-const hierarchieService = require('../services/HierarchieService');
 
 class MetadataController {
   constructor(models) {
     if (!models) {
       throw new Error('MetadataController: Les modèles sont requis');
     }
-    
     this.models = models;
     this.sequelize = models.sequelize || Object.values(models)[0]?.sequelize;
-    
-    // Initialiser le service de hiérarchie
-    this.initializeHierarchieService();
   }
 
   /**
-   * Initialise le service de hiérarchie avec gestion d'erreur robuste
+   * GET /api/metadata/all
+   * Récupération globale de toutes les métadonnées
    */
-  initializeHierarchieService() {
+  async getAllMetadata(req, res) {
     try {
-      // Vérifier si le service est déjà initialisé
-      if (hierarchieService.isInitialized) {
-        console.log('✅ HierarchieService déjà initialisé');
-        return;
-      }
-      
-      // Initialiser avec les modèles
-      hierarchieService.initialize(this.models);
-      console.log('✅ HierarchieService initialisé dans MetadataController');
-      
-    } catch (error) {
-      console.error('⚠️ Erreur initialisation HierarchieService:', error.message);
-      
-      // Créer des méthodes de fallback pour éviter les erreurs
-      this.hierarchieServiceAvailable = false;
-      
-      // Log des modèles disponibles pour debug
-      const availableModels = Object.keys(this.models).filter(k => k !== 'sequelize' && k !== 'Sequelize');
-      console.error('   Modèles disponibles:', availableModels.join(', '));
-      
-      // Vérifier spécifiquement les modèles requis
-      const requiredModels = ['TypeOeuvre', 'Genre', 'Categorie', 'TypeOeuvreGenre', 'GenreCategorie'];
-      const missingModels = requiredModels.filter(m => !this.models[m]);
-      if (missingModels.length > 0) {
-        console.error('   Modèles manquants:', missingModels.join(', '));
-      }
-    }
-  }
+      const [
+        langues,
+        categories,
+        genres,
+        types_oeuvres,
+        editeurs,
+        types_users,
+        tags,
+        materiaux,
+        techniques
+      ] = await Promise.all([
+        this.models.Langue.findAll({ order: [['nom', 'ASC']] }),
+        this.models.Categorie.findAll({ order: [['nom', 'ASC']] }),
+        this.models.Genre.findAll({ order: [['nom', 'ASC']] }),
+        this.models.TypeOeuvre.findAll({ order: [['nom_type', 'ASC']] }),
+        this.models.Editeur.findAll({ 
+          where: { actif: true },
+          order: [['nom', 'ASC']] 
+        }),
+        this.models.TypeUser.findAll({ order: [['nom_type', 'ASC']] }),
+        this.models.TagMotCle.findAll({ 
+          order: [['nom', 'ASC']],
+          limit: 100
+        }),
+        this.models.Materiau?.findAll({ order: [['nom', 'ASC']] }) || [],
+        this.models.Technique?.findAll({ order: [['nom', 'ASC']] }) || []
+      ]);
 
-  /**
-   * Wrapper pour appeler les méthodes du HierarchieService avec gestion d'erreur
-   */
-  async callHierarchieService(methodName, ...args) {
-    try {
-      if (!hierarchieService.isInitialized) {
-        // Tenter une réinitialisation
-        this.initializeHierarchieService();
-      }
-      
-      if (!hierarchieService[methodName]) {
-        throw new Error(`Méthode ${methodName} non disponible dans HierarchieService`);
-      }
-      
-      return await hierarchieService[methodName](...args);
-      
+      res.json({
+        success: true,
+        data: {
+          langues,
+          categories,
+          genres,
+          types_oeuvres,
+          editeurs,
+          types_users,
+          tags,
+          materiaux,
+          techniques
+        }
+      });
     } catch (error) {
-      console.error(`Erreur lors de l'appel à HierarchieService.${methodName}:`, error.message);
-      
-      // Retourner une réponse d'erreur appropriée selon la méthode
-      if (methodName === 'getTypesOeuvres' || methodName === 'getGenresParType' || methodName === 'getCategoriesParGenre') {
-        return [];
-      }
-      if (methodName === 'validerSelection') {
-        return { valide: false, erreur: 'Service de validation temporairement indisponible' };
-      }
-      if (methodName === 'getHierarchieComplete') {
-        return [];
-      }
-      if (methodName === 'getStatistiquesUtilisation') {
-        return { global: [], detaille: {} };
-      }
-      
-      throw error;
+      console.error('Erreur getAllMetadata:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
     }
   }
 
@@ -93,49 +73,57 @@ class MetadataController {
    */
   async getTypesOeuvres(req, res) {
     try {
-      const types = await this.callHierarchieService('getTypesOeuvres');
+      const types = await this.models.TypeOeuvre.findAll({
+        order: [['nom_type', 'ASC']]
+      });
       
       res.json({
         success: true,
-        data: types,
-        total: types.length
+        data: types
       });
     } catch (error) {
       console.error('Erreur getTypesOeuvres:', error);
       res.status(500).json({
         success: false,
-        error: error.message || 'Une erreur est survenue'
+        error: error.message
       });
     }
   }
 
   /**
-   * GET /api/metadata/types/:typeId/genres
+   * GET /api/metadata/types-oeuvres/:typeId/genres
    * Obtenir les genres disponibles pour un type d'œuvre
    */
   async getGenresParType(req, res) {
     try {
       const { typeId } = req.params;
       
-      if (!typeId || isNaN(typeId)) {
-        return res.status(400).json({
-          success: false,
-          error: 'ID du type invalide'
-        });
-      }
+      const typeGenres = await this.models.TypeOeuvreGenre.findAll({
+        where: {
+          id_type_oeuvre: typeId,
+          actif: true
+        },
+        include: [{
+          model: this.models.Genre,
+          attributes: ['id_genre', 'nom', 'description']
+        }],
+        order: [['ordre_affichage', 'ASC']]
+      });
 
-      const genres = await this.callHierarchieService('getGenresParType', parseInt(typeId));
-      
+      const genres = typeGenres.map(tg => ({
+        ...tg.Genre.toJSON(),
+        ordre_affichage: tg.ordre_affichage
+      }));
+
       res.json({
         success: true,
-        data: genres,
-        total: genres.length
+        data: genres
       });
     } catch (error) {
       console.error('Erreur getGenresParType:', error);
-      res.status(error.message.includes('non trouvé') ? 404 : 500).json({
+      res.status(500).json({
         success: false,
-        error: error.message || 'Une erreur est survenue. Veuillez réessayer plus tard.'
+        error: error.message
       });
     }
   }
@@ -144,572 +132,779 @@ class MetadataController {
    * GET /api/metadata/genres/:genreId/categories
    * Obtenir les catégories disponibles pour un genre
    */
- async getCategoriesParGenre(req, res) {
-  try {
-    const { genreId } = req.params;
-    console.log('🔍 Recherche des catégories pour le genre:', genreId);
+  async getCategoriesParGenre(req, res) {
+    try {
+      const { genreId } = req.params;
+      
+      const genreCategories = await this.models.GenreCategorie.findAll({
+        where: {
+          id_genre: genreId,
+          actif: true
+        },
+        include: [{
+          model: this.models.Categorie,
+          attributes: ['id_categorie', 'nom', 'description']
+        }],
+        order: [['ordre_affichage', 'ASC']]
+      });
 
-    // Option 1 : Via le modèle Genre avec le BON alias
-    const genre = await this.models.Genre.findByPk(genreId, {
-      include: [{
-        model: this.models.Categorie,
-        as: 'CategoriesDisponibles', // ✅ Utiliser le bon alias !
-        through: {
-          attributes: ['ordre_affichage']
-          // Retirer where: { actif: true } si ça pose problème
-        }
-      }]
-    });
+      const categories = genreCategories.map(gc => ({
+        ...gc.Categorie.toJSON(),
+        ordre_affichage: gc.ordre_affichage
+      }));
 
-    if (!genre) {
-      return res.status(404).json({
+      res.json({
+        success: true,
+        data: categories
+      });
+    } catch (error) {
+      console.error('Erreur getCategoriesParGenre:', error);
+      res.status(500).json({
         success: false,
-        error: 'Genre non trouvé'
+        error: error.message
       });
     }
-
-    res.json({
-      success: true,
-      data: genre.CategoriesDisponibles || []
-    });
-
-  } catch (error) {
-    console.error('❌ Erreur getCategoriesParGenre:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
   }
-}
 
   /**
    * POST /api/metadata/validate-hierarchy
-   * Valider une sélection hiérarchique Type → Genre → Catégories
+   * Valider une sélection hiérarchique
    */
   async validerHierarchie(req, res) {
     try {
       const { id_type_oeuvre, id_genre, categories = [] } = req.body;
-      
-      // Validation des paramètres
-      if (!id_type_oeuvre || !id_genre) {
-        return res.status(400).json({
-          success: false,
-          error: 'Type et genre sont obligatoires'
-        });
-      }
 
-      if (!Array.isArray(categories)) {
-        return res.status(400).json({
-          success: false,
-          error: 'Les catégories doivent être un tableau'
-        });
-      }
+      // Vérifier que le genre est valide pour le type
+      const typeGenre = await this.models.TypeOeuvreGenre.findOne({
+        where: {
+          id_type_oeuvre,
+          id_genre,
+          actif: true
+        }
+      });
 
-      const validation = await this.callHierarchieService(
-        'validerSelection',
-        id_type_oeuvre,
-        id_genre,
-        categories
-      );
-
-      if (!validation.valide) {
-        return res.status(400).json({
-          success: false,
-          error: validation.erreur,
-          details: {
-            id_type_oeuvre,
-            id_genre,
-            categories
+      if (!typeGenre) {
+        return res.json({
+          success: true,
+          data: {
+            valid: false,
+            error: 'Le genre sélectionné n\'est pas valide pour ce type d\'œuvre'
           }
         });
       }
 
+      // Vérifier que toutes les catégories sont valides pour le genre
+      if (categories.length > 0) {
+        const validCategories = await this.models.GenreCategorie.findAll({
+          where: {
+            id_genre,
+            id_categorie: { [Op.in]: categories },
+            actif: true
+          },
+          attributes: ['id_categorie']
+        });
+
+        const validCategoryIds = validCategories.map(vc => vc.id_categorie);
+        const invalidCategories = categories.filter(id => !validCategoryIds.includes(id));
+
+        if (invalidCategories.length > 0) {
+          return res.json({
+            success: true,
+            data: {
+              valid: false,
+              error: 'Certaines catégories ne sont pas valides pour le genre sélectionné',
+              invalidCategories
+            }
+          });
+        }
+      }
+
       res.json({
         success: true,
-        message: 'Hiérarchie valide',
-        data: {
-          id_type_oeuvre,
-          id_genre,
-          categories
-        }
+        data: { valid: true }
       });
     } catch (error) {
       console.error('Erreur validerHierarchie:', error);
       res.status(500).json({
         success: false,
-        error: error.message || 'Une erreur est survenue'
+        error: error.message
       });
     }
   }
 
   /**
    * GET /api/metadata/hierarchy
-   * Obtenir la hiérarchie complète Type → Genre → Catégorie
+   * Obtenir la hiérarchie complète
    */
   async getHierarchieComplete(req, res) {
     try {
-      const { simplified = false } = req.query;
-      const hierarchie = await this.callHierarchieService('getHierarchieComplete');
-      
-      if (simplified === 'true' && Array.isArray(hierarchie)) {
-        // Version simplifiée pour les formulaires
-        const simplifiedData = hierarchie.map(type => ({
-          id: type.id_type_oeuvre,
-          nom: type.nom_type,
-          genres: (type.GenresDisponibles || []).map(genre => ({
-            id: genre.id_genre,
-            nom: genre.nom,
-            categories: (genre.CategoriesDisponibles || []).map(cat => ({
-              id: cat.id_categorie,
-              nom: cat.nom
-            }))
-          }))
-        }));
-        
-        return res.json({
-          success: true,
-          data: simplifiedData
-        });
-      }
+      const types = await this.models.TypeOeuvre.findAll({
+        include: [{
+          model: this.models.TypeOeuvreGenre,
+          as: 'type_oeuvre_genres',
+          where: { actif: true },
+          required: false,
+          include: [{
+            model: this.models.Genre,
+            include: [{
+              model: this.models.GenreCategorie,
+              as: 'genre_categories',
+              where: { actif: true },
+              required: false,
+              include: [{
+                model: this.models.Categorie
+              }]
+            }]
+          }]
+        }],
+        order: [
+          ['nom_type', 'ASC'],
+          ['type_oeuvre_genres', 'ordre_affichage', 'ASC'],
+          ['type_oeuvre_genres', 'Genre', 'genre_categories', 'ordre_affichage', 'ASC']
+        ]
+      });
+
+      // Restructurer les données pour une meilleure lisibilité
+      const hierarchy = types.map(type => ({
+        id_type_oeuvre: type.id_type_oeuvre,
+        nom_type: type.nom_type,
+        description: type.description,
+        genres: type.type_oeuvre_genres?.map(tg => ({
+          id_genre: tg.Genre.id_genre,
+          nom: tg.Genre.nom,
+          description: tg.Genre.description,
+          ordre_affichage: tg.ordre_affichage,
+          categories: tg.Genre.genre_categories?.map(gc => ({
+            id_categorie: gc.Categorie.id_categorie,
+            nom: gc.Categorie.nom,
+            description: gc.Categorie.description,
+            ordre_affichage: gc.ordre_affichage
+          })) || []
+        })) || []
+      }));
 
       res.json({
         success: true,
-        data: hierarchie
+        data: hierarchy
       });
     } catch (error) {
       console.error('Erreur getHierarchieComplete:', error);
       res.status(500).json({
         success: false,
-        error: error.message || 'Une erreur est survenue'
+        error: error.message
       });
     }
   }
 
   /**
    * GET /api/metadata/hierarchy/statistics
-   * Obtenir les statistiques d'utilisation de la hiérarchie
+   * Statistiques d'utilisation de la hiérarchie
    */
   async getHierarchieStatistics(req, res) {
     try {
-      const stats = await this.callHierarchieService('getStatistiquesUtilisation');
-      
+      const [
+        totalTypes,
+        totalGenres,
+        totalCategories,
+        typeGenreCount,
+        genreCategoryCount,
+        mostUsedTypes,
+        mostUsedGenres,
+        mostUsedCategories
+      ] = await Promise.all([
+        this.models.TypeOeuvre.count(),
+        this.models.Genre.count(),
+        this.models.Categorie.count(),
+        this.models.TypeOeuvreGenre.count({ where: { actif: true } }),
+        this.models.GenreCategorie.count({ where: { actif: true } }),
+        
+        // Types les plus utilisés dans les œuvres
+        this.models.Oeuvre?.count({
+          attributes: ['id_type_oeuvre'],
+          group: ['id_type_oeuvre'],
+          include: [{
+            model: this.models.TypeOeuvre,
+            attributes: ['nom_type']
+          }],
+          order: [[this.sequelize.fn('COUNT', this.sequelize.col('id_oeuvre')), 'DESC']],
+          limit: 5
+        }) || [],
+        
+        // Genres les plus utilisés
+        this.models.GenreOeuvre?.count({
+          attributes: ['id_genre'],
+          group: ['id_genre'],
+          include: [{
+            model: this.models.Genre,
+            attributes: ['nom']
+          }],
+          order: [[this.sequelize.fn('COUNT', this.sequelize.col('id_genre')), 'DESC']],
+          limit: 5
+        }) || [],
+        
+        // Catégories les plus utilisées
+        this.models.CategorieOeuvre?.count({
+          attributes: ['id_categorie'],
+          group: ['id_categorie'],
+          include: [{
+            model: this.models.Categorie,
+            attributes: ['nom']
+          }],
+          order: [[this.sequelize.fn('COUNT', this.sequelize.col('id_categorie')), 'DESC']],
+          limit: 5
+        }) || []
+      ]);
+
       res.json({
         success: true,
-        data: stats
+        data: {
+          totals: {
+            types: totalTypes,
+            genres: totalGenres,
+            categories: totalCategories,
+            activeTypeGenreRelations: typeGenreCount,
+            activeGenreCategoryRelations: genreCategoryCount
+          },
+          mostUsed: {
+            types: mostUsedTypes,
+            genres: mostUsedGenres,
+            categories: mostUsedCategories
+          }
+        }
       });
     } catch (error) {
       console.error('Erreur getHierarchieStatistics:', error);
       res.status(500).json({
         success: false,
-        error: error.message || 'Une erreur est survenue'
+        error: error.message
       });
     }
   }
 
   /**
    * POST /api/metadata/types/:typeId/genres
-   * Ajouter un genre à un type (Admin uniquement)
+   * Ajouter un genre à un type
    */
   async ajouterGenreAuType(req, res) {
     try {
       const { typeId } = req.params;
       const { id_genre, ordre_affichage = 0 } = req.body;
 
-      if (!id_genre) {
+      // Vérifier si la relation existe déjà
+      const existing = await this.models.TypeOeuvreGenre.findOne({
+        where: { id_type_oeuvre: typeId, id_genre }
+      });
+
+      if (existing) {
+        // Réactiver si désactivé
+        if (!existing.actif) {
+          existing.actif = true;
+          existing.ordre_affichage = ordre_affichage;
+          await existing.save();
+          return res.json({
+            success: true,
+            data: existing,
+            message: 'Relation réactivée'
+          });
+        }
         return res.status(400).json({
           success: false,
-          error: 'ID du genre requis'
+          error: 'Cette relation existe déjà'
         });
       }
 
-      const result = await this.callHierarchieService(
-        'ajouterGenreAuType',
-        parseInt(typeId),
+      const relation = await this.models.TypeOeuvreGenre.create({
+        id_type_oeuvre: typeId,
         id_genre,
-        ordre_affichage
-      );
+        ordre_affichage,
+        actif: true
+      });
 
       res.status(201).json({
         success: true,
-        message: 'Genre ajouté au type avec succès',
-        data: result
+        data: relation
       });
     } catch (error) {
       console.error('Erreur ajouterGenreAuType:', error);
-      res.status(400).json({
+      res.status(500).json({
         success: false,
-        error: error.message || 'Une erreur est survenue'
+        error: error.message
       });
     }
   }
 
   /**
    * POST /api/metadata/genres/:genreId/categories
-   * Ajouter une catégorie à un genre (Admin uniquement)
+   * Ajouter une catégorie à un genre
    */
   async ajouterCategorieAuGenre(req, res) {
     try {
       const { genreId } = req.params;
       const { id_categorie, ordre_affichage = 0 } = req.body;
 
-      if (!id_categorie) {
+      // Vérifier si la relation existe déjà
+      const existing = await this.models.GenreCategorie.findOne({
+        where: { id_genre: genreId, id_categorie }
+      });
+
+      if (existing) {
+        // Réactiver si désactivé
+        if (!existing.actif) {
+          existing.actif = true;
+          existing.ordre_affichage = ordre_affichage;
+          await existing.save();
+          return res.json({
+            success: true,
+            data: existing,
+            message: 'Relation réactivée'
+          });
+        }
         return res.status(400).json({
           success: false,
-          error: 'ID de la catégorie requis'
+          error: 'Cette relation existe déjà'
         });
       }
 
-      const result = await this.callHierarchieService(
-        'ajouterCategorieAuGenre',
-        parseInt(genreId),
+      const relation = await this.models.GenreCategorie.create({
+        id_genre: genreId,
         id_categorie,
-        ordre_affichage
-      );
+        ordre_affichage,
+        actif: true
+      });
 
       res.status(201).json({
         success: true,
-        message: 'Catégorie ajoutée au genre avec succès',
-        data: result
+        data: relation
       });
     } catch (error) {
       console.error('Erreur ajouterCategorieAuGenre:', error);
-      res.status(400).json({
+      res.status(500).json({
         success: false,
-        error: error.message || 'Une erreur est survenue'
+        error: error.message
       });
     }
   }
 
   /**
    * PUT /api/metadata/types/:typeId/genres/:genreId
-   * Modifier l'ordre d'affichage ou l'état actif d'un genre dans un type
+   * Modifier une relation type-genre
    */
   async modifierGenreDansType(req, res) {
     try {
       const { typeId, genreId } = req.params;
       const { ordre_affichage, actif } = req.body;
 
-      const result = await this.callHierarchieService(
-        'modifierRelation',
-        'TypeOeuvreGenre',
-        { id_type_oeuvre: parseInt(typeId), id_genre: parseInt(genreId) },
-        { ordre_affichage, actif }
-      );
+      const relation = await this.models.TypeOeuvreGenre.findOne({
+        where: {
+          id_type_oeuvre: typeId,
+          id_genre: genreId
+        }
+      });
+
+      if (!relation) {
+        return res.status(404).json({
+          success: false,
+          error: 'Relation non trouvée'
+        });
+      }
+
+      if (ordre_affichage !== undefined) relation.ordre_affichage = ordre_affichage;
+      if (actif !== undefined) relation.actif = actif;
+
+      await relation.save();
 
       res.json({
         success: true,
-        message: 'Relation mise à jour avec succès',
-        data: result
+        data: relation
       });
     } catch (error) {
       console.error('Erreur modifierGenreDansType:', error);
-      res.status(400).json({
+      res.status(500).json({
         success: false,
-        error: error.message || 'Une erreur est survenue'
+        error: error.message
       });
     }
   }
 
   /**
    * DELETE /api/metadata/types/:typeId/genres/:genreId
-   * Désactiver un genre pour un type (soft delete)
+   * Désactiver une relation type-genre
    */
   async desactiverGenrePourType(req, res) {
     try {
       const { typeId, genreId } = req.params;
 
-      const result = await this.callHierarchieService(
-        'desactiverRelation',
-        'TypeOeuvreGenre',
-        { id_type_oeuvre: parseInt(typeId), id_genre: parseInt(genreId) }
-      );
+      const relation = await this.models.TypeOeuvreGenre.findOne({
+        where: {
+          id_type_oeuvre: typeId,
+          id_genre: genreId
+        }
+      });
+
+      if (!relation) {
+        return res.status(404).json({
+          success: false,
+          error: 'Relation non trouvée'
+        });
+      }
+
+      relation.actif = false;
+      await relation.save();
 
       res.json({
         success: true,
-        message: 'Genre désactivé pour ce type',
-        data: result
+        message: 'Relation désactivée'
       });
     } catch (error) {
       console.error('Erreur desactiverGenrePourType:', error);
-      res.status(400).json({
-        success: false,
-        error: error.message || 'Une erreur est survenue'
-      });
-    }
-  }
-
-  // ===== MÉTHODES POUR LES AUTRES MÉTADONNÉES =====
-  
-  /**
-   * GET /api/metadata/materiaux
-   */
-  async getMateriaux(req, res) {
-    try {
-      const materiaux = await this.models.Materiau.findAll({
-        order: [['nom', 'ASC']]
-      });
-      
-      res.json({
-        success: true,
-        data: materiaux,
-        total: materiaux.length
-      });
-    } catch (error) {
-      console.error('Erreur lors de la récupération des matériaux:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur lors de la récupération des matériaux'
+        error: error.message
       });
     }
   }
 
   /**
-   * POST /api/metadata/materiaux
+   * GET /api/metadata/types-oeuvres/:id/categories
+   * Récupérer les catégories valides pour un type d'œuvre (groupées par genre)
    */
-  async createMateriau(req, res) {
-    try {
-      const { nom, description } = req.body;
-      
-      if (!nom) {
-        return res.status(400).json({
-          success: false,
-          error: 'Le nom du matériau est obligatoire'
-        });
-      }
+  /**
+ * GET /api/metadata/types-oeuvres/:id/categories
+ * Récupérer les catégories valides pour un type d'œuvre (groupées par genre)
+ */
+// MetadataController.js - Méthode getCategoriesForType mise à jour
 
-      const materiau = await this.models.Materiau.create({
-        nom,
-        description
-      });
+/**
+ * GET /api/metadata/types-oeuvres/:id/categories
+ * Récupérer les catégories valides pour un type d'œuvre (groupées par genre)
+ */
+// MetadataController.js - Méthode getCategoriesForType mise à jour
 
-      res.status(201).json({
+/**
+ * GET /api/metadata/types-oeuvres/:id/categories
+ * Récupérer les catégories valides pour un type d'œuvre (groupées par genre)
+ */
+async getCategoriesForType(req, res) {
+  try {
+    const { id } = req.params;
+    
+    console.log(`getCategoriesForType appelé pour type_oeuvre ID: ${id}`);
+    
+    // 1. Récupérer tous les genres valides pour ce type avec les bonnes associations
+    const validTypeGenres = await this.models.TypeOeuvreGenre.findAll({
+      where: {
+        id_type_oeuvre: id,
+        actif: true
+      },
+      include: [{
+        model: this.models.Genre,
+        as: 'genre', // Utiliser l'alias défini dans l'association
+        attributes: ['id_genre', 'nom', 'description'],
+        required: true
+      }],
+      order: [['ordre_affichage', 'ASC']]
+    });
+
+    console.log(`Nombre de genres trouvés: ${validTypeGenres.length}`);
+
+    if (validTypeGenres.length === 0) {
+      return res.json({
         success: true,
-        data: materiau,
-        message: 'Matériau créé avec succès'
+        data: [],
+        message: 'Aucun genre configuré pour ce type d\'œuvre'
       });
-    } catch (error) {
-      if (error.name === 'SequelizeUniqueConstraintError') {
+    }
+
+    const validGenreIds = validTypeGenres.map(tg => tg.id_genre);
+
+    // 2. Récupérer toutes les catégories de ces genres
+    const genreCategories = await this.models.GenreCategorie.findAll({
+      where: {
+        id_genre: { [Op.in]: validGenreIds },
+        actif: true
+      },
+      include: [
+        {
+          model: this.models.Genre,
+          as: 'genre', // Utiliser l'alias défini
+          attributes: ['id_genre', 'nom'],
+          required: true
+        },
+        {
+          model: this.models.Categorie,
+          as: 'categorie', // Utiliser l'alias défini
+          attributes: ['id_categorie', 'nom', 'description'],
+          required: true
+        }
+      ],
+      order: [['ordre_affichage', 'ASC']]
+    });
+
+    console.log(`Nombre de catégories trouvées: ${genreCategories.length}`);
+
+    // 3. Grouper les catégories par genre
+    const categoriesGrouped = validTypeGenres.map(tg => {
+      // Accéder au genre via l'alias
+      const genre = tg.genre;
+      
+      if (!genre) {
+        console.error(`Genre non trouvé pour TypeOeuvreGenre id_genre: ${tg.id_genre}`);
+        return null;
+      }
+
+      // Filtrer les catégories pour ce genre
+      const categories = genreCategories
+        .filter(gc => gc.id_genre === genre.id_genre)
+        .map(gc => {
+          const cat = gc.categorie;
+          if (!cat) {
+            console.error(`Categorie non trouvée pour GenreCategorie id_categorie: ${gc.id_categorie}`);
+            return null;
+          }
+          return {
+            id_categorie: cat.id_categorie,
+            nom: cat.nom,
+            description: cat.description
+          };
+        })
+        .filter(cat => cat !== null);
+
+      return {
+        id_genre: genre.id_genre,
+        nom: genre.nom,
+        description: genre.description,
+
+        categories: categories
+      };
+    }).filter(g => g !== null);
+
+    // Filtrer pour ne garder que les genres qui ont des catégories
+    const genresAvecCategories = categoriesGrouped.filter(g => g.categories.length > 0);
+
+    res.json({
+      success: true,
+      data: genresAvecCategories,
+      meta: {
+        totalGenres: validTypeGenres.length,
+        genresAvecCategories: genresAvecCategories.length,
+        totalCategories: genreCategories.length
+      }
+    });
+
+  } catch (error) {
+    console.error('Erreur getCategoriesForType:', error);
+    console.error('Stack:', error.stack);
+    
+    // En développement, retourner plus de détails
+    if (process.env.NODE_ENV === 'development') {
+      res.status(500).json({ 
+        success: false, 
+        error: 'Erreur serveur lors de la récupération des catégories',
+        details: {
+          message: error.message,
+          stack: error.stack
+        }
+      });
+    } else {
+      res.status(500).json({ 
+        success: false, 
+        error: 'Erreur serveur lors de la récupération des catégories'
+      });
+    }
+  }
+}
+  /**
+   * POST /api/metadata/validate-hierarchy
+   * Valider la hiérarchie type/catégories (sans genre direct)
+   */
+  async validateHierarchy(req, res) {
+    try {
+      const { id_type_oeuvre, categories } = req.body;
+
+      if (!id_type_oeuvre || !Array.isArray(categories)) {
         return res.status(400).json({
           success: false,
-          error: 'Un matériau avec ce nom existe déjà'
+          error: 'Paramètres invalides'
         });
       }
-      console.error('Erreur lors de la création du matériau:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Erreur serveur lors de la création du matériau'
+
+      if (categories.length === 0) {
+        return res.json({
+          success: true,
+          data: { valid: true }
+        });
+      }
+
+      // Récupérer les genres valides pour ce type
+      const validTypeGenres = await this.models.TypeOeuvreGenre.findAll({
+        where: {
+          id_type_oeuvre,
+          actif: true
+        },
+        attributes: ['id_genre']
+      });
+
+      const validGenreIds = validTypeGenres.map(tg => tg.id_genre);
+
+      // Vérifier que toutes les catégories appartiennent à des genres valides
+      const invalidCategories = [];
+      
+      for (const catId of categories) {
+        const validCategory = await this.models.GenreCategorie.findOne({
+          where: {
+            id_categorie: catId,
+            id_genre: { [Op.in]: validGenreIds },
+            actif: true
+          },
+          include: [{
+            model: this.models.Categorie,
+            attributes: ['nom']
+          }]
+        });
+
+        if (!validCategory) {
+          const cat = await this.models.Categorie.findByPk(catId, {
+            attributes: ['nom']
+          });
+          invalidCategories.push({
+            id: catId,
+            nom: cat?.nom || 'Inconnue'
+          });
+        }
+      }
+
+      const isValid = invalidCategories.length === 0;
+
+      res.json({
+        success: true,
+        data: {
+          valid: isValid,
+          invalidCategories: isValid ? undefined : invalidCategories
+        }
+      });
+
+    } catch (error) {
+      console.error('Erreur validation hiérarchie:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Erreur serveur lors de la validation' 
       });
     }
   }
 
   /**
-   * PUT /api/metadata/materiaux/:id
+   * POST /api/metadata/genres-from-categories
+   * Récupérer les genres associés à des catégories
    */
-  async updateMateriau(req, res) {
+  async getGenresFromCategories(req, res) {
     try {
-      const { id } = req.params;
-      const { nom, description } = req.body;
-
-      const materiau = await this.models.Materiau.findByPk(id);
+      const { categories } = req.body;
       
-      if (!materiau) {
-        return res.status(404).json({
-          success: false,
-          error: 'Matériau non trouvé'
+      if (!Array.isArray(categories) || categories.length === 0) {
+        return res.json({
+          success: true,
+          data: { genres: [] }
         });
       }
 
-      await materiau.update({ nom, description });
+      // Récupérer les associations genre-catégorie
+      const genreCategories = await this.models.GenreCategorie.findAll({
+        where: {
+          id_categorie: { [Op.in]: categories },
+          actif: true
+        },
+        include: [{
+          model: this.models.Genre,
+          attributes: ['id_genre', 'nom', 'description']
+        }],
+        attributes: ['id_categorie', 'id_genre']
+      });
+
+      // Compter combien de catégories sélectionnées appartiennent à chaque genre
+      const genreMap = new Map();
+      
+      genreCategories.forEach(gc => {
+        const genre = gc.Genre;
+        if (!genreMap.has(genre.id_genre)) {
+          genreMap.set(genre.id_genre, {
+            id_genre: genre.id_genre,
+            nom: genre.nom,
+            description: genre.description,
+            categories_count: 0
+          });
+        }
+        genreMap.get(genre.id_genre).categories_count++;
+      });
+
+      const genres = Array.from(genreMap.values())
+        .sort((a, b) => b.categories_count - a.categories_count);
 
       res.json({
         success: true,
-        data: materiau,
-        message: 'Matériau mis à jour avec succès'
+        data: { genres }
       });
+
     } catch (error) {
-      console.error('Erreur lors de la mise à jour du matériau:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Erreur serveur lors de la mise à jour du matériau'
+      console.error('Erreur récupération genres depuis catégories:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Erreur serveur' 
       });
     }
   }
 
   /**
-   * DELETE /api/metadata/materiaux/:id
+   * GET /api/metadata/types-oeuvres/:typeId/has-categories
+   * Vérifier si un type d'œuvre a des catégories disponibles
    */
-  async deleteMateriau(req, res) {
+  async checkIfTypeHasCategories(req, res) {
     try {
-      const { id } = req.params;
+      const { typeId } = req.params;
       
-      // Vérifier s'il est utilisé
-      const count = await this.models.Artisanat.count({
-        where: { id_materiau: id }
+      const validTypeGenres = await this.models.TypeOeuvreGenre.findAll({
+        where: {
+          id_type_oeuvre: typeId,
+          actif: true
+        },
+        attributes: ['id_genre']
       });
 
-      if (count > 0) {
-        return res.status(400).json({
-          success: false,
-          error: `Ce matériau est utilisé par ${count} artisanat(s) et ne peut pas être supprimé`
+      if (validTypeGenres.length === 0) {
+        return res.json({
+          success: true,
+          data: { hasCategories: false, requiresCategories: false }
         });
       }
 
-      const materiau = await this.models.Materiau.findByPk(id);
-      
-      if (!materiau) {
-        return res.status(404).json({
-          success: false,
-          error: 'Matériau non trouvé'
-        });
-      }
+      const validGenreIds = validTypeGenres.map(tg => tg.id_genre);
 
-      await materiau.destroy();
+      const categoriesCount = await this.models.GenreCategorie.count({
+        where: {
+          id_genre: { [Op.in]: validGenreIds },
+          actif: true
+        }
+      });
 
       res.json({
         success: true,
-        message: 'Matériau supprimé avec succès'
+        data: { 
+          hasCategories: categoriesCount > 0,
+          requiresCategories: categoriesCount > 0 
+        }
       });
+
     } catch (error) {
-      console.error('Erreur lors de la suppression du matériau:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Erreur serveur lors de la suppression du matériau'
+      console.error('Erreur vérification catégories:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Erreur serveur' 
       });
     }
   }
 
-  // Méthodes similaires pour techniques, langues, catégories, etc.
-  // (Les autres méthodes restent inchangées car elles n'utilisent pas HierarchieService)
-
-  // ===== TECHNIQUES =====
-  
-  async getTechniques(req, res) {
-    try {
-      const techniques = await this.models.Technique.findAll({
-        order: [['nom', 'ASC']]
-      });
-      
-      res.json({
-        success: true,
-        data: techniques
-      });
-    } catch (error) {
-      console.error('Erreur lors de la récupération des techniques:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Erreur serveur lors de la récupération des techniques'
-      });
-    }
-  }
-
-  async createTechnique(req, res) {
-    try {
-      const { nom, description } = req.body;
-      
-      if (!nom) {
-        return res.status(400).json({
-          success: false,
-          error: 'Le nom de la technique est obligatoire'
-        });
-      }
-
-      const technique = await this.models.Technique.create({
-        nom,
-        description
-      });
-
-      res.status(201).json({
-        success: true,
-        data: technique,
-        message: 'Technique créée avec succès'
-      });
-    } catch (error) {
-      if (error.name === 'SequelizeUniqueConstraintError') {
-        return res.status(400).json({
-          success: false,
-          error: 'Une technique avec ce nom existe déjà'
-        });
-      }
-      console.error('Erreur lors de la création de la technique:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Erreur serveur lors de la création de la technique'
-      });
-    }
-  }
-
-  async updateTechnique(req, res) {
-    try {
-      const { id } = req.params;
-      const { nom, description } = req.body;
-
-      const technique = await this.models.Technique.findByPk(id);
-      
-      if (!technique) {
-        return res.status(404).json({
-          success: false,
-          error: 'Technique non trouvée'
-        });
-      }
-
-      await technique.update({ nom, description });
-
-      res.json({
-        success: true,
-        data: technique,
-        message: 'Technique mise à jour avec succès'
-      });
-    } catch (error) {
-      console.error('Erreur lors de la mise à jour de la technique:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Erreur serveur lors de la mise à jour de la technique'
-      });
-    }
-  }
-
-  async deleteTechnique(req, res) {
-    try {
-      const { id } = req.params;
-      
-      // Vérifier si elle est utilisée
-      const count = await this.models.Artisanat.count({
-        where: { id_technique: id }
-      });
-
-      if (count > 0) {
-        return res.status(400).json({
-          success: false,
-          error: `Cette technique est utilisée par ${count} artisanat(s) et ne peut pas être supprimée`
-        });
-      }
-
-      const technique = await this.models.Technique.findByPk(id);
-      
-      if (!technique) {
-        return res.status(404).json({
-          success: false,
-          error: 'Technique non trouvée'
-        });
-      }
-
-      await technique.destroy();
-
-      res.json({
-        success: true,
-        message: 'Technique supprimée avec succès'
-      });
-    } catch (error) {
-      console.error('Erreur lors de la suppression de la technique:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Erreur serveur lors de la suppression de la technique'
-      });
-    }
-  }
-
-  // ===== LANGUES =====
-  
+  /**
+   * GET /api/metadata/langues
+   */
   async getLangues(req, res) {
     try {
       const langues = await this.models.Langue.findAll({
@@ -721,67 +916,48 @@ class MetadataController {
         data: langues
       });
     } catch (error) {
-      console.error('Erreur lors de la récupération des langues:', error);
+      console.error('Erreur getLangues:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur lors de la récupération des langues'
+        error: error.message
       });
     }
   }
 
-  // ===== CATÉGORIES =====
-  
-  async getCategories(req, res) {
+  /**
+   * GET /api/metadata/types-users
+   */
+  async getTypesUsers(req, res) {
     try {
-      const categories = await this.models.Categorie.findAll({
-        order: [['nom', 'ASC']]
+      const typesUsers = await this.models.TypeUser.findAll({
+        order: [['nom_type', 'ASC']]
       });
       
       res.json({
         success: true,
-        data: categories
+        data: typesUsers
       });
     } catch (error) {
-      console.error('Erreur lors de la récupération des catégories:', error);
+      console.error('Erreur getTypesUsers:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur lors de la récupération des catégories'
+        error: error.message
       });
     }
   }
 
-  // ===== GENRES =====
-  
-  async getGenres(req, res) {
-    try {
-      const genres = await this.models.Genre.findAll({
-        order: [['nom', 'ASC']]
-      });
-      
-      res.json({
-        success: true,
-        data: genres
-      });
-    } catch (error) {
-      console.error('Erreur lors de la récupération des genres:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Erreur serveur lors de la récupération des genres'
-      });
-    }
-  }
-
-  // ===== ÉDITEURS =====
-  
+  /**
+   * GET /api/metadata/editeurs
+   */
   async getEditeurs(req, res) {
     try {
       const { type_editeur } = req.query;
+      const where = { actif: true };
       
-      const where = {};
       if (type_editeur) {
         where.type_editeur = type_editeur;
       }
-      
+
       const editeurs = await this.models.Editeur.findAll({
         where,
         order: [['nom', 'ASC']]
@@ -792,160 +968,151 @@ class MetadataController {
         data: editeurs
       });
     } catch (error) {
-      console.error('Erreur lors de la récupération des éditeurs:', error);
+      console.error('Erreur getEditeurs:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur lors de la récupération des éditeurs'
+        error: error.message
       });
     }
   }
 
-  // ===== TYPES D'ORGANISATIONS =====
-  
-  async getTypesOrganisations(req, res) {
+  /**
+   * POST /api/metadata/editeurs
+   */
+  async createEditeur(req, res) {
     try {
-      const typesOrganisations = await this.models.TypeOrganisation.findAll({
-        order: [['nom', 'ASC']]
-      });
+      const { nom, type_editeur = 'autre', site_web, email, telephone, description, actif = true } = req.body;
       
-      res.json({
-        success: true,
-        data: typesOrganisations
-      });
-    } catch (error) {
-      console.error('Erreur lors de la récupération des types d\'organisations:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Erreur serveur lors de la récupération des types d\'organisations'
-      });
-    }
-  }
-
-  // ===== WILAYAS =====
-  
-  async getWilayas(req, res) {
-    try {
-      const { includeDairas, includeCommunes } = req.query;
-      
-      const include = [];
-      
-      if (includeDairas === 'true') {
-        const dairaInclude = {
-          model: this.models.Daira,
-          attributes: ['id_daira', 'nom', 'daira_name_ascii']
-        };
-        
-        if (includeCommunes === 'true') {
-          dairaInclude.include = [{
-            model: this.models.Commune,
-            attributes: ['id_commune', 'nom', 'commune_name_ascii']
-          }];
-        }
-        
-        include.push(dairaInclude);
-      }
-      
-      const wilayas = await this.models.Wilaya.findAll({
-        attributes: ['id_wilaya', 'codeW', 'nom', 'wilaya_name_ascii'],
-        include,
-        order: [['codeW', 'ASC']]
-      });
-      
-      res.json({
-        success: true,
-        data: wilayas
-      });
-    } catch (error) {
-      console.error('Erreur lors de la récupération des wilayas:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Erreur serveur lors de la récupération des wilayas'
-      });
-    }
-  }
-
-  async getDairasByWilaya(req, res) {
-    try {
-      const { id } = req.params;
-      const { includeCommunes } = req.query;
-      
-      const include = [];
-      
-      if (includeCommunes === 'true') {
-        include.push({
-          model: this.models.Commune,
-          attributes: ['id_commune', 'nom', 'commune_name_ascii']
+      if (!nom) {
+        return res.status(400).json({
+          success: false,
+          error: 'Le nom de l\'éditeur est obligatoire'
         });
       }
-      
-      const dairas = await this.models.Daira.findAll({
-        where: { wilayaId: id },
-        attributes: ['id_daira', 'nom', 'daira_name_ascii'],
-        include,
-        order: [['nom', 'ASC']]
+
+      const editeur = await this.models.Editeur.create({
+        nom,
+        type_editeur,
+        site_web,
+        email,
+        telephone,
+        description,
+        actif
       });
-      
-      res.json({
+
+      res.status(201).json({
         success: true,
-        data: dairas
+        data: editeur
       });
     } catch (error) {
-      console.error('Erreur lors de la récupération des dairas:', error);
+      if (error.name === 'SequelizeUniqueConstraintError') {
+        return res.status(400).json({
+          success: false,
+          error: 'Un éditeur avec ce nom existe déjà'
+        });
+      }
+      console.error('Erreur createEditeur:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur lors de la récupération des dairas'
+        error: error.message
       });
     }
   }
 
-  async getCommunesByDaira(req, res) {
+  /**
+   * PUT /api/metadata/editeurs/:id
+   * Mettre à jour un éditeur
+   */
+  async updateEditeur(req, res) {
     try {
       const { id } = req.params;
+      const { nom, type_editeur, site_web, email, telephone, description, actif } = req.body;
+
+      const editeur = await this.models.Editeur.findByPk(id);
       
-      const communes = await this.models.Commune.findAll({
-        where: { dairaId: id },
-        attributes: ['id_commune', 'nom', 'commune_name_ascii'],
-        order: [['nom', 'ASC']]
-      });
-      
+      if (!editeur) {
+        return res.status(404).json({
+          success: false,
+          error: 'Éditeur non trouvé'
+        });
+      }
+
+      // Mise à jour des champs
+      if (nom !== undefined) editeur.nom = nom;
+      if (type_editeur !== undefined) editeur.type_editeur = type_editeur;
+      if (site_web !== undefined) editeur.site_web = site_web;
+      if (email !== undefined) editeur.email = email;
+      if (telephone !== undefined) editeur.telephone = telephone;
+      if (description !== undefined) editeur.description = description;
+      if (actif !== undefined) editeur.actif = actif;
+
+      await editeur.save();
+
       res.json({
         success: true,
-        data: communes
+        data: editeur
       });
     } catch (error) {
-      console.error('Erreur lors de la récupération des communes:', error);
+      if (error.name === 'SequelizeUniqueConstraintError') {
+        return res.status(400).json({
+          success: false,
+          error: 'Un éditeur avec ce nom existe déjà'
+        });
+      }
+      console.error('Erreur updateEditeur:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur lors de la récupération des communes'
+        error: error.message
       });
     }
   }
 
-  async getLocalitesByCommune(req, res) {
+  /**
+   * DELETE /api/metadata/editeurs/:id
+   * Supprimer/désactiver un éditeur
+   */
+  async deleteEditeur(req, res) {
     try {
       const { id } = req.params;
+      const { force = false } = req.query;
+
+      const editeur = await this.models.Editeur.findByPk(id);
       
-      const localites = await this.models.Localite.findAll({
-        where: { id_commune: id },
-        attributes: ['id_localite', 'nom', 'localite_name_ascii'],
-        order: [['nom', 'ASC']]
-      });
-      
-      res.json({
-        success: true,
-        data: localites
-      });
+      if (!editeur) {
+        return res.status(404).json({
+          success: false,
+          error: 'Éditeur non trouvé'
+        });
+      }
+
+      if (force === 'true') {
+        // Suppression définitive
+        await editeur.destroy();
+        res.json({
+          success: true,
+          message: 'Éditeur supprimé définitivement'
+        });
+      } else {
+        // Désactivation
+        editeur.actif = false;
+        await editeur.save();
+        res.json({
+          success: true,
+          message: 'Éditeur désactivé'
+        });
+      }
     } catch (error) {
-      console.error('Erreur lors de la récupération des localités:', error);
+      console.error('Erreur deleteEditeur:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur lors de la récupération des localités'
+        error: error.message
       });
     }
   }
 
-  // ===== TAGS/MOTS-CLÉS =====
-  
+  /**
+   * GET /api/metadata/tags
+   */
   async getTags(req, res) {
     try {
       const { search, limit = 50 } = req.query;
@@ -966,14 +1133,17 @@ class MetadataController {
         data: tags
       });
     } catch (error) {
-      console.error('Erreur lors de la récupération des tags:', error);
+      console.error('Erreur getTags:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur lors de la récupération des tags'
+        error: error.message
       });
     }
   }
 
+  /**
+   * POST /api/metadata/tags
+   */
   async createTag(req, res) {
     try {
       const { nom } = req.body;
@@ -985,111 +1155,577 @@ class MetadataController {
         });
       }
 
+      const nomNormalized = nom.trim().toLowerCase();
+
       const [tag, created] = await this.models.TagMotCle.findOrCreate({
-        where: { nom },
-        defaults: { nom }
+        where: { nom: nomNormalized },
+        defaults: { nom: nomNormalized }
       });
 
       res.status(created ? 201 : 200).json({
         success: true,
         data: tag,
-        message: created ? 'Tag créé avec succès' : 'Tag existant'
+        created
       });
     } catch (error) {
-      console.error('Erreur lors de la création du tag:', error);
+      console.error('Erreur createTag:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur lors de la création du tag'
+        error: error.message
       });
     }
   }
 
-  // ===== RÉCUPÉRATION GLOBALE =====
-  
-  async getAllMetadata(req, res) {
+  /**
+   * GET /api/metadata/materiaux
+   */
+  async getMateriaux(req, res) {
     try {
-      const [
-        langues,
-        categories,
-        genres,
-        types_oeuvres,
-        types_evenements,
-        materiaux,
-        techniques,
-        wilayas,
-        editeurs,
-        types_organisations
-      ] = await Promise.all([
-        this.models.Langue.findAll({ order: [['nom', 'ASC']] }),
-        this.models.Categorie.findAll({ order: [['nom', 'ASC']] }),
-        this.models.Genre.findAll({ order: [['nom', 'ASC']] }),
-        this.callHierarchieService('getTypesOeuvres').catch(() => []),
-        this.models.TypeEvenement ? 
-          this.models.TypeEvenement.findAll({ order: [['nom_type', 'ASC']] }) : 
-          [],
-        this.models.Materiau.findAll({ order: [['nom', 'ASC']] }),
-        this.models.Technique.findAll({ order: [['nom', 'ASC']] }),
-        this.models.Wilaya.findAll({ 
-          attributes: ['id_wilaya', 'codeW', 'nom', 'wilaya_name_ascii'],
-          order: [['codeW', 'ASC']] 
-        }),
-        this.models.Editeur ? 
-          this.models.Editeur.findAll({ 
-            where: { actif: true },
-            order: [['nom', 'ASC']] 
-          }) : 
-          [],
-        this.models.TypeOrganisation ? 
-          this.models.TypeOrganisation.findAll({ order: [['nom', 'ASC']] }) : 
-          []
-      ]);
-
-      res.json({
-        success: true,
-        data: {
-          langues,
-          categories,
-          genres,
-          types_oeuvres,
-          types_evenements,
-          materiaux,
-          techniques,
-          wilayas,
-          editeurs,
-          types_organisations
-        }
-      });
-    } catch (error) {
-      console.error('Erreur lors de la récupération des métadonnées:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Erreur serveur lors de la récupération des métadonnées'
-      });
-    }
-  }
-
-  // ===== MÉTHODES DE RECHERCHE =====
-  
-  async searchWilayas(req, res) {
-    try {
-      const { q } = req.query;
-      
-      if (!q || q.length < 2) {
+      if (!this.models.Materiau) {
         return res.json({
           success: true,
           data: []
         });
       }
+
+      const materiaux = await this.models.Materiau.findAll({
+        order: [['nom', 'ASC']]
+      });
       
-      const wilayas = await this.models.Wilaya.findAll({
+      res.json({
+        success: true,
+        data: materiaux
+      });
+    } catch (error) {
+      console.error('Erreur getMateriaux:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * POST /api/metadata/materiaux
+   * Créer un nouveau matériau
+   */
+  async createMateriau(req, res) {
+    try {
+      if (!this.models.Materiau) {
+        return res.status(404).json({
+          success: false,
+          error: 'Le modèle Materiau n\'est pas disponible'
+        });
+      }
+
+      const { nom, description } = req.body;
+      
+      if (!nom) {
+        return res.status(400).json({
+          success: false,
+          error: 'Le nom du matériau est obligatoire'
+        });
+      }
+
+      const materiau = await this.models.Materiau.create({
+        nom,
+        description
+      });
+
+      res.status(201).json({
+        success: true,
+        data: materiau
+      });
+    } catch (error) {
+      if (error.name === 'SequelizeUniqueConstraintError') {
+        return res.status(400).json({
+          success: false,
+          error: 'Un matériau avec ce nom existe déjà'
+        });
+      }
+      console.error('Erreur createMateriau:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * PUT /api/metadata/materiaux/:id
+   * Mettre à jour un matériau
+   */
+  async updateMateriau(req, res) {
+    try {
+      if (!this.models.Materiau) {
+        return res.status(404).json({
+          success: false,
+          error: 'Le modèle Materiau n\'est pas disponible'
+        });
+      }
+
+      const { id } = req.params;
+      const { nom, description } = req.body;
+
+      const materiau = await this.models.Materiau.findByPk(id);
+      
+      if (!materiau) {
+        return res.status(404).json({
+          success: false,
+          error: 'Matériau non trouvé'
+        });
+      }
+
+      if (nom !== undefined) materiau.nom = nom;
+      if (description !== undefined) materiau.description = description;
+
+      await materiau.save();
+
+      res.json({
+        success: true,
+        data: materiau
+      });
+    } catch (error) {
+      if (error.name === 'SequelizeUniqueConstraintError') {
+        return res.status(400).json({
+          success: false,
+          error: 'Un matériau avec ce nom existe déjà'
+        });
+      }
+      console.error('Erreur updateMateriau:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * DELETE /api/metadata/materiaux/:id
+   * Supprimer un matériau
+   */
+  async deleteMateriau(req, res) {
+    try {
+      if (!this.models.Materiau) {
+        return res.status(404).json({
+          success: false,
+          error: 'Le modèle Materiau n\'est pas disponible'
+        });
+      }
+
+      const { id } = req.params;
+
+      const materiau = await this.models.Materiau.findByPk(id);
+      
+      if (!materiau) {
+        return res.status(404).json({
+          success: false,
+          error: 'Matériau non trouvé'
+        });
+      }
+
+      await materiau.destroy();
+
+      res.json({
+        success: true,
+        message: 'Matériau supprimé'
+      });
+    } catch (error) {
+      console.error('Erreur deleteMateriau:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * GET /api/metadata/techniques
+   */
+  async getTechniques(req, res) {
+    try {
+      if (!this.models.Technique) {
+        return res.json({
+          success: true,
+          data: []
+        });
+      }
+
+      const techniques = await this.models.Technique.findAll({
+        order: [['nom', 'ASC']]
+      });
+      
+      res.json({
+        success: true,
+        data: techniques
+      });
+    } catch (error) {
+      console.error('Erreur getTechniques:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * POST /api/metadata/techniques
+   * Créer une nouvelle technique
+   */
+  async createTechnique(req, res) {
+    try {
+      if (!this.models.Technique) {
+        return res.status(404).json({
+          success: false,
+          error: 'Le modèle Technique n\'est pas disponible'
+        });
+      }
+
+      const { nom, description } = req.body;
+      
+      if (!nom) {
+        return res.status(400).json({
+          success: false,
+          error: 'Le nom de la technique est obligatoire'
+        });
+      }
+
+      const technique = await this.models.Technique.create({
+        nom,
+        description
+      });
+
+      res.status(201).json({
+        success: true,
+        data: technique
+      });
+    } catch (error) {
+      if (error.name === 'SequelizeUniqueConstraintError') {
+        return res.status(400).json({
+          success: false,
+          error: 'Une technique avec ce nom existe déjà'
+        });
+      }
+      console.error('Erreur createTechnique:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * PUT /api/metadata/techniques/:id
+   * Mettre à jour une technique
+   */
+  async updateTechnique(req, res) {
+    try {
+      if (!this.models.Technique) {
+        return res.status(404).json({
+          success: false,
+          error: 'Le modèle Technique n\'est pas disponible'
+        });
+      }
+
+      const { id } = req.params;
+      const { nom, description } = req.body;
+
+      const technique = await this.models.Technique.findByPk(id);
+      
+      if (!technique) {
+        return res.status(404).json({
+          success: false,
+          error: 'Technique non trouvée'
+        });
+      }
+
+      if (nom !== undefined) technique.nom = nom;
+      if (description !== undefined) technique.description = description;
+
+      await technique.save();
+
+      res.json({
+        success: true,
+        data: technique
+      });
+    } catch (error) {
+      if (error.name === 'SequelizeUniqueConstraintError') {
+        return res.status(400).json({
+          success: false,
+          error: 'Une technique avec ce nom existe déjà'
+        });
+      }
+      console.error('Erreur updateTechnique:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * DELETE /api/metadata/techniques/:id
+   * Supprimer une technique
+   */
+  async deleteTechnique(req, res) {
+    try {
+      if (!this.models.Technique) {
+        return res.status(404).json({
+          success: false,
+          error: 'Le modèle Technique n\'est pas disponible'
+        });
+      }
+
+      const { id } = req.params;
+
+      const technique = await this.models.Technique.findByPk(id);
+      
+      if (!technique) {
+        return res.status(404).json({
+          success: false,
+          error: 'Technique non trouvée'
+        });
+      }
+
+      await technique.destroy();
+
+      res.json({
+        success: true,
+        message: 'Technique supprimée'
+      });
+    } catch (error) {
+      console.error('Erreur deleteTechnique:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * GET /api/metadata/categories
+   * Toutes les catégories (sans filtre)
+   */
+  async getCategories(req, res) {
+    try {
+      const categories = await this.models.Categorie.findAll({
+        order: [['nom', 'ASC']]
+      });
+      
+      res.json({
+        success: true,
+        data: categories
+      });
+    } catch (error) {
+      console.error('Erreur getCategories:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * GET /api/metadata/categories/search
+   * Rechercher des catégories
+   */
+  async searchCategories(req, res) {
+    try {
+      const { q } = req.query;
+      
+      if (!q || q.length < 2) {
+        return res.status(400).json({
+          success: false,
+          error: 'Le terme de recherche doit contenir au moins 2 caractères'
+        });
+      }
+
+      const categories = await this.models.Categorie.findAll({
         where: {
           [Op.or]: [
             { nom: { [Op.like]: `%${q}%` } },
+            { description: { [Op.like]: `%${q}%` } }
+          ]
+        },
+        order: [['nom', 'ASC']],
+        limit: 20
+      });
+      
+      res.json({
+        success: true,
+        data: categories
+      });
+    } catch (error) {
+      console.error('Erreur searchCategories:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * GET /api/metadata/genres
+   * Tous les genres (sans filtre)
+   */
+  async getGenres(req, res) {
+    try {
+      const genres = await this.models.Genre.findAll({
+        order: [['nom', 'ASC']]
+      });
+      
+      res.json({
+        success: true,
+        data: genres
+      });
+    } catch (error) {
+      console.error('Erreur getGenres:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * GET /api/metadata/types-evenements
+   */
+  async getTypesEvenements(req, res) {
+    try {
+      if (!this.models.TypeEvenement) {
+        return res.json({
+          success: true,
+          data: []
+        });
+      }
+
+      const types = await this.models.TypeEvenement.findAll({
+        order: [['nom_type', 'ASC']]
+      });
+      
+      res.json({
+        success: true,
+        data: types
+      });
+    } catch (error) {
+      console.error('Erreur getTypesEvenements:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * GET /api/metadata/types-organisations
+   */
+  async getTypesOrganisations(req, res) {
+    try {
+      if (!this.models.TypeOrganisation) {
+        return res.json({
+          success: true,
+          data: []
+        });
+      }
+
+      const types = await this.models.TypeOrganisation.findAll({
+        order: [['nom_type', 'ASC']]
+      });
+      
+      res.json({
+        success: true,
+        data: types
+      });
+    } catch (error) {
+      console.error('Erreur getTypesOrganisations:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * GET /api/metadata/wilayas
+   */
+  async getWilayas(req, res) {
+    try {
+      if (!this.models.Wilaya) {
+        return res.json({
+          success: true,
+          data: []
+        });
+      }
+
+      const { includeDairas, includeCommunes } = req.query;
+      
+      const include = [];
+      
+      if (includeDairas === 'true' && this.models.Daira) {
+        const dairaInclude = {
+          model: this.models.Daira,
+          as: 'dairas',
+          attributes: ['id_daira', 'nom_fr', 'nom_ar']
+        };
+        
+        if (includeCommunes === 'true' && this.models.Commune) {
+          dairaInclude.include = [{
+            model: this.models.Commune,
+            as: 'communes',
+            attributes: ['id_commune', 'nom_fr', 'nom_ar']
+          }];
+        }
+        
+        include.push(dairaInclude);
+      }
+
+      const wilayas = await this.models.Wilaya.findAll({
+        attributes: ['id_wilaya', 'codeW', 'nom', 'wilaya_name_ascii'],
+        include,
+        order: [['codeW', 'ASC']]
+      });
+      
+      res.json({
+        success: true,
+        data: wilayas
+      });
+    } catch (error) {
+      console.error('Erreur getWilayas:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * GET /api/metadata/wilayas/search
+   * Rechercher des wilayas
+   */
+  async searchWilayas(req, res) {
+    try {
+      if (!this.models.Wilaya) {
+        return res.json({
+          success: true,
+          data: []
+        });
+      }
+
+      const { q } = req.query;
+      
+      if (!q || q.length < 2) {
+        return res.status(400).json({
+          success: false,
+          error: 'Le terme de recherche doit contenir au moins 2 caractères'
+        });
+      }
+
+      const wilayas = await this.models.Wilaya.findAll({
+        where: {
+          [Op.or]: [
             { wilaya_name_ascii: { [Op.like]: `%${q}%` } },
-            this.sequelize.where(
-              this.sequelize.cast(this.sequelize.col('codeW'), 'CHAR'),
-              { [Op.like]: `%${q}%` }
-            )
+            { nom: { [Op.like]: `%${q}%` } },
+            { codeW: { [Op.like]: `%${q}%` } }
           ]
         },
         attributes: ['id_wilaya', 'codeW', 'nom', 'wilaya_name_ascii'],
@@ -1102,118 +1738,236 @@ class MetadataController {
         data: wilayas
       });
     } catch (error) {
-      console.error('Erreur lors de la recherche de wilayas:', error);
+      console.error('Erreur searchWilayas:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur lors de la recherche'
+        error: error.message
       });
     }
   }
 
-  async searchCategories(req, res) {
+  /**
+   * GET /api/metadata/wilayas/:id/dairas
+   * Récupérer les dairas d'une wilaya
+   */
+  async getDairasByWilaya(req, res) {
     try {
-      const { q } = req.query;
-      
-      if (!q || q.length < 2) {
+      if (!this.models.Daira) {
         return res.json({
           success: true,
           data: []
         });
       }
+
+      const { id } = req.params;
       
-      const categories = await this.models.Categorie.findAll({
-        where: {
-          nom: { [Op.like]: `%${q}%` }
-        },
-        order: [['nom', 'ASC']],
-        limit: 10
+      const dairas = await this.models.Daira.findAll({
+        where: { id_wilaya: id },
+        attributes: ['id_daira', 'nom', 'daira_name_ascii'],
+        order: [['daira_name_ascii', 'ASC']]
       });
       
       res.json({
         success: true,
-        data: categories
+        data: dairas
       });
     } catch (error) {
-      console.error('Erreur lors de la recherche de catégories:', error);
+      console.error('Erreur getDairasByWilaya:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur lors de la recherche'
+        error: error.message
       });
     }
   }
 
-  // ===== STATISTIQUES D'UTILISATION =====
-  
-  async getUsageStatistics(req, res) {
+  /**
+   * GET /api/metadata/dairas/:id/communes
+   * Récupérer les communes d'une daira
+   */
+  async getCommunesByDaira(req, res) {
     try {
-      const statistics = {
-        // Nombre total par type
-        counts: {
-          oeuvres: await this.models.Oeuvre.count(),
-          langues: await this.models.Langue.count(),
-          categories: await this.models.Categorie.count(),
-          genres: await this.models.Genre.count(),
-          materiaux: await this.models.Materiau.count(),
-          techniques: await this.models.Technique.count(),
-          wilayas: await this.models.Wilaya.count(),
-          dairas: await this.models.Daira.count(),
-          communes: await this.models.Commune.count()
-        },
-        
-        // Utilisation des matériaux
-        materiauxUsage: await this.models.Materiau.findAll({
-          attributes: [
-            'id_materiau',
-            'nom',
-            [this.sequelize.fn('COUNT', this.sequelize.col('Artisanats.id_artisanat')), 'usage_count']
-          ],
-          include: [{
-            model: this.models.Artisanat,
-            attributes: [],
-            required: false
-          }],
-          group: ['Materiau.id_materiau', 'Materiau.nom'],
-          order: [[this.sequelize.literal('usage_count'), 'DESC']],
-          limit: 10,
-          raw: true
-        }),
-        
-        // Utilisation des techniques
-        techniquesUsage: await this.models.Technique.findAll({
-          attributes: [
-            'id_technique',
-            'nom',
-            [this.sequelize.fn('COUNT', this.sequelize.col('Artisanats.id_artisanat')), 'usage_count']
-          ],
-          include: [{
-            model: this.models.Artisanat,
-            attributes: [],
-            required: false
-          }],
-          group: ['Technique.id_technique', 'Technique.nom'],
-          order: [[this.sequelize.literal('usage_count'), 'DESC']],
-          limit: 10,
-          raw: true
-        })
-      };
-      
-      // Ajouter les statistiques de hiérarchie si disponibles
-      try {
-        const hierarchyStats = await this.callHierarchieService('getStatistiquesUtilisation');
-        statistics.hierarchy = hierarchyStats;
-      } catch (err) {
-        console.warn('Impossible d\'obtenir les statistiques de hiérarchie:', err.message);
+      if (!this.models.Commune) {
+        return res.json({
+          success: true,
+          data: []
+        });
       }
+
+      const { id } = req.params;
+      
+      const communes = await this.models.Commune.findAll({
+        where: { id_daira: id },
+        attributes: ['id_commune', 'nom', 'commune_name_ascii'],
+        order: [['commune_name_ascii', 'ASC']]
+      });
       
       res.json({
         success: true,
-        data: statistics
+        data: communes
       });
     } catch (error) {
-      console.error('Erreur lors de la récupération des statistiques:', error);
+      console.error('Erreur getCommunesByDaira:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur lors de la récupération des statistiques'
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * GET /api/metadata/communes/:id/localites
+   * Récupérer les localités d'une commune
+   */
+  async getLocalitesByCommune(req, res) {
+    try {
+      if (!this.models.Localite) {
+        return res.json({
+          success: true,
+          data: []
+        });
+      }
+
+      const { id } = req.params;
+      
+      const localites = await this.models.Localite.findAll({
+        where: { id_commune: id },
+        attributes: ['id_localite', 'nom_fr', 'nom_ar'],
+        order: [['nom_fr', 'ASC']]
+      });
+      
+      res.json({
+        success: true,
+        data: localites
+      });
+    } catch (error) {
+      console.error('Erreur getLocalitesByCommune:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * GET /api/metadata/statistics
+   * Récupérer les statistiques d'utilisation des métadonnées
+   */
+  async getUsageStatistics(req, res) {
+    try {
+      const stats = {};
+
+      // Statistiques générales
+      const [
+        totalLangues,
+        totalCategories,
+        totalGenres,
+        totalTypesOeuvres,
+        totalEditeurs,
+        totalTags,
+        totalMateriaux,
+        totalTechniques
+      ] = await Promise.all([
+        this.models.Langue.count(),
+        this.models.Categorie.count(),
+        this.models.Genre.count(),
+        this.models.TypeOeuvre.count(),
+        this.models.Editeur.count({ where: { actif: true } }),
+        this.models.TagMotCle.count(),
+        this.models.Materiau?.count() || 0,
+        this.models.Technique?.count() || 0
+      ]);
+
+      stats.totals = {
+        langues: totalLangues,
+        categories: totalCategories,
+        genres: totalGenres,
+        typesOeuvres: totalTypesOeuvres,
+        editeurs: totalEditeurs,
+        tags: totalTags,
+        materiaux: totalMateriaux,
+        techniques: totalTechniques
+      };
+
+      // Statistiques d'utilisation si les modèles existent
+      if (this.models.Oeuvre) {
+        const [
+          oeuvresTotales,
+          oeuvresParLangue,
+          oeuvresParType,
+          oeuvresParEditeur
+        ] = await Promise.all([
+          this.models.Oeuvre.count(),
+          
+          this.models.Oeuvre.count({
+            attributes: ['id_langue_principale'],
+            group: ['id_langue_principale'],
+            include: [{
+              model: this.models.Langue,
+              as: 'langue_principale',
+              attributes: ['nom']
+            }]
+          }),
+          
+          this.models.Oeuvre.count({
+            attributes: ['id_type_oeuvre'],
+            group: ['id_type_oeuvre'],
+            include: [{
+              model: this.models.TypeOeuvre,
+              attributes: ['nom_type']
+            }]
+          }),
+          
+          this.models.Oeuvre.count({
+            attributes: ['id_editeur'],
+            group: ['id_editeur'],
+            include: [{
+              model: this.models.Editeur,
+              attributes: ['nom']
+            }]
+          })
+        ]);
+
+        stats.usage = {
+          oeuvresTotales,
+          oeuvresParLangue: oeuvresParLangue.slice(0, 10),
+          oeuvresParType: oeuvresParType.slice(0, 10),
+          oeuvresParEditeur: oeuvresParEditeur.slice(0, 10)
+        };
+      }
+
+      // Statistiques récentes
+      const oneMonthAgo = new Date();
+      oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
+      const recentStats = {};
+      
+      if (this.models.TagMotCle) {
+        recentStats.tagsRecents = await this.models.TagMotCle.count({
+          where: {
+            createdAt: { [Op.gte]: oneMonthAgo }
+          }
+        });
+      }
+
+      if (this.models.Editeur) {
+        recentStats.editeursRecents = await this.models.Editeur.count({
+          where: {
+            createdAt: { [Op.gte]: oneMonthAgo }
+          }
+        });
+      }
+
+      stats.recent = recentStats;
+
+      res.json({
+        success: true,
+        data: stats
+      });
+    } catch (error) {
+      console.error('Erreur getUsageStatistics:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message
       });
     }
   }
