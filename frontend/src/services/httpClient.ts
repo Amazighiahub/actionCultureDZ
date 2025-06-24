@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import axios, { AxiosInstance, AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { API_BASE_URL, AUTH_CONFIG, ApiResponse, PaginatedResponse, FilterParams, buildUrl, UploadProgress } from '@/config/api';
+
 interface ApiUploadOptions<T = any> {
   fieldName?: string;
   additionalData?: Record<string, any>;
@@ -12,6 +13,7 @@ interface ApiUploadOptions<T = any> {
     allowedTypes?: string[];
   };
 }
+
 // Types pour la réponse d'erreur
 interface ErrorResponse {
   success: false;
@@ -26,6 +28,9 @@ interface QueuedRequest<T = any> {
   request: () => Promise<T>;
   resolve: (value: T) => void;
   reject: (error: any) => void;
+  url?: string;
+  method?: string;
+  timestamp?: number;
 }
 
 // Extension de AxiosRequestConfig pour le retry
@@ -49,16 +54,43 @@ class HttpError extends Error {
   }
 }
 
-// File d'attente pour les requêtes
-class RequestQueue {
+// File d'attente améliorée pour les requêtes
+class ImprovedRequestQueue {
   private queue: QueuedRequest[] = [];
   private processing = false;
   private lastRequestTime = 0;
   private minDelay = 100; // Délai minimum entre requêtes (ms)
+  
+  // Historique des requêtes pour le rate limiting adaptatif
+  private requestHistory: { timestamp: number; url: string }[] = [];
+  
+  // Cache simple en mémoire
+  private cache = new Map<string, { data: any; timestamp: number }>();
+  private cacheTimeout = 5 * 60 * 1000; // 5 minutes
+  
+  // Compteurs pour ajustement dynamique
+  private rateLimitHits = 0;
+  private successfulRequests = 0;
 
-  async add<T>(request: () => Promise<T>): Promise<T> {
+  async add<T>(request: () => Promise<T>, url?: string, method: string = 'GET'): Promise<T> {
+    // Vérifier le cache pour les GET
+    if (method === 'GET' && url) {
+      const cached = this.getFromCache(url);
+      if (cached) {
+        console.log(`📦 Cache hit: ${url}`);
+        return cached as T;
+      }
+    }
+
     return new Promise((resolve, reject) => {
-      this.queue.push({ request, resolve, reject });
+      this.queue.push({ 
+        request, 
+        resolve, 
+        reject,
+        url,
+        method,
+        timestamp: Date.now()
+      });
       this.process();
     });
   }
@@ -69,19 +101,37 @@ class RequestQueue {
     this.processing = true;
     
     while (this.queue.length > 0) {
+      // Ajustement dynamique du délai
+      const adaptiveDelay = this.calculateAdaptiveDelay();
+      
       const now = Date.now();
       const timeSinceLastRequest = now - this.lastRequestTime;
       
-      if (timeSinceLastRequest < this.minDelay) {
-        await new Promise(resolve => setTimeout(resolve, this.minDelay - timeSinceLastRequest));
+      if (timeSinceLastRequest < adaptiveDelay) {
+        await new Promise(resolve => setTimeout(resolve, adaptiveDelay - timeSinceLastRequest));
       }
       
       const item = this.queue.shift();
       if (item) {
         try {
           const result = await item.request();
+          
+          // Mettre en cache si GET
+          if (item.method === 'GET' && item.url) {
+            this.addToCache(item.url, result);
+          }
+          
+          // Enregistrer le succès
+          this.successfulRequests++;
+          this.recordRequest(item.url || 'unknown');
+          
           item.resolve(result);
-        } catch (error) {
+        } catch (error: any) {
+          // Détecter le rate limit
+          if (error.response?.status === 429) {
+            this.rateLimitHits++;
+            this.adjustDelayAfterRateLimit();
+          }
           item.reject(error);
         }
         this.lastRequestTime = Date.now();
@@ -90,16 +140,108 @@ class RequestQueue {
     
     this.processing = false;
   }
+
+  // Calculer le délai adaptatif
+  private calculateAdaptiveDelay(): number {
+    // Nettoyer l'historique (garder dernière minute)
+    const oneMinuteAgo = Date.now() - 60000;
+    this.requestHistory = this.requestHistory.filter(r => r.timestamp > oneMinuteAgo);
+    
+    const requestsLastMinute = this.requestHistory.length;
+    
+    // Si on a eu des rate limits récemment, augmenter le délai
+    if (this.rateLimitHits > 0) {
+      return Math.min(this.minDelay * Math.pow(2, this.rateLimitHits), 5000);
+    }
+    
+    // Si on approche de 30 requêtes/minute, ralentir
+    if (requestsLastMinute > 25) {
+      return 2000; // 2 secondes
+    } else if (requestsLastMinute > 20) {
+      return 1000; // 1 seconde
+    } else if (requestsLastMinute > 15) {
+      return 500; // 500ms
+    }
+    
+    return this.minDelay;
+  }
+  
+  // Ajuster après un rate limit
+  private adjustDelayAfterRateLimit() {
+    this.minDelay = Math.min(this.minDelay * 2, 5000);
+    console.warn(`⚠️ Rate limit détecté! Nouveau délai: ${this.minDelay}ms`);
+    
+    // Réinitialiser après 5 minutes sans rate limit
+    setTimeout(() => {
+      if (this.rateLimitHits === 0) {
+        this.minDelay = 100;
+        console.log('✅ Délai réinitialisé à 100ms');
+      }
+      this.rateLimitHits = Math.max(0, this.rateLimitHits - 1);
+    }, 5 * 60 * 1000);
+  }
+  
+  // Gestion du cache
+  private getFromCache(url: string): any | null {
+    const entry = this.cache.get(url);
+    if (!entry) return null;
+    
+    if (Date.now() - entry.timestamp > this.cacheTimeout) {
+      this.cache.delete(url);
+      return null;
+    }
+    
+    return entry.data;
+  }
+  
+  private addToCache(url: string, data: any) {
+    this.cache.set(url, { data, timestamp: Date.now() });
+    
+    // Limiter la taille du cache
+    if (this.cache.size > 50) {
+      const oldestKey = Array.from(this.cache.entries())
+        .sort((a, b) => a[1].timestamp - b[1].timestamp)[0][0];
+      this.cache.delete(oldestKey);
+    }
+  }
+  
+  private recordRequest(url: string) {
+    this.requestHistory.push({ timestamp: Date.now(), url });
+  }
+  
+  // Méthodes publiques
+  clearCache() {
+    this.cache.clear();
+  }
+  
+  getStats() {
+    return {
+      queueSize: this.queue.length,
+      cacheSize: this.cache.size,
+      requestsLastMinute: this.requestHistory.length,
+      rateLimitHits: this.rateLimitHits,
+      currentDelay: this.calculateAdaptiveDelay()
+    };
+  }
+
+  // Setter pour le délai minimum
+  setMinDelay(delay: number) {
+    this.minDelay = delay;
+  }
+
+  getMinDelay(): number {
+    return this.minDelay;
+  }
 }
 
 class HttpClient {
   private axiosInstance: AxiosInstance;
-  private requestQueue: RequestQueue;
+  private requestQueue: ImprovedRequestQueue;
   private retryDelays = new Map<string, number>();
   private csrfToken: string | null = null;
 
   constructor() {
-    this.requestQueue = new RequestQueue();
+    this.requestQueue = new ImprovedRequestQueue();
     
     this.axiosInstance = axios.create({
       baseURL: API_BASE_URL,
@@ -146,6 +288,26 @@ class HttpClient {
           console.log('✅ Token CSRF récupéré');
         }
 
+        // Extraire les infos de rate limit depuis les headers
+        const remaining = response.headers['x-ratelimit-remaining'];
+        const limit = response.headers['x-ratelimit-limit'];
+        const reset = response.headers['x-ratelimit-reset'];
+
+        if (remaining !== undefined) {
+          const percentUsed = ((parseInt(limit) - parseInt(remaining)) / parseInt(limit)) * 100;
+         
+          if (percentUsed > 80) {
+            console.warn(`⚠️ Attention: ${percentUsed.toFixed(0)}% de la limite utilisée (${remaining}/${limit})`);
+            // Ralentir automatiquement
+            this.requestQueue.setMinDelay(1000);
+          }
+         
+          // Afficher dans la console en dev
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`📊 Rate limit: ${remaining}/${limit} requêtes restantes`);
+          }
+        }
+
         // Réinitialiser le délai de retry pour cette URL
         const url = response.config.url || '';
         this.retryDelays.delete(url);
@@ -159,24 +321,40 @@ class HttpClient {
           return Promise.reject(error);
         }
         
-        // Gestion du rate limiting (429)
+        // Gestion améliorée du rate limiting (429)
         if (error.response?.status === 429) {
           const retryAfter = error.response.headers['retry-after'];
-          const delay = retryAfter 
-            ? parseInt(retryAfter) * 1000 
+          const delay = retryAfter
+            ? parseInt(retryAfter) * 1000
             : this.getBackoffDelay(originalRequest.url || '');
-          
-          console.warn(`⏳ Rate limit atteint. Nouvelle tentative dans ${delay/1000}s...`);
-          
-          // Afficher un toast informatif
+         
+          // Extraction plus intelligente du délai
+          let actualDelay = delay;
+          const errorData = error.response.data as any;
+         
+          if (errorData?.retryAfter) {
+            actualDelay = errorData.retryAfter * 1000;
+          } else if (errorData?.message) {
+            const match = errorData.message.match(/(\d+)\s*secondes?/i);
+            if (match) {
+              actualDelay = parseInt(match[1]) * 1000;
+            }
+          }
+         
+          console.warn(`⏳ Rate limit atteint. Nouvelle tentative dans ${actualDelay/1000}s...`);
+         
+          // Notification plus détaillée
           this.showToast({
             title: "Limite de requêtes atteinte",
-            description: `Veuillez patienter ${Math.ceil(delay/1000)} secondes...`,
-            variant: "warning" as any, // Type assertion pour éviter les erreurs de type
+            description: `Nouvelle tentative automatique dans ${Math.ceil(actualDelay/1000)} secondes. ${errorData?.message || ''}`,
+            variant: "warning" as any,
           });
+         
+          // Ajuster la queue pour éviter d'autres 429
+          this.requestQueue.setMinDelay(Math.max(1000, actualDelay / 10));
           
           // Attendre et réessayer
-          await new Promise(resolve => setTimeout(resolve, delay));
+          await new Promise(resolve => setTimeout(resolve, actualDelay));
           
           // Incrémenter le compteur de retry
           originalRequest._retryCount = (originalRequest._retryCount || 0) + 1;
@@ -346,46 +524,47 @@ class HttpClient {
     }
   }
 
-  // Méthodes HTTP avec queue
+  // Méthodes HTTP avec queue améliorée
   async get<T>(url: string, params?: any): Promise<ApiResponse<T>> {
     return this.requestQueue.add(async () => {
       const response = await this.axiosInstance.get<ApiResponse<T>>(url, { params });
-      console.log(response);
       return response.data;
-    });
+    }, url, 'GET'); // Passer url et method
   }
-async getBlob(url: string): Promise<Blob> {
-  const response = await this.axiosInstance.get(url, {
-    responseType: 'blob'
-  });
-  return response.data;
-}
+
+  async getBlob(url: string): Promise<Blob> {
+    const response = await this.axiosInstance.get(url, {
+      responseType: 'blob'
+    });
+    return response.data;
+  }
+
   async post<T>(url: string, data?: any): Promise<ApiResponse<T>> {
     return this.requestQueue.add(async () => {
       const response = await this.axiosInstance.post<ApiResponse<T>>(url, data);
       return response.data;
-    });
+    }, url, 'POST');
   }
 
   async put<T>(url: string, data?: any): Promise<ApiResponse<T>> {
     return this.requestQueue.add(async () => {
       const response = await this.axiosInstance.put<ApiResponse<T>>(url, data);
       return response.data;
-    });
+    }, url, 'PUT');
   }
 
   async patch<T>(url: string, data?: any): Promise<ApiResponse<T>> {
     return this.requestQueue.add(async () => {
       const response = await this.axiosInstance.patch<ApiResponse<T>>(url, data);
       return response.data;
-    });
+    }, url, 'PATCH');
   }
 
   async delete<T>(url: string): Promise<ApiResponse<T>> {
     return this.requestQueue.add(async () => {
       const response = await this.axiosInstance.delete<ApiResponse<T>>(url);
       return response.data;
-    });
+    }, url, 'DELETE');
   }
 
   // Méthode pour les requêtes paginées
@@ -409,7 +588,7 @@ async getBlob(url: string): Promise<Blob> {
         },
       });
       return response.data;
-    });
+    }, url, 'POST');
   }
 
   // Méthode pour télécharger des fichiers
@@ -455,85 +634,122 @@ async getBlob(url: string): Promise<Blob> {
     return null;
   }
 
-/**
- * Upload d'un fichier avec options avancées
- */
-async uploadFile<T>(
-  url: string, 
-  file: File, 
-  options?: ApiUploadOptions<any>
-): Promise<ApiResponse<T>> {
-  const formData = new FormData();
-  
-  // Ajouter le fichier avec le nom de champ spécifié
-  const fieldName = options?.fieldName || 'file';
-  formData.append(fieldName, file);
-  
-  // Ajouter les données additionnelles
-  if (options?.additionalData) {
-    Object.entries(options.additionalData).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        formData.append(key, typeof value === 'object' ? JSON.stringify(value) : String(value));
-      }
-    });
-  }
-  
-  // Headers supplémentaires
-  const headers = {
-    ...options?.headers
-  };
-  
-  return this.requestQueue.add(async () => {
-    const response = await this.axiosInstance.post<ApiResponse<T>>(url, formData, {
-      headers,
-      onUploadProgress: (progressEvent) => {
-        if (options?.onProgress && progressEvent.total) {
-          const percentage = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-          options.onProgress({
-            loaded: progressEvent.loaded,
-            total: progressEvent.total,
-            percentage
-          });
-        }
-      },
-    });
-    return response.data;
-  });
-}
-async postFormData<T = any>(
-  endpoint: string,
-  formData: FormData,
-  config?: AxiosRequestConfig
-): Promise<ApiResponse<T>> {
-  return this.requestQueue.add(async () => {
-    console.log('📤 POST FormData:', endpoint);
+  /**
+   * Upload d'un fichier avec options avancées
+   */
+  async uploadFile<T>(
+    url: string, 
+    file: File, 
+    options?: ApiUploadOptions<any>
+  ): Promise<ApiResponse<T>> {
+    const formData = new FormData();
     
-    const response = await this.axiosInstance.post<ApiResponse<T>>(
-      endpoint,
-      formData,
-      {
-        ...config,
-        headers: {
-          ...config?.headers,
-          'Content-Type': 'multipart/form-data',
-        },
+    // Ajouter le fichier avec le nom de champ spécifié
+    const fieldName = options?.fieldName || 'file';
+    formData.append(fieldName, file);
+    
+    // Ajouter les données additionnelles
+    if (options?.additionalData) {
+      Object.entries(options.additionalData).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          formData.append(key, typeof value === 'object' ? JSON.stringify(value) : String(value));
+        }
+      });
+    }
+    
+    // Headers supplémentaires
+    const headers = {
+      ...options?.headers
+    };
+    
+    return this.requestQueue.add(async () => {
+      const response = await this.axiosInstance.post<ApiResponse<T>>(url, formData, {
+        headers,
         onUploadProgress: (progressEvent) => {
-          if (progressEvent.total) {
-            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-            console.log(`Upload progress: ${percentCompleted}%`);
-            
-            if (config?.onUploadProgress) {
-              config.onUploadProgress(progressEvent);
-            }
+          if (options?.onProgress && progressEvent.total) {
+            const percentage = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            options.onProgress({
+              loaded: progressEvent.loaded,
+              total: progressEvent.total,
+              percentage
+            });
           }
         },
-        timeout: 300000, // 5 minutes
-      }
-    );
+      });
+      return response.data;
+    }, url, 'POST');
+  }
 
-    return response.data;
-  });
-}
+  async postFormData<T = any>(
+    endpoint: string,
+    formData: FormData,
+    config?: AxiosRequestConfig
+  ): Promise<ApiResponse<T>> {
+    return this.requestQueue.add(async () => {
+      console.log('📤 POST FormData:', endpoint);
+      
+      const response = await this.axiosInstance.post<ApiResponse<T>>(
+        endpoint,
+        formData,
+        {
+          ...config,
+          headers: {
+            ...config?.headers,
+            'Content-Type': 'multipart/form-data',
+          },
+          onUploadProgress: (progressEvent) => {
+            if (progressEvent.total) {
+              const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+              console.log(`Upload progress: ${percentCompleted}%`);
+              
+              if (config?.onUploadProgress) {
+                config.onUploadProgress(progressEvent);
+              }
+            }
+          },
+          timeout: 300000, // 5 minutes
+        }
+      );
+
+      return response.data;
+    }, endpoint, 'POST');
+  }
+
+  // Méthodes utilitaires publiques
+  
+  // Obtenir les statistiques de la queue
+  getQueueStats() {
+    return this.requestQueue.getStats();
+  }
+
+  // Vider le cache
+  clearCache() {
+    this.requestQueue.clearCache();
+    console.log('🗑️ Cache vidé');
+  }
+
+  // Mode conservateur (pour éviter les 429)
+  useConservativeMode() {
+    this.requestQueue.setMinDelay(1000);
+    console.log('🐢 Mode conservateur activé (1 req/sec)');
+  }
+
+  // Mode normal
+  useNormalMode() {
+    this.requestQueue.setMinDelay(100);
+    console.log('🚶 Mode normal activé');
+  }
+
+  // Mode agressif (utiliser avec précaution)
+  useAggressiveMode() {
+    this.requestQueue.setMinDelay(50);
+    console.log('🏃 Mode agressif activé (attention aux rate limits!)');
+  }
+
+  // Obtenir le délai actuel
+  getCurrentDelay(): number {
+    return this.requestQueue.getMinDelay();
+  }
 }
 
 // Instance singleton

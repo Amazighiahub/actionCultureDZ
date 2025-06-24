@@ -152,8 +152,9 @@ const initAdminPatrimoineRoutes = (models) => {
     }
   );
 
-  // GET /api/admin/patrimoine/stats/summary - Statistiques
-  router.get('/stats/summary',
+ 
+    // GET /api/admin/patrimoine/statistics - Statistiques (pour compatibilité frontend)
+  router.get('/statistics',
     async (req, res) => {
       try {
         if (!models.Lieu) {
@@ -203,7 +204,6 @@ const initAdminPatrimoineRoutes = (models) => {
       }
     }
   );
-
   // POST /api/admin/patrimoine - Créer un site
   router.post('/',
     [

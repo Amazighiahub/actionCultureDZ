@@ -26,6 +26,7 @@ import NotificationPreferences from "./pages/notifications/preferences";
 
 // Import du listener de notifications toast
 import { NotificationToastListener } from "./components/NotificationToastListener";
+import EventDetailsPage from "./pages/EventDetailsPage";
 
 // Configuration optimisée du QueryClient
 const queryClient = new QueryClient({
@@ -85,6 +86,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/patrimoine" element={<Patrimoine />} />
             <Route path="/evenements" element={<Evenements />} />
+            <Route path="/evenements/:id" element={<EventDetailsPage />} />
             <Route path="/oeuvres" element={<Oeuvres />} />
             <Route path="/artisanat" element={<Artisanat />} />
             <Route path="/a-propos" element={<APropos />} />
