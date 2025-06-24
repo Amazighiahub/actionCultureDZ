@@ -186,7 +186,93 @@ module.exports = (models, authMiddleware) => {
   // ========================================================================
   // LOG DES ROUTES
   // ========================================================================
+// Ajouter ces routes dans userRoutes.js
 
+// APRÈS les routes existantes, AJOUTER :
+
+// ========================================================================
+// ROUTES DE VÉRIFICATION EMAIL
+// ========================================================================
+
+// Vérifier un email avec token (route publique)
+router.get('/verify-email/:token',
+  param('token').notEmpty().isLength({ min: 32 }),
+  validationMiddleware.handleValidationErrors,
+  (req, res) => userController.verifyEmail(req, res)
+);
+
+// Renvoyer l'email de vérification (authentifié)
+router.post('/resend-verification',
+  authMiddleware.authenticate,
+  auditMiddleware.logAction('resend_verification', { entityType: 'user' }),
+  (req, res) => userController.resendVerificationEmail(req, res)
+);
+
+// Demander un reset de mot de passe (public)
+router.post('/forgot-password',
+  body('email').isEmail().normalizeEmail(),
+  validationMiddleware.handleValidationErrors,
+  ...rateLimitMiddleware.auth,
+  auditMiddleware.logAction('password_reset_request', { entityType: 'user' }),
+  (req, res) => userController.requestPasswordReset(req, res)
+);
+
+// Réinitialiser le mot de passe avec token (public)
+router.post('/reset-password',
+  [
+    body('token').notEmpty().isLength({ min: 32 }),
+    body('newPassword')
+      .isLength({ min: 8 })
+      .withMessage('Le mot de passe doit contenir au moins 8 caractères')
+  ],
+  validationMiddleware.handleValidationErrors,
+  ...rateLimitMiddleware.auth,
+  auditMiddleware.logAction('password_reset', { entityType: 'user' }),
+  (req, res) => userController.resetPassword(req, res)
+);
+
+// Vérifier le statut de vérification email (authentifié)
+router.get('/verification-status',
+  authMiddleware.authenticate,
+  async (req, res) => {
+    try {
+      const user = await models.User.findByPk(req.user.id_user, {
+        attributes: ['id_user', 'email', 'email_verifie']
+      });
+
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          error: 'Utilisateur non trouvé'
+        });
+      }
+
+      // Vérifier s'il y a un token actif
+      let hasActiveToken = false;
+      if (!user.email_verifie) {
+        hasActiveToken = await models.EmailVerification.hasActiveToken(
+          user.id_user,
+          'email_verification'
+        );
+      }
+
+      res.json({
+        success: true,
+        data: {
+          email: user.email,
+          verified: user.email_verifie,
+          hasActiveToken
+        }
+      });
+    } catch (error) {
+      console.error('Erreur vérification statut:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur serveur'
+      });
+    }
+  }
+);
   const routeCount = router.stack.filter(layer => layer.route).length;
   console.log(`✅ Routes utilisateur initialisées: ${routeCount} routes`);
 

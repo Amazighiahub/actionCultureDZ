@@ -1,4 +1,4 @@
-const { DataTypes } = require('sequelize');
+const { DataTypes ,Op , fn, col} = require('sequelize');
 
 module.exports = (sequelize) => {
   const Evenement = sequelize.define('Evenement', {
@@ -186,10 +186,10 @@ module.exports = (sequelize) => {
         const result = await sequelize.models.EvenementUser.findOne({
           where: { 
             id_evenement: this.id_evenement,
-            evaluation_evenement: { [sequelize.Op.not]: null }
+            evaluation_evenement: { [Op.not]: null }
           },
           attributes: [
-            [sequelize.fn('AVG', sequelize.col('evaluation_evenement')), 'moyenne']
+            [fn('AVG', col('evaluation_evenement')), 'moyenne']
           ],
           raw: true
         });
@@ -360,11 +360,11 @@ module.exports = (sequelize) => {
   Evenement.getActiveEvents = function() {
     return this.findAll({
       where: {
-        [sequelize.Op.or]: [
+        [Op.or]: [
           { statut: 'en_cours' },
           {
             statut: 'planifie',
-            date_fin: { [sequelize.Op.gte]: new Date() }
+            date_fin: { [Op.gte]: new Date() }
           }
         ]
       },

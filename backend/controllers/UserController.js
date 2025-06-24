@@ -570,6 +570,8 @@ if (this.models.UserRole && this.models.Role) {
 
     return jwt.sign(payload, this.JWT_SECRET, { expiresIn: '24h' });
   }
+
+  
 }
 
 module.exports = UserController;
