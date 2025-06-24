@@ -994,7 +994,7 @@ const initializeDatabase = async (config = {}) => {
     
     // 3. Charger tous les modèles
     const models = loadModels(sequelize);
-    console.log(`✅ ${Object.keys(models).length} modèles chargés.`);
+   // console.log(`✅ ${Object.keys(models).length} modèles chargés.`);
     
     // 4. Initialiser les associations
     initializeAssociations(models);
@@ -1072,7 +1072,7 @@ const resetDatabase = async (config = {}) => {
     
     // Charger les modèles
     const models = loadModels(sequelize);
-    console.log(`✅ ${Object.keys(models).length} modèles chargés.`);
+    //console.log(`✅ ${Object.keys(models).length} modèles chargés.`);
     
     // Vérifier que les modèles critiques sont chargés
     const requiredModels = ['User', 'Lieu', 'Intervenant', 'Programme', 'Evenement', 'Specialite'];

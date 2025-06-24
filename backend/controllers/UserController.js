@@ -36,7 +36,7 @@ class UserController {
         prenom,
         email,
         password,
-        id_type_user = 'visiteur',
+        id_type_user = TYPE_USER_IDS.VISITEUR,
         accepte_conditions = false,
         accepte_newsletter = false,
         photo_url, // NOUVEAU: Accepte photo_url dans le body
@@ -171,19 +171,30 @@ class UserController {
       }
 
       // Assigner le rôle User par défaut
-      if (this.models.UserRole && this.models.Role) {
-        const userRole = await this.models.Role.findOne({
-          where: { nom_role: 'User' },
-          transaction
-        });
+      // Déterminer le rôle selon le type d'utilisateur
+let roleName = 'User'; // Par défaut pour les visiteurs
 
-        if (userRole) {
-          await this.models.UserRole.create({
-            id_user: userId,
-            id_role: userRole.id_role
-          }, { transaction });
-        }
-      }
+// Si ce n'est pas un visiteur (id_type_user !== 1), c'est un professionnel
+if (id_type_user !== TYPE_USER_IDS.VISITEUR) {
+  roleName = 'Professionnel';
+}
+
+// Assigner le rôle approprié
+if (this.models.UserRole && this.models.Role) {
+  const userRole = await this.models.Role.findOne({
+    where: { nom_role: roleName },
+    transaction
+  });
+
+  if (userRole) {
+    await this.models.UserRole.create({
+      id_user: userId,
+      id_role: userRole.id_role
+    }, { transaction });
+    
+    console.log(`✅ Rôle "${roleName}" assigné à l'utilisateur ${userId}`);
+  }
+}
 
       await transaction.commit();
 

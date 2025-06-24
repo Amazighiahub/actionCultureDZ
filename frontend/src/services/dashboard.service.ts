@@ -3,6 +3,7 @@
 import { API_ENDPOINTS, ApiResponse, PaginatedResponse, FilterParams } from '@/config/api';
 import { httpClient } from './httpClient';
 
+
 interface OverviewStats {
   users: {
     total: number;
@@ -170,7 +171,7 @@ class DashboardService {
 
   // Patrimoine
   async getPatrimoineStats(): Promise<ApiResponse<PatrimoineStats>> {
-    return httpClient.get<PatrimoineStats>(API_ENDPOINTS.dashboard.patrimoine);
+    return httpClient.get<PatrimoineStats>(API_ENDPOINTS.dashboard.patrimoine.statistics);
   }
 
   async getQRStats(period?: string): Promise<ApiResponse<QRStats>> {
