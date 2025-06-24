@@ -1,26 +1,24 @@
+// models/ProgrammeIntervenant.js - Version pour Users inscrits
 const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
   const ProgrammeIntervenant = sequelize.define('ProgrammeIntervenant', {
-    id: {
-      type: DataTypes.INTEGER,
-      primaryKey: true,
-      autoIncrement: true
-    },
     id_programme: {
       type: DataTypes.INTEGER,
+      primaryKey: true,
       allowNull: false,
       references: {
         model: 'programme',
         key: 'id_programme'
       }
     },
-    id_intervenant: {
+    id_user: {  // Utiliser id_user pour les utilisateurs inscrits
       type: DataTypes.INTEGER,
+      primaryKey: true,
       allowNull: false,
       references: {
-        model: 'intervenant',
-        key: 'id_intervenant'
+        model: 'user',  // Référence à la table user
+        key: 'id_user'
       }
     },
     role_intervenant: {
@@ -82,7 +80,7 @@ module.exports = (sequelize) => {
     indexes: [
       {
         unique: true,
-        fields: ['id_programme', 'id_intervenant']
+        fields: ['id_programme', 'id_user']  // Index unique sur la combinaison
       },
       {
         fields: ['statut_confirmation']
@@ -100,9 +98,10 @@ module.exports = (sequelize) => {
       as: 'Programme'
     });
     
-    ProgrammeIntervenant.belongsTo(models.Intervenant, {
-      foreignKey: 'id_intervenant',
-      as: 'Intervenant'
+    // Association avec User
+    ProgrammeIntervenant.belongsTo(models.User, {
+      foreignKey: 'id_user',
+      as: 'User'
     });
   };
   

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Calendar, 
   MapPin, 
@@ -23,48 +24,47 @@ import {
   Building,
   CheckCircle,
   AlertCircle,
-  Loader2
+  Loader2,
+  ImageIcon
 } from 'lucide-react';
 
 // Import des types
+import { favoriService } from '@/services/favori.service';
 import type { Evenement } from '@/types/models/evenement.types';
 import type { Programme } from '@/types/models/programme.types';
 import type { Media } from '@/types/models/media.types';
 import type { Commentaire } from '@/types/models/tracking.types';
-import type { EvenementUser } from '@/types/models/associations.types';
+
+// Interface pour les réponses paginées
+interface PaginatedResponse<T> {
+  items?: T[];
+  data?: T[] | PaginatedResponse<T>;
+  results?: T[];
+  programmes?: T[];
+  commentaires?: T[];
+  [key: string]: any;
+}
 
 // Helper pour extraire les données d'une réponse potentiellement paginée
 function extractArrayFromResponse<T>(response: any): T[] {
   if (!response) return [];
   
-  // Si c'est directement un tableau
-  if (Array.isArray(response)) {
-    return response;
-  }
-  
-  // Si c'est un objet avec une propriété data
-  if (response.data && Array.isArray(response.data)) {
-    return response.data;
-  }
-  
-  // Si c'est un objet avec une propriété items
-  if (response.items && Array.isArray(response.items)) {
-    return response.items;
-  }
-  
-  // Si c'est un objet avec une propriété results
-  if (response.results && Array.isArray(response.results)) {
-    return response.results;
-  }
+  if (Array.isArray(response)) return response;
+  if (response.data && Array.isArray(response.data)) return response.data;
+  if (response.items && Array.isArray(response.items)) return response.items;
+  if (response.results && Array.isArray(response.results)) return response.results;
   
   return [];
 }
 
-// Interface pour mapper les données de l'API si elles diffèrent
+// Interface pour mapper les données de l'API
 interface EvenementApiResponse {
   Organisations: any[];
   Oeuvres: any[];
   Participants: any[];
+  Programmes: any[];
+  Commentaires: any[];
+  Media: any[];
   note_moyenne: number;
   duree_totale: number;
   est_complet: boolean;
@@ -105,7 +105,6 @@ interface EvenementApiResponse {
   date_modification?: string;
   image?: string;
   image_url?: string;
-  // Relations
   type_evenement?: any;
   TypeEvenement?: any;
   lieu?: any;
@@ -114,9 +113,8 @@ interface EvenementApiResponse {
   Organisateur?: any;
   user?: any;
   medias?: any[];
-  Media?: any[];
   programmes?: any[];
-  Programmes?: any[];
+  commentaires?: any[];
 }
 
 // Import des services
@@ -127,80 +125,6 @@ import { authService } from '@/services/auth.service';
 
 // Import des enums
 import { StatutEvenement } from '@/types/enums/evenement.enums';
-import { StatutParticipation } from '@/types/enums/liaison.enums';
-
-// Composants Tabs
-interface TabsProps {
-  children: React.ReactNode;
-  defaultValue: string;
-}
-
-const Tabs: React.FC<TabsProps> = ({ children, defaultValue }) => {
-  const [activeTab, setActiveTab] = useState(defaultValue);
-  
-  return (
-    <div className="w-full">
-      {React.Children.map(children, (child) => {
-        if (React.isValidElement(child)) {
-          return React.cloneElement(child, { activeTab, setActiveTab } as any);
-        }
-        return child;
-      })}
-    </div>
-  );
-};
-
-interface TabsListProps {
-  children: React.ReactNode;
-  activeTab?: string;
-  setActiveTab?: (value: string) => void;
-}
-
-const TabsList: React.FC<TabsListProps> = ({ children, activeTab, setActiveTab }) => {
-  return (
-    <div className="inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground">
-      {React.Children.map(children, (child) => {
-        if (React.isValidElement(child)) {
-          return React.cloneElement(child, { activeTab, setActiveTab } as any);
-        }
-        return child;
-      })}
-    </div>
-  );
-};
-
-interface TabsTriggerProps {
-  value: string;
-  children: React.ReactNode;
-  activeTab?: string;
-  setActiveTab?: (value: string) => void;
-}
-
-const TabsTrigger: React.FC<TabsTriggerProps> = ({ value, children, activeTab, setActiveTab }) => {
-  const isActive = activeTab === value;
-  const baseClasses = "inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50";
-  const activeClasses = isActive ? "bg-background text-foreground shadow-sm" : "hover:bg-background/50";
-  
-  return (
-    <button
-      className={`${baseClasses} ${activeClasses}`}
-      onClick={() => setActiveTab && setActiveTab(value)}
-    >
-      {children}
-    </button>
-  );
-};
-
-interface TabsContentProps {
-  value: string;
-  children: React.ReactNode;
-  activeTab?: string;
-}
-
-const TabsContent: React.FC<TabsContentProps> = ({ value, children, activeTab }) => {
-  if (activeTab !== value) return null;
-  return <div className="mt-6">{children}</div>;
-};
 
 // Fonction pour mapper les données API vers le type Evenement
 const mapApiToEvenement = (data: EvenementApiResponse, eventId: number): Evenement => {
@@ -260,7 +184,8 @@ const EventDetailsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [isLiked, setIsLiked] = useState(false);
+const [isFavorite, setIsFavorite] = useState(false);
+const [favoriteLoading, setFavoriteLoading] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [isInscrit, setIsInscrit] = useState(false);
   const [inscriptionLoading, setInscriptionLoading] = useState(false);
@@ -276,129 +201,188 @@ const EventDetailsPage: React.FC = () => {
   useEffect(() => {
     setIsAuthenticated(authService.isAuthenticated());
   }, []);
-
+  useEffect(() => {
+    if (id && isAuthenticated) {
+      checkFavoriteStatus(parseInt(id));
+    }
+  }, [id, isAuthenticated]);
+  const checkFavoriteStatus = async (eventId: number) => {
+    try {
+      const response = await favoriService.check('evenement', eventId);
+      if (response.success && response.data) {
+        setIsFavorite(response.data.is_favorite);
+      }
+    } catch (err) {
+      console.error('Erreur vérification favori:', err);
+    }
+  };
   const loadEventData = async (eventId: number) => {
     try {
       setLoading(true);
       setError(null);
 
-      // Charger l'événement
+      // Charger l'événement avec toutes ses relations
+      console.log('🔄 Chargement événement ID:', eventId);
       const eventResult = await evenementService.getDetail(eventId);
-      console.log('Event API response:', eventResult);
+      console.log('✅ Event API response:', eventResult);
       
       if (eventResult.success && eventResult.data) {
-        // Utiliser la fonction de mapping
-        const validEvent = mapApiToEvenement(eventResult.data as EvenementApiResponse, eventId);
+        const eventData = eventResult.data as any;
+        const validEvent = mapApiToEvenement(eventData, eventId);
         setEvent(validEvent);
+        
+        // Vérifier si les données sont déjà incluses dans la réponse
+        if (eventData.programmes || eventData.Programmes) {
+          const rawProgrammes = eventData.programmes || eventData.Programmes;
+          console.log('📋 Programmes inclus:', rawProgrammes);
+          setProgrammes(Array.isArray(rawProgrammes) ? rawProgrammes : []);
+        }
+        
+        if (eventData.commentaires || eventData.Commentaires) {
+          const rawComments = eventData.commentaires || eventData.Commentaires;
+          console.log('💬 Commentaires inclus:', rawComments);
+          setCommentaires(Array.isArray(rawComments) ? rawComments : []);
+        }
+        
+        if (eventData.medias || eventData.Media) {
+          const rawMedias = eventData.medias || eventData.Media;
+          console.log('🖼️ Médias inclus:', rawMedias);
+          setMedias(Array.isArray(rawMedias) ? rawMedias : []);
+        }
       } else {
         throw new Error(eventResult.error || 'Erreur lors du chargement de l\'événement');
       }
 
-      // Charger les programmes
-      try {
-        const programmeResult = await programmeService.getByEvent(eventId);
-        if (programmeResult.success && programmeResult.data) {
-          const rawProgrammes = extractArrayFromResponse<any>(programmeResult.data);
-          // S'assurer que les programmes ont la bonne structure
-          const programmes: Programme[] = rawProgrammes.map(p => ({
-            id_programme: p.id_programme || p.id,
-            titre: p.titre || p.title || '',
-            description: p.description,
-            id_evenement: p.id_evenement || eventId,
-            id_lieu: p.id_lieu,
-            heure_debut: p.heure_debut,
-            heure_fin: p.heure_fin,
-            lieu_specifique: p.lieu_specifique,
-            ordre: p.ordre || 0,
-            statut: p.statut || 'planifie',
-            type_activite: p.type_activite || 'autre',
-            duree_estimee: p.duree_estimee,
-            nb_participants_max: p.nb_participants_max,
-            materiel_requis: p.materiel_requis || [],
-            niveau_requis: p.niveau_requis,
-            langue_principale: p.langue_principale || 'fr',
-            traduction_disponible: p.traduction_disponible ?? false,
-            enregistrement_autorise: p.enregistrement_autorise ?? false,
-            diffusion_live: p.diffusion_live ?? false,
-            support_numerique: p.support_numerique ?? false,
-            notes_organisateur: p.notes_organisateur,
-            // Relations
-            Evenement: p.Evenement,
-            Lieu: p.Lieu,
-            Intervenants: p.Intervenants || []
-          }));
-          setProgrammes(programmes);
+      // Charger les programmes si pas déjà inclus
+      if (programmes.length === 0) {
+        try {
+          console.log('🔄 Chargement programmes séparé...');
+          const programmeResult = await programmeService.getByEvent(eventId);
+          console.log('📋 Programme Result:', programmeResult);
+          
+          if (programmeResult.success && programmeResult.data) {
+            let rawProgrammes: any[] = [];
+            
+            // Gestion TypeScript correcte avec type assertion
+            if (Array.isArray(programmeResult.data)) {
+              rawProgrammes = programmeResult.data;
+            } else if (programmeResult.data && typeof programmeResult.data === 'object') {
+              const dataAsAny = programmeResult.data as any;;
+              
+              if (dataAsAny.items && Array.isArray(dataAsAny.items)) {
+                rawProgrammes = dataAsAny.items;
+              } else if (dataAsAny.data && Array.isArray(dataAsAny.data)) {
+                rawProgrammes = dataAsAny.data;
+              } else if (dataAsAny.results && Array.isArray(dataAsAny.results)) {
+                rawProgrammes = dataAsAny.results;
+              } else if (dataAsAny.programmes && Array.isArray(dataAsAny.programmes)) {
+                rawProgrammes = dataAsAny.programmes;
+              }
+            }
+            
+            console.log('📋 Programmes extraits:', rawProgrammes.length);
+            setProgrammes(rawProgrammes);
+          }
+        } catch (err) {
+          console.error('❌ Erreur chargement programmes:', err);
         }
-      } catch (err) {
-        console.error('Erreur chargement programmes:', err);
       }
 
-      // Charger les commentaires
-      try {
-        const commentaireResult = await commentaireService.getCommentairesEvenement(eventId);
-        if (commentaireResult.success && commentaireResult.data) {
-          const rawComments = extractArrayFromResponse<any>(commentaireResult.data);
-          // Mapper vers le type Commentaire correct si nécessaire
-          const comments: Commentaire[] = rawComments.map(c => ({
-            id_commentaire: c.id_commentaire || c.id,
-            contenu: c.contenu || c.content || '',
-            id_user: c.id_user || c.user_id,
-            id_evenement: c.id_evenement || eventId,
-            statut: c.statut || 'publie',
-            note_qualite: c.note_qualite || c.rating,
-            date_creation: c.date_creation || c.created_at || new Date().toISOString(),
-            date_modification: c.date_modification || c.updated_at || new Date().toISOString(),
-            commentaire_parent_id: c.commentaire_parent_id || c.parent_id,
-            // Relations
-            User: c.User || c.user,
-            Reponses: c.Reponses || c.replies || []
-          }));
-          setCommentaires(comments);
-        }
-      } catch (err) {
-        console.error('Erreur chargement commentaires:', err);
-      }
 
-      // Charger les médias
-      try {
-        const mediaResult = await evenementService.getMedias(eventId);
-        if (mediaResult.success && mediaResult.data) {
-          // Si les médias retournés sont de type EventMedia, les mapper vers Media
-          const eventMedias = extractArrayFromResponse<any>(mediaResult.data);
-          const medias: Media[] = eventMedias.map((m: any) => ({
-            id_media: m.id || m.id_media || 0,
-            type_media: m.type || m.type_media || 'image',
-            url: m.url || '',
-            titre: m.titre || m.title,
-            description: m.description,
-            tags: m.tags || [],
-            metadata: m.metadata || {},
-            qualite: m.qualite || 'originale',
-            droits_usage: m.droits_usage || 'libre',
-            alt_text: m.alt_text,
-            credit: m.credit,
-            visible_public: m.visible_public ?? true,
-            ordre: m.ordre || 0,
-            thumbnail_url: m.thumbnail_url,
-            duree: m.duree,
-            taille_fichier: m.taille_fichier || m.size,
-            mime_type: m.mime_type || m.type,
-            id_evenement: eventId
-          }));
-          setMedias(medias);
+
+      // Charger les commentaires si pas déjà inclus
+      // Charger les commentaires si pas déjà inclus
+if (commentaires.length === 0) {
+  try {
+    console.log('🔄 Chargement commentaires séparé...');
+    const commentaireResult = await commentaireService.getCommentairesEvenement(eventId);
+    console.log('💬 Commentaire Result:', commentaireResult);
+    
+    if (commentaireResult.success) {
+      let rawComments: any[] = [];
+      
+      // Vérifier d'abord si c'est directement un array
+      if (Array.isArray(commentaireResult.data)) {
+        rawComments = commentaireResult.data;
+      } 
+      // Sinon, vérifier si pagination existe
+      else if (commentaireResult.pagination && typeof commentaireResult.pagination === 'object') {
+        const pagination = commentaireResult.pagination as any;
+        
+        if (pagination.items && Array.isArray(pagination.items)) {
+          rawComments = pagination.items;
+        } else if (pagination.data && Array.isArray(pagination.data)) {
+          rawComments = pagination.data;
+        } else if (pagination.results && Array.isArray(pagination.results)) {
+          rawComments = pagination.results;
         }
-      } catch (err) {
-        console.error('Erreur chargement médias:', err);
+      }
+      // Sinon, vérifier data comme objet
+      else if (commentaireResult.data && typeof commentaireResult.data === 'object') {
+        const dataAsAny = commentaireResult.data as any;
+        
+        if (dataAsAny.items && Array.isArray(dataAsAny.items)) {
+          rawComments = dataAsAny.items;
+        } else if (dataAsAny.data && Array.isArray(dataAsAny.data)) {
+          rawComments = dataAsAny.data;
+        } else if (dataAsAny.results && Array.isArray(dataAsAny.results)) {
+          rawComments = dataAsAny.results;
+        } else if (dataAsAny.commentaires && Array.isArray(dataAsAny.commentaires)) {
+          rawComments = dataAsAny.commentaires;
+        }
+      }
+      
+      console.log('💬 Commentaires extraits:', rawComments.length);
+      setCommentaires(rawComments);
+    }
+  } catch (err) {
+    console.error('❌ Erreur chargement commentaires:', err);
+  }
+}
+
+      // Charger les médias si pas déjà inclus
+      if (medias.length === 0) {
+        try {
+          console.log('🔄 Chargement médias séparé...');
+          const mediaResult = await evenementService.getMedias(eventId);
+          if (mediaResult.success && mediaResult.data) {
+            const eventMedias = extractArrayFromResponse<any>(mediaResult.data);
+            setMedias(eventMedias);
+          }
+        } catch (err) {
+          console.error('❌ Erreur chargement médias:', err);
+        }
       }
 
     } catch (err) {
-      console.error('Erreur lors du chargement:', err);
+      console.error('❌ Erreur lors du chargement:', err);
       setError(err instanceof Error ? err.message : 'Une erreur est survenue');
     } finally {
       setLoading(false);
     }
   };
-
+  const handleToggleFavorite = async () => {
+    if (!event || !isAuthenticated) {
+      if (!isAuthenticated) {
+        navigate('/auth');
+        return;
+      }
+      return;
+    }
+  
+    setFavoriteLoading(true);
+    try {
+      const response = await favoriService.toggle('evenement', event.id_evenement);
+      if (response.success && response.data) {
+        setIsFavorite(response.data.added);
+      }
+    } catch (err) {
+      console.error('Erreur toggle favori:', err);
+      alert('Erreur lors de la modification du favori');
+    } finally {
+      setFavoriteLoading(false);
+    }
+  };
   const handleInscription = async () => {
     if (!event) return;
     
@@ -407,7 +391,6 @@ const EventDetailsPage: React.FC = () => {
       const result = await evenementService.inscription(event.id_evenement);
       if (result.success) {
         setIsInscrit(true);
-        // Recharger l'événement pour mettre à jour le nombre de participants
         loadEventData(event.id_evenement);
       } else {
         alert(result.error || 'Erreur lors de l\'inscription');
@@ -444,7 +427,7 @@ const EventDetailsPage: React.FC = () => {
     if (!event) return;
     
     const url = window.location.href;
-    const text = `Découvrez ${event.nom_evenement} - Du ${formatDate(event.date_debut)} au ${formatDate(event.date_fin)}`;
+    const text = `Découvrez ${event.nom_evenement} - ${formatDateRange(event.date_debut, event.date_fin)}`;
     
     switch(platform) {
       case 'facebook':
@@ -464,24 +447,24 @@ const EventDetailsPage: React.FC = () => {
   const getStatusColor = (status: StatutEvenement) => {
     switch (status) {
       case 'planifie':
-        return 'bg-blue-100 text-blue-700 border-blue-200';
+        return 'default';
       case 'en_cours':
-        return 'bg-green-100 text-green-700 border-green-200';
+        return 'success';
       case 'termine':
-        return 'bg-gray-100 text-gray-700 border-gray-200';
+        return 'secondary';
       case 'annule':
-        return 'bg-red-100 text-red-700 border-red-200';
+        return 'destructive';
       case 'reporte':
-        return 'bg-orange-100 text-orange-700 border-orange-200';
+        return 'warning';
       default:
-        return 'bg-gray-100 text-gray-700 border-gray-200';
+        return 'default';
     }
   };
 
   const getStatusLabel = (status: StatutEvenement) => {
     switch (status) {
       case 'planifie':
-        return 'Planifié';
+        return 'À venir';
       case 'en_cours':
         return 'En cours';
       case 'termine':
@@ -521,36 +504,40 @@ const EventDetailsPage: React.FC = () => {
     return start;
   };
 
+  const formatTime = (time?: string) => {
+    if (!time) return '--:--';
+    
+    // Si le temps contient une date
+    if (time.includes(' ')) {
+      return time.split(' ')[1]?.slice(0, 5) || '--:--';
+    }
+    if (time.includes('T')) {
+      return time.split('T')[1]?.slice(0, 5) || '--:--';
+    }
+    
+    // Si c'est juste l'heure
+    return time.slice(0, 5);
+  };
+
   // Grouper les programmes par jour
   const programmesByDay = programmes.reduce((acc, prog) => {
-    // Extraire la date du programme (gérer différents formats possibles)
     let date = 'Sans date';
     
     if (prog.heure_debut) {
-      // Si heure_debut contient date et heure (format: "2024-03-15 10:00:00")
       if (prog.heure_debut.includes(' ')) {
         date = prog.heure_debut.split(' ')[0];
       } else if (prog.heure_debut.includes('T')) {
-        // Format ISO (2024-03-15T10:00:00)
         date = prog.heure_debut.split('T')[0];
-      } else {
-        date = prog.heure_debut;
       }
-    } else if ((prog as any).date) {
-      // Si le programme a une propriété date séparée
-      date = (prog as any).date;
     }
     
     if (!acc[date]) acc[date] = [];
     acc[date].push(prog);
     
-    // Trier les programmes par ordre ou heure de début
     acc[date].sort((a, b) => {
-      // D'abord par ordre si disponible
       if (a.ordre !== undefined && b.ordre !== undefined) {
         return a.ordre - b.ordre;
       }
-      // Sinon par heure de début
       if (a.heure_debut && b.heure_debut) {
         return a.heure_debut.localeCompare(b.heure_debut);
       }
@@ -593,18 +580,23 @@ const EventDetailsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
-      {/* Header avec image */}
+      {/* Header avec image amélioré */}
       <div className="relative h-[40vh] lg:h-[50vh] overflow-hidden">
         {mainImage ? (
-          <img 
-            src={mainImage} 
-            alt={event.nom_evenement}
-            className="w-full h-full object-cover"
-          />
+          <>
+            <img 
+              src={mainImage} 
+              alt={event.nom_evenement}
+              className="w-full h-full object-cover"
+            />
+            {/* Overlay gradient plus prononcé pour meilleure lisibilité */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+          </>
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/10" />
+          <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
+            <ImageIcon className="h-20 w-20 text-primary/40" />
+          </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
         
         <Button 
           variant="ghost" 
@@ -620,15 +612,18 @@ const EventDetailsPage: React.FC = () => {
             <div className="flex items-start justify-between">
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
-                  <Badge className="bg-primary/90 text-primary-foreground">
+                  <Badge className="bg-primary text-primary-foreground border-0 px-3 py-1">
                     {event.TypeEvenement?.nom_type || 'Événement'}
                   </Badge>
-                  <Badge className={getStatusColor(event.statut)}>
+                  <Badge variant={getStatusColor(event.statut) as any} className="border-0 px-3 py-1">
                     {getStatusLabel(event.statut)}
                   </Badge>
                 </div>
-                <h1 className="text-3xl lg:text-5xl font-bold text-white drop-shadow-lg">
-                  {event.nom_evenement}
+                {/* Titre avec meilleure visibilité */}
+                <h1 className="text-3xl lg:text-5xl font-bold">
+                  <span className="text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
+                    {event.nom_evenement}
+                  </span>
                 </h1>
               </div>
             </div>
@@ -641,7 +636,7 @@ const EventDetailsPage: React.FC = () => {
           {/* Contenu principal */}
           <div className="lg:col-span-2 space-y-8">
             {/* Informations essentielles */}
-            <Card className="border-2 hover:shadow-lg transition-shadow">
+            <Card className="border hover:shadow-xl transition-all duration-300 hover:border-primary/30">
               <CardContent className="p-6">
                 <div className="grid sm:grid-cols-2 gap-6">
                   <div className="space-y-4">
@@ -657,8 +652,10 @@ const EventDetailsPage: React.FC = () => {
                       <MapPin className="h-5 w-5 text-primary mt-0.5" />
                       <div>
                         <p className="text-sm text-muted-foreground">Lieu</p>
-                        <p className="font-semibold">{event.Lieu?.nom}</p>
-                        <p className="text-sm">{event.Lieu?.adresse}</p>
+                        <p className="font-semibold">{event.Lieu?.nom || 'Non spécifié'}</p>
+                        {event.Lieu?.adresse && (
+                          <p className="text-sm text-muted-foreground">{event.Lieu.adresse}</p>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -689,8 +686,8 @@ const EventDetailsPage: React.FC = () => {
                 {(event.contact_email || event.contact_telephone) && (
                   <div className="mt-4 pt-4 border-t">
                     <p className="text-sm text-muted-foreground">
-                      {event.contact_email && `Contact : ${event.contact_email}`}
-                      {event.contact_telephone && ` • ${event.contact_telephone}`}
+                      {event.contact_email && `Email : ${event.contact_email}`}
+                      {event.contact_telephone && ` • Tél : ${event.contact_telephone}`}
                     </p>
                   </div>
                 )}
@@ -698,14 +695,18 @@ const EventDetailsPage: React.FC = () => {
             </Card>
 
             {/* Tabs pour Description, Programme, Commentaires */}
-            <Tabs defaultValue="description">
-              <TabsList>
+            <Tabs defaultValue="description" className="w-full">
+              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="description">Description</TabsTrigger>
-                <TabsTrigger value="programme">Programme ({programmes.length})</TabsTrigger>
-                <TabsTrigger value="comments">Commentaires ({commentaires.length})</TabsTrigger>
+                <TabsTrigger value="programme">
+                  Programme {programmes.length > 0 && `(${programmes.length})`}
+                </TabsTrigger>
+                <TabsTrigger value="comments">
+                  Commentaires {commentaires.length > 0 && `(${commentaires.length})`}
+                </TabsTrigger>
               </TabsList>
               
-              <TabsContent value="description">
+              <TabsContent value="description" className="mt-6">
                 <Card>
                   <CardContent className="p-6 space-y-6">
                     <div className="prose prose-gray dark:prose-invert max-w-none">
@@ -733,7 +734,7 @@ const EventDetailsPage: React.FC = () => {
                 </Card>
               </TabsContent>
               
-              <TabsContent value="programme">
+              <TabsContent value="programme" className="mt-6">
                 <Card>
                   <CardContent className="p-6">
                     {programmes.length > 0 ? (
@@ -745,31 +746,22 @@ const EventDetailsPage: React.FC = () => {
                             </h3>
                             <div className="space-y-4">
                               {dayProgrammes.map((prog) => (
-                                <div key={prog.id_programme} className="flex space-x-4 p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
+                                <div 
+                                  key={prog.id_programme} 
+                                  className="flex space-x-4 p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+                                >
                                   <div className="flex items-center space-x-2">
                                     <Clock className="h-4 w-4 text-primary" />
                                     <span className="font-semibold text-sm min-w-[100px]">
-                                      {(() => {
-                                        const startTime = prog.heure_debut?.includes(' ') 
-                                          ? prog.heure_debut.split(' ')[1]?.slice(0, 5)
-                                          : prog.heure_debut?.includes('T')
-                                          ? prog.heure_debut.split('T')[1]?.slice(0, 5)
-                                          : prog.heure_debut?.slice(0, 5) || '--:--';
-                                        
-                                        const endTime = prog.heure_fin?.includes(' ')
-                                          ? prog.heure_fin.split(' ')[1]?.slice(0, 5)
-                                          : prog.heure_fin?.includes('T')
-                                          ? prog.heure_fin.split('T')[1]?.slice(0, 5)
-                                          : prog.heure_fin?.slice(0, 5) || '--:--';
-                                        
-                                        return `${startTime} - ${endTime}`;
-                                      })()}
+                                      {formatTime(prog.heure_debut)} - {formatTime(prog.heure_fin)}
                                     </span>
                                   </div>
                                   <div className="flex-1">
                                     <h4 className="font-semibold">{prog.titre}</h4>
                                     {prog.description && (
-                                      <p className="text-sm text-muted-foreground mt-1">{prog.description}</p>
+                                      <p className="text-sm text-muted-foreground mt-1">
+                                        {prog.description}
+                                      </p>
                                     )}
                                     {prog.lieu_specifique && (
                                       <p className="text-xs text-muted-foreground mt-2">
@@ -778,7 +770,7 @@ const EventDetailsPage: React.FC = () => {
                                       </p>
                                     )}
                                     {prog.type_activite && (
-                                      <Badge variant="outline" className="text-xs">
+                                      <Badge variant="outline" className="text-xs mt-2">
                                         {prog.type_activite.replace(/_/g, ' ').charAt(0).toUpperCase() + 
                                          prog.type_activite.replace(/_/g, ' ').slice(1)}
                                       </Badge>
@@ -791,15 +783,18 @@ const EventDetailsPage: React.FC = () => {
                         ))}
                       </div>
                     ) : (
-                      <p className="text-muted-foreground text-center py-8">
-                        Le programme détaillé sera bientôt disponible.
-                      </p>
+                      <div className="text-center py-12">
+                        <Calendar className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
+                        <p className="text-muted-foreground">
+                          Le programme détaillé sera bientôt disponible.
+                        </p>
+                      </div>
                     )}
                   </CardContent>
                 </Card>
               </TabsContent>
               
-              <TabsContent value="comments">
+              <TabsContent value="comments" className="mt-6">
                 <Card>
                   <CardContent className="p-6">
                     {commentaires.length > 0 ? (
@@ -828,18 +823,16 @@ const EventDetailsPage: React.FC = () => {
                                   </div>
                                   {comment.note_qualite && (
                                     <div className="flex items-center space-x-1">
-                                      {[...Array(5)].map((_, i) => {
-                                        const isActive = i < Math.floor(comment.note_qualite!);
-                                        const starClass = isActive 
-                                          ? 'fill-yellow-400 text-yellow-400' 
-                                          : 'text-gray-300';
-                                        return (
-                                          <Star 
-                                            key={i} 
-                                            className={`h-4 w-4 ${starClass}`} 
-                                          />
-                                        );
-                                      })}
+                                      {[...Array(5)].map((_, i) => (
+                                        <Star 
+                                          key={i} 
+                                          className={`h-4 w-4 ${
+                                            i < Math.floor(comment.note_qualite!) 
+                                              ? 'fill-yellow-400 text-yellow-400' 
+                                              : 'text-gray-300'
+                                          }`} 
+                                        />
+                                      ))}
                                     </div>
                                   )}
                                 </div>
@@ -853,7 +846,7 @@ const EventDetailsPage: React.FC = () => {
                                         <div className="flex items-center space-x-2">
                                           <Avatar className="h-8 w-8">
                                             <AvatarImage 
-                                              src={(reponse.User as any)?.photo_url || (reponse.User as any)?.avatar} 
+                                              src={(reponse.User as any)?.photo_url} 
                                               alt={`${reponse.User?.prenom} ${reponse.User?.nom}`} 
                                             />
                                             <AvatarFallback className="text-xs">
@@ -880,18 +873,21 @@ const EventDetailsPage: React.FC = () => {
                         ))}
                       </div>
                     ) : (
-                      <p className="text-muted-foreground text-center py-8">
-                        Aucun commentaire pour le moment.
-                      </p>
+                      <div className="text-center py-12">
+                        <MessageCircle className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
+                        <p className="text-muted-foreground">
+                          Aucun commentaire pour le moment. Soyez le premier à commenter !
+                        </p>
+                      </div>
                     )}
                     
-                    <div className="pt-4">
+                    <div className="pt-6 border-t mt-6">
                       <Button 
                         variant="outline" 
                         className="w-full"
                         onClick={() => {
                           if (isAuthenticated) {
-                            // TODO: Ouvrir un modal ou une zone de saisie pour ajouter un commentaire
+                            // TODO: Ouvrir un modal pour ajouter un commentaire
                             alert('Fonctionnalité d\'ajout de commentaire à implémenter');
                           } else {
                             navigate('/auth');
@@ -906,18 +902,56 @@ const EventDetailsPage: React.FC = () => {
                 </Card>
               </TabsContent>
             </Tabs>
+
+            {/* Galerie en bas (mobile uniquement) */}
+            {medias.length > 0 && (
+              <Card className="lg:hidden">
+                <CardHeader>
+                  <CardTitle className="text-xl flex items-center justify-between">
+                    <span>Galerie de l'événement</span>
+                    <Badge variant="outline" className="text-sm">
+                      {medias.length} média{medias.length > 1 ? 's' : ''}
+                    </Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {medias.map((media, index) => (
+                      <div 
+                        key={media.id_media} 
+                        className="aspect-[4/3] rounded-lg overflow-hidden bg-muted relative group cursor-pointer"
+                      >
+                        <img
+                          src={media.thumbnail_url || media.url}
+                          alt={media.titre || `Photo ${index + 1}`}
+                          className="w-full h-full object-cover transition-all duration-300 group-hover:scale-110 group-hover:brightness-110"
+                          loading="lazy"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                          <div className="absolute bottom-0 left-0 right-0 p-3 text-white">
+                            <p className="text-sm font-medium truncate">
+                              {media.titre || `Photo ${index + 1}`}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
 
-          {/* Sidebar */}
+          {/* Sidebar avec espacement approprié */}
           <div className="space-y-6">
             {/* Card d'inscription */}
-            <Card className="sticky top-6 border-2 border-primary/20">
+            <Card className="border-2 border-primary/20 shadow-lg">
               <CardContent className="p-6 space-y-6">
                 <div className="text-center space-y-2">
                   <p className="text-3xl font-bold text-primary">
                     {event.tarif === 0 ? 'Gratuit' : `${event.tarif} DA`}
                   </p>
-                  <Badge className={getStatusColor(event.statut)}>
+                  <Badge variant={getStatusColor(event.statut) as any}>
                     {getStatusLabel(event.statut)}
                   </Badge>
                 </div>
@@ -956,18 +990,16 @@ const EventDetailsPage: React.FC = () => {
                 {event.note_moyenne && !isNaN(event.note_moyenne) && event.note_moyenne > 0 && (
                   <div className="flex items-center justify-center space-x-2 py-2">
                     <div className="flex">
-                      {[...Array(5)].map((_, i) => {
-                        const isActive = i < Math.floor(event.note_moyenne!);
-                        const starClass = isActive 
-                          ? 'fill-yellow-400 text-yellow-400' 
-                          : 'text-gray-300';
-                        return (
-                          <Star 
-                            key={i} 
-                            className={`h-5 w-5 ${starClass}`} 
-                          />
-                        );
-                      })}
+                      {[...Array(5)].map((_, i) => (
+                        <Star 
+                          key={i} 
+                          className={`h-5 w-5 ${
+                            i < Math.floor(event.note_moyenne!) 
+                              ? 'fill-yellow-400 text-yellow-400' 
+                              : 'text-gray-300'
+                          }`} 
+                        />
+                      ))}
                     </div>
                     <span className="font-semibold">{Number(event.note_moyenne).toFixed(1)}</span>
                   </div>
@@ -1016,14 +1048,27 @@ const EventDetailsPage: React.FC = () => {
                 )}
                 
                 <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    className="flex-1"
-                    onClick={() => setIsLiked(!isLiked)}
-                  >
-                    <Heart className={`h-4 w-4 mr-2 ${isLiked ? 'fill-red-500 text-red-500' : ''}`} />
-                    {isLiked ? 'Enregistré' : 'Enregistrer'}
-                  </Button>
+                <Button 
+  variant="outline" 
+  className="flex-1 transition-all duration-200 hover:border-red-500/50"
+  onClick={handleToggleFavorite}
+  disabled={favoriteLoading}
+>
+  {favoriteLoading ? (
+    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+  ) : (
+    <Heart 
+      className={`h-4 w-4 mr-2 transition-all duration-300 ${
+        isFavorite 
+          ? 'fill-red-500 text-red-500 scale-110' 
+          : 'hover:text-red-500'
+      }`} 
+    />
+  )}
+  <span className={isFavorite ? 'text-red-500' : ''}>
+    {isFavorite ? 'Favori' : 'Ajouter aux favoris'}
+  </span>
+</Button>
                   
                   <div className="relative">
                     <Button 
@@ -1074,27 +1119,44 @@ const EventDetailsPage: React.FC = () => {
               </CardContent>
             </Card>
 
-            {/* Galerie média si disponible */}
+            {/* Galerie sur le côté (desktop uniquement) - Sans sticky pour éviter le chevauchement */}
             {medias.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Galerie</CardTitle>
+              <Card className="hidden lg:block">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg flex items-center justify-between">
+                    <span>Galerie</span>
+                    <span className="text-sm text-muted-foreground font-normal">
+                      {medias.length} photo{medias.length > 1 ? 's' : ''}
+                    </span>
+                  </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-3">
                   <div className="grid grid-cols-2 gap-2">
-                    {medias.slice(0, 4).map((media) => (
-                      <div key={media.id_media} className="aspect-square rounded-lg overflow-hidden">
+                    {medias.slice(0, 4).map((media, index) => (
+                      <div 
+                        key={media.id_media} 
+                        className="aspect-square rounded-lg overflow-hidden bg-muted relative group cursor-pointer"
+                      >
                         <img
                           src={media.thumbnail_url || media.url}
-                          alt={media.titre || 'Image de l\'événement'}
-                          className="w-full h-full object-cover hover:scale-105 transition-transform cursor-pointer"
+                          alt={media.titre || `Photo ${index + 1}`}
+                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                          loading="lazy"
                         />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
                       </div>
                     ))}
                   </div>
                   {medias.length > 4 && (
-                    <Button variant="outline" className="w-full mt-3" size="sm">
-                      Voir toutes les photos ({medias.length})
+                    <Button 
+                      variant="outline" 
+                      className="w-full mt-3 hover:bg-primary hover:text-primary-foreground transition-colors" 
+                      size="sm"
+                    >
+                      <span>Voir toutes les photos</span>
+                      <span className="ml-2 text-xs bg-primary/10 px-2 py-0.5 rounded-full">
+                        {medias.length}
+                      </span>
                     </Button>
                   )}
                 </CardContent>

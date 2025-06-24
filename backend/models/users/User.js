@@ -297,10 +297,7 @@ module.exports = (sequelize) => {
     
     // Indexes pour les performances
     indexes: [
-      {
-        fields: ['email'],
-        unique: true
-      },
+      
       {
         fields: ['id_type_user'] // Modifié
       },
@@ -430,7 +427,10 @@ module.exports = (sequelize) => {
       foreignKey: 'id_user',
       as: 'Critiques'
     });
-    
+    User.hasMany(models.ProgrammeIntervenant, {
+    foreignKey: 'id_user',
+    as: 'Interventions'
+  });
     // Favoris
     User.hasMany(models.Favori, { 
       foreignKey: 'id_user',

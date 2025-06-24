@@ -22,7 +22,7 @@ class CommentaireController {
         include: [
           {
             model: this.models.User,
-            attributes: ['nom', 'prenom', 'type_user']
+            attributes: ['nom', 'prenom', 'id_type_user']  // Changé type_user en id_type_user
           },
           {
             model: this.models.Commentaire,
@@ -32,7 +32,7 @@ class CommentaireController {
             include: [
               {
                 model: this.models.User,
-                attributes: ['nom', 'prenom', 'type_user']
+                attributes: ['nom', 'prenom', 'id_type_user']  // Changé type_user en id_type_user
               }
             ]
           }
@@ -93,7 +93,7 @@ class CommentaireController {
         include: [
           {
             model: this.models.User,
-            attributes: ['nom', 'prenom', 'type_user']
+            attributes: ['nom', 'prenom', 'id_type_user']  // Changé type_user en id_type_user
           }
         ]
       });
@@ -141,7 +141,7 @@ class CommentaireController {
         include: [
           {
             model: this.models.User,
-            attributes: ['nom', 'prenom', 'type_user']
+            attributes: ['nom', 'prenom', 'id_type_user']  // Changé type_user en id_type_user
           }
         ]
       });
@@ -177,7 +177,7 @@ class CommentaireController {
         include: [
           {
             model: this.models.User,
-            attributes: ['nom', 'prenom', 'type_user']
+            attributes: ['nom', 'prenom', 'id_type_user']  // Changé type_user en id_type_user
           },
           {
             model: this.models.Commentaire,
@@ -187,7 +187,7 @@ class CommentaireController {
             include: [
               {
                 model: this.models.User,
-                attributes: ['nom', 'prenom', 'type_user']
+                attributes: ['nom', 'prenom', 'id_type_user']  // Changé type_user en id_type_user
               }
             ]
           }

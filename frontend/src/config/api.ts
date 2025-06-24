@@ -603,14 +603,30 @@ categoriesForType: (typeId: number) => `/metadata/types-oeuvres/${typeId}/catego
   // ================================================
   programmes: {
     byEvent: (evenementId: number) => `/programmes/evenement/${evenementId}`,
+    
+    // Détail d'un programme
     detail: (id: number) => `/programmes/${id}`,
-    export: (evenementId: number) => `/programmes/evenement/${evenementId}/export`,
+    
+    // Créer un programme pour un événement
     create: (evenementId: number) => `/programmes/evenement/${evenementId}`,
+    
+    // Mettre à jour un programme
     update: (id: number) => `/programmes/${id}`,
+    
+    // Supprimer un programme
     delete: (id: number) => `/programmes/${id}`,
+    
+    // Réorganiser l'ordre des programmes
     reorder: (evenementId: number) => `/programmes/evenement/${evenementId}/reorder`,
+    
+    // Dupliquer un programme
     duplicate: (id: number) => `/programmes/${id}/duplicate`,
+    
+    // Mettre à jour le statut
     updateStatus: (id: number) => `/programmes/${id}/statut`,
+    
+    // Export des programmes
+    export: (evenementId: number) => `/programmes/evenement/${evenementId}/export`
   },
 
   // ================================================

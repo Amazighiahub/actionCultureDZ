@@ -252,7 +252,7 @@ export interface EvenementOrganisation {
 export interface ProgrammeIntervenant {
   id: number;
   id_programme: number;
-  id_intervenant: number;
+  id_user: number;
   role_intervenant: 'principal' | 'co_intervenant' | 'moderateur' | 'invite' | 'animateur';
   ordre_intervention: number;
   duree_intervention?: number;
@@ -268,10 +268,10 @@ export interface ProgrammeIntervenant {
   date_creation: string;
   date_modification: string;
   Programme?: Programme;
-  Intervenant?: Intervenant;
+  User?: User;
 }
 
-// =====================================================
+//=====================================================
 // ASSOCIATIONS PARCOURS
 // =====================================================
 

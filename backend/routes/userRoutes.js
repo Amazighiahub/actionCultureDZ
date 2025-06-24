@@ -1,9 +1,26 @@
 // routes/userRoutes.js
 const express = require('express');
 const router = express.Router();
-const { body } = require('express-validator');
+const { body, param, validationResult } = require('express-validator'); // ✅ Import de param ajouté
 const validationMiddleware = require('../middlewares/validationMiddleware');
 const auditMiddleware = require('../middlewares/auditMiddleware');
+
+// ✅ Constante pour les types d'utilisateurs (même que dans le contrôleur)
+const TYPE_USER_IDS = {
+  VISITEUR: 1,
+  ECRIVAIN: 2,
+  JOURNALISTE: 3,
+  SCIENTIFIQUE: 4,
+  ACTEUR: 5,
+  ARTISTE: 6,
+  ARTISAN: 7,
+  REALISATEUR: 8,
+  MUSICIEN: 9,
+  PHOTOGRAPHE: 10,
+  DANSEUR: 11,
+  SCULPTEUR: 12,
+  AUTRE: 13
+};
 
 module.exports = (models, authMiddleware) => {
   const UserController = require('../controllers/UserController');
@@ -31,15 +48,18 @@ module.exports = (models, authMiddleware) => {
     body('password')
       .isLength({ min: 8 })
       .withMessage('Le mot de passe doit contenir au moins 8 caractères'),
-    body('type_user')
+    body('id_type_user') // ✅ Changé de type_user à id_type_user
       .optional()
-      .isIn(['visiteur', 'ecrivain', 'journaliste', 'scientifique', 'acteur', 
-             'artiste', 'artisan', 'realisateur', 'musicien', 'photographe', 
-             'danseur', 'sculpteur', 'autre'])
-      .withMessage('Type d\'utilisateur invalide'),
+      .isInt({ min: 1, max: 13 })
+      .withMessage('Type d\'utilisateur invalide')
+      .toInt(), // Convertir en entier
     body('accepte_conditions')
       .custom(value => value === true || value === 'true')
-      .withMessage('Vous devez accepter les conditions d\'utilisation')
+      .withMessage('Vous devez accepter les conditions d\'utilisation'),
+    body('photo_url') // ✅ NOUVEAU : Validation de photo_url optionnelle
+      .optional()
+      .matches(/^\/uploads\/images\//)
+      .withMessage('URL de photo invalide')
   ];
 
   const loginValidation = [
@@ -66,7 +86,7 @@ module.exports = (models, authMiddleware) => {
   // ROUTES PUBLIQUES
   // ========================================================================
 
-  // ÉTAPE 1 : Inscription
+  // ÉTAPE 1 : Inscription (avec photo optionnelle)
   router.post('/register', 
     registerValidation,
     validationMiddleware.handleValidationErrors,
@@ -84,10 +104,49 @@ module.exports = (models, authMiddleware) => {
 
   // Déconnexion
   router.post('/logout',
-    authMiddleware.isAuthenticated, // Optionnel
+    authMiddleware.authenticate,
     auditMiddleware.logAction('user_logout', { entityType: 'user' }),
     (req, res) => userController.logoutUser(req, res)
   );
+
+  // Vérifier si un email existe déjà
+  router.post('/check-email',
+    body('email').isEmail().normalizeEmail(),
+    validationMiddleware.handleValidationErrors,
+    async (req, res) => {
+      try {
+        const { email } = req.body;
+        const exists = await models.User.findOne({
+          where: { email },
+          attributes: ['id_user']
+        });
+
+        res.json({
+          success: true,
+          exists: !!exists
+        });
+      } catch (error) {
+        res.status(500).json({
+          success: false,
+          error: 'Erreur serveur'
+        });
+      }
+    }
+  );
+
+  // Récupérer les types d'utilisateurs disponibles
+  router.get('/types', (req, res) => {
+    const types = Object.entries(TYPE_USER_IDS).map(([key, value]) => ({
+      id: value,
+      key: key.toLowerCase(),
+      label: key.charAt(0) + key.slice(1).toLowerCase().replace('_', ' ')
+    }));
+
+    res.json({
+      success: true,
+      data: types
+    });
+  });
 
   // ========================================================================
   // ROUTES PROTÉGÉES
@@ -131,148 +190,8 @@ module.exports = (models, authMiddleware) => {
   );
 
   // ========================================================================
-  // ROUTES ADDITIONNELLES (compatibles avec votre système)
-  // ========================================================================
-
-  // Récupérer les types d'utilisateurs disponibles
-  router.get('/types', (req, res) => {
-    const types = [
-      { value: 'visiteur', label: 'Visiteur' },
-      { value: 'ecrivain', label: 'Écrivain' },
-      { value: 'journaliste', label: 'Journaliste' },
-      { value: 'scientifique', label: 'Scientifique' },
-      { value: 'acteur', label: 'Acteur' },
-      { value: 'artiste', label: 'Artiste' },
-      { value: 'artisan', label: 'Artisan' },
-      { value: 'realisateur', label: 'Réalisateur' },
-      { value: 'musicien', label: 'Musicien' },
-      { value: 'photographe', label: 'Photographe' },
-      { value: 'danseur', label: 'Danseur' },
-      { value: 'sculpteur', label: 'Sculpteur' },
-      { value: 'autre', label: 'Autre' }
-    ];
-
-    res.json({
-      success: true,
-      data: types
-    });
-  });
-
-  // Vérifier si un email existe déjà
-  router.post('/check-email',
-    body('email').isEmail().normalizeEmail(),
-    validationMiddleware.handleValidationErrors,
-    async (req, res) => {
-      try {
-        const { email } = req.body;
-        const exists = await models.User.findOne({
-          where: { email },
-          attributes: ['id_user']
-        });
-
-        res.json({
-          success: true,
-          exists: !!exists
-        });
-      } catch (error) {
-        res.status(500).json({
-          success: false,
-          error: 'Erreur serveur'
-        });
-      }
-    }
-  );
-
-  // ========================================================================
   // LOG DES ROUTES
   // ========================================================================
-// Ajouter ces routes dans userRoutes.js
-
-// APRÈS les routes existantes, AJOUTER :
-
-// ========================================================================
-// ROUTES DE VÉRIFICATION EMAIL
-// ========================================================================
-
-// Vérifier un email avec token (route publique)
-router.get('/verify-email/:token',
-  param('token').notEmpty().isLength({ min: 32 }),
-  validationMiddleware.handleValidationErrors,
-  (req, res) => userController.verifyEmail(req, res)
-);
-
-// Renvoyer l'email de vérification (authentifié)
-router.post('/resend-verification',
-  authMiddleware.authenticate,
-  auditMiddleware.logAction('resend_verification', { entityType: 'user' }),
-  (req, res) => userController.resendVerificationEmail(req, res)
-);
-
-// Demander un reset de mot de passe (public)
-router.post('/forgot-password',
-  body('email').isEmail().normalizeEmail(),
-  validationMiddleware.handleValidationErrors,
-  ...rateLimitMiddleware.auth,
-  auditMiddleware.logAction('password_reset_request', { entityType: 'user' }),
-  (req, res) => userController.requestPasswordReset(req, res)
-);
-
-// Réinitialiser le mot de passe avec token (public)
-router.post('/reset-password',
-  [
-    body('token').notEmpty().isLength({ min: 32 }),
-    body('newPassword')
-      .isLength({ min: 8 })
-      .withMessage('Le mot de passe doit contenir au moins 8 caractères')
-  ],
-  validationMiddleware.handleValidationErrors,
-  ...rateLimitMiddleware.auth,
-  auditMiddleware.logAction('password_reset', { entityType: 'user' }),
-  (req, res) => userController.resetPassword(req, res)
-);
-
-// Vérifier le statut de vérification email (authentifié)
-router.get('/verification-status',
-  authMiddleware.authenticate,
-  async (req, res) => {
-    try {
-      const user = await models.User.findByPk(req.user.id_user, {
-        attributes: ['id_user', 'email', 'email_verifie']
-      });
-
-      if (!user) {
-        return res.status(404).json({
-          success: false,
-          error: 'Utilisateur non trouvé'
-        });
-      }
-
-      // Vérifier s'il y a un token actif
-      let hasActiveToken = false;
-      if (!user.email_verifie) {
-        hasActiveToken = await models.EmailVerification.hasActiveToken(
-          user.id_user,
-          'email_verification'
-        );
-      }
-
-      res.json({
-        success: true,
-        data: {
-          email: user.email,
-          verified: user.email_verifie,
-          hasActiveToken
-        }
-      });
-    } catch (error) {
-      console.error('Erreur vérification statut:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Erreur serveur'
-      });
-    }
-  }
-);
   const routeCount = router.stack.filter(layer => layer.route).length;
   console.log(`✅ Routes utilisateur initialisées: ${routeCount} routes`);
 

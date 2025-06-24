@@ -157,10 +157,7 @@ module.exports = (sequelize) => {
     });
     
     // Relation One-to-Many avec ProgrammeIntervenant
-    Intervenant.hasMany(models.ProgrammeIntervenant, {
-      foreignKey: 'id_intervenant',
-      as: 'ProgrammeIntervenants'
-    });
+   
   };
   
   // Méthodes d'instance
