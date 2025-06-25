@@ -30,6 +30,7 @@ import {
 
 // Import des types
 import { favoriService } from '@/services/favori.service';
+import { httpClient } from '@/services/httpClient';
 import type { Evenement } from '@/types/models/evenement.types';
 import type { Programme } from '@/types/models/programme.types';
 import type { Media } from '@/types/models/media.types';
@@ -184,8 +185,8 @@ const EventDetailsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-const [isFavorite, setIsFavorite] = useState(false);
-const [favoriteLoading, setFavoriteLoading] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [favoriteLoading, setFavoriteLoading] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [isInscrit, setIsInscrit] = useState(false);
   const [inscriptionLoading, setInscriptionLoading] = useState(false);
@@ -201,21 +202,28 @@ const [favoriteLoading, setFavoriteLoading] = useState(false);
   useEffect(() => {
     setIsAuthenticated(authService.isAuthenticated());
   }, []);
+
+  // Vérifier le statut favori
   useEffect(() => {
     if (id && isAuthenticated) {
       checkFavoriteStatus(parseInt(id));
     }
   }, [id, isAuthenticated]);
+
   const checkFavoriteStatus = async (eventId: number) => {
     try {
       const response = await favoriService.check('evenement', eventId);
-      if (response.success && response.data) {
-        setIsFavorite(response.data.is_favorite);
+      console.log('🔍 Check favori response:', response);
+      
+      if (response.success) {
+        // L'API retourne directement isFavorite
+        setIsFavorite(response.isFavorite);
       }
     } catch (err) {
       console.error('Erreur vérification favori:', err);
     }
   };
+
   const loadEventData = async (eventId: number) => {
     try {
       setLoading(true);
@@ -288,57 +296,54 @@ const [favoriteLoading, setFavoriteLoading] = useState(false);
         }
       }
 
-
-
       // Charger les commentaires si pas déjà inclus
-      // Charger les commentaires si pas déjà inclus
-if (commentaires.length === 0) {
-  try {
-    console.log('🔄 Chargement commentaires séparé...');
-    const commentaireResult = await commentaireService.getCommentairesEvenement(eventId);
-    console.log('💬 Commentaire Result:', commentaireResult);
-    
-    if (commentaireResult.success) {
-      let rawComments: any[] = [];
-      
-      // Vérifier d'abord si c'est directement un array
-      if (Array.isArray(commentaireResult.data)) {
-        rawComments = commentaireResult.data;
-      } 
-      // Sinon, vérifier si pagination existe
-      else if (commentaireResult.pagination && typeof commentaireResult.pagination === 'object') {
-        const pagination = commentaireResult.pagination as any;
-        
-        if (pagination.items && Array.isArray(pagination.items)) {
-          rawComments = pagination.items;
-        } else if (pagination.data && Array.isArray(pagination.data)) {
-          rawComments = pagination.data;
-        } else if (pagination.results && Array.isArray(pagination.results)) {
-          rawComments = pagination.results;
+      if (commentaires.length === 0) {
+        try {
+          console.log('🔄 Chargement commentaires séparé...');
+          const commentaireResult = await commentaireService.getCommentairesEvenement(eventId);
+          console.log('💬 Commentaire Result:', commentaireResult);
+          
+          if (commentaireResult.success) {
+            let rawComments: any[] = [];
+            
+            // Vérifier d'abord si c'est directement un array
+            if (Array.isArray(commentaireResult.data)) {
+              rawComments = commentaireResult.data;
+            } 
+            // Sinon, vérifier si pagination existe
+            else if (commentaireResult.pagination && typeof commentaireResult.pagination === 'object') {
+              const pagination = commentaireResult.pagination as any;
+              
+              if (pagination.items && Array.isArray(pagination.items)) {
+                rawComments = pagination.items;
+              } else if (pagination.data && Array.isArray(pagination.data)) {
+                rawComments = pagination.data;
+              } else if (pagination.results && Array.isArray(pagination.results)) {
+                rawComments = pagination.results;
+              }
+            }
+            // Sinon, vérifier data comme objet
+            else if (commentaireResult.data && typeof commentaireResult.data === 'object') {
+              const dataAsAny = commentaireResult.data as any;
+              
+              if (dataAsAny.items && Array.isArray(dataAsAny.items)) {
+                rawComments = dataAsAny.items;
+              } else if (dataAsAny.data && Array.isArray(dataAsAny.data)) {
+                rawComments = dataAsAny.data;
+              } else if (dataAsAny.results && Array.isArray(dataAsAny.results)) {
+                rawComments = dataAsAny.results;
+              } else if (dataAsAny.commentaires && Array.isArray(dataAsAny.commentaires)) {
+                rawComments = dataAsAny.commentaires;
+              }
+            }
+            
+            console.log('💬 Commentaires extraits:', rawComments.length);
+            setCommentaires(rawComments);
+          }
+        } catch (err) {
+          console.error('❌ Erreur chargement commentaires:', err);
         }
       }
-      // Sinon, vérifier data comme objet
-      else if (commentaireResult.data && typeof commentaireResult.data === 'object') {
-        const dataAsAny = commentaireResult.data as any;
-        
-        if (dataAsAny.items && Array.isArray(dataAsAny.items)) {
-          rawComments = dataAsAny.items;
-        } else if (dataAsAny.data && Array.isArray(dataAsAny.data)) {
-          rawComments = dataAsAny.data;
-        } else if (dataAsAny.results && Array.isArray(dataAsAny.results)) {
-          rawComments = dataAsAny.results;
-        } else if (dataAsAny.commentaires && Array.isArray(dataAsAny.commentaires)) {
-          rawComments = dataAsAny.commentaires;
-        }
-      }
-      
-      console.log('💬 Commentaires extraits:', rawComments.length);
-      setCommentaires(rawComments);
-    }
-  } catch (err) {
-    console.error('❌ Erreur chargement commentaires:', err);
-  }
-}
 
       // Charger les médias si pas déjà inclus
       if (medias.length === 0) {
@@ -361,8 +366,12 @@ if (commentaires.length === 0) {
       setLoading(false);
     }
   };
+
   const handleToggleFavorite = async () => {
+    console.log('🎯 Toggle favori start');
+    
     if (!event || !isAuthenticated) {
+      console.log('❌ Not authenticated or no event');
       if (!isAuthenticated) {
         navigate('/auth');
         return;
@@ -372,17 +381,25 @@ if (commentaires.length === 0) {
   
     setFavoriteLoading(true);
     try {
+      console.log('📤 Calling toggle for:', event.id_evenement);
       const response = await favoriService.toggle('evenement', event.id_evenement);
+      console.log('📥 Toggle response:', response);
+      
       if (response.success && response.data) {
         setIsFavorite(response.data.added);
+        console.log('✅ Favori updated:', response.data.added);
+        
+        // Invalider le cache
+        httpClient.invalidateCache(`/favoris/check/evenement/${event.id_evenement}`);
       }
     } catch (err) {
-      console.error('Erreur toggle favori:', err);
+      console.error('❌ Erreur toggle favori:', err);
       alert('Erreur lors de la modification du favori');
     } finally {
       setFavoriteLoading(false);
     }
   };
+
   const handleInscription = async () => {
     if (!event) return;
     
@@ -580,8 +597,8 @@ if (commentaires.length === 0) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
-      {/* Header avec image amélioré */}
-      <div className="relative h-[40vh] lg:h-[50vh] overflow-hidden">
+         {/* Header avec image amélioré */}
+      <div className="relative h-[35vh] lg:h-[45vh] overflow-hidden">
         {mainImage ? (
           <>
             <img 
@@ -589,19 +606,20 @@ if (commentaires.length === 0) {
               alt={event.nom_evenement}
               className="w-full h-full object-cover"
             />
-            {/* Overlay gradient plus prononcé pour meilleure lisibilité */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+            {/* Gradient seulement sur le quart inférieur */}
+            <div 
+              className="absolute bottom-0 inset-x-0 h-1/4 bg-gradient-to-t from-black/30 to-transparent"
+            />
           </>
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
-            <ImageIcon className="h-20 w-20 text-primary/40" />
+          <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center">
+            <ImageIcon className="h-20 w-20 text-gray-300" />
           </div>
         )}
-        
         <Button 
           variant="ghost" 
           size="icon"
-          className="absolute top-4 left-4 bg-background/80 backdrop-blur hover:bg-background/90"
+          className="absolute top-4 left-4 bg-white/10 backdrop-blur-md hover:bg-white/20 text-white border border-white/20"
           onClick={() => navigate(-1)}
         >
           <ChevronLeft className="h-5 w-5" />
@@ -612,16 +630,19 @@ if (commentaires.length === 0) {
             <div className="flex items-start justify-between">
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
-                  <Badge className="bg-primary text-primary-foreground border-0 px-3 py-1">
+                  <Badge className="bg-primary/90 backdrop-blur-sm text-primary-foreground border-0 px-3 py-1 shadow-lg">
                     {event.TypeEvenement?.nom_type || 'Événement'}
                   </Badge>
-                  <Badge variant={getStatusColor(event.statut) as any} className="border-0 px-3 py-1">
+                  <Badge 
+                    variant={getStatusColor(event.statut) as any} 
+                    className="backdrop-blur-sm border-0 px-3 py-1 shadow-lg"
+                  >
                     {getStatusLabel(event.statut)}
                   </Badge>
                 </div>
-                {/* Titre avec meilleure visibilité */}
+                {/* Titre avec ombre plus prononcée pour meilleure lisibilité */}
                 <h1 className="text-3xl lg:text-5xl font-bold">
-                  <span className="text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
+                  <span className="text-white drop-shadow-[0_4px_20px_rgba(0,0,0,0.9)]">
                     {event.nom_evenement}
                   </span>
                 </h1>
@@ -1048,27 +1069,27 @@ if (commentaires.length === 0) {
                 )}
                 
                 <div className="flex gap-2">
-                <Button 
-  variant="outline" 
-  className="flex-1 transition-all duration-200 hover:border-red-500/50"
-  onClick={handleToggleFavorite}
-  disabled={favoriteLoading}
->
-  {favoriteLoading ? (
-    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-  ) : (
-    <Heart 
-      className={`h-4 w-4 mr-2 transition-all duration-300 ${
-        isFavorite 
-          ? 'fill-red-500 text-red-500 scale-110' 
-          : 'hover:text-red-500'
-      }`} 
-    />
-  )}
-  <span className={isFavorite ? 'text-red-500' : ''}>
-    {isFavorite ? 'Favori' : 'Ajouter aux favoris'}
-  </span>
-</Button>
+                  <Button 
+                    variant="outline" 
+                    className="flex-1 transition-all duration-200 hover:border-red-500/50"
+                    onClick={handleToggleFavorite}
+                    disabled={favoriteLoading}
+                  >
+                    {favoriteLoading ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Heart 
+                        className={`h-4 w-4 mr-2 transition-all duration-300 ${
+                          isFavorite 
+                            ? 'fill-red-500 text-red-500 scale-110' 
+                            : 'hover:text-red-500'
+                        }`} 
+                      />
+                    )}
+                    <span className={isFavorite ? 'text-red-500' : ''}>
+                      {isFavorite ? 'Favori' : 'Ajouter aux favoris'}
+                    </span>
+                  </Button>
                   
                   <div className="relative">
                     <Button 

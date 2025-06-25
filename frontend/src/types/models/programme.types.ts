@@ -13,6 +13,7 @@ export interface Programme {
   description?: string;
   id_evenement: number;
   id_lieu?: number;
+  date_programme?: Date;
   heure_debut?: string;
   heure_fin?: string;
   lieu_specifique?: string;

@@ -11,7 +11,7 @@ module.exports = (sequelize) => {
     nom: {
       type: DataTypes.STRING(100),
       allowNull: false,
-      unique: true
+     
     },
     description: {
       type: DataTypes.TEXT,
@@ -34,7 +34,14 @@ module.exports = (sequelize) => {
     }
   }, {
     tableName: 'genre',
-    timestamps: false
+    timestamps: false,
+    indexes: [
+      {
+        name: 'idx_genre_unique',  // Toujours nommer l'index
+        fields: ['nom'],
+        unique: true
+      }
+    ]
   });
 
   // Associations

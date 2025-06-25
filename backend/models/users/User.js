@@ -21,7 +21,7 @@ module.exports = (sequelize) => {
     email: {
       type: DataTypes.STRING(255),
       allowNull: false,
-      unique: true,
+    
       validate: {
         isEmail: true
       }
@@ -297,6 +297,12 @@ module.exports = (sequelize) => {
     
     // Indexes pour les performances
     indexes: [
+     
+        {
+          name: 'id_index_email',  // Toujours nommer l'index
+          fields: ['email'],
+          unique: true
+        },
       
       {
         fields: ['id_type_user'] // Modifié

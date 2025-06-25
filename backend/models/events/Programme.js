@@ -33,6 +33,13 @@ module.exports = (sequelize) => {
         key: 'id_lieu'
       }
     },
+    date_programme: {
+      type: DataTypes.DATEONLY,  // Format YYYY-MM-DD
+      allowNull: false,
+      validate: {
+        isDate: true
+      }
+    },
     heure_debut: {
       type: DataTypes.TIME
     },
@@ -114,6 +121,9 @@ module.exports = (sequelize) => {
     indexes: [
       {
         fields: ['id_evenement']
+      },
+      {
+        fields: ['date_programme']  // Nouvel index pour les requêtes par date
       },
       {
         fields: ['ordre']

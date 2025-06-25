@@ -9,7 +9,7 @@ module.exports = (sequelize) => {
     },
     codeW: {
       type: DataTypes.INTEGER,
-      unique: true
+      
     },
     nom: {
       type: DataTypes.STRING(255),
@@ -19,11 +19,20 @@ module.exports = (sequelize) => {
       type: DataTypes.STRING(255),
       allowNull: false
     }
-  }, {
+  }, 
+  
+  {
     tableName: 'wilayas',
-    timestamps: true
+    timestamps: true,
+    indexes: [
+      {
+        name: 'idx_codeW_unique',  // Toujours nommer l'index
+        fields: ['codeW'],
+        unique: true
+      }
+    ]
   });
-
+  
   // Associations
   Wilaya.associate = (models) => {
     Wilaya.hasMany(models.Daira, { foreignKey: 'wilayaId' });

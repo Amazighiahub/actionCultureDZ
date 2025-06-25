@@ -280,7 +280,7 @@ class App {
 
       // Synchroniser les modèles si configuré
       if (this.config.server.environment === 'development' && this.config.database.sync) {
-        await sequelize.sync({ alter: true });
+        await sequelize.sync({ alter: false });
         console.log('✅ Modèles synchronisés avec la base de données');
       }
 

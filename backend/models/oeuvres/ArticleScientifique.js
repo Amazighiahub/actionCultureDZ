@@ -29,7 +29,7 @@ module.exports = (sequelize) => {
     },
     doi: {
       type: DataTypes.STRING(255),
-      unique: true
+     
     },
     pages: {
       type: DataTypes.STRING(50)
@@ -75,9 +75,19 @@ module.exports = (sequelize) => {
     url_arxiv: {
       type: DataTypes.STRING(255)
     }
-  }, {
+  }, 
+ 
+  
+  {
     tableName: 'articlescientifique',
-    timestamps: false
+    timestamps: false,
+    indexes: [
+      {
+        name: 'idx_doi_unique',  // Toujours nommer l'index
+        fields: ['doi'],
+        unique: true
+      }
+    ]
   });
 
   // Associations

@@ -721,7 +721,14 @@ class HttpClient {
   getQueueStats() {
     return this.requestQueue.getStats();
   }
-
+/**
+   * Invalider le cache pour un endpoint spécifique
+   */
+invalidateCache(endpoint: string): void {
+  const cacheKey = `cache_${endpoint}`;
+  localStorage.removeItem(cacheKey);
+  console.log('🗑️ Cache invalidé:', endpoint);
+}
   // Vider le cache
   clearCache() {
     this.requestQueue.clearCache();
