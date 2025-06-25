@@ -171,7 +171,7 @@ class EvenementService extends BaseService<Evenement, CreateEvenementData, Updat
   async addMedias(eventId: number, files: File[]): Promise<ApiResponse<EventMedia[]>> {
     // Utiliser mediaService pour upload multiple
     const uploadResult = await mediaService.uploadMultiple(files, 'evenement', eventId);
-    
+
     if (uploadResult.success && uploadResult.data) {
       // Transformer la réponse pour correspondre au type EventMedia[]
       const eventMedias: EventMedia[] = uploadResult.data.map((media, index) => ({
@@ -182,13 +182,13 @@ class EvenementService extends BaseService<Evenement, CreateEvenementData, Updat
         description: '',
         ordre: index
       }));
-      
+
       return {
         success: true,
         data: eventMedias
       };
     }
-    
+
     return {
       success: false,
       error: uploadResult.error || 'Erreur lors de l\'upload des médias'
@@ -242,7 +242,7 @@ class EvenementService extends BaseService<Evenement, CreateEvenementData, Updat
 }
 
 export const evenementService = new EvenementService();
-export type { 
-  Evenement, CreateEvenementData, UpdateEvenementData, EventMedia, 
-  Participant, ShareData, NotificationData, SearchEvenementsParams 
+export type {
+  Evenement, CreateEvenementData, UpdateEvenementData, EventMedia,
+  Participant, ShareData, NotificationData, SearchEvenementsParams
 };

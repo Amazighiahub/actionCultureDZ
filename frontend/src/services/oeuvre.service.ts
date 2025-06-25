@@ -1,7 +1,7 @@
 // services/oeuvre.service.ts - Version complètement corrigée
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { 
-  CreateOeuvreCompleteDTO, 
+import {
+  CreateOeuvreCompleteDTO,
   CreateOeuvreResponse,
   IntervenantSearchResult,
   CheckUserByEmailResponse,
@@ -20,7 +20,7 @@ class OeuvreService {
    * Créer une nouvelle œuvre AVEC médias
    */
   async createOeuvreWithMedias(
-    data: CreateOeuvreBackendDTO | CreateOeuvreCompleteDTO, 
+    data: CreateOeuvreBackendDTO | CreateOeuvreCompleteDTO,
     mediaFiles?: File[]
   ): Promise<ApiResponse<CreateOeuvreResponse>> {
     try {
@@ -31,7 +31,7 @@ class OeuvreService {
 
       // ÉTAPE 1 : Créer l'œuvre d'abord
       const oeuvreResult = await this.createOeuvre(data);
-      
+
       if (!oeuvreResult.success || !oeuvreResult.data) {
         return oeuvreResult;
       }
@@ -42,7 +42,7 @@ class OeuvreService {
       // ÉTAPE 2 : Upload des médias si présents
       if (mediaFiles && mediaFiles.length > 0) {
         console.log('📤 Upload de', mediaFiles.length, 'médias...');
-        
+
         const uploadResult = await mediaService.uploadMultiple(
           mediaFiles,
           'oeuvre',
@@ -63,7 +63,7 @@ class OeuvreService {
       }
 
       return oeuvreResult;
-      
+
     } catch (error: any) {
       console.error('❌ Erreur création œuvre avec médias:', error);
       return {
@@ -91,22 +91,22 @@ class OeuvreService {
       });
 
       const response = await httpClient.post<CreateOeuvreResponse>('/oeuvres', normalizedData);
-      
+
       return response;
     } catch (error: any) {
       console.error('❌ Erreur création œuvre:', error);
-      
+
       // Gestion du timeout
-      if (error.message && 
-          (error.message.includes('timeout') || 
-           error.message.includes('Timeout') ||
-           error.code === 'ECONNABORTED')) {
-        
+      if (error.message &&
+        (error.message.includes('timeout') ||
+          error.message.includes('Timeout') ||
+          error.code === 'ECONNABORTED')) {
+
         console.log('⏱️ Timeout détecté, vérification de la création...');
-        
+
         // Attendre un peu et vérifier si l'œuvre a été créée
         await new Promise(resolve => setTimeout(resolve, 2000));
-        
+
         const checkResult = await this.checkRecentOeuvre(data.titre);
         if (checkResult.success && checkResult.data) {
           console.log('✅ Œuvre trouvée malgré le timeout');
@@ -119,7 +119,7 @@ class OeuvreService {
           };
         }
       }
-      
+
       return {
         success: false,
         error: error.response?.data?.error || error.message || 'Erreur lors de la création'
@@ -130,100 +130,100 @@ class OeuvreService {
   /**
    * Alternative : Créer une œuvre avec FormData (pour upload direct)
    */
- async createOeuvreFormData(
-  data: CreateOeuvreBackendDTO | CreateOeuvreCompleteDTO,
-  mediaFiles?: File[]
-): Promise<ApiResponse<CreateOeuvreResponse>> {
-  try {
-    const formData = new FormData();
-    
-    // Ajouter les champs simples directement
-    formData.append('titre', data.titre);
-    formData.append('description', data.description || '');
-    formData.append('id_type_oeuvre', data.id_type_oeuvre.toString());
-    formData.append('id_langue', data.id_langue.toString());
-    
-    if (data.annee_creation) {
-      formData.append('annee_creation', data.annee_creation.toString());
-    }
-    if (data.prix) {
-      formData.append('prix', data.prix.toString());
-    }
+  async createOeuvreFormData(
+    data: CreateOeuvreBackendDTO | CreateOeuvreCompleteDTO,
+    mediaFiles?: File[]
+  ): Promise<ApiResponse<CreateOeuvreResponse>> {
+    try {
+      const formData = new FormData();
 
-    // Pour les tableaux et objets, les stringifier
-    if (data.categories && data.categories.length > 0) {
-      // Option 1: Envoyer comme JSON
-      formData.append('categories', JSON.stringify(data.categories));
-      
-      // Option 2: Envoyer chaque élément séparément
-      // data.categories.forEach((cat, index) => {
-      //   formData.append(`categories[${index}]`, cat.toString());
-      // });
-    }
+      // Ajouter les champs simples directement
+      formData.append('titre', data.titre);
+      formData.append('description', data.description || '');
+      formData.append('id_type_oeuvre', data.id_type_oeuvre.toString());
+      formData.append('id_langue', data.id_langue.toString());
 
-    if (data.tags && data.tags.length > 0) {
-      formData.append('tags', JSON.stringify(data.tags));
-    }
-
-    // Contributeurs
-    if ('utilisateurs_inscrits' in data && data.utilisateurs_inscrits?.length) {
-      formData.append('utilisateurs_inscrits', JSON.stringify(data.utilisateurs_inscrits));
-    }
-    
-    if ('intervenants_non_inscrits' in data && data.intervenants_non_inscrits?.length) {
-      formData.append('intervenants_non_inscrits', JSON.stringify(data.intervenants_non_inscrits));
-    }
-    
-    if ('nouveaux_intervenants' in data && data.nouveaux_intervenants?.length) {
-      formData.append('nouveaux_intervenants', JSON.stringify(data.nouveaux_intervenants));
-    }
-
-    if ('editeurs' in data && data.editeurs?.length) {
-      formData.append('editeurs', JSON.stringify(data.editeurs));
-    }
-
-    // Détails spécifiques
-    if (data.details_specifiques && Object.keys(data.details_specifiques).length > 0) {
-      formData.append('details_specifiques', JSON.stringify(data.details_specifiques));
-    }
-
-    // Ajouter les fichiers médias
-    if (mediaFiles && mediaFiles.length > 0) {
-      mediaFiles.forEach((file) => {
-        formData.append('medias', file);
-      });
-    }
-
-    // Debug
-    console.log('📋 FormData entries:');
-    for (const [key, value] of formData.entries()) {
-      if (value instanceof File) {
-        console.log(`- ${key}: File(${value.name}, ${value.size} bytes, ${value.type})`);
-      } else {
-        console.log(`- ${key}:`, value);
+      if (data.annee_creation) {
+        formData.append('annee_creation', data.annee_creation.toString());
       }
-    }
+      if (data.prix) {
+        formData.append('prix', data.prix.toString());
+      }
 
-    const response = await httpClient.postFormData<CreateOeuvreResponse>(
-      '/oeuvres',
-      formData
-    );
+      // Pour les tableaux et objets, les stringifier
+      if (data.categories && data.categories.length > 0) {
+        // Option 1: Envoyer comme JSON
+        formData.append('categories', JSON.stringify(data.categories));
 
-    return response;
-    
-  } catch (error: any) {
-    console.error('❌ Erreur création œuvre FormData:', error);
-    
-    if (error.response?.data) {
-      console.error('Détails de l\'erreur:', error.response.data);
+        // Option 2: Envoyer chaque élément séparément
+        // data.categories.forEach((cat, index) => {
+        //   formData.append(`categories[${index}]`, cat.toString());
+        // });
+      }
+
+      if (data.tags && data.tags.length > 0) {
+        formData.append('tags', JSON.stringify(data.tags));
+      }
+
+      // Contributeurs
+      if ('utilisateurs_inscrits' in data && data.utilisateurs_inscrits?.length) {
+        formData.append('utilisateurs_inscrits', JSON.stringify(data.utilisateurs_inscrits));
+      }
+
+      if ('intervenants_non_inscrits' in data && data.intervenants_non_inscrits?.length) {
+        formData.append('intervenants_non_inscrits', JSON.stringify(data.intervenants_non_inscrits));
+      }
+
+      if ('nouveaux_intervenants' in data && data.nouveaux_intervenants?.length) {
+        formData.append('nouveaux_intervenants', JSON.stringify(data.nouveaux_intervenants));
+      }
+
+      if ('editeurs' in data && data.editeurs?.length) {
+        formData.append('editeurs', JSON.stringify(data.editeurs));
+      }
+
+      // Détails spécifiques
+      if (data.details_specifiques && Object.keys(data.details_specifiques).length > 0) {
+        formData.append('details_specifiques', JSON.stringify(data.details_specifiques));
+      }
+
+      // Ajouter les fichiers médias
+      if (mediaFiles && mediaFiles.length > 0) {
+        mediaFiles.forEach((file) => {
+          formData.append('medias', file);
+        });
+      }
+
+      // Debug
+      console.log('📋 FormData entries:');
+      for (const [key, value] of formData.entries()) {
+        if (value instanceof File) {
+          console.log(`- ${key}: File(${value.name}, ${value.size} bytes, ${value.type})`);
+        } else {
+          console.log(`- ${key}:`, value);
+        }
+      }
+
+      const response = await httpClient.postFormData<CreateOeuvreResponse>(
+        '/oeuvres',
+        formData
+      );
+
+      return response;
+
+    } catch (error: any) {
+      console.error('❌ Erreur création œuvre FormData:', error);
+
+      if (error.response?.data) {
+        console.error('Détails de l\'erreur:', error.response.data);
+      }
+
+      return {
+        success: false,
+        error: error.response?.data?.error || error.message || 'Erreur lors de la création'
+      };
     }
-    
-    return {
-      success: false,
-      error: error.response?.data?.error || error.message || 'Erreur lors de la création'
-    };
   }
-}
 
   /**
    * Upload de médias pour une œuvre existante
@@ -231,7 +231,7 @@ class OeuvreService {
   async uploadMedias(oeuvreId: number, files: File[]): Promise<ApiResponse<any>> {
     try {
       console.log('📤 Upload médias pour œuvre', oeuvreId);
-      
+
       return await mediaService.uploadMultiple(
         files,
         'oeuvre',
@@ -255,13 +255,13 @@ class OeuvreService {
   async searchIntervenants(params: { q: string }): Promise<IntervenantSearchResult[]> {
     try {
       console.log('🔍 Recherche intervenants avec:', params);
-      
+
       const response = await httpClient.get<IntervenantSearchResult[]>('/intervenants/search', params);
-      
+
       if (response.success && response.data) {
         return response.data;
       }
-      
+
       return [];
     } catch (error) {
       console.error('❌ Erreur recherche intervenants:', error);
@@ -275,11 +275,11 @@ class OeuvreService {
   async checkUserByEmail(email: string): Promise<CheckUserByEmailResponse> {
     try {
       const response = await httpClient.post<CheckUserByEmailResponse>('/users/check-email', { email });
-      
+
       if (response.success && response.data) {
         return response.data;
       }
-      
+
       return { success: false, exists: false };
     } catch (error) {
       console.error('Erreur vérification email:', error);
@@ -297,14 +297,14 @@ class OeuvreService {
         sort: 'recent',
         limit: 1
       });
-      
+
       if (response.success && response.data?.oeuvres?.length > 0) {
         const oeuvre = response.data.oeuvres[0];
-        
+
         const createdAt = new Date(oeuvre.date_creation);
         const now = new Date();
         const diffMinutes = (now.getTime() - createdAt.getTime()) / (1000 * 60);
-        
+
         if (diffMinutes <= 5) {
           return {
             success: true,
@@ -312,7 +312,7 @@ class OeuvreService {
           };
         }
       }
-      
+
       return {
         success: false,
         error: 'Aucune œuvre récente trouvée'
@@ -377,67 +377,67 @@ class OeuvreService {
   /**
  * Récupérer mes œuvres (œuvres de l'utilisateur connecté)
  */
-/**
- * Récupérer mes œuvres (œuvres de l'utilisateur connecté)
- */
-async getMyOeuvres(params?: {
-  page?: number;
-  limit?: number;
-  statut?: string;
-}): Promise<ApiResponse<{
-  oeuvres: Oeuvre[];
-  pagination: {
-    total: number;
-    page: number;
-    pages: number;
-    limit: number;
-  };
-}>> {
-  try {
-    console.log('🔍 Appel API getMyOeuvres avec params:', params);
-    
-    // Spécifier le type attendu pour httpClient.get
-    const response = await httpClient.get<{
-      oeuvres: Oeuvre[];
-      pagination: {
-        total: number;
-        page: number;
-        pages: number;
-        limit: number;
-      };
-    }>(API_ENDPOINTS.oeuvres.myWorks, params);
-    
-    console.log('📚 Réponse API getMyOeuvres:', response);
-    
-    if (!response.success) {
-      console.error('❌ Erreur API:', response.error);
-      
-      // Si c'est une erreur 401, afficher plus d'infos
-      if (response.error?.includes('401') || response.error?.includes('auth')) {
-        const token = localStorage.getItem('auth_token');
-        console.error('🔐 Problème d\'authentification:', {
-          tokenPresent: !!token,
-          tokenLength: token?.length,
-          error: response.error
-        });
-      }
-    }
-    
-    return response;
-  } catch (error: any) {
-    console.error('❌ Erreur getMyOeuvres:', error);
-    
-    // Vérifier si c'est une erreur réseau
-    if (error.message?.includes('Network') || error.message?.includes('fetch')) {
-      console.error('🌐 Erreur réseau détectée');
-    }
-    
-    return {
-      success: false,
-      error: error.message || 'Erreur lors de la récupération'
+  /**
+   * Récupérer mes œuvres (œuvres de l'utilisateur connecté)
+   */
+  async getMyOeuvres(params?: {
+    page?: number;
+    limit?: number;
+    statut?: string;
+  }): Promise<ApiResponse<{
+    oeuvres: Oeuvre[];
+    pagination: {
+      total: number;
+      page: number;
+      pages: number;
+      limit: number;
     };
+  }>> {
+    try {
+      console.log('🔍 Appel API getMyOeuvres avec params:', params);
+
+      // Spécifier le type attendu pour httpClient.get
+      const response = await httpClient.get<{
+        oeuvres: Oeuvre[];
+        pagination: {
+          total: number;
+          page: number;
+          pages: number;
+          limit: number;
+        };
+      }>(API_ENDPOINTS.oeuvres.myWorks, params);
+
+      console.log('📚 Réponse API getMyOeuvres:', response);
+
+      if (!response.success) {
+        console.error('❌ Erreur API:', response.error);
+
+        // Si c'est une erreur 401, afficher plus d'infos
+        if (response.error?.includes('401') || response.error?.includes('auth')) {
+          const token = localStorage.getItem('auth_token');
+          console.error('🔐 Problème d\'authentification:', {
+            tokenPresent: !!token,
+            tokenLength: token?.length,
+            error: response.error
+          });
+        }
+      }
+
+      return response;
+    } catch (error: any) {
+      console.error('❌ Erreur getMyOeuvres:', error);
+
+      // Vérifier si c'est une erreur réseau
+      if (error.message?.includes('Network') || error.message?.includes('fetch')) {
+        console.error('🌐 Erreur réseau détectée');
+      }
+
+      return {
+        success: false,
+        error: error.message || 'Erreur lors de la récupération'
+      };
+    }
   }
-}
 
   /**
    * Mettre à jour une œuvre

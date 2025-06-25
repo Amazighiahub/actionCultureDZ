@@ -8,13 +8,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
-import { 
-  Calendar, 
-  MapPin, 
-  Users, 
-  DollarSign, 
-  Info, 
-  ArrowRight, 
+import {
+  Calendar,
+  MapPin,
+  Users,
+  DollarSign,
+  Info,
+  ArrowRight,
   Loader2,
   AlertCircle,
   Activity,
@@ -46,7 +46,7 @@ function useRateLimitMonitor() {
 const Evenements = () => {
   const navigate = useNavigate();
   const rateLimitStats = useRateLimitMonitor();
-  
+
   const [evenements, setEvenements] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -77,26 +77,26 @@ const Evenements = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       // Construire les paramètres
       const params: any = { limit: 20 };
       if (selectedStatut !== 'tous') {
         params.statut = selectedStatut;
       }
-      
+
       // Utiliser evenementService qui utilise httpClient amélioré
       const result = await evenementService.search(params);
-      
+
       if (result.success && result.data) {
-        const events = (result.data as any).items || 
-                      (result.data as any).results || 
-                      (result.data as any).data || 
-                      result.data || 
-                      [];
-        
+        const events = (result.data as any).items ||
+          (result.data as any).results ||
+          (result.data as any).data ||
+          result.data ||
+          [];
+
         console.log(`✅ ${events.length} événements chargés`);
         setEvenements(Array.isArray(events) ? events : []);
-        
+
         // Sauvegarder en localStorage comme backup
         try {
           localStorage.setItem('evenements_backup', JSON.stringify(events));
@@ -109,15 +109,15 @@ const Evenements = () => {
       }
     } catch (err: any) {
       console.error('Erreur:', err);
-      
+
       // Gérer spécifiquement le rate limit
       if (err.message?.includes('429') || err.message?.includes('rate limit')) {
         localStorage.setItem('lastRateLimit', Date.now().toString());
-        
+
         // Essayer de charger depuis le backup
         const backup = localStorage.getItem('evenements_backup');
         const backupTime = localStorage.getItem('evenements_backup_time');
-        
+
         if (backup && backupTime) {
           const age = Date.now() - parseInt(backupTime);
           if (age < 30 * 60 * 1000) { // 30 minutes
@@ -131,7 +131,7 @@ const Evenements = () => {
             }
           }
         }
-        
+
         setError('Trop de requêtes. Veuillez patienter quelques instants.');
       } else {
         setError('Impossible de charger les événements');
@@ -166,20 +166,20 @@ const Evenements = () => {
 
   const formatDate = (dateDebut?: string, dateFin?: string) => {
     if (!dateDebut) return 'Date non définie';
-    
+
     const start = new Date(dateDebut);
     const end = dateFin ? new Date(dateFin) : null;
-    
-    const options: Intl.DateTimeFormatOptions = { 
-      day: 'numeric', 
-      month: 'long', 
-      year: 'numeric' 
+
+    const options: Intl.DateTimeFormatOptions = {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
     };
-    
+
     if (end && dateDebut !== dateFin) {
       return `${start.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })} - ${end.toLocaleDateString('fr-FR', options)}`;
     }
-    
+
     return start.toLocaleDateString('fr-FR', options);
   };
 
@@ -238,21 +238,21 @@ const Evenements = () => {
   // Indicateur de santé du rate limit
   const getRateLimitHealth = () => {
     if (!rateLimitStats) return { status: 'unknown', color: 'gray' };
-    
+
     const { requestsLastMinute, rateLimitHits, currentDelay } = rateLimitStats;
-    
+
     if (rateLimitHits > 0) {
       return { status: 'critical', color: 'red', message: 'Rate limit atteint!' };
     }
-    
+
     if (requestsLastMinute > 25) {
       return { status: 'warning', color: 'orange', message: 'Proche de la limite' };
     }
-    
+
     if (currentDelay > 500) {
       return { status: 'slow', color: 'yellow', message: 'Mode ralenti actif' };
     }
-    
+
     return { status: 'good', color: 'green', message: 'Tout va bien' };
   };
 
@@ -280,7 +280,7 @@ const Evenements = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      
+
       {/* Indicateur de rate limit en développement */}
       {process.env.NODE_ENV === 'development' && rateLimitStats && (
         <div className="fixed bottom-4 left-4 z-50">
@@ -293,7 +293,7 @@ const Evenements = () => {
             <Activity className={`h-4 w-4 mr-2 text-${health.color}-500`} />
             Rate Limit
           </Button>
-          
+
           {showRateLimitInfo && (
             <Card className="absolute bottom-full left-0 mb-2 w-64">
               <CardHeader className="pb-3">
@@ -323,8 +323,8 @@ const Evenements = () => {
                   <span>429 hits:</span>
                   <span className="font-mono">{rateLimitStats.rateLimitHits}</span>
                 </div>
-                <Progress 
-                  value={(rateLimitStats.requestsLastMinute / 30) * 100} 
+                <Progress
+                  value={(rateLimitStats.requestsLastMinute / 30) * 100}
                   className="h-2"
                 />
                 <div className={`text-xs text-${health.color}-600 font-medium`}>
@@ -364,7 +364,7 @@ const Evenements = () => {
           )}
         </div>
       )}
-      
+
       <main className="container py-12">
         {/* En-tête */}
         <div className="text-center space-y-4 mb-16">
@@ -385,9 +385,9 @@ const Evenements = () => {
             <AlertDescription>
               {error}
               {!error.includes('cache') && (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  variant="outline"
+                  size="sm"
                   className="ml-4"
                   onClick={loadEvenements}
                 >
@@ -400,29 +400,29 @@ const Evenements = () => {
 
         {/* Filtres par statut */}
         <div className="flex flex-wrap gap-4 mb-8 justify-center">
-          <Button 
-            variant={selectedStatut === 'tous' ? 'default' : 'outline'} 
+          <Button
+            variant={selectedStatut === 'tous' ? 'default' : 'outline'}
             size="sm"
             onClick={() => setSelectedStatut('tous')}
           >
             Tous les statuts
           </Button>
-          <Button 
-            variant={selectedStatut === 'planifie' ? 'default' : 'outline'} 
+          <Button
+            variant={selectedStatut === 'planifie' ? 'default' : 'outline'}
             size="sm"
             onClick={() => setSelectedStatut('planifie')}
           >
             À venir
           </Button>
-          <Button 
-            variant={selectedStatut === 'en_cours' ? 'default' : 'outline'} 
+          <Button
+            variant={selectedStatut === 'en_cours' ? 'default' : 'outline'}
             size="sm"
             onClick={() => setSelectedStatut('en_cours')}
           >
             En cours
           </Button>
-          <Button 
-            variant={selectedStatut === 'termine' ? 'default' : 'outline'} 
+          <Button
+            variant={selectedStatut === 'termine' ? 'default' : 'outline'}
             size="sm"
             onClick={() => setSelectedStatut('termine')}
           >
@@ -432,17 +432,17 @@ const Evenements = () => {
 
         {/* Filtres par type */}
         <div className="flex flex-wrap gap-4 mb-12 justify-center">
-          <Button 
-            variant={selectedType === 'tous' ? 'default' : 'outline'} 
+          <Button
+            variant={selectedType === 'tous' ? 'default' : 'outline'}
             size="sm"
             onClick={() => setSelectedType('tous')}
           >
             Toutes catégories
           </Button>
           {uniqueTypes.map(type => (
-            <Button 
+            <Button
               key={type}
-              variant={selectedType === type ? 'default' : 'outline'} 
+              variant={selectedType === type ? 'default' : 'outline'}
               size="sm"
               onClick={() => setSelectedType(type!)}
             >
@@ -468,15 +468,15 @@ const Evenements = () => {
               const eventType = evenement.type_evenement?.nom_type || evenement.TypeEvenement?.nom_type || evenement.type || 'Événement';
               const eventLieu = evenement.Lieu || evenement.lieu;
               const lieuName = eventLieu?.nom || evenement.adresse || 'Lieu non défini';
-              const eventComplet = evenement.est_complet || 
+              const eventComplet = evenement.est_complet ||
                 (evenement.capacite_max && (evenement.participants_count || evenement.nombre_participants || 0) >= evenement.capacite_max);
-              
+
               return (
                 <Card key={eventId} className="overflow-hidden hover-lift group">
                   <div className="aspect-video overflow-hidden bg-muted">
                     {eventImage ? (
-                      <img 
-                        src={eventImage} 
+                      <img
+                        src={eventImage}
                         alt={eventName}
                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                       />
@@ -491,7 +491,7 @@ const Evenements = () => {
                       <CardTitle className="font-serif text-lg leading-tight line-clamp-2">
                         {eventName}
                       </CardTitle>
-                      <Badge 
+                      <Badge
                         variant={getStatusColor(evenement.statut) as any}
                         className="ml-2 whitespace-nowrap"
                       >
@@ -508,7 +508,7 @@ const Evenements = () => {
                         {evenement.description}
                       </p>
                     )}
-                    
+
                     <div className="space-y-2 text-sm">
                       <div className="flex items-center space-x-2">
                         <Calendar className="h-4 w-4 text-primary flex-shrink-0" />
@@ -534,8 +534,8 @@ const Evenements = () => {
                         <span className="font-medium">{formatTarif(evenement)}</span>
                       </div>
                     </div>
-                    
-                    <Button 
+
+                    <Button
                       className="w-full btn-hover group"
                       onClick={() => handleEventDetails(eventId)}
                       disabled={evenement.statut === 'annule'}
