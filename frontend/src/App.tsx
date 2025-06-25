@@ -19,6 +19,7 @@ import DashboardAdmin from "./pages/DashboardAdmin";
 import DashboardUser from "./pages/DashboardUser";
 import AjouterOeuvre from "./pages/AjouterOeuvre";
 import AjouterEvenement from "./pages/AjouterEvenement";
+import VerifyEmailPage from './pages/VerifyEmailPage';
 
 // Import des pages de notifications
 import NotificationsPage from "./pages/notifications/preferences";
@@ -182,6 +183,11 @@ const App = () => (
               </AdminRoute>
             } />
             
+            {/* Route pour la vérification de l'email */}
+            <Route path="/verify-email/:token" element={
+              <VerifyEmailPage />} 
+            />
+
             {/* Route catch-all pour 404 */}
             <Route path="*" element={<NotFound />} />
           </Routes>

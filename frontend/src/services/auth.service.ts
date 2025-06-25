@@ -76,7 +76,20 @@ class AuthService {
     return response;
   }
 
+  /**
+     * Appelle l'API pour vérifier un e-mail à l'aide d'un jeton.
+     * Si la vérification réussit, connecte l'utilisateur.
+     * @param token Le jeton de vérification provenant de l'URL.
+     */
+  async verifyEmail(token: string) {
+    const endpoint = API_ENDPOINTS.auth.verifyEmail(token);
+    const response = await httpClient.post<AuthTokenData>(endpoint);
 
+    if (response.success && response.data) {
+        this.setAuthData(response.data);
+    }
+    return response;
+  }
 
   async refreshToken(): Promise<ApiResponse<AuthTokenData>> {
     const refreshToken = localStorage.getItem(AUTH_CONFIG.refreshTokenKey);

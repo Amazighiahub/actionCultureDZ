@@ -189,9 +189,16 @@ module.exports = (models, authMiddleware) => {
     (req, res) => userController.changePassword(req, res)
   );
 
+  // Route pour vérifier l'email avec un jeton transmis dans l'URL
+  router.post(
+    '/verify-email/:token', 
+    userController.verifyEmail.bind(userController) 
+  );
+
   // ========================================================================
   // LOG DES ROUTES
   // ========================================================================
+
   const routeCount = router.stack.filter(layer => layer.route).length;
   console.log(`✅ Routes utilisateur initialisées: ${routeCount} routes`);
 
