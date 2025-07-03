@@ -20,23 +20,26 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle } from
-'@/components/UI/dialog';
+  DialogTitle
+} from
+  '@/components/UI/dialog';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue } from
-'@/components/UI/select';
+  SelectValue
+} from
+  '@/components/UI/select';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuTrigger } from
-'@/components/UI/dropdown-menu';
+  DropdownMenuTrigger
+} from
+  '@/components/UI/dropdown-menu';
 import {
   Users,
   BookOpen,
@@ -106,8 +109,9 @@ import {
   CheckCheck,
   BellRing,
   WifiOff,
-  Wifi } from
-'lucide-react';
+  Wifi
+} from
+  'lucide-react';
 import { useToast } from '@/components/UI/use-toast';
 import { useDashboardAdmin, useAdminFilters } from '@/hooks/useDashboardAdmin';
 import { useConfirmedActionWithDialog } from '@/hooks/useConfirmedAction';
@@ -116,7 +120,7 @@ import { notificationService } from '@/services/notification.service';
 import { socketService } from '@/services/socketService';
 
 // Hook personnalisé pour le debounce
-import { useTranslation } from "react-i18next";const useDebouncedValue = <T,>(value: T, delay: number = 500): T => {
+import { useTranslation } from "react-i18next"; const useDebouncedValue = <T,>(value: T, delay: number = 500): T => {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
 
   useEffect(() => {
@@ -134,29 +138,29 @@ import { useTranslation } from "react-i18next";const useDebouncedValue = <T,>(va
 
 // Constantes pour les options de filtres
 const TYPES_OEUVRE = [
-'peinture', 'sculpture', 'photographie', 'artisanat', 'calligraphie', 'ceramique', 'textile', 'bijouterie'];
+  'peinture', 'sculpture', 'photographie', 'artisanat', 'calligraphie', 'ceramique', 'textile', 'bijouterie'];
 
 
 const TYPES_EVENEMENT = [
-'exposition', 'concert', 'festival', 'conference', 'atelier', 'visite_guidee', 'spectacle', 'concours'];
+  'exposition', 'concert', 'festival', 'conference', 'atelier', 'visite_guidee', 'spectacle', 'concours'];
 
 
 const TYPES_PATRIMOINE = [
-'monument', 'site_archeologique', 'musee', 'batiment_historique', 'site_naturel', 'medina', 'kasbah'];
+  'monument', 'site_archeologique', 'musee', 'batiment_historique', 'site_naturel', 'medina', 'kasbah'];
 
 
 const TYPES_SERVICE = [
-'guide_touristique', 'transport', 'hebergement', 'restauration', 'artisanat', 'formation', 'consultation'];
+  'guide_touristique', 'transport', 'hebergement', 'restauration', 'artisanat', 'formation', 'consultation'];
 
 
 const WILAYAS = [
-'Adrar', 'Chlef', 'Laghouat', 'Oum El Bouaghi', 'Batna', 'Béjaïa', 'Biskra', 'Béchar',
-'Blida', 'Bouira', 'Tamanrasset', 'Tébessa', 'Tlemcen', 'Tiaret', 'Tizi Ouzou', 'Alger',
-'Djelfa', 'Jijel', 'Sétif', 'Saïda', 'Skikda', 'Sidi Bel Abbès', 'Annaba', 'Guelma',
-'Constantine', 'Médéa', 'Mostaganem', 'MSila', 'Mascara', 'Ouargla', 'Oran', 'El Bayadh',
-'Illizi', 'Bordj Bou Arréridj', 'Boumerdès', 'El Tarf', 'Tindouf', 'Tissemsilt', 'El Oued',
-'Khenchela', 'Souk Ahras', 'Tipaza', 'Mila', 'Aïn Defla', 'Naâma', 'Aïn Témouchent',
-'Ghardaïa', 'Relizane'];
+  'Adrar', 'Chlef', 'Laghouat', 'Oum El Bouaghi', 'Batna', 'Béjaïa', 'Biskra', 'Béchar',
+  'Blida', 'Bouira', 'Tamanrasset', 'Tébessa', 'Tlemcen', 'Tiaret', 'Tizi Ouzou', 'Alger',
+  'Djelfa', 'Jijel', 'Sétif', 'Saïda', 'Skikda', 'Sidi Bel Abbès', 'Annaba', 'Guelma',
+  'Constantine', 'Médéa', 'Mostaganem', 'MSila', 'Mascara', 'Ouargla', 'Oran', 'El Bayadh',
+  'Illizi', 'Bordj Bou Arréridj', 'Boumerdès', 'El Tarf', 'Tindouf', 'Tissemsilt', 'El Oued',
+  'Khenchela', 'Souk Ahras', 'Tipaza', 'Mila', 'Aïn Defla', 'Naâma', 'Aïn Témouchent',
+  'Ghardaïa', 'Relizane'];
 
 
 // Interface pour le modal de notification
@@ -170,52 +174,6 @@ interface NotificationModalData {
   defaultTitle?: string;
   defaultMessage?: string;
 }
-
-// Types de notifications système
-const NOTIFICATION_TYPES = {
-  validation_compte: {
-    label: t("dashboardadmin.label_validation"),
-    icon: CheckCircle,
-    color: 'text-green-600',
-    template: (entity: string) => `Votre ${entity} a été validé(e)`
-  },
-  rejection: {
-    label: t("dashboardadmin.label_rejet"),
-    icon: XCircle,
-    color: 'text-red-600',
-    template: (entity: string) => `Votre ${entity} a été rejeté(e)`
-  },
-  message_admin: {
-    label: t("dashboardadmin.label_message"),
-    icon: MessageSquare,
-    color: 'text-blue-600',
-    template: () => 'Message de l\'administration'
-  },
-  suspension: {
-    label: t("dashboardadmin.label_suspension"),
-    icon: Lock,
-    color: 'text-orange-600',
-    template: () => 'Compte suspendu'
-  },
-  reactivation: {
-    label: t("dashboardadmin.label_ractivation"),
-    icon: Unlock,
-    color: 'text-green-600',
-    template: () => 'Compte réactivé'
-  },
-  info: {
-    label: t("dashboardadmin.label_information"),
-    icon: Bell,
-    color: 'text-gray-600',
-    template: () => 'Information'
-  },
-  warning: {
-    label: t("dashboardadmin.label_avertissement"),
-    icon: AlertTriangle,
-    color: 'text-yellow-600',
-    template: () => 'Avertissement'
-  }
-};
 
 const DashboardAdmin = () => {
   const { toast } = useToast();
@@ -274,8 +232,8 @@ const DashboardAdmin = () => {
   const [showServiceFilters, setShowServiceFilters] = useState(false);
 
   // États pour les modals
-  const [editUserModal, setEditUserModal] = useState<{open: boolean;user: any | null;}>({ open: false, user: null });
-  const [suspendUserModal, setSuspendUserModal] = useState<{open: boolean;user: any | null;}>({ open: false, user: null });
+  const [editUserModal, setEditUserModal] = useState<{ open: boolean; user: any | null; }>({ open: false, user: null });
+  const [suspendUserModal, setSuspendUserModal] = useState<{ open: boolean; user: any | null; }>({ open: false, user: null });
   const [notificationModal, setNotificationModal] = useState<NotificationModalData>({
     isOpen: false,
     type: 'user',
@@ -519,13 +477,12 @@ const DashboardAdmin = () => {
 
   // Fonction pour envoyer une notification avec gestion complète
   const sendNotification = async (
-  type: string,
-  entityId: number,
-  entityName: string,
-  userId: number,
-  action: 'validation' | 'rejection' | 'custom',
-  customData?: {titre: string;message: string;canaux?: string[];sendEmail?: boolean;}) =>
-  {
+    type: string,
+    entityId: number,
+    entityName: string,
+    userId: number,
+    action: 'validation' | 'rejection' | 'custom',
+    customData?: { titre: string; message: string; canaux?: string[]; sendEmail?: boolean; }) => {
     try {
       let titre = '';
       let message = '';
@@ -603,9 +560,9 @@ const DashboardAdmin = () => {
         title: t("dashboardadmin.title_notification_envoye"),
         description: `Notification envoyée à l'utilisateur`,
         action:
-        <Button variant="outline" size="sm" onClick={() => navigate(`/admin/notifications/sent`)}>{t("dashboardadmin.voir_lhistorique")}
+          <Button variant="outline" size="sm" onClick={() => navigate(`/admin/notifications/sent`)}>{t("dashboardadmin.voir_lhistorique")}
 
-        </Button>
+          </Button>
 
       });
 
@@ -693,9 +650,9 @@ const DashboardAdmin = () => {
   };
 
   // Actions avec notifications
-  const validateUserWithNotification = async ({ userId, validated }: {userId: number;validated: boolean;}) => {
+  const validateUserWithNotification = async ({ userId, validated }: { userId: number; validated: boolean; }) => {
     const user = pendingUsers?.items?.find((u: any) => u.id_user === userId) ||
-    pendingUsers?.users?.find((u: any) => u.id_user === userId);
+      pendingUsers?.users?.find((u: any) => u.id_user === userId);
 
     await validateUser({ userId, validated });
 
@@ -706,9 +663,9 @@ const DashboardAdmin = () => {
     }
   };
 
-  const validateOeuvreWithNotification = async ({ oeuvreId, validated }: {oeuvreId: number;validated: boolean;}) => {
+  const validateOeuvreWithNotification = async ({ oeuvreId, validated }: { oeuvreId: number; validated: boolean; }) => {
     const oeuvre = pendingOeuvres?.items?.find((o: any) => o.id_oeuvre === oeuvreId) ||
-    pendingOeuvres?.oeuvres?.find((o: any) => o.id_oeuvre === oeuvreId);
+      pendingOeuvres?.oeuvres?.find((o: any) => o.id_oeuvre === oeuvreId);
 
     await validateOeuvre({ oeuvreId, validated });
 
@@ -725,7 +682,7 @@ const DashboardAdmin = () => {
 
   // Actions confirmées avec dialog et notifications
   const deleteUserAction = useConfirmedActionWithDialog(
-    async ({ userId }: {userId: number;}) => {
+    async ({ userId }: { userId: number; }) => {
       await deleteUser({ userId });
       setSelectedUsers((prev) => prev.filter((id) => id !== userId));
     },
@@ -740,14 +697,14 @@ const DashboardAdmin = () => {
   );
 
   const validateUserAction = useConfirmedActionWithDialog(
-    async ({ userId, validated }: {userId: number;validated: boolean;}) => {
+    async ({ userId, validated }: { userId: number; validated: boolean; }) => {
       await validateUserWithNotification({ userId, validated });
     },
     {
       dialogTitle: (validated: boolean) => validated ? 'Valider l\'utilisateur' : 'Rejeter l\'utilisateur',
       dialogDescription: (validated: boolean) => validated ?
-      'Voulez-vous valider cet utilisateur et lui donner accès à la plateforme ?' :
-      'Voulez-vous rejeter la demande de cet utilisateur ?',
+        'Voulez-vous valider cet utilisateur et lui donner accès à la plateforme ?' :
+        'Voulez-vous rejeter la demande de cet utilisateur ?',
       confirmButtonText: (validated: boolean) => validated ? 'Valider' : 'Rejeter',
       confirmButtonVariant: (validated: boolean) => validated ? 'default' : 'destructive',
       cooldownPeriod: 2000
@@ -755,7 +712,7 @@ const DashboardAdmin = () => {
   );
 
   const deleteOeuvreAction = useConfirmedActionWithDialog(
-    async ({ oeuvreId }: {oeuvreId: number;}) => {
+    async ({ oeuvreId }: { oeuvreId: number; }) => {
       await deleteOeuvre(oeuvreId);
       setSelectedOeuvres((prev) => prev.filter((id) => id !== oeuvreId));
     },
@@ -769,7 +726,7 @@ const DashboardAdmin = () => {
   );
 
   const deleteEvenementAction = useConfirmedActionWithDialog(
-    async ({ evenementId }: {evenementId: number;}) => {
+    async ({ evenementId }: { evenementId: number; }) => {
       await deleteEvenement(evenementId);
       setSelectedEvenements((prev) => prev.filter((id) => id !== evenementId));
     },
@@ -783,7 +740,7 @@ const DashboardAdmin = () => {
   );
 
   const deleteServiceAction = useConfirmedActionWithDialog(
-    async ({ serviceId }: {serviceId: number;}) => {
+    async ({ serviceId }: { serviceId: number; }) => {
       await deleteService(serviceId);
       setSelectedServices((prev) => prev.filter((id) => id !== serviceId));
     },
@@ -926,11 +883,11 @@ const DashboardAdmin = () => {
     if (debouncedSearchUsers) {
       const query = debouncedSearchUsers.toLowerCase();
       users = users.filter((user: any) =>
-      user.nom?.toLowerCase().includes(query) ||
-      user.prenom?.toLowerCase().includes(query) ||
-      user.email?.toLowerCase().includes(query) ||
-      user.type_user?.toLowerCase().includes(query) ||
-      user.entreprise?.toLowerCase().includes(query)
+        user.nom?.toLowerCase().includes(query) ||
+        user.prenom?.toLowerCase().includes(query) ||
+        user.email?.toLowerCase().includes(query) ||
+        user.type_user?.toLowerCase().includes(query) ||
+        user.entreprise?.toLowerCase().includes(query)
       );
     }
 
@@ -986,38 +943,38 @@ const DashboardAdmin = () => {
   // Gérer la sélection d'éléments
   const toggleOeuvreSelection = useCallback((oeuvreId: number) => {
     setSelectedOeuvres((prev) =>
-    prev.includes(oeuvreId) ?
-    prev.filter((id) => id !== oeuvreId) :
-    [...prev, oeuvreId]
+      prev.includes(oeuvreId) ?
+        prev.filter((id) => id !== oeuvreId) :
+        [...prev, oeuvreId]
     );
   }, []);
 
   const toggleEvenementSelection = useCallback((evenementId: number) => {
     setSelectedEvenements((prev) =>
-    prev.includes(evenementId) ?
-    prev.filter((id) => id !== evenementId) :
-    [...prev, evenementId]
+      prev.includes(evenementId) ?
+        prev.filter((id) => id !== evenementId) :
+        [...prev, evenementId]
     );
   }, []);
 
   const toggleServiceSelection = useCallback((serviceId: number) => {
     setSelectedServices((prev) =>
-    prev.includes(serviceId) ?
-    prev.filter((id) => id !== serviceId) :
-    [...prev, serviceId]
+      prev.includes(serviceId) ?
+        prev.filter((id) => id !== serviceId) :
+        [...prev, serviceId]
     );
   }, []);
 
   const toggleUserSelection = useCallback((userId: number) => {
     setSelectedUsers((prev) =>
-    prev.includes(userId) ?
-    prev.filter((id) => id !== userId) :
-    [...prev, userId]
+      prev.includes(userId) ?
+        prev.filter((id) => id !== userId) :
+        [...prev, userId]
     );
   }, []);
 
   // Actions groupées avec notifications
-  const { t } = useTranslation();const handleBulkValidation = async (type: 'users' | 'oeuvres' | 'evenements' | 'services', validated: boolean) => {
+  const { t } = useTranslation(); const handleBulkValidation = async (type: 'users' | 'oeuvres' | 'evenements' | 'services', validated: boolean) => {
     let selectedIds: number[] = [];
     let entityType = '';
 
@@ -1048,6 +1005,52 @@ const DashboardAdmin = () => {
       });
       return;
     }
+
+    // Types de notifications système
+    const NOTIFICATION_TYPES = {
+      validation_compte: {
+        label: t("dashboardadmin.label_validation"),
+        icon: CheckCircle,
+        color: 'text-green-600',
+        template: (entity: string) => `Votre ${entity} a été validé(e)`
+      },
+      rejection: {
+        label: t("dashboardadmin.label_rejet"),
+        icon: XCircle,
+        color: 'text-red-600',
+        template: (entity: string) => `Votre ${entity} a été rejeté(e)`
+      },
+      message_admin: {
+        label: t("dashboardadmin.label_message"),
+        icon: MessageSquare,
+        color: 'text-blue-600',
+        template: () => 'Message de l\'administration'
+      },
+      suspension: {
+        label: t("dashboardadmin.label_suspension"),
+        icon: Lock,
+        color: 'text-orange-600',
+        template: () => 'Compte suspendu'
+      },
+      reactivation: {
+        label: t("dashboardadmin.label_ractivation"),
+        icon: Unlock,
+        color: 'text-green-600',
+        template: () => 'Compte réactivé'
+      },
+      info: {
+        label: t("dashboardadmin.label_information"),
+        icon: Bell,
+        color: 'text-gray-600',
+        template: () => 'Information'
+      },
+      warning: {
+        label: t("dashboardadmin.label_avertissement"),
+        icon: AlertTriangle,
+        color: 'text-yellow-600',
+        template: () => 'Avertissement'
+      }
+    };
 
     const action = validated ? 'valider' : 'rejeter';
     const message = `Voulez-vous ${action} ${selectedIds.length} ${entityType}(s) ?`;
@@ -1210,7 +1213,8 @@ const DashboardAdmin = () => {
   };
 
   // Carte de statistique
-  const StatCard = ({ title, value, subtitle, icon: Icon, trend, color = 'primary' }: any) => {const { t } = useTranslation();
+  const StatCard = ({ title, value, subtitle, icon: Icon, trend, color = 'primary' }: any) => {
+    const { t } = useTranslation();
     const colorClasses = {
       primary: 'text-primary bg-primary/10',
       secondary: 'text-secondary bg-secondary/10',
@@ -1227,7 +1231,7 @@ const DashboardAdmin = () => {
               <p className="text-sm font-medium text-muted-foreground">{title}</p>
               <p className="text-2xl font-bold">{value}</p>
               {subtitle &&
-              <p className="text-xs text-muted-foreground">{subtitle}</p>
+                <p className="text-xs text-muted-foreground">{subtitle}</p>
               }
             </div>
             <div className={cn("p-3 rounded-full", colorClasses[color] || colorClasses.primary)}>
@@ -1235,11 +1239,11 @@ const DashboardAdmin = () => {
             </div>
           </div>
           {trend !== undefined &&
-          <div className="mt-3 flex items-center text-xs">
+            <div className="mt-3 flex items-center text-xs">
               <TrendingUp className={cn("h-3 w-3 mr-1", trend > 0 ? "text-green-600" : "text-red-600")} />
               <span className={trend > 0 ? "text-green-600" : "text-red-600"}>
                 {Math.abs(trend)}{t("dashboardadmin.priode_prcdente")}
-            </span>
+              </span>
             </div>
           }
         </CardContent>
@@ -1257,43 +1261,43 @@ const DashboardAdmin = () => {
     onPageChange,
     itemsPerPage
   }: any) =>
-  <div className="flex items-center justify-between mt-6">
+    <div className="flex items-center justify-between mt-6">
       <p className="text-sm text-muted-foreground">{t("dashboardadmin.affichage")}
-      {(currentPage - 1) * itemsPerPage + 1} à {Math.min(currentPage * itemsPerPage, totalItems)}{t("dashboardadmin.sur_1")}{totalItems}{t("dashboardadmin.rsultats")}
-    </p>
+        {(currentPage - 1) * itemsPerPage + 1} à {Math.min(currentPage * itemsPerPage, totalItems)}{t("dashboardadmin.sur_1")}{totalItems}{t("dashboardadmin.rsultats")}
+      </p>
       <div className="flex items-center gap-2">
         <Button
-        variant="outline"
-        size="sm"
-        onClick={() => onPageChange(1)}
-        disabled={!hasPrev}>
+          variant="outline"
+          size="sm"
+          onClick={() => onPageChange(1)}
+          disabled={!hasPrev}>
 
           <ChevronsLeft className="h-4 w-4" />
         </Button>
         <Button
-        variant="outline"
-        size="sm"
-        onClick={() => onPageChange(currentPage - 1)}
-        disabled={!hasPrev}>
+          variant="outline"
+          size="sm"
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={!hasPrev}>
 
           <ChevronLeft className="h-4 w-4" />
         </Button>
         <span className="flex items-center px-3 text-sm">{t("dashboardadmin.page")}
-        {currentPage}{t("dashboardadmin.sur_1")}{totalPages}
+          {currentPage}{t("dashboardadmin.sur_1")}{totalPages}
         </span>
         <Button
-        variant="outline"
-        size="sm"
-        onClick={() => onPageChange(currentPage + 1)}
-        disabled={!hasNext}>
+          variant="outline"
+          size="sm"
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={!hasNext}>
 
           <ChevronRight className="h-4 w-4" />
         </Button>
         <Button
-        variant="outline"
-        size="sm"
-        onClick={() => onPageChange(totalPages)}
-        disabled={!hasNext}>
+          variant="outline"
+          size="sm"
+          onClick={() => onPageChange(totalPages)}
+          disabled={!hasNext}>
 
           <ChevronsRight className="h-4 w-4" />
         </Button>
@@ -1302,7 +1306,8 @@ const DashboardAdmin = () => {
 
 
   // Modal de notification amélioré
-  const NotificationModal = () => {const { t } = useTranslation();
+  const NotificationModal = () => {
+    const { t } = useTranslation();
     const NotificationIcon = NOTIFICATION_TYPES[notificationForm.type as keyof typeof NOTIFICATION_TYPES]?.icon || Bell;
     const notificationColor = NOTIFICATION_TYPES[notificationForm.type as keyof typeof NOTIFICATION_TYPES]?.color || 'text-gray-600';
 
@@ -1316,12 +1321,12 @@ const DashboardAdmin = () => {
             </DialogTitle>
             <DialogDescription>
               {notificationModal.action === 'broadcast' ?
-              'Envoyer une notification à tous les utilisateurs de la plateforme' :
-              `Envoyer une notification à ${notificationModal.entityName || 'l\'utilisateur'}`
+                'Envoyer une notification à tous les utilisateurs de la plateforme' :
+                `Envoyer une notification à ${notificationModal.entityName || 'l\'utilisateur'}`
               }
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="notification-type">{t("dashboardadmin.type_notification")}</Label>
@@ -1334,7 +1339,7 @@ const DashboardAdmin = () => {
                 </SelectTrigger>
                 <SelectContent>
                   {Object.entries(NOTIFICATION_TYPES).map(([key, config]) =>
-                  <SelectItem key={key} value={key}>
+                    <SelectItem key={key} value={key}>
                       <div className="flex items-center gap-2">
                         <config.icon className={cn("h-4 w-4", config.color)} />
                         {config.label}
@@ -1344,7 +1349,7 @@ const DashboardAdmin = () => {
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="grid gap-2">
               <Label htmlFor="notification-title">{t("dashboardadmin.titre")}</Label>
               <Input
@@ -1354,7 +1359,7 @@ const DashboardAdmin = () => {
                 placeholder={t("dashboardadmin.placeholder_titre_notification")} />
 
             </div>
-            
+
             <div className="grid gap-2">
               <Label htmlFor="notification-message">{t("dashboardadmin.message")}</Label>
               <Textarea
@@ -1365,7 +1370,7 @@ const DashboardAdmin = () => {
                 rows={4} />
 
             </div>
-            
+
             <div className="grid gap-2">
               <Label htmlFor="notification-priority">{t("dashboardadmin.priorit")}</Label>
               <Select
@@ -1383,7 +1388,7 @@ const DashboardAdmin = () => {
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="space-y-2">
               <Label>{t("dashboardadmin.canaux_notification")}</Label>
               <div className="space-y-2">
@@ -1410,7 +1415,7 @@ const DashboardAdmin = () => {
 
                   </Label>
                 </div>
-                
+
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="canal-push"
@@ -1434,7 +1439,7 @@ const DashboardAdmin = () => {
 
                   </Label>
                 </div>
-                
+
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="canal-email"
@@ -1451,7 +1456,7 @@ const DashboardAdmin = () => {
                 </div>
               </div>
             </div>
-            
+
             {/* Aperçu de la notification */}
             <div className="rounded-lg border p-4 space-y-2 bg-muted/50">
               <p className="text-sm font-medium text-muted-foreground">{t("dashboardadmin.aperu")}</p>
@@ -1466,7 +1471,7 @@ const DashboardAdmin = () => {
               </div>
             </div>
           </div>
-          
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setNotificationModal({ ...notificationModal, isOpen: false })}>{t("dashboardadmin.annuler_3")}
 
@@ -1484,7 +1489,7 @@ const DashboardAdmin = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      
+
       <main className="container mx-auto py-8 px-4">
         {/* En-tête avec indicateur de connexion */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
@@ -1492,30 +1497,30 @@ const DashboardAdmin = () => {
             <h1 className="text-3xl font-bold font-serif">{t("dashboardadmin.tableau_bord_administrateur")}</h1>
             <p className="text-muted-foreground mt-1">{t("dashboardadmin.vue_densemble_plateforme")}</p>
           </div>
-          
+
           <div className="flex items-center gap-3">
             {/* Indicateur de connexion WebSocket */}
             <div className="flex items-center gap-2">
               {isWebSocketConnected ?
-              <>
+                <>
                   <Wifi className="h-4 w-4 text-green-600" />
                   <span className="text-sm text-green-600">{t("dashboardadmin.connect")}</span>
                 </> :
 
-              <>
+                <>
                   <WifiOff className="h-4 w-4 text-red-600" />
                   <span className="text-sm text-red-600">{t("dashboardadmin.dconnect")}</span>
                 </>
               }
             </div>
-            
+
             {/* Notifications récentes */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="icon" className="relative">
                   <Bell className="h-4 w-4" />
                   {recentNotifications.length > 0 &&
-                  <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                    <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
                       {recentNotifications.length}
                     </span>
                   }
@@ -1525,19 +1530,19 @@ const DashboardAdmin = () => {
                 <DropdownMenuLabel>{t("dashboardadmin.notifications_rcentes")}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 {recentNotifications.length > 0 ?
-                recentNotifications.map((notif, index) =>
-                <DropdownMenuItem key={index} className="flex items-start gap-2 p-3">
+                  recentNotifications.map((notif, index) =>
+                    <DropdownMenuItem key={index} className="flex items-start gap-2 p-3">
                       <Bell className="h-4 w-4 mt-0.5 text-muted-foreground" />
                       <div className="flex-1">
                         <p className="text-sm font-medium">{notif.titre}</p>
                         <p className="text-xs text-muted-foreground">{formatDate(notif.date)}</p>
                       </div>
                     </DropdownMenuItem>
-                ) :
+                  ) :
 
-                <div className="p-4 text-center text-sm text-muted-foreground">{t("dashboardadmin.aucune_notification_rcente")}
+                  <div className="p-4 text-center text-sm text-muted-foreground">{t("dashboardadmin.aucune_notification_rcente")}
 
-                </div>
+                  </div>
                 }
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => navigate('/admin/notifications')}>{t("dashboardadmin.voir_toutes_les")}
@@ -1545,7 +1550,7 @@ const DashboardAdmin = () => {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            
+
             <Button
               onClick={() => {
                 setNotificationModal({
@@ -1570,7 +1575,7 @@ const DashboardAdmin = () => {
               <BellRing className="h-4 w-4" />{t("dashboardadmin.notification_globale")}
 
             </Button>
-            
+
             <Select value={selectedPeriod} onValueChange={(value: any) => changePeriod(value)}>
               <SelectTrigger className="w-[140px]">
                 <SelectValue />
@@ -1582,7 +1587,7 @@ const DashboardAdmin = () => {
                 <SelectItem value="year">{t("dashboardadmin.cette_anne")}</SelectItem>
               </SelectContent>
             </Select>
-            
+
             <Button
               variant="outline"
               onClick={() => refreshAll?.()}
@@ -1591,7 +1596,7 @@ const DashboardAdmin = () => {
               <RefreshCw className={cn("h-4 w-4 mr-2", loading && "animate-spin")} />{t("dashboardadmin.actualiser")}
 
             </Button>
-            
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline">
@@ -1614,7 +1619,7 @@ const DashboardAdmin = () => {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            
+
             <Button variant="outline" onClick={() => clearCache && clearCache()}>
               <Database className="h-4 w-4 mr-2" />{t("dashboardadmin.vider_cache")}
 
@@ -1624,67 +1629,67 @@ const DashboardAdmin = () => {
 
         {/* Alertes importantes */}
         {alerts && alerts.length > 0 &&
-        <div className="mb-6 space-y-3">
+          <div className="mb-6 space-y-3">
             {alerts.filter((alert) => alert.severity === 'critical' || alert.severity === 'high').map((alert, index) =>
-          <Alert key={index} variant={alert.severity === 'critical' ? 'destructive' : 'default'}>
+              <Alert key={index} variant={alert.severity === 'critical' ? 'destructive' : 'default'}>
                 <AlertTriangle className="h-4 w-4" />
                 <AlertTitle>
                   {alert.type === 'security' ? 'Alerte de sécurité' :
-              alert.type === 'performance' ? 'Performance' :
-              alert.type === 'content' ? 'Contenu' : 'Système'}
+                    alert.type === 'performance' ? 'Performance' :
+                      alert.type === 'content' ? 'Contenu' : 'Système'}
                 </AlertTitle>
                 <AlertDescription>{alert.message}</AlertDescription>
               </Alert>
-          )}
+            )}
           </div>
         }
 
         {/* Cartes de statistiques */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
           {loadingOverview ?
-          <>
+            <>
               <Skeleton className="h-32" />
               <Skeleton className="h-32" />
               <Skeleton className="h-32" />
               <Skeleton className="h-32" />
             </> :
-          overview ?
-          <>
-              <StatCard
-              title={t("dashboardadmin.utilisateurs")}
-              value={formatNumber(overview.users?.total)}
-              subtitle={`+${overview.users?.nouveaux_mois || 0} ce mois`}
-              icon={Users}
-              trend={overview.growth?.users_growth_percent}
-              color="primary" />
+            overview ?
+              <>
+                <StatCard
+                  title={t("dashboardadmin.utilisateurs")}
+                  value={formatNumber(overview.users?.total)}
+                  subtitle={`+${overview.users?.nouveaux_mois || 0} ce mois`}
+                  icon={Users}
+                  trend={overview.growth?.users_growth_percent}
+                  color="primary" />
 
-              
-              <StatCard
-              title={t("dashboardadmin.uvres")}
-              value={formatNumber(overview.content?.oeuvres_total)}
-              subtitle={`${overview.content?.oeuvres_en_attente || 0} en attente`}
-              icon={BookOpen}
-              trend={overview.growth?.content_growth_percent}
-              color="secondary" />
 
-              
-              <StatCard
-              title={t("dashboardadmin.vnements")}
-              value={formatNumber(overview.content?.evenements_total)}
-              subtitle={`${overview.content?.evenements_actifs || 0} actifs`}
-              icon={Calendar}
-              color="success" />
+                <StatCard
+                  title={t("dashboardadmin.uvres")}
+                  value={formatNumber(overview.content?.oeuvres_total)}
+                  subtitle={`${overview.content?.oeuvres_en_attente || 0} en attente`}
+                  icon={BookOpen}
+                  trend={overview.growth?.content_growth_percent}
+                  color="secondary" />
 
-              
-              <StatCard
-              title={t("dashboardadmin.patrimoine")}
-              value={formatNumber(overview.content?.sites_patrimoine)}
-              subtitle={`${patrimoineStats?.sites_unesco || 0} UNESCO`}
-              icon={MapPin}
-              color="warning" />
 
-            </> :
-          null}
+                <StatCard
+                  title={t("dashboardadmin.vnements")}
+                  value={formatNumber(overview.content?.evenements_total)}
+                  subtitle={`${overview.content?.evenements_actifs || 0} actifs`}
+                  icon={Calendar}
+                  color="success" />
+
+
+                <StatCard
+                  title={t("dashboardadmin.patrimoine")}
+                  value={formatNumber(overview.content?.sites_patrimoine)}
+                  subtitle={`${patrimoineStats?.sites_unesco || 0} UNESCO`}
+                  icon={MapPin}
+                  color="warning" />
+
+              </> :
+              null}
         </div>
 
         {/* Actions rapides */}
@@ -1701,68 +1706,68 @@ const DashboardAdmin = () => {
             </CardHeader>
             <CardContent>
               {loadingPendingUsers ?
-              <div className="space-y-3">
+                <div className="space-y-3">
                   <Skeleton className="h-16" />
                   <Skeleton className="h-16" />
                   <Skeleton className="h-16" />
                 </div> :
-              (pendingUsersData?.items || pendingUsersData?.users) && (pendingUsersData?.items?.length > 0 || pendingUsersData?.users?.length > 0) ?
-              <div className="space-y-3">
-                  {(pendingUsersData.items || pendingUsersData.users).slice(0, 3).map((user: any) =>
-                <div key={user.id_user} className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">{user.prenom} {user.nom}</p>
-                        <p className="text-sm text-muted-foreground">{user.type_user}</p>
-                        {user.statut_validation &&
-                    <Badge variant="secondary" className="mt-1 text-xs">
-                            {user.statut_validation}
-                          </Badge>
+                (pendingUsersData?.items || pendingUsersData?.users) && (pendingUsersData?.items?.length > 0 || pendingUsersData?.users?.length > 0) ?
+                  <div className="space-y-3">
+                    {(pendingUsersData.items || pendingUsersData.users).slice(0, 3).map((user: any) =>
+                      <div key={user.id_user} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{user.prenom} {user.nom}</p>
+                          <p className="text-sm text-muted-foreground">{user.type_user}</p>
+                          {user.statut_validation &&
+                            <Badge variant="secondary" className="mt-1 text-xs">
+                              {user.statut_validation}
+                            </Badge>
+                          }
+                        </div>
+                        <div className="flex gap-2 flex-shrink-0">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => validateUserAction.execute({ userId: user.id_user, validated: true })}
+                            disabled={validateUserAction.isLoading}
+                            title={t("dashboardadmin.valider")}>
+
+                            {validateUserAction.isLoading ?
+                              <Loader2 className="h-4 w-4 animate-spin" /> :
+
+                              <UserCheck className="h-4 w-4" />
+                            }
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => validateUserAction.execute({ userId: user.id_user, validated: false })}
+                            disabled={validateUserAction.isLoading}
+                            title={t("dashboardadmin.rejeter_1")}>
+
+                            {validateUserAction.isLoading ?
+                              <Loader2 className="h-4 w-4 animate-spin" /> :
+
+                              <UserX className="h-4 w-4" />
+                            }
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                    {(pendingUsersData.items?.length > 3 || pendingUsersData.users?.length > 3) &&
+                      <Button
+                        variant="link"
+                        className="w-full"
+                        onClick={() => setActiveTab('users')}>{t("dashboardadmin.voir_tous_les")}
+
+
+                      </Button>
                     }
-                      </div>
-                      <div className="flex gap-2 flex-shrink-0">
-                        <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => validateUserAction.execute({ userId: user.id_user, validated: true })}
-                      disabled={validateUserAction.isLoading}
-                      title={t("dashboardadmin.valider")}>
+                  </div> :
 
-                          {validateUserAction.isLoading ?
-                      <Loader2 className="h-4 w-4 animate-spin" /> :
+                  <p className="text-sm text-muted-foreground text-center py-4">{t("dashboardadmin.aucun_utilisateur_attente")}
 
-                      <UserCheck className="h-4 w-4" />
-                      }
-                        </Button>
-                        <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => validateUserAction.execute({ userId: user.id_user, validated: false })}
-                      disabled={validateUserAction.isLoading}
-                      title={t("dashboardadmin.rejeter_1")}>
-
-                          {validateUserAction.isLoading ?
-                      <Loader2 className="h-4 w-4 animate-spin" /> :
-
-                      <UserX className="h-4 w-4" />
-                      }
-                        </Button>
-                      </div>
-                    </div>
-                )}
-                  {(pendingUsersData.items?.length > 3 || pendingUsersData.users?.length > 3) &&
-                <Button
-                  variant="link"
-                  className="w-full"
-                  onClick={() => setActiveTab('users')}>{t("dashboardadmin.voir_tous_les")}
-
-
-                </Button>
-                }
-                </div> :
-
-              <p className="text-sm text-muted-foreground text-center py-4">{t("dashboardadmin.aucun_utilisateur_attente")}
-
-              </p>
+                  </p>
               }
             </CardContent>
           </Card>
@@ -1779,53 +1784,53 @@ const DashboardAdmin = () => {
             </CardHeader>
             <CardContent>
               {loadingPendingOeuvres ?
-              <div className="space-y-3">
+                <div className="space-y-3">
                   <Skeleton className="h-16" />
                   <Skeleton className="h-16" />
                   <Skeleton className="h-16" />
                 </div> :
-              (pendingOeuvresData?.items || pendingOeuvresData?.oeuvres) && (pendingOeuvresData?.items?.length > 0 || pendingOeuvresData?.oeuvres?.length > 0) ?
-              <div className="space-y-3">
-                  {(pendingOeuvresData.items || pendingOeuvresData.oeuvres).slice(0, 3).map((oeuvre: any) =>
-                <div key={oeuvre.id_oeuvre} className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">{oeuvre.titre}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {oeuvre.auteur?.prenom} {oeuvre.auteur?.nom}
-                        </p>
+                (pendingOeuvresData?.items || pendingOeuvresData?.oeuvres) && (pendingOeuvresData?.items?.length > 0 || pendingOeuvresData?.oeuvres?.length > 0) ?
+                  <div className="space-y-3">
+                    {(pendingOeuvresData.items || pendingOeuvresData.oeuvres).slice(0, 3).map((oeuvre: any) =>
+                      <div key={oeuvre.id_oeuvre} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{oeuvre.titre}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {oeuvre.auteur?.prenom} {oeuvre.auteur?.nom}
+                          </p>
+                        </div>
+                        <div className="flex gap-2 ml-2 flex-shrink-0">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => validateOeuvreWithNotification({ oeuvreId: oeuvre.id_oeuvre, validated: true })}>
+
+                            <CheckCircle className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => validateOeuvreWithNotification({ oeuvreId: oeuvre.id_oeuvre, validated: false })}>
+
+                            <XCircle className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex gap-2 ml-2 flex-shrink-0">
-                        <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => validateOeuvreWithNotification({ oeuvreId: oeuvre.id_oeuvre, validated: true })}>
-
-                          <CheckCircle className="h-4 w-4" />
-                        </Button>
-                        <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => validateOeuvreWithNotification({ oeuvreId: oeuvre.id_oeuvre, validated: false })}>
-
-                          <XCircle className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                )}
-                  {(pendingOeuvresData.items?.length > 3 || pendingOeuvresData.oeuvres?.length > 3) &&
-                <Button
-                  variant="link"
-                  className="w-full"
-                  onClick={() => setActiveTab('oeuvres')}>{t("dashboardadmin.voir_toutes_les_1")}
+                    )}
+                    {(pendingOeuvresData.items?.length > 3 || pendingOeuvresData.oeuvres?.length > 3) &&
+                      <Button
+                        variant="link"
+                        className="w-full"
+                        onClick={() => setActiveTab('oeuvres')}>{t("dashboardadmin.voir_toutes_les_1")}
 
 
-                </Button>
-                }
-                </div> :
+                      </Button>
+                    }
+                  </div> :
 
-              <p className="text-sm text-muted-foreground text-center py-4">{t("dashboardadmin.aucune_uvre_attente")}
+                  <p className="text-sm text-muted-foreground text-center py-4">{t("dashboardadmin.aucune_uvre_attente")}
 
-              </p>
+                  </p>
               }
             </CardContent>
           </Card>
@@ -1842,40 +1847,40 @@ const DashboardAdmin = () => {
             </CardHeader>
             <CardContent>
               {loadingModeration ?
-              <div className="space-y-3">
+                <div className="space-y-3">
                   <Skeleton className="h-16" />
                   <Skeleton className="h-16" />
                   <Skeleton className="h-16" />
                 </div> :
-              (moderationQueueData?.items || moderationQueueData?.signalements) && (moderationQueueData?.items?.length > 0 || moderationQueueData?.signalements?.length > 0) ?
-              <div className="space-y-3">
-                  {(moderationQueueData.items || moderationQueueData.signalements).slice(0, 3).map((item: any) =>
-                <div key={item.id} className="p-3 bg-muted rounded-lg">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <p className="font-medium text-sm truncate">{item.entity_title}</p>
-                          <p className="text-xs text-muted-foreground">{item.reason}</p>
+                (moderationQueueData?.items || moderationQueueData?.signalements) && (moderationQueueData?.items?.length > 0 || moderationQueueData?.signalements?.length > 0) ?
+                  <div className="space-y-3">
+                    {(moderationQueueData.items || moderationQueueData.signalements).slice(0, 3).map((item: any) =>
+                      <div key={item.id} className="p-3 bg-muted rounded-lg">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <p className="font-medium text-sm truncate">{item.entity_title}</p>
+                            <p className="text-xs text-muted-foreground">{item.reason}</p>
+                          </div>
+                          <Badge variant="outline" className="ml-2 flex-shrink-0">
+                            {item.type}
+                          </Badge>
                         </div>
-                        <Badge variant="outline" className="ml-2 flex-shrink-0">
-                          {item.type}
-                        </Badge>
                       </div>
-                    </div>
-                )}
-                  {(moderationQueueData.items?.length > 3 || moderationQueueData.signalements?.length > 3) &&
-                <Button
-                  variant="link"
-                  className="w-full"
-                  onClick={() => setActiveTab('moderation')}>{t("dashboardadmin.voir_tous_les_1")}
+                    )}
+                    {(moderationQueueData.items?.length > 3 || moderationQueueData.signalements?.length > 3) &&
+                      <Button
+                        variant="link"
+                        className="w-full"
+                        onClick={() => setActiveTab('moderation')}>{t("dashboardadmin.voir_tous_les_1")}
 
 
-                </Button>
-                }
-                </div> :
+                      </Button>
+                    }
+                  </div> :
 
-              <p className="text-sm text-muted-foreground text-center py-4">{t("dashboardadmin.aucun_signalement_attente_1")}
+                  <p className="text-sm text-muted-foreground text-center py-4">{t("dashboardadmin.aucun_signalement_attente_1")}
 
-              </p>
+                  </p>
               }
             </CardContent>
           </Card>
@@ -1914,7 +1919,7 @@ const DashboardAdmin = () => {
 
               {/* Statistiques détaillées */}
               {stats &&
-              <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-4 md:grid-cols-2">
                   <Card>
                     <CardHeader>
                       <CardTitle className="text-lg">{t("dashboardadmin.rpartition_des_utilisateurs")}</CardTitle>
@@ -1922,19 +1927,19 @@ const DashboardAdmin = () => {
                     <CardContent>
                       <div className="space-y-3">
                         {Object.entries(stats.charts?.content_by_type || {}).map(([type, count]) =>
-                      <div key={type} className="flex items-center justify-between">
+                          <div key={type} className="flex items-center justify-between">
                             <span className="text-sm capitalize">{type}</span>
                             <div className="flex items-center gap-2">
                               <div className="w-32 bg-secondary rounded-full h-2">
                                 <div
-                              className="bg-primary h-2 rounded-full"
-                              style={{ width: `${(count as number) / stats.stats.total_users * 100}%` }} />
+                                  className="bg-primary h-2 rounded-full"
+                                  style={{ width: `${(count as number) / stats.stats.total_users * 100}%` }} />
 
                               </div>
                               <span className="text-sm font-medium w-12 text-right">{count as number}</span>
                             </div>
                           </div>
-                      )}
+                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -1989,7 +1994,7 @@ const DashboardAdmin = () => {
                       className="pl-10" />
 
                   </div>
-                  
+
                   <div className="flex gap-2">
                     <Button
                       variant={isSelectModeUsers ? "secondary" : "outline"}
@@ -2001,12 +2006,12 @@ const DashboardAdmin = () => {
                       <CheckCircle className="h-4 w-4 mr-2" />
                       {isSelectModeUsers ? 'Annuler sélection' : 'Mode sélection'}
                     </Button>
-                    
+
                     {isSelectModeUsers && selectedUsers.length > 0 &&
-                    <DropdownMenu>
+                      <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="secondary">{t("dashboardadmin.actions_2")}
-                          {selectedUsers.length})
+                            {selectedUsers.length})
                             <MoreVertical className="h-4 w-4 ml-2" />
                           </Button>
                         </DropdownMenuTrigger>
@@ -2014,29 +2019,29 @@ const DashboardAdmin = () => {
                           <DropdownMenuItem onClick={() => handleBulkValidation('users', true)}>
                             <UserCheck className="h-4 w-4 mr-2" />{t("dashboardadmin.valider_tous")}
 
-                        </DropdownMenuItem>
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleBulkValidation('users', false)}>
                             <UserX className="h-4 w-4 mr-2" />{t("dashboardadmin.rejeter_tous")}
 
-                        </DropdownMenuItem>
+                          </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
-                          onClick={() => {
-                            if (selectedUsers.length > 0) {
-                              bulkUserAction(selectedUsers, 'delete');
-                              setSelectedUsers([]);
-                              setIsSelectModeUsers(false);
-                            }
-                          }}
-                          className="text-red-600">
+                            onClick={() => {
+                              if (selectedUsers.length > 0) {
+                                bulkUserAction(selectedUsers, 'delete');
+                                setSelectedUsers([]);
+                                setIsSelectModeUsers(false);
+                              }
+                            }}
+                            className="text-red-600">
 
                             <Trash2 className="h-4 w-4 mr-2" />{t("dashboardadmin.supprimer_6")}
 
-                        </DropdownMenuItem>
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     }
-                    
+
                     <Button
                       variant="outline"
                       onClick={() => exportUsers('excel', { search: searchUsers })}>
@@ -2049,199 +2054,199 @@ const DashboardAdmin = () => {
 
                 {/* Liste des utilisateurs */}
                 {loadingPendingUsers ?
-                <div className="space-y-3">
+                  <div className="space-y-3">
                     <Skeleton className="h-20" />
                     <Skeleton className="h-20" />
                     <Skeleton className="h-20" />
                   </div> :
-                filteredAndPaginatedUsers.users.length > 0 ?
-                <>
-                    <div className="space-y-4">
-                      {filteredAndPaginatedUsers.users.map((user: any) =>
-                    <Card key={user.id_user} className={cn(
-                      "p-4 transition-all duration-200",
-                      selectedUsers.includes(user.id_user) && "ring-2 ring-primary shadow-lg"
-                    )}>
-                          <div className="flex items-start justify-between">
-                            {isSelectModeUsers &&
-                        <Checkbox
-                          checked={selectedUsers.includes(user.id_user)}
-                          onCheckedChange={() => toggleUserSelection(user.id_user)}
-                          className="mt-1 mr-3" />
+                  filteredAndPaginatedUsers.users.length > 0 ?
+                    <>
+                      <div className="space-y-4">
+                        {filteredAndPaginatedUsers.users.map((user: any) =>
+                          <Card key={user.id_user} className={cn(
+                            "p-4 transition-all duration-200",
+                            selectedUsers.includes(user.id_user) && "ring-2 ring-primary shadow-lg"
+                          )}>
+                            <div className="flex items-start justify-between">
+                              {isSelectModeUsers &&
+                                <Checkbox
+                                  checked={selectedUsers.includes(user.id_user)}
+                                  onCheckedChange={() => toggleUserSelection(user.id_user)}
+                                  className="mt-1 mr-3" />
 
-                        }
-                            
-                            <div className="space-y-2 flex-1">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <h4 className="font-semibold">{user.prenom} {user.nom}</h4>
-                                <Badge variant="outline">{user.type_user}</Badge>
-                                {user.statut_validation &&
-                            <Badge
-                              variant={user.statut_validation === 'en_attente' ? 'secondary' : 'default'}>
-
-                                    {user.statut_validation.replace('_', ' ')}
-                                  </Badge>
-                            }
-                                {user.statut === 'suspendu' &&
-                            <Badge variant="destructive">
-                                    <Lock className="h-3 w-3 mr-1" />{t("dashboardadmin.suspendu_2")}
-
-                            </Badge>
-                            }
-                              </div>
-                              <div className="space-y-1">
-                                <p className="text-sm text-muted-foreground flex items-center gap-2">
-                                  <Mail className="h-3 w-3" />
-                                  {user.email}
-                                </p>
-                                {user.telephone &&
-                            <p className="text-sm text-muted-foreground flex items-center gap-2">
-                                    <Phone className="h-3 w-3" />
-                                    {user.telephone}
-                                  </p>
-                            }
-                                {user.entreprise &&
-                            <p className="text-sm text-muted-foreground flex items-center gap-2">
-                                    <Building className="h-3 w-3" />
-                                    {user.entreprise}
-                                  </p>
-                            }
-                                {user.site_web &&
-                            <p className="text-sm text-muted-foreground flex items-center gap-2">
-                                    <Globe className="h-3 w-3" />
-                                    <a href={user.site_web} target="_blank" rel="noopener noreferrer" className="hover:underline">
-                                      {user.site_web}
-                                    </a>
-                                  </p>
-                            }
-                                <p className="text-sm text-muted-foreground">{t("dashboardadmin.inscrit")}
-                              {formatDate(user.date_inscription || user.date_creation)}
-                                </p>
-                              </div>
-                              {user.biographie &&
-                          <p className="text-sm mt-2 text-gray-700 line-clamp-2">{user.biographie}</p>
-                          }
-                              {user.specialites && user.specialites.length > 0 &&
-                          <div className="flex gap-2 mt-2 flex-wrap">
-                                  {user.specialites.map((spec: string, idx: number) =>
-                            <Badge key={idx} variant="secondary" className="text-xs">{spec}</Badge>
-                            )}
-                                </div>
-                          }
-                            </div>
-                            <div className="flex gap-2 ml-4 flex-shrink-0">
-                              <Button
-                            size="sm"
-                            onClick={() => validateUserAction.execute({ userId: user.id_user, validated: true })}
-                            disabled={validateUserAction.isLoading || validateUserAction.cooldown}
-                            title={t("dashboardadmin.valider")}>
-
-                                {validateUserAction.isLoading ?
-                            <Loader2 className="h-4 w-4 animate-spin" /> :
-
-                            <>
-                                    <UserCheck className="h-4 w-4 mr-1" />{t("dashboardadmin.valider")}
-
-                            </>
-                            }
-                              </Button>
-                              <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => validateUserAction.execute({ userId: user.id_user, validated: false })}
-                            disabled={validateUserAction.isLoading || validateUserAction.cooldown}
-                            title={t("dashboardadmin.rejeter_1")}>
-
-                                {validateUserAction.isLoading ?
-                            <Loader2 className="h-4 w-4 animate-spin" /> :
-
-                            <>
-                                    <UserX className="h-4 w-4 mr-1" />{t("dashboardadmin.rejeter_1")}
-
-                            </>
-                            }
-                              </Button>
-                              
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button size="sm" variant="ghost">
-                                    <MoreVertical className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuLabel>{t("dashboardadmin.actions_1")}</DropdownMenuLabel>
-                                  <DropdownMenuSeparator />
-                                  
-                                  <DropdownMenuItem onClick={() => handleEditUser(user)}>
-                                    <Edit className="h-4 w-4 mr-2" />{t("dashboardadmin.modifier_4")}
-
-                              </DropdownMenuItem>
-                                  
-                                  <DropdownMenuItem onClick={() => openNotificationModal('utilisateur', user)}>
-                                    <Bell className="h-4 w-4 mr-2" />{t("dashboardadmin.envoyer_notification_4")}
-
-                              </DropdownMenuItem>
-                                  
-                                  {user.statut !== 'suspendu' ?
-                              <DropdownMenuItem onClick={() => handleSuspendUser(user)}>
-                                      <Lock className="h-4 w-4 mr-2" />{t("dashboardadmin.suspendre_2")}
-
-                              </DropdownMenuItem> :
-
-                              <DropdownMenuItem onClick={() => handleReactivateUser(user)}>
-                                      <Unlock className="h-4 w-4 mr-2" />{t("dashboardadmin.ractiver_1")}
-
-                              </DropdownMenuItem>
                               }
-                                  
-                                  <DropdownMenuItem onClick={() => handleResetPassword(user)}>
-                                    <Key className="h-4 w-4 mr-2" />{t("dashboardadmin.rinitialiser_mdp")}
 
-                              </DropdownMenuItem>
-                                  
-                                  <DropdownMenuSeparator />
-                                  
-                                  <DropdownMenuItem
-                                onClick={() => deleteUserAction.execute({ userId: user.id_user })}
-                                disabled={deleteUserAction.isLoading || deleteUserAction.cooldown}
-                                className="text-red-600 focus:text-red-600">
+                              <div className="space-y-2 flex-1">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <h4 className="font-semibold">{user.prenom} {user.nom}</h4>
+                                  <Badge variant="outline">{user.type_user}</Badge>
+                                  {user.statut_validation &&
+                                    <Badge
+                                      variant={user.statut_validation === 'en_attente' ? 'secondary' : 'default'}>
 
-                                    <Trash2 className="h-4 w-4 mr-2" />{t("dashboardadmin.supprimer_6")}
+                                      {user.statut_validation.replace('_', ' ')}
+                                    </Badge>
+                                  }
+                                  {user.statut === 'suspendu' &&
+                                    <Badge variant="destructive">
+                                      <Lock className="h-3 w-3 mr-1" />{t("dashboardadmin.suspendu_2")}
 
-                                {deleteUserAction.cooldown &&
-                                <span className="ml-2 text-xs">
-                                        ({Math.ceil(deleteUserAction.timeUntilNextExecution / 1000)}{t("dashboardadmin.s")}
-                                </span>
+                                    </Badge>
+                                  }
+                                </div>
+                                <div className="space-y-1">
+                                  <p className="text-sm text-muted-foreground flex items-center gap-2">
+                                    <Mail className="h-3 w-3" />
+                                    {user.email}
+                                  </p>
+                                  {user.telephone &&
+                                    <p className="text-sm text-muted-foreground flex items-center gap-2">
+                                      <Phone className="h-3 w-3" />
+                                      {user.telephone}
+                                    </p>
+                                  }
+                                  {user.entreprise &&
+                                    <p className="text-sm text-muted-foreground flex items-center gap-2">
+                                      <Building className="h-3 w-3" />
+                                      {user.entreprise}
+                                    </p>
+                                  }
+                                  {user.site_web &&
+                                    <p className="text-sm text-muted-foreground flex items-center gap-2">
+                                      <Globe className="h-3 w-3" />
+                                      <a href={user.site_web} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                                        {user.site_web}
+                                      </a>
+                                    </p>
+                                  }
+                                  <p className="text-sm text-muted-foreground">{t("dashboardadmin.inscrit")}
+                                    {formatDate(user.date_inscription || user.date_creation)}
+                                  </p>
+                                </div>
+                                {user.biographie &&
+                                  <p className="text-sm mt-2 text-gray-700 line-clamp-2">{user.biographie}</p>
                                 }
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
+                                {user.specialites && user.specialites.length > 0 &&
+                                  <div className="flex gap-2 mt-2 flex-wrap">
+                                    {user.specialites.map((spec: string, idx: number) =>
+                                      <Badge key={idx} variant="secondary" className="text-xs">{spec}</Badge>
+                                    )}
+                                  </div>
+                                }
+                              </div>
+                              <div className="flex gap-2 ml-4 flex-shrink-0">
+                                <Button
+                                  size="sm"
+                                  onClick={() => validateUserAction.execute({ userId: user.id_user, validated: true })}
+                                  disabled={validateUserAction.isLoading || validateUserAction.cooldown}
+                                  title={t("dashboardadmin.valider")}>
+
+                                  {validateUserAction.isLoading ?
+                                    <Loader2 className="h-4 w-4 animate-spin" /> :
+
+                                    <>
+                                      <UserCheck className="h-4 w-4 mr-1" />{t("dashboardadmin.valider")}
+
+                                    </>
+                                  }
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => validateUserAction.execute({ userId: user.id_user, validated: false })}
+                                  disabled={validateUserAction.isLoading || validateUserAction.cooldown}
+                                  title={t("dashboardadmin.rejeter_1")}>
+
+                                  {validateUserAction.isLoading ?
+                                    <Loader2 className="h-4 w-4 animate-spin" /> :
+
+                                    <>
+                                      <UserX className="h-4 w-4 mr-1" />{t("dashboardadmin.rejeter_1")}
+
+                                    </>
+                                  }
+                                </Button>
+
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button size="sm" variant="ghost">
+                                      <MoreVertical className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuLabel>{t("dashboardadmin.actions_1")}</DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+
+                                    <DropdownMenuItem onClick={() => handleEditUser(user)}>
+                                      <Edit className="h-4 w-4 mr-2" />{t("dashboardadmin.modifier_4")}
+
+                                    </DropdownMenuItem>
+
+                                    <DropdownMenuItem onClick={() => openNotificationModal('utilisateur', user)}>
+                                      <Bell className="h-4 w-4 mr-2" />{t("dashboardadmin.envoyer_notification_4")}
+
+                                    </DropdownMenuItem>
+
+                                    {user.statut !== 'suspendu' ?
+                                      <DropdownMenuItem onClick={() => handleSuspendUser(user)}>
+                                        <Lock className="h-4 w-4 mr-2" />{t("dashboardadmin.suspendre_2")}
+
+                                      </DropdownMenuItem> :
+
+                                      <DropdownMenuItem onClick={() => handleReactivateUser(user)}>
+                                        <Unlock className="h-4 w-4 mr-2" />{t("dashboardadmin.ractiver_1")}
+
+                                      </DropdownMenuItem>
+                                    }
+
+                                    <DropdownMenuItem onClick={() => handleResetPassword(user)}>
+                                      <Key className="h-4 w-4 mr-2" />{t("dashboardadmin.rinitialiser_mdp")}
+
+                                    </DropdownMenuItem>
+
+                                    <DropdownMenuSeparator />
+
+                                    <DropdownMenuItem
+                                      onClick={() => deleteUserAction.execute({ userId: user.id_user })}
+                                      disabled={deleteUserAction.isLoading || deleteUserAction.cooldown}
+                                      className="text-red-600 focus:text-red-600">
+
+                                      <Trash2 className="h-4 w-4 mr-2" />{t("dashboardadmin.supprimer_6")}
+
+                                      {deleteUserAction.cooldown &&
+                                        <span className="ml-2 text-xs">
+                                          ({Math.ceil(deleteUserAction.timeUntilNextExecution / 1000)}{t("dashboardadmin.s")}
+                                        </span>
+                                      }
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </div>
                             </div>
-                          </div>
-                        </Card>
-                    )}
+                          </Card>
+                        )}
+                      </div>
+
+                      <PaginationControls
+                        currentPage={filteredAndPaginatedUsers.currentPage}
+                        totalPages={filteredAndPaginatedUsers.totalPages}
+                        totalItems={filteredAndPaginatedUsers.totalItems}
+                        hasNext={filteredAndPaginatedUsers.hasNext}
+                        hasPrev={filteredAndPaginatedUsers.hasPrev}
+                        onPageChange={setCurrentPageUsers}
+                        itemsPerPage={itemsPerPage} />
+
+                    </> :
+
+                    <div className="text-center py-12">
+                      <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                      <p className="text-muted-foreground">
+                        {searchUsers ?
+                          `Aucun résultat pour "${searchUsers}"` :
+                          'Aucun utilisateur à afficher'
+                        }
+                      </p>
                     </div>
-                    
-                    <PaginationControls
-                    currentPage={filteredAndPaginatedUsers.currentPage}
-                    totalPages={filteredAndPaginatedUsers.totalPages}
-                    totalItems={filteredAndPaginatedUsers.totalItems}
-                    hasNext={filteredAndPaginatedUsers.hasNext}
-                    hasPrev={filteredAndPaginatedUsers.hasPrev}
-                    onPageChange={setCurrentPageUsers}
-                    itemsPerPage={itemsPerPage} />
-
-                  </> :
-
-                <div className="text-center py-12">
-                    <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground">
-                      {searchUsers ?
-                    `Aucun résultat pour "${searchUsers}"` :
-                    'Aucun utilisateur à afficher'
-                    }
-                    </p>
-                  </div>
                 }
               </CardContent>
             </Card>
@@ -2252,11 +2257,11 @@ const DashboardAdmin = () => {
             <div className="space-y-6">
               {/* Panneau de filtres */}
               {showOeuvreFilters &&
-              <Card>
+                <Card>
                   <CardHeader>
                     <CardTitle className="text-lg flex items-center justify-between">{t("dashboardadmin.filtres_avancs_3")}
 
-                    <Button variant="ghost" size="sm" onClick={() => setShowOeuvreFilters(false)}>
+                      <Button variant="ghost" size="sm" onClick={() => setShowOeuvreFilters(false)}>
                         <XIcon className="h-4 w-4" />
                       </Button>
                     </CardTitle>
@@ -2266,8 +2271,8 @@ const DashboardAdmin = () => {
                       <div className="space-y-2">
                         <Label>{t("dashboardadmin.type_duvre")}</Label>
                         <Select
-                        value={oeuvreFilters.type_oeuvre || ''}
-                        onValueChange={(value) => setOeuvreFilters({ ...oeuvreFilters, type_oeuvre: value || undefined })}>
+                          value={oeuvreFilters.type_oeuvre || ''}
+                          onValueChange={(value) => setOeuvreFilters({ ...oeuvreFilters, type_oeuvre: value || undefined })}>
 
                           <SelectTrigger>
                             <SelectValue placeholder={t("dashboardadmin.tous_les_types_3")} />
@@ -2275,17 +2280,17 @@ const DashboardAdmin = () => {
                           <SelectContent>
                             <SelectItem value="">{t("dashboardadmin.tous_les_types_3")}</SelectItem>
                             {TYPES_OEUVRE.map((type) =>
-                          <SelectItem key={type} value={type}>{type}</SelectItem>
-                          )}
+                              <SelectItem key={type} value={type}>{type}</SelectItem>
+                            )}
                           </SelectContent>
                         </Select>
                       </div>
-                      
+
                       <div className="space-y-2">
                         <Label>{t("dashboardadmin.statut_3")}</Label>
                         <Select
-                        value={oeuvreFilters.statut || ''}
-                        onValueChange={(value) => setOeuvreFilters({ ...oeuvreFilters, statut: value || undefined })}>
+                          value={oeuvreFilters.statut || ''}
+                          onValueChange={(value) => setOeuvreFilters({ ...oeuvreFilters, statut: value || undefined })}>
 
                           <SelectTrigger>
                             <SelectValue placeholder={t("dashboardadmin.placeholder_tous_les_statuts_2")} />
@@ -2298,12 +2303,12 @@ const DashboardAdmin = () => {
                           </SelectContent>
                         </Select>
                       </div>
-                      
+
                       <div className="space-y-2">
                         <Label>{t("dashboardadmin.wilaya_3")}</Label>
                         <Select
-                        value={oeuvreFilters.wilaya || ''}
-                        onValueChange={(value) => setOeuvreFilters({ ...oeuvreFilters, wilaya: value || undefined })}>
+                          value={oeuvreFilters.wilaya || ''}
+                          onValueChange={(value) => setOeuvreFilters({ ...oeuvreFilters, wilaya: value || undefined })}>
 
                           <SelectTrigger>
                             <SelectValue placeholder={t("dashboardadmin.toutes_les_wilayas_3")} />
@@ -2311,35 +2316,35 @@ const DashboardAdmin = () => {
                           <SelectContent>
                             <SelectItem value="">{t("dashboardadmin.toutes_les_wilayas_3")}</SelectItem>
                             {WILAYAS.map((wilaya) =>
-                          <SelectItem key={wilaya} value={wilaya}>{wilaya}</SelectItem>
-                          )}
+                              <SelectItem key={wilaya} value={wilaya}>{wilaya}</SelectItem>
+                            )}
                           </SelectContent>
                         </Select>
                       </div>
-                      
+
                       <div className="space-y-2">
                         <Label>{t("dashboardadmin.prix_maximum_1")}</Label>
                         <Input
-                        type="number"
-                        placeholder={t("dashboardadmin.placeholder_prix_max_1")}
-                        value={oeuvreFilters.prix_max || ''}
-                        onChange={(e) => setOeuvreFilters({ ...oeuvreFilters, prix_max: e.target.value ? Number(e.target.value) : undefined })} />
+                          type="number"
+                          placeholder={t("dashboardadmin.placeholder_prix_max_1")}
+                          value={oeuvreFilters.prix_max || ''}
+                          onChange={(e) => setOeuvreFilters({ ...oeuvreFilters, prix_max: e.target.value ? Number(e.target.value) : undefined })} />
 
                       </div>
                     </div>
-                    
+
                     <div className="flex gap-2 mt-4">
                       <Button onClick={() => {
-                      resetOeuvreFilters();
-                      setCurrentPageOeuvres(1);
-                    }}>{t("dashboardadmin.rinitialiser_3")}
+                        resetOeuvreFilters();
+                        setCurrentPageOeuvres(1);
+                      }}>{t("dashboardadmin.rinitialiser_3")}
 
-                    </Button>
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
               }
-              
+
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
@@ -2373,7 +2378,7 @@ const DashboardAdmin = () => {
                         className="pl-10" />
 
                     </div>
-                    
+
                     <div className="flex gap-2">
                       <Button
                         variant="outline"
@@ -2382,7 +2387,7 @@ const DashboardAdmin = () => {
                         <SlidersHorizontal className="h-4 w-4 mr-2" />{t("dashboardadmin.filtres_3")}
 
                       </Button>
-                      
+
                       <Button
                         variant={isSelectModeOeuvres ? "secondary" : "outline"}
                         onClick={() => {
@@ -2393,12 +2398,12 @@ const DashboardAdmin = () => {
                         <CheckCircle className="h-4 w-4 mr-2" />
                         {isSelectModeOeuvres ? 'Annuler sélection' : 'Mode sélection'}
                       </Button>
-                      
+
                       {isSelectModeOeuvres && selectedOeuvres.length > 0 &&
-                      <DropdownMenu>
+                        <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="secondary">{t("dashboardadmin.actions_2")}
-                            {selectedOeuvres.length})
+                              {selectedOeuvres.length})
                               <MoreVertical className="h-4 w-4 ml-2" />
                             </Button>
                           </DropdownMenuTrigger>
@@ -2406,15 +2411,15 @@ const DashboardAdmin = () => {
                             <DropdownMenuItem onClick={() => handleBulkValidation('oeuvres', true)}>
                               <CheckCircle className="h-4 w-4 mr-2" />{t("dashboardadmin.valider_toutes")}
 
-                          </DropdownMenuItem>
+                            </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleBulkValidation('oeuvres', false)}>
                               <XCircle className="h-4 w-4 mr-2" />{t("dashboardadmin.rejeter_toutes")}
 
-                          </DropdownMenuItem>
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       }
-                      
+
                       <Button variant="outline">
                         <Download className="h-4 w-4 mr-2" />{t("dashboardadmin.exporter_4")}
 
@@ -2424,199 +2429,199 @@ const DashboardAdmin = () => {
 
                   {/* Liste des œuvres */}
                   {loadingOeuvres ?
-                  <div className="space-y-3">
+                    <div className="space-y-3">
                       <Skeleton className="h-24" />
                       <Skeleton className="h-24" />
                       <Skeleton className="h-24" />
                     </div> :
-                  filteredAndPaginatedOeuvres.items.length > 0 ?
-                  <>
-                      <div className="space-y-4">
-                        {filteredAndPaginatedOeuvres.items.map((oeuvre: any) =>
-                      <Card key={oeuvre.id_oeuvre} className={cn(
-                        "p-4 transition-all duration-200",
-                        selectedOeuvres.includes(oeuvre.id_oeuvre) && "ring-2 ring-primary shadow-lg"
-                      )}>
-                            <div className="flex items-start justify-between">
-                              {isSelectModeOeuvres &&
-                          <Checkbox
-                            checked={selectedOeuvres.includes(oeuvre.id_oeuvre)}
-                            onCheckedChange={() => toggleOeuvreSelection(oeuvre.id_oeuvre)}
-                            className="mt-1 mr-3" />
+                    filteredAndPaginatedOeuvres.items.length > 0 ?
+                      <>
+                        <div className="space-y-4">
+                          {filteredAndPaginatedOeuvres.items.map((oeuvre: any) =>
+                            <Card key={oeuvre.id_oeuvre} className={cn(
+                              "p-4 transition-all duration-200",
+                              selectedOeuvres.includes(oeuvre.id_oeuvre) && "ring-2 ring-primary shadow-lg"
+                            )}>
+                              <div className="flex items-start justify-between">
+                                {isSelectModeOeuvres &&
+                                  <Checkbox
+                                    checked={selectedOeuvres.includes(oeuvre.id_oeuvre)}
+                                    onCheckedChange={() => toggleOeuvreSelection(oeuvre.id_oeuvre)}
+                                    className="mt-1 mr-3" />
 
-                          }
-                              
-                              <div className="space-y-2 flex-1">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <h4 className="font-semibold">{oeuvre.titre}</h4>
-                                  <Badge variant="outline">{oeuvre.type_oeuvre}</Badge>
-                                  <Badge
-                                variant={oeuvre.statut === 'valide' ? 'default' :
-                                oeuvre.statut === 'en_attente' ? 'secondary' : 'destructive'}>
+                                }
 
-                                    {oeuvre.statut?.replace('_', ' ')}
-                                  </Badge>
-                                  {oeuvre.prix &&
-                              <Badge variant="outline">
-                                      <Euro className="h-3 w-3 mr-1" />
-                                      {formatPrice(oeuvre.prix)}
+                                <div className="space-y-2 flex-1">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <h4 className="font-semibold">{oeuvre.titre}</h4>
+                                    <Badge variant="outline">{oeuvre.type_oeuvre}</Badge>
+                                    <Badge
+                                      variant={oeuvre.statut === 'valide' ? 'default' :
+                                        oeuvre.statut === 'en_attente' ? 'secondary' : 'destructive'}>
+
+                                      {oeuvre.statut?.replace('_', ' ')}
                                     </Badge>
-                              }
-                                </div>
-                                
-                                <div className="space-y-1">
-                                  <p className="text-sm text-muted-foreground">{t("dashboardadmin.par_1")}
-                                {oeuvre.auteur?.prenom} {oeuvre.auteur?.nom} 
-                                    {oeuvre.auteur?.type_user && ` (${oeuvre.auteur.type_user})`}
-                                  </p>
-                                  
-                                  {oeuvre.description &&
-                              <p className="text-sm line-clamp-2">{oeuvre.description}</p>
-                              }
-                                  
-                                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                    <span className="flex items-center gap-1">
-                                      <CalendarIcon className="h-3 w-3" />
-                                      {formatDate(oeuvre.date_creation)}
-                                    </span>
-                                    
-                                    {oeuvre.wilaya &&
-                                <span className="flex items-center gap-1">
-                                        <MapPinIcon className="h-3 w-3" />
-                                        {oeuvre.wilaya}
-                                      </span>
-                                }
-                                    
-                                    {oeuvre.nombre_vues &&
-                                <span className="flex items-center gap-1">
-                                        <Eye className="h-3 w-3" />
-                                        {oeuvre.nombre_vues}{t("dashboardadmin.vues")}
-                                </span>
-                                }
-                                    
-                                    {oeuvre.note_moyenne &&
-                                <span className="flex items-center gap-1">
-                                        <Star className="h-3 w-3" />
-                                        {formatRating(oeuvre.note_moyenne)}
-                                      </span>
-                                }
+                                    {oeuvre.prix &&
+                                      <Badge variant="outline">
+                                        <Euro className="h-3 w-3 mr-1" />
+                                        {formatPrice(oeuvre.prix)}
+                                      </Badge>
+                                    }
                                   </div>
-                                  
-                                  {oeuvre.tags && oeuvre.tags.length > 0 &&
-                              <div className="flex gap-1 mt-2 flex-wrap">
-                                      {oeuvre.tags.slice(0, 3).map((tag: string, idx: number) =>
-                                <Badge key={idx} variant="secondary" className="text-xs">
-                                          <Tag className="h-2 w-2 mr-1" />
-                                          {tag}
-                                        </Badge>
-                                )}
-                                      {oeuvre.tags.length > 3 &&
-                                <Badge variant="secondary" className="text-xs">
-                                          +{oeuvre.tags.length - 3}
-                                        </Badge>
-                                }
+
+                                  <div className="space-y-1">
+                                    <p className="text-sm text-muted-foreground">{t("dashboardadmin.par_1")}
+                                      {oeuvre.auteur?.prenom} {oeuvre.auteur?.nom}
+                                      {oeuvre.auteur?.type_user && ` (${oeuvre.auteur.type_user})`}
+                                    </p>
+
+                                    {oeuvre.description &&
+                                      <p className="text-sm line-clamp-2">{oeuvre.description}</p>
+                                    }
+
+                                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                      <span className="flex items-center gap-1">
+                                        <CalendarIcon className="h-3 w-3" />
+                                        {formatDate(oeuvre.date_creation)}
+                                      </span>
+
+                                      {oeuvre.wilaya &&
+                                        <span className="flex items-center gap-1">
+                                          <MapPinIcon className="h-3 w-3" />
+                                          {oeuvre.wilaya}
+                                        </span>
+                                      }
+
+                                      {oeuvre.nombre_vues &&
+                                        <span className="flex items-center gap-1">
+                                          <Eye className="h-3 w-3" />
+                                          {oeuvre.nombre_vues}{t("dashboardadmin.vues")}
+                                        </span>
+                                      }
+
+                                      {oeuvre.note_moyenne &&
+                                        <span className="flex items-center gap-1">
+                                          <Star className="h-3 w-3" />
+                                          {formatRating(oeuvre.note_moyenne)}
+                                        </span>
+                                      }
                                     </div>
-                              }
+
+                                    {oeuvre.tags && oeuvre.tags.length > 0 &&
+                                      <div className="flex gap-1 mt-2 flex-wrap">
+                                        {oeuvre.tags.slice(0, 3).map((tag: string, idx: number) =>
+                                          <Badge key={idx} variant="secondary" className="text-xs">
+                                            <Tag className="h-2 w-2 mr-1" />
+                                            {tag}
+                                          </Badge>
+                                        )}
+                                        {oeuvre.tags.length > 3 &&
+                                          <Badge variant="secondary" className="text-xs">
+                                            +{oeuvre.tags.length - 3}
+                                          </Badge>
+                                        }
+                                      </div>
+                                    }
+                                  </div>
                                 </div>
+
+                                {oeuvre.medias && oeuvre.medias.length > 0 &&
+                                  <div className="ml-4">
+                                    <img
+                                      src={oeuvre.medias[0].url}
+                                      alt={oeuvre.titre}
+                                      className="w-24 h-24 object-cover rounded" />
+
+                                  </div>
+                                }
                               </div>
-                              
-                              {oeuvre.medias && oeuvre.medias.length > 0 &&
-                          <div className="ml-4">
-                                  <img
-                              src={oeuvre.medias[0].url}
-                              alt={oeuvre.titre}
-                              className="w-24 h-24 object-cover rounded" />
 
-                                </div>
+                              <div className="flex gap-2 mt-4">
+                                {oeuvre.statut === 'en_attente' &&
+                                  <>
+                                    <Button
+                                      size="sm"
+                                      onClick={() => {
+                                        updateOeuvreStatus(oeuvre.id_oeuvre, 'valide');
+                                        sendNotification('œuvre', oeuvre.id_oeuvre, oeuvre.titre, oeuvre.auteur?.id || 0, 'validation');
+                                      }}>
+
+                                      <CheckCircle className="h-4 w-4 mr-1" />{t("dashboardadmin.approuver_1")}
+
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => {
+                                        updateOeuvreStatus(oeuvre.id_oeuvre, 'rejete');
+                                        sendNotification('œuvre', oeuvre.id_oeuvre, oeuvre.titre, oeuvre.auteur?.id || 0, 'rejection');
+                                      }}>
+
+                                      <XCircle className="h-4 w-4 mr-1" />{t("dashboardadmin.rejeter_1")}
+
+                                    </Button>
+                                  </>
+                                }
+
+                                <Button size="sm" variant="ghost">
+                                  <Eye className="h-4 w-4 mr-1" />{t("dashboardadmin.voir_dtails_3")}
+
+                                </Button>
+
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button size="sm" variant="ghost">
+                                      <MoreVertical className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem>
+                                      <Edit className="h-4 w-4 mr-2" />{t("dashboardadmin.modifier_4")}
+
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => openNotificationModal('œuvre', oeuvre)}>
+                                      <Bell className="h-4 w-4 mr-2" />{t("dashboardadmin.envoyer_notification_4")}
+
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem>
+                                      <Award className="h-4 w-4 mr-2" />{t("dashboardadmin.mettre_avant_3")}
+
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      onClick={() => deleteOeuvreAction.execute({ oeuvreId: oeuvre.id_oeuvre })}
+                                      className="text-red-600 focus:text-red-600">
+
+                                      <Trash2 className="h-4 w-4 mr-2" />{t("dashboardadmin.supprimer_6")}
+
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </div>
+                            </Card>
+                          )}
+                        </div>
+
+                        <PaginationControls
+                          currentPage={filteredAndPaginatedOeuvres.currentPage}
+                          totalPages={filteredAndPaginatedOeuvres.totalPages}
+                          totalItems={filteredAndPaginatedOeuvres.totalItems}
+                          hasNext={filteredAndPaginatedOeuvres.hasNext}
+                          hasPrev={filteredAndPaginatedOeuvres.hasPrev}
+                          onPageChange={setCurrentPageOeuvres}
+                          itemsPerPage={itemsPerPage} />
+
+                      </> :
+
+                      <div className="text-center py-12">
+                        <BookOpen className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                        <p className="text-muted-foreground">
+                          {searchOeuvres ?
+                            `Aucun résultat pour "${searchOeuvres}"` :
+                            'Aucune œuvre à afficher'
                           }
-                            </div>
-                            
-                            <div className="flex gap-2 mt-4">
-                              {oeuvre.statut === 'en_attente' &&
-                          <>
-                                  <Button
-                              size="sm"
-                              onClick={() => {
-                                updateOeuvreStatus(oeuvre.id_oeuvre, 'valide');
-                                sendNotification('œuvre', oeuvre.id_oeuvre, oeuvre.titre, oeuvre.auteur?.id || 0, 'validation');
-                              }}>
-
-                                    <CheckCircle className="h-4 w-4 mr-1" />{t("dashboardadmin.approuver_1")}
-
-                            </Button>
-                                  <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                updateOeuvreStatus(oeuvre.id_oeuvre, 'rejete');
-                                sendNotification('œuvre', oeuvre.id_oeuvre, oeuvre.titre, oeuvre.auteur?.id || 0, 'rejection');
-                              }}>
-
-                                    <XCircle className="h-4 w-4 mr-1" />{t("dashboardadmin.rejeter_1")}
-
-                            </Button>
-                                </>
-                          }
-                              
-                              <Button size="sm" variant="ghost">
-                                <Eye className="h-4 w-4 mr-1" />{t("dashboardadmin.voir_dtails_3")}
-
-                          </Button>
-                              
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button size="sm" variant="ghost">
-                                    <MoreVertical className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem>
-                                    <Edit className="h-4 w-4 mr-2" />{t("dashboardadmin.modifier_4")}
-
-                              </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => openNotificationModal('œuvre', oeuvre)}>
-                                    <Bell className="h-4 w-4 mr-2" />{t("dashboardadmin.envoyer_notification_4")}
-
-                              </DropdownMenuItem>
-                                  <DropdownMenuItem>
-                                    <Award className="h-4 w-4 mr-2" />{t("dashboardadmin.mettre_avant_3")}
-
-                              </DropdownMenuItem>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem
-                                onClick={() => deleteOeuvreAction.execute({ oeuvreId: oeuvre.id_oeuvre })}
-                                className="text-red-600 focus:text-red-600">
-
-                                    <Trash2 className="h-4 w-4 mr-2" />{t("dashboardadmin.supprimer_6")}
-
-                              </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </div>
-                          </Card>
-                      )}
+                        </p>
                       </div>
-                      
-                      <PaginationControls
-                      currentPage={filteredAndPaginatedOeuvres.currentPage}
-                      totalPages={filteredAndPaginatedOeuvres.totalPages}
-                      totalItems={filteredAndPaginatedOeuvres.totalItems}
-                      hasNext={filteredAndPaginatedOeuvres.hasNext}
-                      hasPrev={filteredAndPaginatedOeuvres.hasPrev}
-                      onPageChange={setCurrentPageOeuvres}
-                      itemsPerPage={itemsPerPage} />
-
-                    </> :
-
-                  <div className="text-center py-12">
-                      <BookOpen className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                      <p className="text-muted-foreground">
-                        {searchOeuvres ?
-                      `Aucun résultat pour "${searchOeuvres}"` :
-                      'Aucune œuvre à afficher'
-                      }
-                      </p>
-                    </div>
                   }
                 </CardContent>
               </Card>
@@ -2628,11 +2633,11 @@ const DashboardAdmin = () => {
             <div className="space-y-6">
               {/* Panneau de filtres */}
               {showEvenementFilters &&
-              <Card>
+                <Card>
                   <CardHeader>
                     <CardTitle className="text-lg flex items-center justify-between">{t("dashboardadmin.filtres_avancs_3")}
 
-                    <Button variant="ghost" size="sm" onClick={() => setShowEvenementFilters(false)}>
+                      <Button variant="ghost" size="sm" onClick={() => setShowEvenementFilters(false)}>
                         <XIcon className="h-4 w-4" />
                       </Button>
                     </CardTitle>
@@ -2642,8 +2647,8 @@ const DashboardAdmin = () => {
                       <div className="space-y-2">
                         <Label>{t("dashboardadmin.type_dvnement")}</Label>
                         <Select
-                        value={evenementFilters.type_evenement || ''}
-                        onValueChange={(value) => setEvenementFilters({ ...evenementFilters, type_evenement: value || undefined })}>
+                          value={evenementFilters.type_evenement || ''}
+                          onValueChange={(value) => setEvenementFilters({ ...evenementFilters, type_evenement: value || undefined })}>
 
                           <SelectTrigger>
                             <SelectValue placeholder={t("dashboardadmin.tous_les_types_3")} />
@@ -2651,17 +2656,17 @@ const DashboardAdmin = () => {
                           <SelectContent>
                             <SelectItem value="">{t("dashboardadmin.tous_les_types_3")}</SelectItem>
                             {TYPES_EVENEMENT.map((type) =>
-                          <SelectItem key={type} value={type}>{type}</SelectItem>
-                          )}
+                              <SelectItem key={type} value={type}>{type}</SelectItem>
+                            )}
                           </SelectContent>
                         </Select>
                       </div>
-                      
+
                       <div className="space-y-2">
                         <Label>{t("dashboardadmin.statut_3")}</Label>
                         <Select
-                        value={evenementFilters.statut || ''}
-                        onValueChange={(value) => setEvenementFilters({ ...evenementFilters, statut: value || undefined })}>
+                          value={evenementFilters.statut || ''}
+                          onValueChange={(value) => setEvenementFilters({ ...evenementFilters, statut: value || undefined })}>
 
                           <SelectTrigger>
                             <SelectValue placeholder={t("dashboardadmin.placeholder_tous_les_statuts_2")} />
@@ -2675,12 +2680,12 @@ const DashboardAdmin = () => {
                           </SelectContent>
                         </Select>
                       </div>
-                      
+
                       <div className="space-y-2">
                         <Label>{t("dashboardadmin.wilaya_3")}</Label>
                         <Select
-                        value={evenementFilters.wilaya || ''}
-                        onValueChange={(value) => setEvenementFilters({ ...evenementFilters, wilaya: value || undefined })}>
+                          value={evenementFilters.wilaya || ''}
+                          onValueChange={(value) => setEvenementFilters({ ...evenementFilters, wilaya: value || undefined })}>
 
                           <SelectTrigger>
                             <SelectValue placeholder={t("dashboardadmin.toutes_les_wilayas_3")} />
@@ -2688,34 +2693,34 @@ const DashboardAdmin = () => {
                           <SelectContent>
                             <SelectItem value="">{t("dashboardadmin.toutes_les_wilayas_3")}</SelectItem>
                             {WILAYAS.map((wilaya) =>
-                          <SelectItem key={wilaya} value={wilaya}>{wilaya}</SelectItem>
-                          )}
+                              <SelectItem key={wilaya} value={wilaya}>{wilaya}</SelectItem>
+                            )}
                           </SelectContent>
                         </Select>
                       </div>
-                      
+
                       <div className="space-y-2">
                         <Label>{t("dashboardadmin.date_dbut")}</Label>
                         <Input
-                        type="date"
-                        value={evenementFilters.date_debut || ''}
-                        onChange={(e) => setEvenementFilters({ ...evenementFilters, date_debut: e.target.value || undefined })} />
+                          type="date"
+                          value={evenementFilters.date_debut || ''}
+                          onChange={(e) => setEvenementFilters({ ...evenementFilters, date_debut: e.target.value || undefined })} />
 
                       </div>
                     </div>
-                    
+
                     <div className="flex gap-2 mt-4">
                       <Button onClick={() => {
-                      resetEvenementFilters();
-                      setCurrentPageEvenements(1);
-                    }}>{t("dashboardadmin.rinitialiser_3")}
+                        resetEvenementFilters();
+                        setCurrentPageEvenements(1);
+                      }}>{t("dashboardadmin.rinitialiser_3")}
 
-                    </Button>
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
               }
-              
+
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
@@ -2749,7 +2754,7 @@ const DashboardAdmin = () => {
                         className="pl-10" />
 
                     </div>
-                    
+
                     <div className="flex gap-2">
                       <Button
                         variant="outline"
@@ -2758,7 +2763,7 @@ const DashboardAdmin = () => {
                         <SlidersHorizontal className="h-4 w-4 mr-2" />{t("dashboardadmin.filtres_3")}
 
                       </Button>
-                      
+
                       <Button
                         variant={isSelectModeEvenements ? "secondary" : "outline"}
                         onClick={() => {
@@ -2769,7 +2774,7 @@ const DashboardAdmin = () => {
                         <CheckCircle className="h-4 w-4 mr-2" />
                         {isSelectModeEvenements ? 'Annuler sélection' : 'Mode sélection'}
                       </Button>
-                      
+
                       <Button variant="outline">
                         <Download className="h-4 w-4 mr-2" />{t("dashboardadmin.exporter_4")}
 
@@ -2779,176 +2784,176 @@ const DashboardAdmin = () => {
 
                   {/* Liste des événements */}
                   {loadingEvenements ?
-                  <div className="space-y-3">
+                    <div className="space-y-3">
                       <Skeleton className="h-24" />
                       <Skeleton className="h-24" />
                       <Skeleton className="h-24" />
                     </div> :
-                  filteredAndPaginatedEvenements.items.length > 0 ?
-                  <>
-                      <div className="space-y-4">
-                        {filteredAndPaginatedEvenements.items.map((evenement: any) =>
-                      <Card key={evenement.id_evenement} className={cn(
-                        "p-4 transition-all duration-200",
-                        selectedEvenements.includes(evenement.id_evenement) && "ring-2 ring-primary shadow-lg"
-                      )}>
-                            <div className="flex items-start justify-between">
-                              {isSelectModeEvenements &&
-                          <Checkbox
-                            checked={selectedEvenements.includes(evenement.id_evenement)}
-                            onCheckedChange={() => toggleEvenementSelection(evenement.id_evenement)}
-                            className="mt-1 mr-3" />
+                    filteredAndPaginatedEvenements.items.length > 0 ?
+                      <>
+                        <div className="space-y-4">
+                          {filteredAndPaginatedEvenements.items.map((evenement: any) =>
+                            <Card key={evenement.id_evenement} className={cn(
+                              "p-4 transition-all duration-200",
+                              selectedEvenements.includes(evenement.id_evenement) && "ring-2 ring-primary shadow-lg"
+                            )}>
+                              <div className="flex items-start justify-between">
+                                {isSelectModeEvenements &&
+                                  <Checkbox
+                                    checked={selectedEvenements.includes(evenement.id_evenement)}
+                                    onCheckedChange={() => toggleEvenementSelection(evenement.id_evenement)}
+                                    className="mt-1 mr-3" />
 
-                          }
-                              
-                              <div className="space-y-2 flex-1">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <h4 className="font-semibold">{evenement.titre}</h4>
-                                  <Badge variant="outline">{evenement.type_evenement}</Badge>
-                                  <Badge
-                                variant={evenement.statut === 'en_cours' ? 'default' :
-                                evenement.statut === 'a_venir' ? 'secondary' :
-                                evenement.statut === 'termine' ? 'outline' : 'destructive'}>
+                                }
 
-                                    {evenement.statut?.replace('_', ' ')}
-                                  </Badge>
-                                  {evenement.prix &&
-                              <Badge variant="outline">
-                                      <Euro className="h-3 w-3 mr-1" />
-                                      {formatPrice(evenement.prix)}
+                                <div className="space-y-2 flex-1">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <h4 className="font-semibold">{evenement.titre}</h4>
+                                    <Badge variant="outline">{evenement.type_evenement}</Badge>
+                                    <Badge
+                                      variant={evenement.statut === 'en_cours' ? 'default' :
+                                        evenement.statut === 'a_venir' ? 'secondary' :
+                                          evenement.statut === 'termine' ? 'outline' : 'destructive'}>
+
+                                      {evenement.statut?.replace('_', ' ')}
                                     </Badge>
-                              }
-                                </div>
-                                
-                                <div className="space-y-1">
-                                  <p className="text-sm text-muted-foreground">{t("dashboardadmin.organis_par")}
-                                {evenement.organisateur?.prenom} {evenement.organisateur?.nom}
-                                  </p>
-                                  
-                                  {evenement.description &&
-                              <p className="text-sm line-clamp-2">{evenement.description}</p>
-                              }
-                                  
-                                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                    <span className="flex items-center gap-1">
-                                      <CalendarIcon className="h-3 w-3" />
-                                      {formatDate(evenement.date_debut)}
-                                    </span>
-                                    
-                                    <span className="flex items-center gap-1">
-                                      <MapPinIcon className="h-3 w-3" />
-                                      {evenement.lieu}, {evenement.wilaya}
-                                    </span>
-                                    
-                                    <span className="flex items-center gap-1">
-                                      <Users className="h-3 w-3" />
-                                      {evenement.participants_count}{t("dashboardadmin.participants")}
-                                </span>
+                                    {evenement.prix &&
+                                      <Badge variant="outline">
+                                        <Euro className="h-3 w-3 mr-1" />
+                                        {formatPrice(evenement.prix)}
+                                      </Badge>
+                                    }
+                                  </div>
+
+                                  <div className="space-y-1">
+                                    <p className="text-sm text-muted-foreground">{t("dashboardadmin.organis_par")}
+                                      {evenement.organisateur?.prenom} {evenement.organisateur?.nom}
+                                    </p>
+
+                                    {evenement.description &&
+                                      <p className="text-sm line-clamp-2">{evenement.description}</p>
+                                    }
+
+                                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                      <span className="flex items-center gap-1">
+                                        <CalendarIcon className="h-3 w-3" />
+                                        {formatDate(evenement.date_debut)}
+                                      </span>
+
+                                      <span className="flex items-center gap-1">
+                                        <MapPinIcon className="h-3 w-3" />
+                                        {evenement.lieu}, {evenement.wilaya}
+                                      </span>
+
+                                      <span className="flex items-center gap-1">
+                                        <Users className="h-3 w-3" />
+                                        {evenement.participants_count}{t("dashboardadmin.participants")}
+                                      </span>
+                                    </div>
                                   </div>
                                 </div>
+
+                                {evenement.image &&
+                                  <div className="ml-4">
+                                    <img
+                                      src={evenement.image}
+                                      alt={evenement.titre}
+                                      className="w-24 h-24 object-cover rounded" />
+
+                                  </div>
+                                }
                               </div>
-                              
-                              {evenement.image &&
-                          <div className="ml-4">
-                                  <img
-                              src={evenement.image}
-                              alt={evenement.titre}
-                              className="w-24 h-24 object-cover rounded" />
 
-                                </div>
-                          }
-                            </div>
-                            
-                            <div className="flex gap-2 mt-4">
-                              {evenement.statut === 'a_venir' &&
-                          <>
+                              <div className="flex gap-2 mt-4">
+                                {evenement.statut === 'a_venir' &&
+                                  <>
+                                    <Button
+                                      size="sm"
+                                      onClick={() => updateEvenementStatus(evenement.id_evenement, 'en_cours')}>
+
+                                      <Play className="h-4 w-4 mr-1" />{t("dashboardadmin.dmarrer")}
+
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => updateEvenementStatus(evenement.id_evenement, 'annule')}>
+
+                                      <Ban className="h-4 w-4 mr-1" />{t("dashboardadmin.annuler_3")}
+
+                                    </Button>
+                                  </>
+                                }
+
+                                {evenement.statut === 'en_cours' &&
                                   <Button
-                              size="sm"
-                              onClick={() => updateEvenementStatus(evenement.id_evenement, 'en_cours')}>
+                                    size="sm"
+                                    onClick={() => updateEvenementStatus(evenement.id_evenement, 'termine')}>
 
-                                    <Play className="h-4 w-4 mr-1" />{t("dashboardadmin.dmarrer")}
+                                    <Pause className="h-4 w-4 mr-1" />{t("dashboardadmin.terminer")}
 
-                            </Button>
-                                  <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => updateEvenementStatus(evenement.id_evenement, 'annule')}>
-
-                                    <Ban className="h-4 w-4 mr-1" />{t("dashboardadmin.annuler_3")}
-
-                            </Button>
-                                </>
-                          }
-                              
-                              {evenement.statut === 'en_cours' &&
-                          <Button
-                            size="sm"
-                            onClick={() => updateEvenementStatus(evenement.id_evenement, 'termine')}>
-
-                                  <Pause className="h-4 w-4 mr-1" />{t("dashboardadmin.terminer")}
-
-                          </Button>
-                          }
-                              
-                              <Button size="sm" variant="ghost">
-                                <Eye className="h-4 w-4 mr-1" />{t("dashboardadmin.voir_dtails_3")}
-
-                          </Button>
-                              
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button size="sm" variant="ghost">
-                                    <MoreVertical className="h-4 w-4" />
                                   </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem>
-                                    <Edit className="h-4 w-4 mr-2" />{t("dashboardadmin.modifier_4")}
+                                }
 
-                              </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => openNotificationModal('événement', evenement)}>
-                                    <Bell className="h-4 w-4 mr-2" />{t("dashboardadmin.envoyer_notification_4")}
+                                <Button size="sm" variant="ghost">
+                                  <Eye className="h-4 w-4 mr-1" />{t("dashboardadmin.voir_dtails_3")}
 
-                              </DropdownMenuItem>
-                                  <DropdownMenuItem>
-                                    <Award className="h-4 w-4 mr-2" />{t("dashboardadmin.mettre_avant_3")}
+                                </Button>
 
-                              </DropdownMenuItem>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem
-                                onClick={() => deleteEvenementAction.execute({ evenementId: evenement.id_evenement })}
-                                className="text-red-600 focus:text-red-600">
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button size="sm" variant="ghost">
+                                      <MoreVertical className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem>
+                                      <Edit className="h-4 w-4 mr-2" />{t("dashboardadmin.modifier_4")}
 
-                                    <Trash2 className="h-4 w-4 mr-2" />{t("dashboardadmin.supprimer_6")}
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => openNotificationModal('événement', evenement)}>
+                                      <Bell className="h-4 w-4 mr-2" />{t("dashboardadmin.envoyer_notification_4")}
 
-                              </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </div>
-                          </Card>
-                      )}
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem>
+                                      <Award className="h-4 w-4 mr-2" />{t("dashboardadmin.mettre_avant_3")}
+
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      onClick={() => deleteEvenementAction.execute({ evenementId: evenement.id_evenement })}
+                                      className="text-red-600 focus:text-red-600">
+
+                                      <Trash2 className="h-4 w-4 mr-2" />{t("dashboardadmin.supprimer_6")}
+
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </div>
+                            </Card>
+                          )}
+                        </div>
+
+                        <PaginationControls
+                          currentPage={filteredAndPaginatedEvenements.currentPage}
+                          totalPages={filteredAndPaginatedEvenements.totalPages}
+                          totalItems={filteredAndPaginatedEvenements.totalItems}
+                          hasNext={filteredAndPaginatedEvenements.hasNext}
+                          hasPrev={filteredAndPaginatedEvenements.hasPrev}
+                          onPageChange={setCurrentPageEvenements}
+                          itemsPerPage={itemsPerPage} />
+
+                      </> :
+
+                      <div className="text-center py-12">
+                        <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                        <p className="text-muted-foreground">
+                          {searchEvenements ?
+                            `Aucun résultat pour "${searchEvenements}"` :
+                            'Aucun événement à afficher'
+                          }
+                        </p>
                       </div>
-                      
-                      <PaginationControls
-                      currentPage={filteredAndPaginatedEvenements.currentPage}
-                      totalPages={filteredAndPaginatedEvenements.totalPages}
-                      totalItems={filteredAndPaginatedEvenements.totalItems}
-                      hasNext={filteredAndPaginatedEvenements.hasNext}
-                      hasPrev={filteredAndPaginatedEvenements.hasPrev}
-                      onPageChange={setCurrentPageEvenements}
-                      itemsPerPage={itemsPerPage} />
-
-                    </> :
-
-                  <div className="text-center py-12">
-                      <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                      <p className="text-muted-foreground">
-                        {searchEvenements ?
-                      `Aucun résultat pour "${searchEvenements}"` :
-                      'Aucun événement à afficher'
-                      }
-                      </p>
-                    </div>
                   }
                 </CardContent>
               </Card>
@@ -2960,11 +2965,11 @@ const DashboardAdmin = () => {
             <div className="space-y-6">
               {/* Panneau de filtres patrimoine */}
               {showPatrimoineFilters &&
-              <Card>
+                <Card>
                   <CardHeader>
                     <CardTitle className="text-lg flex items-center justify-between">{t("dashboardadmin.filtres_avancs_3")}
 
-                    <Button variant="ghost" size="sm" onClick={() => setShowPatrimoineFilters(false)}>
+                      <Button variant="ghost" size="sm" onClick={() => setShowPatrimoineFilters(false)}>
                         <XIcon className="h-4 w-4" />
                       </Button>
                     </CardTitle>
@@ -2974,8 +2979,8 @@ const DashboardAdmin = () => {
                       <div className="space-y-2">
                         <Label>{t("dashboardadmin.type_patrimoine")}</Label>
                         <Select
-                        value={patrimoineFilters.type_patrimoine || ''}
-                        onValueChange={(value) => setPatrimoineFilters({ ...patrimoineFilters, type_patrimoine: value || undefined })}>
+                          value={patrimoineFilters.type_patrimoine || ''}
+                          onValueChange={(value) => setPatrimoineFilters({ ...patrimoineFilters, type_patrimoine: value || undefined })}>
 
                           <SelectTrigger>
                             <SelectValue placeholder={t("dashboardadmin.tous_les_types_3")} />
@@ -2983,17 +2988,17 @@ const DashboardAdmin = () => {
                           <SelectContent>
                             <SelectItem value="">{t("dashboardadmin.tous_les_types_3")}</SelectItem>
                             {TYPES_PATRIMOINE.map((type) =>
-                          <SelectItem key={type} value={type}>{type}</SelectItem>
-                          )}
+                              <SelectItem key={type} value={type}>{type}</SelectItem>
+                            )}
                           </SelectContent>
                         </Select>
                       </div>
-                      
+
                       <div className="space-y-2">
                         <Label>{t("dashboardadmin.wilaya_3")}</Label>
                         <Select
-                        value={patrimoineFilters.wilaya || ''}
-                        onValueChange={(value) => setPatrimoineFilters({ ...patrimoineFilters, wilaya: value || undefined })}>
+                          value={patrimoineFilters.wilaya || ''}
+                          onValueChange={(value) => setPatrimoineFilters({ ...patrimoineFilters, wilaya: value || undefined })}>
 
                           <SelectTrigger>
                             <SelectValue placeholder={t("dashboardadmin.toutes_les_wilayas_3")} />
@@ -3001,17 +3006,17 @@ const DashboardAdmin = () => {
                           <SelectContent>
                             <SelectItem value="">{t("dashboardadmin.toutes_les_wilayas_3")}</SelectItem>
                             {WILAYAS.map((wilaya) =>
-                          <SelectItem key={wilaya} value={wilaya}>{wilaya}</SelectItem>
-                          )}
+                              <SelectItem key={wilaya} value={wilaya}>{wilaya}</SelectItem>
+                            )}
                           </SelectContent>
                         </Select>
                       </div>
-                      
+
                       <div className="space-y-2">
                         <Label>{t("dashboardadmin.classement")}</Label>
                         <Select
-                        value={patrimoineFilters.classement || ''}
-                        onValueChange={(value) => setPatrimoineFilters({ ...patrimoineFilters, classement: value || undefined })}>
+                          value={patrimoineFilters.classement || ''}
+                          onValueChange={(value) => setPatrimoineFilters({ ...patrimoineFilters, classement: value || undefined })}>
 
                           <SelectTrigger>
                             <SelectValue placeholder={t("dashboardadmin.placeholder_tous_les_classements")} />
@@ -3025,19 +3030,19 @@ const DashboardAdmin = () => {
                         </Select>
                       </div>
                     </div>
-                    
+
                     <div className="flex gap-2 mt-4">
                       <Button onClick={() => {
-                      resetPatrimoineFilters();
-                      setCurrentPagePatrimoine(1);
-                    }}>{t("dashboardadmin.rinitialiser_3")}
+                        resetPatrimoineFilters();
+                        setCurrentPagePatrimoine(1);
+                      }}>{t("dashboardadmin.rinitialiser_3")}
 
-                    </Button>
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
               }
-              
+
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
@@ -3071,7 +3076,7 @@ const DashboardAdmin = () => {
                         className="pl-10" />
 
                     </div>
-                    
+
                     <div className="flex gap-2">
                       <Button
                         variant="outline"
@@ -3080,7 +3085,7 @@ const DashboardAdmin = () => {
                         <SlidersHorizontal className="h-4 w-4 mr-2" />{t("dashboardadmin.filtres_3")}
 
                       </Button>
-                      
+
                       <Button variant="outline">
                         <Download className="h-4 w-4 mr-2" />{t("dashboardadmin.exporter_4")}
 
@@ -3090,122 +3095,122 @@ const DashboardAdmin = () => {
 
                   {/* Liste */}
                   {loadingPatrimoine ?
-                  <div className="space-y-3">
+                    <div className="space-y-3">
                       <Skeleton className="h-24" />
                       <Skeleton className="h-24" />
                       <Skeleton className="h-24" />
                     </div> :
-                  filteredAndPaginatedPatrimoine.items.length > 0 ?
-                  <>
-                      <div className="space-y-4">
-                        {filteredAndPaginatedPatrimoine.items.map((site: any) =>
-                      <Card key={site.id_patrimoine} className="p-4">
-                            <div className="flex items-start justify-between">
-                              <div className="space-y-2 flex-1">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <h4 className="font-semibold">{site.nom}</h4>
-                                  <Badge variant="outline">{site.type_patrimoine}</Badge>
-                                  {site.classement_unesco &&
-                              <Badge variant="default">{t("dashboardadmin.unesco_1")}</Badge>
-                              }
-                                </div>
-                                
-                                <div className="space-y-1">
-                                  {site.description &&
-                              <p className="text-sm line-clamp-2">{site.description}</p>
-                              }
-                                  
-                                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                    <span className="flex items-center gap-1">
-                                      <MapPinIcon className="h-3 w-3" />
-                                      {site.commune}, {site.wilaya}
-                                    </span>
-                                    
-                                    {site.date_construction &&
-                                <span className="flex items-center gap-1">
-                                        <CalendarIcon className="h-3 w-3" />
-                                        {site.date_construction}
+                    filteredAndPaginatedPatrimoine.items.length > 0 ?
+                      <>
+                        <div className="space-y-4">
+                          {filteredAndPaginatedPatrimoine.items.map((site: any) =>
+                            <Card key={site.id_patrimoine} className="p-4">
+                              <div className="flex items-start justify-between">
+                                <div className="space-y-2 flex-1">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <h4 className="font-semibold">{site.nom}</h4>
+                                    <Badge variant="outline">{site.type_patrimoine}</Badge>
+                                    {site.classement_unesco &&
+                                      <Badge variant="default">{t("dashboardadmin.unesco_1")}</Badge>
+                                    }
+                                  </div>
+
+                                  <div className="space-y-1">
+                                    {site.description &&
+                                      <p className="text-sm line-clamp-2">{site.description}</p>
+                                    }
+
+                                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                      <span className="flex items-center gap-1">
+                                        <MapPinIcon className="h-3 w-3" />
+                                        {site.commune}, {site.wilaya}
                                       </span>
-                                }
-                                    
-                                    {site.nombre_visites &&
-                                <span className="flex items-center gap-1">
-                                        <Eye className="h-3 w-3" />
-                                        {site.nombre_visites}{t("dashboardadmin.visites")}
-                                </span>
-                                }
+
+                                      {site.date_construction &&
+                                        <span className="flex items-center gap-1">
+                                          <CalendarIcon className="h-3 w-3" />
+                                          {site.date_construction}
+                                        </span>
+                                      }
+
+                                      {site.nombre_visites &&
+                                        <span className="flex items-center gap-1">
+                                          <Eye className="h-3 w-3" />
+                                          {site.nombre_visites}{t("dashboardadmin.visites")}
+                                        </span>
+                                      }
+                                    </div>
                                   </div>
                                 </div>
+
+                                {site.image_principale &&
+                                  <div className="ml-4">
+                                    <img
+                                      src={site.image_principale}
+                                      alt={site.nom}
+                                      className="w-24 h-24 object-cover rounded" />
+
+                                  </div>
+                                }
                               </div>
-                              
-                              {site.image_principale &&
-                          <div className="ml-4">
-                                  <img
-                              src={site.image_principale}
-                              alt={site.nom}
-                              className="w-24 h-24 object-cover rounded" />
 
-                                </div>
+                              <div className="flex gap-2 mt-4">
+                                <Button size="sm" variant="ghost">
+                                  <Eye className="h-4 w-4 mr-1" />{t("dashboardadmin.voir_dtails_3")}
+
+                                </Button>
+
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button size="sm" variant="ghost">
+                                      <MoreVertical className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem>
+                                      <Edit className="h-4 w-4 mr-2" />{t("dashboardadmin.modifier_4")}
+
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => openNotificationModal('patrimoine', site)}>
+                                      <Bell className="h-4 w-4 mr-2" />{t("dashboardadmin.envoyer_notification_4")}
+
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem>
+                                      <Award className="h-4 w-4 mr-2" />{t("dashboardadmin.mettre_avant_3")}
+
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem className="text-red-600">
+                                      <Trash2 className="h-4 w-4 mr-2" />{t("dashboardadmin.supprimer_6")}
+
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </div>
+                            </Card>
+                          )}
+                        </div>
+
+                        <PaginationControls
+                          currentPage={filteredAndPaginatedPatrimoine.currentPage}
+                          totalPages={filteredAndPaginatedPatrimoine.totalPages}
+                          totalItems={filteredAndPaginatedPatrimoine.totalItems}
+                          hasNext={filteredAndPaginatedPatrimoine.hasNext}
+                          hasPrev={filteredAndPaginatedPatrimoine.hasPrev}
+                          onPageChange={setCurrentPagePatrimoine}
+                          itemsPerPage={itemsPerPage} />
+
+                      </> :
+
+                      <div className="text-center py-12">
+                        <MapPin className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                        <p className="text-muted-foreground">
+                          {searchPatrimoine ?
+                            `Aucun résultat pour "${searchPatrimoine}"` :
+                            'Aucun site patrimonial à afficher'
                           }
-                            </div>
-                            
-                            <div className="flex gap-2 mt-4">
-                              <Button size="sm" variant="ghost">
-                                <Eye className="h-4 w-4 mr-1" />{t("dashboardadmin.voir_dtails_3")}
-
-                          </Button>
-                              
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button size="sm" variant="ghost">
-                                    <MoreVertical className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem>
-                                    <Edit className="h-4 w-4 mr-2" />{t("dashboardadmin.modifier_4")}
-
-                              </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => openNotificationModal('patrimoine', site)}>
-                                    <Bell className="h-4 w-4 mr-2" />{t("dashboardadmin.envoyer_notification_4")}
-
-                              </DropdownMenuItem>
-                                  <DropdownMenuItem>
-                                    <Award className="h-4 w-4 mr-2" />{t("dashboardadmin.mettre_avant_3")}
-
-                              </DropdownMenuItem>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem className="text-red-600">
-                                    <Trash2 className="h-4 w-4 mr-2" />{t("dashboardadmin.supprimer_6")}
-
-                              </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </div>
-                          </Card>
-                      )}
+                        </p>
                       </div>
-                      
-                      <PaginationControls
-                      currentPage={filteredAndPaginatedPatrimoine.currentPage}
-                      totalPages={filteredAndPaginatedPatrimoine.totalPages}
-                      totalItems={filteredAndPaginatedPatrimoine.totalItems}
-                      hasNext={filteredAndPaginatedPatrimoine.hasNext}
-                      hasPrev={filteredAndPaginatedPatrimoine.hasPrev}
-                      onPageChange={setCurrentPagePatrimoine}
-                      itemsPerPage={itemsPerPage} />
-
-                    </> :
-
-                  <div className="text-center py-12">
-                      <MapPin className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                      <p className="text-muted-foreground">
-                        {searchPatrimoine ?
-                      `Aucun résultat pour "${searchPatrimoine}"` :
-                      'Aucun site patrimonial à afficher'
-                      }
-                      </p>
-                    </div>
                   }
                 </CardContent>
               </Card>
@@ -3217,11 +3222,11 @@ const DashboardAdmin = () => {
             <div className="space-y-6">
               {/* Panneau de filtres services */}
               {showServiceFilters &&
-              <Card>
+                <Card>
                   <CardHeader>
                     <CardTitle className="text-lg flex items-center justify-between">{t("dashboardadmin.filtres_avancs_3")}
 
-                    <Button variant="ghost" size="sm" onClick={() => setShowServiceFilters(false)}>
+                      <Button variant="ghost" size="sm" onClick={() => setShowServiceFilters(false)}>
                         <XIcon className="h-4 w-4" />
                       </Button>
                     </CardTitle>
@@ -3231,8 +3236,8 @@ const DashboardAdmin = () => {
                       <div className="space-y-2">
                         <Label>{t("dashboardadmin.type_service")}</Label>
                         <Select
-                        value={serviceFilters.type_service || ''}
-                        onValueChange={(value) => setServiceFilters({ ...serviceFilters, type_service: value || undefined })}>
+                          value={serviceFilters.type_service || ''}
+                          onValueChange={(value) => setServiceFilters({ ...serviceFilters, type_service: value || undefined })}>
 
                           <SelectTrigger>
                             <SelectValue placeholder={t("dashboardadmin.tous_les_types_3")} />
@@ -3240,17 +3245,17 @@ const DashboardAdmin = () => {
                           <SelectContent>
                             <SelectItem value="">{t("dashboardadmin.tous_les_types_3")}</SelectItem>
                             {TYPES_SERVICE.map((type) =>
-                          <SelectItem key={type} value={type}>{type}</SelectItem>
-                          )}
+                              <SelectItem key={type} value={type}>{type}</SelectItem>
+                            )}
                           </SelectContent>
                         </Select>
                       </div>
-                      
+
                       <div className="space-y-2">
                         <Label>{t("dashboardadmin.statut_3")}</Label>
                         <Select
-                        value={serviceFilters.statut || ''}
-                        onValueChange={(value) => setServiceFilters({ ...serviceFilters, statut: value || undefined })}>
+                          value={serviceFilters.statut || ''}
+                          onValueChange={(value) => setServiceFilters({ ...serviceFilters, statut: value || undefined })}>
 
                           <SelectTrigger>
                             <SelectValue placeholder={t("dashboardadmin.placeholder_tous_les_statuts_2")} />
@@ -3263,12 +3268,12 @@ const DashboardAdmin = () => {
                           </SelectContent>
                         </Select>
                       </div>
-                      
+
                       <div className="space-y-2">
                         <Label>{t("dashboardadmin.wilaya_3")}</Label>
                         <Select
-                        value={serviceFilters.wilaya || ''}
-                        onValueChange={(value) => setServiceFilters({ ...serviceFilters, wilaya: value || undefined })}>
+                          value={serviceFilters.wilaya || ''}
+                          onValueChange={(value) => setServiceFilters({ ...serviceFilters, wilaya: value || undefined })}>
 
                           <SelectTrigger>
                             <SelectValue placeholder={t("dashboardadmin.toutes_les_wilayas_3")} />
@@ -3276,35 +3281,35 @@ const DashboardAdmin = () => {
                           <SelectContent>
                             <SelectItem value="">{t("dashboardadmin.toutes_les_wilayas_3")}</SelectItem>
                             {WILAYAS.map((wilaya) =>
-                          <SelectItem key={wilaya} value={wilaya}>{wilaya}</SelectItem>
-                          )}
+                              <SelectItem key={wilaya} value={wilaya}>{wilaya}</SelectItem>
+                            )}
                           </SelectContent>
                         </Select>
                       </div>
-                      
+
                       <div className="space-y-2">
                         <Label>{t("dashboardadmin.prix_maximum_1")}</Label>
                         <Input
-                        type="number"
-                        placeholder={t("dashboardadmin.placeholder_prix_max_1")}
-                        value={serviceFilters.prix_max || ''}
-                        onChange={(e) => setServiceFilters({ ...serviceFilters, prix_max: e.target.value ? Number(e.target.value) : undefined })} />
+                          type="number"
+                          placeholder={t("dashboardadmin.placeholder_prix_max_1")}
+                          value={serviceFilters.prix_max || ''}
+                          onChange={(e) => setServiceFilters({ ...serviceFilters, prix_max: e.target.value ? Number(e.target.value) : undefined })} />
 
                       </div>
                     </div>
-                    
+
                     <div className="flex gap-2 mt-4">
                       <Button onClick={() => {
-                      resetServiceFilters();
-                      setCurrentPageServices(1);
-                    }}>{t("dashboardadmin.rinitialiser_3")}
+                        resetServiceFilters();
+                        setCurrentPageServices(1);
+                      }}>{t("dashboardadmin.rinitialiser_3")}
 
-                    </Button>
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
               }
-              
+
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
@@ -3338,7 +3343,7 @@ const DashboardAdmin = () => {
                         className="pl-10" />
 
                     </div>
-                    
+
                     <div className="flex gap-2">
                       <Button
                         variant="outline"
@@ -3347,7 +3352,7 @@ const DashboardAdmin = () => {
                         <SlidersHorizontal className="h-4 w-4 mr-2" />{t("dashboardadmin.filtres_3")}
 
                       </Button>
-                      
+
                       <Button
                         variant={isSelectModeServices ? "secondary" : "outline"}
                         onClick={() => {
@@ -3358,7 +3363,7 @@ const DashboardAdmin = () => {
                         <CheckCircle className="h-4 w-4 mr-2" />
                         {isSelectModeServices ? 'Annuler sélection' : 'Mode sélection'}
                       </Button>
-                      
+
                       <Button variant="outline">
                         <Download className="h-4 w-4 mr-2" />{t("dashboardadmin.exporter_4")}
 
@@ -3368,161 +3373,161 @@ const DashboardAdmin = () => {
 
                   {/* Liste */}
                   {loadingServices ?
-                  <div className="space-y-3">
+                    <div className="space-y-3">
                       <Skeleton className="h-24" />
                       <Skeleton className="h-24" />
                       <Skeleton className="h-24" />
                     </div> :
-                  filteredAndPaginatedServices.items.length > 0 ?
-                  <>
-                      <div className="space-y-4">
-                        {filteredAndPaginatedServices.items.map((service: any) =>
-                      <Card key={service.id_service} className={cn(
-                        "p-4 transition-all duration-200",
-                        selectedServices.includes(service.id_service) && "ring-2 ring-primary shadow-lg"
-                      )}>
-                            <div className="flex items-start justify-between">
-                              {isSelectModeServices &&
-                          <Checkbox
-                            checked={selectedServices.includes(service.id_service)}
-                            onCheckedChange={() => toggleServiceSelection(service.id_service)}
-                            className="mt-1 mr-3" />
+                    filteredAndPaginatedServices.items.length > 0 ?
+                      <>
+                        <div className="space-y-4">
+                          {filteredAndPaginatedServices.items.map((service: any) =>
+                            <Card key={service.id_service} className={cn(
+                              "p-4 transition-all duration-200",
+                              selectedServices.includes(service.id_service) && "ring-2 ring-primary shadow-lg"
+                            )}>
+                              <div className="flex items-start justify-between">
+                                {isSelectModeServices &&
+                                  <Checkbox
+                                    checked={selectedServices.includes(service.id_service)}
+                                    onCheckedChange={() => toggleServiceSelection(service.id_service)}
+                                    className="mt-1 mr-3" />
 
-                          }
-                              
-                              <div className="space-y-2 flex-1">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <h4 className="font-semibold">{service.titre}</h4>
-                                  <Badge variant="outline">{service.type_service}</Badge>
-                                  <Badge
-                                variant={service.statut === 'actif' ? 'default' :
-                                service.statut === 'suspendu' ? 'destructive' : 'secondary'}>
+                                }
 
-                                    {service.statut}
-                                  </Badge>
-                                  {service.prix &&
-                              <Badge variant="outline">
-                                      <Euro className="h-3 w-3 mr-1" />
-                                      {formatPrice(service.prix, service.unite_prix)}
+                                <div className="space-y-2 flex-1">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <h4 className="font-semibold">{service.titre}</h4>
+                                    <Badge variant="outline">{service.type_service}</Badge>
+                                    <Badge
+                                      variant={service.statut === 'actif' ? 'default' :
+                                        service.statut === 'suspendu' ? 'destructive' : 'secondary'}>
+
+                                      {service.statut}
                                     </Badge>
-                              }
-                                </div>
-                                
-                                <div className="space-y-1">
-                                  <p className="text-sm text-muted-foreground">{t("dashboardadmin.par_1")}
-                                {service.prestataire?.prenom} {service.prestataire?.nom}
-                                    {service.prestataire?.entreprise && ` - ${service.prestataire.entreprise}`}
-                                  </p>
-                                  
-                                  {service.description &&
-                              <p className="text-sm line-clamp-2">{service.description}</p>
-                              }
-                                  
-                                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                    <span className="flex items-center gap-1">
-                                      <MapPinIcon className="h-3 w-3" />
-                                      {service.wilaya}
-                                    </span>
-                                    
-                                    {service.note_moyenne &&
-                                <span className="flex items-center gap-1">
-                                        <Star className="h-3 w-3" />
-                                        {formatRating(service.note_moyenne)}
+                                    {service.prix &&
+                                      <Badge variant="outline">
+                                        <Euro className="h-3 w-3 mr-1" />
+                                        {formatPrice(service.prix, service.unite_prix)}
+                                      </Badge>
+                                    }
+                                  </div>
+
+                                  <div className="space-y-1">
+                                    <p className="text-sm text-muted-foreground">{t("dashboardadmin.par_1")}
+                                      {service.prestataire?.prenom} {service.prestataire?.nom}
+                                      {service.prestataire?.entreprise && ` - ${service.prestataire.entreprise}`}
+                                    </p>
+
+                                    {service.description &&
+                                      <p className="text-sm line-clamp-2">{service.description}</p>
+                                    }
+
+                                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                      <span className="flex items-center gap-1">
+                                        <MapPinIcon className="h-3 w-3" />
+                                        {service.wilaya}
                                       </span>
-                                }
-                                    
-                                    {service.nombre_reservations &&
-                                <span className="flex items-center gap-1">
-                                        <ShoppingBag className="h-3 w-3" />
-                                        {service.nombre_reservations}{t("dashboardadmin.rservations")}
-                                </span>
-                                }
+
+                                      {service.note_moyenne &&
+                                        <span className="flex items-center gap-1">
+                                          <Star className="h-3 w-3" />
+                                          {formatRating(service.note_moyenne)}
+                                        </span>
+                                      }
+
+                                      {service.nombre_reservations &&
+                                        <span className="flex items-center gap-1">
+                                          <ShoppingBag className="h-3 w-3" />
+                                          {service.nombre_reservations}{t("dashboardadmin.rservations")}
+                                        </span>
+                                      }
+                                    </div>
                                   </div>
                                 </div>
                               </div>
-                            </div>
-                            
-                            <div className="flex gap-2 mt-4">
-                              {service.statut === 'actif' &&
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => updateServiceStatus(service.id_service, 'suspendu')}>
 
-                                  <Pause className="h-4 w-4 mr-1" />{t("dashboardadmin.suspendre_2")}
+                              <div className="flex gap-2 mt-4">
+                                {service.statut === 'actif' &&
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => updateServiceStatus(service.id_service, 'suspendu')}>
 
-                          </Button>
-                          }
-                              
-                              {service.statut === 'suspendu' &&
-                          <Button
-                            size="sm"
-                            onClick={() => updateServiceStatus(service.id_service, 'actif')}>
+                                    <Pause className="h-4 w-4 mr-1" />{t("dashboardadmin.suspendre_2")}
 
-                                  <Play className="h-4 w-4 mr-1" />{t("dashboardadmin.ractiver_1")}
-
-                          </Button>
-                          }
-                              
-                              <Button size="sm" variant="ghost">
-                                <Eye className="h-4 w-4 mr-1" />{t("dashboardadmin.voir_dtails_3")}
-
-                          </Button>
-                              
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button size="sm" variant="ghost">
-                                    <MoreVertical className="h-4 w-4" />
                                   </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem>
-                                    <Edit className="h-4 w-4 mr-2" />{t("dashboardadmin.modifier_4")}
+                                }
 
-                              </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => openNotificationModal('service', service)}>
-                                    <Bell className="h-4 w-4 mr-2" />{t("dashboardadmin.envoyer_notification_4")}
+                                {service.statut === 'suspendu' &&
+                                  <Button
+                                    size="sm"
+                                    onClick={() => updateServiceStatus(service.id_service, 'actif')}>
 
-                              </DropdownMenuItem>
-                                  <DropdownMenuItem>
-                                    <Award className="h-4 w-4 mr-2" />{t("dashboardadmin.mettre_avant_3")}
+                                    <Play className="h-4 w-4 mr-1" />{t("dashboardadmin.ractiver_1")}
 
-                              </DropdownMenuItem>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem
-                                onClick={() => deleteServiceAction.execute({ serviceId: service.id_service })}
-                                className="text-red-600 focus:text-red-600">
+                                  </Button>
+                                }
 
-                                    <Trash2 className="h-4 w-4 mr-2" />{t("dashboardadmin.supprimer_6")}
+                                <Button size="sm" variant="ghost">
+                                  <Eye className="h-4 w-4 mr-1" />{t("dashboardadmin.voir_dtails_3")}
 
-                              </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </div>
-                          </Card>
-                      )}
+                                </Button>
+
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button size="sm" variant="ghost">
+                                      <MoreVertical className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem>
+                                      <Edit className="h-4 w-4 mr-2" />{t("dashboardadmin.modifier_4")}
+
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => openNotificationModal('service', service)}>
+                                      <Bell className="h-4 w-4 mr-2" />{t("dashboardadmin.envoyer_notification_4")}
+
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem>
+                                      <Award className="h-4 w-4 mr-2" />{t("dashboardadmin.mettre_avant_3")}
+
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      onClick={() => deleteServiceAction.execute({ serviceId: service.id_service })}
+                                      className="text-red-600 focus:text-red-600">
+
+                                      <Trash2 className="h-4 w-4 mr-2" />{t("dashboardadmin.supprimer_6")}
+
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </div>
+                            </Card>
+                          )}
+                        </div>
+
+                        <PaginationControls
+                          currentPage={filteredAndPaginatedServices.currentPage}
+                          totalPages={filteredAndPaginatedServices.totalPages}
+                          totalItems={filteredAndPaginatedServices.totalItems}
+                          hasNext={filteredAndPaginatedServices.hasNext}
+                          hasPrev={filteredAndPaginatedServices.hasPrev}
+                          onPageChange={setCurrentPageServices}
+                          itemsPerPage={itemsPerPage} />
+
+                      </> :
+
+                      <div className="text-center py-12">
+                        <Briefcase className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                        <p className="text-muted-foreground">
+                          {searchServices ?
+                            `Aucun résultat pour "${searchServices}"` :
+                            'Aucun service à afficher'
+                          }
+                        </p>
                       </div>
-                      
-                      <PaginationControls
-                      currentPage={filteredAndPaginatedServices.currentPage}
-                      totalPages={filteredAndPaginatedServices.totalPages}
-                      totalItems={filteredAndPaginatedServices.totalItems}
-                      hasNext={filteredAndPaginatedServices.hasNext}
-                      hasPrev={filteredAndPaginatedServices.hasPrev}
-                      onPageChange={setCurrentPageServices}
-                      itemsPerPage={itemsPerPage} />
-
-                    </> :
-
-                  <div className="text-center py-12">
-                      <Briefcase className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                      <p className="text-muted-foreground">
-                        {searchServices ?
-                      `Aucun résultat pour "${searchServices}"` :
-                      'Aucun service à afficher'
-                      }
-                      </p>
-                    </div>
                   }
                 </CardContent>
               </Card>
@@ -3540,68 +3545,68 @@ const DashboardAdmin = () => {
               </CardHeader>
               <CardContent>
                 {loadingModeration ?
-                <div className="space-y-3">
+                  <div className="space-y-3">
                     <Skeleton className="h-20" />
                     <Skeleton className="h-20" />
                     <Skeleton className="h-20" />
                   </div> :
-                (moderationQueueData?.items || moderationQueueData?.signalements) && (moderationQueueData?.items?.length > 0 || moderationQueueData?.signalements?.length > 0) ?
-                <div className="space-y-4">
-                    {(moderationQueueData.items || moderationQueueData.signalements).map((item: any) =>
-                  <Card key={item.id} className="p-4">
-                        <div className="flex items-start justify-between">
-                          <div className="space-y-2 flex-1">
-                            <div className="flex items-center gap-2">
-                              <h4 className="font-semibold">{item.entity_title}</h4>
-                              <Badge variant="outline">{item.type}</Badge>
-                              <Badge variant={item.status === 'pending' ? 'destructive' : 'secondary'}>
-                                {item.status === 'pending' ? 'En attente' : item.status}
-                              </Badge>
+                  (moderationQueueData?.items || moderationQueueData?.signalements) && (moderationQueueData?.items?.length > 0 || moderationQueueData?.signalements?.length > 0) ?
+                    <div className="space-y-4">
+                      {(moderationQueueData.items || moderationQueueData.signalements).map((item: any) =>
+                        <Card key={item.id} className="p-4">
+                          <div className="flex items-start justify-between">
+                            <div className="space-y-2 flex-1">
+                              <div className="flex items-center gap-2">
+                                <h4 className="font-semibold">{item.entity_title}</h4>
+                                <Badge variant="outline">{item.type}</Badge>
+                                <Badge variant={item.status === 'pending' ? 'destructive' : 'secondary'}>
+                                  {item.status === 'pending' ? 'En attente' : item.status}
+                                </Badge>
+                              </div>
+                              <p className="text-sm text-muted-foreground">{t("dashboardadmin.signal_par")}
+                                {item.reported_by?.nom} - {formatDate(item.date_signalement)}
+                              </p>
+                              <p className="text-sm">
+                                <span className="font-medium">{t("dashboardadmin.raison")}</span> {item.reason}
+                              </p>
+                              {item.details &&
+                                <p className="text-sm text-muted-foreground">{item.details}</p>
+                              }
                             </div>
-                            <p className="text-sm text-muted-foreground">{t("dashboardadmin.signal_par")}
-                          {item.reported_by?.nom} - {formatDate(item.date_signalement)}
-                            </p>
-                            <p className="text-sm">
-                              <span className="font-medium">{t("dashboardadmin.raison")}</span> {item.reason}
-                            </p>
-                            {item.details &&
-                        <p className="text-sm text-muted-foreground">{item.details}</p>
-                        }
+                            <div className="flex gap-2 ml-4">
+                              <Button
+                                size="sm"
+                                onClick={() => moderateSignalement({ signalementId: item.id, action: 'approve' })}>
+
+                                <CheckCircle className="h-4 w-4 mr-1" />{t("dashboardadmin.approuver_1")}
+
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => moderateSignalement({ signalementId: item.id, action: 'reject' })}>
+
+                                <XCircle className="h-4 w-4 mr-1" />{t("dashboardadmin.supprimer_6")}
+
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => moderateSignalement({ signalementId: item.id, action: 'warn' })}>
+
+                                <AlertTriangle className="h-4 w-4 mr-1" />{t("dashboardadmin.avertir")}
+
+                              </Button>
+                            </div>
                           </div>
-                          <div className="flex gap-2 ml-4">
-                            <Button
-                          size="sm"
-                          onClick={() => moderateSignalement({ signalementId: item.id, action: 'approve' })}>
+                        </Card>
+                      )}
+                    </div> :
 
-                              <CheckCircle className="h-4 w-4 mr-1" />{t("dashboardadmin.approuver_1")}
-
-                        </Button>
-                            <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => moderateSignalement({ signalementId: item.id, action: 'reject' })}>
-
-                              <XCircle className="h-4 w-4 mr-1" />{t("dashboardadmin.supprimer_6")}
-
-                        </Button>
-                            <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => moderateSignalement({ signalementId: item.id, action: 'warn' })}>
-
-                              <AlertTriangle className="h-4 w-4 mr-1" />{t("dashboardadmin.avertir")}
-
-                        </Button>
-                          </div>
-                        </div>
-                      </Card>
-                  )}
-                  </div> :
-
-                <div className="text-center py-12">
-                    <Shield className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground">{t("dashboardadmin.aucun_signalement_attente_1")}</p>
-                  </div>
+                    <div className="text-center py-12">
+                      <Shield className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                      <p className="text-muted-foreground">{t("dashboardadmin.aucun_signalement_attente_1")}</p>
+                    </div>
                 }
               </CardContent>
             </Card>
@@ -3640,7 +3645,7 @@ const DashboardAdmin = () => {
 
                   </div>
                 </div>
-                
+
                 <div className="grid gap-2">
                   <Label htmlFor="edit-email">{t("dashboardadmin.email_1")}</Label>
                   <Input
@@ -3650,7 +3655,7 @@ const DashboardAdmin = () => {
                     onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })} />
 
                 </div>
-                
+
                 <div className="grid gap-2">
                   <Label htmlFor="edit-telephone">{t("dashboardadmin.tlphone")}</Label>
                   <Input
@@ -3659,7 +3664,7 @@ const DashboardAdmin = () => {
                     onChange={(e) => setEditFormData({ ...editFormData, telephone: e.target.value })} />
 
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
                     <Label htmlFor="edit-type">{t("dashboardadmin.type_dutilisateur")}</Label>
@@ -3678,7 +3683,7 @@ const DashboardAdmin = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   <div className="grid gap-2">
                     <Label htmlFor="edit-statut">{t("dashboardadmin.statut_3")}</Label>
                     <Select
@@ -3696,7 +3701,7 @@ const DashboardAdmin = () => {
                     </Select>
                   </div>
                 </div>
-                
+
                 <div className="grid gap-2">
                   <Label htmlFor="edit-entreprise">{t("dashboardadmin.entreprise")}</Label>
                   <Input
@@ -3705,7 +3710,7 @@ const DashboardAdmin = () => {
                     onChange={(e) => setEditFormData({ ...editFormData, entreprise: e.target.value })} />
 
                 </div>
-                
+
                 <div className="grid gap-2">
                   <Label htmlFor="edit-biographie">{t("dashboardadmin.biographie")}</Label>
                   <Textarea
@@ -3747,7 +3752,7 @@ const DashboardAdmin = () => {
                   onChange={(e) => setSuspendFormData({ ...suspendFormData, duree: Number(e.target.value) })} />
 
               </div>
-              
+
               <div className="grid gap-2">
                 <Label htmlFor="suspend-raison">{t("dashboardadmin.raison_suspension")}</Label>
                 <Textarea
@@ -3772,7 +3777,7 @@ const DashboardAdmin = () => {
           </DialogContent>
         </Dialog>
       </main>
-      
+
       <Footer />
     </div>);
 
