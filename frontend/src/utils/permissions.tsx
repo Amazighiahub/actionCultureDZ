@@ -1,23 +1,20 @@
 // src/utils/permissions.ts - VERSION FINALE ALIGNÉE AVEC LES TYPES
 
 import { authService } from '../services/auth.service';
-import type { 
-  User, 
-  Organisation, 
-  Role,
-  Commentaire,
-  Signalement 
-} from '../types/User.types';
+import type { User} from '../types/models/user.types';
+import { Commentaire } from '../types/models/tracking.types'
 import type { 
   Oeuvre,
-  OeuvreUser 
-} from '../types/Oeuvre.types';
+  
+} from '../types/models/oeuvre.types';
+import { EvenementUser, EvenementOeuvre , EvenementOrganisation} from '../types/models/associations.types'; 
+
 import type { 
-  Evenement,
-  EvenementUser,
-  EvenementOrganisation 
-} from '../types/Evenement.types';
-import type { Lieu } from '../types/Geographie.types';
+  Evenement
+ 
+   
+} from '../types/models/evenement.types';
+import type { Lieu } from '../types/models/lieu.types';
 
 // ==========================================================================
 // PERMISSIONS POUR LES ŒUVRES
@@ -605,6 +602,7 @@ export function usePermissions() {
 
 import React from 'react';
 import { Navigate } from 'react-router-dom';
+import { Signalement } from '../types/models/tracking.types';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;

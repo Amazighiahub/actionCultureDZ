@@ -1,21 +1,10 @@
 /**
- * Page d'accueil avec intégration complète des API
- * 
- * GESTION DES TYPES :
- * 1. Les types sont importés depuis '@/types' (votre structure types/)
- * 2. Les réponses paginées utilisent PaginatedResponse<T> de '@/config/api'
- * 3. Pour les erreurs TypeScript sur response.data.data :
- *    - response.data est de type PaginatedResponse<T>
- *    - Utilisez: const paginatedData = response.data as PaginatedResponse<VotreType>
- *    - Puis accédez à: paginatedData.data pour obtenir le tableau
- * 
- * STRUCTURE DES RÉPONSES API :
- * - ApiResponse<T> = { success: boolean; data?: T; error?: string }
- * - PaginatedResponse<T> = { data: T[]; total: number; page: number; limit: number }
+ * Page d'accueil avec intégration complète des API et traductions i18n
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Header from '@/components/Header';
 import HeroSection from '@/components/HeroSection';
 import CartePatrimoine from '@/components/CartePatrimoine';
@@ -32,6 +21,11 @@ import {
   MapPin, Clock, Star, Eye, Download, AlertCircle, RefreshCw
 } from 'lucide-react';
 
+// Import des hooks de localisation
+import { useLocalizedDate } from '@/hooks/useLocalizedDate';
+import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
+import { useRTL } from '@/hooks/useRTL';
+
 // Import des services
 import { dashboardService } from '@/services/dashboard.service';
 import { evenementService } from '@/services/evenement.service';
@@ -42,21 +36,17 @@ import { notificationService } from '@/services/notification.service';
 import { authService } from '@/services/auth.service';
 import { metadataService } from '@/services/metadata.service';
 
-// Import des types depuis votre structure
+// Import des types
 import {
   Evenement,
   Oeuvre,
-  // Pour patrimoine et artisanat, utilisez les types depuis leurs services
   Wilaya
 } from '@/types';
 
-// Import des types spécifiques aux services
 import type { SitePatrimoine } from '@/services/patrimoine.service';
 import type { Artisanat } from '@/services/artisanat.service';
 import type { OverviewStats } from '@/services/dashboard.service';
 import type { Notification } from '@/services/notification.service';
-
-// Import du type de réponse paginée depuis l'API config
 import { PaginatedResponse } from '@/config/api';
 
 // État global pour les wilayas
@@ -68,31 +58,27 @@ const getWilayaName = (wilayaId: number): string => {
   return wilaya ? wilaya.wilaya_name : `Wilaya ${wilayaId}`;
 };
 
-// Helper pour extraire les données d'une réponse (paginée ou directe)
+// Helper pour extraire les données d'une réponse
 function extractDataFromResponse<T>(responseData: any): T[] {
   if (!responseData) return [];
   
-  // Si c'est une réponse paginée avec une propriété 'data'
   if (typeof responseData === 'object' && 'data' in responseData && Array.isArray(responseData.data)) {
     return responseData.data;
   }
   
-  // Si c'est directement un tableau
   if (Array.isArray(responseData)) {
     return responseData;
   }
   
-  // Si c'est un objet avec une propriété 'items' (autre format possible)
   if (typeof responseData === 'object' && 'items' in responseData && Array.isArray(responseData.items)) {
     return responseData.items;
   }
   
-  // Cas par défaut - log pour debug
   console.warn('extractDataFromResponse: format non reconnu:', responseData);
   return [];
 }
 
-// Composant StatCard
+// Composant StatCard avec traductions
 interface StatCardProps {
   icon: React.ElementType;
   title: string;
@@ -101,60 +87,75 @@ interface StatCardProps {
   loading?: boolean;
 }
 
-const StatCard = ({ icon: Icon, title, value, trend, loading = false }: StatCardProps) => (
-  <Card className="hover-lift">
-    <CardContent className="p-6">
-      {loading ? (
-        <div className="space-y-3">
-          <Skeleton className="h-12 w-12 rounded-lg" />
-          <Skeleton className="h-4 w-24" />
-          <Skeleton className="h-6 w-16" />
-        </div>
-      ) : (
-        <>
-          <div className="flex items-center justify-between">
-            <div className="p-3 bg-primary/10 rounded-lg">
-              <Icon className="h-6 w-6 text-primary" />
-            </div>
-            {trend && (
-              <div className="flex items-center text-sm text-green-600">
-                <TrendingUp className="h-4 w-4 mr-1" />
-                {trend}
+const StatCard = ({ icon: Icon, title, value, trend, loading = false }: StatCardProps) => {
+  const { formatNumber } = useLocalizedNumber();
+  const { rtlClasses } = useRTL();
+  
+  return (
+    <Card className="hover-lift">
+      <CardContent className="p-6">
+        {loading ? (
+          <div className="space-y-3">
+            <Skeleton className="h-12 w-12 rounded-lg" />
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-6 w-16" />
+          </div>
+        ) : (
+          <>
+            <div className="flex items-center justify-between">
+              <div className="p-3 bg-primary/10 rounded-lg">
+                <Icon className="h-6 w-6 text-primary" />
               </div>
-            )}
-          </div>
-          <div className="mt-4">
-            <p className="text-sm text-muted-foreground">{title}</p>
-            <p className="text-2xl font-bold">{value}</p>
-          </div>
-        </>
-      )}
-    </CardContent>
-  </Card>
-);
+              {trend && (
+                <div className="flex items-center text-sm text-green-600">
+                  <TrendingUp className={`h-4 w-4 ${rtlClasses.marginEnd(1)}`} />
+                  {trend}
+                </div>
+              )}
+            </div>
+            <div className="mt-4">
+              <p className="text-sm text-muted-foreground">{title}</p>
+              <p className="text-2xl font-bold">
+                {typeof value === 'number' ? formatNumber(value) : value}
+              </p>
+            </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
 
-// Composant ErrorMessage
-const ErrorMessage = ({ message, onRetry }: { message: string; onRetry?: () => void }) => (
-  <Card className="border-destructive/20 bg-destructive/5">
-    <CardContent className="p-6">
-      <div className="flex items-center space-x-2 text-destructive mb-2">
-        <AlertCircle className="h-5 w-5" />
-        <p className="font-semibold">Erreur de chargement</p>
-      </div>
-      <p className="text-sm text-muted-foreground mb-4">{message}</p>
-      {onRetry && (
-        <Button variant="outline" size="sm" onClick={onRetry}>
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Réessayer
-        </Button>
-      )}
-    </CardContent>
-  </Card>
-);
+// Composant ErrorMessage avec traductions
+const ErrorMessage = ({ message, onRetry }: { message: string; onRetry?: () => void }) => {
+  const { t } = useTranslation();
+  const { rtlClasses } = useRTL();
+  
+  return (
+    <Card className="border-destructive/20 bg-destructive/5">
+      <CardContent className="p-6">
+        <div className={`flex items-center space-x-2 text-destructive mb-2 ${rtlClasses.flexRow}`}>
+          <AlertCircle className="h-5 w-5" />
+          <p className="font-semibold">{t('errors.loadingError')}</p>
+        </div>
+        <p className="text-sm text-muted-foreground mb-4">{message}</p>
+        {onRetry && (
+          <Button variant="outline" size="sm" onClick={onRetry}>
+            <RefreshCw className={`h-4 w-4 ${rtlClasses.marginEnd(2)}`} />
+            {t('common.retry')}
+          </Button>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
 
-// Composant PatrimoineDynamique
+// Composant PatrimoineDynamique avec traductions
 const PatrimoineDynamique = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
+  const { formatNumber } = useLocalizedNumber();
+  const { rtlClasses } = useRTL();
   const [sites, setSites] = useState<SitePatrimoine[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -168,19 +169,16 @@ const PatrimoineDynamique = () => {
       setLoading(true);
       setError(null);
       const response = await patrimoineService.getSitesPopulaires(6);
-      console.log('Sites populaires response:', response);
       
       if (response.success && response.data) {
-        // Vérifier que response.data est bien un tableau
         const sitesData = Array.isArray(response.data) ? response.data : [];
-        console.log('Sites data:', sitesData);
         setSites(sitesData);
       } else {
-        throw new Error(response.error || 'Erreur lors du chargement');
+        throw new Error(response.error || t('errors.loadingError'));
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Une erreur est survenue');
-      setSites([]); // S'assurer que sites reste un tableau même en cas d'erreur
+      setError(err instanceof Error ? err.message : t('errors.generic.message'));
+      setSites([]);
     } finally {
       setLoading(false);
     }
@@ -190,18 +188,16 @@ const PatrimoineDynamique = () => {
     return <ErrorMessage message={error} onRetry={loadSites} />;
   }
 
-  // Protection supplémentaire pour s'assurer que sites est un tableau
   const sitesArray = Array.isArray(sites) ? sites : [];
 
   return (
     <div className="space-y-8">
       <div className="text-center space-y-4">
         <h2 className="text-3xl font-bold tracking-tight lg:text-4xl">
-          Patrimoine culturel
+          {t('sections.heritage.title')}
         </h2>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-          Explorez les trésors architecturaux et naturels qui témoignent 
-          de la richesse millénaire de l'Algérie
+          {t('sections.heritage.subtitle')}
         </p>
       </div>
 
@@ -222,7 +218,7 @@ const PatrimoineDynamique = () => {
         ) : sitesArray.length === 0 ? (
           <div className="col-span-full text-center py-12">
             <MapPin className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">Aucun site patrimonial disponible pour le moment</p>
+            <p className="text-muted-foreground">{t('sections.heritage.noResults')}</p>
           </div>
         ) : (
           sitesArray.map((site) => (
@@ -239,14 +235,14 @@ const PatrimoineDynamique = () => {
                     <MapPin className="h-12 w-12 text-primary/50" />
                   </div>
                 )}
-                <div className="absolute top-4 left-4">
+                <div className={`absolute top-4 ${rtlClasses.start(4)}`}>
                   {site.classement === 'mondial' && (
                     <Badge className="bg-accent text-accent-foreground">
                       UNESCO
                     </Badge>
                   )}
                 </div>
-                <div className="absolute top-4 right-4">
+                <div className={`absolute top-4 ${rtlClasses.end(4)}`}>
                   <Badge variant="secondary" className="bg-background/90">
                     {site.type}
                   </Badge>
@@ -257,13 +253,13 @@ const PatrimoineDynamique = () => {
                 <div className="flex items-start justify-between">
                   <CardTitle className="text-lg leading-tight">{site.nom}</CardTitle>
                   {site.note_moyenne && (
-                    <div className="flex items-center space-x-1 text-sm">
+                    <div className={`flex items-center space-x-1 text-sm ${rtlClasses.flexRow}`}>
                       <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                      <span className="font-medium">{site.note_moyenne.toFixed(1)}</span>
+                      <span className="font-medium">{formatNumber(site.note_moyenne, { maximumFractionDigits: 1 })}</span>
                     </div>
                   )}
                 </div>
-                <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                <div className={`flex items-center space-x-2 text-sm text-muted-foreground ${rtlClasses.flexRow}`}>
                   <MapPin className="h-4 w-4" />
                   <span>{getWilayaName(site.wilaya_id)}</span>
                 </div>
@@ -275,9 +271,9 @@ const PatrimoineDynamique = () => {
                 </p>
                 
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-1 text-xs text-muted-foreground">
+                  <div className={`flex items-center space-x-1 text-xs text-muted-foreground ${rtlClasses.flexRow}`}>
                     <Clock className="h-3 w-3" />
-                    <span>{site.nombre_avis || 0} avis</span>
+                    <span>{formatNumber(site.nombre_avis || 0)} {t('sections.heritage.reviews')}</span>
                   </div>
                   
                   <Button 
@@ -286,7 +282,7 @@ const PatrimoineDynamique = () => {
                     className="text-primary"
                     onClick={() => navigate(`/patrimoine/${site.id}`)}
                   >
-                    Découvrir
+                    {t('sections.heritage.discover')}
                   </Button>
                 </div>
               </CardContent>
@@ -297,16 +293,20 @@ const PatrimoineDynamique = () => {
 
       <div className="text-center">
         <Button size="lg" variant="outline" onClick={() => navigate('/patrimoine')}>
-          Voir tous les sites patrimoniaux
+          {t('sections.heritage.seeAll')}
         </Button>
       </div>
     </div>
   );
 };
 
-// Composant EvenementsDynamique
+// Composant EvenementsDynamique avec traductions
 const EvenementsDynamique = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
+  const { formatDate } = useLocalizedDate();
+  const { formatNumber, formatPrice } = useLocalizedNumber();
+  const { rtlClasses } = useRTL();
   const [evenements, setEvenements] = useState<Evenement[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -323,18 +323,16 @@ const EvenementsDynamique = () => {
       setLoading(true);
       setError(null);
       const response = await evenementService.getUpcoming({ limit: 3 });
-      console.log('Evenements response:', response);
       
       if (response.success && response.data) {
         const evenements = extractDataFromResponse<Evenement>(response.data);
-        console.log('Evenements data:', evenements);
         setEvenements(evenements);
       } else {
-        throw new Error(response.error || 'Erreur lors du chargement');
+        throw new Error(response.error || t('errors.loadingError'));
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Une erreur est survenue');
-      setEvenements([]); // S'assurer que evenements reste un tableau
+      setError(err instanceof Error ? err.message : t('errors.generic.message'));
+      setEvenements([]);
     } finally {
       setLoading(false);
     }
@@ -357,22 +355,25 @@ const EvenementsDynamique = () => {
     }
   };
 
+  const getStatusText = (statut: string) => {
+    // Utiliser les traductions pour les statuts
+    return t(`sections.events.status.${statut}`, statut.replace(/_/g, ' '));
+  };
+
   if (error) {
     return <ErrorMessage message={error} onRetry={loadEvenements} />;
   }
 
-  // Protection supplémentaire
   const evenementsArray = Array.isArray(evenements) ? evenements : [];
 
   return (
     <div className="space-y-8">
       <div className="text-center space-y-4">
         <h2 className="text-3xl font-bold tracking-tight lg:text-4xl">
-          Événements culturels
+          {t('sections.events.title')}
         </h2>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-          Participez aux festivals, expositions et célébrations qui animent 
-          la scène culturelle algérienne
+          {t('sections.events.subtitle')}
         </p>
       </div>
 
@@ -393,7 +394,7 @@ const EvenementsDynamique = () => {
         ) : evenementsArray.length === 0 ? (
           <div className="col-span-full text-center py-12">
             <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">Aucun événement à venir pour le moment</p>
+            <p className="text-muted-foreground">{t('sections.events.noEvents')}</p>
           </div>
         ) : (
           evenementsArray.map((event) => (
@@ -416,9 +417,9 @@ const EvenementsDynamique = () => {
                     <Calendar className="h-12 w-12 text-primary/50" />
                   </div>
                 )}
-                <div className="absolute top-4 left-4">
+                <div className={`absolute top-4 ${rtlClasses.start(4)}`}>
                   <Badge className={getStatusColor(event.statut)}>
-                    {event.statut.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    {getStatusText(event.statut)}
                   </Badge>
                 </div>
               </div>
@@ -429,17 +430,17 @@ const EvenementsDynamique = () => {
                 </CardTitle>
                 
                 <div className="space-y-2 text-sm text-muted-foreground">
-                  <div className="flex items-center space-x-2">
+                  <div className={`flex items-center space-x-2 ${rtlClasses.flexRow}`}>
                     <Calendar className="h-4 w-4" />
                     <span>
-                      {event.date_debut ? new Date(event.date_debut).toLocaleDateString('fr-FR') : 'Date à confirmer'}
+                      {event.date_debut ? formatDate(event.date_debut) : t('sections.events.dateToConfirm')}
                       {event.date_fin && event.date_fin !== event.date_debut && 
-                        ` - ${new Date(event.date_fin).toLocaleDateString('fr-FR')}`
+                        ` - ${formatDate(event.date_fin)}`
                       }
                     </span>
                   </div>
                   {event.Lieu && (
-                    <div className="flex items-center space-x-2">
+                    <div className={`flex items-center space-x-2 ${rtlClasses.flexRow}`}>
                       <MapPin className="h-4 w-4" />
                       <span>{event.Lieu.nom}</span>
                     </div>
@@ -449,19 +450,19 @@ const EvenementsDynamique = () => {
               
               <CardContent className="space-y-4">
                 <p className="text-sm text-muted-foreground line-clamp-2">
-                  {event.description || 'Aucune description disponible'}
+                  {event.description || t('common.noDescription')}
                 </p>
                 
                 {event.capacite_max && (
                   <div className="space-y-3">
                     <div className="flex items-center justify-between text-sm">
-                      <div className="flex items-center space-x-1">
+                      <div className={`flex items-center space-x-1 ${rtlClasses.flexRow}`}>
                         <Users className="h-4 w-4 text-muted-foreground" />
-                        <span>{event.nombre_participants || 0}/{event.capacite_max}</span>
+                        <span>{formatNumber(event.nombre_participants || 0)}/{formatNumber(event.capacite_max)}</span>
                       </div>
                       {event.tarif !== undefined && (
                         <span className="font-semibold">
-                          {event.tarif === 0 ? 'Gratuit' : `${event.tarif} DA`}
+                          {formatPrice(event.tarif)}
                         </span>
                       )}
                     </div>
@@ -483,17 +484,16 @@ const EvenementsDynamique = () => {
                     size="sm"
                     onClick={() => {
                       if (isAuthenticated) {
-                        // TODO: Implémenter l'inscription à l'événement
                         toast({
-                          title: "Inscription",
-                          description: "Fonctionnalité en cours de développement",
+                          title: t('sections.events.registration'),
+                          description: t('common.featureInDevelopment'),
                         });
                       } else {
                         navigate('/auth');
                       }
                     }}
                   >
-                    S'inscrire à l'événement
+                    {t('sections.events.register')}
                   </Button>
                 )}
               </CardContent>
@@ -504,7 +504,7 @@ const EvenementsDynamique = () => {
 
       <div className="text-center">
         <Button size="lg" variant="outline" onClick={() => navigate('/evenements')}>
-          Voir tous les événements
+          {t('sections.events.seeAllEvents')}
         </Button>
       </div>
     </div>
@@ -514,6 +514,10 @@ const EvenementsDynamique = () => {
 // Composant OeuvresDynamique
 const OeuvresDynamique = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
+  const { formatDate } = useLocalizedDate();
+  const { formatNumber } = useLocalizedNumber();
+  const { rtlClasses } = useRTL();
   const [oeuvres, setOeuvres] = useState<Oeuvre[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -527,19 +531,16 @@ const OeuvresDynamique = () => {
       setLoading(true);
       setError(null);
       const response = await oeuvreService.getRecentOeuvres();
-      console.log('Oeuvres response:', response);
       
       if (response.success && response.data) {
-        // Vérifier que c'est bien un tableau
         const oeuvresData = Array.isArray(response.data) ? response.data : [];
-        console.log('Oeuvres data:', oeuvresData);
         setOeuvres(oeuvresData as Oeuvre[]);
       } else {
-        throw new Error(response.error || 'Erreur lors du chargement');
+        throw new Error(response.error || t('errors.loadingError'));
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Une erreur est survenue');
-      setOeuvres([]); // S'assurer que oeuvres reste un tableau
+      setError(err instanceof Error ? err.message : t('errors.generic.message'));
+      setOeuvres([]);
     } finally {
       setLoading(false);
     }
@@ -549,18 +550,16 @@ const OeuvresDynamique = () => {
     return <ErrorMessage message={error} onRetry={loadOeuvres} />;
   }
 
-  // Protection supplémentaire
   const oeuvresArray = Array.isArray(oeuvres) ? oeuvres : [];
 
   return (
     <div className="space-y-8">
       <div className="text-center space-y-4">
         <h2 className="text-3xl font-bold tracking-tight lg:text-4xl">
-          Bibliothèque numérique
+          {t('sections.works.title')}
         </h2>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-          Découvrez et téléchargez les œuvres littéraires, cinématographiques 
-          et artistiques qui enrichissent le patrimoine culturel algérien
+          {t('sections.works.subtitle')}
         </p>
       </div>
 
@@ -581,7 +580,7 @@ const OeuvresDynamique = () => {
         ) : oeuvresArray.length === 0 ? (
           <div className="col-span-full text-center py-12">
             <Palette className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">Aucune œuvre disponible pour le moment</p>
+            <p className="text-muted-foreground">{t('sections.works.noWorks')}</p>
           </div>
         ) : (
           oeuvresArray.map((oeuvre) => (
@@ -598,7 +597,7 @@ const OeuvresDynamique = () => {
                     <Palette className="h-12 w-12 text-primary/50" />
                   </div>
                 )}
-                <div className="absolute top-4 left-4">
+                <div className={`absolute top-4 ${rtlClasses.start(4)}`}>
                   {oeuvre.TypeOeuvre && (
                     <Badge className="bg-primary/90 text-primary-foreground">
                       {oeuvre.TypeOeuvre.nom_type}
@@ -615,7 +614,7 @@ const OeuvresDynamique = () => {
                 <div className="flex items-center justify-between">
                   {oeuvre.Saiseur && (
                     <p className="text-sm text-muted-foreground">
-                      par {oeuvre.Saiseur.prenom} {oeuvre.Saiseur.nom}
+                      {t('common.by')} {oeuvre.Saiseur.prenom} {oeuvre.Saiseur.nom}
                     </p>
                   )}
                 </div>
@@ -623,35 +622,35 @@ const OeuvresDynamique = () => {
               
               <CardContent className="space-y-4">
                 <p className="text-sm text-muted-foreground line-clamp-2">
-                  {oeuvre.description || 'Aucune description disponible'}
+                  {oeuvre.description || t('common.noDescription')}
                 </p>
                 
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                   {oeuvre.annee_creation && (
-                    <span>Créée en {oeuvre.annee_creation}</span>
+                    <span>{t('sections.works.createdIn', { year: oeuvre.annee_creation })}</span>
                   )}
                   {oeuvre.Langue && (
                     <span>{oeuvre.Langue.nom}</span>
                   )}
                 </div>
                 
-                <div className="flex space-x-2">
+                <div className={`flex space-x-2 ${rtlClasses.flexRow}`}>
                   <Button 
                     size="sm" 
                     variant="outline" 
                     className="flex-1"
                     onClick={() => navigate(`/oeuvres/${oeuvre.id_oeuvre}`)}
                   >
-                    <Eye className="h-4 w-4 mr-1" />
-                    Aperçu
+                    <Eye className={`h-4 w-4 ${rtlClasses.marginEnd(1)}`} />
+                    {t('sections.works.preview')}
                   </Button>
                   <Button 
                     size="sm" 
                     className="flex-1"
                     onClick={() => navigate(`/oeuvres/${oeuvre.id_oeuvre}`)}
                   >
-                    <Download className="h-4 w-4 mr-1" />
-                    Détails
+                    <Download className={`h-4 w-4 ${rtlClasses.marginEnd(1)}`} />
+                    {t('sections.works.details')}
                   </Button>
                 </div>
               </CardContent>
@@ -662,7 +661,7 @@ const OeuvresDynamique = () => {
 
       <div className="text-center">
         <Button size="lg" variant="outline" onClick={() => navigate('/oeuvres')}>
-          Explorer toute la bibliothèque
+          {t('sections.works.exploreLibrary')}
         </Button>
       </div>
     </div>
@@ -672,6 +671,9 @@ const OeuvresDynamique = () => {
 // Composant ArtisanatDynamique
 const ArtisanatDynamique = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
+  const { formatNumber, formatPrice } = useLocalizedNumber();
+  const { rtlClasses } = useRTL();
   const [artisanats, setArtisanats] = useState<Artisanat[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -686,21 +688,19 @@ const ArtisanatDynamique = () => {
       setLoading(true);
       setError(null);
       const response = await artisanatService.search({ limit: 6 });
-      console.log('Artisanats response:', response);
       
       if (response.success && response.data) {
         const artisanats = extractDataFromResponse<Artisanat>(response.data);
-        console.log('Artisanats data:', artisanats);
         setArtisanats(artisanats);
       } else {
-        throw new Error(response.error || 'Erreur lors du chargement');
+        throw new Error(response.error || t('errors.loadingError'));
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Une erreur est survenue');
-      setArtisanats([]); // S'assurer que artisanats reste un tableau
+      setError(err instanceof Error ? err.message : t('errors.generic.message'));
+      setArtisanats([]);
       toast({
-        title: "Erreur",
-        description: "Impossible de charger les produits artisanaux",
+        title: t('errors.generic.title'),
+        description: t('errors.loadingCraftsError'),
         variant: "destructive",
       });
     } finally {
@@ -712,17 +712,16 @@ const ArtisanatDynamique = () => {
     return <ErrorMessage message={error} onRetry={loadArtisanats} />;
   }
 
-  // Protection supplémentaire
   const artisanatsArray = Array.isArray(artisanats) ? artisanats : [];
 
   return (
     <div className="space-y-8">
       <div className="text-center space-y-4">
         <h2 className="text-3xl font-bold tracking-tight lg:text-4xl">
-          Artisanat traditionnel
+          {t('sections.crafts.title')}
         </h2>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-          Découvrez les savoir-faire ancestraux transmis de génération en génération
+          {t('sections.crafts.subtitle')}
         </p>
       </div>
 
@@ -742,7 +741,7 @@ const ArtisanatDynamique = () => {
         ) : artisanatsArray.length === 0 ? (
           <div className="col-span-full text-center py-12">
             <Hammer className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">Aucun produit artisanal disponible pour le moment</p>
+            <p className="text-muted-foreground">{t('sections.crafts.noCrafts')}</p>
           </div>
         ) : (
           artisanatsArray.map((artisanat) => (
@@ -760,9 +759,9 @@ const ArtisanatDynamique = () => {
                   </div>
                 )}
                 {artisanat.sur_commande && (
-                  <div className="absolute top-4 right-4">
+                  <div className={`absolute top-4 ${rtlClasses.end(4)}`}>
                     <Badge variant="secondary" className="bg-background/90">
-                      Sur commande
+                      {t('sections.crafts.onOrder')}
                     </Badge>
                   </div>
                 )}
@@ -773,11 +772,16 @@ const ArtisanatDynamique = () => {
                 {(artisanat.prix_min !== undefined || artisanat.prix_max !== undefined) && (
                   <div className="flex items-center justify-between">
                     <span className="text-lg font-bold text-primary">
-                      {artisanat.prix_min !== undefined && `${artisanat.prix_min} DA`}
-                      {artisanat.prix_min !== undefined && artisanat.prix_max !== undefined && artisanat.prix_max !== artisanat.prix_min && 
-                        ` - ${artisanat.prix_max} DA`}
-                      {artisanat.prix_min === undefined && artisanat.prix_max !== undefined && 
-                        `Jusqu'à ${artisanat.prix_max} DA`}
+                      {artisanat.prix_min !== undefined && artisanat.prix_max !== undefined && artisanat.prix_max !== artisanat.prix_min ? (
+                        t('sections.crafts.price.range', { 
+                          min: formatPrice(artisanat.prix_min), 
+                          max: formatPrice(artisanat.prix_max) 
+                        })
+                      ) : artisanat.prix_min !== undefined ? (
+                        t('sections.crafts.price.from', { min: formatPrice(artisanat.prix_min) })
+                      ) : artisanat.prix_max !== undefined ? (
+                        t('sections.crafts.price.upTo', { max: formatPrice(artisanat.prix_max) })
+                      ) : null}
                     </span>
                   </div>
                 )}
@@ -785,19 +789,21 @@ const ArtisanatDynamique = () => {
               
               <CardContent className="space-y-4">
                 <p className="text-sm text-muted-foreground line-clamp-2">
-                  {artisanat.description || 'Aucune description disponible'}
+                  {artisanat.description || t('common.noDescription')}
                 </p>
                 
                 <div className="flex items-center justify-between text-sm">
                   {artisanat.en_stock !== undefined && !artisanat.sur_commande && (
                     <span className="text-muted-foreground">
-                      {artisanat.en_stock > 0 ? `${artisanat.en_stock} en stock` : 'Rupture de stock'}
+                      {artisanat.en_stock > 0 ? 
+                        t('sections.crafts.stock.inStock', { count: artisanat.en_stock }) : 
+                        t('sections.crafts.stock.outOfStock')}
                     </span>
                   )}
                   {artisanat.note_moyenne !== undefined && (
-                    <div className="flex items-center space-x-1">
+                    <div className={`flex items-center space-x-1 ${rtlClasses.flexRow}`}>
                       <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                      <span>{artisanat.note_moyenne.toFixed(1)}</span>
+                      <span>{formatNumber(artisanat.note_moyenne, { maximumFractionDigits: 1 })}</span>
                     </div>
                   )}
                 </div>
@@ -807,7 +813,7 @@ const ArtisanatDynamique = () => {
                   className="w-full"
                   onClick={() => navigate(`/artisanat/${artisanat.id}`)}
                 >
-                  Voir les détails
+                  {t('sections.crafts.seeDetails')}
                 </Button>
               </CardContent>
             </Card>
@@ -817,7 +823,7 @@ const ArtisanatDynamique = () => {
 
       <div className="text-center">
         <Button size="lg" variant="outline" onClick={() => navigate('/artisanat')}>
-          Explorer tout l'artisanat
+          {t('sections.crafts.exploreAll')}
         </Button>
       </div>
     </div>
@@ -828,6 +834,10 @@ const ArtisanatDynamique = () => {
 const Index = () => {
   console.log('=== Index component mounted ===');
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
+  const { formatNumber } = useLocalizedNumber();
+  const { rtlClasses } = useRTL();
+  
   const [activeTab, setActiveTab] = useState('patrimoine');
   const [stats, setStats] = useState<OverviewStats | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -844,69 +854,43 @@ const Index = () => {
       console.log('=== checkAuthAndLoadData START ===');
       setLoading(true);
       
-      // Vérifier l'authentification
       const authenticated = authService.isAuthenticated();
-      console.log('Is authenticated:', authenticated);
       setIsAuthenticated(authenticated);
 
-      // Charger les métadonnées (wilayas) en cache
-      console.log('Loading wilayas...');
+      // Charger les wilayas
       const wilayasResponse = await metadataService.getWilayas();
-      console.log('Wilayas response:', wilayasResponse);
       if (wilayasResponse.success && wilayasResponse.data) {
         wilayasCache = wilayasResponse.data;
       }
 
-      // Charger les statistiques - Seulement si authentifié ou essayer sans bloquer
+      // Charger les stats si authentifié
       if (authenticated) {
-        console.log('Loading stats (authenticated)...');
         try {
           const statsResponse = await dashboardService.getOverview();
-          console.log('Stats response:', statsResponse);
           if (statsResponse.success && statsResponse.data) {
             setStats(statsResponse.data);
           }
         } catch (statsError) {
           console.log('Stats error:', statsError);
         }
-      } else {
-        console.log('Skipping stats (not authenticated)');
-        // Vous pouvez charger des stats publiques ici si disponibles
       }
 
       // Charger les notifications si connecté
       if (authenticated) {
-        console.log('Loading notifications...');
         try {
           const notifSummary = await notificationService.getSummary();
-          console.log('Notifications summary:', notifSummary);
-          // getSummary retourne directement NotificationSummary, pas ApiResponse
-          if (authenticated) {
-        console.log('Loading notifications...');
-        try {
-          const notifSummary = await notificationService.getSummary();
-          console.log('Notifications summary:', notifSummary);
-          // getSummary retourne directement NotificationSummary, pas ApiResponse
           if (notifSummary && notifSummary.dernieres && Array.isArray(notifSummary.dernieres)) {
-            // Les notifications du résumé sont une version simplifiée
             setNotifications((notifSummary.dernieres as any) || []);
           }
         } catch (notifError) {
           console.log('Notifications error:', notifError);
-          // On ne bloque pas le chargement si les notifications échouent
         }
       }
-        } catch (notifError) {
-          console.log('Notifications error:', notifError);
-          // On ne bloque pas le chargement si les notifications échouent
-        }
-      }
-      console.log('=== checkAuthAndLoadData END ===');
     } catch (error) {
       console.error('Erreur dans checkAuthAndLoadData:', error);
       toast({
-        title: "Erreur",
-        description: "Certaines données n'ont pas pu être chargées",
+        title: t('errors.generic.title'),
+        description: t('errors.partialDataLoad'),
         variant: "destructive",
       });
     } finally {
@@ -915,7 +899,7 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className={`min-h-screen bg-background`} dir={rtlClasses.direction}>
       <Header />
       
       <main>
@@ -925,14 +909,14 @@ const Index = () => {
             <Alert className="border-primary/20 bg-primary/5">
               <Bell className="h-4 w-4" />
               <AlertDescription>
-                Vous avez {notifications.length} nouvelle(s) notification(s).
+                {t('notifications.youHave', { count: notifications.length })}
                 <Button 
                   variant="link" 
                   size="sm" 
-                  className="ml-2 p-0 h-auto"
+                  className={`${rtlClasses.marginStart(2)} p-0 h-auto`}
                   onClick={() => navigate('/notifications')}
                 >
-                  Voir tout
+                  {t('common.viewAll')}
                 </Button>
               </AlertDescription>
             </Alert>
@@ -945,37 +929,37 @@ const Index = () => {
         <section className="py-12 bg-muted/30">
           <div className="container">
             <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold font-serif">La culture algérienne en chiffres</h2>
+              <h2 className="text-2xl font-bold font-serif">{t('home.stats.title')}</h2>
               <p className="text-muted-foreground mt-2">
-                Découvrez l'ampleur de notre patrimoine culturel
+                {t('home.stats.subtitle')}
               </p>
             </div>
             
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
               <StatCard
                 icon={Map}
-                title="Sites patrimoniaux"
+                title={t('home.stats.heritage')}
                 value={stats?.content?.sites_patrimoine || "-"}
                 trend={stats ? "+12%" : null}
                 loading={loading}
               />
               <StatCard
                 icon={Calendar}
-                title="Événements actifs"
+                title={t('home.stats.events')}
                 value={stats?.content?.evenements_total || "-"}
                 trend={stats ? "+8%" : null}
                 loading={loading}
               />
               <StatCard
                 icon={Palette}
-                title="Œuvres numériques"
+                title={t('home.stats.works')}
                 value={stats?.content?.oeuvres_total || "-"}
                 trend={stats ? "+15%" : null}
                 loading={loading}
               />
               <StatCard
                 icon={Users}
-                title="Membres actifs"
+                title={t('home.stats.members')}
                 value={stats?.users?.total || "-"}
                 trend={stats ? "+20%" : null}
                 loading={loading}
@@ -989,21 +973,20 @@ const Index = () => {
           <div className="container">
             <div className="text-center mb-12">
               <h2 className="text-3xl font-bold tracking-tight font-serif lg:text-4xl mb-4">
-                Explorez notre patrimoine culturel
+                {t('home.explore.title')}
               </h2>
               <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-                Naviguez entre les différentes facettes de la culture algérienne : 
-                sites historiques, événements culturels, œuvres artistiques et artisanat traditionnel
+                {t('home.explore.subtitle')}
               </p>
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-5 mb-12">
-                <TabsTrigger value="patrimoine">Patrimoine</TabsTrigger>
-                <TabsTrigger value="carte">Carte</TabsTrigger>
-                <TabsTrigger value="evenements">Événements</TabsTrigger>
-                <TabsTrigger value="oeuvres">Œuvres</TabsTrigger>
-                <TabsTrigger value="artisanat">Artisanat</TabsTrigger>
+                <TabsTrigger value="patrimoine">{t('home.explore.tabs.heritage')}</TabsTrigger>
+                <TabsTrigger value="carte">{t('home.explore.tabs.map')}</TabsTrigger>
+                <TabsTrigger value="evenements">{t('home.explore.tabs.events')}</TabsTrigger>
+                <TabsTrigger value="oeuvres">{t('home.explore.tabs.works')}</TabsTrigger>
+                <TabsTrigger value="artisanat">{t('home.explore.tabs.crafts')}</TabsTrigger>
               </TabsList>
               
               <TabsContent value="patrimoine" className="space-y-8">
@@ -1013,11 +996,10 @@ const Index = () => {
               <TabsContent value="carte" className="space-y-8">
                 <div className="text-center space-y-4 mb-8">
                   <h3 className="text-2xl font-bold tracking-tight font-serif">
-                    Carte interactive du patrimoine
+                    {t('sections.heritage.interactiveMap')}
                   </h3>
                   <p className="text-muted-foreground max-w-2xl mx-auto">
-                    Explorez les sites UNESCO et monuments historiques à travers une carte interactive. 
-                    Créez vos propres parcours de découverte.
+                    {t('sections.heritage.mapDescription')}
                   </p>
                 </div>
                 <CartePatrimoine />
@@ -1045,13 +1027,12 @@ const Index = () => {
               <CardContent className="p-8 md:p-12">
                 <div className="text-center space-y-6">
                   <h3 className="text-2xl md:text-3xl font-bold font-serif">
-                    Vous êtes un professionnel de la culture ?
+                    {t('home.professionals.title')}
                   </h3>
                   <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                    Rejoignez notre communauté d'artistes, artisans et organisateurs. 
-                    Partagez vos créations et événements avec des milliers de passionnés.
+                    {t('home.professionals.subtitle')}
                   </p>
-                  <div className="flex flex-col sm:flex-row justify-center gap-4">
+                  <div className={`flex flex-col sm:flex-row justify-center gap-4`}>
                     <Button 
                       size="lg" 
                       className="btn-hover"
@@ -1063,8 +1044,8 @@ const Index = () => {
                         }
                       }}
                     >
-                      <Palette className="h-5 w-5 mr-2" />
-                      Créer une œuvre
+                      <Palette className={`h-5 w-5 ${rtlClasses.marginEnd(2)}`} />
+                      {t('home.professionals.createWork')}
                     </Button>
                     <Button 
                       size="lg" 
@@ -1077,12 +1058,12 @@ const Index = () => {
                         }
                       }}
                     >
-                      <Calendar className="h-5 w-5 mr-2" />
-                      Organiser un événement
+                      <Calendar className={`h-5 w-5 ${rtlClasses.marginEnd(2)}`} />
+                      {t('home.professionals.organizeEvent')}
                     </Button>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    Inscription gratuite • Validation sous 48h • Support dédié
+                    {t('home.professionals.benefits')}
                   </p>
                 </div>
               </CardContent>
@@ -1090,29 +1071,26 @@ const Index = () => {
           </div>
         </section>
 
-        {/* Section d'information enrichie */}
+        {/* Section Mission et Ressources */}
         <section className="py-16">
           <div className="container">
             <div className="grid gap-8 lg:grid-cols-2">
-              {/* À propos */}
+              {/* Mission */}
               <Card className="bg-gradient-to-br from-primary/5 to-transparent">
                 <CardContent className="p-8">
-                  <div className="flex items-start space-x-4">
+                  <div className={`flex items-start space-x-4 ${rtlClasses.flexRow}`}>
                     <div className="p-3 bg-primary/10 rounded-lg">
                       <Info className="h-6 w-6 text-primary" />
                     </div>
                     <div className="flex-1">
                       <h3 className="text-lg font-semibold mb-3">
-                        Notre mission
+                        {t('home.mission.title')}
                       </h3>
                       <p className="text-muted-foreground mb-4">
-                        Culture Algérie est une plateforme dédiée à la préservation et à la 
-                        valorisation du patrimoine culturel algérien. Nous connectons les 
-                        passionnés de culture avec les richesses artistiques, historiques et 
-                        traditionnelles de notre pays.
+                        {t('home.mission.description')}
                       </p>
                       <Button variant="link" className="p-0" onClick={() => navigate('/a-propos')}>
-                        En savoir plus →
+                        {t('home.mission.learnMore')}
                       </Button>
                     </div>
                   </div>
@@ -1122,30 +1100,30 @@ const Index = () => {
               {/* Ressources */}
               <Card className="bg-gradient-to-br from-accent/5 to-transparent">
                 <CardContent className="p-8">
-                  <div className="flex items-start space-x-4">
+                  <div className={`flex items-start space-x-4 ${rtlClasses.flexRow}`}>
                     <div className="p-3 bg-accent/10 rounded-lg">
                       <Hammer className="h-6 w-6 text-accent" />
                     </div>
                     <div className="flex-1">
                       <h3 className="text-lg font-semibold mb-3">
-                        Ressources utiles
+                        {t('home.resources.title')}
                       </h3>
                       <ul className="space-y-2 text-muted-foreground">
-                        <li className="flex items-center">
-                          <span className="mr-2">•</span>
-                          Guide du patrimoine algérien
+                        <li className={`flex items-center ${rtlClasses.flexRow}`}>
+                          <span className={rtlClasses.marginEnd(2)}>•</span>
+                          {t('home.resources.guide')}
                         </li>
-                        <li className="flex items-center">
-                          <span className="mr-2">•</span>
-                          Calendrier des événements culturels
+                        <li className={`flex items-center ${rtlClasses.flexRow}`}>
+                          <span className={rtlClasses.marginEnd(2)}>•</span>
+                          {t('home.resources.calendar')}
                         </li>
-                        <li className="flex items-center">
-                          <span className="mr-2">•</span>
-                          Annuaire des artisans traditionnels
+                        <li className={`flex items-center ${rtlClasses.flexRow}`}>
+                          <span className={rtlClasses.marginEnd(2)}>•</span>
+                          {t('home.resources.directory')}
                         </li>
                       </ul>
                       <Button variant="link" className="p-0 mt-4" onClick={() => navigate('/a-propos#ressources')}>
-                        Accéder aux ressources →
+                        {t('home.resources.access')}
                       </Button>
                     </div>
                   </div>

@@ -22,13 +22,14 @@ const initParcoursIntelligentRoutes = require('./parcoursIntelligentRoutes');
 const initNotificationRoutes = require('./notificationRoutes');
 const initIntervenantRoutes = require('./intervenantRoutes');
 const initServiceRoutes = require('./servicesRoutes');
-
+const initSignalementRoutes  = require('./signalementRoutes')
+const initTrackingRoutes = require('./trackingRoutes');
 // CORRECTION: Les routes admin sont dans le dossier admin/
 const initAdminOeuvresRoutes = require('./admin/adminOeuvresRoutes');
 const initAdminEvenementsRoutes = require('./admin/adminEvenementsRoutes');
 const initAdminPatrimoineRoutes = require('./admin/adminPatrimoineRoutes');
 const initAdminServicesRoutes = require('./admin/adminServicesRoutes');
-
+const initArticleBlockRoutes = require('./articleBlockRoutes');
 // ========================================================================
 // FONCTIONS UTILITAIRES
 // ========================================================================
@@ -405,7 +406,9 @@ const initRoutes = (models, authMiddleware) => {
         notifications: typeof initNotificationRoutes === 'function' ? '✅ Chargé' : '❌ Non chargé',
         intervenants: typeof initIntervenantRoutes === 'function' ? '✅ Chargé' : '❌ Non chargé',
         services: typeof initServiceRoutes === 'function' ? '✅ Chargé' : '❌ Non chargé',
-        
+          // NOUVELLES ROUTES
+  tracking: typeof initTrackingRoutes === 'function' ? '✅ Chargé' : '❌ Non chargé',
+  signalements: typeof initSignalementRoutes === 'function' ? '✅ Chargé' : '❌ Non chargé',
         // Routes admin
         'admin/oeuvres': typeof initAdminOeuvresRoutes === 'function' ? '✅ Chargé' : '❌ Non chargé',
         'admin/evenements': typeof initAdminEvenementsRoutes === 'function' ? '✅ Chargé' : '❌ Non chargé',
@@ -453,6 +456,7 @@ const initRoutes = (models, authMiddleware) => {
     { path: '/metadata', init: initMetadataRoutes, args: [models, authMiddleware] },
     { path: '/users', init: initUserRoutes, args: [models, authMiddleware] },
     { path: '/oeuvres', init: initOeuvreRoutes, args: [models, authMiddleware] },
+    { path: '/article-blocks', init: initArticleBlockRoutes, args: [models, authMiddleware] },
     { path: '/services', init: initServiceRoutes, args: [models, authMiddleware] },
     
     // Routes qui nécessitent tous les middlewares
@@ -465,12 +469,14 @@ const initRoutes = (models, authMiddleware) => {
     { path: '/artisanat', init: initArtisanatRoutes, args: [models] },
     { path: '/commentaires', init: initCommentaireRoutes, args: [models] },
     { path: '/favoris', init: initFavoriRoutes, args: [models] },
+    
     { path: '/notifications', init: initNotificationRoutes, args: [models] },
     { path: '/parcours', init: initParcoursIntelligentRoutes, args: [models] },
     { path: '/programmes', init: initProgrammeRoutes, args: [models] },
     { path: '/professionnel', init: initProfessionnelRoutes, args: [models] },
     { path: '/dashboard', init: initDashboardRoutes, args: [models] },
-    
+    { path: '/tracking', init: initTrackingRoutes, args: [models, authMiddleware] },
+    { path: '/signalements', init: initSignalementRoutes, args: [models, authMiddleware] },
     // ========================================================================
     // ROUTES ADMIN - AJOUT
     // ========================================================================

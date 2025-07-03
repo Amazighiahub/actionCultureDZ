@@ -1,0 +1,1647 @@
+{
+  "accessibility": {
+    "feedback": {
+      "error": "Erreur",
+      "info": "Information",
+      "loading": "Chargement en cours",
+      "success": "Succès",
+      "warning": "Avertissement"
+    },
+    "images": {
+      "avatar": "Photo de profil",
+      "cover": "Image de couverture",
+      "gallery": "Galerie d'images",
+      "hero": "Image d'illustration",
+      "logo": "Logo Timlilit Culture",
+      "thumbnail": "Miniature"
+    },
+    "links": {
+      "download": "Télécharger {{filename}}",
+      "external": "Lien externe (ouvre dans un nouvel onglet)"
+    },
+    "navigation": {
+      "closeMenu": "Fermer le menu",
+      "closeModal": "Fermer la fenêtre modale",
+      "darkMode": "Mode sombre",
+      "language": "Changer de langue",
+      "lightMode": "Mode clair",
+      "openMenu": "Ouvrir le menu",
+      "skipToContent": "Aller au contenu principal",
+      "skipToNav": "Aller à la navigation",
+      "toggleTheme": "Basculer le thème"
+    },
+    "pagination": {
+      "current": "Page actuelle, page {{page}}",
+      "first": "Première page",
+      "last": "Dernière page",
+      "next": "Page suivante",
+      "page": "Page {{page}}",
+      "previous": "Page précédente"
+    },
+    "sorting": {
+      "asc": "Tri croissant",
+      "desc": "Tri décroissant",
+      "sortBy": "Trier par {{field}}"
+    }
+  },
+  "admin": {
+    "actions": {
+      "approve": "Approuver",
+      "bulkAction": "Action en masse",
+      "export": "Exporter",
+      "import": "Importer",
+      "reject": "Rejeter",
+      "restore": "Restaurer",
+      "suspend": "Suspendre",
+      "unsuspend": "Réactiver"
+    },
+    "metadata": {
+      "categories": "Catégories",
+      "languages": "Langues",
+      "regions": "Régions",
+      "tags": "Tags"
+    },
+    "sections": {
+      "content": "Gestion du contenu",
+      "metadata": "Gestion des métadonnées",
+      "moderation": "Modération",
+      "overview": "Vue d'ensemble système",
+      "reports": "Rapports et analyses",
+      "settings": "Paramètres système",
+      "users": "Gestion des utilisateurs",
+      "validation": "Validation des comptes"
+    },
+    "stats": {
+      "metrics": {
+        "logins": "Connexions",
+        "registrations": "Inscriptions",
+        "reports": "Signalements",
+        "revenue": "Revenus",
+        "uploads": "Téléversements"
+      },
+      "periods": {
+        "daily": "Quotidien",
+        "monthly": "Mensuel",
+        "weekly": "Hebdomadaire",
+        "yearly": "Annuel"
+      }
+    },
+    "userRoles": {
+      "activeUsers": "Utilisateurs actifs",
+      "admins": "Administrateurs",
+      "moderators": "Modérateurs",
+      "newUsers": "Nouveaux utilisateurs",
+      "professionals": "Professionnels",
+      "totalUsers": "Total utilisateurs",
+      "visitors": "Visiteurs"
+    }
+  },
+  "articles": {
+    "actions": {
+      "addToFavorites": "Ajouter aux favoris",
+      "copyLink": "Copier le lien",
+      "downloadPdf": "Télécharger PDF",
+      "linkCopied": "Lien copié !",
+      "print": "Imprimer",
+      "removeFromFavorites": "Retirer des favoris",
+      "scrollToTop": "Retour en haut",
+      "share": "Partager"
+    },
+    "back": "Retour",
+    "backToWorks": "Retour aux œuvres",
+    "badges": {
+      "factChecked": "Vérifié",
+      "openAccess": "Accès libre",
+      "peerReviewed": "Évalué par les pairs",
+      "verified": "Vérifié"
+    },
+    "comments": {
+      "add": "Commenter",
+      "count": "Commentaires ({{count}})",
+      "hide": "Masquer",
+      "modal": {
+        "addTitle": "Ajouter un commentaire",
+        "cancel": "Annuler",
+        "characterCount": "{{count}} / {{max}} caractères",
+        "description": "Partagez votre avis sur cet article",
+        "label": "Votre commentaire",
+        "placeholder": "Écrivez votre commentaire ici...",
+        "replyTitle": "Répondre au commentaire",
+        "send": "Envoyer",
+        "sending": "Envoi..."
+      },
+      "noComments": "Aucun commentaire pour le moment. Soyez le premier à commenter !",
+      "reply": "Répondre",
+      "show": "Afficher",
+      "title": "Commentaires"
+    },
+    "contentUnavailable": "Le contenu de cet article n'est pas encore disponible.",
+    "loading": "Chargement de l'article...",
+    "metadata": {
+      "citationApa": "Citation APA :",
+      "doi": "DOI :",
+      "impactFactor": "Impact Factor :",
+      "issn": "ISSN :",
+      "number": "Numéro",
+      "pages": "Pages",
+      "publishedIn": "Publié dans",
+      "readingTime": "{{time}} min de lecture",
+      "volume": "Volume",
+      "wordCount": "{{count}} mots"
+    },
+    "notFound": "Article introuvable",
+    "notFoundMessage": "L'article demandé n'existe pas.",
+    "sections": {
+      "abstract": "Abstract",
+      "bibliographicInfo": "Informations bibliographiques",
+      "categories": "Catégories",
+      "classification": "Classification",
+      "contributors": "Contributeurs",
+      "principalContributor": "Principal",
+      "resume": "Résumé",
+      "tags": "Tags"
+    },
+    "title": "Articles",
+    "types": {
+      "article": "Article",
+      "scientificArticle": "Article Scientifique"
+    }
+  },
+  "auth": {
+    "accountTypes": {
+      "professional": "Professionnel",
+      "professionalDesc": "Pour créer et partager vos œuvres",
+      "visitor": "Visiteur",
+      "visitorDesc": "Pour découvrir et apprécier la culture"
+    },
+    "agreements": {
+      "newsletter": "Je souhaite recevoir la newsletter",
+      "terms": "J'accepte les conditions d'utilisation et la politique de confidentialité"
+    },
+    "errors": {
+      "acceptTerms": "Vous devez accepter les conditions d'utilisation",
+      "cancelled": "Connexion annulée",
+      "emailExists": "Cette adresse email est déjà utilisée",
+      "expired": "Le lien a expiré",
+      "generic": "Erreur lors de l'opération",
+      "incorrect": "Email ou mot de passe incorrect",
+      "invalidToken": "Le jeton est invalide ou a expiré",
+      "notFound": "Aucun compte associé à cette adresse",
+      "noToken": "Aucun jeton de vérification n'a été fourni",
+      "passwordMismatch": "Les mots de passe ne correspondent pas",
+      "passwordWeak": "Le mot de passe doit contenir au moins 8 caractères",
+      "serverError": "Impossible de communiquer avec le serveur"
+    },
+    "fields": {
+      "accountType": "Type de compte",
+      "bio": "Présentation (optionnel)",
+      "email": "Adresse email",
+      "firstname": "Prénom",
+      "lastname": "Nom",
+      "organization": "Organisation (optionnel)",
+      "password": "Mot de passe",
+      "portfolio": "Site web / Portfolio (optionnel)"
+    },
+    "messages": {
+      "continueWith": "Continuer avec {{provider}}",
+      "haveAccount": "Déjà un compte ?",
+      "noAccount": "Pas encore de compte ?",
+      "or": "Ou",
+      "redirecting": "Redirection en cours...",
+      "verificationSent": "Email de vérification envoyé"
+    },
+    "professionalFields": {
+      "artisan": "Artisan",
+      "artist": "Artiste",
+      "filmmaker": "Cinéaste",
+      "musician": "Musicien",
+      "organizer": "Organisateur d'événements",
+      "other": "Autre",
+      "researcher": "Chercheur",
+      "title": "Domaine d'activité",
+      "writer": "Écrivain"
+    },
+    "success": {
+      "accountVerified": "Votre compte a été vérifié avec succès !",
+      "emailSent": "Un email a été envoyé",
+      "emailVerified": "Email vérifié avec succès",
+      "login": "Connexion réussie",
+      "logout": "Déconnexion réussie",
+      "passwordReset": "Mot de passe réinitialisé avec succès",
+      "professionalPending": "Votre compte professionnel sera validé sous 48h",
+      "signup": "Inscription réussie",
+      "verifyEmail": "Veuillez vérifier votre email pour activer votre compte",
+      "welcomeBack": "Bon retour parmi nous !"
+    }
+  },
+  "categories": {
+    "heritageTypes": {
+      "bridge": "Pont",
+      "citadel": "Citadelle historique",
+      "colonial": "Architecture coloniale",
+      "islamic": "Architecture islamique",
+      "museum": "Musée",
+      "nationalPark": "Parc national",
+      "roman": "Site romain"
+    },
+    "regions": {
+      "algiers": "Alger",
+      "allRegions": "Toutes les régions",
+      "aures": "Aurès",
+      "constantine": "Constantine",
+      "ghardaia": "Ghardaïa",
+      "hoggar": "Hoggar",
+      "kabylie": "Kabylie",
+      "mzab": "M'zab",
+      "oran": "Oran",
+      "sahara": "Sahara",
+      "tlemcen": "Tlemcen"
+    },
+    "workTypes": {
+      "album": "Album",
+      "art": "Œuvres d'art",
+      "article": "Article",
+      "articles": "Articles",
+      "arts": "Œuvres d'art",
+      "artwork": "Œuvre d'art",
+      "artworks": "Œuvres d'art",
+      "book": "Livre",
+      "books": "Livres",
+      "cinema": "Cinéma",
+      "film": "Film",
+      "films": "Films",
+      "literature": "Littérature",
+      "music": "Musique",
+      "musicalAlbum": "Album musical",
+      "musicalAlbums": "Albums musicaux",
+      "painting": "Peinture",
+      "photography": "Photographie",
+      "scientificArticle": "Article scientifique",
+      "scientificArticles": "Articles scientifiques",
+      "sculpture": "Sculpture"
+    }
+  },
+  "common": {
+    "aboutItem": "À propos de {{item}}",
+    "add": "Ajouter",
+    "address": "Adresse",
+    "alerts": {
+      "success": {
+        "commentAdded": "Commentaire ajouté avec succès",
+        "commentError": "Erreur lors de l'ajout du commentaire",
+        "favoriteAdded": "Ajouté aux favoris",
+        "favoriteRemoved": "Retiré des favoris",
+        "linkCopied": "Lien copié !"
+      }
+    },
+    "all": "Tous",
+    "allItems": "Tous les {{items}}",
+    "and": "et",
+    "at": "à",
+    "back": "Retour",
+    "backTo": "Retour à {{destination}}",
+    "backToHome": "Retour à l'accueil",
+    "cancel": "Annuler",
+    "close": "Fermer",
+    "comment": "Commenter",
+    "confirm": "Confirmer",
+    "confirmPassword": "Confirmer le mot de passe",
+    "continue": "Continuer",
+    "create": "Créer",
+    "currency": "DA",
+    "dashboard": "Tableau de bord",
+    "date": "Date",
+    "delete": "Supprimer",
+    "details": "Détails",
+    "discover": "Découvrir",
+    "download": "Télécharger",
+    "duration": "Durée",
+    "edit": "Modifier",
+    "email": "Email",
+    "error": "Erreur",
+    "errors": {
+      "generic": "Une erreur est survenue",
+      "loading": "Erreur lors du chargement",
+      "notFound": "Élément introuvable",
+      "saving": "Erreur lors de l'enregistrement"
+    },
+    "explore": "Explorer",
+    "favorite": "Favori",
+    "filter": "Filtrer",
+    "filters": "Filtres",
+    "firstname": "Prénom",
+    "for": "pour",
+    "forgotPassword": "Mot de passe oublié ?",
+    "formatting": {
+      "and": "et",
+      "at": "à",
+      "by": "par",
+      "colon": ":",
+      "comma": ",",
+      "dash": "•",
+      "for": "pour",
+      "from": "de",
+      "in": "dans",
+      "of": "de",
+      "on": "sur",
+      "or": "ou",
+      "period": ".",
+      "slash": "/",
+      "the": "le/la/les",
+      "to": "à",
+      "with": "avec"
+    },
+    "free": "Gratuit",
+    "from": "de",
+    "help": "Aide",
+    "home": "Accueil",
+    "in": "dans",
+    "info": {
+      "beFirstToComment": "Soyez le premier à commenter !",
+      "noContent": "Aucun contenu disponible"
+    },
+    "lastname": "Nom",
+    "less": "Moins",
+    "like": "J'aime",
+    "loading": "Chargement...",
+    "loadingContent": "Chargement {{content}}...",
+    "location": "Lieu",
+    "messages": "Messages",
+    "more": "Plus",
+    "name": "Nom",
+    "new": "Nouveau",
+    "next": "Suivant",
+    "no": "Non",
+    "none": "Aucun",
+    "notifications": "Notifications",
+    "of": "de",
+    "on": "sur",
+    "or": "ou",
+    "password": "Mot de passe",
+    "phone": "Téléphone",
+    "previous": "Précédent",
+    "price": "Prix",
+    "profile": "Profil",
+    "readArticle": "Lire l'article",
+    "readExtract": "Lire un extrait",
+    "rememberMe": "Se souvenir de moi",
+    "reply": "Répondre",
+    "resetPassword": "Réinitialiser le mot de passe",
+    "results": {
+      "found": "{{count}} résultat trouvé",
+      "found_plural": "{{count}} résultats trouvés",
+      "multiple": "{{count}} résultats",
+      "noMatch": "Aucun {{type}} ne correspond à vos critères",
+      "noMatchSearch": "Aucun {{type}} ne correspond à votre recherche \"{{query}}\"",
+      "none": "Aucun résultat",
+      "showing": "Affichage des résultats",
+      "single": "{{count}} résultat"
+    },
+    "retrying": "Nouvelle tentative...",
+    "save": "Enregistrer",
+    "searchBy": "Rechercher par {{criteria}}...",
+    "searchIn": "Rechercher dans {{context}}...",
+    "send": "Envoyer",
+    "sending": "Envoi...",
+    "settings": "Paramètres",
+    "share": "Partager",
+    "shareOn": "Partager sur {{platform}}",
+    "sort": "Trier",
+    "sortBy": "Trier par",
+    "start": "Commencer",
+    "subtitle": "Sous-titre",
+    "the": "le/la/les",
+    "theme": "Thème",
+    "time": "Heure",
+    "title": "Titre",
+    "to": "à",
+    "update": "Mettre à jour",
+    "upload": "Téléverser",
+    "username": "Nom d'utilisateur",
+    "view": "Voir",
+    "viewItem": "Voir {{item}}",
+    "website": "Site web",
+    "with": "avec",
+    "yes": "Oui"
+  },
+  "components": {
+    "contributors": {
+      "character": "Personnage",
+      "externalContributor": "Contributeur externe",
+      "mainContributors": "Contributeurs principaux",
+      "noContributors": "Aucun contributeur renseigné",
+      "otherContributors": "Autres contributeurs",
+      "principal": "Principal",
+      "registeredMember": "Membre inscrit",
+      "role": "Rôle",
+      "title": "Contributeurs"
+    },
+    "hero": {
+      "album": "Album",
+      "back": "Retour",
+      "browse": "Feuilleter",
+      "by": "par",
+      "duration": "min",
+      "favorites": "Favoris",
+      "free": "Gratuit",
+      "listenNow": "Écouter maintenant",
+      "metadata": {
+        "isbn": "ISBN:",
+        "language": "Langue:",
+        "listens": "écoutes",
+        "pages": "Pages:",
+        "readingTime": "Temps lecture",
+        "reviews": "avis",
+        "views": "Vues:"
+      },
+      "myList": "Ma liste",
+      "readExtract": "Lire un extrait",
+      "readNow": "Lire maintenant",
+      "synopsis": "Synopsis",
+      "tracks": "titres",
+      "types": {
+        "artwork": "Œuvre d'art",
+        "book": "Livre",
+        "film": "Film",
+        "music": "Album"
+      },
+      "watchNow": "Regarder maintenant",
+      "watchTrailer": "Bande-annonce"
+    },
+    "interventEditor": {
+      "editors": {
+        "added": "Éditeurs ajoutés",
+        "createNew": "Créer un nouvel éditeur",
+        "isbn": "ISBN",
+        "isbnPlaceholder": "978-...",
+        "notFound": "Aucun éditeur trouvé pour \"{{query}}\"",
+        "pricePlaceholder": "Prix en DA",
+        "role": "Rôle",
+        "roles": {
+          "coEditor": "Co-éditeur",
+          "distributor": "Distributeur",
+          "mainEditor": "Éditeur principal",
+          "originalEditor": "Éditeur original",
+          "translationEditor": "Éditeur traduction"
+        },
+        "salePrice": "Prix de vente",
+        "searchEditor": "Rechercher un éditeur",
+        "searchPlaceholder": "Rechercher par nom ou ville...",
+        "status": "Statut",
+        "statuses": {
+          "cancelled": "Annulé",
+          "inProgress": "En cours",
+          "outOfStock": "Épuisé",
+          "published": "Publié"
+        },
+        "title": "Éditeurs"
+      },
+      "intervenants": {
+        "added": "Intervenants ajoutés",
+        "alreadyAdded": "(Déjà ajouté)",
+        "createNew": "Créer un nouvel intervenant",
+        "new": "Nouveau",
+        "notFound": "Aucun intervenant trouvé pour \"{{query}}\"",
+        "searchExisting": "Rechercher un intervenant existant",
+        "searchPlaceholder": "Rechercher par nom, prénom...",
+        "selectRole": "Sélectionner un rôle",
+        "title": "Intervenants"
+      }
+    }
+  },
+  "dashboard": {
+    "account": {
+      "accountSettings": "Paramètres du compte",
+      "changeEmail": "Changer l'email",
+      "changePassword": "Changer le mot de passe",
+      "editProfile": "Modifier le profil",
+      "myProfile": "Mon profil",
+      "preferences": "Préférences",
+      "privacy": "Confidentialité",
+      "security": "Sécurité",
+      "sessions": "Sessions actives",
+      "twoFactor": "Authentification à deux facteurs"
+    },
+    "billing": {
+      "invoices": "Factures",
+      "paymentMethods": "Moyens de paiement",
+      "subscription": "Abonnement",
+      "upgrade": "Passer à Pro"
+    },
+    "content": {
+      "myComments": "Mes commentaires",
+      "myDownloads": "Mes téléchargements",
+      "myEvents": "Mes événements",
+      "myFavorites": "Mes favoris",
+      "myFollowers": "Mes abonnés",
+      "myFollowing": "Mes abonnements",
+      "myOrders": "Mes commandes",
+      "myReviews": "Mes avis",
+      "myWorks": "Mes œuvres"
+    },
+    "empty": {
+      "comments": "Vous n'avez pas encore commenté",
+      "events": "Vous n'avez pas encore créé d'événement",
+      "favorites": "Vous n'avez pas encore de favoris",
+      "followers": "Vous n'avez pas encore d'abonnés",
+      "works": "Vous n'avez pas encore créé d'œuvre"
+    },
+    "help": {
+      "documentation": "Documentation",
+      "faq": "FAQ",
+      "support": "Contacter le support",
+      "tutorials": "Tutoriels"
+    },
+    "sections": {
+      "activity": "Activité récente",
+      "overview": "Vue d'ensemble",
+      "quickActions": "Actions rapides",
+      "statistics": "Statistiques"
+    },
+    "stats": {
+      "charts": {
+        "audienceInsights": "Insights audience",
+        "geographicDistribution": "Distribution géographique",
+        "popularContent": "Contenu populaire",
+        "viewsOverTime": "Évolution des vues"
+      },
+      "metrics": {
+        "engagement": "Engagement",
+        "totalComments": "Commentaires totaux",
+        "totalDownloads": "Téléchargements totaux",
+        "totalLikes": "J'aime totaux",
+        "totalViews": "Vues totales"
+      },
+      "periods": {
+        "growth": "Croissance",
+        "lastMonth": "Mois dernier",
+        "thisMonth": "Ce mois-ci"
+      }
+    },
+    "titles": {
+      "admin": "Administration",
+      "professional": "Tableau de bord Pro",
+      "user": "Tableau de bord"
+    },
+    "welcome": "Bienvenue, {{name}}"
+  },
+  "date": {
+    "days": {
+      "full": {
+        "friday": "Vendredi",
+        "monday": "Lundi",
+        "saturday": "Samedi",
+        "sunday": "Dimanche",
+        "thursday": "Jeudi",
+        "tuesday": "Mardi",
+        "wednesday": "Mercredi"
+      },
+      "short": {
+        "fri": "Ven",
+        "mon": "Lun",
+        "sat": "Sam",
+        "sun": "Dim",
+        "thu": "Jeu",
+        "tue": "Mar",
+        "wed": "Mer"
+      }
+    },
+    "formats": {
+      "datetime": "{{date}} à {{time}}",
+      "long": "{{dayName}} {{day}} {{monthName}} {{year}}",
+      "medium": "{{day}} {{monthName}} {{year}}",
+      "short": "{{day}}/{{month}}/{{year}}",
+      "time": "{{hours}}:{{minutes}}",
+      "timeWithSeconds": "{{hours}}:{{minutes}}:{{seconds}}"
+    },
+    "months": {
+      "full": {
+        "april": "Avril",
+        "august": "Août",
+        "december": "Décembre",
+        "february": "Février",
+        "january": "Janvier",
+        "july": "Juillet",
+        "june": "Juin",
+        "march": "Mars",
+        "may": "Mai",
+        "november": "Novembre",
+        "october": "Octobre",
+        "september": "Septembre"
+      },
+      "short": {
+        "apr": "Avr",
+        "aug": "Août",
+        "dec": "Déc",
+        "feb": "Fév",
+        "jan": "Jan",
+        "jul": "Juil",
+        "jun": "Juin",
+        "mar": "Mar",
+        "may": "Mai",
+        "nov": "Nov",
+        "oct": "Oct",
+        "sep": "Sep"
+      }
+    },
+    "relative": {
+      "ago": "il y a {{time}}",
+      "in": "dans {{time}}",
+      "now": "À l'instant",
+      "units": {
+        "day": "{{count}} jour",
+        "day_plural": "{{count}} jours",
+        "hour": "{{count}} heure",
+        "hour_plural": "{{count}} heures",
+        "minute": "{{count}} minute",
+        "minute_plural": "{{count}} minutes",
+        "month": "{{count}} mois",
+        "month_plural": "{{count}} mois",
+        "second": "{{count}} seconde",
+        "second_plural": "{{count}} secondes",
+        "week": "{{count}} semaine",
+        "week_plural": "{{count}} semaines",
+        "year": "{{count}} an",
+        "year_plural": "{{count}} ans"
+      }
+    },
+    "units": {
+      "lastMonth": "Mois dernier",
+      "lastWeek": "Semaine dernière",
+      "lastYear": "Année dernière",
+      "nextMonth": "Mois prochain",
+      "nextWeek": "Semaine prochaine",
+      "nextYear": "Année prochaine",
+      "thisMonth": "Ce mois-ci",
+      "thisWeek": "Cette semaine",
+      "thisYear": "Cette année",
+      "today": "Aujourd'hui",
+      "tomorrow": "Demain",
+      "yesterday": "Hier"
+    }
+  },
+  "errors": {
+    "cacheData": "Connexion limitée. Affichage des données en cache.",
+    "maintenance": "Site en maintenance. Nous serons de retour bientôt.",
+    "operations": {
+      "deletingError": "Erreur lors de la suppression",
+      "downloadError": "Erreur lors du téléchargement",
+      "loadingError": "Erreur lors du chargement",
+      "savingError": "Erreur lors de l'enregistrement",
+      "uploadError": "Erreur lors du téléversement",
+      "validationError": "Erreur de validation"
+    },
+    "pages": {
+      "401": {
+        "action": "Se connecter",
+        "message": "Vous devez vous connecter pour accéder à cette page.",
+        "title": "Non authentifié"
+      },
+      "403": {
+        "action": "Retour",
+        "message": "Vous n'avez pas les permissions nécessaires pour accéder à cette page.",
+        "title": "Accès refusé"
+      },
+      "404": {
+        "action": "Retour à l'accueil",
+        "message": "Oops! La page que vous recherchez n'existe pas.",
+        "title": "Page introuvable"
+      },
+      "500": {
+        "action": "Actualiser",
+        "message": "Une erreur est survenue. Veuillez réessayer plus tard.",
+        "title": "Erreur serveur"
+      },
+      "network": {
+        "action": "Réessayer",
+        "message": "Impossible de se connecter au serveur. Vérifiez votre connexion internet.",
+        "title": "Erreur réseau"
+      }
+    },
+    "rateLimit": "Trop de requêtes. Veuillez patienter {{seconds}} secondes.",
+    "sessionExpired": "Votre session a expiré. Veuillez vous reconnecter."
+  },
+  "footer": {
+    "madeWith": "Fait avec ❤️ en Algérie",
+    "version": "Version {{version}}"
+  },
+  "forms": {
+    "actions": {
+      "addAnother": "Ajouter un autre",
+      "back": "Retour",
+      "continue": "Continuer",
+      "preview": "Aperçu",
+      "publish": "Publier",
+      "remove": "Supprimer",
+      "save": "Enregistrer",
+      "saveDraft": "Sauvegarder comme brouillon",
+      "submit": "Soumettre"
+    },
+    "help": {
+      "hints": {
+        "image": "Format recommandé : 1920x1080px, max 5MB",
+        "price": "Laissez vide pour un accès gratuit",
+        "title": "Choisissez un titre accrocheur et descriptif"
+      }
+    },
+    "sections": {
+      "classification": "Classification",
+      "contributors": "Contributeurs",
+      "generalInfo": "Informations générales",
+      "location": "Lieu",
+      "media": "Médias",
+      "partners": "Partenaires",
+      "pricing": "Tarification",
+      "program": "Programme",
+      "registration": "Inscription",
+      "schedule": "Planning",
+      "speakers": "Intervenants",
+      "technicalDetails": "Détails techniques",
+      "visibility": "Visibilité"
+    }
+  },
+  "metadata": {
+    "contributors": {
+      "artist": "Artiste",
+      "artists": "Artistes",
+      "author": "Auteur",
+      "authors": "Auteurs",
+      "character": "Personnage",
+      "cinematography": "Photographie",
+      "contributor": "Contributeur",
+      "contributors": "Contributeurs",
+      "editor": "Éditeur",
+      "illustrator": "Illustrateur",
+      "mainRole": "Rôle principal",
+      "music": "Musique",
+      "notRegistered": "Non inscrit",
+      "organisation": "Organisation",
+      "principal": "Principal",
+      "producer": "Producteur",
+      "registered": "Inscrit",
+      "role": "Rôle",
+      "screenplay": "Scénario",
+      "translator": "Traducteur"
+    },
+    "dates": {
+      "createdIn": "Créée en {{year}}",
+      "creationYear": "Année de création",
+      "dateAdded": "Ajouté le",
+      "lastUpdated": "Dernière mise à jour",
+      "publishDate": "Date de publication",
+      "year": "Année"
+    },
+    "technical": {
+      "cast": "Distribution",
+      "dimensions": "Dimensions",
+      "director": "Réalisateur",
+      "directors": "Réalisateurs",
+      "duration": "Durée",
+      "durationMinutes": "{{minutes}} minutes",
+      "genre": "Genre",
+      "isbn": "ISBN",
+      "label": "Label",
+      "materials": "Matériaux",
+      "medium": "Support",
+      "pageCount": "{{count}} page",
+      "pageCount_plural": "{{count}} pages",
+      "pages": "Nombre de pages",
+      "runtime": "{{hours}}h {{minutes}}min",
+      "technique": "Technique"
+    }
+  },
+  "notifications": {
+    "empty": "Aucune notification",
+    "new": "Nouvelle notification",
+    "settings": {
+      "categories": {
+        "comments": "Commentaires et réponses",
+        "events": "Événements et rappels",
+        "follows": "Nouveaux abonnés",
+        "likes": "J'aime et favoris",
+        "news": "Actualités et nouveautés",
+        "system": "Mises à jour système"
+      },
+      "email": "Notifications par email",
+      "push": "Notifications push",
+      "title": "Paramètres de notification"
+    },
+    "title": "Notifications",
+    "types": {
+      "comment": "a commenté votre {{type}}",
+      "event": "Nouvel événement : {{title}}",
+      "follow": "vous suit maintenant",
+      "like": "a aimé votre {{type}}",
+      "mention": "vous a mentionné",
+      "rejection": "Votre demande a été rejetée",
+      "system": "Notification système",
+      "validation": "Votre compte a été validé",
+      "welcome": "Bienvenue sur Timlilit Culture !",
+      "work": "Nouvelle œuvre : {{title}}"
+    }
+  },
+  "pages": {
+    "notFound": {
+      "action": "Retour à l'accueil",
+      "errorLog": "404 Error: User attempted to access non-existent route:",
+      "message": "La page que vous recherchez n'existe pas.",
+      "subtitle": "Oops! Page introuvable",
+      "title": "404"
+    },
+    "verifyEmail": {
+      "error": {
+        "invalidToken": "Le jeton est invalide ou a expiré.",
+        "serverError": "Impossible de communiquer avec le serveur.",
+        "title": "Erreur lors de la vérification"
+      },
+      "noToken": "Aucun jeton de vérification n'a été fourni.",
+      "success": {
+        "message": "Votre compte a été vérifié avec succès ! Redirection en cours...",
+        "title": "Vérification Réussie !"
+      },
+      "verifying": "Vérification de votre compte en cours..."
+    }
+  },
+  "placeholders": {
+    "comment": "Écrivez votre commentaire ici...",
+    "email": "Votre adresse email",
+    "message": "Votre message",
+    "name": "Votre nom",
+    "password": "Votre mot de passe",
+    "reply": "Écrivez votre réponse ici...",
+    "search": "Rechercher..."
+  },
+  "price": {
+    "currency": "DA",
+    "freeAccess": "Accès gratuit",
+    "from": "À partir de {{price}}",
+    "negotiable": "Prix négociable",
+    "onRequest": "Prix sur demande",
+    "originalPrice": "Prix original",
+    "price": "Prix",
+    "range": "{{min}} - {{max}} DA",
+    "reducedPrice": "Prix réduit",
+    "save": "Économisez {{amount}} DA",
+    "upTo": "Jusqu'à {{max}} DA"
+  },
+  "professional": {
+    "financial": {
+      "balance": "Solde",
+      "commissions": "Commissions",
+      "payouts": "Paiements",
+      "sales": "Ventes",
+      "withdraw": "Retirer"
+    },
+    "metrics": {
+      "bookings": "Réservations",
+      "calendar": "Calendrier",
+      "engagement": "Engagement",
+      "followers": "Abonnés",
+      "following": "Abonnements",
+      "impressions": "Impressions",
+      "messages": "Messages",
+      "rating": "Évaluation moyenne",
+      "reach": "Portée",
+      "reviews": "Avis reçus",
+      "views": "Vues"
+    },
+    "sections": {
+      "addWork": "Ajouter une œuvre",
+      "analytics": "Analyses détaillées",
+      "createEvent": "Créer un événement",
+      "earnings": "Revenus",
+      "insights": "Insights",
+      "myAudience": "Mon audience",
+      "performance": "Performance"
+    },
+    "tips": {
+      "engage": "Interagissez avec votre audience",
+      "optimize": "Optimisez vos titres et descriptions",
+      "promote": "Promouvez sur les réseaux sociaux",
+      "quality": "Privilégiez la qualité",
+      "regular": "Publiez régulièrement",
+      "title": "Conseils pro"
+    },
+    "tools": {
+      "analytics": "Analytics avancés",
+      "newsletter": "Newsletter",
+      "promotion": "Promotion",
+      "seo": "Optimisation SEO",
+      "socialMedia": "Réseaux sociaux",
+      "title": "Outils pro"
+    },
+    "validation": {
+      "approved": "Compte professionnel validé",
+      "documents": "Documents requis",
+      "pending": "Votre compte est en cours de validation",
+      "rejected": "Validation refusée",
+      "requirements": "Critères de validation",
+      "resubmit": "Soumettre à nouveau"
+    }
+  },
+  "sections": {
+    "about": {
+      "contact": {
+        "description": "Une question ? Une suggestion ? N'hésitez pas à nous contacter",
+        "title": "Contactez-nous"
+      },
+      "mission": {
+        "description": "Préserver, valoriser et transmettre le patrimoine culturel algérien aux générations futures tout en soutenant les créateurs contemporains.",
+        "title": "Notre mission"
+      },
+      "partners": {
+        "description": "Nous travaillons avec les meilleures institutions culturelles",
+        "title": "Nos partenaires"
+      },
+      "press": {
+        "contact": "Contact presse",
+        "kit": "Kit média",
+        "releases": "Communiqués de presse",
+        "title": "Espace presse"
+      },
+      "stats": {
+        "events": "Événements organisés",
+        "partners": "Partenaires culturels",
+        "title": "Timlilit Culture en chiffres",
+        "users": "Utilisateurs actifs",
+        "works": "Œuvres cataloguées"
+      },
+      "subtitle": "La plateforme de référence pour la culture algérienne",
+      "team": {
+        "description": "Une équipe passionnée dédiée à la promotion de la culture algérienne",
+        "title": "Notre équipe"
+      },
+      "title": "À propos de Timlilit Culture",
+      "values": {
+        "accessibility": {
+          "description": "Rendre la culture accessible à tous",
+          "title": "Accessibilité"
+        },
+        "authenticity": {
+          "description": "Préserver l'intégrité de notre patrimoine culturel",
+          "title": "Authenticité"
+        },
+        "community": {
+          "description": "Créer des liens entre passionnés de culture",
+          "title": "Communauté"
+        },
+        "innovation": {
+          "description": "Utiliser la technologie au service de la culture",
+          "title": "Innovation"
+        },
+        "title": "Nos valeurs"
+      },
+      "vision": {
+        "description": "Devenir le pont numérique entre le riche héritage culturel de l'Algérie et le monde, en facilitant l'accès à notre patrimoine et en encourageant la création contemporaine.",
+        "title": "Notre vision"
+      }
+    },
+    "crafts": {
+      "actions": {
+        "addToCart": "Ajouter au panier",
+        "buyNow": "Acheter maintenant",
+        "contactArtisan": "Contacter l'artisan",
+        "quickView": "Aperçu rapide",
+        "requestQuote": "Demander un devis",
+        "seeDetails": "Voir les détails"
+      },
+      "attributes": {
+        "authentic": "Authentique",
+        "certified": "Certifié",
+        "customizable": "Personnalisable",
+        "handmade": "Fait main",
+        "uniquePiece": "Pièce unique"
+      },
+      "categories": {
+        "all": "Tous",
+        "basketry": "Vannerie",
+        "calligraphy": "Calligraphie",
+        "embroidery": "Broderie",
+        "jewelry": "Bijouterie",
+        "leatherwork": "Maroquinerie",
+        "metalwork": "Ferronnerie",
+        "pottery": "Poterie",
+        "weaving": "Tissage",
+        "woodwork": "Ébénisterie"
+      },
+      "details": {
+        "artisan": "Artisan",
+        "care": "Entretien",
+        "colors": "Couleurs disponibles",
+        "customization": "Options de personnalisation",
+        "delivery": "Livraison",
+        "dimensions": "Dimensions",
+        "materials": "Matériaux",
+        "origin": "Origine",
+        "process": "Processus de fabrication",
+        "productionTime": "Délai de fabrication",
+        "returns": "Retours",
+        "story": "Histoire du produit",
+        "techniques": "Techniques",
+        "tradition": "Tradition",
+        "warranty": "Garantie",
+        "weight": "Poids",
+        "workshop": "Atelier"
+      },
+      "filters": {
+        "availability": "Disponibilité",
+        "colors": "Couleurs",
+        "materials": "Matériaux",
+        "newest": "Plus récents",
+        "popular": "Populaires",
+        "priceAsc": "Prix croissant",
+        "priceDesc": "Prix décroissant",
+        "rating": "Mieux notés",
+        "size": "Taille",
+        "sortBy": "Trier par",
+        "techniques": "Techniques"
+      },
+      "price": {
+        "fixed": "{{price}} DA",
+        "negotiable": "Prix négociable",
+        "onRequest": "Prix sur demande"
+      },
+      "regions": {
+        "all": "Toutes les régions",
+        "aures": "Aurès",
+        "constantine": "Constantine",
+        "hoggar": "Hoggar",
+        "kabylie": "Kabylie",
+        "mzab": "M'zab",
+        "sahara": "Sahara",
+        "tlemcen": "Tlemcen"
+      },
+      "stock": {
+        "inStock": "{{count}} en stock",
+        "limitedStock": "Stock limité",
+        "madeToOrder": "Fabrication à la demande",
+        "onOrder": "Sur commande"
+      }
+    },
+    "events": {
+      "empty": {
+        "comments": "Aucun commentaire pour le moment. Soyez le premier à commenter !",
+        "gallery": "Aucune image disponible pour cet événement.",
+        "program": "Le programme détaillé sera bientôt disponible.",
+        "programItems": "Aucun élément de programme pour le moment.",
+        "speakers": "Les intervenants seront annoncés prochainement."
+      },
+      "filters": {
+        "accessibility": "Accessibilité PMR",
+        "allCategories": "Toutes catégories",
+        "allRegions": "Toutes les régions",
+        "allStatuses": "Tous les statuts",
+        "dateRange": "Période",
+        "freeOnly": "Gratuits uniquement",
+        "ongoing": "En cours",
+        "past": "Passés",
+        "priceRange": "Gamme de prix",
+        "upcoming": "À venir",
+        "withRegistration": "Avec inscription"
+      },
+      "info": {
+        "access": "Accès",
+        "accessibility": "Accessibilité",
+        "capacity": "{{current}}/{{max}} participants",
+        "certificate": "Un certificat de participation sera délivré",
+        "freeEntry": "Entrée libre, aucune inscription requise",
+        "gallery": "Galerie",
+        "organizer": "Organisateur",
+        "parking": "Parking disponible",
+        "partners": "Partenaires",
+        "placesAvailable": "{{count}} place disponible",
+        "placesAvailable_plural": "{{count}} places disponibles",
+        "practicalInfo": "Informations pratiques",
+        "program": "Programme",
+        "publicTransport": "Transports en commun",
+        "speakers": "Intervenants",
+        "sponsors": "Sponsors",
+        "venue": "Lieu"
+      },
+      "registration": {
+        "closed": "Inscriptions fermées",
+        "confirmed": "Inscription confirmée",
+        "deadline": "Date limite d'inscription",
+        "full": "Complet",
+        "joinWaitingList": "Rejoindre la liste d'attente",
+        "register": "S'inscrire maintenant",
+        "registered": "Vous êtes inscrit à cet événement",
+        "required": "Inscription requise",
+        "unregister": "Se désinscrire",
+        "waitingList": "Liste d'attente"
+      },
+      "sections": {
+        "about": "À propos",
+        "classification": "Classification",
+        "team": "Équipe d'organisation",
+        "technicalDetails": "Détails techniques"
+      },
+      "similarEvents": "Événements similaires",
+      "status": {
+        "almost_full": "Presque complet",
+        "cancelled": "Annulé",
+        "completed": "Terminé",
+        "ongoing": "En cours",
+        "planned": "À venir",
+        "postponed": "Reporté",
+        "registration_closed": "Inscriptions fermées",
+        "registration_open": "Inscriptions ouvertes"
+      },
+      "upcomingEvents": "Prochains événements"
+    },
+    "heritage": {
+      "errorLoading": "Erreur lors du chargement des sites",
+      "filters": {
+        "allPeriods": "Toutes les périodes",
+        "allTypes": "Tous les types",
+        "military": "Architecture militaire",
+        "natural": "Sites naturels",
+        "religious": "Sites religieux",
+        "unesco": "Sites UNESCO"
+      },
+      "loading": "Chargement des sites...",
+      "map": {
+        "actions": {
+          "currentLocation": "Ma position",
+          "exitFullscreen": "Quitter le plein écran",
+          "explore": "Explorer sur la carte",
+          "fullscreen": "Plein écran",
+          "open": "Ouvrir la carte",
+          "searchLocation": "Rechercher un lieu...",
+          "zoomIn": "Zoomer",
+          "zoomOut": "Dézoomer"
+        },
+        "filters": {
+          "hideFilters": "Masquer les filtres",
+          "reset": "Réinitialiser les filtres",
+          "showFilters": "Afficher les filtres"
+        },
+        "subtitle": "Explorez plus de 50 sites culturels à travers l'Algérie",
+        "title": "Carte interactive du patrimoine"
+      },
+      "noSites": "Aucun site ne correspond à vos critères de recherche.",
+      "periods": {
+        "ancient": "Antiquité",
+        "colonial": "Période coloniale",
+        "contemporary": "Contemporain",
+        "medieval": "Moyen Âge",
+        "ottoman": "Période ottomane",
+        "prehistoric": "Préhistoire"
+      },
+      "routes": {
+        "active": "Parcours actif",
+        "difficulty": {
+          "challenging": "Aventurier",
+          "custom": "Personnalisé",
+          "easy": "Facile",
+          "moderate": "Modéré"
+        },
+        "sites": "{{count}} site",
+        "sites_plural": "{{count}} sites",
+        "subtitle": "Choisissez un itinéraire thématique pour découvrir les merveilles du patrimoine algérien",
+        "title": "Parcours découverte"
+      },
+      "siteInfo": {
+        "admission": "Tarifs",
+        "audioGuide": "Audioguide disponible",
+        "bestTime": "Meilleure période",
+        "bookVisit": "Réserver une visite",
+        "downloadBrochure": "Télécharger la brochure",
+        "facilities": "Équipements",
+        "gettingThere": "Comment s'y rendre",
+        "guidedTours": "Visites guidées",
+        "moreInfo": "Plus d'informations",
+        "nearbyAttractions": "À proximité",
+        "officialWebsite": "Site officiel",
+        "openingHours": "Horaires d'ouverture",
+        "practicalInfo": "Informations pratiques",
+        "reviews": "Avis des visiteurs",
+        "virtualTour": "Visite virtuelle",
+        "visitDuration": "{{duration}}",
+        "visitors": "{{count}}/an"
+      },
+      "types": {
+        "berber": "Architecture berbère",
+        "citadel": "Citadelle historique",
+        "colonial": "Architecture coloniale",
+        "islamic": "Architecture islamique",
+        "modern": "Monument moderne",
+        "museum": "Musée",
+        "nationalPark": "Parc national",
+        "roman": "Site romain"
+      }
+    },
+    "hero": {
+      "cta": {
+        "explore": "Explorer maintenant",
+        "learnMore": "En savoir plus"
+      },
+      "quickActions": {
+        "discover": {
+          "description": "Sites UNESCO, monuments historiques et traditions",
+          "title": "Découvrir le patrimoine"
+        },
+        "events": {
+          "description": "Festivals, expositions et célébrations à venir",
+          "title": "Événements culturels"
+        },
+        "title": "Accès rapide",
+        "works": {
+          "description": "Littérature, arts visuels et créations numériques",
+          "title": "Œuvres & Collections"
+        }
+      },
+      "subtitle": "Explorez notre riche héritage à travers des millénaires d'histoire, de traditions vivantes et d'expressions artistiques contemporaines",
+      "title": "Découvrez le patrimoine culturel",
+      "titleHighlight": "de l'Algérie"
+    },
+    "works": {
+      "actions": {
+        "borrow": "Emprunter",
+        "buy": "Acheter",
+        "download": "Télécharger",
+        "downloadEPUB": "Télécharger EPUB",
+        "downloadPDF": "Télécharger PDF",
+        "listen": "Écouter",
+        "listenPreview": "Écouter un extrait",
+        "read": "Lire",
+        "readExcerpt": "Lire un extrait",
+        "readOnline": "Lire en ligne",
+        "rent": "Louer",
+        "watch": "Regarder",
+        "watchTrailer": "Voir la bande-annonce"
+      },
+      "badges": {
+        "award": "Primé",
+        "bestseller": "Best-seller",
+        "exclusive": "Exclusif",
+        "external": "Externe",
+        "featured": "À la une",
+        "free": "Gratuit",
+        "limited": "Édition limitée",
+        "member": "Membre",
+        "verified": "Vérifié"
+      },
+      "detail": {
+        "about": "À propos de cette œuvre",
+        "abstract": "Abstract",
+        "articleType": {
+          "article": "Article",
+          "scientificArticle": "Article Scientifique"
+        },
+        "availability": {
+          "available": "Disponible",
+          "comingSoon": "Bientôt disponible",
+          "digitalOnly": "Numérique uniquement",
+          "limitedAvailability": "Disponibilité limitée",
+          "outOfStock": "Rupture de stock",
+          "physicalOnly": "Physique uniquement",
+          "preOrder": "Précommander",
+          "unavailable": "Indisponible"
+        },
+        "badges": {
+          "factChecked": "Vérifié",
+          "openAccess": "Accès libre",
+          "peerReviewed": "Évalué par les pairs",
+          "verified": "Vérifié"
+        },
+        "bibliographicInfo": "Informations bibliographiques",
+        "citationApa": "Citation APA :",
+        "comment": {
+          "add": "Ajouter un commentaire",
+          "cancel": "Annuler",
+          "characterCount": "{{count}} / {{max}} caractères",
+          "noComments": "Aucun commentaire pour le moment. Soyez le premier à commenter !",
+          "placeholder": "Écrivez votre commentaire ici...",
+          "reply": "Répondre au commentaire",
+          "respond": "Répondre",
+          "send": "Envoyer",
+          "sending": "Envoi...",
+          "shareOpinion": "Partagez votre avis sur cette œuvre",
+          "yourComment": "Votre commentaire"
+        },
+        "contentUnavailable": "Le contenu de cet article n'est pas encore disponible.",
+        "copyLink": "Copier le lien",
+        "doi": "DOI :",
+        "downloadPdf": "Télécharger PDF",
+        "errors": {
+          "backToWorks": "Retour aux œuvres",
+          "loading": "Erreur lors du chargement de l'œuvre",
+          "notFound": "Œuvre introuvable"
+        },
+        "extract": "Extrait",
+        "impactFactor": "Impact Factor :",
+        "issn": "ISSN :",
+        "linkCopied": "Lien copié !",
+        "loading": "Chargement de l'article...",
+        "metadata": {
+          "artist": "Artiste",
+          "artists": "Artistes",
+          "cast": "Distribution",
+          "director": "Réalisateur",
+          "directors": "Réalisateurs",
+          "duration": "Durée",
+          "edition": "Édition",
+          "genre": "Genre",
+          "genres": "Genres",
+          "isbn": "ISBN",
+          "language": "Langue",
+          "pageCount": "{{count}} page",
+          "pageCount_plural": "{{count}} pages",
+          "pages": "Nombre de pages",
+          "publishDate": "Date de publication",
+          "publisher": "Éditeur",
+          "runtime": "{{hours}}h {{minutes}}min",
+          "year": "Année",
+          "yearCreated": "Créée en {{year}}"
+        },
+        "notFound": "Article introuvable",
+        "notFoundMessage": "L'article demandé n'existe pas.",
+        "number": "Numéro",
+        "pages": "Pages",
+        "print": "Imprimer",
+        "published": "Publié",
+        "publishedIn": "Publié dans",
+        "readingStats": {
+          "readingTime": "{{time}} min de lecture",
+          "wordCount": "{{count}} mots"
+        },
+        "related": {
+          "alsoLiked": "Vous aimerez aussi",
+          "artistPresentation": "Présentation de l'artiste",
+          "bibliography": "Bibliographie de l'auteur",
+          "fromSameArtist": "Du même artiste",
+          "fromSameAuthor": "Du même auteur",
+          "fromSameDirector": "Du même réalisateur",
+          "inSameCollection": "Dans la même collection",
+          "inSameGenre": "Dans le même genre",
+          "otherArtworks": "Autres œuvres d'art de la collection",
+          "otherWorks": "Découvrir d'autres œuvres {{type}}",
+          "recommendations": "Recommandations"
+        },
+        "resume": "Résumé",
+        "sections": {
+          "about": "À propos",
+          "aboutWork": "À propos de cette œuvre",
+          "actions": "Actions",
+          "classification": "Classification",
+          "creationTeam": "Équipe de création",
+          "noDescription": "Aucune description disponible.",
+          "statistics": "Statistiques",
+          "technicalDetails": "Détails techniques",
+          "upcomingEvents": "Prochains événements"
+        },
+        "share": {
+          "copyLink": "Copier le lien",
+          "facebook": "Facebook",
+          "linkCopied": "Lien copié !",
+          "twitter": "Twitter"
+        },
+        "stats": {
+          "averageRating": "Note moyenne",
+          "comments": "Commentaires",
+          "downloads": "Téléchargements",
+          "listens": "Écoutes",
+          "listenTime": "Durée d'écoute",
+          "plays": "Lectures",
+          "rating": "{{rating}} / 5",
+          "readingTime": "Temps lecture",
+          "reviews": "Avis",
+          "views": "Vues",
+          "viewsPerYear": "{{count}}/an"
+        },
+        "summary": "Résumé",
+        "synopsis": "Synopsis",
+        "tabs": {
+          "authorAndWorks": "Auteur & Œuvres",
+          "comments": "Commentaires",
+          "description": "Description"
+        },
+        "team": {
+          "author": "Auteur",
+          "authors": "Auteurs",
+          "contributor": "Contributeur",
+          "contributors": "Contributeurs",
+          "editor": "Éditeur",
+          "illustrator": "Illustrateur",
+          "translator": "Traducteur"
+        },
+        "volume": "Volume"
+      },
+      "empty": {
+        "noOtherWorks": "Aucune autre œuvre disponible pour le moment."
+      },
+      "filters": {
+        "allGenres": "Tous les genres",
+        "allLanguages": "Toutes les langues",
+        "yearRange": "Période de création"
+      },
+      "info": {
+        "featuredCount": "{{count}} œuvres mises en avant par notre équipe éditoriale",
+        "newCount": "{{count}} nouvelles œuvres ajoutées ce mois-ci",
+        "popularCount": "{{count}} œuvres populaires (classiques intemporels et succès récents)",
+        "recommendedCount": "{{count}} œuvres recommandées basées sur vos préférences"
+      },
+      "results": {
+        "count": "{{count}} résultat pour \"{{query}}\"",
+        "count_plural": "{{count}} résultats pour \"{{query}}\""
+      },
+      "stats": {
+        "classics": "{{count}} classiques intemporels",
+        "new": "{{count}} nouveautés ce mois",
+        "news": "nouveautés",
+        "oldClassics": "classiques",
+        "recent": "{{count}} créations récentes",
+        "recentWorks": "récentes",
+        "total": "{{count}} œuvres au total",
+        "works": "œuvres"
+      },
+      "types": {
+        "album": "Album musical",
+        "art": "Œuvres d'art",
+        "article": "Article",
+        "articles": "Articles",
+        "book": "Livre",
+        "cinema": "Cinéma",
+        "film": "Film",
+        "literature": "Littérature",
+        "music": "Musique",
+        "painting": "Peinture",
+        "photography": "Photographie",
+        "scientific": "Articles scientifiques",
+        "scientific_article": "Article scientifique",
+        "sculpture": "Sculpture"
+      }
+    }
+  },
+  "success": {
+    "account": {
+      "passwordChanged": "Mot de passe modifié avec succès",
+      "profileUpdated": "Profil mis à jour avec succès",
+      "registered": "Inscription réussie",
+      "settingsSaved": "Paramètres enregistrés",
+      "subscribed": "Abonnement réussi",
+      "unregistered": "Désinscription réussie",
+      "unsubscribed": "Désabonnement réussi"
+    },
+    "operations": {
+      "copied": "Copié dans le presse-papiers",
+      "created": "Créé avec succès",
+      "deleted": "Supprimé avec succès",
+      "downloaded": "Téléchargé avec succès",
+      "saved": "Enregistré avec succès",
+      "sent": "Envoyé avec succès",
+      "shared": "Partagé avec succès",
+      "updated": "Mis à jour avec succès",
+      "uploaded": "Téléversé avec succès"
+    },
+    "social": {
+      "commentPosted": "Commentaire publié",
+      "favoriteAdded": "Ajouté aux favoris",
+      "favoriteRemoved": "Retiré des favoris",
+      "following": "Vous suivez maintenant {{name}}",
+      "reviewPosted": "Avis publié",
+      "unfollowing": "Vous ne suivez plus {{name}}"
+    }
+  },
+  "tooltips": {
+    "addToFavorites": "Ajouter aux favoris",
+    "copyLink": "Copier le lien",
+    "download": "Télécharger",
+    "downloadPdf": "Télécharger PDF",
+    "print": "Imprimer",
+    "removeFromFavorites": "Retirer des favoris",
+    "reply": "Répondre",
+    "scrollToTop": "Retour en haut",
+    "share": "Partager",
+    "viewLess": "Voir moins",
+    "viewMore": "Voir plus"
+  },
+  "units": {
+    "actions": {
+      "addComment": "Ajouter un commentaire",
+      "addToFavorites": "Ajouter aux favoris",
+      "apply": "Appliquer",
+      "cancel": "Annuler",
+      "clear": "Effacer",
+      "close": "Fermer",
+      "collapse": "Réduire",
+      "comment": "Commenter",
+      "continue": "Continuer",
+      "copyLink": "Copier le lien",
+      "discover": "Découvrir",
+      "download": "Télécharger",
+      "downloadPdf": "Télécharger PDF",
+      "expand": "Développer",
+      "explore": "Explorer",
+      "goBack": "Retour",
+      "goBackTo": "Retour à {{destination}}",
+      "hide": "Masquer",
+      "listenPreview": "Écouter un extrait",
+      "loadMore": "Charger plus",
+      "open": "Ouvrir",
+      "pause": "Pause",
+      "play": "Lire",
+      "print": "Imprimer",
+      "readArticle": "Lire l'article",
+      "readExtract": "Lire un extrait",
+      "readMore": "Lire la suite",
+      "recommend": "Recommander",
+      "refresh": "Actualiser",
+      "removeFromFavorites": "Retirer des favoris",
+      "reply": "Répondre",
+      "report": "Signaler",
+      "reset": "Réinitialiser",
+      "retry": "Réessayer",
+      "seeAll": "Voir tout",
+      "send": "Envoyer",
+      "sending": "Envoi...",
+      "share": "Partager",
+      "show": "Afficher",
+      "showLess": "Afficher moins",
+      "showMore": "Afficher plus",
+      "start": "Commencer",
+      "stop": "Arrêter",
+      "viewAll": "Tout voir",
+      "viewDetails": "Voir les détails",
+      "viewMore": "Voir plus",
+      "viewWork": "Voir l'œuvre",
+      "watchTrailer": "Voir la bande-annonce",
+      "writeReview": "Écrire un avis"
+    },
+    "pagination": {
+      "of": "de",
+      "page": "Page {{current}} sur {{total}}",
+      "perPage": "Par page",
+      "showing": "Affichage de {{from}} à {{to}} sur {{total}} résultats",
+      "to": "à"
+    },
+    "quantity": {
+      "characters": "{{count}} caractères",
+      "charactersCount": "{{count}} / {{max}} caractères",
+      "entries": "{{count}} entrées",
+      "pages": "{{count}} page",
+      "pages_plural": "{{count}} pages",
+      "tracks": "{{count}} titre",
+      "tracks_plural": "{{count}} titres",
+      "visitors": "{{count}}k/an",
+      "words": "{{count}} mots",
+      "wordsShort": "mots"
+    },
+    "selection": {
+      "deselectAll": "Tout désélectionner",
+      "selectAll": "Tout sélectionner",
+      "selected": "{{count}} sélectionné",
+      "selected_plural": "{{count}} sélectionnés"
+    },
+    "status": {
+      "active": "Actif",
+      "approved": "Approuvé",
+      "archived": "Archivé",
+      "available": "Disponible",
+      "cancelled": "Annulé",
+      "completed": "Terminé",
+      "connected": "Connecté",
+      "deleting": "Suppression...",
+      "disconnected": "Déconnecté",
+      "draft": "Brouillon",
+      "error": "Erreur",
+      "inactive": "Inactif",
+      "loading": "Chargement...",
+      "offline": "Hors ligne",
+      "online": "En ligne",
+      "pending": "En attente",
+      "processing": "Traitement...",
+      "published": "Publié",
+      "rejected": "Rejeté",
+      "saving": "Enregistrement...",
+      "sending": "Envoi...",
+      "success": "Succès",
+      "unavailable": "Indisponible",
+      "uploading": "Téléchargement..."
+    },
+    "time": {
+      "duration1to2h": "1-2h",
+      "duration30min": "30min",
+      "hours": "h",
+      "hoursReading": "{{hours}}h",
+      "hoursShort": "h",
+      "minReading": "{{time}} min de lecture",
+      "minReadingShort": "min de lecture",
+      "minutes": "min",
+      "perYear": "/an"
+    },
+    "validation": {
+      "email": "Adresse email invalide",
+      "maxLength": "Maximum {{max}} caractères",
+      "maxValue": "La valeur maximale est {{max}}",
+      "minLength": "Minimum {{min}} caractères",
+      "minValue": "La valeur minimale est {{min}}",
+      "optional": "Optionnel",
+      "pattern": "Format invalide",
+      "phone": "Numéro de téléphone invalide",
+      "required": "Ce champ est requis",
+      "url": "URL invalide"
+    }
+  }
+}

@@ -1,3 +1,6 @@
+// Import de la configuration i18n - DOIT être en premier !
+import '../i18n/config';
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -20,14 +23,16 @@ import DashboardUser from "./pages/DashboardUser";
 import AjouterOeuvre from "./pages/AjouterOeuvre";
 import AjouterEvenement from "./pages/AjouterEvenement";
 import VerifyEmailPage from './pages/VerifyEmailPage';
-
+import OeuvreDetail from './pages/OeuvreDetailPage';
 // Import des pages de notifications
 import NotificationsPage from "./pages/notifications/preferences";
 import NotificationPreferences from "./pages/notifications/preferences";
-
+import ArticleViewPage from './pages/articles/ArticleViewPage';
 // Import du listener de notifications toast
-import { NotificationToastListener } from "./components/NotificationToastListener";
+import NotificationToastListener from '@/components/NotificationToastListener';
 import EventDetailsPage from "./pages/EventDetailsPage";
+import EditArticle from "./pages/articles/edit/EditArticle";
+import RTLManager from './components/RTLManager';
 
 // Configuration optimisée du QueryClient
 const queryClient = new QueryClient({
@@ -78,10 +83,17 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <PermissionsProvider>
-        <BrowserRouter>
+        <BrowserRouter
+          future={{
+            v7_startTransition: true,
+            v7_relativeSplatPath: true,
+          }}
+        >
+          {/* Gestionnaire RTL */}
+          <RTLManager />
           {/* Listener global pour les notifications toast */}
           <AuthenticatedFeatures />
-          
+         
           <Routes>
             {/* Routes publiques */}
             <Route path="/" element={<Index />} />
@@ -89,9 +101,11 @@ const App = () => (
             <Route path="/evenements" element={<Evenements />} />
             <Route path="/evenements/:id" element={<EventDetailsPage />} />
             <Route path="/oeuvres" element={<Oeuvres />} />
+            <Route path="/oeuvres/:id" element={<OeuvreDetail />} />
             <Route path="/artisanat" element={<Artisanat />} />
             <Route path="/a-propos" element={<APropos />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/articles/:id" element={<ArticleViewPage />} />
             
             {/* Route dashboard qui redirige selon le rôle */}
             <Route 
@@ -144,6 +158,15 @@ const App = () => (
             />
             
             <Route 
+              path="/editer-article/:id" 
+              element={
+                <ProfessionalRoute>
+                  <EditArticle />
+                </ProfessionalRoute>
+              } 
+            />
+            
+            <Route 
               path="/ajouter-evenement" 
               element={
                 <ProfessionalRoute>
@@ -184,9 +207,7 @@ const App = () => (
             } />
             
             {/* Route pour la vérification de l'email */}
-            <Route path="/verify-email/:token" element={
-              <VerifyEmailPage />} 
-            />
+            <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
 
             {/* Route catch-all pour 404 */}
             <Route path="*" element={<NotFound />} />

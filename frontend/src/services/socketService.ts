@@ -4,14 +4,22 @@ import { io, Socket } from 'socket.io-client';
 import { API_BASE_URL } from '@/config/api';
 import { authService } from './auth.service';
 
-// Types pour les événements Socket
+// ================================================
+// TYPES DE BASE
+// ================================================
+
+// Type de base pour toutes les données socket
 interface BaseSocketData {
   timestamp?: string;
   userId?: number;
 }
 
-// Événements de notification
+// ================================================
+// ÉVÉNEMENTS DE NOTIFICATION
+// ================================================
+
 interface NotificationEvents {
+  // Nouvelle notification
   'notification:new': (data: {
     id: number;
     type: string;
@@ -19,21 +27,61 @@ interface NotificationEvents {
     message: string;
     url_action?: string;
     priorite?: string;
+    realtime?: boolean;
   } & BaseSocketData) => void;
   
+  // Notification admin
+  'notification:admin': (data: {
+    id: number;
+    type: string;
+    titre: string;
+    message: string;
+    url_action?: string;
+    priorite?: string;
+    entity_type?: string;
+    entity_id?: number;
+    entity_name?: string;
+    admin_id?: string | number;
+    realtime?: boolean;
+  } & BaseSocketData) => void;
+  
+  // Marquer comme lu
   'notification:mark_read': (data: {
     notificationId: number;
     success: boolean;
   }) => void;
   
+  // Marquer tout comme lu
   'notification:mark_all_read': (data: {
     success: boolean;
     count: number;
   }) => void;
+  
+  // Notification broadcast
+  'notification:broadcast': (data: {
+    titre: string;
+    message: string;
+    type_notification: string;
+    priorite?: string;
+    global: boolean;
+    metadata?: any;
+  } & BaseSocketData) => void;
+  
+  // Confirmation d'envoi
+  'notification:sent': (data: {
+    admin_id: string | number;
+    recipient_id: number;
+    notification_id: number;
+    status: 'sent' | 'failed';
+  } & BaseSocketData) => void;
 }
 
-// Événements admin
+// ================================================
+// ÉVÉNEMENTS ADMIN
+// ================================================
+
 interface AdminEvents {
+  // Activité admin
   'admin:activity': (data: {
     type: 'user_action' | 'content_action' | 'moderation' | 'system';
     action: string;
@@ -51,6 +99,7 @@ interface AdminEvents {
     metadata?: any;
   } & BaseSocketData) => void;
   
+  // Nouvel utilisateur
   'admin:new_user': (data: {
     user: {
       id: number;
@@ -62,6 +111,7 @@ interface AdminEvents {
     };
   } & BaseSocketData) => void;
   
+  // Contenu créé
   'admin:content_created': (data: {
     user: {
       id: number;
@@ -76,6 +126,7 @@ interface AdminEvents {
     };
   } & BaseSocketData) => void;
   
+  // Alerte de modération
   'admin:moderation_alert': (data: {
     type: 'signalement' | 'spam' | 'contenu_inapproprie';
     severity: 'low' | 'medium' | 'high' | 'critical';
@@ -90,6 +141,7 @@ interface AdminEvents {
     };
   } & BaseSocketData) => void;
   
+  // Alerte système
   'admin:system_alert': (data: {
     type: 'performance' | 'security' | 'error' | 'maintenance';
     level: 'info' | 'warning' | 'error' | 'critical';
@@ -97,37 +149,49 @@ interface AdminEvents {
     details?: any;
   } & BaseSocketData) => void;
 
+  // Mise à jour présence admin
   'admin:presence_update': (data: {
     adminIds: number[];
   }) => void;
 }
 
-// Événements utilisateur
+// ================================================
+// ÉVÉNEMENTS UTILISATEUR
+// ================================================
+
 interface UserEvents {
+  // État en ligne
   'user:online': (data: {
     userId: number;
     status: 'online' | 'away' | 'offline';
     lastSeen?: string;
   }) => void;
   
+  // Indicateur de frappe
   'user:typing': (data: {
     userId: number;
     isTyping: boolean;
     context?: string;
   }) => void;
   
+  // Mise à jour présence
   'user:presence_update': (data: {
     onlineUsers: number[];
     totalOnline: number;
   }) => void;
 
+  // Obtenir présence
   'user:get_presence': (data: {
     requestUserId: number;
   }) => void;
 }
 
-// Événements de contenu
+// ================================================
+// ÉVÉNEMENTS DE CONTENU
+// ================================================
+
 interface ContentEvents {
+  // Nouvelle œuvre
   'content:new_oeuvre': (data: {
     oeuvre: {
       id: number;
@@ -141,6 +205,7 @@ interface ContentEvents {
     };
   } & BaseSocketData) => void;
   
+  // Nouveau commentaire
   'content:new_comment': (data: {
     comment: {
       id: number;
@@ -158,6 +223,7 @@ interface ContentEvents {
     };
   } & BaseSocketData) => void;
   
+  // Mise à jour contenu
   'content:update': (data: {
     type: 'oeuvre' | 'evenement' | 'site';
     id: number;
@@ -165,8 +231,12 @@ interface ContentEvents {
   } & BaseSocketData) => void;
 }
 
-// Événements d'événements (événements culturels)
+// ================================================
+// ÉVÉNEMENTS D'ÉVÉNEMENTS CULTURELS
+// ================================================
+
 interface EventEvents {
+  // Nouvel événement
   'event:new': (data: {
     event: {
       id: number;
@@ -180,18 +250,21 @@ interface EventEvents {
     };
   } & BaseSocketData) => void;
   
+  // Mise à jour événement
   'event:update': (data: {
     eventId: number;
     changes: any;
     notification?: string;
   } & BaseSocketData) => void;
   
+  // Événement annulé
   'event:cancelled': (data: {
     eventId: number;
     reason?: string;
     notification: string;
   } & BaseSocketData) => void;
   
+  // Rappel événement
   'event:reminder': (data: {
     event: {
       id: number;
@@ -203,8 +276,12 @@ interface EventEvents {
   }) => void;
 }
 
-// Événements de chat/messagerie
+// ================================================
+// ÉVÉNEMENTS DE CHAT
+// ================================================
+
 interface ChatEvents {
+  // Message de chat
   'chat:message': (data: {
     message: {
       id: string;
@@ -220,6 +297,7 @@ interface ChatEvents {
     };
   }) => void;
   
+  // Mise à jour room
   'chat:room_update': (data: {
     roomId: string;
     action: 'user_joined' | 'user_left' | 'room_created' | 'room_deleted';
@@ -229,18 +307,23 @@ interface ChatEvents {
     };
   }) => void;
 
+  // Joindre room
   'chat:join_room': (data: {
     roomId: string;
     userId: number;
   }) => void;
 
+  // Quitter room
   'chat:leave_room': (data: {
     roomId: string;
     userId: number;
   }) => void;
 }
 
-// Événements système
+// ================================================
+// ÉVÉNEMENTS SYSTÈME
+// ================================================
+
 interface SystemEvents {
   'connect': () => void;
   'disconnect': (reason: string) => void;
@@ -254,7 +337,10 @@ interface SystemEvents {
   'pong': (latency: number) => void;
 }
 
-// Type combiné de tous les événements
+// ================================================
+// TYPE COMBINÉ
+// ================================================
+
 export type SocketEvents = NotificationEvents & 
   AdminEvents & 
   UserEvents & 
@@ -263,7 +349,10 @@ export type SocketEvents = NotificationEvents &
   ChatEvents & 
   SystemEvents;
 
-// Configuration du socket
+// ================================================
+// CONFIGURATION
+// ================================================
+
 interface SocketConfig {
   autoConnect?: boolean;
   reconnection?: boolean;
@@ -274,7 +363,13 @@ interface SocketConfig {
   transports?: string[];
 }
 
-// Service Socket principal
+// Type pour un handler d'événement générique
+type EventHandler = (...args: any[]) => void;
+
+// ================================================
+// SERVICE SOCKET
+// ================================================
+
 class SocketService {
   private socket: Socket | null = null;
   private config: SocketConfig = {
@@ -287,13 +382,12 @@ class SocketService {
     transports: ['websocket', 'polling']
   };
   
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-  private listeners: Map<string, Set<Function>> = new Map();
+  private listeners: Map<string, Set<EventHandler>> = new Map();
   private messageQueue: Array<{ event: string; data: any }> = [];
   private isConnecting = false;
   private connectionPromise: Promise<void> | null = null;
   
-  // État de connexion
+  // État public
   public isConnected = false;
   public connectionError: Error | null = null;
   
@@ -306,9 +400,10 @@ class SocketService {
     this.setupAuthListener();
   }
 
-  // Écouter les changements d'authentification
+  /**
+   * Configuration des listeners d'authentification
+   */
   private setupAuthListener() {
-    // Écouter les événements d'authentification
     window.addEventListener('auth:login', () => {
       this.connect();
     });
@@ -318,7 +413,9 @@ class SocketService {
     });
   }
 
-  // Connexion au serveur
+  /**
+   * Connexion au serveur WebSocket
+   */
   async connect(token?: string): Promise<void> {
     if (this.isConnected || this.isConnecting) {
       return this.connectionPromise || Promise.resolve();
@@ -327,16 +424,13 @@ class SocketService {
     this.isConnecting = true;
     this.connectionPromise = new Promise((resolve, reject) => {
       try {
-        // Récupérer le token si non fourni
         const authToken = token || authService.getAuthToken();
         if (!authToken) {
           throw new Error('No authentication token');
         }
 
-        // URL du serveur WebSocket
         const wsUrl = API_BASE_URL.replace('/api', '');
         
-        // Créer la connexion
         this.socket = io(wsUrl, {
           ...this.config,
           auth: {
@@ -347,37 +441,7 @@ class SocketService {
           }
         });
 
-        // Gérer les événements de connexion
-        this.socket.on('connect', () => {
-          console.log('✅ Socket connected');
-          this.isConnected = true;
-          this.isConnecting = false;
-          this.connectionError = null;
-          
-          // Vider la queue des messages
-          this.flushMessageQueue();
-          
-          // Notifier les callbacks
-          this.onConnectCallbacks.forEach(cb => cb());
-          
-          resolve();
-        });
-
-        this.socket.on('disconnect', (reason) => {
-          console.log('❌ Socket disconnected:', reason);
-          this.isConnected = false;
-          this.onDisconnectCallbacks.forEach(cb => cb(reason));
-        });
-
-        this.socket.on('connect_error', (error) => {
-          console.error('Socket connection error:', error);
-          this.connectionError = error;
-          this.isConnecting = false;
-          this.onErrorCallbacks.forEach(cb => cb(error));
-          reject(error);
-        });
-
-        // Réattacher tous les listeners existants
+        this.setupSocketListeners(resolve, reject);
         this.reattachListeners();
         
       } catch (error) {
@@ -390,7 +454,40 @@ class SocketService {
     return this.connectionPromise;
   }
 
-  // Déconnexion
+  /**
+   * Configuration des listeners de socket
+   */
+  private setupSocketListeners(resolve: () => void, reject: (error: Error) => void) {
+    if (!this.socket) return;
+
+    this.socket.on('connect', () => {
+      console.log('✅ Socket connected');
+      this.isConnected = true;
+      this.isConnecting = false;
+      this.connectionError = null;
+      this.flushMessageQueue();
+      this.onConnectCallbacks.forEach(cb => cb());
+      resolve();
+    });
+
+    this.socket.on('disconnect', (reason) => {
+      console.log('❌ Socket disconnected:', reason);
+      this.isConnected = false;
+      this.onDisconnectCallbacks.forEach(cb => cb(reason));
+    });
+
+    this.socket.on('connect_error', (error) => {
+      console.error('Socket connection error:', error);
+      this.connectionError = error;
+      this.isConnecting = false;
+      this.onErrorCallbacks.forEach(cb => cb(error));
+      reject(error);
+    });
+  }
+
+  /**
+   * Déconnexion
+   */
   disconnect(): void {
     if (this.socket) {
       this.socket.disconnect();
@@ -400,36 +497,36 @@ class SocketService {
     }
   }
 
-  // Écouter un événement (typage fort)
+  /**
+   * Écouter un événement
+   */
   on<K extends keyof SocketEvents>(
     event: K,
     handler: SocketEvents[K]
   ): void {
-    // Ajouter à notre map interne
     if (!this.listeners.has(event)) {
       this.listeners.set(event, new Set());
     }
     this.listeners.get(event)!.add(handler);
 
-    // Si le socket est connecté, attacher directement
     if (this.socket && this.isConnected) {
       this.socket.on(event, handler as any);
     }
   }
 
-  // Retirer un listener
+  /**
+   * Retirer un listener
+   */
   off<K extends keyof SocketEvents>(
     event: K,
     handler?: SocketEvents[K]
   ): void {
     if (!handler) {
-      // Retirer tous les handlers pour cet événement
       this.listeners.delete(event);
       if (this.socket) {
         this.socket.removeAllListeners(event);
       }
     } else {
-      // Retirer un handler spécifique
       const handlers = this.listeners.get(event);
       if (handlers) {
         handlers.delete(handler);
@@ -443,7 +540,9 @@ class SocketService {
     }
   }
 
-  // Émettre un événement
+  /**
+   * Émettre un événement
+   */
   emit<K extends keyof SocketEvents>(
     event: K,
     data?: Parameters<SocketEvents[K]>[0]
@@ -451,12 +550,13 @@ class SocketService {
     if (this.socket && this.isConnected) {
       this.socket.emit(event, data);
     } else {
-      // Ajouter à la queue si déconnecté
       this.messageQueue.push({ event, data });
     }
   }
 
-  // Émettre et attendre une réponse
+  /**
+   * Émettre avec acknowledgment
+   */
   async emitWithAck<K extends keyof SocketEvents, R = any>(
     event: K,
     data?: Parameters<SocketEvents[K]>[0],
@@ -478,18 +578,22 @@ class SocketService {
     });
   }
 
-  // Réattacher les listeners après reconnexion
+  /**
+   * Réattacher les listeners après reconnexion
+   */
   private reattachListeners(): void {
     if (!this.socket) return;
 
     this.listeners.forEach((handlers, event) => {
       handlers.forEach(handler => {
-        this.socket!.on(event, handler as any);
+        this.socket!.on(event, handler);
       });
     });
   }
 
-  // Vider la queue des messages
+  /**
+   * Vider la queue des messages
+   */
   private flushMessageQueue(): void {
     while (this.messageQueue.length > 0) {
       const { event, data } = this.messageQueue.shift()!;
@@ -497,7 +601,9 @@ class SocketService {
     }
   }
 
-  // Callbacks de connexion/déconnexion
+  /**
+   * Callbacks de connexion
+   */
   onConnect(callback: () => void): () => void {
     this.onConnectCallbacks.add(callback);
     return () => this.onConnectCallbacks.delete(callback);
@@ -513,7 +619,9 @@ class SocketService {
     return () => this.onErrorCallbacks.delete(callback);
   }
 
-  // Joindre une room
+  /**
+   * Méthodes utilitaires
+   */
   joinRoom(roomId: string): void {
     const user = authService.getCurrentUserFromCache();
     if (!user) {
@@ -527,7 +635,6 @@ class SocketService {
     });
   }
 
-  // Quitter une room
   leaveRoom(roomId: string): void {
     const user = authService.getCurrentUserFromCache();
     if (!user) {
@@ -541,14 +648,12 @@ class SocketService {
     });
   }
 
-  // Obtenir la latence
   async getPing(): Promise<number> {
     const start = Date.now();
     await this.emitWithAck('ping');
     return Date.now() - start;
   }
 
-  // Reconnecter manuellement
   reconnect(): void {
     if (this.socket) {
       this.socket.connect();
@@ -557,17 +662,14 @@ class SocketService {
     }
   }
 
-  // Obtenir l'instance du socket (pour cas avancés)
   getSocket(): Socket | null {
     return this.socket;
   }
 
-  // Méthode pour vérifier la présence d'un utilisateur
   checkUserPresence(userId: number): void {
     this.emit('user:get_presence', { requestUserId: userId });
   }
 
-  // Méthode pour envoyer un indicateur de frappe
   sendTypingIndicator(context: string, isTyping: boolean): void {
     const user = authService.getCurrentUserFromCache();
     if (!user) return;
@@ -580,8 +682,9 @@ class SocketService {
   }
 }
 
-// Export du singleton
-export const socketService = new SocketService();
+// ================================================
+// EXPORT
+// ================================================
 
-// Export du type de configuration seulement
+export const socketService = new SocketService();
 export type { SocketConfig };

@@ -89,6 +89,7 @@ class OeuvreController {
             model: this.models.Media,
             where: { visible_public: true },
             required: false,
+            separate: true,
             limit: 1,
             order: [['ordre', 'ASC']]
           }
@@ -152,6 +153,7 @@ class OeuvreController {
           },
           {
             model: this.models.TagMotCle,
+            as: 'Tags',
             through: { attributes: [] },
             attributes: ['id_tag', 'nom']
           },
@@ -994,6 +996,14 @@ res.status(201).json({
           error: 'Œuvre non trouvée' 
         });
       }
+      const hasMainImage = await this.models.Media.findOne({
+        where: { 
+          id_oeuvre: id,
+          is_principal: true,
+          type_media: 'image'
+        },
+        transaction
+      });
 
       const medias = [];
       let ordre = await this.models.Media.count({ where: { id_oeuvre: id } }) + 1;
@@ -1009,7 +1019,8 @@ res.status(201).json({
           mime_type: file.mimetype,
           ordre: ordre++,
           visible_public: true,
-          date_creation: new Date()
+          date_creation: new Date(),
+          is_principal: mediaMetadata[i]?.is_principal || (!hasMainImage && i === 0 && isImage)
         }, { transaction });
 
         medias.push(media);
@@ -1032,7 +1043,63 @@ res.status(201).json({
       });
     }
   }
-
+  async setMediaPrincipal(req, res) {
+    const transaction = await this.sequelize.transaction();
+    
+    try {
+      const { id, mediaId } = req.params;
+      
+      // Vérifier que le média existe et appartient à l'œuvre
+      const media = await this.models.Media.findOne({
+        where: {
+          id_media: mediaId,
+          id_oeuvre: id,
+          type_media: 'image' // Seules les images peuvent être principales
+        },
+        transaction
+      });
+      
+      if (!media) {
+        await transaction.rollback();
+        return res.status(404).json({
+          success: false,
+          error: 'Média non trouvé ou n\'est pas une image'
+        });
+      }
+      
+      // Retirer le statut principal des autres images
+      await this.models.Media.update(
+        { is_principal: false },
+        {
+          where: {
+            id_oeuvre: id,
+            type_media: 'image',
+            id_media: { [Op.ne]: mediaId }
+          },
+          transaction
+        }
+      );
+      
+      // Définir ce média comme principal
+      media.is_principal = true;
+      await media.save({ transaction });
+      
+      await transaction.commit();
+      
+      res.json({
+        success: true,
+        message: 'Image principale définie avec succès'
+      });
+      
+    } catch (error) {
+      await transaction.rollback();
+      console.error('❌ Erreur définition média principal:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur serveur'
+      });
+    }
+  }
   /**
    * Alias pour uploadMedia
    */

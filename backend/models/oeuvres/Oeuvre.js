@@ -112,7 +112,8 @@ module.exports = (sequelize) => {
     });
     Oeuvre.belongsToMany(models.TagMotCle, { 
       through: models.OeuvreTag, 
-      foreignKey: 'id_oeuvre' 
+      foreignKey: 'id_oeuvre',
+      as: 'Tags'  // Ajouter cet alias
     });
     Oeuvre.belongsToMany(models.Evenement, { 
       through: models.EvenementOeuvre, 

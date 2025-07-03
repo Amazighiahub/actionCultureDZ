@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,6 +24,7 @@ import { getAssetUrl } from '@/helpers/assetUrl';
 
 const Auth = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const { login, registerVisitor, registerProfessional, loginLoading, registerLoading, isAuthenticated } = useAuth();
   
@@ -82,8 +84,8 @@ const Auth = () => {
       // Validation de la taille
       if (file.size > 5 * 1024 * 1024) {
         toast({
-          title: "Fichier trop volumineux",
-          description: "La photo ne doit pas dépasser 5 MB",
+          title: t('auth.errors.fileTooLarge.title'),
+          description: t('auth.errors.fileTooLarge.description'),
           variant: "destructive",
         });
         return;
@@ -93,8 +95,8 @@ const Auth = () => {
       const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
       if (!allowedTypes.includes(file.type)) {
         toast({
-          title: "Type de fichier non autorisé",
-          description: "Utilisez JPG, PNG, GIF ou WebP",
+          title: t('auth.errors.invalidFileType.title'),
+          description: t('auth.errors.invalidFileType.description'),
           variant: "destructive",
         });
         return;
@@ -138,13 +140,13 @@ const Auth = () => {
     const errors: Record<string, string> = {};
     
     if (!loginForm.email) {
-      errors.email = 'L\'email est requis';
+      errors.email = t('auth.errors.emailRequired');
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginForm.email)) {
-      errors.email = 'Email invalide';
+      errors.email = t('auth.errors.emailInvalid');
     }
     
     if (!loginForm.mot_de_passe) {
-      errors.password = 'Le mot de passe est requis';
+      errors.password = t('auth.errors.passwordRequired');
     }
     
     setLoginErrors(errors);
@@ -167,15 +169,15 @@ const Auth = () => {
 
       if (!success) {
         toast({
-          title: "Erreur de connexion",
-          description: AUTH_ERROR_MESSAGES.INVALID_CREDENTIALS,
+          title: t('auth.errors.loginError'),
+          description: t('auth.errors.invalidCredentials'),
           variant: "destructive",
         });
       } else {
         // Succès - afficher un toast de bienvenue
         toast({
-          title: "Connexion réussie",
-          description: "Bienvenue sur Timlilit Culture !",
+          title: t('auth.success.loginTitle'),
+          description: t('auth.success.loginDescription'),
         });
         
         // Forcer le rafraîchissement complet de la page
@@ -186,8 +188,8 @@ const Auth = () => {
     } catch (error: any) {
       console.error('Erreur login:', error);
       toast({
-        title: "Erreur",
-        description: error.message || AUTH_ERROR_MESSAGES.NETWORK_ERROR,
+        title: t('errors.generic.title'),
+        description: error.message || t('errors.generic.message'),
         variant: "destructive",
       });
     }
@@ -199,54 +201,54 @@ const Auth = () => {
     
     // Validation des champs communs
     if (!registerForm.nom || registerForm.nom.length < 2) {
-      errors.nom = 'Le nom doit contenir au moins 2 caractères';
+      errors.nom = t('auth.errors.nameMinLength');
     }
     
     if (!registerForm.prenom || registerForm.prenom.length < 2) {
-      errors.prenom = 'Le prénom doit contenir au moins 2 caractères';
+      errors.prenom = t('auth.errors.firstNameMinLength');
     }
     
     if (!registerForm.email) {
-      errors.email = 'L\'email est requis';
+      errors.email = t('auth.errors.emailRequired');
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(registerForm.email)) {
-      errors.email = 'Email invalide';
+      errors.email = t('auth.errors.emailInvalid');
     }
     
     if (!registerForm.mot_de_passe || registerForm.mot_de_passe.length < 8) {
-      errors.mot_de_passe = 'Le mot de passe doit contenir au moins 8 caractères';
+      errors.mot_de_passe = t('auth.errors.passwordMinLength');
     }
     
     if (registerForm.mot_de_passe !== registerForm.confirmation_mot_de_passe) {
-      errors.confirmation_mot_de_passe = 'Les mots de passe ne correspondent pas';
+      errors.confirmation_mot_de_passe = t('auth.errors.passwordMismatch');
     }
     
     if (!registerForm.date_naissance) {
-      errors.date_naissance = 'La date de naissance est requise';
+      errors.date_naissance = t('auth.errors.birthDateRequired');
     } else {
       const birthDate = new Date(registerForm.date_naissance);
       const today = new Date();
       const age = today.getFullYear() - birthDate.getFullYear();
       if (age < 13) {
-        errors.date_naissance = 'Vous devez avoir au moins 13 ans';
+        errors.date_naissance = t('auth.errors.minAge');
       }
     }
     
     if (!registerForm.wilaya_residence || registerForm.wilaya_residence === 0) {
-      errors.wilaya_residence = 'Veuillez sélectionner une wilaya';
+      errors.wilaya_residence = t('auth.errors.wilayaRequired');
     }
     
     if (!registerForm.accepte_conditions) {
-      errors.accepte_conditions = 'Vous devez accepter les conditions d\'utilisation';
+      errors.accepte_conditions = t('auth.errors.acceptTermsRequired');
     }
     
     // Validation spécifique pour les professionnels
     if (userType === 'professionnel') {
       if (!registerForm.secteur) {
-        errors.secteur = 'Le secteur d\'activité est requis';
+        errors.secteur = t('auth.errors.sectorRequired');
       }
       
       if (!registerForm.biographie || registerForm.biographie.length < 50) {
-        errors.biographie = 'La biographie doit contenir au moins 50 caractères';
+        errors.biographie = t('auth.errors.biographyMinLength');
       }
     }
     
@@ -255,15 +257,13 @@ const Auth = () => {
   };
 
   // Soumission du formulaire d'inscription
-// Soumission du formulaire d'inscription
-  // Soumission du formulaire d'inscription
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validateRegisterForm()) {
       toast({
-        title: "Erreur de validation",
-        description: "Veuillez corriger les erreurs dans le formulaire",
+        title: t('auth.errors.validationError'),
+        description: t('auth.errors.correctErrors'),
         variant: "destructive",
       });
       return;
@@ -291,7 +291,7 @@ const Auth = () => {
 
           if (!uploadResponse.ok) {
             const errorData = await uploadResponse.json();
-            throw new Error(errorData.error || 'Erreur upload photo');
+            throw new Error(errorData.error || t('auth.errors.uploadError'));
           }
 
           const uploadResult = await uploadResponse.json();
@@ -300,13 +300,13 @@ const Auth = () => {
             photoUrl = uploadResult.data.url;
             console.log('✅ Photo uploadée avec succès:', photoUrl);
           } else {
-            throw new Error('URL de photo non reçue');
+            throw new Error(t('auth.errors.uploadUrlNotReceived'));
           }
         } catch (uploadError) {
           console.error('❌ Erreur upload photo:', uploadError);
           toast({
-            title: "Erreur d'upload",
-            description: "Impossible d'uploader la photo. L'inscription continue sans photo.",
+            title: t('auth.errors.uploadTitle'),
+            description: t('auth.errors.uploadContinueWithoutPhoto'),
             variant: "destructive"
           });
         } finally {
@@ -367,10 +367,10 @@ const Auth = () => {
         
         // Message de succès
         toast({
-          title: "Inscription réussie",
+          title: t('auth.success.registrationTitle'),
           description: userType === 'professionnel' 
-            ? "Votre compte est en attente de validation. Vous recevrez un email de confirmation." 
-            : "Bienvenue sur Timlilit Culture !",
+            ? t('auth.success.professionalRegistration') 
+            : t('auth.success.visitorRegistration'),
         });
         
         // Réinitialiser le formulaire
@@ -401,21 +401,29 @@ const Auth = () => {
       } else {
         console.error('❌ Échec de l\'inscription');
         toast({
-          title: "Erreur d'inscription", 
-          description: "Une erreur est survenue lors de l'inscription",
+          title: t('auth.errors.registrationError'), 
+          description: t('auth.errors.registrationErrorDescription'),
           variant: "destructive",
         });
       }
     } catch (error: any) {
       console.error('❌ Erreur inscription:', error);
       toast({
-        title: "Erreur",
-        description: error.message || AUTH_ERROR_MESSAGES.NETWORK_ERROR,
+        title: t('errors.generic.title'),
+        description: error.message || t('errors.generic.message'),
         variant: "destructive",
       });
     } finally {
       setUploadingPhoto(false);
     }
+  };
+
+  // Fonction pour traduire les options de secteur
+  const getTranslatedSectorOptions = () => {
+    return SECTEUR_OPTIONS.map(option => ({
+      ...option,
+      label: t(`auth.sectors.${option.value}`, option.label)
+    }));
   };
  
   return (
@@ -426,10 +434,10 @@ const Auth = () => {
         <div className="max-w-2xl mx-auto">
           <div className="text-center space-y-4 mb-12">
             <h1 className="text-4xl font-bold tracking-tight font-serif text-gradient">
-              Connexion & Inscription
+              {t('auth.title')}
             </h1>
             <p className="text-lg text-muted-foreground">
-              Rejoignez la communauté Timlilit Culture
+              {t('auth.subtitle')}
             </p>
           </div>
 
@@ -437,11 +445,11 @@ const Auth = () => {
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="connexion" className="flex items-center space-x-2">
                 <LogIn className="h-4 w-4" />
-                <span>Connexion</span>
+                <span>{t('auth.login.tabTitle')}</span>
               </TabsTrigger>
               <TabsTrigger value="inscription" className="flex items-center space-x-2">
                 <UserPlus className="h-4 w-4" />
-                <span>Inscription</span>
+                <span>{t('auth.register.tabTitle')}</span>
               </TabsTrigger>
             </TabsList>
 
@@ -451,17 +459,17 @@ const Auth = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
                     <LogIn className="h-5 w-5" />
-                    <span>Se connecter</span>
+                    <span>{t('auth.login.title')}</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={handleLogin} className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="login-email">Email</Label>
+                      <Label htmlFor="login-email">{t('auth.login.email')}</Label>
                       <Input 
                         id="login-email" 
                         type="email" 
-                        placeholder="votre.email@exemple.com"
+                        placeholder={t('auth.login.emailPlaceholder')}
                         value={loginForm.email}
                         onChange={(e) => {
                           setLoginForm({...loginForm, email: e.target.value});
@@ -476,7 +484,7 @@ const Auth = () => {
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="login-password">Mot de passe</Label>
+                      <Label htmlFor="login-password">{t('auth.login.password')}</Label>
                       <Input 
                         id="login-password" 
                         type="password" 
@@ -500,10 +508,10 @@ const Auth = () => {
                           checked={loginForm.remember}
                           onCheckedChange={(checked) => setLoginForm({...loginForm, remember: !!checked})}
                         />
-                        <span>Se souvenir de moi</span>
+                        <span>{t('auth.login.rememberMe')}</span>
                       </label>
                       <Button variant="link" className="p-0 h-auto">
-                        Mot de passe oublié ?
+                        {t('auth.login.forgotPassword')}
                       </Button>
                     </div>
                     
@@ -515,12 +523,12 @@ const Auth = () => {
                       {loginLoading ? (
                         <>
                           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Connexion en cours...
+                          {t('auth.login.loggingIn')}
                         </>
                       ) : (
                         <>
                           <LogIn className="h-4 w-4 mr-2" />
-                          Se connecter
+                          {t('auth.login.submit')}
                         </>
                       )}
                     </Button>
@@ -535,14 +543,14 @@ const Auth = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
                     <UserPlus className="h-5 w-5" />
-                    <span>Créer un compte</span>
+                    <span>{t('auth.register.title')}</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={handleRegister} className="space-y-6">
                     {/* Choix du profil */}
                     <div className="space-y-3">
-                      <Label>Type de profil</Label>
+                      <Label>{t('auth.register.profileType')}</Label>
                       <RadioGroup 
                         value={userType} 
                         onValueChange={(value) => setUserType(value as 'visiteur' | 'professionnel')}
@@ -551,14 +559,14 @@ const Auth = () => {
                           <RadioGroupItem value="visiteur" id="visiteur" />
                           <Label htmlFor="visiteur" className="flex items-center space-x-2 cursor-pointer">
                             <User className="h-4 w-4" />
-                            <span>Particulier</span>
+                            <span>{t('auth.register.individual')}</span>
                           </Label>
                         </div>
                         <div className="flex items-center space-x-2">
                           <RadioGroupItem value="professionnel" id="professionnel" />
                           <Label htmlFor="professionnel" className="flex items-center space-x-2 cursor-pointer">
                             <Palette className="h-4 w-4" />
-                            <span>Professionnel (création soumise à validation par un admin)</span>
+                            <span>{t('auth.register.professional')}</span>
                           </Label>
                         </div>
                       </RadioGroup>
@@ -567,10 +575,10 @@ const Auth = () => {
                     {/* Formulaire commun */}
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="prenom">Prénom *</Label>
+                        <Label htmlFor="prenom">{t('auth.register.firstName')} *</Label>
                         <Input 
                           id="prenom" 
-                          placeholder="Votre prénom"
+                          placeholder={t('auth.register.firstNamePlaceholder')}
                           value={registerForm.prenom}
                           onChange={(e) => {
                             setRegisterForm({...registerForm, prenom: e.target.value});
@@ -584,10 +592,10 @@ const Auth = () => {
                         )}
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="nom">Nom *</Label>
+                        <Label htmlFor="nom">{t('auth.register.lastName')} *</Label>
                         <Input 
                           id="nom" 
-                          placeholder="Votre nom"
+                          placeholder={t('auth.register.lastNamePlaceholder')}
                           value={registerForm.nom}
                           onChange={(e) => {
                             setRegisterForm({...registerForm, nom: e.target.value});
@@ -604,7 +612,7 @@ const Auth = () => {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="sexe">Sexe *</Label>
+                        <Label htmlFor="sexe">{t('auth.register.gender')} *</Label>
                         <Select 
                           value={registerForm.sexe}
                           onValueChange={(value) => setRegisterForm({...registerForm, sexe: value as 'M' | 'F'})}
@@ -613,13 +621,13 @@ const Auth = () => {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="M">Masculin</SelectItem>
-                            <SelectItem value="F">Féminin</SelectItem>
+                            <SelectItem value="M">{t('auth.register.male')}</SelectItem>
+                            <SelectItem value="F">{t('auth.register.female')}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="date-naissance">Date de naissance *</Label>
+                        <Label htmlFor="date-naissance">{t('auth.register.birthDate')} *</Label>
                         <Input 
                           id="date-naissance" 
                           type="date"
@@ -638,11 +646,11 @@ const Auth = () => {
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="email">Email *</Label>
+                      <Label htmlFor="email">{t('auth.register.email')} *</Label>
                       <Input 
                         id="email" 
                         type="email" 
-                        placeholder="votre.email@exemple.com"
+                        placeholder={t('auth.register.emailPlaceholder')}
                         value={registerForm.email}
                         onChange={(e) => {
                           setRegisterForm({...registerForm, email: e.target.value});
@@ -658,7 +666,7 @@ const Auth = () => {
                     
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="password">Mot de passe *</Label>
+                        <Label htmlFor="password">{t('auth.register.password')} *</Label>
                         <Input 
                           id="password" 
                           type="password" 
@@ -677,7 +685,7 @@ const Auth = () => {
                         )}
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="password-confirm">Confirmer le mot de passe *</Label>
+                        <Label htmlFor="password-confirm">{t('auth.register.confirmPassword')} *</Label>
                         <Input 
                           id="password-confirm" 
                           type="password" 
@@ -699,7 +707,7 @@ const Auth = () => {
                     
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="wilaya">Wilaya de résidence *</Label>
+                        <Label htmlFor="wilaya">{t('auth.register.wilaya')} *</Label>
                         <Select 
                           value={registerForm.wilaya_residence.toString()}
                           onValueChange={(value) => {
@@ -709,7 +717,7 @@ const Auth = () => {
                           disabled={wilayasLoading}
                         >
                           <SelectTrigger className={registerErrors.wilaya_residence ? 'border-destructive' : ''}>
-                            <SelectValue placeholder={wilayasLoading ? "Chargement..." : "Sélectionnez une wilaya"} />
+                            <SelectValue placeholder={wilayasLoading ? t('common.loading') : t('auth.register.selectWilaya')} />
                           </SelectTrigger>
                           <SelectContent>
                             {wilayas.map((wilaya) => (
@@ -723,11 +731,11 @@ const Auth = () => {
                           <p className="text-sm text-destructive">{registerErrors.wilaya_residence}</p>
                         )}
                         {wilayasError && (
-                          <p className="text-sm text-destructive">Erreur de chargement des wilayas</p>
+                          <p className="text-sm text-destructive">{t('auth.errors.wilayasLoadError')}</p>
                         )}
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="telephone">Téléphone (optionnel)</Label>
+                        <Label htmlFor="telephone">{t('auth.register.phone')}</Label>
                         <Input 
                           id="telephone" 
                           type="tel" 
@@ -743,11 +751,11 @@ const Auth = () => {
                       <div className="space-y-4 p-4 bg-secondary/10 rounded-lg border border-secondary/20">
                         <h3 className="font-semibold text-secondary flex items-center">
                           <Palette className="h-5 w-5 mr-2" />
-                          Informations professionnelles
+                          {t('auth.register.professionalInfo')}
                         </h3>
                         
                         <div className="space-y-2">
-                          <Label htmlFor="secteur">Secteur d'activité *</Label>
+                          <Label htmlFor="secteur">{t('auth.register.sector')} *</Label>
                           <Select 
                             value={registerForm.secteur}
                             onValueChange={(value) => {
@@ -757,10 +765,10 @@ const Auth = () => {
                             required={userType === 'professionnel'}
                           >
                             <SelectTrigger className={registerErrors.secteur ? 'border-destructive' : ''}>
-                              <SelectValue placeholder="Sélectionnez votre secteur" />
+                              <SelectValue placeholder={t('auth.register.selectSector')} />
                             </SelectTrigger>
                             <SelectContent>
-                              {SECTEUR_OPTIONS.map((option) => (
+                              {getTranslatedSectorOptions().map((option) => (
                                 <SelectItem key={option.value} value={option.value}>
                                   {option.label}
                                 </SelectItem>
@@ -773,13 +781,13 @@ const Auth = () => {
                         </div>
                         
                         <div className="space-y-2">
-                          <Label htmlFor="photo">Photo de profil (optionnel)</Label>
+                          <Label htmlFor="photo">{t('auth.register.profilePhoto')}</Label>
                           <div className="flex items-center space-x-4">
                             {photoPreview && (
                               <div className="relative w-20 h-20">
                                 <img 
                                   src={photoPreview} 
-                                  alt="Aperçu" 
+                                  alt={t('auth.register.photoPreview')} 
                                   className="w-full h-full object-cover rounded-lg border-2 border-border"
                                   onError={(e) => {
                                     console.error('Erreur chargement aperçu photo');
@@ -790,7 +798,7 @@ const Auth = () => {
                                   type="button"
                                   onClick={removePhoto}
                                   className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 hover:bg-destructive/90 transition-colors shadow-sm"
-                                  aria-label="Supprimer la photo"
+                                  aria-label={t('auth.register.removePhoto')}
                                 >
                                   <X className="h-3 w-3" />
                                 </button>
@@ -806,18 +814,18 @@ const Auth = () => {
                                 className="cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
                               />
                               <p className="text-xs text-muted-foreground mt-1">
-                                JPG, PNG, GIF ou WebP. Max 5MB.
+                                {t('auth.register.photoFormats')}
                               </p>
                               {uploadingPhoto && (
                                 <p className="text-xs text-blue-600 mt-1 flex items-center">
                                   <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                                  Upload en cours...
+                                  {t('auth.register.uploadingPhoto')}
                                 </p>
                               )}
                               {uploadedPhotoUrl && !uploadingPhoto && (
                                 <p className="text-xs text-green-600 mt-1 flex items-center">
                                   <Check className="h-3 w-3 mr-1" />
-                                  Photo uploadée avec succès
+                                  {t('auth.register.photoUploaded')}
                                 </p>
                               )}
                             </div>
@@ -825,7 +833,7 @@ const Auth = () => {
                         </div>
                         
                         <div className="space-y-2">
-                          <Label htmlFor="portfolio">Lien portfolio (optionnel)</Label>
+                          <Label htmlFor="portfolio">{t('auth.register.portfolio')}</Label>
                           <Input 
                             id="portfolio" 
                             type="url"
@@ -836,10 +844,10 @@ const Auth = () => {
                         </div>
                         
                         <div className="space-y-2">
-                          <Label htmlFor="biographie">Biographie *</Label>
+                          <Label htmlFor="biographie">{t('auth.register.biography')} *</Label>
                           <Textarea 
                             id="biographie" 
-                            placeholder="Présentez brièvement votre parcours et vos projets..."
+                            placeholder={t('auth.register.biographyPlaceholder')}
                             className={`min-h-[100px] ${registerErrors.biographie ? 'border-destructive' : ''}`}
                             value={registerForm.biographie}
                             onChange={(e) => {
@@ -849,7 +857,7 @@ const Auth = () => {
                             required={userType === 'professionnel'}
                           />
                           <p className="text-xs text-muted-foreground">
-                            {registerForm.biographie.length}/500 caractères (minimum 50)
+                            {registerForm.biographie.length}/500 {t('auth.register.charactersMinimum')}
                           </p>
                           {registerErrors.biographie && (
                             <p className="text-sm text-destructive">{registerErrors.biographie}</p>
@@ -871,8 +879,14 @@ const Auth = () => {
                           className={registerErrors.accepte_conditions ? 'border-destructive' : ''}
                         />
                         <Label htmlFor="conditions" className="text-sm cursor-pointer">
-                          J'accepte les <a href="/conditions" className="text-primary underline">conditions d'utilisation</a> et 
-                          la <a href="/confidentialite" className="text-primary underline">politique de confidentialité</a> *
+                          {t('auth.register.acceptTerms.prefix')}{' '}
+                          <a href="/conditions" className="text-primary underline">
+                            {t('auth.register.acceptTerms.terms')}
+                          </a>{' '}
+                          {t('auth.register.acceptTerms.and')}{' '}
+                          <a href="/confidentialite" className="text-primary underline">
+                            {t('auth.register.acceptTerms.privacy')}
+                          </a>{' '}*
                         </Label>
                       </div>
                       {registerErrors.accepte_conditions && (
@@ -886,7 +900,7 @@ const Auth = () => {
                           onCheckedChange={(checked) => setRegisterForm({...registerForm, accepte_newsletter: !!checked})}
                         />
                         <Label htmlFor="newsletter" className="text-sm cursor-pointer">
-                          Je souhaite recevoir la newsletter et les actualités culturelles
+                          {t('auth.register.newsletter')}
                         </Label>
                       </div>
                     </div>
@@ -899,12 +913,12 @@ const Auth = () => {
                       {registerLoading ? (
                         <>
                           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Inscription en cours...
+                          {t('auth.register.registering')}
                         </>
                       ) : (
                         <>
                           <UserPlus className="h-4 w-4 mr-2" />
-                          Créer mon compte
+                          {t('auth.register.createAccount')}
                         </>
                       )}
                     </Button>
@@ -913,8 +927,8 @@ const Auth = () => {
                       <Alert className="border-amber-200 bg-amber-50">
                         <AlertCircle className="h-4 w-4 text-amber-600" />
                         <AlertDescription className="text-amber-800">
-                          <strong>Note :</strong> Les comptes professionnels sont soumis à validation. 
-                          Vous recevrez un email de confirmation une fois votre profil approuvé par un administrateur.
+                          <strong>{t('auth.register.professionalNote.title')}</strong>{' '}
+                          {t('auth.register.professionalNote.description')}
                         </AlertDescription>
                       </Alert>
                     )}

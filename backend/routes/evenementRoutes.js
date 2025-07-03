@@ -336,7 +336,30 @@ const createEvenementRoutes = (models, middlewares = {}) => {
       next();
     }
   );
-
+// Dans votre fichier de routes (ex: routes/evenements.js)
+router.get('/evenements/oeuvre/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Requête pour récupérer les événements liés à cette œuvre
+    const evenements = await db.query(`
+      SELECT e.* 
+      FROM evenements e
+      WHERE e.id_oeuvre = ?
+      ORDER BY e.date_evenement DESC
+    `, [id]);
+    
+    res.json({
+      success: true,
+      data: evenements
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
   // ====================================================================
   // ROUTES BATCH
   // ====================================================================

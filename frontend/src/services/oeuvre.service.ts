@@ -132,7 +132,8 @@ class OeuvreService {
    */
   async createOeuvreFormData(
     data: CreateOeuvreBackendDTO | CreateOeuvreCompleteDTO,
-    mediaFiles?: File[]
+    mediaFiles?: File[],
+    mediaMetadata?: Array<{ is_principal: boolean }>
   ): Promise<ApiResponse<CreateOeuvreResponse>> {
     try {
       const formData = new FormData();
@@ -192,6 +193,9 @@ class OeuvreService {
         mediaFiles.forEach((file) => {
           formData.append('medias', file);
         });
+        if (mediaMetadata && mediaMetadata.length > 0) {
+          formData.append('media_metadata', JSON.stringify(mediaMetadata));
+        }
       }
 
       // Debug
@@ -266,6 +270,166 @@ class OeuvreService {
     } catch (error) {
       console.error('❌ Erreur recherche intervenants:', error);
       return [];
+    }
+  }
+
+  /**
+   * Enregistrer une vue pour une œuvre
+   */
+  async trackView(idOeuvre: number): Promise<ApiResponse<void>> {
+    try {
+      // Utiliser la bonne route de tracking
+      return await httpClient.post(`/tracking/oeuvre/${idOeuvre}/view`);
+    } catch (error: any) {
+      console.error('Erreur tracking vue:', error);
+      return {
+        success: false,
+        error: error.message || 'Erreur lors du tracking de la vue'
+      };
+    }
+  }
+
+  /**
+   * Récupérer les événements où l'œuvre est présentée
+   */
+  async getEventsByOeuvre(oeuvreId: number): Promise<ApiResponse<any[]>> {
+    try {
+      return await httpClient.get(`/oeuvres/${oeuvreId}/evenements`);
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Erreur lors de la récupération des événements'
+      };
+    }
+  }
+
+  /**
+   * Recommander une œuvre
+   */
+  async recommendOeuvre(oeuvreId: number, data: {
+    destinataire_email: string;
+    message?: string;
+  }): Promise<ApiResponse<void>> {
+    try {
+      return await httpClient.post(`/oeuvres/${oeuvreId}/recommander`, data);
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Erreur lors de la recommandation'
+      };
+    }
+  }
+
+  /**
+   * Récupérer les statistiques de vues d'une œuvre
+   */
+  async getViewStats(oeuvreId: number): Promise<ApiResponse<{
+    total_vues: number;
+    vues_uniques: number;
+    vues_30_jours: number;
+    evolution: Array<{ date: string; vues: number }>;
+  }>> {
+    try {
+      return await httpClient.get(`/oeuvres/${oeuvreId}/stats/vues`);
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Erreur lors de la récupération des statistiques'
+      };
+    }
+  }
+
+  /**
+   * Récupérer les œuvres similaires (recommandations)
+   */
+  async getSimilarOeuvres(oeuvreId: number, limit = 6): Promise<ApiResponse<Oeuvre[]>> {
+    try {
+      return await httpClient.get(`/oeuvres/${oeuvreId}/similaires`, { limit });
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Erreur lors de la récupération des œuvres similaires'
+      };
+    }
+  }
+
+  /**
+   * Récupérer les œuvres d'un intervenant
+   */
+  async getOeuvresByIntervenant(intervenantId: number, params?: {
+    page?: number;
+    limit?: number;
+    role_principal?: boolean;
+  }): Promise<ApiResponse<{
+    oeuvres: Oeuvre[];
+    pagination: {
+      total: number;
+      page: number;
+      pages: number;
+      limit: number;
+    };
+  }>> {
+    try {
+      console.log('🔍 Récupération œuvres pour intervenant:', intervenantId);
+      
+      // Utiliser l'endpoint approprié pour récupérer les œuvres d'un intervenant
+      const response = await httpClient.get<{
+        oeuvres: Oeuvre[];
+        pagination: {
+          total: number;
+          page: number;
+          pages: number;
+          limit: number;
+        };
+      }>(`/intervenants/${intervenantId}/oeuvres`, params);
+      
+      if (response.success && response.data) {
+        console.log(`✅ ${response.data.oeuvres.length} œuvres trouvées pour l'intervenant`);
+      }
+      
+      return response;
+    } catch (error: any) {
+      console.error('❌ Erreur récupération œuvres intervenant:', error);
+      
+      // Alternative : utiliser l'endpoint de recherche d'œuvres avec filtre intervenant
+      try {
+        const searchResponse = await httpClient.get<{
+          oeuvres: Oeuvre[];
+          pagination: {
+            total: number;
+            page: number;
+            pages: number;
+            limit: number;
+          };
+        }>('/oeuvres', {
+          ...params,
+          intervenant_id: intervenantId
+        });
+        
+        return searchResponse;
+      } catch (searchError: any) {
+        return {
+          success: false,
+          error: searchError.message || error.message || 'Erreur lors de la récupération des œuvres de l\'intervenant'
+        };
+      }
+    }
+  }
+
+  /**
+   * Noter une œuvre
+   */
+  async rateOeuvre(oeuvreId: number, rating: number): Promise<ApiResponse<{
+    note_moyenne: number;
+    nombre_notes: number;
+  }>> {
+    try {
+      return await httpClient.post(`/oeuvres/${oeuvreId}/noter`, { note: rating });
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Erreur lors de la notation'
+      };
     }
   }
 
@@ -352,6 +516,7 @@ class OeuvreService {
     categorie?: number;
     search?: string;
     sort?: string;
+    saisi_par?: number; // Ajout du paramètre pour filtrer par créateur
   }): Promise<ApiResponse<{
     oeuvres: Oeuvre[];
     pagination: {
@@ -371,12 +536,6 @@ class OeuvreService {
     }
   }
 
-  /**
-   * Récupérer mes œuvres
-   */
-  /**
- * Récupérer mes œuvres (œuvres de l'utilisateur connecté)
- */
   /**
    * Récupérer mes œuvres (œuvres de l'utilisateur connecté)
    */
@@ -571,6 +730,50 @@ class OeuvreService {
       };
     }
   }
+  /**
+ * Récupérer les œuvres par types (plusieurs types)
+ */
+async getOeuvresByType(types: number[]): Promise<ApiResponse<Oeuvre[]>> {
+  try {
+    console.log('🔍 Récupération œuvres par types:', types);
+    
+    // Option 1: Utiliser un endpoint dédié si disponible
+    // return await httpClient.get('/oeuvres/by-types', { types });
+    
+    // Option 2: Utiliser l'endpoint existant avec un filtre
+    const response = await httpClient.get<{
+      oeuvres: Oeuvre[];
+      pagination: {
+        total: number;
+        page: number;
+        pages: number;
+        limit: number;
+      };
+    }>('/oeuvres', {
+      types: types.join(','), // ou types selon le format accepté par l'API
+      limit: 100 // Ajuster selon vos besoins
+    });
+    
+    if (response.success && response.data) {
+      return {
+        success: true,
+        data: response.data.oeuvres
+      };
+    }
+    
+    return {
+      success: false,
+      error: 'Erreur lors de la récupération des œuvres'
+    };
+  } catch (error: any) {
+    console.error('❌ Erreur récupération œuvres par types:', error);
+    return {
+      success: false,
+      error: error.message || 'Erreur lors de la récupération'
+    };
+  }
+}
+
 }
 
 // Instance singleton

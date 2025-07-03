@@ -1,14 +1,14 @@
 // components/dashboard/DashboardFilters.tsx
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from 'react';
-import { 
-  Sheet, 
-  SheetContent, 
-  SheetDescription, 
-  SheetHeader, 
-  SheetTitle, 
-  SheetTrigger 
-} from '@/components/ui/sheet';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger } from
+'@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -16,15 +16,15 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { 
-  Filter, 
-  X, 
-  Calendar as CalendarIcon, 
+import {
+  Filter,
+  X,
+  Calendar as CalendarIcon,
   ChevronDown,
-  RotateCcw
-} from 'lucide-react';
+  RotateCcw } from
+'lucide-react';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { fr } from 'date-fns/locale';import { useTranslation } from "react-i18next";
 
 interface FilterOptions {
   types?: string[];
@@ -42,7 +42,7 @@ interface DashboardFiltersProps {
   activeFiltersCount: number;
   availableTypes?: string[];
   availableStatus?: string[];
-  availableWilayas?: Array<{ id: number; nom: string }>;
+  availableWilayas?: Array<{id: number;nom: string;}>;
 }
 
 export const DashboardFilters: React.FC<DashboardFiltersProps> = ({
@@ -64,7 +64,7 @@ export const DashboardFilters: React.FC<DashboardFiltersProps> = ({
   const [dateRangeOpen, setDateRangeOpen] = useState(false);
 
   // Appliquer les filtres
-  const applyFilters = () => {
+  const { t } = useTranslation();const applyFilters = () => {
     onFiltersChange(filters);
     setIsOpen(false);
   };
@@ -85,10 +85,10 @@ export const DashboardFilters: React.FC<DashboardFiltersProps> = ({
   // Toggle pour les checkbox
   const toggleArrayFilter = (array: string[] | number[], value: string | number, key: keyof FilterOptions) => {
     const currentArray = filters[key] as any[] || [];
-    const newArray = currentArray.includes(value)
-      ? currentArray.filter(item => item !== value)
-      : [...currentArray, value];
-    
+    const newArray = currentArray.includes(value) ?
+    currentArray.filter((item) => item !== value) :
+    [...currentArray, value];
+
     setFilters({ ...filters, [key]: newArray });
   };
 
@@ -104,60 +104,60 @@ export const DashboardFilters: React.FC<DashboardFiltersProps> = ({
   };
 
   // Composant pour afficher les filtres actifs
-  const ActiveFilterBadges = () => {
+  const ActiveFilterBadges = () => {const { t } = useTranslation();
     const badges: React.ReactNode[] = [];
-    
-    filters.types?.forEach(type => {
+
+    filters.types?.forEach((type) => {
       badges.push(
-        <Badge key={`type-${type}`} variant="secondary" className="gap-1">
-          Type: {type}
-          <X 
-            className="h-3 w-3 cursor-pointer" 
-            onClick={() => toggleArrayFilter(filters.types!, type, 'types')}
-          />
+        <Badge key={`type-${type}`} variant="secondary" className="gap-1">{t("dashboard_dashboardfilters.type")}
+          {type}
+          <X
+            className="h-3 w-3 cursor-pointer"
+            onClick={() => toggleArrayFilter(filters.types!, type, 'types')} />
+
         </Badge>
       );
     });
-    
-    filters.status?.forEach(status => {
+
+    filters.status?.forEach((status) => {
       badges.push(
-        <Badge key={`status-${status}`} variant="secondary" className="gap-1">
-          Statut: {status}
-          <X 
-            className="h-3 w-3 cursor-pointer" 
-            onClick={() => toggleArrayFilter(filters.status!, status, 'status')}
-          />
+        <Badge key={`status-${status}`} variant="secondary" className="gap-1">{t("dashboard_dashboardfilters.statut")}
+          {status}
+          <X
+            className="h-3 w-3 cursor-pointer"
+            onClick={() => toggleArrayFilter(filters.status!, status, 'status')} />
+
         </Badge>
       );
     });
-    
+
     if (filters.dateRange) {
       badges.push(
         <Badge key="date" variant="secondary" className="gap-1">
           {format(filters.dateRange.from, 'dd/MM/yyyy', { locale: fr })} - 
           {format(filters.dateRange.to, 'dd/MM/yyyy', { locale: fr })}
-          <X 
-            className="h-3 w-3 cursor-pointer" 
-            onClick={() => setFilters({ ...filters, dateRange: undefined })}
-          />
+          <X
+            className="h-3 w-3 cursor-pointer"
+            onClick={() => setFilters({ ...filters, dateRange: undefined })} />
+
         </Badge>
       );
     }
-    
-    return badges.length > 0 ? (
-      <div className="flex flex-wrap gap-2 mb-4">
+
+    return badges.length > 0 ?
+    <div className="flex flex-wrap gap-2 mb-4">
         {badges}
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          onClick={resetFilters}
-          className="h-6 px-2"
-        >
-          <RotateCcw className="h-3 w-3 mr-1" />
-          Tout effacer
-        </Button>
-      </div>
-    ) : null;
+        <Button
+        variant="ghost"
+        size="sm"
+        onClick={resetFilters}
+        className="h-6 px-2">
+
+          <RotateCcw className="h-3 w-3 mr-1" />{t("dashboard_dashboardfilters.tout_effacer")}
+
+      </Button>
+      </div> :
+    null;
   };
 
   return (
@@ -166,94 +166,94 @@ export const DashboardFilters: React.FC<DashboardFiltersProps> = ({
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
         <SheetTrigger asChild>
           <Button variant="outline" className="relative">
-            <Filter className="h-4 w-4 mr-2" />
-            Filtres
-            {countActiveFilters() > 0 && (
-              <Badge 
-                variant="destructive" 
-                className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center"
-              >
+            <Filter className="h-4 w-4 mr-2" />{t("dashboard_dashboardfilters.filtres")}
+
+            {countActiveFilters() > 0 &&
+            <Badge
+              variant="destructive"
+              className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center">
+
                 {countActiveFilters()}
               </Badge>
-            )}
+            }
           </Button>
         </SheetTrigger>
         
         <SheetContent className="w-[400px] sm:w-[540px]">
           <SheetHeader>
-            <SheetTitle>Filtres avancés</SheetTitle>
-            <SheetDescription>
-              Affinez votre recherche avec des filtres personnalisés
+            <SheetTitle>{t("dashboard_dashboardfilters.filtres_avancs")}</SheetTitle>
+            <SheetDescription>{t("dashboard_dashboardfilters.affinez_votre_recherche")}
+
             </SheetDescription>
           </SheetHeader>
           
           <div className="mt-6 space-y-6">
             {/* Types d'utilisateurs */}
             <div className="space-y-3">
-              <Label className="text-sm font-medium">Types d'utilisateurs</Label>
+              <Label className="text-sm font-medium">{t("dashboard_dashboardfilters.types_dutilisateurs")}</Label>
               <div className="grid grid-cols-2 gap-3">
-                {availableTypes.map(type => (
-                  <div key={type} className="flex items-center space-x-2">
+                {availableTypes.map((type) =>
+                <div key={type} className="flex items-center space-x-2">
                     <Checkbox
-                      id={`type-${type}`}
-                      checked={filters.types?.includes(type) || false}
-                      onCheckedChange={(checked) => {
-                        toggleArrayFilter(filters.types || [], type, 'types');
-                      }}
-                    />
+                    id={`type-${type}`}
+                    checked={filters.types?.includes(type) || false}
+                    onCheckedChange={(checked) => {
+                      toggleArrayFilter(filters.types || [], type, 'types');
+                    }} />
+
                     <label
-                      htmlFor={`type-${type}`}
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 capitalize"
-                    >
+                    htmlFor={`type-${type}`}
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 capitalize">
+
                       {type}
                     </label>
                   </div>
-                ))}
+                )}
               </div>
             </div>
 
             {/* Statuts */}
             <div className="space-y-3">
-              <Label className="text-sm font-medium">Statuts</Label>
+              <Label className="text-sm font-medium">{t("dashboard_dashboardfilters.statuts")}</Label>
               <div className="grid grid-cols-2 gap-3">
-                {availableStatus.map(status => (
-                  <div key={status} className="flex items-center space-x-2">
+                {availableStatus.map((status) =>
+                <div key={status} className="flex items-center space-x-2">
                     <Checkbox
-                      id={`status-${status}`}
-                      checked={filters.status?.includes(status) || false}
-                      onCheckedChange={(checked) => {
-                        toggleArrayFilter(filters.status || [], status, 'status');
-                      }}
-                    />
+                    id={`status-${status}`}
+                    checked={filters.status?.includes(status) || false}
+                    onCheckedChange={(checked) => {
+                      toggleArrayFilter(filters.status || [], status, 'status');
+                    }} />
+
                     <label
-                      htmlFor={`status-${status}`}
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 capitalize"
-                    >
+                    htmlFor={`status-${status}`}
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 capitalize">
+
                       {status.replace('_', ' ')}
                     </label>
                   </div>
-                ))}
+                )}
               </div>
             </div>
 
             {/* Période */}
             <div className="space-y-3">
-              <Label className="text-sm font-medium">Période d'inscription</Label>
+              <Label className="text-sm font-medium">{t("dashboard_dashboardfilters.priode_dinscription")}</Label>
               <Popover open={dateRangeOpen} onOpenChange={setDateRangeOpen}>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
-                    className="w-full justify-start text-left font-normal"
-                  >
+                    className="w-full justify-start text-left font-normal">
+
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {filters.dateRange ? (
-                      <>
+                    {filters.dateRange ?
+                    <>
                         {format(filters.dateRange.from, 'dd/MM/yyyy', { locale: fr })} - 
                         {format(filters.dateRange.to, 'dd/MM/yyyy', { locale: fr })}
-                      </>
-                    ) : (
-                      <span>Sélectionner une période</span>
-                    )}
+                      </> :
+
+                    <span>{t("dashboard_dashboardfilters.slectionner_une_priode")}</span>
+                    }
                     <ChevronDown className="ml-auto h-4 w-4 opacity-50" />
                   </Button>
                 </PopoverTrigger>
@@ -270,15 +270,15 @@ export const DashboardFilters: React.FC<DashboardFiltersProps> = ({
                         setDateRangeOpen(false);
                       }
                     }}
-                    initialFocus
-                  />
+                    initialFocus />
+
                 </PopoverContent>
               </Popover>
             </div>
 
             {/* Filtres prédéfinis */}
             <div className="space-y-3">
-              <Label className="text-sm font-medium">Filtres rapides</Label>
+              <Label className="text-sm font-medium">{t("dashboard_dashboardfilters.filtres_rapides")}</Label>
               <div className="grid grid-cols-2 gap-2">
                 <Button
                   variant="outline"
@@ -290,9 +290,9 @@ export const DashboardFilters: React.FC<DashboardFiltersProps> = ({
                       ...filters,
                       dateRange: { from: lastWeek, to: now }
                     });
-                  }}
-                >
-                  7 derniers jours
+                  }}>{t("dashboard_dashboardfilters.derniers_jours")}
+
+
                 </Button>
                 <Button
                   variant="outline"
@@ -304,9 +304,9 @@ export const DashboardFilters: React.FC<DashboardFiltersProps> = ({
                       ...filters,
                       dateRange: { from: lastMonth, to: now }
                     });
-                  }}
-                >
-                  30 derniers jours
+                  }}>{t("dashboard_dashboardfilters.derniers_jours_1")}
+
+
                 </Button>
                 <Button
                   variant="outline"
@@ -316,9 +316,9 @@ export const DashboardFilters: React.FC<DashboardFiltersProps> = ({
                       ...filters,
                       status: ['en_attente']
                     });
-                  }}
-                >
-                  En attente uniquement
+                  }}>{t("dashboard_dashboardfilters.attente_uniquement")}
+
+
                 </Button>
                 <Button
                   variant="outline"
@@ -328,9 +328,9 @@ export const DashboardFilters: React.FC<DashboardFiltersProps> = ({
                       ...filters,
                       types: ['artisan', 'guide', 'expert']
                     });
-                  }}
-                >
-                  Professionnels
+                  }}>{t("dashboard_dashboardfilters.professionnels")}
+
+
                 </Button>
               </div>
             </div>
@@ -338,21 +338,21 @@ export const DashboardFilters: React.FC<DashboardFiltersProps> = ({
 
           {/* Actions */}
           <div className="flex gap-3 mt-8">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="flex-1"
               onClick={() => {
                 resetFilters();
                 setIsOpen(false);
-              }}
-            >
-              Réinitialiser
+              }}>{t("dashboard_dashboardfilters.rinitialiser")}
+
+
             </Button>
-            <Button 
+            <Button
               className="flex-1"
-              onClick={applyFilters}
-            >
-              Appliquer les filtres
+              onClick={applyFilters}>{t("dashboard_dashboardfilters.appliquer_les_filtres")}
+
+
             </Button>
           </div>
         </SheetContent>
@@ -360,6 +360,6 @@ export const DashboardFilters: React.FC<DashboardFiltersProps> = ({
 
       {/* Afficher les badges de filtres actifs en dehors du Sheet */}
       <ActiveFilterBadges />
-    </>
-  );
+    </>);
+
 };

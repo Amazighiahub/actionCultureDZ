@@ -30,59 +30,128 @@ class UnifiedNotificationService {
   /**
    * Récupérer la liste des notifications
    */
-  async getNotifications(
-    options: LoadNotificationsOptions = {}
-  ): Promise<NotificationListResponse> {
-    try {
-      const token = localStorage.getItem('auth_token');
-      if (!token) throw new Error('Non authentifié');
-
-      const params = new URLSearchParams();
-      if (options.page) params.append('page', options.page.toString());
-      if (options.limit) params.append('limit', options.limit.toString());
-      if (options.nonLues !== undefined) params.append('nonLues', options.nonLues.toString());
-      if (options.type) params.append('type', options.type);
-
-      const response = await fetch(
-        `${getApiUrl(API_ENDPOINTS.notifications.list)}?${params}`,
-        {
-          headers: getAuthHeaders(token)
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`Erreur ${response.status}: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      
-      // Si l'API retourne le format avec underscore, on garde tel quel
-      // Sinon on mappe les données
-      const notifications = data.data.notifications.map((n: any) => {
-        // Si c'est déjà au bon format (id_notification existe)
-        if (n.id_notification) return n;
-        // Sinon on convertit depuis le format API
-        return mapAPIToNotification(n);
-      });
-
+  /**
+ * Récupérer la liste des notifications
+ */
+async getNotifications(
+  options: LoadNotificationsOptions = {}
+): Promise<NotificationListResponse> {
+  try {
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+      // CORRECTION: Retourner une réponse vide au lieu de throw
       return {
-        notifications,
-        pagination: data.data.pagination || data.pagination,
-        stats: data.data.stats || data.stats
+        notifications: [],
+        pagination: {
+          total: 0,
+          page: options.page || 1,
+          pages: 0,
+          limit: options.limit || 20
+        },
+        stats: {
+          nonLues: 0,
+          total: 0
+        }
       };
-    } catch (error) {
-      console.error('Erreur lors de la récupération des notifications:', error);
-      throw error;
     }
-  }
 
+    const params = new URLSearchParams();
+    if (options.page) params.append('page', options.page.toString());
+    if (options.limit) params.append('limit', options.limit.toString());
+    if (options.nonLues !== undefined) params.append('nonLues', options.nonLues.toString());
+    if (options.type) params.append('type', options.type);
+
+    const response = await fetch(
+      `${getApiUrl(API_ENDPOINTS.notifications.list)}?${params}`,
+      {
+        headers: getAuthHeaders(token)
+      }
+    );
+
+    // CORRECTION: Gérer les erreurs 503 et 404
+    if (response.status === 503 || response.status === 404) {
+      console.warn(`Service notifications non disponible (${response.status})`);
+      return {
+        notifications: [],
+        pagination: {
+          total: 0,
+          page: options.page || 1,
+          pages: 0,
+          limit: options.limit || 20
+        },
+        stats: {
+          nonLues: 0,
+          total: 0
+        }
+      };
+    }
+
+    if (!response.ok) {
+      // CORRECTION: Retourner des valeurs par défaut au lieu de throw
+      console.error(`Erreur API notifications: ${response.status} ${response.statusText}`);
+      return {
+        notifications: [],
+        pagination: {
+          total: 0,
+          page: options.page || 1,
+          pages: 0,
+          limit: options.limit || 20
+        },
+        stats: {
+          nonLues: 0,
+          total: 0
+        }
+      };
+    }
+
+    const data = await response.json();
+    
+    // Si l'API retourne le format avec underscore, on garde tel quel
+    // Sinon on mappe les données
+    const notifications = data.data.notifications.map((n: any) => {
+      // Si c'est déjà au bon format (id_notification existe)
+      if (n.id_notification) return n;
+      // Sinon on convertit depuis le format API
+      return mapAPIToNotification(n);
+    });
+
+    return {
+      notifications,
+      pagination: data.data.pagination || data.pagination,
+      stats: data.data.stats || data.stats
+    };
+  } catch (error) {
+    console.error('Erreur lors de la récupération des notifications:', error);
+    // CORRECTION: Retourner des valeurs par défaut au lieu de throw
+    return {
+      notifications: [],
+      pagination: {
+        total: 0,
+        page: options.page || 1,
+        pages: 0,
+        limit: options.limit || 20
+      },
+      stats: {
+        nonLues: 0,
+        total: 0
+      }
+    };
+  }
+}
   /**
    * Récupérer le résumé des notifications
    */
   async getSummary(): Promise<NotificationSummary> {
     try {
       const token = localStorage.getItem('auth_token');
-      if (!token) throw new Error('Non authentifié');
+      if (!token) {
+        return {
+          total: 0,
+          nonLues: 0,
+          parType: {},
+          dernieres: []
+        };
+      }
 
       const response = await fetch(
         getApiUrl(API_ENDPOINTS.notifications.summary),
@@ -90,10 +159,25 @@ class UnifiedNotificationService {
           headers: getAuthHeaders(token)
         }
       );
-
-      if (!response.ok) {
-        throw new Error(`Erreur ${response.status}: ${response.statusText}`);
+      if (response.status === 503 || response.status === 404) {
+        console.warn(`Service notifications non disponible (${response.status})`);
+        return {
+          total: 0,
+          nonLues: 0,
+          parType: {},
+          dernieres: []
+        };
       }
+      if (!response.ok) {
+        console.error(`Erreur API notifications: ${response.status} ${response.statusText}`);
+        return {
+          total: 0,
+          nonLues: 0,
+          parType: {},
+          dernieres: []
+        };
+      }
+     
 
       const data = await response.json();
       
@@ -115,8 +199,12 @@ class UnifiedNotificationService {
         dernieres: []
       };
     } catch (error) {
-      console.error('Erreur lors de la récupération du résumé:', error);
-      throw error;
+      return {
+        total: 0,
+        nonLues: 0,
+        parType: {},
+        dernieres: []
+      };
     }
   }
 
@@ -447,6 +535,146 @@ class UnifiedNotificationService {
    */
   formatDate(dateStr: string): string {
     return formatNotificationDate(dateStr);
+  }
+
+  /**
+   * Envoyer une notification à un utilisateur spécifique
+   */
+  async sendNotification(notificationData: {
+    titre: string;
+    message: string;
+    type_notification: string;
+    destinataire_id: number;
+    url_action?: string;
+    priorite?: string;
+    canaux?: string[];
+    metadata?: any;
+  }): Promise<{ success: boolean; notification?: Notification }> {
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        throw new Error('Non authentifié');
+      }
+
+      const response = await fetch(
+        `${getApiUrl('/api/notifications/send')}`,
+        {
+          method: 'POST',
+          headers: {
+            ...getAuthHeaders(token),
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(notificationData)
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Erreur lors de l\'envoi de la notification');
+      }
+
+      const result = await response.json();
+      return {
+        success: true,
+        notification: result.data?.notification
+      };
+    } catch (error) {
+      console.error('Erreur sendNotification:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Envoyer une notification globale à tous les utilisateurs
+   */
+  async sendGlobalNotification(notificationData: {
+    titre: string;
+    message: string;
+    type_notification: string;
+    priorite?: string;
+    canaux?: string[];
+    global: boolean;
+    metadata?: any;
+  }): Promise<{ success: boolean; sent_count?: number }> {
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        throw new Error('Non authentifié');
+      }
+
+      const response = await fetch(
+        `${getApiUrl('/api/notifications/broadcast')}`,
+        {
+          method: 'POST',
+          headers: {
+            ...getAuthHeaders(token),
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(notificationData)
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Erreur lors de l\'envoi de la notification globale');
+      }
+
+      const result = await response.json();
+      return {
+        success: true,
+        sent_count: result.data?.sent_count || 0
+      };
+    } catch (error) {
+      console.error('Erreur sendGlobalNotification:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Envoyer un email via le service de notification
+   * Note: Cette méthode n'est disponible que si le backend supporte l'envoi d'emails
+   */
+  async sendEmail?(emailData: {
+    to: number | string; // userId ou email
+    subject: string;
+    body: string;
+    template?: string;
+  }): Promise<{ success: boolean; messageId?: string }> {
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        throw new Error('Non authentifié');
+      }
+
+      const response = await fetch(
+        `${getApiUrl('/api/notifications/email')}`,
+        {
+          method: 'POST',
+          headers: {
+            ...getAuthHeaders(token),
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(emailData)
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Erreur lors de l\'envoi de l\'email');
+      }
+
+      const result = await response.json();
+      return {
+        success: true,
+        messageId: result.data?.messageId
+      };
+    } catch (error) {
+      console.error('Erreur sendEmail:', error);
+      // Ne pas throw l'erreur pour sendEmail car c'est optionnel
+      return {
+        success: false
+      };
+    }
   }
 }
 

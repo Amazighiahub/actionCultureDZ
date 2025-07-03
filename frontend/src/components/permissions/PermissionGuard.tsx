@@ -2,7 +2,7 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { usePermissions } from '@/hooks/usePermissions';
-import { PermissionCheck } from '@/services/permissions.service';
+import { PermissionCheck } from '@/services/permissions.service';import { useTranslation } from "react-i18next";
 
 interface PermissionGuardProps {
   children: React.ReactNode;
@@ -22,12 +22,12 @@ export function PermissionGuard({
   requireAll = false,
   fallback = null,
   redirectTo,
-  showMessage = true,
+  showMessage = true
 }: PermissionGuardProps) {
-  const { hasPermission, hasAllPermissions, hasAnyPermission, loading, statusMessage } = usePermissions();
+  const { hasPermission, hasAllPermissions, hasAnyPermission, loading, statusMessage } = usePermissions();const { t } = useTranslation();
 
   if (loading) {
-    return <div>Chargement des permissions...</div>;
+    return <div>{t("permissions_permissionguard.chargement_des_permissions")}</div>;
   }
 
   let hasAccess = false;
@@ -35,9 +35,9 @@ export function PermissionGuard({
   if (permission) {
     hasAccess = hasPermission(permission);
   } else if (permissions) {
-    hasAccess = requireAll 
-      ? hasAllPermissions(...permissions)
-      : hasAnyPermission(...permissions);
+    hasAccess = requireAll ?
+    hasAllPermissions(...permissions) :
+    hasAnyPermission(...permissions);
   }
 
   if (!hasAccess) {
@@ -49,8 +49,8 @@ export function PermissionGuard({
       return (
         <div className="alert alert-warning">
           {statusMessage}
-        </div>
-      );
+        </div>);
+
     }
 
     return <>{fallback}</>;
@@ -63,13 +63,13 @@ export function PermissionGuard({
 export function Can({
   children,
   permission,
-  fallback = null,
-}: {
-  children: React.ReactNode;
-  permission: PermissionCheck;
-  fallback?: React.ReactNode;
-}) {
-  const { hasPermission, loading } = usePermissions();
+  fallback = null
+
+
+
+
+}: {children: React.ReactNode;permission: PermissionCheck;fallback?: React.ReactNode;}) {
+  const { hasPermission, loading } = usePermissions();const { t } = useTranslation();
 
   if (loading || !hasPermission(permission)) {
     return <>{fallback}</>;
@@ -79,11 +79,11 @@ export function Can({
 }
 
 // Composant pour protéger les routes (Admin)
-export function AdminRoute({ children }: { children: React.ReactNode }) {
-  const { isAdmin, loading } = usePermissions();
+export function AdminRoute({ children }: {children: React.ReactNode;}) {
+  const { isAdmin, loading } = usePermissions();const { t } = useTranslation();
 
   if (loading) {
-    return <div>Chargement...</div>;
+    return <div>{t("permissions_permissionguard.chargement_2")}</div>;
   }
 
   if (!isAdmin) {
@@ -94,22 +94,22 @@ export function AdminRoute({ children }: { children: React.ReactNode }) {
 }
 
 // Composant pour protéger les routes (Professionnel)
-export function ProfessionalRoute({ children }: { children: React.ReactNode }) {
-  const { isProfessional, needsValidation, statusMessage, loading } = usePermissions();
+export function ProfessionalRoute({ children }: {children: React.ReactNode;}) {
+  const { isProfessional, needsValidation, statusMessage, loading } = usePermissions();const { t } = useTranslation();
 
   if (loading) {
-    return <div>Chargement...</div>;
+    return <div>{t("permissions_permissionguard.chargement_2")}</div>;
   }
 
   if (needsValidation) {
     return (
       <div className="container mt-5">
         <div className="alert alert-info">
-          <h4>Validation en attente</h4>
+          <h4>{t("permissions_permissionguard.validation_attente")}</h4>
           <p>{statusMessage || 'Votre compte professionnel est en attente de validation par un administrateur.'}</p>
         </div>
-      </div>
-    );
+      </div>);
+
   }
 
   if (!isProfessional) {
@@ -120,11 +120,11 @@ export function ProfessionalRoute({ children }: { children: React.ReactNode }) {
 }
 
 // Composant pour protéger les routes (Authentifié)
-export function AuthenticatedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, loading } = usePermissions();
+export function AuthenticatedRoute({ children }: {children: React.ReactNode;}) {
+  const { isAuthenticated, loading } = usePermissions();const { t } = useTranslation();
 
   if (loading) {
-    return <div>Chargement...</div>;
+    return <div>{t("permissions_permissionguard.chargement_2")}</div>;
   }
 
   if (!isAuthenticated) {
@@ -136,15 +136,15 @@ export function AuthenticatedRoute({ children }: { children: React.ReactNode }) 
 
 // Composant pour afficher le statut de l'utilisateur
 export function UserStatusBanner() {
-  const { statusMessage, needsValidation } = usePermissions();
+  const { statusMessage, needsValidation } = usePermissions();const { t } = useTranslation();
 
   if (!statusMessage) return null;
 
   return (
     <div className={`alert ${needsValidation ? 'alert-info' : 'alert-warning'} mb-3`}>
       {statusMessage}
-    </div>
-  );
+    </div>);
+
 }
 
 // Composant bouton avec vérification de permission
@@ -161,7 +161,7 @@ export function PermissionButton({
   showDisabled = false,
   ...props
 }: PermissionButtonProps) {
-  const { hasPermission } = usePermissions();
+  const { hasPermission } = usePermissions();const { t } = useTranslation();
   const canPerformAction = hasPermission(permission);
 
   if (!canPerformAction && !showDisabled) {
@@ -171,23 +171,23 @@ export function PermissionButton({
   return (
     <button {...props} disabled={!canPerformAction || props.disabled}>
       {children}
-    </button>
-  );
+    </button>);
+
 }
 
 // Hook pour les boutons d'action sur les ressources
-export function ResourceActions({ 
+export function ResourceActions({
   resource,
   onEdit,
   onDelete,
   type = 'oeuvre'
-}: {
-  resource: { id_user: number; id: number };
-  onEdit?: () => void;
-  onDelete?: () => void;
-  type?: 'oeuvre' | 'evenement' | 'programme';
-}) {
-  const { isAdmin, isOwner } = usePermissions();
+
+
+
+
+
+}: {resource: {id_user: number;id: number;};onEdit?: () => void;onDelete?: () => void;type?: 'oeuvre' | 'evenement' | 'programme';}) {
+  const { isAdmin, isOwner } = usePermissions();const { t } = useTranslation();
   const canEdit = isAdmin || isOwner(resource.id_user);
   const canDelete = isAdmin || isOwner(resource.id_user);
 
@@ -195,24 +195,24 @@ export function ResourceActions({
 
   return (
     <div className="btn-group" role="group">
-      {canEdit && onEdit && (
-        <button 
-          className="btn btn-sm btn-outline-primary" 
-          onClick={onEdit}
-          title="Modifier"
-        >
+      {canEdit && onEdit &&
+      <button
+        className="btn btn-sm btn-outline-primary"
+        onClick={onEdit}
+        title={t("permissions_permissionguard.title_modifier")}>
+
           <i className="bi bi-pencil"></i>
         </button>
-      )}
-      {canDelete && onDelete && (
-        <button 
-          className="btn btn-sm btn-outline-danger" 
-          onClick={onDelete}
-          title="Supprimer"
-        >
+      }
+      {canDelete && onDelete &&
+      <button
+        className="btn btn-sm btn-outline-danger"
+        onClick={onDelete}
+        title={t("permissions_permissionguard.title_supprimer")}>
+
           <i className="bi bi-trash"></i>
         </button>
-      )}
-    </div>
-  );
+      }
+    </div>);
+
 }

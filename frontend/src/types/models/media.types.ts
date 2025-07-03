@@ -22,6 +22,7 @@ export interface Media {
   visible_public: boolean;
   ordre: number;
   thumbnail_url?: string;
+  is_Principale?: boolean;
   duree?: number;
   taille_fichier?: number;
   mime_type?: string;

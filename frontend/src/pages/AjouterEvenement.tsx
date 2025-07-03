@@ -1,5 +1,6 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,93 +12,145 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Upload, Save, ArrowLeft, Calendar } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useToast } from '@/components/ui/use-toast';
+
+// Import des hooks de localisation
+import { useLocalizedDate } from '@/hooks/useLocalizedDate';
+import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
+import { useRTL } from '@/hooks/useRTL';
+
+// Import des services
+import { metadataService } from '@/services/metadata.service';
+import { authService } from '@/services/auth.service';
+
+// Import des types
+import { Wilaya } from '@/types';
 
 const AjouterEvenement = () => {
+  const navigate = useNavigate();
+  const { t } = useTranslation();
+  const { rtlClasses } = useRTL();
+  const { formatPrice } = useLocalizedNumber();
+  const { toast } = useToast();
+  
   const [gratuit, setGratuit] = useState(false);
+  const [wilayas, setWilayas] = useState<Wilaya[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    checkAuthAndLoadData();
+  }, []);
+
+  const checkAuthAndLoadData = async () => {
+    // Vérifier l'authentification
+    const authenticated = authService.isAuthenticated();
+    setIsAuthenticated(authenticated);
+    
+    if (!authenticated) {
+      toast({
+        title: t('auth.required'),
+        description: t('auth.mustBeConnected'),
+        variant: "destructive",
+      });
+      navigate('/auth');
+      return;
+    }
+
+    // Charger les wilayas
+    try {
+      const wilayasResponse = await metadataService.getWilayas();
+      if (wilayasResponse.success && wilayasResponse.data) {
+        setWilayas(wilayasResponse.data);
+      }
+    } catch (error) {
+      console.error('Erreur chargement wilayas:', error);
+    }
+  };
 
   const typesEvenements = [
-    'Exposition',
-    'Concert',
-    'Projection',
-    'Conférence',
-    'Atelier',
-    'Festival',
-    'Spectacle',
-    'Rencontre littéraire'
-  ];
-
-  const villes = [
-    'Alger',
-    'Oran',
-    'Constantine',
-    'Annaba',
-    'Tlemcen',
-    'Sétif',
-    'Béjaïa',
-    'Biskra',
-    'Ghardaïa',
-    'Ouargla'
+    { value: 'exposition', label: t('events.types.exhibition') },
+    { value: 'concert', label: t('events.types.concert') },
+    { value: 'projection', label: t('events.types.screening') },
+    { value: 'conference', label: t('events.types.conference') },
+    { value: 'atelier', label: t('events.types.workshop') },
+    { value: 'festival', label: t('events.types.festival') },
+    { value: 'spectacle', label: t('events.types.show') },
+    { value: 'rencontre_litteraire', label: t('events.types.literaryMeeting') }
   ];
 
   const handleGratuitChange = (checked: boolean | "indeterminate") => {
     setGratuit(checked === true);
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    toast({
+      title: t('common.featureInDevelopment'),
+      description: t('events.create.willBeAvailableSoon'),
+    });
+  };
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className={`min-h-screen bg-background`} dir={rtlClasses.direction}>
       <Header />
       
       <main className="container py-12">
         <div className="max-w-4xl mx-auto">
           {/* En-tête */}
-          <div className="flex items-center space-x-4 mb-8">
+          <div className={`flex items-center space-x-4 mb-8 ${rtlClasses.flexRow}`}>
             <Link to="/dashboard-pro">
               <Button variant="outline" size="sm">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Retour au dashboard
+                <ArrowLeft className={`h-4 w-4 ${rtlClasses.marginEnd(2)}`} />
+                {t('common.backToDashboard')}
               </Button>
             </Link>
             <div>
               <h1 className="text-4xl font-bold tracking-tight font-serif text-gradient">
-                Créer un événement
+                {t('events.create.title')}
               </h1>
               <p className="text-lg text-muted-foreground mt-2">
-                Organisez un événement culturel
+                {t('events.create.subtitle')}
               </p>
             </div>
           </div>
 
-          <form className="space-y-8">
+          <form className="space-y-8" onSubmit={handleSubmit}>
             <Card>
               <CardHeader>
-                <CardTitle>Informations générales</CardTitle>
+                <CardTitle>{t('events.create.generalInfo')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="nom">Nom de l'événement *</Label>
-                  <Input id="nom" placeholder="Ex: Festival de Musique Andalouse de Tlemcen" />
+                  <Label htmlFor="nom">{t('events.create.eventName')} *</Label>
+                  <Input 
+                    id="nom" 
+                    placeholder={t('events.create.eventNamePlaceholder')} 
+                    required
+                  />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="description">Description *</Label>
+                  <Label htmlFor="description">{t('common.description')} *</Label>
                   <Textarea 
                     id="description" 
-                    placeholder="Décrivez votre événement, le programme, les intervenants..."
+                    placeholder={t('events.create.descriptionPlaceholder')}
                     className="min-h-[120px]"
+                    required
                   />
                 </div>
                 
                 <div className="grid md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <Label htmlFor="type">Type d'événement *</Label>
-                    <Select>
+                    <Label htmlFor="type">{t('events.create.eventType')} *</Label>
+                    <Select required>
                       <SelectTrigger>
-                        <SelectValue placeholder="Sélectionnez un type" />
+                        <SelectValue placeholder={t('common.selectType')} />
                       </SelectTrigger>
                       <SelectContent>
                         {typesEvenements.map((type) => (
-                          <SelectItem key={type} value={type.toLowerCase()}>
-                            {type}
+                          <SelectItem key={type.value} value={type.value}>
+                            {type.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -105,15 +158,15 @@ const AjouterEvenement = () => {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="ville">Ville *</Label>
-                    <Select>
+                    <Label htmlFor="ville">{t('common.city')} *</Label>
+                    <Select required>
                       <SelectTrigger>
-                        <SelectValue placeholder="Sélectionnez une ville" />
+                        <SelectValue placeholder={t('common.selectCity')} />
                       </SelectTrigger>
                       <SelectContent>
-                        {villes.map((ville) => (
-                          <SelectItem key={ville} value={ville.toLowerCase()}>
-                            {ville}
+                        {wilayas.map((wilaya) => (
+                          <SelectItem key={wilaya.id_wilaya} value={wilaya.id_wilaya.toString()}>
+                            {wilaya.wilaya_name}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -122,37 +175,41 @@ const AjouterEvenement = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="lieu">Lieu précis *</Label>
-                  <Input id="lieu" placeholder="Ex: Théâtre National d'Alger, Salle Ahmed Bey" />
+                  <Label htmlFor="lieu">{t('events.create.exactLocation')} *</Label>
+                  <Input 
+                    id="lieu" 
+                    placeholder={t('events.create.locationPlaceholder')} 
+                    required
+                  />
                 </div>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle>Dates et horaires</CardTitle>
+                <CardTitle>{t('events.create.datesAndTimes')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <Label htmlFor="date-debut">Date de début *</Label>
-                    <Input id="date-debut" type="date" />
+                    <Label htmlFor="date-debut">{t('events.create.startDate')} *</Label>
+                    <Input id="date-debut" type="date" required />
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="date-fin">Date de fin</Label>
+                    <Label htmlFor="date-fin">{t('events.create.endDate')}</Label>
                     <Input id="date-fin" type="date" />
                   </div>
                 </div>
                 
                 <div className="grid md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <Label htmlFor="heure-debut">Heure de début</Label>
+                    <Label htmlFor="heure-debut">{t('events.create.startTime')}</Label>
                     <Input id="heure-debut" type="time" />
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="heure-fin">Heure de fin</Label>
+                    <Label htmlFor="heure-fin">{t('events.create.endTime')}</Label>
                     <Input id="heure-fin" type="time" />
                   </div>
                 </div>
@@ -161,27 +218,35 @@ const AjouterEvenement = () => {
 
             <Card>
               <CardHeader>
-                <CardTitle>Participation et tarification</CardTitle>
+                <CardTitle>{t('events.create.participationAndPricing')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="max-participants">Nombre maximum de participants</Label>
-                  <Input id="max-participants" type="number" placeholder="Ex: 100" />
+                  <Label htmlFor="max-participants">{t('events.create.maxParticipants')}</Label>
+                  <Input 
+                    id="max-participants" 
+                    type="number" 
+                    placeholder={t('events.create.maxParticipantsPlaceholder')} 
+                  />
                 </div>
                 
-                <div className="flex items-center space-x-2">
+                <div className={`flex items-center space-x-2 ${rtlClasses.flexRow}`}>
                   <Checkbox 
                     id="gratuit" 
                     checked={gratuit}
                     onCheckedChange={handleGratuitChange}
                   />
-                  <Label htmlFor="gratuit">Événement gratuit</Label>
+                  <Label htmlFor="gratuit">{t('events.create.freeEvent')}</Label>
                 </div>
                 
                 {!gratuit && (
-                  <div className="space-y-2 ml-6">
-                    <Label htmlFor="tarif">Tarif (en DA)</Label>
-                    <Input id="tarif" type="number" placeholder="Ex: 500" />
+                  <div className={`space-y-2 ${rtlClasses.marginStart(6)}`}>
+                    <Label htmlFor="tarif">{t('events.create.price')}</Label>
+                    <Input 
+                      id="tarif" 
+                      type="number" 
+                      placeholder={t('events.create.pricePlaceholder')} 
+                    />
                   </div>
                 )}
               </CardContent>
@@ -189,42 +254,60 @@ const AjouterEvenement = () => {
 
             <Card>
               <CardHeader>
-                <CardTitle>Image et médias</CardTitle>
+                <CardTitle>{t('events.create.imageAndMedia')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="affiche">Image ou affiche de l'événement *</Label>
+                  <Label htmlFor="affiche">{t('events.create.eventImage')} *</Label>
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
                     <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-600 mb-2">Glissez-déposez votre image ou cliquez pour sélectionner</p>
-                    <p className="text-sm text-gray-400">PNG, JPG jusqu'à 5MB</p>
+                    <p className="text-gray-600 mb-2">
+                      {t('common.dragDropImage')}
+                    </p>
+                    <p className="text-sm text-gray-400">
+                      {t('common.imageFormats')}
+                    </p>
                     <Button variant="outline" className="mt-4">
-                      Choisir un fichier
+                      {t('common.chooseFile')}
                     </Button>
                   </div>
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="medias-post">Médias post-événement (facultatif)</Label>
+                  <Label htmlFor="medias-post">{t('events.create.postEventMedia')}</Label>
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
                     <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                    <p className="text-sm text-gray-600">Photos, vidéos, compte-rendu</p>
-                    <p className="text-xs text-gray-400">À ajouter après l'événement</p>
+                    <p className="text-sm text-gray-600">
+                      {t('events.create.postEventMediaDesc')}
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      {t('events.create.addAfterEvent')}
+                    </p>
                     <Button variant="outline" size="sm" className="mt-2">
-                      Choisir des fichiers
+                      {t('common.chooseFiles')}
                     </Button>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <div className="flex justify-end space-x-4">
-              <Button variant="outline">
-                Sauvegarder comme brouillon
+            <div className={`flex justify-end space-x-4 ${rtlClasses.flexRow}`}>
+              <Button 
+                type="button" 
+                variant="outline"
+                onClick={() => {
+                  toast({
+                    title: t('common.featureInDevelopment'),
+                    description: t('events.create.draftSaved'),
+                  });
+                }}
+              >
+                <Save className={`h-4 w-4 ${rtlClasses.marginEnd(2)}`} />
+                {t('events.create.saveAsDraft')}
               </Button>
-              <Button className="btn-hover">
-                <Calendar className="h-4 w-4 mr-2" />
-                Publier l'événement
+              <Button type="submit" className="btn-hover" disabled={loading}>
+                <Calendar className={`h-4 w-4 ${rtlClasses.marginEnd(2)}`} />
+                {t('events.create.publishEvent')}
               </Button>
             </div>
           </form>

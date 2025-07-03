@@ -3,7 +3,7 @@
 // =============================================================================
 // FORMATAGE ET AFFICHAGE
 // =============================================================================
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export const formatting = {
   // Formatage des dates
   date: {

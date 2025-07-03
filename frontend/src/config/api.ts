@@ -370,7 +370,7 @@ categoriesForType: (typeId: number) => `/metadata/types-oeuvres/${typeId}/catego
     search: '/intervenants/search',
     types: '/intervenants/types',
     detail: (id: number) => `/intervenants/${id}`,
-    
+    oeuvres: (id) => `/intervenants/${id}/oeuvres`,
     // Gestion (Admin + Professionnel validé)
     create: '/intervenants',
     update: (id: number) => `/intervenants/${id}`,
@@ -707,7 +707,48 @@ categoriesForType: (typeId: number) => `/metadata/types-oeuvres/${typeId}/catego
     createTicket: '/professionnel/support/ticket',
     helpFaq: '/professionnel/help/faq',
   },
+  tracking: {
+    // Enregistrer une vue
+    view: '/tracking/view',
+    
+    // Mettre à jour la durée d'une vue
+    updateDuration: (id: number) => `/tracking/view/${id}`,
+    
+    // Obtenir les statistiques
+    stats: (type: string, id: number) => `/tracking/stats/${type}/${id}`,
+    
+    // Routes spécifiques par type
+    viewOeuvre: (id: number) => `/tracking/oeuvre/${id}/view`,
+    viewEvenement: (id: number) => `/tracking/evenement/${id}/view`,
+  },
 
+  // ================================================
+  // SIGNALEMENTS
+  // ================================================
+  signalements: {
+    // Créer un signalement
+    create: '/signalement',
+    
+    // Obtenir mes signalements
+    mesSignalements: '/signalement/mes-signalements',
+    
+    // Admin/Modération
+    moderationQueue: '/signalement/moderation',
+    traiter: (id: number) => `/signalement/${id}/traiter`,
+    statistics: '/signalement/stats',
+  },
+
+  articleBlocks: {
+    templates: '/article-blocks/templates',
+    getByArticle: (articleId, articleType?) => `/article-blocks/article/${articleId}/${articleType}`,
+    create: '/article-blocks',
+    createBatch: '/article-blocks/batch',
+    update: (blockId) => `/article-blocks/${blockId}`,
+    delete: (blockId) => `/article-blocks/${blockId}`,
+    reorder: (articleId) => `/article-blocks/article/${articleId}/reorder`,
+    duplicate: (blockId) => `/article-blocks/${blockId}/duplicate`,
+    uploadImage: (articleId) => `/article-blocks/article/${articleId}/upload-image`,
+  },
   // ================================================
   // DASHBOARD ADMIN
   // ================================================

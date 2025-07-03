@@ -7,11 +7,11 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  Calendar, 
-  MapPin, 
-  Users, 
-  Clock, 
+import {
+  Calendar,
+  MapPin,
+  Users,
+  Clock,
   Share2,
   Heart,
   MessageCircle,
@@ -25,8 +25,19 @@ import {
   CheckCircle,
   AlertCircle,
   Loader2,
-  ImageIcon
-} from 'lucide-react';
+  ImageIcon,
+  Send } from
+'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle } from
+"@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 
 // Import des types
 import { favoriService } from '@/services/favori.service';
@@ -49,12 +60,12 @@ interface PaginatedResponse<T> {
 // Helper pour extraire les données d'une réponse potentiellement paginée
 function extractArrayFromResponse<T>(response: any): T[] {
   if (!response) return [];
-  
+
   if (Array.isArray(response)) return response;
   if (response.data && Array.isArray(response.data)) return response.data;
   if (response.items && Array.isArray(response.items)) return response.items;
   if (response.results && Array.isArray(response.results)) return response.results;
-  
+
   return [];
 }
 
@@ -128,7 +139,7 @@ import { authService } from '@/services/auth.service';
 import { StatutEvenement } from '@/types/enums/evenement.enums';
 
 // Fonction pour mapper les données API vers le type Evenement
-const mapApiToEvenement = (data: EvenementApiResponse, eventId: number): Evenement => {
+import { useTranslation } from "react-i18next";const mapApiToEvenement = (data: EvenementApiResponse, eventId: number): Evenement => {
   return {
     // Propriétés requises avec fallbacks
     id_evenement: data.id_evenement || data.id || eventId,
@@ -136,13 +147,13 @@ const mapApiToEvenement = (data: EvenementApiResponse, eventId: number): Eveneme
     id_lieu: data.id_lieu || data.lieu_id || 0,
     id_user: data.id_user || data.user_id || data.organisateur_id || 0,
     id_type_evenement: data.id_type_evenement || data.type_evenement_id || 0,
-    statut: (data.statut as StatutEvenement) || 'planifie',
+    statut: data.statut as StatutEvenement || 'planifie',
     tarif: data.tarif ?? data.prix ?? 0,
     inscription_requise: data.inscription_requise ?? true,
     certificat_delivre: data.certificat_delivre ?? false,
     date_creation: data.date_creation || data.created_at || new Date().toISOString(),
     date_modification: data.date_modification || data.updated_at || new Date().toISOString(),
-    
+
     // Propriétés optionnelles
     description: data.description,
     date_debut: data.date_debut,
@@ -154,14 +165,14 @@ const mapApiToEvenement = (data: EvenementApiResponse, eventId: number): Eveneme
     age_minimum: data.age_minimum,
     accessibilite: data.accessibilite,
     date_limite_inscription: data.date_limite_inscription,
-    
+
     // Champs virtuels
     nombre_participants: data.nombre_participants || data.participants_count,
     nombre_inscrits: data.nombre_inscrits,
     est_complet: data.est_complet,
     duree_totale: data.duree_totale,
     note_moyenne: data.note_moyenne ? Number(data.note_moyenne) : undefined,
-    
+
     // Relations
     TypeEvenement: data.TypeEvenement || data.type_evenement,
     Lieu: data.Lieu || data.lieu,
@@ -175,9 +186,9 @@ const mapApiToEvenement = (data: EvenementApiResponse, eventId: number): Eveneme
 };
 
 const EventDetailsPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams<{id: string;}>();
   const navigate = useNavigate();
-  
+
   const [event, setEvent] = useState<Evenement | null>(null);
   const [programmes, setProgrammes] = useState<Programme[]>([]);
   const [commentaires, setCommentaires] = useState<Commentaire[]>([]);
@@ -190,9 +201,13 @@ const EventDetailsPage: React.FC = () => {
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [isInscrit, setIsInscrit] = useState(false);
   const [inscriptionLoading, setInscriptionLoading] = useState(false);
+  const [showCommentModal, setShowCommentModal] = useState(false);
+  const [commentContent, setCommentContent] = useState('');
+  const [commentLoading, setCommentLoading] = useState(false);
+  const [replyToComment, setReplyToComment] = useState<number | null>(null);
 
   // Charger les données de l'événement
-  useEffect(() => {
+  const { t } = useTranslation();useEffect(() => {
     if (id) {
       loadEventData(parseInt(id));
     }
@@ -214,7 +229,7 @@ const EventDetailsPage: React.FC = () => {
     try {
       const response = await favoriService.check('evenement', eventId);
       console.log('🔍 Check favori response:', response);
-      
+
       if (response.success) {
         // L'API retourne directement isFavorite
         setIsFavorite(response.isFavorite);
@@ -233,25 +248,25 @@ const EventDetailsPage: React.FC = () => {
       console.log('🔄 Chargement événement ID:', eventId);
       const eventResult = await evenementService.getDetail(eventId);
       console.log('✅ Event API response:', eventResult);
-      
+
       if (eventResult.success && eventResult.data) {
         const eventData = eventResult.data as any;
         const validEvent = mapApiToEvenement(eventData, eventId);
         setEvent(validEvent);
-        
+
         // Vérifier si les données sont déjà incluses dans la réponse
         if (eventData.programmes || eventData.Programmes) {
           const rawProgrammes = eventData.programmes || eventData.Programmes;
           console.log('📋 Programmes inclus:', rawProgrammes);
           setProgrammes(Array.isArray(rawProgrammes) ? rawProgrammes : []);
         }
-        
+
         if (eventData.commentaires || eventData.Commentaires) {
           const rawComments = eventData.commentaires || eventData.Commentaires;
           console.log('💬 Commentaires inclus:', rawComments);
           setCommentaires(Array.isArray(rawComments) ? rawComments : []);
         }
-        
+
         if (eventData.medias || eventData.Media) {
           const rawMedias = eventData.medias || eventData.Media;
           console.log('🖼️ Médias inclus:', rawMedias);
@@ -267,16 +282,16 @@ const EventDetailsPage: React.FC = () => {
           console.log('🔄 Chargement programmes séparé...');
           const programmeResult = await programmeService.getByEvent(eventId);
           console.log('📋 Programme Result:', programmeResult);
-          
+
           if (programmeResult.success && programmeResult.data) {
             let rawProgrammes: any[] = [];
-            
+
             // Gestion TypeScript correcte avec type assertion
             if (Array.isArray(programmeResult.data)) {
               rawProgrammes = programmeResult.data;
             } else if (programmeResult.data && typeof programmeResult.data === 'object') {
               const dataAsAny = programmeResult.data as any;;
-              
+
               if (dataAsAny.items && Array.isArray(dataAsAny.items)) {
                 rawProgrammes = dataAsAny.items;
               } else if (dataAsAny.data && Array.isArray(dataAsAny.data)) {
@@ -287,7 +302,7 @@ const EventDetailsPage: React.FC = () => {
                 rawProgrammes = dataAsAny.programmes;
               }
             }
-            
+
             console.log('📋 Programmes extraits:', rawProgrammes.length);
             setProgrammes(rawProgrammes);
           }
@@ -302,18 +317,18 @@ const EventDetailsPage: React.FC = () => {
           console.log('🔄 Chargement commentaires séparé...');
           const commentaireResult = await commentaireService.getCommentairesEvenement(eventId);
           console.log('💬 Commentaire Result:', commentaireResult);
-          
+
           if (commentaireResult.success) {
             let rawComments: any[] = [];
-            
+
             // Vérifier d'abord si c'est directement un array
             if (Array.isArray(commentaireResult.data)) {
               rawComments = commentaireResult.data;
-            } 
+            }
             // Sinon, vérifier si pagination existe
             else if (commentaireResult.pagination && typeof commentaireResult.pagination === 'object') {
               const pagination = commentaireResult.pagination as any;
-              
+
               if (pagination.items && Array.isArray(pagination.items)) {
                 rawComments = pagination.items;
               } else if (pagination.data && Array.isArray(pagination.data)) {
@@ -325,7 +340,7 @@ const EventDetailsPage: React.FC = () => {
             // Sinon, vérifier data comme objet
             else if (commentaireResult.data && typeof commentaireResult.data === 'object') {
               const dataAsAny = commentaireResult.data as any;
-              
+
               if (dataAsAny.items && Array.isArray(dataAsAny.items)) {
                 rawComments = dataAsAny.items;
               } else if (dataAsAny.data && Array.isArray(dataAsAny.data)) {
@@ -336,7 +351,7 @@ const EventDetailsPage: React.FC = () => {
                 rawComments = dataAsAny.commentaires;
               }
             }
-            
+
             console.log('💬 Commentaires extraits:', rawComments.length);
             setCommentaires(rawComments);
           }
@@ -369,7 +384,7 @@ const EventDetailsPage: React.FC = () => {
 
   const handleToggleFavorite = async () => {
     console.log('🎯 Toggle favori start');
-    
+
     if (!event || !isAuthenticated) {
       console.log('❌ Not authenticated or no event');
       if (!isAuthenticated) {
@@ -378,17 +393,17 @@ const EventDetailsPage: React.FC = () => {
       }
       return;
     }
-  
+
     setFavoriteLoading(true);
     try {
       console.log('📤 Calling toggle for:', event.id_evenement);
       const response = await favoriService.toggle('evenement', event.id_evenement);
       console.log('📥 Toggle response:', response);
-      
+
       if (response.success && response.data) {
         setIsFavorite(response.data.added);
         console.log('✅ Favori updated:', response.data.added);
-        
+
         // Invalider le cache
         httpClient.invalidateCache(`/favoris/check/evenement/${event.id_evenement}`);
       }
@@ -402,7 +417,7 @@ const EventDetailsPage: React.FC = () => {
 
   const handleInscription = async () => {
     if (!event) return;
-    
+
     setInscriptionLoading(true);
     try {
       const result = await evenementService.inscription(event.id_evenement);
@@ -422,7 +437,7 @@ const EventDetailsPage: React.FC = () => {
 
   const handleDesinscription = async () => {
     if (!event) return;
-    
+
     setInscriptionLoading(true);
     try {
       const result = await evenementService.desinscription(event.id_evenement);
@@ -440,13 +455,69 @@ const EventDetailsPage: React.FC = () => {
     }
   };
 
+  const handleSubmitComment = async () => {
+    if (!event || !commentContent.trim()) return;
+
+    setCommentLoading(true);
+    try {
+      const result = await commentaireService.createCommentaireEvenement(event.id_evenement, {
+        contenu: commentContent.trim(),
+        parent_id: replyToComment || undefined
+      });
+
+      if (result.success && result.data) {
+        // Ajouter le nouveau commentaire à la liste
+        if (replyToComment) {
+          // Si c'est une réponse, l'ajouter à la liste des réponses du commentaire parent
+          setCommentaires((prevComments) =>
+          prevComments.map((comment) => {
+            if (comment.id_commentaire === replyToComment) {
+              return {
+                ...comment,
+                Reponses: [...(comment.Reponses || []), result.data as any]
+              };
+            }
+            return comment;
+          })
+          );
+        } else {
+          // Si c'est un nouveau commentaire, l'ajouter au début de la liste
+          setCommentaires((prevComments) => [result.data as any, ...prevComments]);
+        }
+
+        // Réinitialiser le formulaire
+        setCommentContent('');
+        setShowCommentModal(false);
+        setReplyToComment(null);
+      } else {
+        alert(result.error || 'Erreur lors de l\'ajout du commentaire');
+      }
+    } catch (err) {
+      console.error('Erreur ajout commentaire:', err);
+      alert('Erreur lors de l\'ajout du commentaire');
+    } finally {
+      setCommentLoading(false);
+    }
+  };
+
+  const openCommentModal = (parentId: number | null = null) => {
+    if (!isAuthenticated) {
+      navigate('/auth');
+      return;
+    }
+
+    setReplyToComment(parentId);
+    setShowCommentModal(true);
+    setCommentContent('');
+  };
+
   const shareEvent = (platform: string) => {
     if (!event) return;
-    
+
     const url = window.location.href;
     const text = `Découvrez ${event.nom_evenement} - ${formatDateRange(event.date_debut, event.date_fin)}`;
-    
-    switch(platform) {
+
+    switch (platform) {
       case 'facebook':
         window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
         break;
@@ -497,33 +568,33 @@ const EventDetailsPage: React.FC = () => {
 
   const formatDate = (date?: string) => {
     if (!date) return 'Date non définie';
-    
+
     const dateObj = new Date(date);
-    const options: Intl.DateTimeFormatOptions = { 
-      day: 'numeric', 
-      month: 'long', 
-      year: 'numeric' 
+    const options: Intl.DateTimeFormatOptions = {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
     };
-    
+
     return dateObj.toLocaleDateString('fr-FR', options);
   };
 
   const formatDateRange = (dateDebut?: string, dateFin?: string) => {
     if (!dateDebut) return 'Dates non définies';
-    
+
     const start = formatDate(dateDebut);
     const end = dateFin ? formatDate(dateFin) : null;
-    
+
     if (end && dateDebut !== dateFin) {
       return `Du ${start} au ${end}`;
     }
-    
+
     return start;
   };
 
   const formatTime = (time?: string) => {
     if (!time) return '--:--';
-    
+
     // Si le temps contient une date
     if (time.includes(' ')) {
       return time.split(' ')[1]?.slice(0, 5) || '--:--';
@@ -531,7 +602,7 @@ const EventDetailsPage: React.FC = () => {
     if (time.includes('T')) {
       return time.split('T')[1]?.slice(0, 5) || '--:--';
     }
-    
+
     // Si c'est juste l'heure
     return time.slice(0, 5);
   };
@@ -539,7 +610,7 @@ const EventDetailsPage: React.FC = () => {
   // Grouper les programmes par jour
   const programmesByDay = programmes.reduce((acc, prog) => {
     let date = 'Sans date';
-    
+
     if (prog.heure_debut) {
       if (prog.heure_debut.includes(' ')) {
         date = prog.heure_debut.split(' ')[0];
@@ -547,10 +618,10 @@ const EventDetailsPage: React.FC = () => {
         date = prog.heure_debut.split('T')[0];
       }
     }
-    
+
     if (!acc[date]) acc[date] = [];
     acc[date].push(prog);
-    
+
     acc[date].sort((a, b) => {
       if (a.ordre !== undefined && b.ordre !== undefined) {
         return a.ordre - b.ordre;
@@ -560,7 +631,7 @@ const EventDetailsPage: React.FC = () => {
       }
       return 0;
     });
-    
+
     return acc;
   }, {} as Record<string, Programme[]>);
 
@@ -568,8 +639,8 @@ const EventDetailsPage: React.FC = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+      </div>);
+
   }
 
   if (error || !event) {
@@ -579,49 +650,49 @@ const EventDetailsPage: React.FC = () => {
           <CardContent className="p-6">
             <div className="flex items-center space-x-2 text-destructive mb-4">
               <AlertCircle className="h-5 w-5" />
-              <h3 className="font-semibold">Erreur</h3>
+              <h3 className="font-semibold">{t("eventdetailspage.erreur")}</h3>
             </div>
             <p className="text-muted-foreground mb-4">
               {error || 'Événement introuvable'}
             </p>
-            <Button onClick={() => navigate('/evenements')} variant="outline">
-              Retour aux événements
+            <Button onClick={() => navigate('/evenements')} variant="outline">{t("eventdetailspage.retour_aux_vnements")}
+
             </Button>
           </CardContent>
         </Card>
-      </div>
-    );
+      </div>);
+
   }
 
-  const mainImage = event.image_url || medias.find(m => m.type_media === 'image')?.url;
+  const mainImage = event.image_url || medias.find((m) => m.type_media === 'image')?.url;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
          {/* Header avec image amélioré */}
       <div className="relative h-[35vh] lg:h-[45vh] overflow-hidden">
-        {mainImage ? (
-          <>
-            <img 
-              src={mainImage} 
-              alt={event.nom_evenement}
-              className="w-full h-full object-cover"
-            />
+        {mainImage ?
+        <>
+            <img
+            src={mainImage}
+            alt={event.nom_evenement}
+            className="w-full h-full object-cover" />
+          
             {/* Gradient seulement sur le quart inférieur */}
-            <div 
-              className="absolute bottom-0 inset-x-0 h-1/4 bg-gradient-to-t from-black/30 to-transparent"
-            />
-          </>
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center">
+            <div
+            className="absolute bottom-0 inset-x-0 h-1/4 bg-gradient-to-t from-black/30 to-transparent" />
+          
+          </> :
+
+        <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center">
             <ImageIcon className="h-20 w-20 text-gray-300" />
           </div>
-        )}
-        <Button 
-          variant="ghost" 
+        }
+        <Button
+          variant="ghost"
           size="icon"
           className="absolute top-4 left-4 bg-white/10 backdrop-blur-md hover:bg-white/20 text-white border border-white/20"
-          onClick={() => navigate(-1)}
-        >
+          onClick={() => navigate(-1)}>
+          
           <ChevronLeft className="h-5 w-5" />
         </Button>
 
@@ -633,10 +704,10 @@ const EventDetailsPage: React.FC = () => {
                   <Badge className="bg-primary/90 backdrop-blur-sm text-primary-foreground border-0 px-3 py-1 shadow-lg">
                     {event.TypeEvenement?.nom_type || 'Événement'}
                   </Badge>
-                  <Badge 
-                    variant={getStatusColor(event.statut) as any} 
-                    className="backdrop-blur-sm border-0 px-3 py-1 shadow-lg"
-                  >
+                  <Badge
+                    variant={getStatusColor(event.statut) as any}
+                    className="backdrop-blur-sm border-0 px-3 py-1 shadow-lg">
+                    
                     {getStatusLabel(event.statut)}
                   </Badge>
                 </div>
@@ -664,7 +735,7 @@ const EventDetailsPage: React.FC = () => {
                     <div className="flex items-start space-x-3">
                       <Calendar className="h-5 w-5 text-primary mt-0.5" />
                       <div>
-                        <p className="text-sm text-muted-foreground">Date</p>
+                        <p className="text-sm text-muted-foreground">{t("eventdetailspage.date")}</p>
                         <p className="font-semibold">{formatDateRange(event.date_debut, event.date_fin)}</p>
                       </div>
                     </div>
@@ -672,11 +743,11 @@ const EventDetailsPage: React.FC = () => {
                     <div className="flex items-start space-x-3">
                       <MapPin className="h-5 w-5 text-primary mt-0.5" />
                       <div>
-                        <p className="text-sm text-muted-foreground">Lieu</p>
+                        <p className="text-sm text-muted-foreground">{t("eventdetailspage.lieu")}</p>
                         <p className="font-semibold">{event.Lieu?.nom || 'Non spécifié'}</p>
-                        {event.Lieu?.adresse && (
-                          <p className="text-sm text-muted-foreground">{event.Lieu.adresse}</p>
-                        )}
+                        {event.Lieu?.adresse &&
+                        <p className="text-sm text-muted-foreground">{event.Lieu.adresse}</p>
+                        }
                       </div>
                     </div>
                   </div>
@@ -685,7 +756,7 @@ const EventDetailsPage: React.FC = () => {
                     <div className="flex items-start space-x-3">
                       <DollarSign className="h-5 w-5 text-primary mt-0.5" />
                       <div>
-                        <p className="text-sm text-muted-foreground">Tarif</p>
+                        <p className="text-sm text-muted-foreground">{t("eventdetailspage.tarif")}</p>
                         <p className="font-semibold text-lg">
                           {event.tarif === 0 ? 'Gratuit' : `${event.tarif} DA`}
                         </p>
@@ -695,7 +766,7 @@ const EventDetailsPage: React.FC = () => {
                     <div className="flex items-start space-x-3">
                       <Building className="h-5 w-5 text-primary mt-0.5" />
                       <div>
-                        <p className="text-sm text-muted-foreground">Organisateur</p>
+                        <p className="text-sm text-muted-foreground">{t("eventdetailspage.organisateur")}</p>
                         <p className="font-semibold">
                           {event.Organisations?.[0]?.nom || event.Organisateur?.nom || 'Non spécifié'}
                         </p>
@@ -704,26 +775,26 @@ const EventDetailsPage: React.FC = () => {
                   </div>
                 </div>
 
-                {(event.contact_email || event.contact_telephone) && (
-                  <div className="mt-4 pt-4 border-t">
+                {(event.contact_email || event.contact_telephone) &&
+                <div className="mt-4 pt-4 border-t">
                     <p className="text-sm text-muted-foreground">
                       {event.contact_email && `Email : ${event.contact_email}`}
                       {event.contact_telephone && ` • Tél : ${event.contact_telephone}`}
                     </p>
                   </div>
-                )}
+                }
               </CardContent>
             </Card>
 
             {/* Tabs pour Description, Programme, Commentaires */}
             <Tabs defaultValue="description" className="w-full">
               <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="description">Description</TabsTrigger>
-                <TabsTrigger value="programme">
-                  Programme {programmes.length > 0 && `(${programmes.length})`}
+                <TabsTrigger value="description">{t("eventdetailspage.description")}</TabsTrigger>
+                <TabsTrigger value="programme">{t("eventdetailspage.programme")}
+                  {programmes.length > 0 && `(${programmes.length})`}
                 </TabsTrigger>
-                <TabsTrigger value="comments">
-                  Commentaires {commentaires.length > 0 && `(${commentaires.length})`}
+                <TabsTrigger value="comments">{t("eventdetailspage.commentaires")}
+                  {commentaires.length > 0 && `(${commentaires.length})`}
                 </TabsTrigger>
               </TabsList>
               
@@ -736,21 +807,21 @@ const EventDetailsPage: React.FC = () => {
                       </div>
                     </div>
                     
-                    {event.accessibilite && (
-                      <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                    {event.accessibilite &&
+                    <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                         <CheckCircle className="h-4 w-4 text-green-600" />
                         <span>{event.accessibilite}</span>
                       </div>
-                    )}
+                    }
 
-                    {event.age_minimum && (
-                      <Alert>
+                    {event.age_minimum &&
+                    <Alert>
                         <AlertCircle className="h-4 w-4" />
-                        <AlertDescription>
-                          Âge minimum requis : {event.age_minimum} ans
-                        </AlertDescription>
+                        <AlertDescription>{t("eventdetailspage.minimum_requis")}
+                        {event.age_minimum}{t("eventdetailspage.ans")}
+                      </AlertDescription>
                       </Alert>
-                    )}
+                    }
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -758,19 +829,19 @@ const EventDetailsPage: React.FC = () => {
               <TabsContent value="programme" className="mt-6">
                 <Card>
                   <CardContent className="p-6">
-                    {programmes.length > 0 ? (
-                      <div className="space-y-8">
-                        {Object.entries(programmesByDay).map(([day, dayProgrammes]) => (
-                          <div key={day}>
+                    {programmes.length > 0 ?
+                    <div className="space-y-8">
+                        {Object.entries(programmesByDay).map(([day, dayProgrammes]) =>
+                      <div key={day}>
                             <h3 className="text-lg font-semibold mb-4 text-primary">
                               {day === 'Sans date' ? day : formatDate(day)}
                             </h3>
                             <div className="space-y-4">
-                              {dayProgrammes.map((prog) => (
-                                <div 
-                                  key={prog.id_programme} 
-                                  className="flex space-x-4 p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
-                                >
+                              {dayProgrammes.map((prog) =>
+                          <div
+                            key={prog.id_programme}
+                            className="flex space-x-4 p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
+                            
                                   <div className="flex items-center space-x-2">
                                     <Clock className="h-4 w-4 text-primary" />
                                     <span className="font-semibold text-sm min-w-[100px]">
@@ -779,38 +850,38 @@ const EventDetailsPage: React.FC = () => {
                                   </div>
                                   <div className="flex-1">
                                     <h4 className="font-semibold">{prog.titre}</h4>
-                                    {prog.description && (
-                                      <p className="text-sm text-muted-foreground mt-1">
+                                    {prog.description &&
+                              <p className="text-sm text-muted-foreground mt-1">
                                         {prog.description}
                                       </p>
-                                    )}
-                                    {prog.lieu_specifique && (
-                                      <p className="text-xs text-muted-foreground mt-2">
+                              }
+                                    {prog.lieu_specifique &&
+                              <p className="text-xs text-muted-foreground mt-2">
                                         <MapPin className="inline h-3 w-3 mr-1" />
                                         {prog.lieu_specifique}
                                       </p>
-                                    )}
-                                    {prog.type_activite && (
-                                      <Badge variant="outline" className="text-xs mt-2">
-                                        {prog.type_activite.replace(/_/g, ' ').charAt(0).toUpperCase() + 
-                                         prog.type_activite.replace(/_/g, ' ').slice(1)}
+                              }
+                                    {prog.type_activite &&
+                              <Badge variant="outline" className="text-xs mt-2">
+                                        {prog.type_activite.replace(/_/g, ' ').charAt(0).toUpperCase() +
+                                prog.type_activite.replace(/_/g, ' ').slice(1)}
                                       </Badge>
-                                    )}
+                              }
                                   </div>
                                 </div>
-                              ))}
+                          )}
                             </div>
                           </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-center py-12">
+                      )}
+                      </div> :
+
+                    <div className="text-center py-12">
                         <Calendar className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
-                        <p className="text-muted-foreground">
-                          Le programme détaillé sera bientôt disponible.
-                        </p>
+                        <p className="text-muted-foreground">{t("eventdetailspage.programme_dtaill_sera")}
+
+                      </p>
                       </div>
-                    )}
+                    }
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -818,16 +889,16 @@ const EventDetailsPage: React.FC = () => {
               <TabsContent value="comments" className="mt-6">
                 <Card>
                   <CardContent className="p-6">
-                    {commentaires.length > 0 ? (
-                      <div className="space-y-6">
-                        {commentaires.map((comment) => (
-                          <div key={comment.id_commentaire} className="border-b last:border-0 pb-6 last:pb-0">
+                    {commentaires.length > 0 ?
+                    <div className="space-y-6">
+                        {commentaires.map((comment) =>
+                      <div key={comment.id_commentaire} className="border-b last:border-0 pb-6 last:pb-0">
                             <div className="flex items-start space-x-4">
                               <Avatar>
-                                <AvatarImage 
-                                  src={(comment.User as any)?.photo_url || (comment.User as any)?.avatar} 
-                                  alt={`${comment.User?.prenom} ${comment.User?.nom}`} 
-                                />
+                                <AvatarImage
+                              src={(comment.User as any)?.photo_url || (comment.User as any)?.avatar}
+                              alt={`${comment.User?.prenom} ${comment.User?.nom}`} />
+                            
                                 <AvatarFallback>
                                   {comment.User?.prenom?.[0]}{comment.User?.nom?.[0]}
                                 </AvatarFallback>
@@ -842,34 +913,44 @@ const EventDetailsPage: React.FC = () => {
                                       {formatDate(comment.date_creation)}
                                     </p>
                                   </div>
-                                  {comment.note_qualite && (
-                                    <div className="flex items-center space-x-1">
-                                      {[...Array(5)].map((_, i) => (
-                                        <Star 
-                                          key={i} 
-                                          className={`h-4 w-4 ${
-                                            i < Math.floor(comment.note_qualite!) 
-                                              ? 'fill-yellow-400 text-yellow-400' 
-                                              : 'text-gray-300'
-                                          }`} 
-                                        />
-                                      ))}
+                                  {comment.note_qualite &&
+                              <div className="flex items-center space-x-1">
+                                      {[...Array(5)].map((_, i) =>
+                                <Star
+                                  key={i}
+                                  className={`h-4 w-4 ${
+                                  i < Math.floor(comment.note_qualite!) ?
+                                  'fill-yellow-400 text-yellow-400' :
+                                  'text-gray-300'}`
+                                  } />
+
+                                )}
                                     </div>
-                                  )}
+                              }
                                 </div>
                                 <p className="mt-3 text-sm leading-relaxed">{comment.contenu}</p>
                                 
+                                <Button
+                              variant="ghost"
+                              size="sm"
+                              className="mt-2 text-xs"
+                              onClick={() => openCommentModal(comment.id_commentaire)}>
+                              
+                                  <MessageCircle className="h-3 w-3 mr-1" />{t("eventdetailspage.rpondre")}
+
+                            </Button>
+                                
                                 {/* Afficher les réponses si disponibles */}
-                                {comment.Reponses && comment.Reponses.length > 0 && (
-                                  <div className="mt-4 ml-4 pl-4 border-l-2 border-muted space-y-4">
-                                    {comment.Reponses.map((reponse) => (
-                                      <div key={reponse.id_commentaire} className="space-y-2">
+                                {comment.Reponses && comment.Reponses.length > 0 &&
+                            <div className="mt-4 ml-4 pl-4 border-l-2 border-muted space-y-4">
+                                    {comment.Reponses.map((reponse) =>
+                              <div key={reponse.id_commentaire} className="space-y-2">
                                         <div className="flex items-center space-x-2">
                                           <Avatar className="h-8 w-8">
-                                            <AvatarImage 
-                                              src={(reponse.User as any)?.photo_url} 
-                                              alt={`${reponse.User?.prenom} ${reponse.User?.nom}`} 
-                                            />
+                                            <AvatarImage
+                                      src={(reponse.User as any)?.photo_url}
+                                      alt={`${reponse.User?.prenom} ${reponse.User?.nom}`} />
+                                    
                                             <AvatarFallback className="text-xs">
                                               {reponse.User?.prenom?.[0]}{reponse.User?.nom?.[0]}
                                             </AvatarFallback>
@@ -885,38 +966,31 @@ const EventDetailsPage: React.FC = () => {
                                         </div>
                                         <p className="text-sm ml-10">{reponse.contenu}</p>
                                       </div>
-                                    ))}
+                              )}
                                   </div>
-                                )}
+                            }
                               </div>
                             </div>
                           </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-center py-12">
+                      )}
+                      </div> :
+
+                    <div className="text-center py-12">
                         <MessageCircle className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
-                        <p className="text-muted-foreground">
-                          Aucun commentaire pour le moment. Soyez le premier à commenter !
-                        </p>
+                        <p className="text-muted-foreground">{t("eventdetailspage.aucun_commentaire_pour")}
+
+                      </p>
                       </div>
-                    )}
+                    }
                     
                     <div className="pt-6 border-t mt-6">
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         className="w-full"
-                        onClick={() => {
-                          if (isAuthenticated) {
-                            // TODO: Ouvrir un modal pour ajouter un commentaire
-                            alert('Fonctionnalité d\'ajout de commentaire à implémenter');
-                          } else {
-                            navigate('/auth');
-                          }
-                        }}
-                      >
-                        <MessageCircle className="h-4 w-4 mr-2" />
-                        Ajouter un commentaire
+                        onClick={() => openCommentModal()}>
+                        
+                        <MessageCircle className="h-4 w-4 mr-2" />{t("eventdetailspage.ajouter_commentaire")}
+
                       </Button>
                     </div>
                   </CardContent>
@@ -925,29 +999,29 @@ const EventDetailsPage: React.FC = () => {
             </Tabs>
 
             {/* Galerie en bas (mobile uniquement) */}
-            {medias.length > 0 && (
-              <Card className="lg:hidden">
+            {medias.length > 0 &&
+            <Card className="lg:hidden">
                 <CardHeader>
                   <CardTitle className="text-xl flex items-center justify-between">
-                    <span>Galerie de l'événement</span>
+                    <span>{t("eventdetailspage.galerie_lvnement")}</span>
                     <Badge variant="outline" className="text-sm">
-                      {medias.length} média{medias.length > 1 ? 's' : ''}
+                      {medias.length}{t("eventdetailspage.mdia")}{medias.length > 1 ? 's' : ''}
                     </Badge>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {medias.map((media, index) => (
-                      <div 
-                        key={media.id_media} 
-                        className="aspect-[4/3] rounded-lg overflow-hidden bg-muted relative group cursor-pointer"
-                      >
+                    {medias.map((media, index) =>
+                  <div
+                    key={media.id_media}
+                    className="aspect-[4/3] rounded-lg overflow-hidden bg-muted relative group cursor-pointer">
+                    
                         <img
-                          src={media.thumbnail_url || media.url}
-                          alt={media.titre || `Photo ${index + 1}`}
-                          className="w-full h-full object-cover transition-all duration-300 group-hover:scale-110 group-hover:brightness-110"
-                          loading="lazy"
-                        />
+                      src={media.thumbnail_url || media.url}
+                      alt={media.titre || `Photo ${index + 1}`}
+                      className="w-full h-full object-cover transition-all duration-300 group-hover:scale-110 group-hover:brightness-110"
+                      loading="lazy" />
+                    
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                           <div className="absolute bottom-0 left-0 right-0 p-3 text-white">
                             <p className="text-sm font-medium truncate">
@@ -956,11 +1030,11 @@ const EventDetailsPage: React.FC = () => {
                           </div>
                         </div>
                       </div>
-                    ))}
+                  )}
                   </div>
                 </CardContent>
               </Card>
-            )}
+            }
           </div>
 
           {/* Sidebar avec espacement approprié */}
@@ -977,10 +1051,10 @@ const EventDetailsPage: React.FC = () => {
                   </Badge>
                 </div>
                 
-                {event.capacite_max && event.nombre_participants !== undefined && (
-                  <div className="space-y-3">
+                {event.capacite_max && event.nombre_participants !== undefined &&
+                <div className="space-y-3">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Places disponibles</span>
+                      <span className="text-muted-foreground">{t("eventdetailspage.places_disponibles")}</span>
                       <span className="font-semibold">
                         {Math.max(0, event.capacite_max - (event.nombre_participants || 0))}
                       </span>
@@ -990,204 +1064,263 @@ const EventDetailsPage: React.FC = () => {
                       <div className="flex items-center justify-between text-sm">
                         <span className="flex items-center space-x-1">
                           <Users className="h-4 w-4" />
-                          <span>{event.nombre_participants || 0} inscrits</span>
+                          <span>{event.nombre_participants || 0}{t("eventdetailspage.inscrits")}</span>
                         </span>
                         <span>
-                          {Math.round(((event.nombre_participants || 0) / event.capacite_max) * 100)}%
+                          {Math.round((event.nombre_participants || 0) / event.capacite_max * 100)}%
                         </span>
                       </div>
                       <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
                         <div
-                          className="bg-gradient-to-r from-primary to-primary/80 h-2 rounded-full transition-all"
-                          style={{
-                            width: `${((event.nombre_participants || 0) / event.capacite_max) * 100}%`
-                          }}
-                        />
+                        className="bg-gradient-to-r from-primary to-primary/80 h-2 rounded-full transition-all"
+                        style={{
+                          width: `${(event.nombre_participants || 0) / event.capacite_max * 100}%`
+                        }} />
+                      
                       </div>
                     </div>
                   </div>
-                )}
+                }
 
-                {event.note_moyenne && !isNaN(event.note_moyenne) && event.note_moyenne > 0 && (
-                  <div className="flex items-center justify-center space-x-2 py-2">
+                {event.note_moyenne && !isNaN(event.note_moyenne) && event.note_moyenne > 0 &&
+                <div className="flex items-center justify-center space-x-2 py-2">
                     <div className="flex">
-                      {[...Array(5)].map((_, i) => (
-                        <Star 
-                          key={i} 
-                          className={`h-5 w-5 ${
-                            i < Math.floor(event.note_moyenne!) 
-                              ? 'fill-yellow-400 text-yellow-400' 
-                              : 'text-gray-300'
-                          }`} 
-                        />
-                      ))}
+                      {[...Array(5)].map((_, i) =>
+                    <Star
+                      key={i}
+                      className={`h-5 w-5 ${
+                      i < Math.floor(event.note_moyenne!) ?
+                      'fill-yellow-400 text-yellow-400' :
+                      'text-gray-300'}`
+                      } />
+
+                    )}
                     </div>
                     <span className="font-semibold">{Number(event.note_moyenne).toFixed(1)}</span>
                   </div>
-                )}
+                }
                 
-                {event.statut === 'planifie' && event.inscription_requise && (
-                  <>
-                    {isInscrit ? (
-                      <div className="space-y-3">
+                {event.statut === 'planifie' && event.inscription_requise &&
+                <>
+                    {isInscrit ?
+                  <div className="space-y-3">
                         <Alert className="bg-green-50 border-green-200">
                           <CheckCircle className="h-4 w-4 text-green-600" />
-                          <AlertDescription className="text-green-800">
-                            Vous êtes inscrit à cet événement
-                          </AlertDescription>
+                          <AlertDescription className="text-green-800">{t("eventdetailspage.vous_tes_inscrit")}
+
+                      </AlertDescription>
                         </Alert>
-                        <Button 
-                          className="w-full" 
-                          variant="outline"
-                          onClick={handleDesinscription}
-                          disabled={inscriptionLoading}
-                        >
-                          {inscriptionLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                          Se désinscrire
-                        </Button>
-                      </div>
-                    ) : (
-                      <Button 
-                        className="w-full" 
-                        size="lg" 
-                        disabled={event.est_complet || inscriptionLoading}
-                        onClick={handleInscription}
-                      >
+                        <Button
+                      className="w-full"
+                      variant="outline"
+                      onClick={handleDesinscription}
+                      disabled={inscriptionLoading}>
+                      
+                          {inscriptionLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}{t("eventdetailspage.dsinscrire")}
+
+                    </Button>
+                      </div> :
+
+                  <Button
+                    className="w-full"
+                    size="lg"
+                    disabled={event.est_complet || inscriptionLoading}
+                    onClick={handleInscription}>
+                    
                         {inscriptionLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                         {event.est_complet ? 'Complet' : 'S\'inscrire maintenant'}
                       </Button>
-                    )}
+                  }
                   </>
-                )}
+                }
 
-                {event.statut === 'planifie' && !event.inscription_requise && (
-                  <Alert>
-                    <AlertDescription>
-                      Entrée libre, aucune inscription requise
-                    </AlertDescription>
+                {event.statut === 'planifie' && !event.inscription_requise &&
+                <Alert>
+                    <AlertDescription>{t("eventdetailspage.entre_libre_aucune")}
+
+                  </AlertDescription>
                   </Alert>
-                )}
+                }
                 
                 <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     className="flex-1 transition-all duration-200 hover:border-red-500/50"
                     onClick={handleToggleFavorite}
-                    disabled={favoriteLoading}
-                  >
-                    {favoriteLoading ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <Heart 
-                        className={`h-4 w-4 mr-2 transition-all duration-300 ${
-                          isFavorite 
-                            ? 'fill-red-500 text-red-500 scale-110' 
-                            : 'hover:text-red-500'
-                        }`} 
-                      />
-                    )}
+                    disabled={favoriteLoading}>
+                    
+                    {favoriteLoading ?
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" /> :
+
+                    <Heart
+                      className={`h-4 w-4 mr-2 transition-all duration-300 ${
+                      isFavorite ?
+                      'fill-red-500 text-red-500 scale-110' :
+                      'hover:text-red-500'}`
+                      } />
+
+                    }
                     <span className={isFavorite ? 'text-red-500' : ''}>
                       {isFavorite ? 'Favori' : 'Ajouter aux favoris'}
                     </span>
                   </Button>
                   
                   <div className="relative">
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       size="icon"
-                      onClick={() => setShowShareMenu(!showShareMenu)}
-                    >
+                      onClick={() => setShowShareMenu(!showShareMenu)}>
+                      
                       <Share2 className="h-4 w-4" />
                     </Button>
                     
-                    {showShareMenu && (
-                      <Card className="absolute right-0 top-12 z-10 shadow-lg">
+                    {showShareMenu &&
+                    <Card className="absolute right-0 top-12 z-10 shadow-lg">
                         <CardContent className="p-2">
                           <button
-                            onClick={() => shareEvent('facebook')}
-                            className="flex items-center space-x-2 w-full p-2 hover:bg-muted rounded text-sm"
-                          >
+                          onClick={() => shareEvent('facebook')}
+                          className="flex items-center space-x-2 w-full p-2 hover:bg-muted rounded text-sm">
+                          
                             <Facebook className="h-4 w-4" />
-                            <span>Facebook</span>
+                            <span>{t("eventdetailspage.facebook")}</span>
                           </button>
                           <button
-                            onClick={() => shareEvent('twitter')}
-                            className="flex items-center space-x-2 w-full p-2 hover:bg-muted rounded text-sm"
-                          >
+                          onClick={() => shareEvent('twitter')}
+                          className="flex items-center space-x-2 w-full p-2 hover:bg-muted rounded text-sm">
+                          
                             <Twitter className="h-4 w-4" />
-                            <span>Twitter</span>
+                            <span>{t("eventdetailspage.twitter")}</span>
                           </button>
                           <button
-                            onClick={() => shareEvent('copy')}
-                            className="flex items-center space-x-2 w-full p-2 hover:bg-muted rounded text-sm"
-                          >
+                          onClick={() => shareEvent('copy')}
+                          className="flex items-center space-x-2 w-full p-2 hover:bg-muted rounded text-sm">
+                          
                             <LinkIcon className="h-4 w-4" />
-                            <span>Copier le lien</span>
+                            <span>{t("eventdetailspage.copier_lien")}</span>
                           </button>
                         </CardContent>
                       </Card>
-                    )}
+                    }
                   </div>
                 </div>
 
-                {event.certificat_delivre && (
-                  <Alert className="bg-blue-50 border-blue-200">
-                    <AlertDescription className="text-sm">
-                      Un certificat de participation sera délivré
-                    </AlertDescription>
+                {event.certificat_delivre &&
+                <Alert className="bg-blue-50 border-blue-200">
+                    <AlertDescription className="text-sm">{t("eventdetailspage.certificat_participation_sera")}
+
+                  </AlertDescription>
                   </Alert>
-                )}
+                }
               </CardContent>
             </Card>
 
             {/* Galerie sur le côté (desktop uniquement) - Sans sticky pour éviter le chevauchement */}
-            {medias.length > 0 && (
-              <Card className="hidden lg:block">
+            {medias.length > 0 &&
+            <Card className="hidden lg:block">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg flex items-center justify-between">
-                    <span>Galerie</span>
+                    <span>{t("eventdetailspage.galerie")}</span>
                     <span className="text-sm text-muted-foreground font-normal">
-                      {medias.length} photo{medias.length > 1 ? 's' : ''}
+                      {medias.length}{t("eventdetailspage.photo")}{medias.length > 1 ? 's' : ''}
                     </span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-3">
                   <div className="grid grid-cols-2 gap-2">
-                    {medias.slice(0, 4).map((media, index) => (
-                      <div 
-                        key={media.id_media} 
-                        className="aspect-square rounded-lg overflow-hidden bg-muted relative group cursor-pointer"
-                      >
+                    {medias.slice(0, 4).map((media, index) =>
+                  <div
+                    key={media.id_media}
+                    className="aspect-square rounded-lg overflow-hidden bg-muted relative group cursor-pointer">
+                    
                         <img
-                          src={media.thumbnail_url || media.url}
-                          alt={media.titre || `Photo ${index + 1}`}
-                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                          loading="lazy"
-                        />
+                      src={media.thumbnail_url || media.url}
+                      alt={media.titre || `Photo ${index + 1}`}
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                      loading="lazy" />
+                    
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
                       </div>
-                    ))}
+                  )}
                   </div>
-                  {medias.length > 4 && (
-                    <Button 
-                      variant="outline" 
-                      className="w-full mt-3 hover:bg-primary hover:text-primary-foreground transition-colors" 
-                      size="sm"
-                    >
-                      <span>Voir toutes les photos</span>
+                  {medias.length > 4 &&
+                <Button
+                  variant="outline"
+                  className="w-full mt-3 hover:bg-primary hover:text-primary-foreground transition-colors"
+                  size="sm">
+                  
+                      <span>{t("eventdetailspage.voir_toutes_les")}</span>
                       <span className="ml-2 text-xs bg-primary/10 px-2 py-0.5 rounded-full">
                         {medias.length}
                       </span>
                     </Button>
-                  )}
+                }
                 </CardContent>
               </Card>
-            )}
+            }
           </div>
         </div>
       </div>
-    </div>
-  );
+
+      {/* Modal d'ajout de commentaire */}
+      <Dialog open={showCommentModal} onOpenChange={setShowCommentModal}>
+        <DialogContent className="sm:max-w-[525px]">
+          <DialogHeader>
+            <DialogTitle>
+              {replyToComment ? 'Répondre au commentaire' : 'Ajouter un commentaire'}
+            </DialogTitle>
+            <DialogDescription>{t("eventdetailspage.partagez_votre_avis")}
+
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="comment">{t("eventdetailspage.votre_commentaire")}</Label>
+              <Textarea
+                id="comment"
+                placeholder={t("eventdetailspage.placeholder_crivez_votre_commentaire")}
+                className="min-h-[120px] resize-none"
+                value={commentContent}
+                onChange={(e) => setCommentContent(e.target.value)}
+                disabled={commentLoading} />
+              
+              <p className="text-xs text-muted-foreground text-right">
+                {commentContent.length} / 500 caractères
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowCommentModal(false);
+                setCommentContent('');
+                setReplyToComment(null);
+              }}
+              disabled={commentLoading}>{t("eventdetailspage.annuler")}
+
+
+            </Button>
+            <Button
+              onClick={handleSubmitComment}
+              disabled={!commentContent.trim() || commentContent.length > 500 || commentLoading}>
+              
+              {commentLoading ?
+              <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />{t("eventdetailspage.envoi")}
+
+              </> :
+
+              <>
+                  <Send className="h-4 w-4 mr-2" />{t("eventdetailspage.envoyer")}
+
+              </>
+              }
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>);
+
 };
 
 export default EventDetailsPage;

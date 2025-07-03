@@ -2,9 +2,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Bell, BellOff, Check, CheckCheck, Trash2, Settings, X } from 'lucide-react';
 import { useNotifications } from '../hooks/useNotifications';
-import type { Notification } from '../services/socketService';
+import type { Notification } from '../services/notification.service';
 import { formatDistanceToNow } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { fr } from 'date-fns/locale';import { useTranslation } from "react-i18next";
 
 interface NotificationBellProps {
   className?: string;
@@ -34,7 +34,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Fermer le dropdown quand on clique ailleurs
-  useEffect(() => {
+  const { t } = useTranslation();useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
@@ -67,9 +67,9 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
   }, [refreshSummary]);
 
   // Filtrer les notifications
-  const displayedNotifications = filter === 'unread'
-    ? notifications.filter(n => !n.lu)
-    : notifications;
+  const displayedNotifications = filter === 'unread' ?
+  notifications.filter((n) => !n.lu) :
+  notifications;
 
   // Obtenir l'icône selon le type
   const getNotificationIcon = (type: string) => {
@@ -92,11 +92,11 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
   // Obtenir la couleur selon la priorité
   const getPriorityColor = (priority?: string) => {
     switch (priority) {
-      case 'urgente': return 'text-red-600 bg-red-50';
-      case 'haute': return 'text-orange-600 bg-orange-50';
-      case 'normale': return 'text-blue-600 bg-blue-50';
-      case 'basse': return 'text-gray-600 bg-gray-50';
-      default: return 'text-gray-600 bg-gray-50';
+      case 'urgente':return 'text-red-600 bg-red-50';
+      case 'haute':return 'text-orange-600 bg-orange-50';
+      case 'normale':return 'text-blue-600 bg-blue-50';
+      case 'basse':return 'text-gray-600 bg-gray-50';
+      default:return 'text-gray-600 bg-gray-50';
     }
   };
 
@@ -106,91 +106,91 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors"
-        aria-label="Notifications"
-      >
-        {isConnected ? (
-          <Bell className="w-6 h-6 text-gray-700" />
-        ) : (
-          <BellOff className="w-6 h-6 text-gray-400" />
-        )}
+        aria-label={t("common_notificationbell.notifications")}>
+
+        {isConnected ?
+        <Bell className="w-6 h-6 text-gray-700" /> :
+
+        <BellOff className="w-6 h-6 text-gray-400" />
+        }
         
         {/* Badge de notification */}
-        {showBadge && summary && summary.nonLues > 0 && (
-          <span className="absolute top-0 right-0 transform translate-x-1/2 -translate-y-1/2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+        {showBadge && summary && summary.nonLues > 0 &&
+        <span className="absolute top-0 right-0 transform translate-x-1/2 -translate-y-1/2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
             {summary.nonLues > 99 ? '99+' : summary.nonLues}
           </span>
-        )}
+        }
       </button>
 
       {/* Dropdown */}
-      {isOpen && (
-        <div className={`absolute top-full mt-2 ${position === 'left' ? 'left-0' : 'right-0'} w-96 bg-white rounded-lg shadow-xl border border-gray-200 z-50`}>
+      {isOpen &&
+      <div className={`absolute top-full mt-2 ${position === 'left' ? 'left-0' : 'right-0'} w-96 bg-white rounded-lg shadow-xl border border-gray-200 z-50`}>
           {/* Header */}
           <div className="p-4 border-b border-gray-200">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold">Notifications</h3>
+              <h3 className="text-lg font-semibold">{t("common_notificationbell.notifications")}</h3>
               <div className="flex items-center gap-2">
                 {/* Filtre */}
                 <select
-                  value={filter}
-                  onChange={(e) => setFilter(e.target.value as 'all' | 'unread')}
-                  className="text-sm border rounded px-2 py-1"
-                >
-                  <option value="all">Toutes</option>
-                  <option value="unread">Non lues</option>
+                value={filter}
+                onChange={(e) => setFilter(e.target.value as 'all' | 'unread')}
+                className="text-sm border rounded px-2 py-1">
+
+                  <option value="all">{t("common_notificationbell.toutes")}</option>
+                  <option value="unread">{t("common_notificationbell.non_lues")}</option>
                 </select>
                 
                 {/* Actions */}
                 <button
-                  onClick={() => markAllAsRead()}
-                  className="p-1 hover:bg-gray-100 rounded"
-                  title="Tout marquer comme lu"
-                >
+                onClick={() => markAllAsRead()}
+                className="p-1 hover:bg-gray-100 rounded"
+                title={t("common_notificationbell.title_tout_marquer_comme")}>
+
                   <CheckCheck className="w-4 h-4" />
                 </button>
                 
                 <button
-                  onClick={() => setIsOpen(false)}
-                  className="p-1 hover:bg-gray-100 rounded"
-                >
+                onClick={() => setIsOpen(false)}
+                className="p-1 hover:bg-gray-100 rounded">
+
                   <X className="w-4 h-4" />
                 </button>
               </div>
             </div>
             
             {/* Résumé */}
-            {summary && (
-              <div className="mt-2 text-sm text-gray-600">
-                {summary.nonLues > 0 ? (
-                  <span>{summary.nonLues} nouvelle{summary.nonLues > 1 ? 's' : ''}</span>
-                ) : (
-                  <span>Aucune nouvelle notification</span>
-                )}
+            {summary &&
+          <div className="mt-2 text-sm text-gray-600">
+                {summary.nonLues > 0 ?
+            <span>{summary.nonLues}{t("common_notificationbell.nouvelle")}{summary.nonLues > 1 ? 's' : ''}</span> :
+
+            <span>{t("common_notificationbell.aucune_nouvelle_notification")}</span>
+            }
               </div>
-            )}
+          }
           </div>
 
           {/* Liste des notifications */}
           <div className="max-h-96 overflow-y-auto">
-            {isLoading ? (
-              <div className="p-8 text-center text-gray-500">
+            {isLoading ?
+          <div className="p-8 text-center text-gray-500">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
-                <p className="mt-2">Chargement...</p>
-              </div>
-            ) : displayedNotifications.length === 0 ? (
-              <div className="p-8 text-center text-gray-500">
+                <p className="mt-2">{t("common_notificationbell.chargement")}</p>
+              </div> :
+          displayedNotifications.length === 0 ?
+          <div className="p-8 text-center text-gray-500">
                 <Bell className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-                <p>Aucune notification</p>
-              </div>
-            ) : (
-              <ul className="divide-y divide-gray-200">
-                {displayedNotifications.map((notification) => (
-                  <li
-                    key={notification.id_notification}
-                    className={`p-4 hover:bg-gray-50 transition-colors ${
-                      !notification.lu ? 'bg-blue-50' : ''
-                    }`}
-                  >
+                <p>{t("common_notificationbell.aucune_notification")}</p>
+              </div> :
+
+          <ul className="divide-y divide-gray-200">
+                {displayedNotifications.map((notification) =>
+            <li
+              key={notification.id_notification}
+              className={`p-4 hover:bg-gray-50 transition-colors ${
+              !notification.lu ? 'bg-blue-50' : ''}`
+              }>
+
                     <div className="flex items-start gap-3">
                       {/* Icône */}
                       <span className={`text-2xl p-2 rounded-lg ${getPriorityColor(notification.priorite)}`}>
@@ -207,71 +207,71 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
                         </p>
                         <p className="text-xs text-gray-400 mt-1">
                           {formatDistanceToNow(new Date(notification.date_creation), {
-                            addSuffix: true,
-                            locale: fr
-                          })}
+                      addSuffix: true,
+                      locale: fr
+                    })}
                         </p>
                       </div>
                       
                       {/* Actions */}
                       <div className="flex items-center gap-1">
-                        {!notification.lu && (
-                          <button
-                            onClick={() => markAsRead(notification.id_notification)}
-                            className="p-1 hover:bg-gray-200 rounded"
-                            title="Marquer comme lu"
-                          >
+                        {!notification.lu &&
+                  <button
+                    onClick={() => markAsRead(notification.id_notification)}
+                    className="p-1 hover:bg-gray-200 rounded"
+                    title={t("common_notificationbell.title_marquer_comme")}>
+
                             <Check className="w-4 h-4 text-gray-600" />
                           </button>
-                        )}
+                  }
                         <button
-                          onClick={() => deleteNotification(notification.id_notification)}
-                          className="p-1 hover:bg-gray-200 rounded"
-                          title="Supprimer"
-                        >
+                    onClick={() => deleteNotification(notification.id_notification)}
+                    className="p-1 hover:bg-gray-200 rounded"
+                    title={t("common_notificationbell.title_supprimer")}>
+
                           <Trash2 className="w-4 h-4 text-gray-600" />
                         </button>
                       </div>
                     </div>
                     
                     {/* Lien vers l'action */}
-                    {notification.url_action && (
-                      <a
-                        href={notification.url_action}
-                        className="inline-block mt-2 text-sm text-blue-600 hover:text-blue-800"
-                        onClick={() => markAsRead(notification.id_notification)}
-                      >
-                        Voir plus →
-                      </a>
-                    )}
+                    {notification.url_action &&
+              <a
+                href={notification.url_action}
+                className="inline-block mt-2 text-sm text-blue-600 hover:text-blue-800"
+                onClick={() => markAsRead(notification.id_notification)}>{t("common_notificationbell.voir_plus")}
+
+
+              </a>
+              }
                   </li>
-                ))}
-              </ul>
             )}
+              </ul>
+          }
           </div>
 
           {/* Footer */}
           <div className="p-3 border-t border-gray-200 bg-gray-50">
             <div className="flex items-center justify-between">
               <a
-                href="/notifications"
-                className="text-sm text-blue-600 hover:text-blue-800"
-                onClick={() => setIsOpen(false)}
-              >
-                Voir toutes les notifications
-              </a>
+              href="/notifications"
+              className="text-sm text-blue-600 hover:text-blue-800"
+              onClick={() => setIsOpen(false)}>{t("common_notificationbell.voir_toutes_les")}
+
+
+            </a>
               <a
-                href="/notifications/preferences"
-                className="text-sm text-gray-600 hover:text-gray-800 flex items-center gap-1"
-                onClick={() => setIsOpen(false)}
-              >
-                <Settings className="w-4 h-4" />
-                Préférences
-              </a>
+              href="/notifications/preferences"
+              className="text-sm text-gray-600 hover:text-gray-800 flex items-center gap-1"
+              onClick={() => setIsOpen(false)}>
+
+                <Settings className="w-4 h-4" />{t("common_notificationbell.prfrences")}
+
+            </a>
             </div>
           </div>
         </div>
-      )}
-    </div>
-  );
+      }
+    </div>);
+
 };

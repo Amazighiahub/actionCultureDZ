@@ -1,5 +1,5 @@
-
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import CartePatrimoine from '@/components/CartePatrimoine';
@@ -9,11 +9,13 @@ import { Badge } from '@/components/ui/badge';
 import { MapPin, Clock, Users, QrCode, Compass } from 'lucide-react';
 
 const Patrimoine = () => {
+  const { t } = useTranslation();
+  
   const lieuxComplements = [
     {
       nom: 'Ksar de Beni Isguen',
       region: 'Ghardaïa',
-      type: 'Architecture berbère',
+      type: t('categories.heritageTypes.berber'),
       description: 'Ville fortifiée traditionnelle du M\'zab avec architecture défensive unique',
       image: 'https://images.unsplash.com/photo-1477587458883-47145ed94245?auto=format&fit=crop&w=600&q=80',
       visiteurs: '25k/an',
@@ -22,7 +24,7 @@ const Patrimoine = () => {
     {
       nom: 'Pont de Sidi M\'Cid',
       region: 'Constantine',
-      type: 'Monument moderne',
+      type: t('categories.heritageTypes.modern'),
       description: 'Pont suspendu emblématique de la ville des ponts suspendus',
       image: 'https://images.unsplash.com/photo-1539650116574-75c0c6d73c6e?auto=format&fit=crop&w=600&q=80',
       visiteurs: '180k/an',
@@ -31,7 +33,7 @@ const Patrimoine = () => {
     {
       nom: 'Musée du Bardo',
       region: 'Alger',
-      type: 'Musée ethnographique',
+      type: t('categories.heritageTypes.ethnographic'),
       description: 'Collections d\'art et traditions populaires algériennes',
       image: 'https://images.unsplash.com/photo-1541961017774-22349e4a1262?auto=format&fit=crop&w=600&q=80',
       visiteurs: '95k/an',
@@ -47,33 +49,33 @@ const Patrimoine = () => {
         {/* En-tête */}
         <div className="text-center space-y-4 mb-16">
           <h1 className="text-4xl font-bold tracking-tight sm:text-5xl font-serif text-gradient">
-            Patrimoine culturel
+            {t('sections.heritage.title')}
           </h1>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Découvrez les trésors historiques et culturels de l'Algérie à travers une carte interactive
+            {t('sections.heritage.subtitle')}
           </p>
         </div>
 
         {/* Filtres */}
         <div className="flex flex-wrap gap-4 mb-8 justify-center">
-          <Button variant="outline" size="sm">Toutes les régions</Button>
-          <Button variant="outline" size="sm">Monuments UNESCO</Button>
-          <Button variant="outline" size="sm">Sites archéologiques</Button>
-          <Button variant="outline" size="sm">Architecture traditionnelle</Button>
+          <Button variant="outline" size="sm">{t('sections.heritage.filters.allRegions')}</Button>
+          <Button variant="outline" size="sm">{t('sections.heritage.filters.monuments')}</Button>
+          <Button variant="outline" size="sm">{t('sections.heritage.filters.archaeological')}</Button>
+          <Button variant="outline" size="sm">{t('sections.heritage.filters.traditional')}</Button>
         </div>
 
         {/* Carte interactive */}
         <div className="mb-12">
           <div className="flex items-center space-x-2 mb-6">
             <Compass className="h-6 w-6 text-primary" />
-            <h2 className="text-2xl font-bold font-serif">Explorez sur la carte</h2>
+            <h2 className="text-2xl font-bold font-serif">{t('sections.heritage.map.explore')}</h2>
           </div>
           <CartePatrimoine />
         </div>
 
         {/* Sites complémentaires */}
         <div className="mb-12">
-          <h2 className="text-2xl font-bold font-serif mb-6 text-center">Autres sites remarquables</h2>
+          <h2 className="text-2xl font-bold font-serif mb-6 text-center">{t('sections.heritage.otherSites')}</h2>
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
             {lieuxComplements.map((lieu) => (
               <Card key={lieu.nom} className="overflow-hidden hover-lift">
@@ -111,7 +113,7 @@ const Patrimoine = () => {
                   
                   <div className="flex space-x-2">
                     <Button className="flex-1 btn-hover">
-                      Découvrir
+                      {t('sections.heritage.discover')}
                     </Button>
                     <Button variant="outline" size="icon">
                       <QrCode className="h-4 w-4" />
@@ -127,18 +129,16 @@ const Patrimoine = () => {
         <Card className="text-center p-8 bg-gradient-to-br from-primary/5 to-secondary/5">
           <div className="space-y-4">
             <MapPin className="h-16 w-16 text-primary mx-auto" />
-            <h3 className="text-2xl font-semibold font-serif">Planifiez votre visite</h3>
+            <h3 className="text-2xl font-semibold font-serif">{t('sections.heritage.planVisit.title')}</h3>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Utilisez notre carte interactive pour créer votre itinéraire personnalisé et découvrir 
-              les merveilles du patrimoine algérien. Choisissez un parcours thématique ou explorez 
-              librement les sites qui vous intéressent.
+              {t('sections.heritage.planVisit.description')}
             </p>
             <div className="flex justify-center space-x-4">
               <Button size="lg">
-                Commencer l'exploration
+                {t('sections.heritage.planVisit.start')}
               </Button>
               <Button size="lg" variant="outline">
-                Guide pratique
+                {t('sections.heritage.planVisit.guide')}
               </Button>
             </div>
           </div>
