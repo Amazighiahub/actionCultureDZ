@@ -6,8 +6,8 @@ import ArticleEditor from '@/components/article/ArticleEditor';
 import { oeuvreService } from '@/services/oeuvre.service';
 import { articleBlockService } from '@/services/articleBlock.service';
 import { Loader2, ArrowLeft } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';import { useTranslation } from "react-i18next";
+import { Button } from '@/components/UI/button';
+import { Alert, AlertDescription } from '@/components/UI/alert';import { useTranslation } from "react-i18next";
 
 const EditArticle: React.FC = () => {
   const { id } = useParams<{id: string;}>();

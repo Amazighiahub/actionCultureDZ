@@ -3,9 +3,9 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/UI/card';
+import { Button } from '@/components/UI/button';
+import { Badge } from '@/components/UI/badge';
 import { 
   ChevronLeft, BookOpen, Film, Music, Palette, FileText, Award, 
   Sparkles, Eye, Heart, Share2, DollarSign, Star, Download, Play,

@@ -4,16 +4,16 @@ import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/UI/card';
+import { Button } from '@/components/UI/button';
+import { Badge } from '@/components/UI/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/UI/tabs';
+import { Alert, AlertDescription, AlertTitle } from '@/components/UI/alert';
+import { Skeleton } from '@/components/UI/skeleton';
+import { Input } from '@/components/UI/input';
+import { Label } from '@/components/UI/label';
+import { Textarea } from '@/components/UI/textarea';
+import { Checkbox } from '@/components/UI/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -21,14 +21,14 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle } from
-'@/components/ui/dialog';
+'@/components/UI/dialog';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue } from
-'@/components/ui/select';
+'@/components/UI/select';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,7 +36,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger } from
-'@/components/ui/dropdown-menu';
+'@/components/UI/dropdown-menu';
 import {
   Users,
   BookOpen,
@@ -108,7 +108,7 @@ import {
   WifiOff,
   Wifi } from
 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/components/UI/use-toast';
 import { useDashboardAdmin, useAdminFilters } from '@/hooks/useDashboardAdmin';
 import { useConfirmedActionWithDialog } from '@/hooks/useConfirmedAction';
 import { cn } from '@/lib/utils';

@@ -3,12 +3,12 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Input } from '@/components/ui/input';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent } from '@/components/UI/card';
+import { Button } from '@/components/UI/button';
+import { Badge } from '@/components/UI/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/UI/tabs';
+import { Input } from '@/components/UI/input';
+import { Skeleton } from '@/components/UI/skeleton';
 import {
   BookOpen,
   Calendar,
@@ -23,7 +23,7 @@ import {
   Search,
   Briefcase } from
 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/components/UI/use-toast';
 import { useDashboardPro } from '@/hooks/useDashboardPro';import { useTranslation } from "react-i18next";
 
 const DashboardPro = () => {

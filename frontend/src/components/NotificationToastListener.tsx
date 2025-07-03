@@ -1,7 +1,7 @@
 // components/NotificationToastListener.tsx
 /* eslint-disable @typescript-eslint/no-explicit-any *//* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect } from 'react';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/components/UI/use-toast';
 import { socketService } from '@/services/socketService';
 
 // Export séparé du hook personnalisé pour éviter les problèmes de Fast Refresh

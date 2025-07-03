@@ -3,7 +3,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { favoriService } from '@/services/favori.service';
 import type { Favori, FavoriStats, PopularItem, GroupedFavoris } from '@/services/favori.service';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/components/UI/use-toast';
 import type { PaginationParams } from '@/config/api';
 
 interface UseFavorisOptions {

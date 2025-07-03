@@ -1,7 +1,7 @@
 // hooks/useDashboardAdmin.ts - VERSION SIMPLIFIÉE
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useCallback } from 'react';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/components/UI/use-toast';
 import { adminService } from '@/services/admin.service';
 import { httpClient } from '@/services/httpClient';
 import type { 

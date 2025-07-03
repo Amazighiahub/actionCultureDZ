@@ -1,11 +1,11 @@
 // components/dashboard/ActivityTimeline.tsx
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/UI/card';
+import { Badge } from '@/components/UI/badge';
+import { Button } from '@/components/UI/button';
+import { ScrollArea } from '@/components/UI/scroll-area';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/UI/avatar';
 import {
   UserPlus,
   FileText,
