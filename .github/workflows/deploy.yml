@@ -30,6 +30,7 @@ jobs:
             npm run build
             
             echo "🔄 Restarting backend..."
+            pm2 restart redis-dev
             pm2 restart back-eventculture
             
             echo "✅ Deployment complete!"
