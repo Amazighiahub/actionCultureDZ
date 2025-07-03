@@ -1,87 +1,125 @@
-
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { useRTL } from '@/hooks/useRTL';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { ArrowRight, MapPin, Calendar, Palette } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { MapPin, Calendar, Palette, ArrowRight } from 'lucide-react';
 
 const HeroSection = () => {
+  const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
+  const { rtlClasses, direction } = useRTL();
+
+  // Helper function pour ajouter le préfixe
+  const tHero = (key: string) => t(`sections.hero.${key}`);
+
   const quickActions = [
     {
+      id: 'discover',
       icon: MapPin,
-      title: 'Découvrir un lieu',
-      description: 'Explorez le patrimoine algérien',
-      color: 'bg-primary/10 text-primary border-primary/20',
+      titleKey: 'quickActions.discover.title',
+      descriptionKey: 'quickActions.discover.description',
+      href: '/patrimoine',
+      bgColor: 'bg-green-50',
+      iconColor: 'text-green-600',
     },
     {
+      id: 'events',
       icon: Calendar,
-      title: 'Voir un événement',
-      description: 'Événements culturels à venir',
-      color: 'bg-accent/10 text-accent border-accent/20',
+      titleKey: 'quickActions.events.title',
+      descriptionKey: 'quickActions.events.description',
+      href: '/evenements',
+      bgColor: 'bg-blue-50',
+      iconColor: 'text-blue-600',
     },
     {
+      id: 'works',
       icon: Palette,
-      title: 'Parcourir une œuvre',
-      description: 'Art, littérature et cinéma',
-      color: 'bg-orange-100 text-orange-700 border-orange-200',
+      titleKey: 'quickActions.works.title',
+      descriptionKey: 'quickActions.works.description',
+      href: '/oeuvres',
+      bgColor: 'bg-orange-50',
+      iconColor: 'text-orange-600',
     },
   ];
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-secondary/30 to-background">
-      {/* Motif géométrique de fond */}
-      <div className="absolute inset-0 pattern-geometric" />
-      
-      <div className="container relative py-16 lg:py-24">
-        <div className="grid gap-12 lg:grid-cols-2 lg:gap-16 items-center">
-          {/* Contenu principal */}
-          <div className="space-y-8">
+    <section className="relative bg-gradient-to-br from-background to-muted py-20 md:py-32" dir={direction}>
+      <div className="container">
+        <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
+          {/* Section de texte */}
+          <div className="flex flex-col justify-center space-y-8">
             <div className="space-y-4">
-              <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
-                Découvrez la richesse culturelle de l'
-                <span className="text-gradient">Algérie</span>
+              <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none">
+                {tHero('title')}
+                <span className="text-primary block">
+                  {tHero('titleHighlight')}
+                </span>
               </h1>
-              <p className="text-lg text-muted-foreground sm:text-xl">
-                Plongez dans la richesse du patrimoine, vivez les événements culturels et admirez les œuvres qui font rayonner notre culture.
+              <p className="max-w-[600px] text-muted-foreground md:text-xl">
+                {tHero('subtitle')}
               </p>
             </div>
             
-            <div className="flex flex-col gap-4 sm:flex-row">
-              <Button size="lg" className="group">
-                Commencer l'exploration
-                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+            <div className={`flex flex-col gap-4 sm:flex-row ${rtlClasses.flexRow}`}>
+              <Button 
+                size="lg" 
+                onClick={() => navigate('/patrimoine')}
+                className="group"
+              >
+                {tHero('cta.explore')}
+                <ArrowRight className={`h-4 w-4 ${rtlClasses.marginStart(2)} transition-transform group-hover:translate-x-1`} />
               </Button>
-              <Button variant="outline" size="lg">
-                En savoir plus
+              <Button 
+                size="lg" 
+                variant="outline"
+                onClick={() => navigate('/a-propos')}
+              >
+                {tHero('cta.learnMore')}
               </Button>
             </div>
           </div>
 
-          {/* Actions rapides */}
-          <div className="space-y-6">
-            <h2 className="text-2xl font-semibold text-center lg:text-left">
-              Actions rapides
+          {/* Section actions rapides */}
+          <div className="lg:pl-8">
+            <h2 className="mb-6 text-2xl font-semibold">
+              {tHero('quickActions.title')}
             </h2>
-            <div className="grid gap-4">
-              {quickActions.map((action, index) => (
+            
+            <div className="space-y-4">
+              {quickActions.map((action) => (
                 <Card 
-                  key={action.title}
-                  className={`p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 cursor-pointer border-2 ${action.color}`}
+                  key={action.id}
+                  className={`cursor-pointer transition-all hover:shadow-lg ${action.bgColor}`}
+                  onClick={() => navigate(action.href)}
                 >
-                  <div className="flex items-center space-x-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-current/10">
-                      <action.icon className="h-6 w-6" />
+                  <CardContent className="p-6">
+                    <div className={`flex items-center gap-4 ${rtlClasses.flexRow}`}>
+                      <div className={`rounded-lg bg-white p-3 shadow-sm`}>
+                        <action.icon className={`h-6 w-6 ${action.iconColor}`} />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-foreground">
+                          {tHero(action.titleKey)}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          {tHero(action.descriptionKey)}
+                        </p>
+                      </div>
+                      <ArrowRight className={`h-5 w-5 text-muted-foreground ${rtlClasses.direction === 'rtl' ? 'rotate-180' : ''}`} />
                     </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold">{action.title}</h3>
-                      <p className="text-sm opacity-80">{action.description}</p>
-                    </div>
-                    <ArrowRight className="h-5 w-5 opacity-60" />
-                  </div>
+                  </CardContent>
                 </Card>
               ))}
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Élément décoratif */}
+      <div className="absolute inset-0 -z-10 overflow-hidden">
+        <div className="absolute -top-[40rem] left-[50%] h-[80rem] w-[80rem] -translate-x-[50%] rounded-full bg-gradient-to-tr from-primary/20 to-accent/20 opacity-20 blur-3xl" />
       </div>
     </section>
   );

@@ -1,5 +1,5 @@
 // models/misc/EmailVerification.js
-const { DataTypes } = require('sequelize');
+const { DataTypes, Op } = require('sequelize');
 
 module.exports = (sequelize) => {
   const EmailVerification = sequelize.define('EmailVerification', {
@@ -40,20 +40,12 @@ module.exports = (sequelize) => {
     createdAt: 'created_at',
     updatedAt: false,
     indexes: [
-      {
-        fields: ['token'],
-        unique: true
-      },
-      {
-        fields: ['id_user', 'type']
-      },
-      {
-        fields: ['expires_at']
-      }
+      { fields: ['token'], unique: true },
+      { fields: ['id_user', 'type'] },
+      { fields: ['expires_at'] }
     ]
   });
 
-  // Associations
   EmailVerification.associate = (models) => {
     EmailVerification.belongsTo(models.User, {
       foreignKey: 'id_user',
@@ -61,25 +53,17 @@ module.exports = (sequelize) => {
     });
   };
 
-  // Méthodes statiques
   EmailVerification.createVerificationToken = async function(userId, type = 'email_verification') {
     const crypto = require('crypto');
     const token = crypto.randomBytes(32).toString('hex');
-    const expiresIn = type === 'email_verification' ? 24 : 2; // 24h pour email, 2h pour password
-    
-    // Invalider les tokens précédents
+    const expiresIn = type === 'email_verification' ? 24 : 2;
+
     await this.update(
       { used_at: new Date() },
-      { 
-        where: { 
-          id_user: userId,
-          type: type,
-          used_at: null
-        }
-      }
+      { where: { id_user: userId, type: type, used_at: null } }
     );
     
-    return await this.create({
+    return this.create({
       id_user: userId,
       token: token,
       type: type,
@@ -94,7 +78,7 @@ module.exports = (sequelize) => {
         type: type,
         used_at: null,
         expires_at: {
-          [sequelize.Op.gt]: new Date()
+          [Op.gt]: new Date()
         }
       },
       include: [{
@@ -110,21 +94,12 @@ module.exports = (sequelize) => {
     return verification;
   };
 
-  // Nettoyer les tokens expirés
   EmailVerification.cleanExpired = async function() {
-    return await this.destroy({
+    return this.destroy({
       where: {
-        [sequelize.Op.or]: [
-          {
-            expires_at: {
-              [sequelize.Op.lt]: new Date()
-            }
-          },
-          {
-            used_at: {
-              [sequelize.Op.ne]: null
-            }
-          }
+        [Op.or]: [
+          { expires_at: { [Op.lt]: new Date() } },
+          { used_at: { [Op.ne]: null } }
         ]
       }
     });

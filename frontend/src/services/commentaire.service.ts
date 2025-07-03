@@ -1,6 +1,6 @@
 // services/commentaire.service.ts
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { API_ENDPOINTS, ApiResponse, PaginatedResponse, PaginationParams } from '@/config/api';
+import { API_ENDPOINTS, ApiResponse, FilterParams, PaginatedResponse, PaginationParams } from '@/config/api';
 import { httpClient } from './httpClient';
 
 interface Commentaire {
@@ -44,9 +44,10 @@ class CommentaireService {
     oeuvreId: number, 
     params?: PaginationParams
   ): Promise<ApiResponse<PaginatedResponse<Commentaire>>> {
+    // Cast vers FilterParams car httpClient.getPaginated l'attend
     return httpClient.getPaginated<Commentaire>(
       API_ENDPOINTS.commentaires.oeuvre(oeuvreId), 
-      params
+      params as FilterParams
     );
   }
 
@@ -67,7 +68,7 @@ class CommentaireService {
   ): Promise<ApiResponse<PaginatedResponse<Commentaire>>> {
     return httpClient.getPaginated<Commentaire>(
       API_ENDPOINTS.commentaires.evenement(evenementId), 
-      params
+      params as FilterParams
     );
   }
 

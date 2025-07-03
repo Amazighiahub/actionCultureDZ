@@ -7,3 +7,5 @@ export { useAuth } from './useAuth';
 // Hooks de permissions
 
 // Hooks de permissions
+export { useOeuvres } from './useOeuvres';
+export type { UseOeuvresReturn } from './useOeuvres';

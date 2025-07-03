@@ -69,7 +69,7 @@ const initProgrammeRoutes = (models) => {
       .optional()
       .isArray()
       .withMessage('Liste d\'intervenants invalide'),
-    body('intervenants.*')
+    body('intervenants.*.id_user')
       .optional()
       .isInt()
       .withMessage('ID intervenant invalide')
@@ -113,8 +113,17 @@ const initProgrammeRoutes = (models) => {
   // ========================================================================
   // ROUTES PUBLIQUES - Consultation
   // ========================================================================
+  // IMPORTANT: L'ordre est crucial - routes spécifiques AVANT routes génériques
 
-  // Liste des programmes d'un événement
+  // 1. Export du programme d'un événement (route la plus spécifique)
+  router.get('/evenement/:evenementId/export', 
+    param('evenementId').isInt().withMessage('ID événement invalide'),
+    query('format').optional().isIn(['json', 'csv', 'pdf']).withMessage('Format invalide'),
+    validationMiddleware.handleValidationErrors,
+    programmeController.exportProgramme.bind(programmeController)
+  );
+
+  // 2. Liste des programmes d'un événement
   router.get('/evenement/:evenementId', 
     param('evenementId').isInt().withMessage('ID événement invalide'),
     query('date').optional().isISO8601().withMessage('Format de date invalide'),
@@ -123,53 +132,17 @@ const initProgrammeRoutes = (models) => {
     programmeController.getProgrammesByEvenement.bind(programmeController)
   );
 
-  // Détails d'un programme
+  // 3. Détails d'un programme (route générique - EN DERNIER pour les GET)
   router.get('/:id', 
     validationMiddleware.validateId('id'),
     programmeController.getProgrammeById.bind(programmeController)
-  );
-
-  // Export du programme d'un événement
-  router.get('/evenement/:evenementId/export', 
-    param('evenementId').isInt().withMessage('ID événement invalide'),
-    query('format').optional().isIn(['json', 'csv', 'pdf']).withMessage('Format invalide'),
-    validationMiddleware.handleValidationErrors,
-    programmeController.exportProgramme.bind(programmeController)
   );
 
   // ========================================================================
   // ROUTES PROTÉGÉES - Gestion (créateur de l'événement)
   // ========================================================================
 
-  // Créer un programme
-  router.post('/evenement/:evenementId', 
-    authMiddleware.authenticate,
-    authMiddleware.requireValidatedProfessional,
-    param('evenementId').isInt().withMessage('ID événement invalide'),
-    programmeValidation,
-    validationMiddleware.handleValidationErrors,
-    programmeController.createProgramme.bind(programmeController)
-  );
-
-  // Mettre à jour un programme
-  router.put('/:id', 
-    authMiddleware.authenticate,
-    authMiddleware.requireValidatedProfessional,
-    validationMiddleware.validateId('id'),
-    programmeValidation,
-    validationMiddleware.handleValidationErrors,
-    programmeController.updateProgramme.bind(programmeController)
-  );
-
-  // Supprimer un programme
-  router.delete('/:id', 
-    authMiddleware.authenticate,
-    authMiddleware.requireValidatedProfessional,
-    validationMiddleware.validateId('id'),
-    programmeController.deleteProgramme.bind(programmeController)
-  );
-
-  // Réorganiser l'ordre des programmes
+  // 4. Réorganiser l'ordre des programmes (route spécifique AVANT les routes avec :id)
   router.put('/evenement/:evenementId/reorder', 
     authMiddleware.authenticate,
     authMiddleware.requireValidatedProfessional,
@@ -179,7 +152,17 @@ const initProgrammeRoutes = (models) => {
     programmeController.reorderProgrammes.bind(programmeController)
   );
 
-  // Dupliquer un programme
+  // 5. Créer un programme
+  router.post('/evenement/:evenementId', 
+    authMiddleware.authenticate,
+    authMiddleware.requireValidatedProfessional,
+    param('evenementId').isInt().withMessage('ID événement invalide'),
+    programmeValidation,
+    validationMiddleware.handleValidationErrors,
+    programmeController.createProgramme.bind(programmeController)
+  );
+
+  // 6. Dupliquer un programme (route spécifique avec action)
   router.post('/:id/duplicate', 
     authMiddleware.authenticate,
     authMiddleware.requireValidatedProfessional,
@@ -189,7 +172,7 @@ const initProgrammeRoutes = (models) => {
     programmeController.duplicateProgramme.bind(programmeController)
   );
 
-  // Mettre à jour le statut d'un programme
+  // 7. Mettre à jour le statut d'un programme (route spécifique avec action)
   router.patch('/:id/statut', 
     authMiddleware.authenticate,
     authMiddleware.requireValidatedProfessional,
@@ -199,10 +182,41 @@ const initProgrammeRoutes = (models) => {
     programmeController.updateStatut.bind(programmeController)
   );
 
+  // 8. Mettre à jour un programme (route générique PUT)
+  router.put('/:id', 
+    authMiddleware.authenticate,
+    authMiddleware.requireValidatedProfessional,
+    validationMiddleware.validateId('id'),
+    programmeValidation,
+    validationMiddleware.handleValidationErrors,
+    programmeController.updateProgramme.bind(programmeController)
+  );
+
+  // 9. Supprimer un programme (route générique DELETE)
+  router.delete('/:id', 
+    authMiddleware.authenticate,
+    authMiddleware.requireValidatedProfessional,
+    validationMiddleware.validateId('id'),
+    programmeController.deleteProgramme.bind(programmeController)
+  );
+
+  // ========================================================================
+  // LOGS DE CONFIRMATION
+  // ========================================================================
+  
   console.log('✅ Routes programmes initialisées avec succès');
-  console.log('  📍 Routes publiques: consultation et export');
-  console.log('  📍 Routes protégées: CRUD complet pour les créateurs');
-  console.log('  📍 Fonctionnalités: vérification chevauchements, réorganisation, duplication');
+  console.log('  📍 Ordre des routes respecté : spécifiques → génériques');
+  console.log('  📍 Routes publiques:');
+  console.log('     - GET /evenement/:evenementId/export');
+  console.log('     - GET /evenement/:evenementId');
+  console.log('     - GET /:id');
+  console.log('  📍 Routes protégées:');
+  console.log('     - PUT /evenement/:evenementId/reorder');
+  console.log('     - POST /evenement/:evenementId');
+  console.log('     - POST /:id/duplicate');
+  console.log('     - PATCH /:id/statut');
+  console.log('     - PUT /:id');
+  console.log('     - DELETE /:id');
 
   return router;
 };

@@ -10,14 +10,21 @@ module.exports = (sequelize) => {
     nom: {
       type: DataTypes.STRING(100),
       allowNull: false,
-      unique: true
+      
     },
     code: {
       type: DataTypes.STRING(10)
     }
   }, {
     tableName: 'langue',
-    timestamps: false
+    timestamps: false,
+    indexes: [
+      {
+        name: 'idx_langue_unique',  // Toujours nommer l'index
+        fields: ['nom'],
+        unique: true
+      }
+    ]
   });
 
   // Associations

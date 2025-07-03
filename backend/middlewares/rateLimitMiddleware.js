@@ -1,268 +1,186 @@
-// middlewares/rateLimitMiddleware.js
+// middlewares/rateLimiter.js
 const rateLimit = require('express-rate-limit');
 const RedisStore = require('rate-limit-redis');
 const Redis = require('ioredis');
 
-// Configuration Redis (optionnel mais recommandé pour la production)
-let redisClient = null;
-if (process.env.REDIS_HOST) {
-  redisClient = new Redis({
-    host: process.env.REDIS_HOST || 'localhost',
-    port: process.env.REDIS_PORT || 6379,
-    password: process.env.REDIS_PASSWORD,
-    db: process.env.REDIS_DB || 0,
-    retryStrategy: (times) => {
-      const delay = Math.min(times * 50, 2000);
-      return delay;
-    }
-  });
-
-  redisClient.on('error', (err) => {
-    console.error('❌ Erreur Redis:', err);
-  });
-
-  redisClient.on('connect', () => {
-    console.log('✅ Redis connecté pour rate limiting');
-  });
-}
-
-// Configuration de base du rate limiter
-const createRateLimiter = (options) => {
-  const baseConfig = {
-    windowMs: 1 * 60 * 1000, // 1 minute par défaut
-    standardHeaders: true, // Retourne les headers `RateLimit-*`
-    legacyHeaders: false, // Désactive les headers `X-RateLimit-*`
-    
-    // Handler personnalisé pour les erreurs 429
-    handler: (req, res) => {
-      const retryAfter = Math.ceil((req.rateLimit.resetTime - Date.now()) / 1000);
-      
-      // Logger l'incident
-      console.warn(`⚠️ Rate limit atteint pour ${req.user?.email || req.ip} sur ${req.path}`);
-      
-      res.status(429).json({
-        success: false,
-        error: 'Trop de requêtes',
-        message: `Limite de ${req.rateLimit.limit} requêtes par ${options.windowMs / 60000} minute(s) dépassée. Réessayez dans ${retryAfter} secondes.`,
-        retryAfter,
-        resetTime: req.rateLimit.resetTime,
-        limit: req.rateLimit.limit,
-        remaining: req.rateLimit.remaining,
-        current: req.rateLimit.current
-      });
-    },
-    
-    // Fonction pour ignorer certaines requêtes
-    skip: (req) => {
-      // Exemption pour les Super Admins
-      if (req.user?.Roles?.some(r => r.nom_role === 'Super Admin')) {
-        return true;
-      }
-      
-      // Exemption pour les requêtes de santé
-      if (req.path === '/health' || req.path === '/api/health') {
-        return true;
-      }
-      
-      return false;
-    },
-    
-    // Générateur de clé unique par utilisateur ou IP
-    keyGenerator: (req) => {
-      // Priorité : utilisateur authentifié > IP
-      if (req.user?.id_user) {
-        return `user_${req.user.id_user}`;
-      }
-      
-      // Fallback sur l'IP (en tenant compte des proxies)
-      return req.ip || req.connection.remoteAddress || 'unknown';
-    },
-    
-    // Message personnalisé
-    message: async (req, res) => {
-      return `Trop de requêtes depuis cet utilisateur/IP, veuillez réessayer après ${options.windowMs / 60000} minute(s)`;
-    }
-  };
-
-  // Utiliser Redis si disponible (recommandé pour plusieurs serveurs)
-  if (process.env.NODE_ENV === 'production' && redisClient) {
-    try {
-      baseConfig.store = new RedisStore({
-        client: redisClient,
-        prefix: 'rl:',
-        sendCommand: (...args) => redisClient.call(...args),
-      });
-      console.log('✅ Rate limiter utilise Redis');
-    } catch (error) {
-      console.warn('⚠️ Impossible d\'utiliser Redis pour le rate limiting:', error);
-    }
-  }
-
-  return rateLimit({ ...baseConfig, ...options });
-};
-
-// Middleware pour ajouter les headers de rate limit même en succès
-const addRateLimitHeaders = (req, res, next) => {
-  if (req.rateLimit) {
-    res.setHeader('X-RateLimit-Limit', req.rateLimit.limit);
-    res.setHeader('X-RateLimit-Remaining', Math.max(0, req.rateLimit.remaining));
-    res.setHeader('X-RateLimit-Reset', new Date(req.rateLimit.resetTime).toISOString());
-    
-    // Ajouter un header personnalisé pour le temps restant
-    const retryAfter = Math.max(0, Math.ceil((req.rateLimit.resetTime - Date.now()) / 1000));
-    if (retryAfter > 0) {
-      res.setHeader('X-RateLimit-Retry-After', retryAfter);
-    }
-  }
-  next();
-};
-
-// Limiteurs spécifiques avec configuration améliorée
-const generalLimiter = createRateLimiter({
-  windowMs: 1 * 60 * 1000, // 1 minute
-  max: 100, // 100 requêtes par minute
-  message: 'Limite générale de 100 requêtes par minute dépassée',
-  skipSuccessfulRequests: false,
-  skipFailedRequests: true, // Ne pas compter les erreurs 5xx
+// Configuration Redis (optionnel, pour environnement distribué)
+const redisClient = new Redis({
+  host: process.env.REDIS_HOST || 'localhost',
+  port: process.env.REDIS_PORT || 6379,
+  password: process.env.REDIS_PASSWORD
 });
 
-const sensitiveActionsLimiter = createRateLimiter({
-  windowMs: 5 * 60 * 1000, // 5 minutes
-  max: 10, // 10 actions sensibles par 5 minutes
-  message: 'Limite d\'actions sensibles atteinte (10 par 5 minutes)',
-  skipSuccessfulRequests: false,
-  skipFailedRequests: false,
-  // Délai progressif après un certain nombre de requêtes
-  delayAfter: 5, // Commencer à ralentir après 5 requêtes
-  delayMs: (hits) => {
-    // Délai exponentiel : 0ms, 1000ms, 2000ms, 4000ms...
-    return hits > 5 ? Math.pow(2, hits - 5) * 1000 : 0;
-  },
-});
-
-const authLimiter = createRateLimiter({
+// 1. Rate limiter global (pour toutes les routes)
+const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // 5 tentatives par 15 minutes
-  skipFailedRequests: false, // Compter toutes les tentatives
-  skipSuccessfulRequests: true, // Ne pas compter les connexions réussies
-  message: 'Trop de tentatives d\'authentification. Compte temporairement verrouillé.',
+  max: 100, // 100 requêtes par fenêtre
+  message: {
+    success: false,
+    error: 'Trop de requêtes, veuillez réessayer plus tard.',
+    retryAfter: new Date(Date.now() + 15 * 60 * 1000)
+  },
+  standardHeaders: true, // Retourne les headers `RateLimit-*`
+  legacyHeaders: false, // Désactive les headers `X-RateLimit-*`
+  // store: new RedisStore({ client: redisClient }), // Décommenter pour Redis
 });
 
-const creationLimiter = createRateLimiter({
+// 2. Rate limiter strict pour les endpoints sensibles
+const strictLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // 5 requêtes max
+  skipSuccessfulRequests: false,
+  message: {
+    success: false,
+    error: 'Limite atteinte pour cette action. Réessayez dans 15 minutes.'
+  }
+});
+
+// 3. Rate limiter pour la création de contenu
+const createContentLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 heure
   max: 20, // 20 créations par heure
-  message: 'Limite de création de contenu atteinte (20 par heure)',
-  skipFailedRequests: true,
-});
-
-const uploadLimiter = createRateLimiter({
-  windowMs: 10 * 60 * 1000, // 10 minutes
-  max: 10, // 10 uploads par 10 minutes
-  message: 'Limite d\'upload atteinte (10 fichiers par 10 minutes)',
-  skipFailedRequests: true,
-});
-
-const searchLimiter = createRateLimiter({
-  windowMs: 1 * 60 * 1000, // 1 minute
-  max: 30, // 30 recherches par minute
-  message: 'Trop de recherches. Veuillez patienter.',
-  skipFailedRequests: true,
-});
-
-// Middleware de rate limiting dynamique basé sur le rôle
-const dynamicRateLimiter = (baseLimit = 100) => {
-  return (req, res, next) => {
-    let limit = baseLimit;
-    
-    // Augmenter la limite pour certains rôles
-    if (req.user?.Roles) {
-      if (req.user.Roles.some(r => r.nom_role === 'Admin')) {
-        limit = limit * 2; // Double pour les admins
-      } else if (req.user.Roles.some(r => r.nom_role === 'Moderateur')) {
-        limit = Math.floor(limit * 1.5); // 50% de plus pour les modérateurs
-      }
-    }
-    
-    // Créer un limiteur avec la limite ajustée
-    const limiter = createRateLimiter({
-      windowMs: 1 * 60 * 1000,
-      max: limit,
-      message: `Limite de ${limit} requêtes par minute dépassée`
+  skipSuccessfulRequests: true, // Ne compte que les échecs
+  keyGenerator: (req) => req.user?.id_user || req.ip,
+  handler: (req, res) => {
+    res.status(429).json({
+      success: false,
+      error: 'Vous avez atteint la limite de création d\'œuvres (20 par heure)',
+      remainingTime: req.rateLimit.resetTime
     });
-    
-    limiter(req, res, next);
-  };
-};
-
-// Fonction pour réinitialiser le rate limit d'un utilisateur (admin)
-const resetRateLimit = async (userId) => {
-  if (!redisClient) {
-    console.warn('⚠️ Redis non disponible pour reset rate limit');
-    return false;
   }
-  
-  try {
-    const keys = await redisClient.keys(`rl:user_${userId}:*`);
-    if (keys.length > 0) {
-      await redisClient.del(...keys);
-      console.log(`✅ Rate limit réinitialisé pour l'utilisateur ${userId}`);
-      return true;
-    }
-    return false;
-  } catch (error) {
-    console.error('❌ Erreur reset rate limit:', error);
-    return false;
-  }
-};
-
-// Middleware pour logger les rate limits approchants
-const rateLimitWarning = (threshold = 0.8) => {
-  return (req, res, next) => {
-    if (req.rateLimit) {
-      const { limit, remaining } = req.rateLimit;
-      const used = limit - remaining;
-      const percentage = used / limit;
-      
-      if (percentage >= threshold) {
-        console.warn(`⚠️ Rate limit warning: ${req.user?.email || req.ip} a utilisé ${Math.round(percentage * 100)}% de sa limite sur ${req.path}`);
-      }
-    }
-    next();
-  };
-};
-// Ajoutez ceci dans votre fichier rateLimitMiddleware.js avant le module.exports :
-
-// Limiteur adaptatif qui ajuste la limite selon l'historique de l'utilisateur
-const adaptiveLimiter = createRateLimiter({
-  windowMs: 1 * 60 * 1000, // 1 minute
-  max: 100, // 100 requêtes par minute par défaut
-  message: 'Limite de requêtes adaptative dépassée',
-  skipSuccessfulRequests: false,
-  skipFailedRequests: true,
 });
 
-// Puis modifiez votre module.exports pour inclure adaptive :
+// 4. Rate limiter pour les vues/statistiques
+const viewLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5 minutes
+  max: 30, // 30 vues par 5 minutes
+  keyGenerator: (req) => {
+    // Clé unique par IP + ID de l'œuvre
+    return `${req.ip}:${req.params.id}`;
+  },
+  skip: (req) => {
+    // Skip pour les utilisateurs authentifiés premium
+    return req.user?.isPremium === true;
+  }
+});
+
+// 5. Rate limiter dynamique basé sur le rôle
+const dynamicLimiter = (options = {}) => {
+  return rateLimit({
+    windowMs: options.windowMs || 15 * 60 * 1000,
+    max: (req) => {
+      // Limites différentes selon le rôle
+      if (req.user?.role === 'admin') return 1000;
+      if (req.user?.role === 'premium') return 500;
+      if (req.user) return 200;
+      return options.max || 50; // Non authentifié
+    },
+    keyGenerator: (req) => {
+      // Utiliser l'ID utilisateur si authentifié, sinon l'IP
+      return req.user?.id_user || req.ip;
+    },
+    ...options
+  });
+};
+
+// 6. Rate limiter avec slowdown progressif
+const speedLimiter = require('express-slow-down');
+
+const progressiveLimiter = speedLimiter({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  delayAfter: 50, // Commence à ralentir après 50 requêtes
+  delayMs: (hits) => hits * 100, // Ajoute 100ms de délai par requête supplémentaire
+  maxDelayMs: 5000, // Maximum 5 secondes de délai
+  // store: new RedisStore({ client: redisClient }), // Pour Redis
+});
+
+// 7. Configuration avancée avec gestion des IPs trustées
+const advancedLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  skip: (req) => {
+    // Liste blanche d'IPs
+    const trustedIPs = ['127.0.0.1', '::1', ...process.env.TRUSTED_IPS?.split(',') || []];
+    return trustedIPs.includes(req.ip);
+  },
+  keyGenerator: (req) => {
+    // Utiliser le header X-Forwarded-For si derrière un proxy
+    const forwarded = req.headers['x-forwarded-for'];
+    if (forwarded) {
+      return forwarded.split(',')[0].trim();
+    }
+    return req.ip;
+  },
+  handler: async (req, res) => {
+    // Log des tentatives excessives
+    console.warn(`⚠️ Rate limit atteint pour ${req.ip} sur ${req.path}`);
+    
+    // Optionnel : Enregistrer dans la base de données
+    if (req.user) {
+      await logRateLimitViolation(req.user.id_user, req.path, req.ip);
+    }
+    
+    res.status(429).json({
+      success: false,
+      error: 'Trop de requêtes',
+      retryAfter: req.rateLimit.resetTime,
+      limit: req.rateLimit.limit,
+      current: req.rateLimit.current,
+      remaining: req.rateLimit.remaining
+    });
+  }
+});
+
+// 8. Rate limiter par endpoint avec configuration
+const endpointLimiters = {
+  login: rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 5,
+    skipSuccessfulRequests: true
+  }),
+  
+  register: rateLimit({
+    windowMs: 60 * 60 * 1000,
+    max: 3,
+    message: 'Trop de tentatives d\'inscription'
+  }),
+  
+  forgotPassword: rateLimit({
+    windowMs: 60 * 60 * 1000,
+    max: 3,
+    skipSuccessfulRequests: false
+  }),
+  
+  apiKey: rateLimit({
+    windowMs: 24 * 60 * 60 * 1000, // 24 heures
+    max: 5,
+    message: 'Limite de génération de clés API atteinte'
+  })
+};
+
+// Fonction helper pour logger les violations
+async function logRateLimitViolation(userId, endpoint, ip) {
+  // Implémenter selon vos besoins
+  console.log(`Rate limit violation: User ${userId} on ${endpoint} from ${ip}`);
+}
 
 module.exports = {
-  // Limiteurs principaux avec headers
-  general: [generalLimiter, addRateLimitHeaders, rateLimitWarning()],
-  sensitiveActions: [sensitiveActionsLimiter, addRateLimitHeaders, rateLimitWarning(0.5)],
-  auth: [authLimiter, addRateLimitHeaders],
-  creation: [creationLimiter, addRateLimitHeaders, rateLimitWarning(0.7)],
-  upload: [uploadLimiter, addRateLimitHeaders],
-  search: [searchLimiter, addRateLimitHeaders],
+  globalLimiter,
+  strictLimiter,
+  createContentLimiter,
+  viewLimiter,
+  dynamicLimiter,
+  progressiveLimiter,
+  advancedLimiter,
+  endpointLimiters,
   
-  // AJOUTER CETTE LIGNE :
-  adaptive: [adaptiveLimiter, addRateLimitHeaders, rateLimitWarning()],
-  
-  // Limiteur dynamique
-  dynamic: dynamicRateLimiter,
-  
-  // Utilitaires
-  addHeaders: addRateLimitHeaders,
-  warning: rateLimitWarning,
-  resetUserLimit: resetRateLimit,
-  
-  // Accès direct aux créateurs pour configuration personnalisée
-  createLimiter: createRateLimiter
+  // Arrays expected by app.js
+  auth: [
+    endpointLimiters.login,
+    endpointLimiters.register,
+    endpointLimiters.forgotPassword
+  ].filter(Boolean), 
+  creation: [createContentLimiter],
+  sensitiveActions: [strictLimiter],
+  general: [globalLimiter]
 };

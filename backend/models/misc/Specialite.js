@@ -10,7 +10,7 @@ module.exports = (sequelize) => {
     nom_specialite: {
       type: DataTypes.STRING(100),
       allowNull: false,
-      unique: true
+     
     },
     description: {
       type: DataTypes.TEXT,
@@ -26,7 +26,14 @@ module.exports = (sequelize) => {
     }
   }, {
     tableName: 'specialites',
-    timestamps: false
+    timestamps: false,
+    indexes: [
+     
+      {
+        name: 'id_index_specialite',  // Toujours nommer l'index
+        fields: ['nom_specialite'],
+        unique: true
+      }]
   });
 
   return Specialite;

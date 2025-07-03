@@ -6,22 +6,22 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { 
-  UserPlus, 
-  FileText, 
-  Calendar, 
+import {
+  UserPlus,
+  FileText,
+  Calendar,
   AlertTriangle,
   CheckCircle,
   XCircle,
   Edit,
   Trash,
   RefreshCw,
-  Activity
-} from 'lucide-react';
+  Activity } from
+'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { socketService } from '@/services/socketService';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils';import { useTranslation } from "react-i18next";
 
 interface ActivityItem {
   id: string;
@@ -58,7 +58,7 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
   const [filter, setFilter] = useState<string>('all');
 
   // Se connecter aux événements WebSocket
-  useEffect(() => {
+  const { t } = useTranslation();useEffect(() => {
     if (!isLive || !socketService.isConnected) return;
 
     const handleNewActivity = (data: any) => {
@@ -72,7 +72,7 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
         timestamp: data.timestamp || new Date().toISOString()
       };
 
-      setActivities(prev => {
+      setActivities((prev) => {
         const updated = [newActivity, ...prev];
         return updated.slice(0, maxItems);
       });
@@ -144,7 +144,7 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
   // Formater le message d'activité
   const formatActivityMessage = (activity: ActivityItem) => {
     const userName = `${activity.user.prenom} ${activity.user.nom}`;
-    
+
     switch (activity.action) {
       case 'user_registered':
         return `${userName} s'est inscrit`;
@@ -164,7 +164,7 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
   };
 
   // Filtrer les activités
-  const filteredActivities = activities.filter(activity => {
+  const filteredActivities = activities.filter((activity) => {
     if (filter === 'all') return true;
     return activity.type === filter;
   });
@@ -174,22 +174,22 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
-            <Activity className="h-5 w-5" />
-            Activité en temps réel
-            {isLive && (
-              <div className="relative">
-                <Badge variant="default" className="animate-pulse bg-green-600 text-white hover:bg-green-600">
-                  LIVE
-                </Badge>
+            <Activity className="h-5 w-5" />{t("dashboard_activitytimeline.activit_temps_rel")}
+
+            {isLive &&
+            <div className="relative">
+                <Badge variant="default" className="animate-pulse bg-green-600 text-white hover:bg-green-600">{t("dashboard_activitytimeline.live")}
+
+              </Badge>
                 <span className="absolute -right-1 -top-1 h-3 w-3 animate-ping rounded-full bg-green-600" />
               </div>
-            )}
+            }
           </CardTitle>
           <Button
             variant={isLive ? "secondary" : "outline"}
             size="sm"
-            onClick={() => setIsLive(!isLive)}
-          >
+            onClick={() => setIsLive(!isLive)}>
+
             <RefreshCw className={cn("h-4 w-4 mr-1", isLive && "animate-spin")} />
             {isLive ? 'Pause' : 'Reprendre'}
           </Button>
@@ -197,33 +197,33 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
         
         {/* Filtres */}
         <div className="flex gap-2 mt-4">
-          <Badge 
+          <Badge
             variant={filter === 'all' ? 'default' : 'outline'}
             className="cursor-pointer"
-            onClick={() => setFilter('all')}
-          >
-            Tout
+            onClick={() => setFilter('all')}>{t("dashboard_activitytimeline.tout")}
+
+
           </Badge>
-          <Badge 
+          <Badge
             variant={filter === 'user_action' ? 'default' : 'outline'}
             className="cursor-pointer"
-            onClick={() => setFilter('user_action')}
-          >
-            Utilisateurs
+            onClick={() => setFilter('user_action')}>{t("dashboard_activitytimeline.utilisateurs")}
+
+
           </Badge>
-          <Badge 
+          <Badge
             variant={filter === 'content_action' ? 'default' : 'outline'}
             className="cursor-pointer"
-            onClick={() => setFilter('content_action')}
-          >
-            Contenu
+            onClick={() => setFilter('content_action')}>{t("dashboard_activitytimeline.contenu")}
+
+
           </Badge>
-          <Badge 
+          <Badge
             variant={filter === 'moderation' ? 'default' : 'outline'}
             className="cursor-pointer"
-            onClick={() => setFilter('moderation')}
-          >
-            Modération
+            onClick={() => setFilter('moderation')}>{t("dashboard_activitytimeline.modration")}
+
+
           </Badge>
         </div>
       </CardHeader>
@@ -231,16 +231,16 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
       <CardContent>
         <ScrollArea className="h-[400px] pr-4">
           <div className="space-y-4">
-            {filteredActivities.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">
-                Aucune activité à afficher
-              </p>
-            ) : (
-              filteredActivities.map((activity) => (
-                <div 
-                  key={activity.id} 
-                  className="flex gap-3 items-start p-3 rounded-lg hover:bg-muted/50 transition-colors"
-                >
+            {filteredActivities.length === 0 ?
+            <p className="text-center text-muted-foreground py-8">{t("dashboard_activitytimeline.aucune_activit_afficher")}
+
+            </p> :
+
+            filteredActivities.map((activity) =>
+            <div
+              key={activity.id}
+              className="flex gap-3 items-start p-3 rounded-lg hover:bg-muted/50 transition-colors">
+
                   {/* Avatar */}
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={activity.user.avatar} />
@@ -253,37 +253,37 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
                   <div className="flex-1 space-y-1">
                     <p className="text-sm">
                       <span className="font-medium">{formatActivityMessage(activity)}</span>
-                      {activity.target && (
-                        <span className="text-muted-foreground">
+                      {activity.target &&
+                  <span className="text-muted-foreground">
                           {' '}• {activity.target.type}
                         </span>
-                      )}
+                  }
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {formatDistanceToNow(new Date(activity.timestamp), { 
-                        addSuffix: true,
-                        locale: fr 
-                      })}
+                      {formatDistanceToNow(new Date(activity.timestamp), {
+                    addSuffix: true,
+                    locale: fr
+                  })}
                     </p>
                   </div>
                   
                   {/* Icône d'action */}
                   <div className={cn(
-                    "p-1.5 rounded",
-                    getActionColor(activity.type, activity.action) === 'destructive' && "bg-red-100 text-red-600",
-                    getActionColor(activity.type, activity.action) === 'success' && "bg-green-100 text-green-600",
-                    getActionColor(activity.type, activity.action) === 'warning' && "bg-yellow-100 text-yellow-600",
-                    getActionColor(activity.type, activity.action) === 'secondary' && "bg-secondary text-secondary-foreground",
-                    getActionColor(activity.type, activity.action) === 'default' && "bg-gray-100 text-gray-600"
-                  )}>
+                "p-1.5 rounded",
+                getActionColor(activity.type, activity.action) === 'destructive' && "bg-red-100 text-red-600",
+                getActionColor(activity.type, activity.action) === 'success' && "bg-green-100 text-green-600",
+                getActionColor(activity.type, activity.action) === 'warning' && "bg-yellow-100 text-yellow-600",
+                getActionColor(activity.type, activity.action) === 'secondary' && "bg-secondary text-secondary-foreground",
+                getActionColor(activity.type, activity.action) === 'default' && "bg-gray-100 text-gray-600"
+              )}>
                     {getActionIcon(activity.action)}
                   </div>
                 </div>
-              ))
-            )}
+            )
+            }
           </div>
         </ScrollArea>
       </CardContent>
-    </Card>
-  );
+    </Card>);
+
 };

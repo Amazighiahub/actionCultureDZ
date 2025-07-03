@@ -5,6 +5,7 @@ import { MaterielRequis } from './specific-types';
 import { Evenement } from './evenement.types';
 import { Lieu } from './lieu.types';
 import { Intervenant } from './intervenant.types';
+import { User } from './user.types';
 
 export interface Programme {
   id_programme: number;
@@ -12,6 +13,7 @@ export interface Programme {
   description?: string;
   id_evenement: number;
   id_lieu?: number;
+  date_programme?: Date;
   heure_debut?: string;
   heure_fin?: string;
   lieu_specifique?: string;
@@ -32,7 +34,7 @@ export interface Programme {
   // Relations (optionnelles)
   Evenement?: Evenement;
   Lieu?: Lieu;
-  Intervenants?: Intervenant[];
+  Users?: User[];
 }
 
 // Type pour la création d'un programme

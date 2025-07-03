@@ -18,7 +18,7 @@ module.exports = (sequelize) => {
     code_unique: {
       type: DataTypes.STRING(100),
       allowNull: false,
-      unique: true
+     
     },
     url_destination: {
       type: DataTypes.STRING(500),
@@ -42,7 +42,14 @@ module.exports = (sequelize) => {
     }
   }, {
     tableName: 'qr_codes',
-    timestamps: false
+    timestamps: false,
+    indexes: [
+     
+      {
+        name: 'id_index_code',  // Toujours nommer l'index
+        fields: ['code_unique'],
+        unique: true
+      },]
   });
 
   return QRCode;

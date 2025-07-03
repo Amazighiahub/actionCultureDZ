@@ -1,4 +1,6 @@
 // controllers/UserController.js
+const emailService = require('../services/emailService');
+const EmailVerification = require('../models/misc/EmailVerification')
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
@@ -36,7 +38,7 @@ class UserController {
         prenom,
         email,
         password,
-        id_type_user = 'visiteur',
+        id_type_user = TYPE_USER_IDS.VISITEUR,
         accepte_conditions = false,
         accepte_newsletter = false,
         photo_url, // NOUVEAU: Accepte photo_url dans le body
@@ -129,10 +131,10 @@ class UserController {
         id_type_user,
         accepte_conditions,
         accepte_newsletter,
-        statut: 'actif',
+        statut: 'en_attente_validation',
         email_verifie: false,
         photo_url: photo_url || null, // MODIFIÉ: Utilise la photo fournie ou null
-        statut_validation: id_type_user === TYPE_USER_IDS.VISITEUR ? null : 'en_attente',
+        statut_validation: id_type_user === TYPE_USER_IDS.VISITEUR ? null : 'en_attente_validation',
         date_creation: new Date(),
         ip_inscription: req.ip
       };
@@ -171,21 +173,48 @@ class UserController {
       }
 
       // Assigner le rôle User par défaut
-      if (this.models.UserRole && this.models.Role) {
-        const userRole = await this.models.Role.findOne({
-          where: { nom_role: 'User' },
-          transaction
-        });
+      // Déterminer le rôle selon le type d'utilisateur
+let roleName = 'User'; // Par défaut pour les visiteurs
 
-        if (userRole) {
-          await this.models.UserRole.create({
-            id_user: userId,
-            id_role: userRole.id_role
-          }, { transaction });
-        }
-      }
+// Si ce n'est pas un visiteur (id_type_user !== 1), c'est un professionnel
+if (id_type_user !== TYPE_USER_IDS.VISITEUR) {
+  roleName = 'Professionnel';
+}
 
+// Assigner le rôle approprié
+if (this.models.UserRole && this.models.Role) {
+  const userRole = await this.models.Role.findOne({
+    where: { nom_role: roleName },
+    transaction
+  });
+
+  if (userRole) {
+    await this.models.UserRole.create({
+      id_user: userId,
+      id_role: userRole.id_role
+    }, { transaction });
+    
+    console.log(`✅ Rôle "${roleName}" assigné à l'utilisateur ${userId}`);
+  }
+}
+
+  // AJOUT: Créer le jeton de vérification
+  const verificationToken = crypto.randomBytes(32).toString('hex');
+  await this.models.EmailVerification.create({
+      id_user: userId,
+      token: verificationToken,
+      type: 'email_verification',
+      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000) // Expire dans 24h
+  }, { transaction });
       await transaction.commit();
+
+      // Envoi de l'email de vérification (corrigé)
+      try {
+        await emailService.sendVerificationEmail(user, verificationToken); // On utilise "user" et le token créé juste avant
+        console.log(`📧 Email de vérification envoyé à ${user.email}`);
+      } catch (emailError) {
+        console.error("Erreur critique lors de l'envoi de l'email de vérification:", emailError);
+      }
 
       // Générer le token JWT
       const token = this.generateToken(user);
@@ -197,8 +226,8 @@ class UserController {
       res.status(201).json({
         success: true,
         message: photo_url 
-          ? 'Inscription réussie avec photo de profil !' 
-          : 'Inscription réussie ! Vous pouvez ajouter une photo de profil plus tard.',
+        ? 'Inscription réussie ! Un e-mail de vérification a été envoyé pour activer votre compte.'
+        : 'Inscription réussie ! Un e-mail de vérification a été envoyé. Vous pourrez ajouter une photo plus tard.',
         data: {
           user: userResponse,
           token,
@@ -214,6 +243,46 @@ class UserController {
         error: 'Erreur lors de l\'inscription',
         details: process.env.NODE_ENV === 'development' ? error.message : undefined
       });
+    }
+  }
+
+
+  async verifyEmail(req, res) {
+    const { token } = req.params; // On récupère le token depuis les paramètres de l'URL
+    
+    try {
+      const verification = await this.models.EmailVerification.verifyToken(token, 'email_verification');
+      
+      if (!verification) {
+        return res.status(400).json({
+          success: false,
+          error: 'Jeton invalide, expiré ou déjà utilisé.'
+        });
+      }
+
+      const user = verification.User;
+      if (!user) {
+        return res.status(404).json({ success: false, error: 'Utilisateur associé non trouvé.' });
+      }
+
+      user.statut = 'actif';
+      user.email_verifie = true;
+      await user.save();
+    
+      const jwtToken = this.generateToken(user);
+      const userResponse = user.toJSON();
+      delete userResponse.password;
+
+      res.json({
+        success: true,
+        data: {
+          user: userResponse,
+          token: jwtToken
+        }
+      });
+    } catch (error) {
+      console.error('❌ Erreur lors de la vérification de l\'email:', error);
+      res.status(500).json({ success: false, error: 'Erreur interne du serveur.' });
     }
   }
 

@@ -33,6 +33,13 @@ module.exports = (sequelize) => {
         key: 'id_lieu'
       }
     },
+    date_programme: {
+      type: DataTypes.DATEONLY,  // Format YYYY-MM-DD
+      allowNull: false,
+      validate: {
+        isDate: true
+      }
+    },
     heure_debut: {
       type: DataTypes.TIME
     },
@@ -116,6 +123,9 @@ module.exports = (sequelize) => {
         fields: ['id_evenement']
       },
       {
+        fields: ['date_programme']  // Nouvel index pour les requêtes par date
+      },
+      {
         fields: ['ordre']
       },
       {
@@ -140,12 +150,12 @@ module.exports = (sequelize) => {
     });
     
     // Relation avec Intervenant (pas User)
-    Programme.belongsToMany(models.Intervenant, {
-      through: models.ProgrammeIntervenant,
-      foreignKey: 'id_programme',
-      otherKey: 'id_intervenant',
-      as: 'Intervenants'
-    });
+    Programme.belongsToMany(models.User, {
+    through: models.ProgrammeIntervenant,
+    foreignKey: 'id_programme',
+    otherKey: 'id_user',  // Maintenant c'est id_user
+    as: 'Intervenants'    // On garde l'alias 'Intervenants' pour la clarté
+  });
     
     Programme.hasMany(models.ProgrammeIntervenant, {
       foreignKey: 'id_programme',

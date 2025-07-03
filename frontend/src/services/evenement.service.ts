@@ -5,29 +5,9 @@ import { BaseService } from './base.service';
 import { httpClient } from './httpClient';
 import { Programme } from '@/types';
 import { mediaService } from './media.service';
+import { Evenement } from '@/types/models/evenement.types';
 
-interface Evenement {
-  id: number;
-  titre: string;
-  description: string;
-  date_debut: string;
-  date_fin: string;
-  heure_debut?: string;
-  heure_fin?: string;
-  lieu_id?: number;
-  adresse?: string;
-  latitude?: number;
-  longitude?: number;
-  statut: string;
-  capacite_max?: number;
-  participants_count?: number;
-  organisateur_id: number;
-  organisation_id?: number;
-  medias?: EventMedia[];
-  programmes?: Programme[];
-  created_at: string;
-  updated_at: string;
-}
+
 
 interface CreateEvenementData {
   titre: string;
@@ -171,7 +151,7 @@ class EvenementService extends BaseService<Evenement, CreateEvenementData, Updat
   async addMedias(eventId: number, files: File[]): Promise<ApiResponse<EventMedia[]>> {
     // Utiliser mediaService pour upload multiple
     const uploadResult = await mediaService.uploadMultiple(files, 'evenement', eventId);
-    
+
     if (uploadResult.success && uploadResult.data) {
       // Transformer la réponse pour correspondre au type EventMedia[]
       const eventMedias: EventMedia[] = uploadResult.data.map((media, index) => ({
@@ -182,13 +162,13 @@ class EvenementService extends BaseService<Evenement, CreateEvenementData, Updat
         description: '',
         ordre: index
       }));
-      
+
       return {
         success: true,
         data: eventMedias
       };
     }
-    
+
     return {
       success: false,
       error: uploadResult.error || 'Erreur lors de l\'upload des médias'
@@ -239,10 +219,40 @@ class EvenementService extends BaseService<Evenement, CreateEvenementData, Updat
   }>> {
     return httpClient.get<any>(API_ENDPOINTS.evenements.statistics);
   }
+
+  
+/**
+ * Récupérer les événements où une œuvre est présentée
+ */
+async getByOeuvre(oeuvreId: number): Promise<ApiResponse<Evenement[]>> {
+  try {
+    console.log('🔍 Récupération événements pour œuvre:', oeuvreId);
+    
+    const response = await httpClient.get<Evenement[]>(
+      `/evenements/oeuvre/${oeuvreId}`
+    );
+    
+    if (response.success && response.data) {
+      console.log(`✅ ${response.data.length} événements trouvés`);
+      return response;
+    }
+    
+    return {
+      success: false,
+      error: response.error || 'Aucun événement trouvé'
+    };
+  } catch (error: any) {
+    console.error('❌ Erreur récupération événements par œuvre:', error);
+    return {
+      success: false,
+      error: error.message || 'Erreur lors de la récupération des événements'
+    };
+  }
+}
 }
 
 export const evenementService = new EvenementService();
-export type { 
-  Evenement, CreateEvenementData, UpdateEvenementData, EventMedia, 
-  Participant, ShareData, NotificationData, SearchEvenementsParams 
+export type {
+  Evenement, CreateEvenementData, UpdateEvenementData, EventMedia,
+  Participant, ShareData, NotificationData, SearchEvenementsParams
 };

@@ -1,6 +1,7 @@
 // components/oeuvre/IntervenantEditeurManager.tsx - VERSION CORRIGÉE
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,6 +30,7 @@ import { oeuvreService } from '@/services/oeuvre.service';
 import { metadataService } from '@/services/metadata.service';
 import IntervenantModal from '@/components/modals/IntervenantModal';
 import EditeurModal from '@/components/modals/EditeurModal';
+import { useRTL } from '@/hooks/useRTL';
 import type { 
   IntervenantExistant, 
   NouvelIntervenant, 
@@ -69,6 +71,9 @@ const IntervenantEditeurManager: React.FC<IntervenantEditeurManagerProps> = ({
   onIntervenantsChange,
   onEditeursChange
 }) => {
+  const { t } = useTranslation();
+  const { rtlClasses } = useRTL();
+  
   // États pour les intervenants
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<IntervenantSearchResult[]>([]);
@@ -172,7 +177,7 @@ const IntervenantEditeurManager: React.FC<IntervenantEditeurManagerProps> = ({
         
       } catch (error) {
         console.error('❌ Erreur recherche intervenants:', error);
-        setSearchError('Erreur lors de la recherche');
+        setSearchError(t('contributors.errors.searchError'));
         setSearchResults([]);
       } finally {
         setSearching(false);
@@ -181,7 +186,7 @@ const IntervenantEditeurManager: React.FC<IntervenantEditeurManagerProps> = ({
 
     const debounceTimer = setTimeout(searchIntervenants, 300);
     return () => clearTimeout(debounceTimer);
-  }, [searchQuery]);
+  }, [searchQuery, t]);
 
   // Filtrage des éditeurs
   useEffect(() => {
@@ -335,23 +340,23 @@ const IntervenantEditeurManager: React.FC<IntervenantEditeurManagerProps> = ({
       {/* Section Intervenants */}
       <Card className="shadow-cultural">
         <CardHeader>
-          <CardTitle className="text-2xl font-serif flex items-center gap-2">
+          <CardTitle className={`text-2xl font-serif flex items-center gap-2 ${rtlClasses.flexRow}`}>
             <Users className="h-6 w-6" />
-            Intervenants
+            {t('contributors.title')}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Intervenants sélectionnés */}
           {selectedIntervenants.length > 0 && (
             <div className="space-y-2 mb-4">
-              <Label>Intervenants ajoutés ({selectedIntervenants.length})</Label>
+              <Label>{t('contributors.addedCount', { count: selectedIntervenants.length })}</Label>
               <div className="space-y-2">
                 {selectedIntervenants.map((intervenant) => (
                   <div 
                     key={intervenant.id}
                     className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg hover:bg-secondary/70 transition-colors"
                   >
-                    <div className="flex items-center gap-3">
+                    <div className={`flex items-center gap-3 ${rtlClasses.flexRow}`}>
                       <User className="h-5 w-5 text-muted-foreground" />
                       <div>
                         <p className="font-medium">
@@ -364,7 +369,7 @@ const IntervenantEditeurManager: React.FC<IntervenantEditeurManagerProps> = ({
                           {intervenant.display.email && ` • ${intervenant.display.email}`}
                         </p>
                         {intervenant.display.specialites && intervenant.display.specialites.length > 0 && (
-                          <div className="flex gap-1 mt-1">
+                          <div className={`flex gap-1 mt-1 ${rtlClasses.flexRow}`}>
                             {intervenant.display.specialites.slice(0, 3).map((spec, idx) => (
                               <Badge key={idx} variant="outline" className="text-xs">
                                 {spec}
@@ -374,7 +379,7 @@ const IntervenantEditeurManager: React.FC<IntervenantEditeurManagerProps> = ({
                         )}
                       </div>
                       {intervenant.type === 'nouveau' && (
-                        <Badge variant="secondary">Nouveau</Badge>
+                        <Badge variant="secondary">{t('contributors.new')}</Badge>
                       )}
                       {intervenant.type === 'existant' && (
                         <CheckCircle className="h-4 w-4 text-green-500" />
@@ -396,17 +401,17 @@ const IntervenantEditeurManager: React.FC<IntervenantEditeurManagerProps> = ({
 
           {/* Recherche d'intervenants */}
           <div className="space-y-2">
-            <Label>Rechercher un intervenant existant</Label>
+            <Label>{t('contributors.searchExisting')}</Label>
             <div className="relative">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Search className={`absolute ${rtlClasses.start(3)} top-2.5 h-4 w-4 text-muted-foreground`} />
               <Input
-                placeholder="Rechercher par nom, prénom..."
+                placeholder={t('contributors.searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
+                className={`${rtlClasses.paddingStart(9)}`}
               />
               {searching && (
-                <Loader2 className="absolute right-3 top-2.5 h-4 w-4 animate-spin text-muted-foreground" />
+                <Loader2 className={`absolute ${rtlClasses.end(3)} top-2.5 h-4 w-4 animate-spin text-muted-foreground`} />
               )}
             </div>
 
@@ -436,12 +441,12 @@ const IntervenantEditeurManager: React.FC<IntervenantEditeurManagerProps> = ({
                         <div className="flex-1">
                           <p className="font-medium">
                             {result.label}
-                            {isAlreadyAdded && <span className="text-sm text-muted-foreground ml-2">(Déjà ajouté)</span>}
+                            {isAlreadyAdded && <span className={`text-sm text-muted-foreground ${rtlClasses.marginStart(2)}`}>({t('contributors.alreadyAdded')})</span>}
                           </p>
                           <p className="text-sm text-muted-foreground">
                             {result.organisation}
                             {result.specialites && result.specialites.length > 0 && (
-                              <span className="ml-2">• {result.specialites.join(', ')}</span>
+                              <span className={rtlClasses.marginStart(2)}>• {result.specialites.join(', ')}</span>
                             )}
                           </p>
                         </div>
@@ -450,14 +455,14 @@ const IntervenantEditeurManager: React.FC<IntervenantEditeurManagerProps> = ({
                             onValueChange={(value) => handleAddExistingIntervenant(result, parseInt(value))}
                           >
                             <SelectTrigger className="w-[180px]">
-                              <SelectValue placeholder="Sélectionner un rôle" />
+                              <SelectValue placeholder={t('contributors.selectRole')} />
                             </SelectTrigger>
                             <SelectContent>
                               {typesUsers.map((type) => (
                                 <SelectItem key={type.id_type_user} value={type.id_type_user.toString()}>
                                   {type.nom_type}
                                   {type.description && (
-                                    <span className="text-xs text-muted-foreground ml-1">
+                                    <span className={`text-xs text-muted-foreground ${rtlClasses.marginStart(1)}`}>
                                       ({type.description})
                                     </span>
                                   )}
@@ -476,7 +481,7 @@ const IntervenantEditeurManager: React.FC<IntervenantEditeurManagerProps> = ({
             {/* Message si aucun résultat */}
             {!searching && searchQuery.length >= 2 && searchResults.length === 0 && (
               <p className="text-sm text-muted-foreground text-center py-2">
-                Aucun intervenant trouvé pour "{searchQuery}"
+                {t('contributors.noResultsFor', { query: searchQuery })}
               </p>
             )}
           </div>
@@ -487,8 +492,8 @@ const IntervenantEditeurManager: React.FC<IntervenantEditeurManagerProps> = ({
             onClick={() => setShowIntervenantModal(true)}
             className="w-full"
           >
-            <Plus className="h-4 w-4 mr-2" />
-            Créer un nouvel intervenant
+            <Plus className={`h-4 w-4 ${rtlClasses.marginEnd(2)}`} />
+            {t('contributors.createNew')}
           </Button>
         </CardContent>
       </Card>
@@ -497,16 +502,16 @@ const IntervenantEditeurManager: React.FC<IntervenantEditeurManagerProps> = ({
       {shouldShowEditeurs() && (
         <Card className="shadow-cultural">
           <CardHeader>
-            <CardTitle className="text-2xl font-serif flex items-center gap-2">
+            <CardTitle className={`text-2xl font-serif flex items-center gap-2 ${rtlClasses.flexRow}`}>
               <Building2 className="h-6 w-6" />
-              Éditeurs
+              {t('publishers.title')}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Éditeurs sélectionnés */}
             {selectedEditeurs.length > 0 && (
               <div className="space-y-2 mb-4">
-                <Label>Éditeurs ajoutés ({selectedEditeurs.length})</Label>
+                <Label>{t('publishers.addedCount', { count: selectedEditeurs.length })}</Label>
                 <div className="space-y-2">
                   {selectedEditeurs.map((editeurOeuvre, index) => {
                     const editeur = editeurs.find(e => e.id_editeur === editeurOeuvre.id_editeur);
@@ -518,7 +523,7 @@ const IntervenantEditeurManager: React.FC<IntervenantEditeurManagerProps> = ({
                         className="p-3 bg-secondary/50 rounded-lg space-y-3"
                       >
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
+                          <div className={`flex items-center gap-3 ${rtlClasses.flexRow}`}>
                             <Building2 className="h-5 w-5 text-muted-foreground" />
                             <div>
                               <p className="font-medium">{editeur.nom}</p>
@@ -539,9 +544,9 @@ const IntervenantEditeurManager: React.FC<IntervenantEditeurManagerProps> = ({
                         </div>
 
                         {/* Détails de l'édition */}
-                        <div className="grid grid-cols-2 gap-3 pl-8">
+                        <div className={`grid grid-cols-2 gap-3 ${rtlClasses.paddingStart(8)}`}>
                           <div className="space-y-1">
-                            <Label className="text-xs">Rôle</Label>
+                            <Label className="text-xs">{t('publishers.role')}</Label>
                             <Select
                               value={editeurOeuvre.role_editeur}
                               onValueChange={(value) => handleUpdateEditeur(index, { 
@@ -552,17 +557,17 @@ const IntervenantEditeurManager: React.FC<IntervenantEditeurManagerProps> = ({
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="editeur_principal">Éditeur principal</SelectItem>
-                                <SelectItem value="co_editeur">Co-éditeur</SelectItem>
-                                <SelectItem value="distributeur">Distributeur</SelectItem>
-                                <SelectItem value="editeur_original">Éditeur original</SelectItem>
-                                <SelectItem value="editeur_traduction">Éditeur traduction</SelectItem>
+                                <SelectItem value="editeur_principal">{t('publishers.roles.mainPublisher')}</SelectItem>
+                                <SelectItem value="co_editeur">{t('publishers.roles.coPublisher')}</SelectItem>
+                                <SelectItem value="distributeur">{t('publishers.roles.distributor')}</SelectItem>
+                                <SelectItem value="editeur_original">{t('publishers.roles.originalPublisher')}</SelectItem>
+                                <SelectItem value="editeur_traduction">{t('publishers.roles.translationPublisher')}</SelectItem>
                               </SelectContent>
                             </Select>
                           </div>
 
                           <div className="space-y-1">
-                            <Label className="text-xs">Statut</Label>
+                            <Label className="text-xs">{t('publishers.status')}</Label>
                             <Select
                               value={editeurOeuvre.statut_edition || 'en_cours'}
                               onValueChange={(value) => handleUpdateEditeur(index, { 
@@ -573,16 +578,16 @@ const IntervenantEditeurManager: React.FC<IntervenantEditeurManagerProps> = ({
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="en_cours">En cours</SelectItem>
-                                <SelectItem value="publie">Publié</SelectItem>
-                                <SelectItem value="epuise">Épuisé</SelectItem>
-                                <SelectItem value="annule">Annulé</SelectItem>
+                                <SelectItem value="en_cours">{t('publishers.statuses.inProgress')}</SelectItem>
+                                <SelectItem value="publie">{t('publishers.statuses.published')}</SelectItem>
+                                <SelectItem value="epuise">{t('publishers.statuses.outOfStock')}</SelectItem>
+                                <SelectItem value="annule">{t('publishers.statuses.cancelled')}</SelectItem>
                               </SelectContent>
                             </Select>
                           </div>
 
                           <div className="space-y-1">
-                            <Label className="text-xs">ISBN</Label>
+                            <Label className="text-xs">{t('publishers.isbn')}</Label>
                             <Input
                               className="h-8 text-sm"
                               placeholder="978-..."
@@ -594,11 +599,11 @@ const IntervenantEditeurManager: React.FC<IntervenantEditeurManagerProps> = ({
                           </div>
 
                           <div className="space-y-1">
-                            <Label className="text-xs">Prix de vente</Label>
+                            <Label className="text-xs">{t('publishers.salePrice')}</Label>
                             <Input
                               className="h-8 text-sm"
                               type="number"
-                              placeholder="Prix en DA"
+                              placeholder={t('publishers.pricePlaceholder')}
                               value={editeurOeuvre.prix_vente || ''}
                               onChange={(e) => handleUpdateEditeur(index, { 
                                 prix_vente: parseFloat(e.target.value) || undefined 
@@ -615,14 +620,14 @@ const IntervenantEditeurManager: React.FC<IntervenantEditeurManagerProps> = ({
 
             {/* Recherche d'éditeurs */}
             <div className="space-y-2">
-              <Label>Rechercher un éditeur</Label>
+              <Label>{t('publishers.search')}</Label>
               <div className="relative">
-                <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Search className={`absolute ${rtlClasses.start(3)} top-2.5 h-4 w-4 text-muted-foreground`} />
                 <Input
-                  placeholder="Rechercher par nom ou ville..."
+                  placeholder={t('publishers.searchPlaceholder')}
                   value={editeurSearchQuery}
                   onChange={(e) => setEditeurSearchQuery(e.target.value)}
-                  className="pl-9"
+                  className={`${rtlClasses.paddingStart(9)}`}
                 />
               </div>
 
@@ -652,7 +657,7 @@ const IntervenantEditeurManager: React.FC<IntervenantEditeurManagerProps> = ({
 
               {editeurSearchQuery && filteredEditeurs.length === 0 && (
                 <p className="text-sm text-muted-foreground text-center py-2">
-                  Aucun éditeur trouvé pour "{editeurSearchQuery}"
+                  {t('publishers.noResultsFor', { query: editeurSearchQuery })}
                 </p>
               )}
             </div>
@@ -663,8 +668,8 @@ const IntervenantEditeurManager: React.FC<IntervenantEditeurManagerProps> = ({
               onClick={() => setShowEditeurModal(true)}
               className="w-full"
             >
-              <Plus className="h-4 w-4 mr-2" />
-              Créer un nouvel éditeur
+              <Plus className={`h-4 w-4 ${rtlClasses.marginEnd(2)}`} />
+              {t('publishers.createNew')}
             </Button>
           </CardContent>
         </Card>

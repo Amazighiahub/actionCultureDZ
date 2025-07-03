@@ -57,7 +57,7 @@ export function useAuth(): UseAuthReturn {
             navigate('/admin/dashboard');
           } else if (currentUser.id_type_user !== 1) {
             // Professionnel
-            navigate('/dashboard');
+            navigate('/dashboard-pro');
           } else {
             // Visiteur
             navigate('/');

@@ -11,19 +11,19 @@ import { socketService } from '@/services/socketService';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { 
-  Wifi, 
-  WifiOff, 
-  AlertCircle, 
+import {
+  Wifi,
+  WifiOff,
+  AlertCircle,
   RefreshCw,
   Cloud,
   CloudOff,
-  Loader2
-} from 'lucide-react';
+  Loader2 } from
+'lucide-react';
 import { cn } from '@/lib/utils';
 
 // Interface pour l'état de connexion
-interface ConnectionState {
+import { useTranslation } from "react-i18next";interface ConnectionState {
   isConnected: boolean;
   isConnecting: boolean;
   lastError: Error | null;
@@ -68,16 +68,16 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
   );
   const [isVisible, setIsVisible] = useState(false);
   const [hideTimer, setHideTimer] = useState<NodeJS.Timeout | null>(null);
-  const [isReconnecting, setIsReconnecting] = useState(false);
+  const [isReconnecting, setIsReconnecting] = useState(false);const { t } = useTranslation();
 
   useEffect(() => {
     let unsubscribe: (() => void) | undefined;
-    
+
     // S'abonner aux changements d'état si la méthode existe
     if (socketServiceTyped.onStateChange) {
       unsubscribe = socketServiceTyped.onStateChange((state: ConnectionState) => {
         setConnectionState(state);
-        
+
         // Afficher l'indicateur lors des changements d'état
         if (!state.isConnected || state.isConnecting || state.lastError) {
           showStatus();
@@ -96,7 +96,7 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
       reconnectAttempts: 0
     };
     setConnectionState(initialState);
-    
+
     if (!initialState.isConnected) {
       showStatus();
     }
@@ -123,11 +123,11 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
     if (hideTimer) {
       clearTimeout(hideTimer);
     }
-    
+
     const timer = setTimeout(() => {
       setIsVisible(false);
     }, autoHideDelay);
-    
+
     setHideTimer(timer);
   };
 
@@ -163,135 +163,135 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
   if (connectionState.isConnected && !showDetails) {
     return (
       <div className={cn('fixed z-50 transition-all duration-300', positionClasses[position])}>
-        <Badge 
+        <Badge
           variant="secondary"
           className="flex items-center gap-2 px-3 py-2 shadow-lg cursor-pointer bg-green-100 hover:bg-green-200 dark:bg-green-900/20 dark:hover:bg-green-900/30"
-          onClick={() => setIsVisible(false)}
-        >
+          onClick={() => setIsVisible(false)}>
+
           <Cloud className="h-4 w-4 text-green-600 dark:text-green-400" />
-          <span className="text-sm text-green-800 dark:text-green-200">Connecté</span>
+          <span className="text-sm text-green-800 dark:text-green-200">{t("common_connectionstatus.connect_1")}</span>
         </Badge>
-      </div>
-    );
+      </div>);
+
   }
 
   // Vue détaillée ou état déconnecté
   return (
-    <div 
+    <div
       className={cn(
         'fixed z-50 transition-all duration-300',
         positionClasses[position],
         !isVisible && 'opacity-0 pointer-events-none'
-      )}
-    >
-      {showDetails ? (
-        // Vue détaillée avec Alert
-        <Alert className={cn(
-          'w-80 shadow-lg',
-          connectionState.isConnected ? 'border-green-500 dark:border-green-400' : 
-          connectionState.isConnecting ? 'border-yellow-500 dark:border-yellow-400' : 
-          'border-red-500 dark:border-red-400'
-        )}>
+      )}>
+
+      {showDetails ?
+      // Vue détaillée avec Alert
+      <Alert className={cn(
+        'w-80 shadow-lg',
+        connectionState.isConnected ? 'border-green-500 dark:border-green-400' :
+        connectionState.isConnecting ? 'border-yellow-500 dark:border-yellow-400' :
+        'border-red-500 dark:border-red-400'
+      )}>
           <div className="space-y-3">
             {/* En-tête */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                {connectionState.isConnected ? (
-                  <>
+                {connectionState.isConnected ?
+              <>
                     <Wifi className="h-4 w-4 text-green-600 dark:text-green-400" />
-                    <span className="font-medium text-green-600 dark:text-green-400">Connecté</span>
-                  </>
-                ) : connectionState.isConnecting ? (
-                  <>
+                    <span className="font-medium text-green-600 dark:text-green-400">{t("common_connectionstatus.connect_1")}</span>
+                  </> :
+              connectionState.isConnecting ?
+              <>
                     <Loader2 className="h-4 w-4 animate-spin text-yellow-600 dark:text-yellow-400" />
-                    <span className="font-medium text-yellow-600 dark:text-yellow-400">Connexion...</span>
-                  </>
-                ) : (
-                  <>
+                    <span className="font-medium text-yellow-600 dark:text-yellow-400">{t("common_connectionstatus.connexion_1")}</span>
+                  </> :
+
+              <>
                     <WifiOff className="h-4 w-4 text-red-600 dark:text-red-400" />
-                    <span className="font-medium text-red-600 dark:text-red-400">Déconnecté</span>
+                    <span className="font-medium text-red-600 dark:text-red-400">{t("common_connectionstatus.dconnect")}</span>
                   </>
-                )}
+              }
               </div>
               
-              {!connectionState.isConnected && !connectionState.isConnecting && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleReconnect}
-                  disabled={isReconnecting}
-                >
-                  {isReconnecting ? (
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                  ) : (
-                    <RefreshCw className="h-3 w-3" />
-                  )}
+              {!connectionState.isConnected && !connectionState.isConnecting &&
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleReconnect}
+              disabled={isReconnecting}>
+
+                  {isReconnecting ?
+              <Loader2 className="h-3 w-3 animate-spin" /> :
+
+              <RefreshCw className="h-3 w-3" />
+              }
                 </Button>
-              )}
+            }
             </div>
 
             {/* Détails */}
             <AlertDescription className="space-y-1 text-xs">
-              {connectionState.lastError && (
-                <p className="text-red-600 dark:text-red-400">
-                  Erreur: {connectionState.lastError.message}
+              {connectionState.lastError &&
+            <p className="text-red-600 dark:text-red-400">{t("common_connectionstatus.erreur")}
+              {connectionState.lastError.message}
                 </p>
-              )}
+            }
               
-              {connectionState.reconnectAttempts > 0 && (
-                <p>
-                  Tentatives de reconnexion: {connectionState.reconnectAttempts}
+              {connectionState.reconnectAttempts > 0 &&
+            <p>{t("common_connectionstatus.tentatives_reconnexion")}
+              {connectionState.reconnectAttempts}
                 </p>
-              )}
+            }
               
-              {socketServiceTyped.isPolling && (
-                <p className="text-yellow-600 dark:text-yellow-400">
-                  Mode dégradé (polling)
-                </p>
-              )}
+              {socketServiceTyped.isPolling &&
+            <p className="text-yellow-600 dark:text-yellow-400">{t("common_connectionstatus.mode_dgrad_polling")}
+
+            </p>
+            }
               
-              {socketServiceTyped.socketId && (
-                <p className="text-muted-foreground">
-                  ID: {socketServiceTyped.socketId.substring(0, 8)}...
+              {socketServiceTyped.socketId &&
+            <p className="text-muted-foreground">{t("common_connectionstatus.id")}
+              {socketServiceTyped.socketId.substring(0, 8)}...
                 </p>
-              )}
+            }
             </AlertDescription>
           </div>
-        </Alert>
-      ) : (
-        // Badge simple pour états non connectés
-        <Badge 
-          variant={connectionState.isConnecting ? "secondary" : "destructive"}
-          className={cn(
-            "flex items-center gap-2 px-3 py-2 shadow-lg",
-            connectionState.isConnecting && "bg-yellow-100 hover:bg-yellow-200 dark:bg-yellow-900/20 dark:hover:bg-yellow-900/30"
-          )}
-        >
-          {connectionState.isConnecting ? (
-            <>
+        </Alert> :
+
+      // Badge simple pour états non connectés
+      <Badge
+        variant={connectionState.isConnecting ? "secondary" : "destructive"}
+        className={cn(
+          "flex items-center gap-2 px-3 py-2 shadow-lg",
+          connectionState.isConnecting && "bg-yellow-100 hover:bg-yellow-200 dark:bg-yellow-900/20 dark:hover:bg-yellow-900/30"
+        )}>
+
+          {connectionState.isConnecting ?
+        <>
               <Loader2 className="h-4 w-4 animate-spin text-yellow-700 dark:text-yellow-300" />
-              <span className="text-sm text-yellow-900 dark:text-yellow-100">Connexion...</span>
-            </>
-          ) : (
-            <>
+              <span className="text-sm text-yellow-900 dark:text-yellow-100">{t("common_connectionstatus.connexion_1")}</span>
+            </> :
+
+        <>
               <CloudOff className="h-4 w-4" />
-              <span className="text-sm">Mode hors ligne</span>
-              {connectionState.reconnectAttempts > 0 && (
-                <span className="text-xs opacity-75">
+              <span className="text-sm">{t("common_connectionstatus.mode_hors_ligne")}</span>
+              {connectionState.reconnectAttempts > 0 &&
+          <span className="text-xs opacity-75">
                   ({connectionState.reconnectAttempts})
                 </span>
-              )}
+          }
             </>
-          )}
+        }
         </Badge>
-      )}
-    </div>
-  );
+      }
+    </div>);
+
 };
 
 // Composant minimal pour afficher uniquement une icône
-export const ConnectionStatusIcon: React.FC<{ className?: string }> = ({ className }) => {
-  const [isConnected, setIsConnected] = useState(socketServiceTyped.isConnected || false);
+export const ConnectionStatusIcon: React.FC<{className?: string;}> = ({ className }) => {
+  const [isConnected, setIsConnected] = useState(socketServiceTyped.isConnected || false);const { t } = useTranslation();
 
   useEffect(() => {
     if (socketServiceTyped.onStateChange) {
@@ -303,11 +303,11 @@ export const ConnectionStatusIcon: React.FC<{ className?: string }> = ({ classNa
     }
   }, []);
 
-  return isConnected ? (
-    <Wifi className={cn('h-4 w-4 text-green-600 dark:text-green-400', className)} />
-  ) : (
-    <WifiOff className={cn('h-4 w-4 text-red-600 dark:text-red-400', className)} />
-  );
+  return isConnected ?
+  <Wifi className={cn('h-4 w-4 text-green-600 dark:text-green-400', className)} /> :
+
+  <WifiOff className={cn('h-4 w-4 text-red-600 dark:text-red-400', className)} />;
+
 };
 
 // Hook pour utiliser l'état de connexion

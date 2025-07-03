@@ -2,9 +2,122 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
+@import './styles/article-print.css';
 /* Système de design pour la plateforme culturelle algérienne */
+/* Ajoutez ceci à votre fichier global.css ou index.css */
+/* Importer le fichier language-styles.css créé ci-dessus */
+@import './styles/language-styles.css';
+/* Import des polices */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Tifinagh&display=swap');
 
+/* Styles de base pour chaque langue */
+:root {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Arabe */
+[lang="ar"] {
+  font-family: 'Noto Sans Arabic', 'Arial', sans-serif;
+  letter-spacing: 0;
+}
+
+/* Tamazight Tifinagh */
+[lang="tz-tfng"],
+.tifinagh-font {
+  font-family: 'Noto Sans Tifinagh', 'Tifinaghe-ircam Unicode', 'Arial Unicode MS', sans-serif;
+  font-size: 1.1em;
+  line-height: 1.8;
+  letter-spacing: 0.05em;
+}
+
+/* Ajustements pour RTL */
+[dir="rtl"] {
+  text-align: right;
+}
+
+[dir="rtl"] .text-left {
+  text-align: right !important;
+}
+
+[dir="rtl"] .text-right {
+  text-align: left !important;
+}
+
+/* Ajustements pour les composants UI en RTL */
+[dir="rtl"] .ml-2 {
+  margin-left: 0;
+  margin-right: 0.5rem;
+}
+
+[dir="rtl"] .mr-2 {
+  margin-right: 0;
+  margin-left: 0.5rem;
+}
+
+[dir="rtl"] .pl-4 {
+  padding-left: 0;
+  padding-right: 1rem;
+}
+
+[dir="rtl"] .pr-4 {
+  padding-right: 0;
+  padding-left: 1rem;
+}
+
+/* Icônes directionnelles */
+[dir="rtl"] .rotate-for-rtl {
+  transform: scaleX(-1);
+}
+
+/* Animations et transitions */
+* {
+  transition: direction 0.3s ease-in-out;
+}
+
+/* Fix pour les dropdown menus en RTL */
+[dir="rtl"] [data-radix-popper-content-wrapper] {
+  right: auto !important;
+  left: 0 !important;
+}
+
+/* Scrollbar pour RTL */
+[dir="rtl"] {
+  scrollbar-gutter: stable both-edges;
+}
+
+[dir="rtl"]::-webkit-scrollbar {
+  position: absolute;
+  left: 0;
+  right: auto;
+}
+
+/* Typography adjustments pour Tifinagh */
+.tifinagh-font h1,
+.tifinagh-font h2,
+.tifinagh-font h3,
+.tifinagh-font h4 {
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.tifinagh-font p {
+  line-height: 2;
+}
+
+/* Amélioration de la lisibilité du Tifinagh */
+.tifinagh-font button,
+.tifinagh-font .btn {
+  font-size: 1.05em;
+  padding: 0.6em 1.2em;
+}
+
+/* Support pour le mode sombre */
+@media (prefers-color-scheme: dark) {
+  .tifinagh-font {
+    font-weight: 500;
+  }
+}
 @layer base {
   :root {
     --background: 42 21% 97%;

@@ -54,26 +54,78 @@ const createEvenementController = (models) => {
       if (TypeEvenement) include.push({ model: TypeEvenement, as: 'TypeEvenement', attributes: ['id_type_evenement', 'nom_type'], required: false });
       if (User) include.push({ model: User, as: 'Organisateur', attributes: ['id_user', 'nom', 'prenom'], required: false });
 
+      // Ajouter les attributs calculés
       const { count, rows } = await Evenement.findAndCountAll({
         where,
         include,
+        attributes: {
+          include: [
+            // Nombre total d'inscrits
+            [
+              sequelize.literal(`(
+                SELECT COUNT(*)
+                FROM evenementusers AS eu
+                WHERE eu.id_evenement = Evenement.id_evenement
+              )`),
+              'nombre_inscrits'
+            ],
+            // Nombre de participants confirmés
+            [
+              sequelize.literal(`(
+                SELECT COUNT(*)
+                FROM evenementusers AS eu
+                WHERE eu.id_evenement = Evenement.id_evenement
+                AND eu.statut_participation IN ('confirme', 'present')
+              )`),
+              'participants_count'
+            ]
+          ]
+        },
         order: [[ 'date_debut', sort === '-date_debut' ? 'DESC' : 'ASC' ]],
         limit: parseInt(limit),
         offset: parseInt(offset),
         distinct: true
       });
 
+      // Transformer les résultats
+      const eventsWithComplet = rows.map(event => {
+        const eventData = event.toJSON();
+        
+        // S'assurer que les valeurs sont des nombres
+        eventData.nombre_inscrits = parseInt(eventData.nombre_inscrits) || 0;
+        eventData.participants_count = parseInt(eventData.participants_count) || 0;
+        
+        // Calculer est_complet
+        eventData.est_complet = !!(eventData.capacite_max && 
+                                 eventData.nombre_inscrits >= eventData.capacite_max);
+        
+        // Supprimer les champs virtuels qui retournent des Promises
+        delete eventData.nombre_participants;
+        delete eventData.note_moyenne;
+        delete eventData.est_complet; // Supprimer l'ancien aussi s'il existe
+        
+        return eventData;
+      });
+
       res.json({
         success: true,
-        data: rows,
-        pagination: { total: count, page: parseInt(page), pages: Math.ceil(count / limit), limit: parseInt(limit) }
+        data: eventsWithComplet,
+        pagination: { 
+          total: count, 
+          page: parseInt(page), 
+          pages: Math.ceil(count / limit), 
+          limit: parseInt(limit) 
+        }
       });
     } catch (error) {
       console.error('Erreur getAllEvenements:', error);
-      res.status(500).json({ success: false, error: 'Erreur lors de la récupération des événements', details: error.message });
+      res.status(500).json({ 
+        success: false, 
+        error: 'Erreur lors de la récupération des événements', 
+        details: error.message 
+      });
     }
   };
-
   // GET /evenements/upcoming
   const getEvenementsAvenir = async (req, res) => {
     try {

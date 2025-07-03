@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, Lock, Clock } from 'lucide-react';
+import { AlertCircle, Lock, Clock } from 'lucide-react';import { useTranslation } from "react-i18next";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -29,12 +29,12 @@ export function ProtectedRoute({
   const { isAdmin, isProfessional, needsValidation } = usePermissions();
 
   // Afficher un loader pendant le chargement
-  if (loading) {
+  const { t } = useTranslation();if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
+      </div>);
+
   }
 
   // Vérifier l'authentification
@@ -49,21 +49,21 @@ export function ProtectedRoute({
         <Card className="max-w-md w-full">
           <CardHeader>
             <CardTitle className="flex items-center text-destructive">
-              <Lock className="h-5 w-5 mr-2" />
-              Accès refusé
+              <Lock className="h-5 w-5 mr-2" />{t("auth_protectedroute.accs_refus")}
+
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-muted-foreground">
-              Cette page est réservée aux administrateurs.
+            <p className="text-muted-foreground">{t("auth_protectedroute.cette_page_est")}
+
             </p>
-            <Button onClick={() => window.history.back()} variant="outline" className="w-full">
-              Retour
+            <Button onClick={() => window.history.back()} variant="outline" className="w-full">{t("auth_protectedroute.retour_1")}
+
             </Button>
           </CardContent>
         </Card>
-      </div>
-    );
+      </div>);
+
   }
 
   // Vérifier les rôles professionnels
@@ -73,26 +73,26 @@ export function ProtectedRoute({
         <Card className="max-w-md w-full">
           <CardHeader>
             <CardTitle className="flex items-center text-destructive">
-              <Lock className="h-5 w-5 mr-2" />
-              Accès professionnel requis
+              <Lock className="h-5 w-5 mr-2" />{t("auth_protectedroute.accs_professionnel_requis")}
+
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-muted-foreground">
-              Cette fonctionnalité est réservée aux professionnels validés.
+            <p className="text-muted-foreground">{t("auth_protectedroute.cette_fonctionnalit_est")}
+
             </p>
             <div className="flex space-x-2">
-              <Button onClick={() => window.history.back()} variant="outline" className="flex-1">
-                Retour
+              <Button onClick={() => window.history.back()} variant="outline" className="flex-1">{t("auth_protectedroute.retour_1")}
+
               </Button>
-              <Button onClick={() => window.location.href = '/auth'} className="flex-1">
-                S'inscrire comme pro
+              <Button onClick={() => window.location.href = '/auth'} className="flex-1">{t("auth_protectedroute.sinscrire_comme_pro")}
+
               </Button>
             </div>
           </CardContent>
         </Card>
-      </div>
-    );
+      </div>);
+
   }
 
   // Vérifier la validation pour les professionnels
@@ -102,33 +102,33 @@ export function ProtectedRoute({
         <Card className="max-w-md w-full">
           <CardHeader>
             <CardTitle className="flex items-center text-amber-600">
-              <Clock className="h-5 w-5 mr-2" />
-              Validation en attente
+              <Clock className="h-5 w-5 mr-2" />{t("auth_protectedroute.validation_attente")}
+
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <p className="text-muted-foreground">
-                Votre compte professionnel est en cours de validation par notre équipe.
+              <p className="text-muted-foreground">{t("auth_protectedroute.votre_compte_professionnel")}
+
               </p>
-              <p className="text-sm text-muted-foreground">
-                Vous recevrez un email dès que votre compte sera validé. 
-                Cela prend généralement 24 à 48 heures.
+              <p className="text-sm text-muted-foreground">{t("auth_protectedroute.vous_recevrez_email")}
+
+
               </p>
             </div>
             <div className="bg-amber-50 p-3 rounded-lg">
               <p className="text-sm text-amber-800 flex items-start">
-                <AlertCircle className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
-                En attendant, vous pouvez explorer la plateforme en tant que visiteur.
+                <AlertCircle className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />{t("auth_protectedroute.attendant_vous_pouvez")}
+
               </p>
             </div>
-            <Button onClick={() => window.location.href = '/'} className="w-full">
-              Retour à l'accueil
+            <Button onClick={() => window.location.href = '/'} className="w-full">{t("auth_protectedroute.retour_laccueil")}
+
             </Button>
           </CardContent>
         </Card>
-      </div>
-    );
+      </div>);
+
   }
 
   // Toutes les vérifications sont passées
@@ -137,26 +137,26 @@ export function ProtectedRoute({
 
 // Composants spécialisés pour faciliter l'utilisation
 
-export function AdminRoute({ children }: { children: React.ReactNode }) {
+export function AdminRoute({ children }: {children: React.ReactNode;}) {const { t } = useTranslation();
   return (
     <ProtectedRoute requireAuth requireAdmin>
       {children}
-    </ProtectedRoute>
-  );
+    </ProtectedRoute>);
+
 }
 
-export function ProfessionalRoute({ children }: { children: React.ReactNode }) {
+export function ProfessionalRoute({ children }: {children: React.ReactNode;}) {const { t } = useTranslation();
   return (
     <ProtectedRoute requireAuth requireProfessional requireValidated>
       {children}
-    </ProtectedRoute>
-  );
+    </ProtectedRoute>);
+
 }
 
-export function AuthenticatedRoute({ children }: { children: React.ReactNode }) {
+export function AuthenticatedRoute({ children }: {children: React.ReactNode;}) {const { t } = useTranslation();
   return (
     <ProtectedRoute requireAuth>
       {children}
-    </ProtectedRoute>
-  );
+    </ProtectedRoute>);
+
 }

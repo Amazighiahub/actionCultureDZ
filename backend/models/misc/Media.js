@@ -106,6 +106,9 @@ module.exports = (sequelize) => {
     thumbnail_url: {
       type: DataTypes.STRING(500)
     },
+    is_Principale: {
+      type: DataTypes.BOOLEAN
+    },
     duree: {
       type: DataTypes.INTEGER,
       comment: 'Durée en secondes pour vidéo/audio'

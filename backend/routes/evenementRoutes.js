@@ -1,488 +1,433 @@
+// routes/evenements.routes.js - Version corrigée
+
 const express = require('express');
 const { body, param, query } = require('express-validator');
 
-// Factory function pour créer les routes avec les modèles et middlewares injectés
 const createEvenementRoutes = (models, middlewares = {}) => {
   const router = express.Router();
   
-  // Importer le contrôleur
+  // Contrôleur
   const createEvenementController = require('../controllers/evenementController');
   const controller = createEvenementController(models);
   
-  // Si les middlewares ne sont pas fournis, les charger directement
-  if (!middlewares || Object.keys(middlewares).length === 0) {
-    console.log('⚠️  Middlewares non fournis, chargement direct...');
-    
-    const createAuthMiddleware = require('../middlewares/authMiddleware');
-    const cacheMiddleware = require('../middlewares/cacheMiddleware');
-    const validationMiddleware = require('../middlewares/validationMiddleware');
-    const rateLimitMiddleware = require('../middlewares/rateLimitMiddleware');
-    const auditMiddleware = require('../middlewares/auditMiddleware');
-    const securityMiddleware = require('../middlewares/securityMiddleware');
-    
-    middlewares = {
-      auth: createAuthMiddleware(models),
-      cache: cacheMiddleware,
-      validation: validationMiddleware,
-      rateLimit: rateLimitMiddleware,
-      audit: auditMiddleware,
-      security: securityMiddleware
-    };
-  }
-  
-  // Destructurer les middlewares
+  // Middlewares avec valeurs par défaut
   const { 
-    auth, 
-    cache, 
-    validation, 
-    rateLimit, 
-    audit,
-    security
+    auth = {}, 
+    cache = {}, 
+    validation = {}, 
+    rateLimit = {}, 
+    audit = {},
+    security = {}
   } = middlewares;
 
+  // Helper pour gérer les middlewares qui peuvent être des arrays
+  const flattenMiddleware = (middleware) => {
+    if (!middleware) return [(req, res, next) => next()];
+    if (Array.isArray(middleware)) return middleware;
+    return [middleware];
+  };
+
+  // Middleware par défaut si non défini
+  const defaultMiddleware = (req, res, next) => next();
+
   // ====================================================================
-  // ROUTES PUBLIQUES - Accessibles sans authentification
+  // MIDDLEWARE CUSTOM POUR ÉVÉNEMENTS
+  // ====================================================================
+  
+  const logEventRequest = (req, res, next) => {
+    req._startTime = Date.now();
+    
+    res.on('finish', () => {
+      const duration = Date.now() - req._startTime;
+      const cached = res.getHeader('X-Cache') === 'HIT';
+      
+      console.log(JSON.stringify({
+        type: 'event_request',
+        method: req.method,
+        path: req.path,
+        statusCode: res.statusCode,
+        duration,
+        cached,
+        userId: req.user?.id_user || 'anonymous',
+        ip: req.ip,
+        userAgent: req.get('user-agent'),
+        timestamp: new Date().toISOString()
+      }));
+    });
+    
+    next();
+  };
+
+  const optimizeEventQuery = (req, res, next) => {
+    if (!req.query.limit) {
+      req.query.limit = 20;
+    }
+    
+    req.query.limit = Math.min(parseInt(req.query.limit), 100);
+    
+    if (req.query.statut === 'termine' || req.query.statut === 'annule') {
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+    } else {
+      res.setHeader('Cache-Control', 'public, max-age=300');
+    }
+    
+    next();
+  };
+
+  // ====================================================================
+  // ROUTES PUBLIQUES
   // ====================================================================
   
   /**
    * @route   GET /api/evenements
-   * @desc    Récupérer tous les événements avec filtres et pagination
-   * @access  Public
+   * @desc    Liste des événements
    */
   router.get('/', 
-    cache.cacheStrategy.medium,
-    validation.validatePagination,
-    controller.getAllEvenements
+    logEventRequest,
+    ...flattenMiddleware(rateLimit.evenements || rateLimit.general),
+    optimizeEventQuery,
+    cache.cacheStrategy?.medium || defaultMiddleware,
+    validation.validatePagination || defaultMiddleware,
+    async (req, res, next) => {
+      try {
+        res.setHeader('X-Data-Source', 'database');
+        await controller.getAllEvenements(req, res, next);
+      } catch (error) {
+        if (cache.serveStale) {
+          const staleData = await cache.serveStale(req);
+          if (staleData) {
+            res.setHeader('X-Cache', 'STALE');
+            return res.json(staleData);
+          }
+        }
+        next(error);
+      }
+    }
+  );
+
+  /**
+   * @route   GET /api/evenements/search
+   * @desc    Recherche d'événements
+   */
+  router.get('/search',
+    logEventRequest,
+    ...flattenMiddleware(rateLimit.search || rateLimit.general),
+    [
+      query('q')
+        .optional()
+        .trim()
+        .isLength({ min: 2 })
+        .withMessage('Recherche minimum 2 caractères')
+        .customSanitizer(value => value.toLowerCase()),
+      query('wilaya_id').optional().isInt(),
+      query('type_id').optional().isInt(),
+      query('date_debut').optional().isISO8601(),
+      query('date_fin').optional().isISO8601()
+    ],
+    validation.handleValidationErrors || defaultMiddleware,
+    optimizeEventQuery,
+    cache.cacheStrategy?.short || defaultMiddleware,
+    controller.searchEvenements || controller.getAllEvenements
   );
 
   /**
    * @route   GET /api/evenements/upcoming
-   * @desc    Récupérer les événements à venir
-   * @access  Public
+   * @desc    Événements à venir
    */
   router.get('/upcoming',
-    cache.cacheStrategy.short,
-    validation.validatePagination,
-    controller.getEvenementsAvenir
+    logEventRequest,
+    ...flattenMiddleware(rateLimit.evenements || rateLimit.general),
+    cache.cacheStrategy?.medium || defaultMiddleware,
+    validation.validatePagination || defaultMiddleware,
+    async (req, res, next) => {
+      req.query.date_debut_min = new Date().toISOString();
+      req.query.statut = 'planifie';
+      
+      if (controller.getEvenementsAvenir) {
+        await controller.getEvenementsAvenir(req, res, next);
+      } else {
+        await controller.getAllEvenements(req, res, next);
+      }
+    }
   );
 
   /**
    * @route   GET /api/evenements/:id
-   * @desc    Récupérer un événement par ID
-   * @access  Public
+   * @desc    Détail d'un événement
    */
   router.get('/:id',
-    validation.validateId('id'),
-    cache.cacheStrategy.medium,
-    controller.getEvenementById
-  );
-
-  /**
-   * @route   GET /api/evenements/:id/share-data
-   * @desc    Récupérer les données de partage social
-   * @access  Public
-   */
-  router.get('/:id/share-data',
-    validation.validateId('id'),
-    cache.cacheStrategy.long,
-    controller.getSocialShareData
+    logEventRequest,
+    validation.validateId?.('id') || defaultMiddleware,
+    ...flattenMiddleware(rateLimit.evenements || rateLimit.general),
+    async (req, res, next) => {
+      const eventId = req.params.id;
+      
+      if (cache.checkExists) {
+        const exists = await cache.checkExists(`event:${eventId}`);
+        if (exists === false) {
+          return res.status(404).json({
+            success: false,
+            error: 'Événement non trouvé'
+          });
+        }
+      }
+      
+      next();
+    },
+    cache.cacheStrategy?.long || defaultMiddleware,
+    controller.getEvenementById || defaultMiddleware
   );
 
   /**
    * @route   GET /api/evenements/:id/medias
-   * @desc    Récupérer les médias d'un événement
-   * @access  Public
+   * @desc    Médias d'un événement
    */
   router.get('/:id/medias',
-    validation.validateId('id'),
-    cache.cacheStrategy.medium,
-    controller.getMedias
+    logEventRequest,
+    validation.validateId?.('id') || defaultMiddleware,
+    ...flattenMiddleware(rateLimit.evenements || rateLimit.general),
+    cache.cacheStrategy?.static || cache.cacheStrategy?.long || defaultMiddleware,
+    controller.getMedias || controller.getEvenementById
   );
 
   /**
-   * @route   GET /api/evenements/:id/export
-   * @desc    Exporter le programme d'un événement
-   * @access  Public
+   * @route   GET /api/evenements/:id/programmes
+   * @desc    Programmes d'un événement
    */
-  router.get('/:id/export',
-    validation.validateId('id'),
-    rateLimit.general,
-    controller.exportProgramme
+  router.get('/:id/programmes',
+    logEventRequest,
+    validation.validateId?.('id') || defaultMiddleware,
+    ...flattenMiddleware(rateLimit.evenements || rateLimit.general),
+    cache.cacheStrategy?.medium || defaultMiddleware,
+    controller.getProgrammes || controller.getEvenementById
+  );
+
+  /**
+   * @route   GET /api/evenements/stats
+   * @desc    Statistiques publiques
+   */
+  router.get('/stats/public',
+    logEventRequest,
+    ...flattenMiddleware(rateLimit.general),
+    cache.cacheStrategy?.static || cache.cacheStrategy?.long || defaultMiddleware,
+    async (req, res) => {
+      if (controller.getPublicStats) {
+        const stats = await controller.getPublicStats();
+        res.json({
+          success: true,
+          data: stats
+        });
+      } else {
+        res.json({
+          success: true,
+          data: {
+            total_evenements: 0,
+            evenements_actifs: 0,
+            participants_total: 0
+          }
+        });
+      }
+    }
   );
 
   // ====================================================================
-  // ROUTES AUTHENTIFIÉES - CRÉATION ET MODIFICATION
+  // ROUTES AUTHENTIFIÉES
   // ====================================================================
 
   /**
    * @route   POST /api/evenements
-   * @desc    Créer un nouvel événement
-   * @access  Private - Professionnel validé avec organisation OU Admin
-   * @note    L'upload d'image est géré dans le contrôleur
+   * @desc    Créer un événement
    */
   router.post('/',
-    auth.authenticate,
-    auth.requireValidatedProfessional, // Vérifie organisation pour les professionnels
-    security.sanitizeInput,
-    rateLimit.creation,
+    auth.authenticate || defaultMiddleware,
+    auth.requireValidatedProfessional || defaultMiddleware,
+    security.sanitizeInput || defaultMiddleware,
+    ...flattenMiddleware(rateLimit.creation || rateLimit.general),
+    logEventRequest,
     [
-      body('nom_evenement')
-        .notEmpty().withMessage('Le nom de l\'événement est requis')
-        .trim()
-        .isLength({ min: 3, max: 200 }).withMessage('Le nom doit faire entre 3 et 200 caractères'),
-      body('description')
-        .optional()
-        .trim()
-        .isLength({ max: 5000 }).withMessage('La description ne doit pas dépasser 5000 caractères'),
-      body('date_debut')
-        .isISO8601().withMessage('Date de début invalide')
-        .toDate(),
-      body('date_fin')
-        .isISO8601().withMessage('Date de fin invalide')
-        .toDate()
-        .custom((value, { req }) => {
-          if (new Date(value) < new Date(req.body.date_debut)) {
-            throw new Error('La date de fin doit être après la date de début');
-          }
-          return true;
-        }),
-      body('id_lieu')
-        .isInt({ min: 1 }).withMessage('Lieu invalide'),
-      body('id_type_evenement')
-        .isInt({ min: 1 }).withMessage('Type d\'événement invalide'),
-      body('capacite_max')
-        .optional()
-        .isInt({ min: 1, max: 100000 }).withMessage('Capacité entre 1 et 100 000'),
-      body('prix_min')
-        .optional()
-        .isFloat({ min: 0 }).withMessage('Prix minimum doit être positif'),
-      body('prix_max')
-        .optional()
-        .isFloat({ min: 0 }).withMessage('Prix maximum doit être positif')
-        .custom((value, { req }) => {
-          if (req.body.prix_min && parseFloat(value) < parseFloat(req.body.prix_min)) {
-            throw new Error('Le prix maximum doit être supérieur au prix minimum');
-          }
-          return true;
-        })
+      body('nom_evenement').notEmpty().trim().isLength({ min: 3, max: 200 }),
+      body('description').optional().trim(),
+      body('date_debut').notEmpty().isISO8601(),
+      body('date_fin').optional().isISO8601(),
+      body('capacite_max').optional().isInt({ min: 1 }),
+      body('tarif').optional().isFloat({ min: 0 }),
+      body('id_type_evenement').notEmpty().isInt(),
+      body('id_lieu').notEmpty().isInt()
     ],
-    validation.handleValidationErrors,
-    validation.validateEventCreation,
-    cache.invalidateOnChange('evenement'),
-    audit.logCriticalAction(audit.actions.CREATE_EVENT, 'evenement'),
-    controller.createEvenement // Gère l'upload en interne
+    validation.handleValidationErrors || defaultMiddleware,
+    validation.validateEventCreation || defaultMiddleware,
+    async (req, res, next) => {
+      req._cacheInvalidationKeys = [
+        'events:list:*',
+        'events:upcoming:*',
+        `events:wilaya:${req.body.wilaya_id}:*`,
+        `events:type:${req.body.id_type_evenement}:*`
+      ];
+      next();
+    },
+    cache.invalidatePatterns ? cache.invalidatePatterns(req => req._cacheInvalidationKeys) : defaultMiddleware,
+    audit.logCriticalAction ? audit.logCriticalAction(audit.actions?.CREATE_EVENT || 'CREATE_EVENT', 'evenement') : defaultMiddleware,
+    controller.createEvenement || defaultMiddleware
   );
 
   /**
    * @route   PUT /api/evenements/:id
    * @desc    Mettre à jour un événement
-   * @access  Private - Owner OU Admin
-   * @note    L'upload d'image est géré dans le contrôleur
    */
   router.put('/:id',
-    auth.authenticate,
-    validation.validateId('id'),
-    auth.requireOwnership('Evenement', 'id', 'id_user'),
-    security.sanitizeInput,
+    auth.authenticate || defaultMiddleware,
+    validation.validateId?.('id') || defaultMiddleware,
+    auth.requireOwnership ? auth.requireOwnership('Evenement', 'id', 'id_user') : defaultMiddleware,
+    security.sanitizeInput || defaultMiddleware,
+    ...flattenMiddleware(rateLimit.creation || rateLimit.general),
+    logEventRequest,
     [
-      body('nom_evenement')
-        .optional()
-        .trim()
-        .isLength({ min: 3, max: 200 }),
-      body('description')
-        .optional()
-        .trim()
-        .isLength({ max: 5000 }),
-      body('date_debut')
-        .optional()
-        .isISO8601()
-        .toDate(),
-      body('date_fin')
-        .optional()
-        .isISO8601()
-        .toDate()
-        .custom((value, { req }) => {
-          if (req.body.date_debut && new Date(value) < new Date(req.body.date_debut)) {
-            throw new Error('La date de fin doit être après la date de début');
-          }
-          return true;
-        }),
-      body('capacite_max')
-        .optional()
-        .isInt({ min: 1, max: 100000 }),
-      body('prix_min')
-        .optional()
-        .isFloat({ min: 0 }),
-      body('prix_max')
-        .optional()
-        .isFloat({ min: 0 })
-        .custom((value, { req }) => {
-          if (req.body.prix_min && parseFloat(value) < parseFloat(req.body.prix_min)) {
-            throw new Error('Le prix maximum doit être supérieur au prix minimum');
-          }
-          return true;
-        })
+      body('nom_evenement').optional().trim().isLength({ min: 3, max: 200 }),
+      body('description').optional().trim(),
+      body('date_debut').optional().isISO8601(),
+      body('date_fin').optional().isISO8601(),
+      body('capacite_max').optional().isInt({ min: 1 }),
+      body('tarif').optional().isFloat({ min: 0 })
     ],
-    validation.handleValidationErrors,
-    cache.invalidateOnChange('evenement'),
-    audit.logCriticalAction(audit.actions.UPDATE_EVENT, 'evenement'),
-    controller.updateEvenement // Gère l'upload en interne
+    validation.handleValidationErrors || defaultMiddleware,
+    (req, res, next) => {
+      req._cacheInvalidationKeys = [
+        `event:${req.params.id}:*`,
+        'events:list:*',
+        'events:upcoming:*'
+      ];
+      next();
+    },
+    cache.invalidatePatterns ? cache.invalidatePatterns(req => req._cacheInvalidationKeys) : defaultMiddleware,
+    audit.logCriticalAction ? audit.logCriticalAction(audit.actions?.UPDATE_EVENT || 'UPDATE_EVENT', 'evenement') : defaultMiddleware,
+    controller.updateEvenement || defaultMiddleware
   );
-
-  /**
-   * @route   DELETE /api/evenements/:id
-   * @desc    Supprimer un événement
-   * @access  Private - Owner OU Admin
-   */
-  router.delete('/:id',
-    auth.authenticate,
-    validation.validateId('id'),
-    auth.requireOwnership('Evenement', 'id', 'id_user'),
-    rateLimit.sensitiveActions,
-    cache.invalidateOnChange('evenement'),
-    audit.logCriticalAction(audit.actions.DELETE_EVENT, 'evenement'),
-    controller.deleteEvenement
-  );
-
-  /**
-   * @route   PATCH /api/evenements/:id/cancel
-   * @desc    Annuler un événement
-   * @access  Private - Owner OU Admin
-   */
-  router.patch('/:id/cancel',
-    auth.authenticate,
-    validation.validateId('id'),
-    auth.requireOwnership('Evenement', 'id', 'id_user'),
-    security.sanitizeInput,
-    [
-      body('raison_annulation')
-        .notEmpty().withMessage('La raison d\'annulation est requise')
-        .trim()
-        .isLength({ min: 10, max: 500 }).withMessage('Entre 10 et 500 caractères')
-    ],
-    validation.handleValidationErrors,
-    cache.invalidateOnChange('evenement'),
-    audit.logCriticalAction(audit.actions.CANCEL_EVENT, 'evenement'),
-    controller.cancelEvenement
-  );
-
-  // ====================================================================
-  // ROUTES AUTHENTIFIÉES - INSCRIPTIONS
-  // ====================================================================
 
   /**
    * @route   POST /api/evenements/:id/inscription
    * @desc    S'inscrire à un événement
-   * @access  Private - Tout utilisateur authentifié
    */
   router.post('/:id/inscription',
-    auth.authenticate,
-    validation.validateId('id'),
-    rateLimit.creation,
-    cache.invalidateCache(['/evenements']),
-    audit.logAction('inscription_evenement', { entityType: 'evenement' }),
-    controller.inscrireUtilisateur
+    auth.authenticate || defaultMiddleware,
+    validation.validateId?.('id') || defaultMiddleware,
+    ...flattenMiddleware(rateLimit.creation || rateLimit.general),
+    logEventRequest,
+    async (req, res, next) => {
+      if (cache.acquireLock) {
+        const lockKey = `inscription:${req.params.id}:${req.user.id_user}`;
+        const locked = await cache.acquireLock(lockKey, 5000);
+        
+        if (!locked) {
+          return res.status(429).json({
+            success: false,
+            error: 'Une inscription est déjà en cours'
+          });
+        }
+        
+        req._lockKey = lockKey;
+      }
+      next();
+    },
+    controller.inscrireUtilisateur || defaultMiddleware,
+    async (req, res, next) => {
+      if (req._lockKey && cache.releaseLock) {
+        await cache.releaseLock(req._lockKey);
+      }
+      next();
+    }
   );
-
-  /**
-   * @route   DELETE /api/evenements/:id/inscription
-   * @desc    Se désinscrire d'un événement
-   * @access  Private - Tout utilisateur authentifié
-   */
-  router.delete('/:id/inscription',
-    auth.authenticate,
-    validation.validateId('id'),
-    cache.invalidateCache(['/evenements']),
-    audit.logAction('desinscription_evenement', { entityType: 'evenement' }),
-    controller.desinscrireUtilisateur
-  );
-
+// Dans votre fichier de routes (ex: routes/evenements.js)
+router.get('/evenements/oeuvre/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Requête pour récupérer les événements liés à cette œuvre
+    const evenements = await db.query(`
+      SELECT e.* 
+      FROM evenements e
+      WHERE e.id_oeuvre = ?
+      ORDER BY e.date_evenement DESC
+    `, [id]);
+    
+    res.json({
+      success: true,
+      data: evenements
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
   // ====================================================================
-  // ROUTES AUTHENTIFIÉES - GESTION DES PARTICIPANTS
+  // ROUTES BATCH
   // ====================================================================
 
   /**
-   * @route   GET /api/evenements/:id/participants
-   * @desc    Récupérer les participants d'un événement
-   * @access  Private - Owner OU Admin
+   * @route   POST /api/evenements/batch
+   * @desc    Récupérer plusieurs événements
    */
-  router.get('/:id/participants',
-    auth.authenticate,
-    validation.validateId('id'),
-    auth.requireOwnership('Evenement', 'id', 'id_user'),
-    cache.userCache(300),
-    audit.logDataAccess('participants_evenement'),
-    controller.getParticipants
-  );
-
-  /**
-   * @route   PATCH /api/evenements/:id/participants/:userId/validate
-   * @desc    Valider/Refuser la participation d'un utilisateur
-   * @access  Private - Owner OU Admin
-   */
-  router.patch('/:id/participants/:userId/validate',
-    auth.authenticate,
-    validation.validateId('id'),
-    validation.validateId('userId'),
-    auth.requireOwnership('Evenement', 'id', 'id_user'),
-    security.sanitizeInput,
+  router.post('/batch',
+    ...flattenMiddleware(rateLimit.general),
     [
-      body('statut_participation')
-        .isIn(['accepter', 'refuser'])
-        .withMessage('Statut invalide (accepter ou refuser)')
+      body('ids').isArray({ max: 50 }).withMessage('Maximum 50 IDs'),
+      body('ids.*').isInt().withMessage('IDs invalides')
     ],
-    validation.handleValidationErrors,
-    cache.invalidateCache(['/evenements']),
-    audit.logAction('validate_participation', { entityType: 'evenement' }),
-    controller.validateParticipation
+    validation.handleValidationErrors || defaultMiddleware,
+    async (req, res) => {
+      if (controller.getBatchEvents) {
+        const { ids } = req.body;
+        const events = await controller.getBatchEvents(ids);
+        
+        res.json({
+          success: true,
+          data: events
+        });
+      } else {
+        res.status(501).json({
+          success: false,
+          error: 'Batch non implémenté'
+        });
+      }
+    }
   );
 
   // ====================================================================
-  // ROUTES AUTHENTIFIÉES - GESTION DES MÉDIAS
+  // MIDDLEWARE DE FIN
   // ====================================================================
+  
+  router.use((req, res, next) => {
+    if (res.headersSent) return;
+    
+    res.setHeader('X-Request-ID', req.id || 'none');
+    res.setHeader('X-Response-Time', Date.now() - (req._startTime || Date.now()));
+    
+    next();
+  });
 
-  /**
-   * @route   POST /api/evenements/:id/medias
-   * @desc    Ajouter des médias à un événement
-   * @access  Private - Owner OU Admin
-   * @note    Upload géré dans le contrôleur (max 10 images)
-   */
-  router.post('/:id/medias',
-    auth.authenticate,
-    validation.validateId('id'),
-    auth.requireOwnership('Evenement', 'id', 'id_user'),
-    security.sanitizeInput,
-    rateLimit.creation,
-    [
-      body('descriptions')
-        .optional()
-        .isArray()
-        .withMessage('Les descriptions doivent être un tableau'),
-      body('descriptions.*')
-        .optional()
-        .trim()
-        .isLength({ max: 500 })
-        .withMessage('Description max 500 caractères')
-    ],
-    validation.handleValidationErrors,
-    cache.invalidateCache(['/evenements']),
-    audit.logAction('add_medias_evenement', { entityType: 'evenement' }),
-    controller.addMedias // Gère l'upload en interne
-  );
+  // Gestion d'erreur spécifique
+  router.use((err, req, res, next) => {
+    if (err.name === 'EventNotFound') {
+      return res.status(404).json({
+        success: false,
+        error: 'Événement non trouvé',
+        code: 'EVENT_NOT_FOUND'
+      });
+    }
+    
+    if (err.name === 'EventFull') {
+      return res.status(400).json({
+        success: false,
+        error: 'Événement complet',
+        code: 'EVENT_FULL'
+      });
+    }
+    
+    next(err);
+  });
 
-  /**
-   * @route   DELETE /api/evenements/:id/medias/:mediaId
-   * @desc    Supprimer un média d'un événement
-   * @access  Private - Owner OU Admin
-   */
-  router.delete('/:id/medias/:mediaId',
-    auth.authenticate,
-    validation.validateId('id'),
-    validation.validateId('mediaId'),
-    auth.requireOwnership('Evenement', 'id', 'id_user'),
-    cache.invalidateCache(['/evenements']),
-    audit.logAction('delete_media_evenement', { entityType: 'evenement' }),
-    controller.deleteMedia
-  );
-
-  // ====================================================================
-  // ROUTES AUTHENTIFIÉES - GESTION DES ŒUVRES
-  // ====================================================================
-
-  /**
-   * @route   GET /api/evenements/:id/mes-oeuvres
-   * @desc    Récupérer les œuvres disponibles pour cet événement
-   * @access  Private - Owner OU Admin
-   */
-  router.get('/:id/mes-oeuvres',
-    auth.authenticate,
-    validation.validateId('id'),
-    auth.requireOwnership('Evenement', 'id', 'id_user'),
-    cache.userCache(300),
-    controller.getMesOeuvresEvenement
-  );
-
-  /**
-   * @route   POST /api/evenements/:id/oeuvres
-   * @desc    Ajouter une œuvre à un événement
-   * @access  Private - Owner OU Admin
-   */
-  router.post('/:id/oeuvres',
-    auth.authenticate,
-    validation.validateId('id'),
-    auth.requireOwnership('Evenement', 'id', 'id_user'),
-    security.sanitizeInput,
-    [
-      body('id_oeuvre')
-        .isInt({ min: 1 })
-        .withMessage('ID de l\'œuvre invalide'),
-      body('ordre')
-        .optional()
-        .isInt({ min: 0 })
-        .withMessage('Ordre invalide')
-    ],
-    validation.handleValidationErrors,
-    cache.invalidateCache(['/evenements']),
-    audit.logAction('add_oeuvre_evenement', { entityType: 'evenement' }),
-    controller.addOeuvreProfessionnel
-  );
-
-  /**
-   * @route   DELETE /api/evenements/:id/oeuvres/:oeuvreId
-   * @desc    Retirer une œuvre d'un événement
-   * @access  Private - Owner OU Admin
-   */
-  router.delete('/:id/oeuvres/:oeuvreId',
-    auth.authenticate,
-    validation.validateId('id'),
-    validation.validateId('oeuvreId'),
-    auth.requireOwnership('Evenement', 'id', 'id_user'),
-    cache.invalidateCache(['/evenements']),
-    audit.logAction('remove_oeuvre_evenement', { entityType: 'evenement' }),
-    controller.removeOeuvreProfessionnel
-  );
-
-  // ====================================================================
-  // ROUTES AUTHENTIFIÉES - NOTIFICATIONS
-  // ====================================================================
-
-  /**
-   * @route   POST /api/evenements/:id/notification
-   * @desc    Envoyer une notification manuelle aux participants
-   * @access  Private - Owner OU Admin
-   */
-  router.post('/:id/notification',
-    auth.authenticate,
-    validation.validateId('id'),
-    auth.requireOwnership('Evenement', 'id', 'id_user'),
-    security.sanitizeInput,
-    rateLimit.sensitiveActions,
-    [
-      body('sujet')
-        .notEmpty()
-        .trim()
-        .isLength({ min: 3, max: 100 })
-        .withMessage('Sujet entre 3 et 100 caractères'),
-      body('message')
-        .notEmpty()
-        .trim()
-        .isLength({ min: 10, max: 1000 })
-        .withMessage('Message entre 10 et 1000 caractères'),
-      body('participants')
-        .optional()
-        .isArray()
-        .withMessage('Participants doit être un tableau'),
-      body('participants.*')
-        .isInt({ min: 1 })
-        .withMessage('ID participant invalide')
-    ],
-    validation.handleValidationErrors,
-    audit.logAction('send_notification_evenement', { entityType: 'evenement' }),
-    controller.sendNotificationManuelle
-  );
-
-  // Log de confirmation
-  console.log('✅ Routes événements initialisées avec sécurité renforcée');
+  console.log('✅ Routes événements initialisées');
   
   return router;
 };

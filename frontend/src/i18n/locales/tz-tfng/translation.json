@@ -1,0 +1,456 @@
+{
+  "auth": {
+    "mustBeConnected": "ⵉⵍⴰⵇ ⴰⴷ ⵜⵉⵍⵉⴷ ⵜⴻⵜⵜⵡⴰⵙⴻⵏⵜ",
+    "required": "ⵉⵍⴰⵇ"
+  },
+  "categories": {
+    "heritageTypes": {
+      "berber": "ⵜⴰⵖⵔⵎⴰ ⵜⴰⵎⴰⵣⵉⵖⵜ",
+      "ethnographic": "ⴰⵙⴼⵙⵔ ⴰⵙⵏⴰⴳⵎⴰⵏ",
+      "modern": "ⴰⵎⵜⵔⴰⵔ ⴰⵜⵔⴰⵔ"
+    },
+    "workTypes": {
+      "unknown": "ⴰⵏⴰⵡ ⵓⵔ ⵉⵜⵜⵡⴰⵙⵙⵏ"
+    }
+  },
+  "common": {
+    "about": "ⵖⴼ",
+    "backToDashboard": "ⴰⵖⵓⵍ ⵖⴻⵔ ⵜⴰⴼⴻⵍⵡⵉⵜ",
+    "by": "ⵙⵖⵓⵔ",
+    "chooseFile": "ⴼⵔⴻⵏ ⴰⴼⴰⵢⵍⵓ",
+    "chooseFiles": "ⴼⵔⴻⵏ ⵉⴼⴰⵢⵍⵓⵜⴻⵏ",
+    "city": "ⵜⴰⵎⴷⵉⵏⵜ",
+    "contact": "ⴰⵎⵢⴰⵡⴰⴹ",
+    "copyright": "ⴰⴽⴽ ⵉⵣⵔⴼⴰⵏ ⵜⵜⵓⵃⴹⴰⵏ",
+    "description": "ⴰⴳⵍⴰⵎ",
+    "dragDropImage": "ⵙⵓⵖⴻⴷ ⵜⴻⵙⵔⴻⵙⴻⴷ ⵜⵓⴳⵏⴰ ⴷⴰ",
+    "featureInDevelopment": "ⵜⴰⵎⴰⵀⵉⵍⵜ-ⴰ ⵜⴻⵍⵍⴰ ⴷⴻⴳ ⵓⵙⴱⵓⵖⵍⵓ",
+    "followUs": "ⴹⴼⵕ ⴰⵏⵖ",
+    "imageFormats": "ⵉⵎⴰⵙⴰⵍⴻⵏ ⵉⵜⵜⵡⴰⵇⴱⴰⵍⴻⵏ: JPG, PNG, GIF",
+    "invalidDate": "ⴰⵙⴰⴽⵓⴷ ⵓⵔ ⵉⵖⴻⴷ ⴰⵔⴰ",
+    "language": "ⵜⵓⵜⵍⴰⵢⵜ",
+    "login": "ⴰⴽⵛⵎ",
+    "logout": "ⴼⴼⵖ",
+    "noDescription": "ⵓⵍⴰⵛ ⴰⴳⵍⴰⵎ",
+    "privacy": "ⵜⴰⵙⵔⵜⵉⵜ ⵏ ⵓⵙⵡⵉⵔ",
+    "retry": "ⵄⴰⵡⴷ",
+    "search": "ⵔⵣⵓ...",
+    "selectCity": "ⴼⵔⴻⵏ ⵜⴰⵎⴷⵉⵏⵜ",
+    "selectType": "ⴼⵔⴻⵏ ⴰⵏⴰⵡ",
+    "signup": "ⵊⵊⵔⴷ",
+    "terms": "ⵜⵉⴼⴰⴷⵉⵡⵉⵏ ⵏ ⵓⵙⵎⵔⵙ",
+    "viewAll": "ⵡⴰⵍⵉ ⴰⴽⴽ"
+  },
+  "contributors": {
+    "addedCount_one": "{{count}} ⴰⵎⵓⵜⵜⴽ ⵉⵜⵜⵡⴰⵔⵏⴰ",
+    "addedCount_many": "{{count}} ⵉⵎⵓⵜⵜⴽⵏ ⵜⵜⵡⴰⵔⵏⴰⵏ",
+    "addedCount_other": "{{count}} ⵉⵎⵓⵜⵜⴽⵏ ⵜⵜⵡⴰⵔⵏⴰⵏ",
+    "alreadyAdded": "ⵉⵜⵜⵡⴰⵔⵏⴰ ⵢⴰⴽⴰⵏ",
+    "createNew": "ⵙⵏⵓⵍⴼⵓ ⴰⵎⴰⵢⵏⵓ",
+    "errors": {
+      "searchError": "ⵜⴰⵣⴳⵍⵜ ⵏ ⵓⵔⵣⵣⵓ"
+    },
+    "externalContributor": "ⴰⵎⵓⵜⵜⴽ ⴰⴱⵕⵕⴰⵏⵉ",
+    "mainContributors": "ⵉⵎⵓⵜⵜⴽⵏ ⵉⴳⵊⴷⴰⵏⵏ",
+    "new": "ⴰⵎⴰⵢⵏⵓ",
+    "noContributors": "ⵓⵍⴰⵛ ⵉⵎⵓⵜⵜⴽⵏ",
+    "noResultsFor": "ⵓⵍⴰⵛ ⵉⴳⵎⴰⴹ ⵉ",
+    "otherContributors": "ⵉⵎⵓⵜⵜⴽⵏ ⵢⴰⴹⵏⵉⵏ",
+    "registeredMember": "ⴰⴳⵎⴰⵡ ⵉⵜⵜⵡⴰⵊⵊⵔⴷⵏ",
+    "searchExisting": "ⵔⵣⵓ ⴷⴻⴳ ⵉⵍⵍⴰⵏ",
+    "searchPlaceholder": "ⵔⵣⵓ ⴰⵎⵓⵜⵜⴽ...",
+    "selectRole": "ⴼⵔⴻⵏ ⵜⴰⵡⵓⵔⵉ",
+    "title": "ⵉⵎⵓⵜⵜⴽⵏ"
+  },
+  "errors": {
+    "generic": {
+      "message": "ⵜⴻⵍⵍⴰ-ⴷ ⵜⵣⴳⵍⵜ ⵓⵔ ⵉⵜⵜⵡⴰⵔⴰⵊⵓⵏ. ⵄⴰⵡⴷ ⵜⵉⴽⴻⵍⵜ.",
+      "title": "ⵜⴰⵣⴳⵍⵜ"
+    },
+    "loadingCraftsError": "ⴰⵙⵉⵍⵉ ⵏ ⵜⵥⵓⵕⵉⵏ ⵉⵅⵙⵔ",
+    "loadingError": "ⵜⴰⵣⴳⵍⵜ ⵏ ⵓⵙⵉⵍⵉ",
+    "partialDataLoad": "ⵉⵙⴼⴽⴰ ⵜⵜⵡⴰⵙⵉⵍⵉⵏ ⵙ ⵜⴼⵓⵍⵉ"
+  },
+  "events": {
+    "create": {
+      "addAfterEvent": "ⵔⵏⵓ ⴹⴼⴼⵉⵔ ⵜⴰⴷⵢⴰⵏⵜ",
+      "datesAndTimes": "ⵉⵙⴰⴽⵓⴷⵏ ⴷ ⵜⵉⴽⵓⴷⵉⵏ",
+      "descriptionPlaceholder": "ⴳⵍⵎ ⵜⴰⴷⵢⴰⵏⵜ...",
+      "draftSaved": "ⴰⵔⵔⴰⵜⵏ ⵉⵜⵜⵡⴰⵃⴹⴰ",
+      "endDate": "ⴰⵙⴰⴽⵓⴷ ⵏ ⵜⴳⴰⵔⴰ",
+      "endTime": "ⴰⴽⵓⴷ ⵏ ⵜⴳⴰⵔⴰ",
+      "eventImage": "ⵜⴰⵡⵍⴰⴼⵜ ⵏ ⵜⴷⵢⴰⵏⵜ",
+      "eventName": "ⵉⵙⵎ ⵏ ⵜⴷⵢⴰⵏⵜ",
+      "eventNamePlaceholder": "ⵙⴽⵛⵎ ⵉⵙⵎ ⵏ ⵜⴷⵢⴰⵏⵜ",
+      "eventType": "ⴰⵏⴰⵡ ⵏ ⵜⴷⵢⴰⵏⵜ",
+      "exactLocation": "ⴰⴷⵖⴰⵔ ⴰⵎⴷⴷⴰⴷ",
+      "freeEvent": "ⵜⴰⴷⵢⴰⵏⵜ ⵜⴰⴱⴰⵟⵟⵍⵜ",
+      "generalInfo": "ⵉⵏⵖⵎⵉⵙⵏ ⵉⵎⴰⵜⵓⵜⵏ",
+      "imageAndMedia": "ⵜⵉⵡⵍⴰⴼⵉⵏ ⴷ ⵉⵙⵏⵖⵎⵉⵙⵏ",
+      "locationPlaceholder": "ⵙⴽⵛⵎ ⴰⴷⵖⴰⵔ",
+      "maxParticipants": "ⴰⵎⴹⴰⵏ ⴰⴼⵍⵍⴰⵢ ⵏ ⵉⵎⵜⵜⴽⴽⴰⵢⵏ",
+      "maxParticipantsPlaceholder": "ⵙⴽⵛⵎ ⴰⵎⴹⴰⵏ ⴰⴼⵍⵍⴰⵢ",
+      "participationAndPricing": "ⴰⵜⵜⴽⴽⵉ ⴷ ⵜⵎⴰⵏⵉⵏ",
+      "postEventMedia": "ⵉⵙⵏⵖⵎⵉⵙⵏ ⴹⴼⴼⵉⵔ ⵜⴰⴷⵢⴰⵏⵜ",
+      "postEventMediaDesc": "ⵔⵏⵓ ⵜⵉⵡⵍⴰⴼⵉⵏ ⴷ ⵉⴼⵉⴷⵢⵓⵜⵏ ⴹⴼⴼⵉⵔ ⵜⴰⴷⵢⴰⵏⵜ",
+      "price": "ⵜⴰⵎⴰⵏⵜ",
+      "pricePlaceholder": "ⵙⴽⵛⵎ ⵜⴰⵎⴰⵏⵜ",
+      "publishEvent": "ⴼⵙⵔ ⵜⴰⴷⵢⴰⵏⵜ",
+      "saveAsDraft": "ⵃⴹⵓ ⴷ ⴰⵔⵔⴰⵜⵏ",
+      "startDate": "ⴰⵙⴰⴽⵓⴷ ⵏ ⵜⵣⵡⵓⵔⵉ",
+      "startTime": "ⴰⴽⵓⴷ ⵏ ⵜⵣⵡⵓⵔⵉ",
+      "subtitle": "ⵙⵏⵓⵍⴼⵓ ⵜⴰⴷⵢⴰⵏⵜ ⵜⴰⴷⵍⵙⴰⵏⵜ ⵜⴰⵎⴰⵢⵏⵓⵜ",
+      "title": "ⵔⵏⵓ ⵜⴰⴷⵢⴰⵏⵜ",
+      "willBeAvailableSoon": "ⴰⴷ ⵢⵉⵍⵉ ⵜⴰⴳⴳⴰⵔⴰ"
+    },
+    "types": {
+      "concert": "ⴰⵎⴰⵔⴳ",
+      "conference": "ⴰⵙⴰⵔⴰⴳ",
+      "exhibition": "ⴰⵙⴼⵙⵔ",
+      "festival": "ⵜⴰⴼⵓⴳⵍⴰ",
+      "literaryMeeting": "ⵜⴰⵎⵍⵉⵍⵉⵜ ⵜⴰⵙⴽⵍⴰⵏⵜ",
+      "screening": "ⴰⵙⴽⴰⵏ",
+      "show": "ⴰⵙⴰⴼⵙⵔ",
+      "workshop": "ⴰⵀⵉⵍ"
+    }
+  },
+  "footer": {
+    "legal": "ⴰⵙⵔⴼⴰⵏ",
+    "links": {
+      "faq": "ⵉⵙⵇⵙⵉⵜⵏ",
+      "legalNotices": "ⵜⵉⵏⵎⵖⵉⵡⵉⵏ ⵜⵉⵙⵔⴼⴰⵏⵉⵏ",
+      "userGuide": "ⴰⵎⵏⵉⵔ ⵏ ⵓⵙⵎⵔⵙ"
+    },
+    "location": "ⵍⵣⵣⴰⵢⵔ",
+    "navigation": "ⵜⵓⵏⵉⴳⵉⵏ",
+    "platform": "ⵜⴰⵙⵖⵓⵏⵜ ⵜⵓⵏⵎⵉⵔⵜ ⵉ ⵓⵙⵏⵎⵍ ⴷ ⵓⵃⵔⴰⵣ ⵏ ⵓⴳⵍⴰ ⴰⴷⵍⵙⴰⵏ ⴰⴱⴰⵔⴰⵖ ⴰⵣⵣⴰⵢⵔⵉ",
+    "resources": "ⵜⵉⵖⴱⵓⵍⴰ"
+  },
+  "header": {
+    "badges": {
+      "admin": "ⴰⴷⴱⴰⵔ",
+      "pending": "ⵉⵜⵜⵔⴰⵊⵓ",
+      "professional": "ⴰⵎⴰⵣⵣⴰⵍ"
+    },
+    "nav": {
+      "about": "ⵖⴼ",
+      "crafts": "ⵜⵉⵥⵓⵕⵉⵏ",
+      "events": "ⵜⵉⵎⵖⵔⵉⵡⵉⵏ",
+      "heritage": "ⴰⴳⵍⴰ",
+      "works": "ⵜⵉⵡⵓⵔⵉⵡⵉⵏ"
+    },
+    "subtitle": "ⵜⴰⵖⵓⵖⵜ ⵏ ⵍⵣⵣⴰⵢⵔ",
+    "title": "ⵜⵉⵎⵍⵉⵍⵉⵜ ⵏ ⵜⴷⵍⵙⴰ",
+    "userMenu": {
+      "addWork": "ⵔⵏⵓ ⵜⴰⵡⵓⵔⵉ",
+      "administration": "ⵜⴰⴷⴱⵉⵔⵜ",
+      "createEvent": "ⵙⵏⵓⵍⴼⵓ ⵜⴰⴷⵢⴰⵏⵜ",
+      "metadata": "ⵉⵙⴼⴽⴰ ⵏ ⵜⵥⵓⵕⵉ",
+      "myFavorites": "ⵉⵎⵓⴼⴰⵢⵏ ⵉⵏⵓ",
+      "myProfile": "ⵉⴼⵔⵙ ⵉⵏⵓ",
+      "mySpace": "ⴰⵙⴰⵢⵔⴰⵔ ⵉⵏⵓ",
+      "pendingValidations": "ⵉⵙⵖⵣⴰⵏ ⵉⵜⵜⵔⴰⵊⵓⵏ",
+      "proDashboard": "ⵜⴰⴼⵍⵡⵉⵜ ⵏ ⵓⵎⴰⵣⵣⴰⵍ"
+    }
+  },
+  "home": {
+    "explore": {
+      "subtitle": "ⴰⴼ ⴰⵖⵍⴰⴷ ⵏ ⵢⵉⴷⵍⴻⵙ ⴰⵎⴰⵣⵉⵖ",
+      "tabs": {
+        "crafts": "ⵜⵉⵃⵓⵏⴰ",
+        "events": "ⵜⵉⴷⵢⴰⵏⵉⵏ",
+        "heritage": "ⴰⴳⴻⵎⵎⴰⵢ",
+        "map": "ⵜⴰⴽⴰⵔⴹⴰ",
+        "works": "ⵜⵉⵥⵓⵔⵉⵢⵉⵏ"
+      },
+      "title": "ⵙⵏⵉⵔⴻⵎ"
+    },
+    "mission": {
+      "description": "ⵜⴰⵙⵖⵓⵏⵜ ⵜⵓⵏⵎⵉⵔⵜ ⵉ ⵓⵃⵔⴰⵣ ⴷ ⵓⵙⵙⵏⵖⵍ ⵏ ⵓⴳⵍⴰ ⴰⴷⵍⵙⴰⵏ ⴰⵎⴰⵣⵉⵖ",
+      "learnMore": "ⵉⵙⵙⵉⵏ ⵓⴳⴰⵔ",
+      "title": "ⵜⴰⵡⵓⵔⵉ ⵏⵏⵖ"
+    },
+    "professionals": {
+      "benefits": "ⴼⴰⵕⴻⵚ ⵙⴻⴳ ⵡⵓⴳⴰⵔ ⵏ ⵟⵟⵎⴻⵄ ⵉ ⵍⴻⵅⴷⴰⵎ-ⵉⴽ ⴷ ⵜⴻⴷⵢⴰⵏⵉⵏ-ⵉⴽ",
+      "createWork": "ⵙⵏⵓⵍⴼⵓ-ⴷ ⵜⴰⵡⵓⵔⵉ",
+      "organizeEvent": "ⵙⵓⴷⴷⴻⵙ ⵜⴰⴷⵢⴰⵏⵜ",
+      "subtitle": "ⵔⵏⵓ ⵖⴻⵔ ⵜⴻⴳⵔⴰⵡⵜ-ⵏⵏⴻⵖ ⵏ ⵉⵏⴰⵥⵓⵔⴻⵏ ⴷ ⵉⵎⴰⵀⵉⵍⴻⵏ",
+      "title": "ⵉ ⵢⵉⵎⴰⵀⵉⵍⴻⵏ"
+    },
+    "resources": {
+      "access": "ⴰⵏⴽⵛⵎ ⵖⵔ ⵜⵖⴱⵓⵍⴰ",
+      "calendar": "ⴰⵙⵎⴽⵜⵉ ⴰⴷⵍⵙⴰⵏ",
+      "directory": "ⴰⵙⴰⵔⵉⵡ ⵏ ⵉⵎⴰⵣⵣⴰⵍⵏ",
+      "guide": "ⴰⵎⵏⵉⵔ ⵏ ⵜⵎⵙⴽⴰⵔⵉⵏ",
+      "title": "ⵜⵉⵖⴱⵓⵍⴰ"
+    },
+    "stats": {
+      "events": "ⵜⵉⴷⵢⴰⵏⵉⵏ",
+      "heritage": "ⵉⴷⵖⴰⵔⵏ ⵏ ⵓⴳⵍⴰ",
+      "members": "ⵉⴳⵎⴰⵡⵏ",
+      "subtitle": "ⵉⵎⴹⴰⵏⵏ ⵏⵏⴰ ⵉⵙⴰⵡⴰⵍⵏ",
+      "title": "ⵜⴰⵙⵖⵓⵏⵜ ⵜⴰⴷⴷⵔⴰⵏⵜ",
+      "works": "ⵜⵉⵡⵓⵔⵉⵡⵉⵏ"
+    }
+  },
+  "notifications": {
+    "youHave_one": "ⵖⵓⵔⴽ {{count}} ⵜⵏⵎⵖⵉⵡⵜ",
+    "youHave_many": "ⵖⵓⵔⴽ {{count}} ⵜⵏⵎⵖⵉⵡⵉⵏ",
+    "youHave_other": "ⵖⵓⵔⴽ {{count}} ⵜⵏⵎⵖⵉⵡⵉⵏ"
+  },
+  "price": {
+    "fixed": "ⵜⴰⵎⴰⵏⵜ ⵉⵣⴳⴰⵏ",
+    "free": "ⴱⴰⵟⵟⵍ"
+  },
+  "publishers": {
+    "addedCount_one": "{{count}} ⴰⵎⴰⵣⵔⴰⴳ ⵉⵜⵜⵡⴰⵔⵏⴰ",
+    "addedCount_many": "{{count}} ⵉⵎⴰⵣⵔⴰⴳⵏ ⵜⵜⵡⴰⵔⵏⴰⵏ",
+    "addedCount_other": "{{count}} ⵉⵎⴰⵣⵔⴰⴳⵏ ⵜⵜⵡⴰⵔⵏⴰⵏ",
+    "createNew": "ⵙⵏⵓⵍⴼⵓ ⴰⵎⴰⵣⵔⴰⴳ ⴰⵎⴰⵢⵏⵓ",
+    "isbn": "ISBN",
+    "noResultsFor": "ⵓⵍⴰⵛ ⵉⴳⵎⴰⴹ ⵉ",
+    "pricePlaceholder": "ⵙⴽⵛⵎ ⵜⴰⵎⴰⵏⵜ",
+    "role": "ⵜⴰⵡⵓⵔⵉ",
+    "roles": {
+      "coPublisher": "ⴰⵎⴰⵣⵔⴰⴳ ⴰⵎⵓⵏ",
+      "distributor": "ⴰⵎⴱⴹⴰ",
+      "mainPublisher": "ⴰⵎⴰⵣⵔⴰⴳ ⴰⴳⵊⴷⴰⵏ",
+      "originalPublisher": "ⴰⵎⴰⵣⵔⴰⴳ ⴰⵥⵓⵕⴰⵏ",
+      "translationPublisher": "ⴰⵎⴰⵣⵔⴰⴳ ⵏ ⵓⵙⵓⵖⵍ"
+    },
+    "salePrice": "ⵜⴰⵎⴰⵏⵜ ⵏ ⵓⵣⵏⵣⵉ",
+    "search": "ⵔⵣⵓ",
+    "searchPlaceholder": "ⵔⵣⵓ ⴰⵎⴰⵣⵔⴰⴳ...",
+    "status": "ⴰⴷⴷⴰⴷ",
+    "statuses": {
+      "cancelled": "ⵉⵜⵜⵡⴰⵙⵔ",
+      "inProgress": "ⵉⵜⵜⴷⴷⵓ",
+      "outOfStock": "ⵉⴼⴼⵖ",
+      "published": "ⵉⵜⵜⵡⴰⴼⵙⵔ"
+    },
+    "title": "ⵉⵎⴰⵣⵔⴰⴳⵏ"
+  },
+  "sections": {
+    "crafts": {
+      "exploreAll": "ⵙⵏⵉⵔⵎ ⴰⴽⴽ",
+      "noCrafts": "ⵓⵍⴰⵛ ⵜⵉⵥⵓⵕⵉⵏ",
+      "onOrder": "ⵙ ⵜⵓⵜⵜⵔⴰ",
+      "price": {
+        "from": "ⵙⴳ",
+        "range": "{{min}} - {{max}}",
+        "upTo": "ⴰⵔ"
+      },
+      "seeDetails": "ⵥⵕ ⵉⴼⵔⵓⵔⵉⵜⵏ",
+      "stock": {
+        "inStock_one": "{{count}} ⵜⴰⴳⴳⴰⵢⵜ ⵜⵍⵍⴰ",
+        "inStock_many": "{{count}} ⵜⴳⴳⴰⵢⵉⵏ ⵍⵍⴰⵏⵜ",
+        "inStock_other": "{{count}} ⵜⴳⴳⴰⵢⵉⵏ ⵍⵍⴰⵏⵜ",
+        "outOfStock": "ⵉⴼⴼⵖ"
+      },
+      "subtitle": "ⴰⴼ ⵜⵉⵎⵓⵙⵙⵏⵉⵡⵉⵏ ⵏ ⵉⵎⵣⵡⵓⵔⴰ ⵏⵏⴰ ⵉⵜⵜⴷⴷⵓⵏ ⵙⴳ ⵢⴰⵏ ⵓⵙⵓⵜⴰ ⵖⵔ ⵡⴰⵢⴹ",
+      "title": "ⵜⵉⵥⵓⵕⵉⵏ ⵜⵉⵎⵏⵙⴰⵢⵉⵏ"
+    },
+    "events": {
+      "dateToConfirm": "ⴰⵙⴰⴽⵓⴷ ⵉ ⵓⵙⵏⵜⵎ",
+      "noEvents": "ⵓⵍⴰⵛ ⵜⵉⴷⵢⴰⵏⵉⵏ",
+      "register": "ⵊⵊⵔⴷ",
+      "registration": "ⴰⵊⵊⵔⴷ",
+      "seeAllEvents": "ⵥⵕ ⴰⴽⴽ ⵜⵉⴷⵢⴰⵏⵉⵏ",
+      "subtitle": "ⴰⵜⵜⴽⵉ ⴳ ⵜⵎⵖⵔⵉⵡⵉⵏ ⵏⵏⴰ ⵉⵙⵙⵉⴷⵉⵔⵏ ⵜⴰⴳⵔⴰⵡⵜ ⵜⴰⴷⵍⵙⴰⵏⵜ ⵏ ⵍⵣⵣⴰⵢⵔ",
+      "title": "ⵜⵉⵎⵖⵔⵉⵡⵉⵏ ⵜⵉⴷⵍⵙⴰⵏⵉⵏ"
+    },
+    "heritage": {
+      "discover": "ⴰⴼ",
+      "filters": {
+        "allRegions": "ⴰⴽⴽ ⵜⵎⵏⴰⴹⵉⵏ",
+        "archaeological": "ⵉⴷⵖⴰⵔⵏ ⵉⵏⴰⵔⴽⵢⵓⵍⵓⵊⵉⵢⵏ",
+        "monuments": "ⵉⵙⵎⴹⴰⵍ UNESCO",
+        "traditional": "ⵜⴰⵖⵔⵎⴰ ⵜⴰⵏⵙⴰⵢⵜ"
+      },
+      "interactiveMap": "ⵜⴰⴽⴰⵕⴹⴰ ⵜⴰⵎⵢⴰⴳⴰⵏⵜ",
+      "map": {
+        "explore": "ⵙⵏⵉⵔⵎ ⴳ ⵜⴽⴰⵕⴹⴰ"
+      },
+      "mapDescription": "ⴰⴼ ⵉⴷⵖⴰⵔⵏ ⵏ ⵓⴳⵍⴰ ⵙ ⵜⴽⴰⵕⴹⴰ ⵜⴰⵎⵢⴰⴳⴰⵏⵜ",
+      "noResults": "ⵓⵍⴰⵛ ⵉⴳⵎⴰⴹ",
+      "otherSites": "ⵉⴷⵖⴰⵔⵏ ⵢⴰⴹⵏⵉⵏ ⵉⵜⵜⵡⴰⵙⵙⵏⵏ",
+      "planVisit": {
+        "description": "ⵙⵎⵔⵙ ⵜⴰⴽⴰⵕⴹⴰ ⵜⴰⵎⵢⴰⴳⴰⵏⵜ ⵏⵏⵖ ⵉ ⵓⵙⵏⵓⵍⴼⵓ ⵏ ⵓⴱⵔⵉⴷ ⵏⵏⴽ ⵓⴷⵎⴰⵡⴰⵏ ⴷ ⵡⴰⴼ ⵏ ⵉⵎⵔⴰⵢⵏ ⵏ ⵓⴳⵍⴰ ⴰⵣⵣⴰⵢⵔⵉ.",
+        "guide": "ⴰⵎⵏⵉⵔ ⴰⵎⵙⴽⴰⵔ",
+        "start": "ⴱⴷⵓ ⴰⵙⵏⵉⵔⵎ",
+        "title": "ⵙⵖⵉⵡⵙ ⵜⴰⵔⵣⵣⴼⵜ ⵏⵏⴽ"
+      },
+      "reviews": "ⵜⵉⵙⴽⵔⵉⵏ",
+      "seeAll": "ⵡⴰⵍⵉ ⴰⴽⴽ",
+      "subtitle": "ⴰⴼ ⵉⴳⵔⴰⵏ ⵏ ⵓⵎⵣⵔⵓⵢ ⴷ ⵜⴷⵍⵙⴰ ⵏ ⵍⵣⵣⴰⵢⵔ ⵙ ⵜⴽⴰⵔⴹⴰ ⵜⴰⵎⵢⴰⴳⴰⵏⵜ",
+      "title": "ⴰⴳⵍⴰ ⴰⴷⵍⵙⴰⵏ"
+    },
+    "works": {
+      "actions": {
+        "readArticle": "ⵖⵔ ⴰⵎⴰⴳⵔⴰⴷ",
+        "view": "ⵥⵕ ⵜⴰⵡⵓⵔⵉ"
+      },
+      "ageLabels": {
+        "classic": "ⴰⴽⵍⴰⵙⵉⴽⵉ",
+        "recent": "ⴰⵎⴰⵢⵏⵓ"
+      },
+      "badges": {
+        "classic": "ⴰⴽⵍⴰⵙⵉⴽⵉ",
+        "new": "ⴰⵎⴰⵢⵏⵓ",
+        "popular": "ⵉⵜⵜⵡⴰⵙⵙⵏ"
+      },
+      "createdIn": "ⵉⵜⵜⵡⴰⵙⵏⵓⵍⴼⴰ ⴳ",
+      "details": "ⵉⴼⵔⵓⵔⵉⵜⵏ",
+      "empty": {
+        "noFeatured": "ⵓⵍⴰⵛ ⵜⴰⵡⵓⵔⵉ ⵉⵜⵜⵡⴰⴼⵔⵏ ⵉ ⵜⵉⵣⵉ ⴰ.",
+        "noNew": "ⵓⵍⴰⵛ ⵜⴰⵡⵓⵔⵉ ⵜⴰⵎⴰⵢⵏⵓⵜ ⴳ ⵢⵢⵓⵔ ⴰ. ⴰⵖⵓⵍⴷ ⵜⴰⴳⴳⴰⵔⴰ!",
+        "noPopular": "ⵓⵍⴰⵛ ⵜⴰⵡⵓⵔⵉ ⵜⴰⴽⵍⴰⵙⵉⴽⵉⵜ ⵏⵖ ⵜⴰⵎⴰⵢⵏⵓⵜ ⵉ ⵓⵙⴽⴰⵏ.",
+        "noRecommended": "ⵓⵍⴰⵛ ⴰⵙⵓⵎⵔ. ⵙⵏⵉⵔⵎ ⴰⴽⴰⵜⴰⵍⵓⴳ ⵏⵏⵖ!",
+        "noSearch": "ⵓⵍⴰⵛ ⵉⴳⵎⴰⴹ ⵏ ⵓⵔⵣⵣⵓ",
+        "noType": "ⵓⵍⴰⵛ ⵜⴰⵡⵓⵔⵉ ⵉⵎⵙⴰⵙⴰⵏ ⴷ ⵓⵏⴰⵡ ⵉⵜⵜⵡⴰⴼⵔⵏⵏ.",
+        "noWorks": "ⵓⵍⴰⵛ ⵜⴰⵡⵓⵔⵉ ⵉⵍⵍⴰⵏ ⵉ ⵜⵉⵣⵉ ⴰ."
+      },
+      "exploreLibrary": "ⵙⵏⵉⵔⵎ ⵜⴰⵙⴷⵍⵉⵙⵜ",
+      "filters": {
+        "all": "ⴰⴽⴽ ⵜⵉⵡⵓⵔⵉⵡⵉⵏ",
+        "allTypes": "ⴰⴽⴽ ⵉⵏⴰⵡⵏ",
+        "featured": "ⵉⵜⵜⵡⴰⴼⵔⵏ",
+        "new": "ⵜⵉⵎⴰⵢⵏⵓⵜⵉⵏ",
+        "popular": "ⵉⵜⵜⵡⴰⵙⵙⵏ",
+        "recommended": "ⵉⵜⵜⵡⴰⵙⵓⵎⵔ"
+      },
+      "info": {
+        "classicsDesc": "ⴰⴼ ⵉⴽⵍⴰⵙⵉⴽⵉⵢⵏ ⵏⵏⵖ ⵉⵣⴷⴰⵢⵏ (ⵓⴳⴰⵔ ⵏ 10 ⵉⵙⴳⴳⴰⵙⵏ) ⴷ ⵉⵎⵓⵔⵙⵏ ⵉⵎⴰⵢⵏⵓⵜⵏ (5 ⵉⵙⴳⴳⴰⵙⵏ ⵉⵏⴳⴳⵓⵔⴰ)",
+        "featuredCount_one": "{{count}} ⵜⴰⵡⵓⵔⵉ ⵉⵜⵜⵡⴰⴼⵔⵏ",
+        "featuredCount_many": "{{count}} ⵜⵉⵡⵓⵔⵉⵡⵉⵏ ⵜⵜⵡⴰⴼⵔⵏⵏⵜ",
+        "featuredCount_other": "{{count}} ⵜⵉⵡⵓⵔⵉⵡⵉⵏ ⵜⵜⵡⴰⴼⵔⵏⵏⵜ",
+        "newCount_one": "{{count}} ⵜⴰⵡⵓⵔⵉ ⵜⴰⵎⴰⵢⵏⵓⵜ",
+        "newCount_many": "{{count}} ⵜⵉⵡⵓⵔⵉⵡⵉⵏ ⵜⵉⵎⴰⵢⵏⵓⵜⵉⵏ",
+        "newCount_other": "{{count}} ⵜⵉⵡⵓⵔⵉⵡⵉⵏ ⵜⵉⵎⴰⵢⵏⵓⵜⵉⵏ",
+        "popularCount_one": "{{count}} ⵜⴰⵡⵓⵔⵉ ⵉⵜⵜⵡⴰⵙⵙⵏ",
+        "popularCount_many": "{{count}} ⵜⵉⵡⵓⵔⵉⵡⵉⵏ ⵜⵜⵡⴰⵙⵙⵏⵏⵜ",
+        "popularCount_other": "{{count}} ⵜⵉⵡⵓⵔⵉⵡⵉⵏ ⵜⵜⵡⴰⵙⵙⵏⵏⵜ",
+        "recommendedCount_one": "{{count}} ⵜⴰⵡⵓⵔⵉ ⵉⵜⵜⵡⴰⵙⵓⵎⵔ",
+        "recommendedCount_many": "{{count}} ⵜⵉⵡⵓⵔⵉⵡⵉⵏ ⵜⵜⵡⴰⵙⵓⵎⵔⵏⵜ",
+        "recommendedCount_other": "{{count}} ⵜⵉⵡⵓⵔⵉⵡⵉⵏ ⵜⵜⵡⴰⵙⵓⵎⵔⵏⵜ"
+      },
+      "loading": "ⴰⵙⵉⵍⵉ ⵏ ⵜⵡⵓⵔⵉⵡⵉⵏ...",
+      "noTitle": "ⴱⵍⴰ ⴰⵣⵡⵍ",
+      "noWorks": "ⵓⵍⴰⵛ ⵜⴰⵡⵓⵔⵉ",
+      "preview": "ⵜⴰⵎⵓⵖⵍⵉ",
+      "rateLimit": {
+        "cache": "ⵜⵓⴼⴼⵔⴰ:",
+        "clearCache": "ⵙⴼⴹ ⵜⵓⴼⴼⵔⴰ ⴷ ⵓⵙⵉⵍⵉ",
+        "currentDelay": "ⴰⵔⴰⴳ ⴰⵎⵉⵔⴰⵏ:",
+        "entries": "ⵜⵉⵏⴽⵛⴰⵎⵉⵏ",
+        "health": {
+          "critical": "ⵜⵡⴹ ⵜⵍⵉⵙⴰ!",
+          "good": "ⴰⴽⴽ ⵉⵖⵓⴷⴰ",
+          "slow": "ⴰⵙⵎⵓⵏ ⴰⵣⴷⴰⵢ ⵉⵜⵜⴷⴷⵓ",
+          "warning": "ⵉⵇⵇⵔⴱⴷ ⵖⵔ ⵜⵍⵉⵙⴰ"
+        },
+        "hits": "429 ⵜⵉⴽⴽⴰⵍ:",
+        "normalMode": "ⴰⵙⵎⵓⵏ ⴰⵎⴰⴳⴰⵏ",
+        "queue": "ⵜⴰⴼⵉⵍⴰ ⵏ ⵓⵔⴰⵊⵓ:",
+        "requestsPerMinute": "ⵜⵓⵜⵔⵉⵡⵉⵏ/ⵜⴰⵙⴷⵉⴷⵜ:",
+        "slowMode": "ⴰⵙⵎⵓⵏ ⴰⵣⴷⴰⵢ",
+        "status": "ⴰⴷⴷⴰⴷ ⵏ Rate Limit",
+        "title": "Rate Limit"
+      },
+      "results": {
+        "count_one": "{{count}} ⵉⴳⵎⴰⴹ",
+        "count_many": "{{count}} ⵉⴳⵎⴰⴹ",
+        "count_other": "{{count}} ⵉⴳⵎⴰⴹ"
+      },
+      "searchPlaceholder": "ⵔⵣⵓ ⵙ ⵓⵣⵡⵍ, ⴰⵎⴳⴰⵢ, ⴰⵙⵖⵔⵓⵢ, ⴰⵎⵙⵓⴼⵖ...",
+      "stats": {
+        "classics_one": "{{count}} ⵜⴰⵡⵓⵔⵉ ⵜⴰⴽⵍⴰⵙⵉⴽⵉⵜ",
+        "classics_many": "{{count}} ⵜⵉⵡⵓⵔⵉⵡⵉⵏ ⵜⵉⴽⵍⴰⵙⵉⴽⵉⵢⵉⵏ",
+        "classics_other": "{{count}} ⵜⵉⵡⵓⵔⵉⵡⵉⵏ ⵜⵉⴽⵍⴰⵙⵉⴽⵉⵢⵉⵏ",
+        "new_one": "{{count}} ⵜⴰⵡⵓⵔⵉ ⵜⴰⵎⴰⵢⵏⵓⵜ",
+        "new_many": "{{count}} ⵜⵉⵡⵓⵔⵉⵡⵉⵏ ⵜⵉⵎⴰⵢⵏⵓⵜⵉⵏ",
+        "new_other": "{{count}} ⵜⵉⵡⵓⵔⵉⵡⵉⵏ ⵜⵉⵎⴰⵢⵏⵓⵜⵉⵏ",
+        "recent_one": "{{count}} ⵜⴰⵡⵓⵔⵉ ⵜⴰⵎⴰⵢⵏⵓⵜ",
+        "recent_many": "{{count}} ⵜⵉⵡⵓⵔⵉⵡⵉⵏ ⵜⵉⵎⴰⵢⵏⵓⵜⵉⵏ",
+        "recent_other": "{{count}} ⵜⵉⵡⵓⵔⵉⵡⵉⵏ ⵜⵉⵎⴰⵢⵏⵓⵜⵉⵏ",
+        "total_one": "{{count}} ⵜⴰⵡⵓⵔⵉ",
+        "total_many": "{{count}} ⵜⵉⵡⵓⵔⵉⵡⵉⵏ",
+        "total_other": "{{count}} ⵜⵉⵡⵓⵔⵉⵡⵉⵏ"
+      },
+      "subtitle": "ⵙⵏⵉⵔⵎ ⵉⴳⵔⴰⵏ ⵏ ⵜⴷⵍⵙⴰ ⵜⴰⵣⵣⴰⵢⵔⵉⵜ: ⵜⵉⵡⵓⵔⵉⵡⵉⵏ ⵜⵉⵙⴽⵍⴰⵏⵉⵏ, ⵜⵉⵙⵉⵏⵉⵎⴰⵜⵉⵏ ⴷ ⵜⵉⵥⵓⵕⴰⵏⵉⵏ",
+      "title": "ⴰⴼ ⵜⴰⴳⵔⵓⵎⵎⴰ ⵏⵏⵖ"
+    },
+    "hero": {
+      "quickActions": {
+        "discover": {
+          "title": "ⴰⴼ ⴰⴳⴻⵎⵎⴰⵢ",
+          "description": "ⵙⵏⵉⵔⴻⵎ ⴰⴷⵖⴰⵔⴻⵏ ⵏ ⵓⵎⴻⵣⵔⵓⵢ ⴷ ⵉⵙⴻⵎⴹⴰⵍ ⵉⴷⴻⵍⵙⴰⵏⴻⵏ"
+        },
+        "events": {
+          "title": "ⵜⵉⴷⵢⴰⵏⵉⵏ ⵉ ⴷ-ⵉⵜⴻⴷⴷⵓⵏ",
+          "description": "ⵜⵜⴻⴽⴽⵉ ⴷⴻⴳ ⵜⴻⴷⵢⴰⵏⵉⵏ ⴷ ⵜⵎⴻⵖⵔⵉⵡⵉⵏ ⵜⵉⴷⴻⵍⵙⴰⵏⵉⵏ"
+        },
+        "works": {
+          "title": "ⵜⵉⵥⵓⵔⵉⵢⵉⵏ",
+          "description": "ⴰⴼ ⵜⵉⵙⵏⵓⵍⴼⵓⵢⵉⵏ ⵜⵉⵥⵓⵔⴰⵏⵉⵏ ⴷ ⵜⵙⴻⴽⵍⴰⵏⵉⵏ ⵜⵉⵎⴰⵣⵉⵖⵉⵏ"
+        },
+        "title": "ⴰⴼ ⵜⴰⴷⴻⵍⵙⴰⵏⵜ-ⵏⵏⴻⵖ"
+      },
+      "cta": {
+        "learnMore": "ⵥⴻⵔ ⵓⴳⴰⵔ",
+        "explore": "ⵙⵏⵉⵔⴻⵎ ⵜⴰⴼⵔⴰⵏⵜ"
+      },
+      "title": "ⴰⵣⵓⵍ ⴷⴻⴳ",
+      "titleHighlight": "ⵜⴰⵎⵍⵉⵍⵉⵜ ⵜⴰⴷⴻⵍⵙⴰⵏⵜ",
+      "subtitle": "ⵜⴰⴼⵔⴰⵏⵜ ⵜⵓⵎⴹⵉⵏⵜ ⵉ ⵓⵃⵔⴰⵣ ⴷ ⵓⵙⵏⴻⵔⵏⵉ ⵏ ⵓⴳⴻⵎⵎⴰⵢ ⴰⴷⴻⵍⵙⴰⵏ ⴰⵎⴰⵣⵉⵖ"
+    }
+  },
+  "works": {
+    "actions": {
+      "favorites": "ⵉⵎⵓⴼⴰⵢⵏ",
+      "listenNow": "ⵙⴼⵍⴷ ⴷⵖⵉ",
+      "myList": "ⵜⴰⵍⴳⴰⵎⵜ ⵉⵏⵓ",
+      "preview": "ⵜⴰⵎⵓⵖⵍⵉ",
+      "readExcerpt": "ⵖⵔ ⵜⴰⴼⵍⵉⵙⵜ",
+      "readNow": "ⵖⵔ ⴷⵖⵉ",
+      "trailer": "ⴰⵙⴽⴰⵏ ⴰⵎⵣⵡⴰⵔⵓ",
+      "watchNow": "ⵥⵕ ⴷⵖⵉ"
+    },
+    "album": {
+      "tracksCount_one": "{{count}} ⵜⴰⵖⵔⵉⵡⵜ",
+      "tracksCount_many": "{{count}} ⵜⵖⵔⵉⵡⵉⵏ",
+      "tracksCount_other": "{{count}} ⵜⵖⵔⵉⵡⵉⵏ"
+    },
+    "duration": {
+      "minutes_one": "{{count}} ⵜⴰⵙⴷⵉⴷⵜ",
+      "minutes_many": "{{count}} ⵜⵓⵙⴷⵉⴷⵉⵏ",
+      "minutes_other": "{{count}} ⵜⵓⵙⴷⵉⴷⵉⵏ"
+    },
+    "fields": {
+      "isbn": "ISBN",
+      "pages": "ⵜⵉⴼⵍⵉⵡⵉⵏ"
+    },
+    "pricing": {
+      "free": "ⴱⴰⵟⵟⵍ"
+    },
+    "sections": {
+      "synopsis": "ⴰⴳⵣⵓⵍ"
+    },
+    "stats": {
+      "listensCount_one": "{{count}} ⴰⵙⴼⵍⴷ",
+      "listensCount_many": "{{count}} ⵉⵙⴼⵍⴷⵏ",
+      "listensCount_other": "{{count}} ⵉⵙⴼⵍⴷⵏ",
+      "readingTime": "ⴰⴽⵓⴷ ⵏ ⵜⵖⵓⵔⵉ",
+      "readingTimeValue": "{{minutes}} ⵜⵓⵙⴷⵉⴷⵉⵏ",
+      "reviewsCount_one": "{{count}} ⵜⴰⵙⴽⵔⵜ",
+      "reviewsCount_many": "{{count}} ⵜⵉⵙⴽⵔⵉⵏ",
+      "reviewsCount_other": "{{count}} ⵜⵉⵙⴽⵔⵉⵏ",
+      "views": "ⵜⵉⵎⵓⵖⵍⵉⵡⵉⵏ"
+    },
+    "types": {
+      "album": "ⴰⵍⴱⵓⵎ",
+      "book": "ⴰⴷⵍⵉⵙ",
+      "film": "ⴰⴼⵉⵍⵎ"
+    }
+  }
+}

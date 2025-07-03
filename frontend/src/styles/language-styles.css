@@ -1,0 +1,308 @@
+/* ===================================
+   Styles pour le support multilingue
+   =================================== */
+
+/* Polices par défaut */
+:root {
+    /* Polices arabes */
+    --font-arabic: 'Tajawal', 'Cairo', 'Noto Kufi Arabic', 'Arial', sans-serif;
+    --font-arabic-display: 'Cairo', 'Tajawal', sans-serif;
+
+    /* Polices Tifinagh */
+    --font-tifinagh: 'Noto Sans Tifinagh', 'Tifinaghe-Ircam Unicode', 'Hapax Berbère', sans-serif;
+
+    /* Polices latines (français, anglais, tamazight latin) */
+    --font-latin: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+}
+
+/* ===================================
+     Styles globaux par langue
+     =================================== */
+
+/* Arabe */
+html[lang="ar"],
+html[lang="ar-DZ"] {
+    font-family: var(--font-arabic);
+    font-size: 110%;
+    line-height: 1.8;
+    letter-spacing: 0.02em;
+}
+
+/* Classe utilitaire pour police arabe */
+.font-arabic {
+    font-family: var(--font-arabic) !important;
+}
+
+/* Ajustements pour les titres en arabe */
+html[lang="ar"] h1,
+html[lang="ar"] h2,
+html[lang="ar"] h3,
+html[lang="ar"] h4,
+html[lang="ar"] h5,
+html[lang="ar"] h6,
+html[lang="ar-DZ"] h1,
+html[lang="ar-DZ"] h2,
+html[lang="ar-DZ"] h3,
+html[lang="ar-DZ"] h4,
+html[lang="ar-DZ"] h5,
+html[lang="ar-DZ"] h6 {
+    font-family: var(--font-arabic-display);
+    font-weight: 700;
+    line-height: 1.5;
+}
+
+/* Tifinagh */
+html[lang="tz-tfng"],
+.tifinagh-font {
+    font-family: var(--font-tifinagh);
+    font-size: 115%;
+    line-height: 1.7;
+    letter-spacing: 0.05em;
+}
+
+/* Ajustements spécifiques pour Tifinagh */
+html[lang="tz-tfng"] h1,
+html[lang="tz-tfng"] h2,
+html[lang="tz-tfng"] h3 {
+    font-weight: 600;
+    letter-spacing: 0.1em;
+}
+
+/* Tamazight Latin */
+html[lang="tz-ltn"] {
+    font-family: var(--font-latin);
+    /* Ajustements légers pour les caractères spéciaux */
+    font-size: 105%;
+    line-height: 1.6;
+}
+
+/* Français et Anglais */
+html[lang="fr"],
+html[lang="en"] {
+    font-family: var(--font-latin);
+}
+
+/* ===================================
+     Support RTL
+     =================================== */
+
+/* Direction RTL globale */
+html[dir="rtl"] {
+    text-align: right;
+}
+
+html[dir="ltr"] {
+    text-align: left;
+}
+
+/* Ajustements pour les inputs en RTL */
+html[dir="rtl"] input,
+html[dir="rtl"] textarea,
+html[dir="rtl"] select {
+    text-align: right;
+    direction: rtl;
+}
+
+/* Placeholders en RTL */
+html[dir="rtl"] input::placeholder,
+html[dir="rtl"] textarea::placeholder {
+    text-align: right;
+}
+
+/* ===================================
+     Classes utilitaires par langue
+     =================================== */
+
+/* Classes spécifiques à chaque langue */
+.lang-ar {
+    --text-primary: #1a1a1a;
+    --text-secondary: #4a4a4a;
+}
+
+.lang-tz-tfng {
+    --text-primary: #0a0a0a;
+    --text-secondary: #3a3a3a;
+}
+
+.lang-tz-ltn {
+    --text-primary: #1a1a1a;
+    --text-secondary: #4a4a4a;
+}
+
+/* ===================================
+     Fixes pour les composants UI
+     =================================== */
+
+/* Buttons en RTL */
+html[dir="rtl"] button svg:first-child {
+    margin-left: 0.5rem;
+    margin-right: 0;
+}
+
+html[dir="rtl"] button svg:last-child {
+    margin-right: 0.5rem;
+    margin-left: 0;
+}
+
+/* Dropdown menus en RTL */
+html[dir="rtl"] [role="menu"] {
+    text-align: right;
+}
+
+/* Cards et conteneurs */
+html[dir="rtl"] .card,
+html[dir="rtl"] .panel {
+    text-align: right;
+}
+
+/* ===================================
+     Animations directionnelles
+     =================================== */
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideInLeft {
+    from {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+html[dir="rtl"] .slide-in {
+    animation: slideInLeft 0.3s ease-out;
+}
+
+html[dir="ltr"] .slide-in {
+    animation: slideInRight 0.3s ease-out;
+}
+
+/* ===================================
+     Styles spéciaux pour les nombres
+     =================================== */
+
+/* Chiffres arabes-indiens */
+html[lang="ar"] .number,
+html[lang="ar-DZ"] .number {
+    font-feature-settings: "numr";
+}
+
+/* Force les chiffres latins dans certains contextes */
+.latin-numbers {
+    font-feature-settings: "lnum";
+}
+
+/* ===================================
+     Responsive adjustments
+     =================================== */
+
+@media (max-width: 768px) {
+
+    /* Ajustements mobiles pour l'arabe */
+    html[lang="ar"],
+    html[lang="ar-DZ"] {
+        font-size: 105%;
+    }
+
+    /* Ajustements mobiles pour Tifinagh */
+    html[lang="tz-tfng"] {
+        font-size: 110%;
+    }
+}
+
+/* ===================================
+     Print styles
+     =================================== */
+
+@media print {
+
+    html[lang="ar"],
+    html[lang="ar-DZ"] {
+        font-family: 'Amiri', 'Traditional Arabic', serif;
+    }
+
+    html[lang="tz-tfng"] {
+        font-family: var(--font-tifinagh);
+        font-size: 120%;
+    }
+}
+
+/* ===================================
+     Accessibilité
+     =================================== */
+
+/* Focus styles adaptés à la direction */
+html[dir="rtl"] :focus {
+    box-shadow: -2px 0 0 2px rgba(59, 130, 246, 0.5);
+}
+
+html[dir="ltr"] :focus {
+    box-shadow: 2px 0 0 2px rgba(59, 130, 246, 0.5);
+}
+
+/* Skip links */
+html[dir="rtl"] .skip-link {
+    left: auto;
+    right: -999px;
+}
+
+html[dir="rtl"] .skip-link:focus {
+    left: auto;
+    right: 0;
+}
+
+/* ===================================
+     Utilitaires Tailwind personnalisés
+     =================================== */
+
+@layer utilities {
+
+    /* Margin logiques */
+    .ms-auto {
+        margin-inline-start: auto;
+    }
+
+    .me-auto {
+        margin-inline-end: auto;
+    }
+
+    /* Padding logiques */
+    .ps-0 {
+        padding-inline-start: 0;
+    }
+
+    .pe-0 {
+        padding-inline-end: 0;
+    }
+
+    /* Bordures logiques */
+    .border-s {
+        border-inline-start-width: 1px;
+    }
+
+    .border-e {
+        border-inline-end-width: 1px;
+    }
+
+    /* Rotation RTL pour les icônes */
+    .rtl-rotate {
+        transform: scaleX(1);
+    }
+
+    html[dir="rtl"] .rtl-rotate {
+        transform: scaleX(-1);
+    } }

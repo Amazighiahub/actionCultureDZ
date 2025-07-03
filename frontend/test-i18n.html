@@ -1,0 +1,2357 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Test i18n</title>
+    <script src="https://unpkg.com/i18next@23.7.6/dist/umd/i18next.min.js"></script>
+</head>
+<body>
+    <h1>Test des traductions i18n</h1>
+    <select id="langSelector">
+        <option value="ar">العربية</option>
+        <option value="fr">Français</option>
+        <option value="en">English</option>
+        <option value="tz-ltn">Tamaziɣt</option>
+        <option value="tz-tfng">ⵜⴰⵎⴰⵣⵉⵖⵜ</option>
+    </select>
+    
+    <div id="results"></div>
+    
+    <script>
+        // Charger les traductions
+        const translations = {
+            ar: {
+  "auth": {
+    "mustBeConnected": "يجب أن تكون متصلاً",
+    "required": "مطلوب"
+  },
+  "categories": {
+    "heritageTypes": {
+      "berber": "العمارة الأمازيغية",
+      "ethnographic": "متحف إثنوغرافي",
+      "modern": "نصب حديث"
+    },
+    "workTypes": {
+      "unknown": "نوع غير معروف"
+    }
+  },
+  "common": {
+    "about": "حول",
+    "backToDashboard": "العودة إلى لوحة التحكم",
+    "by": "بواسطة",
+    "chooseFile": "اختر ملف",
+    "chooseFiles": "اختر الملفات",
+    "city": "المدينة",
+    "contact": "اتصال",
+    "copyright": "جميع الحقوق محفوظة",
+    "description": "الوصف",
+    "dragDropImage": "اسحب وأفلت الصورة هنا",
+    "featureInDevelopment": "هذه الميزة قيد التطوير",
+    "followUs": "تابعونا",
+    "imageFormats": "الصيغ المدعومة: JPG, PNG, GIF",
+    "invalidDate": "تاريخ غير صالح",
+    "language": "اللغة",
+    "login": "تسجيل الدخول",
+    "logout": "تسجيل الخروج",
+    "noDescription": "لا يوجد وصف",
+    "privacy": "سياسة الخصوصية",
+    "retry": "إعادة المحاولة",
+    "search": "بحث...",
+    "selectCity": "اختر المدينة",
+    "selectType": "اختر النوع",
+    "signup": "إنشاء حساب",
+    "terms": "شروط الاستخدام",
+    "viewAll": "عرض الكل"
+  },
+  "contributors": {
+    "addedCount_zero": "لم تتم إضافة أي مساهم",
+    "addedCount_one": "تمت إضافة مساهم واحد",
+    "addedCount_two": "تمت إضافة مساهمين اثنين",
+    "addedCount_few": "تمت إضافة {{count}} مساهمين",
+    "addedCount_many": "تمت إضافة {{count}} مساهماً",
+    "addedCount_other": "تمت إضافة {{count}} مساهم",
+    "alreadyAdded": "تمت الإضافة مسبقاً",
+    "createNew": "إنشاء جديد",
+    "errors": {
+      "searchError": "خطأ في البحث"
+    },
+    "externalContributor": "مساهم خارجي",
+    "mainContributors": "المساهمون الرئيسيون",
+    "new": "جديد",
+    "noContributors": "لا يوجد مساهمون",
+    "noResultsFor": "لا توجد نتائج لـ",
+    "otherContributors": "مساهمون آخرون",
+    "registeredMember": "عضو مسجل",
+    "searchExisting": "البحث في الموجود",
+    "searchPlaceholder": "ابحث عن مساهم...",
+    "selectRole": "اختر الدور",
+    "title": "المساهمون"
+  },
+  "errors": {
+    "generic": {
+      "message": "حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.",
+      "title": "خطأ"
+    },
+    "loadingCraftsError": "فشل تحميل الحرف اليدوية",
+    "loadingError": "خطأ في التحميل",
+    "partialDataLoad": "تم تحميل البيانات جزئياً"
+  },
+  "events": {
+    "create": {
+      "addAfterEvent": "إضافة بعد الحدث",
+      "datesAndTimes": "التواريخ والأوقات",
+      "descriptionPlaceholder": "صف الحدث...",
+      "draftSaved": "تم حفظ المسودة",
+      "endDate": "تاريخ الانتهاء",
+      "endTime": "وقت الانتهاء",
+      "eventImage": "صورة الحدث",
+      "eventName": "اسم الحدث",
+      "eventNamePlaceholder": "أدخل اسم الحدث",
+      "eventType": "نوع الحدث",
+      "exactLocation": "الموقع الدقيق",
+      "freeEvent": "حدث مجاني",
+      "generalInfo": "معلومات عامة",
+      "imageAndMedia": "الصور والوسائط",
+      "locationPlaceholder": "أدخل الموقع",
+      "maxParticipants": "العدد الأقصى للمشاركين",
+      "maxParticipantsPlaceholder": "أدخل العدد الأقصى",
+      "participationAndPricing": "المشاركة والتسعير",
+      "postEventMedia": "وسائط ما بعد الحدث",
+      "postEventMediaDesc": "إضافة صور وفيديوهات بعد انتهاء الحدث",
+      "price": "السعر",
+      "pricePlaceholder": "أدخل السعر",
+      "publishEvent": "نشر الحدث",
+      "saveAsDraft": "حفظ كمسودة",
+      "startDate": "تاريخ البداية",
+      "startTime": "وقت البداية",
+      "subtitle": "أنشئ حدثاً ثقافياً جديداً",
+      "title": "إضافة حدث جديد",
+      "willBeAvailableSoon": "ستكون متاحة قريباً"
+    },
+    "types": {
+      "concert": "حفلة موسيقية",
+      "conference": "مؤتمر",
+      "exhibition": "معرض",
+      "festival": "مهرجان",
+      "literaryMeeting": "لقاء أدبي",
+      "screening": "عرض فيلم",
+      "show": "عرض",
+      "workshop": "ورشة عمل"
+    }
+  },
+  "footer": {
+    "legal": "قانوني",
+    "links": {
+      "faq": "الأسئلة الشائعة",
+      "legalNotices": "الإشعارات القانونية",
+      "userGuide": "دليل الاستخدام"
+    },
+    "location": "الجزائر",
+    "navigation": "التنقل",
+    "platform": "منصة مخصصة لتعزيز والحفاظ على التراث الثقافي الجزائري الغني.",
+    "resources": "الموارد"
+  },
+  "header": {
+    "badges": {
+      "admin": "مدير",
+      "pending": "قيد الانتظار",
+      "professional": "محترف"
+    },
+    "nav": {
+      "about": "حول",
+      "crafts": "الحرف",
+      "events": "الفعاليات",
+      "heritage": "التراث",
+      "works": "الأعمال"
+    },
+    "subtitle": "صدى الجزائر",
+    "title": "تمليليت ثقافة",
+    "userMenu": {
+      "addWork": "إضافة عمل",
+      "administration": "الإدارة",
+      "createEvent": "إنشاء فعالية",
+      "metadata": "البيانات الوصفية",
+      "myFavorites": "مفضلاتي",
+      "myProfile": "ملفي الشخصي",
+      "mySpace": "مساحتي",
+      "pendingValidations": "التحققات المعلقة",
+      "proDashboard": "لوحة التحكم الاحترافية"
+    }
+  },
+  "home": {
+    "explore": {
+      "subtitle": "اكتشف ثراء الثقافة الأمازيغية",
+      "tabs": {
+        "crafts": "الحرف",
+        "events": "الفعاليات",
+        "heritage": "التراث",
+        "map": "الخريطة",
+        "works": "الأعمال"
+      },
+      "title": "استكشف"
+    },
+    "mission": {
+      "description": "منصة مخصصة للحفاظ على التراث الثقافي الأمازيغي وتعزيزه",
+      "learnMore": "اعرف المزيد",
+      "title": "مهمتنا"
+    },
+    "professionals": {
+      "benefits": "استفد من رؤية أكبر لأعمالك وفعالياتك",
+      "createWork": "أنشئ عملاً",
+      "organizeEvent": "نظم فعالية",
+      "subtitle": "انضم إلى مجتمعنا من الفنانين والحرفيين",
+      "title": "للمحترفين"
+    },
+    "resources": {
+      "access": "الوصول إلى الموارد",
+      "calendar": "التقويم الثقافي",
+      "directory": "دليل المحترفين",
+      "guide": "دليل الممارسات",
+      "title": "الموارد"
+    },
+    "stats": {
+      "events": "فعالية",
+      "heritage": "موقع تراثي",
+      "members": "عضو",
+      "subtitle": "أرقام تتحدث عن نفسها",
+      "title": "منصة حية",
+      "works": "عمل"
+    }
+  },
+  "notifications": {
+    "youHave_zero": "ليس لديك إشعارات",
+    "youHave_one": "لديك إشعار واحد",
+    "youHave_two": "لديك إشعاران",
+    "youHave_few": "لديك {{count}} إشعارات",
+    "youHave_many": "لديك {{count}} إشعاراً",
+    "youHave_other": "لديك {{count}} إشعار"
+  },
+  "price": {
+    "fixed": "سعر ثابت",
+    "free": "مجاني"
+  },
+  "publishers": {
+    "addedCount_zero": "لم تتم إضافة أي ناشر",
+    "addedCount_one": "تمت إضافة ناشر واحد",
+    "addedCount_two": "تمت إضافة ناشرين اثنين",
+    "addedCount_few": "تمت إضافة {{count}} ناشرين",
+    "addedCount_many": "تمت إضافة {{count}} ناشراً",
+    "addedCount_other": "تمت إضافة {{count}} ناشر",
+    "createNew": "إنشاء ناشر جديد",
+    "isbn": "الرقم الدولي المعياري للكتاب",
+    "noResultsFor": "لا توجد نتائج لـ",
+    "pricePlaceholder": "أدخل السعر",
+    "role": "الدور",
+    "roles": {
+      "coPublisher": "ناشر مشارك",
+      "distributor": "موزع",
+      "mainPublisher": "الناشر الرئيسي",
+      "originalPublisher": "الناشر الأصلي",
+      "translationPublisher": "ناشر الترجمة"
+    },
+    "salePrice": "سعر البيع",
+    "search": "بحث",
+    "searchPlaceholder": "ابحث عن ناشر...",
+    "status": "الحالة",
+    "statuses": {
+      "cancelled": "ملغى",
+      "inProgress": "قيد التقدم",
+      "outOfStock": "نفذ المخزون",
+      "published": "منشور"
+    },
+    "title": "الناشرون"
+  },
+  "sections": {
+    "crafts": {
+      "exploreAll": "استكشف الكل",
+      "noCrafts": "لا توجد حرف يدوية",
+      "onOrder": "عند الطلب",
+      "price": {
+        "from": "ابتداءً من",
+        "range": "{{min}} - {{max}}",
+        "upTo": "حتى"
+      },
+      "seeDetails": "عرض التفاصيل",
+      "stock": {
+        "inStock_zero": "نفذ المخزون",
+        "inStock_one": "قطعة واحدة متوفرة",
+        "inStock_two": "قطعتان متوفرتان",
+        "inStock_few": "{{count}} قطع متوفرة",
+        "inStock_many": "{{count}} قطعة متوفرة",
+        "inStock_other": "{{count}} قطعة متوفرة",
+        "outOfStock": "نفذت الكمية"
+      },
+      "subtitle": "اكتشف المهارات الأسلاف المنقولة من جيل إلى جيل",
+      "title": "الحرف التقليدية"
+    },
+    "events": {
+      "dateToConfirm": "التاريخ قيد التأكيد",
+      "noEvents": "لا توجد فعاليات",
+      "register": "التسجيل",
+      "registration": "التسجيل",
+      "seeAllEvents": "عرض جميع الفعاليات",
+      "subtitle": "شارك في الفعاليات التي تحيي الساحة الثقافية الجزائرية",
+      "title": "الفعاليات الثقافية"
+    },
+    "heritage": {
+      "discover": "اكتشف",
+      "filters": {
+        "allRegions": "جميع المناطق",
+        "archaeological": "المواقع الأثرية",
+        "monuments": "آثار اليونسكو",
+        "traditional": "العمارة التقليدية"
+      },
+      "interactiveMap": "خريطة تفاعلية",
+      "map": {
+        "explore": "استكشف على الخريطة"
+      },
+      "mapDescription": "اكتشف المواقع التراثية على الخريطة التفاعلية",
+      "noResults": "لا توجد نتائج",
+      "otherSites": "مواقع أخرى مميزة",
+      "planVisit": {
+        "description": "استخدم خريطتنا التفاعلية لإنشاء مسار مخصص واكتشاف روائع التراث الجزائري. اختر مسارًا موضوعيًا أو استكشف بحرية المواقع التي تهمك.",
+        "guide": "دليل عملي",
+        "start": "ابدأ الاستكشاف",
+        "title": "خطط لزيارتك"
+      },
+      "reviews": "التقييمات",
+      "seeAll": "عرض الكل",
+      "subtitle": "اكتشف الكنوز التاريخية والثقافية للجزائر من خلال خريطة تفاعلية",
+      "title": "التراث الثقافي"
+    },
+    "works": {
+      "actions": {
+        "readArticle": "قراءة المقال",
+        "view": "عرض العمل"
+      },
+      "ageLabels": {
+        "classic": "كلاسيكي",
+        "recent": "حديث"
+      },
+      "badges": {
+        "classic": "كلاسيكي",
+        "new": "جديد",
+        "popular": "شائع"
+      },
+      "createdIn": "أُنشئ في",
+      "details": "التفاصيل",
+      "empty": {
+        "noFeatured": "لا توجد أعمال مميزة حاليًا.",
+        "noNew": "لا توجد أعمال جديدة هذا الشهر. عد قريبًا!",
+        "noPopular": "لا توجد أعمال كلاسيكية أو حديثة للعرض.",
+        "noRecommended": "لا توجد توصيات متاحة. استكشف كتالوجنا!",
+        "noSearch": "لا توجد نتائج للبحث",
+        "noType": "لا توجد أعمال تطابق النوع المحدد.",
+        "noWorks": "لا توجد أعمال متاحة حاليًا."
+      },
+      "exploreLibrary": "استكشف المكتبة",
+      "filters": {
+        "all": "جميع الأعمال",
+        "allTypes": "جميع الأنواع",
+        "featured": "المميزة",
+        "new": "الجديد",
+        "popular": "الشائعة",
+        "recommended": "الموصى بها"
+      },
+      "info": {
+        "classicsDesc": "اكتشف كلاسيكياتنا الخالدة (أكثر من 10 سنوات) ونجاحاتنا الحديثة (آخر 5 سنوات)",
+        "featuredCount_zero": "لا توجد أعمال مميزة",
+        "featuredCount_one": "عمل مميز واحد",
+        "featuredCount_two": "عملان مميزان",
+        "featuredCount_few": "{{count}} أعمال مميزة",
+        "featuredCount_many": "{{count}} عملاً مميزاً",
+        "featuredCount_other": "{{count}} عمل مميز",
+        "newCount_zero": "لا توجد أعمال جديدة",
+        "newCount_one": "عمل جديد واحد",
+        "newCount_two": "عملان جديدان",
+        "newCount_few": "{{count}} أعمال جديدة",
+        "newCount_many": "{{count}} عملاً جديداً",
+        "newCount_other": "{{count}} عمل جديد",
+        "popularCount_zero": "لا توجد أعمال شائعة",
+        "popularCount_one": "عمل شائع واحد",
+        "popularCount_two": "عملان شائعان",
+        "popularCount_few": "{{count}} أعمال شائعة",
+        "popularCount_many": "{{count}} عملاً شائعاً",
+        "popularCount_other": "{{count}} عمل شائع",
+        "recommendedCount_zero": "لا توجد أعمال موصى بها",
+        "recommendedCount_one": "عمل موصى به واحد",
+        "recommendedCount_two": "عملان موصى بهما",
+        "recommendedCount_few": "{{count}} أعمال موصى بها",
+        "recommendedCount_many": "{{count}} عملاً موصى به",
+        "recommendedCount_other": "{{count}} عمل موصى به"
+      },
+      "loading": "جاري تحميل الأعمال...",
+      "noTitle": "بدون عنوان",
+      "noWorks": "لا توجد أعمال",
+      "preview": "معاينة",
+      "rateLimit": {
+        "cache": "الذاكرة المؤقتة:",
+        "clearCache": "مسح الذاكرة المؤقتة وإعادة التحميل",
+        "currentDelay": "التأخير الحالي:",
+        "entries": "إدخالات",
+        "health": {
+          "critical": "تم الوصول إلى حد المعدل!",
+          "good": "كل شيء على ما يرام",
+          "slow": "وضع بطيء نشط",
+          "warning": "قريب من الحد"
+        },
+        "hits": "429 إصابة:",
+        "normalMode": "الوضع العادي",
+        "queue": "قائمة الانتظار:",
+        "requestsPerMinute": "طلب/دقيقة:",
+        "slowMode": "الوضع البطيء",
+        "status": "حالة حد المعدل",
+        "title": "حد المعدل"
+      },
+      "results": {
+        "count_zero": "لا توجد نتائج",
+        "count_one": "نتيجة واحدة",
+        "count_two": "نتيجتان",
+        "count_few": "{{count}} نتائج",
+        "count_many": "{{count}} نتيجة",
+        "count_other": "{{count}} نتيجة"
+      },
+      "searchPlaceholder": "البحث بالعنوان، المؤلف، الممثل، المخرج...",
+      "stats": {
+        "classics_zero": "لا توجد أعمال كلاسيكية",
+        "classics_one": "عمل كلاسيكي واحد",
+        "classics_two": "عملان كلاسيكيان",
+        "classics_few": "{{count}} أعمال كلاسيكية",
+        "classics_many": "{{count}} عملاً كلاسيكياً",
+        "classics_other": "{{count}} عمل كلاسيكي",
+        "new_zero": "لا توجد أعمال جديدة",
+        "new_one": "عمل جديد واحد",
+        "new_two": "عملان جديدان",
+        "new_few": "{{count}} أعمال جديدة",
+        "new_many": "{{count}} عملاً جديداً",
+        "new_other": "{{count}} عمل جديد",
+        "recent_zero": "لا توجد أعمال حديثة",
+        "recent_one": "عمل حديث واحد",
+        "recent_two": "عملان حديثان",
+        "recent_few": "{{count}} أعمال حديثة",
+        "recent_many": "{{count}} عملاً حديثاً",
+        "recent_other": "{{count}} عمل حديث",
+        "total_zero": "لا توجد أعمال",
+        "total_one": "عمل واحد",
+        "total_two": "عملان",
+        "total_few": "{{count}} أعمال",
+        "total_many": "{{count}} عملاً",
+        "total_other": "{{count}} عمل"
+      },
+      "subtitle": "استكشف كنوز الثقافة الجزائرية: الأعمال الأدبية والسينمائية والفنية",
+      "title": "اكتشف مجموعتنا"
+    },
+    "hero": {
+      "quickActions": {
+        "discover": {
+          "title": "اكتشف التراث",
+          "description": "استكشف المواقع التاريخية والمعالم الثقافية"
+        },
+        "events": {
+          "title": "الفعاليات القادمة",
+          "description": "شارك في الأحداث والاحتفالات الثقافية"
+        },
+        "works": {
+          "title": "الأعمال الفنية",
+          "description": "اكتشف الإبداعات الفنية والأدبية الأمازيغية"
+        },
+        "title": "اكتشف ثقافتنا"
+      },
+      "cta": {
+        "learnMore": "اعرف المزيد",
+        "explore": "استكشف المنصة"
+      },
+      "title": "مرحباً بكم في",
+      "titleHighlight": "تمليليت ثقافة",
+      "subtitle": "منصة رقمية مخصصة للحفاظ على التراث الثقافي الأمازيغي وتعزيزه"
+    }
+  },
+  "works": {
+    "actions": {
+      "favorites": "المفضلة",
+      "listenNow": "استمع الآن",
+      "myList": "قائمتي",
+      "preview": "معاينة",
+      "readExcerpt": "قراءة مقتطف",
+      "readNow": "اقرأ الآن",
+      "trailer": "المقطع الدعائي",
+      "watchNow": "شاهد الآن"
+    },
+    "album": {
+      "tracksCount_zero": "لا توجد مقاطع",
+      "tracksCount_one": "مقطع واحد",
+      "tracksCount_two": "مقطعان",
+      "tracksCount_few": "{{count}} مقاطع",
+      "tracksCount_many": "{{count}} مقطعاً",
+      "tracksCount_other": "{{count}} مقطع"
+    },
+    "duration": {
+      "minutes_zero": "أقل من دقيقة",
+      "minutes_one": "دقيقة واحدة",
+      "minutes_two": "دقيقتان",
+      "minutes_few": "{{count}} دقائق",
+      "minutes_many": "{{count}} دقيقة",
+      "minutes_other": "{{count}} دقيقة"
+    },
+    "fields": {
+      "isbn": "الرقم الدولي المعياري للكتاب",
+      "pages": "الصفحات"
+    },
+    "pricing": {
+      "free": "مجاني"
+    },
+    "sections": {
+      "synopsis": "الملخص"
+    },
+    "stats": {
+      "listensCount_zero": "لم يستمع أحد",
+      "listensCount_one": "استماع واحد",
+      "listensCount_two": "استماعان",
+      "listensCount_few": "{{count}} استماعات",
+      "listensCount_many": "{{count}} استماعاً",
+      "listensCount_other": "{{count}} استماع",
+      "readingTime": "وقت القراءة",
+      "readingTimeValue": "{{minutes}} دقيقة",
+      "reviewsCount_zero": "لا توجد تقييمات",
+      "reviewsCount_one": "تقييم واحد",
+      "reviewsCount_two": "تقييمان",
+      "reviewsCount_few": "{{count}} تقييمات",
+      "reviewsCount_many": "{{count}} تقييماً",
+      "reviewsCount_other": "{{count}} تقييم",
+      "views": "المشاهدات"
+    },
+    "types": {
+      "album": "ألبوم",
+      "book": "كتاب",
+      "film": "فيلم"
+    }
+  }
+},
+            fr: {
+  "auth": {
+    "mustBeConnected": "Vous devez être connecté",
+    "required": "Requis"
+  },
+  "categories": {
+    "heritageTypes": {
+      "berber": "Architecture berbère",
+      "ethnographic": "Musée ethnographique",
+      "modern": "Monument moderne"
+    },
+    "workTypes": {
+      "unknown": "Type inconnu"
+    }
+  },
+  "common": {
+    "about": "À propos",
+    "backToDashboard": "Retour au tableau de bord",
+    "by": "par",
+    "chooseFile": "Choisir un fichier",
+    "chooseFiles": "Choisir des fichiers",
+    "city": "Ville",
+    "contact": "Contact",
+    "copyright": "Tous droits réservés",
+    "description": "Description",
+    "dragDropImage": "Glissez-déposez l'image ici",
+    "featureInDevelopment": "Cette fonctionnalité est en cours de développement",
+    "followUs": "Suivez-nous",
+    "imageFormats": "Formats acceptés : JPG, PNG, GIF",
+    "invalidDate": "Date invalide",
+    "language": "Langue",
+    "login": "Se connecter",
+    "logout": "Déconnexion",
+    "noDescription": "Aucune description",
+    "privacy": "Politique de confidentialité",
+    "retry": "Réessayer",
+    "search": "Rechercher...",
+    "selectCity": "Sélectionner une ville",
+    "selectType": "Sélectionner un type",
+    "signup": "S'inscrire",
+    "terms": "Conditions d'utilisation",
+    "viewAll": "Voir tout"
+  },
+  "contributors": {
+    "addedCount_one": "{{count}} contributeur ajouté",
+    "addedCount_other": "{{count}} contributeurs ajoutés",
+    "alreadyAdded": "Déjà ajouté",
+    "createNew": "Créer nouveau",
+    "errors": {
+      "searchError": "Erreur de recherche"
+    },
+    "externalContributor": "Contributeur externe",
+    "mainContributors": "Contributeurs principaux",
+    "new": "Nouveau",
+    "noContributors": "Aucun contributeur",
+    "noResultsFor": "Aucun résultat pour",
+    "otherContributors": "Autres contributeurs",
+    "registeredMember": "Membre inscrit",
+    "searchExisting": "Rechercher dans l'existant",
+    "searchPlaceholder": "Rechercher un contributeur...",
+    "selectRole": "Sélectionner un rôle",
+    "title": "Contributeurs"
+  },
+  "errors": {
+    "generic": {
+      "message": "Une erreur inattendue s'est produite. Veuillez réessayer.",
+      "title": "Erreur"
+    },
+    "loadingCraftsError": "Échec du chargement des artisanats",
+    "loadingError": "Erreur de chargement",
+    "partialDataLoad": "Données partiellement chargées"
+  },
+  "events": {
+    "create": {
+      "addAfterEvent": "Ajouter après l'événement",
+      "datesAndTimes": "Dates et horaires",
+      "descriptionPlaceholder": "Décrivez l'événement...",
+      "draftSaved": "Brouillon enregistré",
+      "endDate": "Date de fin",
+      "endTime": "Heure de fin",
+      "eventImage": "Image de l'événement",
+      "eventName": "Nom de l'événement",
+      "eventNamePlaceholder": "Entrez le nom de l'événement",
+      "eventType": "Type d'événement",
+      "exactLocation": "Lieu exact",
+      "freeEvent": "Événement gratuit",
+      "generalInfo": "Informations générales",
+      "imageAndMedia": "Images et médias",
+      "locationPlaceholder": "Entrez le lieu",
+      "maxParticipants": "Nombre maximum de participants",
+      "maxParticipantsPlaceholder": "Entrez le nombre maximum",
+      "participationAndPricing": "Participation et tarification",
+      "postEventMedia": "Médias post-événement",
+      "postEventMediaDesc": "Ajouter des photos et vidéos après l'événement",
+      "price": "Prix",
+      "pricePlaceholder": "Entrez le prix",
+      "publishEvent": "Publier l'événement",
+      "saveAsDraft": "Enregistrer comme brouillon",
+      "startDate": "Date de début",
+      "startTime": "Heure de début",
+      "subtitle": "Créez un nouvel événement culturel",
+      "title": "Ajouter un événement",
+      "willBeAvailableSoon": "Sera disponible bientôt"
+    },
+    "types": {
+      "concert": "Concert",
+      "conference": "Conférence",
+      "exhibition": "Exposition",
+      "festival": "Festival",
+      "literaryMeeting": "Rencontre littéraire",
+      "screening": "Projection",
+      "show": "Spectacle",
+      "workshop": "Atelier"
+    }
+  },
+  "footer": {
+    "legal": "Légal",
+    "links": {
+      "faq": "FAQ",
+      "legalNotices": "Mentions légales",
+      "userGuide": "Guide d'utilisation"
+    },
+    "location": "Algérie",
+    "navigation": "Navigation",
+    "platform": "Plateforme dédiée à la promotion et à la préservation du riche patrimoine culturel algérien.",
+    "resources": "Ressources"
+  },
+  "header": {
+    "badges": {
+      "admin": "Admin",
+      "pending": "En attente",
+      "professional": "Professionnel"
+    },
+    "nav": {
+      "about": "À propos",
+      "crafts": "Artisanat",
+      "events": "Événements",
+      "heritage": "Patrimoine",
+      "works": "Œuvres"
+    },
+    "subtitle": "L'écho d'Algérie",
+    "title": "Timlilit Culture",
+    "userMenu": {
+      "addWork": "Ajouter une œuvre",
+      "administration": "Administration",
+      "createEvent": "Créer un événement",
+      "metadata": "Métadonnées",
+      "myFavorites": "Mes favoris",
+      "myProfile": "Mon profil",
+      "mySpace": "Mon espace",
+      "pendingValidations": "Validations en attente",
+      "proDashboard": "Tableau de bord Pro"
+    }
+  },
+  "home": {
+    "explore": {
+      "subtitle": "Découvrez la richesse de la culture amazighe",
+      "tabs": {
+        "crafts": "Artisanat",
+        "events": "Événements",
+        "heritage": "Patrimoine",
+        "map": "Carte",
+        "works": "Œuvres"
+      },
+      "title": "Explorer"
+    },
+    "mission": {
+      "description": "Une plateforme dédiée à la préservation et à la valorisation du patrimoine culturel amazigh",
+      "learnMore": "En savoir plus",
+      "title": "Notre mission"
+    },
+    "professionals": {
+      "benefits": "Bénéficiez d'une meilleure visibilité pour vos œuvres et événements",
+      "createWork": "Créer une œuvre",
+      "organizeEvent": "Organiser un événement",
+      "subtitle": "Rejoignez notre communauté d'artistes et d'artisans",
+      "title": "Pour les professionnels"
+    },
+    "resources": {
+      "access": "Accéder aux ressources",
+      "calendar": "Calendrier culturel",
+      "directory": "Annuaire des professionnels",
+      "guide": "Guide des pratiques",
+      "title": "Ressources"
+    },
+    "stats": {
+      "events": "événements",
+      "heritage": "sites patrimoniaux",
+      "members": "membres",
+      "subtitle": "Des chiffres qui parlent",
+      "title": "Une plateforme vivante",
+      "works": "œuvres"
+    }
+  },
+  "notifications": {
+    "youHave_one": "Vous avez {{count}} notification",
+    "youHave_other": "Vous avez {{count}} notifications"
+  },
+  "price": {
+    "fixed": "Prix fixe",
+    "free": "Gratuit"
+  },
+  "publishers": {
+    "addedCount_one": "{{count}} éditeur ajouté",
+    "addedCount_other": "{{count}} éditeurs ajoutés",
+    "createNew": "Créer un nouvel éditeur",
+    "isbn": "ISBN",
+    "noResultsFor": "Aucun résultat pour",
+    "pricePlaceholder": "Entrez le prix",
+    "role": "Rôle",
+    "roles": {
+      "coPublisher": "Co-éditeur",
+      "distributor": "Distributeur",
+      "mainPublisher": "Éditeur principal",
+      "originalPublisher": "Éditeur original",
+      "translationPublisher": "Éditeur de la traduction"
+    },
+    "salePrice": "Prix de vente",
+    "search": "Rechercher",
+    "searchPlaceholder": "Rechercher un éditeur...",
+    "status": "Statut",
+    "statuses": {
+      "cancelled": "Annulé",
+      "inProgress": "En cours",
+      "outOfStock": "Rupture de stock",
+      "published": "Publié"
+    },
+    "title": "Éditeurs"
+  },
+  "sections": {
+    "crafts": {
+      "exploreAll": "Explorer tout",
+      "noCrafts": "Aucun artisanat",
+      "onOrder": "Sur commande",
+      "price": {
+        "from": "À partir de",
+        "range": "{{min}} - {{max}}",
+        "upTo": "Jusqu'à"
+      },
+      "seeDetails": "Voir les détails",
+      "stock": {
+        "inStock_one": "{{count}} pièce en stock",
+        "inStock_other": "{{count}} pièces en stock",
+        "outOfStock": "Rupture de stock"
+      },
+      "subtitle": "Découvrez les savoir-faire ancestraux transmis de génération en génération",
+      "title": "Artisanat traditionnel"
+    },
+    "events": {
+      "dateToConfirm": "Date à confirmer",
+      "noEvents": "Aucun événement",
+      "register": "S'inscrire",
+      "registration": "Inscription",
+      "seeAllEvents": "Voir tous les événements",
+      "subtitle": "Participez aux événements qui animent la scène culturelle algérienne",
+      "title": "Événements culturels"
+    },
+    "heritage": {
+      "discover": "Découvrir",
+      "filters": {
+        "allRegions": "Toutes les régions",
+        "archaeological": "Sites archéologiques",
+        "monuments": "Monuments UNESCO",
+        "traditional": "Architecture traditionnelle"
+      },
+      "interactiveMap": "Carte interactive",
+      "map": {
+        "explore": "Explorez sur la carte"
+      },
+      "mapDescription": "Découvrez les sites patrimoniaux sur la carte interactive",
+      "noResults": "Aucun résultat",
+      "otherSites": "Autres sites remarquables",
+      "planVisit": {
+        "description": "Utilisez notre carte interactive pour créer votre itinéraire personnalisé et découvrir les merveilles du patrimoine algérien. Choisissez un parcours thématique ou explorez librement les sites qui vous intéressent.",
+        "guide": "Guide pratique",
+        "start": "Commencer l'exploration",
+        "title": "Planifiez votre visite"
+      },
+      "reviews": "Avis",
+      "seeAll": "Voir tout",
+      "subtitle": "Découvrez les trésors historiques et culturels de l'Algérie à travers une carte interactive",
+      "title": "Patrimoine culturel"
+    },
+    "works": {
+      "actions": {
+        "readArticle": "Lire l'article",
+        "view": "Voir l'œuvre"
+      },
+      "ageLabels": {
+        "classic": "Classique",
+        "recent": "Récent"
+      },
+      "badges": {
+        "classic": "Classique",
+        "new": "Nouveauté",
+        "popular": "Populaire"
+      },
+      "createdIn": "Créé en",
+      "details": "Détails",
+      "empty": {
+        "noFeatured": "Aucune œuvre mise en avant pour le moment.",
+        "noNew": "Aucune nouvelle œuvre ce mois-ci. Revenez bientôt !",
+        "noPopular": "Aucune œuvre classique ou récente à afficher.",
+        "noRecommended": "Aucune recommandation disponible. Explorez notre catalogue !",
+        "noSearch": "Aucun résultat de recherche",
+        "noType": "Aucune œuvre ne correspond au type sélectionné.",
+        "noWorks": "Aucune œuvre disponible pour le moment."
+      },
+      "exploreLibrary": "Explorer la bibliothèque",
+      "filters": {
+        "all": "Toutes les œuvres",
+        "allTypes": "Tous les types",
+        "featured": "À la une",
+        "new": "Nouveautés",
+        "popular": "Populaires",
+        "recommended": "Recommandées"
+      },
+      "info": {
+        "classicsDesc": "Découvrez nos classiques intemporels (plus de 10 ans) et nos succès récents (5 dernières années)",
+        "featuredCount_one": "{{count}} œuvre mise en avant",
+        "featuredCount_other": "{{count}} œuvres mises en avant",
+        "newCount_one": "{{count}} nouvelle œuvre",
+        "newCount_other": "{{count}} nouvelles œuvres",
+        "popularCount_one": "{{count}} œuvre populaire",
+        "popularCount_other": "{{count}} œuvres populaires",
+        "recommendedCount_one": "{{count}} œuvre recommandée",
+        "recommendedCount_other": "{{count}} œuvres recommandées"
+      },
+      "loading": "Chargement des œuvres...",
+      "noTitle": "Sans titre",
+      "noWorks": "Aucune œuvre",
+      "preview": "Aperçu",
+      "rateLimit": {
+        "cache": "Cache:",
+        "clearCache": "Vider cache & recharger",
+        "currentDelay": "Délai actuel:",
+        "entries": "entrées",
+        "health": {
+          "critical": "Rate limit atteint!",
+          "good": "Tout va bien",
+          "slow": "Mode ralenti actif",
+          "warning": "Proche de la limite"
+        },
+        "hits": "429 hits:",
+        "normalMode": "Mode normal",
+        "queue": "File d'attente:",
+        "requestsPerMinute": "Req/minute:",
+        "slowMode": "Mode lent",
+        "status": "État du Rate Limit",
+        "title": "Rate Limit"
+      },
+      "results": {
+        "count_one": "{{count}} résultat",
+        "count_other": "{{count}} résultats"
+      },
+      "searchPlaceholder": "Rechercher par titre, auteur, acteur, réalisateur...",
+      "stats": {
+        "classics_one": "{{count}} œuvre classique",
+        "classics_other": "{{count}} œuvres classiques",
+        "new_one": "{{count}} nouvelle œuvre",
+        "new_other": "{{count}} nouvelles œuvres",
+        "recent_one": "{{count}} œuvre récente",
+        "recent_other": "{{count}} œuvres récentes",
+        "total_one": "{{count}} œuvre",
+        "total_other": "{{count}} œuvres"
+      },
+      "subtitle": "Explorez les trésors de la culture algérienne : œuvres littéraires, cinématographiques et artistiques",
+      "title": "Découvrez notre collection"
+    },
+    "hero": {
+      "quickActions": {
+        "discover": {
+          "title": "Découvrir le patrimoine",
+          "description": "Explorez les sites historiques et les monuments culturels"
+        },
+        "events": {
+          "title": "Événements à venir",
+          "description": "Participez aux événements et célébrations culturelles"
+        },
+        "works": {
+          "title": "Œuvres artistiques",
+          "description": "Découvrez les créations artistiques et littéraires amazighes"
+        },
+        "title": "Découvrez notre culture"
+      },
+      "cta": {
+        "learnMore": "En savoir plus",
+        "explore": "Explorer la plateforme"
+      },
+      "title": "Bienvenue sur",
+      "titleHighlight": "Tamlilit Culture",
+      "subtitle": "Plateforme numérique dédiée à la préservation et à la valorisation du patrimoine culturel amazigh"
+    }
+  },
+  "works": {
+    "actions": {
+      "favorites": "Favoris",
+      "listenNow": "Écouter maintenant",
+      "myList": "Ma liste",
+      "preview": "Aperçu",
+      "readExcerpt": "Lire un extrait",
+      "readNow": "Lire maintenant",
+      "trailer": "Bande-annonce",
+      "watchNow": "Regarder maintenant"
+    },
+    "album": {
+      "tracksCount_one": "{{count}} piste",
+      "tracksCount_other": "{{count}} pistes"
+    },
+    "duration": {
+      "minutes_one": "{{count}} minute",
+      "minutes_other": "{{count}} minutes"
+    },
+    "fields": {
+      "isbn": "ISBN",
+      "pages": "Pages"
+    },
+    "pricing": {
+      "free": "Gratuit"
+    },
+    "sections": {
+      "synopsis": "Synopsis"
+    },
+    "stats": {
+      "listensCount_one": "{{count}} écoute",
+      "listensCount_other": "{{count}} écoutes",
+      "readingTime": "Temps de lecture",
+      "readingTimeValue": "{{minutes}} minutes",
+      "reviewsCount_one": "{{count}} avis",
+      "reviewsCount_other": "{{count}} avis",
+      "views": "Vues"
+    },
+    "types": {
+      "album": "Album",
+      "book": "Livre",
+      "film": "Film"
+    }
+  }
+},
+            en: {
+  "auth": {
+    "mustBeConnected": "auth.mustBeConnected",
+    "required": "auth.required"
+  },
+  "categories": {
+    "heritageTypes": {
+      "berber": "Berber architecture",
+      "ethnographic": "Ethnographic museum",
+      "modern": "Modern monument"
+    },
+    "workTypes": {
+      "unknown": "Unknown type"
+    }
+  },
+  "common": {
+    "about": "About",
+    "backToDashboard": "Back to dashboard",
+    "by": "by",
+    "chooseFile": "Choose file",
+    "chooseFiles": "Choose files",
+    "city": "City",
+    "contact": "Contact",
+    "copyright": "All rights reserved",
+    "description": "Description",
+    "dragDropImage": "Drag and drop image here",
+    "featureInDevelopment": "This feature is under development",
+    "followUs": "Follow us",
+    "imageFormats": "Supported formats: JPG, PNG, GIF",
+    "invalidDate": "Invalid date",
+    "language": "Language",
+    "login": "Login",
+    "logout": "Logout",
+    "noDescription": "No description",
+    "privacy": "Privacy policy",
+    "retry": "Retry",
+    "search": "Search...",
+    "selectCity": "Select city",
+    "selectType": "Select type",
+    "signup": "Sign up",
+    "terms": "Terms of use",
+    "viewAll": "View all"
+  },
+  "contributors": {
+    "addedCount_one": "contributors.addedCount",
+    "addedCount_other": "contributors.addedCount",
+    "alreadyAdded": "contributors.alreadyAdded",
+    "createNew": "contributors.createNew",
+    "errors": {
+      "searchError": "contributors.errors.searchError"
+    },
+    "externalContributor": "contributors.externalContributor",
+    "mainContributors": "contributors.mainContributors",
+    "new": "contributors.new",
+    "noContributors": "contributors.noContributors",
+    "noResultsFor": "contributors.noResultsFor",
+    "otherContributors": "contributors.otherContributors",
+    "registeredMember": "contributors.registeredMember",
+    "searchExisting": "contributors.searchExisting",
+    "searchPlaceholder": "contributors.searchPlaceholder",
+    "selectRole": "contributors.selectRole",
+    "title": "contributors.title"
+  },
+  "errors": {
+    "generic": {
+      "message": "errors.generic.message",
+      "title": "errors.generic.title"
+    },
+    "loadingCraftsError": "errors.loadingCraftsError",
+    "loadingError": "errors.loadingError",
+    "partialDataLoad": "errors.partialDataLoad"
+  },
+  "events": {
+    "create": {
+      "addAfterEvent": "events.create.addAfterEvent",
+      "datesAndTimes": "events.create.datesAndTimes",
+      "descriptionPlaceholder": "events.create.descriptionPlaceholder",
+      "draftSaved": "events.create.draftSaved",
+      "endDate": "events.create.endDate",
+      "endTime": "events.create.endTime",
+      "eventImage": "events.create.eventImage",
+      "eventName": "events.create.eventName",
+      "eventNamePlaceholder": "events.create.eventNamePlaceholder",
+      "eventType": "events.create.eventType",
+      "exactLocation": "events.create.exactLocation",
+      "freeEvent": "events.create.freeEvent",
+      "generalInfo": "events.create.generalInfo",
+      "imageAndMedia": "events.create.imageAndMedia",
+      "locationPlaceholder": "events.create.locationPlaceholder",
+      "maxParticipants": "events.create.maxParticipants",
+      "maxParticipantsPlaceholder": "events.create.maxParticipantsPlaceholder",
+      "participationAndPricing": "events.create.participationAndPricing",
+      "postEventMedia": "events.create.postEventMedia",
+      "postEventMediaDesc": "events.create.postEventMediaDesc",
+      "price": "events.create.price",
+      "pricePlaceholder": "events.create.pricePlaceholder",
+      "publishEvent": "events.create.publishEvent",
+      "saveAsDraft": "events.create.saveAsDraft",
+      "startDate": "events.create.startDate",
+      "startTime": "events.create.startTime",
+      "subtitle": "events.create.subtitle",
+      "title": "events.create.title",
+      "willBeAvailableSoon": "events.create.willBeAvailableSoon"
+    },
+    "types": {
+      "concert": "events.types.concert",
+      "conference": "events.types.conference",
+      "exhibition": "events.types.exhibition",
+      "festival": "events.types.festival",
+      "literaryMeeting": "events.types.literaryMeeting",
+      "screening": "events.types.screening",
+      "show": "events.types.show",
+      "workshop": "events.types.workshop"
+    }
+  },
+  "footer": {
+    "legal": "Legal",
+    "links": {
+      "faq": "FAQ",
+      "legalNotices": "Legal Notices",
+      "userGuide": "User Guide"
+    },
+    "location": "Algeria",
+    "navigation": "Navigation",
+    "platform": "Platform dedicated to promoting and preserving Algeria's rich cultural heritage.",
+    "resources": "Resources"
+  },
+  "header": {
+    "badges": {
+      "admin": "Admin",
+      "pending": "Pending",
+      "professional": "Professional"
+    },
+    "nav": {
+      "about": "About",
+      "crafts": "Crafts",
+      "events": "Events",
+      "heritage": "Heritage",
+      "works": "Works"
+    },
+    "subtitle": "The echo of Algeria",
+    "title": "Timlilit Culture",
+    "userMenu": {
+      "addWork": "Add work",
+      "administration": "Administration",
+      "createEvent": "Create event",
+      "metadata": "Metadata",
+      "myFavorites": "My favorites",
+      "myProfile": "My profile",
+      "mySpace": "My space",
+      "pendingValidations": "Pending validations",
+      "proDashboard": "Pro Dashboard"
+    }
+  },
+  "home": {
+    "explore": {
+      "subtitle": "Discover the richness of Amazigh culture",
+      "tabs": {
+        "crafts": "Crafts",
+        "events": "Events",
+        "heritage": "Heritage",
+        "map": "Map",
+        "works": "Works"
+      },
+      "title": "Explore"
+    },
+    "mission": {
+      "description": "home.mission.description",
+      "learnMore": "home.mission.learnMore",
+      "title": "home.mission.title"
+    },
+    "professionals": {
+      "benefits": "Get better visibility for your works and events",
+      "createWork": "Create a work",
+      "organizeEvent": "Organize an event",
+      "subtitle": "Join our community of artists and craftspeople",
+      "title": "For professionals"
+    },
+    "resources": {
+      "access": "home.resources.access",
+      "calendar": "home.resources.calendar",
+      "directory": "home.resources.directory",
+      "guide": "home.resources.guide",
+      "title": "home.resources.title"
+    },
+    "stats": {
+      "events": "home.stats.events",
+      "heritage": "home.stats.heritage",
+      "members": "home.stats.members",
+      "subtitle": "home.stats.subtitle",
+      "title": "home.stats.title",
+      "works": "home.stats.works"
+    }
+  },
+  "notifications": {
+    "youHave_one": "notifications.youHave",
+    "youHave_other": "notifications.youHave"
+  },
+  "price": {
+    "fixed": "{{price}} DA",
+    "free": "Free"
+  },
+  "publishers": {
+    "addedCount_one": "publishers.addedCount",
+    "addedCount_other": "publishers.addedCount",
+    "createNew": "publishers.createNew",
+    "isbn": "publishers.isbn",
+    "noResultsFor": "publishers.noResultsFor",
+    "pricePlaceholder": "publishers.pricePlaceholder",
+    "role": "publishers.role",
+    "roles": {
+      "coPublisher": "publishers.roles.coPublisher",
+      "distributor": "publishers.roles.distributor",
+      "mainPublisher": "publishers.roles.mainPublisher",
+      "originalPublisher": "publishers.roles.originalPublisher",
+      "translationPublisher": "publishers.roles.translationPublisher"
+    },
+    "salePrice": "publishers.salePrice",
+    "search": "publishers.search",
+    "searchPlaceholder": "publishers.searchPlaceholder",
+    "status": "publishers.status",
+    "statuses": {
+      "cancelled": "publishers.statuses.cancelled",
+      "inProgress": "publishers.statuses.inProgress",
+      "outOfStock": "publishers.statuses.outOfStock",
+      "published": "publishers.statuses.published"
+    },
+    "title": "publishers.title"
+  },
+  "sections": {
+    "crafts": {
+      "exploreAll": "sections.crafts.exploreAll",
+      "noCrafts": "sections.crafts.noCrafts",
+      "onOrder": "sections.crafts.onOrder",
+      "price": {
+        "from": "From {{min}} DA",
+        "range": "{{min}} - {{max}} DA",
+        "upTo": "Up to {{max}} DA"
+      },
+      "seeDetails": "sections.crafts.seeDetails",
+      "stock": {
+        "inStock_one": "sections.crafts.stock.inStock",
+        "inStock_other": "sections.crafts.stock.inStock",
+        "outOfStock": "Out of stock"
+      },
+      "subtitle": "Discover ancestral skills passed down from generation to generation",
+      "title": "Traditional Crafts"
+    },
+    "events": {
+      "dateToConfirm": "sections.events.dateToConfirm",
+      "noEvents": "sections.events.noEvents",
+      "register": "sections.events.register",
+      "registration": "sections.events.registration",
+      "seeAllEvents": "See all events",
+      "subtitle": "Participate in events that bring the Algerian cultural scene to life",
+      "title": "Cultural Events"
+    },
+    "heritage": {
+      "discover": "sections.heritage.discover",
+      "filters": {
+        "allRegions": "All regions",
+        "archaeological": "Archaeological sites",
+        "monuments": "UNESCO monuments",
+        "traditional": "Traditional architecture"
+      },
+      "interactiveMap": "sections.heritage.interactiveMap",
+      "map": {
+        "explore": "Explore on the map"
+      },
+      "mapDescription": "sections.heritage.mapDescription",
+      "noResults": "No results",
+      "otherSites": "Other remarkable sites",
+      "planVisit": {
+        "description": "Use our interactive map to create your personalized itinerary and discover the wonders of Algerian heritage. Choose a thematic route or freely explore the sites that interest you.",
+        "guide": "Practical guide",
+        "start": "Start exploring",
+        "title": "Plan your visit"
+      },
+      "reviews": "sections.heritage.reviews",
+      "seeAll": "See all",
+      "subtitle": "Discover Algeria's historical and cultural treasures through an interactive map",
+      "title": "Cultural Heritage"
+    },
+    "works": {
+      "actions": {
+        "readArticle": "sections.works.actions.readArticle",
+        "view": "View work"
+      },
+      "ageLabels": {
+        "classic": "Classic",
+        "recent": "Recent"
+      },
+      "badges": {
+        "classic": "Classic",
+        "new": "New",
+        "popular": "Popular"
+      },
+      "createdIn": "sections.works.createdIn",
+      "details": "sections.works.details",
+      "empty": {
+        "noFeatured": "No featured works at the moment.",
+        "noNew": "No new works this month. Come back soon!",
+        "noPopular": "No classic or recent works to display.",
+        "noRecommended": "No recommendations available. Explore our catalog!",
+        "noSearch": "No works match your search \"{{query}}\".",
+        "noType": "No works match the selected type.",
+        "noWorks": "No works available at the moment."
+      },
+      "exploreLibrary": "sections.works.exploreLibrary",
+      "filters": {
+        "all": "All works",
+        "allTypes": "All types",
+        "featured": "Featured",
+        "new": "New",
+        "popular": "Popular",
+        "recommended": "Recommended"
+      },
+      "info": {
+        "classicsDesc": "Discover our timeless classics (over 10 years old) and our recent successes (last 5 years)",
+        "featuredCount_one": "sections.works.info.featuredCount",
+        "featuredCount_other": "sections.works.info.featuredCount",
+        "newCount_one": "sections.works.info.newCount",
+        "newCount_other": "sections.works.info.newCount",
+        "popularCount_one": "sections.works.info.popularCount",
+        "popularCount_other": "sections.works.info.popularCount",
+        "recommendedCount_one": "sections.works.info.recommendedCount",
+        "recommendedCount_other": "sections.works.info.recommendedCount"
+      },
+      "loading": "Loading works...",
+      "noTitle": "Untitled",
+      "noWorks": "sections.works.noWorks",
+      "preview": "sections.works.preview",
+      "rateLimit": {
+        "cache": "Cache:",
+        "clearCache": "Clear cache & reload",
+        "currentDelay": "Current delay:",
+        "entries": "entries",
+        "health": {
+          "critical": "Rate limit reached!",
+          "good": "All good",
+          "slow": "Slow mode active",
+          "warning": "Close to limit"
+        },
+        "hits": "429 hits:",
+        "normalMode": "Normal mode",
+        "queue": "Queue:",
+        "requestsPerMinute": "Req/minute:",
+        "slowMode": "Slow mode",
+        "status": "Rate Limit Status",
+        "title": "Rate Limit"
+      },
+      "results": {
+        "count_one": "sections.works.results.count",
+        "count_other": "sections.works.results.count"
+      },
+      "searchPlaceholder": "Search by title, author, actor, director...",
+      "stats": {
+        "classics_one": "sections.works.stats.classics",
+        "classics_other": "sections.works.stats.classics",
+        "new_one": "sections.works.stats.new",
+        "new_other": "sections.works.stats.new",
+        "recent_one": "sections.works.stats.recent",
+        "recent_other": "sections.works.stats.recent",
+        "total_one": "sections.works.stats.total",
+        "total_other": "sections.works.stats.total"
+      },
+      "subtitle": "Explore the treasures of Algerian culture: literary, cinematic and artistic works",
+      "title": "Discover our collection"
+    },
+    "hero": {
+      "quickActions": {
+        "discover": {
+          "title": "Discover heritage",
+          "description": "Explore historical sites and cultural monuments"
+        },
+        "events": {
+          "title": "Upcoming events",
+          "description": "Participate in cultural events and celebrations"
+        },
+        "works": {
+          "title": "Artistic works",
+          "description": "Discover Amazigh artistic and literary creations"
+        },
+        "title": "Discover our culture"
+      },
+      "cta": {
+        "learnMore": "Learn more",
+        "explore": "Explore platform"
+      },
+      "title": "Welcome to",
+      "titleHighlight": "Tamlilit Culture",
+      "subtitle": "Digital platform dedicated to preserving and promoting Amazigh cultural heritage"
+    }
+  },
+  "works": {
+    "actions": {
+      "favorites": "works.actions.favorites",
+      "listenNow": "works.actions.listenNow",
+      "myList": "works.actions.myList",
+      "preview": "works.actions.preview",
+      "readExcerpt": "works.actions.readExcerpt",
+      "readNow": "works.actions.readNow",
+      "trailer": "works.actions.trailer",
+      "watchNow": "works.actions.watchNow"
+    },
+    "album": {
+      "tracksCount_one": "works.album.tracksCount",
+      "tracksCount_other": "works.album.tracksCount"
+    },
+    "duration": {
+      "minutes_one": "works.duration.minutes",
+      "minutes_other": "works.duration.minutes"
+    },
+    "fields": {
+      "isbn": "works.fields.isbn",
+      "pages": "works.fields.pages"
+    },
+    "pricing": {
+      "free": "works.pricing.free"
+    },
+    "sections": {
+      "synopsis": "works.sections.synopsis"
+    },
+    "stats": {
+      "listensCount_one": "works.stats.listensCount",
+      "listensCount_other": "works.stats.listensCount",
+      "readingTime": "works.stats.readingTime",
+      "readingTimeValue": "works.stats.readingTimeValue",
+      "reviewsCount_one": "works.stats.reviewsCount",
+      "reviewsCount_other": "works.stats.reviewsCount",
+      "views": "works.stats.views"
+    },
+    "types": {
+      "album": "works.types.album",
+      "book": "works.types.book",
+      "film": "works.types.film"
+    }
+  }
+},
+            'tz-ltn': {
+  "auth": {
+    "mustBeConnected": "Ilaq ad tilid tettwasenṭ",
+    "required": "Ilaq"
+  },
+  "categories": {
+    "heritageTypes": {
+      "berber": "Taɣawsa tamaziɣt",
+      "ethnographic": "Asalay aɣeran",
+      "modern": "Asalay atrar"
+    },
+    "workTypes": {
+      "unknown": "Anaw ur nettwassen"
+    }
+  },
+  "common": {
+    "about": "Ɣef",
+    "backToDashboard": "Aɣul ɣer tfelwit",
+    "by": "sɣur",
+    "chooseFile": "Fren afaylu",
+    "chooseFiles": "Fren ifuyla",
+    "city": "Tamdint",
+    "contact": "Anermis",
+    "copyright": "Akk izerfan ḥerzen",
+    "description": "Aglam",
+    "dragDropImage": "Zuɣed tesresed tugna da",
+    "featureInDevelopment": "Tamahilt-a tella deg usbugel",
+    "followUs": "Ḍfer-aɣ",
+    "imageFormats": "Imasalen ittwaqbalen: JPG, PNG, GIF",
+    "invalidDate": "Asakud ur iɣed ara",
+    "language": "Tutlayt",
+    "login": "Kcem",
+    "logout": "Ffeɣ",
+    "noDescription": "Ulac aglam",
+    "privacy": "Tasertit n tbaḍnit",
+    "retry": "Ɛreḍ tikelt nniḍen",
+    "search": "Nadi...",
+    "selectCity": "Fren tamdint",
+    "selectType": "Fren anaw",
+    "signup": "Jerred",
+    "terms": "Tiwtilin n useqdec",
+    "viewAll": "Wali akk"
+  },
+  "contributors": {
+    "addedCount_one": "{{count}} amarag yettwarna",
+    "addedCount_many": "{{contributors.addedCount}}",
+    "addedCount_other": "{{count}} imuragen ttwarna",
+    "alreadyAdded": "Yettwarna yakan",
+    "createNew": "Snulfu-d amaynut",
+    "errors": {
+      "searchError": "Tuccḍa deg unadi"
+    },
+    "externalContributor": "Amarag azɣaray",
+    "mainContributors": "Imuragen igejdanen",
+    "new": "Amaynut",
+    "noContributors": "Ulac imuragen",
+    "noResultsFor": "Ulac igmaḍ i",
+    "otherContributors": "Imuragen nniḍen",
+    "registeredMember": "Aεeggal yettwakelsen",
+    "searchExisting": "Nadi deg wayen yellan",
+    "searchPlaceholder": "Nadi amarag...",
+    "selectRole": "Fren tamlilt",
+    "title": "Imuragen"
+  },
+  "errors": {
+    "generic": {
+      "message": "Tella-d tuccḍa ur nettwaṛǧi ara. Ma ulac aɣilif, εreḍ tikkelt-nniḍen.",
+      "title": "Tuccḍa"
+    },
+    "loadingCraftsError": "Asali n tḥuna ur yeddi ara",
+    "loadingError": "Tuccḍa deg usali",
+    "partialDataLoad": "Isefka slan-d s wacemma"
+  },
+  "events": {
+    "create": {
+      "addAfterEvent": "Rnu deffir tadyant",
+      "datesAndTimes": "Izemzan d wakuden",
+      "descriptionPlaceholder": "Seglem tadyant...",
+      "draftSaved": "Arewway yettwasekles",
+      "endDate": "Azemz n tagara",
+      "endTime": "Akud n tagara",
+      "eventImage": "Tugna n tedyant",
+      "eventName": "Isem n tedyant",
+      "eventNamePlaceholder": "Sekcem isem n tedyant",
+      "eventType": "Anaw n tedyant",
+      "exactLocation": "Amḍiq leqqayen",
+      "freeEvent": "Tadyant tabaṭelt",
+      "generalInfo": "Talɣut tamatut",
+      "imageAndMedia": "Tugniwin d wallalen",
+      "locationPlaceholder": "Sekcem amḍiq",
+      "maxParticipants": "Amḍan afellay n yimttekkiyen",
+      "maxParticipantsPlaceholder": "Sekcem amḍan afellay",
+      "participationAndPricing": "Attekki d ssuma",
+      "postEventMedia": "Allalen deffir tadyant",
+      "postEventMediaDesc": "Rnu tugniwin d tvidyutin deffir tadyant",
+      "price": "Ssuma",
+      "pricePlaceholder": "Sekcem ssuma",
+      "publishEvent": "Suffeɣ-d tadyant",
+      "saveAsDraft": "Sekles d arewway",
+      "startDate": "Azemz n tazwara",
+      "startTime": "Akud n tazwara",
+      "subtitle": "Snulfu-d tadyant tadelsant tamaynut",
+      "title": "Rnu tadyant",
+      "willBeAvailableSoon": "Ad tili tewjed ɣer zdat"
+    },
+    "types": {
+      "concert": "Aḥebbi",
+      "conference": "Asarag",
+      "exhibition": "Asumer",
+      "festival": "Tafaska",
+      "literaryMeeting": "Tamlilit taseklant",
+      "screening": "Askan",
+      "show": "Asaḥḥa",
+      "workshop": "Amahil"
+    }
+  },
+  "footer": {
+    "legal": "Azref",
+    "links": {
+      "faq": "Isteqsiyen FAQ",
+      "legalNotices": "Ilɣa izerfanen",
+      "userGuide": "Amnir n useqdec"
+    },
+    "location": "Lezzayer",
+    "navigation": "Tunigin",
+    "platform": "Tansa yettwafen i usiǧhed d uḥraz n ugla adelsan ameqqran n Lezzayer.",
+    "resources": "Tiɣbula"
+  },
+  "header": {
+    "badges": {
+      "admin": "Anedbal",
+      "pending": "Yettṛaǧu",
+      "professional": "Amesdag"
+    },
+    "nav": {
+      "about": "Ɣef",
+      "crafts": "Taẓuri tameɣradt",
+      "events": "Tidyanin",
+      "heritage": "Agla",
+      "works": "Timellilin"
+    },
+    "subtitle": "Taɣect n Lezzayer",
+    "title": "Timlilit Tadelsant",
+    "userMenu": {
+      "addWork": "Rnu tamellilt",
+      "administration": "Tadbelt",
+      "createEvent": "Snulfu tadyant",
+      "metadata": "Isefka igejdanen",
+      "myFavorites": "Inurifen-iw",
+      "myProfile": "Amaɣnu-w",
+      "mySpace": "Tallunt-iw",
+      "pendingValidations": "Iseɣbalen yettṛaǧun",
+      "proDashboard": "Tafelwit Pro"
+    }
+  },
+  "home": {
+    "explore": {
+      "subtitle": "Af aɣlad n yidles amaziɣ",
+      "tabs": {
+        "crafts": "Tiḥuna",
+        "events": "Tidyanin",
+        "heritage": "Agemmay",
+        "map": "Takarḍa",
+        "works": "Tiẓuriyin"
+      },
+      "title": "Snirem"
+    },
+    "mission": {
+      "description": "{{home.mission.description}}",
+      "learnMore": "{{home.mission.learnMore}}",
+      "title": "{{home.mission.title}}"
+    },
+    "professionals": {
+      "benefits": "Faṛeṣ seg wugar n ṭṭmeɛ i leḫdam-ik d tedyanin-ik",
+      "createWork": "Snulfu-d tawuri",
+      "organizeEvent": "Suddes tadyant",
+      "subtitle": "Rnu ɣer tegrawt-nneɣ n inaẓuren d imahilen",
+      "title": "I yimahilen"
+    },
+    "resources": {
+      "access": "{{home.resources.access}}",
+      "calendar": "{{home.resources.calendar}}",
+      "directory": "{{home.resources.directory}}",
+      "guide": "{{home.resources.guide}}",
+      "title": "{{home.resources.title}}"
+    },
+    "stats": {
+      "events": "{{home.stats.events}}",
+      "heritage": "{{home.stats.heritage}}",
+      "members": "{{home.stats.members}}",
+      "subtitle": "{{home.stats.subtitle}}",
+      "title": "{{home.stats.title}}",
+      "works": "{{home.stats.works}}"
+    }
+  },
+  "notifications": {
+    "youHave_one": "{{notifications.youHave}}",
+    "youHave_many": "{{notifications.youHave}}",
+    "youHave_other": "{{notifications.youHave}}"
+  },
+  "price": {
+    "fixed": "Ssuma tukkist",
+    "free": "Baṭel"
+  },
+  "publishers": {
+    "addedCount_one": "{{publishers.addedCount}}",
+    "addedCount_many": "{{publishers.addedCount}}",
+    "addedCount_other": "{{publishers.addedCount}}",
+    "createNew": "{{publishers.createNew}}",
+    "isbn": "{{publishers.isbn}}",
+    "noResultsFor": "{{publishers.noResultsFor}}",
+    "pricePlaceholder": "{{publishers.pricePlaceholder}}",
+    "role": "{{publishers.role}}",
+    "roles": {
+      "coPublisher": "{{publishers.roles.coPublisher}}",
+      "distributor": "{{publishers.roles.distributor}}",
+      "mainPublisher": "{{publishers.roles.mainPublisher}}",
+      "originalPublisher": "{{publishers.roles.originalPublisher}}",
+      "translationPublisher": "{{publishers.roles.translationPublisher}}"
+    },
+    "salePrice": "{{publishers.salePrice}}",
+    "search": "{{publishers.search}}",
+    "searchPlaceholder": "{{publishers.searchPlaceholder}}",
+    "status": "{{publishers.status}}",
+    "statuses": {
+      "cancelled": "{{publishers.statuses.cancelled}}",
+      "inProgress": "{{publishers.statuses.inProgress}}",
+      "outOfStock": "{{publishers.statuses.outOfStock}}",
+      "published": "{{publishers.statuses.published}}"
+    },
+    "title": "{{publishers.title}}"
+  },
+  "sections": {
+    "crafts": {
+      "exploreAll": "{{sections.crafts.exploreAll}}",
+      "noCrafts": "{{sections.crafts.noCrafts}}",
+      "onOrder": "{{sections.crafts.onOrder}}",
+      "price": {
+        "from": "Seg {{min}} DA",
+        "range": "{{min}} - {{max}} DA",
+        "upTo": "Ar {{max}} DA"
+      },
+      "seeDetails": "{{sections.crafts.seeDetails}}",
+      "stock": {
+        "inStock_one": "{{sections.crafts.stock.inStock}}",
+        "inStock_many": "{{sections.crafts.stock.inStock}}",
+        "inStock_other": "{{sections.crafts.stock.inStock}}",
+        "outOfStock": "Yekfa"
+      },
+      "subtitle": "Snirem timusniwin timeɣradin yettwaǧǧan seg tsuta ɣer tayeḍ",
+      "title": "Taẓuri tameɣradt taqbuṛt"
+    },
+    "events": {
+      "dateToConfirm": "{{sections.events.dateToConfirm}}",
+      "noEvents": "{{sections.events.noEvents}}",
+      "register": "{{sections.events.register}}",
+      "registration": "{{sections.events.registration}}",
+      "seeAllEvents": "Wali akk tidyanin",
+      "subtitle": "Ttekki deg tdyanin i yesseḥlayen tasna tadelsant n Lezzayer",
+      "title": "Tidyanin tidelsanin"
+    },
+    "heritage": {
+      "discover": "{{sections.heritage.discover}}",
+      "filters": {
+        "allRegions": "Akk temnaḍin",
+        "archaeological": "Isemalen iẓaykanen",
+        "monuments": "Isalyen UNESCO",
+        "traditional": "Taɣawsa taqbuṛt"
+      },
+      "interactiveMap": "{{sections.heritage.interactiveMap}}",
+      "map": {
+        "explore": "Snirem deg tkarḍa"
+      },
+      "mapDescription": "{{sections.heritage.mapDescription}}",
+      "noResults": "Ulac igmaḍ",
+      "otherSites": "Isemalen nniḍen yesɛan azal",
+      "planVisit": {
+        "description": "Seqdec takarḍa-nneɣ tamyigawt i wakken ad tesnulfuḍ abrid-ik udmawan tesnirmeḍ tilhatin n ugla n Lezzayer. Fren abrid asentel neɣ snirem s tlelli isemalen i k-yehwan.",
+        "guide": "Amnir amellal",
+        "start": "Bdu tasniremt",
+        "title": "Suddes tirza-inek"
+      },
+      "reviews": "{{sections.heritage.reviews}}",
+      "seeAll": "Wali akk",
+      "subtitle": "Snirem agerruj azayku d adelsan n Lezzayer s tkarḍa tamyigawt",
+      "title": "Agla adelsan"
+    },
+    "works": {
+      "actions": {
+        "readArticle": "{{sections.works.actions.readArticle}}",
+        "view": "Wali tamellilt"
+      },
+      "ageLabels": {
+        "classic": "Aklasiq",
+        "recent": "Amiran"
+      },
+      "badges": {
+        "classic": "Aklasiq",
+        "new": "Amaynut",
+        "popular": "Yettwassen"
+      },
+      "createdIn": "{{sections.works.createdIn}}",
+      "details": "{{sections.works.details}}",
+      "empty": {
+        "noFeatured": "Ulac timellilin di tlemmast ar tura.",
+        "noNew": "Ulac timellilin timaynutin aggur-a. Uɣal-d qrib!",
+        "noPopular": "Ulac timellilin tiklasiqin neɣ timiranin ara nesken.",
+        "noRecommended": "Ulac iwellihen. Snirem agriw-nneɣ!",
+        "noSearch": "Ulac timellilin yemṣadan d unadi-inek \"{{query}}\".",
+        "noType": "Ulac timellilin yemṣadan d unaw yettwafernen.",
+        "noWorks": "Ulac timellilin ar tura."
+      },
+      "exploreLibrary": "{{sections.works.exploreLibrary}}",
+      "filters": {
+        "all": "Akk tmellilin",
+        "allTypes": "Akk lenwac",
+        "featured": "Di tlemmast",
+        "new": "Timaynutin",
+        "popular": "Yettwassnen",
+        "recommended": "Yettwawelhen"
+      },
+      "info": {
+        "classicsDesc": "Snirem tiklasiqin-nneɣ ur nettettu (ugar n 10 iseggasen) d wayen yeṛban melmi kan (5 iseggasen ineggura)",
+        "featuredCount_one": "{{sections.works.info.featuredCount}}",
+        "featuredCount_many": "{{sections.works.info.featuredCount}}",
+        "featuredCount_other": "{{sections.works.info.featuredCount}}",
+        "newCount_one": "{{sections.works.info.newCount}}",
+        "newCount_many": "{{sections.works.info.newCount}}",
+        "newCount_other": "{{sections.works.info.newCount}}",
+        "popularCount_one": "{{sections.works.info.popularCount}}",
+        "popularCount_many": "{{sections.works.info.popularCount}}",
+        "popularCount_other": "{{sections.works.info.popularCount}}",
+        "recommendedCount_one": "{{sections.works.info.recommendedCount}}",
+        "recommendedCount_many": "{{sections.works.info.recommendedCount}}",
+        "recommendedCount_other": "{{sections.works.info.recommendedCount}}"
+      },
+      "loading": "Asali n tmellilin...",
+      "noTitle": "War azwel",
+      "noWorks": "{{sections.works.noWorks}}",
+      "preview": "{{sections.works.preview}}",
+      "rateLimit": {
+        "cache": "Tuffirt:",
+        "clearCache": "Sfeḍ tuffirt & ales asali",
+        "currentDelay": "Amenḍar amiran:",
+        "entries": "inekcam",
+        "health": {
+          "critical": "Rate limit yewweḍ!",
+          "good": "Yelha",
+          "slow": "Askar aleɣwayan urmid",
+          "warning": "Qrib ad yekcem tilisa"
+        },
+        "hits": "429 hits:",
+        "normalMode": "Askar amagnu",
+        "queue": "Tarebbaɛt n uṛaǧu:",
+        "requestsPerMinute": "Req/tasdat:",
+        "slowMode": "Askar aleɣwayan",
+        "status": "Addad n Rate Limit",
+        "title": "Rate Limit"
+      },
+      "results": {
+        "count_one": "{{sections.works.results.count}}",
+        "count_many": "{{sections.works.results.count}}",
+        "count_other": "{{sections.works.results.count}}"
+      },
+      "searchPlaceholder": "Nadi s uzwel, amaru, uneḍfar, amsuffeɣ...",
+      "stats": {
+        "classics_one": "{{sections.works.stats.classics}}",
+        "classics_many": "{{sections.works.stats.classics}}",
+        "classics_other": "{{sections.works.stats.classics}}",
+        "new_one": "{{sections.works.stats.new}}",
+        "new_many": "{{sections.works.stats.new}}",
+        "new_other": "{{sections.works.stats.new}}",
+        "recent_one": "{{sections.works.stats.recent}}",
+        "recent_many": "{{sections.works.stats.recent}}",
+        "recent_other": "{{sections.works.stats.recent}}",
+        "total_one": "{{sections.works.stats.total}}",
+        "total_many": "{{sections.works.stats.total}}",
+        "total_other": "{{sections.works.stats.total}}"
+      },
+      "subtitle": "Snirem agerruj n tdels n Lezzayer: timellilin tiseklanin, tisinimayyin d tiẓuranin",
+      "title": "Snirem tagerruma-nneɣ"
+    },
+    "hero": {
+      "quickActions": {
+        "discover": {
+          "title": "Af agemmay",
+          "description": "Snirem adɣaren n umezruy d isemḍal idelsanen"
+        },
+        "events": {
+          "title": "Tidyanin i d-iteddun",
+          "description": "Ttekki deg tedyanin d tmeɣriwin tidelsanin"
+        },
+        "works": {
+          "title": "Tiẓuriyin",
+          "description": "Af tisnulfuyin tiẓuranin d tseklanin timaziɣin"
+        },
+        "title": "Af tadelsant-nneɣ"
+      },
+      "cta": {
+        "learnMore": "Ẓer ugar",
+        "explore": "Snirem tafrant"
+      },
+      "title": "Azul deg",
+      "titleHighlight": "Tamlilit Tadelsant",
+      "subtitle": "Tafrant tumḍint i uḥraz d usnerni n ugemmay adelsan amaziɣ"
+    }
+  },
+  "works": {
+    "actions": {
+      "favorites": "Inurifen",
+      "listenNow": "Sel tura",
+      "myList": "Tabdart-iw",
+      "preview": "Taskant",
+      "readExcerpt": "Ɣer aḥric",
+      "readNow": "Ɣer tura",
+      "trailer": "Tanazayt",
+      "watchNow": "Wali tura"
+    },
+    "album": {
+      "tracksCount_one": "{{works.album.tracksCount}}",
+      "tracksCount_many": "{{works.album.tracksCount}}",
+      "tracksCount_other": "{{works.album.tracksCount}}"
+    },
+    "duration": {
+      "minutes_one": "{{works.duration.minutes}}",
+      "minutes_many": "{{works.duration.minutes}}",
+      "minutes_other": "{{works.duration.minutes}}"
+    },
+    "fields": {
+      "isbn": "{{works.fields.isbn}}",
+      "pages": "{{works.fields.pages}}"
+    },
+    "pricing": {
+      "free": "{{works.pricing.free}}"
+    },
+    "sections": {
+      "synopsis": "{{works.sections.synopsis}}"
+    },
+    "stats": {
+      "listensCount_one": "{{works.stats.listensCount}}",
+      "listensCount_many": "{{works.stats.listensCount}}",
+      "listensCount_other": "{{works.stats.listensCount}}",
+      "readingTime": "{{works.stats.readingTime}}",
+      "readingTimeValue": "{{works.stats.readingTimeValue}}",
+      "reviewsCount_one": "{{works.stats.reviewsCount}}",
+      "reviewsCount_many": "{{works.stats.reviewsCount}}",
+      "reviewsCount_other": "{{works.stats.reviewsCount}}",
+      "views": "{{works.stats.views}}"
+    },
+    "types": {
+      "album": "Album",
+      "book": "Adlis",
+      "film": "Asaru"
+    }
+  }
+},
+            'tz-tfng': {
+  "auth": {
+    "mustBeConnected": "ⵉⵍⴰⵇ ⴰⴷ ⵜⵉⵍⵉⴷ ⵜⴻⵜⵜⵡⴰⵙⴻⵏⵜ",
+    "required": "ⵉⵍⴰⵇ"
+  },
+  "categories": {
+    "heritageTypes": {
+      "berber": "⵿⵿categories.heritageTypes.berber⵿⵿",
+      "ethnographic": "⵿⵿categories.heritageTypes.ethnographic⵿⵿",
+      "modern": "⵿⵿categories.heritageTypes.modern⵿⵿"
+    },
+    "workTypes": {
+      "unknown": "⵿⵿categories.workTypes.unknown⵿⵿"
+    }
+  },
+  "common": {
+    "about": "ⵖⴼ",
+    "backToDashboard": "ⴰⵖⵓⵍ ⵖⴻⵔ ⵜⴰⴼⴻⵍⵡⵉⵜ",
+    "by": "ⵙⵖⵓⵔ",
+    "chooseFile": "ⴼⵔⴻⵏ ⴰⴼⴰⵢⵍⵓ",
+    "chooseFiles": "ⴼⵔⴻⵏ ⵉⴼⴰⵢⵍⵓⵜⴻⵏ",
+    "city": "ⵜⴰⵎⴷⵉⵏⵜ",
+    "contact": "ⴰⵎⵢⴰⵡⴰⴹ",
+    "copyright": "ⴰⴽⴽ ⵉⵣⵔⴼⴰⵏ ⵜⵜⵓⵃⴹⴰⵏ",
+    "description": "ⴰⴳⵍⴰⵎ",
+    "dragDropImage": "ⵙⵓⵖⴻⴷ ⵜⴻⵙⵔⴻⵙⴻⴷ ⵜⵓⴳⵏⴰ ⴷⴰ",
+    "featureInDevelopment": "ⵜⴰⵎⴰⵀⵉⵍⵜ-ⴰ ⵜⴻⵍⵍⴰ ⴷⴻⴳ ⵓⵙⴱⵓⵖⵍⵓ",
+    "followUs": "ⴹⴼⵕ ⴰⵏⵖ",
+    "imageFormats": "ⵉⵎⴰⵙⴰⵍⴻⵏ ⵉⵜⵜⵡⴰⵇⴱⴰⵍⴻⵏ: JPG, PNG, GIF",
+    "invalidDate": "ⴰⵙⴰⴽⵓⴷ ⵓⵔ ⵉⵖⴻⴷ ⴰⵔⴰ",
+    "language": "ⵜⵓⵜⵍⴰⵢⵜ",
+    "login": "ⴰⴽⵛⵎ",
+    "logout": "ⴼⴼⵖ",
+    "noDescription": "ⵓⵍⴰⵛ ⴰⴳⵍⴰⵎ",
+    "privacy": "ⵜⴰⵙⵔⵜⵉⵜ ⵏ ⵓⵙⵡⵉⵔ",
+    "retry": "ⵄⴰⵡⴷ",
+    "search": "ⵔⵣⵓ...",
+    "selectCity": "ⴼⵔⴻⵏ ⵜⴰⵎⴷⵉⵏⵜ",
+    "selectType": "ⴼⵔⴻⵏ ⴰⵏⴰⵡ",
+    "signup": "ⵊⵊⵔⴷ",
+    "terms": "ⵜⵉⴼⴰⴷⵉⵡⵉⵏ ⵏ ⵓⵙⵎⵔⵙ",
+    "viewAll": "ⵡⴰⵍⵉ ⴰⴽⴽ"
+  },
+  "contributors": {
+    "addedCount_one": "⵿⵿contributors.addedCount⵿⵿",
+    "addedCount_many": "⵿⵿contributors.addedCount⵿⵿",
+    "addedCount_other": "⵿⵿contributors.addedCount⵿⵿",
+    "alreadyAdded": "⵿⵿contributors.alreadyAdded⵿⵿",
+    "createNew": "⵿⵿contributors.createNew⵿⵿",
+    "errors": {
+      "searchError": "⵿⵿contributors.errors.searchError⵿⵿"
+    },
+    "externalContributor": "⵿⵿contributors.externalContributor⵿⵿",
+    "mainContributors": "⵿⵿contributors.mainContributors⵿⵿",
+    "new": "⵿⵿contributors.new⵿⵿",
+    "noContributors": "⵿⵿contributors.noContributors⵿⵿",
+    "noResultsFor": "⵿⵿contributors.noResultsFor⵿⵿",
+    "otherContributors": "⵿⵿contributors.otherContributors⵿⵿",
+    "registeredMember": "⵿⵿contributors.registeredMember⵿⵿",
+    "searchExisting": "⵿⵿contributors.searchExisting⵿⵿",
+    "searchPlaceholder": "⵿⵿contributors.searchPlaceholder⵿⵿",
+    "selectRole": "⵿⵿contributors.selectRole⵿⵿",
+    "title": "⵿⵿contributors.title⵿⵿"
+  },
+  "errors": {
+    "generic": {
+      "message": "⵿⵿errors.generic.message⵿⵿",
+      "title": "⵿⵿errors.generic.title⵿⵿"
+    },
+    "loadingCraftsError": "⵿⵿errors.loadingCraftsError⵿⵿",
+    "loadingError": "⵿⵿errors.loadingError⵿⵿",
+    "partialDataLoad": "⵿⵿errors.partialDataLoad⵿⵿"
+  },
+  "events": {
+    "create": {
+      "addAfterEvent": "⵿⵿events.create.addAfterEvent⵿⵿",
+      "datesAndTimes": "⵿⵿events.create.datesAndTimes⵿⵿",
+      "descriptionPlaceholder": "⵿⵿events.create.descriptionPlaceholder⵿⵿",
+      "draftSaved": "⵿⵿events.create.draftSaved⵿⵿",
+      "endDate": "⵿⵿events.create.endDate⵿⵿",
+      "endTime": "⵿⵿events.create.endTime⵿⵿",
+      "eventImage": "⵿⵿events.create.eventImage⵿⵿",
+      "eventName": "⵿⵿events.create.eventName⵿⵿",
+      "eventNamePlaceholder": "⵿⵿events.create.eventNamePlaceholder⵿⵿",
+      "eventType": "⵿⵿events.create.eventType⵿⵿",
+      "exactLocation": "⵿⵿events.create.exactLocation⵿⵿",
+      "freeEvent": "⵿⵿events.create.freeEvent⵿⵿",
+      "generalInfo": "⵿⵿events.create.generalInfo⵿⵿",
+      "imageAndMedia": "⵿⵿events.create.imageAndMedia⵿⵿",
+      "locationPlaceholder": "⵿⵿events.create.locationPlaceholder⵿⵿",
+      "maxParticipants": "⵿⵿events.create.maxParticipants⵿⵿",
+      "maxParticipantsPlaceholder": "⵿⵿events.create.maxParticipantsPlaceholder⵿⵿",
+      "participationAndPricing": "⵿⵿events.create.participationAndPricing⵿⵿",
+      "postEventMedia": "⵿⵿events.create.postEventMedia⵿⵿",
+      "postEventMediaDesc": "⵿⵿events.create.postEventMediaDesc⵿⵿",
+      "price": "⵿⵿events.create.price⵿⵿",
+      "pricePlaceholder": "⵿⵿events.create.pricePlaceholder⵿⵿",
+      "publishEvent": "⵿⵿events.create.publishEvent⵿⵿",
+      "saveAsDraft": "⵿⵿events.create.saveAsDraft⵿⵿",
+      "startDate": "⵿⵿events.create.startDate⵿⵿",
+      "startTime": "⵿⵿events.create.startTime⵿⵿",
+      "subtitle": "⵿⵿events.create.subtitle⵿⵿",
+      "title": "⵿⵿events.create.title⵿⵿",
+      "willBeAvailableSoon": "⵿⵿events.create.willBeAvailableSoon⵿⵿"
+    },
+    "types": {
+      "concert": "⵿⵿events.types.concert⵿⵿",
+      "conference": "⵿⵿events.types.conference⵿⵿",
+      "exhibition": "⵿⵿events.types.exhibition⵿⵿",
+      "festival": "⵿⵿events.types.festival⵿⵿",
+      "literaryMeeting": "⵿⵿events.types.literaryMeeting⵿⵿",
+      "screening": "⵿⵿events.types.screening⵿⵿",
+      "show": "⵿⵿events.types.show⵿⵿",
+      "workshop": "⵿⵿events.types.workshop⵿⵿"
+    }
+  },
+  "footer": {
+    "legal": "⵿⵿footer.legal⵿⵿",
+    "links": {
+      "faq": "⵿⵿footer.links.faq⵿⵿",
+      "legalNotices": "⵿⵿footer.links.legalNotices⵿⵿",
+      "userGuide": "⵿⵿footer.links.userGuide⵿⵿"
+    },
+    "location": "⵿⵿footer.location⵿⵿",
+    "navigation": "⵿⵿footer.navigation⵿⵿",
+    "platform": "⵿⵿footer.platform⵿⵿",
+    "resources": "⵿⵿footer.resources⵿⵿"
+  },
+  "header": {
+    "badges": {
+      "admin": "⵿⵿header.badges.admin⵿⵿",
+      "pending": "⵿⵿header.badges.pending⵿⵿",
+      "professional": "⵿⵿header.badges.professional⵿⵿"
+    },
+    "nav": {
+      "about": "ⵖⴼ",
+      "crafts": "ⵜⵉⵥⵓⵕⵉⵏ",
+      "events": "ⵜⵉⵎⵖⵔⵉⵡⵉⵏ",
+      "heritage": "ⴰⴳⵍⴰ",
+      "works": "ⵜⵉⵡⵓⵔⵉⵡⵉⵏ"
+    },
+    "subtitle": "ⵜⴰⵖⵓⵖⵜ ⵏ ⵍⵣⵣⴰⵢⵔ",
+    "title": "ⵜⵉⵎⵍⵉⵍⵉⵜ ⵏ ⵜⴷⵍⵙⴰ",
+    "userMenu": {
+      "addWork": "⵿⵿header.userMenu.addWork⵿⵿",
+      "administration": "⵿⵿header.userMenu.administration⵿⵿",
+      "createEvent": "⵿⵿header.userMenu.createEvent⵿⵿",
+      "metadata": "⵿⵿header.userMenu.metadata⵿⵿",
+      "myFavorites": "⵿⵿header.userMenu.myFavorites⵿⵿",
+      "myProfile": "⵿⵿header.userMenu.myProfile⵿⵿",
+      "mySpace": "⵿⵿header.userMenu.mySpace⵿⵿",
+      "pendingValidations": "⵿⵿header.userMenu.pendingValidations⵿⵿",
+      "proDashboard": "⵿⵿header.userMenu.proDashboard⵿⵿"
+    }
+  },
+  "home": {
+    "explore": {
+      "subtitle": "ⴰⴼ ⴰⵖⵍⴰⴷ ⵏ ⵢⵉⴷⵍⴻⵙ ⴰⵎⴰⵣⵉⵖ",
+      "tabs": {
+        "crafts": "ⵜⵉⵃⵓⵏⴰ",
+        "events": "ⵜⵉⴷⵢⴰⵏⵉⵏ",
+        "heritage": "ⴰⴳⴻⵎⵎⴰⵢ",
+        "map": "ⵜⴰⴽⴰⵔⴹⴰ",
+        "works": "ⵜⵉⵥⵓⵔⵉⵢⵉⵏ"
+      },
+      "title": "ⵙⵏⵉⵔⴻⵎ"
+    },
+    "mission": {
+      "description": "⵿⵿home.mission.description⵿⵿",
+      "learnMore": "⵿⵿home.mission.learnMore⵿⵿",
+      "title": "⵿⵿home.mission.title⵿⵿"
+    },
+    "professionals": {
+      "benefits": "ⴼⴰⵕⴻⵚ ⵙⴻⴳ ⵡⵓⴳⴰⵔ ⵏ ⵟⵟⵎⴻⵄ ⵉ ⵍⴻⵅⴷⴰⵎ-ⵉⴽ ⴷ ⵜⴻⴷⵢⴰⵏⵉⵏ-ⵉⴽ",
+      "createWork": "ⵙⵏⵓⵍⴼⵓ-ⴷ ⵜⴰⵡⵓⵔⵉ",
+      "organizeEvent": "ⵙⵓⴷⴷⴻⵙ ⵜⴰⴷⵢⴰⵏⵜ",
+      "subtitle": "ⵔⵏⵓ ⵖⴻⵔ ⵜⴻⴳⵔⴰⵡⵜ-ⵏⵏⴻⵖ ⵏ ⵉⵏⴰⵥⵓⵔⴻⵏ ⴷ ⵉⵎⴰⵀⵉⵍⴻⵏ",
+      "title": "ⵉ ⵢⵉⵎⴰⵀⵉⵍⴻⵏ"
+    },
+    "resources": {
+      "access": "⵿⵿home.resources.access⵿⵿",
+      "calendar": "⵿⵿home.resources.calendar⵿⵿",
+      "directory": "⵿⵿home.resources.directory⵿⵿",
+      "guide": "⵿⵿home.resources.guide⵿⵿",
+      "title": "⵿⵿home.resources.title⵿⵿"
+    },
+    "stats": {
+      "events": "⵿⵿home.stats.events⵿⵿",
+      "heritage": "⵿⵿home.stats.heritage⵿⵿",
+      "members": "⵿⵿home.stats.members⵿⵿",
+      "subtitle": "⵿⵿home.stats.subtitle⵿⵿",
+      "title": "⵿⵿home.stats.title⵿⵿",
+      "works": "⵿⵿home.stats.works⵿⵿"
+    }
+  },
+  "notifications": {
+    "youHave_one": "⵿⵿notifications.youHave⵿⵿",
+    "youHave_many": "⵿⵿notifications.youHave⵿⵿",
+    "youHave_other": "⵿⵿notifications.youHave⵿⵿"
+  },
+  "price": {
+    "fixed": "⵿⵿price.fixed⵿⵿",
+    "free": "⵿⵿price.free⵿⵿"
+  },
+  "publishers": {
+    "addedCount_one": "⵿⵿publishers.addedCount⵿⵿",
+    "addedCount_many": "⵿⵿publishers.addedCount⵿⵿",
+    "addedCount_other": "⵿⵿publishers.addedCount⵿⵿",
+    "createNew": "⵿⵿publishers.createNew⵿⵿",
+    "isbn": "⵿⵿publishers.isbn⵿⵿",
+    "noResultsFor": "⵿⵿publishers.noResultsFor⵿⵿",
+    "pricePlaceholder": "⵿⵿publishers.pricePlaceholder⵿⵿",
+    "role": "⵿⵿publishers.role⵿⵿",
+    "roles": {
+      "coPublisher": "⵿⵿publishers.roles.coPublisher⵿⵿",
+      "distributor": "⵿⵿publishers.roles.distributor⵿⵿",
+      "mainPublisher": "⵿⵿publishers.roles.mainPublisher⵿⵿",
+      "originalPublisher": "⵿⵿publishers.roles.originalPublisher⵿⵿",
+      "translationPublisher": "⵿⵿publishers.roles.translationPublisher⵿⵿"
+    },
+    "salePrice": "⵿⵿publishers.salePrice⵿⵿",
+    "search": "⵿⵿publishers.search⵿⵿",
+    "searchPlaceholder": "⵿⵿publishers.searchPlaceholder⵿⵿",
+    "status": "⵿⵿publishers.status⵿⵿",
+    "statuses": {
+      "cancelled": "⵿⵿publishers.statuses.cancelled⵿⵿",
+      "inProgress": "⵿⵿publishers.statuses.inProgress⵿⵿",
+      "outOfStock": "⵿⵿publishers.statuses.outOfStock⵿⵿",
+      "published": "⵿⵿publishers.statuses.published⵿⵿"
+    },
+    "title": "⵿⵿publishers.title⵿⵿"
+  },
+  "sections": {
+    "crafts": {
+      "exploreAll": "⵿⵿sections.crafts.exploreAll⵿⵿",
+      "noCrafts": "⵿⵿sections.crafts.noCrafts⵿⵿",
+      "onOrder": "⵿⵿sections.crafts.onOrder⵿⵿",
+      "price": {
+        "from": "⵿⵿sections.crafts.price.from⵿⵿",
+        "range": "⵿⵿sections.crafts.price.range⵿⵿",
+        "upTo": "⵿⵿sections.crafts.price.upTo⵿⵿"
+      },
+      "seeDetails": "⵿⵿sections.crafts.seeDetails⵿⵿",
+      "stock": {
+        "inStock_one": "⵿⵿sections.crafts.stock.inStock⵿⵿",
+        "inStock_many": "⵿⵿sections.crafts.stock.inStock⵿⵿",
+        "inStock_other": "⵿⵿sections.crafts.stock.inStock⵿⵿",
+        "outOfStock": "⵿⵿sections.crafts.stock.outOfStock⵿⵿"
+      },
+      "subtitle": "ⴰⴼ ⵜⵉⵎⵓⵙⵙⵏⵉⵡⵉⵏ ⵏ ⵉⵎⵣⵡⵓⵔⴰ ⵏⵏⴰ ⵉⵜⵜⴷⴷⵓⵏ ⵙⴳ ⵢⴰⵏ ⵓⵙⵓⵜⴰ ⵖⵔ ⵡⴰⵢⴹ",
+      "title": "ⵜⵉⵥⵓⵕⵉⵏ ⵜⵉⵎⵏⵙⴰⵢⵉⵏ"
+    },
+    "events": {
+      "dateToConfirm": "⵿⵿sections.events.dateToConfirm⵿⵿",
+      "noEvents": "⵿⵿sections.events.noEvents⵿⵿",
+      "register": "⵿⵿sections.events.register⵿⵿",
+      "registration": "⵿⵿sections.events.registration⵿⵿",
+      "seeAllEvents": "⵿⵿sections.events.seeAllEvents⵿⵿",
+      "subtitle": "ⴰⵜⵜⴽⵉ ⴳ ⵜⵎⵖⵔⵉⵡⵉⵏ ⵏⵏⴰ ⵉⵙⵙⵉⴷⵉⵔⵏ ⵜⴰⴳⵔⴰⵡⵜ ⵜⴰⴷⵍⵙⴰⵏⵜ ⵏ ⵍⵣⵣⴰⵢⵔ",
+      "title": "ⵜⵉⵎⵖⵔⵉⵡⵉⵏ ⵜⵉⴷⵍⵙⴰⵏⵉⵏ"
+    },
+    "heritage": {
+      "discover": "⵿⵿sections.heritage.discover⵿⵿",
+      "filters": {
+        "allRegions": "⵿⵿sections.heritage.filters.allRegions⵿⵿",
+        "archaeological": "⵿⵿sections.heritage.filters.archaeological⵿⵿",
+        "monuments": "⵿⵿sections.heritage.filters.monuments⵿⵿",
+        "traditional": "⵿⵿sections.heritage.filters.traditional⵿⵿"
+      },
+      "interactiveMap": "⵿⵿sections.heritage.interactiveMap⵿⵿",
+      "map": {
+        "explore": "⵿⵿sections.heritage.map.explore⵿⵿"
+      },
+      "mapDescription": "⵿⵿sections.heritage.mapDescription⵿⵿",
+      "noResults": "ⵓⵍⴰⵛ ⵉⴳⵎⴰⴹ",
+      "otherSites": "⵿⵿sections.heritage.otherSites⵿⵿",
+      "planVisit": {
+        "description": "⵿⵿sections.heritage.planVisit.description⵿⵿",
+        "guide": "⵿⵿sections.heritage.planVisit.guide⵿⵿",
+        "start": "⵿⵿sections.heritage.planVisit.start⵿⵿",
+        "title": "⵿⵿sections.heritage.planVisit.title⵿⵿"
+      },
+      "reviews": "⵿⵿sections.heritage.reviews⵿⵿",
+      "seeAll": "ⵡⴰⵍⵉ ⴰⴽⴽ",
+      "subtitle": "ⴰⴼ ⵉⴳⵔⴰⵏ ⵏ ⵓⵎⵣⵔⵓⵢ ⴷ ⵜⴷⵍⵙⴰ ⵏ ⵍⵣⵣⴰⵢⵔ ⵙ ⵜⴽⴰⵕⴹⴰ ⵜⴰⵎⵢⴰⴳⴰⵏⵜ",
+      "title": "ⴰⴳⵍⴰ ⴰⴷⵍⵙⴰⵏ"
+    },
+    "works": {
+      "actions": {
+        "readArticle": "⵿⵿sections.works.actions.readArticle⵿⵿",
+        "view": "⵿⵿sections.works.actions.view⵿⵿"
+      },
+      "ageLabels": {
+        "classic": "⵿⵿sections.works.ageLabels.classic⵿⵿",
+        "recent": "⵿⵿sections.works.ageLabels.recent⵿⵿"
+      },
+      "badges": {
+        "classic": "⵿⵿sections.works.badges.classic⵿⵿",
+        "new": "⵿⵿sections.works.badges.new⵿⵿",
+        "popular": "⵿⵿sections.works.badges.popular⵿⵿"
+      },
+      "createdIn": "⵿⵿sections.works.createdIn⵿⵿",
+      "details": "⵿⵿sections.works.details⵿⵿",
+      "empty": {
+        "noFeatured": "⵿⵿sections.works.empty.noFeatured⵿⵿",
+        "noNew": "⵿⵿sections.works.empty.noNew⵿⵿",
+        "noPopular": "⵿⵿sections.works.empty.noPopular⵿⵿",
+        "noRecommended": "⵿⵿sections.works.empty.noRecommended⵿⵿",
+        "noSearch": "⵿⵿sections.works.empty.noSearch⵿⵿",
+        "noType": "⵿⵿sections.works.empty.noType⵿⵿",
+        "noWorks": "⵿⵿sections.works.empty.noWorks⵿⵿"
+      },
+      "exploreLibrary": "⵿⵿sections.works.exploreLibrary⵿⵿",
+      "filters": {
+        "all": "⵿⵿sections.works.filters.all⵿⵿",
+        "allTypes": "⵿⵿sections.works.filters.allTypes⵿⵿",
+        "featured": "⵿⵿sections.works.filters.featured⵿⵿",
+        "new": "⵿⵿sections.works.filters.new⵿⵿",
+        "popular": "⵿⵿sections.works.filters.popular⵿⵿",
+        "recommended": "⵿⵿sections.works.filters.recommended⵿⵿"
+      },
+      "info": {
+        "classicsDesc": "⵿⵿sections.works.info.classicsDesc⵿⵿",
+        "featuredCount_one": "⵿⵿sections.works.info.featuredCount⵿⵿",
+        "featuredCount_many": "⵿⵿sections.works.info.featuredCount⵿⵿",
+        "featuredCount_other": "⵿⵿sections.works.info.featuredCount⵿⵿",
+        "newCount_one": "⵿⵿sections.works.info.newCount⵿⵿",
+        "newCount_many": "⵿⵿sections.works.info.newCount⵿⵿",
+        "newCount_other": "⵿⵿sections.works.info.newCount⵿⵿",
+        "popularCount_one": "⵿⵿sections.works.info.popularCount⵿⵿",
+        "popularCount_many": "⵿⵿sections.works.info.popularCount⵿⵿",
+        "popularCount_other": "⵿⵿sections.works.info.popularCount⵿⵿",
+        "recommendedCount_one": "⵿⵿sections.works.info.recommendedCount⵿⵿",
+        "recommendedCount_many": "⵿⵿sections.works.info.recommendedCount⵿⵿",
+        "recommendedCount_other": "⵿⵿sections.works.info.recommendedCount⵿⵿"
+      },
+      "loading": "⵿⵿sections.works.loading⵿⵿",
+      "noTitle": "⵿⵿sections.works.noTitle⵿⵿",
+      "noWorks": "⵿⵿sections.works.noWorks⵿⵿",
+      "preview": "⵿⵿sections.works.preview⵿⵿",
+      "rateLimit": {
+        "cache": "⵿⵿sections.works.rateLimit.cache⵿⵿",
+        "clearCache": "⵿⵿sections.works.rateLimit.clearCache⵿⵿",
+        "currentDelay": "⵿⵿sections.works.rateLimit.currentDelay⵿⵿",
+        "entries": "⵿⵿sections.works.rateLimit.entries⵿⵿",
+        "health": {
+          "critical": "⵿⵿sections.works.rateLimit.health.critical⵿⵿",
+          "good": "⵿⵿sections.works.rateLimit.health.good⵿⵿",
+          "slow": "⵿⵿sections.works.rateLimit.health.slow⵿⵿",
+          "warning": "⵿⵿sections.works.rateLimit.health.warning⵿⵿"
+        },
+        "hits": "⵿⵿sections.works.rateLimit.hits⵿⵿",
+        "normalMode": "⵿⵿sections.works.rateLimit.normalMode⵿⵿",
+        "queue": "⵿⵿sections.works.rateLimit.queue⵿⵿",
+        "requestsPerMinute": "⵿⵿sections.works.rateLimit.requestsPerMinute⵿⵿",
+        "slowMode": "⵿⵿sections.works.rateLimit.slowMode⵿⵿",
+        "status": "⵿⵿sections.works.rateLimit.status⵿⵿",
+        "title": "⵿⵿sections.works.rateLimit.title⵿⵿"
+      },
+      "results": {
+        "count_one": "⵿⵿sections.works.results.count⵿⵿",
+        "count_many": "⵿⵿sections.works.results.count⵿⵿",
+        "count_other": "⵿⵿sections.works.results.count⵿⵿"
+      },
+      "searchPlaceholder": "⵿⵿sections.works.searchPlaceholder⵿⵿",
+      "stats": {
+        "classics_one": "⵿⵿sections.works.stats.classics⵿⵿",
+        "classics_many": "⵿⵿sections.works.stats.classics⵿⵿",
+        "classics_other": "⵿⵿sections.works.stats.classics⵿⵿",
+        "new_one": "⵿⵿sections.works.stats.new⵿⵿",
+        "new_many": "⵿⵿sections.works.stats.new⵿⵿",
+        "new_other": "⵿⵿sections.works.stats.new⵿⵿",
+        "recent_one": "⵿⵿sections.works.stats.recent⵿⵿",
+        "recent_many": "⵿⵿sections.works.stats.recent⵿⵿",
+        "recent_other": "⵿⵿sections.works.stats.recent⵿⵿",
+        "total_one": "⵿⵿sections.works.stats.total⵿⵿",
+        "total_many": "⵿⵿sections.works.stats.total⵿⵿",
+        "total_other": "⵿⵿sections.works.stats.total⵿⵿"
+      },
+      "subtitle": "ⵙⵏⵉⵔⵎ ⵉⴳⵔⴰⵏ ⵏ ⵜⴷⵍⵙⴰ ⵜⴰⵣⵣⴰⵢⵔⵉⵜ: ⵜⵉⵡⵓⵔⵉⵡⵉⵏ ⵜⵉⵙⴽⵍⴰⵏⵉⵏ, ⵜⵉⵙⵉⵏⵉⵎⴰⵜⵉⵏ ⴷ ⵜⵉⵥⵓⵕⴰⵏⵉⵏ",
+      "title": "ⴰⴼ ⵜⴰⴳⵔⵓⵎⵎⴰ ⵏⵏⵖ"
+    },
+    "hero": {
+      "quickActions": {
+        "discover": {
+          "title": "ⴰⴼ ⴰⴳⴻⵎⵎⴰⵢ",
+          "description": "ⵙⵏⵉⵔⴻⵎ ⴰⴷⵖⴰⵔⴻⵏ ⵏ ⵓⵎⴻⵣⵔⵓⵢ ⴷ ⵉⵙⴻⵎⴹⴰⵍ ⵉⴷⴻⵍⵙⴰⵏⴻⵏ"
+        },
+        "events": {
+          "title": "ⵜⵉⴷⵢⴰⵏⵉⵏ ⵉ ⴷ-ⵉⵜⴻⴷⴷⵓⵏ",
+          "description": "ⵜⵜⴻⴽⴽⵉ ⴷⴻⴳ ⵜⴻⴷⵢⴰⵏⵉⵏ ⴷ ⵜⵎⴻⵖⵔⵉⵡⵉⵏ ⵜⵉⴷⴻⵍⵙⴰⵏⵉⵏ"
+        },
+        "works": {
+          "title": "ⵜⵉⵥⵓⵔⵉⵢⵉⵏ",
+          "description": "ⴰⴼ ⵜⵉⵙⵏⵓⵍⴼⵓⵢⵉⵏ ⵜⵉⵥⵓⵔⴰⵏⵉⵏ ⴷ ⵜⵙⴻⴽⵍⴰⵏⵉⵏ ⵜⵉⵎⴰⵣⵉⵖⵉⵏ"
+        },
+        "title": "ⴰⴼ ⵜⴰⴷⴻⵍⵙⴰⵏⵜ-ⵏⵏⴻⵖ"
+      },
+      "cta": {
+        "learnMore": "ⵥⴻⵔ ⵓⴳⴰⵔ",
+        "explore": "ⵙⵏⵉⵔⴻⵎ ⵜⴰⴼⵔⴰⵏⵜ"
+      },
+      "title": "ⴰⵣⵓⵍ ⴷⴻⴳ",
+      "titleHighlight": "ⵜⴰⵎⵍⵉⵍⵉⵜ ⵜⴰⴷⴻⵍⵙⴰⵏⵜ",
+      "subtitle": "ⵜⴰⴼⵔⴰⵏⵜ ⵜⵓⵎⴹⵉⵏⵜ ⵉ ⵓⵃⵔⴰⵣ ⴷ ⵓⵙⵏⴻⵔⵏⵉ ⵏ ⵓⴳⴻⵎⵎⴰⵢ ⴰⴷⴻⵍⵙⴰⵏ ⴰⵎⴰⵣⵉⵖ"
+    }
+  },
+  "works": {
+    "actions": {
+      "favorites": "⵿⵿works.actions.favorites⵿⵿",
+      "listenNow": "⵿⵿works.actions.listenNow⵿⵿",
+      "myList": "⵿⵿works.actions.myList⵿⵿",
+      "preview": "⵿⵿works.actions.preview⵿⵿",
+      "readExcerpt": "⵿⵿works.actions.readExcerpt⵿⵿",
+      "readNow": "⵿⵿works.actions.readNow⵿⵿",
+      "trailer": "⵿⵿works.actions.trailer⵿⵿",
+      "watchNow": "⵿⵿works.actions.watchNow⵿⵿"
+    },
+    "album": {
+      "tracksCount_one": "⵿⵿works.album.tracksCount⵿⵿",
+      "tracksCount_many": "⵿⵿works.album.tracksCount⵿⵿",
+      "tracksCount_other": "⵿⵿works.album.tracksCount⵿⵿"
+    },
+    "duration": {
+      "minutes_one": "⵿⵿works.duration.minutes⵿⵿",
+      "minutes_many": "⵿⵿works.duration.minutes⵿⵿",
+      "minutes_other": "⵿⵿works.duration.minutes⵿⵿"
+    },
+    "fields": {
+      "isbn": "⵿⵿works.fields.isbn⵿⵿",
+      "pages": "⵿⵿works.fields.pages⵿⵿"
+    },
+    "pricing": {
+      "free": "⵿⵿works.pricing.free⵿⵿"
+    },
+    "sections": {
+      "synopsis": "⵿⵿works.sections.synopsis⵿⵿"
+    },
+    "stats": {
+      "listensCount_one": "⵿⵿works.stats.listensCount⵿⵿",
+      "listensCount_many": "⵿⵿works.stats.listensCount⵿⵿",
+      "listensCount_other": "⵿⵿works.stats.listensCount⵿⵿",
+      "readingTime": "⵿⵿works.stats.readingTime⵿⵿",
+      "readingTimeValue": "⵿⵿works.stats.readingTimeValue⵿⵿",
+      "reviewsCount_one": "⵿⵿works.stats.reviewsCount⵿⵿",
+      "reviewsCount_many": "⵿⵿works.stats.reviewsCount⵿⵿",
+      "reviewsCount_other": "⵿⵿works.stats.reviewsCount⵿⵿",
+      "views": "⵿⵿works.stats.views⵿⵿"
+    },
+    "types": {
+      "album": "⵿⵿works.types.album⵿⵿",
+      "book": "⵿⵿works.types.book⵿⵿",
+      "film": "⵿⵿works.types.film⵿⵿"
+    }
+  }
+}
+        };
+        
+        // Initialiser i18next
+        i18next.init({
+            lng: 'fr',
+            resources: Object.keys(translations).reduce((acc, lng) => {
+                acc[lng] = { translation: translations[lng] };
+                return acc;
+            }, {})
+        });
+        
+        // Tester les traductions
+        function testTranslations() {
+            const lng = document.getElementById('langSelector').value;
+            i18next.changeLanguage(lng);
+            
+            const keys = [
+                'home.explore.title',
+                'home.explore.subtitle',
+                'home.professionals.title',
+                'sections.heritage.title'
+            ];
+            
+            let html = '<h2>Résultats pour ' + lng + ':</h2><ul>';
+            keys.forEach(key => {
+                const value = i18next.t(key);
+                html += '<li><strong>' + key + ':</strong> ' + value + '</li>';
+            });
+            html += '</ul>';
+            
+            document.getElementById('results').innerHTML = html;
+        }
+        
+        document.getElementById('langSelector').addEventListener('change', testTranslations);
+        testTranslations();
+    </script>
+</body>
+</html>

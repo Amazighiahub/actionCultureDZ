@@ -151,10 +151,10 @@ class AdminService {
   // ========================================
   // VUE D'ENSEMBLE ET STATISTIQUES
   // ========================================
-  
+
   async getOverview(): Promise<ApiResponse<OverviewStats>> {
     const response = await httpClient.get<any>(API_ENDPOINTS.dashboard.overview);
-    
+
     if (response.success && response.data) {
       const apiData = response.data;
       const transformedData: OverviewStats = {
@@ -183,13 +183,13 @@ class AdminService {
           engagement_growth_percent: 0
         }
       };
-      
+
       return {
         success: true,
         data: transformedData
       };
     }
-    
+
     return response;
   }
 
@@ -200,72 +200,72 @@ class AdminService {
   async getPatrimoineStats(): Promise<ApiResponse<PatrimoineStats>> {
     return httpClient.get<PatrimoineStats>(API_ENDPOINTS.dashboard.patrimoine.statistics);
   }
-async getOeuvres(params?: OeuvreFilters): Promise<ApiResponse<PaginatedResponse<any>>> {
+  async getOeuvres(params?: OeuvreFilters): Promise<ApiResponse<PaginatedResponse<any>>> {
     return httpClient.getPaginated<any>('/admin/oeuvres', params);
   }
-  
+
   async getOeuvreDetails(oeuvreId: number): Promise<ApiResponse<any>> {
     return httpClient.get<any>(`/admin/oeuvres/${oeuvreId}`);
   }
-  
+
   async updateOeuvre(oeuvreId: number, data: Partial<any>): Promise<ApiResponse<any>> {
     return httpClient.put<any>(`/admin/oeuvres/${oeuvreId}`, data);
   }
-  
+
   async deleteOeuvre(oeuvreId: number): Promise<ApiResponse<void>> {
     return httpClient.delete<void>(`/admin/oeuvres/${oeuvreId}`);
   }
-  
+
   // Événements
   async getEvenements(params?: EvenementFilters): Promise<ApiResponse<PaginatedResponse<any>>> {
     return httpClient.getPaginated<any>('/admin/evenements', params);
   }
-  
+
   async getEvenementDetails(evenementId: number): Promise<ApiResponse<any>> {
     return httpClient.get<any>(`/admin/evenements/${evenementId}`);
   }
-  
+
   async updateEvenement(evenementId: number, data: Partial<any>): Promise<ApiResponse<any>> {
     return httpClient.put<any>(`/admin/evenements/${evenementId}`, data);
   }
-  
+
   async deleteEvenement(evenementId: number): Promise<ApiResponse<void>> {
     return httpClient.delete<void>(`/admin/evenements/${evenementId}`);
   }
-  
+
   // Patrimoine
   async getPatrimoineItems(params?: PatrimoineFilters): Promise<ApiResponse<PaginatedResponse<any>>> {
     return httpClient.getPaginated<any>('/admin/patrimoine', params);
   }
-  
+
   async updatePatrimoine(patrimoineId: number, data: Partial<any>): Promise<ApiResponse<any>> {
     return httpClient.put<any>(`/admin/patrimoine/${patrimoineId}`, data);
   }
-  
+
   async deletePatrimoine(patrimoineId: number): Promise<ApiResponse<void>> {
     return httpClient.delete<void>(`/admin/patrimoine/${patrimoineId}`);
   }
-  
+
   // Services
   async getServices(params?: ServiceFilters): Promise<ApiResponse<PaginatedResponse<any>>> {
     return httpClient.getPaginated<any>('/admin/services', params);
   }
-  
+
   async getServiceDetails(serviceId: number): Promise<ApiResponse<any>> {
     return httpClient.get<any>(`/admin/services/${serviceId}`);
   }
-  
+
   async updateService(serviceId: number, data: Partial<any>): Promise<ApiResponse<any>> {
     return httpClient.put<any>(`/admin/services/${serviceId}`, data);
   }
-  
+
   async deleteService(serviceId: number): Promise<ApiResponse<void>> {
     return httpClient.delete<void>(`/admin/services/${serviceId}`);
   }
   // ========================================
   // GESTION DES UTILISATEURS
   // ========================================
-  
+
   async getPendingUsers(params?: FilterParams): Promise<ApiResponse<PaginatedResponse<PendingUser>>> {
     return httpClient.getPaginated<PendingUser>(API_ENDPOINTS.dashboard.pendingUsers, params);
   }
@@ -319,7 +319,7 @@ async getOeuvres(params?: OeuvreFilters): Promise<ApiResponse<PaginatedResponse<
   // ========================================
   // GESTION DES ŒUVRES EN ATTENTE
   // ========================================
-  
+
   async getPendingOeuvres(params?: FilterParams): Promise<ApiResponse<PaginatedResponse<PendingOeuvre>>> {
     return httpClient.getPaginated<PendingOeuvre>(API_ENDPOINTS.dashboard.pendingOeuvres, params);
   }
@@ -334,7 +334,7 @@ async getOeuvres(params?: OeuvreFilters): Promise<ApiResponse<PaginatedResponse<
   // ========================================
   // MODÉRATION
   // ========================================
-  
+
   async getModerationQueue(params?: FilterParams): Promise<ApiResponse<PaginatedResponse<ModerationItem>>> {
     return httpClient.getPaginated<ModerationItem>(API_ENDPOINTS.dashboard.moderationQueue, params);
   }
@@ -349,7 +349,7 @@ async getOeuvres(params?: OeuvreFilters): Promise<ApiResponse<PaginatedResponse<
   // ========================================
   // ALERTES ET MONITORING
   // ========================================
-  
+
   async getAlerts(): Promise<ApiResponse<Alert[]>> {
     return httpClient.get<Alert[]>(API_ENDPOINTS.dashboard.monitoring.alerts);
   }
@@ -357,7 +357,7 @@ async getOeuvres(params?: OeuvreFilters): Promise<ApiResponse<PaginatedResponse<
   // ========================================
   // RAPPORTS
   // ========================================
-  
+
   async getActivityReport(period: string): Promise<ApiResponse<Blob>> {
     return httpClient.download(
       `${API_ENDPOINTS.dashboard.activityReport}?period=${period}`,
@@ -382,7 +382,7 @@ async getOeuvres(params?: OeuvreFilters): Promise<ApiResponse<PaginatedResponse<
   // ========================================
   // CACHE
   // ========================================
-  
+
   async clearCache(type?: 'all' | 'users' | 'content' | 'metadata'): Promise<ApiResponse<void>> {
     return httpClient.post<void>(API_ENDPOINTS.dashboard.cache.clear, { type });
   }

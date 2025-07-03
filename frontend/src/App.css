@@ -40,3 +40,25 @@
 .read-the-docs {
   color: #888;
 }
+/* Effet 3D pour les livres */
+.book-3d-effect {
+  transform-style: preserve-3d;
+  transition: transform 0.3s ease;
+}
+
+.book-3d-effect:hover {
+  transform: rotateY(-5deg) rotateX(5deg);
+}
+
+/* Gradient spécifique par type */
+.hero-gradient-livre {
+  background: linear-gradient(135deg, #fef3c7 0%, #fbbf24 100%);
+}
+
+.hero-gradient-film {
+  background: linear-gradient(135deg, #1e1b4b 0%, #7c3aed 100%);
+}
+
+.hero-gradient-musique {
+  background: linear-gradient(135deg, #7c3aed 0%, #ec4899 100%);
+}

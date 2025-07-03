@@ -7,8 +7,8 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  DialogTitle } from
+'@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,11 +18,11 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  SelectValue } from
+'@/components/ui/select';
 import { Loader2, Building2, Globe, AlertCircle } from 'lucide-react';
 import { metadataService } from '@/services/metadata.service';
-import type { Editeur } from '@/types/models/references.types';
+import type { Editeur } from '@/types/models/references.types';import { useTranslation } from "react-i18next";
 
 interface EditeurModalProps {
   isOpen: boolean;
@@ -46,20 +46,20 @@ const EditeurModal: React.FC<EditeurModalProps> = ({
     type_editeur: 'Maison d\'édition', // Valeur par défaut
     site_web: ''
   });
-  
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Types d'éditeurs disponibles
-  const typesEditeurs = [
-    'Maison d\'édition',
-    'Éditeur indépendant',
-    'Entreprise publique',
-    'Label musical',
-    'Auto-édition',
-    'Éditeur institutionnel',
-    'Éditeur universitaire'
-  ];
+  const { t } = useTranslation();const typesEditeurs = [
+  'Maison d\'édition',
+  'Éditeur indépendant',
+  'Entreprise publique',
+  'Label musical',
+  'Auto-édition',
+  'Éditeur institutionnel',
+  'Éditeur universitaire'];
+
 
   // Réinitialiser le formulaire quand la modal s'ouvre
   useEffect(() => {
@@ -74,7 +74,7 @@ const EditeurModal: React.FC<EditeurModalProps> = ({
   }, [isOpen]);
 
   const handleInputChange = (field: keyof FormData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSubmit = async () => {
@@ -128,52 +128,52 @@ const EditeurModal: React.FC<EditeurModalProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Ajouter un éditeur</DialogTitle>
-          <DialogDescription>
-            Créez un nouvel éditeur. Vous pourrez ensuite l'associer à votre œuvre.
+          <DialogTitle>{t("modals_editeurmodal.ajouter_diteur")}</DialogTitle>
+          <DialogDescription>{t("modals_editeurmodal.crez_nouvel_diteur")}
+
           </DialogDescription>
         </DialogHeader>
 
-        {error && (
-          <Alert variant="destructive">
+        {error &&
+        <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>{error}</AlertDescription>
           </Alert>
-        )}
+        }
 
         <div className="space-y-4">
           {/* Nom de l'éditeur */}
           <div className="space-y-2">
             <Label htmlFor="nom">
-              <Building2 className="inline-block h-4 w-4 mr-2" />
-              Nom de l'éditeur *
+              <Building2 className="inline-block h-4 w-4 mr-2" />{t("modals_editeurmodal.nom_lditeur")}
+
             </Label>
             <Input
               id="nom"
               value={formData.nom}
               onChange={(e) => handleInputChange('nom', e.target.value)}
-              placeholder="Ex: Éditions Barzakh, ENAG, Casbah Éditions"
-              disabled={loading}
-            />
+              placeholder={t("modals_editeurmodal.placeholder_ditions_barzakh_enag")}
+              disabled={loading} />
+
           </div>
 
           {/* Type d'éditeur */}
           <div className="space-y-2">
-            <Label htmlFor="type_editeur">Type d'éditeur *</Label>
+            <Label htmlFor="type_editeur">{t("modals_editeurmodal.type_dditeur")}</Label>
             <Select
               value={formData.type_editeur}
               onValueChange={(value) => handleInputChange('type_editeur', value)}
-              disabled={loading}
-            >
+              disabled={loading}>
+
               <SelectTrigger id="type_editeur">
-                <SelectValue placeholder="Sélectionnez un type" />
+                <SelectValue placeholder={t("modals_editeurmodal.placeholder_slectionnez_type")} />
               </SelectTrigger>
               <SelectContent>
-                {typesEditeurs.map((type) => (
-                  <SelectItem key={type} value={type}>
+                {typesEditeurs.map((type) =>
+                <SelectItem key={type} value={type}>
                     {type}
                   </SelectItem>
-                ))}
+                )}
               </SelectContent>
             </Select>
           </div>
@@ -181,8 +181,8 @@ const EditeurModal: React.FC<EditeurModalProps> = ({
           {/* Site web */}
           <div className="space-y-2">
             <Label htmlFor="site_web">
-              <Globe className="inline-block h-4 w-4 mr-2" />
-              Site web
+              <Globe className="inline-block h-4 w-4 mr-2" />{t("modals_editeurmodal.site_web")}
+
             </Label>
             <Input
               id="site_web"
@@ -190,26 +190,26 @@ const EditeurModal: React.FC<EditeurModalProps> = ({
               value={formData.site_web || ''}
               onChange={(e) => handleInputChange('site_web', e.target.value)}
               placeholder="https://www.editeur.dz"
-              disabled={loading}
-            />
-            <p className="text-xs text-muted-foreground">
-              Optionnel - L'URL doit commencer par http:// ou https://
+              disabled={loading} />
+
+            <p className="text-xs text-muted-foreground">{t("modals_editeurmodal.optionnel_lurl_doit")}
+
             </p>
           </div>
         </div>
 
         <DialogFooter className="mt-6">
-          <Button variant="outline" onClick={onClose} disabled={loading}>
-            Annuler
+          <Button variant="outline" onClick={onClose} disabled={loading}>{t("modals_editeurmodal.annuler")}
+
           </Button>
           <Button onClick={handleSubmit} disabled={loading}>
-            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Créer l'éditeur
+            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{t("modals_editeurmodal.crer_lditeur")}
+
           </Button>
         </DialogFooter>
       </DialogContent>
-    </Dialog>
-  );
+    </Dialog>);
+
 };
 
 export default EditeurModal;

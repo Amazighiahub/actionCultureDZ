@@ -19,12 +19,7 @@ module.exports = (sequelize) => {
   }, {
     tableName: 'type_user',
     timestamps: false,
-    indexes: [
-      {
-        fields: ['nom_type'],
-        unique: true
-      }
-    ]
+   
   });
 
   // Associations
