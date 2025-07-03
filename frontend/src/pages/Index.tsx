@@ -9,13 +9,13 @@ import Header from '@/components/Header';
 import HeroSection from '@/components/HeroSection';
 import CartePatrimoine from '@/components/CartePatrimoine';
 import Footer from '@/components/Footer';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { useToast } from '@/components/ui/use-toast';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/UI/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/UI/tabs';
+import { Alert, AlertDescription } from '@/components/UI/alert';
+import { Button } from '@/components/UI/button';
+import { Badge } from '@/components/UI/badge';
+import { Skeleton } from '@/components/UI/skeleton';
+import { useToast } from '@/components/UI/use-toast';
 import { 
   TrendingUp, Users, Calendar, Palette, Map, Info, Bell, Hammer,
   MapPin, Clock, Star, Eye, Download, AlertCircle, RefreshCw
