@@ -1,8 +1,8 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/UI/avatar';
+import { Badge } from '@/components/UI/badge';
+import { Card } from '@/components/UI/card';
 import { User, Star } from 'lucide-react';
 import { useRTL } from '@/hooks/useRTL';
 

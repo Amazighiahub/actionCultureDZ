@@ -1,8 +1,128 @@
 {
   "auth": {
-    "mustBeConnected": "Ilaq ad tilid tettwasenṭ",
-    "required": "Ilaq"
+  "mustBeConnected": "Ilaq ad teqqneḍ",
+  "required": "Ilaq",
+  
+  "title": "Akeččum d Ujerred",
+  "subtitle": "Kcem ɣer umḍiq-ik udmawan neɣ rnu amiḍan amaynut",
+  
+  "login": {
+    "tabTitle": "Akeččum",
+    "title": "Kcem",
+    "email": "Imayl",
+    "emailPlaceholder": "imayl-ik@amedya.com",
+    "password": "Awal uffir",
+    "rememberMe": "Cfu fell-i",
+    "forgotPassword": "Tettuḍ awal uffir?",
+    "loggingIn": "Akeččum iteddu...",
+    "submit": "Kcem"
   },
+  
+  "register": {
+    "tabTitle": "Ajerred",
+    "title": "Rnu Amiḍan",
+    "profileType": "Anaw n umaɣnu",
+    "individual": "Amerzaw (Amdan)",
+    "professional": "Ameslay (Anaẓur, Anelmad, Amesɣiwan)",
+    "firstName": "Isem",
+    "firstNamePlaceholder": "Isem-ik",
+    "lastName": "Myeggen",
+    "lastNamePlaceholder": "Myeggen-ik",
+    "gender": "Tawsit",
+    "male": "Argaz",
+    "female": "Tameṭṭut",
+    "birthDate": "Azemz n tlalit",
+    "email": "Imayl",
+    "emailPlaceholder": "imayl-ik@amedya.com",
+    "password": "Awal uffir",
+    "confirmPassword": "Sentem awal uffir",
+    "wilaya": "Tamnaḍt",
+    "selectWilaya": "Fren tamnaḍt-ik",
+    "phone": "Tilifun",
+    "professionalInfo": "Isallen imeslayen",
+    "sector": "Tigzi n leqdic",
+    "selectSector": "Fren tigzi-inek",
+    "profilePhoto": "Tugna n umaɣnu",
+    "photoPreview": "Taskant n tugna",
+    "removePhoto": "Kkes tugna",
+    "photoFormats": "Ifurma yettwaqbalen: JPG, PNG, GIF, WEBP (afellay 5MB)",
+    "uploadingPhoto": "Asali iteddu...",
+    "photoUploaded": "Tugna tettwasuli akken iwata",
+    "portfolio": "Aḥric n leqdic / Asmel web",
+    "biography": "Tameddurt",
+    "biographyPlaceholder": "Sken-aɣ-d iman-ik, mmeslay-aɣ-d ɣef webrid-ik, isenfaren-ik, tiɣbula-k... (adday 50 n isekkilen)",
+    "charactersMinimum": "isekkilen (adday 50)",
+    "acceptTerms": {
+      "prefix": "Qbleɣ",
+      "terms": "tiwtilin n useqdec",
+      "and": "d",
+      "privacy": "tasertit n tbaḍnit"
+    },
+    "newsletter": "Bɣiɣ ad d-ṭṭfeɣ isallen d yileqman s yimayl",
+    "registering": "Ajerred iteddu...",
+    "createAccount": "Rnu amiḍan-iw",
+    "professionalNote": {
+      "title": "Tamawt taxatart:",
+      "description": "Imiḍanen imeslayen ttrajun asenqed sɣur tarbaɛt-nneɣ deg 24-48 n tsaɛtin."
+    }
+  },
+  
+  "errors": {
+    "fileTooLarge": {
+      "title": "Afaylu meqqer aṭas",
+      "description": "Tiddi n ufaylu ur ilaq ara ad tɛeddi 5MB"
+    },
+    "invalidFileType": {
+      "title": "Anaw n ufaylu ur yeɣbel ara",
+      "description": "Ala ifuyla JPG, PNG, GIF d WEBP i yettwaqbalen"
+    },
+    "emailRequired": "Imayl ilaq",
+    "emailInvalid": "Imayl ur yeɣbel ara",
+    "passwordRequired": "Awal uffir ilaq",
+    "loginError": "Tuccḍa deg unekcum",
+    "invalidCredentials": "Imayl neɣ awal uffir ur ṣeḥḥan ara",
+    "nameMinLength": "Myeggen ilaq ad yesɛu ma drus 2 n isekkilen",
+    "firstNameMinLength": "Isem ilaq ad yesɛu ma drus 2 n isekkilen",
+    "passwordMinLength": "Awal uffir ilaq ad yesɛu ma drus 8 n isekkilen",
+    "passwordMismatch": "Awalen uffiren ur mṣaḍan ara",
+    "birthDateRequired": "Azemz n tlalit ilaq",
+    "minAge": "Ilaq ad tesɛiḍ ma drus 13 n yiseggasen akken ad tjerdeḍ",
+    "wilayaRequired": "Ma ulac aɣilif fren tamnaḍt-ik",
+    "acceptTermsRequired": "Ilaq ad tqebleḍ tiwtilin n useqdec",
+    "sectorRequired": "Tigzi n leqdic tlaq i yimeslayen",
+    "biographyMinLength": "Tameddurt ilaq ad tesɛu ma drus 50 n isekkilen",
+    "validationError": "Tuccḍa n usenqed",
+    "correctErrors": "Ma ulac aɣilif seɣti tuccḍiwin-a",
+    "uploadError": "Tuccḍa deg usali n tugna",
+    "uploadUrlNotReceived": "Tansa n tugna ur d-tewwiḍ ara",
+    "uploadTitle": "Tuccḍa n usali",
+    "uploadContinueWithoutPhoto": "Asali n tugna yecceḍ. Ad nkemmel ajerred war tugna.",
+    "registrationError": "Tuccḍa deg ujerred",
+    "registrationErrorDescription": "Tella-d tuccḍa. Ma ulac aɣilif ɛreḍ tikelt nniḍen.",
+    "wilayasLoadError": "Tuccḍa deg usali n temnaḍin"
+  },
+  
+  "success": {
+    "loginTitle": "Akeččum yedda",
+    "loginDescription": "Ansuf yis-k ɣer Timlilit Culture!",
+    "registrationTitle": "Ajerred yedda",
+    "professionalRegistration": "Amiḍan-ik ameslay yettwarna u yettrajju asenqed.",
+    "visitorRegistration": "Amiḍan-ik yettwarna akken iwata. Ansuf!"
+  },
+  
+  "sectors": {
+    "artiste": "Anaẓur",
+    "artisan": "Anelmad",
+    "organisateur": "Amesɣiwan n tedyanin",
+    "guide": "Amnir n tmeɣriwin",
+    "chercheur": "Amnadi / Amassan",
+    "journaliste": "Aneɣmas adlasan",
+    "conservateur": "Aḥafiḍ n usalay",
+    "editeur": "Amazrag",
+    "producteur": "Afares",
+    "autre": "Wayeḍ"
+  }
+},
   "categories": {
     "heritageTypes": {
       "berber": "Taɣawsa tamaziɣt",

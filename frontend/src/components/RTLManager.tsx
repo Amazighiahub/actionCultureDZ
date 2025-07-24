@@ -1,3 +1,4 @@
+// RTLManager.tsx amélioré
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { initializeAlgerianSite } from '@/utils/rtl';
@@ -8,41 +9,24 @@ const RTLManager = () => {
   useEffect(() => {
     // Si i18n n'est pas prêt, ne rien faire
     if (!ready || !i18n.language) {
-      console.log('[RTLManager] i18n pas encore prêt, langue:', i18n.language);
+      console.log('[RTLManager] i18n pas encore prêt');
       return;
     }
     
-    // Normaliser le code de langue avec vérification
-    const normalizeLanguage = (lang: string | undefined): string => {
-      // Vérifier que lang existe
-      if (!lang || typeof lang !== 'string') {
-        console.log('[RTLManager] Langue non définie, utilisation du français');
-        return 'fr';
-      }
-      
-      const langLower = lang.toLowerCase();
-      
-      if (langLower.startsWith('ar')) return 'ar';
-      if (langLower.startsWith('fr')) return 'fr';
-      if (langLower.startsWith('en')) return 'en';
-      if (langLower === 'tz' || langLower.includes('tz-ltn')) return 'tz-ltn';
-      if (langLower.includes('tz-tfng')) return 'tz-tfng';
-      
-      return lang;
-    };
-    
-    const normalizedLang = normalizeLanguage(i18n.language);
+    // Utiliser la langue directement depuis i18n sans normalisation supplémentaire
+    const currentLang = i18n.language;
+    console.log('[RTLManager] Configuration pour la langue:', currentLang);
     
     // Langues RTL
     const rtlLanguages = ['ar', 'ar-DZ', 'he', 'fa', 'ur'];
-    const isRTL = rtlLanguages.includes(normalizedLang);
+    const isRTL = rtlLanguages.includes(currentLang);
     
     // Définir la direction
     document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
-    document.documentElement.lang = normalizedLang;
+    document.documentElement.lang = currentLang;
     
     // Réinitialiser toutes les classes de langue
-    document.documentElement.classList.remove(
+    const allLangClasses = [
       'lang-ar',
       'lang-fr', 
       'lang-en',
@@ -50,43 +34,36 @@ const RTLManager = () => {
       'lang-tz-tfng',
       'tifinagh-font',
       'font-arabic'
-    );
+    ];
+    
+    document.documentElement.classList.remove(...allLangClasses);
     
     // Ajouter la classe de langue actuelle
-    document.documentElement.classList.add(`lang-${normalizedLang}`);
+    document.documentElement.classList.add(`lang-${currentLang}`);
     
     // Gestion spécifique par langue
-    switch (normalizedLang) {
+    switch (currentLang) {
       case 'ar':
-        // Pour l'arabe algérien
+      case 'ar-DZ':
         document.documentElement.classList.add('font-arabic');
         initializeAlgerianSite();
-        // Charger les polices arabes
         loadArabicFonts();
         break;
         
       case 'tz-tfng':
-        // Pour le Tifinagh
         document.documentElement.classList.add('tifinagh-font');
         loadTifinaghFonts();
         break;
         
-      case 'tz-ltn':
-        // Pour le Tamazight latin
-        // Pas de police spéciale nécessaire, utilise les polices latines
-        break;
-        
-      case 'fr':
-      case 'en':
+      // Autres langues: pas de configuration spéciale
       default:
-        // Langues latines standard
         break;
     }
     
     // Mettre à jour les métadonnées
-    updateMetaTags(normalizedLang);
+    updateMetaTags(currentLang);
     
-    console.log('[RTLManager] Configuration appliquée pour:', normalizedLang, 'RTL:', isRTL);
+    console.log('[RTLManager] Configuration appliquée - Langue:', currentLang, 'RTL:', isRTL);
     
   }, [i18n.language, ready]);
   
@@ -109,7 +86,6 @@ const loadTifinaghFonts = () => {
   if (!document.getElementById('tifinagh-fonts')) {
     const link = document.createElement('link');
     link.id = 'tifinagh-fonts';
-    // Vous pouvez utiliser Noto Sans Tifinagh ou d'autres polices Tifinagh
     link.href = 'https://fonts.googleapis.com/css2?family=Noto+Sans+Tifinagh&display=swap';
     link.rel = 'stylesheet';
     document.head.appendChild(link);
@@ -140,7 +116,7 @@ const updateMetaTags = (language: string) => {
     'ar-DZ': 'ar_DZ',
     'fr': 'fr_FR',
     'en': 'en_US',
-    'tz-ltn': 'ber_DZ', // Code ISO pour Berbère/Tamazight
+    'tz-ltn': 'ber_DZ',
     'tz-tfng': 'ber_DZ'
   };
   

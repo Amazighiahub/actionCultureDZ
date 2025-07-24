@@ -1,8 +1,128 @@
 {
   "auth": {
-    "mustBeConnected": "يجب أن تكون متصلاً",
-    "required": "مطلوب"
+  "mustBeConnected": "يجب أن تكون متصلاً",
+  "required": "مطلوب",
+  
+  "title": "تسجيل الدخول والتسجيل",
+  "subtitle": "الوصول إلى مساحتك الشخصية أو إنشاء حسابك",
+  
+  "login": {
+    "tabTitle": "تسجيل الدخول",
+    "title": "تسجيل الدخول",
+    "email": "البريد الإلكتروني",
+    "emailPlaceholder": "بريدك@مثال.com",
+    "password": "كلمة المرور",
+    "rememberMe": "تذكرني",
+    "forgotPassword": "نسيت كلمة المرور؟",
+    "loggingIn": "جارٍ تسجيل الدخول...",
+    "submit": "تسجيل الدخول"
   },
+  
+  "register": {
+    "tabTitle": "التسجيل",
+    "title": "إنشاء حساب",
+    "profileType": "نوع الملف الشخصي",
+    "individual": "زائر (فرد)",
+    "professional": "محترف (فنان، حرفي، منظم)",
+    "firstName": "الاسم الأول",
+    "firstNamePlaceholder": "اسمك الأول",
+    "lastName": "اسم العائلة",
+    "lastNamePlaceholder": "اسم عائلتك",
+    "gender": "الجنس",
+    "male": "ذكر",
+    "female": "أنثى",
+    "birthDate": "تاريخ الميلاد",
+    "email": "البريد الإلكتروني",
+    "emailPlaceholder": "بريدك@مثال.com",
+    "password": "كلمة المرور",
+    "confirmPassword": "تأكيد كلمة المرور",
+    "wilaya": "الولاية",
+    "selectWilaya": "اختر ولايتك",
+    "phone": "الهاتف",
+    "professionalInfo": "المعلومات المهنية",
+    "sector": "قطاع النشاط",
+    "selectSector": "اختر قطاعك",
+    "profilePhoto": "صورة الملف الشخصي",
+    "photoPreview": "معاينة الصورة",
+    "removePhoto": "إزالة الصورة",
+    "photoFormats": "الصيغ المقبولة: JPG، PNG، GIF، WEBP (الحد الأقصى 5 ميجابايت)",
+    "uploadingPhoto": "جارٍ الرفع...",
+    "photoUploaded": "تم رفع الصورة بنجاح",
+    "portfolio": "معرض الأعمال / الموقع الإلكتروني",
+    "biography": "السيرة الذاتية",
+    "biographyPlaceholder": "عرّف عن نفسك، تحدث عن مسارك، مشاريعك، إلهاماتك... (50 حرفاً على الأقل)",
+    "charactersMinimum": "حرفاً (50 على الأقل)",
+    "acceptTerms": {
+      "prefix": "أوافق على",
+      "terms": "شروط الاستخدام",
+      "and": "و",
+      "privacy": "سياسة الخصوصية"
+    },
+    "newsletter": "أرغب في تلقي الأخبار والتحديثات عبر البريد الإلكتروني",
+    "registering": "جارٍ التسجيل...",
+    "createAccount": "إنشاء حسابي",
+    "professionalNote": {
+      "title": "ملاحظة مهمة:",
+      "description": "الحسابات المهنية تخضع للتحقق من قبل فريقنا خلال 24-48 ساعة."
+    }
+  },
+  
+  "errors": {
+    "fileTooLarge": {
+      "title": "الملف كبير جداً",
+      "description": "حجم الملف يجب ألا يتجاوز 5 ميجابايت"
+    },
+    "invalidFileType": {
+      "title": "نوع الملف غير صالح",
+      "description": "يتم قبول ملفات JPG، PNG، GIF و WEBP فقط"
+    },
+    "emailRequired": "البريد الإلكتروني مطلوب",
+    "emailInvalid": "البريد الإلكتروني غير صالح",
+    "passwordRequired": "كلمة المرور مطلوبة",
+    "loginError": "خطأ في تسجيل الدخول",
+    "invalidCredentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة",
+    "nameMinLength": "اسم العائلة يجب أن يحتوي على حرفين على الأقل",
+    "firstNameMinLength": "الاسم الأول يجب أن يحتوي على حرفين على الأقل",
+    "passwordMinLength": "كلمة المرور يجب أن تحتوي على 8 أحرف على الأقل",
+    "passwordMismatch": "كلمات المرور غير متطابقة",
+    "birthDateRequired": "تاريخ الميلاد مطلوب",
+    "minAge": "يجب أن يكون عمرك 13 سنة على الأقل للتسجيل",
+    "wilayaRequired": "الرجاء اختيار ولايتك",
+    "acceptTermsRequired": "يجب الموافقة على شروط الاستخدام",
+    "sectorRequired": "قطاع النشاط مطلوب للمحترفين",
+    "biographyMinLength": "السيرة الذاتية يجب أن تحتوي على 50 حرفاً على الأقل",
+    "validationError": "خطأ في التحقق",
+    "correctErrors": "الرجاء تصحيح الأخطاء أدناه",
+    "uploadError": "خطأ في رفع الصورة",
+    "uploadUrlNotReceived": "لم يتم استلام رابط الصورة",
+    "uploadTitle": "خطأ في الرفع",
+    "uploadContinueWithoutPhoto": "فشل رفع الصورة. سنتابع التسجيل بدون صورة.",
+    "registrationError": "خطأ في التسجيل",
+    "registrationErrorDescription": "حدث خطأ. الرجاء المحاولة مرة أخرى.",
+    "wilayasLoadError": "خطأ في تحميل الولايات"
+  },
+  
+  "success": {
+    "loginTitle": "تم تسجيل الدخول بنجاح",
+    "loginDescription": "مرحباً بك في تمليليت ثقافة!",
+    "registrationTitle": "تم التسجيل بنجاح",
+    "professionalRegistration": "تم إنشاء حسابك المهني وهو في انتظار التحقق.",
+    "visitorRegistration": "تم إنشاء حسابك بنجاح. مرحباً!"
+  },
+  
+  "sectors": {
+    "artiste": "فنان",
+    "artisan": "حرفي",
+    "organisateur": "منظم فعاليات",
+    "guide": "مرشد سياحي",
+    "chercheur": "باحث / أكاديمي",
+    "journaliste": "صحفي ثقافي",
+    "conservateur": "أمين متحف",
+    "editeur": "ناشر",
+    "producteur": "منتج",
+    "autre": "آخر"
+  }
+},
   "categories": {
     "heritageTypes": {
       "berber": "العمارة الأمازيغية",

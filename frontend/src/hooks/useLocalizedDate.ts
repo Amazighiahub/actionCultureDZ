@@ -1,3 +1,5 @@
+// hooks/useLocalizedDate.ts - Version corrigée avec mapping de locale
+
 import { useTranslation } from 'react-i18next';
 import { useMemo } from 'react';
 
@@ -12,9 +14,25 @@ interface LocalizedDateOptions {
   calendar?: boolean;
 }
 
+// IMPORTANT: Mapping des codes de langue personnalisés vers des locales BCP 47 valides
+const LOCALE_MAPPING: Record<string, string> = {
+  'ar': 'ar-DZ',
+  'ar-DZ': 'ar-DZ',
+  'fr': 'fr-DZ',
+  'en': 'en-US',
+  'tz-ltn': 'fr-DZ',  // Fallback vers français pour Tamazight Latin
+  'tz-tfng': 'ar-DZ', // Fallback vers arabe pour Tamazight Tifinagh
+};
+
+// Fonction pour obtenir une locale valide
+const getValidLocale = (language: string | undefined): string => {
+  if (!language) return 'fr-DZ';
+  return LOCALE_MAPPING[language] || 'fr-DZ';
+};
+
 // Calendriers locaux
 const CALENDAR_SYSTEMS: Record<string, string> = {
-  'ar': 'islamic-civil', // Calendrier Hégirien pour l'arabe
+  'ar': 'islamic-civil',
   'fr': 'gregory',
   'en': 'gregory',
   'tz-ltn': 'gregory',
@@ -55,7 +73,7 @@ const DATE_FORMATS: Record<string, Record<DateFormat, Intl.DateTimeFormatOptions
   }
 };
 
-// Traductions pour les dates relatives
+// Traductions pour les dates relatives (reste inchangé)
 const RELATIVE_TIME_TRANSLATIONS: Record<string, Record<string, string>> = {
   'fr': {
     today: "Aujourd'hui",
@@ -148,19 +166,31 @@ export const useLocalizedDate = () => {
   const { i18n, t } = useTranslation();
   
   const formatters = useMemo(() => {
-    const locale = i18n.language;
-    const formats = DATE_FORMATS[locale] || DATE_FORMATS['fr'];
+    const language = i18n.language;
+    const validLocale = getValidLocale(language); // Utiliser la locale valide
+    const formats = DATE_FORMATS[language] || DATE_FORMATS['fr'];
+    
+    // Créer les formatters avec gestion d'erreur
+    const createFormatter = (options: Intl.DateTimeFormatOptions) => {
+      try {
+        return new Intl.DateTimeFormat(validLocale, options);
+      } catch (error) {
+        console.warn(`Failed to create DateTimeFormat for locale ${validLocale}`, error);
+        // Fallback vers fr-DZ
+        return new Intl.DateTimeFormat('fr-DZ', options);
+      }
+    };
     
     return {
-      short: new Intl.DateTimeFormat(locale, formats.short),
-      medium: new Intl.DateTimeFormat(locale, formats.medium),
-      long: new Intl.DateTimeFormat(locale, formats.long),
-      full: new Intl.DateTimeFormat(locale, formats.full),
-      time: new Intl.DateTimeFormat(locale, { 
+      short: createFormatter(formats.short),
+      medium: createFormatter(formats.medium),
+      long: createFormatter(formats.long),
+      full: createFormatter(formats.full),
+      time: createFormatter({ 
         hour: '2-digit', 
         minute: '2-digit' 
       }),
-      datetime: new Intl.DateTimeFormat(locale, {
+      datetime: createFormatter({
         ...formats.medium,
         hour: '2-digit',
         minute: '2-digit'
@@ -204,11 +234,17 @@ export const useLocalizedDate = () => {
     
     if (showTime || timeStyle) {
       if (timeStyle) {
+        const validLocale = getValidLocale(i18n.language);
         const customOptions: Intl.DateTimeFormatOptions = {
           ...DATE_FORMATS[i18n.language][dateStyle],
           timeStyle
         };
-        formatter = new Intl.DateTimeFormat(i18n.language, customOptions);
+        try {
+          formatter = new Intl.DateTimeFormat(validLocale, customOptions);
+        } catch (error) {
+          console.warn('Failed to create custom formatter', error);
+          formatter = formatters.datetime;
+        }
       } else {
         formatter = formatters.datetime;
       }
@@ -296,8 +332,13 @@ export const useLocalizedDate = () => {
 
     // Si les dates sont dans le même mois
     if (start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear()) {
-      const formatter = new Intl.DateTimeFormat(i18n.language, { day: 'numeric' });
-      return `${formatter.format(start)} - ${formatDate(end, { dateStyle })}`;
+      const validLocale = getValidLocale(i18n.language);
+      try {
+        const formatter = new Intl.DateTimeFormat(validLocale, { day: 'numeric' });
+        return `${formatter.format(start)} - ${formatDate(end, { dateStyle })}`;
+      } catch {
+        return `${formatDate(start, { dateStyle })} - ${formatDate(end, { dateStyle })}`;
+      }
     }
 
     // Dates différentes
@@ -306,18 +347,36 @@ export const useLocalizedDate = () => {
 
   // Obtenir les noms des mois
   const getMonthNames = (format: 'long' | 'short' = 'long'): string[] => {
-    const formatter = new Intl.DateTimeFormat(i18n.language, { month: format });
-    return Array.from({ length: 12 }, (_, i) => 
-      formatter.format(new Date(2000, i, 1))
-    );
+    const validLocale = getValidLocale(i18n.language);
+    try {
+      const formatter = new Intl.DateTimeFormat(validLocale, { month: format });
+      return Array.from({ length: 12 }, (_, i) => 
+        formatter.format(new Date(2000, i, 1))
+      );
+    } catch {
+      // Fallback vers les noms en français
+      const formatter = new Intl.DateTimeFormat('fr-DZ', { month: format });
+      return Array.from({ length: 12 }, (_, i) => 
+        formatter.format(new Date(2000, i, 1))
+      );
+    }
   };
 
   // Obtenir les noms des jours
   const getDayNames = (format: 'long' | 'short' | 'narrow' = 'long'): string[] => {
-    const formatter = new Intl.DateTimeFormat(i18n.language, { weekday: format });
-    return Array.from({ length: 7 }, (_, i) => 
-      formatter.format(new Date(2024, 0, i + 1))
-    );
+    const validLocale = getValidLocale(i18n.language);
+    try {
+      const formatter = new Intl.DateTimeFormat(validLocale, { weekday: format });
+      return Array.from({ length: 7 }, (_, i) => 
+        formatter.format(new Date(2024, 0, i + 1))
+      );
+    } catch {
+      // Fallback vers les noms en français
+      const formatter = new Intl.DateTimeFormat('fr-DZ', { weekday: format });
+      return Array.from({ length: 7 }, (_, i) => 
+        formatter.format(new Date(2024, 0, i + 1))
+      );
+    }
   };
 
   return {

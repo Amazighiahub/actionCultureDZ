@@ -2,15 +2,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Separator } from '@/components/ui/separator';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Progress } from '@/components/ui/progress';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/UI/card';
+import { Button } from '@/components/UI/button';
+import { Badge } from '@/components/UI/badge';
+import { Alert, AlertDescription } from '@/components/UI/alert';
+import { Separator } from '@/components/UI/separator';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/UI/avatar';
+import { Progress } from '@/components/UI/progress';
+import { Textarea } from '@/components/UI/textarea';
+import { Label } from '@/components/UI/label';
 import {
   Dialog,
   DialogContent,
@@ -18,7 +18,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle } from
-"@/components/ui/dialog";
+"@/components/UI/dialog";
 import {
   ArrowLeft,
   Calendar,

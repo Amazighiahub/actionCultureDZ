@@ -1,8 +1,128 @@
 {
-  "auth": {
-    "mustBeConnected": "auth.mustBeConnected",
-    "required": "auth.required"
+ "auth": {
+  "mustBeConnected": "You must be logged in",
+  "required": "Required",
+  
+  "title": "Login & Registration",
+  "subtitle": "Access your personal space or create your account",
+  
+  "login": {
+    "tabTitle": "Login",
+    "title": "Log In",
+    "email": "Email",
+    "emailPlaceholder": "your.email@example.com",
+    "password": "Password",
+    "rememberMe": "Remember me",
+    "forgotPassword": "Forgot password?",
+    "loggingIn": "Logging in...",
+    "submit": "Log In"
   },
+  
+  "register": {
+    "tabTitle": "Register",
+    "title": "Create an Account",
+    "profileType": "Profile Type",
+    "individual": "Visitor (Individual)",
+    "professional": "Professional (Artist, Craftsman, Organizer)",
+    "firstName": "First Name",
+    "firstNamePlaceholder": "Your first name",
+    "lastName": "Last Name",
+    "lastNamePlaceholder": "Your last name",
+    "gender": "Gender",
+    "male": "Male",
+    "female": "Female",
+    "birthDate": "Date of Birth",
+    "email": "Email",
+    "emailPlaceholder": "your.email@example.com",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "wilaya": "Wilaya",
+    "selectWilaya": "Select your wilaya",
+    "phone": "Phone",
+    "professionalInfo": "Professional Information",
+    "sector": "Sector of Activity",
+    "selectSector": "Select your sector",
+    "profilePhoto": "Profile Photo",
+    "photoPreview": "Photo preview",
+    "removePhoto": "Remove photo",
+    "photoFormats": "Accepted formats: JPG, PNG, GIF, WEBP (max 5MB)",
+    "uploadingPhoto": "Uploading...",
+    "photoUploaded": "Photo uploaded successfully",
+    "portfolio": "Portfolio / Website",
+    "biography": "Biography",
+    "biographyPlaceholder": "Introduce yourself, talk about your journey, projects, inspirations... (minimum 50 characters)",
+    "charactersMinimum": "characters (minimum 50)",
+    "acceptTerms": {
+      "prefix": "I accept the",
+      "terms": "terms of use",
+      "and": "and the",
+      "privacy": "privacy policy"
+    },
+    "newsletter": "I wish to receive news and updates by email",
+    "registering": "Registering...",
+    "createAccount": "Create My Account",
+    "professionalNote": {
+      "title": "Important Note:",
+      "description": "Professional accounts are subject to validation by our team within 24-48 hours."
+    }
+  },
+  
+  "errors": {
+    "fileTooLarge": {
+      "title": "File too large",
+      "description": "File size must not exceed 5MB"
+    },
+    "invalidFileType": {
+      "title": "Invalid file type",
+      "description": "Only JPG, PNG, GIF and WEBP files are accepted"
+    },
+    "emailRequired": "Email is required",
+    "emailInvalid": "Email is not valid",
+    "passwordRequired": "Password is required",
+    "loginError": "Login error",
+    "invalidCredentials": "Incorrect email or password",
+    "nameMinLength": "Last name must contain at least 2 characters",
+    "firstNameMinLength": "First name must contain at least 2 characters",
+    "passwordMinLength": "Password must contain at least 8 characters",
+    "passwordMismatch": "Passwords do not match",
+    "birthDateRequired": "Date of birth is required",
+    "minAge": "You must be at least 13 years old to register",
+    "wilayaRequired": "Please select your wilaya",
+    "acceptTermsRequired": "You must accept the terms of use",
+    "sectorRequired": "Sector of activity is required for professionals",
+    "biographyMinLength": "Biography must contain at least 50 characters",
+    "validationError": "Validation error",
+    "correctErrors": "Please correct the errors below",
+    "uploadError": "Error uploading photo",
+    "uploadUrlNotReceived": "Photo URL was not received",
+    "uploadTitle": "Upload error",
+    "uploadContinueWithoutPhoto": "Photo upload failed. We will continue registration without photo.",
+    "registrationError": "Registration error",
+    "registrationErrorDescription": "An error occurred. Please try again.",
+    "wilayasLoadError": "Error loading wilayas"
+  },
+  
+  "success": {
+    "loginTitle": "Login successful",
+    "loginDescription": "Welcome to Timlilit Culture!",
+    "registrationTitle": "Registration successful",
+    "professionalRegistration": "Your professional account has been created and is pending validation.",
+    "visitorRegistration": "Your account has been created successfully. Welcome!"
+  },
+  
+  "sectors": {
+    "artiste": "Artist",
+    "artisan": "Craftsman",
+    "organisateur": "Event Organizer",
+    "guide": "Tour Guide",
+    "chercheur": "Researcher / Academic",
+    "journaliste": "Cultural Journalist",
+    "conservateur": "Museum Curator",
+    "editeur": "Publisher",
+    "producteur": "Producer",
+    "autre": "Other"
+  }
+},
   "categories": {
     "heritageTypes": {
       "berber": "Berber architecture",

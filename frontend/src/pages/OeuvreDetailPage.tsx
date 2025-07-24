@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/UI/card';
+import { Button } from '@/components/UI/button';
+import { Badge } from '@/components/UI/badge';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/UI/avatar';
+import { Alert, AlertDescription } from '@/components/UI/alert';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/UI/tabs';
 import {
   Calendar,
   MapPin,
@@ -45,9 +45,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle } from
-"@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
+"@/components/UI/dialog";
+import { Textarea } from "@/components/UI/textarea";
+import { Label } from "@/components/UI/label";
 import { ContributeursSection } from "@/components/oeuvre/ContributeursSection";
 import { HeroSection } from '@/components/oeuvre/HeroSection';
 

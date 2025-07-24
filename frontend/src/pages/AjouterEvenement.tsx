@@ -3,16 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/UI/card';
+import { Button } from '@/components/UI/button';
+import { Input } from '@/components/UI/input';
+import { Label } from '@/components/UI/label';
+import { Textarea } from '@/components/UI/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/UI/select';
+import { Checkbox } from '@/components/UI/checkbox';
 import { Upload, Save, ArrowLeft, Calendar } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/components/UI/use-toast';
 
 // Import des hooks de localisation
 import { useLocalizedDate } from '@/hooks/useLocalizedDate';
@@ -25,6 +25,10 @@ import { authService } from '@/services/auth.service';
 
 // Import des types
 import { Wilaya } from '@/types';
+import { Lieu } from '@/types/models/lieu.types';
+
+// Import du composant LieuSelector
+import { LieuSelector } from '@/components/LieuSelector';
 
 const AjouterEvenement = () => {
   const navigate = useNavigate();
@@ -37,6 +41,11 @@ const AjouterEvenement = () => {
   const [wilayas, setWilayas] = useState<Wilaya[]>([]);
   const [loading, setLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  
+  // État pour le lieu sélectionné
+  const [selectedLieuId, setSelectedLieuId] = useState<number | undefined>();
+  const [selectedLieu, setSelectedLieu] = useState<Lieu | undefined>();
+  const [selectedWilayaId, setSelectedWilayaId] = useState<number | undefined>();
 
   useEffect(() => {
     checkAuthAndLoadData();
@@ -85,6 +94,23 @@ const AjouterEvenement = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!selectedLieuId) {
+      toast({
+        title: t('common.error'),
+        description: t('events.create.locationRequired'),
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Ici, vous pouvez collecter toutes les données du formulaire
+    const formData = {
+      // ... autres champs du formulaire
+      lieu_id: selectedLieuId,
+      // Si vous avez créé un nouveau lieu, les coordonnées sont déjà dans la BD
+    };
+    
     toast({
       title: t('common.featureInDevelopment'),
       description: t('events.create.willBeAvailableSoon'),
@@ -158,15 +184,18 @@ const AjouterEvenement = () => {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="ville">{t('common.city')} *</Label>
-                    <Select required>
+                    <Label htmlFor="wilaya">{t('common.wilaya')}</Label>
+                    <Select 
+                      value={selectedWilayaId?.toString()}
+                      onValueChange={(value) => setSelectedWilayaId(parseInt(value))}
+                    >
                       <SelectTrigger>
-                        <SelectValue placeholder={t('common.selectCity')} />
+                        <SelectValue placeholder={t('common.selectWilaya')} />
                       </SelectTrigger>
                       <SelectContent>
                         {wilayas.map((wilaya) => (
                           <SelectItem key={wilaya.id_wilaya} value={wilaya.id_wilaya.toString()}>
-                            {wilaya.wilaya_name}
+                            {wilaya.codeW} - {wilaya.wilaya_name_ascii}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -175,12 +204,21 @@ const AjouterEvenement = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="lieu">{t('events.create.exactLocation')} *</Label>
-                  <Input 
-                    id="lieu" 
-                    placeholder={t('events.create.locationPlaceholder')} 
+                  <Label>{t('events.create.location')} *</Label>
+                  <LieuSelector
+                    value={selectedLieuId}
+                    onChange={(lieuId, lieu) => {
+                      setSelectedLieuId(lieuId);
+                      setSelectedLieu(lieu);
+                    }}
+                    wilayaId={selectedWilayaId}
                     required
                   />
+                  {selectedLieu && (
+                    <p className="text-sm text-muted-foreground mt-2">
+                      {selectedLieu.adresse}
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>

@@ -1,15 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/UI/card';
+import { Button } from '@/components/UI/button';
+import { Input } from '@/components/UI/input';
+import { Label } from '@/components/UI/label';
+import { Textarea } from '@/components/UI/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/UI/select';
+import { Alert, AlertDescription } from '@/components/UI/alert';
+import { Badge } from '@/components/UI/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/UI/tabs';
+import { Checkbox } from '@/components/UI/checkbox';
 import {
   ArrowLeft, Save, Eye, Plus, Trash2, MoveUp, MoveDown,
   Copy, Type, Heading1, Heading2, Image, Quote, List,

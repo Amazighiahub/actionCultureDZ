@@ -2,6 +2,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { API_ENDPOINTS, ApiResponse, AuthTokenData, LoginCredentials, RefreshTokenRequest, AUTH_CONFIG } from '@/config/api';
 import { httpClient } from './httpClient';
+import { uploadService as UploadService } from "./upload.service";
+import { mediaService as MediaService } from "./media.service";
 
 export interface RegisterVisitorData {
   nom: string;
@@ -275,7 +277,7 @@ async updateProfilePhoto(photoFile: File): Promise<ApiResponse<any>> {
     });
     
     // Option 1 : Utiliser mediaService.uploadProfilePhoto qui existe déjà
-    const { mediaService } = await import('./media.service');
+    const { mediaService } = MediaService;
     const uploadResult = await mediaService.uploadProfilePhoto(photoFile);
     
     console.log('📥 Réponse upload photo profil:', uploadResult);
@@ -314,7 +316,7 @@ async updateProfilePhotoAlternative(photoFile: File): Promise<ApiResponse<any>> 
     console.log('📸 Upload photo profil via uploadService');
     
     // Importer uploadService directement
-    const { uploadService } = await import('./upload.service');
+    const { uploadService } = UploadService;
     
     // Upload de l'image
     const uploadResult = await uploadService.uploadImage(photoFile, {

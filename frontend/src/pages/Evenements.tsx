@@ -1,13 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Progress } from '@/components/ui/progress';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/UI/card';
+import { Button } from '@/components/UI/button';
+import { Badge } from '@/components/UI/badge';
+import { Alert, AlertDescription } from '@/components/UI/alert';
+import { Progress } from '@/components/UI/progress';
+import { Input } from '@/components/UI/input';
 import {
   Calendar,
   MapPin,
@@ -19,13 +21,19 @@ import {
   AlertCircle,
   Activity,
   Zap,
-  Gauge } from
-'lucide-react';
+  Gauge,
+  Clock,
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
+  Search,
+  X
+} from 'lucide-react';
 import { evenementService } from '@/services/evenement.service';
 import { httpClient } from '@/services/httpClient';
 
 // Hook pour monitorer le rate limit
-import { useTranslation } from "react-i18next";function useRateLimitMonitor() {
+function useRateLimitMonitor() {
   const [stats, setStats] = useState<any>(null);
 
   useEffect(() => {
@@ -44,6 +52,7 @@ import { useTranslation } from "react-i18next";function useRateLimitMonitor() {
 }
 
 const Evenements = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const rateLimitStats = useRateLimitMonitor();
 
@@ -52,6 +61,7 @@ const Evenements = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedStatut, setSelectedStatut] = useState<string>('tous');
   const [selectedType, setSelectedType] = useState<string>('tous');
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const [filteredEvenements, setFilteredEvenements] = useState<any[]>([]);
   const [showRateLimitInfo, setShowRateLimitInfo] = useState(false);
 
@@ -79,10 +89,7 @@ const Evenements = () => {
       setError(null);
 
       // Construire les paramètres
-      const params: any = { limit: 20 };
-      if (selectedStatut !== 'tous') {
-        params.statut = selectedStatut;
-      }
+      const params: any = { limit: 50 }; // Charger plus d'événements pour filtrer localement
 
       // Utiliser evenementService qui utilise httpClient amélioré
       const result = await evenementService.search(params);
@@ -139,17 +146,23 @@ const Evenements = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedStatut]);
+  }, []);
 
-  // Charger au montage et quand le filtre change
-  const { t } = useTranslation();useEffect(() => {
+  // Charger au montage
+  useEffect(() => {
     loadEvenements();
   }, [loadEvenements]);
 
-  // Filtrer localement par type
+  // Filtrer localement par type, statut et recherche
   useEffect(() => {
     let filtered = [...evenements];
 
+    // Filtrer par statut
+    if (selectedStatut !== 'tous') {
+      filtered = filtered.filter((e) => e.statut === selectedStatut);
+    }
+
+    // Filtrer par type
     if (selectedType !== 'tous') {
       filtered = filtered.filter((e) => {
         const type = e.type_evenement?.nom_type || e.TypeEvenement?.nom_type || e.type;
@@ -157,8 +170,19 @@ const Evenements = () => {
       });
     }
 
+    // Filtrer par recherche
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter((e) => {
+        const nom = (e.nom_evenement || e.titre || '').toLowerCase();
+        const description = (e.description || '').toLowerCase();
+        const lieu = (e.Lieu?.nom || e.lieu?.nom || e.adresse || '').toLowerCase();
+        return nom.includes(query) || description.includes(query) || lieu.includes(query);
+      });
+    }
+
     setFilteredEvenements(filtered);
-  }, [evenements, selectedType]);
+  }, [evenements, selectedType, selectedStatut, searchQuery]);
 
   const handleEventDetails = (eventId: number) => {
     navigate(`/evenements/${eventId}`);
@@ -217,6 +241,23 @@ const Evenements = () => {
     }
   };
 
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'planifie':
+        return Clock;
+      case 'en_cours':
+        return Activity;
+      case 'termine':
+        return CheckCircle;
+      case 'annule':
+        return XCircle;
+      case 'reporte':
+        return AlertTriangle;
+      default:
+        return Calendar;
+    }
+  };
+
   const formatParticipants = (event: any) => {
     if (!event.capacite_max) return 'Places illimitées';
     const inscrits = event.participants_count ||
@@ -237,6 +278,12 @@ const Evenements = () => {
     map((e) => e.type_evenement?.nom_type || e.TypeEvenement?.nom_type || e.type).
     filter(Boolean)
   ));
+
+  // Statistiques pour chaque statut
+  const getStatutCount = (statut: string) => {
+    if (statut === 'tous') return evenements.length;
+    return evenements.filter(e => e.statut === statut).length;
+  };
 
   // Indicateur de santé du rate limit
   const getRateLimitHealth = () => {
@@ -268,6 +315,7 @@ const Evenements = () => {
         <main className="container py-12">
           <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">{t("evenements.loading")}</p>
             {rateLimitStats &&
             <p className="text-sm text-muted-foreground">{t("evenements.file_dattente_1")}
               {rateLimitStats.queueSize}{t("evenements.requtes")}
@@ -277,12 +325,100 @@ const Evenements = () => {
         </main>
         <Footer />
       </div>);
-
   }
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
+      
+      {/* Nouveau design du sous-menu avec types d'événements */}
+      <div className="sticky top-16 z-40 bg-gradient-to-br from-primary via-primary/90 to-primary/80 dark:from-primary/90 dark:via-primary/80 dark:to-primary/70 shadow-lg">
+        <div className="w-full px-4 sm:px-6 lg:px-8 max-w-[1400px] mx-auto">
+          <div className="relative py-2">
+            {/* Overlay avec pattern subtil */}
+            <div className="absolute inset-0 opacity-10" 
+                 style={{
+                   backgroundImage: `radial-gradient(circle at 20% 50%, white 1px, transparent 1px),
+                                    radial-gradient(circle at 60% 30%, white 1px, transparent 1px),
+                                    radial-gradient(circle at 80% 70%, white 1px, transparent 1px)`,
+                   backgroundSize: '30px 30px',
+                   backgroundPosition: '0 0, 15px 15px, 30px 30px'
+                 }}>
+            </div>
+            
+            {/* Conteneur des tabs centré */}
+            <div 
+              className="flex items-center justify-center gap-6 lg:gap-8 overflow-x-auto relative"
+              style={{
+                scrollbarWidth: 'none',
+                msOverflowStyle: 'none',
+                WebkitOverflowScrolling: 'touch'
+              }}
+            >
+              {/* Tab Tous */}
+              <button
+                onClick={() => setSelectedType('tous')}
+                className={`relative flex items-center gap-2 py-1.5 px-4 text-sm font-medium transition-all duration-300 whitespace-nowrap rounded-lg ${
+                  selectedType === 'tous' 
+                    ? 'text-white bg-white/20 backdrop-blur-sm' 
+                    : 'text-white/70 hover:text-white hover:bg-white/10'
+                }`}
+              >
+                <span>{t("evenements.toutes_catgories")}</span>
+                <span className={`text-xs ${
+                  selectedType === 'tous' 
+                    ? 'text-white/80' 
+                    : 'text-white/50'
+                }`}>
+                  {evenements.length}
+                </span>
+                {selectedType === 'tous' && (
+                  <div className="absolute -bottom-1 left-4 right-4 h-0.5 bg-gradient-to-r from-secondary to-secondary/80"></div>
+                )}
+              </button>
+              
+              {/* Types d'événements */}
+              {uniqueTypes.map((type) => {
+                const count = evenements.filter(e => {
+                  const eventType = e.type_evenement?.nom_type || e.TypeEvenement?.nom_type || e.type;
+                  return eventType === type;
+                }).length;
+                
+                return (
+                  <button
+                    key={type}
+                    onClick={() => setSelectedType(type!)}
+                    className={`relative flex items-center gap-2 py-1.5 px-4 text-sm font-medium transition-all duration-300 whitespace-nowrap rounded-lg ${
+                      selectedType === type 
+                        ? 'text-white bg-white/20 backdrop-blur-sm' 
+                        : 'text-white/70 hover:text-white hover:bg-white/10'
+                    }`}
+                  >
+                    <Calendar className={`h-4 w-4 ${
+                      selectedType === type 
+                        ? 'text-secondary' 
+                        : 'text-white/50'
+                    }`} />
+                    <span>{type?.charAt(0).toUpperCase() + type?.slice(1)}</span>
+                    {count > 0 && (
+                      <span className={`text-xs ${
+                        selectedType === type 
+                          ? 'text-white/80' 
+                          : 'text-white/50'
+                      }`}>
+                        {count}
+                      </span>
+                    )}
+                    {selectedType === type && (
+                      <div className="absolute -bottom-1 left-4 right-4 h-0.5 bg-gradient-to-r from-secondary to-secondary/80"></div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
       
       {/* Indicateur de rate limit en développement */}
       {process.env.NODE_ENV === 'development' && rateLimitStats &&
@@ -368,18 +504,45 @@ const Evenements = () => {
         </div>
       }
       
-      <main className="container py-12">
+      <main className="container py-8">
         {/* En-tête */}
-        <div className="text-center space-y-4 mb-16">
-          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl font-serif text-gradient">{t("evenements.vnements_culturels")}
-
+        <div className="text-center space-y-4 mb-12">
+          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl font-serif text-gradient">
+            {t("evenements.vnements_culturels")}
           </h1>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">{t("evenements.participez_aux_vnements")}
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+            {t("evenements.participez_aux_vnements")}
+          </p>
+          <div className="flex items-center justify-center gap-6 text-sm text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <Calendar className="h-4 w-4 text-primary" />
+              {filteredEvenements.length} {t("evenements.vnement")}{filteredEvenements.length > 1 ? 's' : ''} {t("evenements.disponible")}{filteredEvenements.length > 1 ? 's' : ''}
+            </span>
+          </div>
+        </div>
 
-          </p>
-          <p className="text-sm text-muted-foreground">
-            {filteredEvenements.length}{t("evenements.vnement")}{filteredEvenements.length > 1 ? 's' : ''}{t("evenements.disponible")}{filteredEvenements.length > 1 ? 's' : ''}
-          </p>
+        {/* Barre de recherche */}
+        <div className="max-w-2xl mx-auto mb-8">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" />
+            <Input
+              type="text"
+              placeholder={t('evenements.searchPlaceholder') || "Rechercher un événement..."}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 pr-10 bg-secondary/10 dark:bg-secondary/5 border-primary/20 dark:border-primary/10 focus:border-primary dark:focus:border-primary/50"
+            />
+            {searchQuery && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
+                onClick={() => setSearchQuery('')}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </div>
 
         {error &&
@@ -393,8 +556,6 @@ const Evenements = () => {
               size="sm"
               className="ml-4"
               onClick={loadEvenements}>{t("evenements.ressayer")}
-
-
             </Button>
             }
             </AlertDescription>
@@ -406,64 +567,50 @@ const Evenements = () => {
           <Button
             variant={selectedStatut === 'tous' ? 'default' : 'outline'}
             size="sm"
-            onClick={() => setSelectedStatut('tous')}>{t("evenements.tous_les_statuts")}
-
-
+            onClick={() => setSelectedStatut('tous')}
+          >
+            {t("evenements.tous_les_statuts")}
           </Button>
           <Button
             variant={selectedStatut === 'planifie' ? 'default' : 'outline'}
             size="sm"
-            onClick={() => setSelectedStatut('planifie')}>{t("evenements.venir")}
-
-
+            onClick={() => setSelectedStatut('planifie')}
+          >
+            {t("evenements.venir")}
           </Button>
           <Button
             variant={selectedStatut === 'en_cours' ? 'default' : 'outline'}
             size="sm"
-            onClick={() => setSelectedStatut('en_cours')}>{t("evenements.cours")}
-
-
+            onClick={() => setSelectedStatut('en_cours')}
+          >
+            {t("evenements.cours")}
           </Button>
           <Button
             variant={selectedStatut === 'termine' ? 'default' : 'outline'}
             size="sm"
-            onClick={() => setSelectedStatut('termine')}>{t("evenements.passs")}
-
-
+            onClick={() => setSelectedStatut('termine')}
+          >
+            {t("evenements.passs")}
           </Button>
         </div>
 
-        {/* Filtres par type */}
-        <div className="flex flex-wrap gap-4 mb-12 justify-center">
-          <Button
-            variant={selectedType === 'tous' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setSelectedType('tous')}>{t("evenements.toutes_catgories")}
-
-
-          </Button>
-          {uniqueTypes.map((type) =>
-          <Button
-            key={type}
-            variant={selectedType === type ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setSelectedType(type!)}>
-
-              {type?.charAt(0).toUpperCase() + type?.slice(1)}
-            </Button>
-          )}
-        </div>
+        {searchQuery && (
+          <div className="text-center mb-6">
+            <p className="text-sm text-muted-foreground">
+              {filteredEvenements.length} résultat{filteredEvenements.length > 1 ? 's' : ''} pour "{searchQuery}"
+            </p>
+          </div>
+        )}
 
         {/* Liste des événements */}
         {filteredEvenements.length === 0 ?
         <Alert className="max-w-2xl mx-auto">
             <AlertDescription>{t("evenements.aucun_vnement_correspond")}
-
           </AlertDescription>
           </Alert> :
 
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-            {/* Cartes d'événements - code existant */}
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {/* Cartes d'événements */}
             {filteredEvenements.map((evenement) => {
             const eventId = evenement.id_evenement || evenement.id;
             const eventName = evenement.nom_evenement || evenement.titre || 'Sans titre';
@@ -479,82 +626,98 @@ const Evenements = () => {
             0;
 
             const eventComplet = evenement.capacite_max && participants >= evenement.capacite_max;
+            const StatusIcon = getStatusIcon(evenement.statut);
+            
             return (
-              <Card key={eventId} className="overflow-hidden hover-lift group">
-                  <div className="aspect-video overflow-hidden bg-muted">
+              <Card 
+                key={eventId} 
+                className="overflow-hidden hover-lift group h-full flex flex-col relative cursor-pointer transition-all duration-300"
+                onClick={() => handleEventDetails(eventId)}
+              >
+                  {/* Badge de statut */}
+                  <Badge
+                    variant={getStatusColor(evenement.statut) as any}
+                    className="absolute top-2 left-2 z-10 text-xs px-2 py-0.5 shadow-md"
+                  >
+                    <StatusIcon className="h-3 w-3 mr-1" />
+                    {getStatusLabel(evenement.statut)}
+                  </Badge>
+                  
+                  <div className="aspect-video overflow-hidden bg-muted relative">
                     {eventImage ?
                   <img
                     src={eventImage}
                     alt={eventName}
-                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" /> :
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" /> :
 
 
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/10">
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-secondary/20 to-secondary/10 dark:from-secondary/10 dark:to-secondary/5">
                         <Calendar className="h-12 w-12 text-primary/40" />
                       </div>
                   }
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   </div>
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <CardTitle className="font-serif text-lg leading-tight line-clamp-2">
-                        {eventName}
-                      </CardTitle>
-                      <Badge
-                      variant={getStatusColor(evenement.statut) as any}
-                      className="ml-2 whitespace-nowrap">
-
-                        {getStatusLabel(evenement.statut)}
+                  
+                  <div className="flex flex-col flex-1">
+                    <CardHeader className="space-y-2 pb-3">
+                      <div className="flex justify-between items-start gap-2">
+                        <CardTitle className="font-serif text-base leading-tight line-clamp-2 flex-1 hover:text-primary transition-colors">
+                          {eventName}
+                        </CardTitle>
+                      </div>
+                      <Badge variant="outline" className="text-xs px-2 py-0.5 border-primary/30 dark:border-primary/20 self-start">
+                        {eventType}
                       </Badge>
-                    </div>
-                    <Badge variant="outline" className="self-start mt-2">
-                      {eventType}
-                    </Badge>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {evenement.description &&
-                  <p className="text-sm text-muted-foreground line-clamp-2">
-                        {evenement.description}
-                      </p>
-                  }
+                    </CardHeader>
                     
-                    <div className="space-y-2 text-sm">
-                      <div className="flex items-center space-x-2">
-                        <Calendar className="h-4 w-4 text-primary flex-shrink-0" />
-                        <span className="truncate">{formatDate(evenement.date_debut, evenement.date_fin)}</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
-                        <span className="truncate">{lieuName}</span>
-                      </div>
-                      {evenement.capacite_max &&
-                    <div className="flex items-center space-x-2">
-                          <Users className="h-4 w-4 text-primary flex-shrink-0" />
-                          <span>{formatParticipants(evenement)}</span>
-                          {eventComplet &&
-                      <Badge variant="destructive" className="text-xs">{t("evenements.complet")}
-
-                      </Badge>
+                    <CardContent className="space-y-3 pt-0 flex-1 flex flex-col">
+                      {evenement.description &&
+                      <p className="text-xs text-muted-foreground line-clamp-2">
+                          {evenement.description}
+                        </p>
                       }
+                      
+                      <div className="space-y-1.5 text-xs flex-1">
+                        <div className="flex items-center space-x-1.5">
+                          <Calendar className="h-3 w-3 text-primary flex-shrink-0" />
+                          <span className="truncate">{formatDate(evenement.date_debut, evenement.date_fin)}</span>
                         </div>
-                    }
-                      <div className="flex items-center space-x-2">
-                        <DollarSign className="h-4 w-4 text-primary flex-shrink-0" />
-                        <span className="font-medium">{formatTarif(evenement)}</span>
+                        <div className="flex items-center space-x-1.5">
+                          <MapPin className="h-3 w-3 text-primary flex-shrink-0" />
+                          <span className="truncate">{lieuName}</span>
+                        </div>
+                        {evenement.capacite_max &&
+                        <div className="flex items-center space-x-1.5">
+                              <Users className="h-3 w-3 text-primary flex-shrink-0" />
+                              <span>{formatParticipants(evenement)}</span>
+                              {eventComplet &&
+                          <Badge variant="destructive" className="text-xs py-0 px-1.5 h-5">{t("evenements.complet")}</Badge>
+                          }
+                            </div>
+                        }
                       </div>
-                    </div>
-                    
-                    <Button
-                    className="w-full btn-hover group"
-                    onClick={() => handleEventDetails(eventId)}
-                    disabled={evenement.statut === 'annule'}>
 
-                      <Info className="h-4 w-4 mr-2" />{t("evenements.dtails_vnement")}
-
-                    <ArrowRight className="h-4 w-4 ml-2 transition-transform group-hover:translate-x-1" />
-                    </Button>
-                  </CardContent>
+                      <div className="flex items-center justify-between mt-auto">
+                        <div className="flex items-center space-x-1.5">
+                          <DollarSign className="h-3 w-3 text-primary flex-shrink-0" />
+                          <span className="font-medium text-xs">{formatTarif(evenement)}</span>
+                        </div>
+                      </div>
+                      
+                      <Button
+                        className="w-full btn-hover group h-8 text-xs mt-3"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEventDetails(eventId);
+                        }}
+                        disabled={evenement.statut === 'annule'}
+                      >
+                        <Info className="h-3 w-3 mr-1.5" />{t("evenements.dtails_vnement")}
+                        <ArrowRight className="h-3 w-3 ml-1.5 transition-transform group-hover:translate-x-1" />
+                      </Button>
+                    </CardContent>
+                  </div>
                 </Card>);
-
           })}
           </div>
         }
@@ -562,7 +725,6 @@ const Evenements = () => {
 
       <Footer />
     </div>);
-
 };
 
 export default Evenements;

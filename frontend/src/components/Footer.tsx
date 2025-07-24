@@ -1,5 +1,5 @@
 import React from 'react';
-import { Separator } from '@/components/ui/separator';
+import { Separator } from '@/components/UI/separator';
 import { MapPin, Phone, Mail, Facebook, Instagram, Youtube } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useRTL } from '@/utils/rtl';

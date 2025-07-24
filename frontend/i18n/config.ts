@@ -1,5 +1,4 @@
-// i18n/config-simple.ts
-/* eslint-disable @typescript-eslint/no-explicit-any */
+// i18n/config.ts - Version corrigée
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
@@ -10,26 +9,32 @@ import enTranslation from './locales/en/translation.json';
 import tzLtnTranslation from './locales/tz-ltn/translation.json';
 import tzTfngTranslation from './locales/tz-tfng/translation.json';
 
-// Liste des langues supportées (TOUJOURS en minuscules)
+// Liste des langues supportées
 const supportedLanguages = ['ar', 'fr', 'en', 'tz-ltn', 'tz-tfng'];
 
-// Normaliser TOUJOURS en minuscules
+// Normaliser la langue sans forcer en minuscules partout
 const normalizeLanguage = (lang: string | null | undefined): string => {
   if (!lang) return 'fr';
-  
-  // Forcer en minuscules et nettoyer
-  const normalized = lang.toLowerCase().trim();
-  
-  // Vérifier si supporté
+
+  // Nettoyer sans forcer en minuscules
+  const cleaned = lang.trim();
+
+  // Vérifier d'abord si c'est une langue supportée exacte
+  if (supportedLanguages.includes(cleaned)) {
+    return cleaned;
+  }
+
+  // Ensuite vérifier en minuscules
+  const normalized = cleaned.toLowerCase();
   if (supportedLanguages.includes(normalized)) {
     return normalized;
   }
-  
+
   // Gérer les cas spéciaux
   if (normalized.startsWith('ar')) return 'ar';
   if (normalized.startsWith('fr')) return 'fr';
   if (normalized.startsWith('en')) return 'en';
-  
+
   return 'fr'; // Fallback
 };
 
@@ -38,21 +43,15 @@ const getInitialLanguage = (): string => {
   // 1. Vérifier le localStorage
   const stored = localStorage.getItem('i18nextLng');
   if (stored) {
-    const normalized = normalizeLanguage(stored);
-    // Corriger le localStorage si nécessaire
-    if (stored !== normalized) {
-      console.log(`[i18n] Correction du localStorage: ${stored} -> ${normalized}`);
-      localStorage.setItem('i18nextLng', normalized);
-    }
-    return normalized;
+    return normalizeLanguage(stored);
   }
-  
+
   // 2. Utiliser le navigateur
   const browserLang = navigator.language?.split('-')[0];
   return normalizeLanguage(browserLang);
 };
 
-// Configuration minimale sans LanguageDetector
+// Configuration sans forcer les minuscules partout
 i18n
   .use(initReactI18next)
   .init({
@@ -63,40 +62,40 @@ i18n
       'tz-ltn': { translation: tzLtnTranslation },
       'tz-tfng': { translation: tzTfngTranslation },
     },
-    
-    lng: getInitialLanguage(), // Définir la langue initiale explicitement
+
+    lng: getInitialLanguage(),
     fallbackLng: 'fr',
-    debug: false, // Désactiver le debug pour moins de bruit
-    
+    debug: false,
+
     interpolation: {
       escapeValue: false
     },
-    
+
     supportedLngs: supportedLanguages,
     load: 'currentOnly',
     cleanCode: false,
-    lowerCaseLng: true, // Forcer en minuscules
-    
+    lowerCaseLng: false, // Ne pas forcer en minuscules
+
     react: {
       useSuspense: false,
     },
   });
 
-// Intercepter TOUS les changements de langue pour forcer la normalisation
+// Intercepter les changements de langue pour la persistance
 const originalChangeLanguage = i18n.changeLanguage.bind(i18n);
 i18n.changeLanguage = async (lng: string | undefined, callback?: any) => {
   if (!lng) return originalChangeLanguage(lng, callback);
-  
+
   const normalized = normalizeLanguage(lng);
-  console.log(`[i18n] changeLanguage intercepté: ${lng} -> ${normalized}`);
-  
-  // Toujours sauvegarder la version normalisée
+  console.log(`[i18n] changeLanguage: ${lng} -> ${normalized}`);
+
+  // Sauvegarder la version normalisée
   localStorage.setItem('i18nextLng', normalized);
-  
+
   // Mettre à jour le DOM
   document.documentElement.lang = normalized;
   document.documentElement.dir = normalized === 'ar' ? 'rtl' : 'ltr';
-  
+
   return originalChangeLanguage(normalized, callback);
 };
 
@@ -105,9 +104,9 @@ export const changeLanguage = (langCode: string): void => {
   i18n.changeLanguage(langCode);
 };
 
-// Fonction pour obtenir la langue actuelle (toujours normalisée)
+// Fonction pour obtenir la langue actuelle
 export const getCurrentLanguage = (): string => {
-  return normalizeLanguage(i18n.language);
+  return i18n.language;
 };
 
 // Fonction pour obtenir toutes les langues disponibles
@@ -119,39 +118,23 @@ export const getAvailableLanguages = () => [
   { code: 'tz-tfng', label: 'ⵜⴰⵎⴰⵣⵉⵖⵜ', dir: 'ltr' }
 ];
 
-// Nettoyer au démarrage
-const cleanup = () => {
-  // Nettoyer localStorage
-  const stored = localStorage.getItem('i18nextLng');
-  if (stored && stored !== stored.toLowerCase()) {
-    console.log(`[i18n] Nettoyage au démarrage: ${stored} -> ${stored.toLowerCase()}`);
-    localStorage.setItem('i18nextLng', stored.toLowerCase());
-  }
-  
-  // Nettoyer sessionStorage aussi
-  const sessionStored = sessionStorage.getItem('i18nextLng');
-  if (sessionStored) {
-    sessionStorage.removeItem('i18nextLng');
-    console.log('[i18n] SessionStorage nettoyé');
-  }
-  
+// Initialisation au démarrage (sans modification agressive)
+const initialize = () => {
   // S'assurer que le HTML est synchronisé
   const currentLang = getCurrentLanguage();
   document.documentElement.lang = currentLang;
   document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
 };
 
-// Exécuter le nettoyage
-cleanup();
+// Exécuter l'initialisation
+initialize();
 
 // Exposer globalement pour le debug (dev seulement)
 if (import.meta.env.DEV) {
   (window as any).i18nDebug = {
     current: () => i18n.language,
-    normalized: () => getCurrentLanguage(),
     stored: () => localStorage.getItem('i18nextLng'),
     changeLanguage,
-    cleanup,
   };
 }
 

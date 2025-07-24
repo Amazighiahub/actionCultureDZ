@@ -2,7 +2,7 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { usePermissions } from '@/hooks/usePermissions';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Alert, AlertDescription } from '@/components/UI/alert';
 import { AlertCircle } from 'lucide-react';import { useTranslation } from "react-i18next";
 
 interface ValidatedProfessionalRouteProps {

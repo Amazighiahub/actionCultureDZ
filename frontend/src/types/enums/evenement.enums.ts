@@ -7,7 +7,7 @@ export type StatutEvenement =
   | 'annule' 
   | 'reporte';
 
-export type TypeLieu = 'Wilaya' | 'Daira' | 'Commune';
+
 
 export enum StatutEvenementEnum {
   PLANIFIE = 'planifie',
@@ -21,4 +21,22 @@ export enum TypeLieuEnum {
   WILAYA = 'Wilaya',
   DAIRA = 'Daira',
   COMMUNE = 'Commune'
+}
+export enum TypeLieu {
+  SALLE_SPECTACLE = 'salle_spectacle',
+  GALERIE = 'galerie',
+  ESPACE_CULTUREL = 'espace_culturel',
+  MUSEE = 'musee',
+  BIBLIOTHEQUE = 'bibliotheque',
+  CINEMA = 'cinema',
+  PLEIN_AIR = 'plein_air',
+  AUTRE = 'autre'
+}
+
+
+
+export enum TypeInscription {
+  LIBRE = 'libre',
+  VALIDATION_REQUISE = 'validation_requise',
+  SUR_INVITATION = 'sur_invitation'
 }

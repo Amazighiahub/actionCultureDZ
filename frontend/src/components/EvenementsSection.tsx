@@ -1,8 +1,8 @@
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/UI/card';
+import { Button } from '@/components/UI/button';
+import { Badge } from '@/components/UI/badge';
 import { Calendar, MapPin, Users, Clock } from 'lucide-react';import { useTranslation } from "react-i18next";
 
 const EvenementsSection = () => {const { t } = useTranslation();

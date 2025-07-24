@@ -7,7 +7,7 @@ const createEvenementRoutes = (models, middlewares = {}) => {
   const router = express.Router();
   
   // Contrôleur
-  const createEvenementController = require('../controllers/evenementController');
+  const createEvenementController = require('../controllers/EvenementController');
   const controller = createEvenementController(models);
   
   // Middlewares avec valeurs par défaut

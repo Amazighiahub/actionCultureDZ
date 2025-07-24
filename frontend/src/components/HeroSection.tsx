@@ -1,128 +1,130 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useRTL } from '@/hooks/useRTL';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { MapPin, Calendar, Palette, ArrowRight } from 'lucide-react';
+import { Button } from '@/components/UI/button';
+import { ChevronRight, MapPin, Calendar, Palette, Users } from 'lucide-react';
 
-const HeroSection = () => {
-  const navigate = useNavigate();
-  const { t, i18n } = useTranslation();
-  const { rtlClasses, direction } = useRTL();
+const EnhancedHeroSection = () => {
+  const { t } = useTranslation();
+  const [currentSlide, setCurrentSlide] = useState(0);
 
-  // Helper function pour ajouter le préfixe
-  const tHero = (key: string) => t(`sections.hero.${key}`);
-
-  const quickActions = [
+  // Images du carousel
+  const heroImages = [
     {
-      id: 'discover',
-      icon: MapPin,
-      titleKey: 'quickActions.discover.title',
-      descriptionKey: 'quickActions.discover.description',
-      href: '/patrimoine',
-      bgColor: 'bg-green-50',
-      iconColor: 'text-green-600',
+      url: 'https://images.unsplash.com/photo-1539037116277-4db20889f2d4?w=1600',
+      title: 'Casbah d\'Alger',
+      subtitle: 'Patrimoine mondial UNESCO'
     },
     {
-      id: 'events',
-      icon: Calendar,
-      titleKey: 'quickActions.events.title',
-      descriptionKey: 'quickActions.events.description',
-      href: '/evenements',
-      bgColor: 'bg-blue-50',
-      iconColor: 'text-blue-600',
+      url: 'https://images.unsplash.com/photo-1566552881560-0be862a7c445?w=1600',
+      title: 'Sahara Algérien',
+      subtitle: 'Beauté naturelle exceptionnelle'
     },
     {
-      id: 'works',
-      icon: Palette,
-      titleKey: 'quickActions.works.title',
-      descriptionKey: 'quickActions.works.description',
-      href: '/oeuvres',
-      bgColor: 'bg-orange-50',
-      iconColor: 'text-orange-600',
-    },
+      url: 'https://images.unsplash.com/photo-1580418827493-f2b22c0a76cb?w=1600',
+      title: 'Architecture Traditionnelle',
+      subtitle: 'Art et savoir-faire ancestral'
+    }
   ];
 
+  // Auto-slide
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % heroImages.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
+
   return (
-    <section className="relative bg-gradient-to-br from-background to-muted py-20 md:py-32" dir={direction}>
-      <div className="container">
-        <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
-          {/* Section de texte */}
-          <div className="flex flex-col justify-center space-y-8">
-            <div className="space-y-4">
-              <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none">
-                {tHero('title')}
-                <span className="text-primary block">
-                  {tHero('titleHighlight')}
-                </span>
-              </h1>
-              <p className="max-w-[600px] text-muted-foreground md:text-xl">
-                {tHero('subtitle')}
-              </p>
+    <section className="relative h-[600px] md:h-[700px] overflow-hidden">
+      {/* Carousel d'images */}
+      <div className="absolute inset-0">
+        {heroImages.map((image, index) => (
+          <div
+            key={index}
+            className={`absolute inset-0 transition-opacity duration-1000 ${
+              index === currentSlide ? 'opacity-100' : 'opacity-0'
+            }`}
+          >
+            <img
+              src={image.url}
+              alt={image.title}
+              className="w-full h-full object-cover"
+            />
+            {/* Overlay gradient */}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/60" />
+          </div>
+        ))}
+      </div>
+
+      {/* Contenu */}
+      <div className="relative z-10 h-full flex items-center">
+        <div className="container">
+          <div className="max-w-3xl text-white">
+            {/* Badge animé */}
+            <div className="inline-flex items-center px-4 py-2 rounded-full bg-white/20 backdrop-blur-sm mb-6 animate-fade-in">
+              <span className="text-sm font-medium">
+                {t('home.hero.badge', 'Découvrez le patrimoine culturel algérien')}
+              </span>
             </div>
-            
-            <div className={`flex flex-col gap-4 sm:flex-row ${rtlClasses.flexRow}`}>
-              <Button 
-                size="lg" 
-                onClick={() => navigate('/patrimoine')}
-                className="group"
-              >
-                {tHero('cta.explore')}
-                <ArrowRight className={`h-4 w-4 ${rtlClasses.marginStart(2)} transition-transform group-hover:translate-x-1`} />
+
+            {/* Titre principal avec animation */}
+            <h1 className="text-4xl md:text-6xl font-bold mb-6 animate-slide-up">
+              {t('home.hero.title', 'Bienvenue sur Patrimoine DZ')}
+            </h1>
+
+            {/* Sous-titre */}
+            <p className="text-xl md:text-2xl mb-8 text-gray-200 animate-slide-up animation-delay-200">
+              {t('home.hero.subtitle', 'Explorez, préservez et partagez la richesse culturelle de l\'Algérie')}
+            </p>
+
+            {/* CTA Buttons */}
+            <div className="flex flex-wrap gap-4 animate-slide-up animation-delay-400">
+              <Button size="lg" className="bg-primary hover:bg-primary/90">
+                {t('home.hero.explore', 'Explorer le patrimoine')}
+                <ChevronRight className="ml-2 h-5 w-5" />
               </Button>
-              <Button 
-                size="lg" 
-                variant="outline"
-                onClick={() => navigate('/a-propos')}
-              >
-                {tHero('cta.learnMore')}
+              <Button size="lg" variant="outline" className="text-white border-white hover:bg-white/20">
+                {t('home.hero.contribute', 'Contribuer')}
               </Button>
+            </div>
+
+            {/* Stats rapides */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-12 animate-fade-in animation-delay-600">
+              {[
+                { icon: MapPin, value: '1000+', label: t('home.hero.sites', 'Sites patrimoniaux') },
+                { icon: Calendar, value: '500+', label: t('home.hero.events', 'Événements') },
+                { icon: Palette, value: '2000+', label: t('home.hero.works', 'Œuvres') },
+                { icon: Users, value: '10k+', label: t('home.hero.members', 'Membres') }
+              ].map((stat, index) => (
+                <div key={index} className="text-center">
+                  <stat.icon className="h-6 w-6 mx-auto mb-2 text-primary-foreground/80" />
+                  <div className="text-2xl font-bold">{stat.value}</div>
+                  <div className="text-sm text-gray-300">{stat.label}</div>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* Section actions rapides */}
-          <div className="lg:pl-8">
-            <h2 className="mb-6 text-2xl font-semibold">
-              {tHero('quickActions.title')}
-            </h2>
-            
-            <div className="space-y-4">
-              {quickActions.map((action) => (
-                <Card 
-                  key={action.id}
-                  className={`cursor-pointer transition-all hover:shadow-lg ${action.bgColor}`}
-                  onClick={() => navigate(action.href)}
-                >
-                  <CardContent className="p-6">
-                    <div className={`flex items-center gap-4 ${rtlClasses.flexRow}`}>
-                      <div className={`rounded-lg bg-white p-3 shadow-sm`}>
-                        <action.icon className={`h-6 w-6 ${action.iconColor}`} />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-foreground">
-                          {tHero(action.titleKey)}
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          {tHero(action.descriptionKey)}
-                        </p>
-                      </div>
-                      <ArrowRight className={`h-5 w-5 text-muted-foreground ${rtlClasses.direction === 'rtl' ? 'rotate-180' : ''}`} />
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+          {/* Indicateurs de carousel */}
+          <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex gap-2">
+            {heroImages.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentSlide(index)}
+                className={`w-2 h-2 rounded-full transition-all ${
+                  index === currentSlide ? 'w-8 bg-white' : 'bg-white/50'
+                }`}
+                aria-label={`Slide ${index + 1}`}
+              />
+            ))}
           </div>
         </div>
       </div>
 
-      {/* Élément décoratif */}
-      <div className="absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute -top-[40rem] left-[50%] h-[80rem] w-[80rem] -translate-x-[50%] rounded-full bg-gradient-to-tr from-primary/20 to-accent/20 opacity-20 blur-3xl" />
-      </div>
+      {/* Motif décoratif en bas */}
+      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent" />
     </section>
   );
 };
 
-export default HeroSection;
+export default EnhancedHeroSection;

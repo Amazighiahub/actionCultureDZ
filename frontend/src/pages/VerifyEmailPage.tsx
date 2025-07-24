@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { authService } from '@/services/auth.service';
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/UI/alert";
+import { Button } from "@/components/UI/button";
 import { Loader2 } from 'lucide-react';import { useTranslation } from "react-i18next";
 
 

@@ -8,9 +8,9 @@
  */
 import React, { useEffect, useState } from 'react';
 import { socketService } from '@/services/socketService';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/UI/badge';
+import { Alert, AlertDescription } from '@/components/UI/alert';
+import { Button } from '@/components/UI/button';
 import {
   Wifi,
   WifiOff,

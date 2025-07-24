@@ -8,7 +8,7 @@ import { evenementService } from '@/services/evenement.service';
 import { artisanatService } from '@/services/artisanat.service';
 import { patrimoineService } from '@/services/patrimoine.service';
 import type { DashboardStats } from '@/services/professionnel.service';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/components/UI/use-toast';
 import { API_ENDPOINTS } from '@/config/api';
 
 interface UseDashboardProOptions {

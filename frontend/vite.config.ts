@@ -4,6 +4,8 @@ import path from "path";
 import { componentTagger } from "lovable-tagger";
 import type { Plugin } from 'vite';
 
+import checker from 'vite-plugin-checker'
+
 // Plugin personnalisé pour gérer les routes SPA
 const spaFallback = (): Plugin => {
   return {
@@ -63,6 +65,13 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
+    checker({
+      typescript: true,
+      overlay: {
+        initialIsOpen: true,
+        position: 'tr'
+      }
+    }),
     spaFallback(), // Utiliser notre plugin personnalisé
     mode === 'development' && componentTagger(),
   ].filter(Boolean),
@@ -75,6 +84,96 @@ export default defineConfig(({ mode }) => ({
     __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
   },
   optimizeDeps: {
-    include: ['axios', 'moment'],
+    include: ['axios', 'moment', 'react', 'react-dom', 'react-router-dom', '@tanstack/react-query'],
   },
+  build: {
+    // Augmenter la limite d'avertissement
+    chunkSizeWarningLimit: 1000,
+    
+    // Optimiser la taille de sortie
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: mode === 'production', // Supprimer console.log en production
+        drop_debugger: true,
+      },
+    },
+    
+    rollupOptions: {
+      output: {
+        // Configuration manuelle des chunks pour une meilleure séparation
+        manualChunks: (id) => {
+          // Dépendances React
+          if (id.includes('node_modules')) {
+            if (id.includes('react-router') || id.includes('react-dom') || id.includes('/react/')) {
+              return 'react-vendor';
+            }
+            
+            // UI Libraries
+            if (id.includes('@radix-ui') || id.includes('sonner') || id.includes('react-hot-toast')) {
+              return 'ui-vendor';
+            }
+            
+            // Data fetching & state
+            if (id.includes('@tanstack') || id.includes('axios')) {
+              return 'data-vendor';
+            }
+            
+            // Utilitaires
+            if (id.includes('moment') || id.includes('date-fns') || id.includes('lodash')) {
+              return 'utils-vendor';
+            }
+            
+            // Internationalisation
+            if (id.includes('i18n') || id.includes('react-i18next')) {
+              return 'i18n-vendor';
+            }
+          }
+          
+          // Services
+          if (id.includes('/services/')) {
+            return 'services';
+          }
+          
+          // Composants partagés
+          if (id.includes('/components/ui/')) {
+            return 'ui-components';
+          }
+        },
+        
+        // Nommer les chunks de manière plus claire
+        chunkFileNames: (chunkInfo) => {
+          const facadeModuleId = chunkInfo.facadeModuleId ? chunkInfo.facadeModuleId.split('/').pop() : 'chunk';
+          return `assets/js/${chunkInfo.name || facadeModuleId}-[hash].js`;
+        },
+        
+        // Nommer les assets
+        assetFileNames: (assetInfo) => {
+          // Vérifier que le nom existe
+          if (!assetInfo.name) {
+            return `assets/[hash][extname]`;
+          }
+          
+          const info = assetInfo.name.split('.');
+          const ext = info[info.length - 1];
+          if (/png|jpe?g|svg|gif|tiff|bmp|ico/i.test(ext)) {
+            return `assets/images/[name]-[hash][extname]`;
+          } else if (/woff2?|ttf|otf|eot/i.test(ext)) {
+            return `assets/fonts/[name]-[hash][extname]`;
+          }
+          return `assets/[name]-[hash][extname]`;
+        },
+      },
+    },
+    
+    // Générer un rapport de taille
+    reportCompressedSize: true,
+  },
+  
+  // Configuration pour la production
+  ...(mode === 'production' && {
+    esbuild: {
+      drop: ['console', 'debugger'],
+    },
+  }),
 }));

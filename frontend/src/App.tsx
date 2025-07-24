@@ -1,9 +1,9 @@
 // Import de la configuration i18n - DOIT être en premier !
 import '../i18n/config';
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "@/components/UI/toaster";
+import { Toaster as Sonner } from "@/components/UI/sonner";
+import { TooltipProvider } from "@/components/UI/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { PermissionsProvider } from "@/providers/PermissionsProvider";
@@ -33,7 +33,7 @@ import NotificationToastListener from '@/components/NotificationToastListener';
 import EventDetailsPage from "./pages/EventDetailsPage";
 import EditArticle from "./pages/articles/edit/EditArticle";
 import RTLManager from './components/RTLManager';
-
+import { LanguagePersistenceManager } from '@/hooks/useLanguagePersistence';
 // Configuration optimisée du QueryClient
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -89,6 +89,8 @@ const App = () => (
             v7_relativeSplatPath: true,
           }}
         >
+           {/* Gestionnaire de persistance de langue */}
+           <LanguagePersistenceManager />
           {/* Gestionnaire RTL */}
           <RTLManager />
           {/* Listener global pour les notifications toast */}

@@ -4,12 +4,12 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Progress } from '@/components/ui/progress';
-import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/UI/card';
+import { Button } from '@/components/UI/button';
+import { Badge } from '@/components/UI/badge';
+import { Alert, AlertDescription } from '@/components/UI/alert';
+import { Progress } from '@/components/UI/progress';
+import { Input } from '@/components/UI/input';
 import { 
   Book, 
   Calendar, 
@@ -205,36 +205,13 @@ const Oeuvres = () => {
     }
   };
 
-  // Indicateur de santé du rate limit
-  const getRateLimitHealth = () => {
-    if (!rateLimitStats) return { status: 'unknown', color: 'gray' };
-    
-    const { requestsLastMinute, rateLimitHits, currentDelay } = rateLimitStats;
-    
-    if (rateLimitHits > 0) {
-      return { status: 'critical', color: 'red', message: t('sections.works.rateLimit.health.critical') };
-    }
-    
-    if (requestsLastMinute > 25) {
-      return { status: 'warning', color: 'orange', message: t('sections.works.rateLimit.health.warning') };
-    }
-    
-    if (currentDelay > 500) {
-      return { status: 'slow', color: 'yellow', message: t('sections.works.rateLimit.health.slow') };
-    }
-    
-    return { status: 'good', color: 'green', message: t('sections.works.rateLimit.health.good') };
-  };
-
-  const health = getRateLimitHealth();
-
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
         <main className="container py-12">
           <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <Loader2 className="h-8 w-8 animate-spin text-stone-600" />
             <p className="text-sm text-muted-foreground">{t('sections.works.loading')}</p>
           </div>
         </main>
@@ -247,96 +224,124 @@ const Oeuvres = () => {
     <div className="min-h-screen bg-background">
       <Header />
       
-      {/* Indicateur de rate limit en développement */}
-      {process.env.NODE_ENV === 'development' && rateLimitStats && (
-        <div className="fixed bottom-4 left-4 z-50">
-          <Button
-            variant="outline"
-            size="sm"
-            className="shadow-lg"
-            onClick={() => setShowRateLimitInfo(!showRateLimitInfo)}
-          >
-            <Activity className={`h-4 w-4 mr-2 text-${health.color}-500`} />
-            {t('sections.works.rateLimit.title')}
-          </Button>
-          
-          {showRateLimitInfo && (
-            <Card className="absolute bottom-full left-0 mb-2 w-64">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <Gauge className="h-4 w-4" />
-                  {t('sections.works.rateLimit.status')}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span>{t('sections.works.rateLimit.queue')}</span>
-                  <span className="font-mono">{rateLimitStats.queueSize}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>{t('sections.works.rateLimit.cache')}</span>
-                  <span className="font-mono">{rateLimitStats.cacheSize} {t('sections.works.rateLimit.entries')}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>{t('sections.works.rateLimit.requestsPerMinute')}</span>
-                  <span className="font-mono">{rateLimitStats.requestsLastMinute}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>{t('sections.works.rateLimit.currentDelay')}</span>
-                  <span className="font-mono">{rateLimitStats.currentDelay}ms</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>{t('sections.works.rateLimit.hits')}</span>
-                  <span className="font-mono">{rateLimitStats.rateLimitHits}</span>
-                </div>
-                <Progress 
-                  value={(rateLimitStats.requestsLastMinute / 30) * 100} 
-                  className="h-2"
-                />
-                <div className={`text-xs text-${health.color}-600 font-medium`}>
-                  {health.message}
-                </div>
-                <div className="pt-2 space-y-1">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => {
-                      (httpClient as any).clearCache?.();
-                      loadOeuvres();
-                    }}
-                  >
-                    <Zap className="h-3 w-3 mr-1" />
-                    {t('sections.works.rateLimit.clearCache')}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => {
-                      const mode = rateLimitStats.currentDelay > 500 ? 'normal' : 'conservative';
-                      if (mode === 'normal') {
-                        (httpClient as any).useNormalMode?.();
-                      } else {
-                        (httpClient as any).useConservativeMode?.();
-                      }
-                    }}
-                  >
-                    {rateLimitStats.currentDelay > 500 ? 
-                      `🚶 ${t('sections.works.rateLimit.normalMode')}` : 
-                      `🐢 ${t('sections.works.rateLimit.slowMode')}`}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+      {/* Nouveau design du sous-menu avec dégradé foncé */}
+      <div className="sticky top-16 z-40 bg-gradient-to-br from-stone-800 via-stone-700 to-stone-600 dark:from-stone-900 dark:via-stone-800 dark:to-stone-700 shadow-lg">
+        <div className="w-full px-4 sm:px-6 lg:px-8 max-w-[1400px] mx-auto">
+          <div className="relative py-2">
+            {/* Overlay avec pattern subtil */}
+            <div className="absolute inset-0 opacity-10" 
+                 style={{
+                   backgroundImage: `radial-gradient(circle at 20% 50%, white 1px, transparent 1px),
+                                    radial-gradient(circle at 60% 30%, white 1px, transparent 1px),
+                                    radial-gradient(circle at 80% 70%, white 1px, transparent 1px)`,
+                   backgroundSize: '30px 30px',
+                   backgroundPosition: '0 0, 15px 15px, 30px 30px'
+                 }}>
+            </div>
+            
+            {/* Conteneur des tabs centré */}
+            <div 
+              className="flex items-center justify-center gap-6 lg:gap-8 overflow-x-auto relative"
+              style={{
+                scrollbarWidth: 'none',
+                msOverflowStyle: 'none',
+                WebkitOverflowScrolling: 'touch'
+              }}
+            >
+              {/* Tab Tous */}
+              <button
+                onClick={() => setSelectedType('tous')}
+                className={`relative flex items-center gap-2 py-1.5 px-4 text-sm font-medium transition-all duration-300 whitespace-nowrap rounded-lg ${
+                  selectedType === 'tous' 
+                    ? 'text-white bg-white/20 backdrop-blur-sm' 
+                    : 'text-stone-300 hover:text-white hover:bg-white/10'
+                }`}
+              >
+                <span>{t('sections.works.filters.allTypes')}</span>
+                {filteredOeuvres.length > 0 && (
+                  <span className={`text-xs ${
+                    selectedType === 'tous' 
+                      ? 'text-white/80' 
+                      : 'text-stone-400'
+                  }`}>
+                    {filteredOeuvres.length}
+                  </span>
+                )}
+                {selectedType === 'tous' && (
+                  <div className="absolute -bottom-1 left-4 right-4 h-0.5 bg-gradient-to-r from-amber-400 to-amber-500"></div>
+                )}
+              </button>
+              
+              {/* Autres tabs */}
+              {Array.isArray(typesOeuvres) && typesOeuvres.length > 0 && typesOeuvres
+                .filter(type => type.id_type_oeuvre && type.nom_type)
+                .sort((a, b) => {
+                  const ordre = ['Littérature', 'Cinéma', 'Musique', 'Œuvres d\'art', 'Articles'];
+                  const nomA = formatTypeNom(a.nom_type);
+                  const nomB = formatTypeNom(b.nom_type);
+                  const indexA = ordre.indexOf(nomA);
+                  const indexB = ordre.indexOf(nomB);
+                  
+                  if (indexA !== -1 && indexB !== -1) {
+                    return indexA - indexB;
+                  }
+                  if (indexA !== -1) return -1;
+                  if (indexB !== -1) return 1;
+                  return nomA.localeCompare(nomB);
+                })
+                .map(type => {
+                  const typeId = type.id_type_oeuvre;
+                  const typeNom = formatTypeNom(type.nom_type);
+                  const IconComponent = getTypeIcon(typeNom);
+                  
+                  // Compter les œuvres de ce type
+                  const count = filteredOeuvres.filter(o => {
+                    const oTypeId = o.id_type_oeuvre || o.TypeOeuvre?.id_type_oeuvre;
+                    return oTypeId?.toString() === typeId.toString();
+                  }).length;
+                  
+                  return (
+                    <button
+                      key={typeId}
+                      onClick={() => setSelectedType(typeId.toString())}
+                      className={`relative flex items-center gap-2 py-1.5 px-4 text-sm font-medium transition-all duration-300 whitespace-nowrap rounded-lg ${
+                        selectedType === typeId.toString() 
+                          ? 'text-white bg-white/20 backdrop-blur-sm' 
+                          : 'text-stone-300 hover:text-white hover:bg-white/10'
+                      }`}
+                    >
+                      <IconComponent className={`h-4 w-4 ${
+                        selectedType === typeId.toString() 
+                          ? 'text-amber-400' 
+                          : 'text-stone-400'
+                      }`} />
+                      <span>{typeNom}</span>
+                      {count > 0 && (
+                        <span className={`text-xs ${
+                          selectedType === typeId.toString() 
+                            ? 'text-white/80' 
+                            : 'text-stone-400'
+                        }`}>
+                          {count}
+                        </span>
+                      )}
+                      {selectedType === typeId.toString() && (
+                        <div className="absolute -bottom-1 left-4 right-4 h-0.5 bg-gradient-to-r from-amber-400 to-amber-500"></div>
+                      )}
+                    </button>
+                  );
+                })
+                .filter(Boolean)}
+            </div>
+          </div>
         </div>
-      )}
+      </div>
+     
       
-      <main className="container py-12">
+      <main className="container py-8">
         {/* En-tête */}
         <div className="text-center space-y-4 mb-12">
-          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl font-serif text-gradient">
+          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl font-serif bg-gradient-to-r from-stone-700 to-stone-800 dark:from-stone-400 dark:to-stone-500 bg-clip-text text-transparent">
             {t('sections.works.title')}
           </h1>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
@@ -365,13 +370,13 @@ const Oeuvres = () => {
         {/* Barre de recherche */}
         <div className="max-w-2xl mx-auto mb-8">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
             <Input
               type="text"
               placeholder={t('sections.works.searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-10"
+              className="pl-10 pr-10 bg-stone-50 dark:bg-stone-900 border-stone-200 dark:border-stone-700 focus:border-stone-400 dark:focus:border-stone-600"
             />
             {searchQuery && (
               <Button
@@ -412,7 +417,11 @@ const Oeuvres = () => {
               variant={selectedFilter === 'tous' ? 'default' : 'outline'} 
               size="sm"
               onClick={() => setSelectedFilter('tous')}
-              className="transition-all hover:scale-105"
+              className={`transition-all hover:scale-105 ${
+                selectedFilter === 'tous' 
+                  ? 'bg-stone-700 hover:bg-stone-800 text-white' 
+                  : 'border-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800'
+              }`}
             >
               {t('sections.works.filters.all')}
             </Button>
@@ -420,14 +429,18 @@ const Oeuvres = () => {
               variant={selectedFilter === 'nouveautes' ? 'default' : 'outline'} 
               size="sm"
               onClick={() => setSelectedFilter('nouveautes')}
-              className="transition-all hover:scale-105 relative overflow-hidden"
+              className={`transition-all hover:scale-105 relative overflow-hidden ${
+                selectedFilter === 'nouveautes' 
+                  ? 'bg-stone-700 hover:bg-stone-800 text-white' 
+                  : 'border-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800'
+              }`}
             >
               <Sparkles className="h-3 w-3 mr-1.5" />
               {t('sections.works.filters.new')}
               {selectedFilter !== 'nouveautes' && (
                 <span className="absolute -top-1 -right-1 flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-600 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-600"></span>
                 </span>
               )}
             </Button>
@@ -435,7 +448,11 @@ const Oeuvres = () => {
               variant={selectedFilter === 'une' ? 'default' : 'outline'} 
               size="sm"
               onClick={() => setSelectedFilter('une')}
-              className="transition-all hover:scale-105"
+              className={`transition-all hover:scale-105 ${
+                selectedFilter === 'une' 
+                  ? 'bg-amber-700 hover:bg-amber-800 text-white' 
+                  : 'border-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800'
+              }`}
             >
               <Star className="h-3 w-3 mr-1.5" />
               {t('sections.works.filters.featured')}
@@ -444,7 +461,11 @@ const Oeuvres = () => {
               variant={selectedFilter === 'populaires' ? 'default' : 'outline'} 
               size="sm"
               onClick={() => setSelectedFilter('populaires')}
-              className="transition-all hover:scale-105"
+              className={`transition-all hover:scale-105 ${
+                selectedFilter === 'populaires' 
+                  ? 'bg-stone-600 hover:bg-stone-700 text-white' 
+                  : 'border-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800'
+              }`}
               title={t('sections.works.info.classicsDesc')}
             >
               <TrendingUp className="h-3 w-3 mr-1.5" />
@@ -454,7 +475,11 @@ const Oeuvres = () => {
               variant={selectedFilter === 'recommandees' ? 'default' : 'outline'} 
               size="sm"
               onClick={() => setSelectedFilter('recommandees')}
-              className="transition-all hover:scale-105"
+              className={`transition-all hover:scale-105 ${
+                selectedFilter === 'recommandees' 
+                  ? 'bg-rose-700 hover:bg-rose-800 text-white' 
+                  : 'border-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800'
+              }`}
             >
               <Heart className="h-3 w-3 mr-1.5" />
               {t('sections.works.filters.recommended')}
@@ -468,64 +493,7 @@ const Oeuvres = () => {
           )}
         </div>
 
-        {/* Filtres par type */}
-        <div className="flex flex-wrap gap-4 mb-12 justify-center">
-          <Button 
-            variant={selectedType === 'tous' ? 'default' : 'outline'} 
-            size="sm"
-            onClick={() => setSelectedType('tous')}
-          >
-            {t('sections.works.filters.allTypes')}
-            <Badge variant="secondary" className="ml-2 text-xs">
-              {filteredOeuvres.length}
-            </Badge>
-          </Button>
-          {Array.isArray(typesOeuvres) && typesOeuvres.length > 0 && typesOeuvres
-            .filter(type => type.id_type_oeuvre && type.nom_type)
-            .sort((a, b) => {
-              const ordre = ['Littérature', 'Cinéma', 'Musique', 'Œuvres d\'art', 'Articles'];
-              const nomA = formatTypeNom(a.nom_type);
-              const nomB = formatTypeNom(b.nom_type);
-              const indexA = ordre.indexOf(nomA);
-              const indexB = ordre.indexOf(nomB);
-              
-              if (indexA !== -1 && indexB !== -1) {
-                return indexA - indexB;
-              }
-              if (indexA !== -1) return -1;
-              if (indexB !== -1) return 1;
-              return nomA.localeCompare(nomB);
-            })
-            .map(type => {
-              const typeId = type.id_type_oeuvre;
-              const typeNom = formatTypeNom(type.nom_type);
-              const IconComponent = getTypeIcon(typeNom);
-              
-              // Compter les œuvres de ce type dans les œuvres filtrées
-              const count = filteredOeuvres.filter(o => {
-                const oTypeId = o.id_type_oeuvre || o.TypeOeuvre?.id_type_oeuvre;
-                return oTypeId?.toString() === typeId.toString();
-              }).length;
-              
-              return (
-                <Button 
-                  key={typeId}
-                  variant={selectedType === typeId.toString() ? 'default' : 'outline'} 
-                  size="sm"
-                  onClick={() => setSelectedType(typeId.toString())}
-                  className="transition-all hover:scale-105"
-                >
-                  <IconComponent className="h-3 w-3 mr-1.5" />
-                  {typeNom}
-                  <Badge variant="secondary" className="ml-2 text-xs">
-                    {count}
-                  </Badge>
-                </Button>
-              );
-            })
-            .filter(Boolean)}
-        </div>
-
+       
         {/* Liste des œuvres */}
         {selectedFilter !== 'tous' && filteredOeuvres.length > 0 && (
           <div className="text-center mb-6">
@@ -615,25 +583,25 @@ const Oeuvres = () => {
               return (
                 <Card 
                   key={oeuvreId} 
-                  className="overflow-hidden hover-lift group h-full flex flex-col relative cursor-pointer"
+                  className="overflow-hidden hover-lift group h-full flex flex-col relative cursor-pointer hover:shadow-lg transition-all duration-300"
                   onClick={() => handleOeuvreDetails(oeuvreId, typeOeuvreId)}
                 >
                   {/* Badge unique */}
                   {(isNew || isClassic || isPopular) && (
                     <div className="absolute top-2 left-2 z-10">
                       {isNew && (
-                        <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 text-xs px-2 py-0.5 shadow-md">
+                        <Badge className="bg-gradient-to-r from-amber-600 to-amber-700 text-white border-0 text-xs px-2 py-0.5 shadow-md">
                           {t('sections.works.badges.new')}
                         </Badge>
                       )}
                       {!isNew && isClassic && (
-                        <Badge className="bg-gradient-to-r from-amber-600 to-yellow-600 text-white border-0 text-xs px-2 py-0.5 shadow-md">
+                        <Badge className="bg-gradient-to-r from-stone-600 to-stone-700 text-white border-0 text-xs px-2 py-0.5 shadow-md">
                           <History className="h-3 w-3 mr-1" />
                           {t('sections.works.badges.classic')}
                         </Badge>
                       )}
                       {!isNew && !isClassic && isPopular && (
-                        <Badge className="bg-gradient-to-r from-orange-500 to-red-500 text-white border-0 text-xs px-2 py-0.5 shadow-md">
+                        <Badge className="bg-gradient-to-r from-stone-700 to-stone-800 text-white border-0 text-xs px-2 py-0.5 shadow-md">
                           <TrendingUp className="h-3 w-3 mr-1" />
                           {t('sections.works.badges.popular')}
                         </Badge>
@@ -688,15 +656,15 @@ const Oeuvres = () => {
                         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                       </>
                     ) : null}
-                    <div className={`${imageUrl ? 'hidden' : ''} placeholder-icon w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/10`}>
-                      <PlaceholderIcon className="h-10 w-10 text-primary/40" />
+                    <div className={`${imageUrl ? 'hidden' : ''} placeholder-icon w-full h-full flex items-center justify-center bg-gradient-to-br from-stone-100 to-stone-200 dark:from-stone-800 dark:to-stone-700`}>
+                      <PlaceholderIcon className="h-10 w-10 text-stone-400" />
                     </div>
                   </div>
                   <div className="flex flex-col flex-1">
                     <CardHeader className="space-y-2 pb-3">
                       <div className="flex justify-between items-start gap-2">
                         <CardTitle 
-                          className="font-serif text-base leading-tight line-clamp-2 flex-1 hover:text-primary transition-colors cursor-pointer"
+                          className="font-serif text-base leading-tight line-clamp-2 flex-1 hover:text-stone-700 dark:hover:text-stone-300 transition-colors cursor-pointer"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleOeuvreDetails(oeuvreId, typeOeuvreId);
@@ -706,11 +674,11 @@ const Oeuvres = () => {
                         </CardTitle>
                       </div>
                       <div className="flex flex-wrap gap-1.5">
-                        <Badge variant="outline" className="text-xs px-2 py-0.5">
+                        <Badge variant="outline" className="text-xs px-2 py-0.5 border-stone-300 dark:border-stone-600">
                           {typeNom}
                         </Badge>
                         {langueNom && (
-                          <Badge variant="secondary" className="text-xs px-2 py-0.5">
+                          <Badge variant="secondary" className="text-xs px-2 py-0.5 bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300">
                             {langueNom}
                           </Badge>
                         )}
@@ -729,8 +697,8 @@ const Oeuvres = () => {
                       <div className="space-y-1.5 text-xs flex-1">
                         {oeuvre.annee_creation && (
                           <div className="flex items-center space-x-1.5">
-                            <Calendar className="h-3 w-3 text-primary flex-shrink-0" />
-                            <span className={isClassic ? 'font-medium text-amber-600' : isPopular ? 'font-medium text-green-600' : ''}>
+                            <Calendar className="h-3 w-3 text-stone-600 dark:text-stone-400 flex-shrink-0" />
+                            <span className={isClassic ? 'font-medium text-stone-700 dark:text-stone-300' : isPopular ? 'font-medium text-stone-600 dark:text-stone-400' : ''}>
                               {oeuvre.annee_creation}
                               {isClassic && ` • ${t('sections.works.ageLabels.classic')}`}
                               {isPopular && ` • ${t('sections.works.ageLabels.recent')}`}
@@ -739,15 +707,15 @@ const Oeuvres = () => {
                         )}
                         {tags.length > 0 && (
                           <div className="flex items-center space-x-1.5">
-                            <Tag className="h-3 w-3 text-primary flex-shrink-0" />
+                            <Tag className="h-3 w-3 text-stone-600 dark:text-stone-400 flex-shrink-0" />
                             <div className="flex flex-wrap gap-1">
                               {tags.slice(0, 2).map((tag: string, index: number) => (
-                                <Badge key={index} variant="secondary" className="text-xs py-0 px-1.5 h-5">
+                                <Badge key={index} variant="secondary" className="text-xs py-0 px-1.5 h-5 bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300">
                                   {tag}
                                 </Badge>
                               ))}
                               {tags.length > 2 && (
-                                <Badge variant="secondary" className="text-xs py-0 px-1.5 h-5">
+                                <Badge variant="secondary" className="text-xs py-0 px-1.5 h-5 bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300">
                                   +{tags.length - 2}
                                 </Badge>
                               )}
@@ -758,7 +726,7 @@ const Oeuvres = () => {
 
                       <div className="flex items-center justify-between mt-auto">
                         <div className="flex items-center space-x-1.5">
-                          <DollarSign className="h-3 w-3 text-primary flex-shrink-0" />
+                          <DollarSign className="h-3 w-3 text-stone-600 dark:text-stone-400 flex-shrink-0" />
                           <span className="font-medium text-xs">{formatPrix(oeuvre)}</span>
                         </div>
                         <div className="flex items-center space-x-3 text-xs text-muted-foreground">
@@ -778,7 +746,7 @@ const Oeuvres = () => {
                       </div>
                       
                       <Button 
-                        className="w-full btn-hover group h-8 text-xs mt-3"
+                        className="w-full btn-hover group h-8 text-xs mt-3 bg-gradient-to-r from-stone-700 to-stone-800 hover:from-stone-800 hover:to-stone-900 text-white"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleOeuvreDetails(oeuvreId, typeOeuvreId);

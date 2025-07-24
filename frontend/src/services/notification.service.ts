@@ -21,7 +21,19 @@ import {
   mapAPISummaryToSummary,
   formatNotificationDate
 } from '../types/models/notification.types';
+// Copiez-collez ceci à la FIN de notification.service.ts
+// Remplacez la section export type { ... } existante
 
+export type { 
+  Notification,
+  NotificationSummary,
+  NotificationPreferences,
+  NotificationListResponse,
+  WebSocketStatus,
+  TestEmailType,
+  UpdatePreferencesData,
+  BroadcastNotificationData
+} from '../types/models/notification.types';
 class UnifiedNotificationService {
   // ================================================
   // MÉTHODES PRINCIPALES
@@ -683,11 +695,3 @@ export const notificationService = new UnifiedNotificationService();
 
 // Export du type pour l'injection de dépendances
 export type { UnifiedNotificationService };
-export type { 
-  Notification,
-  NotificationSummary,
-  NotificationPreferences,
-  NotificationListResponse,
-  WebSocketStatus,
-  TestEmailType 
-} from '../types/models/notification.types';

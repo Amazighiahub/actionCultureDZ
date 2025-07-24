@@ -1,7 +1,7 @@
 // components/dashboard/DashboardCharts.tsx
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/UI/card';
 import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { TrendingUp, TrendingDown, Users, Calendar, BookOpen } from 'lucide-react';import { useTranslation } from "react-i18next";
 

@@ -8,20 +8,20 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle } from
-'@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+'@/components/UI/dialog';
+import { Button } from '@/components/UI/button';
+import { Input } from '@/components/UI/input';
+import { Label } from '@/components/UI/label';
+import { Textarea } from '@/components/UI/textarea';
+import { Badge } from '@/components/UI/badge';
+import { Alert, AlertDescription } from '@/components/UI/alert';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue } from
-'@/components/ui/select';
+'@/components/UI/select';
 import {
   Loader2,
   User,

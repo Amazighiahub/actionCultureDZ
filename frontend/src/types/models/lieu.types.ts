@@ -17,7 +17,7 @@ export interface Lieu {
   adresse: string;
   latitude: number;
   longitude: number;
-  
+  typeLieuCulturel: string;
   // Relations (optionnelles)
   Wilaya?: Wilaya;
   Daira?: Daira;

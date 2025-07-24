@@ -1,16 +1,16 @@
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-@import './styles/article-print.css';
-/* Système de design pour la plateforme culturelle algérienne */
-/* Ajoutez ceci à votre fichier global.css ou index.css */
-/* Importer le fichier language-styles.css créé ci-dessus */
-@import './styles/language-styles.css';
-/* Import des polices */
+/* Import des polices - DOIT être en premier */
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Tifinagh&display=swap');
 
+/* Import des fichiers CSS personnalisés */
+@import './styles/article-print.css';
+@import './styles/language-styles.css';
+
+/* Directives Tailwind - APRÈS les imports */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 /* Styles de base pour chaque langue */
 :root {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;

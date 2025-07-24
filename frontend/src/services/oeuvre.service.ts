@@ -15,6 +15,64 @@ import { API_ENDPOINTS, type ApiResponse } from '@/config/api';
 import { mediaService } from './media.service';
 import { CreateOeuvreBackendDTO } from '@/types/api/create-oeuvre-backend.dto';
 
+// ========================================
+// EXPORTS DE TYPES - AJOUTER CE BLOC !
+// ========================================
+
+// Ré-export des types depuis leurs sources
+export type { Oeuvre } from '@/types/models/oeuvre.types';
+export type {
+  CreateOeuvreCompleteDTO,
+  CreateOeuvreResponse,
+  IntervenantSearchResult,
+  CheckUserByEmailResponse,
+  IntervenantExistant,
+  NouvelIntervenant,
+  EditeurOeuvre
+} from '@/types/api/oeuvre-creation.types';
+export type { CreateOeuvreBackendDTO } from '@/types/api/create-oeuvre-backend.dto';
+
+// Types alias pour l'API
+export type CreateOeuvreData = CreateOeuvreBackendDTO | CreateOeuvreCompleteDTO;
+export type UpdateOeuvreData = Partial<CreateOeuvreData>;
+
+// Interface pour les paramètres de recherche
+export interface SearchOeuvresParams {
+  q?: string;
+  type?: number;
+  langue?: number;
+  categorie?: number;
+  annee_min?: number;
+  annee_max?: number;
+  prix_min?: number;
+  prix_max?: number;
+  editeur?: number;
+  tag?: string;
+  intervenant?: string;
+  limit?: number;
+  page?: number;
+  sort?: string;
+  statut?: string;
+  saisi_par?: number;
+}
+
+// Interface pour les statistiques
+export interface OeuvreStatistics {
+  total: number;
+  parType: Array<{ type: string; count: number }>;
+  parLangue: Array<{ langue: string; count: number }>;
+  noteMoyenneGlobale: number;
+}
+
+// Interface pour les liens de partage
+export interface ShareLinks {
+  facebook: string;
+  twitter: string;
+  linkedin: string;
+  whatsapp: string;
+  email: string;
+  embed?: string;
+}
 class OeuvreService {
   /**
    * Créer une nouvelle œuvre AVEC médias

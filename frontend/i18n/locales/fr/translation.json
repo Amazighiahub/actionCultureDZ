@@ -1,8 +1,128 @@
 {
   "auth": {
-    "mustBeConnected": "Vous devez être connecté",
-    "required": "Requis"
+  "mustBeConnected": "Vous devez être connecté",
+  "required": "Requis",
+  
+  "title": "Connexion & Inscription",
+  "subtitle": "Accédez à votre espace personnel ou créez votre compte",
+  
+  "login": {
+    "tabTitle": "Connexion",
+    "title": "Se connecter",
+    "email": "Email",
+    "emailPlaceholder": "votre.email@exemple.com",
+    "password": "Mot de passe",
+    "rememberMe": "Se souvenir de moi",
+    "forgotPassword": "Mot de passe oublié ?",
+    "loggingIn": "Connexion en cours...",
+    "submit": "Se connecter"
   },
+  
+  "register": {
+    "tabTitle": "Inscription",
+    "title": "Créer un compte",
+    "profileType": "Type de profil",
+    "individual": "Visiteur (Particulier)",
+    "professional": "Professionnel (Artiste, Artisan, Organisateur)",
+    "firstName": "Prénom",
+    "firstNamePlaceholder": "Votre prénom",
+    "lastName": "Nom",
+    "lastNamePlaceholder": "Votre nom",
+    "gender": "Genre",
+    "male": "Homme",
+    "female": "Femme",
+    "birthDate": "Date de naissance",
+    "email": "Email",
+    "emailPlaceholder": "votre.email@exemple.com",
+    "password": "Mot de passe",
+    "confirmPassword": "Confirmer le mot de passe",
+    "wilaya": "Wilaya",
+    "selectWilaya": "Sélectionnez votre wilaya",
+    "phone": "Téléphone",
+    "professionalInfo": "Informations professionnelles",
+    "sector": "Secteur d'activité",
+    "selectSector": "Sélectionnez votre secteur",
+    "profilePhoto": "Photo de profil",
+    "photoPreview": "Aperçu de la photo",
+    "removePhoto": "Supprimer la photo",
+    "photoFormats": "Formats acceptés : JPG, PNG, GIF, WEBP (max 5MB)",
+    "uploadingPhoto": "Upload en cours...",
+    "photoUploaded": "Photo uploadée avec succès",
+    "portfolio": "Portfolio / Site web",
+    "biography": "Biographie",
+    "biographyPlaceholder": "Présentez-vous, parlez de votre parcours, de vos projets, de vos inspirations... (minimum 50 caractères)",
+    "charactersMinimum": "caractères (minimum 50)",
+    "acceptTerms": {
+      "prefix": "J'accepte les",
+      "terms": "conditions d'utilisation",
+      "and": "et la",
+      "privacy": "politique de confidentialité"
+    },
+    "newsletter": "Je souhaite recevoir les actualités et nouveautés par email",
+    "registering": "Inscription en cours...",
+    "createAccount": "Créer mon compte",
+    "professionalNote": {
+      "title": "Note importante :",
+      "description": "Les comptes professionnels sont soumis à validation par notre équipe sous 24-48h."
+    }
+  },
+  
+  "errors": {
+    "fileTooLarge": {
+      "title": "Fichier trop volumineux",
+      "description": "La taille du fichier ne doit pas dépasser 5MB"
+    },
+    "invalidFileType": {
+      "title": "Type de fichier invalide",
+      "description": "Seuls les fichiers JPG, PNG, GIF et WEBP sont acceptés"
+    },
+    "emailRequired": "L'email est requis",
+    "emailInvalid": "L'email n'est pas valide",
+    "passwordRequired": "Le mot de passe est requis",
+    "loginError": "Erreur de connexion",
+    "invalidCredentials": "Email ou mot de passe incorrect",
+    "nameMinLength": "Le nom doit contenir au moins 2 caractères",
+    "firstNameMinLength": "Le prénom doit contenir au moins 2 caractères",
+    "passwordMinLength": "Le mot de passe doit contenir au moins 8 caractères",
+    "passwordMismatch": "Les mots de passe ne correspondent pas",
+    "birthDateRequired": "La date de naissance est requise",
+    "minAge": "Vous devez avoir au moins 13 ans pour vous inscrire",
+    "wilayaRequired": "Veuillez sélectionner votre wilaya",
+    "acceptTermsRequired": "Vous devez accepter les conditions d'utilisation",
+    "sectorRequired": "Le secteur d'activité est requis pour les professionnels",
+    "biographyMinLength": "La biographie doit contenir au moins 50 caractères",
+    "validationError": "Erreur de validation",
+    "correctErrors": "Veuillez corriger les erreurs ci-dessous",
+    "uploadError": "Erreur lors de l'upload de la photo",
+    "uploadUrlNotReceived": "L'URL de la photo n'a pas été reçue",
+    "uploadTitle": "Erreur d'upload",
+    "uploadContinueWithoutPhoto": "L'upload de la photo a échoué. Nous continuons l'inscription sans photo.",
+    "registrationError": "Erreur lors de l'inscription",
+    "registrationErrorDescription": "Une erreur est survenue. Veuillez réessayer.",
+    "wilayasLoadError": "Erreur lors du chargement des wilayas"
+  },
+  
+  "success": {
+    "loginTitle": "Connexion réussie",
+    "loginDescription": "Bienvenue sur Timlilit Culture !",
+    "registrationTitle": "Inscription réussie",
+    "professionalRegistration": "Votre compte professionnel a été créé et est en attente de validation.",
+    "visitorRegistration": "Votre compte a été créé avec succès. Bienvenue !"
+  },
+  
+  "sectors": {
+    "artiste": "Artiste",
+    "artisan": "Artisan",
+    "organisateur": "Organisateur d'événements",
+    "guide": "Guide touristique",
+    "chercheur": "Chercheur / Académique",
+    "journaliste": "Journaliste culturel",
+    "conservateur": "Conservateur de musée",
+    "editeur": "Éditeur",
+    "producteur": "Producteur",
+    "autre": "Autre"
+  }
+},
   "categories": {
     "heritageTypes": {
       "berber": "Architecture berbère",
@@ -10,7 +130,18 @@
       "modern": "Monument moderne"
     },
     "workTypes": {
-      "unknown": "Type inconnu"
+      "unknown": "Type inconnu",
+      "articles": "Articles",
+      "cinema": "Cinéma",
+      "literature": "Littérature",
+      "musicalAlbum": "Album musical",
+      "scientificArticle": "Article scientifique",
+      "art": "Art",
+      "artwork": "Œuvre d'art",
+      "artworks": "Œuvres d'art",
+      "music": "Musique",
+      "musicalAlbums": "Albums musicaux",
+      "scientificArticles": "Articles scientifiques"
     }
   },
   "common": {

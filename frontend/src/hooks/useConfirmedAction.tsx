@@ -1,7 +1,7 @@
 // hooks/useConfirmedAction.ts
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/components/UI/use-toast';
 
 // Types
 interface UseConfirmedActionOptions {
@@ -262,7 +262,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle 
-} from '@/components/ui/alert-dialog';
+} from '@/components/UI/alert-dialog';
 
 interface UseConfirmedActionWithDialogOptions extends UseConfirmedActionOptions {
   dialogTitle?: string | ((...args: any[]) => string);

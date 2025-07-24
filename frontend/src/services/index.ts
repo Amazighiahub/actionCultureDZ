@@ -50,7 +50,7 @@ export const services = {
   dashboard: dashboardService,
 } as const;
 
-// Export des types
+// Export des types depuis leurs fichiers d'origine
 export type {
   // Auth types
   RegisterVisitorData,
@@ -69,6 +69,32 @@ export type {
   PrivacySettings
 } from './user.service';
 
+// Import et ré-export des types Oeuvre
+export type {
+  // Types de base
+  Oeuvre,
+  CreateOeuvreCompleteDTO,
+  CreateOeuvreResponse,
+  IntervenantSearchResult,
+  CheckUserByEmailResponse,
+  IntervenantExistant,
+  NouvelIntervenant,
+  EditeurOeuvre,
+  CreateOeuvreBackendDTO,
+  // Types alias
+  CreateOeuvreData,
+  UpdateOeuvreData,
+  // Types additionnels
+  OeuvreStatistics,
+  ShareLinks,
+  SearchOeuvresParams
+} from './oeuvre.service';
+
+// Export des types Media
+export type {
+  Media
+} from '@/types/models/media.types';
+
 export type {
   // Metadata types
   Materiau,
@@ -84,19 +110,7 @@ export type {
   Commune,
   Localite,
   Tag,
- 
 } from '@/types';
-
-export type {
-  // Oeuvre types
-  Oeuvre,
-  CreateOeuvreData,
-  UpdateOeuvreData,
-  Media,
-  OeuvreStatistics,
-  ShareLinks,
-  SearchOeuvresParams
-} from './oeuvre.service';
 
 export type {
   // Evenement types
@@ -167,7 +181,7 @@ export type {
   Programme,
   CreateProgrammeData,
   UpdateProgrammeData,
-  Intervenant,
+  
   ReorderData,
   ExportOptions as ProgrammeExportOptions
 } from './programme.service';
@@ -178,7 +192,7 @@ export type {
   ChunkUploadResponse,
   CompleteChunkUploadData,
   UploadInfo,
-  UploadOptions
+  
 } from './upload.service';
 
 export type {
