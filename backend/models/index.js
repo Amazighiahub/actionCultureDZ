@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { createDatabaseConnection } = require('../config/database');
+const { Sequelize } = require('sequelize');
 
 // Fonction d'import des données géographiques modifiée
 async function importData(models) {
@@ -85,7 +86,11 @@ async function importData(models) {
 // Fonction utilitaire pour charger un modèle de manière sécurisée
 const loadModelSafely = (modelPath, modelName, sequelize) => {
   try {
-    const model = require(modelPath)(sequelize);
+    const factory = require(modelPath);
+    const model = typeof factory === 'function'
+      ? factory(sequelize, Sequelize.DataTypes)   // <— passe DataTypes
+      : factory; // si le fichier fait un define() au require
+
     console.log(`✅ Modèle ${modelName} chargé avec succès`);
     return model;
   } catch (error) {

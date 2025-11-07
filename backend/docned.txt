@@ -1,0 +1,61 @@
+MySQL server
+
+CREATE DATABASE actionculture CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'actionuser'@'localhost' IDENTIFIED BY 'actiondz';
+GRANT ALL PRIVILEGES ON actionculture.* TO 'actionuser'@'localhost';
+FLUSH PRIVILEGES;
+EXIT;
+
+
+config distante 
+sudo nano /etc/mysql/mysql.conf.d/mysqld.cnf
+
+installation php et extension 
+sudo apt install -y php-fpm
+ php-mysql
+ php-cli 
+php-curl 
+php-zip 
+php-gd 
+php-mbstring 
+php-xml 
+php-bcmath
+ php-intl
+
+
+Installer Nginx 
+sudo apt install -y Nginx
+config -- server {
+    listen 80;
+    server_name _;
+
+    root /var/www/actionculture/public;
+    index index.php index.html;
+
+    access_log /var/log/nginx/actionculture_access.log;
+    error_log /var/log/nginx/actionculture_error.log;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/run/php/php-fpm.sock;
+    }
+
+    location ~ /\.ht {
+        deny all;
+    }
+}
+
+sudo ln -s /etc/nginx/sites-available/actionculture /etc/nginx/sites-enabled/
+
+
+Creation de dossier Web : 
+sudo mkdir -p /var/www/actionculture/public
+echo "<?php phpinfo(); ?>" | sudo tee /var/www/actionculture/public/index.php
+sudo chown -R www-data:www-data /var/www/actionculture
+
+installation phpmyadmin
+

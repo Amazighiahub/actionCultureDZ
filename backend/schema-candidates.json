@@ -1,0 +1,1120 @@
+{
+  "evenement": {
+    "columns": [],
+    "sources": [
+      "controllers\\DashboardController.js:raw-sql",
+      "controllers\\ProfessionnelController.js:raw-sql",
+      "scripts\\updateEventsImages.js:raw-sql"
+    ]
+  },
+  "type_evenement": {
+    "columns": [],
+    "sources": [
+      "scripts\\updateEventsImages.js:raw-sql"
+    ]
+  },
+  "media": {
+    "columns": [],
+    "sources": [
+      "scripts\\updateEventsImages.js:raw-sql"
+    ]
+  },
+  "evenements": {
+    "columns": [],
+    "sources": [
+      "routes\\evenementRoutes.js:raw-sql"
+    ]
+  },
+  "information_schema": {
+    "columns": [],
+    "sources": [
+      "config\\database.js:raw-sql",
+      "models\\index.js:raw-sql"
+    ]
+  },
+  "UserRole": {
+    "columns": [
+      "id",
+      "id_role",
+      "id_user"
+    ],
+    "sources": [
+      "models\\users\\UserRole.js:sequelize.define"
+    ]
+  },
+  "User": {
+    "columns": [
+      "accepte_conditions",
+      "accepte_newsletter",
+      "adresse",
+      "biographie",
+      "certifications",
+      "date_naissance",
+      "date_validation",
+      "derniere_connexion",
+      "documents_fournis",
+      "double_authentification",
+      "email",
+      "email_public",
+      "email_verifie",
+      "entreprise",
+      "id_type_user",
+      "id_user",
+      "id_user_validate",
+      "ip_inscription",
+      "langue_preferee",
+      "nom",
+      "nombre_commentaires",
+      "nombre_evenements",
+      "nombre_favoris",
+      "nombre_oeuvres",
+      "notifications_commentaires",
+      "notifications_email",
+      "notifications_evenements",
+      "notifications_favoris",
+      "notifications_newsletter",
+      "notifications_push",
+      "password",
+      "photo_url",
+      "prenom",
+      "profil_public",
+      "raison_rejet",
+      "reseaux_sociaux",
+      "score_reputation",
+      "sexe",
+      "siret",
+      "site_web",
+      "specialites",
+      "statut",
+      "statut_validation",
+      "telephone",
+      "telephone_public",
+      "telephone_verifie",
+      "theme_prefere",
+      "wilaya_residence"
+    ],
+    "sources": [
+      "models\\users\\User.js:sequelize.define"
+    ]
+  },
+  "Role": {
+    "columns": [
+      "description",
+      "id_role",
+      "nom_role"
+    ],
+    "sources": [
+      "models\\users\\Role.js:sequelize.define"
+    ]
+  },
+  "Vestige": {
+    "columns": [
+      "description",
+      "detailLieuId",
+      "id",
+      "nom",
+      "type"
+    ],
+    "sources": [
+      "models\\places\\Vestige.js:sequelize.define"
+    ]
+  },
+  "Service": {
+    "columns": [
+      "id",
+      "id_detailLieu",
+      "nom"
+    ],
+    "sources": [
+      "models\\places\\Service.js:sequelize.define"
+    ]
+  },
+  "Monument": {
+    "columns": [
+      "description",
+      "detailLieuId",
+      "id",
+      "nom",
+      "type"
+    ],
+    "sources": [
+      "models\\places\\Monument.js:sequelize.define"
+    ]
+  },
+  "LieuMedia": {
+    "columns": [
+      "description",
+      "id",
+      "id_lieu",
+      "type",
+      "url"
+    ],
+    "sources": [
+      "models\\places\\LieuMedia.js:sequelize.define"
+    ]
+  },
+  "Lieu": {
+    "columns": [
+      "adresse",
+      "communeId",
+      "dairaId",
+      "id_lieu",
+      "latitude",
+      "localiteId",
+      "longitude",
+      "nom",
+      "typeLieu",
+      "wilayaId"
+    ],
+    "sources": [
+      "models\\places\\Lieu.js:sequelize.define"
+    ]
+  },
+  "DetailLieu": {
+    "columns": [
+      "description",
+      "histoire",
+      "horaires",
+      "id_detailLieu",
+      "id_lieu",
+      "noteMoyenne",
+      "referencesHistoriques"
+    ],
+    "sources": [
+      "models\\places\\DetailLieu.js:sequelize.define"
+    ]
+  },
+  "TypeOrganisation": {
+    "columns": [
+      "id_type_organisation",
+      "nom"
+    ],
+    "sources": [
+      "models\\organisations\\TypeOrganisation.js:sequelize.define"
+    ]
+  },
+  "Organisation": {
+    "columns": [
+      "description",
+      "id_organisation",
+      "id_type_organisation",
+      "nom",
+      "site_web"
+    ],
+    "sources": [
+      "models\\organisations\\Organisation.js:sequelize.define"
+    ]
+  },
+  "Editeur": {
+    "columns": [
+      "actif",
+      "adresse",
+      "annee_creation",
+      "description",
+      "email",
+      "id_editeur",
+      "nom",
+      "pays",
+      "site_web",
+      "telephone",
+      "type_editeur",
+      "ville"
+    ],
+    "sources": [
+      "models\\organisations\\Editeur.js:sequelize.define"
+    ]
+  },
+  "OeuvreArt": {
+    "columns": [
+      "dimensions",
+      "id_oeuvre",
+      "id_oeuvre_art",
+      "support",
+      "technique"
+    ],
+    "sources": [
+      "models\\oeuvres\\OeuvreArt.js:sequelize.define"
+    ]
+  },
+  "Oeuvre": {
+    "columns": [
+      "annee_creation",
+      "date_validation",
+      "description",
+      "id_langue",
+      "id_oeuvre",
+      "id_oeuvre_originale",
+      "id_type_oeuvre",
+      "prix",
+      "raison_rejet",
+      "saisi_par",
+      "statut",
+      "titre",
+      "validateur_id"
+    ],
+    "sources": [
+      "models\\oeuvres\\Oeuvre.js:sequelize.define"
+    ]
+  },
+  "Livre": {
+    "columns": [
+      "id_genre",
+      "id_livre",
+      "id_oeuvre",
+      "isbn",
+      "nb_pages"
+    ],
+    "sources": [
+      "models\\oeuvres\\Livre.js:sequelize.define"
+    ]
+  },
+  "Film": {
+    "columns": [
+      "duree_minutes",
+      "id_film",
+      "id_genre",
+      "id_oeuvre",
+      "realisateur"
+    ],
+    "sources": [
+      "models\\oeuvres\\Film.js:sequelize.define"
+    ]
+  },
+  "Artisanat": {
+    "columns": [
+      "date_creation",
+      "dimensions",
+      "id_artisanat",
+      "id_materiau",
+      "id_oeuvre",
+      "id_technique",
+      "poids",
+      "prix"
+    ],
+    "sources": [
+      "models\\oeuvres\\Artisanat.js:sequelize.define"
+    ]
+  },
+  "ArticleScientifique": {
+    "columns": [
+      "citation_apa",
+      "date_acceptation",
+      "date_publication",
+      "date_soumission",
+      "doi",
+      "id_article_scientifique",
+      "id_genre",
+      "id_oeuvre",
+      "impact_factor",
+      "issn",
+      "journal",
+      "numero",
+      "open_access",
+      "pages",
+      "peer_reviewed",
+      "resume",
+      "url_arxiv",
+      "url_hal",
+      "volume"
+    ],
+    "sources": [
+      "models\\oeuvres\\ArticleScientifique.js:sequelize.define"
+    ]
+  },
+  "ArticleBlock": {
+    "columns": [
+      "article_type",
+      "contenu",
+      "contenu_json",
+      "id_article",
+      "id_block",
+      "id_media",
+      "metadata",
+      "ordre",
+      "type_block",
+      "visible"
+    ],
+    "sources": [
+      "models\\oeuvres\\ArticleBlock.js:sequelize.define"
+    ]
+  },
+  "Article": {
+    "columns": [
+      "auteur",
+      "commentaires_moderation",
+      "contenu_complet",
+      "date_derniere_modification",
+      "date_publication",
+      "fact_checked",
+      "id_article",
+      "id_genre",
+      "id_oeuvre",
+      "langue_contenu",
+      "nb_mots",
+      "nb_partages",
+      "nb_vues",
+      "niveau_credibilite",
+      "note_qualite",
+      "paywall",
+      "resume",
+      "source",
+      "sous_titre",
+      "statut",
+      "temps_lecture",
+      "url_archive",
+      "url_source"
+    ],
+    "sources": [
+      "models\\oeuvres\\Article.js:sequelize.define"
+    ]
+  },
+  "AlbumMusical": {
+    "columns": [
+      "duree",
+      "id_album",
+      "id_genre",
+      "id_oeuvre",
+      "label"
+    ],
+    "sources": [
+      "models\\oeuvres\\AlbumMusical.js:sequelize.define"
+    ]
+  },
+  "Vue": {
+    "columns": [
+      "date_vue",
+      "device_type",
+      "duree_secondes",
+      "id_entite",
+      "id_user",
+      "id_vue",
+      "ip_address",
+      "is_unique",
+      "pays",
+      "referer",
+      "session_id",
+      "type_entite",
+      "user_agent",
+      "ville"
+    ],
+    "sources": [
+      "models\\misc\\Vue.js:sequelize.define"
+    ]
+  },
+  "Specialite": {
+    "columns": [
+      "actif",
+      "categorie",
+      "description",
+      "id_specialite",
+      "nom_specialite"
+    ],
+    "sources": [
+      "models\\misc\\Specialite.js:sequelize.define"
+    ]
+  },
+  "Signalement": {
+    "columns": [
+      "action_prise",
+      "date_signalement",
+      "date_traitement",
+      "description",
+      "id_entite",
+      "id_moderateur",
+      "id_signalement",
+      "id_user_signalant",
+      "motif",
+      "notes_moderation",
+      "priorite",
+      "statut",
+      "type_entite",
+      "url_screenshot"
+    ],
+    "sources": [
+      "models\\misc\\Signalement.js:sequelize.define"
+    ]
+  },
+  "QRScan": {
+    "columns": [
+      "date_scan",
+      "device_type",
+      "id_qr_code",
+      "id_scan",
+      "id_user",
+      "ip_address",
+      "is_unique",
+      "latitude",
+      "longitude",
+      "pays",
+      "user_agent",
+      "ville"
+    ],
+    "sources": [
+      "models\\misc\\QRScan.js:sequelize.define"
+    ]
+  },
+  "QRCode": {
+    "columns": [
+      "actif",
+      "code_unique",
+      "date_creation",
+      "date_expiration",
+      "id_lieu",
+      "id_qr_code",
+      "qr_image_url",
+      "url_destination"
+    ],
+    "sources": [
+      "models\\misc\\QRCode.js:sequelize.define"
+    ]
+  },
+  "Notification": {
+    "columns": [
+      "date_lecture",
+      "email_envoye",
+      "expire_le",
+      "id_evenement",
+      "id_notification",
+      "id_oeuvre",
+      "id_programme",
+      "id_user",
+      "lu",
+      "message",
+      "priorite",
+      "sms_envoye",
+      "titre",
+      "type_notification",
+      "url_action"
+    ],
+    "sources": [
+      "models\\misc\\Notification.js:sequelize.define"
+    ]
+  },
+  "Media": {
+    "columns": [
+      "alt_text",
+      "credit",
+      "description",
+      "droits_usage",
+      "duree",
+      "id_evenement",
+      "id_media",
+      "id_oeuvre",
+      "is_Principale",
+      "metadata",
+      "mime_type",
+      "ordre",
+      "qualite",
+      "tags",
+      "taille_fichier",
+      "thumbnail_url",
+      "titre",
+      "type_media",
+      "url",
+      "visible_public"
+    ],
+    "sources": [
+      "models\\misc\\Media.js:sequelize.define"
+    ]
+  },
+  "Intervenant": {
+    "columns": [
+      "actif",
+      "biographie",
+      "date_deces",
+      "date_naissance",
+      "email",
+      "id_intervenant",
+      "id_user",
+      "langues_parlees",
+      "lieu_deces",
+      "lieu_naissance",
+      "nom",
+      "organisation",
+      "pays_origine",
+      "photo_url",
+      "prenom",
+      "prix_distinctions",
+      "reseaux_sociaux",
+      "site_web",
+      "specialites",
+      "telephone",
+      "titre_professionnel",
+      "verifie",
+      "wikipedia_url"
+    ],
+    "sources": [
+      "models\\misc\\Intervenant.js:sequelize.define"
+    ]
+  },
+  "Favori": {
+    "columns": [
+      "date_ajout",
+      "id_entite",
+      "id_favori",
+      "id_user",
+      "notes",
+      "type_entite"
+    ],
+    "sources": [
+      "models\\misc\\Favori.js:sequelize.define"
+    ]
+  },
+  "EmailVerification": {
+    "columns": [
+      "expires_at",
+      "id",
+      "id_user",
+      "token",
+      "type",
+      "used_at"
+    ],
+    "sources": [
+      "models\\misc\\EmailVerification.js:sequelize.define"
+    ]
+  },
+  "CritiqueEvaluation": {
+    "columns": [
+      "commentaire",
+      "date_creation",
+      "date_modification",
+      "id_critique",
+      "id_oeuvre",
+      "id_user",
+      "note"
+    ],
+    "sources": [
+      "models\\misc\\CritiqueEvaluation.js:sequelize.define"
+    ]
+  },
+  "Commentaire": {
+    "columns": [
+      "commentaire_parent_id",
+      "contenu",
+      "id_commentaire",
+      "id_evenement",
+      "id_oeuvre",
+      "id_user",
+      "note_qualite",
+      "statut"
+    ],
+    "sources": [
+      "models\\misc\\Commentaire.js:sequelize.define"
+    ]
+  },
+  "AuditLog": {
+    "columns": [
+      "action",
+      "date_action",
+      "details",
+      "entity_id",
+      "entity_type",
+      "id_admin",
+      "id_log",
+      "ip_address",
+      "user_agent"
+    ],
+    "sources": [
+      "models\\misc\\AuditLog.js:sequelize.define"
+    ]
+  },
+  "Wilaya": {
+    "columns": [
+      "codeW",
+      "id_wilaya",
+      "nom",
+      "wilaya_name_ascii"
+    ],
+    "sources": [
+      "models\\geography\\Wilaya.js:sequelize.define"
+    ]
+  },
+  "Localite": {
+    "columns": [
+      "id_commune",
+      "id_localite",
+      "localite_name_ascii",
+      "nom"
+    ],
+    "sources": [
+      "models\\geography\\Localite.js:sequelize.define"
+    ]
+  },
+  "Daira": {
+    "columns": [
+      "daira_name_ascii",
+      "id_daira",
+      "nom",
+      "wilayaId"
+    ],
+    "sources": [
+      "models\\geography\\Daira.js:sequelize.define"
+    ]
+  },
+  "Commune": {
+    "columns": [
+      "commune_name_ascii",
+      "dairaId",
+      "id_commune",
+      "nom"
+    ],
+    "sources": [
+      "models\\geography\\Commune.js:sequelize.define"
+    ]
+  },
+  "TypeEvenement": {
+    "columns": [
+      "description",
+      "id_type_evenement",
+      "nom_type"
+    ],
+    "sources": [
+      "models\\events\\TypeEvenement.js:sequelize.define"
+    ]
+  },
+  "Programme": {
+    "columns": [
+      "date_programme",
+      "description",
+      "diffusion_live",
+      "duree_estimee",
+      "enregistrement_autorise",
+      "heure_debut",
+      "heure_fin",
+      "id_evenement",
+      "id_lieu",
+      "id_programme",
+      "langue_principale",
+      "lieu_specifique",
+      "materiel_requis",
+      "nb_participants_max",
+      "niveau_requis",
+      "notes_organisateur",
+      "ordre",
+      "statut",
+      "support_numerique",
+      "titre",
+      "traduction_disponible",
+      "type_activite"
+    ],
+    "sources": [
+      "models\\events\\Programme.js:sequelize.define"
+    ]
+  },
+  "Parcours": {
+    "columns": [
+      "date_creation",
+      "description",
+      "difficulte",
+      "distance_km",
+      "duree_estimee",
+      "id_createur",
+      "id_parcours",
+      "nom_parcours",
+      "point_arrivee",
+      "point_depart",
+      "statut",
+      "theme"
+    ],
+    "sources": [
+      "models\\events\\Parcours.js:sequelize.define"
+    ]
+  },
+  "Evenement": {
+    "columns": [
+      "accessibilite",
+      "age_minimum",
+      "capacite_max",
+      "certificat_delivre",
+      "contact_email",
+      "contact_telephone",
+      "date_debut",
+      "date_fin",
+      "date_limite_inscription",
+      "description",
+      "duree_totale",
+      "est_complet",
+      "id_evenement",
+      "id_lieu",
+      "id_type_evenement",
+      "id_user",
+      "image_url",
+      "inscription_requise",
+      "nom_evenement",
+      "nombre_inscrits",
+      "nombre_participants",
+      "note_moyenne",
+      "statut",
+      "tarif"
+    ],
+    "sources": [
+      "models\\events\\Evenement.js:sequelize.define"
+    ]
+  },
+  "TypeUser": {
+    "columns": [
+      "description",
+      "id_type_user",
+      "nom_type"
+    ],
+    "sources": [
+      "models\\classifications\\TypeUser.js:sequelize.define"
+    ]
+  },
+  "TypeOeuvre": {
+    "columns": [
+      "description",
+      "id_type_oeuvre",
+      "nom_type"
+    ],
+    "sources": [
+      "models\\classifications\\TypeOeuvre.js:sequelize.define"
+    ]
+  },
+  "Technique": {
+    "columns": [
+      "description",
+      "id_technique",
+      "nom"
+    ],
+    "sources": [
+      "models\\classifications\\Technique.js:sequelize.define"
+    ]
+  },
+  "TagMotCle": {
+    "columns": [
+      "id_tag",
+      "nom"
+    ],
+    "sources": [
+      "models\\classifications\\TagMotCle.js:sequelize.define"
+    ]
+  },
+  "Materiau": {
+    "columns": [
+      "description",
+      "id_materiau",
+      "nom"
+    ],
+    "sources": [
+      "models\\classifications\\Materiau.js:sequelize.define"
+    ]
+  },
+  "Langue": {
+    "columns": [
+      "code",
+      "id_langue",
+      "nom"
+    ],
+    "sources": [
+      "models\\classifications\\Langue.js:sequelize.define"
+    ]
+  },
+  "Genre": {
+    "columns": [
+      "actif",
+      "couleur",
+      "description",
+      "id_genre",
+      "nom",
+      "ordre_affichage"
+    ],
+    "sources": [
+      "models\\classifications\\Genre.js:sequelize.define"
+    ]
+  },
+  "Categorie": {
+    "columns": [
+      "actif",
+      "couleur",
+      "description",
+      "icone",
+      "id_categorie",
+      "nom",
+      "ordre_affichage"
+    ],
+    "sources": [
+      "models\\classifications\\Categorie.js:sequelize.define"
+    ]
+  },
+  "UserSpecialite": {
+    "columns": [
+      "annees_experience",
+      "date_ajout",
+      "id_specialite",
+      "id_user",
+      "niveau"
+    ],
+    "sources": [
+      "models\\associations\\UserSpecialite.js:sequelize.define"
+    ]
+  },
+  "UserOrganisation": {
+    "columns": [
+      "actif",
+      "departement",
+      "id",
+      "id_organisation",
+      "id_superviseur",
+      "id_user",
+      "role"
+    ],
+    "sources": [
+      "models\\associations\\UserOrganisation.js:sequelize.define"
+    ]
+  },
+  "UserCertification": {
+    "columns": [
+      "date_expiration",
+      "date_obtention",
+      "date_verification",
+      "fichier_certificat",
+      "id_certification",
+      "id_user",
+      "nom_certification",
+      "numero_certification",
+      "organisme",
+      "url_verification",
+      "verifie"
+    ],
+    "sources": [
+      "models\\associations\\UserCertification.js:sequelize.define"
+    ]
+  },
+  "TypeOeuvreGenre": {
+    "columns": [
+      "actif",
+      "id_genre",
+      "id_type_oeuvre",
+      "ordre_affichage"
+    ],
+    "sources": [
+      "models\\associations\\TypeOeuvreGenre.js:sequelize.define"
+    ]
+  },
+  "ProgrammeIntervenant": {
+    "columns": [
+      "biographie_courte",
+      "date_confirmation",
+      "duree_intervention",
+      "frais_deplacement",
+      "honoraires",
+      "id_programme",
+      "id_user",
+      "logement_requis",
+      "materiel_technique",
+      "notes_organisateur",
+      "ordre_intervention",
+      "role_intervenant",
+      "statut_confirmation",
+      "sujet_intervention"
+    ],
+    "sources": [
+      "models\\associations\\ProgrammeIntervenant.js:sequelize.define"
+    ]
+  },
+  "ParcoursLieu": {
+    "columns": [
+      "distance_precedent",
+      "duree_estimee",
+      "id_evenement",
+      "id_lieu",
+      "id_parcours",
+      "id_parcours_lieu",
+      "notes",
+      "ordre",
+      "temps_trajet",
+      "transport_mode"
+    ],
+    "sources": [
+      "models\\associations\\ParcoursLieu.js:sequelize.define"
+    ]
+  },
+  "OeuvreUser": {
+    "columns": [
+      "description_role",
+      "id",
+      "id_oeuvre",
+      "id_type_user",
+      "id_user",
+      "ordre_apparition",
+      "personnage",
+      "role_principal"
+    ],
+    "sources": [
+      "models\\associations\\OeuvreUser.js:sequelize.define"
+    ]
+  },
+  "OeuvreTag": {
+    "columns": [
+      "id",
+      "id_oeuvre",
+      "id_tag"
+    ],
+    "sources": [
+      "models\\associations\\OeuvreTag.js:sequelize.define"
+    ]
+  },
+  "OeuvreIntervenant": {
+    "columns": [
+      "description_role",
+      "id",
+      "id_intervenant",
+      "id_oeuvre",
+      "id_type_user",
+      "ordre_apparition",
+      "personnage",
+      "role_principal"
+    ],
+    "sources": [
+      "models\\associations\\OeuvreIntervenant.js:sequelize.define"
+    ]
+  },
+  "OeuvreEditeur": {
+    "columns": [
+      "date_edition",
+      "format",
+      "id",
+      "id_editeur",
+      "id_oeuvre",
+      "isbn_editeur",
+      "langue_edition",
+      "notes",
+      "prix_vente",
+      "role_editeur",
+      "statut_edition",
+      "tirage"
+    ],
+    "sources": [
+      "models\\associations\\OeuvreEditeur.js:sequelize.define"
+    ]
+  },
+  "OeuvreCategorie": {
+    "columns": [
+      "id",
+      "id_categorie",
+      "id_oeuvre"
+    ],
+    "sources": [
+      "models\\associations\\OeuvreCategorie.js:sequelize.define"
+    ]
+  },
+  "GenreCategorie": {
+    "columns": [
+      "actif",
+      "id_categorie",
+      "id_genre",
+      "ordre_affichage"
+    ],
+    "sources": [
+      "models\\associations\\GenreCategorie.js:sequelize.define"
+    ]
+  },
+  "EvenementUser": {
+    "columns": [
+      "certificat_genere",
+      "commentaire_evaluation",
+      "date_certificat",
+      "date_inscription",
+      "date_validation",
+      "evaluation_evenement",
+      "id_EventUser",
+      "id_evenement",
+      "id_user",
+      "notes",
+      "presence_confirmee",
+      "recommande",
+      "role_participation",
+      "statut_participation",
+      "valide_par"
+    ],
+    "sources": [
+      "models\\associations\\EvenementUser.js:sequelize.define"
+    ]
+  },
+  "EvenementOrganisation": {
+    "columns": [
+      "contribution",
+      "id",
+      "id_evenement",
+      "id_organisation",
+      "invitation_vip",
+      "logo_affichage",
+      "mention_communication",
+      "role"
+    ],
+    "sources": [
+      "models\\associations\\EvenementOrganisation.js:sequelize.define"
+    ]
+  },
+  "EvenementOeuvre": {
+    "columns": [
+      "description_presentation",
+      "duree_presentation",
+      "id_EventOeuvre",
+      "id_evenement",
+      "id_oeuvre",
+      "id_presentateur",
+      "ordre_presentation"
+    ],
+    "sources": [
+      "models\\associations\\EvenementOeuvre.js:sequelize.define"
+    ]
+  },
+  "au": {
+    "columns": [],
+    "sources": [
+      "controllers\\userRoleController.js:raw-sql"
+    ]
+  },
+  "oeuvre": {
+    "columns": [],
+    "sources": [
+      "controllers\\DashboardController.js:raw-sql",
+      "controllers\\ProfessionnelController.js:raw-sql"
+    ]
+  },
+  "vue": {
+    "columns": [],
+    "sources": [
+      "controllers\\ProfessionnelController.js:raw-sql"
+    ]
+  },
+  "favori": {
+    "columns": [],
+    "sources": [
+      "controllers\\DashboardController.js:raw-sql",
+      "controllers\\ProfessionnelController.js:raw-sql"
+    ]
+  },
+  "evenement_user": {
+    "columns": [],
+    "sources": [
+      "controllers\\ProfessionnelController.js:raw-sql"
+    ]
+  },
+  "evenementusers": {
+    "columns": [],
+    "sources": [
+      "controllers\\evenementController.js:raw-sql"
+    ]
+  },
+  "favoris": {
+    "columns": [],
+    "sources": [
+      "controllers\\ArtisanatController.js:raw-sql"
+    ]
+  },
+  "oeuvretags": {
+    "columns": [],
+    "sources": [
+      "controllers\\ArtisanatController.js:raw-sql"
+    ]
+  },
+  "tagmotcle": {
+    "columns": [],
+    "sources": [
+      "controllers\\ArtisanatController.js:raw-sql"
+    ]
+  }
+}
