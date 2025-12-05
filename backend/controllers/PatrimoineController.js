@@ -1,5 +1,5 @@
 const { Op } = require('sequelize');
-const QRCode = require('qrcode'); // ✅ AJOUT DE L'IMPORT MANQUANT
+const QRCode = require('qrcode');
 
 class PatrimoineController {
   constructor(models) {
@@ -24,8 +24,16 @@ class PatrimoineController {
             required: true
           },
           {
-            model: this.models.Wilaya,
-            attributes: ['nom']
+            model: this.models.Commune,
+            attributes: ['nom'],
+            include: [{
+              model: this.models.Daira,
+              attributes: ['nom'],
+              include: [{
+                model: this.models.Wilaya,
+                attributes: ['nom']
+              }]
+            }]
           },
           {
             model: this.models.LieuMedia,
@@ -42,6 +50,8 @@ class PatrimoineController {
       const sitesAvecQR = await Promise.all(
         sites.map(async (site) => {
           const siteData = site.toJSON();
+          // Aplatir la hiérarchie géographique
+          siteData.wilaya = siteData.Commune?.Daira?.Wilaya || null;
           const qrCodeData = this.createQRCodeData(siteData);
           siteData.qrCode = await this.genererQRCode(qrCodeData);
           return siteData;
@@ -75,276 +85,144 @@ class PatrimoineController {
       const totalMonuments = await this.models.Monument?.count() || 0;
       const totalVestiges = await this.models.Vestige?.count() || 0;
 
-      const sitesParWilaya = await this.models.Lieu.findAll({
+      // Sites par wilaya (via hiérarchie Commune → Daira → Wilaya)
+      const sitesParWilaya = await this.models.Wilaya.findAll({
         attributes: [
-          'wilayaId',
-          [this.sequelize.fn('COUNT', this.sequelize.col('Lieu.id_lieu')), 'total']
+          'id_wilaya',
+          'nom',
+          [this.sequelize.fn('COUNT', 
+            this.sequelize.fn('DISTINCT', this.sequelize.col('Dairas.Communes.Lieux.id_lieu'))
+          ), 'total']
         ],
-        include: [
-          {
-            model: this.models.Wilaya,
-            attributes: ['nom']
-          },
-          {
-            model: this.models.DetailLieu,
-            required: true,
-            attributes: []
-          }
-        ],
-        group: ['wilayaId', 'Wilaya.id_wilaya'],
-        order: [[this.sequelize.literal('total'), 'DESC']]
+        include: [{
+          model: this.models.Daira,
+          attributes: [],
+          include: [{
+            model: this.models.Commune,
+            attributes: [],
+            include: [{
+              model: this.models.Lieu,
+              attributes: [],
+              include: [{
+                model: this.models.DetailLieu,
+                required: true,
+                attributes: []
+              }]
+            }]
+          }]
+        }],
+        group: ['Wilaya.id_wilaya'],
+        order: [[this.sequelize.literal('total'), 'DESC']],
+        subQuery: false
       });
 
       // Sites les plus populaires (simulation)
       const topSites = await this.models.Lieu.findAll({
         include: [
-          { model: this.models.DetailLieu, required: true },
-          { model: this.models.Wilaya }
+          {
+            model: this.models.DetailLieu,
+            required: true,
+            attributes: ['noteMoyenne']
+          },
+          {
+            model: this.models.Commune,
+            attributes: ['nom']
+          }
         ],
-        limit: 5,
-        order: [['createdAt', 'DESC']]
+        order: [
+          [this.models.DetailLieu, 'noteMoyenne', 'DESC NULLS LAST']
+        ],
+        limit: 5
       });
-
-      // Ajouter les QR codes aux top sites
-      const topSitesAvecQR = await Promise.all(
-        topSites.map(async (site) => {
-          const siteData = site.toJSON();
-          siteData.qrCode = await this.genererQRCode(this.createQRCodeData(siteData));
-          siteData.visites = Math.floor(Math.random() * 10000) + 1000; // Simulation
-          return siteData;
-        })
-      );
 
       res.json({
         success: true,
         data: {
-          totaux: {
-            sites: totalSites,
-            monuments: totalMonuments,
-            vestiges: totalVestiges,
-            wilayas: sitesParWilaya.length
-          },
-          sitesParWilaya: sitesParWilaya,
-          topSites: topSitesAvecQR,
-          derniereMiseAJour: new Date()
+          totalSites,
+          totalMonuments,
+          totalVestiges,
+          sitesParWilaya: sitesParWilaya.map(w => ({
+            wilaya: w.nom,
+            total: parseInt(w.dataValues.total) || 0
+          })),
+          topSites
         }
       });
 
     } catch (error) {
-      console.error('Erreur lors de la récupération des statistiques:', error);
+      console.error('Erreur lors des statistiques:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Erreur serveur lors de la récupération des statistiques' 
+        error: 'Erreur serveur' 
       });
     }
   }
 
-  // Récupérer tous les sites patrimoniaux
-  async getAllSitesPatrimoniaux(req, res) {
+  // ========================================================================
+  // GESTION DES MONUMENTS
+  // ========================================================================
+
+  async getAllMonuments(req, res) {
     try {
-      const { page = 1, limit = 12, wilaya, search, includeQR = false } = req.query;
+      const { 
+        page = 1, 
+        limit = 10,
+        type,
+        wilaya,
+        search
+      } = req.query;
+
       const offset = (page - 1) * limit;
       const where = {};
 
-      if (wilaya) {
-        where.wilayaId = wilaya;
+      if (type) {
+        where.type = type;
       }
 
       if (search) {
-        where[Op.or] = [
-          { nom: { [Op.like]: '%' + search + '%' } },
-          { adresse: { [Op.like]: '%' + search + '%' } }
-        ];
+        where.nom = { [Op.like]: `%${search}%` };
       }
 
-      const sites = await this.models.Lieu.findAndCountAll({
-        where: where,
-        include: [
-          { 
-            model: this.models.Wilaya,
-            attributes: ['nom']
-          },
-          { 
-            model: this.models.DetailLieu,
-            required: true,
-            include: [
-              { 
-                model: this.models.Monument,
-                required: false
-              },
-              { 
-                model: this.models.Vestige,
-                required: false
-              }
-            ]
-          },
-          { 
-            model: this.models.LieuMedia,
-            where: { type: 'image' },
-            required: false,
-            limit: 3
-          }
-        ],
-        limit: parseInt(limit),
-        offset: parseInt(offset),
-        order: [['nom', 'ASC']],
-        distinct: true
-      });
-
-      // Ajouter les QR codes si demandé
-      let sitesData = sites.rows;
-      if (includeQR === 'true') {
-        sitesData = await Promise.all(
-          sites.rows.map(async (site) => {
-            const siteData = site.toJSON();
-            siteData.qrCode = await this.genererQRCode(this.createQRCodeData(siteData));
-            return siteData;
-          })
-        );
-      }
-
-      res.json({
-        success: true,
-        data: {
-          sites: sitesData,
-          pagination: {
-            total: sites.count,
-            page: parseInt(page),
-            pages: Math.ceil(sites.count / limit),
-            limit: parseInt(limit)
-          }
-        }
-      });
-
-    } catch (error) {
-      console.error('Erreur lors de la récupération des sites patrimoniaux:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: 'Erreur serveur lors de la récupération des sites patrimoniaux' 
-      });
-    }
-  }
-
-  // Récupérer les détails complets d'un site patrimonial
-  async getSitePatrimonialById(req, res) {
-    try {
-      const { id } = req.params;
-
-      const site = await this.models.Lieu.findByPk(id, {
-        include: [
-          { 
-            model: this.models.Wilaya,
-            attributes: ['nom']
-          },
-          { 
-            model: this.models.Daira,
-            attributes: ['nom']
-          },
-          { 
+      // Configuration des includes avec filtrage par wilaya si nécessaire
+      const includeDetailLieu = {
+        model: this.models.DetailLieu,
+        required: true,
+        include: [{
+          model: this.models.Lieu,
+          required: true,
+          include: [{
             model: this.models.Commune,
-            attributes: ['nom']
-          },
-          { 
-            model: this.models.DetailLieu,
-            include: [
-              { 
-                model: this.models.Monument,
-                attributes: ['nom', 'description', 'type']
-              },
-              { 
-                model: this.models.Vestige,
-                attributes: ['nom', 'description', 'type']
-              }
-            ]
-          },
-          { 
-            model: this.models.LieuMedia
-          },
-          { 
-            model: this.models.Service,
-            attributes: ['nom']
-          }
-        ]
-      });
-
-      if (!site) {
-        return res.status(404).json({ 
-          success: false, 
-          error: 'Site patrimonial non trouvé' 
-        });
-      }
-
-      // Générer le QR code pour ce site
-      const siteData = site.toJSON();
-      const qrCodeData = this.createQRCodeData(siteData);
-      siteData.qrCode = await this.genererQRCode(qrCodeData);
-
-      // Ajouter des informations supplémentaires
-      siteData.visitInfo = {
-        bestTimeToVisit: this.getBestTimeToVisit(site),
-        estimatedDuration: this.getEstimatedVisitDuration(site),
-        accessibility: this.getAccessibilityInfo(site),
-        nearbyAttractions: await this.getNearbyAttractions(site)
+            required: true,
+            include: [{
+              model: this.models.Daira,
+              required: true,
+              include: [{
+                model: this.models.Wilaya,
+                required: true,
+                where: wilaya ? { id_wilaya: wilaya } : {}
+              }]
+            }]
+          }]
+        }]
       };
 
-      res.json({
-        success: true,
-        data: siteData
-      });
-
-    } catch (error) {
-      console.error('Erreur lors de la récupération du site patrimonial:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: 'Erreur serveur lors de la récupération du site patrimonial' 
-      });
-    }
-  }
-
-  // Récupérer les monuments par type
-  async getMonumentsByType(req, res) {
-    try {
-      const { type } = req.params;
-      const { page = 1, limit = 12 } = req.query;
-      const offset = (page - 1) * limit;
-
-      if (!this.models.Monument) {
-        return res.status(501).json({
-          success: false,
-          error: 'Modèle Monument non disponible'
-        });
-      }
-
       const monuments = await this.models.Monument.findAndCountAll({
-        where: { type: type },
-        include: [
-          {
-            model: this.models.DetailLieu,
-            include: [
-              {
-                model: this.models.Lieu,
-                include: [
-                  { model: this.models.Wilaya, attributes: ['nom'] }
-                ]
-              }
-            ]
-          }
-        ],
+        where,
+        include: [includeDetailLieu],
         limit: parseInt(limit),
         offset: parseInt(offset),
-        order: [['nom', 'ASC']]
+        order: [['createdAt', 'DESC']],
+        distinct: true
       });
 
       res.json({
         success: true,
         data: {
           monuments: monuments.rows,
-          type: type,
           pagination: {
             total: monuments.count,
             page: parseInt(page),
-            pages: Math.ceil(monuments.count / limit),
-            limit: parseInt(limit)
+            pages: Math.ceil(monuments.count / limit)
           }
         }
       });
@@ -353,55 +231,190 @@ class PatrimoineController {
       console.error('Erreur lors de la récupération des monuments:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Erreur serveur lors de la récupération des monuments' 
+        error: 'Erreur serveur' 
       });
     }
   }
 
-  // Récupérer les vestiges par type
-  async getVestigesByType(req, res) {
+  async createMonument(req, res) {
     try {
-      const { type } = req.params;
-      const { page = 1, limit = 12 } = req.query;
-      const offset = (page - 1) * limit;
+      const { nom, type, description, id_detail_lieu } = req.body;
 
-      if (!this.models.Vestige) {
-        return res.status(501).json({
+      // Vérifier que le DetailLieu existe
+      const detailLieu = await this.models.DetailLieu.findByPk(id_detail_lieu);
+      if (!detailLieu) {
+        return res.status(404).json({
           success: false,
-          error: 'Modèle Vestige non disponible'
+          error: 'DetailLieu non trouvé'
         });
       }
 
+      const monument = await this.models.Monument.create({
+        nom,
+        type,
+        description,
+        id_detail_lieu // Utiliser snake_case
+      });
+
+      // Récupérer le monument créé avec ses relations
+      const monumentComplet = await this.models.Monument.findByPk(monument.id, {
+        include: [{
+          model: this.models.DetailLieu,
+          include: [{
+            model: this.models.Lieu,
+            include: [{
+              model: this.models.Commune,
+              include: [{
+                model: this.models.Daira,
+                include: [{ model: this.models.Wilaya }]
+              }]
+            }]
+          }]
+        }]
+      });
+
+      res.status(201).json({
+        success: true,
+        message: 'Monument créé avec succès',
+        data: monumentComplet
+      });
+
+    } catch (error) {
+      console.error('Erreur lors de la création du monument:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Erreur serveur' 
+      });
+    }
+  }
+
+  async updateMonument(req, res) {
+    try {
+      const { id } = req.params;
+      const { nom, type, description } = req.body;
+
+      const monument = await this.models.Monument.findByPk(id);
+      if (!monument) {
+        return res.status(404).json({
+          success: false,
+          error: 'Monument non trouvé'
+        });
+      }
+
+      await monument.update({
+        nom: nom || monument.nom,
+        type: type || monument.type,
+        description: description || monument.description
+      });
+
+      res.json({
+        success: true,
+        message: 'Monument mis à jour avec succès',
+        data: monument
+      });
+
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Erreur serveur' 
+      });
+    }
+  }
+
+  async deleteMonument(req, res) {
+    try {
+      const { id } = req.params;
+
+      const monument = await this.models.Monument.findByPk(id);
+      if (!monument) {
+        return res.status(404).json({
+          success: false,
+          error: 'Monument non trouvé'
+        });
+      }
+
+      await monument.destroy();
+
+      res.json({
+        success: true,
+        message: 'Monument supprimé avec succès'
+      });
+
+    } catch (error) {
+      console.error('Erreur lors de la suppression:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Erreur serveur' 
+      });
+    }
+  }
+
+  // ========================================================================
+  // GESTION DES VESTIGES
+  // ========================================================================
+
+  async getAllVestiges(req, res) {
+    try {
+      const { 
+        page = 1, 
+        limit = 10,
+        type,
+        wilaya,
+        search
+      } = req.query;
+
+      const offset = (page - 1) * limit;
+      const where = {};
+
+      if (type) {
+        where.type = type;
+      }
+
+      if (search) {
+        where.nom = { [Op.like]: `%${search}%` };
+      }
+
+      // Configuration des includes avec filtrage par wilaya si nécessaire
+      const includeDetailLieu = {
+        model: this.models.DetailLieu,
+        required: true,
+        include: [{
+          model: this.models.Lieu,
+          required: true,
+          include: [{
+            model: this.models.Commune,
+            required: true,
+            include: [{
+              model: this.models.Daira,
+              required: true,
+              include: [{
+                model: this.models.Wilaya,
+                required: true,
+                where: wilaya ? { id_wilaya: wilaya } : {}
+              }]
+            }]
+          }]
+        }]
+      };
+
       const vestiges = await this.models.Vestige.findAndCountAll({
-        where: { type: type },
-        include: [
-          {
-            model: this.models.DetailLieu,
-            include: [
-              {
-                model: this.models.Lieu,
-                include: [
-                  { model: this.models.Wilaya, attributes: ['nom'] }
-                ]
-              }
-            ]
-          }
-        ],
+        where,
+        include: [includeDetailLieu],
         limit: parseInt(limit),
         offset: parseInt(offset),
-        order: [['nom', 'ASC']]
+        order: [['createdAt', 'DESC']],
+        distinct: true
       });
 
       res.json({
         success: true,
         data: {
           vestiges: vestiges.rows,
-          type: type,
           pagination: {
             total: vestiges.count,
             page: parseInt(page),
-            pages: Math.ceil(vestiges.count / limit),
-            limit: parseInt(limit)
+            pages: Math.ceil(vestiges.count / limit)
           }
         }
       });
@@ -410,206 +423,56 @@ class PatrimoineController {
       console.error('Erreur lors de la récupération des vestiges:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Erreur serveur lors de la récupération des vestiges' 
+        error: 'Erreur serveur' 
       });
     }
   }
 
-  // Recherche patrimoine
-  async recherchePatrimoine(req, res) {
+  async createVestige(req, res) {
     try {
-      const { q, wilaya, limit = 20 } = req.query;
-      const where = {};
+      const { nom, type, description, id_detail_lieu } = req.body;
 
-      if (wilaya) {
-        where.wilayaId = wilaya;
-      }
-
-      if (q) {
-        where[Op.or] = [
-          { nom: { [Op.like]: '%' + q + '%' } },
-          { adresse: { [Op.like]: '%' + q + '%' } }
-        ];
-      }
-
-      const resultats = await this.models.Lieu.findAll({
-        where: where,
-        include: [
-          { model: this.models.Wilaya, attributes: ['nom'] },
-          { 
-            model: this.models.DetailLieu,
-            include: [
-              { model: this.models.Monument, required: false },
-              { model: this.models.Vestige, required: false }
-            ]
-          }
-        ],
-        limit: parseInt(limit),
-        order: [['nom', 'ASC']]
-      });
-
-      res.json({
-        success: true,
-        data: {
-          resultats: resultats,
-          count: resultats.length
-        }
-      });
-
-    } catch (error) {
-      console.error('Erreur lors de la recherche patrimoine:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: 'Erreur serveur lors de la recherche' 
-      });
-    }
-  }
-
-  // Galerie d'un site
-  async getGalerieSite(req, res) {
-    try {
-      const { id } = req.params;
-      const { type = 'all', page = 1, limit = 20 } = req.query;
-      const offset = (page - 1) * limit;
-
-      const where = { id_lieu: id };
-      if (type !== 'all') {
-        where.type = type;
-      }
-
-      const medias = await this.models.LieuMedia.findAndCountAll({
-        where: where,
-        limit: parseInt(limit),
-        offset: parseInt(offset),
-        order: [['createdAt', 'DESC']]
-      });
-
-      res.json({
-        success: true,
-        data: {
-          medias: medias.rows,
-          pagination: {
-            total: medias.count,
-            page: parseInt(page),
-            pages: Math.ceil(medias.count / limit),
-            limit: parseInt(limit)
-          }
-        }
-      });
-
-    } catch (error) {
-      console.error('Erreur lors de la récupération de la galerie:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: 'Erreur serveur lors de la récupération de la galerie' 
-      });
-    }
-  }
-
-  // Parcours patrimoniaux
-  async getParcoursPatrimoniaux(req, res) {
-    try {
-      const { wilaya, limit = 10, page = 1 } = req.query;
-      const offset = (page - 1) * limit;
-      
-      if (!this.models.Parcours) {
-        return res.json({
-          success: true,
-          data: {
-            parcours: [],
-            pagination: {
-              total: 0,
-              page: parseInt(page),
-              pages: 0,
-              limit: parseInt(limit)
-            }
-          },
-          message: 'Module parcours en développement'
+      // Vérifier que le DetailLieu existe
+      const detailLieu = await this.models.DetailLieu.findByPk(id_detail_lieu);
+      if (!detailLieu) {
+        return res.status(404).json({
+          success: false,
+          error: 'DetailLieu non trouvé'
         });
       }
 
-      const where = {};
-      const lieuWhere = wilaya ? { wilayaId: wilaya } : {};
-      
-      const parcours = await this.models.Parcours.findAndCountAll({
+      const vestige = await this.models.Vestige.create({
+        nom,
+        type,
+        description,
+        id_detail_lieu // Utiliser snake_case
+      });
+
+      // Récupérer le vestige créé avec ses relations
+      const vestigeComplet = await this.models.Vestige.findByPk(vestige.id, {
         include: [{
-          model: this.models.Lieu,
-          through: {
-            model: this.models.ParcoursLieu,
-            attributes: ['ordre', 'duree_estimee', 'distance_precedent']
-          },
-          where: lieuWhere,
-          include: [
-            { model: this.models.Wilaya, attributes: ['nom'] },
-            { 
-              model: this.models.DetailLieu,
-              attributes: ['description', 'histoire'],
-              include: [
-                { model: this.models.Monument },
-                { model: this.models.Vestige }
-              ]
-            },
-            { 
-              model: this.models.LieuMedia,
-              where: { type: 'image' },
-              required: false,
-              limit: 1
-            }
-          ]
-        }],
-        limit: parseInt(limit),
-        offset: parseInt(offset),
-        order: [['createdAt', 'DESC']],
-        distinct: true
+          model: this.models.DetailLieu,
+          include: [{
+            model: this.models.Lieu,
+            include: [{
+              model: this.models.Commune,
+              include: [{
+                model: this.models.Daira,
+                include: [{ model: this.models.Wilaya }]
+              }]
+            }]
+          }]
+        }]
       });
 
-      // Enrichir avec QR codes et statistiques
-      const parcoursEnrichis = await Promise.all(
-        parcours.rows.map(async (p) => {
-          const parcoursData = p.toJSON();
-          
-          // Calculer la distance totale et durée
-          let distanceTotale = 0;
-          let dureeTotale = 0;
-          
-          parcoursData.Lieux.forEach((lieu) => {
-            if (lieu.ParcoursLieu.distance_precedent) {
-              distanceTotale += lieu.ParcoursLieu.distance_precedent;
-            }
-            if (lieu.ParcoursLieu.duree_estimee) {
-              dureeTotale += lieu.ParcoursLieu.duree_estimee;
-            }
-          });
-          
-          parcoursData.distanceTotale = distanceTotale;
-          parcoursData.dureeTotale = dureeTotale;
-          parcoursData.qrCode = await this.genererQRCode(
-            JSON.stringify({
-              type: 'parcours_patrimonial',
-              id: p.id_parcours,
-              nom: p.nom
-            })
-          );
-          
-          return parcoursData;
-        })
-      );
-
-      res.json({
+      res.status(201).json({
         success: true,
-        data: {
-          parcours: parcoursEnrichis,
-          pagination: {
-            total: parcours.count,
-            page: parseInt(page),
-            pages: Math.ceil(parcours.count / limit),
-            limit: parseInt(limit)
-          }
-        }
+        message: 'Vestige créé avec succès',
+        data: vestigeComplet
       });
 
     } catch (error) {
-      console.error('Erreur récupération parcours patrimoniaux:', error);
+      console.error('Erreur lors de la création du vestige:', error);
       res.status(500).json({ 
         success: false, 
         error: 'Erreur serveur' 
@@ -618,187 +481,149 @@ class PatrimoineController {
   }
 
   // ========================================================================
-  // GESTION QR CODES
+  // GESTION COMPLÈTE DU PATRIMOINE
   // ========================================================================
 
-  // Générer une carte de visite numérique pour un site
-  async genererCarteVisite(req, res) {
-    try {
-      const { id } = req.params;
-      const { format = 'vcard' } = req.query;
-
-      const site = await this.models.Lieu.findByPk(id, {
-        include: [
-          { model: this.models.Wilaya },
-          { model: this.models.DetailLieu },
-          { model: this.models.Service }
-        ]
-      });
-
-      if (!site) {
-        return res.status(404).json({ 
-          success: false, 
-          error: 'Site non trouvé' 
-        });
-      }
-
-      if (format === 'vcard') {
-        const vcard = this.genererVCard(site);
-        res.setHeader('Content-Type', 'text/vcard');
-        res.setHeader('Content-Disposition', `attachment; filename="${site.nom}.vcf"`);
-        res.send(vcard);
-      } else {
-        // Format JSON avec QR code
-        const carteVisite = {
-          site: {
-            nom: site.nom,
-            adresse: site.adresse,
-            wilaya: site.Wilaya?.nom,
-            coordinates: {
-              latitude: site.latitude,
-              longitude: site.longitude
-            },
-            description: site.DetailLieu?.description,
-            horaires: site.DetailLieu?.horaires,
-            services: site.Services?.map(s => s.nom)
-          },
-          qrCode: await this.genererQRCode(this.createQRCodeData(site.toJSON())),
-          googleMapsUrl: `https://www.google.com/maps?q=${site.latitude},${site.longitude}`,
-          generatedAt: new Date().toISOString()
-        };
-
-        res.json({
-          success: true,
-          data: carteVisite
-        });
-      }
-
-    } catch (error) {
-      console.error('Erreur lors de la génération de la carte de visite:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: 'Erreur serveur' 
-      });
-    }
-  }
-
-  // Télécharger le QR code d'un site
-  async downloadQRCode(req, res) {
-    try {
-      const { id } = req.params;
-      const { size = 300, format = 'png' } = req.query;
-
-      const site = await this.models.Lieu.findByPk(id, {
-        include: [{ model: this.models.Wilaya }]
-      });
-
-      if (!site) {
-        return res.status(404).json({ 
-          success: false, 
-          error: 'Site non trouvé' 
-        });
-      }
-
-      const qrCodeData = this.createQRCodeData(site.toJSON());
-      
-      if (format === 'svg') {
-        const qrSvg = await QRCode.toString(qrCodeData, {
-          type: 'svg',
-          width: parseInt(size),
-          errorCorrectionLevel: 'H'
-        });
-        
-        res.setHeader('Content-Type', 'image/svg+xml');
-        res.setHeader('Content-Disposition', `attachment; filename="${site.nom}-qrcode.svg"`);
-        res.send(qrSvg);
-      } else {
-        const qrBuffer = await QRCode.toBuffer(qrCodeData, {
-          type: 'png',
-          width: parseInt(size),
-          errorCorrectionLevel: 'H',
-          margin: 1
-        });
-        
-        res.setHeader('Content-Type', 'image/png');
-        res.setHeader('Content-Disposition', `attachment; filename="${site.nom}-qrcode.png"`);
-        res.send(qrBuffer);
-      }
-
-    } catch (error) {
-      console.error('Erreur lors du téléchargement du QR code:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: 'Erreur serveur' 
-      });
-    }
-  }
-
-  // ========================================================================
-  // CRUD SITES PATRIMONIAUX
-  // ========================================================================
-
-  async createSitePatrimonial(req, res) {
+  async createSitePatrimonialComplet(req, res) {
     const transaction = await this.sequelize.transaction();
-
+    
     try {
-      const { lieu, details, monument, vestige, services = [], medias = [] } = req.body;
+      const {
+        lieu,
+        detailsLieu,
+        monuments = [],
+        vestiges = [],
+        services = [],
+        medias = []
+      } = req.body;
 
-      // Validation : monument OU vestige, pas les deux
-      if (monument && vestige) {
+      // 1. Créer le lieu avec validation des coordonnées GPS
+      if (!lieu.nom || !lieu.communeId || !lieu.latitude || !lieu.longitude) {
         await transaction.rollback();
         return res.status(400).json({
           success: false,
-          error: 'Un site ne peut être à la fois monument et vestige'
+          error: 'Données du lieu incomplètes'
         });
       }
 
-      // 1. Créer le lieu
+      // Validation GPS
+      if (lieu.latitude < -90 || lieu.latitude > 90) {
+        await transaction.rollback();
+        return res.status(400).json({
+          success: false,
+          error: 'Latitude invalide'
+        });
+      }
+
+      if (lieu.longitude < -180 || lieu.longitude > 180) {
+        await transaction.rollback();
+        return res.status(400).json({
+          success: false,
+          error: 'Longitude invalide'
+        });
+      }
+
       const nouveauLieu = await this.models.Lieu.create({
-        ...lieu,
-        typeLieu: lieu.typeLieu || 'Commune'
+        nom: lieu.nom,
+        typeLieu: lieu.typeLieu || 'Commune',
+        communeId: lieu.communeId,
+        localiteId: lieu.localiteId,
+        adresse: lieu.adresse,
+        latitude: lieu.latitude,
+        longitude: lieu.longitude
       }, { transaction });
 
-      // 2. Créer les détails
+      // 2. Créer les détails du lieu
       const nouveauxDetails = await this.models.DetailLieu.create({
-        ...details,
         id_lieu: nouveauLieu.id_lieu,
-        noteMoyenne: 0
+        description: detailsLieu.description,
+        horaires: detailsLieu.horaires,
+        histoire: detailsLieu.histoire,
+        referencesHistoriques: detailsLieu.referencesHistoriques,
+        noteMoyenne: null
       }, { transaction });
 
-      // 3. Créer monument OU vestige
-      let siteType = null;
-      if (monument && this.models.Monument) {
-        siteType = await this.models.Monument.create({
-          ...monument,
-          detailLieuId: nouveauxDetails.id_detailLieu
-        }, { transaction });
-      } else if (vestige && this.models.Vestige) {
-        siteType = await this.models.Vestige.create({
-          ...vestige,
-          detailLieuId: nouveauxDetails.id_detailLieu
+      // 3. Créer les monuments (avec snake_case)
+      for (const monument of monuments) {
+        await this.models.Monument.create({
+          nom: monument.nom,
+          type: monument.type,
+          description: monument.description,
+          id_detail_lieu: nouveauxDetails.id_detailLieu
         }, { transaction });
       }
 
-      // 4. Ajouter les services
+      // 4. Créer les vestiges (avec snake_case)
+      for (const vestige of vestiges) {
+        await this.models.Vestige.create({
+          nom: vestige.nom,
+          type: vestige.type,
+          description: vestige.description,
+          id_detail_lieu: nouveauxDetails.id_detailLieu
+        }, { transaction });
+      }
+
+      // 5. Créer les services (liés directement au lieu)
       for (const service of services) {
         await this.models.Service.create({
-          nom: service,
-          id_lieu: nouveauLieu.id_lieu
+          nom: service.nom,
+          id_lieu: nouveauLieu.id_lieu,
+          disponible: service.disponible !== undefined ? service.disponible : true,
+          description: service.description
         }, { transaction });
       }
 
-      // 5. Ajouter les médias
+      // 6. Créer les médias
       for (const media of medias) {
         await this.models.LieuMedia.create({
-          ...media,
-          id_lieu: nouveauLieu.id_lieu
+          id_lieu: nouveauLieu.id_lieu,
+          type: media.type,
+          url: media.url,
+          description: media.description
         }, { transaction });
       }
+
+      // 7. Générer et sauvegarder le QR Code
+      const qrCodeData = {
+        id: nouveauLieu.id_lieu,
+        nom: nouveauLieu.nom,
+        type: 'patrimoine'
+      };
+
+      const qrCodeUrl = await this.genererQRCode(qrCodeData);
+      
+      await this.models.QrCode.create({
+        id_lieu: nouveauLieu.id_lieu,
+        code_unique: `PAT-${Date.now()}-${nouveauLieu.id_lieu}`,
+        url_destination: `/patrimoine/site/${nouveauLieu.id_lieu}`,
+        qr_image_url: qrCodeUrl,
+        actif: true
+      }, { transaction });
 
       await transaction.commit();
 
-      // Récupérer le site complet
-      const siteComplet = await this.getSiteComplet(nouveauLieu.id_lieu);
+      // Récupérer le site complet créé
+      const siteComplet = await this.models.Lieu.findByPk(nouveauLieu.id_lieu, {
+        include: [
+          { 
+            model: this.models.Commune,
+            include: [{
+              model: this.models.Daira,
+              include: [{ model: this.models.Wilaya }]
+            }]
+          },
+          { 
+            model: this.models.DetailLieu,
+            include: [
+              { model: this.models.Monument },
+              { model: this.models.Vestige }
+            ]
+          },
+          { model: this.models.Service },
+          { model: this.models.LieuMedia },
+          { model: this.models.QrCode }
+        ]
+      });
 
       res.status(201).json({
         success: true,
@@ -808,7 +633,7 @@ class PatrimoineController {
 
     } catch (error) {
       await transaction.rollback();
-      console.error('Erreur création site patrimonial:', error);
+      console.error('Erreur lors de la création du site:', error);
       res.status(500).json({ 
         success: false, 
         error: 'Erreur serveur lors de la création' 
@@ -816,99 +641,135 @@ class PatrimoineController {
     }
   }
 
-  async updateSitePatrimonial(req, res) {
-    const transaction = await this.sequelize.transaction();
+  // ========================================================================
+  // RECHERCHE ET FILTRAGE
+  // ========================================================================
 
+  async searchPatrimoine(req, res) {
     try {
-      const { id } = req.params;
-      const updates = req.body;
+      const { 
+        q,
+        type,
+        wilaya,
+        includeMonuments = true,
+        includeVestiges = true,
+        page = 1,
+        limit = 20
+      } = req.query;
 
-      // Vérifier l'existence
-      const lieu = await this.models.Lieu.findByPk(id);
-      if (!lieu) {
-        return res.status(404).json({
-          success: false,
-          error: 'Site non trouvé'
-        });
+      const offset = (page - 1) * limit;
+      const results = {
+        lieux: [],
+        monuments: [],
+        vestiges: []
+      };
+
+      // Configuration de la recherche pour les lieux
+      const lieuWhere = {};
+      if (q) {
+        lieuWhere[Op.or] = [
+          { nom: { [Op.like]: `%${q}%` } },
+          { adresse: { [Op.like]: `%${q}%` } }
+        ];
       }
 
-      // Mettre à jour le lieu
-      if (updates.lieu) {
-        await lieu.update(updates.lieu, { transaction });
-      }
-
-      // Mettre à jour les détails
-      if (updates.details) {
-        await this.models.DetailLieu.update(
-          updates.details,
-          { where: { id_lieu: id }, transaction }
-        );
-      }
-
-      // Gérer les services
-      if (updates.services) {
-        // Supprimer les anciens
-        await this.models.Service.destroy({
-          where: { id_lieu: id },
-          transaction
-        });
-        
-        // Créer les nouveaux
-        for (const service of updates.services) {
-          await this.models.Service.create({
-            nom: service,
-            id_lieu: id
-          }, { transaction });
+      // Include avec filtrage par wilaya via la hiérarchie
+      const lieuInclude = [
+        {
+          model: this.models.DetailLieu,
+          required: true
+        },
+        {
+          model: this.models.Commune,
+          required: true,
+          include: [{
+            model: this.models.Daira,
+            required: true,
+            include: [{
+              model: this.models.Wilaya,
+              required: true,
+              where: wilaya ? { id_wilaya: wilaya } : {}
+            }]
+          }]
         }
-      }
+      ];
 
-      await transaction.commit();
-
-      const siteComplet = await this.getSiteComplet(id);
-      
-      res.json({
-        success: true,
-        message: 'Site mis à jour avec succès',
-        data: siteComplet
+      // Rechercher les lieux
+      const lieux = await this.models.Lieu.findAll({
+        where: lieuWhere,
+        include: lieuInclude,
+        limit: parseInt(limit),
+        offset: parseInt(offset)
       });
+      results.lieux = lieux;
 
-    } catch (error) {
-      await transaction.rollback();
-      console.error('Erreur mise à jour site:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: 'Erreur serveur' 
-      });
-    }
-  }
+      // Rechercher les monuments si demandé
+      if (includeMonuments === 'true') {
+        const monumentWhere = q ? { nom: { [Op.like]: `%${q}%` } } : {};
+        if (type) monumentWhere.type = type;
 
-  async deleteSitePatrimonial(req, res) {
-    const transaction = await this.sequelize.transaction();
-
-    try {
-      const { id } = req.params;
-
-      const lieu = await this.models.Lieu.findByPk(id);
-      if (!lieu) {
-        return res.status(404).json({
-          success: false,
-          error: 'Site non trouvé'
+        const monuments = await this.models.Monument.findAll({
+          where: monumentWhere,
+          include: [{
+            model: this.models.DetailLieu,
+            include: [{
+              model: this.models.Lieu,
+              include: [{
+                model: this.models.Commune,
+                include: [{
+                  model: this.models.Daira,
+                  include: [{
+                    model: this.models.Wilaya,
+                    where: wilaya ? { id_wilaya: wilaya } : {}
+                  }]
+                }]
+              }]
+            }]
+          }],
+          limit: parseInt(limit)
         });
+        results.monuments = monuments;
       }
 
-      // La suppression en cascade devrait gérer les relations
-      await lieu.destroy({ transaction });
+      // Rechercher les vestiges si demandé
+      if (includeVestiges === 'true') {
+        const vestigeWhere = q ? { nom: { [Op.like]: `%${q}%` } } : {};
+        if (type) vestigeWhere.type = type;
 
-      await transaction.commit();
+        const vestiges = await this.models.Vestige.findAll({
+          where: vestigeWhere,
+          include: [{
+            model: this.models.DetailLieu,
+            include: [{
+              model: this.models.Lieu,
+              include: [{
+                model: this.models.Commune,
+                include: [{
+                  model: this.models.Daira,
+                  include: [{
+                    model: this.models.Wilaya,
+                    where: wilaya ? { id_wilaya: wilaya } : {}
+                  }]
+                }]
+              }]
+            }]
+          }],
+          limit: parseInt(limit)
+        });
+        results.vestiges = vestiges;
+      }
 
       res.json({
         success: true,
-        message: 'Site supprimé avec succès'
+        data: results,
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit)
+        }
       });
 
     } catch (error) {
-      await transaction.rollback();
-      console.error('Erreur suppression site:', error);
+      console.error('Erreur lors de la recherche:', error);
       res.status(500).json({ 
         success: false, 
         error: 'Erreur serveur' 
@@ -917,449 +778,177 @@ class PatrimoineController {
   }
 
   // ========================================================================
-  // MÉTHODES UTILITAIRES
+  // QR CODES
   // ========================================================================
 
   async genererQRCode(data) {
     try {
-      const options = {
-        errorCorrectionLevel: 'H',
-        type: 'image/png',
-        quality: 0.92,
-        margin: 1,
-        color: {
-          dark: '#1a1a1a',
-          light: '#FFFFFF'
-        },
-        width: 300
-      };
-
-      return await QRCode.toDataURL(data, options);
+      const qrCodeData = JSON.stringify(data);
+      const qrCodeUrl = await QRCode.toDataURL(qrCodeData);
+      return qrCodeUrl;
     } catch (error) {
-      console.error('Erreur génération QR code:', error);
-      return null;
+      console.error('Erreur lors de la génération du QR code:', error);
+      throw error;
     }
   }
 
-  // Créer les données du QR code pour un site
   createQRCodeData(site) {
-    return JSON.stringify({
-      type: 'patrimoine_site',
+    return {
       id: site.id_lieu,
       nom: site.nom,
-      wilaya: site.Wilaya?.nom,
+      adresse: site.adresse,
       coordinates: {
         lat: site.latitude,
         lng: site.longitude
       },
-      url: `${process.env.BASE_URL || 'https://actionculture.dz'}/patrimoine/sites/${site.id_lieu}`,
-      description: site.DetailLieu?.description?.substring(0, 100),
-      timestamp: new Date().toISOString()
-    });
-  }
-
-  genererVCard(site) {
-    return `BEGIN:VCARD
-VERSION:3.0
-FN:${site.nom}
-ORG:Patrimoine Culturel Algérien
-ADR:;;${site.adresse};${site.Commune?.nom || ''};${site.Wilaya?.nom || ''};;Algérie
-GEO:${site.latitude};${site.longitude}
-NOTE:${site.DetailLieu?.description || ''}
-URL:${process.env.BASE_URL}/patrimoine/sites/${site.id_lieu}
-END:VCARD`;
-  }
-
-  getBestTimeToVisit(site) {
-    // Logique pour déterminer le meilleur moment pour visiter
-    const saisons = {
-      'monument': 'Printemps et Automne',
-      'vestige': 'Automne et Hiver',
-      'musee': 'Toute l\'année'
-    };
-    
-    return {
-      saison: saisons[site.typeLieu] || 'Printemps et Automne',
-      horaires: site.DetailLieu?.horaires || 'Non spécifié',
-      conseil: 'Évitez les heures de forte chaleur en été'
+      wilaya: site.wilaya?.nom || site.Commune?.Daira?.Wilaya?.nom,
+      type: 'patrimoine',
+      url: `/patrimoine/site/${site.id_lieu}`
     };
   }
 
-  getEstimatedVisitDuration(site) {
-    let duration = 30; // minutes de base
-    
-    if (site.DetailLieu?.Monument) duration += 30;
-    if (site.DetailLieu?.Vestige) duration += 45;
-    if (site.Services?.length > 3) duration += 30;
-    
-    return {
-      minimum: duration,
-      recommande: duration * 1.5,
-      avecGuide: duration * 2
-    };
-  }
-
-  getAccessibilityInfo(site) {
-    const hasAccessibility = site.Services?.some(s => 
-      s.nom.toLowerCase().includes('accessible') || 
-      s.nom.toLowerCase().includes('handicap')
-    );
-    
-    return {
-      wheelchairAccessible: hasAccessibility,
-      parkingAvailable: site.Services?.some(s => s.nom.toLowerCase().includes('parking')),
-      publicTransport: site.Services?.some(s => s.nom.toLowerCase().includes('transport')),
-      guidedTours: site.Services?.some(s => s.nom.toLowerCase().includes('guide'))
-    };
-  }
-
-  async getNearbyAttractions(site) {
+  async scanQRCode(req, res) {
     try {
-      const nearby = await this.models.Lieu.findAll({
-        attributes: [
-          '*',
-          [
-            this.sequelize.literal(`
-              (6371 * acos(
-                cos(radians(${site.latitude})) * 
-                cos(radians(latitude)) * 
-                cos(radians(longitude) - radians(${site.longitude})) + 
-                sin(radians(${site.latitude})) * 
-                sin(radians(latitude))
-              ))
-            `),
-            'distance'
-          ]
-        ],
-        include: [
-          { model: this.models.DetailLieu, required: true }
-        ],
-        where: {
-          id_lieu: { [Op.ne]: site.id_lieu }
-        },
-        having: this.sequelize.literal('distance <= 5'), // 5km
-        order: [[this.sequelize.literal('distance'), 'ASC']],
-        limit: 3
-      });
-      
-      return nearby.map(n => ({
-        id: n.id_lieu,
-        nom: n.nom,
-        distance: parseFloat(n.dataValues.distance).toFixed(2),
-        type: n.typeLieu
-      }));
-    } catch (error) {
-      console.error('Erreur recherche attractions proches:', error);
-      return [];
-    }
-  }
+      const { code_unique, id_user } = req.body;
+      const { ip } = req;
+      const userAgent = req.headers['user-agent'];
 
-  async getSiteComplet(id) {
-    return await this.models.Lieu.findByPk(id, {
-      include: [
-        { model: this.models.Wilaya },
-        { model: this.models.Daira },
-        { model: this.models.Commune },
-        { 
-          model: this.models.DetailLieu,
-          include: [
-            { model: this.models.Monument },
-            { model: this.models.Vestige }
-          ]
-        },
-        { model: this.models.Service },
-        { model: this.models.LieuMedia }
-      ]
-    });
-  }
-
-  // ========================================================================
-  // MÉTHODES SUPPLÉMENTAIRES POUR COMPATIBILITÉ
-  // ========================================================================
-
-  async noterSite(req, res) {
-    res.status(501).json({
-      success: false,
-      error: 'Notation des sites non implémentée'
-    });
-  }
-
-  async ajouterAuxFavoris(req, res) {
-    res.status(501).json({
-      success: false,
-      error: 'Système de favoris non implémenté'
-    });
-  }
-
-  async retirerDesFavoris(req, res) {
-    res.status(501).json({
-      success: false,
-      error: 'Système de favoris non implémenté'
-    });
-  }
-
-  async updateHoraires(req, res) {
-    res.status(501).json({
-      success: false,
-      error: 'Mise à jour horaires non implémentée'
-    });
-  }
-
-  // ========================================================================
-  // MÉTHODES MANQUANTES POUR LES ROUTES
-  // ========================================================================
-
-  async uploadMedias(req, res) {
-    res.status(501).json({
-      success: false,
-      error: 'Upload médias non implémenté'
-    });
-  }
-
-  async deleteMedia(req, res) {
-    res.status(501).json({
-      success: false,
-      error: 'Suppression média non implémentée'
-    });
-  }
-
-  async getNearbyMobile(req, res) {
-    try {
-      const { lat, lng, radius = 5 } = req.query;
-      
-      const sites = await this.models.Lieu.findAll({
-        attributes: [
-          '*',
-          [
-            this.sequelize.literal(`
-              (6371 * acos(
-                cos(radians(${lat})) * 
-                cos(radians(latitude)) * 
-                cos(radians(longitude) - radians(${lng})) + 
-                sin(radians(${lat})) * 
-                sin(radians(latitude))
-              ))
-            `),
-            'distance'
-          ]
-        ],
-        include: [
-          { model: this.models.DetailLieu, required: true },
-          { model: this.models.Wilaya, attributes: ['nom'] },
-          { 
-            model: this.models.LieuMedia,
-            where: { type: 'image' },
-            required: false,
-            limit: 1
-          }
-        ],
-        having: this.sequelize.literal(`distance <= ${radius}`),
-        order: [[this.sequelize.literal('distance'), 'ASC']],
-        limit: 10
-      });
-
-      // Version optimisée pour mobile
-      const sitesOptimized = sites.map(site => ({
-        id: site.id_lieu,
-        nom: site.nom,
-        distance: parseFloat(site.dataValues.distance).toFixed(2),
-        image: site.LieuMedias?.[0]?.url || null,
-        type: site.typeLieu,
-        description: site.DetailLieu?.description?.substring(0, 100) + '...',
-        coordinates: {
-          lat: site.latitude,
-          lng: site.longitude
+      // Trouver le QR code
+      const qrCode = await this.models.QrCode.findOne({
+        where: { 
+          code_unique,
+          actif: true
         }
-      }));
-
-      res.json({
-        success: true,
-        data: sitesOptimized
       });
 
-    } catch (error) {
-      console.error('Erreur getNearbyMobile:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Erreur serveur'
-      });
-    }
-  }
-
-  async handleQRScan(req, res) {
-    try {
-      const { qrData } = req.body;
-      
-      // Parser les données du QR code
-      let data;
-      try {
-        data = JSON.parse(qrData);
-      } catch {
-        return res.status(400).json({
+      if (!qrCode) {
+        return res.status(404).json({
           success: false,
-          error: 'Format QR code invalide'
+          error: 'QR Code invalide ou inactif'
         });
       }
 
-      if (data.type === 'patrimoine_site' && data.id) {
-        const site = await this.models.Lieu.findByPk(data.id, {
-          include: [
-            { model: this.models.DetailLieu },
-            { model: this.models.Wilaya }
-          ]
-        });
-
-        if (site) {
-          // Log de la visite (optionnel)
-          // await this.logQRScan(req.user?.id_user, site.id_lieu);
-          
-          res.json({
-            success: true,
-            data: {
-              type: 'site_patrimonial',
-              site: {
-                id: site.id_lieu,
-                nom: site.nom,
-                description: site.DetailLieu?.description,
-                wilaya: site.Wilaya?.nom
-              }
-            }
-          });
-        } else {
-          res.status(404).json({
-            success: false,
-            error: 'Site non trouvé'
-          });
-        }
-      } else {
-        res.status(400).json({
+      // Vérifier l'expiration
+      if (qrCode.date_expiration && new Date(qrCode.date_expiration) < new Date()) {
+        return res.status(410).json({
           success: false,
-          error: 'Type de QR code non supporté'
+          error: 'QR Code expiré'
         });
       }
 
-    } catch (error) {
-      console.error('Erreur handleQRScan:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Erreur serveur'
+      // Enregistrer le scan
+      const scan = await this.models.QrScan.create({
+        id_qr_code: qrCode.id_qr_code,
+        id_user: id_user || null,
+        ip_address: ip,
+        user_agent: userAgent,
+        device_type: this.detectDeviceType(userAgent),
+        date_scan: new Date()
       });
-    }
-  }
 
-  async getOfflineDataPack(req, res) {
-    try {
-      const { wilaya } = req.params;
-      
-      const sites = await this.models.Lieu.findAll({
-        where: { wilayaId: wilaya },
+      // Récupérer les informations du lieu
+      const lieu = await this.models.Lieu.findByPk(qrCode.id_lieu, {
         include: [
-          { model: this.models.DetailLieu },
-          { model: this.models.Wilaya },
           { 
-            model: this.models.LieuMedia,
-            where: { type: 'image' },
-            required: false,
-            limit: 3
+            model: this.models.DetailLieu,
+            include: [
+              { model: this.models.Monument },
+              { model: this.models.Vestige }
+            ]
+          },
+          { model: this.models.Service },
+          { model: this.models.LieuMedia },
+          { 
+            model: this.models.Commune,
+            include: [{
+              model: this.models.Daira,
+              include: [{ model: this.models.Wilaya }]
+            }]
           }
-        ],
-        limit: 50 // Limiter pour la taille du pack
-      });
-
-      const offlinePack = {
-        version: Date.now(),
-        wilaya: wilaya,
-        sites: sites.map(site => ({
-          id: site.id_lieu,
-          nom: site.nom,
-          description: site.DetailLieu?.description,
-          latitude: site.latitude,
-          longitude: site.longitude,
-          images: site.LieuMedias?.map(m => m.url) || [],
-          qrCode: this.createQRCodeData(site.toJSON())
-        })),
-        metadata: {
-          count: sites.length,
-          generated: new Date().toISOString()
-        }
-      };
-
-      res.json({
-        success: true,
-        data: offlinePack
-      });
-
-    } catch (error) {
-      console.error('Erreur getOfflineDataPack:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Erreur serveur'
-      });
-    }
-  }
-
-  async importSitesPatrimoniaux(req, res) {
-    res.status(501).json({
-      success: false,
-      error: 'Import sites patrimoniaux non implémenté'
-    });
-  }
-
-  async exportSitesPatrimoniaux(req, res) {
-    try {
-      const { format = 'json' } = req.query;
-      
-      const sites = await this.models.Lieu.findAll({
-        include: [
-          { model: this.models.DetailLieu },
-          { model: this.models.Wilaya },
-          { model: this.models.Service }
         ]
       });
 
-      if (format === 'csv') {
-        const csv = this.convertSitesToCSV(sites);
-        res.setHeader('Content-Type', 'text/csv');
-        res.setHeader('Content-Disposition', 'attachment; filename="sites-patrimoniaux.csv"');
-        res.send(csv);
-      } else {
-        res.json({
-          success: true,
-          data: {
-            sites,
-            count: sites.length,
-            exported: new Date().toISOString()
-          }
-        });
-      }
+      res.json({
+        success: true,
+        data: lieu,
+        qrCode: {
+          url_destination: qrCode.url_destination
+        }
+      });
 
     } catch (error) {
-      console.error('Erreur exportSitesPatrimoniaux:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Erreur serveur'
+      console.error('Erreur lors du scan:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Erreur serveur' 
       });
     }
   }
 
-  // Méthode utilitaire pour convertir en CSV
-  convertSitesToCSV(sites) {
-    const headers = ['ID', 'Nom', 'Type', 'Adresse', 'Wilaya', 'Latitude', 'Longitude', 'Description'];
-    const rows = sites.map(site => [
-      site.id_lieu,
-      `"${site.nom}"`,
-      site.typeLieu,
-      `"${site.adresse}"`,
-      `"${site.Wilaya?.nom || ''}"`,
-      site.latitude,
-      site.longitude,
-      `"${site.DetailLieu?.description || ''}"`
-    ]);
+  detectDeviceType(userAgent) {
+    if (/mobile/i.test(userAgent)) return 'mobile';
+    if (/tablet/i.test(userAgent)) return 'tablet';
+    return 'desktop';
+  }
 
-    return [
-      headers.join(','),
-      ...rows.map(row => row.join(','))
-    ].join('\n');
+  // ========================================================================
+  // PARCOURS TOURISTIQUES
+  // ========================================================================
+
+  async getParcoursPatrimoniaux(req, res) {
+    try {
+      const { wilaya, theme, difficulte, page = 1, limit = 10 } = req.query;
+      const offset = (page - 1) * limit;
+      const where = {};
+
+      if (theme) where.theme = theme;
+      if (difficulte) where.difficulte = difficulte;
+
+      const parcours = await this.models.Parcours.findAndCountAll({
+        where,
+        include: [{
+          model: this.models.ParcoursLieu,
+          include: [{
+            model: this.models.Lieu,
+            include: [
+              { model: this.models.DetailLieu },
+              { 
+                model: this.models.Commune,
+                include: [{
+                  model: this.models.Daira,
+                  include: [{
+                    model: this.models.Wilaya,
+                    where: wilaya ? { id_wilaya: wilaya } : {}
+                  }]
+                }]
+              }
+            ]
+          }]
+        }],
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        order: [['createdAt', 'DESC']]
+      });
+
+      res.json({
+        success: true,
+        data: {
+          parcours: parcours.rows,
+          pagination: {
+            total: parcours.count,
+            page: parseInt(page),
+            pages: Math.ceil(parcours.count / limit)
+          }
+        }
+      });
+
+    } catch (error) {
+      console.error('Erreur:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Erreur serveur' 
+      });
+    }
   }
 }
 

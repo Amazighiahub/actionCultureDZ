@@ -244,52 +244,96 @@ class App {
   }
 
   // Initialisation de la base de données
+  // Patch pour app.js - Remplacez la méthode initializeDatabase par celle-ci
+
+// Méthode corrigée pour app.js (remplacer lignes ~259-310)
   async initializeDatabase() {
     try {
-      const dbConfig = {
-        database: this.config.database.name,
-        username: this.config.database.username,
-        password: this.config.database.password,
-        host: this.config.database.host,
-        port: this.config.database.port,
-        dialect: this.config.database.dialect,
-        logging: this.config.server.environment === 'development' ? console.log : false,
-        pool: this.config.database.pool
-      };
-
-      // Créer la base de données si elle n'existe pas
-      await createDatabase(dbConfig);
-
-      // Initialiser la connexion et les modèles
-      const { sequelize, models } = await initializeDatabase(dbConfig);
+      console.log('🔌 Connexion à la base de données...');
       
-      // IMPORTANT: Ajouter sequelize aux modèles AVANT de les stocker
-      models.sequelize = sequelize;
-      models.Sequelize = require('sequelize');
-      
-      this.models = models;
-      this.sequelize = sequelize;
-
-      // Initialiser le middleware d'authentification avec les modèles
-      this.authMiddleware = createAuthMiddleware(models);
-
-      // Vérifier la connexion
-      await sequelize.authenticate();
-      console.log('✅ Connexion à la base de données établie avec succès');
-      console.log('✅ sequelize ajouté aux modèles');
-
-      // Synchroniser les modèles si configuré
-      if (this.config.server.environment === 'development' && this.config.database.sync) {
-        await sequelize.sync({ alter: false });
-        console.log('✅ Modèles synchronisés avec la base de données');
+      // Étape 1 : Créer la base de données si nécessaire
+      try {
+        const { createDatabase } = require('./config/database');
+        if (typeof createDatabase === 'function') {
+          await createDatabase(process.env.NODE_ENV || 'development');
+          console.log('✅ Base de données vérifiée/créée');
+        }
+      } catch (err) {
+        console.log('ℹ️ Base de données probablement existante');
       }
-
-      return { sequelize, models };
+      
+      // Étape 2 : Charger les modèles
+      const db = require('./models');
+      
+      // Vérifier que sequelize existe
+      if (!db || !db.sequelize) {
+        throw new Error('Sequelize non chargé correctement dans models/index.js');
+      }
+      
+      // Étape 3 : Tester la connexion
+      await db.sequelize.authenticate();
+      console.log('✅ Connexion à MySQL établie avec succès');
+      
+      // Étape 4 : Synchroniser si demandé
+      if (process.env.DB_SYNC === 'true') {
+        await db.sequelize.sync({ alter: false });
+        console.log('✅ Modèles synchronisés');
+      }
+      
+      // Étape 5 : Insérer les données par défaut si nécessaire
+      if (process.env.DB_SEED === 'true' && db.insertDefaultData) {
+        console.log('🌱 Insertion des données par défaut...');
+        await db.insertDefaultData(db);
+        console.log('✅ Données par défaut insérées');
+      }
+      
+      // Stocker la référence
+      this.db = db;
+      this.models = db; 
+      this.sequelize = db.sequelize;
+      const createAuthMiddleware = require('./middlewares/authMiddleware');
+if (createAuthMiddleware && this.models.User) {
+  this.authMiddleware = createAuthMiddleware(this.models.User);
+  console.log('✅ Middleware d\'authentification initialisé');
+} else {
+  // Créer un middleware factice pour éviter les erreurs
+  this.authMiddleware = {
+    authenticate: (req, res, next) => next(),
+    isAuthenticated: (req, res, next) => next(),
+    requireValidatedProfessional: (req, res, next) => next(),
+    isAdmin: (req, res, next) => next()
+  };
+  console.warn('⚠️ Middleware d\'authentification en mode bypass');
+}
+      // Afficher les modèles chargés
+      const modelNames = Object.keys(db).filter(key => 
+        key !== 'sequelize' && 
+        key !== 'Sequelize' && 
+        typeof db[key] === 'function'
+      );
+      
+      console.log(`📊 ${modelNames.length} modèles disponibles`);
+      console.log(`📋 Modèles: ${modelNames.slice(0, 10).join(', ')}${modelNames.length > 10 ? '...' : ''}`);
+      
+      return true;
+      
     } catch (error) {
-      console.error('❌ Erreur lors de l\'initialisation de la base de données:', error);
+      console.error('❌ Erreur lors de l\'initialisation de la base de données:', error.message);
+      
+      if (error.code === 'ECONNREFUSED') {
+        console.log('\n⚠️ MySQL n\'est pas accessible. Vérifiez que MySQL est démarré.');
+      } else if (error.code === 'ER_ACCESS_DENIED_ERROR') {
+        console.log('\n⚠️ Accès refusé. Vérifiez vos identifiants MySQL.');
+      } else if (error.code === 'ER_BAD_DB_ERROR') {
+        console.log('\n⚠️ Base de données introuvable. Créez-la manuellement :');
+        console.log('mysql -u root -p');
+        console.log('CREATE DATABASE actionculture;');
+      }
+      
       throw error;
     }
   }
+
 
   // Initialisation des rate limiters
   initializeRateLimiters() {

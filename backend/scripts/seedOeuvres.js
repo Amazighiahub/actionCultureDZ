@@ -336,7 +336,7 @@ async function getAdmin(models) {
     }
     
     // L'admin existe déjà avec id_user = 2
-    const admin = await models.User.findByPk(2);
+    const admin = await models.User.findByPk(8);
     
     if (!admin) {
       throw new Error('Admin non trouvé! Assurez-vous que l\'utilisateur avec id=2 existe.');

@@ -3,79 +3,179 @@
 export interface Wilaya {
   id_wilaya: number;
   codeW: string;  // Code de la wilaya (01, 02, etc.)
+  nom: string;     // Nom en arabe
   wilaya_name_ascii: string;  // Nom en ASCII
-  wilaya_name?: string;  // Nom en arabe (optionnel)
+  createdAt?: string;
+  updatedAt?: string;
+  
+  // Relations
+  Dairas?: Daira[];
 }
 
 export interface Daira {
   id_daira: number;
-  id_wilaya: number;
-  nom_daira: string;
-  nom_daira_ar?: string;
-  code_daira?: string;
-  wilaya?: Wilaya;
+  wilayaId: number;  // FK vers Wilaya
+  nom: string;       // Nom en arabe
+  daira_name_ascii: string;  // Nom en ASCII
+  createdAt?: string;
+  updatedAt?: string;
+  
+  // Relations
+  Wilaya?: Wilaya;
+  Communes?: Commune[];
 }
 
 export interface Commune {
   id_commune: number;
-  id_daira: number;
-  nom_commune: string;
-  nom_commune_ar?: string;
-  code_commune?: string;
-  code_postal?: string;
-  daira?: Daira;
+  dairaId: number;  // FK vers Daira
+  nom: string;      // Nom en arabe
+  commune_name_ascii: string;  // Nom en ASCII
+  createdAt?: string;
+  updatedAt?: string;
+  
+  // Relations
+  Daira?: Daira;
+  Localites?: Localite[];
+  Lieux?: any[]; // Import circulaire évité
 }
 
 export interface Localite {
   id_localite: number;
-  id_commune: number;
-  nom_localite: string;
-  nom_localite_ar?: string;
-  type_localite?: 'village' | 'quartier' | 'cite' | 'autre';
-  commune?: Commune;
+  id_commune: number;  // FK vers Commune
+  nom: string;
+  localite_name_ascii?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  
+  // Relations
+  Commune?: Commune;
 }
 
-// Types pour les réponses API
-export interface GeographicLocation {
-  wilaya?: Wilaya;
-  daira?: Daira;
-  commune?: Commune;
+// =====================================================
+// TYPES POUR LA HIÉRARCHIE GÉOGRAPHIQUE
+// =====================================================
+
+/**
+ * Type pour la hiérarchie géographique complète
+ * Utilisé quand on navigue depuis Commune vers Wilaya
+ */
+export interface GeographicHierarchy {
   localite?: Localite;
-  fullAddress?: string;
+  commune: Commune & {
+    Daira: Daira & {
+      Wilaya: Wilaya;
+    };
+  };
 }
 
-// Types pour les sélections
-export interface GeographicSelection {
-  wilayaId?: number;
-  dairaId?: number;
-  communeId?: number;
-  localiteId?: number;
+/**
+ * Type pour la réponse API avec hiérarchie aplatie
+ * Plus facile à utiliser côté frontend
+ */
+export interface FlatGeographicHierarchy {
+  wilaya: {
+    id: number;
+    code: string;
+    nom: string;
+  };
+  daira: {
+    id: number;
+    nom: string;
+  };
+  commune: {
+    id: number;
+    nom: string;
+  };
+  localite?: {
+    id: number;
+    nom: string;
+  };
 }
 
-// Helper pour formater une adresse complète
-export function formatGeographicAddress(location: GeographicLocation): string {
+// =====================================================
+// HELPERS POUR LA NAVIGATION HIÉRARCHIQUE
+// =====================================================
+
+/**
+ * Obtenir la wilaya depuis une commune
+ */
+export function getWilayaFromCommune(commune: Commune): Wilaya | undefined {
+  return commune.Daira?.Wilaya;
+}
+
+/**
+ * Obtenir la daira depuis une commune
+ */
+export function getDairaFromCommune(commune: Commune): Daira | undefined {
+  return commune.Daira;
+}
+
+/**
+ * Aplatir la hiérarchie géographique pour l'API
+ */
+export function flattenGeographicHierarchy(
+  commune?: Commune,
+  localite?: Localite
+): FlatGeographicHierarchy | null {
+  if (!commune?.Daira?.Wilaya) return null;
+  
+  return {
+    wilaya: {
+      id: commune.Daira.Wilaya.id_wilaya,
+      code: commune.Daira.Wilaya.codeW,
+      nom: commune.Daira.Wilaya.wilaya_name_ascii
+    },
+    daira: {
+      id: commune.Daira.id_daira,
+      nom: commune.Daira.daira_name_ascii
+    },
+    commune: {
+      id: commune.id_commune,
+      nom: commune.commune_name_ascii
+    },
+    localite: localite ? {
+      id: localite.id_localite,
+      nom: localite.localite_name_ascii || localite.nom
+    } : undefined
+  };
+}
+
+/**
+ * Formater une adresse complète depuis la hiérarchie
+ */
+export function formatGeographicAddress(
+  hierarchy: FlatGeographicHierarchy | null,
+  adresse?: string
+): string {
+  if (!hierarchy) return adresse || '';
+  
   const parts: string[] = [];
   
-  if (location.localite) {
-    parts.push(location.localite.nom_localite);
+  if (adresse) {
+    parts.push(adresse);
   }
-  if (location.commune) {
-    parts.push(location.commune.nom_commune);
+  
+  if (hierarchy.localite) {
+    parts.push(hierarchy.localite.nom);
   }
-  if (location.daira) {
-    parts.push(location.daira.nom_daira);
-  }
-  if (location.wilaya) {
-    parts.push(`${location.wilaya.codeW} - ${location.wilaya.wilaya_name_ascii}`);
-  }
+  
+  parts.push(hierarchy.commune.nom);
+  parts.push(hierarchy.daira.nom);
+  parts.push(`${hierarchy.wilaya.code} - ${hierarchy.wilaya.nom}`);
   
   return parts.join(', ');
 }
 
-// Helper pour obtenir le nom complet d'une wilaya
+/**
+ * Helper pour obtenir le nom complet d'une wilaya
+ */
 export function getWilayaFullName(wilaya: Wilaya): string {
   return `${wilaya.codeW} - ${wilaya.wilaya_name_ascii}`;
 }
+
+// =====================================================
+// CONSTANTES
+// =====================================================
 
 // Mapping des codes de wilaya vers les noms
 export const WILAYA_CODES: Record<string, string> = {
@@ -137,4 +237,11 @@ export const WILAYA_CODES: Record<string, string> = {
   '56': 'Djanet',
   '57': 'In Salah',
   '58': 'In Guezzam'
+};
+
+// Nombre total de wilayas, dairas et communes
+export const GEOGRAPHY_STATS = {
+  TOTAL_WILAYAS: 58,
+  TOTAL_DAIRAS: 548,
+  TOTAL_COMMUNES: 1541
 };

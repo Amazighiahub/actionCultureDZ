@@ -15,30 +15,36 @@ const { Op } = require('sequelize');
 class ServicesController {
   // ==================== CRUD DE BASE ====================
 
-  // Créer un service simple (DetailLieu doit exister)
+  // Créer un service simple (Lieu doit exister)
   async createService(req, res) {
     try {
-      const { id_detailLieu, nom } = req.body;
+      const { id_lieu, nom, disponible = true, description } = req.body;
 
-      // Vérifier que le DetailLieu existe
-      const detailLieu = await DetailLieu.findByPk(id_detailLieu);
-      if (!detailLieu) {
+      // Vérifier que le Lieu existe
+      const lieu = await Lieu.findByPk(id_lieu);
+      if (!lieu) {
         return res.status(404).json({
           success: false,
-          message: 'DetailLieu non trouvé'
+          message: 'Lieu non trouvé'
         });
       }
 
       const service = await Service.create({
-        id_detailLieu,
-        nom
+        id_lieu,
+        nom,
+        disponible,
+        description
       });
 
       // Récupérer le service avec ses relations
       const serviceComplet = await Service.findByPk(service.id, {
         include: [{
-          model: DetailLieu,
-          attributes: ['description', 'horaires', 'noteMoyenne']
+          model: Lieu,
+          attributes: ['id_lieu', 'nom', 'adresse', 'latitude', 'longitude'],
+          include: [{
+            model: DetailLieu,
+            attributes: ['description', 'horaires', 'noteMoyenne']
+          }]
         }]
       });
 
@@ -64,7 +70,7 @@ class ServicesController {
         page = 1, 
         limit = 10,
         search,
-        wilayaId,
+        communeId,
         includeMedias = false,
         sortBy = 'nom',
         order = 'ASC'
@@ -80,23 +86,32 @@ class ServicesController {
 
       // Construction des includes
       const includeOptions = [{
-        model: DetailLieu,
-        attributes: ['id_detailLieu', 'description', 'horaires', 'noteMoyenne'],
-        include: [{
-          model: Lieu,
-          attributes: ['id_lieu', 'nom', 'adresse', 'typeLieu', 'latitude', 'longitude'],
-          where: wilayaId ? { wilayaId } : {},
-          include: [
-            { model: Wilaya, attributes: ['id_wilaya', 'nom'] },
-            { model: Daira, attributes: ['id_daira', 'nom'] },
-            { model: Commune, attributes: ['id_commune', 'nom'] }
-          ]
-        }]
+        model: Lieu,
+        attributes: ['id_lieu', 'nom', 'adresse', 'typeLieu', 'latitude', 'longitude'],
+        where: communeId ? { communeId } : {},
+        include: [
+          { 
+            model: Commune, 
+            attributes: ['id_commune', 'nom'],
+            include: [{
+              model: Daira,
+              attributes: ['id_daira', 'nom'],
+              include: [{
+                model: Wilaya,
+                attributes: ['id_wilaya', 'nom']
+              }]
+            }]
+          },
+          { 
+            model: DetailLieu,
+            attributes: ['id_detailLieu', 'description', 'horaires', 'noteMoyenne']
+          }
+        ]
       }];
 
       // Inclure les médias si demandé
       if (includeMedias === 'true') {
-        includeOptions[0].include[0].include.push({
+        includeOptions[0].include.push({
           model: LieuMedia,
           attributes: ['id', 'type', 'url', 'description']
         });
@@ -140,17 +155,21 @@ class ServicesController {
 
       const service = await Service.findByPk(id, {
         include: [{
-          model: DetailLieu,
-          include: [{
-            model: Lieu,
-            include: [
-              { model: Wilaya },
-              { model: Daira },
-              { model: Commune },
-              { model: Localite },
-              { model: LieuMedia }
-            ]
-          }]
+          model: Lieu,
+          include: [
+            { 
+              model: Commune,
+              include: [{
+                model: Daira,
+                include: [{
+                  model: Wilaya
+                }]
+              }]
+            },
+            { model: Localite },
+            { model: LieuMedia },
+            { model: DetailLieu }
+          ]
         }]
       });
 
@@ -179,7 +198,7 @@ class ServicesController {
   async updateService(req, res) {
     try {
       const { id } = req.params;
-      const { id_detailLieu, nom } = req.body;
+      const { id_lieu, nom, disponible, description } = req.body;
 
       const service = await Service.findByPk(id);
       if (!service) {
@@ -189,26 +208,32 @@ class ServicesController {
         });
       }
 
-      // Si id_detailLieu est fourni, vérifier qu'il existe
-      if (id_detailLieu && id_detailLieu !== service.id_detailLieu) {
-        const detailLieu = await DetailLieu.findByPk(id_detailLieu);
-        if (!detailLieu) {
+      // Si id_lieu est fourni, vérifier qu'il existe
+      if (id_lieu && id_lieu !== service.id_lieu) {
+        const lieu = await Lieu.findByPk(id_lieu);
+        if (!lieu) {
           return res.status(404).json({
             success: false,
-            message: 'DetailLieu non trouvé'
+            message: 'Lieu non trouvé'
           });
         }
       }
 
       await service.update({
-        id_detailLieu: id_detailLieu || service.id_detailLieu,
-        nom: nom || service.nom
+        id_lieu: id_lieu || service.id_lieu,
+        nom: nom || service.nom,
+        disponible: disponible !== undefined ? disponible : service.disponible,
+        description: description || service.description
       });
 
       const serviceUpdated = await Service.findByPk(id, {
         include: [{
-          model: DetailLieu,
-          attributes: ['description', 'horaires', 'noteMoyenne']
+          model: Lieu,
+          attributes: ['id_lieu', 'nom', 'adresse'],
+          include: [{
+            model: DetailLieu,
+            attributes: ['description', 'horaires', 'noteMoyenne']
+          }]
         }]
       });
 
@@ -265,13 +290,14 @@ class ServicesController {
     try {
       const {
         nomService,
+        disponible = true,
+        description,
         lieu,
         detailLieu,
         medias = []
       } = req.body;
 
       let lieuCree = null;
-      let detailLieuCree = null;
 
       // 1. Gérer le Lieu
       if (lieu) {
@@ -287,202 +313,122 @@ class ServicesController {
           }
         } else {
           // Créer un nouveau lieu
-          const { nom, adresse, latitude, longitude, typeLieu, wilayaId, dairaId, communeId, localiteId } = lieu;
+          const { nom, adresse, latitude, longitude, typeLieu, communeId, localiteId } = lieu;
           
           // Validation
-          if (!nom || !adresse || !latitude || !longitude || !typeLieu) {
+          if (!nom || !adresse || !latitude || !longitude || !typeLieu || !communeId) {
             await transaction.rollback();
             return res.status(400).json({
               success: false,
-              message: 'Les champs nom, adresse, latitude, longitude et typeLieu sont obligatoires pour créer un lieu'
+              message: 'Données du lieu incomplètes'
             });
           }
 
-          // Vérifier les références géographiques
-          if (wilayaId) {
-            const wilaya = await Wilaya.findByPk(wilayaId, { transaction });
-            if (!wilaya) {
-              await transaction.rollback();
-              return res.status(404).json({
-                success: false,
-                message: 'Wilaya non trouvée'
-              });
-            }
+          // Validation GPS
+          if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+            await transaction.rollback();
+            return res.status(400).json({
+              success: false,
+              message: 'Coordonnées GPS invalides'
+            });
           }
 
           lieuCree = await Lieu.create({
             nom,
             adresse,
-            latitude: parseFloat(latitude),
-            longitude: parseFloat(longitude),
+            latitude,
+            longitude,
             typeLieu,
-            wilayaId,
-            dairaId,
             communeId,
             localiteId
           }, { transaction });
-        }
-      }
 
-      // 2. Gérer le DetailLieu
-      if (detailLieu) {
-        if (detailLieu.id_detailLieu) {
-          // Utiliser un DetailLieu existant
-          detailLieuCree = await DetailLieu.findByPk(detailLieu.id_detailLieu, { transaction });
-          if (!detailLieuCree) {
-            await transaction.rollback();
-            return res.status(404).json({
-              success: false,
-              message: 'DetailLieu spécifié non trouvé'
-            });
-          }
-        } else if (lieuCree) {
-          // Créer un nouveau DetailLieu
-          const { description, horaires, histoire, referencesHistoriques, noteMoyenne } = detailLieu;
-          
-          detailLieuCree = await DetailLieu.create({
-            id_lieu: lieuCree.id_lieu,
-            description,
-            horaires,
-            histoire,
-            referencesHistoriques,
-            noteMoyenne: noteMoyenne ? parseFloat(noteMoyenne) : null
-          }, { transaction });
-        } else {
-          await transaction.rollback();
-          return res.status(400).json({
-            success: false,
-            message: 'Un lieu doit être spécifié pour créer un DetailLieu'
-          });
-        }
-      }
-
-      // 3. Créer les médias associés au lieu
-      if (lieuCree && medias.length > 0) {
-        for (const media of medias) {
-          const { type, url, description } = media;
-          
-          if (!type || !url) {
-            await transaction.rollback();
-            return res.status(400).json({
-              success: false,
-              message: 'Type et URL sont obligatoires pour chaque média'
-            });
+          // 2. Créer les médias du lieu si fournis
+          if (medias.length > 0) {
+            const mediasData = medias.map(media => ({
+              id_lieu: lieuCree.id_lieu,
+              type: media.type,
+              url: media.url,
+              description: media.description
+            }));
+            await LieuMedia.bulkCreate(mediasData, { transaction });
           }
 
-          await LieuMedia.create({
-            id_lieu: lieuCree.id_lieu,
-            type,
-            url,
-            description
-          }, { transaction });
+          // 3. Créer le DetailLieu si fourni
+          if (detailLieu) {
+            await DetailLieu.create({
+              id_lieu: lieuCree.id_lieu,
+              description: detailLieu.description,
+              horaires: detailLieu.horaires,
+              histoire: detailLieu.histoire,
+              referencesHistoriques: detailLieu.referencesHistoriques,
+              noteMoyenne: detailLieu.noteMoyenne || null
+            }, { transaction });
+          }
         }
-      }
-
-      // 4. Créer le service
-      if (!detailLieuCree) {
+      } else {
         await transaction.rollback();
         return res.status(400).json({
           success: false,
-          message: 'Un DetailLieu est requis pour créer un service'
+          message: 'Les informations du lieu sont requises'
         });
       }
 
-      const service = await Service.create({
-        id_detailLieu: detailLieuCree.id_detailLieu,
-        nom: nomService
+      // 4. Créer le Service
+      const serviceCree = await Service.create({
+        id_lieu: lieuCree.id_lieu,
+        nom: nomService,
+        disponible,
+        description
       }, { transaction });
 
-      // Commit de la transaction
       await transaction.commit();
 
-      // Récupérer le service complet avec toutes les relations
-      const serviceComplet = await Service.findByPk(service.id, {
+      // 5. Récupérer le service complet avec toutes ses relations
+      const serviceComplet = await Service.findByPk(serviceCree.id, {
         include: [{
-          model: DetailLieu,
-          include: [{
-            model: Lieu,
-            include: [
-              { model: Wilaya },
-              { model: Daira },
-              { model: Commune },
-              { model: Localite },
-              { model: LieuMedia }
-            ]
-          }]
+          model: Lieu,
+          include: [
+            { 
+              model: Commune,
+              include: [{
+                model: Daira,
+                include: [{
+                  model: Wilaya
+                }]
+              }]
+            },
+            { model: Localite },
+            { model: DetailLieu },
+            { model: LieuMedia }
+          ]
         }]
       });
 
       res.status(201).json({
         success: true,
-        message: 'Service créé avec succès avec toutes ses dépendances',
+        message: 'Service créé avec succès',
         data: serviceComplet
       });
 
     } catch (error) {
       await transaction.rollback();
-      console.error('Erreur lors de la création complète du service:', error);
+      console.error('Erreur lors de la création du service complet:', error);
       res.status(500).json({
         success: false,
-        message: 'Erreur lors de la création complète du service',
+        message: 'Erreur lors de la création du service',
         error: error.message
       });
     }
   }
 
-  // ==================== RECHERCHE PAR LIEU ====================
+  // ==================== SERVICES PAR LIEU ====================
 
-  // Obtenir les services par DetailLieu
-  async getServicesByDetailLieu(req, res) {
-    try {
-      const { detailLieuId } = req.params;
-      const { page = 1, limit = 10 } = req.query;
-      const offset = (page - 1) * limit;
-
-      const services = await Service.findAndCountAll({
-        where: { id_detailLieu: detailLieuId },
-        include: [{
-          model: DetailLieu,
-          attributes: ['description', 'horaires', 'noteMoyenne']
-        }],
-        limit: parseInt(limit),
-        offset: parseInt(offset),
-        order: [['nom', 'ASC']]
-      });
-
-      res.status(200).json({
-        success: true,
-        data: {
-          services: services.rows,
-          pagination: {
-            total: services.count,
-            page: parseInt(page),
-            pages: Math.ceil(services.count / limit),
-            limit: parseInt(limit)
-          }
-        }
-      });
-    } catch (error) {
-      console.error('Erreur lors de la récupération des services:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Erreur lors de la récupération des services',
-        error: error.message
-      });
-    }
-  }
-
-  // Obtenir les services par Lieu
+  // Obtenir tous les services d'un lieu spécifique
   async getServicesByLieu(req, res) {
     try {
       const { lieuId } = req.params;
-      const { 
-        page = 1, 
-        limit = 10,
-        includeMedias = false
-      } = req.query;
-
-      const offset = (page - 1) * limit;
+      const { includeDetails = false } = req.query;
 
       // Vérifier que le lieu existe
       const lieu = await Lieu.findByPk(lieuId);
@@ -493,58 +439,36 @@ class ServicesController {
         });
       }
 
-      // Construire les options d'inclusion
-      const includeOptions = [{
-        model: DetailLieu,
-        required: true,
-        where: { id_lieu: lieuId },
-        attributes: ['id_detailLieu', 'description', 'horaires', 'noteMoyenne'],
-        include: [{
+      const includeOptions = [];
+      if (includeDetails === 'true') {
+        includeOptions.push({
           model: Lieu,
-          attributes: ['id_lieu', 'nom', 'adresse', 'latitude', 'longitude', 'typeLieu'],
-          include: [
-            { model: Wilaya, attributes: ['id_wilaya', 'nom'] },
-            { model: Daira, attributes: ['id_daira', 'nom'] },
-            { model: Commune, attributes: ['id_commune', 'nom'] }
-          ]
-        }]
-      }];
-
-      // Ajouter les médias si demandé
-      if (includeMedias === 'true') {
-        includeOptions[0].include[0].include.push({
-          model: LieuMedia,
-          attributes: ['id', 'type', 'url', 'description']
+          include: [{
+            model: DetailLieu,
+            attributes: ['description', 'horaires', 'noteMoyenne']
+          }]
         });
       }
 
-      const services = await Service.findAndCountAll({
+      const services = await Service.findAll({
+        where: { id_lieu: lieuId },
         include: includeOptions,
-        limit: parseInt(limit),
-        offset: parseInt(offset),
-        order: [['nom', 'ASC']],
-        distinct: true
+        order: [['nom', 'ASC']]
       });
 
       res.status(200).json({
         success: true,
-        data: {
-          services: services.rows,
-          lieu: {
-            id: lieu.id_lieu,
-            nom: lieu.nom,
-            adresse: lieu.adresse
-          },
-          pagination: {
-            total: services.count,
-            page: parseInt(page),
-            pages: Math.ceil(services.count / limit),
-            limit: parseInt(limit)
-          }
-        }
+        lieu: {
+          id: lieu.id_lieu,
+          nom: lieu.nom,
+          adresse: lieu.adresse
+        },
+        count: services.length,
+        data: services
       });
+
     } catch (error) {
-      console.error('Erreur lors de la récupération des services par lieu:', error);
+      console.error('Erreur lors de la récupération des services du lieu:', error);
       res.status(500).json({
         success: false,
         message: 'Erreur lors de la récupération des services',
@@ -553,182 +477,78 @@ class ServicesController {
     }
   }
 
-  // ==================== RECHERCHE PAR PROXIMITÉ ====================
-
-  // Rechercher des services par proximité géographique
-  async getServicesByProximity(req, res) {
-    try {
-      const { 
-        latitude, 
-        longitude, 
-        radius = 5,
-        limit = 20,
-        type
-      } = req.query;
-
-      if (!latitude || !longitude) {
-        return res.status(400).json({
-          success: false,
-          message: 'Latitude et longitude sont requises'
-        });
-      }
-
-      const lat = parseFloat(latitude);
-      const lng = parseFloat(longitude);
-      const radiusKm = parseFloat(radius);
-
-      // Construire la condition WHERE pour le type si fourni
-      const whereCondition = type ? { nom: { [Op.like]: `%${type}%` } } : {};
-
-      // Requête avec calcul de distance Haversine
-      const services = await Service.findAll({
-        where: whereCondition,
-        include: [{
-          model: DetailLieu,
-          required: true,
-          attributes: ['id_detailLieu', 'description', 'horaires', 'noteMoyenne'],
-          include: [{
-            model: Lieu,
-            required: true,
-            attributes: [
-              'id_lieu', 
-              'nom', 
-              'adresse', 
-              'latitude', 
-              'longitude',
-              'typeLieu',
-              [
-                sequelize.literal(`
-                  (6371 * acos(
-                    cos(radians(${lat})) * 
-                    cos(radians(\`DetailLieu->Lieu\`.\`latitude\`)) * 
-                    cos(radians(\`DetailLieu->Lieu\`.\`longitude\`) - radians(${lng})) + 
-                    sin(radians(${lat})) * 
-                    sin(radians(\`DetailLieu->Lieu\`.\`latitude\`))
-                  ))
-                `),
-                'distance'
-              ]
-            ],
-            include: [
-              { model: Wilaya, attributes: ['nom'] },
-              { model: LieuMedia, attributes: ['type', 'url'] }
-            ]
-          }]
-        }],
-        having: sequelize.literal(`distance <= ${radiusKm}`),
-        order: [[sequelize.literal('distance'), 'ASC']],
-        limit: parseInt(limit),
-        subQuery: false
-      });
-
-      // Formater les résultats
-      const formattedServices = services.map(service => ({
-        id: service.id,
-        nom: service.nom,
-        lieu: {
-          id: service.DetailLieu.Lieu.id_lieu,
-          nom: service.DetailLieu.Lieu.nom,
-          adresse: service.DetailLieu.Lieu.adresse,
-          latitude: service.DetailLieu.Lieu.latitude,
-          longitude: service.DetailLieu.Lieu.longitude,
-          distance: parseFloat(service.DetailLieu.Lieu.dataValues.distance).toFixed(2),
-          wilaya: service.DetailLieu.Lieu.Wilaya?.nom
-        },
-        details: {
-          description: service.DetailLieu.description,
-          horaires: service.DetailLieu.horaires,
-          noteMoyenne: service.DetailLieu.noteMoyenne
-        },
-        medias: service.DetailLieu.Lieu.LieuMedia
-      }));
-
-      res.status(200).json({
-        success: true,
-        count: formattedServices.length,
-        searchCenter: { latitude: lat, longitude: lng },
-        radius: radiusKm,
-        data: formattedServices
-      });
-
-    } catch (error) {
-      console.error('Erreur lors de la recherche par proximité:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Erreur lors de la recherche des services',
-        error: error.message
-      });
-    }
-  }
-
-  // ==================== SERVICES GROUPÉS ====================
-
-  // Obtenir les services groupés par lieu dans une zone
+  // Obtenir les services groupés par lieu
   async getServicesGroupedByLieu(req, res) {
     try {
-      const { wilayaId, dairaId, communeId, limit = 50 } = req.query;
+      const { communeId, minServices = 0 } = req.query;
 
-      // Construire les conditions WHERE pour filtrer par zone
-      const lieuWhereConditions = {};
-      if (wilayaId) lieuWhereConditions.wilayaId = wilayaId;
-      if (dairaId) lieuWhereConditions.dairaId = dairaId;
-      if (communeId) lieuWhereConditions.communeId = communeId;
+      const whereConditions = {};
+      if (communeId) {
+        whereConditions.communeId = communeId;
+      }
 
-      // Récupérer tous les lieux avec leurs services
       const lieux = await Lieu.findAll({
-        where: lieuWhereConditions,
-        attributes: ['id_lieu', 'nom', 'adresse', 'latitude', 'longitude', 'typeLieu'],
+        where: whereConditions,
+        attributes: [
+          'id_lieu',
+          'nom',
+          'adresse',
+          'typeLieu',
+          'latitude',
+          'longitude'
+        ],
         include: [
-          { model: Wilaya, attributes: ['nom'] },
-          { model: Daira, attributes: ['nom'] },
-          { model: Commune, attributes: ['nom'] },
           {
-            model: DetailLieu,
-            attributes: ['id_detailLieu', 'description', 'horaires', 'noteMoyenne'],
+            model: Service,
+            attributes: ['id', 'nom', 'disponible', 'description']
+          },
+          {
+            model: Commune,
+            attributes: ['id_commune', 'nom'],
             include: [{
-              model: Service,
-              attributes: ['id', 'nom']
+              model: Daira,
+              attributes: ['id_daira', 'nom'],
+              include: [{
+                model: Wilaya,
+                attributes: ['id_wilaya', 'nom']
+              }]
             }]
           },
           {
-            model: LieuMedia,
-            attributes: ['type', 'url'],
-            limit: 1
+            model: DetailLieu,
+            attributes: ['noteMoyenne', 'horaires']
           }
         ],
-        limit: parseInt(limit)
+        order: [
+          ['nom', 'ASC'],
+          [Service, 'nom', 'ASC']
+        ]
       });
 
-      // Filtrer et formater les lieux qui ont des services
+      // Filtrer les lieux avec un minimum de services
       const lieuxAvecServices = lieux
-        .filter(lieu => lieu.DetailLieu && lieu.DetailLieu.Services && lieu.DetailLieu.Services.length > 0)
+        .filter(lieu => lieu.Services && lieu.Services.length >= parseInt(minServices))
         .map(lieu => ({
-          lieu: {
-            id: lieu.id_lieu,
-            nom: lieu.nom,
-            adresse: lieu.adresse,
-            coordinates: {
-              latitude: lieu.latitude,
-              longitude: lieu.longitude
-            },
-            type: lieu.typeLieu,
-            localisation: {
-              wilaya: lieu.Wilaya?.nom,
-              daira: lieu.Daira?.nom,
-              commune: lieu.Commune?.nom
-            },
-            image: lieu.LieuMedia?.[0]?.url || null
+          id: lieu.id_lieu,
+          nom: lieu.nom,
+          adresse: lieu.adresse,
+          typeLieu: lieu.typeLieu,
+          coordinates: {
+            latitude: lieu.latitude,
+            longitude: lieu.longitude
           },
-          details: {
-            description: lieu.DetailLieu.description,
-            horaires: lieu.DetailLieu.horaires,
-            noteMoyenne: lieu.DetailLieu.noteMoyenne
-          },
-          services: lieu.DetailLieu.Services.map(service => ({
-            id: service.id,
-            nom: service.nom
-          })),
-          nombreServices: lieu.DetailLieu.Services.length
+          commune: lieu.Commune ? lieu.Commune.nom : null,
+          daira: lieu.Commune?.Daira ? lieu.Commune.Daira.nom : null,
+          wilaya: lieu.Commune?.Daira?.Wilaya ? lieu.Commune.Daira.Wilaya.nom : null,
+          noteMoyenne: lieu.DetailLieu ? lieu.DetailLieu.noteMoyenne : null,
+          horaires: lieu.DetailLieu ? lieu.DetailLieu.horaires : null,
+          nombreServices: lieu.Services.length,
+          services: lieu.Services.map(s => ({
+            id: s.id,
+            nom: s.nom,
+            disponible: s.disponible,
+            description: s.description
+          }))
         }));
 
       // Statistiques
@@ -765,8 +585,8 @@ class ServicesController {
         search = '', 
         page = 1, 
         limit = 20,
-        wilayaId,
-        includeDetailLieux = false
+        communeId,
+        includeServices = false
       } = req.query;
 
       const offset = (page - 1) * limit;
@@ -780,32 +600,36 @@ class ServicesController {
         ];
       }
 
-      // Filtre par wilaya si fourni
-      if (wilayaId) {
-        where.wilayaId = wilayaId;
+      // Filtre par commune si fourni
+      if (communeId) {
+        where.communeId = communeId;
       }
 
       // Options d'inclusion
       const includeOptions = [
         { 
-          model: Wilaya, 
-          attributes: ['id_wilaya', 'nom'] 
-        },
-        { 
-          model: Daira, 
-          attributes: ['id_daira', 'nom'] 
-        },
-        { 
           model: Commune, 
-          attributes: ['id_commune', 'nom'] 
+          attributes: ['id_commune', 'nom'],
+          include: [{
+            model: Daira,
+            attributes: ['id_daira', 'nom'],
+            include: [{
+              model: Wilaya,
+              attributes: ['id_wilaya', 'nom']
+            }]
+          }]
+        },
+        {
+          model: DetailLieu,
+          attributes: ['id_detailLieu', 'description', 'horaires', 'noteMoyenne']
         }
       ];
 
-      // Inclure les DetailLieux si demandé
-      if (includeDetailLieux === 'true') {
+      // Inclure les services si demandé
+      if (includeServices === 'true') {
         includeOptions.push({
-          model: DetailLieu,
-          attributes: ['id_detailLieu', 'description', 'horaires', 'noteMoyenne']
+          model: Service,
+          attributes: ['id', 'nom', 'disponible', 'description']
         });
       }
 
@@ -842,53 +666,6 @@ class ServicesController {
     }
   }
 
-  // Obtenir les DetailLieux d'un lieu spécifique
-  async getDetailLieuxByLieu(req, res) {
-    try {
-      const { lieuId } = req.params;
-
-      // Vérifier que le lieu existe
-      const lieu = await Lieu.findByPk(lieuId, {
-        attributes: ['id_lieu', 'nom']
-      });
-
-      if (!lieu) {
-        return res.status(404).json({
-          success: false,
-          message: 'Lieu non trouvé'
-        });
-      }
-
-      // Récupérer tous les DetailLieux de ce lieu
-      const detailLieux = await DetailLieu.findAll({
-        where: { id_lieu: lieuId },
-        attributes: ['id_detailLieu', 'description', 'horaires', 'histoire', 'noteMoyenne'],
-        include: [{
-          model: Service,
-          attributes: ['id', 'nom']
-        }]
-      });
-
-      res.status(200).json({
-        success: true,
-        lieu: {
-          id: lieu.id_lieu,
-          nom: lieu.nom
-        },
-        count: detailLieux.length,
-        data: detailLieux
-      });
-
-    } catch (error) {
-      console.error('Erreur lors de la récupération des DetailLieux:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Erreur lors de la récupération des DetailLieux',
-        error: error.message
-      });
-    }
-  }
-
   // ==================== MÉTHODES UTILITAIRES ====================
 
   // Créer plusieurs services en même temps
@@ -905,23 +682,30 @@ class ServicesController {
         });
       }
 
-      // Vérifier que tous les DetailLieu existent
-      const detailLieuIds = [...new Set(services.map(s => s.id_detailLieu))];
-      const existingDetailLieux = await DetailLieu.findAll({
-        where: { id_detailLieu: detailLieuIds },
+      // Vérifier que tous les Lieux existent
+      const lieuIds = [...new Set(services.map(s => s.id_lieu))];
+      const existingLieux = await Lieu.findAll({
+        where: { id_lieu: lieuIds },
         transaction
       });
 
-      if (existingDetailLieux.length !== detailLieuIds.length) {
+      if (existingLieux.length !== lieuIds.length) {
         await transaction.rollback();
         return res.status(404).json({
           success: false,
-          message: 'Un ou plusieurs DetailLieu n\'existent pas'
+          message: 'Un ou plusieurs lieux n\'existent pas'
         });
       }
 
       // Créer tous les services
-      const createdServices = await Service.bulkCreate(services, { transaction });
+      const servicesData = services.map(s => ({
+        id_lieu: s.id_lieu,
+        nom: s.nom,
+        disponible: s.disponible !== undefined ? s.disponible : true,
+        description: s.description || null
+      }));
+
+      const createdServices = await Service.bulkCreate(servicesData, { transaction });
 
       await transaction.commit();
 
@@ -941,16 +725,48 @@ class ServicesController {
     }
   }
 
+  // Basculer la disponibilité d'un service
+  async toggleServiceDisponibilite(req, res) {
+    try {
+      const { id } = req.params;
+
+      const service = await Service.findByPk(id);
+      if (!service) {
+        return res.status(404).json({
+          success: false,
+          message: 'Service non trouvé'
+        });
+      }
+
+      await service.update({
+        disponible: !service.disponible
+      });
+
+      res.status(200).json({
+        success: true,
+        message: `Service ${service.disponible ? 'activé' : 'désactivé'} avec succès`,
+        data: service
+      });
+    } catch (error) {
+      console.error('Erreur lors du changement de disponibilité:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Erreur lors du changement de disponibilité',
+        error: error.message
+      });
+    }
+  }
+
   // Statistiques des services
   async getServicesStats(req, res) {
     try {
-      const { wilayaId, startDate, endDate } = req.query;
+      const { communeId, startDate, endDate } = req.query;
 
       const whereConditions = {};
       const lieuWhereConditions = {};
 
-      if (wilayaId) {
-        lieuWhereConditions.wilayaId = wilayaId;
+      if (communeId) {
+        lieuWhereConditions.communeId = communeId;
       }
 
       if (startDate && endDate) {
@@ -962,23 +778,25 @@ class ServicesController {
       // Nombre total de services
       const totalServices = await Service.count({ where: whereConditions });
 
+      // Services disponibles vs indisponibles
+      const servicesDisponibles = await Service.count({ 
+        where: { ...whereConditions, disponible: true } 
+      });
+      const servicesIndisponibles = totalServices - servicesDisponibles;
+
       // Services par type de lieu
       const servicesByTypeLieu = await Service.findAll({
         attributes: [
           [sequelize.fn('COUNT', sequelize.col('Service.id')), 'count'],
-          [sequelize.col('DetailLieu.Lieu.typeLieu'), 'typeLieu']
+          [sequelize.col('Lieu.typeLieu'), 'typeLieu']
         ],
         include: [{
-          model: DetailLieu,
+          model: Lieu,
           attributes: [],
-          include: [{
-            model: Lieu,
-            attributes: [],
-            where: lieuWhereConditions
-          }]
+          where: lieuWhereConditions
         }],
         where: whereConditions,
-        group: ['DetailLieu.Lieu.typeLieu'],
+        group: ['Lieu.typeLieu'],
         raw: true
       });
 
@@ -988,16 +806,12 @@ class ServicesController {
           'id_lieu',
           'nom',
           'adresse',
-          [sequelize.fn('COUNT', sequelize.col('DetailLieu.Services.id')), 'servicesCount']
+          [sequelize.fn('COUNT', sequelize.col('Services.id')), 'servicesCount']
         ],
         include: [{
-          model: DetailLieu,
+          model: Service,
           attributes: [],
-          include: [{
-            model: Service,
-            attributes: [],
-            where: whereConditions
-          }]
+          where: whereConditions
         }],
         where: lieuWhereConditions,
         group: ['Lieu.id_lieu'],
@@ -1010,6 +824,8 @@ class ServicesController {
         success: true,
         data: {
           totalServices,
+          servicesDisponibles,
+          servicesIndisponibles,
           servicesByTypeLieu,
           topLieux
         }

@@ -7,6 +7,15 @@ module.exports = (sequelize) => {
       primaryKey: true,
       autoIncrement: true
     },
+    id_lieu: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      unique: true,  // Un lieu = un seul detail_lieu
+      references: {
+        model: 'lieu',
+        key: 'id_lieu'
+      }
+    },
     description: {
       type: DataTypes.TEXT
     },
@@ -16,20 +25,15 @@ module.exports = (sequelize) => {
     histoire: {
       type: DataTypes.TEXT
     },
-    id_lieu: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: 'lieu',
-        key: 'id_lieu'
-      }
-    },
-   
     referencesHistoriques: {
       type: DataTypes.TEXT
     },
     noteMoyenne: {
-      type: DataTypes.FLOAT
+      type: DataTypes.FLOAT,
+      validate: {
+        min: 0,
+        max: 5
+      }
     }
   }, {
     tableName: 'detail_lieux',
@@ -39,9 +43,9 @@ module.exports = (sequelize) => {
   // Associations
   DetailLieu.associate = (models) => {
     DetailLieu.belongsTo(models.Lieu, { foreignKey: 'id_lieu' });
-    DetailLieu.hasMany(models.Monument, { foreignKey: 'detailLieuId' });
-    DetailLieu.hasMany(models.Vestige, { foreignKey: 'detailLieuId' });
-    DetailLieu.hasMany(models.Service, { foreignKey: 'id_detailLieu' });
+    DetailLieu.hasMany(models.Monument, { foreignKey: 'id_detail_lieu', onDelete: 'CASCADE' });
+    DetailLieu.hasMany(models.Vestige, { foreignKey: 'id_detail_lieu', onDelete: 'CASCADE' });
+    // Service n'est plus lié à DetailLieu mais directement à Lieu
   };
 
   return DetailLieu;

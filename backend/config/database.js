@@ -1,73 +1,82 @@
-
-// config/database.js
-require('dotenv').config();
 const { Sequelize } = require('sequelize');
 
-// Configuration de connexion à la base de données
-const createDatabaseConnection = (config = {}) => {
-  const {
-    database = process.env.DB_NAME || 'actionculture',
-    username = process.env.DB_USER || 'root',
-    password = process.env.DB_PASSWORD || 'root',
-    host = process.env.DB_HOST || 'localhost',
-    port = parseInt(process.env.DB_PORT) || 3306,
-    dialect = process.env.DB_DIALECT || 'mysql',
-    logging = process.env.NODE_ENV === 'development' ? console.log : false,
-    ...otherOptions
-  } = config;
-
-  const sequelize = new Sequelize(database, username, password, {
-    host,
-    port,
-    dialect,
-    logging,
+// Configuration pour chaque environnement
+const config = {
+  development: {
+    username: 'root',
+    password: 'root',
+    database: 'actionculture',
+    host: '127.0.0.1',
+    dialect: 'mysql',
+    logging: false,
     define: {
       charset: 'utf8mb4',
       collate: 'utf8mb4_unicode_ci',
-      timestamps: true,
-      underscored: false,
+      timestamps: true
     },
     pool: {
       max: 10,
       min: 0,
       acquire: 30000,
-      idle: 10000,
-    },
-    dialectOptions: {
-      charset: 'utf8mb4',
-      dateStrings: true,
-      typeCast: true,
-    },
-    timezone: '+00:00',
-    ...otherOptions
-  });
+      idle: 10000
+    }
+  },
+  test: {
+    username: 'root',
+    password: 'root',
+    database: 'actionculture_test',
+    host: '127.0.0.1',
+    dialect: 'mysql',
+    logging: false
+  },
+  production: {
+    username: process.env.DB_USER || 'root',
+    password: process.env.DB_PASSWORD || 'root',
+    database: process.env.DB_NAME || 'actionculture',
+    host: process.env.DB_HOST || '127.0.0.1',
+    dialect: 'mysql',
+    logging: false
+  }
+};
+
+// Fonction pour créer la connexion à la base de données
+const createDatabaseConnection = (env = 'development') => {
+  const dbConfig = config[env];
+  
+  const sequelize = new Sequelize(
+    dbConfig.database,
+    dbConfig.username,
+    dbConfig.password,
+    {
+      host: dbConfig.host,
+      dialect: dbConfig.dialect,
+      logging: dbConfig.logging,
+      define: dbConfig.define || {},
+      pool: dbConfig.pool || {}
+    }
+  );
 
   return sequelize;
 };
 
-// Créer la base de données si elle n'existe pas
-const createDatabase = async (config = {}) => {
-  const {
-    database = process.env.DB_NAME || 'actionculture',
-    username = process.env.DB_USER || 'root',
-    password = process.env.DB_PASSWORD || '',
-    host = process.env.DB_HOST || 'localhost',
-    port = parseInt(process.env.DB_PORT) || 3306,
-    charset = 'utf8mb4',
-    collate = 'utf8mb4_unicode_ci'
-  } = config;
-
+// Fonction pour créer la base de données si elle n'existe pas
+const createDatabase = async (env = 'development') => {
+  const dbConfig = config[env];
+  
   // Connexion sans spécifier de base de données
-  const sequelize = new Sequelize('', username, password, {
-    host,
-    port,
-    dialect: 'mysql',
+  const sequelize = new Sequelize('', dbConfig.username, dbConfig.password, {
+    host: dbConfig.host,
+    dialect: dbConfig.dialect,
     logging: false
   });
 
   try {
-    await sequelize.query(`CREATE DATABASE IF NOT EXISTS \`${database}\` CHARACTER SET ${charset} COLLATE ${collate};`);
-    console.log(`✅ Base de données '${database}' créée ou existe déjà.`);
+    // Créer la base de données si elle n'existe pas
+    await sequelize.query(
+      `CREATE DATABASE IF NOT EXISTS \`${dbConfig.database}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`
+    );
+    console.log(`✅ Base de données '${dbConfig.database}' créée ou existe déjà.`);
+    
     await sequelize.close();
     return true;
   } catch (error) {
@@ -77,7 +86,10 @@ const createDatabase = async (config = {}) => {
   }
 };
 
-module.exports = {
-  createDatabaseConnection,
-  createDatabase
-};
+// Export par défaut de la configuration
+module.exports = config;
+
+// Export nommé des fonctions
+module.exports.createDatabase = createDatabase;
+module.exports.createDatabaseConnection = createDatabaseConnection;
+module.exports.config = config;

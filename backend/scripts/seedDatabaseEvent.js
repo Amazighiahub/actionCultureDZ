@@ -1,8 +1,9 @@
-// scripts/seedFinalCorrected.js - Version finale corrigée
+// scripts/seedFinalCorrected.js - Version avec cryptage des mots de passe
 const { Sequelize } = require('sequelize');
+const bcrypt = require('bcrypt');
 
 // Configuration de la base de données
-const sequelize = new Sequelize('actionculture', 'root', '', {
+const sequelize = new Sequelize('actionculture', 'root', 'root', {
   host: 'localhost',
   dialect: 'mysql',
   logging: false // Mettre à true pour voir les requêtes SQL
@@ -29,6 +30,12 @@ try {
   console.log('✅ Modèles essentiels chargés');
 } catch (error) {
   console.error('❌ Erreur chargement modèles:', error.message);
+}
+
+// Fonction pour hasher les mots de passe
+async function hashPassword(password) {
+  const saltRounds = 10;
+  return await bcrypt.hash(password, saltRounds);
 }
 
 // Fonction principale de seed
@@ -91,7 +98,7 @@ async function seedDatabase() {
     for (const type of typesUserData) {
       try {
         const [record, created] = await models.TypeUser.findOrCreate({
-          where: { nom_type: type.nom_type },  // Utiliser nom_type et non nom_type_user
+          where: { nom_type: type.nom_type },
           defaults: type
         });
         typeUserMap[type.nom_type] = record.id_type_user;
@@ -128,8 +135,10 @@ async function seedDatabase() {
       }
     }
 
-    // ========== ÉTAPE 4: Utilisateurs avec acceptation des conditions ==========
+    // ========== ÉTAPE 4: Utilisateurs avec mots de passe cryptés ==========
     console.log('\n👥 Insertion des utilisateurs...');
+    console.log('🔒 Cryptage des mots de passe en cours...');
+    
     const usersData = [
       {
         nom: "Admin",
@@ -141,7 +150,7 @@ async function seedDatabase() {
         telephone: "0555000001",
         wilaya_residence: 16,
         statut: true,
-        accepte_conditions: true  // IMPORTANT: Ajout de ce champ
+        accepte_conditions: true
       },
       {
         nom: "Benali",
@@ -216,6 +225,11 @@ async function seedDatabase() {
         accepte_conditions: true
       }
     ];
+    
+    // Crypter tous les mots de passe avant insertion
+    for (let user of usersData) {
+      user.password = await hashPassword(user.password);
+    }
     
     const userMap = {};
     for (const user of usersData) {
@@ -428,9 +442,13 @@ async function seedDatabase() {
     console.log(`- ${Object.keys(roleMap).length} rôles`);
     console.log(`- ${Object.keys(typeUserMap).length} types d'utilisateurs`);
     console.log(`- ${Object.keys(typeEventMap).length} types d'événements`);
-    console.log(`- ${Object.keys(userMap).length} utilisateurs`);
+    console.log(`- ${Object.keys(userMap).length} utilisateurs (mots de passe cryptés)`);
     console.log(`- ${Object.keys(lieuMap).length} lieux`);
     console.log(`- ${evenementsData.length} événements`);
+    
+    console.log('\n🔑 Identifiants de connexion:');
+    console.log('Email: admin@actionculture.dz | Password: admin123');
+    console.log('Email: m.benali@test.dz | Password: password123');
 
   } catch (error) {
     console.error('\n❌ Erreur générale:', error);

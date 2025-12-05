@@ -7,7 +7,7 @@ module.exports = (sequelize) => {
       primaryKey: true,
       autoIncrement: true
     },
-    detailLieuId: {
+    id_detail_lieu: {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
@@ -34,7 +34,7 @@ module.exports = (sequelize) => {
 
   // Associations
   Monument.associate = (models) => {
-    Monument.belongsTo(models.DetailLieu, { foreignKey: 'detailLieuId' });
+    Monument.belongsTo(models.DetailLieu, { foreignKey: 'id_detail_lieu' });
   };
 
   return Monument;

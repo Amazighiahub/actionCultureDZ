@@ -1,4 +1,5 @@
 const { Op } = require('sequelize');
+
 class LieuController {
   constructor(models) {
     this.models = models;
@@ -20,18 +21,35 @@ class LieuController {
 
       const offset = (page - 1) * limit;
       const where = {};
+      
+      // Configuration des includes avec filtrage hiérarchique
       const include = [
         { 
-          model: this.models.Wilaya,
-          attributes: ['nom', 'wilaya_name_ascii']
-        },
-        { 
-          model: this.models.Daira,
-          attributes: ['nom', 'daira_name_ascii']
-        },
-        { 
           model: this.models.Commune,
-          attributes: ['nom', 'commune_name_ascii']
+          attributes: ['id_commune', 'nom', 'commune_name_ascii'],
+          required: true,
+          where: commune ? { id_commune: commune } : {},
+          include: [
+            {
+              model: this.models.Daira,
+              attributes: ['id_daira', 'nom', 'daira_name_ascii'],
+              required: true,
+              where: daira ? { id_daira: daira } : {},
+              include: [
+                {
+                  model: this.models.Wilaya,
+                  attributes: ['id_wilaya', 'nom', 'wilaya_name_ascii'],
+                  required: true,
+                  where: wilaya ? { id_wilaya: wilaya } : {}
+                }
+              ]
+            }
+          ]
+        },
+        { 
+          model: this.models.Localite,
+          attributes: ['id_localite', 'nom', 'localite_name_ascii'],
+          required: false
         },
         { 
           model: this.models.DetailLieu,
@@ -44,10 +62,7 @@ class LieuController {
         { model: this.models.LieuMedia }
       ];
 
-      // Filtres géographiques
-      if (wilaya) where.wilayaId = wilaya;
-      if (daira) where.dairaId = daira;
-      if (commune) where.communeId = commune;
+      // Filtres sur le lieu
       if (type_lieu) where.typeLieu = type_lieu;
 
       // Recherche textuelle
@@ -77,10 +92,20 @@ class LieuController {
         distinct: true
       });
 
+      // Formater les données pour inclure la hiérarchie géographique
+      const lieuxFormates = lieux.rows.map(lieu => {
+        const lieuData = lieu.toJSON();
+        // Aplatir la hiérarchie géographique pour faciliter l'accès
+        lieuData.wilaya = lieuData.Commune?.Daira?.Wilaya || null;
+        lieuData.daira = lieuData.Commune?.Daira || null;
+        lieuData.commune = lieuData.Commune || null;
+        return lieuData;
+      });
+
       res.json({
         success: true,
         data: {
-          lieux: lieux.rows,
+          lieux: lieuxFormates,
           pagination: {
             total: lieux.count,
             page: parseInt(page),
@@ -98,364 +123,450 @@ class LieuController {
       });
     }
   }
-async searchForSelection(req, res) {
+
+  // Récupérer les lieux d'une wilaya spécifique
+  async getLieuxByWilaya(req, res) {
     try {
-      const { 
-        search = '', 
-        page = 1, 
-        limit = 20,
-        wilayaId,
-        includeDetailLieux = false
-      } = req.query;
-
+      const { wilayaId } = req.params;
+      const { page = 1, limit = 10 } = req.query;
       const offset = (page - 1) * limit;
-      const where = {};
 
-      // Recherche textuelle
-      if (search.trim()) {
-        where[Op.or] = [
-          { nom: { [Op.like]: `%${search}%` } },
-          { adresse: { [Op.like]: `%${search}%` } }
-        ];
-      }
-
-      // Filtre par wilaya si fourni
-      if (wilayaId) {
-        where.wilayaId = wilayaId;
-      }
-
-      // Options d'inclusion de base
-      const includeOptions = [
-        { 
-          model: Wilaya, 
-          attributes: ['id_wilaya', 'nom'] 
-        },
-        { 
-          model: Daira, 
-          attributes: ['id_daira', 'nom'] 
-        },
-        { 
-          model: Commune, 
-          attributes: ['id_commune', 'nom'] 
-        }
-      ];
-
-      // Inclure les DetailLieux si demandé
-      if (includeDetailLieux === 'true') {
-        includeOptions.push({
-          model: DetailLieu,
-          attributes: ['id_detailLieu', 'description', 'horaires', 'noteMoyenne'],
-          include: [{
-            model: Service,
-            attributes: ['id', 'nom']
-          }]
+      // Vérifier que la wilaya existe
+      const wilaya = await this.models.Wilaya.findByPk(wilayaId);
+      if (!wilaya) {
+        return res.status(404).json({
+          success: false,
+          error: 'Wilaya non trouvée'
         });
       }
 
-      const lieux = await Lieu.findAndCountAll({
-        where,
-        attributes: ['id_lieu', 'nom', 'adresse', 'latitude', 'longitude', 'typeLieu'],
-        include: includeOptions,
+      // Récupérer les lieux via la hiérarchie Commune → Daira → Wilaya
+      const lieux = await this.models.Lieu.findAndCountAll({
         limit: parseInt(limit),
         offset: parseInt(offset),
+        include: [
+          {
+            model: this.models.Commune,
+            required: true,
+            include: [
+              {
+                model: this.models.Daira,
+                required: true,
+                where: { wilayaId: wilayaId },
+                include: [
+                  {
+                    model: this.models.Wilaya,
+                    attributes: ['id_wilaya', 'nom']
+                  }
+                ]
+              }
+            ]
+          },
+          { model: this.models.DetailLieu },
+          { model: this.models.Service },
+          { model: this.models.LieuMedia }
+        ],
         order: [['nom', 'ASC']],
         distinct: true
       });
 
-      res.status(200).json({
+      res.json({
         success: true,
         data: {
+          wilaya: wilaya,
           lieux: lieux.rows,
           pagination: {
             total: lieux.count,
             page: parseInt(page),
-            pages: Math.ceil(lieux.count / limit),
-            limit: parseInt(limit)
+            pages: Math.ceil(lieux.count / limit)
           }
         }
       });
 
     } catch (error) {
-      console.error('Erreur lors de la recherche de lieux:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Erreur lors de la recherche de lieux',
-        error: error.message
+      console.error('Erreur:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Erreur serveur' 
       });
     }
   }
 
-  // Obtenir les DetailLieux d'un lieu spécifique
-  async getDetailLieuxByLieu(req, res) {
-    try {
-      const { lieuId } = req.params;
-
-      // Vérifier que le lieu existe
-      const lieu = await Lieu.findByPk(lieuId, {
-        attributes: ['id_lieu', 'nom', 'adresse']
-      });
-
-      if (!lieu) {
-        return res.status(404).json({
-          success: false,
-          message: 'Lieu non trouvé'
-        });
-      }
-
-      // Récupérer tous les DetailLieux de ce lieu avec leurs services
-      const detailLieux = await DetailLieu.findAll({
-        where: { id_lieu: lieuId },
-        attributes: ['id_detailLieu', 'description', 'horaires', 'histoire', 'noteMoyenne'],
-        include: [{
-          model: Service,
-          attributes: ['id', 'nom']
-        }]
-      });
-
-      res.status(200).json({
-        success: true,
-        lieu: {
-          id: lieu.id_lieu,
-          nom: lieu.nom,
-          adresse: lieu.adresse
-        },
-        count: detailLieux.length,
-        data: detailLieux
-      });
-
-    } catch (error) {
-      console.error('Erreur lors de la récupération des DetailLieux:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Erreur lors de la récupération des DetailLieux',
-        error: error.message
-      });
-    }
-  }
-
-  // Obtenir un lieu complet avec tous ses détails
-  async getLieuComplet(req, res) {
-    try {
-      const { id } = req.params;
-
-      const lieu = await Lieu.findByPk(id, {
-        include: [
-          { model: Wilaya },
-          { model: Daira },
-          { model: Commune },
-          { 
-            model: DetailLieu,
-            include: [
-              { model: Service }
-            ]
-          },
-          { model: LieuMedia }
-        ]
-      });
-
-      if (!lieu) {
-        return res.status(404).json({
-          success: false,
-          message: 'Lieu non trouvé'
-        });
-      }
-
-      res.status(200).json({
-        success: true,
-        data: lieu
-      });
-
-    } catch (error) {
-      console.error('Erreur lors de la récupération du lieu:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Erreur lors de la récupération du lieu',
-        error: error.message
-      });
-    }
-  }
-
-  // Recherche avancée avec filtres multiples
-  async searchAdvanced(req, res) {
+  // Créer un nouveau lieu
+  async createLieu(req, res) {
     try {
       const {
         nom,
-        wilayaId,
-        dairaId,
-        communeId,
         typeLieu,
-        hasServices,
-        noteMoyenneMin,
+        communeId,
+        localiteId,
+        adresse,
         latitude,
         longitude,
+        details
+      } = req.body;
+
+      // Validation des données requises
+      if (!nom || !typeLieu || !communeId || !adresse || !latitude || !longitude) {
+        return res.status(400).json({
+          success: false,
+          error: 'Données manquantes. Les champs nom, typeLieu, communeId, adresse, latitude et longitude sont requis.'
+        });
+      }
+
+      // Validation des coordonnées GPS
+      if (latitude < -90 || latitude > 90) {
+        return res.status(400).json({
+          success: false,
+          error: 'Latitude invalide. Doit être entre -90 et 90.'
+        });
+      }
+
+      if (longitude < -180 || longitude > 180) {
+        return res.status(400).json({
+          success: false,
+          error: 'Longitude invalide. Doit être entre -180 et 180.'
+        });
+      }
+
+      // Vérifier que la commune existe
+      const commune = await this.models.Commune.findByPk(communeId);
+      if (!commune) {
+        return res.status(404).json({
+          success: false,
+          error: 'Commune non trouvée'
+        });
+      }
+
+      // Vérifier la localité si fournie
+      if (localiteId) {
+        const localite = await this.models.Localite.findByPk(localiteId);
+        if (!localite || localite.id_commune !== communeId) {
+          return res.status(400).json({
+            success: false,
+            error: 'Localité invalide ou n\'appartient pas à la commune spécifiée'
+          });
+        }
+      }
+
+      // Créer le lieu
+      const lieu = await this.models.Lieu.create({
+        nom,
+        typeLieu,
+        communeId,
+        localiteId,
+        adresse,
+        latitude,
+        longitude
+      });
+
+      // Créer les détails si fournis
+      if (details) {
+        await this.models.DetailLieu.create({
+          id_lieu: lieu.id_lieu,
+          description: details.description,
+          horaires: details.horaires,
+          histoire: details.histoire,
+          referencesHistoriques: details.referencesHistoriques
+        });
+      }
+
+      // Récupérer le lieu créé avec toutes ses relations
+      const lieuComplet = await this.models.Lieu.findByPk(lieu.id_lieu, {
+        include: [
+          { 
+            model: this.models.Commune,
+            include: [{
+              model: this.models.Daira,
+              include: [{ model: this.models.Wilaya }]
+            }]
+          },
+          { model: this.models.Localite },
+          { model: this.models.DetailLieu }
+        ]
+      });
+
+      res.status(201).json({
+        success: true,
+        message: 'Lieu créé avec succès',
+        data: lieuComplet
+      });
+
+    } catch (error) {
+      console.error('Erreur lors de la création du lieu:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Erreur serveur lors de la création du lieu' 
+      });
+    }
+  }
+
+  // Mettre à jour un lieu
+  async updateLieu(req, res) {
+    try {
+      const { id } = req.params;
+      const {
+        nom,
+        typeLieu,
+        communeId,
+        localiteId,
+        adresse,
+        latitude,
+        longitude
+      } = req.body;
+
+      // Trouver le lieu
+      const lieu = await this.models.Lieu.findByPk(id);
+      if (!lieu) {
+        return res.status(404).json({
+          success: false,
+          error: 'Lieu non trouvé'
+        });
+      }
+
+      // Validation des coordonnées GPS si fournies
+      if (latitude !== undefined && (latitude < -90 || latitude > 90)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Latitude invalide. Doit être entre -90 et 90.'
+        });
+      }
+
+      if (longitude !== undefined && (longitude < -180 || longitude > 180)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Longitude invalide. Doit être entre -180 et 180.'
+        });
+      }
+
+      // Vérifier la commune si changée
+      if (communeId && communeId !== lieu.communeId) {
+        const commune = await this.models.Commune.findByPk(communeId);
+        if (!commune) {
+          return res.status(404).json({
+            success: false,
+            error: 'Commune non trouvée'
+          });
+        }
+      }
+
+      // Vérifier la localité si fournie
+      if (localiteId) {
+        const localite = await this.models.Localite.findByPk(localiteId);
+        const targetCommuneId = communeId || lieu.communeId;
+        if (!localite || localite.id_commune !== targetCommuneId) {
+          return res.status(400).json({
+            success: false,
+            error: 'Localité invalide ou n\'appartient pas à la commune'
+          });
+        }
+      }
+
+      // Mettre à jour le lieu
+      await lieu.update({
+        nom: nom || lieu.nom,
+        typeLieu: typeLieu || lieu.typeLieu,
+        communeId: communeId || lieu.communeId,
+        localiteId: localiteId !== undefined ? localiteId : lieu.localiteId,
+        adresse: adresse || lieu.adresse,
+        latitude: latitude !== undefined ? latitude : lieu.latitude,
+        longitude: longitude !== undefined ? longitude : lieu.longitude
+      });
+
+      // Récupérer le lieu mis à jour avec ses relations
+      const lieuMisAJour = await this.models.Lieu.findByPk(id, {
+        include: [
+          { 
+            model: this.models.Commune,
+            include: [{
+              model: this.models.Daira,
+              include: [{ model: this.models.Wilaya }]
+            }]
+          },
+          { model: this.models.Localite },
+          { model: this.models.DetailLieu },
+          { model: this.models.Service },
+          { model: this.models.LieuMedia }
+        ]
+      });
+
+      res.json({
+        success: true,
+        message: 'Lieu mis à jour avec succès',
+        data: lieuMisAJour
+      });
+
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour du lieu:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Erreur serveur lors de la mise à jour du lieu' 
+      });
+    }
+  }
+
+  // Supprimer un lieu
+  async deleteLieu(req, res) {
+    try {
+      const { id } = req.params;
+
+      const lieu = await this.models.Lieu.findByPk(id);
+      if (!lieu) {
+        return res.status(404).json({
+          success: false,
+          error: 'Lieu non trouvé'
+        });
+      }
+
+      // Supprimer le lieu (les relations cascade seront gérées par la BD)
+      await lieu.destroy();
+
+      res.json({
+        success: true,
+        message: 'Lieu supprimé avec succès'
+      });
+
+    } catch (error) {
+      console.error('Erreur lors de la suppression du lieu:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Erreur serveur lors de la suppression du lieu' 
+      });
+    }
+  }
+
+  // Rechercher des lieux
+  async searchLieux(req, res) {
+    try {
+      const { 
+        q,
+        type,
+        commune,
+        daira,
+        wilaya,
         radius,
+        lat,
+        lng,
         page = 1,
         limit = 20
       } = req.query;
 
       const offset = (page - 1) * limit;
       const where = {};
-      const having = {};
 
-      // Filtres de base
-      if (nom) where.nom = { [Op.like]: `%${nom}%` };
-      if (wilayaId) where.wilayaId = wilayaId;
-      if (dairaId) where.dairaId = dairaId;
-      if (communeId) where.communeId = communeId;
-      if (typeLieu) where.typeLieu = typeLieu;
-
-      // Construction de la requête
-      let query = {
-        where,
-        include: [
-          { model: Wilaya, attributes: ['nom'] },
-          { model: Daira, attributes: ['nom'] },
-          { model: Commune, attributes: ['nom'] },
-          {
-            model: DetailLieu,
-            attributes: ['id_detailLieu', 'description', 'noteMoyenne'],
-            required: hasServices === 'true',
-            include: hasServices === 'true' ? [{
-              model: Service,
-              attributes: ['id', 'nom'],
-              required: true
-            }] : []
-          }
-        ],
-        limit: parseInt(limit),
-        offset: parseInt(offset),
-        distinct: true
-      };
-
-      // Filtre par note moyenne
-      if (noteMoyenneMin) {
-        query.include[3].where = {
-          noteMoyenne: { [Op.gte]: parseFloat(noteMoyenneMin) }
-        };
+      // Recherche textuelle
+      if (q) {
+        where[Op.or] = [
+          { nom: { [Op.like]: `%${q}%` } },
+          { adresse: { [Op.like]: `%${q}%` } }
+        ];
       }
 
-      // Recherche par proximité
-      if (latitude && longitude && radius) {
-        const lat = parseFloat(latitude);
-        const lng = parseFloat(longitude);
-        const rad = parseFloat(radius);
+      // Filtre par type
+      if (type) {
+        where.typeLieu = type;
+      }
 
-        query.attributes = {
+      // Configuration des includes avec filtrage hiérarchique
+      const include = [
+        {
+          model: this.models.Commune,
+          required: true,
+          where: commune ? { id_commune: commune } : {},
           include: [
-            [
-              sequelize.literal(`
-                (6371 * acos(
-                  cos(radians(${lat})) * 
-                  cos(radians(latitude)) * 
-                  cos(radians(longitude) - radians(${lng})) + 
-                  sin(radians(${lat})) * 
-                  sin(radians(latitude))
-                ))
-              `),
-              'distance'
-            ]
+            {
+              model: this.models.Daira,
+              required: true,
+              where: daira ? { id_daira: daira } : {},
+              include: [
+                {
+                  model: this.models.Wilaya,
+                  required: true,
+                  where: wilaya ? { id_wilaya: wilaya } : {}
+                }
+              ]
+            }
           ]
-        };
+        },
+        { model: this.models.DetailLieu },
+        { model: this.models.Service },
+        { model: this.models.LieuMedia }
+      ];
 
-        having.distance = { [Op.lte]: rad };
-        query.having = having;
-        query.order = [[sequelize.literal('distance'), 'ASC']];
+      // Si recherche par proximité
+      let lieux;
+      if (radius && lat && lng) {
+        // Calcul de distance avec Haversine formula
+        const distance = this.models.sequelize.literal(
+          `6371 * acos(
+            cos(radians(${lat})) * cos(radians(latitude)) * 
+            cos(radians(longitude) - radians(${lng})) + 
+            sin(radians(${lat})) * sin(radians(latitude))
+          )`
+        );
+
+        lieux = await this.models.Lieu.findAndCountAll({
+          where: {
+            ...where,
+            [Op.and]: this.models.sequelize.literal(
+              `${distance} <= ${radius}`
+            )
+          },
+          attributes: {
+            include: [[distance, 'distance']]
+          },
+          include,
+          order: [[this.models.sequelize.literal('distance'), 'ASC']],
+          limit: parseInt(limit),
+          offset: parseInt(offset),
+          distinct: true
+        });
       } else {
-        query.order = [['nom', 'ASC']];
+        lieux = await this.models.Lieu.findAndCountAll({
+          where,
+          include,
+          order: [['nom', 'ASC']],
+          limit: parseInt(limit),
+          offset: parseInt(offset),
+          distinct: true
+        });
       }
 
-      const lieux = await Lieu.findAndCountAll(query);
-
-      res.status(200).json({
+      res.json({
         success: true,
         data: {
           lieux: lieux.rows,
           pagination: {
             total: lieux.count,
             page: parseInt(page),
-            pages: Math.ceil(lieux.count / limit),
-            limit: parseInt(limit)
+            pages: Math.ceil(lieux.count / limit)
           }
         }
       });
 
     } catch (error) {
-      console.error('Erreur lors de la recherche avancée:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Erreur lors de la recherche',
-        error: error.message
+      console.error('Erreur lors de la recherche:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Erreur serveur lors de la recherche' 
       });
     }
   }
 
-  // Suggestions de lieux (pour autocomplete)
-  async getSuggestions(req, res) {
-    try {
-      const { q, limit = 10 } = req.query;
-
-      if (!q || q.length < 2) {
-        return res.status(200).json({
-          success: true,
-          data: []
-        });
-      }
-
-      const lieux = await Lieu.findAll({
-        where: {
-          [Op.or]: [
-            { nom: { [Op.like]: `${q}%` } },
-            { nom: { [Op.like]: `% ${q}%` } },
-            { adresse: { [Op.like]: `%${q}%` } }
-          ]
-        },
-        attributes: ['id_lieu', 'nom', 'adresse', 'typeLieu'],
-        include: [{
-          model: Wilaya,
-          attributes: ['nom']
-        }],
-        limit: parseInt(limit),
-        order: [
-          [sequelize.literal(`CASE WHEN nom LIKE '${q}%' THEN 0 ELSE 1 END`), 'ASC'],
-          ['nom', 'ASC']
-        ]
-      });
-
-      // Formater pour l'autocomplete
-      const suggestions = lieux.map(lieu => ({
-        id: lieu.id_lieu,
-        label: `${lieu.nom} - ${lieu.adresse}`,
-        value: lieu.id_lieu,
-        nom: lieu.nom,
-        adresse: lieu.adresse,
-        typeLieu: lieu.typeLieu,
-        wilaya: lieu.Wilaya?.nom
-      }));
-
-      res.status(200).json({
-        success: true,
-        data: suggestions
-      });
-
-    } catch (error) {
-      console.error('Erreur lors de la récupération des suggestions:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Erreur lors de la récupération des suggestions',
-        error: error.message
-      });
-    }
-  }
-  // Récupérer un lieu par ID
+  // Obtenir un lieu par ID avec toutes ses relations
   async getLieuById(req, res) {
     try {
       const { id } = req.params;
 
       const lieu = await this.models.Lieu.findByPk(id, {
         include: [
-          { model: this.models.Wilaya },
-          { model: this.models.Daira },
-          { model: this.models.Commune },
+          { 
+            model: this.models.Commune,
+            include: [{
+              model: this.models.Daira,
+              include: [{ model: this.models.Wilaya }]
+            }]
+          },
           { model: this.models.Localite },
           { 
             model: this.models.DetailLieu,
@@ -466,230 +577,137 @@ async searchForSelection(req, res) {
           },
           { model: this.models.Service },
           { model: this.models.LieuMedia },
+          { model: this.models.QrCode },
           {
             model: this.models.Evenement,
-            attributes: ['id_evenement', 'nom_evenement', 'date_debut', 'date_fin', 'description'],
-            include: [
-              { model: this.models.TypeEvenement, attributes: ['nom_type'] }
-            ]
+            where: { date_fin: { [Op.gte]: new Date() } },
+            required: false
           }
         ]
       });
 
       if (!lieu) {
-        return res.status(404).json({ 
-          success: false, 
-          error: 'Lieu non trouvé' 
-        });
-      }
-
-      res.json({
-        success: true,
-        data: lieu
-      });
-
-    } catch (error) {
-      console.error('Erreur lors de la récupération du lieu:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: 'Erreur serveur lors de la récupération du lieu' 
-      });
-    }
-  }
-
-  // Créer un nouveau lieu
-  async createLieu(req, res) {
-    const transaction = await this.models.sequelize.transaction();
-
-    try {
-      const {
-        nom,
-        adresse,
-        latitude,
-        longitude,
-        typeLieu,
-        wilayaId,
-        dairaId,
-        communeId,
-        localiteId,
-        details = {},
-        services = [],
-        medias = []
-      } = req.body;
-
-      // Validation des champs obligatoires
-      if (!nom || !adresse || !latitude || !longitude || !typeLieu) {
-        await transaction.rollback();
-        return res.status(400).json({
+        return res.status(404).json({
           success: false,
-          error: 'Les champs nom, adresse, coordonnées et type de lieu sont obligatoires'
+          error: 'Lieu non trouvé'
         });
       }
 
-      // Créer le lieu
-      const lieu = await this.models.Lieu.create({
-        nom,
-        adresse,
-        latitude: parseFloat(latitude),
-        longitude: parseFloat(longitude),
-        typeLieu,
-        wilayaId,
-        dairaId,
-        communeId,
-        localiteId
-      }, { transaction });
+      // Formater la réponse avec hiérarchie géographique aplatie
+      const lieuData = lieu.toJSON();
+      lieuData.wilaya = lieuData.Commune?.Daira?.Wilaya || null;
+      lieuData.daira = lieuData.Commune?.Daira || null;
 
-      // Ajouter les détails du lieu
-      if (Object.keys(details).length > 0) {
-        await this.models.DetailLieu.create({
-          id_lieu: lieu.id_lieu,
-          description: details.description,
-          horaires: details.horaires,
-          histoire: details.histoire,
-          referencesHistoriques: details.referencesHistoriques
-        }, { transaction });
-      }
-
-      // Ajouter les services
-      if (services.length > 0) {
-        for (const service of services) {
-          await this.models.Service.create({
-            id_lieu: lieu.id_lieu,
-            nom: service
-          }, { transaction });
-        }
-      }
-
-      // Ajouter les médias
-      if (medias.length > 0) {
-        for (const media of medias) {
-          await this.models.LieuMedia.create({
-            id_lieu: lieu.id_lieu,
-            type: media.type,
-            url: media.url,
-            description: media.description
-          }, { transaction });
-        }
-      }
-
-      await transaction.commit();
-
-      // Récupérer le lieu complet pour la réponse
-      const lieuComplet = await this.getLieuComplet(lieu.id_lieu);
-
-      res.status(201).json({
+      res.json({
         success: true,
-        message: 'Lieu créé avec succès',
-        data: lieuComplet
+        data: lieuData
       });
 
     } catch (error) {
-      await transaction.rollback();
-      console.error('Erreur lors de la création du lieu:', error);
+      console.error('Erreur:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Erreur serveur lors de la création du lieu' 
+        error: 'Erreur serveur' 
       });
     }
   }
-  // Lieux par proximité géographique
-  async getLieuxProximite(req, res) {
+
+  // Statistiques des lieux
+  async getStatistiques(req, res) {
     try {
-      const { latitude, longitude, rayon = 50, limit = 10 } = req.query;
+      // Total des lieux
+      const totalLieux = await this.models.Lieu.count();
 
-      if (!latitude || !longitude) {
-        return res.status(400).json({
-          success: false,
-          error: 'Latitude et longitude requises'
-        });
-      }
-
-      const lat = parseFloat(latitude);
-      const lng = parseFloat(longitude);
-      const radiusKm = parseFloat(rayon);
-
-      // Calcul de la distance avec la formule de Haversine
-      const lieux = await this.models.Lieu.findAll({
+      // Lieux par type
+      const lieuxParType = await this.models.Lieu.findAll({
         attributes: [
-          '*',
-          [
-            this.models.sequelize.literal(`
-              (6371 * acos(
-                cos(radians(${lat})) * 
-                cos(radians(latitude)) * 
-                cos(radians(longitude) - radians(${lng})) + 
-                sin(radians(${lat})) * 
-                sin(radians(latitude))
-              ))
-            `),
-            'distance'
-          ]
+          'typeLieu',
+          [this.models.sequelize.fn('COUNT', '*'), 'count']
         ],
-        include: [
-          { model: this.models.Wilaya, attributes: ['nom'] },
-          { model: this.models.DetailLieu, attributes: ['description'] }
+        group: ['typeLieu']
+      });
+
+      // Lieux avec détails
+      const lieuxAvecDetails = await this.models.Lieu.count({
+        include: [{
+          model: this.models.DetailLieu,
+          required: true
+        }]
+      });
+
+      // Lieux avec services
+      const lieuxAvecServices = await this.models.Lieu.count({
+        include: [{
+          model: this.models.Service,
+          required: true
+        }],
+        distinct: true
+      });
+
+      // Top wilayas par nombre de lieux (via hiérarchie)
+      const topWilayas = await this.models.Wilaya.findAll({
+        attributes: [
+          'id_wilaya',
+          'nom',
+          [this.models.sequelize.fn('COUNT', 
+            this.models.sequelize.fn('DISTINCT', this.models.sequelize.col('Dairas.Communes.Lieux.id_lieu'))
+          ), 'nombreLieux']
         ],
-        having: this.models.sequelize.literal(`distance <= ${radiusKm}`),
-        order: [this.models.sequelize.literal('distance ASC')],
-        limit: parseInt(limit)
+        include: [{
+          model: this.models.Daira,
+          attributes: [],
+          include: [{
+            model: this.models.Commune,
+            attributes: [],
+            include: [{
+              model: this.models.Lieu,
+              attributes: []
+            }]
+          }]
+        }],
+        group: ['Wilaya.id_wilaya'],
+        order: [[this.models.sequelize.literal('nombreLieux'), 'DESC']],
+        limit: 10,
+        subQuery: false
       });
 
       res.json({
         success: true,
-        data: lieux,
-        count: lieux.length
+        data: {
+          totalLieux,
+          lieuxParType,
+          lieuxAvecDetails,
+          lieuxAvecServices,
+          topWilayas
+        }
       });
 
     } catch (error) {
-      console.error('Erreur lors de la recherche par proximité:', error);
+      console.error('Erreur lors du calcul des statistiques:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Erreur serveur lors de la recherche par proximité' 
-      });
-    }
-  }
-  // Statistiques des lieux par wilaya
-  async getStatistiquesLieux(req, res) {
-    try {
-      const stats = await this.models.Lieu.findAll({
-        attributes: [
-          [this.models.sequelize.fn('COUNT', this.models.sequelize.col('Lieu.id_lieu')), 'total_lieux'],
-          [this.models.sequelize.col('Wilaya.nom'), 'wilaya_nom']
-        ],
-        include: [
-          {
-            model: this.models.Wilaya,
-            attributes: []
-          }
-        ],
-        group: ['Wilaya.id_wilaya', 'Wilaya.nom'],
-        order: [[this.models.sequelize.literal('total_lieux'), 'DESC']]
-      });
-
-      res.json({
-        success: true,
-        data: stats
-      });
-
-    } catch (error) {
-      console.error('Erreur lors de la récupération des statistiques:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: 'Erreur serveur lors de la récupération des statistiques' 
+        error: 'Erreur serveur lors du calcul des statistiques' 
       });
     }
   }
 
-  // Méthode utilitaire pour récupérer un lieu complet
-  async getLieuComplet(id) {
-    return await this.models.Lieu.findByPk(id, {
-      include: [
-        { model: this.models.Wilaya },
-        { model: this.models.Daira },
-        { model: this.models.Commune },
-        { model: this.models.DetailLieu }
-      ]
+  // Helper : Obtenir la wilaya d'une commune
+  async getWilayaFromCommune(communeId) {
+    const commune = await this.models.Commune.findByPk(communeId, {
+      include: [{
+        model: this.models.Daira,
+        include: [{ model: this.models.Wilaya }]
+      }]
     });
+    return commune?.Daira?.Wilaya || null;
+  }
+
+  // Helper : Obtenir la daira d'une commune
+  async getDairaFromCommune(communeId) {
+    const commune = await this.models.Commune.findByPk(communeId, {
+      include: [{ model: this.models.Daira }]
+    });
+    return commune?.Daira || null;
   }
 }
 
