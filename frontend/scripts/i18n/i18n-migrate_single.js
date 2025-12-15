@@ -43,7 +43,7 @@ class I18nUIMigratorSingleFile {
         const filePath = fileInfo.file.toLowerCase();
         return (
           (filePath.includes('/pages/') || filePath.includes('\\pages\\') ||
-           (filePath.includes('/components/') && !filePath.includes('/components/ui/')) ||
+           (filePath.includes('/components/') && !filePath.includes('/components/UI/')) ||
            (filePath.includes('\\components\\') && !filePath.includes('\\components\\ui\\')))
           && (filePath.endsWith('.tsx') || filePath.endsWith('.jsx'))
           && fileInfo.texts.length > 0 

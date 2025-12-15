@@ -34,7 +34,7 @@ class I18nUIAnalyzer {
         'dist/**',
         '**/*.test.*',
         '**/*.spec.*',
-        '**/components/ui/**', // Exclure les composants UI de base
+        '**/components/UI/**', // Exclure les composants UI de base
         '**/services/**',
         '**/utils/**',
         '**/types/**',
@@ -51,7 +51,7 @@ class I18nUIAnalyzer {
       const normalizedPath = file.replace(/\\/g, '/');
       return (
         normalizedPath.includes('/pages/') || 
-        (normalizedPath.includes('/components/') && !normalizedPath.includes('/components/ui/'))
+        (normalizedPath.includes('/components/') && !normalizedPath.includes('/components/UI/'))
       );
     });
     

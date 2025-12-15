@@ -10,16 +10,28 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Setup SSH and deploy
+    - name: Setup SSH
       run: |
         mkdir -p ~/.ssh
-        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        echo "${{ secrets.SSH_PRIVATE_KEY_B64 }}" | base64 -d > ~/.ssh/id_rsa
         chmod 600 ~/.ssh/id_rsa
         ssh-keyscan -H 82.25.119.112 >> ~/.ssh/known_hosts
 
-        ssh root@82.25.119.112 << 'EOF'
-          cd /home/EventCulture
-          git pull origin main
-          cd frontend && npm install && npm run build
-          pm2 restart back-eventculture
+        ssh -o StrictHostKeyChecking=no root@82.25.119.112 << 'EOF'
+            echo "📦 Pulling latest changes..."
+            cd /home/EventCulture
+            git pull origin main
+            
+            echo "🔧 Installing frontend dependencies..."
+            cd frontend
+            npm install
+            
+            echo "🏗️ Building frontend..."
+            npm run build
+            
+            echo "🔄 Restarting backend..."
+            pm2 restart redis-dev
+            pm2 restart back-eventculture
+            
+            echo "✅ Deployment complete!"
         EOF
