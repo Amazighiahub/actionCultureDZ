@@ -1,4 +1,4 @@
-// hooks/useAuth.ts
+// hooks/useAuth.ts - VERSION CORRIGÉE
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '@/services/auth.service';
@@ -8,7 +8,7 @@ import type {
   RegisterVisitorData, 
   RegisterProfessionalData 
 } from '@/services/auth.service';
-import type { UseAuthReturn } from '../types/models/auth.types';
+import type { UseAuthReturn, AuthResult } from '../types/models/auth.types';
 
 export function useAuth(): UseAuthReturn {
   const navigate = useNavigate();
@@ -29,25 +29,20 @@ export function useAuth(): UseAuthReturn {
   const [registerLoading, setRegisterLoading] = useState(false);
 
   /**
-   * Connexion
+   * ✅ CORRIGÉ: Connexion - retourne maintenant AuthResult
    */
-  const login = useCallback(async (credentials: LoginCredentials): Promise<boolean> => {
+  const login = useCallback(async (credentials: LoginCredentials): Promise<AuthResult> => {
     try {
       setLoginLoading(true);
       
       const response = await authService.login(credentials);
       
       if (response.success && response.data) {
-        // Le token est déjà stocké par authService.login via setAuthData
-        
-        // IMPORTANT: Rafraîchir immédiatement les permissions
-        // Cela va mettre à jour l'état user dans le contexte
+        // Le token est stocké par authService.login via setAuthData
         await refreshPermissions();
-        
-        // Attendre un tick pour que le contexte se mette à jour
         await new Promise(resolve => setTimeout(resolve, 100));
         
-        // Maintenant récupérer l'utilisateur fraîchement chargé
+        // Récupérer l'utilisateur fraîchement chargé
         const userResponse = await authService.getCurrentUser();
         if (userResponse.success && userResponse.data) {
           const currentUser = userResponse.data;
@@ -64,13 +59,20 @@ export function useAuth(): UseAuthReturn {
           }
         }
         
-        return true;
+        return { success: true };
       }
       
-      return false;
-    } catch (error) {
+      // ✅ Retourner le message d'erreur du backend
+      return { 
+        success: false, 
+        error: response.error || 'Email ou mot de passe incorrect'
+      };
+    } catch (error: any) {
       console.error('Login error:', error);
-      return false;
+      return { 
+        success: false, 
+        error: error.message || 'Erreur lors de la connexion'
+      };
     } finally {
       setLoginLoading(false);
     }
@@ -82,76 +84,115 @@ export function useAuth(): UseAuthReturn {
   const logout = useCallback(async (): Promise<void> => {
     try {
       await authService.logout();
-      // IMPORTANT: Rafraîchir immédiatement pour vider l'état
       await refreshPermissions();
       navigate('/auth');
     } catch (error) {
       console.error('Logout error:', error);
-      // Même en cas d'erreur, on rafraîchit et redirige
       await refreshPermissions();
       navigate('/auth');
     }
   }, [navigate, refreshPermissions]);
 
   /**
-   * Inscription visiteur
+   * ✅ CORRIGÉ: Inscription visiteur - retourne maintenant AuthResult
    */
-  const registerVisitor = useCallback(async (data: RegisterVisitorData): Promise<boolean> => {
+  const registerVisitor = useCallback(async (data: RegisterVisitorData): Promise<AuthResult> => {
     try {
       setRegisterLoading(true);
       
       const response = await authService.registerVisitor(data);
       
       if (response.success && response.data) {
-        // Le token est déjà stocké par authService via setAuthData
         await refreshPermissions();
-        
-        // Attendre que le contexte se mette à jour
         await new Promise(resolve => setTimeout(resolve, 100));
         
-        navigate('/');
-        return true;
+        // Vérifier si vérification email nécessaire
+        const needsEmailVerification = (response.data as any).needsEmailVerification;
+        
+        if (needsEmailVerification) {
+          // Rediriger vers page de confirmation email
+          navigate('/verification-email-envoyee', {
+            state: {
+              email: data.email,
+              message: 'Un email de vérification a été envoyé à votre adresse.'
+            }
+          });
+        } else {
+          // Mode dev ou email déjà vérifié - rediriger vers accueil
+          navigate('/');
+        }
+        
+        return { success: true };
       }
       
-      return false;
-    } catch (error) {
+      // ✅ Retourner le message d'erreur du backend
+      return { 
+        success: false, 
+        error: response.error || 'Une erreur est survenue lors de l\'inscription'
+      };
+    } catch (error: any) {
       console.error('Register visitor error:', error);
-      return false;
+      return { 
+        success: false, 
+        error: error.message || 'Une erreur est survenue lors de l\'inscription'
+      };
     } finally {
       setRegisterLoading(false);
     }
   }, [navigate, refreshPermissions]);
 
   /**
-   * Inscription professionnel
+   * ✅ CORRIGÉ: Inscription professionnel - retourne maintenant AuthResult
    */
-  const registerProfessional = useCallback(async (data: RegisterProfessionalData): Promise<boolean> => {
+  const registerProfessional = useCallback(async (data: RegisterProfessionalData): Promise<AuthResult> => {
     try {
       setRegisterLoading(true);
       
       const response = await authService.registerProfessional(data);
       
       if (response.success && response.data) {
-        // Le token est déjà stocké par authService via setAuthData
         await refreshPermissions();
-        
-        // Attendre que le contexte se mette à jour
         await new Promise(resolve => setTimeout(resolve, 100));
         
-        // Rediriger avec message de validation
-        navigate('/dashboard', {
-          state: {
-            message: 'Votre compte professionnel a été créé et est en attente de validation.'
-          }
-        });
+        // Vérifier si vérification email nécessaire
+        const needsEmailVerification = (response.data as any).needsEmailVerification;
+        const needsAdminValidation = (response.data as any).needsAdminValidation;
         
-        return true;
+        if (needsEmailVerification) {
+          // Rediriger vers page de confirmation email
+          navigate('/verification-email-envoyee', {
+            state: {
+              email: data.email,
+              message: 'Un email de vérification a été envoyé. Après vérification, votre compte sera soumis à validation par un administrateur.',
+              isProfessional: true
+            }
+          });
+        } else if (needsAdminValidation) {
+          // Mode dev - email vérifié mais en attente validation admin
+          navigate('/dashboard-pro', {
+            state: {
+              message: 'Votre compte professionnel a été créé et est en attente de validation par un administrateur.'
+            }
+          });
+        } else {
+          // Compte actif (rare pour un pro)
+          navigate('/dashboard-pro');
+        }
+        
+        return { success: true };
       }
       
-      return false;
-    } catch (error) {
+      // ✅ Retourner le message d'erreur du backend
+      return { 
+        success: false, 
+        error: response.error || 'Une erreur est survenue lors de l\'inscription'
+      };
+    } catch (error: any) {
       console.error('Register professional error:', error);
-      return false;
+      return { 
+        success: false, 
+        error: error.message || 'Une erreur est survenue lors de l\'inscription'
+      };
     } finally {
       setRegisterLoading(false);
     }
@@ -168,7 +209,7 @@ export function useAuth(): UseAuthReturn {
     needsValidation,
     statusMessage,
     
-    // Actions
+    // Actions - ✅ retournent maintenant AuthResult
     login,
     logout,
     registerVisitor,

@@ -1,22 +1,33 @@
+// models/Programme.js - ⚡ MODIFIÉ POUR I18N
 const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
   const Programme = sequelize.define('Programme', {
-    // ... [TOUS LES CHAMPS RESTENT IDENTIQUES] ...
     id_programme: {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true
     },
+    // ⚡ MODIFIÉ POUR I18N
     titre: {
-      type: DataTypes.STRING(255),
+      type: DataTypes.JSON,
       allowNull: false,
+      defaultValue: { fr: '' },
+      comment: 'Titre en plusieurs langues { fr: "Conférence", ar: "محاضرة", en: "Conference" }',
       validate: {
-        notEmpty: true
+        notEmpty(value) {
+          if (!value || (!value.fr && !value.ar)) {
+            throw new Error('Le titre est requis');
+          }
+        }
       }
     },
+    // ⚡ MODIFIÉ POUR I18N
     description: {
-      type: DataTypes.TEXT
+      type: DataTypes.JSON,
+      allowNull: true,
+      defaultValue: {},
+      comment: 'Description en plusieurs langues'
     },
     id_evenement: {
       type: DataTypes.INTEGER,
@@ -34,7 +45,7 @@ module.exports = (sequelize) => {
       }
     },
     date_programme: {
-      type: DataTypes.DATEONLY,  // Format YYYY-MM-DD
+      type: DataTypes.DATEONLY,
       allowNull: false,
       validate: {
         isDate: true
@@ -111,7 +122,6 @@ module.exports = (sequelize) => {
     notes_organisateur: {
       type: DataTypes.TEXT
     }
-    
   }, {
     tableName: 'programme',
     timestamps: true,
@@ -119,25 +129,15 @@ module.exports = (sequelize) => {
     updatedAt: 'date_modification',
     
     indexes: [
-      {
-        fields: ['id_evenement']
-      },
-      {
-        fields: ['date_programme']  // Nouvel index pour les requêtes par date
-      },
-      {
-        fields: ['ordre']
-      },
-      {
-        fields: ['statut']
-      },
-      {
-        fields: ['type_activite']
-      }
+      { fields: ['id_evenement'] },
+      { fields: ['date_programme'] },
+      { fields: ['ordre'] },
+      { fields: ['statut'] },
+      { fields: ['type_activite'] }
     ]
   });
 
-  // Associations CORRIGÉES
+  // Associations
   Programme.associate = (models) => {
     Programme.belongsTo(models.Evenement, { 
       foreignKey: 'id_evenement',
@@ -149,23 +149,27 @@ module.exports = (sequelize) => {
       as: 'Lieu'
     });
     
-    // Relation avec Intervenant (pas User)
     Programme.belongsToMany(models.User, {
-    through: models.ProgrammeIntervenant,
-    foreignKey: 'id_programme',
-    otherKey: 'id_user',  // Maintenant c'est id_user
-    as: 'Intervenants'    // On garde l'alias 'Intervenants' pour la clarté
-  });
+      through: models.ProgrammeIntervenant,
+      foreignKey: 'id_programme',
+      otherKey: 'id_user',
+      as: 'Intervenants'
+    });
     
     Programme.hasMany(models.ProgrammeIntervenant, {
       foreignKey: 'id_programme',
       as: 'ProgrammeIntervenants'
     });
   };
-  
-  // Méthodes de classe CORRIGÉES
-  
-  // Autres méthodes restent identiques...
+
+  // ⚡ NOUVELLES MÉTHODES I18N
+  Programme.prototype.getTitre = function(lang = 'fr') {
+    return this.titre?.[lang] || this.titre?.fr || this.titre?.ar || '';
+  };
+
+  Programme.prototype.getDescription = function(lang = 'fr') {
+    return this.description?.[lang] || this.description?.fr || '';
+  };
 
   return Programme;
-}
+};

@@ -1,5 +1,8 @@
-// controllers/IntervenantController.js - Version adaptée au modèle existant
+// controllers/IntervenantController.js - VERSION i18n
 const { Op } = require('sequelize');
+
+// ⚡ Import du helper i18n
+const { translate, translateDeep, createMultiLang, mergeTranslations } = require('../helpers/i18n');
 
 class IntervenantController {
   constructor(models) {
@@ -10,16 +13,33 @@ class IntervenantController {
     this.models = models;
     this.sequelize = models.sequelize || Object.values(models)[0]?.sequelize;
     
-    console.log('✅ IntervenantController initialisé');
-    console.log('📦 Modèles disponibles:', Object.keys(models).filter(k => k !== 'sequelize' && k !== 'Sequelize'));
+    console.log('✅ IntervenantController initialisé avec i18n');
+  }
+
+  // ⚡ Recherche multilingue dans les champs JSON
+  buildMultiLangSearch(field, search) {
+    return [
+      this.sequelize.where(
+        this.sequelize.fn('JSON_EXTRACT', this.sequelize.col(field), '$.fr'),
+        { [Op.like]: `%${search}%` }
+      ),
+      this.sequelize.where(
+        this.sequelize.fn('JSON_EXTRACT', this.sequelize.col(field), '$.ar'),
+        { [Op.like]: `%${search}%` }
+      ),
+      this.sequelize.where(
+        this.sequelize.fn('JSON_EXTRACT', this.sequelize.col(field), '$.en'),
+        { [Op.like]: `%${search}%` }
+      )
+    ];
   }
 
   /**
    * GET /api/intervenants
-   * Récupérer tous les intervenants avec pagination et filtres
    */
   async getIntervenants(req, res) {
     try {
+      const lang = req.lang || 'fr';  // ⚡
       const { 
         page = 1, 
         limit = 20, 
@@ -35,12 +55,12 @@ class IntervenantController {
       const offset = (page - 1) * limit;
       const where = {};
 
-      // Filtres
+      // ⚡ Recherche multilingue
       if (search) {
         where[Op.or] = [
-          { nom: { [Op.like]: `%${search}%` } },
-          { prenom: { [Op.like]: `%${search}%` } },
-          { biographie: { [Op.like]: `%${search}%` } },
+          ...this.buildMultiLangSearch('nom', search),
+          ...this.buildMultiLangSearch('prenom', search),
+          ...this.buildMultiLangSearch('biographie', search),
           { organisation: { [Op.like]: `%${search}%` } },
           { titre_professionnel: { [Op.like]: `%${search}%` } }
         ];
@@ -62,7 +82,14 @@ class IntervenantController {
         where.verifie = verifie === 'true';
       }
 
-      // Requête avec pagination
+      // Tri multilingue
+      let orderClause;
+      if (['nom', 'prenom', 'biographie'].includes(order)) {
+        orderClause = [[this.sequelize.fn('JSON_EXTRACT', this.sequelize.col(order), `$.${lang}`), direction]];
+      } else {
+        orderClause = [[order, direction]];
+      }
+
       const { count, rows: intervenants } = await this.models.Intervenant.findAndCountAll({
         where,
         include: [
@@ -73,37 +100,38 @@ class IntervenantController {
             required: false
           }
         ],
-        order: [[order, direction]],
+        order: orderClause,
         limit: parseInt(limit),
         offset
       });
 
+      // ⚡ Traduire
       res.json({
         success: true,
-        data: intervenants,
+        data: translateDeep(intervenants, lang),
         pagination: {
           total: count,
           page: parseInt(page),
           limit: parseInt(limit),
           totalPages: Math.ceil(count / limit)
-        }
+        },
+        lang
       });
     } catch (error) {
       console.error('Erreur lors de la récupération des intervenants:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur lors de la récupération des intervenants',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        error: 'Erreur serveur lors de la récupération des intervenants'
       });
     }
   }
 
   /**
    * GET /api/intervenants/:id
-   * Récupérer un intervenant par son ID
    */
   async getIntervenantById(req, res) {
     try {
+      const lang = req.lang || 'fr';  // ⚡
       const { id } = req.params;
 
       const intervenant = await this.models.Intervenant.findByPk(id, {
@@ -131,34 +159,41 @@ class IntervenantController {
         });
       }
 
-      // Ajouter des statistiques
       const stats = await intervenant.getStatistiques();
 
+      // ⚡ Traduire
       res.json({
         success: true,
         data: {
-          ...intervenant.toJSON(),
+          ...translateDeep(intervenant, lang),
           statistiques: stats
-        }
+        },
+        lang
       });
     } catch (error) {
       console.error('Erreur lors de la récupération de l\'intervenant:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur lors de la récupération de l\'intervenant',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        error: 'Erreur serveur lors de la récupération de l\'intervenant'
       });
     }
   }
 
+  // ⚡ Préparer un champ multilingue
+  prepareMultiLangField(value, lang = 'fr') {
+    if (!value) return null;
+    if (typeof value === 'object' && value !== null) return value;
+    return createMultiLang(value, lang);
+  }
+
   /**
    * POST /api/intervenants
-   * Créer un nouvel intervenant
    */
   async createIntervenant(req, res) {
     const transaction = await this.sequelize.transaction();
     
     try {
+      const lang = req.lang || 'fr';  // ⚡
       const {
         nom,
         prenom,
@@ -179,7 +214,6 @@ class IntervenantController {
         prix_distinctions
       } = req.body;
 
-      // Validation des champs obligatoires
       if (!nom || !prenom) {
         await transaction.rollback();
         return res.status(400).json({
@@ -188,7 +222,6 @@ class IntervenantController {
         });
       }
 
-      // Vérifier l'unicité de l'email si fourni
       if (email) {
         const existingIntervenant = await this.models.Intervenant.findOne({
           where: { email }
@@ -203,17 +236,21 @@ class IntervenantController {
         }
       }
 
-      // Créer l'intervenant
+      // ⚡ Préparer les champs multilingues
+      const nomMultiLang = this.prepareMultiLangField(nom, lang);
+      const prenomMultiLang = this.prepareMultiLangField(prenom, lang);
+      const biographieMultiLang = this.prepareMultiLangField(biographie, lang);
+
       const intervenant = await this.models.Intervenant.create({
-        nom,
-        prenom,
+        nom: nomMultiLang,
+        prenom: prenomMultiLang,
+        biographie: biographieMultiLang,
         date_naissance,
         lieu_naissance,
         titre_professionnel,
         organisation,
         email,
         telephone,
-        biographie,
         photo_url,
         specialites: specialites || [],
         site_web,
@@ -231,7 +268,7 @@ class IntervenantController {
       res.status(201).json({
         success: true,
         message: 'Intervenant créé avec succès',
-        data: intervenant
+        data: translate(intervenant, lang)
       });
 
     } catch (error) {
@@ -251,22 +288,21 @@ class IntervenantController {
 
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur lors de la création de l\'intervenant',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        error: 'Erreur serveur lors de la création de l\'intervenant'
       });
     }
   }
 
   /**
    * PUT /api/intervenants/:id
-   * Mettre à jour un intervenant
    */
   async updateIntervenant(req, res) {
     const transaction = await this.sequelize.transaction();
     
     try {
+      const lang = req.lang || 'fr';  // ⚡
       const { id } = req.params;
-      const updates = req.body;
+      const { nom, prenom, biographie, ...otherUpdates } = req.body;
 
       const intervenant = await this.models.Intervenant.findByPk(id);
 
@@ -278,11 +314,10 @@ class IntervenantController {
         });
       }
 
-      // Vérifier l'unicité de l'email si modifié
-      if (updates.email && updates.email !== intervenant.email) {
+      if (otherUpdates.email && otherUpdates.email !== intervenant.email) {
         const existingIntervenant = await this.models.Intervenant.findOne({
           where: { 
-            email: updates.email,
+            email: otherUpdates.email,
             id_intervenant: { [Op.ne]: id }
           }
         });
@@ -291,36 +326,58 @@ class IntervenantController {
           await transaction.rollback();
           return res.status(400).json({
             success: false,
-            error: 'Un autre intervenant utilise déjà cet email'
+            error: 'Cet email est déjà utilisé'
           });
         }
       }
 
-      // Mettre à jour l'intervenant
+      const updates = { ...otherUpdates };
+
+      // ⚡ Gérer les champs multilingues
+      if (nom !== undefined) {
+        if (typeof nom === 'object') {
+          updates.nom = mergeTranslations(intervenant.nom, nom);
+        } else {
+          updates.nom = mergeTranslations(intervenant.nom, { [lang]: nom });
+        }
+      }
+
+      if (prenom !== undefined) {
+        if (typeof prenom === 'object') {
+          updates.prenom = mergeTranslations(intervenant.prenom, prenom);
+        } else {
+          updates.prenom = mergeTranslations(intervenant.prenom, { [lang]: prenom });
+        }
+      }
+
+      if (biographie !== undefined) {
+        if (typeof biographie === 'object') {
+          updates.biographie = mergeTranslations(intervenant.biographie, biographie);
+        } else {
+          updates.biographie = mergeTranslations(intervenant.biographie, { [lang]: biographie });
+        }
+      }
+
       await intervenant.update(updates, { transaction });
 
-      // Récupérer l'intervenant mis à jour avec ses relations
-      const intervenantMisAJour = await this.models.Intervenant.findByPk(
-        id,
-        {
-          include: [
-            {
-              model: this.models.User,
-              as: 'UserAccount',
-              attributes: ['id_user', 'prenom', 'nom', 'email'],
-              required: false
-            }
-          ],
-          transaction
-        }
-      );
+      const intervenantMisAJour = await this.models.Intervenant.findByPk(id, {
+        include: [
+          {
+            model: this.models.User,
+            as: 'UserAccount',
+            attributes: ['id_user', 'prenom', 'nom', 'email'],
+            required: false
+          }
+        ],
+        transaction
+      });
 
       await transaction.commit();
 
       res.json({
         success: true,
         message: 'Intervenant mis à jour avec succès',
-        data: intervenantMisAJour
+        data: translateDeep(intervenantMisAJour, lang)
       });
 
     } catch (error) {
@@ -329,15 +386,13 @@ class IntervenantController {
       
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur lors de la mise à jour de l\'intervenant',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        error: 'Erreur serveur lors de la mise à jour de l\'intervenant'
       });
     }
   }
 
   /**
    * DELETE /api/intervenants/:id
-   * Supprimer un intervenant (Admin uniquement)
    */
   async deleteIntervenant(req, res) {
     const transaction = await this.sequelize.transaction();
@@ -355,7 +410,6 @@ class IntervenantController {
         });
       }
 
-      // Vérifier si l'intervenant est associé à des programmes
       if (this.models.ProgrammeIntervenant) {
         const programmesCount = await this.models.ProgrammeIntervenant.count({
           where: { id_intervenant: id }
@@ -370,7 +424,6 @@ class IntervenantController {
         }
       }
 
-      // Soft delete : désactiver plutôt que supprimer
       await intervenant.update({ actif: false }, { transaction });
 
       await transaction.commit();
@@ -385,21 +438,17 @@ class IntervenantController {
       console.error('Erreur lors de la suppression de l\'intervenant:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur lors de la suppression de l\'intervenant',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        error: 'Erreur serveur lors de la suppression de l\'intervenant'
       });
     }
   }
 
   /**
    * GET /api/intervenants/search
-   * Rechercher des intervenants pour l'autocomplétion
    */
   async searchIntervenants(req, res) {
     try {
-      console.log('🔍 searchIntervenants - Début');
-      console.log('Query params:', req.query);
-
+      const lang = req.lang || 'fr';  // ⚡
       const { q, limit = 10 } = req.query;
 
       if (!q || q.length < 2) {
@@ -409,13 +458,14 @@ class IntervenantController {
         });
       }
 
+      // ⚡ Recherche multilingue
       const where = {
         [Op.or]: [
-          { nom: { [Op.like]: `%${q}%` } },
-          { prenom: { [Op.like]: `%${q}%` } },
+          ...this.buildMultiLangSearch('nom', q),
+          ...this.buildMultiLangSearch('prenom', q),
+          ...this.buildMultiLangSearch('biographie', q),
           { organisation: { [Op.like]: `%${q}%` } },
-          { titre_professionnel: { [Op.like]: `%${q}%` } },
-          { biographie: { [Op.like]: `%${q}%` } }
+          { titre_professionnel: { [Op.like]: `%${q}%` } }
         ],
         actif: true
       };
@@ -432,41 +482,40 @@ class IntervenantController {
           'photo_url'
         ],
         limit: parseInt(limit),
-        order: [['nom', 'ASC'], ['prenom', 'ASC']]
+        order: [[this.sequelize.fn('JSON_EXTRACT', this.sequelize.col('nom'), `$.${lang}`), 'ASC']]
       });
 
+      // ⚡ Traduire et formater
+      const translated = translateDeep(intervenants, lang);
+      
       res.json({
         success: true,
-        data: intervenants.map(intervenant => ({
+        data: translated.map(intervenant => ({
           id: intervenant.id_intervenant,
-          label: intervenant.getNomComplet ? intervenant.getNomComplet() : 
-                 `${intervenant.titre_professionnel ? intervenant.titre_professionnel + ' ' : ''}${intervenant.prenom} ${intervenant.nom}`,
+          label: `${intervenant.titre_professionnel ? intervenant.titre_professionnel + ' ' : ''}${intervenant.prenom} ${intervenant.nom}`,
           value: intervenant.id_intervenant,
           titre: intervenant.titre_professionnel,
           organisation: intervenant.organisation,
           specialites: intervenant.specialites || [],
           photo_url: intervenant.photo_url
-        }))
+        })),
+        lang
       });
 
     } catch (error) {
       console.error('❌ Erreur dans searchIntervenants:', error);
-      console.error('Stack trace:', error.stack);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur lors de la recherche',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        error: 'Erreur serveur lors de la recherche'
       });
     }
   }
 
   /**
    * GET /api/intervenants/types
-   * Récupérer les types de spécialités disponibles
    */
   async getTypesIntervenants(req, res) {
     try {
-      // Récupérer toutes les spécialités uniques depuis la base
       const intervenants = await this.models.Intervenant.findAll({
         attributes: ['specialites'],
         where: {
@@ -475,7 +524,6 @@ class IntervenantController {
         }
       });
 
-      // Extraire et dédupliquer les spécialités
       const specialitesSet = new Set();
       intervenants.forEach(intervenant => {
         if (intervenant.specialites && Array.isArray(intervenant.specialites)) {
@@ -483,7 +531,6 @@ class IntervenantController {
         }
       });
 
-      // Types suggérés par défaut
       const typesSuggeres = [
         'Animation culturelle',
         'Arts plastiques',
@@ -498,7 +545,6 @@ class IntervenantController {
         'Théâtre'
       ];
 
-      // Combiner les types existants et suggérés
       typesSuggeres.forEach(type => specialitesSet.add(type));
 
       res.json({
@@ -509,15 +555,73 @@ class IntervenantController {
       console.error('Erreur lors de la récupération des types:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        error: 'Erreur serveur'
       });
     }
   }
 
   /**
+   * ⚡ GET /api/intervenants/:id/translations
+   */
+  async getIntervenantTranslations(req, res) {
+    try {
+      const { id } = req.params;
+
+      const intervenant = await this.models.Intervenant.findByPk(id, {
+        attributes: ['id_intervenant', 'nom', 'prenom', 'biographie']
+      });
+
+      if (!intervenant) {
+        return res.status(404).json({
+          success: false,
+          error: 'Intervenant non trouvé'
+        });
+      }
+
+      res.json({
+        success: true,
+        data: intervenant
+      });
+
+    } catch (error) {
+      console.error('Erreur:', error);
+      res.status(500).json({ success: false, error: 'Erreur serveur' });
+    }
+  }
+
+  /**
+   * ⚡ PATCH /api/intervenants/:id/translation/:lang
+   */
+  async updateIntervenantTranslation(req, res) {
+    try {
+      const { id, lang } = req.params;
+      const { nom, prenom, biographie } = req.body;
+
+      const intervenant = await this.models.Intervenant.findByPk(id);
+      if (!intervenant) {
+        return res.status(404).json({ success: false, error: 'Intervenant non trouvé' });
+      }
+
+      const updates = {};
+      if (nom) updates.nom = mergeTranslations(intervenant.nom, { [lang]: nom });
+      if (prenom) updates.prenom = mergeTranslations(intervenant.prenom, { [lang]: prenom });
+      if (biographie) updates.biographie = mergeTranslations(intervenant.biographie, { [lang]: biographie });
+
+      if (Object.keys(updates).length === 0) {
+        return res.status(400).json({ success: false, error: 'Aucune donnée à mettre à jour' });
+      }
+
+      await intervenant.update(updates);
+      res.json({ success: true, message: `Traduction ${lang} mise à jour`, data: intervenant });
+
+    } catch (error) {
+      console.error('Erreur:', error);
+      res.status(500).json({ success: false, error: 'Erreur serveur' });
+    }
+  }
+
+  /**
    * GET /api/intervenants/stats/overview
-   * Statistiques sur les intervenants
    */
   async getStatistiques(req, res) {
     try {
@@ -528,35 +632,20 @@ class IntervenantController {
         parPaysOrigine,
         derniersAjouts
       ] = await Promise.all([
-        // Total des intervenants
         this.models.Intervenant.count(),
-
-        // Intervenants actifs
-        this.models.Intervenant.count({
-          where: { actif: true }
-        }),
-
-        // Intervenants vérifiés
-        this.models.Intervenant.count({
-          where: { verifie: true }
-        }),
-
-        // Top 5 pays d'origine
+        this.models.Intervenant.count({ where: { actif: true } }),
+        this.models.Intervenant.count({ where: { verifie: true } }),
         this.models.Intervenant.findAll({
           attributes: [
             'pays_origine',
             [this.sequelize.fn('COUNT', this.sequelize.col('id_intervenant')), 'count']
           ],
-          where: {
-            pays_origine: { [Op.ne]: null }
-          },
+          where: { pays_origine: { [Op.ne]: null } },
           group: ['pays_origine'],
           order: [[this.sequelize.literal('count'), 'DESC']],
           limit: 5,
           raw: true
         }),
-
-        // 5 derniers intervenants ajoutés
         this.models.Intervenant.findAll({
           attributes: ['id_intervenant', 'nom', 'prenom', 'organisation', 'date_creation'],
           order: [['date_creation', 'DESC']],
@@ -581,8 +670,7 @@ class IntervenantController {
       console.error('Erreur lors du calcul des statistiques:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur lors du calcul des statistiques',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        error: 'Erreur serveur lors du calcul des statistiques'
       });
     }
   }

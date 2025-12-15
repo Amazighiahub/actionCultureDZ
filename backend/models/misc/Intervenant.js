@@ -1,6 +1,5 @@
-// models/misc/Intervenant.js - Modèle pour les intervenants avec Op correctement importé
-
-const { DataTypes, Op } = require('sequelize'); // IMPORTANT: Importer Op ici
+// models/Intervenant.js - ⚡ MODIFIÉ POUR I18N
+const { DataTypes, Op } = require('sequelize');
 
 module.exports = (sequelize) => {
   const Intervenant = sequelize.define('Intervenant', {
@@ -9,16 +8,21 @@ module.exports = (sequelize) => {
       primaryKey: true,
       autoIncrement: true
     },
-
+    // ⚡ MODIFIÉ POUR I18N
     nom: {
-      type: DataTypes.STRING(100),
-      allowNull: false
+      type: DataTypes.JSON,
+      allowNull: false,
+      defaultValue: { fr: '', ar: '' },
+      comment: 'Nom en plusieurs langues { fr: "Bouzidi", ar: "بوزيدي", "tz-ltn": "Buzidi", "tz-tfng": "ⴱⵓⵣⵉⴷⵉ" }'
     },
+    // ⚡ MODIFIÉ POUR I18N
     prenom: {
-      type: DataTypes.STRING(100),
-      allowNull: false
+      type: DataTypes.JSON,
+      allowNull: false,
+      defaultValue: { fr: '', ar: '' },
+      comment: 'Prénom en plusieurs langues'
     },
-      date_naissance: {
+    date_naissance: {
       type: DataTypes.DATEONLY,
       comment: 'Date de naissance'
     },
@@ -48,9 +52,6 @@ module.exports = (sequelize) => {
       defaultValue: {},
       comment: 'Liens vers réseaux sociaux {twitter, linkedin, instagram, etc.}'
     },
-    
-    // MÉDIAS
-   
     titre_professionnel: {
       type: DataTypes.STRING(255),
       comment: 'Ex: Dr., Prof., Maître, etc.'
@@ -68,9 +69,12 @@ module.exports = (sequelize) => {
     telephone: {
       type: DataTypes.STRING(20)
     },
+    // ⚡ MODIFIÉ POUR I18N
     biographie: {
-      type: DataTypes.TEXT,
-      comment: 'Biographie courte de l\'intervenant'
+      type: DataTypes.JSON,
+      allowNull: true,
+      defaultValue: {},
+      comment: 'Biographie en plusieurs langues'
     },
     photo_url: {
       type: DataTypes.STRING(500)
@@ -83,7 +87,6 @@ module.exports = (sequelize) => {
     site_web: {
       type: DataTypes.STRING(500)
     },
-   
     pays_origine: {
       type: DataTypes.STRING(100)
     },
@@ -92,8 +95,6 @@ module.exports = (sequelize) => {
       defaultValue: ['ar'],
       comment: 'Langues parlées par l\'intervenant'
     },
-    
-    // Lien optionnel avec un utilisateur existant
     id_user: {
       type: DataTypes.INTEGER,
       references: {
@@ -102,8 +103,6 @@ module.exports = (sequelize) => {
       },
       comment: 'Lien optionnel si l\'intervenant a un compte utilisateur'
     },
-    
-    // Statut
     actif: {
       type: DataTypes.BOOLEAN,
       defaultValue: true
@@ -113,7 +112,6 @@ module.exports = (sequelize) => {
       defaultValue: false,
       comment: 'Profil vérifié par l\'administration'
     }
-    
   }, {
     tableName: 'intervenant',
     timestamps: true,
@@ -121,51 +119,49 @@ module.exports = (sequelize) => {
     updatedAt: 'date_modification',
     
     indexes: [
-      {
-        fields: ['nom', 'prenom']
-      },
-      {
-        fields: ['id_user'],
-        unique: true,
-        where: { id_user: { [Op.not]: null } } // Utiliser Op directement
-      },
-      {
-        fields: ['email'],
-        unique: true,
-        where: { email: { [Op.not]: null } } // Utiliser Op directement
-      }
+      { fields: ['id_user'], unique: true, where: { id_user: { [Op.not]: null } } },
+      { fields: ['email'], unique: true, where: { email: { [Op.not]: null } } }
     ]
   });
 
-  // ASSOCIATIONS COMPLÈTES
+  // Associations
   Intervenant.associate = (models) => {
-    // Lien optionnel avec User
     Intervenant.belongsTo(models.User, {
       foreignKey: 'id_user',
       as: 'UserAccount',
       constraints: false
     });
+    
     Intervenant.hasMany(models.OeuvreIntervenant, { 
-  foreignKey: 'id_intervenant' 
-});
-    // Relation Many-to-Many avec Programme via ProgrammeIntervenant
+      foreignKey: 'id_intervenant' 
+    });
+    
     Intervenant.belongsToMany(models.Programme, {
       through: models.ProgrammeIntervenant,
       foreignKey: 'id_intervenant',
       otherKey: 'id_programme',
       as: 'Programmes'
     });
-    
-    // Relation One-to-Many avec ProgrammeIntervenant
-   
   };
   
-  // Méthodes d'instance
-  Intervenant.prototype.getNomComplet = function() {
+  // ⚡ NOUVELLES MÉTHODES I18N
+  Intervenant.prototype.getNom = function(lang = 'fr') {
+    return this.nom?.[lang] || this.nom?.fr || this.nom?.ar || '';
+  };
+
+  Intervenant.prototype.getPrenom = function(lang = 'fr') {
+    return this.prenom?.[lang] || this.prenom?.fr || this.prenom?.ar || '';
+  };
+
+  Intervenant.prototype.getNomComplet = function(lang = 'fr') {
     let nom = '';
     if (this.titre_professionnel) nom += this.titre_professionnel + ' ';
-    nom += this.prenom + ' ' + this.nom;
-    return nom;
+    nom += this.getPrenom(lang) + ' ' + this.getNom(lang);
+    return nom.trim();
+  };
+
+  Intervenant.prototype.getBiographie = function(lang = 'fr') {
+    return this.biographie?.[lang] || this.biographie?.fr || '';
   };
   
   Intervenant.prototype.ajouterSpecialite = function(specialite) {
@@ -195,13 +191,11 @@ module.exports = (sequelize) => {
       prochaineProgramme: null
     };
     
-    // Compter les programmes
     const programmes = await sequelize.models.ProgrammeIntervenant.count({
       where: { id_intervenant: this.id_intervenant }
     });
     stats.nombreProgrammes = programmes;
     
-    // Trouver le prochain programme
     const prochainProg = await sequelize.models.ProgrammeIntervenant.findOne({
       where: { 
         id_intervenant: this.id_intervenant,
@@ -214,7 +208,7 @@ module.exports = (sequelize) => {
           model: sequelize.models.Evenement,
           as: 'Evenement',
           where: {
-            date_debut: { [Op.gte]: new Date() } // Utiliser Op directement
+            date_debut: { [Op.gte]: new Date() }
           }
         }]
       }],
@@ -229,10 +223,6 @@ module.exports = (sequelize) => {
     
     return stats;
   };
-  
-  // Méthodes statiques
-  
-  
-  
+
   return Intervenant;
 };

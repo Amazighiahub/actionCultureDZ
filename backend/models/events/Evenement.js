@@ -1,4 +1,5 @@
-const { DataTypes ,Op , fn, col} = require('sequelize');
+// models/Evenement.js - ⚡ MODIFIÉ POUR I18N
+const { DataTypes, Op, fn, col } = require('sequelize');
 
 module.exports = (sequelize) => {
   const Evenement = sequelize.define('Evenement', {
@@ -7,15 +8,26 @@ module.exports = (sequelize) => {
       primaryKey: true,
       autoIncrement: true
     },
+    // ⚡ MODIFIÉ POUR I18N
     nom_evenement: {
-      type: DataTypes.STRING(255),
+      type: DataTypes.JSON,
       allowNull: false,
+      defaultValue: { fr: '' },
+      comment: 'Nom en plusieurs langues { fr: "Festival du livre", ar: "مهرجان الكتاب", en: "Book Festival" }',
       validate: {
-        notEmpty: true
+        notEmpty(value) {
+          if (!value || (!value.fr && !value.ar)) {
+            throw new Error('Le nom de l\'événement est requis');
+          }
+        }
       }
     },
+    // ⚡ MODIFIÉ POUR I18N
     description: {
-      type: DataTypes.TEXT
+      type: DataTypes.JSON,
+      allowNull: true,
+      defaultValue: {},
+      comment: 'Description en plusieurs langues'
     },
     date_debut: {
       type: DataTypes.DATE,
@@ -93,9 +105,6 @@ module.exports = (sequelize) => {
       type: DataTypes.BOOLEAN,
       defaultValue: false
     },
-    
-    // ===== CHAMPS SUPPLÉMENTAIRES DU TYPE TYPESCRIPT =====
-    
     age_minimum: {
       type: DataTypes.INTEGER,
       validate: {
@@ -104,24 +113,18 @@ module.exports = (sequelize) => {
       },
       comment: 'Âge minimum requis pour participer'
     },
-    
-   
-    
+    // ⚡ MODIFIÉ POUR I18N
     accessibilite: {
-      type: DataTypes.TEXT,
-      comment: 'Informations sur l\'accessibilité (PMR, etc.)'
+      type: DataTypes.JSON,
+      allowNull: true,
+      defaultValue: {},
+      comment: 'Informations sur l\'accessibilité en plusieurs langues'
     },
-    
-  
-    
-   
-    
     certificat_delivre: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
       comment: 'Un certificat sera-t-il délivré aux participants ?'
     },
-    
     date_limite_inscription: {
       type: DataTypes.DATE,
       comment: 'Date limite pour s\'inscrire',
@@ -134,8 +137,7 @@ module.exports = (sequelize) => {
       }
     },
     
-    // ===== MÉTADONNÉES CALCULÉES (Virtual Fields) =====
-    
+    // Champs virtuels
     nombre_participants: {
       type: DataTypes.VIRTUAL,
       async get() {
@@ -149,7 +151,6 @@ module.exports = (sequelize) => {
         return count;
       }
     },
-    
     nombre_inscrits: {
       type: DataTypes.VIRTUAL,
       async get() {
@@ -160,7 +161,6 @@ module.exports = (sequelize) => {
         return count;
       }
     },
-    
     est_complet: {
       type: DataTypes.VIRTUAL,
       async get() {
@@ -169,16 +169,14 @@ module.exports = (sequelize) => {
         return inscrits >= this.capacite_max;
       }
     },
-    
     duree_totale: {
       type: DataTypes.VIRTUAL,
       get() {
         if (!this.date_debut || !this.date_fin) return null;
         const diff = new Date(this.date_fin) - new Date(this.date_debut);
-        return Math.round(diff / (1000 * 60 * 60)); // en heures
+        return Math.round(diff / (1000 * 60 * 60));
       }
     },
-    
     note_moyenne: {
       type: DataTypes.VIRTUAL,
       async get() {
@@ -196,7 +194,6 @@ module.exports = (sequelize) => {
         return result?.moyenne ? parseFloat(result.moyenne).toFixed(1) : null;
       }
     }
-    
   }, {
     tableName: 'evenement',
     timestamps: true,
@@ -204,34 +201,18 @@ module.exports = (sequelize) => {
     updatedAt: 'date_modification',
     
     indexes: [
-      {
-        fields: ['id_lieu']
-      },
-      {
-        fields: ['id_user']
-      },
-      {
-        fields: ['id_type_evenement']
-      },
-      {
-        fields: ['statut']
-      },
-      {
-        fields: ['date_debut']
-      },
-      {
-        fields: ['date_fin']
-      },
-      {
-        fields: ['date_limite_inscription']
-      }
+      { fields: ['id_lieu'] },
+      { fields: ['id_user'] },
+      { fields: ['id_type_evenement'] },
+      { fields: ['statut'] },
+      { fields: ['date_debut'] },
+      { fields: ['date_fin'] },
+      { fields: ['date_limite_inscription'] }
     ],
     
     hooks: {
       beforeValidate: (evenement) => {
-        // Mise à jour automatique du statut selon les dates
         const now = new Date();
-        
         if (evenement.date_debut && evenement.date_fin) {
           if (now < new Date(evenement.date_debut)) {
             evenement.statut = 'planifie';
@@ -241,15 +222,12 @@ module.exports = (sequelize) => {
             evenement.statut = 'termine';
           }
         }
-      },
-      
-      
+      }
     }
   });
 
   // Associations
   Evenement.associate = (models) => {
-    // Relations One-to-Many
     Evenement.belongsTo(models.TypeEvenement, { 
       foreignKey: 'id_type_evenement',
       as: 'TypeEvenement'
@@ -265,7 +243,6 @@ module.exports = (sequelize) => {
       as: 'Organisateur'
     });
     
-    // Relations Many-to-Many via tables de liaison
     Evenement.hasMany(models.EvenementUser, {
       foreignKey: 'id_evenement',
       as: 'EvenementUsers'
@@ -281,7 +258,6 @@ module.exports = (sequelize) => {
       as: 'EvenementOrganisations'
     });
     
-    // Relations directes pour faciliter l'accès
     Evenement.belongsToMany(models.User, {
       through: models.EvenementUser,
       foreignKey: 'id_evenement',
@@ -303,7 +279,6 @@ module.exports = (sequelize) => {
       as: 'Organisations'
     });
     
-    // Relations avec Programme et Media
     Evenement.hasMany(models.Programme, {
       foreignKey: 'id_evenement',
       as: 'Programmes'
@@ -315,7 +290,20 @@ module.exports = (sequelize) => {
     });
   };
   
-  // Méthodes d'instance
+  // ⚡ NOUVELLES MÉTHODES I18N
+  Evenement.prototype.getNomEvenement = function(lang = 'fr') {
+    return this.nom_evenement?.[lang] || this.nom_evenement?.fr || this.nom_evenement?.ar || '';
+  };
+
+  Evenement.prototype.getDescription = function(lang = 'fr') {
+    return this.description?.[lang] || this.description?.fr || '';
+  };
+
+  Evenement.prototype.getAccessibilite = function(lang = 'fr') {
+    return this.accessibilite?.[lang] || this.accessibilite?.fr || '';
+  };
+
+  // Méthodes d'instance existantes
   Evenement.prototype.isActive = function() {
     if (!this.date_fin) return false;
     return new Date(this.date_fin) >= new Date();
@@ -371,8 +359,6 @@ module.exports = (sequelize) => {
       order: [['date_debut', 'ASC']]
     });
   };
-  
-  
 
   return Evenement;
 };

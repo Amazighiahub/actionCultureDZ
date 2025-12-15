@@ -1,4 +1,4 @@
-// models/Categorie.js
+// models/Categorie.js - ⚡ MODIFIÉ POUR I18N
 const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
@@ -8,14 +8,19 @@ module.exports = (sequelize) => {
       primaryKey: true,
       autoIncrement: true
     },
+    // ⚡ MODIFIÉ POUR I18N
     nom: {
-      type: DataTypes.STRING(100),
+      type: DataTypes.JSON,
       allowNull: false,
-      unique: true
+      defaultValue: { fr: '' },
+      comment: 'Nom en plusieurs langues { fr: "Roman", ar: "رواية", en: "Novel", "tz-ltn": "...", "tz-tfng": "..." }'
     },
+    // ⚡ MODIFIÉ POUR I18N
     description: {
-      type: DataTypes.TEXT,
-      allowNull: true
+      type: DataTypes.JSON,
+      allowNull: true,
+      defaultValue: {},
+      comment: 'Description en plusieurs langues'
     },
     icone: {
       type: DataTypes.STRING(50),
@@ -43,7 +48,6 @@ module.exports = (sequelize) => {
 
   // Associations
   Categorie.associate = (models) => {
-    // Relation Many-to-Many avec Genre via GenreCategorie
     Categorie.belongsToMany(models.Genre, {
       through: models.GenreCategorie,
       foreignKey: 'id_categorie',
@@ -51,25 +55,31 @@ module.exports = (sequelize) => {
       as: 'genres'
     });
     
-    // Relation directe avec la table de liaison pour les requêtes complexes
     Categorie.hasMany(models.GenreCategorie, { 
       foreignKey: 'id_categorie',
       as: 'genreCategories'
     });
     
-    // Relation avec les œuvres via la table de liaison
     Categorie.belongsToMany(models.Oeuvre, { 
-  through: models.OeuvreCategorie,  // Changé de CategorieOeuvre à OeuvreCategorie
-  foreignKey: 'id_categorie',
-  otherKey: 'id_oeuvre',
-  as: 'oeuvres'
-});
+      through: models.OeuvreCategorie,
+      foreignKey: 'id_categorie',
+      otherKey: 'id_oeuvre',
+      as: 'oeuvres'
+    });
 
-Categorie.hasMany(models.OeuvreCategorie, {  // Changé aussi ici
-  foreignKey: 'id_categorie',
-  as: 'categorieOeuvres'
-});
-    
+    Categorie.hasMany(models.OeuvreCategorie, {
+      foreignKey: 'id_categorie',
+      as: 'categorieOeuvres'
+    });
+  };
+
+  // ⚡ NOUVELLES MÉTHODES I18N
+  Categorie.prototype.getNom = function(lang = 'fr') {
+    return this.nom?.[lang] || this.nom?.fr || this.nom?.ar || '';
+  };
+
+  Categorie.prototype.getDescription = function(lang = 'fr') {
+    return this.description?.[lang] || this.description?.fr || '';
   };
 
   return Categorie;

@@ -3,33 +3,44 @@ import { useState, useEffect } from 'react';
 import { httpClient } from '@/services/httpClient';
 import { API_ENDPOINTS } from '@/config/api';
 
+// =====================================================
+// TYPES (alignés avec les modèles Sequelize backend)
+// =====================================================
+
 export interface Wilaya {
   id_wilaya: number;
-  codeW: string;  // Code de la wilaya (01, 02, etc.)
-  wilaya_name_ascii: string;  // Nom en ASCII
-  wilaya_name?: string;  // Nom en arabe (optionnel)
+  codeW: number;
+  nom: string;
+  wilaya_name_ascii: string;
 }
 
 export interface Daira {
   id_daira: number;
-  id_wilaya: number;
-  nom_daira: string;
+  wilayaId: number;
+  nom: string;
+  daira_name_ascii: string;
 }
 
 export interface Commune {
   id_commune: number;
-  id_daira: number;
-  nom_commune: string;
+  dairaId: number;
+  nom: string;
+  commune_name_ascii: string;
 }
 
 export interface Localite {
   id_localite: number;
   id_commune: number;
-  nom_localite: string;
+  nom: string;
+  localite_name_ascii: string;
 }
 
+// =====================================================
+// HOOK: useWilayas
+// =====================================================
+
 /**
- * Hook pour charger les wilayas
+ * Hook pour charger toutes les wilayas
  */
 export function useWilayas() {
   const [wilayas, setWilayas] = useState<Wilaya[]>([]);
@@ -42,11 +53,14 @@ export function useWilayas() {
         setLoading(true);
         setError(null);
         
-        console.log('Chargement des wilayas...');
-        const response = await httpClient.get<Wilaya[]>(API_ENDPOINTS.metadata.geographie.wilayas);
+        const response = await httpClient.get<{ success: boolean; data: Wilaya[] }>(
+          API_ENDPOINTS.metadata.geographie.wilayas
+        );
         
-        if (response.success && response.data) {
-          console.log('Wilayas chargées:', response.data);
+        if (response.success && response.data?.data) {
+          setWilayas(response.data.data);
+        } else if (response.success && Array.isArray(response.data)) {
+          // Fallback si la réponse est directement un tableau
           setWilayas(response.data);
         } else {
           setError(response.error || 'Erreur lors du chargement des wilayas');
@@ -64,6 +78,10 @@ export function useWilayas() {
 
   return { wilayas, loading, error };
 }
+
+// =====================================================
+// HOOK: useDairas
+// =====================================================
 
 /**
  * Hook pour charger les dairas d'une wilaya
@@ -84,11 +102,13 @@ export function useDairas(wilayaId: number | null) {
         setLoading(true);
         setError(null);
         
-        const response = await httpClient.get<Daira[]>(
+        const response = await httpClient.get<{ success: boolean; data: Daira[] }>(
           API_ENDPOINTS.metadata.geographie.dairasByWilaya(wilayaId)
         );
         
-        if (response.success && response.data) {
+        if (response.success && response.data?.data) {
+          setDairas(response.data.data);
+        } else if (response.success && Array.isArray(response.data)) {
           setDairas(response.data);
         } else {
           setError(response.error || 'Erreur lors du chargement des dairas');
@@ -106,6 +126,10 @@ export function useDairas(wilayaId: number | null) {
 
   return { dairas, loading, error };
 }
+
+// =====================================================
+// HOOK: useCommunes
+// =====================================================
 
 /**
  * Hook pour charger les communes d'une daira
@@ -126,11 +150,13 @@ export function useCommunes(dairaId: number | null) {
         setLoading(true);
         setError(null);
         
-        const response = await httpClient.get<Commune[]>(
+        const response = await httpClient.get<{ success: boolean; data: Commune[] }>(
           API_ENDPOINTS.metadata.geographie.communesByDaira(dairaId)
         );
         
-        if (response.success && response.data) {
+        if (response.success && response.data?.data) {
+          setCommunes(response.data.data);
+        } else if (response.success && Array.isArray(response.data)) {
           setCommunes(response.data);
         } else {
           setError(response.error || 'Erreur lors du chargement des communes');
@@ -148,6 +174,10 @@ export function useCommunes(dairaId: number | null) {
 
   return { communes, loading, error };
 }
+
+// =====================================================
+// HOOK: useLocalites
+// =====================================================
 
 /**
  * Hook pour charger les localités d'une commune
@@ -168,11 +198,13 @@ export function useLocalites(communeId: number | null) {
         setLoading(true);
         setError(null);
         
-        const response = await httpClient.get<Localite[]>(
+        const response = await httpClient.get<{ success: boolean; data: Localite[] }>(
           API_ENDPOINTS.metadata.geographie.localitesByCommune(communeId)
         );
         
-        if (response.success && response.data) {
+        if (response.success && response.data?.data) {
+          setLocalites(response.data.data);
+        } else if (response.success && Array.isArray(response.data)) {
           setLocalites(response.data);
         } else {
           setError(response.error || 'Erreur lors du chargement des localités');
@@ -190,6 +222,10 @@ export function useLocalites(communeId: number | null) {
 
   return { localites, loading, error };
 }
+
+// =====================================================
+// HOOK: useSearchWilayas
+// =====================================================
 
 /**
  * Hook pour rechercher des wilayas
@@ -210,12 +246,14 @@ export function useSearchWilayas(query: string) {
         setLoading(true);
         setError(null);
         
-        const response = await httpClient.get<Wilaya[]>(
+        const response = await httpClient.get<{ success: boolean; data: Wilaya[] }>(
           API_ENDPOINTS.metadata.geographie.searchWilayas,
           { q: query }
         );
         
-        if (response.success && response.data) {
+        if (response.success && response.data?.data) {
+          setResults(response.data.data);
+        } else if (response.success && Array.isArray(response.data)) {
           setResults(response.data);
         } else {
           setError(response.error || 'Erreur lors de la recherche');
@@ -235,6 +273,10 @@ export function useSearchWilayas(query: string) {
 
   return { results, loading, error };
 }
+
+// =====================================================
+// HOOK: useGeographicSelection
+// =====================================================
 
 /**
  * Hook pour gérer la sélection hiérarchique Wilaya > Daira > Commune > Localité
@@ -266,6 +308,20 @@ export function useGeographicSelection() {
     setSelectedLocalite(null);
   }, [selectedCommune]);
 
+  // Helpers pour obtenir les objets sélectionnés
+  const getSelectedWilayaObject = () => wilayas.find(w => w.id_wilaya === selectedWilaya);
+  const getSelectedDairaObject = () => dairas.find(d => d.id_daira === selectedDaira);
+  const getSelectedCommuneObject = () => communes.find(c => c.id_commune === selectedCommune);
+  const getSelectedLocaliteObject = () => localites.find(l => l.id_localite === selectedLocalite);
+
+  // Reset complet
+  const resetSelection = () => {
+    setSelectedWilaya(null);
+    setSelectedDaira(null);
+    setSelectedCommune(null);
+    setSelectedLocalite(null);
+  };
+
   return {
     // Données
     wilayas,
@@ -273,7 +329,7 @@ export function useGeographicSelection() {
     communes,
     localites,
     
-    // Sélections
+    // Sélections (IDs)
     selectedWilaya,
     selectedDaira,
     selectedCommune,
@@ -284,6 +340,15 @@ export function useGeographicSelection() {
     setSelectedDaira,
     setSelectedCommune,
     setSelectedLocalite,
+    
+    // Objets sélectionnés
+    getSelectedWilayaObject,
+    getSelectedDairaObject,
+    getSelectedCommuneObject,
+    getSelectedLocaliteObject,
+    
+    // Reset
+    resetSelection,
     
     // États de chargement
     loading: wilayasLoading || dairasLoading || communesLoading || localitesLoading,
@@ -299,4 +364,37 @@ export function useGeographicSelection() {
     communesError,
     localitesError,
   };
+}
+
+// =====================================================
+// HELPERS
+// =====================================================
+
+/**
+ * Formater le nom complet d'une wilaya (code + nom)
+ */
+export function formatWilayaName(wilaya: Wilaya): string {
+  const code = String(wilaya.codeW).padStart(2, '0');
+  return `${code} - ${wilaya.wilaya_name_ascii}`;
+}
+
+/**
+ * Formater une adresse complète
+ */
+export function formatFullAddress(
+  localite?: Localite | null,
+  commune?: Commune | null,
+  daira?: Daira | null,
+  wilaya?: Wilaya | null,
+  adresse?: string
+): string {
+  const parts: string[] = [];
+  
+  if (adresse) parts.push(adresse);
+  if (localite) parts.push(localite.localite_name_ascii || localite.nom);
+  if (commune) parts.push(commune.commune_name_ascii || commune.nom);
+  if (daira) parts.push(daira.daira_name_ascii || daira.nom);
+  if (wilaya) parts.push(formatWilayaName(wilaya));
+  
+  return parts.join(', ');
 }

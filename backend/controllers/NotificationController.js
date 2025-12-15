@@ -1,6 +1,9 @@
-// controllers/NotificationController.js - API des notifications utilisateur
+// controllers/NotificationController.js - VERSION i18n
 const { Op } = require('sequelize');
 const NotificationService = require('../services/NotificationService');
+
+// ⚡ Import du helper i18n
+const { translate, translateDeep } = require('../helpers/i18n');
 
 class NotificationController {
   constructor(models) {
@@ -8,13 +11,10 @@ class NotificationController {
     this.notificationService = new NotificationService(models);
   }
 
-  // ========================================================================
-  // RÉCUPÉRATION DES NOTIFICATIONS
-  // ========================================================================
-
   // Récupérer les notifications de l'utilisateur connecté
   async getMyNotifications(req, res) {
     try {
+      const lang = req.lang || 'fr';  // ⚡
       const { page = 1, limit = 20, nonLues = false, type } = req.query;
       const offset = (page - 1) * limit;
 
@@ -56,7 +56,6 @@ class NotificationController {
         distinct: true
       });
 
-      // Compter les non lues
       const nonLuesCount = await this.models.Notification.count({
         where: {
           id_user: req.user.id_user,
@@ -64,10 +63,11 @@ class NotificationController {
         }
       });
 
+      // ⚡ Traduire les relations incluses
       res.json({
         success: true,
         data: {
-          notifications: notifications.rows,
+          notifications: translateDeep(notifications.rows, lang),
           pagination: {
             total: notifications.count,
             page: parseInt(page),
@@ -78,7 +78,8 @@ class NotificationController {
             nonLues: nonLuesCount,
             total: notifications.count
           }
-        }
+        },
+        lang
       });
 
     } catch (error) {
@@ -90,18 +91,17 @@ class NotificationController {
     }
   }
 
-  // Récupérer le résumé des notifications (pour badge/compteur)
+  // Résumé des notifications
   async getNotificationsSummary(req, res) {
     try {
+      const lang = req.lang || 'fr';  // ⚡
       const userId = req.user.id_user;
 
       const [total, nonLues, parType] = await Promise.all([
-        // Total
         this.models.Notification.count({
           where: { id_user: userId }
         }),
         
-        // Non lues
         this.models.Notification.count({
           where: { 
             id_user: userId,
@@ -109,7 +109,6 @@ class NotificationController {
           }
         }),
         
-        // Par type (non lues)
         this.models.Notification.findAll({
           where: { 
             id_user: userId,
@@ -123,7 +122,6 @@ class NotificationController {
         })
       ]);
 
-      // Dernières notifications non lues
       const dernieres = await this.models.Notification.findAll({
         where: { 
           id_user: userId,
@@ -143,8 +141,9 @@ class NotificationController {
             acc[item.type_notification] = parseInt(item.dataValues.count);
             return acc;
           }, {}),
-          dernieres
-        }
+          dernieres: translate(dernieres, lang)
+        },
+        lang
       });
 
     } catch (error) {
@@ -155,10 +154,6 @@ class NotificationController {
       });
     }
   }
-
-  // ========================================================================
-  // GESTION DES NOTIFICATIONS
-  // ========================================================================
 
   // Marquer une notification comme lue
   async markAsRead(req, res) {
@@ -310,10 +305,6 @@ class NotificationController {
     }
   }
 
-  // ========================================================================
-  // PRÉFÉRENCES DE NOTIFICATION
-  // ========================================================================
-
   // Récupérer les préférences
   async getPreferences(req, res) {
     try {
@@ -385,54 +376,6 @@ class NotificationController {
       res.json({
         success: true,
         message: 'Préférences mises à jour'
-      });
-
-    } catch (error) {
-      console.error('Erreur:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: 'Erreur serveur' 
-      });
-    }
-  }
-
-  // ========================================================================
-  // MÉTHODES UTILITAIRES
-  // ========================================================================
-
-  // Tester l'envoi d'email (développement)
-  async testEmail(req, res) {
-    try {
-      // Seulement en développement ou pour les admins
-      if (process.env.NODE_ENV === 'production' && !req.user.isAdmin) {
-        return res.status(403).json({
-          success: false,
-          error: 'Accès refusé'
-        });
-      }
-
-      const { type = 'test' } = req.body;
-      const user = await this.models.User.findByPk(req.user.id_user);
-
-      let result;
-      switch (type) {
-        case 'bienvenue':
-          result = await this.notificationService.emailService.sendWelcomeEmail(user);
-          break;
-        case 'test':
-        default:
-          result = await this.notificationService.emailService.sendEmail(
-            user.email,
-            'Test de notification - Action Culture',
-            'Ceci est un email de test. Si vous le recevez, les notifications fonctionnent correctement!'
-          );
-      }
-
-      res.json({
-        success: true,
-        message: 'Email de test envoyé',
-        result,
-        serviceStatus: this.notificationService.emailService.getStatus()
       });
 
     } catch (error) {

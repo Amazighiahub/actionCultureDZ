@@ -1,3 +1,4 @@
+// models/Service.js - ⚡ MODIFIÉ POUR I18N
 const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
@@ -15,16 +16,23 @@ module.exports = (sequelize) => {
         key: 'id_lieu'
       }
     },
+    // ⚡ MODIFIÉ POUR I18N
     nom: {
-      type: DataTypes.STRING(255),
-      allowNull: false
+      type: DataTypes.JSON,
+      allowNull: false,
+      defaultValue: { fr: '' },
+      comment: 'Nom du service en plusieurs langues { fr: "Parking", ar: "موقف سيارات", en: "Parking" }'
     },
     disponible: {
       type: DataTypes.BOOLEAN,
       defaultValue: true
     },
+    // ⚡ MODIFIÉ POUR I18N
     description: {
-      type: DataTypes.TEXT
+      type: DataTypes.JSON,
+      allowNull: true,
+      defaultValue: {},
+      comment: 'Description en plusieurs langues'
     }
   }, {
     tableName: 'services',
@@ -34,6 +42,15 @@ module.exports = (sequelize) => {
   // Associations
   Service.associate = (models) => {
     Service.belongsTo(models.Lieu, { foreignKey: 'id_lieu' });
+  };
+
+  // ⚡ NOUVELLES MÉTHODES I18N
+  Service.prototype.getNom = function(lang = 'fr') {
+    return this.nom?.[lang] || this.nom?.fr || this.nom?.ar || '';
+  };
+
+  Service.prototype.getDescription = function(lang = 'fr') {
+    return this.description?.[lang] || this.description?.fr || '';
   };
 
   return Service;

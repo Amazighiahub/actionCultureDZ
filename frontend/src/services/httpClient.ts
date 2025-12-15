@@ -259,6 +259,11 @@ class HttpClient {
     // Request interceptor
     this.axiosInstance.interceptors.request.use(
       async (config) => {
+
+
+  config.headers['X-Language'] = localStorage.getItem('i18nextLng') || 'fr';
+
+        
         // Ajouter le token d'authentification
         const token = localStorage.getItem(AUTH_CONFIG.tokenKey);
         if (token) {

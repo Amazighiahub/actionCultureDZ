@@ -1,3 +1,4 @@
+// models/Specialite.js - ⚡ MODIFIÉ POUR I18N
 const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
@@ -7,14 +8,19 @@ module.exports = (sequelize) => {
       primaryKey: true,
       autoIncrement: true
     },
+    // ⚡ MODIFIÉ POUR I18N
     nom_specialite: {
-      type: DataTypes.STRING(100),
+      type: DataTypes.JSON,
       allowNull: false,
-     
+      defaultValue: { fr: '' },
+      comment: 'Nom en plusieurs langues { fr: "Peinture", ar: "رسم", en: "Painting" }'
     },
+    // ⚡ MODIFIÉ POUR I18N
     description: {
-      type: DataTypes.TEXT,
-      allowNull: true
+      type: DataTypes.JSON,
+      allowNull: true,
+      defaultValue: {},
+      comment: 'Description en plusieurs langues'
     },
     categorie: {
       type: DataTypes.STRING(50),
@@ -26,15 +32,17 @@ module.exports = (sequelize) => {
     }
   }, {
     tableName: 'specialites',
-    timestamps: false,
-    indexes: [
-     
-      {
-        name: 'id_index_specialite',  // Toujours nommer l'index
-        fields: ['nom_specialite'],
-        unique: true
-      }]
+    timestamps: false
   });
+
+  // ⚡ NOUVELLES MÉTHODES I18N
+  Specialite.prototype.getNomSpecialite = function(lang = 'fr') {
+    return this.nom_specialite?.[lang] || this.nom_specialite?.fr || this.nom_specialite?.ar || '';
+  };
+
+  Specialite.prototype.getDescription = function(lang = 'fr') {
+    return this.description?.[lang] || this.description?.fr || '';
+  };
 
   return Specialite;
 };

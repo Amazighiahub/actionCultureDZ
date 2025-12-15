@@ -1,3 +1,4 @@
+// models/Monument.js - ⚡ MODIFIÉ POUR I18N
 const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
@@ -15,13 +16,19 @@ module.exports = (sequelize) => {
         key: 'id_detailLieu'
       }
     },
+    // ⚡ MODIFIÉ POUR I18N
     nom: {
-      type: DataTypes.STRING(255),
-      allowNull: false
+      type: DataTypes.JSON,
+      allowNull: false,
+      defaultValue: { fr: '' },
+      comment: 'Nom du monument en plusieurs langues { fr: "Grande Mosquée", ar: "الجامع الكبير", en: "Grand Mosque" }'
     },
+    // ⚡ MODIFIÉ POUR I18N
     description: {
-      type: DataTypes.STRING(255),
-      allowNull: false
+      type: DataTypes.JSON,
+      allowNull: false,
+      defaultValue: { fr: '' },
+      comment: 'Description en plusieurs langues'
     },
     type: {
       type: DataTypes.ENUM('Mosquée', 'Palais', 'Statue', 'Tour', 'Musée'),
@@ -35,6 +42,15 @@ module.exports = (sequelize) => {
   // Associations
   Monument.associate = (models) => {
     Monument.belongsTo(models.DetailLieu, { foreignKey: 'id_detail_lieu' });
+  };
+
+  // ⚡ NOUVELLES MÉTHODES I18N
+  Monument.prototype.getNom = function(lang = 'fr') {
+    return this.nom?.[lang] || this.nom?.fr || this.nom?.ar || '';
+  };
+
+  Monument.prototype.getDescription = function(lang = 'fr') {
+    return this.description?.[lang] || this.description?.fr || this.description?.ar || '';
   };
 
   return Monument;

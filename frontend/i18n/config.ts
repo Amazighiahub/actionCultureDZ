@@ -82,6 +82,7 @@ i18n
   });
 
 // Intercepter les changements de langue pour la persistance
+// Intercepter les changements de langue pour la persistance
 const originalChangeLanguage = i18n.changeLanguage.bind(i18n);
 i18n.changeLanguage = async (lng: string | undefined, callback?: any) => {
   if (!lng) return originalChangeLanguage(lng, callback);
@@ -95,6 +96,19 @@ i18n.changeLanguage = async (lng: string | undefined, callback?: any) => {
   // Mettre à jour le DOM
   document.documentElement.lang = normalized;
   document.documentElement.dir = normalized === 'ar' ? 'rtl' : 'ltr';
+
+  // ⚡ AJOUT : Sync avec backend (optionnel - stocke en cookie)
+  try {
+    const apiUrl = import.meta.env.VITE_API_URL || '/api';
+    await fetch(`${apiUrl}/set-language`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lang: normalized }),
+      credentials: 'include'
+    });
+  } catch (e) {
+    // Silencieux - pas critique
+  }
 
   return originalChangeLanguage(normalized, callback);
 };

@@ -1,9 +1,12 @@
-// routes/oeuvreRoutes.js - Routes corrigées pour les œuvres
+// routes/oeuvreRoutes.js - VERSION i18n
 const express = require('express');
 const router = express.Router();
 const OeuvreController = require('../controllers/OeuvreController');
-const { body } = require('express-validator');
+const { body, param } = require('express-validator');
 const uploadService = require('../services/uploadService');
+
+// ⚡ Import du middleware de validation de langue
+const { validateLanguage } = require('../middlewares/language');
 
 const initOeuvreRoutes = (models, authMiddleware) => {
   const oeuvreController = new OeuvreController(models);
@@ -12,7 +15,6 @@ const initOeuvreRoutes = (models, authMiddleware) => {
   // MIDDLEWARES SIMPLIFIÉS
   // ========================================================================
 
-  // Middleware de validation simplifié
   const validatePagination = (req, res, next) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
@@ -73,11 +75,10 @@ const initOeuvreRoutes = (models, authMiddleware) => {
 
     multerConfig = multer({
       storage,
-      limits: { fileSize: 50 * 1024 * 1024 } // 50MB
+      limits: { fileSize: 50 * 1024 * 1024 }
     });
   }
 
-  // Gestionnaire d'upload
   const handleMulterUpload = (fieldName = 'medias', maxCount = 10) => {
     return (req, res, next) => {
       const upload = multerConfig.array(fieldName, maxCount);
@@ -100,10 +101,7 @@ const initOeuvreRoutes = (models, authMiddleware) => {
     };
   };
 
-  // Parser de FormData
   const parseFormData = (req, res, next) => {
-    console.log('📝 Parsing FormData...');
-    
     const jsonFields = [
       'categories', 'tags', 'editeurs', 
       'utilisateurs_inscrits', 'intervenants_non_inscrits', 
@@ -114,9 +112,8 @@ const initOeuvreRoutes = (models, authMiddleware) => {
       if (req.body[field] && typeof req.body[field] === 'string') {
         try {
           req.body[field] = JSON.parse(req.body[field]);
-          console.log(`✅ Parsed ${field}`);
         } catch (e) {
-          console.error(`❌ Erreur parsing ${field}:`, e);
+          console.error(`Erreur parsing ${field}:`, e);
         }
       }
     });
@@ -128,10 +125,18 @@ const initOeuvreRoutes = (models, authMiddleware) => {
   // RÈGLES DE VALIDATION
   // ========================================================================
 
+  // ⚡ Validation acceptant string OU JSON pour les champs multilingues
   const createOeuvreValidation = [
     body('titre')
-      .trim()
-      .isLength({ min: 1, max: 255 })
+      .custom((value) => {
+        if (typeof value === 'string') {
+          return value.trim().length >= 1 && value.trim().length <= 255;
+        }
+        if (typeof value === 'object') {
+          return Object.values(value).some(v => v && v.length >= 1);
+        }
+        return false;
+      })
       .withMessage('Le titre est obligatoire (max 255 caractères)'),
     body('id_type_oeuvre')
       .isInt()
@@ -145,19 +150,32 @@ const initOeuvreRoutes = (models, authMiddleware) => {
       .withMessage('Année de création invalide'),
     body('description')
       .optional()
-      .isLength({ max: 5000 })
+      .custom((value) => {
+        if (typeof value === 'string') return value.length <= 5000;
+        if (typeof value === 'object') return true;
+        return true;
+      })
       .withMessage('Description trop longue (max 5000 caractères)')
   ];
 
   const updateOeuvreValidation = [
     body('titre')
       .optional()
-      .trim()
-      .isLength({ min: 1, max: 255 })
+      .custom((value) => {
+        if (typeof value === 'string') {
+          return value.trim().length >= 1 && value.trim().length <= 255;
+        }
+        if (typeof value === 'object') return true;
+        return false;
+      })
       .withMessage('Le titre doit contenir entre 1 et 255 caractères'),
     body('description')
       .optional()
-      .isLength({ max: 5000 })
+      .custom((value) => {
+        if (typeof value === 'string') return value.length <= 5000;
+        if (typeof value === 'object') return true;
+        return true;
+      })
       .withMessage('Description trop longue (max 5000 caractères)')
   ];
 
@@ -175,26 +193,22 @@ const initOeuvreRoutes = (models, authMiddleware) => {
   // VÉRIFICATION DES MIDDLEWARES D'AUTH
   // ========================================================================
 
-  // Créer des wrappers sûrs pour les middlewares d'authentification
   const safeAuth = {
     authenticate: authMiddleware?.authenticate || ((req, res, next) => {
       console.warn('⚠️ authMiddleware.authenticate non disponible');
-      req.user = { id_user: 1 }; // Mock user pour dev
+      req.user = { id_user: 1 };
       next();
     }),
     
     requireValidatedProfessional: authMiddleware?.requireValidatedProfessional || ((req, res, next) => {
-      console.warn('⚠️ authMiddleware.requireValidatedProfessional non disponible');
       next();
     }),
     
     requireAdmin: authMiddleware?.requireAdmin || ((req, res, next) => {
-      console.warn('⚠️ authMiddleware.requireAdmin non disponible');
       next();
     }),
     
     requireOwnership: authMiddleware?.requireOwnership || (() => (req, res, next) => {
-      console.warn('⚠️ authMiddleware.requireOwnership non disponible');
       next();
     })
   };
@@ -203,13 +217,11 @@ const initOeuvreRoutes = (models, authMiddleware) => {
   // ROUTES PUBLIQUES
   // ========================================================================
 
-  // Liste des œuvres
   router.get('/', 
     validatePagination,
     (req, res) => oeuvreController.getAllOeuvres(req, res)
   );
 
-  // Œuvres récentes
   router.get('/recent', 
     (req, res) => {
       req.query.limit = req.query.limit || 6;
@@ -218,7 +230,6 @@ const initOeuvreRoutes = (models, authMiddleware) => {
     }
   );
 
-  // Œuvres populaires
   router.get('/popular',
     (req, res) => {
       req.query.limit = req.query.limit || 6;
@@ -227,29 +238,54 @@ const initOeuvreRoutes = (models, authMiddleware) => {
     }
   );
 
-  // Statistiques
   router.get('/statistics', 
     (req, res) => oeuvreController.getStatistics(req, res)
   );
 
-  // Recherche
   router.get('/search', 
     (req, res) => oeuvreController.searchOeuvres(req, res)
   );
 
-  // Détails d'une œuvre
+  // ========================================================================
+  // ⚡ ROUTES DE TRADUCTION (ADMIN)
+  // ========================================================================
+
+  // Récupérer toutes les traductions d'une œuvre
+  router.get('/:id/translations',
+    safeAuth.authenticate,
+    safeAuth.requireAdmin,
+    validateId('id'),
+    (req, res) => oeuvreController.getOeuvreTranslations(req, res)
+  );
+
+  // Mettre à jour une traduction spécifique
+  router.patch('/:id/translation/:lang',
+    safeAuth.authenticate,
+    safeAuth.requireAdmin,
+    validateId('id'),
+    validateLanguage,
+    [
+      body('titre').optional().isString().isLength({ max: 255 }),
+      body('description').optional().isString().isLength({ max: 5000 })
+    ],
+    handleValidationErrors,
+    (req, res) => oeuvreController.updateOeuvreTranslation(req, res)
+  );
+
+  // ========================================================================
+  // ROUTES AVEC :id (après les routes spécifiques)
+  // ========================================================================
+
   router.get('/:id',
     validateId('id'),
     (req, res) => oeuvreController.getOeuvreById(req, res)
   );
 
-  // Liens de partage
   router.get('/:id/share-links',
     validateId('id'),
     (req, res) => oeuvreController.getShareLinks(req, res)
   );
 
-  // Médias d'une œuvre
   router.get('/:id/medias',
     validateId('id'),
     (req, res) => oeuvreController.getMedias(req, res)
@@ -259,14 +295,12 @@ const initOeuvreRoutes = (models, authMiddleware) => {
   // ROUTES AUTHENTIFIÉES
   // ========================================================================
 
-  // Mes œuvres (IMPORTANT: avant /:id pour éviter les conflits)
   router.get('/user/my-works',
     safeAuth.authenticate,
     validatePagination,
     (req, res) => oeuvreController.getMyWorks(req, res)
   );
 
-  // Statistiques personnelles
   router.get('/user/my-statistics',
     safeAuth.authenticate,
     async (req, res) => {
@@ -311,7 +345,6 @@ const initOeuvreRoutes = (models, authMiddleware) => {
     }
   );
 
-  // Créer une œuvre
   router.post('/', 
     safeAuth.authenticate,
     safeAuth.requireValidatedProfessional,
@@ -322,7 +355,6 @@ const initOeuvreRoutes = (models, authMiddleware) => {
     (req, res) => oeuvreController.createOeuvre(req, res)
   );
 
-  // Mettre à jour une œuvre
   router.put('/:id',
     safeAuth.authenticate,
     safeAuth.requireValidatedProfessional,
@@ -333,7 +365,6 @@ const initOeuvreRoutes = (models, authMiddleware) => {
     (req, res) => oeuvreController.updateOeuvre(req, res)
   );
 
-  // Supprimer une œuvre
   router.delete('/:id', 
     safeAuth.authenticate,
     safeAuth.requireValidatedProfessional,
@@ -346,7 +377,6 @@ const initOeuvreRoutes = (models, authMiddleware) => {
   // GESTION DES MÉDIAS
   // ========================================================================
 
-  // Upload de médias
   router.post('/:id/medias/upload',
     safeAuth.authenticate,
     safeAuth.requireValidatedProfessional,
@@ -356,7 +386,6 @@ const initOeuvreRoutes = (models, authMiddleware) => {
     (req, res) => oeuvreController.uploadMedia(req, res)
   );
 
-  // Réorganiser les médias
   router.put('/:id/medias/reorder',
     safeAuth.authenticate,
     safeAuth.requireValidatedProfessional,
@@ -367,7 +396,6 @@ const initOeuvreRoutes = (models, authMiddleware) => {
     (req, res) => oeuvreController.reorderMedias(req, res)
   );
 
-  // Supprimer un média
   router.delete('/:id/medias/:mediaId',
     safeAuth.authenticate,
     safeAuth.requireValidatedProfessional,
@@ -381,7 +409,6 @@ const initOeuvreRoutes = (models, authMiddleware) => {
   // ROUTES ADMIN
   // ========================================================================
 
-  // Valider/rejeter une œuvre
   router.patch('/:id/validate', 
     safeAuth.authenticate,
     safeAuth.requireAdmin,
@@ -391,7 +418,6 @@ const initOeuvreRoutes = (models, authMiddleware) => {
     (req, res) => oeuvreController.validateOeuvre(req, res)
   );
 
-  // Œuvres en attente
   router.get('/admin/pending',
     safeAuth.authenticate,
     safeAuth.requireAdmin,
@@ -401,7 +427,6 @@ const initOeuvreRoutes = (models, authMiddleware) => {
     }
   );
 
-  // Œuvres rejetées
   router.get('/admin/rejected',
     safeAuth.authenticate,
     safeAuth.requireAdmin,
@@ -415,13 +440,11 @@ const initOeuvreRoutes = (models, authMiddleware) => {
   // ROUTES UTILITAIRES
   // ========================================================================
 
-  // Recherche d'intervenants
   router.get('/search/intervenants',
     safeAuth.authenticate,
     (req, res) => oeuvreController.searchIntervenants(req, res)
   );
 
-  // Vérifier un email
   router.post('/check-email',
     safeAuth.authenticate,
     body('email').isEmail().normalizeEmail(),
@@ -429,19 +452,16 @@ const initOeuvreRoutes = (models, authMiddleware) => {
     (req, res) => oeuvreController.checkEmail(req, res)
   );
 
-  // ========================================================================
-  // ROUTE DE TEST
-  // ========================================================================
-
   router.get('/test/ping', (req, res) => {
     res.json({
       success: true,
-      message: 'Module œuvres opérationnel',
+      message: 'Module œuvres i18n opérationnel',
       timestamp: new Date().toISOString()
     });
   });
 
-  console.log('✅ Routes œuvres initialisées avec succès');
+  console.log('✅ Routes œuvres i18n initialisées');
+  console.log('  🌍 Routes traduction: GET /:id/translations, PATCH /:id/translation/:lang');
   
   return router;
 };

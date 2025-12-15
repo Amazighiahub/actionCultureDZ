@@ -1,3 +1,4 @@
+// models/Editeur.js - ⚡ MODIFIÉ POUR I18N
 const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
@@ -7,9 +8,12 @@ module.exports = (sequelize) => {
       primaryKey: true,
       autoIncrement: true
     },
+    // ⚡ MODIFIÉ POUR I18N
     nom: {
-      type: DataTypes.STRING(255),
-      allowNull: false
+      type: DataTypes.JSON,
+      allowNull: false,
+      defaultValue: { fr: '' },
+      comment: 'Nom en plusieurs langues { fr: "Éditions Adlis", ar: "أدليس للنشر", en: "Adlis Publishing" }'
     },
     type_editeur: {
       type: DataTypes.ENUM('maison_edition', 'label_musique', 'studio_cinema', 'galerie_art', 'editeur_scientifique', 'presse', 'editeur_numerique', 'autre'),
@@ -33,8 +37,12 @@ module.exports = (sequelize) => {
     telephone: {
       type: DataTypes.STRING(20)
     },
+    // ⚡ MODIFIÉ POUR I18N
     description: {
-      type: DataTypes.TEXT
+      type: DataTypes.JSON,
+      allowNull: true,
+      defaultValue: {},
+      comment: 'Description en plusieurs langues'
     },
     annee_creation: {
       type: DataTypes.INTEGER
@@ -56,6 +64,15 @@ module.exports = (sequelize) => {
       through: models.OeuvreEditeur, 
       foreignKey: 'id_editeur' 
     });
+  };
+
+  // ⚡ NOUVELLES MÉTHODES I18N
+  Editeur.prototype.getNom = function(lang = 'fr') {
+    return this.nom?.[lang] || this.nom?.fr || this.nom?.ar || '';
+  };
+
+  Editeur.prototype.getDescription = function(lang = 'fr') {
+    return this.description?.[lang] || this.description?.fr || '';
   };
 
   return Editeur;

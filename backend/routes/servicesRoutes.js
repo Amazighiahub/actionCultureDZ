@@ -1,18 +1,45 @@
-// routes/servicesRoutes.js
+// routes/servicesRoutes.js - VERSION i18n
 const express = require('express');
 const router = express.Router();
-const servicesController = require('../controllers/servicesController');
+const ServicesController = require('../controllers/ServicesController');
+const { body, param, query } = require('express-validator');
 
-// Factory function qui reçoit les modèles et middlewares
+// ⚡ Import du middleware de validation de langue
+const { validateLanguage } = require('../middlewares/language');
+
 const initServiceRoutes = (models, authMiddleware) => {
+  const servicesController = new ServicesController(models);
+  
   const { 
     authenticate, 
     requireAdmin, 
-    requireValidatedProfessional,
-    isAuthenticated 
+    requireValidatedProfessional 
   } = authMiddleware;
 
-  // Middleware pour vérifier la propriété d'un service
+  // Middleware de validation
+  let validationMiddleware;
+  try {
+    validationMiddleware = require('../middlewares/validationMiddleware');
+  } catch (e) {
+    validationMiddleware = {
+      handleValidationErrors: (req, res, next) => {
+        const errors = require('express-validator').validationResult(req);
+        if (!errors.isEmpty()) {
+          return res.status(400).json({ success: false, errors: errors.array() });
+        }
+        next();
+      },
+      validateId: (paramName) => (req, res, next) => {
+        const id = req.params[paramName];
+        if (!id || isNaN(id)) {
+          return res.status(400).json({ success: false, error: `${paramName} invalide` });
+        }
+        next();
+      }
+    };
+  }
+
+  // Middleware de vérification de propriété
   const checkServiceOwnership = async (req, res, next) => {
     try {
       const { id } = req.params;
@@ -35,13 +62,10 @@ const initServiceRoutes = (models, authMiddleware) => {
         });
       }
 
-      // Admin peut tout faire
       if (req.user.isAdmin) {
         return next();
       }
 
-      // Vérifier si l'utilisateur est le créateur
-      // Adapter selon votre modèle de données
       const isOwner = service.createdBy === req.user.id_user || 
                      (service.DetailLieu?.Lieu?.createdBy === req.user.id_user);
 
@@ -62,79 +86,175 @@ const initServiceRoutes = (models, authMiddleware) => {
     }
   };
 
+  // ⚡ Validation acceptant string OU JSON
+  const createServiceValidation = [
+    body('nom')
+      .custom((value) => {
+        if (typeof value === 'string') return value.trim().length >= 2;
+        if (typeof value === 'object') return Object.values(value).some(v => v && v.length >= 2);
+        return false;
+      })
+      .withMessage('Le nom est requis (min 2 caractères)'),
+    body('description')
+      .optional()
+      .custom((value) => {
+        if (typeof value === 'string') return value.length <= 2000;
+        if (typeof value === 'object') return true;
+        return true;
+      }),
+    body('type_service').notEmpty().withMessage('Type de service requis'),
+    body('id_lieu').optional().isInt()
+  ];
+
   // ========================================================================
   // ROUTES PUBLIQUES - VISITEURS
   // ========================================================================
 
   // Obtenir tous les services
-  router.get('/services', servicesController.getAllServices);
+  router.get('/services', 
+    [
+      query('page').optional().isInt({ min: 1 }),
+      query('limit').optional().isInt({ min: 1, max: 100 }),
+      query('search').optional().trim(),
+      query('type').optional().isString(),
+      query('lieu_id').optional().isInt()
+    ],
+    validationMiddleware.handleValidationErrors,
+    (req, res) => servicesController.getAllServices(req, res)
+  );
+
+  // Services par DetailLieu
+  router.get('/services/detail-lieu/:detailLieuId', 
+    validationMiddleware.validateId('detailLieuId'),
+    (req, res) => servicesController.getServicesByDetailLieu(req, res)
+  );
+
+  // Services par Lieu
+  router.get('/services/lieu/:lieuId', 
+    validationMiddleware.validateId('lieuId'),
+    (req, res) => servicesController.getServicesByLieu(req, res)
+  );
+
+  // Recherche par proximité
+  router.get('/services/proximite', 
+    [
+      query('latitude').isFloat({ min: -90, max: 90 }),
+      query('longitude').isFloat({ min: -180, max: 180 }),
+      query('radius').optional().isFloat({ min: 0.1, max: 100 })
+    ],
+    validationMiddleware.handleValidationErrors,
+    (req, res) => servicesController.getServicesByProximity(req, res)
+  );
+
+  // Services groupés par lieu
+  router.get('/services/grouped-by-lieu', 
+    (req, res) => servicesController.getServicesGroupedByLieu(req, res)
+  );
+
+  // ========================================================================
+  // ⚡ ROUTES DE TRADUCTION (ADMIN)
+  // ========================================================================
+
+  // Récupérer toutes les traductions d'un service
+  router.get('/services/:id/translations',
+    authenticate,
+    requireAdmin,
+    validationMiddleware.validateId('id'),
+    (req, res) => servicesController.getServiceTranslations(req, res)
+  );
+
+  // Mettre à jour une traduction spécifique
+  router.patch('/services/:id/translation/:lang',
+    authenticate,
+    requireAdmin,
+    validationMiddleware.validateId('id'),
+    validateLanguage,
+    [
+      body('nom').optional().isString().isLength({ max: 255 }),
+      body('description').optional().isString().isLength({ max: 2000 })
+    ],
+    validationMiddleware.handleValidationErrors,
+    (req, res) => servicesController.updateServiceTranslation(req, res)
+  );
+
+  // ========================================================================
+  // ROUTES AVEC :id (après les routes spécifiques)
+  // ========================================================================
 
   // Obtenir un service par ID
-  router.get('/services/:id', servicesController.getServiceById);
-
-  // Obtenir les services par DetailLieu
-  router.get('/services/detail-lieu/:detailLieuId', servicesController.getServicesByDetailLieu);
-
-  // Obtenir les services par Lieu
-  router.get('/services/lieu/:lieuId', servicesController.getServicesByLieu);
-
-  // Rechercher des services par proximité géographique
-  router.get('/services/proximite', servicesController.getServicesByProximity);
-
-  // Obtenir les services groupés par lieu dans une zone
-  router.get('/services/grouped-by-lieu', servicesController.getServicesGroupedByLieu);
+  router.get('/services/:id', 
+    validationMiddleware.validateId('id'),
+    (req, res) => servicesController.getServiceById(req, res)
+  );
 
   // ========================================================================
   // ROUTES PROTÉGÉES - PROFESSIONNELS VALIDÉS
   // ========================================================================
 
-  // Créer un nouveau service simple (DetailLieu doit exister)
+  // Créer un nouveau service
   router.post('/services', 
     authenticate, 
-    requireValidatedProfessional, 
-    servicesController.createService
+    requireValidatedProfessional,
+    createServiceValidation,
+    validationMiddleware.handleValidationErrors,
+    (req, res) => servicesController.createService(req, res)
   );
 
-  // Créer un service complet (avec création de Lieu, DetailLieu et LieuMedia si nécessaire)
+  // Créer un service complet
   router.post('/services/complet', 
     authenticate, 
-    requireValidatedProfessional, 
-    servicesController.createServiceComplet
+    requireValidatedProfessional,
+    (req, res) => servicesController.createServiceComplet(req, res)
   );
 
   // Créer plusieurs services
   router.post('/services/bulk', 
     authenticate, 
-    requireValidatedProfessional, 
-    servicesController.createMultipleServices
+    requireValidatedProfessional,
+    (req, res) => servicesController.createMultipleServices(req, res)
   );
 
-  // Mettre à jour un service - PROPRIÉTAIRE OU ADMIN
+  // Mettre à jour un service
   router.put('/services/:id', 
     authenticate,
     checkServiceOwnership,
-    servicesController.updateService
+    validationMiddleware.validateId('id'),
+    [
+      body('nom').optional().custom((value) => {
+        if (typeof value === 'string') return value.trim().length >= 2;
+        if (typeof value === 'object') return true;
+        return false;
+      }),
+      body('description').optional().custom((value) => {
+        if (typeof value === 'string') return value.length <= 2000;
+        if (typeof value === 'object') return true;
+        return true;
+      })
+    ],
+    validationMiddleware.handleValidationErrors,
+    (req, res) => servicesController.updateService(req, res)
   );
 
-  // Supprimer un service - PROPRIÉTAIRE OU ADMIN
+  // Supprimer un service
   router.delete('/services/:id', 
     authenticate,
     checkServiceOwnership,
-    servicesController.deleteService
+    validationMiddleware.validateId('id'),
+    (req, res) => servicesController.deleteService(req, res)
   );
 
   // ========================================================================
   // ROUTES ADMIN SEULEMENT
   // ========================================================================
 
-  // Statistiques des services
+  // Statistiques
   router.get('/services/stats/overview',
     authenticate,
     requireAdmin,
-    servicesController.getServicesStats
+    (req, res) => servicesController.getServicesStats(req, res)
   );
 
-  // Export des services
+  // Export
   router.get('/services/export',
     authenticate,
     requireAdmin,
@@ -142,7 +262,6 @@ const initServiceRoutes = (models, authMiddleware) => {
       try {
         const { format = 'json', wilayaId } = req.query;
         
-        const where = {};
         const include = [{
           model: models.DetailLieu,
           include: [{
@@ -152,10 +271,7 @@ const initServiceRoutes = (models, authMiddleware) => {
           }]
         }];
 
-        const services = await models.Service.findAll({
-          where,
-          include
-        });
+        const services = await models.Service.findAll({ include });
 
         res.json({
           success: true,
@@ -172,6 +288,9 @@ const initServiceRoutes = (models, authMiddleware) => {
       }
     }
   );
+
+  console.log('✅ Routes services i18n initialisées');
+  console.log('  🌍 Routes traduction: GET /services/:id/translations, PATCH /services/:id/translation/:lang');
 
   return router;
 };

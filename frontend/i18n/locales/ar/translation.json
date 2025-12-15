@@ -68,6 +68,7 @@
   },
   
   "errors": {
+    "fileMustBeImage": "يجب أن يكون الملف صورة",
     "fileTooLarge": {
       "title": "الملف كبير جداً",
       "description": "حجم الملف يجب ألا يتجاوز 5 ميجابايت"
@@ -159,7 +160,12 @@
     "selectType": "اختر النوع",
     "signup": "إنشاء حساب",
     "terms": "شروط الاستخدام",
-    "viewAll": "عرض الكل"
+    "viewAll": "عرض الكل",
+    "error": "خطأ",
+    "loading": "جارٍ التحميل...",
+    "wilaya": "الولاية",
+    "selectWilaya": "اختر الولاية",
+    "linkCopied": "تم نسخ الرابط!"
   },
   "contributors": {
     "addedCount_one": "تمت إضافة مساهم واحد",
@@ -224,7 +230,9 @@
       "startTime": "وقت البداية",
       "subtitle": "أنشئ حدثاً ثقافياً جديداً",
       "title": "إضافة حدث جديد",
-      "willBeAvailableSoon": "ستكون متاحة قريباً"
+      "willBeAvailableSoon": "ستكون متاحة قريباً",
+      "location": "الموقع",
+      "locationRequired": "الموقع مطلوب"
     },
     "types": {
       "concert": "حفلة موسيقية",
@@ -284,7 +292,10 @@
         "events": "الفعاليات",
         "heritage": "التراث",
         "map": "الخريطة",
-        "works": "الأعمال"
+        "works": "الأعمال",
+        "activity": "النشاط",
+    "moderation": "الإشراف",
+    "patrimoine": "التراث"
       },
       "title": "استكشف"
     },
@@ -351,7 +362,11 @@
       "cancelled": "ملغى",
       "inProgress": "قيد التقدم",
       "outOfStock": "نفذ المخزون",
-      "published": "منشور"
+      "published": "منشور",
+      "tous": "الكل",
+    "en_cours": "جاري",
+    "planifie": "مخطط",
+    "termine": "منتهي"
     },
     "title": "الناشرون",
     "addedCount_zero": "لم تتم إضافة أي ناشر",
@@ -390,6 +405,9 @@
       "seeAllEvents": "عرض جميع الفعاليات",
       "subtitle": "شارك في الفعاليات التي تحيي الساحة الثقافية الجزائرية",
       "title": "الفعاليات الثقافية"
+    },
+    "unregister": {
+      "error": "خطأ أثناء إلغاء التسجيل"
     },
     "heritage": {
       "discover": "اكتشف",
@@ -564,6 +582,21 @@
       "subtitle": "منصة رقمية مخصصة للحفاظ على التراث الثقافي الأمازيغي وتعزيزه"
     }
   },
+  "favorites": {
+    "update": {
+      "error": "خطأ أثناء تحديث المفضلة"
+    }
+  },
+  "social": {
+    "facebook": "فيسبوك",
+    "twitter": "تويتر",
+    "copy": "نسخ"
+  },
+   "admin": {
+    "rejection": {
+      "reason": "سبب الرفض:"
+    }
+  },
   "works": {
     "actions": {
       "favorites": "المفضلة",
@@ -622,6 +655,9 @@
       "album": "ألبوم",
       "book": "كتاب",
       "film": "فيلم"
+    },
+     "create": {
+      "success": "تم إنشاء العمل بنجاح! جاري التحويل..."
     }
   },
  
@@ -738,7 +774,9 @@
       "toutes_catgories": "جميع الفئات",
       "aucun_vnement_correspond": "لا توجد فعاليات تطابق معايير البحث الخاصة بك.",
       "complet": "مكتمل",
-      "dtails_vnement": "تفاصيل الفعالية"
+      "dtails_vnement": "تفاصيل الفعالية",
+      "loading": "جارٍ تحميل الفعاليات...",
+    "searchPlaceholder": "البحث عن فعالية..."
     },
     "dashboarduser": {
       "mon_espace_personnel": "مساحتي الشخصية",
@@ -1657,6 +1695,14 @@
       "placeholder_375": "مثال: 3.75",
       "article_valu_par": "مقال محكّم من قبل الأقران"
     },
+     "articles": {
+    "create": {
+      "success": "تم إنشاء المقال بنجاح!"
+    },
+    "save": {
+      "success": "تم حفظ المقال بنجاح!"
+    }
+  },
     "articles_editarticle": {
       "chargement_larticle": "جاري تحميل المقال...",
       "retour_dashboard": "العودة إلى لوحة التحكم"

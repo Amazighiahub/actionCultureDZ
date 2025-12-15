@@ -1,5 +1,8 @@
-// controllers/commentaireController.js - Nouveau contrôleur pour les commentaires
+// controllers/CommentaireController.js - VERSION i18n
 const { Op } = require('sequelize');
+
+// ⚡ Import du helper i18n
+const { translate, translateDeep } = require('../helpers/i18n');
 
 class CommentaireController {
   constructor(models) {
@@ -9,6 +12,7 @@ class CommentaireController {
   // Récupérer les commentaires d'une œuvre
   async getCommentairesOeuvre(req, res) {
     try {
+      const lang = req.lang || 'fr';  // ⚡
       const { oeuvreId } = req.params;
       const { page = 1, limit = 10 } = req.query;
       const offset = (page - 1) * limit;
@@ -17,12 +21,12 @@ class CommentaireController {
         where: { 
           id_oeuvre: oeuvreId,
           statut: 'publie',
-          commentaire_parent_id: null // Seulement les commentaires principaux
+          commentaire_parent_id: null
         },
         include: [
           {
             model: this.models.User,
-            attributes: ['nom', 'prenom', 'id_type_user']  // Changé type_user en id_type_user
+            attributes: ['nom', 'prenom', 'id_type_user']
           },
           {
             model: this.models.Commentaire,
@@ -32,7 +36,7 @@ class CommentaireController {
             include: [
               {
                 model: this.models.User,
-                attributes: ['nom', 'prenom', 'id_type_user']  // Changé type_user en id_type_user
+                attributes: ['nom', 'prenom', 'id_type_user']
               }
             ]
           }
@@ -42,17 +46,19 @@ class CommentaireController {
         order: [['date_creation', 'DESC']]
       });
 
+      // ⚡ Traduire les noms d'utilisateurs
       res.json({
         success: true,
         data: {
-          commentaires: commentaires.rows,
+          commentaires: translateDeep(commentaires.rows, lang),
           pagination: {
             total: commentaires.count,
             page: parseInt(page),
             pages: Math.ceil(commentaires.count / limit),
             limit: parseInt(limit)
           }
-        }
+        },
+        lang
       });
 
     } catch (error) {
@@ -67,10 +73,10 @@ class CommentaireController {
   // Créer un commentaire sur une œuvre
   async createCommentaireOeuvre(req, res) {
     try {
+      const lang = req.lang || 'fr';  // ⚡
       const { oeuvreId } = req.params;
       const { contenu, note_qualite, commentaire_parent_id } = req.body;
 
-      // Vérifier que l'œuvre existe
       const oeuvre = await this.models.Oeuvre.findByPk(oeuvreId);
       if (!oeuvre) {
         return res.status(404).json({
@@ -88,20 +94,20 @@ class CommentaireController {
         statut: 'publie'
       });
 
-      // Récupérer le commentaire complet pour la réponse
       const commentaireComplet = await this.models.Commentaire.findByPk(commentaire.id_commentaire, {
         include: [
           {
             model: this.models.User,
-            attributes: ['nom', 'prenom', 'id_type_user']  // Changé type_user en id_type_user
+            attributes: ['nom', 'prenom', 'id_type_user']
           }
         ]
       });
 
+      // ⚡ Traduire
       res.status(201).json({
         success: true,
         message: 'Commentaire ajouté avec succès',
-        data: commentaireComplet
+        data: translateDeep(commentaireComplet, lang)
       });
 
     } catch (error) {
@@ -116,10 +122,10 @@ class CommentaireController {
   // Créer un commentaire sur un événement
   async createCommentaireEvenement(req, res) {
     try {
+      const lang = req.lang || 'fr';  // ⚡
       const { evenementId } = req.params;
       const { contenu, note_qualite, commentaire_parent_id } = req.body;
 
-      // Vérifier que l'événement existe
       const evenement = await this.models.Evenement.findByPk(evenementId);
       if (!evenement) {
         return res.status(404).json({
@@ -141,7 +147,7 @@ class CommentaireController {
         include: [
           {
             model: this.models.User,
-            attributes: ['nom', 'prenom', 'id_type_user']  // Changé type_user en id_type_user
+            attributes: ['nom', 'prenom', 'id_type_user']
           }
         ]
       });
@@ -149,7 +155,7 @@ class CommentaireController {
       res.status(201).json({
         success: true,
         message: 'Commentaire ajouté avec succès',
-        data: commentaireComplet
+        data: translateDeep(commentaireComplet, lang)
       });
 
     } catch (error) {
@@ -164,6 +170,7 @@ class CommentaireController {
   // Récupérer les commentaires d'un événement
   async getCommentairesEvenement(req, res) {
     try {
+      const lang = req.lang || 'fr';  // ⚡
       const { evenementId } = req.params;
       const { page = 1, limit = 10 } = req.query;
       const offset = (page - 1) * limit;
@@ -177,7 +184,7 @@ class CommentaireController {
         include: [
           {
             model: this.models.User,
-            attributes: ['nom', 'prenom', 'id_type_user']  // Changé type_user en id_type_user
+            attributes: ['nom', 'prenom', 'id_type_user']
           },
           {
             model: this.models.Commentaire,
@@ -187,7 +194,7 @@ class CommentaireController {
             include: [
               {
                 model: this.models.User,
-                attributes: ['nom', 'prenom', 'id_type_user']  // Changé type_user en id_type_user
+                attributes: ['nom', 'prenom', 'id_type_user']
               }
             ]
           }
@@ -200,14 +207,15 @@ class CommentaireController {
       res.json({
         success: true,
         data: {
-          commentaires: commentaires.rows,
+          commentaires: translateDeep(commentaires.rows, lang),
           pagination: {
             total: commentaires.count,
             page: parseInt(page),
             pages: Math.ceil(commentaires.count / limit),
             limit: parseInt(limit)
           }
-        }
+        },
+        lang
       });
 
     } catch (error) {
@@ -225,7 +233,7 @@ class CommentaireController {
       const { id } = req.params;
       const { contenu, note_qualite } = req.body;
 
-      const commentaire = req.resource; // Récupéré par le middleware requireOwnership
+      const commentaire = req.resource;
 
       await commentaire.update({
         contenu,
@@ -251,7 +259,7 @@ class CommentaireController {
   // Supprimer un commentaire
   async deleteCommentaire(req, res) {
     try {
-      const commentaire = req.resource; // Récupéré par le middleware requireOwnership
+      const commentaire = req.resource;
 
       await commentaire.update({ statut: 'supprime' });
 

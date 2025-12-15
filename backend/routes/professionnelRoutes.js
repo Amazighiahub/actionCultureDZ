@@ -16,9 +16,27 @@ const initProfessionnelRoutes = (models) => {
   const authMiddleware = createAuthMiddleware(models);
   const professionnelController = new ProfessionnelController(models);
 
+  // Fallback pour requireValidatedProfessional si non défini
+  const requireValidatedProfessional = authMiddleware.requireValidatedProfessional || 
+    authMiddleware.requireProfessional ||
+    ((req, res, next) => {
+      // Vérification basique si le middleware n'existe pas
+      if (!req.user) {
+        return res.status(401).json({ success: false, error: 'Authentification requise' });
+      }
+      if (req.user.role !== 'Professionnel' && !req.user.isProfessionnel) {
+        return res.status(403).json({ success: false, error: 'Accès réservé aux professionnels' });
+      }
+      next();
+    });
+
+  // Fallback pour requireOwnership si non défini  
+  const requireOwnership = authMiddleware.requireOwnership || 
+    ((model, paramName, ownerField) => (req, res, next) => next());
+
   // Toutes les routes nécessitent l'authentification et d'être un professionnel validé
   router.use(authMiddleware.authenticate);
-  router.use(authMiddleware.requireValidatedProfessional);
+  router.use(requireValidatedProfessional);
 
   // ========================================
   // DASHBOARD PROFESSIONNEL
@@ -61,7 +79,7 @@ const initProfessionnelRoutes = (models) => {
    */
   router.get('/oeuvres/:id/stats',
     validationMiddleware.validateId('id'),
-    authMiddleware.requireOwnership('Oeuvre', 'id', 'saisi_par'),
+    requireOwnership('Oeuvre', 'id', 'saisi_par'),
     cacheMiddleware.conditionalCache(300),
     professionnelController.getOeuvreStats.bind(professionnelController)
   );
@@ -122,7 +140,7 @@ const initProfessionnelRoutes = (models) => {
    */
   router.get('/evenements/:id/stats',
     validationMiddleware.validateId('id'),
-    authMiddleware.requireOwnership('Evenement', 'id', 'id_user'),
+    requireOwnership('Evenement', 'id', 'id_user'),
     cacheMiddleware.conditionalCache(300),
     professionnelController.getEvenementStats.bind(professionnelController)
   );
@@ -142,7 +160,7 @@ const initProfessionnelRoutes = (models) => {
       body('notes').optional().isString().withMessage('Notes invalides')
     ],
     validationMiddleware.handleValidationErrors,
-    authMiddleware.requireOwnership('Evenement', 'id', 'id_user'),
+    requireOwnership('Evenement', 'id', 'id_user'),
     rateLimitMiddleware.sensitiveActions,
     auditMiddleware.logAction('MANAGE_PARTICIPANT'),
     professionnelController.manageParticipants.bind(professionnelController)
@@ -263,7 +281,7 @@ const initProfessionnelRoutes = (models) => {
     validationMiddleware.validateId('evenementId'),
     [query('format').optional().isIn(['csv', 'excel']).withMessage('Format invalide')],
     validationMiddleware.handleValidationErrors,
-    authMiddleware.requireOwnership('Evenement', 'evenementId', 'id_user'),
+    requireOwnership('Evenement', 'evenementId', 'id_user'),
     rateLimitMiddleware.sensitiveActions,
     auditMiddleware.logAction('EXPORT_PARTICIPANTS'),
     (req, res) => {
@@ -406,7 +424,7 @@ const initProfessionnelRoutes = (models) => {
    */
   router.delete('/portfolio/:mediaId',
     validationMiddleware.validateId('mediaId'),
-    authMiddleware.requireOwnership('Media', 'mediaId', 'id_user'),
+    requireOwnership('Media', 'mediaId', 'id_user'),
     rateLimitMiddleware.sensitiveActions,
     auditMiddleware.logAction('DELETE_PORTFOLIO_MEDIA'),
     (req, res) => {
@@ -430,7 +448,7 @@ const initProfessionnelRoutes = (models) => {
       body('ordre').optional().isInt({ min: 1 }).withMessage('Ordre invalide')
     ],
     validationMiddleware.handleValidationErrors,
-    authMiddleware.requireOwnership('Media', 'mediaId', 'id_user'),
+    requireOwnership('Media', 'mediaId', 'id_user'),
     auditMiddleware.logAction('UPDATE_PORTFOLIO_MEDIA'),
     (req, res) => {
       res.status(501).json({

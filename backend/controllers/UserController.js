@@ -1,10 +1,14 @@
-// controllers/UserController.js
+// controllers/UserController.js - VERSION i18n CORRIGÉE
 const emailService = require('../services/emailService');
 const EmailVerification = require('../models/misc/EmailVerification')
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { Op } = require('sequelize');
+
+// ⚡ Import du helper i18n
+const { translate, translateDeep, createMultiLang, mergeTranslations } = require('../helpers/i18n');
+
 const TYPE_USER_IDS = {
   VISITEUR: 1,
   ECRIVAIN: 2,
@@ -20,14 +24,56 @@ const TYPE_USER_IDS = {
   SCULPTEUR: 12,
   AUTRE: 13
 };
+
+// ✅ Configuration pour le mode développement
+const IS_DEV_MODE = process.env.NODE_ENV === 'development';
+const SKIP_EMAIL_VERIFICATION = process.env.SKIP_EMAIL_VERIFICATION === 'true' || IS_DEV_MODE;
+
 class UserController {
   constructor(models) {
     this.models = models;
     this.JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+    
+    // Log de la configuration au démarrage
+    console.log('📧 Configuration email:');
+    console.log(`   - Mode: ${IS_DEV_MODE ? 'DÉVELOPPEMENT' : 'PRODUCTION'}`);
+    console.log(`   - Vérification email: ${SKIP_EMAIL_VERIFICATION ? 'DÉSACTIVÉE' : 'ACTIVÉE'}`);
   }
 
   /**
-   * ÉTAPE 1 : Créer un utilisateur (inscription) - AVEC PHOTO OPTIONNELLE
+   * ⚡ Helper pour préparer les champs multilingues (nom, prenom, biographie)
+   * Accepte soit une string simple, soit un objet JSON multilingue
+   */
+  prepareMultiLangField(value, lang = 'fr') {
+    if (!value) return null;
+    
+    // Si c'est déjà un objet JSON, le retourner tel quel
+    if (typeof value === 'object' && value !== null) {
+      return value;
+    }
+    
+    // Si c'est une string, créer l'objet multilingue
+    return createMultiLang(value, lang);
+  }
+
+  /**
+   * ✅ Helper pour construire les options d'include Role
+   * Évite les erreurs si le modèle Role n'est pas défini
+   */
+  getRoleInclude() {
+    if (this.models.Role) {
+      return [{
+        model: this.models.Role,
+        as: 'Roles',
+        through: { attributes: [] },
+        required: false
+      }];
+    }
+    return [];
+  }
+
+  /**
+   * INSCRIPTION
    */
   async createUser(req, res) {
     const transaction = await this.models.sequelize.transaction();
@@ -41,16 +87,22 @@ class UserController {
         id_type_user = TYPE_USER_IDS.VISITEUR,
         accepte_conditions = false,
         accepte_newsletter = false,
-        photo_url, // NOUVEAU: Accepte photo_url dans le body
+        photo_url,
+        biographie,
         ...otherData
       } = req.body;
+
+      // ⚡ Récupérer la langue de la requête
+      const lang = req.lang || 'fr';
 
       console.log('📝 Nouvelle inscription:', { 
         nom, 
         prenom, 
         email, 
         id_type_user,
-        photo_url: photo_url ? '✅ Photo fournie' : '❌ Pas de photo'
+        lang,
+        photo_url: photo_url ? '✅ Photo fournie' : '❌ Pas de photo',
+        mode: IS_DEV_MODE ? 'DEV' : 'PROD'
       });
 
       // Validation des champs obligatoires
@@ -70,9 +122,8 @@ class UserController {
         });
       }
 
-      // NOUVEAU: Validation de photo_url si fournie
+      // Validation de photo_url si fournie
       if (photo_url) {
-        // Vérifier que l'URL commence par /uploads/images/
         if (!photo_url.startsWith('/uploads/images/')) {
           await transaction.rollback();
           return res.status(400).json({
@@ -81,7 +132,6 @@ class UserController {
           });
         }
 
-        // Vérifier le format du fichier (optionnel)
         const allowedExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'];
         const hasValidExtension = allowedExtensions.some(ext => 
           photo_url.toLowerCase().endsWith(ext)
@@ -95,7 +145,6 @@ class UserController {
           });
         }
 
-        // Vérifier que le fichier n'est pas un chemin traversal
         if (photo_url.includes('..') || photo_url.includes('//')) {
           await transaction.rollback();
           return res.status(400).json({
@@ -122,22 +171,48 @@ class UserController {
       // Hasher le mot de passe
       const hashedPassword = await bcrypt.hash(password, 12);
 
-      // Créer l'utilisateur avec ou sans photo
+      // ✅ CORRIGÉ: Utiliser UNIQUEMENT les valeurs ENUM existantes
+      const isVisiteur = id_type_user === TYPE_USER_IDS.VISITEUR;
+      
+      let statut;
+      let email_verifie;
+      let statut_validation;
+
+      if (SKIP_EMAIL_VERIFICATION) {
+        statut = isVisiteur ? 'actif' : 'en_attente_validation';
+        email_verifie = true;
+        statut_validation = isVisiteur ? null : 'en_attente';
+        console.log('⚡ Mode DEV: Email considéré comme vérifié');
+      } else {
+        statut = 'en_attente_validation';
+        email_verifie = false;
+        statut_validation = isVisiteur ? null : 'en_attente';
+      }
+
+      // ⚡ Préparer les champs multilingues
+      const nomMultiLang = this.prepareMultiLangField(nom, lang);
+      const prenomMultiLang = this.prepareMultiLangField(prenom, lang);
+      const biographieMultiLang = this.prepareMultiLangField(biographie, lang);
+
+      // Créer l'utilisateur
       const userData = {
-        nom,
-        prenom,
+        nom: nomMultiLang,           // ⚡ JSON multilingue
+        prenom: prenomMultiLang,     // ⚡ JSON multilingue
         email,
         password: hashedPassword,
         id_type_user,
         accepte_conditions,
         accepte_newsletter,
-        statut: 'en_attente_validation',
-        email_verifie: false,
-        photo_url: photo_url || null, // MODIFIÉ: Utilise la photo fournie ou null
-        statut_validation: id_type_user === TYPE_USER_IDS.VISITEUR ? null : 'en_attente_validation',
+        statut,
+        email_verifie,
+        photo_url: photo_url || null,
+        biographie: biographieMultiLang,  // ⚡ JSON multilingue
+        statut_validation,
         date_creation: new Date(),
         ip_inscription: req.ip
       };
+
+      console.log('📦 Création utilisateur avec statut:', statut, ', email_verifie:', email_verifie);
 
       const user = await this.models.User.create(userData, { 
         transaction,
@@ -145,12 +220,11 @@ class UserController {
       });
 
       const userId = user.get('id_user');
-      console.log(`✅ Utilisateur créé - ID: ${userId}, Photo: ${photo_url ? '✅' : '❌'}`);
+      console.log(`✅ Utilisateur créé - ID: ${userId}, Statut: ${statut}, Email vérifié: ${email_verifie}`);
 
-      // Si une photo a été fournie et qu'un modèle Media existe, l'enregistrer
+      // Enregistrer la photo dans Media si présente
       if (photo_url && this.models.Media) {
         try {
-          // Extraire le nom du fichier de l'URL
           const filename = photo_url.split('/').pop();
           
           await this.models.Media.create({
@@ -158,8 +232,8 @@ class UserController {
             original_name: filename,
             file_path: `uploads/images/${filename}`,
             file_url: photo_url,
-            mime_type: 'image/jpeg', // Pourrait être déduit de l'extension
-            size: 0, // Non disponible à ce stade
+            mime_type: 'image/jpeg',
+            size: 0,
             type: 'profile_photo',
             uploaded_by: userId,
             is_public: true
@@ -168,223 +242,105 @@ class UserController {
           console.log('✅ Photo enregistrée dans la table Media');
         } catch (mediaError) {
           console.log('⚠️ Erreur enregistrement Media (ignorée):', mediaError.message);
-          // On continue même si l'enregistrement Media échoue
         }
       }
 
-      // Assigner le rôle User par défaut
-      // Déterminer le rôle selon le type d'utilisateur
-let roleName = 'User'; // Par défaut pour les visiteurs
+      // Assigner le rôle
+      let roleName = isVisiteur ? 'User' : 'Professionnel';
 
-// Si ce n'est pas un visiteur (id_type_user !== 1), c'est un professionnel
-if (id_type_user !== TYPE_USER_IDS.VISITEUR) {
-  roleName = 'Professionnel';
-}
+      if (this.models.UserRole && this.models.Role) {
+        const userRole = await this.models.Role.findOne({
+          where: { nom_role: roleName },
+          transaction
+        });
 
-// Assigner le rôle approprié
-if (this.models.UserRole && this.models.Role) {
-  const userRole = await this.models.Role.findOne({
-    where: { nom_role: roleName },
-    transaction
-  });
+        if (userRole) {
+          await this.models.UserRole.create({
+            id_user: userId,
+            id_role: userRole.id_role
+          }, { transaction });
+          
+          console.log(`✅ Rôle "${roleName}" assigné à l'utilisateur ${userId}`);
+        }
+      }
 
-  if (userRole) {
-    await this.models.UserRole.create({
-      id_user: userId,
-      id_role: userRole.id_role
-    }, { transaction });
-    
-    console.log(`✅ Rôle "${roleName}" assigné à l'utilisateur ${userId}`);
-  }
-}
+      // Gestion de la vérification email selon le mode
+      if (!SKIP_EMAIL_VERIFICATION) {
+        const verificationToken = crypto.randomBytes(32).toString('hex');
+        await this.models.EmailVerification.create({
+          id_user: userId,
+          token: verificationToken,
+          type: 'email_verification',
+          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000)
+        }, { transaction });
 
-  // AJOUT: Créer le jeton de vérification
-  const verificationToken = crypto.randomBytes(32).toString('hex');
-  await this.models.EmailVerification.create({
-      id_user: userId,
-      token: verificationToken,
-      type: 'email_verification',
-      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000) // Expire dans 24h
-  }, { transaction });
-      await transaction.commit();
+        await transaction.commit();
 
-      // Envoi de l'email de vérification (corrigé)
-      try {
-        await emailService.sendVerificationEmail(user, verificationToken); // On utilise "user" et le token créé juste avant
-        console.log(`📧 Email de vérification envoyé à ${user.email}`);
-      } catch (emailError) {
-        console.error("Erreur critique lors de l'envoi de l'email de vérification:", emailError);
+        try {
+          await emailService.sendVerificationEmail(user, verificationToken);
+          console.log(`📧 Email de vérification envoyé à ${user.email}`);
+        } catch (emailError) {
+          console.error("⚠️ Erreur envoi email (utilisateur créé quand même):", emailError);
+        }
+      } else {
+        await transaction.commit();
+        console.log('⚡ Mode DEV: Pas d\'email de vérification envoyé');
       }
 
       // Générer le token JWT
       const token = this.generateToken(user);
 
-      // Préparer la réponse
-      const userResponse = user.toJSON();
-      delete userResponse.password;
+      // ⚡ Préparer la réponse traduite
+      // ✅ CORRIGÉ: Convertir en JSON avant translateDeep
+      const userJSON = user.toJSON();
+      delete userJSON.password;
+      const userResponse = translateDeep(userJSON, lang);
+
+      // Message selon le mode et le type d'utilisateur
+      let message;
+      if (SKIP_EMAIL_VERIFICATION) {
+        if (isVisiteur) {
+          message = 'Inscription réussie ! Votre compte est actif.';
+        } else {
+          message = 'Inscription réussie ! Votre compte professionnel est en attente de validation par un administrateur.';
+        }
+      } else {
+        message = 'Inscription réussie ! Un e-mail de vérification a été envoyé à votre adresse.';
+      }
 
       res.status(201).json({
         success: true,
-        message: photo_url 
-        ? 'Inscription réussie ! Un e-mail de vérification a été envoyé pour activer votre compte.'
-        : 'Inscription réussie ! Un e-mail de vérification a été envoyé. Vous pourrez ajouter une photo plus tard.',
+        message,
         data: {
           user: userResponse,
           token,
-          nextStep: photo_url ? null : 'upload_photo' // Pas de prochaine étape si photo déjà fournie
+          needsEmailVerification: !SKIP_EMAIL_VERIFICATION && !email_verifie,
+          needsAdminValidation: !isVisiteur,
+          devMode: IS_DEV_MODE
         }
       });
 
     } catch (error) {
       await transaction.rollback();
-      console.error('❌ Erreur inscription:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Erreur lors de l\'inscription',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
-      });
-    }
-  }
-
-
-  async verifyEmail(req, res) {
-    const { token } = req.params; // On récupère le token depuis les paramètres de l'URL
-    
-    try {
-      const verification = await this.models.EmailVerification.verifyToken(token, 'email_verification');
+      console.error('❌ Erreur création utilisateur:', error);
       
-      if (!verification) {
-        return res.status(400).json({
-          success: false,
-          error: 'Jeton invalide, expiré ou déjà utilisé.'
-        });
-      }
-
-      const user = verification.User;
-      if (!user) {
-        return res.status(404).json({ success: false, error: 'Utilisateur associé non trouvé.' });
-      }
-
-      user.statut = 'actif';
-      user.email_verifie = true;
-      await user.save();
-    
-      const jwtToken = this.generateToken(user);
-      const userResponse = user.toJSON();
-      delete userResponse.password;
-
-      res.json({
-        success: true,
-        data: {
-          user: userResponse,
-          token: jwtToken
-        }
-      });
-    } catch (error) {
-      console.error('❌ Erreur lors de la vérification de l\'email:', error);
-      res.status(500).json({ success: false, error: 'Erreur interne du serveur.' });
-    }
-  }
-
-  /**
-   * ÉTAPE 2 : Mettre à jour la photo de profil (reste disponible pour changement ultérieur)
-   */
-  async updateProfilePhoto(req, res) {
-    try {
-      const userId = req.user.id_user;
-      const { photo_url } = req.body;
-
-      console.log(`📸 Mise à jour photo - User: ${userId}, URL: ${photo_url}`);
-
-      if (!photo_url) {
-        return res.status(400).json({
-          success: false,
-          error: 'URL de la photo requise'
-        });
-      }
-
-      // Validation de l'URL
-      if (!photo_url.startsWith('/uploads/images/')) {
-        return res.status(400).json({
-          success: false,
-          error: 'URL de photo invalide. Elle doit commencer par /uploads/images/'
-        });
-      }
-
-      // Vérifier le format
-      const allowedExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'];
-      const hasValidExtension = allowedExtensions.some(ext => 
-        photo_url.toLowerCase().endsWith(ext)
-      );
-
-      if (!hasValidExtension) {
-        return res.status(400).json({
-          success: false,
-          error: 'Format de photo non supporté'
-        });
-      }
-
-      // Vérifier les tentatives de path traversal
-      if (photo_url.includes('..') || photo_url.includes('//')) {
-        return res.status(400).json({
-          success: false,
-          error: 'URL de photo invalide'
-        });
-      }
-
-      // Récupérer l'ancienne photo
-      const user = await this.models.User.findByPk(userId);
-      const oldPhotoUrl = user.photo_url;
-
-      // Mettre à jour uniquement photo_url
-      const [updatedRows] = await this.models.User.update(
-        { photo_url },
-        { where: { id_user: userId } }
-      );
-
-      if (updatedRows === 0) {
-        return res.status(404).json({
-          success: false,
-          error: 'Utilisateur non trouvé'
-        });
-      }
-
-      // Si l'ancienne photo existe et est différente, on pourrait la marquer pour suppression
-      if (oldPhotoUrl && oldPhotoUrl !== photo_url) {
-        console.log(`🔄 Photo remplacée: ${oldPhotoUrl} → ${photo_url}`);
-        // Note: La suppression physique du fichier devrait être gérée par un service dédié
-      }
-
-      // Récupérer l'utilisateur mis à jour
-      const updatedUser = await this.models.User.findByPk(userId, {
-        attributes: { exclude: ['password'] }
-      });
-
-      console.log(`✅ Photo mise à jour pour l'utilisateur ${userId}`);
-
-      res.json({
-        success: true,
-        message: 'Photo de profil mise à jour avec succès',
-        data: {
-          user: updatedUser
-        }
-      });
-
-    } catch (error) {
-      console.error('❌ Erreur mise à jour photo:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur lors de la mise à jour de la photo'
+        error: 'Erreur lors de la création du compte',
+        details: IS_DEV_MODE ? error.message : undefined
       });
     }
   }
 
   /**
-   * Connexion utilisateur
+   * CONNEXION - ✅ VERSION CORRIGÉE
    */
   async loginUser(req, res) {
     try {
       const { email, password } = req.body;
+      const lang = req.lang || 'fr';
+
+      console.log('🔐 Tentative connexion:', email);
 
       if (!email || !password) {
         return res.status(400).json({
@@ -393,15 +349,19 @@ if (this.models.UserRole && this.models.Role) {
         });
       }
 
-      // Récupérer l'utilisateur avec ses rôles
-      const user = await this.models.User.findOne({
-        where: { email },
-        include: [{
-          model: this.models.Role,
-          as: 'Roles',
-          through: { attributes: [] }
-        }]
-      });
+      // ✅ CORRECTION 1: Construire les options de requête dynamiquement
+      const queryOptions = {
+        where: { email }
+      };
+
+      // Ajouter l'include Role seulement si le modèle existe
+      const roleInclude = this.getRoleInclude();
+      if (roleInclude.length > 0) {
+        queryOptions.include = roleInclude;
+      }
+
+      // Chercher l'utilisateur
+      const user = await this.models.User.findOne(queryOptions);
 
       if (!user) {
         return res.status(401).json({
@@ -411,8 +371,8 @@ if (this.models.UserRole && this.models.Role) {
       }
 
       // Vérifier le mot de passe
-      const isValidPassword = await bcrypt.compare(password, user.password);
-      if (!isValidPassword) {
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+      if (!isPasswordValid) {
         return res.status(401).json({
           success: false,
           error: 'Email ou mot de passe incorrect'
@@ -420,10 +380,20 @@ if (this.models.UserRole && this.models.Role) {
       }
 
       // Vérifier le statut
-      if (user.statut !== 'actif') {
+      const blockedStatuses = ['suspendu', 'banni', 'inactif'];
+      if (blockedStatuses.includes(user.statut)) {
         return res.status(403).json({
           success: false,
-          error: `Votre compte est ${user.statut}`
+          error: `Votre compte est ${user.statut}. Veuillez contacter l'administrateur.`
+        });
+      }
+
+      // Vérifier si l'email doit être vérifié (seulement en mode PROD)
+      if (!SKIP_EMAIL_VERIFICATION && !user.email_verifie) {
+        return res.status(403).json({
+          success: false,
+          error: 'Veuillez vérifier votre email avant de vous connecter.',
+          needsEmailVerification: true
         });
       }
 
@@ -433,41 +403,58 @@ if (this.models.UserRole && this.models.Role) {
       // Générer le token
       const token = this.generateToken(user);
 
-      // Préparer la réponse
-      const userData = user.toJSON();
-      delete userData.password;
+      // ✅ CORRECTION 2: Convertir en JSON AVANT translateDeep
+      const userJSON = user.toJSON();
+      delete userJSON.password;
+      
+      // Appliquer la traduction sur l'objet JSON (pas sur l'instance Sequelize)
+      const userData = translateDeep(userJSON, lang);
+
+      console.log('✅ Connexion réussie pour:', email);
 
       res.json({
         success: true,
         message: 'Connexion réussie',
         data: {
           user: userData,
-          token
+          token,
+          needsAdminValidation: user.id_type_user !== TYPE_USER_IDS.VISITEUR && 
+                                user.statut_validation !== 'valide'
         }
       });
 
     } catch (error) {
+      // ✅ CORRECTION 3: Afficher les détails de l'erreur en mode DEV
       console.error('❌ Erreur connexion:', error);
+      console.error('❌ Stack:', error.stack);
+      
       res.status(500).json({
         success: false,
-        error: 'Erreur lors de la connexion'
+        error: 'Erreur lors de la connexion',
+        details: IS_DEV_MODE ? error.message : undefined,
+        stack: IS_DEV_MODE ? error.stack : undefined
       });
     }
   }
 
   /**
-   * Récupérer le profil
+   * Récupérer le profil - ✅ VERSION CORRIGÉE
    */
   async getProfile(req, res) {
     try {
-      const user = await this.models.User.findByPk(req.user.id_user, {
-        attributes: { exclude: ['password'] },
-        include: [{
-          model: this.models.Role,
-          as: 'Roles',
-          through: { attributes: [] }
-        }]
-      });
+      const lang = req.lang || 'fr';
+
+      // ✅ CORRIGÉ: Utiliser le helper pour l'include
+      const queryOptions = {
+        attributes: { exclude: ['password'] }
+      };
+
+      const roleInclude = this.getRoleInclude();
+      if (roleInclude.length > 0) {
+        queryOptions.include = roleInclude;
+      }
+
+      const user = await this.models.User.findByPk(req.user.id_user, queryOptions);
 
       if (!user) {
         return res.status(404).json({
@@ -476,16 +463,20 @@ if (this.models.UserRole && this.models.Role) {
         });
       }
 
+      // ✅ CORRIGÉ: Convertir en JSON avant translateDeep
+      const userJSON = user.toJSON();
+      
       res.json({
         success: true,
-        data: user
+        data: translateDeep(userJSON, lang)
       });
 
     } catch (error) {
       console.error('❌ Erreur récupération profil:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur'
+        error: 'Erreur serveur',
+        details: IS_DEV_MODE ? error.message : undefined
       });
     }
   }
@@ -495,21 +486,67 @@ if (this.models.UserRole && this.models.Role) {
    */
   async updateProfile(req, res) {
     try {
-      const userId = req.user.id_user;
-      const allowedFields = [
-        'nom', 'prenom', 'date_naissance', 'sexe', 
-        'telephone', 'biographie', 'wilaya_residence', 
-        'adresse', 'langue_preferee', 'theme_prefere',
-        'entreprise', 'site_web', 'specialites'
-      ];
+      const lang = req.lang || 'fr';
+      const { 
+        nom, 
+        prenom, 
+        biographie,
+        telephone,
+        date_naissance,
+        sexe,
+        adresse,
+        wilaya_residence,
+        accepte_newsletter,
+        langue_preferee,
+        theme_prefere,
+        site_web,
+        reseaux_sociaux,
+        specialites
+      } = req.body;
 
-      // Filtrer les champs autorisés
+      const user = await this.models.User.findByPk(req.user.id_user);
+
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          error: 'Utilisateur non trouvé'
+        });
+      }
+
+      // Préparer les mises à jour
       const updates = {};
-      allowedFields.forEach(field => {
-        if (req.body[field] !== undefined) {
-          updates[field] = req.body[field];
-        }
-      });
+
+      // ⚡ Champs multilingues
+      if (nom !== undefined) {
+        updates.nom = mergeTranslations(user.nom, 
+          typeof nom === 'object' ? nom : { [lang]: nom }
+        );
+      }
+      
+      if (prenom !== undefined) {
+        updates.prenom = mergeTranslations(user.prenom, 
+          typeof prenom === 'object' ? prenom : { [lang]: prenom }
+        );
+      }
+      
+      if (biographie !== undefined) {
+        updates.biographie = mergeTranslations(user.biographie, 
+          typeof biographie === 'object' ? biographie : { [lang]: biographie }
+        );
+      }
+
+      // Champs simples
+      if (telephone !== undefined) updates.telephone = telephone;
+      if (date_naissance !== undefined) updates.date_naissance = date_naissance;
+      if (sexe !== undefined) updates.sexe = sexe;
+      if (adresse !== undefined) updates.adresse = adresse;
+      if (wilaya_residence !== undefined) updates.wilaya_residence = wilaya_residence;
+      if (accepte_newsletter !== undefined) updates.accepte_newsletter = accepte_newsletter;
+      if (langue_preferee !== undefined) updates.langue_preferee = langue_preferee;
+      if (theme_prefere !== undefined) updates.theme_prefere = theme_prefere;
+      if (site_web !== undefined) updates.site_web = site_web;
+      if (reseaux_sociaux !== undefined) updates.reseaux_sociaux = reseaux_sociaux;
+      if (specialites !== undefined) updates.specialites = specialites;
 
       if (Object.keys(updates).length === 0) {
         return res.status(400).json({
@@ -518,25 +555,78 @@ if (this.models.UserRole && this.models.Role) {
         });
       }
 
-      await this.models.User.update(updates, {
-        where: { id_user: userId }
-      });
+      await user.update(updates);
 
-      const updatedUser = await this.models.User.findByPk(userId, {
+      // Recharger avec les associations
+      const queryOptions = {
         attributes: { exclude: ['password'] }
-      });
+      };
+
+      const roleInclude = this.getRoleInclude();
+      if (roleInclude.length > 0) {
+        queryOptions.include = roleInclude;
+      }
+
+      const updatedUser = await this.models.User.findByPk(req.user.id_user, queryOptions);
+
+      // ✅ CORRIGÉ: Convertir en JSON avant translateDeep
+      const userJSON = updatedUser.toJSON();
 
       res.json({
         success: true,
         message: 'Profil mis à jour',
-        data: updatedUser
+        data: translateDeep(userJSON, lang)
       });
 
     } catch (error) {
       console.error('❌ Erreur mise à jour profil:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur'
+        error: 'Erreur serveur',
+        details: IS_DEV_MODE ? error.message : undefined
+      });
+    }
+  }
+
+  /**
+   * Mettre à jour la photo de profil
+   */
+  async updateProfilePhoto(req, res) {
+    try {
+      const { photo_url } = req.body;
+
+      if (!photo_url) {
+        return res.status(400).json({
+          success: false,
+          error: 'URL de photo requise'
+        });
+      }
+
+      // Validation de l'URL
+      if (!photo_url.startsWith('/uploads/images/')) {
+        return res.status(400).json({
+          success: false,
+          error: 'URL de photo invalide'
+        });
+      }
+
+      await this.models.User.update(
+        { photo_url },
+        { where: { id_user: req.user.id_user } }
+      );
+
+      res.json({
+        success: true,
+        message: 'Photo de profil mise à jour',
+        data: { photo_url }
+      });
+
+    } catch (error) {
+      console.error('❌ Erreur mise à jour photo:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur serveur',
+        details: IS_DEV_MODE ? error.message : undefined
       });
     }
   }
@@ -560,7 +650,8 @@ if (this.models.UserRole && this.models.Role) {
       console.error('❌ Erreur suppression photo:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur'
+        error: 'Erreur serveur',
+        details: IS_DEV_MODE ? error.message : undefined
       });
     }
   }
@@ -601,7 +692,8 @@ if (this.models.UserRole && this.models.Role) {
       console.error('❌ Erreur changement mot de passe:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur'
+        error: 'Erreur serveur',
+        details: IS_DEV_MODE ? error.message : undefined
       });
     }
   }
@@ -614,6 +706,292 @@ if (this.models.UserRole && this.models.Role) {
       success: true,
       message: 'Déconnexion réussie'
     });
+  }
+
+  /**
+   * Vérification de l'email
+   */
+  async verifyEmail(req, res) {
+    try {
+      const { token } = req.params;
+
+      if (!token) {
+        return res.status(400).json({
+          success: false,
+          error: 'Token de vérification manquant'
+        });
+      }
+
+      // Chercher le token de vérification
+      const verification = await this.models.EmailVerification.findOne({
+        where: {
+          token,
+          type: 'email_verification',
+          expires_at: { [Op.gt]: new Date() }
+        }
+      });
+
+      if (!verification) {
+        return res.status(400).json({
+          success: false,
+          error: 'Token invalide ou expiré'
+        });
+      }
+
+      // Mettre à jour l'utilisateur
+      const user = await this.models.User.findByPk(verification.id_user);
+
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          error: 'Utilisateur non trouvé'
+        });
+      }
+
+      // Déterminer le nouveau statut
+      const isVisiteur = user.id_type_user === TYPE_USER_IDS.VISITEUR;
+      const newStatut = isVisiteur ? 'actif' : 'en_attente_validation';
+
+      await user.update({
+        email_verifie: true,
+        statut: newStatut
+      });
+
+      // Supprimer le token utilisé
+      await verification.destroy();
+
+      console.log(`✅ Email vérifié pour l'utilisateur ${user.id_user}, nouveau statut: ${newStatut}`);
+
+      res.json({
+        success: true,
+        message: 'Email vérifié avec succès',
+        data: {
+          email_verifie: true,
+          statut: newStatut,
+          needsAdminValidation: !isVisiteur
+        }
+      });
+
+    } catch (error) {
+      console.error('❌ Erreur vérification email:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur serveur',
+        details: IS_DEV_MODE ? error.message : undefined
+      });
+    }
+  }
+
+  /**
+   * ⚡ Récupérer un utilisateur par ID (avec traduction) - ✅ VERSION CORRIGÉE
+   */
+  async getUserById(req, res) {
+    try {
+      const { id } = req.params;
+      const lang = req.lang || 'fr';
+
+      // ✅ CORRIGÉ: Utiliser le helper pour l'include
+      const queryOptions = {
+        attributes: { exclude: ['password', 'ip_inscription'] }
+      };
+
+      const roleInclude = this.getRoleInclude();
+      if (roleInclude.length > 0) {
+        queryOptions.include = roleInclude;
+      }
+
+      const user = await this.models.User.findByPk(id, queryOptions);
+
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          error: 'Utilisateur non trouvé'
+        });
+      }
+
+      // ✅ CORRIGÉ: Convertir en JSON avant translateDeep
+      const userJSON = user.toJSON();
+
+      res.json({
+        success: true,
+        data: translateDeep(userJSON, lang)
+      });
+
+    } catch (error) {
+      console.error('❌ Erreur récupération utilisateur:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur serveur',
+        details: IS_DEV_MODE ? error.message : undefined
+      });
+    }
+  }
+
+  /**
+   * ⚡ Lister les utilisateurs (avec traduction) - ✅ VERSION CORRIGÉE
+   */
+  async listUsers(req, res) {
+    try {
+      const lang = req.lang || 'fr';
+      const { page = 1, limit = 20, type, statut, search } = req.query;
+
+      const where = {};
+      
+      if (type) where.id_type_user = type;
+      if (statut) where.statut = statut;
+      
+      // ⚡ Recherche multilingue
+      if (search) {
+        where[Op.or] = [
+          this.models.sequelize.where(
+            this.models.sequelize.fn('JSON_EXTRACT', this.models.sequelize.col('nom'), this.models.sequelize.literal("'$.fr'")),
+            { [Op.like]: `%${search}%` }
+          ),
+          this.models.sequelize.where(
+            this.models.sequelize.fn('JSON_EXTRACT', this.models.sequelize.col('nom'), this.models.sequelize.literal("'$.ar'")),
+            { [Op.like]: `%${search}%` }
+          ),
+          this.models.sequelize.where(
+            this.models.sequelize.fn('JSON_EXTRACT', this.models.sequelize.col('prenom'), this.models.sequelize.literal("'$.fr'")),
+            { [Op.like]: `%${search}%` }
+          ),
+          this.models.sequelize.where(
+            this.models.sequelize.fn('JSON_EXTRACT', this.models.sequelize.col('prenom'), this.models.sequelize.literal("'$.ar'")),
+            { [Op.like]: `%${search}%` }
+          ),
+          { email: { [Op.like]: `%${search}%` } }
+        ];
+      }
+
+      const { count, rows } = await this.models.User.findAndCountAll({
+        where,
+        attributes: { exclude: ['password', 'ip_inscription'] },
+        limit: parseInt(limit),
+        offset: (parseInt(page) - 1) * parseInt(limit),
+        order: [['date_creation', 'DESC']]
+      });
+
+      // ✅ CORRIGÉ: Convertir en JSON avant translateDeep
+      const usersJSON = rows.map(user => user.toJSON());
+
+      res.json({
+        success: true,
+        data: translateDeep(usersJSON, lang),
+        pagination: {
+          total: count,
+          page: parseInt(page),
+          limit: parseInt(limit),
+          pages: Math.ceil(count / parseInt(limit))
+        }
+      });
+
+    } catch (error) {
+      console.error('❌ Erreur liste utilisateurs:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur serveur',
+        details: IS_DEV_MODE ? error.message : undefined
+      });
+    }
+  }
+
+  /**
+   * ⚡ Récupérer toutes les traductions d'un utilisateur (admin)
+   */
+  async getUserTranslations(req, res) {
+    try {
+      const { id } = req.params;
+
+      const user = await this.models.User.findByPk(id, {
+        attributes: ['id_user', 'nom', 'prenom', 'biographie', 'email']
+      });
+
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          error: 'Utilisateur non trouvé'
+        });
+      }
+
+      // Retourner les données brutes (JSON multilingue)
+      res.json({
+        success: true,
+        data: {
+          id_user: user.id_user,
+          email: user.email,
+          nom: user.nom,           // { fr: "...", ar: "...", ... }
+          prenom: user.prenom,     // { fr: "...", ar: "...", ... }
+          biographie: user.biographie
+        }
+      });
+
+    } catch (error) {
+      console.error('❌ Erreur récupération traductions:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur serveur',
+        details: IS_DEV_MODE ? error.message : undefined
+      });
+    }
+  }
+
+  /**
+   * ⚡ Mettre à jour une traduction spécifique (admin)
+   */
+  async updateUserTranslation(req, res) {
+    try {
+      const { id, lang } = req.params;
+      const { nom, prenom, biographie } = req.body;
+
+      const user = await this.models.User.findByPk(id);
+
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          error: 'Utilisateur non trouvé'
+        });
+      }
+
+      const updates = {};
+
+      if (nom) {
+        updates.nom = mergeTranslations(user.nom, { [lang]: nom });
+      }
+
+      if (prenom) {
+        updates.prenom = mergeTranslations(user.prenom, { [lang]: prenom });
+      }
+
+      if (biographie) {
+        updates.biographie = mergeTranslations(user.biographie, { [lang]: biographie });
+      }
+
+      if (Object.keys(updates).length === 0) {
+        return res.status(400).json({
+          success: false,
+          error: 'Aucune donnée à mettre à jour'
+        });
+      }
+
+      await user.update(updates);
+
+      // ✅ CORRIGÉ: Convertir en JSON pour la réponse
+      const userJSON = user.toJSON();
+
+      res.json({
+        success: true,
+        message: `Traduction ${lang} mise à jour avec succès`,
+        data: userJSON
+      });
+
+    } catch (error) {
+      console.error('❌ Erreur mise à jour traduction:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur serveur',
+        details: IS_DEV_MODE ? error.message : undefined
+      });
+    }
   }
 
   /**

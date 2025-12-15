@@ -1,3 +1,4 @@
+// models/Organisation.js - ⚡ MODIFIÉ POUR I18N
 const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
@@ -7,9 +8,12 @@ module.exports = (sequelize) => {
       primaryKey: true,
       autoIncrement: true
     },
+    // ⚡ MODIFIÉ POUR I18N
     nom: {
-      type: DataTypes.STRING(255),
-      allowNull: false
+      type: DataTypes.JSON,
+      allowNull: false,
+      defaultValue: { fr: '' },
+      comment: 'Nom en plusieurs langues { fr: "Ministère de la Culture", ar: "وزارة الثقافة", en: "Ministry of Culture" }'
     },
     id_type_organisation: {
       type: DataTypes.INTEGER,
@@ -19,8 +23,12 @@ module.exports = (sequelize) => {
         key: 'id_type_organisation'
       }
     },
+    // ⚡ MODIFIÉ POUR I18N
     description: {
-      type: DataTypes.TEXT
+      type: DataTypes.JSON,
+      allowNull: true,
+      defaultValue: {},
+      comment: 'Description en plusieurs langues'
     },
     site_web: {
       type: DataTypes.STRING(255)
@@ -37,6 +45,15 @@ module.exports = (sequelize) => {
       through: models.EvenementOrganisation, 
       foreignKey: 'id_organisation' 
     });
+  };
+
+  // ⚡ NOUVELLES MÉTHODES I18N
+  Organisation.prototype.getNom = function(lang = 'fr') {
+    return this.nom?.[lang] || this.nom?.fr || this.nom?.ar || '';
+  };
+
+  Organisation.prototype.getDescription = function(lang = 'fr') {
+    return this.description?.[lang] || this.description?.fr || '';
   };
 
   return Organisation;

@@ -1,110 +1,130 @@
-// middlewares/authMiddleware.js - VERSION CORRIGÉE AVEC UN SEUL CHAMP
+// middlewares/authMiddleware.js - VERSION CORRIGÉE
+// Compatible avec: createAuthMiddleware(models) OU createAuthMiddleware(User)
 const jwt = require('jsonwebtoken');
 
-// Configuration JWT
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+// ✅ Configuration pour le mode développement
+const IS_DEV_MODE = process.env.NODE_ENV === 'development';
+const SKIP_EMAIL_VERIFICATION = process.env.SKIP_EMAIL_VERIFICATION === 'true' || IS_DEV_MODE;
 
-// Fonction helper pour vérifier le token
-const verifyToken = (token) => {
-  try {
-    return jwt.verify(token, JWT_SECRET);
-  } catch (error) {
-    return null;
+module.exports = (modelsOrUser) => {
+  // ✅ COMPATIBILITÉ: Accepte soit models complet, soit juste User
+  let User, Role, Organisation;
+  
+  if (modelsOrUser.findByPk) {
+    // C'est un modèle User directement
+    User = modelsOrUser;
+    Role = null;
+    Organisation = null;
+    console.log('🔐 AuthMiddleware initialisé avec User seul');
+  } else {
+    // C'est l'objet models complet
+    User = modelsOrUser.User;
+    Role = modelsOrUser.Role;
+    Organisation = modelsOrUser.Organisation;
+    console.log('🔐 AuthMiddleware initialisé avec models complet');
   }
-};
 
-// Factory function qui crée les middlewares avec les modèles
-const createAuthMiddleware = (models) => {
-  const { User, Role, UserRole, Evenement, Oeuvre, Commentaire, Organisation } = models;
+  const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
   // ====================
   // HELPERS INTERNES
   // ====================
   
-  // Récupérer l'utilisateur complet avec ses rôles et organisation
-  const getUserWithRoles = async (userId) => {
-    const user = await User.findByPk(userId, {
-      include: [
-        {
-          model: Role,
-          as: 'Roles',
-          through: { attributes: [] }
-        },
-        {
-          model: Organisation,
-          as: 'Organisations',
-          through: { attributes: [] },
-          required: false
-        }
-      ],
-      attributes: { exclude: ['password'] }
-    });
-
-    if (user) {
-      // Ajouter des propriétés helper
-      user.roleNames = user.Roles ? user.Roles.map(role => role.nom_role) : [];
-      user.isAdmin = user.roleNames.includes('Administrateur');
-      user.isProfessionnel = user.roleNames.includes('Professionnel');
-      user.isUser = user.roleNames.includes('User') || user.roleNames.length === 0;
-      user.hasOrganisation = user.Organisations && user.Organisations.length > 0;
-      
-      // IMPORTANT : Ajouter une propriété helper pour la validation
-      user.isProfessionnelValide = user.isProfessionnel && user.statut_validation === 'valide';
+  // Vérifier un token JWT
+  const verifyToken = (token) => {
+    try {
+      return jwt.verify(token, JWT_SECRET);
+    } catch (error) {
+      console.error('❌ Erreur vérification token:', error.message);
+      return null;
     }
-
-    return user;
   };
 
-  // Vérifier si l'utilisateur a les permissions nécessaires
-  const hasPermission = (user, requiredPermissions) => {
-    if (!user) return false;
-    
-    // Les admins ont toujours toutes les permissions
-    if (user.isAdmin) return true;
-    
-    // Définir les permissions par rôle
-    const rolePermissions = {
-      'Professionnel': [
-        // Événements (nécessite organisation)
-        'create_event',
-        'update_own_event',
-        'delete_own_event',
-        // Œuvres (pas besoin d'organisation)
-        'create_oeuvre',
-        'update_oeuvre',
-        'delete_oeuvre',
-        // Patrimoine (pas besoin d'organisation)
-        'create_patrimoine',
-        'update_patrimoine',
-        'delete_patrimoine',
-        // Autres
-        'manage_profile',
-        'manage_favorites',
-        'view_participants'
-      ],
-      'User': [
-        'view_content',
-        'manage_profile',
-        'manage_favorites',
-        'create_comment',
-        'register_event',
-        'rate_content'
-      ]
-    };
+  // Récupérer l'utilisateur complet avec ses rôles
+  const getUserWithRoles = async (userId) => {
+    try {
+      // Configuration de base
+      const queryOptions = {
+        attributes: { exclude: ['password'] }
+      };
 
-    // Vérifier si l'utilisateur a au moins une des permissions requises
-    const userPermissions = user.roleNames.flatMap(role => rolePermissions[role] || []);
-    return requiredPermissions.some(perm => userPermissions.includes(perm));
+      // Ajouter les includes si les modèles sont disponibles
+      if (Role) {
+        queryOptions.include = [{
+          model: Role,
+          as: 'Roles',
+          through: { attributes: [] },
+          required: false
+        }];
+
+        // Ajouter Organisation si disponible
+        if (Organisation) {
+          queryOptions.include.push({
+            model: Organisation,
+            as: 'Organisations',
+            through: { attributes: [] },
+            required: false
+          });
+        }
+      }
+
+      const user = await User.findByPk(userId, queryOptions);
+
+      if (user) {
+        // Ajouter des propriétés helper
+        if (user.Roles) {
+          user.roleNames = user.Roles.map(role => role.nom_role);
+        } else {
+          user.roleNames = [];
+        }
+        
+        user.isAdmin = user.roleNames.includes('Administrateur');
+        user.isProfessionnel = user.roleNames.includes('Professionnel');
+        user.isUser = user.roleNames.includes('User') || user.roleNames.length === 0;
+        user.hasOrganisation = user.Organisations && user.Organisations.length > 0;
+        
+        // Helper pour la validation professionnelle
+        user.isProfessionnelValide = user.isProfessionnel && user.statut_validation === 'valide';
+      }
+
+      return user;
+    } catch (error) {
+      console.error('❌ Erreur getUserWithRoles:', error.message);
+      
+      // Fallback: récupérer l'utilisateur sans les associations
+      try {
+        const user = await User.findByPk(userId, {
+          attributes: { exclude: ['password'] }
+        });
+        
+        if (user) {
+          user.roleNames = [];
+          user.isAdmin = false;
+          user.isProfessionnel = false;
+          user.isUser = true;
+          user.hasOrganisation = false;
+          user.isProfessionnelValide = false;
+        }
+        
+        return user;
+      } catch (fallbackError) {
+        console.error('❌ Erreur fallback getUserWithRoles:', fallbackError.message);
+        return null;
+      }
+    }
   };
 
   // ====================
   // MIDDLEWARES PRINCIPAUX
   // ====================
 
-  // Middleware d'authentification principal
+  /**
+   * Middleware d'authentification principal
+   * Vérifie le token JWT et charge l'utilisateur
+   */
   const authenticate = async (req, res, next) => {
     try {
-      // Récupérer le token depuis le header Authorization
+      // Récupérer le token
       const authHeader = req.headers.authorization;
       const token = authHeader && authHeader.startsWith('Bearer ') 
         ? authHeader.substring(7) 
@@ -126,13 +146,39 @@ const createAuthMiddleware = (models) => {
         });
       }
 
-      // Récupérer l'utilisateur avec ses rôles et organisation
+      // Récupérer l'utilisateur avec ses rôles
       const user = await getUserWithRoles(decoded.id || decoded.id_user);
 
-      if (!user || user.statut !== 'actif') {
+      if (!user) {
         return res.status(401).json({
           success: false,
-          message: 'Utilisateur non trouvé ou inactif'
+          message: 'Utilisateur non trouvé'
+        });
+      }
+
+      // ✅ CORRIGÉ: Gestion des statuts avec les valeurs ENUM existantes
+      // ENUM disponibles: 'actif', 'en_attente_validation', 'inactif', 'suspendu', 'banni'
+      
+      // Statuts bloqués définitivement
+      const blockedStatuses = ['suspendu', 'banni', 'inactif'];
+      if (blockedStatuses.includes(user.statut)) {
+        return res.status(403).json({
+          success: false,
+          message: `Votre compte est ${user.statut}. Veuillez contacter l'administrateur.`,
+          statut: user.statut
+        });
+      }
+
+      // ✅ CORRIGÉ: Statuts autorisés pour l'authentification
+      // - actif: compte pleinement fonctionnel
+      // - en_attente_validation: professionnel en attente OU utilisateur en attente de vérification email
+      const allowedStatuses = ['actif', 'en_attente_validation'];
+      
+      if (!allowedStatuses.includes(user.statut)) {
+        return res.status(401).json({
+          success: false,
+          message: 'Statut de compte non reconnu',
+          statut: user.statut
         });
       }
 
@@ -143,17 +189,25 @@ const createAuthMiddleware = (models) => {
       
       next();
     } catch (error) {
-      console.error('Erreur authentification:', error);
+      console.error('❌ Erreur authentification:', error);
       return res.status(500).json({
         success: false,
         message: 'Erreur lors de l\'authentification',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        details: IS_DEV_MODE ? error.message : undefined
       });
     }
   };
 
-  // Middleware pour vérifier si l'utilisateur est authentifié (optionnel)
-  const isAuthenticated = async (req, res, next) => {
+  /**
+   * ✅ ALIAS: isAuthenticated = authenticate
+   * Pour compatibilité avec app.js
+   */
+  const isAuthenticated = authenticate;
+
+  /**
+   * Middleware optionnel - Authentifie si un token est présent
+   */
+  const optionalAuth = async (req, res, next) => {
     try {
       const authHeader = req.headers.authorization;
       const token = authHeader && authHeader.startsWith('Bearer ') 
@@ -164,7 +218,7 @@ const createAuthMiddleware = (models) => {
         const decoded = verifyToken(token);
         if (decoded) {
           const user = await getUserWithRoles(decoded.id || decoded.id_user);
-          if (user && user.statut === 'actif') {
+          if (user && !['suspendu', 'banni', 'inactif'].includes(user.statut)) {
             req.user = user;
             req.userId = user.id_user;
             req.userRoles = user.roleNames;
@@ -174,8 +228,73 @@ const createAuthMiddleware = (models) => {
       
       next();
     } catch (error) {
-      console.error('Erreur isAuthenticated:', error);
-      next(); // Continuer même en cas d'erreur (optionnel)
+      // En cas d'erreur, continuer sans authentification
+      next();
+    }
+  };
+
+  /**
+   * ✅ NOUVEAU: Middleware pour vérifier que l'email est vérifié
+   */
+  const requireVerifiedEmail = async (req, res, next) => {
+    try {
+      // En mode DEV, on skip la vérification
+      if (SKIP_EMAIL_VERIFICATION) {
+        return next();
+      }
+
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          message: 'Authentification requise'
+        });
+      }
+
+      if (!req.user.email_verifie) {
+        return res.status(403).json({
+          success: false,
+          message: 'Veuillez vérifier votre email pour accéder à cette fonctionnalité.',
+          needsEmailVerification: true
+        });
+      }
+
+      next();
+    } catch (error) {
+      console.error('❌ Erreur vérification email:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Erreur serveur'
+      });
+    }
+  };
+
+  /**
+   * ✅ NOUVEAU: Middleware pour vérifier que le compte est actif
+   */
+  const requireActiveAccount = async (req, res, next) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          message: 'Authentification requise'
+        });
+      }
+
+      if (req.user.statut !== 'actif') {
+        return res.status(403).json({
+          success: false,
+          message: 'Votre compte doit être actif pour accéder à cette fonctionnalité.',
+          statut: req.user.statut
+        });
+      }
+
+      next();
+    } catch (error) {
+      console.error('❌ Erreur vérification compte actif:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Erreur serveur'
+      });
     }
   };
 
@@ -183,8 +302,36 @@ const createAuthMiddleware = (models) => {
   // MIDDLEWARES DE RÔLES
   // ====================
 
-  // Vérifier si l'utilisateur est admin
-  const requireAdmin = async (req, res, next) => {
+  /**
+   * Vérifie si l'utilisateur a un rôle spécifique
+   */
+  const requireRole = (...roles) => {
+    return (req, res, next) => {
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          message: 'Authentification requise'
+        });
+      }
+
+      const userRoles = req.userRoles || [];
+      const hasRole = roles.some(role => userRoles.includes(role));
+
+      if (!hasRole) {
+        return res.status(403).json({
+          success: false,
+          message: 'Accès non autorisé. Rôle requis: ' + roles.join(' ou ')
+        });
+      }
+
+      next();
+    };
+  };
+
+  /**
+   * Vérifie si l'utilisateur est administrateur
+   */
+  const requireAdmin = (req, res, next) => {
     if (!req.user) {
       return res.status(401).json({
         success: false,
@@ -202,289 +349,16 @@ const createAuthMiddleware = (models) => {
     next();
   };
 
-  // Vérifier si l'utilisateur est professionnel validé OU admin (pour événements)
-  const requireValidatedProfessional = async (req, res, next) => {
-    if (!req.user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Authentification requise'
-      });
-    }
+  /**
+   * ✅ ALIAS: isAdmin = requireAdmin
+   * Pour compatibilité avec app.js
+   */
+  const isAdmin = requireAdmin;
 
-    // Les administrateurs ont tous les droits
-    if (req.user.isAdmin) {
-      return next();
-    }
-
-    // MODIFICATION ICI : Utiliser statut_validation au lieu de professionnel_valide
-    if (!req.user.isProfessionnel || req.user.statut_validation !== 'valide') {
-      // Message différent selon le statut
-      let message = 'Accès réservé aux professionnels validés';
-      
-      if (req.user.isProfessionnel && req.user.statut_validation === 'en_attente') {
-        message = 'Votre compte professionnel est en attente de validation';
-      } else if (req.user.isProfessionnel && req.user.statut_validation === 'rejete') {
-        message = 'Votre demande de validation professionnelle a été rejetée';
-      }
-      
-      return res.status(403).json({
-        success: false,
-        message,
-        statut_validation: req.user.statut_validation
-      });
-    }
-
-    // Pour les événements, vérifier l'appartenance à une organisation
-    if (req.baseUrl && req.baseUrl.includes('/evenements') && req.method === 'POST') {
-      if (!req.user.hasOrganisation) {
-        return res.status(403).json({
-          success: false,
-          message: 'Vous devez appartenir à une organisation pour créer des événements'
-        });
-      }
-    }
-
-    next();
-  };
-
-  // Vérifier si l'utilisateur est professionnel validé OU admin (pour contenu: œuvres, patrimoine)
-  const requireValidatedProfessionalForContent = async (req, res, next) => {
-    if (!req.user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Authentification requise'
-      });
-    }
-
-    // Les administrateurs ont tous les droits
-    if (req.user.isAdmin) {
-      return next();
-    }
-
-    // MODIFICATION ICI : Utiliser statut_validation au lieu de professionnel_valide
-    if (!req.user.isProfessionnel || req.user.statut_validation !== 'valide') {
-      let message = 'Accès réservé aux professionnels validés';
-      
-      if (req.user.isProfessionnel && req.user.statut_validation === 'en_attente') {
-        message = 'Votre compte professionnel est en attente de validation';
-      } else if (req.user.isProfessionnel && req.user.statut_validation === 'rejete') {
-        message = 'Votre demande de validation professionnelle a été rejetée';
-      }
-      
-      return res.status(403).json({
-        success: false,
-        message,
-        statut_validation: req.user.statut_validation
-      });
-    }
-
-    next();
-  };
-
-  // Vérifier si l'utilisateur a un rôle spécifique
-  const requireRole = (roles) => {
-    const rolesArray = Array.isArray(roles) ? roles : [roles];
-    
-    return async (req, res, next) => {
-      if (!req.user) {
-        return res.status(401).json({
-          success: false,
-          message: 'Authentification requise'
-        });
-      }
-
-      // Les admins passent toujours
-      if (req.user.isAdmin) {
-        return next();
-      }
-
-      const hasRequiredRole = rolesArray.some(role => req.userRoles.includes(role));
-
-      if (!hasRequiredRole) {
-        return res.status(403).json({
-          success: false,
-          message: `Accès réservé aux : ${rolesArray.join(', ')}`
-        });
-      }
-
-      next();
-    };
-  };
-
-  // ====================
-  // MIDDLEWARES DE PROPRIÉTÉ
-  // ====================
-
-  // Vérifier la propriété d'une ressource
-  const requireOwnership = (modelName, paramName = 'id', ownerField = 'id_user') => {
-    return async (req, res, next) => {
-      if (!req.user) {
-        return res.status(401).json({
-          success: false,
-          message: 'Authentification requise'
-        });
-      }
-
-      // Les admins peuvent tout modifier
-      if (req.user.isAdmin) {
-        return next();
-      }
-
-      const resourceId = req.params[paramName];
-      if (!resourceId) {
-        return res.status(400).json({
-          success: false,
-          message: 'ID de ressource manquant'
-        });
-      }
-
-      const Model = models[modelName];
-      if (!Model) {
-        return res.status(500).json({
-          success: false,
-          message: 'Modèle non trouvé'
-        });
-      }
-
-      const resource = await Model.findByPk(resourceId);
-      
-      if (!resource) {
-        return res.status(404).json({
-          success: false,
-          message: `${modelName} non trouvé`
-        });
-      }
-
-      if (resource[ownerField] !== req.user.id_user) {
-        return res.status(403).json({
-          success: false,
-          message: 'Vous n\'êtes pas autorisé à modifier cette ressource'
-        });
-      }
-
-      req.resource = resource;
-      next();
-    };
-  };
-
-  // Vérifier si l'utilisateur peut modifier une ressource
-  const canModify = (resourceType) => {
-    return async (req, res, next) => {
-      if (!req.user) {
-        return res.status(401).json({
-          success: false,
-          message: 'Authentification requise'
-        });
-      }
-
-      // Les admins peuvent tout modifier
-      if (req.user.isAdmin) {
-        return next();
-      }
-
-      const resourceId = req.params.id;
-      if (!resourceId) {
-        return res.status(400).json({
-          success: false,
-          message: 'ID de ressource manquant'
-        });
-      }
-
-      let isOwner = false;
-      let resource = null;
-      
-      switch (resourceType) {
-        case 'event':
-        case 'evenement':
-          resource = await Evenement.findByPk(resourceId);
-          isOwner = resource && resource.id_user === req.user.id_user;
-          break;
-          
-        case 'oeuvre':
-          resource = await Oeuvre.findByPk(resourceId);
-          isOwner = resource && resource.saisi_par === req.user.id_user;
-          break;
-          
-        case 'comment':
-        case 'commentaire':
-          resource = await Commentaire.findByPk(resourceId);
-          isOwner = resource && resource.id_user === req.user.id_user;
-          break;
-          
-        default:
-          return res.status(400).json({
-            success: false,
-            message: 'Type de ressource non supporté'
-          });
-      }
-
-      if (!resource) {
-        return res.status(404).json({
-          success: false,
-          message: 'Ressource non trouvée'
-        });
-      }
-
-      if (!isOwner) {
-        return res.status(403).json({
-          success: false,
-          message: 'Vous n\'êtes pas autorisé à modifier cette ressource'
-        });
-      }
-
-      req.resource = resource;
-      next();
-    };
-  };
-
-  // ====================
-  // MIDDLEWARES DE PERMISSIONS
-  // ====================
-
-  // Vérifier les permissions spécifiques
-  const checkPermission = (requiredPermissions) => {
-    const permissionsArray = Array.isArray(requiredPermissions) ? requiredPermissions : [requiredPermissions];
-    
-    return async (req, res, next) => {
-      if (!req.user) {
-        return res.status(401).json({
-          success: false,
-          message: 'Authentification requise'
-        });
-      }
-
-      if (hasPermission(req.user, permissionsArray)) {
-        return next();
-      }
-
-      return res.status(403).json({
-        success: false,
-        message: 'Permissions insuffisantes pour cette action'
-      });
-    };
-  };
-
-  // Vérifier si l'utilisateur est actif
-  const requireActiveUser = async (req, res, next) => {
-    if (!req.user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Authentification requise'
-      });
-    }
-
-    if (req.user.statut !== 'actif') {
-      return res.status(403).json({
-        success: false,
-        message: 'Compte utilisateur inactif ou suspendu'
-      });
-    }
-
-    next();
-  };
-
-  // Vérifier l'appartenance à une organisation (pour les professionnels)
-  const requireOrganizationMembership = async (req, res, next) => {
+  /**
+   * Vérifie si l'utilisateur est un professionnel validé
+   */
+  const requireValidatedProfessional = (req, res, next) => {
     if (!req.user) {
       return res.status(401).json({
         success: false,
@@ -497,86 +371,131 @@ const createAuthMiddleware = (models) => {
       return next();
     }
 
-    // Vérifier si l'utilisateur a une organisation
-    if (!req.user.hasOrganisation) {
+    // Vérifier que c'est un professionnel
+    if (!req.user.isProfessionnel) {
       return res.status(403).json({
         success: false,
-        message: 'Vous devez appartenir à une organisation pour cette action'
+        message: 'Accès réservé aux professionnels'
+      });
+    }
+
+    // ✅ CORRIGÉ: Vérifier statut_validation (pas statut)
+    if (req.user.statut_validation !== 'valide') {
+      return res.status(403).json({
+        success: false,
+        message: 'Votre compte professionnel est en attente de validation.',
+        needsAdminValidation: true,
+        statut_validation: req.user.statut_validation
       });
     }
 
     next();
   };
 
-  // ====================
-  // MIDDLEWARES UTILITAIRES
-  // ====================
-
-  // Logger les accès pour audit
-  const logAccess = (action) => {
+  /**
+   * Vérifie si l'utilisateur est propriétaire de la ressource ou admin
+   */
+  const requireOwnerOrAdmin = (userIdField = 'id_user') => {
     return (req, res, next) => {
-      console.log(`[${new Date().toISOString()}] ${action} - User: ${req.user?.email || 'anonymous'} - IP: ${req.ip}`);
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          message: 'Authentification requise'
+        });
+      }
+
+      const resourceUserId = req.params[userIdField] || req.body[userIdField];
+      const isOwner = req.user.id_user === parseInt(resourceUserId, 10);
+      const isAdminUser = req.user.isAdmin;
+
+      if (!isOwner && !isAdminUser) {
+        return res.status(403).json({
+          success: false,
+          message: 'Accès non autorisé à cette ressource'
+        });
+      }
+
       next();
     };
   };
 
-  // Middleware pour enrichir la requête avec des infos utiles
-  const enrichRequest = async (req, res, next) => {
-    if (req.user) {
-      req.isAdmin = req.user.isAdmin;
-      // MODIFICATION : Utiliser statut_validation
-      req.isProfessional = req.user.isProfessionnel && req.user.statut_validation === 'valide';
-      req.canCreateContent = req.user.statut === 'actif' && 
-                           (req.isProfessional || req.isAdmin);
-    }
-    next();
+  // ====================
+  // MIDDLEWARES DE RATE LIMITING
+  // ====================
+
+  const rateLimitStore = new Map();
+
+  const rateLimit = (options = {}) => {
+    const {
+      windowMs = 60 * 1000,
+      max = 100,
+      message = 'Trop de requêtes, veuillez réessayer plus tard.'
+    } = options;
+
+    return (req, res, next) => {
+      const key = req.user?.id_user || req.ip;
+      const now = Date.now();
+      
+      if (!rateLimitStore.has(key)) {
+        rateLimitStore.set(key, { count: 1, resetTime: now + windowMs });
+        return next();
+      }
+
+      const record = rateLimitStore.get(key);
+      
+      if (now > record.resetTime) {
+        record.count = 1;
+        record.resetTime = now + windowMs;
+        return next();
+      }
+
+      record.count++;
+      
+      if (record.count > max) {
+        return res.status(429).json({
+          success: false,
+          message,
+          retryAfter: Math.ceil((record.resetTime - now) / 1000)
+        });
+      }
+
+      next();
+    };
   };
 
-  // ====================
-  // ALIAS POUR COMPATIBILITÉ
-  // ====================
-  const isAdmin = requireAdmin;
-  const isProfessional = requireValidatedProfessional;
-  const isProfessionalForContent = requireValidatedProfessionalForContent;
+  const strictRateLimit = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 5,
+    message: 'Trop de tentatives. Veuillez réessayer dans 15 minutes.'
+  });
 
   // ====================
-  // EXPORT DES MIDDLEWARES
+  // EXPORT
   // ====================
+  
   return {
-    // Authentification de base
+    // Authentification
     authenticate,
-    isAuthenticated,
+    isAuthenticated,  // ✅ Alias pour app.js
+    optionalAuth,
     
-    // Vérification des rôles
+    // Vérifications de compte
+    requireVerifiedEmail,
+    requireActiveAccount,
+    
+    // Rôles
     requireRole,
     requireAdmin,
+    isAdmin,          // ✅ Alias pour app.js
     requireValidatedProfessional,
-    requireValidatedProfessionalForContent,
+    requireOwnerOrAdmin,
     
-    // Vérification de propriété
-    requireOwnership,
-    canModify,
-    
-    // Vérification des permissions
-    checkPermission,
-    requireActiveUser,
-    requireOrganizationMembership,
-    
-    // Utilitaires
-    logAccess,
-    enrichRequest,
-    verifyToken,
-    
-    // Alias pour compatibilité
-    isAdmin,
-    isProfessional,
-    isProfessionalForContent,
+    // Rate limiting
+    rateLimit,
+    strictRateLimit,
     
     // Helpers exposés
-    getUserWithRoles,
-    hasPermission
+    verifyToken,
+    getUserWithRoles
   };
 };
-
-// Export de la fonction factory
-module.exports = createAuthMiddleware;

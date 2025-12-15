@@ -1,3 +1,4 @@
+// models/Vestige.js - ⚡ MODIFIÉ POUR I18N
 const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
@@ -15,13 +16,19 @@ module.exports = (sequelize) => {
         key: 'id_detailLieu'
       }
     },
+    // ⚡ MODIFIÉ POUR I18N
     nom: {
-      type: DataTypes.STRING(255),
-      allowNull: false
+      type: DataTypes.JSON,
+      allowNull: false,
+      defaultValue: { fr: '' },
+      comment: 'Nom du vestige en plusieurs langues { fr: "Ruines romaines", ar: "الآثار الرومانية", en: "Roman ruins" }'
     },
+    // ⚡ MODIFIÉ POUR I18N
     description: {
-      type: DataTypes.STRING(255),
-      allowNull: false
+      type: DataTypes.JSON,
+      allowNull: false,
+      defaultValue: { fr: '' },
+      comment: 'Description en plusieurs langues'
     },
     type: {
       type: DataTypes.ENUM('Ruines', 'Murailles', 'Site archéologique'),
@@ -35,6 +42,15 @@ module.exports = (sequelize) => {
   // Associations
   Vestige.associate = (models) => {
     Vestige.belongsTo(models.DetailLieu, { foreignKey: 'id_detail_lieu' });
+  };
+
+  // ⚡ NOUVELLES MÉTHODES I18N
+  Vestige.prototype.getNom = function(lang = 'fr') {
+    return this.nom?.[lang] || this.nom?.fr || this.nom?.ar || '';
+  };
+
+  Vestige.prototype.getDescription = function(lang = 'fr') {
+    return this.description?.[lang] || this.description?.fr || this.description?.ar || '';
   };
 
   return Vestige;

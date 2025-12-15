@@ -20,6 +20,10 @@ const createAuthMiddleware = require('./middlewares/authMiddleware');
 const securityMiddleware = require('./middlewares/securityMiddleware');
 const auditMiddleware = require('./middlewares/auditMiddleware');
 
+// ⚡ Middleware de langue (i18n)
+const { languageMiddleware, setLanguageCookie } = require('./middlewares/language');
+const { SUPPORTED_LANGUAGES } = require('./helpers/i18n');
+
 // Importation des routes
 const initRoutes = require('./routes');
 
@@ -136,12 +140,16 @@ class App {
       this.app.use(morgan(':remote-addr - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent" - :response-time ms'));
     }
 
-    // Cookie Parser (nécessaire pour CSRF)
+    // Cookie Parser (nécessaire pour CSRF et langue)
     this.app.use(cookieParser());
+
+    // ⚡ Middleware de détection de langue (i18n)
+    // Détecte automatiquement via: ?lang=ar, cookie, header X-Language, Accept-Language
+    this.app.use(languageMiddleware);
 
     // Augmenter les limites pour les uploads de médias
     this.app.use(express.json({ 
-      limit: '50mb', // Augmenter à 50MB pour les médias
+      limit: '50mb',
       verify: (req, res, buf, encoding) => {
         req.rawBody = buf.toString(encoding || 'utf8');
       }
@@ -159,27 +167,23 @@ class App {
       index: false,
       dotfiles: 'ignore',
       setHeaders: (res, path, stat) => {
-        // Headers de sécurité
         res.setHeader('X-Content-Type-Options', 'nosniff');
-        
-        // CORS pour les médias
         res.setHeader('Access-Control-Allow-Origin', '*');
         res.setHeader('Access-Control-Allow-Methods', 'GET');
         
-        // Cache selon le type de fichier
         if (path.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
-          res.setHeader('Cache-Control', 'public, max-age=604800'); // 7 jours
+          res.setHeader('Cache-Control', 'public, max-age=604800');
         } else if (path.match(/\.(mp4|webm|ogg)$/i)) {
           res.setHeader('Cache-Control', 'public, max-age=604800');
         } else if (path.match(/\.(pdf|doc|docx)$/i)) {
-          res.setHeader('Cache-Control', 'public, max-age=86400'); // 1 jour
+          res.setHeader('Cache-Control', 'public, max-age=86400');
         } else if (path.endsWith('.html')) {
           res.setHeader('Cache-Control', 'no-cache');
         }
       }
     };
 
-    // Servir le dossier uploads avec la nouvelle configuration
+    // Servir le dossier uploads
     this.app.use('/uploads', express.static(path.join(__dirname, this.config.upload.baseDir || 'uploads'), staticOptions));
 
     // Logger les accès aux fichiers en développement
@@ -190,7 +194,6 @@ class App {
       });
     }
 
-    // Utiliser les dossiers configurés
     this.app.use('/public', express.static(path.join(__dirname, 'public'), staticOptions));
 
     // Log des accès non autorisés
@@ -212,6 +215,7 @@ class App {
     });
 
     console.log('✅ Middlewares de base initialisés');
+    console.log('🌍 Middleware i18n activé - Langues:', SUPPORTED_LANGUAGES.join(', '));
   }
 
   // Initialiser la structure des dossiers uploads
@@ -244,9 +248,6 @@ class App {
   }
 
   // Initialisation de la base de données
-  // Patch pour app.js - Remplacez la méthode initializeDatabase par celle-ci
-
-// Méthode corrigée pour app.js (remplacer lignes ~259-310)
   async initializeDatabase() {
     try {
       console.log('🔌 Connexion à la base de données...');
@@ -265,7 +266,6 @@ class App {
       // Étape 2 : Charger les modèles
       const db = require('./models');
       
-      // Vérifier que sequelize existe
       if (!db || !db.sequelize) {
         throw new Error('Sequelize non chargé correctement dans models/index.js');
       }
@@ -291,20 +291,21 @@ class App {
       this.db = db;
       this.models = db; 
       this.sequelize = db.sequelize;
+      
       const createAuthMiddleware = require('./middlewares/authMiddleware');
-if (createAuthMiddleware && this.models.User) {
-  this.authMiddleware = createAuthMiddleware(this.models.User);
-  console.log('✅ Middleware d\'authentification initialisé');
-} else {
-  // Créer un middleware factice pour éviter les erreurs
-  this.authMiddleware = {
-    authenticate: (req, res, next) => next(),
-    isAuthenticated: (req, res, next) => next(),
-    requireValidatedProfessional: (req, res, next) => next(),
-    isAdmin: (req, res, next) => next()
-  };
-  console.warn('⚠️ Middleware d\'authentification en mode bypass');
-}
+      if (createAuthMiddleware && this.models.User) {
+        this.authMiddleware = createAuthMiddleware(this.models);
+        console.log('✅ Middleware d\'authentification initialisé');
+      } else {
+        this.authMiddleware = {
+          authenticate: (req, res, next) => next(),
+          isAuthenticated: (req, res, next) => next(),
+          requireValidatedProfessional: (req, res, next) => next(),
+          isAdmin: (req, res, next) => next()
+        };
+        console.warn('⚠️ Middleware d\'authentification en mode bypass');
+      }
+      
       // Afficher les modèles chargés
       const modelNames = Object.keys(db).filter(key => 
         key !== 'sequelize' && 
@@ -334,16 +335,14 @@ if (createAuthMiddleware && this.models.User) {
     }
   }
 
-
   // Initialisation des rate limiters
   initializeRateLimiters() {
-    // Vérifier que CSRF est initialisé
     if (!this.csrfProtection) {
       console.warn('⚠️ CSRF Protection non initialisée, initialisation...');
       this.initializeCSRFProtection();
     }
     
-    // Rate limiting pour l'authentification (avec CSRF)
+    // Rate limiting pour l'authentification
     this.app.use('/api/users/login', ...rateLimitMiddleware.auth);
     this.app.use('/api/users/register', ...rateLimitMiddleware.auth);
     this.app.use('/api/users/forgot-password', this.csrfProtection, ...rateLimitMiddleware.auth);
@@ -355,12 +354,12 @@ if (createAuthMiddleware && this.models.User) {
     this.app.use('/api/artisanat', ...rateLimitMiddleware.creation);
     this.app.use('/api/patrimoine/sites', ...rateLimitMiddleware.creation);
     
-    // Rate limiting pour les actions sensibles (avec CSRF)
+    // Rate limiting pour les actions sensibles
     this.app.use('/api/dashboard/actions', ...rateLimitMiddleware.sensitiveActions);
     this.app.use('/api/users/change-password', this.csrfProtection, ...rateLimitMiddleware.sensitiveActions);
     this.app.use('/api/professionnel/export', ...rateLimitMiddleware.sensitiveActions);
     
-    // Rate limiting général - utiliser 'general' au lieu de 'adaptive'
+    // Rate limiting général
     this.app.use('/api/', ...rateLimitMiddleware.general);
 
     console.log('✅ Rate limiters initialisés avec CSRF protection');
@@ -380,6 +379,33 @@ if (createAuthMiddleware && this.models.User) {
       res.json({ csrfToken: req.csrfToken ? req.csrfToken() : null });
     });
 
+    // ⚡ Route pour obtenir les langues supportées (i18n)
+    this.app.get('/api/languages', (req, res) => {
+      res.json({
+        success: true,
+        languages: [
+          { code: 'fr', label: 'Français', dir: 'ltr' },
+          { code: 'ar', label: 'العربية', dir: 'rtl' },
+          { code: 'en', label: 'English', dir: 'ltr' },
+          { code: 'tz-ltn', label: 'Tamaziɣt', dir: 'ltr' },
+          { code: 'tz-tfng', label: 'ⵜⴰⵎⴰⵣⵉⵖⵜ', dir: 'ltr' }
+        ],
+        current: req.lang,
+        dir: req.dir,
+        supported: SUPPORTED_LANGUAGES
+      });
+    });
+
+    // ⚡ Route pour changer la langue (stockée en cookie)
+    this.app.post('/api/set-language', setLanguageCookie, (req, res) => {
+      res.json({ 
+        success: true, 
+        lang: req.lang,
+        dir: req.dir,
+        message: `Langue changée en ${req.lang}`
+      });
+    });
+
     // Route de santé
     this.app.get('/health', (req, res) => {
       res.json({
@@ -388,6 +414,7 @@ if (createAuthMiddleware && this.models.User) {
         uptime: process.uptime(),
         memory: process.memoryUsage(),
         environment: this.config.server.environment,
+        lang: req.lang,
         version: '1.0.0'
       });
     });
@@ -398,8 +425,11 @@ if (createAuthMiddleware && this.models.User) {
         message: 'API Action Culture - Système de gestion culturelle algérien',
         version: '1.0.0',
         status: 'running',
+        lang: req.lang,           // ⚡ Langue détectée
+        dir: req.dir,             // ⚡ Direction du texte (ltr/rtl)
         documentation: '/api',
         health: '/health',
+        languages: '/api/languages',  // ⚡ Endpoint langues
         environment: this.config.server.environment,
         uploads: {
           public: 'POST /api/upload/image/public - Upload sans authentification',
@@ -477,7 +507,7 @@ if (createAuthMiddleware && this.models.User) {
       this.authMiddleware.authenticate,
       this.authMiddleware.requireValidatedProfessional,
       auditMiddleware.logAction('upload_oeuvre_media', { entityType: 'media' }),
-      uploadService.uploadMedia().array('medias', 10), // Accepter jusqu'à 10 fichiers
+      uploadService.uploadMedia().array('medias', 10),
       this.handleOeuvreMediaUpload.bind(this)
     );
 
@@ -526,6 +556,7 @@ if (createAuthMiddleware && this.models.User) {
     console.log('✅ Routes initialisées');
     console.log(`  📍 Port configuré: ${this.config.server.port}`);
     console.log(`  📍 URL de base: ${this.config.server.baseUrl}`);
+    console.log(`  🌍 Routes i18n: /api/languages, /api/set-language`);
   }
 
   // Handlers pour les routes upload
@@ -690,7 +721,7 @@ if (createAuthMiddleware && this.models.User) {
           url: fileUrl,
           size: req.file.size,
           mimetype: req.file.mimetype,
-          duration: null // À implémenter avec ffmpeg si nécessaire
+          duration: null
         }
       });
     } catch (error) {
@@ -724,7 +755,7 @@ if (createAuthMiddleware && this.models.User) {
           url: fileUrl,
           size: req.file.size,
           mimetype: req.file.mimetype,
-          duration: null // À implémenter avec ffmpeg si nécessaire
+          duration: null
         }
       });
     } catch (error) {
@@ -754,7 +785,8 @@ if (createAuthMiddleware && this.models.User) {
         types: types ? types.split(',') : undefined,
         limit: limit ? parseInt(limit) : this.config.limits.defaultPageSize,
         page: page ? parseInt(page) : 1,
-        userId: req.user?.id_user
+        userId: req.user?.id_user,
+        lang: req.lang  // ⚡ Passer la langue au service de recherche
       });
 
       res.json(results);
@@ -783,7 +815,8 @@ if (createAuthMiddleware && this.models.User) {
       
       const results = await searchService.getSuggestions(
         q.trim(), 
-        limit ? parseInt(limit) : 5
+        limit ? parseInt(limit) : 5,
+        req.lang  // ⚡ Passer la langue
       );
 
       res.json(results);
@@ -908,6 +941,7 @@ if (createAuthMiddleware && this.models.User) {
       await this.startScheduledTasks();
       
       console.log('🎉 Application initialisée avec succès !');
+      console.log('🌍 Support multilingue: FR, AR, EN, TZ-LTN, TZ-TFNG');
       return this.app;
     } catch (error) {
       console.error('❌ Erreur lors de l\'initialisation de l\'application:', error);

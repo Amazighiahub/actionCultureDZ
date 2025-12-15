@@ -1,13 +1,12 @@
-// routes/commentaireRoutes.js - Nouvelles routes pour les commentaires
+// routes/commentaireRoutes.js - VERSION i18n
 const express = require('express');
 const router = express.Router();
-const CommentaireController = require('../controllers/commentaireController');
-const createAuthMiddleware = require('../middlewares/authMiddleware'); // Factory function
+const CommentaireController = require('../controllers/CommentaireController');
+const createAuthMiddleware = require('../middlewares/authMiddleware');
 const validationMiddleware = require('../middlewares/validationMiddleware');
-const { body } = require('express-validator');
+const { body, param } = require('express-validator');
 
 const initCommentaireRoutes = (models) => {
-  // CORRECTION: Initialiser authMiddleware avec les modèles
   const authMiddleware = createAuthMiddleware(models);
   const commentaireController = new CommentaireController(models);
 
@@ -18,44 +17,77 @@ const initCommentaireRoutes = (models) => {
     body('commentaire_parent_id').optional().isInt().withMessage('ID du commentaire parent invalide')
   ];
 
-  // Routes publiques - consultation des commentaires
-  router.get('/oeuvre/:oeuvreId', commentaireController.getCommentairesOeuvre.bind(commentaireController));
-  router.get('/evenement/:evenementId', commentaireController.getCommentairesEvenement.bind(commentaireController));
+  // ========================================================================
+  // ROUTES PUBLIQUES - consultation des commentaires
+  // ========================================================================
 
-  // Routes pour utilisateurs connectés - création de commentaires
+  // Commentaires d'une œuvre
+  router.get('/oeuvre/:oeuvreId', 
+    param('oeuvreId').isInt().withMessage('ID œuvre invalide'),
+    validationMiddleware.handleValidationErrors,
+    commentaireController.getCommentairesOeuvre.bind(commentaireController)
+  );
+
+  // Commentaires d'un événement
+  router.get('/evenement/:evenementId', 
+    param('evenementId').isInt().withMessage('ID événement invalide'),
+    validationMiddleware.handleValidationErrors,
+    commentaireController.getCommentairesEvenement.bind(commentaireController)
+  );
+
+  // ========================================================================
+  // ROUTES AUTHENTIFIÉES - création de commentaires
+  // ========================================================================
+
+  // Créer un commentaire sur une œuvre
   router.post('/oeuvre/:oeuvreId', 
     authMiddleware.authenticate,
+    param('oeuvreId').isInt().withMessage('ID œuvre invalide'),
     commentaireValidation,
     validationMiddleware.handleValidationErrors,
     commentaireController.createCommentaireOeuvre.bind(commentaireController)
   );
 
+  // Créer un commentaire sur un événement
   router.post('/evenement/:evenementId', 
     authMiddleware.authenticate,
+    param('evenementId').isInt().withMessage('ID événement invalide'),
     commentaireValidation,
     validationMiddleware.handleValidationErrors,
     commentaireController.createCommentaireEvenement.bind(commentaireController)
   );
 
-  // Modification/suppression - propriétaire du commentaire ou admin
+  // ========================================================================
+  // MODIFICATION/SUPPRESSION
+  // ========================================================================
+
+  // Modifier un commentaire (propriétaire ou admin)
   router.put('/:id', 
     authMiddleware.authenticate,
     authMiddleware.requireOwnership('Commentaire', 'id', 'id_user'),
+    param('id').isInt().withMessage('ID invalide'),
     commentaireValidation,
     validationMiddleware.handleValidationErrors,
     commentaireController.updateCommentaire.bind(commentaireController)
   );
 
+  // Supprimer un commentaire (propriétaire ou admin)
   router.delete('/:id', 
     authMiddleware.authenticate,
     authMiddleware.requireOwnership('Commentaire', 'id', 'id_user'),
+    param('id').isInt().withMessage('ID invalide'),
+    validationMiddleware.handleValidationErrors,
     commentaireController.deleteCommentaire.bind(commentaireController)
   );
 
-  // Modération - admins uniquement
+  // ========================================================================
+  // MODÉRATION - admins uniquement
+  // ========================================================================
+
   router.patch('/:id/moderate', 
     authMiddleware.authenticate,
     authMiddleware.requireAdmin,
+    param('id').isInt().withMessage('ID invalide'),
     [
       body('statut').isIn(['publie', 'rejete', 'supprime']).withMessage('Statut invalide')
     ],
@@ -63,7 +95,8 @@ const initCommentaireRoutes = (models) => {
     commentaireController.moderateCommentaire.bind(commentaireController)
   );
 
-  console.log('✅ Routes commentaires initialisées avec authMiddleware');
+  console.log('✅ Routes commentaires i18n initialisées');
+  console.log('  🌍 Traduction automatique des noms d\'utilisateurs dans les réponses');
 
   return router;
 };

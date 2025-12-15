@@ -567,7 +567,16 @@ const DashboardAdmin = () => {
       };
 
       // Envoyer via l'API
+      try {
       await notificationService.sendNotification(notificationData);
+    } catch (apiError: any) {
+      // Si la route n'existe pas, on continue silencieusement
+      if (apiError.message?.includes("n'existe pas") || apiError.message?.includes('404')) {
+        console.log('📧 Route notification non disponible - notification locale uniquement');
+      } else {
+        throw apiError; // Relancer les autres erreurs
+      }
+    }
 
       // Si l'email est demandé et que c'est supporté
       if (customData?.sendEmail && notificationService.sendEmail) {
@@ -3611,6 +3620,7 @@ const DashboardAdmin = () => {
 
         {/* Modal de notification */}
         <NotificationModal />
+        {validateUserAction.dialog}
 
         {/* Modal d'édition utilisateur */}
         <Dialog open={editUserModal.open} onOpenChange={(open) => setEditUserModal({ open, user: editUserModal.user })}>

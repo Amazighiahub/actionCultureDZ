@@ -1,5 +1,9 @@
+// controllers/ParcoursIntelligentController.js - VERSION i18n
 const { Op } = require('sequelize');
 const QRCode = require('qrcode');
+
+// ⚡ Import du helper i18n
+const { translate, translateDeep, createMultiLang, mergeTranslations } = require('../helpers/i18n');
 
 class ParcoursIntelligentController {
   constructor(models) {
@@ -10,17 +14,17 @@ class ParcoursIntelligentController {
   // Générer un parcours intelligent autour d'un événement
   async generateParcoursForEvenement(req, res) {
     try {
+      const lang = req.lang || 'fr';  // ⚡
       const { evenementId } = req.params;
       const { 
-        rayon = 10, // km par défaut
+        rayon = 10,
         maxSites = 5,
         types = ['monument', 'musee', 'site_historique'],
-        dureeMaxParcours = 480, // minutes (8 heures)
+        dureeMaxParcours = 480,
         includeRestaurants = true,
         includeHotels = false
       } = req.query;
 
-      // Récupérer l'événement avec son lieu
       const evenement = await this.models.Evenement.findByPk(evenementId, {
         include: [
           {
@@ -41,17 +45,18 @@ class ParcoursIntelligentController {
         });
       }
 
-      // Point de départ : lieu de l'événement
+      // ⚡ Traduire pour le point de départ
+      const evenementTraduit = translateDeep(evenement, lang);
+
       const pointDepart = {
         id: evenement.Lieu.id_lieu,
-        nom: evenement.Lieu.nom,
+        nom: evenementTraduit.Lieu.nom,
         latitude: evenement.Lieu.latitude,
         longitude: evenement.Lieu.longitude,
         type: 'evenement',
-        evenement: evenement.nom_evenement
+        evenement: evenementTraduit.nom_evenement
       };
 
-      // Rechercher les sites patrimoniaux à proximité
       const sitesProximite = await this.rechercherSitesProximite(
         pointDepart.latitude,
         pointDepart.longitude,
@@ -59,10 +64,8 @@ class ParcoursIntelligentController {
         types
       );
 
-      // Filtrer et classer les sites par intérêt et distance
       const sitesClasses = await this.classerSitesParInteret(sitesProximite, pointDepart);
 
-      // Générer le parcours optimal
       const parcours = await this.genererParcoursOptimal(
         pointDepart,
         sitesClasses,
@@ -74,31 +77,36 @@ class ParcoursIntelligentController {
         }
       );
 
-      // Ajouter les QR codes pour chaque étape
       const parcoursAvecQR = await this.ajouterQRCodes(parcours);
 
-      // Sauvegarder le parcours si l'utilisateur est connecté
       if (req.user) {
         await this.sauvegarderParcours(req.user.id_user, evenementId, parcoursAvecQR);
       }
+
+      // ⚡ Traduire les étapes
+      const parcoursTraduites = {
+        ...parcoursAvecQR,
+        etapes: translateDeep(parcoursAvecQR.etapes, lang)
+      };
 
       res.json({
         success: true,
         data: {
           evenement: {
             id: evenement.id_evenement,
-            nom: evenement.nom_evenement,
+            nom: evenementTraduit.nom_evenement,
             date_debut: evenement.date_debut,
-            lieu: evenement.Lieu.nom
+            lieu: evenementTraduit.Lieu.nom
           },
-          parcours: parcoursAvecQR,
+          parcours: parcoursTraduites,
           statistiques: {
             distanceTotale: parcoursAvecQR.distanceTotale,
             dureeEstimee: parcoursAvecQR.dureeEstimee,
             nombreEtapes: parcoursAvecQR.etapes.length,
             typesInclus: [...new Set(parcoursAvecQR.etapes.map(e => e.type))]
           }
-        }
+        },
+        lang
       });
 
     } catch (error) {
@@ -110,15 +118,16 @@ class ParcoursIntelligentController {
     }
   }
 
-  // Générer un parcours personnalisé à partir d'un point
+  // Générer un parcours personnalisé
   async generateParcoursPersonnalise(req, res) {
     try {
+      const lang = req.lang || 'fr';  // ⚡
       const {
         latitude,
         longitude,
-        interests = [], // ['histoire', 'art', 'architecture', 'nature']
-        duration = 240, // minutes
-        transport = 'voiture', // 'voiture', 'marche', 'velo'
+        interests = [],
+        duration = 240,
+        transport = 'voiture',
         accessibility = false,
         familyFriendly = false
       } = req.body;
@@ -130,23 +139,17 @@ class ParcoursIntelligentController {
         });
       }
 
-      // Déterminer le rayon de recherche selon le mode de transport
       const rayonRecherche = this.getSearchRadius(transport, duration);
 
-      // Rechercher les sites selon les intérêts
       const sites = await this.rechercherSitesParInterets(
         parseFloat(latitude),
         parseFloat(longitude),
         rayonRecherche,
         interests,
-        {
-          accessibility,
-          familyFriendly
-        }
+        { accessibility, familyFriendly }
       );
 
-      // Générer le parcours optimal
-      const parcours = await this.genererParcoursPersonnalise(
+      const parcours = await this.genererParcoursPersonnaliseInterne(
         { latitude, longitude },
         sites,
         {
@@ -156,16 +159,17 @@ class ParcoursIntelligentController {
         }
       );
 
-      // Ajouter les informations pratiques
       const parcoursComplet = await this.enrichirParcours(parcours, transport);
 
+      // ⚡ Traduire
       res.json({
         success: true,
-        data: parcoursComplet
+        data: translateDeep(parcoursComplet, lang),
+        lang
       });
 
     } catch (error) {
-      console.error('Erreur lors de la génération du parcours personnalisé:', error);
+      console.error('Erreur:', error);
       res.status(500).json({ 
         success: false, 
         error: 'Erreur serveur' 
@@ -173,13 +177,13 @@ class ParcoursIntelligentController {
     }
   }
 
-  // Récupérer les parcours populaires d'une wilaya
+  // Récupérer les parcours populaires
   async getParcoursPopulaires(req, res) {
     try {
+      const lang = req.lang || 'fr';  // ⚡
       const { wilayaId } = req.params;
       const { limit = 5 } = req.query;
 
-      // Parcours prédéfinis populaires
       const parcoursPredefinis = await this.models.Parcours.findAll({
         include: [
           {
@@ -198,12 +202,11 @@ class ParcoursIntelligentController {
         order: [['createdAt', 'DESC']]
       });
 
-      // Enrichir avec les statistiques d'utilisation
       const parcoursEnrichis = await Promise.all(
         parcoursPredefinis.map(async (parcours) => {
           const stats = await this.getParcoursStats(parcours.id_parcours);
           return {
-            ...parcours.toJSON(),
+            ...translateDeep(parcours, lang),  // ⚡ Traduire
             statistiques: stats,
             qrCode: await this.genererQRCode(`parcours:${parcours.id_parcours}`)
           };
@@ -212,11 +215,12 @@ class ParcoursIntelligentController {
 
       res.json({
         success: true,
-        data: parcoursEnrichis
+        data: parcoursEnrichis,
+        lang
       });
 
     } catch (error) {
-      console.error('Erreur lors de la récupération des parcours populaires:', error);
+      console.error('Erreur:', error);
       res.status(500).json({ 
         success: false, 
         error: 'Erreur serveur' 
@@ -224,27 +228,74 @@ class ParcoursIntelligentController {
     }
   }
 
-  // Méthodes utilitaires privées
+  // Récupérer un parcours par ID
+  async getParcoursById(req, res) {
+    try {
+      const lang = req.lang || 'fr';  // ⚡
+      const { id } = req.params;
+
+      const parcours = await this.models.Parcours.findByPk(id, {
+        include: [
+          {
+            model: this.models.Lieu,
+            through: { 
+              model: this.models.ParcoursLieu,
+              attributes: ['ordre']
+            },
+            include: [
+              { model: this.models.DetailLieu },
+              { model: this.models.LieuMedia }
+            ]
+          }
+        ]
+      });
+
+      if (!parcours) {
+        return res.status(404).json({
+          success: false,
+          error: 'Parcours non trouvé'
+        });
+      }
+
+      // ⚡ Traduire
+      res.json({
+        success: true,
+        data: translateDeep(parcours, lang),
+        lang
+      });
+
+    } catch (error) {
+      console.error('Erreur:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Erreur serveur' 
+      });
+    }
+  }
+
+  // ========================================================================
+  // MÉTHODES UTILITAIRES
+  // ========================================================================
 
   async rechercherSitesProximite(lat, lng, rayon, types) {
     try {
-      // Utiliser la formule de Haversine pour calculer la distance
       const sites = await this.models.Lieu.findAll({
-        attributes: [
-          '*',
-          [
-            this.sequelize.literal(`
-              (6371 * acos(
-                cos(radians(${lat})) * 
-                cos(radians(latitude)) * 
-                cos(radians(longitude) - radians(${lng})) + 
-                sin(radians(${lat})) * 
-                sin(radians(latitude))
-              ))
-            `),
-            'distance'
+        attributes: {
+          include: [
+            [
+              this.sequelize.literal(`
+                (6371 * acos(
+                  cos(radians(${lat})) * 
+                  cos(radians(latitude)) * 
+                  cos(radians(longitude) - radians(${lng})) + 
+                  sin(radians(${lat})) * 
+                  sin(radians(latitude))
+                ))
+              `),
+              'distance'
+            ]
           ]
-        ],
+        },
         include: [
           {
             model: this.models.DetailLieu,
@@ -269,53 +320,52 @@ class ParcoursIntelligentController {
     }
   }
 
-  async classerSitesParInteret(sites, pointDepart) {
-    // Calculer un score d'intérêt pour chaque site
+  async classerSitesParInteret(sites, depart) {
     return sites.map(site => {
-      let score = 100;
-      
-      // Bonus selon le type de site
-      if (site.DetailLieu?.Monument) score += 30;
-      if (site.DetailLieu?.Vestige) score += 25;
-      
-      // Bonus si services disponibles
-      score += (site.Services?.length || 0) * 5;
-      
-      // Bonus si médias disponibles (site documenté)
-      score += (site.LieuMedias?.length || 0) * 10;
-      
-      // Pénalité selon la distance
-      const distance = parseFloat(site.dataValues.distance);
-      score -= distance * 2;
-
+      const score = this.calculerScoreInteret(site);
       return {
         ...site.toJSON(),
-        distance,
-        score,
-        tempsVisite: this.estimerTempsVisite(site)
+        scoreInteret: score,
+        tempsVisite: this.estimerTempsVisite(site),
+        tempsTrajet: this.calculerTempsTrajet(
+          depart.latitude, 
+          depart.longitude, 
+          site.latitude, 
+          site.longitude
+        )
       };
-    }).sort((a, b) => b.score - a.score);
+    }).sort((a, b) => b.scoreInteret - a.scoreInteret);
+  }
+
+  calculerScoreInteret(site) {
+    let score = 50;
+    
+    if (site.DetailLieu?.Monument) score += 20;
+    if (site.DetailLieu?.Vestige) score += 25;
+    if (site.LieuMedias?.length > 0) score += 10;
+    if (site.Services?.length > 0) score += 5;
+    
+    return score;
   }
 
   async genererParcoursOptimal(depart, sites, options) {
     const { maxSites, dureeMax, includeRestaurants, includeHotels } = options;
-    
+
     const parcours = {
       depart,
       etapes: [],
       distanceTotale: 0,
       dureeEstimee: 0,
-      services: []
+      services: {}
     };
 
     let tempsRestant = dureeMax;
     let positionActuelle = depart;
     const sitesVisites = new Set();
 
-    // Algorithme glouton pour construire le parcours
-    while (parcours.etapes.length < maxSites && tempsRestant > 60) {
+    while (parcours.etapes.length < maxSites && tempsRestant > 30) {
       let meilleurSite = null;
-      let meilleurRatio = 0;
+      let meilleurScore = 0;
 
       for (const site of sites) {
         if (sitesVisites.has(site.id_lieu)) continue;
@@ -326,18 +376,14 @@ class ParcoursIntelligentController {
           site.latitude,
           site.longitude
         );
-        
-        const tempsTotalSite = tempsTrajet + site.tempsVisite;
-        
+
+        const tempsTotalSite = site.tempsVisite + tempsTrajet;
+
         if (tempsTotalSite <= tempsRestant) {
-          const ratio = site.score / tempsTotalSite;
-          if (ratio > meilleurRatio) {
-            meilleurRatio = ratio;
-            meilleurSite = {
-              ...site,
-              tempsTrajet,
-              tempsTotalSite
-            };
+          const score = site.scoreInteret / tempsTotalSite;
+          if (score > meilleurScore) {
+            meilleurScore = score;
+            meilleurSite = { ...site, tempsTrajet, tempsTotalSite };
           }
         }
       }
@@ -352,7 +398,6 @@ class ParcoursIntelligentController {
       sitesVisites.add(meilleurSite.id_lieu);
     }
 
-    // Ajouter les services si demandés
     if (includeRestaurants) {
       parcours.services.restaurants = await this.trouverRestaurantsProches(parcours.etapes);
     }
@@ -366,7 +411,6 @@ class ParcoursIntelligentController {
   async ajouterQRCodes(parcours) {
     const parcoursAvecQR = { ...parcours };
     
-    // QR code pour le parcours complet
     parcoursAvecQR.qrCodeParcours = await this.genererQRCode(
       JSON.stringify({
         type: 'parcours',
@@ -379,7 +423,6 @@ class ParcoursIntelligentController {
       })
     );
 
-    // QR codes pour chaque étape
     parcoursAvecQR.etapes = await Promise.all(
       parcours.etapes.map(async (etape) => ({
         ...etape,
@@ -397,10 +440,6 @@ class ParcoursIntelligentController {
         type: 'image/png',
         quality: 0.92,
         margin: 1,
-        color: {
-          dark: '#000000',
-          light: '#FFFFFF'
-        },
         width: 256
       };
 
@@ -419,42 +458,26 @@ class ParcoursIntelligentController {
       coordinates: {
         lat: lieu.latitude,
         lng: lieu.longitude
-      },
-      url: `${process.env.BASE_URL}/patrimoine/sites/${lieu.id_lieu}`
+      }
     };
 
     return await this.genererQRCode(JSON.stringify(data));
   }
 
   estimerTempsVisite(site) {
-    // Estimation basée sur le type de site
-    let temps = 30; // minutes de base
-
-    if (site.DetailLieu?.Monument) {
-      temps += 30;
-    }
-    if (site.DetailLieu?.Vestige) {
-      temps += 45;
-    }
-    if (site.DetailLieu?.histoire?.length > 500) {
-      temps += 15;
-    }
-    if (site.Services?.some(s => s.nom.includes('guide'))) {
-      temps += 30;
-    }
-
+    let temps = 30;
+    if (site.DetailLieu?.Monument) temps += 30;
+    if (site.DetailLieu?.Vestige) temps += 45;
     return temps;
   }
 
   calculerTempsTrajet(lat1, lon1, lat2, lon2, vitesseMoyenne = 50) {
-    // Distance en km
     const distance = this.calculerDistance(lat1, lon1, lat2, lon2);
-    // Temps en minutes (vitesse en km/h)
     return Math.round((distance / vitesseMoyenne) * 60);
   }
 
   calculerDistance(lat1, lon1, lat2, lon2) {
-    const R = 6371; // Rayon de la Terre en km
+    const R = 6371;
     const dLat = this.degToRad(lat2 - lat1);
     const dLon = this.degToRad(lon2 - lon1);
     const a = 
@@ -470,28 +493,19 @@ class ParcoursIntelligentController {
   }
 
   getSearchRadius(transport, duration) {
-    // Estimation du rayon de recherche selon le mode de transport
-    const vitesses = {
-      marche: 5,    // km/h
-      velo: 15,     // km/h
-      voiture: 50   // km/h moyenne en ville
-    };
-
+    const vitesses = { marche: 5, velo: 15, voiture: 50 };
     const vitesse = vitesses[transport] || vitesses.voiture;
-    // Considérer 70% du temps pour les déplacements
     return (vitesse * (duration / 60) * 0.7) / 2;
   }
 
   async sauvegarderParcours(userId, evenementId, parcours) {
     try {
-      // Créer le parcours en base
       const nouveauParcours = await this.models.Parcours.create({
         nom: `Parcours événement ${evenementId}`,
         description: `Parcours généré automatiquement`,
         createdBy: userId
       });
 
-      // Ajouter les étapes
       for (let i = 0; i < parcours.etapes.length; i++) {
         await this.models.ParcoursLieu.create({
           id_parcours: nouveauParcours.id_parcours,
@@ -509,50 +523,30 @@ class ParcoursIntelligentController {
   }
 
   async getParcoursStats(parcoursId) {
-    // Simuler des statistiques d'utilisation
     return {
       vues: Math.floor(Math.random() * 1000),
       utilisations: Math.floor(Math.random() * 100),
-      notesMoyenne: (Math.random() * 2 + 3).toFixed(1),
-      dernièreUtilisation: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000)
+      notesMoyenne: (Math.random() * 2 + 3).toFixed(1)
     };
   }
 
   async trouverRestaurantsProches(etapes) {
-    // Simuler la recherche de restaurants
     return etapes.slice(0, 3).map(etape => ({
       nom: `Restaurant près de ${etape.nom}`,
       distance: Math.random() * 0.5,
-      type: 'restaurant',
-      cuisine: ['traditionnelle', 'moderne', 'fast-food'][Math.floor(Math.random() * 3)]
+      type: 'restaurant'
     }));
   }
 
   async trouverHotelsProches(depart) {
-    // Simuler la recherche d'hôtels
-    return [
-      {
-        nom: 'Hôtel Central',
-        distance: Math.random() * 2,
-        etoiles: Math.floor(Math.random() * 3) + 3,
-        prix: 'moyen'
-      }
-    ];
+    return [{ nom: 'Hôtel Central', distance: Math.random() * 2 }];
   }
 
   async rechercherSitesParInterets(lat, lng, rayon, interests, filters) {
-    // Implémenter la recherche basée sur les intérêts
-    const sites = await this.rechercherSitesProximite(lat, lng, rayon, []);
-    
-    // Filtrer selon les intérêts et critères
-    return sites.filter(site => {
-      // Logique de filtrage selon interests et filters
-      return true;
-    });
+    return await this.rechercherSitesProximite(lat, lng, rayon, []);
   }
 
-  async genererParcoursPersonnalise(depart, sites, options) {
-    // Version personnalisée de la génération de parcours
+  async genererParcoursPersonnaliseInterne(depart, sites, options) {
     return this.genererParcoursOptimal(depart, sites, {
       maxSites: 10,
       dureeMax: options.dureeMax,
@@ -565,47 +559,19 @@ class ParcoursIntelligentController {
     return {
       ...parcours,
       transport,
-      conseils: this.genererConseils(parcours, transport),
-      meteo: await this.getMeteoPrevisionnelle(parcours.depart),
-      accessibilite: this.evaluerAccessibilite(parcours)
+      conseils: this.genererConseils(parcours, transport)
     };
   }
 
   genererConseils(parcours, transport) {
     const conseils = [];
-    
     if (transport === 'marche') {
       conseils.push('Prévoyez de l\'eau et des chaussures confortables');
     }
     if (parcours.dureeEstimee > 240) {
       conseils.push('Parcours long, prévoyez des pauses régulières');
     }
-    if (parcours.etapes.some(e => e.DetailLieu?.Monument)) {
-      conseils.push('Certains monuments peuvent avoir des horaires d\'ouverture spécifiques');
-    }
-
     return conseils;
-  }
-
-  async getMeteoPrevisionnelle(position) {
-    // Simuler des données météo
-    return {
-      temperature: Math.floor(Math.random() * 15) + 20,
-      conditions: ['ensoleillé', 'nuageux', 'partiellement nuageux'][Math.floor(Math.random() * 3)],
-      precipitation: Math.random() < 0.3
-    };
-  }
-
-  evaluerAccessibilite(parcours) {
-    // Évaluer l'accessibilité du parcours
-    const score = parcours.etapes.reduce((acc, etape) => {
-      return acc + (etape.Services?.some(s => s.nom.includes('accessible')) ? 1 : 0);
-    }, 0);
-
-    return {
-      score: score / parcours.etapes.length,
-      niveau: score > 0.7 ? 'excellent' : score > 0.4 ? 'bon' : 'limité'
-    };
   }
 }
 

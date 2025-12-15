@@ -1,3 +1,4 @@
+// models/TypeOrganisation.js - ⚡ MODIFIÉ POUR I18N
 const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
@@ -7,10 +8,12 @@ module.exports = (sequelize) => {
       primaryKey: true,
       autoIncrement: true
     },
+    // ⚡ MODIFIÉ POUR I18N
     nom: {
-      type: DataTypes.STRING(255),
+      type: DataTypes.JSON,
       allowNull: false,
-      unique: true
+      defaultValue: { fr: '' },
+      comment: 'Nom en plusieurs langues { fr: "Association", ar: "جمعية", en: "Association" }'
     }
   }, {
     tableName: 'typeorganisation',
@@ -20,6 +23,11 @@ module.exports = (sequelize) => {
   // Associations
   TypeOrganisation.associate = (models) => {
     TypeOrganisation.hasMany(models.Organisation, { foreignKey: 'id_type_organisation' });
+  };
+
+  // ⚡ NOUVELLE MÉTHODE I18N
+  TypeOrganisation.prototype.getNom = function(lang = 'fr') {
+    return this.nom?.[lang] || this.nom?.fr || this.nom?.ar || '';
   };
 
   return TypeOrganisation;

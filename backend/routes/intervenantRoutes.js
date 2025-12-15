@@ -1,23 +1,23 @@
-// routes/intervenantRoutes.js - Routes pour la gestion des intervenants
+// routes/intervenantRoutes.js - VERSION i18n
 const express = require('express');
 const IntervenantController = require('../controllers/IntervenantController');
 const validationMiddleware = require('../middlewares/validationMiddleware');
-const { body, query } = require('express-validator');
+const { body, query, param } = require('express-validator');
+
+// ⚡ Import du middleware de validation de langue
+const { validateLanguage } = require('../middlewares/language');
 
 const initIntervenantRoutes = (models, authMiddleware) => {
   const router = express.Router();
   
-  console.log('📋 Initialisation des routes intervenants...');
+  console.log('📋 Initialisation des routes intervenants i18n...');
   
-  // Créer le contrôleur
   const intervenantController = new IntervenantController(models);
 
   // ===== MIDDLEWARE PERSONNALISÉ =====
   
-  // Middleware qui permet l'accès aux administrateurs OU aux professionnels validés
   const requireAdminOrProfessional = async (req, res, next) => {
     try {
-      // Vérifier que l'utilisateur est authentifié
       if (!req.user) {
         return res.status(401).json({
           success: false,
@@ -25,32 +25,28 @@ const initIntervenantRoutes = (models, authMiddleware) => {
         });
       }
 
-      // Vérifier si l'utilisateur est admin
       if (req.user.role === 'Admin' || req.user.isAdmin) {
         return next();
       }
       
-      // Vérifier si l'utilisateur est un professionnel validé
       if (req.user.role === 'Professionnel' || req.user.isProfessionnel) {
-        // Vérifier le statut de validation
         if (req.user.statut_validation === 'valide') {
           return next();
         } else {
           return res.status(403).json({
             success: false,
-            error: 'Votre compte professionnel doit être validé pour accéder à cette fonctionnalité',
+            error: 'Votre compte professionnel doit être validé',
             statut: req.user.statut_validation
           });
         }
       }
       
-      // Si ni admin ni professionnel validé
       return res.status(403).json({
         success: false,
         error: 'Accès réservé aux administrateurs et professionnels validés'
       });
     } catch (error) {
-      console.error('Erreur lors de la vérification des permissions:', error);
+      console.error('Erreur vérification permissions:', error);
       return res.status(500).json({
         success: false,
         error: 'Erreur lors de la vérification des permissions'
@@ -60,48 +56,36 @@ const initIntervenantRoutes = (models, authMiddleware) => {
 
   // ===== ROUTES PUBLIQUES =====
   
-  // IMPORTANT: Les routes spécifiques doivent être placées AVANT les routes avec paramètres
-
-  // Route de documentation (la plus spécifique)
+  // Documentation API
   router.get('/docs/api', (req, res) => {
     res.json({
       success: true,
-      message: 'API Intervenants - Documentation',
+      message: 'API Intervenants i18n - Documentation',
       endpoints: {
         public: {
-          list: 'GET /api/intervenants - Liste des intervenants avec filtres',
-          search: 'GET /api/intervenants/search?q=terme - Recherche d\'intervenants',
-          types: 'GET /api/intervenants/types - Types d\'intervenants disponibles',
-          details: 'GET /api/intervenants/:id - Détails d\'un intervenant'
+          list: 'GET /api/intervenants',
+          search: 'GET /api/intervenants/search?q=terme',
+          types: 'GET /api/intervenants/types',
+          details: 'GET /api/intervenants/:id'
         },
         protected: {
-          create: 'POST /api/intervenants - Créer un intervenant (Admin + Professionnel validé)',
-          update: 'PUT /api/intervenants/:id - Modifier un intervenant (Admin + Professionnel validé)',
-          delete: 'DELETE /api/intervenants/:id - Supprimer un intervenant (Admin uniquement)',
-          stats: 'GET /api/intervenants/stats/overview - Statistiques (Admin uniquement)'
+          create: 'POST /api/intervenants',
+          update: 'PUT /api/intervenants/:id',
+          delete: 'DELETE /api/intervenants/:id'
         },
-        permissions: {
-          public: 'Les routes GET sont accessibles publiquement',
-          create_update: 'La création et modification nécessitent Admin OU Professionnel validé',
-          delete: 'La suppression nécessite le rôle Admin',
-          owner_rights: 'Les professionnels peuvent modifier uniquement leurs propres intervenants'
-        },
-        filters: {
-          search: 'Recherche dans nom, prénom, biographie, spécialité',
-          type_intervenant: 'Filtrer par type (artiste, conférencier, formateur...)',
-          specialite: 'Filtrer par spécialité',
-          wilaya_id: 'Filtrer par wilaya',
-          disponible: 'Filtrer par disponibilité (true/false)',
-          pagination: 'page et limit pour la pagination'
+        i18n: {
+          getTranslations: 'GET /api/intervenants/:id/translations (Admin)',
+          updateTranslation: 'PATCH /api/intervenants/:id/translation/:lang (Admin)'
         }
-      }
+      },
+      languages: ['fr', 'ar', 'en', 'tz-ltn', 'tz-tfng']
     });
   });
 
-  // Recherche d'intervenants (autocomplétion) - AVANT la route /:id
+  // Recherche d'intervenants (autocomplétion)
   router.get('/search',
     [
-      query('q').trim().isLength({ min: 2 }).withMessage('Minimum 2 caractères pour la recherche'),
+      query('q').trim().isLength({ min: 2 }).withMessage('Minimum 2 caractères'),
       query('type_intervenant').optional().trim(),
       query('limit').optional().isInt({ min: 1, max: 50 })
     ],
@@ -109,19 +93,19 @@ const initIntervenantRoutes = (models, authMiddleware) => {
     (req, res) => intervenantController.searchIntervenants(req, res)
   );
 
-  // Récupérer les types d'intervenants disponibles - AVANT la route /:id
+  // Types d'intervenants
   router.get('/types',
     (req, res) => intervenantController.getTypesIntervenants(req, res)
   );
 
-  // Statistiques sur les intervenants (Admin seulement) - AVANT la route /:id
+  // Statistiques (Admin)
   router.get('/stats/overview',
     authMiddleware.authenticate,
     authMiddleware.requireAdmin,
     (req, res) => intervenantController.getStatistiques(req, res)
   );
 
-  // Récupérer tous les intervenants (public - pour consultation)
+  // Liste des intervenants
   router.get('/',
     [
       query('page').optional().isInt({ min: 1 }),
@@ -136,7 +120,38 @@ const initIntervenantRoutes = (models, authMiddleware) => {
     (req, res) => intervenantController.getIntervenants(req, res)
   );
 
-  // Récupérer un intervenant par son ID - DOIT ÊTRE APRÈS toutes les routes spécifiques
+  // ========================================================================
+  // ⚡ ROUTES DE TRADUCTION (ADMIN)
+  // ========================================================================
+
+  // Récupérer toutes les traductions d'un intervenant
+  router.get('/:id/translations',
+    authMiddleware.authenticate,
+    authMiddleware.requireAdmin,
+    validationMiddleware.validateId('id'),
+    (req, res) => intervenantController.getIntervenantTranslations(req, res)
+  );
+
+  // Mettre à jour une traduction spécifique
+  router.patch('/:id/translation/:lang',
+    authMiddleware.authenticate,
+    authMiddleware.requireAdmin,
+    validationMiddleware.validateId('id'),
+    validateLanguage,
+    [
+      body('nom').optional().isString().isLength({ max: 100 }),
+      body('prenom').optional().isString().isLength({ max: 100 }),
+      body('biographie').optional().isString().isLength({ max: 2000 })
+    ],
+    validationMiddleware.handleValidationErrors,
+    (req, res) => intervenantController.updateIntervenantTranslation(req, res)
+  );
+
+  // ========================================================================
+  // ROUTES AVEC :id (après les routes spécifiques)
+  // ========================================================================
+
+  // Détails d'un intervenant
   router.get('/:id',
     validationMiddleware.validateId('id'),
     (req, res) => intervenantController.getIntervenantById(req, res)
@@ -144,28 +159,45 @@ const initIntervenantRoutes = (models, authMiddleware) => {
 
   // ===== ROUTES PROTÉGÉES (Admin + Professionnel) =====
 
-  // Créer un nouvel intervenant
+  // ⚡ Validation acceptant string OU JSON pour les champs multilingues
+  const createIntervenantValidation = [
+    body('nom')
+      .custom((value) => {
+        if (typeof value === 'string') return value.trim().length > 0 && value.trim().length <= 100;
+        if (typeof value === 'object') return Object.values(value).some(v => v && v.length > 0);
+        return false;
+      })
+      .withMessage('Le nom est obligatoire (max 100 caractères)'),
+    body('prenom')
+      .custom((value) => {
+        if (typeof value === 'string') return value.trim().length > 0 && value.trim().length <= 100;
+        if (typeof value === 'object') return Object.values(value).some(v => v && v.length > 0);
+        return false;
+      })
+      .withMessage('Le prénom est obligatoire (max 100 caractères)'),
+    body('type_intervenant').trim().notEmpty().withMessage('Le type d\'intervenant est obligatoire'),
+    body('specialite').optional().trim().isLength({ max: 200 }),
+    body('biographie')
+      .optional()
+      .custom((value) => {
+        if (typeof value === 'string') return value.length <= 2000;
+        if (typeof value === 'object') return true;
+        return true;
+      })
+      .withMessage('La biographie ne doit pas dépasser 2000 caractères'),
+    body('email').optional().trim().isEmail().withMessage('Email invalide'),
+    body('telephone').optional().trim().matches(/^[0-9+\-\s()]+$/),
+    body('site_web').optional().trim().isURL(),
+    body('photo_url').optional().trim().isURL(),
+    body('wilaya_id').optional().isInt({ min: 1 }),
+    body('disponible').optional().isBoolean()
+  ];
+
+  // Créer un intervenant
   router.post('/',
     authMiddleware.authenticate,
     requireAdminOrProfessional,
-    [
-      body('nom').trim().notEmpty().withMessage('Le nom est obligatoire')
-        .isLength({ max: 100 }).withMessage('Le nom ne doit pas dépasser 100 caractères'),
-      body('prenom').trim().notEmpty().withMessage('Le prénom est obligatoire')
-        .isLength({ max: 100 }).withMessage('Le prénom ne doit pas dépasser 100 caractères'),
-      body('type_intervenant').trim().notEmpty().withMessage('Le type d\'intervenant est obligatoire'),
-      body('specialite').optional().trim()
-        .isLength({ max: 200 }).withMessage('La spécialité ne doit pas dépasser 200 caractères'),
-      body('biographie').optional().trim()
-        .isLength({ max: 2000 }).withMessage('La biographie ne doit pas dépasser 2000 caractères'),
-      body('email').optional().trim().isEmail().withMessage('Email invalide'),
-      body('telephone').optional().trim()
-        .matches(/^[0-9+\-\s()]+$/).withMessage('Format de téléphone invalide'),
-      body('site_web').optional().trim().isURL().withMessage('URL invalide'),
-      body('photo_url').optional().trim().isURL().withMessage('URL de photo invalide'),
-      body('wilaya_id').optional().isInt({ min: 1 }).withMessage('ID de wilaya invalide'),
-      body('disponible').optional().isBoolean()
-    ],
+    createIntervenantValidation,
     validationMiddleware.handleValidationErrors,
     (req, res) => intervenantController.createIntervenant(req, res)
   );
@@ -176,28 +208,30 @@ const initIntervenantRoutes = (models, authMiddleware) => {
     requireAdminOrProfessional,
     validationMiddleware.validateId('id'),
     [
-      body('nom').optional().trim().notEmpty()
-        .isLength({ max: 100 }).withMessage('Le nom ne doit pas dépasser 100 caractères'),
-      body('prenom').optional().trim().notEmpty()
-        .isLength({ max: 100 }).withMessage('Le prénom ne doit pas dépasser 100 caractères'),
-      body('type_intervenant').optional().trim().notEmpty(),
-      body('specialite').optional().trim()
-        .isLength({ max: 200 }).withMessage('La spécialité ne doit pas dépasser 200 caractères'),
-      body('biographie').optional().trim()
-        .isLength({ max: 2000 }).withMessage('La biographie ne doit pas dépasser 2000 caractères'),
-      body('email').optional().trim().isEmail().withMessage('Email invalide'),
-      body('telephone').optional().trim()
-        .matches(/^[0-9+\-\s()]+$/).withMessage('Format de téléphone invalide'),
-      body('site_web').optional().trim().isURL().withMessage('URL invalide'),
-      body('photo_url').optional().trim().isURL().withMessage('URL de photo invalide'),
-      body('wilaya_id').optional().isInt({ min: 1 }).withMessage('ID de wilaya invalide'),
+      body('nom').optional().custom((value) => {
+        if (typeof value === 'string') return value.trim().length > 0 && value.trim().length <= 100;
+        if (typeof value === 'object') return true;
+        return false;
+      }),
+      body('prenom').optional().custom((value) => {
+        if (typeof value === 'string') return value.trim().length > 0 && value.trim().length <= 100;
+        if (typeof value === 'object') return true;
+        return false;
+      }),
+      body('biographie').optional().custom((value) => {
+        if (typeof value === 'string') return value.length <= 2000;
+        if (typeof value === 'object') return true;
+        return true;
+      }),
+      body('email').optional().trim().isEmail(),
+      body('telephone').optional().trim().matches(/^[0-9+\-\s()]+$/),
+      body('site_web').optional().trim().isURL(),
+      body('wilaya_id').optional().isInt({ min: 1 }),
       body('disponible').optional().isBoolean()
     ],
     validationMiddleware.handleValidationErrors,
     (req, res) => intervenantController.updateIntervenant(req, res)
   );
-
-  // ===== ROUTES ADMIN UNIQUEMENT =====
 
   // Supprimer un intervenant (Admin seulement)
   router.delete('/:id',
@@ -207,7 +241,8 @@ const initIntervenantRoutes = (models, authMiddleware) => {
     (req, res) => intervenantController.deleteIntervenant(req, res)
   );
 
-  console.log('✅ Routes intervenants initialisées avec succès');
+  console.log('✅ Routes intervenants i18n initialisées');
+  console.log('  🌍 Routes traduction: GET /:id/translations, PATCH /:id/translation/:lang');
   
   return router;
 };

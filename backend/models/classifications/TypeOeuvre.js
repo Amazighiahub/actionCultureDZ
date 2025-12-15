@@ -1,4 +1,4 @@
-// models/TypeOeuvre.js
+// models/TypeOeuvre.js - ⚡ MODIFIÉ POUR I18N
 const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
@@ -8,12 +8,19 @@ module.exports = (sequelize) => {
       primaryKey: true,
       autoIncrement: true
     },
+    // ⚡ MODIFIÉ POUR I18N
     nom_type: {
-      type: DataTypes.STRING(50),
-      allowNull: false
+      type: DataTypes.JSON,
+      allowNull: false,
+      defaultValue: { fr: '' },
+      comment: 'Nom du type en plusieurs langues { fr: "Livre", ar: "كتاب", en: "Book" }'
     },
+    // ⚡ MODIFIÉ POUR I18N
     description: {
-      type: DataTypes.TEXT
+      type: DataTypes.JSON,
+      allowNull: true,
+      defaultValue: {},
+      comment: 'Description en plusieurs langues'
     }
   }, {
     tableName: 'type_oeuvre',
@@ -22,13 +29,11 @@ module.exports = (sequelize) => {
 
   // Associations
   TypeOeuvre.associate = (models) => {
-    // Relation avec les œuvres
     TypeOeuvre.hasMany(models.Oeuvre, { 
       foreignKey: 'id_type_oeuvre',
       as: 'oeuvres'
     });
     
-    // Relation Many-to-Many avec Genre via TypeOeuvreGenre
     TypeOeuvre.belongsToMany(models.Genre, { 
       through: models.TypeOeuvreGenre,
       foreignKey: 'id_type_oeuvre',
@@ -36,11 +41,19 @@ module.exports = (sequelize) => {
       as: 'genres'
     });
     
-    // Relation directe avec la table de liaison pour les requêtes complexes
     TypeOeuvre.hasMany(models.TypeOeuvreGenre, { 
       foreignKey: 'id_type_oeuvre',
       as: 'typeOeuvreGenres'
     });
+  };
+
+  // ⚡ NOUVELLES MÉTHODES I18N
+  TypeOeuvre.prototype.getNomType = function(lang = 'fr') {
+    return this.nom_type?.[lang] || this.nom_type?.fr || this.nom_type?.ar || '';
+  };
+
+  TypeOeuvre.prototype.getDescription = function(lang = 'fr') {
+    return this.description?.[lang] || this.description?.fr || '';
   };
 
   return TypeOeuvre;

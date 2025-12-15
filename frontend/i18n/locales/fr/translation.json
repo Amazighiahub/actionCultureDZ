@@ -1288,7 +1288,13 @@
     "statut": "Statut",
     "rserver_une_visite": "Réserver une visite",
     "plus_dinformations": "Plus d'informations",
-    "fermer": "Fermer"
+    "fermer": "Fermer",
+    "circuit_algerois": "Circuit Algérois",
+    "route_romaine": "Route Romaine",
+    "patrimoine_unesco": "Patrimoine UNESCO",
+    "facile": "Facile",
+    "modere": "Modéré",
+    "aventurier": "Aventurier"
   },
   "notifications_preferences": {
     "prfrences_notifications": "Préférences de notifications",

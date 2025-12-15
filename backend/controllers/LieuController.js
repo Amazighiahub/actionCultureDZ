@@ -1,13 +1,37 @@
+// controllers/LieuController.js - VERSION i18n
 const { Op } = require('sequelize');
+
+// ⚡ Import du helper i18n
+const { translate, translateDeep, createMultiLang, mergeTranslations } = require('../helpers/i18n');
 
 class LieuController {
   constructor(models) {
     this.models = models;
+    this.sequelize = models.sequelize || Object.values(models)[0]?.sequelize;
+  }
+
+  // ⚡ Recherche multilingue dans les champs JSON
+  buildMultiLangSearch(field, search) {
+    return [
+      this.sequelize.where(
+        this.sequelize.fn('JSON_EXTRACT', this.sequelize.col(field), '$.fr'),
+        { [Op.like]: `%${search}%` }
+      ),
+      this.sequelize.where(
+        this.sequelize.fn('JSON_EXTRACT', this.sequelize.col(field), '$.ar'),
+        { [Op.like]: `%${search}%` }
+      ),
+      this.sequelize.where(
+        this.sequelize.fn('JSON_EXTRACT', this.sequelize.col(field), '$.en'),
+        { [Op.like]: `%${search}%` }
+      )
+    ];
   }
 
   // Récupérer tous les lieux
   async getAllLieux(req, res) {
     try {
+      const lang = req.lang || 'fr';  // ⚡
       const { 
         page = 1, 
         limit = 10, 
@@ -22,7 +46,6 @@ class LieuController {
       const offset = (page - 1) * limit;
       const where = {};
       
-      // Configuration des includes avec filtrage hiérarchique
       const include = [
         { 
           model: this.models.Commune,
@@ -62,18 +85,16 @@ class LieuController {
         { model: this.models.LieuMedia }
       ];
 
-      // Filtres sur le lieu
       if (type_lieu) where.typeLieu = type_lieu;
 
-      // Recherche textuelle
+      // ⚡ Recherche multilingue
       if (search) {
         where[Op.or] = [
-          { nom: { [Op.like]: `%${search}%` } },
-          { adresse: { [Op.like]: `%${search}%` } }
+          ...this.buildMultiLangSearch('nom', search),
+          ...this.buildMultiLangSearch('adresse', search)
         ];
       }
 
-      // Inclure les événements si demandé
       if (with_events === 'true') {
         include.push({
           model: this.models.Evenement,
@@ -88,31 +109,31 @@ class LieuController {
         limit: parseInt(limit),
         offset: parseInt(offset),
         include,
-        order: [['nom', 'ASC']],
+        order: [[this.sequelize.fn('JSON_EXTRACT', this.sequelize.col('Lieu.nom'), `$.${lang}`), 'ASC']],
         distinct: true
       });
 
-      // Formater les données pour inclure la hiérarchie géographique
       const lieuxFormates = lieux.rows.map(lieu => {
         const lieuData = lieu.toJSON();
-        // Aplatir la hiérarchie géographique pour faciliter l'accès
         lieuData.wilaya = lieuData.Commune?.Daira?.Wilaya || null;
         lieuData.daira = lieuData.Commune?.Daira || null;
         lieuData.commune = lieuData.Commune || null;
         return lieuData;
       });
 
+      // ⚡ Traduire les résultats
       res.json({
         success: true,
         data: {
-          lieux: lieuxFormates,
+          lieux: translateDeep(lieuxFormates, lang),
           pagination: {
             total: lieux.count,
             page: parseInt(page),
             pages: Math.ceil(lieux.count / limit),
             limit: parseInt(limit)
           }
-        }
+        },
+        lang
       });
 
     } catch (error) {
@@ -127,11 +148,11 @@ class LieuController {
   // Récupérer les lieux d'une wilaya spécifique
   async getLieuxByWilaya(req, res) {
     try {
+      const lang = req.lang || 'fr';  // ⚡
       const { wilayaId } = req.params;
       const { page = 1, limit = 10 } = req.query;
       const offset = (page - 1) * limit;
 
-      // Vérifier que la wilaya existe
       const wilaya = await this.models.Wilaya.findByPk(wilayaId);
       if (!wilaya) {
         return res.status(404).json({
@@ -140,7 +161,6 @@ class LieuController {
         });
       }
 
-      // Récupérer les lieux via la hiérarchie Commune → Daira → Wilaya
       const lieux = await this.models.Lieu.findAndCountAll({
         limit: parseInt(limit),
         offset: parseInt(offset),
@@ -166,21 +186,23 @@ class LieuController {
           { model: this.models.Service },
           { model: this.models.LieuMedia }
         ],
-        order: [['nom', 'ASC']],
+        order: [[this.sequelize.fn('JSON_EXTRACT', this.sequelize.col('Lieu.nom'), `$.${lang}`), 'ASC']],
         distinct: true
       });
 
+      // ⚡ Traduire
       res.json({
         success: true,
         data: {
-          wilaya: wilaya,
-          lieux: lieux.rows,
+          wilaya: translate(wilaya, lang),
+          lieux: translateDeep(lieux.rows, lang),
           pagination: {
             total: lieux.count,
             page: parseInt(page),
             pages: Math.ceil(lieux.count / limit)
           }
-        }
+        },
+        lang
       });
 
     } catch (error) {
@@ -192,21 +214,30 @@ class LieuController {
     }
   }
 
+  // ⚡ Préparer un champ multilingue
+  prepareMultiLangField(value, lang = 'fr') {
+    if (!value) return null;
+    if (typeof value === 'object' && value !== null) return value;
+    return createMultiLang(value, lang);
+  }
+
   // Créer un nouveau lieu
   async createLieu(req, res) {
     try {
+      const lang = req.lang || 'fr';  // ⚡
       const {
         nom,
         typeLieu,
         communeId,
         localiteId,
         adresse,
+        description,
+        histoire,
         latitude,
         longitude,
         details
       } = req.body;
 
-      // Validation des données requises
       if (!nom || !typeLieu || !communeId || !adresse || !latitude || !longitude) {
         return res.status(400).json({
           success: false,
@@ -214,7 +245,6 @@ class LieuController {
         });
       }
 
-      // Validation des coordonnées GPS
       if (latitude < -90 || latitude > 90) {
         return res.status(400).json({
           success: false,
@@ -229,7 +259,6 @@ class LieuController {
         });
       }
 
-      // Vérifier que la commune existe
       const commune = await this.models.Commune.findByPk(communeId);
       if (!commune) {
         return res.status(404).json({
@@ -238,7 +267,6 @@ class LieuController {
         });
       }
 
-      // Vérifier la localité si fournie
       if (localiteId) {
         const localite = await this.models.Localite.findByPk(localiteId);
         if (!localite || localite.id_commune !== communeId) {
@@ -249,29 +277,34 @@ class LieuController {
         }
       }
 
-      // Créer le lieu
+      // ⚡ Préparer les champs multilingues
+      const nomMultiLang = this.prepareMultiLangField(nom, lang);
+      const adresseMultiLang = this.prepareMultiLangField(adresse, lang);
+      const descriptionMultiLang = this.prepareMultiLangField(description, lang);
+      const histoireMultiLang = this.prepareMultiLangField(histoire, lang);
+
       const lieu = await this.models.Lieu.create({
-        nom,
+        nom: nomMultiLang,
+        adresse: adresseMultiLang,
+        description: descriptionMultiLang,
+        histoire: histoireMultiLang,
         typeLieu,
         communeId,
         localiteId,
-        adresse,
         latitude,
         longitude
       });
 
-      // Créer les détails si fournis
       if (details) {
         await this.models.DetailLieu.create({
           id_lieu: lieu.id_lieu,
-          description: details.description,
-          horaires: details.horaires,
-          histoire: details.histoire,
+          description: this.prepareMultiLangField(details.description, lang),
+          horaires: this.prepareMultiLangField(details.horaires, lang),
+          histoire: this.prepareMultiLangField(details.histoire, lang),
           referencesHistoriques: details.referencesHistoriques
         });
       }
 
-      // Récupérer le lieu créé avec toutes ses relations
       const lieuComplet = await this.models.Lieu.findByPk(lieu.id_lieu, {
         include: [
           { 
@@ -286,10 +319,11 @@ class LieuController {
         ]
       });
 
+      // ⚡ Traduire
       res.status(201).json({
         success: true,
         message: 'Lieu créé avec succès',
-        data: lieuComplet
+        data: translateDeep(lieuComplet, lang)
       });
 
     } catch (error) {
@@ -304,19 +338,14 @@ class LieuController {
   // Mettre à jour un lieu
   async updateLieu(req, res) {
     try {
+      const lang = req.lang || 'fr';  // ⚡
       const { id } = req.params;
-      const {
-        nom,
-        typeLieu,
-        communeId,
-        localiteId,
-        adresse,
-        latitude,
-        longitude
-      } = req.body;
+      const { nom, adresse, description, histoire, ...otherFields } = req.body;
 
-      // Trouver le lieu
-      const lieu = await this.models.Lieu.findByPk(id);
+      const lieu = await this.models.Lieu.findByPk(id, {
+        include: [{ model: this.models.DetailLieu }]
+      });
+
       if (!lieu) {
         return res.status(404).json({
           success: false,
@@ -324,56 +353,43 @@ class LieuController {
         });
       }
 
-      // Validation des coordonnées GPS si fournies
-      if (latitude !== undefined && (latitude < -90 || latitude > 90)) {
-        return res.status(400).json({
-          success: false,
-          error: 'Latitude invalide. Doit être entre -90 et 90.'
-        });
-      }
+      const updates = { ...otherFields };
 
-      if (longitude !== undefined && (longitude < -180 || longitude > 180)) {
-        return res.status(400).json({
-          success: false,
-          error: 'Longitude invalide. Doit être entre -180 et 180.'
-        });
-      }
-
-      // Vérifier la commune si changée
-      if (communeId && communeId !== lieu.communeId) {
-        const commune = await this.models.Commune.findByPk(communeId);
-        if (!commune) {
-          return res.status(404).json({
-            success: false,
-            error: 'Commune non trouvée'
-          });
+      // ⚡ Gérer les champs multilingues
+      if (nom !== undefined) {
+        if (typeof nom === 'object') {
+          updates.nom = mergeTranslations(lieu.nom, nom);
+        } else {
+          updates.nom = mergeTranslations(lieu.nom, { [lang]: nom });
         }
       }
 
-      // Vérifier la localité si fournie
-      if (localiteId) {
-        const localite = await this.models.Localite.findByPk(localiteId);
-        const targetCommuneId = communeId || lieu.communeId;
-        if (!localite || localite.id_commune !== targetCommuneId) {
-          return res.status(400).json({
-            success: false,
-            error: 'Localité invalide ou n\'appartient pas à la commune'
-          });
+      if (adresse !== undefined) {
+        if (typeof adresse === 'object') {
+          updates.adresse = mergeTranslations(lieu.adresse, adresse);
+        } else {
+          updates.adresse = mergeTranslations(lieu.adresse, { [lang]: adresse });
         }
       }
 
-      // Mettre à jour le lieu
-      await lieu.update({
-        nom: nom || lieu.nom,
-        typeLieu: typeLieu || lieu.typeLieu,
-        communeId: communeId || lieu.communeId,
-        localiteId: localiteId !== undefined ? localiteId : lieu.localiteId,
-        adresse: adresse || lieu.adresse,
-        latitude: latitude !== undefined ? latitude : lieu.latitude,
-        longitude: longitude !== undefined ? longitude : lieu.longitude
-      });
+      if (description !== undefined) {
+        if (typeof description === 'object') {
+          updates.description = mergeTranslations(lieu.description, description);
+        } else {
+          updates.description = mergeTranslations(lieu.description, { [lang]: description });
+        }
+      }
 
-      // Récupérer le lieu mis à jour avec ses relations
+      if (histoire !== undefined) {
+        if (typeof histoire === 'object') {
+          updates.histoire = mergeTranslations(lieu.histoire, histoire);
+        } else {
+          updates.histoire = mergeTranslations(lieu.histoire, { [lang]: histoire });
+        }
+      }
+
+      await lieu.update(updates);
+
       const lieuMisAJour = await this.models.Lieu.findByPk(id, {
         include: [
           { 
@@ -393,7 +409,7 @@ class LieuController {
       res.json({
         success: true,
         message: 'Lieu mis à jour avec succès',
-        data: lieuMisAJour
+        data: translateDeep(lieuMisAJour, lang)
       });
 
     } catch (error) {
@@ -410,7 +426,10 @@ class LieuController {
     try {
       const { id } = req.params;
 
-      const lieu = await this.models.Lieu.findByPk(id);
+      const lieu = await this.models.Lieu.findByPk(id, {
+        include: [{ model: this.models.Evenement }]
+      });
+
       if (!lieu) {
         return res.status(404).json({
           success: false,
@@ -418,7 +437,13 @@ class LieuController {
         });
       }
 
-      // Supprimer le lieu (les relations cascade seront gérées par la BD)
+      if (lieu.Evenements && lieu.Evenements.length > 0) {
+        return res.status(400).json({
+          success: false,
+          error: 'Impossible de supprimer un lieu qui possède des événements associés'
+        });
+      }
+
       await lieu.destroy();
 
       res.json({
@@ -438,6 +463,7 @@ class LieuController {
   // Rechercher des lieux
   async searchLieux(req, res) {
     try {
+      const lang = req.lang || 'fr';  // ⚡
       const { 
         q,
         type,
@@ -454,20 +480,18 @@ class LieuController {
       const offset = (page - 1) * limit;
       const where = {};
 
-      // Recherche textuelle
+      // ⚡ Recherche multilingue
       if (q) {
         where[Op.or] = [
-          { nom: { [Op.like]: `%${q}%` } },
-          { adresse: { [Op.like]: `%${q}%` } }
+          ...this.buildMultiLangSearch('nom', q),
+          ...this.buildMultiLangSearch('adresse', q)
         ];
       }
 
-      // Filtre par type
       if (type) {
         where.typeLieu = type;
       }
 
-      // Configuration des includes avec filtrage hiérarchique
       const include = [
         {
           model: this.models.Commune,
@@ -493,11 +517,9 @@ class LieuController {
         { model: this.models.LieuMedia }
       ];
 
-      // Si recherche par proximité
       let lieux;
       if (radius && lat && lng) {
-        // Calcul de distance avec Haversine formula
-        const distance = this.models.sequelize.literal(
+        const distance = this.sequelize.literal(
           `6371 * acos(
             cos(radians(${lat})) * cos(radians(latitude)) * 
             cos(radians(longitude) - radians(${lng})) + 
@@ -508,7 +530,7 @@ class LieuController {
         lieux = await this.models.Lieu.findAndCountAll({
           where: {
             ...where,
-            [Op.and]: this.models.sequelize.literal(
+            [Op.and]: this.sequelize.literal(
               `${distance} <= ${radius}`
             )
           },
@@ -516,7 +538,7 @@ class LieuController {
             include: [[distance, 'distance']]
           },
           include,
-          order: [[this.models.sequelize.literal('distance'), 'ASC']],
+          order: [[this.sequelize.literal('distance'), 'ASC']],
           limit: parseInt(limit),
           offset: parseInt(offset),
           distinct: true
@@ -525,23 +547,25 @@ class LieuController {
         lieux = await this.models.Lieu.findAndCountAll({
           where,
           include,
-          order: [['nom', 'ASC']],
+          order: [[this.sequelize.fn('JSON_EXTRACT', this.sequelize.col('Lieu.nom'), `$.${lang}`), 'ASC']],
           limit: parseInt(limit),
           offset: parseInt(offset),
           distinct: true
         });
       }
 
+      // ⚡ Traduire
       res.json({
         success: true,
         data: {
-          lieux: lieux.rows,
+          lieux: translateDeep(lieux.rows, lang),
           pagination: {
             total: lieux.count,
             page: parseInt(page),
             pages: Math.ceil(lieux.count / limit)
           }
-        }
+        },
+        lang
       });
 
     } catch (error) {
@@ -553,9 +577,10 @@ class LieuController {
     }
   }
 
-  // Obtenir un lieu par ID avec toutes ses relations
+  // Obtenir un lieu par ID
   async getLieuById(req, res) {
     try {
+      const lang = req.lang || 'fr';  // ⚡
       const { id } = req.params;
 
       const lieu = await this.models.Lieu.findByPk(id, {
@@ -593,14 +618,15 @@ class LieuController {
         });
       }
 
-      // Formater la réponse avec hiérarchie géographique aplatie
       const lieuData = lieu.toJSON();
       lieuData.wilaya = lieuData.Commune?.Daira?.Wilaya || null;
       lieuData.daira = lieuData.Commune?.Daira || null;
 
+      // ⚡ Traduire
       res.json({
         success: true,
-        data: lieuData
+        data: translateDeep(lieuData, lang),
+        lang
       });
 
     } catch (error) {
@@ -612,22 +638,82 @@ class LieuController {
     }
   }
 
+  // ⚡ Récupérer toutes les traductions d'un lieu (admin)
+  async getLieuTranslations(req, res) {
+    try {
+      const { id } = req.params;
+
+      const lieu = await this.models.Lieu.findByPk(id, {
+        attributes: ['id_lieu', 'nom', 'adresse', 'description', 'histoire'],
+        include: [{
+          model: this.models.DetailLieu,
+          attributes: ['description', 'horaires', 'histoire']
+        }]
+      });
+
+      if (!lieu) {
+        return res.status(404).json({
+          success: false,
+          error: 'Lieu non trouvé'
+        });
+      }
+
+      res.json({
+        success: true,
+        data: lieu
+      });
+
+    } catch (error) {
+      console.error('Erreur:', error);
+      res.status(500).json({ success: false, error: 'Erreur serveur' });
+    }
+  }
+
+  // ⚡ Mettre à jour une traduction spécifique (admin)
+  async updateLieuTranslation(req, res) {
+    try {
+      const { id, lang } = req.params;
+      const { nom, adresse, description, histoire } = req.body;
+
+      const lieu = await this.models.Lieu.findByPk(id);
+      if (!lieu) {
+        return res.status(404).json({ success: false, error: 'Lieu non trouvé' });
+      }
+
+      const updates = {};
+      if (nom) updates.nom = mergeTranslations(lieu.nom, { [lang]: nom });
+      if (adresse) updates.adresse = mergeTranslations(lieu.adresse, { [lang]: adresse });
+      if (description) updates.description = mergeTranslations(lieu.description, { [lang]: description });
+      if (histoire) updates.histoire = mergeTranslations(lieu.histoire, { [lang]: histoire });
+
+      if (Object.keys(updates).length === 0) {
+        return res.status(400).json({ success: false, error: 'Aucune donnée à mettre à jour' });
+      }
+
+      await lieu.update(updates);
+      res.json({ success: true, message: `Traduction ${lang} mise à jour`, data: lieu });
+
+    } catch (error) {
+      console.error('Erreur:', error);
+      res.status(500).json({ success: false, error: 'Erreur serveur' });
+    }
+  }
+
   // Statistiques des lieux
   async getStatistiques(req, res) {
     try {
-      // Total des lieux
+      const lang = req.lang || 'fr';  // ⚡
+      
       const totalLieux = await this.models.Lieu.count();
 
-      // Lieux par type
       const lieuxParType = await this.models.Lieu.findAll({
         attributes: [
           'typeLieu',
-          [this.models.sequelize.fn('COUNT', '*'), 'count']
+          [this.sequelize.fn('COUNT', '*'), 'count']
         ],
         group: ['typeLieu']
       });
 
-      // Lieux avec détails
       const lieuxAvecDetails = await this.models.Lieu.count({
         include: [{
           model: this.models.DetailLieu,
@@ -635,7 +721,6 @@ class LieuController {
         }]
       });
 
-      // Lieux avec services
       const lieuxAvecServices = await this.models.Lieu.count({
         include: [{
           model: this.models.Service,
@@ -644,42 +729,15 @@ class LieuController {
         distinct: true
       });
 
-      // Top wilayas par nombre de lieux (via hiérarchie)
-      const topWilayas = await this.models.Wilaya.findAll({
-        attributes: [
-          'id_wilaya',
-          'nom',
-          [this.models.sequelize.fn('COUNT', 
-            this.models.sequelize.fn('DISTINCT', this.models.sequelize.col('Dairas.Communes.Lieux.id_lieu'))
-          ), 'nombreLieux']
-        ],
-        include: [{
-          model: this.models.Daira,
-          attributes: [],
-          include: [{
-            model: this.models.Commune,
-            attributes: [],
-            include: [{
-              model: this.models.Lieu,
-              attributes: []
-            }]
-          }]
-        }],
-        group: ['Wilaya.id_wilaya'],
-        order: [[this.models.sequelize.literal('nombreLieux'), 'DESC']],
-        limit: 10,
-        subQuery: false
-      });
-
       res.json({
         success: true,
         data: {
           totalLieux,
           lieuxParType,
           lieuxAvecDetails,
-          lieuxAvecServices,
-          topWilayas
-        }
+          lieuxAvecServices
+        },
+        lang
       });
 
     } catch (error) {
@@ -689,25 +747,6 @@ class LieuController {
         error: 'Erreur serveur lors du calcul des statistiques' 
       });
     }
-  }
-
-  // Helper : Obtenir la wilaya d'une commune
-  async getWilayaFromCommune(communeId) {
-    const commune = await this.models.Commune.findByPk(communeId, {
-      include: [{
-        model: this.models.Daira,
-        include: [{ model: this.models.Wilaya }]
-      }]
-    });
-    return commune?.Daira?.Wilaya || null;
-  }
-
-  // Helper : Obtenir la daira d'une commune
-  async getDairaFromCommune(communeId) {
-    const commune = await this.models.Commune.findByPk(communeId, {
-      include: [{ model: this.models.Daira }]
-    });
-    return commune?.Daira || null;
   }
 }
 

@@ -10,18 +10,24 @@ module.exports = (sequelize) => {
       primaryKey: true,
       autoIncrement: true
     },
+    
+    // ⚡ MODIFIÉ POUR I18N - Noms en JSON
     nom: {
-      type: DataTypes.STRING(100),
-      allowNull: false
+      type: DataTypes.JSON,
+      allowNull: false,
+      defaultValue: { fr: '', ar: '' },
+      comment: 'Nom en plusieurs langues { fr: "...", ar: "...", en: "...", "tz-ltn": "...", "tz-tfng": "..." }'
     },
     prenom: {
-      type: DataTypes.STRING(100),
-      allowNull: false
+      type: DataTypes.JSON,
+      allowNull: false,
+      defaultValue: { fr: '', ar: '' },
+      comment: 'Prénom en plusieurs langues'
     },
+    
     email: {
       type: DataTypes.STRING(255),
       allowNull: false,
-    
       validate: {
         isEmail: true
       }
@@ -34,11 +40,10 @@ module.exports = (sequelize) => {
     // =============================================================================
     // INFORMATIONS PERSONNELLES
     // =============================================================================
-    // MODIFICATION : Remplacer l'ENUM par une référence à la table type_user
     id_type_user: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      defaultValue: 1, // 1 = visiteur par défaut
+      defaultValue: 1,
       references: {
         model: 'type_user',
         key: 'id_type_user'
@@ -62,9 +67,13 @@ module.exports = (sequelize) => {
       type: DataTypes.STRING(255),
       allowNull: true
     },
+    
+    // ⚡ MODIFIÉ POUR I18N - Biographie en JSON
     biographie: {
-      type: DataTypes.TEXT,
-      allowNull: true
+      type: DataTypes.JSON,
+      allowNull: true,
+      defaultValue: {},
+      comment: 'Biographie en plusieurs langues'
     },
 
     // =============================================================================
@@ -89,11 +98,10 @@ module.exports = (sequelize) => {
     // STATUTS ET VALIDATION
     // =============================================================================
     statut: {
-      type: DataTypes.ENUM('actif','en_attente_validation' , 'inactif', 'suspendu', 'banni'),
+      type: DataTypes.ENUM('actif', 'en_attente_validation', 'inactif', 'suspendu', 'banni'),
       defaultValue: 'actif',
       allowNull: false
     },
-   
     statut_validation: {
       type: DataTypes.ENUM('en_attente', 'valide', 'rejete', 'suspendu'),
       allowNull: true,
@@ -104,7 +112,6 @@ module.exports = (sequelize) => {
       allowNull: true,
       comment: 'Date de validation du statut professionnel'
     },
-    // NOUVEAU CHAMP : Utilisateur qui a validé
     id_user_validate: {
       type: DataTypes.INTEGER,
       allowNull: true,
@@ -131,9 +138,9 @@ module.exports = (sequelize) => {
       comment: 'Acceptation des conditions d\'utilisation'
     },
     langue_preferee: {
-      type: DataTypes.STRING(5),
+      type: DataTypes.STRING(10),
       defaultValue: 'fr',
-      comment: 'Code langue préférée (ex: fr, ar, en)'
+      comment: 'Code langue préférée (ex: fr, ar, en, tz-ltn, tz-tfng)'
     },
     theme_prefere: {
       type: DataTypes.ENUM('light', 'dark', 'auto'),
@@ -295,17 +302,14 @@ module.exports = (sequelize) => {
     createdAt: 'date_creation',
     updatedAt: 'date_modification',
     
-    // Indexes pour les performances
     indexes: [
-     
-        {
-          name: 'id_index_email',  // Toujours nommer l'index
-          fields: ['email'],
-          unique: true
-        },
-      
       {
-        fields: ['id_type_user'] // Modifié
+        name: 'id_index_email',
+        fields: ['email'],
+        unique: true
+      },
+      {
+        fields: ['id_type_user']
       },
       {
         fields: ['statut']
@@ -320,29 +324,24 @@ module.exports = (sequelize) => {
         fields: ['derniere_connexion']
       },
       {
-        fields: ['id_user_validate'] // Nouveau
+        fields: ['id_user_validate']
       }
     ],
     
-    // Hooks
     hooks: {
       beforeCreate: async (user) => {
-        // Valider automatiquement les visiteurs (id_type_user = 1)
         if (user.id_type_user === 1) {
           user.statut_validation = 'valide';
         } else {
-          // Les autres types doivent être validés
           user.statut_validation = 'en_attente';
         }
         
-        // Accepter les conditions est obligatoire
         if (!user.accepte_conditions) {
           throw new Error('Vous devez accepter les conditions d\'utilisation');
         }
       },
       
       beforeUpdate: (user) => {
-        // Mettre à jour les statistiques si nécessaire
         if (user.changed('statut_validation') && user.statut_validation === "valide") {
           user.date_validation = new Date();
         }
@@ -354,53 +353,45 @@ module.exports = (sequelize) => {
   // ASSOCIATIONS
   // =============================================================================
   User.associate = (models) => {
-    // NOUVELLE ASSOCIATION : Type d'utilisateur
     User.belongsTo(models.TypeUser, {
       foreignKey: 'id_type_user',
       as: 'TypeUser'
     });
     
-    // NOUVELLE ASSOCIATION : Utilisateur validateur
     User.belongsTo(models.User, {
       foreignKey: 'id_user_validate',
       as: 'Validateur'
     });
     
-    // NOUVELLE ASSOCIATION : Utilisateurs validés par cet utilisateur
     User.hasMany(models.User, {
       foreignKey: 'id_user_validate',
       as: 'UsersValides'
     });
     
-    // Relations avec les rôles
     User.belongsToMany(models.Role, { 
       through: models.UserRole, 
       foreignKey: 'id_user',
       as: 'Roles'
     });
     
-    // Relations avec les organisations
     User.belongsToMany(models.Organisation, { 
       through: models.UserOrganisation, 
       foreignKey: 'id_user',
       as: 'Organisations'
     });
     
-    // Relations avec les œuvres
     User.belongsToMany(models.Oeuvre, { 
       through: models.OeuvreUser, 
       foreignKey: 'id_user',
       as: 'Oeuvres'
     });
     
-    // Relations avec les événements
     User.belongsToMany(models.Evenement, { 
       through: models.EvenementUser, 
       foreignKey: 'id_user',
       as: 'Evenements'
     });
     
-    // Relation avec Wilaya
     User.belongsTo(models.Wilaya, { 
       foreignKey: 'wilaya_residence',
       as: 'Wilaya',
@@ -408,7 +399,6 @@ module.exports = (sequelize) => {
       onUpdate: 'CASCADE'
     });
     
-    // Relations en tant que créateur/validateur
     User.hasMany(models.Oeuvre, { 
       as: 'OeuvresSaisies', 
       foreignKey: 'saisi_par' 
@@ -433,11 +423,12 @@ module.exports = (sequelize) => {
       foreignKey: 'id_user',
       as: 'Critiques'
     });
+    
     User.hasMany(models.ProgrammeIntervenant, {
-    foreignKey: 'id_user',
-    as: 'Interventions'
-  });
-    // Favoris
+      foreignKey: 'id_user',
+      as: 'Interventions'
+    });
+    
     User.hasMany(models.Favori, { 
       foreignKey: 'id_user',
       as: 'Favoris'
@@ -447,12 +438,28 @@ module.exports = (sequelize) => {
   // =============================================================================
   // MÉTHODES D'INSTANCE
   // =============================================================================
-  User.prototype.toPublicJSON = function() {
+  
+  // ⚡ NOUVELLE MÉTHODE - Obtenir le nom complet traduit
+  User.prototype.getNomComplet = function(lang = 'fr') {
+    const prenom = this.prenom?.[lang] || this.prenom?.fr || this.prenom?.ar || '';
+    const nom = this.nom?.[lang] || this.nom?.fr || this.nom?.ar || '';
+    return `${prenom} ${nom}`.trim();
+  };
+  
+  // ⚡ NOUVELLE MÉTHODE - Obtenir la biographie traduite
+  User.prototype.getBiographie = function(lang = 'fr') {
+    return this.biographie?.[lang] || this.biographie?.fr || this.biographie?.ar || '';
+  };
+  
+  User.prototype.toPublicJSON = function(lang = 'fr') {
     const values = this.toJSON();
     delete values.password;
     delete values.ip_inscription;
     
-    // Masquer certains champs si le profil n'est pas public
+    // Traduire les champs
+    values.nom_display = this.getNomComplet(lang);
+    values.biographie_display = this.getBiographie(lang);
+    
     if (!values.profil_public) {
       delete values.email;
       delete values.telephone;
@@ -460,7 +467,6 @@ module.exports = (sequelize) => {
       delete values.date_naissance;
     }
     
-    // Masquer email/téléphone selon les préférences
     if (!values.email_public) delete values.email;
     if (!values.telephone_public) delete values.telephone;
     

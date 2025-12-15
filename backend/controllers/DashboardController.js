@@ -612,7 +612,7 @@ async generateDetailedStats(period) {
         id_oeuvre: oeuvre.id_oeuvre,
         titre: oeuvre.titre,
         description: oeuvre.description,
-        type_oeuvre: oeuvre.type_oeuvre,
+        type_oeuvre: oeuvre.id_type_oeuvre,
         date_creation: oeuvre.date_creation,
         auteur: oeuvre.Saiseur ? {
           id: oeuvre.Saiseur.id_user,
@@ -738,7 +738,12 @@ async generateDetailedStats(period) {
       
       switch (action) {
         case 'validate_user':
-          result = await this.validateUserAction(entityId, data);
+          // ✅ CORRIGÉ: Passer les bons paramètres avec l'ID du validateur
+          result = await this.validateUserAction(entityId, {
+            valide: data.validated !== undefined ? data.validated : data.valide,
+            validateur_id: req.user.id_user,
+            raison: data.reason || data.raison
+          });
           break;
           
         case 'validate_oeuvre':
@@ -785,8 +790,15 @@ async generateDetailedStats(period) {
   /**
    * Validation d'un utilisateur
    */
+  /**
+   * Validation d'un utilisateur (professionnel)
+   * ✅ VERSION CORRIGÉE
+   */
   async validateUserAction(userId, data) {
-    const { valide, validateur_id, raison } = data;
+    // Accepter les deux formats de paramètres: { valide, ... } ou { validated, ... }
+    const valide = data.valide !== undefined ? data.valide : data.validated;
+    const validateur_id = data.validateur_id || data.adminId;
+    const raison = data.raison || data.reason;
     
     console.log(`📋 Validation utilisateur ${userId}:`, { valide, validateur_id, raison });
     
@@ -794,48 +806,68 @@ async generateDetailedStats(period) {
     if (!user) {
       throw new Error('Utilisateur non trouvé');
     }
+
+    // ✅ CORRIGÉ: Vérifier avec id_type_user (pas type_user)
+    if (user.id_type_user === TYPE_USER_IDS.VISITEUR) {
+      throw new Error('Les visiteurs n\'ont pas besoin de validation');
+    }
+
+    // Vérifier qu'il est bien en attente de validation
+    if (user.statut_validation !== 'en_attente') {
+      throw new Error(`Cet utilisateur a déjà été traité (statut: ${user.statut_validation})`);
+    }
     
+    // Préparer les données de mise à jour
     const updateData = {
       statut_validation: valide ? 'valide' : 'rejete',
       date_validation: new Date(),
-      validateur_id: validateur_id
+      id_user_validate: validateur_id  // ✅ CORRIGÉ: bon nom de champ selon User.js
     };
     
+    // Si rejeté, enregistrer la raison
     if (!valide && raison) {
       updateData.raison_rejet = raison;
     }
     
-    if (user.type_user !== 'visiteur') {
-      updateData.statut = valide ? 'actif' : 'inactif';
-    }
+    // ✅ CORRIGÉ: Mettre à jour le statut du compte
+    // - Si validé: passer de 'en_attente_validation' à 'actif'
+    // - Si rejeté: passer à 'inactif'
+    updateData.statut = valide ? 'actif' : 'inactif';
     
     await user.update(updateData);
     await user.reload();
     
     console.log('✅ Utilisateur mis à jour:', {
       id: user.id_user,
-      statut_validation: user.statut_validation,
-      statut: user.statut
+      email: user.email,
+      statut: user.statut,
+      statut_validation: user.statut_validation
     });
     
-    // Notification
+    // Créer une notification pour l'utilisateur
     if (this.models.Notification) {
       try {
         await this.models.Notification.create({
           user_id: userId,
           type: valide ? 'validation_acceptee' : 'validation_refusee',
-          titre: valide ? 'Votre compte a été validé' : 'Validation refusée',
+          titre: valide ? 'Votre compte a été validé !' : 'Validation refusée',
           message: valide 
-            ? 'Félicitations ! Votre compte professionnel a été validé.'
-            : `Votre demande a été refusée. ${raison ? `Raison : ${raison}` : ''}`,
+            ? 'Félicitations ! Votre compte professionnel a été validé. Vous avez maintenant accès à toutes les fonctionnalités de la plateforme.'
+            : `Votre demande de compte professionnel a été refusée. ${raison ? `Raison : ${raison}` : 'Veuillez contacter l\'administrateur pour plus d\'informations.'}`,
           lue: false
         });
+        console.log('📬 Notification créée pour l\'utilisateur');
       } catch (err) {
-        console.error('Erreur notification:', err);
+        console.error('⚠️ Erreur création notification:', err.message);
       }
     }
+
+    // Vider le cache
+    this.clearCache('user');
+    this.clearCache('overview');
     
     return {
+      success: true,
       message: valide ? 'Utilisateur validé avec succès' : 'Utilisateur rejeté',
       data: {
         id_user: user.id_user,
@@ -850,10 +882,35 @@ async generateDetailedStats(period) {
   }
 
   /**
-   * Méthode validateUser pour compatibilité
+   * Méthode validateUser - gère la requête HTTP directement
+   * ✅ VERSION CORRIGÉE
    */
-  async validateUser(userId, data) {
-    return this.validateUserAction(userId, data);
+  async validateUser(req, res) {
+    try {
+      const { userId, id } = req.params;
+      const targetUserId = userId || id;
+      const { validated, valide, reason, raison } = req.body;
+      
+      console.log('🔄 validateUser appelée:', { targetUserId, validated, valide, reason });
+      
+      const result = await this.validateUserAction(targetUserId, {
+        valide: validated !== undefined ? validated : valide,
+        validateur_id: req.user.id_user,
+        raison: reason || raison
+      });
+      
+      res.json({
+        success: true,
+        message: result.message,
+        data: result.data
+      });
+    } catch (error) {
+      console.error('❌ Erreur validateUser:', error);
+      res.status(400).json({
+        success: false,
+        error: error.message
+      });
+    }
   }
 
   /**
@@ -2126,7 +2183,7 @@ async generateDetailedStats(period) {
   async getContentByType() {
     try {
       const [oeuvres, evenements, artisanats] = await Promise.all([
-        this.models.Oeuvre.count({ group: ['type_oeuvre'] }),
+        this.models.Oeuvre.count({ group: ['id_type_oeuvre'] }),
         this.models.Evenement.count(),
         this.models.Artisanat?.count() || 0
       ]);

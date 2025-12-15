@@ -1,5 +1,4 @@
-// models/Media.js - Modèle Media mis à jour avec tous les champs
-
+// models/Media.js - ⚡ MODIFIÉ POUR I18N
 const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
@@ -31,16 +30,20 @@ module.exports = (sequelize) => {
       type: DataTypes.STRING(500),
       allowNull: false
     },
+    // ⚡ MODIFIÉ POUR I18N
     titre: {
-      type: DataTypes.STRING(255)
+      type: DataTypes.JSON,
+      allowNull: true,
+      defaultValue: {},
+      comment: 'Titre en plusieurs langues { fr: "...", ar: "...", en: "..." }'
     },
+    // ⚡ MODIFIÉ POUR I18N
     description: {
-      type: DataTypes.TEXT
+      type: DataTypes.JSON,
+      allowNull: true,
+      defaultValue: {},
+      comment: 'Description en plusieurs langues'
     },
-    
-    // ===== NOUVEAUX CHAMPS AJOUTÉS =====
-    
-    // Tags pour catégoriser le média
     tags: {
       type: DataTypes.JSON,
       defaultValue: [],
@@ -52,22 +55,16 @@ module.exports = (sequelize) => {
         this.setDataValue('tags', Array.isArray(value) ? value : []);
       }
     },
-    
-    // Métadonnées supplémentaires (dimensions, EXIF, etc.)
     metadata: {
       type: DataTypes.JSON,
       defaultValue: {},
       comment: 'Métadonnées du fichier (EXIF, dimensions, etc.)'
     },
-    
-    // Qualité du média
     qualite: {
       type: DataTypes.ENUM('basse', 'moyenne', 'haute', 'originale'),
       defaultValue: 'haute',
       comment: 'Qualité/résolution du média'
     },
-    
-    // Droits d'usage
     droits_usage: {
       type: DataTypes.ENUM(
         'libre',
@@ -80,21 +77,17 @@ module.exports = (sequelize) => {
       defaultValue: 'libre',
       comment: 'Droits d\'utilisation du média'
     },
-    
-    // Texte alternatif pour l'accessibilité
+    // ⚡ MODIFIÉ POUR I18N
     alt_text: {
-      type: DataTypes.STRING(500),
-      comment: 'Texte alternatif pour l\'accessibilité'
+      type: DataTypes.JSON,
+      allowNull: true,
+      defaultValue: {},
+      comment: 'Texte alternatif en plusieurs langues pour l\'accessibilité'
     },
-    
-    // Crédit / Attribution
     credit: {
       type: DataTypes.STRING(255),
       comment: 'Crédit photo/vidéo (photographe, source, etc.)'
     },
-    
-    // ===== CHAMPS EXISTANTS =====
-    
     visible_public: {
       type: DataTypes.BOOLEAN,
       defaultValue: true
@@ -126,45 +119,27 @@ module.exports = (sequelize) => {
     createdAt: 'date_creation',
     updatedAt: 'date_modification',
     
-    // Index pour améliorer les performances
     indexes: [
-      {
-        fields: ['id_oeuvre']
-      },
-      {
-        fields: ['id_evenement']
-      },
-      {
-        fields: ['type_media']
-      },
-      {
-        fields: ['visible_public']
-      },
-      {
-        fields: ['qualite']
-      },
-      {
-        fields: ['droits_usage']
-      }
+      { fields: ['id_oeuvre'] },
+      { fields: ['id_evenement'] },
+      { fields: ['type_media'] },
+      { fields: ['visible_public'] },
+      { fields: ['qualite'] },
+      { fields: ['droits_usage'] }
     ],
     
-    // Hooks pour validation
     hooks: {
       beforeValidate: (media) => {
-        // S'assurer que tags est toujours un array
         if (media.tags && !Array.isArray(media.tags)) {
           media.tags = [];
         }
-        
-        // S'assurer que metadata est toujours un objet
         if (media.metadata && typeof media.metadata !== 'object') {
           media.metadata = {};
         }
       },
-      
       beforeCreate: (media) => {
         // Générer un alt_text par défaut si non fourni
-        if (!media.alt_text && media.titre) {
+        if ((!media.alt_text || Object.keys(media.alt_text).length === 0) && media.titre) {
           media.alt_text = media.titre;
         }
       }
@@ -177,7 +152,20 @@ module.exports = (sequelize) => {
     Media.belongsTo(models.Evenement, { foreignKey: 'id_evenement' });
   };
   
-  // Méthodes d'instance
+  // ⚡ NOUVELLES MÉTHODES I18N
+  Media.prototype.getTitre = function(lang = 'fr') {
+    return this.titre?.[lang] || this.titre?.fr || this.titre?.ar || '';
+  };
+
+  Media.prototype.getDescription = function(lang = 'fr') {
+    return this.description?.[lang] || this.description?.fr || '';
+  };
+
+  Media.prototype.getAltText = function(lang = 'fr') {
+    return this.alt_text?.[lang] || this.alt_text?.fr || this.getTitre(lang) || '';
+  };
+
+  // Méthodes existantes
   Media.prototype.addTag = function(tag) {
     const tags = this.tags || [];
     if (!tags.includes(tag)) {

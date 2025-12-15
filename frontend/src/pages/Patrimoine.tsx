@@ -1,12 +1,27 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import CartePatrimoine from '@/components/CartePatrimoine';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/UI/card';
 import { Button } from '@/components/UI/button';
 import { Badge } from '@/components/UI/badge';
+import { Skeleton } from '@/components/UI/skeleton';
 import { MapPin, Clock, Users, QrCode, Compass } from 'lucide-react';
+
+// Lazy loading pour CartePatrimoine (cohérent avec Index.tsx)
+const CartePatrimoine = lazy(() => import('@/components/CartePatrimoine'));
+
+// Composant de fallback pour la carte
+const MapSkeleton = () => (
+  <div className="space-y-4">
+    <Skeleton className="h-[300px] w-full rounded-lg" />
+    <div className="grid gap-4 md:grid-cols-3">
+      <Skeleton className="h-32 rounded-lg" />
+      <Skeleton className="h-32 rounded-lg" />
+      <Skeleton className="h-32 rounded-lg" />
+    </div>
+  </div>
+);
 
 const Patrimoine = () => {
   const { t } = useTranslation();
@@ -64,13 +79,15 @@ const Patrimoine = () => {
           <Button variant="outline" size="sm">{t('sections.heritage.filters.traditional')}</Button>
         </div>
 
-        {/* Carte interactive */}
+        {/* Carte interactive avec Suspense */}
         <div className="mb-12">
           <div className="flex items-center space-x-2 mb-6">
             <Compass className="h-6 w-6 text-primary" />
             <h2 className="text-2xl font-bold font-serif">{t('sections.heritage.map.explore')}</h2>
           </div>
-          <CartePatrimoine />
+          <Suspense fallback={<MapSkeleton />}>
+            <CartePatrimoine />
+          </Suspense>
         </div>
 
         {/* Sites complémentaires */}
@@ -84,6 +101,7 @@ const Patrimoine = () => {
                     src={lieu.image} 
                     alt={lieu.nom}
                     className="w-full h-full object-cover"
+                    loading="lazy"
                   />
                 </div>
                 <CardHeader>

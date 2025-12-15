@@ -1,3 +1,4 @@
+// models/Parcours.js - ⚡ MODIFIÉ POUR I18N
 const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
@@ -7,13 +8,19 @@ module.exports = (sequelize) => {
       primaryKey: true,
       autoIncrement: true
     },
+    // ⚡ MODIFIÉ POUR I18N
     nom_parcours: {
-      type: DataTypes.STRING(200),
-      allowNull: false
+      type: DataTypes.JSON,
+      allowNull: false,
+      defaultValue: { fr: '' },
+      comment: 'Nom en plusieurs langues { fr: "Parcours historique", ar: "المسار التاريخي", en: "Historical Tour" }'
     },
+    // ⚡ MODIFIÉ POUR I18N
     description: {
-      type: DataTypes.TEXT,
-      allowNull: true
+      type: DataTypes.JSON,
+      allowNull: true,
+      defaultValue: {},
+      comment: 'Description en plusieurs langues'
     },
     duree_estimee: {
       type: DataTypes.INTEGER,
@@ -62,6 +69,15 @@ module.exports = (sequelize) => {
     createdAt: 'date_creation',
     updatedAt: 'date_modification'
   });
+
+  // ⚡ NOUVELLES MÉTHODES I18N
+  Parcours.prototype.getNomParcours = function(lang = 'fr') {
+    return this.nom_parcours?.[lang] || this.nom_parcours?.fr || this.nom_parcours?.ar || '';
+  };
+
+  Parcours.prototype.getDescription = function(lang = 'fr') {
+    return this.description?.[lang] || this.description?.fr || '';
+  };
 
   return Parcours;
 };

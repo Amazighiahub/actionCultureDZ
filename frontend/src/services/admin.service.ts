@@ -1,4 +1,4 @@
-// services/admin.service.ts - VERSION SIMPLIFIÉE
+// services/admin.service.ts - VERSION CORRIGÉE
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { API_ENDPOINTS, ApiResponse, PaginatedResponse, FilterParams } from '@/config/api';
 import { httpClient } from './httpClient';
@@ -200,6 +200,7 @@ class AdminService {
   async getPatrimoineStats(): Promise<ApiResponse<PatrimoineStats>> {
     return httpClient.get<PatrimoineStats>(API_ENDPOINTS.dashboard.patrimoine.statistics);
   }
+
   async getOeuvres(params?: OeuvreFilters): Promise<ApiResponse<PaginatedResponse<any>>> {
     return httpClient.getPaginated<any>('/admin/oeuvres', params);
   }
@@ -262,6 +263,7 @@ class AdminService {
   async deleteService(serviceId: number): Promise<ApiResponse<void>> {
     return httpClient.delete<void>(`/admin/services/${serviceId}`);
   }
+
   // ========================================
   // GESTION DES UTILISATEURS
   // ========================================
@@ -270,10 +272,17 @@ class AdminService {
     return httpClient.getPaginated<PendingUser>(API_ENDPOINTS.dashboard.pendingUsers, params);
   }
 
-  async validateUser(userId: number, validated: boolean, comment?: string): Promise<ApiResponse<CurrentUser>> {
-    return httpClient.patch<CurrentUser>(`/dashboard/users/${userId}/validate`, {
+  /**
+   * ✅ CORRIGÉ: Validation d'un utilisateur
+   * Utilise PATCH /dashboard/users/:id/validate
+   */
+  async validateUser(userId: number, validated: boolean, reason?: string): Promise<ApiResponse<any>> {
+    console.log('🔄 AdminService.validateUser appelé:', { userId, validated, reason });
+    
+    // La route backend attend: { valide: boolean, raison?: string }
+    return httpClient.patch<any>(`/dashboard/users/${userId}/validate`, {
       valide: validated,
-      raison: comment
+      raison: reason
     });
   }
 

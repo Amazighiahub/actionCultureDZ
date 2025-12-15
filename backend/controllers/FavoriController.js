@@ -1,20 +1,23 @@
+// controllers/FavoriController.js - VERSION i18n
 const { Op } = require('sequelize');
 
+// ⚡ Import du helper i18n
+const { translate, translateDeep } = require('../helpers/i18n');
+
 class FavoriController {
- constructor(models) {
+  constructor(models) {
     this.models = models;
-    // Récupérer l'instance sequelize depuis les modèles
     this.sequelize = models.sequelize || Object.values(models)[0]?.sequelize;
   }
 
-  // Récupérer tous les favoris d'un utilisateur avec pagination
+  // Récupérer tous les favoris d'un utilisateur
   async getUserFavoris(req, res) {
     try {
+      const lang = req.lang || 'fr';  // ⚡
       const { page = 1, limit = 12, type } = req.query;
       const offset = (page - 1) * limit;
       const where = { id_user: req.user.id_user };
 
-      // Filtrer par type si spécifié
       if (type) {
         where.type_entite = type;
       }
@@ -27,8 +30,7 @@ class FavoriController {
         include: await this.getIncludesForFavoris()
       });
 
-      // Enrichir les données avec les entités liées
-      const favorisEnrichis = await this.enrichirFavoris(favoris.rows);
+      const favorisEnrichis = await this.enrichirFavoris(favoris.rows, lang);
 
       res.json({
         success: true,
@@ -40,7 +42,8 @@ class FavoriController {
             pages: Math.ceil(favoris.count / limit),
             limit: parseInt(limit)
           }
-        }
+        },
+        lang
       });
 
     } catch (error) {
@@ -55,10 +58,10 @@ class FavoriController {
   // Ajouter un favori
   async addFavori(req, res) {
     try {
+      const lang = req.lang || 'fr';  // ⚡
       const { type_entite, id_entite } = req.body;
       const id_user = req.user.id_user;
 
-      // Validation
       const typesValides = ['oeuvre', 'evenement', 'lieu', 'artisanat'];
       if (!typesValides.includes(type_entite)) {
         return res.status(400).json({
@@ -67,7 +70,6 @@ class FavoriController {
         });
       }
 
-      // Vérifier que l'entité existe
       const entiteExiste = await this.verifierEntiteExiste(type_entite, id_entite);
       if (!entiteExiste) {
         return res.status(404).json({
@@ -76,7 +78,6 @@ class FavoriController {
         });
       }
 
-      // Vérifier si le favori existe déjà
       const favoriExistant = await this.models.Favori.findOne({
         where: { id_user, type_entite, id_entite }
       });
@@ -88,7 +89,6 @@ class FavoriController {
         });
       }
 
-      // Créer le favori
       const favori = await this.models.Favori.create({
         id_user,
         type_entite,
@@ -96,15 +96,15 @@ class FavoriController {
         date_ajout: new Date()
       });
 
-      // Récupérer les détails de l'entité
       const entiteDetails = await this.getEntiteDetails(type_entite, id_entite);
 
+      // ⚡ Traduire
       res.status(201).json({
         success: true,
         message: 'Ajouté aux favoris avec succès',
         data: {
           favori,
-          entite: entiteDetails
+          entite: translateDeep(entiteDetails, lang)
         }
       });
 
@@ -216,7 +216,7 @@ class FavoriController {
     }
   }
 
-  // Obtenir les statistiques des favoris d'un utilisateur
+  // Statistiques des favoris
   async getUserFavorisStats(req, res) {
     try {
       const id_user = req.user.id_user;
@@ -256,7 +256,59 @@ class FavoriController {
     }
   }
 
-  // Méthodes utilitaires
+  // Favoris populaires
+  async getPopularFavorites(req, res) {
+    try {
+      const lang = req.lang || 'fr';  // ⚡
+      const { type, limit = 10 } = req.query;
+      const where = {};
+
+      if (type) {
+        where.type_entite = type;
+      }
+
+      const populaires = await this.models.Favori.findAll({
+        where,
+        attributes: [
+          'type_entite',
+          'id_entite',
+          [this.sequelize.fn('COUNT', this.sequelize.col('id_favori')), 'count']
+        ],
+        group: ['type_entite', 'id_entite'],
+        order: [[this.sequelize.literal('count'), 'DESC']],
+        limit: parseInt(limit)
+      });
+
+      const populairesEnrichis = [];
+      for (const item of populaires) {
+        const entiteDetails = await this.getEntiteDetails(item.type_entite, item.id_entite);
+        if (entiteDetails) {
+          populairesEnrichis.push({
+            type: item.type_entite,
+            count: parseInt(item.dataValues.count),
+            entite: translateDeep(entiteDetails, lang)
+          });
+        }
+      }
+
+      res.json({
+        success: true,
+        data: populairesEnrichis,
+        lang
+      });
+
+    } catch (error) {
+      console.error('Erreur lors de la récupération des favoris populaires:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Erreur serveur' 
+      });
+    }
+  }
+
+  // ========================================================================
+  // MÉTHODES UTILITAIRES
+  // ========================================================================
 
   async verifierEntiteExiste(type, id) {
     try {
@@ -332,14 +384,14 @@ class FavoriController {
     }
   }
 
-  async enrichirFavoris(favoris) {
+  async enrichirFavoris(favoris, lang = 'fr') {
     const favorisEnrichis = [];
 
     for (const favori of favoris) {
       const entiteDetails = await this.getEntiteDetails(favori.type_entite, favori.id_entite);
       favorisEnrichis.push({
         ...favori.toJSON(),
-        entite: entiteDetails
+        entite: translateDeep(entiteDetails, lang)  // ⚡ Traduire
       });
     }
 
@@ -348,55 +400,6 @@ class FavoriController {
 
   async getIncludesForFavoris() {
     return [];
-  }
-
-  // Obtenir les entités populaires (les plus mises en favoris)
-  async getPopularFavorites(req, res) {
-    try {
-      const { type, limit = 10 } = req.query;
-      const where = {};
-
-      if (type) {
-        where.type_entite = type;
-      }
-
-      const populaires = await this.models.Favori.findAll({
-        where,
-        attributes: [
-          'type_entite',
-          'id_entite',
-          [this.sequelize.fn('COUNT', this.sequelize.col('id_favori')), 'count']
-        ],
-        group: ['type_entite', 'id_entite'],
-        order: [[this.sequelize.literal('count'), 'DESC']],
-        limit: parseInt(limit)
-      });
-
-      // Enrichir avec les détails des entités
-      const populairesEnrichis = [];
-      for (const item of populaires) {
-        const entiteDetails = await this.getEntiteDetails(item.type_entite, item.id_entite);
-        if (entiteDetails) {
-          populairesEnrichis.push({
-            type: item.type_entite,
-            count: parseInt(item.dataValues.count),
-            entite: entiteDetails
-          });
-        }
-      }
-
-      res.json({
-        success: true,
-        data: populairesEnrichis
-      });
-
-    } catch (error) {
-      console.error('Erreur lors de la récupération des favoris populaires:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: 'Erreur serveur' 
-      });
-    }
   }
 }
 

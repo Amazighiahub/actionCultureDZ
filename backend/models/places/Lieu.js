@@ -1,3 +1,4 @@
+// models/Lieu.js - ⚡ MODIFIÉ POUR I18N
 const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
@@ -26,13 +27,19 @@ module.exports = (sequelize) => {
         key: 'id_localite'
       }
     },
+    // ⚡ MODIFIÉ POUR I18N
     nom: {
-      type: DataTypes.STRING(255),
-      allowNull: false
+      type: DataTypes.JSON,
+      allowNull: false,
+      defaultValue: { fr: '' },
+      comment: 'Nom du lieu en plusieurs langues { fr: "Casbah d\'Alger", ar: "قصبة الجزائر", en: "Casbah of Algiers" }'
     },
+    // ⚡ MODIFIÉ POUR I18N
     adresse: {
-      type: DataTypes.STRING(255),
-      allowNull: false
+      type: DataTypes.JSON,
+      allowNull: false,
+      defaultValue: { fr: '' },
+      comment: 'Adresse en plusieurs langues'
     },
     latitude: {
       type: DataTypes.FLOAT,
@@ -68,25 +75,30 @@ module.exports = (sequelize) => {
 
   // Associations
   Lieu.associate = (models) => {
-    // Relations simplifiées - hiérarchie via commune seulement
     Lieu.belongsTo(models.Commune, { foreignKey: 'communeId' });
     Lieu.belongsTo(models.Localite, { foreignKey: 'localiteId' });
     
-    // Relations one-to-one et one-to-many
     Lieu.hasOne(models.DetailLieu, { foreignKey: 'id_lieu', onDelete: 'CASCADE' });
     Lieu.hasMany(models.Service, { foreignKey: 'id_lieu', onDelete: 'CASCADE' });
     Lieu.hasMany(models.LieuMedia, { foreignKey: 'id_lieu', onDelete: 'CASCADE' });
     Lieu.hasMany(models.QrCode, { foreignKey: 'id_lieu', onDelete: 'CASCADE' });
     
-    // Relations avec événements
     Lieu.hasMany(models.Evenement, { foreignKey: 'id_lieu' });
     Lieu.hasMany(models.Programme, { foreignKey: 'id_lieu' });
     
-    // Relation many-to-many avec parcours
     Lieu.belongsToMany(models.Parcours, { 
       through: models.ParcoursLieu, 
       foreignKey: 'id_lieu' 
     });
+  };
+
+  // ⚡ NOUVELLES MÉTHODES I18N
+  Lieu.prototype.getNom = function(lang = 'fr') {
+    return this.nom?.[lang] || this.nom?.fr || this.nom?.ar || '';
+  };
+
+  Lieu.prototype.getAdresse = function(lang = 'fr') {
+    return this.adresse?.[lang] || this.adresse?.fr || this.adresse?.ar || '';
   };
 
   return Lieu;

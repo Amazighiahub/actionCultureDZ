@@ -1,3 +1,4 @@
+// models/TagMotCle.js - ⚡ MODIFIÉ POUR I18N
 const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
@@ -7,9 +8,12 @@ module.exports = (sequelize) => {
       primaryKey: true,
       autoIncrement: true
     },
+    // ⚡ MODIFIÉ POUR I18N
     nom: {
-      type: DataTypes.STRING(255),
-      allowNull: false
+      type: DataTypes.JSON,
+      allowNull: false,
+      defaultValue: { fr: '' },
+      comment: 'Nom du tag en plusieurs langues { fr: "Culture", ar: "ثقافة", en: "Culture" }'
     }
   }, {
     tableName: 'tagmotcle',
@@ -22,6 +26,11 @@ module.exports = (sequelize) => {
       through: models.OeuvreTag, 
       foreignKey: 'id_tag' 
     });
+  };
+
+  // ⚡ NOUVELLE MÉTHODE I18N
+  TagMotCle.prototype.getNom = function(lang = 'fr') {
+    return this.nom?.[lang] || this.nom?.fr || this.nom?.ar || '';
   };
 
   return TagMotCle;

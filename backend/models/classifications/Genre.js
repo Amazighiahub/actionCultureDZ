@@ -1,4 +1,4 @@
-// models/Genre.js
+// models/Genre.js - ⚡ MODIFIÉ POUR I18N
 const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
@@ -8,14 +8,19 @@ module.exports = (sequelize) => {
       primaryKey: true,
       autoIncrement: true
     },
+    // ⚡ MODIFIÉ POUR I18N
     nom: {
-      type: DataTypes.STRING(100),
+      type: DataTypes.JSON,
       allowNull: false,
-     
+      defaultValue: { fr: '' },
+      comment: 'Nom en plusieurs langues { fr: "...", ar: "...", en: "...", "tz-ltn": "...", "tz-tfng": "..." }'
     },
+    // ⚡ MODIFIÉ POUR I18N
     description: {
-      type: DataTypes.TEXT,
-      allowNull: true
+      type: DataTypes.JSON,
+      allowNull: true,
+      defaultValue: {},
+      comment: 'Description en plusieurs langues'
     },
     couleur: {
       type: DataTypes.STRING(7),
@@ -34,26 +39,17 @@ module.exports = (sequelize) => {
     }
   }, {
     tableName: 'genre',
-    timestamps: false,
-    indexes: [
-      {
-        name: 'idx_genre_unique',  // Toujours nommer l'index
-        fields: ['nom'],
-        unique: true
-      }
-    ]
+    timestamps: false
   });
 
   // Associations
   Genre.associate = (models) => {
-    // Relations avec les œuvres spécifiques
     if (models.Livre) Genre.hasMany(models.Livre, { foreignKey: 'id_genre', as: 'livres' });
     if (models.Film) Genre.hasMany(models.Film, { foreignKey: 'id_genre', as: 'films' });
     if (models.AlbumMusical) Genre.hasMany(models.AlbumMusical, { foreignKey: 'id_genre', as: 'albums' });
     if (models.Article) Genre.hasMany(models.Article, { foreignKey: 'id_genre', as: 'articles' });
     if (models.ArticleScientifique) Genre.hasMany(models.ArticleScientifique, { foreignKey: 'id_genre', as: 'articlesScientifiques' });
     
-    // Relation Many-to-Many avec TypeOeuvre via TypeOeuvreGenre
     Genre.belongsToMany(models.TypeOeuvre, { 
       through: models.TypeOeuvreGenre,
       foreignKey: 'id_genre',
@@ -61,7 +57,6 @@ module.exports = (sequelize) => {
       as: 'typesOeuvre'
     });
     
-    // Relation Many-to-Many avec Categorie via GenreCategorie
     Genre.belongsToMany(models.Categorie, { 
       through: models.GenreCategorie,
       foreignKey: 'id_genre',
@@ -69,7 +64,6 @@ module.exports = (sequelize) => {
       as: 'categories'
     });
     
-    // Relations directes avec les tables de liaison pour les requêtes complexes
     Genre.hasMany(models.TypeOeuvreGenre, { 
       foreignKey: 'id_genre',
       as: 'typeOeuvreGenres'
@@ -80,7 +74,6 @@ module.exports = (sequelize) => {
       as: 'genreCategories'
     });
     
-    // Relation avec les œuvres via la table de liaison
     if (models.GenreOeuvre) {
       Genre.belongsToMany(models.Oeuvre, {
         through: models.GenreOeuvre,
@@ -94,6 +87,15 @@ module.exports = (sequelize) => {
         as: 'genreOeuvres'
       });
     }
+  };
+
+  // ⚡ NOUVELLES MÉTHODES I18N
+  Genre.prototype.getNom = function(lang = 'fr') {
+    return this.nom?.[lang] || this.nom?.fr || this.nom?.ar || '';
+  };
+
+  Genre.prototype.getDescription = function(lang = 'fr') {
+    return this.description?.[lang] || this.description?.fr || '';
   };
 
   return Genre;

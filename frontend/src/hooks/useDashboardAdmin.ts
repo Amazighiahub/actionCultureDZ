@@ -1,9 +1,10 @@
 // hooks/useDashboardAdmin.ts - VERSION SIMPLIFIÉE
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { httpClient } from '@/services/httpClient';
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/components/UI/use-toast';
 import { adminService } from '@/services/admin.service';
-import { httpClient } from '@/services/httpClient';
+
 import type { 
   OverviewStats,
   DashboardStats,
@@ -199,28 +200,40 @@ export const useDashboardAdmin = () => {
 
   // ========================================
   // ACTIONS UTILISATEURS
-  // ========================================
-
-  const validateUser = async ({ userId, validated }: { userId: number; validated: boolean }) => {
-    try {
-      const response = await adminService.validateUser(userId, validated);
-      if (response.success) {
-        toast({
-          title: "Succès",
-          description: validated ? "Utilisateur validé" : "Utilisateur rejeté"
-        });
-        await loadPendingUsers();
-      }
-    } catch (error) {
-      console.error('Erreur validation utilisateur:', error);
+const validateUser = async ({ userId, validated }: { userId: number; validated: boolean }) => {
+  try {
+    const response = await adminService.validateUser(userId, validated);
+    if (response.success) {
       toast({
-        title: "Erreur",
-        description: "Impossible de valider l'utilisateur",
-        variant: "destructive"
+        title: "Succès",
+        description: validated ? "Utilisateur validé" : "Utilisateur rejeté"
       });
+      
+      // ✅ SOLUTION: Mise à jour locale du state (plus fiable)
+      setPendingUsers((prev: any) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          items: prev.items?.filter((u: any) => u.id_user !== userId) || [],
+          pagination: prev.pagination ? {
+            ...prev.pagination,
+            total: Math.max(0, (prev.pagination.total || 0) - 1)
+          } : prev.pagination
+        };
+      });
+      
+      // Vider le cache pour les prochains chargements
+      httpClient.clearCache();
     }
-  };
-
+  } catch (error) {
+    console.error('Erreur validation utilisateur:', error);
+    toast({
+      title: "Erreur",
+      description: "Impossible de valider l'utilisateur",
+      variant: "destructive"
+    });
+  }
+};
   const updateUser = async ({ userId, data }: { userId: number; data: any }) => {
     try {
       const response = await adminService.updateUser(userId, data);

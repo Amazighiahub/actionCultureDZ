@@ -240,10 +240,16 @@ export const getApiUrl = (
   return `${API_BASE_URL}${path}`;
 };
 
-// Helper pour les headers d'authentification
+// Helper pour obtenir la langue courante
+const getCurrentLanguage = (): string => {
+  return localStorage.getItem('i18nextLng') || 'fr';
+};
+
+// Helper pour les headers d'authentification + langue
 export const getAuthHeaders = (token?: string): Record<string, string> => {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
+    'X-Language': getCurrentLanguage(),  // ⚡ AJOUT CRITIQUE
   };
   
   if (token) {
@@ -252,18 +258,38 @@ export const getAuthHeaders = (token?: string): Record<string, string> => {
   
   return headers;
 };
-
-// Helper pour formater les dates en ISO 8601
-export const formatDateForApi = (date: Date | string): string => {
-  if (typeof date === 'string') return date;
-  return date.toISOString();
-};
-
 // Helper pour parser les dates de l'API
 export const parseDateFromApi = (dateStr: string | null | undefined): Date | null => {
   if (!dateStr) return null;
   const date = new Date(dateStr);
   return isNaN(date.getTime()) ? null : date;
+};
+
+// Helper pour formater une date pour l'API (format ISO YYYY-MM-DD)
+export const formatDateForApi = (date: Date | string | null | undefined): string | null => {
+  if (!date) return null;
+  
+  let dateObj: Date;
+  
+  if (typeof date === 'string') {
+    // Si c'est déjà une string au format ISO, la retourner directement
+    if (date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      return date;
+    }
+    // Si c'est une string ISO complète, extraire la date
+    if (date.match(/^\d{4}-\d{2}-\d{2}T/)) {
+      return date.split('T')[0];
+    }
+    dateObj = new Date(date);
+  } else {
+    dateObj = date;
+  }
+  
+  if (dateObj instanceof Date && !isNaN(dateObj.getTime())) {
+    return dateObj.toISOString().split('T')[0]; // YYYY-MM-DD
+  }
+  
+  return null;
 };
 
 // ================================================
@@ -401,11 +427,16 @@ categoriesForType: (typeId: number) => `/metadata/types-oeuvres/${typeId}/catego
     geographie: {
       wilayas: '/metadata/wilayas',
       searchWilayas: '/metadata/wilayas/search',
-      dairasByWilaya: (id: number) => `/metadata/wilayas/${id}/dairas`,
-      communesByDaira: (id: number) => `/metadata/dairas/${id}/communes`,
-      localitesByCommune: (id: number) => `/metadata/communes/${id}/localites`,
-    },
-    
+      
+      // Dairas par wilaya
+      dairasByWilaya: (wilayaId: number) => `/metadata/wilayas/${wilayaId}/dairas`,
+      
+      // Communes par daira
+      communesByDaira: (dairaId: number) => `/metadata/dairas/${dairaId}/communes`,
+      
+      // Localités par commune
+      localitesByCommune: (communeId: number) => `/metadata/communes/${communeId}/localites`,
+      },
     tags: {
       list: '/metadata/tags',
       create: '/metadata/tags',

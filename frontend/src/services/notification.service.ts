@@ -569,7 +569,7 @@ async getNotifications(
       }
 
       const response = await fetch(
-        `${getApiUrl('/api/notifications/send')}`,
+        `${getApiUrl('/notifications/send')}`,
         {
           method: 'POST',
           headers: {
@@ -615,7 +615,7 @@ async getNotifications(
       }
 
       const response = await fetch(
-        `${getApiUrl('/api/notifications/broadcast')}`,
+        `${getApiUrl('/notifications/broadcast')}`,
         {
           method: 'POST',
           headers: {
@@ -659,7 +659,7 @@ async getNotifications(
       }
 
       const response = await fetch(
-        `${getApiUrl('/api/notifications/email')}`,
+        `${getApiUrl('/notifications/email')}`,
         {
           method: 'POST',
           headers: {
