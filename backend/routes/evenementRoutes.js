@@ -304,8 +304,28 @@ const createEvenementRoutes = (models, middlewares = {}) => {
   );
 
   /**
+   * @route   GET /api/evenements/:id/config-inscription
+   * @desc    Récupérer la configuration du formulaire d'inscription (types d'œuvres acceptées, etc.)
+   */
+  router.get('/:id/config-inscription',
+    validation.validateId?.('id') || defaultMiddleware,
+    auth.optionalAuth || defaultMiddleware,
+    controller.getConfigInscription || defaultMiddleware
+  );
+
+  /**
+   * @route   GET /api/evenements/:id/mon-inscription
+   * @desc    Vérifier si l'utilisateur est inscrit à un événement
+   */
+  router.get('/:id/mon-inscription',
+    auth.authenticate || defaultMiddleware,
+    validation.validateId?.('id') || defaultMiddleware,
+    controller.getMonInscription || defaultMiddleware
+  );
+
+  /**
    * @route   POST /api/evenements/:id/inscription
-   * @desc    S'inscrire à un événement
+   * @desc    S'inscrire à un événement (avec soumission d'œuvres optionnelle selon le type)
    */
   router.post('/:id/inscription',
     auth.authenticate || defaultMiddleware,
@@ -336,30 +356,78 @@ const createEvenementRoutes = (models, middlewares = {}) => {
       next();
     }
   );
-// Dans votre fichier de routes (ex: routes/evenements.js)
-router.get('/evenements/oeuvre/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    
-    // Requête pour récupérer les événements liés à cette œuvre
-    const evenements = await db.query(`
-      SELECT e.* 
-      FROM evenements e
-      WHERE e.id_oeuvre = ?
-      ORDER BY e.date_evenement DESC
-    `, [id]);
-    
-    res.json({
-      success: true,
-      data: evenements
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-});
+  // ====================================================================
+  // ROUTES GESTION DES OEUVRES DANS L'ÉVÉNEMENT
+  // ====================================================================
+
+  /**
+   * @route   GET /api/evenements/:id/mes-oeuvres
+   * @desc    Récupérer les oeuvres de l'utilisateur (ajoutées et disponibles)
+   */
+  router.get('/:id/mes-oeuvres',
+    auth.authenticate || defaultMiddleware,
+    validation.validateId?.('id') || defaultMiddleware,
+    controller.getMesOeuvresEvenement || defaultMiddleware
+  );
+
+  /**
+   * @route   POST /api/evenements/:id/oeuvres
+   * @desc    Ajouter une oeuvre à un événement
+   */
+  router.post('/:id/oeuvres',
+    auth.authenticate || defaultMiddleware,
+    validation.validateId?.('id') || defaultMiddleware,
+    [
+      body('id_oeuvre').isInt().withMessage('ID œuvre invalide'),
+      body('description_presentation').optional().isString(),
+      body('duree_presentation').optional().isInt({ min: 1 })
+    ],
+    validation.handleValidationErrors || defaultMiddleware,
+    controller.addOeuvreProfessionnel || defaultMiddleware
+  );
+
+  /**
+   * @route   PUT /api/evenements/:id/oeuvres/:oeuvreId
+   * @desc    Mettre à jour une association oeuvre-événement
+   */
+  router.put('/:id/oeuvres/:oeuvreId',
+    auth.authenticate || defaultMiddleware,
+    validation.validateId?.('id') || defaultMiddleware,
+    [
+      body('description_presentation').optional().isString(),
+      body('duree_presentation').optional().isInt({ min: 1 }),
+      body('ordre_presentation').optional().isInt({ min: 1 })
+    ],
+    validation.handleValidationErrors || defaultMiddleware,
+    controller.updateOeuvreEvenement || defaultMiddleware
+  );
+
+  /**
+   * @route   DELETE /api/evenements/:id/oeuvres/:oeuvreId
+   * @desc    Retirer une oeuvre d'un événement
+   */
+  router.delete('/:id/oeuvres/:oeuvreId',
+    auth.authenticate || defaultMiddleware,
+    validation.validateId?.('id') || defaultMiddleware,
+    controller.removeOeuvreProfessionnel || defaultMiddleware
+  );
+
+  /**
+   * @route   PUT /api/evenements/:id/oeuvres/reorder
+   * @desc    Réorganiser l'ordre des oeuvres
+   */
+  router.put('/:id/oeuvres/reorder',
+    auth.authenticate || defaultMiddleware,
+    validation.validateId?.('id') || defaultMiddleware,
+    [
+      body('oeuvres').isArray().withMessage('Liste des œuvres requise'),
+      body('oeuvres.*.id_oeuvre').isInt().withMessage('ID œuvre invalide'),
+      body('oeuvres.*.ordre').isInt({ min: 1 }).withMessage('Ordre invalide')
+    ],
+    validation.handleValidationErrors || defaultMiddleware,
+    controller.reorderOeuvresEvenement || defaultMiddleware
+  );
+
   // ====================================================================
   // ROUTES BATCH
   // ====================================================================

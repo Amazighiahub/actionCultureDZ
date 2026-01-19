@@ -7,6 +7,9 @@ const fs = require('fs').promises;
 // ⚡ Import du helper i18n
 const { translate, translateDeep, createMultiLang, mergeTranslations } = require('../helpers/i18n');
 
+// ✅ OPTIMISATION: Import de l'utilitaire de recherche multilingue centralisé
+const { buildMultiLangSearch } = require('../utils/MultiLangSearchBuilder');
+
 class ArtisanatController {
   constructor(models) {
     this.models = models;
@@ -41,22 +44,9 @@ class ArtisanatController {
     });
   }
 
-  // ⚡ Recherche multilingue
-  buildMultiLangSearch(field, search) {
-    return [
-      this.sequelize.where(
-        this.sequelize.fn('JSON_EXTRACT', this.sequelize.col(field), '$.fr'),
-        { [Op.like]: `%${search}%` }
-      ),
-      this.sequelize.where(
-        this.sequelize.fn('JSON_EXTRACT', this.sequelize.col(field), '$.ar'),
-        { [Op.like]: `%${search}%` }
-      ),
-      this.sequelize.where(
-        this.sequelize.fn('JSON_EXTRACT', this.sequelize.col(field), '$.en'),
-        { [Op.like]: `%${search}%` }
-      )
-    ];
+  // ⚡ Recherche multilingue - utilise l'utilitaire centralisé
+  buildMultiLangSearchLocal(tableName, field, search) {
+    return buildMultiLangSearch(this.sequelize, field, search, tableName);
   }
 
   /**
@@ -89,8 +79,8 @@ class ArtisanatController {
       // ⚡ Recherche multilingue
       if (search) {
         oeuvreWhere[Op.or] = [
-          ...this.buildMultiLangSearch('Oeuvre.titre', search),
-          ...this.buildMultiLangSearch('Oeuvre.description', search)
+          ...this.buildMultiLangSearchLocal('Oeuvre', 'titre', search),
+          ...this.buildMultiLangSearchLocal('Oeuvre', 'description', search)
         ];
       }
 
@@ -107,47 +97,76 @@ class ArtisanatController {
         if (prix_max) where.prix[Op.lte] = parseFloat(prix_max);
       }
 
+      // Construire les inclusions de manière sécurisée
+      const oeuvreIncludes = [
+        {
+          model: this.models.User,
+          as: 'Saiseur',
+          attributes: ['id_user', 'nom', 'prenom', 'photo_url'],
+          required: false
+        },
+        {
+          model: this.models.Media,
+          attributes: ['id_media', 'url', 'type_media', 'thumbnail_url'],
+          required: false
+        }
+      ];
+
+      // Ajouter Langue et Categorie seulement si les modèles existent
+      if (this.models.Langue) {
+        oeuvreIncludes.push({
+          model: this.models.Langue,
+          attributes: ['nom', 'code'],
+          required: false
+        });
+      }
+
+      if (this.models.Categorie) {
+        oeuvreIncludes.push({
+          model: this.models.Categorie,
+          through: { attributes: [] },
+          attributes: ['id_categorie', 'nom'],
+          required: false
+        });
+      }
+
+      // Ajouter le filtre wilaya sur User si spécifié
+      if (wilaya && this.models.Wilaya) {
+        oeuvreIncludes[0].include = [{
+          model: this.models.Wilaya,
+          as: 'Wilaya',
+          where: { id_wilaya: wilaya },
+          attributes: ['nom'],
+          required: true
+        }];
+        oeuvreIncludes[0].required = true;
+      }
+
       const include = [
         {
           model: this.models.Oeuvre,
           where: oeuvreWhere,
-          include: [
-            {
-              model: this.models.User,
-              as: 'Saiseur',
-              attributes: ['id_user', 'nom', 'prenom', 'photo_url', 'type_user'],
-              include: wilaya ? [{
-                model: this.models.Wilaya,
-                where: { id_wilaya: wilaya },
-                attributes: ['nom']
-              }] : []
-            },
-            {
-              model: this.models.Media,
-              attributes: ['id_media', 'url', 'type_media', 'thumbnail_url'],
-              required: false,
-              limit: 1
-            },
-            {
-              model: this.models.Categorie,
-              through: { attributes: [] },
-              attributes: ['id_categorie', 'nom']
-            },
-            {
-              model: this.models.Langue,
-              attributes: ['nom', 'code']
-            }
-          ]
-        },
-        {
-          model: this.models.Materiau,
-          attributes: ['id_materiau', 'nom', 'description']
-        },
-        {
-          model: this.models.Technique,
-          attributes: ['id_technique', 'nom', 'description']
+          include: oeuvreIncludes,
+          required: true
         }
       ];
+
+      // Ajouter Materiau et Technique si les modèles existent
+      if (this.models.Materiau) {
+        include.push({
+          model: this.models.Materiau,
+          attributes: ['id_materiau', 'nom', 'description'],
+          required: false
+        });
+      }
+
+      if (this.models.Technique) {
+        include.push({
+          model: this.models.Technique,
+          attributes: ['id_technique', 'nom', 'description'],
+          required: false
+        });
+      }
 
       let order;
       switch (sort) {
@@ -211,10 +230,141 @@ class ArtisanatController {
 
     } catch (error) {
       console.error('Erreur lors de la récupération des artisanats:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: 'Erreur serveur lors de la récupération des artisanats' 
+      res.status(500).json({
+        success: false,
+        error: 'Erreur serveur lors de la récupération des artisanats'
       });
+    }
+  }
+
+  /**
+   * Rechercher des artisanats
+   */
+  async searchArtisanats(req, res) {
+    try {
+      const lang = req.lang || 'fr';
+      const { q, limit = 20, page = 1 } = req.query;
+      const offset = (page - 1) * limit;
+
+      if (!q || q.length < 2) {
+        return res.json({ success: true, data: [], lang });
+      }
+
+      const artisanats = await this.models.Artisanat.findAndCountAll({
+        include: [{
+          model: this.models.Oeuvre,
+          where: {
+            statut: 'publie',
+            [Op.or]: [
+              ...this.buildMultiLangSearchLocal('Oeuvre', 'titre', q),
+              ...this.buildMultiLangSearchLocal('Oeuvre', 'description', q)
+            ]
+          },
+          include: [
+            {
+              model: this.models.User,
+              as: 'Saiseur',
+              attributes: ['id_user', 'nom', 'prenom', 'photo_url'],
+              required: false
+            },
+            {
+              model: this.models.Media,
+              attributes: ['id_media', 'url', 'type_media', 'thumbnail_url'],
+              required: false
+            }
+          ]
+        }],
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        distinct: true
+      });
+
+      res.json({
+        success: true,
+        data: translateDeep(artisanats.rows, lang),
+        pagination: {
+          total: artisanats.count,
+          page: parseInt(page),
+          pages: Math.ceil(artisanats.count / limit)
+        },
+        lang
+      });
+
+    } catch (error) {
+      console.error('Erreur searchArtisanats:', error);
+      res.status(500).json({ success: false, error: 'Erreur serveur' });
+    }
+  }
+
+  /**
+   * Statistiques artisanat
+   */
+  async getStatistiques(req, res) {
+    try {
+      const lang = req.lang || 'fr';
+
+      const totalArtisanats = await this.models.Artisanat.count({
+        include: [{
+          model: this.models.Oeuvre,
+          where: { statut: 'publie' }
+        }]
+      });
+
+      const artisanatsParMateriau = await this.models.Artisanat.findAll({
+        attributes: [
+          'id_materiau',
+          [this.sequelize.fn('COUNT', '*'), 'count']
+        ],
+        include: [{
+          model: this.models.Oeuvre,
+          where: { statut: 'publie' },
+          attributes: []
+        }],
+        group: ['id_materiau']
+      });
+
+      res.json({
+        success: true,
+        data: {
+          totalArtisanats,
+          artisanatsParMateriau
+        },
+        lang
+      });
+
+    } catch (error) {
+      console.error('Erreur getStatistiques:', error);
+      res.status(500).json({ success: false, error: 'Erreur serveur' });
+    }
+  }
+
+  /**
+   * Artisans par région
+   */
+  async getArtisansByRegion(req, res) {
+    try {
+      const lang = req.lang || 'fr';
+      const { wilayaId } = req.params;
+      const { limit = 20 } = req.query;
+
+      const artisans = await this.models.User.findAll({
+        where: {
+          type_user: 'artisan',
+          wilayaId: wilayaId
+        },
+        attributes: ['id_user', 'nom', 'prenom', 'photo_url', 'biographie'],
+        limit: parseInt(limit)
+      });
+
+      res.json({
+        success: true,
+        data: translateDeep(artisans, lang),
+        lang
+      });
+
+    } catch (error) {
+      console.error('Erreur getArtisansByRegion:', error);
+      res.status(500).json({ success: false, error: 'Erreur serveur' });
     }
   }
 
@@ -603,6 +753,61 @@ class ArtisanatController {
     } catch (error) {
       console.error('Erreur:', error);
       res.status(500).json({ success: false, error: 'Erreur serveur' });
+    }
+  }
+
+  /**
+   * Upload de médias pour un artisanat
+   */
+  async uploadMedias(req, res) {
+    try {
+      const lang = req.lang || 'fr';
+      const { id } = req.params;
+
+      if (!req.files || req.files.length === 0) {
+        return res.status(400).json({
+          success: false,
+          error: 'Aucun fichier fourni'
+        });
+      }
+
+      const artisanat = await this.models.Artisanat.findByPk(id, {
+        include: [{ model: this.models.Oeuvre }]
+      });
+
+      if (!artisanat) {
+        return res.status(404).json({
+          success: false,
+          error: 'Artisanat non trouvé'
+        });
+      }
+
+      const medias = [];
+      for (let i = 0; i < req.files.length; i++) {
+        const file = req.files[i];
+        const isVideo = file.mimetype.startsWith('video/');
+
+        const media = await this.models.Media.create({
+          id_oeuvre: artisanat.id_oeuvre,
+          url: `/uploads/artisanat/${id}/${file.filename}`,
+          type_media: isVideo ? 'video' : 'image',
+          ordre: i
+        });
+        medias.push(media);
+      }
+
+      res.json({
+        success: true,
+        message: `${medias.length} média(s) uploadé(s) avec succès`,
+        data: translateDeep(medias, lang)
+      });
+
+    } catch (error) {
+      console.error('Erreur uploadMedias:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur serveur lors de l\'upload'
+      });
     }
   }
 

@@ -10,7 +10,24 @@ module.exports = (sequelize) => {
     },
     typeLieu: {
       type: DataTypes.ENUM('Wilaya', 'Daira', 'Commune'),
-      allowNull: false
+      allowNull: false,
+      comment: 'Division administrative du lieu'
+    },
+    // ⚡ NOUVEAU - Type de patrimoine pour adapter l'affichage
+    typePatrimoine: {
+      type: DataTypes.ENUM(
+        'ville_village',       // Contient monuments, vestiges, musées → parcours intelligent
+        'monument',            // Mosquée, Palais, Fort, etc. → programmes, services
+        'musee',               // Collections, expositions → programmes, billetterie
+        'site_archeologique',  // Ruines, vestiges → programmes, visites guidées
+        'site_naturel',        // Parcs, réserves → randonnées, parcours
+        'edifice_religieux',   // Mosquées, zaouïas, églises
+        'palais_forteresse',   // Palais, forts, citadelles
+        'autre'
+      ),
+      allowNull: false,
+      defaultValue: 'monument',
+      comment: 'Type de patrimoine pour adapter les fonctionnalités affichées'
     },
     communeId: {
       type: DataTypes.INTEGER,
@@ -81,14 +98,20 @@ module.exports = (sequelize) => {
     Lieu.hasOne(models.DetailLieu, { foreignKey: 'id_lieu', onDelete: 'CASCADE' });
     Lieu.hasMany(models.Service, { foreignKey: 'id_lieu', onDelete: 'CASCADE' });
     Lieu.hasMany(models.LieuMedia, { foreignKey: 'id_lieu', onDelete: 'CASCADE' });
-    Lieu.hasMany(models.QrCode, { foreignKey: 'id_lieu', onDelete: 'CASCADE' });
+    Lieu.hasMany(models.QRCode, { foreignKey: 'id_lieu', onDelete: 'CASCADE' });
     
     Lieu.hasMany(models.Evenement, { foreignKey: 'id_lieu' });
     Lieu.hasMany(models.Programme, { foreignKey: 'id_lieu' });
     
-    Lieu.belongsToMany(models.Parcours, { 
-      through: models.ParcoursLieu, 
-      foreignKey: 'id_lieu' 
+    Lieu.belongsToMany(models.Parcours, {
+      through: models.ParcoursLieu,
+      foreignKey: 'id_lieu',
+      otherKey: 'id_parcours'
+    });
+
+    Lieu.hasMany(models.ParcoursLieu, {
+      foreignKey: 'id_lieu',
+      as: 'ParcoursLieux'
     });
   };
 

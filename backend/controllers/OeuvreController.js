@@ -7,6 +7,9 @@ const crypto = require('crypto');
 // ⚡ Import du helper i18n
 const { translate, translateDeep, createMultiLang, mergeTranslations } = require('../helpers/i18n');
 
+// ✅ OPTIMISATION: Import de l'utilitaire de recherche multilingue centralisé
+const { buildMultiLangSearch } = require('../utils/MultiLangSearchBuilder');
+
 class OeuvreController {
   constructor(models) {
     this.models = models;
@@ -21,26 +24,10 @@ class OeuvreController {
 
   /**
    * ⚡ Recherche multilingue dans les champs JSON
+   * ✅ OPTIMISATION: Utilise maintenant l'utilitaire centralisé
    */
-  buildMultiLangSearch(field, search) {
-    return [
-      this.sequelize.where(
-        this.sequelize.fn('JSON_EXTRACT', this.sequelize.col(field), '$.fr'),
-        { [Op.like]: `%${search}%` }
-      ),
-      this.sequelize.where(
-        this.sequelize.fn('JSON_EXTRACT', this.sequelize.col(field), '$.ar'),
-        { [Op.like]: `%${search}%` }
-      ),
-      this.sequelize.where(
-        this.sequelize.fn('JSON_EXTRACT', this.sequelize.col(field), '$.en'),
-        { [Op.like]: `%${search}%` }
-      ),
-      this.sequelize.where(
-        this.sequelize.fn('JSON_EXTRACT', this.sequelize.col(field), '$."tz-ltn"'),
-        { [Op.like]: `%${search}%` }
-      )
-    ];
+  buildMultiLangSearchLocal(field, search) {
+    return buildMultiLangSearch(this.sequelize, field, search, 'Oeuvre');
   }
 
   /**
@@ -71,8 +58,8 @@ class OeuvreController {
       // ⚡ Recherche multilingue
       if (search) {
         where[Op.or] = [
-          ...this.buildMultiLangSearch('titre', search),
-          ...this.buildMultiLangSearch('description', search)
+          ...this.buildMultiLangSearchLocal('titre', search),
+          ...this.buildMultiLangSearchLocal('description', search)
         ];
       }
 
@@ -244,6 +231,63 @@ class OeuvreController {
   }
 
   /**
+   * ✅ NOUVELLE FONCTION - Récupérer les médias d'une œuvre
+   */
+  async getMedias(req, res) {
+    try {
+      const lang = req.lang || 'fr';
+      const { id } = req.params;
+
+      // Vérifier que l'œuvre existe
+      const oeuvre = await this.models.Oeuvre.findByPk(id);
+      if (!oeuvre) {
+        return res.status(404).json({
+          success: false,
+          error: 'Œuvre non trouvée'
+        });
+      }
+
+      // Récupérer les médias
+      const medias = await this.models.Media.findAll({
+        where: {
+          id_oeuvre: id,
+          visible_public: true
+        },
+        attributes: [
+          'id_media',
+          'type_media',
+          'url',
+          'titre',
+          'description',
+          'thumbnail_url',
+          'ordre',
+          'is_principal',
+          'date_creation'
+        ],
+        order: [
+          ['is_principal', 'DESC'],
+          ['ordre', 'ASC'],
+          ['date_creation', 'ASC']
+        ]
+      });
+
+      res.json({
+        success: true,
+        data: translateDeep(medias, lang),
+        count: medias.length,
+        lang
+      });
+
+    } catch (error) {
+      console.error('❌ Erreur récupération médias œuvre:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur serveur lors de la récupération des médias'
+      });
+    }
+  }
+
+  /**
    * ⚡ Préparer un champ multilingue
    */
   prepareMultiLangField(value, lang = 'fr') {
@@ -297,44 +341,45 @@ class OeuvreController {
         });
       }
 
-      // ⚡ Préparer les champs multilingues
-      const titreMultiLang = this.prepareMultiLangField(titre, lang);
-      const descriptionMultiLang = this.prepareMultiLangField(description, lang);
-
-      const categoriesArray = Array.isArray(categories) ? categories : categories ? [categories] : [];
-
-      // 3. Créer l'œuvre principale
+      // 2. Créer l'œuvre
       const oeuvre = await this.models.Oeuvre.create({
-        titre: titreMultiLang,           // ⚡ JSON multilingue
-        description: descriptionMultiLang, // ⚡ JSON multilingue
+        titre: this.prepareMultiLangField(titre, lang),
+        description: this.prepareMultiLangField(description, lang),
         id_type_oeuvre,
         id_langue,
         annee_creation,
         prix,
         id_oeuvre_originale,
-        id_createur: req.user.id_user,
-        statut: 'brouillon',
-        date_creation: new Date()
+        details_specifiques,
+        saisi_par: req.user?.id_user,
+        statut: 'brouillon'
       }, { transaction });
 
-      console.log(`✅ Œuvre créée avec ID: ${oeuvre.id_oeuvre}`);
-
-      // 4. Associer les catégories
-      if (categoriesArray.length > 0) {
+      // 3. Associer les catégories
+      if (categories.length > 0) {
+        const categoriesArray = Array.isArray(categories) ? categories : [categories];
         await oeuvre.setCategories(categoriesArray, { transaction });
-        console.log(`✅ ${categoriesArray.length} catégorie(s) associée(s)`);
       }
 
-      // 5. Associer les tags
+      // 4. Associer les tags
       if (tags.length > 0) {
         const tagsArray = Array.isArray(tags) ? tags : [tags];
-        await oeuvre.setTags(tagsArray, { transaction });
-        console.log(`✅ ${tagsArray.length} tag(s) associé(s)`);
+        // Créer les tags s'ils n'existent pas
+        const tagInstances = [];
+        for (const tagNom of tagsArray) {
+          const [tag] = await this.models.TagMotCle.findOrCreate({
+            where: { nom: tagNom },
+            defaults: { nom: tagNom },
+            transaction
+          });
+          tagInstances.push(tag);
+        }
+        await oeuvre.setTags(tagInstances, { transaction });
       }
 
       await transaction.commit();
 
-      // Recharger l'œuvre avec les relations
+      // Recharger avec les relations
       const oeuvreComplete = await this.models.Oeuvre.findByPk(oeuvre.id_oeuvre, {
         include: [
           { model: this.models.TypeOeuvre },
@@ -344,11 +389,12 @@ class OeuvreController {
         ]
       });
 
-      // ⚡ Traduire la réponse
       res.status(201).json({
         success: true,
         message: 'Œuvre créée avec succès',
-        data: translateDeep(oeuvreComplete, lang)
+        data: {
+          oeuvre: translateDeep(oeuvreComplete, lang)
+        }
       });
 
     } catch (error) {
@@ -597,8 +643,8 @@ class OeuvreController {
       const where = {
         statut: 'publie',
         [Op.or]: [
-          ...this.buildMultiLangSearch('titre', q),
-          ...this.buildMultiLangSearch('description', q)
+          ...this.buildMultiLangSearchLocal('titre', q),
+          ...this.buildMultiLangSearchLocal('description', q)
         ]
       };
 
@@ -645,6 +691,408 @@ class OeuvreController {
       res.status(500).json({
         success: false,
         error: 'Erreur lors de la recherche'
+      });
+    }
+  }
+
+  /**
+   * Récupérer les œuvres de l'utilisateur connecté
+   */
+  async getMyWorks(req, res) {
+    try {
+      const lang = req.lang || 'fr';
+      const userId = req.user?.id_user;
+
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          error: 'Utilisateur non authentifié'
+        });
+      }
+
+      const {
+        page = 1,
+        limit = 50,
+        statut,
+        sort = 'recent'
+      } = req.query;
+
+      const offset = (page - 1) * limit;
+      const where = { saisi_par: userId };
+
+      // Filtre par statut si spécifié
+      if (statut) {
+        where.statut = statut;
+      }
+
+      // Tri
+      let order;
+      switch (sort) {
+        case 'recent':
+          order = [['date_creation', 'DESC']];
+          break;
+        case 'title':
+          order = [[this.sequelize.fn('JSON_EXTRACT', this.sequelize.col('titre'), `$.${lang}`), 'ASC']];
+          break;
+        case 'year':
+          order = [['annee_creation', 'DESC']];
+          break;
+        default:
+          order = [['date_creation', 'DESC']];
+      }
+
+      console.log(`📚 Récupération des œuvres pour l'utilisateur ${userId}...`);
+
+      const result = await this.models.Oeuvre.findAndCountAll({
+        where,
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        order,
+        include: [
+          {
+            model: this.models.TypeOeuvre,
+            attributes: ['id_type_oeuvre', 'nom_type']
+          },
+          {
+            model: this.models.Langue,
+            attributes: ['id_langue', 'nom', 'code']
+          },
+          {
+            model: this.models.Categorie,
+            through: { attributes: [] },
+            attributes: ['id_categorie', 'nom']
+          },
+          {
+            model: this.models.Media,
+            required: false,
+            separate: true,
+            limit: 1,
+            order: [['ordre', 'ASC']]
+          }
+        ],
+        distinct: true
+      });
+
+      console.log(`✅ ${result.count} œuvres trouvées pour l'utilisateur ${userId}`);
+
+      // Traduire les résultats
+      const translatedOeuvres = translateDeep(result.rows, lang);
+
+      res.json({
+        success: true,
+        data: {
+          oeuvres: translatedOeuvres,
+          pagination: {
+            total: result.count,
+            page: parseInt(page),
+            pages: Math.ceil(result.count / limit),
+            limit: parseInt(limit)
+          }
+        },
+        lang
+      });
+
+    } catch (error) {
+      console.error('❌ Erreur récupération mes œuvres:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur serveur lors de la récupération de vos œuvres'
+      });
+    }
+  }
+
+  // ========================================================================
+  // ALIAS POUR COMPATIBILITÉ AVEC LES ROUTES
+  // ========================================================================
+
+  /**
+   * Alias pour create
+   */
+  async createOeuvre(req, res) {
+    return this.create(req, res);
+  }
+
+  /**
+   * Alias pour update
+   */
+  async updateOeuvre(req, res) {
+    return this.update(req, res);
+  }
+
+  /**
+   * Alias pour delete
+   */
+  async deleteOeuvre(req, res) {
+    return this.delete(req, res);
+  }
+
+  /**
+   * Alias pour search
+   */
+  async searchOeuvres(req, res) {
+    return this.search(req, res);
+  }
+
+  /**
+   * Récupérer les statistiques
+   */
+  async getStatistics(req, res) {
+    try {
+      const stats = await this.models.Oeuvre.findAll({
+        attributes: [
+          'statut',
+          [this.sequelize.fn('COUNT', '*'), 'count']
+        ],
+        group: ['statut'],
+        raw: true
+      });
+
+      const total = stats.reduce((sum, s) => sum + parseInt(s.count), 0);
+
+      res.json({
+        success: true,
+        data: {
+          total,
+          parStatut: stats.reduce((acc, s) => {
+            acc[s.statut] = parseInt(s.count);
+            return acc;
+          }, {})
+        }
+      });
+    } catch (error) {
+      console.error('❌ Erreur statistiques:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur serveur'
+      });
+    }
+  }
+
+  /**
+   * Récupérer les liens de partage d'une œuvre
+   */
+  async getShareLinks(req, res) {
+    try {
+      const { id } = req.params;
+      const baseUrl = process.env.FRONTEND_URL || 'http://localhost:8080';
+      const oeuvreUrl = `${baseUrl}/oeuvres/${id}`;
+
+      res.json({
+        success: true,
+        data: {
+          direct: oeuvreUrl,
+          facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(oeuvreUrl)}`,
+          twitter: `https://twitter.com/intent/tweet?url=${encodeURIComponent(oeuvreUrl)}`,
+          linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(oeuvreUrl)}`,
+          whatsapp: `https://wa.me/?text=${encodeURIComponent(oeuvreUrl)}`
+        }
+      });
+    } catch (error) {
+      console.error('❌ Erreur liens partage:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur serveur'
+      });
+    }
+  }
+
+  /**
+   * Upload de médias
+   */
+  async uploadMedia(req, res) {
+    try {
+      const { id } = req.params;
+      const files = req.files || [];
+
+      if (files.length === 0) {
+        return res.status(400).json({
+          success: false,
+          error: 'Aucun fichier uploadé'
+        });
+      }
+
+      const medias = [];
+      for (const file of files) {
+        const media = await this.models.Media.create({
+          id_oeuvre: id,
+          type_media: file.mimetype.startsWith('image/') ? 'image' : 'document',
+          url: `/uploads/oeuvres/${file.filename}`,
+          titre: file.originalname,
+          visible_public: true
+        });
+        medias.push(media);
+      }
+
+      res.json({
+        success: true,
+        message: `${medias.length} média(s) uploadé(s)`,
+        data: medias
+      });
+    } catch (error) {
+      console.error('❌ Erreur upload média:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur lors de l\'upload'
+      });
+    }
+  }
+
+  /**
+   * Réordonner les médias
+   */
+  async reorderMedias(req, res) {
+    try {
+      const { mediaIds } = req.body;
+
+      for (let i = 0; i < mediaIds.length; i++) {
+        await this.models.Media.update(
+          { ordre: i + 1 },
+          { where: { id_media: mediaIds[i] } }
+        );
+      }
+
+      res.json({
+        success: true,
+        message: 'Ordre des médias mis à jour'
+      });
+    } catch (error) {
+      console.error('❌ Erreur réordonnancement:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur serveur'
+      });
+    }
+  }
+
+  /**
+   * Supprimer un média
+   */
+  async deleteMedia(req, res) {
+    try {
+      const { mediaId } = req.params;
+
+      const media = await this.models.Media.findByPk(mediaId);
+      if (!media) {
+        return res.status(404).json({
+          success: false,
+          error: 'Média non trouvé'
+        });
+      }
+
+      await media.destroy();
+
+      res.json({
+        success: true,
+        message: 'Média supprimé'
+      });
+    } catch (error) {
+      console.error('❌ Erreur suppression média:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur serveur'
+      });
+    }
+  }
+
+  /**
+   * Valider une œuvre (admin)
+   */
+  async validateOeuvre(req, res) {
+    try {
+      const { id } = req.params;
+      const { statut, raison_rejet } = req.body;
+
+      const oeuvre = await this.models.Oeuvre.findByPk(id);
+      if (!oeuvre) {
+        return res.status(404).json({
+          success: false,
+          error: 'Œuvre non trouvée'
+        });
+      }
+
+      const updates = { statut };
+      if (statut === 'rejete' && raison_rejet) {
+        updates.raison_rejet = raison_rejet;
+      }
+
+      await oeuvre.update(updates);
+
+      res.json({
+        success: true,
+        message: `Œuvre ${statut === 'publie' ? 'publiée' : 'rejetée'} avec succès`,
+        data: oeuvre
+      });
+    } catch (error) {
+      console.error('❌ Erreur validation:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur serveur'
+      });
+    }
+  }
+
+  /**
+   * Rechercher des intervenants
+   */
+  async searchIntervenants(req, res) {
+    try {
+      const { q } = req.query;
+
+      if (!q || q.length < 2) {
+        return res.status(400).json({
+          success: false,
+          error: 'Le terme de recherche doit contenir au moins 2 caractères'
+        });
+      }
+
+      const users = await this.models.User.findAll({
+        where: {
+          [Op.or]: [
+            { nom: { [Op.like]: `%${q}%` } },
+            { prenom: { [Op.like]: `%${q}%` } },
+            { email: { [Op.like]: `%${q}%` } }
+          ],
+          statut: 'actif'
+        },
+        attributes: ['id_user', 'nom', 'prenom', 'email'],
+        limit: 10
+      });
+
+      res.json({
+        success: true,
+        data: users
+      });
+    } catch (error) {
+      console.error('❌ Erreur recherche intervenants:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur serveur'
+      });
+    }
+  }
+
+  /**
+   * Vérifier un email
+   */
+  async checkEmail(req, res) {
+    try {
+      const { email } = req.body;
+
+      const user = await this.models.User.findOne({
+        where: { email },
+        attributes: ['id_user', 'nom', 'prenom', 'email']
+      });
+
+      res.json({
+        success: true,
+        exists: !!user,
+        user: user || null
+      });
+    } catch (error) {
+      console.error('❌ Erreur vérification email:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur serveur'
       });
     }
   }

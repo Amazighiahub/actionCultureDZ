@@ -212,7 +212,10 @@ if (oeuvreIntervenantModel) models.OeuvreIntervenant = oeuvreIntervenantModel;
   
   const articleScientifiqueModel = loadModelSafely('./oeuvres/ArticleScientifique', 'ArticleScientifique', sequelize);
   if (articleScientifiqueModel) models.ArticleScientifique = articleScientifiqueModel;
-  
+
+  const articleBlockModel = loadModelSafely('./oeuvres/ArticleBlock', 'ArticleBlock', sequelize);
+  if (articleBlockModel) models.ArticleBlock = articleBlockModel;
+
   const artisanatModel = loadModelSafely('./oeuvres/Artisanat', 'Artisanat', sequelize);
   if (artisanatModel) models.Artisanat = artisanatModel;
   
@@ -984,6 +987,9 @@ const insertDefaultData = async (models) => {
 const initializeDatabase = async (config = {}) => {
   try {
     console.log('🚀 Initialisation de la base de données...');
+
+    const syncConfig = config.sync || {};
+    const shouldSeed = config.skipSeed !== true;
     
     // 1. Créer la connexion
     const sequelize = createDatabaseConnection(config);
@@ -1010,8 +1016,32 @@ const initializeDatabase = async (config = {}) => {
     }
     
     // Corriger le problème de référence 'lieu' vs 'lieux'
-    // Créer d'abord toutes les tables sans contraintes
-    await sequelize.sync({ force: false, alter: false });
+    // Si force: true, supprimer manuellement toutes les tables pour éviter les erreurs de FK
+    if (syncConfig.force) {
+      try {
+        const [tables] = await sequelize.query(
+          "SELECT table_name FROM information_schema.tables WHERE table_schema = DATABASE();"
+        );
+        for (const row of tables) {
+          const tableName = row.table_name || row.TABLE_NAME;
+          if (tableName) {
+            try {
+              await sequelize.query(`DROP TABLE IF EXISTS \`${tableName}\`;`);
+            } catch (dropErr) {
+              // Ignorer les erreurs de suppression individuelles
+            }
+          }
+        }
+      } catch (listErr) {
+        // Continuer même si on ne peut pas lister les tables
+      }
+    }
+
+    // Créer toutes les tables
+    await sequelize.sync({
+      force: !!syncConfig.force,
+      alter: !!syncConfig.alter
+    });
     console.log('✅ Base de données synchronisée.');
     
     // Réactiver les contraintes de clés étrangères
@@ -1023,8 +1053,10 @@ const initializeDatabase = async (config = {}) => {
     }
     
     // 6. Insérer les données par défaut (inclut maintenant l'import géographique)
-    await insertDefaultData(models);
-    console.log('✅ Données par défaut insérées.');
+    if (shouldSeed) {
+      await insertDefaultData(models);
+      console.log('✅ Données par défaut insérées.');
+    }
     
     console.log('🎉 Base de données initialisée avec succès !');
     

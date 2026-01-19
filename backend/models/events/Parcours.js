@@ -70,6 +70,22 @@ module.exports = (sequelize) => {
     updatedAt: 'date_modification'
   });
 
+  // Associations
+  Parcours.associate = (models) => {
+    Parcours.belongsTo(models.User, { foreignKey: 'id_createur', as: 'Createur' });
+
+    Parcours.belongsToMany(models.Lieu, {
+      through: models.ParcoursLieu,
+      foreignKey: 'id_parcours',
+      otherKey: 'id_lieu'
+    });
+
+    Parcours.hasMany(models.ParcoursLieu, {
+      foreignKey: 'id_parcours',
+      as: 'Etapes'
+    });
+  };
+
   // ⚡ NOUVELLES MÉTHODES I18N
   Parcours.prototype.getNomParcours = function(lang = 'fr') {
     return this.nom_parcours?.[lang] || this.nom_parcours?.fr || this.nom_parcours?.ar || '';

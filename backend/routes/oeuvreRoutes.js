@@ -8,8 +8,17 @@ const uploadService = require('../services/uploadService');
 // ⚡ Import du middleware de validation de langue
 const { validateLanguage } = require('../middlewares/language');
 
+const IS_PRODUCTION = process.env.NODE_ENV === 'production';
+
 const initOeuvreRoutes = (models, authMiddleware) => {
   const oeuvreController = new OeuvreController(models);
+
+  if (IS_PRODUCTION) {
+    const isAuthValid = authMiddleware && typeof authMiddleware.authenticate === 'function';
+    if (!isAuthValid) {
+      throw new Error('Configuration invalide: authMiddleware manquant pour les routes oeuvres en production');
+    }
+  }
 
   // ========================================================================
   // MIDDLEWARES SIMPLIFIÉS

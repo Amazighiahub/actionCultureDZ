@@ -1,37 +1,189 @@
-name: Deploy on merge to main
+name: CI/CD Pipeline with Quality Gates
 
 on:
   push:
     branches:
       - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+env:
+  NODE_VERSION: '18'
 
 jobs:
-  deploy:
+  # ============================================
+  # JOB 1: Quality Gates (Tests, Lint, TypeCheck)
+  # ============================================
+  quality-gates:
+    name: 🔍 Quality Gates
     runs-on: ubuntu-latest
 
     steps:
-    - name: Setup SSH
-      run: |
-        mkdir -p ~/.ssh
-        echo "${{ secrets.SSH_PRIVATE_KEY_B64 }}" | base64 -d > ~/.ssh/id_rsa
-        chmod 600 ~/.ssh/id_rsa
-        ssh-keyscan -H 82.25.119.112 >> ~/.ssh/known_hosts
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
 
-        ssh -o StrictHostKeyChecking=no root@82.25.119.112 << 'EOF'
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
+
+      # ---- Backend Quality Gates ----
+      - name: 📦 Install Backend Dependencies
+        working-directory: ./backend
+        run: npm ci
+
+      - name: 🔍 Backend Lint
+        working-directory: ./backend
+        run: npm run lint || echo "⚠️ Linting issues detected"
+        continue-on-error: true
+
+      - name: 🧪 Backend Tests
+        working-directory: ./backend
+        run: npm test -- --coverage --passWithNoTests
+        env:
+          NODE_ENV: test
+          DB_NAME: actionculture_test
+          DB_USER: root
+          DB_PASSWORD: root
+          DB_HOST: localhost
+          JWT_SECRET: test-secret-key-for-ci-minimum-32-chars
+
+      - name: 🔒 Backend Security Audit
+        working-directory: ./backend
+        run: npm audit --audit-level=high || echo "⚠️ Security vulnerabilities found"
+        continue-on-error: true
+
+      # ---- Frontend Quality Gates ----
+      - name: 📦 Install Frontend Dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: 🔍 Frontend Lint
+        working-directory: ./frontend
+        run: npm run lint || echo "⚠️ Linting issues detected"
+        continue-on-error: true
+
+      - name: 📝 TypeScript Check
+        working-directory: ./frontend
+        run: npx tsc --noEmit
+        continue-on-error: true
+
+      - name: 🏗️ Frontend Build Test
+        working-directory: ./frontend
+        run: npm run build
+        env:
+          CI: true
+
+      - name: 🔒 Frontend Security Audit
+        working-directory: ./frontend
+        run: npm audit --audit-level=high || echo "⚠️ Security vulnerabilities found"
+        continue-on-error: true
+
+      # ---- Upload Artifacts ----
+      - name: 📊 Upload Coverage Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: backend/coverage/
+          retention-days: 7
+
+  # ============================================
+  # JOB 2: Deploy (only on main branch push)
+  # ============================================
+  deploy:
+    name: 🚀 Deploy to Production
+    runs-on: ubuntu-latest
+    needs: quality-gates
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔐 Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY_B64 }}" | base64 -d > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H 82.25.119.112 >> ~/.ssh/known_hosts
+
+      - name: 🚀 Deploy to Server
+        run: |
+          ssh -o StrictHostKeyChecking=no root@82.25.119.112 << 'EOF'
             echo "📦 Pulling latest changes..."
             cd /home/EventCulture
             git pull origin main
-            
-            echo "🔧 Installing frontend dependencies..."
-            cd frontend
-            npm install
-            
+
+            echo "📦 Installing backend dependencies..."
+            cd backend
+            npm ci --production
+
+            echo "🔄 Running database migrations..."
+            npx sequelize-cli db:migrate || echo "⚠️ No new migrations"
+
+            echo "📦 Installing frontend dependencies..."
+            cd ../frontend
+            npm ci
+
             echo "🏗️ Building frontend..."
             npm run build
-            
-            echo "🔄 Restarting backend..."
-            pm2 restart redis-dev
-            pm2 restart back-eventculture
-            
+
+            echo "🔄 Restarting services..."
+            pm2 restart redis-dev || pm2 start redis-dev
+            pm2 restart back-eventculture || pm2 start back-eventculture
+
             echo "✅ Deployment complete!"
-        EOF
+            pm2 status
+          EOF
+
+      - name: 📢 Notify Success
+        if: success()
+        run: echo "✅ Deployment to production successful!"
+
+      - name: 📢 Notify Failure
+        if: failure()
+        run: echo "❌ Deployment failed!"
+
+  # ============================================
+  # JOB 3: Deploy to Staging (on develop branch)
+  # ============================================
+  deploy-staging:
+    name: 🧪 Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: quality-gates
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔐 Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY_B64 }}" | base64 -d > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H 82.25.119.112 >> ~/.ssh/known_hosts
+
+      - name: 🧪 Deploy to Staging
+        run: |
+          ssh -o StrictHostKeyChecking=no root@82.25.119.112 << 'EOF'
+            echo "📦 Deploying to staging..."
+            cd /home/EventCulture-staging || cd /home/EventCulture
+            git fetch origin develop
+            git checkout develop
+            git pull origin develop
+
+            cd backend && npm ci
+            cd ../frontend && npm ci && npm run build
+
+            pm2 restart staging-backend || echo "Staging not configured as PM2 process"
+            echo "✅ Staging deployment complete!"
+          EOF

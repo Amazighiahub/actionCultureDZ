@@ -1,12 +1,43 @@
 const { Sequelize } = require('sequelize');
 
+// ============================================================================
+// VALIDATION DES VARIABLES D'ENVIRONNEMENT CRITIQUES
+// ============================================================================
+const isProduction = process.env.NODE_ENV === 'production';
+
+// Fonction de validation des credentials
+const validateCredentials = (env) => {
+  const requiredVars = ['DB_USER', 'DB_PASSWORD', 'DB_NAME', 'DB_HOST'];
+  const missing = requiredVars.filter(v => !process.env[v]);
+
+  if (isProduction && missing.length > 0) {
+    throw new Error(
+      `❌ ERREUR CRITIQUE: Variables d'environnement manquantes en production: ${missing.join(', ')}\n` +
+      `Configurez ces variables dans votre fichier .env avant de démarrer en production.`
+    );
+  }
+
+  // Vérifier que les credentials par défaut ne sont pas utilisés en production
+  if (isProduction) {
+    if (process.env.DB_USER === 'root') {
+      throw new Error('❌ ERREUR CRITIQUE: Ne pas utiliser "root" comme DB_USER en production!');
+    }
+    if (process.env.DB_PASSWORD === 'root' || process.env.DB_PASSWORD?.length < 12) {
+      throw new Error('❌ ERREUR CRITIQUE: Mot de passe DB trop faible pour la production (min 12 caractères)!');
+    }
+  }
+};
+
+// Valider au chargement du module
+validateCredentials(process.env.NODE_ENV);
+
 // Configuration pour chaque environnement
 const config = {
   development: {
-    username: 'root',
-    password: 'root',
-    database: 'actionculture',
-    host: '127.0.0.1',
+    username: process.env.DB_USER || 'root',
+    password: process.env.DB_PASSWORD || 'root',
+    database: process.env.DB_NAME || 'actionculture',
+    host: process.env.DB_HOST || '127.0.0.1',
     dialect: 'mysql',
     logging: false,
     define: {
@@ -15,41 +46,62 @@ const config = {
       timestamps: true
     },
     pool: {
-      max: 10,
-      min: 0,
-      acquire: 30000,
-      idle: 10000
+      max: parseInt(process.env.DB_POOL_MAX || '10'),
+      min: parseInt(process.env.DB_POOL_MIN || '0'),
+      acquire: parseInt(process.env.DB_POOL_ACQUIRE || '30000'),
+      idle: parseInt(process.env.DB_POOL_IDLE || '10000')
     }
   },
   test: {
-    username: 'root',
-    password: 'root',
-    database: 'actionculture_test',
-    host: '127.0.0.1',
+    username: process.env.DB_USER_TEST || process.env.DB_USER || 'root',
+    password: process.env.DB_PASSWORD_TEST || process.env.DB_PASSWORD || 'root',
+    database: process.env.DB_NAME_TEST || 'actionculture_test',
+    host: process.env.DB_HOST_TEST || process.env.DB_HOST || '127.0.0.1',
     dialect: 'mysql',
-    logging: false
+    logging: false,
+    pool: {
+      max: parseInt(process.env.DB_POOL_MAX || '5'),
+      min: 0
+    }
   },
   production: {
-    username: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || 'root',
-    database: process.env.DB_NAME || 'actionculture',
-    host: process.env.DB_HOST || '127.0.0.1',
+    // PAS DE FALLBACKS EN PRODUCTION - Les variables DOIVENT être définies
+    username: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    host: process.env.DB_HOST,
     dialect: 'mysql',
-    logging: false
+    logging: false,
+    pool: {
+      max: parseInt(process.env.DB_POOL_MAX || '20'),
+      min: parseInt(process.env.DB_POOL_MIN || '5'),
+      acquire: parseInt(process.env.DB_POOL_ACQUIRE || '30000'),
+      idle: parseInt(process.env.DB_POOL_IDLE || '10000')
+    }
   }
 };
 
 // Fonction pour créer la connexion à la base de données
-const createDatabaseConnection = (env = 'development') => {
-  const dbConfig = config[env];
-  
+// Compatible avec:
+// - createDatabaseConnection('development'|'production'|...)
+// - createDatabaseConnection({ database, username, password, host, port, dialect, logging, pool, define })
+const createDatabaseConnection = (envOrConfig = 'development') => {
+  const dbConfig = typeof envOrConfig === 'string'
+    ? config[envOrConfig]
+    : envOrConfig;
+
+  if (!dbConfig) {
+    throw new Error('Configuration DB invalide: environnement inconnu ou configuration manquante');
+  }
+
   const sequelize = new Sequelize(
     dbConfig.database,
     dbConfig.username,
     dbConfig.password,
     {
       host: dbConfig.host,
-      dialect: dbConfig.dialect,
+      port: dbConfig.port,
+      dialect: dbConfig.dialect || 'mysql',
       logging: dbConfig.logging,
       define: dbConfig.define || {},
       pool: dbConfig.pool || {}

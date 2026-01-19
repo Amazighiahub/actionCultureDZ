@@ -428,7 +428,15 @@ module.exports = (sequelize) => {
       foreignKey: 'id_user',
       as: 'Interventions'
     });
-    
+
+    // ✅ Association bidirectionnelle avec Programme via ProgrammeIntervenant
+    User.belongsToMany(models.Programme, {
+      through: models.ProgrammeIntervenant,
+      foreignKey: 'id_user',
+      otherKey: 'id_programme',
+      as: 'Programmes'
+    });
+
     User.hasMany(models.Favori, { 
       foreignKey: 'id_user',
       as: 'Favoris'

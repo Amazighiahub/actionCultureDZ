@@ -35,9 +35,9 @@ module.exports = (sequelize) => {
   
   // Associations
   Wilaya.associate = (models) => {
-    Wilaya.hasMany(models.Daira, { foreignKey: 'wilayaId' });
-    Wilaya.hasMany(models.Lieu, { foreignKey: 'wilayaId' });
-     Wilaya.hasMany(models.User, { foreignKey: 'wilaya_residence' });
+    Wilaya.hasMany(models.Daira, { foreignKey: 'wilayaId', as: 'Dairas' });
+    // Note: Lieu n'a pas de wilayaId direct, la relation passe par Commune -> Daira -> Wilaya
+    Wilaya.hasMany(models.User, { foreignKey: 'wilaya_residence' });
   };
 
 

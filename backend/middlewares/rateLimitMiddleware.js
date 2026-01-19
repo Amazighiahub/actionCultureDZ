@@ -3,12 +3,47 @@ const rateLimit = require('express-rate-limit');
 const RedisStore = require('rate-limit-redis');
 const Redis = require('ioredis');
 
-// Configuration Redis (optionnel, pour environnement distribué)
-const redisClient = new Redis({
-  host: process.env.REDIS_HOST || 'localhost',
-  port: process.env.REDIS_PORT || 6379,
-  password: process.env.REDIS_PASSWORD
-});
+// ✅ SÉCURITÉ: Configuration Redis pour rate limiting distribué
+const IS_PRODUCTION = process.env.NODE_ENV === 'production';
+const USE_REDIS = process.env.USE_REDIS_RATE_LIMIT === 'true' || IS_PRODUCTION;
+
+// Configuration Redis
+let redisClient = null;
+let redisStore = null;
+
+if (USE_REDIS) {
+  try {
+    redisClient = new Redis({
+      host: process.env.REDIS_HOST || 'localhost',
+      port: parseInt(process.env.REDIS_PORT || '6379'),
+      password: process.env.REDIS_PASSWORD || undefined,
+      retryDelayOnFailover: 100,
+      maxRetriesPerRequest: 3,
+      lazyConnect: true
+    });
+
+    // Tester la connexion
+    redisClient.on('connect', () => {
+      console.log('✅ Redis connecté pour rate limiting');
+    });
+
+    redisClient.on('error', (err) => {
+      console.error('❌ Erreur Redis rate limiting:', err.message);
+    });
+
+    // Créer le store Redis
+    redisStore = new RedisStore({
+      sendCommand: (...args) => redisClient.call(...args),
+    });
+
+    console.log('🔧 Rate limiting avec Redis activé');
+  } catch (error) {
+    console.warn('⚠️ Redis non disponible, utilisation du store en mémoire:', error.message);
+    redisStore = null;
+  }
+} else {
+  console.log('🔧 Rate limiting avec store en mémoire (dev mode)');
+}
 
 // 1. Rate limiter global (pour toutes les routes)
 const globalLimiter = rateLimit({
@@ -21,7 +56,8 @@ const globalLimiter = rateLimit({
   },
   standardHeaders: true, // Retourne les headers `RateLimit-*`
   legacyHeaders: false, // Désactive les headers `X-RateLimit-*`
-  // store: new RedisStore({ client: redisClient }), // Décommenter pour Redis
+  // ✅ SÉCURITÉ: Utiliser Redis en production pour scalabilité
+  ...(redisStore && { store: redisStore }),
 });
 
 // 2. Rate limiter strict pour les endpoints sensibles
@@ -32,7 +68,9 @@ const strictLimiter = rateLimit({
   message: {
     success: false,
     error: 'Limite atteinte pour cette action. Réessayez dans 15 minutes.'
-  }
+  },
+  // ✅ SÉCURITÉ: Redis en production
+  ...(redisStore && { store: redisStore }),
 });
 
 // 3. Rate limiter pour la création de contenu
@@ -47,7 +85,9 @@ const createContentLimiter = rateLimit({
       error: 'Vous avez atteint la limite de création d\'œuvres (20 par heure)',
       remainingTime: req.rateLimit.resetTime
     });
-  }
+  },
+  // ✅ SÉCURITÉ: Redis en production
+  ...(redisStore && { store: redisStore }),
 });
 
 // 4. Rate limiter pour les vues/statistiques
@@ -158,9 +198,108 @@ const endpointLimiters = {
   })
 };
 
+// ============================================================================
+// 9. RATE LIMITING PAR COMPTE (Protection brute force distribué)
+// ============================================================================
+
+// Cache en mémoire pour les tentatives de connexion par email
+const loginAttempts = new Map();
+
+// Configuration
+const ACCOUNT_LOCKOUT_CONFIG = {
+  maxAttempts: 5,           // Nombre max de tentatives échouées
+  lockoutDuration: 15 * 60 * 1000, // 15 minutes de blocage
+  cleanupInterval: 5 * 60 * 1000   // Nettoyage toutes les 5 minutes
+};
+
+// Nettoyage périodique des entrées expirées
+const cleanupLoginAttempts = () => {
+  const now = Date.now();
+  for (const [email, data] of loginAttempts.entries()) {
+    if (now > data.lockoutUntil && now - data.lastAttempt > ACCOUNT_LOCKOUT_CONFIG.lockoutDuration) {
+      loginAttempts.delete(email);
+    }
+  }
+};
+
+// Lancer le nettoyage périodique
+const cleanupTimer = setInterval(cleanupLoginAttempts, ACCOUNT_LOCKOUT_CONFIG.cleanupInterval);
+if (typeof cleanupTimer.unref === 'function') {
+  cleanupTimer.unref(); // Évite que Jest reste bloqué
+}
+
+/**
+ * Middleware de rate limiting par compte email
+ * Bloque les tentatives de connexion après X échecs sur un même email
+ */
+const accountRateLimiter = {
+  /**
+   * Vérifie si le compte est bloqué avant la tentative de connexion
+   */
+  checkAccountLock: (req, res, next) => {
+    const email = req.body?.email?.toLowerCase();
+    if (!email) return next();
+
+    const attempts = loginAttempts.get(email);
+    if (attempts && Date.now() < attempts.lockoutUntil) {
+      const remainingTime = Math.ceil((attempts.lockoutUntil - Date.now()) / 1000 / 60);
+      return res.status(429).json({
+        success: false,
+        error: `Compte temporairement bloqué après ${ACCOUNT_LOCKOUT_CONFIG.maxAttempts} tentatives échouées.`,
+        message: `Réessayez dans ${remainingTime} minute(s).`,
+        retryAfter: attempts.lockoutUntil,
+        code: 'ACCOUNT_LOCKED'
+      });
+    }
+
+    next();
+  },
+
+  /**
+   * Enregistre une tentative échouée
+   */
+  recordFailedAttempt: (email) => {
+    if (!email) return;
+    email = email.toLowerCase();
+
+    const now = Date.now();
+    const attempts = loginAttempts.get(email) || { 
+      count: 0, 
+      lastAttempt: now, 
+      lockoutUntil: 0 
+    };
+
+    attempts.count++;
+    attempts.lastAttempt = now;
+
+    if (attempts.count >= ACCOUNT_LOCKOUT_CONFIG.maxAttempts) {
+      attempts.lockoutUntil = now + ACCOUNT_LOCKOUT_CONFIG.lockoutDuration;
+      console.warn(`🔒 Compte bloqué: ${email} après ${attempts.count} tentatives échouées`);
+    }
+
+    loginAttempts.set(email, attempts);
+    return attempts;
+  },
+
+  /**
+   * Réinitialise les tentatives après une connexion réussie
+   */
+  resetAttempts: (email) => {
+    if (!email) return;
+    loginAttempts.delete(email.toLowerCase());
+  },
+
+  /**
+   * Obtient le statut des tentatives pour un email
+   */
+  getAttemptStatus: (email) => {
+    if (!email) return null;
+    return loginAttempts.get(email.toLowerCase()) || null;
+  }
+};
+
 // Fonction helper pour logger les violations
 async function logRateLimitViolation(userId, endpoint, ip) {
-  // Implémenter selon vos besoins
   console.log(`Rate limit violation: User ${userId} on ${endpoint} from ${ip}`);
 }
 
@@ -173,6 +312,7 @@ module.exports = {
   progressiveLimiter,
   advancedLimiter,
   endpointLimiters,
+  accountRateLimiter, // Rate limiting par compte email
   
   // Arrays expected by app.js
   auth: [

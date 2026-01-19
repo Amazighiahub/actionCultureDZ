@@ -9,7 +9,7 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const compression = require('compression');
 const path = require('path');
-const csrf = require('csurf');
+// ✅ CSRF supprimé - non nécessaire avec JWT
 const cookieParser = require('cookie-parser');
 
 // Importation des middlewares
@@ -19,6 +19,7 @@ const errorMiddleware = require('./middlewares/errorMiddleware');
 const createAuthMiddleware = require('./middlewares/authMiddleware');
 const securityMiddleware = require('./middlewares/securityMiddleware');
 const auditMiddleware = require('./middlewares/auditMiddleware');
+const { httpsRedirect, hstsMiddleware } = require('./middlewares/httpsRedirect');
 
 // ⚡ Middleware de langue (i18n)
 const { languageMiddleware, setLanguageCookie } = require('./middlewares/language');
@@ -39,7 +40,7 @@ class App {
     this.authMiddleware = null;
     this.sequelize = null;
     this.config = config;
-    this.csrfProtection = null;
+    // ✅ CSRF supprimé
     
     // Infos sur les uploads
     this.uploadInfo = {
@@ -73,22 +74,16 @@ class App {
     }
   }
 
-  initializeCSRFProtection() {
-    // Configuration du CSRF protection
-    this.csrfProtection = csrf({
-      cookie: {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict'
-      }
-    });
-    console.log('✅ CSRF Protection initialisée');
-  }
+  // ✅ CSRF supprimé - méthode initializeCSRFProtection() retirée
 
   // Initialisation des middlewares de base
   initializeMiddlewares() {
     // Trust proxy pour obtenir la vraie IP derrière un reverse proxy
     this.app.set('trust proxy', 1);
+
+    // Redirection HTTPS et HSTS en production
+    this.app.use(httpsRedirect);
+    this.app.use(hstsMiddleware);
 
     // Sécurité avec Helmet
     this.app.use(helmet({
@@ -140,7 +135,7 @@ class App {
       this.app.use(morgan(':remote-addr - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent" - :response-time ms'));
     }
 
-    // Cookie Parser (nécessaire pour CSRF et langue)
+    // Cookie Parser (nécessaire pour langue)
     this.app.use(cookieParser());
 
     // ⚡ Middleware de détection de langue (i18n)
@@ -168,7 +163,6 @@ class App {
       dotfiles: 'ignore',
       setHeaders: (res, path, stat) => {
         res.setHeader('X-Content-Type-Options', 'nosniff');
-        res.setHeader('Access-Control-Allow-Origin', '*');
         res.setHeader('Access-Control-Allow-Methods', 'GET');
         
         if (path.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
@@ -297,13 +291,17 @@ class App {
         this.authMiddleware = createAuthMiddleware(this.models);
         console.log('✅ Middleware d\'authentification initialisé');
       } else {
+        if (this.config.server.environment === 'production') {
+          throw new Error('Middleware d\'authentification indisponible en production');
+        }
+
         this.authMiddleware = {
           authenticate: (req, res, next) => next(),
           isAuthenticated: (req, res, next) => next(),
           requireValidatedProfessional: (req, res, next) => next(),
           isAdmin: (req, res, next) => next()
         };
-        console.warn('⚠️ Middleware d\'authentification en mode bypass');
+        console.warn('⚠️ Middleware d\'authentification en mode bypass (dev uniquement)');
       }
       
       // Afficher les modèles chargés
@@ -336,17 +334,13 @@ class App {
   }
 
   // Initialisation des rate limiters
+  // ✅ CSRF supprimé des rate limiters
   initializeRateLimiters() {
-    if (!this.csrfProtection) {
-      console.warn('⚠️ CSRF Protection non initialisée, initialisation...');
-      this.initializeCSRFProtection();
-    }
-    
     // Rate limiting pour l'authentification
     this.app.use('/api/users/login', ...rateLimitMiddleware.auth);
     this.app.use('/api/users/register', ...rateLimitMiddleware.auth);
-    this.app.use('/api/users/forgot-password', this.csrfProtection, ...rateLimitMiddleware.auth);
-    this.app.use('/api/users/reset-password', this.csrfProtection, ...rateLimitMiddleware.auth);
+    this.app.use('/api/users/forgot-password', ...rateLimitMiddleware.auth);
+    this.app.use('/api/users/reset-password', ...rateLimitMiddleware.auth);
 
     // Rate limiting pour les créations
     this.app.use('/api/oeuvres', ...rateLimitMiddleware.creation);
@@ -356,13 +350,13 @@ class App {
     
     // Rate limiting pour les actions sensibles
     this.app.use('/api/dashboard/actions', ...rateLimitMiddleware.sensitiveActions);
-    this.app.use('/api/users/change-password', this.csrfProtection, ...rateLimitMiddleware.sensitiveActions);
+    this.app.use('/api/users/change-password', ...rateLimitMiddleware.sensitiveActions);
     this.app.use('/api/professionnel/export', ...rateLimitMiddleware.sensitiveActions);
     
     // Rate limiting général
     this.app.use('/api/', ...rateLimitMiddleware.general);
 
-    console.log('✅ Rate limiters initialisés avec CSRF protection');
+    console.log('✅ Rate limiters initialisés');
   }
 
   // Initialisation des routes
@@ -374,10 +368,7 @@ class App {
       throw new Error('Le middleware d\'authentification doit être initialisé avant les routes');
     }
 
-    // Route pour obtenir le token CSRF
-    this.app.get('/api/csrf-token', (req, res) => {
-      res.json({ csrfToken: req.csrfToken ? req.csrfToken() : null });
-    });
+    // ✅ Route CSRF supprimée - non nécessaire avec JWT
 
     // ⚡ Route pour obtenir les langues supportées (i18n)
     this.app.get('/api/languages', (req, res) => {
@@ -909,6 +900,17 @@ class App {
         });
       }
 
+      // Nettoyer les fichiers temporaires (toutes les 6 heures)
+      cron.schedule('0 */6 * * *', async () => {
+        console.log('🧹 Nettoyage des fichiers temporaires...');
+        try {
+          const { cleanAllTemporaryFiles } = require('./scripts/cleanTempFiles');
+          await cleanAllTemporaryFiles();
+        } catch (error) {
+          console.error('❌ Erreur lors du nettoyage des fichiers temporaires:', error);
+        }
+      });
+
       console.log('⏰ Tâches planifiées démarrées');
     } catch (error) {
       console.error('❌ Erreur lors du démarrage des tâches planifiées:', error);
@@ -927,7 +929,7 @@ class App {
       
       // Initialiser dans l'ordre
       this.initializeMiddlewares();
-      this.initializeCSRFProtection();
+      // ✅ CSRF supprimé - this.initializeCSRFProtection() retiré
       await this.initializeDatabase();
       
       // Initialiser la structure des uploads

@@ -222,11 +222,29 @@ class EmailVerificationController {
         });
       }
 
-      // Valider le mot de passe
-      if (newPassword.length < 8) {
+      // Valider le mot de passe (même règles que l'inscription)
+      if (newPassword.length < 12) {
         return res.status(400).json({
           success: false,
-          error: 'Le mot de passe doit contenir au moins 8 caractères'
+          error: 'Le mot de passe doit contenir au moins 12 caractères'
+        });
+      }
+      if (!/[a-z]/.test(newPassword)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Le mot de passe doit contenir au moins une lettre minuscule'
+        });
+      }
+      if (!/[A-Z]/.test(newPassword)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Le mot de passe doit contenir au moins une lettre majuscule'
+        });
+      }
+      if (!/[0-9]/.test(newPassword)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Le mot de passe doit contenir au moins un chiffre'
         });
       }
 

@@ -39,7 +39,8 @@ const initLieuRoutes = (models) => {
       .withMessage('L\'adresse doit contenir entre 5 et 255 caractères'),
     body('latitude').isFloat({ min: -90, max: 90 }).withMessage('Latitude invalide'),
     body('longitude').isFloat({ min: -180, max: 180 }).withMessage('Longitude invalide'),
-    body('typeLieu').isIn(['Wilaya', 'Daira', 'Commune']).withMessage('Type de lieu invalide'),
+    body('typeLieu').optional().isIn(['Wilaya', 'Daira', 'Commune']).withMessage('Type de lieu administratif invalide'),
+    body('typeLieuCulturel').optional().isString().withMessage('Type de lieu culturel invalide'),
     body('description')
       .optional()
       .custom((value) => {
@@ -120,10 +121,24 @@ const initLieuRoutes = (models) => {
   // Recherche de lieux
   router.get('/search',
     [
-      query('q').trim().isLength({ min: 2 }).withMessage('Minimum 2 caractères')
+      query('q').optional().trim(),
+      query('typeLieuCulturel').optional().isString(),
+      query('wilayaId').optional().isInt()
     ],
     validationMiddleware.handleValidationErrors,
     lieuController.searchLieux.bind(lieuController)
+  );
+
+  // Vérifier les doublons (doit être AVANT les routes avec :id)
+  router.post('/check-duplicate',
+    authMiddleware.authenticate,
+    [
+      body('nom').isString().withMessage('Nom requis'),
+      body('latitude').isFloat().withMessage('Latitude invalide'),
+      body('longitude').isFloat().withMessage('Longitude invalide')
+    ],
+    validationMiddleware.handleValidationErrors,
+    lieuController.checkDuplicate.bind(lieuController)
   );
 
   // Statistiques
@@ -200,8 +215,88 @@ const initLieuRoutes = (models) => {
     lieuController.deleteLieu.bind(lieuController)
   );
 
+  // ========================================================================
+  // ROUTES SERVICES D'UN LIEU
+  // ========================================================================
+
+  // Obtenir les services d'un lieu
+  router.get('/:id/services',
+    validationMiddleware.validateId('id'),
+    lieuController.getServicesLieu.bind(lieuController)
+  );
+
+  // Ajouter un service à un lieu
+  router.post('/:id/services',
+    authMiddleware.authenticate,
+    authMiddleware.requireRole(['Contributeur', 'Modérateur', 'Administrateur']),
+    validationMiddleware.validateId('id'),
+    [
+      body('nom').optional().custom((value) => {
+        if (typeof value === 'string') return value.length >= 2;
+        if (typeof value === 'object') return Object.values(value).some(v => v && v.length >= 2);
+        return false;
+      }).withMessage('Le nom du service doit contenir au moins 2 caractères'),
+      body('services').optional().isArray().withMessage('Services doit être un tableau'),
+      body('disponible').optional().isBoolean()
+    ],
+    validationMiddleware.handleValidationErrors,
+    lieuController.addServiceLieu.bind(lieuController)
+  );
+
+  // Mettre à jour un service
+  router.put('/:id/services/:serviceId',
+    authMiddleware.authenticate,
+    authMiddleware.requireRole(['Modérateur', 'Administrateur']),
+    validationMiddleware.validateId('id'),
+    [
+      param('serviceId').isInt().withMessage('ID service invalide'),
+      body('nom').optional(),
+      body('description').optional(),
+      body('disponible').optional().isBoolean()
+    ],
+    validationMiddleware.handleValidationErrors,
+    lieuController.updateServiceLieu.bind(lieuController)
+  );
+
+  // Supprimer un service
+  router.delete('/:id/services/:serviceId',
+    authMiddleware.authenticate,
+    authMiddleware.requireRole(['Modérateur', 'Administrateur']),
+    validationMiddleware.validateId('id'),
+    [param('serviceId').isInt().withMessage('ID service invalide')],
+    validationMiddleware.handleValidationErrors,
+    lieuController.deleteServiceLieu.bind(lieuController)
+  );
+
+  // ========================================================================
+  // ROUTES DÉTAILS D'UN LIEU
+  // ========================================================================
+
+  // Obtenir les détails d'un lieu
+  router.get('/:id/details',
+    validationMiddleware.validateId('id'),
+    lieuController.getDetailsLieu.bind(lieuController)
+  );
+
+  // Mettre à jour les détails d'un lieu
+  router.put('/:id/details',
+    authMiddleware.authenticate,
+    authMiddleware.requireRole(['Contributeur', 'Modérateur', 'Administrateur']),
+    validationMiddleware.validateId('id'),
+    [
+      body('description').optional(),
+      body('horaires').optional(),
+      body('histoire').optional(),
+      body('referencesHistoriques').optional()
+    ],
+    validationMiddleware.handleValidationErrors,
+    lieuController.updateDetailsLieu.bind(lieuController)
+  );
+
   console.log('✅ Routes lieux i18n initialisées');
   console.log('  🌍 Routes traduction: GET /:id/translations, PATCH /:id/translation/:lang');
+  console.log('  📦 Routes services: GET/POST /:id/services, PUT/DELETE /:id/services/:serviceId');
+  console.log('  📋 Routes détails: GET/PUT /:id/details');
 
   return router;
 };

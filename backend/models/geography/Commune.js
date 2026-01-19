@@ -32,7 +32,7 @@ module.exports = (sequelize) => {
   Commune.associate = (models) => {
     Commune.belongsTo(models.Daira, { foreignKey: 'dairaId' });
     Commune.hasMany(models.Localite, { foreignKey: 'id_commune' });
-    Commune.hasMany(models.Lieu, { foreignKey: 'communeId' });
+    Commune.hasMany(models.Lieu, { foreignKey: 'communeId', as: 'Lieux' });
   };
 
   return Commune;

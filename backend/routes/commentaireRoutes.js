@@ -1,104 +1,185 @@
-// routes/commentaireRoutes.js - VERSION i18n
+// routes/commentaireRoutes.js
 const express = require('express');
 const router = express.Router();
-const CommentaireController = require('../controllers/CommentaireController');
-const createAuthMiddleware = require('../middlewares/authMiddleware');
-const validationMiddleware = require('../middlewares/validationMiddleware');
-const { body, param } = require('express-validator');
 
-const initCommentaireRoutes = (models) => {
-  const authMiddleware = createAuthMiddleware(models);
-  const commentaireController = new CommentaireController(models);
+module.exports = (models, middlewares = {}) => {
+  const CommentaireController = require('../controllers/commentaireController');
+  const controller = new CommentaireController(models);
+  
+  // Middleware d'authentification (optionnel si non fourni)
+  const authMiddleware = middlewares.auth || ((req, res, next) => next());
+  const optionalAuth = middlewares.optionalAuth || ((req, res, next) => next());
 
-  // Validation pour les commentaires
-  const commentaireValidation = [
-    body('contenu').trim().isLength({ min: 1, max: 2000 }).withMessage('Le contenu doit contenir entre 1 et 2000 caractères'),
-    body('note_qualite').optional().isInt({ min: 1, max: 5 }).withMessage('La note doit être entre 1 et 5'),
-    body('commentaire_parent_id').optional().isInt().withMessage('ID du commentaire parent invalide')
-  ];
+  // ════════════════════════════════════════════════════════════════════════════
+  // ROUTES COMMENTAIRES ŒUVRES
+  // ════════════════════════════════════════════════════════════════════════════
 
-  // ========================================================================
-  // ROUTES PUBLIQUES - consultation des commentaires
-  // ========================================================================
+  /**
+   * GET /commentaires/oeuvre/:oeuvreId
+   * Récupérer les commentaires d'une œuvre (public)
+   */
+  router.get('/oeuvre/:oeuvreId', async (req, res) => {
+    try {
+      await controller.getCommentairesOeuvre(req, res);
+    } catch (error) {
+      console.error('Erreur route GET /oeuvre/:oeuvreId:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur serveur lors de la récupération des commentaires'
+      });
+    }
+  });
 
-  // Commentaires d'une œuvre
-  router.get('/oeuvre/:oeuvreId', 
-    param('oeuvreId').isInt().withMessage('ID œuvre invalide'),
-    validationMiddleware.handleValidationErrors,
-    commentaireController.getCommentairesOeuvre.bind(commentaireController)
-  );
+  /**
+   * POST /commentaires/oeuvre/:oeuvreId
+   * Créer un commentaire sur une œuvre (authentifié)
+   */
+  router.post('/oeuvre/:oeuvreId', authMiddleware, async (req, res) => {
+    try {
+      await controller.createCommentaireOeuvre(req, res);
+    } catch (error) {
+      console.error('Erreur route POST /oeuvre/:oeuvreId:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur serveur lors de la création du commentaire'
+      });
+    }
+  });
 
-  // Commentaires d'un événement
-  router.get('/evenement/:evenementId', 
-    param('evenementId').isInt().withMessage('ID événement invalide'),
-    validationMiddleware.handleValidationErrors,
-    commentaireController.getCommentairesEvenement.bind(commentaireController)
-  );
+  // ════════════════════════════════════════════════════════════════════════════
+  // ROUTES COMMENTAIRES ÉVÉNEMENTS
+  // ════════════════════════════════════════════════════════════════════════════
 
-  // ========================================================================
-  // ROUTES AUTHENTIFIÉES - création de commentaires
-  // ========================================================================
+  /**
+   * GET /commentaires/evenement/:evenementId
+   * Récupérer les commentaires d'un événement (public)
+   */
+  router.get('/evenement/:evenementId', async (req, res) => {
+    try {
+      await controller.getCommentairesEvenement(req, res);
+    } catch (error) {
+      console.error('Erreur route GET /evenement/:evenementId:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur serveur lors de la récupération des commentaires'
+      });
+    }
+  });
 
-  // Créer un commentaire sur une œuvre
-  router.post('/oeuvre/:oeuvreId', 
-    authMiddleware.authenticate,
-    param('oeuvreId').isInt().withMessage('ID œuvre invalide'),
-    commentaireValidation,
-    validationMiddleware.handleValidationErrors,
-    commentaireController.createCommentaireOeuvre.bind(commentaireController)
-  );
+  /**
+   * POST /commentaires/evenement/:evenementId
+   * Créer un commentaire sur un événement (authentifié)
+   */
+  router.post('/evenement/:evenementId', authMiddleware, async (req, res) => {
+    try {
+      await controller.createCommentaireEvenement(req, res);
+    } catch (error) {
+      console.error('Erreur route POST /evenement/:evenementId:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur serveur lors de la création du commentaire'
+      });
+    }
+  });
 
-  // Créer un commentaire sur un événement
-  router.post('/evenement/:evenementId', 
-    authMiddleware.authenticate,
-    param('evenementId').isInt().withMessage('ID événement invalide'),
-    commentaireValidation,
-    validationMiddleware.handleValidationErrors,
-    commentaireController.createCommentaireEvenement.bind(commentaireController)
-  );
+  // ════════════════════════════════════════════════════════════════════════════
+  // ROUTES GESTION COMMENTAIRES
+  // ════════════════════════════════════════════════════════════════════════════
 
-  // ========================================================================
-  // MODIFICATION/SUPPRESSION
-  // ========================================================================
+  /**
+   * PUT /commentaires/:id
+   * Modifier un commentaire (propriétaire uniquement)
+   */
+  router.put('/:id', authMiddleware, async (req, res) => {
+    try {
+      // Vérifier que l'utilisateur est propriétaire du commentaire
+      const commentaire = await models.Commentaire.findByPk(req.params.id);
+      
+      if (!commentaire) {
+        return res.status(404).json({
+          success: false,
+          error: 'Commentaire non trouvé'
+        });
+      }
+      
+      if (commentaire.id_user !== req.user.id_user) {
+        return res.status(403).json({
+          success: false,
+          error: 'Non autorisé à modifier ce commentaire'
+        });
+      }
+      
+      req.resource = commentaire;
+      await controller.updateCommentaire(req, res);
+    } catch (error) {
+      console.error('Erreur route PUT /:id:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur serveur lors de la modification du commentaire'
+      });
+    }
+  });
 
-  // Modifier un commentaire (propriétaire ou admin)
-  router.put('/:id', 
-    authMiddleware.authenticate,
-    authMiddleware.requireOwnership('Commentaire', 'id', 'id_user'),
-    param('id').isInt().withMessage('ID invalide'),
-    commentaireValidation,
-    validationMiddleware.handleValidationErrors,
-    commentaireController.updateCommentaire.bind(commentaireController)
-  );
+  /**
+   * DELETE /commentaires/:id
+   * Supprimer un commentaire (propriétaire uniquement)
+   */
+  router.delete('/:id', authMiddleware, async (req, res) => {
+    try {
+      const commentaire = await models.Commentaire.findByPk(req.params.id);
+      
+      if (!commentaire) {
+        return res.status(404).json({
+          success: false,
+          error: 'Commentaire non trouvé'
+        });
+      }
+      
+      if (commentaire.id_user !== req.user.id_user) {
+        return res.status(403).json({
+          success: false,
+          error: 'Non autorisé à supprimer ce commentaire'
+        });
+      }
+      
+      req.resource = commentaire;
+      await controller.deleteCommentaire(req, res);
+    } catch (error) {
+      console.error('Erreur route DELETE /:id:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur serveur lors de la suppression du commentaire'
+      });
+    }
+  });
 
-  // Supprimer un commentaire (propriétaire ou admin)
-  router.delete('/:id', 
-    authMiddleware.authenticate,
-    authMiddleware.requireOwnership('Commentaire', 'id', 'id_user'),
-    param('id').isInt().withMessage('ID invalide'),
-    validationMiddleware.handleValidationErrors,
-    commentaireController.deleteCommentaire.bind(commentaireController)
-  );
+  // ════════════════════════════════════════════════════════════════════════════
+  // ROUTES ADMIN
+  // ════════════════════════════════════════════════════════════════════════════
 
-  // ========================================================================
-  // MODÉRATION - admins uniquement
-  // ========================================================================
-
-  router.patch('/:id/moderate', 
-    authMiddleware.authenticate,
-    authMiddleware.requireAdmin,
-    param('id').isInt().withMessage('ID invalide'),
-    [
-      body('statut').isIn(['publie', 'rejete', 'supprime']).withMessage('Statut invalide')
-    ],
-    validationMiddleware.handleValidationErrors,
-    commentaireController.moderateCommentaire.bind(commentaireController)
-  );
-
-  console.log('✅ Routes commentaires i18n initialisées');
-  console.log('  🌍 Traduction automatique des noms d\'utilisateurs dans les réponses');
+  /**
+   * PUT /commentaires/:id/moderate
+   * Modérer un commentaire (admin uniquement)
+   */
+  router.put('/:id/moderate', authMiddleware, async (req, res) => {
+    try {
+      // Vérifier que l'utilisateur est admin
+      if (!req.user || req.user.role !== 'admin') {
+        return res.status(403).json({
+          success: false,
+          error: 'Accès réservé aux administrateurs'
+        });
+      }
+      
+      await controller.moderateCommentaire(req, res);
+    } catch (error) {
+      console.error('Erreur route PUT /:id/moderate:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur serveur lors de la modération du commentaire'
+      });
+    }
+  });
 
   return router;
 };
-
-module.exports = initCommentaireRoutes;

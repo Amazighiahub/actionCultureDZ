@@ -2,6 +2,8 @@
 require('dotenv').config();
 const http = require('http');
 const App = require('./app');
+const logger = require('./utils/logger');
+const EnvironmentValidator = require('./config/envValidator');
 
 // Configuration du port
 const PORT = process.env.PORT || 3001;
@@ -10,8 +12,12 @@ const HOST = process.env.HOST || '0.0.0.0';
 // Fonction principale pour démarrer le serveur
 async function startServer() {
   try {
-    console.log('🚀 Démarrage du serveur Action Culture...');
+    logger.info('🚀 Démarrage du serveur Action Culture...');
     
+    // Valider la configuration d'environnement avant d'initialiser
+    EnvironmentValidator.validate();
+    EnvironmentValidator.printReport();
+
     // Créer et initialiser l'application
     const appInstance = new App();
     const app = await appInstance.initialize();
@@ -21,32 +27,32 @@ async function startServer() {
     
     // Gérer les connexions WebSocket si nécessaire
     server.on('upgrade', (request, socket, head) => {
-      console.log('WebSocket connection attempt');
+      logger.info('WebSocket connection attempt');
       // Implémenter la logique WebSocket si nécessaire
     });
     
     // Gérer la fermeture gracieuse
     const gracefulShutdown = async (signal) => {
-      console.log(`\n${signal} reçu, arrêt gracieux du serveur...`);
+      logger.info(`\n${signal} reçu, arrêt gracieux du serveur...`);
       
       server.close(async () => {
-        console.log('✅ Serveur HTTP fermé');
+        logger.info('✅ Serveur HTTP fermé');
         
         try {
           // Fermer la base de données
           await appInstance.closeDatabase();
           
-          console.log('👋 Application arrêtée proprement');
+          logger.info('👋 Application arrêtée proprement');
           process.exit(0);
         } catch (error) {
-          console.error('❌ Erreur lors de l\'arrêt:', error);
+          logger.error('❌ Erreur lors de l\'arrêt:', error);
           process.exit(1);
         }
       });
       
       // Forcer l'arrêt après 30 secondes
       setTimeout(() => {
-        console.error('⚠️ Arrêt forcé après timeout');
+        logger.error('⚠️ Arrêt forcé après timeout');
         process.exit(1);
       }, 30000);
     };
@@ -57,18 +63,18 @@ async function startServer() {
     
     // Démarrer le serveur
     server.listen(PORT, HOST, () => {
-      console.log('═══════════════════════════════════════════════════');
-      console.log('🎉 Serveur Action Culture démarré avec succès !');
-      console.log('═══════════════════════════════════════════════════');
-      console.log(`📍 Adresse locale: http://localhost:${PORT}`);
-      console.log(`📍 Adresse réseau: http://${HOST}:${PORT}`);
-      console.log(`📍 Documentation API: http://localhost:${PORT}/api`);
-      console.log(`📍 Santé: http://localhost:${PORT}/health`);
-      console.log('═══════════════════════════════════════════════════');
-      console.log(`🌍 Environnement: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`🗄️  Base de données: ${process.env.DB_NAME || 'actionculture'}`);
-      console.log(`👤 Utilisateur DB: ${process.env.DB_USER || 'root'}`);
-      console.log('═══════════════════════════════════════════════════');
+      logger.info('═══════════════════════════════════════════════════');
+      logger.info('🎉 Serveur Action Culture démarré avec succès !');
+      logger.info('═══════════════════════════════════════════════════');
+      logger.info(`📍 Adresse locale: http://localhost:${PORT}`);
+      logger.info(`📍 Adresse réseau: http://${HOST}:${PORT}`);
+      logger.info(`📍 Documentation API: http://localhost:${PORT}/api`);
+      logger.info(`📍 Santé: http://localhost:${PORT}/health`);
+      logger.info('═══════════════════════════════════════════════════');
+      logger.info(`🌍 Environnement: ${process.env.NODE_ENV || 'development'}`);
+      logger.info(`🗄️  Base de données: ${process.env.DB_NAME || 'actionculture'}`);
+      logger.info(`👤 Utilisateur DB: ${process.env.DB_USER || 'root'}`);
+      logger.info('═══════════════════════════════════════════════════');
       
       // Afficher les routes disponibles en développement
       if (process.env.NODE_ENV === 'development') {
@@ -87,11 +93,11 @@ async function startServer() {
       
       // Afficher les avertissements
       if (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'your-secret-key-change-in-production') {
-        console.warn('\n⚠️  ATTENTION: JWT_SECRET n\'est pas configuré correctement !');
+        logger.warn('\n⚠️  ATTENTION: JWT_SECRET n\'est pas configuré correctement !');
       }
       
       if (process.env.NODE_ENV === 'production' && !process.env.BASE_URL) {
-        console.warn('⚠️  ATTENTION: BASE_URL n\'est pas configuré pour la production !');
+        logger.warn('⚠️  ATTENTION: BASE_URL n\'est pas configuré pour la production !');
       }
     });
     
@@ -103,11 +109,11 @@ async function startServer() {
       
       switch (error.code) {
         case 'EACCES':
-          console.error(`❌ Le port ${PORT} nécessite des privilèges élevés`);
+          logger.error(`❌ Le port ${PORT} nécessite des privilèges élevés`);
           process.exit(1);
           break;
         case 'EADDRINUSE':
-          console.error(`❌ Le port ${PORT} est déjà utilisé`);
+          logger.error(`❌ Le port ${PORT} est déjà utilisé`);
           process.exit(1);
           break;
         default:
@@ -116,7 +122,7 @@ async function startServer() {
     });
     
   } catch (error) {
-    console.error('❌ Erreur fatale lors du démarrage:', error);
+    logger.error('❌ Erreur fatale lors du démarrage:', error);
     process.exit(1);
   }
 }
@@ -126,13 +132,13 @@ const nodeVersion = process.versions.node;
 const majorVersion = parseInt(nodeVersion.split('.')[0]);
 
 if (majorVersion < 14) {
-  console.error(`❌ Node.js version ${nodeVersion} détectée.`);
-  console.error('   Cette application nécessite Node.js 14.0.0 ou supérieur.');
+  logger.error(`❌ Node.js version ${nodeVersion} détectée.`);
+  logger.error('   Cette application nécessite Node.js 14.0.0 ou supérieur.');
   process.exit(1);
 }
 
 // Démarrer le serveur
 startServer().catch(error => {
-  console.error('❌ Impossible de démarrer le serveur:', error);
+  logger.error('❌ Impossible de démarrer le serveur:', error);
   process.exit(1);
 });

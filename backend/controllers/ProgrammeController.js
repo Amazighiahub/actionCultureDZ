@@ -597,6 +597,133 @@ class ProgrammeController {
   }
 
   // ========================================================================
+  // MÉTHODES SUPPLÉMENTAIRES
+  // ========================================================================
+
+  // Dupliquer un programme
+  async duplicateProgramme(req, res) {
+    const transaction = await this.sequelize.transaction();
+
+    try {
+      const lang = req.lang || 'fr';
+      const { id } = req.params;
+
+      const programme = await this.models.Programme.findByPk(id, {
+        include: [{ model: this.models.Evenement }]
+      });
+
+      if (!programme) {
+        await transaction.rollback();
+        return res.status(404).json({
+          success: false,
+          error: 'Programme non trouvé'
+        });
+      }
+
+      // Vérifier les permissions
+      if (programme.Evenement.id_user !== req.user.id_user && !req.user.isAdmin) {
+        await transaction.rollback();
+        return res.status(403).json({
+          success: false,
+          error: 'Accès refusé'
+        });
+      }
+
+      // Créer la copie
+      const newProgramme = await this.models.Programme.create({
+        titre: programme.titre,
+        description: programme.description,
+        id_evenement: programme.id_evenement,
+        id_lieu: programme.id_lieu,
+        lieu_specifique: programme.lieu_specifique,
+        ordre: await this.getNextOrdre(programme.id_evenement),
+        statut: 'planifie',
+        type_activite: programme.type_activite,
+        duree_estimee: programme.duree_estimee,
+        nb_participants_max: programme.nb_participants_max,
+        materiel_requis: programme.materiel_requis,
+        notes_organisateur: programme.notes_organisateur
+      }, { transaction });
+
+      await transaction.commit();
+
+      const programmeComplet = await this.getProgrammeComplet(newProgramme.id_programme);
+
+      res.status(201).json({
+        success: true,
+        message: 'Programme dupliqué avec succès',
+        data: translateDeep(programmeComplet, lang)
+      });
+
+    } catch (error) {
+      await transaction.rollback();
+      console.error('Erreur lors de la duplication:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur serveur'
+      });
+    }
+  }
+
+  // Réorganiser l'ordre des programmes
+  async reorderProgrammes(req, res) {
+    const transaction = await this.sequelize.transaction();
+
+    try {
+      const { evenementId } = req.params;
+      const { programmes } = req.body;
+
+      // Vérifier l'événement
+      const evenement = await this.models.Evenement.findByPk(evenementId);
+      if (!evenement) {
+        await transaction.rollback();
+        return res.status(404).json({
+          success: false,
+          error: 'Événement non trouvé'
+        });
+      }
+
+      // Vérifier les permissions
+      if (evenement.id_user !== req.user.id_user && !req.user.isAdmin) {
+        await transaction.rollback();
+        return res.status(403).json({
+          success: false,
+          error: 'Accès refusé'
+        });
+      }
+
+      // Mettre à jour l'ordre de chaque programme
+      for (const item of programmes) {
+        await this.models.Programme.update(
+          { ordre: item.ordre },
+          {
+            where: {
+              id_programme: item.id,
+              id_evenement: evenementId
+            },
+            transaction
+          }
+        );
+      }
+
+      await transaction.commit();
+
+      res.json({
+        success: true,
+        message: 'Ordre des programmes mis à jour'
+      });
+
+    } catch (error) {
+      await transaction.rollback();
+      console.error('Erreur lors de la réorganisation:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur serveur'
+      });
+    }
+  }
+
+  // ========================================================================
   // MÉTHODES UTILITAIRES
   // ========================================================================
 

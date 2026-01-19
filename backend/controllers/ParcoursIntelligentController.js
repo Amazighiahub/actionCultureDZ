@@ -279,16 +279,26 @@ class ParcoursIntelligentController {
 
   async rechercherSitesProximite(lat, lng, rayon, types) {
     try {
+      // Sécurité: Convertir explicitement en nombres pour éviter toute injection SQL
+      const safeLat = parseFloat(lat);
+      const safeLng = parseFloat(lng);
+      const safeRayon = parseFloat(rayon);
+      
+      if (isNaN(safeLat) || isNaN(safeLng) || isNaN(safeRayon)) {
+        console.error('Paramètres de géolocalisation invalides');
+        return [];
+      }
+
       const sites = await this.models.Lieu.findAll({
         attributes: {
           include: [
             [
               this.sequelize.literal(`
                 (6371 * acos(
-                  cos(radians(${lat})) * 
+                  cos(radians(${safeLat})) * 
                   cos(radians(latitude)) * 
-                  cos(radians(longitude) - radians(${lng})) + 
-                  sin(radians(${lat})) * 
+                  cos(radians(longitude) - radians(${safeLng})) + 
+                  sin(radians(${safeLat})) * 
                   sin(radians(latitude))
                 ))
               `),
@@ -309,7 +319,7 @@ class ParcoursIntelligentController {
           { model: this.models.LieuMedia },
           { model: this.models.Service }
         ],
-        having: this.sequelize.literal(`distance <= ${rayon}`),
+        having: this.sequelize.literal(`distance <= ${safeRayon}`),
         order: [[this.sequelize.literal('distance'), 'ASC']]
       });
 

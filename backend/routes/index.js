@@ -24,6 +24,7 @@ const initIntervenantRoutes = require('./intervenantRoutes');
 const initServiceRoutes = require('./servicesRoutes');
 const initSignalementRoutes  = require('./signalementRoutes')
 const initTrackingRoutes = require('./trackingRoutes');
+const initEmailVerificationRoutes = require('./emailVerificationRoutes');
 // CORRECTION: Les routes admin sont dans le dossier admin/
 const initAdminOeuvresRoutes = require('./admin/adminOeuvresRoutes');
 const initAdminEvenementsRoutes = require('./admin/adminEvenementsRoutes');
@@ -235,6 +236,67 @@ const initRoutes = (models, authMiddleware) => {
   // ROUTES SYSTÈME
   // ========================================================================
 
+  // Route des statistiques publiques pour la page d'accueil (hero section)
+  router.get('/stats/public', async (req, res) => {
+    try {
+      const { Lieu, Evenement, Oeuvre, User, Artisanat } = models;
+      
+      // Compter les sites patrimoniaux (lieux)
+      const sitesPatrimoniaux = Lieu ? await Lieu.count() : 0;
+      
+      // Compter les événements actifs (planifiés ou en cours)
+      const evenementsActifs = Evenement ? await Evenement.count({
+        where: {
+          statut: ['planifie', 'en_cours']
+        }
+      }) : 0;
+      
+      // Compter toutes les œuvres
+      const oeuvres = Oeuvre ? await Oeuvre.count() : 0;
+      
+      // Compter les artisanats
+      const artisanats = Artisanat ? await Artisanat.count() : 0;
+      
+      // Compter les membres (utilisateurs actifs)
+      const membres = User ? await User.count({
+        where: {
+          statut: 'actif'
+        }
+      }) : 0;
+
+      // Formater les nombres pour l'affichage
+      const formatStat = (num) => {
+        if (num >= 10000) return Math.floor(num / 1000) + 'k+';
+        if (num >= 1000) return (num / 1000).toFixed(1).replace('.0', '') + 'k+';
+        if (num >= 100) return Math.floor(num / 100) * 100 + '+';
+        if (num >= 10) return Math.floor(num / 10) * 10 + '+';
+        return num.toString();
+      };
+
+      res.json({
+        success: true,
+        data: {
+          sites_patrimoniaux: sitesPatrimoniaux,
+          sites_patrimoniaux_formatted: formatStat(sitesPatrimoniaux),
+          evenements: evenementsActifs,
+          evenements_formatted: formatStat(evenementsActifs),
+          oeuvres: oeuvres + artisanats,
+          oeuvres_formatted: formatStat(oeuvres + artisanats),
+          membres: membres,
+          membres_formatted: formatStat(membres)
+        },
+        cached: false,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Erreur stats publiques:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur lors de la récupération des statistiques'
+      });
+    }
+  });
+
   // Route de santé
   router.get('/health', async (req, res) => {
     try {
@@ -409,6 +471,7 @@ const initRoutes = (models, authMiddleware) => {
           // NOUVELLES ROUTES
   tracking: typeof initTrackingRoutes === 'function' ? '✅ Chargé' : '❌ Non chargé',
   signalements: typeof initSignalementRoutes === 'function' ? '✅ Chargé' : '❌ Non chargé',
+        emailVerification: typeof initEmailVerificationRoutes === 'function' ? '✅ Chargé' : '❌ Non chargé',
         // Routes admin
         'admin/oeuvres': typeof initAdminOeuvresRoutes === 'function' ? '✅ Chargé' : '❌ Non chargé',
         'admin/evenements': typeof initAdminEvenementsRoutes === 'function' ? '✅ Chargé' : '❌ Non chargé',
@@ -477,6 +540,7 @@ const initRoutes = (models, authMiddleware) => {
     { path: '/dashboard', init: initDashboardRoutes, args: [models] },
     { path: '/tracking', init: initTrackingRoutes, args: [models, authMiddleware] },
     { path: '/signalements', init: initSignalementRoutes, args: [models, authMiddleware] },
+    { path: '/email-verification', init: initEmailVerificationRoutes, args: [models, authMiddleware] },
     // ========================================================================
     // ROUTES ADMIN - AJOUT
     // ========================================================================

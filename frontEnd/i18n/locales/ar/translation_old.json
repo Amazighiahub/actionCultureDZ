@@ -1,0 +1,1641 @@
+{
+  "accessibility": {
+    "feedback": {
+      "error": "خطأ",
+      "info": "معلومات",
+      "loading": "جاري التحميل",
+      "success": "نجاح",
+      "warning": "تحذير"
+    },
+    "images": {
+      "avatar": "صورة الملف الشخصي",
+      "cover": "صورة الغلاف",
+      "gallery": "معرض الصور",
+      "hero": "صورة توضيحية",
+      "logo": "شعار تمليليت ثقافة",
+      "thumbnail": "صورة مصغرة"
+    },
+    "links": {
+      "download": "تحميل {{filename}}",
+      "external": "رابط خارجي (يفتح في علامة تبويب جديدة)"
+    },
+    "navigation": {
+      "closeMenu": "إغلاق القائمة",
+      "closeModal": "إغلاق النافذة المنبثقة",
+      "darkMode": "الوضع المظلم",
+      "language": "تغيير اللغة",
+      "lightMode": "الوضع المضيء",
+      "openMenu": "فتح القائمة",
+      "skipToContent": "الانتقال إلى المحتوى الرئيسي",
+      "skipToNav": "الانتقال إلى التنقل",
+      "toggleTheme": "تبديل المظهر"
+    },
+    "pagination": {
+      "current": "الصفحة الحالية، صفحة {{page}}",
+      "first": "الصفحة الأولى",
+      "last": "الصفحة الأخيرة",
+      "next": "الصفحة التالية",
+      "page": "الصفحة {{page}}",
+      "previous": "الصفحة السابقة"
+    },
+    "sorting": {
+      "asc": "ترتيب تصاعدي",
+      "desc": "ترتيب تنازلي",
+      "sortBy": "ترتيب حسب {{field}}"
+    }
+  },
+  "actions": {
+    "addComment": "إضافة تعليق",
+    "addToFavorites": "إضافة إلى المفضلة",
+    "apply": "تطبيق",
+    "cancel": "إلغاء",
+    "clear": "مسح",
+    "close": "إغلاق",
+    "collapse": "طي",
+    "comment": "تعليق",
+    "continue": "استمر",
+    "copyLink": "نسخ الرابط",
+    "discover": "اكتشف",
+    "download": "تحميل",
+    "downloadPdf": "تحميل PDF",
+    "expand": "توسيع",
+    "explore": "استكشف",
+    "goBack": "رجوع",
+    "goBackTo": "الرجوع إلى {{destination}}",
+    "hide": "إخفاء",
+    "listenPreview": "الاستماع إلى مقتطف",
+    "loadMore": "تحميل المزيد",
+    "open": "فتح",
+    "pause": "إيقاف مؤقت",
+    "play": "تشغيل",
+    "print": "طباعة",
+    "readArticle": "قراءة المقال",
+    "readExtract": "قراءة مقتطف",
+    "readMore": "اقرأ المزيد",
+    "recommend": "توصية",
+    "refresh": "تحديث",
+    "removeFromFavorites": "إزالة من المفضلة",
+    "reply": "رد",
+    "report": "إبلاغ",
+    "reset": "إعادة تعيين",
+    "retry": "إعادة المحاولة",
+    "seeAll": "رؤية الكل",
+    "send": "إرسال",
+    "sending": "جاري الإرسال...",
+    "share": "مشاركة",
+    "show": "عرض",
+    "showLess": "عرض أقل",
+    "showMore": "عرض المزيد",
+    "start": "ابدأ",
+    "stop": "إيقاف",
+    "viewAll": "عرض الكل",
+    "viewDetails": "عرض التفاصيل",
+    "viewMore": "عرض المزيد",
+    "viewWork": "عرض العمل",
+    "watchTrailer": "مشاهدة المقطع الدعائي",
+    "writeReview": "كتابة تقييم"
+  },
+  "admin": {
+    "actions": {
+      "approve": "موافقة",
+      "bulkAction": "إجراء جماعي",
+      "export": "تصدير",
+      "import": "استيراد",
+      "reject": "رفض",
+      "restore": "استعادة",
+      "suspend": "تعليق",
+      "unsuspend": "إعادة تفعيل"
+    },
+    "metadata": {
+      "categories": "الفئات",
+      "languages": "اللغات",
+      "regions": "المناطق",
+      "tags": "الوسوم"
+    },
+    "sections": {
+      "content": "إدارة المحتوى",
+      "metadata": "إدارة البيانات الوصفية",
+      "moderation": "الإشراف",
+      "overview": "نظرة عامة على النظام",
+      "reports": "التقارير والتحليلات",
+      "settings": "إعدادات النظام",
+      "users": "إدارة المستخدمين",
+      "validation": "التحقق من الحسابات"
+    },
+    "stats": {
+      "metrics": {
+        "logins": "تسجيلات الدخول",
+        "registrations": "التسجيلات",
+        "reports": "البلاغات",
+        "revenue": "الإيرادات",
+        "uploads": "التحميلات"
+      },
+      "periods": {
+        "daily": "يومي",
+        "monthly": "شهري",
+        "weekly": "أسبوعي",
+        "yearly": "سنوي"
+      }
+    },
+    "userRoles": {
+      "activeUsers": "المستخدمون النشطون",
+      "admins": "المديرون",
+      "moderators": "المشرفون",
+      "newUsers": "المستخدمون الجدد",
+      "professionals": "المحترفون",
+      "totalUsers": "إجمالي المستخدمين",
+      "visitors": "الزوار"
+    }
+  },
+  "articles": {
+    "actions": {
+      "addToFavorites": "إضافة إلى المفضلة",
+      "copyLink": "نسخ الرابط",
+      "downloadPdf": "تحميل PDF",
+      "linkCopied": "تم نسخ الرابط!",
+      "print": "طباعة",
+      "removeFromFavorites": "إزالة من المفضلة",
+      "scrollToTop": "العودة إلى الأعلى",
+      "share": "مشاركة"
+    },
+    "back": "رجوع",
+    "backToWorks": "الرجوع إلى الأعمال",
+    "badges": {
+      "factChecked": "مُدقق",
+      "openAccess": "وصول مفتوح",
+      "peerReviewed": "مُراجع من قبل الأقران",
+      "verified": "موثق"
+    },
+    "comments": {
+      "add": "تعليق",
+      "count": "التعليقات ({{count}})",
+      "hide": "إخفاء",
+      "modal": {
+        "addTitle": "إضافة تعليق",
+        "cancel": "إلغاء",
+        "characterCount": "{{count}} / {{max}} حرف",
+        "description": "شارك رأيك حول هذا المقال",
+        "label": "تعليقك",
+        "placeholder": "اكتب تعليقك هنا...",
+        "replyTitle": "الرد على التعليق",
+        "send": "إرسال",
+        "sending": "جاري الإرسال..."
+      },
+      "noComments": "لا توجد تعليقات حتى الآن. كن أول من يعلق!",
+      "reply": "رد",
+      "show": "عرض",
+      "title": "التعليقات"
+    },
+    "contentUnavailable": "محتوى هذا المقال غير متاح بعد.",
+    "loading": "جاري تحميل المقال...",
+    "metadata": {
+      "citationApa": "الاستشهاد APA:",
+      "doi": "معرف الكائن الرقمي:",
+      "impactFactor": "معامل التأثير:",
+      "issn": "الرقم الدولي الموحد للدوريات:",
+      "number": "العدد",
+      "pages": "الصفحات",
+      "publishedIn": "منشور في",
+      "readingTime": "{{time}} دقيقة للقراءة",
+      "volume": "المجلد",
+      "wordCount": "{{count}} كلمة"
+    },
+    "notFound": "المقال غير موجود",
+    "notFoundMessage": "المقال المطلوب غير موجود.",
+    "sections": {
+      "abstract": "ملخص باللغة الإنجليزية",
+      "bibliographicInfo": "معلومات ببليوغرافية",
+      "categories": "الفئات",
+      "classification": "التصنيف",
+      "contributors": "المساهمون",
+      "principalContributor": "رئيسي",
+      "resume": "ملخص",
+      "tags": "الوسوم"
+    },
+    "title": "المقالات",
+    "types": {
+      "article": "مقال",
+      "scientificArticle": "مقال علمي"
+    }
+  },
+  "auth": {
+    "accountTypes": {
+      "professional": "محترف",
+      "professionalDesc": "لإنشاء ومشاركة أعمالك",
+      "visitor": "زائر",
+      "visitorDesc": "لاكتشاف وتقدير الثقافة"
+    },
+    "agreements": {
+      "newsletter": "أرغب في تلقي النشرة الإخبارية",
+      "terms": "أوافق على شروط الاستخدام وسياسة الخصوصية"
+    },
+    "errors": {
+      "acceptTerms": "يجب عليك قبول شروط الاستخدام",
+      "cancelled": "تم إلغاء تسجيل الدخول",
+      "emailExists": "هذا البريد الإلكتروني مستخدم بالفعل",
+      "expired": "انتهت صلاحية الرابط",
+      "generic": "خطأ في العملية",
+      "incorrect": "البريد الإلكتروني أو كلمة المرور غير صحيحة",
+      "invalidToken": "الرمز غير صالح أو منتهي الصلاحية",
+      "notFound": "لا يوجد حساب مرتبط بهذا العنوان",
+      "noToken": "لم يتم توفير رمز التحقق",
+      "passwordMismatch": "كلمات المرور غير متطابقة",
+      "passwordWeak": "يجب أن تحتوي كلمة المرور على 8 أحرف على الأقل",
+      "serverError": "تعذر الاتصال بالخادم"
+    },
+    "fields": {
+      "accountType": "نوع الحساب",
+      "bio": "التقديم (اختياري)",
+      "email": "عنوان البريد الإلكتروني",
+      "firstname": "الاسم الأول",
+      "lastname": "اللقب",
+      "organization": "المنظمة (اختياري)",
+      "password": "كلمة المرور",
+      "portfolio": "الموقع الإلكتروني / المحفظة (اختياري)"
+    },
+    "messages": {
+      "continueWith": "المتابعة مع {{provider}}",
+      "haveAccount": "لديك حساب بالفعل؟",
+      "noAccount": "ليس لديك حساب بعد؟",
+      "or": "أو",
+      "redirecting": "جاري إعادة التوجيه...",
+      "verificationSent": "تم إرسال بريد التحقق"
+    },
+    "professionalFields": {
+      "artisan": "حرفي",
+      "artist": "فنان",
+      "filmmaker": "صانع أفلام",
+      "musician": "موسيقي",
+      "organizer": "منظم فعاليات",
+      "other": "آخر",
+      "researcher": "باحث",
+      "title": "مجال النشاط",
+      "writer": "كاتب"
+    },
+    "success": {
+      "accountVerified": "تم التحقق من حسابك بنجاح!",
+      "emailSent": "تم إرسال بريد إلكتروني",
+      "emailVerified": "تم التحقق من البريد الإلكتروني بنجاح",
+      "login": "تم تسجيل الدخول بنجاح",
+      "logout": "تم تسجيل الخروج بنجاح",
+      "passwordReset": "تم إعادة تعيين كلمة المرور بنجاح",
+      "professionalPending": "سيتم التحقق من حسابك المهني خلال 48 ساعة",
+      "signup": "تم التسجيل بنجاح",
+      "verifyEmail": "يرجى التحقق من بريدك الإلكتروني لتفعيل حسابك",
+      "welcomeBack": "مرحبًا بعودتك!"
+    }
+  },
+  "categories": {
+    "heritageTypes": {
+      "bridge": "جسر",
+      "citadel": "قلعة تاريخية",
+      "colonial": "العمارة الاستعمارية",
+      "islamic": "العمارة الإسلامية",
+      "museum": "متحف",
+      "nationalPark": "حديقة وطنية",
+      "roman": "موقع روماني"
+    },
+    "regions": {
+      "algiers": "الجزائر",
+      "allRegions": "جميع المناطق",
+      "aures": "الأوراس",
+      "constantine": "قسنطينة",
+      "ghardaia": "غرداية",
+      "hoggar": "الهقار",
+      "kabylie": "منطقة القبائل",
+      "mzab": "مزاب",
+      "oran": "وهران",
+      "sahara": "الصحراء",
+      "tlemcen": "تلمسان"
+    },
+    "workTypes": {
+      "album": "ألبوم",
+      "art": "أعمال فنية",
+      "article": "مقال",
+      "articles": "مقالات",
+      "arts": "أعمال فنية",
+      "artwork": "عمل فني",
+      "artworks": "أعمال فنية",
+      "book": "كتاب",
+      "books": "كتب",
+      "cinema": "السينما",
+      "film": "فيلم",
+      "films": "أفلام",
+      "literature": "الأدب",
+      "music": "الموسيقى",
+      "musicalAlbum": "ألبوم موسيقي",
+      "musicalAlbums": "ألبومات موسيقية",
+      "painting": "لوحة",
+      "photography": "تصوير فوتوغرافي",
+      "scientificArticle": "مقال علمي",
+      "scientificArticles": "مقالات علمية",
+      "sculpture": "منحوتة"
+    }
+  },
+  "common": {
+    "aboutItem": "حول {{item}}",
+    "add": "إضافة",
+    "address": "العنوان",
+    "alerts": {
+      "success": {
+        "commentAdded": "تمت إضافة التعليق بنجاح",
+        "commentError": "خطأ في إضافة التعليق",
+        "favoriteAdded": "تمت الإضافة إلى المفضلة",
+        "favoriteRemoved": "تمت الإزالة من المفضلة",
+        "linkCopied": "تم نسخ الرابط!"
+      }
+    },
+    "all": "الكل",
+    "allItems": "جميع {{items}}",
+    "and": "و",
+    "at": "في",
+    "back": "رجوع",
+    "backTo": "الرجوع إلى {{destination}}",
+    "backToHome": "الرجوع إلى الصفحة الرئيسية",
+    "cancel": "إلغاء",
+    "close": "إغلاق",
+    "comment": "تعليق",
+    "confirm": "تأكيد",
+    "confirmPassword": "تأكيد كلمة المرور",
+    "continue": "استمر",
+    "create": "إنشاء",
+    "currency": "دج",
+    "dashboard": "لوحة التحكم",
+    "date": "التاريخ",
+    "delete": "حذف",
+    "details": "التفاصيل",
+    "discover": "اكتشف",
+    "download": "تحميل",
+    "duration": "المدة",
+    "edit": "تعديل",
+    "email": "البريد الإلكتروني",
+    "error": "خطأ",
+    "explore": "استكشف",
+    "favorite": "المفضلة",
+    "filter": "تصفية",
+    "filters": "عوامل التصفية",
+    "firstname": "الاسم الأول",
+    "for": "لـ",
+    "forgotPassword": "نسيت كلمة المرور؟",
+    "formatting": {
+      "and": "و",
+      "at": "في",
+      "by": "بواسطة",
+      "colon": ":",
+      "comma": "،",
+      "dash": "•",
+      "for": "لـ",
+      "from": "من",
+      "in": "في",
+      "of": "من",
+      "on": "على",
+      "or": "أو",
+      "period": ".",
+      "slash": "/",
+      "the": "ال",
+      "to": "إلى",
+      "with": "مع"
+    },
+    "free": "مجاني",
+    "from": "من",
+    "help": "مساعدة",
+    "home": "الرئيسية",
+    "in": "في",
+    "lastname": "اللقب",
+    "less": "أقل",
+    "like": "إعجاب",
+    "loading": "جاري التحميل...",
+    "loadingContent": "جاري تحميل {{content}}...",
+    "location": "الموقع",
+    "messages": "الرسائل",
+    "more": "المزيد",
+    "name": "الاسم",
+    "new": "جديد",
+    "next": "التالي",
+    "no": "لا",
+    "none": "لا شيء",
+    "notifications": "الإشعارات",
+    "of": "من",
+    "on": "على",
+    "or": "أو",
+    "password": "كلمة المرور",
+    "phone": "الهاتف",
+    "previous": "السابق",
+    "price": "السعر",
+    "profile": "الملف الشخصي",
+    "readArticle": "قراءة المقال",
+    "readExtract": "قراءة مقتطف",
+    "rememberMe": "تذكرني",
+    "reply": "رد",
+    "resetPassword": "إعادة تعيين كلمة المرور",
+    "results": {
+      "found": "تم العثور على {{count}} نتيجة",
+      "found_plural": "تم العثور على {{count}} نتائج",
+      "multiple": "{{count}} نتائج",
+      "noMatch": "لا يوجد {{type}} يطابق معاييرك",
+      "noMatchSearch": "لا يوجد {{type}} يطابق بحثك \"{{query}}\"",
+      "none": "لا توجد نتائج",
+      "showing": "عرض النتائج",
+      "single": "{{count}} نتيجة"
+    },
+    "retrying": "جاري إعادة المحاولة...",
+    "save": "حفظ",
+    "searchBy": "البحث حسب {{criteria}}...",
+    "searchIn": "البحث في {{context}}...",
+    "send": "إرسال",
+    "sending": "جاري الإرسال...",
+    "settings": "الإعدادات",
+    "share": "مشاركة",
+    "shareOn": "مشاركة على {{platform}}",
+    "sort": "ترتيب",
+    "sortBy": "ترتيب حسب",
+    "start": "ابدأ",
+    "subtitle": "العنوان الفرعي",
+    "the": "ال",
+    "theme": "المظهر",
+    "time": "الوقت",
+    "title": "العنوان",
+    "to": "إلى",
+    "update": "تحديث",
+    "upload": "رفع",
+    "username": "اسم المستخدم",
+    "view": "عرض",
+    "viewItem": "عرض {{item}}",
+    "website": "الموقع الإلكتروني",
+    "with": "مع",
+    "yes": "نعم"
+  },
+  "components": {
+    "contributors": {
+      "character": "الشخصية",
+      "externalContributor": "مساهم خارجي",
+      "mainContributors": "المساهمون الرئيسيون",
+      "noContributors": "لم يتم تحديد أي مساهمين",
+      "otherContributors": "المساهمون الآخرون",
+      "principal": "رئيسي",
+      "registeredMember": "عضو مسجل",
+      "role": "الدور",
+      "title": "المساهمون"
+    },
+    "hero": {
+      "album": "الألبوم",
+      "back": "رجوع",
+      "browse": "تصفح",
+      "by": "بواسطة",
+      "duration": "دقيقة",
+      "favorites": "المفضلة",
+      "free": "مجاني",
+      "listenNow": "استمع الآن",
+      "metadata": {
+        "isbn": "الرقم الدولي المعياري للكتاب:",
+        "language": "اللغة:",
+        "listens": "الاستماعات",
+        "pages": "الصفحات:",
+        "readingTime": "وقت القراءة",
+        "reviews": "التقييمات",
+        "views": "المشاهدات:"
+      },
+      "myList": "قائمتي",
+      "readExtract": "قراءة مقتطف",
+      "readNow": "اقرأ الآن",
+      "synopsis": "الملخص",
+      "tracks": "المقطوعات",
+      "types": {
+        "artwork": "عمل فني",
+        "book": "كتاب",
+        "film": "فيلم",
+        "music": "ألبوم"
+      },
+      "watchNow": "شاهد الآن",
+      "watchTrailer": "المقطع الدعائي"
+    },
+    "interventEditor": {
+      "editors": {
+        "added": "الناشرون المضافون",
+        "createNew": "إنشاء ناشر جديد",
+        "isbn": "الرقم الدولي المعياري للكتاب",
+        "isbnPlaceholder": "978-...",
+        "notFound": "لم يتم العثور على ناشر لـ \"{{query}}\"",
+        "pricePlaceholder": "السعر بالدينار الجزائري",
+        "role": "الدور",
+        "roles": {
+          "coEditor": "الناشر المشارك",
+          "distributor": "الموزع",
+          "mainEditor": "الناشر الرئيسي",
+          "originalEditor": "الناشر الأصلي",
+          "translationEditor": "ناشر الترجمة"
+        },
+        "salePrice": "سعر البيع",
+        "searchEditor": "البحث عن ناشر",
+        "searchPlaceholder": "البحث بالاسم أو المدينة...",
+        "status": "الحالة",
+        "statuses": {
+          "cancelled": "ملغى",
+          "inProgress": "قيد التنفيذ",
+          "outOfStock": "نفذت الكمية",
+          "published": "منشور"
+        },
+        "title": "الناشرون"
+      },
+      "intervenants": {
+        "added": "المتدخلون المضافون",
+        "alreadyAdded": "(مضاف بالفعل)",
+        "createNew": "إنشاء متدخل جديد",
+        "new": "جديد",
+        "notFound": "لم يتم العثور على متدخل لـ \"{{query}}\"",
+        "searchExisting": "البحث عن متدخل موجود",
+        "searchPlaceholder": "البحث بالاسم، اللقب...",
+        "selectRole": "اختر دورًا",
+        "title": "المتدخلون"
+      }
+    }
+  },
+  "dashboard": {
+    "account": {
+      "accountSettings": "إعدادات الحساب",
+      "changeEmail": "تغيير البريد الإلكتروني",
+      "changePassword": "تغيير كلمة المرور",
+      "editProfile": "تعديل الملف الشخصي",
+      "myProfile": "ملفي الشخصي",
+      "preferences": "التفضيلات",
+      "privacy": "الخصوصية",
+      "security": "الأمان",
+      "sessions": "الجلسات النشطة",
+      "twoFactor": "المصادقة الثنائية"
+    },
+    "billing": {
+      "invoices": "الفواتير",
+      "paymentMethods": "طرق الدفع",
+      "subscription": "الاشتراك",
+      "upgrade": "الترقية إلى احترافي"
+    },
+    "content": {
+      "myComments": "تعليقاتي",
+      "myDownloads": "تحميلاتي",
+      "myEvents": "فعالياتي",
+      "myFavorites": "مفضلاتي",
+      "myFollowers": "متابعيّ",
+      "myFollowing": "متابعاتي",
+      "myOrders": "طلباتي",
+      "myReviews": "تقييماتي",
+      "myWorks": "أعمالي"
+    },
+    "empty": {
+      "comments": "لم تقم بالتعليق بعد",
+      "events": "لم تقم بإنشاء أي فعالية بعد",
+      "favorites": "ليس لديك مفضلات بعد",
+      "followers": "ليس لديك متابعون بعد",
+      "works": "لم تقم بإنشاء أي عمل بعد"
+    },
+    "help": {
+      "documentation": "الوثائق",
+      "faq": "الأسئلة الشائعة",
+      "support": "الاتصال بالدعم",
+      "tutorials": "الدروس"
+    },
+    "sections": {
+      "activity": "النشاط الأخير",
+      "overview": "نظرة عامة",
+      "quickActions": "إجراءات سريعة",
+      "statistics": "الإحصائيات"
+    },
+    "stats": {
+      "charts": {
+        "audienceInsights": "رؤى الجمهور",
+        "geographicDistribution": "التوزيع الجغرافي",
+        "popularContent": "المحتوى الشائع",
+        "viewsOverTime": "تطور المشاهدات"
+      },
+      "metrics": {
+        "engagement": "التفاعل",
+        "totalComments": "إجمالي التعليقات",
+        "totalDownloads": "إجمالي التحميلات",
+        "totalLikes": "إجمالي الإعجابات",
+        "totalViews": "إجمالي المشاهدات"
+      },
+      "periods": {
+        "growth": "النمو",
+        "lastMonth": "الشهر الماضي",
+        "thisMonth": "هذا الشهر"
+      }
+    },
+    "titles": {
+      "admin": "الإدارة",
+      "professional": "لوحة التحكم الاحترافية",
+      "user": "لوحة التحكم"
+    },
+    "welcome": "مرحبًا، {{name}}"
+  },
+  "date": {
+    "days": {
+      "full": {
+        "friday": "الجمعة",
+        "monday": "الإثنين",
+        "saturday": "السبت",
+        "sunday": "الأحد",
+        "thursday": "الخميس",
+        "tuesday": "الثلاثاء",
+        "wednesday": "الأربعاء"
+      },
+      "short": {
+        "fri": "جم",
+        "mon": "إث",
+        "sat": "سب",
+        "sun": "أح",
+        "thu": "خم",
+        "tue": "ثل",
+        "wed": "أر"
+      }
+    },
+    "formats": {
+      "datetime": "{{date}} في {{time}}",
+      "long": "{{dayName}} {{day}} {{monthName}} {{year}}",
+      "medium": "{{day}} {{monthName}} {{year}}",
+      "short": "{{day}}/{{month}}/{{year}}",
+      "time": "{{hours}}:{{minutes}}",
+      "timeWithSeconds": "{{hours}}:{{minutes}}:{{seconds}}"
+    },
+    "months": {
+      "full": {
+        "april": "أبريل",
+        "august": "أغسطس",
+        "december": "ديسمبر",
+        "february": "فبراير",
+        "january": "يناير",
+        "july": "يوليو",
+        "june": "يونيو",
+        "march": "مارس",
+        "may": "مايو",
+        "november": "نوفمبر",
+        "october": "أكتوبر",
+        "september": "سبتمبر"
+      },
+      "short": {
+        "apr": "أبر",
+        "aug": "أغس",
+        "dec": "ديس",
+        "feb": "فبر",
+        "jan": "ينا",
+        "jul": "يول",
+        "jun": "يون",
+        "mar": "مار",
+        "may": "ماي",
+        "nov": "نوف",
+        "oct": "أكت",
+        "sep": "سبت"
+      }
+    },
+    "relative": {
+      "ago": "منذ {{time}}",
+      "in": "خلال {{time}}",
+      "now": "الآن",
+      "units": {
+        "day": "{{count}} يوم",
+        "day_plural": "{{count}} أيام",
+        "hour": "{{count}} ساعة",
+        "hour_plural": "{{count}} ساعات",
+        "minute": "{{count}} دقيقة",
+        "minute_plural": "{{count}} دقائق",
+        "month": "{{count}} شهر",
+        "month_plural": "{{count}} أشهر",
+        "second": "{{count}} ثانية",
+        "second_plural": "{{count}} ثواني",
+        "week": "{{count}} أسبوع",
+        "week_plural": "{{count}} أسابيع",
+        "year": "{{count}} سنة",
+        "year_plural": "{{count}} سنوات"
+      }
+    },
+    "units": {
+      "lastMonth": "الشهر الماضي",
+      "lastWeek": "الأسبوع الماضي",
+      "lastYear": "السنة الماضية",
+      "nextMonth": "الشهر القادم",
+      "nextWeek": "الأسبوع القادم",
+      "nextYear": "السنة القادمة",
+      "thisMonth": "هذا الشهر",
+      "thisWeek": "هذا الأسبوع",
+      "thisYear": "هذه السنة",
+      "today": "اليوم",
+      "tomorrow": "غدًا",
+      "yesterday": "أمس"
+    }
+  },
+  "errors": {
+    "cacheData": "اتصال محدود. عرض البيانات من الذاكرة المؤقتة.",
+    "maintenance": "الموقع تحت الصيانة. سنعود قريبًا.",
+    "operations": {
+      "deletingError": "خطأ في الحذف",
+      "downloadError": "خطأ في التحميل",
+      "loadingError": "خطأ في التحميل",
+      "savingError": "خطأ في الحفظ",
+      "uploadError": "خطأ في الرفع",
+      "validationError": "خطأ في التحقق"
+    },
+    "pages": {
+      "401": {
+        "action": "تسجيل الدخول",
+        "message": "يجب عليك تسجيل الدخول للوصول إلى هذه الصفحة.",
+        "title": "غير مصرح"
+      },
+      "403": {
+        "action": "رجوع",
+        "message": "ليس لديك الصلاحيات اللازمة للوصول إلى هذه الصفحة.",
+        "title": "وصول مرفوض"
+      },
+      "404": {
+        "action": "العودة إلى الصفحة الرئيسية",
+        "message": "عذرًا! الصفحة التي تبحث عنها غير موجودة.",
+        "title": "الصفحة غير موجودة"
+      },
+      "500": {
+        "action": "تحديث",
+        "message": "حدث خطأ. يرجى المحاولة مرة أخرى لاحقًا.",
+        "title": "خطأ في الخادم"
+      },
+      "network": {
+        "action": "إعادة المحاولة",
+        "message": "تعذر الاتصال بالخادم. تحقق من اتصالك بالإنترنت.",
+        "title": "خطأ في الشبكة"
+      }
+    },
+    "rateLimit": "طلبات كثيرة جدًا. يرجى الانتظار {{seconds}} ثانية.",
+    "sessionExpired": "انتهت صلاحية جلستك. يرجى تسجيل الدخول مرة أخرى."
+  },
+  "footer": {
+    "madeWith": "صنع بـ ❤️ في الجزائر",
+    "version": "الإصدار {{version}}"
+  },
+  "forms": {
+    "actions": {
+      "addAnother": "إضافة آخر",
+      "back": "رجوع",
+      "continue": "متابعة",
+      "preview": "معاينة",
+      "publish": "نشر",
+      "remove": "إزالة",
+      "save": "حفظ",
+      "saveDraft": "حفظ كمسودة",
+      "submit": "إرسال"
+    },
+    "help": {
+      "hints": {
+        "image": "التنسيق الموصى به: 1920x1080 بكسل، بحد أقصى 5 ميجابايت",
+        "price": "اتركه فارغًا للوصول المجاني",
+        "title": "اختر عنوانًا جذابًا ووصفيًا"
+      }
+    },
+    "sections": {
+      "classification": "التصنيف",
+      "contributors": "المساهمون",
+      "generalInfo": "معلومات عامة",
+      "location": "الموقع",
+      "media": "الوسائط",
+      "partners": "الشركاء",
+      "pricing": "التسعير",
+      "program": "البرنامج",
+      "registration": "التسجيل",
+      "schedule": "الجدولة",
+      "speakers": "المتحدثون",
+      "technicalDetails": "تفاصيل تقنية",
+      "visibility": "الرؤية"
+    }
+  },
+  "info": {
+    "beFirstToComment": "كن أول من يعلق!",
+    "noContent": "لا يوجد محتوى متاح"
+  },
+  "metadata": {
+    "contributors": {
+      "artist": "الفنان",
+      "artists": "الفنانون",
+      "author": "المؤلف",
+      "authors": "المؤلفون",
+      "character": "الشخصية",
+      "cinematography": "التصوير السينمائي",
+      "contributor": "المساهم",
+      "contributors": "المساهمون",
+      "editor": "المحرر",
+      "illustrator": "الرسام",
+      "mainRole": "الدور الرئيسي",
+      "music": "الموسيقى",
+      "notRegistered": "غير مسجل",
+      "organisation": "المنظمة",
+      "principal": "رئيسي",
+      "producer": "المنتج",
+      "registered": "مسجل",
+      "role": "الدور",
+      "screenplay": "السيناريو",
+      "translator": "المترجم"
+    },
+    "dates": {
+      "createdIn": "أنشئ في {{year}}",
+      "creationYear": "سنة الإنشاء",
+      "dateAdded": "تمت الإضافة في",
+      "lastUpdated": "آخر تحديث",
+      "publishDate": "تاريخ النشر",
+      "year": "السنة"
+    },
+    "technical": {
+      "cast": "طاقم التمثيل",
+      "dimensions": "الأبعاد",
+      "director": "المخرج",
+      "directors": "المخرجون",
+      "duration": "المدة",
+      "durationMinutes": "{{minutes}} دقيقة",
+      "genre": "النوع",
+      "isbn": "الرقم الدولي المعياري للكتاب",
+      "label": "التسمية",
+      "materials": "المواد",
+      "medium": "الوسيط",
+      "pageCount": "{{count}} صفحة",
+      "pageCount_plural": "{{count}} صفحات",
+      "pages": "عدد الصفحات",
+      "runtime": "{{hours}} ساعة {{minutes}} دقيقة",
+      "technique": "التقنية"
+    }
+  },
+  "notifications": {
+    "empty": "لا توجد إشعارات",
+    "new": "إشعار جديد",
+    "settings": {
+      "categories": {
+        "comments": "التعليقات والردود",
+        "events": "الفعاليات والتذكيرات",
+        "follows": "المتابعون الجدد",
+        "likes": "الإعجابات والمفضلات",
+        "news": "الأخبار والجديد",
+        "system": "تحديثات النظام"
+      },
+      "email": "الإشعارات عبر البريد الإلكتروني",
+      "push": "الإشعارات الفورية",
+      "title": "إعدادات الإشعارات"
+    },
+    "title": "الإشعارات",
+    "types": {
+      "comment": "علق على {{type}} الخاص بك",
+      "event": "فعالية جديدة: {{title}}",
+      "follow": "يتابعك الآن",
+      "like": "أعجب بـ {{type}} الخاص بك",
+      "mention": "ذكرك",
+      "rejection": "تم رفض طلبك",
+      "system": "إشعار النظام",
+      "validation": "تم التحقق من حسابك",
+      "welcome": "مرحبًا بك في تمليليت ثقافة!",
+      "work": "عمل جديد: {{title}}"
+    }
+  },
+  "pages": {
+    "notFound": {
+      "action": "العودة إلى الصفحة الرئيسية",
+      "errorLog": "خطأ 404: حاول المستخدم الوصول إلى مسار غير موجود:",
+      "message": "الصفحة التي تبحث عنها غير موجودة.",
+      "subtitle": "عذرا! الصفحة غير موجودة",
+      "title": "404"
+    },
+    "verifyEmail": {
+      "error": {
+        "invalidToken": "الرمز غير صالح أو منتهي الصلاحية.",
+        "serverError": "تعذر الاتصال بالخادم.",
+        "title": "خطأ في التحقق"
+      },
+      "noToken": "لم يتم توفير رمز التحقق.",
+      "success": {
+        "message": "تم التحقق من حسابك بنجاح! جاري إعادة التوجيه...",
+        "title": "تم التحقق بنجاح!"
+      },
+      "verifying": "جاري التحقق من حسابك..."
+    }
+  },
+  "pagination": {
+    "of": "من",
+    "page": "الصفحة {{current}} من {{total}}",
+    "perPage": "لكل صفحة",
+    "showing": "عرض من {{from}} إلى {{to}} من {{total}} نتيجة",
+    "to": "إلى"
+  },
+  "placeholders": {
+    "comment": "اكتب تعليقك هنا...",
+    "email": "عنوان بريدك الإلكتروني",
+    "message": "رسالتك",
+    "name": "اسمك",
+    "password": "كلمة المرور الخاصة بك",
+    "reply": "اكتب ردك هنا...",
+    "search": "بحث..."
+  },
+  "price": {
+    "currency": "دج",
+    "freeAccess": "وصول مجاني",
+    "from": "ابتداءً من {{price}}",
+    "negotiable": "السعر قابل للتفاوض",
+    "onRequest": "السعر عند الطلب",
+    "originalPrice": "السعر الأصلي",
+    "price": "السعر",
+    "range": "{{min}} - {{max}} دج",
+    "reducedPrice": "السعر المخفض",
+    "save": "وفر {{amount}} دج",
+    "upTo": "حتى {{max}} دج"
+  },
+  "professional": {
+    "financial": {
+      "balance": "الرصيد",
+      "commissions": "العمولات",
+      "payouts": "المدفوعات",
+      "sales": "المبيعات",
+      "withdraw": "سحب"
+    },
+    "metrics": {
+      "bookings": "الحجوزات",
+      "calendar": "التقويم",
+      "engagement": "التفاعل",
+      "followers": "المتابعون",
+      "following": "المتابعات",
+      "impressions": "الظهور",
+      "messages": "الرسائل",
+      "rating": "التقييم المتوسط",
+      "reach": "الوصول",
+      "reviews": "التقييمات المستلمة",
+      "views": "المشاهدات"
+    },
+    "sections": {
+      "addWork": "إضافة عمل",
+      "analytics": "التحليلات المفصلة",
+      "createEvent": "إنشاء فعالية",
+      "earnings": "الإيرادات",
+      "insights": "الرؤى",
+      "myAudience": "جمهوري",
+      "performance": "الأداء"
+    },
+    "tips": {
+      "engage": "تفاعل مع جمهورك",
+      "optimize": "حسّن عناوينك وأوصافك",
+      "promote": "روّج على وسائل التواصل الاجتماعي",
+      "quality": "أعط الأولوية للجودة",
+      "regular": "انشر بانتظام",
+      "title": "نصائح احترافية"
+    },
+    "tools": {
+      "analytics": "التحليلات المتقدمة",
+      "newsletter": "النشرة الإخبارية",
+      "promotion": "الترويج",
+      "seo": "تحسين محركات البحث",
+      "socialMedia": "وسائل التواصل الاجتماعي",
+      "title": "أدوات احترافية"
+    },
+    "validation": {
+      "approved": "تم التحقق من الحساب المهني",
+      "documents": "المستندات المطلوبة",
+      "pending": "حسابك قيد التحقق",
+      "rejected": "تم رفض التحقق",
+      "requirements": "معايير التحقق",
+      "resubmit": "إعادة التقديم"
+    }
+  },
+  "sections": {
+    "about": {
+      "contact": {
+        "description": "هل لديك سؤال؟ اقتراح؟ لا تتردد في الاتصال بنا",
+        "title": "اتصل بنا"
+      },
+      "mission": {
+        "description": "الحفاظ على التراث الثقافي الجزائري وتعزيزه ونقله للأجيال القادمة مع دعم المبدعين المعاصرين.",
+        "title": "مهمتنا"
+      },
+      "partners": {
+        "description": "نعمل مع أفضل المؤسسات الثقافية",
+        "title": "شركاؤنا"
+      },
+      "press": {
+        "contact": "اتصال صحفي",
+        "kit": "المجموعة الإعلامية",
+        "releases": "البيانات الصحفية",
+        "title": "المساحة الصحفية"
+      },
+      "stats": {
+        "events": "فعاليات منظمة",
+        "partners": "شركاء ثقافيون",
+        "title": "تمليليت ثقافة بالأرقام",
+        "users": "مستخدمون نشطون",
+        "works": "أعمال مفهرسة"
+      },
+      "subtitle": "المنصة المرجعية للثقافة الجزائرية",
+      "team": {
+        "description": "فريق شغوف مكرس لتعزيز الثقافة الجزائرية",
+        "title": "فريقنا"
+      },
+      "title": "حول تمليليت ثقافة",
+      "values": {
+        "accessibility": {
+          "description": "جعل الثقافة في متناول الجميع",
+          "title": "إمكانية الوصول"
+        },
+        "authenticity": {
+          "description": "الحفاظ على سلامة تراثنا الثقافي",
+          "title": "الأصالة"
+        },
+        "community": {
+          "description": "خلق روابط بين عشاق الثقافة",
+          "title": "المجتمع"
+        },
+        "innovation": {
+          "description": "استخدام التكنولوجيا في خدمة الثقافة",
+          "title": "الابتكار"
+        },
+        "title": "قيمنا"
+      },
+      "vision": {
+        "description": "أن نصبح الجسر الرقمي بين التراث الثقافي الغني للجزائر والعالم، من خلال تسهيل الوصول إلى تراثنا وتشجيع الإبداع المعاصر.",
+        "title": "رؤيتنا"
+      }
+    },
+    "crafts": {
+      "actions": {
+        "addToCart": "إضافة إلى السلة",
+        "buyNow": "شراء الآن",
+        "contactArtisan": "الاتصال بالحرفي",
+        "quickView": "نظرة سريعة",
+        "requestQuote": "طلب عرض سعر",
+        "seeDetails": "عرض التفاصيل"
+      },
+      "attributes": {
+        "authentic": "أصيل",
+        "certified": "معتمد",
+        "customizable": "قابل للتخصيص",
+        "handmade": "صناعة يدوية",
+        "uniquePiece": "قطعة فريدة"
+      },
+      "categories": {
+        "all": "الكل",
+        "basketry": "صناعة السلال",
+        "calligraphy": "الخط",
+        "embroidery": "التطريز",
+        "jewelry": "المجوهرات",
+        "leatherwork": "الجلديات",
+        "metalwork": "الحدادة",
+        "pottery": "الفخار",
+        "weaving": "النسيج",
+        "woodwork": "النجارة"
+      },
+      "details": {
+        "artisan": "الحرفي",
+        "care": "العناية",
+        "colors": "الألوان المتاحة",
+        "customization": "خيارات التخصيص",
+        "delivery": "التوصيل",
+        "dimensions": "الأبعاد",
+        "materials": "المواد",
+        "origin": "الأصل",
+        "process": "عملية التصنيع",
+        "productionTime": "وقت الإنتاج",
+        "returns": "الإرجاع",
+        "story": "قصة المنتج",
+        "techniques": "التقنيات",
+        "tradition": "التقليد",
+        "warranty": "الضمان",
+        "weight": "الوزن",
+        "workshop": "الورشة"
+      },
+      "filters": {
+        "availability": "التوفر",
+        "colors": "الألوان",
+        "materials": "المواد",
+        "newest": "الأحدث",
+        "popular": "الشائع",
+        "priceAsc": "السعر تصاعدي",
+        "priceDesc": "السعر تنازلي",
+        "rating": "الأعلى تقييمًا",
+        "size": "الحجم",
+        "sortBy": "ترتيب حسب",
+        "techniques": "التقنيات"
+      },
+      "price": {
+        "fixed": "{{price}} دج",
+        "negotiable": "السعر قابل للتفاوض",
+        "onRequest": "السعر عند الطلب"
+      },
+      "regions": {
+        "all": "جميع المناطق",
+        "aures": "الأوراس",
+        "constantine": "قسنطينة",
+        "hoggar": "الهقار",
+        "kabylie": "منطقة القبائل",
+        "mzab": "مزاب",
+        "sahara": "الصحراء",
+        "tlemcen": "تلمسان"
+      },
+      "stock": {
+        "inStock": "{{count}} في المخزون",
+        "limitedStock": "مخزون محدود",
+        "madeToOrder": "تصنيع عند الطلب",
+        "onOrder": "عند الطلب"
+      }
+    },
+    "events": {
+      "empty": {
+        "comments": "لا توجد تعليقات حتى الآن. كن أول من يعلق!",
+        "gallery": "لا توجد صور متاحة لهذه الفعالية.",
+        "program": "البرنامج التفصيلي سيكون متاحًا قريبًا.",
+        "programItems": "لا توجد عناصر برنامج حاليًا.",
+        "speakers": "سيتم الإعلان عن المتحدثين قريبًا."
+      },
+      "filters": {
+        "accessibility": "إمكانية الوصول لذوي الاحتياجات الخاصة",
+        "allCategories": "جميع الفئات",
+        "allRegions": "جميع المناطق",
+        "allStatuses": "جميع الحالات",
+        "dateRange": "الفترة",
+        "freeOnly": "المجانية فقط",
+        "ongoing": "جارية",
+        "past": "سابقة",
+        "priceRange": "نطاق السعر",
+        "upcoming": "قادمة",
+        "withRegistration": "مع التسجيل"
+      },
+      "info": {
+        "access": "الوصول",
+        "accessibility": "إمكانية الوصول",
+        "capacity": "{{current}}/{{max}} مشارك",
+        "certificate": "سيتم منح شهادة مشاركة",
+        "freeEntry": "الدخول مجاني، لا يتطلب تسجيل",
+        "gallery": "المعرض",
+        "organizer": "المنظم",
+        "parking": "موقف سيارات متاح",
+        "partners": "الشركاء",
+        "placesAvailable": "{{count}} مكان متاح",
+        "placesAvailable_plural": "{{count}} أماكن متاحة",
+        "practicalInfo": "معلومات عملية",
+        "program": "البرنامج",
+        "publicTransport": "المواصلات العامة",
+        "speakers": "المتحدثون",
+        "sponsors": "الرعاة",
+        "venue": "المكان"
+      },
+      "registration": {
+        "closed": "التسجيل مغلق",
+        "confirmed": "تم تأكيد التسجيل",
+        "deadline": "الموعد النهائي للتسجيل",
+        "full": "ممتلئ",
+        "joinWaitingList": "انضم إلى قائمة الانتظار",
+        "register": "سجل الآن",
+        "registered": "أنت مسجل في هذه الفعالية",
+        "required": "التسجيل مطلوب",
+        "unregister": "إلغاء التسجيل",
+        "waitingList": "قائمة الانتظار"
+      },
+      "sections": {
+        "about": "حول",
+        "classification": "التصنيف",
+        "team": "فريق التنظيم",
+        "technicalDetails": "التفاصيل التقنية"
+      },
+      "similarEvents": "فعاليات مماثلة",
+      "status": {
+        "almost_full": "شبه ممتلئ",
+        "cancelled": "ملغاة",
+        "completed": "منتهية",
+        "ongoing": "جارية",
+        "planned": "قادمة",
+        "postponed": "مؤجلة",
+        "registration_closed": "التسجيل مغلق",
+        "registration_open": "التسجيل مفتوح"
+      },
+      "upcomingEvents": "الفعاليات القادمة"
+    },
+    "heritage": {
+      "errorLoading": "خطأ في تحميل المواقع",
+      "filters": {
+        "allPeriods": "جميع الفترات",
+        "allTypes": "جميع الأنواع",
+        "military": "العمارة العسكرية",
+        "natural": "المواقع الطبيعية",
+        "religious": "المواقع الدينية",
+        "unesco": "مواقع اليونسكو"
+      },
+      "loading": "جاري تحميل المواقع...",
+      "map": {
+        "actions": {
+          "currentLocation": "موقعي",
+          "exitFullscreen": "الخروج من ملء الشاشة",
+          "explore": "استكشف على الخريطة",
+          "fullscreen": "ملء الشاشة",
+          "open": "فتح الخريطة",
+          "searchLocation": "البحث عن مكان...",
+          "zoomIn": "تكبير",
+          "zoomOut": "تصغير"
+        },
+        "filters": {
+          "hideFilters": "إخفاء عوامل التصفية",
+          "reset": "إعادة تعيين عوامل التصفية",
+          "showFilters": "عرض عوامل التصفية"
+        },
+        "subtitle": "استكشف أكثر من 50 موقعًا ثقافيًا عبر الجزائر",
+        "title": "خريطة التراث التفاعلية"
+      },
+      "noSites": "لا توجد مواقع تطابق معايير البحث الخاصة بك.",
+      "periods": {
+        "ancient": "العصور القديمة",
+        "colonial": "الفترة الاستعمارية",
+        "contemporary": "المعاصر",
+        "medieval": "العصور الوسطى",
+        "ottoman": "الفترة العثمانية",
+        "prehistoric": "ما قبل التاريخ"
+      },
+      "routes": {
+        "active": "المسار النشط",
+        "difficulty": {
+          "challenging": "مغامر",
+          "custom": "مخصص",
+          "easy": "سهل",
+          "moderate": "متوسط"
+        },
+        "sites": "{{count}} موقع",
+        "sites_plural": "{{count}} مواقع",
+        "subtitle": "اختر مسارًا موضوعيًا لاكتشاف روائع التراث الجزائري",
+        "title": "مسار الاكتشاف"
+      },
+      "siteInfo": {
+        "admission": "الأسعار",
+        "audioGuide": "دليل صوتي متاح",
+        "bestTime": "أفضل فترة",
+        "bookVisit": "حجز زيارة",
+        "downloadBrochure": "تحميل الكتيب",
+        "facilities": "المرافق",
+        "gettingThere": "كيفية الوصول",
+        "guidedTours": "الجولات المرشدة",
+        "moreInfo": "مزيد من المعلومات",
+        "nearbyAttractions": "بالقرب",
+        "officialWebsite": "الموقع الرسمي",
+        "openingHours": "ساعات العمل",
+        "practicalInfo": "معلومات عملية",
+        "reviews": "آراء الزوار",
+        "virtualTour": "جولة افتراضية",
+        "visitDuration": "{{duration}}",
+        "visitors": "{{count}}/سنة"
+      },
+      "types": {
+        "berber": "العمارة الأمازيغية",
+        "citadel": "قلعة تاريخية",
+        "colonial": "العمارة الاستعمارية",
+        "islamic": "العمارة الإسلامية",
+        "modern": "نصب حديث",
+        "museum": "متحف",
+        "nationalPark": "حديقة وطنية",
+        "roman": "موقع روماني"
+      }
+    },
+    "hero": {
+      "cta": {
+        "explore": "استكشف الآن",
+        "learnMore": "اعرف المزيد"
+      },
+      "quickActions": {
+        "discover": {
+          "description": "مواقع اليونسكو والمعالم التاريخية والتقاليد",
+          "title": "اكتشف التراث"
+        },
+        "events": {
+          "description": "المهرجانات والمعارض والاحتفالات القادمة",
+          "title": "الفعاليات الثقافية"
+        },
+        "title": "وصول سريع",
+        "works": {
+          "description": "الأدب والفنون البصرية والإبداعات الرقمية",
+          "title": "الأعمال والمجموعات"
+        }
+      },
+      "subtitle": "استكشف تراثنا الغني عبر آلاف السنين من التاريخ والتقاليد الحية والتعبيرات الفنية المعاصرة",
+      "title": "اكتشف التراث الثقافي",
+      "titleHighlight": "للجزائر"
+    },
+    "works": {
+      "actions": {
+        "borrow": "استعارة",
+        "buy": "شراء",
+        "download": "تحميل",
+        "downloadEPUB": "تحميل EPUB",
+        "downloadPDF": "تحميل PDF",
+        "listen": "استماع",
+        "listenPreview": "الاستماع إلى مقتطف",
+        "read": "قراءة",
+        "readExcerpt": "قراءة مقتطف",
+        "readOnline": "قراءة أونلاين",
+        "rent": "استئجار",
+        "watch": "مشاهدة",
+        "watchTrailer": "مشاهدة المقطع الدعائي"
+      },
+      "badges": {
+        "award": "حائز على جائزة",
+        "bestseller": "الأكثر مبيعًا",
+        "exclusive": "حصري",
+        "external": "خارجي",
+        "featured": "مميز",
+        "free": "مجاني",
+        "limited": "إصدار محدود",
+        "member": "عضو",
+        "verified": "موثق"
+      },
+      "detail": {
+        "about": "حول هذا العمل",
+        "abstract": "ملخص باللغة الإنجليزية",
+        "articleType": {
+          "article": "مقال",
+          "scientificArticle": "مقال علمي"
+        },
+        "availability": {
+          "available": "متاح",
+          "comingSoon": "قريبًا",
+          "digitalOnly": "رقمي فقط",
+          "limitedAvailability": "توفر محدود",
+          "outOfStock": "نفذت الكمية",
+          "physicalOnly": "مادي فقط",
+          "preOrder": "طلب مسبق",
+          "unavailable": "غير متاح"
+        },
+        "badges": {
+          "factChecked": "مُدقق",
+          "openAccess": "وصول مفتوح",
+          "peerReviewed": "مُراجع من قبل الأقران",
+          "verified": "موثق"
+        },
+        "bibliographicInfo": "معلومات ببليوغرافية",
+        "citationApa": "الاستشهاد APA:",
+        "comment": {
+          "add": "إضافة تعليق",
+          "cancel": "إلغاء",
+          "characterCount": "{{count}} / {{max}} حرف",
+          "noComments": "لا توجد تعليقات حتى الآن. كن أول من يعلق!",
+          "placeholder": "اكتب تعليقك هنا...",
+          "reply": "الرد على التعليق",
+          "respond": "رد",
+          "send": "إرسال",
+          "sending": "جاري الإرسال...",
+          "shareOpinion": "شارك رأيك حول هذا العمل",
+          "yourComment": "تعليقك"
+        },
+        "contentUnavailable": "محتوى هذا المقال غير متاح بعد.",
+        "copyLink": "نسخ الرابط",
+        "doi": "معرف الكائن الرقمي:",
+        "downloadPdf": "تحميل PDF",
+        "errors": {
+          "backToWorks": "الرجوع إلى الأعمال",
+          "loading": "خطأ في تحميل العمل",
+          "notFound": "العمل غير موجود"
+        },
+        "extract": "مقتطف",
+        "impactFactor": "معامل التأثير:",
+        "issn": "الرقم الدولي الموحد للدوريات:",
+        "linkCopied": "تم نسخ الرابط!",
+        "loading": "جاري تحميل المقال...",
+        "metadata": {
+          "artist": "الفنان",
+          "artists": "الفنانون",
+          "cast": "طاقم التمثيل",
+          "director": "المخرج",
+          "directors": "المخرجون",
+          "duration": "المدة",
+          "edition": "الطبعة",
+          "genre": "النوع",
+          "genres": "الأنواع",
+          "isbn": "الرقم الدولي المعياري للكتاب",
+          "language": "اللغة",
+          "pageCount": "{{count}} صفحة",
+          "pageCount_plural": "{{count}} صفحات",
+          "pages": "عدد الصفحات",
+          "publishDate": "تاريخ النشر",
+          "publisher": "الناشر",
+          "runtime": "{{hours}} ساعة {{minutes}} دقيقة",
+          "year": "السنة",
+          "yearCreated": "أنشئ في {{year}}"
+        },
+        "notFound": "المقال غير موجود",
+        "notFoundMessage": "المقال المطلوب غير موجود.",
+        "number": "العدد",
+        "pages": "الصفحات",
+        "print": "طباعة",
+        "published": "منشور",
+        "publishedIn": "منشور في",
+        "readingStats": {
+          "readingTime": "{{time}} دقيقة للقراءة",
+          "wordCount": "{{count}} كلمة"
+        },
+        "related": {
+          "alsoLiked": "قد يعجبك أيضًا",
+          "artistPresentation": "تقديم الفنان",
+          "bibliography": "ببليوغرافيا المؤلف",
+          "fromSameArtist": "من نفس الفنان",
+          "fromSameAuthor": "من نفس المؤلف",
+          "fromSameDirector": "من نفس المخرج",
+          "inSameCollection": "في نفس المجموعة",
+          "inSameGenre": "في نفس النوع",
+          "otherArtworks": "أعمال فنية أخرى من المجموعة",
+          "otherWorks": "اكتشف أعمال {{type}} أخرى",
+          "recommendations": "توصيات"
+        },
+        "resume": "ملخص",
+        "sections": {
+          "about": "حول",
+          "aboutWork": "حول هذا العمل",
+          "actions": "الإجراءات",
+          "classification": "التصنيف",
+          "creationTeam": "فريق الإبداع",
+          "noDescription": "لا يوجد وصف متاح.",
+          "statistics": "الإحصائيات",
+          "technicalDetails": "التفاصيل التقنية",
+          "upcomingEvents": "الفعاليات القادمة"
+        },
+        "share": {
+          "copyLink": "نسخ الرابط",
+          "facebook": "فيسبوك",
+          "linkCopied": "تم نسخ الرابط!",
+          "twitter": "تويتر"
+        },
+        "stats": {
+          "averageRating": "التقييم المتوسط",
+          "comments": "التعليقات",
+          "downloads": "التحميلات",
+          "listens": "الاستماعات",
+          "listenTime": "مدة الاستماع",
+          "plays": "التشغيلات",
+          "rating": "{{rating}} / 5",
+          "readingTime": "وقت القراءة",
+          "reviews": "التقييمات",
+          "views": "المشاهدات",
+          "viewsPerYear": "{{count}}/سنة"
+        },
+        "summary": "الخلاصة",
+        "synopsis": "الملخص",
+        "tabs": {
+          "authorAndWorks": "المؤلف والأعمال",
+          "comments": "التعليقات",
+          "description": "الوصف"
+        },
+        "team": {
+          "author": "المؤلف",
+          "authors": "المؤلفون",
+          "contributor": "المساهم",
+          "contributors": "المساهمون",
+          "editor": "المحرر",
+          "illustrator": "الرسام",
+          "translator": "المترجم"
+        },
+        "volume": "المجلد"
+      },
+      "empty": {
+        "noOtherWorks": "لا توجد أعمال أخرى متاحة حاليًا."
+      },
+      "filters": {
+        "allGenres": "جميع الأنواع الفنية",
+        "allLanguages": "جميع اللغات",
+        "yearRange": "فترة الإنشاء"
+      },
+      "info": {
+        "featuredCount": "{{count}} عمل مميز من قبل فريقنا التحريري",
+        "newCount": "{{count}} عمل جديد تمت إضافته هذا الشهر",
+        "popularCount": "{{count}} عمل شائع (كلاسيكيات خالدة ونجاحات حديثة)",
+        "recommendedCount": "{{count}} عمل موصى به بناءً على تفضيلاتك"
+      },
+      "results": {
+        "count": "{{count}} نتيجة لـ \"{{query}}\"",
+        "count_plural": "{{count}} نتائج لـ \"{{query}}\""
+      },
+      "stats": {
+        "classics": "{{count}} كلاسيكي خالد",
+        "new": "{{count}} جديد هذا الشهر",
+        "news": "جديد",
+        "oldClassics": "كلاسيكيات",
+        "recent": "{{count}} إبداع حديث",
+        "recentWorks": "حديثة",
+        "total": "{{count}} عمل إجمالاً",
+        "works": "أعمال"
+      },
+      "types": {
+        "album": "ألبوم موسيقي",
+        "art": "أعمال فنية",
+        "article": "مقال",
+        "articles": "مقالات",
+        "book": "كتاب",
+        "cinema": "السينما",
+        "film": "فيلم",
+        "literature": "الأدب",
+        "music": "الموسيقى",
+        "painting": "لوحة",
+        "photography": "تصوير فوتوغرافي",
+        "scientific": "مقالات علمية",
+        "scientific_article": "مقال علمي",
+        "sculpture": "منحوتة"
+      }
+    }
+  },
+  "selection": {
+    "deselectAll": "إلغاء تحديد الكل",
+    "selectAll": "تحديد الكل",
+    "selected": "{{count}} محدد",
+    "selected_plural": "{{count}} محددة"
+  },
+  "status": {
+    "active": "نشط",
+    "approved": "موافق عليه",
+    "archived": "مؤرشف",
+    "available": "متاح",
+    "cancelled": "ملغى",
+    "completed": "مكتمل",
+    "connected": "متصل",
+    "deleting": "جاري الحذف...",
+    "disconnected": "غير متصل",
+    "draft": "مسودة",
+    "error": "خطأ",
+    "inactive": "غير نشط",
+    "loading": "جاري التحميل...",
+    "offline": "غير متصل",
+    "online": "متصل",
+    "pending": "قيد الانتظار",
+    "processing": "جاري المعالجة...",
+    "published": "منشور",
+    "rejected": "مرفوض",
+    "saving": "جاري الحفظ...",
+    "sending": "جاري الإرسال...",
+    "success": "نجاح",
+    "unavailable": "غير متاح",
+    "uploading": "جاري الرفع..."
+  },
+  "success": {
+    "account": {
+      "passwordChanged": "تم تغيير كلمة المرور بنجاح",
+      "profileUpdated": "تم تحديث الملف الشخصي بنجاح",
+      "registered": "تم التسجيل بنجاح",
+      "settingsSaved": "تم حفظ الإعدادات",
+      "subscribed": "تم الاشتراك بنجاح",
+      "unregistered": "تم إلغاء التسجيل بنجاح",
+      "unsubscribed": "تم إلغاء الاشتراك بنجاح"
+    },
+    "operations": {
+      "copied": "تم النسخ إلى الحافظة",
+      "created": "تم الإنشاء بنجاح",
+      "deleted": "تم الحذف بنجاح",
+      "downloaded": "تم التحميل بنجاح",
+      "saved": "تم الحفظ بنجاح",
+      "sent": "تم الإرسال بنجاح",
+      "shared": "تمت المشاركة بنجاح",
+      "updated": "تم التحديث بنجاح",
+      "uploaded": "تم الرفع بنجاح"
+    },
+    "social": {
+      "commentPosted": "تم نشر التعليق",
+      "favoriteAdded": "تمت الإضافة إلى المفضلة",
+      "favoriteRemoved": "تمت الإزالة من المفضلة",
+      "following": "أنت تتابع الآن {{name}}",
+      "reviewPosted": "تم نشر التقييم",
+      "unfollowing": "لم تعد تتابع {{name}}"
+    }
+  },
+  "tooltips": {
+    "addToFavorites": "إضافة إلى المفضلة",
+    "copyLink": "نسخ الرابط",
+    "download": "تحميل",
+    "downloadPdf": "تحميل PDF",
+    "print": "طباعة",
+    "removeFromFavorites": "إزالة من المفضلة",
+    "reply": "رد",
+    "scrollToTop": "العودة إلى الأعلى",
+    "share": "مشاركة",
+    "viewLess": "عرض أقل",
+    "viewMore": "عرض المزيد"
+  },
+  "units": {
+    "quantity": {
+      "characters": "{{count}} حرف",
+      "charactersCount": "{{count}} / {{max}} حرف",
+      "entries": "{{count}} مدخل",
+      "pages": "{{count}} صفحة",
+      "pages_plural": "{{count}} صفحات",
+      "tracks": "{{count}} مقطوعة",
+      "tracks_plural": "{{count}} مقطوعات",
+      "visitors": "{{count}} ألف/سنة",
+      "words": "{{count}} كلمة",
+      "wordsShort": "كلمة"
+    },
+    "time": {
+      "duration1to2h": "1-2 ساعة",
+      "duration30min": "30 دقيقة",
+      "hours": "ساعة",
+      "hoursReading": "{{hours}} ساعة",
+      "hoursShort": "ساعة",
+      "minReading": "{{time}} دقيقة للقراءة",
+      "minReadingShort": "دقيقة للقراءة",
+      "minutes": "دقيقة",
+      "perYear": "/سنة"
+    }
+  },
+  "validation": {
+    "email": "عنوان البريد الإلكتروني غير صالح",
+    "maxLength": "الحد الأقصى {{max}} حرف",
+    "maxValue": "القيمة القصوى هي {{max}}",
+    "minLength": "الحد الأدنى {{min}} حرف",
+    "minValue": "القيمة الدنيا هي {{min}}",
+    "optional": "اختياري",
+    "pattern": "تنسيق غير صالح",
+    "phone": "رقم الهاتف غير صالح",
+    "required": "هذا الحقل مطلوب",
+    "url": "عنوان URL غير صالح"
+  }
+}

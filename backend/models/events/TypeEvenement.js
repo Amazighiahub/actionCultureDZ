@@ -21,6 +21,19 @@ module.exports = (sequelize) => {
       allowNull: true,
       defaultValue: {},
       comment: 'Description en plusieurs langues'
+    },
+    // Configuration de soumission pour l'inscription
+    config_soumission: {
+      type: DataTypes.JSON,
+      allowNull: true,
+      defaultValue: null,
+      comment: 'Configuration du formulaire de soumission { type_oeuvre: "livre|poeme|oeuvre_art|film|musique", requis: true/false, max_soumissions: 5, champs_supplementaires: [...] }'
+    },
+    // Indique si ce type d'événement accepte des soumissions d'œuvres
+    accepte_soumissions: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      comment: 'Indique si les participants peuvent soumettre des œuvres'
     }
   }, {
     tableName: 'type_evenement',

@@ -4,6 +4,7 @@ const router = express.Router();
 const uploadService = require('../services/uploadService');
 const auditMiddleware = require('../middlewares/auditMiddleware');
 const rateLimitMiddleware = require('../middlewares/rateLimitMiddleware');
+const FileValidator = require('../utils/FileValidator');
 
 const initUploadRoutes = (models, authMiddleware) => {
   const UploadController = require('../controllers/UploadController');
@@ -52,6 +53,7 @@ const initUploadRoutes = (models, authMiddleware) => {
   router.post('/image/public',
     rateLimitMiddleware.creation,
     uploadService.uploadImage().single('image'),
+    FileValidator.uploadValidator(['image/jpeg', 'image/png', 'image/gif', 'image/webp'], 10 * 1024 * 1024),
     auditMiddleware.logAction('upload_image_public', { entityType: 'media' }),
     (req, res) => uploadController.uploadPublicImage(req, res)
   );
@@ -60,6 +62,7 @@ const initUploadRoutes = (models, authMiddleware) => {
   router.post('/document/public',
     rateLimitMiddleware.creation,
     uploadService.uploadDocument().single('document'),
+    FileValidator.uploadValidator(['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'], 50 * 1024 * 1024),
     auditMiddleware.logAction('upload_document_public', { entityType: 'media' }),
     (req, res) => uploadController.uploadPublicImage(req, res) // Réutilise la même logique
   );
@@ -73,6 +76,7 @@ const initUploadRoutes = (models, authMiddleware) => {
     authMiddleware.authenticate,
     rateLimitMiddleware.creation,
     uploadService.uploadImage().single('image'),
+    FileValidator.uploadValidator(['image/jpeg', 'image/png', 'image/gif', 'image/webp'], 10 * 1024 * 1024),
     auditMiddleware.logAction('upload_profile_photo', { entityType: 'media' }),
     (req, res) => uploadController.uploadProfilePhoto(req, res)
   );
@@ -82,6 +86,7 @@ const initUploadRoutes = (models, authMiddleware) => {
     authMiddleware.authenticate,
     rateLimitMiddleware.creation,
     uploadService.uploadImage().single('image'),
+    FileValidator.uploadValidator(['image/jpeg', 'image/png', 'image/gif', 'image/webp'], 10 * 1024 * 1024),
     auditMiddleware.logAction('upload_image', { entityType: 'media' }),
     (req, res) => uploadController.uploadImage(req, res)
   );
@@ -91,6 +96,7 @@ const initUploadRoutes = (models, authMiddleware) => {
     authMiddleware.authenticate,
     rateLimitMiddleware.creation,
     uploadService.uploadDocument().single('document'),
+    FileValidator.uploadValidator(['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'], 50 * 1024 * 1024),
     auditMiddleware.logAction('upload_document', { entityType: 'media' }),
     (req, res) => uploadController.uploadImage(req, res) // Même logique avec document
   );

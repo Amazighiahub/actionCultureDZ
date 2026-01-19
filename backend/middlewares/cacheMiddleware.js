@@ -184,28 +184,9 @@ function cleanupCache() {
 }
 
 // Nettoyer périodiquement (toutes les 5 minutes)
-setInterval(cleanupCache, 5 * 60 * 1000);
-
-module.exports = cacheMiddleware;
-
-// Nettoyer automatiquement les entrées expirées
-function cleanupCache() {
-  const now = Date.now();
-  let cleaned = 0;
-  
-  for (const [key, value] of cache.entries()) {
-    if (value.expiry <= now) {
-      cache.delete(key);
-      cleaned++;
-    }
-  }
-  
-  if (cleaned > 0) {
-    console.log(`🧹 Nettoyé ${cleaned} entrées expirées du cache`);
-  }
+const cleanupInterval = setInterval(cleanupCache, 5 * 60 * 1000);
+if (typeof cleanupInterval.unref === 'function') {
+  cleanupInterval.unref();
 }
-
-// Nettoyer périodiquement (toutes les 5 minutes)
-setInterval(cleanupCache, 5 * 60 * 1000);
 
 module.exports = cacheMiddleware;

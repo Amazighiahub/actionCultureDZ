@@ -4,6 +4,7 @@ const router = express.Router();
 const { body, param, validationResult } = require('express-validator');
 const validationMiddleware = require('../middlewares/validationMiddleware');
 const auditMiddleware = require('../middlewares/auditMiddleware');
+const { accountRateLimiter } = require('../middlewares/rateLimitMiddleware');
 
 // ⚡ Import du middleware de validation de langue
 const { validateLanguage } = require('../middlewares/language');
@@ -70,9 +71,18 @@ module.exports = (models, authMiddleware) => {
       .isEmail()
       .normalizeEmail()
       .withMessage('Email invalide'),
+    // ✅ SÉCURITÉ: Validation renforcée du mot de passe
     body('password')
-      .isLength({ min: 8 })
-      .withMessage('Le mot de passe doit contenir au moins 8 caractères'),
+      .isLength({ min: 12 })
+      .withMessage('Le mot de passe doit contenir au moins 12 caractères')
+      .matches(/[a-z]/)
+      .withMessage('Le mot de passe doit contenir au moins une lettre minuscule')
+      .matches(/[A-Z]/)
+      .withMessage('Le mot de passe doit contenir au moins une lettre majuscule')
+      .matches(/[0-9]/)
+      .withMessage('Le mot de passe doit contenir au moins un chiffre')
+      .matches(/[!@#$%^&*(),.?":{}|<>]/)
+      .withMessage('Le mot de passe doit contenir au moins un caractère spécial (!@#$%^&*...)'),
     body('id_type_user')
       .optional()
       .isInt({ min: 1, max: 13 })
@@ -109,11 +119,20 @@ module.exports = (models, authMiddleware) => {
       .withMessage('URL de photo invalide')
   ];
 
+  // ✅ SÉCURITÉ: Validation renforcée pour changement de mot de passe
   const changePasswordValidation = [
     body('current_password').notEmpty().withMessage('Mot de passe actuel requis'),
     body('new_password')
-      .isLength({ min: 8 })
-      .withMessage('Le nouveau mot de passe doit contenir au moins 8 caractères')
+      .isLength({ min: 12 })
+      .withMessage('Le nouveau mot de passe doit contenir au moins 12 caractères')
+      .matches(/[a-z]/)
+      .withMessage('Le mot de passe doit contenir au moins une lettre minuscule')
+      .matches(/[A-Z]/)
+      .withMessage('Le mot de passe doit contenir au moins une lettre majuscule')
+      .matches(/[0-9]/)
+      .withMessage('Le mot de passe doit contenir au moins un chiffre')
+      .matches(/[!@#$%^&*(),.?":{}|<>]/)
+      .withMessage('Le mot de passe doit contenir au moins un caractère spécial')
   ];
 
   // ⚡ Validation pour mise à jour de traduction
@@ -150,8 +169,9 @@ module.exports = (models, authMiddleware) => {
     (req, res) => userController.createUser(req, res)
   );
 
-  // Connexion
+  // Connexion (avec protection brute force par compte)
   router.post('/login', 
+    accountRateLimiter.checkAccountLock, // Vérifie si le compte est bloqué
     loginValidation,
     validationMiddleware.handleValidationErrors,
     auditMiddleware.logAction('user_login', { entityType: 'user' }),
@@ -163,6 +183,12 @@ module.exports = (models, authMiddleware) => {
     authMiddleware.authenticate,
     auditMiddleware.logAction('user_logout', { entityType: 'user' }),
     (req, res) => userController.logoutUser(req, res)
+  );
+
+  // ✅ NOUVEAU: Route pour rafraîchir le token d'accès
+  router.post('/refresh-token',
+    auditMiddleware.logAction('token_refresh', { entityType: 'user' }),
+    (req, res) => userController.refreshToken(req, res)
   );
 
   // Vérifier si un email existe déjà

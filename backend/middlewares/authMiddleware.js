@@ -1,30 +1,63 @@
-// middlewares/authMiddleware.js - VERSION CORRIGÉE
+// middlewares/authMiddleware.js - VERSION CORRIGÉE ET SÉCURISÉE
 // Compatible avec: createAuthMiddleware(models) OU createAuthMiddleware(User)
 const jwt = require('jsonwebtoken');
 
-// ✅ Configuration pour le mode développement
+// ============================================================================
+// VALIDATION DE SÉCURITÉ JWT
+// ============================================================================
+const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 const IS_DEV_MODE = process.env.NODE_ENV === 'development';
 const SKIP_EMAIL_VERIFICATION = process.env.SKIP_EMAIL_VERIFICATION === 'true' || IS_DEV_MODE;
+
+// Valeurs d'exemple à rejeter
+const INSECURE_SECRETS = [
+  'your-secret-key-change-in-production',
+  'votre_secret_jwt_tres_long_et_aleatoire_min_32_caracteres',
+  'secret',
+  'jwt_secret',
+  'changeme',
+  'your-secret-key'
+];
+
+// Validation du JWT_SECRET
+const validateJwtSecret = () => {
+  const secret = process.env.JWT_SECRET;
+
+  if (IS_PRODUCTION) {
+    if (!secret) {
+      throw new Error('❌ ERREUR CRITIQUE: JWT_SECRET non défini en production!');
+    }
+    if (secret.length < 32) {
+      throw new Error(`❌ ERREUR CRITIQUE: JWT_SECRET trop court (${secret.length} caractères). Minimum 32 requis en production.`);
+    }
+    if (INSECURE_SECRETS.some(s => secret.toLowerCase().includes(s.toLowerCase()))) {
+      throw new Error('❌ ERREUR CRITIQUE: JWT_SECRET contient une valeur d\'exemple non sécurisée!');
+    }
+  }
+
+  return secret || 'dev-secret-key-only-for-development';
+};
+
+// Valider au chargement du module
+const JWT_SECRET = validateJwtSecret();
 
 module.exports = (modelsOrUser) => {
   // ✅ COMPATIBILITÉ: Accepte soit models complet, soit juste User
   let User, Role, Organisation;
-  
+
   if (modelsOrUser.findByPk) {
     // C'est un modèle User directement
     User = modelsOrUser;
     Role = null;
     Organisation = null;
-    console.log('🔐 AuthMiddleware initialisé avec User seul');
+    if (!IS_PRODUCTION) console.log('🔐 AuthMiddleware initialisé avec User seul');
   } else {
     // C'est l'objet models complet
     User = modelsOrUser.User;
     Role = modelsOrUser.Role;
     Organisation = modelsOrUser.Organisation;
-    console.log('🔐 AuthMiddleware initialisé avec models complet');
+    if (!IS_PRODUCTION) console.log('🔐 AuthMiddleware initialisé avec models complet');
   }
-
-  const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
   // ====================
   // HELPERS INTERNES
@@ -121,14 +154,17 @@ module.exports = (modelsOrUser) => {
   /**
    * Middleware d'authentification principal
    * Vérifie le token JWT et charge l'utilisateur
+   * ✅ SÉCURITÉ: Priorité aux cookies httpOnly, fallback sur header Authorization
    */
   const authenticate = async (req, res, next) => {
     try {
-      // Récupérer le token
+      // ✅ SÉCURITÉ: Priorité au cookie httpOnly (plus sécurisé)
+      // Fallback sur header Authorization pour compatibilité
       const authHeader = req.headers.authorization;
-      const token = authHeader && authHeader.startsWith('Bearer ') 
-        ? authHeader.substring(7) 
-        : req.headers['x-access-token'] || req.cookies?.token;
+      const token = req.cookies?.access_token  // 1. Cookie httpOnly (prioritaire)
+        || (authHeader && authHeader.startsWith('Bearer ') ? authHeader.substring(7) : null)  // 2. Header Authorization
+        || req.headers['x-access-token']  // 3. Header legacy
+        || req.cookies?.token;  // 4. Ancien cookie (migration)
 
       if (!token) {
         return res.status(401).json({
@@ -206,13 +242,16 @@ module.exports = (modelsOrUser) => {
 
   /**
    * Middleware optionnel - Authentifie si un token est présent
+   * ✅ SÉCURITÉ: Priorité aux cookies httpOnly
    */
   const optionalAuth = async (req, res, next) => {
     try {
+      // ✅ SÉCURITÉ: Même logique que authenticate
       const authHeader = req.headers.authorization;
-      const token = authHeader && authHeader.startsWith('Bearer ') 
-        ? authHeader.substring(7) 
-        : req.headers['x-access-token'] || req.cookies?.token;
+      const token = req.cookies?.access_token
+        || (authHeader && authHeader.startsWith('Bearer ') ? authHeader.substring(7) : null)
+        || req.headers['x-access-token']
+        || req.cookies?.token;
 
       if (token) {
         const decoded = verifyToken(token);
@@ -419,6 +458,76 @@ module.exports = (modelsOrUser) => {
     };
   };
 
+  /**
+   * ✅ NOUVEAU: Vérifie si l'utilisateur est propriétaire d'une ressource
+   * @param {string} modelName - Nom du modèle (ex: 'Oeuvre', 'Evenement')
+   * @param {string} paramName - Nom du paramètre contenant l'ID (ex: 'id')
+   * @param {string} ownerField - Champ contenant l'ID du propriétaire (ex: 'saisi_par', 'id_user')
+   */
+  const requireOwnership = (modelName, paramName, ownerField) => {
+    return async (req, res, next) => {
+      try {
+        if (!req.user) {
+          return res.status(401).json({
+            success: false,
+            message: 'Authentification requise'
+          });
+        }
+
+        // Les admins passent toujours
+        if (req.user.isAdmin) {
+          return next();
+        }
+
+        const resourceId = req.params[paramName];
+        if (!resourceId) {
+          return res.status(400).json({
+            success: false,
+            message: `Paramètre ${paramName} manquant`
+          });
+        }
+
+        // Récupérer le modèle depuis modelsOrUser
+        const Model = modelsOrUser[modelName];
+        if (!Model) {
+          console.error(`❌ Modèle ${modelName} non trouvé`);
+          return res.status(500).json({
+            success: false,
+            message: 'Erreur de configuration serveur'
+          });
+        }
+
+        // Trouver la ressource
+        const resource = await Model.findByPk(resourceId);
+        if (!resource) {
+          return res.status(404).json({
+            success: false,
+            message: `${modelName} non trouvé(e)`
+          });
+        }
+
+        // Vérifier la propriété
+        const ownerId = resource[ownerField];
+        if (ownerId !== req.user.id_user) {
+          return res.status(403).json({
+            success: false,
+            message: 'Vous n\'êtes pas autorisé à modifier cette ressource'
+          });
+        }
+
+        // Ajouter la ressource à req pour éviter de la recharger
+        req.resource = resource;
+        next();
+      } catch (error) {
+        console.error('❌ Erreur requireOwnership:', error);
+        return res.status(500).json({
+          success: false,
+          message: 'Erreur lors de la vérification des droits'
+        });
+      }
+    };
+  };
+
   // ====================
   // MIDDLEWARES DE RATE LIMITING
   // ====================
@@ -478,22 +587,23 @@ module.exports = (modelsOrUser) => {
     authenticate,
     isAuthenticated,  // ✅ Alias pour app.js
     optionalAuth,
-    
+
     // Vérifications de compte
     requireVerifiedEmail,
     requireActiveAccount,
-    
+
     // Rôles
     requireRole,
     requireAdmin,
     isAdmin,          // ✅ Alias pour app.js
     requireValidatedProfessional,
     requireOwnerOrAdmin,
-    
+    requireOwnership,  // ✅ NOUVEAU: Vérification de propriété
+
     // Rate limiting
     rateLimit,
     strictRateLimit,
-    
+
     // Helpers exposés
     verifyToken,
     getUserWithRoles

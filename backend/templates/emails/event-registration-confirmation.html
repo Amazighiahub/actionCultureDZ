@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirmation d'inscription à l'événement</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; }
+        .container { max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .header { background-color: #2c3e50; color: #ffffff; padding: 40px; text-align: center; }
+        .header h1 { margin: 0; font-size: 28px; }
+        .success-icon { font-size: 48px; margin-bottom: 10px; }
+        .content { padding: 30px 40px; color: #333333; line-height: 1.6; }
+        .content p { margin: 0 0 20px; }
+        .event-details { background-color: #f8f9fa; border-radius: 8px; padding: 20px; margin: 20px 0; }
+        .event-details h3 { color: #2c3e50; margin: 0 0 15px; font-size: 18px; }
+        .event-details .detail-row { display: flex; margin-bottom: 10px; }
+        .event-details .label { font-weight: bold; color: #555; min-width: 120px; }
+        .event-details .value { color: #333; }
+        .oeuvres-section { background-color: #e8f4f8; border-radius: 8px; padding: 20px; margin: 20px 0; }
+        .oeuvres-section h4 { color: #2c3e50; margin: 0 0 10px; }
+        .oeuvres-list { list-style: none; padding: 0; margin: 0; }
+        .oeuvres-list li { padding: 8px 0; border-bottom: 1px solid #d1e7ee; }
+        .oeuvres-list li:last-child { border-bottom: none; }
+        .button { display: inline-block; background-color: #3498db; color: #ffffff; padding: 12px 25px; border-radius: 5px; text-decoration: none; font-weight: bold; margin-right: 10px; }
+        .button-secondary { background-color: #95a5a6; }
+        .qr-section { text-align: center; margin: 30px 0; padding: 20px; background-color: #fff; border: 1px dashed #ccc; border-radius: 8px; }
+        .qr-section img { max-width: 200px; height: auto; }
+        .footer { background-color: #f9f9f9; padding: 20px 40px; text-align: center; font-size: 12px; color: #777777; }
+        .important-note { background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; }
+        .contact-info { margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="success-icon">✓</div>
+            <h1>Inscription Confirmée</h1>
+        </div>
+        <div class="content">
+            <p>Bonjour {{prenom}},</p>
+            <p>Votre inscription à l'événement a été confirmée avec succès !</p>
+
+            <div class="event-details">
+                <h3>{{nomEvenement}}</h3>
+                <div class="detail-row">
+                    <span class="label">Date :</span>
+                    <span class="value">{{dateDebut}}{{#if dateFin}} - {{dateFin}}{{/if}}</span>
+                </div>
+                {{#if heureDebut}}
+                <div class="detail-row">
+                    <span class="label">Heure :</span>
+                    <span class="value">{{heureDebut}}{{#if heureFin}} - {{heureFin}}{{/if}}</span>
+                </div>
+                {{/if}}
+                {{#if lieu}}
+                <div class="detail-row">
+                    <span class="label">Lieu :</span>
+                    <span class="value">{{lieu}}</span>
+                </div>
+                {{/if}}
+                {{#if adresse}}
+                <div class="detail-row">
+                    <span class="label">Adresse :</span>
+                    <span class="value">{{adresse}}</span>
+                </div>
+                {{/if}}
+                {{#if typeEvenement}}
+                <div class="detail-row">
+                    <span class="label">Type :</span>
+                    <span class="value">{{typeEvenement}}</span>
+                </div>
+                {{/if}}
+                {{#if nombrePersonnes}}
+                <div class="detail-row">
+                    <span class="label">Personnes :</span>
+                    <span class="value">{{nombrePersonnes}}</span>
+                </div>
+                {{/if}}
+                {{#if reference}}
+                <div class="detail-row">
+                    <span class="label">Référence :</span>
+                    <span class="value"><strong>{{reference}}</strong></span>
+                </div>
+                {{/if}}
+            </div>
+
+            {{#if oeuvresSoumises}}
+            <div class="oeuvres-section">
+                <h4>Vos œuvres soumises ({{nombreOeuvres}})</h4>
+                <ul class="oeuvres-list">
+                    {{#each oeuvresSoumises}}
+                    <li>📚 {{this.titre}}</li>
+                    {{/each}}
+                </ul>
+                <p style="margin-top: 15px; font-size: 13px; color: #666;">
+                    L'organisateur examinera vos soumissions et vous tiendra informé(e).
+                </p>
+            </div>
+            {{/if}}
+
+            {{#if qrCodeUrl}}
+            <div class="qr-section">
+                <p><strong>Votre billet d'entrée</strong></p>
+                <img src="{{qrCodeUrl}}" alt="QR Code d'entrée" />
+                <p style="font-size: 12px; color: #666; margin-top: 10px;">
+                    Présentez ce QR code à l'entrée de l'événement
+                </p>
+            </div>
+            {{/if}}
+
+            {{#if isPaid}}
+            <div class="important-note">
+                <strong>Paiement requis</strong><br>
+                Total : {{montantTotal}}<br>
+                {{#if paymentInstructions}}
+                {{paymentInstructions}}
+                {{/if}}
+            </div>
+            {{/if}}
+
+            <p style="text-align: center; margin-top: 30px;">
+                <a href="{{eventUrl}}" class="button">Voir l'événement</a>
+                {{#if calendarUrl}}
+                <a href="{{calendarUrl}}" class="button button-secondary">Ajouter au calendrier</a>
+                {{/if}}
+            </p>
+
+            <div class="contact-info">
+                <p><strong>Des questions ?</strong></p>
+                {{#if contactEmail}}
+                <p>Email : <a href="mailto:{{contactEmail}}">{{contactEmail}}</a></p>
+                {{/if}}
+                {{#if contactTelephone}}
+                <p>Téléphone : {{contactTelephone}}</p>
+                {{/if}}
+            </div>
+        </div>
+        <div class="footer">
+            <p>Cet email est envoyé automatiquement suite à votre inscription.</p>
+            <p>© 2025 Action Culture. Tous droits réservés.</p>
+        </div>
+    </div>
+</body>
+</html>

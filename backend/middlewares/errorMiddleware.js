@@ -1,3 +1,6 @@
+const AppError = require('../utils/AppError');
+const logger = require('../utils/logger');
+
 const errorMiddleware = {
   // Gestionnaire d'erreurs 404
   notFound: (req, res, next) => {
@@ -39,6 +42,13 @@ const errorMiddleware = {
       '/robots.txt'
     ].some(path => req.originalUrl.startsWith(path));
     
+    // If it's an AppError, use its structured format
+    if (error instanceof AppError) {
+      const payload = error.toJSON();
+      logger.warn('AppError: %o', payload);
+      return res.status(error.statusCode).json(payload);
+    }
+
     let statusCode = error.status || error.statusCode || 500;
     let message = error.message || 'Erreur interne du serveur';
 
@@ -83,7 +93,7 @@ const errorMiddleware = {
     if (error.name === 'SequelizeDatabaseError') {
       statusCode = 500;
       message = 'Erreur de base de données';
-      console.error('Erreur de base de données:', error);
+      logger.error('Erreur de base de données: %o', error);
     }
 
     // Erreurs JWT
@@ -99,7 +109,7 @@ const errorMiddleware = {
 
     // Log de l'erreur en développement (sauf pour les 404 sur chemins ignorés)
     if (process.env.NODE_ENV === 'development' && !(statusCode === 404 && isIgnoredPath)) {
-      console.error('Erreur:', error);
+      logger.error('Erreur: %o', error);
     }
 
     res.status(statusCode).json({

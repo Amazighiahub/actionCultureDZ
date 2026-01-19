@@ -30,6 +30,17 @@ module.exports = (sequelize) => {
       defaultValue: 0,
       comment: 'Ordre de passage des intervenants'
     },
+    // ✅ AJOUT: Heures spécifiques par intervenant
+    heure_debut_intervention: {
+      type: DataTypes.TIME,
+      allowNull: true,
+      comment: 'Heure de début de l\'intervention'
+    },
+    heure_fin_intervention: {
+      type: DataTypes.TIME,
+      allowNull: true,
+      comment: 'Heure de fin de l\'intervention'
+    },
     duree_intervention: {
       type: DataTypes.INTEGER,
       comment: 'Durée d\'intervention en minutes'

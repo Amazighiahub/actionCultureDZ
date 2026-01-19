@@ -52,5 +52,10 @@ module.exports = (sequelize) => {
       },]
   });
 
+  // Associations
+  QRCode.associate = (models) => {
+    QRCode.belongsTo(models.Lieu, { foreignKey: 'id_lieu' });
+  };
+
   return QRCode;
 };

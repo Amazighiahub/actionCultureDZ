@@ -10,33 +10,32 @@ console.log('🔐 Génération d\'un JWT_SECRET sécurisé...\n');
 
 const secret = generateSecret();
 
-console.log('Ajoutez cette ligne à votre fichier .env :');
-console.log('─'.repeat(80));
-console.log(`JWT_SECRET=${secret}`);
-console.log('─'.repeat(80));
-
-console.log('\n⚠️  IMPORTANT :');
-console.log('- Ne partagez JAMAIS ce secret');
-console.log('- Ne le committez PAS dans git');
-console.log('- Changez-le régulièrement en production');
-console.log('- Utilisez un secret différent par environnement\n');
-
-// Vérifier si .env existe
 const fs = require('fs');
 const path = require('path');
+const logger = require('../utils/logger');
 
-const envPath = path.join(__dirname, '.env');
+// Écrire le secret dans .env si présent et non défini
+const envPath = path.join(__dirname, '..', '.env');
 if (fs.existsSync(envPath)) {
-  console.log('📄 Fichier .env détecté');
-  
   const envContent = fs.readFileSync(envPath, 'utf8');
   if (envContent.includes('JWT_SECRET=')) {
-    console.log('⚠️  JWT_SECRET existe déjà dans .env');
-    console.log('   Remplacez-le manuellement si nécessaire');
+    logger.warn('⚠️  JWT_SECRET existe déjà dans .env — aucune modification effectuée');
+    logger.info('Si vous souhaitez remplacer le secret, modifiez .env manuellement.');
   } else {
-    console.log('✅ Vous pouvez ajouter le JWT_SECRET à votre .env');
+    fs.appendFileSync(envPath, `\nJWT_SECRET=${secret}\n`);
+    logger.info('✅ JWT_SECRET ajouté à votre fichier .env (ne le committez pas)');
   }
 } else {
-  console.log('❌ Fichier .env non trouvé');
-  console.log('   Créez-le d\'abord avec : cp .env.example .env');
+  // Créer un .env.example si besoin
+  const examplePath = path.join(__dirname, '..', '.env.example');
+  if (fs.existsSync(examplePath)) {
+    fs.copyFileSync(examplePath, envPath);
+    fs.appendFileSync(envPath, `\nJWT_SECRET=${secret}\n`);
+    logger.info('✅ .env créé depuis .env.example et JWT_SECRET ajouté');
+  } else {
+    fs.writeFileSync(envPath, `JWT_SECRET=${secret}\n`);
+    logger.info('✅ Fichier .env créé et JWT_SECRET ajouté');
+  }
+
+  logger.info('⚠️ IMPORTANT: Ne partagez jamais ce secret et ne le commitez pas dans git');
 }

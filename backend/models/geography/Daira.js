@@ -31,8 +31,8 @@ module.exports = (sequelize) => {
   // Associations
   Daira.associate = (models) => {
     Daira.belongsTo(models.Wilaya, { foreignKey: 'wilayaId' });
-    Daira.hasMany(models.Commune, { foreignKey: 'dairaId' });
-    Daira.hasMany(models.Lieu, { foreignKey: 'dairaId' });
+    Daira.hasMany(models.Commune, { foreignKey: 'dairaId', as: 'Communes' });
+    // Note: Lieu n'a pas de dairaId direct, la relation passe par Commune
   };
 
   return Daira;

@@ -4,28 +4,18 @@ const { Op } = require('sequelize');
 // ⚡ Import du helper i18n
 const { translate, translateDeep, createMultiLang, mergeTranslations } = require('../helpers/i18n');
 
+// ✅ OPTIMISATION: Import de l'utilitaire de recherche multilingue centralisé
+const { buildMultiLangSearch } = require('../utils/MultiLangSearchBuilder');
+
 class LieuController {
   constructor(models) {
     this.models = models;
     this.sequelize = models.sequelize || Object.values(models)[0]?.sequelize;
   }
 
-  // ⚡ Recherche multilingue dans les champs JSON
-  buildMultiLangSearch(field, search) {
-    return [
-      this.sequelize.where(
-        this.sequelize.fn('JSON_EXTRACT', this.sequelize.col(field), '$.fr'),
-        { [Op.like]: `%${search}%` }
-      ),
-      this.sequelize.where(
-        this.sequelize.fn('JSON_EXTRACT', this.sequelize.col(field), '$.ar'),
-        { [Op.like]: `%${search}%` }
-      ),
-      this.sequelize.where(
-        this.sequelize.fn('JSON_EXTRACT', this.sequelize.col(field), '$.en'),
-        { [Op.like]: `%${search}%` }
-      )
-    ];
+  // ⚡ Recherche multilingue - utilise l'utilitaire centralisé
+  buildMultiLangSearchLocal(field, search) {
+    return buildMultiLangSearch(this.sequelize, field, search, 'Lieu');
   }
 
   // Récupérer tous les lieux
@@ -46,52 +36,71 @@ class LieuController {
       const offset = (page - 1) * limit;
       const where = {};
       
-      const include = [
-        { 
+      // Construire les inclusions de manière sécurisée
+      const include = [];
+
+      // Commune avec Daira et Wilaya
+      if (this.models.Commune) {
+        const communeInclude = {
           model: this.models.Commune,
           attributes: ['id_commune', 'nom', 'commune_name_ascii'],
-          required: true,
-          where: commune ? { id_commune: commune } : {},
-          include: [
-            {
-              model: this.models.Daira,
-              attributes: ['id_daira', 'nom', 'daira_name_ascii'],
-              required: true,
-              where: daira ? { id_daira: daira } : {},
-              include: [
-                {
-                  model: this.models.Wilaya,
-                  attributes: ['id_wilaya', 'nom', 'wilaya_name_ascii'],
-                  required: true,
-                  where: wilaya ? { id_wilaya: wilaya } : {}
-                }
-              ]
-            }
-          ]
-        },
-        { 
+          required: false,
+          where: commune ? { id_commune: commune } : undefined
+        };
+
+        if (this.models.Daira) {
+          communeInclude.include = [{
+            model: this.models.Daira,
+            attributes: ['id_daira', 'nom', 'daira_name_ascii'],
+            required: false,
+            where: daira ? { id_daira: daira } : undefined
+          }];
+
+          if (this.models.Wilaya) {
+            communeInclude.include[0].include = [{
+              model: this.models.Wilaya,
+              attributes: ['id_wilaya', 'nom', 'wilaya_name_ascii'],
+              required: false,
+              where: wilaya ? { id_wilaya: wilaya } : undefined
+            }];
+          }
+        }
+        include.push(communeInclude);
+      }
+
+      // Localite
+      if (this.models.Localite) {
+        include.push({
           model: this.models.Localite,
           attributes: ['id_localite', 'nom', 'localite_name_ascii'],
           required: false
-        },
-        { 
+        });
+      }
+
+      // DetailLieu avec Monument et Vestige
+      if (this.models.DetailLieu) {
+        const detailInclude = {
           model: this.models.DetailLieu,
-          include: [
-            { model: this.models.Monument },
-            { model: this.models.Vestige }
-          ]
-        },
-        { model: this.models.Service },
-        { model: this.models.LieuMedia }
-      ];
+          required: false
+        };
+        const subIncludes = [];
+        if (this.models.Monument) subIncludes.push({ model: this.models.Monument, required: false });
+        if (this.models.Vestige) subIncludes.push({ model: this.models.Vestige, required: false });
+        if (subIncludes.length > 0) detailInclude.include = subIncludes;
+        include.push(detailInclude);
+      }
+
+      // Service et LieuMedia
+      if (this.models.Service) include.push({ model: this.models.Service, required: false });
+      if (this.models.LieuMedia) include.push({ model: this.models.LieuMedia, required: false });
 
       if (type_lieu) where.typeLieu = type_lieu;
 
       // ⚡ Recherche multilingue
       if (search) {
         where[Op.or] = [
-          ...this.buildMultiLangSearch('nom', search),
-          ...this.buildMultiLangSearch('adresse', search)
+          ...this.buildMultiLangSearchLocal('nom', search),
+          ...this.buildMultiLangSearchLocal('adresse', search)
         ];
       }
 
@@ -121,11 +130,13 @@ class LieuController {
         return lieuData;
       });
 
-      // ⚡ Traduire les résultats
+      // ⚡ Traduire les résultats - Utiliser "items" pour être compatible avec le frontend
+      const translatedLieux = translateDeep(lieuxFormates, lang);
       res.json({
         success: true,
         data: {
-          lieux: translateDeep(lieuxFormates, lang),
+          items: translatedLieux,
+          lieux: translatedLieux, // Garder aussi "lieux" pour rétrocompatibilité
           pagination: {
             total: lieux.count,
             page: parseInt(page),
@@ -227,21 +238,39 @@ class LieuController {
       const lang = req.lang || 'fr';  // ⚡
       const {
         nom,
-        typeLieu,
+        typeLieu = 'Commune', // Valeur par défaut
+        typeLieuCulturel,
         communeId,
+        wilayaId, // Le frontend peut envoyer wilayaId au lieu de communeId
         localiteId,
         adresse,
         description,
         histoire,
         latitude,
         longitude,
-        details
+        details,
+        detail // Alias pour details
       } = req.body;
 
-      if (!nom || !typeLieu || !communeId || !adresse || !latitude || !longitude) {
+      // Si pas de communeId mais wilayaId, chercher une commune de cette wilaya
+      let finalCommuneId = communeId;
+      if (!communeId && wilayaId) {
+        const commune = await this.models.Commune.findOne({
+          include: [{
+            model: this.models.Daira,
+            where: { wilayaId },
+            required: true
+          }]
+        });
+        if (commune) {
+          finalCommuneId = commune.id_commune;
+        }
+      }
+
+      if (!nom || !adresse || !latitude || !longitude) {
         return res.status(400).json({
           success: false,
-          error: 'Données manquantes. Les champs nom, typeLieu, communeId, adresse, latitude et longitude sont requis.'
+          error: 'Données manquantes. Les champs nom, adresse, latitude et longitude sont requis.'
         });
       }
 
@@ -259,21 +288,24 @@ class LieuController {
         });
       }
 
-      const commune = await this.models.Commune.findByPk(communeId);
-      if (!commune) {
-        return res.status(404).json({
-          success: false,
-          error: 'Commune non trouvée'
-        });
-      }
-
-      if (localiteId) {
-        const localite = await this.models.Localite.findByPk(localiteId);
-        if (!localite || localite.id_commune !== communeId) {
-          return res.status(400).json({
+      // Vérifier la commune si fournie
+      if (finalCommuneId) {
+        const commune = await this.models.Commune.findByPk(finalCommuneId);
+        if (!commune) {
+          return res.status(404).json({
             success: false,
-            error: 'Localité invalide ou n\'appartient pas à la commune spécifiée'
+            error: 'Commune non trouvée'
           });
+        }
+
+        if (localiteId) {
+          const localite = await this.models.Localite.findByPk(localiteId);
+          if (!localite || localite.id_commune !== finalCommuneId) {
+            return res.status(400).json({
+              success: false,
+              error: 'Localité invalide ou n\'appartient pas à la commune spécifiée'
+            });
+          }
         }
       }
 
@@ -289,19 +321,22 @@ class LieuController {
         description: descriptionMultiLang,
         histoire: histoireMultiLang,
         typeLieu,
-        communeId,
+        typeLieuCulturel,
+        communeId: finalCommuneId,
         localiteId,
         latitude,
         longitude
       });
 
-      if (details) {
+      // Créer les détails si fournis (accepter details ou detail)
+      const detailsData = details || detail;
+      if (detailsData) {
         await this.models.DetailLieu.create({
           id_lieu: lieu.id_lieu,
-          description: this.prepareMultiLangField(details.description, lang),
-          horaires: this.prepareMultiLangField(details.horaires, lang),
-          histoire: this.prepareMultiLangField(details.histoire, lang),
-          referencesHistoriques: details.referencesHistoriques
+          description: this.prepareMultiLangField(detailsData.description, lang),
+          horaires: this.prepareMultiLangField(detailsData.horaires, lang),
+          histoire: this.prepareMultiLangField(detailsData.histoire, lang),
+          referencesHistoriques: detailsData.referencesHistoriques
         });
       }
 
@@ -483,8 +518,8 @@ class LieuController {
       // ⚡ Recherche multilingue
       if (q) {
         where[Op.or] = [
-          ...this.buildMultiLangSearch('nom', q),
-          ...this.buildMultiLangSearch('adresse', q)
+          ...this.buildMultiLangSearchLocal('nom', q),
+          ...this.buildMultiLangSearchLocal('adresse', q)
         ];
       }
 
@@ -554,11 +589,12 @@ class LieuController {
         });
       }
 
-      // ⚡ Traduire
+      // ⚡ Traduire - Utiliser "items" pour être compatible avec le frontend
       res.json({
         success: true,
         data: {
-          lieux: translateDeep(lieux.rows, lang),
+          items: translateDeep(lieux.rows, lang),
+          lieux: translateDeep(lieux.rows, lang), // Garder aussi "lieux" pour rétrocompatibilité
           pagination: {
             total: lieux.count,
             page: parseInt(page),
@@ -570,9 +606,9 @@ class LieuController {
 
     } catch (error) {
       console.error('Erreur lors de la recherche:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: 'Erreur serveur lors de la recherche' 
+      res.status(500).json({
+        success: false,
+        error: 'Erreur serveur lors de la recherche'
       });
     }
   }
@@ -602,7 +638,7 @@ class LieuController {
           },
           { model: this.models.Service },
           { model: this.models.LieuMedia },
-          { model: this.models.QrCode },
+          { model: this.models.QRCode },
           {
             model: this.models.Evenement,
             where: { date_fin: { [Op.gte]: new Date() } },
@@ -699,6 +735,56 @@ class LieuController {
     }
   }
 
+  // Lieux à proximité (pour patrimoine routes)
+  async getLieuxProximite(req, res) {
+    try {
+      const lang = req.lang || 'fr';
+      const { latitude, longitude, rayon = 10, limit = 20 } = req.query;
+
+      // Calcul simple de proximité (approximation)
+      const latDelta = rayon / 111; // 1 degré ≈ 111 km
+      const lngDelta = rayon / (111 * Math.cos(parseFloat(latitude) * Math.PI / 180));
+
+      const lieux = await this.models.Lieu.findAll({
+        where: {
+          latitude: {
+            [Op.between]: [parseFloat(latitude) - latDelta, parseFloat(latitude) + latDelta]
+          },
+          longitude: {
+            [Op.between]: [parseFloat(longitude) - lngDelta, parseFloat(longitude) + lngDelta]
+          }
+        },
+        include: [
+          { model: this.models.DetailLieu, required: true },
+          {
+            model: this.models.Commune,
+            include: [{
+              model: this.models.Daira,
+              include: [{ model: this.models.Wilaya }]
+            }]
+          },
+          { model: this.models.LieuMedia, limit: 1, required: false }
+        ],
+        limit: parseInt(limit)
+      });
+
+      res.json({
+        success: true,
+        data: translateDeep(lieux, lang),
+        lang
+      });
+
+    } catch (error) {
+      console.error('Erreur getLieuxProximite:', error);
+      res.status(500).json({ success: false, error: 'Erreur serveur' });
+    }
+  }
+
+  // Statistiques des lieux (alias pour patrimoine routes)
+  async getStatistiquesLieux(req, res) {
+    return this.getStatistiques(req, res);
+  }
+
   // Statistiques des lieux
   async getStatistiques(req, res) {
     try {
@@ -742,10 +828,371 @@ class LieuController {
 
     } catch (error) {
       console.error('Erreur lors du calcul des statistiques:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: 'Erreur serveur lors du calcul des statistiques' 
+      res.status(500).json({
+        success: false,
+        error: 'Erreur serveur lors du calcul des statistiques'
       });
+    }
+  }
+
+  // Vérifier les doublons de lieu
+  async checkDuplicate(req, res) {
+    try {
+      const { nom, latitude, longitude } = req.body;
+      const lang = req.lang || 'fr';
+
+      // Tolérance de 100 mètres (environ 0.001 degré)
+      const tolerance = 0.001;
+
+      // Rechercher par nom similaire
+      const lieuByName = await this.models.Lieu.findOne({
+        where: this.sequelize.where(
+          this.sequelize.fn('JSON_EXTRACT', this.sequelize.col('nom'), `$.${lang}`),
+          { [Op.like]: `%${nom}%` }
+        ),
+        include: [
+          {
+            model: this.models.Commune,
+            include: [{
+              model: this.models.Daira,
+              include: [{ model: this.models.Wilaya }]
+            }]
+          }
+        ]
+      });
+
+      // Rechercher par coordonnées proches
+      const lieuByCoords = await this.models.Lieu.findOne({
+        where: {
+          latitude: {
+            [Op.between]: [latitude - tolerance, latitude + tolerance]
+          },
+          longitude: {
+            [Op.between]: [longitude - tolerance, longitude + tolerance]
+          }
+        },
+        include: [
+          {
+            model: this.models.Commune,
+            include: [{
+              model: this.models.Daira,
+              include: [{ model: this.models.Wilaya }]
+            }]
+          }
+        ]
+      });
+
+      const existingLieu = lieuByName || lieuByCoords;
+
+      if (existingLieu) {
+        return res.json({
+          success: true,
+          data: {
+            exists: true,
+            lieu: translateDeep(existingLieu, lang),
+            matchType: lieuByName ? 'name' : 'coordinates'
+          }
+        });
+      }
+
+      res.json({
+        success: true,
+        data: {
+          exists: false
+        }
+      });
+
+    } catch (error) {
+      console.error('Erreur checkDuplicate:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur lors de la vérification des doublons'
+      });
+    }
+  }
+
+  // ========================================================================
+  // GESTION DES SERVICES D'UN LIEU
+  // ========================================================================
+
+  /**
+   * Obtenir les services d'un lieu
+   */
+  async getServicesLieu(req, res) {
+    try {
+      const lang = req.lang || 'fr';
+      const { id } = req.params;
+
+      const lieu = await this.models.Lieu.findByPk(id);
+      if (!lieu) {
+        return res.status(404).json({ success: false, error: 'Lieu non trouvé' });
+      }
+
+      const services = await this.models.Service.findAll({
+        where: { id_lieu: id }
+      });
+
+      res.json({
+        success: true,
+        data: translateDeep(services, lang),
+        lang
+      });
+
+    } catch (error) {
+      console.error('Erreur getServicesLieu:', error);
+      res.status(500).json({ success: false, error: 'Erreur serveur' });
+    }
+  }
+
+  /**
+   * Ajouter un service à un lieu
+   */
+  async addServiceLieu(req, res) {
+    try {
+      const lang = req.lang || 'fr';
+      const { id } = req.params;
+      const { nom, description, disponible = true, services } = req.body;
+
+      const lieu = await this.models.Lieu.findByPk(id);
+      if (!lieu) {
+        return res.status(404).json({ success: false, error: 'Lieu non trouvé' });
+      }
+
+      // Support pour ajout multiple (array de noms) ou single
+      if (services && Array.isArray(services)) {
+        const createdServices = [];
+        for (const serviceName of services) {
+          const service = await this.models.Service.create({
+            id_lieu: id,
+            nom_service: typeof serviceName === 'string'
+              ? createMultiLang(serviceName, lang)
+              : serviceName,
+            disponible: true
+          });
+          createdServices.push(service);
+        }
+        return res.status(201).json({
+          success: true,
+          message: `${createdServices.length} services ajoutés`,
+          data: translateDeep(createdServices, lang),
+          lang
+        });
+      }
+
+      // Ajout d'un seul service
+      const service = await this.models.Service.create({
+        id_lieu: id,
+        nom_service: typeof nom === 'string' ? createMultiLang(nom, lang) : nom,
+        description: description
+          ? (typeof description === 'string' ? createMultiLang(description, lang) : description)
+          : null,
+        disponible
+      });
+
+      res.status(201).json({
+        success: true,
+        message: 'Service ajouté',
+        data: translateDeep(service, lang),
+        lang
+      });
+
+    } catch (error) {
+      console.error('Erreur addServiceLieu:', error);
+      res.status(500).json({ success: false, error: 'Erreur serveur' });
+    }
+  }
+
+  /**
+   * Mettre à jour un service
+   */
+  async updateServiceLieu(req, res) {
+    try {
+      const lang = req.lang || 'fr';
+      const { id, serviceId } = req.params;
+      const { nom, description, disponible } = req.body;
+
+      const service = await this.models.Service.findOne({
+        where: { id: serviceId, id_lieu: id }
+      });
+
+      if (!service) {
+        return res.status(404).json({ success: false, error: 'Service non trouvé' });
+      }
+
+      const updates = {};
+      if (nom !== undefined) {
+        updates.nom_service = typeof nom === 'string'
+          ? mergeTranslations(service.nom_service, { [lang]: nom })
+          : nom;
+      }
+      if (description !== undefined) {
+        updates.description = typeof description === 'string'
+          ? mergeTranslations(service.description, { [lang]: description })
+          : description;
+      }
+      if (disponible !== undefined) {
+        updates.disponible = disponible;
+      }
+
+      await service.update(updates);
+
+      res.json({
+        success: true,
+        message: 'Service mis à jour',
+        data: translateDeep(service, lang),
+        lang
+      });
+
+    } catch (error) {
+      console.error('Erreur updateServiceLieu:', error);
+      res.status(500).json({ success: false, error: 'Erreur serveur' });
+    }
+  }
+
+  /**
+   * Supprimer un service
+   */
+  async deleteServiceLieu(req, res) {
+    try {
+      const { id, serviceId } = req.params;
+
+      const service = await this.models.Service.findOne({
+        where: { id: serviceId, id_lieu: id }
+      });
+
+      if (!service) {
+        return res.status(404).json({ success: false, error: 'Service non trouvé' });
+      }
+
+      await service.destroy();
+
+      res.json({
+        success: true,
+        message: 'Service supprimé'
+      });
+
+    } catch (error) {
+      console.error('Erreur deleteServiceLieu:', error);
+      res.status(500).json({ success: false, error: 'Erreur serveur' });
+    }
+  }
+
+  // ========================================================================
+  // GESTION DES DÉTAILS D'UN LIEU
+  // ========================================================================
+
+  /**
+   * Obtenir les détails d'un lieu
+   */
+  async getDetailsLieu(req, res) {
+    try {
+      const lang = req.lang || 'fr';
+      const { id } = req.params;
+
+      const details = await this.models.DetailLieu.findOne({
+        where: { id_lieu: id },
+        include: [
+          { model: this.models.Monument },
+          { model: this.models.Vestige }
+        ]
+      });
+
+      if (!details) {
+        return res.status(404).json({ success: false, error: 'Détails non trouvés' });
+      }
+
+      res.json({
+        success: true,
+        data: translateDeep(details, lang),
+        lang
+      });
+
+    } catch (error) {
+      console.error('Erreur getDetailsLieu:', error);
+      res.status(500).json({ success: false, error: 'Erreur serveur' });
+    }
+  }
+
+  /**
+   * Créer ou mettre à jour les détails d'un lieu
+   */
+  async updateDetailsLieu(req, res) {
+    try {
+      const lang = req.lang || 'fr';
+      const { id } = req.params;
+      const { description, horaires, histoire, referencesHistoriques } = req.body;
+
+      const lieu = await this.models.Lieu.findByPk(id);
+      if (!lieu) {
+        return res.status(404).json({ success: false, error: 'Lieu non trouvé' });
+      }
+
+      let details = await this.models.DetailLieu.findOne({ where: { id_lieu: id } });
+
+      const data = {};
+      if (description !== undefined) {
+        data.description = typeof description === 'string'
+          ? createMultiLang(description, lang)
+          : description;
+      }
+      if (horaires !== undefined) {
+        data.horaires = typeof horaires === 'string'
+          ? createMultiLang(horaires, lang)
+          : horaires;
+      }
+      if (histoire !== undefined) {
+        data.histoire = typeof histoire === 'string'
+          ? createMultiLang(histoire, lang)
+          : histoire;
+      }
+      if (referencesHistoriques !== undefined) {
+        data.referencesHistoriques = typeof referencesHistoriques === 'string'
+          ? createMultiLang(referencesHistoriques, lang)
+          : referencesHistoriques;
+      }
+
+      if (details) {
+        // Mettre à jour en fusionnant les traductions
+        const updates = {};
+        if (description !== undefined) {
+          updates.description = typeof description === 'string'
+            ? mergeTranslations(details.description, { [lang]: description })
+            : description;
+        }
+        if (horaires !== undefined) {
+          updates.horaires = typeof horaires === 'string'
+            ? mergeTranslations(details.horaires, { [lang]: horaires })
+            : horaires;
+        }
+        if (histoire !== undefined) {
+          updates.histoire = typeof histoire === 'string'
+            ? mergeTranslations(details.histoire, { [lang]: histoire })
+            : histoire;
+        }
+        if (referencesHistoriques !== undefined) {
+          updates.referencesHistoriques = typeof referencesHistoriques === 'string'
+            ? mergeTranslations(details.referencesHistoriques, { [lang]: referencesHistoriques })
+            : referencesHistoriques;
+        }
+        await details.update(updates);
+      } else {
+        // Créer les détails
+        details = await this.models.DetailLieu.create({
+          id_lieu: id,
+          ...data
+        });
+      }
+
+      res.json({
+        success: true,
+        message: details ? 'Détails mis à jour' : 'Détails créés',
+        data: translateDeep(details, lang),
+        lang
+      });
+
+    } catch (error) {
+      console.error('Erreur updateDetailsLieu:', error);
+      res.status(500).json({ success: false, error: 'Erreur serveur' });
     }
   }
 }

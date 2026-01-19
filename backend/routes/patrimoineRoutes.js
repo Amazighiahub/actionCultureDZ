@@ -68,6 +68,12 @@ const initPatrimoineRoutes = (models) => {
     patrimoineController.getStatistiquesPatrimoine.bind(patrimoineController)
   );
 
+  // ⚡ Types de patrimoine (pour filtres frontend)
+  router.get('/types',
+    cacheMiddleware.conditionalCache(86400), // Cache 24h
+    patrimoineController.getTypesPatrimoine.bind(patrimoineController)
+  );
+
   // ====================================================================
   // ⚡ ROUTES DE TRADUCTION (ADMIN) - MONUMENTS
   // ====================================================================

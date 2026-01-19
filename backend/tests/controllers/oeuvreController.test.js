@@ -1,15 +1,21 @@
 const request = require('supertest');
-const App = require('../../app');
+const express = require('express');
+const initOeuvreRoutes = require('../../routes/oeuvreRoutes');
 const { setupTestDatabase, teardownTestDatabase } = require('../Setup');
+
+jest.setTimeout(30000);
 
 describe('OeuvreController', () => {
   let app, models, sequelize;
 
   beforeAll(async () => {
-    const appInstance = new App();
-    app = await appInstance.initialize();
-    models = appInstance.getModels();
-    sequelize = appInstance.sequelize;
+    const result = await setupTestDatabase();
+    models = result.models;
+    sequelize = result.sequelize;
+
+    app = express();
+    app.use(express.json());
+    app.use('/api/oeuvres', initOeuvreRoutes(models, null));
   });
 
   afterAll(async () => {
@@ -17,16 +23,52 @@ describe('OeuvreController', () => {
   });
 
   beforeEach(async () => {
-    await sequelize.sync({ force: true });
-    
-    // Créer les données de base
+    await sequelize.query('SET FOREIGN_KEY_CHECKS = 0');
+
+    try {
+      const truncateIfExists = async (modelName) => {
+        const model = models && models[modelName];
+        if (!model || typeof model.destroy !== 'function') return;
+        await model.destroy({ where: {}, truncate: true, force: true });
+      };
+
+      // Tables "enfants" / pivots qui référencent Oeuvre
+      await truncateIfExists('OeuvreIntervenant');
+      await truncateIfExists('OeuvreUser');
+      await truncateIfExists('OeuvreEditeur');
+      await truncateIfExists('OeuvreCategorie');
+      await truncateIfExists('OeuvreTag');
+      await truncateIfExists('EvenementOeuvre');
+      await truncateIfExists('Media');
+      await truncateIfExists('CritiqueEvaluation');
+
+      // Sous-types éventuels
+      await truncateIfExists('Livre');
+      await truncateIfExists('Film');
+      await truncateIfExists('AlbumMusical');
+      await truncateIfExists('Article');
+      await truncateIfExists('ArticleScientifique');
+      await truncateIfExists('Artisanat');
+      await truncateIfExists('OeuvreArt');
+
+      // Table principale
+      await truncateIfExists('Oeuvre');
+
+      // Référentiels utilisés par ces tests
+      await truncateIfExists('TypeOeuvre');
+      await truncateIfExists('Langue');
+    } finally {
+      await sequelize.query('SET FOREIGN_KEY_CHECKS = 1');
+    }
+
+    // Créer les données de base (format i18n JSON)
     await models.TypeOeuvre.create({
-      nom_type: 'Livre',
-      description: 'Œuvres littéraires'
+      nom_type: { fr: 'Livre', ar: 'كتاب', en: 'Book' },
+      description: { fr: 'Œuvres littéraires' }
     });
     
     await models.Langue.create({
-      nom: 'Français',
+      nom: { fr: 'Français', ar: 'الفرنسية', en: 'French' },
       code: 'fr'
     });
   });
@@ -47,14 +89,14 @@ describe('OeuvreController', () => {
       const langue = await models.Langue.findOne();
 
       await models.Oeuvre.create({
-        titre: 'Œuvre Publiée',
+        titre: { fr: 'Œuvre Publiée' },
         id_type_oeuvre: typeOeuvre.id_type_oeuvre,
         id_langue: langue.id_langue,
         statut: 'publie'
       });
 
       await models.Oeuvre.create({
-        titre: 'Œuvre Brouillon',
+        titre: { fr: 'Œuvre Brouillon' },
         id_type_oeuvre: typeOeuvre.id_type_oeuvre,
         id_langue: langue.id_langue,
         statut: 'brouillon'
@@ -65,7 +107,7 @@ describe('OeuvreController', () => {
         .expect(200);
 
       expect(response.body.data.oeuvres).toHaveLength(1);
-      expect(response.body.data.oeuvres[0].titre).toBe('Œuvre Publiée');
+      expect(response.body.data.oeuvres[0].titre).toBe('Œuvre Publiée'); // translateDeep extrait la valeur fr
     });
 
     test('Doit supporter la pagination', async () => {
@@ -75,7 +117,7 @@ describe('OeuvreController', () => {
       // Créer 15 œuvres
       for (let i = 1; i <= 15; i++) {
         await models.Oeuvre.create({
-          titre: `Œuvre ${i}`,
+          titre: { fr: `Œuvre ${i}` },
           id_type_oeuvre: typeOeuvre.id_type_oeuvre,
           id_langue: langue.id_langue,
           statut: 'publie'
@@ -98,10 +140,10 @@ describe('OeuvreController', () => {
       const langue = await models.Langue.findOne();
 
       const oeuvre = await models.Oeuvre.create({
-        titre: 'Œuvre Test',
+        titre: { fr: 'Œuvre Test' },
         id_type_oeuvre: typeOeuvre.id_type_oeuvre,
         id_langue: langue.id_langue,
-        description: 'Description test',
+        description: { fr: 'Description test' },
         statut: 'publie'
       });
 

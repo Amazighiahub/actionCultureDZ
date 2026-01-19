@@ -4,28 +4,18 @@ const { Op } = require('sequelize');
 // ⚡ Import du helper i18n
 const { translate, translateDeep, createMultiLang, mergeTranslations } = require('../helpers/i18n');
 
+// ✅ OPTIMISATION: Import de l'utilitaire de recherche multilingue centralisé
+const { buildMultiLangSearch } = require('../utils/MultiLangSearchBuilder');
+
 class ServicesController {
   constructor(models) {
     this.models = models;
     this.sequelize = models.sequelize || Object.values(models)[0]?.sequelize;
   }
 
-  // ⚡ Recherche multilingue
-  buildMultiLangSearch(field, search) {
-    return [
-      this.sequelize.where(
-        this.sequelize.fn('JSON_EXTRACT', this.sequelize.col(field), '$.fr'),
-        { [Op.like]: `%${search}%` }
-      ),
-      this.sequelize.where(
-        this.sequelize.fn('JSON_EXTRACT', this.sequelize.col(field), '$.ar'),
-        { [Op.like]: `%${search}%` }
-      ),
-      this.sequelize.where(
-        this.sequelize.fn('JSON_EXTRACT', this.sequelize.col(field), '$.en'),
-        { [Op.like]: `%${search}%` }
-      )
-    ];
+  // ⚡ Recherche multilingue - utilise l'utilitaire centralisé
+  buildMultiLangSearchLocal(field, search) {
+    return buildMultiLangSearch(this.sequelize, field, search);
   }
 
   // Récupérer tous les services
@@ -40,8 +30,8 @@ class ServicesController {
       // ⚡ Recherche multilingue
       if (search) {
         where[Op.or] = [
-          ...this.buildMultiLangSearch('nom', search),
-          ...this.buildMultiLangSearch('description', search)
+          ...this.buildMultiLangSearchLocal('nom', search),
+          ...this.buildMultiLangSearchLocal('description', search)
         ];
       }
 

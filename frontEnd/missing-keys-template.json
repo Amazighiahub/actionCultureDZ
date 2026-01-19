@@ -1,0 +1,527 @@
+{
+  "admin": {
+    "alerts": {
+      "disconnected": "[À TRADUIRE] admin.alerts.disconnected"
+    },
+    "dashboard": {
+      "subtitle": "[À TRADUIRE] admin.dashboard.subtitle",
+      "title": "[À TRADUIRE] admin.dashboard.title"
+    },
+    "events": {
+      "title": "[À TRADUIRE] admin.events.title"
+    },
+    "oeuvres": {
+      "title": "[À TRADUIRE] admin.oeuvres.title"
+    },
+    "services": {
+      "title": "[À TRADUIRE] admin.services.title"
+    },
+    "tabs": {
+      "events": "[À TRADUIRE] admin.tabs.events",
+      "heritage": "[À TRADUIRE] admin.tabs.heritage",
+      "moderation": "[À TRADUIRE] admin.tabs.moderation",
+      "overview": "[À TRADUIRE] admin.tabs.overview",
+      "services": "[À TRADUIRE] admin.tabs.services",
+      "users": "[À TRADUIRE] admin.tabs.users",
+      "works": "[À TRADUIRE] admin.tabs.works"
+    },
+    "users": {
+      "title": "[À TRADUIRE] admin.users.title"
+    }
+  },
+  "auth": {
+    "errors": {
+      "acceptTerms": "[À TRADUIRE] auth.errors.acceptTerms",
+      "biographyTooShort": "[À TRADUIRE] auth.errors.biographyTooShort",
+      "emailExists": "[À TRADUIRE] auth.errors.emailExists",
+      "passwordTooShort": "[À TRADUIRE] auth.errors.passwordTooShort",
+      "registerError": "[À TRADUIRE] auth.errors.registerError",
+      "required": "[À TRADUIRE] auth.errors.required",
+      "serverError": "[À TRADUIRE] auth.errors.serverError"
+    },
+    "fields": {
+      "biography": "[À TRADUIRE] auth.fields.biography",
+      "biographyPlaceholder": "[À TRADUIRE] auth.fields.biographyPlaceholder",
+      "confirmPassword": "[À TRADUIRE] auth.fields.confirmPassword",
+      "email": "[À TRADUIRE] auth.fields.email",
+      "firstName": "[À TRADUIRE] auth.fields.firstName",
+      "lastName": "[À TRADUIRE] auth.fields.lastName",
+      "password": "[À TRADUIRE] auth.fields.password",
+      "photo": "[À TRADUIRE] auth.fields.photo",
+      "sector": "[À TRADUIRE] auth.fields.sector",
+      "wilaya": "[À TRADUIRE] auth.fields.wilaya"
+    },
+    "login": "[À TRADUIRE] auth.login",
+    "loginToComment": "[À TRADUIRE] auth.loginToComment",
+    "loginToFavorite": "[À TRADUIRE] auth.loginToFavorite",
+    "loginToRegister": "[À TRADUIRE] auth.loginToRegister",
+    "register": {
+      "acceptTerms": "[À TRADUIRE] auth.register.acceptTerms",
+      "chooseType": "[À TRADUIRE] auth.register.chooseType",
+      "hasAccount": "[À TRADUIRE] auth.register.hasAccount",
+      "loading": "[À TRADUIRE] auth.register.loading",
+      "login": "[À TRADUIRE] auth.register.login",
+      "professionalDesc": "[À TRADUIRE] auth.register.professionalDesc",
+      "professionalNote": "[À TRADUIRE] auth.register.professionalNote",
+      "submit": "[À TRADUIRE] auth.register.submit",
+      "visitor": "[À TRADUIRE] auth.register.visitor",
+      "visitorDesc": "[À TRADUIRE] auth.register.visitorDesc",
+      "welcome": "[À TRADUIRE] auth.register.welcome"
+    },
+    "success": {
+      "registerDescription": "[À TRADUIRE] auth.success.registerDescription",
+      "registerTitle": "[À TRADUIRE] auth.success.registerTitle"
+    }
+  },
+  "comments": {
+    "addComment": "[À TRADUIRE] comments.addComment",
+    "added": "[À TRADUIRE] comments.added",
+    "addedDesc": "[À TRADUIRE] comments.addedDesc",
+    "empty": "[À TRADUIRE] comments.empty",
+    "emptyDesc": "[À TRADUIRE] comments.emptyDesc",
+    "errorEmpty": "[À TRADUIRE] comments.errorEmpty",
+    "errorSubmit": "[À TRADUIRE] comments.errorSubmit",
+    "loginRequired": "[À TRADUIRE] comments.loginRequired",
+    "placeholder": "[À TRADUIRE] comments.placeholder",
+    "reviews": "[À TRADUIRE] comments.reviews",
+    "submit": "[À TRADUIRE] comments.submit",
+    "yourRating": "[À TRADUIRE] comments.yourRating"
+  },
+  "common": {
+    "activeFilters": "[À TRADUIRE] common.activeFilters",
+    "all": "[À TRADUIRE] common.all",
+    "anonymous": "[À TRADUIRE] common.anonymous",
+    "appName": "[À TRADUIRE] common.appName",
+    "back": "[À TRADUIRE] common.back",
+    "call": "[À TRADUIRE] common.call",
+    "clearAll": "[À TRADUIRE] common.clearAll",
+    "confirm": "[À TRADUIRE] common.confirm",
+    "download": "[À TRADUIRE] common.download",
+    "email": "[À TRADUIRE] common.email",
+    "enterText": "[À TRADUIRE] common.enterText",
+    "firstPage": "[À TRADUIRE] common.firstPage",
+    "languages": "[À TRADUIRE] common.languages",
+    "lastPage": "[À TRADUIRE] common.lastPage",
+    "loading": "[À TRADUIRE] common.loading",
+    "nextPage": "[À TRADUIRE] common.nextPage",
+    "noData": "[À TRADUIRE] common.noData",
+    "optional": "[À TRADUIRE] common.optional",
+    "pagination": "[À TRADUIRE] common.pagination",
+    "previousPage": "[À TRADUIRE] common.previousPage",
+    "reconnect": "[À TRADUIRE] common.reconnect",
+    "reply": "[À TRADUIRE] common.reply",
+    "report": "[À TRADUIRE] common.report",
+    "resetFilters": "[À TRADUIRE] common.resetFilters",
+    "select": "[À TRADUIRE] common.select",
+    "selectAll": "[À TRADUIRE] common.selectAll",
+    "selectRow": "[À TRADUIRE] common.selectRow",
+    "selectWilaya": "[À TRADUIRE] common.selectWilaya",
+    "share": "[À TRADUIRE] common.share",
+    "showMore": "[À TRADUIRE] common.showMore",
+    "success": "[À TRADUIRE] common.success",
+    "user": "[À TRADUIRE] common.user",
+    "validationError": "[À TRADUIRE] common.validationError",
+    "viewDetails": "[À TRADUIRE] common.viewDetails",
+    "website": "[À TRADUIRE] common.website",
+    "wilaya": "[À TRADUIRE] common.wilaya",
+    "years": "[À TRADUIRE] common.years"
+  },
+  "contributors": {
+    "addedCount": "[À TRADUIRE] contributors.addedCount"
+  },
+  "emptyState": {
+    "default": {
+      "description": "[À TRADUIRE] emptyState.default.description",
+      "title": "[À TRADUIRE] emptyState.default.title"
+    },
+    "documents": {
+      "description": "[À TRADUIRE] emptyState.documents.description",
+      "title": "[À TRADUIRE] emptyState.documents.title"
+    },
+    "events": {
+      "description": "[À TRADUIRE] emptyState.events.description",
+      "title": "[À TRADUIRE] emptyState.events.title"
+    },
+    "locations": {
+      "description": "[À TRADUIRE] emptyState.locations.description",
+      "title": "[À TRADUIRE] emptyState.locations.title"
+    },
+    "products": {
+      "description": "[À TRADUIRE] emptyState.products.description",
+      "title": "[À TRADUIRE] emptyState.products.title"
+    },
+    "search": {
+      "description": "[À TRADUIRE] emptyState.search.description",
+      "title": "[À TRADUIRE] emptyState.search.title"
+    },
+    "users": {
+      "description": "[À TRADUIRE] emptyState.users.description",
+      "title": "[À TRADUIRE] emptyState.users.title"
+    },
+    "works": {
+      "description": "[À TRADUIRE] emptyState.works.description",
+      "title": "[À TRADUIRE] emptyState.works.title"
+    }
+  },
+  "event": {
+    "accessibility": "[À TRADUIRE] event.accessibility",
+    "backToList": "[À TRADUIRE] event.backToList",
+    "browseAllEvents": "[À TRADUIRE] event.browseAllEvents",
+    "capacity": "[À TRADUIRE] event.capacity",
+    "certificate": "[À TRADUIRE] event.certificate",
+    "certificateDelivered": "[À TRADUIRE] event.certificateDelivered",
+    "contact": "[À TRADUIRE] event.contact",
+    "description": "[À TRADUIRE] event.description",
+    "endDate": "[À TRADUIRE] event.endDate",
+    "getDirections": "[À TRADUIRE] event.getDirections",
+    "location": "[À TRADUIRE] event.location",
+    "mainOrganizer": "[À TRADUIRE] event.mainOrganizer",
+    "minimumAge": "[À TRADUIRE] event.minimumAge",
+    "moreEvents": "[À TRADUIRE] event.moreEvents",
+    "noDescription": "[À TRADUIRE] event.noDescription",
+    "noOrganizers": "[À TRADUIRE] event.noOrganizers",
+    "noRelatedEvents": "[À TRADUIRE] event.noRelatedEvents",
+    "notFound": "[À TRADUIRE] event.notFound",
+    "organizers": "[À TRADUIRE] event.organizers",
+    "partners": "[À TRADUIRE] event.partners",
+    "practicalInfo": "[À TRADUIRE] event.practicalInfo",
+    "pricing": "[À TRADUIRE] event.pricing",
+    "registration": {
+      "alreadyRegistered": "[À TRADUIRE] event.registration.alreadyRegistered",
+      "cancel": "[À TRADUIRE] event.registration.cancel",
+      "cancelled": "[À TRADUIRE] event.registration.cancelled",
+      "cancelledDesc": "[À TRADUIRE] event.registration.cancelledDesc",
+      "closed": "[À TRADUIRE] event.registration.closed",
+      "comment": "[À TRADUIRE] event.registration.comment",
+      "commentPlaceholder": "[À TRADUIRE] event.registration.commentPlaceholder",
+      "confirm": "[À TRADUIRE] event.registration.confirm",
+      "confirmed": "[À TRADUIRE] event.registration.confirmed",
+      "date": "[À TRADUIRE] event.registration.date",
+      "deadline": "[À TRADUIRE] event.registration.deadline",
+      "dialogTitle": "[À TRADUIRE] event.registration.dialogTitle",
+      "event": "[À TRADUIRE] event.registration.event",
+      "eventPast": "[À TRADUIRE] event.registration.eventPast",
+      "fewPlaces": "[À TRADUIRE] event.registration.fewPlaces",
+      "full": "[À TRADUIRE] event.registration.full",
+      "loginToRegister": "[À TRADUIRE] event.registration.loginToRegister",
+      "numberOfPeople": "[À TRADUIRE] event.registration.numberOfPeople",
+      "participants": "[À TRADUIRE] event.registration.participants",
+      "pending": "[À TRADUIRE] event.registration.pending",
+      "people": "[À TRADUIRE] event.registration.people",
+      "perPerson": "[À TRADUIRE] event.registration.perPerson",
+      "questions": "[À TRADUIRE] event.registration.questions",
+      "register": "[À TRADUIRE] event.registration.register",
+      "required": "[À TRADUIRE] event.registration.required",
+      "success": "[À TRADUIRE] event.registration.success",
+      "successDesc": "[À TRADUIRE] event.registration.successDesc",
+      "title": "[À TRADUIRE] event.registration.title",
+      "total": "[À TRADUIRE] event.registration.total",
+      "unavailable": "[À TRADUIRE] event.registration.unavailable",
+      "waitingList": "[À TRADUIRE] event.registration.waitingList"
+    },
+    "registrationDeadline": "[À TRADUIRE] event.registrationDeadline",
+    "relatedEvents": "[À TRADUIRE] event.relatedEvents",
+    "startDate": "[À TRADUIRE] event.startDate",
+    "tabs": {
+      "comments": "[À TRADUIRE] event.tabs.comments",
+      "gallery": "[À TRADUIRE] event.tabs.gallery",
+      "info": "[À TRADUIRE] event.tabs.info",
+      "program": "[À TRADUIRE] event.tabs.program"
+    },
+    "viewOnMap": "[À TRADUIRE] event.viewOnMap"
+  },
+  "events": {
+    "addToFavorites": "[À TRADUIRE] events.addToFavorites",
+    "almostFull": "[À TRADUIRE] events.almostFull",
+    "contact": "[À TRADUIRE] events.contact",
+    "create": {
+      "location": "[À TRADUIRE] events.create.location",
+      "locationRequired": "[À TRADUIRE] events.create.locationRequired"
+    },
+    "free": "[À TRADUIRE] events.free",
+    "full": "[À TRADUIRE] events.full",
+    "noResults": "[À TRADUIRE] events.noResults",
+    "noResultsDesc": "[À TRADUIRE] events.noResultsDesc",
+    "participants": "[À TRADUIRE] events.participants",
+    "past": "[À TRADUIRE] events.past",
+    "removeFromFavorites": "[À TRADUIRE] events.removeFromFavorites",
+    "searchPlaceholder": "[À TRADUIRE] events.searchPlaceholder",
+    "subtitle": "[À TRADUIRE] events.subtitle",
+    "title": "[À TRADUIRE] events.title",
+    "upcoming": "[À TRADUIRE] events.upcoming"
+  },
+  "gallery": {
+    "all": "[À TRADUIRE] gallery.all",
+    "empty": "[À TRADUIRE] gallery.empty",
+    "emptyDesc": "[À TRADUIRE] gallery.emptyDesc"
+  },
+  "home": {
+    "hero": {
+      "badge": "[À TRADUIRE] home.hero.badge",
+      "contribute": "[À TRADUIRE] home.hero.contribute",
+      "explore": "[À TRADUIRE] home.hero.explore",
+      "subtitle": "[À TRADUIRE] home.hero.subtitle"
+    },
+    "professionals": {
+      "badge": "[À TRADUIRE] home.professionals.badge",
+      "benefits": {
+        "community": "[À TRADUIRE] home.professionals.benefits.community",
+        "tools": "[À TRADUIRE] home.professionals.benefits.tools",
+        "visibility": "[À TRADUIRE] home.professionals.benefits.visibility"
+      }
+    }
+  },
+  "notifications": {
+    "youHave": "[À TRADUIRE] notifications.youHave"
+  },
+  "oeuvre": {
+    "addToFavorites": "[À TRADUIRE] oeuvre.addToFavorites",
+    "awards": "[À TRADUIRE] oeuvre.awards",
+    "backToList": "[À TRADUIRE] oeuvre.backToList",
+    "browseAllOeuvres": "[À TRADUIRE] oeuvre.browseAllOeuvres",
+    "categories": "[À TRADUIRE] oeuvre.categories",
+    "character": "[À TRADUIRE] oeuvre.character",
+    "contributors": "[À TRADUIRE] oeuvre.contributors",
+    "description": "[À TRADUIRE] oeuvre.description",
+    "duration": "[À TRADUIRE] oeuvre.duration",
+    "externalLink": "[À TRADUIRE] oeuvre.externalLink",
+    "fields": {
+      "additionalDetails": "[À TRADUIRE] oeuvre.fields.additionalDetails",
+      "additionalDetailsPlaceholder": "[À TRADUIRE] oeuvre.fields.additionalDetailsPlaceholder",
+      "albumDuration": "[À TRADUIRE] oeuvre.fields.albumDuration",
+      "categories": "[À TRADUIRE] oeuvre.fields.categories",
+      "description": "[À TRADUIRE] oeuvre.fields.description",
+      "descriptionHint": "[À TRADUIRE] oeuvre.fields.descriptionHint",
+      "descriptionPlaceholder": "[À TRADUIRE] oeuvre.fields.descriptionPlaceholder",
+      "dimensions": "[À TRADUIRE] oeuvre.fields.dimensions",
+      "director": "[À TRADUIRE] oeuvre.fields.director",
+      "doi": "[À TRADUIRE] oeuvre.fields.doi",
+      "duration": "[À TRADUIRE] oeuvre.fields.duration",
+      "genre": "[À TRADUIRE] oeuvre.fields.genre",
+      "isbn": "[À TRADUIRE] oeuvre.fields.isbn",
+      "issue": "[À TRADUIRE] oeuvre.fields.issue",
+      "journal": "[À TRADUIRE] oeuvre.fields.journal",
+      "label": "[À TRADUIRE] oeuvre.fields.label",
+      "language": "[À TRADUIRE] oeuvre.fields.language",
+      "material": "[À TRADUIRE] oeuvre.fields.material",
+      "pages": "[À TRADUIRE] oeuvre.fields.pages",
+      "peerReviewed": "[À TRADUIRE] oeuvre.fields.peerReviewed",
+      "price": "[À TRADUIRE] oeuvre.fields.price",
+      "priceHint": "[À TRADUIRE] oeuvre.fields.priceHint",
+      "publisher": "[À TRADUIRE] oeuvre.fields.publisher",
+      "region": "[À TRADUIRE] oeuvre.fields.region",
+      "sourceUrl": "[À TRADUIRE] oeuvre.fields.sourceUrl",
+      "summary": "[À TRADUIRE] oeuvre.fields.summary",
+      "summaryPlaceholder": "[À TRADUIRE] oeuvre.fields.summaryPlaceholder",
+      "support": "[À TRADUIRE] oeuvre.fields.support",
+      "synopsis": "[À TRADUIRE] oeuvre.fields.synopsis",
+      "tags": "[À TRADUIRE] oeuvre.fields.tags",
+      "tagsPlaceholder": "[À TRADUIRE] oeuvre.fields.tagsPlaceholder",
+      "technique": "[À TRADUIRE] oeuvre.fields.technique",
+      "title": "[À TRADUIRE] oeuvre.fields.title",
+      "titlePlaceholder": "[À TRADUIRE] oeuvre.fields.titlePlaceholder",
+      "type": "[À TRADUIRE] oeuvre.fields.type",
+      "volume": "[À TRADUIRE] oeuvre.fields.volume",
+      "weight": "[À TRADUIRE] oeuvre.fields.weight",
+      "year": "[À TRADUIRE] oeuvre.fields.year"
+    },
+    "genres": "[À TRADUIRE] oeuvre.genres",
+    "language": "[À TRADUIRE] oeuvre.language",
+    "mainContributors": "[À TRADUIRE] oeuvre.mainContributors",
+    "metadata": "[À TRADUIRE] oeuvre.metadata",
+    "moreOeuvres": "[À TRADUIRE] oeuvre.moreOeuvres",
+    "noContributors": "[À TRADUIRE] oeuvre.noContributors",
+    "noContributorsDesc": "[À TRADUIRE] oeuvre.noContributorsDesc",
+    "noDescription": "[À TRADUIRE] oeuvre.noDescription",
+    "noEvents": "[À TRADUIRE] oeuvre.noEvents",
+    "noEventsDesc": "[À TRADUIRE] oeuvre.noEventsDesc",
+    "noRelatedOeuvres": "[À TRADUIRE] oeuvre.noRelatedOeuvres",
+    "notFound": "[À TRADUIRE] oeuvre.notFound",
+    "origin": "[À TRADUIRE] oeuvre.origin",
+    "pastEvents": "[À TRADUIRE] oeuvre.pastEvents",
+    "people": "[À TRADUIRE] oeuvre.people",
+    "publisher": "[À TRADUIRE] oeuvre.publisher",
+    "publishers": "[À TRADUIRE] oeuvre.publishers",
+    "quickInfo": "[À TRADUIRE] oeuvre.quickInfo",
+    "relatedOeuvres": "[À TRADUIRE] oeuvre.relatedOeuvres",
+    "removeFromFavorites": "[À TRADUIRE] oeuvre.removeFromFavorites",
+    "steps": {
+      "categories": {
+        "description": "[À TRADUIRE] oeuvre.steps.categories.description",
+        "noCategories": "[À TRADUIRE] oeuvre.steps.categories.noCategories",
+        "selected": "[À TRADUIRE] oeuvre.steps.categories.selected",
+        "suggestions": "[À TRADUIRE] oeuvre.steps.categories.suggestions",
+        "title": "[À TRADUIRE] oeuvre.steps.categories.title"
+      },
+      "details": {
+        "description": "[À TRADUIRE] oeuvre.steps.details.description",
+        "noType": "[À TRADUIRE] oeuvre.steps.details.noType",
+        "selectType": "[À TRADUIRE] oeuvre.steps.details.selectType",
+        "title": "[À TRADUIRE] oeuvre.steps.details.title"
+      },
+      "general": {
+        "title": "[À TRADUIRE] oeuvre.steps.general.title"
+      },
+      "media": {
+        "added": "[À TRADUIRE] oeuvre.steps.media.added",
+        "choose": "[À TRADUIRE] oeuvre.steps.media.choose",
+        "description": "[À TRADUIRE] oeuvre.steps.media.description",
+        "dropzone": "[À TRADUIRE] oeuvre.steps.media.dropzone",
+        "formats": "[À TRADUIRE] oeuvre.steps.media.formats",
+        "principalInfo": "[À TRADUIRE] oeuvre.steps.media.principalInfo",
+        "setPrincipal": "[À TRADUIRE] oeuvre.steps.media.setPrincipal",
+        "title": "[À TRADUIRE] oeuvre.steps.media.title"
+      }
+    },
+    "summary": "[À TRADUIRE] oeuvre.summary",
+    "tabs": {
+      "author": "[À TRADUIRE] oeuvre.tabs.author",
+      "comments": "[À TRADUIRE] oeuvre.tabs.comments",
+      "gallery": "[À TRADUIRE] oeuvre.tabs.gallery",
+      "info": "[À TRADUIRE] oeuvre.tabs.info"
+    },
+    "tags": "[À TRADUIRE] oeuvre.tags",
+    "team": "[À TRADUIRE] oeuvre.team",
+    "titre": "[À TRADUIRE] oeuvre.titre",
+    "totalContributors": "[À TRADUIRE] oeuvre.totalContributors",
+    "totalEvents": "[À TRADUIRE] oeuvre.totalEvents",
+    "type": "[À TRADUIRE] oeuvre.type",
+    "upcomingEvents": "[À TRADUIRE] oeuvre.upcomingEvents",
+    "views": "[À TRADUIRE] oeuvre.views",
+    "year": "[À TRADUIRE] oeuvre.year"
+  },
+  "places": {
+    "address": "[À TRADUIRE] places.address",
+    "addressPlaceholder": "[À TRADUIRE] places.addressPlaceholder",
+    "addressSearch": "[À TRADUIRE] places.addressSearch",
+    "addressSearchPlaceholder": "[À TRADUIRE] places.addressSearchPlaceholder",
+    "allTypes": "[À TRADUIRE] places.allTypes",
+    "coordinates": "[À TRADUIRE] places.coordinates",
+    "coordinatesCopied": "[À TRADUIRE] places.coordinatesCopied",
+    "copyError": "[À TRADUIRE] places.copyError",
+    "create": {
+      "button": "[À TRADUIRE] places.create.button",
+      "error": "[À TRADUIRE] places.create.error",
+      "success": "[À TRADUIRE] places.create.success"
+    },
+    "createNew": "[À TRADUIRE] places.createNew",
+    "description": "[À TRADUIRE] places.description",
+    "descriptionPlaceholder": "[À TRADUIRE] places.descriptionPlaceholder",
+    "duplicate": {
+      "description": "[À TRADUIRE] places.duplicate.description",
+      "title": "[À TRADUIRE] places.duplicate.title"
+    },
+    "filterByType": "[À TRADUIRE] places.filterByType",
+    "geocoding": {
+      "error": "[À TRADUIRE] places.geocoding.error"
+    },
+    "mapInstructions": "[À TRADUIRE] places.mapInstructions",
+    "mapLocation": "[À TRADUIRE] places.mapLocation",
+    "name": "[À TRADUIRE] places.name",
+    "namePlaceholder": "[À TRADUIRE] places.namePlaceholder",
+    "noResults": "[À TRADUIRE] places.noResults",
+    "search": {
+      "placeholder": "[À TRADUIRE] places.search.placeholder"
+    },
+    "selectExisting": "[À TRADUIRE] places.selectExisting",
+    "selectThisLocation": "[À TRADUIRE] places.selectThisLocation",
+    "sortedByDistance": "[À TRADUIRE] places.sortedByDistance",
+    "type": "[À TRADUIRE] places.type",
+    "types": {
+      "archaeologicalSite": "[À TRADUIRE] places.types.archaeologicalSite",
+      "cinema": "[À TRADUIRE] places.types.cinema",
+      "conferenceHall": "[À TRADUIRE] places.types.conferenceHall",
+      "culturalCenter": "[À TRADUIRE] places.types.culturalCenter",
+      "culturalSpace": "[À TRADUIRE] places.types.culturalSpace",
+      "cultureHouse": "[À TRADUIRE] places.types.cultureHouse",
+      "gallery": "[À TRADUIRE] places.types.gallery",
+      "historicalMonument": "[À TRADUIRE] places.types.historicalMonument",
+      "library": "[À TRADUIRE] places.types.library",
+      "museum": "[À TRADUIRE] places.types.museum",
+      "other": "[À TRADUIRE] places.types.other",
+      "outdoor": "[À TRADUIRE] places.types.outdoor",
+      "theater": "[À TRADUIRE] places.types.theater",
+      "theater2": "[À TRADUIRE] places.types.theater2"
+    },
+    "useCurrentLocation": "[À TRADUIRE] places.useCurrentLocation"
+  },
+  "programme": {
+    "digitalSupport": "[À TRADUIRE] programme.digitalSupport",
+    "empty": "[À TRADUIRE] programme.empty",
+    "emptyDesc": "[À TRADUIRE] programme.emptyDesc",
+    "level": "[À TRADUIRE] programme.level",
+    "liveStreaming": "[À TRADUIRE] programme.liveStreaming",
+    "noDate": "[À TRADUIRE] programme.noDate",
+    "requiredMaterial": "[À TRADUIRE] programme.requiredMaterial",
+    "speakers": "[À TRADUIRE] programme.speakers",
+    "translationAvailable": "[À TRADUIRE] programme.translationAvailable"
+  },
+  "publishers": {
+    "addedCount": "[À TRADUIRE] publishers.addedCount"
+  },
+  "sections": {
+    "crafts": {
+      "stock": {
+        "inStock": "[À TRADUIRE] sections.crafts.stock.inStock"
+      }
+    }
+  },
+  "status": {
+    "active": "[À TRADUIRE] status.active",
+    "archived": "[À TRADUIRE] status.archived",
+    "cancelled": "[À TRADUIRE] status.cancelled",
+    "closed": "[À TRADUIRE] status.closed",
+    "draft": "[À TRADUIRE] status.draft",
+    "finished": "[À TRADUIRE] status.finished",
+    "full": "[À TRADUIRE] status.full",
+    "inactive": "[À TRADUIRE] status.inactive",
+    "ongoing": "[À TRADUIRE] status.ongoing",
+    "open": "[À TRADUIRE] status.open",
+    "pending": "[À TRADUIRE] status.pending",
+    "published": "[À TRADUIRE] status.published",
+    "rejected": "[À TRADUIRE] status.rejected",
+    "suspended": "[À TRADUIRE] status.suspended",
+    "upcoming": "[À TRADUIRE] status.upcoming",
+    "validated": "[À TRADUIRE] status.validated"
+  },
+  "works": {
+    "actions": {
+      "addFavorite": "[À TRADUIRE] works.actions.addFavorite",
+      "buy": "[À TRADUIRE] works.actions.buy",
+      "watchTrailer": "[À TRADUIRE] works.actions.watchTrailer"
+    },
+    "album": {
+      "tracksCount": "[À TRADUIRE] works.album.tracksCount"
+    },
+    "directedBy": "[À TRADUIRE] works.directedBy",
+    "duration": {
+      "minutes": "[À TRADUIRE] works.duration.minutes"
+    },
+    "filterByType": "[À TRADUIRE] works.filterByType",
+    "flipToFront": "[À TRADUIRE] works.flipToFront",
+    "inFavorites": "[À TRADUIRE] works.inFavorites",
+    "noDescription": "[À TRADUIRE] works.noDescription",
+    "noResults": "[À TRADUIRE] works.noResults",
+    "noResultsDesc": "[À TRADUIRE] works.noResultsDesc",
+    "searchPlaceholder": "[À TRADUIRE] works.searchPlaceholder",
+    "sort": {
+      "popular": "[À TRADUIRE] works.sort.popular",
+      "rated": "[À TRADUIRE] works.sort.rated",
+      "recent": "[À TRADUIRE] works.sort.recent",
+      "title": "[À TRADUIRE] works.sort.title"
+    },
+    "stats": {
+      "contributors": "[À TRADUIRE] works.stats.contributors",
+      "listensCount": "[À TRADUIRE] works.stats.listensCount",
+      "rating": "[À TRADUIRE] works.stats.rating",
+      "thisMonth": "[À TRADUIRE] works.stats.thisMonth",
+      "total": "[À TRADUIRE] works.stats.total",
+      "types": "[À TRADUIRE] works.stats.types"
+    },
+    "subtitle": "[À TRADUIRE] works.subtitle",
+    "synopsis": "[À TRADUIRE] works.synopsis",
+    "title": "[À TRADUIRE] works.title",
+    "viewCover": "[À TRADUIRE] works.viewCover",
+    "viewSummary": "[À TRADUIRE] works.viewSummary"
+  }
+}

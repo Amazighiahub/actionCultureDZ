@@ -8,6 +8,7 @@ const { Op } = require('sequelize');
 
 // ⚡ Import du helper i18n
 const { translate, translateDeep, createMultiLang, mergeTranslations } = require('../helpers/i18n');
+const { accountRateLimiter } = require('../middlewares/rateLimitMiddleware');
 
 const TYPE_USER_IDS = {
   VISITEUR: 1,
@@ -32,7 +33,15 @@ const SKIP_EMAIL_VERIFICATION = process.env.SKIP_EMAIL_VERIFICATION === 'true' |
 class UserController {
   constructor(models) {
     this.models = models;
-    this.JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+    
+    if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
+      const isProduction = process.env.NODE_ENV === 'production';
+      if (isProduction) {
+        throw new Error('JWT_SECRET manquant ou trop court (min 32 caractères) en production');
+      }
+      console.warn('⚠️ JWT_SECRET non configuré ou trop court - utilisation d\'un secret temporaire (dev uniquement)');
+    }
+    this.JWT_SECRET = process.env.JWT_SECRET;
     
     // Log de la configuration au démarrage
     console.log('📧 Configuration email:');
@@ -95,10 +104,9 @@ class UserController {
       // ⚡ Récupérer la langue de la requête
       const lang = req.lang || 'fr';
 
+      const maskedEmail = email ? `${email.substring(0, 3)}***@${email.split('@')[1] || '***'}` : '***';
       console.log('📝 Nouvelle inscription:', { 
-        nom, 
-        prenom, 
-        email, 
+        email: maskedEmail,
         id_type_user,
         lang,
         photo_url: photo_url ? '✅ Photo fournie' : '❌ Pas de photo',
@@ -287,8 +295,12 @@ class UserController {
         console.log('⚡ Mode DEV: Pas d\'email de vérification envoyé');
       }
 
-      // Générer le token JWT
-      const token = this.generateToken(user);
+      // ✅ SÉCURITÉ: Générer les tokens (accès 15min + refresh 7j)
+      const accessToken = this.generateToken(user);
+      const refreshToken = this.generateRefreshToken(user);
+
+      // ✅ SÉCURITÉ: Définir les cookies httpOnly sécurisés
+      this.setAuthCookies(res, accessToken, refreshToken);
 
       // ⚡ Préparer la réponse traduite
       // ✅ CORRIGÉ: Convertir en JSON avant translateDeep
@@ -313,7 +325,9 @@ class UserController {
         message,
         data: {
           user: userResponse,
-          token,
+          token: accessToken, // Pour compatibilité
+          refreshToken,
+          expiresIn: 15 * 60, // 15 minutes en secondes
           needsEmailVerification: !SKIP_EMAIL_VERIFICATION && !email_verifie,
           needsAdminValidation: !isVisiteur,
           devMode: IS_DEV_MODE
@@ -364,6 +378,8 @@ class UserController {
       const user = await this.models.User.findOne(queryOptions);
 
       if (!user) {
+        // Enregistrer la tentative échouée
+        accountRateLimiter.recordFailedAttempt(email);
         return res.status(401).json({
           success: false,
           error: 'Email ou mot de passe incorrect'
@@ -373,6 +389,8 @@ class UserController {
       // Vérifier le mot de passe
       const isPasswordValid = await bcrypt.compare(password, user.password);
       if (!isPasswordValid) {
+        // Enregistrer la tentative échouée
+        accountRateLimiter.recordFailedAttempt(email);
         return res.status(401).json({
           success: false,
           error: 'Email ou mot de passe incorrect'
@@ -397,16 +415,23 @@ class UserController {
         });
       }
 
+      // Réinitialiser les tentatives de connexion après succès
+      accountRateLimiter.resetAttempts(email);
+
       // Mettre à jour dernière connexion
       await user.update({ derniere_connexion: new Date() });
 
-      // Générer le token
-      const token = this.generateToken(user);
+      // ✅ SÉCURITÉ: Générer les tokens (accès 15min + refresh 7j)
+      const accessToken = this.generateToken(user);
+      const refreshToken = this.generateRefreshToken(user);
+
+      // ✅ SÉCURITÉ: Définir les cookies httpOnly sécurisés
+      this.setAuthCookies(res, accessToken, refreshToken);
 
       // ✅ CORRECTION 2: Convertir en JSON AVANT translateDeep
       const userJSON = user.toJSON();
       delete userJSON.password;
-      
+
       // Appliquer la traduction sur l'objet JSON (pas sur l'instance Sequelize)
       const userData = translateDeep(userJSON, lang);
 
@@ -417,8 +442,10 @@ class UserController {
         message: 'Connexion réussie',
         data: {
           user: userData,
-          token,
-          needsAdminValidation: user.id_type_user !== TYPE_USER_IDS.VISITEUR && 
+          token: accessToken, // Pour compatibilité avec le frontend existant
+          refreshToken, // Nouveau: refresh token
+          expiresIn: 15 * 60, // 15 minutes en secondes
+          needsAdminValidation: user.id_type_user !== TYPE_USER_IDS.VISITEUR &&
                                 user.statut_validation !== 'valide'
         }
       });
@@ -699,9 +726,12 @@ class UserController {
   }
 
   /**
-   * Déconnexion
+   * Déconnexion - ✅ Efface les cookies httpOnly
    */
   async logoutUser(req, res) {
+    // ✅ SÉCURITÉ: Effacer les cookies d'authentification
+    this.clearAuthCookies(res);
+
     res.json({
       success: true,
       message: 'Déconnexion réussie'
@@ -995,16 +1025,150 @@ class UserController {
   }
 
   /**
-   * Générer un token JWT
+   * Générer un token JWT d'accès (courte durée)
    */
   generateToken(user) {
     const payload = {
       id_user: user.id_user,
       email: user.email,
-      id_type_user: user.id_type_user
+      id_type_user: user.id_type_user,
+      type: 'access'
     };
 
-    return jwt.sign(payload, this.JWT_SECRET, { expiresIn: '24h' });
+    // ✅ SÉCURITÉ: Token d'accès de 15 minutes (au lieu de 24h)
+    return jwt.sign(payload, this.JWT_SECRET, { expiresIn: '15m' });
+  }
+
+  /**
+   * ✅ NOUVEAU: Générer un refresh token (longue durée)
+   */
+  generateRefreshToken(user) {
+    const payload = {
+      id_user: user.id_user,
+      email: user.email,
+      type: 'refresh'
+    };
+
+    // Refresh token valide 7 jours
+    return jwt.sign(payload, this.JWT_SECRET, { expiresIn: '7d' });
+  }
+
+  /**
+   * ✅ NOUVEAU: Configurer les cookies httpOnly sécurisés
+   */
+  setAuthCookies(res, accessToken, refreshToken) {
+    const isProduction = process.env.NODE_ENV === 'production';
+
+    // Cookie pour le token d'accès (15 minutes)
+    res.cookie('access_token', accessToken, {
+      httpOnly: true,
+      secure: isProduction, // HTTPS uniquement en production
+      sameSite: 'strict',
+      maxAge: 15 * 60 * 1000, // 15 minutes
+      path: '/'
+    });
+
+    // Cookie pour le refresh token (7 jours)
+    res.cookie('refresh_token', refreshToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 jours
+      path: '/api/users/refresh-token' // Limité à la route de refresh
+    });
+  }
+
+  /**
+   * ✅ NOUVEAU: Effacer les cookies d'authentification
+   */
+  clearAuthCookies(res) {
+    res.clearCookie('access_token', { path: '/' });
+    res.clearCookie('refresh_token', { path: '/api/users/refresh-token' });
+  }
+
+  /**
+   * ✅ NOUVEAU: Rafraîchir le token d'accès
+   */
+  async refreshToken(req, res) {
+    try {
+      // Récupérer le refresh token depuis le cookie ou le body
+      const refreshToken = req.cookies?.refresh_token || req.body?.refreshToken;
+
+      if (!refreshToken) {
+        return res.status(401).json({
+          success: false,
+          error: 'Refresh token manquant'
+        });
+      }
+
+      // Vérifier le refresh token
+      let decoded;
+      try {
+        decoded = jwt.verify(refreshToken, this.JWT_SECRET);
+      } catch (error) {
+        this.clearAuthCookies(res);
+        return res.status(401).json({
+          success: false,
+          error: 'Refresh token invalide ou expiré',
+          code: 'REFRESH_TOKEN_EXPIRED'
+        });
+      }
+
+      // Vérifier que c'est bien un refresh token
+      if (decoded.type !== 'refresh') {
+        return res.status(401).json({
+          success: false,
+          error: 'Type de token invalide'
+        });
+      }
+
+      // Récupérer l'utilisateur
+      const user = await this.models.User.findByPk(decoded.id_user);
+
+      if (!user) {
+        this.clearAuthCookies(res);
+        return res.status(401).json({
+          success: false,
+          error: 'Utilisateur non trouvé'
+        });
+      }
+
+      // Vérifier le statut du compte
+      const blockedStatuses = ['suspendu', 'banni', 'inactif'];
+      if (blockedStatuses.includes(user.statut)) {
+        this.clearAuthCookies(res);
+        return res.status(403).json({
+          success: false,
+          error: `Votre compte est ${user.statut}`
+        });
+      }
+
+      // Générer de nouveaux tokens
+      const newAccessToken = this.generateToken(user);
+      const newRefreshToken = this.generateRefreshToken(user);
+
+      // Définir les cookies
+      this.setAuthCookies(res, newAccessToken, newRefreshToken);
+
+      console.log(`🔄 Token rafraîchi pour: ${user.email}`);
+
+      res.json({
+        success: true,
+        message: 'Token rafraîchi avec succès',
+        data: {
+          token: newAccessToken, // Pour compatibilité avec le frontend existant
+          refreshToken: newRefreshToken,
+          expiresIn: 15 * 60 // 15 minutes en secondes
+        }
+      });
+
+    } catch (error) {
+      console.error('❌ Erreur refresh token:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur lors du rafraîchissement du token'
+      });
+    }
   }
 }
 

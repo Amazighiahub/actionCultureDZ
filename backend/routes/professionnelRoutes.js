@@ -5,6 +5,7 @@
 const express = require('express');
 const router = express.Router();
 const ProfessionnelController = require('../controllers/ProfessionnelController');
+const createEvenementController = require('../controllers/EvenementController');
 const createAuthMiddleware = require('../middlewares/authMiddleware');
 const validationMiddleware = require('../middlewares/validationMiddleware');
 const rateLimitMiddleware = require('../middlewares/rateLimitMiddleware');
@@ -15,6 +16,7 @@ const { body, query, param } = require('express-validator');
 const initProfessionnelRoutes = (models) => {
   const authMiddleware = createAuthMiddleware(models);
   const professionnelController = new ProfessionnelController(models);
+  const evenementController = createEvenementController(models);
 
   // Fallback pour requireValidatedProfessional si non défini
   const requireValidatedProfessional = authMiddleware.requireValidatedProfessional || 
@@ -143,6 +145,30 @@ const initProfessionnelRoutes = (models) => {
     requireOwnership('Evenement', 'id', 'id_user'),
     cacheMiddleware.conditionalCache(300),
     professionnelController.getEvenementStats.bind(professionnelController)
+  );
+
+  /**
+   * @route GET /professionnel/evenements/:id/participants
+   * @desc Liste des participants avec leurs œuvres soumises
+   * @access Private (Professionnel validé, propriétaire de l'événement)
+   */
+  router.get('/evenements/:id/participants',
+    validationMiddleware.validateId('id'),
+    requireOwnership('Evenement', 'id', 'id_user'),
+    cacheMiddleware.conditionalCache(60),
+    evenementController.getParticipants
+  );
+
+  /**
+   * @route GET /professionnel/evenements/:id/participants/:userId/profil
+   * @desc Voir le profil complet d'un participant inscrit (avec portfolio et historique)
+   * @access Private (Professionnel validé, propriétaire de l'événement)
+   */
+  router.get('/evenements/:id/participants/:userId/profil',
+    validationMiddleware.validateId('id'),
+    validationMiddleware.validateId('userId'),
+    requireOwnership('Evenement', 'id', 'id_user'),
+    evenementController.getParticipantProfil
   );
 
   /**
