@@ -98,7 +98,7 @@ const AdminServicesTab: React.FC = () => {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Rechercher un service..."
+                placeholder={t('admin.services.searchPlaceholder', 'Rechercher un service...')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9"
@@ -107,18 +107,18 @@ const AdminServicesTab: React.FC = () => {
 
             <Select value={typeFilter} onValueChange={setTypeFilter}>
               <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Type" />
+                <SelectValue placeholder={t('common.type', 'Type')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="tous">Tous</SelectItem>
-                <SelectItem value="guide_touristique">Guide touristique</SelectItem>
-                <SelectItem value="transport">Transport</SelectItem>
-                <SelectItem value="hebergement">Hébergement</SelectItem>
-                <SelectItem value="atelier">Atelier</SelectItem>
+                <SelectItem value="tous">{t('common.all', 'Tous')}</SelectItem>
+                <SelectItem value="guide_touristique">{t('admin.services.types.tourGuide', 'Guide touristique')}</SelectItem>
+                <SelectItem value="transport">{t('admin.services.types.transport', 'Transport')}</SelectItem>
+                <SelectItem value="hebergement">{t('admin.services.types.accommodation', 'Hébergement')}</SelectItem>
+                <SelectItem value="atelier">{t('admin.services.types.workshop', 'Atelier')}</SelectItem>
               </SelectContent>
             </Select>
 
-            <Button variant="outline" size="icon">
+            <Button variant="outline" size="icon" aria-label={t('common.refresh', 'Actualiser')}>
               <RefreshCw className="h-4 w-4" />
             </Button>
           </div>
@@ -126,7 +126,7 @@ const AdminServicesTab: React.FC = () => {
       </Card>
 
       {services.length === 0 ? (
-        <EmptyState type="products" title="Aucun service" />
+        <EmptyState type="products" title={t('admin.services.noServices', 'Aucun service')} />
       ) : (
         <div className="space-y-4">
           {services.map((service) => (
@@ -159,30 +159,30 @@ const AdminServicesTab: React.FC = () => {
                     </div>
                     {service.prestataire && (
                       <p className="text-xs text-muted-foreground mt-1">
-                        Par {service.prestataire.prenom} {service.prestataire.nom}
+                        {t('common.by', 'Par')} {service.prestataire.prenom} {service.prestataire.nom}
                       </p>
                     )}
                   </div>
 
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
+                      <Button variant="ghost" size="icon" aria-label={t('common.moreOptions', 'Plus d\'options')}>
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem>
                         <Eye className="h-4 w-4 mr-2" />
-                        Voir
+                        {t('common.view', 'Voir')}
                       </DropdownMenuItem>
                       <DropdownMenuItem>
                         <Edit className="h-4 w-4 mr-2" />
-                        Modifier
+                        {t('common.edit', 'Modifier')}
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem className="text-destructive">
                         <Trash2 className="h-4 w-4 mr-2" />
-                        Supprimer
+                        {t('common.delete', 'Supprimer')}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>

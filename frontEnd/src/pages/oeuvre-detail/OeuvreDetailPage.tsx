@@ -508,23 +508,23 @@ const OeuvreDetailPage: React.FC = () => {
             <CardHeader>
               <CardTitle className="text-lg flex items-center">
                 <Share2 className="h-5 w-5 mr-2 text-primary" />
-                Actions
+                {t('oeuvredetailpage.actions', 'Actions')}
               </CardTitle>
             </CardHeader>
             <CardContent className="pb-6">
               <div className={`grid gap-4 ${oeuvre.Livre ? 'sm:grid-cols-3' : 'sm:grid-cols-2'}`}>
                 <Button size="lg" className="w-full" variant="default">
                   <ThumbsUp className="h-5 w-5 mr-2" />
-                  Recommander
+                  {t('oeuvredetailpage.recommander', 'Recommander')}
                 </Button>
                 <Button variant="outline" size="lg" className="w-full" onClick={openCommentModal}>
                   <MessageCircle className="h-5 w-5 mr-2" />
-                  Écrire un avis
+                  {t('oeuvredetailpage.crire_avis', 'Écrire un avis')}
                 </Button>
                 {oeuvre.Livre && (
                   <Button variant="outline" size="lg" className="w-full">
                     <BookOpen className="h-5 w-5 mr-2" />
-                    Lire un extrait
+                    {t('oeuvredetailpage.lire_extrait', 'Lire un extrait')}
                   </Button>
                 )}
               </div>
@@ -537,7 +537,7 @@ const OeuvreDetailPage: React.FC = () => {
               <CardHeader>
                 <CardTitle className="text-lg flex items-center">
                   <CalendarCheck className="h-5 w-5 mr-2 text-primary" />
-                  Prochains événements
+                  {t('oeuvredetailpage.prochains_vnements', 'Prochains événements')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -564,7 +564,7 @@ const OeuvreDetailPage: React.FC = () => {
                 </div>
                 <div className="mt-4 text-center">
                   <Button variant="outline" size="sm" asChild>
-                    <Link to="/evenements">Voir tous les événements</Link>
+                    <Link to="/evenements">{t('oeuvredetailpage.voir_tous_les', 'Voir tous les événements')}</Link>
                   </Button>
                 </div>
               </CardContent>
@@ -586,17 +586,17 @@ const OeuvreDetailPage: React.FC = () => {
       <Dialog open={showCommentModal} onOpenChange={setShowCommentModal}>
         <DialogContent className="sm:max-w-[525px]">
           <DialogHeader>
-            <DialogTitle>Ajouter un commentaire</DialogTitle>
+            <DialogTitle>{t('oeuvredetailpage.commentaires', 'Ajouter un commentaire')}</DialogTitle>
             <DialogDescription>
-              Partagez votre avis sur cette œuvre
+              {t('oeuvredetailpage.partagez_votre_avis', 'Partagez votre avis sur cette œuvre')}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="comment">Votre commentaire</Label>
+              <Label htmlFor="comment">{t('oeuvredetailpage.votre_commentaire', 'Votre commentaire')}</Label>
               <Textarea
                 id="comment"
-                placeholder="Écrivez votre commentaire ici..."
+                placeholder={t('oeuvredetailpage.placeholder_crivez_votre_commentaire', 'Écrivez votre commentaire ici...')}
                 className="min-h-[120px] resize-none"
                 value={commentContent}
                 onChange={(e) => setCommentContent(e.target.value)}
@@ -616,7 +616,7 @@ const OeuvreDetailPage: React.FC = () => {
               }}
               disabled={commentLoading}
             >
-              Annuler
+              {t('oeuvredetailpage.annuler', 'Annuler')}
             </Button>
             <Button
               onClick={handleSubmitComment}
@@ -625,12 +625,12 @@ const OeuvreDetailPage: React.FC = () => {
               {commentLoading ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Envoi...
+                  {t('oeuvredetailpage.envoi', 'Envoi...')}
                 </>
               ) : (
                 <>
                   <Send className="h-4 w-4 mr-2" />
-                  Envoyer
+                  {t('oeuvredetailpage.envoyer', 'Envoyer')}
                 </>
               )}
             </Button>

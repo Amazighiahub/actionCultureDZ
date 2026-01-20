@@ -584,8 +584,8 @@ class ProfessionnelController {
       const evenements = await this.models.Evenement.findAndCountAll({
         where,
         include: [
-          { model: this.models.TypeEvenement, attributes: ['id_type_evenement', 'nom'], required: false },
-          { model: this.models.Lieu, attributes: ['id_lieu', 'nom', 'adresse'], required: false }
+          { model: this.models.TypeEvenement, as: 'TypeEvenement', attributes: ['id_type_evenement', 'nom_type'], required: false },
+          { model: this.models.Lieu, as: 'Lieu', attributes: ['id_lieu', 'nom', 'adresse'], required: false }
         ],
         limit: parseInt(limit),
         offset,
@@ -701,8 +701,9 @@ class ProfessionnelController {
         return res.status(404).json({ success: false, error: 'Événement non trouvé' });
       }
 
-      // Trouver la participation
-      const participation = await this.models.Participation.findOne({
+      // Trouver la participation (table evenementusers)
+      const EvenementUser = this.models.EvenementUser;
+      const participation = await EvenementUser.findOne({
         where: { id_evenement: id, id_user: userId }
       });
 
@@ -710,36 +711,58 @@ class ProfessionnelController {
         return res.status(404).json({ success: false, error: 'Participant non trouvé' });
       }
 
-      // Appliquer l'action
-      const updates = {};
+      // Appliquer l'action - utiliser statut_participation selon le modèle EvenementUser
+      const updates = {
+        date_validation: new Date(),
+        valide_par: organisateurId
+      };
+
       switch (action) {
         case 'confirmer':
-          updates.statut = 'confirme';
+          updates.statut_participation = 'confirme';
           break;
         case 'rejeter':
-          updates.statut = 'rejete';
+          updates.statut_participation = 'annule';
           break;
         case 'marquer_present':
-          updates.present = true;
+          updates.statut_participation = 'present';
+          updates.presence_confirmee = true;
           break;
         case 'marquer_absent':
-          updates.present = false;
+          updates.statut_participation = 'absent';
+          updates.presence_confirmee = false;
           break;
       }
 
-      if (notes) updates.notes_organisateur = notes;
+      if (notes) updates.notes = notes;
 
       await participation.update(updates);
 
+      // Récupérer les infos du participant pour les notifications
+      const User = this.models.User;
+      const participant = await User.findByPk(userId, {
+        attributes: ['id_user', 'nom', 'prenom', 'email']
+      });
+
       res.json({
         success: true,
-        message: 'Participant mis à jour',
-        data: participation
+        message: action === 'confirmer' ? 'Participation confirmée' :
+                 action === 'rejeter' ? 'Participation refusée' :
+                 action === 'marquer_present' ? 'Présence enregistrée' :
+                 'Absence enregistrée',
+        data: {
+          participation,
+          participant: participant ? {
+            nom: participant.nom,
+            prenom: participant.prenom,
+            email: participant.email
+          } : null
+        }
       });
 
     } catch (error) {
       console.error('Erreur manageParticipants:', error);
-      res.status(500).json({ success: false, error: 'Erreur serveur' });
+      res.status(500).json({ success: false, error: 'Erreur serveur', details: error.message });
     }
   }
 

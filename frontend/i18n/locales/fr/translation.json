@@ -113,6 +113,14 @@
       "passwordRequired": "Le mot de passe est requis",
       "loginError": "Erreur de connexion",
       "invalidCredentials": "Email ou mot de passe incorrect",
+      "userNotFound": "Aucun compte trouvé avec cet email",
+      "wrongPassword": "Mot de passe incorrect",
+      "accountNotVerified": "Veuillez vérifier votre email avant de vous connecter",
+      "accountDisabled": "Votre compte a été désactivé. Contactez l'administrateur.",
+      "accountPending": "Votre compte professionnel est en attente de validation",
+      "accountSuspended": "Votre compte est suspendu. Contactez l'administrateur.",
+      "accountBanned": "Votre compte a été banni",
+      "tooManyAttempts": "Trop de tentatives de connexion. Veuillez réessayer plus tard.",
       "nameMinLength": "Le nom doit contenir au moins 2 caractères",
       "firstNameMinLength": "Le prénom doit contenir au moins 2 caractères",
       "passwordMinLength": "Le mot de passe doit contenir au moins 8 caractères",
@@ -285,7 +293,15 @@
     "years": "ans",
     "save": "Enregistrer",
     "submit": "Soumettre",
-    "close": "Fermer"
+    "close": "Fermer",
+    "allStatuses": "Tous les statuts",
+    "allRoles": "Tous les rôles",
+    "notes": "Notes",
+    "works": "œuvres",
+    "moreOptions": "Plus d'options",
+    "clearSearch": "Effacer la recherche",
+    "type": "Type",
+    "more": "autres"
   },
   "contributors": {
     "addedCount": "{{count}} contributeurs ajoutés",
@@ -862,12 +878,13 @@
     "modifier_profil": "Modifier le profil"
   },
   "dashboardpro": {
-    "participants": "participants",
-    "visites": "visites",
-    "da": "DA",
+    "participants": " participants",
+    "visites": " visites",
+    "da": " DA",
     "dashboard_professionnel": "Dashboard Professionnel",
     "grez_vos_crations": "Gérez vos créations culturelles",
     "actualiser": "Actualiser",
+    "ajouter": "Ajouter",
     "uvres": "Œuvres",
     "vnements": "Événements",
     "services": "Services",
@@ -876,6 +893,7 @@
     "vnements_1": "Événements",
     "services_1": "Services",
     "patrimoine": "Patrimoine",
+    "artisanat": "Artisanat",
     "placeholder_rechercher": "Rechercher...",
     "mes_uvres": "Mes œuvres (",
     "nouvelle_uvre": "Nouvelle œuvre",
@@ -889,10 +907,21 @@
     "nouveau_service": "Nouveau service",
     "aucun_service": "Aucun service créé",
     "crer_mon_premier_1": "Créer mon premier service",
-    "mon_patrimoine": "Mon patrimoine (",
+    "mon_patrimoine": "Mon patrimoine",
+    "nouveau_patrimoine": "Nouveau patrimoine",
     "nouveau_site": "Nouveau site",
     "aucun_site_patrimoine": "Aucun site patrimoine enregistré",
-    "ajouter_mon_premier": "Ajouter mon premier site"
+    "ajouter_mon_premier": "Ajouter mon premier site",
+    "mes_artisanats": "Mes artisanats",
+    "nouvel_artisanat": "Nouvel artisanat",
+    "aucun_artisanat": "Aucun artisanat créé",
+    "creer_premier_artisanat": "Créer mon premier artisanat",
+    "non_defini": "Non défini",
+    "en_stock": "en stock",
+    "sur_commande": "Sur commande",
+    "indisponible": "Indisponible",
+    "manage": "Gérer",
+    "manage_event": "Gérer programmes et œuvres"
   },
   "dashboardadmin": {
     "label_validation": "Validation",
@@ -1768,7 +1797,15 @@
       "title": "Gestion des événements"
     },
     "services": {
-      "title": "Gestion des services"
+      "title": "Gestion des services",
+      "searchPlaceholder": "Rechercher un service...",
+      "noServices": "Aucun service",
+      "types": {
+        "tourGuide": "Guide touristique",
+        "transport": "Transport",
+        "accommodation": "Hébergement",
+        "workshop": "Atelier"
+      }
     },
     "alerts": {
       "title": "Alertes"
@@ -2099,7 +2136,24 @@
       "title": "Inscription",
       "total": "Total",
       "unavailable": "Inscription indisponible",
-      "waitingList": "Liste d'attente"
+      "waitingList": "Liste d'attente",
+      "submitWorks": "Œuvres à soumettre",
+      "worksRequired": "Sélectionnez les œuvres que vous souhaitez présenter (obligatoire)",
+      "worksOptional": "Sélectionnez les œuvres que vous souhaitez présenter (optionnel)",
+      "maxWorks": "Maximum: {{max}} œuvre(s)",
+      "acceptedTypes": "Types acceptés:",
+      "noWorks": "Vous n'avez pas encore d'œuvres correspondant à ce type d'événement",
+      "createWork": "Créer une œuvre",
+      "selectedWorks": "Œuvres sélectionnées:",
+      "worksSubmitted": "Œuvres soumises",
+      "oeuvresRequired": "Veuillez sélectionner au moins une œuvre à soumettre",
+      "professionalOnly": "La soumission d'œuvres est réservée aux professionnels",
+      "upgradeToPro": "Passez en compte professionnel pour soumettre vos œuvres",
+      "becomePro": "Devenir professionnel",
+      "interestedVisitor": "Intéressé(e) par cet événement ?",
+      "connectToParticipate": "Connectez-vous pour vous inscrire ou ajoutez aux favoris",
+      "addToFavorites": "Ajouter aux favoris",
+      "removeFromFavorites": "Retirer des favoris"
     },
     "registrationDeadline": "Date limite d'inscription",
     "relatedEvents": "Événements associés",
@@ -2252,6 +2306,30 @@
       "wilayaRequired": "Veuillez sélectionner une wilaya",
       "createFailed": "Erreur lors de la création du site"
     }
+  },
+  "pro": {
+    "participants": {
+      "title": "Participants",
+      "total": "inscrits",
+      "search": "Rechercher un participant...",
+      "empty": "Aucun participant trouvé",
+      "profile": "Profil du participant",
+      "viewProfile": "Voir profil",
+      "registeredOn": "Inscrit le",
+      "worksSubmitted": "œuvre(s) soumise(s)",
+      "eventRegistration": "Inscription à cet événement",
+      "submittedWorks": "Œuvres soumises pour cet événement",
+      "portfolio": "Portfolio",
+      "participationHistory": "Historique des participations",
+      "loadError": "Impossible de charger le profil"
+    }
+  },
+  "gestion": {
+    "title": "Gestion de l'événement",
+    "programmes": "Programmes",
+    "participants": "Participants",
+    "oeuvres": "Œuvres",
+    "showOeuvres": "Présenter des œuvres"
   },
   "status": {
     "active": "Actif",

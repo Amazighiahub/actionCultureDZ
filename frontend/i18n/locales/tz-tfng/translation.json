@@ -2029,6 +2029,22 @@
     },
     "useCurrentLocation": "ⵙⴻⵇⴷⴻⵛ ⴰⴷⵉⴳ-ⵉⵡ ⵜⵓⵔⴰ"
   },
+  "pro": {
+    "participants": {
+      "title": "ⵉⵎⵜⵜⴻⴽⴽⵉⵢⴻⵏ",
+      "total": "ⵉⵊⴻⵔⴷⴻⵏ",
+      "search": "ⵏⴰⴷⵉ ⵖⴻⴼ ⵓⵎⵜⵜⴻⴽⴽⵉ...",
+      "empty": "ⵓⵍⴰⵛ ⵉⵎⵜⵜⴻⴽⴽⵉⵢⴻⵏ",
+      "profile": "ⴰⵎⴰⵖⵏⵓ ⵏ ⵓⵎⵜⵜⴻⴽⴽⵉ"
+    }
+  },
+  "gestion": {
+    "title": "ⴰⵙⴻⴼⵔⴻⴽ ⵏ ⵜⴻⴷⵢⴰⵏⵜ",
+    "programmes": "ⵉⵀⵉⵍⴻⵏ",
+    "participants": "ⵉⵎⵜⵜⴻⴽⴽⵉⵢⴻⵏ",
+    "oeuvres": "ⵜⵉⵖⵓⵔⵉⵡⵉⵏ",
+    "showOeuvres": "ⵙⴽⴻⵏ ⵜⵉⵖⵓⵔⵉⵡⵉⵏ"
+  },
   "status": {
     "active": "ⴰⵔⵎⵉⵙ",
     "inactive": "ⵓⵔ ⵢⴻⵔⵎⵉⵙ ⴰⵔⴰ",

@@ -5,6 +5,7 @@
  */
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/UI/card';
 import { Button } from '@/components/UI/button';
 import { Badge } from '@/components/UI/badge';
@@ -26,8 +27,8 @@ import {
 } from '@/components/UI/dialog';
 import {
   Calendar, Clock, Users, Ticket, CheckCircle, XCircle,
-  AlertCircle, Loader2, UserPlus, UserMinus, CreditCard,
-  Mail, Phone, MapPin, ExternalLink, Palette, BookOpen, Music, Film
+  AlertCircle, Loader2, UserPlus, UserMinus,
+  Mail, Phone, Palette, BookOpen, Music, Film, Heart
 } from 'lucide-react';
 import { httpClient } from '@/services/httpClient';
 import { oeuvreService } from '@/services/oeuvre.service';
@@ -71,16 +72,20 @@ interface EventRegistrationProps {
   onRegister: (data?: { nombre_personnes?: number; commentaire?: string; oeuvres?: number[]; notes?: string }) => Promise<boolean>;
   isRegistered?: boolean;
   registrationStatus?: 'pending' | 'confirmed' | 'cancelled' | 'waiting_list';
+  isFavorite?: boolean;
+  onToggleFavorite?: () => void;
 }
 
 const EventRegistration: React.FC<EventRegistrationProps> = ({
   event,
   onRegister,
   isRegistered = false,
-  registrationStatus
+  registrationStatus,
+  isFavorite = false,
+  onToggleFavorite
 }) => {
   const { t } = useTranslation();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, isProfessional } = useAuth();
   const { formatDate } = useLocalizedDate();
   const { formatPrice } = useLocalizedNumber();
   const { td, safe } = useTranslateData();
@@ -407,12 +412,44 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
 
       <CardFooter className="flex flex-col gap-3">
         {!isAuthenticated ? (
-          <Button asChild className="w-full">
-            <a href="/auth">
-              <UserPlus className="h-4 w-4 mr-2" />
-              {t('event.registration.loginToRegister', 'Se connecter pour s\'inscrire')}
-            </a>
-          </Button>
+          <>
+            {/* Message pour visiteurs non connectés */}
+            <div className="w-full p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg text-center">
+              <Heart className="h-5 w-5 text-amber-500 mx-auto mb-1" />
+              <p className="text-sm text-amber-700 dark:text-amber-300">
+                {t('event.registration.interestedVisitor', 'Intéressé(e) par cet événement ?')}
+              </p>
+              <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                {t('event.registration.connectToParticipate', 'Connectez-vous pour vous inscrire ou ajoutez aux favoris')}
+              </p>
+            </div>
+
+            {/* Bouton favoris pour visiteurs */}
+            {onToggleFavorite && (
+              <Button
+                variant={isFavorite ? "default" : "outline"}
+                className={cn(
+                  "w-full",
+                  isFavorite && "bg-red-500 hover:bg-red-600 text-white"
+                )}
+                onClick={onToggleFavorite}
+              >
+                <Heart className={cn("h-4 w-4 mr-2", isFavorite && "fill-current")} />
+                {isFavorite
+                  ? t('event.registration.removeFromFavorites', 'Retirer des favoris')
+                  : t('event.registration.addToFavorites', 'Ajouter aux favoris')
+                }
+              </Button>
+            )}
+
+            {/* Bouton connexion */}
+            <Button asChild className="w-full" variant="outline">
+              <Link to="/auth">
+                <UserPlus className="h-4 w-4 mr-2" />
+                {t('event.registration.loginToRegister', 'Se connecter pour s\'inscrire')}
+              </Link>
+            </Button>
+          </>
         ) : isRegistered ? (
           <>
             <div className="w-full p-3 bg-green-50 dark:bg-green-900/20 rounded-lg text-center">
@@ -495,110 +532,130 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
                     <div className="flex items-center gap-2">
                       <Palette className="h-5 w-5 text-primary" />
                       <Label className="text-base font-semibold">
-                        {inscriptionConfig.config_soumission?.label || t('event.registration.submitWorks', 'Œuvres à soumettre')}
+                        {td(inscriptionConfig.config_soumission?.label) || t('event.registration.submitWorks', 'Œuvres à soumettre')}
                         {inscriptionConfig.config_soumission?.requis && (
                           <span className="text-red-500 ml-1">*</span>
                         )}
                       </Label>
                     </div>
-                    
-                    <p className="text-sm text-muted-foreground">
-                      {inscriptionConfig.config_soumission?.requis 
-                        ? t('event.registration.worksRequired', 'Sélectionnez les œuvres que vous souhaitez présenter (obligatoire)')
-                        : t('event.registration.worksOptional', 'Sélectionnez les œuvres que vous souhaitez présenter (optionnel)')
-                      }
-                      {inscriptionConfig.config_soumission?.max_soumissions && (
-                        <span className="block mt-1">
-                          {t('event.registration.maxWorks', 'Maximum: {{max}} œuvre(s)', { max: inscriptionConfig.config_soumission.max_soumissions })}
-                        </span>
-                      )}
-                    </p>
 
-                    {inscriptionConfig.config_soumission?.type_oeuvre && inscriptionConfig.config_soumission.type_oeuvre.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        <span className="text-xs text-muted-foreground">{t('event.registration.acceptedTypes', 'Types acceptés:')}</span>
-                        {inscriptionConfig.config_soumission.type_oeuvre.map((type, idx) => (
-                          <Badge key={idx} variant="outline" className="text-xs">
-                            {type}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
-
-                    {oeuvresLoading ? (
-                      <div className="flex items-center justify-center py-4">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      </div>
-                    ) : mesOeuvres.length === 0 ? (
-                      <div className="text-center py-4 bg-muted/50 rounded-lg">
-                        <Palette className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                        <p className="text-sm text-muted-foreground">
-                          {t('event.registration.noWorks', 'Vous n\'avez pas encore d\'œuvres')}
+                    {/* Message pour les non-professionnels */}
+                    {!isProfessional ? (
+                      <div className="text-center py-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                        <Palette className="h-8 w-8 mx-auto text-blue-500 mb-2" />
+                        <p className="text-sm text-blue-700 dark:text-blue-300 font-medium">
+                          {t('event.registration.professionalOnly', 'La soumission d\'œuvres est réservée aux professionnels')}
                         </p>
-                        <Button variant="link" size="sm" asChild className="mt-2">
-                          <a href="/oeuvres/ajouter">
-                            {t('event.registration.createWork', 'Créer une œuvre')}
-                          </a>
+                        <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                          {t('event.registration.upgradeToPro', 'Passez en compte professionnel pour soumettre vos œuvres')}
+                        </p>
+                        <Button variant="outline" size="sm" asChild className="mt-3">
+                          <Link to="/auth?tab=register&type=professional">
+                            {t('event.registration.becomePro', 'Devenir professionnel')}
+                          </Link>
                         </Button>
                       </div>
                     ) : (
-                      <ScrollArea className="h-48 border rounded-md p-2">
-                        <div className="space-y-2">
-                          {mesOeuvres.map((oeuvre) => {
-                            const isSelected = selectedOeuvres.includes(oeuvre.id_oeuvre);
-                            const Icon = getOeuvreTypeIcon(oeuvre.TypeOeuvre?.nom_type);
-                            
-                            return (
-                              <div
-                                key={oeuvre.id_oeuvre}
-                                className={cn(
-                                  "flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors",
-                                  isSelected 
-                                    ? "bg-primary/10 border-2 border-primary" 
-                                    : "bg-muted/50 hover:bg-muted border-2 border-transparent"
-                                )}
-                                onClick={() => toggleOeuvreSelection(oeuvre.id_oeuvre)}
-                              >
-                                <Checkbox 
-                                  checked={isSelected}
-                                  onCheckedChange={() => toggleOeuvreSelection(oeuvre.id_oeuvre)}
-                                />
-                                {oeuvre.image_url ? (
-                                  <img 
-                                    src={oeuvre.image_url} 
-                                    alt={td(oeuvre.titre)} 
-                                    className="w-12 h-12 object-cover rounded"
-                                  />
-                                ) : (
-                                  <div className="w-12 h-12 bg-muted rounded flex items-center justify-center">
-                                    <Icon className="h-6 w-6 text-muted-foreground" />
-                                  </div>
-                                )}
-                                <div className="flex-1 min-w-0">
-                                  <p className="font-medium text-sm truncate">{td(oeuvre.titre)}</p>
-                                  {oeuvre.TypeOeuvre?.nom_type && (
-                                    <p className="text-xs text-muted-foreground">{td(oeuvre.TypeOeuvre.nom_type)}</p>
-                                  )}
-                                </div>
-                                {isSelected && (
-                                  <CheckCircle className="h-5 w-5 text-primary flex-shrink-0" />
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </ScrollArea>
-                    )}
+                      <>
+                        <p className="text-sm text-muted-foreground">
+                          {inscriptionConfig.config_soumission?.requis
+                            ? t('event.registration.worksRequired', 'Sélectionnez les œuvres que vous souhaitez présenter (obligatoire)')
+                            : t('event.registration.worksOptional', 'Sélectionnez les œuvres que vous souhaitez présenter (optionnel)')
+                          }
+                          {inscriptionConfig.config_soumission?.max_soumissions && (
+                            <span className="block mt-1">
+                              {t('event.registration.maxWorks', 'Maximum: {{max}} œuvre(s)', { max: inscriptionConfig.config_soumission.max_soumissions })}
+                            </span>
+                          )}
+                        </p>
 
-                    {selectedOeuvres.length > 0 && (
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">
-                          {t('event.registration.selectedWorks', 'Œuvres sélectionnées:')}
-                        </span>
-                        <Badge variant="secondary">
-                          {selectedOeuvres.length} / {inscriptionConfig.config_soumission?.max_soumissions || 10}
-                        </Badge>
-                      </div>
+                        {inscriptionConfig.config_soumission?.type_oeuvre && inscriptionConfig.config_soumission.type_oeuvre.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            <span className="text-xs text-muted-foreground">{t('event.registration.acceptedTypes', 'Types acceptés:')}</span>
+                            {inscriptionConfig.config_soumission.type_oeuvre.map((type, idx) => (
+                              <Badge key={idx} variant="outline" className="text-xs">
+                                {type}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+
+                        {oeuvresLoading ? (
+                          <div className="flex items-center justify-center py-4">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          </div>
+                        ) : mesOeuvres.length === 0 ? (
+                          <div className="text-center py-4 bg-muted/50 rounded-lg">
+                            <Palette className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                            <p className="text-sm text-muted-foreground">
+                              {t('event.registration.noWorks', 'Vous n\'avez pas encore d\'œuvres')}
+                            </p>
+                            <Button variant="link" size="sm" asChild className="mt-2">
+                              <Link to="/ajouter-oeuvre">
+                                {t('event.registration.createWork', 'Créer une œuvre')}
+                              </Link>
+                            </Button>
+                          </div>
+                        ) : (
+                          <ScrollArea className="h-48 border rounded-md p-2">
+                            <div className="space-y-2">
+                              {mesOeuvres.map((oeuvre) => {
+                                const isSelected = selectedOeuvres.includes(oeuvre.id_oeuvre);
+                                const Icon = getOeuvreTypeIcon(oeuvre.TypeOeuvre?.nom_type);
+
+                                return (
+                                  <div
+                                    key={oeuvre.id_oeuvre}
+                                    className={cn(
+                                      "flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors",
+                                      isSelected
+                                        ? "bg-primary/10 border-2 border-primary"
+                                        : "bg-muted/50 hover:bg-muted border-2 border-transparent"
+                                    )}
+                                    onClick={() => toggleOeuvreSelection(oeuvre.id_oeuvre)}
+                                  >
+                                    <Checkbox
+                                      checked={isSelected}
+                                      onCheckedChange={() => toggleOeuvreSelection(oeuvre.id_oeuvre)}
+                                    />
+                                    {oeuvre.image_url ? (
+                                      <img
+                                        src={oeuvre.image_url}
+                                        alt={td(oeuvre.titre)}
+                                        className="w-12 h-12 object-cover rounded"
+                                      />
+                                    ) : (
+                                      <div className="w-12 h-12 bg-muted rounded flex items-center justify-center">
+                                        <Icon className="h-6 w-6 text-muted-foreground" />
+                                      </div>
+                                    )}
+                                    <div className="flex-1 min-w-0">
+                                      <p className="font-medium text-sm truncate">{td(oeuvre.titre)}</p>
+                                      {oeuvre.TypeOeuvre?.nom_type && (
+                                        <p className="text-xs text-muted-foreground">{td(oeuvre.TypeOeuvre.nom_type)}</p>
+                                      )}
+                                    </div>
+                                    {isSelected && (
+                                      <CheckCircle className="h-5 w-5 text-primary flex-shrink-0" />
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </ScrollArea>
+                        )}
+
+                        {selectedOeuvres.length > 0 && (
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-muted-foreground">
+                              {t('event.registration.selectedWorks', 'Œuvres sélectionnées:')}
+                            </span>
+                            <Badge variant="secondary">
+                              {selectedOeuvres.length} / {inscriptionConfig.config_soumission?.max_soumissions || 10}
+                            </Badge>
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 )}

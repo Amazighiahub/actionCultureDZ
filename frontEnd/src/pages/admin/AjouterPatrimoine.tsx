@@ -692,7 +692,7 @@ const AjouterPatrimoine: React.FC = () => {
         {/* En-tête */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+            <Button variant="ghost" size="icon" onClick={() => navigate(-1)} aria-label={t('common.back', 'Retour')}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>

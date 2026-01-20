@@ -278,11 +278,11 @@ const Evenements: React.FC = () => {
               {/* Boutons */}
               <div className="flex gap-2">
                 {hasActiveFilters && (
-                  <Button variant="ghost" size="icon" onClick={resetFilters}>
+                  <Button variant="ghost" size="icon" onClick={resetFilters} aria-label={t('common.resetFilters', 'Réinitialiser les filtres')}>
                     <X className="h-4 w-4" />
                   </Button>
                 )}
-                <Button variant="outline" size="icon" onClick={refresh}>
+                <Button variant="outline" size="icon" onClick={refresh} aria-label={t('common.refresh', 'Actualiser')}>
                   <RefreshCw className="h-4 w-4" />
                 </Button>
               </div>

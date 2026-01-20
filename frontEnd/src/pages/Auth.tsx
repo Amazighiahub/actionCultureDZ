@@ -21,6 +21,7 @@ import { mediaService } from '@/services/media.service';
 import { SECTEUR_TYPE_USER_MAP, SECTEUR_OPTIONS, AUTH_ERROR_MESSAGES } from '@/types/models/auth.types';
 import { useWilayas } from '@/hooks/useGeographie';
 import { getAssetUrl } from '@/helpers/assetUrl';
+import { authLogger } from '@/utils/logger';
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -114,7 +115,7 @@ const Auth = () => {
       // Réinitialiser l'URL uploadée car on a un nouveau fichier
       setUploadedPhotoUrl(null);
       
-      console.log('📸 Photo sélectionnée:', {
+      authLogger.debug('Photo sélectionnée:', {
         name: file.name,
         size: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
         type: file.type
@@ -274,7 +275,7 @@ const Auth = () => {
 
       // ÉTAPE 1 : UPLOAD DE LA PHOTO SI PRÉSENTE (AVANT L'INSCRIPTION)
       if (userType === 'professionnel' && photoFile) {
-        console.log('📸 ÉTAPE 1 - Upload de la photo AVANT inscription');
+        authLogger.debug('ÉTAPE 1 - Upload de la photo AVANT inscription');
         setUploadingPhoto(true);
         
         try {
@@ -298,7 +299,7 @@ const Auth = () => {
           
           if (uploadResult.success && uploadResult.data?.url) {
             photoUrl = uploadResult.data.url;
-            console.log('✅ Photo uploadée avec succès:', photoUrl);
+            authLogger.debug('Photo uploadée avec succès:', photoUrl);
           } else {
             throw new Error(t('auth.errors.uploadUrlNotReceived'));
           }
@@ -325,24 +326,24 @@ const Auth = () => {
         mot_de_passe: registerForm.mot_de_passe,
         confirmation_mot_de_passe: registerForm.confirmation_mot_de_passe,
         wilaya_residence: Number(registerForm.wilaya_residence),
-        telephone: registerForm.telephone?.trim() || undefined,
         accepte_conditions: registerForm.accepte_conditions,
         accepte_newsletter: registerForm.accepte_newsletter || false
       };
-
-      console.log('📝 ÉTAPE 2 - Inscription avec les données complètes');
-      console.log('📝 Données d\'inscription préparées:', {
+      
+      authLogger.debug('ÉTAPE 2 - Inscription avec les données complètes');
+      authLogger.debug('Données d\'inscription préparées:', {
         type: userType,
         email: baseData.email,
         photo_url: photoUrl,
-        wilaya: baseData.wilaya_residence
+        hasPhoto: !!photoUrl
       });
 
       let success = false;
       
       if (userType === 'visiteur') {
-        console.log('👤 Inscription en tant que visiteur...');
-        success = await registerVisitor(baseData);
+        authLogger.debug('Inscription en tant que visiteur...');
+        const result = await registerVisitor(baseData);
+        success = result.success;
       } else {
         const professionalData = {
           ...baseData,
@@ -351,19 +352,19 @@ const Auth = () => {
           id_type_user: SECTEUR_TYPE_USER_MAP[registerForm.secteur] || 2
         };
         
-        console.log('👨‍🎨 Inscription en tant que professionnel avec photo_url:', {
+        authLogger.debug('Inscription en tant que professionnel avec photo_url:', {
           id_type_user: professionalData.id_type_user,
           photo_url: professionalData.photo_url
         });
         
-        // LOG COMPLET pour debug
-        console.log('📊 DONNÉES COMPLÈTES ENVOYÉES:', professionalData);
+        authLogger.debug('DONNÉES COMPLÈTES ENVOYÉES:', professionalData);
         
-        success = await registerProfessional(professionalData);
+        const result = await registerProfessional(professionalData);
+        success = result.success;
       }
 
       if (success) {
-        console.log('✅ Inscription réussie !');
+        authLogger.debug('Inscription réussie !');
         
         // Message de succès
         toast({

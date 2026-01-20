@@ -110,12 +110,19 @@ module.exports = (modelsOrUser) => {
         } else {
           user.roleNames = [];
         }
-        
-        user.isAdmin = user.roleNames.includes('Administrateur');
-        user.isProfessionnel = user.roleNames.includes('Professionnel');
-        user.isUser = user.roleNames.includes('User') || user.roleNames.length === 0;
+
+        // Types professionnels: tout sauf visiteur (1) et admin (29)
+        const professionalTypeIds = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28];
+        const isProfessionalByType = user.id_type_user && professionalTypeIds.includes(user.id_type_user);
+
+        // DEBUG LOG - à retirer après test
+        console.log(`🔍 Auth Debug: user.id_type_user=${user.id_type_user}, isProfessionalByType=${isProfessionalByType}`);
+
+        user.isAdmin = user.roleNames.includes('Administrateur') || user.id_type_user === 29;
+        user.isProfessionnel = user.roleNames.includes('Professionnel') || isProfessionalByType;
+        user.isUser = user.roleNames.includes('User') || user.id_type_user === 1 || user.roleNames.length === 0;
         user.hasOrganisation = user.Organisations && user.Organisations.length > 0;
-        
+
         // Helper pour la validation professionnelle
         user.isProfessionnelValide = user.isProfessionnel && user.statut_validation === 'valide';
       }
@@ -132,11 +139,15 @@ module.exports = (modelsOrUser) => {
         
         if (user) {
           user.roleNames = [];
-          user.isAdmin = false;
-          user.isProfessionnel = false;
-          user.isUser = true;
+          // Types professionnels: tout sauf visiteur (1) et admin (29)
+          const professionalTypeIds = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28];
+          const isProfessionalByType = user.id_type_user && professionalTypeIds.includes(user.id_type_user);
+
+          user.isAdmin = user.id_type_user === 29;
+          user.isProfessionnel = isProfessionalByType;
+          user.isUser = user.id_type_user === 1 || !isProfessionalByType;
           user.hasOrganisation = false;
-          user.isProfessionnelValide = false;
+          user.isProfessionnelValide = isProfessionalByType && user.statut_validation === 'valide';
         }
         
         return user;

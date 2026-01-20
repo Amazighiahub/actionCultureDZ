@@ -82,26 +82,16 @@ const config = {
 };
 
 // Fonction pour créer la connexion à la base de données
-// Compatible avec:
-// - createDatabaseConnection('development'|'production'|...)
-// - createDatabaseConnection({ database, username, password, host, port, dialect, logging, pool, define })
-const createDatabaseConnection = (envOrConfig = 'development') => {
-  const dbConfig = typeof envOrConfig === 'string'
-    ? config[envOrConfig]
-    : envOrConfig;
-
-  if (!dbConfig) {
-    throw new Error('Configuration DB invalide: environnement inconnu ou configuration manquante');
-  }
-
+const createDatabaseConnection = (env = 'development') => {
+  const dbConfig = config[env];
+  
   const sequelize = new Sequelize(
     dbConfig.database,
     dbConfig.username,
     dbConfig.password,
     {
       host: dbConfig.host,
-      port: dbConfig.port,
-      dialect: dbConfig.dialect || 'mysql',
+      dialect: dbConfig.dialect,
       logging: dbConfig.logging,
       define: dbConfig.define || {},
       pool: dbConfig.pool || {}

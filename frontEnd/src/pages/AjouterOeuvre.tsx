@@ -43,6 +43,7 @@ import type {
 
 // Type pour les médias
 import { useTranslation } from "react-i18next";import { t } from 'i18next';
+import MultiLangInput from '@/components/MultiLangInput';
 interface MediaUpload {
   id: string;
   file: File;
@@ -69,8 +70,8 @@ interface ExtendedMetadata {
 // Type pour le formulaire
 interface FormData {
   // Champs généraux
-  titre: string;
-  description: string;
+  titre: { fr: string; ar: string; en: string; 'tz-ltn'?: string; 'tz-tfng'?: string };
+  description: { fr: string; ar: string; en: string; 'tz-ltn'?: string; 'tz-tfng'?: string };
   id_type_oeuvre: number;
   id_langue: number;
   annee_creation?: number;
@@ -83,11 +84,13 @@ interface FormData {
   nb_pages?: number;
   duree_minutes?: number;
   realisateur?: string;
+  producteur?: string;
+  studio?: string;
   duree_album?: string;
   label?: string;
+  nb_pistes?: number;
   auteur?: string;
   source?: string;
-  type_article?: string;
   resume_article?: string;
   url_source?: string;
   journal?: string;
@@ -107,8 +110,8 @@ interface FormData {
 
 // État initial du formulaire
 const INITIAL_FORM_DATA: FormData = {
-  titre: '',
-  description: '',
+  titre: { fr: '', ar: '', en: '' },
+  description: { fr: '', ar: '', en: '' },
   id_type_oeuvre: 0,
   id_langue: 1,
   categories: [],
@@ -1407,35 +1410,30 @@ const AjouterOeuvre: React.FC = () => {
                         <CardTitle className="text-2xl font-serif">{t("ajouteroeuvre.informations_gnrales")}</CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                          <div className="space-y-2">
-                            <Label htmlFor="titre" className="text-base">{t("ajouteroeuvre.titre_luvre")}</Label>
-                            <Input
-                          id="titre"
-                          placeholder={t("ajouteroeuvre.placeholder_lart_calligraphie_maghrebine")}
-                          value={formData.titre}
-                          onChange={(e) => handleInputChange('titre', e.target.value)}
-                          className="hover:border-primary focus:border-primary" />
-
+                        <div className="space-y-6">
+                          {/* Titre multilingue */}
+                          <div>
+                            <MultiLangInput
+                              name="titre"
+                              label={t("ajouteroeuvre.titre_luvre")}
+                              value={formData.titre}
+                              onChange={(value) => handleInputChange('titre', value)}
+                              required
+                              placeholder={t("ajouteroeuvre.placeholder_lart_calligraphie_maghrebine")}
+                            />
                           </div>
                           
-                          <div className="space-y-2">
-                            <Label htmlFor="id_langue" className="text-base">{t("ajouteroeuvre.langue")}</Label>
-                            <Select
-                          value={formData.id_langue.toString()}
-                          onValueChange={(value) => handleInputChange('id_langue', parseInt(value))}>
-
-                              <SelectTrigger className="hover:border-primary">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {metadata.langues?.map((langue: any) =>
-                            <SelectItem key={langue.id_langue} value={langue.id_langue.toString()}>
-                                    {langue.nom}
-                                  </SelectItem>
-                            ) || <SelectItem value="1">{t("ajouteroeuvre.franais")}</SelectItem>}
-                              </SelectContent>
-                            </Select>
+                          {/* Description multilingue */}
+                          <div>
+                            <MultiLangInput
+                              name="description"
+                              label={t("ajouteroeuvre.description")}
+                              value={formData.description}
+                              onChange={(value) => handleInputChange('description', value)}
+                              type="textarea"
+                              rows={4}
+                              placeholder={t("ajouteroeuvre.placeholder_dcrivez_votre_uvre")}
+                            />
                           </div>
                         </div>
                         
@@ -1463,17 +1461,6 @@ const AjouterOeuvre: React.FC = () => {
                           className="hover:border-primary focus:border-primary" />
 
                           </div>
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <Label htmlFor="description" className="text-base">{t("ajouteroeuvre.description")}</Label>
-                          <Textarea
-                        id="description"
-                        placeholder={t("ajouteroeuvre.placeholder_dcrivez_votre_uvre")}
-                        className="min-h-[120px] hover:border-primary focus:border-primary"
-                        value={formData.description}
-                        onChange={(e) => handleInputChange('description', e.target.value)} />
-
                         </div>
                       </CardContent>
                     </Card>

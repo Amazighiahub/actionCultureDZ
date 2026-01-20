@@ -104,7 +104,17 @@
       "passwordTooShort": "يجب أن تتكون كلمة المرور من 8 أحرف على الأقل",
       "biographyTooShort": "يجب أن تحتوي السيرة الذاتية على 50 حرفاً على الأقل",
       "acceptTerms": "يجب قبول شروط الاستخدام",
-      "registerError": "خطأ في التسجيل"
+      "registerError": "خطأ في التسجيل",
+      "loginError": "خطأ في تسجيل الدخول",
+      "invalidCredentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة",
+      "userNotFound": "لا يوجد حساب بهذا البريد الإلكتروني",
+      "wrongPassword": "كلمة المرور غير صحيحة",
+      "accountNotVerified": "يرجى التحقق من بريدك الإلكتروني قبل تسجيل الدخول",
+      "accountDisabled": "تم تعطيل حسابك. اتصل بالمسؤول.",
+      "accountPending": "حسابك المهني في انتظار التحقق",
+      "accountSuspended": "حسابك معلق. اتصل بالمسؤول.",
+      "accountBanned": "تم حظر حسابك",
+      "tooManyAttempts": "محاولات تسجيل دخول كثيرة جداً. يرجى المحاولة لاحقاً."
     },
     "success": {
       "loginTitle": "تم تسجيل الدخول بنجاح",
@@ -2138,7 +2148,24 @@
       "title": "التسجيل",
       "total": "المجموع",
       "unavailable": "التسجيل غير متاح",
-      "waitingList": "قائمة الانتظار"
+      "waitingList": "قائمة الانتظار",
+      "submitWorks": "الأعمال للتقديم",
+      "worksRequired": "اختر الأعمال التي تريد تقديمها (إلزامي)",
+      "worksOptional": "اختر الأعمال التي تريد تقديمها (اختياري)",
+      "maxWorks": "الحد الأقصى: {{max}} عمل(أعمال)",
+      "acceptedTypes": "الأنواع المقبولة:",
+      "noWorks": "ليس لديك أعمال تتطابق مع نوع هذا الحدث بعد",
+      "createWork": "إنشاء عمل",
+      "selectedWorks": "الأعمال المختارة:",
+      "worksSubmitted": "الأعمال المقدمة",
+      "oeuvresRequired": "يرجى اختيار عمل واحد على الأقل للتقديم",
+      "professionalOnly": "تقديم الأعمال مخصص للمحترفين فقط",
+      "upgradeToPro": "قم بالترقية إلى حساب محترف لتقديم أعمالك",
+      "becomePro": "كن محترفًا",
+      "interestedVisitor": "مهتم بهذا الحدث؟",
+      "connectToParticipate": "سجل دخولك للتسجيل أو أضف إلى المفضلة",
+      "addToFavorites": "أضف إلى المفضلة",
+      "removeFromFavorites": "إزالة من المفضلة"
     },
     "registrationDeadline": "الموعد النهائي للتسجيل",
     "relatedEvents": "الأحداث المرتبطة",
@@ -2291,6 +2318,22 @@
       "wilayaRequired": "الرجاء اختيار ولاية",
       "createFailed": "خطأ أثناء إنشاء الموقع"
     }
+  },
+  "pro": {
+    "participants": {
+      "title": "المشاركون",
+      "total": "مسجلون",
+      "search": "البحث عن مشارك...",
+      "empty": "لم يتم العثور على مشاركين",
+      "profile": "ملف المشارك"
+    }
+  },
+  "gestion": {
+    "title": "إدارة الحدث",
+    "programmes": "البرامج",
+    "participants": "المشاركون",
+    "oeuvres": "الأعمال",
+    "showOeuvres": "عرض الأعمال"
   },
   "status": {
     "active": "نشط",

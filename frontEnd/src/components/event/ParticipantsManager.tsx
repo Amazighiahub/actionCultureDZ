@@ -42,11 +42,15 @@ import {
   XCircle,
   User,
   ExternalLink,
-  Loader2
+  Loader2,
+  UserCheck,
+  UserX,
+  UserCog
 } from 'lucide-react';
 import { httpClient } from '@/services/httpClient';
 import { useTranslateData } from '@/hooks/useTranslateData';
 import { useLocalizedDate } from '@/hooks/useLocalizedDate';
+import { useToast } from '@/components/UI/use-toast';
 import { cn } from '@/lib/utils';
 
 interface ParticipantsManagerProps {
@@ -62,6 +66,19 @@ interface OeuvreSoumise {
   TypeOeuvre?: { nom_type: string };
   ordre_presentation?: number;
   description_presentation?: string;
+  // Champs supplémentaires pour les détails
+  annee_creation?: number;
+  dimensions?: string;
+  materiaux?: string;
+  technique?: string;
+  prix?: number;
+  statut?: string;
+  langue?: string;
+  editeur?: string;
+  isbn?: string;
+  nombre_pages?: number;
+  date_publication?: string;
+  Medias?: Array<{ id_media: number; url: string; type: string }>;
 }
 
 interface Participant {
@@ -130,6 +147,7 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
   const { t } = useTranslation();
   const { td } = useTranslateData();
   const { formatDate } = useLocalizedDate();
+  const { toast } = useToast();
 
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
@@ -137,10 +155,16 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatut, setFilterStatut] = useState<string>('all');
   const [filterRole, setFilterRole] = useState<string>('all');
+  const [actionLoading, setActionLoading] = useState<number | null>(null);
 
   const [profilData, setProfilData] = useState<ParticipantProfil | null>(null);
   const [profilLoading, setProfilLoading] = useState(false);
   const [profilDialogOpen, setProfilDialogOpen] = useState(false);
+
+  // État pour le dialogue de détails d'œuvre
+  const [selectedOeuvre, setSelectedOeuvre] = useState<OeuvreSoumise | null>(null);
+  const [oeuvreDialogOpen, setOeuvreDialogOpen] = useState(false);
+  const [oeuvreAuteur, setOeuvreAuteur] = useState<{ nom: string; prenom: string } | null>(null);
 
   useEffect(() => {
     loadParticipants();
@@ -152,8 +176,11 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
       const response = await httpClient.get<{ data: Participant[]; stats: Stats }>(
         `/professionnel/evenements/${evenementId}/participants`
       );
+
       if (response.success && response.data) {
-        setParticipants(response.data as unknown as Participant[]);
+        // response.data contient directement le tableau de participants
+        const participantsList = Array.isArray(response.data) ? response.data : [];
+        setParticipants(participantsList as Participant[]);
         if ((response as any).stats) {
           setStats((response as any).stats);
         }
@@ -183,13 +210,74 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
     }
   };
 
+  // Gestion des actions sur les participants (confirmer, rejeter, marquer présent/absent)
+  const handleParticipantAction = async (
+    userId: number,
+    action: 'confirmer' | 'rejeter' | 'marquer_present' | 'marquer_absent',
+    notes?: string
+  ) => {
+    try {
+      setActionLoading(userId);
+
+      const response = await httpClient.post(
+        `/professionnel/evenements/${evenementId}/participants/manage`,
+        { userId, action, notes }
+      );
+
+      if (response.success) {
+        // Messages de succès selon l'action
+        const messages: Record<string, { title: string; description: string }> = {
+          confirmer: {
+            title: t('pro.participants.actions.confirmSuccess', 'Participation confirmée'),
+            description: t('pro.participants.actions.confirmDesc', 'Le participant a été notifié')
+          },
+          rejeter: {
+            title: t('pro.participants.actions.rejectSuccess', 'Participation refusée'),
+            description: t('pro.participants.actions.rejectDesc', 'Le participant a été notifié')
+          },
+          marquer_present: {
+            title: t('pro.participants.actions.presentSuccess', 'Présence enregistrée'),
+            description: t('pro.participants.actions.presentDesc', 'Le participant est marqué présent')
+          },
+          marquer_absent: {
+            title: t('pro.participants.actions.absentSuccess', 'Absence enregistrée'),
+            description: t('pro.participants.actions.absentDesc', 'Le participant est marqué absent')
+          }
+        };
+
+        toast({
+          title: messages[action].title,
+          description: messages[action].description
+        });
+
+        // Recharger la liste des participants
+        await loadParticipants();
+      } else {
+        toast({
+          title: t('common.error', 'Erreur'),
+          description: response.error || t('pro.participants.actions.error', 'Une erreur est survenue'),
+          variant: 'destructive'
+        });
+      }
+    } catch (error) {
+      console.error('Erreur action participant:', error);
+      toast({
+        title: t('common.error', 'Erreur'),
+        description: t('pro.participants.actions.error', 'Une erreur est survenue'),
+        variant: 'destructive'
+      });
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   const getStatusBadge = (statut: string) => {
     const config: Record<string, { color: string; icon: React.ElementType; label: string }> = {
-      inscrit: { color: 'bg-blue-100 text-blue-800', icon: Clock, label: 'Inscrit' },
-      confirme: { color: 'bg-green-100 text-green-800', icon: CheckCircle, label: 'Confirmé' },
-      present: { color: 'bg-emerald-100 text-emerald-800', icon: CheckCircle, label: 'Présent' },
-      absent: { color: 'bg-gray-100 text-gray-800', icon: XCircle, label: 'Absent' },
-      annule: { color: 'bg-red-100 text-red-800', icon: XCircle, label: 'Annulé' }
+      inscrit: { color: 'bg-blue-100 text-blue-800', icon: Clock, label: t('status.pending', 'Inscrit') },
+      confirme: { color: 'bg-green-100 text-green-800', icon: CheckCircle, label: t('status.validated', 'Confirmé') },
+      present: { color: 'bg-emerald-100 text-emerald-800', icon: CheckCircle, label: t('status.present', 'Présent') },
+      absent: { color: 'bg-gray-100 text-gray-800', icon: XCircle, label: t('status.absent', 'Absent') },
+      annule: { color: 'bg-red-100 text-red-800', icon: XCircle, label: t('status.cancelled', 'Annulé') }
     };
     const status = config[statut] || config.inscrit;
     const Icon = status.icon;
@@ -203,11 +291,11 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
 
   const getRoleBadge = (role: string) => {
     const config: Record<string, { color: string; label: string }> = {
-      participant: { color: 'bg-slate-100 text-slate-800', label: 'Participant' },
-      organisateur: { color: 'bg-purple-100 text-purple-800', label: 'Organisateur' },
-      intervenant: { color: 'bg-orange-100 text-orange-800', label: 'Intervenant' },
-      benevole: { color: 'bg-cyan-100 text-cyan-800', label: 'Bénévole' },
-      staff: { color: 'bg-indigo-100 text-indigo-800', label: 'Staff' }
+      participant: { color: 'bg-slate-100 text-slate-800', label: t('event.roles.participant', 'Participant') },
+      organisateur: { color: 'bg-purple-100 text-purple-800', label: t('event.roles.organisateur', 'Organisateur') },
+      intervenant: { color: 'bg-orange-100 text-orange-800', label: t('event.roles.intervenant', 'Intervenant') },
+      benevole: { color: 'bg-cyan-100 text-cyan-800', label: t('event.roles.benevole', 'Bénévole') },
+      staff: { color: 'bg-indigo-100 text-indigo-800', label: t('event.roles.staff', 'Staff') }
     };
     const roleConfig = config[role] || config.participant;
     return <Badge className={roleConfig.color}>{roleConfig.label}</Badge>;
@@ -262,12 +350,12 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
               <SelectValue placeholder="Statut" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Tous les statuts</SelectItem>
-              <SelectItem value="inscrit">Inscrit</SelectItem>
-              <SelectItem value="confirme">Confirmé</SelectItem>
-              <SelectItem value="present">Présent</SelectItem>
-              <SelectItem value="absent">Absent</SelectItem>
-              <SelectItem value="annule">Annulé</SelectItem>
+              <SelectItem value="all">{t('common.allStatuses', 'Tous les statuts')}</SelectItem>
+              <SelectItem value="inscrit">{t('status.pending', 'Inscrit')}</SelectItem>
+              <SelectItem value="confirme">{t('status.validated', 'Confirmé')}</SelectItem>
+              <SelectItem value="present">{t('status.present', 'Présent')}</SelectItem>
+              <SelectItem value="absent">{t('status.absent', 'Absent')}</SelectItem>
+              <SelectItem value="annule">{t('status.cancelled', 'Annulé')}</SelectItem>
             </SelectContent>
           </Select>
           <Select value={filterRole} onValueChange={setFilterRole}>
@@ -275,10 +363,10 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
               <SelectValue placeholder="Rôle" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Tous les rôles</SelectItem>
-              <SelectItem value="participant">Participant</SelectItem>
-              <SelectItem value="intervenant">Intervenant</SelectItem>
-              <SelectItem value="benevole">Bénévole</SelectItem>
+              <SelectItem value="all">{t('common.allRoles', 'Tous les rôles')}</SelectItem>
+              <SelectItem value="participant">{t('event.roles.participant', 'Participant')}</SelectItem>
+              <SelectItem value="intervenant">{t('event.roles.intervenant', 'Intervenant')}</SelectItem>
+              <SelectItem value="benevole">{t('event.roles.benevole', 'Bénévole')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -340,25 +428,39 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
                       <p className="text-sm text-muted-foreground">{participant.User.email}</p>
                       <p className="text-xs text-muted-foreground mt-1">
                         <Calendar className="inline h-3 w-3 mr-1" />
-                        Inscrit le {formatDate(participant.date_inscription, { dateStyle: 'medium' })}
+                        {t('pro.participants.registeredOn', 'Inscrit le')} {formatDate(participant.date_inscription, { dateStyle: 'medium' })}
                       </p>
 
-                      {/* Œuvres soumises */}
+                      {/* Œuvres soumises - cliquables pour voir les détails */}
                       {participant.oeuvres_soumises && participant.oeuvres_soumises.length > 0 && (
                         <div className="mt-2">
                           <p className="text-xs font-medium text-muted-foreground mb-1">
                             <Palette className="inline h-3 w-3 mr-1" />
-                            {participant.oeuvres_soumises.length} œuvre(s) soumise(s):
+                            {participant.oeuvres_soumises.length} {t('pro.participants.worksSubmitted', 'œuvre(s) soumise(s)')}:
                           </p>
                           <div className="flex flex-wrap gap-1">
                             {participant.oeuvres_soumises.slice(0, 3).map((oeuvre) => (
-                              <Badge key={oeuvre.id_oeuvre} variant="outline" className="text-xs">
+                              <Badge
+                                key={oeuvre.id_oeuvre}
+                                variant="outline"
+                                className="text-xs cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
+                                onClick={() => {
+                                  setSelectedOeuvre(oeuvre);
+                                  setOeuvreAuteur({ nom: participant.User.nom, prenom: participant.User.prenom });
+                                  setOeuvreDialogOpen(true);
+                                }}
+                              >
+                                <Eye className="h-3 w-3 mr-1" />
                                 {td(oeuvre.titre)}
                               </Badge>
                             ))}
                             {participant.oeuvres_soumises.length > 3 && (
-                              <Badge variant="outline" className="text-xs">
-                                +{participant.oeuvres_soumises.length - 3}
+                              <Badge
+                                variant="outline"
+                                className="text-xs cursor-pointer hover:bg-muted"
+                                onClick={() => loadParticipantProfil(participant.id_user)}
+                              >
+                                +{participant.oeuvres_soumises.length - 3} {t('common.more', 'autres')}
                               </Badge>
                             )}
                           </div>
@@ -367,14 +469,93 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
                     </div>
 
                     {/* Actions */}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => loadParticipantProfil(participant.id_user)}
-                    >
-                      <Eye className="h-4 w-4 mr-1" />
-                      Voir profil
-                    </Button>
+                    <div className="flex flex-col gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => loadParticipantProfil(participant.id_user)}
+                      >
+                        <Eye className="h-4 w-4 mr-1" />
+                        {t('pro.participants.viewProfile', 'Voir profil')}
+                      </Button>
+
+                      {/* Boutons de validation selon le statut actuel */}
+                      <div className="flex flex-wrap gap-1">
+                        {/* Si inscrit -> peut confirmer ou rejeter */}
+                        {participant.statut_participation === 'inscrit' && (
+                          <>
+                            <Button
+                              variant="default"
+                              size="sm"
+                              className="bg-green-600 hover:bg-green-700"
+                              onClick={() => handleParticipantAction(participant.id_user, 'confirmer')}
+                              disabled={actionLoading === participant.id_user}
+                            >
+                              {actionLoading === participant.id_user ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <UserCheck className="h-4 w-4 mr-1" />
+                              )}
+                              {t('pro.participants.actions.confirm', 'Confirmer')}
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleParticipantAction(participant.id_user, 'rejeter')}
+                              disabled={actionLoading === participant.id_user}
+                            >
+                              {actionLoading === participant.id_user ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <UserX className="h-4 w-4 mr-1" />
+                              )}
+                              {t('pro.participants.actions.reject', 'Refuser')}
+                            </Button>
+                          </>
+                        )}
+
+                        {/* Si confirmé -> peut marquer présent ou absent */}
+                        {participant.statut_participation === 'confirme' && (
+                          <>
+                            <Button
+                              variant="default"
+                              size="sm"
+                              className="bg-emerald-600 hover:bg-emerald-700"
+                              onClick={() => handleParticipantAction(participant.id_user, 'marquer_present')}
+                              disabled={actionLoading === participant.id_user}
+                            >
+                              {actionLoading === participant.id_user ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <CheckCircle className="h-4 w-4 mr-1" />
+                              )}
+                              {t('pro.participants.actions.markPresent', 'Présent')}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleParticipantAction(participant.id_user, 'marquer_absent')}
+                              disabled={actionLoading === participant.id_user}
+                            >
+                              {actionLoading === participant.id_user ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <XCircle className="h-4 w-4 mr-1" />
+                              )}
+                              {t('pro.participants.actions.markAbsent', 'Absent')}
+                            </Button>
+                          </>
+                        )}
+
+                        {/* Si présent -> afficher badge */}
+                        {participant.statut_participation === 'present' && (
+                          <Badge className="bg-emerald-100 text-emerald-800">
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            {t('status.present', 'Présent')}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -440,7 +621,7 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
                       <Button variant="ghost" size="sm" asChild>
                         <a href={profilData.profil.site_web} target="_blank" rel="noopener noreferrer">
                           <Globe className="h-4 w-4 mr-1" />
-                          Site web
+                          {t('common.website', 'Site web')}
                         </a>
                       </Button>
                     )}
@@ -454,18 +635,18 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
               <div>
                 <h4 className="font-semibold mb-2 flex items-center gap-2">
                   <Calendar className="h-4 w-4" />
-                  Inscription à cet événement
+                  {t('pro.participants.eventRegistration', 'Inscription à cet événement')}
                 </h4>
                 <div className="flex gap-2 flex-wrap">
                   {getStatusBadge(profilData.inscription.statut_participation)}
                   {getRoleBadge(profilData.inscription.role_participation)}
                   <span className="text-sm text-muted-foreground">
-                    Inscrit le {formatDate(profilData.inscription.date_inscription, { dateStyle: 'long' })}
+                    {t('pro.participants.registeredOn', 'Inscrit le')} {formatDate(profilData.inscription.date_inscription, { dateStyle: 'long' })}
                   </span>
                 </div>
                 {profilData.inscription.notes && (
                   <p className="text-sm mt-2 p-2 bg-muted rounded">
-                    <strong>Notes:</strong> {profilData.inscription.notes}
+                    <strong>{t('common.notes', 'Notes')}:</strong> {profilData.inscription.notes}
                   </p>
                 )}
               </div>
@@ -475,13 +656,22 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
                 <div>
                   <h4 className="font-semibold mb-2 flex items-center gap-2">
                     <Palette className="h-4 w-4" />
-                    Œuvres soumises pour cet événement ({profilData.oeuvres_soumises.length})
+                    {t('pro.participants.submittedWorks', 'Œuvres soumises pour cet événement')} ({profilData.oeuvres_soumises.length})
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {profilData.oeuvres_soumises.map((oeuvre) => {
                       const Icon = getOeuvreIcon(oeuvre.TypeOeuvre?.nom_type);
                       return (
-                        <div key={oeuvre.id_oeuvre} className="flex items-center gap-3 p-3 border rounded-lg">
+                        <div
+                          key={oeuvre.id_oeuvre}
+                          className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                          onClick={() => {
+                            setSelectedOeuvre(oeuvre);
+                            setOeuvreAuteur({ nom: profilData.profil.nom, prenom: profilData.profil.prenom });
+                            setProfilDialogOpen(false);
+                            setOeuvreDialogOpen(true);
+                          }}
+                        >
                           {oeuvre.image_url ? (
                             <img src={oeuvre.image_url} alt={td(oeuvre.titre)} className="w-16 h-16 object-cover rounded" />
                           ) : (
@@ -494,12 +684,11 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
                             {oeuvre.TypeOeuvre && (
                               <p className="text-xs text-muted-foreground">{td(oeuvre.TypeOeuvre.nom_type)}</p>
                             )}
+                            {oeuvre.description && (
+                              <p className="text-xs text-muted-foreground truncate mt-1">{td(oeuvre.description)}</p>
+                            )}
                           </div>
-                          <Button variant="ghost" size="sm" asChild>
-                            <a href={`/oeuvres/${oeuvre.id_oeuvre}`} target="_blank">
-                              <ExternalLink className="h-4 w-4" />
-                            </a>
-                          </Button>
+                          <Eye className="h-4 w-4 text-muted-foreground" />
                         </div>
                       );
                     })}
@@ -512,20 +701,32 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
                 <div>
                   <h4 className="font-semibold mb-2 flex items-center gap-2">
                     <BookOpen className="h-4 w-4" />
-                    Portfolio ({profilData.portfolio.length} œuvres)
+                    {t('pro.participants.portfolio', 'Portfolio')} ({profilData.portfolio.length} {t('common.works', 'œuvres')})
                   </h4>
-                  <ScrollArea className="h-32">
-                    <div className="flex gap-2">
+                  <ScrollArea className="h-36">
+                    <div className="flex gap-3">
                       {profilData.portfolio.map((oeuvre) => (
-                        <div key={oeuvre.id_oeuvre} className="flex-shrink-0 w-24">
+                        <div
+                          key={oeuvre.id_oeuvre}
+                          className="flex-shrink-0 w-28 cursor-pointer hover:opacity-80 transition-opacity"
+                          onClick={() => {
+                            setSelectedOeuvre(oeuvre);
+                            setOeuvreAuteur({ nom: profilData.profil.nom, prenom: profilData.profil.prenom });
+                            setProfilDialogOpen(false);
+                            setOeuvreDialogOpen(true);
+                          }}
+                        >
                           {oeuvre.image_url ? (
-                            <img src={oeuvre.image_url} alt={td(oeuvre.titre)} className="w-24 h-24 object-cover rounded" />
+                            <img src={oeuvre.image_url} alt={td(oeuvre.titre)} className="w-28 h-28 object-cover rounded shadow-sm" />
                           ) : (
-                            <div className="w-24 h-24 bg-muted rounded flex items-center justify-center">
+                            <div className="w-28 h-28 bg-muted rounded flex items-center justify-center shadow-sm">
                               <Palette className="h-8 w-8 text-muted-foreground" />
                             </div>
                           )}
-                          <p className="text-xs truncate mt-1">{td(oeuvre.titre)}</p>
+                          <p className="text-xs truncate mt-1 font-medium">{td(oeuvre.titre)}</p>
+                          {oeuvre.TypeOeuvre && (
+                            <p className="text-xs text-muted-foreground truncate">{td(oeuvre.TypeOeuvre.nom_type)}</p>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -538,7 +739,7 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
                 <div>
                   <h4 className="font-semibold mb-2 flex items-center gap-2">
                     <Calendar className="h-4 w-4" />
-                    Historique des participations
+                    {t('pro.participants.participationHistory', 'Historique des participations')}
                   </h4>
                   <div className="space-y-2">
                     {profilData.historique_participations.slice(0, 5).map((h, idx) => (
@@ -555,7 +756,168 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
             </div>
           ) : (
             <div className="text-center py-8 text-muted-foreground">
-              Impossible de charger le profil
+              {t('pro.participants.loadError', 'Impossible de charger le profil')}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog détails œuvre */}
+      <Dialog open={oeuvreDialogOpen} onOpenChange={setOeuvreDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Palette className="h-5 w-5" />
+              {t('pro.participants.workDetails', 'Détails de l\'œuvre')}
+            </DialogTitle>
+          </DialogHeader>
+
+          {selectedOeuvre && (
+            <div className="space-y-6">
+              {/* Image principale */}
+              <div className="relative">
+                {selectedOeuvre.image_url ? (
+                  <img
+                    src={selectedOeuvre.image_url}
+                    alt={td(selectedOeuvre.titre)}
+                    className="w-full h-64 object-cover rounded-lg"
+                  />
+                ) : (
+                  <div className="w-full h-64 bg-muted rounded-lg flex items-center justify-center">
+                    <Palette className="h-16 w-16 text-muted-foreground" />
+                  </div>
+                )}
+              </div>
+
+              {/* Titre et type */}
+              <div>
+                <h3 className="text-2xl font-bold">{td(selectedOeuvre.titre)}</h3>
+                {selectedOeuvre.TypeOeuvre && (
+                  <Badge variant="secondary" className="mt-2">
+                    {td(selectedOeuvre.TypeOeuvre.nom_type)}
+                  </Badge>
+                )}
+              </div>
+
+              {/* Auteur */}
+              {oeuvreAuteur && (
+                <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
+                  <User className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">{t('pro.participants.author', 'Auteur / Artiste')}</p>
+                    <p className="font-medium">{td(oeuvreAuteur.prenom)} {td(oeuvreAuteur.nom)}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Description */}
+              {selectedOeuvre.description && (
+                <div>
+                  <h4 className="font-semibold mb-2">{t('common.description', 'Description')}</h4>
+                  <p className="text-muted-foreground whitespace-pre-wrap">{td(selectedOeuvre.description)}</p>
+                </div>
+              )}
+
+              {/* Description de présentation (spécifique à l'événement) */}
+              {selectedOeuvre.description_presentation && (
+                <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg">
+                  <h4 className="font-semibold mb-2 flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    {t('pro.participants.presentationDesc', 'Note pour cet événement')}
+                  </h4>
+                  <p className="text-sm">{td(selectedOeuvre.description_presentation)}</p>
+                </div>
+              )}
+
+              {/* Informations techniques */}
+              <div className="grid grid-cols-2 gap-4">
+                {selectedOeuvre.annee_creation && (
+                  <div className="p-3 bg-muted/30 rounded-lg">
+                    <p className="text-xs text-muted-foreground">{t('oeuvre.yearCreation', 'Année de création')}</p>
+                    <p className="font-medium">{selectedOeuvre.annee_creation}</p>
+                  </div>
+                )}
+                {selectedOeuvre.dimensions && (
+                  <div className="p-3 bg-muted/30 rounded-lg">
+                    <p className="text-xs text-muted-foreground">{t('oeuvre.dimensions', 'Dimensions')}</p>
+                    <p className="font-medium">{selectedOeuvre.dimensions}</p>
+                  </div>
+                )}
+                {selectedOeuvre.materiaux && (
+                  <div className="p-3 bg-muted/30 rounded-lg">
+                    <p className="text-xs text-muted-foreground">{t('oeuvre.materials', 'Matériaux')}</p>
+                    <p className="font-medium">{td(selectedOeuvre.materiaux)}</p>
+                  </div>
+                )}
+                {selectedOeuvre.technique && (
+                  <div className="p-3 bg-muted/30 rounded-lg">
+                    <p className="text-xs text-muted-foreground">{t('oeuvre.technique', 'Technique')}</p>
+                    <p className="font-medium">{td(selectedOeuvre.technique)}</p>
+                  </div>
+                )}
+                {/* Champs spécifiques aux livres */}
+                {selectedOeuvre.editeur && (
+                  <div className="p-3 bg-muted/30 rounded-lg">
+                    <p className="text-xs text-muted-foreground">{t('oeuvre.publisher', 'Éditeur')}</p>
+                    <p className="font-medium">{td(selectedOeuvre.editeur)}</p>
+                  </div>
+                )}
+                {selectedOeuvre.isbn && (
+                  <div className="p-3 bg-muted/30 rounded-lg">
+                    <p className="text-xs text-muted-foreground">ISBN</p>
+                    <p className="font-medium">{selectedOeuvre.isbn}</p>
+                  </div>
+                )}
+                {selectedOeuvre.nombre_pages && (
+                  <div className="p-3 bg-muted/30 rounded-lg">
+                    <p className="text-xs text-muted-foreground">{t('oeuvre.pages', 'Nombre de pages')}</p>
+                    <p className="font-medium">{selectedOeuvre.nombre_pages}</p>
+                  </div>
+                )}
+                {selectedOeuvre.date_publication && (
+                  <div className="p-3 bg-muted/30 rounded-lg">
+                    <p className="text-xs text-muted-foreground">{t('oeuvre.publicationDate', 'Date de publication')}</p>
+                    <p className="font-medium">{formatDate(selectedOeuvre.date_publication, { dateStyle: 'long' })}</p>
+                  </div>
+                )}
+                {selectedOeuvre.langue && (
+                  <div className="p-3 bg-muted/30 rounded-lg">
+                    <p className="text-xs text-muted-foreground">{t('oeuvre.language', 'Langue')}</p>
+                    <p className="font-medium">{td(selectedOeuvre.langue)}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Galerie de médias */}
+              {selectedOeuvre.Medias && selectedOeuvre.Medias.length > 0 && (
+                <div>
+                  <h4 className="font-semibold mb-2">{t('oeuvre.gallery', 'Galerie')}</h4>
+                  <div className="grid grid-cols-3 gap-2">
+                    {selectedOeuvre.Medias.map((media) => (
+                      <img
+                        key={media.id_media}
+                        src={media.url}
+                        alt=""
+                        className="w-full h-24 object-cover rounded cursor-pointer hover:opacity-80"
+                        onClick={() => window.open(media.url, '_blank')}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Bouton pour voir la page complète */}
+              <div className="flex justify-end gap-2 pt-4 border-t">
+                <Button variant="outline" onClick={() => setOeuvreDialogOpen(false)}>
+                  {t('common.close', 'Fermer')}
+                </Button>
+                <Button asChild>
+                  <a href={`/oeuvres/${selectedOeuvre.id_oeuvre}`} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    {t('pro.participants.viewFullPage', 'Voir page complète')}
+                  </a>
+                </Button>
+              </div>
             </div>
           )}
         </DialogContent>

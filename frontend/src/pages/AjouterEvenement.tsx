@@ -1,22 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from "react-i18next";
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/UI/card';
 import { Button } from '@/components/UI/button';
 import { Input } from '@/components/UI/input';
 import { Label } from '@/components/UI/label';
-import { Textarea } from '@/components/UI/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/UI/select';
 import { Checkbox } from '@/components/UI/checkbox';
 import { Upload, Save, ArrowLeft, Calendar } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useToast } from '@/components/UI/use-toast';
+import MultiLangInput from '@/components/MultiLangInput';
 
 // Import des hooks de localisation
-import { useLocalizedDate } from '@/hooks/useLocalizedDate';
-import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { useRTL } from '@/hooks/useRTL';
 
 // Import des services
@@ -34,18 +32,24 @@ const AjouterEvenement = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { rtlClasses } = useRTL();
-  const { formatPrice } = useLocalizedNumber();
   const { toast } = useToast();
   
   const [gratuit, setGratuit] = useState(false);
   const [wilayas, setWilayas] = useState<Wilaya[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  
+    
   // État pour le lieu sélectionné
   const [selectedLieuId, setSelectedLieuId] = useState<number | undefined>();
   const [selectedLieu, setSelectedLieu] = useState<Lieu | undefined>();
   const [selectedWilayaId, setSelectedWilayaId] = useState<number | undefined>();
+  
+  // État pour le formulaire multilingue
+  const [formData, setFormData] = useState<{
+    nom: { fr: string; ar: string; en: string };
+    description: { fr: string; ar: string; en: string };
+  }>({
+    nom: { fr: '', ar: '', en: '' },
+    description: { fr: '', ar: '', en: '' }
+  });
 
   useEffect(() => {
     checkAuthAndLoadData();
@@ -54,7 +58,6 @@ const AjouterEvenement = () => {
   const checkAuthAndLoadData = async () => {
     // Vérifier l'authentification
     const authenticated = authService.isAuthenticated();
-    setIsAuthenticated(authenticated);
     
     if (!authenticated) {
       toast({
@@ -105,11 +108,15 @@ const AjouterEvenement = () => {
     }
     
     // Ici, vous pouvez collecter toutes les données du formulaire
-    const formData = {
-      // ... autres champs du formulaire
+    const submitData = {
+      nom: JSON.stringify(formData.nom),
+      description: JSON.stringify(formData.description),
       lieu_id: selectedLieuId,
+      // ... autres champs du formulaire
       // Si vous avez créé un nouveau lieu, les coordonnées sont déjà dans la BD
     };
+    
+    console.log('Données à soumettre:', submitData);
     
     toast({
       title: t('common.featureInDevelopment'),
@@ -118,7 +125,7 @@ const AjouterEvenement = () => {
   };
 
   return (
-    <div className={`min-h-screen bg-background`} dir={rtlClasses.direction}>
+    <div className={`min-h-screen bg-background`} dir="ltr">
       <Header />
       
       <main className="container py-12">
@@ -148,21 +155,27 @@ const AjouterEvenement = () => {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="nom">{t('events.create.eventName')} *</Label>
-                  <Input 
-                    id="nom" 
-                    placeholder={t('events.create.eventNamePlaceholder')} 
+                  <Label>{t('events.create.eventName')} *</Label>
+                  <MultiLangInput
+                    name="nom"
+                    label={t('events.create.eventName')}
+                    value={formData.nom}
+                    onChange={(value) => setFormData(prev => ({ ...prev, nom: value as { fr: string; ar: string; en: string } }))}
                     required
+                    placeholder={t('events.create.eventNamePlaceholder')}
                   />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="description">{t('common.description')} *</Label>
-                  <Textarea 
-                    id="description" 
+                  <Label>{t('common.description')} *</Label>
+                  <MultiLangInput
+                    name="description"
+                    label={t('common.description')}
+                    value={formData.description}
+                    onChange={(value) => setFormData(prev => ({ ...prev, description: value as { fr: string; ar: string; en: string } }))}
+                    type="textarea"
+                    rows={4}
                     placeholder={t('events.create.descriptionPlaceholder')}
-                    className="min-h-[120px]"
-                    required
                   />
                 </div>
                 
@@ -343,7 +356,7 @@ const AjouterEvenement = () => {
                 <Save className={`h-4 w-4 ${rtlClasses.marginEnd(2)}`} />
                 {t('events.create.saveAsDraft')}
               </Button>
-              <Button type="submit" className="btn-hover" disabled={loading}>
+              <Button type="submit" className="btn-hover" disabled={false}>
                 <Calendar className={`h-4 w-4 ${rtlClasses.marginEnd(2)}`} />
                 {t('events.create.publishEvent')}
               </Button>

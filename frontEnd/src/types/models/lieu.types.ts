@@ -11,8 +11,8 @@ export interface Lieu {
   typeLieu: TypeLieu;
   communeId: number; // ✅ OBLIGATOIRE maintenant
   localiteId?: number; // Optionnel
-  nom: string;
-  adresse: string;
+  nom: { fr: string; ar: string; en: string; 'tz-ltn'?: string; 'tz-tfng'?: string };
+  adresse: { fr: string; ar: string; en: string; 'tz-ltn'?: string; 'tz-tfng'?: string };
   latitude: number; // Validation : -90 à 90
   longitude: number; // Validation : -180 à 180
   typeLieuCulturel?: string;

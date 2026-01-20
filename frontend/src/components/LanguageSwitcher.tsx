@@ -137,7 +137,7 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
             size="sm" 
             className={cn(baseClasses, "h-8 px-2 gap-1")}
           >
-            {showFlag && <span className="text-lg leading-none">{currentLanguage.flag}</span>}
+            {showFlag && <span className="text-sm leading-none flag">{currentLanguage.flag}</span>}
             <span className="text-xs font-medium">{currentLanguage.code.toUpperCase()}</span>
           </Button>
         );
@@ -147,11 +147,11 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
           <Button 
             variant="outline" 
             size="default" 
-            className={cn(baseClasses, "gap-2", currentLanguage.fontClass)}
+            className={cn(baseClasses, "gap-2 h-10 px-4")}
           >
-            <Globe className="h-4 w-4" />
-            {showFlag && <span className="text-lg leading-none">{currentLanguage.flag}</span>}
-            <span className="hidden sm:inline">
+            <Globe className="h-4 w-4 flex-shrink-0" />
+            {showFlag && <span className="text-sm leading-none flag">{currentLanguage.flag}</span>}
+            <span className="hidden sm:inline text-sm font-medium">
               {showNativeName ? currentLanguage.nativeName : currentLanguage.name}
             </span>
           </Button>
@@ -162,10 +162,10 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
           <Button 
             variant="ghost" 
             size="sm" 
-            className={cn(baseClasses, "gap-2", currentLanguage.fontClass)}
+            className={cn(baseClasses, "gap-2 h-9 px-3")}
           >
-            <Globe className="h-4 w-4" />
-            <span className="hidden sm:inline">
+            <Globe className="h-4 w-4 flex-shrink-0" />
+            <span className="hidden sm:inline text-sm font-medium">
               {showNativeName ? currentLanguage.nativeName : currentLanguage.name}
             </span>
           </Button>
@@ -175,10 +175,10 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
+      <DropdownMenuTrigger asChild className="language-switcher">
         {renderTrigger()}
       </DropdownMenuTrigger>
-      <DropdownMenuContent align={isRTL ? 'start' : align} className="w-56">
+      <DropdownMenuContent align={isRTL ? 'start' : align} className="w-64">
         <DropdownMenuLabel className="text-xs text-muted-foreground">
           Select Language / Choisir la langue
         </DropdownMenuLabel>
@@ -188,9 +188,9 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
             key={lang.code}
             onClick={() => handleLanguageChange(lang.code)}
             className={cn(
-              "cursor-pointer",
+              "cursor-pointer py-2",
               i18n.language === lang.code && "bg-accent",
-              lang.fontClass
+              "transition-colors duration-200"
             )}
           >
             <div className={cn(
@@ -198,7 +198,7 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
               lang.dir === 'rtl' && "flex-row-reverse"
             )}>
               {showFlag && (
-                <span className="text-lg leading-none flex-shrink-0">
+                <span className="text-sm leading-none flex-shrink-0 flag">
                   {lang.flag}
                 </span>
               )}
@@ -208,17 +208,17 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
               )}>
                 {showNativeName ? (
                   <div>
-                    <div className="font-medium truncate">{lang.nativeName}</div>
+                    <div className="font-medium text-sm truncate">{lang.nativeName}</div>
                     <div className="text-xs text-muted-foreground truncate">
                       {lang.name}
                     </div>
                   </div>
                 ) : (
-                  <span className="truncate">{lang.name}</span>
+                  <span className="text-sm truncate">{lang.name}</span>
                 )}
               </div>
               {i18n.language === lang.code && (
-                <span className="text-primary flex-shrink-0">✓</span>
+                <span className="text-primary flex-shrink-0 ml-2">✓</span>
               )}
             </div>
           </DropdownMenuItem>

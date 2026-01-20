@@ -39,6 +39,7 @@ import {
 import { useToast } from '@/components/UI/use-toast';
 import { useDashboardPro } from '@/hooks/useDashboardPro';
 import { useTranslation } from "react-i18next";
+import { useTranslateData } from '@/hooks/useTranslateData';
 import GestionEvenement from '@/components/event/GestionEvenement';
 
 const DashboardPro = () => {
@@ -67,33 +68,46 @@ const DashboardPro = () => {
   } = useDashboardPro();
 
   // Log pour déboguer
-  const { t } = useTranslation();console.log('Dashboard - Mes œuvres:', mesOeuvres);
+  const { t } = useTranslation();
+  const { td, safe } = useTranslateData();
+  console.log('Dashboard - Mes œuvres:', mesOeuvres);
 
   // Fonction de filtrage par recherche
   const filterBySearch = (items: any[]) => {
     if (!items || !searchQuery) return items;
     return items.filter((item) => {
+      // Extraire les valeurs string des champs (y compris objets multilingues)
+      const getValue = (field: any): string => {
+        if (!field) return '';
+        if (typeof field === 'string') return field;
+        if (typeof field === 'object' && !Array.isArray(field)) {
+          // Objet multilingue - prendre la première valeur disponible
+          return Object.values(field).find(v => typeof v === 'string') as string || '';
+        }
+        return '';
+      };
+
       const searchFields = [
-      item.titre,
-      item.nom,
-      item.nom_evenement,
-      item.description,
-      item.lieu,
-      item.type].
-      filter(Boolean).join(' ').toLowerCase();
+        getValue(item.titre),
+        getValue(item.nom),
+        getValue(item.nom_evenement),
+        getValue(item.description),
+        getValue(item.lieu),
+        getValue(item.type)
+      ].filter(Boolean).join(' ').toLowerCase();
 
       return searchFields.includes(searchQuery.toLowerCase());
     });
   };
 
   // Composant pour afficher une ligne d'item avec bordure pointillée
-  const ItemRow = ({ item, type, onView, onEdit, onDelete }: any) => {const { t } = useTranslation();
+  const ItemRow = ({ item, type, onView, onEdit, onDelete }: any) => {
     const getItemTitle = () => {
       switch (type) {
-        case 'oeuvre':return item.titre;
-        case 'evenement':return item.nom_evenement;
-        case 'patrimoine':return item.nom;
-        case 'service':return item.nom;
+        case 'oeuvre':return td(item.titre);
+        case 'evenement':return td(item.nom_evenement);
+        case 'patrimoine':return td(item.nom);
+        case 'service':return td(item.nom);
         default:return 'Sans titre';
       }
     };
@@ -103,21 +117,21 @@ const DashboardPro = () => {
         case 'oeuvre':
           return (
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <span>{item.TypeOeuvre?.nom_type || item.type_oeuvre?.nom_type || 'Non catégorisé'}</span>
-              {item.vues !== undefined &&
+              <span>{td(item.TypeOeuvre?.nom_type) || td(item.type_oeuvre?.nom_type) || 'Non catégorisé'}</span>
+              {typeof item.vues === 'number' &&
               <span className="flex items-center gap-1">
                   <Eye className="h-3 w-3" />
                   {item.vues}
                 </span>
               }
-              {item.note_moyenne !== undefined &&
+              {typeof item.note_moyenne === 'number' &&
               <span className="flex items-center gap-1">
                   <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
                   {item.note_moyenne.toFixed(1)}
                 </span>
               }
               <Badge variant={item.statut === 'publie' ? 'default' : 'secondary'}>
-                {item.statut || 'brouillon'}
+                {typeof item.statut === 'string' ? item.statut : 'brouillon'}
               </Badge>
             </div>);
 
@@ -133,34 +147,34 @@ const DashboardPro = () => {
               {item.Lieu &&
               <span className="flex items-center gap-1">
                   <MapPin className="h-3 w-3" />
-                  {item.Lieu.nom}
+                  {td(item.Lieu.nom)}
                 </span>
               }
               <span className="flex items-center gap-1">
                 <Users className="h-3 w-3" />
-                {item.nombre_participants || 0}{t("dashboardpro.participants")}
+                {typeof item.nombre_participants === 'number' ? item.nombre_participants : 0} {t("dashboardpro.participants")}
               </span>
               <Badge variant={
-              item.statut === 'a_venir' ? 'default' :
+              item.statut === 'a_venir' || item.statut === 'planifie' ? 'default' :
               item.statut === 'en_cours' ? 'secondary' :
               'outline'
               }>
-                {item.statut}
+                {typeof item.statut === 'string' ? item.statut : 'planifie'}
               </Badge>
             </div>);
 
         case 'patrimoine':
           return (
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <span>{item.type}</span>
+              <span>{td(item.type) || 'Patrimoine'}</span>
               <span className="flex items-center gap-1">
                 <MapPin className="h-3 w-3" />
-                {item.wilaya}
+                {td(item.wilaya) || 'Non spécifié'}
               </span>
-              {item.visites !== undefined &&
+              {typeof item.visites === 'number' &&
               <span className="flex items-center gap-1">
                   <Eye className="h-3 w-3" />
-                  {item.visites}{t("dashboardpro.visites")}
+                  {item.visites} {t("dashboardpro.visites")}
               </span>
               }
             </div>);
@@ -168,13 +182,13 @@ const DashboardPro = () => {
         case 'service':
           return (
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <span>{item.type}</span>
-              {item.prix &&
+              <span>{td(item.type) || 'Service'}</span>
+              {typeof item.prix === 'number' &&
               <span className="font-medium text-primary">
-                  {item.prix}{t("dashboardpro.da")}
+                  {item.prix} {t("dashboardpro.da")}
               </span>
               }
-              {item.duree &&
+              {item.duree && typeof item.duree === 'string' &&
               <span>{item.duree}</span>
               }
             </div>);
@@ -467,7 +481,7 @@ const DashboardPro = () => {
                   <div key={evenement.id_evenement} className="py-4 border-b border-dashed border-gray-200 last:border-0">
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
-                        <h3 className="text-base font-medium mb-1">{evenement.nom_evenement}</h3>
+                        <h3 className="text-base font-medium mb-1">{td(evenement.nom_evenement)}</h3>
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
                           {evenement.date_debut &&
                           <span className="flex items-center gap-1">
@@ -478,19 +492,19 @@ const DashboardPro = () => {
                           {evenement.Lieu &&
                           <span className="flex items-center gap-1">
                               <MapPin className="h-3 w-3" />
-                              {evenement.Lieu.nom}
+                              {td(evenement.Lieu.nom) || td(evenement.Lieu.adresse) || 'Lieu non spécifié'}
                             </span>
                           }
                           <span className="flex items-center gap-1">
                             <Users className="h-3 w-3" />
-                            {evenement.nombre_participants || 0}{t("dashboardpro.participants")}
+                            {typeof evenement.nombre_participants === 'number' ? evenement.nombre_participants : 0} {t("dashboardpro.participants")}
                           </span>
                           <Badge variant={
-                          evenement.statut === 'a_venir' ? 'default' :
+                          evenement.statut === 'a_venir' || evenement.statut === 'planifie' ? 'default' :
                           evenement.statut === 'en_cours' ? 'secondary' :
                           'outline'
                           }>
-                            {evenement.statut}
+                            {typeof evenement.statut === 'string' ? evenement.statut : 'planifie'}
                           </Badge>
                         </div>
                       </div>
@@ -501,7 +515,7 @@ const DashboardPro = () => {
                           size="sm"
                           onClick={() => setGestionEvenement({
                             id: evenement.id_evenement,
-                            nom: evenement.nom_evenement
+                            nom: td(evenement.nom_evenement)
                           })}
                           title={t("dashboardpro.manage_event", "Gérer programmes et œuvres")}
                         >
@@ -616,17 +630,17 @@ const DashboardPro = () => {
                   <div key={item.id_artisanat || item.id} className="py-4 border-b border-dashed border-gray-200 last:border-0">
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
-                        <h3 className="text-base font-medium mb-1">{item.nom || item.titre}</h3>
+                        <h3 className="text-base font-medium mb-1">{td(item.nom) || td(item.titre)}</h3>
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                          <span>{item.Materiau?.nom || item.materiau || t("dashboardpro.non_defini", "Non défini")}</span>
-                          <span>{item.Technique?.nom || item.technique || ""}</span>
-                          {item.prix_min !== undefined && item.prix_max !== undefined && (
+                          <span>{td(item.Materiau?.nom) || td(item.materiau) || t("dashboardpro.non_defini", "Non défini")}</span>
+                          <span>{td(item.Technique?.nom) || td(item.technique) || ""}</span>
+                          {typeof item.prix_min === 'number' && typeof item.prix_max === 'number' && (
                             <span className="font-medium text-primary">
                               {item.prix_min} - {item.prix_max} {t("dashboardpro.da", "DA")}
                             </span>
                           )}
-                          <Badge variant={item.en_stock > 0 ? 'default' : item.sur_commande ? 'secondary' : 'outline'}>
-                            {item.en_stock > 0 ? `${item.en_stock} ${t("dashboardpro.en_stock", "en stock")}` :
+                          <Badge variant={typeof item.en_stock === 'number' && item.en_stock > 0 ? 'default' : item.sur_commande ? 'secondary' : 'outline'}>
+                            {typeof item.en_stock === 'number' && item.en_stock > 0 ? `${item.en_stock} ${t("dashboardpro.en_stock", "en stock")}` :
                              item.sur_commande ? t("dashboardpro.sur_commande", "Sur commande") :
                              t("dashboardpro.indisponible", "Indisponible")}
                           </Badge>

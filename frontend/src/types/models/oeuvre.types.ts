@@ -14,11 +14,11 @@ export type StatutOeuvre = 'brouillon' | 'en_attente' | 'publie' | 'rejete' | 'a
 
 export interface Oeuvre {
   id_oeuvre: number;
-  titre: string;
+  titre: { fr: string; ar: string; en: string; 'tz-ltn'?: string; 'tz-tfng'?: string };
   id_type_oeuvre: number;
   id_langue: number;
   annee_creation?: number;
-  description?: string;
+  description?: { fr: string; ar: string; en: string; 'tz-ltn'?: string; 'tz-tfng'?: string };
   prix?: number;
   saisi_par?: number;
   id_oeuvre_originale?: number;
@@ -62,11 +62,11 @@ export interface Oeuvre {
 
 // Type pour la création d'une œuvre
 export type CreateOeuvreDTO = {
-  titre: string;
+  titre: { fr: string; ar: string; en: string; 'tz-ltn'?: string; 'tz-tfng'?: string };
   id_type_oeuvre: number;
   id_langue: number;
   annee_creation?: number;
-  description?: string;
+  description?: { fr: string; ar: string; en: string; 'tz-ltn'?: string; 'tz-tfng'?: string };
   prix?: number;
   saisi_par?: number;
   id_oeuvre_originale?: number;

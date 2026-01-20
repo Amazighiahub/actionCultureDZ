@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import axios, { AxiosInstance, AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { API_BASE_URL, AUTH_CONFIG, ApiResponse, PaginatedResponse, FilterParams, buildUrl, UploadProgress } from '@/config/api';
+import { apiLogger, cacheLogger } from '@/utils/logger';
 
 interface ApiUploadOptions<T = any> {
   fieldName?: string;
@@ -77,7 +78,7 @@ class ImprovedRequestQueue {
     if (method === 'GET' && url) {
       const cached = this.getFromCache(url);
       if (cached) {
-        console.log(`📦 Cache hit: ${url}`);
+        cacheLogger.debug(`Cache hit: ${url}`);
         return cached as T;
       }
     }
@@ -169,13 +170,13 @@ class ImprovedRequestQueue {
   // Ajuster après un rate limit
   private adjustDelayAfterRateLimit() {
     this.minDelay = Math.min(this.minDelay * 2, 5000);
-    console.warn(`⚠️ Rate limit détecté! Nouveau délai: ${this.minDelay}ms`);
-    
+    apiLogger.warn(`Rate limit détecté! Nouveau délai: ${this.minDelay}ms`);
+
     // Réinitialiser après 5 minutes sans rate limit
     setTimeout(() => {
       if (this.rateLimitHits === 0) {
         this.minDelay = 100;
-        console.log('✅ Délai réinitialisé à 100ms');
+        apiLogger.debug('Délai réinitialisé à 100ms');
       }
       this.rateLimitHits = Math.max(0, this.rateLimitHits - 1);
     }, 5 * 60 * 1000);
@@ -275,8 +276,8 @@ class HttpClient {
           config.headers['X-CSRF-Token'] = this.csrfToken;
         }
 
-        // Log pour debug (à retirer en production)
-        console.log(`🌐 ${config.method?.toUpperCase()} ${config.url}`);
+        // Log pour debug (dev uniquement)
+        apiLogger.debug(`${config.method?.toUpperCase()} ${config.url}`);
 
         return config;
       },
@@ -290,7 +291,7 @@ class HttpClient {
         const csrfToken = response.headers['x-csrf-token'];
         if (csrfToken) {
           this.csrfToken = csrfToken;
-          console.log('✅ Token CSRF récupéré');
+          apiLogger.debug('Token CSRF récupéré');
         }
 
         // Extraire les infos de rate limit depuis les headers
@@ -300,17 +301,15 @@ class HttpClient {
 
         if (remaining !== undefined) {
           const percentUsed = ((parseInt(limit) - parseInt(remaining)) / parseInt(limit)) * 100;
-         
+
           if (percentUsed > 80) {
-            console.warn(`⚠️ Attention: ${percentUsed.toFixed(0)}% de la limite utilisée (${remaining}/${limit})`);
+            apiLogger.warn(`Attention: ${percentUsed.toFixed(0)}% de la limite utilisée (${remaining}/${limit})`);
             // Ralentir automatiquement
             this.requestQueue.setMinDelay(1000);
           }
-         
+
           // Afficher dans la console en dev
-          if (process.env.NODE_ENV === 'development') {
-            console.log(`📊 Rate limit: ${remaining}/${limit} requêtes restantes`);
-          }
+          apiLogger.debug(`Rate limit: ${remaining}/${limit} requêtes restantes`);
         }
 
         // Réinitialiser le délai de retry pour cette URL
@@ -496,12 +495,12 @@ class HttpClient {
         if (response.data.data.refreshToken) {
           localStorage.setItem(AUTH_CONFIG.refreshTokenKey, response.data.data.refreshToken);
         }
-        console.log('✅ Token rafraîchi avec succès');
+        apiLogger.debug('Token rafraîchi avec succès');
       } else {
         throw new Error('Token refresh failed');
       }
     } catch (error) {
-      console.error('❌ Erreur lors du rafraîchissement du token:', error);
+      apiLogger.error('Erreur lors du rafraîchissement du token:', error);
       throw error;
     }
   }
@@ -691,8 +690,8 @@ class HttpClient {
     config?: AxiosRequestConfig
   ): Promise<ApiResponse<T>> {
     return this.requestQueue.add(async () => {
-      console.log('📤 POST FormData:', endpoint);
-      
+      apiLogger.debug('POST FormData:', endpoint);
+
       const response = await this.axiosInstance.post<ApiResponse<T>>(
         endpoint,
         formData,
@@ -703,13 +702,8 @@ class HttpClient {
             'Content-Type': 'multipart/form-data',
           },
           onUploadProgress: (progressEvent) => {
-            if (progressEvent.total) {
-              const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-              console.log(`Upload progress: ${percentCompleted}%`);
-              
-              if (config?.onUploadProgress) {
-                config.onUploadProgress(progressEvent);
-              }
+            if (progressEvent.total && config?.onUploadProgress) {
+              config.onUploadProgress(progressEvent);
             }
           },
           timeout: 300000, // 5 minutes
@@ -732,30 +726,30 @@ class HttpClient {
 invalidateCache(endpoint: string): void {
   const cacheKey = `cache_${endpoint}`;
   localStorage.removeItem(cacheKey);
-  console.log('🗑️ Cache invalidé:', endpoint);
+  cacheLogger.debug('Cache invalidé:', endpoint);
 }
   // Vider le cache
   clearCache() {
     this.requestQueue.clearCache();
-    console.log('🗑️ Cache vidé');
+    cacheLogger.debug('Cache vidé');
   }
 
   // Mode conservateur (pour éviter les 429)
   useConservativeMode() {
     this.requestQueue.setMinDelay(1000);
-    console.log('🐢 Mode conservateur activé (1 req/sec)');
+    apiLogger.debug('Mode conservateur activé (1 req/sec)');
   }
 
   // Mode normal
   useNormalMode() {
     this.requestQueue.setMinDelay(100);
-    console.log('🚶 Mode normal activé');
+    apiLogger.debug('Mode normal activé');
   }
 
   // Mode agressif (utiliser avec précaution)
   useAggressiveMode() {
     this.requestQueue.setMinDelay(50);
-    console.log('🏃 Mode agressif activé (attention aux rate limits!)');
+    apiLogger.warn('Mode agressif activé (attention aux rate limits!)');
   }
 
   // Obtenir le délai actuel

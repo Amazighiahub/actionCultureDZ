@@ -53,16 +53,27 @@ const ProgramItem: React.FC<ProgramItemProps> = ({ program, isExpanded, onToggle
   const { td } = useTranslateData();
 
   // Normaliser les champs qui peuvent être des objets multilingues
-  const statut = td(statut) || 'planifie';
-  const typeActivite = td(program.type_activite) || 'default';
-  const niveauRequis = td(program.niveau_requis) || '';
+  const statut = program.statut || 'planifie';
+  const typeActivite = program.type_activite || 'default';
+  const niveauRequis = program.niveau_requis || '';
 
   const Icon = activityIcons[typeActivite] || activityIcons.default;
   
   const formatTime = (time?: string) => {
     if (!time) return '--:--';
+
+    // Si c'est déjà au format HH:MM ou HH:MM:SS, extraire directement
+    if (/^\d{2}:\d{2}(:\d{2})?$/.test(time)) {
+      return time.substring(0, 5);
+    }
+
+    // Si c'est une date ISO complète, parser et formater
     const date = new Date(time);
-    return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    if (!isNaN(date.getTime())) {
+      return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    return '--:--';
   };
 
   const getStatusIcon = (statut: string) => {

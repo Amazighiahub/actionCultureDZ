@@ -144,6 +144,28 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
     return Object.keys(newErrors).length === 0;
   };
 
+  // Traduire les erreurs du backend
+  const getRegisterErrorMessage = (error: string): string => {
+    const errorMappings: Record<string, string> = {
+      'Cet email est déjà utilisé': t('auth.errors.emailExists', 'Cet email est déjà utilisé'),
+      'Email already exists': t('auth.errors.emailExists', 'Cet email est déjà utilisé'),
+      'Email déjà utilisé': t('auth.errors.emailExists', 'Cet email est déjà utilisé'),
+      'Un compte existe déjà': t('auth.errors.emailExists', 'Un compte existe déjà avec cet email'),
+      'Mot de passe trop court': t('auth.errors.passwordTooShort', 'Le mot de passe doit contenir au moins 8 caractères'),
+      'Password too short': t('auth.errors.passwordTooShort', 'Le mot de passe doit contenir au moins 8 caractères'),
+      'Données invalides': t('auth.errors.invalidData', 'Données invalides. Vérifiez le formulaire.'),
+      'Invalid data': t('auth.errors.invalidData', 'Données invalides. Vérifiez le formulaire.'),
+    };
+
+    for (const [key, value] of Object.entries(errorMappings)) {
+      if (error.toLowerCase().includes(key.toLowerCase())) {
+        return value;
+      }
+    }
+
+    return error || t('auth.errors.serverError', 'Erreur serveur');
+  };
+
   // Soumission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -152,24 +174,35 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
 
     try {
       const registerFn = userType === 'visiteur' ? registerVisitor : registerProfessional;
-      const success = await registerFn(formData);
+      const result = await registerFn(formData);
 
-      if (success) {
+      if (result.success) {
         toast({
           title: t('auth.success.registerTitle', 'Compte créé !'),
-          description: t('auth.success.registerDescription', 'Vérifiez votre email')
+          description: userType === 'professionnel'
+            ? t('auth.success.professionalRegistration', 'Votre compte professionnel a été créé et est en attente de validation.')
+            : t('auth.success.visitorRegistration', 'Vérifiez votre email pour activer votre compte.')
         });
-        onSwitchToLogin();
+        // La redirection est gérée par le hook useAuth
       } else {
+        // Utiliser le message d'erreur spécifique du backend
+        const errorMessage = getRegisterErrorMessage(result.error || '');
+
         toast({
-          title: t('auth.errors.registerError', 'Erreur'),
-          description: t('auth.errors.emailExists', 'Cet email existe déjà'),
+          title: t('auth.errors.registerError', 'Erreur d\'inscription'),
+          description: errorMessage,
           variant: 'destructive'
         });
+
+        // Afficher l'erreur sur le champ email si c'est lié à l'email
+        if (result.error?.toLowerCase().includes('email')) {
+          setErrors({ ...errors, email: errorMessage });
+        }
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: t('auth.errors.registerError', 'Erreur'),
+        description: t('auth.errors.serverError', 'Erreur serveur. Veuillez réessayer.'),
         variant: 'destructive'
       });
     }

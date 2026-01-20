@@ -110,6 +110,12 @@ class EvenementService extends BaseService<Evenement, CreateEvenementData, Updat
     return httpClient.get<Evenement>(API_ENDPOINTS.evenements.detail(id));
   }
 
+  // Programmes d'un événement
+  async getProgrammes(eventId: number): Promise<ApiResponse<{ programmes: Programme[] }>> {
+    // L'endpoint correct est /programmes/evenement/:evenementId
+    return httpClient.get<{ programmes: Programme[] }>(API_ENDPOINTS.programmes.byEvent(eventId));
+  }
+
   async getShareData(id: number): Promise<ApiResponse<ShareData>> {
     return httpClient.get<ShareData>(API_ENDPOINTS.evenements.shareData(id));
   }

@@ -104,7 +104,17 @@
       "passwordTooShort": "Password must be at least 8 characters",
       "biographyTooShort": "Biography must be at least 50 characters",
       "acceptTerms": "You must accept the terms of use",
-      "registerError": "Registration error"
+      "registerError": "Registration error",
+      "loginError": "Login error",
+      "invalidCredentials": "Invalid email or password",
+      "userNotFound": "No account found with this email",
+      "wrongPassword": "Incorrect password",
+      "accountNotVerified": "Please verify your email before logging in",
+      "accountDisabled": "Your account has been disabled. Contact the administrator.",
+      "accountPending": "Your professional account is pending validation",
+      "accountSuspended": "Your account is suspended. Contact the administrator.",
+      "accountBanned": "Your account has been banned",
+      "tooManyAttempts": "Too many login attempts. Please try again later."
     },
     "success": {
       "loginTitle": "Login successful",
@@ -2070,7 +2080,24 @@
       "title": "Registration",
       "total": "Total",
       "unavailable": "Registration unavailable",
-      "waitingList": "Waiting list"
+      "waitingList": "Waiting list",
+      "submitWorks": "Works to submit",
+      "worksRequired": "Select the works you want to present (required)",
+      "worksOptional": "Select the works you want to present (optional)",
+      "maxWorks": "Maximum: {{max}} work(s)",
+      "acceptedTypes": "Accepted types:",
+      "noWorks": "You don't have any works matching this event type yet",
+      "createWork": "Create a work",
+      "selectedWorks": "Selected works:",
+      "worksSubmitted": "Submitted works",
+      "oeuvresRequired": "Please select at least one work to submit",
+      "professionalOnly": "Work submission is reserved for professionals",
+      "upgradeToPro": "Upgrade to a professional account to submit your works",
+      "becomePro": "Become a professional",
+      "interestedVisitor": "Interested in this event?",
+      "connectToParticipate": "Log in to register or add to favorites",
+      "addToFavorites": "Add to favorites",
+      "removeFromFavorites": "Remove from favorites"
     },
     "registrationDeadline": "Registration deadline",
     "relatedEvents": "Related events",
@@ -2223,6 +2250,22 @@
       "wilayaRequired": "Please select a wilaya",
       "createFailed": "Error creating site"
     }
+  },
+  "pro": {
+    "participants": {
+      "title": "Participants",
+      "total": "registered",
+      "search": "Search for a participant...",
+      "empty": "No participants found",
+      "profile": "Participant profile"
+    }
+  },
+  "gestion": {
+    "title": "Event management",
+    "programmes": "Programs",
+    "participants": "Participants",
+    "oeuvres": "Works",
+    "showOeuvres": "Present works"
   },
   "status": {
     "active": "Active",

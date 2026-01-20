@@ -34,12 +34,24 @@ interface FormData {
 }
 
 const INITIAL_FORM: FormData = {
-  nom: { fr: '', ar: '', en: '' },
-  description: { fr: '', ar: '', en: '' },
-  id_materiau: 0,
-  id_technique: 0,
-  sur_commande: false,
-  tags: []
+  nom: { 
+    fr: 'Vase Berbère Traditionnel', 
+    ar: 'أمازيغي تقليدي', 
+    en: 'Traditional Berber Vase' 
+  },
+  description: { 
+    fr: 'Magnifique vase en céramique artisanale, décoré avec des motifs berbères traditionnels. Pièce unique réalisée à la main par Karim Benali, artisan professionnel spécialisé dans l\'art berbère.',
+    ar: 'إزهار خزفي يدوي مزين بزخارف أمازيغية تقليدية. قطعة فريدة من صنع كريم بن علي، حرفي محترف متخصص في الفن الأمازيغي.',
+    en: 'Magnificent handmade ceramic vase decorated with traditional Berber patterns. Unique piece created by Karim Benali, professional artisan specializing in Berber art.'
+  },
+  id_materiau: 1, // Céramique
+  id_technique: 1, // Tournage
+  prix_min: 5000,
+  prix_max: 8000,
+  delai_fabrication: 7,
+  sur_commande: true,
+  en_stock: 2,
+  tags: ['berbère', 'céramique', 'traditionnel', 'artisanal', 'karim benali']
 };
 
 const AjouterArtisanat: React.FC = () => {
@@ -261,19 +273,21 @@ const AjouterArtisanat: React.FC = () => {
                 <CardContent className="space-y-4">
                   {/* Nom multilingue */}
                   <MultiLangInput
+                    name="nom"
                     label={t('ajouterArtisanat.nom', 'Nom du produit')}
                     value={formData.nom}
-                    onChange={(value) => setFormData(prev => ({ ...prev, nom: value }))}
+                    onChange={(value) => setFormData(prev => ({ ...prev, nom: value as { fr: string; ar: string; en: string } }))}
                     required
                     placeholder={t('ajouterArtisanat.nomPlaceholder', 'Ex: Tapis berbère traditionnel')}
                   />
 
                   {/* Description multilingue */}
                   <MultiLangInput
+                    name="description"
                     label={t('ajouterArtisanat.description', 'Description')}
                     value={formData.description}
-                    onChange={(value) => setFormData(prev => ({ ...prev, description: value }))}
-                    multiline
+                    onChange={(value) => setFormData(prev => ({ ...prev, description: value as { fr: string; ar: string; en: string } }))}
+                    type="textarea"
                     rows={4}
                     placeholder={t('ajouterArtisanat.descriptionPlaceholder', 'Décrivez votre produit, ses caractéristiques...')}
                   />

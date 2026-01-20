@@ -23,7 +23,6 @@ import {
 } from 'lucide-react';
 
 // Hooks de localisation
-import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { useRTL } from '@/hooks/useRTL';
 
 // Services
@@ -32,10 +31,6 @@ import { notificationService } from '@/services/notification.service';
 import { authService } from '@/services/auth.service';
 import { metadataService } from '@/services/metadata.service';
 
-// Types
-import { Wilaya } from '@/types';
-import type { OverviewStats } from '@/services/dashboard.service';
-import type { Notification } from '@/services/notification.service';
 
 // ✅ Composants séparés (refactorisés)
 import HeroSection from '@/components/home/HeroSection';
@@ -49,24 +44,19 @@ import EnhancedCTASection from '@/components/home/EnhancedCTASection';
 // Carte patrimoine (lazy loaded)
 const CartePatrimoine = React.lazy(() => import('@/components/CartePatrimoine'));
 
-// État global pour les wilayas (à remplacer par Context dans le futur)
-let wilayasCache: Wilaya[] = [];
-
 const Index: React.FC = () => {
-  console.log('=== Index component mounted ===');
-  
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
-  const { formatNumber } = useLocalizedNumber();
   const { rtlClasses } = useRTL();
   const { toast } = useToast();
   
   // États
   const [activeTab, setActiveTab] = useState('patrimoine');
-  const [stats, setStats] = useState<OverviewStats | null>(null);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [wilayasCache, setWilayasCache] = useState<any>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<any>(null);
   
   // Direction RTL
   const direction = i18n.language === 'ar' || i18n.language === 'ar-DZ' ? 'rtl' : 'ltr';
@@ -77,7 +67,6 @@ const Index: React.FC = () => {
 
   const checkAuthAndLoadData = async () => {
     try {
-      console.log('=== checkAuthAndLoadData START ===');
       setLoading(true);
       
       const authenticated = authService.isAuthenticated();
@@ -86,7 +75,7 @@ const Index: React.FC = () => {
       // Charger les wilayas
       const wilayasResponse = await metadataService.getWilayas();
       if (wilayasResponse.success && wilayasResponse.data) {
-        wilayasCache = wilayasResponse.data;
+        setWilayasCache(wilayasResponse.data);
       }
 
       // Charger les stats si authentifié
@@ -96,8 +85,8 @@ const Index: React.FC = () => {
           if (statsResponse.success && statsResponse.data) {
             setStats(statsResponse.data);
           }
-        } catch (statsError) {
-          console.log('Stats error:', statsError);
+        } catch {
+          // Stats non critiques, ignorer silencieusement
         }
       }
 
@@ -108,8 +97,8 @@ const Index: React.FC = () => {
           if (notifSummary && notifSummary.dernieres && Array.isArray(notifSummary.dernieres)) {
             setNotifications((notifSummary.dernieres as any) || []);
           }
-        } catch (notifError) {
-          console.log('Notifications error:', notifError);
+        } catch {
+          // Notifications non critiques, ignorer silencieusement
         }
       }
     } catch (error) {
@@ -185,14 +174,10 @@ const Index: React.FC = () => {
                   <Palette className={`h-4 w-4 ${rtlClasses.marginEnd(2)} group-data-[state=active]:scale-110 transition-transform`} />
                   {t('home.explore.tabs.works')}
                 </TabsTrigger>
-                <TabsTrigger value="artisanat" className="group">
-                  <Hammer className={`h-4 w-4 ${rtlClasses.marginEnd(2)} group-data-[state=active]:scale-110 transition-transform`} />
-                  {t('home.explore.tabs.crafts')}
-                </TabsTrigger>
-              </TabsList>
+                </TabsList>
               
               <TabsContent value="patrimoine" className="space-y-8">
-                <PatrimoineDynamique wilayasCache={wilayasCache} />
+                <PatrimoineDynamique wilayasCache={wilayasCache || []} />
               </TabsContent>
               
               <TabsContent value="carte" className="space-y-8">
@@ -215,10 +200,6 @@ const Index: React.FC = () => {
               
               <TabsContent value="oeuvres" className="space-y-8">
                 <OeuvresDynamique />
-              </TabsContent>
-
-              <TabsContent value="artisanat" className="space-y-8">
-                <ArtisanatDynamique />
               </TabsContent>
             </Tabs>
           </div>
@@ -313,6 +294,27 @@ const Index: React.FC = () => {
                   </div>
                 </CardContent>
               </Card>
+            </div>
+          </div>
+        </section>
+
+        {/* Section Artisanat - En bas de la page */}
+        <section className="py-16 bg-gradient-to-br from-accent/5 to-transparent">
+          <div className="container">
+            <div className="text-center mb-12">
+              <div className="flex items-center justify-center gap-3 mb-4">
+                <Hammer className="h-8 w-8 text-accent" />
+                <h2 className="text-3xl font-bold tracking-tight font-serif lg:text-4xl">
+                  {t('home.explore.tabs.crafts')}
+                </h2>
+              </div>
+              <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+                {t('sections.artisanat.description', 'Découvrez l\'artisanat traditionnel algérien et ses créateurs passionnés')}
+              </p>
+            </div>
+            
+            <div className="animate-safe">
+              <ArtisanatDynamique />
             </div>
           </div>
         </section>

@@ -83,9 +83,19 @@ export function useEventDetails(eventId: number, options: EventDetailsOptions = 
   const programsQuery = useQuery({
     queryKey: programsKey,
     queryFn: async () => {
-      const response = await programmeService.getByEvent(eventId);
-      if (response.success && response.data) {
-        return response.data.programmes || [];
+      try {
+        // Essayer avec programmeService d'abord
+        const response = await programmeService.getByEvent(eventId);
+        if (response.success && response.data) {
+          return response.data.programmes || [];
+        }
+      } catch (error) {
+        console.warn('programmeService.getByEvent failed, trying evenementService.getProgrammes:', error);
+        // Fallback vers evenementService
+        const response = await evenementService.getProgrammes(eventId);
+        if (response.success && response.data) {
+          return response.data.programmes || [];
+        }
       }
       return [];
     },

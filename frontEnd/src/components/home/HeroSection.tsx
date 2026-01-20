@@ -10,6 +10,7 @@ import { Button } from '@/components/UI/button';
 import { ChevronRight, MapPin, Calendar, Palette, Users, Sparkles } from 'lucide-react';
 import { useRTL } from '@/hooks/useRTL';
 import { httpClient } from '@/services/httpClient';
+import { Skeleton } from '@/components/UI/skeleton';
 
 interface PublicStats {
   sites_patrimoniaux: number;
@@ -33,27 +34,27 @@ const HeroSection: React.FC = () => {
 
   const heroImages = [
     {
-      url: 'https://images.pexels.com/photos/19738955/pexels-photo-19738955.jpeg',
+      url: '/images/hero/casbah-alger.jpg',
       title: 'Casbah d\'Alger',
     },
     {
-      url: 'https://as2.ftcdn.net/v2/jpg/03/58/66/17/1000_F_358661751_f23PhAChuJmTE4JWAeXa15uPYcwaDclj.jpg',
+      url: '/images/hero/timgad-ruins.jpg',
       title: 'Timgad',
     },
     {
-      url: 'https://images.pexels.com/photos/9180227/pexels-photo-9180227.jpeg',
+      url: '/images/hero/sahara-algerien.jpg',
       title: 'Sahara Algérien',
     },
     {
-      url: 'https://images.pexels.com/photos/9254283/pexels-photo-9254283.jpeg',
+      url: '/images/hero/timgad-ancient.jpg',
       title: 'Timgad',
     },
     {
-      url: 'https://thumbs.dreamstime.com/z/ruines-d-une-maison-de-berber-au-canyon-ghoufi-en-alg%C3%A9rie-121973610.jpg?ct=jpeg',
+      url: '/images/hero/ghoufi-canyon.jpg',
       title: 'Ghoufi',
     },
     {
-      url: 'https://as2.ftcdn.net/v2/jpg/02/24/00/37/1000_F_224003731_IaY7muvK4NXdBNH1d1mLoBh6vQakVa2d.jpg',
+      url: '/images/hero/kabylie-mountains.jpg',
       title: 'Kabylie',
     }
   ];
@@ -259,7 +260,11 @@ const HeroSection: React.FC = () => {
                     group-hover:scale-110 transition-transform
                   " />
                   <div className="text-xl sm:text-2xl md:text-3xl font-bold text-white">
-                    {stat.value}
+                    {statsLoading ? (
+                      <Skeleton className="h-8 w-12 mx-auto bg-white/20" />
+                    ) : (
+                      stat.value
+                    )}
                   </div>
                   <div className="text-xs sm:text-sm text-gray-300 leading-tight">
                     {stat.label}

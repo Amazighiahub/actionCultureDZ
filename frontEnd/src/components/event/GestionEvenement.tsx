@@ -4,6 +4,7 @@
  */
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useTranslateData } from '@/hooks/useTranslateData';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/UI/card';
 import { Button } from '@/components/UI/button';
 import { Badge } from '@/components/UI/badge';
@@ -28,17 +29,16 @@ import {
   Edit,
   Clock,
   Users,
-  BookOpen,
   Calendar,
-  GripVertical,
+  BookOpen,
   ArrowUp,
   ArrowDown,
-  Save,
   UserCheck
 } from 'lucide-react';
 import ParticipantsManager from './ParticipantsManager';
 import { useToast } from '@/components/UI/use-toast';
-import { programmeService, type Programme, type CreateProgrammeData } from '@/services/programme.service';
+import { programmeService, type Programme } from '@/services/programme.service';
+import ProgrammeForm, { ProgrammeFormData } from '@/components/forms/ProgrammeForm';
 import { evenementOeuvreService, type EvenementOeuvre, type MesOeuvresResponse } from '@/services/evenement-oeuvre.service';
 import type { Oeuvre } from '@/types/models/oeuvre.types';
 
@@ -73,6 +73,7 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
   hideOeuvres = false
 }) => {
   const { t } = useTranslation();
+  const { td } = useTranslateData();
   const { toast } = useToast();
 
   // État pour activer/désactiver la gestion des œuvres
@@ -83,14 +84,6 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
   const [loadingProgrammes, setLoadingProgrammes] = useState(true);
   const [showProgrammeDialog, setShowProgrammeDialog] = useState(false);
   const [editingProgramme, setEditingProgramme] = useState<Programme | null>(null);
-  const [programmeForm, setProgrammeForm] = useState<Partial<CreateProgrammeData>>({
-    titre: '',
-    description: '',
-    type_activite: 'conference',
-    heure_debut: '',
-    heure_fin: '',
-    nb_participants_max: undefined
-  });
 
   // États pour les œuvres
   const [oeuvresData, setOeuvresData] = useState<MesOeuvresResponse | null>(null);
@@ -99,6 +92,21 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
   const [selectedOeuvre, setSelectedOeuvre] = useState<Oeuvre | null>(null);
   const [oeuvreDescription, setOeuvreDescription] = useState('');
   const [oeuvresDuree, setOeuvresDuree] = useState<number | undefined>();
+
+  // Helper pour formater les heures (gère TIME et datetime ISO)
+  const formatTime = (time?: string) => {
+    if (!time) return '--:--';
+    // Si c'est déjà au format HH:MM ou HH:MM:SS
+    if (/^\d{2}:\d{2}(:\d{2})?$/.test(time)) {
+      return time.substring(0, 5);
+    }
+    // Si c'est une date ISO complète
+    const date = new Date(time);
+    if (!isNaN(date.getTime())) {
+      return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    }
+    return '--:--';
+  };
 
   // Chargement des données
   useEffect(() => {
@@ -147,23 +155,45 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
   };
 
   // Handlers pour les programmes
-  const handleSaveProgramme = async () => {
+  const handleSaveProgramme = async (data: ProgrammeFormData) => {
     try {
+      // Transformer les données pour l'API (conforme à la base de données)
+      const apiData = {
+        titre: data.titre.fr, // Base attend: string, on prend le français
+        description: data.description.fr, // Base attend: string?, on prend le français
+        type_activite: data.type_activite, // Conforme
+        heure_debut: `${data.date_programme}T${data.heure_debut}:00`, // Format ISO pour la base
+        heure_fin: `${data.date_programme}T${data.heure_fin}:00`, // Format ISO pour la base
+        id_lieu: data.id_lieu, // Conforme
+        lieu_specifique: data.lieu_specifique?.fr, // Base attend: string?, on prend le français
+        nb_participants_max: data.nb_participants_max, // Conforme
+        niveau_requis: data.niveau_requis, // Conforme
+        materiel_requis: data.materiel_requis, // Conforme
+        notes_organisateur: data.notes_organisateur, // Conforme
+        traduction_disponible: data.traduction_disponible, // Conforme
+        enregistrement_autorise: data.enregistrement_autorise, // Conforme
+        diffusion_live: data.diffusion_live, // Conforme
+        support_numerique: data.support_numerique, // Conforme
+        langue_principale: data.langue_principale, // Conforme
+        ordre: data.ordre, // Conforme
+        intervenants: data.intervenants // Conforme
+      };
+
       if (editingProgramme) {
-        const response = await programmeService.update(editingProgramme.id_programme, programmeForm);
+        const response = await programmeService.update(editingProgramme.id_programme, apiData);
         if (response.success) {
           toast({ title: t('common.success'), description: t('programme.updated', 'Programme mis à jour') });
           loadProgrammes();
         }
       } else {
-        const response = await programmeService.create(evenementId, programmeForm as CreateProgrammeData);
+        const response = await programmeService.create(evenementId, apiData);
         if (response.success) {
           toast({ title: t('common.success'), description: t('programme.created', 'Programme créé') });
           loadProgrammes();
         }
       }
       setShowProgrammeDialog(false);
-      resetProgrammeForm();
+      setEditingProgramme(null);
     } catch (error) {
       console.error('Erreur sauvegarde programme:', error);
       toast({ title: t('common.error'), description: t('programme.saveError', 'Erreur lors de la sauvegarde'), variant: 'destructive' });
@@ -171,43 +201,28 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
   };
 
   const handleDeleteProgramme = async (programmeId: number) => {
-    if (!confirm(t('programme.confirmDelete', 'Voulez-vous vraiment supprimer ce programme ?'))) return;
-
-    try {
-      const response = await programmeService.delete(programmeId);
-      if (response.success) {
-        toast({ title: t('common.success'), description: t('programme.deleted', 'Programme supprimé') });
-        loadProgrammes();
+    if (window.confirm(t('programme.confirmDelete', 'Êtes-vous sûr de vouloir supprimer ce programme ?'))) {
+      try {
+        const response = await programmeService.delete(programmeId);
+        if (response.success) {
+          toast({ title: t('common.success'), description: t('programme.deleted', 'Programme supprimé') });
+          loadProgrammes();
+        }
+      } catch (error) {
+        console.error('Erreur suppression programme:', error);
+        toast({ title: t('common.error'), description: t('programme.deleteError', 'Erreur lors de la suppression'), variant: 'destructive' });
       }
-    } catch (error) {
-      console.error('Erreur suppression programme:', error);
-      toast({ title: t('common.error'), description: t('programme.deleteError', 'Erreur lors de la suppression'), variant: 'destructive' });
     }
   };
 
   const handleEditProgramme = (programme: Programme) => {
     setEditingProgramme(programme);
-    setProgrammeForm({
-      titre: programme.titre,
-      description: programme.description,
-      type_activite: programme.type_activite,
-      heure_debut: programme.heure_debut,
-      heure_fin: programme.heure_fin,
-      nb_participants_max: programme.nb_participants_max
-    });
     setShowProgrammeDialog(true);
   };
 
-  const resetProgrammeForm = () => {
+  const handleCancelProgramme = () => {
+    setShowProgrammeDialog(false);
     setEditingProgramme(null);
-    setProgrammeForm({
-      titre: '',
-      description: '',
-      type_activite: 'conference',
-      heure_debut: '',
-      heure_fin: '',
-      nb_participants_max: undefined
-    });
   };
 
   // Handlers pour les œuvres
@@ -326,12 +341,12 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
             </h3>
             <Dialog open={showProgrammeDialog} onOpenChange={setShowProgrammeDialog}>
               <DialogTrigger asChild>
-                <Button onClick={resetProgrammeForm}>
+                <Button onClick={() => setEditingProgramme(null)}>
                   <Plus className="h-4 w-4 mr-2" />
                   {t('programme.add', 'Ajouter un programme')}
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-lg">
+              <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>
                     {editingProgramme
@@ -343,89 +358,56 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
                   </DialogDescription>
                 </DialogHeader>
 
-                <div className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="titre">{t('common.title', 'Titre')} *</Label>
-                    <Input
-                      id="titre"
-                      value={programmeForm.titre || ''}
-                      onChange={(e) => setProgrammeForm({ ...programmeForm, titre: e.target.value })}
-                      placeholder={t('programme.titlePlaceholder', 'Titre du programme')}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="type_activite">{t('programme.type', 'Type d\'activité')} *</Label>
-                    <Select
-                      value={programmeForm.type_activite}
-                      onValueChange={(value) => setProgrammeForm({ ...programmeForm, type_activite: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder={t('common.select', 'Sélectionner')} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {TYPES_ACTIVITE.map((type) => (
-                          <SelectItem key={type.value} value={type.value}>
-                            {type.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="heure_debut">{t('programme.startTime', 'Heure de début')}</Label>
-                      <Input
-                        id="heure_debut"
-                        type="time"
-                        value={programmeForm.heure_debut || ''}
-                        onChange={(e) => setProgrammeForm({ ...programmeForm, heure_debut: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="heure_fin">{t('programme.endTime', 'Heure de fin')}</Label>
-                      <Input
-                        id="heure_fin"
-                        type="time"
-                        value={programmeForm.heure_fin || ''}
-                        onChange={(e) => setProgrammeForm({ ...programmeForm, heure_fin: e.target.value })}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="nb_participants_max">{t('programme.maxParticipants', 'Participants max')}</Label>
-                    <Input
-                      id="nb_participants_max"
-                      type="number"
-                      value={programmeForm.nb_participants_max || ''}
-                      onChange={(e) => setProgrammeForm({ ...programmeForm, nb_participants_max: parseInt(e.target.value) || undefined })}
-                      placeholder="Illimité"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="description">{t('common.description', 'Description')}</Label>
-                    <Textarea
-                      id="description"
-                      value={programmeForm.description || ''}
-                      onChange={(e) => setProgrammeForm({ ...programmeForm, description: e.target.value })}
-                      placeholder={t('programme.descPlaceholder', 'Description du programme')}
-                      rows={3}
-                    />
-                  </div>
-                </div>
-
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setShowProgrammeDialog(false)}>
-                    {t('common.cancel', 'Annuler')}
-                  </Button>
-                  <Button onClick={handleSaveProgramme}>
-                    <Save className="h-4 w-4 mr-2" />
-                    {t('common.save', 'Enregistrer')}
-                  </Button>
-                </DialogFooter>
+                <ProgrammeForm
+                  eventId={evenementId}
+                  initialData={editingProgramme ? {
+                    titre: {
+                      fr: editingProgramme.titre || '',
+                      ar: editingProgramme.titre || '',
+                      en: editingProgramme.titre || '',
+                      'tz-ltn': '',
+                      'tz-tfng': ''
+                    },
+                    description: {
+                      fr: editingProgramme.description || '',
+                      ar: editingProgramme.description || '',
+                      en: editingProgramme.description || '',
+                      'tz-ltn': '',
+                      'tz-tfng': ''
+                    },
+                    date_programme: editingProgramme.heure_debut ? editingProgramme.heure_debut.split('T')[0] : '',
+                    heure_debut: editingProgramme.heure_debut ? editingProgramme.heure_debut.split('T')[1]?.substring(0, 5) : '',
+                    heure_fin: editingProgramme.heure_fin ? editingProgramme.heure_fin.split('T')[1]?.substring(0, 5) : '',
+                    type_activite: editingProgramme.type_activite as any,
+                    statut: 'planifie',
+                    ordre: 1,
+                    nb_participants_max: editingProgramme.nb_participants_max,
+                    niveau_requis: 'tous_niveaux',
+                    materiel_requis: [],
+                    langue_principale: 'fr',
+                    traduction_disponible: false,
+                    enregistrement_autorise: false,
+                    diffusion_live: false,
+                    support_numerique: false,
+                    notes_organisateur: '',
+                    intervenants: []
+                  } : undefined}
+                  onSubmit={handleSaveProgramme}
+                  onCancel={handleCancelProgramme}
+                  mode={editingProgramme ? 'edit' : 'create'}
+                  lieux={[
+                    { id_lieu: 1, nom: 'Salle principale' },
+                    { id_lieu: 2, nom: 'Salle de conférence A' },
+                    { id_lieu: 3, nom: 'Atelier 1' },
+                    { id_lieu: 4, nom: 'Espace extérieur' }
+                  ]}
+                  users={[
+                    { id_user: 1, prenom: 'Ahmed', nom: 'Benali' },
+                    { id_user: 2, prenom: 'Fatima', nom: 'Messaoudi' },
+                    { id_user: 3, prenom: 'Mohamed', nom: 'Kaci' },
+                    { id_user: 4, prenom: 'Leila', nom: 'Boudiaf' }
+                  ]}
+                />
               </DialogContent>
             </Dialog>
           </div>
@@ -452,7 +434,7 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
-                          <h4 className="font-semibold">{programme.titre}</h4>
+                          <h4 className="font-semibold">{td(programme.titre)}</h4>
                           <Badge variant="outline">{programme.type_activite}</Badge>
                           <Badge
                             variant={
@@ -466,15 +448,15 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
                         </div>
                         {programme.description && (
                           <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
-                            {programme.description}
+                            {td(programme.description)}
                           </p>
                         )}
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
                           {programme.heure_debut && (
                             <span className="flex items-center gap-1">
                               <Clock className="h-3.5 w-3.5" />
-                              {new Date(programme.heure_debut).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-                              {programme.heure_fin && ` - ${new Date(programme.heure_fin).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`}
+                              {formatTime(programme.heure_debut)}
+                              {programme.heure_fin && ` - ${formatTime(programme.heure_fin)}`}
                             </span>
                           )}
                           {programme.nb_participants_max && (
@@ -552,7 +534,7 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
                       <SelectContent>
                         {oeuvresData?.oeuvres_disponibles?.map((oeuvre) => (
                           <SelectItem key={oeuvre.id_oeuvre} value={oeuvre.id_oeuvre.toString()}>
-                            {oeuvre.titre}
+                            {td(oeuvre.titre)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -644,10 +626,10 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
                       </div>
 
                       <div className="flex-1">
-                        <h4 className="font-semibold">{item.Oeuvre?.titre || 'Œuvre'}</h4>
+                        <h4 className="font-semibold">{td(item.Oeuvre?.titre) || 'Œuvre'}</h4>
                         {item.description_presentation && (
                           <p className="text-sm text-muted-foreground line-clamp-1">
-                            {item.description_presentation}
+                            {td(item.description_presentation)}
                           </p>
                         )}
                         <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
@@ -685,7 +667,7 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
               </CardHeader>
               <CardContent>
                 <div className="text-sm text-muted-foreground">
-                  {oeuvresData.oeuvres_disponibles.slice(0, 5).map(oeuvre => oeuvre.titre).join(', ')}
+                  {oeuvresData.oeuvres_disponibles.slice(0, 5).map(oeuvre => td(oeuvre.titre)).join(', ')}
                   {oeuvresData.oeuvres_disponibles.length > 5 && ` et ${oeuvresData.oeuvres_disponibles.length - 5} autres...`}
                 </div>
               </CardContent>

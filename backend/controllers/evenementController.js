@@ -513,8 +513,8 @@ const createEvenementController = (models) => {
         const Oeuvre = models.Oeuvre;
         if (Oeuvre) {
           for (const idOeuvre of oeuvres) {
-            const oeuvre = await Oeuvre.findOne({ 
-              where: { id_oeuvre: idOeuvre, id_user: userId } 
+            const oeuvre = await Oeuvre.findOne({
+              where: { id_oeuvre: idOeuvre, saisi_par: userId }
             });
             
             if (!oeuvre) {
@@ -802,18 +802,18 @@ const createEvenementController = (models) => {
       if (role) where.role_participation = role;
 
       // Récupérer les participants avec profil étendu
-      const participants = await EvenementUser.findAll({ 
+      const participants = await EvenementUser.findAll({
         where,
-        include: [{ 
-          model: User, 
-          as: 'User', 
+        include: [{
+          model: User,
+          as: 'User',
           attributes: [
-            'id_user', 'nom', 'prenom', 'email', 
-            'bio', 'photo_profil', 'site_web',
-            'telephone', 'statut', 'date_inscription'
+            'id_user', 'nom', 'prenom', 'email',
+            'biographie', 'photo_url', 'site_web',
+            'telephone', 'statut', 'date_creation'
           ],
-          include: models.TypeUser ? [{ 
-            model: models.TypeUser, 
+          include: models.TypeUser ? [{
+            model: models.TypeUser,
             as: 'TypeUser',
             attributes: ['id_type_user', 'nom_type']
           }] : []
@@ -836,7 +836,7 @@ const createEvenementController = (models) => {
               include: [{
                 model: Oeuvre,
                 as: 'Oeuvre',
-                attributes: ['id_oeuvre', 'titre', 'description', 'image_url', 'date_creation'],
+                attributes: ['id_oeuvre', 'titre', 'description', 'date_creation'],
                 include: TypeOeuvre ? [{
                   model: TypeOeuvre,
                   as: 'TypeOeuvre',
@@ -905,9 +905,9 @@ const createEvenementController = (models) => {
       const user = await User.findByPk(userId, {
         attributes: [
           'id_user', 'nom', 'prenom', 'email',
-          'bio', 'photo_profil', 'site_web',
-          'telephone', 'statut', 'date_inscription',
-          'linkedin', 'facebook', 'twitter', 'instagram'
+          'biographie', 'photo_url', 'site_web',
+          'telephone', 'statut', 'date_creation',
+          'reseaux_sociaux'
         ],
         include: [
           models.TypeUser ? { 
@@ -919,7 +919,7 @@ const createEvenementController = (models) => {
             model: models.Organisation,
             as: 'Organisations',
             through: { attributes: ['role'] },
-            attributes: ['id_organisation', 'nom', 'logo_url']
+            attributes: ['id_organisation', 'nom', 'description', 'site_web']
           } : null
         ].filter(Boolean)
       });
@@ -954,8 +954,8 @@ const createEvenementController = (models) => {
       let portfolio = [];
       if (Oeuvre) {
         portfolio = await Oeuvre.findAll({
-          where: { id_user: userId },
-          attributes: ['id_oeuvre', 'titre', 'description', 'image_url', 'date_creation'],
+          where: { saisi_par: userId },
+          attributes: ['id_oeuvre', 'titre', 'description', 'date_creation'],
           include: TypeOeuvre ? [{
             model: TypeOeuvre,
             as: 'TypeOeuvre',
@@ -1170,7 +1170,7 @@ const createEvenementController = (models) => {
       const oeuvresIds = oeuvresAjoutees.map(eo => eo.id_oeuvre);
       const oeuvresDisponibles = await Oeuvre.findAll({
         where: {
-          id_user: userId,
+          saisi_par: userId,  // Le champ est saisi_par, pas id_user
           statut: 'publie',
           ...(oeuvresIds.length > 0 ? { id_oeuvre: { [Op.notIn]: oeuvresIds } } : {})
         },
@@ -1211,7 +1211,7 @@ const createEvenementController = (models) => {
 
       // Vérifier que l'oeuvre appartient à l'utilisateur
       const oeuvre = await Oeuvre.findOne({
-        where: { id_oeuvre, id_user: userId }
+        where: { id_oeuvre, saisi_par: userId }
       });
       if (!oeuvre) {
         await transaction.rollback();

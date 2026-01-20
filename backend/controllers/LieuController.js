@@ -22,9 +22,9 @@ class LieuController {
   async getAllLieux(req, res) {
     try {
       const lang = req.lang || 'fr';  // ⚡
-      const { 
-        page = 1, 
-        limit = 10, 
+      const {
+        page = 1,
+        limit = 10,
         wilaya,
         daira,
         commune,
@@ -35,7 +35,7 @@ class LieuController {
 
       const offset = (page - 1) * limit;
       const where = {};
-      
+
       // Construire les inclusions de manière sécurisée
       const include = [];
 
@@ -77,22 +77,23 @@ class LieuController {
         });
       }
 
-      // DetailLieu avec Monument et Vestige
-      if (this.models.DetailLieu) {
+      // DetailLieu avec Monument et Vestige - seulement si pas trop de données
+      if (this.models.DetailLieu && parseInt(limit) <= 50) {
         const detailInclude = {
           model: this.models.DetailLieu,
           required: false
         };
-        const subIncludes = [];
-        if (this.models.Monument) subIncludes.push({ model: this.models.Monument, required: false });
-        if (this.models.Vestige) subIncludes.push({ model: this.models.Vestige, required: false });
-        if (subIncludes.length > 0) detailInclude.include = subIncludes;
+        // Ne pas inclure Monument/Vestige dans les listes pour éviter les erreurs
         include.push(detailInclude);
       }
 
-      // Service et LieuMedia
-      if (this.models.Service) include.push({ model: this.models.Service, required: false });
-      if (this.models.LieuMedia) include.push({ model: this.models.LieuMedia, required: false });
+      // Service et LieuMedia - seulement si pas trop de données
+      if (this.models.Service && parseInt(limit) <= 50) {
+        include.push({ model: this.models.Service, required: false });
+      }
+      if (this.models.LieuMedia && parseInt(limit) <= 50) {
+        include.push({ model: this.models.LieuMedia, required: false });
+      }
 
       if (type_lieu) where.typeLieu = type_lieu;
 
@@ -104,7 +105,7 @@ class LieuController {
         ];
       }
 
-      if (with_events === 'true') {
+      if (with_events === 'true' && this.models.Evenement) {
         include.push({
           model: this.models.Evenement,
           attributes: ['nom_evenement', 'date_debut', 'date_fin'],
@@ -113,13 +114,23 @@ class LieuController {
         });
       }
 
+      // Ordre simplifié pour éviter les erreurs JSON_EXTRACT
+      let order = [['id_lieu', 'ASC']];
+      try {
+        // Tenter l'ordre par nom si JSON fonctionne
+        order = [[this.sequelize.fn('JSON_EXTRACT', this.sequelize.col('Lieu.nom'), `$.${lang}`), 'ASC']];
+      } catch {
+        // Fallback sur l'ID
+      }
+
       const lieux = await this.models.Lieu.findAndCountAll({
         where,
         limit: parseInt(limit),
         offset: parseInt(offset),
         include,
-        order: [[this.sequelize.fn('JSON_EXTRACT', this.sequelize.col('Lieu.nom'), `$.${lang}`), 'ASC']],
-        distinct: true
+        order,
+        distinct: true,
+        subQuery: false
       });
 
       const lieuxFormates = lieux.rows.map(lieu => {
@@ -148,10 +159,12 @@ class LieuController {
       });
 
     } catch (error) {
-      console.error('Erreur lors de la récupération des lieux:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: 'Erreur serveur lors de la récupération des lieux' 
+      console.error('Erreur lors de la récupération des lieux:', error.message);
+      console.error('Stack:', error.stack);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur serveur lors de la récupération des lieux',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
       });
     }
   }

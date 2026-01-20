@@ -34,7 +34,7 @@
   --secondary: 42 62% 90%;
   --secondary-foreground: 75 27% 34%;
   --muted: 42 20% 94%;
-  --muted-foreground: 220 10% 45%;
+  --muted-foreground: 220 8% 46%;
   --accent: 215 38% 51%;
   --accent-foreground: 42 21% 97%;
   --destructive: 0 72% 51%;
@@ -117,7 +117,42 @@
 }
 
 /* ==========================================================================
-   2. BASE STYLES - FONDATION
+   2. ACCESSIBILITY - REDUCED MOTION & FOCUS STYLES
+   ========================================================================== */
+
+/* Respect prefers-reduced-motion for users with vestibular disorders */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Skip to main content link for keyboard users */
+.skip-to-content {
+  position: absolute;
+  top: -100%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  padding: 1rem 2rem;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border-radius: var(--radius);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.skip-to-content:focus {
+  top: 1rem;
+}
+
+/* ==========================================================================
+   3. BASE STYLES - FONDATION
    ========================================================================== */
 @layer base {
   *,
@@ -136,6 +171,18 @@
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
     scroll-padding-top: 100px;
+  }
+
+  /* Consistent focus-visible styles for all interactive elements */
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+    border-radius: var(--radius);
+  }
+
+  /* Remove default focus styles when not using keyboard */
+  :focus:not(:focus-visible) {
+    outline: none;
   }
 
   body {
@@ -425,6 +472,38 @@
     font-weight: 500;
     margin-bottom: var(--space-xs);
     color: hsl(var(--foreground));
+  }
+
+  /* Indicateur champs obligatoires */
+  label[data-required="true"]::after,
+  label.required::after,
+  .label-required::after {
+    content: " *";
+    color: hsl(var(--destructive));
+    font-weight: 600;
+  }
+
+  /* Champs en erreur */
+  input[aria-invalid="true"],
+  textarea[aria-invalid="true"],
+  select[aria-invalid="true"],
+  .input-error {
+    border-color: hsl(var(--destructive));
+    background-color: hsl(var(--destructive) / 0.05);
+  }
+
+  input[aria-invalid="true"]:focus,
+  textarea[aria-invalid="true"]:focus,
+  select[aria-invalid="true"]:focus {
+    box-shadow: 0 0 0 3px hsl(var(--destructive) / 0.15);
+  }
+
+  /* Message d'erreur sous le champ */
+  .field-error,
+  [role="alert"] {
+    font-size: var(--text-sm);
+    color: hsl(var(--destructive));
+    margin-top: var(--space-xs);
   }
 
   /* Empêcher zoom iOS */
@@ -768,6 +847,59 @@
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
+  }
+
+  /* Respect des préférences d'animations réduites */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* Animations accessibles */
+  .animate-safe {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-safe {
+      animation: none;
+      opacity: 1;
+    }
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Focus visible amélioré */
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+    border-radius: calc(var(--radius) - 1px);
+  }
+
+  /* Skip links pour accessibilité */
+  .skip-link {
+    position: absolute;
+    top: -40px;
+    left: 6px;
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    padding: 8px;
+    text-decoration: none;
+    border-radius: 4px;
+    z-index: 9999;
+  }
+
+  .skip-link:focus {
+    top: 6px;
   }
 
   .touch-target {

@@ -94,7 +94,7 @@ html[lang="ar-DZ"] h4, html[lang="ar-DZ"] h5, html[lang="ar-DZ"] h6 {
 html[lang="tz-tfng"],
 .tifinagh-font {
     font-family: 'Noto Sans Tifinagh', 'Hapax Berbère', 'Tifinaghe-Ircam Unicode', sans-serif;
-    font-size: calc(var(--lang-base-size) * 1.15);
+    font-size: calc(var(--lang-base-size) * 1.35); /* Augmenté de 1.15 à 1.35 */
     line-height: 1.8;
     letter-spacing: 0.05em;
 }
@@ -107,7 +107,7 @@ html[lang="tz-tfng"] a,
 html[lang="tz-tfng"] label,
 html[lang="tz-tfng"] button {
     font-family: 'Noto Sans Tifinagh', sans-serif;
-    font-size: 1.1em;
+    font-size: 1.25em; /* Augmenté de 1.1em à 1.25em */
     line-height: 1.8;
     letter-spacing: 0.04em;
 }
@@ -116,7 +116,7 @@ html[lang="tz-tfng"] button {
 html[lang="tz-tfng"] h1 {
     font-family: 'Noto Sans Tifinagh', sans-serif;
     font-weight: 600;
-    font-size: 2.2rem !important;
+    font-size: 2.6rem !important; /* Augmenté de 2.2rem à 2.6rem */
     letter-spacing: 0.06em;
     line-height: 1.5;
 }
@@ -124,7 +124,7 @@ html[lang="tz-tfng"] h1 {
 html[lang="tz-tfng"] h2 {
     font-family: 'Noto Sans Tifinagh', sans-serif;
     font-weight: 600;
-    font-size: 1.8rem !important;
+    font-size: 2.1rem !important; /* Augmenté de 1.8rem à 2.1rem */
     letter-spacing: 0.05em;
     line-height: 1.5;
 }
@@ -132,7 +132,7 @@ html[lang="tz-tfng"] h2 {
 html[lang="tz-tfng"] h3 {
     font-family: 'Noto Sans Tifinagh', sans-serif;
     font-weight: 600;
-    font-size: 1.4rem !important;
+    font-size: 1.7rem !important; /* Augmenté de 1.4rem à 1.7rem */
     letter-spacing: 0.04em;
     line-height: 1.5;
 }
@@ -142,7 +142,7 @@ html[lang="tz-tfng"] h5,
 html[lang="tz-tfng"] h6 {
     font-family: 'Noto Sans Tifinagh', sans-serif;
     font-weight: 600;
-    font-size: 1.2rem !important;
+    font-size: 1.5rem !important; /* Augmenté de 1.2rem à 1.5rem */
     letter-spacing: 0.04em;
     line-height: 1.5;
 }
@@ -157,7 +157,7 @@ html[lang="tz-tfng"] h6 {
 html[lang="tz-tfng"] header h1,
 html[lang="tz-tfng"] header .text-gradient {
     font-family: 'Noto Sans Tifinagh', sans-serif;
-    font-size: 1.05rem !important;
+    font-size: 1.2rem !important; /* Augmenté de 1.05rem à 1.2rem */
     letter-spacing: 0.03em;
     font-weight: 600;
     line-height: 1.3;
@@ -166,27 +166,27 @@ html[lang="tz-tfng"] header .text-gradient {
 html[lang="tz-tfng"] header p,
 html[lang="tz-tfng"] header span:not(.font-medium) {
     font-family: 'Noto Sans Tifinagh', sans-serif;
-    font-size: 0.8rem !important;
+    font-size: 0.95rem !important; /* Augmenté de 0.8rem à 0.95rem */
     letter-spacing: 0.02em;
 }
 
 @media (min-width: 640px) {
     html[lang="tz-tfng"] header h1,
     html[lang="tz-tfng"] header .text-gradient {
-        font-size: 1.15rem !important;
+        font-size: 1.35rem !important; /* Augmenté de 1.15rem à 1.35rem */
     }
     html[lang="tz-tfng"] header p {
-        font-size: 0.85rem !important;
+        font-size: 1.0rem !important; /* Augmenté de 0.85rem à 1.0rem */
     }
 }
 
 @media (min-width: 1024px) {
     html[lang="tz-tfng"] header h1,
     html[lang="tz-tfng"] header .text-gradient {
-        font-size: 1.25rem !important;
+        font-size: 1.5rem !important; /* Augmenté de 1.25rem à 1.5rem */
     }
     html[lang="tz-tfng"] header p {
-        font-size: 0.9rem !important;
+        font-size: 1.1rem !important; /* Augmenté de 0.9rem à 1.1rem */
     }
 }
 
@@ -194,7 +194,7 @@ html[lang="tz-tfng"] nav a,
 html[lang="tz-tfng"] nav span,
 html[lang="tz-tfng"] [role="menuitem"] {
     font-family: 'Noto Sans Tifinagh', sans-serif;
-    font-size: 1.15em !important;
+    font-size: 1.25em !important; /* Augmenté de 1.15em à 1.25em */
     letter-spacing: 0.04em;
     line-height: 1.6;
 }
@@ -204,7 +204,7 @@ html[lang="tz-tfng"] [role="menu"] *,
 html[lang="tz-tfng"] [role="listbox"] *,
 html[lang="tz-tfng"] [data-radix-popper-content-wrapper] * {
     font-family: 'Noto Sans Tifinagh', sans-serif;
-    font-size: 1.15em !important;
+    font-size: 1.25em !important; /* Augmenté de 1.15em à 1.25em */
     letter-spacing: 0.03em;
     line-height: 1.6;
 }
@@ -216,8 +216,40 @@ html[lang="tz-tfng"] select,
 html[lang="tz-tfng"] input::placeholder,
 html[lang="tz-tfng"] textarea::placeholder {
     font-family: 'Noto Sans Tifinagh', sans-serif;
-    font-size: 1.05em !important;
+    font-size: 1.15em !important; /* Augmenté de 1.05em à 1.15em */
     letter-spacing: 0.03em;
+}
+
+/* === TIFINAGH - SÉLECTEUR DE LANGUE STABLE === */
+html[lang="tz-tfng"] .language-switcher button,
+html[lang="tz-tfng"] [data-radix-dropdown-menu-trigger] {
+    font-family: 'Noto Sans Tifinagh', sans-serif !important;
+    font-size: 0.875rem !important; /* Fixer la taille à 14px */
+    min-height: 2.25rem !important; /* 36px - hauteur fixe */
+    max-height: 2.5rem !important; /* 40px - hauteur max */
+    letter-spacing: 0.02em !important;
+    line-height: 1.4 !important;
+}
+
+/* Stabiliser la taille du dropdown en Tifinagh */
+html[lang="tz-tfng"] [role="menu"] *,
+html[lang="tz-tfng"] [role="listbox"] *,
+html[lang="tz-tfng"] [data-radix-popper-content-wrapper] * {
+    font-family: 'Noto Sans Tifinagh', sans-serif !important;
+    font-size: 0.875rem !important; /* Fixer à 14px */
+    letter-spacing: 0.02em !important;
+    line-height: 1.4 !important;
+}
+
+/* Empêcher le changement de taille des drapeaux en Tifinagh */
+html[lang="tz-tfng"] .language-switcher .flag {
+    font-size: 0.875rem !important;
+    line-height: 1 !important;
+    width: 1rem !important;
+    height: 1rem !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
 /* === TAMAZIGHT LATIN === */

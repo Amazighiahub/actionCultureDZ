@@ -97,6 +97,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
                 size="icon"
                 className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
                 onClick={() => onSearchChange('')}
+                aria-label={t('common.clearSearch', 'Effacer la recherche')}
               >
                 <X className="h-4 w-4" />
               </Button>

@@ -38,7 +38,11 @@
       "Bash(git config:*)",
       "Bash(git rm:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(node scripts/configure-type-evenement-soumissions.js:*)",
+      "Bash(node scripts/add-salon-livre.js:*)",
+      "Bash(git checkout:*)",
+      "Bash(node scripts/create-test-programmes.js:*)"
     ]
   }
 }

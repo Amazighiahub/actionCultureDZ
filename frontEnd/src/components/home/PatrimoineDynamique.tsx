@@ -17,6 +17,9 @@ import ErrorMessage from './ErrorMessage';
 
 // Helper pour obtenir le nom de la wilaya
 const getWilayaName = (wilayaId: number, wilayasCache: any[]): string => {
+  if (!wilayasCache || !Array.isArray(wilayasCache)) {
+    return `Wilaya ${wilayaId}`;
+  }
   const wilaya = wilayasCache.find(w => w.id_wilaya === wilayaId);
   return wilaya ? wilaya.wilaya_name : `Wilaya ${wilayaId}`;
 };

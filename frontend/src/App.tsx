@@ -16,6 +16,7 @@ import PatrimoineDetail from "./pages/PatrimoineDetail";
 import Evenements from "./pages/Evenements";
 import Oeuvres from "./pages/Oeuvres";
 import Artisanat from "./pages/Artisanat";
+import ArtisanatDetail from "./pages/ArtisanatDetail";
 import APropos from "./pages/APropos";
 import Auth from "./pages/Auth";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -113,6 +114,7 @@ const App = () => (
             <Route path="/oeuvres" element={<Oeuvres />} />
             <Route path="/oeuvres/:id" element={<OeuvreDetail />} />
             <Route path="/artisanat" element={<Artisanat />} />
+            <Route path="/artisanat/:id" element={<ArtisanatDetail />} />
             <Route path="/a-propos" element={<APropos />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />

@@ -1,15 +1,13 @@
 // hooks/useDashboardPro.ts - Version simplifiée sans recommandations
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useCallback, useEffect } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useCallback, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { professionnelService } from '@/services/professionnel.service';
 import { oeuvreService } from '@/services/oeuvre.service';
 import { evenementService } from '@/services/evenement.service';
 import { artisanatService } from '@/services/artisanat.service';
 import { patrimoineService } from '@/services/patrimoine.service';
-import type { DashboardStats } from '@/services/professionnel.service';
 import { useToast } from '@/components/UI/use-toast';
-import { API_ENDPOINTS } from '@/config/api';
 
 interface UseDashboardProOptions {
   autoFetch?: boolean;
@@ -18,7 +16,6 @@ interface UseDashboardProOptions {
 
 export function useDashboardPro(options: UseDashboardProOptions = {}) {
   const { autoFetch = true, refreshInterval } = options;
-  const queryClient = useQueryClient();
   const { toast } = useToast();
 
   // Dashboard principal
@@ -104,7 +101,7 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
   // Gérer l'erreur des œuvres avec useEffect
   useEffect(() => {
     if (errorOeuvres) {
-      console.error('❌ Query error:', errorOeuvres);
+      console.error('❌ Query error œuvres:', errorOeuvres);
       toast({
         title: "Erreur",
         description: "Impossible de charger vos œuvres",
@@ -117,46 +114,93 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
   const {
     data: mesEvenements,
     isLoading: loadingEvenements,
-    refetch: refetchEvenements
+    refetch: refetchEvenements,
+    error: errorEvenements
   } = useQuery({
     queryKey: ['dashboard-pro-evenements'],
     queryFn: async () => {
-      const response = await professionnelService.getEvenements({ limit: 50 });
-      if (!response.success) throw new Error(response.error);
-      
-      // S'assurer que le format est correct
-      // Si response.data a déjà items et pagination, on le garde
-      if (response.data?.items && response.data?.pagination) {
-        return response.data;
-      }
-      
-      // Si response.data EST la liste des items directement
-      if (Array.isArray(response.data)) {
+      try {
+        console.log('🔍 Chargement des événements...');
+        const response = await professionnelService.getEvenements({ limit: 50 });
+        console.log('📡 Réponse API événements:', response);
+
+        if (!response.success) {
+          console.error('❌ Erreur API événements:', response.error);
+          throw new Error(response.error || 'Erreur lors du chargement des événements');
+        }
+
+        // L'API retourne { evenements: [...], pagination: {...} } ou { items: [...], pagination: {...} }
+        const responseData = response.data as any;
+        const evenementsList = responseData?.evenements || responseData?.items || [];
+        console.log('📋 Liste événements:', evenementsList);
+
+        if (evenementsList.length > 0) {
+          // Ajouter les programmes à chaque événement
+          const evenementsAvecProgrammes = await Promise.all(
+            evenementsList.map(async (evenement: any) => {
+              try {
+                const programmesResponse = await evenementService.getProgrammes(evenement.id_evenement);
+                console.log(`📅 Programmes pour événement ${evenement.id_evenement}:`, programmesResponse);
+
+                // L'API peut retourner les programmes dans différents formats
+                const programmes = programmesResponse.success
+                  ? (programmesResponse.data?.programmes || programmesResponse.data || [])
+                  : [];
+
+                return {
+                  ...evenement,
+                  programmes: Array.isArray(programmes) ? programmes : []
+                };
+              } catch (error) {
+                console.warn(`Erreur chargement programmes pour événement ${evenement.id_evenement}:`, error);
+                return {
+                  ...evenement,
+                  programmes: []
+                };
+              }
+            })
+          );
+
+          console.log('✅ Événements chargés:', evenementsAvecProgrammes.length);
+          return {
+            items: evenementsAvecProgrammes,
+            pagination: responseData?.pagination || { total: evenementsAvecProgrammes.length }
+          };
+        }
+
+        // Si l'API ne retourne pas de données
+        console.log('⚠️ Aucun événement trouvé');
         return {
-          items: response.data,
-          pagination: { total: response.data.length }
+          items: [],
+          pagination: { total: 0 }
+        };
+      } catch (error: any) {
+        console.error('❌ Erreur chargement événements:', error);
+        // Retourner une structure vide en cas d'erreur au lieu de données de test
+        return {
+          items: [],
+          pagination: { total: 0 }
         };
       }
-      
-      // Si response.data a une structure PaginatedResponse
-      if (response.data && 'items' in response.data) {
-        return {
-          items: response.data.items || [],
-          pagination: response.data.pagination || { total: 0 }
-        };
-      }
-      
-      // Fallback
-      return {
-        items: [],
-        pagination: { total: 0 }
-      };
     },
     enabled: autoFetch,
     staleTime: 5 * 60 * 1000,
+    retry: 1,
   });
 
-  // Mes artisanats/services (utilise l'API réelle)
+  // Gérer l'erreur des événements avec useEffect
+  useEffect(() => {
+    if (errorEvenements) {
+      console.error('❌ Query error événements:', errorEvenements);
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger vos événements",
+        variant: "destructive",
+      });
+    }
+  }, [errorEvenements, toast]);
+
+  // Mes artisanats (utilise l'API réelle pour récupérer MES artisanats)
   const {
     data: mesArtisanats,
     isLoading: loadingArtisanats,
@@ -164,32 +208,32 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
   } = useQuery({
     queryKey: ['dashboard-pro-artisanats'],
     queryFn: async () => {
-      const response = await professionnelService.getArtisanats({ limit: 50 });
-      if (!response.success) throw new Error(response.error);
-      
-      // Même logique que pour les événements
-      if (response.data?.items && response.data?.pagination) {
-        return response.data;
-      }
-      
-      if (Array.isArray(response.data)) {
+      try {
+        const response = await artisanatService.search({ limit: 50 });
+        if (!response.success) throw new Error(response.error);
+
+        if (response.data?.items) {
+          return response.data;
+        }
+
+        if (Array.isArray(response.data)) {
+          return {
+            items: response.data,
+            pagination: { total: response.data.length }
+          };
+        }
+
         return {
-          items: response.data,
-          pagination: { total: response.data.length }
+          items: [],
+          pagination: { total: 0 }
+        };
+      } catch (error: any) {
+        console.error('❌ Erreur chargement artisanats:', error);
+        return {
+          items: [],
+          pagination: { total: 0 }
         };
       }
-      
-      if (response.data && 'items' in response.data) {
-        return {
-          items: response.data.items || [],
-          pagination: response.data.pagination || { total: 0 }
-        };
-      }
-      
-      return {
-        items: [],
-        pagination: { total: 0 }
-      };
     },
     enabled: autoFetch,
     staleTime: 5 * 60 * 1000,
@@ -239,8 +283,7 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
   // Notifications (optionnel, peut être retiré si non nécessaire)
   const {
     data: notifications,
-    isLoading: loadingNotifications,
-    refetch: refetchNotifications
+    isLoading: loadingNotifications
   } = useQuery({
     queryKey: ['dashboard-pro-notifications'],
     queryFn: async () => {
@@ -370,7 +413,8 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
     // Erreurs
     error: errorStats,
     errorOeuvres,
-    
+    errorEvenements,
+
     // Actions
     getOeuvreStats,
     getEvenementStats,

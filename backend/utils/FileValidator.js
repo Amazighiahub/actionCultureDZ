@@ -15,90 +15,83 @@ const MAGIC_NUMBERS = {
   'ffd8ffe0': { type: 'image/jpeg', ext: '.jpg' },
   'ffd8ffe1': { type: 'image/jpeg', ext: '.jpg' },
   'ffd8ffe2': { type: 'image/jpeg', ext: '.jpg' },
-  'ffd8ffe3': { type: 'image/jpeg', ext: '.jpg' },
-  'ffd8ffe8': { type: 'image/jpeg', ext: '.jpg' },
-  'ffd8ffdb': { type: 'image/jpeg', ext: '.jpg' },
   '47494638': { type: 'image/gif', ext: '.gif' }, // GIF89a or GIF87a
-  '424d': { type: 'image/bmp', ext: '.bmp' }, // BMP files start with "BM"
+  '52494646': { type: 'image/webp', ext: '.webp' },
 
   // Documents
   '25504446': { type: 'application/pdf', ext: '.pdf' },
   'd0cf11e0': { type: 'application/msword', ext: '.doc' },
-  '504b0304': { type: 'application/zip', ext: '.zip' }, // Office files (docx, xlsx, pptx) use ZIP
+  '504b0304': { type: 'application/zip', ext: '.zip' }, // Office files use ZIP
 
   // Vidéos
-  '00000018': { type: 'video/mp4', ext: '.mp4' }, // ftyp box
-  '00000020': { type: 'video/mp4', ext: '.mp4' }, // ftyp box variant
-  '0000001c': { type: 'video/mp4', ext: '.mp4' }, // ftyp box variant
+  '000000': { type: 'video/mp4', ext: '.mp4' }, // Simple check for MP4
+  '52494646': { type: 'video/avi', ext: '.avi' },
 
   // Audio
   '494433': { type: 'audio/mpeg', ext: '.mp3' }, // ID3 tag
-  'fffb': { type: 'audio/mpeg', ext: '.mp3' }, // MP3 frame sync
-  'fff3': { type: 'audio/mpeg', ext: '.mp3' }, // MP3 frame sync
   '4f676753': { type: 'audio/ogg', ext: '.ogg' }
-};
-
-// WebP nécessite une vérification spéciale (RIFF....WEBP)
-const RIFF_BASED = {
-  'WEBP': { type: 'image/webp', ext: '.webp' },
-  'AVI ': { type: 'video/avi', ext: '.avi' },
-  'WAVE': { type: 'audio/wav', ext: '.wav' }
 };
 
 class FileValidator {
   /**
-   * Obtient les premiers bytes d'un fichier pour détection
+   * Obtient le magic number (premiers bytes) d'un fichier
    */
-  static async getFileHeader(filePath, bytes = 12) {
+  static async getMagicNumber(filePath) {
     return new Promise((resolve, reject) => {
-      const buffer = Buffer.alloc(bytes);
+      const buffer = Buffer.alloc(4);
       fs.open(filePath, 'r', (err, fd) => {
         if (err) return reject(err);
 
-        fs.read(fd, buffer, 0, bytes, 0, (err) => {
+        fs.read(fd, buffer, 0, 4, 0, (err) => {
           fs.close(fd, () => {});
           if (err) return reject(err);
-          resolve(buffer);
+
+          const hex = buffer.toString('hex');
+          resolve(hex);
         });
       });
     });
   }
 
   /**
-   * Valide le type réel d'un fichier via magic bytes
+   * Valide le type réel d'un fichier
    */
   static async validateFileType(filePath, allowedTypes) {
     try {
-      const header = await FileValidator.getFileHeader(filePath, 12);
-      const magicHex = header.slice(0, 4).toString('hex');
+      const magicHex = await FileValidator.getMagicNumber(filePath);
 
-      // Vérifier les formats RIFF (WebP, AVI, WAV)
-      if (magicHex === '52494646') { // "RIFF"
-        const format = header.slice(8, 12).toString('ascii');
-        const riffInfo = RIFF_BASED[format];
-        if (riffInfo) {
-          if (allowedTypes.includes(riffInfo.type)) {
-            return { valid: true, mimeType: riffInfo.type, extension: riffInfo.ext };
-          }
-          return { valid: false, detected: riffInfo.type, allowed: allowedTypes, message: `Type détecté (${riffInfo.type}) non autorisé` };
-        }
-      }
-
-      // Chercher une correspondance dans MAGIC_NUMBERS
+      // Chercher une correspondance
       for (const [magic, info] of Object.entries(MAGIC_NUMBERS)) {
         if (magicHex.startsWith(magic)) {
           if (allowedTypes.includes(info.type)) {
-            return { valid: true, mimeType: info.type, extension: info.ext };
+            return {
+              valid: true,
+              mimeType: info.type,
+              extension: info.ext
+            };
+          } else {
+            return {
+              valid: false,
+              detected: info.type,
+              allowed: allowedTypes,
+              message: `Type détecté (${info.type}) non autorisé`
+            };
           }
-          return { valid: false, detected: info.type, allowed: allowedTypes, message: `Type détecté (${info.type}) non autorisé` };
         }
       }
 
-      // Si pas de match, vérifier l'extension comme fallback
+      // Si pas de match, vérifier l'extension
       const ext = path.extname(filePath).toLowerCase();
-      return { valid: false, detected: 'unknown', message: `Type de fichier non détecté: ${ext}` };
+      return {
+        valid: false,
+        detected: 'unknown',
+        message: `Type de fichier non détecté: ${ext}`
+      };
     } catch (error) {
-      return { valid: false, error: error.message };
+      return {
+        valid: false,
+        error: error.message
+      };
     }
   }
 

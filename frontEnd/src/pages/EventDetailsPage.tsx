@@ -192,6 +192,8 @@ const EventDetailsPage: React.FC = () => {
                     onRegister={registerToEvent}
                     isRegistered={isRegistered}
                     registrationStatus={registrationStatus}
+                    isFavorite={isFavorite}
+                    onToggleFavorite={toggleFavorite}
                   />
                 </Suspense>
               </ErrorBoundary>

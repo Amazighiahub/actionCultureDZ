@@ -11,8 +11,8 @@ import { Organisation } from './organisation.types';
 
 export interface Evenement {
   id_evenement: number;
-  nom_evenement: string;
-  description?: string;
+  nom_evenement: { fr: string; ar: string; en: string; 'tz-ltn'?: string; 'tz-tfng'?: string };
+  description?: { fr: string; ar: string; en: string; 'tz-ltn'?: string; 'tz-tfng'?: string };
   date_debut?: string;
   date_fin?: string;
   contact_email?: string;

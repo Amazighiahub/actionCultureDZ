@@ -2115,6 +2115,22 @@
     },
     "useCurrentLocation": "Seqdec adig-iw tura"
   },
+  "pro": {
+    "participants": {
+      "title": "Imttekkiyen",
+      "total": "ijerden",
+      "search": "Nadi ɣef umttekki...",
+      "empty": "Ulac imttekkiyen",
+      "profile": "Amaɣnu n umttekki"
+    }
+  },
+  "gestion": {
+    "title": "Asefrek n tedyant",
+    "programmes": "Ihilen",
+    "participants": "Imttekkiyen",
+    "oeuvres": "Tiɣuriwin",
+    "showOeuvres": "Sken tiɣuriwin"
+  },
   "status": {
     "active": "Armis",
     "inactive": "Ur yermis ara",

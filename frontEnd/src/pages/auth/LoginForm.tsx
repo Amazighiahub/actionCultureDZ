@@ -50,6 +50,36 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
     return Object.keys(newErrors).length === 0;
   };
 
+  // Traduire les erreurs du backend
+  const getErrorMessage = (error: string): string => {
+    // Mapper les erreurs backend aux traductions
+    const errorMappings: Record<string, string> = {
+      'Email ou mot de passe incorrect': t('auth.errors.invalidCredentials', 'Email ou mot de passe incorrect'),
+      'Invalid email or password': t('auth.errors.invalidCredentials', 'Email ou mot de passe incorrect'),
+      'Utilisateur non trouvé': t('auth.errors.userNotFound', 'Aucun compte trouvé avec cet email'),
+      'User not found': t('auth.errors.userNotFound', 'Aucun compte trouvé avec cet email'),
+      'Mot de passe incorrect': t('auth.errors.wrongPassword', 'Mot de passe incorrect'),
+      'Wrong password': t('auth.errors.wrongPassword', 'Mot de passe incorrect'),
+      'Compte non vérifié': t('auth.errors.accountNotVerified', 'Veuillez vérifier votre email avant de vous connecter'),
+      'Account not verified': t('auth.errors.accountNotVerified', 'Veuillez vérifier votre email avant de vous connecter'),
+      'Compte désactivé': t('auth.errors.accountDisabled', 'Votre compte a été désactivé'),
+      'Account disabled': t('auth.errors.accountDisabled', 'Votre compte a été désactivé'),
+      'Compte en attente de validation': t('auth.errors.accountPending', 'Votre compte professionnel est en attente de validation'),
+      'Account pending validation': t('auth.errors.accountPending', 'Votre compte professionnel est en attente de validation'),
+      'Trop de tentatives': t('auth.errors.tooManyAttempts', 'Trop de tentatives. Réessayez plus tard'),
+      'Too many attempts': t('auth.errors.tooManyAttempts', 'Trop de tentatives. Réessayez plus tard'),
+    };
+
+    // Chercher une correspondance partielle
+    for (const [key, value] of Object.entries(errorMappings)) {
+      if (error.toLowerCase().includes(key.toLowerCase())) {
+        return value;
+      }
+    }
+
+    return error || t('auth.errors.serverError', 'Erreur serveur');
+  };
+
   // Soumission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,29 +87,41 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
     if (!validateForm()) return;
 
     try {
-      const success = await login({
+      const result = await login({
         email: formData.email,
         password: formData.mot_de_passe
       });
 
-      if (success) {
+      if (result.success) {
         toast({
           title: t('auth.success.loginTitle', 'Connexion réussie'),
           description: t('auth.success.loginDescription', 'Bienvenue !')
         });
-        // Redirection gérée par le composant parent
-        window.location.reload();
+        // Redirection gérée par le hook useAuth
       } else {
+        // Utiliser le message d'erreur spécifique du backend
+        const errorMessage = getErrorMessage(result.error || '');
+
         toast({
           title: t('auth.errors.loginError', 'Erreur de connexion'),
-          description: t('auth.errors.invalidCredentials', 'Email ou mot de passe incorrect'),
+          description: errorMessage,
           variant: 'destructive'
         });
+
+        // Afficher aussi l'erreur dans le formulaire si c'est lié au mot de passe ou email
+        if (result.error?.toLowerCase().includes('mot de passe') ||
+            result.error?.toLowerCase().includes('password')) {
+          setErrors({ ...errors, password: errorMessage });
+        } else if (result.error?.toLowerCase().includes('email') ||
+                   result.error?.toLowerCase().includes('utilisateur') ||
+                   result.error?.toLowerCase().includes('user')) {
+          setErrors({ ...errors, email: errorMessage });
+        }
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: t('auth.errors.loginError', 'Erreur'),
-        description: t('auth.errors.serverError', 'Erreur serveur'),
+        description: t('auth.errors.serverError', 'Erreur serveur. Veuillez réessayer.'),
         variant: 'destructive'
       });
     }

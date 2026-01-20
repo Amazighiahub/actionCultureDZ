@@ -112,23 +112,9 @@ class ArtisanatController {
         }
       ];
 
-      // Ajouter Langue et Categorie seulement si les modèles existent
-      if (this.models.Langue) {
-        oeuvreIncludes.push({
-          model: this.models.Langue,
-          attributes: ['nom', 'code'],
-          required: false
-        });
-      }
-
-      if (this.models.Categorie) {
-        oeuvreIncludes.push({
-          model: this.models.Categorie,
-          through: { attributes: [] },
-          attributes: ['id_categorie', 'nom'],
-          required: false
-        });
-      }
+      // Note: Langue et Catégories exclues temporairement pour éviter erreur SQL
+      // Sequelize a des problèmes avec les alias dans les sous-requêtes LIMIT
+      // Les données langue peuvent être récupérées séparément si nécessaire
 
       // Ajouter le filtre wilaya sur User si spécifié
       if (wilaya && this.models.Wilaya) {
@@ -199,7 +185,8 @@ class ArtisanatController {
         limit: parseInt(limit),
         offset: parseInt(offset),
         order,
-        distinct: true
+        distinct: true,
+        subQuery: false  // Évite les problèmes d'alias dans les sous-requêtes
       });
 
       const artisanatsWithStats = await Promise.all(
@@ -376,52 +363,96 @@ class ArtisanatController {
       const lang = req.lang || 'fr';  // ⚡
       const { id } = req.params;
 
-      const artisanat = await this.models.Artisanat.findByPk(id, {
-        include: [
-          {
-            model: this.models.Oeuvre,
-            include: [
-              {
-                model: this.models.User,
-                as: 'Saiseur',
-                attributes: ['id_user', 'nom', 'prenom', 'photo_url', 'type_user', 'email', 'telephone', 'biographie'],
-                include: [{
-                  model: this.models.Wilaya,
-                  attributes: ['nom', 'code']
-                }]
-              },
-              {
-                model: this.models.Media,
-                order: [['ordre', 'ASC']]
-              },
-              {
-                model: this.models.Categorie,
-                through: { attributes: [] }
-              },
-              {
-                model: this.models.TagMotCle,
-                through: { attributes: [] }
-              },
-              {
-                model: this.models.Langue
-              }
-            ]
-          },
-          {
+      // Construire les inclusions de manière sécurisée
+      const oeuvreIncludes = [];
+
+      // Ajouter User/Saiseur si le modèle existe
+      if (this.models.User) {
+        const userInclude = {
+          model: this.models.User,
+          as: 'Saiseur',
+          attributes: ['id_user', 'nom', 'prenom', 'photo_url', 'email', 'telephone', 'biographie', 'wilaya_residence'],
+          required: false
+        };
+
+        // Ajouter Wilaya sur User si le modèle existe
+        if (this.models.Wilaya) {
+          userInclude.include = [{
+            model: this.models.Wilaya,
+            as: 'Wilaya',
+            attributes: ['id_wilaya', 'nom', 'codeW', 'wilaya_name_ascii'],
+            required: false
+          }];
+        }
+
+        oeuvreIncludes.push(userInclude);
+      }
+
+      // Ajouter Media si le modèle existe
+      if (this.models.Media) {
+        oeuvreIncludes.push({
+          model: this.models.Media,
+          attributes: ['id_media', 'url', 'type_media', 'thumbnail_url', 'ordre'],
+          required: false
+        });
+      }
+
+      // Ajouter TypeOeuvre si existe
+      if (this.models.TypeOeuvre) {
+        oeuvreIncludes.push({
+          model: this.models.TypeOeuvre,
+          attributes: ['id_type_oeuvre', 'nom_type'],
+          required: false
+        });
+      }
+
+      const include = [
+        {
+          model: this.models.Oeuvre,
+          include: oeuvreIncludes,
+          required: false
+        }
+      ];
+
+      // Ajouter Materiau si existe ET si l'association existe
+      try {
+        if (this.models.Materiau) {
+          include.push({
             model: this.models.Materiau,
-            attributes: ['id_materiau', 'nom', 'description']
-          },
-          {
+            attributes: ['id_materiau', 'nom', 'description'],
+            required: false
+          });
+        }
+      } catch (e) {
+        // Materiau n'existe pas ou association non définie
+      }
+
+      // Ajouter Technique si existe ET si l'association existe
+      try {
+        if (this.models.Technique) {
+          include.push({
             model: this.models.Technique,
-            attributes: ['id_technique', 'nom', 'description']
-          }
-        ]
-      });
+            attributes: ['id_technique', 'nom', 'description'],
+            required: false
+          });
+        }
+      } catch (e) {
+        // Technique n'existe pas ou association non définie
+      }
+
+      const artisanat = await this.models.Artisanat.findByPk(id, { include });
 
       if (!artisanat) {
-        return res.status(404).json({ 
-          success: false, 
-          error: 'Artisanat non trouvé' 
+        return res.status(404).json({
+          success: false,
+          error: 'Artisanat non trouvé'
+        });
+      }
+
+      if (!artisanat.Oeuvre) {
+        return res.status(404).json({
+          success: false,
+          error: 'Œuvre associée non trouvée'
         });
       }
 
@@ -430,10 +461,10 @@ class ArtisanatController {
         this.getArtisanatsSimilaires(artisanat)
       ]);
 
-      const autresCreations = await this.getAutresCreationsArtisan(
-        artisanat.Oeuvre.saisi_par, 
-        artisanat.id_artisanat
-      );
+      // Récupérer les autres créations seulement si saisi_par existe
+      const autresCreations = artisanat.Oeuvre.saisi_par
+        ? await this.getAutresCreationsArtisan(artisanat.Oeuvre.saisi_par, artisanat.id_artisanat)
+        : [];
 
       // ⚡ Traduire
       res.json({
@@ -449,9 +480,11 @@ class ArtisanatController {
 
     } catch (error) {
       console.error('Erreur lors de la récupération de l\'artisanat:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: 'Erreur serveur' 
+      console.error('Stack:', error.stack);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur serveur',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
       });
     }
   }
@@ -816,43 +849,82 @@ class ArtisanatController {
   // ========================================================================
 
   async getArtisanatComplet(id) {
-    return await this.models.Artisanat.findByPk(id, {
-      include: [
-        {
-          model: this.models.Oeuvre,
-          include: [
-            { model: this.models.User, as: 'Saiseur' },
-            { model: this.models.Categorie },
-            { model: this.models.TagMotCle },
-            { model: this.models.Media }
-          ]
-        },
-        { model: this.models.Materiau },
-        { model: this.models.Technique }
-      ]
-    });
+    const oeuvreIncludes = [
+      { model: this.models.User, as: 'Saiseur', required: false },
+      { model: this.models.Media, required: false }
+    ];
+
+    // Ajouter Categorie si le modèle existe
+    if (this.models.Categorie && this.models.OeuvreCategorie) {
+      oeuvreIncludes.push({ model: this.models.Categorie, required: false });
+    }
+
+    // Ajouter TagMotCle si le modèle existe (avec alias 'Tags')
+    if (this.models.TagMotCle && this.models.OeuvreTag) {
+      oeuvreIncludes.push({ model: this.models.TagMotCle, as: 'Tags', required: false });
+    }
+
+    const include = [
+      {
+        model: this.models.Oeuvre,
+        include: oeuvreIncludes
+      }
+    ];
+
+    if (this.models.Materiau) {
+      include.push({ model: this.models.Materiau, required: false });
+    }
+    if (this.models.Technique) {
+      include.push({ model: this.models.Technique, required: false });
+    }
+
+    return await this.models.Artisanat.findByPk(id, { include });
   }
 
   async getArtisanatStatistics(artisanatId) {
-    const artisanat = await this.models.Artisanat.findByPk(artisanatId);
-    
-    const [nombreFavoris, nombreCommentaires] = await Promise.all([
-      this.models.Favori.count({ 
-        where: { 
-          type_entite: 'artisanat',
-          id_entite: artisanatId 
-        } 
-      }),
-      this.models.Commentaire.count({ 
-        where: { id_oeuvre: artisanat.id_oeuvre } 
-      })
-    ]);
+    try {
+      const artisanat = await this.models.Artisanat.findByPk(artisanatId);
+      if (!artisanat) {
+        return { vues: 0, favoris: 0, commentaires: 0 };
+      }
 
-    return {
-      nombre_favoris: nombreFavoris,
-      nombre_commentaires: nombreCommentaires,
-      nombre_vues: 0
-    };
+      let nombreFavoris = 0;
+      let nombreCommentaires = 0;
+
+      // Compter les favoris si le modèle existe
+      if (this.models.Favori) {
+        try {
+          nombreFavoris = await this.models.Favori.count({
+            where: {
+              type_entite: 'artisanat',
+              id_entite: artisanatId
+            }
+          });
+        } catch {
+          nombreFavoris = 0;
+        }
+      }
+
+      // Compter les commentaires si le modèle existe
+      if (this.models.Commentaire && artisanat.id_oeuvre) {
+        try {
+          nombreCommentaires = await this.models.Commentaire.count({
+            where: { id_oeuvre: artisanat.id_oeuvre }
+          });
+        } catch {
+          nombreCommentaires = 0;
+        }
+      }
+
+      return {
+        vues: 0,
+        favoris: nombreFavoris,
+        commentaires: nombreCommentaires
+      };
+    } catch (error) {
+      console.error('Erreur getArtisanatStatistics:', error);
+      return { vues: 0, favoris: 0, commentaires: 0 };
+    }
   }
 
   async checkDisponibilite(artisanatId) {
@@ -860,50 +932,75 @@ class ArtisanatController {
   }
 
   async getArtisanatsSimilaires(artisanat, limit = 4) {
-    const similaires = await this.models.Artisanat.findAll({
-      where: {
-        id_artisanat: { [Op.ne]: artisanat.id_artisanat },
-        [Op.or]: [
-          { id_materiau: artisanat.id_materiau },
-          { id_technique: artisanat.id_technique }
-        ]
-      },
-      include: [
+    try {
+      const whereConditions = {
+        id_artisanat: { [Op.ne]: artisanat.id_artisanat }
+      };
+
+      // Ajouter les conditions de similarité si les champs existent
+      const orConditions = [];
+      if (artisanat.id_materiau) {
+        orConditions.push({ id_materiau: artisanat.id_materiau });
+      }
+      if (artisanat.id_technique) {
+        orConditions.push({ id_technique: artisanat.id_technique });
+      }
+      if (orConditions.length > 0) {
+        whereConditions[Op.or] = orConditions;
+      }
+
+      const oeuvreIncludes = [
+        {
+          model: this.models.Media,
+          attributes: ['url', 'thumbnail_url'],
+          required: false
+        },
+        {
+          model: this.models.User,
+          as: 'Saiseur',
+          attributes: ['nom', 'prenom'],
+          required: false
+        }
+      ];
+
+      const include = [
         {
           model: this.models.Oeuvre,
           where: { statut: 'publie' },
-          include: [
-            {
-              model: this.models.Media,
-              attributes: ['url', 'thumbnail_url'],
-              limit: 1
-            },
-            {
-              model: this.models.User,
-              as: 'Saiseur',
-              attributes: ['nom', 'prenom']
-            }
-          ]
-        },
-        { model: this.models.Materiau, attributes: ['nom'] },
-        { model: this.models.Technique, attributes: ['nom'] }
-      ],
-      limit,
-      order: this.sequelize.random()
-    });
+          include: oeuvreIncludes,
+          required: true
+        }
+      ];
 
-    return similaires;
+      if (this.models.Materiau) {
+        include.push({ model: this.models.Materiau, attributes: ['nom'], required: false });
+      }
+      if (this.models.Technique) {
+        include.push({ model: this.models.Technique, attributes: ['nom'], required: false });
+      }
+
+      const similaires = await this.models.Artisanat.findAll({
+        where: whereConditions,
+        include,
+        limit,
+        subQuery: false
+      });
+
+      return similaires;
+    } catch (error) {
+      console.error('Erreur getArtisanatsSimilaires:', error);
+      return [];
+    }
   }
 
   async getAutresCreationsArtisan(artisanId, excludeId, limit = 6) {
-    const creations = await this.models.Artisanat.findAll({
-      where: {
-        id_artisanat: { [Op.ne]: excludeId }
-      },
-      include: [
+    try {
+      if (!artisanId) return [];
+
+      const include = [
         {
           model: this.models.Oeuvre,
-          where: { 
+          where: {
             statut: 'publie',
             saisi_par: artisanId
           },
@@ -911,18 +1008,34 @@ class ArtisanatController {
             {
               model: this.models.Media,
               attributes: ['url', 'thumbnail_url'],
-              limit: 1
+              required: false
             }
-          ]
-        },
-        { model: this.models.Materiau, attributes: ['nom'] },
-        { model: this.models.Technique, attributes: ['nom'] }
-      ],
-      limit,
-      order: [[this.models.Oeuvre, 'date_creation', 'DESC']]
-    });
+          ],
+          required: true
+        }
+      ];
 
-    return creations;
+      if (this.models.Materiau) {
+        include.push({ model: this.models.Materiau, attributes: ['nom'], required: false });
+      }
+      if (this.models.Technique) {
+        include.push({ model: this.models.Technique, attributes: ['nom'], required: false });
+      }
+
+      const creations = await this.models.Artisanat.findAll({
+        where: {
+          id_artisanat: { [Op.ne]: excludeId }
+        },
+        include,
+        limit,
+        subQuery: false
+      });
+
+      return creations;
+    } catch (error) {
+      console.error('Erreur getAutresCreationsArtisan:', error);
+      return [];
+    }
   }
 }
 
