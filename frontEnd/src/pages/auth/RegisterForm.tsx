@@ -123,8 +123,10 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
     }
     if (!formData.mot_de_passe) {
       newErrors.mot_de_passe = t('auth.errors.required', 'Champ requis');
-    } else if (formData.mot_de_passe.length < 8) {
-      newErrors.mot_de_passe = t('auth.errors.passwordTooShort', 'Minimum 8 caractères');
+    } else if (formData.mot_de_passe.length < 12) {
+      newErrors.mot_de_passe = t('auth.errors.passwordTooShort', 'Minimum 12 caractères');
+    } else if (!/[!@#$%^&*(),.?":{}|<>]/.test(formData.mot_de_passe)) {
+      newErrors.mot_de_passe = t('auth.errors.passwordNoSpecialChar', 'Doit contenir un caractère spécial');
     }
     if (formData.mot_de_passe !== formData.confirmation_mot_de_passe) {
       newErrors.confirmation_mot_de_passe = t('auth.errors.passwordMismatch', 'Les mots de passe ne correspondent pas');
