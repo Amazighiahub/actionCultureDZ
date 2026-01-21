@@ -4,6 +4,12 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent } from '@/components/UI/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/UI/dialog';
 import { Button } from '@/components/UI/button';
 import { Badge } from '@/components/UI/badge';
 import {
@@ -67,6 +73,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   const [isFlipped, setIsFlipped] = useState(false);
   // État pour le menu de partage
   const [shareOpen, setShareOpen] = useState(false);
+  // État pour la modal d'extrait
+  const [showExcerpt, setShowExcerpt] = useState(false);
 
   // Fonction de partage
   const handleShare = async (platform: string) => {
@@ -94,6 +102,9 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
           document.execCommand('copy');
           document.body.removeChild(textArea);
         }
+        break;
+      case 'whatsapp':
+        window.open(`https://wa.me/?text=${encodeURIComponent(text + ' ' + url)}`, '_blank');
         break;
     }
     setShareOpen(false);
@@ -133,6 +144,13 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
           >
             <Twitter className="h-4 w-4 text-sky-500" />
             <span>Twitter</span>
+          </button>
+          <button
+            onClick={() => handleShare('whatsapp')}
+            className="flex items-center gap-3 w-full p-2 hover:bg-muted rounded-md text-sm transition-colors"
+          >
+            <MessageCircle className="h-4 w-4 text-green-500" />
+            <span>WhatsApp</span>
           </button>
           <button
             onClick={() => handleShare('copy')}
@@ -180,7 +198,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             {/* ════════════════════════════════════════════════════════════════ */}
             <div className="lg:col-span-2">
               <div 
-                className="relative mx-auto max-w-sm lg:max-w-none"
+                className="relative mx-auto min-w-[280px] max-w-sm lg:max-w-none"
                 style={{ perspective: '1200px' }}
               >
                 {/* Conteneur du livre avec effet flip */}
@@ -491,7 +509,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                   )}
                 </div>
 
-                <h1 className="text-4xl lg:text-5xl font-bold font-serif mb-4">{oeuvre.titre}</h1>
+                <h1 className="text-4xl lg:text-5xl font-bold font-serif mb-4">{typeof oeuvre.titre === 'string' ? oeuvre.titre : (oeuvre.titre as any)?.fr || ''}</h1>
                 
                 {mainContributors.length > 0 && (
                   <div className="space-y-2">
@@ -517,11 +535,38 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
               {/* Actions principales */}
               <div className={`flex flex-wrap gap-3 ${rtlClasses.flexRow}`}>
-                <Button size="lg" className="shadow-lg">
+                <Button 
+                  size="lg" 
+                  className="shadow-lg"
+                  onClick={() => setShowExcerpt(true)}
+                >
                   <Eye className={`h-5 w-5 ${rtlClasses.marginEnd(2)}`} />
                   {t('works.actions.readExcerpt', 'Lire un extrait')}
                 </Button>
               </div>
+
+              {/* Modal Extrait */}
+              <Dialog open={showExcerpt} onOpenChange={setShowExcerpt}>
+                <DialogContent className="max-w-4xl max-h-[80vh] overflow-auto">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      <BookOpen className="h-5 w-5 text-primary" />
+                      {t('works.excerpt.title', 'Extrait de')} "{typeof oeuvre.titre === 'string' ? oeuvre.titre : (oeuvre.titre as any)?.fr || ''}"
+                    </DialogTitle>
+                  </DialogHeader>
+                  <div className="mt-4">
+                    {oeuvre.description ? (
+                      <div className="prose prose-sm max-w-none dark:prose-invert leading-relaxed whitespace-pre-wrap">
+                        {typeof oeuvre.description === 'string' ? oeuvre.description : (oeuvre.description as any)?.fr || ''}
+                      </div>
+                    ) : (
+                      <p className="text-muted-foreground text-center py-8">
+                        {t('works.excerpt.noContent', "Aucun contenu disponible pour cet ouvrage.")}
+                      </p>
+                    )}
+                  </div>
+                </DialogContent>
+              </Dialog>
 
               {/* Description */}
               {oeuvre.description && (
