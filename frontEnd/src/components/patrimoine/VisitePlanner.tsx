@@ -82,6 +82,10 @@ const TYPE_ICONS: Record<string, React.ElementType> = {
   edifice_religieux: Church,
   restaurant: Utensils,
   hotel: Hotel,
+  guide: Navigation,
+  transport: Navigation,
+  artisanat: Star,
+  location: Navigation,
   default: MapPin,
 };
 

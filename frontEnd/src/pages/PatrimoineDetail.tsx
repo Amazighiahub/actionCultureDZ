@@ -848,6 +848,23 @@ const PatrimoineDetail = () => {
               </CardContent>
             </Card>
             
+            {/* Lien pour les professionnels */}
+            <Card className="border border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-950/20">
+              <CardContent className="p-3 text-center">
+                <p className="text-sm text-blue-700 dark:text-blue-300 mb-2">
+                  {t('patrimoine.proService', 'Vous êtes professionnel ?')}
+                </p>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="border-blue-300 text-blue-700 hover:bg-blue-100 dark:border-blue-700 dark:text-blue-300"
+                  onClick={() => navigate(`/ajouter-mon-service?lieu=${site.id_lieu}`)}
+                >
+                  {t('patrimoine.addYourService', 'Proposez vos services ici')}
+                </Button>
+              </CardContent>
+            </Card>
+            
             <Button variant="outline" className="w-full" onClick={() => navigate('/patrimoine')}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               {t('patrimoine.backToList', 'Retour à la liste')}
