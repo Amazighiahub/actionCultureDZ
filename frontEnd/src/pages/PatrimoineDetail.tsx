@@ -16,6 +16,7 @@ import {
 import { patrimoineService } from '@/services/patrimoine.service';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/UI/dialog';
+import VisitePlanner from '@/components/patrimoine/VisitePlanner';
 
 // Helper pour traduire les champs multilingues
 const translate = (value: string | { fr?: string; ar?: string; en?: string } | null | undefined, lang: string): string => {
@@ -140,6 +141,7 @@ const PatrimoineDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [showVisitePlanner, setShowVisitePlanner] = useState(false);
 
   // Charger les détails du site
   useEffect(() => {
@@ -816,7 +818,14 @@ const PatrimoineDetail = () => {
 
             {/* Actions */}
             <div className="space-y-2">
-              <Button className="w-full" onClick={() => navigate('/patrimoine')}>
+              <Button 
+                className="w-full bg-primary hover:bg-primary/90" 
+                onClick={() => setShowVisitePlanner(true)}
+              >
+                <Route className="h-4 w-4 mr-2" />
+                {t('patrimoine.planVisit', 'Planifier votre visite')}
+              </Button>
+              <Button variant="outline" className="w-full" onClick={() => navigate('/patrimoine')}>
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 {t('patrimoine.backToList', 'Retour à la liste')}
               </Button>
@@ -839,6 +848,17 @@ const PatrimoineDetail = () => {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Modal Planificateur de visite */}
+      <VisitePlanner
+        isOpen={showVisitePlanner}
+        onClose={() => setShowVisitePlanner(false)}
+        siteId={site.id_lieu}
+        siteName={translate(site.nom, lang)}
+        siteLatitude={site.latitude}
+        siteLongitude={site.longitude}
+        siteType={site.typePatrimoine}
+      />
     </div>
   );
 };
