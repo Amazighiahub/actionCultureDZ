@@ -261,14 +261,23 @@ const PatrimoineDetail = () => {
                 <h1 className="text-3xl md:text-4xl font-bold font-serif mb-2">
                   {translate(site.nom, lang)}
                 </h1>
-                <div className="flex items-center gap-2 text-white/90">
+                <div className="flex items-center gap-2 text-white/90 mb-4">
                   <MapPin className="h-4 w-4" />
                   <span>
                     {site.wilaya?.nom || site.commune?.nom || translate(site.adresse, lang)}
                   </span>
                 </div>
+                {/* 🎯 CTA Principal - Planifier votre visite */}
+                <Button 
+                  size="lg"
+                  onClick={() => setShowVisitePlanner(true)}
+                  className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 animate-pulse hover:animate-none"
+                >
+                  <Route className="h-5 w-5 mr-2" />
+                  {t('patrimoine.planVisit', 'Planifier votre visite')}
+                </Button>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-col gap-2 items-end">
                 {site.stats?.noteMoyenne && (
                   <Badge className="bg-yellow-500/90 text-white">
                     <Star className="h-4 w-4 mr-1 fill-current" />
@@ -817,19 +826,32 @@ const PatrimoineDetail = () => {
             )}
 
             {/* Actions */}
-            <div className="space-y-2">
-              <Button 
-                className="w-full bg-primary hover:bg-primary/90" 
-                onClick={() => setShowVisitePlanner(true)}
-              >
-                <Route className="h-4 w-4 mr-2" />
-                {t('patrimoine.planVisit', 'Planifier votre visite')}
-              </Button>
-              <Button variant="outline" className="w-full" onClick={() => navigate('/patrimoine')}>
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                {t('patrimoine.backToList', 'Retour à la liste')}
-              </Button>
-            </div>
+            <Card className="border-2 border-emerald-200 dark:border-emerald-800 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30">
+              <CardContent className="p-4 space-y-3">
+                <div className="text-center">
+                  <Route className="h-8 w-8 mx-auto text-emerald-600 dark:text-emerald-400 mb-2" />
+                  <h3 className="font-semibold text-emerald-800 dark:text-emerald-200">
+                    {t('patrimoine.discoverArea', 'Découvrez les environs')}
+                  </h3>
+                  <p className="text-sm text-emerald-600 dark:text-emerald-400">
+                    {t('patrimoine.planVisitDesc', 'Créez un parcours personnalisé avec les sites à proximité')}
+                  </p>
+                </div>
+                <Button 
+                  size="lg"
+                  className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-md hover:shadow-lg transition-all" 
+                  onClick={() => setShowVisitePlanner(true)}
+                >
+                  <Route className="h-5 w-5 mr-2" />
+                  {t('patrimoine.planVisit', 'Planifier votre visite')}
+                </Button>
+              </CardContent>
+            </Card>
+            
+            <Button variant="outline" className="w-full" onClick={() => navigate('/patrimoine')}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              {t('patrimoine.backToList', 'Retour à la liste')}
+            </Button>
           </div>
         </div>
       </main>
