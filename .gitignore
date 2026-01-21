@@ -1,33 +1,84 @@
 node_modules/
+
+# ============================================================================
+# SECRETS ET CREDENTIALS - NE JAMAIS COMMITER
+# ============================================================================
+.env
+.env.*
+!.env.example
 backend/.env
+backend/.env.test
+backend/.env.local
+backend/.env.production
 frontend/.env
+frontEnd/.env
+*.pem
+*.key
+*.cert
+credentials.json
+secrets.json
+
+# ============================================================================
+# UPLOADS ET FICHIERS UTILISATEUR
+# ============================================================================
 backend/uploads
 backend/uploads/images/*
 backend/uploads/documents/*
 backend/uploads/media/*
-backend/!uploads/images/.gitkeep
-backend/!uploads/documents/.gitkeep
-backend/!uploads/media/.gitkeep
-# Ignorer les fichiers package-lock.json
-package-lock.json
-*/package-lock.json
+backend/uploads/videos/*
+backend/uploads/temp/*
+!backend/uploads/.gitkeep
+!backend/uploads/images/.gitkeep
+!backend/uploads/documents/.gitkeep
+!backend/uploads/media/.gitkeep
 
-backend/.DS_Store
-.env
-.env.local
-.env.development.local
-.env.production.local
-
-# Logs
+# ============================================================================
+# LOGS ET DEBUG
+# ============================================================================
 *.log
+logs/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+backend/logs/
 
-# Dossiers de build
+# ============================================================================
+# DEPENDENCIES
+# ============================================================================
+package-lock.json
+*/package-lock.json
+yarn.lock
+
+# ============================================================================
+# BUILD ET CACHE
+# ============================================================================
 dist/
 build/
-
-# Cache
 .cache/
 .vite/
+*.tsbuildinfo
+
+# ============================================================================
+# IDE ET SYSTÈME
+# ============================================================================
+.DS_Store
+*.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# ============================================================================
+# TESTS
+# ============================================================================
+coverage/
+.nyc_output/
+
+# ============================================================================
+# DIVERS
+# ============================================================================
+*.tmp
+*.temp
+.windsurf/

@@ -199,26 +199,41 @@ const initOeuvreRoutes = (models, authMiddleware) => {
   ];
 
   // ========================================================================
-  // VÉRIFICATION DES MIDDLEWARES D'AUTH
+  // VÉRIFICATION DES MIDDLEWARES D'AUTH (SÉCURISÉ)
   // ========================================================================
 
+  // Vérifier que les middlewares d'authentification sont disponibles
+  if (!authMiddleware?.authenticate) {
+    console.error('❌ ERREUR CRITIQUE: authMiddleware.authenticate non disponible');
+    throw new Error('Middleware d\'authentification non configuré');
+  }
+
   const safeAuth = {
-    authenticate: authMiddleware?.authenticate || ((req, res, next) => {
-      console.warn('⚠️ authMiddleware.authenticate non disponible');
-      req.user = { id_user: 1 };
-      next();
+    // Pas de fallback dangereux - utiliser les vrais middlewares ou refuser l'accès
+    authenticate: authMiddleware.authenticate,
+
+    requireValidatedProfessional: authMiddleware.requireValidatedProfessional || ((req, res, next) => {
+      console.error('❌ requireValidatedProfessional non disponible');
+      return res.status(503).json({
+        success: false,
+        error: 'Service d\'authentification temporairement indisponible'
+      });
     }),
-    
-    requireValidatedProfessional: authMiddleware?.requireValidatedProfessional || ((req, res, next) => {
-      next();
+
+    requireAdmin: authMiddleware.requireAdmin || authMiddleware.requireRole?.(['Admin']) || ((req, res, next) => {
+      console.error('❌ requireAdmin non disponible');
+      return res.status(503).json({
+        success: false,
+        error: 'Service d\'authentification temporairement indisponible'
+      });
     }),
-    
-    requireAdmin: authMiddleware?.requireAdmin || ((req, res, next) => {
-      next();
-    }),
-    
-    requireOwnership: authMiddleware?.requireOwnership || (() => (req, res, next) => {
-      next();
+
+    requireOwnership: authMiddleware.requireOwnership || (() => (req, res, next) => {
+      console.error('❌ requireOwnership non disponible');
+      return res.status(503).json({
+        success: false,
+        error: 'Service d\'authentification temporairement indisponible'
+      });
     })
   };
 
