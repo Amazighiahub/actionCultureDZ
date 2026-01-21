@@ -28,6 +28,7 @@ import AjouterOeuvre from "./pages/AjouterOeuvre";
 import AjouterEvenement from "./pages/AjouterEvenement";
 import AjouterPatrimoine from "./pages/admin/AjouterPatrimoine";
 import AjouterService from "./pages/AjouterService";
+import AjouterServicePro from "./pages/AjouterServicePro";
 import AjouterPatrimoinePro from "./pages/AjouterPatrimoinePro";
 import AjouterArtisanat from "./pages/AjouterArtisanat";
 import VerifyEmailPage from './pages/VerifyEmailPage';
@@ -194,6 +195,15 @@ const App = () => (
               element={
                 <ProfessionalRoute>
                   <AjouterService />
+                </ProfessionalRoute>
+              }
+            />
+
+            <Route
+              path="/ajouter-mon-service"
+              element={
+                <ProfessionalRoute>
+                  <AjouterServicePro />
                 </ProfessionalRoute>
               }
             />
