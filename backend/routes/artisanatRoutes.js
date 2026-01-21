@@ -4,6 +4,7 @@ const router = express.Router();
 const ArtisanatController = require('../controllers/ArtisanatController');
 const createAuthMiddleware = require('../middlewares/authMiddleware');
 const validationMiddleware = require('../middlewares/validationMiddleware');
+const FileValidator = require('../utils/FileValidator');
 const { body, param, query } = require('express-validator');
 
 // ⚡ Import du middleware de validation de langue
@@ -175,6 +176,27 @@ const initArtisanatRoutes = (models) => {
       }
     },
     artisanatController.upload.array('medias', 10),
+    // 🔒 Validation du type réel des fichiers uploadés
+    async (req, res, next) => {
+      if (!req.files || req.files.length === 0) return next();
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      const results = await FileValidator.validateFilesBatch(
+        req.files.map(f => f.path),
+        allowedTypes
+      );
+      const invalidFiles = results.filter(r => !r.valid);
+      if (invalidFiles.length > 0) {
+        // Supprimer les fichiers invalides
+        const fs = require('fs');
+        req.files.forEach(f => fs.unlinkSync(f.path));
+        return res.status(400).json({
+          success: false,
+          error: 'Type de fichier non autorisé',
+          details: invalidFiles
+        });
+      }
+      next();
+    },
     artisanatController.uploadMedias.bind(artisanatController)
   );
 

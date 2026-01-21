@@ -567,11 +567,36 @@ class LieuController {
 
       let lieux;
       if (radius && lat && lng) {
+        // 🔒 Valider et nettoyer les coordonnées pour éviter l'injection SQL
+        const safeLat = parseFloat(lat);
+        const safeLng = parseFloat(lng);
+        const safeRadius = parseFloat(radius);
+
+        // Vérifier que les valeurs sont des nombres valides
+        if (isNaN(safeLat) || isNaN(safeLng) || isNaN(safeRadius)) {
+          return res.status(400).json({
+            success: false,
+            error: 'Coordonnées invalides: lat, lng et radius doivent être des nombres'
+          });
+        }
+
+        // Vérifier les limites géographiques
+        if (safeLat < -90 || safeLat > 90 || safeLng < -180 || safeLng > 180) {
+          return res.status(400).json({
+            success: false,
+            error: 'Coordonnées hors limites (lat: -90 à 90, lng: -180 à 180)'
+          });
+        }
+
+        // Limiter le rayon de recherche (max 500km)
+        const clampedRadius = Math.min(Math.max(safeRadius, 0), 500);
+
+        // Utiliser les valeurs validées (nombres purs, pas de risque d'injection)
         const distance = this.sequelize.literal(
           `6371 * acos(
-            cos(radians(${lat})) * cos(radians(latitude)) * 
-            cos(radians(longitude) - radians(${lng})) + 
-            sin(radians(${lat})) * sin(radians(latitude))
+            cos(radians(${safeLat})) * cos(radians(latitude)) *
+            cos(radians(longitude) - radians(${safeLng})) +
+            sin(radians(${safeLat})) * sin(radians(latitude))
           )`
         );
 
@@ -579,7 +604,11 @@ class LieuController {
           where: {
             ...where,
             [Op.and]: this.sequelize.literal(
-              `${distance} <= ${radius}`
+              `6371 * acos(
+                cos(radians(${safeLat})) * cos(radians(latitude)) *
+                cos(radians(longitude) - radians(${safeLng})) +
+                sin(radians(${safeLat})) * sin(radians(latitude))
+              ) <= ${clampedRadius}`
             )
           },
           attributes: {

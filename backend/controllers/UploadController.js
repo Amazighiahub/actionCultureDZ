@@ -6,6 +6,35 @@ class UploadController {
   constructor(models) {
     this.models = models;
     this.baseUrl = process.env.BASE_URL || `http://localhost:${process.env.PORT || 3001}`;
+    // 🔒 Répertoire racine autorisé pour les uploads
+    this.uploadsRoot = path.resolve(__dirname, '..', 'uploads');
+  }
+
+  /**
+   * 🔒 Valide et sécurise un chemin de fichier contre le path traversal
+   * @param {string} filePath - Chemin relatif du fichier
+   * @returns {string|null} - Chemin absolu sécurisé ou null si invalide
+   */
+  _securePath(filePath) {
+    if (!filePath || typeof filePath !== 'string') return null;
+
+    // Nettoyer le chemin - supprimer les protocoles et caractères dangereux
+    let cleanPath = filePath
+      .replace(/^(https?:)?\/\/[^\/]+/, '') // Supprimer domaine
+      .replace(/\\/g, '/') // Normaliser les slashes
+      .replace(/\.{2,}/g, '.') // Supprimer les séquences de points
+      .replace(/[<>:"|?*]/g, ''); // Supprimer caractères Windows interdits
+
+    // Résoudre le chemin absolu
+    const absolutePath = path.resolve(__dirname, '..', cleanPath);
+
+    // 🔒 Vérifier que le chemin reste dans le dossier uploads
+    if (!absolutePath.startsWith(this.uploadsRoot)) {
+      console.error('🚨 Path traversal détecté:', { original: filePath, resolved: absolutePath });
+      return null;
+    }
+
+    return absolutePath;
   }
 
   /**
@@ -108,12 +137,16 @@ class UploadController {
       // Mettre à jour l'utilisateur
       await user.update({ photo_url: fileUrl });
 
-      // Supprimer l'ancienne photo si elle existe
+      // 🔒 Supprimer l'ancienne photo si elle existe (avec protection path traversal)
       if (oldPhotoUrl && oldPhotoUrl !== fileUrl) {
         try {
-          const oldPath = path.join(__dirname, '..', oldPhotoUrl);
-          await fs.unlink(oldPath);
-          console.log('🗑️ Ancienne photo supprimée');
+          const oldPath = this._securePath(oldPhotoUrl);
+          if (oldPath) {
+            await fs.unlink(oldPath);
+            console.log('🗑️ Ancienne photo supprimée');
+          } else {
+            console.log('⚠️ Chemin non sécurisé ignoré:', oldPhotoUrl);
+          }
         } catch (err) {
           console.log('⚠️ Impossible de supprimer l\'ancienne photo:', err.message);
         }
@@ -303,11 +336,15 @@ class UploadController {
         });
       }
 
-      // Supprimer le fichier physique
+      // 🔒 Supprimer le fichier physique (avec protection path traversal)
       try {
-        const filePath = path.join(__dirname, '..', media.file_url);
-        await fs.unlink(filePath);
-        console.log('🗑️ Fichier supprimé:', filePath);
+        const filePath = this._securePath(media.file_url);
+        if (filePath) {
+          await fs.unlink(filePath);
+          console.log('🗑️ Fichier supprimé:', filePath);
+        } else {
+          console.log('⚠️ Chemin non sécurisé ignoré:', media.file_url);
+        }
       } catch (err) {
         console.log('⚠️ Erreur suppression fichier:', err.message);
       }

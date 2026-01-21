@@ -5,6 +5,13 @@ const { Sequelize } = require('sequelize');
 // ============================================================================
 const isProduction = process.env.NODE_ENV === 'production';
 
+// 🔒 Liste des mots de passe faibles connus à bloquer
+const WEAK_PASSWORDS = [
+  'root', 'admin', 'password', 'pass', '123456', '12345678',
+  'qwerty', 'abc123', 'letmein', 'welcome', 'monkey', 'dragon',
+  'master', 'login', 'princess', 'password1', 'Password1'
+];
+
 // Fonction de validation des credentials
 const validateCredentials = (env) => {
   const requiredVars = ['DB_USER', 'DB_PASSWORD', 'DB_NAME', 'DB_HOST'];
@@ -17,13 +24,45 @@ const validateCredentials = (env) => {
     );
   }
 
-  // Vérifier que les credentials par défaut ne sont pas utilisés en production
+  // 🔒 Vérification stricte en production
   if (isProduction) {
-    if (process.env.DB_USER === 'root') {
-      throw new Error('❌ ERREUR CRITIQUE: Ne pas utiliser "root" comme DB_USER en production!');
+    const dbUser = process.env.DB_USER;
+    const dbPassword = process.env.DB_PASSWORD;
+
+    // Utilisateur interdit
+    if (dbUser === 'root' || dbUser === 'admin' || dbUser === 'sa') {
+      throw new Error('❌ ERREUR CRITIQUE: Ne pas utiliser "root", "admin" ou "sa" comme DB_USER en production!');
     }
-    if (process.env.DB_PASSWORD === 'root' || process.env.DB_PASSWORD?.length < 12) {
-      throw new Error('❌ ERREUR CRITIQUE: Mot de passe DB trop faible pour la production (min 12 caractères)!');
+
+    // Vérifier les mots de passe faibles
+    if (WEAK_PASSWORDS.includes(dbPassword?.toLowerCase())) {
+      throw new Error('❌ ERREUR CRITIQUE: Mot de passe DB trop commun! Utilisez un mot de passe unique.');
+    }
+
+    // Longueur minimale: 16 caractères en production
+    if (!dbPassword || dbPassword.length < 16) {
+      throw new Error('❌ ERREUR CRITIQUE: Mot de passe DB trop court pour la production (min 16 caractères)!');
+    }
+
+    // Vérifier la complexité: au moins 1 majuscule, 1 minuscule, 1 chiffre
+    const hasUppercase = /[A-Z]/.test(dbPassword);
+    const hasLowercase = /[a-z]/.test(dbPassword);
+    const hasNumber = /[0-9]/.test(dbPassword);
+    const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(dbPassword);
+
+    if (!hasUppercase || !hasLowercase || !hasNumber) {
+      throw new Error(
+        '❌ ERREUR CRITIQUE: Mot de passe DB doit contenir au moins:\n' +
+        '  - 1 lettre majuscule\n' +
+        '  - 1 lettre minuscule\n' +
+        '  - 1 chiffre\n' +
+        '  Recommandé: ajoutez aussi des caractères spéciaux (!@#$%...)'
+      );
+    }
+
+    // Warning si pas de caractère spécial
+    if (!hasSpecial) {
+      console.warn('⚠️ Recommandation: Ajoutez des caractères spéciaux à votre mot de passe DB pour plus de sécurité');
     }
   }
 };

@@ -359,6 +359,16 @@ const createEvenementController = (models) => {
       const evenement = await Evenement.findByPk(id);
       if (!evenement) return res.status(404).json({ success: false, error: 'Événement non trouvé' });
 
+      // 🔒 Vérification ownership - seul le créateur ou admin peut modifier
+      const isAdmin = req.user?.role === 'Admin' || req.user?.isAdmin;
+      const isOwner = evenement.id_user === req.user?.id_user;
+      if (!isAdmin && !isOwner) {
+        return res.status(403).json({
+          success: false,
+          error: 'Non autorisé à modifier cet événement'
+        });
+      }
+
       const { nom_evenement, description, accessibilite, ...otherFields } = req.body;
       const updates = { ...otherFields };
 
@@ -405,6 +415,17 @@ const createEvenementController = (models) => {
       const { id } = req.params;
       const evenement = await Evenement.findByPk(id);
       if (!evenement) return res.status(404).json({ success: false, error: 'Événement non trouvé' });
+
+      // 🔒 Vérification ownership - seul le créateur ou admin peut supprimer
+      const isAdmin = req.user?.role === 'Admin' || req.user?.isAdmin;
+      const isOwner = evenement.id_user === req.user?.id_user;
+      if (!isAdmin && !isOwner) {
+        return res.status(403).json({
+          success: false,
+          error: 'Non autorisé à supprimer cet événement'
+        });
+      }
+
       await evenement.update({ statut: 'archive' });
       res.json({ success: true, message: 'Événement supprimé' });
     } catch (error) {
@@ -419,6 +440,17 @@ const createEvenementController = (models) => {
       const { id } = req.params;
       const evenement = await Evenement.findByPk(id);
       if (!evenement) return res.status(404).json({ success: false, error: 'Événement non trouvé' });
+
+      // 🔒 Vérification ownership - seul le créateur ou admin peut annuler
+      const isAdmin = req.user?.role === 'Admin' || req.user?.isAdmin;
+      const isOwner = evenement.id_user === req.user?.id_user;
+      if (!isAdmin && !isOwner) {
+        return res.status(403).json({
+          success: false,
+          error: 'Non autorisé à annuler cet événement'
+        });
+      }
+
       await evenement.update({ statut: 'annule' });
       res.json({ success: true, message: 'Événement annulé' });
     } catch (error) {

@@ -417,12 +417,22 @@ class OeuvreController {
     try {
       const lang = req.lang || 'fr';  // ⚡ Récupérer la langue
       const { id } = req.params;
-      
+
       const oeuvre = await this.models.Oeuvre.findByPk(id);
       if (!oeuvre) {
         return res.status(404).json({
           success: false,
           error: 'Œuvre non trouvée'
+        });
+      }
+
+      // 🔒 Vérification ownership - seul le créateur ou admin peut modifier
+      const isAdmin = req.user?.role === 'Admin' || req.user?.isAdmin;
+      const isOwner = oeuvre.id_user === req.user?.id_user;
+      if (!isAdmin && !isOwner) {
+        return res.status(403).json({
+          success: false,
+          error: 'Non autorisé à modifier cette œuvre'
         });
       }
 
@@ -513,12 +523,22 @@ class OeuvreController {
   async delete(req, res) {
     try {
       const { id } = req.params;
-      
+
       const oeuvre = await this.models.Oeuvre.findByPk(id);
       if (!oeuvre) {
         return res.status(404).json({
           success: false,
           error: 'Œuvre non trouvée'
+        });
+      }
+
+      // 🔒 Vérification ownership - seul le créateur ou admin peut supprimer
+      const isAdmin = req.user?.role === 'Admin' || req.user?.isAdmin;
+      const isOwner = oeuvre.id_user === req.user?.id_user;
+      if (!isAdmin && !isOwner) {
+        return res.status(403).json({
+          success: false,
+          error: 'Non autorisé à supprimer cette œuvre'
         });
       }
 

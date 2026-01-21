@@ -16,6 +16,36 @@ const { Op } = require('sequelize');
 const SUPPORTED_LANGUAGES = ['fr', 'ar', 'en', 'tz-ltn', 'tz-tfng'];
 
 /**
+ * 🔒 Valide et retourne une langue sécurisée
+ * Prévient l'injection SQL via le paramètre lang
+ */
+function sanitizeLang(lang) {
+  if (!lang || typeof lang !== 'string') return 'fr';
+  const normalizedLang = lang.toLowerCase().trim();
+  return SUPPORTED_LANGUAGES.includes(normalizedLang) ? normalizedLang : 'fr';
+}
+
+/**
+ * 🔒 Valide et retourne un nom de champ sécurisé
+ * Seuls les caractères alphanumériques et underscores sont autorisés
+ */
+function sanitizeField(field) {
+  if (!field || typeof field !== 'string') return null;
+  // Autoriser uniquement lettres, chiffres et underscores
+  const sanitized = field.replace(/[^a-zA-Z0-9_]/g, '');
+  return sanitized.length > 0 ? sanitized : null;
+}
+
+/**
+ * 🔒 Valide et retourne un nom de table sécurisé
+ */
+function sanitizeTableName(tableName) {
+  if (!tableName || typeof tableName !== 'string') return null;
+  const sanitized = tableName.replace(/[^a-zA-Z0-9_]/g, '');
+  return sanitized.length > 0 ? sanitized : null;
+}
+
+/**
  * Construit les conditions de recherche multilingue pour un champ JSON
  *
  * @param {Sequelize} sequelize - Instance Sequelize
@@ -34,10 +64,18 @@ function buildMultiLangSearch(sequelize, field, search, tableName = null, langua
     return [];
   }
 
-  const safeSearch = sequelize.escape(`%${search.trim()}%`);
-  const fieldRef = tableName ? `\`${tableName}\`.\`${field}\`` : `\`${field}\``;
+  // 🔒 Valider le champ et la table
+  const safeField = sanitizeField(field);
+  if (!safeField) return [];
 
-  return languages.map(lang => {
+  const safeTable = tableName ? sanitizeTableName(tableName) : null;
+  const safeSearch = sequelize.escape(`%${search.trim()}%`);
+  const fieldRef = safeTable ? `\`${safeTable}\`.\`${safeField}\`` : `\`${safeField}\``;
+
+  // 🔒 Filtrer uniquement les langues supportées
+  const safeLangs = languages.filter(l => SUPPORTED_LANGUAGES.includes(l));
+
+  return safeLangs.map(lang => {
     return sequelize.literal(
       `JSON_UNQUOTE(JSON_EXTRACT(${fieldRef}, '$.${lang}')) LIKE ${safeSearch}`
     );
@@ -88,11 +126,17 @@ function buildMultiFieldSearch(sequelize, fields, search, tableName = null) {
  * const order = buildMultiLangOrder(sequelize, 'titre', 'fr', 'ASC');
  */
 function buildMultiLangOrder(sequelize, field, lang = 'fr', direction = 'ASC', tableName = null) {
-  const fieldRef = tableName ? `\`${tableName}\`.\`${field}\`` : `\`${field}\``;
+  // 🔒 Valider tous les paramètres
+  const safeField = sanitizeField(field);
+  if (!safeField) return [['id', 'ASC']]; // Fallback sécurisé
+
+  const safeTable = tableName ? sanitizeTableName(tableName) : null;
+  const safeLang = sanitizeLang(lang);
+  const fieldRef = safeTable ? `\`${safeTable}\`.\`${safeField}\`` : `\`${safeField}\``;
   const validDirection = direction.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
 
   return [
-    sequelize.literal(`JSON_UNQUOTE(JSON_EXTRACT(${fieldRef}, '$.${lang}')) ${validDirection}`)
+    sequelize.literal(`JSON_UNQUOTE(JSON_EXTRACT(${fieldRef}, '$.${safeLang}')) ${validDirection}`)
   ];
 }
 
@@ -110,11 +154,17 @@ function buildMultiLangOrder(sequelize, field, lang = 'fr', direction = 'ASC', t
  * const attr = buildTranslatedAttribute(sequelize, 'titre', 'ar', 'titre_traduit');
  */
 function buildTranslatedAttribute(sequelize, field, lang = 'fr', alias = null, tableName = null) {
-  const fieldRef = tableName ? `\`${tableName}\`.\`${field}\`` : `\`${field}\``;
-  const resultAlias = alias || `${field}_${lang}`;
+  // 🔒 Valider tous les paramètres
+  const safeField = sanitizeField(field);
+  if (!safeField) return null;
+
+  const safeTable = tableName ? sanitizeTableName(tableName) : null;
+  const safeLang = sanitizeLang(lang);
+  const fieldRef = safeTable ? `\`${safeTable}\`.\`${safeField}\`` : `\`${safeField}\``;
+  const resultAlias = alias ? sanitizeField(alias) || `${safeField}_${safeLang}` : `${safeField}_${safeLang}`;
 
   return [
-    sequelize.literal(`JSON_UNQUOTE(JSON_EXTRACT(${fieldRef}, '$.${lang}'))`),
+    sequelize.literal(`JSON_UNQUOTE(JSON_EXTRACT(${fieldRef}, '$.${safeLang}'))`),
     resultAlias
   ];
 }
@@ -129,10 +179,14 @@ function buildTranslatedAttribute(sequelize, field, lang = 'fr', alias = null, t
  * @returns {Object} Condition Sequelize
  */
 function buildExactMatch(sequelize, field, value, lang = 'fr') {
-  const safeValue = sequelize.escape(value);
+  // 🔒 Valider le champ et la langue
+  const safeField = sanitizeField(field);
+  if (!safeField) return null;
+
+  const safeLang = sanitizeLang(lang);
 
   return sequelize.where(
-    sequelize.fn('JSON_UNQUOTE', sequelize.fn('JSON_EXTRACT', sequelize.col(field), sequelize.literal(`'$.${lang}'`))),
+    sequelize.fn('JSON_UNQUOTE', sequelize.fn('JSON_EXTRACT', sequelize.col(safeField), sequelize.literal(`'$.${safeLang}'`))),
     value
   );
 }
@@ -147,10 +201,21 @@ function buildExactMatch(sequelize, field, value, lang = 'fr') {
  * @returns {Object} Condition Sequelize pour MATCH AGAINST
  */
 function buildFullTextSearch(sequelize, field, search) {
-  const safeSearch = search.replace(/['"]/g, '');
+  // 🔒 Valider le champ
+  const safeField = sanitizeField(field);
+  if (!safeField) return null;
+
+  // 🔒 Nettoyer la recherche - supprimer tout caractère dangereux
+  const safeSearch = search
+    .replace(/['"\\;]/g, '') // Supprimer quotes et point-virgule
+    .replace(/[<>]/g, '')    // Supprimer chevrons
+    .substring(0, 100)       // Limiter la longueur
+    .trim();
+
+  if (!safeSearch) return null;
 
   return sequelize.literal(
-    `MATCH(${field}) AGAINST('${safeSearch}' IN NATURAL LANGUAGE MODE)`
+    `MATCH(\`${safeField}\`) AGAINST(${sequelize.escape(safeSearch)} IN NATURAL LANGUAGE MODE)`
   );
 }
 

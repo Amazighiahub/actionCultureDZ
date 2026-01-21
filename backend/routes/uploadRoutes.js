@@ -123,6 +123,29 @@ const initUploadRoutes = (models, authMiddleware) => {
     authMiddleware.authenticate,
     rateLimitMiddleware.creation,
     uploadService.uploadImage().array('images', 10), // Max 10 images
+    // 🔒 Validation du type réel des fichiers uploadés (batch)
+    async (req, res, next) => {
+      if (!req.files || req.files.length === 0) return next();
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      const results = await FileValidator.validateFilesBatch(
+        req.files.map(f => f.path),
+        allowedTypes
+      );
+      const invalidFiles = results.filter(r => !r.valid);
+      if (invalidFiles.length > 0) {
+        // Supprimer tous les fichiers (invalides inclus)
+        const fs = require('fs');
+        req.files.forEach(f => {
+          try { fs.unlinkSync(f.path); } catch (e) { /* ignore */ }
+        });
+        return res.status(400).json({
+          success: false,
+          error: 'Type de fichier non autorisé',
+          details: invalidFiles
+        });
+      }
+      next();
+    },
     auditMiddleware.logAction('upload_multiple', { entityType: 'media' }),
     async (req, res) => {
       try {

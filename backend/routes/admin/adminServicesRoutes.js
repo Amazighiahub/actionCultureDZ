@@ -25,38 +25,47 @@ const initAdminServicesRoutes = (models) => {
       auditMiddleware = require(path.join(middlewarePath, 'auditMiddleware'));
       console.log('✅ Imports absolus réussis');
     } catch (error2) {
-      console.error('❌ Impossible de charger les middlewares:', error2.message);
-      
-      // FALLBACK: Middlewares minimaux pour permettre le fonctionnement
+      console.error('❌ ERREUR CRITIQUE: Impossible de charger les middlewares:', error2.message);
+
+      // 🔒 SÉCURITÉ: Ne JAMAIS utiliser de fallback qui bypass l'authentification!
+      // En cas d'erreur de chargement, toutes les routes admin sont bloquées
       authMiddleware = {
         authenticate: (req, res, next) => {
-          // Middleware d'authentification minimal
-          req.user = { id_user: 1, isAdmin: true, email: 'admin@test.com' };
-          next();
+          console.error('🚨 Middleware auth non chargé - accès refusé');
+          return res.status(503).json({
+            success: false,
+            error: 'Service d\'authentification temporairement indisponible',
+            code: 'AUTH_SERVICE_UNAVAILABLE'
+          });
         },
         requireAdmin: (req, res, next) => {
-          if (!req.user || !req.user.isAdmin) {
-            return res.status(403).json({
-              success: false,
-              message: 'Accès admin requis'
-            });
-          }
-          next();
+          console.error('🚨 Middleware admin non chargé - accès refusé');
+          return res.status(503).json({
+            success: false,
+            error: 'Service d\'authentification temporairement indisponible',
+            code: 'AUTH_SERVICE_UNAVAILABLE'
+          });
         }
       };
-      
+
       validationMiddleware = {
-        handleValidationErrors: (req, res, next) => next()
+        handleValidationErrors: (req, res, next) => {
+          console.error('🚨 Middleware validation non chargé');
+          return res.status(503).json({
+            success: false,
+            error: 'Service de validation temporairement indisponible'
+          });
+        }
       };
-      
+
       auditMiddleware = {
         logAction: (action) => (req, res, next) => {
-          console.log(`🔍 Action: ${action}`);
+          console.warn(`⚠️ Audit désactivé pour action: ${action}`);
           next();
         }
       };
-      
-      console.log('⚠️ Utilisation des middlewares de fallback');
+
+      console.error('🚨 Routes admin services en mode dégradé - accès bloqué');
     }
   }
 
