@@ -20,8 +20,9 @@ import { Separator } from '@/components/UI/separator';
 import {
   ArrowLeft, Save, Loader2, AlertCircle, CheckCircle2,
   MapPin, Building2, Utensils, Hotel, Car, Compass, ShoppingBag,
-  Phone, Mail, Globe, Clock, DollarSign, Camera, Upload, Search
+  Phone, Mail, Globe, Clock, DollarSign, Camera, Upload, Search, Plus
 } from 'lucide-react';
+import { RadioGroup, RadioGroupItem } from '@/components/UI/radio-group';
 import { patrimoineService } from '@/services/patrimoine.service';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/UI/use-toast';
@@ -91,6 +92,17 @@ const AjouterServicePro: React.FC = () => {
   const [selectedLieu, setSelectedLieu] = useState<any | null>(null);
   const [showLieuSearch, setShowLieuSearch] = useState(false);
   const [loadingLieux, setLoadingLieux] = useState(false);
+  
+  // Nouveau lieu
+  const [lieuMode, setLieuMode] = useState<'existing' | 'new'>('existing');
+  const [newLieu, setNewLieu] = useState({
+    nom: { fr: '', ar: '', en: '' },
+    adresse: { fr: '', ar: '', en: '' },
+    latitude: '',
+    longitude: '',
+    wilaya: '',
+    commune: '',
+  });
 
   // Submit state
   const [submitting, setSubmitting] = useState(false);
@@ -220,9 +232,22 @@ const AjouterServicePro: React.FC = () => {
       setError(t('service.errors.typeRequired', 'Le type de service est requis'));
       return false;
     }
-    if (!formData.id_lieu && (!formData.latitude || !formData.longitude)) {
-      setError(t('service.errors.locationRequired', 'Veuillez sélectionner un lieu ou entrer des coordonnées GPS'));
-      return false;
+    
+    // Validation selon le mode de lieu
+    if (lieuMode === 'existing') {
+      if (!formData.id_lieu) {
+        setError(t('service.errors.lieuRequired', 'Veuillez sélectionner un lieu existant'));
+        return false;
+      }
+    } else if (lieuMode === 'new') {
+      if (!newLieu.nom.fr && !newLieu.nom.ar) {
+        setError(t('service.errors.newLieuNomRequired', 'Le nom du nouveau lieu est requis'));
+        return false;
+      }
+      if (!newLieu.latitude || !newLieu.longitude) {
+        setError(t('service.errors.newLieuGpsRequired', 'Les coordonnées GPS du nouveau lieu sont requises'));
+        return false;
+      }
     }
     return true;
   };
@@ -237,12 +262,49 @@ const AjouterServicePro: React.FC = () => {
       setSubmitting(true);
       setError(null);
 
-      // Préparer les données
+      let lieuId = formData.id_lieu;
+
+      // Si nouveau lieu, le créer d'abord
+      if (lieuMode === 'new') {
+        const lieuData = {
+          nom: newLieu.nom,
+          adresse: newLieu.adresse,
+          latitude: parseFloat(newLieu.latitude),
+          longitude: parseFloat(newLieu.longitude),
+          wilaya: newLieu.wilaya,
+          commune: newLieu.commune,
+          typeLieu: 'service', // Type par défaut pour les lieux créés par les pros
+        };
+
+        const lieuResponse = await fetch('/api/lieux', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          },
+          body: JSON.stringify(lieuData),
+        });
+
+        const lieuResult = await lieuResponse.json();
+
+        if (!lieuResult.success) {
+          throw new Error(lieuResult.error || 'Erreur lors de la création du lieu');
+        }
+
+        lieuId = lieuResult.data.id_lieu || lieuResult.data.id;
+        
+        toast({
+          title: t('service.lieuCreated', 'Lieu créé'),
+          description: t('service.lieuCreatedDesc', 'Le nouveau lieu a été créé avec succès.'),
+        });
+      }
+
+      // Préparer les données du service
       const serviceData = {
         nom: formData.nom,
         description: formData.description,
         type_service: formData.type_service,
-        id_lieu: formData.id_lieu,
+        id_lieu: lieuId,
         latitude: formData.latitude ? parseFloat(formData.latitude) : null,
         longitude: formData.longitude ? parseFloat(formData.longitude) : null,
         adresse: formData.adresse,
@@ -468,10 +530,41 @@ const AjouterServicePro: React.FC = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Lieu patrimonial */}
-                <div className="space-y-2">
-                  <Label>{t('service.nearbyPlace', 'Lieu patrimonial à proximité')}</Label>
-                  {selectedLieu ? (
+                {/* Choix: Lieu existant ou nouveau */}
+                <div className="space-y-3">
+                  <Label>{t('service.lieuChoice', 'Où se trouve votre service ?')}</Label>
+                  <RadioGroup
+                    value={lieuMode}
+                    onValueChange={(v) => {
+                      setLieuMode(v as 'existing' | 'new');
+                      if (v === 'new') {
+                        setSelectedLieu(null);
+                        updateField('id_lieu', null);
+                      }
+                    }}
+                    className="flex gap-4"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="existing" id="existing" />
+                      <Label htmlFor="existing" className="cursor-pointer">
+                        {t('service.existingPlace', 'Lieu existant')}
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="new" id="new" />
+                      <Label htmlFor="new" className="cursor-pointer flex items-center gap-1">
+                        <Plus className="h-4 w-4" />
+                        {t('service.newPlace', 'Ajouter un nouveau lieu')}
+                      </Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+
+                {/* Lieu existant */}
+                {lieuMode === 'existing' && (
+                  <div className="space-y-2">
+                    <Label>{t('service.nearbyPlace', 'Lieu patrimonial à proximité')}</Label>
+                    {selectedLieu ? (
                     <div className="flex items-center justify-between p-3 bg-emerald-50 dark:bg-emerald-950/30 rounded-lg border border-emerald-200 dark:border-emerald-800">
                       <div className="flex items-center gap-3">
                         <MapPin className="h-5 w-5 text-emerald-600" />
@@ -536,7 +629,88 @@ const AjouterServicePro: React.FC = () => {
                       )}
                     </div>
                   )}
-                </div>
+                  </div>
+                )}
+
+                {/* Nouveau lieu */}
+                {lieuMode === 'new' && (
+                  <Card className="border-2 border-dashed border-blue-300 dark:border-blue-700 bg-blue-50/50 dark:bg-blue-950/20">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base flex items-center gap-2 text-blue-700 dark:text-blue-300">
+                        <Plus className="h-5 w-5" />
+                        {t('service.newPlaceTitle', 'Informations du nouveau lieu')}
+                      </CardTitle>
+                      <CardDescription>
+                        {t('service.newPlaceDesc', 'Ce lieu sera créé et associé à votre service')}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {/* Nom du lieu */}
+                      <div className="space-y-2">
+                        <Label>{t('service.placeName', 'Nom du lieu')} *</Label>
+                        <MultiLangInput
+                          value={newLieu.nom}
+                          onChange={(value) => setNewLieu(prev => ({ ...prev, nom: value }))}
+                          placeholder={{ fr: 'Ex: Place des Martyrs', ar: 'مثال: ساحة الشهداء', en: 'Ex: Martyrs Square' }}
+                        />
+                      </div>
+
+                      {/* Adresse du lieu */}
+                      <div className="space-y-2">
+                        <Label>{t('service.placeAddress', 'Adresse du lieu')} *</Label>
+                        <MultiLangInput
+                          value={newLieu.adresse}
+                          onChange={(value) => setNewLieu(prev => ({ ...prev, adresse: value }))}
+                          placeholder={{ fr: 'Adresse complète...', ar: 'العنوان الكامل...', en: 'Full address...' }}
+                        />
+                      </div>
+
+                      {/* Coordonnées GPS */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>{t('service.latitude', 'Latitude')} *</Label>
+                          <Input
+                            type="number"
+                            step="any"
+                            value={newLieu.latitude}
+                            onChange={(e) => setNewLieu(prev => ({ ...prev, latitude: e.target.value }))}
+                            placeholder="36.7538"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>{t('service.longitude', 'Longitude')} *</Label>
+                          <Input
+                            type="number"
+                            step="any"
+                            value={newLieu.longitude}
+                            onChange={(e) => setNewLieu(prev => ({ ...prev, longitude: e.target.value }))}
+                            placeholder="3.0588"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Wilaya / Commune */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>{t('service.wilaya', 'Wilaya')}</Label>
+                          <Input
+                            value={newLieu.wilaya}
+                            onChange={(e) => setNewLieu(prev => ({ ...prev, wilaya: e.target.value }))}
+                            placeholder="Ex: Alger"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>{t('service.commune', 'Commune')}</Label>
+                          <Input
+                            value={newLieu.commune}
+                            onChange={(e) => setNewLieu(prev => ({ ...prev, commune: e.target.value }))}
+                            placeholder="Ex: Casbah"
+                          />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
 
                 <Separator />
 
