@@ -98,6 +98,11 @@
       "registrationError": "خطأ في التسجيل",
       "registrationErrorDescription": "حدث خطأ. الرجاء المحاولة مرة أخرى.",
       "wilayasLoadError": "خطأ في تحميل الولايات",
+      "emailExistsDescription": "يوجد حساب بهذا البريد الإلكتروني بالفعل. يرجى تسجيل الدخول أو استخدام عنوان آخر.",
+      "emailNotVerified": "البريد الإلكتروني غير مؤكد",
+      "pleaseVerifyEmail": "يرجى التحقق من بريدك الإلكتروني قبل تسجيل الدخول. تحقق من صندوق الوارد.",
+      "contactSupport": "تم تعليق حسابك. اتصل بالدعم لمزيد من المعلومات.",
+      "passwordError": "كلمة المرور لا تستوفي معايير الأمان (8 أحرف على الأقل)",
       "required": "هذا الحقل مطلوب",
       "serverError": "خطأ في الخادم. يرجى المحاولة مرة أخرى.",
       "emailExists": "هذا البريد الإلكتروني مستخدم بالفعل",
@@ -117,12 +122,12 @@
       "tooManyAttempts": "محاولات تسجيل دخول كثيرة جداً. يرجى المحاولة لاحقاً."
     },
     "success": {
-      "loginTitle": "تم تسجيل الدخول بنجاح",
-      "loginDescription": "مرحباً بك في تمليليت ثقافة!",
-      "registrationTitle": "تم التسجيل بنجاح",
-      "professionalRegistration": "تم إنشاء حسابك المهني وهو في انتظار التحقق.",
-      "visitorRegistration": "تم إنشاء حسابك بنجاح. مرحباً!",
-      "registerTitle": "تم التسجيل بنجاح",
+      "loginTitle": "تم تسجيل الدخول بنجاح!",
+      "loginDescription": "مرحباً بك في صدى الجزائر! سيتم توجيهك...",
+      "registrationTitle": "تم التسجيل بنجاح!",
+      "professionalRegistration": "تم إنشاء حسابك المهني. سيتم التحقق منه خلال 24-48 ساعة. ستتلقى بريداً إلكترونياً للتأكيد.",
+      "visitorRegistration": "مرحباً بك في صدى الجزائر! تم إنشاء حسابك بنجاح. يمكنك الآن استكشاف المحتوى.",
+      "registerTitle": "تم التسجيل بنجاح!",
       "registerDescription": "تم إنشاء حسابك بنجاح!"
     },
     "sectors": {
@@ -203,7 +208,7 @@
     "activeFilters": "الفلاتر النشطة",
     "all": "الكل",
     "anonymous": "مجهول",
-    "appName": "EventCulture",
+    "appName": "صدى الجزائر",
     "back": "رجوع",
     "call": "اتصال",
     "clearAll": "مسح الكل",
@@ -360,6 +365,12 @@
     }
   },
   "home": {
+    "hero": {
+      "badge": "اكتشف التراث الثقافي الجزائري",
+      "subtitle": "استكشف وحافظ وشارك الثراء الثقافي للجزائر",
+      "explore": "استكشف التراث",
+      "contribute": "ساهم"
+    },
     "explore": {
       "subtitle": "اكتشف ثراء الثقافة الأمازيغية",
       "tabs": {
@@ -824,7 +835,7 @@
     },
     "dashboard": {
       "title": "لوحة التحكم",
-      "subtitle": "إدارة منصة EventCulture"
+      "subtitle": "إدارة منصة صدى الجزائر"
     },
     "tabs": {
       "overview": "نظرة عامة",

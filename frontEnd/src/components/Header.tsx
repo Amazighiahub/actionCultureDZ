@@ -229,15 +229,15 @@ const Header = () => {
         <div className="flex items-center justify-between gap-2 sm:gap-4">
 
           {/* Logo et titre */}
-          <Link to="/" className="flex items-center gap-2 shrink-0">
-            <div className="h-10 w-10 sm:h-11 sm:w-11 flex-shrink-0">
+          <Link to="/" className="flex items-center gap-3 shrink-0">
+            <div className="h-10 w-10 sm:h-12 sm:w-12 flex-shrink-0">
               <MadgacenLogo className="w-full h-full" />
             </div>
-            <div className="hidden xs:flex flex-col">
-              <h1 className="text-xs sm:text-sm font-bold text-gradient whitespace-nowrap">
+            <div className="flex flex-col">
+              <h1 className="text-sm sm:text-base md:text-lg font-bold text-stone-800 dark:text-stone-100 whitespace-nowrap">
                 {t('header.title')}
               </h1>
-              <p className="text-[9px] sm:text-[10px] text-muted-foreground hidden sm:block whitespace-nowrap">
+              <p className="text-[10px] sm:text-xs text-stone-500 dark:text-stone-400 hidden sm:block whitespace-nowrap">
                 {t('header.subtitle')}
               </p>
             </div>

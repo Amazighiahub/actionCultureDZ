@@ -32,30 +32,23 @@ const HeroSection: React.FC = () => {
   const [publicStats, setPublicStats] = useState<PublicStats | null>(null);
   const [statsLoading, setStatsLoading] = useState(true);
 
+  // Images locales du patrimoine algérien
   const heroImages = [
+    {
+      url: '/images/hero/timgad.jpg',
+      title: 'Timgad',
+    },
+    {
+      url: '/images/hero/sahara.jpg',
+      title: 'Sahara Algérien',
+    },
     {
       url: '/images/hero/casbah-alger.jpg',
       title: 'Casbah d\'Alger',
     },
     {
-      url: '/images/hero/timgad-ruins.jpg',
-      title: 'Timgad',
-    },
-    {
-      url: '/images/hero/sahara-algerien.jpg',
-      title: 'Sahara Algérien',
-    },
-    {
-      url: '/images/hero/timgad-ancient.jpg',
-      title: 'Timgad',
-    },
-    {
-      url: '/images/hero/ghoufi-canyon.jpg',
-      title: 'Ghoufi',
-    },
-    {
-      url: '/images/hero/kabylie-mountains.jpg',
-      title: 'Kabylie',
+      url: '/images/hero/grenier.jpg',
+      title: 'Grenier Traditionnel',
     }
   ];
 
@@ -123,9 +116,9 @@ const HeroSection: React.FC = () => {
   ];
 
   return (
-    <section 
+    <section
       className="relative w-full overflow-hidden"
-      style={{ height: 'clamp(500px, 80vh, 700px)' }}
+      style={{ height: '100vh', minHeight: '600px', maxHeight: '900px' }}
     >
       {/* ===== CAROUSEL D'IMAGES ===== */}
       <div className="absolute inset-0">
@@ -144,12 +137,12 @@ const HeroSection: React.FC = () => {
               alt={image.title}
               loading={index === 0 ? "eager" : "lazy"}
               onLoad={() => handleImageLoad(index)}
-              className={`w-full h-full object-cover ${
+              className={`w-full h-full object-cover object-center ${
                 imagesLoaded[index] ? 'opacity-100' : 'opacity-0'
               }`}
             />
             {/* Overlay sombre */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/60" />
           </div>
         ))}
       </div>

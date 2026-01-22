@@ -131,7 +131,7 @@ export const MultilingualLayout: React.FC<MultilingualLayoutProps> = ({
           <div className="container mx-auto px-4 py-8">
             <div className="flex flex-col md:flex-row justify-between items-center">
               <div className="text-sm text-muted-foreground">
-                © 2024 EventCulture - {currentLang === 'fr' ? 'Tous droits réservés' : 
+                © 2024 Écho Algérie - {currentLang === 'fr' ? 'Tous droits réservés' : 
                                  currentLang === 'ar' ? 'جميع الحقوق محفوظة' :
                                  currentLang === 'en' ? 'All rights reserved' :
                                  currentLang === 'tz-ltn' ? 'Tikkal n warrac' :

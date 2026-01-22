@@ -6,6 +6,7 @@ import { httpClient } from './httpClient';
 
 interface SitePatrimoine {
   id: number;
+  id_lieu?: number; // Backend peut retourner id_lieu au lieu de id
   nom: string;
   nom_ar?: string;
   description: string;

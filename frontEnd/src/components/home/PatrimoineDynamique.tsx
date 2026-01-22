@@ -13,6 +13,7 @@ import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { useRTL } from '@/hooks/useRTL';
 import { patrimoineService } from '@/services/patrimoine.service';
 import type { SitePatrimoine } from '@/services/patrimoine.service';
+import { getAssetUrl } from '@/helpers/assetUrl';
 import ErrorMessage from './ErrorMessage';
 
 // Helper pour obtenir le nom de la wilaya
@@ -98,12 +99,12 @@ const PatrimoineDynamique: React.FC<PatrimoineDynamiqueProps> = ({ wilayasCache 
             <p className="text-muted-foreground">{t('sections.heritage.noResults')}</p>
           </div>
         ) : (
-          sitesArray.map((site) => (
-            <Card key={site.id} className="overflow-hidden hover-lift group">
+          sitesArray.map((site, index) => (
+            <Card key={site.id || site.id_lieu || `site-${index}`} className="overflow-hidden hover-lift group">
               <div className="relative h-48 overflow-hidden">
                 {site.medias && site.medias[0] ? (
                   <img
-                    src={site.medias[0].url}
+                    src={getAssetUrl(site.medias[0].url)}
                     alt={site.nom}
                     loading="lazy"
                     className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
@@ -131,7 +132,7 @@ const PatrimoineDynamique: React.FC<PatrimoineDynamiqueProps> = ({ wilayasCache 
                     size="sm" 
                     variant="secondary"
                     className="w-full"
-                    onClick={() => navigate(`/patrimoine/${site.id}`)}
+                    onClick={() => navigate(`/patrimoine/${site.id || site.id_lieu}`)}
                   >
                     {t('sections.heritage.discover')}
                     <ArrowRight className={`h-4 w-4 ${rtlClasses.marginStart(2)}`} />

@@ -14,6 +14,7 @@ import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { useRTL } from '@/hooks/useRTL';
 import { artisanatService } from '@/services/artisanat.service';
 import type { Artisanat } from '@/services/artisanat.service';
+import { getAssetUrl } from '@/helpers/assetUrl';
 import ErrorMessage from './ErrorMessage';
 
 // Helper pour extraire les données d'une réponse
@@ -49,7 +50,7 @@ const ArtisanatDynamique: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await artisanatService.search({ limit: 6 });
+      const response = await artisanatService.getAll({ limit: 6 });
       
       if (response.success && response.data) {
         const artisanats = extractDataFromResponse<Artisanat>(response.data);
@@ -111,7 +112,7 @@ const ArtisanatDynamique: React.FC = () => {
               <div className="relative h-48 overflow-hidden">
                 {artisanat.medias && artisanat.medias[0] ? (
                   <img
-                    src={artisanat.medias[0].url}
+                    src={getAssetUrl(artisanat.medias[0].url)}
                     alt={artisanat.nom}
                     loading="lazy"
                     className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
