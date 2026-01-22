@@ -42,7 +42,17 @@
       "Bash(node scripts/configure-type-evenement-soumissions.js:*)",
       "Bash(node scripts/add-salon-livre.js:*)",
       "Bash(git checkout:*)",
-      "Bash(node scripts/create-test-programmes.js:*)"
+      "Bash(node scripts/create-test-programmes.js:*)",
+      "Bash(git push:*)",
+      "Bash(git pull:*)",
+      "Bash(git stash:*)",
+      "Bash(git -C /c/Users/sabab/EventCulture log --oneline)",
+      "Bash(git -C /c/Users/sabab/EventCulture branch -a)",
+      "Bash(git restore:*)",
+      "Bash(npx vite build)",
+      "Bash(npm start)",
+      "Bash(where:*)",
+      "Bash(python3:*)"
     ]
   }
 }

@@ -33,6 +33,9 @@ const { initializeDatabase } = require('./models');
 const { createDatabase } = require('./config/database');
 const uploadService = require('./services/uploadService');
 
+// ✅ Service Container pour l'architecture Service/Repository
+const serviceContainer = require('./services/ServiceContainer');
+
 class App {
   constructor() {
     this.app = express();
@@ -310,7 +313,11 @@ class App {
       
       console.log(`📊 ${modelNames.length} modèles disponibles`);
       console.log(`📋 Modèles: ${modelNames.slice(0, 10).join(', ')}${modelNames.length > 10 ? '...' : ''}`);
-      
+
+      // ✅ Initialiser le ServiceContainer avec les modèles
+      serviceContainer.initialize(db);
+      console.log('✅ ServiceContainer initialisé');
+
       return true;
       
     } catch (error) {
@@ -435,7 +442,7 @@ class App {
       });
     });
 
-    // Routes API principales
+    // Routes API principales (utilise ServiceContainer en interne)
     this.app.use('/api', initRoutes(this.models, this.authMiddleware));
 
     // Route pour obtenir les infos d'upload

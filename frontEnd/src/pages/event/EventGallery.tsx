@@ -17,6 +17,7 @@ import { LazyImage, EmptyState } from '@/components/shared';
 import { useTranslateData } from '@/hooks/useTranslateData';
 import { cn } from '@/lib/utils';
 import type { Media } from '@/types/models/media.types';
+import { getAssetUrl } from '@/helpers/assetUrl';
 
 interface EventGalleryProps {
   medias: Media[];
@@ -132,7 +133,7 @@ const Lightbox: React.FC<LightboxProps> = ({
       case 'video':
         return (
           <video
-            src={currentMedia.url}
+            src={getAssetUrl(currentMedia.url)}
             controls
             autoPlay
             className="max-h-[80vh] max-w-full rounded-lg"
@@ -140,13 +141,13 @@ const Lightbox: React.FC<LightboxProps> = ({
             Votre navigateur ne supporte pas la lecture vidéo.
           </video>
         );
-      
+
       case 'audio':
         return (
           <div className="bg-muted p-8 rounded-lg text-center">
             <Music className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
             <p className="mb-4 font-medium">{td(currentMedia.titre) || 'Audio'}</p>
-            <audio src={currentMedia.url} controls className="w-full max-w-md">
+            <audio src={getAssetUrl(currentMedia.url)} controls className="w-full max-w-md">
               Votre navigateur ne supporte pas la lecture audio.
             </audio>
           </div>
@@ -158,7 +159,7 @@ const Lightbox: React.FC<LightboxProps> = ({
             <FileText className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
             <p className="mb-4 font-medium">{td(currentMedia.titre) || 'Document'}</p>
             <Button asChild>
-              <a href={currentMedia.url} target="_blank" rel="noopener noreferrer">
+              <a href={getAssetUrl(currentMedia.url)} target="_blank" rel="noopener noreferrer">
                 <Download className="h-4 w-4 mr-2" />
                 {t('common.download', 'Télécharger')}
               </a>
@@ -169,7 +170,7 @@ const Lightbox: React.FC<LightboxProps> = ({
       default:
         return (
           <img
-            src={currentMedia.url}
+            src={getAssetUrl(currentMedia.url)}
             alt={td(currentMedia.titre) || td(currentMedia.description) || 'Image'}
             className="max-h-[80vh] max-w-full object-contain rounded-lg"
           />

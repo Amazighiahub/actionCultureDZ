@@ -16,6 +16,10 @@ import {
   Table, Code, Minus, AlertCircle, Loader2, FileText, Film,
   Upload, X, Star, ChevronDown, Grid3X3, Link2 } from
 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+
+// Import des helpers
+import { getAssetUrl } from '@/helpers/assetUrl';
 
 // Import des services et types
 import { articleBlockService } from '@/services/articleBlock.service';
@@ -222,7 +226,9 @@ const BLOCK_ICONS: Record<string, any> = {
 // Composant pour un bloc d'article
 const ArticleBlockEditor: React.FC<ArticleBlockEditorProps> = ({
   block, index, onUpdate, onDelete, onMoveUp, onMoveDown, onDuplicate, canMoveUp, canMoveDown
-}) => {const { t } = useTranslation();
+}) => {
+  const { t } = useTranslation();
+  const { toast } = useToast();
   const handleContentChange = (value: string) => {
     onUpdate(index, { contenu: value });
   };
@@ -237,12 +243,20 @@ const ArticleBlockEditor: React.FC<ArticleBlockEditorProps> = ({
     // Validation
     const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
-      alert('L\'image est trop volumineuse (max 10MB)');
+      toast({
+        title: t('common.error', 'Erreur'),
+        description: t('article.imageTooLarge', 'L\'image est trop volumineuse (max 10MB)'),
+        variant: 'destructive',
+      });
       return;
     }
 
     if (!file.type.startsWith('image/')) {
-      alert('Le fichier doit être une image');
+      toast({
+        title: t('common.error', 'Erreur'),
+        description: t('article.mustBeImage', 'Le fichier doit être une image'),
+        variant: 'destructive',
+      });
       return;
     }
 
@@ -332,7 +346,7 @@ const ArticleBlockEditor: React.FC<ArticleBlockEditorProps> = ({
             {block.media?.url ?
             <div className="relative group">
                 <img
-                src={block.media.url}
+                src={getAssetUrl(block.media.url)}
                 alt={block.metadata?.caption || 'Image'}
                 className="w-full max-h-96 object-contain rounded-lg border" />
               
@@ -653,7 +667,10 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({
   });
 
   // Charger les métadonnées au montage
-  const { t } = useTranslation();useEffect(() => {
+  const { t } = useTranslation();
+  const { toast } = useToast();
+
+  useEffect(() => {
     loadMetadata();
   }, []);
 
@@ -785,7 +802,7 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({
         return block.media?.url ?
         <figure key={index} className="my-6">
             <img
-            src={block.media.url}
+            src={getAssetUrl(block.media.url)}
             alt={block.metadata?.caption || 'Image'}
             className={block.metadata?.layout || 'full-width'} />
           
@@ -864,10 +881,37 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({
         return <hr key={index} />;
 
       case 'embed':
-        return block.contenu ?
-        <div key={index} className="embed-container"
-        dangerouslySetInnerHTML={{ __html: block.contenu }} /> :
-        null;
+        // ✅ SÉCURITÉ: Sanitiser le HTML pour prévenir les attaques XSS
+        if (block.contenu) {
+          // Utiliser DOMPurify pour nettoyer le HTML des embeds
+          const sanitizeEmbed = (html: string) => {
+            // Configuration stricte pour les embeds
+            const allowedTags = ['iframe', 'div', 'span'];
+            const allowedAttrs = ['src', 'width', 'height', 'frameborder', 'allow', 'allowfullscreen', 'class', 'title'];
+            
+            // Créer un élément temporaire pour parser le HTML
+            const temp = document.createElement('div');
+            temp.innerHTML = html;
+            
+            // Vérifier que c'est un iframe de source autorisée
+            const iframe = temp.querySelector('iframe');
+            if (iframe) {
+              const src = iframe.getAttribute('src') || '';
+              const allowedDomains = ['youtube.com', 'youtube-nocookie.com', 'vimeo.com', 'dailymotion.com', 'soundcloud.com'];
+              const isAllowed = allowedDomains.some(domain => src.includes(domain));
+              if (!isAllowed) return '';
+            }
+            
+            return html;
+          };
+          
+          const sanitizedContent = sanitizeEmbed(block.contenu);
+          return sanitizedContent ? (
+            <div key={index} className="embed-container"
+              dangerouslySetInnerHTML={{ __html: sanitizedContent }} />
+          ) : null;
+        }
+        return null;
 
       default:
         return null;
@@ -962,7 +1006,10 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({
       } else {
         // Sauvegarde par défaut
         console.log('Sauvegarde article:', response);
-        alert('Article sauvegardé avec succès!');
+        toast({
+          title: t('common.success', 'Succès'),
+          description: t('article.savedSuccess', 'Article sauvegardé avec succès!'),
+        });
       }
     } catch (error: any) {
       console.error('Erreur sauvegarde:', error);

@@ -1,104 +1,135 @@
-# Action Culture - Stack de développement
-# Usage: docker compose up -d
-# Frontend (page web): http://localhost:8080
-# API Backend: http://localhost:3001
+# ============================================
+# Docker Compose - EventCulture (DEVELOPPEMENT)
+# ============================================
+# ATTENTION : Ce fichier est pour le DEVELOPPEMENT LOCAL uniquement.
+# Pour la PRODUCTION, utiliser : docker-compose.prod.yml
+#
+# Usage dev : docker compose up -d
+# ============================================
 
 services:
-  # Base de données MySQL
-  mysql:
-    image: mysql:8.0
-    container_name: dz-mysql
-    restart: unless-stopped
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: actionculture
-      MYSQL_USER: actionculture
-      MYSQL_PASSWORD: actionculture
-    ports:
-      - "3306:3306"
-    volumes:
-      - mysql_data:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-      start_period: 15s
-
-  # Redis (cache / rate limiting)
-  redis:
-    image: redis:7-alpine
-    container_name: dz-redis
-    restart: unless-stopped
-    ports:
-      - "6379:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-
-  # Backend API Node.js
+  # ==========================================
+  # Backend API
+  # ==========================================
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: dz-backend
+      target: production
+    container_name: eventculture-backend
     restart: unless-stopped
     ports:
       - "3001:3001"
-    # Optionnel : décommenter si vous avez un fichier .env dans backend/
-    # env_file:
-    #   - ./backend/.env
+    env_file:
+      - .env
     environment:
-      NODE_ENV: development
-      # Générer un secret en prod : node scripts/generateSecret.js
-      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me-in-production-min-32-chars}
-      PORT: 3001
-      HOST: 0.0.0.0
-      DB_HOST: mysql
-      DB_PORT: 3306
-      DB_NAME: actionculture
-      DB_USER: actionculture
-      DB_PASSWORD: actionculture
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      REDIS_URL: redis://redis:6379
-      USE_REDIS_MEMORY: "false"
-      API_URL: http://localhost:3001
-      FRONTEND_URL: http://localhost:8080
-      BASE_URL: http://localhost:3001
+      - NODE_ENV=production
+      - SKIP_PRODUCTION_CHECKS=true
+      - DB_HOST=mysql
+      - REDIS_HOST=redis
     volumes:
-      - ./backend/uploads:/app/uploads
+      - backend_uploads:/app/uploads
+      - backend_logs:/app/logs
     depends_on:
       mysql:
         condition: service_healthy
       redis:
         condition: service_healthy
+    networks:
+      - eventculture-network
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -O- http://localhost:3001/health || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
       start_period: 40s
 
-  # Frontend React (Vite dev server) - dossier frontEnd (camelCase)
+  # ==========================================
+  # Frontend
+  # ==========================================
   frontend:
     build:
       context: ./frontEnd
       dockerfile: Dockerfile
-    container_name: dz-frontend
+      args:
+        - VITE_API_URL=${VITE_API_URL:-http://localhost:3001/api}
+    container_name: eventculture-frontend
     restart: unless-stopped
     ports:
-      - "8080:8080"
-    environment:
-      # Proxy API : cible le backend dans Docker
-      VITE_PROXY_TARGET: http://backend:3001
+      - "3000:80"
     depends_on:
-      backend:
-        condition: service_healthy
-    stdin_open: true
-    tty: true
+      - backend
+    networks:
+      - eventculture-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
+  # ==========================================
+  # MySQL Database
+  # ==========================================
+  mysql:
+    image: mysql:8.0
+    container_name: eventculture-mysql
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-root}
+      - MYSQL_DATABASE=${DB_NAME:-actionculture}
+      - MYSQL_USER=${DB_USER:-actionculture_user}
+      - MYSQL_PASSWORD=${DB_PASSWORD:-root}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./backend/database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - eventculture-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+
+  # ==========================================
+  # Redis Cache
+  # ==========================================
+  redis:
+    image: redis:7-alpine
+    container_name: eventculture-redis
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - eventculture-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+
+# ==========================================
+# Networks
+# ==========================================
+networks:
+  eventculture-network:
+    driver: bridge
+
+# ==========================================
+# Volumes
+# ==========================================
 volumes:
   mysql_data:
+    driver: local
+  redis_data:
+    driver: local
+  backend_uploads:
+    driver: local
+  backend_logs:
+    driver: local

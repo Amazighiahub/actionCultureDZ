@@ -115,8 +115,10 @@ module.exports = (modelsOrUser) => {
         const professionalTypeIds = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28];
         const isProfessionalByType = user.id_type_user && professionalTypeIds.includes(user.id_type_user);
 
-        // DEBUG LOG - à retirer après test
-        console.log(`🔍 Auth Debug: user.id_type_user=${user.id_type_user}, isProfessionalByType=${isProfessionalByType}`);
+        // Log uniquement en développement
+        if (IS_DEV_MODE) {
+          console.log(`🔍 Auth Debug: user.id_type_user=${user.id_type_user}, isProfessionalByType=${isProfessionalByType}`);
+        }
 
         user.isAdmin = user.roleNames.includes('Administrateur') || user.id_type_user === 29;
         user.isProfessionnel = user.roleNames.includes('Professionnel') || isProfessionalByType;

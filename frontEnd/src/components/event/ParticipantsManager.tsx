@@ -52,6 +52,7 @@ import { useTranslateData } from '@/hooks/useTranslateData';
 import { useLocalizedDate } from '@/hooks/useLocalizedDate';
 import { useToast } from '@/components/UI/use-toast';
 import { cn } from '@/lib/utils';
+import { getAssetUrl } from '@/helpers/assetUrl';
 
 interface ParticipantsManagerProps {
   evenementId: number;
@@ -896,10 +897,10 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
                     {selectedOeuvre.Medias.map((media) => (
                       <img
                         key={media.id_media}
-                        src={media.url}
+                        src={getAssetUrl(media.url)}
                         alt=""
                         className="w-full h-24 object-cover rounded cursor-pointer hover:opacity-80"
-                        onClick={() => window.open(media.url, '_blank')}
+                        onClick={() => window.open(getAssetUrl(media.url), '_blank')}
                       />
                     ))}
                   </div>

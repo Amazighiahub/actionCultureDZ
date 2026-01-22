@@ -18,6 +18,7 @@ import { LoadingSkeleton, LazyImage } from '@/components/shared';
 
 // ✅ CORRIGÉ: Utilise useDashboardAdmin au lieu de useAdminStats
 import { useDashboardAdmin } from '@/hooks/useDashboardAdmin';
+import { getAssetUrl } from '@/helpers/assetUrl';
 
 // Composant StatCard
 interface StatCardProps {
@@ -288,7 +289,7 @@ const AdminOverview: React.FC = () => {
                     title={oeuvre.titre}
                     subtitle={oeuvre.auteur ? `${oeuvre.auteur.prenom} ${oeuvre.auteur.nom}` : oeuvre.type_oeuvre}
                     date={new Date(oeuvre.date_creation || oeuvre.created_at).toLocaleDateString('fr-FR')}
-                    imageUrl={oeuvre.medias?.[0]?.url}
+                    imageUrl={getAssetUrl(oeuvre.medias?.[0]?.url)}
                     onApprove={() => validateOeuvre({ oeuvreId: oeuvre.id_oeuvre, validated: true })}
                     onReject={() => validateOeuvre({ oeuvreId: oeuvre.id_oeuvre, validated: false })}
                   />

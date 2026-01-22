@@ -141,12 +141,34 @@ class ServicesController {
   async createService(req, res) {
     try {
       const lang = req.lang || 'fr';  // ⚡
-      const { nom, description, type_service, id_lieu, horaires, contact, tarif } = req.body;
+      const {
+        nom,
+        description,
+        type_service,
+        id_lieu,
+        horaires,
+        adresse,
+        telephone,
+        email,
+        site_web,
+        latitude,
+        longitude,
+        tarif_min,
+        tarif_max,
+        disponible = true
+      } = req.body;
 
-      if (!nom || !id_lieu) {
+      if (!nom) {
         return res.status(400).json({
           success: false,
-          error: 'Nom et lieu sont requis'
+          error: 'Le nom est requis'
+        });
+      }
+
+      if (!type_service) {
+        return res.status(400).json({
+          success: false,
+          error: 'Le type de service est requis'
         });
       }
 
@@ -154,15 +176,28 @@ class ServicesController {
       const nomMultiLang = this.prepareMultiLangField(nom, lang);
       const descriptionMultiLang = this.prepareMultiLangField(description, lang);
       const horairesMultiLang = this.prepareMultiLangField(horaires, lang);
+      const adresseMultiLang = this.prepareMultiLangField(adresse, lang);
+
+      // Récupérer l'utilisateur connecté (professionnel)
+      const id_user = req.user?.id_user || req.user?.id || null;
 
       const service = await this.models.Service.create({
         nom: nomMultiLang,
         description: descriptionMultiLang,
         type_service,
-        id_lieu,
+        id_lieu: id_lieu || null,
         horaires: horairesMultiLang,
-        contact,
-        tarif
+        adresse: adresseMultiLang,
+        telephone: telephone || null,
+        email: email || null,
+        site_web: site_web || null,
+        latitude: latitude || null,
+        longitude: longitude || null,
+        tarif_min: tarif_min || null,
+        tarif_max: tarif_max || null,
+        disponible: disponible !== false,
+        id_user,
+        statut: 'en_attente' // Par défaut en attente de validation
       });
 
       // ⚡ Traduire
@@ -173,7 +208,7 @@ class ServicesController {
       });
 
     } catch (error) {
-      console.error('Erreur:', error);
+      console.error('Erreur création service:', error);
       res.status(500).json({ success: false, error: 'Erreur serveur' });
     }
   }
@@ -183,7 +218,22 @@ class ServicesController {
     try {
       const lang = req.lang || 'fr';  // ⚡
       const { id } = req.params;
-      const { nom, description, horaires, ...otherFields } = req.body;
+      const {
+        nom,
+        description,
+        horaires,
+        adresse,
+        type_service,
+        telephone,
+        email,
+        site_web,
+        latitude,
+        longitude,
+        tarif_min,
+        tarif_max,
+        disponible,
+        ...otherFields
+      } = req.body;
 
       const service = await this.models.Service.findByPk(id);
       if (!service) {
@@ -217,6 +267,25 @@ class ServicesController {
         }
       }
 
+      if (adresse !== undefined) {
+        if (typeof adresse === 'object') {
+          updates.adresse = mergeTranslations(service.adresse, adresse);
+        } else {
+          updates.adresse = mergeTranslations(service.adresse, { [lang]: adresse });
+        }
+      }
+
+      // Champs simples
+      if (type_service !== undefined) updates.type_service = type_service;
+      if (telephone !== undefined) updates.telephone = telephone;
+      if (email !== undefined) updates.email = email;
+      if (site_web !== undefined) updates.site_web = site_web;
+      if (latitude !== undefined) updates.latitude = latitude;
+      if (longitude !== undefined) updates.longitude = longitude;
+      if (tarif_min !== undefined) updates.tarif_min = tarif_min;
+      if (tarif_max !== undefined) updates.tarif_max = tarif_max;
+      if (disponible !== undefined) updates.disponible = disponible;
+
       await service.update(updates);
 
       // ⚡ Traduire
@@ -227,7 +296,7 @@ class ServicesController {
       });
 
     } catch (error) {
-      console.error('Erreur:', error);
+      console.error('Erreur mise à jour service:', error);
       res.status(500).json({ success: false, error: 'Erreur serveur' });
     }
   }

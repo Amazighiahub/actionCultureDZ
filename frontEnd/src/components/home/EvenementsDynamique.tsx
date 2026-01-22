@@ -16,6 +16,7 @@ import { useRTL } from '@/hooks/useRTL';
 import { evenementService } from '@/services/evenement.service';
 import { authService } from '@/services/auth.service';
 import { Evenement } from '@/types';
+import { getAssetUrl } from '@/helpers/assetUrl';
 import ErrorMessage from './ErrorMessage';
 
 // Helper pour extraire les données d'une réponse
@@ -133,14 +134,14 @@ const EvenementsDynamique: React.FC = () => {
               <div className="relative h-48 overflow-hidden">
                 {event.Media && event.Media[0] ? (
                   <img
-                    src={event.Media[0].url}
+                    src={getAssetUrl(event.Media[0].url)}
                     alt={event.nom_evenement}
                     loading="lazy"
                     className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                 ) : event.image_url ? (
                   <img
-                    src={event.image_url}
+                    src={getAssetUrl(event.image_url)}
                     alt={event.nom_evenement}
                     loading="lazy"
                     className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
