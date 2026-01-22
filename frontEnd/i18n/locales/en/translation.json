@@ -98,6 +98,11 @@
       "registrationError": "Registration error",
       "registrationErrorDescription": "An error occurred. Please try again.",
       "wilayasLoadError": "Error loading wilayas",
+      "emailExistsDescription": "An account already exists with this email address. Please log in or use a different address.",
+      "emailNotVerified": "Email not verified",
+      "pleaseVerifyEmail": "Please verify your email before logging in. Check your inbox.",
+      "contactSupport": "Your account has been suspended. Contact support for more information.",
+      "passwordError": "Password does not meet security requirements (minimum 8 characters)",
       "required": "This field is required",
       "serverError": "Server error. Please try again.",
       "emailExists": "This email is already in use",
@@ -117,12 +122,12 @@
       "tooManyAttempts": "Too many login attempts. Please try again later."
     },
     "success": {
-      "loginTitle": "Login successful",
-      "loginDescription": "Welcome to Timlilit Culture!",
-      "registrationTitle": "Registration successful",
-      "professionalRegistration": "Your professional account has been created and is pending validation.",
-      "visitorRegistration": "Your account has been created successfully. Welcome!",
-      "registerTitle": "Registration successful",
+      "loginTitle": "Login successful!",
+      "loginDescription": "Welcome to Écho Algérie! You will be redirected...",
+      "registrationTitle": "Registration successful!",
+      "professionalRegistration": "Your professional account has been created. An administrator will validate it within 24-48 hours. You will receive a confirmation email.",
+      "visitorRegistration": "Welcome to Écho Algérie! Your account has been created successfully. You can now explore the content.",
+      "registerTitle": "Registration successful!",
       "registerDescription": "Your account has been created successfully!"
     },
     "sectors": {
@@ -235,7 +240,7 @@
     "activeFilters": "Active filters",
     "all": "All",
     "anonymous": "Anonymous",
-    "appName": "EventCulture",
+    "appName": "Écho Algérie",
     "back": "Back",
     "call": "Call",
     "clearAll": "Clear all",
@@ -374,7 +379,7 @@
       "heritage": "Heritage",
       "works": "Works"
     },
-    "subtitle": "The echo of Algeria",
+    "subtitle": "Écho Algérie",
     "title": "Timlilit Culture",
     "userMenu": {
       "addWork": "Add work",
@@ -389,6 +394,12 @@
     }
   },
   "home": {
+    "hero": {
+      "badge": "Discover Algerian cultural heritage",
+      "subtitle": "Explore, preserve and share the cultural richness of Algeria",
+      "explore": "Explore heritage",
+      "contribute": "Contribute"
+    },
     "explore": {
       "subtitle": "A digital platform dedicated to the preservation and promotion of Algerian culture in all its richness and diversity.",
       "tabs": {
@@ -1865,7 +1876,7 @@
     },
     "dashboard": {
       "title": "Dashboard",
-      "subtitle": "Manage your EventCulture platform"
+      "subtitle": "Manage your Écho Algérie platform"
     },
     "tabs": {
       "overview": "Overview",

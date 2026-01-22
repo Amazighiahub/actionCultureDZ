@@ -188,7 +188,7 @@
     "activeFilters": "Imzizdigen urmiden",
     "all": "Akk",
     "anonymous": "Udrig",
-    "appName": "EventCulture",
+    "appName": "Taẓmmart n Dzayer",
     "back": "Uɣal",
     "call": "Siwel",
     "clearAll": "Sfeḍ akk",
@@ -1832,7 +1832,7 @@
     },
     "dashboard": {
       "title": "Tafelwit n usenqed",
-      "subtitle": "Sefrek agdil EventCulture-ik"
+      "subtitle": "Sefrek agdil Taẓmmart n Dzayer-ik"
     },
     "tabs": {
       "overview": "Taskant tamatu",

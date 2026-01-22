@@ -102,7 +102,7 @@
     "activeFilters": "ⵉⵎⵣⵉⵣⴷⵉⴳⵏ ⵓⵔⵎⵉⴷⵏ",
     "all": "ⴰⴽⴽ",
     "anonymous": "ⵓⴷⵔⵉⴳ",
-    "appName": "EventCulture",
+    "appName": "ⵜⴰⵣⵎⵎⴰⵔⵜ ⵏ ⴷⵣⴰⵢⵔ",
     "back": "ⵓⵖⴰⵍ",
     "call": "ⵙⵉⵡⵍ",
     "clearAll": "ⵙⴼⴹ ⴰⴽⴽ",
@@ -1746,7 +1746,7 @@
     },
     "dashboard": {
       "title": "ⵜⴰⴼⵍⵡⵉⵜ ⵏ ⵓⵙⵏⵇⴷ",
-      "subtitle": "ⵙⴼⵔⴽ ⴰⴳⴷⵉⵍ EventCulture-ⵉⴽ"
+      "subtitle": "ⵙⴼⵔⴽ ⴰⴳⴷⵉⵍ ⵜⴰⵣⵎⵎⴰⵔⵜ ⵏ ⴷⵣⴰⵢⵔ-ⵉⴽ"
     },
     "tabs": {
       "overview": "ⵜⴰⵙⴽⴰⵏⵜ ⵜⴰⵎⴰⵜⵓ",

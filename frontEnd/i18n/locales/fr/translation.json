@@ -140,16 +140,21 @@
       "uploadContinueWithoutPhoto": "L'upload de la photo a échoué. Nous continuons l'inscription sans photo.",
       "registrationError": "Erreur lors de l'inscription",
       "registrationErrorDescription": "Une erreur est survenue. Veuillez réessayer.",
-      "wilayasLoadError": "Erreur lors du chargement des wilayas"
+      "wilayasLoadError": "Erreur lors du chargement des wilayas",
+      "emailExistsDescription": "Un compte existe déjà avec cette adresse email. Veuillez vous connecter ou utiliser une autre adresse.",
+      "emailNotVerified": "Email non vérifié",
+      "pleaseVerifyEmail": "Veuillez vérifier votre email avant de vous connecter. Vérifiez votre boîte de réception.",
+      "contactSupport": "Votre compte a été suspendu. Contactez le support pour plus d'informations.",
+      "passwordError": "Le mot de passe ne respecte pas les critères de sécurité (minimum 8 caractères)"
     },
     "success": {
-      "loginTitle": "Connexion réussie",
-      "loginDescription": "Bienvenue sur Timlilit Culture !",
-      "registerTitle": "Inscription réussie",
+      "loginTitle": "Connexion réussie !",
+      "loginDescription": "Bienvenue sur Écho Algérie ! Vous allez être redirigé...",
+      "registerTitle": "Inscription réussie !",
       "registerDescription": "Votre compte a été créé avec succès !",
-      "registrationTitle": "Inscription réussie",
-      "professionalRegistration": "Votre compte professionnel a été créé et est en attente de validation.",
-      "visitorRegistration": "Votre compte a été créé avec succès. Bienvenue !"
+      "registrationTitle": "Inscription réussie !",
+      "professionalRegistration": "Votre compte professionnel a été créé. Un administrateur va le valider sous 24-48h. Vous recevrez un email de confirmation.",
+      "visitorRegistration": "Bienvenue sur Écho Algérie ! Votre compte a été créé avec succès. Vous pouvez maintenant explorer le contenu."
     },
     "sectors": {
       "artiste": "Artiste",
@@ -226,7 +231,7 @@
     "activeFilters": "Filtres actifs",
     "all": "Tous",
     "anonymous": "Anonyme",
-    "appName": "EventCulture",
+    "appName": "Écho Algérie",
     "back": "Retour",
     "backToDashboard": "Retour au tableau de bord",
     "by": "par",
@@ -269,7 +274,9 @@
     "refresh": "Actualiser",
     "reply": "Répondre",
     "report": "Signaler",
+    "reset": "Réinitialiser",
     "resetFilters": "Réinitialiser les filtres",
+    "results": "résultats",
     "retry": "Réessayer",
     "search": "Rechercher...",
     "select": "Sélectionner",
@@ -419,7 +426,7 @@
       "heritage": "Patrimoine",
       "works": "Œuvres"
     },
-    "subtitle": "L'écho d'Algérie",
+    "subtitle": "Écho Algérie",
     "title": "Timlilit Culture",
     "userMenu": {
       "addWork": "Ajouter une œuvre",
@@ -434,6 +441,12 @@
     }
   },
   "home": {
+    "hero": {
+      "badge": "Découvrez le patrimoine culturel algérien",
+      "subtitle": "Explorez, préservez et partagez la richesse culturelle de l'Algérie",
+      "explore": "Explorer le patrimoine",
+      "contribute": "Contribuer"
+    },
     "explore": {
       "subtitle": "Plateforme numérique dédiée à la préservation et à la valorisation de la culture algérienne dans toute sa richesse et sa diversité.",
       "tabs": {
@@ -550,6 +563,8 @@
       },
       "mapDescription": "Découvrez les sites patrimoniaux sur la carte interactive",
       "noResults": "Aucun résultat",
+      "search": "Rechercher un site...",
+      "tryDifferentSearch": "Essayez une autre recherche ou réinitialisez les filtres",
       "otherSites": "Autres sites remarquables",
       "planVisit": {
         "description": "Utilisez notre carte interactive pour créer votre itinéraire personnalisé et découvrir les merveilles du patrimoine algérien. Choisissez un parcours thématique ou explorez librement les sites qui vous intéressent.",
@@ -1775,7 +1790,7 @@
   "admin": {
     "dashboard": {
       "title": "Tableau de bord",
-      "subtitle": "Gérez votre plateforme EventCulture"
+      "subtitle": "Gérez votre plateforme Écho Algérie"
     },
     "tabs": {
       "overview": "Vue d'ensemble",
@@ -1913,6 +1928,7 @@
       "title": "Gestion du patrimoine",
       "searchPlaceholder": "Rechercher...",
       "filters": {
+        "all": "Tous",
         "allTypes": "Tous les types",
         "allWilayas": "Toutes les wilayas"
       },
@@ -2351,5 +2367,12 @@
     "open": "Ouvert",
     "closed": "Fermé",
     "unknown": "Inconnu"
+  },
+  "patrimoine": {
+    "filters": {
+      "all": "Tous",
+      "allTypes": "Tous les types",
+      "allWilayas": "Toutes les wilayas"
+    }
   }
 }
