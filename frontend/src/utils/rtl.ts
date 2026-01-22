@@ -400,15 +400,12 @@ export const initializeAlgerianSite = (): void => {
   // Définir la direction RTL par défaut
   document.documentElement.dir = 'rtl';
   document.documentElement.lang = 'ar-DZ';
-  
+
   // Ajouter les classes CSS nécessaires
   document.documentElement.classList.add('dir-rtl', 'locale-ar-dz');
-  
-  // Définir les métadonnées
-  const metaViewport = document.querySelector('meta[name="viewport"]');
-  if (metaViewport) {
-    metaViewport.setAttribute('content', 'width=device-width, initial-scale=1, direction=rtl');
-  }
+
+  // Note: La direction RTL est gérée via l'attribut dir sur documentElement,
+  // pas via la meta viewport (qui ne supporte pas l'attribut direction)
 };
 
 // Hook React pour la gestion RTL

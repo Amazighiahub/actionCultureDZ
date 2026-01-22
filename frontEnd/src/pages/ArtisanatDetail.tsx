@@ -21,6 +21,7 @@ import { artisanatService } from '@/services/artisanat.service';
 import { useTranslateData } from '@/hooks/useTranslateData';
 import { useToast } from '@/components/UI/use-toast';
 import { cn } from '@/lib/utils';
+import { getAssetUrl } from '@/helpers/assetUrl';
 
 interface ArtisanatData {
   id: number;
@@ -289,7 +290,7 @@ const ArtisanatDetail: React.FC = () => {
               <div className="relative aspect-square bg-muted rounded-xl overflow-hidden">
                 {currentMedia ? (
                   <img
-                    src={currentMedia.url}
+                    src={getAssetUrl(currentMedia.url)}
                     alt={td(Oeuvre?.titre || '')}
                     className="w-full h-full object-cover"
                   />
@@ -357,7 +358,7 @@ const ArtisanatDetail: React.FC = () => {
                       )}
                     >
                       <img
-                        src={media.thumbnail_url || media.url}
+                        src={getAssetUrl(media.thumbnail_url || media.url)}
                         alt=""
                         className="w-full h-full object-cover"
                       />
@@ -605,7 +606,7 @@ const ArtisanatDetail: React.FC = () => {
                     <div className="aspect-square bg-muted rounded-lg overflow-hidden">
                       {oeuvre.Oeuvre?.Media?.[0] ? (
                         <img
-                          src={oeuvre.Oeuvre.Media[0].url}
+                          src={getAssetUrl(oeuvre.Oeuvre.Media[0].url)}
                           alt={td(oeuvre.Oeuvre.titre)}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                         />

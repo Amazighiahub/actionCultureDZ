@@ -37,6 +37,7 @@ import {
 // ✅ CORRIGÉ: Utilise useDashboardAdmin
 import { useDashboardAdmin } from '@/hooks/useDashboardAdmin';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import { getAssetUrl } from '@/helpers/assetUrl';
 
 // ✅ Helper pour extraire le texte multilingue
 const getLocalizedText = (value: any, lang: string = 'fr', fallback: string = ''): string => {
@@ -205,7 +206,7 @@ const AdminOeuvresTab: React.FC = () => {
                 <div className="aspect-video relative bg-muted">
                   {oeuvre.image_url || oeuvre.medias?.[0]?.url ? (
                     <LazyImage
-                      src={oeuvre.image_url || oeuvre.medias?.[0]?.url}
+                      src={getAssetUrl(oeuvre.image_url || oeuvre.medias?.[0]?.url)}
                       alt={titre}
                       className="w-full h-full object-cover"
                     />

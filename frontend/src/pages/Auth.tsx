@@ -163,34 +163,56 @@ const Auth = () => {
     }
 
     try {
-      const success = await login({
+      const result = await login({
         email: loginForm.email,
         password: loginForm.mot_de_passe
       });
 
-      if (!success) {
+      if (!result.success) {
+        // Afficher le message d'erreur spécifique du backend
+        const errorMessage = result.error || t('auth.errors.invalidCredentials');
+
+        // Messages d'erreur spécifiques selon le type d'erreur
+        let title = t('auth.errors.loginError');
+        let description = errorMessage;
+
+        if (errorMessage.toLowerCase().includes('email') && errorMessage.toLowerCase().includes('mot de passe')) {
+          description = t('auth.errors.invalidCredentials', 'Email ou mot de passe incorrect');
+        } else if (errorMessage.toLowerCase().includes('trouvé') || errorMessage.toLowerCase().includes('exist')) {
+          description = t('auth.errors.userNotFound', 'Aucun compte trouvé avec cet email');
+        } else if (errorMessage.toLowerCase().includes('mot de passe') || errorMessage.toLowerCase().includes('password')) {
+          description = t('auth.errors.wrongPassword', 'Mot de passe incorrect');
+        } else if (errorMessage.toLowerCase().includes('vérifié') || errorMessage.toLowerCase().includes('verif')) {
+          title = t('auth.errors.emailNotVerified', 'Email non vérifié');
+          description = t('auth.errors.pleaseVerifyEmail', 'Veuillez vérifier votre email avant de vous connecter');
+        } else if (errorMessage.toLowerCase().includes('suspendu') || errorMessage.toLowerCase().includes('banni')) {
+          title = t('auth.errors.accountSuspended', 'Compte suspendu');
+          description = t('auth.errors.contactSupport', 'Votre compte a été suspendu. Contactez le support.');
+        }
+
         toast({
-          title: t('auth.errors.loginError'),
-          description: t('auth.errors.invalidCredentials'),
+          title,
+          description,
           variant: "destructive",
         });
       } else {
         // Succès - afficher un toast de bienvenue
         toast({
-          title: t('auth.success.loginTitle'),
-          description: t('auth.success.loginDescription'),
+          title: t('auth.success.loginTitle', 'Connexion réussie'),
+          description: t('auth.success.loginDescription', 'Bienvenue sur Écho Algérie !'),
         });
-        
+
         // Forcer le rafraîchissement complet de la page
         setTimeout(() => {
           window.location.reload();
         }, 500);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erreur login:', error);
+      const errorMessage = error instanceof Error ? error.message : t('errors.generic.message');
       toast({
-        title: t('errors.generic.title'),
-        description: error.message || t('errors.generic.message'),
+        title: t('errors.generic.title', 'Erreur'),
+        description: errorMessage,
         variant: "destructive",
       });
     }
@@ -340,10 +362,11 @@ const Auth = () => {
 
       let success = false;
       
+      let registrationResult: { success: boolean; error?: string };
+
       if (userType === 'visiteur') {
         authLogger.debug('Inscription en tant que visiteur...');
-        const result = await registerVisitor(baseData);
-        success = result.success;
+        registrationResult = await registerVisitor(baseData);
       } else {
         const professionalData = {
           ...baseData,
@@ -351,29 +374,33 @@ const Auth = () => {
           biographie: registerForm.biographie.trim(),
           id_type_user: SECTEUR_TYPE_USER_MAP[registerForm.secteur] || 2
         };
-        
+
         authLogger.debug('Inscription en tant que professionnel avec photo_url:', {
           id_type_user: professionalData.id_type_user,
           photo_url: professionalData.photo_url
         });
-        
+
         authLogger.debug('DONNÉES COMPLÈTES ENVOYÉES:', professionalData);
-        
-        const result = await registerProfessional(professionalData);
-        success = result.success;
+
+        registrationResult = await registerProfessional(professionalData);
       }
 
-      if (success) {
+      if (registrationResult.success) {
         authLogger.debug('Inscription réussie !');
-        
-        // Message de succès
-        toast({
-          title: t('auth.success.registrationTitle'),
-          description: userType === 'professionnel' 
-            ? t('auth.success.professionalRegistration') 
-            : t('auth.success.visitorRegistration'),
-        });
-        
+
+        // Message de succès différent selon le type d'utilisateur
+        if (userType === 'professionnel') {
+          toast({
+            title: t('auth.success.registrationTitle', 'Inscription réussie !'),
+            description: t('auth.success.professionalRegistration', 'Votre compte professionnel a été créé. Il sera validé par un administrateur sous 24-48h.'),
+          });
+        } else {
+          toast({
+            title: t('auth.success.registrationTitle', 'Inscription réussie !'),
+            description: t('auth.success.visitorRegistration', 'Bienvenue ! Votre compte a été créé avec succès.'),
+          });
+        }
+
         // Réinitialiser le formulaire
         setPhotoFile(null);
         setPhotoPreview(null);
@@ -396,22 +423,50 @@ const Auth = () => {
           portfolio: '',
           id_type_user: 0
         });
-        
+
         // La redirection sera gérée automatiquement par le hook useAuth
-        // car le token est stocké et l'état isAuthenticated va changer
       } else {
-        console.error('❌ Échec de l\'inscription');
+        console.error('❌ Échec de l\'inscription:', registrationResult.error);
+
+        // Afficher le message d'erreur spécifique du backend
+        const errorMessage = registrationResult.error || '';
+        let title = t('auth.errors.registrationError', 'Erreur d\'inscription');
+        let description = t('auth.errors.registrationErrorDescription', 'Une erreur est survenue lors de l\'inscription');
+
+        // Messages d'erreur spécifiques
+        if (errorMessage.toLowerCase().includes('email') && (errorMessage.toLowerCase().includes('exist') || errorMessage.toLowerCase().includes('déjà'))) {
+          title = t('auth.errors.emailExists', 'Email déjà utilisé');
+          description = t('auth.errors.emailExistsDescription', 'Un compte existe déjà avec cette adresse email. Veuillez vous connecter ou utiliser une autre adresse.');
+        } else if (errorMessage.toLowerCase().includes('mot de passe')) {
+          description = t('auth.errors.passwordError', 'Le mot de passe ne respecte pas les critères de sécurité');
+        } else if (errorMessage) {
+          description = errorMessage;
+        }
+
         toast({
-          title: t('auth.errors.registrationError'), 
-          description: t('auth.errors.registrationErrorDescription'),
+          title,
+          description,
           variant: "destructive",
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('❌ Erreur inscription:', error);
+      const errorMessage = error instanceof Error ? error.message : '';
+
+      // Vérifier si c'est une erreur d'email existant
+      let title = t('errors.generic.title', 'Erreur');
+      let description = t('errors.generic.message', 'Une erreur est survenue');
+
+      if (errorMessage.toLowerCase().includes('email') && (errorMessage.toLowerCase().includes('exist') || errorMessage.toLowerCase().includes('déjà'))) {
+        title = t('auth.errors.emailExists', 'Email déjà utilisé');
+        description = t('auth.errors.emailExistsDescription', 'Un compte existe déjà avec cette adresse email.');
+      } else if (errorMessage) {
+        description = errorMessage;
+      }
+
       toast({
-        title: t('errors.generic.title'),
-        description: error.message || t('errors.generic.message'),
+        title,
+        description,
         variant: "destructive",
       });
     } finally {

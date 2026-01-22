@@ -7,14 +7,18 @@ import { oeuvreService } from '@/services/oeuvre.service';
 import { articleBlockService } from '@/services/articleBlock.service';
 import { Loader2, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/UI/button';
-import { Alert, AlertDescription } from '@/components/UI/alert';import { useTranslation } from "react-i18next";
+import { Alert, AlertDescription } from '@/components/UI/alert';
+import { useTranslation } from "react-i18next";
+import { useToast } from '@/hooks/use-toast';
 
 const EditArticle: React.FC = () => {
   const { id } = useParams<{id: string;}>();
   const navigate = useNavigate();
   const [initialData, setInitialData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);const { t } = useTranslation();
+  const [error, setError] = useState<string | null>(null);
+  const { t } = useTranslation();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (id) {
@@ -80,7 +84,10 @@ const EditArticle: React.FC = () => {
 
   const handleSave = (response: any) => {
     console.log('Article mis à jour:', response);
-    alert('Article mis à jour avec succès !');
+    toast({
+      title: t('common.success', 'Succès'),
+      description: t('article.updateSuccess', 'Article mis à jour avec succès !'),
+    });
     navigate(`/oeuvres/${id}`);
   };
 

@@ -51,6 +51,8 @@ import { articleBlockService } from '@/services/articleBlock.service';
 import { favoriService } from '@/services/favori.service';
 import { commentaireService } from '@/services/commentaire.service';
 import { authService } from '@/services/auth.service';
+import { useToast } from '@/hooks/use-toast';
+import { getAssetUrl } from '@/helpers/assetUrl';
 
 // Types
 import type { Oeuvre } from '@/types/models/oeuvre.types';
@@ -192,7 +194,9 @@ const ArticleViewPage: React.FC = () => {
   const [showCommentModal, setShowCommentModal] = useState(false);
   const [commentContent, setCommentContent] = useState('');
   const [commentLoading, setCommentLoading] = useState(false);
-  const [replyToComment, setReplyToComment] = useState<number | null>(null);const { t } = useTranslation();
+  const [replyToComment, setReplyToComment] = useState<number | null>(null);
+  const { t } = useTranslation();
+  const { toast } = useToast();
 
   const articleId = parseInt(id || '0');
   const isScientific = oeuvre?.id_type_oeuvre === 5;
@@ -309,7 +313,10 @@ const ArticleViewPage: React.FC = () => {
       navigator.share({ title, url });
     } else {
       navigator.clipboard.writeText(url);
-      alert('Lien copié !');
+      toast({
+        title: t('common.success', 'Succès'),
+        description: t('article.linkCopied', 'Lien copié !'),
+      });
     }
   };
 
@@ -355,11 +362,19 @@ const ArticleViewPage: React.FC = () => {
         setShowCommentModal(false);
         setReplyToComment(null);
       } else {
-        alert(result.error || 'Erreur lors de l\'ajout du commentaire');
+        toast({
+          title: t('common.error', 'Erreur'),
+          description: result.error || t('article.commentError', 'Erreur lors de l\'ajout du commentaire'),
+          variant: 'destructive',
+        });
       }
     } catch (err) {
       console.error('Erreur ajout commentaire:', err);
-      alert('Erreur lors de l\'ajout du commentaire');
+      toast({
+        title: t('common.error', 'Erreur'),
+        description: t('article.commentError', 'Erreur lors de l\'ajout du commentaire'),
+        variant: 'destructive',
+      });
     } finally {
       setCommentLoading(false);
     }
@@ -461,7 +476,7 @@ const ArticleViewPage: React.FC = () => {
         return block.media ?
         <figure key={block.id_block || index} className="my-8">
             <img
-            src={block.media.url}
+            src={getAssetUrl(block.media.url)}
             alt={block.metadata?.caption || 'Image'}
             className={`rounded-lg shadow-lg w-full ${
             block.metadata?.layout === 'centered' ? 'max-w-3xl mx-auto' : ''}`

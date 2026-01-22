@@ -15,6 +15,7 @@ import {
 import { LazyImage, EmptyState } from '@/components/shared';
 import { cn } from '@/lib/utils';
 import type { Media } from '@/types/models/media.types';
+import { getAssetUrl } from '@/helpers/assetUrl';
 
 interface OeuvreGalleryProps {
   medias: Media[];
@@ -105,7 +106,7 @@ const Lightbox: React.FC<LightboxProps> = ({
     switch (currentMedia.type_media) {
       case 'video':
         return (
-          <video src={currentMedia.url} controls autoPlay className="max-h-[80vh] max-w-full rounded-lg">
+          <video src={getAssetUrl(currentMedia.url)} controls autoPlay className="max-h-[80vh] max-w-full rounded-lg">
             Votre navigateur ne supporte pas la lecture vidéo.
           </video>
         );
@@ -114,7 +115,7 @@ const Lightbox: React.FC<LightboxProps> = ({
           <div className="bg-muted p-8 rounded-lg text-center">
             <Music className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
             <p className="mb-4 font-medium">{currentMedia.titre || 'Audio'}</p>
-            <audio src={currentMedia.url} controls className="w-full max-w-md" />
+            <audio src={getAssetUrl(currentMedia.url)} controls className="w-full max-w-md" />
           </div>
         );
       case 'document':
@@ -123,7 +124,7 @@ const Lightbox: React.FC<LightboxProps> = ({
             <FileText className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
             <p className="mb-4 font-medium">{currentMedia.titre || 'Document'}</p>
             <Button asChild>
-              <a href={currentMedia.url} target="_blank" rel="noopener noreferrer">
+              <a href={getAssetUrl(currentMedia.url)} target="_blank" rel="noopener noreferrer">
                 <Download className="h-4 w-4 mr-2" />
                 {t('common.download', 'Télécharger')}
               </a>
@@ -133,7 +134,7 @@ const Lightbox: React.FC<LightboxProps> = ({
       default:
         return (
           <img
-            src={currentMedia.url}
+            src={getAssetUrl(currentMedia.url)}
             alt={currentMedia.titre || 'Image'}
             className="max-h-[80vh] max-w-full object-contain rounded-lg"
           />
@@ -275,7 +276,7 @@ const OeuvreGallery: React.FC<OeuvreGalleryProps> = ({ medias }) => {
               >
                 <div className="w-16 h-16 rounded overflow-hidden flex-shrink-0">
                   {media.type_media === 'image' ? (
-                    <LazyImage src={media.url} alt={media.titre || 'Media'} className="w-full h-full object-cover" />
+                    <LazyImage src={getAssetUrl(media.url)} alt={media.titre || 'Media'} className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-muted">
                       <Icon className="h-6 w-6 text-muted-foreground" />

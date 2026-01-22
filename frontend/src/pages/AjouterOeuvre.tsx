@@ -36,6 +36,7 @@ import type {
   DetailsSpecifiques,
   CreateOeuvreCompleteDTO } from
 '@/types/api/oeuvre-creation.types';
+import { useToast } from '@/hooks/use-toast';
 
 // ============================================================================
 // TYPES LOCAUX
@@ -413,6 +414,8 @@ const EditorModeSelector: React.FC<EditorModeSelectorProps> = ({
 // ============================================================================
 
 const AjouterOeuvre: React.FC = () => {
+  const { toast } = useToast();
+
   // État de chargement et erreurs
   const [loading, setLoading] = useState(false);
   const [loadingMetadata, setLoadingMetadata] = useState(true);
@@ -654,7 +657,11 @@ const AjouterOeuvre: React.FC = () => {
     });
 
     if (errors.length > 0) {
-      alert('Erreurs lors de l\'ajout des fichiers:\n' + errors.join('\n'));
+      toast({
+        title: t('ajouteroeuvre.erreur_upload'),
+        description: errors.join('\n'),
+        variant: 'destructive',
+      });
     }
 
     if (newMedias.length > 0) {
@@ -726,11 +733,14 @@ const AjouterOeuvre: React.FC = () => {
   const handleArticleEditorSave = useCallback((response: any) => {
     console.log('Article sauvegardé depuis l\'éditeur:', response);
     // Redirection vers le dashboard ou l'article
-    alert('Article créé avec succès !');
+    toast({
+      title: t('ajouteroeuvre.succes'),
+      description: t('ajouteroeuvre.article_cree_succes'),
+    });
     setTimeout(() => {
       window.location.href = '/dashboard-pro';
     }, 1500);
-  }, []);
+  }, [toast, t]);
 
   // ============================================================================
   // SOUMISSION DU FORMULAIRE
@@ -759,10 +769,10 @@ const AjouterOeuvre: React.FC = () => {
         break;
 
       case 'Album Musical':
-        details.album = {
+        details.album_musical = {
           duree: formData.duree_album,
           label: formData.label,
-          nb_pistes: undefined
+          nb_pistes: formData.nb_pistes
         };
         break;
 
@@ -876,7 +886,10 @@ const AjouterOeuvre: React.FC = () => {
         }
 
         // Succès
-        alert(isDraft ? 'Brouillon sauvegardé avec succès !' : 'Œuvre créée avec succès !');
+        toast({
+          title: t('ajouteroeuvre.succes'),
+          description: isDraft ? t('ajouteroeuvre.brouillon_sauvegarde') : t('ajouteroeuvre.oeuvre_creee_succes'),
+        });
 
         // Redirection
         setTimeout(() => {
@@ -900,10 +913,8 @@ const AjouterOeuvre: React.FC = () => {
             console.log('✅ Œuvre trouvée malgré le timeout');
 
             if (medias.length > 0) {
-              const uploadConfirm = confirm(
-                'L\'œuvre a été créée avec succès ! ' +
-                'Voulez-vous uploader les médias maintenant ?'
-              );
+              // Uploader automatiquement les médias après timeout
+            const uploadConfirm = true; // Auto-upload après timeout
 
               if (uploadConfirm) {
                 setUploadProgress('Upload des médias...');
@@ -920,7 +931,10 @@ const AjouterOeuvre: React.FC = () => {
               }
             }
 
-            alert('Œuvre créée avec succès ! Redirection...');
+            toast({
+              title: t('ajouteroeuvre.succes'),
+              description: t('ajouteroeuvre.oeuvre_creee_succes'),
+            });
             setTimeout(() => {
               window.location.href = '/dashboard-pro';
             }, 1500);
@@ -943,7 +957,7 @@ const AjouterOeuvre: React.FC = () => {
       setLoading(false);
       setUploadProgress('');
     }
-  }, [formData, metadata.types_oeuvres, contributeurs, nouveauxIntervenants, editeurs, medias, prepareDetailsSpecifiques]);
+  }, [formData, metadata.types_oeuvres, contributeurs, nouveauxIntervenants, editeurs, medias, prepareDetailsSpecifiques, toast, t]);
 
   // ============================================================================
   // RENDU DES CHAMPS SPÉCIFIQUES

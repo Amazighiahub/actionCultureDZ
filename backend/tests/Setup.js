@@ -1,57 +1,62 @@
-require('dotenv').config({ path: '.env.test' });
-const { initializeDatabase } = require('../models');
-const { Sequelize } = require('sequelize');
+/**
+ * Configuration des tests - Jest Setup
+ */
 
-let sequelize, models;
+// Timeout plus long pour les tests d integration
+jest.setTimeout(30000);
 
-// Configuration pour les tests
-const testDbConfig = {
-  database: process.env.TEST_DB_NAME || 'actionculture_test',
-  username: process.env.TEST_DB_USER || process.env.DB_USER || 'root',
-  password: process.env.TEST_DB_PASSWORD || process.env.DB_PASSWORD || '',
-  host: process.env.TEST_DB_HOST || process.env.DB_HOST || 'localhost',
-  port: parseInt(process.env.TEST_DB_PORT || process.env.DB_PORT) || 3306,
-  logging: false,
-  sync: { force: true }, // Recréer les tables à chaque test
-  skipSeed: true
-};
+// Variables d environnement pour les tests
+process.env.NODE_ENV = "test";
+process.env.JWT_SECRET = "test-secret-key-for-testing-only";
+process.env.DB_NAME = "actionculture_test";
 
-// Fonction pour initialiser la base de test
-const setupTestDatabase = async () => {
-  if (!sequelize) {
-    const bootstrapSequelize = new Sequelize('', testDbConfig.username, testDbConfig.password, {
-      host: testDbConfig.host,
-      port: testDbConfig.port,
-      dialect: 'mysql',
-      logging: false
-    });
+// Mock du logger pour eviter les logs pendant les tests
+jest.mock("../utils/logger", () => ({
+  info: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+  debug: jest.fn(),
+  logRequest: jest.fn(),
+  logError: jest.fn(),
+  logDb: jest.fn()
+}));
 
-    try {
-      await bootstrapSequelize.query(
-        `CREATE DATABASE IF NOT EXISTS \`${testDbConfig.database}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`
-      );
-    } finally {
-      await bootstrapSequelize.close();
-    }
+// Helper pour nettoyer les mocks apres chaque test
+afterEach(() => {
+  jest.clearAllMocks();
+});
 
-    const result = await initializeDatabase(testDbConfig);
-    sequelize = result.sequelize;
-    models = result.models;
-  }
-  return { sequelize, models };
-};
+// Helper global pour creer des utilisateurs de test
+global.createTestUser = (overrides = {}) => ({
+  id_user: 1,
+  nom: "Test",
+  prenom: "User",
+  email: "test@example.com",
+  type_user: "visiteur",
+  statut_validation: "valide",
+  est_actif: true,
+  ...overrides
+});
 
-// Fonction pour nettoyer après les tests
-const teardownTestDatabase = async () => {
-  if (sequelize) {
-    await sequelize.close();
-    sequelize = null;
-    models = null;
-  }
-};
+// Helper pour creer une oeuvre de test
+global.createTestOeuvre = (overrides = {}) => ({
+  id_oeuvre: 1,
+  titre: { fr: "Test Oeuvre", ar: "اختبار", en: "Test Work" },
+  description: { fr: "Description test", ar: "وصف اختبار", en: "Test description" },
+  id_type_oeuvre: 1,
+  id_createur: 1,
+  statut: "publie",
+  ...overrides
+});
 
-module.exports = {
-  setupTestDatabase,
-  teardownTestDatabase,
-  testDbConfig
-};
+// Helper pour creer un evenement de test
+global.createTestEvenement = (overrides = {}) => ({
+  id_evenement: 1,
+  nom_evenement: { fr: "Test Event", ar: "حدث اختبار", en: "Test Event" },
+  date_debut: new Date("2025-03-15"),
+  date_fin: new Date("2025-03-17"),
+  id_organisateur: 1,
+  statut: "publie",
+  ...overrides
+});
+

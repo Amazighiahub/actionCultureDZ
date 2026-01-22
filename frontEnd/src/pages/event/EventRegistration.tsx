@@ -33,6 +33,7 @@ import {
 import { httpClient } from '@/services/httpClient';
 import { oeuvreService } from '@/services/oeuvre.service';
 import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
 import { useLocalizedDate } from '@/hooks/useLocalizedDate';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { useTranslateData } from '@/hooks/useTranslateData';
@@ -89,6 +90,7 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
   const { formatDate } = useLocalizedDate();
   const { formatPrice } = useLocalizedNumber();
   const { td, safe } = useTranslateData();
+  const { toast } = useToast();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -221,10 +223,14 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
   // Soumettre l'inscription
   const handleSubmit = async () => {
     // Vérifier si des œuvres sont requises
-    if (inscriptionConfig?.accepte_soumissions && 
-        inscriptionConfig?.config_soumission?.requis && 
+    if (inscriptionConfig?.accepte_soumissions &&
+        inscriptionConfig?.config_soumission?.requis &&
         selectedOeuvres.length === 0) {
-      alert(t('event.registration.oeuvresRequired', 'Veuillez sélectionner au moins une œuvre à soumettre'));
+      toast({
+        title: t('common.error', 'Erreur'),
+        description: t('event.registration.oeuvresRequired', 'Veuillez sélectionner au moins une œuvre à soumettre'),
+        variant: 'destructive',
+      });
       return;
     }
 

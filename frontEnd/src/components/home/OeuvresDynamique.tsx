@@ -14,6 +14,7 @@ import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { useRTL } from '@/hooks/useRTL';
 import { oeuvreService } from '@/services/oeuvre.service';
 import { Oeuvre } from '@/types';
+import { getAssetUrl } from '@/helpers/assetUrl';
 import ErrorMessage from './ErrorMessage';
 
 const OeuvresDynamique: React.FC = () => {
@@ -92,7 +93,7 @@ const OeuvresDynamique: React.FC = () => {
               <div className="relative h-48 overflow-hidden">
                 {oeuvre.Media && oeuvre.Media[0] ? (
                   <img
-                    src={oeuvre.Media[0].url}
+                    src={getAssetUrl(oeuvre.Media[0].url)}
                     alt={oeuvre.titre}
                     loading="lazy"
                     className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"

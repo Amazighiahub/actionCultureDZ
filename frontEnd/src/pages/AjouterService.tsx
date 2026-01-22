@@ -21,6 +21,7 @@ import {
 import { lieuService } from '@/services/lieu.service';
 import { patrimoineService } from '@/services/patrimoine.service';
 import MultiLangInput from '@/components/MultiLangInput';
+import { useToast } from '@/hooks/use-toast';
 
 // Types de patrimoine avec leurs icones
 const TYPES_PATRIMOINE = [
@@ -51,21 +52,30 @@ const SERVICES_PREDEFINIS = [
   { id: 'aire_jeux', label: { fr: 'Aire de jeux', ar: 'ملعب أطفال', en: 'Playground' } }
 ];
 
+interface MultiLangText {
+  fr: string;
+  ar: string;
+  en: string;
+  'tz-ltn': string;
+  'tz-tfng': string;
+}
+
 interface ServiceForm {
-  nom: { fr: string; ar: string; en: string };
-  description: { fr: string; ar: string; en: string };
+  nom: MultiLangText;
+  description: MultiLangText;
   disponible: boolean;
 }
 
 const INITIAL_SERVICE: ServiceForm = {
-  nom: { fr: '', ar: '', en: '' },
-  description: { fr: '', ar: '', en: '' },
+  nom: { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
+  description: { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
   disponible: true
 };
 
 const AjouterService: React.FC = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const currentLang = i18n.language as 'fr' | 'ar' | 'en';
 
   // States
@@ -190,12 +200,22 @@ const AjouterService: React.FC = () => {
   // Ajouter un service personnalisé à la liste
   const addCustomService = () => {
     if (!customService.nom.fr && !customService.nom.ar) {
-      setError(t('ajouterService.errors.nomRequired', 'Le nom du service est requis'));
+      const errorMessage = t('ajouterService.errors.nomRequired', 'Le nom du service est requis');
+      setError(errorMessage);
+      toast({
+        title: t('common.error', 'Erreur'),
+        description: errorMessage,
+        variant: 'destructive',
+      });
       return;
     }
     setServicesToAdd(prev => [...prev, { ...customService }]);
     setCustomService(INITIAL_SERVICE);
     setError(null);
+    toast({
+      title: t('ajouterService.serviceAdded', 'Service ajouté'),
+      description: t('ajouterService.serviceAddedDesc', 'Le service a été ajouté à la liste'),
+    });
   };
 
   // Retirer un service de la liste
@@ -206,7 +226,13 @@ const AjouterService: React.FC = () => {
   // Soumettre les services
   const handleSubmit = async () => {
     if (!selectedLieu) {
-      setError(t('ajouterService.errors.noLieuSelected', 'Veuillez sélectionner un lieu'));
+      const errorMessage = t('ajouterService.errors.noLieuSelected', 'Veuillez sélectionner un lieu');
+      setError(errorMessage);
+      toast({
+        title: t('common.error', 'Erreur'),
+        description: errorMessage,
+        variant: 'destructive',
+      });
       return;
     }
 
@@ -225,7 +251,13 @@ const AjouterService: React.FC = () => {
     ];
 
     if (allServices.length === 0) {
-      setError(t('ajouterService.errors.noServices', 'Veuillez ajouter au moins un service'));
+      const errorMessage = t('ajouterService.errors.noServices', 'Veuillez ajouter au moins un service');
+      setError(errorMessage);
+      toast({
+        title: t('common.error', 'Erreur'),
+        description: errorMessage,
+        variant: 'destructive',
+      });
       return;
     }
 
@@ -244,6 +276,11 @@ const AjouterService: React.FC = () => {
 
       setSuccess(true);
 
+      toast({
+        title: t('ajouterService.successTitle', 'Succès'),
+        description: t('ajouterService.success', 'Services ajoutés avec succès!'),
+      });
+
       // Recharger les services
       await loadExistingServices(selectedLieu.id_lieu);
 
@@ -257,7 +294,13 @@ const AjouterService: React.FC = () => {
 
     } catch (err: any) {
       console.error('Erreur ajout services:', err);
-      setError(err.message || t('ajouterService.errors.submitFailed', 'Erreur lors de l\'ajout des services'));
+      const errorMessage = err.message || t('ajouterService.errors.submitFailed', 'Erreur lors de l\'ajout des services');
+      setError(errorMessage);
+      toast({
+        title: t('common.error', 'Erreur'),
+        description: errorMessage,
+        variant: 'destructive',
+      });
     } finally {
       setSubmitting(false);
     }

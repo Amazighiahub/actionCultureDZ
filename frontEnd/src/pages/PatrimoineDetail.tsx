@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { patrimoineService } from '@/services/patrimoine.service';
 import { useToast } from '@/hooks/use-toast';
+import { getAssetUrl } from '@/helpers/assetUrl';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/UI/dialog';
 import VisitePlanner from '@/components/patrimoine/VisitePlanner';
 
@@ -322,7 +323,7 @@ const PatrimoineDetail = () => {
                         </div>
                       ) : (
                         <img
-                          src={media.url}
+                          src={getAssetUrl(media.url)}
                           alt={`Photo ${idx + 1}`}
                           className="w-full h-full object-cover hover:scale-105 transition-transform"
                         />
@@ -632,7 +633,7 @@ const PatrimoineDetail = () => {
                           </div>
                         ) : (
                           <img
-                            src={media.url}
+                            src={getAssetUrl(media.url)}
                             alt={`Photo ${idx + 1}`}
                             className="w-full h-full object-cover hover:scale-105 transition-transform"
                           />

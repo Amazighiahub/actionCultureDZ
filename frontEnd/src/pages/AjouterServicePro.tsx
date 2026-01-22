@@ -39,35 +39,43 @@ const TYPES_SERVICE = [
   { value: 'autre', label: { fr: 'Autre service', ar: 'خدمة أخرى', en: 'Other service' }, icon: Building2 },
 ];
 
+interface MultiLangText {
+  fr: string;
+  ar: string;
+  en: string;
+  'tz-ltn': string;
+  'tz-tfng': string;
+}
+
 interface ServiceFormData {
-  nom: { fr: string; ar: string; en: string };
-  description: { fr: string; ar: string; en: string };
+  nom: MultiLangText;
+  description: MultiLangText;
   type_service: string;
   id_lieu: number | null;
   latitude: string;
   longitude: string;
-  adresse: { fr: string; ar: string; en: string };
+  adresse: MultiLangText;
   telephone: string;
   email: string;
   site_web: string;
-  horaires: { fr: string; ar: string; en: string };
+  horaires: MultiLangText;
   tarif_min: string;
   tarif_max: string;
   disponible: boolean;
 }
 
 const INITIAL_FORM: ServiceFormData = {
-  nom: { fr: '', ar: '', en: '' },
-  description: { fr: '', ar: '', en: '' },
+  nom: { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
+  description: { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
   type_service: '',
   id_lieu: null,
   latitude: '',
   longitude: '',
-  adresse: { fr: '', ar: '', en: '' },
+  adresse: { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
   telephone: '',
   email: '',
   site_web: '',
-  horaires: { fr: '', ar: '', en: '' },
+  horaires: { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
   tarif_min: '',
   tarif_max: '',
   disponible: true,
@@ -96,8 +104,8 @@ const AjouterServicePro: React.FC = () => {
   // Nouveau lieu
   const [lieuMode, setLieuMode] = useState<'existing' | 'new'>('existing');
   const [newLieu, setNewLieu] = useState({
-    nom: { fr: '', ar: '', en: '' },
-    adresse: { fr: '', ar: '', en: '' },
+    nom: { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
+    adresse: { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
     latitude: '',
     longitude: '',
     wilaya: '',

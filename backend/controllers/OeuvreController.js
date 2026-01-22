@@ -350,10 +350,91 @@ class OeuvreController {
         annee_creation,
         prix,
         id_oeuvre_originale,
-        details_specifiques,
         saisi_par: req.user?.id_user,
         statut: 'brouillon'
       }, { transaction });
+
+      // 2b. Créer l'entrée dans la table spécifique selon le type d'œuvre
+      if (details_specifiques && Object.keys(details_specifiques).length > 0) {
+        const typeOeuvre = await this.models.TypeOeuvre.findByPk(id_type_oeuvre);
+        const typeName = typeOeuvre?.nom_type;
+
+        console.log('📝 Création détails spécifiques pour:', typeName, details_specifiques);
+
+        try {
+          switch (typeName) {
+            case 'Livre':
+              if (details_specifiques.livre && this.models.Livre) {
+                await this.models.Livre.create({
+                  id_oeuvre: oeuvre.id_oeuvre,
+                  ...details_specifiques.livre
+                }, { transaction });
+              }
+              break;
+
+            case 'Film':
+              if (details_specifiques.film && this.models.Film) {
+                await this.models.Film.create({
+                  id_oeuvre: oeuvre.id_oeuvre,
+                  ...details_specifiques.film
+                }, { transaction });
+              }
+              break;
+
+            case 'Album Musical':
+              if (details_specifiques.album_musical && this.models.AlbumMusical) {
+                await this.models.AlbumMusical.create({
+                  id_oeuvre: oeuvre.id_oeuvre,
+                  ...details_specifiques.album_musical
+                }, { transaction });
+              }
+              break;
+
+            case 'Article':
+              if (details_specifiques.article && this.models.Article) {
+                await this.models.Article.create({
+                  id_oeuvre: oeuvre.id_oeuvre,
+                  ...details_specifiques.article
+                }, { transaction });
+              }
+              break;
+
+            case 'Article Scientifique':
+              if (details_specifiques.article_scientifique && this.models.ArticleScientifique) {
+                await this.models.ArticleScientifique.create({
+                  id_oeuvre: oeuvre.id_oeuvre,
+                  ...details_specifiques.article_scientifique
+                }, { transaction });
+              }
+              break;
+
+            case 'Artisanat':
+              if (details_specifiques.artisanat && this.models.Artisanat) {
+                await this.models.Artisanat.create({
+                  id_oeuvre: oeuvre.id_oeuvre,
+                  ...details_specifiques.artisanat
+                }, { transaction });
+              }
+              break;
+
+            case 'Œuvre d\'Art':
+            case 'Oeuvre d\'Art':
+              if (details_specifiques.oeuvre_art && this.models.OeuvreArt) {
+                await this.models.OeuvreArt.create({
+                  id_oeuvre: oeuvre.id_oeuvre,
+                  ...details_specifiques.oeuvre_art
+                }, { transaction });
+              }
+              break;
+
+            default:
+              console.log('⚠️ Type d\'œuvre non reconnu pour les détails spécifiques:', typeName);
+          }
+        } catch (detailsError) {
+          console.error('⚠️ Erreur création détails spécifiques:', detailsError.message);
+          // On continue même si les détails spécifiques échouent
+        }
+      }
 
       // 3. Associer les catégories
       if (categories.length > 0) {
