@@ -347,34 +347,62 @@ cd ../frontEnd && npm install
 
 ---
 
-## 📊 Étape 10: Données de Test
+## Étape 10: Chargement des Données de Test
 
-### 10.1 Créer des Données de Test
+### 10.1 Option 1: Script Automatique (Recommandé)
+```bash
+# Dans le dossier backend/seeds
+cd backend/database/seeds
+
+# Exécuter le script de chargement
+load-test-data-mysql.bat
+```
+
+### 10.2 Option 2: Manuellement
 ```bash
 # Se connecter à MySQL
 mysql -u actionculture_user -p actionculture
 
-# Insérer des événements de test
-INSERT INTO evenements (nom_evenement, date_debut, description, id_lieu) 
-VALUES ('Événement Test 1', NOW(), 'Description événement test', 1);
-
-# Insérer des sites patrimoniaux
-INSERT INTO lieux (nom, latitude, longitude, description, id_wilaya) 
-VALUES ('Site Test 1', 36.7, 3.0, 'Description site test', 1);
+# Copier-coller les requêtes SQL depuis backend/database/seeds/test-data-mysql.sql
 ```
 
-### 10.2 Utiliser les Seeds (si disponibles)
-```bash
-# Dans le dossier backend
-cd backend
+### 10.3 Données de Test Inclues
 
-# Exécuter les seeds de données
-npm run db:seed
+#### Œuvres et Patrimoine
+- **5 lieux patrimoniaux** (Casbah d'Alger, Musée National, Timgad, etc.)
+- **5 œuvres d'art** (vases, peintures, sculptures, photos)
+- **5 événements culturels** (festivals, expositions, ateliers)
+
+#### Utilisateurs de Test
+- **Admin** : `admin@test.com` / `admin123`
+- **User** : `user@test.com` / `user123`  
+- **Artisan** : `artisan@test.com` / `user123`
+
+#### Données Géographiques
+- **5 wilayas** (Alger, Oran, Tizi Ouzou, Constantine, Batna)
+- **Types de lieux** (monuments, musées, sites archéologiques)
+- **Coordonnées GPS** pour la carte interactive
+
+#### Contenu Interactif
+- **Commentaires** sur les œuvres
+- **Types d'événements** (festivals, conférences, ateliers)
+- **Types d'œuvres** (peinture, sculpture, artisanat, etc.)
+
+### 10.4 Vérification des Données
+```bash
+# Vérifier que les données sont bien chargées
+mysql -u actionculture_user -p actionculture
+
+# Compter les enregistrements
+SELECT COUNT(*) as total FROM evenements;     -- Doit afficher 5
+SELECT COUNT(*) as total FROM lieux;          -- Doit afficher 5  
+SELECT COUNT(*) as total FROM oeuvres;         -- Doit afficher 5
+SELECT COUNT(*) as total FROM users;          -- Doit afficher 3
 ```
 
 ---
 
-## 🎯 Étape 11: Tests Avancés
+## Étape 11: Tester les Fonctionnalités
 
 ### 11.1 Tester le Parcours Intelligent
 1. **Aller** sur la page d'un événement

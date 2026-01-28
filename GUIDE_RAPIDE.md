@@ -83,6 +83,23 @@ npm run dev
 
 ---
 
+## 📊 Charger les Données de Test
+
+### Script Automatique
+```bash
+# Dans le dossier backend/seeds
+cd backend/database/seeds
+
+# Exécuter le script
+load-test-data-mysql.bat
+```
+
+### Utilisateurs de Test Créés
+- **Admin** : `admin@test.com` / `admin123`
+- **User** : `user@test.com` / `user123`
+
+---
+
 ## 🧪 Tests à Faire
 
 ### ✅ Pages Principales
