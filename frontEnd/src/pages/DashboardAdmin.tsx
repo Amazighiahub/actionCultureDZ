@@ -21,7 +21,7 @@ import ErrorBoundary from '@/components/shared/ErrorBoundary';
 // Icônes
 import {
   Users, BookOpen, Calendar, Shield, Activity,
-  MapPin, Package, Bell, RefreshCw, Settings, Wifi, WifiOff
+  MapPin, Package, Bell, Settings, Wifi, WifiOff
 } from 'lucide-react';
 
 // Hooks
@@ -150,7 +150,7 @@ const DashboardAdmin: React.FC = () => {
 
         {/* Navigation par onglets */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="flex flex-wrap h-auto p-1 h-auto gap-1 bg-muted/50 p-1">
+          <TabsList className="flex flex-wrap h-auto gap-1 bg-muted/50 p-1">
             {tabs.map((tab) => (
               <TabsTrigger
                 key={tab.id}

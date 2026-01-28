@@ -45,50 +45,39 @@ export interface CurrentUser {
 }
 
 class AuthService {
-  // ✅ SÉCURITÉ: Les tokens sont maintenant gérés via cookies httpOnly
-  // Le localStorage est conservé uniquement pour la compatibilité pendant la transition
+  // ✅ SÉCURITÉ: Les tokens sont gérés UNIQUEMENT via cookies httpOnly
+  // Le localStorage stocke uniquement les métadonnées (user, expiry) pour l'UX
 
-  // Token management - Lecture depuis localStorage (fallback uniquement)
-  private getToken(): string | null {
-    // Note: Le vrai token est dans un cookie httpOnly (non accessible en JS)
-    // Ce fallback permet la transition progressive
-    return localStorage.getItem(AUTH_CONFIG.tokenKey);
-  }
-
-  private setToken(token: string): void {
-    // ✅ SÉCURITÉ: Stocker aussi en localStorage pour compatibilité
-    // Le cookie httpOnly est défini côté serveur automatiquement
-    localStorage.setItem(AUTH_CONFIG.tokenKey, token);
-
-    // Calculer et stocker la date d'expiration (15 minutes)
-    const expiresAt = new Date(Date.now() + AUTH_CONFIG.expiration).toISOString();
-    localStorage.setItem(AUTH_CONFIG.tokenExpiryKey, expiresAt);
-  }
-
-  private removeToken(): void {
-    localStorage.removeItem(AUTH_CONFIG.tokenKey);
-    localStorage.removeItem(AUTH_CONFIG.refreshTokenKey);
+  /**
+   * Nettoie les données de session locales
+   * Note: Les cookies httpOnly sont supprimés côté serveur via /logout
+   */
+  private clearLocalAuthData(): void {
+    localStorage.removeItem(AUTH_CONFIG.tokenKey); // Legacy cleanup
+    localStorage.removeItem(AUTH_CONFIG.refreshTokenKey); // Legacy cleanup
     localStorage.removeItem(AUTH_CONFIG.tokenExpiryKey);
-    // Note: Les cookies httpOnly sont supprimés via l'appel à /logout
   }
 
+  /**
+   * Stocke les métadonnées d'authentification (pas le token lui-même)
+   * Le token est géré via cookie httpOnly côté serveur
+   */
   private setAuthData(data: AuthTokenData): void {
-    // Stocker le token en localStorage (compatibilité)
-    if (data.token) {
-      this.setToken(data.token);
-    }
-
-    // Stocker le refresh token (compatibilité - le vrai est dans un cookie httpOnly)
-    if (data.refreshToken) {
-      localStorage.setItem(AUTH_CONFIG.refreshTokenKey, data.refreshToken);
-    }
-
-    // Calculer l'expiration si expiresIn est fourni (en secondes)
+    // Stocker la date d'expiration pour l'UX (savoir quand rafraîchir)
     if ((data as any).expiresIn) {
       const expiresAt = new Date(Date.now() + (data as any).expiresIn * 1000).toISOString();
       localStorage.setItem(AUTH_CONFIG.tokenExpiryKey, expiresAt);
     } else if (data.expiresAt) {
       localStorage.setItem(AUTH_CONFIG.tokenExpiryKey, data.expiresAt);
+    } else {
+      // Par défaut 15 minutes
+      const expiresAt = new Date(Date.now() + AUTH_CONFIG.expiration).toISOString();
+      localStorage.setItem(AUTH_CONFIG.tokenExpiryKey, expiresAt);
+    }
+
+    // Stocker l'utilisateur pour l'affichage (données non sensibles)
+    if ((data as any).user) {
+      localStorage.setItem('user', JSON.stringify((data as any).user));
     }
   }
 
@@ -118,27 +107,19 @@ class AuthService {
   /**
    * ✅ SÉCURITÉ: Rafraîchit le token d'accès via cookie httpOnly
    * Le refresh token est envoyé automatiquement via le cookie
-   * Fallback sur localStorage pour compatibilité
    */
   async refreshToken(): Promise<ApiResponse<AuthTokenData>> {
-    // Le refresh token est envoyé automatiquement via cookie httpOnly
-    // Le fallback localStorage est utilisé si le cookie n'est pas disponible
-    const refreshToken = localStorage.getItem(AUTH_CONFIG.refreshTokenKey);
-
-    // Appel à l'API - le cookie httpOnly sera envoyé automatiquement
-    const response = await httpClient.post<AuthTokenData>(
-      '/users/refresh-token',
-      refreshToken ? { refreshToken } : {} // Fallback si cookie non disponible
-    );
+    // Appel à l'API - le cookie httpOnly refresh_token sera envoyé automatiquement
+    const response = await httpClient.post<AuthTokenData>('/users/refresh-token', {});
 
     if (response.success && response.data) {
       this.setAuthData(response.data);
       console.log('✅ Token rafraîchi avec succès');
     } else {
       console.warn('⚠️ Échec du rafraîchissement du token');
-      // Si le refresh échoue, nettoyer les tokens
+      // Si le refresh échoue, nettoyer les données locales
       if (response.error?.includes('expiré') || response.error?.includes('expired')) {
-        this.removeToken();
+        this.clearLocalAuthData();
         this.clearUserCache();
       }
     }
@@ -150,21 +131,21 @@ class AuthService {
   }
 
   async verifyToken(): Promise<ApiResponse<{ valid: boolean }>> {
-    // Vérification locale du token car l'endpoint n'existe pas
-    const token = this.getToken();
+    // Vérification basée sur le cache user et l'expiration
+    const cachedUser = this.getCurrentUserFromCache();
     const expiresAt = localStorage.getItem(AUTH_CONFIG.tokenExpiryKey);
-    
-    if (!token) {
+
+    if (!cachedUser) {
       return { success: true, data: { valid: false } };
     }
-    
+
     if (expiresAt) {
       const expiry = new Date(expiresAt);
       const isValid = expiry > new Date();
       return { success: true, data: { valid: isValid } };
     }
-    
-    // Si pas de date d'expiration, on considère le token comme valide
+
+    // Si pas de date d'expiration mais user en cache, considérer comme valide
     return { success: true, data: { valid: true } };
   }
 
@@ -241,21 +222,19 @@ async registerProfessional(data: RegisterProfessionalData): Promise<ApiResponse<
 }
   /**
    * ✅ Vérifie si l'utilisateur est authentifié
-   * Note: Avec les cookies httpOnly, on vérifie l'expiration stockée
-   * Le vrai token est validé côté serveur à chaque requête
+   * Basé sur le cache user et l'expiration stockée
+   * Le vrai token (cookie httpOnly) est validé côté serveur à chaque requête
    */
   isAuthenticated(): boolean {
-    const token = this.getToken();
+    const cachedUser = this.getCurrentUserFromCache();
     const expiresAt = localStorage.getItem(AUTH_CONFIG.tokenExpiryKey);
 
-    // Si pas de token en localStorage, l'utilisateur pourrait quand même
-    // être authentifié via cookie httpOnly (vérifier via /profile)
-    if (!token) {
-      // Vérifier si on a un user en cache (indique une session active)
-      const cachedUser = this.getCurrentUserFromCache();
-      return !!cachedUser;
+    // Pas de user en cache = pas authentifié
+    if (!cachedUser) {
+      return false;
     }
 
+    // Vérifier l'expiration si disponible
     if (expiresAt) {
       const expiry = new Date(expiresAt);
       const isValid = expiry > new Date();
@@ -264,6 +243,7 @@ async registerProfessional(data: RegisterProfessionalData): Promise<ApiResponse<
       if (!isValid) {
         this.refreshToken().catch(() => {
           console.log('🔄 Refresh automatique échoué, session expirée');
+          this.clearUserCache();
         });
         // Retourner true pour éviter une déconnexion immédiate
         // Le refresh en cours déterminera le vrai état
@@ -272,11 +252,15 @@ async registerProfessional(data: RegisterProfessionalData): Promise<ApiResponse<
       return isValid;
     }
 
+    // User en cache sans expiration = considérer comme authentifié
     return true;
   }
 
+  /**
+   * @deprecated Token géré via cookie httpOnly, cette méthode retourne null
+   */
   getAuthToken(): string | null {
-    return this.getToken();
+    return null; // Token non accessible en JS (cookie httpOnly)
   }
 
   /**
@@ -484,11 +468,13 @@ async updateProfilePhotoAlternative(photoFile: File): Promise<ApiResponse<any>> 
     localStorage.removeItem('user');
   }
 
-// Et modifiez votre méthode logout() existante (ligne ~95) pour ajouter clearUserCache():
+  /**
+   * Déconnexion - efface les données locales et appelle l'API pour supprimer les cookies
+   */
   async logout(): Promise<ApiResponse<void>> {
     const response = await httpClient.post<void>(API_ENDPOINTS.auth.logout);
-    this.removeToken();
-    this.clearUserCache(); // <-- Ajoutez cette ligne
+    this.clearLocalAuthData();
+    this.clearUserCache();
     return response;
   }
 
