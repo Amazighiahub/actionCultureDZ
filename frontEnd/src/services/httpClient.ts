@@ -260,16 +260,11 @@ class HttpClient {
     // Request interceptor
     this.axiosInstance.interceptors.request.use(
       async (config) => {
+        // Header de langue
+        config.headers['X-Language'] = localStorage.getItem('i18nextLng') || 'fr';
 
-
-  config.headers['X-Language'] = localStorage.getItem('i18nextLng') || 'fr';
-
-        
-        // Ajouter le token d'authentification
-        const token = localStorage.getItem(AUTH_CONFIG.tokenKey);
-        if (token) {
-          config.headers[AUTH_CONFIG.header] = `${AUTH_CONFIG.headerPrefix} ${token}`;
-        }
+        // ✅ SÉCURITÉ: Le token est envoyé via cookie httpOnly (withCredentials: true)
+        // Pas besoin d'ajouter le header Authorization manuellement
 
         // Ajouter le token CSRF si disponible
         if (this.csrfToken) {
@@ -478,22 +473,19 @@ class HttpClient {
   }
 
   private async refreshToken(): Promise<void> {
-    const refreshToken = localStorage.getItem(AUTH_CONFIG.refreshTokenKey);
-    if (!refreshToken) {
-      throw new Error('No refresh token available');
-    }
-    
+    // ✅ SÉCURITÉ: Le refresh token est envoyé via cookie httpOnly
     try {
       const response = await axios.post(
         `${API_BASE_URL}/users/refresh-token`,
-        { refreshToken },
+        {},
         { withCredentials: true }
       );
-      
+
       if (response.data.success && response.data.data) {
-        localStorage.setItem(AUTH_CONFIG.tokenKey, response.data.data.token);
-        if (response.data.data.refreshToken) {
-          localStorage.setItem(AUTH_CONFIG.refreshTokenKey, response.data.data.refreshToken);
+        // Stocker uniquement la date d'expiration pour l'UX
+        if (response.data.data.expiresIn) {
+          const expiresAt = new Date(Date.now() + response.data.data.expiresIn * 1000).toISOString();
+          localStorage.setItem(AUTH_CONFIG.tokenExpiryKey, expiresAt);
         }
         apiLogger.debug('Token rafraîchi avec succès');
       } else {
@@ -506,10 +498,10 @@ class HttpClient {
   }
 
   private handleAuthError() {
-    // Nettoyer les tokens
-    localStorage.removeItem(AUTH_CONFIG.tokenKey);
-    localStorage.removeItem(AUTH_CONFIG.refreshTokenKey);
-    
+    // Nettoyer les données locales (cookies gérés côté serveur)
+    localStorage.removeItem(AUTH_CONFIG.tokenExpiryKey);
+    localStorage.removeItem('user');
+
     // Rediriger vers la page de connexion
     const currentPath = window.location.pathname;
     if (currentPath !== '/auth') {
