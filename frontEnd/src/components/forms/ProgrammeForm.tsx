@@ -73,6 +73,7 @@ interface ProgrammeFormProps {
   success?: boolean;
   lieux?: any[];
   users?: any[];
+  eventDates?: { dateDebut: string; dateFin: string };
 }
 
 // Icônes par type d'activité
@@ -91,9 +92,68 @@ const typesActivite = [
   { value: 'atelier', label: 'Atelier', icon: Users },
   { value: 'projection', label: 'Projection', icon: Video },
   { value: 'presentation', label: 'Présentation', icon: FileText },
+  { value: 'spectacle', label: 'Spectacle', icon: Play },
+  { value: 'exposition', label: 'Exposition', icon: Eye },
+  { value: 'visite', label: 'Visite guidée', icon: MapPin },
+  { value: 'concert', label: 'Concert', icon: Mic },
+  { value: 'lecture', label: 'Lecture', icon: FileText },
+  { value: 'debat', label: 'Débat', icon: Users },
+  { value: 'formation', label: 'Formation', icon: Users },
+  { value: 'ceremonie', label: 'Cérémonie', icon: Calendar },
   { value: 'pause', label: 'Pause', icon: Pause },
   { value: 'autre', label: 'Autre', icon: Play }
 ];
+
+// Plages horaires prédéfinies
+const plagesHoraires = [
+  { value: '08:00', label: '08:00' },
+  { value: '08:30', label: '08:30' },
+  { value: '09:00', label: '09:00' },
+  { value: '09:30', label: '09:30' },
+  { value: '10:00', label: '10:00' },
+  { value: '10:30', label: '10:30' },
+  { value: '11:00', label: '11:00' },
+  { value: '11:30', label: '11:30' },
+  { value: '12:00', label: '12:00' },
+  { value: '12:30', label: '12:30' },
+  { value: '13:00', label: '13:00' },
+  { value: '13:30', label: '13:30' },
+  { value: '14:00', label: '14:00' },
+  { value: '14:30', label: '14:30' },
+  { value: '15:00', label: '15:00' },
+  { value: '15:30', label: '15:30' },
+  { value: '16:00', label: '16:00' },
+  { value: '16:30', label: '16:30' },
+  { value: '17:00', label: '17:00' },
+  { value: '17:30', label: '17:30' },
+  { value: '18:00', label: '18:00' },
+  { value: '18:30', label: '18:30' },
+  { value: '19:00', label: '19:00' },
+  { value: '19:30', label: '19:30' },
+  { value: '20:00', label: '20:00' },
+  { value: '20:30', label: '20:30' },
+  { value: '21:00', label: '21:00' },
+  { value: '21:30', label: '21:30' },
+  { value: '22:00', label: '22:00' }
+];
+
+// Fonction pour générer les dates entre deux dates
+const generateDateRange = (startDate: string, endDate: string): string[] => {
+  const dates: string[] = [];
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  
+  for (let date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
+    dates.push(date.toISOString().split('T')[0]);
+  }
+  return dates;
+};
+
+// Formater une date pour l'affichage
+const formatDateLabel = (dateStr: string): string => {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+};
 
 // Niveaux requis
 const niveaux = [
@@ -130,8 +190,13 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
   error = null,
   success = false,
   lieux = [],
-  users = []
+  users = [],
+  eventDates
 }) => {
+  // Générer les dates disponibles basées sur les dates de l'événement
+  const availableDates = eventDates 
+    ? generateDateRange(eventDates.dateDebut, eventDates.dateFin)
+    : [];
   const { t } = useTranslation();
   const [formData, setFormData] = useState<ProgrammeFormData>({
     titre: { fr: '', ar: '', en: '' },
@@ -309,7 +374,7 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="basic">Informations</TabsTrigger>
           <TabsTrigger value="schedule">Horaires</TabsTrigger>
-          <TabsTrigger value="participants">Participants</TabsTrigger>
+          <TabsTrigger value="participants">Intervenants</TabsTrigger>
           <TabsTrigger value="options">Options</TabsTrigger>
         </TabsList>
 
@@ -416,124 +481,106 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Date */}
-              <FormField label="Date" required={true} error={errors.date_programme}>
-                <Input
-                  type="date"
+              {/* Date - Menu déroulant avec dates de l'événement */}
+              <FormField label="Date de l'activité" required={true} error={errors.date_programme}>
+                <Select
                   value={formData.date_programme}
-                  onChange={(e) => handleChange('date_programme', e.target.value)}
+                  onValueChange={(value) => handleChange('date_programme', value)}
                   disabled={isReadOnly}
-                />
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionner une date" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableDates.length > 0 ? (
+                      availableDates.map((date) => (
+                        <SelectItem key={date} value={date}>
+                          {formatDateLabel(date)}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="" disabled>
+                        Aucune date disponible
+                      </SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
               </FormField>
 
-              {/* Heures */}
+              {/* Heures - Menus déroulants avec plages prédéfinies */}
               <div className="grid grid-cols-2 gap-4">
                 <FormField label="Heure de début" required={true} error={errors.heure_debut}>
-                  <Input
-                    type="time"
-                    value={formData.heure_debut}
-                    onChange={(e) => handleChange('heure_debut', e.target.value)}
-                    disabled={isReadOnly}
-                  />
-                </FormField>
-
-                <FormField label="Heure de fin" required={true} error={errors.heure_fin}>
-                  <Input
-                    type="time"
-                    value={formData.heure_fin}
-                    onChange={(e) => handleChange('heure_fin', e.target.value)}
-                    disabled={isReadOnly}
-                  />
-                </FormField>
-              </div>
-
-              {/* Durée estimée */}
-              <FormField label="Durée estimée (minutes)">
-                <Input
-                  type="number"
-                  min="1"
-                  value={formData.duree_estimee || ''}
-                  onChange={(e) => handleChange('duree_estimee', parseInt(e.target.value))}
-                  disabled={isReadOnly}
-                  placeholder="Calculée automatiquement"
-                />
-              </FormField>
-
-              {/* Lieu */}
-              <div className="space-y-4">
-                <FormField label="Lieu existant">
                   <Select
-                    value={formData.id_lieu?.toString()}
-                    onValueChange={(value) => handleChange('id_lieu', value ? parseInt(value) : undefined)}
+                    value={formData.heure_debut}
+                    onValueChange={(value) => handleChange('heure_debut', value)}
                     disabled={isReadOnly}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Sélectionner un lieu" />
+                      <SelectValue placeholder="Sélectionner l'heure" />
                     </SelectTrigger>
                     <SelectContent>
-                      {lieux.map((lieu) => (
-                        <SelectItem key={lieu.id_lieu} value={lieu.id_lieu.toString()}>
-                          {lieu.nom}
+                      {plagesHoraires.map((plage) => (
+                        <SelectItem key={plage.value} value={plage.value}>
+                          {plage.label}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </FormField>
 
-                <MultiLangInput
-                  name="lieu_specifique"
-                  label="Lieu spécifique (si non listé)"
-                  value={formData.lieu_specifique || {}}
-                  onChange={(value) => handleMultiLangChange('lieu_specifique', value)}
-                  disabled={isReadOnly}
-                  errors={errors}
-                />
+                <FormField label="Heure de fin" required={true} error={errors.heure_fin}>
+                  <Select
+                    value={formData.heure_fin}
+                    onValueChange={(value) => handleChange('heure_fin', value)}
+                    disabled={isReadOnly}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionner l'heure" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {plagesHoraires.map((plage) => (
+                        <SelectItem key={plage.value} value={plage.value}>
+                          {plage.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormField>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
 
-        {/* Onglet Participants et Intervenants */}
-        <TabsContent value="participants" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Participants et intervenants</CardTitle>
-              <CardDescription>
-                Gestion des participants et intervenants
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Nombre maximum de participants */}
-              <FormField label="Nombre maximum de participants">
-                <Input
-                  type="number"
-                  min="1"
-                  value={formData.nb_participants_max || ''}
-                  onChange={(e) => handleChange('nb_participants_max', e.target.value ? parseInt(e.target.value) : undefined)}
-                  disabled={isReadOnly}
-                  placeholder="Illimité si non spécifié"
-                />
-              </FormField>
-
-              {/* Niveau requis */}
-              <FormField label="Niveau requis">
+              {/* Lieu */}
+              <FormField label="Lieu" error={errors.id_lieu}>
                 <Select
-                  value={formData.niveau_requis}
-                  onValueChange={(value) => handleChange('niveau_requis', value)}
+                  value={formData.id_lieu?.toString()}
+                  onValueChange={(value) => handleChange('id_lieu', value ? parseInt(value) : undefined)}
                   disabled={isReadOnly}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner un niveau" />
+                    <SelectValue placeholder="Sélectionner un lieu" />
                   </SelectTrigger>
                   <SelectContent>
-                    {niveaux.map((niveau) => (
-                      <SelectItem key={niveau.value} value={niveau.value}>
-                        {niveau.label}
+                    {lieux.map((lieu) => (
+                      <SelectItem key={lieu.id_lieu} value={lieu.id_lieu.toString()}>
+                        {lieu.nom}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </FormField>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Onglet Intervenants */}
+        <TabsContent value="participants" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Intervenants</CardTitle>
+              <CardDescription>
+                Gestion des intervenants de l'activité
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
 
               {/* Intervenants */}
               <div className="space-y-4">

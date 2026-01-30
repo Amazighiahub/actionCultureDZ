@@ -48,6 +48,8 @@ interface GestionEvenementProps {
   onClose?: () => void;
   /** Si true, masque l'onglet des œuvres (pour événements sans œuvres comme concours, lectures, etc.) */
   hideOeuvres?: boolean;
+  /** Dates de début et fin de l'événement pour le formulaire d'activité */
+  eventDates?: { dateDebut: string; dateFin: string };
 }
 
 // Types d'activités pour les programmes
@@ -70,7 +72,8 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
   evenementId,
   evenementNom,
   onClose,
-  hideOeuvres = false
+  hideOeuvres = false,
+  eventDates
 }) => {
   const { t } = useTranslation();
   const { td } = useTranslateData();
@@ -343,18 +346,18 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
               <DialogTrigger asChild>
                 <Button onClick={() => setEditingProgramme(null)}>
                   <Plus className="h-4 w-4 mr-2" />
-                  {t('programme.add', 'Ajouter un programme')}
+                  {t('programme.add', 'Ajouter une activité')}
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>
                     {editingProgramme
-                      ? t('programme.edit', 'Modifier le programme')
-                      : t('programme.create', 'Créer un programme')}
+                      ? t('programme.edit', 'Modifier l\'activité')
+                      : t('programme.create', 'Créer une activité')}
                   </DialogTitle>
                   <DialogDescription>
-                    {t('programme.formDesc', 'Remplissez les informations du programme')}
+                    {t('programme.formDesc', 'Remplissez les informations de l\'activité')}
                   </DialogDescription>
                 </DialogHeader>
 
@@ -407,6 +410,7 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
                     { id_user: 3, prenom: 'Mohamed', nom: 'Kaci' },
                     { id_user: 4, prenom: 'Leila', nom: 'Boudiaf' }
                   ]}
+                  eventDates={eventDates}
                 />
               </DialogContent>
             </Dialog>
