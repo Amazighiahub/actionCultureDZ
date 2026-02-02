@@ -274,8 +274,21 @@ class App {
       
       // Étape 4 : Synchroniser si demandé
       if (process.env.DB_SYNC === 'true') {
-        await db.sequelize.sync({ alter: false });
-        console.log('✅ Modèles synchronisés');
+        try {
+          await db.sequelize.query('SET FOREIGN_KEY_CHECKS = 0');
+          console.log ('🔧 Contraintes FK désactivées');
+          
+          await db.sequelize.sync({ alter: true });
+
+          await db.sequelize.query('SET FOREIGN_KEY_CHECKS = 1');
+          console.log('🔧 Contraintes FK réactivées');
+          console.log('✅ Modèles synchronisés');
+        } catch (syncError) {
+          try {
+            await db.sequelize.query('SET FOREIGN_KEY_CHECKS = 1');
+          } catch (e) {}
+          throw syncError;
+        }    
       }
       
       // Étape 5 : Insérer les données par défaut si nécessaire
