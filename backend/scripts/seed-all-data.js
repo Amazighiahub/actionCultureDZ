@@ -214,7 +214,7 @@ async function seedOeuvres(models, typeOeuvreMap, langueMap, genreMap, userMap) 
   for (const livre of DATA.LIVRES) {
     const oeuvre = await models.Oeuvre.create({
       titre: livre.titre, description: livre.description,
-      id_type_oeuvre: typeOeuvreMap['Livre'], id_langue: langueMap['fr'],
+      id_type_oeuvre: typeOeuvreMap['Livre'], id_langue: langueMap['Français'],
       annee_creation: livre.annee, saisi_par: adminId,
       statut: 'publie', date_validation: new Date(), validateur_id: adminId
     });
@@ -229,7 +229,7 @@ async function seedOeuvres(models, typeOeuvreMap, langueMap, genreMap, userMap) 
   for (const film of DATA.FILMS) {
     const oeuvre = await models.Oeuvre.create({
       titre: film.titre, description: film.description,
-      id_type_oeuvre: typeOeuvreMap['Film'], id_langue: langueMap['fr'],
+      id_type_oeuvre: typeOeuvreMap['Film'], id_langue: langueMap['Français'],
       annee_creation: film.annee, saisi_par: adminId,
       statut: 'publie', date_validation: new Date(), validateur_id: adminId
     });
@@ -243,7 +243,7 @@ async function seedOeuvres(models, typeOeuvreMap, langueMap, genreMap, userMap) 
   for (const album of DATA.ALBUMS) {
     const oeuvre = await models.Oeuvre.create({
       titre: album.titre, description: album.description,
-      id_type_oeuvre: typeOeuvreMap['Album Musical'], id_langue: langueMap['ar'],
+      id_type_oeuvre: typeOeuvreMap['Album Musical'], id_langue: langueMap['Arabe'],
       annee_creation: album.annee, saisi_par: adminId,
       statut: 'publie', date_validation: new Date(), validateur_id: adminId
     });
@@ -257,7 +257,7 @@ async function seedOeuvres(models, typeOeuvreMap, langueMap, genreMap, userMap) 
   for (const art of DATA.ARTISANAT) {
     await models.Oeuvre.create({
       titre: art.titre, description: art.description,
-      id_type_oeuvre: typeOeuvreMap['Artisanat'], id_langue: langueMap['fr'],
+      id_type_oeuvre: typeOeuvreMap['Artisanat'], id_langue: langueMap['Français'],
       annee_creation: 2023, prix: 15000, saisi_par: adminId,
       statut: 'publie', date_validation: new Date(), validateur_id: adminId
     });

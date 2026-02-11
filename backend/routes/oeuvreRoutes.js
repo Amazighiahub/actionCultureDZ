@@ -4,6 +4,7 @@ const router = express.Router();
 const OeuvreController = require('../controllers/OeuvreController');
 const { body, param } = require('express-validator');
 const uploadService = require('../services/uploadService');
+const FileValidator = require('../utils/FileValidator');
 
 // ⚡ Import du middleware de validation de langue
 const { validateLanguage } = require('../middlewares/language');
@@ -107,6 +108,33 @@ const initOeuvreRoutes = (models, authMiddleware) => {
         }
         next();
       });
+    };
+  };
+
+  const validateUploadedFilesBatch = (allowedTypes) => {
+    return async (req, res, next) => {
+      try {
+        if (!req.files || req.files.length === 0) return next();
+        const results = await FileValidator.validateFilesBatch(
+          req.files.map(f => f.path),
+          allowedTypes
+        );
+        const invalidFiles = results.filter(r => !r.valid);
+        if (invalidFiles.length > 0) {
+          const fs = require('fs');
+          req.files.forEach(f => {
+            try { fs.unlinkSync(f.path); } catch (e) { /* ignore */ }
+          });
+          return res.status(400).json({
+            success: false,
+            error: 'Type de fichier non autorisé',
+            details: invalidFiles
+          });
+        }
+        next();
+      } catch (error) {
+        next(error);
+      }
     };
   };
 
@@ -373,6 +401,13 @@ const initOeuvreRoutes = (models, authMiddleware) => {
     safeAuth.authenticate,
     safeAuth.requireValidatedProfessional,
     handleMulterUpload('medias', 10),
+    validateUploadedFilesBatch([
+      'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+      'video/mp4', 'video/webm',
+      'audio/mpeg', 'audio/ogg', 'audio/wav', 'audio/aac',
+      'application/pdf', 'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    ]),
     parseFormData,
     createOeuvreValidation,
     handleValidationErrors,
@@ -407,6 +442,13 @@ const initOeuvreRoutes = (models, authMiddleware) => {
     safeAuth.requireOwnership('Oeuvre', 'id', 'saisi_par'),
     validateId('id'),
     handleMulterUpload('files', 10),
+    validateUploadedFilesBatch([
+      'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+      'video/mp4', 'video/webm',
+      'audio/mpeg', 'audio/ogg', 'audio/wav', 'audio/aac',
+      'application/pdf', 'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    ]),
     (req, res) => oeuvreController.uploadMedia(req, res)
   );
 
@@ -477,6 +519,9 @@ const initOeuvreRoutes = (models, authMiddleware) => {
   );
 
   router.get('/test/ping', (req, res) => {
+    if (process.env.NODE_ENV === 'production') {
+      return res.status(404).end();
+    }
     res.json({
       success: true,
       message: 'Module œuvres i18n opérationnel',
@@ -484,8 +529,10 @@ const initOeuvreRoutes = (models, authMiddleware) => {
     });
   });
 
-  console.log('✅ Routes œuvres i18n initialisées');
-  console.log('  🌍 Routes traduction: GET /:id/translations, PATCH /:id/translation/:lang');
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('✅ Routes œuvres i18n initialisées');
+    console.log('  🌍 Routes traduction: GET /:id/translations, PATCH /:id/translation/:lang');
+  }
   
   return router;
 };

@@ -445,6 +445,9 @@ const initRoutes = (models, authMiddleware) => {
 
   // Routes de débogage
   router.get('/debug/routes', (req, res) => {
+    if (process.env.NODE_ENV === 'production') {
+      return res.status(404).end();
+    }
     const debug = {
       timestamp: new Date().toISOString(),
       environment: process.env.NODE_ENV || 'development',
@@ -509,7 +512,9 @@ const initRoutes = (models, authMiddleware) => {
   // MONTAGE DES ROUTES MÉTIER
   // ========================================================================
 
-  console.log('🔧 Montage des routes métier...');
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('🔧 Montage des routes métier...');
+  }
   
   const routeDefinitions = [
     // Routes qui nécessitent uniquement models
@@ -530,7 +535,7 @@ const initRoutes = (models, authMiddleware) => {
     { path: '/lieux', init: initLieuRoutes, args: [models] },
     { path: '/patrimoine', init: initPatrimoineRoutes, args: [models] },
     { path: '/artisanat', init: initArtisanatRoutes, args: [models] },
-    { path: '/commentaires', init: initCommentaireRoutes, args: [models] },
+    { path: '/commentaires', init: initCommentaireRoutes, args: [models, { auth: authMiddleware.authenticate, optionalAuth: authMiddleware.optionalAuth }] },
     { path: '/favoris', init: initFavoriRoutes, args: [models] },
     
     { path: '/notifications', init: initNotificationRoutes, args: [models] },
@@ -540,6 +545,7 @@ const initRoutes = (models, authMiddleware) => {
     { path: '/dashboard', init: initDashboardRoutes, args: [models] },
     { path: '/tracking', init: initTrackingRoutes, args: [models, authMiddleware] },
     { path: '/signalements', init: initSignalementRoutes, args: [models, authMiddleware] },
+    { path: '/signalement', init: initSignalementRoutes, args: [models, authMiddleware] },
     { path: '/email-verification', init: initEmailVerificationRoutes, args: [models, authMiddleware] },
     // ========================================================================
     // ROUTES ADMIN - AJOUT

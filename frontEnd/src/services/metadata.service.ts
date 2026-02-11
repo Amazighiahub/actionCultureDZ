@@ -221,6 +221,22 @@ export class MetadataService {
   }
 
   // ================================================
+  // TYPES D'ÉVÉNEMENTS
+  // ================================================
+
+  async getTypesEvenements(): Promise<ApiResponse<TypeEvenement[]>> {
+    try {
+      const response = await httpClient.get<TypeEvenement[]>('/metadata/types-evenements');
+      return response;
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Erreur lors du chargement des types d\'événements'
+      };
+    }
+  }
+
+  // ================================================
   // TYPES USERS
   // ================================================
 

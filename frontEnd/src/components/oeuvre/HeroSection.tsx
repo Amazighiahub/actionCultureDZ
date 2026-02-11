@@ -21,7 +21,7 @@ import {
   ChevronLeft, BookOpen, Film, Music, Palette, FileText,
   Sparkles, Eye, Heart, Share2, Star, Play, MessageCircle,
   User, Calendar, Clock, Headphones, RotateCcw, Quote, Globe,
-  BookMarked, Facebook, Twitter, Link as LinkIcon, Copy
+  BookMarked, Facebook, Twitter, Link as LinkIcon, Copy, ZoomIn, X
 } from 'lucide-react';
 import type { Oeuvre } from '@/types/models/oeuvre.types';
 import type { MediaExtended } from '@/types/models/media-extended.types';
@@ -75,6 +75,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   const [shareOpen, setShareOpen] = useState(false);
   // État pour la modal d'extrait
   const [showExcerpt, setShowExcerpt] = useState(false);
+  // État pour le zoom de la couverture
+  const [showZoom, setShowZoom] = useState(false);
 
   // Fonction de partage
   const handleShare = async (platform: string) => {
@@ -180,7 +182,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   // ═══════════════════════════════════════════════════════════════════════════
   if (typeOeuvre === 'Livre') {
     return (
-      <div className="relative bg-gradient-to-br from-amber-50/50 via-background to-orange-50/30 dark:from-amber-950/20 dark:via-background dark:to-orange-950/10 min-h-[650px]">
+      <div className="relative bg-gradient-to-br from-amber-50/50 via-background to-orange-50/30 dark:from-amber-950/20 dark:via-background dark:to-orange-950/10 min-h-[500px]">
         <div className="container max-w-7xl mx-auto px-4 py-8">
           <Button 
             variant="ghost" 
@@ -198,13 +200,13 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             {/* ════════════════════════════════════════════════════════════════ */}
             <div className="lg:col-span-2">
               <div 
-                className="relative mx-auto min-w-[280px] max-w-sm lg:max-w-none"
+                className="relative mx-auto w-[240px] sm:w-[280px] md:w-[320px] lg:w-[340px]"
                 style={{ perspective: '1200px' }}
               >
                 {/* Conteneur du livre avec effet flip */}
                 <div
                   className={cn(
-                    "relative w-full aspect-[3/4] cursor-pointer transition-all duration-700 ease-in-out",
+                    "relative w-full aspect-[2/3] cursor-pointer transition-all duration-700 ease-in-out",
                   )}
                   style={{
                     transformStyle: 'preserve-3d',
@@ -306,8 +308,20 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                           )}
                         </div>
                         
-                        {/* Indicateur de flip */}
-                        <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        {/* Boutons d'action (zoom et flip) */}
+                        <div className="absolute bottom-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                          {/* Bouton Zoom */}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setShowZoom(true);
+                            }}
+                            className="bg-white/20 backdrop-blur-sm rounded-full p-2 shadow-lg hover:bg-white/40 transition-colors"
+                            title={t('works.zoom', 'Agrandir')}
+                          >
+                            <ZoomIn className="h-5 w-5 text-white" />
+                          </button>
+                          {/* Indicateur de flip */}
                           <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 shadow-lg">
                             <RotateCcw className="h-5 w-5 text-white" />
                           </div>
@@ -562,6 +576,40 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                     ) : (
                       <p className="text-muted-foreground text-center py-8">
                         {t('works.excerpt.noContent', "Aucun contenu disponible pour cet ouvrage.")}
+                      </p>
+                    )}
+                  </div>
+                </DialogContent>
+              </Dialog>
+
+              {/* Modal Zoom Couverture */}
+              <Dialog open={showZoom} onOpenChange={setShowZoom}>
+                <DialogContent className="max-w-3xl p-0 bg-black/95 border-0">
+                  <button
+                    onClick={() => setShowZoom(false)}
+                    className="absolute top-4 right-4 z-50 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+                  >
+                    <X className="h-6 w-6 text-white" />
+                  </button>
+                  <div className="flex items-center justify-center min-h-[60vh] p-4">
+                    {mainImage ? (
+                      <img 
+                        src={mainImage} 
+                        alt={oeuvre.titre}
+                        className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl"
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center text-white/60">
+                        <BookOpen className="h-24 w-24 mb-4" />
+                        <p>{t('works.noCover', 'Aucune couverture disponible')}</p>
+                      </div>
+                    )}
+                  </div>
+                  <div className="absolute bottom-4 left-0 right-0 text-center">
+                    <p className="text-white/80 font-medium text-lg">{oeuvre.titre}</p>
+                    {mainContributors.length > 0 && (
+                      <p className="text-white/60 text-sm">
+                        {mainContributors[0].prenom} {mainContributors[0].nom}
                       </p>
                     )}
                   </div>

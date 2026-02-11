@@ -21,10 +21,12 @@ const initDashboardRoutes = (models) => {
     });
 
   // Debug pour vérifier les méthodes
-  console.log('✅ DashboardController initialisé avec les méthodes:', 
-    Object.getOwnPropertyNames(Object.getPrototypeOf(dashboardController))
-      .filter(m => typeof dashboardController[m] === 'function' && m !== 'constructor')
-  );
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('✅ DashboardController initialisé avec les méthodes:', 
+      Object.getOwnPropertyNames(Object.getPrototypeOf(dashboardController))
+        .filter(m => typeof dashboardController[m] === 'function' && m !== 'constructor')
+    );
+  }
 
   // Toutes les routes nécessitent l'authentification admin
   router.use(authMiddleware.authenticate);
@@ -85,6 +87,13 @@ const initDashboardRoutes = (models) => {
   // ========================================
   // GESTION DES UTILISATEURS
   // ========================================
+
+  // Liste de TOUS les utilisateurs (avec filtres optionnels)
+  router.get('/users',
+    validationMiddleware.validatePagination,
+    cacheMiddleware.conditionalCache(120),
+    dashboardController.getAllUsers
+  );
 
   // Liste des utilisateurs en attente
   router.get('/users/pending',
@@ -191,31 +200,13 @@ const initDashboardRoutes = (models) => {
 
   // Supprimer un utilisateur (soft delete)
  // Remplacez la route DELETE existante dans dashboardRoutes.js par celle-ci :
-router.delete('/test/:id', (req, res) => {
-  console.log('✅ Route DELETE test fonctionne, ID:', req.params.id);
-  console.log('📧 User connecté:', req.user?.email);
-  console.log('🔧 Controller disponible:', !!dashboardController);
-  console.log('🗑️ Méthode deleteUser:', typeof dashboardController.deleteUser);
-  
-  // Appeler la méthode deleteUser
-  return dashboardController.deleteUser(req, res);
-});
 // Supprimer un utilisateur (hard delete)
-  router.delete('/users/:id', (req, res) => {
-    console.log('🗑️ Route DELETE simple appelée');
-    console.log('ID:', req.params.id);
-    console.log('Controller:', !!dashboardController);
-    console.log('deleteUser:', typeof dashboardController.deleteUser);
-    
-    if (dashboardController && typeof dashboardController.deleteUser === 'function') {
-      return dashboardController.deleteUser(req, res);
-    } else {
-      res.status(500).json({
-        success: false,
-        error: 'Méthode deleteUser non disponible'
-      });
-    }
-  });
+  router.delete('/users/:id',
+    validationMiddleware.validateId('id'),
+    rateLimitMiddleware.sensitiveActions,
+    auditMiddleware.logAction('DELETE_USER'),
+    dashboardController.deleteUser
+  );
   // Réactiver un utilisateur suspendu
   router.post('/users/:id/reactivate',
     validationMiddleware.validateId('id'),

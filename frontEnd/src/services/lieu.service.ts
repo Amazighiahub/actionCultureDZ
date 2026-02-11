@@ -266,13 +266,31 @@ class LieuService {
   }
 
   /**
-   * Vérifier si un lieu existe déjà (pour éviter les doublons)
+   * Vérifier si un lieu/patrimoine existe déjà (pour éviter les doublons)
    */
-  async checkDuplicate(nom: string, latitude: number, longitude: number): Promise<ApiResponse<{ exists: boolean; lieu?: Lieu }>> {
-    return httpClient.post<{ exists: boolean; lieu?: Lieu }>(`${this.endpoint}/check-duplicate`, {
+  async checkDuplicate(
+    nom: string, 
+    latitude: number, 
+    longitude: number,
+    typePatrimoine?: string
+  ): Promise<ApiResponse<{ 
+    exists: boolean; 
+    lieu?: Lieu; 
+    matchType?: 'name' | 'coordinates';
+    isPatrimoine?: boolean;
+    typePatrimoine?: string;
+  }>> {
+    return httpClient.post<{ 
+      exists: boolean; 
+      lieu?: Lieu;
+      matchType?: 'name' | 'coordinates';
+      isPatrimoine?: boolean;
+      typePatrimoine?: string;
+    }>(`${this.endpoint}/check-duplicate`, {
       nom,
       latitude,
-      longitude
+      longitude,
+      typePatrimoine
     });
   }
 

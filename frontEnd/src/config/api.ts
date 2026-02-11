@@ -799,6 +799,7 @@ categoriesForType: (typeId: number) => `/metadata/types-oeuvres/${typeId}/catego
     parcours: '/dashboard/patrimoine/parcours',
     
     // Utilisateurs
+    allUsers: '/dashboard/users',
     pendingUsers: '/dashboard/users/pending',
     usersStats: '/dashboard/users/stats',
     geographic: '/dashboard/users/geographic',

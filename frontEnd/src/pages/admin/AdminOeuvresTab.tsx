@@ -113,16 +113,6 @@ const AdminOeuvresTab: React.FC = () => {
     });
   }, [allOeuvres, debouncedSearch, statusFilter, currentLang]);
 
-  const getStatusColor = (statut: string) => {
-    switch (statut) {
-      case 'publie': return 'success';
-      case 'en_attente': return 'warning';
-      case 'brouillon': return 'default';
-      case 'rejete': return 'error';
-      default: return 'default';
-    }
-  };
-
   const getTypeIcon = (type: string): React.ElementType => {
     const typeName = getLocalizedText(type, 'fr', '').toLowerCase();
     return TYPE_ICONS[typeName] || TYPE_ICONS.default;
@@ -216,9 +206,7 @@ const AdminOeuvresTab: React.FC = () => {
                     </div>
                   )}
                   <div className="absolute top-2 right-2">
-                    <StatusBadge status={getStatusColor(oeuvre.statut)} size="sm">
-                      {oeuvre.statut || 'en_attente'}
-                    </StatusBadge>
+                    <StatusBadge status={oeuvre.statut || 'en_attente'} size="sm" />
                   </div>
                 </div>
 

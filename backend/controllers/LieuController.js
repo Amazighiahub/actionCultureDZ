@@ -877,62 +877,97 @@ class LieuController {
     }
   }
 
-  // Vérifier les doublons de lieu
+  // Vérifier les doublons de lieu/patrimoine
   async checkDuplicate(req, res) {
     try {
-      const { nom, latitude, longitude } = req.body;
+      const { nom, latitude, longitude, typePatrimoine } = req.body;
       const lang = req.lang || 'fr';
 
       // Tolérance de 100 mètres (environ 0.001 degré)
       const tolerance = 0.001;
 
-      // Rechercher par nom similaire
-      const lieuByName = await this.models.Lieu.findOne({
-        where: this.sequelize.where(
-          this.sequelize.fn('JSON_EXTRACT', this.sequelize.col('nom'), `$.${lang}`),
-          { [Op.like]: `%${nom}%` }
-        ),
-        include: [
-          {
-            model: this.models.Commune,
-            include: [{
-              model: this.models.Daira,
-              include: [{ model: this.models.Wilaya }]
-            }]
-          }
-        ]
-      });
+      // Condition de base pour les coordonnées
+      const coordsCondition = latitude && longitude ? {
+        latitude: { [Op.between]: [latitude - tolerance, latitude + tolerance] },
+        longitude: { [Op.between]: [longitude - tolerance, longitude + tolerance] }
+      } : {};
+
+      // Condition pour le type de patrimoine (si spécifié)
+      const typeCondition = typePatrimoine ? { typePatrimoine } : {};
+
+      // Includes communs
+      const commonIncludes = [
+        {
+          model: this.models.Commune,
+          include: [{
+            model: this.models.Daira,
+            include: [{ model: this.models.Wilaya }]
+          }]
+        },
+        {
+          model: this.models.DetailLieu,
+          required: false
+        }
+      ];
+
+      // Rechercher par nom similaire (priorité aux patrimoines)
+      let lieuByName = null;
+      if (nom && nom.length >= 3) {
+        lieuByName = await this.models.Lieu.findOne({
+          where: {
+            ...typeCondition,
+            [Op.or]: [
+              this.sequelize.where(
+                this.sequelize.fn('JSON_EXTRACT', this.sequelize.col('nom'), '$.fr'),
+                { [Op.like]: `%${nom}%` }
+              ),
+              this.sequelize.where(
+                this.sequelize.fn('JSON_EXTRACT', this.sequelize.col('nom'), '$.ar'),
+                { [Op.like]: `%${nom}%` }
+              )
+            ]
+          },
+          include: commonIncludes
+        });
+      }
 
       // Rechercher par coordonnées proches
-      const lieuByCoords = await this.models.Lieu.findOne({
-        where: {
-          latitude: {
-            [Op.between]: [latitude - tolerance, latitude + tolerance]
+      let lieuByCoords = null;
+      if (latitude && longitude) {
+        lieuByCoords = await this.models.Lieu.findOne({
+          where: {
+            ...coordsCondition,
+            ...typeCondition
           },
-          longitude: {
-            [Op.between]: [longitude - tolerance, longitude + tolerance]
-          }
-        },
-        include: [
-          {
-            model: this.models.Commune,
-            include: [{
-              model: this.models.Daira,
-              include: [{ model: this.models.Wilaya }]
-            }]
-          }
-        ]
-      });
+          include: commonIncludes
+        });
+
+        // Si pas trouvé avec le type, chercher sans le type
+        if (!lieuByCoords && typePatrimoine) {
+          lieuByCoords = await this.models.Lieu.findOne({
+            where: coordsCondition,
+            include: commonIncludes
+          });
+        }
+      }
 
       const existingLieu = lieuByName || lieuByCoords;
 
       if (existingLieu) {
+        const translated = translateDeep(existingLieu, lang);
+        // Un lieu est considéré comme patrimoine s'il a un DetailLieu OU un typePatrimoine
+        const hasDetailLieu = !!existingLieu.DetailLieu;
+        const isPatrimoine = hasDetailLieu || !!existingLieu.typePatrimoine;
+        
         return res.json({
           success: true,
           data: {
             exists: true,
-            lieu: translateDeep(existingLieu, lang),
-            matchType: lieuByName ? 'name' : 'coordinates'
+            lieu: translated,
+            matchType: lieuByName ? 'name' : 'coordinates',
+            isPatrimoine: isPatrimoine,
+            hasDetailLieu: hasDetailLieu,
+            typePatrimoine: existingLieu.typePatrimoine || null
           }
         });
       }

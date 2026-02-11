@@ -57,6 +57,7 @@ export const useDashboardAdmin = () => {
   const [overview, setOverview] = useState<OverviewStats | null>(null);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [patrimoineStats, setPatrimoineStats] = useState<PatrimoineStats | null>(null);
+  const [allUsers, setAllUsers] = useState<any>(null);
   const [pendingUsers, setPendingUsers] = useState<any>(null);
   const [pendingOeuvres, setPendingOeuvres] = useState<any>(null);
   const [moderationQueue, setModerationQueue] = useState<any>(null);
@@ -71,6 +72,7 @@ export const useDashboardAdmin = () => {
   // États de chargement
   const [loading, setLoading] = useState(false);
   const [loadingOverview, setLoadingOverview] = useState(false);
+  const [loadingAllUsers, setLoadingAllUsers] = useState(false);
   const [loadingPendingUsers, setLoadingPendingUsers] = useState(false);
   const [loadingPendingOeuvres, setLoadingPendingOeuvres] = useState(false);
   const [loadingModeration, setLoadingModeration] = useState(false);
@@ -87,6 +89,7 @@ export const useDashboardAdmin = () => {
     loadOverview();
     loadStats();
     loadPatrimoineStats();
+    loadAllUsers();
     loadPendingUsers();
     loadPendingOeuvres();
     loadModerationQueue();
@@ -135,6 +138,20 @@ export const useDashboardAdmin = () => {
       }
     } catch (error) {
       console.error('Erreur chargement patrimoine stats:', error);
+    }
+  };
+
+  const loadAllUsers = async (params?: { page?: number; limit?: number; statut?: string; statut_validation?: string; type_user?: string; search?: string }) => {
+    setLoadingAllUsers(true);
+    try {
+      const response = await adminService.getAllUsers({ page: 1, limit: 100, ...params });
+      if (response.success && response.data) {
+        setAllUsers(response.data);
+      }
+    } catch (error) {
+      console.error('Erreur chargement tous les utilisateurs:', error);
+    } finally {
+      setLoadingAllUsers(false);
     }
   };
 
@@ -680,6 +697,7 @@ const deleteService = async (serviceId: number) => {
       loadOverview(),
       loadStats(),
       loadPatrimoineStats(),
+      loadAllUsers(),
       loadPendingUsers(),
       loadPendingOeuvres(),
       loadModerationQueue(),
@@ -742,6 +760,7 @@ const deleteService = async (serviceId: number) => {
     overview,
     stats,
     patrimoineStats,
+    allUsers,
     pendingUsers,
     pendingOeuvres,
     moderationQueue,
@@ -754,6 +773,7 @@ const deleteService = async (serviceId: number) => {
     // États de chargement
     loading,
     loadingOverview,
+    loadingAllUsers,
     loadingPendingUsers,
     loadingPendingOeuvres,
     loadingModeration,
@@ -795,6 +815,7 @@ const deleteService = async (serviceId: number) => {
     clearCache,
     
     // Fonctions de chargement
+    loadAllUsers,
     loadOeuvres,
     loadEvenements,
     loadPatrimoineItems,

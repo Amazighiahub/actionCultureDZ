@@ -281,22 +281,18 @@ const initLieuRoutes = (models) => {
   // Mettre à jour les détails d'un lieu
   router.put('/:id/details',
     authMiddleware.authenticate,
-    authMiddleware.requireRole(['Contributeur', 'Modérateur', 'Administrateur']),
-    validationMiddleware.validateId('id'),
-    [
-      body('description').optional(),
-      body('horaires').optional(),
-      body('histoire').optional(),
-      body('referencesHistoriques').optional()
-    ],
+    authMiddleware.requireValidatedProfessional,
+    param('id').isInt().withMessage('ID invalide'),
     validationMiddleware.handleValidationErrors,
     lieuController.updateDetailsLieu.bind(lieuController)
   );
 
-  console.log('✅ Routes lieux i18n initialisées');
-  console.log('  🌍 Routes traduction: GET /:id/translations, PATCH /:id/translation/:lang');
-  console.log('  📦 Routes services: GET/POST /:id/services, PUT/DELETE /:id/services/:serviceId');
-  console.log('  📋 Routes détails: GET/PUT /:id/details');
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('✅ Routes lieux i18n initialisées');
+    console.log('  🌍 Routes traduction: GET /:id/translations, PATCH /:id/translation/:lang');
+    console.log('  📦 Routes services: GET/POST /:id/services, PUT/DELETE /:id/services/:serviceId');
+    console.log('  📋 Routes détails: GET/PUT /:id/details');
+  }
 
   return router;
 };

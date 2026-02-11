@@ -16,7 +16,7 @@ const initSignalementRoutes = (models, authMiddleware) => {
     try {
       const { id } = req.params;
       const signalement = await models.Signalement.findByPk(id, {
-        attributes: ['id', 'createdBy']
+        attributes: ['id_signalement', 'id_user_signalant']
       });
 
       if (!signalement) {
@@ -32,7 +32,7 @@ const initSignalementRoutes = (models, authMiddleware) => {
       }
 
       // Vérifier si l'utilisateur est le créateur
-      if (signalement.createdBy !== req.user.id_user) {
+      if (signalement.id_user_signalant !== req.user.id_user) {
         return res.status(403).json({
           success: false,
           message: 'Vous n\'êtes pas autorisé à modifier ce signalement'
@@ -54,7 +54,7 @@ const initSignalementRoutes = (models, authMiddleware) => {
   // ========================================================================
 
   // Obtenir les statistiques publiques des signalements (anonymisées)
-  router.get('/signalements/stats/public', async (req, res) => {
+  router.get('/stats/public', async (req, res) => {
     try {
       const stats = await models.Signalement.findAll({
         attributes: [
@@ -77,32 +77,56 @@ const initSignalementRoutes = (models, authMiddleware) => {
     }
   });
 
+  // Alias compat frontend
+  router.get('/stats', async (req, res) => {
+    try {
+      const stats = await models.Signalement.findAll({
+        attributes: [
+          'motif',
+          [models.Signalement.sequelize.fn('COUNT', '*'), 'count']
+        ],
+        where: { statut: 'traite' },
+        group: ['motif']
+      });
+
+      res.json({
+        success: true,
+        data: stats
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: 'Erreur lors de la récupération des statistiques'
+      });
+    }
+  });
+
   // ========================================================================
   // ROUTES PROTÉGÉES - UTILISATEURS AUTHENTIFIÉS
   // ========================================================================
 
   // Créer un signalement (sans upload de screenshot)
-  router.post('/signalements',
+  router.post('/',
     authenticate,
     signalementController.create
   );
 
   // Obtenir mes signalements
-  router.get('/signalements/mes-signalements',
+  router.get('/mes-signalements',
     authenticate,
     signalementController.getMesSignalements
   );
 
   // Obtenir un signalement spécifique (si créateur)
-  router.get('/signalements/:id',
+  router.get('/:id(\\d+)',
     authenticate,
     checkSignalementOwnership,
     async (req, res) => {
       try {
         const signalement = await models.Signalement.findByPk(req.params.id, {
           include: [
-            { model: models.User, as: 'reporter', attributes: ['username', 'email'] },
-            { model: models.User, as: 'moderateur', attributes: ['username'] }
+            { model: models.User, as: 'Signalant', attributes: ['id_user', 'nom', 'prenom', 'email'] },
+            { model: models.User, as: 'Moderateur', attributes: ['id_user', 'nom', 'prenom', 'email'] }
           ]
         });
 
@@ -120,7 +144,7 @@ const initSignalementRoutes = (models, authMiddleware) => {
   );
 
   // Annuler un signalement (si créateur et en attente)
-  router.delete('/signalements/:id',
+  router.delete('/:id(\\d+)',
     authenticate,
     checkSignalementOwnership,
     async (req, res) => {
@@ -154,21 +178,27 @@ const initSignalementRoutes = (models, authMiddleware) => {
   // ========================================================================
 
   // Obtenir la file de modération
-  router.get('/signalements/moderation/queue',
+  router.get('/moderation/queue',
+    authenticate,
+    requireAdmin,
+    signalementController.getModerationQueue
+  );
+
+  router.get('/moderation',
     authenticate,
     requireAdmin,
     signalementController.getModerationQueue
   );
 
   // Traiter un signalement
-  router.put('/signalements/:id/traiter',
+  router.put('/:id/traiter',
     authenticate,
     requireAdmin,
     signalementController.traiterSignalement
   );
 
   // Obtenir tous les signalements avec filtres
-  router.get('/signalements',
+  router.get('/',
     authenticate,
     requireAdmin,
     async (req, res) => {
@@ -187,8 +217,8 @@ const initSignalementRoutes = (models, authMiddleware) => {
         const { count, rows } = await models.Signalement.findAndCountAll({
           where,
           include: [
-            { model: models.User, as: 'reporter', attributes: ['username', 'email'] },
-            { model: models.User, as: 'moderateur', attributes: ['username'] }
+            { model: models.User, as: 'Signalant', attributes: ['id_user', 'nom', 'prenom', 'email'] },
+            { model: models.User, as: 'Moderateur', attributes: ['id_user', 'nom', 'prenom', 'email'] }
           ],
           order: [['createdAt', 'DESC']],
           limit: parseInt(limit),
@@ -216,7 +246,7 @@ const initSignalementRoutes = (models, authMiddleware) => {
   );
 
   // Statistiques détaillées pour admin
-  router.get('/signalements/stats/detailed',
+  router.get('/stats/detailed',
     authenticate,
     requireAdmin,
     async (req, res) => {
@@ -311,7 +341,7 @@ const initSignalementRoutes = (models, authMiddleware) => {
   );
 
   // Export des signalements
-  router.get('/signalements/export',
+  router.get('/export',
     authenticate,
     requireAdmin,
     async (req, res) => {
@@ -329,8 +359,8 @@ const initSignalementRoutes = (models, authMiddleware) => {
         const signalements = await models.Signalement.findAll({
           where,
           include: [
-            { model: models.User, as: 'reporter', attributes: ['username', 'email'] },
-            { model: models.User, as: 'moderateur', attributes: ['username'] }
+            { model: models.User, as: 'Signalant', attributes: ['id_user', 'nom', 'prenom', 'email'] },
+            { model: models.User, as: 'Moderateur', attributes: ['id_user', 'nom', 'prenom', 'email'] }
           ],
           order: [['createdAt', 'DESC']]
         });

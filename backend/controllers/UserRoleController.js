@@ -136,11 +136,13 @@ class UserController {
       } = req.body;
 
       // ✅ DEBUG SPÉCIAL PHOTO
-      console.log('🖼️ === DEBUG PHOTO_URL ===');
-      console.log('📷 photo_url reçue:', photo_url);
-      console.log('📷 Type:', typeof photo_url);
-      console.log('📷 Longueur:', photo_url ? photo_url.length : 'N/A');
-      console.log('📷 Valide?:', photo_url && photo_url.length > 0);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('🖼️ === DEBUG PHOTO_URL ===');
+        console.log('📷 photo_url reçue:', photo_url);
+        console.log('📷 Type:', typeof photo_url);
+        console.log('📷 Longueur:', photo_url ? photo_url.length : 'N/A');
+        console.log('📷 Valide?:', photo_url && photo_url.length > 0);
+      }
 
       // Validation des champs obligatoires
       if (!nom || !prenom || !email || !password) {

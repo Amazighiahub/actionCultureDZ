@@ -27,11 +27,13 @@ const { SUPPORTED_LANGUAGES } = require('./helpers/i18n');
 
 // Importation des routes
 const initRoutes = require('./routes');
+const initRoutesV2 = require('./routes/v2');
 
 // Importation des services
 const { initializeDatabase } = require('./models');
 const { createDatabase } = require('./config/database');
 const uploadService = require('./services/uploadService');
+const FileValidator = require('./utils/FileValidator');
 
 // ✅ Service Container pour l'architecture Service/Repository
 const serviceContainer = require('./services/ServiceContainer');
@@ -55,8 +57,8 @@ class App {
       },
       allowedTypes: {
         image: ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'],
-        video: ['video/mp4', 'video/mpeg', 'video/quicktime', 'video/x-msvideo'],
-        audio: ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg'],
+        video: ['video/mp4', 'video/mpeg', 'video/quicktime', 'video/x-msvideo', 'video/webm'],
+        audio: ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/aac'],
         document: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
       }
     };
@@ -181,6 +183,10 @@ class App {
       }
     };
 
+    this.app.use('/uploads/private', (req, res) => {
+      return res.status(404).end();
+    });
+
     // Servir le dossier uploads
     this.app.use('/uploads', express.static(path.join(__dirname, this.config.upload.baseDir || 'uploads'), staticOptions));
 
@@ -197,10 +203,12 @@ class App {
     // Log des accès non autorisés
     this.app.use(auditMiddleware.logUnauthorizedAccess);
     
-    this.app.use((req, res, next) => {
-      console.log(`${req.method} ${req.path} - ${req.ip}`);
-      next();
-    });
+    if (this.config.server.environment === 'development') {
+      this.app.use((req, res, next) => {
+        console.log(`${req.method} ${req.path} - ${req.ip}`);
+        next();
+      });
+    }
 
     // Headers de sécurité supplémentaires
     this.app.use((req, res, next) => {
@@ -226,6 +234,10 @@ class App {
       'videos', 
       'audios',
       'documents',
+      'private/images',
+      'private/videos',
+      'private/audios',
+      'private/documents',
       'oeuvres/images',
       'oeuvres/videos',
       'oeuvres/audios',
@@ -296,12 +308,65 @@ class App {
         console.log('✅ Middleware d\'authentification initialisé');
       } else {
         this.authMiddleware = {
-          authenticate: (req, res, next) => next(),
-          isAuthenticated: (req, res, next) => next(),
-          requireValidatedProfessional: (req, res, next) => next(),
-          isAdmin: (req, res, next) => next()
+          authenticate: (req, res) => {
+            console.error('🚨 Middleware auth non initialisé - accès refusé');
+            return res.status(503).json({
+              success: false,
+              error: 'Service d\'authentification temporairement indisponible',
+              code: 'AUTH_SERVICE_UNAVAILABLE'
+            });
+          },
+          optionalAuth: (req, res, next) => next(),
+          isAuthenticated: (req, res) => {
+            console.error('🚨 Middleware auth non initialisé - accès refusé');
+            return res.status(503).json({
+              success: false,
+              error: 'Service d\'authentification temporairement indisponible',
+              code: 'AUTH_SERVICE_UNAVAILABLE'
+            });
+          },
+          requireValidatedProfessional: (req, res) => {
+            console.error('🚨 Middleware auth non initialisé - accès refusé');
+            return res.status(503).json({
+              success: false,
+              error: 'Service d\'authentification temporairement indisponible',
+              code: 'AUTH_SERVICE_UNAVAILABLE'
+            });
+          },
+          requireOwnership: () => (req, res) => {
+            console.error('🚨 Middleware auth non initialisé - accès refusé');
+            return res.status(503).json({
+              success: false,
+              error: 'Service d\'authentification temporairement indisponible',
+              code: 'AUTH_SERVICE_UNAVAILABLE'
+            });
+          },
+          requireRole: () => (req, res) => {
+            console.error('🚨 Middleware auth non initialisé - accès refusé');
+            return res.status(503).json({
+              success: false,
+              error: 'Service d\'authentification temporairement indisponible',
+              code: 'AUTH_SERVICE_UNAVAILABLE'
+            });
+          },
+          requireAdmin: (req, res) => {
+            console.error('🚨 Middleware auth non initialisé - accès refusé');
+            return res.status(503).json({
+              success: false,
+              error: 'Service d\'authentification temporairement indisponible',
+              code: 'AUTH_SERVICE_UNAVAILABLE'
+            });
+          },
+          isAdmin: (req, res) => {
+            console.error('🚨 Middleware auth non initialisé - accès refusé');
+            return res.status(503).json({
+              success: false,
+              error: 'Service d\'authentification temporairement indisponible',
+              code: 'AUTH_SERVICE_UNAVAILABLE'
+            });
+          }
         };
-        console.warn('⚠️ Middleware d\'authentification en mode bypass');
+        console.error('🚨 Middleware d\'authentification indisponible - mode fail-closed activé');
       }
       
       // Afficher les modèles chargés
@@ -444,6 +509,7 @@ class App {
 
     // Routes API principales (utilise ServiceContainer en interne)
     this.app.use('/api', initRoutes(this.models, this.authMiddleware));
+    this.app.use('/api/v2', initRoutesV2(this.models, this.authMiddleware));
 
     // Route pour obtenir les infos d'upload
     this.app.get('/api/upload/info', (req, res) => {
@@ -478,6 +544,7 @@ class App {
     this.app.post('/api/upload/image/public', 
       auditMiddleware.logAction('upload_image_public', { entityType: 'media' }),
       uploadService.uploadImage().single('image'),
+      FileValidator.uploadValidator(this.uploadInfo.allowedTypes.image, this.uploadInfo.maxFileSize.image),
       this.handlePublicUpload.bind(this)
     );
 
@@ -486,6 +553,7 @@ class App {
       this.authMiddleware.authenticate,
       auditMiddleware.logAction('upload_image', { entityType: 'media' }),
       uploadService.uploadImage().single('image'),
+      FileValidator.uploadValidator(this.uploadInfo.allowedTypes.image, this.uploadInfo.maxFileSize.image),
       this.handleAuthenticatedUpload.bind(this)
     );
 
@@ -494,6 +562,7 @@ class App {
       this.authMiddleware.authenticate,
       auditMiddleware.logAction('upload_document', { entityType: 'document' }),
       uploadService.uploadDocument().single('document'),
+      FileValidator.uploadValidator(this.uploadInfo.allowedTypes.document, this.uploadInfo.maxFileSize.document),
       this.handleDocumentUpload.bind(this)
     );
 
@@ -503,6 +572,36 @@ class App {
       this.authMiddleware.requireValidatedProfessional,
       auditMiddleware.logAction('upload_oeuvre_media', { entityType: 'media' }),
       uploadService.uploadMedia().array('medias', 10),
+      async (req, res, next) => {
+        try {
+          if (!req.files || req.files.length === 0) return next();
+          const allowedTypes = [
+            ...this.uploadInfo.allowedTypes.image,
+            ...this.uploadInfo.allowedTypes.video,
+            ...this.uploadInfo.allowedTypes.audio,
+            ...this.uploadInfo.allowedTypes.document
+          ];
+          const results = await FileValidator.validateFilesBatch(
+            req.files.map(f => f.path),
+            allowedTypes
+          );
+          const invalidFiles = results.filter(r => !r.valid);
+          if (invalidFiles.length > 0) {
+            const fs = require('fs');
+            req.files.forEach(f => {
+              try { fs.unlinkSync(f.path); } catch (e) { /* ignore */ }
+            });
+            return res.status(400).json({
+              success: false,
+              error: 'Type de fichier non autorisé',
+              details: invalidFiles
+            });
+          }
+          next();
+        } catch (error) {
+          next(error);
+        }
+      },
       this.handleOeuvreMediaUpload.bind(this)
     );
 
@@ -511,6 +610,7 @@ class App {
       this.authMiddleware.authenticate,
       auditMiddleware.logAction('upload_video', { entityType: 'video' }),
       uploadService.uploadVideo().single('video'),
+      FileValidator.uploadValidator(this.uploadInfo.allowedTypes.video, this.uploadInfo.maxFileSize.video),
       this.handleVideoUpload.bind(this)
     );
 
@@ -519,6 +619,7 @@ class App {
       this.authMiddleware.authenticate,
       auditMiddleware.logAction('upload_audio', { entityType: 'audio' }),
       uploadService.uploadAudio().single('audio'),
+      FileValidator.uploadValidator(this.uploadInfo.allowedTypes.audio, this.uploadInfo.maxFileSize.audio),
       this.handleAudioUpload.bind(this)
     );
 

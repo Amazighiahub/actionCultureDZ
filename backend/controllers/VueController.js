@@ -33,9 +33,17 @@ class VueController {
       }
 
       // Récupérer les infos de la requête
-      const sessionId = req.session?.id || req.cookies?.sessionId || 
-                       req.headers['x-session-id'] || 
+      const sessionId = req.session?.id || req.cookies?.sessionId ||
+                       req.headers['x-session-id'] ||
                        `anon-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+      if (!req.cookies?.sessionId && !req.headers['x-session-id'] && !req.session?.id) {
+        res.cookie('sessionId', sessionId, {
+          httpOnly: true,
+          sameSite: 'lax',
+          secure: process.env.NODE_ENV === 'production'
+        });
+      }
       
       const userAgent = req.get('User-Agent') || '';
       const ipAddress = req.ip || 
@@ -100,6 +108,8 @@ class VueController {
       const { id } = req.params;
       const { duration } = req.body;
 
+      const requestSessionId = req.session?.id || req.cookies?.sessionId || req.headers['x-session-id'] || req.sessionID;
+
       const vue = await this.models.Vue.findByPk(id);
       if (!vue) {
         return res.status(404).json({
@@ -111,17 +121,25 @@ class VueController {
       // Vérifier les permissions
       const canUpdate = vue.id_user ? 
         vue.id_user === req.user?.id_user : 
-        vue.session_id === req.sessionID;
+        (requestSessionId ? vue.session_id === requestSessionId : false);
 
-      if (!canUpdate && !req.user?.is_admin) {
+      if (!canUpdate && !req.user?.isAdmin) {
         return res.status(403).json({
           success: false,
           message: 'Non autorisé à modifier cette vue'
         });
       }
 
+      const parsedDuration = parseInt(duration, 10);
+      if (!Number.isFinite(parsedDuration) || parsedDuration < 0 || parsedDuration > 86400) {
+        return res.status(400).json({
+          success: false,
+          error: 'Durée invalide'
+        });
+      }
+
       await vue.update({ 
-        duree_secondes: parseInt(duration),
+        duree_secondes: parsedDuration,
         date_fin: new Date()
       });
 

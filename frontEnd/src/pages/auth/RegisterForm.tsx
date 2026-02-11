@@ -153,8 +153,8 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
       'Email already exists': t('auth.errors.emailExists', 'Cet email est déjà utilisé'),
       'Email déjà utilisé': t('auth.errors.emailExists', 'Cet email est déjà utilisé'),
       'Un compte existe déjà': t('auth.errors.emailExists', 'Un compte existe déjà avec cet email'),
-      'Mot de passe trop court': t('auth.errors.passwordTooShort', 'Le mot de passe doit contenir au moins 8 caractères'),
-      'Password too short': t('auth.errors.passwordTooShort', 'Le mot de passe doit contenir au moins 8 caractères'),
+      'Mot de passe trop court': t('auth.errors.passwordTooShort', 'Le mot de passe doit contenir au moins 12 caractères'),
+      'Password too short': t('auth.errors.passwordTooShort', 'Le mot de passe doit contenir au moins 12 caractères'),
       'Données invalides': t('auth.errors.invalidData', 'Données invalides. Vérifiez le formulaire.'),
       'Invalid data': t('auth.errors.invalidData', 'Données invalides. Vérifiez le formulaire.'),
     };

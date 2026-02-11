@@ -237,7 +237,7 @@ const Auth = () => {
       errors.email = t('auth.errors.emailInvalid');
     }
     
-    if (!registerForm.mot_de_passe || registerForm.mot_de_passe.length < 8) {
+    if (!registerForm.mot_de_passe || registerForm.mot_de_passe.length < 12) {
       errors.mot_de_passe = t('auth.errors.passwordMinLength');
     }
     
@@ -736,7 +736,7 @@ const Auth = () => {
                           }}
                           className={registerErrors.mot_de_passe ? 'border-destructive' : ''}
                           required
-                          minLength={8}
+                          minLength={12}
                         />
                         {registerErrors.mot_de_passe && (
                           <p className="text-sm text-destructive">{registerErrors.mot_de_passe}</p>
@@ -755,7 +755,7 @@ const Auth = () => {
                           }}
                           className={registerErrors.confirmation_mot_de_passe ? 'border-destructive' : ''}
                           required
-                          minLength={8}
+                          minLength={12}
                         />
                         {registerErrors.confirmation_mot_de_passe && (
                           <p className="text-sm text-destructive">{registerErrors.confirmation_mot_de_passe}</p>

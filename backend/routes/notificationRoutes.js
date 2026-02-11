@@ -6,7 +6,9 @@ const createAuthMiddleware = require('../middlewares/authMiddleware');
 const { body, param, query } = require('express-validator');
 
 const initNotificationRoutes = (models) => {
-  console.log('🔔 Initialisation des routes notifications i18n...');
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('🔔 Initialisation des routes notifications i18n...');
+  }
 
   const authMiddleware = createAuthMiddleware(models);
   const notificationController = new NotificationController(models);
@@ -147,6 +149,12 @@ const initNotificationRoutes = (models) => {
   // ========================================================================
 
   router.post('/test-email',
+    (req, res, next) => {
+      if (process.env.NODE_ENV === 'production') {
+        return res.status(404).end();
+      }
+      next();
+    },
     authMiddleware.authenticate,
     [
       body('type').optional().isIn(['test', 'bienvenue', 'notification'])
@@ -157,6 +165,12 @@ const initNotificationRoutes = (models) => {
 
   // WebSocket status
   router.get('/ws/status',
+    (req, res, next) => {
+      if (process.env.NODE_ENV === 'production') {
+        return res.status(404).end();
+      }
+      next();
+    },
     authMiddleware.authenticate,
     (req, res) => {
       try {
@@ -178,8 +192,10 @@ const initNotificationRoutes = (models) => {
     });
   });
 
-  console.log('✅ Routes notifications i18n initialisées');
-  console.log('  🌍 Relations (Evenement, Programme, Oeuvre) automatiquement traduites');
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('✅ Routes notifications i18n initialisées');
+    console.log('  🌍 Relations (Evenement, Programme, Oeuvre) automatiquement traduites');
+  }
 
   return router;
 };

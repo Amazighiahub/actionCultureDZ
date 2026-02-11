@@ -18,6 +18,16 @@ import { LoadingSkeleton, LazyImage } from '@/components/shared';
 
 // ✅ CORRIGÉ: Utilise useDashboardAdmin au lieu de useAdminStats
 import { useDashboardAdmin } from '@/hooks/useDashboardAdmin';
+
+// Helper pour extraire le texte d'un champ multilingue {fr, ar, en} ou string
+const getLocalizedText = (value: any, lang: string = 'fr', fallback: string = ''): string => {
+  if (!value) return fallback;
+  if (typeof value === 'string') return value;
+  if (typeof value === 'object') {
+    return value[lang] || value.fr || value.ar || value.en || Object.values(value).find(v => typeof v === 'string' && v) || fallback;
+  }
+  return String(value);
+};
 import { getAssetUrl } from '@/helpers/assetUrl';
 
 // Composant StatCard
@@ -238,8 +248,8 @@ const AdminOverview: React.FC = () => {
                 {pendingUsers.items.slice(0, 5).map((user: any) => (
                   <PendingItem
                     key={user.id_user}
-                    title={`${user.prenom} ${user.nom}`}
-                    subtitle={user.type_user || user.email}
+                    title={`${getLocalizedText(user.prenom)} ${getLocalizedText(user.nom)}`}
+                    subtitle={getLocalizedText(user.type_user) || user.email}
                     date={new Date(user.date_inscription).toLocaleDateString('fr-FR')}
                     imageUrl={user.photo_url}
                     onApprove={() => validateUser({ userId: user.id_user, validated: true })}
@@ -286,8 +296,8 @@ const AdminOverview: React.FC = () => {
                 {pendingOeuvres.items.slice(0, 5).map((oeuvre: any) => (
                   <PendingItem
                     key={oeuvre.id_oeuvre}
-                    title={oeuvre.titre}
-                    subtitle={oeuvre.auteur ? `${oeuvre.auteur.prenom} ${oeuvre.auteur.nom}` : oeuvre.type_oeuvre}
+                    title={getLocalizedText(oeuvre.titre, 'fr', 'Sans titre')}
+                    subtitle={oeuvre.auteur ? `${getLocalizedText(oeuvre.auteur.prenom)} ${getLocalizedText(oeuvre.auteur.nom)}` : getLocalizedText(oeuvre.type_oeuvre)}
                     date={new Date(oeuvre.date_creation || oeuvre.created_at).toLocaleDateString('fr-FR')}
                     imageUrl={getAssetUrl(oeuvre.medias?.[0]?.url)}
                     onApprove={() => validateOeuvre({ oeuvreId: oeuvre.id_oeuvre, validated: true })}
@@ -334,8 +344,8 @@ const AdminOverview: React.FC = () => {
                 {moderationQueue.items.slice(0, 5).map((item: any, index: number) => (
                   <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
                     <div>
-                      <p className="font-medium text-sm">{item.entity_title || item.reason}</p>
-                      <p className="text-xs text-muted-foreground">{item.type} - {item.motif || item.reason}</p>
+                      <p className="font-medium text-sm">{getLocalizedText(item.entity_title || item.reason)}</p>
+                      <p className="text-xs text-muted-foreground">{getLocalizedText(item.type)} - {getLocalizedText(item.motif || item.reason)}</p>
                     </div>
                     <Button size="sm" variant="outline" onClick={() => navigate('/admin?tab=moderation')}>
                       {t('admin.moderation.actions.process')}

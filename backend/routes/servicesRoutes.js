@@ -157,16 +157,16 @@ const initServiceRoutes = (models, authMiddleware) => {
 
   // Récupérer toutes les traductions d'un service
   router.get('/services/:id/translations',
-    authenticate,
-    requireAdmin,
+    authMiddleware.authenticate,
+    authMiddleware.isAdmin,
     validationMiddleware.validateId('id'),
     (req, res) => servicesController.getServiceTranslations(req, res)
   );
 
   // Mettre à jour une traduction spécifique
   router.patch('/services/:id/translation/:lang',
-    authenticate,
-    requireAdmin,
+    authMiddleware.authenticate,
+    authMiddleware.isAdmin,
     validationMiddleware.validateId('id'),
     validateLanguage,
     [
@@ -289,8 +289,10 @@ const initServiceRoutes = (models, authMiddleware) => {
     }
   );
 
-  console.log('✅ Routes services i18n initialisées');
-  console.log('  🌍 Routes traduction: GET /services/:id/translations, PATCH /services/:id/translation/:lang');
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('✅ Routes services i18n initialisées');
+    console.log('  🌍 Routes traduction: GET /services/:id/translations, PATCH /services/:id/translation/:lang');
+  }
 
   return router;
 };

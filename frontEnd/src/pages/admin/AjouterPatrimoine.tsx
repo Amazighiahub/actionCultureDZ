@@ -45,12 +45,13 @@ import {
   ArrowLeft, Save, Plus, Trash2, QrCode, MapPin, Clock, Calendar,
   Route, Building2, Landmark, Image as ImageIcon, Upload, Eye,
   CheckCircle2, XCircle, Edit, GripVertical, AlertCircle, Loader2,
-  Download, Share2, Copy, RefreshCw
+  Download, Share2, Copy, RefreshCw, Search, Navigation, X
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { patrimoineService } from '@/services/patrimoine.service';
-import { lieuService } from '@/services/lieu.service';
+import { lieuService, GeocodingResult } from '@/services/lieu.service';
 import { parcoursIntelligentService } from '@/services/parcours.service';
+import { LieuSelector } from '@/components/LieuSelector';
 
 // Types
 interface TranslatableValue {
@@ -236,6 +237,24 @@ const AjouterPatrimoine: React.FC = () => {
   const [generatingParcours, setGeneratingParcours] = useState(false);
   const [availableLieux, setAvailableLieux] = useState<Array<{ id_lieu: number; nom: string }>>([]);
 
+  // ⚡ États pour la recherche d'adresse
+  const [addressQuery, setAddressQuery] = useState('');
+  const [addressResults, setAddressResults] = useState<GeocodingResult[]>([]);
+  const [addressLoading, setAddressLoading] = useState(false);
+  const [showAddressResults, setShowAddressResults] = useState(false);
+  const [checkingDuplicate, setCheckingDuplicate] = useState(false);
+  const [duplicateWarning, setDuplicateWarning] = useState<{ 
+    id_lieu: number; 
+    nom: string; 
+    adresse: string;
+    matchType?: 'name' | 'coordinates';
+    isPatrimoine?: boolean;
+    hasDetailLieu?: boolean;
+    typePatrimoine?: string;
+  } | null>(null);
+  const [createdLieuId, setCreatedLieuId] = useState<number | null>(null);
+  const addressDebounceRef = React.useRef<NodeJS.Timeout | null>(null);
+
   // Charger les wilayas au montage
   useEffect(() => {
     loadWilayas();
@@ -273,6 +292,186 @@ const AjouterPatrimoine: React.FC = () => {
     } catch (err) {
       console.error('Erreur chargement communes:', err);
     }
+  };
+
+  // ⚡ Recherche d'adresse avec Nominatim (OpenStreetMap)
+  const searchAddress = async (query: string) => {
+    if (query.length < 3) {
+      setAddressResults([]);
+      return;
+    }
+    setAddressLoading(true);
+    try {
+      const results = await lieuService.geocodeAddress(query, 'DZ');
+      setAddressResults(results);
+      setShowAddressResults(true);
+    } catch (err) {
+      console.error('Erreur recherche adresse:', err);
+      setAddressResults([]);
+    } finally {
+      setAddressLoading(false);
+    }
+  };
+
+  // ⚡ Debounce pour la recherche d'adresse
+  const handleAddressInputChange = (value: string) => {
+    setAddressQuery(value);
+    setDuplicateWarning(null);
+    setCreatedLieuId(null);
+    if (addressDebounceRef.current) {
+      clearTimeout(addressDebounceRef.current);
+    }
+    addressDebounceRef.current = setTimeout(() => {
+      searchAddress(value);
+    }, 400);
+  };
+
+  // ⚡ Vérifier si un lieu/patrimoine similaire existe déjà
+  const checkDuplicateLieu = async (nom: string, lat: number, lon: number) => {
+    setCheckingDuplicate(true);
+    try {
+      // Envoyer aussi le type de patrimoine pour une recherche plus précise
+      const response = await lieuService.checkDuplicate(nom, lat, lon, formData.typePatrimoine);
+      if (response.success && response.data?.exists && response.data.lieu) {
+        const lieu = response.data.lieu as any;
+        setDuplicateWarning({
+          id_lieu: lieu.id_lieu,
+          nom: typeof lieu.nom === 'object' ? lieu.nom.fr || lieu.nom.ar : lieu.nom,
+          adresse: typeof lieu.adresse === 'object' ? lieu.adresse.fr || lieu.adresse.ar : lieu.adresse,
+          matchType: response.data.matchType,
+          isPatrimoine: response.data.isPatrimoine,
+          hasDetailLieu: (response.data as any).hasDetailLieu,
+          typePatrimoine: response.data.typePatrimoine
+        });
+        return true;
+      }
+      setDuplicateWarning(null);
+      return false;
+    } catch (err) {
+      console.error('Erreur vérification doublon:', err);
+      return false;
+    } finally {
+      setCheckingDuplicate(false);
+    }
+  };
+
+  // ⚡ Sélectionner une adresse depuis les résultats
+  const handleSelectAddress = async (result: GeocodingResult) => {
+    const lat = parseFloat(result.lat);
+    const lon = parseFloat(result.lon);
+    
+    // Construire l'adresse formatée
+    const addressParts = [];
+    if (result.address?.road) addressParts.push(result.address.road);
+    if (result.address?.suburb) addressParts.push(result.address.suburb);
+    if (result.address?.city || result.address?.state) {
+      addressParts.push(result.address.city || result.address.state);
+    }
+    const formattedAddress = addressParts.length > 0 
+      ? addressParts.join(', ')
+      : result.display_name.split(',').slice(0, 3).join(', ');
+
+    // Mettre à jour le formulaire avec les coordonnées
+    setFormData(prev => ({
+      ...prev,
+      adresse: { ...prev.adresse, fr: formattedAddress },
+      latitude: lat,
+      longitude: lon
+    }));
+    
+    setAddressQuery(result.display_name);
+    setShowAddressResults(false);
+
+    setCreatedLieuId(null);
+
+    // Vérifier si un lieu similaire existe
+    const extractedName = result.display_name.split(',')[0];
+    const exists = await checkDuplicateLieu(extractedName, lat, lon);
+
+    // Si pas de doublon, créer le lieu immédiatement
+    if (!exists) {
+      try {
+        const createResponse = await lieuService.create({
+          typeLieu: formData.typeLieu,
+          typePatrimoine: formData.typePatrimoine,
+          nom: { ...formData.nom, fr: formData.nom.fr || extractedName },
+          adresse: { ...formData.adresse, fr: formattedAddress },
+          latitude: lat,
+          longitude: lon,
+          communeId: formData.communeId || undefined,
+          wilayaId: formData.wilayaId || undefined
+        } as any);
+
+        if (createResponse.success && createResponse.data) {
+          const created = createResponse.data as any;
+          setCreatedLieuId(created.id_lieu);
+          toast({
+            title: t('common.success'),
+            description: t('patrimoine.lieuCreated', 'Lieu créé automatiquement')
+          });
+        } else {
+          throw new Error(createResponse.error || 'Erreur création lieu');
+        }
+      } catch (err: any) {
+        const status = err?.response?.status;
+        toast({
+          title: t('common.error'),
+          description: status === 401
+            ? t('patrimoine.authRequiredCreateLieu', 'Connexion requise pour créer un lieu automatiquement')
+            : t('patrimoine.createLieuError', 'Impossible de créer le lieu automatiquement'),
+          variant: 'destructive'
+        });
+      }
+    }
+
+    toast({
+      title: t('patrimoine.addressSelected', 'Adresse sélectionnée'),
+      description: `${t('patrimoine.coordinatesUpdated', 'Coordonnées mises à jour')}: ${lat.toFixed(5)}, ${lon.toFixed(5)}`
+    });
+  };
+
+  // ⚡ Utiliser la géolocalisation du navigateur
+  const handleUseCurrentLocation = async () => {
+    if (!navigator.geolocation) {
+      toast({
+        title: t('common.error'),
+        description: t('patrimoine.geolocationNotSupported', 'Géolocalisation non supportée'),
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setAddressLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+          const result = await lieuService.reverseGeocode(latitude, longitude);
+          if (result) {
+            handleSelectAddress(result);
+          } else {
+            setFormData(prev => ({ ...prev, latitude, longitude }));
+            toast({
+              title: t('patrimoine.locationFound', 'Position trouvée'),
+              description: `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`
+            });
+          }
+        } catch (err) {
+          setFormData(prev => ({ ...prev, latitude, longitude }));
+        } finally {
+          setAddressLoading(false);
+        }
+      },
+      (error) => {
+        console.error('Erreur géolocalisation:', error);
+        toast({
+          title: t('common.error'),
+          description: t('patrimoine.geolocationError', 'Impossible d\'obtenir votre position'),
+          variant: 'destructive'
+        });
+        setAddressLoading(false);
+      }
+    );
   };
 
   // Charger un patrimoine existant (mode édition)
@@ -373,6 +572,7 @@ const AjouterPatrimoine: React.FC = () => {
     setSaving(true);
     try {
       const payload = {
+        ...(createdLieuId ? { lieuId: createdLieuId } : {}),
         ...formData,
         services,
         programmes,
@@ -534,7 +734,7 @@ const AjouterPatrimoine: React.FC = () => {
       const result = await parcoursIntelligentService.generatePersonnalise({
         latitude: formData.latitude,
         longitude: formData.longitude,
-        duration: 240,
+        dureeMaxParcours: 240,
         transport: 'voiture',
         maxSites: 5
       });
@@ -817,9 +1017,12 @@ const AjouterPatrimoine: React.FC = () => {
               <Card>
                 <CardHeader>
                   <CardTitle>{t('patrimoine.location', 'Localisation')}</CardTitle>
+                  <CardDescription>
+                    {t('patrimoine.locationDescription', 'Sélectionnez un lieu existant ou créez-en un nouveau')}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  {/* Wilaya */}
+                  {/* Wilaya (pour filtrer les lieux) */}
                   <div className="space-y-2">
                     <Label>{t('patrimoine.wilaya', 'Wilaya')} *</Label>
                     <Select
@@ -866,35 +1069,47 @@ const AjouterPatrimoine: React.FC = () => {
                     )}
                   </div>
 
-                  {/* Coordonnées GPS */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>{t('patrimoine.latitude', 'Latitude')}</Label>
-                      <Input
-                        type="number"
-                        step="0.000001"
-                        value={formData.latitude}
-                        onChange={(e) => setFormData({ ...formData, latitude: parseFloat(e.target.value) })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>{t('patrimoine.longitude', 'Longitude')}</Label>
-                      <Input
-                        type="number"
-                        step="0.000001"
-                        value={formData.longitude}
-                        onChange={(e) => setFormData({ ...formData, longitude: parseFloat(e.target.value) })}
-                      />
-                    </div>
+                  <Separator />
+
+                  {/* LieuSelector — même composant que dans AjouterEvenement */}
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4" />
+                      {t('patrimoine.selectOrCreateLieu', 'Lieu')} *
+                    </Label>
+                    <LieuSelector
+                      value={createdLieuId ?? undefined}
+                      onChange={(lieuId, lieu) => {
+                        setCreatedLieuId(lieuId ?? null);
+                        if (lieu) {
+                          setFormData(prev => ({
+                            ...prev,
+                            latitude: lieu.latitude,
+                            longitude: lieu.longitude,
+                            adresse: typeof lieu.adresse === 'object'
+                              ? lieu.adresse as TranslatableValue
+                              : { ...prev.adresse, fr: lieu.adresse || '' }
+                          }));
+                        }
+                      }}
+                      wilayaId={formData.wilayaId || undefined}
+                      required
+                    />
                   </div>
 
-                  {/* Aperçu carte */}
-                  <div className="h-48 bg-muted rounded-lg flex items-center justify-center">
-                    <MapPin className="h-8 w-8 text-muted-foreground" />
-                    <span className="ml-2 text-muted-foreground">
-                      {formData.latitude.toFixed(4)}, {formData.longitude.toFixed(4)}
-                    </span>
-                  </div>
+                  {/* Afficher les coordonnées du lieu sélectionné */}
+                  {createdLieuId && (
+                    <div className="p-3 bg-muted/50 rounded-lg">
+                      <div className="flex items-center gap-2 text-sm">
+                        <CheckCircle2 className="h-4 w-4 text-green-600" />
+                        <span className="font-medium">{t('patrimoine.lieuSelected', 'Lieu sélectionné')}</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4 mt-2 text-sm text-muted-foreground">
+                        <span>{t('patrimoine.latitude', 'Latitude')}: {formData.latitude.toFixed(6)}</span>
+                        <span>{t('patrimoine.longitude', 'Longitude')}: {formData.longitude.toFixed(6)}</span>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>

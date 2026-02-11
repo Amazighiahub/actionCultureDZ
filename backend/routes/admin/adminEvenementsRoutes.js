@@ -18,25 +18,31 @@ const initAdminEvenementsRoutes = (models) => {
   } catch (error) {
     console.warn('⚠️ Utilisation des middlewares de fallback');
     authMiddleware = {
-      authenticate: (req, res, next) => {
-        req.user = { id_user: 1, isAdmin: true, email: 'admin@test.com' };
-        next();
+      authenticate: (req, res) => {
+        console.error('🚨 Middleware auth non chargé - accès refusé');
+        return res.status(503).json({
+          success: false,
+          error: 'Service d\'authentification temporairement indisponible',
+          code: 'AUTH_SERVICE_UNAVAILABLE'
+        });
       },
-      requireAdmin: (req, res, next) => {
-        if (!req.user || !req.user.isAdmin) {
-          return res.status(403).json({ success: false, message: 'Accès admin requis' });
-        }
-        next();
+      requireAdmin: (req, res) => {
+        console.error('🚨 Middleware admin non chargé - accès refusé');
+        return res.status(503).json({
+          success: false,
+          error: 'Service d\'authentification temporairement indisponible',
+          code: 'AUTH_SERVICE_UNAVAILABLE'
+        });
       }
     };
     
     validationMiddleware = {
       handleValidationErrors: (req, res, next) => {
-        const errors = require('express-validator').validationResult(req);
-        if (!errors.isEmpty()) {
-          return res.status(400).json({ success: false, errors: errors.array() });
-        }
-        next();
+        console.error('🚨 Middleware validation non chargé');
+        return res.status(503).json({
+          success: false,
+          error: 'Service de validation temporairement indisponible'
+        });
       }
     };
     

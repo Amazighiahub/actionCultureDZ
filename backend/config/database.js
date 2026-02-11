@@ -25,7 +25,7 @@ const validateCredentials = (env) => {
   }
 
   // 🔒 Vérification stricte en production
-  if (isProduction) {
+  if (isProduction && process.env.SKIP_PRODUCTION_CHECKS !== 'true') {
     const dbUser = process.env.DB_USER;
     const dbPassword = process.env.DB_PASSWORD;
 

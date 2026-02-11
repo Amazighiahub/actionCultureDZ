@@ -2,9 +2,9 @@
  * AdminUsersTab - Gestion des utilisateurs
  * Utilise useDashboardAdmin
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/UI/card';
+import { Card, CardContent } from '@/components/UI/card';
 import { Button } from '@/components/UI/button';
 import { Input } from '@/components/UI/input';
 import { Badge } from '@/components/UI/badge';
@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from '@/components/UI/select';
 import {
-  Users, Search, Filter, CheckCircle, XCircle, 
+  Users, Search, CheckCircle, XCircle, 
   MoreVertical, Mail, Shield, Trash2, RefreshCw
 } from 'lucide-react';
 import {
@@ -35,10 +35,21 @@ import {
 
 // ✅ CORRIGÉ: Utilise useDashboardAdmin
 import { useDashboardAdmin } from '@/hooks/useDashboardAdmin';
+
+// Helper pour extraire le texte d'un champ multilingue {fr, ar, en} ou string
+const getLocalizedText = (value: any, fallback: string = ''): string => {
+  if (!value) return fallback;
+  if (typeof value === 'string') return value;
+  if (typeof value === 'object') {
+    return value.fr || value.ar || value.en || Object.values(value).find(v => typeof v === 'string' && v) || fallback;
+  }
+  return String(value);
+};
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 
 // Types de filtres
-const STATUS_OPTIONS = ['tous', 'actif', 'inactif', 'suspendu', 'en_attente'];
+const STATUS_OPTIONS = ['tous', 'actif', 'en_attente_validation', 'inactif', 'suspendu', 'banni'];
+const VALIDATION_OPTIONS = ['tous', 'en_attente', 'valide', 'rejete'];
 const TYPE_OPTIONS = ['tous', 'visiteur', 'artiste', 'organisateur', 'guide', 'artisan'];
 
 const AdminUsersTab: React.FC = () => {
@@ -49,10 +60,12 @@ const AdminUsersTab: React.FC = () => {
   
   const debouncedSearch = useDebouncedValue(searchQuery, 300);
 
+  const [validationFilter, setValidationFilter] = useState('tous');
+
   // ✅ Utilise useDashboardAdmin
   const {
-    pendingUsers,
-    loadingPendingUsers,
+    allUsers,
+    loadingAllUsers,
     validateUser,
     deleteUser,
     suspendUser,
@@ -62,15 +75,17 @@ const AdminUsersTab: React.FC = () => {
 
   // Filtrer les utilisateurs
   const filteredUsers = React.useMemo(() => {
-    if (!pendingUsers?.items) return [];
+    if (!allUsers?.items) return [];
     
-    return pendingUsers.items.filter((user: any) => {
+    return allUsers.items.filter((user: any) => {
       // Filtre de recherche
       if (debouncedSearch) {
         const searchLower = debouncedSearch.toLowerCase();
+        const nom = getLocalizedText(user.nom);
+        const prenom = getLocalizedText(user.prenom);
         const matchesSearch = 
-          user.nom?.toLowerCase().includes(searchLower) ||
-          user.prenom?.toLowerCase().includes(searchLower) ||
+          nom.toLowerCase().includes(searchLower) ||
+          prenom.toLowerCase().includes(searchLower) ||
           user.email?.toLowerCase().includes(searchLower);
         if (!matchesSearch) return false;
       }
@@ -79,25 +94,20 @@ const AdminUsersTab: React.FC = () => {
       if (statusFilter !== 'tous' && user.statut !== statusFilter) {
         return false;
       }
+
+      // Filtre de validation
+      if (validationFilter !== 'tous' && user.statut_validation !== validationFilter) {
+        return false;
+      }
       
       // Filtre de type
-      if (typeFilter !== 'tous' && user.type_user !== typeFilter) {
+      if (typeFilter !== 'tous' && getLocalizedText(user.type_user) !== typeFilter) {
         return false;
       }
       
       return true;
     });
-  }, [pendingUsers, debouncedSearch, statusFilter, typeFilter]);
-
-  const getStatusColor = (statut: string) => {
-    switch (statut) {
-      case 'actif': return 'success';
-      case 'inactif': return 'default';
-      case 'suspendu': return 'error';
-      case 'en_attente': return 'warning';
-      default: return 'default';
-    }
-  };
+  }, [allUsers, debouncedSearch, statusFilter, validationFilter, typeFilter]);
 
   return (
     <div className="space-y-6">
@@ -143,6 +153,18 @@ const AdminUsersTab: React.FC = () => {
                 ))}
               </SelectContent>
             </Select>
+            <Select value={validationFilter} onValueChange={setValidationFilter}>
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <SelectValue placeholder="Validation" />
+              </SelectTrigger>
+              <SelectContent>
+                {VALIDATION_OPTIONS.map((v) => (
+                  <SelectItem key={v} value={v}>
+                    {v === 'tous' ? 'Toutes validations' : v === 'en_attente' ? 'En attente' : v === 'valide' ? 'Validé' : v === 'rejete' ? 'Rejeté' : v}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Select value={typeFilter} onValueChange={setTypeFilter}>
               <SelectTrigger className="w-full sm:w-[180px]">
                 <SelectValue placeholder="Type" />
@@ -160,7 +182,7 @@ const AdminUsersTab: React.FC = () => {
       </Card>
 
       {/* Liste des utilisateurs */}
-      {loadingPendingUsers ? (
+      {loadingAllUsers ? (
         <LoadingSkeleton type="table" count={5} />
       ) : filteredUsers.length === 0 ? (
         <EmptyState
@@ -191,26 +213,24 @@ const AdminUsersTab: React.FC = () => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <p className="font-medium truncate">
-                        {user.prenom} {user.nom}
+                        {getLocalizedText(user.prenom)} {getLocalizedText(user.nom)}
                       </p>
-                      <StatusBadge status={getStatusColor(user.statut)} size="sm">
-                        {user.statut || 'en_attente'}
-                      </StatusBadge>
+                      <StatusBadge status={user.statut || 'en_attente'} size="sm" />
                     </div>
                     <p className="text-sm text-muted-foreground truncate">{user.email}</p>
                     <div className="flex items-center gap-2 mt-1">
                       <Badge variant="outline" className="text-xs">
-                        {user.type_user || 'visiteur'}
+                        {getLocalizedText(user.type_user, 'visiteur')}
                       </Badge>
                       <span className="text-xs text-muted-foreground">
-                        Inscrit le {new Date(user.date_inscription).toLocaleDateString('fr-FR')}
+                        Inscrit le {new Date(user.date_creation || user.date_inscription).toLocaleDateString('fr-FR')}
                       </span>
                     </div>
                   </div>
 
                   {/* Actions */}
                   <div className="flex items-center gap-2">
-                    {user.statut === 'en_attente' && (
+                    {user.statut_validation === 'en_attente' && (
                       <>
                         <Button
                           size="sm"

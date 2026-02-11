@@ -13,7 +13,9 @@ const initAdminServicesRoutes = (models) => {
     authMiddleware = require('../middlewares/authMiddleware')(models);
     validationMiddleware = require('../middlewares/validationMiddleware');
     auditMiddleware = require('../middlewares/auditMiddleware');
-    console.log('✅ Imports relatifs réussis pour adminServicesRoutes');
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('✅ Imports relatifs réussis pour adminServicesRoutes');
+    }
   } catch (error1) {
     console.warn('⚠️ Échec imports relatifs, tentative chemin absolu...');
     
@@ -23,7 +25,9 @@ const initAdminServicesRoutes = (models) => {
       authMiddleware = require(path.join(middlewarePath, 'authMiddleware'))(models);
       validationMiddleware = require(path.join(middlewarePath, 'validationMiddleware'));
       auditMiddleware = require(path.join(middlewarePath, 'auditMiddleware'));
-      console.log('✅ Imports absolus réussis');
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('✅ Imports absolus réussis');
+      }
     } catch (error2) {
       console.error('❌ ERREUR CRITIQUE: Impossible de charger les middlewares:', error2.message);
 
@@ -91,7 +95,9 @@ const initAdminServicesRoutes = (models) => {
     validationMiddleware.handleValidationErrors,
     async (req, res) => {
       try {
-        console.log('🎯 GET /admin/services appelé par:', req.user?.email);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('🎯 GET /admin/services appelé par:', req.user?.email);
+        }
         
         const { 
           page = 1, 
@@ -127,11 +133,15 @@ const initAdminServicesRoutes = (models) => {
         
         // Utiliser le modèle approprié
         const ServiceModel = models.Service || models.Artisanat;
-        console.log('📋 Utilisation du modèle:', ServiceModel ? ServiceModel.name : 'Aucun');
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('📋 Utilisation du modèle:', ServiceModel ? ServiceModel.name : 'Aucun');
+        }
         
         // Debug : afficher les attributs disponibles
         if (ServiceModel && ServiceModel.rawAttributes) {
-          console.log('🔍 Attributs disponibles:', Object.keys(ServiceModel.rawAttributes));
+          if (process.env.NODE_ENV !== 'production') {
+            console.log('🔍 Attributs disponibles:', Object.keys(ServiceModel.rawAttributes));
+          }
         }
         
         // Construire les conditions
@@ -166,7 +176,9 @@ const initAdminServicesRoutes = (models) => {
           orderField = 'id_artisanat';
         }
         
-        console.log(`📋 Utilisation du champ de tri: ${orderField}`);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log(`📋 Utilisation du champ de tri: ${orderField}`);
+        }
         
         // Essayer d'abord avec les includes, puis sans si erreur
         let services;

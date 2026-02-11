@@ -1,6 +1,7 @@
 // middlewares/rateLimiter.js
 const rateLimit = require('express-rate-limit');
-const RedisStore = require('rate-limit-redis');
+const rateLimitRedis = require('rate-limit-redis');
+const RedisStore = rateLimitRedis?.RedisStore || rateLimitRedis?.default || rateLimitRedis;
 const Redis = require('ioredis');
 
 // ✅ SÉCURITÉ: Configuration Redis pour rate limiting distribué
@@ -10,6 +11,19 @@ const USE_REDIS = process.env.USE_REDIS_RATE_LIMIT === 'true' || IS_PRODUCTION;
 // Configuration Redis
 let redisClient = null;
 let redisStore = null;
+
+const createRedisStore = (options) => {
+  if (typeof RedisStore !== 'function') {
+    throw new Error('RedisStore export incompatible');
+  }
+
+  // Certaines versions exportent une classe, d'autres une factory
+  try {
+    return new RedisStore(options);
+  } catch (e) {
+    return RedisStore(options);
+  }
+};
 
 if (USE_REDIS) {
   try {
@@ -32,7 +46,7 @@ if (USE_REDIS) {
     });
 
     // Créer le store Redis
-    redisStore = new RedisStore({
+    redisStore = createRedisStore({
       sendCommand: (...args) => redisClient.call(...args),
     });
 
