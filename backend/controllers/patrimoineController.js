@@ -1154,6 +1154,7 @@ END:VCARD`;
     try {
       const lang = req.lang || 'fr';
       const {
+        lieuId,
         nom, adresse, typePatrimoine, typeLieu, communeId,
         latitude, longitude, description, histoire, referencesHistoriques,
         horaires, genererQRCode, services, programmes, monuments, vestiges, medias,
@@ -1169,25 +1170,54 @@ END:VCARD`;
         description, histoire, referencesHistoriques, horaires
       };
 
-      // Créer le lieu
-      const newLieu = await this.models.Lieu.create({
-        nom: typeof lieuData.nom === 'string' ? createMultiLang(lieuData.nom, lang) : (lieuData.nom || { fr: '' }),
-        adresse: typeof lieuData.adresse === 'string' ? createMultiLang(lieuData.adresse, lang) : (lieuData.adresse || { fr: '' }),
-        typePatrimoine: lieuData.typePatrimoine || typePatrimoine || 'monument',
-        typeLieu: lieuData.typeLieu || typeLieu || 'Commune',
-        communeId: lieuData.communeId || communeId,
-        latitude: lieuData.latitude || latitude || 36.7525,
-        longitude: lieuData.longitude || longitude || 3.04197
-      });
+      let newLieu;
+      if (lieuId) {
+        newLieu = await this.models.Lieu.findByPk(lieuId);
+        if (!newLieu) {
+          return res.status(404).json({
+            success: false,
+            error: 'Lieu non trouvé'
+          });
+        }
 
-      // Créer les détails du lieu
-      const detailLieu = await this.models.DetailLieu.create({
-        id_lieu: newLieu.id_lieu,
-        description: typeof detailsData.description === 'string' ? createMultiLang(detailsData.description, lang) : (detailsData.description || {}),
-        histoire: typeof detailsData.histoire === 'string' ? createMultiLang(detailsData.histoire, lang) : (detailsData.histoire || {}),
-        referencesHistoriques: typeof detailsData.referencesHistoriques === 'string' ? createMultiLang(detailsData.referencesHistoriques, lang) : (detailsData.referencesHistoriques || {}),
-        horaires: typeof detailsData.horaires === 'string' ? createMultiLang(detailsData.horaires, lang) : (detailsData.horaires || {})
-      });
+        await newLieu.update({
+          nom: typeof lieuData.nom === 'string' ? createMultiLang(lieuData.nom, lang) : (lieuData.nom || newLieu.nom),
+          adresse: typeof lieuData.adresse === 'string' ? createMultiLang(lieuData.adresse, lang) : (lieuData.adresse || newLieu.adresse),
+          typePatrimoine: lieuData.typePatrimoine || typePatrimoine || newLieu.typePatrimoine,
+          typeLieu: lieuData.typeLieu || typeLieu || newLieu.typeLieu,
+          communeId: lieuData.communeId || communeId || newLieu.communeId,
+          latitude: lieuData.latitude || latitude || newLieu.latitude,
+          longitude: lieuData.longitude || longitude || newLieu.longitude
+        });
+      } else {
+        newLieu = await this.models.Lieu.create({
+          nom: typeof lieuData.nom === 'string' ? createMultiLang(lieuData.nom, lang) : (lieuData.nom || { fr: '' }),
+          adresse: typeof lieuData.adresse === 'string' ? createMultiLang(lieuData.adresse, lang) : (lieuData.adresse || { fr: '' }),
+          typePatrimoine: lieuData.typePatrimoine || typePatrimoine || 'monument',
+          typeLieu: lieuData.typeLieu || typeLieu || 'Commune',
+          communeId: lieuData.communeId || communeId,
+          latitude: lieuData.latitude || latitude || 36.7525,
+          longitude: lieuData.longitude || longitude || 3.04197
+        });
+      }
+
+      let detailLieu = await this.models.DetailLieu.findOne({ where: { id_lieu: newLieu.id_lieu } });
+      if (detailLieu) {
+        await detailLieu.update({
+          description: typeof detailsData.description === 'string' ? createMultiLang(detailsData.description, lang) : (detailsData.description || detailLieu.description),
+          histoire: typeof detailsData.histoire === 'string' ? createMultiLang(detailsData.histoire, lang) : (detailsData.histoire || detailLieu.histoire),
+          referencesHistoriques: typeof detailsData.referencesHistoriques === 'string' ? createMultiLang(detailsData.referencesHistoriques, lang) : (detailsData.referencesHistoriques || detailLieu.referencesHistoriques),
+          horaires: typeof detailsData.horaires === 'string' ? createMultiLang(detailsData.horaires, lang) : (detailsData.horaires || detailLieu.horaires)
+        });
+      } else {
+        detailLieu = await this.models.DetailLieu.create({
+          id_lieu: newLieu.id_lieu,
+          description: typeof detailsData.description === 'string' ? createMultiLang(detailsData.description, lang) : (detailsData.description || {}),
+          histoire: typeof detailsData.histoire === 'string' ? createMultiLang(detailsData.histoire, lang) : (detailsData.histoire || {}),
+          referencesHistoriques: typeof detailsData.referencesHistoriques === 'string' ? createMultiLang(detailsData.referencesHistoriques, lang) : (detailsData.referencesHistoriques || {}),
+          horaires: typeof detailsData.horaires === 'string' ? createMultiLang(detailsData.horaires, lang) : (detailsData.horaires || {})
+        });
+      }
 
       // Créer les monuments (multiples ou single)
       const monumentsList = monuments || (monument ? [monument] : []);

@@ -367,12 +367,13 @@ module.exports = (modelsOrUser) => {
       }
 
       const userRoles = req.userRoles || [];
-      const hasRole = roles.some(role => userRoles.includes(role));
+      const requiredRoles = roles.flat();
+      const hasRole = requiredRoles.some(role => userRoles.includes(role));
 
       if (!hasRole) {
         return res.status(403).json({
           success: false,
-          message: 'Accès non autorisé. Rôle requis: ' + roles.join(' ou ')
+          message: 'Accès non autorisé. Rôle requis: ' + requiredRoles.join(' ou ')
         });
       }
 

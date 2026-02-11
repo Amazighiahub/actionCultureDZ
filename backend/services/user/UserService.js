@@ -276,8 +276,8 @@ class UserService extends BaseService {
     }
 
     // Valider le nouveau mot de passe
-    if (!nouveauMotDePasse || nouveauMotDePasse.length < 8) {
-      throw this._validationError('Le nouveau mot de passe doit contenir au moins 8 caractères');
+    if (!nouveauMotDePasse || nouveauMotDePasse.length < 12) {
+      throw this._validationError('Le nouveau mot de passe doit contenir au moins 12 caractères');
     }
 
     // Hasher et mettre à jour

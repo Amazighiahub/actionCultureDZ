@@ -371,7 +371,7 @@ class ArtisanatController {
         const userInclude = {
           model: this.models.User,
           as: 'Saiseur',
-          attributes: ['id_user', 'nom', 'prenom', 'photo_url', 'email', 'telephone', 'biographie', 'wilaya_residence'],
+          attributes: ['id_user', 'nom', 'prenom', 'photo_url', 'biographie', 'wilaya_residence'],
           required: false
         };
 

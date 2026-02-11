@@ -38,6 +38,7 @@ const AjouterEvenement = () => {
   
   const [gratuit, setGratuit] = useState(false);
   const [wilayas, setWilayas] = useState<Wilaya[]>([]);
+  const [typesEvenements, setTypesEvenements] = useState<Array<{ id_type_evenement: number; nom_type: any }>>([]);
   
   // État pour l'organisation
   const [organisations, setOrganisations] = useState<any[]>([]);
@@ -57,7 +58,7 @@ const AjouterEvenement = () => {
   const [formData, setFormData] = useState<{
     nom: { fr: string; ar: string; en: string; 'tz-ltn': string; 'tz-tfng': string };
     description: { fr: string; ar: string; en: string; 'tz-ltn': string; 'tz-tfng': string };
-    typeEvenement: string;
+    idTypeEvenement: string;
     dateDebut: string;
     dateFin: string;
     heureDebut: string;
@@ -68,7 +69,7 @@ const AjouterEvenement = () => {
   }>({
     nom: { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
     description: { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
-    typeEvenement: '',
+    idTypeEvenement: '',
     dateDebut: '',
     dateFin: '',
     heureDebut: '',
@@ -109,6 +110,16 @@ const AjouterEvenement = () => {
     } catch (error) {
       console.error('Erreur chargement wilayas:', error);
     }
+
+    // Charger les types d'événements
+    try {
+      const typesResponse = await metadataService.getTypesEvenements();
+      if (typesResponse.success && typesResponse.data) {
+        setTypesEvenements(typesResponse.data);
+      }
+    } catch (error) {
+      console.error('Erreur chargement types événements:', error);
+    }
     
     // Charger les organisations de l'utilisateur
     try {
@@ -133,18 +144,7 @@ const AjouterEvenement = () => {
     }
   };
 
-  const typesEvenements = [
-    { value: 'exposition', label: t('events.types.exhibition') },
-    { value: 'concert', label: t('events.types.concert') },
-    { value: 'projection', label: t('events.types.screening') },
-    { value: 'conference', label: t('events.types.conference') },
-    { value: 'atelier', label: t('events.types.workshop') },
-    { value: 'festival', label: t('events.types.festival') },
-    { value: 'spectacle', label: t('events.types.show') },
-    { value: 'rencontre_litteraire', label: t('events.types.literaryMeeting') },
-    { value: 'webinaire', label: t('events.types.webinar', 'Webinaire') },
-    { value: 'streaming', label: t('events.types.streaming', 'Streaming en direct') }
-  ];
+  // Les types d'événements sont chargés depuis l'API dans checkAuthAndLoadData
 
   const handleGratuitChange = (checked: boolean | "indeterminate") => {
     setGratuit(checked === true);
@@ -164,7 +164,7 @@ const AjouterEvenement = () => {
     }
 
     // Validation: Type requis
-    if (!formData.typeEvenement) {
+    if (!formData.idTypeEvenement) {
       toast({
         title: t('common.error'),
         description: t('events.create.typeRequired', 'Le type d\'événement est requis'),
@@ -223,22 +223,16 @@ const AjouterEvenement = () => {
       return;
     }
 
-    // Collecter toutes les données du formulaire
-    const submitData = {
-      nom: formData.nom,
+    // Collecter toutes les données du formulaire — noms alignés sur le modèle backend
+    const submitData: Record<string, any> = {
+      nom_evenement: formData.nom,
       description: formData.description,
-      type_evenement: formData.typeEvenement,
+      id_type_evenement: parseInt(formData.idTypeEvenement),
       date_debut: formData.dateDebut,
-      date_fin: formData.dateFin || null,
-      heure_debut: formData.heureDebut || null,
-      heure_fin: formData.heureFin || null,
-      max_participants: formData.maxParticipants ? parseInt(formData.maxParticipants) : null,
-      gratuit: gratuit,
-      tarif: !gratuit && formData.tarif ? parseFloat(formData.tarif) : null,
-      is_virtual: isVirtual,
-      url_virtuel: isVirtual ? formData.urlVirtuel : null,
-      lieu_id: !isVirtual ? selectedLieuId : null,
-      organisation_id: !isVirtual ? selectedOrganisationId : null,
+      date_fin: formData.dateFin || undefined,
+      capacite_max: formData.maxParticipants ? parseInt(formData.maxParticipants) : undefined,
+      tarif: !gratuit && formData.tarif ? parseFloat(formData.tarif) : 0,
+      id_lieu: !isVirtual ? selectedLieuId : undefined,
     };
 
     console.log('Données à soumettre:', submitData);
@@ -463,8 +457,8 @@ const AjouterEvenement = () => {
                   <div className="space-y-2">
                     <Label htmlFor="type">{t('events.create.eventType')} *</Label>
                     <Select
-                      value={formData.typeEvenement}
-                      onValueChange={(value) => setFormData(prev => ({ ...prev, typeEvenement: value }))}
+                      value={formData.idTypeEvenement}
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, idTypeEvenement: value }))}
                       required
                     >
                       <SelectTrigger>
@@ -472,8 +466,8 @@ const AjouterEvenement = () => {
                       </SelectTrigger>
                       <SelectContent>
                         {typesEvenements.map((type) => (
-                          <SelectItem key={type.value} value={type.value}>
-                            {type.label}
+                          <SelectItem key={type.id_type_evenement} value={type.id_type_evenement.toString()}>
+                            {typeof type.nom_type === 'object' ? type.nom_type.fr || type.nom_type.ar || '' : type.nom_type}
                           </SelectItem>
                         ))}
                       </SelectContent>

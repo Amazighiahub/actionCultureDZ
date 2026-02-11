@@ -31,6 +31,7 @@ interface SitePatrimoine {
 }
 
 interface CreateSiteData {
+  lieuId?: number;
   nom: string;
   nom_ar?: string;
   description: string;

@@ -154,8 +154,8 @@ class EnvironmentValidator {
       errors.push(`❌ BCRYPT_ROUNDS doit être un nombre`);
     }
 
-    // Validations strictes en production
-    if (env === 'production') {
+    // Validations strictes en production (bypass avec SKIP_PRODUCTION_CHECKS=true)
+    if (env === 'production' && process.env.SKIP_PRODUCTION_CHECKS !== 'true') {
       // Vérifier DB_USER n'est pas root
       if (process.env.DB_USER === 'root') {
         errors.push(

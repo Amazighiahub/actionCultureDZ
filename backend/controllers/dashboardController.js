@@ -539,6 +539,65 @@ async generateDetailedStats(period) {
   }
 
   /**
+   * Liste de TOUS les utilisateurs (avec filtres optionnels)
+   */
+  async getAllUsers(req, res) {
+    try {
+      const { page = 1, limit = 20, statut, statut_validation, type_user, search } = req.query;
+      const offset = (page - 1) * limit;
+
+      const whereClause = {};
+
+      if (statut && statut !== 'tous') {
+        whereClause.statut = statut;
+      }
+      if (statut_validation && statut_validation !== 'tous') {
+        whereClause.statut_validation = statut_validation;
+      }
+      if (type_user && type_user !== 'tous') {
+        whereClause.id_type_user = parseInt(type_user);
+      }
+      if (search && search.trim().length >= 2) {
+        const searchTerm = `%${search.trim()}%`;
+        whereClause[Op.or] = [
+          literal(`JSON_UNQUOTE(JSON_EXTRACT(nom, '$.fr')) LIKE '${searchTerm}'`),
+          literal(`JSON_UNQUOTE(JSON_EXTRACT(prenom, '$.fr')) LIKE '${searchTerm}'`),
+          { email: { [Op.like]: searchTerm } }
+        ];
+      }
+
+      const users = await this.models.User.findAndCountAll({
+        where: whereClause,
+        attributes: { exclude: ['password', 'mot_de_passe'] },
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        order: [['date_creation', 'DESC']]
+      });
+
+      res.json({
+        success: true,
+        data: {
+          items: users.rows,
+          pagination: {
+            total: users.count,
+            page: parseInt(page),
+            pages: Math.ceil(users.count / limit),
+            limit: parseInt(limit),
+            hasNext: page < Math.ceil(users.count / limit),
+            hasPrev: page > 1
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Erreur getAllUsers:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erreur lors de la récupération des utilisateurs'
+      });
+    }
+  }
+
+  /**
    * Utilisateurs en attente
    */
   async getPendingUsers(req, res) {

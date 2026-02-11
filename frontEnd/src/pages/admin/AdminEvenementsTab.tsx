@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { Card, CardContent } from '@/components/UI/card';
 import { Button } from '@/components/UI/button';
 import { Input } from '@/components/UI/input';
-import { Badge } from '@/components/UI/badge';
+// Badge not needed — StatusBadge handles status display
 import {
   Select,
   SelectContent,
@@ -93,16 +93,6 @@ const AdminEvenementsTab: React.FC = () => {
       return true;
     });
   }, [evenements, debouncedSearch, statusFilter, currentLang]);
-
-  const getStatusColor = (statut: string) => {
-    switch (statut) {
-      case 'publie': return 'success';
-      case 'brouillon': return 'default';
-      case 'annule': return 'error';
-      case 'termine': return 'info';
-      default: return 'default';
-    }
-  };
 
   const formatDate = (dateString: string) => {
     if (!dateString) return 'Date non définie';
@@ -204,9 +194,7 @@ const AdminEvenementsTab: React.FC = () => {
                     </p>
                   </div>
                   <div className="absolute top-2 right-2">
-                    <StatusBadge status={getStatusColor(event.statut)} size="sm">
-                      {event.statut || 'brouillon'}
-                    </StatusBadge>
+                    <StatusBadge status={event.statut || 'brouillon'} size="sm" />
                   </div>
                 </div>
 

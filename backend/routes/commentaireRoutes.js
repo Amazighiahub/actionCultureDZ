@@ -164,7 +164,7 @@ module.exports = (models, middlewares = {}) => {
   router.put('/:id/moderate', authMiddleware, async (req, res) => {
     try {
       // Vérifier que l'utilisateur est admin
-      if (!req.user || req.user.role !== 'admin') {
+      if (!req.user || !req.user.isAdmin) {
         return res.status(403).json({
           success: false,
           error: 'Accès réservé aux administrateurs'

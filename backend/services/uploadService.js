@@ -48,7 +48,9 @@ class UploadService {
     dirs.forEach(dir => {
       if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
-        console.log(`📁 Dossier créé: ${dir}`);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log(`📁 Dossier créé: ${dir}`);
+        }
       }
     });
   }
@@ -95,14 +97,14 @@ class UploadService {
     });
 
     const fileFilter = (req, file, cb) => {
-      const allowedTypes = /jpeg|jpg|png|gif|webp|bmp|svg/;
+      const allowedTypes = /jpeg|jpg|png|gif|webp|bmp/;
       const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
       const mimetype = allowedTypes.test(file.mimetype);
 
       if (mimetype && extname) {
         return cb(null, true);
       } else {
-        cb(new Error('Format d\'image non supporté. Formats acceptés: JPG, JPEG, PNG, GIF, WEBP, BMP, SVG'));
+        cb(new Error('Format d\'image non supporté. Formats acceptés: JPG, JPEG, PNG, GIF, WEBP, BMP'));
       }
     };
 
@@ -187,7 +189,7 @@ class UploadService {
         'video/webm'
       ];
 
-      if (extname || allowedMimeTypes.includes(file.mimetype)) {
+      if (extname && allowedMimeTypes.includes(file.mimetype)) {
         return cb(null, true);
       } else {
         cb(new Error('Format de vidéo non supporté'));
@@ -231,7 +233,7 @@ class UploadService {
         'audio/x-ms-wma'
       ];
 
-      if (extname || allowedMimeTypes.includes(file.mimetype)) {
+      if (extname && allowedMimeTypes.includes(file.mimetype)) {
         return cb(null, true);
       } else {
         cb(new Error('Format audio non supporté'));
@@ -408,10 +410,14 @@ class UploadService {
       
       if (fs.existsSync(fullPath)) {
         fs.unlinkSync(fullPath);
-        console.log(`🗑️ Fichier supprimé: ${fullPath}`);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log(`🗑️ Fichier supprimé: ${fullPath}`);
+        }
         return true;
       } else {
-        console.log(`⚠️ Fichier non trouvé: ${fullPath}`);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log(`⚠️ Fichier non trouvé: ${fullPath}`);
+        }
         return false;
       }
     } catch (error) {
@@ -495,7 +501,9 @@ class UploadService {
         }
       }
       
-      console.log(`🧹 ${deletedCount} fichier(s) temporaire(s) supprimé(s)`);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(`🧹 ${deletedCount} fichier(s) temporaire(s) supprimé(s)`);
+      }
       return deletedCount;
     } catch (error) {
       console.error('❌ Erreur nettoyage fichiers temporaires:', error);

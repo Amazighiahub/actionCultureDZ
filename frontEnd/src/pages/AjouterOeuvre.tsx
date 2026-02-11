@@ -43,7 +43,7 @@ import { useToast } from '@/hooks/use-toast';
 // ============================================================================
 
 // Type pour les médias
-import { useTranslation } from "react-i18next";import { t } from 'i18next';
+import { useTranslation } from "react-i18next";
 import MultiLangInput from '@/components/MultiLangInput';
 interface MediaUpload {
   id: string;
@@ -135,6 +135,7 @@ const CategorySelection: React.FC<CategorySelectionProps> = React.memo(({
   selectedCategories,
   onCategoriesChange
 }) => {
+  const { t } = useTranslation();
   const [categoriesGrouped, setCategoriesGrouped] = useState<CategoryGroupedByGenre[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -337,8 +338,9 @@ const EditorModeSelector: React.FC<EditorModeSelectorProps> = ({
   showEditorChoice,
   useArticleEditor,
   setUseArticleEditor
-}) => {const { t } = useTranslation();
-  const typeOeuvre = metadata.types_oeuvres?.find((t: any) => t.id_type_oeuvre === formData.id_type_oeuvre);
+}) => {
+  const { t } = useTranslation();
+  const typeOeuvre = metadata.types_oeuvres?.find((type: any) => type.id_type_oeuvre === formData.id_type_oeuvre);
   const isArticleType = typeOeuvre && (
   typeOeuvre.nom_type === 'Article' ||
   typeOeuvre.nom_type === 'Article Scientifique');
@@ -414,6 +416,7 @@ const EditorModeSelector: React.FC<EditorModeSelectorProps> = ({
 // ============================================================================
 
 const AjouterOeuvre: React.FC = () => {
+  const { t } = useTranslation();
   const { toast } = useToast();
 
   // État de chargement et erreurs
@@ -498,7 +501,7 @@ const AjouterOeuvre: React.FC = () => {
   useEffect(() => {
     if (!metadata.types_oeuvres || metadata.types_oeuvres.length === 0) return;
 
-    const typeOeuvre = metadata.types_oeuvres.find((t: any) => t.id_type_oeuvre === formData.id_type_oeuvre);
+    const typeOeuvre = metadata.types_oeuvres.find((type: any) => type.id_type_oeuvre === formData.id_type_oeuvre);
 
     // Vérifier si c'est un type Article
     const isArticleType = typeOeuvre && (
@@ -542,7 +545,7 @@ const AjouterOeuvre: React.FC = () => {
     if (!metadata.types_oeuvres || metadata.types_oeuvres.length === 0) return;
 
     const suggestions: string[] = [];
-    const typeOeuvre = metadata.types_oeuvres.find((t: any) => t.id_type_oeuvre === formData.id_type_oeuvre);
+    const typeOeuvre = metadata.types_oeuvres.find((type: any) => type.id_type_oeuvre === formData.id_type_oeuvre);
 
     // Tags basés sur le type d'œuvre
     if (typeOeuvre) {
@@ -597,8 +600,8 @@ const AjouterOeuvre: React.FC = () => {
 
     if (normalizedTag && !formData.tags.includes(normalizedTag)) {
       // Vérifier si le tag existe déjà
-      const existingTag = metadata.tags?.find((t: TagMotCle) =>
-      t.nom.toLowerCase() === normalizedTag
+      const existingTag = metadata.tags?.find((tag: TagMotCle) =>
+      tag.nom.toLowerCase() === normalizedTag
       );
 
       // Si le tag n'existe pas, le créer
@@ -837,7 +840,7 @@ const AjouterOeuvre: React.FC = () => {
       }
 
       // Préparer les détails spécifiques
-      const typeOeuvre = metadata.types_oeuvres?.find((t: any) => t.id_type_oeuvre === formData.id_type_oeuvre);
+      const typeOeuvre = metadata.types_oeuvres?.find((type: any) => type.id_type_oeuvre === formData.id_type_oeuvre);
       const detailsSpecifiques = typeOeuvre ? prepareDetailsSpecifiques(typeOeuvre) : {};
 
       // Préparer les données avec la fonction helper
@@ -966,7 +969,7 @@ const AjouterOeuvre: React.FC = () => {
   const renderSpecificFields = useCallback(() => {
     if (!metadata.types_oeuvres || metadata.types_oeuvres.length === 0) return null;
 
-    const typeOeuvre = metadata.types_oeuvres.find((t: any) => t.id_type_oeuvre === formData.id_type_oeuvre);
+    const typeOeuvre = metadata.types_oeuvres.find((type: any) => type.id_type_oeuvre === formData.id_type_oeuvre);
     if (!typeOeuvre) return null;
 
     const fieldsConfig: Record<string, React.ReactNode> = {
@@ -1246,7 +1249,6 @@ const AjouterOeuvre: React.FC = () => {
   // ============================================================================
   // RENDU CONDITIONNEL SELON L'ÉTAT
   // ============================================================================
-  const { t } = useTranslation();
   if (loadingMetadata) {
     return (
       <div className="min-h-screen bg-background pattern-geometric flex items-center justify-center">
@@ -1483,7 +1485,7 @@ const AjouterOeuvre: React.FC = () => {
                     <Card className="shadow-cultural">
                       <CardHeader>
                         <CardTitle className="text-2xl font-serif">{t("ajouteroeuvre.informations_spcifiques")}
-                      {metadata.types_oeuvres?.find((t: any) => t.id_type_oeuvre === formData.id_type_oeuvre)?.nom_type}
+                      {metadata.types_oeuvres?.find((type: any) => type.id_type_oeuvre === formData.id_type_oeuvre)?.nom_type}
                         </CardTitle>
                       </CardHeader>
                       <CardContent>

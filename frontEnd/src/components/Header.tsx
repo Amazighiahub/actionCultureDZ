@@ -110,7 +110,7 @@ const Header = () => {
   // ✅ Fermer le menu mobile quand on redimensionne vers desktop (3xl: 1600px)
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth >= 1600) {
+      if (window.innerWidth >= 1024) {
         setIsMenuOpen(false);
       }
     };
@@ -223,220 +223,220 @@ const Header = () => {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 py-3">
-      <div className="w-full px-4 sm:px-6 lg:px-8 max-w-[1800px] mx-auto">
-        {/* ✅ CORRECTION: Utilisation de gap au lieu de space-x pour RTL */}
-        <div className="flex items-center justify-between gap-2 sm:gap-4">
+    <>
+      <header className="fixed top-0 left-0 right-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 py-2">
+        <div className="w-full px-4 sm:px-6 lg:px-8 max-w-[1800px] mx-auto">
+          <div className="flex items-center justify-between gap-2 sm:gap-4">
 
-          {/* Logo et titre */}
-          <Link to="/" className="flex items-center gap-3 shrink-0">
-            <div className="h-10 w-10 sm:h-12 sm:w-12 flex-shrink-0">
-              <MadgacenLogo className="w-full h-full" />
-            </div>
-            <div className="flex flex-col">
-              <h1 className="text-sm sm:text-base md:text-lg font-bold text-stone-800 dark:text-stone-100 whitespace-nowrap">
-                {t('header.title')}
-              </h1>
-              <p className="text-[10px] sm:text-xs text-stone-500 dark:text-stone-400 hidden sm:block whitespace-nowrap">
-                {t('header.subtitle')}
-              </p>
-            </div>
-          </Link>
+            {/* Logo et titre */}
+            <Link to="/" className="flex items-center gap-2 shrink-0">
+              <div className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0">
+                <MadgacenLogo className="w-full h-full" />
+              </div>
+              <div className="flex flex-col">
+                <h1 className="text-sm sm:text-base font-bold text-stone-800 dark:text-stone-100 whitespace-nowrap">
+                  {t('header.title')}
+                </h1>
+                <p className="text-[10px] sm:text-xs text-stone-500 dark:text-stone-400 hidden sm:block whitespace-nowrap">
+                  {t('header.subtitle')}
+                </p>
+              </div>
+            </Link>
 
-          {/* Navigation desktop - Visible uniquement sur très grands écrans (≥1600px) */}
-          <nav className="hidden 3xl:flex items-center">
-            <div className="flex items-center gap-2">
-              {navigationItems.map((item) => (
-                <Link
-                  key={item.label}
-                  to={item.href}
-                  className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-md transition-colors hover:bg-stone-100 dark:hover:bg-stone-800 whitespace-nowrap"
-                >
-                  <item.icon className="h-4 w-4 flex-shrink-0" />
-                  <span>{item.label}</span>
-                </Link>
-              ))}
-            </div>
-          </nav>
-
-          {/* Actions - ✅ CORRECTION: Meilleure gestion responsive */}
-          <div className="flex items-center gap-1 sm:gap-2">
-            
-            {/* Sélecteur de langue */}
-            <LanguageSelector />
-            
-            {/* Utilisateur connecté */}
-            {isAuthenticated && user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    className="relative h-9 w-9 sm:h-10 sm:w-10 rounded-full p-0"
+            {/* Navigation desktop — visible dès lg (≥1024px) */}
+            <nav className="hidden lg:flex items-center">
+              <div className="flex items-center gap-1">
+                {navigationItems.map((item) => (
+                  <Link
+                    key={item.label}
+                    to={item.href}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-colors hover:bg-stone-100 dark:hover:bg-stone-800 whitespace-nowrap"
                   >
-                    <Avatar className="h-8 w-8 sm:h-9 sm:w-9">
-                      <AvatarImage src={user.photo_url} alt={user.prenom} />
-                      <AvatarFallback className="bg-gradient-to-r from-stone-600 to-stone-700 text-white text-xs sm:text-sm">
-                        {getInitials()}
-                      </AvatarFallback>
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent 
-                  className="w-64" 
-                  align={isRtl ? "start" : "end"}
-                >
-                  <DropdownMenuLabel>
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10">
+                    <item.icon className="h-4 w-4 flex-shrink-0" />
+                    <span>{item.label}</span>
+                  </Link>
+                ))}
+              </div>
+            </nav>
+
+            {/* Actions droite */}
+            <div className="flex items-center gap-1 sm:gap-2">
+
+              {/* Sélecteur de langue */}
+              <LanguageSelector />
+
+              {/* Utilisateur connecté */}
+              {isAuthenticated && user ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      className="relative h-8 w-8 sm:h-9 sm:w-9 rounded-full p-0"
+                    >
+                      <Avatar className="h-7 w-7 sm:h-8 sm:w-8">
                         <AvatarImage src={user.photo_url} alt={user.prenom} />
-                        <AvatarFallback className="bg-gradient-to-r from-stone-600 to-stone-700 text-white">
+                        <AvatarFallback className="bg-gradient-to-r from-stone-600 to-stone-700 text-white text-xs">
                           {getInitials()}
                         </AvatarFallback>
                       </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{user.prenom} {user.nom}</p>
-                        <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    className="w-64"
+                    align={isRtl ? "start" : "end"}
+                  >
+                    <DropdownMenuLabel>
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={user.photo_url} alt={user.prenom} />
+                          <AvatarFallback className="bg-gradient-to-r from-stone-600 to-stone-700 text-white">
+                            {getInitials()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{user.prenom} {user.nom}</p>
+                          <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                        </div>
                       </div>
-                    </div>
-                    {getRoleBadge() && (
-                      <div className="mt-2">{getRoleBadge()}</div>
-                    )}
-                  </DropdownMenuLabel>
-                  
-                  <DropdownMenuSeparator />
-                  
-                  <DropdownMenuItem asChild>
-                    <Link to={getDashboardLink()} className="flex items-center gap-2 min-h-[44px]">
-                      {isAdmin ? (
-                        <>
-                          <Shield className="h-4 w-4" />
-                          <span>{t('header.userMenu.administration')}</span>
-                        </>
-                      ) : isProfessional && !needsValidation ? (
-                        <>
-                          <Palette className="h-4 w-4" />
-                          <span>{t('header.userMenu.proDashboard')}</span>
-                        </>
-                      ) : (
-                        <>
-                          <User className="h-4 w-4" />
-                          <span>{t('header.userMenu.mySpace')}</span>
-                        </>
+                      {getRoleBadge() && (
+                        <div className="mt-2">{getRoleBadge()}</div>
                       )}
-                    </Link>
-                  </DropdownMenuItem>
-                  
-                  {canCreateOeuvre() && (
-                    <>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem asChild>
-                        <Link to="/ajouter-oeuvre" className="flex items-center gap-2 min-h-[44px]">
-                          <Palette className="h-4 w-4" />
-                          <span>{t('header.userMenu.addWork')}</span>
-                        </Link>
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                  
-                  {canCreateEvent() && (
+                    </DropdownMenuLabel>
+
+                    <DropdownMenuSeparator />
+
                     <DropdownMenuItem asChild>
-                      <Link to="/ajouter-evenement" className="flex items-center gap-2 min-h-[44px]">
-                        <Calendar className="h-4 w-4" />
-                        <span>{t('header.userMenu.createEvent')}</span>
+                      <Link to={getDashboardLink()} className="flex items-center gap-2 min-h-[44px]">
+                        {isAdmin ? (
+                          <>
+                            <Shield className="h-4 w-4" />
+                            <span>{t('header.userMenu.administration')}</span>
+                          </>
+                        ) : isProfessional && !needsValidation ? (
+                          <>
+                            <Palette className="h-4 w-4" />
+                            <span>{t('header.userMenu.proDashboard')}</span>
+                          </>
+                        ) : (
+                          <>
+                            <User className="h-4 w-4" />
+                            <span>{t('header.userMenu.mySpace')}</span>
+                          </>
+                        )}
                       </Link>
                     </DropdownMenuItem>
-                  )}
-                  
-                  {isAdmin && (
-                    <>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem asChild>
-                        <Link to="/admin/validation" className="flex items-center gap-2 min-h-[44px]">
-                          <UserCheck className="h-4 w-4" />
-                          <span>{t('header.userMenu.pendingValidations')}</span>
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link to="/admin/metadata" className="flex items-center gap-2 min-h-[44px]">
-                          <Settings className="h-4 w-4" />
-                          <span>{t('header.userMenu.metadata')}</span>
-                        </Link>
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                  
-                  <DropdownMenuSeparator />
-                  
-                  <DropdownMenuItem asChild>
-                    <Link to="/profile" className="flex items-center gap-2 min-h-[44px]">
-                      <User className="h-4 w-4" />
-                      <span>{t('header.userMenu.myProfile')}</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  
-                  <DropdownMenuItem asChild>
-                    <Link to="/mes-favoris" className="flex items-center gap-2 min-h-[44px]">
-                      <Palette className="h-4 w-4" />
-                      <span>{t('header.userMenu.myFavorites')}</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  
-                  <DropdownMenuSeparator />
-                  
-                  <DropdownMenuItem 
-                    onClick={handleLogout} 
-                    className="text-destructive min-h-[44px] flex items-center gap-2"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    <span>{t('common.logout')}</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <>
-                {/* Boutons connexion/inscription - ✅ CORRECTION: Responsive */}
-                <Link to="/auth" className="hidden sm:block">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="border-stone-300 dark:border-stone-600 hover:bg-stone-50 dark:hover:bg-stone-800 min-h-[40px]"
-                  >
-                    <User className="h-4 w-4 sm:mr-2" />
-                    <span className="hidden md:inline">{t('common.login')}</span>
-                  </Button>
-                </Link>
-                
-                <Link to="/auth">
-                  <Button 
-                    size="sm" 
-                    className="bg-gradient-to-r from-stone-700 to-stone-800 hover:from-stone-800 hover:to-stone-900 text-white shadow-sm min-h-[40px] px-3 sm:px-4"
-                  >
-                    <span className="text-xs sm:text-sm">{t('common.signup')}</span>
-                  </Button>
-                </Link>
-              </>
-            )}
 
-            {/* Menu mobile - ✅ CORRECTION: Visible jusqu'à 3xl (1600px) */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="3xl:hidden min-w-[44px] min-h-[44px] p-0"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              aria-label={isMenuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
-              aria-expanded={isMenuOpen}
-            >
-              {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </Button>
+                    {canCreateOeuvre() && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild>
+                          <Link to="/ajouter-oeuvre" className="flex items-center gap-2 min-h-[44px]">
+                            <Palette className="h-4 w-4" />
+                            <span>{t('header.userMenu.addWork')}</span>
+                          </Link>
+                        </DropdownMenuItem>
+                      </>
+                    )}
+
+                    {canCreateEvent() && (
+                      <DropdownMenuItem asChild>
+                        <Link to="/ajouter-evenement" className="flex items-center gap-2 min-h-[44px]">
+                          <Calendar className="h-4 w-4" />
+                          <span>{t('header.userMenu.createEvent')}</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
+
+                    {isAdmin && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild>
+                          <Link to="/admin/validation" className="flex items-center gap-2 min-h-[44px]">
+                            <UserCheck className="h-4 w-4" />
+                            <span>{t('header.userMenu.pendingValidations')}</span>
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link to="/admin/metadata" className="flex items-center gap-2 min-h-[44px]">
+                            <Settings className="h-4 w-4" />
+                            <span>{t('header.userMenu.metadata')}</span>
+                          </Link>
+                        </DropdownMenuItem>
+                      </>
+                    )}
+
+                    <DropdownMenuSeparator />
+
+                    <DropdownMenuItem asChild>
+                      <Link to="/profile" className="flex items-center gap-2 min-h-[44px]">
+                        <User className="h-4 w-4" />
+                        <span>{t('header.userMenu.myProfile')}</span>
+                      </Link>
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem asChild>
+                      <Link to="/mes-favoris" className="flex items-center gap-2 min-h-[44px]">
+                        <Palette className="h-4 w-4" />
+                        <span>{t('header.userMenu.myFavorites')}</span>
+                      </Link>
+                    </DropdownMenuItem>
+
+                    <DropdownMenuSeparator />
+
+                    <DropdownMenuItem
+                      onClick={handleLogout}
+                      className="text-destructive min-h-[44px] flex items-center gap-2"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      <span>{t('common.logout')}</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <>
+                  <Link to="/auth" className="hidden sm:block">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="border-stone-300 dark:border-stone-600 hover:bg-stone-50 dark:hover:bg-stone-800 min-h-[36px]"
+                    >
+                      <User className="h-4 w-4 sm:mr-2" />
+                      <span className="hidden md:inline">{t('common.login')}</span>
+                    </Button>
+                  </Link>
+
+                  <Link to="/auth">
+                    <Button
+                      size="sm"
+                      className="bg-gradient-to-r from-stone-700 to-stone-800 hover:from-stone-800 hover:to-stone-900 text-white shadow-sm min-h-[36px] px-3 sm:px-4"
+                    >
+                      <span className="text-xs sm:text-sm">{t('common.signup')}</span>
+                    </Button>
+                  </Link>
+                </>
+              )}
+
+              {/* Bouton hamburger — visible uniquement sur mobile (< lg) */}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="lg:hidden min-w-[40px] min-h-[40px] p-0"
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                aria-label={isMenuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
+                aria-expanded={isMenuOpen}
+              >
+                {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
+      </header>
 
-      {/* Menu mobile déroulant - ✅ CORRECTION: Visible jusqu'à 3xl (1600px) */}
+      {/* Menu mobile déroulant — visible uniquement sur mobile (< lg) */}
       {isMenuOpen && (
         <div
-          className="fixed inset-0 top-14 sm:top-16 z-40 bg-background 3xl:hidden overflow-y-auto"
-          style={{ height: 'calc(100dvh - 56px)' }}
+          className="fixed inset-0 top-[52px] sm:top-[60px] z-40 bg-background lg:hidden overflow-y-auto"
+          style={{ height: 'calc(100dvh - 52px)' }}
         >
           <div className="px-4 py-4 space-y-3">
             <nav className="space-y-1">
@@ -452,7 +452,7 @@ const Header = () => {
                 </Link>
               ))}
             </nav>
-            
+
             {/* Actions mobile */}
             <div className="pt-4 border-t space-y-3">
               {isAuthenticated && user ? (
@@ -472,7 +472,7 @@ const Header = () => {
                       )}
                     </div>
                   </div>
-                  
+
                   <Link
                     to={getDashboardLink()}
                     className="flex items-center gap-3 rounded-lg p-3 text-base font-medium transition-colors hover:bg-stone-50 dark:hover:bg-stone-800 min-h-[48px]"
@@ -483,9 +483,9 @@ const Header = () => {
                       {isAdmin ? t('header.userMenu.administration') : isProfessional && !needsValidation ? t('header.userMenu.proDashboard') : t('header.userMenu.mySpace')}
                     </span>
                   </Link>
-                  
-                  <Button 
-                    variant="destructive" 
+
+                  <Button
+                    variant="destructive"
                     className="w-full min-h-[48px] text-base"
                     onClick={() => {
                       handleLogout();
@@ -514,7 +514,7 @@ const Header = () => {
           </div>
         </div>
       )}
-    </header>
+    </>
   );
 };
 

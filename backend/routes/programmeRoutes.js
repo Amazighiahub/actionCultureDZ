@@ -183,15 +183,17 @@ const initProgrammeRoutes = (models) => {
   );
 
   // Supprimer un programme
-  router.delete('/:id', 
+  router.delete('/:id',
     authMiddleware.authenticate,
-    authMiddleware.requireValidatedProfessional,
+    authMiddleware.isAdmin,
     validationMiddleware.validateId('id'),
     programmeController.deleteProgramme.bind(programmeController)
   );
 
-  console.log('✅ Routes programmes i18n initialisées');
-  console.log('  🌍 Routes traduction: GET /:id/translations, PATCH /:id/translation/:lang');
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('✅ Routes programmes i18n initialisées');
+    console.log('  🌍 Routes traduction: GET /:id/translations, PATCH /:id/translation/:lang');
+  }
 
   return router;
 };

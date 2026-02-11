@@ -205,7 +205,7 @@ const initIntervenantRoutes = (models, authMiddleware) => {
   // Mettre à jour un intervenant
   router.put('/:id',
     authMiddleware.authenticate,
-    requireAdminOrProfessional,
+    authMiddleware.requireAdmin,
     validationMiddleware.validateId('id'),
     [
       body('nom').optional().custom((value) => {

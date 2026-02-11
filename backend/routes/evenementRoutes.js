@@ -30,33 +30,55 @@ const createEvenementRoutes = (models, middlewares = {}) => {
   // Middleware par défaut si non défini
   const defaultMiddleware = (req, res, next) => next();
 
+  const logEventRequest = (req, res, next) => next();
+
+  // 🔒 SÉCURITÉ: Ne pas bypass l'auth/autorisation si un middleware requis manque
+  const requireMiddleware = (name, middleware) => {
+    if (typeof middleware === 'function') return middleware;
+    return (req, res) => {
+      console.error(`🚨 Middleware requis manquant: ${name} - accès refusé`);
+      return res.status(503).json({
+        success: false,
+        error: 'Service temporairement indisponible',
+        code: 'MIDDLEWARE_UNAVAILABLE',
+        details: name
+      });
+    };
+  };
+
+  const requireAuth = requireMiddleware('auth.authenticate', auth.authenticate);
+  const requireValidatedProfessional = requireMiddleware('auth.requireValidatedProfessional', auth.requireValidatedProfessional);
+  const requireOwnership = auth.requireOwnership
+    ? auth.requireOwnership
+    : () => requireMiddleware('auth.requireOwnership', null);
+
   // ====================================================================
   // MIDDLEWARE CUSTOM POUR ÉVÉNEMENTS
   // ====================================================================
   
-  const logEventRequest = (req, res, next) => {
-    req._startTime = Date.now();
-    
-    res.on('finish', () => {
-      const duration = Date.now() - req._startTime;
-      const cached = res.getHeader('X-Cache') === 'HIT';
-      
-      console.log(JSON.stringify({
-        type: 'event_request',
-        method: req.method,
-        path: req.path,
-        statusCode: res.statusCode,
-        duration,
-        cached,
-        userId: req.user?.id_user || 'anonymous',
-        ip: req.ip,
-        userAgent: req.get('user-agent'),
-        timestamp: new Date().toISOString()
-      }));
+  if (process.env.NODE_ENV !== 'production') {
+    router.use((req, res, next) => {
+      req._startTime = Date.now();
+      res.on('finish', () => {
+        const duration = Date.now() - req._startTime;
+        const cached = res.getHeader('X-Cache') === 'HIT';
+        
+        console.log(JSON.stringify({
+          type: 'event_request',
+          method: req.method,
+          path: req.path,
+          statusCode: res.statusCode,
+          duration: duration,
+          cached: cached,
+          userId: req.user ? req.user.id_user : 'anonymous',
+          ip: req.ip,
+          userAgent: req.get('User-Agent'),
+          timestamp: new Date().toISOString()
+        }));
+      });
+      next();
     });
-    
-    next();
-  };
+  }
 
   const optimizeEventQuery = (req, res, next) => {
     if (!req.query.limit) {
@@ -239,8 +261,8 @@ const createEvenementRoutes = (models, middlewares = {}) => {
    * @desc    Créer un événement
    */
   router.post('/',
-    auth.authenticate || defaultMiddleware,
-    auth.requireValidatedProfessional || defaultMiddleware,
+    requireAuth,
+    requireValidatedProfessional,
     security.sanitizeInput || defaultMiddleware,
     ...flattenMiddleware(rateLimit.creation || rateLimit.general),
     logEventRequest,
@@ -275,9 +297,9 @@ const createEvenementRoutes = (models, middlewares = {}) => {
    * @desc    Mettre à jour un événement
    */
   router.put('/:id',
-    auth.authenticate || defaultMiddleware,
+    requireAuth,
     validation.validateId?.('id') || defaultMiddleware,
-    auth.requireOwnership ? auth.requireOwnership('Evenement', 'id', 'id_user') : defaultMiddleware,
+    requireOwnership('Evenement', 'id', 'id_user'),
     security.sanitizeInput || defaultMiddleware,
     ...flattenMiddleware(rateLimit.creation || rateLimit.general),
     logEventRequest,
@@ -318,7 +340,7 @@ const createEvenementRoutes = (models, middlewares = {}) => {
    * @desc    Vérifier si l'utilisateur est inscrit à un événement
    */
   router.get('/:id/mon-inscription',
-    auth.authenticate || defaultMiddleware,
+    requireAuth,
     validation.validateId?.('id') || defaultMiddleware,
     controller.getMonInscription || defaultMiddleware
   );
@@ -328,7 +350,7 @@ const createEvenementRoutes = (models, middlewares = {}) => {
    * @desc    S'inscrire à un événement (avec soumission d'œuvres optionnelle selon le type)
    */
   router.post('/:id/inscription',
-    auth.authenticate || defaultMiddleware,
+    requireAuth,
     validation.validateId?.('id') || defaultMiddleware,
     ...flattenMiddleware(rateLimit.creation || rateLimit.general),
     logEventRequest,
@@ -365,7 +387,7 @@ const createEvenementRoutes = (models, middlewares = {}) => {
    * @desc    Récupérer les oeuvres de l'utilisateur (ajoutées et disponibles)
    */
   router.get('/:id/mes-oeuvres',
-    auth.authenticate || defaultMiddleware,
+    requireAuth,
     validation.validateId?.('id') || defaultMiddleware,
     controller.getMesOeuvresEvenement || defaultMiddleware
   );
@@ -375,7 +397,7 @@ const createEvenementRoutes = (models, middlewares = {}) => {
    * @desc    Ajouter une oeuvre à un événement
    */
   router.post('/:id/oeuvres',
-    auth.authenticate || defaultMiddleware,
+    requireAuth,
     validation.validateId?.('id') || defaultMiddleware,
     [
       body('id_oeuvre').isInt().withMessage('ID œuvre invalide'),
@@ -391,7 +413,7 @@ const createEvenementRoutes = (models, middlewares = {}) => {
    * @desc    Mettre à jour une association oeuvre-événement
    */
   router.put('/:id/oeuvres/:oeuvreId',
-    auth.authenticate || defaultMiddleware,
+    requireAuth,
     validation.validateId?.('id') || defaultMiddleware,
     [
       body('description_presentation').optional().isString(),
@@ -407,7 +429,7 @@ const createEvenementRoutes = (models, middlewares = {}) => {
    * @desc    Retirer une oeuvre d'un événement
    */
   router.delete('/:id/oeuvres/:oeuvreId',
-    auth.authenticate || defaultMiddleware,
+    requireAuth,
     validation.validateId?.('id') || defaultMiddleware,
     controller.removeOeuvreProfessionnel || defaultMiddleware
   );
@@ -417,7 +439,7 @@ const createEvenementRoutes = (models, middlewares = {}) => {
    * @desc    Réorganiser l'ordre des oeuvres
    */
   router.put('/:id/oeuvres/reorder',
-    auth.authenticate || defaultMiddleware,
+    requireAuth,
     validation.validateId?.('id') || defaultMiddleware,
     [
       body('oeuvres').isArray().withMessage('Liste des œuvres requise'),
@@ -495,7 +517,9 @@ const createEvenementRoutes = (models, middlewares = {}) => {
     next(err);
   });
 
-  console.log('✅ Routes événements initialisées');
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('✅ Routes événements initialisées');
+  }
   
   return router;
 };

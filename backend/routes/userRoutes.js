@@ -324,13 +324,15 @@ module.exports = (models, authMiddleware) => {
     (req, res) => userController.updateUserTranslation(req, res)
   );
 
-  // ========================================================================
-  // LOG DES ROUTES
-  // ========================================================================
+// ========================================================================
+// LOG DES ROUTES
+// ========================================================================
 
-  const routeCount = router.stack.filter(layer => layer.route).length;
+const routeCount = router.stack.filter(layer => layer.route).length;
+if (process.env.NODE_ENV !== 'production') {
   console.log(`✅ Routes utilisateur initialisées: ${routeCount} routes`);
   console.log(`🌍 Routes i18n ajoutées: GET /, GET /:id, GET /:id/translations, PATCH /:id/translation/:lang`);
+}
 
-  return router;
+return router;
 };

@@ -10,7 +10,9 @@ const initUploadRoutes = (models, authMiddleware) => {
   const UploadController = require('../controllers/uploadController');
   const uploadController = new UploadController(models);
 
-  console.log('🔧 Initialisation des routes upload...');
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('🔧 Initialisation des routes upload...');
+  }
 
   // ========================================================================
   // ROUTE INFO
@@ -70,6 +72,10 @@ const initUploadRoutes = (models, authMiddleware) => {
   // ========================================================================
   // ROUTES AUTHENTIFIÉES
   // ========================================================================
+  router.get('/file/:id',
+    authMiddleware.optionalAuth,
+    (req, res) => uploadController.downloadMedia(req, res)
+  );
 
   // Upload photo de profil avec mise à jour automatique
   router.post('/profile-photo',
@@ -184,7 +190,9 @@ const initUploadRoutes = (models, authMiddleware) => {
   // ========================================================================
 
   const routeCount = router.stack.filter(layer => layer.route).length;
-  console.log(`✅ Routes upload initialisées: ${routeCount} routes`);
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`✅ Routes upload initialisées: ${routeCount} routes`);
+  }
 
   return router;
 };

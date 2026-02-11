@@ -258,8 +258,10 @@ const initArtisanatRoutes = (models) => {
     artisanatController.deleteArtisanat.bind(artisanatController)
   );
 
-  console.log('✅ Routes artisanat i18n initialisées');
-  console.log('  🌍 Routes traduction: GET /:id/translations, PATCH /:id/translation/:lang');
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('✅ Routes artisanat i18n initialisées');
+    console.log('  🌍 Routes traduction: GET /:id/translations, PATCH /:id/translation/:lang');
+  }
 
   return router;
 };

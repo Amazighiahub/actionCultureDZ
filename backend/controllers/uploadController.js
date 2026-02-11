@@ -21,6 +21,7 @@ class UploadController {
     // Nettoyer le chemin - supprimer les protocoles et caractères dangereux
     let cleanPath = filePath
       .replace(/^(https?:)?\/\/[^\/]+/, '') // Supprimer domaine
+      .replace(/^\/+/, '') // Supprimer les slashes initiaux (évite path.resolve vers la racine disque)
       .replace(/\\/g, '/') // Normaliser les slashes
       .replace(/\.{2,}/g, '.') // Supprimer les séquences de points
       .replace(/[<>:"|?*]/g, ''); // Supprimer caractères Windows interdits
@@ -37,51 +38,90 @@ class UploadController {
     return absolutePath;
   }
 
+  _getMediaVisibility(media) {
+    if (!media) return true;
+    if (typeof media.visible_public === 'boolean') return media.visible_public;
+    return true;
+  }
+
+  _getUploadedBy(media) {
+    if (!media) return null;
+    const meta = media.metadata && typeof media.metadata === 'object' ? media.metadata : {};
+    return meta.uploadedBy ?? null;
+  }
+
+  _getStoragePath(media) {
+    if (!media) return null;
+    const meta = media.metadata && typeof media.metadata === 'object' ? media.metadata : {};
+    return meta.storagePath ?? null;
+  }
+
+  _inferTypeMedia(mimetype, fallback = 'document') {
+    if (typeof mimetype !== 'string') return fallback;
+    if (mimetype.startsWith('image/')) return 'image';
+    if (mimetype.startsWith('video/')) return 'video';
+    if (mimetype.startsWith('audio/')) return 'audio';
+    if (mimetype === 'application/pdf' || mimetype.includes('word')) return 'document';
+    return fallback;
+  }
+
   /**
    * Upload public d'image (sans authentification)
    */
   async uploadPublicImage(req, res) {
     try {
-      console.log('📸 Upload public - Début');
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('📸 Upload public - Début');
+      }
       
       // Vérifier la présence du fichier
       if (!req.file) {
-        console.log('❌ Aucun fichier reçu');
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('❌ Aucun fichier reçu');
+        }
         return res.status(400).json({
           success: false,
           error: 'Aucun fichier fourni'
         });
       }
 
-      console.log('📁 Fichier reçu:', {
-        filename: req.file.filename,
-        originalname: req.file.originalname,
-        mimetype: req.file.mimetype,
-        size: req.file.size,
-        path: req.file.path
-      });
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('📁 Fichier reçu:', {
+          filename: req.file.filename,
+          originalname: req.file.originalname,
+          mimetype: req.file.mimetype,
+          size: req.file.size,
+          path: req.file.path
+        });
+      }
 
       // Construire l'URL du fichier
-      const fileUrl = `/uploads/images/${req.file.filename}`;
+      const folder = req.file.fieldname === 'document' ? 'documents' : 'images';
+      const fileUrl = `/uploads/${folder}/${req.file.filename}`;
       const fullUrl = `${this.baseUrl}${fileUrl}`;
 
       // Si un modèle Media existe, enregistrer en base
       if (this.models.Media) {
         try {
           const media = await this.models.Media.create({
-            filename: req.file.filename,
-            original_name: req.file.originalname,
-            file_path: req.file.path,
-            file_url: fileUrl,
+            type_media: this._inferTypeMedia(req.file.mimetype, 'image'),
+            url: fileUrl,
+            visible_public: true,
             mime_type: req.file.mimetype,
-            size: req.file.size,
-            type: 'image',
-            uploaded_by: null, // Upload public
-            is_public: true
+            taille_fichier: req.file.size,
+            metadata: {
+              uploadedBy: null,
+              originalName: req.file.originalname,
+              storagePath: `uploads/${folder}/${req.file.filename}`
+            }
           });
-          console.log('✅ Media enregistré en base:', media.id_media);
+          if (process.env.NODE_ENV !== 'production') {
+            console.log('✅ Media enregistré en base:', media.id_media);
+          }
         } catch (dbError) {
-          console.log('⚠️ Erreur enregistrement base (ignorée):', dbError.message);
+          if (process.env.NODE_ENV !== 'production') {
+            console.log('⚠️ Erreur enregistrement base (ignorée):', dbError.message);
+          }
           // On continue même si l'enregistrement en base échoue
         }
       }
@@ -100,7 +140,9 @@ class UploadController {
         }
       };
 
-      console.log('✅ Upload public réussi:', response.data.url);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('✅ Upload public réussi:', response.data.url);
+      }
       res.status(201).json(response);
 
     } catch (error) {
@@ -109,6 +151,69 @@ class UploadController {
         success: false,
         error: 'Erreur lors de l\'upload de l\'image',
         details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  }
+
+  async downloadMedia(req, res) {
+    try {
+      const { id } = req.params;
+
+      if (!this.models.Media) {
+        return res.status(501).json({
+          success: false,
+          error: 'Modèle Media non disponible'
+        });
+      }
+
+      const media = await this.models.Media.findByPk(id);
+      if (!media) {
+        return res.status(404).json({
+          success: false,
+          error: 'Média non trouvé'
+        });
+      }
+
+      const isPublic = this._getMediaVisibility(media);
+      const uploadedBy = this._getUploadedBy(media);
+
+      if (!isPublic) {
+        if (!req.user) {
+          return res.status(401).json({
+            success: false,
+            error: 'Authentification requise'
+          });
+        }
+        if (uploadedBy !== req.user.id_user && !req.user.isAdmin) {
+          return res.status(403).json({
+            success: false,
+            error: 'Accès non autorisé'
+          });
+        }
+      }
+
+      const storagePath = this._getStoragePath(media);
+      if (!storagePath) {
+        return res.status(500).json({
+          success: false,
+          error: 'Chemin du fichier indisponible'
+        });
+      }
+
+      const absolutePath = this._securePath(storagePath);
+      if (!absolutePath) {
+        return res.status(400).json({
+          success: false,
+          error: 'Chemin du fichier invalide'
+        });
+      }
+
+      return res.sendFile(absolutePath);
+    } catch (error) {
+      console.error('❌ Erreur download média:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Erreur serveur'
       });
     }
   }
@@ -156,15 +261,16 @@ class UploadController {
       if (this.models.Media) {
         try {
           await this.models.Media.create({
-            filename: req.file.filename,
-            original_name: req.file.originalname,
-            file_path: req.file.path,
-            file_url: fileUrl,
+            type_media: 'image',
+            url: fileUrl,
+            visible_public: true,
             mime_type: req.file.mimetype,
-            size: req.file.size,
-            type: 'profile_photo',
-            uploaded_by: userId,
-            is_public: true
+            taille_fichier: req.file.size,
+            metadata: {
+              uploadedBy: userId,
+              originalName: req.file.originalname,
+              storagePath: `uploads/images/${req.file.filename}`
+            }
           });
         } catch (dbError) {
           console.log('⚠️ Erreur enregistrement Media:', dbError.message);
@@ -206,42 +312,63 @@ class UploadController {
         });
       }
 
-      const fileUrl = `/uploads/${req.file.fieldname}s/${req.file.filename}`;
+      const privateDir = path.join(this.uploadsRoot, 'private', `${req.file.fieldname}s`);
+      const privateStoragePath = path.join(privateDir, req.file.filename);
+
+      try {
+        await fs.mkdir(privateDir, { recursive: true });
+        await fs.rename(req.file.path, privateStoragePath);
+      } catch (moveError) {
+        console.error('❌ Erreur déplacement fichier vers private:', moveError);
+        return res.status(500).json({
+          success: false,
+          error: 'Erreur lors de la sécurisation du fichier'
+        });
+      }
 
       // Enregistrer en base si modèle Media existe
       let mediaId = null;
       if (this.models.Media) {
         try {
           const media = await this.models.Media.create({
-            filename: req.file.filename,
-            original_name: req.file.originalname,
-            file_path: req.file.path,
-            file_url: fileUrl,
+            type_media: this._inferTypeMedia(req.file.mimetype, 'image'),
+            url: '/api/upload/file/pending',
+            visible_public: false,
             mime_type: req.file.mimetype,
-            size: req.file.size,
-            type: req.file.fieldname || 'image',
-            uploaded_by: req.user.id_user,
-            is_public: false
+            taille_fichier: req.file.size,
+            metadata: {
+              uploadedBy: req.user.id_user,
+              originalName: req.file.originalname,
+              storagePath: `uploads/private/${req.file.fieldname}s/${req.file.filename}`
+            }
           });
           mediaId = media.id_media;
+          const downloadUrl = `/api/upload/file/${mediaId}`;
+          await media.update({ url: downloadUrl });
+          const fileUrlForResponse = downloadUrl;
+
+          return res.json({
+            success: true,
+            message: 'Fichier uploadé avec succès',
+            data: {
+              id: mediaId,
+              filename: req.file.filename,
+              originalName: req.file.originalname,
+              url: fileUrlForResponse,
+              fullUrl: `${this.baseUrl}${fileUrlForResponse}`,
+              size: req.file.size,
+              mimetype: req.file.mimetype,
+              uploadedBy: req.user.id_user
+            }
+          });
         } catch (dbError) {
           console.log('⚠️ Erreur enregistrement Media:', dbError.message);
         }
       }
 
-      res.json({
-        success: true,
-        message: 'Fichier uploadé avec succès',
-        data: {
-          id: mediaId,
-          filename: req.file.filename,
-          originalName: req.file.originalname,
-          url: fileUrl,
-          fullUrl: `${this.baseUrl}${fileUrl}`,
-          size: req.file.size,
-          mimetype: req.file.mimetype,
-          uploadedBy: req.user.id_user
-        }
+      return res.status(500).json({
+        success: false,
+        error: 'Erreur lors de l\'enregistrement du média'
       });
 
     } catch (error) {
@@ -267,13 +394,7 @@ class UploadController {
         });
       }
 
-      const media = await this.models.Media.findByPk(id, {
-        include: [{
-          model: this.models.User,
-          as: 'Uploader',
-          attributes: ['id_user', 'nom', 'prenom', 'email']
-        }]
-      });
+      const media = await this.models.Media.findByPk(id);
 
       if (!media) {
         return res.status(404).json({
@@ -283,7 +404,9 @@ class UploadController {
       }
 
       // Vérifier les permissions
-      if (!media.is_public && media.uploaded_by !== req.user.id_user) {
+      const isPublic = this._getMediaVisibility(media);
+      const uploadedBy = this._getUploadedBy(media);
+      if (!isPublic && uploadedBy !== req.user.id_user && !req.user.isAdmin) {
         return res.status(403).json({
           success: false,
           error: 'Accès non autorisé'
@@ -329,7 +452,8 @@ class UploadController {
       }
 
       // Vérifier les permissions
-      if (media.uploaded_by !== req.user.id_user && req.user.role !== 'Admin') {
+      const uploadedBy = this._getUploadedBy(media);
+      if (uploadedBy !== req.user.id_user && !req.user.isAdmin) {
         return res.status(403).json({
           success: false,
           error: 'Non autorisé à supprimer ce média'
@@ -338,12 +462,13 @@ class UploadController {
 
       // 🔒 Supprimer le fichier physique (avec protection path traversal)
       try {
-        const filePath = this._securePath(media.file_url);
+        const storagePath = this._getStoragePath(media) || media.url;
+        const filePath = this._securePath(storagePath);
         if (filePath) {
           await fs.unlink(filePath);
           console.log('🗑️ Fichier supprimé:', filePath);
         } else {
-          console.log('⚠️ Chemin non sécurisé ignoré:', media.file_url);
+          console.log('⚠️ Chemin non sécurisé ignoré:', storagePath);
         }
       } catch (err) {
         console.log('⚠️ Erreur suppression fichier:', err.message);

@@ -52,7 +52,8 @@
       "Bash(npx vite build)",
       "Bash(npm start)",
       "Bash(where:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(npm update:*)"
     ]
   }
 }

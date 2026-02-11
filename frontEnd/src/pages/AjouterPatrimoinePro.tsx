@@ -8,21 +8,28 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/UI/button';
 import { Input } from '@/components/UI/input';
 import { Label } from '@/components/UI/label';
-import { Textarea } from '@/components/UI/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/UI/select';
 import { Alert, AlertDescription } from '@/components/UI/alert';
 import {
   ArrowLeft, Save, Upload, X, Loader2, AlertCircle,
-  MapPin, Building, Calendar, Globe
+  MapPin, Building, Calendar, Globe, CheckCircle2
 } from 'lucide-react';
 import { patrimoineService, CreateSiteData } from '@/services/patrimoine.service';
 import { metadataService } from '@/services/metadata.service';
+// lieuService is used internally by LieuSelector
 import MultiLangInput from '@/components/MultiLangInput';
-import LieuSelector from '@/components/LieuSelector';
+import { LieuSelector } from '@/components/LieuSelector';
+
+interface TranslatableValue {
+  fr?: string;
+  ar?: string;
+  en?: string;
+  [key: string]: string | undefined;
+}
 
 interface FormData {
-  nom: { fr: string; ar: string; en: string };
-  description: { fr: string; ar: string; en: string };
+  nom: TranslatableValue;
+  description: TranslatableValue;
   type: string;
   epoque?: string;
   wilaya_id: number;
@@ -80,7 +87,7 @@ const EPOQUES = [
 const AjouterPatrimoinePro: React.FC = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const currentLang = i18n.language;
+  i18n.language;
 
   // States
   const [formData, setFormData] = useState<FormData>(INITIAL_FORM);
@@ -89,6 +96,9 @@ const AjouterPatrimoinePro: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+
+  // État pour le lieu sélectionné via LieuSelector
+  const [createdLieuId, setCreatedLieuId] = useState<number | null>(null);
 
   // Metadata
   const [wilayas, setWilayas] = useState<any[]>([]);
@@ -114,6 +124,7 @@ const AjouterPatrimoinePro: React.FC = () => {
     }
   };
 
+
   // Handle file upload
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -135,17 +146,6 @@ const AjouterPatrimoinePro: React.FC = () => {
   const removeMedia = (index: number) => {
     setMedias(prev => prev.filter((_, i) => i !== index));
     setPreviews(prev => prev.filter((_, i) => i !== index));
-  };
-
-  // Handle location selection
-  const handleLocationSelect = (location: { wilaya_id: number; commune_id?: number; latitude?: number; longitude?: number }) => {
-    setFormData(prev => ({
-      ...prev,
-      wilaya_id: location.wilaya_id,
-      commune_id: location.commune_id,
-      latitude: location.latitude || 0,
-      longitude: location.longitude || 0
-    }));
   };
 
   // Handle form submission
@@ -171,6 +171,7 @@ const AjouterPatrimoinePro: React.FC = () => {
       setLoading(true);
 
       const createData: CreateSiteData = {
+        ...(createdLieuId ? { lieuId: createdLieuId } : {}),
         nom: JSON.stringify(formData.nom),
         nom_ar: formData.nom.ar,
         description: JSON.stringify(formData.description),
@@ -272,6 +273,7 @@ const AjouterPatrimoinePro: React.FC = () => {
                 <CardContent className="space-y-4">
                   {/* Nom multilingue */}
                   <MultiLangInput
+                    name="nom"
                     label={t('ajouterPatrimoine.nom')}
                     value={formData.nom}
                     onChange={(value) => setFormData(prev => ({ ...prev, nom: value }))}
@@ -281,10 +283,11 @@ const AjouterPatrimoinePro: React.FC = () => {
 
                   {/* Description multilingue */}
                   <MultiLangInput
+                    name="description"
                     label={t('ajouterPatrimoine.description')}
                     value={formData.description}
                     onChange={(value) => setFormData(prev => ({ ...prev, description: value }))}
-                    multiline
+                    type="textarea"
                     rows={4}
                     placeholder={t('ajouterPatrimoine.descriptionPlaceholder')}
                   />
@@ -364,43 +367,45 @@ const AjouterPatrimoinePro: React.FC = () => {
                     </Select>
                   </div>
 
+                  {/* LieuSelector — même composant que dans AjouterEvenement */}
                   <div className="space-y-2">
-                    <Label>{t('ajouterPatrimoine.adresse')}</Label>
-                    <Input
-                      value={formData.adresse || ''}
-                      onChange={(e) => setFormData(prev => ({ ...prev, adresse: e.target.value }))}
-                      placeholder={t('ajouterPatrimoine.adressePlaceholder')}
+                    <Label className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4" />
+                      {t('ajouterPatrimoine.lieu', 'Lieu')} *
+                    </Label>
+                    <LieuSelector
+                      value={createdLieuId ?? undefined}
+                      onChange={(lieuId, lieu) => {
+                        setCreatedLieuId(lieuId ?? null);
+                        if (lieu) {
+                          setFormData(prev => ({
+                            ...prev,
+                            latitude: lieu.latitude,
+                            longitude: lieu.longitude,
+                            adresse: typeof lieu.adresse === 'object'
+                              ? (lieu.adresse as any).fr || ''
+                              : lieu.adresse || ''
+                          }));
+                        }
+                      }}
+                      wilayaId={formData.wilaya_id || undefined}
+                      required
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>{t('ajouterPatrimoine.latitude')}</Label>
-                      <Input
-                        type="number"
-                        step="any"
-                        value={formData.latitude || ''}
-                        onChange={(e) => setFormData(prev => ({
-                          ...prev,
-                          latitude: parseFloat(e.target.value) || 0
-                        }))}
-                        placeholder="36.7538"
-                      />
+                  {/* Afficher les coordonnées du lieu sélectionné */}
+                  {createdLieuId && (
+                    <div className="p-3 bg-muted/50 rounded-lg">
+                      <div className="flex items-center gap-2 text-sm">
+                        <CheckCircle2 className="h-4 w-4 text-green-600" />
+                        <span className="font-medium">{t('ajouterPatrimoine.lieuSelected', 'Lieu sélectionné')}</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4 mt-2 text-sm text-muted-foreground">
+                        <span>{t('ajouterPatrimoine.latitude')}: {formData.latitude.toFixed(6)}</span>
+                        <span>{t('ajouterPatrimoine.longitude')}: {formData.longitude.toFixed(6)}</span>
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label>{t('ajouterPatrimoine.longitude')}</Label>
-                      <Input
-                        type="number"
-                        step="any"
-                        value={formData.longitude || ''}
-                        onChange={(e) => setFormData(prev => ({
-                          ...prev,
-                          longitude: parseFloat(e.target.value) || 0
-                        }))}
-                        placeholder="3.0588"
-                      />
-                    </div>
-                  </div>
+                  )}
                 </CardContent>
               </Card>
 

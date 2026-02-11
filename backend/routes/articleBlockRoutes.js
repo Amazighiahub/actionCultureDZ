@@ -66,18 +66,23 @@ const initArticleBlockRoutes = (models, authMiddleware) => {
     });
   };
 
-  // Créer des wrappers sûrs pour l'authentification
+  // Créer des wrappers sûrs pour l'authentification (fail-closed)
+  const requireMiddleware = (name, middleware) => {
+    if (typeof middleware === 'function') return middleware;
+    return (req, res) => {
+      console.error(`🚨 Middleware requis manquant: ${name} - accès refusé`);
+      return res.status(503).json({
+        success: false,
+        error: 'Service temporairement indisponible',
+        code: 'MIDDLEWARE_UNAVAILABLE',
+        details: name
+      });
+    };
+  };
+
   const safeAuth = {
-    authenticate: authMiddleware?.authenticate || ((req, res, next) => {
-      console.warn('⚠️ authMiddleware.authenticate non disponible');
-      req.user = { id_user: 1 };
-      next();
-    }),
-    
-    requireValidatedProfessional: authMiddleware?.requireValidatedProfessional || ((req, res, next) => {
-      console.warn('⚠️ authMiddleware.requireValidatedProfessional non disponible');
-      next();
-    })
+    authenticate: requireMiddleware('auth.authenticate', authMiddleware?.authenticate),
+    requireValidatedProfessional: requireMiddleware('auth.requireValidatedProfessional', authMiddleware?.requireValidatedProfessional)
   };
 
   // ========================================================================
@@ -220,6 +225,9 @@ const initArticleBlockRoutes = (models, authMiddleware) => {
   // ========================================================================
 
   router.get('/test/ping', (req, res) => {
+    if (process.env.NODE_ENV === 'production') {
+      return res.status(404).end();
+    }
     res.json({
       success: true,
       message: 'Module article blocks opérationnel',
@@ -227,7 +235,9 @@ const initArticleBlockRoutes = (models, authMiddleware) => {
     });
   });
 
-  console.log('✅ Routes article blocks initialisées avec succès');
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('✅ Routes article blocks initialisées avec succès');
+  }
   
   return router;
 };

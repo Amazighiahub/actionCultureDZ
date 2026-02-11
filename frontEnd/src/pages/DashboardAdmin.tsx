@@ -4,7 +4,7 @@
  * IMPORTS: ./admin/ (pas ./components/)
  */
 import React, { Suspense, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
 // Composants UI
@@ -50,8 +50,24 @@ const DashboardAdmin: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   
-  // États
-  const [activeTab, setActiveTab] = useState('overview');
+  // États — sync avec ?tab= dans l'URL (pour "Voir tout")
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabFromUrl = searchParams.get('tab') || 'overview';
+  const [activeTab, setActiveTabState] = useState(tabFromUrl);
+
+  // Sync URL → state quand l'URL change (ex: clic "Voir tout")
+  useEffect(() => {
+    const t = searchParams.get('tab');
+    if (t && t !== activeTab) {
+      setActiveTabState(t);
+    }
+  }, [searchParams]);
+
+  // Wrapper pour mettre à jour state + URL ensemble
+  const setActiveTab = (tab: string) => {
+    setActiveTabState(tab);
+    setSearchParams(tab === 'overview' ? {} : { tab });
+  };
   const [notificationModalOpen, setNotificationModalOpen] = useState(false);
   
   // Hooks personnalisés

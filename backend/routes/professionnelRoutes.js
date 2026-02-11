@@ -18,23 +18,28 @@ const initProfessionnelRoutes = (models) => {
   const professionnelController = new ProfessionnelController(models);
   const evenementController = createEvenementController(models);
 
-  // Fallback pour requireValidatedProfessional si non défini
-  const requireValidatedProfessional = authMiddleware.requireValidatedProfessional || 
-    authMiddleware.requireProfessional ||
-    ((req, res, next) => {
-      // Vérification basique si le middleware n'existe pas
-      if (!req.user) {
-        return res.status(401).json({ success: false, error: 'Authentification requise' });
-      }
-      if (req.user.role !== 'Professionnel' && !req.user.isProfessionnel) {
-        return res.status(403).json({ success: false, error: 'Accès réservé aux professionnels' });
-      }
-      next();
-    });
+  // 🔒 SÉCURITÉ: ne jamais bypass les contrôles si un middleware requis manque
+  const requireMiddleware = (name, middleware) => {
+    if (typeof middleware === 'function') return middleware;
+    return (req, res) => {
+      console.error(`🚨 Middleware requis manquant: ${name} - accès refusé`);
+      return res.status(503).json({
+        success: false,
+        error: 'Service temporairement indisponible',
+        code: 'MIDDLEWARE_UNAVAILABLE',
+        details: name
+      });
+    };
+  };
 
-  // Fallback pour requireOwnership si non défini  
-  const requireOwnership = authMiddleware.requireOwnership || 
-    ((model, paramName, ownerField) => (req, res, next) => next());
+  const requireValidatedProfessional = requireMiddleware(
+    'auth.requireValidatedProfessional',
+    authMiddleware.requireValidatedProfessional
+  );
+
+  const requireOwnership = authMiddleware.requireOwnership
+    ? authMiddleware.requireOwnership
+    : () => requireMiddleware('auth.requireOwnership', null);
 
   // Toutes les routes nécessitent l'authentification et d'être un professionnel validé
   router.use(authMiddleware.authenticate);

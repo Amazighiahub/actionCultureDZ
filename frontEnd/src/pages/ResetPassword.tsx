@@ -32,7 +32,7 @@ const ResetPassword = () => {
 
     if (!password) {
       newErrors.password = t('auth.errors.passwordRequired');
-    } else if (password.length < 8) {
+    } else if (password.length < 12) {
       newErrors.password = t('auth.errors.passwordMinLength');
     } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
       newErrors.password = t('auth.resetPassword.passwordRequirements');

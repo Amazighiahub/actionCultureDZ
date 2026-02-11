@@ -268,6 +268,10 @@ class AdminService {
   // GESTION DES UTILISATEURS
   // ========================================
 
+  async getAllUsers(params?: FilterParams & { statut?: string; statut_validation?: string; type_user?: string; search?: string }): Promise<ApiResponse<PaginatedResponse<PendingUser>>> {
+    return httpClient.getPaginated<PendingUser>(API_ENDPOINTS.dashboard.allUsers, params);
+  }
+
   async getPendingUsers(params?: FilterParams): Promise<ApiResponse<PaginatedResponse<PendingUser>>> {
     return httpClient.getPaginated<PendingUser>(API_ENDPOINTS.dashboard.pendingUsers, params);
   }
