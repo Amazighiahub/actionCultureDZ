@@ -20,6 +20,7 @@ import { TypeUser } from '@/types/models/type-user.types';
 import { mediaService } from '@/services/media.service';
 import { metadataService, CategoryGroupedByGenre } from '@/services/metadata.service';
 import { oeuvreService } from '@/services/oeuvre.service';
+import { articleBlockService } from '@/services/articleBlock.service';
 import { mapToBackendDTO } from '@/types/api/create-oeuvre-backend.dto';
 import ArticleEditor from '@/components/article/ArticleEditor';
 
@@ -733,16 +734,124 @@ const AjouterOeuvre: React.FC = () => {
   }, []);
 
   // Handler pour la sauvegarde depuis ArticleEditor
-  const handleArticleEditorSave = useCallback((response: any) => {
-    console.log('Article sauvegardé depuis l\'éditeur:', response);
-    // Redirection vers le dashboard ou l'article
-    toast({
-      title: t('ajouteroeuvre.succes'),
-      description: t('ajouteroeuvre.article_cree_succes'),
-    });
-    setTimeout(() => {
-      window.location.href = '/dashboard-pro';
-    }, 1500);
+  const handleArticleEditorSave = useCallback(async (response: any) => {
+    console.log('📝 Sauvegarde article depuis l\'éditeur avancé:', response);
+
+    try {
+      const { formData: articleFormData, blocks, contributeurs: contribs, editeurs: eds } = response.article;
+
+      // 1. Déterminer le type d'oeuvre (article=4, article_scientifique=5)
+      const isScientific = articleFormData.type === 'article_scientifique';
+      const id_type_oeuvre = isScientific ? 5 : 4;
+
+      // 2. Préparer les détails spécifiques selon le type
+      const details_specifiques: any = {};
+      if (isScientific) {
+        details_specifiques.article_scientifique = {
+          journal: articleFormData.journal || null,
+          doi: articleFormData.doi || null,
+          volume: articleFormData.volume || null,
+          numero: articleFormData.numero || null,
+          pages: articleFormData.pages || null,
+          issn: articleFormData.issn || null,
+          impact_factor: articleFormData.impact_factor || null,
+          peer_reviewed: articleFormData.peer_reviewed || false,
+        };
+      } else {
+        details_specifiques.article = {
+          auteur: articleFormData.auteur || null,
+          source: articleFormData.source || null,
+          resume: articleFormData.resume || null,
+          url_source: articleFormData.url_source || null,
+          sous_titre: articleFormData.sous_titre || null,
+        };
+      }
+
+      // 3. Préparer les contributeurs
+      const utilisateurs_inscrits = contribs?.existants?.map((c: any) => ({
+        id_user: c.id_user,
+        role: c.role || 'Contributeur'
+      })) || [];
+
+      const nouveaux_intervenants = contribs?.nouveaux?.map((c: any) => ({
+        nom: c.nom,
+        prenom: c.prenom,
+        role: c.role || 'Contributeur'
+      })) || [];
+
+      const editeursIds = eds?.map((e: any) => e.id_editeur || e) || [];
+
+      // 4. Créer l'oeuvre via l'API
+      const oeuvreData = {
+        titre: articleFormData.titre,
+        description: articleFormData.description,
+        id_type_oeuvre,
+        id_langue: articleFormData.id_langue,
+        annee_creation: articleFormData.annee_creation || new Date().getFullYear(),
+        categories: articleFormData.categories || [],
+        tags: articleFormData.tags || [],
+        details_specifiques,
+        utilisateurs_inscrits,
+        intervenants_non_inscrits: [],
+        nouveaux_intervenants,
+        editeurs: editeursIds,
+      };
+
+      console.log('📤 Création oeuvre:', oeuvreData);
+      const oeuvreResponse = await oeuvreService.createOeuvre(oeuvreData);
+
+      if (!oeuvreResponse.success || !oeuvreResponse.data?.oeuvre?.id_oeuvre) {
+        throw new Error(oeuvreResponse.error || 'Erreur lors de la création de l\'article');
+      }
+
+      const oeuvreId = oeuvreResponse.data.oeuvre.id_oeuvre;
+      console.log('✅ Oeuvre créée avec ID:', oeuvreId);
+
+      // 5. Sauvegarder les blocs si présents
+      if (blocks && blocks.length > 0) {
+        console.log(`📦 Sauvegarde de ${blocks.length} bloc(s)...`);
+        const blocksToSave = blocks.map((block: any, index: number) => ({
+          type_block: block.type_block,
+          contenu: block.contenu || '',
+          contenu_json: block.contenu_json || null,
+          metadata: block.metadata || {},
+          id_media: block.id_media || null,
+          ordre: index,
+          visible: true,
+        }));
+
+        const blocksResponse = await articleBlockService.createMultipleBlocks({
+          id_article: oeuvreId,
+          article_type: isScientific ? 'article_scientifique' : 'article',
+          blocks: blocksToSave.map((b: any) => ({ ...b, id_article: oeuvreId })),
+        });
+
+        if (!blocksResponse.success) {
+          console.warn('⚠️ Erreur sauvegarde blocs:', blocksResponse.error);
+          // On continue même si les blocs échouent — l'oeuvre est créée
+        } else {
+          console.log('✅ Blocs sauvegardés');
+        }
+      }
+
+      // 6. Succès — redirection
+      toast({
+        title: t('ajouteroeuvre.succes'),
+        description: t('ajouteroeuvre.article_cree_succes'),
+      });
+
+      setTimeout(() => {
+        window.location.href = `/oeuvres/${oeuvreId}`;
+      }, 1500);
+
+    } catch (error: any) {
+      console.error('❌ Erreur sauvegarde article avancé:', error);
+      toast({
+        title: t('common.error', 'Erreur'),
+        description: error.message || 'Erreur lors de la sauvegarde de l\'article',
+        variant: 'destructive',
+      });
+    }
   }, [toast, t]);
 
   // ============================================================================
