@@ -143,7 +143,7 @@
 
 ---
 
-### Résumé des fichiers modifiés
+### Résumé des fichiers modifiés (11 février)
 
 | Fichier | Type de modification |
 |---|---|
@@ -156,6 +156,19 @@
 | `frontEnd/src/styles/language-styles.css` | Fix zoom Tifinagh |
 | `frontEnd/src/pages/DashboardAdmin.tsx` | Fix "Voir tout" (sync URL ↔ tabs) |
 | `frontEnd/src/pages/admin/AdminOverview.tsx` | Fix rendu multilingue |
-| `frontEnd/src/pages/admin/AdminUsersTab.tsx` | Fix rendu multilingue + StatusBadge |
+| `frontEnd/src/pages/admin/AdminUsersTab.tsx` | Fix rendu multilingue + StatusBadge + allUsers |
 | `frontEnd/src/pages/admin/AdminOeuvresTab.tsx` | Fix StatusBadge |
 | `frontEnd/src/pages/admin/AdminEvenementsTab.tsx` | Fix StatusBadge + cleanup |
+| `frontEnd/src/hooks/useDashboardAdmin.ts` | Ajout `loadAllUsers`, `allUsers` state |
+| `frontEnd/src/services/admin.service.ts` | Ajout `getAllUsers()` |
+| `frontEnd/src/config/api.ts` | Ajout endpoint `allUsers` |
+| `backend/controllers/DashboardController.js` | Ajout `getAllUsers()` |
+| `backend/routes/dashboardRoutes.js` | Ajout route `GET /dashboard/users` |
+
+### Résumé des fichiers modifiés (13 février)
+
+| Fichier | Type de modification |
+|---|---|
+| `backend/controllers/OeuvreController.js` | Fix `create()` : sauvegarde des médias uploadés (`req.files`) + Fix `getById()` : ajout includes relations spécialisées |
+| `frontEnd/src/pages/oeuvre-detail/oeuvre/OeuvreInfo.tsx` | Ajout sections détails par type (ArticleScientifique, Article, Livre, Film, AlbumMusical) + fix multilingue + fix TS errors |
+| `frontEnd/src/types/models/oeuvres-specialisees.types.ts` | Ajout champs manquants : `Livre.format`, `Livre.collection`, `Film.producteur`, `Film.studio`, `AlbumMusical.nb_pistes` |
