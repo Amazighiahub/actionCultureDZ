@@ -9,7 +9,7 @@ import { Badge } from '@/components/UI/badge';
 import { Separator } from '@/components/UI/separator';
 import {
   BookOpen, Calendar, Globe, Hash, Tag, Layers,
-  Clock, FileText, Award, Building, MapPin,
+  Clock, FileText, Award, Building, MapPin, Star,
   Beaker, ExternalLink, CheckCircle, BookMarked, Film, Music
 } from 'lucide-react';
 import type { Oeuvre } from '@/types/models/oeuvre.types';
@@ -315,6 +315,28 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false }) => {
                       </div>
                     </div>
                   )}
+                  {oeuvre.ArticleScientifique.issn && (
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 rounded-lg bg-primary/10">
+                        <Hash className="h-4 w-4 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">ISSN</p>
+                        <p className="font-mono font-medium text-sm">{oeuvre.ArticleScientifique.issn}</p>
+                      </div>
+                    </div>
+                  )}
+                  {oeuvre.ArticleScientifique.impact_factor && (
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 rounded-lg bg-primary/10">
+                        <Star className="h-4 w-4 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">{t('oeuvre.impactFactor', 'Impact Factor')}</p>
+                        <p className="font-medium text-sm">{oeuvre.ArticleScientifique.impact_factor}</p>
+                      </div>
+                    </div>
+                  )}
                   {oeuvre.ArticleScientifique.peer_reviewed && (
                     <div className="flex items-center gap-2 sm:col-span-2">
                       <CheckCircle className="h-4 w-4 text-green-600" />
@@ -342,6 +364,12 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false }) => {
                     <div>
                       <p className="text-xs text-muted-foreground">{t('oeuvre.author', 'Auteur')}</p>
                       <p className="font-medium text-sm">{oeuvre.Article.auteur}</p>
+                    </div>
+                  )}
+                  {oeuvre.Article.sous_titre && (
+                    <div className="sm:col-span-2">
+                      <p className="text-xs text-muted-foreground">{t('oeuvre.subtitle', 'Sous-titre')}</p>
+                      <p className="font-medium text-sm italic">{oeuvre.Article.sous_titre}</p>
                     </div>
                   )}
                   {oeuvre.Article.source && (
