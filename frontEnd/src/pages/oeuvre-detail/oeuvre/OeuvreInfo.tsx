@@ -9,10 +9,20 @@ import { Badge } from '@/components/UI/badge';
 import { Separator } from '@/components/UI/separator';
 import {
   BookOpen, Calendar, Globe, Hash, Tag, Layers,
-  Clock, FileText, Award, Building, MapPin
+  Clock, FileText, Award, Building, MapPin,
+  Beaker, ExternalLink, CheckCircle, BookMarked, Film, Music
 } from 'lucide-react';
-import { useLocalizedDate } from '@/hooks/useLocalizedDate';
 import type { Oeuvre } from '@/types/models/oeuvre.types';
+
+// Helper pour extraire le texte d'un champ multilingue
+const getLocalizedText = (value: any, fallback: string = ''): string => {
+  if (!value) return fallback;
+  if (typeof value === 'string') return value;
+  if (typeof value === 'object') {
+    return value.fr || value.ar || value.en || Object.values(value).find((v: any) => typeof v === 'string' && v) || fallback;
+  }
+  return String(value);
+};
 
 interface OeuvreInfoProps {
   oeuvre: Oeuvre;
@@ -21,7 +31,7 @@ interface OeuvreInfoProps {
 
 const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false }) => {
   const { t } = useTranslation();
-  const { formatDate } = useLocalizedDate();
+  const oeuvreAny = oeuvre as any;
 
   // Version compacte pour la sidebar
   if (compact) {
@@ -56,10 +66,10 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false }) => {
           )}
 
           {/* ISBN/Code */}
-          {oeuvre.isbn && (
+          {oeuvre.Livre?.isbn && (
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">ISBN</span>
-              <span className="font-mono text-xs">{oeuvre.isbn}</span>
+              <span className="font-mono text-xs">{oeuvre.Livre.isbn}</span>
             </div>
           )}
 
@@ -127,7 +137,7 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false }) => {
           {oeuvre.description ? (
             <div className="prose prose-sm max-w-none dark:prose-invert">
               <p className="whitespace-pre-line text-muted-foreground leading-relaxed">
-                {oeuvre.description}
+                {getLocalizedText(oeuvre.description)}
               </p>
             </div>
           ) : (
@@ -137,11 +147,11 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false }) => {
           )}
 
           {/* Résumé si différent */}
-          {oeuvre.resume && oeuvre.resume !== oeuvre.description && (
+          {oeuvreAny.resume && oeuvreAny.resume !== oeuvre.description && (
             <div className="mt-4 pt-4 border-t">
               <h4 className="font-medium mb-2">{t('oeuvre.summary', 'Résumé')}</h4>
               <p className="text-sm text-muted-foreground whitespace-pre-line">
-                {oeuvre.resume}
+                {getLocalizedText(oeuvreAny.resume)}
               </p>
             </div>
           )}
@@ -197,45 +207,283 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false }) => {
               </div>
             )}
 
-            {/* ISBN */}
-            {oeuvre.isbn && (
+            {/* ISBN (depuis Livre) */}
+            {oeuvre.Livre?.isbn && (
               <div className="flex items-start gap-3">
                 <div className="p-2 rounded-lg bg-primary/10">
                   <Hash className="h-5 w-5 text-primary" />
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">ISBN</p>
-                  <p className="font-mono">{oeuvre.isbn}</p>
+                  <p className="font-mono">{oeuvre.Livre.isbn}</p>
                 </div>
               </div>
             )}
 
-            {/* Durée (pour films/musique) */}
-            {oeuvre.duree && (
+            {/* Durée (depuis Film) */}
+            {oeuvre.Film?.duree_minutes && (
               <div className="flex items-start gap-3">
                 <div className="p-2 rounded-lg bg-primary/10">
                   <Clock className="h-5 w-5 text-primary" />
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">{t('oeuvre.duration', 'Durée')}</p>
-                  <p className="font-medium">{oeuvre.duree} min</p>
+                  <p className="font-medium">{oeuvre.Film.duree_minutes} min</p>
                 </div>
               </div>
             )}
 
             {/* Lieu d'origine */}
-            {oeuvre.lieu_origine && (
+            {oeuvreAny.lieu_origine && (
               <div className="flex items-start gap-3">
                 <div className="p-2 rounded-lg bg-primary/10">
                   <MapPin className="h-5 w-5 text-primary" />
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">{t('oeuvre.origin', 'Origine')}</p>
-                  <p className="font-medium">{oeuvre.lieu_origine}</p>
+                  <p className="font-medium">{oeuvreAny.lieu_origine}</p>
                 </div>
               </div>
             )}
           </div>
+
+          {/* ═══════════════════════════════════════════════════
+              DÉTAILS SPÉCIFIQUES PAR TYPE D'ŒUVRE
+              ═══════════════════════════════════════════════════ */}
+
+          {/* Article Scientifique */}
+          {oeuvre.ArticleScientifique && (
+            <>
+              <Separator />
+              <div>
+                <h4 className="font-medium mb-4 flex items-center gap-2">
+                  <Beaker className="h-4 w-4 text-primary" />
+                  {t('oeuvre.scientificDetails', 'Détails scientifiques')}
+                </h4>
+                <div className="grid gap-4 sm:grid-cols-2 bg-muted/30 rounded-lg p-4">
+                  {oeuvre.ArticleScientifique.journal && (
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 rounded-lg bg-primary/10">
+                        <BookMarked className="h-4 w-4 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">{t('oeuvre.journal', 'Journal / Revue')}</p>
+                        <p className="font-medium text-sm">{oeuvre.ArticleScientifique.journal}</p>
+                      </div>
+                    </div>
+                  )}
+                  {oeuvre.ArticleScientifique.doi && (
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 rounded-lg bg-primary/10">
+                        <ExternalLink className="h-4 w-4 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">DOI</p>
+                        <a
+                          href={`https://doi.org/${oeuvre.ArticleScientifique.doi}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-mono text-sm text-primary hover:underline"
+                        >
+                          {oeuvre.ArticleScientifique.doi}
+                        </a>
+                      </div>
+                    </div>
+                  )}
+                  {oeuvre.ArticleScientifique.volume && (
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 rounded-lg bg-primary/10">
+                        <Hash className="h-4 w-4 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">{t('oeuvre.volume', 'Volume')}</p>
+                        <p className="font-medium text-sm">
+                          Vol. {oeuvre.ArticleScientifique.volume}
+                          {oeuvre.ArticleScientifique.numero && `, n° ${oeuvre.ArticleScientifique.numero}`}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  {oeuvre.ArticleScientifique.pages && (
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 rounded-lg bg-primary/10">
+                        <FileText className="h-4 w-4 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">{t('oeuvre.pages', 'Pages')}</p>
+                        <p className="font-medium text-sm">pp. {oeuvre.ArticleScientifique.pages}</p>
+                      </div>
+                    </div>
+                  )}
+                  {oeuvre.ArticleScientifique.peer_reviewed && (
+                    <div className="flex items-center gap-2 sm:col-span-2">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <span className="text-sm font-medium text-green-700 dark:text-green-400">
+                        {t('oeuvre.peerReviewed', 'Évalué par les pairs (peer-reviewed)')}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Article (presse) */}
+          {oeuvre.Article && (
+            <>
+              <Separator />
+              <div>
+                <h4 className="font-medium mb-4 flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-primary" />
+                  {t('oeuvre.articleDetails', 'Détails de l\'article')}
+                </h4>
+                <div className="grid gap-4 sm:grid-cols-2 bg-muted/30 rounded-lg p-4">
+                  {oeuvre.Article.auteur && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">{t('oeuvre.author', 'Auteur')}</p>
+                      <p className="font-medium text-sm">{oeuvre.Article.auteur}</p>
+                    </div>
+                  )}
+                  {oeuvre.Article.source && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">{t('oeuvre.source', 'Source')}</p>
+                      <p className="font-medium text-sm">{oeuvre.Article.source}</p>
+                    </div>
+                  )}
+                  {oeuvre.Article.resume && (
+                    <div className="sm:col-span-2">
+                      <p className="text-xs text-muted-foreground mb-1">{t('oeuvre.summary', 'Résumé')}</p>
+                      <p className="text-sm text-muted-foreground">{oeuvre.Article.resume}</p>
+                    </div>
+                  )}
+                  {oeuvre.Article.url_source && (
+                    <div className="sm:col-span-2">
+                      <a
+                        href={oeuvre.Article.url_source}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-primary hover:underline flex items-center gap-1"
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                        {t('oeuvre.readOriginal', 'Lire l\'article original')}
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Livre */}
+          {oeuvre.Livre && (
+            <>
+              <Separator />
+              <div>
+                <h4 className="font-medium mb-4 flex items-center gap-2">
+                  <BookOpen className="h-4 w-4 text-primary" />
+                  {t('oeuvre.bookDetails', 'Détails du livre')}
+                </h4>
+                <div className="grid gap-4 sm:grid-cols-2 bg-muted/30 rounded-lg p-4">
+                  {oeuvre.Livre.isbn && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">ISBN</p>
+                      <p className="font-mono text-sm">{oeuvre.Livre.isbn}</p>
+                    </div>
+                  )}
+                  {oeuvre.Livre.nb_pages && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">{t('oeuvre.pages', 'Pages')}</p>
+                      <p className="font-medium text-sm">{oeuvre.Livre.nb_pages} pages</p>
+                    </div>
+                  )}
+                  {oeuvre.Livre.format && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">{t('oeuvre.format', 'Format')}</p>
+                      <p className="font-medium text-sm">{oeuvre.Livre.format}</p>
+                    </div>
+                  )}
+                  {oeuvre.Livre.collection && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">{t('oeuvre.collection', 'Collection')}</p>
+                      <p className="font-medium text-sm">{oeuvre.Livre.collection}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Film */}
+          {oeuvre.Film && (
+            <>
+              <Separator />
+              <div>
+                <h4 className="font-medium mb-4 flex items-center gap-2">
+                  <Film className="h-4 w-4 text-primary" />
+                  {t('oeuvre.filmDetails', 'Détails du film')}
+                </h4>
+                <div className="grid gap-4 sm:grid-cols-2 bg-muted/30 rounded-lg p-4">
+                  {oeuvre.Film.duree_minutes && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">{t('oeuvre.duration', 'Durée')}</p>
+                      <p className="font-medium text-sm">{oeuvre.Film.duree_minutes} min</p>
+                    </div>
+                  )}
+                  {oeuvre.Film.realisateur && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">{t('oeuvre.director', 'Réalisateur')}</p>
+                      <p className="font-medium text-sm">{oeuvre.Film.realisateur}</p>
+                    </div>
+                  )}
+                  {oeuvre.Film.producteur && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">{t('oeuvre.producer', 'Producteur')}</p>
+                      <p className="font-medium text-sm">{oeuvre.Film.producteur}</p>
+                    </div>
+                  )}
+                  {oeuvre.Film.studio && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">{t('oeuvre.studio', 'Studio')}</p>
+                      <p className="font-medium text-sm">{oeuvre.Film.studio}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Album Musical */}
+          {oeuvre.AlbumMusical && (
+            <>
+              <Separator />
+              <div>
+                <h4 className="font-medium mb-4 flex items-center gap-2">
+                  <Music className="h-4 w-4 text-primary" />
+                  {t('oeuvre.albumDetails', 'Détails de l\'album')}
+                </h4>
+                <div className="grid gap-4 sm:grid-cols-2 bg-muted/30 rounded-lg p-4">
+                  {oeuvre.AlbumMusical.duree && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">{t('oeuvre.duration', 'Durée')}</p>
+                      <p className="font-medium text-sm">{oeuvre.AlbumMusical.duree}</p>
+                    </div>
+                  )}
+                  {oeuvre.AlbumMusical.nb_pistes && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">{t('oeuvre.tracks', 'Pistes')}</p>
+                      <p className="font-medium text-sm">{oeuvre.AlbumMusical.nb_pistes} pistes</p>
+                    </div>
+                  )}
+                  {oeuvre.AlbumMusical.label && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">{t('oeuvre.label', 'Label')}</p>
+                      <p className="font-medium text-sm">{oeuvre.AlbumMusical.label}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
 
           {/* Éditeurs */}
           {oeuvre.Editeurs && oeuvre.Editeurs.length > 0 && (
@@ -258,7 +506,7 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false }) => {
           )}
 
           {/* Genres */}
-          {oeuvre.Genres && oeuvre.Genres.length > 0 && (
+          {oeuvreAny.Genres && oeuvreAny.Genres.length > 0 && (
             <>
               <Separator />
               <div>
@@ -267,7 +515,7 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false }) => {
                   {t('oeuvre.genres', 'Genres')}
                 </h4>
                 <div className="flex flex-wrap gap-2">
-                  {oeuvre.Genres.map((genre) => (
+                  {oeuvreAny.Genres.map((genre: any) => (
                     <Badge key={genre.id_genre} variant="secondary">
                       {genre.nom}
                     </Badge>
@@ -318,7 +566,7 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false }) => {
           )}
 
           {/* Récompenses */}
-          {oeuvre.recompenses && oeuvre.recompenses.length > 0 && (
+          {oeuvreAny.recompenses && oeuvreAny.recompenses.length > 0 && (
             <>
               <Separator />
               <div>
@@ -327,7 +575,7 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false }) => {
                   {t('oeuvre.awards', 'Récompenses')}
                 </h4>
                 <ul className="space-y-2">
-                  {oeuvre.recompenses.map((recompense, index) => (
+                  {oeuvreAny.recompenses.map((recompense: any, index: number) => (
                     <li key={index} className="flex items-center gap-2 text-sm">
                       <Award className="h-4 w-4 text-yellow-500" />
                       {recompense}

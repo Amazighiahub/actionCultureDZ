@@ -1,5 +1,42 @@
 # Changelog — EventCulture
 
+## [2026-02-13] Fix article scientifique — médias et affichage
+
+---
+
+### 6. Correction : Médias non affichés après création d'une œuvre
+
+**Problème :** Après avoir créé une œuvre (article scientifique ou autre) avec des fichiers médias, les médias n'apparaissaient pas sur la page de détail.
+
+**Cause racine :** Le backend `OeuvreController.create()` recevait les fichiers uploadés via `req.files` (multer), mais ne créait jamais les enregistrements `Media` dans la base de données. Les fichiers étaient uploadés sur le serveur mais jamais associés à l'œuvre.
+
+**Fichier modifié :**
+- `backend/controllers/OeuvreController.js` — Ajout de l'étape 5 dans `create()` : parcours de `req.files`, parsing de `media_metadata` pour `is_principal`, et création des enregistrements `Media` dans la transaction.
+
+---
+
+### 7. Correction : Détails spécifiques non affichés sur la page de détail
+
+**Problème :** La page de détail d'une œuvre n'affichait pas les champs spécifiques au type (journal, DOI, volume pour un article scientifique ; ISBN, nb_pages pour un livre ; durée, réalisateur pour un film, etc.).
+
+**Cause racine (backend) :** `OeuvreController.getById()` ne chargeait pas les relations spécialisées (`Livre`, `Film`, `AlbumMusical`, `Article`, `ArticleScientifique`, `Artisanat`, `OeuvreArt`).
+
+**Cause racine (frontend) :** `OeuvreInfo.tsx` n'avait aucune section pour afficher les champs spécifiques par type d'œuvre.
+
+**Fichiers modifiés :**
+- `backend/controllers/OeuvreController.js` — Ajout des includes conditionnels pour toutes les relations spécialisées dans `getById()`. Ajout de `is_principal` dans les attributs Media.
+- `frontEnd/src/pages/oeuvre-detail/oeuvre/OeuvreInfo.tsx` — Ajout de sections dédiées pour :
+  - **Article Scientifique** : journal, DOI (lien cliquable), volume/numéro, pages, badge peer-reviewed
+  - **Article** : auteur, source, résumé, lien vers l'original
+  - **Livre** : ISBN, nb_pages, format, collection
+  - **Film** : durée, réalisateur, producteur, studio
+  - **Album Musical** : durée, nb_pistes, label
+  - Fix du rendu multilingue de la description (`getLocalizedText`)
+  - Fix des accès directs `oeuvre.isbn` → `oeuvre.Livre?.isbn`, `oeuvre.duree` → `oeuvre.Film?.duree_minutes`
+- `frontEnd/src/types/models/oeuvres-specialisees.types.ts` — Ajout des champs manquants : `Livre.format`, `Livre.collection`, `Film.producteur`, `Film.studio`, `AlbumMusical.nb_pistes`
+
+---
+
 ## [2026-02-11] Corrections et améliorations
 
 ---

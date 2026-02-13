@@ -10,6 +10,8 @@ export interface Livre {
   id_oeuvre: number;
   isbn?: string;
   nb_pages?: number;
+  format?: string;
+  collection?: string;
   id_genre?: number;
   
   // Relations (optionnelles)
@@ -22,6 +24,8 @@ export interface Film {
   id_oeuvre: number;
   duree_minutes?: number;
   realisateur?: string;
+  producteur?: string;
+  studio?: string;
   id_genre?: number;
   
   // Relations (optionnelles)
@@ -32,7 +36,8 @@ export interface Film {
 export interface AlbumMusical {
   id_album: number;
   id_oeuvre: number;
-  duree?: number;
+  duree?: string;
+  nb_pistes?: number;
   id_genre: number;
   label: string;
   

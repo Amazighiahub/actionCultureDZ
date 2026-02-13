@@ -194,9 +194,18 @@ class OeuvreController {
             model: this.models.Media,
             where: { visible_public: true },
             required: false,
-            attributes: ['id_media', 'type_media', 'url', 'titre', 'description', 'thumbnail_url', 'ordre'],
+            attributes: ['id_media', 'type_media', 'url', 'titre', 'description', 'thumbnail_url', 'ordre', 'is_principal'],
             order: [['ordre', 'ASC']]
-          }
+          },
+
+          // Relations spécialisées (hasOne) selon le type d'œuvre
+          ...(this.models.Livre ? [{ model: this.models.Livre, required: false }] : []),
+          ...(this.models.Film ? [{ model: this.models.Film, required: false }] : []),
+          ...(this.models.AlbumMusical ? [{ model: this.models.AlbumMusical, required: false }] : []),
+          ...(this.models.Article ? [{ model: this.models.Article, required: false }] : []),
+          ...(this.models.ArticleScientifique ? [{ model: this.models.ArticleScientifique, required: false }] : []),
+          ...(this.models.Artisanat ? [{ model: this.models.Artisanat, required: false }] : []),
+          ...(this.models.OeuvreArt ? [{ model: this.models.OeuvreArt, required: false }] : [])
         ]
       });
 
@@ -456,6 +465,49 @@ class OeuvreController {
           tagInstances.push(tag);
         }
         await oeuvre.setTags(tagInstances, { transaction });
+      }
+
+      // 5. Traiter les fichiers médias uploadés (req.files via multer)
+      const uploadedFiles = req.files || [];
+      if (uploadedFiles.length > 0) {
+        let mediaMetadata = [];
+        try {
+          if (req.body.media_metadata) {
+            mediaMetadata = typeof req.body.media_metadata === 'string'
+              ? JSON.parse(req.body.media_metadata)
+              : req.body.media_metadata;
+          }
+        } catch (e) {
+          console.warn('⚠️ Erreur parsing media_metadata:', e.message);
+        }
+
+        console.log(`📤 Traitement de ${uploadedFiles.length} fichier(s) média(s)`);
+
+        for (let i = 0; i < uploadedFiles.length; i++) {
+          const file = uploadedFiles[i];
+          const meta = mediaMetadata[i] || {};
+          const isPrincipal = meta.is_principal || (i === 0);
+
+          // Déterminer le type de média
+          let typeMedia = 'document';
+          if (file.mimetype.startsWith('image/')) typeMedia = 'image';
+          else if (file.mimetype.startsWith('video/')) typeMedia = 'video';
+          else if (file.mimetype.startsWith('audio/')) typeMedia = 'audio';
+
+          await this.models.Media.create({
+            id_oeuvre: oeuvre.id_oeuvre,
+            type_media: typeMedia,
+            url: `/uploads/oeuvres/${file.filename}`,
+            titre: file.originalname,
+            visible_public: true,
+            is_principal: isPrincipal,
+            ordre: i,
+            taille_fichier: file.size,
+            mime_type: file.mimetype
+          }, { transaction });
+        }
+
+        console.log(`✅ ${uploadedFiles.length} média(s) créé(s) pour l'œuvre ${oeuvre.id_oeuvre}`);
       }
 
       await transaction.commit();
