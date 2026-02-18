@@ -368,13 +368,15 @@ class OeuvreController {
         const typeOeuvre = await this.models.TypeOeuvre.findByPk(id_type_oeuvre);
         const typeName = typeOeuvre?.nom_type;
 
+        let createdSpecific = null;
+
         console.log('📝 Création détails spécifiques pour:', typeName, details_specifiques);
 
         try {
           switch (typeName) {
             case 'Livre':
               if (details_specifiques.livre && this.models.Livre) {
-                await this.models.Livre.create({
+                createdSpecific = await this.models.Livre.create({
                   id_oeuvre: oeuvre.id_oeuvre,
                   ...details_specifiques.livre
                 }, { transaction });
@@ -383,7 +385,7 @@ class OeuvreController {
 
             case 'Film':
               if (details_specifiques.film && this.models.Film) {
-                await this.models.Film.create({
+                createdSpecific = await this.models.Film.create({
                   id_oeuvre: oeuvre.id_oeuvre,
                   ...details_specifiques.film
                 }, { transaction });
@@ -392,7 +394,7 @@ class OeuvreController {
 
             case 'Album Musical':
               if (details_specifiques.album_musical && this.models.AlbumMusical) {
-                await this.models.AlbumMusical.create({
+                createdSpecific = await this.models.AlbumMusical.create({
                   id_oeuvre: oeuvre.id_oeuvre,
                   ...details_specifiques.album_musical
                 }, { transaction });
@@ -401,7 +403,7 @@ class OeuvreController {
 
             case 'Article':
               if (details_specifiques.article && this.models.Article) {
-                await this.models.Article.create({
+                createdSpecific = await this.models.Article.create({
                   id_oeuvre: oeuvre.id_oeuvre,
                   ...details_specifiques.article
                 }, { transaction });
@@ -410,7 +412,7 @@ class OeuvreController {
 
             case 'Article Scientifique':
               if (details_specifiques.article_scientifique && this.models.ArticleScientifique) {
-                await this.models.ArticleScientifique.create({
+                createdSpecific = await this.models.ArticleScientifique.create({
                   id_oeuvre: oeuvre.id_oeuvre,
                   ...details_specifiques.article_scientifique
                 }, { transaction });
@@ -419,7 +421,7 @@ class OeuvreController {
 
             case 'Artisanat':
               if (details_specifiques.artisanat && this.models.Artisanat) {
-                await this.models.Artisanat.create({
+                createdSpecific = await this.models.Artisanat.create({
                   id_oeuvre: oeuvre.id_oeuvre,
                   ...details_specifiques.artisanat
                 }, { transaction });
@@ -429,7 +431,7 @@ class OeuvreController {
             case 'Œuvre d\'Art':
             case 'Oeuvre d\'Art':
               if (details_specifiques.oeuvre_art && this.models.OeuvreArt) {
-                await this.models.OeuvreArt.create({
+                createdSpecific = await this.models.OeuvreArt.create({
                   id_oeuvre: oeuvre.id_oeuvre,
                   ...details_specifiques.oeuvre_art
                 }, { transaction });
@@ -438,6 +440,13 @@ class OeuvreController {
 
             default:
               console.log('⚠️ Type d\'œuvre non reconnu pour les détails spécifiques:', typeName);
+          }
+
+          if (createdSpecific) {
+            req.createdSpecific = {
+              typeName,
+              record: createdSpecific
+            };
           }
         } catch (detailsError) {
           console.error('⚠️ Erreur création détails spécifiques:', detailsError.message);
@@ -522,11 +531,25 @@ class OeuvreController {
         ]
       });
 
+      const createdSpecificPayload = (() => {
+        const cs = req.createdSpecific;
+        if (!cs || !cs.record) return {};
+        switch (cs.typeName) {
+          case 'Article Scientifique':
+            return { article_scientifique: cs.record };
+          case 'Article':
+            return { article: cs.record };
+          default:
+            return { details_specifiques_record: cs.record };
+        }
+      })();
+
       res.status(201).json({
         success: true,
         message: 'Œuvre créée avec succès',
         data: {
-          oeuvre: translateDeep(oeuvreComplete, lang)
+          oeuvre: translateDeep(oeuvreComplete, lang),
+          ...createdSpecificPayload
         }
       });
 
