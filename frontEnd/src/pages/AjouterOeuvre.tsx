@@ -807,8 +807,18 @@ const AjouterOeuvre: React.FC = () => {
       const oeuvreId = oeuvreResponse.data.oeuvre.id_oeuvre;
       console.log('✅ Oeuvre créée avec ID:', oeuvreId);
 
+      const articleRecordId = (() => {
+        if (isScientific) {
+          return oeuvreResponse.data.article_scientifique?.id_article_scientifique;
+        }
+        return oeuvreResponse.data.article?.id_article;
+      })();
+
       // 5. Sauvegarder les blocs si présents
       if (blocks && blocks.length > 0) {
+        if (!articleRecordId) {
+          console.warn('⚠️ ID article spécifique manquant, impossible de sauvegarder les blocs');
+        }
         console.log(`📦 Sauvegarde de ${blocks.length} bloc(s)...`);
         const blocksToSave = blocks.map((block: any, index: number) => ({
           type_block: block.type_block,
@@ -820,11 +830,11 @@ const AjouterOeuvre: React.FC = () => {
           visible: true,
         }));
 
-        const blocksResponse = await articleBlockService.createMultipleBlocks({
-          id_article: oeuvreId,
+        const blocksResponse = articleRecordId ? await articleBlockService.createMultipleBlocks({
+          id_article: articleRecordId,
           article_type: isScientific ? 'article_scientifique' : 'article',
-          blocks: blocksToSave.map((b: any) => ({ ...b, id_article: oeuvreId })),
-        });
+          blocks: blocksToSave.map((b: any) => ({ ...b, id_article: articleRecordId })),
+        }) : { success: false, error: 'ID article manquant' };
 
         if (!blocksResponse.success) {
           console.warn('⚠️ Erreur sauvegarde blocs:', blocksResponse.error);
