@@ -10,7 +10,6 @@ import { useFavoriCheck } from '@/hooks/useFavoris';
 import { evenementService } from '@/services/evenement.service';
 import { programmeService } from '@/services/programme.service';
 import { commentaireService } from '@/services/commentaire.service';
-import { mediaService } from '@/services/media.service';
 import type { Evenement } from '@/types/models/evenement.types';
 import type { Programme } from '@/types/models/programme.types';
 import type { Media } from '@/types/models/media.types';
@@ -232,7 +231,7 @@ export function useEventDetails(eventId: number, options: EventDetailsOptions = 
     mutationFn: async ({ contenu, note }: { contenu: string; note?: number }) => {
       const response = await commentaireService.createCommentaireEvenement(eventId, {
         contenu,
-        // Note est généralement gérée séparément ou dans le contenu
+        note_qualite: note,
       });
       if (!response.success) {
         throw new Error(response.error || 'Erreur lors de l\'ajout du commentaire');
@@ -286,8 +285,8 @@ export function useEventDetails(eventId: number, options: EventDetailsOptions = 
           id: org.id_organisation,
           type: 'organisation',
           nom: org.nom,
-          logo_url: org.logo_url,
-          role: org.EvenementOrganisation?.role || 'partenaire',
+          logo_url: (org as any).logo_url,
+          role: (org as any).EvenementOrganisation?.role || 'partenaire',
           description: org.description,
           site_web: org.site_web,
           type_organisation: org.TypeOrganisation?.nom,

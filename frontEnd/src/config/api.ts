@@ -448,6 +448,16 @@ categoriesForType: (typeId: number) => `/metadata/types-oeuvres/${typeId}/catego
   },
 
   // ================================================
+  // ORGANISATIONS
+  // ================================================
+  organisations: {
+    me: '/organisations/me',
+    create: '/organisations',
+    types: '/organisations/types',
+    detail: (id: number) => `/organisations/${id}`,
+  },
+
+  // ================================================
   // ŒUVRES
   // ================================================
   oeuvres: {

@@ -61,11 +61,17 @@ module.exports = (sequelize) => {
     },
     id_lieu: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
       references: {
         model: 'lieu',
         key: 'id_lieu'
-      }
+      },
+      comment: 'Nullable pour les événements virtuels'
+    },
+    url_virtuel: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+      comment: 'Lien pour les événements en ligne (Zoom, Meet, etc.)'
     },
     id_user: {
       type: DataTypes.INTEGER,
@@ -85,8 +91,8 @@ module.exports = (sequelize) => {
       }
     },
     statut: {
-      type: DataTypes.ENUM('planifie', 'en_cours', 'termine', 'annule', 'reporte'),
-      defaultValue: 'planifie'
+      type: DataTypes.ENUM('brouillon', 'publie', 'planifie', 'en_cours', 'termine', 'annule', 'reporte'),
+      defaultValue: 'brouillon'
     },
     capacite_max: {
       type: DataTypes.INTEGER,
@@ -212,6 +218,10 @@ module.exports = (sequelize) => {
     
     hooks: {
       beforeValidate: (evenement) => {
+        // Ne pas écraser les statuts manuels (brouillon, annule, reporte)
+        const manualStatuses = ['brouillon', 'annule', 'reporte'];
+        if (manualStatuses.includes(evenement.statut)) return;
+
         const now = new Date();
         if (evenement.date_debut && evenement.date_fin) {
           if (now < new Date(evenement.date_debut)) {

@@ -227,13 +227,11 @@ const RelatedEvents: React.FC<RelatedEventsProps> = ({
       // Rechercher des événements similaires
       const response = await evenementService.search({
         // Filtrer par type si disponible
-        ...(typeEvenementId && { type_evenement_id: typeEvenementId }),
+        ...(typeEvenementId && { type: typeEvenementId }),
         // Filtrer par wilaya si disponible
-        ...(wilayaId && { wilaya_id: wilayaId }),
-        // Exclure l'événement actuel
-        exclude_id: eventId,
+        ...(wilayaId && { wilaya: wilayaId }),
         // Limiter aux événements à venir
-        statut: 'publie',
+        upcoming: true,
         limit
       });
 

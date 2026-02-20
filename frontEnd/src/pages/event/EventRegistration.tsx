@@ -71,6 +71,7 @@ interface OeuvreSimple {
 interface EventRegistrationProps {
   event: Evenement;
   onRegister: (data?: { nombre_personnes?: number; commentaire?: string; oeuvres?: number[]; notes?: string }) => Promise<boolean>;
+  onUnregister?: () => Promise<boolean>;
   isRegistered?: boolean;
   registrationStatus?: 'pending' | 'confirmed' | 'cancelled' | 'waiting_list';
   isFavorite?: boolean;
@@ -80,6 +81,7 @@ interface EventRegistrationProps {
 const EventRegistration: React.FC<EventRegistrationProps> = ({
   event,
   onRegister,
+  onUnregister,
   isRegistered = false,
   registrationStatus,
   isFavorite = false,
@@ -467,7 +469,11 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
             <Button 
               variant="outline" 
               className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
-              onClick={() => onRegister()}
+              onClick={async () => {
+                if (onUnregister) {
+                  await onUnregister();
+                }
+              }}
             >
               <UserMinus className="h-4 w-4 mr-2" />
               {t('event.registration.cancel', 'Annuler mon inscription')}

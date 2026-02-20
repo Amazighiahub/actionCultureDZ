@@ -31,7 +31,7 @@ const createEvenementController = (models) => {
     return buildMultiLangSearchUtil(sequelize, field, search);
   };
 
-  const uploadMiddleware = uploadService.uploadImage().single('image');
+  const uploadMiddleware = uploadService.uploadImage().single('affiche');
 
   // GET /evenements
   const getAllEvenements = async (req, res) => {
@@ -287,42 +287,53 @@ const createEvenementController = (models) => {
     return createMultiLang(value, lang);
   };
 
+  // Helper: parse un champ qui peut être une string JSON ou déjà un objet
+  const parseJsonField = (value) => {
+    if (!value) return undefined;
+    if (typeof value === 'object') return value;
+    try { return JSON.parse(value); } catch { return value; }
+  };
+
   // POST /evenements
   const createEvenement = async (req, res) => {
     const transaction = await sequelize.transaction();
     try {
-      const lang = req.lang || 'fr';  // ⚡
-      const { 
-        nom_evenement, 
-        description, 
-        accessibilite,
-        date_debut, 
-        date_fin, 
-        id_lieu, 
-        id_type_evenement,
-        capacite_max,
-        prix_entree,
-        image_url 
-      } = req.body;
+      const lang = req.lang || 'fr';
+      const body = req.body;
 
-      // ⚡ Préparer les champs multilingues
-      const nomMultiLang = prepareMultiLangField(nom_evenement, lang);
-      const descriptionMultiLang = prepareMultiLangField(description, lang);
-      const accessibiliteMultiLang = prepareMultiLangField(accessibilite, lang);
+      // Parse les champs i18n (FormData envoie des strings)
+      const nomRaw = parseJsonField(body.nom_evenement);
+      const descRaw = parseJsonField(body.description);
+      const accessRaw = parseJsonField(body.accessibilite);
+
+      const nomMultiLang = prepareMultiLangField(nomRaw, lang);
+      const descriptionMultiLang = prepareMultiLangField(descRaw, lang);
+      const accessibiliteMultiLang = prepareMultiLangField(accessRaw, lang);
+
+      // Gérer l'image uploadée
+      let imageUrl = body.image_url || null;
+      if (req.file) {
+        imageUrl = `/uploads/images/${req.file.filename}`;
+      }
+
+      // Déterminer le statut
+      const validStatuts = ['brouillon', 'publie', 'planifie'];
+      const statut = validStatuts.includes(body.statut) ? body.statut : 'brouillon';
 
       const evenement = await Evenement.create({
         nom_evenement: nomMultiLang,
         description: descriptionMultiLang,
         accessibilite: accessibiliteMultiLang,
-        date_debut,
-        date_fin,
-        id_lieu,
-        id_type_evenement,
-        capacite_max,
-        prix_entree,
-        image_url,
-        id_organisateur: req.user.id_user,
-        statut: 'brouillon'
+        date_debut: body.date_debut,
+        date_fin: body.date_fin || null,
+        id_lieu: body.id_lieu ? parseInt(body.id_lieu) : null,
+        url_virtuel: body.url_virtuel || null,
+        id_type_evenement: parseInt(body.id_type_evenement),
+        capacite_max: body.capacite_max ? parseInt(body.capacite_max) : null,
+        tarif: body.tarif ? parseFloat(body.tarif) : 0,
+        image_url: imageUrl,
+        id_user: req.user.id_user,
+        statut
       }, { transaction });
 
       // Créer l'inscription de l'organisateur
@@ -336,9 +347,17 @@ const createEvenementController = (models) => {
         }, { transaction });
       }
 
+      // Lier l'organisation si fournie
+      if (body.id_organisation && models.EvenementOrganisation) {
+        await models.EvenementOrganisation.create({
+          id_evenement: evenement.id_evenement,
+          id_organisation: parseInt(body.id_organisation),
+          role: 'organisateur_principal'
+        }, { transaction });
+      }
+
       await transaction.commit();
-      
-      // ⚡ Traduire la réponse
+
       res.status(201).json({ 
         success: true, 
         data: translate(evenement, lang), 
@@ -346,6 +365,9 @@ const createEvenementController = (models) => {
       });
     } catch (error) {
       await transaction.rollback();
+      if (req.file) {
+        try { require('fs').unlinkSync(req.file.path); } catch (_) {}
+      }
       console.error('Erreur createEvenement:', error);
       res.status(500).json({ success: false, error: 'Erreur lors de la création', details: error.message });
     }
