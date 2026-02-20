@@ -350,6 +350,7 @@ export function useFavoriCheck(
     isFavorite,
     favoriId,
     loading,
-    toggle
+    toggle,
+    toggleFavorite: toggle
   };
 }

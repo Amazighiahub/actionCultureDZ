@@ -22,6 +22,8 @@ import { useRTL } from '@/hooks/useRTL';
 import { metadataService } from '@/services/metadata.service';
 import { authService } from '@/services/auth.service';
 import { evenementService } from '@/services/evenement.service';
+import { httpClient } from '@/services/httpClient';
+import { API_ENDPOINTS } from '@/config/api';
 
 // Import des types
 import { Wilaya } from '@/types';
@@ -124,17 +126,12 @@ const AjouterEvenement = () => {
     // Charger les organisations de l'utilisateur
     try {
       setLoadingOrganisations(true);
-      const response = await fetch('/api/users/me/organisations', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-      const data = await response.json();
-      if (data.success && data.data) {
-        setOrganisations(data.data);
-        setHasOrganisation(data.data.length > 0);
-        if (data.data.length === 1) {
-          setSelectedOrganisationId(data.data[0].id_organisation);
+      const response = await httpClient.get<any[]>(API_ENDPOINTS.organisations.me);
+      if (response.success && response.data) {
+        setOrganisations(response.data);
+        setHasOrganisation(response.data.length > 0);
+        if (response.data.length === 1) {
+          setSelectedOrganisationId(response.data[0].id_organisation);
         }
       }
     } catch (error) {
@@ -148,6 +145,51 @@ const AjouterEvenement = () => {
 
   const handleGratuitChange = (checked: boolean | "indeterminate") => {
     setGratuit(checked === true);
+  };
+
+  const submitEvent = async (statut: 'publie' | 'brouillon') => {
+    const fd = new FormData();
+    fd.append('nom_evenement', JSON.stringify(formData.nom));
+    fd.append('description', JSON.stringify(formData.description));
+    fd.append('id_type_evenement', formData.idTypeEvenement);
+    fd.append('date_debut', formData.dateDebut);
+    if (formData.dateFin) fd.append('date_fin', formData.dateFin);
+    if (formData.heureDebut) fd.append('heure_debut', formData.heureDebut);
+    if (formData.heureFin) fd.append('heure_fin', formData.heureFin);
+    if (formData.maxParticipants) fd.append('capacite_max', formData.maxParticipants);
+    fd.append('tarif', (!gratuit && formData.tarif) ? formData.tarif : '0');
+    if (!isVirtual && selectedLieuId) fd.append('id_lieu', selectedLieuId.toString());
+    if (!isVirtual && selectedOrganisationId) fd.append('id_organisation', selectedOrganisationId.toString());
+    if (isVirtual && formData.urlVirtuel) fd.append('url_virtuel', formData.urlVirtuel);
+    fd.append('statut', statut);
+    if (affiche) fd.append('affiche', affiche);
+
+    try {
+      const response = await evenementService.create(fd as any);
+
+      if (response.success) {
+        toast({
+          title: t('common.success', 'Succès'),
+          description: statut === 'brouillon'
+            ? t('events.create.draftSaved', 'Brouillon sauvegardé avec succès')
+            : t('events.create.success', 'Événement créé avec succès!'),
+        });
+        navigate('/dashboard-pro');
+      } else {
+        toast({
+          title: t('common.error', 'Erreur'),
+          description: response.error || t('events.create.error', 'Erreur lors de la création'),
+          variant: 'destructive',
+        });
+      }
+    } catch (error: unknown) {
+      console.error('Erreur création événement:', error);
+      toast({
+        title: t('common.error', 'Erreur'),
+        description: t('events.create.error', 'Erreur lors de la création de l\'événement'),
+        variant: 'destructive',
+      });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -223,44 +265,7 @@ const AjouterEvenement = () => {
       return;
     }
 
-    // Collecter toutes les données du formulaire — noms alignés sur le modèle backend
-    const submitData: Record<string, any> = {
-      nom_evenement: formData.nom,
-      description: formData.description,
-      id_type_evenement: parseInt(formData.idTypeEvenement),
-      date_debut: formData.dateDebut,
-      date_fin: formData.dateFin || undefined,
-      capacite_max: formData.maxParticipants ? parseInt(formData.maxParticipants) : undefined,
-      tarif: !gratuit && formData.tarif ? parseFloat(formData.tarif) : 0,
-      id_lieu: !isVirtual ? selectedLieuId : undefined,
-    };
-
-    console.log('Données à soumettre:', submitData);
-
-    try {
-      const response = await evenementService.create(submitData);
-
-      if (response.success) {
-        toast({
-          title: t('common.success', 'Succès'),
-          description: t('events.create.success', 'Événement créé avec succès!'),
-        });
-        navigate('/dashboard-pro');
-      } else {
-        toast({
-          title: t('common.error', 'Erreur'),
-          description: response.error || t('events.create.error', 'Erreur lors de la création'),
-          variant: 'destructive',
-        });
-      }
-    } catch (error: unknown) {
-      console.error('Erreur création événement:', error);
-      toast({
-        title: t('common.error', 'Erreur'),
-        description: t('events.create.error', 'Erreur lors de la création de l\'événement'),
-        variant: 'destructive',
-      });
-    }
+    await submitEvent('publie');
   };
 
   return (
@@ -728,12 +733,7 @@ const AjouterEvenement = () => {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => {
-                  toast({
-                    title: t('common.featureInDevelopment'),
-                    description: t('events.create.draftSaved'),
-                  });
-                }}
+                onClick={() => submitEvent('brouillon')}
               >
                 <Save className={`h-4 w-4 ${rtlClasses.marginEnd(2)}`} />
                 {t('events.create.saveAsDraft')}

@@ -265,16 +265,17 @@ const createEvenementRoutes = (models, middlewares = {}) => {
     requireValidatedProfessional,
     security.sanitizeInput || defaultMiddleware,
     ...flattenMiddleware(rateLimit.creation || rateLimit.general),
+    controller.uploadMiddleware || defaultMiddleware,
     logEventRequest,
     [
-      body('nom_evenement').notEmpty().trim().isLength({ min: 3, max: 200 }),
-      body('description').optional().trim(),
-      body('date_debut').notEmpty().isISO8601(),
-      body('date_fin').optional().isISO8601(),
+      body('nom_evenement').notEmpty(),
+      body('description').optional(),
+      body('date_debut').notEmpty(),
+      body('date_fin').optional(),
       body('capacite_max').optional().isInt({ min: 1 }),
-      body('tarif').optional().isFloat({ min: 0 }),
-      body('id_type_evenement').notEmpty().isInt(),
-      body('id_lieu').notEmpty().isInt()
+      body('tarif').optional(),
+      body('id_type_evenement').notEmpty(),
+      body('id_lieu').optional()
     ],
     validation.handleValidationErrors || defaultMiddleware,
     validation.validateEventCreation || defaultMiddleware,
@@ -377,6 +378,18 @@ const createEvenementRoutes = (models, middlewares = {}) => {
       }
       next();
     }
+  );
+
+  /**
+   * @route   DELETE /api/evenements/:id/inscription
+   * @desc    Se désinscrire d'un événement
+   */
+  router.delete('/:id/inscription',
+    requireAuth,
+    validation.validateId?.('id') || defaultMiddleware,
+    ...flattenMiddleware(rateLimit.creation || rateLimit.general),
+    logEventRequest,
+    controller.desinscrireUtilisateur || defaultMiddleware
   );
   // ====================================================================
   // ROUTES GESTION DES OEUVRES DANS L'ÉVÉNEMENT

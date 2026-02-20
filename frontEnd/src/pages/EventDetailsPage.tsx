@@ -52,6 +52,7 @@ const EventDetailsPage: React.FC = () => {
     toggleFavorite,
     addComment,
     registerToEvent,
+    unregisterFromEvent,
     isRegistered,
     registrationStatus
   } = useEventDetails(id ? parseInt(id) : 0);
@@ -190,6 +191,7 @@ const EventDetailsPage: React.FC = () => {
                   <EventRegistration
                     event={event}
                     onRegister={registerToEvent}
+                    onUnregister={unregisterFromEvent}
                     isRegistered={isRegistered}
                     registrationStatus={registrationStatus}
                     isFavorite={isFavorite}

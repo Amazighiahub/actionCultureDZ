@@ -31,6 +31,7 @@ const initAdminEvenementsRoutes = require('./admin/adminEvenementsRoutes');
 const initAdminPatrimoineRoutes = require('./admin/adminPatrimoineRoutes');
 const initAdminServicesRoutes = require('./admin/adminServicesRoutes');
 const initArticleBlockRoutes = require('./articleBlockRoutes');
+const initOrganisationRoutes = require('./organisationRoutes');
 // ========================================================================
 // FONCTIONS UTILITAIRES
 // ========================================================================
@@ -528,6 +529,7 @@ const initRoutes = (models, authMiddleware) => {
     { path: '/services', init: initServiceRoutes, args: [models, authMiddleware] },
     
     // Routes qui nécessitent tous les middlewares
+    { path: '/organisations', init: initOrganisationRoutes, args: [models, authMiddleware] },
     { path: '/evenements', init: initEvenementRoutes, args: [models, middlewares] },
     { path: '/intervenants', init: initIntervenantRoutes, args: [models, authMiddleware] },
     

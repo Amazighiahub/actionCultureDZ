@@ -31,6 +31,7 @@ import AjouterService from "./pages/AjouterService";
 import AjouterServicePro from "./pages/AjouterServicePro";
 import AjouterPatrimoinePro from "./pages/AjouterPatrimoinePro";
 import AjouterArtisanat from "./pages/AjouterArtisanat";
+import AjouterOrganisation from "./pages/AjouterOrganisation";
 import VerifyEmailPage from './pages/VerifyEmailPage';
 import OeuvreDetail from './pages/oeuvre-detail/OeuvreDetailPage';
 // Import des pages de notifications
@@ -222,6 +223,15 @@ const App = () => (
               element={
                 <ProfessionalRoute>
                   <AjouterArtisanat />
+                </ProfessionalRoute>
+              }
+            />
+
+            <Route
+              path="/ajouter-organisation"
+              element={
+                <ProfessionalRoute>
+                  <AjouterOrganisation />
                 </ProfessionalRoute>
               }
             />

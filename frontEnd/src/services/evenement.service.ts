@@ -96,6 +96,14 @@ class EvenementService extends BaseService<Evenement, CreateEvenementData, Updat
     super(API_ENDPOINTS.evenements.list);
   }
 
+  // Override create to support FormData (multipart upload)
+  async create(data: CreateEvenementData | FormData): Promise<ApiResponse<Evenement>> {
+    if (data instanceof FormData) {
+      return httpClient.postFormData<Evenement>(this.baseEndpoint, data);
+    }
+    return httpClient.post<Evenement>(this.baseEndpoint, data);
+  }
+
   // Recherche et listing
   async getUpcoming(params?: FilterParams): Promise<ApiResponse<PaginatedResponse<Evenement>>> {
     return httpClient.getPaginated<Evenement>(API_ENDPOINTS.evenements.upcoming, params);
