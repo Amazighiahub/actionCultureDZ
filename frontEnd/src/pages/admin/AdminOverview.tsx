@@ -211,8 +211,8 @@ const AdminOverview: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {alerts.slice(0, 3).map((alert, index) => (
-                <div key={index} className="flex items-center gap-2 text-sm text-yellow-800">
+              {alerts.slice(0, 3).map((alert) => (
+                <div key={alert.id || alert.message} className="flex items-center gap-2 text-sm text-yellow-800">
                   <AlertTriangle className="h-4 w-4" />
                   <span>{alert.message}</span>
                 </div>

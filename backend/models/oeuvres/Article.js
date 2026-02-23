@@ -106,7 +106,8 @@ module.exports = (sequelize) => {
     Article.hasMany(models.ArticleBlock, {
       foreignKey: 'id_article',
       as: 'blocks',
-      onDelete: 'CASCADE'
+      constraints: false,
+      scope: { article_type: 'article' }
     });
     Article.belongsTo(models.Genre, { foreignKey: 'id_genre' });
   };

@@ -162,6 +162,13 @@ const OeuvreDetailPage: React.FC = () => {
     addComment
   } = useOeuvreDetails(id ? parseInt(id) : 0);
 
+  // Rediriger vers ArticleViewPage pour les articles (type 4 et 5)
+  useEffect(() => {
+    if (oeuvre && (oeuvre.id_type_oeuvre === 4 || oeuvre.id_type_oeuvre === 5)) {
+      navigate(`/articles/${oeuvre.id_oeuvre}`, { replace: true });
+    }
+  }, [oeuvre, navigate]);
+
   // Charger les données additionnelles quand l'œuvre est chargée
   useEffect(() => {
     if (oeuvre) {

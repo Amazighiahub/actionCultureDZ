@@ -76,8 +76,10 @@ function buildMultiLangSearch(sequelize, field, search, tableName = null, langua
   const safeLangs = languages.filter(l => SUPPORTED_LANGUAGES.includes(l));
 
   return safeLangs.map(lang => {
+    // Hyphenated lang codes (tz-ltn, tz-tfng) need double quotes in MySQL JSON paths
+    const jsonPath = lang.includes('-') ? `$."${lang}"` : `$.${lang}`;
     return sequelize.literal(
-      `JSON_UNQUOTE(JSON_EXTRACT(${fieldRef}, '$.${lang}')) LIKE ${safeSearch}`
+      `JSON_UNQUOTE(JSON_EXTRACT(${fieldRef}, '${jsonPath}')) LIKE ${safeSearch}`
     );
   });
 }
@@ -135,8 +137,9 @@ function buildMultiLangOrder(sequelize, field, lang = 'fr', direction = 'ASC', t
   const fieldRef = safeTable ? `\`${safeTable}\`.\`${safeField}\`` : `\`${safeField}\``;
   const validDirection = direction.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
 
+  const jsonPath = safeLang.includes('-') ? `$."${safeLang}"` : `$.${safeLang}`;
   return [
-    sequelize.literal(`JSON_UNQUOTE(JSON_EXTRACT(${fieldRef}, '$.${safeLang}')) ${validDirection}`)
+    sequelize.literal(`JSON_UNQUOTE(JSON_EXTRACT(${fieldRef}, '${jsonPath}')) ${validDirection}`)
   ];
 }
 
@@ -163,8 +166,9 @@ function buildTranslatedAttribute(sequelize, field, lang = 'fr', alias = null, t
   const fieldRef = safeTable ? `\`${safeTable}\`.\`${safeField}\`` : `\`${safeField}\``;
   const resultAlias = alias ? sanitizeField(alias) || `${safeField}_${safeLang}` : `${safeField}_${safeLang}`;
 
+  const jsonPath = safeLang.includes('-') ? `$."${safeLang}"` : `$.${safeLang}`;
   return [
-    sequelize.literal(`JSON_UNQUOTE(JSON_EXTRACT(${fieldRef}, '$.${safeLang}'))`),
+    sequelize.literal(`JSON_UNQUOTE(JSON_EXTRACT(${fieldRef}, '${jsonPath}'))`),
     resultAlias
   ];
 }
@@ -185,8 +189,9 @@ function buildExactMatch(sequelize, field, value, lang = 'fr') {
 
   const safeLang = sanitizeLang(lang);
 
+  const jsonPath = safeLang.includes('-') ? `$."${safeLang}"` : `$.${safeLang}`;
   return sequelize.where(
-    sequelize.fn('JSON_UNQUOTE', sequelize.fn('JSON_EXTRACT', sequelize.col(safeField), sequelize.literal(`'$.${safeLang}'`))),
+    sequelize.fn('JSON_UNQUOTE', sequelize.fn('JSON_EXTRACT', sequelize.col(safeField), sequelize.literal(`'${jsonPath}'`))),
     value
   );
 }

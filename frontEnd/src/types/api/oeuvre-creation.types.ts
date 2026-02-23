@@ -266,6 +266,10 @@ export interface CreateOeuvreResponse {
   };
   message?: string;
   intervenants_crees?: any[];
+  // Détails spécifiques retournés par le backend selon le type
+  article_scientifique?: { id_article_scientifique: number; [key: string]: any };
+  article?: { id_article: number; [key: string]: any };
+  details_specifiques_record?: any;
 }
 
 /**

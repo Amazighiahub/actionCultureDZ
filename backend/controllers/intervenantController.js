@@ -75,7 +75,7 @@ class IntervenantController {
       // Tri multilingue
       let orderClause;
       if (['nom', 'prenom', 'biographie'].includes(order)) {
-        orderClause = [[this.sequelize.fn('JSON_EXTRACT', this.sequelize.col(order), `$.${lang}`), direction]];
+        orderClause = [[this.sequelize.literal(`JSON_EXTRACT(\`${order}\`, '$.${lang}')`), direction]];
       } else {
         orderClause = [[order, direction]];
       }
@@ -472,7 +472,7 @@ class IntervenantController {
           'photo_url'
         ],
         limit: parseInt(limit),
-        order: [[this.sequelize.fn('JSON_EXTRACT', this.sequelize.col('nom'), `$.${lang}`), 'ASC']]
+        order: [[this.sequelize.literal(`JSON_EXTRACT(\`nom\`, '$${lang.includes('-') ? '."' + lang + '"' : '.' + lang}')`), 'ASC']]
       });
 
       // ⚡ Traduire et formater

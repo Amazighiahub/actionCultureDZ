@@ -21,6 +21,7 @@ import { mediaService } from '@/services/media.service';
 import { metadataService, CategoryGroupedByGenre } from '@/services/metadata.service';
 import { oeuvreService } from '@/services/oeuvre.service';
 import { articleBlockService } from '@/services/articleBlock.service';
+import { httpClient } from '@/services/httpClient';
 import { mapToBackendDTO } from '@/types/api/create-oeuvre-backend.dto';
 import ArticleEditor from '@/components/article/ArticleEditor';
 
@@ -768,15 +769,36 @@ const AjouterOeuvre: React.FC = () => {
       }
 
       // 3. Préparer les contributeurs
-      const utilisateurs_inscrits = contribs?.existants?.map((c: any) => ({
+      // contribs.existants = IntervenantExistant[] (id_intervenant, id_type_user)
+      // contribs.contributeurs = ContributeurOeuvre[] (id_user, id_type_user)
+      // contribs.nouveaux = NouvelIntervenant[] (nom, prenom, etc.)
+      console.log('🔍 DEBUG contribs brut:', JSON.stringify(contribs, null, 2));
+      console.log('🔍 DEBUG eds brut:', JSON.stringify(eds, null, 2));
+      console.log('🔍 DEBUG blocks:', blocks?.map((b: any, i: number) => ({
+        index: i,
+        type: b.type_block,
+        hasMedia: !!b.media,
+        hasTempFile: !!(b.metadata?.tempFile),
+        tempFileIsFile: b.metadata?.tempFile instanceof File,
+        id_media: b.id_media
+      })));
+      const utilisateurs_inscrits = contribs?.contributeurs?.map((c: any) => ({
         id_user: c.id_user,
-        role: c.role || 'Contributeur'
+        id_type_user: c.id_type_user,
+        personnage: c.personnage || c.role || ''
+      })) || [];
+
+      const intervenants_existants = contribs?.existants?.map((c: any) => ({
+        id_intervenant: c.id_intervenant,
+        id_type_user: c.id_type_user,
+        personnage: c.personnage || ''
       })) || [];
 
       const nouveaux_intervenants = contribs?.nouveaux?.map((c: any) => ({
         nom: c.nom,
         prenom: c.prenom,
-        role: c.role || 'Contributeur'
+        role: c.role || c.personnage || 'Contributeur',
+        id_type_user: c.id_type_user
       })) || [];
 
       const editeursIds = eds?.map((e: any) => e.id_editeur || e) || [];
@@ -792,13 +814,15 @@ const AjouterOeuvre: React.FC = () => {
         tags: articleFormData.tags || [],
         details_specifiques,
         utilisateurs_inscrits,
+        intervenants_existants,
         intervenants_non_inscrits: [],
         nouveaux_intervenants,
         editeurs: editeursIds,
       };
 
-      console.log('📤 Création oeuvre:', oeuvreData);
+      console.log('📤 Création oeuvre:', JSON.stringify(oeuvreData, null, 2));
       const oeuvreResponse = await oeuvreService.createOeuvre(oeuvreData);
+      console.log('📥 Réponse création oeuvre:', JSON.stringify(oeuvreResponse, null, 2));
 
       if (!oeuvreResponse.success || !oeuvreResponse.data?.oeuvre?.id_oeuvre) {
         throw new Error(oeuvreResponse.error || 'Erreur lors de la création de l\'article');
@@ -809,10 +833,19 @@ const AjouterOeuvre: React.FC = () => {
 
       const articleRecordId = (() => {
         if (isScientific) {
-          return oeuvreResponse.data.article_scientifique?.id_article_scientifique;
+          // Priorité 1: depuis createdSpecificPayload (clé directe)
+          const fromDirect = oeuvreResponse.data.article_scientifique?.id_article_scientifique;
+          // Priorité 2: depuis l'oeuvre rechargée (incluse dans la réponse)
+          const fromOeuvre = oeuvreResponse.data.oeuvre?.ArticleScientifique?.id_article_scientifique;
+          console.log('🔍 id_article_scientifique — direct:', fromDirect, '| fromOeuvre:', fromOeuvre);
+          return fromDirect || fromOeuvre;
         }
-        return oeuvreResponse.data.article?.id_article;
+        const fromDirect = oeuvreResponse.data.article?.id_article;
+        const fromOeuvre = oeuvreResponse.data.oeuvre?.Article?.id_article;
+        console.log('🔍 id_article — direct:', fromDirect, '| fromOeuvre:', fromOeuvre);
+        return fromDirect || fromOeuvre;
       })();
+      console.log('🔍 articleRecordId final =', articleRecordId);
 
       // 5. Sauvegarder les blocs si présents
       if (blocks && blocks.length > 0) {
@@ -820,15 +853,58 @@ const AjouterOeuvre: React.FC = () => {
           console.warn('⚠️ ID article spécifique manquant, impossible de sauvegarder les blocs');
         }
         console.log(`📦 Sauvegarde de ${blocks.length} bloc(s)...`);
-        const blocksToSave = blocks.map((block: any, index: number) => ({
-          type_block: block.type_block,
-          contenu: block.contenu || '',
-          contenu_json: block.contenu_json || null,
-          metadata: block.metadata || {},
-          id_media: block.id_media || null,
-          ordre: index,
-          visible: true,
-        }));
+
+        // 5a. Upload des images des blocs image qui ont un tempFile
+        const blocksWithMedia = await Promise.all(
+          blocks.map(async (block: any, index: number) => {
+            let id_media = block.id_media || null;
+
+            // Si le bloc a un fichier temporaire (image uploadée dans l'éditeur), l'envoyer au serveur
+            if (block.type_block === 'image' && block.metadata?.tempFile instanceof File) {
+              try {
+                console.log(`📤 Upload image bloc ${index}...`, block.metadata.tempFile.name);
+                // Upload direct via FormData vers le endpoint multer
+                const formData = new FormData();
+                formData.append('files', block.metadata.tempFile);
+                const uploadResult = await httpClient.postFormData<any>(
+                  `/oeuvres/${oeuvreId}/medias/upload`,
+                  formData
+                );
+                console.log(`📥 Résultat upload image bloc ${index}:`, uploadResult);
+                if (uploadResult.success && uploadResult.data) {
+                  // Le backend retourne un tableau de medias créés
+                  const medias = Array.isArray(uploadResult.data) ? uploadResult.data : [uploadResult.data];
+                  if (medias[0]?.id_media) {
+                    id_media = medias[0].id_media;
+                    console.log(`✅ Image bloc ${index} uploadée, media_id:`, id_media);
+                  }
+                } else {
+                  console.warn(`⚠️ Échec upload image bloc ${index}:`, uploadResult.error);
+                }
+              } catch (uploadErr) {
+                console.warn(`⚠️ Erreur upload image bloc ${index}:`, uploadErr);
+              }
+            }
+
+            return { block, id_media, index };
+          })
+        );
+
+        const blocksToSave = blocksWithMedia.map(({ block, id_media, index }) => {
+          // Nettoyer les metadata (retirer tempFile et autres objets non-sérialisables)
+          const cleanMetadata = block.metadata ? { ...block.metadata } : {};
+          delete cleanMetadata.tempFile;
+          
+          return {
+            type_block: block.type_block,
+            contenu: block.contenu || '',
+            contenu_json: block.contenu_json || null,
+            metadata: cleanMetadata,
+            id_media,
+            ordre: index,
+            visible: true,
+          };
+        });
 
         const blocksResponse = articleRecordId ? await articleBlockService.createMultipleBlocks({
           id_article: articleRecordId,
@@ -851,7 +927,8 @@ const AjouterOeuvre: React.FC = () => {
       });
 
       setTimeout(() => {
-        window.location.href = `/oeuvres/${oeuvreId}`;
+        // Rediriger vers la page article (avec blocs) pour les types article
+        window.location.href = `/articles/${oeuvreId}`;
       }, 1500);
 
     } catch (error: any) {
@@ -1029,7 +1106,8 @@ const AjouterOeuvre: React.FC = () => {
 
           await new Promise((resolve) => setTimeout(resolve, 2000));
 
-          const checkResult = await oeuvreService.checkRecentOeuvre(formData.titre);
+          const titreStr = typeof formData.titre === 'object' ? (formData.titre as any).fr || '' : formData.titre;
+          const checkResult = await oeuvreService.checkRecentOeuvre(titreStr);
 
           if (checkResult.success && checkResult.data) {
             console.log('✅ Œuvre trouvée malgré le timeout');
@@ -1419,8 +1497,8 @@ const AjouterOeuvre: React.FC = () => {
           {useArticleEditor && formData.id_type_oeuvre > 0 && showEditorChoice ?
           <ArticleEditor
             initialData={{
-              titre: formData.titre,
-              description: formData.description,
+              titre: typeof formData.titre === 'object' ? (formData.titre as any).fr || '' : formData.titre,
+              description: typeof formData.description === 'object' ? (formData.description as any).fr || '' : formData.description,
               id_langue: formData.id_langue,
               categories: formData.categories,
               tags: formData.tags,
@@ -1768,7 +1846,10 @@ const AjouterOeuvre: React.FC = () => {
                                         {!media.isPrincipal && media.type === 'image' &&
                               <div
                                 className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded cursor-pointer flex items-center justify-center"
-                                onClick={() => handleSetPrincipalMedia(media.id)}>
+                                onClick={() => handleSetPrincipalMedia(media.id)}
+                                role="button"
+                                tabIndex={0}
+                                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSetPrincipalMedia(media.id); } }}>
 
                                             <div className="text-white text-center">
                                               <Star className="h-6 w-6 mx-auto mb-1" />

@@ -157,13 +157,6 @@ const AjouterService: React.FC = () => {
     loadLieux();
   }, [loadLieux]);
 
-  // Charger les services quand un lieu est sélectionné
-  useEffect(() => {
-    if (selectedLieu) {
-      loadExistingServices(selectedLieu.id_lieu);
-    }
-  }, [selectedLieu, loadExistingServices]);
-
   // Obtenir le nom localisé
   const getLocalizedName = (item: any, field: string = 'nom') => {
     if (!item) return '';
@@ -186,6 +179,8 @@ const AjouterService: React.FC = () => {
     setActiveTab('add-services');
     setSelectedPredefinedServices([]);
     setServicesToAdd([]);
+    // Charger les services existants directement
+    loadExistingServices(lieu.id_lieu);
   };
 
   // Toggle service prédéfini
@@ -450,6 +445,9 @@ const AjouterService: React.FC = () => {
                                 ? 'border-primary bg-primary/5 ring-2 ring-primary'
                                 : 'border-gray-200 hover:border-primary/50 hover:bg-gray-50'
                             }`}
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSelectLieu(lieu); } }}
                           >
                             <div className="flex items-start gap-3">
                               <div className={`p-2 rounded-lg ${isSelected ? 'bg-primary text-white' : 'bg-gray-100'}`}>

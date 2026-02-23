@@ -625,6 +625,9 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
                                         : "bg-muted/50 hover:bg-muted border-2 border-transparent"
                                     )}
                                     onClick={() => toggleOeuvreSelection(oeuvre.id_oeuvre)}
+                                    role="button"
+                                    tabIndex={0}
+                                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleOeuvreSelection(oeuvre.id_oeuvre); } }}
                                   >
                                     <Checkbox
                                       checked={isSelected}

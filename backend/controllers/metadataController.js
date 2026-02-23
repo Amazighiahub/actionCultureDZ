@@ -226,12 +226,13 @@ class MetadataController {
 
       const where = {};
       if (search) {
-        where[Op.or] = SUPPORTED_LANGUAGES.map(l => 
-          this.sequelize.where(
-            this.sequelize.fn('JSON_EXTRACT', this.sequelize.col('nom'), `$.${l}`),
+        where[Op.or] = SUPPORTED_LANGUAGES.map(l => {
+          const jsonPath = l.includes('-') ? `$."${l}"` : `$.${l}`;
+          return this.sequelize.where(
+            this.sequelize.fn('JSON_EXTRACT', this.sequelize.col('nom'), this.sequelize.literal(`'${jsonPath}'`)),
             { [Op.like]: `%${search}%` }
-          )
-        );
+          );
+        });
       }
 
       const tags = await this.models.TagMotCle.findAll({

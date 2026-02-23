@@ -127,6 +127,8 @@ class ArticleBlockController {
     try {
       const { id_article, article_type = 'article', blocks } = req.body;
 
+      console.log(`📦 createMultipleBlocks: id_article=${id_article}, article_type=${article_type}, nb_blocks=${blocks?.length}`);
+
       if (!id_article || !blocks || !Array.isArray(blocks)) {
         await transaction.rollback();
         return res.status(400).json({

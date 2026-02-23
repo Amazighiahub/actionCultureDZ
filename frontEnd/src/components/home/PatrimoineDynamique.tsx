@@ -29,7 +29,10 @@ interface PatrimoineDynamiqueProps {
   wilayasCache?: any[];
 }
 
-const PatrimoineDynamique: React.FC<PatrimoineDynamiqueProps> = ({ wilayasCache = [] }) => {
+// Constant to avoid creating new array reference on every render
+const EMPTY_WILAYAS_ARRAY: any[] = [];
+
+const PatrimoineDynamique: React.FC<PatrimoineDynamiqueProps> = ({ wilayasCache = EMPTY_WILAYAS_ARRAY }) => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { formatNumber } = useLocalizedNumber();

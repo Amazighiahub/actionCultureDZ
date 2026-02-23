@@ -70,7 +70,7 @@ class OeuvreController {
           order = [['date_creation', 'DESC']];
           break;
         case 'title':
-          order = [[this.sequelize.fn('JSON_EXTRACT', this.sequelize.col('titre'), `$.${lang}`), 'ASC']];
+          order = [[this.sequelize.literal(`JSON_EXTRACT(\`titre\`, '$.${lang}')`), 'ASC']];
           break;
         case 'year':
           order = [['annee_creation', 'DESC']];
@@ -194,7 +194,7 @@ class OeuvreController {
             model: this.models.Media,
             where: { visible_public: true },
             required: false,
-            attributes: ['id_media', 'type_media', 'url', 'titre', 'description', 'thumbnail_url', 'ordre', 'is_principal'],
+            attributes: ['id_media', 'type_media', 'url', 'titre', 'description', 'thumbnail_url', 'ordre', 'is_Principale'],
             order: [['ordre', 'ASC']]
           },
 
@@ -270,11 +270,11 @@ class OeuvreController {
           'description',
           'thumbnail_url',
           'ordre',
-          'is_principal',
+          'is_Principale',
           'date_creation'
         ],
         order: [
-          ['is_principal', 'DESC'],
+          ['is_Principale', 'DESC'],
           ['ordre', 'ASC'],
           ['date_creation', 'ASC']
         ]
@@ -327,18 +327,41 @@ class OeuvreController {
         tags = [],
         editeurs = [],
         utilisateurs_inscrits = [],
+        intervenants_existants = [],
         intervenants_non_inscrits = [],
         nouveaux_intervenants = [],
         medias = [],
         details_specifiques = {}
       } = req.body;
 
+      // Parse JSON strings from FormData (multer sends arrays/objects as strings)
+      const parseJsonField = (field, fallback = []) => {
+        if (!field) return fallback;
+        if (typeof field === 'string') {
+          try { return JSON.parse(field); } catch { return fallback; }
+        }
+        return field;
+      };
+
+      const parsedCategories = parseJsonField(categories, []);
+      const parsedTags = parseJsonField(tags, []);
+      const parsedEditeurs = parseJsonField(editeurs, []);
+      const parsedUtilisateursInscrits = parseJsonField(utilisateurs_inscrits, []);
+      const parsedIntervenantsExistants = parseJsonField(intervenants_existants, []);
+      const parsedIntervenantsNonInscrits = parseJsonField(intervenants_non_inscrits, []);
+      const parsedNouveauxIntervenants = parseJsonField(nouveaux_intervenants, []);
+      const parsedDetailsSpecifiques = parseJsonField(details_specifiques, {});
+
       console.log('📝 Création œuvre:', {
         titre,
         id_type_oeuvre,
         lang,
-        nb_categories: categories.length,
-        nb_medias: medias.length
+        nb_categories: parsedCategories.length,
+        nb_medias: medias.length,
+        nb_utilisateurs_inscrits: parsedUtilisateursInscrits.length,
+        nb_intervenants_existants: parsedIntervenantsExistants.length,
+        nb_nouveaux_intervenants: parsedNouveauxIntervenants.length,
+        nb_editeurs: parsedEditeurs.length
       });
 
       // 1. Validation basique
@@ -364,76 +387,76 @@ class OeuvreController {
       }, { transaction });
 
       // 2b. Créer l'entrée dans la table spécifique selon le type d'œuvre
-      if (details_specifiques && Object.keys(details_specifiques).length > 0) {
+      if (parsedDetailsSpecifiques && Object.keys(parsedDetailsSpecifiques).length > 0) {
         const typeOeuvre = await this.models.TypeOeuvre.findByPk(id_type_oeuvre);
         const typeName = typeOeuvre?.nom_type;
 
         let createdSpecific = null;
 
-        console.log('📝 Création détails spécifiques pour:', typeName, details_specifiques);
+        console.log('📝 Création détails spécifiques pour:', typeName, parsedDetailsSpecifiques);
 
         try {
           switch (typeName) {
             case 'Livre':
-              if (details_specifiques.livre && this.models.Livre) {
+              if (parsedDetailsSpecifiques.livre && this.models.Livre) {
                 createdSpecific = await this.models.Livre.create({
                   id_oeuvre: oeuvre.id_oeuvre,
-                  ...details_specifiques.livre
+                  ...parsedDetailsSpecifiques.livre
                 }, { transaction });
               }
               break;
 
             case 'Film':
-              if (details_specifiques.film && this.models.Film) {
+              if (parsedDetailsSpecifiques.film && this.models.Film) {
                 createdSpecific = await this.models.Film.create({
                   id_oeuvre: oeuvre.id_oeuvre,
-                  ...details_specifiques.film
+                  ...parsedDetailsSpecifiques.film
                 }, { transaction });
               }
               break;
 
             case 'Album Musical':
-              if (details_specifiques.album_musical && this.models.AlbumMusical) {
+              if (parsedDetailsSpecifiques.album_musical && this.models.AlbumMusical) {
                 createdSpecific = await this.models.AlbumMusical.create({
                   id_oeuvre: oeuvre.id_oeuvre,
-                  ...details_specifiques.album_musical
+                  ...parsedDetailsSpecifiques.album_musical
                 }, { transaction });
               }
               break;
 
             case 'Article':
-              if (details_specifiques.article && this.models.Article) {
+              if (parsedDetailsSpecifiques.article && this.models.Article) {
                 createdSpecific = await this.models.Article.create({
                   id_oeuvre: oeuvre.id_oeuvre,
-                  ...details_specifiques.article
+                  ...parsedDetailsSpecifiques.article
                 }, { transaction });
               }
               break;
 
             case 'Article Scientifique':
-              if (details_specifiques.article_scientifique && this.models.ArticleScientifique) {
+              if (parsedDetailsSpecifiques.article_scientifique && this.models.ArticleScientifique) {
                 createdSpecific = await this.models.ArticleScientifique.create({
                   id_oeuvre: oeuvre.id_oeuvre,
-                  ...details_specifiques.article_scientifique
+                  ...parsedDetailsSpecifiques.article_scientifique
                 }, { transaction });
               }
               break;
 
             case 'Artisanat':
-              if (details_specifiques.artisanat && this.models.Artisanat) {
+              if (parsedDetailsSpecifiques.artisanat && this.models.Artisanat) {
                 createdSpecific = await this.models.Artisanat.create({
                   id_oeuvre: oeuvre.id_oeuvre,
-                  ...details_specifiques.artisanat
+                  ...parsedDetailsSpecifiques.artisanat
                 }, { transaction });
               }
               break;
 
             case 'Œuvre d\'Art':
             case 'Oeuvre d\'Art':
-              if (details_specifiques.oeuvre_art && this.models.OeuvreArt) {
+              if (parsedDetailsSpecifiques.oeuvre_art && this.models.OeuvreArt) {
                 createdSpecific = await this.models.OeuvreArt.create({
                   id_oeuvre: oeuvre.id_oeuvre,
-                  ...details_specifiques.oeuvre_art
+                  ...parsedDetailsSpecifiques.oeuvre_art
                 }, { transaction });
               }
               break;
@@ -455,28 +478,161 @@ class OeuvreController {
       }
 
       // 3. Associer les catégories
-      if (categories.length > 0) {
-        const categoriesArray = Array.isArray(categories) ? categories : [categories];
-        await oeuvre.setCategories(categoriesArray, { transaction });
+      if (parsedCategories.length > 0) {
+        await oeuvre.setCategories(parsedCategories, { transaction });
       }
 
       // 4. Associer les tags
-      if (tags.length > 0) {
-        const tagsArray = Array.isArray(tags) ? tags : [tags];
-        // Créer les tags s'ils n'existent pas
+      if (parsedTags.length > 0) {
+        const tagsArray = Array.isArray(parsedTags) ? parsedTags : [parsedTags];
+        console.log('🏷️ Tags à associer:', tagsArray);
         const tagInstances = [];
-        for (const tagNom of tagsArray) {
-          const [tag] = await this.models.TagMotCle.findOrCreate({
-            where: { nom: tagNom },
-            defaults: { nom: tagNom },
-            transaction
-          });
-          tagInstances.push(tag);
+        for (const tagItem of tagsArray) {
+          try {
+            let tag = null;
+
+            // Si c'est un nombre, chercher par id_tag
+            if (typeof tagItem === 'number' || (typeof tagItem === 'string' && /^\d+$/.test(tagItem))) {
+              tag = await this.models.TagMotCle.findByPk(parseInt(tagItem));
+            }
+
+            // Sinon, chercher par nom (JSON multilingue) dans toutes les langues
+            if (!tag && typeof tagItem === 'string') {
+              const searchLangs = ['fr', 'ar', 'en', 'tz-ltn', 'tz-tfng'];
+              for (const searchLang of searchLangs) {
+                const jsonPath = searchLang.includes('-') ? `$."${searchLang}"` : `$.${searchLang}`;
+                tag = await this.models.TagMotCle.findOne({
+                  where: this.sequelize.where(
+                    this.sequelize.fn('JSON_EXTRACT', this.sequelize.col('nom'), this.sequelize.literal(`'${jsonPath}'`)),
+                    tagItem
+                  ),
+                  transaction
+                });
+                if (tag) break;
+              }
+
+              // Si pas trouvé, créer avec le format multilingue
+              if (!tag) {
+                const tagNomMultiLang = this.prepareMultiLangField(tagItem, lang);
+                [tag] = await this.models.TagMotCle.findOrCreate({
+                  where: this.sequelize.where(
+                    this.sequelize.fn('JSON_EXTRACT', this.sequelize.col('nom'), this.sequelize.literal(`'$.${lang}'`)),
+                    tagItem
+                  ),
+                  defaults: { nom: tagNomMultiLang },
+                  transaction
+                });
+              }
+            }
+
+            if (tag) {
+              tagInstances.push(tag);
+            } else {
+              console.warn(`⚠️ Tag non trouvé/créé: ${tagItem}`);
+            }
+          } catch (tagErr) {
+            console.warn(`⚠️ Erreur traitement tag "${tagItem}":`, tagErr.message);
+          }
         }
-        await oeuvre.setTags(tagInstances, { transaction });
+        if (tagInstances.length > 0) {
+          await oeuvre.setTags(tagInstances, { transaction });
+          console.log(`🏷️ ${tagInstances.length} tag(s) associé(s)`);
+        }
       }
 
-      // 5. Traiter les fichiers médias uploadés (req.files via multer)
+      // 5. Associer les contributeurs
+      console.log('👥 DEBUG contributeurs parsed:', {
+        utilisateurs_inscrits: parsedUtilisateursInscrits,
+        intervenants_existants: parsedIntervenantsExistants,
+        nouveaux_intervenants: parsedNouveauxIntervenants,
+        editeurs: parsedEditeurs
+      });
+
+      // 5a. Utilisateurs inscrits (ContributeurOeuvre -> OeuvreUser)
+      if (parsedUtilisateursInscrits.length > 0 && this.models.OeuvreUser) {
+        console.log(`👥 Association de ${parsedUtilisateursInscrits.length} utilisateur(s) inscrit(s)`);
+        for (let i = 0; i < parsedUtilisateursInscrits.length; i++) {
+          const u = parsedUtilisateursInscrits[i];
+          try {
+            await this.models.OeuvreUser.create({
+              id_oeuvre: oeuvre.id_oeuvre,
+              id_user: u.id_user,
+              id_type_user: u.id_type_user || u.role || 1,
+              personnage: u.personnage || u.role || '',
+              ordre_apparition: i,
+              role_principal: i === 0
+            }, { transaction });
+          } catch (userErr) {
+            console.warn(`⚠️ Erreur association utilisateur ${u.id_user}:`, userErr.message);
+          }
+        }
+      }
+
+      // 5b. Intervenants existants (IntervenantExistant -> OeuvreIntervenant)
+      if (parsedIntervenantsExistants.length > 0 && this.models.OeuvreIntervenant) {
+        console.log(`👥 Association de ${parsedIntervenantsExistants.length} intervenant(s) existant(s)`);
+        for (let i = 0; i < parsedIntervenantsExistants.length; i++) {
+          const ie = parsedIntervenantsExistants[i];
+          try {
+            await this.models.OeuvreIntervenant.create({
+              id_oeuvre: oeuvre.id_oeuvre,
+              id_intervenant: ie.id_intervenant,
+              id_type_user: ie.id_type_user || 1,
+              personnage: ie.personnage || '',
+              ordre_apparition: i,
+              role_principal: i === 0
+            }, { transaction });
+          } catch (intErr) {
+            console.warn(`⚠️ Erreur association intervenant ${ie.id_intervenant}:`, intErr.message);
+          }
+        }
+      }
+
+      // 5c. Nouveaux intervenants (créer Intervenant puis OeuvreIntervenant)
+      if (parsedNouveauxIntervenants.length > 0 && this.models.Intervenant && this.models.OeuvreIntervenant) {
+        console.log(`👥 Création de ${parsedNouveauxIntervenants.length} nouvel(aux) intervenant(s)`);
+        for (let i = 0; i < parsedNouveauxIntervenants.length; i++) {
+          const ni = parsedNouveauxIntervenants[i];
+          try {
+            const newIntervenant = await this.models.Intervenant.create({
+              nom: this.prepareMultiLangField(ni.nom, lang),
+              prenom: this.prepareMultiLangField(ni.prenom, lang),
+              organisation: ni.organisation || null,
+              titre_professionnel: ni.titre_professionnel || null,
+              email: ni.email || null,
+              actif: true
+            }, { transaction });
+
+            await this.models.OeuvreIntervenant.create({
+              id_oeuvre: oeuvre.id_oeuvre,
+              id_intervenant: newIntervenant.id_intervenant,
+              id_type_user: ni.id_type_user || 1,
+              personnage: ni.role || ni.personnage || '',
+              ordre_apparition: i,
+              role_principal: false
+            }, { transaction });
+          } catch (newIntErr) {
+            console.warn(`⚠️ Erreur création nouvel intervenant:`, newIntErr.message);
+          }
+        }
+      }
+
+      // 5d. Éditeurs
+      if (parsedEditeurs.length > 0 && this.models.OeuvreEditeur) {
+        console.log(`📚 Association de ${parsedEditeurs.length} éditeur(s)`);
+        for (const editeurId of parsedEditeurs) {
+          try {
+            await this.models.OeuvreEditeur.create({
+              id_oeuvre: oeuvre.id_oeuvre,
+              id_editeur: editeurId
+            }, { transaction });
+          } catch (edErr) {
+            console.warn(`⚠️ Erreur association éditeur ${editeurId}:`, edErr.message);
+          }
+        }
+      }
+
+      // 6. Traiter les fichiers médias uploadés (req.files via multer)
       const uploadedFiles = req.files || [];
       if (uploadedFiles.length > 0) {
         let mediaMetadata = [];
@@ -495,7 +651,7 @@ class OeuvreController {
         for (let i = 0; i < uploadedFiles.length; i++) {
           const file = uploadedFiles[i];
           const meta = mediaMetadata[i] || {};
-          const isPrincipal = meta.is_principal || (i === 0);
+          const isPrincipal = meta.is_Principale || meta.is_principal || (i === 0);
 
           // Déterminer le type de média
           let typeMedia = 'document';
@@ -509,7 +665,7 @@ class OeuvreController {
             url: `/uploads/oeuvres/${file.filename}`,
             titre: file.originalname,
             visible_public: true,
-            is_principal: isPrincipal,
+            is_Principale: isPrincipal,
             ordre: i,
             taille_fichier: file.size,
             mime_type: file.mimetype
@@ -521,27 +677,41 @@ class OeuvreController {
 
       await transaction.commit();
 
-      // Recharger avec les relations
+      // Recharger avec les relations (inclure Article/ArticleScientifique pour retourner l'ID spécifique)
       const oeuvreComplete = await this.models.Oeuvre.findByPk(oeuvre.id_oeuvre, {
         include: [
           { model: this.models.TypeOeuvre },
           { model: this.models.Langue },
           { model: this.models.Categorie, through: { attributes: [] } },
-          { model: this.models.TagMotCle, as: 'Tags', through: { attributes: [] } }
+          { model: this.models.TagMotCle, as: 'Tags', through: { attributes: [] } },
+          ...(this.models.Article ? [{ model: this.models.Article, required: false }] : []),
+          ...(this.models.ArticleScientifique ? [{ model: this.models.ArticleScientifique, required: false }] : [])
         ]
       });
 
       const createdSpecificPayload = (() => {
         const cs = req.createdSpecific;
-        if (!cs || !cs.record) return {};
-        switch (cs.typeName) {
-          case 'Article Scientifique':
-            return { article_scientifique: cs.record };
-          case 'Article':
-            return { article: cs.record };
-          default:
-            return { details_specifiques_record: cs.record };
+        console.log('🔍 createdSpecific:', cs ? { typeName: cs.typeName, recordId: cs.record?.id_article_scientifique || cs.record?.id_article } : 'null');
+        if (cs && cs.record) {
+          switch (cs.typeName) {
+            case 'Article Scientifique':
+              return { article_scientifique: cs.record };
+            case 'Article':
+              return { article: cs.record };
+            default:
+              return { details_specifiques_record: cs.record };
+          }
         }
+        // Fallback: extraire depuis l'oeuvre rechargée
+        if (oeuvreComplete?.ArticleScientifique) {
+          console.log('🔄 Fallback: ArticleScientifique depuis oeuvre rechargée, id:', oeuvreComplete.ArticleScientifique.id_article_scientifique);
+          return { article_scientifique: oeuvreComplete.ArticleScientifique };
+        }
+        if (oeuvreComplete?.Article) {
+          console.log('🔄 Fallback: Article depuis oeuvre rechargée, id:', oeuvreComplete.Article.id_article);
+          return { article: oeuvreComplete.Article };
+        }
+        return {};
       })();
 
       res.status(201).json({
@@ -584,7 +754,7 @@ class OeuvreController {
 
       // 🔒 Vérification ownership - seul le créateur ou admin peut modifier
       const isAdmin = req.user?.role === 'Admin' || req.user?.isAdmin;
-      const isOwner = oeuvre.id_user === req.user?.id_user;
+      const isOwner = oeuvre.saisi_par === req.user?.id_user;
       if (!isAdmin && !isOwner) {
         return res.status(403).json({
           success: false,
@@ -690,7 +860,7 @@ class OeuvreController {
 
       // 🔒 Vérification ownership - seul le créateur ou admin peut supprimer
       const isAdmin = req.user?.role === 'Admin' || req.user?.isAdmin;
-      const isOwner = oeuvre.id_user === req.user?.id_user;
+      const isOwner = oeuvre.saisi_par === req.user?.id_user;
       if (!isAdmin && !isOwner) {
         return res.status(403).json({
           success: false,
@@ -896,9 +1066,12 @@ class OeuvreController {
       const offset = (page - 1) * limit;
       const where = { saisi_par: userId };
 
-      // Filtre par statut si spécifié
+      // Filtre par statut si spécifié, sinon exclure les archivés
       if (statut) {
         where.statut = statut;
+      } else {
+        const { Op } = require('sequelize');
+        where.statut = { [Op.ne]: 'archive' };
       }
 
       // Tri
@@ -908,7 +1081,7 @@ class OeuvreController {
           order = [['date_creation', 'DESC']];
           break;
         case 'title':
-          order = [[this.sequelize.fn('JSON_EXTRACT', this.sequelize.col('titre'), `$.${lang}`), 'ASC']];
+          order = [[this.sequelize.literal(`JSON_EXTRACT(\`titre\`, '$.${lang}')`), 'ASC']];
           break;
         case 'year':
           order = [['annee_creation', 'DESC']];

@@ -53,7 +53,9 @@
       "Bash(npm start)",
       "Bash(where:*)",
       "Bash(python3:*)",
-      "Bash(npm update:*)"
+      "Bash(npm update:*)",
+      "Bash(cat:*)",
+      "Bash(npx react-doctor@latest)"
     ]
   }
 }

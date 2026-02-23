@@ -14,12 +14,9 @@ module.exports = (sequelize) => {
     id_article: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      references: {
-        model: 'article',
-        key: 'id_article'
-      },
-      onDelete: 'CASCADE',
-      onUpdate: 'CASCADE'
+      // Pas de references ici car polymorphique:
+      // id_article pointe vers article.id_article OU articlescientifique.id_article_scientifique
+      // selon la valeur de article_type
     },
     type_block: {
       type: DataTypes.ENUM(
