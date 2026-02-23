@@ -17,6 +17,7 @@ import {
   Upload, X, Star, ChevronDown, Grid3X3, Link2 } from
 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import DOMPurify from 'dompurify';
 
 // Import des helpers
 import { getAssetUrl } from '@/helpers/assetUrl';
@@ -58,7 +59,13 @@ import type {
 '@/types/api/oeuvre-creation.types';
 
 // Styles pour l'aperçu
-import { useTranslation } from "react-i18next";const PREVIEW_STYLES = `
+import { useTranslation } from "react-i18next";
+
+// Générateur d'ID unique pour les blocs (côté client uniquement)
+let _blockUidCounter = 0;
+const generateBlockUid = () => `block-uid-${Date.now()}-${++_blockUidCounter}`;
+
+const PREVIEW_STYLES = `
   .article-preview {
     font-family: Georgia, serif;
     line-height: 1.8;
@@ -201,6 +208,257 @@ import { useTranslation } from "react-i18next";const PREVIEW_STYLES = `
     left: 0;
     width: 100%;
     height: 100%;
+  }
+
+  /* ============================================
+     SCIENTIFIC ARTICLE — Academic Paper Style
+     ============================================ */
+
+  /* Journal banner bar */
+  .article-preview .journal-banner {
+    background: linear-gradient(135deg, #1e3a5f 0%, #1e40af 100%);
+    color: #fff;
+    padding: 0.625rem 1.25rem;
+    font-size: 0.75rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 0.375rem 0.375rem 0 0;
+    letter-spacing: 0.02em;
+  }
+
+  .article-preview .journal-banner .journal-name {
+    font-weight: 700;
+    font-style: italic;
+    font-size: 0.85rem;
+  }
+
+  .article-preview .journal-banner .journal-details {
+    opacity: 0.85;
+    font-size: 0.7rem;
+  }
+
+  /* Paper container */
+  .article-preview .paper {
+    border: 1px solid #d1d5db;
+    border-top: none;
+    background: #fff;
+    padding: 2.5rem 2.5rem 2rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    border-radius: 0 0 0.375rem 0.375rem;
+  }
+
+  /* Title */
+  .article-preview .scientific-header h1 {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    line-height: 1.35;
+    color: #111827;
+    margin: 0 0 0.75rem 0;
+    text-align: center;
+  }
+
+  /* Authors line */
+  .article-preview .scientific-authors {
+    text-align: center;
+    font-size: 0.9rem;
+    color: #374151;
+    margin-bottom: 0.25rem;
+    font-weight: 500;
+  }
+
+  /* Affiliation / year */
+  .article-preview .scientific-affiliation {
+    text-align: center;
+    font-size: 0.78rem;
+    color: #6b7280;
+    margin-bottom: 1rem;
+    font-style: italic;
+  }
+
+  /* DOI + badges row */
+  .article-preview .scientific-badges {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .article-preview .sci-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.7rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 0.25rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+
+  .article-preview .sci-badge.doi {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+  }
+
+  .article-preview .sci-badge.doi a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .article-preview .sci-badge.doi a:hover {
+    text-decoration: underline;
+  }
+
+  .article-preview .sci-badge.peer {
+    background: #f0fdf4;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+  }
+
+  .article-preview .sci-badge.issn {
+    background: #fefce8;
+    color: #a16207;
+    border: 1px solid #fde68a;
+  }
+
+  .article-preview .sci-badge.if-badge {
+    background: #fdf2f8;
+    color: #be185d;
+    border: 1px solid #fbcfe8;
+  }
+
+  /* Abstract box */
+  .article-preview .scientific-abstract {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.75rem;
+    border-radius: 0.25rem;
+  }
+
+  .article-preview .scientific-abstract h3 {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #1e3a5f;
+    margin: 0 0 0.5rem 0;
+    padding-bottom: 0.35rem;
+    border-bottom: 1px solid #d1d5db;
+  }
+
+  .article-preview .scientific-abstract p {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 0.9rem;
+    color: #374151;
+    margin: 0;
+    line-height: 1.65;
+    text-align: justify;
+  }
+
+  /* Body — two-column on wide screens */
+  .article-preview .scientific-body {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: #1f2937;
+  }
+
+  @media (min-width: 640px) {
+    .article-preview .scientific-body {
+      column-count: 2;
+      column-gap: 1.75rem;
+      column-rule: 1px solid #e5e7eb;
+    }
+  }
+
+  .article-preview .scientific-body p {
+    text-align: justify;
+    text-indent: 1.25em;
+    margin-bottom: 0.6rem;
+  }
+
+  .article-preview .scientific-body p:first-child {
+    text-indent: 0;
+  }
+
+  .article-preview .scientific-body h2,
+  .article-preview .scientific-body h3 {
+    font-family: 'Times New Roman', Times, serif;
+    column-span: all;
+    break-after: avoid;
+    margin-top: 1.25rem;
+    margin-bottom: 0.5rem;
+    color: #111827;
+  }
+
+  .article-preview .scientific-body h2 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 0.25rem;
+  }
+
+  .article-preview .scientific-body h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    font-style: italic;
+  }
+
+  /* Figures inside scientific body */
+  .article-preview .scientific-body figure {
+    break-inside: avoid;
+    column-span: all;
+    margin: 1rem 0;
+    text-align: center;
+  }
+
+  .article-preview .scientific-body figure img {
+    max-width: 85%;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.25rem;
+  }
+
+  .article-preview .scientific-body .image-caption {
+    font-size: 0.8rem;
+    color: #4b5563;
+    margin-top: 0.35rem;
+    font-style: italic;
+  }
+
+  /* Tables inside scientific body */
+  .article-preview .scientific-body table {
+    column-span: all;
+    break-inside: avoid;
+    font-size: 0.85rem;
+    margin: 1rem 0;
+  }
+
+  .article-preview .scientific-body th {
+    background: #f3f4f6;
+    font-weight: 700;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  /* Blockquote in scientific body */
+  .article-preview .scientific-body blockquote {
+    column-span: all;
+    break-inside: avoid;
+    border-left: 3px solid #1e40af;
+    background: #f8fafc;
+    padding: 0.75rem 1rem;
+    margin: 1rem 0;
+    font-size: 0.9rem;
   }
 `;
 
@@ -656,6 +914,38 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({
   const [contributeurs, setContributeurs] = useState<ContributeurOeuvre[]>([]);
   const [editeurs, setEditeurs] = useState<EditeurOeuvre[]>([]);
 
+  // Langue d'édition courante pour titre/description multilingue
+  const [editLang, setEditLang] = useState('fr');
+  const [translations, setTranslations] = useState<Record<string, { titre: string; description: string }>>(() => {
+    const init: Record<string, { titre: string; description: string }> = {
+      fr: { titre: '', description: '' },
+      ar: { titre: '', description: '' },
+      en: { titre: '', description: '' },
+    };
+    // Si initialData contient un titre/description string, le mettre en fr
+    if (initialData?.titre) {
+      if (typeof initialData.titre === 'object') {
+        Object.entries(initialData.titre).forEach(([lang, val]) => {
+          if (!init[lang]) init[lang] = { titre: '', description: '' };
+          init[lang].titre = String(val);
+        });
+      } else {
+        init.fr.titre = String(initialData.titre);
+      }
+    }
+    if (initialData?.description) {
+      if (typeof initialData.description === 'object') {
+        Object.entries(initialData.description as any).forEach(([lang, val]) => {
+          if (!init[lang]) init[lang] = { titre: '', description: '' };
+          init[lang].description = String(val);
+        });
+      } else {
+        init.fr.description = String(initialData.description);
+      }
+    }
+    return init;
+  });
+
   // Tags management
   const [newTag, setNewTag] = useState('');
 
@@ -673,6 +963,120 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({
   useEffect(() => {
     loadMetadata();
   }, []);
+
+  // Pré-remplir avec une structure scientifique guidée pour un nouvel article
+  useEffect(() => {
+    if (!articleId && formData.type === 'article_scientifique' && blocks.length === 0) {
+      const scientificTemplate: ArticleBlock[] = [
+        {
+          type_block: 'heading',
+          contenu: '1. Introduction',
+          metadata: { level: 2 },
+          ordre: 0,
+          visible: true,
+        },
+        {
+          type_block: 'text',
+          contenu: 'Présentez le contexte de votre recherche, la problématique étudiée et les objectifs de l\'étude. Terminez par l\'annonce du plan de l\'article.',
+          metadata: { alignment: 'justify' },
+          ordre: 1,
+          visible: true,
+        },
+        {
+          type_block: 'heading',
+          contenu: '2. Revue de littérature',
+          metadata: { level: 2 },
+          ordre: 2,
+          visible: true,
+        },
+        {
+          type_block: 'text',
+          contenu: 'Synthétisez les travaux antérieurs pertinents. Identifiez les lacunes dans la littérature existante que votre recherche vise à combler.',
+          metadata: { alignment: 'justify' },
+          ordre: 3,
+          visible: true,
+        },
+        {
+          type_block: 'heading',
+          contenu: '3. Méthodologie',
+          metadata: { level: 2 },
+          ordre: 4,
+          visible: true,
+        },
+        {
+          type_block: 'text',
+          contenu: 'Décrivez votre approche méthodologique : type de recherche, échantillon, instruments de collecte de données, procédure d\'analyse.',
+          metadata: { alignment: 'justify' },
+          ordre: 5,
+          visible: true,
+        },
+        {
+          type_block: 'heading',
+          contenu: '4. Résultats',
+          metadata: { level: 2 },
+          ordre: 6,
+          visible: true,
+        },
+        {
+          type_block: 'text',
+          contenu: 'Présentez vos résultats de manière objective. Utilisez des tableaux, figures et graphiques pour illustrer vos données.',
+          metadata: { alignment: 'justify' },
+          ordre: 7,
+          visible: true,
+        },
+        {
+          type_block: 'image',
+          contenu: '',
+          metadata: { caption: 'Figure 1 : Insérez ici un graphique ou une illustration de vos résultats', layout: 'full-width' },
+          ordre: 8,
+          visible: true,
+        },
+        {
+          type_block: 'heading',
+          contenu: '5. Discussion',
+          metadata: { level: 2 },
+          ordre: 9,
+          visible: true,
+        },
+        {
+          type_block: 'text',
+          contenu: 'Interprétez vos résultats en les comparant à la littérature existante. Discutez les implications, les limites de l\'étude et les perspectives futures.',
+          metadata: { alignment: 'justify' },
+          ordre: 10,
+          visible: true,
+        },
+        {
+          type_block: 'heading',
+          contenu: '6. Conclusion',
+          metadata: { level: 2 },
+          ordre: 11,
+          visible: true,
+        },
+        {
+          type_block: 'text',
+          contenu: 'Résumez les principaux apports de votre recherche et proposez des pistes pour de futurs travaux.',
+          metadata: { alignment: 'justify' },
+          ordre: 12,
+          visible: true,
+        },
+        {
+          type_block: 'heading',
+          contenu: 'Références',
+          metadata: { level: 2 },
+          ordre: 13,
+          visible: true,
+        },
+        {
+          type_block: 'text',
+          contenu: '[1] Nom, P. (Année). Titre de l\'article. Nom du journal, Volume(Numéro), pages. DOI\n[2] Nom, P. (Année). Titre du livre. Éditeur.',
+          metadata: { alignment: 'left' },
+          ordre: 14,
+          visible: true,
+        },
+      ];
+      setBlocks(scientificTemplate);
+    }
+  }, [formData.type]);
 
   // Charger l'article existant si articleId
   useEffect(() => {
@@ -707,9 +1111,28 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({
         const articleType = oeuvre.ArticleScientifique ? 'article_scientifique' : 'article';
         const articleData = oeuvre.Article || oeuvre.ArticleScientifique;
 
+        // Extraire les traductions si titre/description sont des objets multilingues
+        const titreObj: Record<string, string> = typeof oeuvre.titre === 'object' && oeuvre.titre !== null
+          ? oeuvre.titre : { fr: String(oeuvre.titre || '') };
+        const descObj: Record<string, string> = typeof oeuvre.description === 'object' && oeuvre.description !== null
+          ? oeuvre.description : { fr: String(oeuvre.description || '') };
+
+        setTranslations(prev => {
+          const updated = { ...prev };
+          Object.entries(titreObj).forEach(([lang, val]) => {
+            if (!updated[lang]) updated[lang] = { titre: '', description: '' };
+            updated[lang].titre = val as string;
+          });
+          Object.entries(descObj).forEach(([lang, val]) => {
+            if (!updated[lang]) updated[lang] = { titre: '', description: '' };
+            updated[lang].description = val as string;
+          });
+          return updated;
+        });
+
         setFormData({
-          titre: oeuvre.titre,
-          description: oeuvre.description || '',
+          titre: titreObj.fr || Object.values(titreObj)[0] || '',
+          description: descObj.fr || Object.values(descObj)[0] || '',
           id_langue: oeuvre.id_langue,
           annee_creation: oeuvre.annee_creation,
           categories: oeuvre.Categories?.map((c: any) => c.id_categorie) || [],
@@ -726,7 +1149,7 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({
       );
 
       if (blocksResponse.success && blocksResponse.data) {
-        setBlocks(blocksResponse.data);
+        setBlocks(blocksResponse.data.map((b: any) => ({ ...b, _uid: generateBlockUid() })));
       }
     } catch (error) {
       console.error('Erreur chargement article:', error);
@@ -741,6 +1164,7 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({
     const newBlock = createDefaultBlock(type as BlockType);
     newBlock.ordre = blocks.length;
     newBlock.visible = true;
+    (newBlock as any)._uid = generateBlockUid();
     setBlocks([...blocks, newBlock]);
   };
 
@@ -779,8 +1203,9 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({
     const newBlock = {
       ...blockToDuplicate,
       id_block: undefined,
-      ordre: blocks.length
-    };
+      ordre: blocks.length,
+      _uid: generateBlockUid()
+    } as any;
     setBlocks([...blocks, newBlock]);
   };
 
@@ -820,8 +1245,9 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({
             <iframe
             src={block.contenu}
             frameBorder="0"
-            allowFullScreen />
-          
+            allowFullScreen
+            title="Embedded content" />
+
           </div> :
         null;
 
@@ -888,11 +1314,11 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({
             // Configuration stricte pour les embeds
             const allowedTags = ['iframe', 'div', 'span'];
             const allowedAttrs = ['src', 'width', 'height', 'frameborder', 'allow', 'allowfullscreen', 'class', 'title'];
-            
+
             // Créer un élément temporaire pour parser le HTML
             const temp = document.createElement('div');
             temp.innerHTML = html;
-            
+
             // Vérifier que c'est un iframe de source autorisée
             const iframe = temp.querySelector('iframe');
             if (iframe) {
@@ -901,10 +1327,14 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({
               const isAllowed = allowedDomains.some(domain => src.includes(domain));
               if (!isAllowed) return '';
             }
-            
-            return html;
+
+            // Sanitize with DOMPurify
+            return DOMPurify.sanitize(html, {
+              ALLOWED_TAGS: allowedTags,
+              ALLOWED_ATTR: allowedAttrs
+            });
           };
-          
+
           const sanitizedContent = sanitizeEmbed(block.contenu);
           return sanitizedContent ? (
             <div key={index} className="embed-container"
@@ -923,10 +1353,14 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({
     const normalizedTag = tag.trim().toLowerCase();
 
     if (normalizedTag && !formData.tags.includes(normalizedTag)) {
-      // Vérifier si le tag existe déjà
-      const existingTag = metadata.tags?.find((t: any) =>
-      t.nom.toLowerCase() === normalizedTag
-      );
+      // Vérifier si le tag existe déjà (nom est un objet multilingue {fr: '...', ar: '...'})
+      const existingTag = metadata.tags?.find((t: any) => {
+        if (typeof t.nom === 'string') return t.nom.toLowerCase() === normalizedTag;
+        if (typeof t.nom === 'object' && t.nom) {
+          return Object.values(t.nom).some((v: any) => typeof v === 'string' && v.toLowerCase() === normalizedTag);
+        }
+        return false;
+      });
 
       // Si le tag n'existe pas, le créer
       if (!existingTag && metadata.tags) {
@@ -973,9 +1407,11 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({
     setError(null);
 
     try {
-      // Validation
-      if (!formData.titre || !formData.description) {
-        throw new Error('Le titre et la description sont obligatoires');
+      // Validation — au moins le titre en français (ou une langue) est requis
+      const hasAnyTitre = Object.values(translations).some(t => t.titre?.trim());
+      const hasAnyDescription = Object.values(translations).some(t => t.description?.trim());
+      if (!hasAnyTitre || !hasAnyDescription) {
+        throw new Error('Le titre et la description sont obligatoires (au moins dans une langue)');
       }
 
       const hasCategories = formData.type === 'article' ? 4 : 5;
@@ -985,12 +1421,34 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({
         throw new Error('Veuillez sélectionner au moins une catégorie');
       }
 
+      // Construire les objets multilingues pour titre et description
+      const buildMultiLang = (field: 'titre' | 'description') => {
+        const obj: Record<string, string> = {};
+        Object.entries(translations).forEach(([lang, vals]) => {
+          if (vals[field]?.trim()) {
+            obj[lang] = vals[field].trim();
+          }
+        });
+        return obj;
+      };
+
+      const titreMultiLang = buildMultiLang('titre');
+      const descriptionMultiLang = buildMultiLang('description');
+
       // Préparer les données pour la sauvegarde
+      // formData.titre/description restent des strings pour la preview,
+      // mais on envoie les objets multilingues dans le formData transmis au parent
+      const saveFormData = {
+        ...formData,
+        titre: titreMultiLang as any,
+        description: descriptionMultiLang as any,
+      };
+
       const response: ArticleSaveResponse = {
         article: {
           id_oeuvre: articleId ? Number(articleId) : 0,
-          titre: formData.titre,
-          formData,
+          titre: titreMultiLang.fr || Object.values(titreMultiLang)[0] || '',
+          formData: saveFormData,
           blocks,
           contributeurs: {
             existants: intervenantsExistants,
@@ -1033,7 +1491,7 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({
   return (
     <div className="min-h-screen bg-background">
       <style dangerouslySetInnerHTML={{ __html: PREVIEW_STYLES }} />
-      
+
       <div className="container py-8">
         <div className="max-w-5xl mx-auto">
           {/* En-tête */}
@@ -1099,25 +1557,69 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({
                   <CardTitle>{t("article_articleeditor.informations_principales")}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  {/* Sélecteur de langue d'édition */}
+                  <div className="flex items-center gap-2 pb-2 border-b">
+                    <Label className="text-sm text-muted-foreground">{t("article_articleeditor.langue", "Langue")} :</Label>
+                    <div className="flex gap-1">
+                      {[
+                        { code: 'fr', label: 'Français' },
+                        { code: 'ar', label: 'العربية' },
+                        { code: 'en', label: 'English' },
+                        { code: 'tz-ltn', label: 'Tamazight (Latin)' },
+                        { code: 'tz-tfng', label: 'ⵜⴰⵎⴰⵣⵉⵖⵜ' },
+                      ].map((lang) => (
+                        <Button
+                          key={lang.code}
+                          type="button"
+                          size="sm"
+                          variant={editLang === lang.code ? 'default' : 'outline'}
+                          onClick={() => setEditLang(lang.code)}
+                          className="text-xs px-2 py-1 h-7">
+                          {lang.label}
+                          {translations[lang.code]?.titre ? ' ✓' : ''}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+
                   <div className="space-y-2">
-                    <Label htmlFor="titre">{t("article_articleeditor.titre_3")}</Label>
+                    <Label htmlFor="titre">{t("article_articleeditor.titre_3")} ({editLang.toUpperCase()})</Label>
                     <Input
                       id="titre"
-                      value={formData.titre}
-                      onChange={(e) => setFormData({ ...formData, titre: e.target.value })}
+                      dir={editLang === 'ar' ? 'rtl' : 'ltr'}
+                      value={translations[editLang]?.titre || ''}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setTranslations(prev => ({
+                          ...prev,
+                          [editLang]: { ...prev[editLang], titre: val }
+                        }));
+                        // Sync formData.titre with the primary language (fr) or current
+                        if (editLang === 'fr' || !translations.fr?.titre) {
+                          setFormData(prev => ({ ...prev, titre: val }));
+                        }
+                      }}
                       placeholder={t("article_articleeditor.placeholder_titre_larticle")} />
-                    
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="description">{t("article_articleeditor.description_chapeau")}</Label>
+                    <Label htmlFor="description">{t("article_articleeditor.description_chapeau")} ({editLang.toUpperCase()})</Label>
                     <Textarea
                       id="description"
-                      value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      dir={editLang === 'ar' ? 'rtl' : 'ltr'}
+                      value={translations[editLang]?.description || ''}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setTranslations(prev => ({
+                          ...prev,
+                          [editLang]: { ...prev[editLang], description: val }
+                        }));
+                        if (editLang === 'fr' || !translations.fr?.description) {
+                          setFormData(prev => ({ ...prev, description: val }));
+                        }
+                      }}
                       placeholder={t("article_articleeditor.placeholder_rsum_introduction_larticle")}
                       className="min-h-[100px]" />
-                    
                   </div>
                 </CardContent>
               </Card>
@@ -1138,7 +1640,7 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({
                   <div className="space-y-3">
                       {blocks.map((block, index) =>
                     <ArticleBlockEditor
-                      key={`block-${block.id_block || index}`}
+                      key={(block as any)._uid || `block-${block.id_block || index}-${blocks.length}`}
                       block={block}
                       index={index}
                       onUpdate={updateBlock}
@@ -1497,17 +1999,92 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({
               <Card>
                 <CardContent className="p-8">
                   <article className="article-preview max-w-3xl mx-auto">
-                    <h1>{formData.titre || 'Sans titre'}</h1>
-                    {formData.sous_titre &&
-                    <p className="lead text-xl text-gray-600 mb-4">
-                        {formData.sous_titre}
-                      </p>
-                    }
-                    <p className="lead text-lg text-gray-600 mb-6">
-                      {formData.description}
-                    </p>
-                    
-                    {blocks.map((block, index) => renderPreviewBlock(block, index))}
+                    {formData.type === 'article_scientifique' ? (
+                      <>
+                        {/* Journal banner */}
+                        {formData.journal && (
+                          <div className="journal-banner">
+                            <span className="journal-name">{formData.journal}</span>
+                            <span className="journal-details">
+                              {formData.volume ? `Vol. ${formData.volume}` : ''}
+                              {formData.numero ? `, N° ${formData.numero}` : ''}
+                              {formData.pages ? ` — pp. ${formData.pages}` : ''}
+                              {formData.annee_creation ? ` (${formData.annee_creation})` : ''}
+                            </span>
+                          </div>
+                        )}
+
+                        <div className={formData.journal ? 'paper' : ''}>
+                          {/* Title */}
+                          <div className="scientific-header">
+                            <h1>{formData.titre || 'Sans titre'}</h1>
+                          </div>
+
+                          {/* Authors */}
+                          {(contributeurs.length > 0 || intervenantsExistants.length > 0 || nouveauxIntervenants.length > 0) && (
+                            <div className="scientific-authors">
+                              {[
+                                ...nouveauxIntervenants.map((ni) => `${ni.prenom || ''} ${ni.nom || ''}`.trim()),
+                                ...contributeurs.map((_c, i) => `Contributeur ${i + 1}`),
+                                ...intervenantsExistants.map((_ie, i) => `Intervenant ${i + 1}`)
+                              ].filter(Boolean).join(', ')}
+                            </div>
+                          )}
+
+                          {formData.annee_creation && (
+                            <div className="scientific-affiliation">
+                              {formData.annee_creation}
+                            </div>
+                          )}
+
+                          {/* Badges: DOI, Peer-reviewed, ISSN, IF */}
+                          {(formData.doi || formData.peer_reviewed || formData.issn || formData.impact_factor) && (
+                            <div className="scientific-badges">
+                              {formData.doi && (
+                                <span className="sci-badge doi">
+                                  <a href={`https://doi.org/${formData.doi}`} target="_blank" rel="noopener noreferrer">DOI: {formData.doi}</a>
+                                </span>
+                              )}
+                              {formData.peer_reviewed && (
+                                <span className="sci-badge peer">✓ Peer-reviewed</span>
+                              )}
+                              {formData.issn && (
+                                <span className="sci-badge issn">ISSN: {formData.issn}</span>
+                              )}
+                              {formData.impact_factor && (
+                                <span className="sci-badge if-badge">IF: {formData.impact_factor}</span>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Abstract */}
+                          {formData.description && (
+                            <div className="scientific-abstract">
+                              <h3>Abstract / Résumé</h3>
+                              <p>{formData.description}</p>
+                            </div>
+                          )}
+
+                          {/* Two-column body */}
+                          <div className="scientific-body">
+                            {blocks.map((block, index) => renderPreviewBlock(block, index))}
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <h1>{formData.titre || 'Sans titre'}</h1>
+                        {formData.sous_titre && (
+                          <p className="lead text-xl text-gray-600 mb-4">
+                            {formData.sous_titre}
+                          </p>
+                        )}
+                        <p className="lead text-lg text-gray-600 mb-6">
+                          {formData.description}
+                        </p>
+                        {blocks.map((block, index) => renderPreviewBlock(block, index))}
+                      </>
+                    )}
                   </article>
                 </CardContent>
               </Card>

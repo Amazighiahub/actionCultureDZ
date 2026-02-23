@@ -124,7 +124,7 @@ const HeroSection: React.FC = () => {
       <div className="absolute inset-0">
         {heroImages.map((image, index) => (
           <div
-            key={index}
+            key={image.url}
             className={`absolute inset-0 transition-opacity duration-1000 ${
               index === currentSlide ? 'opacity-100' : 'opacity-0'
             }`}
@@ -241,9 +241,9 @@ const HeroSection: React.FC = () => {
               max-w-xl sm:max-w-none
               mx-auto sm:mx-0
             ">
-              {stats.map((stat, index) => (
-                <div 
-                  key={index} 
+              {stats.map((stat) => (
+                <div
+                  key={stat.label}
                   className="text-center group cursor-pointer"
                 >
                   <stat.icon className="
@@ -271,9 +271,9 @@ const HeroSection: React.FC = () => {
 
       {/* ===== INDICATEURS DU CAROUSEL ===== */}
       <div className="absolute bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 z-20 flex gap-2">
-        {heroImages.map((_, index) => (
+        {heroImages.map((img, index) => (
           <button
-            key={index}
+            key={img.url}
             onClick={() => setCurrentSlide(index)}
             className={`
               h-2 rounded-full transition-all duration-300

@@ -672,6 +672,9 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
                             setProfilDialogOpen(false);
                             setOeuvreDialogOpen(true);
                           }}
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedOeuvre(oeuvre); setOeuvreAuteur({ nom: profilData.profil.nom, prenom: profilData.profil.prenom }); setProfilDialogOpen(false); setOeuvreDialogOpen(true); } }}
                         >
                           {oeuvre.image_url ? (
                             <img src={oeuvre.image_url} alt={td(oeuvre.titre)} className="w-16 h-16 object-cover rounded" />
@@ -716,6 +719,9 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
                             setProfilDialogOpen(false);
                             setOeuvreDialogOpen(true);
                           }}
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedOeuvre(oeuvre); setOeuvreAuteur({ nom: profilData.profil.nom, prenom: profilData.profil.prenom }); setProfilDialogOpen(false); setOeuvreDialogOpen(true); } }}
                         >
                           {oeuvre.image_url ? (
                             <img src={oeuvre.image_url} alt={td(oeuvre.titre)} className="w-28 h-28 object-cover rounded shadow-sm" />

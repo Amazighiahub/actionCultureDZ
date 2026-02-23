@@ -60,7 +60,7 @@ class ProfessionnelController {
         attributes: { exclude: ['mot_de_passe', 'reset_token'] },
         limit: parseInt(limit),
         offset,
-        order: [[this.sequelize.fn('JSON_EXTRACT', this.sequelize.col('User.nom'), `$.${lang}`), 'ASC']]
+        order: [[this.sequelize.literal(`JSON_EXTRACT(\`User\`.\`nom\`, '$.${lang}')`), 'ASC']]
       });
 
       // ⚡ Traduire
@@ -465,7 +465,12 @@ class ProfessionnelController {
       const userId = req.user.id_user;
 
       const where = { saisi_par: userId };
-      if (statut) where.statut = statut;
+      if (statut) {
+        where.statut = statut;
+      } else {
+        // Par défaut, exclure les oeuvres archivées (soft delete)
+        where.statut = { [Op.ne]: 'archive' };
+      }
       if (type) where.id_type_oeuvre = type;
 
       const oeuvres = await this.models.Oeuvre.findAndCountAll({

@@ -316,6 +316,9 @@ const PatrimoineDetail = () => {
                       key={idx}
                       className="aspect-video cursor-pointer overflow-hidden rounded-lg"
                       onClick={() => setSelectedImage(media.url)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedImage(media.url); } }}
                     >
                       {media.type === 'video' ? (
                         <div className="w-full h-full bg-muted flex items-center justify-center">

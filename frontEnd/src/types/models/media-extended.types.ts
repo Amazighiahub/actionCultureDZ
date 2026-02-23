@@ -7,9 +7,6 @@ import { Media } from './media.types';
  * Utilisé dans l'application pour les médias d'œuvres
  */
 export interface MediaExtended extends Media {
-  // Propriété indiquant si c'est l'image principale
-  is_principal?: boolean;
-  
   // Propriétés additionnelles qui peuvent être retournées par l'API
   date_creation?: string;
   date_modification?: string;
@@ -34,7 +31,7 @@ export interface EvenementMedia extends MediaExtended {
  */
 export function getMainImage(medias: MediaExtended[]): string | undefined {
   // Priorité 1: Image marquée comme principale
-  const principal = medias.find(m => m.is_principal);
+  const principal = medias.find(m => m.is_Principale);
   if (principal) return principal.url;
   
   // Priorité 2: Image avec ordre = 1
@@ -51,8 +48,8 @@ export function getMainImage(medias: MediaExtended[]): string | undefined {
 export function sortMedias(medias: MediaExtended[]): MediaExtended[] {
   return medias.sort((a, b) => {
     // Principal d'abord
-    if (a.is_principal && !b.is_principal) return -1;
-    if (!a.is_principal && b.is_principal) return 1;
+    if (a.is_Principale && !b.is_Principale) return -1;
+    if (!a.is_Principale && b.is_Principale) return 1;
     
     // Puis par ordre
     return (a.ordre || 999) - (b.ordre || 999);

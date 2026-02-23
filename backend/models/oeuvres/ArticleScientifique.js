@@ -97,7 +97,8 @@ module.exports = (sequelize) => {
     ArticleScientifique.hasMany(models.ArticleBlock, {
       foreignKey: 'id_article',
       as: 'blocks',
-      onDelete: 'CASCADE'
+      constraints: false,
+      scope: { article_type: 'article_scientifique' }
     });
     ArticleScientifique.belongsTo(models.Genre, { foreignKey: 'id_genre' });
   };

@@ -48,7 +48,7 @@ class ServicesController {
         ],
         limit: parseInt(limit),
         offset,
-        order: [[this.sequelize.fn('JSON_EXTRACT', this.sequelize.col('Service.nom'), `$.${lang}`), 'ASC']]
+        order: [[this.sequelize.literal(`JSON_EXTRACT(\`Service\`.\`nom\`, '$.${lang}')`), 'ASC']]
       });
 
       // ⚡ Traduire
@@ -114,7 +114,7 @@ class ServicesController {
 
       const services = await this.models.Service.findAll({
         where: { id_lieu: lieuId },
-        order: [[this.sequelize.fn('JSON_EXTRACT', this.sequelize.col('nom'), `$.${lang}`), 'ASC']]
+        order: [[this.sequelize.literal(`JSON_EXTRACT(\`nom\`, '$.${lang}')`), 'ASC']]
       });
 
       // ⚡ Traduire

@@ -118,7 +118,7 @@ class LieuController {
       let order = [['id_lieu', 'ASC']];
       try {
         // Tenter l'ordre par nom si JSON fonctionne
-        order = [[this.sequelize.fn('JSON_EXTRACT', this.sequelize.col('Lieu.nom'), `$.${lang}`), 'ASC']];
+        order = [[this.sequelize.literal(`JSON_EXTRACT(\`Lieu\`.\`nom\`, '$.${lang}')`), 'ASC']];
       } catch {
         // Fallback sur l'ID
       }
@@ -210,7 +210,7 @@ class LieuController {
           { model: this.models.Service },
           { model: this.models.LieuMedia }
         ],
-        order: [[this.sequelize.fn('JSON_EXTRACT', this.sequelize.col('Lieu.nom'), `$.${lang}`), 'ASC']],
+        order: [[this.sequelize.literal(`JSON_EXTRACT(\`Lieu\`.\`nom\`, '$.${lang}')`), 'ASC']],
         distinct: true
       });
 
@@ -624,7 +624,7 @@ class LieuController {
         lieux = await this.models.Lieu.findAndCountAll({
           where,
           include,
-          order: [[this.sequelize.fn('JSON_EXTRACT', this.sequelize.col('Lieu.nom'), `$.${lang}`), 'ASC']],
+          order: [[this.sequelize.literal(`JSON_EXTRACT(\`Lieu\`.\`nom\`, '$.${lang}')`), 'ASC']],
           limit: parseInt(limit),
           offset: parseInt(offset),
           distinct: true

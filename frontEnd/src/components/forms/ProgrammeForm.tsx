@@ -180,6 +180,10 @@ const rolesIntervenant = [
   { value: 'invite', label: 'Invité' }
 ];
 
+// Constants to avoid creating new array references on every render
+const EMPTY_LIEUX_ARRAY: any[] = [];
+const EMPTY_USERS_ARRAY: any[] = [];
+
 const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
   eventId,
   initialData,
@@ -189,8 +193,8 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
   loading = false,
   error = null,
   success = false,
-  lieux = [],
-  users = [],
+  lieux = EMPTY_LIEUX_ARRAY,
+  users = EMPTY_USERS_ARRAY,
   eventDates
 }) => {
   // Générer les dates disponibles basées sur les dates de l'événement
@@ -232,20 +236,26 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
     }
   }, [initialData]);
 
-  // Calculer la durée automatiquement
-  useEffect(() => {
-    if (formData.heure_debut && formData.heure_fin) {
-      const debut = new Date(`2000-01-01T${formData.heure_debut}`);
-      const fin = new Date(`2000-01-01T${formData.heure_fin}`);
-      const duree = Math.round((fin.getTime() - debut.getTime()) / (1000 * 60));
-      if (duree > 0) {
-        setFormData(prev => ({ ...prev, duree_estimee: duree }));
+  const handleChange = (field: keyof ProgrammeFormData, value: any) => {
+    const newFormData = { ...formData, [field]: value };
+
+    // Calculer la durée automatiquement si heure_debut ou heure_fin change
+    if (field === 'heure_debut' || field === 'heure_fin') {
+      const heureDebut = field === 'heure_debut' ? value : formData.heure_debut;
+      const heureFin = field === 'heure_fin' ? value : formData.heure_fin;
+
+      if (heureDebut && heureFin) {
+        const debut = new Date(`2000-01-01T${heureDebut}`);
+        const fin = new Date(`2000-01-01T${heureFin}`);
+        const duree = Math.round((fin.getTime() - debut.getTime()) / (1000 * 60));
+        if (duree > 0) {
+          newFormData.duree_estimee = duree;
+        }
       }
     }
-  }, [formData.heure_debut, formData.heure_fin]);
 
-  const handleChange = (field: keyof ProgrammeFormData, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(newFormData);
+
     // Effacer l'erreur si elle existe
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));

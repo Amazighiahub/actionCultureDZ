@@ -229,6 +229,10 @@ class OeuvreService {
         formData.append('utilisateurs_inscrits', JSON.stringify(data.utilisateurs_inscrits));
       }
 
+      if ('intervenants_existants' in data && (data as any).intervenants_existants?.length) {
+        formData.append('intervenants_existants', JSON.stringify((data as any).intervenants_existants));
+      }
+
       if ('intervenants_non_inscrits' in data && data.intervenants_non_inscrits?.length) {
         formData.append('intervenants_non_inscrits', JSON.stringify(data.intervenants_non_inscrits));
       }

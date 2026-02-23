@@ -1,7 +1,7 @@
 // hooks/useDashboardPro.ts - Version simplifiée sans recommandations
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useCallback, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { professionnelService } from '@/services/professionnel.service';
 import { oeuvreService } from '@/services/oeuvre.service';
 import { evenementService } from '@/services/evenement.service';
@@ -17,6 +17,7 @@ interface UseDashboardProOptions {
 export function useDashboardPro(options: UseDashboardProOptions = {}) {
   const { autoFetch = true, refreshInterval } = options;
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Dashboard principal
   const {
@@ -364,20 +365,20 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
         description: `${type} supprimé avec succès`,
       });
       
-      // Rafraîchir les données correspondantes
+      // Rafraîchir les données correspondantes (invalidate + refetch)
       switch(type) {
         case 'oeuvre':
-          await refetchOeuvres();
+          await queryClient.invalidateQueries({ queryKey: ['dashboard-pro-oeuvres'] });
           break;
         case 'evenement':
-          await refetchEvenements();
+          await queryClient.invalidateQueries({ queryKey: ['dashboard-pro-evenements'] });
           break;
         case 'artisanat':
         case 'service':
-          await refetchArtisanats();
+          await queryClient.invalidateQueries({ queryKey: ['dashboard-pro-artisanats'] });
           break;
         case 'patrimoine':
-          await refetchPatrimoines();
+          await queryClient.invalidateQueries({ queryKey: ['dashboard-pro-patrimoines'] });
           break;
       }
       

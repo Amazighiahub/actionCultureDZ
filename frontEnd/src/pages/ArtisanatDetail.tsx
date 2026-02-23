@@ -212,13 +212,13 @@ const ArtisanatDetail: React.FC = () => {
 
   const nextImage = () => {
     if (medias && currentImageIndex < medias.length - 1) {
-      setCurrentImageIndex(currentImageIndex + 1);
+      setCurrentImageIndex(prev => prev + 1);
     }
   };
 
   const prevImage = () => {
     if (currentImageIndex > 0) {
-      setCurrentImageIndex(currentImageIndex - 1);
+      setCurrentImageIndex(prev => prev - 1);
     }
   };
 

@@ -159,8 +159,8 @@ const ReadingProgress: React.FC = () => {
       setProgress(scrollProgress);
     };
 
-    window.addEventListener('scroll', updateProgress);
-    return () => window.removeEventListener('scroll', updateProgress);
+    window.addEventListener('scroll', updateProgress, { passive: true });
+    return () => window.removeEventListener('scroll', updateProgress, { passive: true });
   }, []);
 
   return (
@@ -212,8 +212,8 @@ const ArticleViewPage: React.FC = () => {
     const handleScroll = () => {
       setScrollToTop(window.scrollY > 300);
     };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll, { passive: true });
   }, []);
 
   // Charger l'article et ses blocs
@@ -251,11 +251,21 @@ const ArticleViewPage: React.FC = () => {
 
       setOeuvre(oeuvreData);
 
-      // Charger les blocs
-      const blocksResponse = await articleBlockService.getBlocksByArticle(
-        articleId,
-        oeuvreData.id_type_oeuvre === 5 ? 'article_scientifique' : 'article'
-      );
+      // Extraire l'ID spécifique de l'article (pas l'oeuvreId)
+      const isScientificType = oeuvreData.id_type_oeuvre === 5;
+      const specificArticleId = isScientificType
+        ? oeuvreData.ArticleScientifique?.id_article_scientifique
+        : oeuvreData.Article?.id_article;
+
+      console.log('🔍 Article record ID:', specificArticleId, 'type:', isScientificType ? 'article_scientifique' : 'article');
+
+      // Charger les blocs avec l'ID spécifique de l'article
+      const blocksResponse = specificArticleId
+        ? await articleBlockService.getBlocksByArticle(
+            specificArticleId,
+            isScientificType ? 'article_scientifique' : 'article'
+          )
+        : { success: false, data: [] as ArticleBlock[] };
 
       if (blocksResponse.success && blocksResponse.data) {
         setBlocks(blocksResponse.data.sort((a, b) => (a.ordre || 0) - (b.ordre || 0)));
@@ -831,8 +841,8 @@ const ArticleViewPage: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {contributeurs.map((contributeur, index) =>
-              <div key={index} className="flex items-center gap-4">
+                {contributeurs.map((contributeur) =>
+              <div key={contributeur.id || contributeur.nom} className="flex items-center gap-4">
                     <Avatar>
                       <AvatarImage src={contributeur.photo} />
                       <AvatarFallback>

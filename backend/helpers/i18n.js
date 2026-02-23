@@ -196,19 +196,21 @@ const buildMultiLangSearch = (field, searchTerm, lang = null) => {
   
   if (lang) {
     // Recherche dans une langue spécifique
+    const jsonPath = lang.includes('-') ? `$."${lang}"` : `$.${lang}`;
     return Sequelize.where(
-      Sequelize.fn('JSON_EXTRACT', Sequelize.col(field), Sequelize.literal(`'$.${lang}'`)),
+      Sequelize.fn('JSON_EXTRACT', Sequelize.col(field), Sequelize.literal(`'${jsonPath}'`)),
       { [Op.like]: searchPattern }
     );
   }
   
   // Recherche dans toutes les langues
-  const conditions = SUPPORTED_LANGUAGES.map(l => 
-    Sequelize.where(
-      Sequelize.fn('JSON_EXTRACT', Sequelize.col(field), Sequelize.literal(`'$.${l}'`)),
+  const conditions = SUPPORTED_LANGUAGES.map(l => {
+    const jsonPath = l.includes('-') ? `$."${l}"` : `$.${l}`;
+    return Sequelize.where(
+      Sequelize.fn('JSON_EXTRACT', Sequelize.col(field), Sequelize.literal(`'${jsonPath}'`)),
       { [Op.like]: searchPattern }
-    )
-  );
+    );
+  });
   
   return { [Op.or]: conditions };
 };
@@ -223,8 +225,9 @@ const buildMultiLangSearch = (field, searchTerm, lang = null) => {
 const buildMultiLangOrder = (field, lang = DEFAULT_LANGUAGE, direction = 'ASC') => {
   const { Sequelize } = require('sequelize');
   
+  const jsonPath = lang.includes('-') ? `$."${lang}"` : `$.${lang}`;
   return [
-    Sequelize.fn('JSON_EXTRACT', Sequelize.col(field), Sequelize.literal(`'$.${lang}'`)),
+    Sequelize.fn('JSON_EXTRACT', Sequelize.col(field), Sequelize.literal(`'${jsonPath}'`)),
     direction
   ];
 };

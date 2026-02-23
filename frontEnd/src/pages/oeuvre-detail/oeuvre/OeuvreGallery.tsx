@@ -35,9 +35,12 @@ const GalleryItem: React.FC<{ media: Media; onClick: () => void }> = ({ media, o
   const isVideo = media.type_media === 'video';
 
   return (
-    <div 
+    <div
       className="group relative aspect-square rounded-lg overflow-hidden cursor-pointer bg-muted"
       onClick={onClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } }}
     >
       {media.type_media === 'image' || isVideo ? (
         <LazyImage
@@ -273,6 +276,9 @@ const OeuvreGallery: React.FC<OeuvreGalleryProps> = ({ medias }) => {
                 key={media.id_media || index}
                 className="flex items-center gap-4 p-3 border rounded-lg hover:bg-muted/50 cursor-pointer"
                 onClick={() => openLightbox(index)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openLightbox(index); } }}
               >
                 <div className="w-16 h-16 rounded overflow-hidden flex-shrink-0">
                   {media.type_media === 'image' ? (
