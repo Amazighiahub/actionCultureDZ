@@ -3,7 +3,7 @@
 
 const express = require('express');
 const router = express.Router();
-const MultilingualController = require('../controllers/MultilingualController');
+const MultilingualController = require('../controllers/multilingualController');
 const createAuthMiddleware = require('../middlewares/authMiddleware');
 const { body, param } = require('express-validator');
 const { validateLanguage } = require('../middlewares/language');

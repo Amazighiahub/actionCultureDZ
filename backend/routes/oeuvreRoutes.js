@@ -1,7 +1,7 @@
 // routes/oeuvreRoutes.js - VERSION i18n
 const express = require('express');
 const router = express.Router();
-const OeuvreController = require('../controllers/OeuvreController');
+const OeuvreController = require('../controllers/oeuvreController');
 const { body, param } = require('express-validator');
 const uploadService = require('../services/uploadService');
 

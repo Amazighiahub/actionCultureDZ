@@ -1,7 +1,7 @@
 // routes/dashboardRoutes.js - VERSION COMPLÈTE
 const express = require('express');
 const router = express.Router();
-const DashboardController = require('../controllers/DashboardController');
+const DashboardController = require('../controllers/dashboardController');
 const createAuthMiddleware = require('../middlewares/authMiddleware');
 const validationMiddleware = require('../middlewares/validationMiddleware');
 const rateLimitMiddleware = require('../middlewares/rateLimitMiddleware');

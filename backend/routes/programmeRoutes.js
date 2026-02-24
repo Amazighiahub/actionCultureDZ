@@ -1,7 +1,7 @@
 // routes/programmeRoutes.js - VERSION i18n
 const express = require('express');
 const router = express.Router();
-const ProgrammeController = require('../controllers/ProgrammeController');
+const ProgrammeController = require('../controllers/programmeController');
 const createAuthMiddleware = require('../middlewares/authMiddleware');
 const validationMiddleware = require('../middlewares/validationMiddleware');
 const { body, param, query } = require('express-validator');

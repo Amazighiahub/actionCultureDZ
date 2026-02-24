@@ -7,7 +7,7 @@ const rateLimitMiddleware = require('../middlewares/rateLimitMiddleware');
 const FileValidator = require('../utils/FileValidator');
 
 const initUploadRoutes = (models, authMiddleware) => {
-  const UploadController = require('../controllers/UploadController');
+  const UploadController = require('../controllers/uploadController');
   const uploadController = new UploadController(models);
 
   console.log('🔧 Initialisation des routes upload...');

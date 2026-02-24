@@ -1,6 +1,6 @@
 // Test the getSitePatrimonialById function directly
 const db = require('./models');
-const PatrimoineController = require('./controllers/PatrimoineController');
+const PatrimoineController = require('./controllers/patrimoineController');
 
 async function test() {
   try {

@@ -28,7 +28,7 @@ const TYPE_USER_IDS = {
 };
 
 module.exports = (models, authMiddleware) => {
-  const UserController = require('../controllers/UserController');
+  const UserController = require('../controllers/userController');
   const userController = new UserController(models);
 
   console.log('🔧 Initialisation des routes utilisateur...');

@@ -1,7 +1,7 @@
 // routes/trackingRoutes.js
 const express = require('express');
 const router = express.Router();
-const VueController = require('../controllers/VueController');
+const VueController = require('../controllers/vueController');
 
 // Factory function qui reçoit les modèles et middlewares
 const initTrackingRoutes = (models, authMiddleware) => {

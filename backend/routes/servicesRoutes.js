@@ -1,7 +1,7 @@
 // routes/servicesRoutes.js - VERSION i18n
 const express = require('express');
 const router = express.Router();
-const ServicesController = require('../controllers/ServicesController');
+const ServicesController = require('../controllers/servicesController');
 const { body, param, query } = require('express-validator');
 
 // ⚡ Import du middleware de validation de langue

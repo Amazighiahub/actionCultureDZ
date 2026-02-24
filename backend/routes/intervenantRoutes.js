@@ -1,6 +1,6 @@
 // routes/intervenantRoutes.js - VERSION i18n
 const express = require('express');
-const IntervenantController = require('../controllers/IntervenantController');
+const IntervenantController = require('../controllers/intervenantController');
 const validationMiddleware = require('../middlewares/validationMiddleware');
 const { body, query, param } = require('express-validator');
 

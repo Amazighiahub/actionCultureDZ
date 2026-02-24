@@ -1,7 +1,7 @@
 // routes/metadataRoutes.js - VERSION i18n CORRIGÉE
 const express = require('express');
 const router = express.Router();
-const MetadataController = require('../controllers/MetadataController');
+const MetadataController = require('../controllers/metadataController');
 const createAuthMiddleware = require('../middlewares/authMiddleware');
 const validationMiddleware = require('../middlewares/validationMiddleware');
 const { body, param, query } = require('express-validator');
