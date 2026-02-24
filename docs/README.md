@@ -119,11 +119,27 @@ eventculture/
 
 ## Documentation détaillée
 
+### Pour démarrer
+- [Guide d'onboarding stagiaire](./ONBOARDING.md) — **Lire en premier !**
+
+### Technique
 - [Architecture du projet](./ARCHITECTURE.md)
 - [Guide de l'API](./API.md)
 - [Guide du Frontend](./FRONTEND.md)
 - [Guide de contribution](./CONTRIBUTING.md)
+- [Guide de sécurité](./SECURITY_GUIDELINES.md)
+- [Guide seed base de données](./GUIDE_SEED_DATABASE.md)
 - [Checklist de production](../PRODUCTION_CHECKLIST.md)
+
+### Modules métier
+- [Gestion des Événements](./modules/EVENEMENTS.md)
+- [Gestion du Patrimoine](./modules/PATRIMOINE.md)
+- [Gestion des Œuvres](./modules/OEUVRES.md)
+- [Gestion des Parcours Intelligents](./modules/PARCOURS_INTELLIGENTS.md)
+- [Gestion des Services](./modules/SERVICES.md)
+
+### Archives
+Les anciens rapports d'audit et changelogs sont dans `docs/archives/`.
 
 ## Langues supportées
 

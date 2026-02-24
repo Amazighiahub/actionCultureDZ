@@ -42,36 +42,48 @@ backend/
 ├── models/                 # Modèles Sequelize (67 modèles)
 │   ├── index.js            # Agrégateur et associations
 │   ├── users/
-│   │   ├── User.js
-│   │   └── Role.js
+│   │   ├── user.js
+│   │   ├── role.js
+│   │   └── userRole.js
 │   ├── oeuvres/
-│   │   ├── Oeuvre.js
-│   │   ├── Livre.js
-│   │   ├── Film.js
+│   │   ├── oeuvre.js
+│   │   ├── livre.js
+│   │   ├── film.js
+│   │   ├── albumMusical.js
+│   │   ├── artisanat.js
 │   │   └── ...
 │   ├── events/
-│   │   ├── Evenement.js
-│   │   ├── Programme.js
-│   │   └── ...
+│   │   ├── evenement.js
+│   │   ├── programme.js
+│   │   ├── parcours.js
+│   │   └── typeEvenement.js
 │   ├── places/
-│   │   ├── Lieu.js
-│   │   ├── Monument.js
-│   │   └── ...
+│   │   ├── lieu.js
+│   │   ├── monument.js
+│   │   ├── vestige.js
+│   │   └── service.js
 │   ├── geography/
-│   │   ├── Wilaya.js
-│   │   ├── Daira.js
-│   │   └── Commune.js
-│   └── associations/       # Tables de jointure
-│       ├── EvenementUser.js
-│       ├── OeuvreCategorie.js
+│   │   ├── wilaya.js
+│   │   ├── daira.js
+│   │   └── commune.js
+│   ├── classifications/    # Types, catégories, genres
+│   ├── misc/               # Commentaire, favori, notification...
+│   ├── organisations/      # Organisation, éditeur
+│   └── associations/       # Tables de jointure M2M
+│       ├── evenementUser.js
+│       ├── oeuvreCategorie.js
 │       └── ...
 │
-├── controllers/            # Logique métier (22 controllers)
-│   ├── UserController.js
-│   ├── OeuvreController.js
-│   ├── EvenementController.js
-│   ├── PatrimoineController.js
-│   ├── AdminController.js
+├── controllers/            # Logique métier (23 controllers)
+│   ├── userController.js
+│   ├── oeuvreController.js
+│   ├── evenementController.js
+│   ├── patrimoineController.js
+│   ├── parcoursIntelligentController.js
+│   ├── servicesController.js
+│   ├── v2/                 # Controllers API v2
+│   │   ├── userControllerV2.js
+│   │   └── oeuvreControllerV2.js
 │   └── ...
 │
 ├── routes/                 # Définition des routes
@@ -94,17 +106,32 @@ backend/
 │
 ├── services/               # Services métier
 │   ├── emailService.js
-│   ├── NotificationService.js
+│   ├── notificationService.js
 │   ├── uploadService.js
+│   ├── serviceContainer.js  # IoC container
+│   ├── core/baseService.js  # Classe de base
+│   ├── oeuvre/oeuvreService.js
+│   ├── user/userService.js
+│   ├── dashboard/           # Analytics, modération, stats
 │   └── ...
+│
+├── repositories/           # Accès données (pattern Repository)
+│   ├── baseRepository.js
+│   ├── oeuvreRepository.js
+│   └── userRepository.js
+│
+├── dto/                    # Data Transfer Objects
+│   ├── baseDTO.js
+│   ├── oeuvre/
+│   └── user/
 │
 ├── helpers/
 │   └── i18n.js             # Helpers multilingues
 │
 └── utils/
-    ├── AppError.js         # Classe d'erreur custom
-    ├── FileValidator.js    # Validation de fichiers
-    └── logger.js           # Winston logger
+    ├── appError.js         # Classe d'erreur custom
+    ├── fileValidator.js    # Validation de fichiers
+    └── multiLangSearchBuilder.js # Recherche multilingue
 ```
 
 ### Flux de requête

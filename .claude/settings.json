@@ -1,8 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(node test-site-api.js:*)",
-      "Bash(node scripts/run-migration.js:*)"
-    ]
-  }
-}
