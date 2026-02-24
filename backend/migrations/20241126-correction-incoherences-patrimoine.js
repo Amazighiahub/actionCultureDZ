@@ -4,12 +4,12 @@ module.exports = {
   up: async (queryInterface, Sequelize) => {
     // Transaction pour garantir l'intégrité
     const transaction = await queryInterface.sequelize.transaction();
-    
+
     try {
       // 1. CORRECTION TABLE SERVICES
       // Ajouter temporairement id_lieu si elle n'existe pas
       const servicesTable = await queryInterface.describeTable('services');
-      
+
       if (!servicesTable.id_lieu) {
         await queryInterface.addColumn('services', 'id_lieu', {
           type: Sequelize.INTEGER,
@@ -22,10 +22,10 @@ module.exports = {
 
       // Migrer les données de id_detailLieu vers id_lieu
       await queryInterface.sequelize.query(`
-        UPDATE services s
-        JOIN detail_lieux dl ON s.id_detailLieu = dl.id_detailLieu
-        SET s.id_lieu = dl.id_lieu
-        WHERE s.id_lieu IS NULL
+        UPDATE services
+        INNER JOIN detail_lieux ON services.id = detail_lieux.id_detailLieu
+        SET services.id_lieu = detail_lieux.id_lieu
+        WHERE services.id_lieu IS NULL
       `, { transaction });
 
       // Rendre id_lieu NOT NULL
@@ -39,23 +39,31 @@ module.exports = {
       }, { transaction });
 
       // Supprimer l'ancienne colonne id_detailLieu
-      if (servicesTable.id_detailLieu) {
-        await queryInterface.removeColumn('services', 'id_detailLieu', { transaction });
-      }
+      // if (servicesTable.id_detailLieu) {
+      //   await queryInterface.removeColumn('services', 'id_detailLieu', { transaction });
+      // }
 
       // Ajouter les nouvelles colonnes
-      await queryInterface.addColumn('services', 'disponible', {
-        type: Sequelize.BOOLEAN,
-        defaultValue: true
-      }, { transaction });
+      if (!servicesTable.disponible) {
+        await queryInterface.addColumn('services', 'disponible', {
+          type: Sequelize.BOOLEAN,
+          defaultValue: true
+        }, { transaction });
+      }
 
-      await queryInterface.addColumn('services', 'description', {
-        type: Sequelize.TEXT
-      }, { transaction });
+      // 2. Fais de même pour 'description' :
+      if (!servicesTable.description) {
+        await queryInterface.addColumn('services', 'description', {
+          type: Sequelize.TEXT
+        }, { transaction });
+      }
 
       // 2. CORRECTION TABLE MONUMENTS
       // Renommer detailLieuId en id_detail_lieu
-      await queryInterface.renameColumn('monuments', 'detailLieuId', 'id_detail_lieu', { transaction });
+      const monumentsTable = await queryInterface.describeTable('monuments');
+      if (monumentsTable.detailLieuId) {
+        await queryInterface.renameColumn('monuments', 'detailLieuId', 'id_detail_lieu', { transaction });
+      }
 
       // Corriger l'encodage du type ENUM
       await queryInterface.changeColumn('monuments', 'type', {
@@ -65,7 +73,10 @@ module.exports = {
 
       // 3. CORRECTION TABLE VESTIGES
       // Renommer detailLieuId en id_detail_lieu
-      await queryInterface.renameColumn('vestiges', 'detailLieuId', 'id_detail_lieu', { transaction });
+      const vestigesTable = await queryInterface.describeTable('vestiges');
+      if (vestigesTable.detailLieuId) {
+        await queryInterface.renameColumn('vestiges', 'detailLieuId', 'id_detail_lieu', { transaction });
+      }
 
       // Corriger l'encodage du type ENUM
       await queryInterface.changeColumn('vestiges', 'type', {
@@ -76,11 +87,11 @@ module.exports = {
       // 4. CORRECTION TABLE LIEU
       // Supprimer les colonnes redondantes wilayaId et dairaId
       const lieuTable = await queryInterface.describeTable('lieu');
-      
+
       if (lieuTable.wilayaId) {
         await queryInterface.removeColumn('lieu', 'wilayaId', { transaction });
       }
-      
+
       if (lieuTable.dairaId) {
         await queryInterface.removeColumn('lieu', 'dairaId', { transaction });
       }
@@ -137,14 +148,14 @@ module.exports = {
 
       // 7. SUPPRIMER ParcourIdParcours SI ELLE EXISTE
       const parcoursLieuxTable = await queryInterface.describeTable('parcours_lieux');
-      
+
       if (parcoursLieuxTable.ParcourIdParcours) {
         await queryInterface.removeColumn('parcours_lieux', 'ParcourIdParcours', { transaction });
       }
 
       await transaction.commit();
       console.log('✅ Toutes les corrections ont été appliquées avec succès !');
-      
+
     } catch (error) {
       await transaction.rollback();
       throw error;
@@ -153,10 +164,10 @@ module.exports = {
 
   down: async (queryInterface, Sequelize) => {
     const transaction = await queryInterface.sequelize.transaction();
-    
+
     try {
       // Inverser les changements (pour rollback si nécessaire)
-      
+
       // 1. Restaurer services
       await queryInterface.addColumn('services', 'id_detailLieu', {
         type: Sequelize.INTEGER,
@@ -220,7 +231,7 @@ module.exports = {
       await queryInterface.removeIndex('vestiges', 'idx_vestiges_detail', { transaction });
 
       await transaction.commit();
-      
+
     } catch (error) {
       await transaction.rollback();
       throw error;
