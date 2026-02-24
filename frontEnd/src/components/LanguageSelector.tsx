@@ -2,15 +2,15 @@
 // Sélecteur de langue global pour tout le site
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/UI/button';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/UI/dropdown-menu';
+} from '@/components/ui/dropdown-menu';
 import { Globe } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/Utils';
 import { 
   SUPPORTED_LANGUAGES, 
   LANGUAGE_LABELS, 

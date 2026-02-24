@@ -3,11 +3,11 @@
  * Combine Label, Input, et gestion d'erreurs
  */
 import React from 'react';
-import { Label } from '@/components/UI/label';
-import { Input } from '@/components/UI/input';
-import { Textarea } from '@/components/UI/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/UI/select';
-import { cn } from '@/lib/utils';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { cn } from '@/lib/Utils';
 
 interface FormFieldProps {
   label: string;

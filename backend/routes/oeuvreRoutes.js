@@ -1,10 +1,10 @@
 // routes/oeuvreRoutes.js - VERSION i18n
 const express = require('express');
 const router = express.Router();
-const OeuvreController = require('../controllers/OeuvreController');
+const OeuvreController = require('../controllers/oeuvreController');
 const { body, param } = require('express-validator');
 const uploadService = require('../services/uploadService');
-const FileValidator = require('../utils/FileValidator');
+const FileValidator = require('../utils/fileValidator');
 
 // ⚡ Import du middleware de validation de langue
 const { validateLanguage } = require('../middlewares/language');
@@ -91,6 +91,11 @@ const initOeuvreRoutes = (models, authMiddleware) => {
 
   const handleMulterUpload = (fieldName = 'medias', maxCount = 10) => {
     return (req, res, next) => {
+      // Si la requête est du JSON (pas multipart), skip multer
+      const contentType = req.headers['content-type'] || '';
+      if (!contentType.includes('multipart/form-data')) {
+        return next();
+      }
       const upload = multerConfig.array(fieldName, maxCount);
       upload(req, res, (err) => {
         if (err) {

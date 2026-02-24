@@ -1,10 +1,10 @@
 // routes/artisanatRoutes.js - VERSION i18n
 const express = require('express');
 const router = express.Router();
-const ArtisanatController = require('../controllers/ArtisanatController');
+const ArtisanatController = require('../controllers/artisanatController');
 const createAuthMiddleware = require('../middlewares/authMiddleware');
 const validationMiddleware = require('../middlewares/validationMiddleware');
-const FileValidator = require('../utils/FileValidator');
+const FileValidator = require('../utils/fileValidator');
 const { body, param, query } = require('express-validator');
 
 // ⚡ Import du middleware de validation de langue

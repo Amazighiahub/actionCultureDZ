@@ -2,7 +2,7 @@
  * useOeuvreForm - Hook pour gérer le formulaire d'ajout d'œuvre
  */
 import { useState, useEffect, useCallback } from 'react';
-import { useToast } from '@/components/UI/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 import { metadataService } from '@/services/metadata.service';
 import { oeuvreService } from '@/services/oeuvre.service';
 import { mediaService } from '@/services/media.service';

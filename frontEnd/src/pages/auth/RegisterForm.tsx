@@ -3,28 +3,28 @@
  */
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/UI/card';
-import { Button } from '@/components/UI/button';
-import { Input } from '@/components/UI/input';
-import { Label } from '@/components/UI/label';
-import { Textarea } from '@/components/UI/textarea';
-import { Checkbox } from '@/components/UI/checkbox';
-import { RadioGroup, RadioGroupItem } from '@/components/UI/radio-group';
-import { Alert, AlertDescription } from '@/components/UI/alert';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue
-} from '@/components/UI/select';
+} from '@/components/ui/select';
 import { 
   User, Palette, Mail, Lock, UserPlus, Upload, 
   Loader2, AlertCircle, X, Check 
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useWilayas } from '@/hooks/useGeographie';
-import { useToast } from '@/components/UI/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 import { LazyImage } from '@/components/shared';
 
 // Options de secteur

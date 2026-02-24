@@ -3,13 +3,13 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/UI/card';
-import { Button } from '@/components/UI/button';
-import { Input } from '@/components/UI/input';
-import { Label } from '@/components/UI/label';
-import { Alert, AlertDescription } from '@/components/UI/alert';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Lock, ArrowLeft, Loader2, CheckCircle, Eye, EyeOff, AlertCircle } from 'lucide-react';
-import { useToast } from '@/components/UI/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 import { userService } from '@/services/user.service';
 
 const ResetPassword = () => {
@@ -75,7 +75,7 @@ const ResetPassword = () => {
 
         // Rediriger vers la page de connexion après 3 secondes
         setTimeout(() => {
-          navigate('/auth');
+          navigate('/Auth');
         }, 3000);
       } else {
         setError(response.error || t('auth.resetPassword.error'));
@@ -143,7 +143,7 @@ const ResetPassword = () => {
                 </Alert>
 
                 <div className="text-center">
-                  <Link to="/auth">
+                  <Link to="/Auth">
                     <Button>
                       {t('auth.resetPassword.goToLogin')}
                     </Button>
@@ -258,7 +258,7 @@ const ResetPassword = () => {
                 </Button>
 
                 <div className="text-center pt-4">
-                  <Link to="/auth" className="text-primary hover:underline inline-flex items-center gap-1">
+                  <Link to="/Auth" className="text-primary hover:underline inline-flex items-center gap-1">
                     <ArrowLeft className="h-4 w-4" />
                     {t('auth.resetPassword.backToLogin')}
                   </Link>

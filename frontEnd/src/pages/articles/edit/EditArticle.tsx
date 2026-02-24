@@ -5,9 +5,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import ArticleEditor from '@/components/article/ArticleEditor';
 import { oeuvreService } from '@/services/oeuvre.service';
 import { articleBlockService } from '@/services/articleBlock.service';
+import { httpClient } from '@/services/httpClient';
 import { Loader2, ArrowLeft } from 'lucide-react';
-import { Button } from '@/components/UI/button';
-import { Alert, AlertDescription } from '@/components/UI/alert';
+import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useTranslation } from "react-i18next";
 import { useToast } from '@/hooks/use-toast';
 
@@ -34,7 +35,7 @@ const EditArticle: React.FC = () => {
       const response = await oeuvreService.getOeuvreById(parseInt(id!));
 
       if (response.success && response.data) {
-        const oeuvre = response.data;
+        const oeuvre = response.data as any;
 
         // Vérifier que c'est un article (type 4 ou 5)
         if (oeuvre.id_type_oeuvre !== 4 && oeuvre.id_type_oeuvre !== 5) {
@@ -42,32 +43,31 @@ const EditArticle: React.FC = () => {
           return;
         }
 
-        // Charger les blocs
-        const blocksResponse = await articleBlockService.getBlocksByArticle(parseInt(id!));
+        const isScientific = oeuvre.id_type_oeuvre === 5;
+        const articleType = isScientific ? 'article_scientifique' : 'article';
 
-        // Extraire les détails spécifiques
-        const details = oeuvre.description || oeuvre.ArticleScientifique.resume || {};
+        // Charger les blocs
+        const blocksResponse = await articleBlockService.getBlocksByArticle(parseInt(id!), articleType);
 
         // Préparer les données initiales avec les blocs
         setInitialData({
-          id_oeuvre: oeuvre.id_oeuvre, // Ajouter l'ID pour l'édition
+          id_oeuvre: oeuvre.id_oeuvre,
           titre: oeuvre.titre,
           description: oeuvre.description,
           id_langue: oeuvre.id_langue,
           categories: oeuvre.Categories?.map((c: any) => c.id_categorie) || [],
           tags: oeuvre.Tags?.map((t: any) => t.nom) || [],
-          type: oeuvre.id_type_oeuvre === 4 ? 'article' : 'article_scientifique',
-          // Champs spécifiques
-          auteur: oeuvre.Article.auteur,
-
-          resume: oeuvre.ArticleScientifique.resume,
-          url_source: oeuvre.ArticleScientifique.url_hal,
-          journal: oeuvre.ArticleScientifique.journal,
-          doi: oeuvre.ArticleScientifique.doi,
-          pages: oeuvre.ArticleScientifique.pages,
-          volume: oeuvre.ArticleScientifique.volume,
-          numero: oeuvre.ArticleScientifique.numero,
-          peer_reviewed: oeuvre.ArticleScientifique.peer_reviewed,
+          type: articleType,
+          // Champs spécifiques — accès sécurisé
+          auteur: oeuvre.Article?.auteur || null,
+          resume: oeuvre.ArticleScientifique?.resume || null,
+          url_source: oeuvre.ArticleScientifique?.url_hal || null,
+          journal: oeuvre.ArticleScientifique?.journal || null,
+          doi: oeuvre.ArticleScientifique?.doi || null,
+          pages: oeuvre.ArticleScientifique?.pages || null,
+          volume: oeuvre.ArticleScientifique?.volume || null,
+          numero: oeuvre.ArticleScientifique?.numero || null,
+          peer_reviewed: oeuvre.ArticleScientifique?.peer_reviewed || false,
           // Ajouter les blocs existants
           existingBlocks: blocksResponse.data || []
         });
@@ -82,13 +82,136 @@ const EditArticle: React.FC = () => {
     }
   };
 
-  const handleSave = (response: any) => {
-    console.log('Article mis à jour:', response);
-    toast({
-      title: t('common.success', 'Succès'),
-      description: t('article.updateSuccess', 'Article mis à jour avec succès !'),
-    });
-    navigate(`/oeuvres/${id}`);
+  const handleSave = async (response: any) => {
+    const oeuvreId = parseInt(id!);
+    const { formData: articleFormData, blocks } = response.article;
+    const isScientific = articleFormData.type === 'article_scientifique';
+    const articleType = isScientific ? 'article_scientifique' : 'article';
+
+    console.log('📝 Mise à jour article:', oeuvreId, '| blocs:', blocks?.length, '| type:', articleType);
+
+    try {
+      // 1. Mettre à jour les métadonnées de l'oeuvre
+      const updateData: any = {
+        titre: articleFormData.titre,
+        description: articleFormData.description,
+      };
+      if (articleFormData.categories?.length > 0) {
+        updateData.categories = articleFormData.categories;
+      }
+      if (articleFormData.tags?.length > 0) {
+        updateData.tags = articleFormData.tags;
+      }
+      await oeuvreService.updateOeuvre(oeuvreId, updateData);
+      console.log('✅ Métadonnées oeuvre mises à jour');
+
+      // 2. Sauvegarder les blocs
+      if (blocks && blocks.length > 0) {
+        // Récupérer l'ID de l'article spécifique
+        const oeuvreDetail = await oeuvreService.getOeuvreById(oeuvreId);
+        const od = oeuvreDetail.data as any;
+        let articleRecordId: number | undefined;
+        if (isScientific) {
+          articleRecordId = od?.ArticleScientifique?.id_article_scientifique
+            || od?.article_scientifique?.id_article_scientifique;
+        } else {
+          articleRecordId = od?.Article?.id_article
+            || od?.article?.id_article;
+        }
+
+        if (!articleRecordId) {
+          console.error('❌ ID article spécifique introuvable pour oeuvre:', oeuvreId);
+          toast({
+            title: 'Avertissement',
+            description: 'Impossible de trouver l\'ID article pour sauvegarder les blocs.',
+            variant: 'destructive',
+          });
+        } else {
+          console.log('🔍 articleRecordId:', articleRecordId);
+
+          // 2a. Upload des nouvelles images (blocs avec tempFile)
+          const blocksWithMedia = await Promise.all(
+            blocks.map(async (block: any, index: number) => {
+              let id_media = block.id_media || block.media?.id_media || null;
+
+              if (block.type_block === 'image' && block.metadata?.tempFile instanceof File) {
+                try {
+                  console.log(`📤 Upload image bloc ${index}...`);
+                  const formData = new FormData();
+                  formData.append('files', block.metadata.tempFile);
+                  const uploadResult = await httpClient.postFormData<any>(
+                    `/oeuvres/${oeuvreId}/medias/upload`,
+                    formData
+                  );
+                  if (uploadResult.success && uploadResult.data) {
+                    const medias = Array.isArray(uploadResult.data) ? uploadResult.data : [uploadResult.data];
+                    if (medias[0]?.id_media) {
+                      id_media = medias[0].id_media;
+                      console.log(`✅ Image bloc ${index} uploadée, media_id:`, id_media);
+                    }
+                  }
+                } catch (uploadErr) {
+                  console.warn(`⚠️ Erreur upload image bloc ${index}:`, uploadErr);
+                }
+              }
+
+              return { block, id_media, index };
+            })
+          );
+
+          // 2b. Préparer les blocs à sauvegarder
+          const blocksToSave = blocksWithMedia.map(({ block, id_media, index }) => {
+            const cleanMetadata = block.metadata ? { ...block.metadata } : {};
+            delete cleanMetadata.tempFile;
+
+            return {
+              type_block: block.type_block,
+              contenu: block.contenu || '',
+              contenu_json: block.contenu_json || null,
+              metadata: cleanMetadata,
+              id_media,
+              ordre: index,
+              visible: true,
+            };
+          });
+
+          // 2c. Créer les nouveaux blocs (createMultipleBlocks supprime automatiquement les anciens)
+          const blocksResponse = await articleBlockService.createMultipleBlocks({
+            id_article: articleRecordId,
+            article_type: articleType,
+            blocks: blocksToSave.map((b: any) => ({ ...b, id_article: articleRecordId })),
+          });
+
+          if (!blocksResponse.success) {
+            console.warn('⚠️ Erreur sauvegarde blocs:', blocksResponse.error);
+            toast({
+              title: 'Avertissement',
+              description: 'L\'article a été mis à jour mais certains blocs n\'ont pas pu être sauvegardés.',
+              variant: 'destructive',
+            });
+          } else {
+            console.log('✅ Blocs sauvegardés:', blocksToSave.length);
+          }
+        }
+      }
+
+      toast({
+        title: t('common.success', 'Succès'),
+        description: t('article.updateSuccess', 'Article mis à jour avec succès !'),
+      });
+
+      setTimeout(() => {
+        navigate(`/articles/${id}`);
+      }, 1000);
+
+    } catch (err: any) {
+      console.error('❌ Erreur mise à jour article:', err);
+      toast({
+        title: 'Erreur',
+        description: err.message || 'Erreur lors de la mise à jour',
+        variant: 'destructive',
+      });
+    }
   };
 
   if (loading) {

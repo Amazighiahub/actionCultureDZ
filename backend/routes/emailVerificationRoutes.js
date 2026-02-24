@@ -6,7 +6,7 @@ const validationMiddleware = require('../middlewares/validationMiddleware');
 const rateLimitMiddleware = require('../middlewares/rateLimitMiddleware');
 
 module.exports = (models, authMiddleware) => {
-  const EmailVerificationController = require('../controllers/EmailVerificationController');
+  const EmailVerificationController = require('../controllers/emailVerificationController');
   const controller = new EmailVerificationController(models);
 
   // ========================================================================

@@ -2,9 +2,9 @@
  * LoadingSkeleton - Squelettes de chargement réutilisables
  */
 import React from 'react';
-import { Skeleton } from '@/components/UI/skeleton';
-import { Card, CardContent, CardHeader } from '@/components/UI/card';
-import { cn } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { cn } from '@/lib/Utils';
 
 interface LoadingSkeletonProps {
   type?: 'card' | 'list' | 'table' | 'form' | 'profile' | 'gallery' | 'stats';

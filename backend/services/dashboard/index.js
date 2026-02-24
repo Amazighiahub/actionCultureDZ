@@ -3,10 +3,10 @@
  * Ces services sont extraits de DashboardController pour une meilleure modularité
  */
 
-const DashboardStatsService = require('./StatsService');
-const DashboardModerationService = require('./ModerationService');
-const DashboardUserManagementService = require('./UserManagementService');
-const DashboardAnalyticsService = require('./AnalyticsService');
+const DashboardStatsService = require('./statsService');
+const DashboardModerationService = require('./moderationService');
+const DashboardUserManagementService = require('./userManagementService');
+const DashboardAnalyticsService = require('./analyticsService');
 
 /**
  * Factory pour créer tous les services dashboard

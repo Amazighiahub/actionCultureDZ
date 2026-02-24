@@ -1,8 +1,8 @@
 // src/utils/permissions.ts - Utilitaires de permissions centralisés (VERSION CORRIGÉE)
 import { authService } from '../services/auth.service';
-import type { User } from '../types/User.types';
-import type { Oeuvre } from '../types/Oeuvre.types';
-import type { Evenement } from '../types/Evenement.types';
+import type { User } from '../types/user.types';
+import type { Oeuvre } from '../types/oeuvre.types';
+import type { Evenement } from '../types/evenement.types';
 
 // ==========================================================================
 // PERMISSIONS POUR LES ŒUVRES

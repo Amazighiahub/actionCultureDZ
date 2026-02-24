@@ -148,7 +148,7 @@ class OeuvreService {
         categories: normalizedData.categories
       });
 
-      const response = await httpClient.post<CreateOeuvreResponse>('/oeuvres', normalizedData);
+      const response = await httpClient.post<CreateOeuvreResponse>('/Oeuvres', normalizedData);
 
       return response;
     } catch (error: any) {
@@ -271,7 +271,7 @@ class OeuvreService {
       }
 
       const response = await httpClient.postFormData<CreateOeuvreResponse>(
-        '/oeuvres',
+        '/Oeuvres',
         formData
       );
 
@@ -463,7 +463,7 @@ class OeuvreService {
             pages: number;
             limit: number;
           };
-        }>('/oeuvres', {
+        }>('/Oeuvres', {
           ...params,
           intervenant_id: intervenantId
         });
@@ -518,7 +518,7 @@ class OeuvreService {
    */
   async checkRecentOeuvre(titre: string): Promise<ApiResponse<any>> {
     try {
-      const response = await httpClient.get<any>('/oeuvres', {
+      const response = await httpClient.get<any>('/Oeuvres', {
         search: titre,
         sort: 'recent',
         limit: 1
@@ -589,7 +589,7 @@ class OeuvreService {
     };
   }>> {
     try {
-      return await httpClient.get('/oeuvres', params);
+      return await httpClient.get('/Oeuvres', params);
     } catch (error: any) {
       return {
         success: false,
@@ -811,7 +811,7 @@ async getOeuvresByType(types: number[]): Promise<ApiResponse<Oeuvre[]>> {
         pages: number;
         limit: number;
       };
-    }>('/oeuvres', {
+    }>('/Oeuvres', {
       types: types.join(','), // ou types selon le format accepté par l'API
       limit: 100 // Ajuster selon vos besoins
     });

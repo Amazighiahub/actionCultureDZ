@@ -1,15 +1,15 @@
-// Import de la configuration i18n - DOIT être en premier !
+﻿// Import de la configuration i18n - DOIT être en premier !
 import '../i18n/config';
 
-import { Toaster } from "@/components/UI/toaster";
-import { Toaster as Sonner } from "@/components/UI/sonner";
-import { TooltipProvider } from "@/components/UI/tooltip";
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { PermissionsProvider } from "@/providers/PermissionsProvider";
 import { ProtectedRoute, AdminRoute, ProfessionalRoute } from "@/components/auth/ProtectedRoute";
 import { usePermissions } from "@/hooks/usePermissions";
-import Index from "./pages/Index";
+import Index from "./pages/index";
 import NotFound from "./pages/NotFound";
 import Patrimoine from "./pages/Patrimoine";
 import PatrimoineDetail from "./pages/PatrimoineDetail";
@@ -33,16 +33,16 @@ import AjouterPatrimoinePro from "./pages/AjouterPatrimoinePro";
 import AjouterArtisanat from "./pages/AjouterArtisanat";
 import AjouterOrganisation from "./pages/AjouterOrganisation";
 import VerifyEmailPage from './pages/VerifyEmailPage';
-import OeuvreDetail from './pages/oeuvre-detail/OeuvreDetailPage';
+import OeuvreDetail from './pages/oeuvreDetail/OeuvreDetailPage';
 // Import des pages de notifications
-import NotificationsPage from "./pages/notifications/preferences";
-import NotificationPreferences from "./pages/notifications/preferences";
+import NotificationsPage from "./pages/notifications/Preferences";
+import NotificationPreferences from "./pages/notifications/Preferences";
 import ArticleViewPage from './pages/articles/ArticleViewPage';
 // Import du listener de notifications toast
 import NotificationToastListener from '@/components/NotificationToastListener';
 import EventDetailsPage from "./pages/EventDetailsPage";
 import EditArticle from "./pages/articles/edit/EditArticle";
-import RTLManager from './components/RTLManager';
+import RTLManager from './components/RtlManager';
 import { LanguagePersistenceManager } from '@/hooks/useLanguagePersistence';
 // Configuration optimisée du QueryClient
 const queryClient = new QueryClient({
@@ -109,16 +109,16 @@ const App = () => (
           <Routes>
             {/* Routes publiques */}
             <Route path="/" element={<Index />} />
-            <Route path="/patrimoine" element={<Patrimoine />} />
+            <Route path="/Patrimoine" element={<Patrimoine />} />
             <Route path="/patrimoine/:id" element={<PatrimoineDetail />} />
-            <Route path="/evenements" element={<Evenements />} />
+            <Route path="/Evenements" element={<Evenements />} />
             <Route path="/evenements/:id" element={<EventDetailsPage />} />
-            <Route path="/oeuvres" element={<Oeuvres />} />
+            <Route path="/Oeuvres" element={<Oeuvres />} />
             <Route path="/oeuvres/:id" element={<OeuvreDetail />} />
-            <Route path="/artisanat" element={<Artisanat />} />
+            <Route path="/Artisanat" element={<Artisanat />} />
             <Route path="/artisanat/:id" element={<ArtisanatDetail />} />
             <Route path="/a-propos" element={<APropos />} />
-            <Route path="/auth" element={<Auth />} />
+            <Route path="/Auth" element={<Auth />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />
             <Route path="/articles/:id" element={<ArticleViewPage />} />
@@ -238,7 +238,7 @@ const App = () => (
 
             {/* Routes des notifications - Accessibles à tous les utilisateurs connectés */}
             <Route 
-              path="/notifications" 
+              path="/Notifications" 
               element={
                 <ProtectedRoute>
                   <NotificationsPage />
@@ -247,7 +247,7 @@ const App = () => (
             />
             
             <Route 
-              path="/notifications/preferences" 
+              path="/notifications/Preferences" 
               element={
                 <ProtectedRoute>
                   <NotificationPreferences />

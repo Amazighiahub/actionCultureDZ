@@ -4,10 +4,10 @@
  */
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/UI/card';
-import { Badge } from '@/components/UI/badge';
-import { Button } from '@/components/UI/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/UI/tabs';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Clock, User, MapPin, Users, ChevronDown, ChevronUp,
   Play, Pause, CheckCircle, XCircle, AlertCircle,
@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { LazyImage, EmptyState } from '@/components/shared';
 import { useTranslateData } from '@/hooks/useTranslateData';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/Utils';
 import type { Programme } from '@/types/models/programme.types';
 
 interface EventProgramProps {

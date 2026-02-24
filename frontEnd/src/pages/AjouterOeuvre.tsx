@@ -1,14 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/UI/card';
-import { Button } from '@/components/UI/button';
-import { Input } from '@/components/UI/input';
-import { Label } from '@/components/UI/label';
-import { Textarea } from '@/components/UI/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/UI/select';
-import { Checkbox } from '@/components/UI/checkbox';
-import { Badge } from '@/components/UI/badge';
-import { Alert, AlertDescription } from '@/components/UI/alert';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   Upload, Save, ArrowLeft, X, Plus, AlertCircle,
   Book, Film, Music, FileText, Beaker, Palette, Hammer, Loader2, Star,
@@ -832,27 +832,64 @@ const AjouterOeuvre: React.FC = () => {
       console.log('✅ Oeuvre créée avec ID:', oeuvreId);
 
       const articleRecordId = (() => {
+        const d = oeuvreResponse.data;
+        console.log('🔍 DEBUG oeuvreResponse.data keys:', Object.keys(d));
+        console.log('🔍 DEBUG oeuvre keys:', d.oeuvre ? Object.keys(d.oeuvre) : 'N/A');
+        
         if (isScientific) {
-          // Priorité 1: depuis createdSpecificPayload (clé directe)
-          const fromDirect = oeuvreResponse.data.article_scientifique?.id_article_scientifique;
-          // Priorité 2: depuis l'oeuvre rechargée (incluse dans la réponse)
-          const fromOeuvre = oeuvreResponse.data.oeuvre?.ArticleScientifique?.id_article_scientifique;
-          console.log('🔍 id_article_scientifique — direct:', fromDirect, '| fromOeuvre:', fromOeuvre);
-          return fromDirect || fromOeuvre;
+          const id =
+            d.article_scientifique?.id_article_scientifique ||
+            d.oeuvre?.ArticleScientifique?.id_article_scientifique ||
+            d.oeuvre?.article_scientifique?.id_article_scientifique ||
+            d.ArticleScientifique?.id_article_scientifique ||
+            d.details_specifiques_record?.id_article_scientifique;
+          console.log('🔍 id_article_scientifique resolved:', id);
+          return id;
         }
-        const fromDirect = oeuvreResponse.data.article?.id_article;
-        const fromOeuvre = oeuvreResponse.data.oeuvre?.Article?.id_article;
-        console.log('🔍 id_article — direct:', fromDirect, '| fromOeuvre:', fromOeuvre);
-        return fromDirect || fromOeuvre;
+        const id =
+          d.article?.id_article ||
+          d.oeuvre?.Article?.id_article ||
+          d.oeuvre?.article?.id_article ||
+          d.Article?.id_article ||
+          d.details_specifiques_record?.id_article;
+        console.log('🔍 id_article resolved:', id);
+        return id;
       })();
       console.log('🔍 articleRecordId final =', articleRecordId);
 
       // 5. Sauvegarder les blocs si présents
+      let finalArticleRecordId = articleRecordId;
       if (blocks && blocks.length > 0) {
-        if (!articleRecordId) {
-          console.warn('⚠️ ID article spécifique manquant, impossible de sauvegarder les blocs');
+        // Fallback: si l'ID n'est pas dans la réponse de création, le récupérer via GET /oeuvres/:id
+        if (!finalArticleRecordId) {
+          console.warn('⚠️ articleRecordId non trouvé dans la réponse, tentative de récupération via GET...');
+          try {
+            const oeuvreDetail = await oeuvreService.getOeuvreById(oeuvreId);
+            if (oeuvreDetail.success && oeuvreDetail.data) {
+              const od = oeuvreDetail.data as any;
+              if (isScientific) {
+                finalArticleRecordId = od.ArticleScientifique?.id_article_scientifique
+                  || od.article_scientifique?.id_article_scientifique;
+              } else {
+                finalArticleRecordId = od.Article?.id_article
+                  || od.article?.id_article;
+              }
+              console.log('🔄 Fallback articleRecordId:', finalArticleRecordId);
+            }
+          } catch (fallbackErr) {
+            console.error('❌ Fallback GET oeuvre échoué:', fallbackErr);
+          }
         }
-        console.log(`📦 Sauvegarde de ${blocks.length} bloc(s)...`);
+
+        if (!finalArticleRecordId) {
+          console.error('❌ ID article spécifique manquant! Réponse backend:', JSON.stringify(oeuvreResponse.data, null, 2));
+          toast({
+            title: 'Avertissement',
+            description: 'L\'article a été créé mais le contenu (blocs) n\'a pas pu être sauvegardé. Veuillez modifier l\'article pour ajouter le contenu.',
+            variant: 'destructive',
+          });
+        }
+        console.log(`📦 Sauvegarde de ${blocks.length} bloc(s), finalArticleRecordId=${finalArticleRecordId}...`);
 
         // 5a. Upload des images des blocs image qui ont un tempFile
         const blocksWithMedia = await Promise.all(
@@ -906,10 +943,10 @@ const AjouterOeuvre: React.FC = () => {
           };
         });
 
-        const blocksResponse = articleRecordId ? await articleBlockService.createMultipleBlocks({
-          id_article: articleRecordId,
+        const blocksResponse = finalArticleRecordId ? await articleBlockService.createMultipleBlocks({
+          id_article: finalArticleRecordId,
           article_type: isScientific ? 'article_scientifique' : 'article',
-          blocks: blocksToSave.map((b: any) => ({ ...b, id_article: articleRecordId })),
+          blocks: blocksToSave.map((b: any) => ({ ...b, id_article: finalArticleRecordId })),
         }) : { success: false, error: 'ID article manquant' };
 
         if (!blocksResponse.success) {

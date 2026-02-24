@@ -15,11 +15,11 @@ console.log('📦 Chargement des modèles...\n');
 
 try {
   // Modèles nécessaires
-  models.User = require('../models/users/User')(sequelize);
-  models.Evenement = require('../models/events/Evenement')(sequelize);
-  models.Programme = require('../models/events/Programme')(sequelize);
-  models.Commentaire = require('../models/misc/Commentaire')(sequelize);
-  models.Lieu = require('../models/places/Lieu')(sequelize);
+  models.User = require('../models/users/user')(sequelize);
+  models.Evenement = require('../models/events/evenement')(sequelize);
+  models.Programme = require('../models/events/programme')(sequelize);
+  models.Commentaire = require('../models/misc/commentaire')(sequelize);
+  models.Lieu = require('../models/places/lieu')(sequelize);
   
   console.log('✅ Modèles chargés');
 } catch (error) {

@@ -85,11 +85,11 @@ export function useAuth(): UseAuthReturn {
     try {
       await authService.logout();
       await refreshPermissions();
-      navigate('/auth');
+      navigate('/Auth');
     } catch (error) {
       console.error('Logout error:', error);
       await refreshPermissions();
-      navigate('/auth');
+      navigate('/Auth');
     }
   }, [navigate, refreshPermissions]);
 

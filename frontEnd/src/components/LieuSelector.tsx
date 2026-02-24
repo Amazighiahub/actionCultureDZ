@@ -1,14 +1,14 @@
 // components/LieuSelector.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Input } from '@/components/UI/input';
-import { Label } from '@/components/UI/label';
-import { Button } from '@/components/UI/button';
-import { Textarea } from '@/components/UI/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/UI/select';
-import { Card, CardContent } from '@/components/UI/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card, CardContent } from '@/components/ui/card';
 import { MapPin, Search, Plus, X, Loader2, Copy, Locate } from 'lucide-react';
-import { useToast } from '@/components/UI/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 import { lieuService } from '@/services/lieu.service';
 import { Lieu } from '@/types/models/lieu.types';
 import { TypeLieuAdministratif, TypeLieuCulturel } from '@/types/enums/lieu.enums';

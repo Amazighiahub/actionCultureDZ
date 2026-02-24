@@ -33,10 +33,10 @@ const initRoutesV2 = require('./routes/v2');
 const { initializeDatabase } = require('./models');
 const { createDatabase } = require('./config/database');
 const uploadService = require('./services/uploadService');
-const FileValidator = require('./utils/FileValidator');
+const FileValidator = require('./utils/fileValidator');
 
 // ✅ Service Container pour l'architecture Service/Repository
-const serviceContainer = require('./services/ServiceContainer');
+const serviceContainer = require('./services/serviceContainer');
 
 class App {
   constructor() {

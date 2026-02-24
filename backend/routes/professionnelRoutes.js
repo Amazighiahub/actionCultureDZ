@@ -4,8 +4,8 @@
 
 const express = require('express');
 const router = express.Router();
-const ProfessionnelController = require('../controllers/ProfessionnelController');
-const createEvenementController = require('../controllers/EvenementController');
+const ProfessionnelController = require('../controllers/professionnelController');
+const createEvenementController = require('../controllers/evenementController');
 const createAuthMiddleware = require('../middlewares/authMiddleware');
 const validationMiddleware = require('../middlewares/validationMiddleware');
 const rateLimitMiddleware = require('../middlewares/rateLimitMiddleware');

@@ -1,7 +1,7 @@
 // routes/signalementRoutes.js - Version simplifiée sans upload
 const express = require('express');
 const router = express.Router();
-const signalementController = require('../controllers/SignalementController');
+const signalementController = require('../controllers/signalementController');
 
 // Factory function qui reçoit les modèles et middlewares
 const initSignalementRoutes = (models, authMiddleware) => {

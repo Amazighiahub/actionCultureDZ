@@ -3,8 +3,8 @@
  */
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent } from '@/components/UI/card';
-import { Button } from '@/components/UI/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { useRTL } from '@/hooks/useRTL';
 

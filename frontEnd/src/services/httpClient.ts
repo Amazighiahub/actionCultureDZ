@@ -504,7 +504,7 @@ class HttpClient {
 
     // Rediriger vers la page de connexion
     const currentPath = window.location.pathname;
-    if (currentPath !== '/auth') {
+    if (currentPath !== '/Auth') {
       window.location.href = `/auth?redirect=${encodeURIComponent(currentPath)}`;
     }
   }

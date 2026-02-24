@@ -1,7 +1,7 @@
 // routes/notificationRoutes.js - VERSION i18n
 const express = require('express');
 const router = express.Router();
-const NotificationController = require('../controllers/NotificationController');
+const NotificationController = require('../controllers/notificationController');
 const createAuthMiddleware = require('../middlewares/authMiddleware');
 const { body, param, query } = require('express-validator');
 

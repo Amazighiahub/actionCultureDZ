@@ -331,7 +331,7 @@ export const API_ENDPOINTS = {
     professionalStatus: '/users/professional/status',
     
     // Préférences
-    updatePreferences: '/users/preferences',
+    updatePreferences: '/users/Preferences',
     updatePrivacy: '/users/privacy',
     
     // Autres
@@ -462,7 +462,7 @@ categoriesForType: (typeId: number) => `/metadata/types-oeuvres/${typeId}/catego
   // ================================================
   oeuvres: {
     // Public
-    list: '/oeuvres',
+    list: '/Oeuvres',
     recent: '/oeuvres/recent',
     popular: '/oeuvres/popular',
     statistics: '/oeuvres/statistics',
@@ -473,7 +473,7 @@ categoriesForType: (typeId: number) => `/metadata/types-oeuvres/${typeId}/catego
     documentation: '/oeuvres/api/documentation',
     
     // Authentifié
-    create: '/oeuvres',
+    create: '/Oeuvres',
     
     update: (id: number) => `/oeuvres/${id}`,
     delete: (id: number) => `/oeuvres/${id}`,
@@ -493,7 +493,7 @@ categoriesForType: (typeId: number) => `/metadata/types-oeuvres/${typeId}/catego
   // ================================================
   evenements: {
     // Public
-    list: '/evenements',
+    list: '/Evenements',
     upcoming: '/evenements/upcoming',
     statistics: '/evenements/statistics', // AJOUT
     detail: (id: number) => `/evenements/${id}`,
@@ -501,7 +501,7 @@ categoriesForType: (typeId: number) => `/metadata/types-oeuvres/${typeId}/catego
     medias: (id: number) => `/evenements/${id}/medias`,
     
     // Création/Modification
-    create: '/evenements',
+    create: '/Evenements',
     update: (id: number) => `/evenements/${id}`,
     cancel: (id: number) => `/evenements/${id}/cancel`,
     
@@ -581,12 +581,12 @@ categoriesForType: (typeId: number) => `/metadata/types-oeuvres/${typeId}/catego
   // ARTISANAT
   // ================================================
   artisanat: {
-    list: '/artisanat',
+    list: '/Artisanat',
     search: '/artisanat/search',
     statistics: '/artisanat/statistics',
     detail: (id: number) => `/artisanat/${id}`,
     artisansByRegion: (wilayaId: number) => `/artisanat/region/${wilayaId}/artisans`,
-    create: '/artisanat',
+    create: '/Artisanat',
     update: (id: number) => `/artisanat/${id}`,
     delete: (id: number) => `/artisanat/${id}`,
     uploadMedias: (id: number) => `/artisanat/${id}/medias`, // CORRIGÉ
@@ -622,11 +622,11 @@ categoriesForType: (typeId: number) => `/metadata/types-oeuvres/${typeId}/catego
   // NOTIFICATIONS
   // ================================================
   notifications: {
-     info: '/notifications',
+     info: '/Notifications',
   list: '/notifications/list',
   summary: '/notifications/summary',
-  preferences: '/notifications/preferences',
-  updatePreferences: '/notifications/preferences',
+  preferences: '/notifications/Preferences',
+  updatePreferences: '/notifications/Preferences',
   markAsRead: (id: number) => `/notifications/${id}/read`,
   markAllAsRead: '/notifications/read-all',
   markMultipleAsRead: '/notifications/read-multiple',
@@ -711,10 +711,10 @@ categoriesForType: (typeId: number) => `/metadata/types-oeuvres/${typeId}/catego
     // Dashboard
     dashboard: '/professionnel/dashboard',
     calendar: '/professionnel/calendar',
-    notifications: '/professionnel/notifications',
+    notifications: '/professionnel/Notifications',
     
     // Œuvres
-    oeuvres: '/professionnel/oeuvres',
+    oeuvres: '/professionnel/Oeuvres',
     oeuvreStats: (id: number) => `/professionnel/oeuvres/${id}/stats`,
     
     // Artisanats
@@ -722,7 +722,7 @@ categoriesForType: (typeId: number) => `/metadata/types-oeuvres/${typeId}/catego
     artisanatStats: (id: number) => `/professionnel/artisanats/${id}/stats`,
     
     // Événements
-    evenements: '/professionnel/evenements',
+    evenements: '/professionnel/Evenements',
     evenementStats: (id: number) => `/professionnel/evenements/${id}/stats`,
     manageParticipants: (id: number) => `/professionnel/evenements/${id}/participants/manage`,
     
@@ -734,8 +734,8 @@ categoriesForType: (typeId: number) => `/metadata/types-oeuvres/${typeId}/catego
     
     // Export
     export: '/professionnel/export',
-    exportOeuvres: '/professionnel/export/oeuvres',
-    exportEvenements: '/professionnel/export/evenements',
+    exportOeuvres: '/professionnel/export/Oeuvres',
+    exportEvenements: '/professionnel/export/Evenements',
     exportArtisanats: '/professionnel/export/artisanats',
     exportParticipants: (evenementId: number) => `/professionnel/export/participants/${evenementId}`,
     
@@ -845,14 +845,14 @@ categoriesForType: (typeId: number) => `/metadata/types-oeuvres/${typeId}/catego
     // Rapports
     activityReport: '/dashboard/reports/activity',
     moderationReport: '/dashboard/reports/moderation',
-    patrimoineReport: '/dashboard/reports/patrimoine',
+    patrimoineReport: '/dashboard/reports/Patrimoine',
     
     // Configuration
-    permissions: '/dashboard/config/permissions',
+    permissions: '/dashboard/config/Permissions',
     metrics: '/dashboard/config/metrics',
     
     // Notifications
-    notifications: '/dashboard/notifications',
+    notifications: '/dashboard/Notifications',
     broadcastNotification: '/dashboard/notifications/broadcast',
     
     // Monitoring (AJOUT)
@@ -877,7 +877,7 @@ categoriesForType: (typeId: number) => `/metadata/types-oeuvres/${typeId}/catego
   
   // Gestion des œuvres
   oeuvres: {
-    list: '/admin/oeuvres',
+    list: '/admin/Oeuvres',
     detail: (id: number) => `/admin/oeuvres/${id}`,
     updateStatus: (id: number) => `/admin/oeuvres/${id}/status`,
     delete: (id: number) => `/admin/oeuvres/${id}`,
@@ -892,7 +892,7 @@ categoriesForType: (typeId: number) => `/metadata/types-oeuvres/${typeId}/catego
   
   // Gestion des événements
   evenements: {
-    list: '/admin/evenements',
+    list: '/admin/Evenements',
     detail: (id: number) => `/admin/evenements/${id}`,
     updateStatus: (id: number) => `/admin/evenements/${id}/status`,
     delete: (id: number) => `/admin/evenements/${id}`,
@@ -906,7 +906,7 @@ categoriesForType: (typeId: number) => `/metadata/types-oeuvres/${typeId}/catego
   
   // Gestion du patrimoine
   patrimoine: {
-    list: '/admin/patrimoine',
+    list: '/admin/Patrimoine',
     detail: (id: number) => `/admin/patrimoine/${id}`,
     update: (id: number) => `/admin/patrimoine/${id}`,
     delete: (id: number) => `/admin/patrimoine/${id}`,

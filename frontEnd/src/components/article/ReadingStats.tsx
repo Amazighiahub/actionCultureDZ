@@ -1,8 +1,8 @@
 // components/article/ReadingStats.tsx
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent } from '@/components/UI/card';
-import { Progress } from '@/components/UI/progress';
-import { cn } from '@/lib/utils';
+import { Card, CardContent } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { cn } from '@/lib/Utils';
 import {
   Clock,
   Eye,

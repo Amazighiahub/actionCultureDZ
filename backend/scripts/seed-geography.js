@@ -19,9 +19,9 @@ const sequelize = new Sequelize(
 const algeriaData = require('../algeria_cities.json');
 
 // Charger les modèles
-const Wilaya = require('../models/geography/Wilaya')(sequelize);
-const Daira = require('../models/geography/Daira')(sequelize);
-const Commune = require('../models/geography/Commune')(sequelize);
+const Wilaya = require('../models/geography/wilaya')(sequelize);
+const Daira = require('../models/geography/daira')(sequelize);
+const Commune = require('../models/geography/commune')(sequelize);
 
 async function seedGeography() {
   console.log('╔══════════════════════════════════════════════════════════╗');

@@ -11,15 +11,15 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/UI/table';
-import { Button } from '@/components/UI/button';
-import { Input } from '@/components/UI/input';
-import { Checkbox } from '@/components/UI/checkbox';
+} from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   ChevronUp, ChevronDown, ChevronsUpDown,
   Search, Loader2
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/Utils';
 
 // Types
 export interface Column<T> {

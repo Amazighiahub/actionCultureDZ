@@ -1,7 +1,7 @@
 // routes/trackingRoutes.js
 const express = require('express');
 const router = express.Router();
-const VueController = require('../controllers/VueController');
+const VueController = require('../controllers/vueController');
 
 // Factory function qui reçoit les modèles et middlewares
 const initTrackingRoutes = (models, authMiddleware) => {
@@ -78,13 +78,13 @@ const initTrackingRoutes = (models, authMiddleware) => {
   // ========================================================================
 
   // Enregistrer une vue (authentification optionnelle)
-  router.post('/tracking/view',
+  router.post('/view',
     optionalAuth,
     (req, res) => vueController.trackView(req, res)
   );
 
   // Enregistrer une vue pour une entité spécifique
-  router.post('/tracking/:type/:id/view',
+  router.post('/:type/:id/view',
     optionalAuth,
     validateEntityType,
     checkEntityExists,
@@ -96,19 +96,19 @@ const initTrackingRoutes = (models, authMiddleware) => {
   );
 
   // Mettre à jour la durée d'une vue
-  router.put('/tracking/view/:id',
+  router.put('/view/:id',
     optionalAuth,
     (req, res) => vueController.updateViewDuration(req, res)
   );
 
   // Obtenir les statistiques publiques d'une entité
-  router.get('/tracking/stats/:type/:id',
+  router.get('/stats/:type/:id',
     validateEntityType,
     (req, res) => vueController.getViewStats(req, res)
   );
 
   // Obtenir le nombre de vues pour une entité
-  router.get('/tracking/:type/:id/count',
+  router.get('/:type/:id/count',
     validateEntityType,
     async (req, res) => {
       try {
@@ -139,7 +139,7 @@ const initTrackingRoutes = (models, authMiddleware) => {
   );
 
   // Obtenir les entités les plus vues (top populaire)
-  router.get('/tracking/popular/:type',
+  router.get('/popular/:type',
     validateEntityType,
     async (req, res) => {
       try {
@@ -245,7 +245,7 @@ const initTrackingRoutes = (models, authMiddleware) => {
   // ========================================================================
 
   // Obtenir l'historique de mes vues
-  router.get('/tracking/mes-vues',
+  router.get('/mes-vues',
     authenticate,
     async (req, res) => {
       try {
@@ -281,7 +281,7 @@ const initTrackingRoutes = (models, authMiddleware) => {
   );
 
   // Supprimer mon historique de vues
-  router.delete('/tracking/mes-vues',
+  router.delete('/mes-vues',
     authenticate,
     async (req, res) => {
       try {
@@ -315,7 +315,7 @@ const initTrackingRoutes = (models, authMiddleware) => {
   // ========================================================================
 
   // Dashboard analytics global
-  router.get('/tracking/analytics/dashboard',
+  router.get('/analytics/dashboard',
     authenticate,
     requireAdmin,
     async (req, res) => {
@@ -420,7 +420,7 @@ const initTrackingRoutes = (models, authMiddleware) => {
   );
 
   // Analytics détaillées pour une entité
-  router.get('/tracking/analytics/:type/:id',
+  router.get('/analytics/:type/:id',
     authenticate,
     requireAdmin,
     validateEntityType,
@@ -534,7 +534,7 @@ const initTrackingRoutes = (models, authMiddleware) => {
   );
 
   // Export des données de tracking
-  router.get('/tracking/export',
+  router.get('/export',
     authenticate,
     requireAdmin,
     async (req, res) => {

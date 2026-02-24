@@ -8,22 +8,22 @@ import { useNavigate, useParams } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { MultiLangInput } from '@/components/MultiLangInput';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/UI/card';
-import { Button } from '@/components/UI/button';
-import { Input } from '@/components/UI/input';
-import { Label } from '@/components/UI/label';
-import { Badge } from '@/components/UI/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/UI/tabs';
-import { Switch } from '@/components/UI/switch';
-import { Separator } from '@/components/UI/separator';
-import { Progress } from '@/components/UI/progress';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Switch } from '@/components/ui/switch';
+import { Separator } from '@/components/ui/separator';
+import { Progress } from '@/components/ui/progress';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue
-} from '@/components/UI/select';
+} from '@/components/ui/select';
 import {
   Dialog,
   DialogContent,
@@ -32,7 +32,7 @@ import {
   DialogTrigger,
   DialogFooter,
   DialogDescription
-} from '@/components/UI/dialog';
+} from '@/components/ui/dialog';
 import {
   Table,
   TableBody,
@@ -40,7 +40,7 @@ import {
   TableHead,
   TableHeader,
   TableRow
-} from '@/components/UI/table';
+} from '@/components/ui/table';
 import {
   ArrowLeft, Save, Plus, Trash2, QrCode, MapPin, Clock, Calendar,
   Route, Building2, Landmark, Image as ImageIcon, Upload, Eye,

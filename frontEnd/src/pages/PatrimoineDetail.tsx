@@ -3,11 +3,11 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/UI/card';
-import { Button } from '@/components/UI/button';
-import { Badge } from '@/components/UI/badge';
-import { Skeleton } from '@/components/UI/skeleton';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/UI/tabs';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   MapPin, Clock, Star, QrCode, ArrowLeft, Landmark, Building2,
   Camera, Calendar, Route, ChevronRight, Download, Share2,
@@ -16,7 +16,7 @@ import {
 import { patrimoineService } from '@/services/patrimoine.service';
 import { useToast } from '@/hooks/use-toast';
 import { getAssetUrl } from '@/helpers/assetUrl';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/UI/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import VisitePlanner from '@/components/patrimoine/VisitePlanner';
 
 // Helper pour traduire les champs multilingues
@@ -220,7 +220,7 @@ const PatrimoineDetail = () => {
               <XCircle className="h-16 w-16 text-destructive mx-auto mb-4" />
               <h2 className="text-2xl font-semibold mb-2">{t('common.error', 'Erreur')}</h2>
               <p className="text-muted-foreground mb-4">{error || 'Site non trouvé'}</p>
-              <Button onClick={() => navigate('/patrimoine')}>
+              <Button onClick={() => navigate('/Patrimoine')}>
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 {t('common.back', 'Retour')}
               </Button>
@@ -239,7 +239,7 @@ const PatrimoineDetail = () => {
       <main className="container py-8">
         {/* Navigation */}
         <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
-          <Link to="/patrimoine" className="hover:text-primary transition-colors">
+          <Link to="/Patrimoine" className="hover:text-primary transition-colors">
             {t('nav.heritage', 'Patrimoine')}
           </Link>
           <ChevronRight className="h-4 w-4" />
@@ -869,7 +869,7 @@ const PatrimoineDetail = () => {
               </CardContent>
             </Card>
             
-            <Button variant="outline" className="w-full" onClick={() => navigate('/patrimoine')}>
+            <Button variant="outline" className="w-full" onClick={() => navigate('/Patrimoine')}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               {t('patrimoine.backToList', 'Retour à la liste')}
             </Button>

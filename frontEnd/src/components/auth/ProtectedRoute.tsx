@@ -3,8 +3,8 @@ import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermissions } from '@/hooks/usePermissions';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/UI/card';
-import { Button } from '@/components/UI/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { AlertCircle, Lock, Clock } from 'lucide-react';import { useTranslation } from "react-i18next";
 
 interface ProtectedRouteProps {
@@ -22,7 +22,7 @@ export function ProtectedRoute({
   requireAdmin = false,
   requireProfessional = false,
   requireValidated = true,
-  redirectTo = '/auth'
+  redirectTo = '/Auth'
 }: ProtectedRouteProps) {
   const location = useLocation();
   const { isAuthenticated, loading } = useAuth();
@@ -42,28 +42,10 @@ export function ProtectedRoute({
     return <Navigate to={redirectTo} state={{ from: location }} replace />;
   }
 
-  // Vérifier les rôles admin
+  // Vérifier les rôles admin — rediriger vers le bon dashboard au lieu d'afficher "Accès refusé"
   if (requireAdmin && !isAdmin) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <Card className="max-w-md w-full">
-          <CardHeader>
-            <CardTitle className="flex items-center text-destructive">
-              <Lock className="h-5 w-5 mr-2" />{t("auth_protectedroute.accs_refus")}
-
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-muted-foreground">{t("auth_protectedroute.cette_page_est")}
-
-            </p>
-            <Button onClick={() => window.history.back()} variant="outline" className="w-full">{t("auth_protectedroute.retour_1")}
-
-            </Button>
-          </CardContent>
-        </Card>
-      </div>);
-
+    const redirectTo = isProfessional ? '/dashboard-pro' : '/';
+    return <Navigate to={redirectTo} replace />;
   }
 
   // Vérifier les rôles professionnels
@@ -85,7 +67,7 @@ export function ProtectedRoute({
               <Button onClick={() => window.history.back()} variant="outline" className="flex-1">{t("auth_protectedroute.retour_1")}
 
               </Button>
-              <Button onClick={() => window.location.href = '/auth'} className="flex-1">{t("auth_protectedroute.sinscrire_comme_pro")}
+              <Button onClick={() => window.location.href = '/Auth'} className="flex-1">{t("auth_protectedroute.sinscrire_comme_pro")}
 
               </Button>
             </div>

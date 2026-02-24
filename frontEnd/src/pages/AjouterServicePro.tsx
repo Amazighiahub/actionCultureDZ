@@ -7,25 +7,25 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/UI/card';
-import { Button } from '@/components/UI/button';
-import { Input } from '@/components/UI/input';
-import { Label } from '@/components/UI/label';
-import { Textarea } from '@/components/UI/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/UI/select';
-import { Checkbox } from '@/components/UI/checkbox';
-import { Alert, AlertDescription } from '@/components/UI/alert';
-import { Badge } from '@/components/UI/badge';
-import { Separator } from '@/components/UI/separator';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 import {
   ArrowLeft, Save, Loader2, AlertCircle, CheckCircle2,
   MapPin, Building2, Utensils, Hotel, Car, Compass, ShoppingBag,
   Phone, Mail, Globe, Clock, DollarSign, Camera, Upload, Search, Plus
 } from 'lucide-react';
-import { RadioGroup, RadioGroupItem } from '@/components/UI/radio-group';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { patrimoineService } from '@/services/patrimoine.service';
 import { useAuth } from '@/hooks/useAuth';
-import { useToast } from '@/components/UI/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 import MultiLangInput from '@/components/MultiLangInput';
 
 // Types de services pour les professionnels
@@ -382,7 +382,7 @@ const AjouterServicePro: React.FC = () => {
               <p className="text-muted-foreground mb-4">
                 {t('service.authRequired', 'Vous devez être connecté en tant que professionnel pour ajouter un service.')}
               </p>
-              <Button onClick={() => navigate('/auth')}>
+              <Button onClick={() => navigate('/Auth')}>
                 {t('common.login', 'Se connecter')}
               </Button>
             </CardContent>

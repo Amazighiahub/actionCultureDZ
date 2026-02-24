@@ -4,8 +4,8 @@
  */
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/UI/button';
-import { Badge } from '@/components/UI/badge';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   Calendar, MapPin, Clock, Users, Heart, Share2,
   Ticket, ExternalLink

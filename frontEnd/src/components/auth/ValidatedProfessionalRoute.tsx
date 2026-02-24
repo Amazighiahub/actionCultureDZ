@@ -2,7 +2,7 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { usePermissions } from '@/hooks/usePermissions';
-import { Alert, AlertDescription } from '@/components/UI/alert';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';import { useTranslation } from "react-i18next";
 
 interface ValidatedProfessionalRouteProps {
@@ -23,7 +23,7 @@ export const ValidatedProfessionalRoute: React.FC<ValidatedProfessionalRouteProp
 
   // Non authentifié
   if (!isAuthenticated) {
-    return <Navigate to="/auth" replace />;
+    return <Navigate to="/Auth" replace />;
   }
 
   // Pas professionnel

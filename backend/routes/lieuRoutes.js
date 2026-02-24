@@ -1,7 +1,7 @@
 // routes/lieuRoutes.js - VERSION i18n
 const express = require('express');
 const router = express.Router();
-const LieuController = require('../controllers/LieuController');
+const LieuController = require('../controllers/lieuController');
 const createAuthMiddleware = require('../middlewares/authMiddleware');
 const validationMiddleware = require('../middlewares/validationMiddleware');
 const { body, param, query } = require('express-validator');

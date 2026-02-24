@@ -3,9 +3,9 @@ const express = require('express');
 const router = express.Router();
 
 const initPatrimoineRoutes = (models) => {
-  const PatrimoineController = require('../controllers/PatrimoineController');
-  const ParcoursIntelligentController = require('../controllers/ParcoursIntelligentController');
-  const LieuController = require('../controllers/LieuController');
+  const PatrimoineController = require('../controllers/patrimoineController');
+  const ParcoursIntelligentController = require('../controllers/parcoursIntelligentController');
+  const LieuController = require('../controllers/lieuController');
   const createAuthMiddleware = require('../middlewares/authMiddleware');
   const validationMiddleware = require('../middlewares/validationMiddleware');
   const cacheMiddleware = require('../middlewares/cacheMiddleware');

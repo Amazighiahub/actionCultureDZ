@@ -11,16 +11,16 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from '@/components/UI/dialog';
-import { Button } from '@/components/UI/button';
-import { Card, CardContent } from '@/components/UI/card';
-import { Badge } from '@/components/UI/badge';
-import { Label } from '@/components/UI/label';
-import { Slider } from '@/components/UI/slider';
-import { Checkbox } from '@/components/UI/checkbox';
-import { RadioGroup, RadioGroupItem } from '@/components/UI/radio-group';
-import { Separator } from '@/components/UI/separator';
-import { ScrollArea } from '@/components/UI/scroll-area';
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
+import { Slider } from '@/components/ui/slider';
+import { Checkbox } from '@/components/ui/checkbox';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Calendar,
   Clock,
@@ -43,7 +43,7 @@ import {
   Star,
   Info,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/Utils';
 
 interface VisitePlannerProps {
   isOpen: boolean;
