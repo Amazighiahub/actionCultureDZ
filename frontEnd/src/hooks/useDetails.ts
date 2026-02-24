@@ -4,7 +4,7 @@
  */
 import { useState, useCallback, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useToast } from '@/components/UI/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useFavoriCheck } from '@/hooks/useFavoris';
 import { httpClient } from '@/services/httpClient';

@@ -4,21 +4,21 @@
  */
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/UI/card';
-import { Button } from '@/components/UI/button';
-import { Input } from '@/components/UI/input';
-import { Label } from '@/components/UI/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/UI/select';
-import { Checkbox } from '@/components/UI/checkbox';
-import { Badge } from '@/components/UI/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/UI/tabs';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Upload, X, Plus, Loader2, Hammer, Tag, DollarSign, Clock, Package,
   ArrowLeft, Save, Edit, Eye, Shield, CheckCircle, AlertCircle
 } from 'lucide-react';
 import MultiLangInput from '@/components/MultiLangInput';
 import FormField from './FormField';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/Utils';
 
 export interface ArtisanatFormData {
   nom: { fr: string; ar: string; en: string; 'tz-ltn'?: string; 'tz-tfng'?: string };

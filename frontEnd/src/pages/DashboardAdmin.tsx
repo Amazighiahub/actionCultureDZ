@@ -10,9 +10,9 @@ import { useTranslation } from 'react-i18next';
 // Composants UI
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/UI/tabs';
-import { Button } from '@/components/UI/button';
-import { Alert, AlertDescription } from '@/components/UI/alert';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 // Composants partagés
 import { LoadingSkeleton } from '@/components/shared';

@@ -210,7 +210,7 @@ class DashboardController {
   /**
    * Statistiques détaillées
    */
-  // Dans votre fichier backend/controllers/DashboardController.js
+  // Dans votre fichier backend/controllers/dashboardController.js
 // Autour de la ligne 208 dans getDetailedStats
 
 // SOLUTION : Nettoyer les données avant de les envoyer
@@ -647,8 +647,9 @@ async generateDetailedStats(period) {
       const { page = 1, limit = 10 } = req.query;
       const offset = (page - 1) * limit;
 
+      const { Op } = require('sequelize');
       const oeuvres = await this.models.Oeuvre.findAndCountAll({
-        where: { statut: 'en_attente' },
+        where: { statut: { [Op.in]: ['en_attente', 'brouillon'] } },
         include: [
           {
             model: this.models.User,
@@ -671,6 +672,8 @@ async generateDetailedStats(period) {
         id_oeuvre: oeuvre.id_oeuvre,
         titre: oeuvre.titre,
         description: oeuvre.description,
+        statut: oeuvre.statut,
+        id_type_oeuvre: oeuvre.id_type_oeuvre,
         type_oeuvre: oeuvre.id_type_oeuvre,
         date_creation: oeuvre.date_creation,
         auteur: oeuvre.Saiseur ? {

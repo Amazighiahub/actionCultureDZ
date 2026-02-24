@@ -4,7 +4,7 @@
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { useToast } from '@/components/UI/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useFavoriCheck } from '@/hooks/useFavoris';
 import { evenementService } from '@/services/evenement.service';

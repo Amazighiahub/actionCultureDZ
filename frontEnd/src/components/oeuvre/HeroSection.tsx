@@ -3,20 +3,20 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent } from '@/components/UI/card';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/UI/dialog';
-import { Button } from '@/components/UI/button';
-import { Badge } from '@/components/UI/badge';
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/UI/popover';
+} from '@/components/ui/popover';
 import {
   ChevronLeft, BookOpen, Film, Music, Palette, FileText,
   Sparkles, Eye, Heart, Share2, Star, Play, MessageCircle,
@@ -29,7 +29,7 @@ import type { MediaExtended } from '@/types/models/media-extended.types';
 import { getMainImage } from '@/types/models/media-extended.types';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { useRTL } from '@/hooks/useRTL';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/Utils';
 
 // ShareButton extracted to module scope to avoid re-creation on every render
 const ShareButton = ({

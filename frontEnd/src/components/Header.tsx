@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Menu, X, MapPin, Calendar, Palette, Hammer, Info, User, LogOut, Settings, Shield, UserCheck, Globe, ChevronDown } from 'lucide-react';
-import { Button } from '@/components/UI/button';
+import { Button } from '@/components/ui/button';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -10,9 +10,9 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/UI/dropdown-menu';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/UI/avatar';
-import { Badge } from '@/components/UI/badge';
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useRTL } from '@/utils/rtl';
@@ -194,10 +194,10 @@ const Header = () => {
   }, [isMenuOpen]);
 
   const navigationItems = [
-    { icon: Calendar, label: t('header.nav.events'), href: '/evenements' },
-    { icon: MapPin, label: t('header.nav.heritage'), href: '/patrimoine' },
-    { icon: Palette, label: t('header.nav.works'), href: '/oeuvres' },
-    { icon: Hammer, label: t('header.nav.crafts'), href: '/artisanat' },
+    { icon: Calendar, label: t('header.nav.events'), href: '/Evenements' },
+    { icon: MapPin, label: t('header.nav.heritage'), href: '/Patrimoine' },
+    { icon: Palette, label: t('header.nav.works'), href: '/Oeuvres' },
+    { icon: Hammer, label: t('header.nav.crafts'), href: '/Artisanat' },
     { icon: Info, label: t('header.nav.about'), href: '/a-propos' },
   ];
 
@@ -413,7 +413,7 @@ const Header = () => {
                 </DropdownMenu>
               ) : (
                 <>
-                  <Link to="/auth" className="hidden sm:block">
+                  <Link to="/Auth" className="hidden sm:block">
                     <Button
                       variant="outline"
                       size="sm"
@@ -424,7 +424,7 @@ const Header = () => {
                     </Button>
                   </Link>
 
-                  <Link to="/auth">
+                  <Link to="/Auth">
                     <Button
                       size="sm"
                       className="bg-gradient-to-r from-stone-700 to-stone-800 hover:from-stone-800 hover:to-stone-900 text-white shadow-sm min-h-[36px] px-3 sm:px-4"
@@ -517,12 +517,12 @@ const Header = () => {
                 </>
               ) : (
                 <div className="flex flex-col sm:flex-row gap-3">
-                  <Link to="/auth" className="flex-1" onClick={() => setIsMenuOpen(false)}>
+                  <Link to="/Auth" className="flex-1" onClick={() => setIsMenuOpen(false)}>
                     <Button variant="outline" className="w-full min-h-[48px] text-base">
                       {t('common.login')}
                     </Button>
                   </Link>
-                  <Link to="/auth" className="flex-1" onClick={() => setIsMenuOpen(false)}>
+                  <Link to="/Auth" className="flex-1" onClick={() => setIsMenuOpen(false)}>
                     <Button className="w-full min-h-[48px] text-base bg-gradient-to-r from-stone-700 to-stone-800 hover:from-stone-800 hover:to-stone-900 text-white">
                       {t('common.signup')}
                     </Button>

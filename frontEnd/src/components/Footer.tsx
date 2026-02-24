@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Separator } from '@/components/UI/separator';
+import { Separator } from '@/components/ui/separator';
 import { MapPin, Phone, Mail, Facebook, Instagram, Youtube, ExternalLink } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useRTL } from '@/utils/rtl';
@@ -15,10 +15,10 @@ const Footer = () => {
     {
       title: t('footer.navigation'),
       links: [
-        { label: t('header.nav.events'), href: '/evenements' },
-        { label: t('header.nav.heritage'), href: '/patrimoine' },
-        { label: t('header.nav.works'), href: '/oeuvres' },
-        { label: t('header.nav.crafts'), href: '/artisanat' },
+        { label: t('header.nav.events'), href: '/Evenements' },
+        { label: t('header.nav.heritage'), href: '/Patrimoine' },
+        { label: t('header.nav.works'), href: '/Oeuvres' },
+        { label: t('header.nav.crafts'), href: '/Artisanat' },
       ]
     },
     {

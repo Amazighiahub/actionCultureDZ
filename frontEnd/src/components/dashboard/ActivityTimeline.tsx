@@ -1,11 +1,11 @@
 // components/dashboard/ActivityTimeline.tsx
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/UI/card';
-import { Badge } from '@/components/UI/badge';
-import { Button } from '@/components/UI/button';
-import { ScrollArea } from '@/components/UI/scroll-area';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/UI/avatar';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   UserPlus,
   FileText,
@@ -21,7 +21,7 @@ import {
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { socketService } from '@/services/socketService';
-import { cn } from '@/lib/utils';import { useTranslation } from "react-i18next";
+import { cn } from '@/lib/Utils';import { useTranslation } from "react-i18next";
 
 interface ActivityItem {
   id: string;

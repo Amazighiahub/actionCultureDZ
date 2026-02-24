@@ -4,11 +4,11 @@
  */
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/UI/card';
-import { Button } from '@/components/UI/button';
-import { Textarea } from '@/components/UI/textarea';
-import { Badge } from '@/components/UI/badge';
-import { Separator } from '@/components/UI/separator';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 import {
   MessageCircle, Star, ThumbsUp, Reply, MoreVertical,
   Send, AlertCircle, User, Clock
@@ -18,12 +18,12 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger
-} from '@/components/UI/dropdown-menu';
+} from '@/components/ui/dropdown-menu';
 import { LazyImage, EmptyState } from '@/components/shared';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocalizedDate } from '@/hooks/useLocalizedDate';
 import { useTranslateData } from '@/hooks/useTranslateData';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/Utils';
 
 interface Comment {
   id_commentaire?: number;
@@ -389,7 +389,7 @@ const EventComments: React.FC<EventCommentsProps> = ({
               {t('comments.loginRequired', 'Connectez-vous pour laisser un avis')}
             </p>
             <Button asChild>
-              <a href="/auth">{t('auth.login.submit', 'Se connecter')}</a>
+              <a href="/Auth">{t('auth.login.submit', 'Se connecter')}</a>
             </Button>
           </CardContent>
         </Card>

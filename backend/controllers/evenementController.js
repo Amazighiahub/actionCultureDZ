@@ -8,7 +8,7 @@ const smsService = require('../services/smsService');
 const { translate, translateDeep, createMultiLang, mergeTranslations } = require('../helpers/i18n');
 
 // ✅ OPTIMISATION: Import de l'utilitaire de recherche multilingue centralisé
-const { buildMultiLangSearch: buildMultiLangSearchUtil } = require('../utils/MultiLangSearchBuilder');
+const { buildMultiLangSearch: buildMultiLangSearchUtil } = require('../utils/multiLangSearchBuilder');
 
 const createEvenementController = (models) => {
   const {

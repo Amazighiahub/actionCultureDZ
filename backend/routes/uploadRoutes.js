@@ -4,7 +4,7 @@ const router = express.Router();
 const uploadService = require('../services/uploadService');
 const auditMiddleware = require('../middlewares/auditMiddleware');
 const rateLimitMiddleware = require('../middlewares/rateLimitMiddleware');
-const FileValidator = require('../utils/FileValidator');
+const FileValidator = require('../utils/fileValidator');
 
 const initUploadRoutes = (models, authMiddleware) => {
   const UploadController = require('../controllers/uploadController');

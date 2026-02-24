@@ -6,7 +6,7 @@ const QRCode = require('qrcode');
 const { translate, translateDeep, createMultiLang, mergeTranslations } = require('../helpers/i18n');
 
 // ✅ OPTIMISATION: Import de l'utilitaire de recherche multilingue centralisé
-const { buildMultiLangSearch } = require('../utils/MultiLangSearchBuilder');
+const { buildMultiLangSearch } = require('../utils/multiLangSearchBuilder');
 
 class PatrimoineController {
   constructor(models) {

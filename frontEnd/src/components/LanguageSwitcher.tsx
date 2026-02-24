@@ -8,9 +8,9 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
   DropdownMenuLabel,
-} from '@/components/UI/dropdown-menu';
-import { Button } from '@/components/UI/button';
-import { cn } from '@/lib/utils';
+} from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/Utils';
 
 interface Language {
   code: string;

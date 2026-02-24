@@ -4,7 +4,7 @@
  */
 
 const express = require('express');
-const userController = require('../../controllers/v2/UserControllerV2');
+const userController = require('../../controllers/v2/userControllerV2');
 
 const initUserRoutesV2 = (models, authMiddleware) => {
   const router = express.Router();

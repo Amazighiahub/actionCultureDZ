@@ -8,7 +8,7 @@ const crypto = require('crypto');
 const { translate, translateDeep, createMultiLang, mergeTranslations } = require('../helpers/i18n');
 
 // ✅ OPTIMISATION: Import de l'utilitaire de recherche multilingue centralisé
-const { buildMultiLangSearch } = require('../utils/MultiLangSearchBuilder');
+const { buildMultiLangSearch } = require('../utils/multiLangSearchBuilder');
 
 class OeuvreController {
   constructor(models) {
@@ -387,76 +387,81 @@ class OeuvreController {
       }, { transaction });
 
       // 2b. Créer l'entrée dans la table spécifique selon le type d'œuvre
-      if (parsedDetailsSpecifiques && Object.keys(parsedDetailsSpecifiques).length > 0) {
+      // Toujours créer l'enregistrement spécifique basé sur id_type_oeuvre (même si details_specifiques est vide)
+      {
         const typeOeuvre = await this.models.TypeOeuvre.findByPk(id_type_oeuvre);
-        const typeName = typeOeuvre?.nom_type;
+        const rawTypeName = typeOeuvre?.nom_type;
+        const typeName = typeof rawTypeName === 'object' && rawTypeName !== null
+          ? (rawTypeName.fr || rawTypeName.en || Object.values(rawTypeName).find(v => v) || '')
+          : rawTypeName;
 
         let createdSpecific = null;
+        const ds = parsedDetailsSpecifiques || {};
 
-        console.log('📝 Création détails spécifiques pour:', typeName, parsedDetailsSpecifiques);
+        console.log('📝 Création détails spécifiques pour:', typeName, 'details:', JSON.stringify(ds));
 
         try {
           switch (typeName) {
             case 'Livre':
-              if (parsedDetailsSpecifiques.livre && this.models.Livre) {
+              if (this.models.Livre) {
                 createdSpecific = await this.models.Livre.create({
                   id_oeuvre: oeuvre.id_oeuvre,
-                  ...parsedDetailsSpecifiques.livre
+                  ...(ds.livre || {})
                 }, { transaction });
               }
               break;
 
             case 'Film':
-              if (parsedDetailsSpecifiques.film && this.models.Film) {
+              if (this.models.Film) {
                 createdSpecific = await this.models.Film.create({
                   id_oeuvre: oeuvre.id_oeuvre,
-                  ...parsedDetailsSpecifiques.film
+                  ...(ds.film || {})
                 }, { transaction });
               }
               break;
 
             case 'Album Musical':
-              if (parsedDetailsSpecifiques.album_musical && this.models.AlbumMusical) {
+              if (this.models.AlbumMusical) {
                 createdSpecific = await this.models.AlbumMusical.create({
                   id_oeuvre: oeuvre.id_oeuvre,
-                  ...parsedDetailsSpecifiques.album_musical
+                  ...(ds.album_musical || {})
                 }, { transaction });
               }
               break;
 
             case 'Article':
-              if (parsedDetailsSpecifiques.article && this.models.Article) {
+              if (this.models.Article) {
                 createdSpecific = await this.models.Article.create({
                   id_oeuvre: oeuvre.id_oeuvre,
-                  ...parsedDetailsSpecifiques.article
+                  ...(ds.article || {})
                 }, { transaction });
               }
               break;
 
             case 'Article Scientifique':
-              if (parsedDetailsSpecifiques.article_scientifique && this.models.ArticleScientifique) {
+              if (this.models.ArticleScientifique) {
                 createdSpecific = await this.models.ArticleScientifique.create({
                   id_oeuvre: oeuvre.id_oeuvre,
-                  ...parsedDetailsSpecifiques.article_scientifique
+                  ...(ds.article_scientifique || {})
                 }, { transaction });
               }
               break;
 
             case 'Artisanat':
-              if (parsedDetailsSpecifiques.artisanat && this.models.Artisanat) {
+              if (this.models.Artisanat) {
                 createdSpecific = await this.models.Artisanat.create({
                   id_oeuvre: oeuvre.id_oeuvre,
-                  ...parsedDetailsSpecifiques.artisanat
+                  ...(ds.artisanat || {})
                 }, { transaction });
               }
               break;
 
             case 'Œuvre d\'Art':
             case 'Oeuvre d\'Art':
-              if (parsedDetailsSpecifiques.oeuvre_art && this.models.OeuvreArt) {
+              if (this.models.OeuvreArt) {
                 createdSpecific = await this.models.OeuvreArt.create({
                   id_oeuvre: oeuvre.id_oeuvre,
-                  ...parsedDetailsSpecifiques.oeuvre_art
+                  ...(ds.oeuvre_art || {})
                 }, { transaction });
               }
               break;
@@ -466,6 +471,7 @@ class OeuvreController {
           }
 
           if (createdSpecific) {
+            console.log('✅ Détails spécifiques créés:', typeName, 'ID:', createdSpecific.id_article_scientifique || createdSpecific.id_article || createdSpecific.id);
             req.createdSpecific = {
               typeName,
               record: createdSpecific
@@ -473,7 +479,6 @@ class OeuvreController {
           }
         } catch (detailsError) {
           console.error('⚠️ Erreur création détails spécifiques:', detailsError.message);
-          // On continue même si les détails spécifiques échouent
         }
       }
 
@@ -653,16 +658,17 @@ class OeuvreController {
           const meta = mediaMetadata[i] || {};
           const isPrincipal = meta.is_Principale || meta.is_principal || (i === 0);
 
-          // Déterminer le type de média
+          // Déterminer le type de média et le sous-dossier correspondant
           let typeMedia = 'document';
-          if (file.mimetype.startsWith('image/')) typeMedia = 'image';
-          else if (file.mimetype.startsWith('video/')) typeMedia = 'video';
-          else if (file.mimetype.startsWith('audio/')) typeMedia = 'audio';
+          let subDir = 'documents';
+          if (file.mimetype.startsWith('image/')) { typeMedia = 'image'; subDir = 'images'; }
+          else if (file.mimetype.startsWith('video/')) { typeMedia = 'video'; subDir = 'videos'; }
+          else if (file.mimetype.startsWith('audio/')) { typeMedia = 'audio'; subDir = 'audios'; }
 
           await this.models.Media.create({
             id_oeuvre: oeuvre.id_oeuvre,
             type_media: typeMedia,
-            url: `/uploads/oeuvres/${file.filename}`,
+            url: `/uploads/oeuvres/${subDir}/${file.filename}`,
             titre: file.originalname,
             visible_public: true,
             is_Principale: isPrincipal,
@@ -1262,10 +1268,11 @@ class OeuvreController {
 
       const medias = [];
       for (const file of files) {
+        const subDir = file.mimetype.startsWith('image/') ? 'images' : file.mimetype.startsWith('video/') ? 'videos' : file.mimetype.startsWith('audio/') ? 'audios' : 'documents';
         const media = await this.models.Media.create({
           id_oeuvre: id,
-          type_media: file.mimetype.startsWith('image/') ? 'image' : 'document',
-          url: `/uploads/oeuvres/${file.filename}`,
+          type_media: file.mimetype.startsWith('image/') ? 'image' : file.mimetype.startsWith('video/') ? 'video' : file.mimetype.startsWith('audio/') ? 'audio' : 'document',
+          url: `/uploads/oeuvres/${subDir}/${file.filename}`,
           titre: file.originalname,
           visible_public: true
         });

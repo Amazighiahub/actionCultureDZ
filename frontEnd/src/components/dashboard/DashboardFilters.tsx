@@ -8,14 +8,14 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger } from
-'@/components/UI/sheet';
-import { Button } from '@/components/UI/button';
-import { Badge } from '@/components/UI/badge';
-import { Input } from '@/components/UI/input';
-import { Label } from '@/components/UI/label';
-import { Checkbox } from '@/components/UI/checkbox';
-import { Calendar } from '@/components/UI/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/UI/popover';
+'@/components/ui/sheet';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Filter,
   X,

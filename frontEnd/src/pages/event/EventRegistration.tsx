@@ -6,16 +6,16 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/UI/card';
-import { Button } from '@/components/UI/button';
-import { Badge } from '@/components/UI/badge';
-import { Progress } from '@/components/UI/progress';
-import { Input } from '@/components/UI/input';
-import { Label } from '@/components/UI/label';
-import { Textarea } from '@/components/UI/textarea';
-import { Separator } from '@/components/UI/separator';
-import { Checkbox } from '@/components/UI/checkbox';
-import { ScrollArea } from '@/components/UI/scroll-area';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Separator } from '@/components/ui/separator';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Dialog,
   DialogContent,
@@ -24,7 +24,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger
-} from '@/components/UI/dialog';
+} from '@/components/ui/dialog';
 import {
   Calendar, Clock, Users, Ticket, CheckCircle, XCircle,
   AlertCircle, Loader2, UserPlus, UserMinus,
@@ -37,7 +37,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useLocalizedDate } from '@/hooks/useLocalizedDate';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { useTranslateData } from '@/hooks/useTranslateData';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/Utils';
 import type { Evenement } from '@/types/models/evenement.types';
 
 interface ConfigSoumission {
@@ -452,7 +452,7 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
 
             {/* Bouton connexion */}
             <Button asChild className="w-full" variant="outline">
-              <Link to="/auth">
+              <Link to="/Auth">
                 <UserPlus className="h-4 w-4 mr-2" />
                 {t('event.registration.loginToRegister', 'Se connecter pour s\'inscrire')}
               </Link>

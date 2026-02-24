@@ -4,8 +4,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent } from '@/components/UI/card';
-import { Button } from '@/components/UI/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Star, Palette, Calendar } from 'lucide-react';
 import { useRTL } from '@/hooks/useRTL';
 import { authService } from '@/services/auth.service';
@@ -54,7 +54,7 @@ const EnhancedCTASection: React.FC = () => {
                     if (isAuthenticated) {
                       navigate('/ajouter-oeuvre');
                     } else {
-                      navigate('/auth');
+                      navigate('/Auth');
                     }
                   }}
                 >
@@ -69,7 +69,7 @@ const EnhancedCTASection: React.FC = () => {
                     if (isAuthenticated) {
                       navigate('/ajouter-evenement');
                     } else {
-                      navigate('/auth');
+                      navigate('/Auth');
                     }
                   }}
                 >

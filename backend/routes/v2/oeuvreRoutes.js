@@ -4,7 +4,7 @@
  */
 
 const express = require('express');
-const oeuvreController = require('../../controllers/v2/OeuvreControllerV2');
+const oeuvreController = require('../../controllers/v2/oeuvreControllerV2');
 
 const initOeuvreRoutesV2 = (models, authMiddleware) => {
   const router = express.Router();

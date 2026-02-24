@@ -6,11 +6,11 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Button } from '@/components/UI/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/UI/card';
-import { Badge } from '@/components/UI/badge';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/UI/avatar';
-import { Skeleton } from '@/components/UI/skeleton';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   ArrowLeft, MapPin, Phone, Mail, Heart,
   Share2, Ruler, Scale, Palette, Hammer, Calendar,
@@ -19,8 +19,8 @@ import {
 
 import { artisanatService } from '@/services/artisanat.service';
 import { useTranslateData } from '@/hooks/useTranslateData';
-import { useToast } from '@/components/UI/use-toast';
-import { cn } from '@/lib/utils';
+import { useToast } from '@/components/ui/use-toast';
+import { cn } from '@/lib/Utils';
 import { getAssetUrl } from '@/helpers/assetUrl';
 
 interface ArtisanatData {

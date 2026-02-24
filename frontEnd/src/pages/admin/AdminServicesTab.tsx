@@ -3,23 +3,23 @@
  */
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/UI/card';
-import { Button } from '@/components/UI/button';
-import { Input } from '@/components/UI/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue
-} from '@/components/UI/select';
+} from '@/components/ui/select';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger
-} from '@/components/UI/dropdown-menu';
+} from '@/components/ui/dropdown-menu';
 import {
   Search, MoreVertical, Edit, Trash2, Eye, RefreshCw, 
   Package, Star, MapPin, Phone

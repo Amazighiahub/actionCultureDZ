@@ -1,6 +1,6 @@
 // controllers/UserController.js - VERSION i18n CORRIGÉE
 const emailService = require('../services/emailService');
-const EmailVerification = require('../models/misc/EmailVerification')
+const EmailVerification = require('../models/misc/emailVerification')
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');

@@ -202,7 +202,7 @@ class AdminService {
   }
 
   async getOeuvres(params?: OeuvreFilters): Promise<ApiResponse<PaginatedResponse<any>>> {
-    return httpClient.getPaginated<any>('/admin/oeuvres', params);
+    return httpClient.getPaginated<any>('/admin/Oeuvres', params);
   }
 
   async getOeuvreDetails(oeuvreId: number): Promise<ApiResponse<any>> {
@@ -219,7 +219,7 @@ class AdminService {
 
   // Événements
   async getEvenements(params?: EvenementFilters): Promise<ApiResponse<PaginatedResponse<any>>> {
-    return httpClient.getPaginated<any>('/admin/evenements', params);
+    return httpClient.getPaginated<any>('/admin/Evenements', params);
   }
 
   async getEvenementDetails(evenementId: number): Promise<ApiResponse<any>> {
@@ -236,7 +236,7 @@ class AdminService {
 
   // Patrimoine
   async getPatrimoineItems(params?: PatrimoineFilters): Promise<ApiResponse<PaginatedResponse<any>>> {
-    return httpClient.getPaginated<any>('/admin/patrimoine', params);
+    return httpClient.getPaginated<any>('/admin/Patrimoine', params);
   }
 
   async updatePatrimoine(patrimoineId: number, data: Partial<any>): Promise<ApiResponse<any>> {
@@ -338,9 +338,9 @@ class AdminService {
   }
 
   async validateOeuvre(oeuvreId: number, validated: boolean, comment?: string): Promise<ApiResponse<Oeuvre>> {
-    return httpClient.post<Oeuvre>(API_ENDPOINTS.dashboard.validateOeuvre(oeuvreId), {
-      approved: validated,
-      comment
+    return httpClient.patch<Oeuvre>(API_ENDPOINTS.dashboard.validateOeuvre(oeuvreId), {
+      valide: validated,
+      raison_rejet: comment
     });
   }
 

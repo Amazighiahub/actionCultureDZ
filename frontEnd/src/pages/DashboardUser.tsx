@@ -1,12 +1,12 @@
 import React from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Card } from '@/components/UI/card';
-import { Button } from '@/components/UI/button';
-import { Badge } from '@/components/UI/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/UI/tabs';
-import { Alert, AlertDescription, AlertTitle } from '@/components/UI/alert';
-import { Skeleton } from '@/components/UI/skeleton';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   User,
   Heart,
@@ -115,7 +115,7 @@ const DashboardUser = () => {
             <AlertDescription className="text-blue-700">{t("dashboarduser.tant_que_visiteur")}
 
 
-              <Link to="/auth" className="text-blue-800 underline ml-1 font-medium">{t("dashboarduser.inscrivezvous_comme_professionnel")}
+              <Link to="/Auth" className="text-blue-800 underline ml-1 font-medium">{t("dashboarduser.inscrivezvous_comme_professionnel")}
 
               </Link>.
             </AlertDescription>
@@ -241,7 +241,7 @@ const DashboardUser = () => {
                 <Card className="p-8 text-center">
                   <Palette className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                   <p className="text-muted-foreground">{t("dashboarduser.aucune_uvre_favorite")}</p>
-                  <Link to="/oeuvres">
+                  <Link to="/Oeuvres">
                     <Button variant="outline" className="mt-4">{t("dashboarduser.explorer_les_uvres")}</Button>
                   </Link>
                 </Card>
@@ -293,7 +293,7 @@ const DashboardUser = () => {
                 <Card className="p-8 text-center">
                   <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                   <p className="text-muted-foreground">{t("dashboarduser.aucun_vnement_suivi")}</p>
-                  <Link to="/evenements">
+                  <Link to="/Evenements">
                     <Button variant="outline" className="mt-4">{t("dashboarduser.dcouvrir_les_vnements")}</Button>
                   </Link>
                 </Card>
@@ -344,7 +344,7 @@ const DashboardUser = () => {
                 <Card className="p-8 text-center">
                   <MapPin className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                   <p className="text-muted-foreground">{t("dashboarduser.aucun_site_favori")}</p>
-                  <Link to="/patrimoine">
+                  <Link to="/Patrimoine">
                     <Button variant="outline" className="mt-4">{t("dashboarduser.explorer_patrimoine")}</Button>
                   </Link>
                 </Card>
@@ -427,7 +427,7 @@ const DashboardUser = () => {
                   <p className="text-sm text-muted-foreground mb-2">{t("dashboarduser.vous_souhaitez_crer")}
 
                   </p>
-                  <Link to="/auth">
+                  <Link to="/Auth">
                     <Button variant="outline">{t("dashboarduser.devenir_professionnel")}
 
                     </Button>

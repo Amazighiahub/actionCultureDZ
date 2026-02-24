@@ -1,4 +1,4 @@
-const AppError = require('../utils/AppError');
+const AppError = require('../utils/appError');
 const logger = require('../utils/logger');
 
 const errorMiddleware = {

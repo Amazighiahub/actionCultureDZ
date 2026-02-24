@@ -2,7 +2,7 @@
  * Oeuvre Services - Point d'entrée
  */
 
-const OeuvreService = require('./OeuvreService');
+const OeuvreService = require('./oeuvreService');
 
 module.exports = {
   OeuvreService

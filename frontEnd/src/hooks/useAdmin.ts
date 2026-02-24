@@ -4,7 +4,7 @@
  */
 import { useState, useCallback, useEffect } from 'react';
 import { useQuery, useMutation as useReactMutation, useQueryClient } from '@tanstack/react-query';
-import { useToast } from '@/components/UI/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { httpClient } from '@/services/httpClient';
@@ -462,7 +462,7 @@ export function useAdminOeuvres(options: UseAdminOeuvresOptions = {}) {
       if (statut && statut !== 'tous') params.statut = statut;
       if (type && type !== 'tous') params.id_type_oeuvre = type;
 
-      const response = await httpClient.get<any>('/admin/oeuvres', params);
+      const response = await httpClient.get<any>('/admin/Oeuvres', params);
       if (!response.success) throw new Error(response.error);
       return response.data;
     },
@@ -581,7 +581,7 @@ export function useAdminEvenements(options: UseAdminEvenementsOptions = {}) {
       if (debouncedSearch) params.search = debouncedSearch;
       if (statut && statut !== 'tous') params.statut = statut;
 
-      const response = await httpClient.get<any>('/admin/evenements', params);
+      const response = await httpClient.get<any>('/admin/Evenements', params);
       if (!response.success) throw new Error(response.error);
       return response.data;
     },

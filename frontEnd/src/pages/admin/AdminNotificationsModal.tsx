@@ -10,26 +10,26 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle
-} from '@/components/UI/dialog';
-import { Button } from '@/components/UI/button';
-import { Input } from '@/components/UI/input';
-import { Label } from '@/components/UI/label';
-import { Textarea } from '@/components/UI/textarea';
-import { RadioGroup, RadioGroupItem } from '@/components/UI/radio-group';
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue
-} from '@/components/UI/select';
-import { Checkbox } from '@/components/UI/checkbox';
-import { Alert, AlertDescription } from '@/components/UI/alert';
+} from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   Bell, Send, Users, User, AlertTriangle, Info,
   CheckCircle, Loader2
 } from 'lucide-react';
-import { useToast } from '@/components/UI/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 
 interface AdminNotificationsModalProps {
   isOpen: boolean;

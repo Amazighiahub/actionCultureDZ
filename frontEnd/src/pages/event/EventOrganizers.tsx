@@ -4,16 +4,16 @@
  */
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/UI/card';
-import { Badge } from '@/components/UI/badge';
-import { Button } from '@/components/UI/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Users, Building2, Mail, Phone, Globe, ExternalLink,
   Award, Star, MapPin
 } from 'lucide-react';
 import { LazyImage, EmptyState } from '@/components/shared';
 import { useTranslateData } from '@/hooks/useTranslateData';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/Utils';
 import type { Organisation } from '@/types/models/organisation.types';
 import type { User } from '@/types/models/user.types';
 

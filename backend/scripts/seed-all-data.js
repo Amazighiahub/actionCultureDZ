@@ -30,46 +30,46 @@ async function loadModels() {
   console.log('📦 Chargement des modèles...');
   
   // Géographie
-  models.Wilaya = require('../models/geography/Wilaya')(sequelize);
-  models.Daira = require('../models/geography/Daira')(sequelize);
-  models.Commune = require('../models/geography/Commune')(sequelize);
+  models.Wilaya = require('../models/geography/wilaya')(sequelize);
+  models.Daira = require('../models/geography/daira')(sequelize);
+  models.Commune = require('../models/geography/commune')(sequelize);
   
   // Users
-  models.Role = require('../models/users/Role')(sequelize);
-  models.User = require('../models/users/User')(sequelize);
-  models.UserRole = require('../models/users/UserRole')(sequelize);
+  models.Role = require('../models/users/role')(sequelize);
+  models.User = require('../models/users/user')(sequelize);
+  models.UserRole = require('../models/users/userRole')(sequelize);
   
   // Classifications
-  models.TypeUser = require('../models/classifications/TypeUser')(sequelize);
-  models.TypeOeuvre = require('../models/classifications/TypeOeuvre')(sequelize);
-  models.Langue = require('../models/classifications/Langue')(sequelize);
-  models.Genre = require('../models/classifications/Genre')(sequelize);
-  models.Categorie = require('../models/classifications/Categorie')(sequelize);
-  models.Materiau = require('../models/classifications/Materiau')(sequelize);
-  models.Technique = require('../models/classifications/Technique')(sequelize);
-  models.TagMotCle = require('../models/classifications/TagMotCle')(sequelize);
+  models.TypeUser = require('../models/classifications/typeUser')(sequelize);
+  models.TypeOeuvre = require('../models/classifications/typeOeuvre')(sequelize);
+  models.Langue = require('../models/classifications/langue')(sequelize);
+  models.Genre = require('../models/classifications/genre')(sequelize);
+  models.Categorie = require('../models/classifications/categorie')(sequelize);
+  models.Materiau = require('../models/classifications/materiau')(sequelize);
+  models.Technique = require('../models/classifications/technique')(sequelize);
+  models.TagMotCle = require('../models/classifications/tagMotCle')(sequelize);
   
   // Lieux & Organisations
-  models.Lieu = require('../models/places/Lieu')(sequelize);
-  models.TypeOrganisation = require('../models/organisations/TypeOrganisation')(sequelize);
-  models.Organisation = require('../models/organisations/Organisation')(sequelize);
-  models.Editeur = require('../models/organisations/Editeur')(sequelize);
+  models.Lieu = require('../models/places/lieu')(sequelize);
+  models.TypeOrganisation = require('../models/organisations/typeOrganisation')(sequelize);
+  models.Organisation = require('../models/organisations/organisation')(sequelize);
+  models.Editeur = require('../models/organisations/editeur')(sequelize);
   
   // Événements
-  models.TypeEvenement = require('../models/events/TypeEvenement')(sequelize);
-  models.Evenement = require('../models/events/Evenement')(sequelize);
-  models.Programme = require('../models/events/Programme')(sequelize);
+  models.TypeEvenement = require('../models/events/typeEvenement')(sequelize);
+  models.Evenement = require('../models/events/evenement')(sequelize);
+  models.Programme = require('../models/events/programme')(sequelize);
   
   // Œuvres
-  models.Oeuvre = require('../models/oeuvres/Oeuvre')(sequelize);
-  models.Livre = require('../models/oeuvres/Livre')(sequelize);
-  models.Film = require('../models/oeuvres/Film')(sequelize);
-  models.AlbumMusical = require('../models/oeuvres/AlbumMusical')(sequelize);
-  models.Artisanat = require('../models/oeuvres/Artisanat')(sequelize);
+  models.Oeuvre = require('../models/oeuvres/oeuvre')(sequelize);
+  models.Livre = require('../models/oeuvres/livre')(sequelize);
+  models.Film = require('../models/oeuvres/film')(sequelize);
+  models.AlbumMusical = require('../models/oeuvres/albumMusical')(sequelize);
+  models.Artisanat = require('../models/oeuvres/artisanat')(sequelize);
   
   // Associations
-  models.EvenementUser = require('../models/associations/EvenementUser')(sequelize);
-  models.ProgrammeIntervenant = require('../models/associations/ProgrammeIntervenant')(sequelize);
+  models.EvenementUser = require('../models/associations/evenementUser')(sequelize);
+  models.ProgrammeIntervenant = require('../models/associations/programmeIntervenant')(sequelize);
   
   console.log(`✅ ${Object.keys(models).length} modèles chargés\n`);
   return models;

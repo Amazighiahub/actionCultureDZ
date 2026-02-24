@@ -1,15 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/UI/card';
-import { Button } from '@/components/UI/button';
-import { Input } from '@/components/UI/input';
-import { Label } from '@/components/UI/label';
-import { Textarea } from '@/components/UI/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/UI/select';
-import { Alert, AlertDescription } from '@/components/UI/alert';
-import { Badge } from '@/components/UI/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/UI/tabs';
-import { Checkbox } from '@/components/UI/checkbox';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   ArrowLeft, Save, Eye, Plus, Trash2, MoveUp, MoveDown,
   Copy, Type, Heading1, Heading2, Image, Quote, List,
@@ -479,6 +479,68 @@ const BLOCK_TEMPLATES: BlockTemplate[] = [
 // Mapping des icônes
 const BLOCK_ICONS: Record<string, any> = {
   Type, Heading1, Image, Film, Quote, List, Grid3X3, Code, Minus, Link2
+};
+
+// Composant pour insérer un bloc entre deux blocs existants
+const InsertBlockBar: React.FC<{
+  insertAt: number;
+  onInsert: (type: BlockType | string, insertAt?: number) => void;
+}> = ({ insertAt, onInsert }) => {
+  const [expanded, setExpanded] = React.useState(false);
+
+  if (!expanded) {
+    return (
+      <div className="flex items-center gap-2 my-2">
+        <div className="flex-1 border-t border-dashed border-muted-foreground/25" />
+        <button
+          type="button"
+          onClick={() => setExpanded(true)}
+          className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border border-dashed border-primary/40 text-primary/70 bg-primary/5 hover:bg-primary/10 hover:border-primary hover:text-primary transition-all"
+        >
+          <Plus className="h-3.5 w-3.5" />
+          Insérer ici
+        </button>
+        <div className="flex-1 border-t border-dashed border-muted-foreground/25" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="my-2 p-3 rounded-lg bg-muted/60 border-2 border-dashed border-primary/40">
+      <p className="text-xs text-muted-foreground mb-2 font-medium">Choisir le type de bloc à insérer :</p>
+      <div className="flex flex-wrap gap-2">
+        {BLOCK_TEMPLATES.map((template) => {
+          const Icon = BLOCK_ICONS[template.icon];
+          return (
+            <Button
+              key={template.id}
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8 px-3 text-xs gap-1.5"
+              onClick={() => {
+                onInsert(template.type_block, insertAt);
+                setExpanded(false);
+              }}
+            >
+              {Icon && <Icon className="h-3.5 w-3.5" />}
+              {template.name}
+            </Button>
+          );
+        })}
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-8 px-3 text-xs text-muted-foreground"
+          onClick={() => setExpanded(false)}
+        >
+          <X className="h-3.5 w-3.5 mr-1" />
+          Annuler
+        </Button>
+      </div>
+    </div>
+  );
 };
 
 // Composant pour un bloc d'article
@@ -1160,12 +1222,20 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({
   };
 
   // Gestion des blocs avec les types importés
-  const addBlock = (type: BlockType | string) => {
+  const addBlock = (type: BlockType | string, insertAt?: number) => {
     const newBlock = createDefaultBlock(type as BlockType);
-    newBlock.ordre = blocks.length;
     newBlock.visible = true;
     (newBlock as any)._uid = generateBlockUid();
-    setBlocks([...blocks, newBlock]);
+    
+    let newBlocks: ArticleBlock[];
+    if (insertAt !== undefined && insertAt >= 0 && insertAt <= blocks.length) {
+      newBlocks = [...blocks.slice(0, insertAt), newBlock, ...blocks.slice(insertAt)];
+    } else {
+      newBlocks = [...blocks, newBlock];
+    }
+    // Recalculer l'ordre
+    newBlocks.forEach((b, idx) => { b.ordre = idx; });
+    setBlocks(newBlocks);
   };
 
   const updateBlock = (index: number, updates: Partial<ArticleBlock>) => {
@@ -1229,7 +1299,7 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({
             <img
             src={getAssetUrl(block.media.url)}
             alt={block.metadata?.caption || 'Image'}
-            className={block.metadata?.layout || 'full-width'} />
+            className="rounded-lg max-w-full max-h-[600px] object-contain mx-auto" />
           
             {block.metadata?.caption &&
           <figcaption className="image-caption">
@@ -1630,30 +1700,34 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({
                   <CardTitle>{t("article_articleeditor.contenu_larticle")}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {blocks.length === 0 ?
+                  {blocks.length === 0 &&
                   <div className="text-center py-8 text-muted-foreground">
                       <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
                       <p>{t("article_articleeditor.aucun_contenu_pour")}</p>
                       <p className="text-sm">{t("article_articleeditor.ajoutez_des_blocs")}</p>
-                    </div> :
-
-                  <div className="space-y-3">
-                      {blocks.map((block, index) =>
-                    <ArticleBlockEditor
-                      key={(block as any)._uid || `block-${block.id_block || index}-${blocks.length}`}
-                      block={block}
-                      index={index}
-                      onUpdate={updateBlock}
-                      onDelete={deleteBlock}
-                      onMoveUp={() => moveBlock(index, 'up')}
-                      onMoveDown={() => moveBlock(index, 'down')}
-                      onDuplicate={() => duplicateBlock(index)}
-                      canMoveUp={index > 0}
-                      canMoveDown={index < blocks.length - 1} />
-
-                    )}
                     </div>
                   }
+
+                  <div className="space-y-1">
+                    {/* Bouton d'insertion avant le premier bloc */}
+                    {blocks.length > 0 && <InsertBlockBar insertAt={0} onInsert={addBlock} />}
+                    {blocks.map((block, index) =>
+                      <React.Fragment key={(block as any)._uid || `block-${block.id_block || index}-${blocks.length}`}>
+                        <ArticleBlockEditor
+                          block={block}
+                          index={index}
+                          onUpdate={updateBlock}
+                          onDelete={deleteBlock}
+                          onMoveUp={() => moveBlock(index, 'up')}
+                          onMoveDown={() => moveBlock(index, 'down')}
+                          onDuplicate={() => duplicateBlock(index)}
+                          canMoveUp={index > 0}
+                          canMoveDown={index < blocks.length - 1} />
+                        {/* Bouton d'insertion après chaque bloc */}
+                        <InsertBlockBar insertAt={index + 1} onInsert={addBlock} />
+                      </React.Fragment>
+                    )}
+                  </div>
                   
                   {/* Boutons d'ajout de blocs */}
                   <div className="pt-4 border-t">

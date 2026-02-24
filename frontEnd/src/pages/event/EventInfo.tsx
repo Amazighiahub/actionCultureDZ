@@ -4,10 +4,10 @@
  */
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/UI/card';
-import { Badge } from '@/components/UI/badge';
-import { Separator } from '@/components/UI/separator';
-import { Button } from '@/components/UI/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { Button } from '@/components/ui/button';
 import {
   MapPin, Clock, Calendar, Users, Ticket, Phone, Mail,
   Globe, Accessibility, Baby, Award, CheckCircle, AlertCircle,

@@ -3,14 +3,14 @@
  */
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/UI/button';
+import { Button } from '@/components/ui/button';
 import {
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
   ChevronsRight
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/Utils';
 
 interface PaginationProps {
   currentPage: number;

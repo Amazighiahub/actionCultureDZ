@@ -8,18 +8,18 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle } from
-'@/components/UI/dialog';
-import { Button } from '@/components/UI/button';
-import { Input } from '@/components/UI/input';
-import { Label } from '@/components/UI/label';
-import { Alert, AlertDescription } from '@/components/UI/alert';
+'@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue } from
-'@/components/UI/select';
+'@/components/ui/select';
 import { Loader2, Building2, Globe, AlertCircle } from 'lucide-react';
 import { metadataService } from '@/services/metadata.service';
 import type { Editeur } from '@/types/models/references.types';import { useTranslation } from "react-i18next";

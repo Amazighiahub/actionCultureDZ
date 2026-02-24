@@ -16,16 +16,16 @@ console.log('📦 Chargement des modèles...\n');
 
 try {
   // Modèles de base
-  models.Wilaya = require('../models/geography/Wilaya')(sequelize);
-  models.Role = require('../models/users/Role')(sequelize);
-  models.User = require('../models/users/User')(sequelize);
-  models.UserRole = require('../models/users/UserRole')(sequelize);
-  models.TypeUser = require('../models/classifications/TypeUser')(sequelize);
-  models.Evenement = require('../models/events/Evenement')(sequelize);
-  models.TypeEvenement = require('../models/events/TypeEvenement')(sequelize);
-  models.Lieu = require('../models/places/Lieu')(sequelize);
-  models.Organisation = require('../models/organisations/Organisation')(sequelize);
-  models.TypeOrganisation = require('../models/organisations/TypeOrganisation')(sequelize);
+  models.Wilaya = require('../models/geography/wilaya')(sequelize);
+  models.Role = require('../models/users/role')(sequelize);
+  models.User = require('../models/users/user')(sequelize);
+  models.UserRole = require('../models/users/userRole')(sequelize);
+  models.TypeUser = require('../models/classifications/typeUser')(sequelize);
+  models.Evenement = require('../models/events/evenement')(sequelize);
+  models.TypeEvenement = require('../models/events/typeEvenement')(sequelize);
+  models.Lieu = require('../models/places/lieu')(sequelize);
+  models.Organisation = require('../models/organisations/organisation')(sequelize);
+  models.TypeOrganisation = require('../models/organisations/typeOrganisation')(sequelize);
   
   console.log('✅ Modèles essentiels chargés');
 } catch (error) {

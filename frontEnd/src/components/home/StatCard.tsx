@@ -2,8 +2,8 @@
  * StatCard - Carte de statistiques avec animation de compteur
  */
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent } from '@/components/UI/card';
-import { Skeleton } from '@/components/UI/skeleton';
+import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { TrendingUp } from 'lucide-react';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { useRTL } from '@/hooks/useRTL';

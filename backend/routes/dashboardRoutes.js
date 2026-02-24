@@ -255,7 +255,7 @@ const initDashboardRoutes = (models) => {
 
   router.get('/content/pending-oeuvres',
     validationMiddleware.validatePagination,
-    cacheMiddleware.conditionalCache(180),
+    cacheMiddleware.conditionalCache(10),
     dashboardController.getPendingOeuvres
   );
 
@@ -364,6 +364,7 @@ const initDashboardRoutes = (models) => {
     validationMiddleware.handleValidationErrors,
     rateLimitMiddleware.sensitiveActions,
     auditMiddleware.logAction('VALIDATE_OEUVRE'),
+    cacheMiddleware.invalidateCache(['pending-oeuvres', 'content/stats']),
     async (req, res) => {
       req.body = {
         action: 'validate_oeuvre',

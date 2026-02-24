@@ -4,27 +4,27 @@
  */
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/UI/card';
-import { Button } from '@/components/UI/button';
-import { Badge } from '@/components/UI/badge';
-import { Input } from '@/components/UI/input';
-import { Skeleton } from '@/components/UI/skeleton';
-import { ScrollArea } from '@/components/UI/scroll-area';
-import { Separator } from '@/components/UI/separator';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/UI/avatar';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/UI/dialog';
+} from '@/components/ui/dialog';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/UI/select';
+} from '@/components/ui/select';
 import {
   Users,
   Search,
@@ -50,8 +50,8 @@ import {
 import { httpClient } from '@/services/httpClient';
 import { useTranslateData } from '@/hooks/useTranslateData';
 import { useLocalizedDate } from '@/hooks/useLocalizedDate';
-import { useToast } from '@/components/UI/use-toast';
-import { cn } from '@/lib/utils';
+import { useToast } from '@/components/ui/use-toast';
+import { cn } from '@/lib/Utils';
 import { getAssetUrl } from '@/helpers/assetUrl';
 
 interface ParticipantsManagerProps {

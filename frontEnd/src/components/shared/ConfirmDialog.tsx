@@ -10,10 +10,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle
-} from '@/components/UI/dialog';
-import { Button } from '@/components/UI/button';
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import { AlertTriangle, Loader2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/Utils';
 
 interface ConfirmDialogProps {
   open: boolean;

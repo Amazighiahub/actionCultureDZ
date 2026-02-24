@@ -107,208 +107,208 @@ const loadModels = (sequelize) => {
   // ORDRE IMPORTANT : Charger les modèles référencés en premier
 
   // 1. Modèles géographiques (référencés par Lieu)
-  const wilayaModel = loadModelSafely('./geography/Wilaya', 'Wilaya', sequelize);
+  const wilayaModel = loadModelSafely('./geography/wilaya', 'Wilaya', sequelize);
   if (wilayaModel) models.Wilaya = wilayaModel;
   
-  const dairaModel = loadModelSafely('./geography/Daira', 'Daira', sequelize);
+  const dairaModel = loadModelSafely('./geography/daira', 'Daira', sequelize);
   if (dairaModel) models.Daira = dairaModel;
   
-  const communeModel = loadModelSafely('./geography/Commune', 'Commune', sequelize);
+  const communeModel = loadModelSafely('./geography/commune', 'Commune', sequelize);
   if (communeModel) models.Commune = communeModel;
   // 1. Après les modèles de base (User, Role) - Ajouter TypeUser
-const typeUserModel = loadModelSafely('./classifications/TypeUser.js', 'TypeUser', sequelize);
+const typeUserModel = loadModelSafely('./classifications/typeUser.js', 'TypeUser', sequelize);
 if (typeUserModel) models.TypeUser = typeUserModel;
 
 // 2. Après TypeOeuvre et Genre - Ajouter les tables de liaison pour la hiérarchie
-const typeOeuvreGenreModel = loadModelSafely('./associations/TypeOeuvreGenre', 'TypeOeuvreGenre', sequelize);
+const typeOeuvreGenreModel = loadModelSafely('./associations/typeOeuvreGenre', 'TypeOeuvreGenre', sequelize);
 if (typeOeuvreGenreModel) models.TypeOeuvreGenre = typeOeuvreGenreModel;
 
-const genreCategorieModel = loadModelSafely('./associations/GenreCategorie', 'GenreCategorie', sequelize);
+const genreCategorieModel = loadModelSafely('./associations/genreCategorie', 'GenreCategorie', sequelize);
 if (genreCategorieModel) models.GenreCategorie = genreCategorieModel;
-  const localiteModel = loadModelSafely('./geography/Localite', 'Localite', sequelize);
+  const localiteModel = loadModelSafely('./geography/localite', 'Localite', sequelize);
   if (localiteModel) models.Localite = localiteModel;
-const oeuvreIntervenantModel = loadModelSafely('./associations/OeuvreIntervenant', 'OeuvreIntervenant', sequelize);
+const oeuvreIntervenantModel = loadModelSafely('./associations/oeuvreIntervenant', 'OeuvreIntervenant', sequelize);
 if (oeuvreIntervenantModel) models.OeuvreIntervenant = oeuvreIntervenantModel;
   // 2. Modèles de base (User, Role) - référencés par beaucoup d'autres
-  const roleModel = loadModelSafely('./users/Role', 'Role', sequelize);
+  const roleModel = loadModelSafely('./users/role', 'Role', sequelize);
   if (roleModel) models.Role = roleModel;
   
-  const userModel = loadModelSafely('./users/User', 'User', sequelize);
+  const userModel = loadModelSafely('./users/user', 'User', sequelize);
   if (userModel) models.User = userModel;
   
-  const userRoleModel = loadModelSafely('./users/UserRole', 'UserRole', sequelize);
+  const userRoleModel = loadModelSafely('./users/userRole', 'UserRole', sequelize);
   if (userRoleModel) models.UserRole = userRoleModel;
 
   // 3. Modèles de lieux - IMPORTANT: Charger avant Evenement
-  const lieuModel = loadModelSafely('./places/Lieu', 'Lieu', sequelize);
+  const lieuModel = loadModelSafely('./places/lieu', 'Lieu', sequelize);
   if (lieuModel) models.Lieu = lieuModel;
   
-  const detailLieuModel = loadModelSafely('./places/DetailLieu', 'DetailLieu', sequelize);
+  const detailLieuModel = loadModelSafely('./places/detailLieu', 'DetailLieu', sequelize);
   if (detailLieuModel) models.DetailLieu = detailLieuModel;
   
-  const serviceModel = loadModelSafely('./places/Service', 'Service', sequelize);
+  const serviceModel = loadModelSafely('./places/service', 'Service', sequelize);
   if (serviceModel) models.Service = serviceModel;
   
-  const lieuMediaModel = loadModelSafely('./places/LieuMedia', 'LieuMedia', sequelize);
+  const lieuMediaModel = loadModelSafely('./places/lieuMedia', 'LieuMedia', sequelize);
   if (lieuMediaModel) models.LieuMedia = lieuMediaModel;
   
-  const monumentModel = loadModelSafely('./places/Monument', 'Monument', sequelize);
+  const monumentModel = loadModelSafely('./places/monument', 'Monument', sequelize);
   if (monumentModel) models.Monument = monumentModel;
   
-  const vestigeModel = loadModelSafely('./places/Vestige', 'Vestige', sequelize);
+  const vestigeModel = loadModelSafely('./places/vestige', 'Vestige', sequelize);
   if (vestigeModel) models.Vestige = vestigeModel;
 
   // 4. Types et classifications
-  const langueModel = loadModelSafely('./classifications/Langue', 'Langue', sequelize);
+  const langueModel = loadModelSafely('./classifications/langue', 'Langue', sequelize);
   if (langueModel) models.Langue = langueModel;
   
-  const categorieModel = loadModelSafely('./classifications/Categorie', 'Categorie', sequelize);
+  const categorieModel = loadModelSafely('./classifications/categorie', 'Categorie', sequelize);
   if (categorieModel) models.Categorie = categorieModel;
   
-  const genreModel = loadModelSafely('./classifications/Genre', 'Genre', sequelize);
+  const genreModel = loadModelSafely('./classifications/genre', 'Genre', sequelize);
   if (genreModel) models.Genre = genreModel;
   
-  const typeOeuvreModel = loadModelSafely('./classifications/TypeOeuvre', 'TypeOeuvre', sequelize);
+  const typeOeuvreModel = loadModelSafely('./classifications/typeOeuvre', 'TypeOeuvre', sequelize);
   if (typeOeuvreModel) models.TypeOeuvre = typeOeuvreModel;
   
-  const tagMotCleModel = loadModelSafely('./classifications/TagMotCle', 'TagMotCle', sequelize);
+  const tagMotCleModel = loadModelSafely('./classifications/tagMotCle', 'TagMotCle', sequelize);
   if (tagMotCleModel) models.TagMotCle = tagMotCleModel;
   
-  const materiauModel = loadModelSafely('./classifications/Materiau', 'Materiau', sequelize);
+  const materiauModel = loadModelSafely('./classifications/materiau', 'Materiau', sequelize);
   if (materiauModel) models.Materiau = materiauModel;
   
-  const techniqueModel = loadModelSafely('./classifications/Technique', 'Technique', sequelize);
+  const techniqueModel = loadModelSafely('./classifications/technique', 'Technique', sequelize);
   if (techniqueModel) models.Technique = techniqueModel;
 
   // 5. Types d'événements (référencé par Evenement)
-  const typeEvenementModel = loadModelSafely('./events/TypeEvenement', 'TypeEvenement', sequelize);
+  const typeEvenementModel = loadModelSafely('./events/typeEvenement', 'TypeEvenement', sequelize);
   if (typeEvenementModel) models.TypeEvenement = typeEvenementModel;
 
   // 6. Organisations
-  const typeOrganisationModel = loadModelSafely('./organisations/TypeOrganisation', 'TypeOrganisation', sequelize);
+  const typeOrganisationModel = loadModelSafely('./organisations/typeOrganisation', 'TypeOrganisation', sequelize);
   if (typeOrganisationModel) models.TypeOrganisation = typeOrganisationModel;
   
-  const organisationModel = loadModelSafely('./organisations/Organisation', 'Organisation', sequelize);
+  const organisationModel = loadModelSafely('./organisations/organisation', 'Organisation', sequelize);
   if (organisationModel) models.Organisation = organisationModel;
   
-  const editeurModel = loadModelSafely('./organisations/Editeur', 'Editeur', sequelize);
+  const editeurModel = loadModelSafely('./organisations/editeur', 'Editeur', sequelize);
   if (editeurModel) models.Editeur = editeurModel;
 
   // 7. Œuvres
-  const oeuvreModel = loadModelSafely('./oeuvres/Oeuvre', 'Oeuvre', sequelize);
+  const oeuvreModel = loadModelSafely('./oeuvres/oeuvre', 'Oeuvre', sequelize);
   if (oeuvreModel) models.Oeuvre = oeuvreModel;
   
-  const livreModel = loadModelSafely('./oeuvres/Livre', 'Livre', sequelize);
+  const livreModel = loadModelSafely('./oeuvres/livre', 'Livre', sequelize);
   if (livreModel) models.Livre = livreModel;
   
-  const filmModel = loadModelSafely('./oeuvres/Film', 'Film', sequelize);
+  const filmModel = loadModelSafely('./oeuvres/film', 'Film', sequelize);
   if (filmModel) models.Film = filmModel;
   
-  const albumMusicalModel = loadModelSafely('./oeuvres/AlbumMusical', 'AlbumMusical', sequelize);
+  const albumMusicalModel = loadModelSafely('./oeuvres/albumMusical', 'AlbumMusical', sequelize);
   if (albumMusicalModel) models.AlbumMusical = albumMusicalModel;
   
-  const articleModel = loadModelSafely('./oeuvres/Article', 'Article', sequelize);
+  const articleModel = loadModelSafely('./oeuvres/article', 'Article', sequelize);
   if (articleModel) models.Article = articleModel;
   
-  const articleScientifiqueModel = loadModelSafely('./oeuvres/ArticleScientifique', 'ArticleScientifique', sequelize);
+  const articleScientifiqueModel = loadModelSafely('./oeuvres/articleScientifique', 'ArticleScientifique', sequelize);
   if (articleScientifiqueModel) models.ArticleScientifique = articleScientifiqueModel;
 
-  const articleBlockModel = loadModelSafely('./oeuvres/ArticleBlock', 'ArticleBlock', sequelize);
+  const articleBlockModel = loadModelSafely('./oeuvres/articleBlock', 'ArticleBlock', sequelize);
   if (articleBlockModel) models.ArticleBlock = articleBlockModel;
 
-  const artisanatModel = loadModelSafely('./oeuvres/Artisanat', 'Artisanat', sequelize);
+  const artisanatModel = loadModelSafely('./oeuvres/artisanat', 'Artisanat', sequelize);
   if (artisanatModel) models.Artisanat = artisanatModel;
   
-  const oeuvreArtModel = loadModelSafely('./oeuvres/OeuvreArt', 'OeuvreArt', sequelize);
+  const oeuvreArtModel = loadModelSafely('./oeuvres/oeuvreArt', 'OeuvreArt', sequelize);
   if (oeuvreArtModel) models.OeuvreArt = oeuvreArtModel;
 
   // 8. Specialite et Intervenant - IMPORTANT: Charger avant Programme et Evenement
-  const specialiteModel = loadModelSafely('./misc/Specialite', 'Specialite', sequelize);
+  const specialiteModel = loadModelSafely('./misc/specialite', 'Specialite', sequelize);
   if (specialiteModel) models.Specialite = specialiteModel;
   
-  const intervenantModel = loadModelSafely('./misc/Intervenant', 'Intervenant', sequelize);
+  const intervenantModel = loadModelSafely('./misc/intervenant', 'Intervenant', sequelize);
   if (intervenantModel) models.Intervenant = intervenantModel;
 
   // 9. Événements (après Lieu, User, TypeEvenement)
-  const evenementModel = loadModelSafely('./events/Evenement', 'Evenement', sequelize);
+  const evenementModel = loadModelSafely('./events/evenement', 'Evenement', sequelize);
   if (evenementModel) models.Evenement = evenementModel;
   
-  const programmeModel = loadModelSafely('./events/Programme', 'Programme', sequelize);
+  const programmeModel = loadModelSafely('./events/programme', 'Programme', sequelize);
   if (programmeModel) models.Programme = programmeModel;
   
-  const parcoursModel = loadModelSafely('./events/Parcours', 'Parcours', sequelize);
+  const parcoursModel = loadModelSafely('./events/parcours', 'Parcours', sequelize);
   if (parcoursModel) models.Parcours = parcoursModel;
 
   // 10. Tables de liaison (après tous les modèles principaux)
-  const oeuvreUserModel = loadModelSafely('./associations/OeuvreUser', 'OeuvreUser', sequelize);
+  const oeuvreUserModel = loadModelSafely('./associations/oeuvreUser', 'OeuvreUser', sequelize);
   if (oeuvreUserModel) models.OeuvreUser = oeuvreUserModel;
   
-  const oeuvreEditeurModel = loadModelSafely('./associations/OeuvreEditeur', 'OeuvreEditeur', sequelize);
+  const oeuvreEditeurModel = loadModelSafely('./associations/oeuvreEditeur', 'OeuvreEditeur', sequelize);
   if (oeuvreEditeurModel) models.OeuvreEditeur = oeuvreEditeurModel;
   
-  const oeuvreCategorieModel = loadModelSafely('./associations/OeuvreCategorie', 'OeuvreCategorie', sequelize);
+  const oeuvreCategorieModel = loadModelSafely('./associations/oeuvreCategorie', 'OeuvreCategorie', sequelize);
   if (oeuvreCategorieModel) models.OeuvreCategorie = oeuvreCategorieModel;
   
-  const oeuvreTagModel = loadModelSafely('./associations/OeuvreTag', 'OeuvreTag', sequelize);
+  const oeuvreTagModel = loadModelSafely('./associations/oeuvreTag', 'OeuvreTag', sequelize);
   if (oeuvreTagModel) models.OeuvreTag = oeuvreTagModel;
   
-  const evenementOeuvreModel = loadModelSafely('./associations/EvenementOeuvre', 'EvenementOeuvre', sequelize);
+  const evenementOeuvreModel = loadModelSafely('./associations/evenementOeuvre', 'EvenementOeuvre', sequelize);
   if (evenementOeuvreModel) models.EvenementOeuvre = evenementOeuvreModel;
   
-  const evenementUserModel = loadModelSafely('./associations/EvenementUser', 'EvenementUser', sequelize);
+  const evenementUserModel = loadModelSafely('./associations/evenementUser', 'EvenementUser', sequelize);
   if (evenementUserModel) models.EvenementUser = evenementUserModel;
   
-  const evenementOrganisationModel = loadModelSafely('./associations/EvenementOrganisation', 'EvenementOrganisation', sequelize);
+  const evenementOrganisationModel = loadModelSafely('./associations/evenementOrganisation', 'EvenementOrganisation', sequelize);
   if (evenementOrganisationModel) models.EvenementOrganisation = evenementOrganisationModel;
   
-  const programmeIntervenantModel = loadModelSafely('./associations/ProgrammeIntervenant', 'ProgrammeIntervenant', sequelize);
+  const programmeIntervenantModel = loadModelSafely('./associations/programmeIntervenant', 'ProgrammeIntervenant', sequelize);
   if (programmeIntervenantModel) models.ProgrammeIntervenant = programmeIntervenantModel;
   
-  const parcoursLieuModel = loadModelSafely('./associations/ParcoursLieu', 'ParcoursLieu', sequelize);
+  const parcoursLieuModel = loadModelSafely('./associations/parcoursLieu', 'ParcoursLieu', sequelize);
   if (parcoursLieuModel) models.ParcoursLieu = parcoursLieuModel;
   
-  const userOrganisationModel = loadModelSafely('./associations/UserOrganisation', 'UserOrganisation', sequelize);
+  const userOrganisationModel = loadModelSafely('./associations/userOrganisation', 'UserOrganisation', sequelize);
   if (userOrganisationModel) models.UserOrganisation = userOrganisationModel;
   
-  const userSpecialiteModel = loadModelSafely('./associations/UserSpecialite', 'UserSpecialite', sequelize);
+  const userSpecialiteModel = loadModelSafely('./associations/userSpecialite', 'UserSpecialite', sequelize);
   if (userSpecialiteModel) models.UserSpecialite = userSpecialiteModel;
 
   // 11. Modèles de certifications
-  const userCertificationModel = loadModelSafely('./misc/UserCertification', 'UserCertification', sequelize);
+  const userCertificationModel = loadModelSafely('./misc/userCertification', 'UserCertification', sequelize);
   if (userCertificationModel) models.UserCertification = userCertificationModel;
-const emailVerificationModel = loadModelSafely('./misc/EmailVerification', 'EmailVerification', sequelize);
+const emailVerificationModel = loadModelSafely('./misc/emailVerification', 'EmailVerification', sequelize);
 if (emailVerificationModel) models.EmailVerification = emailVerificationModel;
   // 12. Modèles divers
-  const mediaModel = loadModelSafely('./misc/Media', 'Media', sequelize);
+  const mediaModel = loadModelSafely('./misc/media', 'Media', sequelize);
   if (mediaModel) models.Media = mediaModel;
   
-  const favoriModel = loadModelSafely('./misc/Favori', 'Favori', sequelize);
+  const favoriModel = loadModelSafely('./misc/favori', 'Favori', sequelize);
   if (favoriModel) models.Favori = favoriModel;
   
-  const commentaireModel = loadModelSafely('./misc/Commentaire', 'Commentaire', sequelize);
+  const commentaireModel = loadModelSafely('./misc/commentaire', 'Commentaire', sequelize);
   if (commentaireModel) models.Commentaire = commentaireModel;
   
-  const critiqueEvaluationModel = loadModelSafely('./misc/CritiqueEvaluation', 'CritiqueEvaluation', sequelize);
+  const critiqueEvaluationModel = loadModelSafely('./misc/critiqueEvaluation', 'CritiqueEvaluation', sequelize);
   if (critiqueEvaluationModel) models.CritiqueEvaluation = critiqueEvaluationModel;
 
   // 13. Modèles de tracking et modération
-  const vueModel = loadModelSafely('./misc/Vue', 'Vue', sequelize);
+  const vueModel = loadModelSafely('./misc/vue', 'Vue', sequelize);
   if (vueModel) models.Vue = vueModel;
   
-  const signalementModel = loadModelSafely('./misc/Signalement', 'Signalement', sequelize);
+  const signalementModel = loadModelSafely('./misc/signalement', 'Signalement', sequelize);
   if (signalementModel) models.Signalement = signalementModel;
   
-  const notificationModel = loadModelSafely('./misc/Notification', 'Notification', sequelize);
+  const notificationModel = loadModelSafely('./misc/notification', 'Notification', sequelize);
   if (notificationModel) models.Notification = notificationModel;
   
-  const auditLogModel = loadModelSafely('./misc/AuditLog', 'AuditLog', sequelize);
+  const auditLogModel = loadModelSafely('./misc/auditLog', 'AuditLog', sequelize);
   if (auditLogModel) models.AuditLog = auditLogModel;
 
   // 14. Modèles QR Code
-  const qrCodeModel = loadModelSafely('./misc/QRCode', 'QRCode', sequelize);
+  const qrCodeModel = loadModelSafely('./misc/qrCode', 'QRCode', sequelize);
   if (qrCodeModel) models.QRCode = qrCodeModel;
   
-  const qrScanModel = loadModelSafely('./misc/QRScan', 'QRScan', sequelize);
+  const qrScanModel = loadModelSafely('./misc/qrScan', 'QRScan', sequelize);
   if (qrScanModel) models.QRScan = qrScanModel;
 
   console.log(`📦 ${Object.keys(models).length} modèles chargés avec succès`);

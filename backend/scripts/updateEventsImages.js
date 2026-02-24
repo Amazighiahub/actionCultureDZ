@@ -11,8 +11,8 @@ const sequelize = new Sequelize('actionculture', 'root', '', {
 
 // Import des modèles
 const models = {};
-models.Evenement = require('../models/events/Evenement')(sequelize);
-models.Media = require('../models/misc/Media')(sequelize);
+models.Evenement = require('../models/events/evenement')(sequelize);
+models.Media = require('../models/misc/media')(sequelize);
 
 // Configuration des chemins
 const UPLOAD_PATHS = {

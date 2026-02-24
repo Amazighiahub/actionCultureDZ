@@ -4,12 +4,12 @@
  */
 import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/UI/card';
-import { Checkbox } from '@/components/UI/checkbox';
-import { Badge } from '@/components/UI/badge';
-import { Button } from '@/components/UI/button';
-import { Label } from '@/components/UI/label';
-import { Alert, AlertDescription } from '@/components/UI/alert';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { metadataService, CategoryGroupedByGenre } from '@/services/metadata.service';
 

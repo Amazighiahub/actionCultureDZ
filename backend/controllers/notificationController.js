@@ -1,6 +1,6 @@
 // controllers/NotificationController.js - VERSION i18n
 const { Op } = require('sequelize');
-const NotificationService = require('../services/NotificationService');
+const NotificationService = require('../services/notificationService');
 
 // ⚡ Import du helper i18n
 const { translate, translateDeep } = require('../helpers/i18n');

@@ -3,15 +3,15 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/UI/card';
-import { Button } from '@/components/UI/button';
-import { Badge } from '@/components/UI/badge';
-import { Skeleton } from '@/components/UI/skeleton';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   MapPin, Clock, Star, QrCode, Compass, Building2, Landmark,
   Trees, Search, RefreshCw, AlertCircle, Eye
 } from 'lucide-react';
-import { Input } from '@/components/UI/input';
+import { Input } from '@/components/ui/input';
 import { patrimoineService } from '@/services/patrimoine.service';
 import { useToast } from '@/hooks/use-toast';
 

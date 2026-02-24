@@ -4,20 +4,20 @@
  */
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Input } from '@/components/UI/input';
-import { Button } from '@/components/UI/button';
-import { Badge } from '@/components/UI/badge';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/UI/select';
+} from '@/components/ui/select';
 import {
   Search, X, RefreshCw, Filter, SlidersHorizontal
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/Utils';
 
 // Types
 export interface FilterOption {

@@ -3,16 +3,16 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Card, CardContent } from '@/components/UI/card';
-import { Button } from '@/components/UI/button';
-import { Badge } from '@/components/UI/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/UI/tabs';
-import { Input } from '@/components/UI/input';
-import { Skeleton } from '@/components/UI/skeleton';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Dialog,
   DialogContent,
-} from '@/components/UI/dialog';
+} from '@/components/ui/dialog';
 import {
   BookOpen,
   Calendar,
@@ -35,8 +35,8 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/UI/dropdown-menu';
-import { useToast } from '@/components/UI/use-toast';
+} from '@/components/ui/dropdown-menu';
+import { useToast } from '@/components/ui/use-toast';
 import { useDashboardPro } from '@/hooks/useDashboardPro';
 import { useTranslation } from "react-i18next";
 import { useTranslateData } from '@/hooks/useTranslateData';

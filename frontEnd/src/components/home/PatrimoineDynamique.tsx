@@ -4,10 +4,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/UI/card';
-import { Button } from '@/components/UI/button';
-import { Badge } from '@/components/UI/badge';
-import { Skeleton } from '@/components/UI/skeleton';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import { MapPin, Star, Eye, ArrowRight } from 'lucide-react';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { useRTL } from '@/hooks/useRTL';
@@ -177,7 +177,7 @@ const PatrimoineDynamique: React.FC<PatrimoineDynamiqueProps> = ({ wilayasCache 
       </div>
 
       <div className="text-center">
-        <Button size="lg" variant="outline" onClick={() => navigate('/patrimoine')} className="group">
+        <Button size="lg" variant="outline" onClick={() => navigate('/Patrimoine')} className="group">
           {t('sections.heritage.seeAll')}
           <ArrowRight className={`h-4 w-4 ${rtlClasses.marginStart(2)} group-hover:translate-x-1 transition-transform`} />
         </Button>

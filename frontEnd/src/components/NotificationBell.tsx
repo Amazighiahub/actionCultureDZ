@@ -254,14 +254,14 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
           <div className="p-3 border-t border-gray-200 bg-gray-50">
             <div className="flex items-center justify-between">
               <a
-              href="/notifications"
+              href="/Notifications"
               className="text-sm text-blue-600 hover:text-blue-800"
               onClick={() => setIsOpen(false)}>{t("common_notificationbell.voir_toutes_les")}
 
 
             </a>
               <a
-              href="/notifications/preferences"
+              href="/notifications/Preferences"
               className="text-sm text-gray-600 hover:text-gray-800 flex items-center gap-1"
               onClick={() => setIsOpen(false)}>
 

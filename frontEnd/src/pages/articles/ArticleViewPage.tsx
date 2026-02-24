@@ -2,15 +2,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/UI/card';
-import { Button } from '@/components/UI/button';
-import { Badge } from '@/components/UI/badge';
-import { Alert, AlertDescription } from '@/components/UI/alert';
-import { Separator } from '@/components/UI/separator';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/UI/avatar';
-import { Progress } from '@/components/UI/progress';
-import { Textarea } from '@/components/UI/textarea';
-import { Label } from '@/components/UI/label';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Separator } from '@/components/ui/separator';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Progress } from '@/components/ui/progress';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import {
   Dialog,
   DialogContent,
@@ -18,7 +18,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle } from
-"@/components/UI/dialog";
+"@/components/ui/dialog";
 import {
   ArrowLeft,
   Calendar,
@@ -301,7 +301,7 @@ const ArticleViewPage: React.FC = () => {
 
   const handleToggleFavorite = async () => {
     if (!isAuthenticated) {
-      navigate('/auth');
+      navigate('/Auth');
       return;
     }
 
@@ -392,7 +392,7 @@ const ArticleViewPage: React.FC = () => {
 
   const openCommentModal = (parentId: number | null = null) => {
     if (!isAuthenticated) {
-      navigate('/auth');
+      navigate('/Auth');
       return;
     }
 
@@ -488,8 +488,8 @@ const ArticleViewPage: React.FC = () => {
             <img
             src={getAssetUrl(block.media.url)}
             alt={block.metadata?.caption || 'Image'}
-            className={`rounded-lg shadow-lg w-full ${
-            block.metadata?.layout === 'centered' ? 'max-w-3xl mx-auto' : ''}`
+            className={`rounded-lg shadow-lg max-w-full max-h-[600px] object-contain ${
+            block.metadata?.layout === 'full' ? 'w-full' : 'max-w-3xl mx-auto'}`
             }
             loading="lazy" />
           
@@ -605,7 +605,7 @@ const ArticleViewPage: React.FC = () => {
             <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-semibold mb-2">{t("articles_articleviewpage.article_introuvable")}</h3>
             <p className="text-muted-foreground mb-4">{error || 'L\'article demandé n\'existe pas.'}</p>
-            <Button onClick={() => navigate('/oeuvres')} variant="outline">{t("articles_articleviewpage.retour_aux_uvres")}
+            <Button onClick={() => navigate('/Oeuvres')} variant="outline">{t("articles_articleviewpage.retour_aux_uvres")}
 
             </Button>
           </CardContent>

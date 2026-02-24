@@ -3,7 +3,7 @@
  */
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Badge } from '@/components/UI/badge';
+import { Badge } from '@/components/ui/badge';
 import { 
   CheckCircle, 
   Clock, 
@@ -16,7 +16,7 @@ import {
   Lock,
   Unlock
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/Utils';
 
 type StatusType =
   | 'actif' | 'inactif' | 'suspendu' | 'en_attente' | 'valide' | 'rejete'

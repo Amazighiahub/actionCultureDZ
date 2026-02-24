@@ -6,11 +6,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/UI/button';
+import { Button } from '@/components/ui/button';
 import { ChevronRight, MapPin, Calendar, Palette, Users, Sparkles } from 'lucide-react';
 import { useRTL } from '@/hooks/useRTL';
 import { httpClient } from '@/services/httpClient';
-import { Skeleton } from '@/components/UI/skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface PublicStats {
   sites_patrimoniaux: number;
@@ -208,7 +208,7 @@ const HeroSection: React.FC = () => {
                   h-11 sm:h-12
                   px-5 sm:px-6
                 "
-                onClick={() => navigate('/patrimoine')}
+                onClick={() => navigate('/Patrimoine')}
               >
                 {t('home.hero.explore', 'Explorer le patrimoine')}
                 <ChevronRight className={`h-4 w-4 sm:h-5 sm:w-5 ${isRtl ? 'mr-2 rotate-180' : 'ml-2'}`} />
@@ -228,7 +228,7 @@ const HeroSection: React.FC = () => {
                   h-11 sm:h-12
                   px-5 sm:px-6
                 "
-                onClick={() => navigate('/auth')}
+                onClick={() => navigate('/Auth')}
               >
                 {t('home.hero.contribute', 'Contribuer')}
               </Button>

@@ -1,7 +1,7 @@
 const request = require('supertest');
 const express = require('express');
 const initOeuvreRoutes = require('../../routes/oeuvreRoutes');
-const { setupTestDatabase, teardownTestDatabase } = require('../Setup');
+const { setupTestDatabase, teardownTestDatabase } = require('../setup');
 
 jest.setTimeout(30000);
 

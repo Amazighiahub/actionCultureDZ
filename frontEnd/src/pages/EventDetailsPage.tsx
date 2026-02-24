@@ -7,8 +7,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Button } from '@/components/UI/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/UI/tabs';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ChevronLeft, Calendar, Image, MessageCircle, Users, Info } from 'lucide-react';
 
 // Composants partagés
@@ -59,7 +59,7 @@ const EventDetailsPage: React.FC = () => {
 
   // Retour si pas d'ID
   if (!id) {
-    navigate('/evenements');
+    navigate('/Evenements');
     return null;
   }
 
@@ -86,7 +86,7 @@ const EventDetailsPage: React.FC = () => {
         <main className="container py-8">
           <div className="text-center py-12">
             <h2 className="text-2xl font-bold mb-4">{t('event.notFound', 'Événement non trouvé')}</h2>
-            <Button onClick={() => navigate('/evenements')}>
+            <Button onClick={() => navigate('/Evenements')}>
               {t('event.backToList', 'Retour aux événements')}
             </Button>
           </div>

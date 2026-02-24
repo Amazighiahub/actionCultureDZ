@@ -4,11 +4,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/UI/card';
-import { Button } from '@/components/UI/button';
-import { Badge } from '@/components/UI/badge';
-import { Skeleton } from '@/components/UI/skeleton';
-import { useToast } from '@/components/UI/use-toast';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/components/ui/use-toast';
 import { Calendar, MapPin, Users, ArrowRight } from 'lucide-react';
 import { useLocalizedDate } from '@/hooks/useLocalizedDate';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
@@ -232,7 +232,7 @@ const EvenementsDynamique: React.FC = () => {
                           description: t('common.featureInDevelopment'),
                         });
                       } else {
-                        navigate('/auth');
+                        navigate('/Auth');
                       }
                     }}
                   >
@@ -247,7 +247,7 @@ const EvenementsDynamique: React.FC = () => {
       </div>
 
       <div className="text-center">
-        <Button size="lg" variant="outline" onClick={() => navigate('/evenements')} className="group">
+        <Button size="lg" variant="outline" onClick={() => navigate('/Evenements')} className="group">
           {t('sections.events.seeAllEvents')}
           <Calendar className={`h-4 w-4 ${rtlClasses.marginStart(2)} group-hover:rotate-12 transition-transform`} />
         </Button>

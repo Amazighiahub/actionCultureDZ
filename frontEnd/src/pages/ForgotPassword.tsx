@@ -3,13 +3,13 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/UI/card';
-import { Button } from '@/components/UI/button';
-import { Input } from '@/components/UI/input';
-import { Label } from '@/components/UI/label';
-import { Alert, AlertDescription } from '@/components/UI/alert';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Mail, ArrowLeft, Loader2, CheckCircle } from 'lucide-react';
-import { useToast } from '@/components/UI/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 import { userService } from '@/services/user.service';
 
 const ForgotPassword = () => {
@@ -103,7 +103,7 @@ const ForgotPassword = () => {
                 </div>
 
                 <div className="text-center pt-4">
-                  <Link to="/auth" className="text-primary hover:underline inline-flex items-center gap-1">
+                  <Link to="/Auth" className="text-primary hover:underline inline-flex items-center gap-1">
                     <ArrowLeft className="h-4 w-4" />
                     {t('auth.forgotPassword.backToLogin')}
                   </Link>
@@ -170,7 +170,7 @@ const ForgotPassword = () => {
                 </Button>
 
                 <div className="text-center pt-4">
-                  <Link to="/auth" className="text-primary hover:underline inline-flex items-center gap-1">
+                  <Link to="/Auth" className="text-primary hover:underline inline-flex items-center gap-1">
                     <ArrowLeft className="h-4 w-4" />
                     {t('auth.forgotPassword.backToLogin')}
                   </Link>

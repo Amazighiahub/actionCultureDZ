@@ -3,9 +3,9 @@
  * Pattern Repository pour abstraction de la couche données
  */
 
-const BaseRepository = require('./BaseRepository');
-const UserRepository = require('./UserRepository');
-const OeuvreRepository = require('./OeuvreRepository');
+const BaseRepository = require('./baseRepository');
+const UserRepository = require('./userRepository');
+const OeuvreRepository = require('./oeuvreRepository');
 
 /**
  * Factory pour créer tous les repositories

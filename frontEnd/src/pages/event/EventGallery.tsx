@@ -4,10 +4,10 @@
  */
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/UI/card';
-import { Button } from '@/components/UI/button';
-import { Badge } from '@/components/UI/badge';
-import { Dialog, DialogContent, DialogTitle } from '@/components/UI/dialog';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import {
   Image as ImageIcon, Video, FileText, Music,
   ChevronLeft, ChevronRight, X, ZoomIn, Download,
@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { LazyImage, EmptyState } from '@/components/shared';
 import { useTranslateData } from '@/hooks/useTranslateData';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/Utils';
 import type { Media } from '@/types/models/media.types';
 import { getAssetUrl } from '@/helpers/assetUrl';
 
