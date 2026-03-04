@@ -24,6 +24,8 @@ import {
 // Composants partagés
 import { LoadingSkeleton } from '@/components/shared';
 import ErrorBoundary from '@/components/shared/ErrorBoundary';
+import SEOHead, { buildOeuvreJsonLd, buildBreadcrumbJsonLd } from '@/components/SEOHead';
+import { getTranslation, type SupportedLanguage } from '@/types/common/multilingual.types';
 
 // ✅ Import du HeroSection avec effet flip 3D
 import { HeroSection } from '@/components/oeuvre/HeroSection';
@@ -101,8 +103,8 @@ const extractContributeurs = (oeuvre: Oeuvre) => {
     });
   }
 
-  if (oeuvre.Intervenants) {
-    oeuvre.Intervenants.forEach((intervenant: any) => {
+  if ((oeuvre as any).Intervenants) {
+    (oeuvre as any).Intervenants.forEach((intervenant: any) => {
       const exists = contributeurs.some(c => c.id === `intervenant-${intervenant.id_intervenant}`);
       if (!exists) {
         contributeurs.push({
@@ -134,11 +136,13 @@ const extractContributeurs = (oeuvre: Oeuvre) => {
 const OeuvreDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { isAuthenticated } = useAuth();
+  const lang = (i18n.language || 'fr') as SupportedLanguage;
   
   const [activeTab, setActiveTab] = useState('description');
   const [showCommentModal, setShowCommentModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   const [commentContent, setCommentContent] = useState('');
   const [commentLoading, setCommentLoading] = useState(false);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
@@ -175,7 +179,7 @@ const OeuvreDetailPage: React.FC = () => {
       loadAuteurInfo(oeuvre);
       loadOeuvresAuteur(oeuvre);
       loadEvenementsCreateur(oeuvre);
-      setViewCount(oeuvre.nombre_vues || Math.floor(Math.random() * 1000) + 100);
+      setViewCount((oeuvre as any).nombre_vues || Math.floor(Math.random() * 1000) + 100);
     }
   }, [oeuvre]);
 
@@ -250,11 +254,33 @@ const OeuvreDetailPage: React.FC = () => {
   // Ouvrir modal commentaire
   const openCommentModal = () => {
     if (!isAuthenticated) {
-      navigate('/Auth');
+      navigate('/auth');
       return;
     }
     setShowCommentModal(true);
     setCommentContent('');
+  };
+
+  // Recommander l'œuvre (partage)
+  const handleRecommander = async () => {
+    const title = oeuvre?.titre || '';
+    const url = window.location.href;
+    try {
+      await navigator.share({ title: String(title), text: `Découvrez cette œuvre : ${title}`, url });
+    } catch {
+      setShowShareModal(true);
+    }
+  };
+
+  // Lire un extrait
+  const handleLireExtrait = () => {
+    if ((oeuvre?.Livre as any)?.url_extrait) {
+      window.open((oeuvre!.Livre as any).url_extrait, '_blank');
+    } else {
+      // Scroll vers la section description qui contient l'extrait
+      setActiveTab('description');
+      window.scrollTo({ top: 400, behavior: 'smooth' });
+    }
   };
 
   // Format date
@@ -269,7 +295,7 @@ const OeuvreDetailPage: React.FC = () => {
 
   // Retour si pas d'ID
   if (!id) {
-    navigate('/Oeuvres');
+    navigate('/oeuvres');
     return null;
   }
 
@@ -296,7 +322,7 @@ const OeuvreDetailPage: React.FC = () => {
         <main className="container py-8">
           <div className="text-center py-12">
             <h2 className="text-2xl font-bold mb-4">{t('oeuvre.notFound', 'Œuvre non trouvée')}</h2>
-            <Button onClick={() => navigate('/Oeuvres')}>
+            <Button onClick={() => navigate('/oeuvres')}>
               {t('oeuvre.backToList', 'Retour aux œuvres')}
             </Button>
           </div>
@@ -308,8 +334,28 @@ const OeuvreDetailPage: React.FC = () => {
 
   const allContributeurs = contributeurs || extractContributeurs(oeuvre);
 
+  const seoKeywords = [
+    getTranslation(oeuvre.titre, lang), oeuvre.TypeOeuvre?.nom_type, (oeuvre as any).Genre?.nom,
+    'culture algérienne', 'littérature algérienne', 'œuvre algérienne'
+  ].filter(Boolean) as string[];
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
+      <SEOHead
+        title={getTranslation(oeuvre.titre, lang)}
+        description={getTranslation(oeuvre.description, lang)?.substring(0, 160) || `Découvrez ${getTranslation(oeuvre.titre, lang)} — œuvre culturelle algérienne`}
+        image={(oeuvre as any).image_url || (oeuvre as any).couverture_url}
+        type="article"
+        keywords={seoKeywords}
+        jsonLd={[
+          buildOeuvreJsonLd(oeuvre),
+          buildBreadcrumbJsonLd([
+            { name: 'Accueil', url: '/' },
+            { name: 'Œuvres', url: '/oeuvres' },
+            { name: getTranslation(oeuvre.titre, lang) || '', url: `/oeuvres/${oeuvre.id_oeuvre}` },
+          ]),
+        ]}
+      />
       <Header />
 
       <main>
@@ -451,7 +497,7 @@ const OeuvreDetailPage: React.FC = () => {
                               {oeuvreAuteur.Media && oeuvreAuteur.Media.length > 0 ? (
                                 <img
                                   src={oeuvreAuteur.Media[0]?.url || ''}
-                                  alt={oeuvreAuteur.titre}
+                                  alt={getTranslation(oeuvreAuteur.titre, lang)}
                                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                                 />
                               ) : (
@@ -462,7 +508,7 @@ const OeuvreDetailPage: React.FC = () => {
                             </div>
                             <div className="flex-1 min-w-0">
                               <h4 className="font-semibold line-clamp-1 group-hover:text-primary transition-colors">
-                                {oeuvreAuteur.titre}
+                                {getTranslation(oeuvreAuteur.titre, lang)}
                               </h4>
                               <div className="flex items-center gap-2 mt-1">
                                 <Badge variant="secondary" className="text-xs">
@@ -476,7 +522,7 @@ const OeuvreDetailPage: React.FC = () => {
                               </div>
                               {oeuvreAuteur.description && (
                                 <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
-                                  {oeuvreAuteur.description}
+                                  {getTranslation(oeuvreAuteur.description, lang)}
                                 </p>
                               )}
                             </div>
@@ -520,7 +566,7 @@ const OeuvreDetailPage: React.FC = () => {
             </CardHeader>
             <CardContent className="pb-6">
               <div className={`grid gap-4 ${oeuvre.Livre ? 'sm:grid-cols-3' : 'sm:grid-cols-2'}`}>
-                <Button size="lg" className="w-full" variant="default">
+                <Button size="lg" className="w-full" variant="default" onClick={handleRecommander}>
                   <ThumbsUp className="h-5 w-5 mr-2" />
                   {t('oeuvredetailpage.recommander', 'Recommander')}
                 </Button>
@@ -529,7 +575,7 @@ const OeuvreDetailPage: React.FC = () => {
                   {t('oeuvredetailpage.crire_avis', 'Écrire un avis')}
                 </Button>
                 {oeuvre.Livre && (
-                  <Button variant="outline" size="lg" className="w-full">
+                  <Button variant="outline" size="lg" className="w-full" onClick={handleLireExtrait}>
                     <BookOpen className="h-5 w-5 mr-2" />
                     {t('oeuvredetailpage.lire_extrait', 'Lire un extrait')}
                   </Button>
@@ -555,7 +601,7 @@ const OeuvreDetailPage: React.FC = () => {
                       to={`/evenements/${event.id_evenement}`}
                       className="block p-4 rounded-lg border hover:bg-muted transition-colors"
                     >
-                      <h4 className="font-medium">{event.nom_evenement}</h4>
+                      <h4 className="font-medium">{getTranslation(event.nom_evenement, lang)}</h4>
                       <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
                         <Calendar className="h-3 w-3" />
                         <span>{formatDate(event.date_debut)}</span>
@@ -571,7 +617,7 @@ const OeuvreDetailPage: React.FC = () => {
                 </div>
                 <div className="mt-4 text-center">
                   <Button variant="outline" size="sm" asChild>
-                    <Link to="/Evenements">{t('oeuvredetailpage.voir_tous_les', 'Voir tous les événements')}</Link>
+                    <Link to="/evenements">{t('oeuvredetailpage.voir_tous_les', 'Voir tous les événements')}</Link>
                   </Button>
                 </div>
               </CardContent>
@@ -642,6 +688,38 @@ const OeuvreDetailPage: React.FC = () => {
               )}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de partage / recommandation */}
+      <Dialog open={showShareModal} onOpenChange={setShowShareModal}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>{t('oeuvredetailpage.recommander', 'Recommander cette œuvre')}</DialogTitle>
+            <DialogDescription>
+              {t('oeuvredetailpage.partager_desc', 'Partagez cette œuvre sur vos réseaux')}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-3 py-4">
+            <Button variant="outline" className="w-full" asChild>
+              <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`} target="_blank" rel="noopener noreferrer">
+                Facebook
+              </a>
+            </Button>
+            <Button variant="outline" className="w-full" asChild>
+              <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(getTranslation(oeuvre?.titre, lang) + ' - ')}${encodeURIComponent(window.location.href)}`} target="_blank" rel="noopener noreferrer">
+                Twitter / X
+              </a>
+            </Button>
+            <Button variant="outline" className="w-full" asChild>
+              <a href={`https://wa.me/?text=${encodeURIComponent(getTranslation(oeuvre?.titre, lang) + ' ' + window.location.href)}`} target="_blank" rel="noopener noreferrer">
+                WhatsApp
+              </a>
+            </Button>
+            <Button variant="outline" className="w-full" onClick={() => { navigator.clipboard.writeText(window.location.href); setShowShareModal(false); }}>
+              {t('common.copyLink', 'Copier le lien')}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
 

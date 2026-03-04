@@ -54,7 +54,7 @@ const EnhancedCTASection: React.FC = () => {
                     if (isAuthenticated) {
                       navigate('/ajouter-oeuvre');
                     } else {
-                      navigate('/Auth');
+                      navigate('/auth');
                     }
                   }}
                 >
@@ -69,7 +69,7 @@ const EnhancedCTASection: React.FC = () => {
                     if (isAuthenticated) {
                       navigate('/ajouter-evenement');
                     } else {
-                      navigate('/Auth');
+                      navigate('/auth');
                     }
                   }}
                 >

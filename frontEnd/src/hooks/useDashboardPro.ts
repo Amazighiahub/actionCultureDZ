@@ -7,6 +7,7 @@ import { oeuvreService } from '@/services/oeuvre.service';
 import { evenementService } from '@/services/evenement.service';
 import { artisanatService } from '@/services/artisanat.service';
 import { patrimoineService } from '@/services/patrimoine.service';
+import { httpClient } from '@/services/httpClient';
 import { useToast } from '@/components/ui/use-toast';
 
 interface UseDashboardProOptions {
@@ -30,7 +31,8 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
     queryFn: async () => {
       const response = await professionnelService.getDashboard();
       if (!response.success) throw new Error(response.error);
-      return response.data;
+      const rawData: any = response.data || {};
+      return rawData.statistiques || rawData;
     },
     enabled: autoFetch,
     staleTime: 5 * 60 * 1000,
@@ -72,9 +74,13 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
           throw new Error(response.error);
         }
         
+        const responseData: any = response.data || {};
+        const items = responseData.oeuvres || responseData.items || (Array.isArray(responseData) ? responseData : []);
+        const pagination = response.pagination || responseData.pagination || { total: items.length || 0 };
+
         const result = {
-          items: response.data?.oeuvres || [],
-          pagination: response.data?.pagination || { total: 0 }
+          items,
+          pagination
         };
         
         console.log(`✅ ${result.items.length} œuvres chargées sur ${result.pagination.total} au total`);
@@ -210,17 +216,26 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
     queryKey: ['dashboard-pro-artisanats'],
     queryFn: async () => {
       try {
-        const response = await artisanatService.search({ limit: 50 });
+        const response = await professionnelService.getArtisanats({ limit: 50, page: 1 });
         if (!response.success) throw new Error(response.error);
 
-        if (response.data?.items) {
-          return response.data;
+        const responseData: any = response.data;
+
+        if (responseData?.items) {
+          return responseData;
         }
 
-        if (Array.isArray(response.data)) {
+        if (responseData?.artisanats) {
           return {
-            items: response.data,
-            pagination: { total: response.data.length }
+            items: responseData.artisanats,
+            pagination: responseData.pagination || { total: responseData.artisanats.length || 0 }
+          };
+        }
+
+        if (Array.isArray(responseData)) {
+          return {
+            items: responseData,
+            pagination: { total: responseData.length }
           };
         }
 
@@ -249,21 +264,9 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
     queryKey: ['dashboard-pro-patrimoines'],
     queryFn: async () => {
       try {
-        console.log('🔍 Chargement patrimoine...');
-        
-        // Pour l'instant, retourner des données vides car l'API n'est pas prête
-        console.warn('⚠️ API patrimoine temporairement désactivée');
-        return { items: [], pagination: { total: 0 } };
-        
-        // Code original commenté pour éviter l'erreur 400
-        /*
-        const response = await patrimoineService.getAll({ 
-          user_id: 'current',
-          limit: 50 
-        });
+        const response = await patrimoineService.getMySites({ limit: 50 });
         
         if (!response.success) {
-          console.warn('API patrimoine non disponible');
           return { items: [], pagination: { total: 0 } };
         }
         
@@ -271,13 +274,12 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
           items: response.data?.items || response.data || [],
           pagination: response.data?.pagination || { total: 0 }
         };
-        */
       } catch (error) {
         console.error('Erreur chargement patrimoine:', error);
         return { items: [], pagination: { total: 0 } };
       }
     },
-    enabled: false, // Désactivé temporairement
+    enabled: autoFetch,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -312,6 +314,7 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
 
   // Fonction pour rafraîchir toutes les données
   const refreshAll = useCallback(async () => {
+    httpClient.clearCache();
     await Promise.all([
       refetchStats(),
       refetchOeuvres(),
@@ -359,6 +362,9 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
       if (!response.success) {
         throw new Error(response.error || 'Erreur lors de la suppression');
       }
+
+      // Évite les listes obsolètes après mutation
+      httpClient.clearCache();
       
       toast({
         title: "Suppression réussie",
@@ -384,9 +390,26 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
       
       return true;
     } catch (error: any) {
+      const message = error?.message || `Impossible de supprimer le ${type}`;
+
+      // Cas fréquent: élément déjà supprimé côté backend mais encore visible en cache local
+      if (message.includes('404') || message.toLowerCase().includes('non trouv')) {
+        httpClient.clearCache();
+        await queryClient.invalidateQueries({ queryKey: ['dashboard-pro-oeuvres'] });
+        await queryClient.invalidateQueries({ queryKey: ['dashboard-pro-evenements'] });
+        await queryClient.invalidateQueries({ queryKey: ['dashboard-pro-artisanats'] });
+        await queryClient.invalidateQueries({ queryKey: ['dashboard-pro-patrimoines'] });
+
+        toast({
+          title: 'Élément déjà supprimé',
+          description: 'La liste a été actualisée.',
+        });
+        return true;
+      }
+
       toast({
         title: "Erreur de suppression",
-        description: error.message || `Impossible de supprimer le ${type}`,
+        description: message,
         variant: "destructive",
       });
       return false;

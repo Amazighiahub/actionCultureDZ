@@ -185,12 +185,13 @@ class ProfessionnelService {
 
   async manageParticipants(
     eventId: number,
-    action: 'approve' | 'reject' | 'remove',
-    userIds: number[]
+    action: 'confirmer' | 'rejeter' | 'marquer_present' | 'marquer_absent',
+    userId: number,
+    notes?: string
   ): Promise<ApiResponse<void>> {
     return httpClient.post<void>(
       API_ENDPOINTS.professionnel.manageParticipants(eventId),
-      { action, user_ids: userIds }
+      { action, userId, notes }
     );
   }
 
@@ -200,11 +201,33 @@ class ProfessionnelService {
   }
 
   async uploadPortfolioMedia(files: File[]): Promise<ApiResponse<any[]>> {
-    return httpClient.uploadMultipleFiles<any[]>(
-      API_ENDPOINTS.professionnel.portfolioUpload,
-      files,
-      { fieldName: 'medias' }
-    );
+    try {
+      const uploads = await Promise.all(
+        files.map((file) =>
+          httpClient.uploadFile<any>(API_ENDPOINTS.professionnel.portfolioUpload, file, {
+            fieldName: 'medias'
+          })
+        )
+      );
+
+      const failed = uploads.find((item) => !item.success);
+      if (failed) {
+        return {
+          success: false,
+          error: failed.error || 'Échec de l\'upload du portfolio'
+        };
+      }
+
+      return {
+        success: true,
+        data: uploads.map((item) => item.data).filter(Boolean)
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error?.message || 'Erreur lors de l\'upload du portfolio'
+      };
+    }
   }
 
   async deletePortfolioMedia(mediaId: number): Promise<ApiResponse<void>> {

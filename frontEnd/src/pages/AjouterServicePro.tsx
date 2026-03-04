@@ -3,7 +3,7 @@
  * Permet d'ajouter un service commercial autour d'un lieu patrimonial
  */
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -84,6 +84,9 @@ const INITIAL_FORM: ServiceFormData = {
 const AjouterServicePro: React.FC = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const isEditMode = !!id;
+  const editId = id ? parseInt(id) : null;
   const [searchParams] = useSearchParams();
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
@@ -115,6 +118,50 @@ const AjouterServicePro: React.FC = () => {
   // Submit state
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Charger les données existantes en mode édition
+  useEffect(() => {
+    if (isEditMode && editId) {
+      loadExistingService();
+    }
+  }, [isEditMode, editId]);
+
+  const loadExistingService = async () => {
+    if (!editId) return;
+    try {
+      const response = await fetch(`/api/services/${editId}`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` },
+      });
+      const result = await response.json();
+      if (result.success && result.data) {
+        const svc = result.data;
+        const toML = (v: any) => typeof v === 'object' && v !== null ? { fr: v.fr || '', ar: v.ar || '', en: v.en || '', 'tz-ltn': v['tz-ltn'] || '', 'tz-tfng': v['tz-tfng'] || '' } : { fr: v || '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' };
+        setFormData({
+          nom: toML(svc.nom),
+          description: toML(svc.description),
+          type_service: svc.type_service || '',
+          id_lieu: svc.id_lieu || null,
+          latitude: svc.latitude?.toString() || '',
+          longitude: svc.longitude?.toString() || '',
+          adresse: toML(svc.adresse),
+          telephone: svc.telephone || '',
+          email: svc.email || '',
+          site_web: svc.site_web || '',
+          horaires: toML(svc.horaires),
+          tarif_min: svc.tarif_min?.toString() || '',
+          tarif_max: svc.tarif_max?.toString() || '',
+          disponible: svc.disponible !== false,
+        });
+        console.log('✅ Service chargé pour édition:', svc);
+      } else {
+        toast({ title: 'Erreur', description: 'Service introuvable', variant: 'destructive' });
+        navigate('/dashboard-pro');
+      }
+    } catch (err: any) {
+      console.error('❌ Erreur chargement service:', err);
+      toast({ title: 'Erreur', description: 'Impossible de charger le service', variant: 'destructive' });
+    }
+  };
 
   // Pré-remplir si un lieu est passé en paramètre
   useEffect(() => {
@@ -288,7 +335,7 @@ const AjouterServicePro: React.FC = () => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
           },
           body: JSON.stringify(lieuData),
         });
@@ -325,12 +372,15 @@ const AjouterServicePro: React.FC = () => {
         disponible: formData.disponible,
       };
 
-      // Appel API pour créer le service
-      const response = await fetch('/api/services', {
-        method: 'POST',
+      // Appel API pour créer ou mettre à jour le service
+      const url = isEditMode && editId ? `/api/services/${editId}` : '/api/services';
+      const method = isEditMode && editId ? 'PUT' : 'POST';
+      
+      const response = await fetch(url, {
+        method,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
         },
         body: JSON.stringify(serviceData),
       });
@@ -339,27 +389,27 @@ const AjouterServicePro: React.FC = () => {
 
       if (data.success) {
         // Upload photo si présente
-        if (photoFile && data.data?.id) {
+        const serviceId = data.data?.id || editId;
+        if (photoFile && serviceId) {
           const formDataPhoto = new FormData();
           formDataPhoto.append('image', photoFile);
-          await fetch(`/api/services/${data.data.id}/photo`, {
+          await fetch(`/api/services/${serviceId}/photo`, {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`,
+              'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
             },
             body: formDataPhoto,
           });
         }
 
         toast({
-          title: t('service.success.title', 'Service ajouté'),
-          description: t('service.success.description', 'Votre service a été soumis et sera validé par un administrateur.'),
+          title: isEditMode ? 'Service mis à jour' : t('service.success.title', 'Service ajouté'),
+          description: isEditMode ? 'Le service a été mis à jour avec succès.' : t('service.success.description', 'Votre service a été soumis et sera validé par un administrateur.'),
         });
 
-        // Rediriger vers le dashboard pro
         navigate('/dashboard-pro');
       } else {
-        throw new Error(data.error || 'Erreur lors de la création');
+        throw new Error(data.error || (isEditMode ? 'Erreur lors de la mise à jour' : 'Erreur lors de la création'));
       }
     } catch (err: any) {
       console.error('Erreur création service:', err);
@@ -382,7 +432,7 @@ const AjouterServicePro: React.FC = () => {
               <p className="text-muted-foreground mb-4">
                 {t('service.authRequired', 'Vous devez être connecté en tant que professionnel pour ajouter un service.')}
               </p>
-              <Button onClick={() => navigate('/Auth')}>
+              <Button onClick={() => navigate('/auth')}>
                 {t('common.login', 'Se connecter')}
               </Button>
             </CardContent>

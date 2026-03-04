@@ -27,7 +27,6 @@ const { SUPPORTED_LANGUAGES } = require('./helpers/i18n');
 
 // Importation des routes
 const initRoutes = require('./routes');
-const initRoutesV2 = require('./routes/v2');
 
 // Importation des services
 const { initializeDatabase } = require('./models');
@@ -115,8 +114,7 @@ class App {
     
     this.app.use((req, res, next) => {
       if (req.path === '/.well-known/appspecific/com.chrome.devtools.json' ||
-          req.path === '/favicon.ico' ||
-          req.path === '/robots.txt') {
+          req.path === '/favicon.ico') {
         return res.status(404).end();
       }
       next();
@@ -439,6 +437,10 @@ class App {
 
     // ✅ Route CSRF supprimée - non nécessaire avec JWT
 
+    // 🗺️ Sitemap.xml dynamique (SEO)
+    const initSitemapRoutes = require('./routes/sitemapRoutes');
+    this.app.use('/sitemap.xml', initSitemapRoutes(this.models));
+
     // ⚡ Route pour obtenir les langues supportées (i18n)
     this.app.get('/api/languages', (req, res) => {
       res.json({
@@ -509,7 +511,6 @@ class App {
 
     // Routes API principales (utilise ServiceContainer en interne)
     this.app.use('/api', initRoutes(this.models, this.authMiddleware));
-    this.app.use('/api/v2', initRoutesV2(this.models, this.authMiddleware));
 
     // Route pour obtenir les infos d'upload
     this.app.get('/api/upload/info', (req, res) => {

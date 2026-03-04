@@ -18,18 +18,23 @@ class OeuvreRepository extends BaseRepository {
     return [
       {
         model: this.models.User,
-        as: 'Createur',
+        as: 'Saiseur',
         attributes: ['id_user', 'nom', 'prenom', 'photo_url']
       },
       {
         model: this.models.TypeOeuvre,
         as: 'TypeOeuvre',
-        attributes: ['id_type_oeuvre', 'nom', 'code']
+        attributes: ['id_type_oeuvre', 'nom_type', 'description']
       },
       {
         model: this.models.Langue,
         as: 'Langue',
         attributes: ['id_langue', 'nom', 'code']
+      },
+      {
+        model: this.models.Media,
+        attributes: ['id_media', 'url', 'type_media', 'titre', 'is_Principale', 'thumbnail_url', 'ordre'],
+        required: false
       }
     ];
   }
@@ -85,7 +90,7 @@ class OeuvreRepository extends BaseRepository {
       ...options,
       where: {
         ...options.where,
-        id_createur: userId
+        saisi_par: userId
       },
       include: options.include || this.getDefaultIncludes()
     });
@@ -137,11 +142,12 @@ class OeuvreRepository extends BaseRepository {
 
     // Recherche texte
     if (query) {
+      const safeQuery = query.replace(/'/g, "\\'");
       where[Op.or] = [
-        literal(`JSON_EXTRACT(titre, '$.fr') LIKE '%${query}%'`),
-        literal(`JSON_EXTRACT(titre, '$.ar') LIKE '%${query}%'`),
-        literal(`JSON_EXTRACT(titre, '$.en') LIKE '%${query}%'`),
-        literal(`JSON_EXTRACT(description, '$.fr') LIKE '%${query}%'`)
+        literal(`JSON_EXTRACT(\`Oeuvre\`.\`titre\`, '$.fr') LIKE '%${safeQuery}%'`),
+        literal(`JSON_EXTRACT(\`Oeuvre\`.\`titre\`, '$.ar') LIKE '%${safeQuery}%'`),
+        literal(`JSON_EXTRACT(\`Oeuvre\`.\`titre\`, '$.en') LIKE '%${safeQuery}%'`),
+        literal(`JSON_EXTRACT(\`Oeuvre\`.\`description\`, '$.fr') LIKE '%${safeQuery}%'`)
       ];
     }
 
@@ -183,35 +189,57 @@ class OeuvreRepository extends BaseRepository {
    * Trouve une œuvre avec tous ses détails
    */
   async findWithFullDetails(oeuvreId) {
-    return this.findById(oeuvreId, {
-      include: [
-        ...this.getDefaultIncludes(),
-        {
-          model: this.models.Categorie,
-          as: 'Categories',
-          through: { attributes: [] }
-        },
-        {
-          model: this.models.Media,
-          as: 'Medias',
-          attributes: ['id_media', 'url', 'type', 'titre', 'est_principal'],
-          order: [['est_principal', 'DESC'], ['ordre', 'ASC']]
-        },
-        {
-          model: this.models.TagMotCle,
-          as: 'Tags',
-          through: { attributes: [] }
-        },
-        {
-          model: this.models.User,
-          as: 'Intervenants',
-          through: {
-            model: this.models.OeuvreIntervenant,
-            attributes: ['role', 'contribution']
-          }
-        }
-      ]
-    });
+    const includes = [
+      ...this.getDefaultIncludes(),
+      {
+        model: this.models.TagMotCle,
+        as: 'Tags',
+        through: { attributes: [] }
+      },
+      {
+        model: this.models.User,
+        as: 'Users',
+        through: { attributes: ['id_type_user', 'role_principal', 'personnage', 'description_role', 'ordre_apparition'] }
+      }
+    ];
+
+    // Associations optionnelles (peuvent ne pas exister)
+    if (this.models.Categorie) {
+      includes.push({
+        model: this.models.Categorie,
+        through: { attributes: [] }
+      });
+    }
+    if (this.models.OeuvreIntervenant) {
+      includes.push({
+        model: this.models.OeuvreIntervenant,
+        include: [
+          { model: this.models.Intervenant, as: 'Intervenant', required: false },
+          { model: this.models.TypeUser, as: 'TypeUser', required: false }
+        ],
+        required: false
+      });
+    }
+    if (this.models.Livre) {
+      includes.push({ model: this.models.Livre, required: false });
+    }
+    if (this.models.OeuvreArt) {
+      includes.push({ model: this.models.OeuvreArt, required: false });
+    }
+    if (this.models.Article) {
+      includes.push({ model: this.models.Article, required: false });
+    }
+    if (this.models.ArticleScientifique) {
+      includes.push({ model: this.models.ArticleScientifique, required: false });
+    }
+    if (this.models.Film) {
+      includes.push({ model: this.models.Film, required: false });
+    }
+    if (this.models.AlbumMusical) {
+      includes.push({ model: this.models.AlbumMusical, required: false });
+    }
+
+    return this.findById(oeuvreId, { include: includes });
   }
 
   /**
@@ -231,7 +259,7 @@ class OeuvreRepository extends BaseRepository {
     return this.model.findAll({
       where: { statut: 'publie' },
       include: this.getDefaultIncludes(),
-      order: [['nb_vues', 'DESC']],
+      order: [['date_creation', 'DESC']],
       limit
     });
   }

@@ -1,36 +1,24 @@
-# Dépendances (réinstallées dans l'image)
 node_modules
 npm-debug.log*
-yarn.lock
-
-# Fichiers d'environnement locaux (à fournir via docker-compose ou secrets)
 .env
 .env.*
 !.env.example
-
-# Fichiers de test et couverture
-coverage
-.nyc_output
-*.test.js
-*.spec.js
-__tests__
-jest.config.js
-
-# Git et IDE
 .git
 .gitignore
-.dockerignore
-.env
-.env.local
-*.md
 .vscode
 .idea
-
-# Uploads et fichiers temporaires (volumes en prod)
-uploads/*
-!uploads/.gitkeep
-
-# Logs et caches
+*.md
+!README.md
+Dockerfile
+docker-compose*
+coverage
+.nyc_output
+tests
+__tests__
+*.test.js
+*.spec.js
 logs
 *.log
-.cache
+uploads/temp/*
+.DS_Store
+Thumbs.db

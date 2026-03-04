@@ -75,7 +75,11 @@ services:
     container_name: eventculture-mysql
     restart: unless-stopped
     ports:
+<<<<<<< HEAD
       - "127.0.0.1:3306:3306"
+=======
+      - "127.0.0.1:3306:3306"   # localhost uniquement (pas accessible depuis l'exterieur)
+>>>>>>> 6853866b (chore: commit all current workspace changes)
     environment:
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-root}
       - MYSQL_DATABASE=${DB_NAME:-actionculture}
@@ -102,7 +106,11 @@ services:
     container_name: eventculture-redis
     restart: unless-stopped
     ports:
+<<<<<<< HEAD
       - "127.0.0.1:6379:6379"
+=======
+      - "127.0.0.1:6379:6379"   # localhost uniquement (pas accessible depuis l'exterieur)
+>>>>>>> 6853866b (chore: commit all current workspace changes)
     volumes:
       - redis_data:/data
     networks:

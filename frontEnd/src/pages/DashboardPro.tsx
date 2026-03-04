@@ -13,6 +13,7 @@ import {
   Dialog,
   DialogContent,
 } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import {
   BookOpen,
   Calendar,
@@ -47,6 +48,7 @@ const DashboardPro = () => {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('oeuvres');
   const [searchQuery, setSearchQuery] = useState('');
+  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; type: string; item: any }>({ open: false, type: '', item: null });
 
   // État pour la gestion d'événement
   const [gestionEvenement, setGestionEvenement] = useState<{id: number; nom: string} | null>(null);
@@ -71,6 +73,11 @@ const DashboardPro = () => {
   const { t } = useTranslation();
   const { td, safe } = useTranslateData();
   console.log('Dashboard - Mes œuvres:', mesOeuvres);
+
+  const oeuvresTotal = dashboardStats?.oeuvres?.total ?? 0;
+  const evenementsTotal = dashboardStats?.evenements?.total ?? 0;
+  const artisanatsTotal = dashboardStats?.artisanats?.total ?? 0;
+  const vuesTotal = dashboardStats?.oeuvres?.vues_total ?? 0;
 
   // Fonction de filtrage par recherche
   const filterBySearch = (items: any[]) => {
@@ -256,17 +263,20 @@ const DashboardPro = () => {
     navigate(routes[type] || '/');
   };
 
-  const handleDeleteItem = async (type: string, item: any) => {
-    const ids: any = {
-      oeuvre: item.id_oeuvre,
-      evenement: item.id_evenement,
-      patrimoine: item.id_site || item.id,
-      service: item.id_service || item.id_artisanat
-    };
+  const handleDeleteItem = (type: string, item: any) => {
+    setDeleteDialog({ open: true, type, item });
+  };
 
-    if (confirm(`Êtes-vous sûr de vouloir supprimer cet élément ?`)) {
-      await deleteItem(type, ids[type]);
-    }
+  const confirmDeleteItem = async () => {
+    const { type, item } = deleteDialog;
+    setDeleteDialog({ open: false, type: '', item: null });
+    const ids: any = {
+      oeuvre: item?.id_oeuvre,
+      evenement: item?.id_evenement,
+      patrimoine: item?.id_site || item?.id,
+      service: item?.id_service || item?.id_artisanat
+    };
+    await deleteItem(type, ids[type]);
   };
 
   return (
@@ -340,28 +350,28 @@ const DashboardPro = () => {
                 <Card>
                   <CardContent className="p-4">
                     <p className="text-sm text-muted-foreground">{t("dashboardpro.uvres_1")}</p>
-                    <p className="text-xl font-bold">{dashboardStats.oeuvres.total}</p>
+                    <p className="text-xl font-bold">{oeuvresTotal}</p>
                   </CardContent>
                 </Card>
 
                 <Card>
                   <CardContent className="p-4">
                     <p className="text-sm text-muted-foreground">{t("dashboardpro.vnements_1")}</p>
-                    <p className="text-xl font-bold">{dashboardStats.evenements.total}</p>
+                    <p className="text-xl font-bold">{evenementsTotal}</p>
                   </CardContent>
                 </Card>
 
                 <Card>
                   <CardContent className="p-4">
                     <p className="text-sm text-muted-foreground">{t("dashboardpro.services_1")}</p>
-                    <p className="text-xl font-bold">{dashboardStats.artisanats.total}</p>
+                    <p className="text-xl font-bold">{artisanatsTotal}</p>
                   </CardContent>
                 </Card>
 
                 <Card>
                   <CardContent className="p-4">
                     <p className="text-sm text-muted-foreground">{t("dashboardpro.vues_totales")}</p>
-                    <p className="text-xl font-bold">{dashboardStats.oeuvres.vues_total}</p>
+                    <p className="text-xl font-bold">{vuesTotal}</p>
                   </CardContent>
                 </Card>
               </> :
@@ -751,6 +761,24 @@ const DashboardPro = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Dialog de confirmation de suppression */}
+      <AlertDialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog(prev => ({ ...prev, open }))}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('common.confirmDelete', 'Confirmer la suppression')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('common.confirmDeleteDesc', 'Êtes-vous sûr de vouloir supprimer cet élément ? Cette action est irréversible.')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('common.cancel', 'Annuler')}</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteItem} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {t('common.delete', 'Supprimer')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>);
 
 };

@@ -145,6 +145,33 @@ const initNotificationRoutes = (models) => {
   );
 
   // ========================================================================
+  // ROUTES D'ENVOI (admin/organisateur)
+  // ========================================================================
+
+  // Envoyer une notification à un utilisateur spécifique
+  router.post('/send',
+    authMiddleware.authenticate,
+    [
+      body('titre').notEmpty().withMessage('Titre requis'),
+      body('message').notEmpty().withMessage('Message requis'),
+      body('destinataire_id').isInt({ min: 1 }).withMessage('destinataire_id invalide')
+    ],
+    validationMiddleware.handleValidationErrors,
+    (req, res) => notificationController.sendNotification(req, res)
+  );
+
+  // Envoyer une notification broadcast à tous les utilisateurs
+  router.post('/broadcast',
+    authMiddleware.authenticate,
+    [
+      body('titre').notEmpty().withMessage('Titre requis'),
+      body('message').notEmpty().withMessage('Message requis')
+    ],
+    validationMiddleware.handleValidationErrors,
+    (req, res) => notificationController.broadcastNotification(req, res)
+  );
+
+  // ========================================================================
   // ROUTES DE TEST (dev/admin)
   // ========================================================================
 

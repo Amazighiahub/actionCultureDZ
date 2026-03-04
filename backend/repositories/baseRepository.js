@@ -160,34 +160,18 @@ class BaseRepository {
     const sanitizedQuery = this._sanitizeSearchQuery(query);
     const searchPattern = `%${sanitizedQuery}%`;
 
+    // Qualifier les colonnes avec le nom de la table pour éviter l'ambiguïté dans les JOINs
+    const tableName = this.model.getTableName();
+    const { literal } = require('sequelize');
+    const langs = ['fr', 'ar', 'en', 'tz-ltn', 'tz-tfng'];
+    const escapedPattern = searchPattern.replace(/'/g, "\\'");
     const searchConditions = fields.map(field => {
-      // Utiliser sequelize.fn et sequelize.col au lieu de literal pour éviter l'injection SQL
-      return {
-        [Op.or]: [
-          { [field]: { [Op.like]: searchPattern } },
-          // Utiliser where avec fn pour les extractions JSON sécurisées
-          this.model.sequelize.where(
-            this.model.sequelize.fn('JSON_EXTRACT', this.model.sequelize.col(field), '$.fr'),
-            { [Op.like]: searchPattern }
-          ),
-          this.model.sequelize.where(
-            this.model.sequelize.fn('JSON_EXTRACT', this.model.sequelize.col(field), '$.ar'),
-            { [Op.like]: searchPattern }
-          ),
-          this.model.sequelize.where(
-            this.model.sequelize.fn('JSON_EXTRACT', this.model.sequelize.col(field), '$.en'),
-            { [Op.like]: searchPattern }
-          ),
-          this.model.sequelize.where(
-            this.model.sequelize.fn('JSON_EXTRACT', this.model.sequelize.col(field), '$.tz-ltn'),
-            { [Op.like]: searchPattern }
-          ),
-          this.model.sequelize.where(
-            this.model.sequelize.fn('JSON_EXTRACT', this.model.sequelize.col(field), '$.tz-tfng'),
-            { [Op.like]: searchPattern }
-          )
-        ]
-      };
+      const qCol = `\`${tableName}\`.\`${field}\``;
+      const parts = [
+        `${qCol} LIKE '${escapedPattern}'`,
+        ...langs.map(lang => `JSON_EXTRACT(${qCol}, '$.${lang}') LIKE '${escapedPattern}'`)
+      ];
+      return literal(`(${parts.join(' OR ')})`);
     });
 
     return this.findAll({

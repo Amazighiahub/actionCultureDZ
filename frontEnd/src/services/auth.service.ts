@@ -75,6 +75,11 @@ class AuthService {
       localStorage.setItem(AUTH_CONFIG.tokenExpiryKey, expiresAt);
     }
 
+    // Stocker le token pour les composants utilisant fetch avec Authorization header
+    if ((data as any).token) {
+      localStorage.setItem(AUTH_CONFIG.tokenKey, (data as any).token);
+    }
+
     // Stocker l'utilisateur pour l'affichage (données non sensibles)
     if ((data as any).user) {
       localStorage.setItem('user', JSON.stringify((data as any).user));
@@ -96,7 +101,7 @@ class AuthService {
      */
   async verifyEmail(token: string) {
     const endpoint = API_ENDPOINTS.auth.verifyEmail(token);
-    const response = await httpClient.post<AuthTokenData>(endpoint);
+    const response = await httpClient.get<AuthTokenData>(endpoint);
 
     if (response.success && response.data) {
         this.setAuthData(response.data);

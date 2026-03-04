@@ -201,11 +201,6 @@ const Auth = () => {
           title: t('auth.success.loginTitle', 'Connexion réussie'),
           description: t('auth.success.loginDescription', 'Bienvenue sur Écho Algérie !'),
         });
-
-        // Forcer le rafraîchissement complet de la page
-        setTimeout(() => {
-          window.location.reload();
-        }, 500);
       }
     } catch (error: unknown) {
       console.error('Erreur login:', error);

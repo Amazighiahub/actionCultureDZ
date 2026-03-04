@@ -30,6 +30,7 @@ import { dashboardService } from '@/services/dashboard.service';
 import { notificationService } from '@/services/notification.service';
 import { authService } from '@/services/auth.service';
 import { metadataService } from '@/services/metadata.service';
+import SEOHead, { buildWebsiteJsonLd } from '@/components/SEOHead';
 
 
 // ✅ Composants séparés (refactorisés)
@@ -115,6 +116,16 @@ const Index: React.FC = () => {
   
   return (
     <div className={`min-h-screen bg-background`} dir={direction}>
+      <SEOHead
+        title="Accueil"
+        description="Découvrez le riche patrimoine culturel algérien : événements, sites historiques, œuvres littéraires et artistiques, artisanat traditionnel."
+        keywords={[
+          'culture algérienne', 'patrimoine Algérie', 'événements culturels', 'artisanat algérien',
+          'littérature algérienne', 'tourisme culturel', 'histoire Algérie', 'traditions algériennes',
+          'musées Algérie', 'festivals Algérie', 'monuments historiques'
+        ]}
+        jsonLd={buildWebsiteJsonLd()}
+      />
       <Header />
       
       <main>

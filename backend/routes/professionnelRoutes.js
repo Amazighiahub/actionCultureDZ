@@ -5,7 +5,7 @@
 const express = require('express');
 const router = express.Router();
 const ProfessionnelController = require('../controllers/professionnelController');
-const createEvenementController = require('../controllers/evenementController');
+const evenementControllerV2 = require('../controllers/evenementController');
 const createAuthMiddleware = require('../middlewares/authMiddleware');
 const validationMiddleware = require('../middlewares/validationMiddleware');
 const rateLimitMiddleware = require('../middlewares/rateLimitMiddleware');
@@ -16,7 +16,6 @@ const { body, query, param } = require('express-validator');
 const initProfessionnelRoutes = (models) => {
   const authMiddleware = createAuthMiddleware(models);
   const professionnelController = new ProfessionnelController(models);
-  const evenementController = createEvenementController(models);
 
   // 🔒 SÉCURITÉ: ne jamais bypass les contrôles si un middleware requis manque
   const requireMiddleware = (name, middleware) => {
@@ -161,7 +160,7 @@ const initProfessionnelRoutes = (models) => {
     validationMiddleware.validateId('id'),
     requireOwnership('Evenement', 'id', 'id_user'),
     cacheMiddleware.conditionalCache(60),
-    evenementController.getParticipants
+    (req, res) => evenementControllerV2.getParticipants(req, res)
   );
 
   /**
@@ -173,7 +172,7 @@ const initProfessionnelRoutes = (models) => {
     validationMiddleware.validateId('id'),
     validationMiddleware.validateId('userId'),
     requireOwnership('Evenement', 'id', 'id_user'),
-    evenementController.getParticipantProfil
+    (req, res) => evenementControllerV2.getParticipantProfil(req, res)
   );
 
   /**

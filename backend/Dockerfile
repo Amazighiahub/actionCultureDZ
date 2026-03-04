@@ -1,6 +1,9 @@
 # ============================================
 # Dockerfile - EventCulture Backend
 # ============================================
+# Multi-stage build : deps -> production
+# Securite : utilisateur non-root, pas de secrets dans l'image
+# ============================================
 
 FROM node:20-alpine AS base
 
@@ -9,7 +12,7 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 # ============================================
-# Stage: Dependencies
+# Stage: Dependencies (production uniquement)
 # ============================================
 FROM base AS deps
 

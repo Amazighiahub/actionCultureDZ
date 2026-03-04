@@ -18,10 +18,9 @@ class UserDTO extends BaseDTO {
     this.biographie = BaseDTO.normalizeMultilang(data.biographie);
 
     // Type et statut
-    this.typeUser = data.type_user || data.typeUser;
+    this.idTypeUser = data.id_type_user || data.idTypeUser;
+    this.statut = data.statut || 'actif';
     this.statutValidation = data.statut_validation || data.statutValidation || 'en_attente';
-    this.estActif = BaseDTO.toBool(data.est_actif ?? data.estActif ?? true);
-    this.estSuspendu = BaseDTO.toBool(data.est_suspendu ?? data.estSuspendu ?? false);
 
     // Contact
     this.telephone = BaseDTO.cleanString(data.telephone);
@@ -32,8 +31,8 @@ class UserDTO extends BaseDTO {
     this.photoUrl = data.photo_url || data.photoUrl;
 
     // Localisation
-    this.wilaya = BaseDTO.cleanString(data.wilaya);
-    this.commune = BaseDTO.cleanString(data.commune);
+    this.wilayaResidence = data.wilaya_residence || data.wilayaResidence;
+    this.adresse = BaseDTO.cleanString(data.adresse);
 
     // Dates
     this.dateCreation = BaseDTO.toDate(data.date_creation || data.dateCreation);
@@ -55,6 +54,9 @@ class UserDTO extends BaseDTO {
 
     const data = entity.get ? entity.get({ plain: true }) : entity;
     const dto = new UserDTO(data);
+    // Strip sensitive fields from _raw to prevent password leaking in toJSON/translateRaw
+    const { password, ...safeData } = data;
+    dto._raw = safeData;
 
     // Options pour inclure des données supplémentaires
     if (options.includeStats && entity.stats) {
@@ -76,7 +78,7 @@ class UserDTO extends BaseDTO {
       nom: BaseDTO.extractMultilang(data.nom, lang),
       prenom: BaseDTO.extractMultilang(data.prenom, lang),
       email: data.email,
-      typeUser: data.type_user,
+      idTypeUser: data.id_type_user,
       photoUrl: data.photo_url,
       statutValidation: data.statut_validation
     };
@@ -85,34 +87,9 @@ class UserDTO extends BaseDTO {
   /**
    * Version pour affichage public (sans données sensibles)
    */
-  toPublicJSON(lang = 'fr') {
-    return {
-      id: this.id,
-      nom: BaseDTO.extractMultilang(this.nom, lang),
-      prenom: BaseDTO.extractMultilang(this.prenom, lang),
-      typeUser: this.typeUser,
-      photoUrl: this.photoUrl,
-      biographie: BaseDTO.extractMultilang(this.biographie, lang),
-      entreprise: this.entreprise
-    };
-  }
-
-  /**
-   * Version complète pour l'admin
-   */
-  toAdminJSON(lang = 'fr') {
-    return {
-      ...this.toJSON(lang),
-      email: this.email,
-      telephone: this.telephone,
-      statutValidation: this.statutValidation,
-      estActif: this.estActif,
-      estSuspendu: this.estSuspendu,
-      dateCreation: this.dateCreation,
-      derniereConnexion: this.derniereConnexion,
-      roles: this.roles
-    };
-  }
+  toJSON(lang = 'fr') { return BaseDTO.translateRaw(this._raw, lang); }
+  toPublicJSON(lang = 'fr') { return BaseDTO.translateRaw(this._raw, lang); }
+  toAdminJSON(lang = 'fr') { return BaseDTO.translateRaw(this._raw, lang); }
 }
 
 module.exports = UserDTO;

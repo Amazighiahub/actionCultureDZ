@@ -44,6 +44,9 @@ import {
   Info,
 } from 'lucide-react';
 import { cn } from '@/lib/Utils';
+import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
 
 interface VisitePlannerProps {
   isOpen: boolean;
@@ -55,10 +58,42 @@ interface VisitePlannerProps {
   siteType?: string;
 }
 
+// Fix pour les icônes Leaflet
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png'
+});
+
+const createColoredIcon = (color: string) => new L.DivIcon({
+  className: '',
+  html: `<div style="background:${color};width:28px;height:28px;border-radius:50%;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center"></div>`,
+  iconSize: [28, 28],
+  iconAnchor: [14, 14],
+  popupAnchor: [0, -16]
+});
+
+const MARKER_COLORS: Record<string, string> = {
+  start: '#22c55e',
+  monument: '#3b82f6',
+  musee: '#8b5cf6',
+  site_archeologique: '#f59e0b',
+  site_naturel: '#10b981',
+  edifice_religieux: '#6366f1',
+  palais_forteresse: '#0ea5e9',
+  ville_village: '#14b8a6',
+  restaurant: '#f97316',
+  hotel: '#3b82f6',
+  default: '#6b7280',
+};
+
 interface ParcoursEtape {
   id: number;
   nom: string;
   type: string;
+  latitude?: number;
+  longitude?: number;
   distance: number;
   duree: number;
   description?: string;
@@ -72,6 +107,10 @@ interface ParcoursGenere {
   distanceTotale: number;
   dureeEstimee: number;
   pointsInteret: number;
+  services?: {
+    restaurants?: Array<{ id: number; nom: string; latitude?: number; longitude?: number; distance: number; telephone?: string; tarif_min?: number; tarif_max?: number }>;
+    hotels?: Array<{ id: number; nom: string; latitude?: number; longitude?: number; distance: number; telephone?: string; tarif_min?: number; tarif_max?: number }>;
+  };
 }
 
 // Icônes par type de site
@@ -140,11 +179,11 @@ const VisitePlanner: React.FC<VisitePlannerProps> = ({
     setError(null);
 
     try {
-      const response = await fetch('/api/parcours-intelligent/personnalise', {
+      const response = await fetch('/api/parcours/personnalise', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
         },
         body: JSON.stringify({
           latitude: siteLatitude,
@@ -204,7 +243,7 @@ const VisitePlanner: React.FC<VisitePlannerProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Route className="h-5 w-5 text-primary" />
@@ -430,6 +469,66 @@ const VisitePlanner: React.FC<VisitePlannerProps> = ({
                 </CardContent>
               </Card>
 
+              {/* Carte interactive du parcours */}
+              <div className="space-y-3">
+                <Label className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4" />
+                  {t('visit.map', 'Carte du parcours')}
+                </Label>
+                <div className="rounded-lg overflow-hidden border" style={{ height: 350 }}>
+                  <MapContainer
+                    center={[siteLatitude, siteLongitude]}
+                    zoom={12}
+                    style={{ height: '100%', width: '100%' }}
+                    scrollWheelZoom={true}
+                  >
+                    <TileLayer
+                      attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a>'
+                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    />
+                    {/* Point de départ */}
+                    <Marker
+                      position={[siteLatitude, siteLongitude]}
+                      icon={createColoredIcon(MARKER_COLORS.start)}
+                    >
+                      <Popup>
+                        <strong>{siteName}</strong><br />
+                        <span className="text-xs">{t('visit.startPoint', 'Point de départ')}</span>
+                      </Popup>
+                    </Marker>
+                    {/* Étapes */}
+                    {parcours.etapes
+                      .filter(e => e.latitude && e.longitude)
+                      .map((etape, idx) => (
+                        <Marker
+                          key={`etape-${etape.id}-${idx}`}
+                          position={[etape.latitude!, etape.longitude!]}
+                          icon={createColoredIcon(MARKER_COLORS[etape.type] || MARKER_COLORS.default)}
+                        >
+                          <Popup>
+                            <strong>{idx + 1}. {etape.nom}</strong><br />
+                            <span className="text-xs">{etape.distance.toFixed(1)} km · {formatDuration(etape.duree)}</span>
+                            {etape.description && <><br /><span className="text-xs">{etape.description}</span></>}
+                          </Popup>
+                        </Marker>
+                      ))}
+                    {/* Polyline reliant les étapes */}
+                    <Polyline
+                      positions={[
+                        [siteLatitude, siteLongitude] as [number, number],
+                        ...parcours.etapes
+                          .filter(e => e.latitude && e.longitude)
+                          .map(e => [e.latitude!, e.longitude!] as [number, number])
+                      ]}
+                      color="#6366f1"
+                      weight={3}
+                      opacity={0.7}
+                      dashArray="8 6"
+                    />
+                  </MapContainer>
+                </div>
+              </div>
+
               {/* Liste des étapes */}
               <div className="space-y-3">
                 <Label className="flex items-center gap-2">
@@ -503,6 +602,49 @@ const VisitePlanner: React.FC<VisitePlannerProps> = ({
                   );
                 })}
               </div>
+
+              {/* Services inclus */}
+              {parcours.services && (
+                (parcours.services.restaurants?.length || 0) > 0 ||
+                (parcours.services.hotels?.length || 0) > 0
+              ) && (
+                <div className="space-y-3">
+                  <Label className="flex items-center gap-2">
+                    <Star className="h-4 w-4" />
+                    {t('visit.includedServices', 'Services inclus dans le parcours')}
+                  </Label>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {parcours.services?.restaurants?.map((r, i) => (
+                      <Card key={`r-${i}`} className="border-orange-200 bg-orange-50/50 dark:bg-orange-950/10">
+                        <CardContent className="p-3 flex items-center gap-3">
+                          <Utensils className="h-4 w-4 text-orange-500 flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{r.nom}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {r.distance.toFixed(1)} km
+                              {r.tarif_min != null && ` · ${r.tarif_min}${r.tarif_max ? '–' + r.tarif_max : ''} DA`}
+                            </p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                    {parcours.services?.hotels?.map((h, i) => (
+                      <Card key={`h-${i}`} className="border-blue-200 bg-blue-50/50 dark:bg-blue-950/10">
+                        <CardContent className="p-3 flex items-center gap-3">
+                          <Hotel className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{h.nom}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {h.distance.toFixed(1)} km
+                              {h.tarif_min != null && ` · ${h.tarif_min}${h.tarif_max ? '–' + h.tarif_max : ''} DA`}
+                            </p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Info */}
               <div className="flex items-start gap-2 p-3 bg-muted/50 rounded-lg">

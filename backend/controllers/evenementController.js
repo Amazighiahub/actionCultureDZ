@@ -1,1510 +1,783 @@
-// controllers/EvenementController.js - VERSION i18n
-const { Op } = require('sequelize');
-const uploadService = require('../services/uploadService');
-const emailService = require('../services/emailService');
-const smsService = require('../services/smsService');
+/**
+ * EvenementControllerV2 - Controller refactoré avec Service Pattern
+ * Architecture: Controller → Service → Repository → Database
+ */
 
-// ⚡ Import du helper i18n
-const { translate, translateDeep, createMultiLang, mergeTranslations } = require('../helpers/i18n');
+const container = require('../services/serviceContainer');
+const NotificationService = require('../services/notificationService');
 
-// ✅ OPTIMISATION: Import de l'utilitaire de recherche multilingue centralisé
-const { buildMultiLangSearch: buildMultiLangSearchUtil } = require('../utils/multiLangSearchBuilder');
+const IS_DEV_MODE = process.env.NODE_ENV === 'development';
 
-const createEvenementController = (models) => {
-  const {
-    Evenement,
-    User,
-    Lieu,
-    TypeEvenement,
-    EvenementUser,
-    EvenementOeuvre,
-    Media,
-    Notification,
-    Programme,
-    Oeuvre,
-    TypeOeuvre
-  } = models;
-  const sequelize = models.sequelize;
+class EvenementControllerV2 {
+  get evenementService() {
+    return container.evenementService;
+  }
 
-  // ⚡ Recherche multilingue - utilise l'utilitaire centralisé
-  const buildMultiLangSearch = (field, search) => {
-    return buildMultiLangSearchUtil(sequelize, field, search);
-  };
+  // ============================================================================
+  // ROUTES PUBLIQUES
+  // ============================================================================
 
-  const uploadMiddleware = uploadService.uploadImage().single('affiche');
-
-  // GET /evenements
-  const getAllEvenements = async (req, res) => {
+  async list(req, res) {
     try {
-      const lang = req.lang || 'fr';  // ⚡
-      const { page = 1, limit = 10, search, wilaya, type, upcoming, past, sort = 'date_debut' } = req.query;
-      const offset = (page - 1) * limit;
-      const where = {};
+      const { page = 1, limit = 20, upcoming } = req.query;
+      const options = { page: parseInt(page), limit: parseInt(limit) };
 
-      // ⚡ Recherche multilingue
-      if (search) {
-        where[Op.or] = [
-          ...buildMultiLangSearch('nom_evenement', search),
-          ...buildMultiLangSearch('description', search)
-        ];
+      let result;
+      if (upcoming === 'true') {
+        result = await this.evenementService.findUpcoming(options);
+      } else {
+        result = await this.evenementService.findPublished(options);
       }
-      if (upcoming === 'true') where.date_debut = { [Op.gte]: new Date() };
-      if (past === 'true') where.date_fin = { [Op.lt]: new Date() };
-      if (type) where.id_type_evenement = type;
 
-      const include = [];
-      if (Lieu) {
-        const loc = {
-          model: Lieu,
-          as: 'Lieu',
-          attributes: ['id_lieu', 'nom', 'adresse', 'latitude', 'longitude'],
-          required: false
-        };
-        // Lieu -> Commune -> Daira -> Wilaya (pas d'association directe Lieu -> Wilaya)
-        if (wilaya && models.Commune) {
-          loc.include = [{
-            model: models.Commune,
-            required: true,
-            include: [{
-              model: models.Daira,
-              required: true,
-              include: [{
-                model: models.Wilaya,
-                where: { id_wilaya: wilaya },
-                required: true
-              }]
-            }]
-          }];
-        }
-        include.push(loc);
-      }
-      if (TypeEvenement) include.push({ model: TypeEvenement, as: 'TypeEvenement', attributes: ['id_type_evenement', 'nom_type'], required: false });
-      if (User) include.push({ model: User, as: 'Organisateur', attributes: ['id_user', 'nom', 'prenom'], required: false });
-
-      const { count, rows } = await Evenement.findAndCountAll({
-        where,
-        include,
-        attributes: {
-          include: [
-            [
-              sequelize.literal(`(
-                SELECT COUNT(*)
-                FROM evenementusers AS eu
-                WHERE eu.id_evenement = Evenement.id_evenement
-              )`),
-              'nombre_inscrits'
-            ],
-            [
-              sequelize.literal(`(
-                SELECT COUNT(*)
-                FROM evenementusers AS eu
-                WHERE eu.id_evenement = Evenement.id_evenement
-                AND eu.statut_participation IN ('confirme', 'present')
-              )`),
-              'participants_count'
-            ]
-          ]
-        },
-        order: [[ 'date_debut', sort === '-date_debut' ? 'DESC' : 'ASC' ]],
-        limit: parseInt(limit),
-        offset: parseInt(offset),
-        distinct: true
-      });
-
-      const eventsWithComplet = rows.map(event => {
-        const eventData = event.toJSON();
-        eventData.nombre_inscrits = parseInt(eventData.nombre_inscrits) || 0;
-        eventData.participants_count = parseInt(eventData.participants_count) || 0;
-        eventData.est_complet = !!(eventData.capacite_max && 
-                                 eventData.nombre_inscrits >= eventData.capacite_max);
-        delete eventData.nombre_participants;
-        delete eventData.note_moyenne;
-        return eventData;
-      });
-
-      // ⚡ Traduire les résultats
       res.json({
         success: true,
-        data: translateDeep(eventsWithComplet, lang),
-        pagination: { 
-          total: count, 
-          page: parseInt(page), 
-          pages: Math.ceil(count / limit), 
-          limit: parseInt(limit) 
-        },
-        lang
+        data: result.data.map(e => e.toCardJSON(req.lang)),
+        pagination: result.pagination
       });
     } catch (error) {
-      console.error('Erreur getAllEvenements:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: 'Erreur lors de la récupération des événements', 
-        details: error.message 
-      });
+      this._handleError(res, error);
     }
-  };
+  }
 
-  // GET /evenements/upcoming
-  const getEvenementsAvenir = async (req, res) => {
+  async search(req, res) {
     try {
-      const lang = req.lang || 'fr';  // ⚡
-      const { page = 1, limit = 10 } = req.query;
-      const offset = (page - 1) * limit;
-      const where = { date_debut: { [Op.gte]: new Date() } };
-      const include = [];
-      if (Lieu) include.push({ model: Lieu, as: 'Lieu', required: false });
-      if (TypeEvenement) include.push({ model: TypeEvenement, as: 'TypeEvenement', required: false });
-
-      const { count, rows } = await Evenement.findAndCountAll({ where, include, order: [['date_debut','ASC']], limit: parseInt(limit), offset: parseInt(offset), distinct: true });
-      
-      // ⚡ Traduire
-      res.json({ 
-        success: true, 
-        data: translateDeep(rows, lang), 
-        pagination: { total: count, page: parseInt(page), pages: Math.ceil(count/limit) },
-        lang
-      });
-    } catch (error) {
-      console.error('Erreur getEvenementsAvenir:', error);
-      res.status(500).json({ success: false, error: 'Erreur lors de la récupération des événements à venir', details: error.message });
-    }
-  };
-
-  // GET /evenements/:id
-  const getEvenementById = async (req, res) => {
-    try {
-      const lang = req.lang || 'fr';  // ⚡
-      const { id } = req.params;
-      const include = [
-        Lieu && { model: Lieu, as: 'Lieu', required: false },
-        TypeEvenement && { model: TypeEvenement, as: 'TypeEvenement', required: false },
-        User && { model: User, as: 'Organisateur', attributes: ['id_user','nom','prenom','email'], required: false },
-        Media && { model: Media, as: 'Medias', required: false }
-      ].filter(Boolean);
-
-      const evenement = await Evenement.findByPk(id, { include });
-      if (!evenement) return res.status(404).json({ success: false, error: 'Événement non trouvé' });
-
-      const data = evenement.toJSON();
-      
-      // Calculer manuellement les champs VIRTUAL (les getters async ne fonctionnent pas avec toJSON)
-      if (EvenementUser) {
-        // Compter tous les inscrits (tous statuts sauf annulé)
-        const nombreInscrits = await EvenementUser.count({ 
-          where: { 
-            id_evenement: id, 
-            statut_participation: { [Op.ne]: 'annule' } 
-          } 
-        });
-        // Compter les participants confirmés/présents
-        const nombreParticipants = await EvenementUser.count({ 
-          where: { 
-            id_evenement: id, 
-            statut_participation: { [Op.in]: ['confirme', 'present'] } 
-          } 
-        });
-        // Écraser les champs VIRTUAL avec les vraies valeurs
-        data.nombre_inscrits = nombreInscrits;
-        data.nombre_participants = nombreParticipants;
-        data.est_complet = !!(data.capacite_max && nombreInscrits >= data.capacite_max);
-      } else {
-        data.nombre_inscrits = 0;
-        data.nombre_participants = 0;
-        data.est_complet = false;
-      }
-      
-      // Nettoyer les champs VIRTUAL mal résolus (objets vides)
-      if (typeof data.note_moyenne === 'object') data.note_moyenne = null;
-      
-      // ⚡ Traduire
-      res.json({ 
-        success: true, 
-        data: translateDeep(data, lang),
-        lang
-      });
-    } catch (error) {
-      console.error('Erreur getEvenementById:', error);
-      res.status(500).json({ success: false, error: 'Erreur lors de la récupération de l\'événement', details: error.message });
-    }
-  };
-
-  // GET /evenements/:id/share-data
-  const getSocialShareData = async (req, res) => {
-    try {
-      const lang = req.lang || 'fr';  // ⚡
-      const { id } = req.params;
-      const evenement = await Evenement.findByPk(id);
-      if (!evenement) return res.status(404).json({ success: false, error: 'Événement non trouvé' });
-      
-      // ⚡ Traduire le nom et la description
-      const translated = translate(evenement, lang);
-      res.json({ 
-        success: true, 
-        data: { 
-          title: translated.nom_evenement, 
-          description: translated.description || '', 
-          url: `https://actionculture.dz/evenements/${id}` 
-        } 
-      });
-    } catch (error) {
-      console.error('Erreur getSocialShareData:', error);
-      res.status(500).json({ success: false, error: 'Erreur', details: error.message });
-    }
-  };
-
-  // GET /evenements/:id/medias
-  const getMedias = async (req, res) => {
-    try {
-      const lang = req.lang || 'fr';  // ⚡
-      const { id } = req.params;
-      if (!Media) return res.json({ success: true, data: [] });
-      const medias = await Media.findAll({ where: { id_evenement: id }, order: [['ordre','ASC']] });
-      res.json({ success: true, data: translateDeep(medias, lang) });
-    } catch (error) {
-      console.error('Erreur getMedias:', error);
-      res.status(500).json({ success: false, error: 'Erreur lors de la récupération des médias', details: error.message });
-    }
-  };
-
-  // GET /evenements/:id/export
-  const exportProgramme = async (req, res) => {
-    try {
-      const lang = req.lang || 'fr';  // ⚡
-      const { id } = req.params;
-      const evenement = await Evenement.findByPk(id);
-      if (!evenement) return res.status(404).json({ success: false, error: 'Événement non trouvé' });
-      res.json({ success: true, data: translateDeep(evenement, lang) });
-    } catch (error) {
-      console.error('Erreur exportProgramme:', error);
-      res.status(500).json({ success: false, error: 'Erreur', details: error.message });
-    }
-  };
-
-  // ⚡ Préparer un champ multilingue
-  const prepareMultiLangField = (value, lang = 'fr') => {
-    if (!value) return null;
-    if (typeof value === 'object' && value !== null) return value;
-    return createMultiLang(value, lang);
-  };
-
-  // Helper: parse un champ qui peut être une string JSON ou déjà un objet
-  const parseJsonField = (value) => {
-    if (!value) return undefined;
-    if (typeof value === 'object') return value;
-    try { return JSON.parse(value); } catch { return value; }
-  };
-
-  // POST /evenements
-  const createEvenement = async (req, res) => {
-    const transaction = await sequelize.transaction();
-    try {
-      const lang = req.lang || 'fr';
-      const body = req.body;
-
-      // Parse les champs i18n (FormData envoie des strings)
-      const nomRaw = parseJsonField(body.nom_evenement);
-      const descRaw = parseJsonField(body.description);
-      const accessRaw = parseJsonField(body.accessibilite);
-
-      const nomMultiLang = prepareMultiLangField(nomRaw, lang);
-      const descriptionMultiLang = prepareMultiLangField(descRaw, lang);
-      const accessibiliteMultiLang = prepareMultiLangField(accessRaw, lang);
-
-      // Gérer l'image uploadée
-      let imageUrl = body.image_url || null;
-      if (req.file) {
-        imageUrl = `/uploads/images/${req.file.filename}`;
-      }
-
-      // Déterminer le statut
-      const validStatuts = ['brouillon', 'publie', 'planifie'];
-      const statut = validStatuts.includes(body.statut) ? body.statut : 'brouillon';
-
-      const evenement = await Evenement.create({
-        nom_evenement: nomMultiLang,
-        description: descriptionMultiLang,
-        accessibilite: accessibiliteMultiLang,
-        date_debut: body.date_debut,
-        date_fin: body.date_fin || null,
-        id_lieu: body.id_lieu ? parseInt(body.id_lieu) : null,
-        url_virtuel: body.url_virtuel || null,
-        id_type_evenement: parseInt(body.id_type_evenement),
-        capacite_max: body.capacite_max ? parseInt(body.capacite_max) : null,
-        tarif: body.tarif ? parseFloat(body.tarif) : 0,
-        image_url: imageUrl,
-        id_user: req.user.id_user,
-        statut
-      }, { transaction });
-
-      // Créer l'inscription de l'organisateur
-      if (EvenementUser) {
-        await EvenementUser.create({
-          id_evenement: evenement.id_evenement,
-          id_user: req.user.id_user,
-          statut_participation: 'confirme',
-          role_participation: 'organisateur',
-          date_inscription: new Date()
-        }, { transaction });
-      }
-
-      // Lier l'organisation si fournie
-      if (body.id_organisation && models.EvenementOrganisation) {
-        await models.EvenementOrganisation.create({
-          id_evenement: evenement.id_evenement,
-          id_organisation: parseInt(body.id_organisation),
-          role: 'organisateur_principal'
-        }, { transaction });
-      }
-
-      await transaction.commit();
-
-      res.status(201).json({ 
-        success: true, 
-        data: translate(evenement, lang), 
-        message: 'Événement créé avec succès' 
-      });
-    } catch (error) {
-      await transaction.rollback();
-      if (req.file) {
-        try { require('fs').unlinkSync(req.file.path); } catch (_) {}
-      }
-      console.error('Erreur createEvenement:', error);
-      res.status(500).json({ success: false, error: 'Erreur lors de la création', details: error.message });
-    }
-  };
-
-  // PUT /evenements/:id
-  const updateEvenement = async (req, res) => {
-    try {
-      const lang = req.lang || 'fr';  // ⚡
-      const { id } = req.params;
-      const evenement = await Evenement.findByPk(id);
-      if (!evenement) return res.status(404).json({ success: false, error: 'Événement non trouvé' });
-
-      // 🔒 Vérification ownership - seul le créateur ou admin peut modifier
-      const isAdmin = req.user?.role === 'Admin' || req.user?.isAdmin;
-      const isOwner = evenement.id_user === req.user?.id_user;
-      if (!isAdmin && !isOwner) {
-        return res.status(403).json({
-          success: false,
-          error: 'Non autorisé à modifier cet événement'
-        });
-      }
-
-      const { nom_evenement, description, accessibilite, ...otherFields } = req.body;
-      const updates = { ...otherFields };
-
-      // ⚡ Gérer les champs multilingues
-      if (nom_evenement !== undefined) {
-        if (typeof nom_evenement === 'object') {
-          updates.nom_evenement = mergeTranslations(evenement.nom_evenement, nom_evenement);
-        } else {
-          updates.nom_evenement = mergeTranslations(evenement.nom_evenement, { [lang]: nom_evenement });
-        }
-      }
-
-      if (description !== undefined) {
-        if (typeof description === 'object') {
-          updates.description = mergeTranslations(evenement.description, description);
-        } else {
-          updates.description = mergeTranslations(evenement.description, { [lang]: description });
-        }
-      }
-
-      if (accessibilite !== undefined) {
-        if (typeof accessibilite === 'object') {
-          updates.accessibilite = mergeTranslations(evenement.accessibilite, accessibilite);
-        } else {
-          updates.accessibilite = mergeTranslations(evenement.accessibilite, { [lang]: accessibilite });
-        }
-      }
-
-      await evenement.update(updates);
-      res.json({ 
-        success: true, 
-        data: translate(evenement, lang), 
-        message: 'Événement mis à jour' 
-      });
-    } catch (error) {
-      console.error('Erreur updateEvenement:', error);
-      res.status(500).json({ success: false, error: 'Erreur lors de la mise à jour', details: error.message });
-    }
-  };
-
-  // DELETE /evenements/:id
-  const deleteEvenement = async (req, res) => {
-    try {
-      const { id } = req.params;
-      const evenement = await Evenement.findByPk(id);
-      if (!evenement) return res.status(404).json({ success: false, error: 'Événement non trouvé' });
-
-      // 🔒 Vérification ownership - seul le créateur ou admin peut supprimer
-      const isAdmin = req.user?.role === 'Admin' || req.user?.isAdmin;
-      const isOwner = evenement.id_user === req.user?.id_user;
-      if (!isAdmin && !isOwner) {
-        return res.status(403).json({
-          success: false,
-          error: 'Non autorisé à supprimer cet événement'
-        });
-      }
-
-      await evenement.update({ statut: 'archive' });
-      res.json({ success: true, message: 'Événement supprimé' });
-    } catch (error) {
-      console.error('Erreur deleteEvenement:', error);
-      res.status(500).json({ success: false, error: 'Erreur lors de la suppression', details: error.message });
-    }
-  };
-
-  // PUT /evenements/:id/cancel
-  const cancelEvenement = async (req, res) => {
-    try {
-      const { id } = req.params;
-      const evenement = await Evenement.findByPk(id);
-      if (!evenement) return res.status(404).json({ success: false, error: 'Événement non trouvé' });
-
-      // 🔒 Vérification ownership - seul le créateur ou admin peut annuler
-      const isAdmin = req.user?.role === 'Admin' || req.user?.isAdmin;
-      const isOwner = evenement.id_user === req.user?.id_user;
-      if (!isAdmin && !isOwner) {
-        return res.status(403).json({
-          success: false,
-          error: 'Non autorisé à annuler cet événement'
-        });
-      }
-
-      await evenement.update({ statut: 'annule' });
-      res.json({ success: true, message: 'Événement annulé' });
-    } catch (error) {
-      console.error('Erreur cancelEvenement:', error);
-      res.status(500).json({ success: false, error: 'Erreur lors de l\'annulation', details: error.message });
-    }
-  };
-
-  // POST /evenements/:id/inscription
-  // Body optionnel: { oeuvres: [id_oeuvre1, id_oeuvre2, ...], notes: "..." }
-  const inscrireUtilisateur = async (req, res) => {
-    const transaction = await sequelize.transaction();
-    try {
-      const { id } = req.params;
-      const userId = req.user.id_user;
-      const { oeuvres = [], notes = '' } = req.body;
-
-      // Vérifier si déjà inscrit
-      const exist = await EvenementUser.findOne({ where: { id_evenement: id, id_user: userId } });
-      if (exist) { 
-        await transaction.rollback(); 
-        return res.status(400).json({ success: false, error: 'Déjà inscrit à cet événement' }); 
-      }
-
-      // Récupérer l'événement avec son type
-      const evenement = await Evenement.findByPk(id, {
-        include: [{ model: TypeEvenement, as: 'TypeEvenement' }]
-      });
-      
-      if (!evenement) {
-        await transaction.rollback();
-        return res.status(404).json({ success: false, error: 'Événement non trouvé' });
-      }
-
-      // Vérifier si l'événement est complet
-      if (evenement.capacite_max) {
-        const nombreInscrits = await EvenementUser.count({ 
-          where: { id_evenement: id, statut_participation: { [Op.ne]: 'annule' } } 
-        });
-        if (nombreInscrits >= evenement.capacite_max) {
-          await transaction.rollback();
-          return res.status(400).json({ success: false, error: 'Événement complet' });
-        }
-      }
-
-      // Vérifier la date limite d'inscription
-      if (evenement.date_limite_inscription && new Date() > new Date(evenement.date_limite_inscription)) {
-        await transaction.rollback();
-        return res.status(400).json({ success: false, error: 'Date limite d\'inscription dépassée' });
-      }
-
-      // Vérifier la configuration de soumission du type d'événement
-      const typeEvenement = evenement.TypeEvenement;
-      const configSoumission = typeEvenement?.config_soumission;
-      const accepteSoumissions = typeEvenement?.accepte_soumissions;
-
-      // Si le type d'événement requiert des soumissions
-      if (accepteSoumissions && configSoumission?.requis && (!oeuvres || oeuvres.length === 0)) {
-        await transaction.rollback();
-        const label = configSoumission.label?.fr || 'Œuvres';
-        return res.status(400).json({ 
-          success: false, 
-          error: `Ce type d'événement requiert la soumission d'œuvres`,
-          message: `Veuillez soumettre vos ${label.toLowerCase()}`,
-          config_soumission: configSoumission
-        });
-      }
-
-      // Vérifier le nombre max de soumissions
-      if (accepteSoumissions && configSoumission?.max_soumissions && oeuvres.length > configSoumission.max_soumissions) {
-        await transaction.rollback();
-        return res.status(400).json({ 
-          success: false, 
-          error: `Nombre maximum de soumissions dépassé (max: ${configSoumission.max_soumissions})` 
-        });
-      }
-
-      // Créer l'inscription
-      const inscription = await EvenementUser.create({ 
-        id_evenement: id, 
-        id_user: userId, 
-        statut_participation: accepteSoumissions && configSoumission?.requis ? 'inscrit' : 'confirme',
-        role_participation: 'participant', 
-        date_inscription: new Date(),
-        notes: notes || null
-      }, { transaction });
-
-      // Si des œuvres sont soumises, les lier à l'événement
-      const oeuvresSoumises = [];
-      if (accepteSoumissions && oeuvres && oeuvres.length > 0 && EvenementOeuvre) {
-        // Vérifier que les œuvres appartiennent à l'utilisateur
-        const Oeuvre = models.Oeuvre;
-        if (Oeuvre) {
-          for (const idOeuvre of oeuvres) {
-            const oeuvre = await Oeuvre.findOne({
-              where: { id_oeuvre: idOeuvre, saisi_par: userId }
-            });
-            
-            if (!oeuvre) {
-              await transaction.rollback();
-              return res.status(400).json({ 
-                success: false, 
-                error: `L'œuvre ${idOeuvre} n'existe pas ou ne vous appartient pas` 
-              });
-            }
-
-            // Vérifier le type d'œuvre si configuré
-            if (configSoumission?.type_oeuvre && configSoumission.type_oeuvre.length > 0) {
-              const typeOeuvre = await oeuvre.getTypeOeuvre?.();
-              const nomType = typeOeuvre?.nom_type?.fr?.toLowerCase() || '';
-              const typesAcceptes = configSoumission.type_oeuvre.map(t => t.toLowerCase());
-              
-              // Vérification souple du type
-              const typeValide = typesAcceptes.some(t => 
-                nomType.includes(t) || t.includes(nomType)
-              );
-              
-              if (!typeValide && configSoumission.type_oeuvre.length > 0) {
-                console.warn(`Type d'œuvre "${nomType}" non strictement validé pour les types acceptés: ${typesAcceptes.join(', ')}`);
-              }
-            }
-
-            // Créer le lien événement-œuvre
-            const lien = await EvenementOeuvre.create({
-              id_evenement: id,
-              id_oeuvre: idOeuvre,
-              id_presentateur: userId,
-              ordre_presentation: oeuvresSoumises.length + 1
-            }, { transaction });
-
-            oeuvresSoumises.push({ id_oeuvre: idOeuvre, lien });
-          }
-        }
-      }
-
-      await transaction.commit();
-
-      // ===== ENVOI DES NOTIFICATIONS =====
-      // Récupérer les informations complètes pour les notifications
-      const user = await User.findByPk(userId, {
-        attributes: ['id_user', 'nom', 'prenom', 'email', 'telephone']
+      const { q, page = 1, limit = 20 } = req.query;
+      const result = await this.evenementService.search(q, {
+        page: parseInt(page),
+        limit: parseInt(limit)
       });
 
-      const eventWithLieu = await Evenement.findByPk(id, {
-        include: [
-          { model: Lieu, as: 'Lieu', required: false },
-          { model: TypeEvenement, as: 'TypeEvenement', required: false }
-        ]
+      res.json({
+        success: true,
+        data: result.data.map(e => e.toCardJSON(req.lang)),
+        pagination: result.pagination
+      });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  async getById(req, res) {
+    try {
+      const evenement = await this.evenementService.findWithFullDetails(parseInt(req.params.id));
+      res.json({
+        success: true,
+        data: evenement.toDetailJSON(req.lang)
+      });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  async getByWilaya(req, res) {
+    try {
+      const { page = 1, limit = 20 } = req.query;
+      const result = await this.evenementService.findByWilaya(parseInt(req.params.wilayaId), {
+        page: parseInt(page),
+        limit: parseInt(limit)
       });
 
-      // Préparer les données de l'événement pour les notifications
-      const nomEvenement = translate(eventWithLieu.nom_evenement, 'fr');
-      const dateDebut = eventWithLieu.date_debut
-        ? new Date(eventWithLieu.date_debut).toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
-        : '';
-      const dateFin = eventWithLieu.date_fin && eventWithLieu.date_fin !== eventWithLieu.date_debut
-        ? new Date(eventWithLieu.date_fin).toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
-        : null;
-      const heureDebut = eventWithLieu.heure_debut || '';
-      const lieuNom = eventWithLieu.Lieu ? translate(eventWithLieu.Lieu.nom, 'fr') : '';
-      const adresse = eventWithLieu.Lieu?.adresse || '';
-      const typeNom = eventWithLieu.TypeEvenement ? translate(eventWithLieu.TypeEvenement.nom_type, 'fr') : '';
+      res.json({
+        success: true,
+        data: result.data.map(e => e.toCardJSON(req.lang)),
+        pagination: result.pagination
+      });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
 
-      // Récupérer les titres des œuvres soumises pour l'email
-      let oeuvresDetails = [];
-      if (oeuvresSoumises.length > 0) {
-        const Oeuvre = models.Oeuvre;
-        if (Oeuvre) {
-          const oeuvresData = await Oeuvre.findAll({
-            where: { id_oeuvre: oeuvresSoumises.map(o => o.id_oeuvre) },
-            attributes: ['id_oeuvre', 'titre']
-          });
-          oeuvresDetails = oeuvresData.map(o => ({ titre: translate(o.titre, 'fr') }));
-        }
-      }
+  // ============================================================================
+  // ROUTES AUTHENTIFIÉES
+  // ============================================================================
 
-      // Générer une référence unique pour l'inscription
-      const reference = `EVT-${id}-${userId}-${Date.now().toString(36).toUpperCase()}`;
+  async getMyEvenements(req, res) {
+    try {
+      const { page = 1, limit = 20 } = req.query;
+      const result = await this.evenementService.findByOrganisateur(req.user.id_user, {
+        page: parseInt(page),
+        limit: parseInt(limit)
+      });
 
-      // Envoi de l'email de confirmation (asynchrone, non bloquant)
-      if (user?.email) {
-        emailService.sendEventRegistrationConfirmation({
-          email: user.email,
-          prenom: user.prenom,
-          nomEvenement,
-          dateDebut,
-          dateFin,
-          heureDebut,
-          lieu: lieuNom,
-          adresse,
-          typeEvenement: typeNom,
-          nombrePersonnes: 1,
-          reference,
-          oeuvresSoumises: oeuvresDetails.length > 0 ? oeuvresDetails : null,
-          eventUrl: `${process.env.FRONTEND_URL}/evenements/${id}`,
-          contactEmail: eventWithLieu.contact_email,
-          contactTelephone: eventWithLieu.contact_telephone
-        }).catch(err => console.error('Erreur envoi email confirmation:', err));
-      }
+      res.json({
+        success: true,
+        data: result.data.map(e => e.toCardJSON(req.lang)),
+        pagination: result.pagination
+      });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
 
-      // Envoi du SMS de confirmation (asynchrone, non bloquant)
-      if (user?.telephone) {
-        smsService.sendEventRegistrationConfirmation({
-          telephone: user.telephone,
-          prenom: user.prenom,
-          nomEvenement,
-          dateEvenement: dateDebut,
-          lieu: lieuNom,
-          reference
-        }).catch(err => console.error('Erreur envoi SMS confirmation:', err));
-      }
-
+  async create(req, res) {
+    try {
+      const evenement = await this.evenementService.create(req.body, req.user.id_user);
       res.status(201).json({
         success: true,
-        data: {
-          inscription,
-          oeuvres_soumises: oeuvresSoumises.length,
-          type_evenement: typeEvenement?.nom_type,
-          accepte_soumissions: accepteSoumissions,
-          reference
-        },
-        message: accepteSoumissions && oeuvresSoumises.length > 0
-          ? `Inscription confirmée avec ${oeuvresSoumises.length} œuvre(s) soumise(s)`
-          : 'Inscription confirmée'
+        message: 'Événement créé avec succès',
+        data: evenement.toDetailJSON(req.lang)
       });
-
     } catch (error) {
-      await transaction.rollback();
-      console.error('Erreur inscrireUtilisateur:', error);
-      res.status(500).json({ success: false, error: 'Erreur lors de l\'inscription', details: error.message });
+      this._handleError(res, error);
     }
-  };
+  }
 
-  // GET /evenements/:id/config-inscription
-  // Retourne la configuration du formulaire d'inscription selon le type d'événement
-  const getConfigInscription = async (req, res) => {
+  async update(req, res) {
     try {
-      const lang = req.lang || 'fr';
-      const { id } = req.params;
-
-      const evenement = await Evenement.findByPk(id, {
-        include: [{ model: TypeEvenement, as: 'TypeEvenement' }]
+      const evenement = await this.evenementService.update(
+        parseInt(req.params.id),
+        req.body,
+        req.user.id_user
+      );
+      res.json({
+        success: true,
+        message: 'Événement mis à jour',
+        data: evenement.toDetailJSON(req.lang)
       });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
 
-      if (!evenement) {
-        return res.status(404).json({ success: false, error: 'Événement non trouvé' });
-      }
+  async delete(req, res) {
+    try {
+      await this.evenementService.delete(parseInt(req.params.id), req.user.id_user);
+      res.json({ success: true, message: 'Événement supprimé' });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
 
-      const typeEvenement = evenement.TypeEvenement;
-      const configSoumission = typeEvenement?.config_soumission;
-      const accepteSoumissions = typeEvenement?.accepte_soumissions || false;
+  // ============================================================================
+  // INSCRIPTION
+  // ============================================================================
 
-      // Calculer les places disponibles
-      let placesDisponibles = null;
-      if (evenement.capacite_max) {
-        const nombreInscrits = await EvenementUser.count({ 
-          where: { id_evenement: id, statut_participation: { [Op.ne]: 'annule' } } 
-        });
-        placesDisponibles = evenement.capacite_max - nombreInscrits;
-      }
+  async register(req, res) {
+    try {
+      await this.evenementService.registerParticipant(
+        parseInt(req.params.id),
+        req.user.id_user
+      );
+      res.json({ success: true, message: 'Inscription confirmée' });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
 
-      // Vérifier si l'utilisateur est déjà inscrit
-      let dejaInscrit = false;
-      if (req.user) {
-        const inscription = await EvenementUser.findOne({ 
-          where: { id_evenement: id, id_user: req.user.id_user } 
-        });
-        dejaInscrit = !!inscription;
+  async unregister(req, res) {
+    try {
+      await this.evenementService.unregisterParticipant(
+        parseInt(req.params.id),
+        req.user.id_user
+      );
+      res.json({ success: true, message: 'Désinscription effectuée' });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  // ============================================================================
+  // ADMIN
+  // ============================================================================
+
+  async listAll(req, res) {
+    try {
+      const { page = 1, limit = 20, statut } = req.query;
+      const options = { page: parseInt(page), limit: parseInt(limit) };
+      if (statut) options.where = { statut };
+
+      const result = await this.evenementService.findAll(options);
+      res.json({
+        success: true,
+        data: result.data.map(e => e.toAdminJSON(req.lang)),
+        pagination: result.pagination
+      });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  async getPending(req, res) {
+    try {
+      const { page = 1, limit = 20 } = req.query;
+      const result = await this.evenementService.findPending({
+        page: parseInt(page),
+        limit: parseInt(limit)
+      });
+      res.json({
+        success: true,
+        data: result.data.map(e => e.toAdminJSON(req.lang)),
+        pagination: result.pagination
+      });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  async publish(req, res) {
+    try {
+      const evenement = await this.evenementService.publish(
+        parseInt(req.params.id),
+        req.user.id_user
+      );
+      res.json({
+        success: true,
+        message: 'Événement publié',
+        data: evenement.toAdminJSON(req.lang)
+      });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  async cancel(req, res) {
+    try {
+      const { motif } = req.body;
+      const evenement = await this.evenementService.cancel(
+        parseInt(req.params.id),
+        req.user.id_user,
+        motif
+      );
+
+      // Notifier les participants de l'annulation
+      try {
+        const notificationService = new NotificationService(container.models);
+        await notificationService.notifierAnnulationEvenement(parseInt(req.params.id), motif || 'Annulation par l\'organisateur');
+      } catch (notifError) {
+        console.error('Erreur notification annulation:', notifError);
       }
 
       res.json({
         success: true,
-        data: {
-          id_evenement: evenement.id_evenement,
-          nom_evenement: translateDeep(evenement.nom_evenement, lang),
-          type_evenement: translateDeep(typeEvenement?.nom_type, lang),
-          inscription_requise: evenement.inscription_requise,
-          date_limite_inscription: evenement.date_limite_inscription,
-          places_disponibles: placesDisponibles,
-          est_complet: placesDisponibles !== null && placesDisponibles <= 0,
-          deja_inscrit: dejaInscrit,
-          accepte_soumissions: accepteSoumissions,
-          config_soumission: accepteSoumissions ? {
-            type_oeuvre: configSoumission?.type_oeuvre || [],
-            requis: configSoumission?.requis || false,
-            max_soumissions: configSoumission?.max_soumissions || 10,
-            label: translateDeep(configSoumission?.label, lang) || 'Œuvres à soumettre'
-          } : null
-        }
+        message: 'Événement annulé',
+        data: evenement.toAdminJSON(req.lang)
+      });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  async getStats(req, res) {
+    try {
+      const stats = await this.evenementService.getStats();
+      res.json({ success: true, data: stats });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  // ============================================================================
+  // OEUVRE / MEDIAS
+  // ============================================================================
+
+  async getByOeuvre(req, res) {
+    try {
+      const result = await this.evenementService.findByOeuvre(parseInt(req.params.oeuvreId));
+      res.json({
+        success: true,
+        data: result.map(e => e.toCardJSON(req.lang))
+      });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  async getMedias(req, res) {
+    try {
+      const evenement = await this.evenementService.findWithFullDetails(parseInt(req.params.id));
+      const data = evenement.toJSON(req.lang);
+      res.json({
+        success: true,
+        data: data.Medias || data.medias || []
+      });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  // ============================================================================
+  // PARTICIPANTS & MES OEUVRES
+  // ============================================================================
+
+  async getParticipants(req, res) {
+    try {
+      const evenementId = parseInt(req.params.id);
+      const models = container.models;
+
+      const participants = await models.EvenementUser.findAll({
+        where: { id_evenement: evenementId },
+        include: [{
+          model: models.User,
+          as: 'User',
+          attributes: { exclude: ['password'] }
+        }],
+        order: [['date_inscription', 'DESC']]
       });
 
+      res.json({
+        success: true,
+        data: participants
+      });
     } catch (error) {
-      console.error('Erreur getConfigInscription:', error);
-      res.status(500).json({ success: false, error: 'Erreur lors de la récupération de la configuration', details: error.message });
+      this._handleError(res, error);
     }
-  };
+  }
 
-  // GET /evenements/:id/mon-inscription
-  // Retourne le statut d'inscription de l'utilisateur connecté
-  const getMonInscription = async (req, res) => {
+  async getMesOeuvres(req, res) {
     try {
-      const { id } = req.params;
+      const evenementId = parseInt(req.params.id);
       const userId = req.user.id_user;
+      const models = container.models;
 
-      const inscription = await EvenementUser.findOne({
-        where: { id_evenement: id, id_user: userId },
-        attributes: ['statut_participation', 'role_participation', 'date_inscription', 'notes']
+      // Oeuvres déjà ajoutées à cet événement par l'utilisateur
+      const oeuvresAjoutees = await models.EvenementOeuvre.findAll({
+        where: { id_evenement: evenementId },
+        include: [{
+          model: models.Oeuvre,
+          as: 'Oeuvre',
+          where: { saisi_par: userId },
+          required: true
+        }],
+        order: [['ordre_presentation', 'ASC']]
+      });
+
+      // Toutes les oeuvres de l'utilisateur (pour proposer celles disponibles)
+      const toutesOeuvres = await models.Oeuvre.findAll({
+        where: { saisi_par: userId, statut: 'publie' }
+      });
+
+      const idsAjoutees = oeuvresAjoutees.map(eo => eo.id_oeuvre);
+      const oeuvresDisponibles = toutesOeuvres.filter(o => !idsAjoutees.includes(o.id_oeuvre));
+
+      res.json({
+        success: true,
+        data: {
+          oeuvres_ajoutees: oeuvresAjoutees,
+          oeuvres_disponibles: oeuvresDisponibles
+        }
+      });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  async getShareData(req, res) {
+    try {
+      const evenement = await this.evenementService.findWithFullDetails(parseInt(req.params.id));
+      const data = evenement.toDetailJSON(req.lang);
+      
+      const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+      const eventUrl = `${baseUrl}/evenements/${req.params.id}`;
+
+      res.json({
+        success: true,
+        data: {
+          title: data.titre || data.nom_evenement,
+          description: data.description,
+          url: eventUrl,
+          image: data.image_url || null,
+          calendar_links: {
+            google: `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(data.titre || '')}&dates=${data.date_debut || ''}/${data.date_fin || ''}`,
+            outlook: eventUrl,
+            ical: eventUrl
+          },
+          social_links: {
+            facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(eventUrl)}`,
+            twitter: `https://twitter.com/intent/tweet?url=${encodeURIComponent(eventUrl)}&text=${encodeURIComponent(data.titre || '')}`,
+            linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(eventUrl)}`,
+            whatsapp: `https://wa.me/?text=${encodeURIComponent((data.titre || '') + ' ' + eventUrl)}`
+          }
+        }
+      });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  async getMyRegistration(req, res) {
+    try {
+      const evenementId = parseInt(req.params.id);
+      const userId = req.user.id_user;
+      const models = container.models;
+
+      const inscription = await models.EvenementUser.findOne({
+        where: { id_evenement: evenementId, id_user: userId }
       });
 
       if (!inscription) {
         return res.json({
           success: true,
-          data: {
-            isRegistered: false,
-            status: null
-          }
+          data: { isRegistered: false, status: null }
         });
       }
-
-      // Mapper les statuts pour le frontend
-      const statusMap = {
-        'inscrit': 'pending',
-        'confirme': 'confirmed',
-        'annule': 'cancelled',
-        'refuse': 'cancelled',
-        'liste_attente': 'waiting_list'
-      };
 
       res.json({
         success: true,
         data: {
           isRegistered: true,
-          status: statusMap[inscription.statut_participation] || 'pending',
-          inscription: {
-            statut_participation: inscription.statut_participation,
-            role_participation: inscription.role_participation,
-            date_inscription: inscription.date_inscription,
-            notes: inscription.notes
-          }
+          status: inscription.statut_participation,
+          inscription
         }
       });
     } catch (error) {
-      console.error('Erreur getMonInscription:', error);
-      res.status(500).json({ success: false, error: 'Erreur lors de la vérification', details: error.message });
+      this._handleError(res, error);
     }
-  };
+  }
 
-  // DELETE /evenements/:id/inscription
-  const desinscrireUtilisateur = async (req, res) => {
+  async addOeuvre(req, res) {
     try {
-      const { id } = req.params;
+      const evenementId = parseInt(req.params.id);
+      const oeuvreId = parseInt(req.body.id_oeuvre ?? req.body.oeuvre_id);
+      const descriptionPresentation = req.body.description_presentation;
+      const dureePresentation = req.body.duree_presentation;
       const userId = req.user.id_user;
-      const count = await EvenementUser.destroy({
+      const models = container.models;
+
+      if (!Number.isInteger(oeuvreId)) {
+        return res.status(400).json({ success: false, error: 'ID œuvre invalide' });
+      }
+
+      // Vérifier que l'oeuvre appartient à l'utilisateur
+      const oeuvre = await models.Oeuvre.findOne({
+        where: { id_oeuvre: oeuvreId, saisi_par: userId }
+      });
+
+      if (!oeuvre) {
+        return res.status(404).json({ success: false, error: 'Œuvre non trouvée ou non autorisée' });
+      }
+
+      // Vérifier si déjà ajoutée
+      const existing = await models.EvenementOeuvre.findOne({
+        where: { id_evenement: evenementId, id_oeuvre: oeuvreId }
+      });
+
+      if (existing) {
+        return res.status(409).json({ success: false, error: 'Œuvre déjà ajoutée à cet événement' });
+      }
+
+      // Obtenir le prochain ordre
+      const maxOrdre = await models.EvenementOeuvre.max('ordre_presentation', {
+        where: { id_evenement: evenementId }
+      });
+
+      const association = await models.EvenementOeuvre.create({
+        id_evenement: evenementId,
+        id_oeuvre: oeuvreId,
+        id_presentateur: userId,
+        ordre_presentation: (maxOrdre || 0) + 1,
+        description_presentation: descriptionPresentation,
+        duree_presentation: dureePresentation
+      });
+
+      const created = await models.EvenementOeuvre.findByPk(association.id_EventOeuvre, {
+        include: [{ model: models.Oeuvre, as: 'Oeuvre', required: false }]
+      });
+
+      res.status(201).json({
+        success: true,
+        message: 'Œuvre ajoutée à l\'événement',
+        data: created || association
+      });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  async updateOeuvre(req, res) {
+    try {
+      const evenementId = parseInt(req.params.id);
+      const oeuvreId = parseInt(req.params.oeuvreId);
+      const userId = req.user.id_user;
+      const models = container.models;
+
+      const association = await models.EvenementOeuvre.findOne({
         where: {
-          id_evenement: id,
-          id_user: userId,
-          role_participation: { [Op.ne]: 'organisateur' }
+          id_evenement: evenementId,
+          id_oeuvre: oeuvreId,
+          id_presentateur: userId
         }
       });
-      if (!count) {
-        return res.status(404).json({ success: false, error: 'Inscription non trouvée' });
+
+      if (!association) {
+        return res.status(404).json({ success: false, error: 'Association non trouvée' });
       }
-      res.json({ success: true, message: 'Désinscription effectuée' });
-    } catch (error) {
-      console.error('Erreur desinscrireUtilisateur:', error);
-      res.status(500).json({ success: false, error: 'Erreur lors de la désinscription', details: error.message });
-    }
-  };
 
-  // GET /evenements/:id/participants
-  // Retourne les participants avec leurs œuvres soumises et profil complet
-  const getParticipants = async (req, res) => {
-    try {
-      const lang = req.lang || 'fr';
-      const { id } = req.params;
-      const { statut, role } = req.query;
+      const updates = {};
+      if (req.body.description_presentation !== undefined) {
+        updates.description_presentation = req.body.description_presentation;
+      }
+      if (req.body.duree_presentation !== undefined) {
+        updates.duree_presentation = req.body.duree_presentation;
+      }
+      if (req.body.ordre_presentation !== undefined) {
+        updates.ordre_presentation = req.body.ordre_presentation;
+      } else if (req.body.ordre !== undefined) {
+        updates.ordre_presentation = req.body.ordre;
+      }
 
-      // Construire le filtre
-      const where = { id_evenement: id };
-      if (statut) where.statut_participation = statut;
-      if (role) where.role_participation = role;
+      await association.update(updates);
 
-      // Récupérer les participants avec profil étendu
-      const participants = await EvenementUser.findAll({
-        where,
-        include: [{
-          model: User,
-          as: 'User',
-          attributes: [
-            'id_user', 'nom', 'prenom', 'email',
-            'biographie', 'photo_url', 'site_web',
-            'telephone', 'statut', 'date_creation'
-          ],
-          include: models.TypeUser ? [{
-            model: models.TypeUser,
-            as: 'TypeUser',
-            attributes: ['id_type_user', 'nom_type']
-          }] : []
-        }],
-        order: [['date_inscription', 'DESC']]
+      const updated = await models.EvenementOeuvre.findOne({
+        where: { id_evenement: evenementId, id_oeuvre: oeuvreId },
+        include: [{ model: models.Oeuvre, as: 'Oeuvre', required: false }]
       });
 
-      // Pour chaque participant, récupérer ses œuvres soumises à cet événement
-      const participantsAvecOeuvres = await Promise.all(
-        participants.map(async (participant) => {
-          const data = participant.toJSON();
-          
-          // Récupérer les œuvres soumises par ce participant pour cet événement
-          if (EvenementOeuvre && Oeuvre) {
-            const oeuvresSoumises = await EvenementOeuvre.findAll({
-              where: { 
-                id_evenement: id, 
-                id_presentateur: participant.id_user 
-              },
-              include: [{
-                model: Oeuvre,
-                as: 'Oeuvre',
-                attributes: ['id_oeuvre', 'titre', 'description', 'date_creation'],
-                include: TypeOeuvre ? [{
-                  model: TypeOeuvre,
-                  as: 'TypeOeuvre',
-                  attributes: ['id_type_oeuvre', 'nom_type']
-                }] : []
-              }]
-            });
-            data.oeuvres_soumises = oeuvresSoumises.map(eo => ({
-              ...eo.Oeuvre?.toJSON(),
-              ordre_presentation: eo.ordre_presentation,
-              description_presentation: eo.description_presentation,
-              duree_presentation: eo.duree_presentation
-            }));
-          } else {
-            data.oeuvres_soumises = [];
+      res.json({
+        success: true,
+        message: 'Œuvre mise à jour dans l\'événement',
+        data: updated || association
+      });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  async reorderOeuvres(req, res) {
+    try {
+      const evenementId = parseInt(req.params.id);
+      const userId = req.user.id_user;
+      const models = container.models;
+      const oeuvres = Array.isArray(req.body.oeuvres) ? req.body.oeuvres : [];
+
+      if (!oeuvres.length) {
+        return res.status(400).json({ success: false, error: 'Liste d\'œuvres invalide' });
+      }
+
+      const transaction = await models.sequelize.transaction();
+      try {
+        for (const item of oeuvres) {
+          const idOeuvre = parseInt(item.id_oeuvre);
+          const ordre = parseInt(item.ordre ?? item.ordre_presentation);
+
+          if (!Number.isInteger(idOeuvre) || !Number.isInteger(ordre)) {
+            throw new Error('Données de réorganisation invalides');
           }
 
-          return data;
-        })
-      );
+          const [updatedCount] = await models.EvenementOeuvre.update(
+            { ordre_presentation: ordre },
+            {
+              where: {
+                id_evenement: evenementId,
+                id_oeuvre: idOeuvre,
+                id_presentateur: userId
+              },
+              transaction
+            }
+          );
 
-      // Statistiques
-      const stats = {
-        total: participants.length,
-        par_statut: {},
-        par_role: {}
-      };
-      
-      participants.forEach(p => {
-        stats.par_statut[p.statut_participation] = (stats.par_statut[p.statut_participation] || 0) + 1;
-        stats.par_role[p.role_participation] = (stats.par_role[p.role_participation] || 0) + 1;
-      });
+          if (!updatedCount) {
+            throw new Error(`Association introuvable pour l'œuvre ${idOeuvre}`);
+          }
+        }
 
-      res.json({ 
-        success: true, 
-        data: translateDeep(participantsAvecOeuvres, lang),
-        stats,
-        lang
-      });
-    } catch (error) {
-      console.error('Erreur getParticipants:', error);
-      res.status(500).json({ success: false, error: 'Erreur lors de la récupération des participants', details: error.message });
-    }
-  };
-
-  // GET /evenements/:id/participants/:userId/profil
-  // Voir le profil complet d'un participant inscrit
-  const getParticipantProfil = async (req, res) => {
-    try {
-      const lang = req.lang || 'fr';
-      const { id, userId } = req.params;
-
-      // Vérifier que l'utilisateur est bien inscrit à cet événement
-      const inscription = await EvenementUser.findOne({
-        where: { id_evenement: id, id_user: userId }
-      });
-
-      if (!inscription) {
-        return res.status(404).json({ 
-          success: false, 
-          error: 'Ce participant n\'est pas inscrit à cet événement' 
+        await transaction.commit();
+      } catch (txError) {
+        await transaction.rollback();
+        return res.status(400).json({
+          success: false,
+          error: txError.message || 'Erreur lors de la réorganisation des œuvres'
         });
       }
 
-      // Récupérer le profil complet de l'utilisateur
-      const user = await User.findByPk(userId, {
-        attributes: [
-          'id_user', 'nom', 'prenom', 'email',
-          'biographie', 'photo_url', 'site_web',
-          'telephone', 'statut', 'date_creation',
-          'reseaux_sociaux'
-        ],
+      const reordered = await models.EvenementOeuvre.findAll({
+        where: { id_evenement: evenementId, id_presentateur: userId },
+        include: [{ model: models.Oeuvre, as: 'Oeuvre', required: false }],
+        order: [['ordre_presentation', 'ASC']]
+      });
+
+      res.json({
+        success: true,
+        message: 'Ordre des œuvres mis à jour',
+        data: reordered
+      });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  async removeOeuvre(req, res) {
+    try {
+      const evenementId = parseInt(req.params.id);
+      const oeuvreId = parseInt(req.params.oeuvreId);
+      const userId = req.user.id_user;
+      const models = container.models;
+
+      const deleted = await models.EvenementOeuvre.destroy({
+        where: {
+          id_evenement: evenementId,
+          id_oeuvre: oeuvreId,
+          id_presentateur: userId
+        }
+      });
+
+      if (!deleted) {
+        return res.status(404).json({ success: false, error: 'Association non trouvée' });
+      }
+
+      res.json({ success: true, message: 'Œuvre retirée de l\'événement' });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  async validateParticipation(req, res) {
+    try {
+      const evenementId = parseInt(req.params.id);
+      const userId = parseInt(req.params.userId);
+      const { validated } = req.body;
+      const models = container.models;
+
+      const participation = await models.EvenementUser.findOne({
+        where: { id_evenement: evenementId, id_user: userId }
+      });
+
+      if (!participation) {
+        return res.status(404).json({ success: false, error: 'Participation non trouvée' });
+      }
+
+      await participation.update({
+        statut_participation: validated ? 'confirme' : 'annule',
+        date_validation: new Date(),
+        valide_par: req.user.id_user
+      });
+
+      // Notifier le participant de la validation/refus
+      try {
+        const notificationService = new NotificationService(container.models);
+        await notificationService.notifierValidationParticipation(
+          evenementId,
+          userId,
+          validated ? 'confirme' : 'refuse',
+          req.body.notes || ''
+        );
+      } catch (notifError) {
+        console.error('Erreur notification validation participation:', notifError);
+      }
+
+      res.json({
+        success: true,
+        message: validated ? 'Participation confirmée' : 'Participation refusée',
+        data: participation
+      });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  async getParticipantProfil(req, res) {
+    try {
+      const evenementId = parseInt(req.params.id);
+      const userId = parseInt(req.params.userId);
+      const models = container.models;
+
+      // Vérifier que l'utilisateur est bien inscrit à cet événement
+      const participation = await models.EvenementUser.findOne({
+        where: { id_evenement: evenementId, id_user: userId }
+      });
+
+      if (!participation) {
+        return res.status(404).json({ success: false, error: 'Participant non trouvé pour cet événement' });
+      }
+
+      // Récupérer le profil complet du participant
+      const user = await models.User.findByPk(userId, {
+        attributes: { exclude: ['password'] },
         include: [
-          models.TypeUser ? { 
-            model: models.TypeUser, 
-            as: 'TypeUser',
-            attributes: ['id_type_user', 'nom_type']
-          } : null,
-          models.Organisation ? {
-            model: models.Organisation,
-            as: 'Organisations',
-            through: { attributes: ['role'] },
-            attributes: ['id_organisation', 'nom', 'description', 'site_web']
-          } : null
-        ].filter(Boolean)
+          { model: models.TypeUser, required: false },
+          { model: models.Wilaya, required: false },
+          {
+            model: models.Oeuvre,
+            as: 'OeuvresSaisies',
+            where: { statut: 'publie' },
+            required: false,
+            limit: 10
+          }
+        ]
       });
 
       if (!user) {
         return res.status(404).json({ success: false, error: 'Utilisateur non trouvé' });
       }
 
-      // Récupérer les œuvres soumises pour cet événement
-      let oeuvresSoumises = [];
-      if (EvenementOeuvre && Oeuvre) {
-        const oeuvresEvent = await EvenementOeuvre.findAll({
-          where: { id_evenement: id, id_presentateur: userId },
-          include: [{
-            model: Oeuvre,
-            as: 'Oeuvre',
-            include: TypeOeuvre ? [{
-              model: TypeOeuvre,
-              as: 'TypeOeuvre',
-              attributes: ['id_type_oeuvre', 'nom_type']
-            }] : []
-          }]
-        });
-        oeuvresSoumises = oeuvresEvent.map(eo => ({
-          ...eo.Oeuvre?.toJSON(),
-          ordre_presentation: eo.ordre_presentation,
-          description_presentation: eo.description_presentation
-        }));
-      }
+      res.json({
+        success: true,
+        data: {
+          profil: user,
+          participation
+        }
+      });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
 
-      // Récupérer les autres œuvres de l'utilisateur (portfolio)
-      let portfolio = [];
-      if (Oeuvre) {
-        portfolio = await Oeuvre.findAll({
-          where: { saisi_par: userId },
-          attributes: ['id_oeuvre', 'titre', 'description', 'date_creation'],
-          include: TypeOeuvre ? [{
-            model: TypeOeuvre,
-            as: 'TypeOeuvre',
-            attributes: ['id_type_oeuvre', 'nom_type']
-          }] : [],
-          limit: 20,
-          order: [['date_creation', 'DESC']]
-        });
-      }
+  async getProfessionnelsEnAttente(req, res) {
+    try {
+      const evenementId = parseInt(req.params.id);
+      const models = container.models;
 
-      // Historique des participations à d'autres événements
-      const historiqueParticipations = await EvenementUser.findAll({
-        where: { 
-          id_user: userId,
-          statut_participation: { [Op.in]: ['confirme', 'present'] }
+      const participants = await models.EvenementUser.findAll({
+        where: {
+          id_evenement: evenementId,
+          statut_participation: 'en_attente'
         },
         include: [{
-          model: Evenement,
-          as: 'Evenement',
-          attributes: ['id_evenement', 'nom_evenement', 'date_debut', 'statut']
+          model: models.User,
+          as: 'User',
+          attributes: { exclude: ['password'] },
+          include: [
+            { model: models.TypeUser, required: false }
+          ]
         }],
-        limit: 10,
-        order: [['date_inscription', 'DESC']]
+        order: [['date_inscription', 'ASC']]
       });
+
+      res.json({
+        success: true,
+        data: participants
+      });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  async exportEvent(req, res) {
+    try {
+      const evenementId = parseInt(req.params.id);
+      const evenement = await this.evenementService.findWithFullDetails(evenementId);
+      const data = evenement.toDetailJSON(req.lang);
 
       res.json({
         success: true,
         data: {
-          profil: translateDeep(user.toJSON(), lang),
-          inscription: {
-            statut_participation: inscription.statut_participation,
-            role_participation: inscription.role_participation,
-            date_inscription: inscription.date_inscription,
-            notes: inscription.notes,
-            evaluation_evenement: inscription.evaluation_evenement,
-            commentaire_evaluation: inscription.commentaire_evaluation
-          },
-          oeuvres_soumises: translateDeep(oeuvresSoumises, lang),
-          portfolio: translateDeep(portfolio, lang),
-          historique_participations: translateDeep(historiqueParticipations.map(h => ({
-            evenement: h.Evenement,
-            statut: h.statut_participation,
-            date: h.date_inscription
-          })), lang)
-        },
-        lang
-      });
-
-    } catch (error) {
-      console.error('Erreur getParticipantProfil:', error);
-      res.status(500).json({ success: false, error: 'Erreur lors de la récupération du profil', details: error.message });
-    }
-  };
-
-  // PATCH /evenements/:id/participants/:userId/validate
-  // Body: { statut_participation: 'accepter' | 'refuser', message?: string, notify_email?: boolean, notify_sms?: boolean }
-  const validateParticipation = async (req, res) => {
-    try {
-      const { id, userId } = req.params;
-      const { statut_participation, message: messageOrganisateur, notify_email = true, notify_sms = true } = req.body;
-
-      const inscription = await EvenementUser.findOne({ where: { id_evenement: id, id_user: userId } });
-      if (!inscription) return res.status(404).json({ success: false, error: 'Inscription non trouvée' });
-
-      const status = statut_participation === 'accepter' ? 'confirme' : 'refuse';
-      await inscription.update({
-        statut_participation: status,
-        date_validation: new Date(),
-        valide_par: req.user?.id_user
-      });
-
-      // Récupérer les informations pour les notifications
-      const participant = await User.findByPk(userId, {
-        attributes: ['id_user', 'nom', 'prenom', 'email', 'telephone']
-      });
-
-      const evenement = await Evenement.findByPk(id, {
-        attributes: ['id_evenement', 'nom_evenement']
-      });
-
-      const nomEvenement = translate(evenement?.nom_evenement, 'fr');
-      const statutNotif = statut_participation === 'accepter' ? 'accepte' : 'refuse';
-
-      // Envoi de l'email de notification (asynchrone, non bloquant)
-      if (notify_email && participant?.email) {
-        emailService.sendSubmissionValidationEmail({
-          email: participant.email,
-          prenom: participant.prenom,
-          nomEvenement,
-          statut: statutNotif,
-          message: messageOrganisateur,
-          eventUrl: `${process.env.FRONTEND_URL}/evenements/${id}`
-        }).catch(err => console.error('Erreur envoi email validation:', err));
-      }
-
-      // Envoi du SMS de notification (asynchrone, non bloquant)
-      if (notify_sms && participant?.telephone) {
-        smsService.sendSubmissionValidation({
-          telephone: participant.telephone,
-          prenom: participant.prenom,
-          nomEvenement,
-          statut: statutNotif
-        }).catch(err => console.error('Erreur envoi SMS validation:', err));
-      }
-
-      res.json({
-        success: true,
-        data: inscription,
-        message: statut_participation === 'accepter'
-          ? 'Participation confirmée - Notification envoyée'
-          : 'Participation refusée - Notification envoyée'
-      });
-    } catch (error) {
-      console.error('Erreur validateParticipation:', error);
-      res.status(500).json({ success: false, error: 'Erreur lors de la validation', details: error.message });
-    }
-  };
-
-  // POST /evenements/:id/medias
-  const addMedias = [
-    uploadService.uploadImage().array('medias', 10),
-    async (req, res) => {
-      try {
-        const lang = req.lang || 'fr';  // ⚡
-        const { id } = req.params;
-        
-        if (!req.files || req.files.length === 0) {
-          return res.status(400).json({ success: false, error: 'Aucun média fourni' });
-        }
-
-        const mediaPromises = req.files.map((file, index) => {
-          const mediaUrl = uploadService.getFileUrlFromPath(file.path);
-          return Media.create({
-            id_evenement: id,
-            type_media: 'image',
-            url: mediaUrl,
-            nom: file.originalname,
-            description: req.body.descriptions ? createMultiLang(req.body.descriptions[index], lang) : null,
-            ordre: index + 2
-          });
-        });
-
-        const createdMedias = await Promise.all(mediaPromises);
-        res.status(201).json({ 
-          success: true, 
-          data: translateDeep(createdMedias, lang), 
-          message: `${createdMedias.length} médias ajoutés avec succès` 
-        });
-      } catch (error) {
-        if (req.files) {
-          req.files.forEach(file => uploadService.deleteFile(file.path));
-        }
-        console.error('Erreur addMedias:', error);
-        res.status(500).json({ success: false, error: 'Erreur lors de l\'ajout des médias', details: error.message });
-      }
-    }
-  ];
-
-  // DELETE /evenements/:id/medias/:mediaId
-  const deleteMedia = async (req, res) => {
-    try {
-      const { id, mediaId } = req.params;
-      
-      const media = await Media.findOne({ where: { id_media: mediaId, id_evenement: id } });
-      if (!media) return res.status(404).json({ success: false, error: 'Média non trouvé' });
-
-      if (media.url) {
-        const urlParts = media.url.split('/');
-        const filename = urlParts[urlParts.length - 1];
-        const filePath = `${uploadService.UPLOAD_IMAGES_DIR}/${filename}`;
-        await uploadService.deleteFile(filePath);
-      }
-
-      await media.destroy();
-      res.json({ success: true, message: 'Média supprimé' });
-    } catch (error) {
-      console.error('Erreur deleteMedia:', error);
-      res.status(500).json({ success: false, error: 'Erreur lors de la suppression', details: error.message });
-    }
-  };
-
-  // GET /evenements/:id/mes-oeuvres
-  const getMesOeuvresEvenement = async (req, res) => {
-    try {
-      const lang = req.lang || 'fr';
-      const { id } = req.params;
-      const userId = req.user.id_user;
-
-      // Vérifier que l'utilisateur est organisateur ou participant de l'événement
-      const evenement = await Evenement.findByPk(id);
-      if (!evenement) {
-        return res.status(404).json({ success: false, error: 'Événement non trouvé' });
-      }
-
-      // Récupérer les oeuvres déjà ajoutées à l'événement
-      const oeuvresAjoutees = await EvenementOeuvre.findAll({
-        where: { id_evenement: id },
-        include: [
-          {
-            model: Oeuvre,
-            as: 'Oeuvre',
-            include: [
-              { model: TypeOeuvre, as: 'TypeOeuvre', required: false }
-            ]
-          },
-          { model: User, as: 'Presentateur', attributes: ['id_user', 'nom', 'prenom'], required: false }
-        ],
-        order: [['ordre_presentation', 'ASC']]
-      });
-
-      // Récupérer les oeuvres disponibles de l'utilisateur (non encore ajoutées)
-      const oeuvresIds = oeuvresAjoutees.map(eo => eo.id_oeuvre);
-      const oeuvresDisponibles = await Oeuvre.findAll({
-        where: {
-          saisi_par: userId,  // Le champ est saisi_par, pas id_user
-          statut: 'publie',
-          ...(oeuvresIds.length > 0 ? { id_oeuvre: { [Op.notIn]: oeuvresIds } } : {})
-        },
-        include: [
-          { model: TypeOeuvre, as: 'TypeOeuvre', required: false }
-        ],
-        order: [['date_creation', 'DESC']]
-      });
-
-      res.json({
-        success: true,
-        data: {
-          oeuvres_ajoutees: translateDeep(oeuvresAjoutees, lang),
-          oeuvres_disponibles: translateDeep(oeuvresDisponibles, lang)
+          evenement: data,
+          export_date: new Date().toISOString()
         }
       });
     } catch (error) {
-      console.error('Erreur getMesOeuvresEvenement:', error);
-      res.status(500).json({ success: false, error: 'Erreur', details: error.message });
+      this._handleError(res, error);
     }
-  };
+  }
 
-  // POST /evenements/:id/oeuvres
-  const addOeuvreProfessionnel = async (req, res) => {
-    const transaction = await sequelize.transaction();
-    try {
-      const lang = req.lang || 'fr';
-      const { id } = req.params;
-      const { id_oeuvre, description_presentation, duree_presentation } = req.body;
-      const userId = req.user.id_user;
+  // ============================================================================
+  // HELPERS
+  // ============================================================================
 
-      // Vérifier que l'événement existe
-      const evenement = await Evenement.findByPk(id);
-      if (!evenement) {
-        await transaction.rollback();
-        return res.status(404).json({ success: false, error: 'Événement non trouvé' });
-      }
+  _handleError(res, error) {
+    const statusCode = error.statusCode || 500;
+    const code = error.code || 'INTERNAL_ERROR';
 
-      // Vérifier que l'oeuvre appartient à l'utilisateur
-      const oeuvre = await Oeuvre.findOne({
-        where: { id_oeuvre, saisi_par: userId }
-      });
-      if (!oeuvre) {
-        await transaction.rollback();
-        return res.status(403).json({ success: false, error: 'Cette œuvre ne vous appartient pas' });
-      }
-
-      // Vérifier si l'oeuvre est déjà ajoutée
-      const existing = await EvenementOeuvre.findOne({
-        where: { id_evenement: id, id_oeuvre }
-      });
-      if (existing) {
-        await transaction.rollback();
-        return res.status(400).json({ success: false, error: 'Cette œuvre est déjà associée à cet événement' });
-      }
-
-      // Calculer le prochain ordre
-      const maxOrdre = await EvenementOeuvre.max('ordre_presentation', {
-        where: { id_evenement: id }
-      }) || 0;
-
-      // Créer l'association
-      const evenementOeuvre = await EvenementOeuvre.create({
-        id_evenement: id,
-        id_oeuvre,
-        id_presentateur: userId,
-        description_presentation,
-        duree_presentation,
-        ordre_presentation: maxOrdre + 1
-      }, { transaction });
-
-      await transaction.commit();
-
-      // Récupérer avec les relations pour la réponse
-      const result = await EvenementOeuvre.findByPk(evenementOeuvre.id_EventOeuvre, {
-        include: [
-          { model: Oeuvre, as: 'Oeuvre' },
-          { model: User, as: 'Presentateur', attributes: ['id_user', 'nom', 'prenom'] }
-        ]
-      });
-
-      res.status(201).json({
-        success: true,
-        data: translateDeep(result, lang),
-        message: 'Œuvre ajoutée à l\'événement avec succès'
-      });
-    } catch (error) {
-      await transaction.rollback();
-      console.error('Erreur addOeuvreProfessionnel:', error);
-      res.status(500).json({ success: false, error: 'Erreur', details: error.message });
+    if (IS_DEV_MODE) {
+      console.error(`❌ Error [${code}]:`, error.message);
+      if (statusCode === 500) console.error(error.stack);
     }
-  };
 
-  // PUT /evenements/:id/oeuvres/:oeuvreId
-  const updateOeuvreEvenement = async (req, res) => {
-    try {
-      const lang = req.lang || 'fr';
-      const { id, oeuvreId } = req.params;
-      const { description_presentation, duree_presentation, ordre_presentation } = req.body;
+    const response = { success: false, error: error.message || 'Erreur serveur', code };
+    if (error.errors) response.errors = error.errors;
+    if (IS_DEV_MODE && statusCode === 500) response.stack = error.stack;
 
-      const evenementOeuvre = await EvenementOeuvre.findOne({
-        where: { id_evenement: id, id_oeuvre: oeuvreId }
-      });
+    res.status(statusCode).json(response);
+  }
+}
 
-      if (!evenementOeuvre) {
-        return res.status(404).json({ success: false, error: 'Association non trouvée' });
-      }
-
-      await evenementOeuvre.update({
-        ...(description_presentation !== undefined && { description_presentation }),
-        ...(duree_presentation !== undefined && { duree_presentation }),
-        ...(ordre_presentation !== undefined && { ordre_presentation })
-      });
-
-      const result = await EvenementOeuvre.findByPk(evenementOeuvre.id_EventOeuvre, {
-        include: [
-          { model: Oeuvre, as: 'Oeuvre' },
-          { model: User, as: 'Presentateur', attributes: ['id_user', 'nom', 'prenom'] }
-        ]
-      });
-
-      res.json({
-        success: true,
-        data: translateDeep(result, lang),
-        message: 'Association mise à jour'
-      });
-    } catch (error) {
-      console.error('Erreur updateOeuvreEvenement:', error);
-      res.status(500).json({ success: false, error: 'Erreur', details: error.message });
-    }
-  };
-
-  // DELETE /evenements/:id/oeuvres/:oeuvreId
-  const removeOeuvreProfessionnel = async (req, res) => {
-    try {
-      const { id, oeuvreId } = req.params;
-      const userId = req.user.id_user;
-
-      // Vérifier que l'association existe
-      const evenementOeuvre = await EvenementOeuvre.findOne({
-        where: { id_evenement: id, id_oeuvre: oeuvreId }
-      });
-
-      if (!evenementOeuvre) {
-        return res.status(404).json({ success: false, error: 'Association non trouvée' });
-      }
-
-      // Vérifier que l'utilisateur est le présentateur ou l'organisateur
-      const evenement = await Evenement.findByPk(id);
-      const isOrganisateur = evenement.id_organisateur === userId;
-      const isPresentateur = evenementOeuvre.id_presentateur === userId;
-
-      if (!isOrganisateur && !isPresentateur) {
-        return res.status(403).json({ success: false, error: 'Non autorisé à supprimer cette œuvre de l\'événement' });
-      }
-
-      await evenementOeuvre.destroy();
-      res.json({ success: true, message: 'Œuvre retirée de l\'événement avec succès' });
-    } catch (error) {
-      console.error('Erreur removeOeuvreProfessionnel:', error);
-      res.status(500).json({ success: false, error: 'Erreur', details: error.message });
-    }
-  };
-
-  // PUT /evenements/:id/oeuvres/reorder
-  const reorderOeuvresEvenement = async (req, res) => {
-    const transaction = await sequelize.transaction();
-    try {
-      const { id } = req.params;
-      const { oeuvres } = req.body; // [{id_oeuvre: 1, ordre: 1}, {id_oeuvre: 2, ordre: 2}]
-
-      for (const item of oeuvres) {
-        await EvenementOeuvre.update(
-          { ordre_presentation: item.ordre },
-          { where: { id_evenement: id, id_oeuvre: item.id_oeuvre }, transaction }
-        );
-      }
-
-      await transaction.commit();
-      res.json({ success: true, message: 'Ordre des œuvres mis à jour' });
-    } catch (error) {
-      await transaction.rollback();
-      console.error('Erreur reorderOeuvresEvenement:', error);
-      res.status(500).json({ success: false, error: 'Erreur', details: error.message });
-    }
-  };
-
-  // POST /evenements/:id/notification
-  const sendNotificationManuelle = async (req, res) => {
-    try {
-      res.json({ success: true, message: 'Notifications non disponibles' });
-    } catch (error) {
-      res.status(500).json({ success: false, error: 'Erreur', details: error.message });
-    }
-  };
-
-  // ⚡ Récupérer toutes les traductions d'un événement (admin)
-  const getEvenementTranslations = async (req, res) => {
-    try {
-      const { id } = req.params;
-      const evenement = await Evenement.findByPk(id, {
-        attributes: ['id_evenement', 'nom_evenement', 'description', 'accessibilite']
-      });
-
-      if (!evenement) {
-        return res.status(404).json({ success: false, error: 'Événement non trouvé' });
-      }
-
-      res.json({
-        success: true,
-        data: {
-          id_evenement: evenement.id_evenement,
-          nom_evenement: evenement.nom_evenement,
-          description: evenement.description,
-          accessibilite: evenement.accessibilite
-        }
-      });
-    } catch (error) {
-      console.error('Erreur:', error);
-      res.status(500).json({ success: false, error: 'Erreur serveur' });
-    }
-  };
-
-  // ⚡ Mettre à jour une traduction spécifique (admin)
-  const updateEvenementTranslation = async (req, res) => {
-    try {
-      const { id, lang } = req.params;
-      const { nom_evenement, description, accessibilite } = req.body;
-
-      const evenement = await Evenement.findByPk(id);
-      if (!evenement) {
-        return res.status(404).json({ success: false, error: 'Événement non trouvé' });
-      }
-
-      const updates = {};
-      if (nom_evenement) updates.nom_evenement = mergeTranslations(evenement.nom_evenement, { [lang]: nom_evenement });
-      if (description) updates.description = mergeTranslations(evenement.description, { [lang]: description });
-      if (accessibilite) updates.accessibilite = mergeTranslations(evenement.accessibilite, { [lang]: accessibilite });
-
-      if (Object.keys(updates).length === 0) {
-        return res.status(400).json({ success: false, error: 'Aucune donnée à mettre à jour' });
-      }
-
-      await evenement.update(updates);
-      res.json({ success: true, message: `Traduction ${lang} mise à jour`, data: evenement });
-    } catch (error) {
-      console.error('Erreur:', error);
-      res.status(500).json({ success: false, error: 'Erreur serveur' });
-    }
-  };
-
-  return {
-    getAllEvenements,
-    getEvenementsAvenir,
-    getEvenementById,
-    getSocialShareData,
-    getMedias,
-    exportProgramme,
-    createEvenement,
-    updateEvenement,
-    deleteEvenement,
-    cancelEvenement,
-    inscrireUtilisateur,
-    desinscrireUtilisateur,
-    getMonInscription,
-    getParticipants,
-    getParticipantProfil,
-    validateParticipation,
-    getConfigInscription,
-    addMedias,
-    deleteMedia,
-    getMesOeuvresEvenement,
-    addOeuvreProfessionnel,
-    updateOeuvreEvenement,
-    removeOeuvreProfessionnel,
-    reorderOeuvresEvenement,
-    sendNotificationManuelle,
-    getEvenementTranslations,
-    updateEvenementTranslation
-  };
-};
-
-module.exports = createEvenementController;
+module.exports = new EvenementControllerV2();

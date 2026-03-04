@@ -1,8 +1,9 @@
-import React from 'react';
+import { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -17,17 +18,54 @@ import {
   Clock,
   Info,
   Bell,
-  RefreshCw
+  RefreshCw,
+  CheckCircle
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from "react-i18next";
 import { useFavoris } from '@/hooks/useFavoris';
+import { notificationService } from '@/services/notification.service';
+import type { Notification } from '@/services/notification.service';
 import type { GroupedFavoris } from '@/services/favori.service';
 
 const DashboardUser = () => {
   const { user } = useAuth();
   const { t } = useTranslation();
+  const navigate = useNavigate();
+
+  // Notifications depuis l'API
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loadingNotifs, setLoadingNotifs] = useState(true);
+
+  useEffect(() => {
+    const loadNotifications = async () => {
+      setLoadingNotifs(true);
+      try {
+        const result = await notificationService.getNotifications({ page: 1, limit: 10 });
+        setNotifications(result.notifications || []);
+      } catch {
+        setNotifications([]);
+      } finally {
+        setLoadingNotifs(false);
+      }
+    };
+    loadNotifications();
+  }, []);
+
+  const handleMarkAsRead = async (id: number) => {
+    try {
+      await notificationService.markAsRead(id);
+      setNotifications(prev => prev.map(n => n.id_notification === id ? { ...n, lu: true } : n));
+    } catch { /* ignore */ }
+  };
+
+  const handleMarkAllRead = async () => {
+    try {
+      await notificationService.markAllAsRead();
+      setNotifications(prev => prev.map(n => ({ ...n, lu: true })));
+    } catch { /* ignore */ }
+  };
 
   // Utiliser le hook useFavoris pour récupérer les vraies données
   const {
@@ -70,10 +108,17 @@ const DashboardUser = () => {
   };
 
   // Handler pour retirer un favori
-  const handleRemoveFavorite = async (favoriId: number) => {
-    if (confirm(t('dashboarduser.confirm_remove_favorite', 'Voulez-vous retirer cet élément de vos favoris ?'))) {
-      removeFavorite(favoriId);
+  const [removeFavDialog, setRemoveFavDialog] = useState<{ open: boolean; favoriId: number | null }>({ open: false, favoriId: null });
+
+  const handleRemoveFavorite = (favoriId: number) => {
+    setRemoveFavDialog({ open: true, favoriId });
+  };
+
+  const confirmRemoveFavorite = () => {
+    if (removeFavDialog.favoriId) {
+      removeFavorite(removeFavDialog.favoriId);
     }
+    setRemoveFavDialog({ open: false, favoriId: null });
   };
 
   return (
@@ -115,7 +160,7 @@ const DashboardUser = () => {
             <AlertDescription className="text-blue-700">{t("dashboarduser.tant_que_visiteur")}
 
 
-              <Link to="/Auth" className="text-blue-800 underline ml-1 font-medium">{t("dashboarduser.inscrivezvous_comme_professionnel")}
+              <Link to="/auth" className="text-blue-800 underline ml-1 font-medium">{t("dashboarduser.inscrivezvous_comme_professionnel")}
 
               </Link>.
             </AlertDescription>
@@ -241,7 +286,7 @@ const DashboardUser = () => {
                 <Card className="p-8 text-center">
                   <Palette className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                   <p className="text-muted-foreground">{t("dashboarduser.aucune_uvre_favorite")}</p>
-                  <Link to="/Oeuvres">
+                  <Link to="/oeuvres">
                     <Button variant="outline" className="mt-4">{t("dashboarduser.explorer_les_uvres")}</Button>
                   </Link>
                 </Card>
@@ -293,7 +338,7 @@ const DashboardUser = () => {
                 <Card className="p-8 text-center">
                   <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                   <p className="text-muted-foreground">{t("dashboarduser.aucun_vnement_suivi")}</p>
-                  <Link to="/Evenements">
+                  <Link to="/evenements">
                     <Button variant="outline" className="mt-4">{t("dashboarduser.dcouvrir_les_vnements")}</Button>
                   </Link>
                 </Card>
@@ -344,7 +389,7 @@ const DashboardUser = () => {
                 <Card className="p-8 text-center">
                   <MapPin className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                   <p className="text-muted-foreground">{t("dashboarduser.aucun_site_favori")}</p>
-                  <Link to="/Patrimoine">
+                  <Link to="/patrimoine">
                     <Button variant="outline" className="mt-4">{t("dashboarduser.explorer_patrimoine")}</Button>
                   </Link>
                 </Card>
@@ -355,19 +400,49 @@ const DashboardUser = () => {
           {/* Onglet Notifications */}
           <TabsContent value="notifications" className="space-y-6">
             <Card className="p-8">
-              <h2 className="text-2xl font-semibold mb-6 font-serif">{t("dashboarduser.notifications_1")}</h2>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-semibold font-serif">{t("dashboarduser.notifications_1")}</h2>
+                {notifications.some(n => !n.lu) && (
+                  <Button variant="outline" size="sm" onClick={handleMarkAllRead}>
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    {t('dashboarduser.markAllRead', 'Tout marquer comme lu')}
+                  </Button>
+                )}
+              </div>
               <div className="space-y-4">
-                <Alert>
-                  <Bell className="h-4 w-4" />
-                  <AlertTitle>{t("dashboarduser.nouvel_vnement_dans")}</AlertTitle>
-                  <AlertDescription>{t("dashboarduser.festival_musique_andalouse")}
-
-                  </AlertDescription>
-                </Alert>
-                
-                <p className="text-center text-muted-foreground mt-8">{t("dashboarduser.aucune_autre_notification")}
-
-                </p>
+                {loadingNotifs ? (
+                  <>
+                    <Skeleton className="h-16" />
+                    <Skeleton className="h-16" />
+                    <Skeleton className="h-16" />
+                  </>
+                ) : notifications.length > 0 ? (
+                  notifications.map((notif) => (
+                    <Alert key={notif.id_notification} className={notif.lu ? 'opacity-60' : 'border-primary/30 bg-primary/5'}>
+                      <Bell className="h-4 w-4" />
+                      <AlertTitle className="flex justify-between items-center">
+                        <span>{notif.titre}</span>
+                        {!notif.lu && (
+                          <Button variant="ghost" size="sm" onClick={() => handleMarkAsRead(notif.id_notification)}>
+                            <CheckCircle className="h-3 w-3" />
+                          </Button>
+                        )}
+                      </AlertTitle>
+                      <AlertDescription>
+                        <p>{notif.message}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          <Clock className="h-3 w-3 inline mr-1" />
+                          {notif.date_creation ? new Date(notif.date_creation).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}
+                        </p>
+                      </AlertDescription>
+                    </Alert>
+                  ))
+                ) : (
+                  <div className="text-center py-8">
+                    <Bell className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <p className="text-muted-foreground">{t("dashboarduser.aucune_autre_notification", 'Aucune notification')}</p>
+                  </div>
+                )}
               </div>
             </Card>
           </TabsContent>
@@ -427,20 +502,38 @@ const DashboardUser = () => {
                   <p className="text-sm text-muted-foreground mb-2">{t("dashboarduser.vous_souhaitez_crer")}
 
                   </p>
-                  <Link to="/Auth">
+                  <Link to="/auth">
                     <Button variant="outline">{t("dashboarduser.devenir_professionnel")}
 
                     </Button>
                   </Link>
                 </div>
-                <Button className="btn-hover">{t("dashboarduser.modifier_profil")}
-
+                <Button className="btn-hover" onClick={() => navigate('/profil/modifier')}>
+                  {t("dashboarduser.modifier_profil")}
                 </Button>
               </div>
             </Card>
           </TabsContent>
         </Tabs>
       </main>
+
+      {/* Dialog de confirmation retrait favori */}
+      <AlertDialog open={removeFavDialog.open} onOpenChange={(open) => setRemoveFavDialog(prev => ({ ...prev, open }))}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('dashboarduser.confirm_remove_title', 'Retirer des favoris')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('dashboarduser.confirm_remove_favorite', 'Voulez-vous retirer cet élément de vos favoris ?')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('common.cancel', 'Annuler')}</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmRemoveFavorite} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {t('common.remove', 'Retirer')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Footer />
     </div>);

@@ -203,7 +203,7 @@ export const useCreateService = (apiUrl: string = ''): UseCreateServiceReturn =>
     setSuccess(false);
 
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token');
       
       const response = await fetch(`${API_BASE_URL}/services/complet`, {
         method: 'POST',

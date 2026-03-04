@@ -72,10 +72,10 @@ class IntervenantController {
         where.verifie = verifie === 'true';
       }
 
-      // Tri multilingue
+      // Tri multilingue - qualifier avec le nom de table pour éviter l'ambiguïté
       let orderClause;
       if (['nom', 'prenom', 'biographie'].includes(order)) {
-        orderClause = [[this.sequelize.literal(`JSON_EXTRACT(\`${order}\`, '$.${lang}')`), direction]];
+        orderClause = [[this.sequelize.literal(`JSON_EXTRACT(\`Intervenant\`.\`${order}\`, '$.${lang}')`), direction]];
       } else {
         orderClause = [[order, direction]];
       }
@@ -135,7 +135,7 @@ class IntervenantController {
           {
             model: this.models.Programme,
             as: 'Programmes',
-            through: { attributes: ['role', 'ordre_passage', 'duree_minutes'] },
+            through: { attributes: ['role_intervenant', 'ordre_intervention', 'duree_intervention'] },
             attributes: ['id_programme', 'titre', 'description'],
             required: false
           }
@@ -149,7 +149,8 @@ class IntervenantController {
         });
       }
 
-      const stats = await intervenant.getStatistiques();
+      let stats = { nombreProgrammes: 0, nombreEvenements: 0, prochaineProgramme: null };
+      try { stats = await intervenant.getStatistiques(); } catch (e) { console.warn('Stats intervenant non dispo:', e.message); }
 
       // ⚡ Traduire
       res.json({

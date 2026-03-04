@@ -189,7 +189,7 @@ class ProgrammeService {
     raison?: string
   ): Promise<ApiResponse<void>> {
     return httpClient.patch<void>(
-      `/api/programmes/${programmeId}/intervenant/${userId}/statut`,
+      `/programmes/${programmeId}/intervenant/${userId}/statut`,
       { statut, raison }
     );
   }

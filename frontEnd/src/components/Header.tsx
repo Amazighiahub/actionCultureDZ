@@ -194,10 +194,10 @@ const Header = () => {
   }, [isMenuOpen]);
 
   const navigationItems = [
-    { icon: Calendar, label: t('header.nav.events'), href: '/Evenements' },
-    { icon: MapPin, label: t('header.nav.heritage'), href: '/Patrimoine' },
-    { icon: Palette, label: t('header.nav.works'), href: '/Oeuvres' },
-    { icon: Hammer, label: t('header.nav.crafts'), href: '/Artisanat' },
+    { icon: Calendar, label: t('header.nav.events'), href: '/evenements' },
+    { icon: MapPin, label: t('header.nav.heritage'), href: '/patrimoine' },
+    { icon: Palette, label: t('header.nav.works'), href: '/oeuvres' },
+    { icon: Hammer, label: t('header.nav.crafts'), href: '/artisanat' },
     { icon: Info, label: t('header.nav.about'), href: '/a-propos' },
   ];
 
@@ -413,7 +413,7 @@ const Header = () => {
                 </DropdownMenu>
               ) : (
                 <>
-                  <Link to="/Auth" className="hidden sm:block">
+                  <Link to="/auth" className="hidden sm:block">
                     <Button
                       variant="outline"
                       size="sm"
@@ -424,7 +424,7 @@ const Header = () => {
                     </Button>
                   </Link>
 
-                  <Link to="/Auth">
+                  <Link to="/auth">
                     <Button
                       size="sm"
                       className="bg-gradient-to-r from-stone-700 to-stone-800 hover:from-stone-800 hover:to-stone-900 text-white shadow-sm min-h-[36px] px-3 sm:px-4"
@@ -517,12 +517,12 @@ const Header = () => {
                 </>
               ) : (
                 <div className="flex flex-col sm:flex-row gap-3">
-                  <Link to="/Auth" className="flex-1" onClick={() => setIsMenuOpen(false)}>
+                  <Link to="/auth" className="flex-1" onClick={() => setIsMenuOpen(false)}>
                     <Button variant="outline" className="w-full min-h-[48px] text-base">
                       {t('common.login')}
                     </Button>
                   </Link>
-                  <Link to="/Auth" className="flex-1" onClick={() => setIsMenuOpen(false)}>
+                  <Link to="/auth" className="flex-1" onClick={() => setIsMenuOpen(false)}>
                     <Button className="w-full min-h-[48px] text-base bg-gradient-to-r from-stone-700 to-stone-800 hover:from-stone-800 hover:to-stone-900 text-white">
                       {t('common.signup')}
                     </Button>

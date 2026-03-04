@@ -9,20 +9,18 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Palette, Eye, Download, ArrowRight } from 'lucide-react';
-import { useLocalizedDate } from '@/hooks/useLocalizedDate';
-import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { useRTL } from '@/hooks/useRTL';
 import { oeuvreService } from '@/services/oeuvre.service';
 import { Oeuvre } from '@/types';
 import { getAssetUrl } from '@/helpers/assetUrl';
+import { getTranslation, type SupportedLanguage } from '@/types/common/multilingual.types';
 import ErrorMessage from './ErrorMessage';
 
 const OeuvresDynamique: React.FC = () => {
   const navigate = useNavigate();
-  const { t } = useTranslation();
-  const { formatDate } = useLocalizedDate();
-  const { formatNumber } = useLocalizedNumber();
+  const { t, i18n } = useTranslation();
   const { rtlClasses } = useRTL();
+  const lang = (i18n.language || 'fr') as SupportedLanguage;
   const [oeuvres, setOeuvres] = useState<Oeuvre[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -94,7 +92,7 @@ const OeuvresDynamique: React.FC = () => {
                 {oeuvre.Media && oeuvre.Media[0] ? (
                   <img
                     src={getAssetUrl(oeuvre.Media[0].url)}
-                    alt={oeuvre.titre}
+                    alt={getTranslation(oeuvre.titre, lang)}
                     loading="lazy"
                     className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
@@ -125,7 +123,7 @@ const OeuvresDynamique: React.FC = () => {
               
               <CardHeader className="pb-3">
                 <CardTitle className="line-clamp-1 text-lg">
-                  {oeuvre.titre}
+                  {getTranslation(oeuvre.titre, lang)}
                 </CardTitle>
                 
                 <div className="flex items-center justify-between">
@@ -139,7 +137,7 @@ const OeuvresDynamique: React.FC = () => {
               
               <CardContent className="space-y-4">
                 <p className="text-sm text-muted-foreground line-clamp-2">
-                  {oeuvre.description || t('common.noDescription')}
+                  {(typeof oeuvre.description === 'object' ? getTranslation(oeuvre.description, lang) : oeuvre.description) || t('common.noDescription')}
                 </p>
                 
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
@@ -168,7 +166,7 @@ const OeuvresDynamique: React.FC = () => {
       </div>
 
       <div className="text-center">
-        <Button size="lg" variant="outline" onClick={() => navigate('/Oeuvres')} className="group">
+        <Button size="lg" variant="outline" onClick={() => navigate('/oeuvres')} className="group">
           {t('sections.works.exploreLibrary')}
           <Palette className={`h-4 w-4 ${rtlClasses.marginStart(2)} group-hover:rotate-12 transition-transform`} />
         </Button>

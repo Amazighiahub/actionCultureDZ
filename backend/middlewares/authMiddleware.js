@@ -196,7 +196,7 @@ module.exports = (modelsOrUser) => {
       }
 
       // Récupérer l'utilisateur avec ses rôles
-      const user = await getUserWithRoles(decoded.id || decoded.id_user);
+      const user = await getUserWithRoles(decoded.userId || decoded.id || decoded.id_user);
 
       if (!user) {
         return res.status(401).json({
@@ -269,7 +269,7 @@ module.exports = (modelsOrUser) => {
       if (token) {
         const decoded = verifyToken(token);
         if (decoded) {
-          const user = await getUserWithRoles(decoded.id || decoded.id_user);
+          const user = await getUserWithRoles(decoded.userId || decoded.id || decoded.id_user);
           if (user && !['suspendu', 'banni', 'inactif'].includes(user.statut)) {
             req.user = user;
             req.userId = user.id_user;
@@ -358,6 +358,13 @@ module.exports = (modelsOrUser) => {
    * Vérifie si l'utilisateur a un rôle spécifique
    */
   const requireRole = (...roles) => {
+    // Aliases pour compatibilité entre noms courts et noms DB
+    const roleAliases = {
+      'Admin': 'Administrateur',
+      'Moderateur': 'Modérateur',
+      'Pro': 'Professionnel'
+    };
+
     return (req, res, next) => {
       if (!req.user) {
         return res.status(401).json({
@@ -368,7 +375,19 @@ module.exports = (modelsOrUser) => {
 
       const userRoles = req.userRoles || [];
       const requiredRoles = roles.flat();
-      const hasRole = requiredRoles.some(role => userRoles.includes(role));
+
+      // Admins passent toujours si 'Admin' ou 'Administrateur' est dans les rôles requis
+      if (req.user.isAdmin && requiredRoles.some(r => r === 'Admin' || r === 'Administrateur')) {
+        return next();
+      }
+
+      // Vérifier les rôles avec aliases
+      const hasRole = requiredRoles.some(role => {
+        if (userRoles.includes(role)) return true;
+        const alias = roleAliases[role];
+        if (alias && userRoles.includes(alias)) return true;
+        return false;
+      });
 
       if (!hasRole) {
         return res.status(403).json({

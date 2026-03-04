@@ -15,10 +15,10 @@ const Footer = () => {
     {
       title: t('footer.navigation'),
       links: [
-        { label: t('header.nav.events'), href: '/Evenements' },
-        { label: t('header.nav.heritage'), href: '/Patrimoine' },
-        { label: t('header.nav.works'), href: '/Oeuvres' },
-        { label: t('header.nav.crafts'), href: '/Artisanat' },
+        { label: t('header.nav.events'), href: '/evenements' },
+        { label: t('header.nav.heritage'), href: '/patrimoine' },
+        { label: t('header.nav.works'), href: '/oeuvres' },
+        { label: t('header.nav.crafts'), href: '/artisanat' },
       ]
     },
     {

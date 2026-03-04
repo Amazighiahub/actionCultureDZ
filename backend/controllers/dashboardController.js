@@ -568,7 +568,7 @@ async generateDetailedStats(period) {
 
       const users = await this.models.User.findAndCountAll({
         where: whereClause,
-        attributes: { exclude: ['password', 'mot_de_passe'] },
+        attributes: { exclude: ['password'] },
         limit: parseInt(limit),
         offset: parseInt(offset),
         order: [['date_creation', 'DESC']]
@@ -2042,14 +2042,14 @@ async generateDetailedStats(period) {
       const offset = (page - 1) * limit;
       
       const where = { 
-        user_id: req.user.id_user,
-        type: { 
+        id_user: req.user.id_user,
+        type_notification: { 
           [Op.in]: ['admin_alert', 'system_notification', 'moderation_required'] 
         }
       };
       
       if (unreadOnly === 'true') {
-        where.lue = false;
+        where.lu = false;
       }
       
       const notifications = await this.models.Notification?.findAndCountAll({

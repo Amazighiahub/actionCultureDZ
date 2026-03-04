@@ -148,7 +148,7 @@ class OeuvreService {
         categories: normalizedData.categories
       });
 
-      const response = await httpClient.post<CreateOeuvreResponse>('/Oeuvres', normalizedData);
+      const response = await httpClient.post<CreateOeuvreResponse>('/oeuvres', normalizedData);
 
       return response;
     } catch (error: any) {
@@ -271,7 +271,7 @@ class OeuvreService {
       }
 
       const response = await httpClient.postFormData<CreateOeuvreResponse>(
-        '/Oeuvres',
+        '/oeuvres',
         formData
       );
 
@@ -463,7 +463,7 @@ class OeuvreService {
             pages: number;
             limit: number;
           };
-        }>('/Oeuvres', {
+        }>('/oeuvres', {
           ...params,
           intervenant_id: intervenantId
         });
@@ -518,7 +518,7 @@ class OeuvreService {
    */
   async checkRecentOeuvre(titre: string): Promise<ApiResponse<any>> {
     try {
-      const response = await httpClient.get<any>('/Oeuvres', {
+      const response = await httpClient.get<any>('/oeuvres', {
         search: titre,
         sort: 'recent',
         limit: 1
@@ -567,6 +567,13 @@ class OeuvreService {
   }
 
   /**
+   * Alias rétrocompatible pour les consommateurs historiques
+   */
+  async getById(id: number): Promise<ApiResponse<Oeuvre>> {
+    return this.getOeuvreById(id);
+  }
+
+  /**
    * Récupérer la liste des œuvres avec filtres
    */
   async getOeuvres(params?: {
@@ -589,7 +596,7 @@ class OeuvreService {
     };
   }>> {
     try {
-      return await httpClient.get('/Oeuvres', params);
+      return await httpClient.get('/oeuvres', params);
     } catch (error: any) {
       return {
         success: false,
@@ -811,7 +818,7 @@ async getOeuvresByType(types: number[]): Promise<ApiResponse<Oeuvre[]>> {
         pages: number;
         limit: number;
       };
-    }>('/Oeuvres', {
+    }>('/oeuvres', {
       types: types.join(','), // ou types selon le format accepté par l'API
       limit: 100 // Ajuster selon vos besoins
     });

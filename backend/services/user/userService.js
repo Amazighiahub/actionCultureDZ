@@ -51,11 +51,11 @@ class UserService extends BaseService {
     }
 
     // 4. Hasher le mot de passe
-    const hashedPassword = await bcrypt.hash(createDTO.motDePasse, this.bcryptRounds);
+    const hashedPassword = await bcrypt.hash(createDTO.password, this.bcryptRounds);
 
     // 5. Préparer les données pour la base
     const entityData = createDTO.toEntity();
-    entityData.mot_de_passe = hashedPassword;
+    entityData.password = hashedPassword;
 
     // 6. Créer l'utilisateur
     const newUser = await this.repository.create(entityData);
@@ -88,16 +88,16 @@ class UserService extends BaseService {
     }
 
     // 2. Vérifier le statut
-    if (!user.est_actif) {
+    if (user.statut === 'inactif' || user.statut === 'banni') {
       throw this._forbiddenError('Votre compte est désactivé');
     }
 
-    if (user.est_suspendu) {
+    if (user.statut === 'suspendu') {
       throw this._forbiddenError('Votre compte est suspendu');
     }
 
     // 3. Vérifier le mot de passe
-    const isValidPassword = await bcrypt.compare(motDePasse, user.mot_de_passe);
+    const isValidPassword = await bcrypt.compare(motDePasse, user.password);
     if (!isValidPassword) {
       throw this._unauthorizedError('Email ou mot de passe incorrect');
     }
@@ -117,6 +117,40 @@ class UserService extends BaseService {
       user: userDTO,
       token
     };
+  }
+
+  /**
+   * Rafraîchit un token JWT
+   * @param {string} token - Token actuel à rafraîchir
+   * @returns {Promise<{user: UserDTO, token: string}>}
+   */
+  async refreshToken(token) {
+    if (!token) {
+      throw this._unauthorizedError('Token requis');
+    }
+
+    try {
+      const decoded = jwt.verify(token, this.jwtSecret, { ignoreExpiration: true });
+      const user = await this.repository.findById(decoded.userId);
+
+      if (!user) {
+        throw this._unauthorizedError('Utilisateur non trouvé');
+      }
+
+      if (user.statut === 'inactif' || user.statut === 'banni' || user.statut === 'suspendu') {
+        throw this._forbiddenError('Compte désactivé ou suspendu');
+      }
+
+      const newToken = this._generateToken(user);
+      const userDTO = UserDTO.fromEntity(user);
+
+      return { user: userDTO, token: newToken };
+    } catch (error) {
+      if (error.name === 'JsonWebTokenError') {
+        throw this._unauthorizedError('Token invalide');
+      }
+      throw error;
+    }
   }
 
   /**
@@ -140,6 +174,16 @@ class UserService extends BaseService {
       }
       throw error;
     }
+  }
+
+  /**
+   * Vérifie si un email existe déjà
+   * @param {string} email
+   * @returns {Promise<boolean>}
+   */
+  async checkEmailExists(email) {
+    const user = await this.repository.findByEmail(email);
+    return !!user;
   }
 
   // ============================================================================
@@ -223,7 +267,7 @@ class UserService extends BaseService {
     if (currentUserId && currentUserId !== id) {
       // Seul l'utilisateur lui-même ou un admin peut modifier
       const currentUser = await this.repository.findById(currentUserId);
-      if (!currentUser || currentUser.type_user !== 'admin') {
+      if (!currentUser || currentUser.id_type_user !== 29) {
         throw this._forbiddenError('Vous ne pouvez pas modifier ce profil');
       }
     }
@@ -270,7 +314,7 @@ class UserService extends BaseService {
     }
 
     // Vérifier l'ancien mot de passe
-    const isValid = await bcrypt.compare(ancienMotDePasse, user.mot_de_passe);
+    const isValid = await bcrypt.compare(ancienMotDePasse, user.password);
     if (!isValid) {
       throw this._validationError('Mot de passe actuel incorrect');
     }
@@ -282,7 +326,7 @@ class UserService extends BaseService {
 
     // Hasher et mettre à jour
     const hashedPassword = await bcrypt.hash(nouveauMotDePasse, this.bcryptRounds);
-    await this.repository.update(userId, { mot_de_passe: hashedPassword });
+    await this.repository.update(userId, { password: hashedPassword });
 
     this.logger.info(`Mot de passe changé pour: ${userId}`);
 
@@ -444,7 +488,7 @@ class UserService extends BaseService {
       throw this._notFoundError(userId);
     }
 
-    if (user.est_suspendu) {
+    if (user.statut === 'suspendu') {
       throw this._conflictError('Cet utilisateur est déjà suspendu');
     }
 
@@ -473,7 +517,7 @@ class UserService extends BaseService {
       throw this._notFoundError(userId);
     }
 
-    if (user.est_actif && !user.est_suspendu) {
+    if (user.statut === 'actif') {
       throw this._conflictError('Cet utilisateur est déjà actif');
     }
 
@@ -509,7 +553,7 @@ class UserService extends BaseService {
       {
         userId: user.id_user,
         email: user.email,
-        typeUser: user.type_user
+        typeUser: user.id_type_user
       },
       this.jwtSecret,
       { expiresIn: this.jwtExpiration }

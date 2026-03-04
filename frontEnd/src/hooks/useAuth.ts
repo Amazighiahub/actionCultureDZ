@@ -1,6 +1,6 @@
 // hooks/useAuth.ts - VERSION CORRIGÉE
 import { useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { authService } from '@/services/auth.service';
 import { usePermissionsContext } from '@/providers/PermissionsProvider';
 import type { 
@@ -12,6 +12,7 @@ import type { UseAuthReturn, AuthResult } from '../types/models/auth.types';
 
 export function useAuth(): UseAuthReturn {
   const navigate = useNavigate();
+  const location = useLocation();
   const {
     user,
     loading,
@@ -46,16 +47,26 @@ export function useAuth(): UseAuthReturn {
         const userResponse = await authService.getCurrentUser();
         if (userResponse.success && userResponse.data) {
           const currentUser = userResponse.data;
-          
-          // Redirection selon le rôle de l'utilisateur
-          if (currentUser.Roles?.some(r => r.nom_role === 'Administrateur')) {
-            navigate('/admin/dashboard');
-          } else if (currentUser.id_type_user !== 1) {
-            // Professionnel
-            navigate('/dashboard-pro');
+
+          const stateFrom = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname;
+          const redirectFromQuery = new URLSearchParams(location.search).get('redirect');
+          const safeRedirect = (target?: string | null) => !!target && target.startsWith('/') && target !== '/auth';
+
+          if (safeRedirect(redirectFromQuery)) {
+            navigate(redirectFromQuery as string, { replace: true });
+          } else if (safeRedirect(stateFrom)) {
+            navigate(stateFrom as string, { replace: true });
           } else {
-            // Visiteur
-            navigate('/');
+            // Redirection selon le rôle de l'utilisateur
+            if (currentUser.Roles?.some(r => r.nom_role === 'Administrateur')) {
+              navigate('/admin/dashboard');
+            } else if (currentUser.id_type_user !== 1) {
+              // Professionnel
+              navigate('/dashboard-pro');
+            } else {
+              // Visiteur
+              navigate('/');
+            }
           }
         }
         
@@ -76,7 +87,7 @@ export function useAuth(): UseAuthReturn {
     } finally {
       setLoginLoading(false);
     }
-  }, [navigate, refreshPermissions]);
+  }, [location.search, location.state, navigate, refreshPermissions]);
 
   /**
    * Déconnexion
@@ -85,11 +96,11 @@ export function useAuth(): UseAuthReturn {
     try {
       await authService.logout();
       await refreshPermissions();
-      navigate('/Auth');
+      navigate('/auth');
     } catch (error) {
       console.error('Logout error:', error);
       await refreshPermissions();
-      navigate('/Auth');
+      navigate('/auth');
     }
   }, [navigate, refreshPermissions]);
 

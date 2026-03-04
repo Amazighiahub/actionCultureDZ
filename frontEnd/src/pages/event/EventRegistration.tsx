@@ -452,7 +452,7 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
 
             {/* Bouton connexion */}
             <Button asChild className="w-full" variant="outline">
-              <Link to="/Auth">
+              <Link to="/auth">
                 <UserPlus className="h-4 w-4 mr-2" />
                 {t('event.registration.loginToRegister', 'Se connecter pour s\'inscrire')}
               </Link>

@@ -75,7 +75,7 @@ const ResetPassword = () => {
 
         // Rediriger vers la page de connexion après 3 secondes
         setTimeout(() => {
-          navigate('/Auth');
+          navigate('/auth');
         }, 3000);
       } else {
         setError(response.error || t('auth.resetPassword.error'));
@@ -143,7 +143,7 @@ const ResetPassword = () => {
                 </Alert>
 
                 <div className="text-center">
-                  <Link to="/Auth">
+                  <Link to="/auth">
                     <Button>
                       {t('auth.resetPassword.goToLogin')}
                     </Button>
@@ -258,7 +258,7 @@ const ResetPassword = () => {
                 </Button>
 
                 <div className="text-center pt-4">
-                  <Link to="/Auth" className="text-primary hover:underline inline-flex items-center gap-1">
+                  <Link to="/auth" className="text-primary hover:underline inline-flex items-center gap-1">
                     <ArrowLeft className="h-4 w-4" />
                     {t('auth.resetPassword.backToLogin')}
                   </Link>

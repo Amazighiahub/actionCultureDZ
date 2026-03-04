@@ -331,24 +331,24 @@ export const API_ENDPOINTS = {
     professionalStatus: '/users/professional/status',
     
     // Préférences
-    updatePreferences: '/users/Preferences',
+    updatePreferences: '/users/preferences',
     updatePrivacy: '/users/privacy',
     
     // Autres
-    sendVerificationEmail: '/users/send-verification-email',
-    statistics: '/users/statistics',
-    typesUtilisateurs: '/users/types-utilisateurs',
+    sendVerificationEmail: '/email-verification/resend',
+    statistics: '/users/stats',
+    typesUtilisateurs: '/users/types',
     
     // Administration
     admin: {
-      getAllUsers: '/users/admin/users',
-      getUserById: (id: number) => `/users/admin/users/${id}`,
-      getPendingProfessionals: '/users/admin/professionals/pending',
-      validateProfessional: (id: number) => `/users/admin/users/${id}/validate`,
-      updateUserStatus: (id: number) => `/users/admin/users/${id}/status`,
-      assignRole: (id: number) => `/users/admin/users/${id}/roles`,
-      removeRole: (id: number) => `/users/admin/users/${id}/roles`,
-      globalStatistics: '/users/admin/statistics',
+      getAllUsers: '/users',
+      getUserById: (id: number) => `/users/${id}`,
+      getPendingProfessionals: '/users/pending',
+      validateProfessional: (id: number) => `/users/${id}/validate`,
+      updateUserStatus: (id: number) => `/users/${id}/suspend`,
+      assignRole: (id: number) => `/users/${id}/validate`,
+      removeRole: (id: number) => `/users/${id}/reject`,
+      globalStatistics: '/users/stats',
     }
   },
 
@@ -370,16 +370,16 @@ categoriesForType: (typeId: number) => `/metadata/types-oeuvres/${typeId}/catego
     delete: (id: number) => `/metadata/editeurs/${id}`
   },
     hierarchy: {
-      complete: '/metadata/hierarchy',
-      simplified: '/metadata/hierarchy?simplified=true',
-      statistics: '/metadata/hierarchy/statistics',
+      complete: '/metadata/hierarchie',
+      simplified: '/metadata/hierarchie?simplified=true',
+      statistics: '/metadata/hierarchie/statistics',
       validate: '/metadata/validate-hierarchy',
     },
     
     // Types d'œuvres et navigation hiérarchique
     typesOeuvres: '/metadata/types-oeuvres',
-    genresParType: (typeId: number) => `/metadata/types/${typeId}/genres`,
-    categoriesParGenre: (genreId: number) => `/metadata/genres/${genreId}/categories`,
+    genresParType: (typeId: number) => `/metadata/genres/${typeId}`,
+    categoriesParGenre: (genreId: number) => `/metadata/categories/${genreId}`,
     
     // Gestion admin de la hiérarchie
     hierarchyAdmin: {
@@ -462,7 +462,7 @@ categoriesForType: (typeId: number) => `/metadata/types-oeuvres/${typeId}/catego
   // ================================================
   oeuvres: {
     // Public
-    list: '/Oeuvres',
+    list: '/oeuvres',
     recent: '/oeuvres/recent',
     popular: '/oeuvres/popular',
     statistics: '/oeuvres/statistics',
@@ -473,14 +473,14 @@ categoriesForType: (typeId: number) => `/metadata/types-oeuvres/${typeId}/catego
     documentation: '/oeuvres/api/documentation',
     
     // Authentifié
-    create: '/Oeuvres',
+    create: '/oeuvres',
     
     update: (id: number) => `/oeuvres/${id}`,
     delete: (id: number) => `/oeuvres/${id}`,
     uploadMedia: (id: number) => `/oeuvres/${id}/medias/upload`,
     deleteMedia: (id: number, mediaId: number) => `/oeuvres/${id}/medias/${mediaId}`,
-    myWorks: '/oeuvres/user/my-works',
-    myStats: '/oeuvres/user/my-statistics',
+    myWorks: '/oeuvres/my/list',
+    myStats: '/oeuvres/my/statistics',
     
     // Admin
     validate: (id: number) => `/oeuvres/${id}/validate`,
@@ -493,7 +493,7 @@ categoriesForType: (typeId: number) => `/metadata/types-oeuvres/${typeId}/catego
   // ================================================
   evenements: {
     // Public
-    list: '/Evenements',
+    list: '/evenements',
     upcoming: '/evenements/upcoming',
     statistics: '/evenements/statistics', // AJOUT
     detail: (id: number) => `/evenements/${id}`,
@@ -501,13 +501,13 @@ categoriesForType: (typeId: number) => `/metadata/types-oeuvres/${typeId}/catego
     medias: (id: number) => `/evenements/${id}/medias`,
     
     // Création/Modification
-    create: '/Evenements',
+    create: '/evenements',
     update: (id: number) => `/evenements/${id}`,
     cancel: (id: number) => `/evenements/${id}/cancel`,
     
     // Participation
-    inscription: (id: number) => `/evenements/${id}/inscription`,
-    desinscription: (id: number) => `/evenements/${id}/inscription`, // DELETE
+    inscription: (id: number) => `/evenements/${id}/register`,
+    desinscription: (id: number) => `/evenements/${id}/register`, // DELETE
     participants: (id: number) => `/evenements/${id}/participants`,
     validateParticipation: (id: number, userId: number) => `/evenements/${id}/participants/${userId}/validate`,
     professionnelsEnAttente: (id: number) => `/evenements/${id}/professionnels/en-attente`,
@@ -533,39 +533,40 @@ categoriesForType: (typeId: number) => `/metadata/types-oeuvres/${typeId}/catego
   // PATRIMOINE
   // ================================================
   patrimoine: {
-    // Sites
-    sites: '/patrimoine/sites',
-    sitesPopulaires: '/patrimoine/sites/populaires',
-    siteDetail: (id: number) => `/patrimoine/sites/${id}`,
-    recherche: '/patrimoine/recherche',
-    types: '/patrimoine/types', // ⚡ Types de patrimoine pour filtres
+    // Sites — aligné avec backend patrimoineRoutes.js
+    sites: '/patrimoine',
+    sitesPopulaires: '/patrimoine/popular',
+    siteDetail: (id: number) => `/patrimoine/${id}`,
+    recherche: '/patrimoine/search',
+    types: '/patrimoine/types',
     monuments: (type: string) => `/patrimoine/monuments/${type}`,
     vestiges: (type: string) => `/patrimoine/vestiges/${type}`,
-    galerie: (id: number) => `/patrimoine/sites/${id}/galerie`,
-    statistiques: '/patrimoine/statistiques',
-    carteVisite: (id: number) => `/patrimoine/sites/${id}/carte-visite`,
-    qrcode: (id: number) => `/patrimoine/sites/${id}/qrcode`,
+    galerie: (id: number) => `/patrimoine/${id}/galerie`,
+    statistiques: '/patrimoine/admin/stats',
+    carteVisite: (id: number) => `/patrimoine/${id}/carte-visite`,
+    qrcode: (id: number) => `/patrimoine/${id}/qrcode`,
+    map: '/patrimoine/map',
     
     // Parcours
-    parcours: '/patrimoine/parcours',
-    parcoursEvenement: (evenementId: number) => `/patrimoine/parcours/evenement/${evenementId}`,
-    parcoursPersonnalise: '/patrimoine/parcours/personnalise',
-    parcoursPopulaires: (wilayaId: number) => `/patrimoine/parcours/populaires/${wilayaId}`,
+    parcours: '/parcours',
+    parcoursEvenement: (evenementId: number) => `/parcours/evenement/${evenementId}`,
+    parcoursPersonnalise: '/parcours/personnalise',
+    parcoursPopulaires: (wilayaId: number) => `/parcours/populaires/${wilayaId}`,
     
     // Lieux
-    lieuxProximite: '/patrimoine/lieux/proximite',
-    lieuxStatistiques: '/patrimoine/lieux/statistiques',
+    lieuxProximite: '/lieux/proximite',
+    lieuxStatistiques: '/lieux/statistiques',
     
-    // Gestion (auth)
-    createSite: '/patrimoine/sites',
-    updateSite: (id: number) => `/patrimoine/sites/${id}`,
-    deleteSite: (id: number) => `/patrimoine/sites/${id}`,
-    noterSite: (id: number) => `/patrimoine/sites/${id}/noter`,
-    ajouterFavoris: (id: number) => `/patrimoine/sites/${id}/favoris`,
-    retirerFavoris: (id: number) => `/patrimoine/sites/${id}/favoris`,
-    uploadMedias: (id: number) => `/patrimoine/sites/${id}/medias`,
-    deleteMedia: (id: number, mediaId: number) => `/patrimoine/sites/${id}/medias/${mediaId}`,
-    updateHoraires: (id: number) => `/patrimoine/sites/${id}/horaires`,
+    // Gestion (auth) — aligné avec backend
+    createSite: '/patrimoine',
+    updateSite: (id: number) => `/patrimoine/${id}`,
+    deleteSite: (id: number) => `/patrimoine/${id}`,
+    noterSite: (id: number) => `/patrimoine/${id}/noter`,
+    ajouterFavoris: (id: number) => `/patrimoine/${id}/favoris`,
+    retirerFavoris: (id: number) => `/patrimoine/${id}/favoris`,
+    uploadMedias: (id: number) => `/patrimoine/${id}/medias`,
+    deleteMedia: (id: number, mediaId: number) => `/patrimoine/${id}/medias/${mediaId}`,
+    updateHoraires: (id: number) => `/patrimoine/${id}/horaires`,
     
     // Mobile
     nearbyMobile: '/patrimoine/mobile/nearby',
@@ -581,12 +582,12 @@ categoriesForType: (typeId: number) => `/metadata/types-oeuvres/${typeId}/catego
   // ARTISANAT
   // ================================================
   artisanat: {
-    list: '/Artisanat',
+    list: '/artisanat',
     search: '/artisanat/search',
     statistics: '/artisanat/statistics',
     detail: (id: number) => `/artisanat/${id}`,
     artisansByRegion: (wilayaId: number) => `/artisanat/region/${wilayaId}/artisans`,
-    create: '/Artisanat',
+    create: '/artisanat',
     update: (id: number) => `/artisanat/${id}`,
     delete: (id: number) => `/artisanat/${id}`,
     uploadMedias: (id: number) => `/artisanat/${id}/medias`, // CORRIGÉ
@@ -622,11 +623,11 @@ categoriesForType: (typeId: number) => `/metadata/types-oeuvres/${typeId}/catego
   // NOTIFICATIONS
   // ================================================
   notifications: {
-     info: '/Notifications',
+     info: '/notifications',
   list: '/notifications/list',
   summary: '/notifications/summary',
-  preferences: '/notifications/Preferences',
-  updatePreferences: '/notifications/Preferences',
+  preferences: '/notifications/preferences',
+  updatePreferences: '/notifications/preferences',
   markAsRead: (id: number) => `/notifications/${id}/read`,
   markAllAsRead: '/notifications/read-all',
   markMultipleAsRead: '/notifications/read-multiple',
@@ -711,10 +712,10 @@ categoriesForType: (typeId: number) => `/metadata/types-oeuvres/${typeId}/catego
     // Dashboard
     dashboard: '/professionnel/dashboard',
     calendar: '/professionnel/calendar',
-    notifications: '/professionnel/Notifications',
+    notifications: '/professionnel/notifications',
     
     // Œuvres
-    oeuvres: '/professionnel/Oeuvres',
+    oeuvres: '/professionnel/oeuvres',
     oeuvreStats: (id: number) => `/professionnel/oeuvres/${id}/stats`,
     
     // Artisanats
@@ -722,7 +723,7 @@ categoriesForType: (typeId: number) => `/metadata/types-oeuvres/${typeId}/catego
     artisanatStats: (id: number) => `/professionnel/artisanats/${id}/stats`,
     
     // Événements
-    evenements: '/professionnel/Evenements',
+    evenements: '/professionnel/evenements',
     evenementStats: (id: number) => `/professionnel/evenements/${id}/stats`,
     manageParticipants: (id: number) => `/professionnel/evenements/${id}/participants/manage`,
     
@@ -734,8 +735,8 @@ categoriesForType: (typeId: number) => `/metadata/types-oeuvres/${typeId}/catego
     
     // Export
     export: '/professionnel/export',
-    exportOeuvres: '/professionnel/export/Oeuvres',
-    exportEvenements: '/professionnel/export/Evenements',
+    exportOeuvres: '/professionnel/export/oeuvres',
+    exportEvenements: '/professionnel/export/evenements',
     exportArtisanats: '/professionnel/export/artisanats',
     exportParticipants: (evenementId: number) => `/professionnel/export/participants/${evenementId}`,
     
@@ -827,7 +828,7 @@ categoriesForType: (typeId: number) => `/metadata/types-oeuvres/${typeId}/catego
     // Actions
     performAction: '/dashboard/actions',
     bulkActions: '/dashboard/actions/bulk',
-    validateUser: (id: number) => `/users/${id}/validate`,
+    validateUser: (id: number) => `/dashboard/users/${id}/validate`,
     validateOeuvre: (id: number) => `/dashboard/oeuvres/${id}/validate`,
     moderateSignalement: (id: number) => `/dashboard/signalements/${id}/moderate`,
     suspendUser: (id: number) => `/dashboard/users/${id}/suspend`,
@@ -845,14 +846,14 @@ categoriesForType: (typeId: number) => `/metadata/types-oeuvres/${typeId}/catego
     // Rapports
     activityReport: '/dashboard/reports/activity',
     moderationReport: '/dashboard/reports/moderation',
-    patrimoineReport: '/dashboard/reports/Patrimoine',
+    patrimoineReport: '/dashboard/reports/patrimoine',
     
     // Configuration
-    permissions: '/dashboard/config/Permissions',
+    permissions: '/dashboard/config/permissions',
     metrics: '/dashboard/config/metrics',
     
     // Notifications
-    notifications: '/dashboard/Notifications',
+    notifications: '/dashboard/notifications',
     broadcastNotification: '/dashboard/notifications/broadcast',
     
     // Monitoring (AJOUT)
@@ -861,78 +862,78 @@ categoriesForType: (typeId: number) => `/metadata/types-oeuvres/${typeId}/catego
       alerts: '/dashboard/monitoring/alerts',
     },
      users: {
-    list: '/admin/users',
-    detail: (id: number) => `/admin/users/${id}`,
-    update: (id: number) => `/admin/users/${id}`,
-    delete: (id: number) => `/admin/users/${id}`,
-    validate: (id: number) => `/admin/users/${id}/validate`,
-    suspend: (id: number) => `/admin/users/${id}/suspend`,
-    reactivate: (id: number) => `/admin/users/${id}/reactivate`,
-    changeRole: (id: number) => `/admin/users/${id}/role`,
-    resetPassword: (id: number) => `/admin/users/${id}/reset-password`,
-    bulkAction: '/admin/users/bulk-action',
-    search: '/admin/users/search',
-    export: '/admin/users/export',
+    list: '/dashboard/users',
+    detail: (id: number) => `/dashboard/users/${id}`,
+    update: (id: number) => `/dashboard/users/${id}`,
+    delete: (id: number) => `/dashboard/users/${id}`,
+    validate: (id: number) => `/dashboard/users/${id}/validate`,
+    suspend: (id: number) => `/dashboard/users/${id}/suspend`,
+    reactivate: (id: number) => `/dashboard/users/${id}/reactivate`,
+    changeRole: (id: number) => `/dashboard/users/${id}/role`,
+    resetPassword: (id: number) => `/dashboard/users/${id}/reset-password`,
+    bulkAction: '/dashboard/users/bulk-action',
+    search: '/dashboard/users/search',
+    export: '/dashboard/users/export',
   },
   
   // Gestion des œuvres
   oeuvres: {
-    list: '/admin/Oeuvres',
-    detail: (id: number) => `/admin/oeuvres/${id}`,
-    updateStatus: (id: number) => `/admin/oeuvres/${id}/status`,
-    delete: (id: number) => `/admin/oeuvres/${id}`,
-    bulkAction: '/admin/oeuvres/bulk-action',
-    export: '/admin/oeuvres/export',
+    list: '/oeuvres/admin/all',
+    detail: (id: number) => `/oeuvres/${id}`,
+    updateStatus: (id: number) => `/oeuvres/${id}/validate`,
+    delete: (id: number) => `/oeuvres/${id}`,
+    bulkAction: '/oeuvres/admin/all',
+    export: '/oeuvres/admin/all',
     featured: {
-      add: (id: number) => `/admin/oeuvres/${id}/featured`,
-      remove: (id: number) => `/admin/oeuvres/${id}/featured`,
-      list: '/admin/oeuvres/featured',
+      add: (id: number) => `/oeuvres/${id}/feature`,
+      remove: (id: number) => `/oeuvres/${id}/feature`,
+      list: '/oeuvres/admin/all',
     },
   },
   
   // Gestion des événements
   evenements: {
-    list: '/admin/Evenements',
-    detail: (id: number) => `/admin/evenements/${id}`,
-    updateStatus: (id: number) => `/admin/evenements/${id}/status`,
-    delete: (id: number) => `/admin/evenements/${id}`,
-    bulkAction: '/admin/evenements/bulk-action',
-    export: '/admin/evenements/export',
+    list: '/evenements/admin/all',
+    detail: (id: number) => `/evenements/${id}`,
+    updateStatus: (id: number) => `/evenements/${id}/publish`,
+    delete: (id: number) => `/evenements/${id}`,
+    bulkAction: '/evenements/admin/all',
+    export: '/evenements/admin/all',
     participants: {
-      list: (id: number) => `/admin/evenements/${id}/participants`,
-      export: (id: number) => `/admin/evenements/${id}/participants/export`,
+      list: (id: number) => `/professionnel/evenements/${id}/participants`,
+      export: (id: number) => `/professionnel/export/participants/${id}`,
     },
   },
   
   // Gestion du patrimoine
   patrimoine: {
-    list: '/admin/Patrimoine',
-    detail: (id: number) => `/admin/patrimoine/${id}`,
-    update: (id: number) => `/admin/patrimoine/${id}`,
-    delete: (id: number) => `/admin/patrimoine/${id}`,
-    updateStatus: (id: number) => `/admin/patrimoine/${id}/status`,
-    bulkAction: '/admin/patrimoine/bulk-action',
-    export: '/admin/patrimoine/export',
+    list: '/patrimoine',
+    detail: (id: number) => `/patrimoine/${id}`,
+    update: (id: number) => `/patrimoine/${id}`,
+    delete: (id: number) => `/patrimoine/${id}`,
+    updateStatus: (id: number) => `/patrimoine/${id}`,
+    bulkAction: '/patrimoine',
+    export: '/patrimoine',
     unesco: {
-      mark: (id: number) => `/admin/patrimoine/${id}/unesco`,
-      unmark: (id: number) => `/admin/patrimoine/${id}/unesco`,
-      list: '/admin/patrimoine/unesco',
+      mark: (id: number) => `/patrimoine/${id}`,
+      unmark: (id: number) => `/patrimoine/${id}`,
+      list: '/patrimoine',
     },
-    statistics: '/admin/patrimoine/statistics',
+    statistics: '/patrimoine/admin/stats',
   },
   
   // Gestion des services
   services: {
-    list: '/admin/services',
-    detail: (id: number) => `/admin/services/${id}`,
-    updateStatus: (id: number) => `/admin/services/${id}/status`,
-    delete: (id: number) => `/admin/services/${id}`,
-    bulkAction: '/admin/services/bulk-action',
-    export: '/admin/services/export',
-    verify: (id: number) => `/admin/services/${id}/verify`,
+    list: '/services',
+    detail: (id: number) => `/services/${id}`,
+    updateStatus: (id: number) => `/services/${id}/validate`,
+    delete: (id: number) => `/services/${id}`,
+    bulkAction: '/services/admin/pending',
+    export: '/services/admin/stats',
+    verify: (id: number) => `/services/${id}/validate`,
     reviews: {
-      list: (id: number) => `/admin/services/${id}/reviews`,
-      moderate: (serviceId: number, reviewId: number) => `/admin/services/${serviceId}/reviews/${reviewId}/moderate`,
+      list: (id: number) => `/services/${id}`,
+      moderate: (serviceId: number, reviewId: number) => `/services/${serviceId}/reject`,
     },
   },
   // Validation du contenu

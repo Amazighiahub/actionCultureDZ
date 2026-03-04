@@ -8,8 +8,6 @@ const errorMiddleware = {
     const ignoredPaths = [
       '/.well-known',
       '/favicon.ico',
-      '/robots.txt',
-      '/sitemap.xml',
       '/apple-touch-icon',
       '/browserconfig.xml',
       '/.env',
@@ -38,8 +36,7 @@ const errorMiddleware = {
     // Ne pas logger les erreurs 404 pour les chemins ignorés
     const isIgnoredPath = [
       '/.well-known',
-      '/favicon.ico',
-      '/robots.txt'
+      '/favicon.ico'
     ].some(path => req.originalUrl.startsWith(path));
     
     // If it's an AppError, use its structured format

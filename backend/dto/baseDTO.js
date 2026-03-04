@@ -14,7 +14,7 @@ class BaseDTO {
     Object.defineProperty(this, '_raw', {
       value: data,
       enumerable: false,
-      writable: false
+      writable: true
     });
   }
 
@@ -135,6 +135,42 @@ class BaseDTO {
    */
   freeze() {
     return Object.freeze(this);
+  }
+
+  // ============================================================================
+  // PASSTHROUGH AVEC TRADUCTION MULTILINGUE
+  // ============================================================================
+
+  /**
+   * Traduit récursivement les champs multilingues d'un objet brut Sequelize.
+   * Garde la structure snake_case et les associations intactes.
+   * Convertit seulement les objets {fr, ar, en, ...} en string traduite.
+   * @param {any} data - Données brutes
+   * @param {string} lang - Langue cible
+   * @returns {any}
+   */
+  static translateRaw(data, lang = 'fr') {
+    if (data === null || data === undefined) return data;
+    if (data instanceof Date) return data;
+    if (typeof data !== 'object') return data;
+    if (Array.isArray(data)) return data.map(item => this.translateRaw(item, lang));
+
+    // Objet vide {} → null (évite l'erreur React "Objects are not valid as a React child")
+    const keys = Object.keys(data);
+    if (keys.length === 0) return null;
+
+    // Vérifier si cet objet est lui-même un champ multilingue
+    const langKeys = ['fr', 'ar', 'en', 'tz-ltn', 'tz-tfng'];
+    if (keys.every(k => langKeys.includes(k)) && keys.some(k => ['fr', 'ar', 'en'].includes(k))) {
+      return this.extractMultilang(data, lang);
+    }
+
+    // Parcourir récursivement pour traduire les sous-objets multilingues
+    const result = {};
+    for (const [key, value] of Object.entries(data)) {
+      result[key] = this.translateRaw(value, lang);
+    }
+    return result;
   }
 
   // ============================================================================

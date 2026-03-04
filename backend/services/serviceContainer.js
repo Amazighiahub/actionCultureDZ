@@ -162,6 +162,48 @@ class ServiceContainer {
     return this._services.get('artisanat');
   }
 
+  /**
+   * Récupère ou crée le ServiceService (services culturels)
+   * @returns {ServiceService}
+   */
+  get serviceService() {
+    this._checkInitialized();
+
+    if (!this._services.has('service')) {
+      const ServiceService = require('./service/serviceService');
+      this._services.set('service', new ServiceService(
+        this._repositories.service,
+        {
+          models: this._models,
+          cache: this._cache
+        }
+      ));
+    }
+
+    return this._services.get('service');
+  }
+
+  /**
+   * Récupère ou crée le ParcoursService
+   * @returns {ParcoursService}
+   */
+  get parcoursService() {
+    this._checkInitialized();
+
+    if (!this._services.has('parcours')) {
+      const ParcoursService = require('./parcours/parcoursService');
+      this._services.set('parcours', new ParcoursService(
+        this._repositories.parcours,
+        {
+          models: this._models,
+          cache: this._cache
+        }
+      ));
+    }
+
+    return this._services.get('parcours');
+  }
+
   // ============================================================================
   // SERVICES DASHBOARD (existants)
   // ============================================================================
@@ -274,6 +316,8 @@ class ServiceContainer {
       'evenement',
       'patrimoine',
       'artisanat',
+      'service',
+      'parcours',
       'stats',
       'moderation',
       'userManagement',

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from "react-i18next";
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -34,6 +34,9 @@ import { LieuSelector } from '@/components/LieuSelector';
 
 const AjouterEvenement = () => {
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const isEditMode = !!id;
+  const editId = id ? parseInt(id) : null;
   const { t } = useTranslation();
   const { rtlClasses } = useRTL();
   const { toast } = useToast();
@@ -89,6 +92,46 @@ const AjouterEvenement = () => {
     checkAuthAndLoadData();
   }, []);
 
+  // Charger les données existantes en mode édition
+  useEffect(() => {
+    if (isEditMode && editId) {
+      loadExistingEvent();
+    }
+  }, [isEditMode, editId]);
+
+  const loadExistingEvent = async () => {
+    if (!editId) return;
+    try {
+      const response = await evenementService.getById(editId);
+      if (response.success && response.data) {
+        const evt = response.data as any;
+        setFormData({
+          nom: typeof evt.nom_evenement === 'object' ? evt.nom_evenement : { fr: evt.nom_evenement || '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
+          description: typeof evt.description === 'object' ? evt.description : { fr: evt.description || '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
+          idTypeEvenement: evt.id_type_evenement?.toString() || '',
+          dateDebut: evt.date_debut ? evt.date_debut.split('T')[0] : '',
+          dateFin: evt.date_fin ? evt.date_fin.split('T')[0] : '',
+          heureDebut: evt.heure_debut || '',
+          heureFin: evt.heure_fin || '',
+          maxParticipants: evt.capacite_max?.toString() || '',
+          tarif: evt.tarif?.toString() || '',
+          urlVirtuel: evt.url_virtuel || '',
+        });
+        if (evt.id_lieu) setSelectedLieuId(evt.id_lieu);
+        if (evt.id_organisation) setSelectedOrganisationId(evt.id_organisation);
+        if (evt.tarif === 0 || !evt.tarif) setGratuit(true);
+        if (evt.url_virtuel) setIsVirtual(true);
+        console.log('✅ Événement chargé pour édition:', evt);
+      } else {
+        toast({ title: 'Erreur', description: 'Événement introuvable', variant: 'destructive' });
+        navigate('/dashboard-pro');
+      }
+    } catch (error: any) {
+      console.error('❌ Erreur chargement événement:', error);
+      toast({ title: 'Erreur', description: 'Impossible de charger l\'événement', variant: 'destructive' });
+    }
+  };
+
   const checkAuthAndLoadData = async () => {
     // Vérifier l'authentification
     const authenticated = authService.isAuthenticated();
@@ -99,7 +142,7 @@ const AjouterEvenement = () => {
         description: t('auth.mustBeConnected'),
         variant: "destructive",
       });
-      navigate('/Auth');
+      navigate('/auth');
       return;
     }
 
@@ -165,28 +208,36 @@ const AjouterEvenement = () => {
     if (affiche) fd.append('affiche', affiche);
 
     try {
-      const response = await evenementService.create(fd as any);
+      let response;
+      if (isEditMode && editId) {
+        console.log('📝 Mise à jour événement', editId);
+        response = await evenementService.update(editId, fd as any);
+      } else {
+        response = await evenementService.create(fd as any);
+      }
 
       if (response.success) {
         toast({
           title: t('common.success', 'Succès'),
-          description: statut === 'brouillon'
-            ? t('events.create.draftSaved', 'Brouillon sauvegardé avec succès')
-            : t('events.create.success', 'Événement créé avec succès!'),
+          description: isEditMode
+            ? 'Événement mis à jour avec succès'
+            : (statut === 'brouillon'
+              ? t('events.create.draftSaved', 'Brouillon sauvegardé avec succès')
+              : t('events.create.success', 'Événement créé avec succès!')),
         });
         navigate('/dashboard-pro');
       } else {
         toast({
           title: t('common.error', 'Erreur'),
-          description: response.error || t('events.create.error', 'Erreur lors de la création'),
+          description: response.error || (isEditMode ? 'Erreur lors de la mise à jour' : t('events.create.error', 'Erreur lors de la création')),
           variant: 'destructive',
         });
       }
     } catch (error: unknown) {
-      console.error('Erreur création événement:', error);
+      console.error(isEditMode ? 'Erreur mise à jour événement:' : 'Erreur création événement:', error);
       toast({
         title: t('common.error', 'Erreur'),
-        description: t('events.create.error', 'Erreur lors de la création de l\'événement'),
+        description: isEditMode ? 'Erreur lors de la mise à jour' : t('events.create.error', 'Erreur lors de la création de l\'événement'),
         variant: 'destructive',
       });
     }
@@ -393,7 +444,7 @@ const AjouterEvenement = () => {
                     <div className="space-y-2">
                       <Label>{t('events.create.selectOrganisation', 'Sélectionnez votre organisation')}</Label>
                       <Select
-                        value={selectedOrganisationId?.toString()}
+                        value={selectedOrganisationId?.toString() ?? ''}
                         onValueChange={(value) => setSelectedOrganisationId(parseInt(value))}
                       >
                         <SelectTrigger>
@@ -483,7 +534,7 @@ const AjouterEvenement = () => {
                     <div className="space-y-2">
                       <Label htmlFor="wilaya">{t('common.wilaya')}</Label>
                       <Select 
-                        value={selectedWilayaId?.toString()}
+                        value={selectedWilayaId?.toString() ?? ''}
                         onValueChange={(value) => setSelectedWilayaId(parseInt(value))}
                       >
                         <SelectTrigger>

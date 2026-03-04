@@ -49,6 +49,8 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
           // Initialiser le service de permissions avec l'utilisateur
           permissionsService.setCurrentUser(response.data);
         } else {
+          // Session invalide côté serveur — nettoyer le cache local
+          authService.clearUserCache();
           setUser(null);
           permissionsService.setCurrentUser(null);
         }
@@ -59,6 +61,8 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
     } catch (err) {
       setError(err as Error);
       console.error('Failed to load user:', err);
+      // Nettoyer le cache local pour éviter une boucle de redirection
+      authService.clearUserCache();
       setUser(null);
       permissionsService.setCurrentUser(null);
     } finally {

@@ -17,10 +17,12 @@ class CreateUserDTO extends BaseDTO {
     // Champs optionnels
     this.telephone = BaseDTO.cleanString(data.telephone);
     this.typeUser = data.type_user || data.typeUser || 'visiteur';
+    this.idTypeUser = parseInt(data.id_type_user || data.idTypeUser) || 1;
     this.entreprise = BaseDTO.cleanString(data.entreprise);
     this.biographie = BaseDTO.normalizeMultilang(data.biographie);
     this.siteWeb = BaseDTO.cleanString(data.site_web || data.siteWeb);
     this.wilaya = BaseDTO.cleanString(data.wilaya);
+    this.wilayaResidence = BaseDTO.toInt(data.wilaya_residence || data.wilayaResidence || data.wilaya, null);
     this.commune = BaseDTO.cleanString(data.commune);
 
     // Consentements
@@ -44,23 +46,22 @@ class CreateUserDTO extends BaseDTO {
   toEntity() {
     return {
       email: this.email,
-      mot_de_passe: this.password, // Sera hashé par le service
+      password: this.password, // Sera hashé par le service
       nom: this.nom,
       prenom: this.prenom,
       telephone: this.telephone,
-      type_user: this.typeUser,
+      id_type_user: this.idTypeUser,
       entreprise: this.entreprise,
       biographie: this.biographie,
       site_web: this.siteWeb,
-      wilaya: this.wilaya,
-      commune: this.commune,
+      wilaya_residence: this.wilayaResidence,
+      adresse: this.commune,
       accepte_conditions: this.accepteConditions,
       accepte_newsletter: this.accepteNewsletter,
       photo_url: this.photoUrl,
       // Valeurs par défaut
       statut_validation: this.typeUser === 'visiteur' ? 'valide' : 'en_attente',
-      est_actif: true,
-      est_suspendu: false,
+      statut: 'actif',
       date_creation: new Date()
     };
   }

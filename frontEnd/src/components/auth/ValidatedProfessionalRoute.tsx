@@ -23,7 +23,7 @@ export const ValidatedProfessionalRoute: React.FC<ValidatedProfessionalRouteProp
 
   // Non authentifié
   if (!isAuthenticated) {
-    return <Navigate to="/Auth" replace />;
+    return <Navigate to="/auth" replace />;
   }
 
   // Pas professionnel

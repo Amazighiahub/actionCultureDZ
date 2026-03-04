@@ -301,7 +301,7 @@ const ArticleViewPage: React.FC = () => {
 
   const handleToggleFavorite = async () => {
     if (!isAuthenticated) {
-      navigate('/Auth');
+      navigate('/auth');
       return;
     }
 
@@ -392,7 +392,7 @@ const ArticleViewPage: React.FC = () => {
 
   const openCommentModal = (parentId: number | null = null) => {
     if (!isAuthenticated) {
-      navigate('/Auth');
+      navigate('/auth');
       return;
     }
 
@@ -605,7 +605,7 @@ const ArticleViewPage: React.FC = () => {
             <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-semibold mb-2">{t("articles_articleviewpage.article_introuvable")}</h3>
             <p className="text-muted-foreground mb-4">{error || 'L\'article demandé n\'existe pas.'}</p>
-            <Button onClick={() => navigate('/Oeuvres')} variant="outline">{t("articles_articleviewpage.retour_aux_uvres")}
+            <Button onClick={() => navigate('/oeuvres')} variant="outline">{t("articles_articleviewpage.retour_aux_uvres")}
 
             </Button>
           </CardContent>

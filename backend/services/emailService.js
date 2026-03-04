@@ -456,6 +456,198 @@ class EmailService {
    * @param {string} params.lieu - Lieu de l'événement
    * @param {string} params.eventUrl - URL de la page événement
    */
+  /**
+   * Notifier la validation/refus d'un professionnel pour un événement
+   * @param {object} professionnel - L'utilisateur professionnel
+   * @param {object} evenement - L'événement concerné
+   * @param {string} statut - 'confirme' | 'refuse'
+   * @param {string} notes - Notes optionnelles
+   */
+  async notifierValidationProfessionnel(professionnel, evenement, statut, notes = '') {
+    try {
+      const prenomStr = typeof professionnel.prenom === 'object' ? (professionnel.prenom.fr || professionnel.prenom.ar || '') : (professionnel.prenom || '');
+      const nomEvenementStr = typeof evenement.nom_evenement === 'object' ? (evenement.nom_evenement.fr || evenement.nom_evenement.ar || '') : (evenement.nom_evenement || '');
+      const statutText = statut === 'confirme' ? 'acceptée' : 'refusée';
+      const statusColor = statut === 'confirme' ? '#27ae60' : '#e74c3c';
+      const eventUrl = `${process.env.FRONTEND_URL}/evenements/${evenement.id_evenement}`;
+
+      const html = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: ${statusColor};">Participation ${statutText}</h2>
+          <p>Bonjour ${prenomStr},</p>
+          <p>Votre demande de participation à l'événement <strong>${nomEvenementStr}</strong> a été <strong style="color: ${statusColor};">${statutText}</strong>.</p>
+          ${notes ? `
+            <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0;">
+              <p><strong>Message de l'organisateur :</strong></p>
+              <p style="font-style: italic;">${notes}</p>
+            </div>
+          ` : ''}
+          <p><a href="${eventUrl}" style="background-color: #3498db; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px;">Voir l'événement</a></p>
+          <p style="margin-top: 30px; font-size: 12px; color: #666;">L'équipe Action Culture</p>
+        </div>
+      `;
+
+      return await this.sendEmail(
+        professionnel.email,
+        `Participation ${statutText} : ${nomEvenementStr}`,
+        html
+      );
+    } catch (error) {
+      console.error("Erreur dans notifierValidationProfessionnel:", error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Notifier l'annulation d'un événement à tous les participants
+   * @param {Array} participants - Liste des EvenementUser avec User inclus
+   * @param {object} evenement - L'événement annulé
+   * @param {string} raison - Raison de l'annulation
+   * @returns {Array} Résultats d'envoi par participant
+   */
+  async notifierAnnulationEvenement(participants, evenement, raison) {
+    const results = [];
+    const nomEvenementStr = typeof evenement.nom_evenement === 'object' ? (evenement.nom_evenement.fr || evenement.nom_evenement.ar || '') : (evenement.nom_evenement || '');
+
+    for (const participant of participants) {
+      try {
+        const user = participant.User;
+        const prenomStr = typeof user.prenom === 'object' ? (user.prenom.fr || user.prenom.ar || '') : (user.prenom || '');
+
+        const html = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #e74c3c;">⚠️ Événement annulé</h2>
+            <p>Bonjour ${prenomStr},</p>
+            <p>Nous sommes au regret de vous informer que l'événement <strong>${nomEvenementStr}</strong> a été annulé.</p>
+            ${raison ? `
+              <div style="background-color: #fff3cd; border: 1px solid #ffc107; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                <p><strong>Raison :</strong> ${raison}</p>
+              </div>
+            ` : ''}
+            <p>Nous nous excusons pour la gêne occasionnée.</p>
+            <p style="margin-top: 30px; font-size: 12px; color: #666;">L'équipe Action Culture</p>
+          </div>
+        `;
+
+        const result = await this.sendEmail(
+          user.email,
+          `Événement annulé : ${nomEvenementStr}`,
+          html
+        );
+        results.push({ email: user.email, result });
+      } catch (error) {
+        console.error(`Erreur envoi annulation à ${participant.User?.email}:`, error);
+        results.push({ email: participant.User?.email, result: { success: false, error: error.message } });
+      }
+    }
+
+    return results;
+  }
+
+  /**
+   * Notifier la modification d'un programme aux participants
+   * @param {Array} participants - Liste des EvenementUser avec User inclus
+   * @param {object} evenement - L'événement concerné
+   * @param {object} programme - Le programme modifié
+   * @param {string} typeModification - 'general' | 'annule' | 'reporte' | 'nouveau'
+   * @returns {Array} Résultats d'envoi par participant
+   */
+  async notifierModificationProgramme(participants, evenement, programme, typeModification = 'general') {
+    const results = [];
+    const nomEvenementStr = typeof evenement.nom_evenement === 'object' ? (evenement.nom_evenement.fr || evenement.nom_evenement.ar || '') : (evenement.nom_evenement || '');
+    const titreProgramme = typeof programme.titre === 'object' ? (programme.titre.fr || programme.titre.ar || '') : (programme.titre || '');
+
+    const titres = {
+      'general': 'Programme modifié',
+      'annule': 'Programme annulé',
+      'reporte': 'Programme reporté',
+      'nouveau': 'Nouveau programme ajouté'
+    };
+    const sujet = titres[typeModification] || 'Programme modifié';
+
+    for (const participant of participants) {
+      try {
+        const user = participant.User;
+        const prenomStr = typeof user.prenom === 'object' ? (user.prenom.fr || user.prenom.ar || '') : (user.prenom || '');
+        const eventUrl = `${process.env.FRONTEND_URL}/evenements/${evenement.id_evenement}`;
+
+        const html = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #f39c12;">📋 ${sujet}</h2>
+            <p>Bonjour ${prenomStr},</p>
+            <p>Le programme <strong>"${titreProgramme}"</strong> de l'événement <strong>${nomEvenementStr}</strong> a été modifié.</p>
+            <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0;">
+              <p><strong>Type de modification :</strong> ${sujet}</p>
+              ${programme.date_debut ? `<p><strong>Date :</strong> ${new Date(programme.date_debut).toLocaleDateString('fr-FR')}</p>` : ''}
+              ${programme.heure_debut ? `<p><strong>Heure :</strong> ${programme.heure_debut}</p>` : ''}
+            </div>
+            <p><a href="${eventUrl}" style="background-color: #3498db; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px;">Voir les détails</a></p>
+            <p style="margin-top: 30px; font-size: 12px; color: #666;">L'équipe Action Culture</p>
+          </div>
+        `;
+
+        const result = await this.sendEmail(
+          user.email,
+          `${sujet} : ${nomEvenementStr}`,
+          html
+        );
+        results.push({ email: user.email, result });
+      } catch (error) {
+        console.error(`Erreur envoi modification programme à ${participant.User?.email}:`, error);
+        results.push({ email: participant.User?.email, result: { success: false, error: error.message } });
+      }
+    }
+
+    return results;
+  }
+
+  /**
+   * Notifier un nouvel événement aux utilisateurs intéressés
+   * @param {Array} users - Liste des utilisateurs à notifier
+   * @param {object} evenement - Le nouvel événement
+   * @returns {Array} Résultats d'envoi par utilisateur
+   */
+  async notifierNouvelEvenement(users, evenement) {
+    const results = [];
+    const nomEvenementStr = typeof evenement.nom_evenement === 'object' ? (evenement.nom_evenement.fr || evenement.nom_evenement.ar || '') : (evenement.nom_evenement || '');
+    const descriptionStr = typeof evenement.description === 'object' ? (evenement.description.fr || evenement.description.ar || '') : (evenement.description || '');
+    const eventUrl = `${process.env.FRONTEND_URL}/evenements/${evenement.id_evenement}`;
+
+    for (const user of users) {
+      try {
+        const prenomStr = typeof user.prenom === 'object' ? (user.prenom.fr || user.prenom.ar || '') : (user.prenom || '');
+
+        const html = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #27ae60;">🎉 Nouvel événement</h2>
+            <p>Bonjour ${prenomStr},</p>
+            <p>Un nouvel événement vient d'être publié : <strong>${nomEvenementStr}</strong></p>
+            ${descriptionStr ? `<p>${descriptionStr.substring(0, 200)}${descriptionStr.length > 200 ? '...' : ''}</p>` : ''}
+            <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0;">
+              ${evenement.date_debut ? `<p><strong>📅 Date :</strong> ${new Date(evenement.date_debut).toLocaleDateString('fr-FR')}</p>` : ''}
+              ${evenement.Lieu?.nom ? `<p><strong>📍 Lieu :</strong> ${typeof evenement.Lieu.nom === 'object' ? (evenement.Lieu.nom.fr || '') : evenement.Lieu.nom}</p>` : ''}
+              ${evenement.TypeEvenement?.nom_type ? `<p><strong>🏷️ Type :</strong> ${evenement.TypeEvenement.nom_type}</p>` : ''}
+            </div>
+            <p><a href="${eventUrl}" style="background-color: #3498db; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px;">Découvrir l'événement</a></p>
+            <p style="margin-top: 30px; font-size: 12px; color: #666;">L'équipe Action Culture</p>
+          </div>
+        `;
+
+        const result = await this.sendEmail(
+          user.email,
+          `Nouvel événement : ${nomEvenementStr}`,
+          html
+        );
+        results.push({ email: user.email, result });
+      } catch (error) {
+        console.error(`Erreur envoi nouvel événement à ${user.email}:`, error);
+        results.push({ email: user.email, result: { success: false, error: error.message } });
+      }
+    }
+
+    return results;
+  }
+
   async sendEventReminder(params) {
     try {
       const { email, prenom, nomEvenement, dateDebut, heureDebut, lieu, eventUrl } = params;

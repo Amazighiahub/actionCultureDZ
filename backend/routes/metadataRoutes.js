@@ -95,6 +95,31 @@ const initMetadataRoutes = (models) => {
     metadataController.getTypesEvenements.bind(metadataController)
   );
 
+  // Tous les genres (sans filtre par type)
+  router.get('/genres',
+    metadataController.getGenres.bind(metadataController)
+  );
+
+  // Types d'utilisateurs
+  router.get('/types-users',
+    metadataController.getTypesUsers.bind(metadataController)
+  );
+
+  // Types d'organisations
+  router.get('/types-organisations',
+    metadataController.getTypesOrganisations.bind(metadataController)
+  );
+
+  // Éditeurs
+  router.get('/editeurs',
+    metadataController.getEditeurs.bind(metadataController)
+  );
+
+  // Statistiques metadata
+  router.get('/statistics',
+    metadataController.getUsageStatistics.bind(metadataController)
+  );
+
   // ========================================================================
   // ⚡ ROUTES DE TRADUCTION (ADMIN) - CATÉGORIES
   // ========================================================================

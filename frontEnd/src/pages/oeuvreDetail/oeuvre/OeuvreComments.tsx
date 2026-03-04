@@ -7,10 +7,9 @@ import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import {
-  MessageCircle, Star, ThumbsUp, Send, AlertCircle, User, Clock
+  MessageCircle, Star, Send, AlertCircle, User, Clock
 } from 'lucide-react';
 import { LazyImage, EmptyState } from '@/components/shared';
 import { useAuth } from '@/hooks/useAuth';
@@ -106,7 +105,7 @@ const CommentItem: React.FC<{ comment: Comment }> = ({ comment }) => {
 };
 
 // Composant principal
-const OeuvreComments: React.FC<OeuvreCommentsProps> = ({ comments, onAddComment, oeuvreId }) => {
+const OeuvreComments: React.FC<OeuvreCommentsProps> = ({ comments, onAddComment, oeuvreId: _oeuvreId }) => {
   const { t } = useTranslation();
   const { isAuthenticated } = useAuth();
   
@@ -231,7 +230,7 @@ const OeuvreComments: React.FC<OeuvreCommentsProps> = ({ comments, onAddComment,
               {t('comments.loginRequired', 'Connectez-vous pour laisser un avis')}
             </p>
             <Button asChild>
-              <a href="/Auth">{t('auth.login.submit', 'Se connecter')}</a>
+              <a href="/auth">{t('auth.login.submit', 'Se connecter')}</a>
             </Button>
           </CardContent>
         </Card>

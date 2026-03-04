@@ -14,6 +14,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { patrimoineService } from '@/services/patrimoine.service';
 import { useToast } from '@/hooks/use-toast';
+import SEOHead from '@/components/SEOHead';
 
 // Lazy loading pour CartePatrimoine
 const CartePatrimoine = lazy(() => import('@/components/CartePatrimoine'));
@@ -180,6 +181,12 @@ const Patrimoine = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead
+        title={t('sections.heritage.title', 'Patrimoine Culturel')}
+        description={t('sections.heritage.subtitle', 'Découvrez les trésors du patrimoine algérien — monuments, musées, sites archéologiques, villes historiques.')}
+        type="website"
+        keywords={['patrimoine algérien', 'monuments Algérie', 'musées Algérie', 'sites archéologiques', 'histoire Algérie', 'tourisme culturel', 'patrimoine UNESCO']}
+      />
       <Header />
 
       <main className="container py-12">
@@ -422,14 +429,14 @@ const Patrimoine = () => {
               {t('sections.heritage.planVisit.description', 'Créez un parcours personnalisé à travers les sites patrimoniaux de l\'Algérie')}
             </p>
             <div className="flex justify-center gap-4">
-              <Link to="/parcours">
-                <Button size="lg">
-                  {t('sections.heritage.planVisit.start', 'Créer un parcours')}
+              <Button size="lg" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+                {t('sections.heritage.planVisit.start', 'Commencer l\'exploration')}
+              </Button>
+              <Link to="/a-propos">
+                <Button size="lg" variant="outline">
+                  {t('sections.heritage.planVisit.guide', 'Guide pratique')}
                 </Button>
               </Link>
-              <Button size="lg" variant="outline">
-                {t('sections.heritage.planVisit.guide', 'Guide pratique')}
-              </Button>
             </div>
           </div>
         </Card>

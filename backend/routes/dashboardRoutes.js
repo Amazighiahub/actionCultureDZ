@@ -208,6 +208,31 @@ const initDashboardRoutes = (models) => {
     dashboardController.deleteUser
   );
   // Réactiver un utilisateur suspendu
+  router.post('/users/:id/suspend',
+    validationMiddleware.validateId('id'),
+    [
+      body('raison').notEmpty().isString().withMessage('Raison requise'),
+      body('duree').optional().isInt({ min: 1 }).withMessage('Durée invalide')
+    ],
+    validationMiddleware.handleValidationErrors,
+    rateLimitMiddleware.sensitiveActions,
+    auditMiddleware.logAction('SUSPEND_USER'),
+    async (req, res) => {
+      req.body = {
+        action: 'suspend_user',
+        entityType: 'user',
+        entityId: req.params.id,
+        data: {
+          raison: req.body.raison,
+          duree: req.body.duree,
+          suspendu_par: req.user.id_user
+        }
+      };
+      return dashboardController.performAdminAction(req, res);
+    }
+  );
+
+  // Réactiver un utilisateur suspendu
   router.post('/users/:id/reactivate',
     validationMiddleware.validateId('id'),
     rateLimitMiddleware.sensitiveActions,

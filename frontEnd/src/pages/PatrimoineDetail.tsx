@@ -11,13 +11,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   MapPin, Clock, Star, QrCode, ArrowLeft, Landmark, Building2,
   Camera, Calendar, Route, ChevronRight, Download, Share2,
-  CheckCircle2, XCircle, Info, History, Image as ImageIcon, Play
+  CheckCircle2, XCircle, Info, History, Image as ImageIcon, Play,
+  Compass, TreePine, Utensils, Hotel
 } from 'lucide-react';
 import { patrimoineService } from '@/services/patrimoine.service';
 import { useToast } from '@/hooks/use-toast';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import VisitePlanner from '@/components/patrimoine/VisitePlanner';
+import ServicesProximite from '@/components/shared/ServicesProximite';
+import SEOHead, { buildPatrimoineJsonLd, buildBreadcrumbJsonLd } from '@/components/SEOHead';
 
 // Helper pour traduire les champs multilingues
 const translate = (value: string | { fr?: string; ar?: string; en?: string } | null | undefined, lang: string): string => {
@@ -31,7 +34,7 @@ type TypePatrimoine = 'ville_village' | 'monument' | 'musee' | 'site_archeologiq
 
 // ⚡ Configuration des onglets selon le type de patrimoine
 const TABS_CONFIG: Record<TypePatrimoine, string[]> = {
-  ville_village: ['monuments', 'vestiges', 'musees', 'parcours', 'services'],
+  ville_village: ['a_visiter', 'services', 'parcours', 'programmes'],
   monument: ['programmes', 'services', 'galerie', 'histoire'],
   musee: ['programmes', 'collections', 'services', 'galerie'],
   site_archeologique: ['vestiges', 'programmes', 'services', 'histoire'],
@@ -144,6 +147,18 @@ const PatrimoineDetail = () => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [showVisitePlanner, setShowVisitePlanner] = useState(false);
 
+  // Partager le site
+  const handleShareSite = async () => {
+    const siteName = translate(site?.nom, lang);
+    const url = window.location.href;
+    try {
+      await navigator.share({ title: siteName, text: `Découvrez ${siteName}`, url });
+    } catch {
+      navigator.clipboard.writeText(url);
+      toast({ title: t('common.linkCopied', 'Lien copié'), description: t('common.linkCopiedDesc', 'Le lien a été copié dans le presse-papier') });
+    }
+  };
+
   // Charger les détails du site
   useEffect(() => {
     const loadSiteDetail = async () => {
@@ -220,7 +235,7 @@ const PatrimoineDetail = () => {
               <XCircle className="h-16 w-16 text-destructive mx-auto mb-4" />
               <h2 className="text-2xl font-semibold mb-2">{t('common.error', 'Erreur')}</h2>
               <p className="text-muted-foreground mb-4">{error || 'Site non trouvé'}</p>
-              <Button onClick={() => navigate('/Patrimoine')}>
+              <Button onClick={() => navigate('/patrimoine')}>
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 {t('common.back', 'Retour')}
               </Button>
@@ -232,14 +247,35 @@ const PatrimoineDetail = () => {
     );
   }
 
+  const seoKeywords = [
+    translate(site?.nom, lang), site?.type_patrimoine,
+    site?.Commune?.Daira?.Wilaya?.nom, 'patrimoine algérien', 'site historique', 'Algérie',
+    'tourisme culturel', 'histoire algérienne'
+  ].filter(Boolean) as string[];
+
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead
+        title={translate(site?.nom, lang)}
+        description={translate(site?.description, lang)?.substring(0, 160) || `Découvrez ${translate(site?.nom, lang)} — patrimoine culturel algérien`}
+        image={getMainImage()}
+        type="place"
+        keywords={seoKeywords}
+        jsonLd={[
+          buildPatrimoineJsonLd(site),
+          buildBreadcrumbJsonLd([
+            { name: 'Accueil', url: '/' },
+            { name: 'Patrimoine', url: '/patrimoine' },
+            { name: translate(site?.nom, lang) || '', url: `/patrimoine/${site?.id_site}` },
+          ]),
+        ]}
+      />
       <Header />
 
       <main className="container py-8">
         {/* Navigation */}
         <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
-          <Link to="/Patrimoine" className="hover:text-primary transition-colors">
+          <Link to="/patrimoine" className="hover:text-primary transition-colors">
             {t('nav.heritage', 'Patrimoine')}
           </Link>
           <ChevronRight className="h-4 w-4" />
@@ -272,7 +308,7 @@ const PatrimoineDetail = () => {
                 <Button 
                   size="lg"
                   onClick={() => setShowVisitePlanner(true)}
-                  className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 animate-pulse hover:animate-none"
+                  className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
                 >
                   <Route className="h-5 w-5 mr-2" />
                   {t('patrimoine.planVisit', 'Planifier votre visite')}
@@ -285,8 +321,16 @@ const PatrimoineDetail = () => {
                     {site.stats.noteMoyenne.toFixed(1)}
                   </Badge>
                 )}
-                {/* ⚡ Afficher le type de patrimoine traduit */}
-                <Badge variant="secondary">
+                {/* ⚡ Afficher le type de patrimoine traduit avec icône */}
+                <Badge variant="secondary" className={
+                  site.typePatrimoine === 'ville_village' ? 'bg-emerald-500/90 text-white' :
+                  site.typePatrimoine === 'site_naturel' ? 'bg-green-500/90 text-white' :
+                  site.typePatrimoine === 'site_archeologique' ? 'bg-amber-500/90 text-white' :
+                  ''
+                }>
+                  {site.typePatrimoine === 'ville_village' && <Building2 className="h-3 w-3 mr-1" />}
+                  {site.typePatrimoine === 'site_naturel' && <TreePine className="h-3 w-3 mr-1" />}
+                  {site.typePatrimoine === 'monument' && <Landmark className="h-3 w-3 mr-1" />}
                   {TYPE_LABELS[(site.typePatrimoine || 'autre') as TypePatrimoine]?.[lang as 'fr' | 'ar' | 'en'] || site.typeLieu || 'Site'}
                 </Badge>
               </div>
@@ -399,6 +443,7 @@ const PatrimoineDetail = () => {
                 parcours: { label: t('patrimoine.parcours', 'Parcours'), icon: Route, count: site.parcours?.length || 0 },
                 galerie: { label: t('patrimoine.gallery', 'Galerie'), icon: Camera, count: site.medias?.length || 0 },
                 histoire: { label: t('patrimoine.history', 'Histoire'), icon: History, count: site.DetailLieu?.histoire ? 1 : 0 },
+                a_visiter: { label: t('patrimoine.toVisit', 'À Visiter'), icon: Compass, count: (site.monuments?.length || 0) + (site.vestiges?.length || 0) },
                 musees: { label: t('patrimoine.museums', 'Musées'), icon: Building2, count: 0 },
                 collections: { label: t('patrimoine.collections', 'Collections'), icon: ImageIcon, count: 0 },
                 faune_flore: { label: t('patrimoine.wildlife', 'Faune & Flore'), icon: Info, count: 0 }
@@ -423,6 +468,74 @@ const PatrimoineDetail = () => {
                       );
                     })}
                   </TabsList>
+
+              {/* À Visiter — vue combinée monuments + vestiges pour ville/village */}
+              <TabsContent value="a_visiter" className="mt-4">
+                {((site.monuments && site.monuments.length > 0) || (site.vestiges && site.vestiges.length > 0)) ? (
+                  <div className="space-y-6">
+                    {/* Monuments */}
+                    {site.monuments && site.monuments.length > 0 && (
+                      <div className="space-y-3">
+                        <h4 className="font-medium flex items-center gap-2 text-primary">
+                          <Landmark className="h-4 w-4" />
+                          {t('patrimoine.monuments', 'Monuments')} ({site.monuments.length})
+                        </h4>
+                        <div className="grid gap-4 sm:grid-cols-2">
+                          {site.monuments.map((monument, idx) => (
+                            <Card key={`m-${idx}`} className="hover:shadow-md transition-shadow">
+                              <CardHeader className="pb-2">
+                                <div className="flex items-center justify-between">
+                                  <CardTitle className="text-lg">{translate(monument.nom as any, lang)}</CardTitle>
+                                  <Badge variant="outline">{monument.type}</Badge>
+                                </div>
+                              </CardHeader>
+                              <CardContent>
+                                <p className="text-sm text-muted-foreground">
+                                  {translate(monument.description as any, lang) || t('common.noDescription', 'Aucune description')}
+                                </p>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Vestiges */}
+                    {site.vestiges && site.vestiges.length > 0 && (
+                      <div className="space-y-3">
+                        <h4 className="font-medium flex items-center gap-2 text-amber-600">
+                          <Building2 className="h-4 w-4" />
+                          {t('patrimoine.vestiges', 'Vestiges')} ({site.vestiges.length})
+                        </h4>
+                        <div className="grid gap-4 sm:grid-cols-2">
+                          {site.vestiges.map((vestige, idx) => (
+                            <Card key={`v-${idx}`} className="hover:shadow-md transition-shadow">
+                              <CardHeader className="pb-2">
+                                <div className="flex items-center justify-between">
+                                  <CardTitle className="text-lg">{translate(vestige.nom as any, lang)}</CardTitle>
+                                  <Badge variant="outline">{vestige.type}</Badge>
+                                </div>
+                              </CardHeader>
+                              <CardContent>
+                                <p className="text-sm text-muted-foreground">
+                                  {translate(vestige.description as any, lang) || t('common.noDescription', 'Aucune description')}
+                                </p>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <Card className="text-center py-8">
+                    <CardContent>
+                      <Compass className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
+                      <p className="text-muted-foreground">{t('patrimoine.noPlacesToVisit', 'Aucun endroit à visiter répertorié pour le moment')}</p>
+                    </CardContent>
+                  </Card>
+                )}
+              </TabsContent>
 
               {/* Monuments */}
               <TabsContent value="monuments" className="mt-4">
@@ -488,37 +601,15 @@ const PatrimoineDetail = () => {
                 )}
               </TabsContent>
 
-              {/* Services */}
+              {/* Services — utilise le composant enrichi */}
               <TabsContent value="services" className="mt-4">
-                {site.services && site.services.length > 0 ? (
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    {site.services.map((service, idx) => (
-                      <Card key={idx}>
-                        <CardContent className="flex items-center gap-4 py-4">
-                          {service.disponible ? (
-                            <CheckCircle2 className="h-6 w-6 text-green-500 flex-shrink-0" />
-                          ) : (
-                            <XCircle className="h-6 w-6 text-red-500 flex-shrink-0" />
-                          )}
-                          <div>
-                            <p className="font-medium">{translate(service.nom as any, lang)}</p>
-                            {service.description && (
-                              <p className="text-sm text-muted-foreground">
-                                {translate(service.description as any, lang)}
-                              </p>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                ) : (
-                  <Card className="text-center py-8">
-                    <CardContent>
-                      <p className="text-muted-foreground">{t('patrimoine.noServices', 'Aucun service disponible')}</p>
-                    </CardContent>
-                  </Card>
-                )}
+                <ServicesProximite
+                  lieuId={site.id_lieu}
+                  lieuName={translate(site.nom, lang)}
+                  services={site.services as any}
+                  variant="full"
+                  showTitle={false}
+                />
               </TabsContent>
 
               {/* Programmes */}
@@ -792,7 +883,7 @@ const PatrimoineDetail = () => {
                     <Download className="h-4 w-4 mr-2" />
                     {t('common.download', 'Télécharger')}
                   </Button>
-                  <Button variant="outline" size="sm" className="flex-1">
+                  <Button variant="outline" size="sm" className="flex-1" onClick={handleShareSite}>
                     <Share2 className="h-4 w-4 mr-2" />
                     {t('common.share', 'Partager')}
                   </Button>
@@ -843,7 +934,7 @@ const PatrimoineDetail = () => {
                 </div>
                 <Button 
                   size="lg"
-                  className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-md hover:shadow-lg transition-all" 
+                  className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-md hover:shadow-lg transition-all"
                   onClick={() => setShowVisitePlanner(true)}
                 >
                   <Route className="h-5 w-5 mr-2" />
@@ -869,7 +960,7 @@ const PatrimoineDetail = () => {
               </CardContent>
             </Card>
             
-            <Button variant="outline" className="w-full" onClick={() => navigate('/Patrimoine')}>
+            <Button variant="outline" className="w-full" onClick={() => navigate('/patrimoine')}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               {t('patrimoine.backToList', 'Retour à la liste')}
             </Button>

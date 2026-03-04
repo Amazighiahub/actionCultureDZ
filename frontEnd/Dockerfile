@@ -1,6 +1,8 @@
 # ============================================
 # Dockerfile - EventCulture Frontend
 # ============================================
+# Multi-stage : deps -> build -> nginx (production)
+# ============================================
 
 FROM node:20-alpine AS base
 
@@ -29,7 +31,7 @@ ENV VITE_API_URL=${VITE_API_URL:-http://localhost:3001/api}
 RUN npm run build
 
 # ============================================
-# Stage: Production avec Nginx
+# Stage: Production (Nginx)
 # ============================================
 FROM nginx:alpine AS production
 

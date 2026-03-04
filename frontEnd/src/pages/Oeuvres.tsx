@@ -30,6 +30,7 @@ import {
   EmptyState
 } from '@/components/shared';
 import ErrorBoundary from '@/components/shared/ErrorBoundary';
+import SEOHead from '@/components/SEOHead';
 
 // Hook personnalisé
 import { useOeuvres } from '@/hooks/useOeuvres';
@@ -237,6 +238,11 @@ const Oeuvres: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead
+        title={t('works.title', 'Œuvres culturelles')}
+        description={t('works.subtitle', 'Explorez la richesse du patrimoine culturel algérien — littérature, cinéma, musique, peinture et arts.')}
+        keywords={['œuvres algériennes', 'littérature algérienne', 'cinéma algérien', 'musique algérienne', 'art algérien', 'culture', 'Algérie']}
+      />
       <Header />
 
       <main className="container py-8">

@@ -30,6 +30,7 @@ import {
   EmptyState
 } from '@/components/shared';
 import ErrorBoundary from '@/components/shared/ErrorBoundary';
+import SEOHead from '@/components/SEOHead';
 
 // Hook personnalisé
 import { useArtisanat } from '@/hooks/useArtisanat';
@@ -209,6 +210,12 @@ const Artisanat: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead
+        title={t('artisanat.title', 'Artisanat Algérien')}
+        description={t('artisanat.subtitle', 'Découvrez les métiers d\'art et les créations artisanales traditionnelles d\'Algérie — poterie, tapis, bijoux, cuir.')}
+        type="website"
+        keywords={['artisanat algérien', 'artisanat traditionnel', 'poterie Algérie', 'tapis algérien', 'bijoux kabyles', 'cuir', 'fait main', 'artisan']}
+      />
       <Header />
 
       <main className="container py-8">

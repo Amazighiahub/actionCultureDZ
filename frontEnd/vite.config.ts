@@ -19,6 +19,7 @@ const spaFallback = (): Plugin => {
           url.includes('.') || 
           url.startsWith('/api') || 
           url.startsWith('/uploads') ||
+          url.startsWith('/sitemap.xml') ||
           url.startsWith('/@') || // Vite special routes
           url.startsWith('/node_modules')
         ) {
@@ -61,6 +62,11 @@ export default defineConfig(({ mode }) => ({
       },
       '/uploads': {
         target: apiProxyTarget,
+        changeOrigin: true,
+        secure: false,
+      },
+      '/sitemap.xml': {
+        target: 'http://127.0.0.1:3001',
         changeOrigin: true,
         secure: false,
       }
@@ -133,6 +139,21 @@ export default defineConfig(({ mode }) => ({
             // Internationalisation
             if (id.includes('i18n') || id.includes('react-i18next')) {
               return 'i18n-vendor';
+            }
+
+            // Cartes (leaflet)
+            if (id.includes('leaflet') || id.includes('react-leaflet')) {
+              return 'maps-vendor';
+            }
+
+            // Éditeur riche (tiptap)
+            if (id.includes('@tiptap') || id.includes('prosemirror')) {
+              return 'editor-vendor';
+            }
+
+            // Recharts / visualisation
+            if (id.includes('recharts') || id.includes('d3-')) {
+              return 'charts-vendor';
             }
           }
           

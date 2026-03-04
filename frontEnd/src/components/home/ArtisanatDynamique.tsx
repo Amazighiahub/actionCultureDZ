@@ -191,7 +191,7 @@ const ArtisanatDynamique: React.FC = () => {
       </div>
 
       <div className="text-center">
-        <Button size="lg" variant="outline" onClick={() => navigate('/Artisanat')} className="group">
+        <Button size="lg" variant="outline" onClick={() => navigate('/artisanat')} className="group">
           {t('sections.crafts.exploreAll')}
           <Hammer className={`h-4 w-4 ${rtlClasses.marginStart(2)} group-hover:rotate-12 transition-transform`} />
         </Button>
