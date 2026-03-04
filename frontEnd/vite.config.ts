@@ -34,6 +34,9 @@ const spaFallback = (): Plugin => {
   };
 };
 
+// Cible du proxy API : en Docker = backend:3001, en local = 127.0.0.1:3001
+const apiProxyTarget = process.env.VITE_PROXY_TARGET || 'http://127.0.0.1:3001';
+
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
@@ -42,7 +45,7 @@ export default defineConfig(({ mode }) => ({
     // Proxy pour éviter les problèmes CORS en développement
     proxy: {
       '/api': {
-        target: 'http://127.0.0.1:3001',
+        target: apiProxyTarget,
         changeOrigin: true,
         secure: false,
         configure: (proxy, _options) => {
@@ -58,6 +61,11 @@ export default defineConfig(({ mode }) => ({
         },
       },
       '/uploads': {
+        target: apiProxyTarget,
+        changeOrigin: true,
+        secure: false,
+      },
+      '/sitemap.xml': {
         target: 'http://127.0.0.1:3001',
         changeOrigin: true,
         secure: false,

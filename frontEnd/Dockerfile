@@ -2,7 +2,6 @@
 # Dockerfile - EventCulture Frontend
 # ============================================
 # Multi-stage : deps -> build -> nginx (production)
-# Le build React genere des fichiers statiques servis par Nginx
 # ============================================
 
 FROM node:20-alpine AS base
@@ -26,22 +25,18 @@ FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# L'URL de l'API est injectee au moment du build
 ARG VITE_API_URL
 ENV VITE_API_URL=${VITE_API_URL:-http://localhost:3001/api}
 
-# Build de l'application React -> genere le dossier dist/
 RUN npm run build
 
 # ============================================
-# Stage: Production (Nginx sert les fichiers statiques)
+# Stage: Production (Nginx)
 # ============================================
 FROM nginx:alpine AS production
 
-# Copier la configuration Nginx
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Copier les fichiers buildes depuis le stage builder
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 EXPOSE 80

@@ -21,7 +21,7 @@ module.exports = (sequelize) => {
       type: DataTypes.INTEGER,
       allowNull: true,
       references: {
-        model: 'users',
+        model: 'user',
         key: 'id_user'
       },
       comment: 'Professionnel propriétaire du service'

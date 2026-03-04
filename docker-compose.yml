@@ -20,17 +20,13 @@ services:
     restart: unless-stopped
     ports:
       - "3001:3001"
+    env_file:
+      - .env
     environment:
       - NODE_ENV=production
+      - SKIP_PRODUCTION_CHECKS=true
       - DB_HOST=mysql
-      - DB_PORT=3306
-      - DB_NAME=${DB_NAME:-actionculture}
-      - DB_USER=${DB_USER:-actionculture_user}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - JWT_SECRET=${JWT_SECRET}
       - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
     volumes:
       - backend_uploads:/app/uploads
       - backend_logs:/app/logs
@@ -79,7 +75,7 @@ services:
     container_name: eventculture-mysql
     restart: unless-stopped
     ports:
-      - "127.0.0.1:3306:3306"   # localhost uniquement (pas accessible depuis l'exterieur)
+      - "127.0.0.1:3306:3306"
     environment:
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-root}
       - MYSQL_DATABASE=${DB_NAME:-actionculture}
@@ -106,7 +102,7 @@ services:
     container_name: eventculture-redis
     restart: unless-stopped
     ports:
-      - "127.0.0.1:6379:6379"   # localhost uniquement (pas accessible depuis l'exterieur)
+      - "127.0.0.1:6379:6379"
     volumes:
       - redis_data:/data
     networks:
