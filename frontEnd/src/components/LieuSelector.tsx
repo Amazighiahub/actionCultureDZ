@@ -262,25 +262,29 @@ export const LieuSelector: React.FC<LieuSelectorProps> = ({
       return;
     }
 
-    // Vérifier les doublons
-    const duplicateCheck = await lieuService.checkDuplicate(
-      newLieu.nom,
-      newLieu.latitude,
-      newLieu.longitude
-    );
+    // Vérifier les doublons (tolérant aux erreurs serveur)
+    try {
+      const duplicateCheck = await lieuService.checkDuplicate(
+        newLieu.nom,
+        newLieu.latitude,
+        newLieu.longitude
+      );
 
-    if (duplicateCheck.success && duplicateCheck.data?.exists) {
-      toast({
-        title: t('places.duplicate.title'),
-        description: t('places.duplicate.description'),
-        variant: "warning"
-      });
-      
-      if (duplicateCheck.data.lieu) {
-        onChange(duplicateCheck.data.lieu.id_lieu, duplicateCheck.data.lieu);
-        setMode('select');
+      if (duplicateCheck.success && duplicateCheck.data?.exists) {
+        toast({
+          title: t('places.duplicate.title'),
+          description: t('places.duplicate.description'),
+          variant: "warning"
+        });
+        
+        if (duplicateCheck.data.lieu) {
+          onChange(duplicateCheck.data.lieu.id_lieu, duplicateCheck.data.lieu);
+          setMode('select');
+        }
+        return;
       }
-      return;
+    } catch (error) {
+      console.warn('Vérification de doublons indisponible, poursuite de la création du lieu.', error);
     }
 
     setLoading(true);

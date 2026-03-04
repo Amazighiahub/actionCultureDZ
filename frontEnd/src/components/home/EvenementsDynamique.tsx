@@ -17,6 +17,7 @@ import { evenementService } from '@/services/evenement.service';
 import { authService } from '@/services/auth.service';
 import { Evenement } from '@/types';
 import { getAssetUrl } from '@/helpers/assetUrl';
+import { getTranslation, type SupportedLanguage } from '@/types/common/multilingual.types';
 import ErrorMessage from './ErrorMessage';
 
 // Helper pour extraire les données d'une réponse
@@ -36,10 +37,11 @@ function extractDataFromResponse<T>(responseData: any): T[] {
 
 const EvenementsDynamique: React.FC = () => {
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { formatDate } = useLocalizedDate();
   const { formatNumber, formatPrice } = useLocalizedNumber();
   const { rtlClasses } = useRTL();
+  const lang = (i18n.language || 'fr') as SupportedLanguage;
   const [evenements, setEvenements] = useState<Evenement[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -135,14 +137,14 @@ const EvenementsDynamique: React.FC = () => {
                 {event.Media && event.Media[0] ? (
                   <img
                     src={getAssetUrl(event.Media[0].url)}
-                    alt={event.nom_evenement}
+                    alt={getTranslation(event.nom_evenement, lang)}
                     loading="lazy"
                     className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                 ) : event.image_url ? (
                   <img
                     src={getAssetUrl(event.image_url)}
-                    alt={event.nom_evenement}
+                    alt={getTranslation(event.nom_evenement, lang)}
                     loading="lazy"
                     className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
@@ -169,7 +171,7 @@ const EvenementsDynamique: React.FC = () => {
               
               <CardHeader className="pb-3">
                 <CardTitle className="line-clamp-2 leading-tight">
-                  {event.nom_evenement}
+                  {getTranslation(event.nom_evenement, lang)}
                 </CardTitle>
                 
                 <div className="space-y-2 text-sm text-muted-foreground">
@@ -185,7 +187,7 @@ const EvenementsDynamique: React.FC = () => {
                   {event.Lieu && (
                     <div className={`flex items-center space-x-2 ${rtlClasses.flexRow}`}>
                       <MapPin className="h-4 w-4" />
-                      <span>{event.Lieu.nom}</span>
+                      <span>{typeof event.Lieu.nom === 'object' ? getTranslation(event.Lieu.nom, lang) : event.Lieu.nom}</span>
                     </div>
                   )}
                 </div>
@@ -193,7 +195,7 @@ const EvenementsDynamique: React.FC = () => {
               
               <CardContent className="space-y-4">
                 <p className="text-sm text-muted-foreground line-clamp-2">
-                  {event.description || t('common.noDescription')}
+                  {(typeof event.description === 'object' ? getTranslation(event.description, lang) : event.description) || t('common.noDescription')}
                 </p>
                 
                 {event.capacite_max && (
@@ -232,7 +234,7 @@ const EvenementsDynamique: React.FC = () => {
                           description: t('common.featureInDevelopment'),
                         });
                       } else {
-                        navigate('/Auth');
+                        navigate('/auth');
                       }
                     }}
                   >
@@ -247,7 +249,7 @@ const EvenementsDynamique: React.FC = () => {
       </div>
 
       <div className="text-center">
-        <Button size="lg" variant="outline" onClick={() => navigate('/Evenements')} className="group">
+        <Button size="lg" variant="outline" onClick={() => navigate('/evenements')} className="group">
           {t('sections.events.seeAllEvents')}
           <Calendar className={`h-4 w-4 ${rtlClasses.marginStart(2)} group-hover:rotate-12 transition-transform`} />
         </Button>

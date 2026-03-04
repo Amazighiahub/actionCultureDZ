@@ -12,3 +12,13 @@ Allow: /
 
 User-agent: *
 Allow: /
+Disallow: /admin/
+Disallow: /dashboard-pro
+Disallow: /dashboard-user
+Disallow: /ajouter-*
+Disallow: /api/
+
+# Sitemap dynamique généré par le backend (inclut toutes les pages détail)
+# En production, remplacer par l'URL absolue du domaine :
+# Sitemap: https://votre-domaine.com/sitemap.xml
+Sitemap: /sitemap.xml

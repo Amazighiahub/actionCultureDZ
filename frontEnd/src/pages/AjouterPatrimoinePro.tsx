@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -87,6 +87,9 @@ const EPOQUES = [
 const AjouterPatrimoinePro: React.FC = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const isEditMode = !!id;
+  const editId = id ? parseInt(id) : null;
   i18n.language;
 
   // States
@@ -96,6 +99,46 @@ const AjouterPatrimoinePro: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+
+  // Charger les données existantes en mode édition
+  useEffect(() => {
+    if (isEditMode && editId) {
+      loadExistingPatrimoine();
+    }
+  }, [isEditMode, editId]);
+
+  const loadExistingPatrimoine = async () => {
+    if (!editId) return;
+    try {
+      const response = await patrimoineService.getById(editId);
+      if (response.success && response.data) {
+        const site = response.data as any;
+        const toTV = (v: any): TranslatableValue => typeof v === 'object' && v !== null ? v : { fr: v || '', ar: '', en: '' };
+        setFormData({
+          nom: toTV(site.nom),
+          description: toTV(site.description),
+          type: site.type || '',
+          epoque: site.epoque,
+          wilaya_id: site.wilaya_id || 0,
+          commune_id: site.commune_id,
+          adresse: site.adresse,
+          latitude: site.latitude || 0,
+          longitude: site.longitude || 0,
+          statut: site.statut || 'ouvert',
+          classement: site.classement,
+          date_classement: site.date_classement,
+          visite_virtuelle_url: site.visite_virtuelle_url,
+        });
+        console.log('✅ Patrimoine chargé pour édition:', site);
+      } else {
+        setError('Site introuvable');
+        navigate('/dashboard-pro');
+      }
+    } catch (err: any) {
+      console.error('❌ Erreur chargement patrimoine:', err);
+      setError('Impossible de charger le site');
+    }
+  };
 
   // État pour le lieu sélectionné via LieuSelector
   const [createdLieuId, setCreatedLieuId] = useState<number | null>(null);
@@ -188,15 +231,21 @@ const AjouterPatrimoinePro: React.FC = () => {
         visite_virtuelle_url: formData.visite_virtuelle_url
       };
 
-      const response = await patrimoineService.create(createData);
+      let response;
+      if (isEditMode && editId) {
+        console.log('📝 Mise à jour patrimoine', editId);
+        response = await patrimoineService.update(editId, createData);
+      } else {
+        response = await patrimoineService.create(createData);
+      }
 
-      if (response.success && response.data) {
+      if (response.success) {
         setSuccess(true);
         setTimeout(() => {
           navigate('/dashboard-pro');
         }, 2000);
       } else {
-        setError(response.error || t('ajouterPatrimoine.errors.createFailed'));
+        setError(response.error || (isEditMode ? 'Erreur lors de la mise à jour' : t('ajouterPatrimoine.errors.createFailed')));
       }
     } catch (err: any) {
       console.error('Erreur creation patrimoine:', err);

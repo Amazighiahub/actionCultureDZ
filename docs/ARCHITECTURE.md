@@ -81,16 +81,30 @@ backend/
 │   ├── patrimoineController.js
 │   ├── parcoursIntelligentController.js
 │   ├── servicesController.js
-│   ├── v2/                 # Controllers API v2
+│   ├── v2/                 # Controllers API v2 (7 modules)
 │   │   ├── userControllerV2.js
-│   │   └── oeuvreControllerV2.js
+│   │   ├── oeuvreControllerV2.js
+│   │   ├── evenementControllerV2.js
+│   │   ├── patrimoineControllerV2.js
+│   │   ├── artisanatControllerV2.js
+│   │   ├── serviceControllerV2.js
+│   │   └── parcoursControllerV2.js
 │   └── ...
 │
 ├── routes/                 # Définition des routes
-│   ├── index.js            # Agrégateur principal
+│   ├── index.js            # Agrégateur principal v1
 │   ├── userRoutes.js
 │   ├── oeuvreRoutes.js
 │   ├── evenementRoutes.js
+│   ├── v2/                 # Routes API v2 (7 modules)
+│   │   ├── index.js        # Agrégateur v2
+│   │   ├── userRoutes.js
+│   │   ├── oeuvreRoutes.js
+│   │   ├── evenementRoutes.js
+│   │   ├── patrimoineRoutes.js
+│   │   ├── artisanatRoutes.js
+│   │   ├── serviceRoutes.js
+│   │   └── parcoursRoutes.js
 │   └── admin/              # Routes admin
 │
 ├── middlewares/
@@ -108,22 +122,38 @@ backend/
 │   ├── emailService.js
 │   ├── notificationService.js
 │   ├── uploadService.js
-│   ├── serviceContainer.js  # IoC container
+│   ├── serviceContainer.js  # IoC container (11 services)
 │   ├── core/baseService.js  # Classe de base
-│   ├── oeuvre/oeuvreService.js
 │   ├── user/userService.js
+│   ├── oeuvre/oeuvreService.js
+│   ├── evenement/evenementService.js
+│   ├── patrimoine/patrimoineService.js
+│   ├── artisanat/artisanatService.js
+│   ├── service/serviceService.js
+│   ├── parcours/parcoursService.js
 │   ├── dashboard/           # Analytics, modération, stats
 │   └── ...
 │
 ├── repositories/           # Accès données (pattern Repository)
+│   ├── index.js            # Factory de repositories
 │   ├── baseRepository.js
+│   ├── userRepository.js
 │   ├── oeuvreRepository.js
-│   └── userRepository.js
+│   ├── evenementRepository.js
+│   ├── patrimoineRepository.js
+│   ├── artisanatRepository.js
+│   ├── serviceRepository.js
+│   └── parcoursRepository.js
 │
 ├── dto/                    # Data Transfer Objects
 │   ├── baseDTO.js
+│   ├── user/
 │   ├── oeuvre/
-│   └── user/
+│   ├── evenement/
+│   ├── patrimoine/
+│   ├── artisanat/
+│   ├── service/
+│   └── parcours/
 │
 ├── helpers/
 │   └── i18n.js             # Helpers multilingues

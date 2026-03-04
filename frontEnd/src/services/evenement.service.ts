@@ -232,7 +232,7 @@ class EvenementService extends BaseService<Evenement, CreateEvenementData, Updat
   }
 
   async addOeuvre(eventId: number, oeuvreId: number): Promise<ApiResponse<void>> {
-    return httpClient.post<void>(API_ENDPOINTS.evenements.addOeuvre(eventId), { oeuvre_id: oeuvreId });
+    return httpClient.post<void>(API_ENDPOINTS.evenements.addOeuvre(eventId), { id_oeuvre: oeuvreId });
   }
 
   async removeOeuvre(eventId: number, oeuvreId: number): Promise<ApiResponse<void>> {

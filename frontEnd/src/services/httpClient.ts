@@ -502,11 +502,10 @@ class HttpClient {
     localStorage.removeItem(AUTH_CONFIG.tokenExpiryKey);
     localStorage.removeItem('user');
 
-    // Rediriger vers la page de connexion
-    const currentPath = window.location.pathname;
-    if (currentPath !== '/Auth') {
-      window.location.href = `/auth?redirect=${encodeURIComponent(currentPath)}`;
-    }
+    // Ne PAS faire de hard redirect ici — laisser React (ProtectedRoute)
+    // gérer la redirection proprement via le PermissionsProvider.
+    // Un hard redirect (window.location.href) casse le flux React et crée
+    // des boucles de redirection.
   }
 
   private showToast(options: { title: string; description?: string; variant?: 'default' | 'destructive' | 'warning' | string }) {

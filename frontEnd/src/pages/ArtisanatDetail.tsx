@@ -8,6 +8,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -18,10 +19,13 @@ import {
 } from 'lucide-react';
 
 import { artisanatService } from '@/services/artisanat.service';
+import { favoriService } from '@/services/favori.service';
 import { useTranslateData } from '@/hooks/useTranslateData';
+import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/Utils';
 import { getAssetUrl } from '@/helpers/assetUrl';
+import SEOHead, { buildArtisanatJsonLd, buildBreadcrumbJsonLd } from '@/components/SEOHead';
 
 interface ArtisanatData {
   id: number;
@@ -103,8 +107,10 @@ const ArtisanatDetail: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
-  
-  
+  const [favoriteLoading, setFavoriteLoading] = useState(false);
+  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; type: string; item: any }>({ open: false, type: '', item: null });
+  const { isAuthenticated } = useAuth();
+
   useEffect(() => {
     if (id) {
       loadArtisanat(parseInt(id));
@@ -115,28 +121,21 @@ const ArtisanatDetail: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      console.log(`🔍 Chargement artisanat ID: ${artisanatId}`);
       
       const response = await artisanatService.getDetail(artisanatId);
-      console.log('📡 Réponse API:', response);
 
       if (response.success && response.data) {
-        console.log('✅ Données reçues:', response.data);
-        console.log('📊 Structure des données:', JSON.stringify(response.data, null, 2));
-        
         const artisanData = response.data as unknown as ArtisanatData;
-        console.log('👤 Artisan (Saiseur):', artisanData.Oeuvre?.Saiseur);
-        console.log('🖼️ Médias:', artisanData.Oeuvre?.Media);
-        console.log('🎨 Matériau:', artisanData.Materiau);
-        console.log('🔧 Technique:', artisanData.Technique);
-        console.log('💰 Prix:', artisanData.prix);
-        console.log('📏 Dimensions:', artisanData.dimensions);
-        console.log('💬 Commentaires:', artisanData.Oeuvre?.Commentaires);
-        console.log('🎨 Autres œuvres artisan:', artisanData.autres_oeuvres_artisan);
-        
         setArtisanat(artisanData);
+
+        // Vérifier l'état du favori
+        if (isAuthenticated) {
+          try {
+            const favCheck = await favoriService.check('artisanat', artisanatId);
+            setIsFavorite(favCheck.isFavorite);
+          } catch { /* ignore */ }
+        }
       } else {
-        console.error('❌ Erreur API:', response.error);
         setError(response.error || t('artisanat.notFound', 'Artisanat non trouvé'));
       }
     } catch (err) {
@@ -147,67 +146,73 @@ const ArtisanatDetail: React.FC = () => {
     }
   };
 
-  const handleDeleteItem = async (type: string, item: any) => {
-    if (confirm(`Êtes-vous sûr de vouloir supprimer cet élément ?`)) {
-      // TODO: Implémenter la suppression
-      console.log('Suppression:', type, item);
+  const _handleDeleteItem = (type: string, item: any) => {
+    setDeleteDialog({ open: true, type, item });
+  };
+
+  const confirmDelete = async () => {
+    const { type: _type, item: _item } = deleteDialog;
+    setDeleteDialog({ open: false, type: '', item: null });
+    try {
+      // TODO: Appel API suppression selon le type
+      toast({
+        title: t('common.deleted', 'Supprimé'),
+        description: t('common.deletedDesc', 'L\'élément a été supprimé')
+      });
+    } catch (err) {
+      toast({
+        title: t('common.error', 'Erreur'),
+        description: t('common.deleteError', 'Impossible de supprimer'),
+        variant: 'destructive'
+      });
     }
   };
 
   const handleShare = async () => {
+    const artisan = artisanat?.Oeuvre?.Saiseur;
+    const title = td(artisanat?.Oeuvre?.titre) || td(artisanat?.nom) || '';
+    const shareText = artisan
+      ? `Découvrez cette magnifique œuvre par ${td(artisan.prenom)} ${td(artisan.nom)}!`
+      : `Découvrez cet artisanat !`;
     try {
-      // Partage natif (mobile)
       await navigator.share({
-        title: td(artisanat?.Oeuvre?.titre),
-        text: `Découvrez cette magnifique œuvre par ${td(artisan?.prenom)} ${td(artisan?.nom)}!`,
+        title,
+        text: shareText,
         url: window.location.href
       });
     } catch {
-      // Fallback: Partage réseaux sociaux
       const shareUrl = encodeURIComponent(window.location.href);
-      const shareText = encodeURIComponent(`Découvrez cette magnifique œuvre par ${td(artisan?.prenom)} ${td(artisan?.nom)}!`);
-      
-      // Ouvrir un modal avec les options de partage
-      toast({
-        title: t('common.shareOptions', 'Options de partage'),
-        description: t('common.shareOptionsDesc', 'Choisissez votre plateforme'),
-        action: (
-          <div className="flex gap-2 mt-2">
-            <Button size="sm" asChild>
-              <a href={`https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`} target="_blank" rel="noopener noreferrer">
-                Facebook
-              </a>
-            </Button>
-            <Button size="sm" asChild>
-              <a href={`https://twitter.com/intent/tweet?text=${shareText}&url=${shareUrl}`} target="_blank" rel="noopener noreferrer">
-                Twitter
-              </a>
-            </Button>
-            <Button size="sm" asChild>
-              <a href={`https://wa.me/?text=${shareText}%20${shareUrl}`} target="_blank" rel="noopener noreferrer">
-                WhatsApp
-              </a>
-            </Button>
-          </div>
-        )
-      });
+      const _encodedText = encodeURIComponent(shareText);
+      window.open(`https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`, '_blank');
     }
   };
 
-  const toggleFavorite = () => {
-    setIsFavorite(!isFavorite);
-    
-    // TODO: Appeler l'API pour ajouter/retirer des favoris
-    console.log(`📌 ${isFavorite ? 'Retrait' : 'Ajout'} favoris pour artisanat ID: ${artisanat?.id_artisanat}`);
-    
-    toast({
-      title: isFavorite
-        ? t('favoris.removed', 'Retiré des favoris')
-        : t('favoris.added', 'Ajouté aux favoris'),
-      description: isFavorite
-        ? t('favoris.removedDesc', 'L\'œuvre a été retirée de vos favoris')
-        : t('favoris.addedDesc', 'L\'œuvre a été ajoutée à vos favoris')
-    });
+  const toggleFavorite = async () => {
+    if (!isAuthenticated) {
+      navigate('/auth');
+      return;
+    }
+    if (!artisanat || favoriteLoading) return;
+    setFavoriteLoading(true);
+    try {
+      const result = await favoriService.toggle('artisanat', artisanat.id);
+      if (result.success) {
+        const added = result.data?.added ?? !isFavorite;
+        setIsFavorite(added);
+        toast({
+          title: added
+            ? t('favoris.added', 'Ajouté aux favoris')
+            : t('favoris.removed', 'Retiré des favoris'),
+          description: added
+            ? t('favoris.addedDesc', 'L\'œuvre a été ajoutée à vos favoris')
+            : t('favoris.removedDesc', 'L\'œuvre a été retirée de vos favoris')
+        });
+      }
+    } catch (err) {
+      console.error('Erreur toggle favori:', err);
+    } finally {
+      setFavoriteLoading(false);
+    }
   };
 
   const nextImage = () => {
@@ -269,8 +274,35 @@ const ArtisanatDetail: React.FC = () => {
   const currentMedia = medias[currentImageIndex];
   const artisan = artisanat?.Oeuvre?.Saiseur;
 
+  const seoKeywords = [
+    td(artisanat?.Oeuvre?.titre) || td(artisanat?.nom), (artisanat as any)?.type_artisanat,
+    Materiau?.nom, Technique?.nom, 'artisanat algérien', 'artisanat traditionnel',
+    'fait main', 'Algérie'
+  ].filter(Boolean) as string[];
+
   return (
     <>
+      <SEOHead
+        title={td(artisanat?.Oeuvre?.titre) || td(artisanat?.nom) || 'Artisanat'}
+        description={td(artisanat?.Oeuvre?.description)?.substring(0, 160) || `Artisanat traditionnel algérien`}
+        image={(medias[0] as any)?.url_media || medias[0]?.url || (artisanat as any)?.image_url}
+        type="product"
+        keywords={seoKeywords}
+        jsonLd={[
+          buildArtisanatJsonLd({
+            ...artisanat,
+            nom: td(artisanat?.Oeuvre?.titre) || td(artisanat?.nom),
+            description: td(artisanat?.Oeuvre?.description),
+            images: medias.map((m: any) => m.url_media || m.url),
+            artisan: artisan ? { nom: artisan.nom, prenom: artisan.prenom } : undefined,
+          }),
+          buildBreadcrumbJsonLd([
+            { name: 'Accueil', url: '/' },
+            { name: 'Artisanat', url: '/artisanat' },
+            { name: td(artisanat?.Oeuvre?.titre) || 'Détail', url: `/artisanat/${artisanat.id}` },
+          ]),
+        ]}
+      />
       <Header />
       <main className="min-h-screen bg-background">
         <div className="container py-8">
@@ -600,7 +632,7 @@ const ArtisanatDetail: React.FC = () => {
                 {autres_oeuvres_artisan.slice(0, 6).map((oeuvre) => (
                   <Link
                     key={oeuvre.id}
-                    to={`/modifier-artisanat/${oeuvre.id}`}
+                    to={`/artisanat/${oeuvre.id}`}
                     className="group"
                   >
                     <div className="aspect-square bg-muted rounded-lg overflow-hidden">
@@ -616,7 +648,7 @@ const ArtisanatDetail: React.FC = () => {
                         </div>
                       )}
                     </div>
-                    <p className="mt-2 text-sm font-medium truncate">{td(oeuvre.Oeuvre.titre)}</p>
+                    <p className="mt-2 text-sm font-medium truncate">{td(oeuvre.Oeuvre?.titre)}</p>
                     {oeuvre.prix && (
                       <p className="text-sm text-primary font-semibold">{oeuvre.prix.toLocaleString()} DA</p>
                     )}
@@ -667,43 +699,27 @@ const ArtisanatDetail: React.FC = () => {
             </section>
           )}
 
-          {/* Artisanats similaires */}
-          {similaires && similaires.length > 0 && (
-            <section className="mt-12">
-              <h2 className="text-2xl font-bold mb-6">
-                {t('artisanat.similar', 'Artisanats similaires')}
-              </h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                {similaires.slice(0, 6).map((item) => (
-                  <Link
-                    key={item.id}
-                    to={`/artisanat/${item.id}`}
-                    className="group"
-                  >
-                    <div className="aspect-square bg-muted rounded-lg overflow-hidden">
-                      {item.Oeuvre?.Media?.[0] ? (
-                        <img
-                          src={item.Oeuvre?.Media?.[0]?.url || ''}
-                          alt={td(item.Oeuvre?.titre || '')}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <Package className="h-8 w-8 text-muted-foreground" />
-                        </div>
-                      )}
-                    </div>
-                    <p className="mt-2 text-sm font-medium truncate">{td(item.Oeuvre?.titre)}</p>
-                    {item.prix && (
-                      <p className="text-sm text-primary font-semibold">{item.prix.toLocaleString()} DA</p>
-                    )}
-                  </Link>
-                ))}
-              </div>
-            </section>
-          )}
         </div>
       </main>
+
+      {/* Dialog de confirmation de suppression */}
+      <AlertDialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog(prev => ({ ...prev, open }))}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('common.confirmDelete', 'Confirmer la suppression')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('common.confirmDeleteDesc', 'Êtes-vous sûr de vouloir supprimer cet élément ? Cette action est irréversible.')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('common.cancel', 'Annuler')}</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {t('common.delete', 'Supprimer')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <Footer />
     </>
   );

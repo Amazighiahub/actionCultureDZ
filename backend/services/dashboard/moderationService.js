@@ -118,14 +118,14 @@ class DashboardModerationService {
       await user.update({
         statut_validation: 'valide',
         date_validation: new Date(),
-        valide_par: moderatorId
+        id_user_validate: moderatorId
       });
     } else if (action === 'reject') {
       await user.update({
-        statut_validation: 'refuse',
-        motif_refus: motif,
+        statut_validation: 'rejete',
+        raison_rejet: motif,
         date_validation: new Date(),
-        valide_par: moderatorId
+        id_user_validate: moderatorId
       });
     }
 
@@ -150,15 +150,13 @@ class DashboardModerationService {
     if (action === 'approve') {
       await oeuvre.update({
         statut: 'publie',
-        date_validation: new Date(),
-        valide_par: moderatorId
+        date_validation: new Date()
       });
     } else if (action === 'reject') {
       await oeuvre.update({
         statut: 'refuse',
-        motif_refus: motif,
-        date_validation: new Date(),
-        valide_par: moderatorId
+        raison_rejet: motif,
+        date_validation: new Date()
       });
     }
 
@@ -202,11 +200,7 @@ class DashboardModerationService {
     const { duree, motif } = data;
 
     await user.update({
-      est_suspendu: true,
-      date_suspension: new Date(),
-      duree_suspension: duree,
-      motif_suspension: motif,
-      suspendu_par: moderatorId
+      statut: 'suspendu'
     });
 
     return user;

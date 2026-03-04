@@ -101,13 +101,14 @@ class MetadataController {
         where: { id_type_oeuvre: typeId, actif: true },
         include: [{
           model: this.models.Genre,
+          as: 'genre',
           attributes: ['id_genre', 'nom', 'description']
         }],
         order: [['ordre_affichage', 'ASC']]
       });
 
       const genres = typeGenres.map(tg => ({
-        ...translateDeep(tg.Genre?.toJSON() || tg.Genre, lang),
+        ...translateDeep(tg.genre?.toJSON() || tg.genre, lang),
         ordre_affichage: tg.ordre_affichage
       }));
 
@@ -130,13 +131,14 @@ class MetadataController {
         where: { id_genre: genreId, actif: true },
         include: [{
           model: this.models.Categorie,
+          as: 'categorie',
           attributes: ['id_categorie', 'nom', 'description']
         }],
         order: [['ordre_affichage', 'ASC']]
       });
 
       const categories = genreCategories.map(gc => ({
-        ...translateDeep(gc.Categorie?.toJSON() || gc.Categorie, lang),
+        ...translateDeep(gc.categorie?.toJSON() || gc.categorie, lang),
         ordre_affichage: gc.ordre_affichage
       }));
 
@@ -157,17 +159,18 @@ class MetadataController {
       const types = await this.models.TypeOeuvre.findAll({
         include: [{
           model: this.models.TypeOeuvreGenre,
-          as: 'type_oeuvre_genres',
+          as: 'typeOeuvreGenres',
           where: { actif: true },
           required: false,
           include: [{
             model: this.models.Genre,
+            as: 'genre',
             include: [{
               model: this.models.GenreCategorie,
-              as: 'genre_categories',
+              as: 'genreCategories',
               where: { actif: true },
               required: false,
-              include: [{ model: this.models.Categorie }]
+              include: [{ model: this.models.Categorie, as: 'categorie' }]
             }]
           }]
         }],
@@ -176,22 +179,30 @@ class MetadataController {
 
       const hierarchy = types.map(type => {
         const typeJson = type.toJSON ? type.toJSON() : type;
+        const togs = typeJson.typeOeuvreGenres || typeJson.type_oeuvre_genres || [];
         return {
           id_type_oeuvre: typeJson.id_type_oeuvre,
           nom_type: translate(typeJson.nom_type, lang),
           description: translate(typeJson.description, lang),
-          genres: typeJson.type_oeuvre_genres?.map(tg => ({
-            id_genre: tg.Genre?.id_genre,
-            nom: translate(tg.Genre?.nom, lang),
-            description: translate(tg.Genre?.description, lang),
-            ordre_affichage: tg.ordre_affichage,
-            categories: tg.Genre?.genre_categories?.map(gc => ({
-              id_categorie: gc.Categorie?.id_categorie,
-              nom: translate(gc.Categorie?.nom, lang),
-              description: translate(gc.Categorie?.description, lang),
-              ordre_affichage: gc.ordre_affichage
-            })) || []
-          })) || []
+          genres: togs.map(tg => {
+            const g = tg.genre || tg.Genre;
+            const gcs = g?.genreCategories || g?.genre_categories || [];
+            return {
+              id_genre: g?.id_genre,
+              nom: translate(g?.nom, lang),
+              description: translate(g?.description, lang),
+              ordre_affichage: tg.ordre_affichage,
+              categories: gcs.map(gc => {
+                const cat = gc.categorie || gc.Categorie;
+                return {
+                  id_categorie: cat?.id_categorie,
+                  nom: translate(cat?.nom, lang),
+                  description: translate(cat?.description, lang),
+                  ordre_affichage: gc.ordre_affichage
+                };
+              })
+            };
+          })
         };
       });
 
@@ -416,6 +427,57 @@ class MetadataController {
       res.json({ success: true, data: translateDeep(types, lang), lang });
     } catch (error) {
       console.error('Erreur getTypesEvenements:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+
+  /**
+   * GET /api/metadata/types-users
+   */
+  async getTypesUsers(req, res) {
+    try {
+      const lang = req.lang || 'fr';
+      if (!this.models.TypeUser) {
+        return res.json({ success: true, data: [], lang });
+      }
+      const types = await this.models.TypeUser.findAll({ order: [['id_type_user', 'ASC']] });
+      res.json({ success: true, data: translateDeep(types, lang), lang });
+    } catch (error) {
+      console.error('Erreur getTypesUsers:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+
+  /**
+   * GET /api/metadata/types-organisations
+   */
+  async getTypesOrganisations(req, res) {
+    try {
+      const lang = req.lang || 'fr';
+      if (!this.models.TypeOrganisation) {
+        return res.json({ success: true, data: [], lang });
+      }
+      const types = await this.models.TypeOrganisation.findAll({ order: [['id_type_organisation', 'ASC']] });
+      res.json({ success: true, data: translateDeep(types, lang), lang });
+    } catch (error) {
+      console.error('Erreur getTypesOrganisations:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+
+  /**
+   * GET /api/metadata/editeurs
+   */
+  async getEditeurs(req, res) {
+    try {
+      const lang = req.lang || 'fr';
+      if (!this.models.Editeur) {
+        return res.json({ success: true, data: [], lang });
+      }
+      const editeurs = await this.models.Editeur.findAll({ order: [['nom', 'ASC']] });
+      res.json({ success: true, data: translateDeep(editeurs, lang), lang });
+    } catch (error) {
+      console.error('Erreur getEditeurs:', error);
       res.status(500).json({ success: false, error: error.message });
     }
   }

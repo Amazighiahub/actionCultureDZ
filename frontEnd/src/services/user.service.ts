@@ -109,7 +109,7 @@ class UserService extends BaseService<User> {
   }
 
   async verifyEmail(token: string): Promise<ApiResponse<void>> {
-    return httpClient.post<void>(API_ENDPOINTS.auth.verifyEmail(token));
+    return httpClient.get<void>(API_ENDPOINTS.auth.verifyEmail(token));
   }
 
   async sendVerificationEmail(): Promise<ApiResponse<void>> {

@@ -7,7 +7,6 @@ import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import {
   MessageCircle, Star, ThumbsUp, Reply, MoreVertical,
@@ -238,7 +237,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
 const EventComments: React.FC<EventCommentsProps> = ({
   comments,
   onAddComment,
-  eventId
+  eventId: _eventId
 }) => {
   const { t } = useTranslation();
   const { isAuthenticated } = useAuth();
@@ -389,7 +388,7 @@ const EventComments: React.FC<EventCommentsProps> = ({
               {t('comments.loginRequired', 'Connectez-vous pour laisser un avis')}
             </p>
             <Button asChild>
-              <a href="/Auth">{t('auth.login.submit', 'Se connecter')}</a>
+              <a href="/auth">{t('auth.login.submit', 'Se connecter')}</a>
             </Button>
           </CardContent>
         </Card>

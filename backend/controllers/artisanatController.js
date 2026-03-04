@@ -1,1042 +1,206 @@
-// controllers/ArtisanatController.js - VERSION i18n
-const { Op } = require('sequelize');
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs').promises;
+/**
+ * ArtisanatControllerV2 - Controller refactoré avec Service Pattern
+ * Architecture: Controller → Service → Repository → Database
+ */
 
-// ⚡ Import du helper i18n
-const { translate, translateDeep, createMultiLang, mergeTranslations } = require('../helpers/i18n');
+const container = require('../services/serviceContainer');
 
-// ✅ OPTIMISATION: Import de l'utilitaire de recherche multilingue centralisé
-const { buildMultiLangSearch } = require('../utils/multiLangSearchBuilder');
+const IS_DEV_MODE = process.env.NODE_ENV === 'development';
 
-class ArtisanatController {
-  constructor(models) {
-    this.models = models;
-    this.sequelize = models.sequelize || Object.values(models)[0]?.sequelize;
-    
-    this.storage = multer.diskStorage({
-      destination: async (req, file, cb) => {
-        const dir = path.join('uploads', 'artisanat', req.params.id || 'temp');
-        await fs.mkdir(dir, { recursive: true });
-        cb(null, dir);
-      },
-      filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-      }
-    });
-
-    this.upload = multer({
-      storage: this.storage,
-      limits: { fileSize: 100 * 1024 * 1024 },
-      fileFilter: (req, file, cb) => {
-        const allowedTypes = /jpeg|jpg|png|gif|mp4|mov|avi|webp/;
-        const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-        const mimetype = allowedTypes.test(file.mimetype);
-        
-        if (mimetype && extname) {
-          return cb(null, true);
-        } else {
-          cb(new Error('Type de fichier non autorisé pour l\'artisanat'));
-        }
-      }
-    });
+class ArtisanatControllerV2 {
+  get artisanatService() {
+    return container.artisanatService;
   }
 
-  // ⚡ Recherche multilingue - utilise l'utilitaire centralisé
-  buildMultiLangSearchLocal(tableName, field, search) {
-    return buildMultiLangSearch(this.sequelize, field, search, tableName);
-  }
+  // ============================================================================
+  // ROUTES PUBLIQUES
+  // ============================================================================
 
-  /**
-   * Récupérer tous les produits artisanaux
-   */
-  async getAllArtisanats(req, res) {
+  async list(req, res) {
     try {
-      const lang = req.lang || 'fr';  // ⚡
-      const { 
-        page = 1, 
-        limit = 12,
-        materiau,
-        technique,
-        wilaya,
-        prix_min,
-        prix_max,
-        disponible = true,
-        artisan,
-        search,
-        sort = 'recent'
-      } = req.query;
-
-      const offset = (page - 1) * limit;
-      const where = {};
-
-      const oeuvreWhere = {
-        statut: 'publie'
-      };
-
-      // ⚡ Recherche multilingue
-      if (search) {
-        oeuvreWhere[Op.or] = [
-          ...this.buildMultiLangSearchLocal('Oeuvre', 'titre', search),
-          ...this.buildMultiLangSearchLocal('Oeuvre', 'description', search)
-        ];
-      }
-
-      if (artisan) {
-        oeuvreWhere.saisi_par = artisan;
-      }
-
-      if (materiau) where.id_materiau = materiau;
-      if (technique) where.id_technique = technique;
-      
-      if (prix_min || prix_max) {
-        where.prix = {};
-        if (prix_min) where.prix[Op.gte] = parseFloat(prix_min);
-        if (prix_max) where.prix[Op.lte] = parseFloat(prix_max);
-      }
-
-      // Construire les inclusions de manière sécurisée
-      const oeuvreIncludes = [
-        {
-          model: this.models.User,
-          as: 'Saiseur',
-          attributes: ['id_user', 'nom', 'prenom', 'photo_url'],
-          required: false
-        },
-        {
-          model: this.models.Media,
-          attributes: ['id_media', 'url', 'type_media', 'thumbnail_url'],
-          required: false
-        }
-      ];
-
-      // Note: Langue et Catégories exclues temporairement pour éviter erreur SQL
-      // Sequelize a des problèmes avec les alias dans les sous-requêtes LIMIT
-      // Les données langue peuvent être récupérées séparément si nécessaire
-
-      // Ajouter le filtre wilaya sur User si spécifié
-      if (wilaya && this.models.Wilaya) {
-        oeuvreIncludes[0].include = [{
-          model: this.models.Wilaya,
-          as: 'Wilaya',
-          where: { id_wilaya: wilaya },
-          attributes: ['nom'],
-          required: true
-        }];
-        oeuvreIncludes[0].required = true;
-      }
-
-      const include = [
-        {
-          model: this.models.Oeuvre,
-          where: oeuvreWhere,
-          include: oeuvreIncludes,
-          required: true
-        }
-      ];
-
-      // Ajouter Materiau et Technique si les modèles existent
-      if (this.models.Materiau) {
-        include.push({
-          model: this.models.Materiau,
-          attributes: ['id_materiau', 'nom', 'description'],
-          required: false
-        });
-      }
-
-      if (this.models.Technique) {
-        include.push({
-          model: this.models.Technique,
-          attributes: ['id_technique', 'nom', 'description'],
-          required: false
-        });
-      }
-
-      let order;
-      switch (sort) {
-        case 'recent':
-          order = [[this.models.Oeuvre, 'date_creation', 'DESC']];
-          break;
-        case 'prix_asc':
-          order = [['prix', 'ASC']];
-          break;
-        case 'prix_desc':
-          order = [['prix', 'DESC']];
-          break;
-        case 'populaire':
-          order = [[
-            this.sequelize.literal(`(
-              SELECT COUNT(*) FROM favoris 
-              WHERE type_entite = 'artisanat' 
-              AND id_entite = Artisanat.id_artisanat
-            )`), 
-            'DESC'
-          ]];
-          break;
-        default:
-          order = [[this.models.Oeuvre, 'date_creation', 'DESC']];
-      }
-
-      const artisanats = await this.models.Artisanat.findAndCountAll({
-        where,
-        include,
+      const { page = 1, limit = 12, materiau, technique, prix_min, prix_max, sort } = req.query;
+      const result = await this.artisanatService.findPublished({
+        page: parseInt(page),
         limit: parseInt(limit),
-        offset: parseInt(offset),
-        order,
-        distinct: true,
-        subQuery: false  // Évite les problèmes d'alias dans les sous-requêtes
-      });
-
-      const artisanatsWithStats = await Promise.all(
-        artisanats.rows.map(async (artisanat) => {
-          const stats = await this.getArtisanatStatistics(artisanat.id_artisanat);
-          return {
-            ...artisanat.toJSON(),
-            statistiques: stats,
-            disponible: await this.checkDisponibilite(artisanat.id_artisanat)
-          };
-        })
-      );
-
-      // ⚡ Traduire
-      res.json({
-        success: true,
-        data: {
-          artisanats: translateDeep(artisanatsWithStats, lang),
-          pagination: {
-            total: artisanats.count,
-            page: parseInt(page),
-            pages: Math.ceil(artisanats.count / limit),
-            limit: parseInt(limit)
-          }
-        },
-        lang
-      });
-
-    } catch (error) {
-      console.error('Erreur lors de la récupération des artisanats:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Erreur serveur lors de la récupération des artisanats'
-      });
-    }
-  }
-
-  /**
-   * Rechercher des artisanats
-   */
-  async searchArtisanats(req, res) {
-    try {
-      const lang = req.lang || 'fr';
-      const { q, limit = 20, page = 1 } = req.query;
-      const offset = (page - 1) * limit;
-
-      if (!q || q.length < 2) {
-        return res.json({ success: true, data: [], lang });
-      }
-
-      const artisanats = await this.models.Artisanat.findAndCountAll({
-        include: [{
-          model: this.models.Oeuvre,
-          where: {
-            statut: 'publie',
-            [Op.or]: [
-              ...this.buildMultiLangSearchLocal('Oeuvre', 'titre', q),
-              ...this.buildMultiLangSearchLocal('Oeuvre', 'description', q)
-            ]
-          },
-          include: [
-            {
-              model: this.models.User,
-              as: 'Saiseur',
-              attributes: ['id_user', 'nom', 'prenom', 'photo_url'],
-              required: false
-            },
-            {
-              model: this.models.Media,
-              attributes: ['id_media', 'url', 'type_media', 'thumbnail_url'],
-              required: false
-            }
-          ]
-        }],
-        limit: parseInt(limit),
-        offset: parseInt(offset),
-        distinct: true
+        materiau: materiau ? parseInt(materiau) : null,
+        technique: technique ? parseInt(technique) : null,
+        prixMin: prix_min,
+        prixMax: prix_max,
+        sort
       });
 
       res.json({
         success: true,
-        data: translateDeep(artisanats.rows, lang),
-        pagination: {
-          total: artisanats.count,
-          page: parseInt(page),
-          pages: Math.ceil(artisanats.count / limit)
-        },
-        lang
+        data: result.data.map(a => a.toCardJSON(req.lang)),
+        pagination: result.pagination
       });
-
     } catch (error) {
-      console.error('Erreur searchArtisanats:', error);
-      res.status(500).json({ success: false, error: 'Erreur serveur' });
+      this._handleError(res, error);
     }
   }
 
-  /**
-   * Statistiques artisanat
-   */
-  async getStatistiques(req, res) {
+  async search(req, res) {
     try {
-      const lang = req.lang || 'fr';
-
-      const totalArtisanats = await this.models.Artisanat.count({
-        include: [{
-          model: this.models.Oeuvre,
-          where: { statut: 'publie' }
-        }]
-      });
-
-      const artisanatsParMateriau = await this.models.Artisanat.findAll({
-        attributes: [
-          'id_materiau',
-          [this.sequelize.fn('COUNT', '*'), 'count']
-        ],
-        include: [{
-          model: this.models.Oeuvre,
-          where: { statut: 'publie' },
-          attributes: []
-        }],
-        group: ['id_materiau']
-      });
-
-      res.json({
-        success: true,
-        data: {
-          totalArtisanats,
-          artisanatsParMateriau
-        },
-        lang
-      });
-
-    } catch (error) {
-      console.error('Erreur getStatistiques:', error);
-      res.status(500).json({ success: false, error: 'Erreur serveur' });
-    }
-  }
-
-  /**
-   * Artisans par région
-   */
-  async getArtisansByRegion(req, res) {
-    try {
-      const lang = req.lang || 'fr';
-      const { wilayaId } = req.params;
-      const { limit = 20 } = req.query;
-
-      const artisans = await this.models.User.findAll({
-        where: {
-          type_user: 'artisan',
-          wilayaId: wilayaId
-        },
-        attributes: ['id_user', 'nom', 'prenom', 'photo_url', 'biographie'],
+      const { q, page = 1, limit = 20 } = req.query;
+      const result = await this.artisanatService.search(q, {
+        page: parseInt(page),
         limit: parseInt(limit)
       });
 
       res.json({
         success: true,
-        data: translateDeep(artisans, lang),
-        lang
+        data: result.data.map(a => a.toCardJSON(req.lang)),
+        pagination: result.pagination
       });
-
     } catch (error) {
-      console.error('Erreur getArtisansByRegion:', error);
-      res.status(500).json({ success: false, error: 'Erreur serveur' });
+      this._handleError(res, error);
     }
   }
 
-  /**
-   * Récupérer un artisanat par ID
-   */
-  async getArtisanatById(req, res) {
+  async getById(req, res) {
     try {
-      const lang = req.lang || 'fr';  // ⚡
-      const { id } = req.params;
-
-      // Construire les inclusions de manière sécurisée
-      const oeuvreIncludes = [];
-
-      // Ajouter User/Saiseur si le modèle existe
-      if (this.models.User) {
-        const userInclude = {
-          model: this.models.User,
-          as: 'Saiseur',
-          attributes: ['id_user', 'nom', 'prenom', 'photo_url', 'biographie', 'wilaya_residence'],
-          required: false
-        };
-
-        // Ajouter Wilaya sur User si le modèle existe
-        if (this.models.Wilaya) {
-          userInclude.include = [{
-            model: this.models.Wilaya,
-            as: 'Wilaya',
-            attributes: ['id_wilaya', 'nom', 'codeW', 'wilaya_name_ascii'],
-            required: false
-          }];
-        }
-
-        oeuvreIncludes.push(userInclude);
-      }
-
-      // Ajouter Media si le modèle existe
-      if (this.models.Media) {
-        oeuvreIncludes.push({
-          model: this.models.Media,
-          attributes: ['id_media', 'url', 'type_media', 'thumbnail_url', 'ordre'],
-          required: false
-        });
-      }
-
-      // Ajouter TypeOeuvre si existe
-      if (this.models.TypeOeuvre) {
-        oeuvreIncludes.push({
-          model: this.models.TypeOeuvre,
-          attributes: ['id_type_oeuvre', 'nom_type'],
-          required: false
-        });
-      }
-
-      const include = [
-        {
-          model: this.models.Oeuvre,
-          include: oeuvreIncludes,
-          required: false
-        }
-      ];
-
-      // Ajouter Materiau si existe ET si l'association existe
-      try {
-        if (this.models.Materiau) {
-          include.push({
-            model: this.models.Materiau,
-            attributes: ['id_materiau', 'nom', 'description'],
-            required: false
-          });
-        }
-      } catch (e) {
-        // Materiau n'existe pas ou association non définie
-      }
-
-      // Ajouter Technique si existe ET si l'association existe
-      try {
-        if (this.models.Technique) {
-          include.push({
-            model: this.models.Technique,
-            attributes: ['id_technique', 'nom', 'description'],
-            required: false
-          });
-        }
-      } catch (e) {
-        // Technique n'existe pas ou association non définie
-      }
-
-      const artisanat = await this.models.Artisanat.findByPk(id, { include });
-
-      if (!artisanat) {
-        return res.status(404).json({
-          success: false,
-          error: 'Artisanat non trouvé'
-        });
-      }
-
-      if (!artisanat.Oeuvre) {
-        return res.status(404).json({
-          success: false,
-          error: 'Œuvre associée non trouvée'
-        });
-      }
-
-      const [stats, similaires] = await Promise.all([
-        this.getArtisanatStatistics(id),
-        this.getArtisanatsSimilaires(artisanat)
-      ]);
-
-      // Récupérer les autres créations seulement si saisi_par existe
-      const autresCreations = artisanat.Oeuvre.saisi_par
-        ? await this.getAutresCreationsArtisan(artisanat.Oeuvre.saisi_par, artisanat.id_artisanat)
-        : [];
-
-      // ⚡ Traduire
+      const artisanat = await this.artisanatService.findWithFullDetails(parseInt(req.params.id));
       res.json({
         success: true,
-        data: {
-          artisanat: translateDeep(artisanat, lang),
-          statistiques: stats,
-          similaires: translateDeep(similaires, lang),
-          autres_creations: translateDeep(autresCreations, lang)
-        },
-        lang
+        data: artisanat.toDetailJSON(req.lang)
       });
-
     } catch (error) {
-      console.error('Erreur lors de la récupération de l\'artisanat:', error);
-      console.error('Stack:', error.stack);
-      res.status(500).json({
-        success: false,
-        error: 'Erreur serveur',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
-      });
+      this._handleError(res, error);
     }
   }
 
-  // ⚡ Préparer un champ multilingue
-  prepareMultiLangField(value, lang = 'fr') {
-    if (!value) return null;
-    if (typeof value === 'object' && value !== null) return value;
-    return createMultiLang(value, lang);
+  // ============================================================================
+  // ROUTES AUTHENTIFIÉES
+  // ============================================================================
+
+  async getMyArtisanats(req, res) {
+    try {
+      const { page = 1, limit = 20 } = req.query;
+      const result = await this.artisanatService.findByArtisan(req.user.id_user, {
+        page: parseInt(page),
+        limit: parseInt(limit)
+      });
+
+      res.json({
+        success: true,
+        data: result.data.map(a => a.toCardJSON(req.lang)),
+        pagination: result.pagination
+      });
+    } catch (error) {
+      this._handleError(res, error);
+    }
   }
 
-  /**
-   * Créer un nouveau produit artisanal
-   */
-  async createArtisanat(req, res) {
-    const transaction = await this.sequelize.transaction();
-
+  async create(req, res) {
     try {
-      const lang = req.lang || 'fr';  // ⚡
-      const {
-        titre,
-        description,
-        id_type_oeuvre,
-        id_langue,
-        id_materiau,
-        id_technique,
-        dimensions,
-        poids,
-        prix,
-        annee_creation,
-        categories = [],
-        tags = []
-      } = req.body;
-
-      // Validation
-      if (!titre) {
-        await transaction.rollback();
-        return res.status(400).json({
-          success: false,
-          error: 'Le titre est obligatoire'
-        });
-      }
-
-      // ⚡ Préparer les champs multilingues
-      const titreMultiLang = this.prepareMultiLangField(titre, lang);
-      const descriptionMultiLang = this.prepareMultiLangField(description, lang);
-
-      // Créer l'œuvre de base
-      const oeuvre = await this.models.Oeuvre.create({
-        titre: titreMultiLang,
-        description: descriptionMultiLang,
-        id_type_oeuvre: id_type_oeuvre || 6, // Type artisanat par défaut
-        id_langue: id_langue || 1,
-        annee_creation,
-        saisi_par: req.user.id_user,
-        statut: 'brouillon',
-        date_creation: new Date()
-      }, { transaction });
-
-      // Créer l'artisanat
-      const artisanat = await this.models.Artisanat.create({
-        id_oeuvre: oeuvre.id_oeuvre,
-        id_materiau,
-        id_technique,
-        dimensions,
-        poids,
-        prix
-      }, { transaction });
-
-      // Associations
-      if (categories.length > 0) {
-        await oeuvre.setCategories(categories, { transaction });
-      }
-
-      if (tags.length > 0) {
-        await oeuvre.setTagMotCles(tags, { transaction });
-      }
-
-      await transaction.commit();
-
-      const artisanatComplet = await this.getArtisanatComplet(artisanat.id_artisanat);
-
-      // ⚡ Traduire
+      const artisanat = await this.artisanatService.create(req.body, req.user.id_user);
       res.status(201).json({
         success: true,
-        message: 'Produit artisanal créé avec succès',
-        data: translateDeep(artisanatComplet, lang)
+        message: 'Artisanat créé avec succès',
+        data: artisanat.toDetailJSON(req.lang)
       });
-
     } catch (error) {
-      await transaction.rollback();
-      console.error('Erreur lors de la création de l\'artisanat:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: 'Erreur serveur lors de la création' 
-      });
+      this._handleError(res, error);
     }
   }
 
-  /**
-   * Mettre à jour un artisanat
-   */
-  async updateArtisanat(req, res) {
-    const transaction = await this.sequelize.transaction();
-
+  async update(req, res) {
     try {
-      const lang = req.lang || 'fr';  // ⚡
-      const { id } = req.params;
-      const { titre, description, ...otherUpdates } = req.body;
-
-      const artisanat = await this.models.Artisanat.findByPk(id, {
-        include: [{ model: this.models.Oeuvre }]
-      });
-
-      if (!artisanat) {
-        await transaction.rollback();
-        return res.status(404).json({
-          success: false,
-          error: 'Artisanat non trouvé'
-        });
-      }
-
-      // Vérifier les permissions
-      if (artisanat.Oeuvre.saisi_par !== req.user.id_user && !req.user.isAdmin) {
-        await transaction.rollback();
-        return res.status(403).json({
-          success: false,
-          error: 'Accès refusé'
-        });
-      }
-
-      // MAJ Artisanat
-      const artisanatUpdates = {};
-      ['id_materiau', 'id_technique', 'dimensions', 'poids', 'prix'].forEach(field => {
-        if (otherUpdates[field] !== undefined) {
-          artisanatUpdates[field] = otherUpdates[field];
-        }
-      });
-
-      if (Object.keys(artisanatUpdates).length > 0) {
-        await artisanat.update(artisanatUpdates, { transaction });
-      }
-
-      // ⚡ MAJ Oeuvre avec champs multilingues
-      const oeuvreUpdates = {};
-      if (titre !== undefined) {
-        if (typeof titre === 'object') {
-          oeuvreUpdates.titre = mergeTranslations(artisanat.Oeuvre.titre, titre);
-        } else {
-          oeuvreUpdates.titre = mergeTranslations(artisanat.Oeuvre.titre, { [lang]: titre });
-        }
-      }
-
-      if (description !== undefined) {
-        if (typeof description === 'object') {
-          oeuvreUpdates.description = mergeTranslations(artisanat.Oeuvre.description, description);
-        } else {
-          oeuvreUpdates.description = mergeTranslations(artisanat.Oeuvre.description, { [lang]: description });
-        }
-      }
-
-      ['id_type_oeuvre', 'id_langue', 'annee_creation', 'statut'].forEach(field => {
-        if (otherUpdates[field] !== undefined) {
-          oeuvreUpdates[field] = otherUpdates[field];
-        }
-      });
-
-      if (Object.keys(oeuvreUpdates).length > 0) {
-        await artisanat.Oeuvre.update(oeuvreUpdates, { transaction });
-      }
-
-      await transaction.commit();
-
-      const artisanatComplet = await this.getArtisanatComplet(id);
-
-      // ⚡ Traduire
+      const artisanat = await this.artisanatService.update(parseInt(req.params.id), req.body);
       res.json({
         success: true,
-        message: 'Artisanat mis à jour avec succès',
-        data: translateDeep(artisanatComplet, lang)
+        message: 'Artisanat mis à jour',
+        data: artisanat.toDetailJSON(req.lang)
       });
-
     } catch (error) {
-      await transaction.rollback();
-      console.error('Erreur lors de la mise à jour:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: 'Erreur serveur' 
-      });
+      this._handleError(res, error);
     }
   }
 
-  /**
-   * Supprimer un artisanat
-   */
-  async deleteArtisanat(req, res) {
-    const transaction = await this.sequelize.transaction();
-
+  async delete(req, res) {
     try {
-      const { id } = req.params;
-
-      const artisanat = await this.models.Artisanat.findByPk(id, {
-        include: [{ model: this.models.Oeuvre }]
-      });
-
-      if (!artisanat) {
-        await transaction.rollback();
-        return res.status(404).json({
-          success: false,
-          error: 'Artisanat non trouvé'
-        });
-      }
-
-      // Vérifier les permissions
-      if (artisanat.Oeuvre.saisi_par !== req.user.id_user && !req.user.isAdmin) {
-        await transaction.rollback();
-        return res.status(403).json({
-          success: false,
-          error: 'Accès refusé'
-        });
-      }
-
-      // Soft delete
-      await artisanat.Oeuvre.update({ statut: 'archive' }, { transaction });
-
-      await transaction.commit();
-
-      res.json({
-        success: true,
-        message: 'Artisanat supprimé avec succès'
-      });
-
+      await this.artisanatService.delete(parseInt(req.params.id));
+      res.json({ success: true, message: 'Artisanat supprimé' });
     } catch (error) {
-      await transaction.rollback();
-      console.error('Erreur lors de la suppression:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: 'Erreur serveur' 
-      });
+      this._handleError(res, error);
     }
   }
 
-  // ⚡ Récupérer toutes les traductions d'un artisanat (admin)
-  async getArtisanatTranslations(req, res) {
+  // ============================================================================
+  // STATISTIQUES & ARTISANS PAR RÉGION
+  // ============================================================================
+
+  async getStatistics(req, res) {
     try {
-      const { id } = req.params;
-
-      const artisanat = await this.models.Artisanat.findByPk(id, {
-        include: [{
-          model: this.models.Oeuvre,
-          attributes: ['id_oeuvre', 'titre', 'description']
-        }]
-      });
-
-      if (!artisanat) {
-        return res.status(404).json({ success: false, error: 'Artisanat non trouvé' });
-      }
-
-      res.json({
-        success: true,
-        data: {
-          id_artisanat: artisanat.id_artisanat,
-          titre: artisanat.Oeuvre.titre,
-          description: artisanat.Oeuvre.description
-        }
-      });
-
+      const stats = await this.artisanatService.getStats();
+      res.json({ success: true, data: stats });
     } catch (error) {
-      console.error('Erreur:', error);
-      res.status(500).json({ success: false, error: 'Erreur serveur' });
+      this._handleError(res, error);
     }
   }
 
-  // ⚡ Mettre à jour une traduction spécifique (admin)
-  async updateArtisanatTranslation(req, res) {
+  async getArtisansByRegion(req, res) {
     try {
-      const { id, lang } = req.params;
-      const { titre, description } = req.body;
+      const { wilayaId } = req.params;
+      const models = container.models;
 
-      const artisanat = await this.models.Artisanat.findByPk(id, {
-        include: [{ model: this.models.Oeuvre }]
-      });
-
-      if (!artisanat) {
-        return res.status(404).json({ success: false, error: 'Artisanat non trouvé' });
-      }
-
-      const updates = {};
-      if (titre) updates.titre = mergeTranslations(artisanat.Oeuvre.titre, { [lang]: titre });
-      if (description) updates.description = mergeTranslations(artisanat.Oeuvre.description, { [lang]: description });
-
-      if (Object.keys(updates).length === 0) {
-        return res.status(400).json({ success: false, error: 'Aucune donnée à mettre à jour' });
-      }
-
-      await artisanat.Oeuvre.update(updates);
-      res.json({ success: true, message: `Traduction ${lang} mise à jour`, data: artisanat.Oeuvre });
-
-    } catch (error) {
-      console.error('Erreur:', error);
-      res.status(500).json({ success: false, error: 'Erreur serveur' });
-    }
-  }
-
-  /**
-   * Upload de médias pour un artisanat
-   */
-  async uploadMedias(req, res) {
-    try {
-      const lang = req.lang || 'fr';
-      const { id } = req.params;
-
-      if (!req.files || req.files.length === 0) {
-        return res.status(400).json({
-          success: false,
-          error: 'Aucun fichier fourni'
-        });
-      }
-
-      const artisanat = await this.models.Artisanat.findByPk(id, {
-        include: [{ model: this.models.Oeuvre }]
-      });
-
-      if (!artisanat) {
-        return res.status(404).json({
-          success: false,
-          error: 'Artisanat non trouvé'
-        });
-      }
-
-      const medias = [];
-      for (let i = 0; i < req.files.length; i++) {
-        const file = req.files[i];
-        const isVideo = file.mimetype.startsWith('video/');
-
-        const media = await this.models.Media.create({
-          id_oeuvre: artisanat.id_oeuvre,
-          url: `/uploads/artisanat/${id}/${file.filename}`,
-          type_media: isVideo ? 'video' : 'image',
-          ordre: i
-        });
-        medias.push(media);
-      }
-
-      res.json({
-        success: true,
-        message: `${medias.length} média(s) uploadé(s) avec succès`,
-        data: translateDeep(medias, lang)
-      });
-
-    } catch (error) {
-      console.error('Erreur uploadMedias:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Erreur serveur lors de l\'upload'
-      });
-    }
-  }
-
-  // ========================================================================
-  // MÉTHODES UTILITAIRES
-  // ========================================================================
-
-  async getArtisanatComplet(id) {
-    const oeuvreIncludes = [
-      { model: this.models.User, as: 'Saiseur', required: false },
-      { model: this.models.Media, required: false }
-    ];
-
-    // Ajouter Categorie si le modèle existe
-    if (this.models.Categorie && this.models.OeuvreCategorie) {
-      oeuvreIncludes.push({ model: this.models.Categorie, required: false });
-    }
-
-    // Ajouter TagMotCle si le modèle existe (avec alias 'Tags')
-    if (this.models.TagMotCle && this.models.OeuvreTag) {
-      oeuvreIncludes.push({ model: this.models.TagMotCle, as: 'Tags', required: false });
-    }
-
-    const include = [
-      {
-        model: this.models.Oeuvre,
-        include: oeuvreIncludes
-      }
-    ];
-
-    if (this.models.Materiau) {
-      include.push({ model: this.models.Materiau, required: false });
-    }
-    if (this.models.Technique) {
-      include.push({ model: this.models.Technique, required: false });
-    }
-
-    return await this.models.Artisanat.findByPk(id, { include });
-  }
-
-  async getArtisanatStatistics(artisanatId) {
-    try {
-      const artisanat = await this.models.Artisanat.findByPk(artisanatId);
-      if (!artisanat) {
-        return { vues: 0, favoris: 0, commentaires: 0 };
-      }
-
-      let nombreFavoris = 0;
-      let nombreCommentaires = 0;
-
-      // Compter les favoris si le modèle existe
-      if (this.models.Favori) {
-        try {
-          nombreFavoris = await this.models.Favori.count({
-            where: {
-              type_entite: 'artisanat',
-              id_entite: artisanatId
-            }
-          });
-        } catch {
-          nombreFavoris = 0;
-        }
-      }
-
-      // Compter les commentaires si le modèle existe
-      if (this.models.Commentaire && artisanat.id_oeuvre) {
-        try {
-          nombreCommentaires = await this.models.Commentaire.count({
-            where: { id_oeuvre: artisanat.id_oeuvre }
-          });
-        } catch {
-          nombreCommentaires = 0;
-        }
-      }
-
-      return {
-        vues: 0,
-        favoris: nombreFavoris,
-        commentaires: nombreCommentaires
-      };
-    } catch (error) {
-      console.error('Erreur getArtisanatStatistics:', error);
-      return { vues: 0, favoris: 0, commentaires: 0 };
-    }
-  }
-
-  async checkDisponibilite(artisanatId) {
-    return true;
-  }
-
-  async getArtisanatsSimilaires(artisanat, limit = 4) {
-    try {
-      const whereConditions = {
-        id_artisanat: { [Op.ne]: artisanat.id_artisanat }
-      };
-
-      // Ajouter les conditions de similarité si les champs existent
-      const orConditions = [];
-      if (artisanat.id_materiau) {
-        orConditions.push({ id_materiau: artisanat.id_materiau });
-      }
-      if (artisanat.id_technique) {
-        orConditions.push({ id_technique: artisanat.id_technique });
-      }
-      if (orConditions.length > 0) {
-        whereConditions[Op.or] = orConditions;
-      }
-
-      const oeuvreIncludes = [
-        {
-          model: this.models.Media,
-          attributes: ['url', 'thumbnail_url'],
-          required: false
-        },
-        {
-          model: this.models.User,
-          as: 'Saiseur',
-          attributes: ['nom', 'prenom'],
-          required: false
-        }
-      ];
-
-      const include = [
-        {
-          model: this.models.Oeuvre,
-          where: { statut: 'publie' },
-          include: oeuvreIncludes,
-          required: true
-        }
-      ];
-
-      if (this.models.Materiau) {
-        include.push({ model: this.models.Materiau, attributes: ['nom'], required: false });
-      }
-      if (this.models.Technique) {
-        include.push({ model: this.models.Technique, attributes: ['nom'], required: false });
-      }
-
-      const similaires = await this.models.Artisanat.findAll({
-        where: whereConditions,
-        include,
-        limit,
-        subQuery: false
-      });
-
-      return similaires;
-    } catch (error) {
-      console.error('Erreur getArtisanatsSimilaires:', error);
-      return [];
-    }
-  }
-
-  async getAutresCreationsArtisan(artisanId, excludeId, limit = 6) {
-    try {
-      if (!artisanId) return [];
-
-      const include = [
-        {
-          model: this.models.Oeuvre,
-          where: {
-            statut: 'publie',
-            saisi_par: artisanId
-          },
-          include: [
-            {
-              model: this.models.Media,
-              attributes: ['url', 'thumbnail_url'],
-              required: false
-            }
-          ],
-          required: true
-        }
-      ];
-
-      if (this.models.Materiau) {
-        include.push({ model: this.models.Materiau, attributes: ['nom'], required: false });
-      }
-      if (this.models.Technique) {
-        include.push({ model: this.models.Technique, attributes: ['nom'], required: false });
-      }
-
-      const creations = await this.models.Artisanat.findAll({
+      const artisans = await models.User.findAll({
         where: {
-          id_artisanat: { [Op.ne]: excludeId }
+          wilaya_residence: parseInt(wilayaId),
+          id_type_user: { [require('sequelize').Op.in]: [2, 3, 4, 5, 6, 7, 8] }
         },
-        include,
-        limit,
-        subQuery: false
+        attributes: { exclude: ['password'] },
+        include: [
+          { model: models.TypeUser, attributes: ['nom_type'], required: false },
+          { model: models.Wilaya, required: false }
+        ]
       });
 
-      return creations;
+      res.json({ success: true, data: artisans });
     } catch (error) {
-      console.error('Erreur getAutresCreationsArtisan:', error);
-      return [];
+      this._handleError(res, error);
     }
+  }
+
+  async uploadMedias(req, res) {
+    res.status(501).json({
+      success: false,
+      error: 'Upload de médias artisanat nécessite configuration du middleware multer'
+    });
+  }
+
+  // ============================================================================
+  // ADMIN
+  // ============================================================================
+
+  async getStats(req, res) {
+    try {
+      const stats = await this.artisanatService.getStats();
+      res.json({ success: true, data: stats });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  // ============================================================================
+  // HELPERS
+  // ============================================================================
+
+  _handleError(res, error) {
+    const statusCode = error.statusCode || 500;
+    const code = error.code || 'INTERNAL_ERROR';
+
+    if (IS_DEV_MODE) {
+      console.error(`❌ Error [${code}]:`, error.message);
+      if (statusCode === 500) console.error(error.stack);
+    }
+
+    const response = { success: false, error: error.message || 'Erreur serveur', code };
+    if (error.errors) response.errors = error.errors;
+    if (IS_DEV_MODE && statusCode === 500) response.stack = error.stack;
+
+    res.status(statusCode).json(response);
   }
 }
 
-module.exports = ArtisanatController;
+module.exports = new ArtisanatControllerV2();

@@ -185,9 +185,19 @@ const initProgrammeRoutes = (models) => {
   // Supprimer un programme
   router.delete('/:id',
     authMiddleware.authenticate,
-    authMiddleware.isAdmin,
+    authMiddleware.requireValidatedProfessional,
     validationMiddleware.validateId('id'),
     programmeController.deleteProgramme.bind(programmeController)
+  );
+
+  // Mettre à jour le statut d'un intervenant (confirmer/décliner)
+  router.patch('/:id/intervenant/:userId/statut',
+    authMiddleware.authenticate,
+    validationMiddleware.validateId('id'),
+    validationMiddleware.validateId('userId'),
+    programmeController.updateIntervenantStatus
+      ? programmeController.updateIntervenantStatus.bind(programmeController)
+      : (req, res) => res.status(501).json({ success: false, error: 'Mise à jour statut intervenant non implémentée' })
   );
 
   if (process.env.NODE_ENV !== 'production') {

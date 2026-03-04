@@ -310,33 +310,37 @@ class NotificationController {
     try {
       const user = await this.models.User.findByPk(req.user.id_user, {
         attributes: [
-          'notifications_actives',
           'notifications_email',
-          'notifications_sms',
-          'notification_nouveaux_evenements',
-          'notification_modifications_programme',
-          'notification_rappels'
+          'notifications_push',
+          'notifications_newsletter',
+          'notifications_commentaires',
+          'notifications_favoris',
+          'notifications_evenements'
         ]
       });
+
+      if (!user) {
+        return res.status(404).json({ success: false, error: 'Utilisateur non trouvé' });
+      }
 
       res.json({
         success: true,
         data: {
           global: {
-            actives: user.notifications_actives ?? true,
             email: user.notifications_email ?? true,
-            sms: user.notifications_sms ?? false
+            push: user.notifications_push ?? true,
+            newsletter: user.notifications_newsletter ?? true
           },
           types: {
-            nouveauxEvenements: user.notification_nouveaux_evenements ?? true,
-            modificationsProgramme: user.notification_modifications_programme ?? true,
-            rappels: user.notification_rappels ?? true
+            commentaires: user.notifications_commentaires ?? true,
+            favoris: user.notifications_favoris ?? true,
+            evenements: user.notifications_evenements ?? true
           }
         }
       });
 
     } catch (error) {
-      console.error('Erreur:', error);
+      console.error('Erreur getPreferences:', error);
       res.status(500).json({ 
         success: false, 
         error: 'Erreur serveur' 
@@ -352,20 +356,20 @@ class NotificationController {
       const updates = {};
       
       if (global) {
-        if (typeof global.actives === 'boolean') updates.notifications_actives = global.actives;
         if (typeof global.email === 'boolean') updates.notifications_email = global.email;
-        if (typeof global.sms === 'boolean') updates.notifications_sms = global.sms;
+        if (typeof global.push === 'boolean') updates.notifications_push = global.push;
+        if (typeof global.newsletter === 'boolean') updates.notifications_newsletter = global.newsletter;
       }
       
       if (types) {
-        if (typeof types.nouveauxEvenements === 'boolean') {
-          updates.notification_nouveaux_evenements = types.nouveauxEvenements;
+        if (typeof types.commentaires === 'boolean') {
+          updates.notifications_commentaires = types.commentaires;
         }
-        if (typeof types.modificationsProgramme === 'boolean') {
-          updates.notification_modifications_programme = types.modificationsProgramme;
+        if (typeof types.favoris === 'boolean') {
+          updates.notifications_favoris = types.favoris;
         }
-        if (typeof types.rappels === 'boolean') {
-          updates.notification_rappels = types.rappels;
+        if (typeof types.evenements === 'boolean') {
+          updates.notifications_evenements = types.evenements;
         }
       }
 
@@ -384,6 +388,91 @@ class NotificationController {
         success: false, 
         error: 'Erreur serveur' 
       });
+    }
+  }
+
+  // Envoyer une notification à un utilisateur spécifique (admin/organisateur)
+  async sendNotification(req, res) {
+    try {
+      const { titre, message, type_notification, destinataire_id, url_action, priorite, metadata } = req.body;
+
+      if (!titre || !message || !destinataire_id) {
+        return res.status(400).json({
+          success: false,
+          error: 'titre, message et destinataire_id sont requis'
+        });
+      }
+
+      // Vérifier que le destinataire existe
+      const destinataire = await this.models.User.findByPk(destinataire_id);
+      if (!destinataire) {
+        return res.status(404).json({ success: false, error: 'Destinataire non trouvé' });
+      }
+
+      const notification = await this.models.Notification.create({
+        id_user: destinataire_id,
+        type_notification: type_notification || 'message_admin',
+        titre,
+        message,
+        url_action: url_action || null,
+        priorite: priorite || 'normale',
+        metadata: metadata || null,
+        lu: false,
+        email_envoye: false
+      });
+
+      res.status(201).json({
+        success: true,
+        message: 'Notification envoyée',
+        data: { notification }
+      });
+
+    } catch (error) {
+      console.error('Erreur sendNotification:', error);
+      res.status(500).json({ success: false, error: 'Erreur serveur' });
+    }
+  }
+
+  // Envoyer une notification broadcast à tous les utilisateurs actifs
+  async broadcastNotification(req, res) {
+    try {
+      const { titre, message, type_notification, priorite, metadata } = req.body;
+
+      if (!titre || !message) {
+        return res.status(400).json({
+          success: false,
+          error: 'titre et message sont requis'
+        });
+      }
+
+      // Récupérer tous les utilisateurs actifs
+      const users = await this.models.User.findAll({
+        where: { statut: 'actif' },
+        attributes: ['id_user']
+      });
+
+      const notifications = users.map(user => ({
+        id_user: user.id_user,
+        type_notification: type_notification || 'message_admin',
+        titre,
+        message,
+        priorite: priorite || 'normale',
+        metadata: metadata || null,
+        lu: false,
+        email_envoye: false
+      }));
+
+      await this.models.Notification.bulkCreate(notifications);
+
+      res.status(201).json({
+        success: true,
+        message: `Notification envoyée à ${users.length} utilisateurs`,
+        data: { sent_count: users.length }
+      });
+
+    } catch (error) {
+      console.error('Erreur broadcastNotification:', error);
+      res.status(500).json({ success: false, error: 'Erreur serveur' });
     }
   }
 }

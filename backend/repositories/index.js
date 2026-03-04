@@ -6,6 +6,11 @@
 const BaseRepository = require('./baseRepository');
 const UserRepository = require('./userRepository');
 const OeuvreRepository = require('./oeuvreRepository');
+const EvenementRepository = require('./evenementRepository');
+const PatrimoineRepository = require('./patrimoineRepository');
+const ArtisanatRepository = require('./artisanatRepository');
+const ServiceRepository = require('./serviceRepository');
+const ParcoursRepository = require('./parcoursRepository');
 
 /**
  * Factory pour créer tous les repositories
@@ -15,10 +20,12 @@ function createRepositories(models) {
   return {
     user: new UserRepository(models),
     oeuvre: new OeuvreRepository(models),
-    // Repositories de base pour les autres modèles
-    evenement: models.Evenement ? new BaseRepository(models.Evenement) : null,
-    patrimoine: models.Patrimoine ? new BaseRepository(models.Patrimoine) : null,
-    artisanat: models.Artisanat ? new BaseRepository(models.Artisanat) : null,
+    evenement: models.Evenement ? new EvenementRepository(models) : null,
+    patrimoine: models.Lieu ? new PatrimoineRepository(models) : null,
+    artisanat: models.Artisanat ? new ArtisanatRepository(models) : null,
+    service: models.Service ? new ServiceRepository(models) : null,
+    parcours: models.Parcours ? new ParcoursRepository(models) : null,
+    // Repositories de base pour les modèles utilitaires
     lieu: models.Lieu ? new BaseRepository(models.Lieu) : null,
     categorie: models.Categorie ? new BaseRepository(models.Categorie) : null,
     commentaire: models.Commentaire ? new BaseRepository(models.Commentaire) : null,
@@ -31,5 +38,10 @@ module.exports = {
   createRepositories,
   BaseRepository,
   UserRepository,
-  OeuvreRepository
+  OeuvreRepository,
+  EvenementRepository,
+  PatrimoineRepository,
+  ArtisanatRepository,
+  ServiceRepository,
+  ParcoursRepository
 };

@@ -20,7 +20,7 @@ class CreateOeuvreDTO extends BaseDTO {
     this.idLangue = BaseDTO.toInt(data.id_langue || data.idLangue);
 
     // Créateur (sera défini par le contrôleur)
-    this.idCreateur = BaseDTO.toInt(data.id_createur || data.idCreateur);
+    this.idCreateur = BaseDTO.toInt(data.saisi_par || data.id_createur || data.idCreateur);
 
     // Détails optionnels
     this.anneeCreation = data.annee_creation || data.anneeCreation
@@ -91,7 +91,7 @@ class CreateOeuvreDTO extends BaseDTO {
     // Créateur obligatoire
     if (!this.idCreateur || this.idCreateur <= 0) {
       errors.push({
-        field: 'id_createur',
+        field: 'saisi_par',
         message: 'Le créateur est obligatoire'
       });
     }
@@ -148,7 +148,7 @@ class CreateOeuvreDTO extends BaseDTO {
       titre: this.titre,
       description: this.description,
       id_type_oeuvre: this.idTypeOeuvre,
-      id_createur: this.idCreateur,
+      saisi_par: this.idCreateur,
       statut: 'brouillon' // Les nouvelles œuvres commencent en brouillon
     };
 

@@ -25,7 +25,7 @@ class OeuvreDTO extends BaseDTO {
     this.langue = data.Langue ? this._mapLangue(data.Langue) : null;
 
     // Créateur
-    this.idCreateur = BaseDTO.toInt(data.id_createur || data.idCreateur);
+    this.idCreateur = BaseDTO.toInt(data.saisi_par || data.id_createur || data.idCreateur);
     this.createur = data.Createur ? this._mapCreateur(data.Createur) : null;
 
     // Détails
@@ -71,7 +71,9 @@ class OeuvreDTO extends BaseDTO {
     if (!entity) return null;
 
     const data = entity.get ? entity.get({ plain: true }) : entity;
-    return new OeuvreDTO(data);
+    const dto = new OeuvreDTO(data);
+    dto._raw = data;
+    return dto;
   }
 
   /**
@@ -101,62 +103,49 @@ class OeuvreDTO extends BaseDTO {
   /**
    * Version pour les cartes/aperçus
    */
+  toJSON(lang = 'fr') {
+    const result = BaseDTO.translateRaw(this._raw, lang);
+    return OeuvreDTO._addComputedFields(result);
+  }
   toCardJSON(lang = 'fr') {
-    return {
-      id: this.id,
-      titre: BaseDTO.extractMultilang(this.titre, lang),
-      description: BaseDTO.extractMultilang(this.description, lang)?.substring(0, 150),
-      imageUrl: this.imageUrl || this.coverUrl,
-      typeOeuvre: this.typeOeuvre?.nom,
-      createur: this.createur ? {
-        id: this.createur.id,
-        nomComplet: `${this.createur.prenom} ${this.createur.nom}`
-      } : null,
-      anneeCreation: this.anneeCreation,
-      nbVues: this.nbVues,
-      noteMoyenne: this.noteMoyenne
-    };
+    const result = BaseDTO.translateRaw(this._raw, lang);
+    return OeuvreDTO._addComputedFields(result);
   }
 
   /**
    * Version détaillée complète
    */
   toDetailJSON(lang = 'fr') {
-    return {
-      ...this.toJSON(lang),
-      categories: this.categories.map(c => ({
-        id: c.id,
-        nom: BaseDTO.extractMultilang(c.nom, lang)
-      })),
-      medias: this.medias,
-      tags: this.tags.map(t => ({
-        id: t.id,
-        nom: BaseDTO.extractMultilang(t.nom, lang)
-      })),
-      intervenants: this.intervenants.map(i => ({
-        id: i.id,
-        nom: i.nom,
-        prenom: i.prenom,
-        role: i.role,
-        contribution: i.contribution
-      }))
-    };
+    const result = BaseDTO.translateRaw(this._raw, lang);
+    return OeuvreDTO._addComputedFields(result);
   }
 
   /**
    * Version admin avec toutes les infos
    */
   toAdminJSON(lang = 'fr') {
-    return {
-      ...this.toDetailJSON(lang),
-      dateValidation: this.dateValidation,
-      datePublication: this.datePublication,
-      nbTelechargements: this.nbTelechargements,
-      nbFavoris: this.nbFavoris,
-      // Garder les données multilingues complètes
-      titreMultilang: this.titre,
-      descriptionMultilang: this.description
-    };
+    const result = BaseDTO.translateRaw(this._raw, lang);
+    return OeuvreDTO._addComputedFields(result);
+  }
+
+  /**
+   * Ajoute les champs calculés attendus par le frontend
+   */
+  static _addComputedFields(data) {
+    if (!data) return data;
+    // image_url / image_principale depuis Media[]
+    if (Array.isArray(data.Media) && data.Media.length > 0) {
+      const principal = data.Media.find(m => m.is_Principale) || data.Media[0];
+      if (!data.image_url) data.image_url = principal.url;
+      if (!data.image_principale) data.image_principale = principal.url;
+    }
+    // Intervenants flat array depuis OeuvreIntervenants join table
+    if (Array.isArray(data.OeuvreIntervenants) && !data.Intervenants) {
+      data.Intervenants = data.OeuvreIntervenants
+        .filter(oi => oi.Intervenant)
+        .map(oi => ({ ...oi.Intervenant, OeuvreIntervenant: oi, TypeUser: oi.TypeUser }));
+    }
+    return data;
   }
 
   // ============================================================================

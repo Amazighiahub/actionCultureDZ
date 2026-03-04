@@ -35,12 +35,12 @@ class DashboardUserManagementService {
       ];
     }
 
-    if (type_user) where.type_user = type_user;
+    if (type_user) where.id_type_user = type_user;
     if (statut) where.statut_validation = statut;
 
     const { rows: users, count } = await this.models.User.findAndCountAll({
       where,
-      attributes: { exclude: ['mot_de_passe', 'refresh_token'] },
+      attributes: { exclude: ['password', 'refresh_token'] },
       order: [[sortBy, sortOrder]],
       limit,
       offset
@@ -62,7 +62,7 @@ class DashboardUserManagementService {
    */
   async getUserDetails(userId) {
     const user = await this.models.User.findByPk(userId, {
-      attributes: { exclude: ['mot_de_passe', 'refresh_token'] },
+      attributes: { exclude: ['password', 'refresh_token'] },
       include: [
         {
           model: this.models.Role,
@@ -100,13 +100,13 @@ class DashboardUserManagementService {
 
     if (this.models.Oeuvre) {
       stats.oeuvres = await this.models.Oeuvre.count({
-        where: { id_createur: userId }
+        where: { saisi_par: userId }
       });
     }
 
     if (this.models.Evenement) {
       stats.evenements = await this.models.Evenement.count({
-        where: { id_organisateur: userId }
+        where: { id_user: userId }
       });
     }
 
@@ -130,8 +130,8 @@ class DashboardUserManagementService {
 
     // Filtrer les champs modifiables
     const allowedFields = [
-      'nom', 'prenom', 'email', 'telephone', 'type_user',
-      'entreprise', 'biographie', 'statut_validation', 'est_actif'
+      'nom', 'prenom', 'email', 'telephone', 'id_type_user',
+      'entreprise', 'biographie', 'statut_validation', 'statut'
     ];
 
     const updateData = {};
@@ -142,7 +142,6 @@ class DashboardUserManagementService {
     }
 
     updateData.date_modification = new Date();
-    updateData.modifie_par = adminId;
 
     await user.update(updateData);
     return user;
@@ -166,10 +165,7 @@ class DashboardUserManagementService {
     } else {
       // Soft delete
       await user.update({
-        est_actif: false,
-        date_suppression: new Date(),
-        supprime_par: adminId,
-        motif_suppression: reason
+        statut: 'inactif'
       });
       return { deleted: true, type: 'soft' };
     }
@@ -185,10 +181,7 @@ class DashboardUserManagementService {
     }
 
     await user.update({
-      est_actif: true,
-      est_suspendu: false,
-      date_reactivation: new Date(),
-      reactive_par: adminId
+      statut: 'actif'
     });
 
     return user;
@@ -240,8 +233,7 @@ class DashboardUserManagementService {
     const hashedPassword = await bcrypt.hash(tempPassword, 12);
 
     await user.update({
-      mot_de_passe: hashedPassword,
-      doit_changer_mdp: true,
+      password: hashedPassword,
       date_modification: new Date()
     });
 
@@ -272,7 +264,7 @@ class DashboardUserManagementService {
             break;
           case 'validate':
             await this.models.User.update(
-              { statut_validation: 'valide', valide_par: adminId },
+              { statut_validation: 'valide', id_user_validate: adminId, date_validation: new Date() },
               { where: { id_user: userId } }
             );
             break;
@@ -295,7 +287,7 @@ class DashboardUserManagementService {
     const { format = 'json', filters = {} } = options;
 
     const where = {};
-    if (filters.type_user) where.type_user = filters.type_user;
+    if (filters.type_user) where.id_type_user = filters.type_user;
     if (filters.statut) where.statut_validation = filters.statut;
     if (filters.dateFrom) {
       where.date_creation = { [Op.gte]: new Date(filters.dateFrom) };
@@ -303,7 +295,7 @@ class DashboardUserManagementService {
 
     const users = await this.models.User.findAll({
       where,
-      attributes: { exclude: ['mot_de_passe', 'refresh_token'] },
+      attributes: { exclude: ['password', 'refresh_token'] },
       raw: true
     });
 

@@ -9,11 +9,12 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ChevronLeft, Calendar, Image, MessageCircle, Users, Info } from 'lucide-react';
+import { ChevronLeft, Calendar, Image, MessageCircle, Users, Info, MapPin } from 'lucide-react';
 
 // Composants partagés
 import { LoadingSkeleton } from '@/components/shared';
 import ErrorBoundary from '@/components/shared/ErrorBoundary';
+import SEOHead, { buildEvenementJsonLd, buildBreadcrumbJsonLd } from '@/components/SEOHead';
 
 // Hook personnalisé
 import { useEventDetails } from '@/hooks/useEventDetails';
@@ -27,6 +28,7 @@ const EventComments = React.lazy(() => import('./event/EventComments'));
 const EventOrganizers = React.lazy(() => import('./event/EventOrganizers'));
 const EventRegistration = React.lazy(() => import('./event/EventRegistration'));
 const RelatedEvents = React.lazy(() => import('./event/RelatedEvents'));
+const ServicesProximite = React.lazy(() => import('@/components/shared/ServicesProximite'));
 
 // Fallback
 const SectionFallback: React.FC = () => (
@@ -59,7 +61,7 @@ const EventDetailsPage: React.FC = () => {
 
   // Retour si pas d'ID
   if (!id) {
-    navigate('/Evenements');
+    navigate('/evenements');
     return null;
   }
 
@@ -86,7 +88,7 @@ const EventDetailsPage: React.FC = () => {
         <main className="container py-8">
           <div className="text-center py-12">
             <h2 className="text-2xl font-bold mb-4">{t('event.notFound', 'Événement non trouvé')}</h2>
-            <Button onClick={() => navigate('/Evenements')}>
+            <Button onClick={() => navigate('/evenements')}>
               {t('event.backToList', 'Retour aux événements')}
             </Button>
           </div>
@@ -96,8 +98,28 @@ const EventDetailsPage: React.FC = () => {
     );
   }
 
+  const seoKeywords = [
+    event.nom_evenement || event.titre, event.TypeEvenement?.nom,
+    event.Lieu?.nom, 'événement culturel', 'culture algérienne', 'Algérie'
+  ].filter(Boolean) as string[];
+
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead
+        title={event.nom_evenement || event.titre}
+        description={event.description?.substring(0, 160) || `Événement culturel en Algérie`}
+        image={event.image_url || event.couverture_url}
+        type="event"
+        keywords={seoKeywords}
+        jsonLd={[
+          buildEvenementJsonLd(event),
+          buildBreadcrumbJsonLd([
+            { name: 'Accueil', url: '/' },
+            { name: 'Événements', url: '/evenements' },
+            { name: event.nom_evenement || event.titre || '', url: `/evenements/${event.id_evenement}` },
+          ]),
+        ]}
+      />
       <Header />
 
       <main>
@@ -143,6 +165,12 @@ const EventDetailsPage: React.FC = () => {
                     <MessageCircle className="h-4 w-4" />
                     {t('event.tabs.comments', 'Avis')} ({comments?.length || 0})
                   </TabsTrigger>
+                  {event.Lieu?.id_lieu && (
+                    <TabsTrigger value="services" className="gap-2">
+                      <MapPin className="h-4 w-4" />
+                      {t('event.tabs.services', 'Services')}
+                    </TabsTrigger>
+                  )}
                 </TabsList>
 
                 <TabsContent value="info" className="mt-6">
@@ -180,6 +208,21 @@ const EventDetailsPage: React.FC = () => {
                     </Suspense>
                   </ErrorBoundary>
                 </TabsContent>
+
+                {event.Lieu?.id_lieu && (
+                  <TabsContent value="services" className="mt-6">
+                    <ErrorBoundary>
+                      <Suspense fallback={<SectionFallback />}>
+                        <ServicesProximite
+                          lieuId={event.Lieu.id_lieu}
+                          lieuName={event.Lieu.nom || ''}
+                          variant="full"
+                          showTitle={true}
+                        />
+                      </Suspense>
+                    </ErrorBoundary>
+                  </TabsContent>
+                )}
               </Tabs>
             </div>
 

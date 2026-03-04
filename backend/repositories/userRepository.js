@@ -40,8 +40,7 @@ class UserRepository extends BaseRepository {
       ...options,
       where: {
         ...options.where,
-        est_actif: true,
-        est_suspendu: false
+        statut: 'actif'
       }
     });
   }
@@ -54,7 +53,7 @@ class UserRepository extends BaseRepository {
       ...options,
       where: {
         ...options.where,
-        type_user: typeUser
+        id_type_user: typeUser
       }
     });
   }
@@ -63,18 +62,14 @@ class UserRepository extends BaseRepository {
    * Trouve les professionnels validés
    */
   async findValidatedProfessionals(options = {}) {
-    const professionalTypes = [
-      'ecrivain', 'journaliste', 'scientifique', 'acteur',
-      'artiste', 'artisan', 'realisateur', 'musicien',
-      'photographe', 'danseur', 'sculpteur'
-    ];
+    const professionalTypeIds = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28];
 
     return this.findAll({
       ...options,
       where: {
-        type_user: { [Op.in]: professionalTypes },
+        id_type_user: { [Op.in]: professionalTypeIds },
         statut_validation: 'valide',
-        est_actif: true
+        statut: 'actif'
       }
     });
   }
@@ -154,7 +149,7 @@ class UserRepository extends BaseRepository {
     return this.update(userId, {
       statut_validation: 'valide',
       date_validation: new Date(),
-      valide_par: validatorId
+      id_user_validate: validatorId
     });
   }
 
@@ -163,10 +158,10 @@ class UserRepository extends BaseRepository {
    */
   async reject(userId, validatorId, motif) {
     return this.update(userId, {
-      statut_validation: 'refuse',
+      statut_validation: 'rejete',
       date_validation: new Date(),
-      valide_par: validatorId,
-      motif_refus: motif
+      id_user_validate: validatorId,
+      raison_rejet: motif
     });
   }
 
@@ -175,11 +170,7 @@ class UserRepository extends BaseRepository {
    */
   async suspend(userId, adminId, duree, motif) {
     return this.update(userId, {
-      est_suspendu: true,
-      date_suspension: new Date(),
-      duree_suspension: duree,
-      motif_suspension: motif,
-      suspendu_par: adminId
+      statut: 'suspendu'
     });
   }
 
@@ -188,10 +179,7 @@ class UserRepository extends BaseRepository {
    */
   async reactivate(userId, adminId) {
     return this.update(userId, {
-      est_actif: true,
-      est_suspendu: false,
-      date_reactivation: new Date(),
-      reactive_par: adminId
+      statut: 'actif'
     });
   }
 
@@ -208,14 +196,14 @@ class UserRepository extends BaseRepository {
     ] = await Promise.all([
       this.count(),
       this.count({ statut_validation: 'en_attente' }),
-      this.count({ est_actif: true, est_suspendu: false }),
-      this.count({ est_suspendu: true }),
+      this.count({ statut: 'actif' }),
+      this.count({ statut: 'suspendu' }),
       this.model.findAll({
         attributes: [
-          'type_user',
+          'id_type_user',
           [this.model.sequelize.fn('COUNT', this.model.sequelize.col('id_user')), 'count']
         ],
-        group: ['type_user'],
+        group: ['id_type_user'],
         raw: true
       })
     ]);
@@ -226,7 +214,7 @@ class UserRepository extends BaseRepository {
       active: activeCount,
       suspended: suspendedCount,
       byType: byType.reduce((acc, item) => {
-        acc[item.type_user] = parseInt(item.count);
+        acc[item.id_type_user] = parseInt(item.count);
         return acc;
       }, {})
     };

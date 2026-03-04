@@ -177,7 +177,7 @@ const PatrimoineDynamique: React.FC<PatrimoineDynamiqueProps> = ({ wilayasCache 
       </div>
 
       <div className="text-center">
-        <Button size="lg" variant="outline" onClick={() => navigate('/Patrimoine')} className="group">
+        <Button size="lg" variant="outline" onClick={() => navigate('/patrimoine')} className="group">
           {t('sections.heritage.seeAll')}
           <ArrowRight className={`h-4 w-4 ${rtlClasses.marginStart(2)} group-hover:translate-x-1 transition-transform`} />
         </Button>

@@ -62,8 +62,8 @@ class OeuvreService extends BaseService {
       throw this._notFoundError(id);
     }
 
-    // Incrémenter les vues
-    await this.repository.incrementViews(id);
+    // Incrémenter les vues (non-bloquant)
+    try { await this.repository.incrementViews(id); } catch (e) { /* colonne nb_vues peut ne pas exister */ }
 
     return OeuvreDTO.fromEntity(oeuvre);
   }
@@ -203,7 +203,8 @@ class OeuvreService extends BaseService {
     }
 
     // 2. Vérifier les permissions
-    if (existingOeuvre.id_createur !== userId) {
+    const ownerId = existingOeuvre.saisi_par ?? existingOeuvre.id_createur;
+    if (ownerId !== userId) {
       // Vérifier si l'utilisateur est admin
       const user = await this.models?.User?.findByPk(userId);
       if (!user || user.type_user !== 'admin') {
@@ -264,7 +265,8 @@ class OeuvreService extends BaseService {
     }
 
     // 2. Vérifier les permissions
-    if (oeuvre.id_createur !== userId) {
+    const ownerId = oeuvre.saisi_par ?? oeuvre.id_createur;
+    if (ownerId !== userId) {
       const user = await this.models?.User?.findByPk(userId);
       if (!user || user.type_user !== 'admin') {
         throw this._forbiddenError('Vous ne pouvez pas supprimer cette œuvre');
@@ -304,7 +306,8 @@ class OeuvreService extends BaseService {
       throw this._notFoundError(id);
     }
 
-    if (oeuvre.id_createur !== userId) {
+    const ownerId = oeuvre.saisi_par ?? oeuvre.id_createur;
+    if (ownerId !== userId) {
       throw this._forbiddenError('Vous ne pouvez pas soumettre cette œuvre');
     }
 
@@ -396,6 +399,13 @@ class OeuvreService extends BaseService {
    * Récupère les statistiques des œuvres
    */
   async getStats() {
+    return this.repository.getStats();
+  }
+
+  /**
+   * Statistiques publiques des œuvres
+   */
+  async getPublicStats() {
     return this.repository.getStats();
   }
 

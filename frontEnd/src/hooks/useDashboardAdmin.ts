@@ -94,6 +94,10 @@ export const useDashboardAdmin = () => {
     loadPendingOeuvres();
     loadModerationQueue();
     loadAlerts();
+    loadOeuvres();
+    loadEvenements();
+    loadPatrimoineItems();
+    loadServices();
   }, []);
 
   // ========================================
@@ -119,9 +123,9 @@ export const useDashboardAdmin = () => {
     }
   };
 
-  const loadStats = async () => {
+  const loadStats = async (period: 'day' | 'week' | 'month' | 'year' = selectedPeriod) => {
     try {
-      const response = await adminService.getStats(selectedPeriod);
+      const response = await adminService.getStats(period);
       if (response.success && response.data) {
         setStats(response.data);
       }
@@ -701,14 +705,18 @@ const deleteService = async (serviceId: number) => {
       loadPendingUsers(),
       loadPendingOeuvres(),
       loadModerationQueue(),
-      loadAlerts()
+      loadAlerts(),
+      loadOeuvres(),
+      loadEvenements(),
+      loadPatrimoineItems(),
+      loadServices()
     ]);
     setLoading(false);
   };
 
   const changePeriod = async (period: 'day' | 'week' | 'month' | 'year') => {
     setSelectedPeriod(period);
-    await loadStats();
+    await loadStats(period);
   };
 
   const exportReport = async (type: string) => {

@@ -165,13 +165,13 @@ module.exports = (sequelize) => {
   };
 
   Notification.supprimerAnciennes = async function(joursRetention = 90) {
-    const datelimite = new Date();
+    const dateLimit = new Date();
     dateLimit.setDate(dateLimit.getDate() - joursRetention);
     
     return await this.destroy({
       where: {
         date_creation: {
-          [sequelize.Op.lt]: dateLimit
+          [Op.lt]: dateLimit
         },
         lu: true
       }

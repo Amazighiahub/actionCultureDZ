@@ -882,14 +882,18 @@ class LieuController {
     try {
       const { nom, latitude, longitude, typePatrimoine } = req.body;
       const lang = req.lang || 'fr';
+      const normalizedNom = typeof nom === 'string' ? nom.trim() : '';
+      const parsedLatitude = Number(latitude);
+      const parsedLongitude = Number(longitude);
+      const hasValidCoords = Number.isFinite(parsedLatitude) && Number.isFinite(parsedLongitude);
 
       // Tolérance de 100 mètres (environ 0.001 degré)
       const tolerance = 0.001;
 
       // Condition de base pour les coordonnées
-      const coordsCondition = latitude && longitude ? {
-        latitude: { [Op.between]: [latitude - tolerance, latitude + tolerance] },
-        longitude: { [Op.between]: [longitude - tolerance, longitude + tolerance] }
+      const coordsCondition = hasValidCoords ? {
+        latitude: { [Op.between]: [parsedLatitude - tolerance, parsedLatitude + tolerance] },
+        longitude: { [Op.between]: [parsedLongitude - tolerance, parsedLongitude + tolerance] }
       } : {};
 
       // Condition pour le type de patrimoine (si spécifié)
@@ -912,28 +916,44 @@ class LieuController {
 
       // Rechercher par nom similaire (priorité aux patrimoines)
       let lieuByName = null;
-      if (nom && nom.length >= 3) {
-        lieuByName = await this.models.Lieu.findOne({
-          where: {
-            ...typeCondition,
-            [Op.or]: [
-              this.sequelize.where(
-                this.sequelize.fn('JSON_EXTRACT', this.sequelize.col('nom'), '$.fr'),
-                { [Op.like]: `%${nom}%` }
-              ),
-              this.sequelize.where(
-                this.sequelize.fn('JSON_EXTRACT', this.sequelize.col('nom'), '$.ar'),
-                { [Op.like]: `%${nom}%` }
-              )
-            ]
-          },
-          include: commonIncludes
-        });
+      if (normalizedNom.length >= 3) {
+        try {
+          lieuByName = await this.models.Lieu.findOne({
+            where: {
+              ...typeCondition,
+              [Op.or]: [
+                this.sequelize.where(
+                  this.sequelize.fn('JSON_EXTRACT', this.sequelize.col('nom'), '$.fr'),
+                  { [Op.like]: `%${normalizedNom}%` }
+                ),
+                this.sequelize.where(
+                  this.sequelize.fn('JSON_EXTRACT', this.sequelize.col('nom'), '$.ar'),
+                  { [Op.like]: `%${normalizedNom}%` }
+                ),
+                this.sequelize.where(
+                  this.sequelize.fn('JSON_EXTRACT', this.sequelize.col('nom'), '$.en'),
+                  { [Op.like]: `%${normalizedNom}%` }
+                )
+              ]
+            },
+            include: commonIncludes
+          });
+        } catch (nameSearchError) {
+          // Fallback tolérant si certaines lignes JSON sont invalides en base
+          console.warn('Fallback checkDuplicate nom (JSON_EXTRACT indisponible):', nameSearchError.message);
+          lieuByName = await this.models.Lieu.findOne({
+            where: {
+              ...typeCondition,
+              nom: { [Op.like]: `%${normalizedNom}%` }
+            },
+            include: commonIncludes
+          });
+        }
       }
 
       // Rechercher par coordonnées proches
       let lieuByCoords = null;
-      if (latitude && longitude) {
+      if (hasValidCoords) {
         lieuByCoords = await this.models.Lieu.findOne({
           where: {
             ...coordsCondition,

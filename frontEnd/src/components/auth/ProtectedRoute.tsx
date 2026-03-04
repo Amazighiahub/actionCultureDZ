@@ -22,7 +22,7 @@ export function ProtectedRoute({
   requireAdmin = false,
   requireProfessional = false,
   requireValidated = true,
-  redirectTo = '/Auth'
+  redirectTo = '/auth'
 }: ProtectedRouteProps) {
   const location = useLocation();
   const { isAuthenticated, loading } = useAuth();
@@ -67,7 +67,7 @@ export function ProtectedRoute({
               <Button onClick={() => window.history.back()} variant="outline" className="flex-1">{t("auth_protectedroute.retour_1")}
 
               </Button>
-              <Button onClick={() => window.location.href = '/Auth'} className="flex-1">{t("auth_protectedroute.sinscrire_comme_pro")}
+              <Button onClick={() => window.location.href = '/auth'} className="flex-1">{t("auth_protectedroute.sinscrire_comme_pro")}
 
               </Button>
             </div>

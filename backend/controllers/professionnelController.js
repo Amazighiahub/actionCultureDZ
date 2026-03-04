@@ -57,7 +57,7 @@ class ProfessionnelController {
       const professionnels = await this.models.User.findAndCountAll({
         where,
         include,
-        attributes: { exclude: ['mot_de_passe', 'reset_token'] },
+        attributes: { exclude: ['password', 'reset_token'] },
         limit: parseInt(limit),
         offset,
         order: [[this.sequelize.literal(`JSON_EXTRACT(\`User\`.\`nom\`, '$.${lang}')`), 'ASC']]
@@ -107,7 +107,7 @@ class ProfessionnelController {
             limit: 5
           }
         ],
-        attributes: { exclude: ['mot_de_passe', 'reset_token'] }
+        attributes: { exclude: ['password', 'reset_token'] }
       });
 
       if (!professionnel) {
@@ -137,7 +137,7 @@ class ProfessionnelController {
           { model: this.models.TypeUser },
           { model: this.models.Wilaya }
         ],
-        attributes: { exclude: ['mot_de_passe', 'reset_token'] }
+        attributes: { exclude: ['password', 'reset_token'] }
       });
 
       // ⚡ Traduire
@@ -195,7 +195,7 @@ class ProfessionnelController {
 
       const userUpdated = await this.models.User.findByPk(req.user.id_user, {
         include: [{ model: this.models.TypeUser }],
-        attributes: { exclude: ['mot_de_passe', 'reset_token'] }
+        attributes: { exclude: ['password', 'reset_token'] }
       });
 
       // ⚡ Traduire
@@ -259,14 +259,14 @@ class ProfessionnelController {
       const { page = 1, limit = 20, statut } = req.query;
       const offset = (page - 1) * limit;
 
-      const where = { id_organisateur: req.user.id_user };
+      const where = { id_user: req.user.id_user };
       if (statut) where.statut = statut;
 
       const evenements = await this.models.Evenement.findAndCountAll({
         where,
         include: [
-          { model: this.models.TypeEvenement },
-          { model: this.models.Lieu }
+          { model: this.models.TypeEvenement, as: 'TypeEvenement', required: false },
+          { model: this.models.Lieu, as: 'Lieu', required: false }
         ],
         limit: parseInt(limit),
         offset,
@@ -281,7 +281,7 @@ class ProfessionnelController {
           pagination: {
             total: evenements.count,
             page: parseInt(page),
-            pages: Math.ceil(evenements.count / limit)
+            pages: Math.ceil(evenements.count / parseInt(limit))
           }
         },
         lang
@@ -306,11 +306,11 @@ class ProfessionnelController {
         evenementsActifs
       ] = await Promise.all([
         this.models.Oeuvre.count({ where: { saisi_par: userId } }),
-        this.models.Evenement.count({ where: { id_organisateur: userId } }),
+        this.models.Evenement.count({ where: { id_user: userId } }),
         this.models.Oeuvre.count({ where: { saisi_par: userId, statut: 'publie' } }),
         this.models.Evenement.count({ 
           where: { 
-            id_organisateur: userId,
+            id_user: userId,
             date_fin: { [Op.gte]: new Date() }
           }
         })
@@ -412,13 +412,13 @@ class ProfessionnelController {
         0, // artisanatsEnVente - pas de statut direct sur Artisanat
         this.models.Oeuvre.findAll({
           where: { saisi_par: userId },
-          include: [{ model: this.models.TypeOeuvre, attributes: ['nom'] }],
+          include: [{ model: this.models.TypeOeuvre, attributes: ['nom_type'], required: false }],
           limit: 5,
           order: [['date_creation', 'DESC']]
         }),
         this.models.Evenement.findAll({
           where: { id_user: userId },
-          include: [{ model: this.models.TypeEvenement, attributes: ['nom'] }],
+          include: [{ model: this.models.TypeEvenement, as: 'TypeEvenement', attributes: ['nom_type'], required: false }],
           limit: 5,
           order: [['date_creation', 'DESC']]
         })
@@ -476,7 +476,7 @@ class ProfessionnelController {
       const oeuvres = await this.models.Oeuvre.findAndCountAll({
         where,
         include: [
-          { model: this.models.TypeOeuvre, attributes: ['id_type_oeuvre', 'nom'] },
+          { model: this.models.TypeOeuvre, attributes: ['id_type_oeuvre', 'nom_type'], required: false },
           { model: this.models.Media, limit: 1, required: false }
         ],
         limit: parseInt(limit),
@@ -667,11 +667,12 @@ class ProfessionnelController {
         return res.status(404).json({ success: false, error: 'Événement non trouvé' });
       }
 
-      // Compter les participants
+      // Compter les participants via EvenementUser
+      const EvenementUser = this.models.EvenementUser;
       const [inscrits, confirmes, presents] = await Promise.all([
-        this.models.Participation ? this.models.Participation.count({ where: { id_evenement: id } }) : 0,
-        this.models.Participation ? this.models.Participation.count({ where: { id_evenement: id, statut: 'confirme' } }) : 0,
-        this.models.Participation ? this.models.Participation.count({ where: { id_evenement: id, present: true } }) : 0
+        EvenementUser ? EvenementUser.count({ where: { id_evenement: id } }) : 0,
+        EvenementUser ? EvenementUser.count({ where: { id_evenement: id, statut_participation: 'confirme' } }) : 0,
+        EvenementUser ? EvenementUser.count({ where: { id_evenement: id, statut_participation: 'present' } }) : 0
       ]);
 
       res.json({
@@ -680,7 +681,7 @@ class ProfessionnelController {
           inscrits,
           confirmes,
           presents,
-          places_restantes: evenement.capacite ? evenement.capacite - inscrits : null
+          places_restantes: evenement.capacite_max ? evenement.capacite_max - inscrits : null
         }
       });
 
@@ -880,7 +881,11 @@ class ProfessionnelController {
         case 'artisanats':
           if (this.models.Artisanat) {
             data = await this.models.Artisanat.findAll({
-              where: { id_user: userId },
+              include: [{
+                model: this.models.Oeuvre,
+                where: { saisi_par: userId },
+                required: true
+              }],
               raw: true
             });
           }

@@ -1,12 +1,11 @@
 # ============================================
-# Docker Compose - EventCulture
+# Docker Compose - EventCulture (DEVELOPPEMENT)
 # ============================================
-# Usage:
-#   Development: docker-compose up -d
-#   Production:  docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# ATTENTION : Ce fichier est pour le DEVELOPPEMENT LOCAL uniquement.
+# Pour la PRODUCTION, utiliser : docker-compose.prod.yml
+#
+# Usage dev : docker compose up -d
 # ============================================
-
-version: '3.8'
 
 services:
   # ==========================================
@@ -80,12 +79,12 @@ services:
     container_name: eventculture-mysql
     restart: unless-stopped
     ports:
-      - "3306:3306"
+      - "127.0.0.1:3306:3306"   # localhost uniquement (pas accessible depuis l'exterieur)
     environment:
-      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-root}
       - MYSQL_DATABASE=${DB_NAME:-actionculture}
       - MYSQL_USER=${DB_USER:-actionculture_user}
-      - MYSQL_PASSWORD=${DB_PASSWORD}
+      - MYSQL_PASSWORD=${DB_PASSWORD:-root}
     volumes:
       - mysql_data:/var/lib/mysql
       - ./backend/database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
@@ -107,7 +106,7 @@ services:
     container_name: eventculture-redis
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"   # localhost uniquement (pas accessible depuis l'exterieur)
     volumes:
       - redis_data:/data
     networks:

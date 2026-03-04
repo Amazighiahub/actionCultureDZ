@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -57,6 +57,9 @@ const INITIAL_FORM: FormData = {
 const AjouterArtisanat: React.FC = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const isEditMode = !!id;
+  const editId = id ? parseInt(id) : null;
   const currentLang = i18n.language;
 
   // States
@@ -77,6 +80,43 @@ const AjouterArtisanat: React.FC = () => {
   useEffect(() => {
     loadMetadata();
   }, []);
+
+  // Charger les données existantes en mode édition
+  useEffect(() => {
+    if (isEditMode && editId) {
+      loadExistingArtisanat();
+    }
+  }, [isEditMode, editId]);
+
+  const loadExistingArtisanat = async () => {
+    if (!editId) return;
+    try {
+      const response = await artisanatService.getById(editId);
+      if (response.success && response.data) {
+        const art = response.data as any;
+        const toObj = (v: any) => typeof v === 'object' && v !== null ? { fr: v.fr || '', ar: v.ar || '', en: v.en || '' } : { fr: v || '', ar: '', en: '' };
+        setFormData({
+          nom: toObj(art.nom),
+          description: toObj(art.description),
+          id_materiau: art.id_materiau || 0,
+          id_technique: art.id_technique || 0,
+          prix_min: art.prix_min,
+          prix_max: art.prix_max,
+          delai_fabrication: art.delai_fabrication,
+          sur_commande: art.sur_commande || false,
+          en_stock: art.en_stock,
+          tags: art.tags?.map((t: any) => t.nom || t) || [],
+        });
+        console.log('✅ Artisanat chargé pour édition:', art);
+      } else {
+        setError('Artisanat introuvable');
+        navigate('/dashboard-pro');
+      }
+    } catch (err: any) {
+      console.error('❌ Erreur chargement artisanat:', err);
+      setError('Impossible de charger l\'artisanat');
+    }
+  };
 
   const loadMetadata = async () => {
     try {
@@ -175,12 +215,19 @@ const AjouterArtisanat: React.FC = () => {
         tags: formData.tags
       };
 
-      const response = await artisanatService.create(createData);
+      let response;
+      if (isEditMode && editId) {
+        console.log('📝 Mise à jour artisanat', editId);
+        response = await artisanatService.update(editId, createData);
+      } else {
+        response = await artisanatService.create(createData);
+      }
 
-      if (response.success && response.data) {
-        // Upload medias if any
-        if (medias.length > 0) {
-          await artisanatService.uploadMedias(response.data.id, medias);
+      if (response.success) {
+        // Upload medias if any (only for new items or new medias)
+        const itemId = (response.data as any)?.id || editId;
+        if (medias.length > 0 && itemId) {
+          await artisanatService.uploadMedias(itemId, medias);
         }
 
         setSuccess(true);
@@ -188,7 +235,7 @@ const AjouterArtisanat: React.FC = () => {
           navigate('/dashboard-pro');
         }, 2000);
       } else {
-        setError(response.error || t('ajouterArtisanat.errors.createFailed', 'Erreur lors de la création'));
+        setError(response.error || (isEditMode ? 'Erreur lors de la mise à jour' : t('ajouterArtisanat.errors.createFailed', 'Erreur lors de la création')));
       }
     } catch (err: any) {
       console.error('Erreur creation artisanat:', err);

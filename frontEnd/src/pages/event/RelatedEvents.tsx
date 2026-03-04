@@ -6,19 +6,18 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
   Calendar, MapPin, Users, ArrowRight, ChevronRight,
   Sparkles, Loader2
 } from 'lucide-react';
-import { LazyImage, StatusBadge, EmptyState } from '@/components/shared';
+import { LazyImage, StatusBadge } from '@/components/shared';
 import { evenementService } from '@/services/evenement.service';
 import { useLocalizedDate } from '@/hooks/useLocalizedDate';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { useTranslateData } from '@/hooks/useTranslateData';
-import { cn } from '@/lib/Utils';
 import type { Evenement } from '@/types/models/evenement.types';
 
 interface RelatedEventsProps {
@@ -36,9 +35,8 @@ interface EventMiniCardProps {
 
 const EventMiniCard: React.FC<EventMiniCardProps> = ({ event, onClick }) => {
   const { t } = useTranslation();
-  const { formatDate } = useLocalizedDate();
   const { formatPrice } = useLocalizedNumber();
-  const { td, safe } = useTranslateData();
+  const { td } = useTranslateData();
 
   return (
     <Card 
@@ -221,7 +219,7 @@ const RelatedEvents: React.FC<RelatedEventsProps> = ({
   const navigate = useNavigate();
 
   // Charger les événements similaires
-  const { data: relatedEvents, isLoading, error } = useQuery({
+  const { data: relatedEvents, isLoading } = useQuery({
     queryKey: ['related-events', eventId, typeEvenementId, wilayaId],
     queryFn: async () => {
       // Rechercher des événements similaires
@@ -254,7 +252,7 @@ const RelatedEvents: React.FC<RelatedEventsProps> = ({
 
   // Voir tous les événements
   const handleViewAll = () => {
-    navigate('/Evenements');
+    navigate('/evenements');
   };
 
   // Chargement

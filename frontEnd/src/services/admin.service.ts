@@ -202,7 +202,7 @@ class AdminService {
   }
 
   async getOeuvres(params?: OeuvreFilters): Promise<ApiResponse<PaginatedResponse<any>>> {
-    return httpClient.getPaginated<any>('/admin/Oeuvres', params);
+    return httpClient.getPaginated<any>(API_ENDPOINTS.dashboard.oeuvres.list, params);
   }
 
   async getOeuvreDetails(oeuvreId: number): Promise<ApiResponse<any>> {
@@ -219,7 +219,7 @@ class AdminService {
 
   // Événements
   async getEvenements(params?: EvenementFilters): Promise<ApiResponse<PaginatedResponse<any>>> {
-    return httpClient.getPaginated<any>('/admin/Evenements', params);
+    return httpClient.getPaginated<any>(API_ENDPOINTS.dashboard.evenements.list, params);
   }
 
   async getEvenementDetails(evenementId: number): Promise<ApiResponse<any>> {
@@ -236,7 +236,7 @@ class AdminService {
 
   // Patrimoine
   async getPatrimoineItems(params?: PatrimoineFilters): Promise<ApiResponse<PaginatedResponse<any>>> {
-    return httpClient.getPaginated<any>('/admin/Patrimoine', params);
+    return httpClient.getPaginated<any>('/admin/patrimoine', params);
   }
 
   async updatePatrimoine(patrimoineId: number, data: Partial<any>): Promise<ApiResponse<any>> {
@@ -249,7 +249,7 @@ class AdminService {
 
   // Services
   async getServices(params?: ServiceFilters): Promise<ApiResponse<PaginatedResponse<any>>> {
-    return httpClient.getPaginated<any>('/admin/services', params);
+    return httpClient.getPaginated<any>(API_ENDPOINTS.dashboard.services.bulkAction, params);
   }
 
   async getServiceDetails(serviceId: number): Promise<ApiResponse<any>> {
@@ -352,10 +352,14 @@ class AdminService {
     return httpClient.getPaginated<ModerationItem>(API_ENDPOINTS.dashboard.moderationQueue, params);
   }
 
-  async moderateSignalement(signalementId: number, action: 'approve' | 'reject' | 'warn', comment?: string): Promise<ApiResponse<void>> {
-    return httpClient.post<void>(API_ENDPOINTS.dashboard.moderateSignalement(signalementId), {
+  async moderateSignalement(
+    signalementId: number,
+    action: 'aucune' | 'avertissement' | 'suppression_contenu' | 'suspension_temporaire' | 'suspension_permanente',
+    notes?: string
+  ): Promise<ApiResponse<void>> {
+    return httpClient.patch<void>(API_ENDPOINTS.dashboard.moderateSignalement(signalementId), {
       action,
-      comment
+      notes
     });
   }
 

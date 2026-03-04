@@ -1,11 +1,81 @@
 // services/NotificationService.js - Orchestrateur des notifications
 const emailService = require('./emailService');
+const smsService = require('./smsService');
+const whatsappService = require('./whatsappService');
 const { Op } = require('sequelize');
 
 class NotificationService {
   constructor(models) {
     this.models = models;
     this.emailService = emailService;
+    this.smsService = smsService;
+    this.whatsappService = whatsappService;
+  }
+
+  // Helper: extraire une string i18n
+  _str(val) {
+    if (!val) return '';
+    if (typeof val === 'object') return val.fr || val.ar || val.en || '';
+    return val;
+  }
+
+  /**
+   * Envoie SMS + WhatsApp à un utilisateur si le téléphone est disponible
+   * @param {object} user - Objet utilisateur avec telephone
+   * @param {string} type - Type de notification ('validation', 'annulation', 'programme', 'rappel', 'nouvel_evenement')
+   * @param {object} params - Paramètres spécifiques au type
+   */
+  async _envoyerSmsWhatsapp(user, type, params) {
+    if (!user.telephone) return;
+
+    const prenom = this._str(user.prenom);
+    const baseParams = { telephone: user.telephone, prenom, ...params };
+
+    try {
+      // SMS
+      switch (type) {
+        case 'validation':
+          await this.smsService.sendSubmissionValidation(baseParams);
+          break;
+        case 'annulation':
+          await this.smsService.sendEventCancellation(baseParams);
+          break;
+        case 'rappel':
+          await this.smsService.sendEventReminder(baseParams);
+          break;
+        case 'inscription':
+          await this.smsService.sendEventRegistrationConfirmation(baseParams);
+          break;
+      }
+    } catch (err) {
+      console.error(`⚠️ Erreur SMS (${type}):`, err.message);
+    }
+
+    try {
+      // WhatsApp
+      switch (type) {
+        case 'validation':
+          await this.whatsappService.sendParticipationValidation(baseParams);
+          break;
+        case 'annulation':
+          await this.whatsappService.sendEventCancellation(baseParams);
+          break;
+        case 'programme':
+          await this.whatsappService.sendProgrammeModification(baseParams);
+          break;
+        case 'rappel':
+          await this.whatsappService.sendEventReminder(baseParams);
+          break;
+        case 'inscription':
+          await this.whatsappService.sendEventRegistrationConfirmation(baseParams);
+          break;
+        case 'nouvel_evenement':
+          await this.whatsappService.sendNewEvent(baseParams);
+          break;
+      }
+    } catch (err) {
+      console.error(`⚠️ Erreur WhatsApp (${type}):`, err.message);
+    }
   }
 
   // ========================================================================
@@ -20,7 +90,7 @@ class NotificationService {
       // Récupérer les informations nécessaires
       const [professionnel, evenement] = await Promise.all([
         this.models.User.findByPk(userId, {
-          attributes: ['id_user', 'nom', 'prenom', 'email', 'type_user']
+          attributes: ['id_user', 'nom', 'prenom', 'email', 'telephone', 'type_user']
         }),
         this.models.Evenement.findByPk(evenementId, {
           include: [
@@ -41,6 +111,13 @@ class NotificationService {
         statut,
         notes
       );
+
+      // SMS + WhatsApp
+      await this._envoyerSmsWhatsapp(professionnel, 'validation', {
+        nomEvenement: this._str(evenement.nom_evenement),
+        statut,
+        notes
+      });
 
       // Enregistrer la notification dans la base
       await this.enregistrerNotification({
@@ -89,7 +166,8 @@ async envoyerRappelEvenement(evenementId) {
       },
       include: [{
         model: this.models.User,
-        where: { notification_rappels: true } // Respecter les préférences
+        as: 'User',
+        where: { notifications_evenements: true }
       }]
     });
 
@@ -99,6 +177,13 @@ async envoyerRappelEvenement(evenementId) {
         `🔔 Rappel : ${evenement.nom_evenement} demain !`,
         `Rappel : L'événement "${evenement.nom_evenement}" aura lieu demain à ${dateEvenement.toLocaleTimeString()}.`
       );
+
+      // SMS + WhatsApp
+      await this._envoyerSmsWhatsapp(participant.User, 'rappel', {
+        nomEvenement: this._str(evenement.nom_evenement),
+        dateEvenement: dateEvenement.toLocaleDateString('fr-FR'),
+        heureDebut: dateEvenement.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+      });
 
       await this.enregistrerNotification({
         id_user: participant.id_user,
@@ -119,12 +204,12 @@ async notifierNouveauCommentaire(commentaireId) {
     const commentaire = await this.models.Commentaire.findByPk(commentaireId, {
       include: [
         { model: this.models.User, as: 'Auteur' },
-        { model: this.models.Oeuvre, include: [{ model: this.models.User, as: 'Createurs' }] }
+        { model: this.models.Oeuvre, include: [{ model: this.models.User, as: 'Users' }] }
       ]
     });
 
     // Notifier le créateur de l'œuvre
-    for (const createur of commentaire.Oeuvre.Createurs) {
+    for (const createur of (commentaire.Oeuvre.Users || [])) {
       if (createur.id_user !== commentaire.id_user && createur.notifications_commentaires) {
         await this.enregistrerNotification({
           id_user: createur.id_user,
@@ -154,31 +239,44 @@ async notifierNouvelleOeuvre(oeuvreId) {
   try {
     const oeuvre = await this.models.Oeuvre.findByPk(oeuvreId, {
       include: [
-        { model: this.models.User, as: 'Createurs' },
+        { model: this.models.User, as: 'Users' },
         { model: this.models.TypeOeuvre }
       ]
     });
 
-    // Pour chaque créateur de l'œuvre
-    for (const createur of oeuvre.Createurs) {
-      // Trouver les followers (si vous avez un système de suivi)
-      const followers = await this.models.UserFollow.findAll({
-        where: { id_user_suivi: createur.id_user },
-        include: [{
-          model: this.models.User,
-          as: 'Follower',
-          where: { notification_nouveaux_contenus: true }
-        }]
-      });
+    if (!oeuvre) return;
 
-      for (const follow of followers) {
-        await this.enregistrerNotification({
-          id_user: follow.id_user_follower,
-          type_notification: 'nouvelle_oeuvre',
-          titre: 'Nouvelle œuvre',
-          message: `${createur.prenom} ${createur.nom} a publié "${oeuvre.titre}"`,
-          id_oeuvre: oeuvreId
-        });
+    const titreStr = typeof oeuvre.titre === 'object' ? (oeuvre.titre.fr || oeuvre.titre.ar || '') : (oeuvre.titre || '');
+
+    // Notifier les utilisateurs qui ont mis en favori des œuvres de ces créateurs
+    for (const createur of (oeuvre.Users || [])) {
+      const prenomStr = typeof createur.prenom === 'object' ? (createur.prenom.fr || '') : (createur.prenom || '');
+      const nomStr = typeof createur.nom === 'object' ? (createur.nom.fr || '') : (createur.nom || '');
+
+      // Trouver les utilisateurs qui ont des favoris du même créateur
+      const favorisUtilisateurs = await this.models.Favori.findAll({
+        where: { type_favori: 'oeuvre' },
+        include: [{
+          model: this.models.Oeuvre,
+          where: {},
+          include: [{ model: this.models.User, as: 'Users', where: { id_user: createur.id_user } }]
+        }],
+        attributes: ['id_user'],
+        group: ['id_user']
+      }).catch(() => []);
+
+      const userIds = [...new Set(favorisUtilisateurs.map(f => f.id_user))];
+
+      for (const userId of userIds) {
+        if (userId !== createur.id_user) {
+          await this.enregistrerNotification({
+            id_user: userId,
+            type_notification: 'nouvelle_oeuvre',
+            titre: 'Nouvelle œuvre',
+            message: `${prenomStr} ${nomStr} a publié "${titreStr}"`,
+            id_oeuvre: oeuvreId
+          });
+        }
       }
     }
   } catch (error) {
@@ -220,22 +318,27 @@ async notifierFavoriAjoute(favoriId) {
   try {
     const favori = await this.models.Favori.findByPk(favoriId, {
       include: [
-        { model: this.models.User, as: 'Utilisateur' },
+        { model: this.models.User },
         { 
           model: this.models.Oeuvre, 
-          include: [{ model: this.models.User, as: 'Createurs' }] 
+          include: [{ model: this.models.User, as: 'Users' }] 
         }
       ]
     });
 
+    if (!favori || !favori.Oeuvre) return;
+
+    const titreStr = typeof favori.Oeuvre.titre === 'object' ? (favori.Oeuvre.titre.fr || '') : (favori.Oeuvre.titre || '');
+
     // Notifier les créateurs
-    for (const createur of favori.Oeuvre.Createurs) {
+    for (const createur of (favori.Oeuvre.Users || [])) {
       if (createur.notifications_favoris) {
+        const prenomFavori = typeof favori.User?.prenom === 'object' ? (favori.User.prenom.fr || '') : (favori.User?.prenom || '');
         await this.enregistrerNotification({
           id_user: createur.id_user,
-          type_notification: 'nouveau_favori',
+          type_notification: 'autre',
           titre: 'Œuvre ajoutée aux favoris',
-          message: `${favori.Utilisateur.prenom} a ajouté "${favori.Oeuvre.titre}" à ses favoris`,
+          message: `${prenomFavori} a ajouté "${titreStr}" à ses favoris`,
           id_oeuvre: favori.id_oeuvre
         });
       }
@@ -346,7 +449,8 @@ async envoyerNewsletter(contenu, filtres = {}) {
         include: [
           {
             model: this.models.User,
-            attributes: ['id_user', 'nom', 'prenom', 'email']
+            as: 'User',
+            attributes: ['id_user', 'nom', 'prenom', 'email', 'telephone']
           }
         ]
       });
@@ -362,6 +466,14 @@ async envoyerNewsletter(contenu, filtres = {}) {
         evenement,
         raison
       );
+
+      // SMS + WhatsApp pour chaque participant
+      for (const participant of participants) {
+        await this._envoyerSmsWhatsapp(participant.User, 'annulation', {
+          nomEvenement: this._str(evenement.nom_evenement),
+          raison
+        });
+      }
 
       // Enregistrer les notifications
       const notifications = [];
@@ -429,7 +541,8 @@ async envoyerNewsletter(contenu, filtres = {}) {
         include: [
           {
             model: this.models.User,
-            attributes: ['id_user', 'nom', 'prenom', 'email']
+            as: 'User',
+            attributes: ['id_user', 'nom', 'prenom', 'email', 'telephone']
           }
         ]
       });
@@ -446,6 +559,15 @@ async envoyerNewsletter(contenu, filtres = {}) {
         programme,
         typeModification
       );
+
+      // SMS + WhatsApp pour chaque participant
+      for (const participant of participants) {
+        await this._envoyerSmsWhatsapp(participant.User, 'programme', {
+          nomEvenement: this._str(programme.Evenement.nom_evenement),
+          titreProgramme: this._str(programme.titre),
+          typeModification
+        });
+      }
 
       // Enregistrer les notifications
       const notifications = participants.map(participant => ({
@@ -508,19 +630,19 @@ async envoyerNewsletter(contenu, filtres = {}) {
 
       // Construire la requête pour les utilisateurs à notifier
       const whereClause = {
-        statut_compte: 'actif',
-        notifications_actives: true // Si vous avez ce champ
+        statut: 'actif',
+        notifications_evenements: true
       };
 
       // Filtrer par wilaya si l'événement a un lieu
       if (filtres.wilayaProximite && evenement.Lieu?.id_wilaya) {
-        whereClause.id_wilaya = evenement.Lieu.id_wilaya;
+        whereClause.wilaya_residence = evenement.Lieu.id_wilaya;
       }
 
       // Récupérer les utilisateurs à notifier
       const users = await this.models.User.findAll({
         where: whereClause,
-        attributes: ['id_user', 'email', 'nom', 'prenom'],
+        attributes: ['id_user', 'email', 'nom', 'prenom', 'telephone'],
         limit: filtres.limit || 100 // Limiter pour éviter trop d'envois
       });
 
@@ -529,8 +651,20 @@ async envoyerNewsletter(contenu, filtres = {}) {
         return { success: true, notified: 0 };
       }
 
-      // Envoyer les notifications
+      // Envoyer les emails
       const results = await this.emailService.notifierNouvelEvenement(users, evenement);
+
+      // SMS + WhatsApp pour chaque utilisateur
+      const nomEvt = this._str(evenement.nom_evenement);
+      const dateEvt = evenement.date_debut ? new Date(evenement.date_debut).toLocaleDateString('fr-FR') : '';
+      const lieuEvt = evenement.Lieu ? this._str(evenement.Lieu.nom) : '';
+      for (const user of users) {
+        await this._envoyerSmsWhatsapp(user, 'nouvel_evenement', {
+          nomEvenement: nomEvt,
+          dateEvenement: dateEvt,
+          lieu: lieuEvt
+        });
+      }
 
       // Enregistrer les notifications
       const notifications = users.map(user => ({
@@ -670,18 +804,22 @@ async envoyerNewsletter(contenu, filtres = {}) {
   async getPreferencesNotification(userId) {
     try {
       const user = await this.models.User.findByPk(userId, {
-        attributes: ['notifications_actives', 'notifications_email', 'notifications_sms']
+        attributes: ['notifications_email', 'notifications_push', 'notifications_evenements', 'notifications_commentaires', 'notifications_favoris', 'notifications_newsletter']
       });
 
       return {
-        actives: user?.notifications_actives ?? true,
+        actives: true,
         email: user?.notifications_email ?? true,
-        sms: user?.notifications_sms ?? false
+        push: user?.notifications_push ?? true,
+        evenements: user?.notifications_evenements ?? true,
+        commentaires: user?.notifications_commentaires ?? true,
+        favoris: user?.notifications_favoris ?? true,
+        newsletter: user?.notifications_newsletter ?? true
       };
 
     } catch (error) {
       console.error('❌ Erreur récupération préférences:', error);
-      return { actives: true, email: true, sms: false };
+      return { actives: true, email: true, push: true, evenements: true, commentaires: true, favoris: true, newsletter: true };
     }
   }
 }

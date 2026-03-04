@@ -18,18 +18,14 @@ const initFavoriRoutes = require('./favoriRoutes');
 const initDashboardRoutes = require('./dashboardRoutes');
 const initProfessionnelRoutes = require('./professionnelRoutes');
 const initProgrammeRoutes = require('./programmeRoutes');
-const initParcoursIntelligentRoutes = require('./parcoursIntelligentRoutes');
+const initParcoursIntelligentRoutes = require('./parcoursRoutes');
 const initNotificationRoutes = require('./notificationRoutes');
 const initIntervenantRoutes = require('./intervenantRoutes');
-const initServiceRoutes = require('./servicesRoutes');
+const initServiceRoutes = require('./serviceRoutes');
 const initSignalementRoutes  = require('./signalementRoutes')
 const initTrackingRoutes = require('./trackingRoutes');
 const initEmailVerificationRoutes = require('./emailVerificationRoutes');
-// CORRECTION: Les routes admin sont dans le dossier admin/
-const initAdminOeuvresRoutes = require('./admin/adminOeuvresRoutes');
-const initAdminEvenementsRoutes = require('./admin/adminEvenementsRoutes');
-const initAdminPatrimoineRoutes = require('./admin/adminPatrimoineRoutes');
-const initAdminServicesRoutes = require('./admin/adminServicesRoutes');
+// Routes admin toutes intégrées dans les controllers v2
 const initArticleBlockRoutes = require('./articleBlockRoutes');
 const initOrganisationRoutes = require('./organisationRoutes');
 // ========================================================================
@@ -477,10 +473,10 @@ const initRoutes = (models, authMiddleware) => {
   signalements: typeof initSignalementRoutes === 'function' ? '✅ Chargé' : '❌ Non chargé',
         emailVerification: typeof initEmailVerificationRoutes === 'function' ? '✅ Chargé' : '❌ Non chargé',
         // Routes admin
-        'admin/oeuvres': typeof initAdminOeuvresRoutes === 'function' ? '✅ Chargé' : '❌ Non chargé',
-        'admin/evenements': typeof initAdminEvenementsRoutes === 'function' ? '✅ Chargé' : '❌ Non chargé',
-        'admin/patrimoine': typeof initAdminPatrimoineRoutes === 'function' ? '✅ Chargé' : '❌ Non chargé',
-        'admin/services': typeof initAdminServicesRoutes === 'function' ? '✅ Chargé' : '❌ Non chargé'
+        'admin/oeuvres': '✅ Intégré dans routes v2',
+        'admin/evenements': '✅ Intégré dans routes v2',
+        'admin/patrimoine': '✅ Intégré dans routes v2',
+        'admin/services': '✅ Intégré dans routes v2'
       },
       
       middlewares: {
@@ -527,21 +523,22 @@ const initRoutes = (models, authMiddleware) => {
     { path: '/oeuvres', init: initOeuvreRoutes, args: [models, authMiddleware] },
     { path: '/article-blocks', init: initArticleBlockRoutes, args: [models, authMiddleware] },
     { path: '/services', init: initServiceRoutes, args: [models, authMiddleware] },
+    // Note: les routes v2 incluent déjà les endpoints admin intégrés
     
     // Routes qui nécessitent tous les middlewares
     { path: '/organisations', init: initOrganisationRoutes, args: [models, authMiddleware] },
-    { path: '/evenements', init: initEvenementRoutes, args: [models, middlewares] },
+    { path: '/evenements', init: initEvenementRoutes, args: [models, authMiddleware] },
     { path: '/intervenants', init: initIntervenantRoutes, args: [models, authMiddleware] },
     
     // Autres routes
     { path: '/lieux', init: initLieuRoutes, args: [models] },
-    { path: '/patrimoine', init: initPatrimoineRoutes, args: [models] },
-    { path: '/artisanat', init: initArtisanatRoutes, args: [models] },
+    { path: '/patrimoine', init: initPatrimoineRoutes, args: [models, authMiddleware] },
+    { path: '/artisanat', init: initArtisanatRoutes, args: [models, authMiddleware] },
     { path: '/commentaires', init: initCommentaireRoutes, args: [models, { auth: authMiddleware.authenticate, optionalAuth: authMiddleware.optionalAuth }] },
     { path: '/favoris', init: initFavoriRoutes, args: [models] },
     
     { path: '/notifications', init: initNotificationRoutes, args: [models] },
-    { path: '/parcours', init: initParcoursIntelligentRoutes, args: [models] },
+    { path: '/parcours', init: initParcoursIntelligentRoutes, args: [models, authMiddleware] },
     { path: '/programmes', init: initProgrammeRoutes, args: [models] },
     { path: '/professionnel', init: initProfessionnelRoutes, args: [models] },
     { path: '/dashboard', init: initDashboardRoutes, args: [models] },
@@ -552,10 +549,7 @@ const initRoutes = (models, authMiddleware) => {
     // ========================================================================
     // ROUTES ADMIN - AJOUT
     // ========================================================================
-    { path: '/admin/oeuvres', init: initAdminOeuvresRoutes, args: [models] },
-    { path: '/admin/evenements', init: initAdminEvenementsRoutes, args: [models] },
-    { path: '/admin/patrimoine', init: initAdminPatrimoineRoutes, args: [models] },
-    { path: '/admin/services', init: initAdminServicesRoutes, args: [models] }
+    // Admin oeuvres, evenements, patrimoine, services tous intégrés dans les routes v2
   ];
 
   let successCount = 0;
@@ -595,7 +589,7 @@ const initRoutes = (models, authMiddleware) => {
   // 404 pour les routes non trouvées
   router.use('*', (req, res) => {
     // Ignorer certaines routes automatiques
-    const ignoredPaths = ['/favicon.ico', '/robots.txt', '/.well-known'];
+    const ignoredPaths = ['/favicon.ico', '/.well-known'];
     if (ignoredPaths.some(path => req.originalUrl.includes(path))) {
       return res.status(404).end();
     }

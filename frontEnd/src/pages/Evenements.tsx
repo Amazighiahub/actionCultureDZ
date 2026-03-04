@@ -33,6 +33,7 @@ import {
   StatusBadge 
 } from '@/components/shared';
 import ErrorBoundary from '@/components/shared/ErrorBoundary';
+import SEOHead from '@/components/SEOHead';
 
 // Hook personnalisé
 import { useEvenements } from '@/hooks/useEvenements';
@@ -219,6 +220,12 @@ const Evenements: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead
+        title={t('events.title', 'Événements culturels')}
+        description={t('events.subtitle', 'Découvrez les événements culturels à travers l\'Algérie — festivals, concerts, expositions, conférences.')}
+        type="website"
+        keywords={['événements culturels', 'festival Algérie', 'concerts Algérie', 'expositions', 'culture algérienne', 'agenda culturel']}
+      />
       <Header />
 
       <main className="container py-8">

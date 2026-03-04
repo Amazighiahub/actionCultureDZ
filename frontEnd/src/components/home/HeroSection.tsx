@@ -32,22 +32,26 @@ const HeroSection: React.FC = () => {
   const [publicStats, setPublicStats] = useState<PublicStats | null>(null);
   const [statsLoading, setStatsLoading] = useState(true);
 
-  // Images locales du patrimoine algérien
+  // Images locales du patrimoine algérien (WebP optimisé + fallback JPEG)
   const heroImages = [
     {
-      url: '/images/hero/timgad.jpg',
+      url: '/images/hero/timgad.webp',
+      fallback: '/images/hero/timgad.jpg',
       title: 'Timgad',
     },
     {
-      url: '/images/hero/sahara.jpg',
+      url: '/images/hero/sahara.webp',
+      fallback: '/images/hero/sahara.jpg',
       title: 'Sahara Algérien',
     },
     {
-      url: '/images/hero/casbah-alger.jpg',
+      url: '/images/hero/casbah-alger.webp',
+      fallback: '/images/hero/casbah-alger.jpg',
       title: 'Casbah d\'Alger',
     },
     {
-      url: '/images/hero/grenier.jpg',
+      url: '/images/hero/grenier.webp',
+      fallback: '/images/hero/grenier.jpg',
       title: 'Grenier Traditionnel',
     }
   ];
@@ -137,6 +141,12 @@ const HeroSection: React.FC = () => {
               alt={image.title}
               loading={index === 0 ? "eager" : "lazy"}
               onLoad={() => handleImageLoad(index)}
+              onError={(e) => {
+                const target = e.currentTarget;
+                if (image.fallback && target.src !== image.fallback) {
+                  target.src = image.fallback;
+                }
+              }}
               className={`w-full h-full object-cover object-center ${
                 imagesLoaded[index] ? 'opacity-100' : 'opacity-0'
               }`}
@@ -208,7 +218,7 @@ const HeroSection: React.FC = () => {
                   h-11 sm:h-12
                   px-5 sm:px-6
                 "
-                onClick={() => navigate('/Patrimoine')}
+                onClick={() => navigate('/patrimoine')}
               >
                 {t('home.hero.explore', 'Explorer le patrimoine')}
                 <ChevronRight className={`h-4 w-4 sm:h-5 sm:w-5 ${isRtl ? 'mr-2 rotate-180' : 'ml-2'}`} />
@@ -228,7 +238,7 @@ const HeroSection: React.FC = () => {
                   h-11 sm:h-12
                   px-5 sm:px-6
                 "
-                onClick={() => navigate('/Auth')}
+                onClick={() => navigate('/auth')}
               >
                 {t('home.hero.contribute', 'Contribuer')}
               </Button>

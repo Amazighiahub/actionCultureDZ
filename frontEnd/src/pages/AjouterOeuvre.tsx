@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -420,10 +421,15 @@ const EditorModeSelector: React.FC<EditorModeSelectorProps> = ({
 const AjouterOeuvre: React.FC = () => {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const isEditMode = !!id;
+  const editId = id ? parseInt(id) : null;
 
   // État de chargement et erreurs
   const [loading, setLoading] = useState(false);
   const [loadingMetadata, setLoadingMetadata] = useState(true);
+  const [loadingEdit, setLoadingEdit] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState<string>('');
 
@@ -482,6 +488,69 @@ const AjouterOeuvre: React.FC = () => {
   useEffect(() => {
     loadMetadata();
   }, []);
+
+  // Charger les données existantes en mode édition
+  useEffect(() => {
+    if (isEditMode && editId && !loadingMetadata) {
+      loadExistingOeuvre();
+    }
+  }, [isEditMode, editId, loadingMetadata]);
+
+  const loadExistingOeuvre = async () => {
+    if (!editId) return;
+    try {
+      setLoadingEdit(true);
+      const response = await oeuvreService.getById(editId);
+      if (response.success && response.data) {
+        const oeuvre = response.data as any;
+        setFormData({
+          titre: typeof oeuvre.titre === 'object' ? oeuvre.titre : { fr: oeuvre.titre || '', ar: '', en: '' },
+          description: typeof oeuvre.description === 'object' ? oeuvre.description : { fr: oeuvre.description || '', ar: '', en: '' },
+          id_type_oeuvre: oeuvre.id_type_oeuvre || 0,
+          id_langue: oeuvre.id_langue || 1,
+          categories: oeuvre.categories?.map((c: any) => c.id_categorie || c) || [],
+          tags: oeuvre.tags?.map((t: any) => t.nom || t) || [],
+          annee_creation: oeuvre.annee_creation,
+          prix: oeuvre.prix,
+          isbn: oeuvre.isbn,
+          nb_pages: oeuvre.nb_pages,
+          duree_minutes: oeuvre.duree_minutes,
+          realisateur: oeuvre.realisateur,
+          producteur: oeuvre.producteur,
+          studio: oeuvre.studio,
+          duree_album: oeuvre.duree_album,
+          label: oeuvre.label,
+          nb_pistes: oeuvre.nb_pistes,
+          auteur: oeuvre.auteur,
+          source: oeuvre.source,
+          resume_article: oeuvre.resume_article,
+          url_source: oeuvre.url_source,
+          journal: oeuvre.journal,
+          doi: oeuvre.doi,
+          pages: oeuvre.pages,
+          volume: oeuvre.volume,
+          numero: oeuvre.numero,
+          peer_reviewed: oeuvre.peer_reviewed,
+          id_materiau: oeuvre.id_materiau,
+          id_technique: oeuvre.id_technique,
+          dimensions: oeuvre.dimensions,
+          poids: oeuvre.poids,
+          technique_art: oeuvre.technique_art,
+          dimensions_art: oeuvre.dimensions_art,
+          support: oeuvre.support,
+        });
+        console.log('✅ Œuvre chargée pour édition:', oeuvre);
+      } else {
+        toast({ title: 'Erreur', description: 'Œuvre introuvable', variant: 'destructive' });
+        navigate('/dashboard-pro');
+      }
+    } catch (error: any) {
+      console.error('❌ Erreur chargement œuvre:', error);
+      toast({ title: 'Erreur', description: 'Impossible de charger l\'œuvre', variant: 'destructive' });
+    } finally {
+      setLoadingEdit(false);
+    }
+  };
 
   // Générer des suggestions de tags quand le contenu change
   useEffect(() => {
@@ -1086,10 +1155,12 @@ const AjouterOeuvre: React.FC = () => {
         detailsSpecifiques
       );
 
-      setUploadProgress('Création de l\'œuvre...');
+      setUploadProgress(isEditMode ? 'Mise à jour de l\'œuvre...' : 'Création de l\'œuvre...');
 
       console.log('📝 Données envoyées:', {
         ...oeuvreData,
+        isEditMode,
+        editId,
         nb_categories: oeuvreData.categories?.length || 0,
         nb_contributeurs: (oeuvreData.utilisateurs_inscrits?.length || 0) + (
         oeuvreData.intervenants_non_inscrits?.length || 0) + (
@@ -1101,9 +1172,12 @@ const AjouterOeuvre: React.FC = () => {
         let oeuvreResponse;
         const mediaFiles = medias.map((m) => m.file);
 
-        if (mediaFiles.length > 0) {
+        if (isEditMode && editId) {
+          // Mode édition — appeler update
+          console.log('� Mise à jour de l\'œuvre', editId);
+          oeuvreResponse = await oeuvreService.update(editId, oeuvreData as any);
+        } else if (mediaFiles.length > 0) {
           console.log('📤 Création avec médias (FormData)');
-          // Préparer les métadonnées des médias avec isPrincipal
           const mediaMetadata = medias.map((m) => ({ is_principal: m.isPrincipal }));
 
           oeuvreResponse = await oeuvreService.createOeuvreFormData(
@@ -1117,14 +1191,14 @@ const AjouterOeuvre: React.FC = () => {
         }
 
         if (!oeuvreResponse.success) {
-          setSubmitError(oeuvreResponse.error || 'Erreur lors de la création de l\'œuvre');
+          setSubmitError(oeuvreResponse.error || (isEditMode ? 'Erreur lors de la mise à jour' : 'Erreur lors de la création de l\'œuvre'));
           return;
         }
 
         // Succès
         toast({
           title: t('ajouteroeuvre.succes'),
-          description: isDraft ? t('ajouteroeuvre.brouillon_sauvegarde') : t('ajouteroeuvre.oeuvre_creee_succes'),
+          description: isEditMode ? 'Œuvre mise à jour avec succès' : (isDraft ? t('ajouteroeuvre.brouillon_sauvegarde') : t('ajouteroeuvre.oeuvre_creee_succes')),
         });
 
         // Redirection

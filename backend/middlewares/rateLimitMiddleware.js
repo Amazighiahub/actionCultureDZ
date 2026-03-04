@@ -62,7 +62,7 @@ if (USE_REDIS) {
 // 1. Rate limiter global (pour toutes les routes)
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // 100 requêtes par fenêtre
+  max: IS_PRODUCTION ? 100 : 1000, // 100 en prod, 1000 en dev
   message: {
     success: false,
     error: 'Trop de requêtes, veuillez réessayer plus tard.',
@@ -77,7 +77,7 @@ const globalLimiter = rateLimit({
 // 2. Rate limiter strict pour les endpoints sensibles
 const strictLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // 5 requêtes max
+  max: IS_PRODUCTION ? 5 : 100, // 5 en prod, 100 en dev
   skipSuccessfulRequests: false,
   message: {
     success: false,
@@ -189,19 +189,19 @@ const advancedLimiter = rateLimit({
 const endpointLimiters = {
   login: rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 5,
+    max: IS_PRODUCTION ? 5 : 100,
     skipSuccessfulRequests: true
   }),
   
   register: rateLimit({
     windowMs: 60 * 60 * 1000,
-    max: 3,
+    max: IS_PRODUCTION ? 3 : 50,
     message: 'Trop de tentatives d\'inscription'
   }),
   
   forgotPassword: rateLimit({
     windowMs: 60 * 60 * 1000,
-    max: 3,
+    max: IS_PRODUCTION ? 3 : 50,
     skipSuccessfulRequests: false
   }),
   
