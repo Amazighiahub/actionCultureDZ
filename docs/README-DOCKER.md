@@ -3,7 +3,7 @@
 ## Prérequis
 
 - [Docker](https://docs.docker.com/get-docker/) et [Docker Compose](https://docs.docker.com/compose/install/)
-- Le fichier `.env` à la racine du projet (copier `.env.example` si besoin)
+- Le fichier `.env` à la racine du projet (fourni hors Git par l'équipe)
 
 ## Architecture des services
 
@@ -31,8 +31,8 @@ docker compose up --build
 ### URLs
 
 - **Page web (frontend)** : http://localhost:3000
-- **API backend** : http://localhost:3001
-- **Documentation API** : http://localhost:3001/api
+- **API backend** : http://localhost:3001/api
+- **Base backend** : http://localhost:3001
 - **Santé** : http://localhost:3001/health
 
 ## Initialisation de la base de données (première fois)
@@ -84,7 +84,7 @@ Les variables suivantes sont **surchargées** dans `docker-compose.yml` pour poi
 
 | Variable | Valeur dans Docker | Raison |
 |----------|-------------------|--------|
-| `NODE_ENV` | `production` | Build optimisé |
+| `NODE_ENV` | `development` | Environnement de dev local |
 | `SKIP_PRODUCTION_CHECKS` | `true` | Désactive les checks stricts de sécurité (dev local) |
 | `DB_HOST` | `mysql` | Nom du service MySQL dans Docker |
 | `REDIS_HOST` | `redis` | Nom du service Redis dans Docker |

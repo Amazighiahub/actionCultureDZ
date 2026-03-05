@@ -123,6 +123,7 @@ eventculture/
 - [Guide d'onboarding stagiaire](./ONBOARDING.md) — **Lire en premier !**
 
 ### Technique
+- [Guide Docker + Base de données (source officielle)](./README-DOCKER.md) — **Référence unique Docker/BD**
 - [Architecture du projet](./ARCHITECTURE.md)
 - [Guide de l'API](./API.md)
 - [Guide du Frontend](./FRONTEND.md)
