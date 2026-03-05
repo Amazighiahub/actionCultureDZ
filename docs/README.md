@@ -129,7 +129,7 @@ eventculture/
 - [Guide de contribution](./CONTRIBUTING.md)
 - [Guide de sécurité](./SECURITY_GUIDELINES.md)
 - [Guide seed base de données](./GUIDE_SEED_DATABASE.md)
-- [Checklist de production](../PRODUCTION_CHECKLIST.md)
+- [Checklist de production](./PRODUCTION_CHECKLIST.md)
 
 ### Modules métier
 - [Gestion des Événements](./modules/EVENEMENTS.md)
