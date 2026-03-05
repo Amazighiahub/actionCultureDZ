@@ -23,7 +23,7 @@ services:
     env_file:
       - .env
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=development
       - SKIP_PRODUCTION_CHECKS=true
       - DB_HOST=mysql
       - REDIS_HOST=redis
