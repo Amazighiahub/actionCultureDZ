@@ -33,10 +33,10 @@ module.exports = (sequelize) => {
       type: DataTypes.STRING(255)
     },
     poids: {
-      type: DataTypes.FLOAT
+      type: DataTypes.DECIMAL(8, 3)
     },
     prix: {
-      type: DataTypes.FLOAT
+      type: DataTypes.DECIMAL(10, 2)
     },
     date_creation: {
       type: DataTypes.DATE

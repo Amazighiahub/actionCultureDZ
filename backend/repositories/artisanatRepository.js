@@ -205,7 +205,8 @@ class ArtisanatRepository extends BaseRepository {
           required: false
         }],
         group: ['id_materiau', 'Materiau.id_materiau'],
-        raw: false
+        raw: false,
+        limit: 50
       });
     }
 
@@ -222,7 +223,8 @@ class ArtisanatRepository extends BaseRepository {
           required: false
         }],
         group: ['id_technique', 'Technique.id_technique'],
-        raw: false
+        raw: false,
+        limit: 50
       });
     }
 

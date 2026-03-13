@@ -55,6 +55,12 @@ class UserDTO extends BaseDTO {
     const dto = new UserDTO(data);
     // Strip sensitive fields from _raw to prevent password leaking in toJSON/translateRaw
     const { password, ...safeData } = data;
+
+    // Rétro-compatibilité frontend : déduire statut_validation depuis statut
+    if (!safeData.statut_validation && safeData.statut) {
+      safeData.statut_validation = UserDTO._statutValidationForFrontend(safeData.statut);
+    }
+
     dto._raw = safeData;
 
     // Options pour inclure des données supplémentaires
@@ -79,7 +85,8 @@ class UserDTO extends BaseDTO {
       email: data.email,
       idTypeUser: data.id_type_user,
       photoUrl: data.photo_url,
-      statut: data.statut
+      statut: data.statut,
+      statut_validation: UserDTO._statutValidationForFrontend(data.statut)
     };
   }
 
@@ -89,6 +96,17 @@ class UserDTO extends BaseDTO {
   toJSON(lang = 'fr') { return BaseDTO.translateRaw(this._raw, lang); }
   toPublicJSON(lang = 'fr') { return BaseDTO.translateRaw(this._raw, lang); }
   toAdminJSON(lang = 'fr') { return BaseDTO.translateRaw(this._raw, lang); }
+
+  /**
+   * Convertit statut (backend) → statut_validation (frontend)
+   */
+  static _statutValidationForFrontend(statut) {
+    switch (statut) {
+      case 'actif': return 'valide';
+      case 'en_attente_validation': return 'en_attente';
+      default: return statut;
+    }
+  }
 }
 
 module.exports = UserDTO;

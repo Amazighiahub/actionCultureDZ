@@ -19,7 +19,7 @@ module.exports = (sequelize) => {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: 'lieux',
+        model: 'lieu',
         key: 'id_lieu'
       }
     },
@@ -136,14 +136,21 @@ module.exports = (sequelize) => {
     const etapes = await this.findAll({
       where: { id_parcours: parcoursId },
       order: [['ordre', 'ASC']],
+      attributes: ['id_parcours_lieu', 'ordre'],
       transaction
     });
 
-    for (let i = 0; i < etapes.length; i++) {
-      if (etapes[i].ordre !== i + 1) {
-        await etapes[i].update({ ordre: i + 1 }, { transaction });
-      }
-    }
+    // Filtrer celles qui ont besoin d'un update
+    const toUpdate = etapes.filter((e, i) => e.ordre !== i + 1);
+    if (toUpdate.length === 0) return;
+
+    // Batch update avec CASE WHEN (1 query au lieu de N)
+    const cases = etapes.map((e, i) => `WHEN ${e.id_parcours_lieu} THEN ${i + 1}`).join(' ');
+    const ids = etapes.map(e => e.id_parcours_lieu).join(',');
+    await sequelize.query(
+      `UPDATE parcours_lieux SET ordre = CASE id_parcours_lieu ${cases} END WHERE id_parcours_lieu IN (${ids})`,
+      { transaction }
+    );
   };
 
   return ParcoursLieu;

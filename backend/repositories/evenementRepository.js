@@ -36,12 +36,15 @@ class EvenementRepository extends BaseRepository {
       if (this.models.Commune) {
         lieuInclude.include = [{
           model: this.models.Commune,
+          attributes: ['id_commune', 'nom'],
           required: false,
           include: [{
             model: this.models.Daira,
+            attributes: ['id_daira', 'nom'],
             required: false,
             include: [{
               model: this.models.Wilaya,
+              attributes: ['id_wilaya', 'nom', 'code'],
               required: false
             }]
           }]
@@ -151,7 +154,8 @@ class EvenementRepository extends BaseRepository {
           required: true
         }
       ],
-      order: [['date_debut', 'ASC']]
+      order: [['date_debut', 'ASC']],
+      limit: 50
     });
   }
 
@@ -287,7 +291,8 @@ class EvenementRepository extends BaseRepository {
         ],
         include: [{ model: this.models.TypeEvenement, as: 'TypeEvenement', attributes: ['nom_type'] }],
         group: ['id_type_evenement', 'TypeEvenement.id_type_evenement'],
-        raw: false
+        raw: false,
+        limit: 50
       }) : []
     ]);
 

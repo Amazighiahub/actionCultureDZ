@@ -59,7 +59,7 @@ module.exports = (sequelize) => {
       comment: 'Adresse en plusieurs langues'
     },
     latitude: {
-      type: DataTypes.FLOAT,
+      type: DataTypes.DECIMAL(10, 8),
       allowNull: false,
       validate: {
         min: -90,
@@ -67,7 +67,7 @@ module.exports = (sequelize) => {
       }
     },
     longitude: {
-      type: DataTypes.FLOAT,
+      type: DataTypes.DECIMAL(11, 8),
       allowNull: false,
       validate: {
         min: -180,

@@ -212,7 +212,8 @@ class UserRepository extends BaseRepository {
           [this.model.sequelize.fn('COUNT', this.model.sequelize.col('id_user')), 'count']
         ],
         group: ['id_type_user'],
-        raw: true
+        raw: true,
+        limit: 50
       })
     ]);
 

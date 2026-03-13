@@ -122,8 +122,8 @@ module.exports = (sequelize) => {
 
   // Associations
   Service.associate = (models) => {
-    Service.belongsTo(models.Lieu, { foreignKey: 'id_lieu' });
-    Service.belongsTo(models.User, { foreignKey: 'id_user', as: 'Professionnel' });
+    Service.belongsTo(models.Lieu, { foreignKey: 'id_lieu', onDelete: 'CASCADE' });
+    Service.belongsTo(models.User, { foreignKey: 'id_user', as: 'Professionnel', onDelete: 'SET NULL' });
   };
 
   // ⚡ NOUVELLES MÉTHODES I18N

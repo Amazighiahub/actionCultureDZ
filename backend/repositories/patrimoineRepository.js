@@ -42,28 +42,42 @@ class PatrimoineRepository extends BaseRepository {
       includes.push({ model: this.models.QRCode, required: false });
     }
 
+    // Localisation (Commune → Daira → Wilaya) incluse directement pour éviter N+1
+    if (this.models.Commune) {
+      const communeInclude = {
+        model: this.models.Commune,
+        attributes: ['id_commune', 'nom'],
+        required: false
+      };
+      if (this.models.Daira) {
+        const dairaInclude = {
+          model: this.models.Daira,
+          attributes: ['id_daira', 'nom'],
+          required: false
+        };
+        if (this.models.Wilaya) {
+          dairaInclude.include = [{
+            model: this.models.Wilaya,
+            attributes: ['id_wilaya', 'nom', 'code'],
+            required: false
+          }];
+        }
+        communeInclude.include = [dairaInclude];
+      }
+      includes.push(communeInclude);
+    }
+
     return includes;
   }
 
   /**
-   * Ajoute la localisation (Commune → Daira → Wilaya) à un site
+   * Formate la localisation à partir des données incluses (plus de requête N+1)
    */
-  async _enrichWithLocation(siteData) {
-    if (siteData.communeId && this.models.Commune) {
-      try {
-        const commune = await this.models.Commune.findByPk(siteData.communeId, {
-          include: [{
-            model: this.models.Daira,
-            include: [{ model: this.models.Wilaya }]
-          }]
-        });
-        if (commune) {
-          const c = commune.toJSON();
-          siteData.commune = c;
-          siteData.daira = c.Daira;
-          siteData.wilaya = c.Daira?.Wilaya;
-        }
-      } catch (e) { /* ignore location errors */ }
+  _formatLocation(siteData) {
+    if (siteData.Commune) {
+      siteData.commune = siteData.Commune;
+      siteData.daira = siteData.Commune.Daira || null;
+      siteData.wilaya = siteData.Commune.Daira?.Wilaya || null;
     }
     return siteData;
   }
@@ -83,11 +97,7 @@ class PatrimoineRepository extends BaseRepository {
       limit: parseInt(limit)
     });
 
-    const enriched = await Promise.all(
-      sites.map(async s => this._enrichWithLocation(s.get({ plain: true })))
-    );
-
-    return enriched;
+    return sites.map(s => this._formatLocation(s.get({ plain: true })));
   }
 
   /**
@@ -125,12 +135,9 @@ class PatrimoineRepository extends BaseRepository {
       order: [['createdAt', 'DESC']]
     });
 
-    // Enrich each site with location
-    const enriched = await Promise.all(
-      result.data.map(async s => this._enrichWithLocation(s.get ? s.get({ plain: true }) : s))
-    );
+    const data = result.data.map(s => this._formatLocation(s.get ? s.get({ plain: true }) : s));
 
-    return { data: enriched, pagination: result.pagination };
+    return { data, pagination: result.pagination };
   }
 
   /**
@@ -146,7 +153,7 @@ class PatrimoineRepository extends BaseRepository {
     const site = await this.model.findByPk(id, { include: includes });
     if (!site) return null;
 
-    return this._enrichWithLocation(site.get({ plain: true }));
+    return this._formatLocation(site.get({ plain: true }));
   }
 
   /**
@@ -204,7 +211,8 @@ class PatrimoineRepository extends BaseRepository {
       where,
       include,
       attributes: ['id_lieu', 'nom', 'latitude', 'longitude', 'typePatrimoine'],
-      order: [['createdAt', 'DESC']]
+      order: [['createdAt', 'DESC']],
+      limit: 500
     });
   }
 
@@ -224,7 +232,8 @@ class PatrimoineRepository extends BaseRepository {
           [this.model.sequelize.fn('COUNT', this.model.sequelize.col('id_lieu')), 'count']
         ],
         group: ['typePatrimoine'],
-        raw: true
+        raw: true,
+        limit: 50
       })
     ]);
 

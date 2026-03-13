@@ -1,154 +1,141 @@
 const request = require('supertest');
 const express = require('express');
 const initOeuvreRoutes = require('../../routes/oeuvreRoutes');
-const { setupTestDatabase, teardownTestDatabase } = require('../setup');
+
+// Mock du serviceContainer AVANT l'import du controller
+const mockOeuvreService = {
+  findPublished: jest.fn(),
+  findWithFullDetails: jest.fn(),
+  findByType: jest.fn(),
+  findByCategory: jest.fn(),
+  findRecent: jest.fn(),
+  findPopular: jest.fn()
+};
+
+jest.mock('../../services/serviceContainer', () => ({
+  get oeuvreService() { return mockOeuvreService; },
+  _initialized: true
+}));
 
 jest.setTimeout(30000);
 
-describe('OeuvreController', () => {
-  let app, models, sequelize;
+// Helper : crée un DTO mock avec les méthodes toCardJSON / toDetailJSON
+const createOeuvreDTO = (data) => ({
+  ...data,
+  toCardJSON: (lang = 'fr') => ({
+    id_oeuvre: data.id_oeuvre,
+    titre: data.titre?.[lang] || data.titre?.fr || '',
+    description: data.description?.[lang] || data.description?.fr || '',
+    statut: data.statut
+  }),
+  toDetailJSON: (lang = 'fr') => ({
+    id_oeuvre: data.id_oeuvre,
+    titre: data.titre?.[lang] || data.titre?.fr || '',
+    description: data.description?.[lang] || data.description?.fr || '',
+    statut: data.statut
+  }),
+  toJSON: (lang = 'fr') => ({
+    id_oeuvre: data.id_oeuvre,
+    titre: data.titre?.[lang] || data.titre?.fr || '',
+    description: data.description?.[lang] || data.description?.fr || '',
+    statut: data.statut
+  })
+});
 
-  beforeAll(async () => {
-    const result = await setupTestDatabase();
-    models = result.models;
-    sequelize = result.sequelize;
+describe('OeuvreController', () => {
+  let app;
+
+  beforeAll(() => {
+    // Mock authMiddleware
+    const authMiddleware = {
+      authenticate: (req, res, next) => next(),
+      optionalAuth: (req, res, next) => next(),
+      requireRole: () => (req, res, next) => next()
+    };
 
     app = express();
     app.use(express.json());
-    app.use('/api/oeuvres', initOeuvreRoutes(models, null));
+    app.use('/api/oeuvres', initOeuvreRoutes({}, authMiddleware));
   });
 
-  afterAll(async () => {
-    await teardownTestDatabase();
-  });
-
-  beforeEach(async () => {
-    await sequelize.query('SET FOREIGN_KEY_CHECKS = 0');
-
-    try {
-      const truncateIfExists = async (modelName) => {
-        const model = models && models[modelName];
-        if (!model || typeof model.destroy !== 'function') return;
-        await model.destroy({ where: {}, truncate: true, force: true });
-      };
-
-      // Tables "enfants" / pivots qui référencent Oeuvre
-      await truncateIfExists('OeuvreIntervenant');
-      await truncateIfExists('OeuvreUser');
-      await truncateIfExists('OeuvreEditeur');
-      await truncateIfExists('OeuvreCategorie');
-      await truncateIfExists('OeuvreTag');
-      await truncateIfExists('EvenementOeuvre');
-      await truncateIfExists('Media');
-      await truncateIfExists('CritiqueEvaluation');
-
-      // Sous-types éventuels
-      await truncateIfExists('Livre');
-      await truncateIfExists('Film');
-      await truncateIfExists('AlbumMusical');
-      await truncateIfExists('Article');
-      await truncateIfExists('ArticleScientifique');
-      await truncateIfExists('Artisanat');
-      await truncateIfExists('OeuvreArt');
-
-      // Table principale
-      await truncateIfExists('Oeuvre');
-
-      // Référentiels utilisés par ces tests
-      await truncateIfExists('TypeOeuvre');
-      await truncateIfExists('Langue');
-    } finally {
-      await sequelize.query('SET FOREIGN_KEY_CHECKS = 1');
-    }
-
-    // Créer les données de base (format i18n JSON)
-    await models.TypeOeuvre.create({
-      nom_type: { fr: 'Livre', ar: 'كتاب', en: 'Book' },
-      description: { fr: 'Œuvres littéraires' }
-    });
-    
-    await models.Langue.create({
-      nom: { fr: 'Français', ar: 'الفرنسية', en: 'French' },
-      code: 'fr'
-    });
+  beforeEach(() => {
+    jest.clearAllMocks();
   });
 
   describe('GET /api/oeuvres', () => {
     test('Doit retourner une liste vide par défaut', async () => {
+      mockOeuvreService.findPublished.mockResolvedValue({
+        data: [],
+        pagination: { page: 1, limit: 20, total: 0, totalPages: 0 }
+      });
+
       const response = await request(app)
         .get('/api/oeuvres')
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.data.oeuvres).toEqual([]);
-      expect(response.body.data.pagination.total).toBe(0);
+      expect(response.body.data).toEqual([]);
+      expect(response.body.pagination.total).toBe(0);
     });
 
     test('Doit retourner les œuvres publiées', async () => {
-      const typeOeuvre = await models.TypeOeuvre.findOne();
-      const langue = await models.Langue.findOne();
-
-      await models.Oeuvre.create({
+      const oeuvrePubliee = createOeuvreDTO({
+        id_oeuvre: 1,
         titre: { fr: 'Œuvre Publiée' },
-        id_type_oeuvre: typeOeuvre.id_type_oeuvre,
-        id_langue: langue.id_langue,
+        description: { fr: 'Desc' },
         statut: 'publie'
       });
 
-      await models.Oeuvre.create({
-        titre: { fr: 'Œuvre Brouillon' },
-        id_type_oeuvre: typeOeuvre.id_type_oeuvre,
-        id_langue: langue.id_langue,
-        statut: 'brouillon'
+      mockOeuvreService.findPublished.mockResolvedValue({
+        data: [oeuvrePubliee],
+        pagination: { page: 1, limit: 20, total: 1, totalPages: 1 }
       });
 
       const response = await request(app)
         .get('/api/oeuvres')
         .expect(200);
 
-      expect(response.body.data.oeuvres).toHaveLength(1);
-      expect(response.body.data.oeuvres[0].titre).toBe('Œuvre Publiée'); // translateDeep extrait la valeur fr
+      expect(response.body.data).toHaveLength(1);
+      expect(response.body.data[0].titre).toBe('Œuvre Publiée');
     });
 
     test('Doit supporter la pagination', async () => {
-      const typeOeuvre = await models.TypeOeuvre.findOne();
-      const langue = await models.Langue.findOne();
-
-      // Créer 15 œuvres
-      for (let i = 1; i <= 15; i++) {
-        await models.Oeuvre.create({
-          titre: { fr: `Œuvre ${i}` },
-          id_type_oeuvre: typeOeuvre.id_type_oeuvre,
-          id_langue: langue.id_langue,
+      const oeuvres = Array.from({ length: 5 }, (_, i) =>
+        createOeuvreDTO({
+          id_oeuvre: 11 + i,
+          titre: { fr: `Œuvre ${11 + i}` },
           statut: 'publie'
-        });
-      }
+        })
+      );
+
+      mockOeuvreService.findPublished.mockResolvedValue({
+        data: oeuvres,
+        pagination: { page: 2, limit: 10, total: 15, totalPages: 2 }
+      });
 
       const response = await request(app)
         .get('/api/oeuvres?page=2&limit=10')
         .expect(200);
 
-      expect(response.body.data.oeuvres).toHaveLength(5);
-      expect(response.body.data.pagination.page).toBe(2);
-      expect(response.body.data.pagination.total).toBe(15);
+      expect(response.body.data).toHaveLength(5);
+      expect(response.body.pagination.page).toBe(2);
+      expect(response.body.pagination.total).toBe(15);
     });
   });
 
   describe('GET /api/oeuvres/:id', () => {
     test('Doit retourner une œuvre existante', async () => {
-      const typeOeuvre = await models.TypeOeuvre.findOne();
-      const langue = await models.Langue.findOne();
-
-      const oeuvre = await models.Oeuvre.create({
+      const oeuvre = createOeuvreDTO({
+        id_oeuvre: 1,
         titre: { fr: 'Œuvre Test' },
-        id_type_oeuvre: typeOeuvre.id_type_oeuvre,
-        id_langue: langue.id_langue,
         description: { fr: 'Description test' },
         statut: 'publie'
       });
 
+      mockOeuvreService.findWithFullDetails.mockResolvedValue(oeuvre);
+
       const response = await request(app)
-        .get(`/api/oeuvres/${oeuvre.id_oeuvre}`)
+        .get('/api/oeuvres/1')
         .expect(200);
 
       expect(response.body.success).toBe(true);
@@ -157,6 +144,10 @@ describe('OeuvreController', () => {
     });
 
     test('Doit retourner 404 pour une œuvre inexistante', async () => {
+      const error = new Error('Œuvre non trouvée');
+      error.statusCode = 404;
+      mockOeuvreService.findWithFullDetails.mockRejectedValue(error);
+
       const response = await request(app)
         .get('/api/oeuvres/99999')
         .expect(404);

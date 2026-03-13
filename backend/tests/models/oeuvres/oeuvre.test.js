@@ -16,38 +16,23 @@ describe('Modèle Oeuvre', () => {
   });
 
   beforeEach(async () => {
-    // Nettoyer les données avec FK désactivées (plus rapide que sync force)
+    // Nettoyer les données avec raw TRUNCATE (FK désactivées dans la même session)
+    const tables = [
+      'oeuvre_intervenant', 'oeuvre_user', 'oeuvre_editeur', 'oeuvre_categorie',
+      'oeuvre_tag', 'evenement_oeuvre', 'media', 'critique_evaluation',
+      'livre', 'film', 'album_musical', 'article', 'article_scientifique',
+      'artisanat', 'oeuvre_art', 'oeuvre', 'type_oeuvre', 'langue'
+    ];
+
     await sequelize.query('SET FOREIGN_KEY_CHECKS = 0');
-
-    try {
-      const truncateIfExists = async (modelName) => {
-        const model = models && models[modelName];
-        if (!model || typeof model.destroy !== 'function') return;
-        await model.destroy({ where: {}, truncate: true, force: true });
-      };
-
-      // Tables liées à Oeuvre
-      await truncateIfExists('OeuvreIntervenant');
-      await truncateIfExists('OeuvreUser');
-      await truncateIfExists('OeuvreEditeur');
-      await truncateIfExists('OeuvreCategorie');
-      await truncateIfExists('OeuvreTag');
-      await truncateIfExists('EvenementOeuvre');
-      await truncateIfExists('Media');
-      await truncateIfExists('CritiqueEvaluation');
-      await truncateIfExists('Livre');
-      await truncateIfExists('Film');
-      await truncateIfExists('AlbumMusical');
-      await truncateIfExists('Article');
-      await truncateIfExists('ArticleScientifique');
-      await truncateIfExists('Artisanat');
-      await truncateIfExists('OeuvreArt');
-      await truncateIfExists('Oeuvre');
-      await truncateIfExists('TypeOeuvre');
-      await truncateIfExists('Langue');
-    } finally {
-      await sequelize.query('SET FOREIGN_KEY_CHECKS = 1');
+    for (const table of tables) {
+      try {
+        await sequelize.query(`TRUNCATE TABLE \`${table}\``);
+      } catch (e) {
+        // Table peut ne pas exister
+      }
     }
+    await sequelize.query('SET FOREIGN_KEY_CHECKS = 1');
     
     // Insérer les données de base nécessaires (format i18n JSON)
     await models.TypeOeuvre.create({

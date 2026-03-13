@@ -349,7 +349,8 @@ class OeuvreRepository extends BaseRepository {
         ],
         where: { statut: 'publie' },
         group: ['id_type_oeuvre'],
-        raw: true
+        raw: true,
+        limit: 50
       })
     ]);
 

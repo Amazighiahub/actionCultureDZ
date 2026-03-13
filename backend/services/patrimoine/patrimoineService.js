@@ -163,66 +163,70 @@ class PatrimoineService extends BaseService {
 
       const detailId = detail?.id_detailLieu;
 
-      // Synchroniser les monuments
+      // Synchroniser les monuments (bulkCreate au lieu de boucle)
       if (detailId && Monument && Array.isArray(data.monuments)) {
         await Monument.destroy({ where: { id_detail_lieu: detailId }, transaction });
-        for (const m of data.monuments) {
-          if (m?.nom?.fr || m?.nom) {
-            await Monument.create({
-              id_detail_lieu: detailId,
-              nom: m.nom || { fr: '' },
-              description: m.description || { fr: '' },
-              type: this._normalizeMonumentType(m.type)
-            }, { transaction });
-          }
+        const monumentRows = data.monuments
+          .filter(m => m?.nom?.fr || m?.nom)
+          .map(m => ({
+            id_detail_lieu: detailId,
+            nom: m.nom || { fr: '' },
+            description: m.description || { fr: '' },
+            type: this._normalizeMonumentType(m.type)
+          }));
+        if (monumentRows.length) {
+          await Monument.bulkCreate(monumentRows, { transaction });
         }
       }
 
-      // Synchroniser les vestiges
+      // Synchroniser les vestiges (bulkCreate)
       if (detailId && Vestige && Array.isArray(data.vestiges)) {
         await Vestige.destroy({ where: { id_detail_lieu: detailId }, transaction });
-        for (const v of data.vestiges) {
-          if (v?.nom?.fr || v?.nom) {
-            await Vestige.create({
-              id_detail_lieu: detailId,
-              nom: v.nom || { fr: '' },
-              description: v.description || { fr: '' },
-              type: this._normalizeVestigeType(v.type)
-            }, { transaction });
-          }
+        const vestigeRows = data.vestiges
+          .filter(v => v?.nom?.fr || v?.nom)
+          .map(v => ({
+            id_detail_lieu: detailId,
+            nom: v.nom || { fr: '' },
+            description: v.description || { fr: '' },
+            type: this._normalizeVestigeType(v.type)
+          }));
+        if (vestigeRows.length) {
+          await Vestige.bulkCreate(vestigeRows, { transaction });
         }
       }
 
-      // Synchroniser les services (liés au Lieu)
+      // Synchroniser les services (bulkCreate)
       if (Service && Array.isArray(data.services)) {
         await Service.destroy({ where: { id_lieu: lieuId }, transaction });
-        for (const s of data.services) {
-          if (s?.nom?.fr || s?.nom) {
-            await Service.create({
-              id_lieu: lieuId,
-              nom: s.nom || { fr: '' },
-              description: s.description || {},
-              type_service: s.type_service || 'autre',
-              disponible: s.disponible !== false,
-              telephone: s.telephone || null,
-              adresse: s.adresse || {}
-            }, { transaction });
-          }
+        const serviceRows = data.services
+          .filter(s => s?.nom?.fr || s?.nom)
+          .map(s => ({
+            id_lieu: lieuId,
+            nom: s.nom || { fr: '' },
+            description: s.description || {},
+            type_service: s.type_service || 'autre',
+            disponible: s.disponible !== false,
+            telephone: s.telephone || null,
+            adresse: s.adresse || {}
+          }));
+        if (serviceRows.length) {
+          await Service.bulkCreate(serviceRows, { transaction });
         }
       }
 
-      // Synchroniser les médias
+      // Synchroniser les médias (bulkCreate)
       if (LieuMedia && Array.isArray(data.medias)) {
         await LieuMedia.destroy({ where: { id_lieu: lieuId }, transaction });
-        for (const m of data.medias) {
-          if (m?.url) {
-            await LieuMedia.create({
-              id_lieu: lieuId,
-              url: m.url,
-              type: m.type || 'image',
-              description: m.description || {}
-            }, { transaction });
-          }
+        const mediaRows = data.medias
+          .filter(m => m?.url)
+          .map(m => ({
+            id_lieu: lieuId,
+            url: m.url,
+            type: m.type || 'image',
+            description: m.description || {}
+          }));
+        if (mediaRows.length) {
+          await LieuMedia.bulkCreate(mediaRows, { transaction });
         }
       }
 
@@ -278,58 +282,62 @@ class PatrimoineService extends BaseService {
 
       if (Array.isArray(data.monuments) && detailId && Monument) {
         await Monument.destroy({ where: { id_detail_lieu: detailId }, transaction });
-        for (const m of data.monuments) {
-          if (m?.nom?.fr || m?.nom) {
-            await Monument.create({
-              id_detail_lieu: detailId,
-              nom: m.nom || { fr: '' },
-              description: m.description || { fr: '' },
-              type: this._normalizeMonumentType(m.type)
-            }, { transaction });
-          }
+        const monumentRows = data.monuments
+          .filter(m => m?.nom?.fr || m?.nom)
+          .map(m => ({
+            id_detail_lieu: detailId,
+            nom: m.nom || { fr: '' },
+            description: m.description || { fr: '' },
+            type: this._normalizeMonumentType(m.type)
+          }));
+        if (monumentRows.length) {
+          await Monument.bulkCreate(monumentRows, { transaction });
         }
       }
 
       if (Array.isArray(data.vestiges) && detailId && Vestige) {
         await Vestige.destroy({ where: { id_detail_lieu: detailId }, transaction });
-        for (const v of data.vestiges) {
-          if (v?.nom?.fr || v?.nom) {
-            await Vestige.create({
-              id_detail_lieu: detailId,
-              nom: v.nom || { fr: '' },
-              description: v.description || { fr: '' },
-              type: this._normalizeVestigeType(v.type)
-            }, { transaction });
-          }
+        const vestigeRows = data.vestiges
+          .filter(v => v?.nom?.fr || v?.nom)
+          .map(v => ({
+            id_detail_lieu: detailId,
+            nom: v.nom || { fr: '' },
+            description: v.description || { fr: '' },
+            type: this._normalizeVestigeType(v.type)
+          }));
+        if (vestigeRows.length) {
+          await Vestige.bulkCreate(vestigeRows, { transaction });
         }
       }
 
       if (Array.isArray(data.services) && Service) {
         await Service.destroy({ where: { id_lieu: lieuId }, transaction });
-        for (const s of data.services) {
-          if (s?.nom?.fr || s?.nom) {
-            await Service.create({
-              id_lieu: lieuId,
-              nom: s.nom || { fr: '' },
-              description: s.description || {},
-              type_service: s.type_service || 'autre',
-              disponible: s.disponible !== false
-            }, { transaction });
-          }
+        const serviceRows = data.services
+          .filter(s => s?.nom?.fr || s?.nom)
+          .map(s => ({
+            id_lieu: lieuId,
+            nom: s.nom || { fr: '' },
+            description: s.description || {},
+            type_service: s.type_service || 'autre',
+            disponible: s.disponible !== false
+          }));
+        if (serviceRows.length) {
+          await Service.bulkCreate(serviceRows, { transaction });
         }
       }
 
       if (Array.isArray(data.medias) && LieuMedia) {
         await LieuMedia.destroy({ where: { id_lieu: lieuId }, transaction });
-        for (const m of data.medias) {
-          if (m?.url) {
-            await LieuMedia.create({
-              id_lieu: lieuId,
-              url: m.url,
-              type: m.type || 'image',
-              description: m.description || {}
-            }, { transaction });
-          }
+        const mediaRows = data.medias
+          .filter(m => m?.url)
+          .map(m => ({
+            id_lieu: lieuId,
+            url: m.url,
+            type: m.type || 'image',
+            description: m.description || {}
+          }));
+        if (mediaRows.length) {
+          await LieuMedia.bulkCreate(mediaRows, { transaction });
         }
       }
 

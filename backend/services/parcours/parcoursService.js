@@ -124,14 +124,16 @@ class ParcoursService extends BaseService {
       id_createur: userId
     };
 
-    const parcours = await this.repository.create(entityData);
+    const parcours = await this.repository.withTransaction(async (transaction) => {
+      const created = await this.repository.create(entityData, { transaction });
 
-    // Ajouter les étapes si fournies
-    if (data.etapes && Array.isArray(data.etapes)) {
-      for (const etape of data.etapes) {
-        await this.repository.addEtape(parcours.id_parcours, etape);
+      // Ajouter les étapes si fournies (bulkCreate au lieu de boucle)
+      if (data.etapes && Array.isArray(data.etapes) && data.etapes.length > 0) {
+        await this.repository.addEtapesBulk(created.id_parcours, data.etapes, { transaction });
       }
-    }
+
+      return created;
+    });
 
     const full = await this.repository.findWithFullDetails(parcours.id_parcours);
 

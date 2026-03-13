@@ -167,6 +167,29 @@ class ParcoursRepository extends BaseRepository {
   }
 
   /**
+   * Ajouter plusieurs étapes en une seule query (bulkCreate)
+   */
+  async addEtapesBulk(parcoursId, etapes, options = {}) {
+    if (!this.models.ParcoursLieu) {
+      throw new Error('Model ParcoursLieu not available');
+    }
+
+    const rows = etapes.map((etape, index) => ({
+      id_parcours: parcoursId,
+      id_lieu: etape.id_lieu || etape.lieuId,
+      id_evenement: etape.id_evenement || etape.evenementId || null,
+      ordre: etape.ordre || index + 1,
+      duree_estimee: etape.duree_estimee || etape.dureeEstimee || null,
+      distance_precedent: etape.distance_precedent || etape.distancePrecedent || null,
+      temps_trajet: etape.temps_trajet || etape.tempsTrajet || null,
+      notes: etape.notes || null,
+      transport_mode: etape.transport_mode || etape.transportMode || 'voiture'
+    }));
+
+    return this.models.ParcoursLieu.bulkCreate(rows, options);
+  }
+
+  /**
    * Supprimer une étape
    */
   async removeEtape(parcoursId, etapeId) {
@@ -231,7 +254,8 @@ class ParcoursRepository extends BaseRepository {
           [this.model.sequelize.fn('COUNT', this.model.sequelize.col('id_parcours')), 'count']
         ],
         group: ['difficulte'],
-        raw: true
+        raw: true,
+        limit: 50
       }),
       this.model.findAll({
         attributes: [
@@ -240,7 +264,8 @@ class ParcoursRepository extends BaseRepository {
         ],
         where: { theme: { [Op.not]: null } },
         group: ['theme'],
-        raw: true
+        raw: true,
+        limit: 50
       })
     ]);
 

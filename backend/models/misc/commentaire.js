@@ -75,8 +75,8 @@ module.exports = (sequelize) => {
     Commentaire.belongsTo(models.User, { foreignKey: 'id_user' });
     Commentaire.belongsTo(models.Oeuvre, { foreignKey: 'id_oeuvre' });
     Commentaire.belongsTo(models.Evenement, { foreignKey: 'id_evenement' });
-    Commentaire.belongsTo(models.Commentaire, { as: 'CommentaireParent', foreignKey: 'commentaire_parent_id' });
-    Commentaire.hasMany(models.Commentaire, { as: 'Reponses', foreignKey: 'commentaire_parent_id' });
+    Commentaire.belongsTo(models.Commentaire, { as: 'CommentaireParent', foreignKey: 'commentaire_parent_id', onDelete: 'CASCADE' });
+    Commentaire.hasMany(models.Commentaire, { as: 'Reponses', foreignKey: 'commentaire_parent_id', onDelete: 'CASCADE' });
   };
 
   return Commentaire;

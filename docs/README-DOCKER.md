@@ -19,57 +19,28 @@ Guide complet pour exécuter le projet EventCulture via Docker. Permet de démar
 | MySQL | eventculture-mysql | 3306 (localhost) | Base de données |
 | Redis | eventculture-redis | 6379 (localhost) | Cache / Rate limiting |
 
-## Lancer toute la stack
-
-À la racine du projet :
+## Setup complet (première fois)
 
 ```bash
-# Mode détaché (en arrière-plan)
-docker compose up -d
+# 1. Copier le fichier d'environnement
+cp .env.example .env
 
-# Mode attaché (logs dans le terminal)
-docker compose up --build
+# 2. Setup complet (conteneurs + tables + seeds)
+make setup
 ```
 
-> **Important** : avant le premier lancement, vérifiez qu'aucun autre conteneur n'utilise les ports 3000 ou 3001. Vérifiez avec `docker ps` et arrêtez les conteneurs conflictuels avec `docker stop <nom>`.
+`make setup` fait tout automatiquement :
+1. Active `DB_SYNC=true` pour que Sequelize crée les tables
+2. Lance les conteneurs Docker
+3. Attend que MySQL et le backend soient prêts
+4. Charge les données de référence et de test (`seed-reference-data.sql`)
+5. Désactive `DB_SYNC` et redémarre le backend
 
 ### URLs
 
-- **Page web (frontend)** : http://localhost:3000
+- **Frontend** : http://localhost:3000
 - **API backend** : http://localhost:3001/api
-- **Base backend** : http://localhost:3001
 - **Santé** : http://localhost:3001/health
-
-## Initialisation de la base de données (première fois)
-
-Les commandes suivantes doivent être exécutées dans un **second terminal** pendant que `docker compose up` tourne.
-
-### Étape 1 — Créer les tables
-
-```bash
-docker exec -it eventculture-backend node -e "
-const db = require('./models');
-(async () => {
-  await db.sequelize.query('SET FOREIGN_KEY_CHECKS = 0');
-  await db.sequelize.sync({ force: true });
-  await db.sequelize.query('SET FOREIGN_KEY_CHECKS = 1');
-  console.log('Tables créées');
-  process.exit(0);
-})();
-"
-```
-
-### Étape 2 — Charger la géographie (wilayas, daïras, communes)
-
-```bash
-docker exec -it eventculture-backend node scripts/seed-geography.js
-```
-
-### Étape 3 — Charger les données de test
-
-```bash
-docker exec -it eventculture-backend node scripts/seed-all-data.js
-```
 
 ### Comptes de test
 
@@ -79,21 +50,45 @@ docker exec -it eventculture-backend node scripts/seed-all-data.js
 | `m.benali@test.dz` | `password123` | Professionnel |
 | `f.saidi@test.com` | `password123` | Utilisateur |
 
-> **Note** : ne pas utiliser ces identifiants en production.
+> **Note** : ces comptes sont créés par les seeds. Ne pas utiliser en production.
+
+## Utilisation quotidienne
+
+```bash
+# Démarrer les conteneurs
+make up
+
+# Arrêter les conteneurs
+make down
+
+# Voir les logs
+docker compose logs -f backend
+```
+
+## Recharger les seeds (sans recréer les tables)
+
+Si les tables existent déjà mais sont vides :
+
+```bash
+make seed
+```
+
+## Réinitialiser complètement la base
+
+```bash
+docker compose down -v    # Supprime les volumes (données)
+make setup                # Recrée tout depuis zéro
+```
 
 ## Variables d'environnement
 
-Le fichier `.env` à la racine est chargé par `docker-compose` via `env_file`. Créer le fichier avec :
-
-```bash
-cp .env.example .env
-```
+Le fichier `.env` à la racine est chargé par `docker-compose` via `env_file`.
 
 ### Variables obligatoires
 
 | Variable | Exemple | Description |
 |----------|---------|-------------|
-| `DB_PASSWORD` | `VotreMotDePasse123` | Mot de passe MySQL (utilisateur `actionculture_user`) |
+| `DB_PASSWORD` | `VotreMotDePasse123` | Mot de passe MySQL |
 | `JWT_SECRET` | (générer ci-dessous) | Secret JWT (min. 32 caractères) |
 | `FRONTEND_URL` | `http://localhost:3000` | URL du frontend (pour CORS) |
 | `VITE_API_URL` | `http://localhost:3001/api` | URL API pour le build frontend |
@@ -107,7 +102,7 @@ cp .env.example .env
 | `DB_HOST` | `mysql` | Nom du service MySQL |
 | `REDIS_HOST` | `redis` | Nom du service Redis |
 
-### Autres variables utiles (optionnel)
+### Autres variables utiles
 
 | Variable | Défaut | Description |
 |----------|--------|-------------|
@@ -116,9 +111,7 @@ cp .env.example .env
 | `DB_USER` | `actionculture_user` | Utilisateur MySQL |
 | `EMAIL_PAUSED` | `true` | Ne pas envoyer d'emails en dev |
 
-> **Important** : `FRONTEND_URL` doit être `http://localhost:3000` (Docker) ou `http://localhost:8080` (local Vite), sinon CORS bloque les requêtes.
-
-Pour générer un **JWT_SECRET** sécurisé (production) :
+Pour générer un **JWT_SECRET** sécurisé :
 
 ```bash
 docker exec -it eventculture-backend node scripts/generateSecret.js
@@ -126,13 +119,19 @@ docker exec -it eventculture-backend node scripts/generateSecret.js
 
 ## Dépannage
 
+### Connexion refusée (login invalide)
+
+Le compte admin n'existe que si les **seeds** ont été exécutés. Vérifiez :
+
+```bash
+# Vérifier si l'admin existe en base
+docker exec eventculture-mysql mysql -u root -proot actionculture \
+  -e "SELECT email, statut FROM user WHERE email='admin@actionculture.dz';"
+```
+
+Si aucun résultat : exécutez `make seed`.
+
 ### Port déjà utilisé
-
-```
-Bind for 0.0.0.0:3001 failed: port is already allocated
-```
-
-Trouver et arrêter le conteneur qui occupe le port :
 
 ```bash
 docker ps --format '{{.Names}} {{.Ports}}' | grep 3001
@@ -141,42 +140,30 @@ docker stop <nom-du-conteneur>
 
 ### Erreur CORS dans le navigateur
 
-Vérifier que `FRONTEND_URL` dans `.env` correspond à l'URL du frontend :
+Vérifier que `FRONTEND_URL=http://localhost:3000` dans `.env`, puis :
 
+```bash
+docker compose restart backend
 ```
-FRONTEND_URL=http://localhost:3000
-```
-
-Puis redémarrer le backend : `docker compose restart backend`
 
 ### Tables inexistantes (erreur seed)
 
-Si le seed échoue avec "Table doesn't exist", relancer l'étape 1 (création des tables).
-
-### Réinitialiser complètement la base
+Les tables sont créées par Sequelize au démarrage quand `DB_SYNC=true`. Relancez :
 
 ```bash
-docker compose down -v
-docker compose up -d
-# Puis refaire les étapes 1, 2 et 3 d'initialisation
+make setup
 ```
 
-## Arrêter les conteneurs
+## Commandes utiles
 
 ```bash
-# Arrêter sans supprimer les données
-docker compose down
-
-# Arrêter et supprimer les volumes (données MySQL, Redis, uploads)
-docker compose down -v
-```
-
-## Commandes de build et test
-
-### Reconstruire après modification du code
-
-```bash
-docker compose up -d --build
+make setup       # Setup complet (première fois)
+make up          # Démarrer les conteneurs
+make down        # Arrêter les conteneurs
+make seed        # Recharger les seeds
+make build       # Reconstruire les images
+make logs        # Voir les logs
+make status      # État des conteneurs
 ```
 
 ### Reconstruire un seul service
@@ -185,35 +172,15 @@ docker compose up -d --build
 docker compose up -d --build --no-deps backend
 ```
 
-### Voir les logs
+### Shell dans un conteneur
 
 ```bash
-docker compose logs -f              # Tous les services
-docker compose logs backend -f     # Backend uniquement
-docker compose logs mysql --tail 50
-```
-
-### Vérifier l'état des conteneurs
-
-```bash
-docker compose ps
-```
-
-### Exécuter des commandes dans un conteneur
-
-```bash
-# Shell dans le backend
 docker exec -it eventculture-backend sh
-
-# Exécuter un script
-docker exec -it eventculture-backend node scripts/seed-geography.js
 ```
 
 ---
 
 ## Build seul (sans compose)
-
-Pour construire uniquement l'image du backend :
 
 ```bash
 cd backend

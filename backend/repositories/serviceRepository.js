@@ -149,7 +149,8 @@ class ServiceRepository extends BaseRepository {
           [this.model.sequelize.fn('COUNT', this.model.sequelize.col('id')), 'count']
         ],
         group: ['type_service'],
-        raw: true
+        raw: true,
+        limit: 50
       })
     ]);
 

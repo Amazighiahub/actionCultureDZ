@@ -201,18 +201,21 @@ class DashboardUserManagementService {
       throw new Error('Rôle non trouvé');
     }
 
-    // Supprimer les anciens rôles
+    // Transaction : destroy + create doivent être atomiques
     if (this.models.UserRole) {
-      await this.models.UserRole.destroy({
-        where: { id_user: userId }
-      });
+      const sequelize = this.models.UserRole.sequelize;
+      await sequelize.transaction(async (transaction) => {
+        await this.models.UserRole.destroy({
+          where: { id_user: userId },
+          transaction
+        });
 
-      // Ajouter le nouveau rôle
-      await this.models.UserRole.create({
-        id_user: userId,
-        id_role: roleId,
-        attribue_par: adminId,
-        date_attribution: new Date()
+        await this.models.UserRole.create({
+          id_user: userId,
+          id_role: roleId,
+          attribue_par: adminId,
+          date_attribution: new Date()
+        }, { transaction });
       });
     }
 
@@ -251,6 +254,16 @@ class DashboardUserManagementService {
   async bulkUserAction(action, userIds, data, adminId) {
     const results = { success: [], errors: [] };
 
+    // Batch optimize : 'validate' = 1 seule query au lieu de N
+    if (action === 'validate') {
+      const [affectedCount] = await this.models.User.update(
+        { statut: 'actif', id_user_validate: adminId, date_validation: new Date() },
+        { where: { id_user: { [Op.in]: userIds } } }
+      );
+      results.success = userIds;
+      return results;
+    }
+
     for (const userId of userIds) {
       try {
         switch (action) {
@@ -262,12 +275,6 @@ class DashboardUserManagementService {
             break;
           case 'changeRole':
             await this.changeUserRole(userId, data.roleId, adminId);
-            break;
-          case 'validate':
-            await this.models.User.update(
-              { statut: 'actif', id_user_validate: adminId, date_validation: new Date() },
-              { where: { id_user: userId } }
-            );
             break;
           default:
             throw new Error(`Action non reconnue: ${action}`);

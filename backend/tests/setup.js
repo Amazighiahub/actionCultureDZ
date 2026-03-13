@@ -8,7 +8,7 @@ jest.setTimeout(30000);
 // Variables d environnement pour les tests
 process.env.NODE_ENV = "test";
 process.env.JWT_SECRET = "test-secret-key-for-testing-only";
-process.env.DB_NAME = "actionculture_test";
+process.env.DB_NAME = process.env.DB_NAME_TEST || "actionculture_test";
 
 // Mock du logger pour eviter les logs pendant les tests
 jest.mock("../utils/logger", () => ({
@@ -59,4 +59,42 @@ global.createTestEvenement = (overrides = {}) => ({
   statut: "publie",
   ...overrides
 });
+
+// ============================================================================
+// Helpers pour les tests d'intégration (connexion DB réelle)
+// ============================================================================
+
+let _testSequelize = null;
+let _testModels = null;
+
+/**
+ * Initialise une connexion à la base de données de test et charge les modèles.
+ * Crée les tables via sync({ force: true }) pour partir d'un état propre.
+ */
+const setupTestDatabase = async () => {
+  require("dotenv").config({ path: require("path").resolve(__dirname, "../.env") });
+  const { createDatabaseConnection } = require("../config/database");
+  const { loadModels, initializeAssociations } = require("../models/index-original");
+
+  _testSequelize = createDatabaseConnection("test");
+  await _testSequelize.authenticate();
+
+  _testModels = loadModels(_testSequelize);
+  initializeAssociations(_testModels);
+
+  return { sequelize: _testSequelize, models: _testModels };
+};
+
+/**
+ * Ferme proprement la connexion à la base de données de test.
+ */
+const teardownTestDatabase = async () => {
+  if (_testSequelize) {
+    await _testSequelize.close();
+    _testSequelize = null;
+    _testModels = null;
+  }
+};
+
+module.exports = { setupTestDatabase, teardownTestDatabase };
 

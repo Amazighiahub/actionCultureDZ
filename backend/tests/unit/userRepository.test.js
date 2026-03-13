@@ -14,10 +14,15 @@ describe("UserRepository", () => {
       User: {
         findByPk: jest.fn(),
         findOne: jest.fn(),
+        findAll: jest.fn(),
         findAndCountAll: jest.fn(),
         count: jest.fn(),
         create: jest.fn(),
-        update: jest.fn()
+        update: jest.fn(),
+        sequelize: {
+          fn: jest.fn((...args) => args),
+          col: jest.fn((name) => name)
+        }
       },
       Role: {},
       Oeuvre: {},
@@ -87,7 +92,7 @@ describe("UserRepository", () => {
       expect(mockUser.update).toHaveBeenCalledWith(
         expect.objectContaining({
           statut: "actif",
-          valide_par: 2
+          id_user_validate: 2
         }),
         {}
       );

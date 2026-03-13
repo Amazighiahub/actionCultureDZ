@@ -357,24 +357,26 @@ class CronService {
     });
 
     for (const event of upcomingEvents) {
-      // Envoyer une notification aux participants
+      // Récupérer les participants confirmés
       const participants = await this.models.EvenementUser.findAll({
         where: {
           id_evenement: event.id_evenement,
           statut_participation: 'confirme'
         },
-        include: [{ model: this.models.User }]
+        attributes: ['id_user']
       });
 
-      for (const participant of participants) {
-        await this.models.Notification.create({
-          id_user: participant.id_user,
+      // Créer toutes les notifications en une seule query
+      if (participants.length > 0) {
+        const notifications = participants.map(p => ({
+          id_user: p.id_user,
           type_notification: 'rappel_evenement',
           titre: 'Événement dans 1 heure !',
           message: `L'événement "${event.nom_evenement}" commence dans 1 heure`,
           id_evenement: event.id_evenement,
           priorite: 'urgente'
-        });
+        }));
+        await this.models.Notification.bulkCreate(notifications);
       }
 
       await event.update({ rappel_derniere_minute: true });

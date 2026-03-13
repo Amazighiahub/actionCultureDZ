@@ -117,19 +117,22 @@ module.exports = (sequelize) => {
 
   // Associations
   EvenementUser.associate = (models) => {
-    EvenementUser.belongsTo(models.Evenement, { 
+    EvenementUser.belongsTo(models.Evenement, {
       foreignKey: 'id_evenement',
-      as: 'Evenement'
+      as: 'Evenement',
+      onDelete: 'CASCADE'
     });
-    
-    EvenementUser.belongsTo(models.User, { 
+
+    EvenementUser.belongsTo(models.User, {
       foreignKey: 'id_user',
-      as: 'User'
+      as: 'User',
+      onDelete: 'CASCADE'
     });
-    
-    EvenementUser.belongsTo(models.User, { 
+
+    EvenementUser.belongsTo(models.User, {
       foreignKey: 'valide_par',
-      as: 'Validateur'
+      as: 'Validateur',
+      onDelete: 'SET NULL'
     });
   };
   
