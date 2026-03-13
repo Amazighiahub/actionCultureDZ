@@ -31,6 +31,13 @@ let DefaultIcon = L.icon({
 
 L.Marker.prototype.options.icon = DefaultIcon;
 
+/** Extrait une chaîne depuis un champ multilingue (string ou { fr, ar, en }) */
+function getLocalizedLieuText(value: string | { fr?: string; ar?: string; en?: string } | null | undefined, fallback = ''): string {
+  if (!value) return fallback;
+  if (typeof value === 'string') return value;
+  return value.fr || value.ar || value.en || fallback;
+}
+
 interface LieuSelectorProps {
   value?: number;
   onChange: (lieuId: number | undefined, lieu?: Lieu) => void;
@@ -44,10 +51,18 @@ export const LieuSelector: React.FC<LieuSelectorProps> = ({
   wilayaId,
   required = false
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { rtlClasses } = useRTL();
   const { toast } = useToast();
-  
+  const lang = i18n.language?.split('-')[0] || 'fr';
+
+  /** Extrait une chaîne d'un champ multilingue (nom, adresse, etc.) */
+  const getLocalizedText = (value: string | Record<string, string> | null | undefined): string => {
+    if (value == null) return '';
+    if (typeof value === 'string') return value;
+    return (value[lang] || value.fr || value.ar || value.en || '') as string;
+  };
+
   const [mode, setMode] = useState<'select' | 'create'>('select');
   const [lieux, setLieux] = useState<Lieu[]>([]);
   const [loading, setLoading] = useState(false);
@@ -450,14 +465,14 @@ export const LieuSelector: React.FC<LieuSelectorProps> = ({
                       <MapPin className={`h-4 w-4 text-muted-foreground ${rtlClasses.marginEnd(2)} mt-0.5 flex-shrink-0`} />
                       <div className="flex-1">
                         <div className={`flex items-center gap-2 ${rtlClasses.flexRow}`}>
-                          <p className="font-medium">{lieu.nom}</p>
+                          <p className="font-medium">{getLocalizedText(lieu.nom)}</p>
                           {lieu.typeLieuCulturel && (
                             <span className="text-xs bg-secondary px-2 py-0.5 rounded">
                               {typesLieuxCulturels.find(t => t.value === lieu.typeLieuCulturel)?.label || lieu.typeLieuCulturel}
                             </span>
                           )}
                         </div>
-                        <p className="text-sm text-muted-foreground">{lieu.adresse}</p>
+                        <p className="text-sm text-muted-foreground">{getLocalizedText(lieu.adresse)}</p>
                         <div className={`flex items-center gap-4 mt-1 text-xs text-muted-foreground ${rtlClasses.flexRow}`}>
                           <span>Lat: {lieu.latitude.toFixed(6)}</span>
                           <span>Lng: {lieu.longitude.toFixed(6)}</span>
@@ -505,7 +520,7 @@ export const LieuSelector: React.FC<LieuSelectorProps> = ({
             <Card className="mt-4">
               <CardContent className="p-4">
                 <div className={`flex justify-between items-center mb-2 ${rtlClasses.flexRow}`}>
-                  <h4 className="font-medium">{previewLieu.nom}</h4>
+                  <h4 className="font-medium">{getLocalizedText(previewLieu.nom)}</h4>
                   <Button
                     type="button"
                     size="sm"
@@ -518,7 +533,7 @@ export const LieuSelector: React.FC<LieuSelectorProps> = ({
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
-                <p className="text-sm text-muted-foreground mb-2">{previewLieu.adresse}</p>
+                <p className="text-sm text-muted-foreground mb-2">{getLocalizedText(previewLieu.adresse)}</p>
                 <div className="text-xs text-muted-foreground mb-2">
                   Coordonnées: {previewLieu.latitude.toFixed(6)}, {previewLieu.longitude.toFixed(6)}
                 </div>
