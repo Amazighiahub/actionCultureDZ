@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -81,7 +81,7 @@ const DashboardPro = () => {
   const vuesTotal = dashboardStats?.oeuvres?.vues_total ?? 0;
 
   // Fonction de filtrage par recherche
-  const filterBySearch = (items: any[]) => {
+  const filterBySearch = useCallback((items: any[]) => {
     if (!items || !searchQuery) return items;
     return items.filter((item) => {
       // Extraire les valeurs string des champs (y compris objets multilingues)
@@ -107,7 +107,7 @@ const DashboardPro = () => {
 
       return searchFields.includes(searchQuery.toLowerCase());
     });
-  };
+  }, [searchQuery]);
 
   // Composant pour afficher une ligne d'item avec bordure pointillée
   const ItemRow = ({ item, type, onView, onEdit, onDelete }: any) => {
@@ -251,7 +251,7 @@ const DashboardPro = () => {
   };
 
   // Handlers pour les actions
-  const handleView = (type: string, item: any) => {
+  const handleView = useCallback((type: string, item: any) => {
     const routes: any = {
       oeuvre: `/oeuvres/${item.id_oeuvre}`,
       evenement: `/evenements/${item.id_evenement}`,
@@ -259,9 +259,9 @@ const DashboardPro = () => {
       service: `/services/${item.id || item.id_service}`
     };
     navigate(routes[type] || '/');
-  };
+  }, [navigate]);
 
-  const handleEdit = (type: string, item: any) => {
+  const handleEdit = useCallback((type: string, item: any) => {
     const routes: any = {
       oeuvre: `/modifier-oeuvre/${item.id_oeuvre}`,
       evenement: `/modifier-evenement/${item.id_evenement}`,
@@ -269,11 +269,11 @@ const DashboardPro = () => {
       service: `/modifier-service/${item.id || item.id_service}`
     };
     navigate(routes[type] || '/');
-  };
+  }, [navigate]);
 
-  const handleDeleteItem = (type: string, item: any) => {
+  const handleDeleteItem = useCallback((type: string, item: any) => {
     setDeleteDialog({ open: true, type, item });
-  };
+  }, []);
 
   const confirmDeleteItem = async () => {
     const { type, item } = deleteDialog;

@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useEffect, useState } from 'react';
+import React, { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import Header from '@/components/Header';
@@ -145,14 +145,14 @@ const Patrimoine = () => {
   }, [filterType]);
 
   // Filtrer les sites (recherche locale uniquement, le type est filtré côté serveur)
-  const filteredSites = sites.filter(site => {
+  const filteredSites = useMemo(() => sites.filter(site => {
     const nom = translate(site.nom, lang);
     const matchSearch = !searchQuery ||
       nom.toLowerCase().includes(searchQuery.toLowerCase()) ||
       site.wilaya?.nom?.toLowerCase().includes(searchQuery.toLowerCase());
 
     return matchSearch;
-  });
+  }), [sites, searchQuery, lang]);
 
   // Obtenir l'image principale d'un site
   const getMainImage = (site: SitePatrimoine): string => {

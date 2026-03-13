@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Card } from '@/components/ui/card';
@@ -53,19 +53,19 @@ const DashboardUser = () => {
     loadNotifications();
   }, []);
 
-  const handleMarkAsRead = async (id: number) => {
+  const handleMarkAsRead = useCallback(async (id: number) => {
     try {
       await notificationService.markAsRead(id);
       setNotifications(prev => prev.map(n => n.id_notification === id ? { ...n, lu: true } : n));
     } catch { /* ignore */ }
-  };
+  }, []);
 
-  const handleMarkAllRead = async () => {
+  const handleMarkAllRead = useCallback(async () => {
     try {
       await notificationService.markAllAsRead();
       setNotifications(prev => prev.map(n => ({ ...n, lu: true })));
     } catch { /* ignore */ }
-  };
+  }, []);
 
   // Utiliser le hook useFavoris pour récupérer les vraies données
   const {
@@ -110,16 +110,16 @@ const DashboardUser = () => {
   // Handler pour retirer un favori
   const [removeFavDialog, setRemoveFavDialog] = useState<{ open: boolean; favoriId: number | null }>({ open: false, favoriId: null });
 
-  const handleRemoveFavorite = (favoriId: number) => {
+  const handleRemoveFavorite = useCallback((favoriId: number) => {
     setRemoveFavDialog({ open: true, favoriId });
-  };
+  }, []);
 
-  const confirmRemoveFavorite = () => {
+  const confirmRemoveFavorite = useCallback(() => {
     if (removeFavDialog.favoriId) {
       removeFavorite(removeFavDialog.favoriId);
     }
     setRemoveFavDialog({ open: false, favoriId: null });
-  };
+  }, [removeFavDialog.favoriId, removeFavorite]);
 
   return (
     <div className="min-h-screen bg-background">

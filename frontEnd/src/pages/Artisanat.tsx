@@ -43,7 +43,7 @@ interface ArtisanatCardProps {
   onFavorite?: (id: number) => void;
 }
 
-const ArtisanatCard: React.FC<ArtisanatCardProps> = ({ artisanat, onView, onFavorite }) => {
+const ArtisanatCard: React.FC<ArtisanatCardProps> = React.memo(({ artisanat, onView, onFavorite }) => {
   const { t } = useTranslation();
   const [isFavorite, setIsFavorite] = useState(false);
 
@@ -154,7 +154,7 @@ const ArtisanatCard: React.FC<ArtisanatCardProps> = ({ artisanat, onView, onFavo
       </CardContent>
     </Card>
   );
-};
+});
 
 // Composant principal
 const Artisanat: React.FC = () => {
