@@ -202,7 +202,9 @@ class UserRepository extends BaseRepository {
       where,
       page,
       limit,
-      attributes: { exclude: ['password', 'refresh_token'] },
+      attributes: ['id_user', 'nom', 'prenom', 'email', 'telephone', 'photo_url',
+        'entreprise', 'id_type_user', 'statut', 'wilaya_residence',
+        'date_creation', 'derniere_connexion', 'email_verifie'],
       order: [['date_creation', 'DESC']]
     });
   }
@@ -216,7 +218,8 @@ class UserRepository extends BaseRepository {
   async searchFiltered(whereClause, limit = 20) {
     return this.model.findAll({
       where: whereClause,
-      attributes: { exclude: ['password', 'refresh_token'] },
+      attributes: ['id_user', 'nom', 'prenom', 'email', 'photo_url',
+        'entreprise', 'id_type_user', 'statut', 'date_creation'],
       limit,
       order: [['nom', 'ASC'], ['prenom', 'ASC']]
     });
@@ -236,7 +239,9 @@ class UserRepository extends BaseRepository {
       },
       page,
       limit,
-      attributes: { exclude: ['password', 'refresh_token'] },
+      attributes: ['id_user', 'nom', 'prenom', 'email', 'photo_url',
+        'entreprise', 'id_type_user', 'statut', 'wilaya_residence',
+        'date_creation', 'email_verifie'],
       order: [['date_creation', 'DESC']]
     });
   }
@@ -248,7 +253,9 @@ class UserRepository extends BaseRepository {
    */
   async findDetailsWithRoles(userId) {
     return this.findById(userId, {
-      attributes: { exclude: ['password', 'refresh_token'] },
+      attributes: ['id_user', 'nom', 'prenom', 'email', 'telephone', 'photo_url',
+        'entreprise', 'bio', 'id_type_user', 'statut', 'wilaya_residence',
+        'date_creation', 'derniere_connexion', 'email_verifie', 'date_validation'],
       include: [{
         model: this.models.Role,
         as: 'Roles',
@@ -265,29 +272,32 @@ class UserRepository extends BaseRepository {
    */
   async findForExport(options = {}) {
     const { where = {}, pageSize = 200, maxResults = 10000 } = options;
-    let allUsers = [];
+    const allUsers = [];
     let offset = 0;
 
     while (allUsers.length < maxResults) {
       const batch = await this.model.findAll({
         where,
-        attributes: { exclude: ['password', 'refresh_token'] },
+        attributes: ['id_user', 'nom', 'prenom', 'email', 'telephone', 'entreprise',
+          'id_type_user', 'statut', 'wilaya_residence', 'date_creation', 'derniere_connexion'],
         include: [{
           model: this.models.Role,
           as: 'Roles',
+          attributes: ['id_role', 'nom_role'],
           through: { attributes: [] }
         }],
         order: [['date_creation', 'DESC']],
         limit: pageSize,
-        offset
+        offset,
+        subQuery: false
       });
       if (batch.length === 0) break;
-      allUsers = allUsers.concat(batch);
+      allUsers.push(...batch);
       offset += pageSize;
       if (batch.length < pageSize) break;
     }
 
-    return allUsers.slice(0, maxResults);
+    return allUsers.length > maxResults ? allUsers.slice(0, maxResults) : allUsers;
   }
 
   /**
@@ -388,10 +398,10 @@ class UserRepository extends BaseRepository {
   async findArtisansByWilaya(wilayaId) {
     const includes = [];
     if (this.models.TypeUser) {
-      includes.push({ model: this.models.TypeUser, attributes: ['nom_type'], required: false });
+      includes.push({ model: this.models.TypeUser, attributes: ['id_type_user', 'nom_type'], required: false });
     }
     if (this.models.Wilaya) {
-      includes.push({ model: this.models.Wilaya, required: false });
+      includes.push({ model: this.models.Wilaya, attributes: ['id_wilaya', 'nom', 'code'], required: false });
     }
 
     return this.model.findAll({
@@ -399,7 +409,8 @@ class UserRepository extends BaseRepository {
         wilaya_residence: parseInt(wilayaId),
         id_type_user: { [Op.ne]: 1 }
       },
-      attributes: { exclude: ['password', 'refresh_token'] },
+      attributes: ['id_user', 'nom', 'prenom', 'email', 'photo_url',
+        'entreprise', 'id_type_user', 'statut', 'wilaya_residence'],
       include: includes
     });
   }

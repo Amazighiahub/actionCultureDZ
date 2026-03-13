@@ -194,11 +194,13 @@ class OeuvreRepository extends BaseRepository {
       {
         model: this.models.TagMotCle,
         as: 'Tags',
+        attributes: ['id_tag', 'nom'],
         through: { attributes: [] }
       },
       {
         model: this.models.User,
         as: 'Users',
+        attributes: ['id_user', 'nom', 'prenom', 'photo_url'],
         through: { attributes: ['id_type_user', 'role_principal', 'personnage', 'description_role', 'ordre_apparition'] }
       }
     ];
@@ -207,15 +209,17 @@ class OeuvreRepository extends BaseRepository {
     if (this.models.Categorie) {
       includes.push({
         model: this.models.Categorie,
+        attributes: ['id_categorie', 'nom', 'description'],
         through: { attributes: [] }
       });
     }
     if (this.models.OeuvreIntervenant) {
       includes.push({
         model: this.models.OeuvreIntervenant,
+        attributes: ['id_oeuvre_intervenant', 'role', 'ordre'],
         include: [
-          { model: this.models.Intervenant, as: 'Intervenant', required: false },
-          { model: this.models.TypeUser, as: 'TypeUser', required: false }
+          { model: this.models.Intervenant, as: 'Intervenant', attributes: ['id_intervenant', 'nom', 'prenom', 'specialites'], required: false },
+          { model: this.models.TypeUser, as: 'TypeUser', attributes: ['id_type_user', 'nom_type'], required: false }
         ],
         required: false
       });

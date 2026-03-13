@@ -15,6 +15,9 @@ class EvenementRepository extends BaseRepository {
   /**
    * Inclusions standard pour les requêtes événements
    */
+  /**
+   * Includes légers pour les listes (pas de deep join Commune→Daira→Wilaya)
+   */
   _defaultIncludes() {
     const includes = [];
 
@@ -27,30 +30,12 @@ class EvenementRepository extends BaseRepository {
     }
 
     if (this.models.Lieu) {
-      const lieuInclude = {
+      includes.push({
         model: this.models.Lieu,
         as: 'Lieu',
         attributes: ['id_lieu', 'nom', 'adresse', 'latitude', 'longitude'],
         required: false
-      };
-      if (this.models.Commune) {
-        lieuInclude.include = [{
-          model: this.models.Commune,
-          attributes: ['id_commune', 'nom'],
-          required: false,
-          include: [{
-            model: this.models.Daira,
-            attributes: ['id_daira', 'nom'],
-            required: false,
-            include: [{
-              model: this.models.Wilaya,
-              attributes: ['id_wilaya', 'nom', 'code'],
-              required: false
-            }]
-          }]
-        }];
-      }
-      includes.push(lieuInclude);
+      });
     }
 
     if (this.models.User) {
@@ -59,6 +44,38 @@ class EvenementRepository extends BaseRepository {
         as: 'Organisateur',
         attributes: ['id_user', 'nom', 'prenom', 'email', 'photo_url']
       });
+    }
+
+    return includes;
+  }
+
+  /**
+   * Includes complets pour le détail (1 seul record → deep join acceptable)
+   */
+  _detailIncludes() {
+    const includes = this._defaultIncludes();
+
+    // Enrichir Lieu avec la hiérarchie administrative complète
+    const lieuIdx = includes.findIndex(i => i.as === 'Lieu');
+    if (lieuIdx !== -1 && this.models.Commune) {
+      includes[lieuIdx] = {
+        ...includes[lieuIdx],
+        include: [{
+          model: this.models.Commune,
+          attributes: ['id_commune', 'nom'],
+          required: false,
+          include: [{
+            model: this.models.Daira,
+            attributes: ['id_daira', 'nom'],
+            required: false,
+            include: this.models.Wilaya ? [{
+              model: this.models.Wilaya,
+              attributes: ['id_wilaya', 'nom', 'code'],
+              required: false
+            }] : []
+          }]
+        }]
+      };
     }
 
     return includes;
@@ -96,7 +113,7 @@ class EvenementRepository extends BaseRepository {
    * Trouve un événement avec tous ses détails
    */
   async findWithFullDetails(id) {
-    const includes = this._defaultIncludes();
+    const includes = this._detailIncludes();
 
     if (this.models.Programme) {
       includes.push({
@@ -173,8 +190,8 @@ class EvenementRepository extends BaseRepository {
    * Trouve par wilaya
    */
   async findByWilaya(wilayaId, options = {}) {
-    const include = this._defaultIncludes().map(inc => {
-      if (inc.as === 'Lieu' && this.models.Commune) {
+    const include = this._detailIncludes().map(inc => {
+      if (inc.as === 'Lieu') {
         return {
           ...inc,
           required: true,
@@ -272,7 +289,7 @@ class EvenementRepository extends BaseRepository {
       include: [{
         model: this.models.User,
         as: 'User',
-        attributes: { exclude: ['password'] }
+        attributes: ['id_user', 'nom', 'prenom', 'email', 'photo_url', 'id_type_user']
       }],
       order: [['date_inscription', 'DESC']]
     });

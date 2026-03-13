@@ -153,7 +153,7 @@ class App {
       next();
     });
 
-    // Compression
+    // Compression gzip — skip small responses (< 1KB), optimize for JSON API
     this.app.use(compression({
       filter: (req, res) => {
         if (req.headers['x-no-compression']) {
@@ -161,7 +161,8 @@ class App {
         }
         return compression.filter(req, res);
       },
-      level: 6
+      level: 6,
+      threshold: 1024 // Skip responses < 1KB (gzip overhead > gain)
     }));
 
     // Logging
@@ -178,6 +179,17 @@ class App {
     // Détecte automatiquement via: ?lang=ar, cookie, header X-Language, Accept-Language
     this.app.use(languageMiddleware);
     this.app.use(i18nMiddleware);
+
+    // Headers de performance pour les réponses API
+    this.app.use('/api', (req, res, next) => {
+      // Vary pour CDN/proxies (langue + encoding)
+      res.set('Vary', 'Accept-Encoding, Accept-Language');
+      // Empêcher le cache sur les mutations
+      if (req.method !== 'GET') {
+        res.set('Cache-Control', 'no-store');
+      }
+      next();
+    });
 
     // Augmenter les limites pour les uploads de médias
     this.app.use(express.json({ limit: '5mb' }));

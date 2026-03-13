@@ -1,8 +1,11 @@
 // services/socketService.ts
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { io, Socket } from 'socket.io-client';
+// socket.io-client (~45KB) est chargé dynamiquement au premier connect()
+import type { Socket } from 'socket.io-client';
 import { API_BASE_URL } from '@/config/api';
 import { authService } from './auth.service';
+
+const loadSocketIO = () => import('socket.io-client').then(m => m.io);
 
 // ================================================
 // TYPES DE BASE
@@ -424,11 +427,13 @@ class SocketService {
     }
 
     this.isConnecting = true;
-    this.connectionPromise = new Promise((resolve, reject) => {
+    this.connectionPromise = new Promise(async (resolve, reject) => {
       try {
         const authToken = token || authService.getAuthToken();
-
         const wsUrl = API_BASE_URL.replace('/api', '');
+
+        // Charger socket.io-client dynamiquement (premier appel seulement)
+        const io = await loadSocketIO();
 
         this.socket = io(wsUrl, {
           ...this.config,
@@ -442,7 +447,7 @@ class SocketService {
 
         this.setupSocketListeners(resolve, reject);
         this.reattachListeners();
-        
+
       } catch (error) {
         this.isConnecting = false;
         this.connectionError = error as Error;

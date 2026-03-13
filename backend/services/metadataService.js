@@ -6,40 +6,31 @@
 const { Op } = require('sequelize');
 const { mergeTranslations, prepareMultiLangField, SUPPORTED_LANGUAGES } = require('../helpers/i18n');
 const { sanitizeLike } = require('../utils/sanitize');
-const LRUCache = require('../utils/LRUCache');
-
-// TTL par défaut : 10 minutes (les tables de référence changent rarement)
-const METADATA_CACHE_TTL = 10 * 60 * 1000;
+const CacheManager = require('../utils/CacheManager');
 
 class MetadataService {
   constructor(models) {
     this.models = models;
     this.sequelize = models.sequelize || Object.values(models)[0]?.sequelize;
-    this.cache = new LRUCache(100);
+    this.cache = CacheManager.create({
+      namespace: 'metadata',
+      defaultTTL: 10 * 60 * 1000, // 10 min — tables de référence changent rarement
+      maxSize: 100
+    });
   }
 
   /**
    * Récupère depuis le cache ou exécute le générateur
    */
-  async _cached(key, generator, ttl = METADATA_CACHE_TTL) {
-    const cached = this.cache.get(key);
-    if (cached !== undefined) return cached;
-    const data = await generator();
-    this.cache.set(key, data, ttl);
-    return data;
+  async _cached(key, generator, ttl) {
+    return this.cache.getOrSet(key, generator, ttl);
   }
 
   /**
    * Invalide le cache pour un pattern donné (ou tout le cache)
    */
   clearCache(pattern = null) {
-    if (pattern) {
-      for (const key of this.cache.keys()) {
-        if (key.includes(pattern)) this.cache.delete(key);
-      }
-    } else {
-      this.cache.clear();
-    }
+    this.cache.invalidate(pattern);
   }
 
   // ========================================================================

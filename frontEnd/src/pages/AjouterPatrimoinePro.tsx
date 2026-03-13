@@ -18,7 +18,10 @@ import { patrimoineService, CreateSiteData } from '@/services/patrimoine.service
 import { metadataService } from '@/services/metadata.service';
 // lieuService is used internally by LieuSelector
 import MultiLangInput from '@/components/MultiLangInput';
-import { LieuSelector } from '@/components/LieuSelector';
+// LieuSelector chargé en lazy (inclut leaflet ~40KB)
+const LieuSelector = React.lazy(() =>
+  import('@/components/LieuSelector').then(m => ({ default: m.LieuSelector }))
+);
 
 interface TranslatableValue {
   fr?: string;
@@ -439,24 +442,26 @@ const AjouterPatrimoinePro: React.FC = () => {
                       <MapPin className="h-4 w-4" />
                       {t('ajouterPatrimoine.lieu', 'Lieu')} *
                     </Label>
-                    <LieuSelector
-                      value={createdLieuId ?? undefined}
-                      onChange={(lieuId, lieu) => {
-                        setCreatedLieuId(lieuId ?? null);
-                        if (lieu) {
-                          setFormData(prev => ({
-                            ...prev,
-                            latitude: lieu.latitude,
-                            longitude: lieu.longitude,
-                            adresse: typeof lieu.adresse === 'object'
-                              ? (lieu.adresse as any).fr || ''
-                              : lieu.adresse || ''
-                          }));
-                        }
-                      }}
-                      wilayaId={formData.wilaya_id || undefined}
-                      required
-                    />
+                    <React.Suspense fallback={<div className="h-20 bg-muted animate-pulse rounded" />}>
+                      <LieuSelector
+                        value={createdLieuId ?? undefined}
+                        onChange={(lieuId, lieu) => {
+                          setCreatedLieuId(lieuId ?? null);
+                          if (lieu) {
+                            setFormData(prev => ({
+                              ...prev,
+                              latitude: lieu.latitude,
+                              longitude: lieu.longitude,
+                              adresse: typeof lieu.adresse === 'object'
+                                ? (lieu.adresse as any).fr || ''
+                                : lieu.adresse || ''
+                            }));
+                          }
+                        }}
+                        wilayaId={formData.wilaya_id || undefined}
+                        required
+                      />
+                    </React.Suspense>
                   </div>
 
                   {/* Afficher les coordonnées du lieu sélectionné */}

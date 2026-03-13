@@ -18,7 +18,8 @@ import { patrimoineService } from '@/services/patrimoine.service';
 import { useToast } from '@/hooks/use-toast';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import VisitePlanner from '@/components/patrimoine/VisitePlanner';
+// VisitePlanner chargé en lazy (inclut leaflet ~40KB, rendu conditionnel)
+const VisitePlanner = React.lazy(() => import('@/components/patrimoine/VisitePlanner'));
 import ServicesProximite from '@/components/shared/ServicesProximite';
 import SEOHead, { buildPatrimoineJsonLd, buildBreadcrumbJsonLd } from '@/components/SEOHead';
 
@@ -983,16 +984,20 @@ const PatrimoineDetail = () => {
         </Dialog>
       )}
 
-      {/* Modal Planificateur de visite */}
-      <VisitePlanner
-        isOpen={showVisitePlanner}
-        onClose={() => setShowVisitePlanner(false)}
-        siteId={site.id_lieu}
-        siteName={translate(site.nom, lang)}
-        siteLatitude={site.latitude}
-        siteLongitude={site.longitude}
-        siteType={site.typePatrimoine}
-      />
+      {/* Modal Planificateur de visite — lazy loaded */}
+      {showVisitePlanner && (
+        <React.Suspense fallback={null}>
+          <VisitePlanner
+            isOpen={showVisitePlanner}
+            onClose={() => setShowVisitePlanner(false)}
+            siteId={site.id_lieu}
+            siteName={translate(site.nom, lang)}
+            siteLatitude={site.latitude}
+            siteLongitude={site.longitude}
+            siteType={site.typePatrimoine}
+          />
+        </React.Suspense>
+      )}
     </div>
   );
 };

@@ -142,17 +142,25 @@ class IntervenantService {
   }
 
   async getTypesIntervenants() {
+    // Cache en mémoire (change rarement, évite de charger toute la table)
+    if (this._typesIntervenantsCache && this._typesIntervenantsCacheExpiry > Date.now()) {
+      return this._typesIntervenantsCache;
+    }
+
     const intervenants = await this.models.Intervenant.findAll({
       attributes: ['specialites'],
-      where: { specialites: { [Op.ne]: null }, actif: true }
+      where: { specialites: { [Op.ne]: null }, actif: true },
+      limit: 5000,
+      raw: true
     });
 
     const specialitesSet = new Set();
-    intervenants.forEach(i => {
-      if (i.specialites && Array.isArray(i.specialites)) {
-        i.specialites.forEach(spec => specialitesSet.add(spec));
+    for (const i of intervenants) {
+      const specs = typeof i.specialites === 'string' ? JSON.parse(i.specialites) : i.specialites;
+      if (Array.isArray(specs)) {
+        for (const spec of specs) specialitesSet.add(spec);
       }
-    });
+    }
 
     const typesSuggeres = [
       'Animation culturelle', 'Arts plastiques', 'Cinéma', 'Conférence',
@@ -161,7 +169,10 @@ class IntervenantService {
     ];
     typesSuggeres.forEach(type => specialitesSet.add(type));
 
-    return Array.from(specialitesSet).sort();
+    const result = Array.from(specialitesSet).sort();
+    this._typesIntervenantsCache = result;
+    this._typesIntervenantsCacheExpiry = Date.now() + 10 * 60 * 1000; // 10min
+    return result;
   }
 
   // ========================================================================

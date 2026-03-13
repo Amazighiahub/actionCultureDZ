@@ -8,10 +8,16 @@ const BaseService = require('../core/baseService');
 const OeuvreDTO = require('../../dto/oeuvre/oeuvreDTO');
 const CreateOeuvreDTO = require('../../dto/oeuvre/createOeuvreDTO');
 const UpdateOeuvreDTO = require('../../dto/oeuvre/updateOeuvreDTO');
+const CacheManager = require('../../utils/CacheManager');
 
 class OeuvreService extends BaseService {
   constructor(oeuvreRepository, options = {}) {
     super(oeuvreRepository, options);
+    this.cache = CacheManager.create({
+      namespace: 'oeuvres',
+      defaultTTL: 3 * 60 * 1000, // 3 min pour les listes
+      maxSize: 80
+    });
   }
 
   // ============================================================================
@@ -34,12 +40,14 @@ class OeuvreService extends BaseService {
    * Récupère les œuvres publiées
    */
   async findPublished(options = {}) {
-    const result = await this.repository.findPublished(options);
-
-    return {
-      data: OeuvreDTO.fromEntities(result.data),
-      pagination: result.pagination
-    };
+    const cacheKey = `published:${JSON.stringify(options)}`;
+    return this.cache.getOrSet(cacheKey, async () => {
+      const result = await this.repository.findPublished(options);
+      return {
+        data: OeuvreDTO.fromEntities(result.data),
+        pagination: result.pagination
+      };
+    });
   }
 
   /**
@@ -120,16 +128,20 @@ class OeuvreService extends BaseService {
    * Récupère les œuvres populaires
    */
   async findPopular(limit = 10) {
-    const oeuvres = await this.repository.findPopular(limit);
-    return OeuvreDTO.fromEntities(oeuvres);
+    return this.cache.getOrSet(`popular:${limit}`, async () => {
+      const oeuvres = await this.repository.findPopular(limit);
+      return OeuvreDTO.fromEntities(oeuvres);
+    }, 5 * 60 * 1000); // 5 min — classement stable
   }
 
   /**
    * Récupère les œuvres récentes
    */
   async findRecent(limit = 10) {
-    const oeuvres = await this.repository.findRecent(limit);
-    return OeuvreDTO.fromEntities(oeuvres);
+    return this.cache.getOrSet(`recent:${limit}`, async () => {
+      const oeuvres = await this.repository.findRecent(limit);
+      return OeuvreDTO.fromEntities(oeuvres);
+    }, 5 * 60 * 1000);
   }
 
   /**
@@ -299,6 +311,7 @@ class OeuvreService extends BaseService {
     });
 
     const { oeuvre, articleRecord, articleScientifiqueRecord } = result;
+    this.cache.invalidate();
     this.logger.info(`Œuvre créée: ${oeuvre.id_oeuvre} par utilisateur: ${userId}`);
 
     // 5. Retourner l'œuvre complète et les enregistrements créés (pour article/blocs)
@@ -383,6 +396,7 @@ class OeuvreService extends BaseService {
       }
     });
 
+    this.cache.invalidate();
     this.logger.info(`Œuvre mise à jour: ${id} par utilisateur: ${userId}`);
 
     // 8. Retourner l'œuvre mise à jour
@@ -411,6 +425,7 @@ class OeuvreService extends BaseService {
     // 3. Supprimer (les relations seront supprimées en cascade)
     await this.repository.delete(id);
 
+    this.cache.invalidate();
     this.logger.info(`Œuvre supprimée: ${id} par utilisateur: ${userId}`);
 
     return true;
@@ -475,6 +490,7 @@ class OeuvreService extends BaseService {
 
     const updated = await this.repository.validate(id, validatorId);
 
+    this.cache.invalidate();
     this.logger.info(`Œuvre validée: ${id} par: ${validatorId}`);
 
     // TODO: Envoyer notification au créateur
@@ -501,6 +517,7 @@ class OeuvreService extends BaseService {
 
     const updated = await this.repository.reject(id, validatorId, motif);
 
+    this.cache.invalidate();
     this.logger.info(`Œuvre refusée: ${id} par: ${validatorId}`);
 
     // TODO: Envoyer notification au créateur
@@ -521,6 +538,7 @@ class OeuvreService extends BaseService {
       est_mis_en_avant: featured
     });
 
+    this.cache.invalidate();
     this.logger.info(`Œuvre ${featured ? 'mise en avant' : 'retirée de la mise en avant'}: ${id}`);
 
     return OeuvreDTO.fromEntity(updated);
@@ -534,14 +552,14 @@ class OeuvreService extends BaseService {
    * Récupère les statistiques des œuvres
    */
   async getStats() {
-    return this.repository.getStats();
+    return this.cache.getOrSet('stats', () => this.repository.getStats(), 5 * 60 * 1000);
   }
 
   /**
    * Statistiques publiques des œuvres
    */
   async getPublicStats() {
-    return this.repository.getStats();
+    return this.cache.getOrSet('public_stats', () => this.repository.getStats(), 5 * 60 * 1000);
   }
 
   // ============================================================================

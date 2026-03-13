@@ -5,10 +5,16 @@
 
 const BaseService = require('../core/baseService');
 const EvenementDTO = require('../../dto/evenement/evenementDTO');
+const CacheManager = require('../../utils/CacheManager');
 
 class EvenementService extends BaseService {
   constructor(evenementRepository, options = {}) {
     super(evenementRepository, options);
+    this.cache = CacheManager.create({
+      namespace: 'evenements',
+      defaultTTL: 2 * 60 * 1000, // 2 min — les événements changent plus souvent que les metadata
+      maxSize: 50
+    });
   }
 
   // ============================================================================
@@ -19,22 +25,28 @@ class EvenementService extends BaseService {
    * Liste des événements publiés
    */
   async findPublished(options = {}) {
-    const result = await this.repository.findPublished(options);
-    return {
-      data: EvenementDTO.fromEntities(result.data),
-      pagination: result.pagination
-    };
+    const cacheKey = `published:${JSON.stringify(options)}`;
+    return this.cache.getOrSet(cacheKey, async () => {
+      const result = await this.repository.findPublished(options);
+      return {
+        data: EvenementDTO.fromEntities(result.data),
+        pagination: result.pagination
+      };
+    });
   }
 
   /**
    * Événements à venir
    */
   async findUpcoming(options = {}) {
-    const result = await this.repository.findUpcoming(options);
-    return {
-      data: EvenementDTO.fromEntities(result.data),
-      pagination: result.pagination
-    };
+    const cacheKey = `upcoming:${JSON.stringify(options)}`;
+    return this.cache.getOrSet(cacheKey, async () => {
+      const result = await this.repository.findUpcoming(options);
+      return {
+        data: EvenementDTO.fromEntities(result.data),
+        pagination: result.pagination
+      };
+    });
   }
 
   /**
@@ -85,11 +97,14 @@ class EvenementService extends BaseService {
    * Par wilaya
    */
   async findByWilaya(wilayaId, options = {}) {
-    const result = await this.repository.findByWilaya(wilayaId, options);
-    return {
-      data: EvenementDTO.fromEntities(result.data),
-      pagination: result.pagination
-    };
+    const cacheKey = `wilaya:${wilayaId}:${JSON.stringify(options)}`;
+    return this.cache.getOrSet(cacheKey, async () => {
+      const result = await this.repository.findByWilaya(wilayaId, options);
+      return {
+        data: EvenementDTO.fromEntities(result.data),
+        pagination: result.pagination
+      };
+    });
   }
 
   /**
@@ -156,6 +171,7 @@ class EvenementService extends BaseService {
     const evenement = await this.repository.create(entityData);
     const full = await this.repository.findWithFullDetails(evenement.id_evenement);
 
+    this.cache.invalidate();
     this.logger.info(`Événement créé: ${evenement.id_evenement} par user: ${userId}`);
 
     return EvenementDTO.fromEntity(full);
@@ -192,6 +208,7 @@ class EvenementService extends BaseService {
     await this.repository.update(id, updateData);
     const updated = await this.repository.findWithFullDetails(id);
 
+    this.cache.invalidate();
     this.logger.info(`Événement modifié: ${id} par user: ${userId}`);
 
     return EvenementDTO.fromEntity(updated);
@@ -211,6 +228,7 @@ class EvenementService extends BaseService {
     }
 
     await this.repository.delete(id);
+    this.cache.invalidate();
     this.logger.info(`Événement supprimé: ${id} par user: ${userId}`);
     return true;
   }
@@ -470,6 +488,7 @@ class EvenementService extends BaseService {
     await this.repository.update(id, { statut: 'publie' });
     const updated = await this.repository.findWithFullDetails(id);
 
+    this.cache.invalidate();
     this.logger.info(`Événement publié: ${id} par admin: ${adminId}`);
     return EvenementDTO.fromEntity(updated);
   }
@@ -495,15 +514,16 @@ class EvenementService extends BaseService {
       this.logger.error('Erreur notification annulation:', notifError);
     }
 
+    this.cache.invalidate();
     this.logger.info(`Événement annulé: ${id} par admin: ${adminId}, motif: ${motif}`);
     return EvenementDTO.fromEntity(updated);
   }
 
   /**
-   * Statistiques
+   * Statistiques (cached 5 min)
    */
   async getStats() {
-    return this.repository.getStats();
+    return this.cache.getOrSet('stats', () => this.repository.getStats(), 5 * 60 * 1000);
   }
 }
 

@@ -188,21 +188,22 @@ describe('DashboardUserManagementService', () => {
       expect(result.success).toEqual([1, 2]);
     });
 
-    it('should deactivate users one by one', async () => {
-      mockUserRepo.update.mockResolvedValue(true);
+    it('should deactivate users in batch via updateMany', async () => {
+      mockUserRepo.updateMany.mockResolvedValue(true);
 
       const result = await service.bulkUserAction('deactivate', [1, 2], {}, 10);
 
-      expect(mockUserRepo.update).toHaveBeenCalledTimes(2);
+      expect(mockUserRepo.updateMany).toHaveBeenCalledTimes(1);
       expect(result.success).toEqual([1, 2]);
     });
 
-    it('should collect errors for failed individual actions', async () => {
-      mockUserRepo.update
+    it('should activate users in parallel via Promise.allSettled', async () => {
+      // reactivateUser is called for each user
+      service.reactivateUser = jest.fn()
         .mockResolvedValueOnce(true)
         .mockRejectedValueOnce(new Error('DB error'));
 
-      const result = await service.bulkUserAction('deactivate', [1, 2], {}, 10);
+      const result = await service.bulkUserAction('activate', [1, 2], {}, 10);
 
       expect(result.success).toEqual([1]);
       expect(result.errors).toHaveLength(1);

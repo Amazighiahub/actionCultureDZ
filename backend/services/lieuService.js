@@ -520,6 +520,31 @@ class LieuService {
     const latDelta = rayon / 111;
     const lngDelta = rayon / (111 * Math.cos(parseFloat(latitude) * Math.PI / 180));
 
+    const include = [
+      {
+        model: this.models.DetailLieu,
+        attributes: ['id_detail_lieu', 'type_lieu', 'description_courte'],
+        required: true
+      }
+    ];
+
+    // 1 seul niveau de join géo (Commune avec nom) — pas besoin de Daira/Wilaya pour la proximité
+    if (this.models.Commune) {
+      include.push({
+        model: this.models.Commune,
+        attributes: ['id_commune', 'nom'],
+        required: false
+      });
+    }
+
+    if (this.models.LieuMedia) {
+      include.push({
+        model: this.models.LieuMedia,
+        attributes: ['url', 'type_media'],
+        required: false
+      });
+    }
+
     const lieux = await this.models.Lieu.findAll({
       where: {
         latitude: {
@@ -529,18 +554,10 @@ class LieuService {
           [Op.between]: [parseFloat(longitude) - lngDelta, parseFloat(longitude) + lngDelta]
         }
       },
-      include: [
-        { model: this.models.DetailLieu, required: true },
-        {
-          model: this.models.Commune,
-          include: [{
-            model: this.models.Daira,
-            include: [{ model: this.models.Wilaya }]
-          }]
-        },
-        { model: this.models.LieuMedia, limit: 1, required: false }
-      ],
-      limit: parseInt(limit)
+      attributes: ['id_lieu', 'nom', 'adresse', 'latitude', 'longitude', 'typeLieu'],
+      include,
+      limit: parseInt(limit),
+      subQuery: false
     });
 
     return lieux;

@@ -29,8 +29,10 @@ import { API_ENDPOINTS } from '@/config/api';
 import { Wilaya } from '@/types';
 import { Lieu } from '@/types/models/lieu.types';
 
-// Import du composant LieuSelector
-import { LieuSelector } from '@/components/LieuSelector';
+// LieuSelector chargé en lazy (inclut leaflet ~40KB)
+const LieuSelector = React.lazy(() =>
+  import('@/components/LieuSelector').then(m => ({ default: m.LieuSelector }))
+);
 
 const AjouterEvenement = () => {
   const navigate = useNavigate();
@@ -567,15 +569,17 @@ const AjouterEvenement = () => {
                 {!isVirtual && (
                   <div className="space-y-2">
                     <Label>{t('events.create.location')} *</Label>
-                    <LieuSelector
-                      value={selectedLieuId}
-                      onChange={(lieuId, lieu) => {
-                        setSelectedLieuId(lieuId);
-                        setSelectedLieu(lieu);
-                      }}
-                      wilayaId={selectedWilayaId}
-                      required
-                    />
+                    <React.Suspense fallback={<div className="h-20 bg-muted animate-pulse rounded" />}>
+                      <LieuSelector
+                        value={selectedLieuId}
+                        onChange={(lieuId, lieu) => {
+                          setSelectedLieuId(lieuId);
+                          setSelectedLieu(lieu);
+                        }}
+                        wilayaId={selectedWilayaId}
+                        required
+                      />
+                    </React.Suspense>
                     {selectedLieu && (
                       <p className="text-sm text-muted-foreground mt-2">
                         {selectedLieu.adresse}

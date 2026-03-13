@@ -1,8 +1,13 @@
 // services/articlePdfExport.service.ts
-import { jsPDF } from 'jspdf';
-import html2canvas from 'html2canvas';
+// jsPDF (~180KB) et html2canvas (~40KB) sont chargés dynamiquement
+// uniquement quand l'utilisateur déclenche un export PDF
+import type { jsPDF as JsPDFType } from 'jspdf';
 import type { Oeuvre } from '@/types/models/oeuvre.types';
 import type { ArticleBlock } from '@/types/models/articles.types';
+
+// Lazy loaders — ne téléchargent le code qu'au premier appel
+const loadJsPDF = () => import('jspdf').then(m => m.jsPDF);
+const loadHtml2Canvas = () => import('html2canvas').then(m => m.default);
 
 export class ArticlePdfExportService {
   /**
@@ -17,14 +22,17 @@ export class ArticlePdfExportService {
       paperSize?: 'a4' | 'letter';
     }
   ) {
-    const { 
-      includeComments = false, 
+    const {
+      includeComments = false,
       includeMetadata = true,
-      paperSize = 'a4' 
+      paperSize = 'a4'
     } = options || {};
 
+    // Charger jsPDF dynamiquement (premier appel seulement)
+    const JsPDF = await loadJsPDF();
+
     // Créer un nouveau document PDF
-    const pdf = new jsPDF({
+    const pdf = new JsPDF({
       orientation: 'portrait',
       unit: 'mm',
       format: paperSize
@@ -193,6 +201,12 @@ export class ArticlePdfExportService {
     if (!element) return;
 
     try {
+      // Charger les libs dynamiquement (premier appel seulement)
+      const [JsPDF, html2canvas] = await Promise.all([
+        loadJsPDF(),
+        loadHtml2Canvas()
+      ]);
+
       // Capturer l'élément en canvas
       const canvas = await html2canvas(element, {
         scale: 2,
@@ -202,7 +216,7 @@ export class ArticlePdfExportService {
       });
 
       // Créer le PDF
-      const pdf = new jsPDF({
+      const pdf = new JsPDF({
         orientation: 'portrait',
         unit: 'mm',
         format: 'a4'

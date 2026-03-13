@@ -249,28 +249,38 @@ class DashboardUserManagementService {
       return results;
     }
 
-    for (const userId of userIds) {
-      try {
-        switch (action) {
-          case 'activate':
-            await this.reactivateUser(userId);
-            break;
-          case 'deactivate':
-            await this.userRepo.update(userId, { statut: 'inactif' });
-            break;
-          case 'delete':
-            await this.userRepo.update(userId, { statut: 'supprime', date_suppression: new Date() });
-            break;
-          default:
-            throw new Error(`Action non reconnue: ${action}`);
-        }
-        results.success.push(userId);
-      } catch (error) {
-        results.errors.push({ userId, error: error.message });
-      }
+    // Batch UPDATE pour deactivate/delete (1 seule query)
+    if (action === 'deactivate') {
+      await this.userRepo.updateMany(
+        { id_user: { [Op.in]: userIds } },
+        { statut: 'inactif' }
+      );
+      results.success = userIds;
+      return results;
     }
 
-    return results;
+    if (action === 'delete') {
+      await this.userRepo.updateMany(
+        { id_user: { [Op.in]: userIds } },
+        { statut: 'supprime', date_suppression: new Date() }
+      );
+      results.success = userIds;
+      return results;
+    }
+
+    // activate: logique métier par user → parallèle avec Promise.allSettled
+    if (action === 'activate') {
+      const settled = await Promise.allSettled(
+        userIds.map(userId => this.reactivateUser(userId))
+      );
+      settled.forEach((result, i) => {
+        if (result.status === 'fulfilled') results.success.push(userIds[i]);
+        else results.errors.push({ userId: userIds[i], error: result.reason?.message });
+      });
+      return results;
+    }
+
+    throw new Error(`Action non reconnue: ${action}`);
   }
 
   /**

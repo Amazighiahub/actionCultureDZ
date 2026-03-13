@@ -13,19 +13,25 @@ const initEvenementRoutesV2 = (models, authMiddleware) => {
   const router = express.Router();
   const { authenticate, requireRole } = authMiddleware;
 
+  // Cache HTTP pour les listes publiques (données changent toutes les ~2 min)
+  const cachePublic = (req, res, next) => {
+    res.set('Cache-Control', 'public, max-age=120, stale-while-revalidate=30');
+    next();
+  };
+
   // ============================================================================
   // ROUTES PUBLIQUES (specific paths BEFORE :id catch-all)
   // ============================================================================
 
-  router.get('/', asyncHandler((req, res) => evenementController.list(req, res)));
-  router.get('/upcoming', asyncHandler((req, res) => {
+  router.get('/', cachePublic, asyncHandler((req, res) => evenementController.list(req, res)));
+  router.get('/upcoming', cachePublic, asyncHandler((req, res) => {
     req.query.upcoming = 'true';
     evenementController.list(req, res);
   }));
-  router.get('/statistics', asyncHandler((req, res) => evenementController.getStats(req, res)));
-  router.get('/search', asyncHandler((req, res) => evenementController.search(req, res)));
-  router.get('/wilaya/:wilayaId', asyncHandler((req, res) => evenementController.getByWilaya(req, res)));
-  router.get('/oeuvre/:oeuvreId', asyncHandler((req, res) => evenementController.getByOeuvre(req, res)));
+  router.get('/statistics', cachePublic, asyncHandler((req, res) => evenementController.getStats(req, res)));
+  router.get('/search', cachePublic, asyncHandler((req, res) => evenementController.search(req, res)));
+  router.get('/wilaya/:wilayaId', cachePublic, asyncHandler((req, res) => evenementController.getByWilaya(req, res)));
+  router.get('/oeuvre/:oeuvreId', cachePublic, asyncHandler((req, res) => evenementController.getByOeuvre(req, res)));
 
   // ============================================================================
   // ROUTES AUTHENTIFIÉES (specific paths BEFORE :id catch-all)

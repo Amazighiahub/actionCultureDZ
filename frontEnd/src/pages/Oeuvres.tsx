@@ -56,7 +56,7 @@ interface OeuvreCardProps {
   onFavorite?: (id: number) => void;
 }
 
-const OeuvreCard: React.FC<OeuvreCardProps> = ({ oeuvre, onView, onFavorite }) => {
+const OeuvreCard: React.FC<OeuvreCardProps> = React.memo(({ oeuvre, onView, onFavorite }) => {
   const { t } = useTranslation();
   const [isFavorite, setIsFavorite] = useState(false);
   
@@ -157,7 +157,7 @@ const OeuvreCard: React.FC<OeuvreCardProps> = ({ oeuvre, onView, onFavorite }) =
       </CardContent>
     </Card>
   );
-};
+});
 
 // Composant principal
 const Oeuvres: React.FC = () => {

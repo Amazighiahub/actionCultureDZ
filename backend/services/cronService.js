@@ -287,19 +287,7 @@ class CronService {
   async sendWeeklyNewsletter() {
     if (!this.models || !this.services?.emailQueueService) return;
 
-    // Récupérer les utilisateurs inscrits à la newsletter
-    const users = await this.models.User.findAll({
-      where: {
-        accepte_newsletter: true,
-        statut: 'actif',
-        email_verifie: true
-      },
-      attributes: ['id_user', 'email', 'nom', 'prenom']
-    });
-
-    if (users.length === 0) return;
-
-    // Récupérer le contenu de la semaine
+    // Récupérer le contenu de la semaine (avant la boucle — identique pour tous)
     const lastWeek = new Date();
     lastWeek.setDate(lastWeek.getDate() - 7);
 
@@ -324,26 +312,42 @@ class CronService {
       }) || []
     ]);
 
-    // Préparer le template
     const template = {
       subject: '📰 Votre newsletter Action Culture',
       text: `Découvrez les nouveautés de la semaine sur Action Culture...`,
       html: this.generateNewsletterHtml(newEvents, newOeuvres)
     };
 
-    // Préparer les emails
-    const emails = users.map(user => ({
-      to: user.email,
-      data: {
-        nom: user.nom,
-        prenom: user.prenom
-      }
-    }));
+    // Pagination par batch pour éviter OOM sur grande base d'abonnés
+    const BATCH_SIZE = 500;
+    let offset = 0;
+    let totalSent = 0;
+    const newsletterWhere = { accepte_newsletter: true, statut: 'actif', email_verifie: true };
 
-    // Envoyer via la queue
-    await this.services.emailQueueService.addBulkEmails(emails, template);
+    while (true) {
+      const users = await this.models.User.findAll({
+        where: newsletterWhere,
+        attributes: ['id_user', 'email', 'nom', 'prenom'],
+        order: [['id_user', 'ASC']],
+        limit: BATCH_SIZE,
+        offset
+      });
 
-    console.log(`📮 Newsletter envoyée à ${users.length} abonnés`);
+      if (users.length === 0) break;
+
+      const emails = users.map(user => ({
+        to: user.email,
+        data: { nom: user.nom, prenom: user.prenom }
+      }));
+
+      await this.services.emailQueueService.addBulkEmails(emails, template);
+      totalSent += users.length;
+      offset += BATCH_SIZE;
+
+      if (users.length < BATCH_SIZE) break;
+    }
+
+    console.log(`📮 Newsletter envoyée à ${totalSent} abonnés`);
   }
 
   /**
@@ -367,20 +371,32 @@ class CronService {
       attributes: ['id_evenement', 'nom_evenement', 'date_debut']
     });
 
-    for (const event of upcomingEvents) {
-      // Récupérer les participants confirmés
-      const participants = await this.models.EvenementUser.findAll({
-        where: {
-          id_evenement: event.id_evenement,
-          statut_participation: 'confirme'
-        },
-        attributes: ['id_user']
-      });
+    if (upcomingEvents.length === 0) return;
 
-      // Créer toutes les notifications en une seule query
-      if (participants.length > 0) {
-        const notifications = participants.map(p => ({
-          id_user: p.id_user,
+    const eventIds = upcomingEvents.map(e => e.id_evenement);
+
+    // 1 seule requête pour TOUS les participants de TOUS les événements
+    const allParticipants = await this.models.EvenementUser.findAll({
+      where: {
+        id_evenement: { [Op.in]: eventIds },
+        statut_participation: 'confirme'
+      },
+      attributes: ['id_user', 'id_evenement']
+    });
+
+    // Grouper par événement
+    const participantsByEvent = new Map();
+    for (const p of allParticipants) {
+      if (!participantsByEvent.has(p.id_evenement)) participantsByEvent.set(p.id_evenement, []);
+      participantsByEvent.get(p.id_evenement).push(p.id_user);
+    }
+
+    // Créer toutes les notifications + marquer les events en parallèle
+    await Promise.all(upcomingEvents.map(async (event) => {
+      const userIds = participantsByEvent.get(event.id_evenement) || [];
+      if (userIds.length > 0) {
+        const notifications = userIds.map(userId => ({
+          id_user: userId,
           type_notification: 'rappel_evenement',
           titre: 'Événement dans 1 heure !',
           message: `L'événement "${event.nom_evenement}" commence dans 1 heure`,
@@ -389,9 +405,8 @@ class CronService {
         }));
         await this.models.Notification.bulkCreate(notifications);
       }
-
       await event.update({ rappel_derniere_minute: true });
-    }
+    }));
   }
 
   /**

@@ -13,16 +13,22 @@ const initOeuvreRoutesV2 = (models, authMiddleware) => {
   const router = express.Router();
   const { authenticate, requireRole } = authMiddleware;
 
+  // Cache HTTP pour les listes publiques (données changent toutes les ~3 min)
+  const cachePublic = (req, res, next) => {
+    res.set('Cache-Control', 'public, max-age=180, stale-while-revalidate=30');
+    next();
+  };
+
   // ============================================================================
   // ROUTES PUBLIQUES
   // ============================================================================
 
-  router.get('/', asyncHandler((req, res) => oeuvreController.list(req, res)));
-  router.get('/recent', asyncHandler((req, res) => oeuvreController.getRecent(req, res)));
-  router.get('/popular', asyncHandler((req, res) => oeuvreController.getPopular(req, res)));
-  router.get('/statistics', asyncHandler((req, res) => oeuvreController.getStatistics(req, res)));
-  router.get('/search', asyncHandler((req, res) => oeuvreController.search(req, res)));
-  router.get('/search/intervenants', asyncHandler((req, res) => oeuvreController.searchIntervenants(req, res)));
+  router.get('/', cachePublic, asyncHandler((req, res) => oeuvreController.list(req, res)));
+  router.get('/recent', cachePublic, asyncHandler((req, res) => oeuvreController.getRecent(req, res)));
+  router.get('/popular', cachePublic, asyncHandler((req, res) => oeuvreController.getPopular(req, res)));
+  router.get('/statistics', cachePublic, asyncHandler((req, res) => oeuvreController.getStatistics(req, res)));
+  router.get('/search', cachePublic, asyncHandler((req, res) => oeuvreController.search(req, res)));
+  router.get('/search/intervenants', cachePublic, asyncHandler((req, res) => oeuvreController.searchIntervenants(req, res)));
 
   // ============================================================================
   // ROUTES AUTHENTIFIÉES (specific paths BEFORE :id catch-all)

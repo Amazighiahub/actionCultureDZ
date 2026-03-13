@@ -63,7 +63,7 @@ interface EventCardProps {
   onView: (id: number) => void;
 }
 
-const EventCard: React.FC<EventCardProps> = ({ event, onView }) => {
+const EventCard: React.FC<EventCardProps> = React.memo(({ event, onView }) => {
   const { t } = useTranslation();
   
   const capacityPercentage = event.capacite_max 
@@ -176,7 +176,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onView }) => {
       </CardContent>
     </Card>
   );
-};
+});
 
 // Composant principal
 const Evenements: React.FC = () => {
