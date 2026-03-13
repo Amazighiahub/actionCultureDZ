@@ -5,14 +5,23 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { TrendingUp, TrendingDown, Users, Calendar, BookOpen } from 'lucide-react';import { useTranslation } from "react-i18next";
 
+// Constantes extraites hors du composant — évite recréation à chaque render
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
+const DAYS = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+const HOURS = Array.from({ length: 24 }, (_, i) => i);
+const TOOLTIP_CONTENT_STYLE = {
+  backgroundColor: 'hsl(var(--background))',
+  border: '1px solid hsl(var(--border))'
+};
+const TOOLTIP_LABEL_STYLE = { color: 'hsl(var(--foreground))' };
+const HEATMAP_GRID_STYLE = { gridTemplateColumns: 'auto repeat(24, 1fr)' };
+
 interface DashboardChartsProps {
   stats: any;
   period: 'day' | 'week' | 'month' | 'year';
 }
 
 export const DashboardCharts: React.FC<DashboardChartsProps> = ({ stats, period }) => {const { t } = useTranslation();
-  // Couleurs pour les graphiques
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 
   // Formatter les données pour les graphiques
   const formatChartData = (data: any) => {
@@ -77,10 +86,7 @@ export const DashboardCharts: React.FC<DashboardChartsProps> = ({ stats, period 
 
             <Tooltip
             formatter={(value: number, name: string) => [`${value} items`, name]}
-            contentStyle={{
-              backgroundColor: 'hsl(var(--background))',
-              border: '1px solid hsl(var(--border))'
-            }} />
+            contentStyle={TOOLTIP_CONTENT_STYLE} />
 
             <Line
             type="monotone"
@@ -119,11 +125,8 @@ export const DashboardCharts: React.FC<DashboardChartsProps> = ({ stats, period 
             )}
             </Pie>
             <Tooltip
-            contentStyle={{
-              backgroundColor: 'hsl(var(--background))',
-              border: '1px solid hsl(var(--border))'
-            }}
-            labelStyle={{ color: 'hsl(var(--foreground))' }} />
+            contentStyle={TOOLTIP_CONTENT_STYLE}
+            labelStyle={TOOLTIP_LABEL_STYLE} />
 
             <Legend
             verticalAlign="bottom"
@@ -170,8 +173,6 @@ export const DashboardCharts: React.FC<DashboardChartsProps> = ({ stats, period 
 
   // Heatmap d'activité
   const ActivityHeatmap = ({ data }: any) => {const { t } = useTranslation();
-    const days = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
-    const hours = Array.from({ length: 24 }, (_, i) => i);
 
     const getIntensity = (value: number, max: number) => {
       const ratio = value / max;
@@ -192,20 +193,20 @@ export const DashboardCharts: React.FC<DashboardChartsProps> = ({ stats, period 
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
-            <div className="grid gap-1 text-xs min-w-[600px]" style={{ gridTemplateColumns: 'auto repeat(24, 1fr)' }}>
+            <div className="grid gap-1 text-xs min-w-[600px]" style={HEATMAP_GRID_STYLE}>
               <div className="col-span-1"></div>
-              {hours.map((hour) =>
+              {HOURS.map((hour) =>
               <div key={hour} className="text-center text-muted-foreground">
                   {hour}
                 </div>
               )}
-              
-              {days.map((day, dayIndex) =>
+
+              {DAYS.map((day, dayIndex) =>
               <React.Fragment key={day}>
                   <div className="flex items-center justify-end pr-2 text-muted-foreground">
                     {day}
                   </div>
-                  {hours.map((hour) => {
+                  {HOURS.map((hour) => {
                   const dataPoint = data?.activity_heatmap?.find(
                     (d: any) => d.day === dayIndex && d.hour === hour
                   );
