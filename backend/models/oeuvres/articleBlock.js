@@ -45,6 +45,7 @@ module.exports = (sequelize) => {
     },
     contenu_json: {
       type: DataTypes.JSON,
+      defaultValue: {},
       comment: 'Contenu structuré pour table/list complexes'
     },
     id_media: {

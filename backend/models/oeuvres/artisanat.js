@@ -39,7 +39,8 @@ module.exports = (sequelize) => {
       type: DataTypes.DECIMAL(10, 2)
     },
     date_creation: {
-      type: DataTypes.DATE
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW
     }
   }, {
     tableName: 'artisanat',

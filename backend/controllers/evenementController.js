@@ -4,7 +4,6 @@
  */
 
 const container = require('../services/serviceContainer');
-const NotificationService = require('../services/notificationService');
 
 const IS_DEV_MODE = process.env.NODE_ENV === 'development';
 
@@ -232,20 +231,11 @@ class EvenementControllerV2 {
 
   async cancel(req, res) {
     try {
-      const { motif } = req.body;
       const evenement = await this.evenementService.cancel(
         parseInt(req.params.id),
         req.user.id_user,
-        motif
+        req.body.motif
       );
-
-      // Notifier les participants de l'annulation
-      try {
-        const notificationService = new NotificationService(container.models);
-        await notificationService.notifierAnnulationEvenement(parseInt(req.params.id), motif || 'Annulation par l\'organisateur');
-      } catch (notifError) {
-        console.error('Erreur notification annulation:', notifError);
-      }
 
       res.json({
         success: true,
@@ -301,32 +291,12 @@ class EvenementControllerV2 {
 
   async getParticipants(req, res) {
     try {
-      const evenementId = parseInt(req.params.id);
-      const models = container.models;
-
-      // Vérifier que le demandeur est le créateur ou un admin
-      const evenement = await models.Evenement.findByPk(evenementId, { attributes: ['id_evenement', 'id_user'] });
-      if (!evenement) {
-        return res.status(404).json({ success: false, error: 'Événement non trouvé' });
-      }
-      if (evenement.id_user !== req.user.id_user && req.user.id_type_user !== 1) {
-        return res.status(403).json({ success: false, error: 'Accès non autorisé' });
-      }
-
-      const participants = await models.EvenementUser.findAll({
-        where: { id_evenement: evenementId },
-        include: [{
-          model: models.User,
-          as: 'User',
-          attributes: { exclude: ['password'] }
-        }],
-        order: [['date_inscription', 'DESC']]
-      });
-
-      res.json({
-        success: true,
-        data: participants
-      });
+      const participants = await this.evenementService.getParticipants(
+        parseInt(req.params.id),
+        req.user.id_user,
+        req.user.id_type_user
+      );
+      res.json({ success: true, data: participants });
     } catch (error) {
       this._handleError(res, error);
     }
@@ -334,41 +304,11 @@ class EvenementControllerV2 {
 
   async getMesOeuvres(req, res) {
     try {
-      const evenementId = parseInt(req.params.id);
-      const userId = req.user.id_user;
-      const models = container.models;
-
-      // Fetch both queries in parallel instead of sequentially
-      const [oeuvresAjoutees, toutesOeuvres] = await Promise.all([
-        // Oeuvres already added to this event by the user
-        models.EvenementOeuvre.findAll({
-          where: { id_evenement: evenementId },
-          include: [{
-            model: models.Oeuvre,
-            as: 'Oeuvre',
-            where: { saisi_par: userId },
-            required: true
-          }],
-          order: [['ordre_presentation', 'ASC']]
-        }),
-        // All published oeuvres by the user
-        models.Oeuvre.findAll({
-          where: { saisi_par: userId, statut: 'publie' },
-          attributes: ['id_oeuvre', 'titre', 'statut', 'id_type_oeuvre']
-        })
-      ]);
-
-      // Filter available oeuvres using a Set for O(1) lookups instead of Array.includes O(n)
-      const idsAjoutees = new Set(oeuvresAjoutees.map(eo => eo.id_oeuvre));
-      const oeuvresDisponibles = toutesOeuvres.filter(o => !idsAjoutees.has(o.id_oeuvre));
-
-      res.json({
-        success: true,
-        data: {
-          oeuvres_ajoutees: oeuvresAjoutees,
-          oeuvres_disponibles: oeuvresDisponibles
-        }
-      });
+      const data = await this.evenementService.getMesOeuvres(
+        parseInt(req.params.id),
+        req.user.id_user
+      );
+      res.json({ success: true, data });
     } catch (error) {
       this._handleError(res, error);
     }
@@ -409,29 +349,11 @@ class EvenementControllerV2 {
 
   async getMyRegistration(req, res) {
     try {
-      const evenementId = parseInt(req.params.id);
-      const userId = req.user.id_user;
-      const models = container.models;
-
-      const inscription = await models.EvenementUser.findOne({
-        where: { id_evenement: evenementId, id_user: userId }
-      });
-
-      if (!inscription) {
-        return res.json({
-          success: true,
-          data: { isRegistered: false, status: null }
-        });
-      }
-
-      res.json({
-        success: true,
-        data: {
-          isRegistered: true,
-          status: inscription.statut_participation,
-          inscription
-        }
-      });
+      const data = await this.evenementService.getMyRegistration(
+        parseInt(req.params.id),
+        req.user.id_user
+      );
+      res.json({ success: true, data });
     } catch (error) {
       this._handleError(res, error);
     }
@@ -439,57 +361,25 @@ class EvenementControllerV2 {
 
   async addOeuvre(req, res) {
     try {
-      const evenementId = parseInt(req.params.id);
       const oeuvreId = parseInt(req.body.id_oeuvre ?? req.body.oeuvre_id);
-      const descriptionPresentation = req.body.description_presentation;
-      const dureePresentation = req.body.duree_presentation;
-      const userId = req.user.id_user;
-      const models = container.models;
-
       if (!Number.isInteger(oeuvreId)) {
         return res.status(400).json({ success: false, error: req.t('oeuvre.invalidId') });
       }
 
-      // Vérifier que l'oeuvre appartient à l'utilisateur
-      const oeuvre = await models.Oeuvre.findOne({
-        where: { id_oeuvre: oeuvreId, saisi_par: userId }
-      });
-
-      if (!oeuvre) {
-        return res.status(404).json({ success: false, error: req.t('oeuvre.notFoundOrUnauthorized') });
-      }
-
-      // Vérifier si déjà ajoutée
-      const existing = await models.EvenementOeuvre.findOne({
-        where: { id_evenement: evenementId, id_oeuvre: oeuvreId }
-      });
-
-      if (existing) {
-        return res.status(409).json({ success: false, error: req.t('oeuvre.alreadyInEvent') });
-      }
-
-      // Obtenir le prochain ordre
-      const maxOrdre = await models.EvenementOeuvre.max('ordre_presentation', {
-        where: { id_evenement: evenementId }
-      });
-
-      const association = await models.EvenementOeuvre.create({
-        id_evenement: evenementId,
-        id_oeuvre: oeuvreId,
-        id_presentateur: userId,
-        ordre_presentation: (maxOrdre || 0) + 1,
-        description_presentation: descriptionPresentation,
-        duree_presentation: dureePresentation
-      });
-
-      const created = await models.EvenementOeuvre.findByPk(association.id_EventOeuvre, {
-        include: [{ model: models.Oeuvre, as: 'Oeuvre', required: false }]
-      });
+      const result = await this.evenementService.addOeuvreToEvent(
+        parseInt(req.params.id),
+        oeuvreId,
+        req.user.id_user,
+        {
+          description_presentation: req.body.description_presentation,
+          duree_presentation: req.body.duree_presentation
+        }
+      );
 
       res.status(201).json({
         success: true,
         message: req.t('oeuvre.addedToEvent'),
-        data: created || association
+        data: result
       });
     } catch (error) {
       this._handleError(res, error);
@@ -498,47 +388,17 @@ class EvenementControllerV2 {
 
   async updateOeuvre(req, res) {
     try {
-      const evenementId = parseInt(req.params.id);
-      const oeuvreId = parseInt(req.params.oeuvreId);
-      const userId = req.user.id_user;
-      const models = container.models;
-
-      const association = await models.EvenementOeuvre.findOne({
-        where: {
-          id_evenement: evenementId,
-          id_oeuvre: oeuvreId,
-          id_presentateur: userId
-        }
-      });
-
-      if (!association) {
-        return res.status(404).json({ success: false, error: req.t('association.notFound') });
-      }
-
-      const updates = {};
-      if (req.body.description_presentation !== undefined) {
-        updates.description_presentation = req.body.description_presentation;
-      }
-      if (req.body.duree_presentation !== undefined) {
-        updates.duree_presentation = req.body.duree_presentation;
-      }
-      if (req.body.ordre_presentation !== undefined) {
-        updates.ordre_presentation = req.body.ordre_presentation;
-      } else if (req.body.ordre !== undefined) {
-        updates.ordre_presentation = req.body.ordre;
-      }
-
-      await association.update(updates);
-
-      const updated = await models.EvenementOeuvre.findOne({
-        where: { id_evenement: evenementId, id_oeuvre: oeuvreId },
-        include: [{ model: models.Oeuvre, as: 'Oeuvre', required: false }]
-      });
+      const result = await this.evenementService.updateOeuvreInEvent(
+        parseInt(req.params.id),
+        parseInt(req.params.oeuvreId),
+        req.user.id_user,
+        req.body
+      );
 
       res.json({
         success: true,
         message: req.t('oeuvre.updatedInEvent'),
-        data: updated || association
+        data: result
       });
     } catch (error) {
       this._handleError(res, error);
@@ -547,56 +407,12 @@ class EvenementControllerV2 {
 
   async reorderOeuvres(req, res) {
     try {
-      const evenementId = parseInt(req.params.id);
-      const userId = req.user.id_user;
-      const models = container.models;
       const oeuvres = Array.isArray(req.body.oeuvres) ? req.body.oeuvres : [];
-
-      if (!oeuvres.length) {
-        return res.status(400).json({ success: false, error: req.t('oeuvre.invalidList') });
-      }
-
-      const transaction = await models.sequelize.transaction();
-      try {
-        for (const item of oeuvres) {
-          const idOeuvre = parseInt(item.id_oeuvre);
-          const ordre = parseInt(item.ordre ?? item.ordre_presentation);
-
-          if (!Number.isInteger(idOeuvre) || !Number.isInteger(ordre)) {
-            throw new Error('Données de réorganisation invalides');
-          }
-
-          const [updatedCount] = await models.EvenementOeuvre.update(
-            { ordre_presentation: ordre },
-            {
-              where: {
-                id_evenement: evenementId,
-                id_oeuvre: idOeuvre,
-                id_presentateur: userId
-              },
-              transaction
-            }
-          );
-
-          if (!updatedCount) {
-            throw new Error(`Association introuvable pour l'œuvre ${idOeuvre}`);
-          }
-        }
-
-        await transaction.commit();
-      } catch (txError) {
-        await transaction.rollback();
-        return res.status(400).json({
-          success: false,
-          error: txError.message || (req.t ? req.t('common.serverError') : 'Server error')
-        });
-      }
-
-      const reordered = await models.EvenementOeuvre.findAll({
-        where: { id_evenement: evenementId, id_presentateur: userId },
-        include: [{ model: models.Oeuvre, as: 'Oeuvre', required: false }],
-        order: [['ordre_presentation', 'ASC']]
-      });
+      const reordered = await this.evenementService.reorderOeuvres(
+        parseInt(req.params.id),
+        req.user.id_user,
+        oeuvres
+      );
 
       res.json({
         success: true,
@@ -610,23 +426,11 @@ class EvenementControllerV2 {
 
   async removeOeuvre(req, res) {
     try {
-      const evenementId = parseInt(req.params.id);
-      const oeuvreId = parseInt(req.params.oeuvreId);
-      const userId = req.user.id_user;
-      const models = container.models;
-
-      const deleted = await models.EvenementOeuvre.destroy({
-        where: {
-          id_evenement: evenementId,
-          id_oeuvre: oeuvreId,
-          id_presentateur: userId
-        }
-      });
-
-      if (!deleted) {
-        return res.status(404).json({ success: false, error: req.t('association.notFound') });
-      }
-
+      await this.evenementService.removeOeuvreFromEvent(
+        parseInt(req.params.id),
+        parseInt(req.params.oeuvreId),
+        req.user.id_user
+      );
       res.json({ success: true, message: req.t('oeuvre.removedFromEvent') });
     } catch (error) {
       this._handleError(res, error);
@@ -635,46 +439,14 @@ class EvenementControllerV2 {
 
   async validateParticipation(req, res) {
     try {
-      const evenementId = parseInt(req.params.id);
-      const userId = parseInt(req.params.userId);
       const { validated } = req.body;
-      const models = container.models;
-
-      // Vérifier que le demandeur est le créateur ou un admin
-      const evenement = await models.Evenement.findByPk(evenementId, { attributes: ['id_evenement', 'id_user'] });
-      if (!evenement) {
-        return res.status(404).json({ success: false, error: 'Événement non trouvé' });
-      }
-      if (evenement.id_user !== req.user.id_user && req.user.id_type_user !== 1) {
-        return res.status(403).json({ success: false, error: 'Accès non autorisé' });
-      }
-
-      const participation = await models.EvenementUser.findOne({
-        where: { id_evenement: evenementId, id_user: userId }
-      });
-
-      if (!participation) {
-        return res.status(404).json({ success: false, error: req.t('participation.notFound') });
-      }
-
-      await participation.update({
-        statut_participation: validated ? 'confirme' : 'annule',
-        date_validation: new Date(),
-        valide_par: req.user.id_user
-      });
-
-      // Notifier le participant de la validation/refus
-      try {
-        const notificationService = new NotificationService(container.models);
-        await notificationService.notifierValidationParticipation(
-          evenementId,
-          userId,
-          validated ? 'confirme' : 'refuse',
-          req.body.notes || ''
-        );
-      } catch (notifError) {
-        console.error('Erreur notification validation participation:', notifError);
-      }
+      const participation = await this.evenementService.validateParticipation(
+        parseInt(req.params.id),
+        parseInt(req.params.userId),
+        validated,
+        { id: req.user.id_user, typeId: req.user.id_type_user },
+        req.body.notes
+      );
 
       res.json({
         success: true,
@@ -688,46 +460,11 @@ class EvenementControllerV2 {
 
   async getParticipantProfil(req, res) {
     try {
-      const evenementId = parseInt(req.params.id);
-      const userId = parseInt(req.params.userId);
-      const models = container.models;
-
-      // Vérifier que l'utilisateur est bien inscrit à cet événement
-      const participation = await models.EvenementUser.findOne({
-        where: { id_evenement: evenementId, id_user: userId }
-      });
-
-      if (!participation) {
-        return res.status(404).json({ success: false, error: req.t('participant.notFoundForEvent') });
-      }
-
-      // Récupérer le profil complet du participant
-      const user = await models.User.findByPk(userId, {
-        attributes: { exclude: ['password'] },
-        include: [
-          { model: models.TypeUser, required: false },
-          { model: models.Wilaya, required: false },
-          {
-            model: models.Oeuvre,
-            as: 'OeuvresSaisies',
-            where: { statut: 'publie' },
-            required: false,
-            limit: 10
-          }
-        ]
-      });
-
-      if (!user) {
-        return res.status(404).json({ success: false, error: req.t('user.notFound') });
-      }
-
-      res.json({
-        success: true,
-        data: {
-          profil: user,
-          participation
-        }
-      });
+      const data = await this.evenementService.getParticipantProfil(
+        parseInt(req.params.id),
+        parseInt(req.params.userId)
+      );
+      res.json({ success: true, data });
     } catch (error) {
       this._handleError(res, error);
     }
@@ -735,38 +472,12 @@ class EvenementControllerV2 {
 
   async getProfessionnelsEnAttente(req, res) {
     try {
-      const evenementId = parseInt(req.params.id);
-      const models = container.models;
-
-      // Vérifier que le demandeur est le créateur ou un admin
-      const evenement = await models.Evenement.findByPk(evenementId, { attributes: ['id_evenement', 'id_user'] });
-      if (!evenement) {
-        return res.status(404).json({ success: false, error: 'Événement non trouvé' });
-      }
-      if (evenement.id_user !== req.user.id_user && req.user.id_type_user !== 1) {
-        return res.status(403).json({ success: false, error: 'Accès non autorisé' });
-      }
-
-      const participants = await models.EvenementUser.findAll({
-        where: {
-          id_evenement: evenementId,
-          statut_participation: 'en_attente'
-        },
-        include: [{
-          model: models.User,
-          as: 'User',
-          attributes: { exclude: ['password'] },
-          include: [
-            { model: models.TypeUser, required: false }
-          ]
-        }],
-        order: [['date_inscription', 'ASC']]
-      });
-
-      res.json({
-        success: true,
-        data: participants
-      });
+      const participants = await this.evenementService.getProfessionnelsEnAttente(
+        parseInt(req.params.id),
+        req.user.id_user,
+        req.user.id_type_user
+      );
+      res.json({ success: true, data: participants });
     } catch (error) {
       this._handleError(res, error);
     }
@@ -774,25 +485,16 @@ class EvenementControllerV2 {
 
   async exportEvent(req, res) {
     try {
-      const evenementId = parseInt(req.params.id);
-      const models = container.models;
-
-      // Vérifier que le demandeur est le créateur ou un admin
-      const evt = await models.Evenement.findByPk(evenementId, { attributes: ['id_evenement', 'id_user'] });
-      if (!evt) {
-        return res.status(404).json({ success: false, error: 'Événement non trouvé' });
-      }
-      if (evt.id_user !== req.user.id_user && req.user.id_type_user !== 1) {
-        return res.status(403).json({ success: false, error: 'Accès non autorisé' });
-      }
-
-      const evenement = await this.evenementService.findWithFullDetails(evenementId);
-      const data = evenement.toDetailJSON(req.lang);
+      const evenement = await this.evenementService.exportEventData(
+        parseInt(req.params.id),
+        req.user.id_user,
+        req.user.id_type_user
+      );
 
       res.json({
         success: true,
         data: {
-          evenement: data,
+          evenement: evenement.toDetailJSON(req.lang),
           export_date: new Date().toISOString()
         }
       });

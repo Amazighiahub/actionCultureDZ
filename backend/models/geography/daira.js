@@ -18,6 +18,7 @@ module.exports = (sequelize) => {
     wilayaId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      index: true,
       references: {
         model: 'wilayas',
         key: 'id_wilaya'

@@ -24,18 +24,22 @@ module.exports = (sequelize) => {
     },
     date_naissance: {
       type: DataTypes.DATEONLY,
+      allowNull: true,
       comment: 'Date de naissance'
     },
     lieu_naissance: {
       type: DataTypes.STRING(255),
+      allowNull: true,
       comment: 'Ville et pays de naissance'
     },
     date_deces: {
       type: DataTypes.DATEONLY,
+      allowNull: true,
       comment: 'Date de décès si applicable'
     },
     lieu_deces: {
       type: DataTypes.STRING(255),
+      allowNull: true,
       comment: 'Ville et pays de décès'
     },
     prix_distinctions: {
@@ -62,6 +66,7 @@ module.exports = (sequelize) => {
     },
     email: {
       type: DataTypes.STRING(255),
+      allowNull: true,
       validate: {
         isEmail: true
       }
@@ -105,10 +110,12 @@ module.exports = (sequelize) => {
     },
     actif: {
       type: DataTypes.BOOLEAN,
+      allowNull: true,
       defaultValue: true
     },
     verifie: {
       type: DataTypes.BOOLEAN,
+      allowNull: true,
       defaultValue: false,
       comment: 'Profil vérifié par l\'administration'
     }

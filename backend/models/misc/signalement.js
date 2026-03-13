@@ -14,6 +14,7 @@ module.exports = (sequelize) => {
     type_entite: {
       type: DataTypes.ENUM('commentaire', 'oeuvre', 'evenement', 'user', 'artisanat'),
       allowNull: false,
+      index: true,
       comment: 'Type d\'entité signalée'
     },
     id_entite: {
@@ -93,11 +94,6 @@ module.exports = (sequelize) => {
       allowNull: true,
       comment: 'Notes du modérateur'
     },
-    date_signalement: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: DataTypes.NOW
-    }
   }, {
     tableName: 'signalements',
     timestamps: true,

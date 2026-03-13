@@ -39,6 +39,8 @@ module.exports = (sequelize) => {
     },
     id_lieu: {
       type: DataTypes.INTEGER,
+      allowNull: true,
+      index: true,
       references: {
         model: 'lieu',
         key: 'id_lieu'
@@ -46,16 +48,18 @@ module.exports = (sequelize) => {
     },
     date_programme: {
       type: DataTypes.DATEONLY,
-      allowNull: false,
+      allowNull: true,
       validate: {
         isDate: true
       }
     },
     heure_debut: {
-      type: DataTypes.TIME
+      type: DataTypes.TIME,
+      allowNull: true
     },
     heure_fin: {
-      type: DataTypes.TIME
+      type: DataTypes.TIME,
+      allowNull: true
     },
     lieu_specifique: {
       type: DataTypes.STRING(255)

@@ -53,6 +53,7 @@ module.exports = (sequelize) => {
     // Superviseur direct
     id_superviseur: {
       type: DataTypes.INTEGER,
+      allowNull: true,
       references: {
         model: 'user',
         key: 'id_user'

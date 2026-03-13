@@ -27,6 +27,7 @@ module.exports = (sequelize) => {
       ),
       allowNull: false,
       defaultValue: 'monument',
+      index: true,
       comment: 'Type de patrimoine pour adapter les fonctionnalités affichées'
     },
     communeId: {

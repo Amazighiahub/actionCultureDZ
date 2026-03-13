@@ -46,6 +46,7 @@ module.exports = (sequelize) => {
     },
     contact_email: {
       type: DataTypes.STRING(255),
+      allowNull: true,
       validate: {
         isEmail: true
       }
@@ -57,7 +58,8 @@ module.exports = (sequelize) => {
       }
     },
     image_url: {
-      type: DataTypes.STRING(500)
+      type: DataTypes.STRING(500),
+      allowNull: true
     },
     id_lieu: {
       type: DataTypes.INTEGER,
@@ -96,6 +98,7 @@ module.exports = (sequelize) => {
     },
     capacite_max: {
       type: DataTypes.INTEGER,
+      allowNull: true,
       validate: {
         min: 0
       }

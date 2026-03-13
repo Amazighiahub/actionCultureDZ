@@ -9,6 +9,7 @@ module.exports = (sequelize) => {
     },
     id_oeuvre: {
       type: DataTypes.INTEGER,
+      allowNull: true,
       references: {
         model: 'oeuvre',
         key: 'id_oeuvre'
@@ -16,6 +17,7 @@ module.exports = (sequelize) => {
     },
     id_tag: {
       type: DataTypes.INTEGER,
+      allowNull: true,
       references: {
         model: 'tagmotcle',
         key: 'id_tag'

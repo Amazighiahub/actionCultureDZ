@@ -5,6 +5,7 @@
 
 const BaseService = require('../core/baseService');
 const ParcoursDTO = require('../../dto/parcours/parcoursDTO');
+const { haversineKm, boundingBox, rayonParTransport, vitesseParTransport } = require('../utils/geoUtils');
 
 class ParcoursService extends BaseService {
   constructor(parcoursRepository, options = {}) {
@@ -257,6 +258,143 @@ class ParcoursService extends BaseService {
 
     this.logger.info(`Étapes réordonnées pour parcours: ${parcoursId}`);
     return ParcoursDTO.fromEntity(updated);
+  }
+
+  // ============================================================================
+  // PARCOURS PERSONNALISÉ
+  // ============================================================================
+
+  /**
+   * Génère un parcours personnalisé basé sur la géolocalisation
+   * @param {Object} params - Paramètres métier (pas de req/res)
+   */
+  async generatePersonnalise({ lat, lng, interests = [], duration = 240, transport = 'voiture', maxSites = 5, includeRestaurants = false, includeHotels = false }) {
+    const rayonKm = rayonParTransport(transport);
+    const bbox = boundingBox(lat, lng, rayonKm);
+    const vitesseKmH = vitesseParTransport(transport);
+
+    // 1. Chercher les lieux patrimoniaux à proximité
+    const lieux = await this.repository.findLieuxProximite(bbox, maxSites * 3);
+
+    // 2. Calculer distances, filtrer par rayon, trier, limiter
+    const lieuxAvecDist = lieux
+      .map(lieu => {
+        const raw = lieu.get({ plain: true });
+        const dist = haversineKm(lat, lng, parseFloat(raw.latitude), parseFloat(raw.longitude));
+        return { raw, dist };
+      })
+      .filter(l => l.dist <= rayonKm)
+      .sort((a, b) => a.dist - b.dist)
+      .slice(0, maxSites);
+
+    // 3. Construire les étapes
+    const etapes = lieuxAvecDist.map(({ raw, dist }) => {
+      const dureeTrajet = Math.round((dist / vitesseKmH) * 60);
+      const dureeVisite = 30;
+      const nom = typeof raw.nom === 'object' ? (raw.nom.fr || raw.nom.ar || raw.nom.en || '') : (raw.nom || '');
+      const desc = raw.DetailLieu?.description;
+      const description = typeof desc === 'object' ? (desc.fr || desc.ar || '') : (desc || '');
+      const medias = raw.LieuMedias || raw.LieuMedia || [];
+      const image = Array.isArray(medias) && medias.length > 0 ? medias[0].url : null;
+
+      return {
+        id: raw.id_lieu,
+        nom,
+        type: raw.typePatrimoine || 'monument',
+        latitude: parseFloat(raw.latitude),
+        longitude: parseFloat(raw.longitude),
+        distance: parseFloat(dist.toFixed(2)),
+        duree: dureeTrajet + dureeVisite,
+        description: (description || '').substring(0, 150),
+        image,
+        horaires: null,
+        note: null
+      };
+    });
+
+    // 4. Chercher les services (restaurants, hôtels) si demandé
+    const servicesResult = { restaurants: [], hotels: [] };
+    const serviceTypes = [];
+    if (includeRestaurants) serviceTypes.push('restaurant');
+    if (includeHotels) serviceTypes.push('hotel');
+
+    if (serviceTypes.length > 0) {
+      const lieuIds = lieuxAvecDist.map(l => l.raw.id_lieu);
+
+      try {
+        const services = await this.repository.findServicesProximite(serviceTypes, lieuIds, bbox, 10);
+
+        services.forEach(s => {
+          const raw = s.get({ plain: true });
+          const nom = typeof raw.nom === 'object' ? (raw.nom.fr || '') : (raw.nom || '');
+          const desc = typeof raw.description === 'object' ? (raw.description.fr || '') : (raw.description || '');
+          const sLat = parseFloat(raw.latitude) || raw.Lieu?.latitude;
+          const sLng = parseFloat(raw.longitude) || raw.Lieu?.longitude;
+
+          let dist = 0;
+          if (sLat && sLng) {
+            dist = haversineKm(lat, lng, sLat, sLng);
+          }
+
+          const serviceItem = {
+            id: raw.id,
+            nom,
+            type: raw.type_service,
+            latitude: sLat || null,
+            longitude: sLng || null,
+            distance: parseFloat(dist.toFixed(2)),
+            duree: 5,
+            description: (desc || '').substring(0, 100),
+            telephone: raw.telephone,
+            tarif_min: raw.tarif_min ? parseFloat(raw.tarif_min) : null,
+            tarif_max: raw.tarif_max ? parseFloat(raw.tarif_max) : null
+          };
+
+          if (raw.type_service === 'restaurant') {
+            servicesResult.restaurants.push(serviceItem);
+          } else if (raw.type_service === 'hotel') {
+            servicesResult.hotels.push(serviceItem);
+          }
+        });
+      } catch (serviceErr) {
+        this.logger.error('Erreur recherche services (non bloquant):', serviceErr.message);
+      }
+
+      // Insérer le restaurant au milieu du parcours
+      if (includeRestaurants && servicesResult.restaurants.length > 0) {
+        const insertIdx = Math.floor(etapes.length / 2);
+        const resto = servicesResult.restaurants[0];
+        etapes.splice(insertIdx, 0, {
+          ...resto,
+          type: 'restaurant',
+          duree: 45,
+          horaires: '12:00 – 15:00'
+        });
+      }
+
+      // Ajouter l'hôtel en fin de parcours
+      if (includeHotels && servicesResult.hotels.length > 0) {
+        const hotel = servicesResult.hotels[0];
+        etapes.push({
+          ...hotel,
+          type: 'hotel',
+          duree: 0,
+          horaires: 'Check-in: 14:00'
+        });
+      }
+    }
+
+    // 5. Calculer les totaux
+    const distanceTotale = etapes.reduce((sum, e) => sum + (e.distance || 0), 0);
+    const dureeEstimee = etapes.reduce((sum, e) => sum + (e.duree || 0), 0);
+
+    return {
+      etapes,
+      distanceTotale: parseFloat(distanceTotale.toFixed(1)),
+      dureeEstimee: Math.min(dureeEstimee, duration),
+      pointsInteret: etapes.length,
+      services: servicesResult
+    };
   }
 
   // ============================================================================

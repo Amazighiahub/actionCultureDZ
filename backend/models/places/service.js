@@ -42,6 +42,7 @@ module.exports = (sequelize) => {
     },
     disponible: {
       type: DataTypes.BOOLEAN,
+      allowNull: true,
       defaultValue: true
     },
     // ⚡ MODIFIÉ POUR I18N
@@ -76,7 +77,10 @@ module.exports = (sequelize) => {
     },
     email: {
       type: DataTypes.STRING(100),
-      allowNull: true
+      allowNull: true,
+      validate: {
+        isEmail: true
+      }
     },
     site_web: {
       type: DataTypes.STRING(255),
@@ -102,6 +106,7 @@ module.exports = (sequelize) => {
     statut: {
       type: DataTypes.ENUM('en_attente', 'valide', 'rejete'),
       defaultValue: 'en_attente',
+      index: true,
       comment: 'Statut de validation par admin'
     },
     // 🆕 Photo principale

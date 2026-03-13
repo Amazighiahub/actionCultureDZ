@@ -260,6 +260,192 @@ class EvenementService extends BaseService {
   }
 
   // ============================================================================
+  // PARTICIPANTS
+  // ============================================================================
+
+  /**
+   * Vérifie que le demandeur est le créateur ou un admin
+   */
+  async _assertEventOwnerOrAdmin(evenementId, userId, userTypeId) {
+    const evenement = await this.repository.findById(evenementId);
+    if (!evenement) throw this._notFoundError(evenementId);
+    if (evenement.id_user !== userId && userTypeId !== 1) {
+      throw this._forbiddenError('Accès non autorisé');
+    }
+    return evenement;
+  }
+
+  /**
+   * Liste les participants d'un événement
+   */
+  async getParticipants(evenementId, requesterId, requesterTypeId) {
+    await this._assertEventOwnerOrAdmin(evenementId, requesterId, requesterTypeId);
+    return this.repository.getParticipants(evenementId);
+  }
+
+  /**
+   * Vérifie l'inscription d'un utilisateur à un événement
+   */
+  async getMyRegistration(evenementId, userId) {
+    const inscription = await this.repository.getRegistration(evenementId, userId);
+    if (!inscription) {
+      return { isRegistered: false, status: null };
+    }
+    return {
+      isRegistered: true,
+      status: inscription.statut_participation,
+      inscription
+    };
+  }
+
+  /**
+   * Valide ou refuse la participation d'un utilisateur
+   */
+  async validateParticipation(evenementId, userId, validated, validatedBy, notes) {
+    await this._assertEventOwnerOrAdmin(evenementId, validatedBy.id, validatedBy.typeId);
+
+    const participation = await this.repository.updateParticipationStatus(evenementId, userId, {
+      statut_participation: validated ? 'confirme' : 'annule',
+      date_validation: new Date(),
+      valide_par: validatedBy.id
+    });
+
+    if (!participation) {
+      throw this._notFoundError(userId);
+    }
+
+    // Notification (best effort)
+    try {
+      if (this.models?.Notification) {
+        const NotificationService = require('../notificationService');
+        const notifService = new NotificationService(this.models);
+        await notifService.notifierValidationParticipation(
+          evenementId, userId, validated ? 'confirme' : 'refuse', notes || ''
+        );
+      }
+    } catch (notifError) {
+      this.logger.error('Erreur notification validation participation:', notifError);
+    }
+
+    return participation;
+  }
+
+  /**
+   * Récupère le profil d'un participant inscrit à un événement
+   */
+  async getParticipantProfil(evenementId, userId) {
+    const participation = await this.repository.getRegistration(evenementId, userId);
+    if (!participation) {
+      throw this._notFoundError(userId);
+    }
+
+    const user = await this.repository.getParticipantProfile(userId);
+    if (!user) {
+      throw this._notFoundError(userId);
+    }
+
+    return { profil: user, participation };
+  }
+
+  /**
+   * Liste les professionnels en attente pour un événement
+   */
+  async getProfessionnelsEnAttente(evenementId, requesterId, requesterTypeId) {
+    await this._assertEventOwnerOrAdmin(evenementId, requesterId, requesterTypeId);
+    return this.repository.getPendingProfessionals(evenementId);
+  }
+
+  // ============================================================================
+  // OEUVRES D'UN ÉVÉNEMENT
+  // ============================================================================
+
+  /**
+   * Récupère les oeuvres d'un user pour un événement (ajoutées + disponibles)
+   */
+  async getMesOeuvres(evenementId, userId) {
+    const { oeuvresAjoutees, toutesOeuvres } = await this.repository.getOeuvresForUser(evenementId, userId);
+    const idsAjoutees = new Set(oeuvresAjoutees.map(eo => eo.id_oeuvre));
+    const oeuvresDisponibles = toutesOeuvres.filter(o => !idsAjoutees.has(o.id_oeuvre));
+    return { oeuvres_ajoutees: oeuvresAjoutees, oeuvres_disponibles: oeuvresDisponibles };
+  }
+
+  /**
+   * Ajoute une oeuvre à un événement
+   */
+  async addOeuvreToEvent(evenementId, oeuvreId, userId, data = {}) {
+    // Vérifier ownership
+    const oeuvre = await this.repository.findOeuvreByOwner(oeuvreId, userId);
+    if (!oeuvre) {
+      throw this._notFoundError(oeuvreId);
+    }
+
+    // Vérifier doublon
+    const existing = await this.repository.findEvenementOeuvre(evenementId, oeuvreId);
+    if (existing) {
+      const error = this._validationError('Oeuvre déjà ajoutée à cet événement');
+      error.statusCode = 409;
+      throw error;
+    }
+
+    return this.repository.addOeuvreToEvent({
+      id_evenement: evenementId,
+      id_oeuvre: oeuvreId,
+      id_presentateur: userId,
+      description_presentation: data.description_presentation,
+      duree_presentation: data.duree_presentation
+    });
+  }
+
+  /**
+   * Met à jour une oeuvre dans un événement
+   */
+  async updateOeuvreInEvent(evenementId, oeuvreId, userId, body) {
+    const updates = {};
+    if (body.description_presentation !== undefined) updates.description_presentation = body.description_presentation;
+    if (body.duree_presentation !== undefined) updates.duree_presentation = body.duree_presentation;
+    if (body.ordre_presentation !== undefined) updates.ordre_presentation = body.ordre_presentation;
+    else if (body.ordre !== undefined) updates.ordre_presentation = body.ordre;
+
+    const result = await this.repository.updateOeuvreInEvent(evenementId, oeuvreId, userId, updates);
+    if (!result) {
+      throw this._notFoundError(oeuvreId);
+    }
+    return result;
+  }
+
+  /**
+   * Réordonne les oeuvres d'un événement
+   */
+  async reorderOeuvres(evenementId, userId, oeuvres) {
+    if (!oeuvres || !oeuvres.length) {
+      throw this._validationError('Liste des oeuvres requise');
+    }
+    await this.repository.reorderOeuvres(evenementId, userId, oeuvres);
+    return this.repository.getOeuvresOrdered(evenementId, userId);
+  }
+
+  /**
+   * Supprime une oeuvre d'un événement
+   */
+  async removeOeuvreFromEvent(evenementId, oeuvreId, userId) {
+    const deleted = await this.repository.removeOeuvreFromEvent(evenementId, oeuvreId, userId);
+    if (!deleted) {
+      throw this._notFoundError(oeuvreId);
+    }
+    return true;
+  }
+
+  /**
+   * Exporte les données d'un événement (après vérification d'autorisation)
+   */
+  async exportEventData(evenementId, requesterId, requesterTypeId) {
+    await this._assertEventOwnerOrAdmin(evenementId, requesterId, requesterTypeId);
+    const evenement = await this.repository.findWithFullDetails(evenementId);
+    if (!evenement) throw this._notFoundError(evenementId);
+    return EvenementDTO.fromEntity(evenement);
+  }
+
+  // ============================================================================
   // MODÉRATION
   // ============================================================================
 
@@ -297,6 +483,17 @@ class EvenementService extends BaseService {
 
     await this.repository.update(id, { statut: 'annule' });
     const updated = await this.repository.findWithFullDetails(id);
+
+    // Notification annulation (best effort)
+    try {
+      if (this.models?.Notification) {
+        const NotificationService = require('../notificationService');
+        const notifService = new NotificationService(this.models);
+        await notifService.notifierAnnulationEvenement(id, motif || 'Annulation par l\'organisateur');
+      }
+    } catch (notifError) {
+      this.logger.error('Erreur notification annulation:', notifError);
+    }
 
     this.logger.info(`Événement annulé: ${id} par admin: ${adminId}, motif: ${motif}`);
     return EvenementDTO.fromEntity(updated);

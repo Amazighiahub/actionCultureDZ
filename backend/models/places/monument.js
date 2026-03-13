@@ -32,7 +32,8 @@ module.exports = (sequelize) => {
     },
     type: {
       type: DataTypes.ENUM('Mosquée', 'Palais', 'Statue', 'Tour', 'Musée'),
-      allowNull: false
+      allowNull: false,
+      index: true
     }
   }, {
     tableName: 'monuments',

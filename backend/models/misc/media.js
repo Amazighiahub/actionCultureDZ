@@ -100,7 +100,9 @@ module.exports = (sequelize) => {
       type: DataTypes.STRING(500)
     },
     is_Principale: {
-      type: DataTypes.BOOLEAN
+      type: DataTypes.BOOLEAN,
+      allowNull: true,
+      defaultValue: false
     },
     duree: {
       type: DataTypes.INTEGER,

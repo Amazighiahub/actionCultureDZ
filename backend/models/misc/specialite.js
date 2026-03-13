@@ -24,7 +24,8 @@ module.exports = (sequelize) => {
     },
     categorie: {
       type: DataTypes.STRING(50),
-      allowNull: true
+      allowNull: true,
+      index: true
     },
     actif: {
       type: DataTypes.BOOLEAN,

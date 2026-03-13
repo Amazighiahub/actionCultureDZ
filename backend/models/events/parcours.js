@@ -29,7 +29,8 @@ module.exports = (sequelize) => {
     },
     difficulte: {
       type: DataTypes.ENUM('facile', 'moyen', 'difficile'),
-      defaultValue: 'facile'
+      defaultValue: 'facile',
+      index: true
     },
     theme: {
       type: DataTypes.STRING(100),
@@ -54,15 +55,12 @@ module.exports = (sequelize) => {
     id_createur: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      index: true,
       references: {
         model: 'user',
         key: 'id_user'
       }
     },
-    date_creation: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW
-    }
   }, {
     tableName: 'parcours',
     timestamps: true,

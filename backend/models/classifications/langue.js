@@ -17,6 +17,8 @@ module.exports = (sequelize) => {
     },
     code: {
       type: DataTypes.STRING(10),
+      allowNull: true,
+      index: true,
       comment: 'Code ISO de la langue (ar, fr, en, etc.)'
     }
   }, {

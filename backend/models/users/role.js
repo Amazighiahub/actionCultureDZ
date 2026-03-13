@@ -9,7 +9,8 @@ module.exports = (sequelize) => {
     },
     nom_role: {
       type: DataTypes.STRING(50),
-      allowNull: false
+      allowNull: false,
+      index: true
     },
     description: {
       type: DataTypes.TEXT

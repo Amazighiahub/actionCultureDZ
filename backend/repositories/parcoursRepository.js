@@ -271,6 +271,65 @@ class ParcoursRepository extends BaseRepository {
 
     return { total, active, thisMonth: thisMonthCount, byDifficulte, byTheme };
   }
+
+  // ============================================================================
+  // PARCOURS PERSONNALISÉ — accès données géolocalisées
+  // ============================================================================
+
+  /**
+   * Trouve les lieux patrimoniaux dans une bounding box
+   */
+  async findLieuxProximite(bbox, limit) {
+    const includes = [];
+    if (this.models.DetailLieu) {
+      includes.push({ model: this.models.DetailLieu, attributes: ['description'], required: false });
+    }
+    if (this.models.LieuMedia) {
+      includes.push({ model: this.models.LieuMedia, attributes: ['url', 'type_media'], required: false });
+    }
+
+    return this.models.Lieu.findAll({
+      where: {
+        latitude: { [Op.between]: [bbox.minLat, bbox.maxLat] },
+        longitude: { [Op.between]: [bbox.minLng, bbox.maxLng] }
+      },
+      include: includes,
+      limit
+    });
+  }
+
+  /**
+   * Trouve les services (restaurants, hôtels) à proximité de lieux ou d'une bounding box
+   */
+  async findServicesProximite(serviceTypes, lieuIds, bbox, limit = 10) {
+    const orConditions = [];
+    if (lieuIds.length > 0) {
+      orConditions.push({ id_lieu: { [Op.in]: lieuIds } });
+    }
+    orConditions.push({
+      latitude: { [Op.between]: [bbox.minLat, bbox.maxLat] },
+      longitude: { [Op.between]: [bbox.minLng, bbox.maxLng] }
+    });
+
+    const includes = [];
+    if (this.models.Lieu) {
+      includes.push({
+        model: this.models.Lieu,
+        attributes: ['id_lieu', 'nom', 'latitude', 'longitude'],
+        required: false
+      });
+    }
+
+    return this.models.Service.findAll({
+      where: {
+        type_service: { [Op.in]: serviceTypes },
+        [Op.or]: orConditions
+      },
+      include: includes,
+      limit,
+      order: [['createdAt', 'DESC']]
+    });
+  }
 }
 
 module.exports = ParcoursRepository;

@@ -6,6 +6,7 @@ module.exports = (sequelize) => {
     id_genre: {
       type: DataTypes.INTEGER,
       primaryKey: true,
+      allowNull: false,
       references: {
         model: 'genre',
         key: 'id_genre'
@@ -14,6 +15,7 @@ module.exports = (sequelize) => {
     id_categorie: {
       type: DataTypes.INTEGER,
       primaryKey: true,
+      allowNull: false,
       references: {
         model: 'categorie',
         key: 'id_categorie'

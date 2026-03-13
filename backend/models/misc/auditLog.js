@@ -42,7 +42,8 @@ module.exports = (sequelize) => {
     },
     date_action: {
       type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW
+      defaultValue: DataTypes.NOW,
+      index: true
     }
   }, {
     tableName: 'audit_logs',

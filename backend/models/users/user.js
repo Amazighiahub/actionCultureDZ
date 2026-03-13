@@ -44,6 +44,7 @@ module.exports = (sequelize) => {
       type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 1,
+      index: true,
       references: {
         model: 'type_user',
         key: 'id_type_user'
@@ -111,6 +112,7 @@ module.exports = (sequelize) => {
     id_user_validate: {
       type: DataTypes.INTEGER,
       allowNull: true,
+      index: true,
       references: {
         model: 'user',
         key: 'id_user'

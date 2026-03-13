@@ -21,6 +21,7 @@ module.exports = (sequelize) => {
     },
     id_oeuvre: {
       type: DataTypes.INTEGER,
+      allowNull: true,
       references: {
         model: 'oeuvre',
         key: 'id_oeuvre'
@@ -28,6 +29,7 @@ module.exports = (sequelize) => {
     },
     id_evenement: {
       type: DataTypes.INTEGER,
+      allowNull: true,
       references: {
         model: 'evenement',
         key: 'id_evenement'
@@ -35,6 +37,7 @@ module.exports = (sequelize) => {
     },
     commentaire_parent_id: {
       type: DataTypes.INTEGER,
+      allowNull: true,
       references: {
         model: 'commentaire',
         key: 'id_commentaire'

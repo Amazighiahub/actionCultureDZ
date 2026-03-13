@@ -42,6 +42,7 @@ module.exports = (sequelize) => {
     },
     id_evenement: {
       type: DataTypes.INTEGER,
+      allowNull: true,
       references: {
         model: 'evenement',
         key: 'id_evenement'
@@ -49,6 +50,7 @@ module.exports = (sequelize) => {
     },
     id_programme: {
       type: DataTypes.INTEGER,
+      allowNull: true,
       references: {
         model: 'programme',
         key: 'id_programme'
@@ -56,6 +58,7 @@ module.exports = (sequelize) => {
     },
     id_oeuvre: {
       type: DataTypes.INTEGER,
+      allowNull: true,
       references: {
         model: 'oeuvre',
         key: 'id_oeuvre'
@@ -63,6 +66,7 @@ module.exports = (sequelize) => {
     },
     url_action: {
       type: DataTypes.STRING(500),
+      allowNull: true,
       comment: 'URL vers l\'élément concerné'
     },
     email_envoye: {

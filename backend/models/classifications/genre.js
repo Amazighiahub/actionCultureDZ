@@ -31,7 +31,8 @@ module.exports = (sequelize) => {
     },
     ordre_affichage: {
       type: DataTypes.INTEGER,
-      defaultValue: 0
+      defaultValue: 0,
+      index: true
     },
     actif: {
       type: DataTypes.BOOLEAN,

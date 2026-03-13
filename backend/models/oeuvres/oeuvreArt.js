@@ -16,13 +16,16 @@ module.exports = (sequelize) => {
       }
     },
     technique: {
-      type: DataTypes.STRING(255)
+      type: DataTypes.STRING(255),
+      allowNull: true
     },
     dimensions: {
-      type: DataTypes.STRING(255)
+      type: DataTypes.STRING(255),
+      allowNull: true
     },
     support: {
-      type: DataTypes.STRING(255)
+      type: DataTypes.STRING(255),
+      allowNull: true
     }
   }, {
     tableName: 'oeuvre_art',

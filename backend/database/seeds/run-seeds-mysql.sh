@@ -165,13 +165,14 @@ echo "🔧 Passage de DB_SYNC=true → DB_SYNC=false dans les .env..."
 ENV_ROOT="${PROJECT_ROOT}/.env"
 ENV_BACKEND="${PROJECT_ROOT}/backend/.env"
 
+# sed -i.bak + rm : compatible macOS (BSD sed) et Linux (GNU sed)
 if [ -f "$ENV_ROOT" ]; then
-    sed -i 's/^DB_SYNC=true/DB_SYNC=false/' "$ENV_ROOT"
+    sed -i.bak 's/^DB_SYNC=true/DB_SYNC=false/' "$ENV_ROOT" && rm -f "${ENV_ROOT}.bak"
     echo "   ✅ ${ENV_ROOT}"
 fi
 
 if [ -f "$ENV_BACKEND" ]; then
-    sed -i 's/^DB_SYNC=true/DB_SYNC=false/' "$ENV_BACKEND"
+    sed -i.bak 's/^DB_SYNC=true/DB_SYNC=false/' "$ENV_BACKEND" && rm -f "${ENV_BACKEND}.bak"
     echo "   ✅ ${ENV_BACKEND}"
 fi
 
@@ -182,6 +183,35 @@ docker compose -f "${PROJECT_ROOT}/docker-compose.yml" restart backend 2>/dev/nu
     docker restart "${BACKEND_CONTAINER}" 2>/dev/null || \
     echo "   ⚠️  Redémarrage manuel requis: docker compose restart backend"
 
+# --- Attendre que le backend soit de nouveau prêt ---
+echo ""
+echo "⏳ Attente du redémarrage du backend..."
+sleep 5
+RETRIES=30
+until curl -sf http://localhost:3001/health > /dev/null 2>&1; do
+    RETRIES=$((RETRIES - 1))
+    if [ $RETRIES -eq 0 ]; then
+        echo "   ⚠️  Backend non prêt après redémarrage (validation admin ignorée)"
+        break
+    fi
+    sleep 2
+done
+
+# --- Validation des identifiants admin ---
+if curl -sf http://localhost:3001/health > /dev/null 2>&1; then
+    echo ""
+    echo "🔐 Validation des identifiants admin..."
+    ADMIN_LOGIN_RESPONSE=$(curl -s -X POST http://localhost:3001/api/users/login \
+        -H "Content-Type: application/json" \
+        -d '{"email":"admin@actionculture.dz","password":"admin123"}')
+    if echo "$ADMIN_LOGIN_RESPONSE" | grep -q '"success":true'; then
+        echo "   ✅ Admin OK : admin@actionculture.dz / admin123"
+    else
+        echo "   ❌ Échec connexion admin (email/mot de passe invalides ou utilisateur absent)"
+        echo "      Vérifiez que seed-reference-data.sql a bien chargé l'utilisateur admin."
+    fi
+fi
+
 echo ""
 echo "============================================"
 echo "  🎉 Setup terminé avec succès !"
@@ -191,5 +221,6 @@ echo "  Frontend : http://localhost:3000"
 echo "  API      : http://localhost:3001"
 echo "  Health   : http://localhost:3001/health"
 echo ""
+echo "  Admin    : admin@actionculture.dz / admin123"
 echo "  DB_SYNC  : false (tables déjà créées)"
 echo ""

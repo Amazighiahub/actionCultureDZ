@@ -24,13 +24,15 @@ module.exports = (sequelize) => {
       }
     },
     note: {
-      type: DataTypes.INTEGER
+      type: DataTypes.INTEGER,
+      allowNull: true
     },
     commentaire: {
       type: DataTypes.TEXT
     },
     date_creation: {
-      type: DataTypes.DATE
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW
     },
     date_modification: {
       type: DataTypes.DATE,

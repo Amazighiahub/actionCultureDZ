@@ -10,6 +10,7 @@ module.exports = (sequelize) => {
     id_qr_code: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      index: true,
       references: {
         model: 'qr_codes',
         key: 'id_qr_code'
@@ -57,7 +58,8 @@ module.exports = (sequelize) => {
     },
     date_scan: {
       type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW
+      defaultValue: DataTypes.NOW,
+      index: true
     }
   }, {
     tableName: 'qr_scans',

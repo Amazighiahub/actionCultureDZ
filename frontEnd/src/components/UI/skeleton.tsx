@@ -11,7 +11,7 @@ function Skeleton({
         className
       )}
       role="status"
-      aria-label="Chargement..."
+      aria-label="Loading..."
       {...props}
     />
   )

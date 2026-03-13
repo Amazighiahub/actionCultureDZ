@@ -259,6 +259,219 @@ class EvenementRepository extends BaseRepository {
     });
   }
 
+  // ============================================================================
+  // PARTICIPANTS
+  // ============================================================================
+
+  /**
+   * Récupère les participants d'un événement avec profil utilisateur
+   */
+  async getParticipants(evenementId) {
+    return this.models.EvenementUser.findAll({
+      where: { id_evenement: evenementId },
+      include: [{
+        model: this.models.User,
+        as: 'User',
+        attributes: { exclude: ['password'] }
+      }],
+      order: [['date_inscription', 'DESC']]
+    });
+  }
+
+  /**
+   * Récupère l'inscription d'un utilisateur à un événement
+   */
+  async getRegistration(evenementId, userId) {
+    return this.models.EvenementUser.findOne({
+      where: { id_evenement: evenementId, id_user: userId }
+    });
+  }
+
+  /**
+   * Valide ou refuse la participation d'un utilisateur
+   */
+  async updateParticipationStatus(evenementId, userId, data) {
+    const participation = await this.models.EvenementUser.findOne({
+      where: { id_evenement: evenementId, id_user: userId }
+    });
+    if (!participation) return null;
+    await participation.update(data);
+    return participation;
+  }
+
+  /**
+   * Récupère les professionnels en attente pour un événement
+   */
+  async getPendingProfessionals(evenementId) {
+    return this.models.EvenementUser.findAll({
+      where: {
+        id_evenement: evenementId,
+        statut_participation: 'en_attente'
+      },
+      include: [{
+        model: this.models.User,
+        as: 'User',
+        attributes: { exclude: ['password'] },
+        include: [
+          { model: this.models.TypeUser, required: false }
+        ]
+      }],
+      order: [['date_inscription', 'ASC']]
+    });
+  }
+
+  /**
+   * Récupère le profil complet d'un participant
+   */
+  async getParticipantProfile(userId) {
+    return this.models.User.findByPk(userId, {
+      attributes: { exclude: ['password'] },
+      include: [
+        { model: this.models.TypeUser, required: false },
+        { model: this.models.Wilaya, required: false },
+        {
+          model: this.models.Oeuvre,
+          as: 'OeuvresSaisies',
+          where: { statut: 'publie' },
+          required: false,
+          limit: 10
+        }
+      ]
+    });
+  }
+
+  // ============================================================================
+  // OEUVRES D'UN ÉVÉNEMENT
+  // ============================================================================
+
+  /**
+   * Récupère les oeuvres ajoutées + disponibles pour un user dans un événement
+   */
+  async getOeuvresForUser(evenementId, userId) {
+    const [oeuvresAjoutees, toutesOeuvres] = await Promise.all([
+      this.models.EvenementOeuvre.findAll({
+        where: { id_evenement: evenementId },
+        include: [{
+          model: this.models.Oeuvre,
+          as: 'Oeuvre',
+          where: { saisi_par: userId },
+          required: true
+        }],
+        order: [['ordre_presentation', 'ASC']]
+      }),
+      this.models.Oeuvre.findAll({
+        where: { saisi_par: userId, statut: 'publie' },
+        attributes: ['id_oeuvre', 'titre', 'statut', 'id_type_oeuvre']
+      })
+    ]);
+    return { oeuvresAjoutees, toutesOeuvres };
+  }
+
+  /**
+   * Vérifie qu'une oeuvre appartient à un utilisateur
+   */
+  async findOeuvreByOwner(oeuvreId, userId) {
+    return this.models.Oeuvre.findOne({
+      where: { id_oeuvre: oeuvreId, saisi_par: userId }
+    });
+  }
+
+  /**
+   * Vérifie si une oeuvre est déjà associée à un événement
+   */
+  async findEvenementOeuvre(evenementId, oeuvreId) {
+    return this.models.EvenementOeuvre.findOne({
+      where: { id_evenement: evenementId, id_oeuvre: oeuvreId }
+    });
+  }
+
+  /**
+   * Ajoute une oeuvre à un événement
+   */
+  async addOeuvreToEvent(data) {
+    const maxOrdre = await this.models.EvenementOeuvre.max('ordre_presentation', {
+      where: { id_evenement: data.id_evenement }
+    });
+
+    const association = await this.models.EvenementOeuvre.create({
+      ...data,
+      ordre_presentation: (maxOrdre || 0) + 1
+    });
+
+    return this.models.EvenementOeuvre.findByPk(association.id_EventOeuvre, {
+      include: [{ model: this.models.Oeuvre, as: 'Oeuvre', required: false }]
+    });
+  }
+
+  /**
+   * Met à jour une association oeuvre-événement
+   */
+  async updateOeuvreInEvent(evenementId, oeuvreId, userId, updates) {
+    const association = await this.models.EvenementOeuvre.findOne({
+      where: { id_evenement: evenementId, id_oeuvre: oeuvreId, id_presentateur: userId }
+    });
+    if (!association) return null;
+
+    await association.update(updates);
+
+    return this.models.EvenementOeuvre.findOne({
+      where: { id_evenement: evenementId, id_oeuvre: oeuvreId },
+      include: [{ model: this.models.Oeuvre, as: 'Oeuvre', required: false }]
+    });
+  }
+
+  /**
+   * Réordonne les oeuvres d'un événement (dans une transaction)
+   */
+  async reorderOeuvres(evenementId, userId, oeuvres) {
+    return this.withTransaction(async (transaction) => {
+      for (const item of oeuvres) {
+        const idOeuvre = parseInt(item.id_oeuvre);
+        const ordre = parseInt(item.ordre ?? item.ordre_presentation);
+
+        if (!Number.isInteger(idOeuvre) || !Number.isInteger(ordre)) {
+          throw new Error('Données de réorganisation invalides');
+        }
+
+        const [updatedCount] = await this.models.EvenementOeuvre.update(
+          { ordre_presentation: ordre },
+          {
+            where: { id_evenement: evenementId, id_oeuvre: idOeuvre, id_presentateur: userId },
+            transaction
+          }
+        );
+
+        if (!updatedCount) {
+          throw new Error(`Association introuvable pour l'œuvre ${idOeuvre}`);
+        }
+      }
+    });
+  }
+
+  /**
+   * Récupère les oeuvres ordonnées d'un user pour un événement
+   */
+  async getOeuvresOrdered(evenementId, userId) {
+    return this.models.EvenementOeuvre.findAll({
+      where: { id_evenement: evenementId, id_presentateur: userId },
+      include: [{ model: this.models.Oeuvre, as: 'Oeuvre', required: false }],
+      order: [['ordre_presentation', 'ASC']]
+    });
+  }
+
+  /**
+   * Supprime une oeuvre d'un événement
+   */
+  async removeOeuvreFromEvent(evenementId, oeuvreId, userId) {
+    return this.models.EvenementOeuvre.destroy({
+      where: { id_evenement: evenementId, id_oeuvre: oeuvreId, id_presentateur: userId }
+    });
+  }
+
+  // ============================================================================
+  // MODÉRATION
+  // ============================================================================
+
   /**
    * Trouve les événements en attente de validation (admin)
    */

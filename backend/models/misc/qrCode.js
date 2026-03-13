@@ -17,8 +17,8 @@ module.exports = (sequelize) => {
     },
     code_unique: {
       type: DataTypes.STRING(100),
-      allowNull: false,
-     
+      allowNull: true,
+
     },
     url_destination: {
       type: DataTypes.STRING(500),

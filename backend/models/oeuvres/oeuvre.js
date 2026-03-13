@@ -33,7 +33,8 @@ module.exports = (sequelize) => {
       comment: 'Langue originale de l\'oeuvre'
     },
     annee_creation: {
-      type: DataTypes.INTEGER
+      type: DataTypes.INTEGER,
+      allowNull: true
     },
     // ⚡ MODIFIÉ POUR I18N
     description: {
@@ -43,10 +44,12 @@ module.exports = (sequelize) => {
       comment: 'Description en plusieurs langues'
     },
     prix: {
-      type: DataTypes.DECIMAL(10, 2)
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: true
     },
     saisi_par: {
       type: DataTypes.INTEGER,
+      allowNull: true,
       references: {
         model: 'user',
         key: 'id_user'
@@ -54,6 +57,7 @@ module.exports = (sequelize) => {
     },
     id_oeuvre_originale: {
       type: DataTypes.INTEGER,
+      allowNull: true,
       references: {
         model: 'oeuvre',
         key: 'id_oeuvre'
@@ -62,10 +66,12 @@ module.exports = (sequelize) => {
     statut: {
       type: DataTypes.ENUM('brouillon', 'en_attente', 'publie', 'rejete', 'archive', 'supprime'),
       allowNull: false,
-      defaultValue: 'brouillon'
+      defaultValue: 'brouillon',
+      index: true
     },
     date_validation: {
-      type: DataTypes.DATE
+      type: DataTypes.DATE,
+      allowNull: true
     },
     validateur_id: {
       type: DataTypes.INTEGER,
