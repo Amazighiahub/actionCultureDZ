@@ -2,9 +2,10 @@
  * Page d'accueil - Index.tsx (Refactorisé)
  * Composants séparés, lazy loading, et bouton "Contribuer" visible
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useQuery } from '@tanstack/react-query';
 
 // Composants UI
 import Header from '@/components/Header';
@@ -14,7 +15,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useToast } from '@/components/ui/use-toast';
 
 // Icônes
 import { 
@@ -49,70 +49,46 @@ const Index: React.FC = () => {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const { rtlClasses } = useRTL();
-  const { toast } = useToast();
-  
   // États
   const [activeTab, setActiveTab] = useState('patrimoine');
-  const [notifications, setNotifications] = useState<any[]>([]);
-  const [wilayasCache, setWilayasCache] = useState<any>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState<any>(null);
-  
+
   // Direction RTL
   const direction = i18n.language === 'ar' || i18n.language === 'ar-DZ' ? 'rtl' : 'ltr';
 
-  useEffect(() => {
-    checkAuthAndLoadData();
-  }, []);
+  // Auth check (synchrone)
+  const isAuthenticated = authService.isAuthenticated();
 
-  const checkAuthAndLoadData = async () => {
-    try {
-      setLoading(true);
-      
-      const authenticated = authService.isAuthenticated();
-      setIsAuthenticated(authenticated);
+  // Wilayas — données publiques, cache long
+  const { data: wilayasCache = null } = useQuery({
+    queryKey: ['metadata', 'wilayas'],
+    queryFn: async () => {
+      const res = await metadataService.getWilayas();
+      return res.success && res.data ? res.data : null;
+    },
+    staleTime: 30 * 60 * 1000,
+  });
 
-      // Charger les wilayas
-      const wilayasResponse = await metadataService.getWilayas();
-      if (wilayasResponse.success && wilayasResponse.data) {
-        setWilayasCache(wilayasResponse.data);
-      }
+  // Stats dashboard — seulement si authentifié
+  const { data: stats = null } = useQuery({
+    queryKey: ['dashboard', 'overview'],
+    queryFn: async () => {
+      const res = await dashboardService.getOverview();
+      return res.success && res.data ? res.data : null;
+    },
+    enabled: isAuthenticated,
+    staleTime: 5 * 60 * 1000,
+  });
 
-      // Charger les stats si authentifié
-      if (authenticated) {
-        try {
-          const statsResponse = await dashboardService.getOverview();
-          if (statsResponse.success && statsResponse.data) {
-            setStats(statsResponse.data);
-          }
-        } catch {
-          // Stats non critiques, ignorer silencieusement
-        }
-      }
-
-      // Charger les notifications si connecté
-      if (authenticated) {
-        try {
-          const notifSummary = await notificationService.getSummary();
-          if (notifSummary && notifSummary.dernieres && Array.isArray(notifSummary.dernieres)) {
-            setNotifications((notifSummary.dernieres as any) || []);
-          }
-        } catch {
-          // Notifications non critiques, ignorer silencieusement
-        }
-      }
-    } catch (error) {
-      console.error('Erreur dans checkAuthAndLoadData:', error);
-      toast({
-        title: t('errors.generic.title'),
-        description: t('errors.partialDataLoad'),
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Notifications — seulement si authentifié
+  const { data: notifications = [] } = useQuery<any[]>({
+    queryKey: ['notifications', 'summary'],
+    queryFn: async () => {
+      const summary = await notificationService.getSummary();
+      return summary?.dernieres && Array.isArray(summary.dernieres) ? summary.dernieres : [];
+    },
+    enabled: isAuthenticated,
+    staleTime: 2 * 60 * 1000,
+  });
   
   return (
     <div className={`min-h-screen bg-background`} dir={direction}>

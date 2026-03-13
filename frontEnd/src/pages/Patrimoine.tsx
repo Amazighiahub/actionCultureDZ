@@ -1,4 +1,5 @@
-import React, { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import React, { lazy, Suspense, useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import Header from '@/components/Header';
@@ -96,53 +97,30 @@ const Patrimoine = () => {
   const { toast } = useToast();
   const lang = i18n.language || 'fr';
 
-  const [sites, setSites] = useState<SitePatrimoine[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<string | null>(null);
-  const [typesPatrimoine, setTypesPatrimoine] = useState<TypePatrimoineOption[]>([]);
 
-  // ⚡ Charger les types de patrimoine disponibles
-  const loadTypesPatrimoine = async () => {
-    try {
-      const response = await patrimoineService.getTypesPatrimoine();
-      if (response.success && response.data) {
-        setTypesPatrimoine(response.data);
-      }
-    } catch (err) {
-      console.error('Erreur chargement types:', err);
-    }
-  };
+  // Types patrimoine — cachés 10min, rarement changent
+  const { data: typesPatrimoine = [] } = useQuery<TypePatrimoineOption[]>({
+    queryKey: ['patrimoine', 'types'],
+    queryFn: async () => {
+      const res = await patrimoineService.getTypesPatrimoine();
+      return res.success && res.data ? res.data : [];
+    },
+    staleTime: 10 * 60 * 1000,
+  });
 
-  // Charger les sites patrimoniaux
-  const loadSites = async (typePatrimoine?: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await patrimoineService.getSitesPopulaires(12, typePatrimoine || undefined);
-      if (response.success && response.data) {
-        setSites(response.data as unknown as SitePatrimoine[]);
-      } else {
-        setError('Impossible de charger les sites patrimoniaux');
-      }
-    } catch (err) {
-      console.error('Erreur chargement sites:', err);
-      setError('Erreur de connexion au serveur');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Sites — re-fetch automatique quand filterType change via queryKey
+  const { data: sites = [], isLoading: loading, error: queryError, refetch } = useQuery<SitePatrimoine[]>({
+    queryKey: ['patrimoine', 'sites', filterType],
+    queryFn: async () => {
+      const res = await patrimoineService.getSitesPopulaires(12, filterType || undefined);
+      if (res.success && res.data) return res.data as unknown as SitePatrimoine[];
+      throw new Error('Impossible de charger les sites patrimoniaux');
+    },
+  });
 
-  useEffect(() => {
-    loadTypesPatrimoine();
-    loadSites();
-  }, []);
-
-  // ⚡ Recharger quand le filtre change
-  useEffect(() => {
-    loadSites(filterType || undefined);
-  }, [filterType]);
+  const error = queryError ? (queryError as Error).message : null;
 
   // Filtrer les sites (recherche locale uniquement, le type est filtré côté serveur)
   const filteredSites = useMemo(() => sites.filter(site => {
@@ -212,7 +190,7 @@ const Patrimoine = () => {
                 className="pl-10"
               />
             </div>
-            <Button variant="outline" onClick={() => loadSites(filterType || undefined)} disabled={loading}>
+            <Button variant="outline" onClick={() => refetch()} disabled={loading}>
               <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
               {t('common.refresh', 'Actualiser')}
             </Button>
@@ -262,7 +240,7 @@ const Patrimoine = () => {
                 <p className="font-semibold">{t('common.error', 'Erreur')}</p>
                 <p className="text-muted-foreground">{error}</p>
               </div>
-              <Button variant="outline" onClick={loadSites} className="ml-auto">
+              <Button variant="outline" onClick={() => refetch()} className="ml-auto">
                 {t('common.retry', 'Réessayer')}
               </Button>
             </CardContent>

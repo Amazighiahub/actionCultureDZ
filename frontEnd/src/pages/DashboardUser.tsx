@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Card } from '@/components/ui/card';
@@ -34,38 +35,43 @@ const DashboardUser = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
-  // Notifications depuis l'API
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [loadingNotifs, setLoadingNotifs] = useState(true);
+  // Notifications via React Query
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    const loadNotifications = async () => {
-      setLoadingNotifs(true);
-      try {
-        const result = await notificationService.getNotifications({ page: 1, limit: 10 });
-        setNotifications(result.notifications || []);
-      } catch {
-        setNotifications([]);
-      } finally {
-        setLoadingNotifs(false);
-      }
-    };
-    loadNotifications();
-  }, []);
+  const { data: notifications = [], isLoading: loadingNotifs } = useQuery<Notification[]>({
+    queryKey: ['notifications', 'user', 'list'],
+    queryFn: async () => {
+      const result = await notificationService.getNotifications({ page: 1, limit: 10 });
+      return result.notifications || [];
+    },
+    staleTime: 2 * 60 * 1000,
+  });
 
-  const handleMarkAsRead = useCallback(async (id: number) => {
-    try {
-      await notificationService.markAsRead(id);
-      setNotifications(prev => prev.map(n => n.id_notification === id ? { ...n, lu: true } : n));
-    } catch { /* ignore */ }
-  }, []);
+  const markAsReadMutation = useMutation({
+    mutationFn: (id: number) => notificationService.markAsRead(id),
+    onSuccess: (_data, id) => {
+      queryClient.setQueryData<Notification[]>(['notifications', 'user', 'list'], (prev) =>
+        prev?.map(n => n.id_notification === id ? { ...n, lu: true } : n) ?? []
+      );
+    },
+  });
 
-  const handleMarkAllRead = useCallback(async () => {
-    try {
-      await notificationService.markAllAsRead();
-      setNotifications(prev => prev.map(n => ({ ...n, lu: true })));
-    } catch { /* ignore */ }
-  }, []);
+  const markAllReadMutation = useMutation({
+    mutationFn: () => notificationService.markAllAsRead(),
+    onSuccess: () => {
+      queryClient.setQueryData<Notification[]>(['notifications', 'user', 'list'], (prev) =>
+        prev?.map(n => ({ ...n, lu: true })) ?? []
+      );
+    },
+  });
+
+  const handleMarkAsRead = useCallback((id: number) => {
+    markAsReadMutation.mutate(id);
+  }, [markAsReadMutation]);
+
+  const handleMarkAllRead = useCallback(() => {
+    markAllReadMutation.mutate();
+  }, [markAllReadMutation]);
 
   // Utiliser le hook useFavoris pour récupérer les vraies données
   const {
