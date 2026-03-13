@@ -27,7 +27,6 @@ const useDashboardProSimple = () => {
                   programmes: programmesResponse.success && programmesResponse.data ? programmesResponse.data.programmes : []
                 };
               } catch (error) {
-                console.warn(`Erreur chargement programmes pour événement ${evenement.id_evenement}:`, error);
                 return {
                   ...evenement,
                   programmes: []
@@ -42,8 +41,6 @@ const useDashboardProSimple = () => {
           };
         }
       } catch (error) {
-        console.warn('Erreur chargement événements, utilisation des données de test:', error);
-        
         // Données de test avec programmes
         return {
           items: [

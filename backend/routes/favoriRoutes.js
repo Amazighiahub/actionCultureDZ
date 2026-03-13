@@ -13,10 +13,10 @@ const initFavoriRoutes = (models) => {
   const addFavoriValidation = [
     body('type_entite')
       .isIn(['oeuvre', 'evenement', 'lieu', 'artisanat'])
-      .withMessage('Type d\'entité invalide'),
+      .withMessage((value, { req }) => req.t('validation.invalidEntityType')),
     body('id_entite')
       .isInt({ min: 1 })
-      .withMessage('ID d\'entité invalide')
+      .withMessage((value, { req }) => req.t('validation.invalidEntityId'))
   ];
 
   // Toutes les routes nécessitent une authentification
@@ -61,7 +61,6 @@ const initFavoriRoutes = (models) => {
     favoriController.removeFavoriByEntity.bind(favoriController)
   );
 
-  console.log('✅ Routes favoris initialisées');
 
   return router;
 };

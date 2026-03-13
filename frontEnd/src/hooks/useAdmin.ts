@@ -3,6 +3,7 @@
  * Utilise: useApi, useMutation, useDebouncedValue, useAuth
  */
 import { useState, useCallback, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation as useReactMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -107,7 +108,6 @@ export function useSocketConnection() {
   const [lastPing, setLastPing] = useState<Date | null>(null);
 
   const reconnect = useCallback(() => {
-    console.log('Reconnecting WebSocket...');
     // Logique de reconnexion via socketService si nécessaire
     setIsConnected(true);
     setLastPing(new Date());
@@ -137,6 +137,7 @@ interface UseAdminStatsOptions {
 export function useAdminStats(options: UseAdminStatsOptions = {}) {
   const { autoFetch = true, refreshInterval } = options;
   const { toast } = useToast();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
 
   // Query pour les statistiques
@@ -148,7 +149,7 @@ export function useAdminStats(options: UseAdminStatsOptions = {}) {
   } = useQuery({
     queryKey: ['admin-stats'],
     queryFn: async () => {
-      const response = await httpClient.get<any>('/admin/stats/overview');
+      const response = await httpClient.get<any>('/dashboard/overview');
       if (!response.success) throw new Error(response.error);
       return response.data;
     },
@@ -165,7 +166,7 @@ export function useAdminStats(options: UseAdminStatsOptions = {}) {
   } = useQuery({
     queryKey: ['admin-pending'],
     queryFn: async () => {
-      const response = await httpClient.get<any>('/admin/pending');
+      const response = await httpClient.get<any>('/dashboard/moderation/queue');
       if (!response.success) throw new Error(response.error);
       return response.data;
     },
@@ -181,7 +182,7 @@ export function useAdminStats(options: UseAdminStatsOptions = {}) {
   } = useQuery({
     queryKey: ['admin-activity'],
     queryFn: async () => {
-      const response = await httpClient.get<any>('/admin/activity', { limit: 10 });
+      const response = await httpClient.get<any>('/dashboard/stats', { limit: 10 });
       if (!response.success) throw new Error(response.error);
       return response.data;
     },
@@ -192,19 +193,19 @@ export function useAdminStats(options: UseAdminStatsOptions = {}) {
   // Mutation pour approuver un élément
   const approveMutation = useReactMutation({
     mutationFn: async ({ type, id }: { type: string; id: number }) => {
-      const response = await httpClient.put(`/admin/${type}s/${id}/validate`);
+      const response = await httpClient.post(`/${type}s/${id}/validate`);
       if (!response.success) throw new Error(response.error);
       return response.data;
     },
     onSuccess: () => {
-      toast({ title: 'Élément approuvé avec succès' });
+      toast({ title: t('toasts.itemApproved') });
       queryClient.invalidateQueries({ queryKey: ['admin-pending'] });
       queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
     },
     onError: (error: any) => {
       toast({ 
-        title: 'Erreur', 
-        description: error.message || 'Impossible d\'approuver',
+        title: t('toasts.error'), 
+        description: error.message || t('toasts.approvalFailed'),
         variant: 'destructive' 
       });
     }
@@ -213,18 +214,18 @@ export function useAdminStats(options: UseAdminStatsOptions = {}) {
   // Mutation pour rejeter un élément
   const rejectMutation = useReactMutation({
     mutationFn: async ({ type, id, reason }: { type: string; id: number; reason?: string }) => {
-      const response = await httpClient.put(`/admin/${type}s/${id}/reject`, { raison: reason });
+      const response = await httpClient.post(`/${type}s/${id}/reject`, { raison: reason });
       if (!response.success) throw new Error(response.error);
       return response.data;
     },
     onSuccess: () => {
-      toast({ title: 'Élément rejeté' });
+      toast({ title: t('toasts.itemRejected') });
       queryClient.invalidateQueries({ queryKey: ['admin-pending'] });
       queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
     },
     onError: (error: any) => {
       toast({ 
-        title: 'Erreur', 
+        title: t('toasts.error'), 
         description: error.message,
         variant: 'destructive' 
       });
@@ -238,7 +239,7 @@ export function useAdminStats(options: UseAdminStatsOptions = {}) {
       refetchPending(),
       refetchActivity()
     ]);
-    toast({ title: 'Données actualisées' });
+    toast({ title: t('toasts.dataRefreshed') });
   }, [refetchStats, refetchPending, refetchActivity, toast]);
 
   return {
@@ -278,6 +279,7 @@ interface UseAdminUsersOptions {
 export function useAdminUsers(options: UseAdminUsersOptions = {}) {
   const { search = '', statut, type, autoFetch = true } = options;
   const { toast } = useToast();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [currentPage, setCurrentPage] = useState(1);
   
@@ -301,7 +303,7 @@ export function useAdminUsers(options: UseAdminUsersOptions = {}) {
       if (statut && statut !== 'tous') params.statut = statut;
       if (type && type !== 'tous') params.id_type_user = type;
 
-      const response = await httpClient.get<any>('/admin/users', params);
+      const response = await httpClient.get<any>('/users', params);
       if (!response.success) throw new Error(response.error);
       return response.data;
     },
@@ -315,64 +317,64 @@ export function useAdminUsers(options: UseAdminUsersOptions = {}) {
   // Mutation pour valider un utilisateur
   const validateMutation = useReactMutation({
     mutationFn: async (userId: number) => {
-      const response = await httpClient.put(`/admin/users/${userId}/validate`);
+      const response = await httpClient.post(`/users/${userId}/validate`);
       if (!response.success) throw new Error(response.error);
       return response.data;
     },
     onSuccess: () => {
-      toast({ title: 'Utilisateur validé' });
+      toast({ title: t('toasts.userValidated') });
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
     },
     onError: (error: any) => {
-      toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
+      toast({ title: t('toasts.error'), description: error.message, variant: 'destructive' });
     }
   });
 
   // Mutation pour suspendre
   const suspendMutation = useReactMutation({
     mutationFn: async ({ userId, reason }: { userId: number; reason?: string }) => {
-      const response = await httpClient.put(`/admin/users/${userId}/suspend`, { raison: reason });
+      const response = await httpClient.post(`/users/${userId}/suspend`, { raison: reason });
       if (!response.success) throw new Error(response.error);
       return response.data;
     },
     onSuccess: () => {
-      toast({ title: 'Utilisateur suspendu' });
+      toast({ title: t('toasts.userSuspended') });
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
     },
     onError: (error: any) => {
-      toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
+      toast({ title: t('toasts.error'), description: error.message, variant: 'destructive' });
     }
   });
 
   // Mutation pour réactiver
   const activateMutation = useReactMutation({
     mutationFn: async (userId: number) => {
-      const response = await httpClient.put(`/admin/users/${userId}/activate`);
+      const response = await httpClient.post(`/users/${userId}/reactivate`);
       if (!response.success) throw new Error(response.error);
       return response.data;
     },
     onSuccess: () => {
-      toast({ title: 'Utilisateur réactivé' });
+      toast({ title: t('toasts.userReactivated') });
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
     },
     onError: (error: any) => {
-      toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
+      toast({ title: t('toasts.error'), description: error.message, variant: 'destructive' });
     }
   });
 
   // Mutation pour supprimer
   const deleteMutation = useReactMutation({
     mutationFn: async (userId: number) => {
-      const response = await httpClient.delete(`/admin/users/${userId}`);
+      const response = await httpClient.delete(`/users/${userId}`);
       if (!response.success) throw new Error(response.error);
       return response.data;
     },
     onSuccess: () => {
-      toast({ title: 'Utilisateur supprimé' });
+      toast({ title: t('toasts.userDeleted') });
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
     },
     onError: (error: any) => {
-      toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
+      toast({ title: t('toasts.error'), description: error.message, variant: 'destructive' });
     }
   });
 
@@ -384,7 +386,7 @@ export function useAdminUsers(options: UseAdminUsersOptions = {}) {
       if (statut && statut !== 'tous') params.statut = statut;
       if (type && type !== 'tous') params.id_type_user = type;
 
-      const response = await httpClient.get<Blob>('/admin/users/export', params);
+      const response = await httpClient.get<Blob>('/dashboard/users/export', params);
       
       if (response.success && response.data) {
         const url = window.URL.createObjectURL(response.data);
@@ -395,10 +397,10 @@ export function useAdminUsers(options: UseAdminUsersOptions = {}) {
         a.click();
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
-        toast({ title: 'Export généré avec succès' });
+        toast({ title: t('toasts.exportGenerated') });
       }
     } catch (err: any) {
-      toast({ title: 'Erreur export', description: err.message, variant: 'destructive' });
+      toast({ title: t('toasts.exportFailed'), description: err.message, variant: 'destructive' });
     }
   }, [debouncedSearch, statut, type, toast]);
 
@@ -440,6 +442,7 @@ interface UseAdminOeuvresOptions {
 export function useAdminOeuvres(options: UseAdminOeuvresOptions = {}) {
   const { search = '', statut, type, autoFetch = true } = options;
   const { toast } = useToast();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [currentPage, setCurrentPage] = useState(1);
   
@@ -462,7 +465,7 @@ export function useAdminOeuvres(options: UseAdminOeuvresOptions = {}) {
       if (statut && statut !== 'tous') params.statut = statut;
       if (type && type !== 'tous') params.id_type_oeuvre = type;
 
-      const response = await httpClient.get<any>('/admin/Oeuvres', params);
+      const response = await httpClient.get<any>('/oeuvres/admin/all', params);
       if (!response.success) throw new Error(response.error);
       return response.data;
     },
@@ -488,46 +491,46 @@ export function useAdminOeuvres(options: UseAdminOeuvresOptions = {}) {
   // Mutations
   const validateMutation = useReactMutation({
     mutationFn: async (id: number) => {
-      const response = await httpClient.put(`/admin/oeuvres/${id}/validate`);
+      const response = await httpClient.post(`/oeuvres/${id}/validate`);
       if (!response.success) throw new Error(response.error);
       return response.data;
     },
     onSuccess: () => {
-      toast({ title: 'Œuvre validée' });
+      toast({ title: t('toasts.oeuvreValidated') });
       queryClient.invalidateQueries({ queryKey: ['admin-oeuvres'] });
     },
     onError: (error: any) => {
-      toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
+      toast({ title: t('toasts.error'), description: error.message, variant: 'destructive' });
     }
   });
 
   const rejectMutation = useReactMutation({
     mutationFn: async ({ id, reason }: { id: number; reason?: string }) => {
-      const response = await httpClient.put(`/admin/oeuvres/${id}/reject`, { raison: reason });
+      const response = await httpClient.post(`/oeuvres/${id}/reject`, { raison: reason });
       if (!response.success) throw new Error(response.error);
       return response.data;
     },
     onSuccess: () => {
-      toast({ title: 'Œuvre rejetée' });
+      toast({ title: t('toasts.oeuvreRejected') });
       queryClient.invalidateQueries({ queryKey: ['admin-oeuvres'] });
     },
     onError: (error: any) => {
-      toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
+      toast({ title: t('toasts.error'), description: error.message, variant: 'destructive' });
     }
   });
 
   const deleteMutation = useReactMutation({
     mutationFn: async (id: number) => {
-      const response = await httpClient.delete(`/admin/oeuvres/${id}`);
+      const response = await httpClient.delete(`/oeuvres/${id}`);
       if (!response.success) throw new Error(response.error);
       return response.data;
     },
     onSuccess: () => {
-      toast({ title: 'Œuvre supprimée' });
+      toast({ title: t('toasts.oeuvreDeleted') });
       queryClient.invalidateQueries({ queryKey: ['admin-oeuvres'] });
     },
     onError: (error: any) => {
-      toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
+      toast({ title: t('toasts.error'), description: error.message, variant: 'destructive' });
     }
   });
 
@@ -560,6 +563,7 @@ interface UseAdminEvenementsOptions {
 export function useAdminEvenements(options: UseAdminEvenementsOptions = {}) {
   const { search = '', statut, autoFetch = true } = options;
   const { toast } = useToast();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [currentPage, setCurrentPage] = useState(1);
   
@@ -581,7 +585,7 @@ export function useAdminEvenements(options: UseAdminEvenementsOptions = {}) {
       if (debouncedSearch) params.search = debouncedSearch;
       if (statut && statut !== 'tous') params.statut = statut;
 
-      const response = await httpClient.get<any>('/admin/Evenements', params);
+      const response = await httpClient.get<any>('/evenements/admin/all', params);
       if (!response.success) throw new Error(response.error);
       return response.data;
     },
@@ -595,46 +599,46 @@ export function useAdminEvenements(options: UseAdminEvenementsOptions = {}) {
   // Mutations
   const validateMutation = useReactMutation({
     mutationFn: async (id: number) => {
-      const response = await httpClient.put(`/admin/evenements/${id}/validate`);
+      const response = await httpClient.post(`/evenements/${id}/publish`);
       if (!response.success) throw new Error(response.error);
       return response.data;
     },
     onSuccess: () => {
-      toast({ title: 'Événement validé' });
+      toast({ title: t('toasts.eventValidated') });
       queryClient.invalidateQueries({ queryKey: ['admin-evenements'] });
     },
     onError: (error: any) => {
-      toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
+      toast({ title: t('toasts.error'), description: error.message, variant: 'destructive' });
     }
   });
 
   const rejectMutation = useReactMutation({
     mutationFn: async ({ id, reason }: { id: number; reason?: string }) => {
-      const response = await httpClient.put(`/admin/evenements/${id}/reject`, { raison: reason });
+      const response = await httpClient.post(`/evenements/${id}/publish`, { statut: 'rejete', raison: reason });
       if (!response.success) throw new Error(response.error);
       return response.data;
     },
     onSuccess: () => {
-      toast({ title: 'Événement rejeté' });
+      toast({ title: t('toasts.eventRejected') });
       queryClient.invalidateQueries({ queryKey: ['admin-evenements'] });
     },
     onError: (error: any) => {
-      toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
+      toast({ title: t('toasts.error'), description: error.message, variant: 'destructive' });
     }
   });
 
   const deleteMutation = useReactMutation({
     mutationFn: async (id: number) => {
-      const response = await httpClient.delete(`/admin/evenements/${id}`);
+      const response = await httpClient.delete(`/evenements/${id}`);
       if (!response.success) throw new Error(response.error);
       return response.data;
     },
     onSuccess: () => {
-      toast({ title: 'Événement supprimé' });
+      toast({ title: t('toasts.eventDeleted') });
       queryClient.invalidateQueries({ queryKey: ['admin-evenements'] });
     },
     onError: (error: any) => {
-      toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
+      toast({ title: t('toasts.error'), description: error.message, variant: 'destructive' });
     }
   });
 
@@ -676,6 +680,7 @@ interface UseAdminModerationOptions {
 export function useAdminModeration(options: UseAdminModerationOptions = {}) {
   const { statut = 'en_attente', autoFetch = true } = options;
   const { toast } = useToast();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
 
   // Query pour les signalements
@@ -690,7 +695,7 @@ export function useAdminModeration(options: UseAdminModerationOptions = {}) {
       const params: any = {};
       if (statut !== 'tous') params.statut = statut;
 
-      const response = await httpClient.get<any>('/admin/signalements', params);
+      const response = await httpClient.get<any>('/signalements', params);
       if (!response.success) throw new Error(response.error);
       return response.data;
     },
@@ -703,22 +708,22 @@ export function useAdminModeration(options: UseAdminModerationOptions = {}) {
   // Mutation pour traiter un signalement
   const treatMutation = useReactMutation({
     mutationFn: async ({ id, action, reason }: { id: number; action: 'approve' | 'reject' | 'warn'; reason?: string }) => {
-      const response = await httpClient.put(`/admin/signalements/${id}/treat`, { action, raison: reason });
+      const response = await httpClient.put(`/signalements/${id}/traiter`, { action, raison: reason });
       if (!response.success) throw new Error(response.error);
       return response.data;
     },
     onSuccess: (_, variables) => {
       const messages = {
-        approve: 'Signalement approuvé - contenu supprimé',
-        reject: 'Signalement rejeté',
-        warn: 'Avertissement envoyé'
+        approve: t('toasts.signalementApproved'),
+        reject: t('toasts.signalementRejected'),
+        warn: t('toasts.warningSent')
       };
       toast({ title: messages[variables.action] });
       queryClient.invalidateQueries({ queryKey: ['admin-signalements'] });
       queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
     },
     onError: (error: any) => {
-      toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
+      toast({ title: t('toasts.error'), description: error.message, variant: 'destructive' });
     }
   });
 

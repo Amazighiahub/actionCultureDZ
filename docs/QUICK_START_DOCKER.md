@@ -1,9 +1,12 @@
 # Quick Start Docker — EventCulture
 
-Ce document est conservé pour compatibilité, mais la documentation Docker/BD est centralisée.
+Document déprécié. Utiliser la documentation officielle :
 
-## Source unique (à maintenir)
+➡️ **[README-DOCKER.md](README-DOCKER.md)**
 
-➡️ `docs/README-DOCKER.md`
+Commandes minimales :
 
-Pour éviter les divergences, toutes les mises à jour doivent être faites uniquement dans ce fichier.
+```bash
+docker compose up -d --build
+# Puis initialiser la base : voir README-DOCKER.md section "Initialisation"
+```

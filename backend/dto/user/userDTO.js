@@ -20,7 +20,6 @@ class UserDTO extends BaseDTO {
     // Type et statut
     this.idTypeUser = data.id_type_user || data.idTypeUser;
     this.statut = data.statut || 'actif';
-    this.statutValidation = data.statut_validation || data.statutValidation || 'en_attente';
 
     // Contact
     this.telephone = BaseDTO.cleanString(data.telephone);
@@ -80,7 +79,7 @@ class UserDTO extends BaseDTO {
       email: data.email,
       idTypeUser: data.id_type_user,
       photoUrl: data.photo_url,
-      statutValidation: data.statut_validation
+      statut: data.statut
     };
   }
 

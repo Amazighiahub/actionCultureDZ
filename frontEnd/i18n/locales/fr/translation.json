@@ -226,6 +226,11 @@
       "scientificArticles": "Articles scientifiques"
     }
   },
+  "category": {
+    "form": {
+      "name": "Nom de la catégorie"
+    }
+  },
   "common": {
     "about": "À propos",
     "activeFilters": "Filtres actifs",
@@ -308,7 +313,9 @@
     "moreOptions": "Plus d'options",
     "clearSearch": "Effacer la recherche",
     "type": "Type",
-    "more": "autres"
+    "more": "autres",
+    "linkCopied": "Lien copié",
+    "linkCopiedDesc": "Le lien a été copié dans le presse-papier"
   },
   "contributors": {
     "addedCount": "{{count}} contributeurs ajoutés",
@@ -394,7 +401,8 @@
       "startTime": "Heure de début",
       "subtitle": "Créez un nouvel événement culturel",
       "title": "Ajouter un événement",
-      "willBeAvailableSoon": "Sera disponible bientôt"
+      "willBeAvailableSoon": "Sera disponible bientôt",
+      "locationRequired": "Veuillez sélectionner un lieu pour l'événement"
     },
     "types": {
       "concert": "Concert",
@@ -1304,6 +1312,12 @@
     "placeholder_4530": "Ex: 45:30",
     "label_maison_production": "Label / Maison de production",
     "placeholder_nom_label": "Nom du label",
+    "nb_pistes": "Nombre de pistes",
+    "placeholder_nb_pistes": "Ex: 12",
+    "producteur": "Producteur",
+    "placeholder_producteur": "Nom du producteur",
+    "studio": "Studio de production",
+    "placeholder_studio": "Nom du studio",
     "auteur": "Auteur",
     "placeholder_nom_lauteur": "Nom de l'auteur",
     "source_publication": "Source / Publication",
@@ -1347,6 +1361,7 @@
     "vous_devez_tre": "Vous devez être connecté pour ajouter une œuvre.",
     "connecter": "Se connecter",
     "type_duvre": "Type d'œuvre",
+    "type_hint": "Sélectionnez le type qui correspond le mieux à votre œuvre. Pour les articles et articles scientifiques, l'éditeur avancé permet une mise en page riche avec blocs (titres, images, citations, tableaux).",
     "informations_gnrales": "Informations générales",
     "titre_luvre": "Titre de l'œuvre *",
     "placeholder_lart_calligraphie_maghrebine": "Ex: L'art de la calligraphie maghrebine",
@@ -1580,6 +1595,7 @@
     "chargement": "Chargement...",
     "chargement_1": "Chargement...",
     "validation_attente": "Validation en attente",
+    "validation_par_admin": "Votre compte professionnel doit être validé par un administrateur avant de pouvoir accéder à cette fonctionnalité.",
     "chargement_2": "Chargement...",
     "title_modifier": "Modifier",
     "title_supprimer": "Supprimer"
@@ -1668,7 +1684,7 @@
   },
   "auth_validatedprofessionalroute": {
     "compte_attente_validation": "Compte en attente de validation",
-    "votre_compte_professionnel": "Votre compte professionnel est en cours de validation par nos équipes. \n                  Vous ne pouvez pas encore créer de contenu.",
+    "votre_compte_professionnel": "Pour accéder à cette fonctionnalité, votre compte professionnel doit être validé par un administrateur. Votre demande est en cours d'examen et vous ne pouvez pas encore créer de contenu.",
     "statut_actuel": "Statut actuel :",
     "retour_tableau_bord": "Retour au tableau de bord",
     "retour_laccueil": "Retour à l'accueil",
@@ -1684,8 +1700,8 @@
     "retour_1": "Retour",
     "sinscrire_comme_pro": "S'inscrire comme pro",
     "validation_attente": "Validation en attente",
-    "votre_compte_professionnel": "Votre compte professionnel est en cours de validation par notre équipe.",
-    "vous_recevrez_email": "Vous recevrez un email dès que votre compte sera validé. \n                Cela prend généralement 24 à 48 heures.",
+    "votre_compte_professionnel": "Votre compte professionnel doit être validé par un administrateur avant de pouvoir créer du contenu.",
+    "vous_recevrez_email": "Un administrateur examinera votre demande. Vous recevrez un email dès que votre compte sera validé. Cela prend généralement 24 à 48 heures.",
     "attendant_vous_pouvez": "En attendant, vous pouvez explorer la plateforme en tant que visiteur.",
     "retour_laccueil": "Retour à l'accueil"
   },
@@ -1832,7 +1848,8 @@
       }
     },
     "alerts": {
-      "title": "Alertes"
+      "title": "Alertes",
+      "disconnected": "Connexion temps réel perdue. Les données peuvent ne pas être à jour."
     },
     "notifications": {
       "modal": {
@@ -2349,6 +2366,81 @@
       "loadError": "Impossible de charger le profil"
     }
   },
+  "programmePages": {
+    "actions": {
+      "backToEvents": "Retour aux événements",
+      "backToEvent": "Retour à l'événement",
+      "edit": "Modifier",
+      "delete": "Supprimer"
+    },
+    "status": {
+      "loadingProgram": "Chargement du programme..."
+    },
+    "errors": {
+      "prefix": "Erreur",
+      "generic": "Une erreur est survenue",
+      "eventIdMissing": "ID d'événement non spécifié",
+      "programmeIdMissing": "ID de programme non spécifié",
+      "eventOrProgrammeIdMissing": "ID d'événement ou de programme non spécifié",
+      "eventIdMissingWithPrefix": "Erreur: ID d'événement non spécifié",
+      "eventOrProgrammeIdMissingWithPrefix": "Erreur: ID d'événement ou de programme non spécifié",
+      "loadFailed": "Erreur lors du chargement du programme",
+      "createFailed": "Erreur lors de la création du programme",
+      "updateFailed": "Erreur lors de la mise à jour du programme",
+      "deleteFailed": "Erreur lors de la suppression du programme"
+    },
+    "meta": {
+      "eventNumber": "Événement #{{id}}",
+      "programNumber": "Programme #{{id}}",
+      "multiDay": "Plusieurs jours possibles",
+      "multipleSpeakers": "Intervenants multiples",
+      "flexibleLocations": "Lieux personnalisables",
+      "speakersCount": "{{count}} intervenant(s)",
+      "locationNotSpecified": "Lieu non spécifié"
+    },
+    "create": {
+      "title": "Créer un programme",
+      "newProgram": "Nouveau programme"
+    },
+    "edit": {
+      "title": "Modifier le programme",
+      "editProgram": "Modifier le programme"
+    },
+    "view": {
+      "title": "Détails du programme",
+      "consultation": "Consultation du programme",
+      "confirmDelete": "Êtes-vous sûr de vouloir supprimer ce programme ?",
+      "quickActions": {
+        "editProgram": "Modifier ce programme",
+        "addAnotherProgram": "Ajouter un autre programme"
+      }
+    },
+    "info": {
+      "multiDayTitle": "Gestion multi-jours",
+      "speakersTitle": "Intervenants",
+      "flexibleLocationsTitle": "Lieux flexibles",
+      "locationAndOptionsTitle": "Lieu et options",
+      "createMultiDayDesc": "Créez des programmes pour chaque jour de votre événement. Le système regroupe automatiquement les activités par date.",
+      "createSpeakersDesc": "Ajoutez plusieurs intervenants avec des rôles spécifiques. Chaque intervenant peut avoir ses propres paramètres.",
+      "createLocationsDesc": "Utilisez des lieux prédéfinis ou spécifiez un lieu personnalisé pour chaque activité du programme.",
+      "editMultiDayDesc": "Modifiez les programmes pour chaque jour de votre événement. Le système regroupe automatiquement les activités par date.",
+      "editSpeakersDesc": "Modifiez les intervenants avec leurs rôles spécifiques. Chaque intervenant peut avoir ses propres paramètres.",
+      "editLocationsDesc": "Changez les lieux prédéfinis ou spécifiez un lieu personnalisé pour chaque activité du programme.",
+      "viewMultiDayDesc": "Ce programme fait partie d'un événement sur plusieurs jours. Le système regroupe automatiquement les activités par date.",
+      "viewSpeakersDesc": "{{count}} intervenant(s) participent à cette activité. Chaque intervenant a un rôle spécifique et ses propres paramètres.",
+      "viewLocationOptionsDesc": "Activité se déroulant dans un lieu spécifique avec des options personnalisées pour les participants et l'organisation."
+    }
+  },
+  "shared": {
+    "errorBoundary": {
+      "title": "Une erreur est survenue",
+      "unexpected": "Erreur inattendue",
+      "retry": "Réessayer"
+    },
+    "lazyImage": {
+      "unavailable": "Image non disponible"
+    }
+  },
   "gestion": {
     "title": "Gestion de l'événement",
     "programmes": "Programmes",
@@ -2383,5 +2475,321 @@
       "allTypes": "Tous les types",
       "allWilayas": "Toutes les wilayas"
     }
+  },
+  "category": {
+    "form": {
+      "name": "Nom de la catégorie"
+    }
+  },
+  "toasts": {
+    "error": "Erreur",
+    "success": "Succès",
+    "warning": "Avertissement",
+    "confirmation": "Confirmation",
+    "unknownError": "Une erreur est survenue",
+    "actionSuccess": "Action effectuée avec succès",
+    "userValidated": "Utilisateur validé",
+    "userRejected": "Utilisateur rejeté",
+    "userValidationFailed": "Impossible de valider l'utilisateur",
+    "userUpdated": "Utilisateur mis à jour",
+    "userUpdateFailed": "Impossible de mettre à jour l'utilisateur",
+    "userDeleted": "Utilisateur supprimé",
+    "userDeleteFailed": "Impossible de supprimer l'utilisateur",
+    "userSuspended": "Utilisateur suspendu",
+    "userSuspendFailed": "Impossible de suspendre l'utilisateur",
+    "userReactivated": "Utilisateur réactivé",
+    "userReactivateFailed": "Impossible de réactiver l'utilisateur",
+    "passwordReset": "Mot de passe réinitialisé",
+    "passwordResetFailed": "Impossible de réinitialiser le mot de passe",
+    "bulkActionApplied": "Action {{action}} appliquée à {{count}} utilisateurs",
+    "bulkActionFailed": "Impossible d'appliquer l'action",
+    "exportUsersDone": "Export des utilisateurs terminé",
+    "exportUsersFailed": "Impossible d'exporter les utilisateurs",
+    "oeuvreValidated": "Œuvre validée",
+    "oeuvreRejected": "Œuvre rejetée",
+    "oeuvreValidationFailed": "Impossible de valider l'œuvre",
+    "oeuvreStatusUpdated": "Statut de l'œuvre mis à jour",
+    "oeuvreDeleted": "Œuvre supprimée",
+    "oeuvreDeleteFailed": "Impossible de supprimer l'œuvre",
+    "oeuvreNotFound": "Œuvre introuvable",
+    "oeuvreLoadFailed": "Impossible de charger l'œuvre",
+    "eventStatusUpdated": "Statut de l'événement mis à jour",
+    "eventDeleted": "Événement supprimé",
+    "eventDeleteFailed": "Impossible de supprimer l'événement",
+    "eventValidated": "Événement validé",
+    "eventRejected": "Événement rejeté",
+    "eventNotFound": "Événement introuvable",
+    "eventLoadFailed": "Impossible de charger l'événement",
+    "serviceStatusUpdated": "Statut du service mis à jour",
+    "serviceDeleted": "Service supprimé",
+    "serviceDeleteFailed": "Impossible de supprimer le service",
+    "serviceNotFound": "Service introuvable",
+    "serviceLoadFailed": "Impossible de charger le service",
+    "statusUpdateFailed": "Impossible de mettre à jour le statut",
+    "loadOverviewFailed": "Impossible de charger la vue d'ensemble",
+    "loadOeuvresFailed": "Impossible de charger les œuvres",
+    "loadEventsFailed": "Impossible de charger les événements",
+    "loadPatrimoineFailed": "Impossible de charger les sites patrimoniaux",
+    "loadServicesFailed": "Impossible de charger les services",
+    "loadDataFailed": "Impossible de charger les données",
+    "loadMyOeuvresFailed": "Impossible de charger vos œuvres",
+    "loadMyEventsFailed": "Impossible de charger vos événements",
+    "signalementProcessed": "Signalement traité",
+    "signalementProcessFailed": "Impossible de traiter le signalement",
+    "signalementApproved": "Signalement approuvé - contenu supprimé",
+    "signalementRejected": "Signalement rejeté",
+    "warningSent": "Avertissement envoyé",
+    "reportExported": "Rapport exporté",
+    "reportExportFailed": "Impossible d'exporter le rapport",
+    "cacheCleared": "Cache vidé",
+    "cacheClearFailed": "Impossible de vider le cache",
+    "itemApproved": "Élément approuvé avec succès",
+    "approvalFailed": "Impossible d'approuver",
+    "itemRejected": "Élément rejeté",
+    "dataRefreshed": "Données actualisées",
+    "exportGenerated": "Export généré avec succès",
+    "exportFailed": "Erreur export",
+    "commentAdded": "Commentaire ajouté",
+    "registrationSuccess": "Inscription réussie !",
+    "registrationError": "Erreur d'inscription",
+    "unregistered": "Désinscription effectuée",
+    "loginRequired": "Connexion requise",
+    "addedToFavorites": "Ajouté aux favoris",
+    "addedToFavoritesDesc": "L'élément a été ajouté à vos favoris",
+    "addToFavoritesFailed": "Impossible d'ajouter aux favoris",
+    "removedFromFavorites": "Retiré des favoris",
+    "removedFromFavoritesDesc": "L'élément a été retiré de vos favoris",
+    "removeFromFavoritesFailed": "Impossible de retirer des favoris",
+    "rateLimitReached": "Limite de requêtes atteinte",
+    "rateLimitDesc": "Nouvelle tentative automatique dans {{seconds}} secondes.",
+    "accessDenied": "Accès refusé",
+    "serverError": "Erreur serveur",
+    "serverErrorDesc": "Une erreur est survenue. Veuillez réessayer plus tard.",
+    "timeout": "Timeout",
+    "timeoutDesc": "La requête a pris trop de temps. Veuillez réessayer.",
+    "formIncomplete": "Formulaire incomplet",
+    "formIncompleteDesc": "Veuillez corriger les erreurs",
+    "articleBlocksSaveFailed": "L'article a été mis à jour mais certains blocs n'ont pas pu être sauvegardés.",
+    "articleBlocksIdMissing": "Impossible de trouver l'ID article pour sauvegarder les blocs.",
+    "articleCreatedBlocksFailed": "L'article a été créé mais le contenu n'a pas pu être sauvegardé.",
+    "updateError": "Erreur lors de la mise à jour",
+    "actionTooFast": "Action trop rapide",
+    "actionTooFastDesc": "Veuillez patienter {{seconds}} seconde(s) avant de réessayer",
+    "actionInProgress": "Action en cours",
+    "actionInProgressDesc": "Veuillez patienter la fin de l'action précédente",
+    "confirmActionDelay": "Action dans {{seconds}} secondes...",
+    "processing": "Traitement...",
+    "confirmAction": "Confirmer l'action",
+    "confirmActionDesc": "Êtes-vous sûr de vouloir effectuer cette action ?",
+    "confirm": "Confirmer",
+    "cancel": "Annuler",
+    "refreshSuccess": "Actualisation",
+    "refreshSuccessDesc": "Données mises à jour avec succès",
+    "deleteSuccess": "Suppression réussie",
+    "deleteSuccessDesc": "{{type}} supprimé avec succès",
+    "deleteFailed": "Erreur de suppression",
+    "alreadyDeleted": "Élément déjà supprimé",
+    "alreadyDeletedDesc": "La liste a été actualisée.",
+    "noPermission": "Vous n'avez pas les permissions nécessaires pour cette action"
+  },
+  "visit": {
+    "title": "Planifier votre visite",
+    "subtitle": "Créez un parcours personnalisé autour de",
+    "duration": "Durée de la visite",
+    "durationHint": "De 1h à 8h selon votre disponibilité",
+    "transport": "Mode de transport",
+    "interests": "Centres d'intérêt",
+    "maxSites": "Nombre de sites à visiter",
+    "options": "Options",
+    "includeRestaurants": "Inclure des restaurants",
+    "includeHotels": "Inclure des hébergements",
+    "accessibility": "Accessibilité PMR",
+    "familyFriendly": "Adapté aux familles",
+    "generating": "Génération du parcours...",
+    "generatingHint": "Nous analysons les meilleurs sites autour de vous",
+    "sites": "sites",
+    "distance": "distance",
+    "estimatedTime": "durée",
+    "map": "Carte du parcours",
+    "startPoint": "Point de départ",
+    "itinerary": "Votre itinéraire",
+    "includedServices": "Services inclus dans le parcours",
+    "info": "Les horaires et disponibilités peuvent varier. Nous vous conseillons de vérifier avant votre visite.",
+    "generate": "Générer le parcours",
+    "modify": "Modifier",
+    "openMaps": "Ouvrir dans Maps",
+    "error": {
+      "generation": "Impossible de générer le parcours. Veuillez réessayer."
+    },
+    "transport.walk": "À pied",
+    "transport.bike": "Vélo",
+    "transport.car": "Voiture",
+    "interests.history": "Histoire",
+    "interests.architecture": "Architecture",
+    "interests.art": "Art",
+    "interests.nature": "Nature",
+    "interests.religion": "Religion",
+    "interests.gastronomy": "Gastronomie"
+  },
+  "multilang": {
+    "keyboardTifinaghNotDetected": "Clavier Tifinagh non détecté",
+    "keyboardTamazightNotDetected": "Clavier Tamazight Latin non détecté",
+    "installTifinagh": "Installez le clavier Tifinagh depuis les paramètres de votre appareil",
+    "installTamazight": "Installez le clavier Tamazight Latin depuis les paramètres de votre appareil",
+    "seeInstructions": "Voir les instructions",
+    "generalInstructions": "Instructions générales",
+    "installKeyboard": "Installez un clavier Tamazight depuis les paramètres de votre appareil",
+    "searchStore": "Recherchez \"Tifinagh\" ou \"Tamazight Latin\" dans votre store",
+    "activateKeyboard": "Activez le clavier dans les paramètres de langue"
+  },
+  "programme": {
+    "form": {
+      "tabs": {
+        "basic": "Informations",
+        "schedule": "Horaires",
+        "participants": "Intervenants",
+        "options": "Options"
+      },
+      "basicInfo": {
+        "title": "Informations de base",
+        "description": "Informations principales sur l'activité du programme"
+      },
+      "activityTitle": "Titre de l'activité",
+      "description": "Description",
+      "activityType": "Type d'activité",
+      "selectType": "Sélectionner un type",
+      "status": "Statut",
+      "selectStatus": "Sélectionner un statut",
+      "order": "Ordre dans le programme",
+      "types": {
+        "conference": "Conférence",
+        "atelier": "Atelier",
+        "projection": "Projection",
+        "presentation": "Présentation",
+        "spectacle": "Spectacle",
+        "exposition": "Exposition",
+        "visite": "Visite guidée",
+        "concert": "Concert",
+        "lecture": "Lecture",
+        "debat": "Débat",
+        "formation": "Formation",
+        "ceremonie": "Cérémonie",
+        "pause": "Pause",
+        "autre": "Autre"
+      },
+      "statuses": {
+        "planifie": "Planifié",
+        "en_cours": "En cours",
+        "termine": "Terminé",
+        "annule": "Annulé",
+        "reporte": "Reporté"
+      },
+      "schedule": {
+        "title": "Horaires et lieu",
+        "description": "Date, horaires et lieu de l'activité",
+        "activityDate": "Date de l'activité",
+        "selectDate": "Sélectionner une date",
+        "noDateAvailable": "Aucune date disponible",
+        "startTime": "Heure de début",
+        "endTime": "Heure de fin",
+        "selectTime": "Sélectionner l'heure",
+        "place": "Lieu",
+        "selectPlace": "Sélectionner un lieu"
+      },
+      "participants": {
+        "title": "Intervenants",
+        "description": "Gestion des intervenants de l'activité",
+        "label": "Intervenants",
+        "addIntervenant": "Ajouter un intervenant",
+        "intervenantNum": "Intervenant #{{num}}",
+        "user": "Utilisateur",
+        "selectUser": "Sélectionner un utilisateur",
+        "role": "Rôle",
+        "selectRole": "Sélectionner un rôle",
+        "interventionSubject": "Sujet d'intervention",
+        "subjectPlaceholder": "Sujet de l'intervention",
+        "shortBiography": "Biographie courte",
+        "biographyPlaceholder": "Brève biographie",
+        "roles": {
+          "principal": "Intervenant principal",
+          "co_intervenant": "Co-intervenant",
+          "moderateur": "Modérateur",
+          "animateur": "Animateur",
+          "invite": "Invité"
+        }
+      },
+      "options": {
+        "title": "Options et matériel",
+        "description": "Options supplémentaires et matériel requis",
+        "mainLanguage": "Langue principale",
+        "selectLanguage": "Sélectionner une langue",
+        "optionsLabel": "Options",
+        "translationAvailable": "Traduction disponible",
+        "recordingAllowed": "Enregistrement autorisé",
+        "liveBroadcast": "Diffusion en direct",
+        "digitalSupport": "Support numérique",
+        "requiredMaterial": "Matériel requis",
+        "addMaterial": "Ajouter un matériel",
+        "organizerNotes": "Notes organisateur",
+        "organizerNotesPlaceholder": "Notes internes pour l'organisateur"
+      },
+      "languages": {
+        "fr": "Français",
+        "ar": "العربية",
+        "en": "English",
+        "tz-ltn": "Tamazight (Latin)",
+        "tz-tfng": "Tamazight (Tifinagh)"
+      },
+      "levels": {
+        "debutant": "Débutant",
+        "intermediaire": "Intermédiaire",
+        "avance": "Avancé",
+        "tous_niveaux": "Tous niveaux"
+      },
+      "actions": {
+        "cancel": "Annuler",
+        "saving": "Enregistrement...",
+        "create": "Créer",
+        "update": "Mettre à jour"
+      },
+      "success": {
+        "created": "Programme créé avec succès",
+        "updated": "Programme mis à jour avec succès"
+      },
+      "errors": {
+        "titleRequired": "Le titre est requis dans toutes les langues",
+        "dateRequired": "La date est requise",
+        "startTimeRequired": "L'heure de début est requise",
+        "endTimeRequired": "L'heure de fin est requise",
+        "endTimeAfterStart": "L'heure de fin doit être après l'heure de début"
+      }
+    }
+  },
+  "emailChange": {
+    "noTokenProvided": "Aucun jeton de confirmation fourni.",
+    "emailUpdatedSuccess": "Votre adresse email a été mise à jour avec succès.",
+    "tokenInvalidOrExpired": "Le jeton est invalide ou a expiré.",
+    "confirmationFailed": "Impossible de confirmer le changement d'email.",
+    "confirming": "Confirmation en cours...",
+    "emailUpdated": "Email mis à jour",
+    "newEmail": "Votre nouvel email :",
+    "reconnect": "Se reconnecter",
+    "backToHome": "Retour à l'accueil"
+  },
+  "eventManagement": {
+    "programmeManagement": "Gestion des programmes",
+    "addProgramme": "Ajouter un programme",
+    "editProgramme": "Modifier le programme",
+    "createProgramme": "Créer un programme",
+    "fillProgrammeInfo": "Remplissez les informations du programme",
+    "noProgramme": "Aucun programme",
+    "startByAddingProgramme": "Commencez par ajouter un programme à cet événement",
+    "confirmDeleteProgramme": "Êtes-vous sûr de vouloir supprimer ce programme ?",
+    "loadProgrammesError": "Erreur lors du chargement des programmes",
+    "programmeUpdated": "Programme mis à jour avec succès",
+    "programmeCreated": "Programme créé avec succès",
+    "programmeDeleted": "Programme supprimé avec succès",
+    "saveError": "Erreur lors de la sauvegarde",
+    "deleteError": "Erreur lors de la suppression"
   }
 }

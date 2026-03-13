@@ -25,7 +25,7 @@ module.exports = (models, middlewares = {}) => {
       console.error('Erreur route GET /oeuvre/:oeuvreId:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur lors de la récupération des commentaires'
+        error: req.t ? req.t('common.serverError') : 'Server error'
       });
     }
   });
@@ -41,7 +41,7 @@ module.exports = (models, middlewares = {}) => {
       console.error('Erreur route POST /oeuvre/:oeuvreId:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur lors de la création du commentaire'
+        error: req.t ? req.t('common.serverError') : 'Server error'
       });
     }
   });
@@ -61,7 +61,7 @@ module.exports = (models, middlewares = {}) => {
       console.error('Erreur route GET /evenement/:evenementId:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur lors de la récupération des commentaires'
+        error: req.t ? req.t('common.serverError') : 'Server error'
       });
     }
   });
@@ -77,7 +77,7 @@ module.exports = (models, middlewares = {}) => {
       console.error('Erreur route POST /evenement/:evenementId:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur lors de la création du commentaire'
+        error: req.t ? req.t('common.serverError') : 'Server error'
       });
     }
   });
@@ -98,14 +98,14 @@ module.exports = (models, middlewares = {}) => {
       if (!commentaire) {
         return res.status(404).json({
           success: false,
-          error: 'Commentaire non trouvé'
+          error: req.t ? req.t('common.notFound') : 'Not found'
         });
       }
       
       if (commentaire.id_user !== req.user.id_user) {
         return res.status(403).json({
           success: false,
-          error: 'Non autorisé à modifier ce commentaire'
+          error: req.t ? req.t('auth.forbidden') : 'Forbidden'
         });
       }
       
@@ -115,7 +115,7 @@ module.exports = (models, middlewares = {}) => {
       console.error('Erreur route PUT /:id:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur lors de la modification du commentaire'
+        error: req.t ? req.t('common.serverError') : 'Server error'
       });
     }
   });
@@ -131,14 +131,14 @@ module.exports = (models, middlewares = {}) => {
       if (!commentaire) {
         return res.status(404).json({
           success: false,
-          error: 'Commentaire non trouvé'
+          error: req.t ? req.t('common.notFound') : 'Not found'
         });
       }
       
       if (commentaire.id_user !== req.user.id_user) {
         return res.status(403).json({
           success: false,
-          error: 'Non autorisé à supprimer ce commentaire'
+          error: req.t ? req.t('auth.forbidden') : 'Forbidden'
         });
       }
       
@@ -148,7 +148,7 @@ module.exports = (models, middlewares = {}) => {
       console.error('Erreur route DELETE /:id:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur lors de la suppression du commentaire'
+        error: req.t ? req.t('common.serverError') : 'Server error'
       });
     }
   });
@@ -167,7 +167,7 @@ module.exports = (models, middlewares = {}) => {
       if (!req.user || !req.user.isAdmin) {
         return res.status(403).json({
           success: false,
-          error: 'Accès réservé aux administrateurs'
+          error: req.t ? req.t('auth.forbidden') : 'Forbidden'
         });
       }
       
@@ -176,7 +176,7 @@ module.exports = (models, middlewares = {}) => {
       console.error('Erreur route PUT /:id/moderate:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur lors de la modération du commentaire'
+        error: req.t ? req.t('common.serverError') : 'Server error'
       });
     }
   });

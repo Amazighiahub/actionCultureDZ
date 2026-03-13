@@ -72,8 +72,6 @@ class CommentaireService {
         }
       };
     } catch (error: any) {
-      // ✅ Gérer silencieusement les erreurs 501 ou autres
-      console.warn('Commentaires non disponibles:', error.message);
       return {
         success: true, // ← Retourner succès avec liste vide
         data: {
@@ -125,7 +123,6 @@ class CommentaireService {
         }
       };
     } catch (error: any) {
-      console.warn('Commentaires événement non disponibles:', error.message);
       return {
         success: true,
         data: {
@@ -225,7 +222,7 @@ class CommentaireService {
     statut: 'publie' | 'rejete' | 'supprime'
   ): Promise<ApiResponse<void>> {
     try {
-      const response = await httpClient.patch<void>(
+      const response = await httpClient.put<void>(
         `${this.endpoint}/${id}/moderate`,
         { statut }
       );

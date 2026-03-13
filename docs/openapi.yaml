@@ -1,0 +1,987 @@
+openapi: 3.0.3
+info:
+  title: Action Culture API
+  description: |
+    API backend for the EventCulture / Action Culture platform — an Algerian
+    cultural heritage and events management application.
+  version: 1.0.0
+  contact:
+    name: EventCulture Team
+
+servers:
+  - url: http://localhost:3001/api
+    description: Development
+  - url: https://api.actionculture.dz/api
+    description: Production
+
+# ---------------------------------------------------------------------------
+# Security
+# ---------------------------------------------------------------------------
+security:
+  - bearerAuth: []
+  - cookieAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Access token sent in the Authorization header.
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: access_token
+      description: httpOnly cookie set after login / token refresh.
+
+  # -------------------------------------------------------------------------
+  # Reusable schemas
+  # -------------------------------------------------------------------------
+  schemas:
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+          example: Unauthorized
+
+    PaginationMeta:
+      type: object
+      properties:
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+        totalPages:
+          type: integer
+
+    LoginRequest:
+      type: object
+      required: [email, mot_de_passe]
+      properties:
+        email:
+          type: string
+          format: email
+        mot_de_passe:
+          type: string
+          format: password
+
+    LoginResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            token:
+              type: string
+            user:
+              $ref: '#/components/schemas/UserSummary'
+
+    RegisterRequest:
+      type: object
+      required: [nom, prenom, email, mot_de_passe]
+      properties:
+        nom:
+          type: string
+        prenom:
+          type: string
+        email:
+          type: string
+          format: email
+        mot_de_passe:
+          type: string
+          format: password
+        type_user:
+          type: integer
+          description: "1 = visiteur (default)"
+
+    UserSummary:
+      type: object
+      properties:
+        id_user:
+          type: integer
+        nom:
+          type: string
+        prenom:
+          type: string
+        email:
+          type: string
+        photo_url:
+          type: string
+          nullable: true
+        type_user:
+          type: integer
+        statut:
+          type: string
+          enum: [actif, inactif, suspendu, en_attente]
+
+    OeuvreSummary:
+      type: object
+      properties:
+        id_oeuvre:
+          type: integer
+        titre:
+          type: string
+        description:
+          type: string
+        categorie:
+          type: string
+        statut_validation:
+          type: string
+          enum: [en_attente, validee, rejetee]
+        auteur:
+          $ref: '#/components/schemas/UserSummary'
+
+    EvenementSummary:
+      type: object
+      properties:
+        id_evenement:
+          type: integer
+        nom_evenement:
+          type: string
+        description:
+          type: string
+        date_debut:
+          type: string
+          format: date-time
+        date_fin:
+          type: string
+          format: date-time
+        statut:
+          type: string
+          enum: [brouillon, planifie, en_cours, termine, annule]
+        lieu:
+          type: object
+          properties:
+            id_lieu:
+              type: integer
+            nom:
+              type: string
+
+    UploadResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            filename:
+              type: string
+            originalName:
+              type: string
+            url:
+              type: string
+            size:
+              type: integer
+            mimetype:
+              type: string
+
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      schema:
+        type: integer
+        default: 1
+    LimitParam:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        default: 10
+        maximum: 100
+    IdParam:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+
+  responses:
+    Unauthorized:
+      description: Missing or invalid authentication
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+# ---------------------------------------------------------------------------
+# Paths
+# ---------------------------------------------------------------------------
+paths:
+  # =========================================================================
+  # Auth / Users
+  # =========================================================================
+  /users/register:
+    post:
+      tags: [Auth]
+      summary: Register a new user
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /users/login:
+    post:
+      tags: [Auth]
+      summary: Authenticate and obtain JWT tokens
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /users/refresh-token:
+    post:
+      tags: [Auth]
+      summary: Refresh an expired access token
+      description: Uses the refresh token cookie to issue a new access token.
+      security: []
+      responses:
+        '200':
+          description: New tokens issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /users/logout:
+    post:
+      tags: [Auth]
+      summary: Logout and invalidate tokens
+      responses:
+        '200':
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+
+  /users/profile:
+    get:
+      tags: [Users]
+      summary: Get current user profile
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/UserSummary'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    put:
+      tags: [Users]
+      summary: Update current user profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nom:
+                  type: string
+                prenom:
+                  type: string
+                biographie:
+                  type: string
+                telephone:
+                  type: string
+      responses:
+        '200':
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/UserSummary'
+
+  /users/change-password:
+    post:
+      tags: [Users]
+      summary: Change password for the authenticated user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [oldPassword, newPassword]
+              properties:
+                oldPassword:
+                  type: string
+                newPassword:
+                  type: string
+      responses:
+        '200':
+          description: Password changed
+        '400':
+          description: Validation error
+
+  # =========================================================================
+  # Oeuvres
+  # =========================================================================
+  /oeuvres:
+    get:
+      tags: [Oeuvres]
+      summary: List oeuvres (public, paginated)
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - name: categorie
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Paginated list of oeuvres
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/OeuvreSummary'
+                  pagination:
+                    $ref: '#/components/schemas/PaginationMeta'
+    post:
+      tags: [Oeuvres]
+      summary: Create a new oeuvre
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [titre]
+              properties:
+                titre:
+                  type: string
+                description:
+                  type: string
+                categorie_id:
+                  type: integer
+      responses:
+        '201':
+          description: Oeuvre created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/OeuvreSummary'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /oeuvres/{id}:
+    get:
+      tags: [Oeuvres]
+      summary: Get oeuvre by ID
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Oeuvre details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/OeuvreSummary'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Oeuvres]
+      summary: Update an oeuvre
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                titre:
+                  type: string
+                description:
+                  type: string
+      responses:
+        '200':
+          description: Oeuvre updated
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Oeuvres]
+      summary: Delete an oeuvre
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Oeuvre deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /oeuvres/{id}/validate:
+    post:
+      tags: [Oeuvres, Admin]
+      summary: Validate an oeuvre (Admin/Moderator)
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Oeuvre validated
+
+  /oeuvres/{id}/reject:
+    post:
+      tags: [Oeuvres, Admin]
+      summary: Reject an oeuvre (Admin/Moderator)
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                raison:
+                  type: string
+      responses:
+        '200':
+          description: Oeuvre rejected
+
+  # =========================================================================
+  # Evenements
+  # =========================================================================
+  /evenements:
+    get:
+      tags: [Evenements]
+      summary: List events (public, paginated)
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - name: upcoming
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Paginated list of events
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EvenementSummary'
+                  pagination:
+                    $ref: '#/components/schemas/PaginationMeta'
+    post:
+      tags: [Evenements]
+      summary: Create a new event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nom_evenement:
+                  type: string
+                description:
+                  type: string
+                date_debut:
+                  type: string
+                  format: date-time
+                date_fin:
+                  type: string
+                  format: date-time
+                lieu_id:
+                  type: integer
+      responses:
+        '201':
+          description: Event created
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /evenements/{id}:
+    get:
+      tags: [Evenements]
+      summary: Get event by ID
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Event details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/EvenementSummary'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Evenements]
+      summary: Update an event
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nom_evenement:
+                  type: string
+                description:
+                  type: string
+      responses:
+        '200':
+          description: Event updated
+    delete:
+      tags: [Evenements]
+      summary: Delete an event
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Event deleted
+
+  /evenements/{id}/register:
+    post:
+      tags: [Evenements]
+      summary: Register current user for an event
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Registration successful
+    delete:
+      tags: [Evenements]
+      summary: Unregister current user from an event
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Unregistered
+
+  /evenements/{id}/cancel:
+    post:
+      tags: [Evenements]
+      summary: Cancel an event (owner or admin)
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Event cancelled
+
+  /evenements/{id}/publish:
+    post:
+      tags: [Evenements, Admin]
+      summary: Publish a pending event (Admin/Moderator)
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Event published
+
+  # =========================================================================
+  # Upload
+  # =========================================================================
+  /upload/image:
+    post:
+      tags: [Upload]
+      summary: Upload a single image (authenticated)
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Image uploaded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadResponse'
+        '400':
+          description: Invalid file
+
+  /upload/image/public:
+    post:
+      tags: [Upload]
+      summary: Upload a public image (registration)
+      security: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Image uploaded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadResponse'
+
+  /upload/document:
+    post:
+      tags: [Upload]
+      summary: Upload a document (authenticated)
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                document:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Document uploaded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadResponse'
+
+  /upload/multiple:
+    post:
+      tags: [Upload]
+      summary: Upload multiple images (max 10)
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                images:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  maxItems: 10
+      responses:
+        '200':
+          description: Images uploaded
+
+  /upload/{id}:
+    get:
+      tags: [Upload]
+      summary: Get media info
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Media metadata
+    delete:
+      tags: [Upload]
+      summary: Delete a media file
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Media deleted
+
+  # =========================================================================
+  # Admin — Dashboard
+  # =========================================================================
+  /dashboard/overview:
+    get:
+      tags: [Admin]
+      summary: Dashboard overview (admin only)
+      responses:
+        '200':
+          description: Overview data
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /dashboard/stats:
+    get:
+      tags: [Admin]
+      summary: Detailed statistics
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [day, week, month, year]
+      responses:
+        '200':
+          description: Statistics object
+
+  /dashboard/users:
+    get:
+      tags: [Admin]
+      summary: List all users (admin)
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Paginated user list
+
+  /dashboard/users/{id}:
+    get:
+      tags: [Admin]
+      summary: Get user details (admin)
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: User details
+    put:
+      tags: [Admin]
+      summary: Update a user (admin)
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: User updated
+    delete:
+      tags: [Admin]
+      summary: Delete a user (admin)
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: User deleted
+
+  /dashboard/users/{id}/validate:
+    patch:
+      tags: [Admin]
+      summary: Validate or reject a user
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [valide]
+              properties:
+                valide:
+                  type: boolean
+                raison:
+                  type: string
+      responses:
+        '200':
+          description: User validation updated
+
+  /dashboard/moderation/queue:
+    get:
+      tags: [Admin]
+      summary: Get moderation queue
+      responses:
+        '200':
+          description: Pending items for moderation
+
+  /dashboard/moderation/signalements:
+    get:
+      tags: [Admin]
+      summary: List reported content
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [commentaire, oeuvre, evenement, user]
+        - name: statut
+          in: query
+          schema:
+            type: string
+            enum: [en_attente, en_cours, traite]
+      responses:
+        '200':
+          description: Paginated signalements
+
+  /dashboard/analytics/advanced:
+    get:
+      tags: [Admin]
+      summary: Advanced analytics
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 365
+      responses:
+        '200':
+          description: Advanced analytics data
+
+  # =========================================================================
+  # System
+  # =========================================================================
+  /health:
+    get:
+      tags: [System]
+      summary: Health check
+      security: []
+      responses:
+        '200':
+          description: Service healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: OK
+                  timestamp:
+                    type: string
+                    format: date-time
+                  database:
+                    type: string
+                    example: Connected
+        '503':
+          description: Service unavailable
+
+  /stats/public:
+    get:
+      tags: [System]
+      summary: Public statistics for the homepage hero section
+      security: []
+      responses:
+        '200':
+          description: Aggregated public stats
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      sites_patrimoniaux:
+                        type: integer
+                      evenements:
+                        type: integer
+                      oeuvres:
+                        type: integer
+                      membres:
+                        type: integer
+
+tags:
+  - name: Auth
+    description: Authentication — register, login, token refresh, logout
+  - name: Users
+    description: User profile management
+  - name: Oeuvres
+    description: Cultural works CRUD
+  - name: Evenements
+    description: Cultural events and registrations
+  - name: Upload
+    description: File upload and media management
+  - name: Admin
+    description: Admin dashboard, user management, moderation
+  - name: System
+    description: Health checks and public statistics

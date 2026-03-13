@@ -9,38 +9,48 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Edit, Calendar, Clock, Users, MapPin } from 'lucide-react';
 import ProgrammeForm, { ProgrammeFormData } from '@/components/forms/ProgrammeForm';
 import { programmeService } from '@/services/programme.service';
+import { lieuService } from '@/services/lieu.service';
+import { httpClient } from '@/services/httpClient';
+import { useTranslation } from 'react-i18next';
 
 const EditProgrammePage: React.FC = () => {
   const { eventId, programmeId } = useParams<{ eventId: string; programmeId: string }>();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [loading, setLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [programmeData, setProgrammeData] = useState<Partial<ProgrammeFormData> | null>(null);
+  const [lieux, setLieux] = useState<any[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
 
-  // Données de test pour les lieux
-  const lieux = [
-    { id_lieu: 1, nom: 'Salle principale' },
-    { id_lieu: 2, nom: 'Salle de conférence A' },
-    { id_lieu: 3, nom: 'Atelier 1' },
-    { id_lieu: 4, nom: 'Espace extérieur' }
-  ];
-
-  // Données de test pour les utilisateurs
-  const users = [
-    { id_user: 1, prenom: 'Ahmed', nom: 'Benali' },
-    { id_user: 2, prenom: 'Fatima', nom: 'Messaoudi' },
-    { id_user: 3, prenom: 'Mohamed', nom: 'Kaci' },
-    { id_user: 4, prenom: 'Leila', nom: 'Boudiaf' }
-  ];
+  React.useEffect(() => {
+    const loadRefData = async () => {
+      try {
+        const [lieuxRes, usersRes] = await Promise.all([
+          lieuService.getAll({ limit: 100 }),
+          httpClient.get<any>('/intervenants/search', { q: '', limit: 50 })
+        ]);
+        if (lieuxRes.success && lieuxRes.data) {
+          const items = (lieuxRes.data as any).lieux || lieuxRes.data;
+          setLieux(Array.isArray(items) ? items : []);
+        }
+        if (usersRes.success && usersRes.data) {
+          const items = (usersRes.data as any).intervenants || usersRes.data;
+          setUsers(Array.isArray(items) ? items : []);
+        }
+      } catch (e) { /* empty lists as fallback */ }
+    };
+    loadRefData();
+  }, []);
 
   // Charger les données du programme
   useEffect(() => {
     const fetchProgramme = async () => {
       if (!programmeId) {
-        setError('ID de programme non spécifié');
+        setError(t('programmePages.errors.programmeIdMissing'));
         setFetchLoading(false);
         return;
       }
@@ -53,16 +63,12 @@ const EditProgrammePage: React.FC = () => {
           
           // Transformer les données pour le formulaire
           const formData: Partial<ProgrammeFormData> = {
-            titre: {
-              fr: programme.titre || '',
-              ar: programme.titre || '',
-              en: programme.titre || ''
-            },
-            description: {
-              fr: programme.description || '',
-              ar: programme.description || '',
-              en: programme.description || ''
-            },
+            titre: typeof programme.titre === 'object' 
+              ? programme.titre 
+              : { fr: programme.titre || '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
+            description: typeof programme.description === 'object'
+              ? programme.description
+              : { fr: programme.description || '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
             date_programme: programme.heure_debut ? programme.heure_debut.split('T')[0] : '',
             heure_debut: programme.heure_debut ? programme.heure_debut.split('T')[1]?.substring(0, 5) : '',
             heure_fin: programme.heure_fin ? programme.heure_fin.split('T')[1]?.substring(0, 5) : '',
@@ -99,21 +105,21 @@ const EditProgrammePage: React.FC = () => {
 
           setProgrammeData(formData);
         } else {
-          setError(response.error || 'Erreur lors du chargement du programme');
+          setError(response.error || t('programmePages.errors.loadFailed'));
         }
       } catch (err: any) {
-        setError(err.message || 'Une erreur est survenue');
+        setError(err.message || t('programmePages.errors.generic'));
       } finally {
         setFetchLoading(false);
       }
     };
 
     fetchProgramme();
-  }, [programmeId]);
+  }, [programmeId, t]);
 
   const handleSubmit = async (data: ProgrammeFormData) => {
     if (!eventId || !programmeId) {
-      setError('ID d\'événement ou de programme non spécifié');
+      setError(t('programmePages.errors.eventOrProgrammeIdMissing'));
       return;
     }
 
@@ -123,13 +129,13 @@ const EditProgrammePage: React.FC = () => {
     try {
       // Transformer les données pour l'API
       const apiData = {
-        titre: data.titre.fr,
-        description: data.description.fr,
+        titre: data.titre,
+        description: data.description,
         type_activite: data.type_activite,
         heure_debut: `${data.date_programme}T${data.heure_debut}:00`,
         heure_fin: `${data.date_programme}T${data.heure_fin}:00`,
         id_lieu: data.id_lieu,
-        lieu_specifique: data.lieu_specifique?.fr,
+        lieu_specifique: data.lieu_specifique,
         nb_participants_max: data.nb_participants_max,
         niveau_requis: data.niveau_requis,
         materiel_requis: data.materiel_requis,
@@ -151,13 +157,13 @@ const EditProgrammePage: React.FC = () => {
 
         // Rediriger vers la page de l'événement après 2 secondes
         setTimeout(() => {
-          navigate(`/events/${eventId}`);
+          navigate(`/evenements/${eventId}`);
         }, 2000);
       } else {
-        setError(response.error || 'Erreur lors de la mise à jour du programme');
+        setError(response.error || t('programmePages.errors.updateFailed'));
       }
     } catch (err: any) {
-      setError(err.message || 'Une erreur est survenue');
+      setError(err.message || t('programmePages.errors.generic'));
       console.error('Erreur:', err);
     } finally {
       setLoading(false);
@@ -165,7 +171,7 @@ const EditProgrammePage: React.FC = () => {
   };
 
   const handleCancel = () => {
-    navigate(`/events/${eventId}`);
+    navigate(`/evenements/${eventId}`);
   };
 
   if (!eventId || !programmeId) {
@@ -173,10 +179,10 @@ const EditProgrammePage: React.FC = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-red-600 mb-4">
-            Erreur: ID d'événement ou de programme non spécifié
+            {t('programmePages.errors.eventOrProgrammeIdMissingWithPrefix')}
           </h1>
-          <Button onClick={() => navigate('/events')}>
-            Retour aux événements
+          <Button onClick={() => navigate('/evenements')}>
+            {t('programmePages.actions.backToEvents')}
           </Button>
         </div>
       </div>
@@ -188,7 +194,7 @@ const EditProgrammePage: React.FC = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p>Chargement du programme...</p>
+          <p>{t('programmePages.status.loadingProgram')}</p>
         </div>
       </div>
     );
@@ -199,10 +205,10 @@ const EditProgrammePage: React.FC = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-red-600 mb-4">
-            Erreur: {error}
+            {t('programmePages.errors.prefix')}: {error}
           </h1>
-          <Button onClick={() => navigate(`/events/${eventId}`)}>
-            Retour à l'événement
+          <Button onClick={() => navigate(`/evenements/${eventId}`)}>
+            {t('programmePages.actions.backToEvent')}
           </Button>
         </div>
       </div>
@@ -220,31 +226,31 @@ const EditProgrammePage: React.FC = () => {
             className="flex items-center gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
-            Retour à l'événement
+            {t('programmePages.actions.backToEvent')}
           </Button>
-          <h1 className="text-3xl font-bold">Modifier le programme</h1>
+          <h1 className="text-3xl font-bold">{t('programmePages.edit.title')}</h1>
         </div>
         
         <div className="flex items-center gap-6 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4" />
-            Événement #{eventId}
+            {t('programmePages.meta.eventNumber', { id: eventId })}
           </div>
           <div className="flex items-center gap-2">
             <Edit className="h-4 w-4" />
-            Programme #{programmeId}
+            {t('programmePages.meta.programNumber', { id: programmeId })}
           </div>
           <div className="flex items-center gap-2">
             <Clock className="h-4 w-4" />
-            Plusieurs jours possibles
+            {t('programmePages.meta.multiDay')}
           </div>
           <div className="flex items-center gap-2">
             <Users className="h-4 w-4" />
-            Intervenants multiples
+            {t('programmePages.meta.multipleSpeakers')}
           </div>
           <div className="flex items-center gap-2">
             <MapPin className="h-4 w-4" />
-            Lieux personnalisables
+            {t('programmePages.meta.flexibleLocations')}
           </div>
         </div>
       </div>
@@ -254,7 +260,7 @@ const EditProgrammePage: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Edit className="h-5 w-5" />
-            Modifier le programme
+            {t('programmePages.edit.editProgram')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -279,13 +285,12 @@ const EditProgrammePage: React.FC = () => {
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <Calendar className="h-5 w-5" />
-              Gestion multi-jours
+              {t('programmePages.info.multiDayTitle')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              Modifiez les programmes pour chaque jour de votre événement. 
-              Le système regroupe automatiquement les activités par date.
+              {t('programmePages.info.editMultiDayDesc')}
             </p>
           </CardContent>
         </Card>
@@ -294,13 +299,12 @@ const EditProgrammePage: React.FC = () => {
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <Users className="h-5 w-5" />
-              Intervenants
+              {t('programmePages.info.speakersTitle')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              Modifiez les intervenants avec leurs rôles spécifiques. 
-              Chaque intervenant peut avoir ses propres paramètres.
+              {t('programmePages.info.editSpeakersDesc')}
             </p>
           </CardContent>
         </Card>
@@ -309,13 +313,12 @@ const EditProgrammePage: React.FC = () => {
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <MapPin className="h-5 w-5" />
-              Lieux flexibles
+              {t('programmePages.info.flexibleLocationsTitle')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              Changez les lieux prédéfinis ou spécifiez un lieu personnalisé 
-              pour chaque activité du programme.
+              {t('programmePages.info.editLocationsDesc')}
             </p>
           </CardContent>
         </Card>

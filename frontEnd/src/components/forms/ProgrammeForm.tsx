@@ -86,22 +86,22 @@ const activityIcons: Record<string, React.ElementType> = {
   autre: Play
 };
 
-// Types d'activités
+// Types d'activités - les labels sont traduits via t() dans le composant
 const typesActivite = [
-  { value: 'conference', label: 'Conférence', icon: Mic },
-  { value: 'atelier', label: 'Atelier', icon: Users },
-  { value: 'projection', label: 'Projection', icon: Video },
-  { value: 'presentation', label: 'Présentation', icon: FileText },
-  { value: 'spectacle', label: 'Spectacle', icon: Play },
-  { value: 'exposition', label: 'Exposition', icon: Eye },
-  { value: 'visite', label: 'Visite guidée', icon: MapPin },
-  { value: 'concert', label: 'Concert', icon: Mic },
-  { value: 'lecture', label: 'Lecture', icon: FileText },
-  { value: 'debat', label: 'Débat', icon: Users },
-  { value: 'formation', label: 'Formation', icon: Users },
-  { value: 'ceremonie', label: 'Cérémonie', icon: Calendar },
-  { value: 'pause', label: 'Pause', icon: Pause },
-  { value: 'autre', label: 'Autre', icon: Play }
+  { value: 'conference', icon: Mic },
+  { value: 'atelier', icon: Users },
+  { value: 'projection', icon: Video },
+  { value: 'presentation', icon: FileText },
+  { value: 'spectacle', icon: Play },
+  { value: 'exposition', icon: Eye },
+  { value: 'visite', icon: MapPin },
+  { value: 'concert', icon: Mic },
+  { value: 'lecture', icon: FileText },
+  { value: 'debat', icon: Users },
+  { value: 'formation', icon: Users },
+  { value: 'ceremonie', icon: Calendar },
+  { value: 'pause', icon: Pause },
+  { value: 'autre', icon: Play }
 ];
 
 // Plages horaires prédéfinies
@@ -155,30 +155,14 @@ const formatDateLabel = (dateStr: string): string => {
   return date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
 };
 
-// Niveaux requis
-const niveaux = [
-  { value: 'debutant', label: 'Débutant' },
-  { value: 'intermediaire', label: 'Intermédiaire' },
-  { value: 'avance', label: 'Avancé' },
-  { value: 'tous_niveaux', label: 'Tous niveaux' }
-];
+// Niveaux requis - labels traduits via t()
+const niveauxKeys = ['debutant', 'intermediaire', 'avance', 'tous_niveaux'] as const;
 
-// Langues disponibles
-const langues = [
-  { value: 'fr', label: 'Français' },
-  { value: 'ar', label: 'العربية' },
-  { value: 'en', label: 'English' },
-  { value: 'tz', label: 'Tamazight' }
-];
+// Langues disponibles - labels traduits via t()
+const languesCodes = ['fr', 'ar', 'en', 'tz-ltn', 'tz-tfng'] as const;
 
-// Rôles d'intervenant
-const rolesIntervenant = [
-  { value: 'principal', label: 'Intervenant principal' },
-  { value: 'co_intervenant', label: 'Co-intervenant' },
-  { value: 'moderateur', label: 'Modérateur' },
-  { value: 'animateur', label: 'Animateur' },
-  { value: 'invite', label: 'Invité' }
-];
+// Rôles d'intervenant - labels traduits via t()
+const rolesIntervenantKeys = ['principal', 'co_intervenant', 'moderateur', 'animateur', 'invite'] as const;
 
 // Constants to avoid creating new array references on every render
 const EMPTY_LIEUX_ARRAY: any[] = [];
@@ -203,14 +187,14 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
     : [];
   const { t } = useTranslation();
   const [formData, setFormData] = useState<ProgrammeFormData>({
-    titre: { fr: '', ar: '', en: '' },
-    description: { fr: '', ar: '', en: '' },
+    titre: { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
+    description: { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
     date_programme: '',
     heure_debut: '',
     heure_fin: '',
     duree_estimee: undefined,
     id_lieu: undefined,
-    lieu_specifique: { fr: '', ar: '', en: '' },
+    lieu_specifique: { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
     type_activite: 'conference',
     statut: 'planifie',
     ordre: 1,
@@ -320,24 +304,30 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
     const newErrors: Record<string, string> = {};
 
     // Titre requis
-    if (!formData.titre.fr || !formData.titre.ar || !formData.titre.en) {
-      newErrors.titre = 'Le titre est requis dans toutes les langues';
+    if (
+      !formData.titre.fr ||
+      !formData.titre.ar ||
+      !formData.titre.en ||
+      !formData.titre['tz-ltn'] ||
+      !formData.titre['tz-tfng']
+    ) {
+      newErrors.titre = t('programme.form.errors.titleRequired');
     }
 
     // Date et horaires requis
     if (!formData.date_programme) {
-      newErrors.date_programme = 'La date est requise';
+      newErrors.date_programme = t('programme.form.errors.dateRequired');
     }
     if (!formData.heure_debut) {
-      newErrors.heure_debut = 'L\'heure de début est requise';
+      newErrors.heure_debut = t('programme.form.errors.startTimeRequired');
     }
     if (!formData.heure_fin) {
-      newErrors.heure_fin = 'L\'heure de fin est requise';
+      newErrors.heure_fin = t('programme.form.errors.endTimeRequired');
     }
 
     // Validation des horaires
     if (formData.heure_debut && formData.heure_fin && formData.heure_debut >= formData.heure_fin) {
-      newErrors.heure_fin = 'L\'heure de fin doit être après l\'heure de début';
+      newErrors.heure_fin = t('programme.form.errors.endTimeAfterStart');
     }
 
     setErrors(newErrors);
@@ -374,7 +364,7 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
         <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
           <CheckCircle className="h-4 w-4 text-green-500" />
           <span className="text-sm text-green-700">
-            {mode === 'create' ? 'Programme créé avec succès' : 'Programme mis à jour avec succès'}
+            {mode === 'create' ? t('programme.form.success.created') : t('programme.form.success.updated')}
           </span>
         </div>
       )}
@@ -382,26 +372,26 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
       {/* Onglets */}
       <Tabs defaultValue="basic" className="w-full">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="basic">Informations</TabsTrigger>
-          <TabsTrigger value="schedule">Horaires</TabsTrigger>
-          <TabsTrigger value="participants">Intervenants</TabsTrigger>
-          <TabsTrigger value="options">Options</TabsTrigger>
+          <TabsTrigger value="basic">{t('programme.form.tabs.basic')}</TabsTrigger>
+          <TabsTrigger value="schedule">{t('programme.form.tabs.schedule')}</TabsTrigger>
+          <TabsTrigger value="participants">{t('programme.form.tabs.participants')}</TabsTrigger>
+          <TabsTrigger value="options">{t('programme.form.tabs.options')}</TabsTrigger>
         </TabsList>
 
         {/* Onglet Informations de base */}
         <TabsContent value="basic" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Informations de base</CardTitle>
+              <CardTitle>{t('programme.form.basicInfo.title')}</CardTitle>
               <CardDescription>
-                Informations principales sur l'activité du programme
+                {t('programme.form.basicInfo.description')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Titre multilingue */}
               <MultiLangInput
                 name="titre"
-                label="Titre de l'activité"
+                label={t('programme.form.activityTitle')}
                 value={formData.titre}
                 onChange={(value) => handleMultiLangChange('titre', value)}
                 required={true}
@@ -412,7 +402,7 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
               {/* Description multilingue */}
               <MultiLangInput
                 name="description"
-                label="Description"
+                label={t('programme.form.description')}
                 value={formData.description}
                 onChange={(value) => handleMultiLangChange('description', value)}
                 type="textarea"
@@ -422,14 +412,14 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
               />
 
               {/* Type d'activité */}
-              <FormField label="Type d'activité" required={true} error={errors.type_activite}>
+              <FormField label={t('programme.form.activityType')} required={true} error={errors.type_activite}>
                 <Select
                   value={formData.type_activite}
                   onValueChange={(value) => handleChange('type_activite', value)}
                   disabled={isReadOnly}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner un type" />
+                    <SelectValue placeholder={t('programme.form.selectType')} />
                   </SelectTrigger>
                   <SelectContent>
                     {typesActivite.map((type) => {
@@ -438,7 +428,7 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
                         <SelectItem key={type.value} value={type.value}>
                           <div className="flex items-center gap-2">
                             <Icon className="h-4 w-4" />
-                            {type.label}
+                            {t(`programme.form.types.${type.value}`)}
                           </div>
                         </SelectItem>
                       );
@@ -448,27 +438,27 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
               </FormField>
 
               {/* Statut */}
-              <FormField label="Statut" error={errors.statut}>
+              <FormField label={t('programme.form.status')} error={errors.statut}>
                 <Select
                   value={formData.statut}
                   onValueChange={(value) => handleChange('statut', value)}
                   disabled={isReadOnly}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner un statut" />
+                    <SelectValue placeholder={t('programme.form.selectStatus')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="planifie">Planifié</SelectItem>
-                    <SelectItem value="en_cours">En cours</SelectItem>
-                    <SelectItem value="termine">Terminé</SelectItem>
-                    <SelectItem value="annule">Annulé</SelectItem>
-                    <SelectItem value="reporte">Reporté</SelectItem>
+                    {(['planifie', 'en_cours', 'termine', 'annule', 'reporte'] as const).map((statusKey) => (
+                      <SelectItem key={statusKey} value={statusKey}>
+                        {t(`programme.form.statuses.${statusKey}`)}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </FormField>
 
               {/* Ordre */}
-              <FormField label="Ordre dans le programme" error={errors.ordre}>
+              <FormField label={t('programme.form.order')} error={errors.ordre}>
                 <Input
                   type="number"
                   min="1"
@@ -485,21 +475,21 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
         <TabsContent value="schedule" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Horaires et lieu</CardTitle>
+              <CardTitle>{t('programme.form.schedule.title')}</CardTitle>
               <CardDescription>
-                Date, horaires et lieu de l'activité
+                {t('programme.form.schedule.description')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Date - Menu déroulant avec dates de l'événement */}
-              <FormField label="Date de l'activité" required={true} error={errors.date_programme}>
+              <FormField label={t('programme.form.schedule.activityDate')} required={true} error={errors.date_programme}>
                 <Select
                   value={formData.date_programme}
                   onValueChange={(value) => handleChange('date_programme', value)}
                   disabled={isReadOnly}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner une date" />
+                    <SelectValue placeholder={t('programme.form.schedule.selectDate')} />
                   </SelectTrigger>
                   <SelectContent>
                     {availableDates.length > 0 ? (
@@ -510,7 +500,7 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
                       ))
                     ) : (
                       <SelectItem value="" disabled>
-                        Aucune date disponible
+                        {t('programme.form.schedule.noDateAvailable')}
                       </SelectItem>
                     )}
                   </SelectContent>
@@ -519,14 +509,14 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
 
               {/* Heures - Menus déroulants avec plages prédéfinies */}
               <div className="grid grid-cols-2 gap-4">
-                <FormField label="Heure de début" required={true} error={errors.heure_debut}>
+                <FormField label={t('programme.form.schedule.startTime')} required={true} error={errors.heure_debut}>
                   <Select
                     value={formData.heure_debut}
                     onValueChange={(value) => handleChange('heure_debut', value)}
                     disabled={isReadOnly}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Sélectionner l'heure" />
+                      <SelectValue placeholder={t('programme.form.schedule.selectTime')} />
                     </SelectTrigger>
                     <SelectContent>
                       {plagesHoraires.map((plage) => (
@@ -538,14 +528,14 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
                   </Select>
                 </FormField>
 
-                <FormField label="Heure de fin" required={true} error={errors.heure_fin}>
+                <FormField label={t('programme.form.schedule.endTime')} required={true} error={errors.heure_fin}>
                   <Select
                     value={formData.heure_fin}
                     onValueChange={(value) => handleChange('heure_fin', value)}
                     disabled={isReadOnly}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Sélectionner l'heure" />
+                      <SelectValue placeholder={t('programme.form.schedule.selectTime')} />
                     </SelectTrigger>
                     <SelectContent>
                       {plagesHoraires.map((plage) => (
@@ -559,14 +549,14 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
               </div>
 
               {/* Lieu */}
-              <FormField label="Lieu" error={errors.id_lieu}>
+              <FormField label={t('programme.form.schedule.place')} error={errors.id_lieu}>
                 <Select
                   value={formData.id_lieu?.toString()}
                   onValueChange={(value) => handleChange('id_lieu', value ? parseInt(value) : undefined)}
                   disabled={isReadOnly}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner un lieu" />
+                    <SelectValue placeholder={t('programme.form.schedule.selectPlace')} />
                   </SelectTrigger>
                   <SelectContent>
                     {lieux.map((lieu) => (
@@ -585,9 +575,9 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
         <TabsContent value="participants" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Intervenants</CardTitle>
+              <CardTitle>{t('programme.form.participants.title')}</CardTitle>
               <CardDescription>
-                Gestion des intervenants de l'activité
+                {t('programme.form.participants.description')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -595,11 +585,11 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
               {/* Intervenants */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <Label className="text-base font-medium">Intervenants</Label>
+                  <Label className="text-base font-medium">{t('programme.form.participants.label')}</Label>
                   {!isReadOnly && (
                     <Button type="button" variant="outline" size="sm" onClick={addIntervenant}>
                       <Plus className="h-4 w-4 mr-2" />
-                      Ajouter un intervenant
+                      {t('programme.form.participants.addIntervenant')}
                     </Button>
                   )}
                 </div>
@@ -608,7 +598,7 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
                   <Card key={index} className="p-4">
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
-                        <h4 className="font-medium">Intervenant #{index + 1}</h4>
+                        <h4 className="font-medium">{t('programme.form.participants.intervenantNum', { num: index + 1 })}</h4>
                         {!isReadOnly && (
                           <Button
                             type="button"
@@ -622,14 +612,14 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
                       </div>
 
                       <div className="grid grid-cols-2 gap-4">
-                        <FormField label="Utilisateur">
+                        <FormField label={t('programme.form.participants.user')}>
                           <Select
                             value={intervenant.id_user?.toString()}
                             onValueChange={(value) => updateIntervenant(index, 'id_user', parseInt(value))}
                             disabled={isReadOnly}
                           >
                             <SelectTrigger>
-                              <SelectValue placeholder="Sélectionner un utilisateur" />
+                              <SelectValue placeholder={t('programme.form.participants.selectUser')} />
                             </SelectTrigger>
                             <SelectContent>
                               {users.map((user) => (
@@ -641,19 +631,19 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
                           </Select>
                         </FormField>
 
-                        <FormField label="Rôle">
+                        <FormField label={t('programme.form.participants.role')}>
                           <Select
                             value={intervenant.role_intervenant}
                             onValueChange={(value) => updateIntervenant(index, 'role_intervenant', value)}
                             disabled={isReadOnly}
                           >
                             <SelectTrigger>
-                              <SelectValue placeholder="Sélectionner un rôle" />
+                              <SelectValue placeholder={t('programme.form.participants.selectRole')} />
                             </SelectTrigger>
                             <SelectContent>
-                              {rolesIntervenant.map((role) => (
-                                <SelectItem key={role.value} value={role.value}>
-                                  {role.label}
+                              {rolesIntervenantKeys.map((roleKey) => (
+                                <SelectItem key={roleKey} value={roleKey}>
+                                  {t(`programme.form.participants.roles.${roleKey}`)}
                                 </SelectItem>
                               ))}
                             </SelectContent>
@@ -661,22 +651,22 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
                         </FormField>
                       </div>
 
-                      <FormField label="Sujet d'intervention">
+                      <FormField label={t('programme.form.participants.interventionSubject')}>
                         <Input
                           value={intervenant.sujet_intervention || ''}
                           onChange={(e) => updateIntervenant(index, 'sujet_intervention', e.target.value)}
                           disabled={isReadOnly}
-                          placeholder="Sujet de l'intervention"
+                          placeholder={t('programme.form.participants.subjectPlaceholder')}
                         />
                       </FormField>
 
-                      <FormField label="Biographie courte">
+                      <FormField label={t('programme.form.participants.shortBiography')}>
                         <Textarea
                           value={intervenant.biographie_courte || ''}
                           onChange={(e) => updateIntervenant(index, 'biographie_courte', e.target.value)}
                           disabled={isReadOnly}
                           rows={3}
-                          placeholder="Brève biographie"
+                          placeholder={t('programme.form.participants.biographyPlaceholder')}
                         />
                       </FormField>
                     </div>
@@ -691,26 +681,26 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
         <TabsContent value="options" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Options et matériel</CardTitle>
+              <CardTitle>{t('programme.form.options.title')}</CardTitle>
               <CardDescription>
-                Options supplémentaires et matériel requis
+                {t('programme.form.options.description')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Langue principale */}
-              <FormField label="Langue principale">
+              <FormField label={t('programme.form.options.mainLanguage')}>
                 <Select
                   value={formData.langue_principale}
                   onValueChange={(value) => handleChange('langue_principale', value)}
                   disabled={isReadOnly}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner une langue" />
+                    <SelectValue placeholder={t('programme.form.options.selectLanguage')} />
                   </SelectTrigger>
                   <SelectContent>
-                    {langues.map((langue) => (
-                      <SelectItem key={langue.value} value={langue.value}>
-                        {langue.label}
+                    {languesCodes.map((langCode) => (
+                      <SelectItem key={langCode} value={langCode}>
+                        {t(`programme.form.languages.${langCode}`)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -719,7 +709,7 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
 
               {/* Options */}
               <div className="space-y-3">
-                <Label className="text-base font-medium">Options</Label>
+                <Label className="text-base font-medium">{t('programme.form.options.optionsLabel')}</Label>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="flex items-center space-x-2">
                     <Checkbox
@@ -728,7 +718,7 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
                       onCheckedChange={(checked) => handleChange('traduction_disponible', checked)}
                       disabled={isReadOnly}
                     />
-                    <Label htmlFor="traduction">Traduction disponible</Label>
+                    <Label htmlFor="traduction">{t('programme.form.options.translationAvailable')}</Label>
                   </div>
 
                   <div className="flex items-center space-x-2">
@@ -738,7 +728,7 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
                       onCheckedChange={(checked) => handleChange('enregistrement_autorise', checked)}
                       disabled={isReadOnly}
                     />
-                    <Label htmlFor="enregistrement">Enregistrement autorisé</Label>
+                    <Label htmlFor="enregistrement">{t('programme.form.options.recordingAllowed')}</Label>
                   </div>
 
                   <div className="flex items-center space-x-2">
@@ -748,7 +738,7 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
                       onCheckedChange={(checked) => handleChange('diffusion_live', checked)}
                       disabled={isReadOnly}
                     />
-                    <Label htmlFor="diffusion">Diffusion en direct</Label>
+                    <Label htmlFor="diffusion">{t('programme.form.options.liveBroadcast')}</Label>
                   </div>
 
                   <div className="flex items-center space-x-2">
@@ -758,19 +748,19 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
                       onCheckedChange={(checked) => handleChange('support_numerique', checked)}
                       disabled={isReadOnly}
                     />
-                    <Label htmlFor="support">Support numérique</Label>
+                    <Label htmlFor="support">{t('programme.form.options.digitalSupport')}</Label>
                   </div>
                 </div>
               </div>
 
               {/* Matériel requis */}
               <div className="space-y-3">
-                <Label className="text-base font-medium">Matériel requis</Label>
+                <Label className="text-base font-medium">{t('programme.form.options.requiredMaterial')}</Label>
                 <div className="flex gap-2">
                   <Input
                     value={newMateriel}
                     onChange={(e) => setNewMateriel(e.target.value)}
-                    placeholder="Ajouter un matériel"
+                    placeholder={t('programme.form.options.addMaterial')}
                     disabled={isReadOnly}
                     onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addMateriel())}
                   />
@@ -794,13 +784,13 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
               </div>
 
               {/* Notes organisateur */}
-              <FormField label="Notes organisateur">
+              <FormField label={t('programme.form.options.organizerNotes')}>
                 <Textarea
                   value={formData.notes_organisateur || ''}
                   onChange={(e) => handleChange('notes_organisateur', e.target.value)}
                   disabled={isReadOnly}
                   rows={4}
-                  placeholder="Notes internes pour l'organisateur"
+                  placeholder={t('programme.form.options.organizerNotesPlaceholder')}
                 />
               </FormField>
             </CardContent>
@@ -813,7 +803,7 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
         {onCancel && (
           <Button type="button" variant="outline" onClick={onCancel} disabled={loading}>
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Annuler
+            {t('programme.form.actions.cancel')}
           </Button>
         )}
         {!isReadOnly && (
@@ -821,12 +811,12 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
             {loading ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Enregistrement...
+                {t('programme.form.actions.saving')}
               </>
             ) : (
               <>
                 <Save className="h-4 w-4 mr-2" />
-                {mode === 'create' ? 'Créer' : 'Mettre à jour'}
+                {mode === 'create' ? t('programme.form.actions.create') : t('programme.form.actions.update')}
               </>
             )}
           </Button>

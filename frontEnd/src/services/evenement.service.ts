@@ -213,17 +213,8 @@ class EvenementService extends BaseService<Evenement, CreateEvenementData, Updat
     };
   }
 
-  async updateMedia(eventId: number, mediaId: number, data: { titre?: string; description?: string; ordre?: number }): Promise<ApiResponse<EventMedia>> {
-    return httpClient.put<EventMedia>(API_ENDPOINTS.evenements.updateMedia(eventId, mediaId), data);
-  }
-
   async deleteMedia(eventId: number, mediaId: number): Promise<ApiResponse<void>> {
     return httpClient.delete<void>(API_ENDPOINTS.evenements.deleteMedia(eventId, mediaId));
-  }
-
-  // Notifications
-  async sendNotification(eventId: number, notification: NotificationData): Promise<ApiResponse<void>> {
-    return httpClient.post<void>(API_ENDPOINTS.evenements.sendNotification(eventId), notification);
   }
 
   // Espace professionnel
@@ -264,14 +255,11 @@ class EvenementService extends BaseService<Evenement, CreateEvenementData, Updat
  */
 async getByOeuvre(oeuvreId: number): Promise<ApiResponse<Evenement[]>> {
   try {
-    console.log('🔍 Récupération événements pour œuvre:', oeuvreId);
-    
     const response = await httpClient.get<Evenement[]>(
       `/evenements/oeuvre/${oeuvreId}`
     );
-    
+
     if (response.success && response.data) {
-      console.log(`✅ ${response.data.length} événements trouvés`);
       return response;
     }
     
@@ -280,7 +268,6 @@ async getByOeuvre(oeuvreId: number): Promise<ApiResponse<Evenement[]>> {
       error: response.error || 'Aucun événement trouvé'
     };
   } catch (error: any) {
-    console.error('❌ Erreur récupération événements par œuvre:', error);
     return {
       success: false,
       error: error.message || 'Erreur lors de la récupération des événements'

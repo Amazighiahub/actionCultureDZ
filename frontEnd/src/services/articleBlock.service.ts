@@ -67,13 +67,10 @@ class ArticleBlockService {
     articleType: 'article' | 'article_scientifique' = 'article'
   ): Promise<ApiResponse<ArticleBlock[]>> {
     try {
-      console.log('🔍 Récupération des blocs pour l\'article:', articleId);
-      
       return await httpClient.get<ArticleBlock[]>(
         API_ENDPOINTS.articleBlocks.getByArticle(articleId, articleType)
       );
     } catch (error) {
-      console.error('❌ Erreur récupération blocs:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Erreur inconnue'
@@ -86,14 +83,11 @@ class ArticleBlockService {
    */
   async createBlock(data: CreateBlockDTO): Promise<ApiResponse<ArticleBlock>> {
     try {
-      console.log('📝 Création d\'un nouveau bloc:', data.type_block);
-      
       return await httpClient.post<ArticleBlock>(
         API_ENDPOINTS.articleBlocks.create, 
         data
       );
     } catch (error) {
-      console.error('❌ Erreur création bloc:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Erreur inconnue'
@@ -106,14 +100,11 @@ class ArticleBlockService {
    */
   async createMultipleBlocks(data: BatchCreateBlocksDTO): Promise<ApiResponse<ArticleBlock[]>> {
     try {
-      console.log('📝 Création de', data.blocks.length, 'blocs');
-      
       return await httpClient.post<ArticleBlock[]>(
         API_ENDPOINTS.articleBlocks.createBatch, 
         data
       );
     } catch (error) {
-      console.error('❌ Erreur création multiple:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Erreur inconnue'
@@ -126,14 +117,11 @@ class ArticleBlockService {
    */
   async updateBlock(blockId: number, data: UpdateBlockDTO): Promise<ApiResponse<ArticleBlock>> {
     try {
-      console.log('✏️ Mise à jour du bloc:', blockId);
-      
       return await httpClient.put<ArticleBlock>(
         API_ENDPOINTS.articleBlocks.update(blockId), 
         data
       );
     } catch (error) {
-      console.error('❌ Erreur mise à jour bloc:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Erreur inconnue'
@@ -146,13 +134,10 @@ class ArticleBlockService {
    */
   async deleteBlock(blockId: number): Promise<ApiResponse<void>> {
     try {
-      console.log('🗑️ Suppression du bloc:', blockId);
-      
       return await httpClient.delete<void>(
         API_ENDPOINTS.articleBlocks.delete(blockId)
       );
     } catch (error) {
-      console.error('❌ Erreur suppression bloc:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Erreur inconnue'
@@ -165,14 +150,11 @@ class ArticleBlockService {
    */
   async reorderBlocks(articleId: number, blockIds: number[]): Promise<ApiResponse<void>> {
     try {
-      console.log('🔄 Réorganisation des blocs pour l\'article:', articleId);
-      
       return await httpClient.put<void>(
         API_ENDPOINTS.articleBlocks.reorder(articleId),
         { blockIds }
       );
     } catch (error) {
-      console.error('❌ Erreur réorganisation blocs:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Erreur inconnue'
@@ -185,13 +167,10 @@ class ArticleBlockService {
    */
   async duplicateBlock(blockId: number): Promise<ApiResponse<ArticleBlock>> {
     try {
-      console.log('📋 Duplication du bloc:', blockId);
-      
       return await httpClient.post<ArticleBlock>(
         API_ENDPOINTS.articleBlocks.duplicate(blockId)
       );
     } catch (error) {
-      console.error('❌ Erreur duplication bloc:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Erreur inconnue'
@@ -209,13 +188,10 @@ class ArticleBlockService {
    */
   async getBlockTemplates(): Promise<ApiResponse<BlockTemplate[]>> {
     try {
-      console.log('📋 Récupération des templates de blocs');
-      
       return await httpClient.get<BlockTemplate[]>(
         API_ENDPOINTS.articleBlocks.templates
       );
     } catch (error) {
-      console.error('❌ Erreur récupération templates:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Erreur inconnue'
@@ -231,8 +207,6 @@ class ArticleBlockService {
     blocks: Omit<CreateBlockDTO, 'id_article' | 'article_type'>[]
   ): Promise<ApiResponse<any>> {
     try {
-      console.log('💾 Sauvegarde article complet avec blocs');
-      
       // D'abord créer/mettre à jour l'article via l'API oeuvre
       const oeuvreResponse = await httpClient.post<any>(
         API_ENDPOINTS.oeuvres.create, 
@@ -244,7 +218,6 @@ class ArticleBlockService {
       }
 
       const articleId = oeuvreResponse.data.oeuvre.id_oeuvre;
-      console.log('✅ Article créé avec ID:', articleId);
 
       // Ensuite sauvegarder les blocs
       const blocksData: BatchCreateBlocksDTO = {
@@ -263,8 +236,6 @@ class ArticleBlockService {
         throw new Error('Erreur lors de la sauvegarde des blocs');
       }
 
-      console.log('✅ Blocs sauvegardés avec succès');
-
       return {
         success: true,
         data: {
@@ -274,7 +245,6 @@ class ArticleBlockService {
       };
 
     } catch (error) {
-      console.error('❌ Erreur sauvegarde article complet:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Erreur inconnue'
@@ -291,17 +261,11 @@ async saveBlocksForArticle(
   blocks: Omit<ArticleBlock, 'id_block' | 'id_article'>[]
 ): Promise<ApiResponse<ArticleBlock[]>> {
   try {
-    console.log('💾 Sauvegarde des blocs pour l\'article:', articleId);
-    
     // D'abord supprimer les anciens blocs
-    const deleteResponse = await httpClient.delete<void>(
+    await httpClient.delete<void>(
       `/articles/${articleId}/blocks`
     );
-    
-    if (!deleteResponse.success) {
-      console.warn('⚠️ Impossible de supprimer les anciens blocs');
-    }
-    
+
     // Puis créer les nouveaux blocs
     const blocksData: BatchCreateBlocksDTO = {
       id_article: articleId,
@@ -321,7 +285,6 @@ async saveBlocksForArticle(
     
     return await this.createMultipleBlocks(blocksData);
   } catch (error: any) {
-    console.error('❌ Erreur sauvegarde blocs:', error);
     return {
       success: false,
       error: error.message || 'Erreur lors de la sauvegarde des blocs'
@@ -342,8 +305,6 @@ async uploadBlockImage(
   media: any;
 }>> {
   try {
-    console.log('📤 Upload image pour bloc:', blockId);
-    
     const formData = new FormData();
     formData.append('image', file);
     formData.append('article_id', articleId.toString());
@@ -358,7 +319,6 @@ async uploadBlockImage(
       formData
     );
   } catch (error: any) {
-    console.error('❌ Erreur upload image bloc:', error);
     return {
       success: false,
       error: error.message || 'Erreur lors de l\'upload'
@@ -379,8 +339,6 @@ async uploadBlockVideo(
   media: any;
 }>> {
   try {
-    console.log('📤 Upload vidéo pour bloc:', blockId);
-    
     const formData = new FormData();
     formData.append('video', file);
     formData.append('article_id', articleId.toString());
@@ -397,7 +355,6 @@ async uploadBlockVideo(
       { timeout: 300000 } // 5 minutes
     );
   } catch (error: any) {
-    console.error('❌ Erreur upload vidéo bloc:', error);
     return {
       success: false,
       error: error.message || 'Erreur lors de l\'upload de la vidéo'
@@ -410,8 +367,6 @@ async uploadBlockVideo(
  */
 async exportToMarkdown(articleId: number): Promise<ApiResponse<string>> {
   try {
-    console.log('📄 Export markdown pour article:', articleId);
-    
     const response = await httpClient.get<{ markdown: string }>(
       `/articles/${articleId}/blocks/export/markdown`
     );
@@ -428,7 +383,6 @@ async exportToMarkdown(articleId: number): Promise<ApiResponse<string>> {
       error: 'Erreur lors de l\'export'
     };
   } catch (error: any) {
-    console.error('❌ Erreur export markdown:', error);
     return {
       success: false,
       error: error.message || 'Erreur lors de l\'export'
@@ -444,14 +398,11 @@ async importFromMarkdown(
   markdown: string
 ): Promise<ApiResponse<ArticleBlock[]>> {
   try {
-    console.log('📄 Import markdown pour article:', articleId);
-    
     return await httpClient.post<ArticleBlock[]>(
       `/articles/${articleId}/blocks/import/markdown`,
       { markdown }
     );
   } catch (error: any) {
-    console.error('❌ Erreur import markdown:', error);
     return {
       success: false,
       error: error.message || 'Erreur lors de l\'import'
@@ -467,14 +418,11 @@ async searchBlocks(
   query: string
 ): Promise<ApiResponse<ArticleBlock[]>> {
   try {
-    console.log('🔍 Recherche blocs pour:', query);
-    
     return await httpClient.get<ArticleBlock[]>(
       `/articles/${articleId}/blocks/search`,
       { q: query }
     );
   } catch (error: any) {
-    console.error('❌ Erreur recherche blocs:', error);
     return {
       success: false,
       error: error.message || 'Erreur lors de la recherche'
@@ -493,8 +441,6 @@ async getBlocksStats(articleId: number): Promise<ApiResponse<{
   totalVideos: number;
 }>> {
   try {
-    console.log('📊 Récupération stats pour article:', articleId);
-    
     return await httpClient.get<{
       total: number;
       byType: Record<string, number>;
@@ -503,7 +449,6 @@ async getBlocksStats(articleId: number): Promise<ApiResponse<{
       totalVideos: number;
     }>(`/articles/${articleId}/blocks/stats`);
   } catch (error: any) {
-    console.error('❌ Erreur stats blocs:', error);
     return {
       success: false,
       error: error.message || 'Erreur lors de la récupération des statistiques'
@@ -520,8 +465,6 @@ async getBlocksStats(articleId: number): Promise<ApiResponse<{
 
 async getOeuvresByType(types: number[]): Promise<ApiResponse<Oeuvre[]>> {
   try {
-    console.log('🔍 Récupération œuvres par types:', types);
-    
     // Faire un appel pour chaque type
     const promises = types.map(type => 
      oeuvreService.getOeuvres({ type, limit: 100 })
@@ -548,7 +491,6 @@ async getOeuvresByType(types: number[]): Promise<ApiResponse<Oeuvre[]>> {
       data: uniqueOeuvres
     };
   } catch (error: any) {
-    console.error('❌ Erreur récupération œuvres par types:', error);
     return {
       success: false,
       error: error.message || 'Erreur lors de la récupération'

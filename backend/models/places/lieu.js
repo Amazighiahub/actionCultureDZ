@@ -86,6 +86,12 @@ module.exports = (sequelize) => {
       },
       {
         fields: ['localiteId']
+      },
+      {
+        fields: ['typePatrimoine']
+      },
+      {
+        fields: ['typeLieu']
       }
     ]
   });
@@ -123,6 +129,14 @@ module.exports = (sequelize) => {
   Lieu.prototype.getAdresse = function(lang = 'fr') {
     return this.adresse?.[lang] || this.adresse?.fr || this.adresse?.ar || '';
   };
+
+  Lieu.afterDestroy(async (lieu, options) => {
+    const { Favori, Vue, Signalement } = sequelize.models;
+    const id = lieu.id_lieu;
+    if (Favori) await Favori.destroy({ where: { type_entite: 'lieu', id_entite: id } });
+    if (Vue) await Vue.destroy({ where: { type_entite: 'lieu', id_entite: id } });
+    if (Signalement) await Signalement.destroy({ where: { type_entite: 'lieu', id_entite: id } });
+  });
 
   return Lieu;
 };

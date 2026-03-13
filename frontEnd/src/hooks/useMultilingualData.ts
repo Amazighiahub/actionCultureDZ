@@ -73,8 +73,7 @@ export function useMultilingualData<T extends Record<string, any>>(
           const parsedData = JSON.parse(savedData);
           setData(prevData => ({ ...prevData, ...parsedData }));
         }
-      } catch (error) {
-        console.warn('Erreur lors du chargement des données multilingues:', error);
+      } catch {
       }
     }
   }, [autoSave, storageKey]);
@@ -84,8 +83,7 @@ export function useMultilingualData<T extends Record<string, any>>(
     if (autoSave && storageKey) {
       try {
         localStorage.setItem(storageKey, JSON.stringify(data));
-      } catch (error) {
-        console.warn('Erreur lors de la sauvegarde des données multilingues:', error);
+      } catch {
       }
     }
   }, [data, autoSave, storageKey]);

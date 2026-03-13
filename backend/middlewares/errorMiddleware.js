@@ -26,92 +26,58 @@ const errorMiddleware = {
     }
     
     // Pour les autres routes, créer une erreur
-    const error = new Error(`Route non trouvée - ${req.originalUrl}`);
+    const error = new Error(req.t ? req.t('common.notFound') : 'Route not found');
     error.status = 404;
     next(error);
   },
 
-  // Gestionnaire d'erreurs global
+  // Gestionnaire d'erreurs global — normalise via AppError.fromError()
   errorHandler: (error, req, res, next) => {
-    // Ne pas logger les erreurs 404 pour les chemins ignorés
     const isIgnoredPath = [
       '/.well-known',
       '/favicon.ico'
-    ].some(path => req.originalUrl.startsWith(path));
-    
-    // If it's an AppError, use its structured format
-    if (error instanceof AppError) {
-      const payload = error.toJSON();
-      logger.warn('AppError: %o', payload);
-      return res.status(error.statusCode).json(payload);
+    ].some(p => req.originalUrl.startsWith(p));
+
+    // Normalize all errors through AppError.fromError()
+    const appError = AppError.fromError(error);
+
+    // Preserve original HTTP status if set (e.g. from 404 handler)
+    if (error.status && !error.statusCode) {
+      appError.statusCode = error.status;
     }
 
-    let statusCode = error.status || error.statusCode || 500;
-    let message = error.message || 'Erreur interne du serveur';
+    const logContext = {
+      requestId: req.requestId,
+      method: req.method,
+      path: req.originalUrl,
+      userId: req.user?.id_user
+    };
 
-    // Erreurs Sequelize
-    if (error.name === 'SequelizeValidationError') {
-      statusCode = 400;
-      message = 'Erreur de validation des données';
-      const details = error.errors.map(err => ({
-        field: err.path,
-        message: err.message,
-        value: err.value
-      }));
-      
-      return res.status(statusCode).json({
-        success: false,
-        error: message,
-        details
-      });
+    // Log based on severity
+    if (appError.statusCode >= 500) {
+      logger.error(appError.message, { ...logContext, stack: error.stack });
+    } else if (!isIgnoredPath && appError.statusCode !== 404) {
+      logger.warn(appError.message, logContext);
     }
 
-    if (error.name === 'SequelizeUniqueConstraintError') {
-      statusCode = 409;
-      message = 'Cette ressource existe déjà';
-      const details = error.errors.map(err => ({
-        field: err.path,
-        message: `${err.path} doit être unique`,
-        value: err.value
-      }));
-      
-      return res.status(statusCode).json({
-        success: false,
-        error: message,
-        details
-      });
+    // Report 5xx to Sentry
+    if (appError.statusCode >= 500) {
+      try {
+        const Sentry = require('@sentry/node');
+        Sentry.withScope((scope) => {
+          scope.setExtra('requestId', req.requestId);
+          if (req.user) scope.setUser({ id: req.user.id_user });
+          Sentry.captureException(error);
+        });
+      } catch (e) { /* Sentry not installed */ }
     }
 
-    if (error.name === 'SequelizeForeignKeyConstraintError') {
-      statusCode = 400;
-      message = 'Référence invalide vers une ressource inexistante';
-    }
-
-    if (error.name === 'SequelizeDatabaseError') {
-      statusCode = 500;
-      message = 'Erreur de base de données';
-      logger.error('Erreur de base de données: %o', error);
-    }
-
-    // Erreurs JWT
-    if (error.name === 'JsonWebTokenError') {
-      statusCode = 401;
-      message = 'Token invalide';
-    }
-
-    if (error.name === 'TokenExpiredError') {
-      statusCode = 401;
-      message = 'Token expiré';
-    }
-
-    // Log de l'erreur en développement (sauf pour les 404 sur chemins ignorés)
-    if (process.env.NODE_ENV === 'development' && !(statusCode === 404 && isIgnoredPath)) {
-      logger.error('Erreur: %o', error);
-    }
-
-    res.status(statusCode).json({
+    res.status(appError.statusCode).json({
       success: false,
-      error: message,
+      error: appError.message,
+      code: appError.code,
+      ...(appError.statusCode < 500 && appError.isOperational && appError.details && { details: appError.details }),
+      ...(req.requestId && { requestId: req.requestId }),
       ...(process.env.NODE_ENV === 'development' && { stack: error.stack })
     });
   }

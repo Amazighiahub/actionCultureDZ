@@ -74,36 +74,46 @@ Exécutez les scripts dans cet ordre :
 ```bash
 cd backend
 
-# 1. Données de base (rôles, utilisateurs, types, lieux, événements)
-node scripts/seedDatabaseEvent.js
+# 1. Géographie (wilayas, dairas, communes) - OBLIGATOIRE en premier
+node scripts/seed-geography.js
 
-# 2. Œuvres culturelles (livres, films, albums, artisanat, articles)
-node scripts/seed-database.js
+# 2. Données complètes (rôles, types, utilisateurs, lieux, événements, œuvres)
+node scripts/seed-all-data.js
 ```
 
-### Option B : Seed minimal (uniquement les données de base)
+### Option B : Seed enrichi (œuvres algériennes réelles - optionnel)
+
+Après Option A, pour ajouter Nedjma, Bataille d'Alger, etc. :
 
 ```bash
-cd backend
-node scripts/seedDatabaseEvent.js
+node scripts/seed-database.js
 ```
 
 ---
 
 ## Résumé des données créées
 
-### Par `seedDatabaseEvent.js` :
+### Par `seed-geography.js` :
+
+| Type | Contenu |
+|------|---------|
+| Wilayas | 58 wilayas d'Algérie (depuis algeria_cities.json) |
+| Dairas | Toutes les daïras |
+| Communes | Toutes les communes |
+
+### Par `seed-all-data.js` :
 
 | Type | Quantité | Exemples |
 |------|----------|----------|
 | Rôles | 3 | User, Professionnel, Administrateur |
-| Types d'utilisateurs | 22 | auteur, réalisateur, compositeur, etc. |
-| Types d'événements | 8 | Festival, Exposition, Concert, etc. |
-| Utilisateurs | 7 | Admin, professionnels, visiteurs |
-| Lieux | 4 | Palais de la Culture, Musée Zabana, etc. |
-| Événements | 4 | Festival Andalou, Exposition Art, etc. |
+| Types d'utilisateurs | 14 | auteur, réalisateur, artisan, etc. |
+| Types d'événements | 9 | Festival, Exposition, Concert, etc. |
+| Utilisateurs | 10 | admin@actionculture.dz, m.benali@test.dz, etc. |
+| Lieux | 6 | Palais Culture, Musée Zabana, Casbah, Timgad, etc. |
+| Événements | 7 | Festival Andalou, Exposition Art, etc. |
+| Œuvres | Livres, films, albums, artisanat (données seed-data-reference) |
 
-### Par `seed-database.js` :
+### Par `seed-database.js` (optionnel) :
 
 | Type | Quantité | Exemples |
 |------|----------|----------|
@@ -136,11 +146,11 @@ node scripts/seedDatabaseEvent.js
 
 ## Dépannage
 
-### Erreur : "Admin non trouvé"
+### Erreur : "Admin non trouvé" ou clés étrangères
 
-**Cause** : Le script `seed-database.js` a été exécuté avant `seedDatabaseEvent.js`.
+**Cause** : `seed-all-data.js` exécuté avant `seed-geography.js`, ou ordre incorrect.
 
-**Solution** : Exécutez d'abord `seedDatabaseEvent.js`.
+**Solution** : Exécutez d'abord `seed-geography.js`, puis `seed-all-data.js`.
 
 ### Erreur : "Connection refused"
 
@@ -168,26 +178,31 @@ node scripts/seedDatabaseEvent.js
 
 | Script | Description |
 |--------|-------------|
-| **`seed-all-data.js`** | ⭐ **RECOMMANDÉ** - Script complet unifié |
-| `seedDatabaseEvent.js` | Données de base (users, rôles, événements) |
-| `seed-database.js` | Œuvres culturelles complètes |
-| `seedTypeUsers.js` | Types d'utilisateurs uniquement |
-| `seedOeuvres.js` | Œuvres uniquement (plus de données) |
-| `seedProCom.js` | Professionnels et communautés |
+| **`seed-geography.js`** | Wilayas, dairas, communes (algeria_cities.json) — **obligatoire en premier** |
+| **`seed-all-data.js`** | ⭐ **RECOMMANDÉ** — Script complet unifié |
+| `seed-data-reference.js` | Données (non exécutable, utilisé par seed-all-data) |
+| `seed-database.js` | Œuvres algériennes réelles (Nedjma, Bataille d'Alger...) — optionnel |
+
+### Scripts supprimés (remplacés par seed-all-data)
+- ~~seedDatabaseEvent.js~~, ~~seedOeuvres.js~~, ~~seedTypeUsers.js~~, ~~seedProCom.js~~
 
 ---
 
 ## Commandes rapides
 
-### Option 1 : Script unifié (RECOMMANDÉ)
+### Option 1 : Complet (RECOMMANDÉ)
 ```bash
 cd backend
+node scripts/seed-geography.js
 node scripts/seed-all-data.js
 ```
 
-### Option 2 : Scripts séparés
+### Option 2 : Avec œuvres culturelles détaillées
 ```bash
-cd backend && node scripts/seedDatabaseEvent.js && node scripts/seed-database.js
+cd backend
+node scripts/seed-geography.js
+node scripts/seed-all-data.js
+node scripts/seed-database.js
 ```
 
 ---

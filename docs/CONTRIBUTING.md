@@ -23,8 +23,8 @@ Ce guide est destiné aux développeurs qui rejoignent le projet EventCulture. I
 
 ```bash
 # Cloner le repository
-git clone https://github.com/votre-org/eventculture.git
-cd eventculture
+git clone https://github.com/Amazighiahub/actionCultureDZ.git
+cd actionCultureDZ
 
 # Backend
 cd backend

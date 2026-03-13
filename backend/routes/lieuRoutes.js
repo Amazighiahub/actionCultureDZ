@@ -25,7 +25,7 @@ const initLieuRoutes = (models) => {
         }
         return false;
       })
-      .withMessage('Le nom doit contenir entre 2 et 255 caractères'),
+      .withMessage((value, { req }) => req.t('validation.invalidName')),
     body('adresse')
       .custom((value) => {
         if (typeof value === 'string') {
@@ -36,11 +36,11 @@ const initLieuRoutes = (models) => {
         }
         return false;
       })
-      .withMessage('L\'adresse doit contenir entre 5 et 255 caractères'),
-    body('latitude').isFloat({ min: -90, max: 90 }).withMessage('Latitude invalide'),
-    body('longitude').isFloat({ min: -180, max: 180 }).withMessage('Longitude invalide'),
-    body('typeLieu').optional().isIn(['Wilaya', 'Daira', 'Commune']).withMessage('Type de lieu administratif invalide'),
-    body('typeLieuCulturel').optional().isString().withMessage('Type de lieu culturel invalide'),
+      .withMessage((value, { req }) => req.t('validation.invalidAddress')),
+    body('latitude').isFloat({ min: -90, max: 90 }).withMessage((value, { req }) => req.t('validation.invalidLatitude')),
+    body('longitude').isFloat({ min: -180, max: 180 }).withMessage((value, { req }) => req.t('validation.invalidLongitude')),
+    body('typeLieu').optional().isIn(['Wilaya', 'Daira', 'Commune']).withMessage((value, { req }) => req.t('validation.invalidType')),
+    body('typeLieuCulturel').optional().isString().withMessage((value, { req }) => req.t('validation.invalidType')),
     body('description')
       .optional()
       .custom((value) => {
@@ -48,7 +48,7 @@ const initLieuRoutes = (models) => {
         if (typeof value === 'object') return true;
         return true;
       })
-      .withMessage('Description trop longue'),
+      .withMessage((value, { req }) => req.t('validation.descriptionTooLong')),
     body('histoire')
       .optional()
       .custom((value) => {
@@ -56,7 +56,7 @@ const initLieuRoutes = (models) => {
         if (typeof value === 'object') return true;
         return true;
       })
-      .withMessage('Histoire trop longue')
+      .withMessage((value, { req }) => req.t('validation.descriptionTooLong'))
   ];
 
   const updateLieuValidation = [
@@ -69,7 +69,7 @@ const initLieuRoutes = (models) => {
         if (typeof value === 'object') return true;
         return false;
       })
-      .withMessage('Le nom doit contenir entre 2 et 255 caractères'),
+      .withMessage((value, { req }) => req.t('validation.invalidName')),
     body('adresse')
       .optional()
       .custom((value) => {
@@ -79,9 +79,9 @@ const initLieuRoutes = (models) => {
         if (typeof value === 'object') return true;
         return false;
       })
-      .withMessage('L\'adresse doit contenir entre 5 et 255 caractères'),
-    body('latitude').optional().isFloat({ min: -90, max: 90 }).withMessage('Latitude invalide'),
-    body('longitude').optional().isFloat({ min: -180, max: 180 }).withMessage('Longitude invalide')
+      .withMessage((value, { req }) => req.t('validation.invalidAddress')),
+    body('latitude').optional().isFloat({ min: -90, max: 90 }).withMessage((value, { req }) => req.t('validation.invalidLatitude')),
+    body('longitude').optional().isFloat({ min: -180, max: 180 }).withMessage((value, { req }) => req.t('validation.invalidLongitude'))
   ];
 
   // ========================================================================
@@ -110,9 +110,9 @@ const initLieuRoutes = (models) => {
   // Lieux à proximité
   router.get('/proximite',
     [
-      query('latitude').isFloat({ min: -90, max: 90 }).withMessage('Latitude invalide'),
-      query('longitude').isFloat({ min: -180, max: 180 }).withMessage('Longitude invalide'),
-      query('radius').optional().isFloat({ min: 0.1, max: 100 }).withMessage('Rayon invalide')
+      query('latitude').isFloat({ min: -90, max: 90 }).withMessage((value, { req }) => req.t('validation.invalidLatitude')),
+      query('longitude').isFloat({ min: -180, max: 180 }).withMessage((value, { req }) => req.t('validation.invalidLongitude')),
+      query('radius').optional().isFloat({ min: 0.1, max: 100 }).withMessage((value, { req }) => req.t('validation.invalidRadius'))
     ],
     validationMiddleware.handleValidationErrors,
     lieuController.getLieuxProximite.bind(lieuController)
@@ -133,9 +133,9 @@ const initLieuRoutes = (models) => {
   router.post('/check-duplicate',
     authMiddleware.authenticate,
     [
-      body('nom').isString().withMessage('Nom requis'),
-      body('latitude').isFloat().withMessage('Latitude invalide'),
-      body('longitude').isFloat().withMessage('Longitude invalide')
+      body('nom').isString().withMessage((value, { req }) => req.t('validation.invalidName')),
+      body('latitude').isFloat().withMessage((value, { req }) => req.t('validation.invalidLatitude')),
+      body('longitude').isFloat().withMessage((value, { req }) => req.t('validation.invalidLongitude'))
     ],
     validationMiddleware.handleValidationErrors,
     lieuController.checkDuplicate.bind(lieuController)
@@ -235,8 +235,8 @@ const initLieuRoutes = (models) => {
         if (typeof value === 'string') return value.length >= 2;
         if (typeof value === 'object') return Object.values(value).some(v => v && v.length >= 2);
         return false;
-      }).withMessage('Le nom du service doit contenir au moins 2 caractères'),
-      body('services').optional().isArray().withMessage('Services doit être un tableau'),
+      }).withMessage((value, { req }) => req.t('validation.invalidName')),
+      body('services').optional().isArray().withMessage((value, { req }) => req.t('validation.invalidData')),
       body('disponible').optional().isBoolean()
     ],
     validationMiddleware.handleValidationErrors,
@@ -249,7 +249,7 @@ const initLieuRoutes = (models) => {
     authMiddleware.requireRole(['Modérateur', 'Administrateur']),
     validationMiddleware.validateId('id'),
     [
-      param('serviceId').isInt().withMessage('ID service invalide'),
+      param('serviceId').isInt().withMessage((value, { req }) => req.t('validation.invalidId')),
       body('nom').optional(),
       body('description').optional(),
       body('disponible').optional().isBoolean()
@@ -263,7 +263,7 @@ const initLieuRoutes = (models) => {
     authMiddleware.authenticate,
     authMiddleware.requireRole(['Modérateur', 'Administrateur']),
     validationMiddleware.validateId('id'),
-    [param('serviceId').isInt().withMessage('ID service invalide')],
+    [param('serviceId').isInt().withMessage((value, { req }) => req.t('validation.invalidId'))],
     validationMiddleware.handleValidationErrors,
     lieuController.deleteServiceLieu.bind(lieuController)
   );
@@ -282,17 +282,11 @@ const initLieuRoutes = (models) => {
   router.put('/:id/details',
     authMiddleware.authenticate,
     authMiddleware.requireValidatedProfessional,
-    param('id').isInt().withMessage('ID invalide'),
+    param('id').isInt().withMessage((value, { req }) => req.t('validation.invalidId')),
     validationMiddleware.handleValidationErrors,
     lieuController.updateDetailsLieu.bind(lieuController)
   );
 
-  if (process.env.NODE_ENV !== 'production') {
-    console.log('✅ Routes lieux i18n initialisées');
-    console.log('  🌍 Routes traduction: GET /:id/translations, PATCH /:id/translation/:lang');
-    console.log('  📦 Routes services: GET/POST /:id/services, PUT/DELETE /:id/services/:serviceId');
-    console.log('  📋 Routes détails: GET/PUT /:id/details');
-  }
 
   return router;
 };

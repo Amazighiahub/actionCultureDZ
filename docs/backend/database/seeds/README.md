@@ -4,6 +4,8 @@
 
 Ce dossier contient les scripts et fichiers SQL pour insérer les données de test dans la base de données EventCulture.
 
+> **Recommandé** : Pour une installation complète, utiliser les scripts Node.js à la racine du backend : `node scripts/seed-geography.js` puis `node scripts/seed-all-data.js`. Voir [GUIDE_SEED_DATABASE.md](../../../GUIDE_SEED_DATABASE.md).
+
 ## 🗂️ Fichiers Disponibles
 
 ### **1. artisanat-seeds.sql**
@@ -25,7 +27,7 @@ Ce dossier contient les scripts et fichiers SQL pour insérer les données de te
 ### **2. run-seeds.sh**
 - **Description**: Script bash pour exécuter les seeds
 - **Fonctionnalités**:
-  - Vérification de l'environnement PostgreSQL
+  - Vérification de l'environnement MySQL
   - Création de la base de données si nécessaire
   - Exécution du script SQL
   - Affichage d'un résumé des données insérées
@@ -33,13 +35,13 @@ Ce dossier contient les scripts et fichiers SQL pour insérer les données de te
 ## 🚀 Comment Utiliser
 
 ### **Prérequis**
-- PostgreSQL installé et en cours d'exécution
-- Base de données `eventculture` créée
+- MySQL 8+ installé et en cours d'exécution
+- Base de données `actionculture` créée
 - Accès administrateur à la base de données
 
 ### **Étape 1: Navigation**
 ```bash
-cd c:\Users\sabab\EventCulture\backEnd\database\seeds
+cd backend/database/seeds
 ```
 
 ### **Étape 2: Exécution**
@@ -55,15 +57,15 @@ chmod +x run-seeds.sh
 run-seeds.bat
 ```
 
-**Ou directement avec PostgreSQL:**
+**Ou directement avec MySQL:**
 ```bash
-psql -h localhost -p 5432 -U postgres -d eventculture -f artisanat-seeds.sql
+mysql -u actionculture_user -p actionculture < artisanat-seeds.sql
 ```
 
 ### **Étape 3: Vérification**
 ```bash
-# Se connecter à PostgreSQL
-psql -h localhost -p 5432 -U postgres -d eventculture
+# Se connecter à MySQL
+mysql -u actionculture_user -p actionculture
 
 # Vérifier les données
 SELECT COUNT(*) as artisanats FROM artisanats;
@@ -99,12 +101,12 @@ SELECT COUNT(*) as commentaires FROM commentaires;
 ## 🔧 Configuration
 
 ### **Variables d'Environnement**
-Le script `run-seeds.sh` utilise les variables suivantes (modifiable selon votre configuration) :
-- `DB_NAME="eventculture"`
-- `DB_USER="postgres"`
-- `DB_PASSWORD="password"`
+Le script utilise les variables suivantes (voir `.env` à la racine) :
+- `DB_NAME="actionculture"`
+- `DB_USER="actionculture_user"`
+- `DB_PASSWORD="votre_mot_de_passe"`
 - `DB_HOST="localhost"`
-- `DB_PORT="5432"`
+- `DB_PORT="3306"`
 
 ### **Personnalisation**
 Pour adapter les données à votre environnement :
@@ -131,13 +133,13 @@ Pour adapter les données à votre environnement :
 ## 🐛 Dépannage
 
 ### **Erreurs Connexions**
-- Vérifiez que PostgreSQL est en cours d'exécution
+- Vérifiez que MySQL est en cours d'exécution
 - Vérifiez les identifiants de base de données
 - Assurez-vous que la base de données existe
 
 ### **Erreurs de Permissions**
 - Donnez les droits d'exécution au script : `chmod +x run-seeds.sh`
-- Vérifiez que l'utilisateur PostgreSQL a les droits d'écriture
+- Vérifiez que l'utilisateur MySQL a les droits d'écriture
 
 ### **Erreurs de Données**
 - Vérifiez que les contraintes sont respectées (unicité des clés primaires)

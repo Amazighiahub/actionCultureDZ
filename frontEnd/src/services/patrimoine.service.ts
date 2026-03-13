@@ -232,13 +232,14 @@ class PatrimoineService extends BaseService<SitePatrimoine, CreateSiteData, Upda
     return httpClient.delete<void>(API_ENDPOINTS.patrimoine.retirerFavoris(id));
   }
 
-  /*async uploadMedias(siteId: number, files: File[]): Promise<ApiResponse<MediaSite[]>> {
-    return httpClient.uploadMultipleFiles<MediaSite[]>(
+  async uploadMedias(siteId: number, files: File[]): Promise<ApiResponse<MediaSite[]>> {
+    const formData = new FormData();
+    files.forEach(file => formData.append('medias', file));
+    return httpClient.upload<MediaSite[]>(
       API_ENDPOINTS.patrimoine.uploadMedias(siteId),
-      files,
-      { fieldName: 'medias' }
+      formData
     );
-  }*/
+  }
 
   async deleteMedia(siteId: number, mediaId: number): Promise<ApiResponse<void>> {
     return httpClient.delete<void>(API_ENDPOINTS.patrimoine.deleteMedia(siteId, mediaId));

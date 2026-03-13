@@ -1167,11 +1167,15 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({
       // Charger l'œuvre
       const oeuvreResponse = await oeuvreService.getOeuvreById(Number(articleId));
       if (oeuvreResponse.success && oeuvreResponse.data) {
-        const oeuvre = oeuvreResponse.data;
+        const oeuvre = oeuvreResponse.data as any;
 
-        // Déterminer le type d'article
-        const articleType = oeuvre.ArticleScientifique ? 'article_scientifique' : 'article';
-        const articleData = oeuvre.Article || oeuvre.ArticleScientifique;
+        // Déterminer le type d'article (articleType dérivé de l'œuvre, pas de formData)
+        const articleType: 'article' | 'article_scientifique' =
+          oeuvre.ArticleScientifique || oeuvre.article_scientifique ? 'article_scientifique' : 'article';
+        const articleData = oeuvre.Article || oeuvre.ArticleScientifique || oeuvre.article || oeuvre.article_scientifique;
+
+        // ID de l'enregistrement article/blocs (id_article ou id_article_scientifique)
+        const blocksRecordId = articleData?.id_article ?? articleData?.id_article_scientifique ?? Number(articleId);
 
         // Extraire les traductions si titre/description sont des objets multilingues
         const titreObj: Record<string, string> = typeof oeuvre.titre === 'object' && oeuvre.titre !== null
@@ -1202,16 +1206,16 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({
           type: articleType,
           ...articleData
         });
-      }
 
-      // Charger les blocs
-      const blocksResponse = await articleBlockService.getBlocksByArticle(
-        Number(articleId),
-        formData.type
-      );
+        // Charger les blocs avec articleType et blocksRecordId (pas formData.type ni oeuvre id)
+        const blocksResponse = await articleBlockService.getBlocksByArticle(
+          Number(blocksRecordId),
+          articleType
+        );
 
-      if (blocksResponse.success && blocksResponse.data) {
-        setBlocks(blocksResponse.data.map((b: any) => ({ ...b, _uid: generateBlockUid() })));
+        if (blocksResponse.success && blocksResponse.data) {
+          setBlocks(blocksResponse.data.map((b: any) => ({ ...b, _uid: generateBlockUid() })));
+        }
       }
     } catch (error) {
       console.error('Erreur chargement article:', error);

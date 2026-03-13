@@ -24,14 +24,14 @@ class SignalementController {
       if (!validTypes.includes(type_entite)) {
         return res.status(400).json({
           success: false,
-          error: 'Type d\'entité invalide'
+          error: req.t('common.badRequest')
         });
       }
 
       if (!validMotifs.includes(motif)) {
         return res.status(400).json({
           success: false,
-          error: 'Motif invalide'
+          error: req.t('signalement.invalidReason')
         });
       }
 
@@ -40,7 +40,7 @@ class SignalementController {
       if (!entityExists) {
         return res.status(404).json({
           success: false,
-          error: 'Entité non trouvée'
+          error: req.t('common.notFound')
         });
       }
 
@@ -56,7 +56,7 @@ class SignalementController {
       if (existingSignalement) {
         return res.status(400).json({
           success: false,
-          error: 'Vous avez déjà signalé cette entité'
+          error: req.t('signalement.alreadyReported')
         });
       }
 
@@ -101,7 +101,7 @@ class SignalementController {
       console.error('Erreur création signalement:', error);
       return res.status(500).json({
         success: false,
-        error: 'Erreur lors de la création du signalement'
+        error: req.t('common.serverError')
       });
     }
   }
@@ -145,7 +145,7 @@ class SignalementController {
       console.error('Erreur récupération signalements:', error);
       return res.status(500).json({
         success: false,
-        error: 'Erreur lors de la récupération des signalements'
+        error: req.t('common.serverError')
       });
     }
   }
@@ -209,7 +209,7 @@ class SignalementController {
       console.error('Erreur file modération:', error);
       return res.status(500).json({
         success: false,
-        error: 'Erreur lors de la récupération de la file'
+        error: req.t('common.serverError')
       });
     }
   }
@@ -232,7 +232,7 @@ class SignalementController {
       if (!validActions.includes(action_prise)) {
         return res.status(400).json({
           success: false,
-          error: 'Action invalide'
+          error: req.t('common.badRequest')
         });
       }
 
@@ -240,7 +240,7 @@ class SignalementController {
       if (!signalement) {
         return res.status(404).json({
           success: false,
-          error: 'Signalement non trouvé'
+          error: req.t('signalement.notFound')
         });
       }
 
@@ -265,7 +265,7 @@ class SignalementController {
       console.error('Erreur traitement signalement:', error);
       return res.status(500).json({
         success: false,
-        error: 'Erreur lors du traitement'
+        error: req.t('common.serverError')
       });
     }
   }

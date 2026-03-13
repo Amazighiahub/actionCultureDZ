@@ -66,7 +66,6 @@ export function useWilayas() {
           setError(response.error || 'Erreur lors du chargement des wilayas');
         }
       } catch (err) {
-        console.error('Erreur chargement wilayas:', err);
         setError('Impossible de charger les wilayas');
       } finally {
         setLoading(false);
@@ -114,7 +113,6 @@ export function useDairas(wilayaId: number | null) {
           setError(response.error || 'Erreur lors du chargement des dairas');
         }
       } catch (err) {
-        console.error('Erreur chargement dairas:', err);
         setError('Impossible de charger les dairas');
       } finally {
         setLoading(false);
@@ -162,7 +160,6 @@ export function useCommunes(dairaId: number | null) {
           setError(response.error || 'Erreur lors du chargement des communes');
         }
       } catch (err) {
-        console.error('Erreur chargement communes:', err);
         setError('Impossible de charger les communes');
       } finally {
         setLoading(false);
@@ -210,7 +207,6 @@ export function useLocalites(communeId: number | null) {
           setError(response.error || 'Erreur lors du chargement des localités');
         }
       } catch (err) {
-        console.error('Erreur chargement localités:', err);
         setError('Impossible de charger les localités');
       } finally {
         setLoading(false);
@@ -259,7 +255,6 @@ export function useSearchWilayas(query: string) {
           setError(response.error || 'Erreur lors de la recherche');
         }
       } catch (err) {
-        console.error('Erreur recherche wilayas:', err);
         setError('Impossible de rechercher les wilayas');
       } finally {
         setLoading(false);

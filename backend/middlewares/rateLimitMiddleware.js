@@ -63,13 +63,15 @@ if (USE_REDIS) {
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: IS_PRODUCTION ? 100 : 1000, // 100 en prod, 1000 en dev
-  message: {
-    success: false,
-    error: 'Trop de requêtes, veuillez réessayer plus tard.',
-    retryAfter: new Date(Date.now() + 15 * 60 * 1000)
+  handler: (req, res) => {
+    res.status(429).json({
+      success: false,
+      error: req.t ? req.t('auth.tooManyRequests') : 'Too many requests',
+      retryAfter: new Date(Date.now() + 15 * 60 * 1000)
+    });
   },
-  standardHeaders: true, // Retourne les headers `RateLimit-*`
-  legacyHeaders: false, // Désactive les headers `X-RateLimit-*`
+  standardHeaders: false, // Ne pas exposer les headers RateLimit-*
+  legacyHeaders: false,
   // ✅ SÉCURITÉ: Utiliser Redis en production pour scalabilité
   ...(redisStore && { store: redisStore }),
 });
@@ -79,9 +81,11 @@ const strictLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: IS_PRODUCTION ? 5 : 100, // 5 en prod, 100 en dev
   skipSuccessfulRequests: false,
-  message: {
-    success: false,
-    error: 'Limite atteinte pour cette action. Réessayez dans 15 minutes.'
+  handler: (req, res) => {
+    res.status(429).json({
+      success: false,
+      error: req.t ? req.t('auth.tooManyRequests') : 'Too many requests'
+    });
   },
   // ✅ SÉCURITÉ: Redis en production
   ...(redisStore && { store: redisStore }),
@@ -91,13 +95,12 @@ const strictLimiter = rateLimit({
 const createContentLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 heure
   max: 20, // 20 créations par heure
-  skipSuccessfulRequests: true, // Ne compte que les échecs
+  skipSuccessfulRequests: false, // Compter toutes les requêtes
   keyGenerator: (req) => req.user?.id_user || req.ip,
   handler: (req, res) => {
     res.status(429).json({
       success: false,
-      error: 'Vous avez atteint la limite de création d\'œuvres (20 par heure)',
-      remainingTime: req.rateLimit.resetTime
+      error: req.t ? req.t('auth.tooManyRequests') : 'Creation limit reached'
     });
   },
   // ✅ SÉCURITÉ: Redis en production
@@ -158,11 +161,7 @@ const advancedLimiter = rateLimit({
     return trustedIPs.includes(req.ip);
   },
   keyGenerator: (req) => {
-    // Utiliser le header X-Forwarded-For si derrière un proxy
-    const forwarded = req.headers['x-forwarded-for'];
-    if (forwarded) {
-      return forwarded.split(',')[0].trim();
-    }
+    // Utiliser req.ip qui respecte la configuration trust proxy d'Express
     return req.ip;
   },
   handler: async (req, res) => {
@@ -176,11 +175,7 @@ const advancedLimiter = rateLimit({
     
     res.status(429).json({
       success: false,
-      error: 'Trop de requêtes',
-      retryAfter: req.rateLimit.resetTime,
-      limit: req.rateLimit.limit,
-      current: req.rateLimit.current,
-      remaining: req.rateLimit.remaining
+      error: req.t ? req.t('auth.tooManyRequests') : 'Too many requests'
     });
   }
 });
@@ -196,7 +191,12 @@ const endpointLimiters = {
   register: rateLimit({
     windowMs: 60 * 60 * 1000,
     max: IS_PRODUCTION ? 3 : 50,
-    message: 'Trop de tentatives d\'inscription'
+    handler: (req, res) => {
+      res.status(429).json({
+        success: false,
+        error: req.t ? req.t('auth.tooManyRequests') : 'Too many requests'
+      });
+    }
   }),
   
   forgotPassword: rateLimit({
@@ -208,7 +208,12 @@ const endpointLimiters = {
   apiKey: rateLimit({
     windowMs: 24 * 60 * 60 * 1000, // 24 heures
     max: 5,
-    message: 'Limite de génération de clés API atteinte'
+    handler: (req, res) => {
+      res.status(429).json({
+        success: false,
+        error: req.t ? req.t('auth.tooManyRequests') : 'Too many requests'
+      });
+    }
   })
 };
 
@@ -216,101 +221,115 @@ const endpointLimiters = {
 // 9. RATE LIMITING PAR COMPTE (Protection brute force distribué)
 // ============================================================================
 
-// Cache en mémoire pour les tentatives de connexion par email
-const loginAttempts = new Map();
+class AccountRateLimiter {
+  constructor(options = {}) {
+    this.maxAttempts = options.maxAttempts || 5;
+    this.lockoutDuration = options.lockoutDuration || 15 * 60 * 1000;
+    this.cleanupInterval = options.cleanupInterval || 5 * 60 * 1000;
+    this.redis = options.redis || null;
+    this.localStore = new Map();
 
-// Configuration
-const ACCOUNT_LOCKOUT_CONFIG = {
-  maxAttempts: 5,           // Nombre max de tentatives échouées
-  lockoutDuration: 15 * 60 * 1000, // 15 minutes de blocage
-  cleanupInterval: 5 * 60 * 1000   // Nettoyage toutes les 5 minutes
-};
-
-// Nettoyage périodique des entrées expirées
-const cleanupLoginAttempts = () => {
-  const now = Date.now();
-  for (const [email, data] of loginAttempts.entries()) {
-    if (now > data.lockoutUntil && now - data.lastAttempt > ACCOUNT_LOCKOUT_CONFIG.lockoutDuration) {
-      loginAttempts.delete(email);
+    const timer = setInterval(() => this._cleanup(), this.cleanupInterval);
+    if (typeof timer.unref === 'function') {
+      timer.unref();
     }
   }
-};
 
-// Lancer le nettoyage périodique
-const cleanupTimer = setInterval(cleanupLoginAttempts, ACCOUNT_LOCKOUT_CONFIG.cleanupInterval);
-if (typeof cleanupTimer.unref === 'function') {
-  cleanupTimer.unref(); // Évite que Jest reste bloqué
-}
+  async _getAttempts(key) {
+    if (this.redis) {
+      try {
+        const data = await this.redis.get(`lockout:${key}`);
+        return data ? JSON.parse(data) : null;
+      } catch { /* fallback to local */ }
+    }
+    return this.localStore.get(key) || null;
+  }
 
-/**
- * Middleware de rate limiting par compte email
- * Bloque les tentatives de connexion après X échecs sur un même email
- */
-const accountRateLimiter = {
-  /**
-   * Vérifie si le compte est bloqué avant la tentative de connexion
-   */
-  checkAccountLock: (req, res, next) => {
+  async _setAttempts(key, data) {
+    if (this.redis) {
+      try {
+        await this.redis.set(`lockout:${key}`, JSON.stringify(data), 'PX', this.lockoutDuration);
+        return;
+      } catch { /* fallback to local */ }
+    }
+    this.localStore.set(key, data);
+  }
+
+  async _deleteAttempts(key) {
+    if (this.redis) {
+      try { await this.redis.del(`lockout:${key}`); return; } catch { /* fallback to local */ }
+    }
+    this.localStore.delete(key);
+  }
+
+  _cleanup() {
+    const now = Date.now();
+    for (const [email, data] of this.localStore.entries()) {
+      if (now > data.lockoutUntil && now - data.lastAttempt > this.lockoutDuration) {
+        this.localStore.delete(email);
+      }
+    }
+  }
+
+  checkAccountLock = (req, res, next) => {
     const email = req.body?.email?.toLowerCase();
     if (!email) return next();
 
-    const attempts = loginAttempts.get(email);
-    if (attempts && Date.now() < attempts.lockoutUntil) {
-      const remainingTime = Math.ceil((attempts.lockoutUntil - Date.now()) / 1000 / 60);
-      return res.status(429).json({
-        success: false,
-        error: `Compte temporairement bloqué après ${ACCOUNT_LOCKOUT_CONFIG.maxAttempts} tentatives échouées.`,
-        message: `Réessayez dans ${remainingTime} minute(s).`,
-        retryAfter: attempts.lockoutUntil,
-        code: 'ACCOUNT_LOCKED'
-      });
-    }
+    this._getAttempts(email).then(attempts => {
+      if (attempts && Date.now() < attempts.lockoutUntil) {
+        const remainingTime = Math.ceil((attempts.lockoutUntil - Date.now()) / 1000 / 60);
+        return res.status(429).json({
+          success: false,
+          error: req.t ? req.t('auth.accountLocked', { attempts: this.maxAttempts }) : `Account temporarily locked after ${this.maxAttempts} failed attempts.`,
+          message: req.t ? req.t('auth.retryIn', { minutes: remainingTime }) : `Retry in ${remainingTime} minute(s).`,
+          retryAfter: attempts.lockoutUntil,
+          code: 'ACCOUNT_LOCKED'
+        });
+      }
+      next();
+    }).catch(() => next());
+  };
 
-    next();
-  },
-
-  /**
-   * Enregistre une tentative échouée
-   */
-  recordFailedAttempt: (email) => {
+  recordFailedAttempt = async (email) => {
     if (!email) return;
     email = email.toLowerCase();
 
     const now = Date.now();
-    const attempts = loginAttempts.get(email) || { 
-      count: 0, 
-      lastAttempt: now, 
-      lockoutUntil: 0 
+    const attempts = (await this._getAttempts(email)) || {
+      count: 0,
+      lastAttempt: now,
+      lockoutUntil: 0
     };
 
     attempts.count++;
     attempts.lastAttempt = now;
 
-    if (attempts.count >= ACCOUNT_LOCKOUT_CONFIG.maxAttempts) {
-      attempts.lockoutUntil = now + ACCOUNT_LOCKOUT_CONFIG.lockoutDuration;
+    if (attempts.count >= this.maxAttempts) {
+      attempts.lockoutUntil = now + this.lockoutDuration;
       console.warn(`🔒 Compte bloqué: ${email} après ${attempts.count} tentatives échouées`);
     }
 
-    loginAttempts.set(email, attempts);
+    await this._setAttempts(email, attempts);
     return attempts;
-  },
+  };
 
-  /**
-   * Réinitialise les tentatives après une connexion réussie
-   */
-  resetAttempts: (email) => {
+  resetAttempts = async (email) => {
     if (!email) return;
-    loginAttempts.delete(email.toLowerCase());
-  },
+    await this._deleteAttempts(email.toLowerCase());
+  };
 
-  /**
-   * Obtient le statut des tentatives pour un email
-   */
-  getAttemptStatus: (email) => {
+  getAttemptStatus = async (email) => {
     if (!email) return null;
-    return loginAttempts.get(email.toLowerCase()) || null;
-  }
-};
+    return await this._getAttempts(email.toLowerCase());
+  };
+}
+
+const accountRateLimiter = new AccountRateLimiter({
+  maxAttempts: 5,
+  lockoutDuration: 15 * 60 * 1000,
+  cleanupInterval: 5 * 60 * 1000,
+  redis: redisClient
+});
 
 // Fonction helper pour logger les violations
 async function logRateLimitViolation(userId, endpoint, ip) {

@@ -7,6 +7,8 @@ const { translate, translateDeep, createMultiLang, mergeTranslations } = require
 // ✅ OPTIMISATION: Import de l'utilitaire de recherche multilingue centralisé
 const { buildMultiLangSearch } = require('../utils/multiLangSearchBuilder');
 
+const ALLOWED_LANGS = ['fr', 'ar', 'en', 'tz-ltn', 'tz-tfng'];
+
 class IntervenantController {
   constructor(models) {
     if (!models) {
@@ -15,8 +17,6 @@ class IntervenantController {
 
     this.models = models;
     this.sequelize = models.sequelize || Object.values(models)[0]?.sequelize;
-
-    console.log('✅ IntervenantController initialisé avec i18n');
   }
 
   // ⚡ Recherche multilingue - utilise l'utilitaire centralisé
@@ -29,7 +29,7 @@ class IntervenantController {
    */
   async getIntervenants(req, res) {
     try {
-      const lang = req.lang || 'fr';  // ⚡
+      const lang = ALLOWED_LANGS.includes(req.lang) ? req.lang : 'fr';
       const { 
         page = 1, 
         limit = 20, 
@@ -75,7 +75,7 @@ class IntervenantController {
       // Tri multilingue - qualifier avec le nom de table pour éviter l'ambiguïté
       let orderClause;
       if (['nom', 'prenom', 'biographie'].includes(order)) {
-        orderClause = [[this.sequelize.literal(`JSON_EXTRACT(\`Intervenant\`.\`${order}\`, '$.${lang}')`), direction]];
+        orderClause = [[this.sequelize.literal(`JSON_EXTRACT(\`Intervenant\`.\`${order.replace(/[^a-z_]/gi, '')}\`, '$.${lang.replace(/[^a-z-]/gi, '')}')`), direction]];
       } else {
         orderClause = [[order, direction]];
       }
@@ -111,7 +111,7 @@ class IntervenantController {
       console.error('Erreur lors de la récupération des intervenants:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur lors de la récupération des intervenants'
+        error: req.t('common.serverError')
       });
     }
   }
@@ -145,7 +145,7 @@ class IntervenantController {
       if (!intervenant) {
         return res.status(404).json({
           success: false,
-          error: 'Intervenant non trouvé'
+          error: req.t('intervenant.notFound')
         });
       }
 
@@ -165,7 +165,59 @@ class IntervenantController {
       console.error('Erreur lors de la récupération de l\'intervenant:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur lors de la récupération de l\'intervenant'
+        error: req.t('common.serverError')
+      });
+    }
+  }
+
+  /**
+   * GET /api/intervenants/:id/oeuvres
+   */
+  async getOeuvresByIntervenant(req, res) {
+    try {
+      const lang = req.lang || 'fr';
+      const { id } = req.params;
+      const { page = 1, limit = 20 } = req.query;
+      const offset = (page - 1) * limit;
+
+      const intervenant = await this.models.Intervenant.findByPk(id);
+      if (!intervenant) {
+        return res.status(404).json({
+          success: false,
+          error: req.t('intervenant.notFound')
+        });
+      }
+
+      const { count, rows } = await this.models.Oeuvre.findAndCountAll({
+        include: [{
+          model: this.models.Intervenant,
+          as: 'Intervenants',
+          where: { id_intervenant: id },
+          through: { attributes: ['role_principal'] },
+          required: true
+        }],
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        order: [['date_creation', 'DESC']]
+      });
+
+      res.json({
+        success: true,
+        data: {
+          oeuvres: rows.map(o => translateDeep(o, lang)),
+          pagination: {
+            total: count,
+            page: parseInt(page),
+            pages: Math.ceil(count / limit),
+            limit: parseInt(limit)
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Erreur getOeuvresByIntervenant:', error);
+      res.status(500).json({
+        success: false,
+        error: req.t('common.serverError')
       });
     }
   }
@@ -209,7 +261,7 @@ class IntervenantController {
         await transaction.rollback();
         return res.status(400).json({
           success: false,
-          error: 'Les champs nom et prénom sont obligatoires'
+          error: req.t('common.badRequest')
         });
       }
 
@@ -222,7 +274,7 @@ class IntervenantController {
           await transaction.rollback();
           return res.status(400).json({
             success: false,
-            error: 'Un intervenant avec cet email existe déjà'
+            error: req.t('intervenant.emailExists')
           });
         }
       }
@@ -258,7 +310,7 @@ class IntervenantController {
 
       res.status(201).json({
         success: true,
-        message: 'Intervenant créé avec succès',
+        message: req.t('intervenant.created'),
         data: translate(intervenant, lang)
       });
 
@@ -269,7 +321,7 @@ class IntervenantController {
       if (error.name === 'SequelizeValidationError') {
         return res.status(400).json({
           success: false,
-          error: 'Données invalides',
+          error: req.t('common.badRequest'),
           details: error.errors.map(e => ({
             field: e.path,
             message: e.message
@@ -279,7 +331,7 @@ class IntervenantController {
 
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur lors de la création de l\'intervenant'
+        error: req.t('common.serverError')
       });
     }
   }
@@ -293,7 +345,12 @@ class IntervenantController {
     try {
       const lang = req.lang || 'fr';  // ⚡
       const { id } = req.params;
-      const { nom, prenom, biographie, ...otherUpdates } = req.body;
+      const { nom, prenom, biographie } = req.body;
+
+      // Whitelist des champs modifiables
+      const allowedFields = ['email', 'telephone', 'specialite', 'organisation', 'photo_url', 'site_web', 'id_user'];
+      const filteredFields = {};
+      allowedFields.forEach(f => { if (req.body[f] !== undefined) filteredFields[f] = req.body[f]; });
 
       const intervenant = await this.models.Intervenant.findByPk(id);
 
@@ -301,14 +358,14 @@ class IntervenantController {
         await transaction.rollback();
         return res.status(404).json({
           success: false,
-          error: 'Intervenant non trouvé'
+          error: req.t('intervenant.notFound')
         });
       }
 
-      if (otherUpdates.email && otherUpdates.email !== intervenant.email) {
+      if (filteredFields.email && filteredFields.email !== intervenant.email) {
         const existingIntervenant = await this.models.Intervenant.findOne({
-          where: { 
-            email: otherUpdates.email,
+          where: {
+            email: filteredFields.email,
             id_intervenant: { [Op.ne]: id }
           }
         });
@@ -317,12 +374,12 @@ class IntervenantController {
           await transaction.rollback();
           return res.status(400).json({
             success: false,
-            error: 'Cet email est déjà utilisé'
+            error: req.t('auth.emailAlreadyUsed')
           });
         }
       }
 
-      const updates = { ...otherUpdates };
+      const updates = { ...filteredFields };
 
       // ⚡ Gérer les champs multilingues
       if (nom !== undefined) {
@@ -367,7 +424,7 @@ class IntervenantController {
 
       res.json({
         success: true,
-        message: 'Intervenant mis à jour avec succès',
+        message: req.t('intervenant.updated'),
         data: translateDeep(intervenantMisAJour, lang)
       });
 
@@ -377,7 +434,7 @@ class IntervenantController {
       
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur lors de la mise à jour de l\'intervenant'
+        error: req.t('common.serverError')
       });
     }
   }
@@ -397,7 +454,7 @@ class IntervenantController {
         await transaction.rollback();
         return res.status(404).json({
           success: false,
-          error: 'Intervenant non trouvé'
+          error: req.t('intervenant.notFound')
         });
       }
 
@@ -410,7 +467,7 @@ class IntervenantController {
           await transaction.rollback();
           return res.status(400).json({
             success: false,
-            error: `Cet intervenant est associé à ${programmesCount} programme(s) et ne peut pas être supprimé`
+            error: req.t('intervenant.hasPrograms', { count: programmesCount })
           });
         }
       }
@@ -421,7 +478,7 @@ class IntervenantController {
 
       res.json({
         success: true,
-        message: 'Intervenant désactivé avec succès'
+        message: req.t('intervenant.deactivated')
       });
 
     } catch (error) {
@@ -429,7 +486,7 @@ class IntervenantController {
       console.error('Erreur lors de la suppression de l\'intervenant:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur lors de la suppression de l\'intervenant'
+        error: req.t('common.serverError')
       });
     }
   }
@@ -439,7 +496,7 @@ class IntervenantController {
    */
   async searchIntervenants(req, res) {
     try {
-      const lang = req.lang || 'fr';  // ⚡
+      const lang = ALLOWED_LANGS.includes(req.lang) ? req.lang : 'fr';
       const { q, limit = 10 } = req.query;
 
       if (!q || q.length < 2) {
@@ -473,7 +530,7 @@ class IntervenantController {
           'photo_url'
         ],
         limit: parseInt(limit),
-        order: [[this.sequelize.literal(`JSON_EXTRACT(\`nom\`, '$${lang.includes('-') ? '."' + lang + '"' : '.' + lang}')`), 'ASC']]
+        order: [[this.sequelize.literal(`JSON_EXTRACT(\`nom\`, '$${(() => { const safeLang = lang.replace(/[^a-z-]/gi, ''); return safeLang.includes('-') ? '."' + safeLang + '"' : '.' + safeLang; })()}')`), 'ASC']]
       });
 
       // ⚡ Traduire et formater
@@ -497,7 +554,7 @@ class IntervenantController {
       console.error('❌ Erreur dans searchIntervenants:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur lors de la recherche'
+        error: req.t('common.serverError')
       });
     }
   }
@@ -546,7 +603,7 @@ class IntervenantController {
       console.error('Erreur lors de la récupération des types:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur'
+        error: req.t('common.serverError')
       });
     }
   }
@@ -565,7 +622,7 @@ class IntervenantController {
       if (!intervenant) {
         return res.status(404).json({
           success: false,
-          error: 'Intervenant non trouvé'
+          error: req.t('intervenant.notFound')
         });
       }
 
@@ -576,7 +633,7 @@ class IntervenantController {
 
     } catch (error) {
       console.error('Erreur:', error);
-      res.status(500).json({ success: false, error: 'Erreur serveur' });
+      res.status(500).json({ success: false, error: req.t('common.serverError') });
     }
   }
 
@@ -590,7 +647,7 @@ class IntervenantController {
 
       const intervenant = await this.models.Intervenant.findByPk(id);
       if (!intervenant) {
-        return res.status(404).json({ success: false, error: 'Intervenant non trouvé' });
+        return res.status(404).json({ success: false, error: req.t('intervenant.notFound') });
       }
 
       const updates = {};
@@ -599,15 +656,15 @@ class IntervenantController {
       if (biographie) updates.biographie = mergeTranslations(intervenant.biographie, { [lang]: biographie });
 
       if (Object.keys(updates).length === 0) {
-        return res.status(400).json({ success: false, error: 'Aucune donnée à mettre à jour' });
+        return res.status(400).json({ success: false, error: req.t('common.badRequest') });
       }
 
       await intervenant.update(updates);
-      res.json({ success: true, message: `Traduction ${lang} mise à jour`, data: intervenant });
+      res.json({ success: true, message: req.t('translation.updated', { lang }), data: intervenant });
 
     } catch (error) {
       console.error('Erreur:', error);
-      res.status(500).json({ success: false, error: 'Erreur serveur' });
+      res.status(500).json({ success: false, error: req.t('common.serverError') });
     }
   }
 
@@ -661,7 +718,7 @@ class IntervenantController {
       console.error('Erreur lors du calcul des statistiques:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur lors du calcul des statistiques'
+        error: req.t('common.serverError')
       });
     }
   }

@@ -22,7 +22,7 @@ const initSignalementRoutes = (models, authMiddleware) => {
       if (!signalement) {
         return res.status(404).json({
           success: false,
-          message: 'Signalement non trouvé'
+          message: req.t ? req.t('admin.reportNotFound') : 'Report not found'
         });
       }
 
@@ -35,16 +35,16 @@ const initSignalementRoutes = (models, authMiddleware) => {
       if (signalement.id_user_signalant !== req.user.id_user) {
         return res.status(403).json({
           success: false,
-          message: 'Vous n\'êtes pas autorisé à modifier ce signalement'
+          message: req.t ? req.t('auth.forbidden') : 'Forbidden'
         });
       }
 
       next();
     } catch (error) {
-      console.error('Erreur vérification propriété:', error);
+      console.error(req.t ? req.t('common.errorCheckingProperty') : 'Error checking property:', error);
       res.status(500).json({
         success: false,
-        message: 'Erreur lors de la vérification des permissions'
+        message: req.t ? req.t('common.serverError') : 'Server error'
       });
     }
   };
@@ -72,7 +72,7 @@ const initSignalementRoutes = (models, authMiddleware) => {
     } catch (error) {
       res.status(500).json({
         success: false,
-        message: 'Erreur lors de la récupération des statistiques'
+        message: req.t ? req.t('common.serverError') : 'Server error'
       });
     }
   });
@@ -96,7 +96,7 @@ const initSignalementRoutes = (models, authMiddleware) => {
     } catch (error) {
       res.status(500).json({
         success: false,
-        message: 'Erreur lors de la récupération des statistiques'
+        message: req.t ? req.t('common.serverError') : 'Server error'
       });
     }
   });
@@ -137,7 +137,7 @@ const initSignalementRoutes = (models, authMiddleware) => {
       } catch (error) {
         res.status(500).json({
           success: false,
-          message: 'Erreur lors de la récupération du signalement'
+          message: req.t ? req.t('common.serverError') : 'Server error'
         });
       }
     }
@@ -154,7 +154,7 @@ const initSignalementRoutes = (models, authMiddleware) => {
         if (signalement.statut !== 'en_attente') {
           return res.status(400).json({
             success: false,
-            message: 'Seuls les signalements en attente peuvent être annulés'
+            message: req.t ? req.t('admin.onlyPendingCanCancel') : 'Only pending reports can be cancelled'
           });
         }
 
@@ -162,12 +162,12 @@ const initSignalementRoutes = (models, authMiddleware) => {
 
         res.json({
           success: true,
-          message: 'Signalement annulé avec succès'
+          message: req.t ? req.t('admin.reportCancelled') : 'Report cancelled'
         });
       } catch (error) {
         res.status(500).json({
           success: false,
-          message: 'Erreur lors de l\'annulation du signalement'
+          message: req.t ? req.t('common.serverError') : 'Server error'
         });
       }
     }
@@ -239,7 +239,7 @@ const initSignalementRoutes = (models, authMiddleware) => {
         console.error('Erreur récupération signalements:', error);
         res.status(500).json({
           success: false,
-          message: 'Erreur lors de la récupération des signalements'
+          message: req.t ? req.t('common.serverError') : 'Server error'
         });
       }
     }
@@ -334,7 +334,7 @@ const initSignalementRoutes = (models, authMiddleware) => {
         console.error('Erreur statistiques:', error);
         res.status(500).json({
           success: false,
-          message: 'Erreur lors du calcul des statistiques'
+          message: req.t ? req.t('common.serverError') : 'Server error'
         });
       }
     }
@@ -375,7 +375,7 @@ const initSignalementRoutes = (models, authMiddleware) => {
         console.error('Erreur export:', error);
         res.status(500).json({
           success: false,
-          message: 'Erreur lors de l\'export'
+          message: req.t ? req.t('common.serverError') : 'Server error'
         });
       }
     }

@@ -13,7 +13,12 @@
       "title": "تسجيل الدخول",
       "submit": "تسجيل الدخول",
       "email": "البريد الإلكتروني",
-      "password": "كلمة المرور"
+      "password": "كلمة المرور",
+      "tabTitle": "تسجيل الدخول",
+      "emailPlaceholder": "votre.email@exemple.com",
+      "rememberMe": "تذكرني",
+      "forgotPassword": "نسيت كلمة المرور؟",
+      "loggingIn": "جاري تسجيل الدخول..."
     },
     "register": {
       "tabTitle": "التسجيل",
@@ -49,11 +54,19 @@
       "biography": "السيرة الذاتية",
       "biographyPlaceholder": "عرّف عن نفسك، تحدث عن مسارك، مشاريعك، إلهاماتك... (50 حرفاً على الأقل)",
       "charactersMinimum": "حرفاً (50 على الأقل)",
-      "acceptTerms": "أوافق على شروط الاستخدام",
+      "acceptTerms": {
+        "prefix": "أوافق على",
+        "terms": "شروط الاستخدام",
+        "and": "و",
+        "privacy": "سياسة الخصوصية"
+      },
       "newsletter": "أرغب في تلقي الأخبار والتحديثات عبر البريد الإلكتروني",
       "registering": "جارٍ التسجيل...",
       "createAccount": "إنشاء حسابي",
-      "professionalNote": "ملاحظة: الحسابات المهنية تتطلب التحقق",
+      "professionalNote": {
+        "title": "ملاحظة مهمة:",
+        "description": "الحسابات المهنية تخضع للتحقق من طرف فريقنا خلال 24-48 ساعة."
+      },
       "welcome": "أنشئ حسابك",
       "chooseType": "اختر نوع حسابك",
       "visitor": "زائر",
@@ -77,8 +90,6 @@
       "emailRequired": "البريد الإلكتروني مطلوب",
       "emailInvalid": "البريد الإلكتروني غير صالح",
       "passwordRequired": "كلمة المرور مطلوبة",
-      "loginError": "خطأ في تسجيل الدخول",
-      "invalidCredentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة",
       "nameMinLength": "اسم العائلة يجب أن يحتوي على حرفين على الأقل",
       "firstNameMinLength": "الاسم الأول يجب أن يحتوي على حرفين على الأقل",
       "passwordMinLength": "كلمة المرور يجب أن تحتوي على 8 أحرف على الأقل",
@@ -119,7 +130,8 @@
       "accountPending": "حسابك المهني في انتظار التحقق",
       "accountSuspended": "حسابك معلق. اتصل بالمسؤول.",
       "accountBanned": "تم حظر حسابك",
-      "tooManyAttempts": "محاولات تسجيل دخول كثيرة جداً. يرجى المحاولة لاحقاً."
+      "tooManyAttempts": "محاولات تسجيل دخول كثيرة جداً. يرجى المحاولة لاحقاً.",
+      "confirmPasswordRequired": "يرجى تأكيد كلمة المرور"
     },
     "success": {
       "loginTitle": "تم تسجيل الدخول بنجاح!",
@@ -156,6 +168,42 @@
       "biography": "السيرة الذاتية",
       "biographyPlaceholder": "أخبرنا عن نفسك، عملك...",
       "photo": "صورة الملف الشخصي"
+    },
+    "forgotPassword": {
+      "title": "نسيت كلمة المرور",
+      "description": "أدخل عنوان بريدك الإلكتروني وسنرسل لك رابطاً لإعادة تعيين كلمة المرور.",
+      "emailLabel": "البريد الإلكتروني",
+      "emailPlaceholder": "votre.email@exemple.com",
+      "submit": "إرسال الرابط",
+      "sending": "جاري الإرسال...",
+      "backToLogin": "العودة لتسجيل الدخول",
+      "successTitle": "تم إرسال البريد",
+      "successDescription": "إذا كان هذا العنوان موجوداً في نظامنا، ستتلقى بريداً إلكترونياً.",
+      "emailSentTitle": "تم إرسال البريد!",
+      "emailSentDescription": "إذا كان هذا البريد مرتبطاً بحساب، ستتلقى رابط إعادة التعيين خلال دقائق.",
+      "checkSpam": "تحقق من مجلد الرسائل غير المرغوب فيها إذا لم تتلقَ البريد.",
+      "didntReceive": "لم تتلقَ البريد؟",
+      "tryAgain": "إعادة المحاولة"
+    },
+    "resetPassword": {
+      "title": "كلمة مرور جديدة",
+      "description": "اختر كلمة مرور آمنة جديدة لحسابك.",
+      "newPassword": "كلمة المرور الجديدة",
+      "confirmPassword": "تأكيد كلمة المرور",
+      "passwordHint": "8 أحرف كحد أدنى مع حرف كبير وحرف صغير ورقم.",
+      "passwordRequirements": "يجب أن تحتوي كلمة المرور على حرف كبير وحرف صغير ورقم على الأقل",
+      "submit": "إعادة تعيين كلمة المرور",
+      "resetting": "جاري إعادة التعيين...",
+      "backToLogin": "العودة لتسجيل الدخول",
+      "successTitle": "تم تغيير كلمة المرور",
+      "successDescription": "تم تغيير كلمة المرور بنجاح. يمكنك الآن تسجيل الدخول.",
+      "redirecting": "سيتم توجيهك إلى صفحة تسجيل الدخول...",
+      "goToLogin": "الذهاب لتسجيل الدخول",
+      "error": "خطأ أثناء إعادة تعيين كلمة المرور",
+      "invalidToken": "رابط إعادة التعيين غير صالح أو منتهي الصلاحية.",
+      "invalidTokenTitle": "رابط غير صالح",
+      "invalidTokenDescription": "رابط إعادة التعيين غير صالح أو منتهي الصلاحية. يرجى طلب رابط جديد.",
+      "requestNewLink": "طلب رابط جديد"
     }
   },
   "categories": {
@@ -165,7 +213,18 @@
       "modern": "نصب حديث"
     },
     "workTypes": {
-      "unknown": "نوع غير معروف"
+      "unknown": "نوع غير معروف",
+      "articles": "مقالات",
+      "cinema": "سينما",
+      "literature": "أدب",
+      "musicalAlbum": "ألبوم موسيقي",
+      "scientificArticle": "مقال علمي",
+      "art": "فن",
+      "artwork": "عمل فني",
+      "artworks": "أعمال فنية",
+      "music": "موسيقى",
+      "musicalAlbums": "ألبومات موسيقية",
+      "scientificArticles": "مقالات علمية"
     }
   },
   "common": {
@@ -241,7 +300,18 @@
     "years": "سنوات",
     "save": "حفظ",
     "submit": "إرسال",
-    "close": "إغلاق"
+    "close": "إغلاق",
+    "reset": "إعادة تعيين",
+    "results": "نتائج",
+    "allStatuses": "جميع الحالات",
+    "allRoles": "جميع الأدوار",
+    "notes": "ملاحظات",
+    "works": "أعمال",
+    "moreOptions": "خيارات أخرى",
+    "clearSearch": "مسح البحث",
+    "type": "النوع",
+    "more": "أخرى",
+    "linkCopiedDesc": "تم نسخ الرابط إلى الحافظة"
   },
   "contributors": {
     "addedCount_one": "تمت إضافة مساهم واحد",
@@ -309,7 +379,15 @@
       "title": "إضافة حدث جديد",
       "willBeAvailableSoon": "ستكون متاحة قريباً",
       "location": "الموقع",
-      "locationRequired": "الموقع مطلوب"
+      "locationRequired": "الموقع مطلوب",
+      "eventFormat": "شكل الحدث",
+      "inPerson": "حضوري",
+      "inPersonDesc": "حدث فعلي مع مكان ومنظمة",
+      "virtual": "افتراضي / عبر الإنترنت",
+      "virtualDesc": "ندوة عبر الإنترنت، بث مباشر، مؤتمر إلكتروني",
+      "organisation": "المنظمة",
+      "selectOrganisation": "اختر منظمتك",
+      "selectOrganisationPlaceholder": "اختيار منظمة"
     },
     "types": {
       "concert": "حفلة موسيقية",
@@ -519,7 +597,9 @@
       "reviews": "التقييمات",
       "seeAll": "عرض الكل",
       "subtitle": "اكتشف الكنوز التاريخية والثقافية للجزائر من خلال خريطة تفاعلية",
-      "title": "التراث الثقافي"
+      "title": "التراث الثقافي",
+      "search": "البحث عن موقع...",
+      "tryDifferentSearch": "جرب بحثاً آخر أو أعد تعيين المرشحات"
     },
     "works": {
       "actions": {
@@ -783,7 +863,8 @@
       "searchPlaceholder": "بحث...",
       "filters": {
         "allTypes": "جميع الأنواع",
-        "allWilayas": "جميع الولايات"
+        "allWilayas": "جميع الولايات",
+        "all": "الكل"
       },
       "types": {
         "historicalSite": "موقع تاريخي",
@@ -857,7 +938,15 @@
       "title": "إدارة الفعاليات"
     },
     "services": {
-      "title": "إدارة الخدمات"
+      "title": "إدارة الخدمات",
+      "searchPlaceholder": "البحث عن خدمة...",
+      "noServices": "لا توجد خدمات",
+      "types": {
+        "tourGuide": "مرشد سياحي",
+        "transport": "نقل",
+        "accommodation": "إقامة",
+        "workshop": "ورشة"
+      }
     }
   },
   "works": {
@@ -1116,7 +1205,20 @@
     "mon_patrimoine": "تراثي (",
     "nouveau_site": "موقع جديد",
     "aucun_site_patrimoine": "لم يتم تسجيل أي موقع تراثي",
-    "ajouter_mon_premier": "إضافة موقعي الأول"
+    "ajouter_mon_premier": "إضافة موقعي الأول",
+    "ajouter": "إضافة",
+    "artisanat": "حرف يدوية",
+    "nouveau_patrimoine": "تراث جديد",
+    "mes_artisanats": "حرفي اليدوية",
+    "nouvel_artisanat": "حرفة يدوية جديدة",
+    "aucun_artisanat": "لا توجد حرف يدوية",
+    "creer_premier_artisanat": "إنشاء أول حرفة يدوية",
+    "non_defini": "غير محدد",
+    "en_stock": "متوفر",
+    "sur_commande": "حسب الطلب",
+    "indisponible": "غير متاح",
+    "manage": "إدارة",
+    "manage_event": "إدارة البرامج والأعمال"
   },
   "dashboardadmin": {
     "label_validation": "التحقق",
@@ -1646,7 +1748,13 @@
     "statut": "الحالة",
     "rserver_une_visite": "حجز زيارة",
     "plus_dinformations": "المزيد من المعلومات",
-    "fermer": "إغلاق"
+    "fermer": "إغلاق",
+    "circuit_algerois": "مسار جزائري",
+    "route_romaine": "الطريق الروماني",
+    "patrimoine_unesco": "تراث اليونسكو",
+    "facile": "سهل",
+    "modere": "معتدل",
+    "aventurier": "مغامر"
   },
   "notifications_preferences": {
     "prfrences_notifications": "تفضيلات الإشعارات",
@@ -1745,6 +1853,7 @@
     "chargement": "جاري التحميل...",
     "chargement_1": "جاري التحميل...",
     "validation_attente": "التحقق قيد الانتظار",
+    "validation_par_admin": "يجب أن يتم التحقق من حسابك المهني من قبل المسؤول قبل الوصول إلى هذه الميزة.",
     "chargement_2": "جاري التحميل...",
     "title_modifier": "تعديل",
     "title_supprimer": "حذف"
@@ -1833,7 +1942,7 @@
   },
   "auth_validatedprofessionalroute": {
     "compte_attente_validation": "الحساب قيد انتظار التحقق",
-    "votre_compte_professionnel": "حسابك المهني قيد التحقق من قبل فريقنا.\nلا يمكنك إنشاء محتوى بعد.",
+    "votre_compte_professionnel": "يجب أن يتم التحقق من حسابك المهني من قبل المسؤول قبل الوصول إلى هذه الميزة. طلبك قيد المراجعة ولا يمكنك إنشاء محتوى بعد.",
     "statut_actuel": "الحالة الحالية:",
     "retour_tableau_bord": "العودة إلى لوحة التحكم",
     "retour_laccueil": "العودة إلى الصفحة الرئيسية",
@@ -1849,8 +1958,8 @@
     "retour_1": "رجوع",
     "sinscrire_comme_pro": "التسجيل كمحترف",
     "validation_attente": "التحقق قيد الانتظار",
-    "votre_compte_professionnel": "حسابك المهني قيد التحقق من قبل فريقنا.",
-    "vous_recevrez_email": "ستتلقى بريدًا إلكترونيًا بمجرد التحقق من حسابك.\nيستغرق ذلك عادة من 24 إلى 48 ساعة.",
+    "votre_compte_professionnel": "يجب أن يتم التحقق من حسابك المهني من قبل المسؤول قبل إنشاء المحتوى.",
+    "vous_recevrez_email": "سيقوم المسؤول بمراجعة طلبك. ستتلقى بريدًا إلكترونيًا بمجرد التحقق من حسابك. عادةً يستغرق ذلك من 24 إلى 48 ساعة.",
     "attendant_vous_pouvez": "في هذه الأثناء، يمكنك استكشاف المنصة كزائر.",
     "retour_laccueil": "العودة إلى الصفحة الرئيسية"
   },
@@ -2336,7 +2445,90 @@
       "total": "مسجلون",
       "search": "البحث عن مشارك...",
       "empty": "لم يتم العثور على مشاركين",
-      "profile": "ملف المشارك"
+      "profile": "ملف المشارك",
+      "viewProfile": "عرض الملف",
+      "registeredOn": "مسجل في",
+      "worksSubmitted": "عمل (أعمال) مقدمة",
+      "eventRegistration": "التسجيل في هذا الحدث",
+      "submittedWorks": "الأعمال المقدمة لهذا الحدث",
+      "portfolio": "معرض الأعمال",
+      "participationHistory": "سجل المشاركات",
+      "loadError": "تعذر تحميل الملف الشخصي"
+    }
+  },
+  "programmePages": {
+    "actions": {
+      "backToEvents": "العودة إلى الفعاليات",
+      "backToEvent": "العودة إلى الفعالية",
+      "edit": "تعديل",
+      "delete": "حذف"
+    },
+    "status": {
+      "loadingProgram": "جاري تحميل البرنامج..."
+    },
+    "errors": {
+      "prefix": "خطأ",
+      "generic": "حدث خطأ",
+      "eventIdMissing": "لم يتم تحديد معرف الفعالية",
+      "programmeIdMissing": "لم يتم تحديد معرف البرنامج",
+      "eventOrProgrammeIdMissing": "لم يتم تحديد معرف الفعالية أو البرنامج",
+      "eventIdMissingWithPrefix": "خطأ: لم يتم تحديد معرف الفعالية",
+      "eventOrProgrammeIdMissingWithPrefix": "خطأ: لم يتم تحديد معرف الفعالية أو البرنامج",
+      "loadFailed": "خطأ أثناء تحميل البرنامج",
+      "createFailed": "خطأ أثناء إنشاء البرنامج",
+      "updateFailed": "خطأ أثناء تحديث البرنامج",
+      "deleteFailed": "خطأ أثناء حذف البرنامج"
+    },
+    "meta": {
+      "eventNumber": "الفعالية #{{id}}",
+      "programNumber": "البرنامج #{{id}}",
+      "multiDay": "إمكانية عدة أيام",
+      "multipleSpeakers": "متحدثون متعددون",
+      "flexibleLocations": "أماكن مرنة",
+      "speakersCount": "{{count}} متحدث(ون)",
+      "locationNotSpecified": "لم يتم تحديد المكان"
+    },
+    "create": {
+      "title": "إنشاء برنامج",
+      "newProgram": "برنامج جديد"
+    },
+    "edit": {
+      "title": "تعديل البرنامج",
+      "editProgram": "تعديل البرنامج"
+    },
+    "view": {
+      "title": "تفاصيل البرنامج",
+      "consultation": "عرض البرنامج",
+      "confirmDelete": "هل أنت متأكد أنك تريد حذف هذا البرنامج؟",
+      "quickActions": {
+        "editProgram": "تعديل هذا البرنامج",
+        "addAnotherProgram": "إضافة برنامج آخر"
+      }
+    },
+    "info": {
+      "multiDayTitle": "إدارة متعددة الأيام",
+      "speakersTitle": "المتحدثون",
+      "flexibleLocationsTitle": "أماكن مرنة",
+      "locationAndOptionsTitle": "المكان والخيارات",
+      "createMultiDayDesc": "أنشئ برامج لكل يوم من فعاليتك. يقوم النظام تلقائيًا بتجميع الأنشطة حسب التاريخ.",
+      "createSpeakersDesc": "أضف عدة متحدثين بأدوار محددة. يمكن لكل متحدث أن يملك إعداداته الخاصة.",
+      "createLocationsDesc": "استخدم أماكن محددة مسبقًا أو عيّن مكانًا مخصصًا لكل نشاط في البرنامج.",
+      "editMultiDayDesc": "عدّل البرامج لكل يوم من فعاليتك. يقوم النظام تلقائيًا بتجميع الأنشطة حسب التاريخ.",
+      "editSpeakersDesc": "عدّل المتحدثين وأدوارهم المحددة. يمكن لكل متحدث أن يملك إعداداته الخاصة.",
+      "editLocationsDesc": "غيّر الأماكن المحددة مسبقًا أو عيّن مكانًا مخصصًا لكل نشاط في البرنامج.",
+      "viewMultiDayDesc": "هذا البرنامج جزء من فعالية متعددة الأيام. يقوم النظام تلقائيًا بتجميع الأنشطة حسب التاريخ.",
+      "viewSpeakersDesc": "يشارك {{count}} متحدث(ون) في هذا النشاط. لكل متحدث دور محدد وإعداداته الخاصة.",
+      "viewLocationOptionsDesc": "يُقام هذا النشاط في مكان محدد مع خيارات مخصصة للمشاركين والتنظيم."
+    }
+  },
+  "shared": {
+    "errorBoundary": {
+      "title": "حدث خطأ",
+      "unexpected": "خطأ غير متوقع",
+      "retry": "إعادة المحاولة"
+    },
+    "lazyImage": {
+      "unavailable": "الصورة غير متاحة"
     }
   },
   "gestion": {
@@ -2366,5 +2558,123 @@
     "open": "مفتوح",
     "closed": "مغلق",
     "unknown": "غير معروف"
+  },
+  "patrimoine": {
+    "filters": {
+      "all": "الكل",
+      "allTypes": "جميع الأنواع",
+      "allWilayas": "جميع الولايات"
+    }
+  },
+  "toasts": {
+    "error": "خطأ",
+    "success": "نجاح",
+    "warning": "تحذير",
+    "confirmation": "تأكيد",
+    "unknownError": "حدث خطأ",
+    "actionSuccess": "تم تنفيذ الإجراء بنجاح",
+    "userValidated": "تم التحقق من المستخدم",
+    "userRejected": "تم رفض المستخدم",
+    "userValidationFailed": "تعذر التحقق من المستخدم",
+    "userUpdated": "تم تحديث المستخدم",
+    "userUpdateFailed": "تعذر تحديث المستخدم",
+    "userDeleted": "تم حذف المستخدم",
+    "userDeleteFailed": "تعذر حذف المستخدم",
+    "userSuspended": "تم تعليق المستخدم",
+    "userSuspendFailed": "تعذر تعليق المستخدم",
+    "userReactivated": "تم إعادة تنشيط المستخدم",
+    "userReactivateFailed": "تعذر إعادة تنشيط المستخدم",
+    "passwordReset": "تم إعادة تعيين كلمة المرور",
+    "passwordResetFailed": "تعذر إعادة تعيين كلمة المرور",
+    "bulkActionApplied": "تم تطبيق الإجراء {{action}} على {{count}} مستخدمين",
+    "bulkActionFailed": "تعذر تطبيق الإجراء",
+    "exportUsersDone": "تم تصدير المستخدمين",
+    "exportUsersFailed": "تعذر تصدير المستخدمين",
+    "oeuvreValidated": "تم التحقق من العمل",
+    "oeuvreRejected": "تم رفض العمل",
+    "oeuvreValidationFailed": "تعذر التحقق من العمل",
+    "oeuvreStatusUpdated": "تم تحديث حالة العمل",
+    "oeuvreDeleted": "تم حذف العمل",
+    "oeuvreDeleteFailed": "تعذر حذف العمل",
+    "oeuvreNotFound": "العمل غير موجود",
+    "oeuvreLoadFailed": "تعذر تحميل العمل",
+    "eventStatusUpdated": "تم تحديث حالة الحدث",
+    "eventDeleted": "تم حذف الحدث",
+    "eventDeleteFailed": "تعذر حذف الحدث",
+    "eventValidated": "تم التحقق من الحدث",
+    "eventRejected": "تم رفض الحدث",
+    "eventNotFound": "الحدث غير موجود",
+    "eventLoadFailed": "تعذر تحميل الحدث",
+    "serviceStatusUpdated": "تم تحديث حالة الخدمة",
+    "serviceDeleted": "تم حذف الخدمة",
+    "serviceDeleteFailed": "تعذر حذف الخدمة",
+    "serviceNotFound": "الخدمة غير موجودة",
+    "serviceLoadFailed": "تعذر تحميل الخدمة",
+    "statusUpdateFailed": "تعذر تحديث الحالة",
+    "loadOverviewFailed": "تعذر تحميل النظرة العامة",
+    "loadOeuvresFailed": "تعذر تحميل الأعمال",
+    "loadEventsFailed": "تعذر تحميل الأحداث",
+    "loadPatrimoineFailed": "تعذر تحميل المواقع التراثية",
+    "loadServicesFailed": "تعذر تحميل الخدمات",
+    "loadDataFailed": "تعذر تحميل البيانات",
+    "loadMyOeuvresFailed": "تعذر تحميل أعمالك",
+    "loadMyEventsFailed": "تعذر تحميل أحداثك",
+    "signalementProcessed": "تمت معالجة البلاغ",
+    "signalementProcessFailed": "تعذرت معالجة البلاغ",
+    "signalementApproved": "تمت الموافقة على البلاغ - تم حذف المحتوى",
+    "signalementRejected": "تم رفض البلاغ",
+    "warningSent": "تم إرسال التحذير",
+    "reportExported": "تم تصدير التقرير",
+    "reportExportFailed": "تعذر تصدير التقرير",
+    "cacheCleared": "تم مسح ذاكرة التخزين المؤقت",
+    "cacheClearFailed": "تعذر مسح ذاكرة التخزين المؤقت",
+    "itemApproved": "تمت الموافقة على العنصر بنجاح",
+    "approvalFailed": "تعذرت الموافقة",
+    "itemRejected": "تم رفض العنصر",
+    "dataRefreshed": "تم تحديث البيانات",
+    "exportGenerated": "تم إنشاء التصدير بنجاح",
+    "exportFailed": "خطأ في التصدير",
+    "commentAdded": "تم إضافة التعليق",
+    "registrationSuccess": "تم التسجيل بنجاح!",
+    "registrationError": "خطأ في التسجيل",
+    "unregistered": "تم إلغاء التسجيل",
+    "loginRequired": "يجب تسجيل الدخول",
+    "addedToFavorites": "تمت الإضافة إلى المفضلة",
+    "addedToFavoritesDesc": "تمت إضافة العنصر إلى مفضلاتك",
+    "addToFavoritesFailed": "تعذرت الإضافة إلى المفضلة",
+    "removedFromFavorites": "تمت الإزالة من المفضلة",
+    "removedFromFavoritesDesc": "تمت إزالة العنصر من مفضلاتك",
+    "removeFromFavoritesFailed": "تعذرت الإزالة من المفضلة",
+    "rateLimitReached": "تم الوصول إلى حد الطلبات",
+    "rateLimitDesc": "إعادة المحاولة تلقائياً خلال {{seconds}} ثوانٍ.",
+    "accessDenied": "تم رفض الوصول",
+    "serverError": "خطأ في الخادم",
+    "serverErrorDesc": "حدث خطأ. يرجى المحاولة لاحقاً.",
+    "timeout": "انتهت المهلة",
+    "timeoutDesc": "استغرق الطلب وقتاً طويلاً. يرجى المحاولة مرة أخرى.",
+    "formIncomplete": "النموذج غير مكتمل",
+    "formIncompleteDesc": "يرجى تصحيح الأخطاء",
+    "articleBlocksSaveFailed": "تم تحديث المقال لكن تعذر حفظ بعض الكتل.",
+    "articleBlocksIdMissing": "تعذر العثور على معرف المقال لحفظ الكتل.",
+    "articleCreatedBlocksFailed": "تم إنشاء المقال لكن تعذر حفظ المحتوى.",
+    "updateError": "خطأ أثناء التحديث",
+    "actionTooFast": "إجراء سريع جداً",
+    "actionTooFastDesc": "يرجى الانتظار {{seconds}} ثانية قبل المحاولة مرة أخرى",
+    "actionInProgress": "إجراء قيد التنفيذ",
+    "actionInProgressDesc": "يرجى انتظار انتهاء الإجراء السابق",
+    "confirmActionDelay": "الإجراء خلال {{seconds}} ثوانٍ...",
+    "processing": "جارٍ المعالجة...",
+    "confirmAction": "تأكيد الإجراء",
+    "confirmActionDesc": "هل أنت متأكد من رغبتك في تنفيذ هذا الإجراء؟",
+    "confirm": "تأكيد",
+    "cancel": "إلغاء",
+    "refreshSuccess": "تحديث",
+    "refreshSuccessDesc": "تم تحديث البيانات بنجاح",
+    "deleteSuccess": "تم الحذف بنجاح",
+    "deleteSuccessDesc": "تم حذف {{type}} بنجاح",
+    "deleteFailed": "خطأ في الحذف",
+    "alreadyDeleted": "العنصر محذوف مسبقاً",
+    "alreadyDeletedDesc": "تم تحديث القائمة.",
+    "noPermission": "ليس لديك الصلاحيات اللازمة لهذا الإجراء"
   }
 }

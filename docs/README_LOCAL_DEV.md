@@ -143,9 +143,9 @@ DB_PORT=3306
 JWT_SECRET=dev-secret-key-only-for-development
 JWT_EXPIRES_IN=24h
 
-# URLs locales
+# URLs locales (Frontend Vite = port 8080 en dev)
 API_URL=http://localhost:3001
-FRONTEND_URL=http://localhost:3000
+FRONTEND_URL=http://localhost:8080
 
 # Email (optionnel pour le développement)
 EMAIL_HOST=smtp.gmail.com

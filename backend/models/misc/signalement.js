@@ -185,6 +185,57 @@ module.exports = (sequelize) => {
   });
 
   // Méthodes statiques
+  Signalement.deleteContent = async function(signalement) {
+    const { sequelize } = this;
+    const modelMap = {
+      'oeuvre': 'Oeuvre',
+      'evenement': 'Evenement',
+      'commentaire': 'Commentaire',
+      'artisanat': 'Artisanat'
+    };
+    const modelName = modelMap[signalement.type_entite];
+    if (modelName && sequelize.models[modelName]) {
+      const entity = await sequelize.models[modelName].findByPk(signalement.id_entite);
+      if (entity) {
+        if (entity.statut !== undefined) {
+          await entity.update({ statut: 'supprime' });
+        } else {
+          await entity.destroy();
+        }
+      }
+    }
+  };
+
+  Signalement.suspendUser = async function(signalement, action) {
+    const { sequelize } = this;
+    if (signalement.id_user_signale) {
+      const user = await sequelize.models.User.findByPk(signalement.id_user_signale);
+      if (user) {
+        await user.update({ statut: 'suspendu' });
+      }
+    }
+  };
+
+  Signalement.warnUser = async function(signalement) {
+    const { sequelize } = this;
+    if (signalement.id_user_signale) {
+      const user = await sequelize.models.User.findByPk(signalement.id_user_signale);
+      if (user) {
+        // Increment warning count or create a notification
+        const Notification = sequelize.models.Notification;
+        if (Notification) {
+          await Notification.create({
+            id_user: signalement.id_user_signale,
+            type: 'avertissement',
+            titre: JSON.stringify({ fr: 'Avertissement' }),
+            message: JSON.stringify({ fr: 'Votre contenu a fait l\'objet d\'un signalement. Veuillez respecter les règles de la communauté.' }),
+            lu: false
+          });
+        }
+      }
+    }
+  };
+
   Signalement.getQueue = async function(moderatorId = null) {
     const where = {
       statut: ['en_attente', 'en_cours']

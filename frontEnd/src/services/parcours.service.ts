@@ -87,7 +87,7 @@ interface ParcoursStats {
 }
 
 class ParcoursIntelligentService {
-  private baseUrl = '/api/parcours-intelligent';
+  private baseUrl = '/parcours';
 
   // Générer un parcours autour d'un événement
   async generateForEvenement(evenementId: number, params?: Partial<GenerateParcoursParams>): Promise<ApiResponse<{
@@ -103,7 +103,10 @@ class ParcoursIntelligentService {
     if (params?.includeHotels !== undefined) queryParams.append('includeHotels', params.includeHotels.toString());
     if (params?.types?.length) queryParams.append('types', params.types.join(','));
 
-    return httpClient.get<any>(`${this.baseUrl}/evenement/${evenementId}?${queryParams.toString()}`);
+    return httpClient.post<any>(`${this.baseUrl}/personnalise`, {
+      evenementId,
+      ...Object.fromEntries(queryParams.entries())
+    });
   }
 
   // Générer un parcours personnalisé
@@ -113,32 +116,32 @@ class ParcoursIntelligentService {
 
   // Récupérer les parcours populaires d'une wilaya
   async getPopulaires(wilayaId: number, limit: number = 5): Promise<ApiResponse<ParcoursIntelligent[]>> {
-    return httpClient.get<ParcoursIntelligent[]>(`${this.baseUrl}/wilaya/${wilayaId}/populaires`, { limit });
+    return httpClient.get<ParcoursIntelligent[]>(`${this.baseUrl}/search`, { wilaya_id: wilayaId, limit, sort: 'popular' });
   }
 
   // Récupérer un parcours par ID
   async getById(id: number): Promise<ApiResponse<ParcoursIntelligent>> {
-    return httpClient.get<ParcoursIntelligent>(`/api/parcours/${id}`);
+    return httpClient.get<ParcoursIntelligent>(`/parcours/${id}`);
   }
 
   // Créer un parcours manuel pour un lieu
   async createParcours(data: CreateParcoursData): Promise<ApiResponse<ParcoursIntelligent>> {
-    return httpClient.post<ParcoursIntelligent>('/api/parcours', data);
+    return httpClient.post<ParcoursIntelligent>('/parcours', data);
   }
 
   // Mettre à jour un parcours
   async updateParcours(id: number, data: Partial<CreateParcoursData>): Promise<ApiResponse<ParcoursIntelligent>> {
-    return httpClient.put<ParcoursIntelligent>(`/api/parcours/${id}`, data);
+    return httpClient.put<ParcoursIntelligent>(`/parcours/${id}`, data);
   }
 
   // Supprimer un parcours
   async deleteParcours(id: number): Promise<ApiResponse<void>> {
-    return httpClient.delete<void>(`/api/parcours/${id}`);
+    return httpClient.delete<void>(`/parcours/${id}`);
   }
 
   // Récupérer les parcours d'un lieu
   async getParcoursByLieu(lieuId: number): Promise<ApiResponse<ParcoursIntelligent[]>> {
-    return httpClient.get<ParcoursIntelligent[]>(`/api/lieux/${lieuId}/parcours`);
+    return httpClient.get<ParcoursIntelligent[]>(`/lieux/${lieuId}/parcours`);
   }
 
   // Générer automatiquement un parcours optimal pour un lieu
@@ -148,7 +151,7 @@ class ParcoursIntelligentService {
     theme?: string;
     difficulte?: 'facile' | 'moyen' | 'difficile';
   }): Promise<ApiResponse<ParcoursIntelligent>> {
-    return httpClient.post<ParcoursIntelligent>(`/api/lieux/${lieuId}/parcours/generate`, options || {});
+    return httpClient.post<ParcoursIntelligent>(`/lieux/${lieuId}/parcours/generate`, options || {});
   }
 
   // Ajouter une étape à un parcours existant
@@ -158,17 +161,17 @@ class ParcoursIntelligentService {
     duree_visite?: number;
     description?: MultiLangText;
   }): Promise<ApiResponse<ParcoursIntelligent>> {
-    return httpClient.post<ParcoursIntelligent>(`/api/parcours/${parcoursId}/etapes`, etape);
+    return httpClient.post<ParcoursIntelligent>(`/parcours/${parcoursId}/etapes`, etape);
   }
 
   // Supprimer une étape d'un parcours
   async removeEtape(parcoursId: number, etapeId: number): Promise<ApiResponse<void>> {
-    return httpClient.delete<void>(`/api/parcours/${parcoursId}/etapes/${etapeId}`);
+    return httpClient.delete<void>(`/parcours/${parcoursId}/etapes/${etapeId}`);
   }
 
   // Réordonner les étapes d'un parcours
   async reorderEtapes(parcoursId: number, etapesOrder: Array<{ id: number; ordre: number }>): Promise<ApiResponse<ParcoursIntelligent>> {
-    return httpClient.put<ParcoursIntelligent>(`/api/parcours/${parcoursId}/etapes/reorder`, { etapes: etapesOrder });
+    return httpClient.put<ParcoursIntelligent>(`/parcours/${parcoursId}/etapes/reorder`, { etapes: etapesOrder });
   }
 
   // Calculer la distance et durée estimée d'un parcours

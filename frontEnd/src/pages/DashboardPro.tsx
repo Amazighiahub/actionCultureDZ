@@ -59,24 +59,25 @@ const DashboardPro = () => {
     mesOeuvres,
     mesEvenements,
     mesArtisanats,
+    mesServices,
     mesPatrimoines,
     loadingStats,
     loadingOeuvres,
     loadingEvenements,
     loadingArtisanats,
+    loadingServices,
     loadingPatrimoines,
     deleteItem,
     refreshAll
   } = useDashboardPro();
 
-  // Log pour déboguer
   const { t } = useTranslation();
   const { td, safe } = useTranslateData();
-  console.log('Dashboard - Mes œuvres:', mesOeuvres);
 
   const oeuvresTotal = dashboardStats?.oeuvres?.total ?? 0;
   const evenementsTotal = dashboardStats?.evenements?.total ?? 0;
-  const artisanatsTotal = dashboardStats?.artisanats?.total ?? 0;
+  const servicesTotal = mesServices?.pagination?.total ?? 0;
+  const artisanatsTotal = mesArtisanats?.pagination?.total ?? dashboardStats?.artisanats?.total ?? 0;
   const vuesTotal = dashboardStats?.oeuvres?.vues_total ?? 0;
 
   // Fonction de filtrage par recherche
@@ -100,7 +101,8 @@ const DashboardPro = () => {
         getValue(item.nom_evenement),
         getValue(item.description),
         getValue(item.lieu),
-        getValue(item.type)
+        getValue(item.type),
+        getValue(item.type_service)
       ].filter(Boolean).join(' ').toLowerCase();
 
       return searchFields.includes(searchQuery.toLowerCase());
@@ -189,15 +191,21 @@ const DashboardPro = () => {
         case 'service':
           return (
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <span>{td(item.type) || 'Service'}</span>
-              {typeof item.prix === 'number' &&
-              <span className="font-medium text-primary">
-                  {item.prix} {t("dashboardpro.da")}
-              </span>
-              }
-              {item.duree && typeof item.duree === 'string' &&
-              <span>{item.duree}</span>
-              }
+              <span>{td(item.type_service) || td(item.type) || 'Service'}</span>
+              {(typeof item.tarif_min === 'number' || typeof item.tarif_max === 'number') && (
+                <span className="font-medium text-primary">
+                  {item.tarif_min ?? '0'} - {item.tarif_max ?? '?'} {t("dashboardpro.da")}
+                </span>
+              )}
+              {item.horaires && typeof item.horaires === 'object' && (
+                <span>{td(item.horaires) || '-'}</span>
+              )}
+              {item.Lieu && (
+                <span className="flex items-center gap-1">
+                  <MapPin className="h-3 w-3" />
+                  {td(item.Lieu.nom) || td(item.lieu?.nom) || '-'}
+                </span>
+              )}
             </div>);
 
         default:
@@ -248,7 +256,7 @@ const DashboardPro = () => {
       oeuvre: `/oeuvres/${item.id_oeuvre}`,
       evenement: `/evenements/${item.id_evenement}`,
       patrimoine: `/patrimoine/${item.id_site || item.id}`,
-      service: `/services/${item.id_service || item.id_artisanat}`
+      service: `/services/${item.id || item.id_service}`
     };
     navigate(routes[type] || '/');
   };
@@ -258,7 +266,7 @@ const DashboardPro = () => {
       oeuvre: `/modifier-oeuvre/${item.id_oeuvre}`,
       evenement: `/modifier-evenement/${item.id_evenement}`,
       patrimoine: `/modifier-patrimoine/${item.id_site || item.id}`,
-      service: `/modifier-service/${item.id_service || item.id_artisanat}`
+      service: `/modifier-service/${item.id || item.id_service}`
     };
     navigate(routes[type] || '/');
   };
@@ -274,7 +282,7 @@ const DashboardPro = () => {
       oeuvre: item?.id_oeuvre,
       evenement: item?.id_evenement,
       patrimoine: item?.id_site || item?.id,
-      service: item?.id_service || item?.id_artisanat
+      service: item?.id || item?.id_service
     };
     await deleteItem(type, ids[type]);
   };
@@ -364,7 +372,7 @@ const DashboardPro = () => {
                 <Card>
                   <CardContent className="p-4">
                     <p className="text-sm text-muted-foreground">{t("dashboardpro.services_1")}</p>
-                    <p className="text-xl font-bold">{artisanatsTotal}</p>
+                    <p className="text-xl font-bold">{servicesTotal + artisanatsTotal}</p>
                   </CardContent>
                 </Card>
 
@@ -572,47 +580,45 @@ const DashboardPro = () => {
 
               <TabsContent value="services" className="p-6 m-0">
                 <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-lg font-semibold">{t("dashboardpro.mes_services")}
-                    {filterBySearch(mesArtisanats?.items || []).length})
+                  <h2 className="text-lg font-semibold">{t("dashboardpro.mes_services")} (
+                    {filterBySearch(mesServices?.items || []).length})
                   </h2>
                   <Link to="/ajouter-service">
                     <Button size="sm">
                       <Plus className="h-4 w-4 mr-2" />{t("dashboardpro.nouveau_service")}
-
                     </Button>
                   </Link>
                 </div>
 
                 <div>
-                  {loadingArtisanats ?
-                  <>
+                  {loadingServices ? (
+                    <>
                       <Skeleton className="h-16 mb-4" />
                       <Skeleton className="h-16 mb-4" />
                       <Skeleton className="h-16" />
-                    </> :
-                  mesArtisanats?.items && mesArtisanats.items.length > 0 ?
-                  filterBySearch(mesArtisanats.items).map((item: any) =>
-                  <ItemRow
-                    key={item.id_artisanat || item.id}
-                    item={item}
-                    type="service"
-                    onView={() => handleView('service', item)}
-                    onEdit={() => handleEdit('service', item)}
-                    onDelete={() => handleDeleteItem('service', item)} />
-
-                  ) :
-
-                  <div className="text-center py-12">
+                    </>
+                  ) : mesServices?.items && mesServices.items.length > 0 ? (
+                    filterBySearch(mesServices.items).map((item: any) => (
+                      <ItemRow
+                        key={item.id || item.id_service}
+                        item={item}
+                        type="service"
+                        onView={() => handleView('service', item)}
+                        onEdit={() => handleEdit('service', item)}
+                        onDelete={() => handleDeleteItem('service', item)}
+                      />
+                    ))
+                  ) : (
+                    <div className="text-center py-12">
                       <Briefcase className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                       <p className="text-muted-foreground">{t("dashboardpro.aucun_service")}</p>
                       <Link to="/ajouter-service">
                         <Button className="mt-4" size="sm">
                           <Plus className="h-4 w-4 mr-2" />{t("dashboardpro.crer_mon_premier_1")}
-
-                      </Button>
+                        </Button>
                       </Link>
                     </div>
-                  }
+                  )}
                 </div>
               </TabsContent>
 

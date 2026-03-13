@@ -6,9 +6,6 @@ const createAuthMiddleware = require('../middlewares/authMiddleware');
 const { body, param, query } = require('express-validator');
 
 const initNotificationRoutes = (models) => {
-  if (process.env.NODE_ENV !== 'production') {
-    console.log('🔔 Initialisation des routes notifications i18n...');
-  }
 
   const authMiddleware = createAuthMiddleware(models);
   const notificationController = new NotificationController(models);
@@ -89,7 +86,7 @@ const initNotificationRoutes = (models) => {
   // Marquer comme lue
   router.put('/:id/read',
     authMiddleware.authenticate,
-    param('id').isInt({ min: 1 }).withMessage('ID notification invalide'),
+    param('id').isInt({ min: 1 }).withMessage((value, { req }) => req.t('validation.invalidId')),
     validationMiddleware.handleValidationErrors,
     (req, res) => notificationController.markAsRead(req, res)
   );
@@ -104,8 +101,8 @@ const initNotificationRoutes = (models) => {
   router.put('/read-multiple',
     authMiddleware.authenticate,
     [
-      body('notificationIds').isArray().withMessage('notificationIds doit être un tableau'),
-      body('notificationIds').notEmpty().withMessage('notificationIds ne peut pas être vide'),
+      body('notificationIds').isArray().withMessage((value, { req }) => req.t('validation.invalidData')),
+      body('notificationIds').notEmpty().withMessage((value, { req }) => req.t('validation.invalidData')),
       body('notificationIds.*').isInt({ min: 1 })
     ],
     validationMiddleware.handleValidationErrors,
@@ -139,7 +136,7 @@ const initNotificationRoutes = (models) => {
   // Supprimer une notification
   router.delete('/:id',
     authMiddleware.authenticate,
-    param('id').isInt({ min: 1 }).withMessage('ID notification invalide'),
+    param('id').isInt({ min: 1 }).withMessage((value, { req }) => req.t('validation.invalidId')),
     validationMiddleware.handleValidationErrors,
     (req, res) => notificationController.deleteNotification(req, res)
   );
@@ -151,10 +148,11 @@ const initNotificationRoutes = (models) => {
   // Envoyer une notification à un utilisateur spécifique
   router.post('/send',
     authMiddleware.authenticate,
+    authMiddleware.requireAdmin,
     [
-      body('titre').notEmpty().withMessage('Titre requis'),
-      body('message').notEmpty().withMessage('Message requis'),
-      body('destinataire_id').isInt({ min: 1 }).withMessage('destinataire_id invalide')
+      body('titre').notEmpty().withMessage((value, { req }) => req.t('validation.titleRequired')),
+      body('message').notEmpty().withMessage((value, { req }) => req.t('validation.messageRequired')),
+      body('destinataire_id').isInt({ min: 1 }).withMessage((value, { req }) => req.t('validation.invalidId'))
     ],
     validationMiddleware.handleValidationErrors,
     (req, res) => notificationController.sendNotification(req, res)
@@ -163,9 +161,10 @@ const initNotificationRoutes = (models) => {
   // Envoyer une notification broadcast à tous les utilisateurs
   router.post('/broadcast',
     authMiddleware.authenticate,
+    authMiddleware.requireAdmin,
     [
-      body('titre').notEmpty().withMessage('Titre requis'),
-      body('message').notEmpty().withMessage('Message requis')
+      body('titre').notEmpty().withMessage((value, { req }) => req.t('validation.titleRequired')),
+      body('message').notEmpty().withMessage((value, { req }) => req.t('validation.messageRequired'))
     ],
     validationMiddleware.handleValidationErrors,
     (req, res) => notificationController.broadcastNotification(req, res)
@@ -205,7 +204,7 @@ const initNotificationRoutes = (models) => {
         const status = socketService.getStatus();
         res.json({ success: true, websocket: status });
       } catch (error) {
-        res.json({ success: false, websocket: { connected: false, error: 'Service non disponible' } });
+        res.json({ success: false, websocket: { connected: false, error: req.t ? req.t('common.serverError') : 'Service unavailable' } });
       }
     }
   );
@@ -214,15 +213,11 @@ const initNotificationRoutes = (models) => {
   router.use('*', (req, res) => {
     res.status(404).json({
       success: false,
-      error: 'Route notification non trouvée',
-      message: `La route ${req.method} ${req.originalUrl} n'existe pas`
+      error: req.t ? req.t('common.notFound') : 'Route not found',
+      message: `${req.method} ${req.originalUrl}`
     });
   });
 
-  if (process.env.NODE_ENV !== 'production') {
-    console.log('✅ Routes notifications i18n initialisées');
-    console.log('  🌍 Relations (Evenement, Programme, Oeuvre) automatiquement traduites');
-  }
 
   return router;
 };

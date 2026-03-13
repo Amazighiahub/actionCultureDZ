@@ -1,9 +1,11 @@
 // hooks/useFavoris.ts
 import { useState, useCallback, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { favoriService } from '@/services/favori.service';
 import type { Favori, FavoriStats, PopularItem, GroupedFavoris } from '@/services/favori.service';
 import { useToast } from '@/components/ui/use-toast';
+import { usePermissionsContext } from '@/providers/PermissionsProvider';
 import type { PaginationParams } from '@/config/api';
 
 interface UseFavorisOptions {
@@ -24,6 +26,7 @@ export function useFavoris(options: UseFavorisOptions = {}) {
   const { type, autoFetch = true, grouped = false } = options;
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { t } = useTranslation();
   
   // État local pour les vérifications de favoris
   const [favoriChecks, setFavoriChecks] = useState<FavoriCheckState>({});
@@ -108,14 +111,14 @@ export function useFavoris(options: UseFavorisOptions = {}) {
       }));
       
       toast({
-        title: "Ajouté aux favoris",
-        description: "L'élément a été ajouté à vos favoris",
+        title: t('toasts.addedToFavorites'),
+        description: t('toasts.addedToFavoritesDesc'),
       });
     },
     onError: (error) => {
       toast({
-        title: "Erreur",
-        description: error.message || "Impossible d'ajouter aux favoris",
+        title: t('toasts.error'),
+        description: error.message || t('toasts.addToFavoritesFailed'),
         variant: "destructive",
       });
     }
@@ -132,14 +135,14 @@ export function useFavoris(options: UseFavorisOptions = {}) {
       queryClient.invalidateQueries({ queryKey: ['favoris-stats'] });
       
       toast({
-        title: "Retiré des favoris",
-        description: "L'élément a été retiré de vos favoris",
+        title: t('toasts.removedFromFavorites'),
+        description: t('toasts.removedFromFavoritesDesc'),
       });
     },
     onError: (error) => {
       toast({
-        title: "Erreur",
-        description: error.message || "Impossible de retirer des favoris",
+        title: t('toasts.error'),
+        description: error.message || t('toasts.removeFromFavoritesFailed'),
         variant: "destructive",
       });
     }
@@ -180,7 +183,6 @@ export function useFavoris(options: UseFavorisOptions = {}) {
         return result;
       }
     } catch (error) {
-      console.error('Erreur vérification favori:', error);
     }
     
     // En cas d'erreur
@@ -309,8 +311,7 @@ export function useFavoriCheck(
   const [loading, setLoading] = useState(true);
   const { toggleFavorite } = useFavoris({ autoFetch: false });
 
-  // Vérifier si l'utilisateur est authentifié
-  const isAuthenticated = !!localStorage.getItem('auth_token');
+  const { isAuthenticated } = usePermissionsContext();
 
   useEffect(() => {
     const checkFavorite = async () => {
@@ -329,7 +330,6 @@ export function useFavoriCheck(
           setFavoriId(response.data.favori_id);
         }
       } catch (error) {
-        console.error('Erreur vérification favori:', error);
         setIsFavorite(false);
       } finally {
         setLoading(false);

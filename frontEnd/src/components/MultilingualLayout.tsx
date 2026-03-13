@@ -146,7 +146,6 @@ export const MultilingualLayout: React.FC<MultilingualLayoutProps> = ({
             </div>
           </div>
         </footer>
-      </div>
     </div>
   );
 };

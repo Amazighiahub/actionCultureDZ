@@ -3,7 +3,7 @@
  * Optimise les requêtes et évite les problèmes N+1
  */
 const BaseRepository = require('./baseRepository');
-const { Op, fn, col, literal } = require('sequelize');
+const { Op, fn, col, literal, where: seqWhere } = require('sequelize');
 
 class OeuvreRepository extends BaseRepository {
   constructor(models) {
@@ -142,12 +142,12 @@ class OeuvreRepository extends BaseRepository {
 
     // Recherche texte
     if (query) {
-      const safeQuery = query.replace(/'/g, "\\'");
+      const likePattern = `%${this._sanitizeSearchQuery(query)}%`;
       where[Op.or] = [
-        literal(`JSON_EXTRACT(\`Oeuvre\`.\`titre\`, '$.fr') LIKE '%${safeQuery}%'`),
-        literal(`JSON_EXTRACT(\`Oeuvre\`.\`titre\`, '$.ar') LIKE '%${safeQuery}%'`),
-        literal(`JSON_EXTRACT(\`Oeuvre\`.\`titre\`, '$.en') LIKE '%${safeQuery}%'`),
-        literal(`JSON_EXTRACT(\`Oeuvre\`.\`description\`, '$.fr') LIKE '%${safeQuery}%'`)
+        seqWhere(fn('JSON_EXTRACT', col('Oeuvre.titre'), literal("'$.fr'")), { [Op.like]: likePattern }),
+        seqWhere(fn('JSON_EXTRACT', col('Oeuvre.titre'), literal("'$.ar'")), { [Op.like]: likePattern }),
+        seqWhere(fn('JSON_EXTRACT', col('Oeuvre.titre'), literal("'$.en'")), { [Op.like]: likePattern }),
+        seqWhere(fn('JSON_EXTRACT', col('Oeuvre.description'), literal("'$.fr'")), { [Op.like]: likePattern })
       ];
     }
 
@@ -259,7 +259,7 @@ class OeuvreRepository extends BaseRepository {
     return this.model.findAll({
       where: { statut: 'publie' },
       include: this.getDefaultIncludes(),
-      order: [['date_creation', 'DESC']],
+      order: [['nb_vues', 'DESC'], ['date_creation', 'DESC']],
       limit
     });
   }
@@ -283,16 +283,25 @@ class OeuvreRepository extends BaseRepository {
     const oeuvre = await this.findById(oeuvreId);
     if (!oeuvre) return [];
 
-    return this.model.findAll({
+    // Fetch more candidates ordered by views, then shuffle in JS
+    // Avoids ORDER BY RAND() which causes full table scans
+    const candidates = await this.model.findAll({
       where: {
         id_oeuvre: { [Op.ne]: oeuvreId },
         statut: 'publie',
         id_type_oeuvre: oeuvre.id_type_oeuvre
       },
       include: this.getDefaultIncludes(),
-      order: literal('RAND()'),
-      limit
+      order: [['nb_vues', 'DESC']],
+      limit: limit * 3
     });
+
+    // Fisher-Yates shuffle in application layer
+    for (let i = candidates.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
+    }
+    return candidates.slice(0, limit);
   }
 
   /**
@@ -302,7 +311,7 @@ class OeuvreRepository extends BaseRepository {
     return this.update(oeuvreId, {
       statut: 'publie',
       date_validation: new Date(),
-      valide_par: validatorId
+      validateur_id: validatorId
     });
   }
 
@@ -311,10 +320,10 @@ class OeuvreRepository extends BaseRepository {
    */
   async reject(oeuvreId, validatorId, motif) {
     return this.update(oeuvreId, {
-      statut: 'refuse',
+      statut: 'rejete',
       date_validation: new Date(),
-      valide_par: validatorId,
-      motif_refus: motif
+      validateur_id: validatorId,
+      raison_rejet: motif
     });
   }
 
@@ -332,7 +341,7 @@ class OeuvreRepository extends BaseRepository {
       this.count(),
       this.count({ statut: 'publie' }),
       this.count({ statut: 'en_attente' }),
-      this.count({ statut: 'refuse' }),
+      this.count({ statut: 'rejete' }),
       this.model.findAll({
         attributes: [
           'id_type_oeuvre',

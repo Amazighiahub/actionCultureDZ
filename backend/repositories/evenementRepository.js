@@ -202,17 +202,21 @@ class EvenementRepository extends BaseRepository {
   /**
    * Inscrit un utilisateur à un événement
    */
-  async registerParticipant(evenementId, userId, data = {}) {
+  async registerParticipant(evenementId, userId, options = {}) {
     if (!this.models.EvenementUser) {
       throw new Error('Model EvenementUser not available');
     }
 
+    const { transaction, ...data } = options;
+    const queryOpts = transaction ? { transaction } : {};
+
     const existing = await this.models.EvenementUser.findOne({
-      where: { id_evenement: evenementId, id_user: userId }
+      where: { id_evenement: evenementId, id_user: userId },
+      ...queryOpts
     });
 
     if (existing) {
-      return existing.update({ statut_participation: 'confirme', ...data });
+      return existing.update({ statut_participation: 'confirme', ...data }, queryOpts);
     }
 
     return this.models.EvenementUser.create({
@@ -221,7 +225,7 @@ class EvenementRepository extends BaseRepository {
       statut_participation: 'confirme',
       date_inscription: new Date(),
       ...data
-    });
+    }, queryOpts);
   }
 
   /**
@@ -239,14 +243,15 @@ class EvenementRepository extends BaseRepository {
   /**
    * Compte les participants d'un événement
    */
-  async countParticipants(evenementId) {
+  async countParticipants(evenementId, options = {}) {
     if (!this.models.EvenementUser) return 0;
 
     return this.models.EvenementUser.count({
       where: {
         id_evenement: evenementId,
         statut_participation: { [Op.in]: ['confirme', 'present'] }
-      }
+      },
+      ...options
     });
   }
 

@@ -43,7 +43,7 @@ module.exports = (sequelize) => {
       comment: 'Description en plusieurs langues'
     },
     prix: {
-      type: DataTypes.FLOAT
+      type: DataTypes.DECIMAL(10, 2)
     },
     saisi_par: {
       type: DataTypes.INTEGER,
@@ -76,6 +76,11 @@ module.exports = (sequelize) => {
     },
     raison_rejet: {
       type: DataTypes.TEXT
+    },
+    nb_vues: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      allowNull: false
     }
   }, {
     tableName: 'oeuvre',
@@ -86,7 +91,13 @@ module.exports = (sequelize) => {
       {
         unique: true,
         fields: ['id_langue', 'id_oeuvre_originale']
-      }
+      },
+      { fields: ['statut'] },
+      { fields: ['saisi_par'] },
+      { fields: ['date_creation'] },
+      { fields: ['id_type_oeuvre'] },
+      { fields: ['nb_vues'] },
+      { fields: ['validateur_id'] }
     ]
   });
 
@@ -139,7 +150,7 @@ module.exports = (sequelize) => {
     Oeuvre.hasOne(models.Artisanat, { foreignKey: 'id_oeuvre' });
     Oeuvre.hasOne(models.OeuvreArt, { foreignKey: 'id_oeuvre' });
     
-    Oeuvre.hasMany(models.Media, { foreignKey: 'id_oeuvre' });
+    Oeuvre.hasMany(models.Media, { foreignKey: 'id_oeuvre', onDelete: 'CASCADE' });
     Oeuvre.hasMany(models.CritiqueEvaluation, { foreignKey: 'id_oeuvre' });
   };
 
@@ -178,6 +189,14 @@ module.exports = (sequelize) => {
     if (oeuvre.id_oeuvre_originale === oeuvre.id_oeuvre) {
       throw new Error("Une œuvre ne peut pas être sa propre traduction");
     }
+  });
+
+  Oeuvre.afterDestroy(async (oeuvre, options) => {
+    const { Favori, Vue, Signalement } = sequelize.models;
+    const id = oeuvre.id_oeuvre;
+    if (Favori) await Favori.destroy({ where: { type_entite: 'oeuvre', id_entite: id } });
+    if (Vue) await Vue.destroy({ where: { type_entite: 'oeuvre', id_entite: id } });
+    if (Signalement) await Signalement.destroy({ where: { type_entite: 'oeuvre', id_entite: id } });
   });
 
   return Oeuvre;

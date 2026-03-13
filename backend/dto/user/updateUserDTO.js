@@ -38,6 +38,13 @@ class UpdateUserDTO extends BaseDTO {
     if (data.accepte_newsletter !== undefined || data.accepteNewsletter !== undefined) {
       this.accepteNewsletter = BaseDTO.toBool(data.accepte_newsletter ?? data.accepteNewsletter);
     }
+    if (data.langue_preferee !== undefined) this.languePreferee = data.langue_preferee;
+    if (data.theme_prefere !== undefined) this.themePrefere = data.theme_prefere;
+    if (data.notifications_email !== undefined) this.notificationsEmail = BaseDTO.toBool(data.notifications_email);
+    if (data.notifications_push !== undefined) this.notificationsPush = BaseDTO.toBool(data.notifications_push);
+    if (data.profil_public !== undefined) this.profilPublic = BaseDTO.toBool(data.profil_public);
+    if (data.email_public !== undefined) this.emailPublic = BaseDTO.toBool(data.email_public);
+    if (data.telephone_public !== undefined) this.telephonePublic = BaseDTO.toBool(data.telephone_public);
   }
 
   /**
@@ -65,6 +72,13 @@ class UpdateUserDTO extends BaseDTO {
     if (this.commune !== undefined) entity.commune = this.commune;
     if (this.photoUrl !== undefined) entity.photo_url = this.photoUrl;
     if (this.accepteNewsletter !== undefined) entity.accepte_newsletter = this.accepteNewsletter;
+    if (this.languePreferee !== undefined) entity.langue_preferee = this.languePreferee;
+    if (this.themePrefere !== undefined) entity.theme_prefere = this.themePrefere;
+    if (this.notificationsEmail !== undefined) entity.notifications_email = this.notificationsEmail;
+    if (this.notificationsPush !== undefined) entity.notifications_push = this.notificationsPush;
+    if (this.profilPublic !== undefined) entity.profil_public = this.profilPublic;
+    if (this.emailPublic !== undefined) entity.email_public = this.emailPublic;
+    if (this.telephonePublic !== undefined) entity.telephone_public = this.telephonePublic;
 
     return entity;
   }

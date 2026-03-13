@@ -116,17 +116,19 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
   const loadInscriptionConfig = async () => {
     try {
       setConfigLoading(true);
-      const response = await httpClient.get<InscriptionConfig>(`/evenements/${event.id_evenement}/config-inscription`);
-      if (response.success && response.data) {
-        setInscriptionConfig(response.data);
-        
-        // Si le type accepte des soumissions, charger les œuvres de l'utilisateur
-        if (response.data.accepte_soumissions) {
-          loadMesOeuvres();
-        }
+      setInscriptionConfig({
+        type_inscription: event.type_inscription || 'libre',
+        capacite_max: event.capacite_max || null,
+        nombre_inscrits: event.nombre_inscrits || 0,
+        accepte_soumissions: event.accepte_soumissions || false,
+        config_soumission: event.config_soumission || null,
+      } as InscriptionConfig);
+
+      if (event.accepte_soumissions) {
+        loadMesOeuvres();
       }
     } catch (error) {
-      console.error('Erreur chargement config inscription:', error);
+      // Silencieux
     } finally {
       setConfigLoading(false);
     }

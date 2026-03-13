@@ -6,7 +6,10 @@ module.exports = function parseFormData(req, res, next) {
       // Parser le JSON
       const parsedData = JSON.parse(req.body.data);
       
-      // Merger avec req.body
+      // Merger avec req.body (filtrer les clés dangereuses)
+      delete parsedData.__proto__;
+      delete parsedData.constructor;
+      delete parsedData.prototype;
       Object.assign(req.body, parsedData);
       
       // Optionnel: supprimer le champ 'data' original
@@ -17,7 +20,7 @@ module.exports = function parseFormData(req, res, next) {
       console.error('❌ Erreur parsing FormData:', error);
       return res.status(400).json({
         success: false,
-        error: 'Format de données invalide'
+        error: req.t ? req.t('validation.invalidData') : 'Invalid data format'
       });
     }
   }

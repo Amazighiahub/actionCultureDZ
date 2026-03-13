@@ -17,35 +17,35 @@ module.exports = (models, authMiddleware) => {
     body('email')
       .isEmail()
       .normalizeEmail()
-      .withMessage('Email invalide')
+      .withMessage((value, { req }) => req.t('validation.invalidEmail'))
   ];
 
   const passwordResetValidation = [
     body('token')
       .notEmpty()
-      .withMessage('Token requis'),
+      .withMessage((value, { req }) => req.t('validation.tokenRequired')),
     body('newPassword')
       .isLength({ min: 12 })
-      .withMessage('Le mot de passe doit contenir au moins 12 caractères')
+      .withMessage((value, { req }) => req.t('validation.passwordTooShort'))
       .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
-      .withMessage('Le mot de passe doit contenir au moins une majuscule, une minuscule et un chiffre')
+      .withMessage((value, { req }) => req.t('validation.passwordRequirements'))
   ];
 
   const tokenValidation = [
     param('token')
       .notEmpty()
       .isLength({ min: 32 })
-      .withMessage('Token invalide')
+      .withMessage((value, { req }) => req.t('validation.invalidToken'))
   ];
 
   const emailChangeValidation = [
     body('newEmail')
       .isEmail()
       .normalizeEmail()
-      .withMessage('Email invalide'),
+      .withMessage((value, { req }) => req.t('validation.invalidEmail')),
     body('password')
       .notEmpty()
-      .withMessage('Mot de passe requis pour confirmer')
+      .withMessage((value, { req }) => req.t('validation.passwordRequired'))
   ];
 
   // ========================================================================

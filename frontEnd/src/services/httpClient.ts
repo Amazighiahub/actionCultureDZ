@@ -1,8 +1,9 @@
 // services/httpClient.ts
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import axios, { AxiosInstance, AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
+import i18next from 'i18next';
 import { API_BASE_URL, AUTH_CONFIG, ApiResponse, PaginatedResponse, FilterParams, buildUrl, UploadProgress } from '@/config/api';
-import { apiLogger, cacheLogger } from '@/utils/logger';
+import { apiLogger } from '@/utils/logger';
 
 interface ApiUploadOptions<T = any> {
   fieldName?: string;
@@ -65,24 +66,11 @@ class ImprovedRequestQueue {
   // Historique des requêtes pour le rate limiting adaptatif
   private requestHistory: { timestamp: number; url: string }[] = [];
   
-  // Cache simple en mémoire
-  private cache = new Map<string, { data: any; timestamp: number }>();
-  private cacheTimeout = 5 * 60 * 1000; // 5 minutes
-  
   // Compteurs pour ajustement dynamique
   private rateLimitHits = 0;
   private successfulRequests = 0;
 
   async add<T>(request: () => Promise<T>, url?: string, method: string = 'GET'): Promise<T> {
-    // Vérifier le cache pour les GET
-    if (method === 'GET' && url) {
-      const cached = this.getFromCache(url);
-      if (cached) {
-        cacheLogger.debug(`Cache hit: ${url}`);
-        return cached as T;
-      }
-    }
-
     return new Promise((resolve, reject) => {
       this.queue.push({ 
         request, 
@@ -116,11 +104,6 @@ class ImprovedRequestQueue {
       if (item) {
         try {
           const result = await item.request();
-          
-          // Mettre en cache si GET
-          if (item.method === 'GET' && item.url) {
-            this.addToCache(item.url, result);
-          }
           
           // Enregistrer le succès
           this.successfulRequests++;
@@ -182,43 +165,13 @@ class ImprovedRequestQueue {
     }, 5 * 60 * 1000);
   }
   
-  // Gestion du cache
-  private getFromCache(url: string): any | null {
-    const entry = this.cache.get(url);
-    if (!entry) return null;
-    
-    if (Date.now() - entry.timestamp > this.cacheTimeout) {
-      this.cache.delete(url);
-      return null;
-    }
-    
-    return entry.data;
-  }
-  
-  private addToCache(url: string, data: any) {
-    this.cache.set(url, { data, timestamp: Date.now() });
-    
-    // Limiter la taille du cache
-    if (this.cache.size > 50) {
-      const oldestKey = Array.from(this.cache.entries())
-        .sort((a, b) => a[1].timestamp - b[1].timestamp)[0][0];
-      this.cache.delete(oldestKey);
-    }
-  }
-  
   private recordRequest(url: string) {
     this.requestHistory.push({ timestamp: Date.now(), url });
-  }
-  
-  // Méthodes publiques
-  clearCache() {
-    this.cache.clear();
   }
   
   getStats() {
     return {
       queueSize: this.queue.length,
-      cacheSize: this.cache.size,
       requestsLastMinute: this.requestHistory.length,
       rateLimitHits: this.rateLimitHits,
       currentDelay: this.calculateAdaptiveDelay()
@@ -340,12 +293,10 @@ class HttpClient {
             }
           }
          
-          console.warn(`⏳ Rate limit atteint. Nouvelle tentative dans ${actualDelay/1000}s...`);
-         
           // Notification plus détaillée
           this.showToast({
-            title: "Limite de requêtes atteinte",
-            description: `Nouvelle tentative automatique dans ${Math.ceil(actualDelay/1000)} secondes. ${errorData?.message || ''}`,
+            title: i18next.t('toasts.rateLimitReached'),
+            description: `${i18next.t('toasts.rateLimitDesc', { seconds: Math.ceil(actualDelay/1000) })} ${errorData?.message || ''}`,
             variant: "warning" as any,
           });
          
@@ -394,7 +345,7 @@ class HttpClient {
         
         // Gestion du 403 (interdit)
         if (error.response?.status === 403) {
-          let errorMessage = "Vous n'avez pas les permissions nécessaires pour cette action";
+          let errorMessage = i18next.t('toasts.noPermission');
           
           if (error.response.data && typeof error.response.data === 'object') {
             const data = error.response.data as Record<string, any>;
@@ -402,7 +353,7 @@ class HttpClient {
           }
           
           this.showToast({
-            title: "Accès refusé",
+            title: i18next.t('toasts.accessDenied'),
             description: errorMessage,
             variant: "destructive",
           });
@@ -411,8 +362,8 @@ class HttpClient {
         // Gestion des erreurs 5xx (serveur)
         if (error.response?.status && error.response.status >= 500) {
           this.showToast({
-            title: "Erreur serveur",
-            description: "Une erreur est survenue. Veuillez réessayer plus tard.",
+            title: i18next.t('toasts.serverError'),
+            description: i18next.t('toasts.serverErrorDesc'),
             variant: "destructive",
           });
         }
@@ -420,8 +371,8 @@ class HttpClient {
         // Gestion des timeout
         if (error.code === 'ECONNABORTED') {
           this.showToast({
-            title: "Timeout",
-            description: "La requête a pris trop de temps. Veuillez réessayer.",
+            title: i18next.t('toasts.timeout'),
+            description: i18next.t('toasts.timeoutDesc'),
             variant: "destructive",
           });
         }
@@ -509,13 +460,8 @@ class HttpClient {
   }
 
   private showToast(options: { title: string; description?: string; variant?: 'default' | 'destructive' | 'warning' | string }) {
-    // Utiliser la fonction globale si disponible
-    if (typeof window !== 'undefined' && 'showToast' in window && typeof (window as any).showToast === 'function') {
-      (window as any).showToast(options);
-    } else {
-      // Fallback console log
-      const level = options.variant === 'destructive' ? 'error' : options.variant === 'warning' ? 'warn' : 'log';
-      console[level](`[Toast] ${options.title}: ${options.description || ''}`);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('app:toast', { detail: options }));
     }
   }
 
@@ -615,19 +561,7 @@ class HttpClient {
     }
   }
 
-  // Méthode pour obtenir le token CSRF
-  async getCsrfToken(): Promise<string | null> {
-    try {
-      const response = await this.get('/csrf-token');
-      if (response.success && response.data) {
-        this.csrfToken = (response.data as any).token;
-        return this.csrfToken;
-      }
-    } catch (error) {
-      console.error('Erreur récupération CSRF token:', error);
-    }
-    return null;
-  }
+  // Le CSRF token est récupéré automatiquement via les headers de réponse (intercepteur)
 
   /**
    * Upload d'un fichier avec options avancées
@@ -711,19 +645,7 @@ class HttpClient {
   getQueueStats() {
     return this.requestQueue.getStats();
   }
-/**
-   * Invalider le cache pour un endpoint spécifique
-   */
-invalidateCache(endpoint: string): void {
-  const cacheKey = `cache_${endpoint}`;
-  localStorage.removeItem(cacheKey);
-  cacheLogger.debug('Cache invalidé:', endpoint);
-}
-  // Vider le cache
-  clearCache() {
-    this.requestQueue.clearCache();
-    cacheLogger.debug('Cache vidé');
-  }
+  // Cache is now handled by React Query — no in-memory duplicate needed
 
   // Mode conservateur (pour éviter les 429)
   useConservativeMode() {

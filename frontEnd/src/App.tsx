@@ -1,4 +1,4 @@
-﻿// Import de la configuration i18n - DOIT être en premier !
+// Import de la configuration i18n - DOIT être en premier !
 import '../i18n/config';
 
 import React, { Suspense } from 'react';
@@ -7,13 +7,14 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { PermissionsProvider } from "@/providers/PermissionsProvider";
+import { PermissionsProvider, usePermissionsContext } from "@/providers/PermissionsProvider";
 import { ProtectedRoute, AdminRoute, ProfessionalRoute } from "@/components/auth/ProtectedRoute";
 import { usePermissions } from "@/hooks/usePermissions";
 // Import du listener de notifications toast
 import NotificationToastListener from '@/components/NotificationToastListener';
 import RTLManager from './components/RtlManager';
 import { LanguagePersistenceManager } from '@/hooks/useLanguagePersistence';
+import { useToast } from '@/hooks/use-toast';
 
 // ============================================================================
 // LAZY LOADING — Chaque page est chargée à la demande (code splitting)
@@ -39,6 +40,7 @@ const ForgotPassword = React.lazy(() => import('./pages/ForgotPassword'));
 const ResetPassword = React.lazy(() => import('./pages/ResetPassword'));
 const ConfirmEmailChange = React.lazy(() => import('./pages/ConfirmEmailChange'));
 const VerifyEmailPage = React.lazy(() => import('./pages/VerifyEmailPage'));
+const VerificationEmailEnvoyee = React.lazy(() => import('./pages/VerificationEmailEnvoyee'));
 
 // Dashboards
 const DashboardPro = React.lazy(() => import('./pages/DashboardPro'));
@@ -58,8 +60,16 @@ const EditArticle = React.lazy(() => import('./pages/articles/edit/EditArticle')
 // Pages admin
 const AjouterPatrimoine = React.lazy(() => import('./pages/admin/AjouterPatrimoine'));
 
+// Pages Programme
+const CreateProgrammePage = React.lazy(() => import('./pages/CreateProgrammePage'));
+const EditProgrammePage = React.lazy(() => import('./pages/EditProgrammePage'));
+const ViewProgrammePage = React.lazy(() => import('./pages/ViewProgrammePage'));
+
+// Pages de gestion
+const GestionArtisanat = React.lazy(() => import('./pages/GestionArtisanat'));
+
 // Pages de notifications
-const NotificationsPage = React.lazy(() => import('./pages/notifications/Preferences'));
+const NotificationsPage = React.lazy(() => import('./pages/notifications/Notifications'));
 const NotificationPreferences = React.lazy(() => import('./pages/notifications/Preferences'));
 
 // ============================================================================
@@ -69,7 +79,6 @@ const PageLoader = () => (
   <div className="flex items-center justify-center min-h-[60vh]">
     <div className="flex flex-col items-center gap-4">
       <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      <p className="text-sm text-muted-foreground animate-pulse">Chargement...</p>
     </div>
   </div>
 );
@@ -110,12 +119,25 @@ const DashboardRouter = () => {
 
 // Composant wrapper pour les fonctionnalités globales nécessitant l'authentification
 const AuthenticatedFeatures = () => {
-  const token = localStorage.getItem('auth_token');
-  
-  // Ne rendre le listener que si l'utilisateur est authentifié
-  if (!token) return null;
-  
+  const { isAuthenticated } = usePermissionsContext();
+  if (!isAuthenticated) return null;
   return <NotificationToastListener />;
+};
+
+// Listener global pour les toasts déclenchés depuis httpClient (ex: erreurs HTTP)
+const GlobalToastListener = () => {
+  const { toast } = useToast();
+
+  React.useEffect(() => {
+    const handler = (event: CustomEvent) => {
+      const { title, description, variant } = event.detail;
+      toast({ title, description, variant: variant === 'destructive' ? 'destructive' : 'default' });
+    };
+    window.addEventListener('app:toast', handler as EventListener);
+    return () => window.removeEventListener('app:toast', handler as EventListener);
+  }, [toast]);
+
+  return null;
 };
 
 const App = () => (
@@ -134,6 +156,8 @@ const App = () => (
           <RTLManager />
           {/* Listener global pour les notifications toast */}
           <AuthenticatedFeatures />
+          {/* Listener pour les toasts httpClient (erreurs HTTP, rate limit, etc.) */}
+          <GlobalToastListener />
          
           <Suspense fallback={<PageLoader />}>
           <Routes>
@@ -314,9 +338,42 @@ const App = () => (
               }
             />
 
+            {/* Routes Programme */}
+            <Route
+              path="/programme/creer"
+              element={
+                <ProfessionalRoute>
+                  <CreateProgrammePage />
+                </ProfessionalRoute>
+              }
+            />
+            <Route
+              path="/programme/modifier/:id"
+              element={
+                <ProfessionalRoute>
+                  <EditProgrammePage />
+                </ProfessionalRoute>
+              }
+            />
+            <Route path="/programme/:id" element={<ViewProgrammePage />} />
+
+            {/* Gestion Artisanat */}
+            <Route
+              path="/gestion-artisanat"
+              element={
+                <ProfessionalRoute>
+                  <GestionArtisanat />
+                </ProfessionalRoute>
+              }
+            />
+
+            {/* Aliases de compatibilité pour les liens existants */}
+            <Route path="/profile" element={<Navigate to="/dashboard-user" replace />} />
+            <Route path="/mes-favoris" element={<Navigate to="/dashboard-user" replace />} />
+
             {/* Routes des notifications - Accessibles à tous les utilisateurs connectés */}
             <Route 
-              path="/Notifications" 
+              path="/notifications" 
               element={
                 <ProtectedRoute>
                   <NotificationsPage />
@@ -325,13 +382,17 @@ const App = () => (
             />
             
             <Route 
-              path="/notifications/Preferences" 
+              path="/notifications/preferences" 
               element={
                 <ProtectedRoute>
                   <NotificationPreferences />
                 </ProtectedRoute>
               } 
             />
+
+            {/* Compatibilité anciennes URLs en PascalCase */}
+            <Route path="/Notifications" element={<Navigate to="/notifications" replace />} />
+            <Route path="/notifications/Preferences" element={<Navigate to="/notifications/preferences" replace />} />
             
             {/* Routes de gestion du patrimoine - Admin */}
             <Route
@@ -351,19 +412,20 @@ const App = () => (
               }
             />
 
-            {/* Routes administratives */}
+            {/* Routes administratives - Redirection vers le dashboard avec l'onglet approprié */}
             <Route path="/admin/*" element={
               <AdminRoute>
                 <Routes>
-                  <Route path="users" element={<div>Gestion des utilisateurs</div>} />
-                  <Route path="metadata" element={<div>Gestion des métadonnées</div>} />
-                  <Route path="validation" element={<div>Validation des professionnels</div>} />
+                  <Route path="users" element={<Navigate to="/admin/dashboard?tab=users" replace />} />
+                  <Route path="metadata" element={<Navigate to="/admin/dashboard?tab=overview" replace />} />
+                  <Route path="validation" element={<Navigate to="/admin/dashboard?tab=users" replace />} />
                   <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
                 </Routes>
               </AdminRoute>
             } />
             
-            {/* Route pour la vérification de l'email */}
+            {/* Routes de vérification email */}
+            <Route path="/verification-email-envoyee" element={<VerificationEmailEnvoyee />} />
             <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
             <Route path="/confirm-email-change/:token" element={<ConfirmEmailChange />} />
 
@@ -371,7 +433,7 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
           </Suspense>
-          
+
           <Toaster />
           <Sonner />
         </BrowserRouter>

@@ -79,7 +79,6 @@ export function useAuth(): UseAuthReturn {
         error: response.error || 'Email ou mot de passe incorrect'
       };
     } catch (error: any) {
-      console.error('Login error:', error);
       return { 
         success: false, 
         error: error.message || 'Erreur lors de la connexion'
@@ -98,7 +97,6 @@ export function useAuth(): UseAuthReturn {
       await refreshPermissions();
       navigate('/auth');
     } catch (error) {
-      console.error('Logout error:', error);
       await refreshPermissions();
       navigate('/auth');
     }
@@ -142,7 +140,6 @@ export function useAuth(): UseAuthReturn {
         error: response.error || 'Une erreur est survenue lors de l\'inscription'
       };
     } catch (error: any) {
-      console.error('Register visitor error:', error);
       return { 
         success: false, 
         error: error.message || 'Une erreur est survenue lors de l\'inscription'
@@ -199,7 +196,6 @@ export function useAuth(): UseAuthReturn {
         error: response.error || 'Une erreur est survenue lors de l\'inscription'
       };
     } catch (error: any) {
-      console.error('Register professional error:', error);
       return { 
         success: false, 
         error: error.message || 'Une erreur est survenue lors de l\'inscription'

@@ -23,9 +23,17 @@ import {
 import { artisanatService } from '@/services/artisanat.service';
 import { metadataService } from '@/services/metadata.service';
 
+type MultiLangText = {
+  fr: string;
+  ar: string;
+  en: string;
+  'tz-ltn': string;
+  'tz-tfng': string;
+};
+
 interface FormData {
-  nom: { fr: string; ar: string; en: string };
-  description: { fr: string; ar: string; en: string };
+  nom: MultiLangText;
+  description: MultiLangText;
   id_materiau: number;
   id_technique: number;
   prix_min?: number;
@@ -38,8 +46,8 @@ interface FormData {
 }
 
 const INITIAL_FORM: FormData = {
-  nom: { fr: '', ar: '', en: '' },
-  description: { fr: '', ar: '', en: '' },
+  nom: { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
+  description: { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
   id_materiau: 0,
   id_technique: 0,
   sur_commande: false,
@@ -160,8 +168,14 @@ const GestionArtisanatSimple: React.FC = () => {
     setError(null);
 
     // Validation
-    if (!formData.nom.fr && !formData.nom.ar) {
-      setError(t('gestionArtisanat.errors.nomRequired', 'Le nom est requis'));
+    if (
+      !formData.nom.fr ||
+      !formData.nom.ar ||
+      !formData.nom.en ||
+      !formData.nom['tz-ltn'] ||
+      !formData.nom['tz-tfng']
+    ) {
+      setError(t('gestionArtisanat.errors.nomRequired', 'Le nom est requis dans toutes les langues'));
       return;
     }
     if (!formData.id_materiau) {

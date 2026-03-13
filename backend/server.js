@@ -1,6 +1,7 @@
 // server.js - Point d'entrée principal de l'application
 require('dotenv').config();
 const http = require('http');
+const { Server } = require('socket.io');
 const App = require('./app');
 const logger = require('./utils/logger');
 const EnvironmentValidator = require('./config/envValidator');
@@ -25,36 +26,96 @@ async function startServer() {
     // Créer le serveur HTTP
     const server = http.createServer(app);
     
-    // Gérer les connexions WebSocket si nécessaire
-    server.on('upgrade', (request, socket, head) => {
-      logger.info('WebSocket connection attempt');
-      // Implémenter la logique WebSocket si nécessaire
+    // Attacher Socket.IO au serveur HTTP
+    const io = new Server(server, {
+      cors: {
+        origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+        methods: ['GET', 'POST'],
+        credentials: true
+      },
+      transports: ['websocket', 'polling']
+    });
+
+    app.set('io', io);
+
+    // Authentification Socket.IO via JWT cookie
+    const cookie = require('cookie');
+    const jwt = require('jsonwebtoken');
+    const JWT_SECRET = process.env.JWT_SECRET || (process.env.NODE_ENV === 'development' ? 'dev-secret-key-only-for-development' : null);
+
+    io.use((socket, next) => {
+      try {
+        // Priorité : cookie httpOnly > auth handshake (compatibilité frontend)
+        const cookies = cookie.parse(socket.handshake.headers.cookie || '');
+        const token = cookies.token || cookies.access_token || socket.handshake.auth?.token;
+        if (!token) {
+          return next(new Error('Authentication required'));
+        }
+        const decoded = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] });
+        socket.userId = decoded.id_user || decoded.id;
+        next();
+      } catch (err) {
+        next(new Error('Authentication failed'));
+      }
+    });
+
+    io.on('connection', (socket) => {
+      if (socket.userId) {
+        socket.join(`user_${socket.userId}`);
+      }
+
+      socket.on('join_room', (room) => {
+        // Autoriser uniquement les rooms publiques ou les rooms de l'utilisateur
+        if (room.startsWith('user_') && room !== `user_${socket.userId}`) {
+          return; // Empêcher de rejoindre la room d'un autre utilisateur
+        }
+        socket.join(room);
+      });
+
+      socket.on('leave_room', (room) => {
+        socket.leave(room);
+      });
+
+      socket.on('disconnect', () => {
+        // cleanup
+      });
     });
     
     // Gérer la fermeture gracieuse
+    let isShuttingDown = false;
     const gracefulShutdown = async (signal) => {
-      logger.info(`\n${signal} reçu, arrêt gracieux du serveur...`);
-      
+      if (isShuttingDown) return;
+      isShuttingDown = true;
+
+      logger.info(`${signal} reçu, arrêt gracieux du serveur...`);
+
+      // Stop accepting new connections
       server.close(async () => {
-        logger.info('✅ Serveur HTTP fermé');
-        
+        logger.info('Serveur HTTP fermé');
+
         try {
-          // Fermer la base de données
+          // Close Socket.IO connections
+          io.close();
+          logger.info('Socket.IO fermé');
+
+          // Close database
           await appInstance.closeDatabase();
-          
-          logger.info('👋 Application arrêtée proprement');
+          logger.info('Base de données fermée');
+
+          logger.info('Application arrêtée proprement');
           process.exit(0);
         } catch (error) {
-          logger.error('❌ Erreur lors de l\'arrêt:', error);
+          logger.error('Erreur lors de l\'arrêt:', error);
           process.exit(1);
         }
       });
-      
-      // Forcer l'arrêt après 30 secondes
-      setTimeout(() => {
-        logger.error('⚠️ Arrêt forcé après timeout');
+
+      // Force exit after 30 seconds
+      const forceTimeout = setTimeout(() => {
+        logger.error('Arrêt forcé après timeout de 30s');
         process.exit(1);
       }, 30000);
+      if (forceTimeout.unref) forceTimeout.unref();
     };
     
     // Écouter les signaux de fermeture
@@ -73,7 +134,7 @@ async function startServer() {
       logger.info('═══════════════════════════════════════════════════');
       logger.info(`🌍 Environnement: ${process.env.NODE_ENV || 'development'}`);
       logger.info(`🗄️  Base de données: ${process.env.DB_NAME || 'actionculture'}`);
-      logger.info(`👤 Utilisateur DB: ${process.env.DB_USER || 'root'}`);
+      logger.info(`👤 Utilisateur DB: ***`);
       logger.info('═══════════════════════════════════════════════════');
       
       // Afficher les routes disponibles en développement

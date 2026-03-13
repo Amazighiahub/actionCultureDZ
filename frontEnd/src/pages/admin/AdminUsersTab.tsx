@@ -71,7 +71,7 @@ const AdminUsersTab: React.FC = () => {
     suspendUser,
     reactivateUser,
     refreshAll
-  } = useDashboardAdmin();
+  } = useDashboardAdmin('users');
 
   // Filtrer les utilisateurs
   const filteredUsers = React.useMemo(() => {

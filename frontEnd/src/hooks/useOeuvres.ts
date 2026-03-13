@@ -50,7 +50,6 @@ export function useOeuvres(): UseOeuvresReturn {
       const timeSince = Date.now() - parseInt(lastRateLimit);
       if (timeSince < 5 * 60 * 1000) {
         (httpClient as any).useConservativeMode?.();
-        console.log('🐢 Mode conservateur activé (rate limit récent)');
       }
     }
 
@@ -71,11 +70,9 @@ export function useOeuvres(): UseOeuvresReturn {
           return !nomLower.includes('artisanat');
         });
         
-        console.log('Types œuvres chargés (sans artisanat):', types);
         setTypesOeuvres(types);
       }
     } catch (error) {
-      console.error('Erreur chargement types œuvres:', error);
       setTypesOeuvres([]);
     }
   };
@@ -91,7 +88,6 @@ export function useOeuvres(): UseOeuvresReturn {
         statut: 'publie'
       };
       
-      console.log('📤 Chargement des œuvres...');
       
       const result = await oeuvreService.getOeuvres(params);
       
@@ -115,7 +111,6 @@ export function useOeuvres(): UseOeuvresReturn {
           return !typeNom.includes('artisanat') && !typeNomFromList.includes('artisanat');
         });
         
-        console.log(`✅ ${oeuvresData.length} œuvres chargées (artisanat exclu)`);
         setOeuvres(Array.isArray(oeuvresData) ? oeuvresData : []);
         
         // Sauvegarder en localStorage
@@ -123,13 +118,11 @@ export function useOeuvres(): UseOeuvresReturn {
           localStorage.setItem('oeuvres_backup', JSON.stringify(oeuvresData));
           localStorage.setItem('oeuvres_backup_time', Date.now().toString());
         } catch (e) {
-          console.error('Erreur sauvegarde backup:', e);
         }
       } else {
         throw new Error(result.error || 'Erreur lors du chargement des œuvres');
       }
     } catch (err: any) {
-      console.error('Erreur:', err);
       
       // Gérer le rate limit
       if (err.message?.includes('429') || err.message?.includes('rate limit')) {
@@ -153,7 +146,6 @@ export function useOeuvres(): UseOeuvresReturn {
               setError('Limite de requêtes atteinte. Affichage des données en cache.');
               return;
             } catch (e) {
-              console.error('Erreur parsing backup:', e);
             }
           }
         }

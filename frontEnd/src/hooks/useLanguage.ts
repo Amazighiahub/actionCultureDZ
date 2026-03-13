@@ -51,17 +51,13 @@ export const useLanguage = () => {
     
     try {
       const normalizedCode = normalizeLanguageCode(langCode);
-      console.log(`[useLanguage] Changement de langue: ${langCode} -> ${normalizedCode}`);
       
       await changeLanguageConfig(normalizedCode);
       
       // Mettre à jour les attributs HTML
       document.documentElement.lang = normalizedCode;
       document.documentElement.dir = normalizedCode === 'ar' ? 'rtl' : 'ltr';
-      
-      console.log('[useLanguage] Langue changée avec succès');
     } catch (err) {
-      console.error('[useLanguage] Erreur lors du changement de langue:', err);
       setError(err instanceof Error ? err.message : 'Erreur inconnue');
       
       // Fallback : recharger la page

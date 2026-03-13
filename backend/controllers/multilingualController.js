@@ -19,8 +19,16 @@ class MultilingualController {
       if (!validModels.includes(model)) {
         return res.status(400).json({
           success: false,
-          error: 'Modèle non valide',
-          validModels
+          error: req.t('common.badRequest')
+        });
+      }
+
+      // Valider le champ (seuls les champs multilingues sont autorisés)
+      const validFields = ['nom', 'titre', 'description', 'histoire', 'adresse', 'biographie', 'nom_evenement', 'lieu_specifique', 'materiel_requis', 'notes_organisateur'];
+      if (!validFields.includes(field)) {
+        return res.status(400).json({
+          success: false,
+          error: req.t('common.badRequest')
         });
       }
 
@@ -31,7 +39,7 @@ class MultilingualController {
       if (!instance) {
         return res.status(404).json({
           success: false,
-          error: `${model} non trouvé`
+          error: req.t('common.notFound')
         });
       }
 
@@ -60,7 +68,7 @@ class MultilingualController {
       console.error('Erreur getTranslations:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur'
+        error: req.t('common.serverError')
       });
     }
   }
@@ -77,7 +85,7 @@ class MultilingualController {
       if (!translations || typeof translations !== 'object') {
         return res.status(400).json({
           success: false,
-          error: 'Traductions invalides'
+          error: req.t('common.badRequest')
         });
       }
 
@@ -86,7 +94,16 @@ class MultilingualController {
       if (!validModels.includes(model)) {
         return res.status(400).json({
           success: false,
-          error: 'Modèle non valide'
+          error: req.t('common.badRequest')
+        });
+      }
+
+      // Valider le champ (seuls les champs multilingues sont autorisés)
+      const validFields = ['nom', 'titre', 'description', 'histoire', 'adresse', 'biographie', 'nom_evenement', 'lieu_specifique', 'materiel_requis', 'notes_organisateur'];
+      if (!validFields.includes(field)) {
+        return res.status(400).json({
+          success: false,
+          error: req.t('common.badRequest')
         });
       }
 
@@ -97,7 +114,7 @@ class MultilingualController {
       if (!instance) {
         return res.status(404).json({
           success: false,
-          error: `${model} non trouvé`
+          error: req.t('common.notFound')
         });
       }
 
@@ -117,7 +134,7 @@ class MultilingualController {
       console.error('Erreur updateTranslations:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur'
+        error: req.t('common.serverError')
       });
     }
   }
@@ -138,7 +155,7 @@ class MultilingualController {
       console.error('Erreur getSupportedLanguages:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur'
+        error: req.t('common.serverError')
       });
     }
   }

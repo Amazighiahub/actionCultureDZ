@@ -317,7 +317,7 @@ class DashboardAnalyticsService {
     // Utilisateurs en attente depuis longtemps
     const pendingUsersCount = await this.models.User.count({
       where: {
-        statut_validation: 'en_attente',
+        statut: 'en_attente_validation',
         date_creation: {
           [Op.lt]: moment().subtract(7, 'days').toDate()
         }

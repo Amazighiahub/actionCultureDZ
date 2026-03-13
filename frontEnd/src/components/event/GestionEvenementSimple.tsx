@@ -95,7 +95,7 @@ const GestionEvenementSimple: React.FC<GestionEvenementSimpleProps> = ({
       } else {
         toast({
           title: t('common.error'),
-          description: 'Erreur lors du chargement des programmes',
+          description: t('eventManagement.loadProgrammesError'),
           variant: 'destructive'
         });
       }
@@ -103,7 +103,7 @@ const GestionEvenementSimple: React.FC<GestionEvenementSimpleProps> = ({
       console.error('Erreur chargement programmes:', error);
       toast({
         title: t('common.error'),
-        description: 'Erreur lors du chargement des programmes',
+        description: t('eventManagement.loadProgrammesError'),
         variant: 'destructive'
       });
     } finally {
@@ -141,7 +141,7 @@ const GestionEvenementSimple: React.FC<GestionEvenementSimpleProps> = ({
         if (response.success) {
           toast({ 
             title: t('common.success'), 
-            description: 'Programme mis à jour avec succès' 
+            description: t('eventManagement.programmeUpdated') 
           });
           loadProgrammes();
         }
@@ -150,7 +150,7 @@ const GestionEvenementSimple: React.FC<GestionEvenementSimpleProps> = ({
         if (response.success) {
           toast({ 
             title: t('common.success'), 
-            description: 'Programme créé avec succès' 
+            description: t('eventManagement.programmeCreated') 
           });
           loadProgrammes();
         }
@@ -161,7 +161,7 @@ const GestionEvenementSimple: React.FC<GestionEvenementSimpleProps> = ({
       console.error('Erreur sauvegarde programme:', error);
       toast({ 
         title: t('common.error'), 
-        description: 'Erreur lors de la sauvegarde', 
+        description: t('eventManagement.saveError'), 
         variant: 'destructive' 
       });
     }
@@ -169,13 +169,13 @@ const GestionEvenementSimple: React.FC<GestionEvenementSimpleProps> = ({
 
   // Handler pour supprimer un programme
   const handleDeleteProgramme = async (programmeId: number) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer ce programme ?')) {
+    if (window.confirm(t('eventManagement.confirmDeleteProgramme'))) {
       try {
         const response = await programmeService.delete(programmeId);
         if (response.success) {
           toast({ 
             title: t('common.success'), 
-            description: 'Programme supprimé avec succès' 
+            description: t('eventManagement.programmeDeleted') 
           });
           loadProgrammes();
         }
@@ -183,7 +183,7 @@ const GestionEvenementSimple: React.FC<GestionEvenementSimpleProps> = ({
         console.error('Erreur suppression programme:', error);
         toast({ 
           title: t('common.error'), 
-          description: 'Erreur lors de la suppression', 
+          description: t('eventManagement.deleteError'), 
           variant: 'destructive' 
         });
       }
@@ -227,22 +227,22 @@ const GestionEvenementSimple: React.FC<GestionEvenementSimpleProps> = ({
           <div className="flex justify-between items-center">
             <CardTitle className="flex items-center gap-2">
               <Calendar className="h-5 w-5" />
-              Gestion des programmes - {evenementNom}
+              {t('eventManagement.programmeManagement')} - {evenementNom}
             </CardTitle>
             <Dialog open={showProgrammeDialog} onOpenChange={setShowProgrammeDialog}>
               <DialogTrigger asChild>
                 <Button onClick={() => setEditingProgramme(null)}>
                   <Plus className="h-4 w-4 mr-2" />
-                  Ajouter un programme
+                  {t('eventManagement.addProgramme')}
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>
-                    {editingProgramme ? 'Modifier le programme' : 'Créer un programme'}
+                    {editingProgramme ? t('eventManagement.editProgramme') : t('eventManagement.createProgramme')}
                   </DialogTitle>
                   <DialogDescription>
-                    Remplissez les informations du programme
+                    {t('eventManagement.fillProgrammeInfo')}
                   </DialogDescription>
                 </DialogHeader>
 
@@ -303,13 +303,13 @@ const GestionEvenementSimple: React.FC<GestionEvenementSimpleProps> = ({
           ) : programmes.length === 0 ? (
             <div className="text-center py-8">
               <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2">Aucun programme</h3>
+              <h3 className="text-lg font-medium mb-2">{t('eventManagement.noProgramme')}</h3>
               <p className="text-muted-foreground mb-4">
-                Commencez par ajouter un programme à cet événement
+                {t('eventManagement.startByAddingProgramme')}
               </p>
               <Button onClick={() => setShowProgrammeDialog(true)}>
                 <Plus className="h-4 w-4 mr-2" />
-                Ajouter un programme
+                {t('eventManagement.addProgramme')}
               </Button>
             </div>
           ) : (

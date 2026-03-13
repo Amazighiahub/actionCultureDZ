@@ -1,6 +1,7 @@
 // hooks/useConfirmedAction.ts
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
 
 // Types
@@ -63,6 +64,7 @@ export function useConfirmedAction<T extends (...args: any[]) => Promise<any>>(
   const cooldownTimerRef = useRef<NodeJS.Timeout | null>(null);
   const updateTimerRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   // Nettoyer les timers au démontage
   useEffect(() => {
@@ -108,8 +110,8 @@ export function useConfirmedAction<T extends (...args: any[]) => Promise<any>>(
     if (state.cooldown) {
       const remainingTime = Math.ceil(timeUntilNextExecution / 1000);
       toast({
-        title: "Action trop rapide",
-        description: `Veuillez patienter ${remainingTime} seconde${remainingTime > 1 ? 's' : ''} avant de réessayer`,
+        title: t('toasts.actionTooFast'),
+        description: t('toasts.actionTooFastDesc', { seconds: remainingTime }),
         // Using default variant instead of warning
       });
       return undefined;
@@ -118,8 +120,8 @@ export function useConfirmedAction<T extends (...args: any[]) => Promise<any>>(
     // Vérifier si déjà en cours
     if (state.isLoading) {
       toast({
-        title: "Action en cours",
-        description: "Veuillez patienter la fin de l'action précédente",
+        title: t('toasts.actionInProgress'),
+        description: t('toasts.actionInProgressDesc'),
         // Using default variant instead of warning
       });
       return undefined;
@@ -141,8 +143,8 @@ export function useConfirmedAction<T extends (...args: any[]) => Promise<any>>(
       // Succès
       if (showSuccessToast && result?.success) {
         toast({
-          title: "Succès",
-          description: result.message || "Action effectuée avec succès",
+          title: t('toasts.success'),
+          description: result.message || t('toasts.actionSuccess'),
         });
       }
       
@@ -158,8 +160,8 @@ export function useConfirmedAction<T extends (...args: any[]) => Promise<any>>(
       
       if (showErrorToast) {
         toast({
-          title: "Erreur",
-          description: err.message || "Une erreur est survenue",
+          title: t('toasts.error'),
+          description: err.message || t('toasts.unknownError'),
           variant: "destructive",
         });
       }
@@ -200,8 +202,8 @@ export function useConfirmedAction<T extends (...args: any[]) => Promise<any>>(
         if (confirmDelay > 0) {
           // Attendre le délai de confirmation
           toast({
-            title: "Confirmation",
-            description: `Action dans ${confirmDelay / 1000} secondes...`,
+            title: t('toasts.confirmation'),
+            description: t('toasts.confirmActionDelay', { seconds: confirmDelay / 1000 }),
           });
           
           setTimeout(async () => {
@@ -276,11 +278,12 @@ export function useConfirmedActionWithDialog<T extends (...args: any[]) => Promi
   action: T,
   options: UseConfirmedActionWithDialogOptions = {}
 ): ConfirmedActionReturn<T> & { dialog: React.ReactNode } {
+  const { t } = useTranslation();
   const {
-    dialogTitle = 'Confirmer l\'action',
-    dialogDescription = options.confirmMessage || 'Êtes-vous sûr de vouloir effectuer cette action ?',
-    confirmButtonText = 'Confirmer',
-    cancelButtonText = 'Annuler',
+    dialogTitle = t('toasts.confirmAction'),
+    dialogDescription = options.confirmMessage || t('toasts.confirmActionDesc'),
+    confirmButtonText = t('toasts.confirm'),
+    cancelButtonText = t('toasts.cancel'),
     confirmButtonVariant = 'default',
     ...baseOptions
   } = options;
@@ -339,7 +342,7 @@ export function useConfirmedActionWithDialog<T extends (...args: any[]) => Promi
             disabled={baseAction.isLoading || baseAction.cooldown}
             className={resolveValue(confirmButtonVariant) === 'destructive' ? 'bg-destructive text-destructive-foreground' : ''}
           >
-            {baseAction.isLoading ? 'Traitement...' : resolveValue(confirmButtonText)}
+            {baseAction.isLoading ? t('toasts.processing') : resolveValue(confirmButtonText)}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

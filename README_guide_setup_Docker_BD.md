@@ -1,9 +1,9 @@
-# 🐳 Guide setup Docker + BD
+# Guide Docker + Base de données
 
-Ce fichier est conservé uniquement comme point d’entrée.
+Redirection vers la documentation officielle.
 
-## Source unique (à maintenir)
+## Documentation Docker
 
-➡️ `docs/README-DOCKER.md`
+➡️ **[docs/README-DOCKER.md](docs/README-DOCKER.md)**
 
-Toutes les instructions Docker/BD (setup, URLs, dump/restore, dépannage) doivent être mises à jour **uniquement** dans ce fichier.
+Contient : architecture des services, commandes, variables d'environnement, initialisation de la base, dépannage.

@@ -26,7 +26,7 @@ class UserRepository extends BaseRepository {
       ...options,
       where: {
         ...options.where,
-        statut_validation: 'en_attente'
+        statut: 'en_attente_validation'
       },
       order: [['date_creation', 'ASC']]
     });
@@ -68,7 +68,6 @@ class UserRepository extends BaseRepository {
       ...options,
       where: {
         id_type_user: { [Op.in]: professionalTypeIds },
-        statut_validation: 'valide',
         statut: 'actif'
       }
     });
@@ -78,14 +77,16 @@ class UserRepository extends BaseRepository {
    * Recherche d'utilisateurs
    */
   async searchUsers(query, options = {}) {
+    // Échapper les wildcards LIKE pour éviter la manipulation de résultats
+    const escaped = query.replace(/[%_\\]/g, '\\$&');
     return this.findAll({
       ...options,
       where: {
         [Op.or]: [
-          { nom: { [Op.like]: `%${query}%` } },
-          { prenom: { [Op.like]: `%${query}%` } },
-          { email: { [Op.like]: `%${query}%` } },
-          { entreprise: { [Op.like]: `%${query}%` } }
+          { nom: { [Op.like]: `%${escaped}%` } },
+          { prenom: { [Op.like]: `%${escaped}%` } },
+          { email: { [Op.like]: `%${escaped}%` } },
+          { entreprise: { [Op.like]: `%${escaped}%` } }
         ],
         ...options.where
       }
@@ -134,6 +135,13 @@ class UserRepository extends BaseRepository {
   }
 
   /**
+   * Trouve un utilisateur par refresh token
+   */
+  async findByRefreshToken(refreshToken) {
+    return this.findOne({ refresh_token: refreshToken });
+  }
+
+  /**
    * Met à jour la dernière connexion
    */
   async updateLastLogin(userId) {
@@ -147,7 +155,7 @@ class UserRepository extends BaseRepository {
    */
   async validate(userId, validatorId) {
     return this.update(userId, {
-      statut_validation: 'valide',
+      statut: 'actif',
       date_validation: new Date(),
       id_user_validate: validatorId
     });
@@ -158,7 +166,7 @@ class UserRepository extends BaseRepository {
    */
   async reject(userId, validatorId, motif) {
     return this.update(userId, {
-      statut_validation: 'rejete',
+      statut: 'rejete',
       date_validation: new Date(),
       id_user_validate: validatorId,
       raison_rejet: motif
@@ -195,7 +203,7 @@ class UserRepository extends BaseRepository {
       byType
     ] = await Promise.all([
       this.count(),
-      this.count({ statut_validation: 'en_attente' }),
+      this.count({ statut: 'en_attente_validation' }),
       this.count({ statut: 'actif' }),
       this.count({ statut: 'suspendu' }),
       this.model.findAll({

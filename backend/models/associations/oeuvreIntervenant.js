@@ -75,7 +75,7 @@ module.exports = (sequelize) => {
 
   // Associations
   OeuvreIntervenant.associate = (models) => {
-    OeuvreIntervenant.hasMany(models.Oeuvre, { 
+    OeuvreIntervenant.belongsTo(models.Oeuvre, { 
       foreignKey: 'id_oeuvre',
       as: 'Oeuvre'
     });

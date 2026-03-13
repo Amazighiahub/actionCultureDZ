@@ -18,6 +18,7 @@ import { User, Palette, Mail, Lock, UserPlus, LogIn, Upload, Calendar, Phone, Ma
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/use-toast';
 import { mediaService } from '@/services/media.service';
+import { httpClient } from '@/services/httpClient';
 import { SECTEUR_TYPE_USER_MAP, SECTEUR_OPTIONS, AUTH_ERROR_MESSAGES } from '@/types/models/auth.types';
 import { useWilayas } from '@/hooks/useGeographie';
 import { getAssetUrl } from '@/helpers/assetUrl';
@@ -234,6 +235,14 @@ const Auth = () => {
     
     if (!registerForm.mot_de_passe || registerForm.mot_de_passe.length < 12) {
       errors.mot_de_passe = t('auth.errors.passwordMinLength');
+    } else if (!/[A-Z]/.test(registerForm.mot_de_passe)) {
+      errors.mot_de_passe = t('auth.errors.passwordNeedUppercase', 'Le mot de passe doit contenir au moins une majuscule');
+    } else if (!/[a-z]/.test(registerForm.mot_de_passe)) {
+      errors.mot_de_passe = t('auth.errors.passwordNeedLowercase', 'Le mot de passe doit contenir au moins une minuscule');
+    } else if (!/[0-9]/.test(registerForm.mot_de_passe)) {
+      errors.mot_de_passe = t('auth.errors.passwordNeedDigit', 'Le mot de passe doit contenir au moins un chiffre');
+    } else if (!/[!@#$%^&*(),.?":{}|<>]/.test(registerForm.mot_de_passe)) {
+      errors.mot_de_passe = t('auth.errors.passwordNeedSpecial', 'Le mot de passe doit contenir au moins un caractère spécial');
     }
     
     if (registerForm.mot_de_passe !== registerForm.confirmation_mot_de_passe) {
@@ -255,6 +264,10 @@ const Auth = () => {
       errors.wilaya_residence = t('auth.errors.wilayaRequired');
     }
     
+    if (registerForm.telephone && !/^(0[5-7]\d{8}|\+213[5-7]\d{8})$/.test(registerForm.telephone.replace(/\s/g, ''))) {
+      errors.telephone = t('auth.errors.phoneInvalid', 'Numéro de téléphone invalide (format: 05/06/07XXXXXXXX)');
+    }
+
     if (!registerForm.accepte_conditions) {
       errors.accepte_conditions = t('auth.errors.acceptTermsRequired');
     }
@@ -297,22 +310,13 @@ const Auth = () => {
         
         try {
           // Upload public de la photo
-          const apiBaseUrl = window.location.origin;
-          const uploadResponse = await fetch(`${apiBaseUrl}/api/upload/image/public`, {
-            method: 'POST',
-            body: (() => {
-              const formData = new FormData();
-              formData.append('image', photoFile);
-              return formData;
-            })()
-          });
+          const formData = new FormData();
+          formData.append('image', photoFile);
+          const uploadResult = await httpClient.upload<any>('/upload/image/public', formData);
 
-          if (!uploadResponse.ok) {
-            const errorData = await uploadResponse.json();
-            throw new Error(errorData.error || t('auth.errors.uploadError'));
+          if (!uploadResult.success) {
+            throw new Error(uploadResult.error || t('auth.errors.uploadError'));
           }
-
-          const uploadResult = await uploadResponse.json();
           
           if (uploadResult.success && uploadResult.data?.url) {
             photoUrl = uploadResult.data.url;

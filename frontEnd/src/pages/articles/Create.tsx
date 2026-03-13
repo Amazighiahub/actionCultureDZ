@@ -7,7 +7,7 @@ export default function CreateArticle() {
   
   return (
     <ArticleEditor 
-      onBack={() => navigate('/articles')}
+      onBack={() => navigate('/oeuvres')}
       onSave={(data) => {
         // Redirection après création
         if (data?.article?.id_oeuvre) {

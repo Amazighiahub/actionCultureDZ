@@ -9,10 +9,12 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Eye, Calendar, Clock, Users, MapPin, Edit, Trash2 } from 'lucide-react';
 import ProgrammeForm, { ProgrammeFormData } from '@/components/forms/ProgrammeForm';
 import { programmeService } from '@/services/programme.service';
+import { useTranslation } from 'react-i18next';
 
 const ViewProgrammePage: React.FC = () => {
   const { eventId, programmeId } = useParams<{ eventId: string; programmeId: string }>();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -38,7 +40,7 @@ const ViewProgrammePage: React.FC = () => {
   useEffect(() => {
     const fetchProgramme = async () => {
       if (!programmeId) {
-        setError('ID de programme non spécifié');
+        setError(t('programmePages.errors.programmeIdMissing'));
         setLoading(false);
         return;
       }
@@ -97,45 +99,45 @@ const ViewProgrammePage: React.FC = () => {
 
           setProgrammeData(formData);
         } else {
-          setError(response.error || 'Erreur lors du chargement du programme');
+          setError(response.error || t('programmePages.errors.loadFailed'));
         }
       } catch (err: any) {
-        setError(err.message || 'Une erreur est survenue');
+        setError(err.message || t('programmePages.errors.generic'));
       } finally {
         setLoading(false);
       }
     };
 
     fetchProgramme();
-  }, [programmeId]);
+  }, [programmeId, t]);
 
   const handleEdit = () => {
     if (eventId && programmeId) {
-      navigate(`/events/${eventId}/programmes/${programmeId}/edit`);
+      navigate(`/programme/modifier/${programmeId}`);
     }
   };
 
   const handleDelete = async () => {
     if (!programmeId) return;
 
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer ce programme ?')) {
+    if (window.confirm(t('programmePages.view.confirmDelete'))) {
       try {
         const response = await programmeService.delete(parseInt(programmeId));
         
         if (response.success) {
           console.log('Programme supprimé avec succès');
-          navigate(`/events/${eventId}`);
+          navigate(`/evenements/${eventId}`);
         } else {
-          setError(response.error || 'Erreur lors de la suppression du programme');
+          setError(response.error || t('programmePages.errors.deleteFailed'));
         }
       } catch (err: any) {
-        setError(err.message || 'Une erreur est survenue');
+        setError(err.message || t('programmePages.errors.generic'));
       }
     }
   };
 
   const handleBack = () => {
-    navigate(`/events/${eventId}`);
+    navigate(`/evenements/${eventId}`);
   };
 
   if (!eventId || !programmeId) {
@@ -143,10 +145,10 @@ const ViewProgrammePage: React.FC = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-red-600 mb-4">
-            Erreur: ID d'événement ou de programme non spécifié
+            {t('programmePages.errors.eventOrProgrammeIdMissingWithPrefix')}
           </h1>
-          <Button onClick={() => navigate('/events')}>
-            Retour aux événements
+          <Button onClick={() => navigate('/evenements')}>
+            {t('programmePages.actions.backToEvents')}
           </Button>
         </div>
       </div>
@@ -158,7 +160,7 @@ const ViewProgrammePage: React.FC = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p>Chargement du programme...</p>
+          <p>{t('programmePages.status.loadingProgram')}</p>
         </div>
       </div>
     );
@@ -169,10 +171,10 @@ const ViewProgrammePage: React.FC = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-red-600 mb-4">
-            Erreur: {error}
+            {t('programmePages.errors.prefix')}: {error}
           </h1>
-          <Button onClick={() => navigate(`/events/${eventId}`)}>
-            Retour à l'événement
+          <Button onClick={() => navigate(`/evenements/${eventId}`)}>
+            {t('programmePages.actions.backToEvent')}
           </Button>
         </div>
       </div>
@@ -191,9 +193,9 @@ const ViewProgrammePage: React.FC = () => {
               className="flex items-center gap-2"
             >
               <ArrowLeft className="h-4 w-4" />
-              Retour à l'événement
+              {t('programmePages.actions.backToEvent')}
             </Button>
-            <h1 className="text-3xl font-bold">Détails du programme</h1>
+            <h1 className="text-3xl font-bold">{t('programmePages.view.title')}</h1>
           </div>
           
           <div className="flex items-center gap-2">
@@ -203,7 +205,7 @@ const ViewProgrammePage: React.FC = () => {
               className="flex items-center gap-2"
             >
               <Edit className="h-4 w-4" />
-              Modifier
+              {t('programmePages.actions.edit')}
             </Button>
             <Button
               variant="destructive"
@@ -211,7 +213,7 @@ const ViewProgrammePage: React.FC = () => {
               className="flex items-center gap-2"
             >
               <Trash2 className="h-4 w-4" />
-              Supprimer
+              {t('programmePages.actions.delete')}
             </Button>
           </div>
         </div>
@@ -219,11 +221,11 @@ const ViewProgrammePage: React.FC = () => {
         <div className="flex items-center gap-6 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4" />
-            Événement #{eventId}
+            {t('programmePages.meta.eventNumber', { id: eventId })}
           </div>
           <div className="flex items-center gap-2">
             <Eye className="h-4 w-4" />
-            Programme #{programmeId}
+            {t('programmePages.meta.programNumber', { id: programmeId })}
           </div>
           <div className="flex items-center gap-2">
             <Clock className="h-4 w-4" />
@@ -231,11 +233,11 @@ const ViewProgrammePage: React.FC = () => {
           </div>
           <div className="flex items-center gap-2">
             <Users className="h-4 w-4" />
-            {programmeData?.intervenants?.length} intervenant(s)
+            {t('programmePages.meta.speakersCount', { count: programmeData?.intervenants?.length || 0 })}
           </div>
           <div className="flex items-center gap-2">
             <MapPin className="h-4 w-4" />
-            {lieux.find(l => l.id_lieu === programmeData?.id_lieu)?.nom || 'Lieu non spécifié'}
+            {lieux.find(l => l.id_lieu === programmeData?.id_lieu)?.nom || t('programmePages.meta.locationNotSpecified')}
           </div>
         </div>
       </div>
@@ -252,7 +254,7 @@ const ViewProgrammePage: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Eye className="h-5 w-5" />
-            Consultation du programme
+            {t('programmePages.view.consultation')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -276,13 +278,12 @@ const ViewProgrammePage: React.FC = () => {
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <Calendar className="h-5 w-5" />
-              Gestion multi-jours
+              {t('programmePages.info.multiDayTitle')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              Ce programme fait partie d'un événement sur plusieurs jours. 
-              Le système regroupe automatiquement les activités par date.
+              {t('programmePages.info.viewMultiDayDesc')}
             </p>
           </CardContent>
         </Card>
@@ -291,13 +292,12 @@ const ViewProgrammePage: React.FC = () => {
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <Users className="h-5 w-5" />
-              Intervenants
+              {t('programmePages.info.speakersTitle')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              {programmeData?.intervenants?.length || 0} intervenant(s) participent à cette activité.
-              Chaque intervenant a un rôle spécifique et ses propres paramètres.
+              {t('programmePages.info.viewSpeakersDesc', { count: programmeData?.intervenants?.length || 0 })}
             </p>
           </CardContent>
         </Card>
@@ -306,13 +306,12 @@ const ViewProgrammePage: React.FC = () => {
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <MapPin className="h-5 w-5" />
-              Lieu et options
+              {t('programmePages.info.locationAndOptionsTitle')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              Activité se déroulant dans un lieu spécifique avec des options 
-              personnalisées pour les participants et l'organisation.
+              {t('programmePages.info.viewLocationOptionsDesc')}
             </p>
           </CardContent>
         </Card>
@@ -322,15 +321,15 @@ const ViewProgrammePage: React.FC = () => {
       <div className="mt-8 flex justify-center gap-4">
         <Button variant="outline" onClick={handleEdit}>
           <Edit className="h-4 w-4 mr-2" />
-          Modifier ce programme
+          {t('programmePages.view.quickActions.editProgram')}
         </Button>
-        <Button variant="outline" onClick={() => navigate(`/events/${eventId}/programmes/create`)}>
+        <Button variant="outline" onClick={() => navigate(`/programme/creer?eventId=${eventId}`)}>
           <Calendar className="h-4 w-4 mr-2" />
-          Ajouter un autre programme
+          {t('programmePages.view.quickActions.addAnotherProgram')}
         </Button>
         <Button variant="outline" onClick={handleBack}>
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Retour à l'événement
+          {t('programmePages.actions.backToEvent')}
         </Button>
       </div>
     </div>

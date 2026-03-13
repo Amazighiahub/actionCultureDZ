@@ -174,10 +174,25 @@ class FileValidator {
 
       const file = req.file;
 
+      // Fichier Cloudinary : pas de fichier local pour magic-bytes.
+      // Valider au minimum le mimetype rapporté par multer contre la whitelist.
+      if (file.path && (file.path.startsWith('http://') || file.path.startsWith('https://'))) {
+        if (!allowedMimeTypes.includes(file.mimetype)) {
+          return res.status(400).json({
+            error: {
+              code: 'INVALID_FILE_TYPE',
+              message: `Type de fichier non autorisé: ${file.mimetype}`,
+              allowedTypes: allowedMimeTypes
+            }
+          });
+        }
+        return next();
+      }
+
       // Vérifier la taille
       if (file.size > maxFileSize) {
-        // Nettoyer le fichier
-        fs.unlinkSync(file.path);
+        // Nettoyer le fichier local
+        if (file.path && !file.path.startsWith('http')) { try { fs.unlinkSync(file.path); } catch (_) {} }
         return res.status(400).json({
           error: {
             code: 'FILE_TOO_LARGE',
@@ -187,7 +202,7 @@ class FileValidator {
         });
       }
 
-      // Valider le type réel
+      // Valider le type réel (magic number) pour les fichiers locaux
       const validation = await FileValidator.validateFileType(
         file.path,
         allowedMimeTypes
@@ -195,7 +210,7 @@ class FileValidator {
 
       if (!validation.valid) {
         // Nettoyer le fichier invalide
-        fs.unlinkSync(file.path);
+        if (file.path && !file.path.startsWith('http')) { try { fs.unlinkSync(file.path); } catch (_) {} }
         return res.status(400).json({
           error: {
             code: 'INVALID_FILE_TYPE',

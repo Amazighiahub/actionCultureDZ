@@ -111,7 +111,7 @@ class ServiceControllerV2 {
       const service = await this.serviceService.create(req.body, req.user.id_user);
       res.status(201).json({
         success: true,
-        message: 'Service créé avec succès (en attente de validation)',
+        message: req.t('service.created'),
         data: service.toDetailJSON(req.lang)
       });
     } catch (error) {
@@ -128,7 +128,7 @@ class ServiceControllerV2 {
       );
       res.json({
         success: true,
-        message: 'Service mis à jour',
+        message: req.t('service.updated'),
         data: service.toDetailJSON(req.lang)
       });
     } catch (error) {
@@ -139,7 +139,7 @@ class ServiceControllerV2 {
   async delete(req, res) {
     try {
       await this.serviceService.delete(parseInt(req.params.id), req.user.id_user);
-      res.json({ success: true, message: 'Service supprimé' });
+      res.json({ success: true, message: req.t('service.deleted') });
     } catch (error) {
       this._handleError(res, error);
     }
@@ -175,7 +175,7 @@ class ServiceControllerV2 {
       );
       res.json({
         success: true,
-        message: 'Service validé',
+        message: req.t('service.validated'),
         data: service.toAdminJSON(req.lang)
       });
     } catch (error) {
@@ -193,7 +193,7 @@ class ServiceControllerV2 {
       );
       res.json({
         success: true,
-        message: 'Service rejeté',
+        message: req.t('service.rejected'),
         data: service.toAdminJSON(req.lang)
       });
     } catch (error) {
@@ -223,7 +223,7 @@ class ServiceControllerV2 {
       if (statusCode === 500) console.error(error.stack);
     }
 
-    const response = { success: false, error: error.message || 'Erreur serveur', code };
+    const response = { success: false, error: error.message || 'Internal server error', code };
     if (error.errors) response.errors = error.errors;
     if (IS_DEV_MODE && statusCode === 500) response.stack = error.stack;
 

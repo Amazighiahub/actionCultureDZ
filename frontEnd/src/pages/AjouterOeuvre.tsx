@@ -23,6 +23,7 @@ import { metadataService, CategoryGroupedByGenre } from '@/services/metadata.ser
 import { oeuvreService } from '@/services/oeuvre.service';
 import { articleBlockService } from '@/services/articleBlock.service';
 import { httpClient } from '@/services/httpClient';
+import { useAuth } from '@/hooks/useAuth';
 import { mapToBackendDTO } from '@/types/api/create-oeuvre-backend.dto';
 import ArticleEditor from '@/components/article/ArticleEditor';
 
@@ -114,8 +115,8 @@ interface FormData {
 
 // État initial du formulaire
 const INITIAL_FORM_DATA: FormData = {
-  titre: { fr: '', ar: '', en: '' },
-  description: { fr: '', ar: '', en: '' },
+  titre: { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
+  description: { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
   id_type_oeuvre: 0,
   id_langue: 1,
   categories: [],
@@ -434,14 +435,11 @@ const AjouterOeuvre: React.FC = () => {
   const [uploadProgress, setUploadProgress] = useState<string>('');
 
   // Authentification
-  const authToken = localStorage.getItem('auth_token');
-  const isAuthenticated = !!authToken;
+  const { isAuthenticated, user: authUser } = useAuth();
   const user = useMemo(() => {
     try {
-      const userInfo = localStorage.getItem('user_info');
-      return userInfo ? JSON.parse(userInfo) : null;
+      return authUser || null;
     } catch (e) {
-      console.error('Erreur parsing user info:', e);
       return null;
     }
   }, []);
@@ -541,12 +539,12 @@ const AjouterOeuvre: React.FC = () => {
         });
         console.log('✅ Œuvre chargée pour édition:', oeuvre);
       } else {
-        toast({ title: 'Erreur', description: 'Œuvre introuvable', variant: 'destructive' });
+        toast({ title: t('toasts.error'), description: t('toasts.oeuvreNotFound'), variant: 'destructive' });
         navigate('/dashboard-pro');
       }
     } catch (error: any) {
       console.error('❌ Erreur chargement œuvre:', error);
-      toast({ title: 'Erreur', description: 'Impossible de charger l\'œuvre', variant: 'destructive' });
+      toast({ title: t('toasts.error'), description: t('toasts.oeuvreLoadFailed'), variant: 'destructive' });
     } finally {
       setLoadingEdit(false);
     }
@@ -651,11 +649,12 @@ const AjouterOeuvre: React.FC = () => {
       2: <Film className="h-5 w-5" />,
       3: <Music className="h-5 w-5" />,
       4: <FileText className="h-5 w-5" />,
-      5: <FileText className="h-5 w-5" />,
-      6: <Hammer className="h-5 w-5" />,
-      7: <Palette className="h-5 w-5" />
+      5: <Beaker className="h-5 w-5" />,
+      6: <Palette className="h-5 w-5" />,
+      7: <Hammer className="h-5 w-5" />,
+      8: <Palette className="h-5 w-5" />
     };
-    return icons[typeId] || null;
+    return icons[typeId] ?? <FileText className="h-5 w-5" />;
   }, []);
 
   // ============================================================================
@@ -953,8 +952,8 @@ const AjouterOeuvre: React.FC = () => {
         if (!finalArticleRecordId) {
           console.error('❌ ID article spécifique manquant! Réponse backend:', JSON.stringify(oeuvreResponse.data, null, 2));
           toast({
-            title: 'Avertissement',
-            description: 'L\'article a été créé mais le contenu (blocs) n\'a pas pu être sauvegardé. Veuillez modifier l\'article pour ajouter le contenu.',
+            title: t('toasts.warning'),
+            description: t('toasts.articleCreatedBlocksFailed'),
             variant: 'destructive',
           });
         }
@@ -1034,7 +1033,7 @@ const AjouterOeuvre: React.FC = () => {
 
       setTimeout(() => {
         // Rediriger vers la page article (avec blocs) pour les types article
-        window.location.href = `/articles/${oeuvreId}`;
+        navigate(`/articles/${oeuvreId}`);
       }, 1500);
 
     } catch (error: any) {
@@ -1068,8 +1067,8 @@ const AjouterOeuvre: React.FC = () => {
         details.film = {
           duree_minutes: formData.duree_minutes,
           realisateur: formData.realisateur,
-          producteur: undefined,
-          studio: undefined
+          producteur: formData.producteur,
+          studio: formData.studio
         };
         break;
 
@@ -1112,6 +1111,7 @@ const AjouterOeuvre: React.FC = () => {
         break;
 
       case 'Œuvre d\'Art':
+      case 'Art':
         details.oeuvre_art = {
           technique: formData.technique_art,
           dimensions: formData.dimensions_art,
@@ -1129,8 +1129,28 @@ const AjouterOeuvre: React.FC = () => {
       setSubmitError(null);
 
       // Validation
-      if (!formData.titre || !formData.id_type_oeuvre || !formData.description) {
-        setSubmitError('Veuillez remplir tous les champs obligatoires');
+      if (
+        !formData.titre?.fr ||
+        !formData.titre?.ar ||
+        !formData.titre?.en ||
+        !formData.titre?.['tz-ltn'] ||
+        !formData.titre?.['tz-tfng']
+      ) {
+        setSubmitError('Le titre est requis dans toutes les langues');
+        return;
+      }
+      if (!formData.id_type_oeuvre) {
+        setSubmitError('Veuillez sélectionner un type d\'œuvre');
+        return;
+      }
+      if (
+        !formData.description?.fr ||
+        !formData.description?.ar ||
+        !formData.description?.en ||
+        !formData.description?.['tz-ltn'] ||
+        !formData.description?.['tz-tfng']
+      ) {
+        setSubmitError('La description est requise dans toutes les langues');
         return;
       }
 
@@ -1198,12 +1218,12 @@ const AjouterOeuvre: React.FC = () => {
         // Succès
         toast({
           title: t('ajouteroeuvre.succes'),
-          description: isEditMode ? 'Œuvre mise à jour avec succès' : (isDraft ? t('ajouteroeuvre.brouillon_sauvegarde') : t('ajouteroeuvre.oeuvre_creee_succes')),
+          description: isEditMode ? t('toasts.oeuvreStatusUpdated') : (isDraft ? t('ajouteroeuvre.brouillon_sauvegarde') : t('ajouteroeuvre.oeuvre_creee_succes')),
         });
 
         // Redirection
         setTimeout(() => {
-          window.location.href = '/dashboard-pro';
+          navigate('/dashboard-pro');
         }, 1500);
 
       } catch (error: any) {
@@ -1247,7 +1267,7 @@ const AjouterOeuvre: React.FC = () => {
               description: t('ajouteroeuvre.oeuvre_creee_succes'),
             });
             setTimeout(() => {
-              window.location.href = '/dashboard-pro';
+              navigate('/dashboard-pro');
             }, 1500);
 
           } else {
@@ -1326,6 +1346,24 @@ const AjouterOeuvre: React.FC = () => {
             onChange={(e) => handleInputChange('realisateur', e.target.value)} />
 
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="producteur">{t("ajouteroeuvre.producteur", "Producteur")}</Label>
+            <Input
+            id="producteur"
+            placeholder={t("ajouteroeuvre.placeholder_producteur", "Nom du producteur")}
+            value={formData.producteur || ''}
+            onChange={(e) => handleInputChange('producteur', e.target.value)} />
+
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="studio">{t("ajouteroeuvre.studio", "Studio de production")}</Label>
+            <Input
+            id="studio"
+            placeholder={t("ajouteroeuvre.placeholder_studio", "Nom du studio")}
+            value={formData.studio || ''}
+            onChange={(e) => handleInputChange('studio', e.target.value)} />
+
+          </div>
         </div>,
 
 
@@ -1347,6 +1385,16 @@ const AjouterOeuvre: React.FC = () => {
             placeholder={t("ajouteroeuvre.placeholder_nom_label")}
             value={formData.label || ''}
             onChange={(e) => handleInputChange('label', e.target.value)} />
+
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="nb_pistes">{t("ajouteroeuvre.nb_pistes", "Nombre de pistes")}</Label>
+            <Input
+            id="nb_pistes"
+            type="number"
+            placeholder={t("ajouteroeuvre.placeholder_nb_pistes", "Ex: 12")}
+            value={formData.nb_pistes || ''}
+            onChange={(e) => handleInputChange('nb_pistes', parseInt(e.target.value) || undefined)} />
 
           </div>
         </div>,
@@ -1547,6 +1595,37 @@ const AjouterOeuvre: React.FC = () => {
             onChange={(e) => handleInputChange('support', e.target.value)} />
 
           </div>
+        </div>,
+
+      'Art':
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+          <div className="space-y-2">
+            <Label htmlFor="technique_art">{t("ajouteroeuvre.technique_artistique")}</Label>
+            <Input
+            id="technique_art"
+            placeholder={t("ajouteroeuvre.placeholder_huile_sur_toile")}
+            value={formData.technique_art || ''}
+            onChange={(e) => handleInputChange('technique_art', e.target.value)} />
+
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="dimensions_art">{t("ajouteroeuvre.dimensions_1")}</Label>
+            <Input
+            id="dimensions_art"
+            placeholder={t("ajouteroeuvre.placeholder_100x80")}
+            value={formData.dimensions_art || ''}
+            onChange={(e) => handleInputChange('dimensions_art', e.target.value)} />
+
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="support">{t("ajouteroeuvre.support")}</Label>
+            <Input
+            id="support"
+            placeholder={t("ajouteroeuvre.placeholder_toile_papier_bois")}
+            value={formData.support || ''}
+            onChange={(e) => handleInputChange('support', e.target.value)} />
+
+          </div>
         </div>
 
     };
@@ -1671,7 +1750,7 @@ const AjouterOeuvre: React.FC = () => {
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>{t("ajouteroeuvre.vous_devez_tre")}
 
-                <Button variant="link" className="px-1" onClick={() => window.location.href = '/login'}>{t("ajouteroeuvre.connecter")}
+                <Button variant="link" className="px-1" onClick={() => navigate('/auth')}>{t("ajouteroeuvre.connecter")}
 
                 </Button>
                   </AlertDescription>
@@ -1691,6 +1770,9 @@ const AjouterOeuvre: React.FC = () => {
                 <Card className="shadow-cultural">
                   <CardHeader>
                     <CardTitle className="text-2xl font-serif">{t("ajouteroeuvre.type_duvre")}</CardTitle>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      {t("ajouteroeuvre.type_hint", "Sélectionnez le type qui correspond le mieux à votre œuvre. Pour les articles et articles scientifiques, l'éditeur avancé permet une mise en page riche avec blocs (titres, images, citations, tableaux).")}
+                    </p>
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 gap-4">

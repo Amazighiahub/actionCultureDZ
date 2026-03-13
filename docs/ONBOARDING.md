@@ -288,4 +288,4 @@ node scripts/checkRawSql.js          # Audit sécurité SQL
 - [Guide de contribution](CONTRIBUTING.md)
 - [Guide de sécurité](SECURITY_GUIDELINES.md)
 - [Guide seed base de données](GUIDE_SEED_DATABASE.md)
-- [Module Patrimoine (détaillé)](MODULE_PATRIMOINE.md)
+- [Module Patrimoine (détaillé)](modules/PATRIMOINE.md)

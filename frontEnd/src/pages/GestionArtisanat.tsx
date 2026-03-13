@@ -26,9 +26,17 @@ import { metadataService } from '@/services/metadata.service';
 import MultiLangInput from '@/components/MultiLangInput';
 import { FormField } from '@/components/forms';
 
+type MultiLangText = {
+  fr: string;
+  ar: string;
+  en: string;
+  'tz-ltn': string;
+  'tz-tfng': string;
+};
+
 interface FormData {
-  nom: { fr: string; ar: string; en: string };
-  description: { fr: string; ar: string; en: string };
+  nom: MultiLangText;
+  description: MultiLangText;
   id_materiau: number;
   id_technique: number;
   prix_min?: number;
@@ -42,8 +50,8 @@ interface FormData {
 }
 
 const INITIAL_FORM: FormData = {
-  nom: { fr: '', ar: '', en: '' },
-  description: { fr: '', ar: '', en: '' },
+  nom: { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
+  description: { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
   id_materiau: 0,
   id_technique: 0,
   sur_commande: false,
@@ -126,12 +134,27 @@ const GestionArtisanat: React.FC = () => {
         setArtisanatData(data);
         
         // Parser les données multilingues
-        let nom = { fr: '', ar: '', en: '' };
-        let description = { fr: '', ar: '', en: '' };
+        let nom: MultiLangText = { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' };
+        let description: MultiLangText = { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' };
         
         try {
-          nom = typeof data.nom === 'string' ? JSON.parse(data.nom) : data.nom;
-          description = typeof data.description === 'string' ? JSON.parse(data.description) : data.description;
+          const parsedNom = typeof data.nom === 'string' ? JSON.parse(data.nom) : data.nom;
+          const parsedDescription = typeof data.description === 'string' ? JSON.parse(data.description) : data.description;
+
+          nom = {
+            fr: parsedNom?.fr || '',
+            ar: parsedNom?.ar || '',
+            en: parsedNom?.en || '',
+            'tz-ltn': parsedNom?.['tz-ltn'] || '',
+            'tz-tfng': parsedNom?.['tz-tfng'] || ''
+          };
+          description = {
+            fr: parsedDescription?.fr || '',
+            ar: parsedDescription?.ar || '',
+            en: parsedDescription?.en || '',
+            'tz-ltn': parsedDescription?.['tz-ltn'] || '',
+            'tz-tfng': parsedDescription?.['tz-tfng'] || ''
+          };
         } catch {
           // Garder les valeurs par défaut si parsing échoue
         }
@@ -219,7 +242,13 @@ const GestionArtisanat: React.FC = () => {
     setError(null);
 
     // Validation
-    if (!formData.nom.fr && !formData.nom.ar) {
+    if (
+      !formData.nom.fr ||
+      !formData.nom.ar ||
+      !formData.nom.en ||
+      !formData.nom['tz-ltn'] ||
+      !formData.nom['tz-tfng']
+    ) {
       setError(t('gestionArtisanat.errors.nomRequired', 'Le nom est requis'));
       return;
     }

@@ -87,7 +87,7 @@ export function AdminRoute({ children }: {children: React.ReactNode;}) {
   }
 
   if (!isAdmin) {
-    return <Navigate to="/unauthorized" replace />;
+    return <Navigate to="/auth" replace />;
   }
 
   return <>{children}</>;
@@ -106,14 +106,14 @@ export function ProfessionalRoute({ children }: {children: React.ReactNode;}) {
       <div className="container mt-5">
         <div className="alert alert-info">
           <h4>{t("permissions_permissionguard.validation_attente")}</h4>
-          <p>{statusMessage || 'Votre compte professionnel est en attente de validation par un administrateur.'}</p>
+          <p>{statusMessage || t("permissions_permissionguard.validation_par_admin")}</p>
         </div>
       </div>);
 
   }
 
   if (!isProfessional) {
-    return <Navigate to="/unauthorized" replace />;
+    return <Navigate to="/auth" replace />;
   }
 
   return <>{children}</>;
@@ -128,7 +128,7 @@ export function AuthenticatedRoute({ children }: {children: React.ReactNode;}) {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/auth" replace />;
   }
 
   return <>{children}</>;

@@ -50,7 +50,7 @@ class FavoriController {
       console.error('Erreur lors de la récupération des favoris:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Erreur serveur lors de la récupération des favoris' 
+        error: req.t('favori.serverErrorGet') 
       });
     }
   }
@@ -66,7 +66,7 @@ class FavoriController {
       if (!typesValides.includes(type_entite)) {
         return res.status(400).json({
           success: false,
-          error: 'Type d\'entité invalide'
+          error: req.t('common.badRequest')
         });
       }
 
@@ -74,7 +74,7 @@ class FavoriController {
       if (!entiteExiste) {
         return res.status(404).json({
           success: false,
-          error: `${type_entite} non trouvé(e)`
+          error: req.t('common.notFound')
         });
       }
 
@@ -85,7 +85,7 @@ class FavoriController {
       if (favoriExistant) {
         return res.status(409).json({
           success: false,
-          error: 'Cet élément est déjà dans vos favoris'
+          error: req.t('favori.added')
         });
       }
 
@@ -101,7 +101,7 @@ class FavoriController {
       // ⚡ Traduire
       res.status(201).json({
         success: true,
-        message: 'Ajouté aux favoris avec succès',
+        message: req.t('favori.added'),
         data: {
           favori,
           entite: translateDeep(entiteDetails, lang)
@@ -112,7 +112,7 @@ class FavoriController {
       console.error('Erreur lors de l\'ajout du favori:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Erreur serveur lors de l\'ajout du favori' 
+        error: req.t('common.serverError') 
       });
     }
   }
@@ -130,7 +130,7 @@ class FavoriController {
       if (!favori) {
         return res.status(404).json({
           success: false,
-          error: 'Favori non trouvé'
+          error: req.t('favori.notFound')
         });
       }
 
@@ -138,14 +138,14 @@ class FavoriController {
 
       res.json({
         success: true,
-        message: 'Retiré des favoris avec succès'
+        message: req.t('favori.removed')
       });
 
     } catch (error) {
       console.error('Erreur lors de la suppression du favori:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Erreur serveur lors de la suppression du favori' 
+        error: req.t('favori.serverErrorDelete') 
       });
     }
   }
@@ -167,7 +167,7 @@ class FavoriController {
       if (!favori) {
         return res.status(404).json({
           success: false,
-          error: 'Favori non trouvé'
+          error: req.t('favori.notFound')
         });
       }
 
@@ -175,14 +175,14 @@ class FavoriController {
 
       res.json({
         success: true,
-        message: 'Retiré des favoris avec succès'
+        message: req.t('favori.removed')
       });
 
     } catch (error) {
       console.error('Erreur lors de la suppression du favori:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Erreur serveur' 
+        error: req.t('common.serverError') 
       });
     }
   }
@@ -211,7 +211,7 @@ class FavoriController {
       console.error('Erreur lors de la vérification du favori:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Erreur serveur' 
+        error: req.t('common.serverError') 
       });
     }
   }
@@ -251,7 +251,7 @@ class FavoriController {
       console.error('Erreur lors de la récupération des statistiques:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Erreur serveur' 
+        error: req.t('common.serverError') 
       });
     }
   }
@@ -301,7 +301,7 @@ class FavoriController {
       console.error('Erreur lors de la récupération des favoris populaires:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Erreur serveur' 
+        error: req.t('common.serverError') 
       });
     }
   }

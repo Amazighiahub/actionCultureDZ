@@ -1,0 +1,26 @@
+{
+  "servicePro": {
+    "nom": { "fr": "Restaurant Test Pro", "en": "Test Pro Restaurant", "ar": "مطعم اختبار" },
+    "description": { "fr": "Description du service professionnel", "en": "Professional service description", "ar": "وصف الخدمة المهنية" },
+    "type_service": "restaurant",
+    "telephone": "+213551234567",
+    "email": "service@test.dz"
+  },
+  "organisation": {
+    "nom": { "fr": "Organisation Test", "en": "Test Organisation", "ar": "منظمة اختبار", "tz-ltn": "Anemyug Test", "tz-tfng": "ⴰⵏⴻⵎⵢⵓⴳ" },
+    "description": { "fr": "Description test", "en": "Test description", "ar": "وصف اختبار", "tz-ltn": "Aglam n usenqed", "tz-tfng": "ⴰⴳⵍⴰⵎ" },
+    "site_web": "https://test.org.dz"
+  },
+  "patrimoinePro": {
+    "nom": { "fr": "Site Test Pro", "en": "Test Pro Site", "ar": "موقع اختبار" },
+    "description": { "fr": "Site patrimonial de test", "en": "Test heritage site", "ar": "موقع تراثي للاختبار" }
+  },
+  "programme": {
+    "titre": "Atelier Test",
+    "description": "Description de l'atelier",
+    "type_activite": "atelier",
+    "date_programme": "2025-06-15",
+    "heure_debut": "10:00",
+    "heure_fin": "12:00"
+  }
+}

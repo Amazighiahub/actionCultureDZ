@@ -79,6 +79,7 @@ const logger = createLogger({
 // Méthodes utilitaires pour le logging structuré
 logger.logRequest = (req, message = 'Request') => {
   logger.info(message, {
+    requestId: req.requestId,
     method: req.method,
     path: req.path,
     ip: req.ip,
@@ -89,6 +90,7 @@ logger.logRequest = (req, message = 'Request') => {
 
 logger.logError = (error, context = {}) => {
   logger.error(error.message, {
+    requestId: context.requestId,
     stack: error.stack,
     code: error.code,
     ...context
@@ -96,7 +98,8 @@ logger.logError = (error, context = {}) => {
 };
 
 logger.logDb = (operation, table, duration) => {
-  logger.debug(`DB ${operation} on ${table}`, { duration: `${duration}ms` });
+  const level = duration > 1000 ? 'warn' : 'debug';
+  logger[level](`DB ${operation} on ${table}`, { duration: `${duration}ms`, slow: duration > 1000 });
 };
 
 // Override global console to use our logger

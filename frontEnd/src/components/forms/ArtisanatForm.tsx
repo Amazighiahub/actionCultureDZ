@@ -54,8 +54,8 @@ interface ArtisanatFormProps {
 }
 
 const DEFAULT_INITIAL_DATA: ArtisanatFormData = {
-  nom: { fr: '', ar: '', en: '' },
-  description: { fr: '', ar: '', en: '' },
+  nom: { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
+  description: { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
   id_materiau: 0,
   id_technique: 0,
   sur_commande: false,
@@ -159,7 +159,7 @@ const ArtisanatForm: React.FC<ArtisanatFormProps> = ({
     switch (mode) {
       case 'create': return <Hammer className="h-6 w-6" />;
       case 'edit': return <Edit className="h-6 w-6" />;
-      'view': return <Eye className="h-6 w-6" />;
+      case 'view': return <Eye className="h-6 w-6" />;
       case 'verify': return <Shield className="h-6 w-6" />;
       default: return <Hammer className="h-6 w-6" />;
     }
@@ -441,8 +441,6 @@ const ArtisanatForm: React.FC<ArtisanatFormProps> = ({
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  Corriger la syntaxe du FormField pour le select
-                  
                   {formData.statut === 'rejete' && (
                     <FormField
                       label={t('artisanForm.motifRejet', 'Motif du rejet')}

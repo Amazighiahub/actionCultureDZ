@@ -54,10 +54,16 @@ const AjouterOrganisation = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.nom.fr && !formData.nom.ar) {
+    if (
+      !formData.nom.fr ||
+      !formData.nom.ar ||
+      !formData.nom.en ||
+      !formData.nom['tz-ltn'] ||
+      !formData.nom['tz-tfng']
+    ) {
       toast({
         title: t('common.error'),
-        description: t('organisations.create.nameRequired', 'Le nom de l\'organisation est requis'),
+        description: t('organisations.create.nameRequired', 'Le nom de l\'organisation est requis dans toutes les langues'),
         variant: 'destructive',
       });
       return;

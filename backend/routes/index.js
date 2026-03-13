@@ -28,6 +28,7 @@ const initEmailVerificationRoutes = require('./emailVerificationRoutes');
 // Routes admin toutes intégrées dans les controllers v2
 const initArticleBlockRoutes = require('./articleBlockRoutes');
 const initOrganisationRoutes = require('./organisationRoutes');
+const initMultilingualRoutes = require('./multilingualRoutes');
 // ========================================================================
 // FONCTIONS UTILITAIRES
 // ========================================================================
@@ -124,7 +125,6 @@ const initRoutes = (models, authMiddleware) => {
     throw new Error('authMiddleware doit être un objet avec les méthodes authenticate, isAdmin, etc.');
   }
 
-  console.log('🔧 Initialisation des routes API...');
 
   // ========================================================================
   // CHARGEMENT DES MIDDLEWARES
@@ -188,7 +188,6 @@ const initRoutes = (models, authMiddleware) => {
   middlewareLoaders.forEach(({ name, loader, fallback }) => {
     try {
       middlewares[name] = loader();
-      console.log(`✅ Middleware ${name} chargé`);
     } catch (error) {
       console.warn(`⚠️ Middleware ${name} non disponible, utilisation du fallback`);
       middlewares[name] = fallback;
@@ -217,7 +216,6 @@ const initRoutes = (models, authMiddleware) => {
       DELETE_OEUVRE: 'delete_oeuvre'
     };
     
-    console.log('✅ Middleware audit initialisé');
   } catch (error) {
     console.warn('⚠️ Middleware audit non disponible');
     middlewares.audit = {
@@ -289,7 +287,7 @@ const initRoutes = (models, authMiddleware) => {
       console.error('Erreur stats publiques:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur lors de la récupération des statistiques'
+        error: req.t ? req.t('common.serverError') : 'Server error'
       });
     }
   });
@@ -299,15 +297,18 @@ const initRoutes = (models, authMiddleware) => {
     try {
       await models.sequelize.authenticate();
       
+      const isProduction = process.env.NODE_ENV === 'production';
       const health = {
         status: 'OK',
         timestamp: new Date().toISOString(),
         version: '1.0.0',
-        environment: process.env.NODE_ENV || 'development',
         database: 'Connected',
-        uptime: process.uptime(),
-        memory: process.memoryUsage(),
-        models: Object.keys(models).filter(key => key !== 'sequelize' && key !== 'Sequelize').length
+        ...(isProduction ? {} : {
+          environment: process.env.NODE_ENV || 'development',
+          uptime: process.uptime(),
+          memory: process.memoryUsage(),
+          models: Object.keys(models).filter(key => key !== 'sequelize' && key !== 'Sequelize').length
+        })
       };
       
       res.json(health);
@@ -337,7 +338,7 @@ const initRoutes = (models, authMiddleware) => {
     };
     
     const documentation = {
-      message: 'API Action Culture - Documentation complète',
+      message: 'API Action Culture - Full Documentation',
       version: '1.0.0',
       baseUrl: process.env.BASE_URL || `http://localhost:${process.env.PORT || 3001}`,
       
@@ -418,7 +419,7 @@ const initRoutes = (models, authMiddleware) => {
     if (moduleRoutes.length === 0) {
       return res.status(404).json({
         success: false,
-        error: `Module '${module}' non trouvé`,
+        error: req.t ? req.t('common.notFound') : `Module '${module}' not found`,
         availableModules: getAvailableModules(allRoutes)
       });
     }
@@ -440,10 +441,10 @@ const initRoutes = (models, authMiddleware) => {
     });
   });
 
-  // Routes de débogage
+  // Routes de débogage (dev uniquement)
   router.get('/debug/routes', (req, res) => {
-    if (process.env.NODE_ENV === 'production') {
-      return res.status(404).end();
+    if (process.env.NODE_ENV !== 'development') {
+      return res.status(404).json({ success: false, error: 'Not found' });
     }
     const debug = {
       timestamp: new Date().toISOString(),
@@ -510,7 +511,6 @@ const initRoutes = (models, authMiddleware) => {
   // ========================================================================
 
   if (process.env.NODE_ENV !== 'production') {
-    console.log('🔧 Montage des routes métier...');
   }
   
   const routeDefinitions = [
@@ -532,6 +532,8 @@ const initRoutes = (models, authMiddleware) => {
     
     // Autres routes
     { path: '/lieux', init: initLieuRoutes, args: [models] },
+    // /api/languages et /api/set-language sont définis directement dans app.js
+    { path: '/multilingual', init: initMultilingualRoutes, args: [models, authMiddleware] },
     { path: '/patrimoine', init: initPatrimoineRoutes, args: [models, authMiddleware] },
     { path: '/artisanat', init: initArtisanatRoutes, args: [models, authMiddleware] },
     { path: '/commentaires', init: initCommentaireRoutes, args: [models, { auth: authMiddleware.authenticate, optionalAuth: authMiddleware.optionalAuth }] },
@@ -544,7 +546,6 @@ const initRoutes = (models, authMiddleware) => {
     { path: '/dashboard', init: initDashboardRoutes, args: [models] },
     { path: '/tracking', init: initTrackingRoutes, args: [models, authMiddleware] },
     { path: '/signalements', init: initSignalementRoutes, args: [models, authMiddleware] },
-    { path: '/signalement', init: initSignalementRoutes, args: [models, authMiddleware] },
     { path: '/email-verification', init: initEmailVerificationRoutes, args: [models, authMiddleware] },
     // ========================================================================
     // ROUTES ADMIN - AJOUT
@@ -560,7 +561,6 @@ const initRoutes = (models, authMiddleware) => {
       if (typeof init === 'function') {
         router.use(path, init(...args));
         successCount++;
-        console.log(`  ✅ ${path}`);
       } else {
         throw new Error(`Module non trouvé: ${path}`);
       }
@@ -572,15 +572,14 @@ const initRoutes = (models, authMiddleware) => {
       router.use(path, (req, res) => {
         res.status(501).json({
           success: false,
-          error: 'Module non implémenté',
-          message: `Le module ${path} est en cours de développement`,
+          error: req.t ? req.t('common.notImplemented') : 'Module not implemented',
+          message: `Module ${path}`,
           details: error.message
         });
       });
     }
   });
 
-  console.log(`✅ Routes montées: ${successCount} succès, ${errorCount} erreurs`);
 
   // ========================================================================
   // GESTION DES ERREURS
@@ -596,9 +595,9 @@ const initRoutes = (models, authMiddleware) => {
 
     res.status(404).json({
       success: false,
-      error: 'Route non trouvée',
-      message: `La route ${req.method} ${req.originalUrl} n'existe pas`,
-      suggestion: 'Consultez GET /api/ pour la documentation complète',
+      error: req.t ? req.t('common.notFound') : 'Route not found',
+      message: `${req.method} ${req.originalUrl}`,
+      suggestion: 'GET /api/',
       availableEndpoints: '/api/endpoints'
     });
   });
@@ -700,7 +699,7 @@ module.exports = (models, authMiddleware) => {
     emergencyRouter.get('/health', (req, res) => {
       res.status(503).json({
         status: 'ERROR',
-        message: 'Service en maintenance',
+        message: req.t ? req.t('common.serverError') : 'Service in maintenance',
         error: error.message
       });
     });
@@ -708,8 +707,8 @@ module.exports = (models, authMiddleware) => {
     emergencyRouter.all('*', (req, res) => {
       res.status(503).json({
         success: false,
-        error: 'Service temporairement indisponible',
-        message: 'L\'API est en cours de maintenance',
+        error: req.t ? req.t('common.serverError') : 'Service temporarily unavailable',
+        message: req.t ? req.t('common.serverError') : 'API maintenance',
         details: process.env.NODE_ENV === 'development' ? error.message : undefined
       });
     });

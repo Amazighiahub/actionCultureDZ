@@ -49,21 +49,18 @@ jobs:
 
       - name: Backend - Lint
         working-directory: ./backend
-        run: npm run lint || echo "Lint issues detected"
-        continue-on-error: true
+        run: npm run lint
 
       - name: Backend - Tests
         working-directory: ./backend
-        run: npm test -- --passWithNoTests
-        continue-on-error: true
+        run: npm test -- --coverage --coverageReporters=text-summary
         env:
           NODE_ENV: test
           JWT_SECRET: ci-test-secret-key-minimum-32-characters-long
 
       - name: Backend - Security audit
         working-directory: ./backend
-        run: npm audit --audit-level=high || true
-        continue-on-error: true
+        run: npm audit --audit-level=high
 
       # ---- Frontend ----
       - name: Frontend - Install
@@ -72,8 +69,7 @@ jobs:
 
       - name: Frontend - Lint
         working-directory: ./frontEnd
-        run: npm run lint || echo "Lint issues detected"
-        continue-on-error: true
+        run: npm run lint
 
       - name: Frontend - Build
         working-directory: ./frontEnd

@@ -2,7 +2,7 @@
  * BaseRepository - Classe de base pour le pattern Repository
  * Fournit les opérations CRUD de base et la gestion des requêtes
  */
-const { Op } = require('sequelize');
+const { Op, fn, col, literal, where: seqWhere } = require('sequelize');
 
 class BaseRepository {
   constructor(model) {
@@ -160,18 +160,18 @@ class BaseRepository {
     const sanitizedQuery = this._sanitizeSearchQuery(query);
     const searchPattern = `%${sanitizedQuery}%`;
 
-    // Qualifier les colonnes avec le nom de la table pour éviter l'ambiguïté dans les JOINs
     const tableName = this.model.getTableName();
-    const { literal } = require('sequelize');
     const langs = ['fr', 'ar', 'en', 'tz-ltn', 'tz-tfng'];
-    const escapedPattern = searchPattern.replace(/'/g, "\\'");
     const searchConditions = fields.map(field => {
-      const qCol = `\`${tableName}\`.\`${field}\``;
-      const parts = [
-        `${qCol} LIKE '${escapedPattern}'`,
-        ...langs.map(lang => `JSON_EXTRACT(${qCol}, '$.${lang}') LIKE '${escapedPattern}'`)
-      ];
-      return literal(`(${parts.join(' OR ')})`);
+      const qualifiedCol = col(`${tableName}.${field}`);
+      return {
+        [Op.or]: [
+          seqWhere(qualifiedCol, { [Op.like]: searchPattern }),
+          ...langs.map(lang =>
+            seqWhere(fn('JSON_EXTRACT', qualifiedCol, literal(`'$.${lang}'`)), { [Op.like]: searchPattern })
+          )
+        ]
+      };
     });
 
     return this.findAll({
@@ -198,8 +198,7 @@ class BaseRepository {
       .replace(/\\/g, '\\\\')
       .replace(/%/g, '\\%')
       .replace(/_/g, '\\_')
-      .replace(/'/g, "''")
-      .substring(0, 200); // Limiter la longueur
+      .substring(0, 200);
   }
 
   /**

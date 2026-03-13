@@ -79,6 +79,25 @@ export const LieuSelector: React.FC<LieuSelectorProps> = ({
   const previewMapRef = useRef<L.Map | null>(null);
   const previewMapContainerRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    if (showMapPreview && previewLieu && previewMapContainerRef.current && !previewMapRef.current) {
+      const map = L.map(previewMapContainerRef.current).setView(
+        [previewLieu.latitude, previewLieu.longitude], 14
+      );
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap'
+      }).addTo(map);
+      L.marker([previewLieu.latitude, previewLieu.longitude]).addTo(map);
+      previewMapRef.current = map;
+    }
+    return () => {
+      if (previewMapRef.current) {
+        previewMapRef.current.remove();
+        previewMapRef.current = null;
+      }
+    };
+  }, [showMapPreview, previewLieu]);
+
   // Charger les lieux existants
   useEffect(() => {
     loadLieux();

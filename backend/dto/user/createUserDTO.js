@@ -59,9 +59,7 @@ class CreateUserDTO extends BaseDTO {
       accepte_conditions: this.accepteConditions,
       accepte_newsletter: this.accepteNewsletter,
       photo_url: this.photoUrl,
-      // Valeurs par défaut
-      statut_validation: this.typeUser === 'visiteur' ? 'valide' : 'en_attente',
-      statut: 'actif',
+      statut: this.typeUser === 'visiteur' ? 'actif' : 'en_attente_validation',
       date_creation: new Date()
     };
   }

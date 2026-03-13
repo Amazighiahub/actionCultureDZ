@@ -21,14 +21,10 @@ export class MediaService {
    * Upload d'un fichier image pour un profil utilisateur
    */
   async uploadProfilePhoto(file: File): Promise<ApiResponse<MediaUploadResponse>> {
-    console.log('📸 MediaService: Upload photo de profil');
-    
     // Utiliser directement uploadService pour l'upload
     const result = await uploadService.uploadProfilePhoto(file);
 
     if (result.success && result.data) {
-      console.log('✅ Photo uploadée avec succès:', result.data.url);
-      
       // Mise à jour du profil avec la nouvelle photo
       try {
         const updateResult = await httpClient.put<{ media_id: number }>(
@@ -44,7 +40,6 @@ export class MediaService {
           } as MediaUploadResponse
         };
       } catch (error) {
-        console.error('❌ Erreur lors de la mise à jour du profil:', error);
         // L'upload a réussi mais la mise à jour du profil a échoué
         // On retourne quand même le résultat de l'upload
         return {
@@ -61,8 +56,6 @@ export class MediaService {
    * Upload d'une photo de profil lors de l'inscription (sans authentification)
    */
   async uploadProfilePhotoForRegistration(file: File): Promise<ApiResponse<UploadResponse>> {
-    console.log('📸 MediaService: Upload photo pour inscription (sans auth)');
-    
     // Utiliser directement uploadService avec l'endpoint public
     const result = await uploadService.uploadImage(file, {
       isPublic: true,
@@ -71,12 +64,6 @@ export class MediaService {
       maxHeight: 500,
       quality: 0.9
     });
-
-    if (result.success && result.data) {
-      console.log('✅ Photo inscription uploadée:', result.data.url);
-    } else {
-      console.error('❌ Échec upload photo inscription:', result.error);
-    }
 
     return result;
   }
@@ -89,8 +76,6 @@ export class MediaService {
     oeuvreId: number,
     options?: MediaUploadOptions
   ): Promise<ApiResponse<MediaUploadResponse>> {
-    console.log('🎨 MediaService: Upload média pour œuvre', oeuvreId);
-    
     // Déterminer le type de fichier
     const fileType = uploadService.getFileType(file);
     
@@ -165,7 +150,6 @@ export class MediaService {
 
       return uploadResult as ApiResponse<MediaUploadResponse>;
     } catch (error) {
-      console.error('❌ Erreur upload média œuvre:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Erreur lors de l\'upload'
@@ -181,8 +165,6 @@ export class MediaService {
     evenementId: number,
     options?: MediaUploadOptions
   ): Promise<ApiResponse<MediaUploadResponse>> {
-    console.log('🎭 MediaService: Upload média pour événement', evenementId);
-    
     const fileType = uploadService.getFileType(file);
     
     if (fileType === 'unknown') {
@@ -254,7 +236,6 @@ export class MediaService {
 
       return uploadResult as ApiResponse<MediaUploadResponse>;
     } catch (error) {
-      console.error('❌ Erreur upload média événement:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Erreur lors de l\'upload'
@@ -271,8 +252,6 @@ export class MediaService {
     entityId: number,
     onProgress?: (progress: { file: string; percentage: number }) => void
   ): Promise<ApiResponse<MediaUploadResponse[]>> {
-    console.log(`📦 MediaService: Upload multiple pour ${entityType} ${entityId}`);
-    
     const results: MediaUploadResponse[] = [];
     const errors: string[] = [];
 
@@ -315,8 +294,6 @@ export class MediaService {
       }
     }
 
-    console.log(`✅ Upload multiple terminé: ${results.length} succès, ${errors.length} erreurs`);
-
     return {
       success: errors.length === 0,
       data: results,
@@ -332,8 +309,6 @@ export class MediaService {
     siteId: number,
     options?: MediaUploadOptions
   ): Promise<ApiResponse<MediaUploadResponse>> {
-    console.log('🏛️ MediaService: Upload média pour patrimoine', siteId);
-    
     const fileType = uploadService.getFileType(file);
     
     if (fileType !== 'image') {
@@ -376,7 +351,6 @@ export class MediaService {
 
       return uploadResult as ApiResponse<MediaUploadResponse>;
     } catch (error) {
-      console.error('❌ Erreur upload média patrimoine:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Erreur lors de l\'upload'
@@ -392,8 +366,6 @@ export class MediaService {
     artisanatId: number,
     options?: MediaUploadOptions
   ): Promise<ApiResponse<MediaUploadResponse>> {
-    console.log('🎨 MediaService: Upload média pour artisanat', artisanatId);
-    
     const fileType = uploadService.getFileType(file);
     
     if (fileType !== 'image') {
@@ -436,7 +408,6 @@ export class MediaService {
 
       return uploadResult as ApiResponse<MediaUploadResponse>;
     } catch (error) {
-      console.error('❌ Erreur upload média artisanat:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Erreur lors de l\'upload'
@@ -452,8 +423,6 @@ export class MediaService {
     entityType: 'oeuvre' | 'evenement' | 'patrimoine' | 'artisanat',
     entityId: number
   ): Promise<ApiResponse<void>> {
-    console.log(`🗑️ MediaService: Suppression média ${mediaId} de ${entityType} ${entityId}`);
-    
     let endpoint: string;
     
     switch (entityType) {
@@ -474,12 +443,8 @@ export class MediaService {
 
     try {
       const result = await httpClient.delete<void>(endpoint);
-      if (result.success) {
-        console.log('✅ Média supprimé avec succès');
-      }
       return result;
     } catch (error) {
-      console.error('❌ Erreur suppression média:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Erreur lors de la suppression'
@@ -494,8 +459,6 @@ export class MediaService {
     entityType: 'oeuvre' | 'evenement' | 'patrimoine',
     entityId: number
   ): Promise<ApiResponse<Media[]>> {
-    console.log(`📂 MediaService: Récupération médias de ${entityType} ${entityId}`);
-    
     let endpoint: string;
     
     switch (entityType) {
@@ -513,7 +476,6 @@ export class MediaService {
     try {
       return await httpClient.get<Media[]>(endpoint);
     } catch (error) {
-      console.error('❌ Erreur récupération médias:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Erreur lors de la récupération'

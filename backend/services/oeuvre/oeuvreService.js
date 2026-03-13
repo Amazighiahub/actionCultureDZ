@@ -165,8 +165,11 @@ class OeuvreService extends BaseService {
       }
     }
 
+    const detailsSpecifiques = requestBody.details_specifiques || {};
+    const idTypeOeuvre = createDTO.idTypeOeuvre;
+
     // 4. Créer l'œuvre dans une transaction
-    const oeuvre = await this.withTransaction(async (transaction) => {
+    const result = await this.withTransaction(async (transaction) => {
       // Créer l'œuvre
       const entityData = createDTO.toEntity();
       const newOeuvre = await this.repository.create(entityData, { transaction });
@@ -183,13 +186,145 @@ class OeuvreService extends BaseService {
         await this._associateTags(newOeuvre.id_oeuvre, tagIds, transaction);
       }
 
-      return newOeuvre;
+      let articleRecord = null;
+      let articleScientifiqueRecord = null;
+
+      // Créer Livre si type 1
+      if (idTypeOeuvre === 1 && this.models?.Livre) {
+        const ds = detailsSpecifiques.livre || {};
+        await this.models.Livre.create({
+          id_oeuvre: newOeuvre.id_oeuvre,
+          isbn: ds.isbn || null,
+          nb_pages: ds.nb_pages != null ? parseInt(ds.nb_pages, 10) : null,
+          id_genre: ds.id_genre || null
+        }, { transaction });
+      }
+
+      // Créer Film si type 2
+      if (idTypeOeuvre === 2 && this.models?.Film) {
+        const ds = detailsSpecifiques.film || {};
+        await this.models.Film.create({
+          id_oeuvre: newOeuvre.id_oeuvre,
+          duree_minutes: ds.duree_minutes != null ? parseInt(ds.duree_minutes, 10) : null,
+          realisateur: ds.realisateur || null,
+          id_genre: ds.id_genre || null
+        }, { transaction });
+      }
+
+      // Créer AlbumMusical si type 3
+      if (idTypeOeuvre === 3 && this.models?.AlbumMusical) {
+        const ds = detailsSpecifiques.album_musical || {};
+        const label = ds.label || 'Indépendant';
+        let idGenre = ds.id_genre || null;
+        if (!idGenre && this.models?.TypeOeuvreGenre) {
+          const tog = await this.models.TypeOeuvreGenre.findOne({
+            where: { id_type_oeuvre: 3, actif: 1 },
+            transaction
+          });
+          idGenre = tog?.id_genre || null;
+        }
+        const duree = ds.duree ? this._parseDureeToMinutes(ds.duree) : null;
+        await this.models.AlbumMusical.create({
+          id_oeuvre: newOeuvre.id_oeuvre,
+          duree,
+          id_genre: idGenre ?? 1,
+          label
+        }, { transaction });
+      }
+
+      // Créer Article si type 4
+      if (idTypeOeuvre === 4 && this.models?.Article) {
+        const ds = detailsSpecifiques.article || {};
+        articleRecord = await this.models.Article.create({
+          id_oeuvre: newOeuvre.id_oeuvre,
+          auteur: ds.auteur || null,
+          source: ds.source || null,
+          resume: ds.resume || null,
+          url_source: ds.url_source || null,
+          sous_titre: ds.sous_titre || null,
+          statut: 'brouillon'
+        }, { transaction });
+      }
+
+      // Créer ArticleScientifique si type 5
+      if (idTypeOeuvre === 5 && this.models?.ArticleScientifique) {
+        const ds = detailsSpecifiques.article_scientifique || {};
+        articleScientifiqueRecord = await this.models.ArticleScientifique.create({
+          id_oeuvre: newOeuvre.id_oeuvre,
+          journal: ds.journal || null,
+          doi: ds.doi || null,
+          volume: ds.volume || null,
+          numero: ds.numero || null,
+          pages: ds.pages || null,
+          issn: ds.issn || null,
+          impact_factor: ds.impact_factor != null ? parseFloat(ds.impact_factor) : null,
+          peer_reviewed: ds.peer_reviewed !== false,
+          open_access: ds.open_access === true,
+          resume: ds.resume || null,
+          citation_apa: ds.citation_apa || null,
+          url_hal: ds.url_hal || null,
+          url_arxiv: ds.url_arxiv || null
+        }, { transaction });
+      }
+
+      // Créer OeuvreArt si type 6 ou 8 (Œuvre d'Art / Art)
+      if ((idTypeOeuvre === 6 || idTypeOeuvre === 8) && this.models?.OeuvreArt) {
+        const ds = detailsSpecifiques.oeuvre_art || {};
+        await this.models.OeuvreArt.create({
+          id_oeuvre: newOeuvre.id_oeuvre,
+          technique: ds.technique || null,
+          dimensions: ds.dimensions || null,
+          support: ds.support || null
+        }, { transaction });
+      }
+
+      // Créer Artisanat si type 7
+      if (idTypeOeuvre === 7 && this.models?.Artisanat) {
+        const ds = detailsSpecifiques.artisanat || {};
+        await this.models.Artisanat.create({
+          id_oeuvre: newOeuvre.id_oeuvre,
+          id_materiau: ds.id_materiau || null,
+          id_technique: ds.id_technique || null,
+          dimensions: ds.dimensions || null,
+          poids: ds.poids != null ? parseFloat(ds.poids) : null,
+          prix: ds.prix != null ? parseFloat(ds.prix) : null
+        }, { transaction });
+      }
+
+      return {
+        oeuvre: newOeuvre,
+        articleRecord,
+        articleScientifiqueRecord
+      };
     });
 
+    const { oeuvre, articleRecord, articleScientifiqueRecord } = result;
     this.logger.info(`Œuvre créée: ${oeuvre.id_oeuvre} par utilisateur: ${userId}`);
 
-    // 5. Retourner l'œuvre complète
-    return this.findById(oeuvre.id_oeuvre);
+    // 5. Retourner l'œuvre complète et les enregistrements créés (pour article/blocs)
+    const oeuvreFull = await this.findById(oeuvre.id_oeuvre);
+    return {
+      oeuvre: oeuvreFull,
+      article: articleRecord ? articleRecord.get({ plain: true }) : null,
+      article_scientifique: articleScientifiqueRecord ? articleScientifiqueRecord.get({ plain: true }) : null
+    };
+  }
+
+  /**
+   * Parse "45:30" (mm:ss) ou "45" en minutes
+   * @private
+   */
+  _parseDureeToMinutes(duree) {
+    if (duree == null || duree === '') return null;
+    const num = parseInt(duree, 10);
+    if (!isNaN(num)) return num;
+    const parts = String(duree).split(':');
+    if (parts.length >= 2) {
+      const m = parseInt(parts[0], 10) || 0;
+      const s = parseInt(parts[1], 10) || 0;
+      return m + Math.round(s / 60);
+    }
+    return null;
   }
 
   /**

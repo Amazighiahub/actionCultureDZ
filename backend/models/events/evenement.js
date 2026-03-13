@@ -255,7 +255,8 @@ module.exports = (sequelize) => {
     
     Evenement.hasMany(models.EvenementUser, {
       foreignKey: 'id_evenement',
-      as: 'EvenementUsers'
+      as: 'EvenementUsers',
+      onDelete: 'CASCADE'
     });
     
     Evenement.hasMany(models.EvenementOeuvre, {
@@ -369,6 +370,14 @@ module.exports = (sequelize) => {
       order: [['date_debut', 'ASC']]
     });
   };
+
+  Evenement.afterDestroy(async (evenement, options) => {
+    const { Favori, Vue, Signalement } = sequelize.models;
+    const id = evenement.id_evenement;
+    if (Favori) await Favori.destroy({ where: { type_entite: 'evenement', id_entite: id } });
+    if (Vue) await Vue.destroy({ where: { type_entite: 'evenement', id_entite: id } });
+    if (Signalement) await Signalement.destroy({ where: { type_entite: 'evenement', id_entite: id } });
+  });
 
   return Evenement;
 };

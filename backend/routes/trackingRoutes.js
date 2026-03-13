@@ -24,7 +24,7 @@ const initTrackingRoutes = (models, authMiddleware) => {
     if (type && !validTypes.includes(type)) {
       return res.status(400).json({
         success: false,
-        message: 'Type d\'entité invalide'
+        message: req.t ? req.t('validation.invalidEntityType') : 'Invalid entity type'
       });
     }
     
@@ -58,17 +58,17 @@ const initTrackingRoutes = (models, authMiddleware) => {
       if (!entity) {
         return res.status(404).json({
           success: false,
-          message: `${type} non trouvé(e)`
+          message: req.t ? req.t('common.notFound') : `${type} not found`
         });
       }
 
       req.entity = entity;
       next();
     } catch (error) {
-      console.error('Erreur vérification entité:', error);
+      console.error(req.t ? req.t('error.checkingEntity') : 'Error checking entity:', error);
       res.status(500).json({
         success: false,
-        message: 'Erreur lors de la vérification de l\'entité'
+        message: req.t ? req.t('common.serverError') : 'Server error'
       });
     }
   };
@@ -132,7 +132,7 @@ const initTrackingRoutes = (models, authMiddleware) => {
       } catch (error) {
         res.status(500).json({
           success: false,
-          message: 'Erreur lors du comptage des vues'
+          message: req.t ? req.t('common.serverError') : 'Server error'
         });
       }
     }
@@ -234,7 +234,7 @@ const initTrackingRoutes = (models, authMiddleware) => {
         console.error('Erreur récupération populaires:', error);
         res.status(500).json({
           success: false,
-          message: 'Erreur lors de la récupération des éléments populaires'
+          message: req.t ? req.t('common.serverError') : 'Server error'
         });
       }
     }
@@ -274,7 +274,7 @@ const initTrackingRoutes = (models, authMiddleware) => {
       } catch (error) {
         res.status(500).json({
           success: false,
-          message: 'Erreur lors de la récupération de l\'historique'
+          message: req.t ? req.t('common.serverError') : 'Server error'
         });
       }
     }
@@ -299,12 +299,12 @@ const initTrackingRoutes = (models, authMiddleware) => {
 
         res.json({
           success: true,
-          message: `${deleted} vue(s) supprimée(s) de votre historique`
+          message: req.t ? req.t('vue.historyDeleted', { count: deleted }) : `${deleted} view(s) deleted`
         });
       } catch (error) {
         res.status(500).json({
           success: false,
-          message: 'Erreur lors de la suppression de l\'historique'
+          message: req.t ? req.t('common.serverError') : 'Server error'
         });
       }
     }
@@ -413,7 +413,7 @@ const initTrackingRoutes = (models, authMiddleware) => {
         console.error('Erreur analytics:', error);
         res.status(500).json({
           success: false,
-          message: 'Erreur lors de la génération des analytics'
+          message: req.t ? req.t('common.serverError') : 'Server error'
         });
       }
     }
@@ -527,7 +527,7 @@ const initTrackingRoutes = (models, authMiddleware) => {
         console.error('Erreur analytics entité:', error);
         res.status(500).json({
           success: false,
-          message: 'Erreur lors de la génération des analytics'
+          message: req.t ? req.t('common.serverError') : 'Server error'
         });
       }
     }
@@ -572,7 +572,7 @@ const initTrackingRoutes = (models, authMiddleware) => {
         console.error('Erreur export:', error);
         res.status(500).json({
           success: false,
-          message: 'Erreur lors de l\'export'
+          message: req.t ? req.t('common.serverError') : 'Server error'
         });
       }
     }

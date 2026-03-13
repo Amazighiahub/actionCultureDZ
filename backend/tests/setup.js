@@ -33,7 +33,7 @@ global.createTestUser = (overrides = {}) => ({
   prenom: "User",
   email: "test@example.com",
   type_user: "visiteur",
-  statut_validation: "valide",
+  statut: "actif",
   est_actif: true,
   ...overrides
 });

@@ -119,6 +119,18 @@ class EvenementService extends BaseService {
       throw this._validationError('Le nom de l\'événement est requis');
     }
 
+    const lieuId = data.id_lieu || data.lieuId;
+    if (lieuId && this.models?.Lieu) {
+      const lieu = await this.models.Lieu.findByPk(lieuId);
+      if (!lieu) throw this._validationError('Le lieu spécifié n\'existe pas');
+    }
+
+    const typeId = data.id_type_evenement || data.typeEvenementId;
+    if (typeId && this.models?.TypeEvenement) {
+      const type = await this.models.TypeEvenement.findByPk(typeId);
+      if (!type) throw this._validationError('Le type d\'événement spécifié n\'existe pas');
+    }
+
     const entityData = {
       nom_evenement: data.nom_evenement || data.nom,
       description: data.description || {},
@@ -216,18 +228,21 @@ class EvenementService extends BaseService {
       throw this._notFoundError(evenementId);
     }
 
-    if (evenement.capacite_max) {
-      const count = await this.repository.countParticipants(evenementId);
-      if (count >= evenement.capacite_max) {
-        throw this._validationError('L\'événement est complet');
-      }
-    }
-
     if (evenement.date_limite_inscription && new Date() > new Date(evenement.date_limite_inscription)) {
       throw this._validationError('La date limite d\'inscription est dépassée');
     }
 
-    const registration = await this.repository.registerParticipant(evenementId, userId);
+    const registration = await this.withTransaction(async (transaction) => {
+      if (evenement.capacite_max) {
+        const count = await this.repository.countParticipants(evenementId, { transaction });
+        if (count >= evenement.capacite_max) {
+          throw this._validationError('L\'événement est complet');
+        }
+      }
+
+      return this.repository.registerParticipant(evenementId, userId, { transaction });
+    });
+
     this.logger.info(`Participant inscrit: user ${userId} → événement ${evenementId}`);
     return registration;
   }

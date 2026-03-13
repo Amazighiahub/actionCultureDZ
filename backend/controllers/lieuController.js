@@ -7,6 +7,8 @@ const { translate, translateDeep, createMultiLang, mergeTranslations } = require
 // ✅ OPTIMISATION: Import de l'utilitaire de recherche multilingue centralisé
 const { buildMultiLangSearch } = require('../utils/multiLangSearchBuilder');
 
+const ALLOWED_LANGS = ['fr', 'ar', 'en', 'tz-ltn', 'tz-tfng'];
+
 class LieuController {
   constructor(models) {
     this.models = models;
@@ -21,7 +23,7 @@ class LieuController {
   // Récupérer tous les lieux
   async getAllLieux(req, res) {
     try {
-      const lang = req.lang || 'fr';  // ⚡
+      const lang = ALLOWED_LANGS.includes(req.lang) ? req.lang : 'fr';
       const {
         page = 1,
         limit = 10,
@@ -118,7 +120,7 @@ class LieuController {
       let order = [['id_lieu', 'ASC']];
       try {
         // Tenter l'ordre par nom si JSON fonctionne
-        order = [[this.sequelize.literal(`JSON_EXTRACT(\`Lieu\`.\`nom\`, '$.${lang}')`), 'ASC']];
+        order = [[this.sequelize.literal(`JSON_EXTRACT(\`Lieu\`.\`nom\`, '$.${lang.replace(/[^a-z-]/gi, '')}')`), 'ASC']];
       } catch {
         // Fallback sur l'ID
       }
@@ -163,7 +165,7 @@ class LieuController {
       console.error('Stack:', error.stack);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur lors de la récupération des lieux',
+        error: req.t('common.serverError'),
         details: process.env.NODE_ENV === 'development' ? error.message : undefined
       });
     }
@@ -172,7 +174,7 @@ class LieuController {
   // Récupérer les lieux d'une wilaya spécifique
   async getLieuxByWilaya(req, res) {
     try {
-      const lang = req.lang || 'fr';  // ⚡
+      const lang = ALLOWED_LANGS.includes(req.lang) ? req.lang : 'fr';
       const { wilayaId } = req.params;
       const { page = 1, limit = 10 } = req.query;
       const offset = (page - 1) * limit;
@@ -181,7 +183,7 @@ class LieuController {
       if (!wilaya) {
         return res.status(404).json({
           success: false,
-          error: 'Wilaya non trouvée'
+          error: req.t('lieu.wilayaNotFound')
         });
       }
 
@@ -210,7 +212,7 @@ class LieuController {
           { model: this.models.Service },
           { model: this.models.LieuMedia }
         ],
-        order: [[this.sequelize.literal(`JSON_EXTRACT(\`Lieu\`.\`nom\`, '$.${lang}')`), 'ASC']],
+        order: [[this.sequelize.literal(`JSON_EXTRACT(\`Lieu\`.\`nom\`, '$.${lang.replace(/[^a-z-]/gi, '')}')`), 'ASC']],
         distinct: true
       });
 
@@ -233,7 +235,7 @@ class LieuController {
       console.error('Erreur:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Erreur serveur' 
+        error: req.t('common.serverError') 
       });
     }
   }
@@ -283,21 +285,21 @@ class LieuController {
       if (!nom || !adresse || !latitude || !longitude) {
         return res.status(400).json({
           success: false,
-          error: 'Données manquantes. Les champs nom, adresse, latitude et longitude sont requis.'
+          error: req.t('lieu.missingFields')
         });
       }
 
       if (latitude < -90 || latitude > 90) {
         return res.status(400).json({
           success: false,
-          error: 'Latitude invalide. Doit être entre -90 et 90.'
+          error: req.t('lieu.invalidLatitude')
         });
       }
 
       if (longitude < -180 || longitude > 180) {
         return res.status(400).json({
           success: false,
-          error: 'Longitude invalide. Doit être entre -180 et 180.'
+          error: req.t('lieu.invalidLongitude')
         });
       }
 
@@ -307,7 +309,7 @@ class LieuController {
         if (!commune) {
           return res.status(404).json({
             success: false,
-            error: 'Commune non trouvée'
+            error: req.t('lieu.communeNotFound')
           });
         }
 
@@ -316,7 +318,7 @@ class LieuController {
           if (!localite || localite.id_commune !== finalCommuneId) {
             return res.status(400).json({
               success: false,
-              error: 'Localité invalide ou n\'appartient pas à la commune spécifiée'
+              error: req.t('lieu.invalidLocalite')
             });
           }
         }
@@ -370,7 +372,7 @@ class LieuController {
       // ⚡ Traduire
       res.status(201).json({
         success: true,
-        message: 'Lieu créé avec succès',
+        message: req.t('lieu.created'),
         data: translateDeep(lieuComplet, lang)
       });
 
@@ -378,7 +380,7 @@ class LieuController {
       console.error('Erreur lors de la création du lieu:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Erreur serveur lors de la création du lieu' 
+        error: req.t('common.serverError') 
       });
     }
   }
@@ -388,7 +390,12 @@ class LieuController {
     try {
       const lang = req.lang || 'fr';  // ⚡
       const { id } = req.params;
-      const { nom, adresse, description, histoire, ...otherFields } = req.body;
+      const { nom, adresse, description, histoire } = req.body;
+
+      // Whitelist des champs modifiables
+      const allowedFields = ['latitude', 'longitude', 'type_lieu', 'commune_id', 'wilaya_id', 'photo_url', 'site_web', 'telephone', 'email', 'capacite', 'accessibilite', 'statut'];
+      const updates = {};
+      allowedFields.forEach(f => { if (req.body[f] !== undefined) updates[f] = req.body[f]; });
 
       const lieu = await this.models.Lieu.findByPk(id, {
         include: [{ model: this.models.DetailLieu }]
@@ -397,11 +404,9 @@ class LieuController {
       if (!lieu) {
         return res.status(404).json({
           success: false,
-          error: 'Lieu non trouvé'
+          error: req.t('lieu.notFound')
         });
       }
-
-      const updates = { ...otherFields };
 
       // ⚡ Gérer les champs multilingues
       if (nom !== undefined) {
@@ -456,7 +461,7 @@ class LieuController {
 
       res.json({
         success: true,
-        message: 'Lieu mis à jour avec succès',
+        message: req.t('lieu.updated'),
         data: translateDeep(lieuMisAJour, lang)
       });
 
@@ -464,7 +469,7 @@ class LieuController {
       console.error('Erreur lors de la mise à jour du lieu:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Erreur serveur lors de la mise à jour du lieu' 
+        error: req.t('common.serverError') 
       });
     }
   }
@@ -481,14 +486,14 @@ class LieuController {
       if (!lieu) {
         return res.status(404).json({
           success: false,
-          error: 'Lieu non trouvé'
+          error: req.t('lieu.notFound')
         });
       }
 
       if (lieu.Evenements && lieu.Evenements.length > 0) {
         return res.status(400).json({
           success: false,
-          error: 'Impossible de supprimer un lieu qui possède des événements associés'
+          error: req.t('lieu.hasEvents')
         });
       }
 
@@ -496,14 +501,14 @@ class LieuController {
 
       res.json({
         success: true,
-        message: 'Lieu supprimé avec succès'
+        message: req.t('lieu.deleted')
       });
 
     } catch (error) {
       console.error('Erreur lors de la suppression du lieu:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Erreur serveur lors de la suppression du lieu' 
+        error: req.t('common.serverError') 
       });
     }
   }
@@ -511,7 +516,7 @@ class LieuController {
   // Rechercher des lieux
   async searchLieux(req, res) {
     try {
-      const lang = req.lang || 'fr';  // ⚡
+      const lang = ALLOWED_LANGS.includes(req.lang) ? req.lang : 'fr';
       const { 
         q,
         type,
@@ -576,7 +581,7 @@ class LieuController {
         if (isNaN(safeLat) || isNaN(safeLng) || isNaN(safeRadius)) {
           return res.status(400).json({
             success: false,
-            error: 'Coordonnées invalides: lat, lng et radius doivent être des nombres'
+            error: req.t('lieu.invalidCoords')
           });
         }
 
@@ -584,7 +589,7 @@ class LieuController {
         if (safeLat < -90 || safeLat > 90 || safeLng < -180 || safeLng > 180) {
           return res.status(400).json({
             success: false,
-            error: 'Coordonnées hors limites (lat: -90 à 90, lng: -180 à 180)'
+            error: req.t('lieu.coordsOutOfRange')
           });
         }
 
@@ -624,7 +629,7 @@ class LieuController {
         lieux = await this.models.Lieu.findAndCountAll({
           where,
           include,
-          order: [[this.sequelize.literal(`JSON_EXTRACT(\`Lieu\`.\`nom\`, '$.${lang}')`), 'ASC']],
+          order: [[this.sequelize.literal(`JSON_EXTRACT(\`Lieu\`.\`nom\`, '$.${lang.replace(/[^a-z-]/gi, '')}')`), 'ASC']],
           limit: parseInt(limit),
           offset: parseInt(offset),
           distinct: true
@@ -650,7 +655,7 @@ class LieuController {
       console.error('Erreur lors de la recherche:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur lors de la recherche'
+        error: req.t('common.serverError')
       });
     }
   }
@@ -692,7 +697,7 @@ class LieuController {
       if (!lieu) {
         return res.status(404).json({
           success: false,
-          error: 'Lieu non trouvé'
+          error: req.t('lieu.notFound')
         });
       }
 
@@ -711,7 +716,7 @@ class LieuController {
       console.error('Erreur:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Erreur serveur' 
+        error: req.t('common.serverError') 
       });
     }
   }
@@ -732,7 +737,7 @@ class LieuController {
       if (!lieu) {
         return res.status(404).json({
           success: false,
-          error: 'Lieu non trouvé'
+          error: req.t('lieu.notFound')
         });
       }
 
@@ -743,7 +748,7 @@ class LieuController {
 
     } catch (error) {
       console.error('Erreur:', error);
-      res.status(500).json({ success: false, error: 'Erreur serveur' });
+      res.status(500).json({ success: false, error: req.t('common.serverError') });
     }
   }
 
@@ -755,7 +760,7 @@ class LieuController {
 
       const lieu = await this.models.Lieu.findByPk(id);
       if (!lieu) {
-        return res.status(404).json({ success: false, error: 'Lieu non trouvé' });
+        return res.status(404).json({ success: false, error: req.t('lieu.notFound') });
       }
 
       const updates = {};
@@ -765,15 +770,15 @@ class LieuController {
       if (histoire) updates.histoire = mergeTranslations(lieu.histoire, { [lang]: histoire });
 
       if (Object.keys(updates).length === 0) {
-        return res.status(400).json({ success: false, error: 'Aucune donnée à mettre à jour' });
+        return res.status(400).json({ success: false, error: req.t('common.noDataToUpdate') });
       }
 
       await lieu.update(updates);
-      res.json({ success: true, message: `Traduction ${lang} mise à jour`, data: lieu });
+      res.json({ success: true, message: req.t('translation.updated', { lang }), data: lieu });
 
     } catch (error) {
       console.error('Erreur:', error);
-      res.status(500).json({ success: false, error: 'Erreur serveur' });
+      res.status(500).json({ success: false, error: req.t('common.serverError') });
     }
   }
 
@@ -818,7 +823,7 @@ class LieuController {
 
     } catch (error) {
       console.error('Erreur getLieuxProximite:', error);
-      res.status(500).json({ success: false, error: 'Erreur serveur' });
+      res.status(500).json({ success: false, error: req.t('common.serverError') });
     }
   }
 
@@ -872,7 +877,7 @@ class LieuController {
       console.error('Erreur lors du calcul des statistiques:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur lors du calcul des statistiques'
+        error: req.t('common.serverError')
       });
     }
   }
@@ -1003,7 +1008,7 @@ class LieuController {
       console.error('Erreur checkDuplicate:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur lors de la vérification des doublons'
+        error: req.t('common.serverError')
       });
     }
   }
@@ -1022,7 +1027,7 @@ class LieuController {
 
       const lieu = await this.models.Lieu.findByPk(id);
       if (!lieu) {
-        return res.status(404).json({ success: false, error: 'Lieu non trouvé' });
+        return res.status(404).json({ success: false, error: req.t('lieu.notFound') });
       }
 
       const services = await this.models.Service.findAll({
@@ -1037,7 +1042,7 @@ class LieuController {
 
     } catch (error) {
       console.error('Erreur getServicesLieu:', error);
-      res.status(500).json({ success: false, error: 'Erreur serveur' });
+      res.status(500).json({ success: false, error: req.t('common.serverError') });
     }
   }
 
@@ -1052,7 +1057,7 @@ class LieuController {
 
       const lieu = await this.models.Lieu.findByPk(id);
       if (!lieu) {
-        return res.status(404).json({ success: false, error: 'Lieu non trouvé' });
+        return res.status(404).json({ success: false, error: req.t('lieu.notFound') });
       }
 
       // Support pour ajout multiple (array de noms) ou single
@@ -1070,7 +1075,7 @@ class LieuController {
         }
         return res.status(201).json({
           success: true,
-          message: `${createdServices.length} services ajoutés`,
+          message: req.t ? req.t('lieu.serviceAdded') : `${createdServices.length} services added`,
           data: translateDeep(createdServices, lang),
           lang
         });
@@ -1088,14 +1093,14 @@ class LieuController {
 
       res.status(201).json({
         success: true,
-        message: 'Service ajouté',
+        message: req.t('lieu.serviceAdded'),
         data: translateDeep(service, lang),
         lang
       });
 
     } catch (error) {
       console.error('Erreur addServiceLieu:', error);
-      res.status(500).json({ success: false, error: 'Erreur serveur' });
+      res.status(500).json({ success: false, error: req.t('common.serverError') });
     }
   }
 
@@ -1113,7 +1118,7 @@ class LieuController {
       });
 
       if (!service) {
-        return res.status(404).json({ success: false, error: 'Service non trouvé' });
+        return res.status(404).json({ success: false, error: req.t('lieu.serviceNotFound') });
       }
 
       const updates = {};
@@ -1135,14 +1140,14 @@ class LieuController {
 
       res.json({
         success: true,
-        message: 'Service mis à jour',
+        message: req.t('lieu.serviceUpdated'),
         data: translateDeep(service, lang),
         lang
       });
 
     } catch (error) {
       console.error('Erreur updateServiceLieu:', error);
-      res.status(500).json({ success: false, error: 'Erreur serveur' });
+      res.status(500).json({ success: false, error: req.t('common.serverError') });
     }
   }
 
@@ -1158,19 +1163,19 @@ class LieuController {
       });
 
       if (!service) {
-        return res.status(404).json({ success: false, error: 'Service non trouvé' });
+        return res.status(404).json({ success: false, error: req.t('lieu.serviceNotFound') });
       }
 
       await service.destroy();
 
       res.json({
         success: true,
-        message: 'Service supprimé'
+        message: req.t('lieu.serviceDeleted')
       });
 
     } catch (error) {
       console.error('Erreur deleteServiceLieu:', error);
-      res.status(500).json({ success: false, error: 'Erreur serveur' });
+      res.status(500).json({ success: false, error: req.t('common.serverError') });
     }
   }
 
@@ -1195,7 +1200,7 @@ class LieuController {
       });
 
       if (!details) {
-        return res.status(404).json({ success: false, error: 'Détails non trouvés' });
+        return res.status(404).json({ success: false, error: req.t('lieu.detailsNotFound') });
       }
 
       res.json({
@@ -1206,7 +1211,7 @@ class LieuController {
 
     } catch (error) {
       console.error('Erreur getDetailsLieu:', error);
-      res.status(500).json({ success: false, error: 'Erreur serveur' });
+      res.status(500).json({ success: false, error: req.t('common.serverError') });
     }
   }
 
@@ -1221,7 +1226,7 @@ class LieuController {
 
       const lieu = await this.models.Lieu.findByPk(id);
       if (!lieu) {
-        return res.status(404).json({ success: false, error: 'Lieu non trouvé' });
+        return res.status(404).json({ success: false, error: req.t('lieu.notFound') });
       }
 
       let details = await this.models.DetailLieu.findOne({ where: { id_lieu: id } });
@@ -1282,14 +1287,14 @@ class LieuController {
 
       res.json({
         success: true,
-        message: details ? 'Détails mis à jour' : 'Détails créés',
+        message: req.t('lieu.detailsUpdated'),
         data: translateDeep(details, lang),
         lang
       });
 
     } catch (error) {
       console.error('Erreur updateDetailsLieu:', error);
-      res.status(500).json({ success: false, error: 'Erreur serveur' });
+      res.status(500).json({ success: false, error: req.t('common.serverError') });
     }
   }
 }

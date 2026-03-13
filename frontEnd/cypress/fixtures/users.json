@@ -1,0 +1,27 @@
+{
+  "admin": {
+    "email": "admin@actionculture.dz",
+    "password": "admin123",
+    "nom": "Admin",
+    "prenom": "System"
+  },
+  "professionnel": {
+    "email": "m.benali@test.dz",
+    "password": "password123",
+    "nom": "Benali",
+    "prenom": "Mohamed"
+  },
+  "visiteur": {
+    "email": "f.saidi@test.com",
+    "password": "password123",
+    "nom": "Saidi",
+    "prenom": "Fatima"
+  },
+  "newVisitor": {
+    "email": "cypress.test@example.com",
+    "password": "CypressTest123!@#",
+    "nom": "Cypress",
+    "prenom": "Test",
+    "date_naissance": "1995-05-15"
+  }
+}

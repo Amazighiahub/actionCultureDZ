@@ -89,7 +89,6 @@ export function useEventDetails(eventId: number, options: EventDetailsOptions = 
           return response.data.programmes || [];
         }
       } catch (error) {
-        console.warn('programmeService.getByEvent failed, trying evenementService.getProgrammes:', error);
         // Fallback vers evenementService
         const response = await evenementService.getProgrammes(eventId);
         if (response.success && response.data) {

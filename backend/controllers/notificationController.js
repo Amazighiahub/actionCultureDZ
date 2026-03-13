@@ -86,7 +86,7 @@ class NotificationController {
       console.error('Erreur lors de la récupération des notifications:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Erreur serveur' 
+        error: req.t('common.serverError') 
       });
     }
   }
@@ -150,7 +150,7 @@ class NotificationController {
       console.error('Erreur:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Erreur serveur' 
+        error: req.t('common.serverError') 
       });
     }
   }
@@ -170,7 +170,7 @@ class NotificationController {
       if (!notification) {
         return res.status(404).json({
           success: false,
-          error: 'Notification non trouvée'
+          error: req.t('notification.notFound')
         });
       }
 
@@ -178,14 +178,14 @@ class NotificationController {
 
       res.json({
         success: true,
-        message: 'Notification marquée comme lue'
+        message: req.t('notification.markedAsRead')
       });
 
     } catch (error) {
       console.error('Erreur:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Erreur serveur' 
+        error: req.t('common.serverError') 
       });
     }
   }
@@ -197,14 +197,14 @@ class NotificationController {
 
       res.json({
         success: true,
-        message: `${updated[0]} notifications marquées comme lues`
+        message: req.t('notification.allMarkedAsRead', { count: updated[0] })
       });
 
     } catch (error) {
       console.error('Erreur:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Erreur serveur' 
+        error: req.t('common.serverError') 
       });
     }
   }
@@ -217,7 +217,7 @@ class NotificationController {
       if (!Array.isArray(notificationIds) || notificationIds.length === 0) {
         return res.status(400).json({
           success: false,
-          error: 'Liste d\'IDs requise'
+          error: req.t('common.badRequest')
         });
       }
 
@@ -236,14 +236,14 @@ class NotificationController {
 
       res.json({
         success: true,
-        message: `${updated[0]} notifications marquées comme lues`
+        message: req.t('notification.allMarkedAsRead', { count: updated[0] })
       });
 
     } catch (error) {
       console.error('Erreur:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Erreur serveur' 
+        error: req.t('common.serverError') 
       });
     }
   }
@@ -263,20 +263,20 @@ class NotificationController {
       if (deleted === 0) {
         return res.status(404).json({
           success: false,
-          error: 'Notification non trouvée'
+          error: req.t('notification.notFound')
         });
       }
 
       res.json({
         success: true,
-        message: 'Notification supprimée'
+        message: req.t('notification.deleted')
       });
 
     } catch (error) {
       console.error('Erreur:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Erreur serveur' 
+        error: req.t('common.serverError') 
       });
     }
   }
@@ -293,14 +293,14 @@ class NotificationController {
 
       res.json({
         success: true,
-        message: `${deleted} notifications supprimées`
+        message: req.t('notification.deletedCount', { count: deleted })
       });
 
     } catch (error) {
       console.error('Erreur:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Erreur serveur' 
+        error: req.t('common.serverError') 
       });
     }
   }
@@ -320,7 +320,7 @@ class NotificationController {
       });
 
       if (!user) {
-        return res.status(404).json({ success: false, error: 'Utilisateur non trouvé' });
+        return res.status(404).json({ success: false, error: req.t('auth.userNotFound') });
       }
 
       res.json({
@@ -343,7 +343,7 @@ class NotificationController {
       console.error('Erreur getPreferences:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Erreur serveur' 
+        error: req.t('common.serverError') 
       });
     }
   }
@@ -379,14 +379,14 @@ class NotificationController {
 
       res.json({
         success: true,
-        message: 'Préférences mises à jour'
+        message: req.t('notification.preferencesUpdated')
       });
 
     } catch (error) {
       console.error('Erreur:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Erreur serveur' 
+        error: req.t('common.serverError') 
       });
     }
   }
@@ -399,14 +399,14 @@ class NotificationController {
       if (!titre || !message || !destinataire_id) {
         return res.status(400).json({
           success: false,
-          error: 'titre, message et destinataire_id sont requis'
+          error: req.t('common.badRequest')
         });
       }
 
       // Vérifier que le destinataire existe
       const destinataire = await this.models.User.findByPk(destinataire_id);
       if (!destinataire) {
-        return res.status(404).json({ success: false, error: 'Destinataire non trouvé' });
+        return res.status(404).json({ success: false, error: req.t('auth.userNotFound') });
       }
 
       const notification = await this.models.Notification.create({
@@ -423,17 +423,17 @@ class NotificationController {
 
       res.status(201).json({
         success: true,
-        message: 'Notification envoyée',
+        message: req.t('notification.sent'),
         data: { notification }
       });
 
     } catch (error) {
       console.error('Erreur sendNotification:', error);
-      res.status(500).json({ success: false, error: 'Erreur serveur' });
+      res.status(500).json({ success: false, error: req.t('common.serverError') });
     }
   }
 
-  // Envoyer une notification broadcast à tous les utilisateurs actifs
+  // Envoyer une notification broadcast à tous les utilisateurs actifs (par lots)
   async broadcastNotification(req, res) {
     try {
       const { titre, message, type_notification, priorite, metadata } = req.body;
@@ -441,38 +441,52 @@ class NotificationController {
       if (!titre || !message) {
         return res.status(400).json({
           success: false,
-          error: 'titre et message sont requis'
+          error: req.t('common.badRequest')
         });
       }
 
-      // Récupérer tous les utilisateurs actifs
-      const users = await this.models.User.findAll({
-        where: { statut: 'actif' },
-        attributes: ['id_user']
-      });
+      const batchSize = 100;
+      let offset = 0;
+      let totalSent = 0;
 
-      const notifications = users.map(user => ({
-        id_user: user.id_user,
-        type_notification: type_notification || 'message_admin',
-        titre,
-        message,
-        priorite: priorite || 'normale',
-        metadata: metadata || null,
-        lu: false,
-        email_envoye: false
-      }));
+      while (true) {
+        const users = await this.models.User.findAll({
+          where: { statut: 'actif' },
+          attributes: ['id_user'],
+          limit: batchSize,
+          offset,
+          raw: true
+        });
 
-      await this.models.Notification.bulkCreate(notifications);
+        if (users.length === 0) break;
+
+        const notifications = users.map(user => ({
+          id_user: user.id_user,
+          type_notification: type_notification || 'message_admin',
+          titre,
+          message,
+          priorite: priorite || 'normale',
+          metadata: metadata || null,
+          lu: false,
+          email_envoye: false
+        }));
+
+        await this.models.Notification.bulkCreate(notifications);
+        totalSent += users.length;
+        offset += batchSize;
+
+        if (users.length < batchSize) break;
+      }
 
       res.status(201).json({
         success: true,
-        message: `Notification envoyée à ${users.length} utilisateurs`,
-        data: { sent_count: users.length }
+        message: req.t('notification.broadcastSent', { count: totalSent }),
+        data: { sent_count: totalSent }
       });
 
     } catch (error) {
       console.error('Erreur broadcastNotification:', error);
-      res.status(500).json({ success: false, error: 'Erreur serveur' });
+      res.status(500).json({ success: false, error: req.t('common.serverError') });
     }
   }
 }

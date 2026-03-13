@@ -24,6 +24,8 @@ interface TranslatableValue {
   fr?: string;
   ar?: string;
   en?: string;
+  'tz-ltn'?: string;
+  'tz-tfng'?: string;
   [key: string]: string | undefined;
 }
 
@@ -44,8 +46,8 @@ interface FormData {
 }
 
 const INITIAL_FORM: FormData = {
-  nom: { fr: '', ar: '', en: '' },
-  description: { fr: '', ar: '', en: '' },
+  nom: { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
+  description: { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
   type: '',
   wilaya_id: 0,
   latitude: 0,
@@ -113,7 +115,10 @@ const AjouterPatrimoinePro: React.FC = () => {
       const response = await patrimoineService.getById(editId);
       if (response.success && response.data) {
         const site = response.data as any;
-        const toTV = (v: any): TranslatableValue => typeof v === 'object' && v !== null ? v : { fr: v || '', ar: '', en: '' };
+        const toTV = (v: any): TranslatableValue =>
+          typeof v === 'object' && v !== null
+            ? { fr: v.fr || '', ar: v.ar || '', en: v.en || '', 'tz-ltn': v['tz-ltn'] || '', 'tz-tfng': v['tz-tfng'] || '' }
+            : { fr: v || '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' };
         setFormData({
           nom: toTV(site.nom),
           description: toTV(site.description),
@@ -197,7 +202,13 @@ const AjouterPatrimoinePro: React.FC = () => {
     setError(null);
 
     // Validation
-    if (!formData.nom.fr && !formData.nom.ar) {
+    if (
+      !formData.nom.fr ||
+      !formData.nom.ar ||
+      !formData.nom.en ||
+      !formData.nom['tz-ltn'] ||
+      !formData.nom['tz-tfng']
+    ) {
       setError(t('ajouterPatrimoine.errors.nomRequired'));
       return;
     }
@@ -216,7 +227,6 @@ const AjouterPatrimoinePro: React.FC = () => {
       const createData: CreateSiteData = {
         ...(createdLieuId ? { lieuId: createdLieuId } : {}),
         nom: JSON.stringify(formData.nom),
-        nom_ar: formData.nom.ar,
         description: JSON.stringify(formData.description),
         type: formData.type,
         epoque: formData.epoque,
@@ -233,13 +243,20 @@ const AjouterPatrimoinePro: React.FC = () => {
 
       let response;
       if (isEditMode && editId) {
-        console.log('📝 Mise à jour patrimoine', editId);
         response = await patrimoineService.update(editId, createData);
       } else {
         response = await patrimoineService.create(createData);
       }
 
       if (response.success) {
+        const siteId = (response.data as any)?.id_lieu || (response.data as any)?.id;
+        if (siteId && medias.length > 0) {
+          try {
+            await patrimoineService.uploadMedias(siteId, medias);
+          } catch (uploadErr) {
+            // Media upload failure should not block success
+          }
+        }
         setSuccess(true);
         setTimeout(() => {
           navigate('/dashboard-pro');

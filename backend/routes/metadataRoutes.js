@@ -274,7 +274,7 @@ const initMetadataRoutes = (models) => {
         if (typeof value === 'string') return value.trim().length >= 2;
         if (typeof value === 'object') return Object.values(value).some(v => v && v.length >= 2);
         return false;
-      }).withMessage('Nom requis (min 2 caractères)'),
+      }).withMessage((value, { req }) => req.t('validation.invalidName')),
       body('description').optional()
     ],
     validationMiddleware.handleValidationErrors,
@@ -290,8 +290,8 @@ const initMetadataRoutes = (models) => {
         if (typeof value === 'string') return value.trim().length >= 2;
         if (typeof value === 'object') return Object.values(value).some(v => v && v.length >= 2);
         return false;
-      }).withMessage('Nom requis'),
-      body('id_type_oeuvre').isInt().withMessage('Type d\'œuvre requis')
+      }).withMessage((value, { req }) => req.t('validation.invalidName')),
+      body('id_type_oeuvre').isInt().withMessage((value, { req }) => req.t('validation.invalidId'))
     ],
     validationMiddleware.handleValidationErrors,
     metadataController.createGenre.bind(metadataController)
@@ -306,8 +306,8 @@ const initMetadataRoutes = (models) => {
         if (typeof value === 'string') return value.trim().length >= 2;
         if (typeof value === 'object') return Object.values(value).some(v => v && v.length >= 2);
         return false;
-      }).withMessage('Nom requis'),
-      body('id_genre').isInt().withMessage('Genre requis')
+      }).withMessage((value, { req }) => req.t('validation.invalidName')),
+      body('id_genre').isInt().withMessage((value, { req }) => req.t('validation.invalidId'))
     ],
     validationMiddleware.handleValidationErrors,
     metadataController.createCategorie.bind(metadataController)
@@ -322,7 +322,7 @@ const initMetadataRoutes = (models) => {
         if (typeof value === 'string') return value.trim().length >= 2;
         if (typeof value === 'object') return Object.values(value).some(v => v && v.length >= 2);
         return false;
-      }).withMessage('Nom requis')
+      }).withMessage((value, { req }) => req.t('validation.invalidName'))
     ],
     validationMiddleware.handleValidationErrors,
     metadataController.createTag.bind(metadataController)
@@ -337,7 +337,7 @@ const initMetadataRoutes = (models) => {
         if (typeof value === 'string') return value.trim().length >= 2;
         if (typeof value === 'object') return Object.values(value).some(v => v && v.length >= 2);
         return false;
-      }).withMessage('Nom requis')
+      }).withMessage((value, { req }) => req.t('validation.invalidName'))
     ],
     validationMiddleware.handleValidationErrors,
     metadataController.createMateriau.bind(metadataController)
@@ -352,13 +352,12 @@ const initMetadataRoutes = (models) => {
         if (typeof value === 'string') return value.trim().length >= 2;
         if (typeof value === 'object') return Object.values(value).some(v => v && v.length >= 2);
         return false;
-      }).withMessage('Nom requis')
+      }).withMessage((value, { req }) => req.t('validation.invalidName'))
     ],
     validationMiddleware.handleValidationErrors,
     metadataController.createTechnique.bind(metadataController)
   );
 
-  console.log('✅ Routes metadata i18n initialisées');
 
   return router;
 };

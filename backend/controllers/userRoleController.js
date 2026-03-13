@@ -61,7 +61,7 @@ class UserController {
       console.error('Erreur lors de la récupération des utilisateurs:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Erreur serveur lors de la récupération des utilisateurs' 
+        error: req.t('common.serverError') 
       });
     }
   }
@@ -93,7 +93,7 @@ class UserController {
       if (!user) {
         return res.status(404).json({ 
           success: false, 
-          error: 'Utilisateur non trouvé' 
+          error: req.t('auth.userNotFound') 
         });
       }
 
@@ -106,7 +106,7 @@ class UserController {
       console.error('Erreur lors de la récupération de l\'utilisateur:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Erreur serveur lors de la récupération de l\'utilisateur' 
+        error: req.t('common.serverError') 
       });
     }
   }
@@ -114,9 +114,6 @@ class UserController {
   // Créer un nouvel utilisateur
  async createUser(req, res) {
     try {
-      console.log('🔍 === DÉBUT CRÉATION UTILISATEUR ===');
-      console.log('📦 Body reçu:', { ...req.body, password: '[REDACTED]' });
-      
       const {
         nom,
         prenom,
@@ -135,27 +132,18 @@ class UserController {
         documents_justificatifs = {}
       } = req.body;
 
-      // ✅ DEBUG SPÉCIAL PHOTO
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('🖼️ === DEBUG PHOTO_URL ===');
-        console.log('📷 photo_url reçue:', photo_url);
-        console.log('📷 Type:', typeof photo_url);
-        console.log('📷 Longueur:', photo_url ? photo_url.length : 'N/A');
-        console.log('📷 Valide?:', photo_url && photo_url.length > 0);
-      }
-
       // Validation des champs obligatoires
       if (!nom || !prenom || !email || !password) {
         return res.status(400).json({
           success: false,
-          error: 'Les champs nom, prénom, email et mot de passe sont obligatoires'
+          error: req.t('common.badRequest')
         });
       }
 
       if (!accepte_conditions) {
         return res.status(400).json({
           success: false,
-          error: 'Vous devez accepter les conditions d\'utilisation'
+          error: req.t('auth.mustAcceptTerms')
         });
       }
 
@@ -164,7 +152,7 @@ class UserController {
       if (existingUser) {
         return res.status(409).json({
           success: false,
-          error: 'Un utilisateur avec cet email existe déjà'
+          error: req.t('auth.emailAlreadyUsed')
         });
       }
 
@@ -172,19 +160,20 @@ class UserController {
       if (sexe && !['M', 'F'].includes(sexe)) {
         return res.status(400).json({
           success: false,
-          error: 'Sexe invalide. Doit être M ou F'
+          error: req.t('common.badRequest')
         });
       }
 
       if (specialites && !Array.isArray(specialites)) {
         return res.status(400).json({
           success: false,
-          error: 'Les spécialités doivent être un tableau'
+          error: req.t('common.badRequest')
         });
       }
 
       // Hasher le mot de passe
-      const hashedPassword = await bcrypt.hash(password, 12);
+      const rounds = parseInt(process.env.BCRYPT_ROUNDS) || 12;
+      const hashedPassword = await bcrypt.hash(password, rounds);
 
       // Déterminer le statut initial selon le type
       let statutCompte = 'actif';
@@ -217,39 +206,21 @@ class UserController {
       // ✅ CRITIQUE : Gérer photo_url explicitement
       if (photo_url && photo_url.trim().length > 0) {
         userData.photo_url = photo_url.trim();
-        console.log('✅ Photo URL ajoutée aux données:', userData.photo_url);
       } else {
-        console.log('⚠️ Pas de photo_url valide, utilisateur créé sans photo');
-        // Ne pas ajouter photo_url du tout si elle est vide
       }
 
       // ✅ CORRIGÉ : Nettoyer les valeurs undefined SAUF photo_url
       Object.keys(userData).forEach(key => {
         if (key !== 'photo_url' && (userData[key] === undefined || userData[key] === '')) {
-          console.log(`🧹 Suppression de ${key}: ${userData[key]}`);
           delete userData[key];
         }
       });
 
-      console.log('📤 === DONNÉES FINALES POUR LA DB ===');
-      console.log('📊 userData final:', { 
-        ...userData, 
-        password: '[REDACTED]',
-        photo_url: userData.photo_url ? `Photo présente: ${userData.photo_url}` : 'PAS DE PHOTO'
-      });
-
-      // Créer l'utilisateur
-      console.log('💾 Création en base de données...');
       const user = await this.models.User.create(userData);
-      console.log('✅ Utilisateur créé avec ID:', user.id_user);
-      console.log('🖼️ Photo URL dans la DB après création:', user.photo_url);
 
       // Assigner automatiquement le rôle approprié
       await this.roleService.assignRoleToUser(user);
 
-      // ✅ SÉCURISÉ : Récupération avec gestion d'erreur
-      console.log('🔄 Récupération utilisateur complet...');
-      
       const includeOptions = [
         {
           model: this.models.Role,
@@ -269,7 +240,7 @@ class UserController {
           });
         }
       } catch (wilayaError) {
-        console.log('⚠️ Erreur relation Wilaya (ignorée):', wilayaError.message);
+        // Wilaya relation not available, continue without it
       }
 
       const userComplete = await this.models.User.findByPk(user.id_user, {
@@ -277,17 +248,13 @@ class UserController {
         include: includeOptions
       });
 
-      console.log('🔍 === VÉRIFICATION FINALE ===');
-      console.log('📷 Photo URL dans userComplete:', userComplete.photo_url);
-      console.log('📷 Photo URL type:', typeof userComplete.photo_url);
-
-      // ✅ SÉCURISÉ : Génération token avec gestion d'erreur
+      // Génération token avec gestion d'erreur
       const secret = process.env.JWT_SECRET;
       if (!secret) {
         console.error('❌ JWT_SECRET non défini dans les variables d\'environnement');
         return res.status(500).json({
           success: false,
-          error: 'Erreur de configuration serveur'
+          error: req.t('common.serverError')
         });
       }
 
@@ -298,38 +265,27 @@ class UserController {
             id_user: user.id_user,
             email: user.email,
             type_user: user.type_user,
-            statut_validation: user.statut_validation,
+            statut: user.statut,
             roles: userComplete.Roles ? userComplete.Roles.map(role => role.nom_role) : []
           },
           secret,
           { expiresIn: '24h' }
         );
-        console.log('✅ Token JWT généré');
       } catch (jwtError) {
-        console.error('❌ Erreur génération JWT:', jwtError);
+        console.error('Erreur génération JWT:', jwtError.message);
         return res.status(500).json({
           success: false,
-          error: 'Erreur lors de la génération du token'
+          error: req.t('common.serverError')
         });
       }
 
       // Message différent selon le type
-      let message = 'Utilisateur créé avec succès';
+      let message = req.t('auth.userCreated');
       if (type_user !== 'visiteur') {
-        message = 'Compte professionnel créé. En attente de validation par un administrateur.';
+        message = req.t('auth.professionalCreated');
       }
 
-      // ✅ Log détaillé pour debug
-      console.log(`✅ Nouvel utilisateur créé: ${userComplete.prenom} ${userComplete.nom} (${userComplete.type_user})`);
-      if (userComplete.photo_url) {
-        console.log(`📸 Photo URL finale: ${userComplete.photo_url}`);
-      } else {
-        console.log(`❌ PROBLÈME: Pas de photo_url dans userComplete!`);
-      }
-      if (specialites?.length > 0) console.log(`🎯 Spécialités: ${specialites.join(', ')}`);
-      if (wilaya_residence) console.log(`📍 Wilaya: ${wilaya_residence}`);
-
-      // ✅ Réponse avec le même format que la connexion
+      // Réponse avec le même format que la connexion
       res.status(201).json({
         success: true,
         message,
@@ -349,7 +305,7 @@ class UserController {
         console.error('❌ Erreurs de validation:', validationErrors);
         return res.status(400).json({ 
           success: false, 
-          error: `Erreur de validation: ${validationErrors}` 
+          error: req.t('common.badRequest') 
         });
       }
       
@@ -357,7 +313,7 @@ class UserController {
         console.error('❌ Contrainte d\'unicité violée');
         return res.status(409).json({ 
           success: false, 
-          error: 'Un utilisateur avec ces informations existe déjà' 
+          error: req.t('auth.emailAlreadyUsed') 
         });
       }
 
@@ -365,7 +321,7 @@ class UserController {
         console.error('❌ Contrainte de clé étrangère violée');
         return res.status(400).json({ 
           success: false, 
-          error: 'Wilaya de résidence invalide' 
+          error: req.t('common.badRequest') 
         });
       }
 
@@ -373,14 +329,14 @@ class UserController {
         console.error('❌ Erreur de base de données:', error.message);
         return res.status(500).json({ 
           success: false, 
-          error: 'Erreur de base de données' 
+          error: req.t('common.serverError') 
         });
       }
       
       // Erreur générique
       res.status(500).json({ 
         success: false, 
-        error: 'Erreur serveur lors de la création de l\'utilisateur' 
+        error: req.t('common.serverError') 
       });
     }
   }
@@ -419,7 +375,7 @@ class UserController {
       if (!user) {
         return res.status(404).json({
           success: false,
-          error: 'Utilisateur non trouvé'
+          error: req.t('auth.userNotFound')
         });
       }
 
@@ -432,7 +388,7 @@ class UserController {
       console.error('Erreur lors de la récupération du profil:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Erreur serveur lors de la récupération du profil' 
+        error: req.t('common.serverError') 
       });
     }
   }
@@ -444,7 +400,7 @@ class UserController {
       if (!email || !password) {
         return res.status(400).json({
           success: false,
-          error: 'Email et mot de passe requis'
+          error: req.t('common.badRequest')
         });
       }
 
@@ -463,7 +419,7 @@ class UserController {
       if (!user) {
         return res.status(401).json({
           success: false,
-          error: 'Identifiants invalides'
+          error: req.t('auth.invalidCredentials')
         });
       }
 
@@ -472,7 +428,7 @@ class UserController {
       if (!isValidPassword) {
         return res.status(401).json({
           success: false,
-          error: 'Identifiants invalides'
+          error: req.t('auth.invalidCredentials')
         });
       }
 
@@ -508,7 +464,7 @@ class UserController {
 
       res.json({
         success: true,
-        message: 'Connexion réussie',
+        message: req.t('auth.loginSuccess'),
         data: {
           user: userData,
           token
@@ -519,7 +475,7 @@ class UserController {
       console.error('Erreur lors de la connexion:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Erreur serveur lors de la connexion' 
+        error: req.t('common.serverError') 
       });
     }
   }
@@ -554,7 +510,7 @@ class UserController {
       console.error('Erreur lors de la récupération du profil:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Erreur serveur lors de la récupération du profil' 
+        error: req.t('common.serverError') 
       });
     }
   }
@@ -578,7 +534,7 @@ class UserController {
 
       res.json({
         success: true,
-        message: 'Profil mis à jour avec succès',
+        message: req.t('user.profileUpdated'),
         data: userUpdated
       });
 
@@ -586,7 +542,7 @@ class UserController {
       console.error('Erreur lors de la mise à jour du profil:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Erreur serveur lors de la mise à jour du profil' 
+        error: req.t('common.serverError') 
       });
     }
   }
@@ -600,7 +556,7 @@ class UserController {
       if (!current_password || !new_password) {
         return res.status(400).json({
           success: false,
-          error: 'Mot de passe actuel et nouveau mot de passe requis'
+          error: req.t('common.badRequest')
         });
       }
 
@@ -611,24 +567,25 @@ class UserController {
       if (!isValidPassword) {
         return res.status(401).json({
           success: false,
-          error: 'Mot de passe actuel incorrect'
+          error: req.t('auth.invalidPassword')
         });
       }
 
       // Hasher le nouveau mot de passe
-      const hashedNewPassword = await bcrypt.hash(new_password, 12);
+      const rounds = parseInt(process.env.BCRYPT_ROUNDS) || 12;
+      const hashedNewPassword = await bcrypt.hash(new_password, rounds);
       await user.update({ password: hashedNewPassword });
 
       res.json({
         success: true,
-        message: 'Mot de passe mis à jour avec succès'
+        message: req.t('auth.passwordChanged')
       });
 
     } catch (error) {
       console.error('Erreur lors du changement de mot de passe:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Erreur serveur lors du changement de mot de passe' 
+        error: req.t('common.serverError') 
       });
     }
   }

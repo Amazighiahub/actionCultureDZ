@@ -138,14 +138,14 @@ class LieuService {
    * Obtenir les communes d'une wilaya
    */
   async getCommunesByWilaya(wilayaId: number): Promise<ApiResponse<any[]>> {
-    return httpClient.get<any[]>(`/geography/wilayas/${wilayaId}/communes`);
+    return httpClient.get<any[]>(`/metadata/wilayas/${wilayaId}/dairas`);
   }
 
   /**
    * Obtenir les lieux proches d'une position
    */
   async getNearby(latitude: number, longitude: number, rayon: number = 10): Promise<ApiResponse<Lieu[]>> {
-    return httpClient.get<Lieu[]>(`${this.endpoint}/nearby`, {
+    return httpClient.get<Lieu[]>(`${this.endpoint}/proximite`, {
       latitude,
       longitude,
       rayon
@@ -191,7 +191,6 @@ class LieuService {
 
       return await response.json();
     } catch (error) {
-      console.error('Erreur geocoding:', error);
       return [];
     }
   }
@@ -217,7 +216,6 @@ class LieuService {
 
       return await response.json();
     } catch (error) {
-      console.error('Erreur reverse geocoding:', error);
       return null;
     }
   }

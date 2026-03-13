@@ -20,9 +20,17 @@ import { artisanatService, CreateArtisanatData } from '@/services/artisanat.serv
 import { metadataService } from '@/services/metadata.service';
 import MultiLangInput from '@/components/MultiLangInput';
 
+type MultiLangText = {
+  fr: string;
+  ar: string;
+  en: string;
+  'tz-ltn': string;
+  'tz-tfng': string;
+};
+
 interface FormData {
-  nom: { fr: string; ar: string; en: string };
-  description: { fr: string; ar: string; en: string };
+  nom: MultiLangText;
+  description: MultiLangText;
   id_materiau: number;
   id_technique: number;
   prix_min?: number;
@@ -34,24 +42,16 @@ interface FormData {
 }
 
 const INITIAL_FORM: FormData = {
-  nom: { 
-    fr: 'Vase Berbère Traditionnel', 
-    ar: 'أمازيغي تقليدي', 
-    en: 'Traditional Berber Vase' 
-  },
-  description: { 
-    fr: 'Magnifique vase en céramique artisanale, décoré avec des motifs berbères traditionnels. Pièce unique réalisée à la main par Karim Benali, artisan professionnel spécialisé dans l\'art berbère.',
-    ar: 'إزهار خزفي يدوي مزين بزخارف أمازيغية تقليدية. قطعة فريدة من صنع كريم بن علي، حرفي محترف متخصص في الفن الأمازيغي.',
-    en: 'Magnificent handmade ceramic vase decorated with traditional Berber patterns. Unique piece created by Karim Benali, professional artisan specializing in Berber art.'
-  },
-  id_materiau: 1, // Céramique
-  id_technique: 1, // Tournage
-  prix_min: 5000,
-  prix_max: 8000,
-  delai_fabrication: 7,
+  nom: { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
+  description: { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
+  id_materiau: 0,
+  id_technique: 0,
+  prix_min: undefined as any,
+  prix_max: undefined as any,
+  delai_fabrication: undefined as any,
   sur_commande: true,
-  en_stock: 2,
-  tags: ['berbère', 'céramique', 'traditionnel', 'artisanal', 'karim benali']
+  en_stock: undefined as any,
+  tags: []
 };
 
 const AjouterArtisanat: React.FC = () => {
@@ -94,7 +94,10 @@ const AjouterArtisanat: React.FC = () => {
       const response = await artisanatService.getById(editId);
       if (response.success && response.data) {
         const art = response.data as any;
-        const toObj = (v: any) => typeof v === 'object' && v !== null ? { fr: v.fr || '', ar: v.ar || '', en: v.en || '' } : { fr: v || '', ar: '', en: '' };
+        const toObj = (v: any): MultiLangText =>
+          typeof v === 'object' && v !== null
+            ? { fr: v.fr || '', ar: v.ar || '', en: v.en || '', 'tz-ltn': v['tz-ltn'] || '', 'tz-tfng': v['tz-tfng'] || '' }
+            : { fr: v || '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' };
         setFormData({
           nom: toObj(art.nom),
           description: toObj(art.description),
@@ -186,7 +189,13 @@ const AjouterArtisanat: React.FC = () => {
     setError(null);
 
     // Validation
-    if (!formData.nom.fr && !formData.nom.ar) {
+    if (
+      !formData.nom.fr ||
+      !formData.nom.ar ||
+      !formData.nom.en ||
+      !formData.nom['tz-ltn'] ||
+      !formData.nom['tz-tfng']
+    ) {
       setError(t('ajouterArtisanat.errors.nomRequired', 'Le nom est requis'));
       return;
     }
@@ -323,7 +332,7 @@ const AjouterArtisanat: React.FC = () => {
                     name="nom"
                     label={t('ajouterArtisanat.nom', 'Nom du produit')}
                     value={formData.nom}
-                    onChange={(value) => setFormData(prev => ({ ...prev, nom: value as { fr: string; ar: string; en: string } }))}
+                    onChange={(value) => setFormData(prev => ({ ...prev, nom: value as MultiLangText }))}
                     required
                     placeholder={t('ajouterArtisanat.nomPlaceholder', 'Ex: Tapis berbère traditionnel')}
                   />
@@ -333,7 +342,7 @@ const AjouterArtisanat: React.FC = () => {
                     name="description"
                     label={t('ajouterArtisanat.description', 'Description')}
                     value={formData.description}
-                    onChange={(value) => setFormData(prev => ({ ...prev, description: value as { fr: string; ar: string; en: string } }))}
+                    onChange={(value) => setFormData(prev => ({ ...prev, description: value as MultiLangText }))}
                     type="textarea"
                     rows={4}
                     placeholder={t('ajouterArtisanat.descriptionPlaceholder', 'Décrivez votre produit, ses caractéristiques...')}

@@ -774,15 +774,15 @@ categoriesForType: (typeId: number) => `/metadata/types-oeuvres/${typeId}/catego
   // ================================================
   signalements: {
     // Créer un signalement
-    create: '/signalement',
+    create: '/signalements',
     
     // Obtenir mes signalements
-    mesSignalements: '/signalement/mes-signalements',
+    mesSignalements: '/signalements/mes-signalements',
     
     // Admin/Modération
-    moderationQueue: '/signalement/moderation',
-    traiter: (id: number) => `/signalement/${id}/traiter`,
-    statistics: '/signalement/stats',
+    moderationQueue: '/signalements/moderation',
+    traiter: (id: number) => `/signalements/${id}/traiter`,
+    statistics: '/signalements/stats',
   },
 
   articleBlocks: {

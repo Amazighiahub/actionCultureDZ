@@ -46,7 +46,7 @@ module.exports = (models, authMiddleware) => {
         console.error('Erreur récupération organisations utilisateur:', error);
         res.status(500).json({
           success: false,
-          error: 'Erreur lors de la récupération des organisations'
+          error: req.t ? req.t('common.serverError') : 'Server error'
         });
       }
     }
@@ -59,10 +59,10 @@ module.exports = (models, authMiddleware) => {
   router.post('/',
     authMiddleware.authenticate,
     [
-      body('nom').notEmpty().withMessage('Le nom est requis'),
-      body('id_type_organisation').isInt({ min: 1 }).withMessage('Le type d\'organisation est requis'),
+      body('nom').notEmpty().withMessage((value, { req }) => req.t('validation.invalidName')),
+      body('id_type_organisation').isInt({ min: 1 }).withMessage((value, { req }) => req.t('validation.invalidType')),
       body('description').optional(),
-      body('site_web').optional().isURL().withMessage('URL invalide')
+      body('site_web').optional().isURL().withMessage((value, { req }) => req.t('validation.invalidWebsite'))
     ],
     validationMiddleware.handleValidationErrors,
     async (req, res) => {
@@ -97,7 +97,7 @@ module.exports = (models, authMiddleware) => {
         console.error('Erreur création organisation:', error);
         res.status(500).json({
           success: false,
-          error: 'Erreur lors de la création de l\'organisation',
+          error: req.t ? req.t('common.serverError') : 'Server error',
           details: error.message
         });
       }
@@ -123,7 +123,7 @@ module.exports = (models, authMiddleware) => {
         console.error('Erreur récupération types organisations:', error);
         res.status(500).json({
           success: false,
-          error: 'Erreur lors de la récupération des types'
+          error: req.t ? req.t('common.serverError') : 'Server error'
         });
       }
     }
@@ -134,7 +134,7 @@ module.exports = (models, authMiddleware) => {
    * @desc    Récupérer une organisation par ID
    */
   router.get('/:id',
-    param('id').isInt().withMessage('ID invalide'),
+    param('id').isInt().withMessage((value, { req }) => req.t('validation.invalidId')),
     validationMiddleware.handleValidationErrors,
     async (req, res) => {
       try {
@@ -148,7 +148,7 @@ module.exports = (models, authMiddleware) => {
         if (!organisation) {
           return res.status(404).json({
             success: false,
-            error: 'Organisation non trouvée'
+            error: req.t ? req.t('common.notFound') : 'Not found'
           });
         }
 
@@ -160,13 +160,12 @@ module.exports = (models, authMiddleware) => {
         console.error('Erreur récupération organisation:', error);
         res.status(500).json({
           success: false,
-          error: 'Erreur lors de la récupération de l\'organisation'
+          error: req.t ? req.t('common.serverError') : 'Server error'
         });
       }
     }
   );
 
-  console.log('✅ Routes organisations initialisées');
 
   return router;
 };

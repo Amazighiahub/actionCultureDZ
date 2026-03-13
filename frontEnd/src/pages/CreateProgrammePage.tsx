@@ -3,40 +3,53 @@
  * Utilise le ProgrammeForm pour gérer l'ajout de programmes sur plusieurs jours
  */
 import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Calendar, Clock, Users, MapPin } from 'lucide-react';
 import ProgrammeForm, { ProgrammeFormData } from '@/components/forms/ProgrammeForm';
 import { programmeService } from '@/services/programme.service';
+import { lieuService } from '@/services/lieu.service';
+import { httpClient } from '@/services/httpClient';
+import { useTranslation } from 'react-i18next';
 
 const CreateProgrammePage: React.FC = () => {
-  const { eventId } = useParams<{ eventId: string }>();
+  const [searchParams] = useSearchParams();
+  const eventId = searchParams.get('eventId') ?? undefined;
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [lieux, setLieux] = useState<any[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
 
-  // Données de test pour les lieux
-  const lieux = [
-    { id_lieu: 1, nom: 'Salle principale' },
-    { id_lieu: 2, nom: 'Salle de conférence A' },
-    { id_lieu: 3, nom: 'Atelier 1' },
-    { id_lieu: 4, nom: 'Espace extérieur' }
-  ];
-
-  // Données de test pour les utilisateurs
-  const users = [
-    { id_user: 1, prenom: 'Ahmed', nom: 'Benali' },
-    { id_user: 2, prenom: 'Fatima', nom: 'Messaoudi' },
-    { id_user: 3, prenom: 'Mohamed', nom: 'Kaci' },
-    { id_user: 4, prenom: 'Leila', nom: 'Boudiaf' }
-  ];
+  React.useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [lieuxRes, usersRes] = await Promise.all([
+          lieuService.getAll({ limit: 100 }),
+          httpClient.get<any>('/intervenants/search', { q: '', limit: 50 })
+        ]);
+        if (lieuxRes.success && lieuxRes.data) {
+          const items = (lieuxRes.data as any).lieux || lieuxRes.data;
+          setLieux(Array.isArray(items) ? items : []);
+        }
+        if (usersRes.success && usersRes.data) {
+          const items = (usersRes.data as any).intervenants || usersRes.data;
+          setUsers(Array.isArray(items) ? items : []);
+        }
+      } catch (e) {
+        // Silencieux — les selects seront vides
+      }
+    };
+    loadData();
+  }, []);
 
   const handleSubmit = async (data: ProgrammeFormData) => {
     if (!eventId) {
-      setError('ID d\'événement non spécifié');
+      setError(t('programmePages.errors.eventIdMissing'));
       return;
     }
 
@@ -46,13 +59,13 @@ const CreateProgrammePage: React.FC = () => {
     try {
       // Transformer les données pour l'API
       const apiData = {
-        titre: data.titre.fr,
-        description: data.description.fr,
+        titre: data.titre,
+        description: data.description,
         type_activite: data.type_activite,
         heure_debut: `${data.date_programme}T${data.heure_debut}:00`,
         heure_fin: `${data.date_programme}T${data.heure_fin}:00`,
         id_lieu: data.id_lieu,
-        lieu_specifique: data.lieu_specifique?.fr,
+        lieu_specifique: data.lieu_specifique,
         nb_participants_max: data.nb_participants_max,
         niveau_requis: data.niveau_requis,
         materiel_requis: data.materiel_requis,
@@ -70,17 +83,16 @@ const CreateProgrammePage: React.FC = () => {
 
       if (response.success) {
         setSuccess(true);
-        console.log('Programme créé avec succès');
 
         // Rediriger vers la page de l'événement après 2 secondes
         setTimeout(() => {
-          navigate(`/events/${eventId}`);
+          navigate(`/evenements/${eventId}`);
         }, 2000);
       } else {
-        setError(response.error || 'Erreur lors de la création du programme');
+        setError(response.error || t('programmePages.errors.createFailed'));
       }
     } catch (err: any) {
-      setError(err.message || 'Une erreur est survenue');
+      setError(err.message || t('programmePages.errors.generic'));
       console.error('Erreur:', err);
     } finally {
       setLoading(false);
@@ -88,7 +100,7 @@ const CreateProgrammePage: React.FC = () => {
   };
 
   const handleCancel = () => {
-    navigate(`/events/${eventId}`);
+    navigate(`/evenements/${eventId}`);
   };
 
   if (!eventId) {
@@ -96,10 +108,10 @@ const CreateProgrammePage: React.FC = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-red-600 mb-4">
-            Erreur: ID d'événement non spécifié
+            {t('programmePages.errors.eventIdMissingWithPrefix')}
           </h1>
-          <Button onClick={() => navigate('/events')}>
-            Retour aux événements
+          <Button onClick={() => navigate('/evenements')}>
+            {t('programmePages.actions.backToEvents')}
           </Button>
         </div>
       </div>
@@ -117,27 +129,27 @@ const CreateProgrammePage: React.FC = () => {
             className="flex items-center gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
-            Retour à l'événement
+            {t('programmePages.actions.backToEvent')}
           </Button>
-          <h1 className="text-3xl font-bold">Créer un programme</h1>
+          <h1 className="text-3xl font-bold">{t('programmePages.create.title')}</h1>
         </div>
         
         <div className="flex items-center gap-6 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4" />
-            Événement #{eventId}
+            {t('programmePages.meta.eventNumber', { id: eventId })}
           </div>
           <div className="flex items-center gap-2">
             <Clock className="h-4 w-4" />
-            Plusieurs jours possibles
+            {t('programmePages.meta.multiDay')}
           </div>
           <div className="flex items-center gap-2">
             <Users className="h-4 w-4" />
-            Intervenants multiples
+            {t('programmePages.meta.multipleSpeakers')}
           </div>
           <div className="flex items-center gap-2">
             <MapPin className="h-4 w-4" />
-            Lieux personnalisables
+            {t('programmePages.meta.flexibleLocations')}
           </div>
         </div>
       </div>
@@ -147,7 +159,7 @@ const CreateProgrammePage: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5" />
-            Nouveau programme
+            {t('programmePages.create.newProgram')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -171,13 +183,12 @@ const CreateProgrammePage: React.FC = () => {
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <Calendar className="h-5 w-5" />
-              Gestion multi-jours
+              {t('programmePages.info.multiDayTitle')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              Créez des programmes pour chaque jour de votre événement. 
-              Le système regroupe automatiquement les activités par date.
+              {t('programmePages.info.createMultiDayDesc')}
             </p>
           </CardContent>
         </Card>
@@ -186,13 +197,12 @@ const CreateProgrammePage: React.FC = () => {
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <Users className="h-5 w-5" />
-              Intervenants
+              {t('programmePages.info.speakersTitle')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              Ajoutez plusieurs intervenants avec des rôles spécifiques. 
-              Chaque intervenant peut avoir ses propres paramètres.
+              {t('programmePages.info.createSpeakersDesc')}
             </p>
           </CardContent>
         </Card>
@@ -201,13 +211,12 @@ const CreateProgrammePage: React.FC = () => {
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <MapPin className="h-5 w-5" />
-              Lieux flexibles
+              {t('programmePages.info.flexibleLocationsTitle')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              Utilisez des lieux prédéfinis ou spécifiez un lieu personnalisé 
-              pour chaque activité du programme.
+              {t('programmePages.info.createLocationsDesc')}
             </p>
           </CardContent>
         </Card>

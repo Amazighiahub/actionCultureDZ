@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { MapPin, Clock, Users, Star, Route, Maximize2, Navigation } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { patrimoineService } from '@/services/patrimoine.service';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
@@ -145,10 +146,41 @@ const parcoursData: ParcoursData[] = [
 const PARCOURS_COLORS = ['#6B8E23', '#4A6FA5', '#16A085'] as const;
 
 const CartePatrimoine: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [monumentSelectionne, setMonumentSelectionne] = useState<Monument | null>(null);
   const [parcoursActif, setParcoursActif] = useState<number | null>(null);
   const [carteOuverte, setCarteOuverte] = useState(false);
+  const [dbMonuments, setDbMonuments] = useState<Monument[]>([]);
+
+  useEffect(() => {
+    const loadFromDb = async () => {
+      try {
+        const lang = i18n.language || 'fr';
+        const response = await patrimoineService.list({ limit: 50 });
+        if (response.success && response.data) {
+          const items = (response.data as any).sites || (response.data as any).lieux || [];
+          const mapped: Monument[] = items
+            .filter((s: any) => s.latitude != null && s.longitude != null)
+            .map((s: any) => ({
+              id: s.id_lieu || s.id,
+              nom: typeof s.nom === 'object' ? (s.nom[lang] || s.nom.fr || '') : (s.nom || ''),
+              position: [parseFloat(s.latitude), parseFloat(s.longitude)] as [number, number],
+              region: s.Commune?.nom || s.wilaya || '',
+              type: s.typePatrimoine || 'monument',
+              descriptionKey: '',
+              image: s.image_url || s.medias?.[0]?.url || '',
+              visiteurs: '',
+              duree: '',
+              heritage: s.classement || '',
+            }));
+          if (mapped.length > 0) setDbMonuments(mapped);
+        }
+      } catch (e) {
+        // Fallback to static data
+      }
+    };
+    loadFromDb();
+  }, [i18n.language]);
 
   // Mémoriser les parcours avec traductions
   const parcours = useMemo(() => 
@@ -165,11 +197,12 @@ const CartePatrimoine: React.FC = () => {
     return PARCOURS_COLORS[index] || PARCOURS_COLORS[0];
   };
 
-  // Mémoriser les lignes du parcours actif
+  const allMonuments = dbMonuments.length > 0 ? dbMonuments : monumentsData;
+
   const lignesParcours = useMemo(() => {
     if (parcoursActif === null) return [];
     const parcoursCourant = parcoursData[parcoursActif];
-    const monumentsParcours = monumentsData.filter(m => parcoursCourant.monuments.includes(m.id));
+    const monumentsParcours = allMonuments.filter(m => parcoursCourant.monuments.includes(m.id));
     return monumentsParcours.length >= 2 ? monumentsParcours.map(m => m.position) : [];
   }, [parcoursActif]);
 
@@ -186,7 +219,7 @@ const CartePatrimoine: React.FC = () => {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         />
         
-        {monumentsData.map((monument) => (
+        {allMonuments.map((monument) => (
           <Marker
             key={monument.id}
             position={monument.position}

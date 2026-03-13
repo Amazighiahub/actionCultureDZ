@@ -63,7 +63,6 @@ export function useArtisanat(): UseArtisanatReturn {
         setMateriaux(data);
       }
     } catch (error) {
-      console.error('Erreur chargement matériaux:', error);
       setMateriaux([]);
     }
   };
@@ -77,7 +76,6 @@ export function useArtisanat(): UseArtisanatReturn {
         setTechniques(data);
       }
     } catch (error) {
-      console.error('Erreur chargement techniques:', error);
       setTechniques([]);
     }
   };
@@ -90,7 +88,6 @@ export function useArtisanat(): UseArtisanatReturn {
         setStats(response.data);
       }
     } catch (error) {
-      console.error('Erreur chargement statistiques:', error);
     }
   };
 
@@ -105,8 +102,6 @@ export function useArtisanat(): UseArtisanatReturn {
         sort: sortBy
       };
 
-      console.log('📤 Chargement des artisanats...');
-
       const result = await artisanatService.getAll(params);
 
       if (result.success && result.data) {
@@ -116,7 +111,6 @@ export function useArtisanat(): UseArtisanatReturn {
                             result.data ||
                             [];
 
-        console.log(`✅ ${artisanatsData.length} artisanats chargés`);
         setArtisanats(Array.isArray(artisanatsData) ? artisanatsData : []);
 
         // Sauvegarder en localStorage
@@ -124,14 +118,11 @@ export function useArtisanat(): UseArtisanatReturn {
           localStorage.setItem('artisanats_backup', JSON.stringify(artisanatsData));
           localStorage.setItem('artisanats_backup_time', Date.now().toString());
         } catch (e) {
-          console.error('Erreur sauvegarde backup:', e);
         }
       } else {
         throw new Error(result.error || 'Erreur lors du chargement des artisanats');
       }
     } catch (err: any) {
-      console.error('Erreur:', err);
-
       // Gérer le rate limit
       if (err.message?.includes('429') || err.message?.includes('rate limit')) {
         localStorage.setItem('lastRateLimit', Date.now().toString());
@@ -149,7 +140,6 @@ export function useArtisanat(): UseArtisanatReturn {
               setError('Limite de requêtes atteinte. Affichage des données en cache.');
               return;
             } catch (e) {
-              console.error('Erreur parsing backup:', e);
             }
           }
         }

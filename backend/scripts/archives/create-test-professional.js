@@ -43,7 +43,6 @@ async function createTestProfessional() {
       }),
       id_type_user: 6, // Artiste (professionnel)
       statut: 'actif',
-      statut_validation: 'valide', // IMPORTANT: requis pour accéder au dashboard pro
       email_verifie: true
     };
 
@@ -64,9 +63,9 @@ async function createTestProfessional() {
 
       // Mettre à jour le statut si nécessaire
       await sequelize.query(`
-        UPDATE user SET statut = 'actif', email_verifie = 1, statut_validation = 'valide' WHERE id_user = ?
+        UPDATE user SET statut = 'actif', email_verifie = 1 WHERE id_user = ?
       `, { replacements: [existingUser.id_user] });
-      console.log('✅ Statut mis à jour vers "actif" et validation = "valide"');
+      console.log('✅ Statut mis à jour vers "actif"');
 
       console.log('\n📋 Informations de connexion:');
       console.log(`   Email: ${testUser.email}`);
@@ -81,8 +80,8 @@ async function createTestProfessional() {
         INSERT INTO user (
           email, password, nom, prenom, sexe, date_naissance,
           telephone, wilaya_residence, biographie, id_type_user,
-          statut, statut_validation, email_verifie, date_creation, date_modification
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+          statut, email_verifie, date_creation, date_modification
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
       `, {
         replacements: [
           testUser.email,
@@ -96,7 +95,6 @@ async function createTestProfessional() {
           testUser.biographie,
           testUser.id_type_user,
           testUser.statut,
-          testUser.statut_validation,
           testUser.email_verifie ? 1 : 0
         ]
       });

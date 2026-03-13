@@ -11,8 +11,6 @@ class ArticleBlockController {
     
     if (!this.sequelize) {
       console.error('❌ Sequelize non trouvé dans les modèles!');
-    } else {
-      console.log('✅ ArticleBlockController initialisé avec succès');
     }
   }
 
@@ -45,7 +43,7 @@ class ArticleBlockController {
       console.error('❌ Erreur récupération blocs:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Erreur serveur lors de la récupération des blocs' 
+        error: req.t('common.serverError') 
       });
     }
   }
@@ -72,7 +70,7 @@ class ArticleBlockController {
         await transaction.rollback();
         return res.status(400).json({
           success: false,
-          error: 'Article ID et type de bloc requis'
+          error: req.t('common.badRequest')
         });
       }
 
@@ -104,7 +102,7 @@ class ArticleBlockController {
 
       res.status(201).json({
         success: true,
-        message: 'Bloc créé avec succès',
+        message: req.t('articleBlock.created'),
         data: newBlock
       });
 
@@ -113,7 +111,7 @@ class ArticleBlockController {
       console.error('❌ Erreur création bloc:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Erreur serveur lors de la création du bloc' 
+        error: req.t('common.serverError') 
       });
     }
   }
@@ -127,13 +125,11 @@ class ArticleBlockController {
     try {
       const { id_article, article_type = 'article', blocks } = req.body;
 
-      console.log(`📦 createMultipleBlocks: id_article=${id_article}, article_type=${article_type}, nb_blocks=${blocks?.length}`);
-
       if (!id_article || !blocks || !Array.isArray(blocks)) {
         await transaction.rollback();
         return res.status(400).json({
           success: false,
-          error: 'Article ID et tableau de blocs requis'
+          error: req.t('common.badRequest')
         });
       }
 
@@ -145,13 +141,10 @@ class ArticleBlockController {
 
       // Créer les nouveaux blocs
       const createdBlocks = [];
+      const allowedBlockFields = ['type', 'contenu', 'id_media', 'legende', 'alt_text', 'style', 'niveau'];
       for (let i = 0; i < blocks.length; i++) {
-        const blockData = {
-          ...blocks[i],
-          id_article,
-          article_type,
-          ordre: i
-        };
+        const blockData = { id_article, article_type, ordre: i };
+        allowedBlockFields.forEach(f => { if (blocks[i][f] !== undefined) blockData[f] = blocks[i][f]; });
 
         const block = await this.models.ArticleBlock.create(blockData, { transaction });
         createdBlocks.push(block);
@@ -171,7 +164,7 @@ class ArticleBlockController {
 
       res.json({
         success: true,
-        message: `${createdBlocks.length} blocs créés avec succès`,
+        message: req.t('articleBlock.multipleCreated', { count: createdBlocks.length }),
         data: newBlocks
       });
 
@@ -180,7 +173,7 @@ class ArticleBlockController {
       console.error('❌ Erreur création multiple:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Erreur serveur lors de la création des blocs' 
+        error: req.t('common.serverError') 
       });
     }
   }
@@ -201,7 +194,7 @@ class ArticleBlockController {
         await transaction.rollback();
         return res.status(404).json({ 
           success: false, 
-          error: 'Bloc non trouvé' 
+          error: req.t('articleBlock.notFound') 
         });
       }
 
@@ -230,7 +223,7 @@ class ArticleBlockController {
 
       res.json({
         success: true,
-        message: 'Bloc mis à jour avec succès',
+        message: req.t('articleBlock.updated'),
         data: updatedBlock
       });
 
@@ -239,7 +232,7 @@ class ArticleBlockController {
       console.error('❌ Erreur mise à jour bloc:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Erreur serveur lors de la mise à jour' 
+        error: req.t('common.serverError') 
       });
     }
   }
@@ -259,7 +252,7 @@ class ArticleBlockController {
         await transaction.rollback();
         return res.status(404).json({ 
           success: false, 
-          error: 'Bloc non trouvé' 
+          error: req.t('articleBlock.notFound') 
         });
       }
 
@@ -272,7 +265,7 @@ class ArticleBlockController {
 
       res.json({
         success: true,
-        message: 'Bloc supprimé avec succès'
+        message: req.t('articleBlock.deleted')
       });
 
     } catch (error) {
@@ -280,7 +273,7 @@ class ArticleBlockController {
       console.error('❌ Erreur suppression bloc:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Erreur serveur lors de la suppression' 
+        error: req.t('common.serverError') 
       });
     }
   }
@@ -299,7 +292,7 @@ class ArticleBlockController {
         await transaction.rollback();
         return res.status(400).json({
           success: false,
-          error: 'blockIds doit être un tableau'
+          error: req.t('common.badRequest')
         });
       }
 
@@ -316,7 +309,7 @@ class ArticleBlockController {
         await transaction.rollback();
         return res.status(400).json({
           success: false,
-          error: 'Certains blocs n\'appartiennent pas à cet article'
+          error: req.t('articleBlock.notBelongToArticle')
         });
       }
 
@@ -338,7 +331,7 @@ class ArticleBlockController {
 
       res.json({
         success: true,
-        message: 'Ordre des blocs mis à jour'
+        message: req.t('articleBlock.reordered')
       });
 
     } catch (error) {
@@ -346,7 +339,7 @@ class ArticleBlockController {
       console.error('❌ Erreur réorganisation blocs:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Erreur serveur' 
+        error: req.t('common.serverError') 
       });
     }
   }
@@ -365,7 +358,7 @@ class ArticleBlockController {
         await transaction.rollback();
         return res.status(400).json({ 
           success: false, 
-          error: 'Aucun fichier fourni' 
+          error: req.t('upload.noFile') 
         });
       }
 
@@ -387,7 +380,7 @@ class ArticleBlockController {
 
       res.json({
         success: true,
-        message: 'Image uploadée avec succès',
+        message: req.t('upload.imageSuccess'),
         data: media
       });
 
@@ -396,7 +389,7 @@ class ArticleBlockController {
       console.error('❌ Erreur upload image:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Erreur serveur lors de l\'upload' 
+        error: req.t('common.serverError') 
       });
     }
   }
@@ -416,7 +409,7 @@ class ArticleBlockController {
         await transaction.rollback();
         return res.status(404).json({ 
           success: false, 
-          error: 'Bloc non trouvé' 
+          error: req.t('articleBlock.notFound') 
         });
       }
 
@@ -444,7 +437,7 @@ class ArticleBlockController {
 
       res.json({
         success: true,
-        message: 'Bloc dupliqué avec succès',
+        message: req.t('articleBlock.duplicated'),
         data: duplicatedBlock
       });
 
@@ -453,7 +446,7 @@ class ArticleBlockController {
       console.error('❌ Erreur duplication bloc:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Erreur serveur' 
+        error: req.t('common.serverError') 
       });
     }
   }
@@ -538,7 +531,7 @@ class ArticleBlockController {
       console.error('❌ Erreur templates:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Erreur serveur' 
+        error: req.t('common.serverError') 
       });
     }
   }

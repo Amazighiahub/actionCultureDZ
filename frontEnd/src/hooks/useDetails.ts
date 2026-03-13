@@ -3,6 +3,7 @@
  * Compatible avec l'infrastructure existante: useQuery, useFavoris
  */
 import { useState, useCallback, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -109,6 +110,7 @@ interface UseEventDetailsOptions {
 export function useEventDetails(eventId: number, options: UseEventDetailsOptions = {}) {
   const { autoFetch = true } = options;
   const { toast } = useToast();
+  const { t } = useTranslation();
   const { isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
   
@@ -158,11 +160,11 @@ export function useEventDetails(eventId: number, options: UseEventDetailsOptions
       return response.data;
     },
     onSuccess: () => {
-      toast({ title: 'Commentaire ajouté' });
+      toast({ title: t('toasts.commentAdded') });
       queryClient.invalidateQueries({ queryKey: ['event-details', eventId] });
     },
     onError: (error: any) => {
-      toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
+      toast({ title: t('toasts.error'), description: error.message, variant: 'destructive' });
     }
   });
 
@@ -174,11 +176,11 @@ export function useEventDetails(eventId: number, options: UseEventDetailsOptions
       return response.data;
     },
     onSuccess: () => {
-      toast({ title: 'Inscription réussie !' });
+      toast({ title: t('toasts.registrationSuccess') });
       queryClient.invalidateQueries({ queryKey: ['event-details', eventId] });
     },
     onError: (error: any) => {
-      toast({ title: 'Erreur d\'inscription', description: error.message, variant: 'destructive' });
+      toast({ title: t('toasts.registrationError'), description: error.message, variant: 'destructive' });
     }
   });
 
@@ -190,18 +192,18 @@ export function useEventDetails(eventId: number, options: UseEventDetailsOptions
       return response.data;
     },
     onSuccess: () => {
-      toast({ title: 'Désinscription effectuée' });
+      toast({ title: t('toasts.unregistered') });
       queryClient.invalidateQueries({ queryKey: ['event-details', eventId] });
     },
     onError: (error: any) => {
-      toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
+      toast({ title: t('toasts.error'), description: error.message, variant: 'destructive' });
     }
   });
 
   // Fonctions wrapper
   const addComment = useCallback(async (content: string, rating?: number) => {
     if (!isAuthenticated) {
-      toast({ title: 'Connexion requise', variant: 'destructive' });
+      toast({ title: t('toasts.loginRequired'), variant: 'destructive' });
       return false;
     }
     try {
@@ -210,11 +212,11 @@ export function useEventDetails(eventId: number, options: UseEventDetailsOptions
     } catch {
       return false;
     }
-  }, [isAuthenticated, addCommentMutation, toast]);
+  }, [isAuthenticated, addCommentMutation, toast, t]);
 
   const registerToEvent = useCallback(async () => {
     if (!isAuthenticated) {
-      toast({ title: 'Connexion requise', variant: 'destructive' });
+      toast({ title: t('toasts.loginRequired'), variant: 'destructive' });
       return false;
     }
     try {
@@ -327,6 +329,7 @@ interface UseOeuvreDetailsOptions {
 export function useOeuvreDetails(oeuvreId: number, options: UseOeuvreDetailsOptions = {}) {
   const { autoFetch = true, incrementViews = true } = options;
   const { toast } = useToast();
+  const { t } = useTranslation();
   const { isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
   const [viewIncremented, setViewIncremented] = useState(false);
@@ -409,18 +412,18 @@ export function useOeuvreDetails(oeuvreId: number, options: UseOeuvreDetailsOpti
       return response.data;
     },
     onSuccess: () => {
-      toast({ title: 'Commentaire ajouté' });
+      toast({ title: t('toasts.commentAdded') });
       queryClient.invalidateQueries({ queryKey: ['oeuvre-details', oeuvreId] });
     },
     onError: (error: any) => {
-      toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
+      toast({ title: t('toasts.error'), description: error.message, variant: 'destructive' });
     }
   });
 
   // Fonction wrapper pour ajouter un commentaire
   const addComment = useCallback(async (content: string, rating?: number) => {
     if (!isAuthenticated) {
-      toast({ title: 'Connexion requise', variant: 'destructive' });
+      toast({ title: t('toasts.loginRequired'), variant: 'destructive' });
       return false;
     }
     try {
@@ -429,7 +432,7 @@ export function useOeuvreDetails(oeuvreId: number, options: UseOeuvreDetailsOpti
     } catch {
       return false;
     }
-  }, [isAuthenticated, addCommentMutation, toast]);
+  }, [isAuthenticated, addCommentMutation, toast, t]);
 
   return {
     // Données

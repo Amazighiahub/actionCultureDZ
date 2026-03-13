@@ -10,7 +10,6 @@ const { validateLanguage } = require('../middlewares/language');
 const initIntervenantRoutes = (models, authMiddleware) => {
   const router = express.Router();
   
-  console.log('📋 Initialisation des routes intervenants i18n...');
   
   const intervenantController = new IntervenantController(models);
 
@@ -21,7 +20,7 @@ const initIntervenantRoutes = (models, authMiddleware) => {
       if (!req.user) {
         return res.status(401).json({
           success: false,
-          error: 'Authentification requise'
+          error: req.t ? req.t('auth.tokenMissing') : 'Authentication required'
         });
       }
 
@@ -30,26 +29,26 @@ const initIntervenantRoutes = (models, authMiddleware) => {
       }
       
       if (req.user.role === 'Professionnel' || req.user.isProfessionnel) {
-        if (req.user.statut_validation === 'valide') {
+        if (req.user.statut === 'actif') {
           return next();
         } else {
           return res.status(403).json({
             success: false,
-            error: 'Votre compte professionnel doit être validé',
-            statut: req.user.statut_validation
+            error: req.t ? req.t('auth.pendingValidation') : 'Account pending validation',
+            statut: req.user.statut
           });
         }
       }
       
       return res.status(403).json({
         success: false,
-        error: 'Accès réservé aux administrateurs et professionnels validés'
+        error: req.t ? req.t('auth.forbidden') : 'Forbidden'
       });
     } catch (error) {
       console.error('Erreur vérification permissions:', error);
       return res.status(500).json({
         success: false,
-        error: 'Erreur lors de la vérification des permissions'
+        error: req.t ? req.t('common.serverError') : 'Server error'
       });
     }
   };
@@ -85,7 +84,7 @@ const initIntervenantRoutes = (models, authMiddleware) => {
   // Recherche d'intervenants (autocomplétion)
   router.get('/search',
     [
-      query('q').trim().isLength({ min: 2 }).withMessage('Minimum 2 caractères'),
+      query('q').trim().isLength({ min: 2 }).withMessage((value, { req }) => req.t('validation.searchRequired')),
       query('type_intervenant').optional().trim(),
       query('limit').optional().isInt({ min: 1, max: 50 })
     ],
@@ -157,6 +156,12 @@ const initIntervenantRoutes = (models, authMiddleware) => {
     (req, res) => intervenantController.getIntervenantById(req, res)
   );
 
+  // Œuvres d'un intervenant
+  router.get('/:id/oeuvres',
+    validationMiddleware.validateId('id'),
+    (req, res) => intervenantController.getOeuvresByIntervenant(req, res)
+  );
+
   // ===== ROUTES PROTÉGÉES (Admin + Professionnel) =====
 
   // ⚡ Validation acceptant string OU JSON pour les champs multilingues
@@ -167,15 +172,15 @@ const initIntervenantRoutes = (models, authMiddleware) => {
         if (typeof value === 'object') return Object.values(value).some(v => v && v.length > 0);
         return false;
       })
-      .withMessage('Le nom est obligatoire (max 100 caractères)'),
+      .withMessage((value, { req }) => req.t('validation.invalidName')),
     body('prenom')
       .custom((value) => {
         if (typeof value === 'string') return value.trim().length > 0 && value.trim().length <= 100;
         if (typeof value === 'object') return Object.values(value).some(v => v && v.length > 0);
         return false;
       })
-      .withMessage('Le prénom est obligatoire (max 100 caractères)'),
-    body('type_intervenant').trim().notEmpty().withMessage('Le type d\'intervenant est obligatoire'),
+      .withMessage((value, { req }) => req.t('validation.invalidFirstName')),
+    body('type_intervenant').trim().notEmpty().withMessage((value, { req }) => req.t('validation.invalidType')),
     body('specialite').optional().trim().isLength({ max: 200 }),
     body('biographie')
       .optional()
@@ -184,8 +189,8 @@ const initIntervenantRoutes = (models, authMiddleware) => {
         if (typeof value === 'object') return true;
         return true;
       })
-      .withMessage('La biographie ne doit pas dépasser 2000 caractères'),
-    body('email').optional().trim().isEmail().withMessage('Email invalide'),
+      .withMessage((value, { req }) => req.t('validation.descriptionTooLong')),
+    body('email').optional().trim().isEmail().withMessage((value, { req }) => req.t('validation.invalidEmail')),
     body('telephone').optional().trim().matches(/^[0-9+\-\s()]+$/),
     body('site_web').optional().trim().isURL(),
     body('photo_url').optional().trim().isURL(),
@@ -241,9 +246,6 @@ const initIntervenantRoutes = (models, authMiddleware) => {
     (req, res) => intervenantController.deleteIntervenant(req, res)
   );
 
-  console.log('✅ Routes intervenants i18n initialisées');
-  console.log('  🌍 Routes traduction: GET /:id/translations, PATCH /:id/translation/:lang');
-  
   return router;
 };
 

@@ -248,7 +248,6 @@ export const useLocalizedNumber = () => {
         })
       };
     } catch (error) {
-      console.warn(`Failed to create formatter for locale ${locale}, falling back to fr-FR`, error);
       // Fallback en cas d'erreur
       const fallbackLocale = 'fr-FR';
       return {
@@ -350,7 +349,6 @@ export const useLocalizedNumber = () => {
           }
       }
     } catch (error) {
-      console.warn('Error formatting number:', error);
       // Fallback basique
       formatted = value.toString();
     }

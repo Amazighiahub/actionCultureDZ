@@ -21,14 +21,14 @@ class VueController {
       if (!validTypes.includes(type_entite)) {
         return res.status(400).json({
           success: false,
-          error: 'Type d\'entité invalide'
+          error: req.t('common.badRequest')
         });
       }
 
       if (!id_entite) {
         return res.status(400).json({
           success: false,
-          error: 'ID de l\'entité requis'
+          error: req.t('common.badRequest')
         });
       }
 
@@ -94,7 +94,7 @@ class VueController {
       console.error('Erreur tracking vue:', error);
       return res.status(500).json({
         success: false,
-        error: 'Erreur lors de l\'enregistrement de la vue'
+        error: req.t('common.serverError')
       });
     }
   }
@@ -114,7 +114,7 @@ class VueController {
       if (!vue) {
         return res.status(404).json({
           success: false,
-          error: 'Vue non trouvée'
+          error: req.t('common.notFound')
         });
       }
 
@@ -126,7 +126,7 @@ class VueController {
       if (!canUpdate && !req.user?.isAdmin) {
         return res.status(403).json({
           success: false,
-          message: 'Non autorisé à modifier cette vue'
+          message: req.t('auth.forbidden')
         });
       }
 
@@ -134,7 +134,7 @@ class VueController {
       if (!Number.isFinite(parsedDuration) || parsedDuration < 0 || parsedDuration > 86400) {
         return res.status(400).json({
           success: false,
-          error: 'Durée invalide'
+          error: req.t('common.badRequest')
         });
       }
 
@@ -152,7 +152,7 @@ class VueController {
       console.error('Erreur mise à jour durée:', error);
       return res.status(500).json({
         success: false,
-        error: 'Erreur lors de la mise à jour'
+        error: req.t('common.serverError')
       });
     }
   }
@@ -270,7 +270,7 @@ class VueController {
       console.error('Erreur stats vues:', error);
       return res.status(500).json({
         success: false,
-        error: 'Erreur lors de la récupération des statistiques'
+        error: req.t('common.serverError')
       });
     }
   }

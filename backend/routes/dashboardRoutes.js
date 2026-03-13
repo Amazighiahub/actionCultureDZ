@@ -20,13 +20,6 @@ const initDashboardRoutes = (models) => {
       dashboardController[method] = dashboardController[method].bind(dashboardController);
     });
 
-  // Debug pour vérifier les méthodes
-  if (process.env.NODE_ENV !== 'production') {
-    console.log('✅ DashboardController initialisé avec les méthodes:', 
-      Object.getOwnPropertyNames(Object.getPrototypeOf(dashboardController))
-        .filter(m => typeof dashboardController[m] === 'function' && m !== 'constructor')
-    );
-  }
 
   // Toutes les routes nécessitent l'authentification admin
   router.use(authMiddleware.authenticate);
@@ -43,7 +36,7 @@ const initDashboardRoutes = (models) => {
 
   router.get('/stats',
     [
-      query('period').optional().isIn(['day', 'week', 'month', 'year']).withMessage('Période invalide')
+      query('period').optional().isIn(['day', 'week', 'month', 'year']).withMessage((value, { req }) => req.t('validation.invalidPeriod'))
     ],
     validationMiddleware.handleValidationErrors,
     cacheMiddleware.conditionalCache(600),
@@ -62,7 +55,7 @@ const initDashboardRoutes = (models) => {
 
   router.get('/patrimoine/qr-stats',
     [
-      query('period').optional().isInt({ min: 1, max: 365 }).withMessage('Période invalide (1-365 jours)')
+      query('period').optional().isInt({ min: 1, max: 365 }).withMessage((value, { req }) => req.t('validation.invalidPeriod'))
     ],
     validationMiddleware.handleValidationErrors,
     cacheMiddleware.conditionalCache(900),
@@ -71,15 +64,15 @@ const initDashboardRoutes = (models) => {
 
   router.get('/patrimoine/parcours',
     [
-      query('period').optional().isInt({ min: 1, max: 365 }).withMessage('Période invalide'),
-      query('statut').optional().isIn(['actif', 'inactif', 'maintenance']).withMessage('Statut invalide')
+      query('period').optional().isInt({ min: 1, max: 365 }).withMessage((value, { req }) => req.t('validation.invalidPeriod')),
+      query('statut').optional().isIn(['actif', 'inactif', 'maintenance']).withMessage((value, { req }) => req.t('validation.invalidStatus'))
     ],
     validationMiddleware.handleValidationErrors,
     cacheMiddleware.conditionalCache(900),
     (req, res) => {
       res.status(501).json({
         success: false,
-        error: 'Statistiques parcours à implémenter'
+        error: req.t('common.notImplemented')
       });
     }
   );
@@ -105,8 +98,8 @@ const initDashboardRoutes = (models) => {
   // Statistiques utilisateurs
   router.get('/users/stats',
     [
-      query('period').optional().isIn(['day', 'week', 'month', 'year']).withMessage('Période invalide'),
-      query('type').optional().isIn(['visiteur', 'artisan', 'guide', 'expert']).withMessage('Type utilisateur invalide')
+      query('period').optional().isIn(['day', 'week', 'month', 'year']).withMessage((value, { req }) => req.t('validation.invalidPeriod')),
+      query('type').optional().isIn(['visiteur', 'artisan', 'guide', 'expert']).withMessage((value, { req }) => req.t('validation.invalidUserType'))
     ],
     validationMiddleware.handleValidationErrors,
     cacheMiddleware.conditionalCache(600),
@@ -129,8 +122,8 @@ const initDashboardRoutes = (models) => {
   // Recherche d'utilisateurs
   router.get('/users/search',
     [
-      query('q').notEmpty().withMessage('Terme de recherche requis'),
-      query('type').optional().isIn(['nom', 'email', 'telephone']).withMessage('Type de recherche invalide')
+      query('q').notEmpty().withMessage((value, { req }) => req.t('validation.searchRequired')),
+      query('type').optional().isIn(['nom', 'email', 'telephone']).withMessage((value, { req }) => req.t('validation.invalidSearchType'))
     ],
     validationMiddleware.handleValidationErrors,
     cacheMiddleware.conditionalCache(300),
@@ -140,11 +133,11 @@ const initDashboardRoutes = (models) => {
   // Export des utilisateurs
   router.get('/users/export',
     [
-      query('format').optional().isIn(['csv', 'excel']).withMessage('Format invalide'),
-      query('type_user').optional().isIn(['visiteur', 'artisan', 'guide', 'expert']).withMessage('Type invalide'),
-      query('statut').optional().isIn(['actif', 'inactif', 'suspendu']).withMessage('Statut invalide'),
-      query('start_date').optional().isISO8601().withMessage('Date début invalide'),
-      query('end_date').optional().isISO8601().withMessage('Date fin invalide')
+      query('format').optional().isIn(['csv', 'excel']).withMessage((value, { req }) => req.t('validation.invalidFormat')),
+      query('type_user').optional().isIn(['visiteur', 'artisan', 'guide', 'expert']).withMessage((value, { req }) => req.t('validation.invalidType')),
+      query('statut').optional().isIn(['actif', 'inactif', 'suspendu']).withMessage((value, { req }) => req.t('validation.invalidStatus')),
+      query('start_date').optional().isISO8601().withMessage((value, { req }) => req.t('validation.invalidStartDate')),
+      query('end_date').optional().isISO8601().withMessage((value, { req }) => req.t('validation.invalidEndDate'))
     ],
     validationMiddleware.handleValidationErrors,
     rateLimitMiddleware.sensitiveActions,
@@ -156,8 +149,8 @@ const initDashboardRoutes = (models) => {
   router.patch('/users/:id/validate',
     validationMiddleware.validateId('id'),
     [
-      body('valide').isBoolean().withMessage('Valeur de validation invalide'),
-      body('raison').optional().isString().withMessage('Raison invalide')
+      body('valide').isBoolean().withMessage((value, { req }) => req.t('validation.invalidValidationValue')),
+      body('raison').optional().isString().withMessage((value, { req }) => req.t('validation.invalidReason'))
     ],
     validationMiddleware.handleValidationErrors,
     rateLimitMiddleware.sensitiveActions,
@@ -181,16 +174,16 @@ const initDashboardRoutes = (models) => {
   router.put('/users/:id',
     validationMiddleware.validateId('id'),
     [
-      body('nom').optional().isString().trim().notEmpty().withMessage('Nom invalide'),
-      body('prenom').optional().isString().trim().notEmpty().withMessage('Prénom invalide'),
-      body('email').optional().isEmail().withMessage('Email invalide'),
-      body('telephone').optional().isMobilePhone('any').withMessage('Téléphone invalide'),
-      body('type_user').optional().isIn(['visiteur', 'artisan', 'guide', 'expert']).withMessage('Type utilisateur invalide'),
-      body('statut').optional().isIn(['actif', 'inactif', 'suspendu']).withMessage('Statut invalide'),
-      body('biographie').optional().isString().withMessage('Biographie invalide'),
-      body('entreprise').optional().isString().withMessage('Entreprise invalide'),
-      body('site_web').optional().isURL().withMessage('URL du site web invalide'),
-      body('wilaya_residence').optional().isInt({ min: 1, max: 58 }).withMessage('Wilaya invalide')
+      body('nom').optional().isString().trim().notEmpty().withMessage((value, { req }) => req.t('validation.invalidName')),
+      body('prenom').optional().isString().trim().notEmpty().withMessage((value, { req }) => req.t('validation.invalidFirstName')),
+      body('email').optional().isEmail().withMessage((value, { req }) => req.t('validation.invalidEmail')),
+      body('telephone').optional().isMobilePhone('any').withMessage((value, { req }) => req.t('validation.invalidPhone')),
+      body('type_user').optional().isIn(['visiteur', 'artisan', 'guide', 'expert']).withMessage((value, { req }) => req.t('validation.invalidUserType')),
+      body('statut').optional().isIn(['actif', 'inactif', 'suspendu']).withMessage((value, { req }) => req.t('validation.invalidStatus')),
+      body('biographie').optional().isString().withMessage((value, { req }) => req.t('validation.invalidBiography')),
+      body('entreprise').optional().isString().withMessage((value, { req }) => req.t('validation.invalidCompany')),
+      body('site_web').optional().isURL().withMessage((value, { req }) => req.t('validation.invalidWebsite')),
+      body('wilaya_residence').optional().isInt({ min: 1, max: 58 }).withMessage((value, { req }) => req.t('validation.invalidWilaya'))
     ],
     validationMiddleware.handleValidationErrors,
     rateLimitMiddleware.sensitiveActions,
@@ -211,8 +204,8 @@ const initDashboardRoutes = (models) => {
   router.post('/users/:id/suspend',
     validationMiddleware.validateId('id'),
     [
-      body('raison').notEmpty().isString().withMessage('Raison requise'),
-      body('duree').optional().isInt({ min: 1 }).withMessage('Durée invalide')
+      body('raison').notEmpty().isString().withMessage((value, { req }) => req.t('validation.reasonRequired')),
+      body('duree').optional().isInt({ min: 1 }).withMessage((value, { req }) => req.t('validation.invalidDuration'))
     ],
     validationMiddleware.handleValidationErrors,
     rateLimitMiddleware.sensitiveActions,
@@ -244,7 +237,7 @@ const initDashboardRoutes = (models) => {
   router.put('/users/:id/role',
     validationMiddleware.validateId('id'),
     [
-      body('role_id').isInt({ min: 1 }).withMessage('ID de rôle invalide')
+      body('role_id').isInt({ min: 1 }).withMessage((value, { req }) => req.t('validation.invalidRoleId'))
     ],
     validationMiddleware.handleValidationErrors,
     rateLimitMiddleware.sensitiveActions,
@@ -263,10 +256,10 @@ const initDashboardRoutes = (models) => {
   // Actions en masse sur les utilisateurs
   router.post('/users/bulk-action',
     [
-      body('user_ids').isArray({ min: 1 }).withMessage('Liste d\'utilisateurs requise'),
-      body('user_ids.*').isInt({ min: 1 }).withMessage('ID utilisateur invalide'),
-      body('action').isIn(['activate', 'deactivate', 'delete', 'change_role']).withMessage('Action invalide'),
-      body('role_id').optional().isInt({ min: 1 }).withMessage('ID de rôle invalide')
+      body('user_ids').isArray({ min: 1 }).withMessage((value, { req }) => req.t('validation.userListRequired')),
+      body('user_ids.*').isInt({ min: 1 }).withMessage((value, { req }) => req.t('validation.invalidUserId')),
+      body('action').isIn(['activate', 'deactivate', 'delete', 'change_role']).withMessage((value, { req }) => req.t('validation.invalidAction')),
+      body('role_id').optional().isInt({ min: 1 }).withMessage((value, { req }) => req.t('validation.invalidRoleId'))
     ],
     validationMiddleware.handleValidationErrors,
     rateLimitMiddleware.sensitiveActions,
@@ -286,8 +279,8 @@ const initDashboardRoutes = (models) => {
 
   router.get('/content/stats',
     [
-      query('period').optional().isIn(['day', 'week', 'month', 'year']).withMessage('Période invalide'),
-      query('type').optional().isIn(['oeuvre', 'evenement', 'artisanat']).withMessage('Type contenu invalide')
+      query('period').optional().isIn(['day', 'week', 'month', 'year']).withMessage((value, { req }) => req.t('validation.invalidPeriod')),
+      query('type').optional().isIn(['oeuvre', 'evenement', 'artisanat']).withMessage((value, { req }) => req.t('validation.invalidContentType'))
     ],
     validationMiddleware.handleValidationErrors,
     cacheMiddleware.conditionalCache(600),
@@ -296,8 +289,8 @@ const initDashboardRoutes = (models) => {
 
   router.get('/content/top-contributors',
     [
-      query('limit').optional().isInt({ min: 1, max: 50 }).withMessage('Limite invalide'),
-      query('period').optional().isInt({ min: 1, max: 365 }).withMessage('Période invalide')
+      query('limit').optional().isInt({ min: 1, max: 50 }).withMessage((value, { req }) => req.t('validation.invalidLimit')),
+      query('period').optional().isInt({ min: 1, max: 365 }).withMessage((value, { req }) => req.t('validation.invalidPeriod'))
     ],
     validationMiddleware.handleValidationErrors,
     cacheMiddleware.conditionalCache(900),
@@ -317,9 +310,9 @@ const initDashboardRoutes = (models) => {
   router.get('/moderation/signalements',
     validationMiddleware.validatePagination,
     [
-      query('type').optional().isIn(['commentaire', 'oeuvre', 'evenement', 'user']).withMessage('Type invalide'),
-      query('priorite').optional().isIn(['basse', 'normale', 'haute', 'urgente']).withMessage('Priorité invalide'),
-      query('statut').optional().isIn(['en_attente', 'en_cours', 'traite']).withMessage('Statut invalide')
+      query('type').optional().isIn(['commentaire', 'oeuvre', 'evenement', 'user']).withMessage((value, { req }) => req.t('validation.invalidType')),
+      query('priorite').optional().isIn(['basse', 'normale', 'haute', 'urgente']).withMessage((value, { req }) => req.t('validation.invalidPriority')),
+      query('statut').optional().isIn(['en_attente', 'en_cours', 'traite']).withMessage((value, { req }) => req.t('validation.invalidStatus'))
     ],
     validationMiddleware.handleValidationErrors,
     cacheMiddleware.conditionalCache(120),
@@ -328,7 +321,7 @@ const initDashboardRoutes = (models) => {
 
   router.get('/moderation/stats',
     [
-      query('period').optional().isInt({ min: 1, max: 365 }).withMessage('Période invalide')
+      query('period').optional().isInt({ min: 1, max: 365 }).withMessage((value, { req }) => req.t('validation.invalidPeriod'))
     ],
     validationMiddleware.handleValidationErrors,
     cacheMiddleware.conditionalCache(600),
@@ -346,16 +339,16 @@ const initDashboardRoutes = (models) => {
           'validate_user', 'validate_oeuvre', 'moderate_comment', 
           'moderate_signalement', 'suspend_user', 'bulk_moderate'
         ])
-        .withMessage('Action invalide'),
+        .withMessage((value, { req }) => req.t('validation.invalidAction')),
       body('entityType')
         .optional()
         .isIn(['user', 'oeuvre', 'comment', 'signalement'])
-        .withMessage('Type d\'entité invalide'),
+        .withMessage((value, { req }) => req.t('validation.invalidEntityType')),
       body('entityId')
         .optional()
         .isInt({ min: 1 })
-        .withMessage('ID d\'entité invalide'),
-      body('data').optional().isObject().withMessage('Données invalides')
+        .withMessage((value, { req }) => req.t('validation.invalidEntityId')),
+      body('data').optional().isObject().withMessage((value, { req }) => req.t('validation.invalidData'))
     ],
     validationMiddleware.handleValidationErrors,
     rateLimitMiddleware.sensitiveActions,
@@ -365,9 +358,9 @@ const initDashboardRoutes = (models) => {
 
   router.post('/actions/bulk',
     [
-      body('action').isString().withMessage('Action requise'),
-      body('entities').isArray().withMessage('Entités doivent être un tableau'),
-      body('data').optional().isObject().withMessage('Données invalides')
+      body('action').isString().withMessage((value, { req }) => req.t('validation.actionRequired')),
+      body('entities').isArray().withMessage((value, { req }) => req.t('validation.entitiesMustBeArray')),
+      body('data').optional().isObject().withMessage((value, { req }) => req.t('validation.invalidData'))
     ],
     validationMiddleware.handleValidationErrors,
     rateLimitMiddleware.sensitiveActions,
@@ -383,8 +376,8 @@ const initDashboardRoutes = (models) => {
   router.patch('/oeuvres/:id/validate',
     validationMiddleware.validateId('id'),
     [
-      body('valide').isBoolean().withMessage('Valeur de validation invalide'),
-      body('raison_rejet').optional().isString().withMessage('Raison de rejet invalide')
+      body('valide').isBoolean().withMessage((value, { req }) => req.t('validation.invalidValidationValue')),
+      body('raison_rejet').optional().isString().withMessage((value, { req }) => req.t('validation.invalidRejectReason'))
     ],
     validationMiddleware.handleValidationErrors,
     rateLimitMiddleware.sensitiveActions,
@@ -414,8 +407,8 @@ const initDashboardRoutes = (models) => {
           'aucune', 'avertissement', 'suppression_contenu', 
           'suspension_temporaire', 'suspension_permanente'
         ])
-        .withMessage('Action de modération invalide'),
-      body('notes').optional().isString().withMessage('Notes invalides')
+        .withMessage((value, { req }) => req.t('validation.invalidModerationAction')),
+      body('notes').optional().isString().withMessage((value, { req }) => req.t('validation.invalidNotes'))
     ],
     validationMiddleware.handleValidationErrors,
     rateLimitMiddleware.sensitiveActions,
@@ -440,7 +433,7 @@ const initDashboardRoutes = (models) => {
 
   router.get('/analytics/advanced',
     [
-      query('period').optional().isInt({ min: 1, max: 365 }).withMessage('Période invalide')
+      query('period').optional().isInt({ min: 1, max: 365 }).withMessage((value, { req }) => req.t('validation.invalidPeriod'))
     ],
     validationMiddleware.handleValidationErrors,
     cacheMiddleware.conditionalCache(1800),
@@ -449,8 +442,8 @@ const initDashboardRoutes = (models) => {
 
   router.get('/analytics/retention',
     [
-      query('period').optional().isInt({ min: 7, max: 365 }).withMessage('Période invalide'),
-      query('cohort').optional().isString().withMessage('Cohorte invalide')
+      query('period').optional().isInt({ min: 7, max: 365 }).withMessage((value, { req }) => req.t('validation.invalidPeriod')),
+      query('cohort').optional().isString().withMessage((value, { req }) => req.t('validation.invalidCohort'))
     ],
     validationMiddleware.handleValidationErrors,
     cacheMiddleware.conditionalCache(3600),
@@ -459,7 +452,7 @@ const initDashboardRoutes = (models) => {
 
   router.get('/analytics/funnel',
     [
-      query('period').optional().isInt({ min: 1, max: 365 }).withMessage('Période invalide')
+      query('period').optional().isInt({ min: 1, max: 365 }).withMessage((value, { req }) => req.t('validation.invalidPeriod'))
     ],
     validationMiddleware.handleValidationErrors,
     cacheMiddleware.conditionalCache(1800),
@@ -468,8 +461,8 @@ const initDashboardRoutes = (models) => {
 
   router.get('/analytics/engagement',
     [
-      query('period').optional().isInt({ min: 1, max: 365 }).withMessage('Période invalide'),
-      query('metric').optional().isIn(['session_duration', 'pages_per_session', 'bounce_rate']).withMessage('Métrique invalide')
+      query('period').optional().isInt({ min: 1, max: 365 }).withMessage((value, { req }) => req.t('validation.invalidPeriod')),
+      query('metric').optional().isIn(['session_duration', 'pages_per_session', 'bounce_rate']).withMessage((value, { req }) => req.t('validation.invalidMetric'))
     ],
     validationMiddleware.handleValidationErrors,
     cacheMiddleware.conditionalCache(900),
@@ -483,10 +476,10 @@ const initDashboardRoutes = (models) => {
   router.get('/audit/logs',
     validationMiddleware.validatePagination,
     [
-      query('action').optional().isString().withMessage('Action invalide'),
-      query('userId').optional().isInt().withMessage('ID utilisateur invalide'),
-      query('startDate').optional().isISO8601().withMessage('Date de début invalide'),
-      query('endDate').optional().isISO8601().withMessage('Date de fin invalide')
+      query('action').optional().isString().withMessage((value, { req }) => req.t('validation.invalidAction')),
+      query('userId').optional().isInt().withMessage((value, { req }) => req.t('validation.invalidUserId')),
+      query('startDate').optional().isISO8601().withMessage((value, { req }) => req.t('validation.invalidStartDate')),
+      query('endDate').optional().isISO8601().withMessage((value, { req }) => req.t('validation.invalidEndDate'))
     ],
     validationMiddleware.handleValidationErrors,
     authMiddleware.requireRole(['Super Admin']),
@@ -513,9 +506,9 @@ const initDashboardRoutes = (models) => {
 
   router.get('/reports/activity',
     [
-      query('startDate').optional().isISO8601().withMessage('Date de début invalide'),
-      query('endDate').optional().isISO8601().withMessage('Date de fin invalide'),
-      query('format').optional().isIn(['json', 'excel']).withMessage('Format invalide')
+      query('startDate').optional().isISO8601().withMessage((value, { req }) => req.t('validation.invalidStartDate')),
+      query('endDate').optional().isISO8601().withMessage((value, { req }) => req.t('validation.invalidEndDate')),
+      query('format').optional().isIn(['json', 'excel']).withMessage((value, { req }) => req.t('validation.invalidFormat'))
     ],
     validationMiddleware.handleValidationErrors,
     rateLimitMiddleware.sensitiveActions,
@@ -525,9 +518,9 @@ const initDashboardRoutes = (models) => {
 
   router.get('/reports/moderation',
     [
-      query('startDate').optional().isISO8601().withMessage('Date de début invalide'),
-      query('endDate').optional().isISO8601().withMessage('Date de fin invalide'),
-      query('format').optional().isIn(['json', 'excel']).withMessage('Format invalide')
+      query('startDate').optional().isISO8601().withMessage((value, { req }) => req.t('validation.invalidStartDate')),
+      query('endDate').optional().isISO8601().withMessage((value, { req }) => req.t('validation.invalidEndDate')),
+      query('format').optional().isIn(['json', 'excel']).withMessage((value, { req }) => req.t('validation.invalidFormat'))
     ],
     validationMiddleware.handleValidationErrors,
     rateLimitMiddleware.sensitiveActions,
@@ -537,9 +530,9 @@ const initDashboardRoutes = (models) => {
 
   router.get('/reports/patrimoine',
     [
-      query('startDate').optional().isISO8601().withMessage('Date de début invalide'),
-      query('endDate').optional().isISO8601().withMessage('Date de fin invalide'),
-      query('format').optional().isIn(['json', 'excel']).withMessage('Format invalide')
+      query('startDate').optional().isISO8601().withMessage((value, { req }) => req.t('validation.invalidStartDate')),
+      query('endDate').optional().isISO8601().withMessage((value, { req }) => req.t('validation.invalidEndDate')),
+      query('format').optional().isIn(['json', 'excel']).withMessage((value, { req }) => req.t('validation.invalidFormat'))
     ],
     validationMiddleware.handleValidationErrors,
     rateLimitMiddleware.sensitiveActions,
@@ -547,7 +540,7 @@ const initDashboardRoutes = (models) => {
     (req, res) => {
       res.status(501).json({
         success: false,
-        error: 'Rapport patrimoine à implémenter'
+        error: req.t('common.notImplemented')
       });
     }
   );
@@ -628,7 +621,7 @@ const initDashboardRoutes = (models) => {
 
   router.post('/cache/clear',
     [
-      body('type').optional().isIn(['all', 'users', 'content', 'metadata']).withMessage('Type de cache invalide')
+      body('type').optional().isIn(['all', 'users', 'content', 'metadata']).withMessage((value, { req }) => req.t('validation.invalidCacheType'))
     ],
     validationMiddleware.handleValidationErrors,
     rateLimitMiddleware.sensitiveActions,
@@ -643,7 +636,7 @@ const initDashboardRoutes = (models) => {
       
       res.json({
         success: true,
-        message: `Cache ${type} vidé avec succès`
+        message: req.t('admin.cacheCleared')
       });
     }
   );
@@ -674,10 +667,10 @@ const initDashboardRoutes = (models) => {
 
   router.post('/notifications/broadcast',
     [
-      body('title').notEmpty().withMessage('Titre requis'),
-      body('message').notEmpty().withMessage('Message requis'),
-      body('target').isIn(['all', 'professionals', 'visitors']).withMessage('Cible invalide'),
-      body('type').optional().isString().withMessage('Type invalide')
+      body('title').notEmpty().withMessage((value, { req }) => req.t('validation.titleRequired')),
+      body('message').notEmpty().withMessage((value, { req }) => req.t('validation.messageRequired')),
+      body('target').isIn(['all', 'professionals', 'visitors']).withMessage((value, { req }) => req.t('validation.invalidTarget')),
+      body('type').optional().isString().withMessage((value, { req }) => req.t('validation.invalidType'))
     ],
     validationMiddleware.handleValidationErrors,
     rateLimitMiddleware.sensitiveActions,
@@ -685,7 +678,6 @@ const initDashboardRoutes = (models) => {
     dashboardController.broadcastNotification
   );
 
-  console.log('✅ Routes dashboard administrateur initialisées');
 
   return router;
 };

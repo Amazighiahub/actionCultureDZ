@@ -69,11 +69,6 @@ export default defineConfig(({ mode }) => ({
         target: 'http://127.0.0.1:3001',
         changeOrigin: true,
         secure: false,
-      },
-      '/sitemap.xml': {
-        target: 'http://127.0.0.1:3001',
-        changeOrigin: true,
-        secure: false,
       }
     }
   },
@@ -98,7 +93,7 @@ export default defineConfig(({ mode }) => ({
     __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
   },
   optimizeDeps: {
-    include: ['axios', 'moment', 'react', 'react-dom', 'react-router-dom', '@tanstack/react-query'],
+    include: ['axios', 'react', 'react-dom', 'react-router-dom', '@tanstack/react-query'],
   },
   build: {
     // Augmenter la limite d'avertissement
@@ -137,7 +132,7 @@ export default defineConfig(({ mode }) => ({
             }
             
             // Utilitaires
-            if (id.includes('moment') || id.includes('date-fns') || id.includes('lodash')) {
+            if (id.includes('date-fns') || id.includes('lodash')) {
               return 'utils-vendor';
             }
             

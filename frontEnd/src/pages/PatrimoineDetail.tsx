@@ -248,7 +248,7 @@ const PatrimoineDetail = () => {
   }
 
   const seoKeywords = [
-    translate(site?.nom, lang), site?.type_patrimoine,
+    translate(site?.nom, lang), site?.typePatrimoine,
     site?.Commune?.Daira?.Wilaya?.nom, 'patrimoine algérien', 'site historique', 'Algérie',
     'tourisme culturel', 'histoire algérienne'
   ].filter(Boolean) as string[];
@@ -266,7 +266,7 @@ const PatrimoineDetail = () => {
           buildBreadcrumbJsonLd([
             { name: 'Accueil', url: '/' },
             { name: 'Patrimoine', url: '/patrimoine' },
-            { name: translate(site?.nom, lang) || '', url: `/patrimoine/${site?.id_site}` },
+            { name: translate(site?.nom, lang) || '', url: `/patrimoine/${site?.id_lieu}` },
           ]),
         ]}
       />

@@ -20,7 +20,6 @@ export const useLanguagePersistence = () => {
       const currentLang = i18n.language;
       if (currentLang) {
         localStorage.setItem(USER_LANG_KEY, currentLang);
-        console.log('[LanguagePersistence] Langue sauvegardée:', currentLang);
       }
     };
     
@@ -30,7 +29,6 @@ export const useLanguagePersistence = () => {
       const currentLang = i18n.language;
       
       if (savedLang && savedLang !== currentLang) {
-        console.log('[LanguagePersistence] Restauration de la langue:', savedLang);
         i18n.changeLanguage(savedLang);
       }
     };

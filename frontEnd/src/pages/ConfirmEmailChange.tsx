@@ -20,7 +20,7 @@ const ConfirmEmailChange = () => {
   useEffect(() => {
     if (!token) {
       setStatus('error');
-      setMessage('Aucun jeton de confirmation fourni.');
+      setMessage(t('emailChange.noTokenProvided'));
       return;
     }
 
@@ -33,14 +33,14 @@ const ConfirmEmailChange = () => {
         if (response.success && response.data) {
           setStatus('success');
           setNewEmail(response.data.newEmail || '');
-          setMessage('Votre adresse email a été mise à jour avec succès.');
+          setMessage(t('emailChange.emailUpdatedSuccess'));
         } else {
           setStatus('error');
-          setMessage(response.error || 'Le jeton est invalide ou a expiré.');
+          setMessage(response.error || t('emailChange.tokenInvalidOrExpired'));
         }
       } catch (error: any) {
         setStatus('error');
-        setMessage(error.response?.data?.error || 'Impossible de confirmer le changement d\'email.');
+        setMessage(error.response?.data?.error || t('emailChange.confirmationFailed'));
       }
     };
 
@@ -60,7 +60,7 @@ const ConfirmEmailChange = () => {
                   <div className="mx-auto">
                     <Loader2 className="h-12 w-12 animate-spin text-primary" />
                   </div>
-                  <CardTitle className="mt-4">Confirmation en cours...</CardTitle>
+                  <CardTitle className="mt-4">{t('emailChange.confirming')}</CardTitle>
                 </CardHeader>
               </>
             )}
@@ -71,20 +71,20 @@ const ConfirmEmailChange = () => {
                   <div className="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
                     <CheckCircle className="h-6 w-6 text-green-600" />
                   </div>
-                  <CardTitle>Email mis à jour</CardTitle>
+                  <CardTitle>{t('emailChange.emailUpdated')}</CardTitle>
                   <CardDescription>{message}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {newEmail && (
                     <Alert className="border-green-200 bg-green-50">
                       <AlertDescription className="text-green-800">
-                        Votre nouvel email : <strong>{newEmail}</strong>
+                        {t('emailChange.newEmail')} <strong>{newEmail}</strong>
                       </AlertDescription>
                     </Alert>
                   )}
                   <div className="text-center">
                     <Link to="/auth">
-                      <Button>Se reconnecter</Button>
+                      <Button>{t('emailChange.reconnect')}</Button>
                     </Link>
                   </div>
                 </CardContent>
@@ -97,13 +97,13 @@ const ConfirmEmailChange = () => {
                   <div className="mx-auto w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-4">
                     <AlertCircle className="h-6 w-6 text-red-600" />
                   </div>
-                  <CardTitle>Erreur</CardTitle>
+                  <CardTitle>{t('common.error')}</CardTitle>
                   <CardDescription>{message}</CardDescription>
                 </CardHeader>
                 <CardContent className="text-center">
                   <Link to="/" className="text-primary hover:underline inline-flex items-center gap-1">
                     <ArrowLeft className="h-4 w-4" />
-                    Retour à l'accueil
+                    {t('emailChange.backToHome')}
                   </Link>
                 </CardContent>
               </>

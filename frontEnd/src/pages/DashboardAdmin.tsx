@@ -145,7 +145,7 @@ const DashboardAdmin: React.FC = () => {
             </Button>
 
             {/* Bouton paramètres */}
-            <Button variant="outline" size="icon" onClick={() => navigate('/admin/settings')}>
+            <Button variant="outline" size="icon" onClick={() => navigate('/admin/dashboard?tab=overview')}>
               <Settings className="h-5 w-5" />
             </Button>
           </div>

@@ -3,7 +3,7 @@ const securityMiddleware = {
   sanitizeInput: (req, res, next) => {
     // Configuration des patterns d'URLs autorisées
     const URL_PATTERNS = {
-      uploads: /^\/uploads\/(images|documents|videos|audio)\/[\w\-]+\.(jpg|jpeg|png|gif|webp|bmp|pdf|doc|docx|mp4|mp3|wav)$/i,
+      uploads: /^\/uploads\/(images|documents|videos|audio)\/[\w\-]+\.(jpg|jpeg|png|gif|webp|pdf|doc|docx|mp4|mp3|wav)$/i,
       external: /^https?:\/\/([\w\-]+\.)+[\w\-]+(\/[\w\-._~:/?#[\]@!$&'()*+,;=]*)?$/
     };
 
@@ -40,17 +40,7 @@ const securityMiddleware = {
         return str.trim();
       }
       
-      // Ne pas sanitiser les champs JSON valides (pour les métadonnées)
-      if (fieldName.includes('metadata') || fieldName.includes('config')) {
-        try {
-          JSON.parse(str);
-          return str; // C'est du JSON valide, on le garde
-        } catch (e) {
-          // Pas du JSON, on continue avec la sanitisation
-        }
-      }
-      
-      // Sanitisation standard pour les autres champs
+      // Sanitisation standard pour tous les champs
       return str
         .replace(/<script[^>]*>.*?<\/script>/gi, '') // Supprimer les scripts
         .replace(/<iframe[^>]*>.*?<\/iframe>/gi, '') // Supprimer les iframes
@@ -149,7 +139,6 @@ const securityMiddleware = {
       'image/png',
       'image/gif',
       'image/webp',
-      'image/bmp',
       'application/pdf',
       'application/msword',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
@@ -160,7 +149,7 @@ const securityMiddleware = {
       if (file.size > maxSize) {
         return res.status(400).json({
           success: false,
-          error: `Le fichier ${file.originalname} dépasse la taille maximale autorisée (10MB)`
+          error: req.t ? req.t('upload.fileTooLarge') : `File ${file.originalname} exceeds maximum size (10MB)`
         });
       }
 
@@ -168,17 +157,17 @@ const securityMiddleware = {
       if (!allowedMimes.includes(file.mimetype)) {
         return res.status(400).json({
           success: false,
-          error: `Le type de fichier ${file.mimetype} n'est pas autorisé`
+          error: req.t ? req.t('upload.invalidFormat') : `File type ${file.mimetype} is not allowed`
         });
       }
 
       // Vérifier l'extension
       const ext = file.originalname.split('.').pop().toLowerCase();
-      const validExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'pdf', 'doc', 'docx'];
+      const validExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'doc', 'docx'];
       if (!validExtensions.includes(ext)) {
         return res.status(400).json({
           success: false,
-          error: `L'extension .${ext} n'est pas autorisée`
+          error: req.t ? req.t('upload.invalidFormat') : `Extension .${ext} is not allowed`
         });
       }
     }

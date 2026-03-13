@@ -72,12 +72,6 @@ class UploadService {
     // Pour les fichiers statiques, on utilise l'URL sans /api
     // Exemple: http://localhost:3001/api -> http://localhost:3001
     this.baseUrlCache = API_BASE_URL.replace(/\/api\/?$/, '');
-    
-    console.log('📍 Static base URL:', {
-      API_BASE_URL,
-      staticBaseUrl: this.baseUrlCache
-    });
-    
     return this.baseUrlCache;
   }
 
@@ -100,14 +94,6 @@ class UploadService {
     // S'assurer qu'il n'y a pas de double slash
     const cleanPath = path.startsWith('/') ? path : '/' + path;
     const fullUrl = `${baseUrl}${cleanPath}`;
-    
-    console.log('🔗 Building full URL:', {
-      baseUrl,
-      path,
-      cleanPath,
-      result: fullUrl
-    });
-    
     return fullUrl;
   }
 
@@ -120,12 +106,6 @@ class UploadService {
       url: this.buildFullUrl(response.url),
       thumbnail_url: response.thumbnail_url ? this.buildFullUrl(response.thumbnail_url) : undefined
     };
-    
-    console.log('🔄 Transformed response:', {
-      original: response,
-      transformed
-    });
-    
     return transformed;
   }
 
@@ -138,7 +118,6 @@ class UploadService {
       }
       return response;
     } catch (error) {
-      console.error('Erreur lors de la récupération des infos upload:', error);
       return {
         success: false,
         error: 'Impossible de récupérer les informations d\'upload'
@@ -151,14 +130,6 @@ class UploadService {
     const endpoint = options?.isPublic 
       ? API_ENDPOINTS.upload.imagePublic 
       : API_ENDPOINTS.upload.image;
-
-    console.log('🖼️ Upload image:', {
-      endpoint,
-      fileName: file.name,
-      fileSize: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
-      fileType: file.type,
-      isPublic: options?.isPublic
-    });
 
     try {
       const formData = new FormData();
@@ -190,16 +161,10 @@ class UploadService {
       
       // Transformer la réponse pour avoir l'URL complète
       if (result.success && result.data) {
-        console.log('📦 Réponse upload brute:', result.data);
         result.data = this.transformUploadResponse(result.data);
-        console.log('✅ Upload image réussi:', result.data.url);
-      } else {
-        console.error('❌ Échec upload image:', result.error);
       }
-      
       return result;
     } catch (error) {
-      console.error('❌ Exception upload image:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Erreur lors de l\'upload'
@@ -209,12 +174,6 @@ class UploadService {
 
   // Upload de document
   async uploadDocument(file: File, options?: ServiceUploadOptions): Promise<ApiResponse<UploadResponse>> {
-    console.log('📄 Upload document:', {
-      fileName: file.name,
-      fileSize: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
-      fileType: file.type
-    });
-
     try {
       const formData = new FormData();
       formData.append('document', file);
@@ -232,12 +191,9 @@ class UploadService {
       // Transformer la réponse
       if (result.success && result.data) {
         result.data = this.transformUploadResponse(result.data);
-        console.log('✅ Upload document réussi:', result.data.url);
       }
-      
       return result;
     } catch (error) {
-      console.error('❌ Exception upload document:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Erreur lors de l\'upload'
@@ -247,15 +203,8 @@ class UploadService {
 
   // Upload de vidéo
   async uploadVideo(file: File, options?: ServiceUploadOptions): Promise<ApiResponse<UploadResponse>> {
-    console.log('🎥 Upload vidéo:', {
-      fileName: file.name,
-      fileSize: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
-      fileType: file.type
-    });
-
     // Pour les vidéos volumineuses, utiliser l'upload par chunks
     if (file.size > 50 * 1024 * 1024) { // Plus de 50MB
-      console.log('📦 Vidéo volumineuse, utilisation de l\'upload par chunks');
       return this.uploadLargeFile(file, options);
     }
 
@@ -276,12 +225,9 @@ class UploadService {
       // Transformer la réponse
       if (result.success && result.data) {
         result.data = this.transformUploadResponse(result.data);
-        console.log('✅ Upload vidéo réussi:', result.data.url);
       }
-      
       return result;
     } catch (error) {
-      console.error('❌ Exception upload vidéo:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Erreur lors de l\'upload'
@@ -291,12 +237,6 @@ class UploadService {
 
   // Upload d'audio
   async uploadAudio(file: File, options?: ServiceUploadOptions): Promise<ApiResponse<UploadResponse>> {
-    console.log('🎵 Upload audio:', {
-      fileName: file.name,
-      fileSize: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
-      fileType: file.type
-    });
-
     try {
       const formData = new FormData();
       formData.append('audio', file);
@@ -314,12 +254,9 @@ class UploadService {
       // Transformer la réponse
       if (result.success && result.data) {
         result.data = this.transformUploadResponse(result.data);
-        console.log('✅ Upload audio réussi:', result.data.url);
       }
-      
       return result;
     } catch (error) {
-      console.error('❌ Exception upload audio:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Erreur lors de l\'upload'
@@ -373,21 +310,12 @@ class UploadService {
     const totalChunks = Math.ceil(file.size / chunkSize);
     const uploadId = this.generateUploadId();
 
-    console.log('📦 Upload par chunks:', {
-      fileName: file.name,
-      fileSize: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
-      chunkSize: `${(chunkSize / 1024 / 1024).toFixed(2)} MB`,
-      totalChunks
-    });
-
     try {
       // Upload de chaque chunk
       for (let i = 0; i < totalChunks; i++) {
         const start = i * chunkSize;
         const end = Math.min(start + chunkSize, file.size);
         const chunk = file.slice(start, end);
-
-        console.log(`📤 Upload chunk ${i + 1}/${totalChunks}`);
 
         const chunkResponse = await this.uploadChunk(
           chunk,
@@ -410,27 +338,18 @@ class UploadService {
       }
 
       // Finaliser l'upload
-      console.log('🔄 Finalisation de l\'upload...');
       const result = await this.completeChunkUpload({
         uploadId,
         filename: file.name,
         fileType: this.getFileType(file)
       });
 
-      if (result.success) {
-        console.log('✅ Upload par chunks réussi:', result.data?.url);
-      }
-
       return result;
     } catch (error) {
-      console.error('❌ Erreur upload par chunks:', error);
-      
       // Essayer d'annuler l'upload
       try {
         await this.cancelChunkUpload(uploadId);
-        console.log('🗑️ Upload annulé');
-      } catch (cancelError) {
-        console.error('Erreur lors de l\'annulation:', cancelError);
+      } catch (_cancelError) {
       }
       
       return {
@@ -560,12 +479,6 @@ class UploadService {
         error: validation.error
       };
     }
-
-    console.log('📷 Upload photo de profil:', {
-      fileName: file.name,
-      fileSize: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
-      fileType: file.type
-    });
 
     return this.uploadImage(file, {
       isPublic: true,

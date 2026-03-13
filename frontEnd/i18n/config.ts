@@ -62,7 +62,7 @@ i18n
 
     lng: getInitialLanguage(),
     fallbackLng: 'fr',
-    debug: true, // Activer pour voir les logs
+    debug: import.meta.env.DEV,
 
     interpolation: {
       escapeValue: false

@@ -16,6 +16,7 @@
 
 const container = require('../services/serviceContainer');
 const { translateDeep } = require('../helpers/i18n');
+const { accountRateLimiter } = require('../middlewares/rateLimitMiddleware');
 
 const IS_DEV_MODE = process.env.NODE_ENV === 'development';
 
@@ -44,15 +45,14 @@ class UserControllerV2 {
     try {
       const result = await this.userService.register(req.body);
 
-      // Configurer les cookies d'authentification
       this._setAuthCookies(res, result.token);
+      this._setRefreshTokenCookie(res, result.refreshToken);
 
       res.status(201).json({
         success: true,
-        message: 'Inscription réussie',
+        message: req.t('auth.registerSuccess'),
         data: {
-          user: this._translateUser(result.user, req.lang),
-          token: result.token
+          user: this._translateUser(result.user, req.lang)
         }
       });
 
@@ -72,25 +72,29 @@ class UserControllerV2 {
       if (!email || !password) {
         return res.status(400).json({
           success: false,
-          error: 'Email et mot de passe requis'
+          error: req.t('auth.emailPasswordRequired')
         });
       }
 
       const result = await this.userService.login(email, password);
 
-      // Configurer les cookies d'authentification
+      accountRateLimiter.resetAttempts(email);
+
       this._setAuthCookies(res, result.token);
+      this._setRefreshTokenCookie(res, result.refreshToken);
 
       res.json({
         success: true,
-        message: 'Connexion réussie',
+        message: req.t('auth.loginSuccess'),
         data: {
-          user: this._translateUser(result.user, req.lang),
-          token: result.token
+          user: this._translateUser(result.user, req.lang)
         }
       });
 
     } catch (error) {
+      if (req.body?.email) {
+        accountRateLimiter.recordFailedAttempt(req.body.email);
+      }
       this._handleError(res, error);
     }
   }
@@ -100,11 +104,19 @@ class UserControllerV2 {
    * Déconnexion
    */
   async logout(req, res) {
+    try {
+      if (req.user?.id_user) {
+        await this.userService.revokeRefreshToken(req.user.id_user);
+      }
+    } catch (_) {
+      // Best-effort revocation; proceed with cookie cleanup regardless
+    }
+
     this._clearAuthCookies(res);
 
     res.json({
       success: true,
-      message: 'Déconnexion réussie'
+      message: req.t('auth.logoutSuccess')
     });
   }
 
@@ -193,7 +205,7 @@ class UserControllerV2 {
 
       res.json({
         success: true,
-        message: 'Profil mis à jour',
+        message: req.t('user.profileUpdated'),
         data: this._translateUser(user, req.lang)
       });
 
@@ -216,7 +228,7 @@ class UserControllerV2 {
 
       res.json({
         success: true,
-        message: 'Utilisateur mis à jour',
+        message: req.t('user.updated'),
         data: this._translateUser(user, req.lang)
       });
 
@@ -238,7 +250,7 @@ class UserControllerV2 {
 
       res.json({
         success: true,
-        message: 'Utilisateur supprimé'
+        message: req.t('user.deleted')
       });
 
     } catch (error) {
@@ -258,7 +270,7 @@ class UserControllerV2 {
       if (!current_password || !new_password) {
         return res.status(400).json({
           success: false,
-          error: 'Mot de passe actuel et nouveau mot de passe requis'
+          error: req.t('auth.currentAndNewPasswordRequired')
         });
       }
 
@@ -270,7 +282,7 @@ class UserControllerV2 {
 
       res.json({
         success: true,
-        message: 'Mot de passe modifié'
+        message: req.t('auth.passwordChanged')
       });
 
     } catch (error) {
@@ -293,7 +305,7 @@ class UserControllerV2 {
       if (!q || q.length < 2) {
         return res.status(400).json({
           success: false,
-          error: 'Requête de recherche trop courte (min 2 caractères)'
+          error: req.t('user.searchTooShort')
         });
       }
 
@@ -378,7 +390,7 @@ class UserControllerV2 {
 
       res.json({
         success: true,
-        message: 'Utilisateur validé',
+        message: req.t('user.validated'),
         data: this._translateUser(user, req.lang)
       });
 
@@ -403,7 +415,7 @@ class UserControllerV2 {
 
       res.json({
         success: true,
-        message: 'Utilisateur refusé',
+        message: req.t('user.rejected'),
         data: this._translateUser(user, req.lang)
       });
 
@@ -429,7 +441,7 @@ class UserControllerV2 {
 
       res.json({
         success: true,
-        message: 'Utilisateur suspendu',
+        message: req.t('user.suspended'),
         data: this._translateUser(user, req.lang)
       });
 
@@ -451,7 +463,7 @@ class UserControllerV2 {
 
       res.json({
         success: true,
-        message: 'Utilisateur réactivé',
+        message: req.t('user.reactivated'),
         data: this._translateUser(user, req.lang)
       });
 
@@ -492,17 +504,21 @@ class UserControllerV2 {
    */
   async refreshToken(req, res) {
     try {
-      const result = await this.userService.refreshToken(req.body.refreshToken || req.cookies?.refresh_token);
+      const incomingRefreshToken = req.cookies?.refresh_token || req.body.refreshToken;
 
-      if (result.token) {
-        this._setAuthCookies(res, result.token);
-      }
+      const result = await this.userService.refreshToken(incomingRefreshToken);
+
+      this._setAuthCookies(res, result.token);
+      this._setRefreshTokenCookie(res, result.refreshToken);
 
       res.json({
         success: true,
-        data: result
+        data: {
+          user: this._translateUser(result.user, req.lang)
+        }
       });
     } catch (error) {
+      this._clearAuthCookies(res);
       this._handleError(res, error);
     }
   }
@@ -515,10 +531,10 @@ class UserControllerV2 {
     try {
       const { email } = req.body;
       if (!email) {
-        return res.status(400).json({ success: false, error: 'Email requis' });
+        return res.status(400).json({ success: false, error: req.t('auth.emailPasswordRequired') });
       }
       const exists = await this.userService.checkEmailExists(email);
-      res.json({ success: true, exists });
+      res.json({ success: true, available: !exists });
     } catch (error) {
       this._handleError(res, error);
     }
@@ -550,12 +566,19 @@ class UserControllerV2 {
     try {
       const { photo_url } = req.body;
       if (!photo_url) {
-        return res.status(400).json({ success: false, error: 'URL de la photo requise' });
+        return res.status(400).json({ success: false, error: req.t('user.photoUrlRequired') });
+      }
+      const allowedPrefixes = ['/uploads/', '/images/'];
+      const apiBase = process.env.API_URL || process.env.VITE_API_URL || '';
+      if (apiBase) allowedPrefixes.push(apiBase);
+      const isAllowed = allowedPrefixes.some(prefix => photo_url.startsWith(prefix));
+      if (!isAllowed) {
+        return res.status(400).json({ success: false, error: req.t ? req.t('user.invalidPhotoUrl') : 'URL de photo invalide. Utilisez le service d\'upload.' });
       }
       const user = await this.userService.update(req.user.id_user, { photo_url: photo_url });
       res.json({
         success: true,
-        message: 'Photo de profil mise à jour',
+        message: req.t('user.photoUpdated'),
         data: this._translateUser(user, req.lang)
       });
     } catch (error) {
@@ -572,7 +595,7 @@ class UserControllerV2 {
       const user = await this.userService.update(req.user.id_user, { photo_url: null });
       res.json({
         success: true,
-        message: 'Photo de profil supprimée',
+        message: req.t('user.photoDeleted'),
         data: this._translateUser(user, req.lang)
       });
     } catch (error) {
@@ -589,7 +612,7 @@ class UserControllerV2 {
       const result = await this.userService.verifyEmail(req.params.token);
       res.json({
         success: true,
-        message: 'Email vérifié avec succès',
+        message: req.t('email.verified'),
         data: result
       });
     } catch (error) {
@@ -626,7 +649,100 @@ class UserControllerV2 {
       );
       res.json({
         success: true,
-        message: `Traduction ${req.params.lang} mise à jour`,
+        message: req.t('translation.updated', { lang: req.params.lang }),
+        data: this._translateUser(user, req.lang)
+      });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  // ============================================================================
+  // PROFESSIONNEL - SUBMIT / STATUS
+  // ============================================================================
+
+  async submitProfessional(req, res) {
+    try {
+      const userId = req.user.id_user;
+      const { specialite, description, experience, portfolio_url } = req.body;
+
+      const user = await this.userService.update(userId, {
+        statut: 'en_attente_validation',
+        specialite,
+        description_pro: description,
+        experience,
+        portfolio_url
+      }, userId);
+
+      res.json({
+        success: true,
+        message: req.t('user.professionalRequestSubmitted'),
+        data: this._translateUser(user, req.lang)
+      });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  async getProfessionalStatus(req, res) {
+    try {
+      const user = await this.userService.findById(req.user.id_user);
+      const data = user.toJSON(req.lang);
+
+      res.json({
+        success: true,
+        data: {
+          statut: data.statut || 'non_demande',
+          date_demande: data.date_demande_pro || null,
+          commentaire: data.commentaire_validation || null
+        }
+      });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  // ============================================================================
+  // PRÉFÉRENCES ET CONFIDENTIALITÉ
+  // ============================================================================
+
+  async updatePreferences(req, res) {
+    try {
+      const userId = req.user.id_user;
+      const body = req.body || {};
+      // Mapper les préférences aux colonnes User existantes
+      const payload = {};
+      if (body.langue_preferee !== undefined) payload.langue_preferee = body.langue_preferee;
+      if (body.theme_prefere !== undefined) payload.theme_prefere = body.theme_prefere;
+      if (body.newsletter !== undefined) payload.accepte_newsletter = body.newsletter;
+      if (body.notifications_email !== undefined) payload.notifications_email = body.notifications_email;
+      if (body.notifications_push !== undefined) payload.notifications_push = body.notifications_push;
+      const user = await this.userService.update(userId, payload, userId);
+
+      res.json({
+        success: true,
+        message: req.t('user.preferencesUpdated'),
+        data: this._translateUser(user, req.lang)
+      });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  async updatePrivacy(req, res) {
+    try {
+      const userId = req.user.id_user;
+      const body = req.body || {};
+      // Mapper la confidentialité aux colonnes User existantes
+      const payload = {};
+      if (body.profil_public !== undefined) payload.profil_public = body.profil_public;
+      if (body.afficher_email !== undefined) payload.email_public = body.afficher_email;
+      if (body.afficher_telephone !== undefined) payload.telephone_public = body.afficher_telephone;
+      const user = await this.userService.update(userId, payload, userId);
+
+      res.json({
+        success: true,
+        message: req.t('user.privacyUpdated'),
         data: this._translateUser(user, req.lang)
       });
     } catch (error) {
@@ -672,7 +788,7 @@ class UserControllerV2 {
 
     const response = {
       success: false,
-      error: error.message || 'Erreur serveur',
+      error: error.message || 'Internal server error',
       code
     };
 
@@ -690,7 +806,7 @@ class UserControllerV2 {
   }
 
   /**
-   * Configure les cookies d'authentification
+   * Configure le cookie d'access token
    * @private
    */
   _setAuthCookies(res, token) {
@@ -700,8 +816,24 @@ class UserControllerV2 {
       httpOnly: true,
       secure: isProduction,
       sameSite: 'lax',
-      maxAge: 24 * 60 * 60 * 1000, // 24 heures (aligné avec JWT_EXPIRES_IN)
+      maxAge: 24 * 60 * 60 * 1000,
       path: '/'
+    });
+  }
+
+  /**
+   * Configure le cookie de refresh token (scoped au seul endpoint de refresh)
+   * @private
+   */
+  _setRefreshTokenCookie(res, refreshToken) {
+    const isProduction = process.env.NODE_ENV === 'production';
+
+    res.cookie('refresh_token', refreshToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: 'lax',
+      path: '/api/users/refresh-token',
+      maxAge: 7 * 24 * 60 * 60 * 1000
     });
   }
 

@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { httpClient } from '@/services/httpClient';
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
 import { adminService } from '@/services/admin.service';
 
@@ -50,8 +51,11 @@ export const useAdminFilters = () => {
   };
 };
 
-export const useDashboardAdmin = () => {
+export type AdminTab = 'overview' | 'users' | 'oeuvres' | 'evenements' | 'patrimoine' | 'services' | 'moderation';
+
+export const useDashboardAdmin = (activeTab: AdminTab = 'overview') => {
   const { toast } = useToast();
+  const { t } = useTranslation();
   
   // États pour les données
   const [overview, setOverview] = useState<OverviewStats | null>(null);
@@ -84,21 +88,39 @@ export const useDashboardAdmin = () => {
   // État pour la période sélectionnée
   const [selectedPeriod, setSelectedPeriod] = useState<'day' | 'week' | 'month' | 'year'>('month');
 
-  // Chargement initial
+  // Per-tab data loading: only fetch what the active tab needs
   useEffect(() => {
-    loadOverview();
-    loadStats();
-    loadPatrimoineStats();
-    loadAllUsers();
-    loadPendingUsers();
-    loadPendingOeuvres();
-    loadModerationQueue();
-    loadAlerts();
-    loadOeuvres();
-    loadEvenements();
-    loadPatrimoineItems();
-    loadServices();
-  }, []);
+    switch (activeTab) {
+      case 'overview':
+        loadOverview();
+        loadStats();
+        loadPatrimoineStats();
+        loadPendingUsers();
+        loadPendingOeuvres();
+        loadAlerts();
+        break;
+      case 'users':
+        loadAllUsers();
+        loadPendingUsers();
+        break;
+      case 'oeuvres':
+        loadOeuvres();
+        loadPendingOeuvres();
+        break;
+      case 'evenements':
+        loadEvenements();
+        break;
+      case 'patrimoine':
+        loadPatrimoineItems();
+        break;
+      case 'services':
+        loadServices();
+        break;
+      case 'moderation':
+        loadModerationQueue();
+        break;
+    }
+  }, [activeTab]);
 
   // ========================================
   // FONCTIONS DE CHARGEMENT DES DONNÉES
@@ -112,10 +134,9 @@ export const useDashboardAdmin = () => {
         setOverview(response.data);
       }
     } catch (error) {
-      console.error('Erreur chargement overview:', error);
       toast({
-        title: "Erreur",
-        description: "Impossible de charger la vue d'ensemble",
+        title: t('toasts.error'),
+        description: t('toasts.loadOverviewFailed'),
         variant: "destructive"
       });
     } finally {
@@ -130,7 +151,6 @@ export const useDashboardAdmin = () => {
         setStats(response.data);
       }
     } catch (error) {
-      console.error('Erreur chargement stats:', error);
     }
   };
 
@@ -141,7 +161,6 @@ export const useDashboardAdmin = () => {
         setPatrimoineStats(response.data);
       }
     } catch (error) {
-      console.error('Erreur chargement patrimoine stats:', error);
     }
   };
 
@@ -153,7 +172,6 @@ export const useDashboardAdmin = () => {
         setAllUsers(response.data);
       }
     } catch (error) {
-      console.error('Erreur chargement tous les utilisateurs:', error);
     } finally {
       setLoadingAllUsers(false);
     }
@@ -167,7 +185,6 @@ export const useDashboardAdmin = () => {
         setPendingUsers(response.data);
       }
     } catch (error) {
-      console.error('Erreur chargement utilisateurs:', error);
     } finally {
       setLoadingPendingUsers(false);
     }
@@ -181,7 +198,6 @@ export const useDashboardAdmin = () => {
         setPendingOeuvres(response.data);
       }
     } catch (error) {
-      console.error('Erreur chargement œuvres en attente:', error);
     } finally {
       setLoadingPendingOeuvres(false);
     }
@@ -195,7 +211,6 @@ export const useDashboardAdmin = () => {
         setModerationQueue(response.data);
       }
     } catch (error) {
-      console.error('Erreur chargement modération:', error);
     } finally {
       setLoadingModeration(false);
     }
@@ -208,7 +223,6 @@ export const useDashboardAdmin = () => {
         setAlerts(response.data);
       }
     } catch (error) {
-      console.error('Erreur chargement alertes:', error);
       setAlerts([]);
     }
   };
@@ -226,8 +240,8 @@ const validateUser = async ({ userId, validated }: { userId: number; validated: 
     const response = await adminService.validateUser(userId, validated);
     if (response.success) {
       toast({
-        title: "Succès",
-        description: validated ? "Utilisateur validé" : "Utilisateur rejeté"
+        title: t('toasts.success'),
+        description: validated ? t('toasts.userValidated') : t('toasts.userRejected')
       });
       
       // ✅ SOLUTION: Mise à jour locale du state (plus fiable)
@@ -243,33 +257,31 @@ const validateUser = async ({ userId, validated }: { userId: number; validated: 
         };
       });
       
-      // Vider le cache pour les prochains chargements
-      httpClient.clearCache();
+      // Cache handled by React Query invalidation
     }
   } catch (error) {
-    console.error('Erreur validation utilisateur:', error);
     toast({
-      title: "Erreur",
-      description: "Impossible de valider l'utilisateur",
+      title: t('toasts.error'),
+      description: t('toasts.userValidationFailed'),
       variant: "destructive"
     });
   }
 };
+
   const updateUser = async ({ userId, data }: { userId: number; data: any }) => {
     try {
       const response = await adminService.updateUser(userId, data);
       if (response.success) {
         toast({
-          title: "Succès",
-          description: "Utilisateur mis à jour"
+          title: t('toasts.success'),
+          description: t('toasts.userUpdated')
         });
         await loadPendingUsers();
       }
     } catch (error) {
-      console.error('Erreur mise à jour utilisateur:', error);
       toast({
-        title: "Erreur",
-        description: "Impossible de mettre à jour l'utilisateur",
+        title: t('toasts.error'),
+        description: t('toasts.userUpdateFailed'),
         variant: "destructive"
       });
     }
@@ -280,16 +292,15 @@ const validateUser = async ({ userId, validated }: { userId: number; validated: 
       const response = await adminService.deleteUser(userId);
       if (response.success) {
         toast({
-          title: "Succès",
-          description: "Utilisateur supprimé"
+          title: t('toasts.success'),
+          description: t('toasts.userDeleted')
         });
         await loadPendingUsers();
       }
     } catch (error) {
-      console.error('Erreur suppression utilisateur:', error);
       toast({
-        title: "Erreur", 
-        description: "Impossible de supprimer l'utilisateur",
+        title: t('toasts.error'),
+        description: t('toasts.userDeleteFailed'),
         variant: "destructive"
       });
     }
@@ -300,16 +311,15 @@ const validateUser = async ({ userId, validated }: { userId: number; validated: 
       const response = await adminService.suspendUser(userId, duration, reason);
       if (response.success) {
         toast({
-          title: "Succès",
-          description: "Utilisateur suspendu"
+          title: t('toasts.success'),
+          description: t('toasts.userSuspended')
         });
         await loadPendingUsers();
       }
     } catch (error) {
-      console.error('Erreur suspension utilisateur:', error);
       toast({
-        title: "Erreur",
-        description: "Impossible de suspendre l'utilisateur",
+        title: t('toasts.error'),
+        description: t('toasts.userSuspendFailed'),
         variant: "destructive"
       });
     }
@@ -320,16 +330,15 @@ const validateUser = async ({ userId, validated }: { userId: number; validated: 
       const response = await adminService.reactivateUser(userId);
       if (response.success) {
         toast({
-          title: "Succès",
-          description: "Utilisateur réactivé"
+          title: t('toasts.success'),
+          description: t('toasts.userReactivated')
         });
         await loadPendingUsers();
       }
     } catch (error) {
-      console.error('Erreur réactivation utilisateur:', error);
       toast({
-        title: "Erreur",
-        description: "Impossible de réactiver l'utilisateur",
+        title: t('toasts.error'),
+        description: t('toasts.userReactivateFailed'),
         variant: "destructive"
       });
     }
@@ -340,15 +349,14 @@ const validateUser = async ({ userId, validated }: { userId: number; validated: 
       const response = await adminService.resetUserPassword(userId);
       if (response.success) {
         toast({
-          title: "Succès",
-          description: "Mot de passe réinitialisé"
+          title: t('toasts.success'),
+          description: t('toasts.passwordReset')
         });
       }
     } catch (error) {
-      console.error('Erreur réinitialisation mot de passe:', error);
       toast({
-        title: "Erreur",
-        description: "Impossible de réinitialiser le mot de passe",
+        title: t('toasts.error'),
+        description: t('toasts.passwordResetFailed'),
         variant: "destructive"
       });
     }
@@ -359,16 +367,15 @@ const validateUser = async ({ userId, validated }: { userId: number; validated: 
       const response = await adminService.bulkUserAction(userIds, action as any);
       if (response.success) {
         toast({
-          title: "Succès",
-          description: `Action ${action} appliquée à ${userIds.length} utilisateurs`
+          title: t('toasts.success'),
+          description: t('toasts.bulkActionApplied', { action, count: userIds.length })
         });
         await loadPendingUsers();
       }
     } catch (error) {
-      console.error('Erreur action bulk:', error);
       toast({
-        title: "Erreur",
-        description: "Impossible d'appliquer l'action",
+        title: t('toasts.error'),
+        description: t('toasts.bulkActionFailed'),
         variant: "destructive"
       });
     }
@@ -379,15 +386,14 @@ const validateUser = async ({ userId, validated }: { userId: number; validated: 
       const response = await adminService.exportUsers(format, filters);
       if (response.success) {
         toast({
-          title: "Succès",
-          description: "Export des utilisateurs terminé"
+          title: t('toasts.success'),
+          description: t('toasts.exportUsersDone')
         });
       }
     } catch (error) {
-      console.error('Erreur export utilisateurs:', error);
       toast({
-        title: "Erreur",
-        description: "Impossible d'exporter les utilisateurs",
+        title: t('toasts.error'),
+        description: t('toasts.exportUsersFailed'),
         variant: "destructive"
       });
     }
@@ -402,16 +408,15 @@ const validateUser = async ({ userId, validated }: { userId: number; validated: 
       const response = await adminService.validateOeuvre(oeuvreId, validated);
       if (response.success) {
         toast({
-          title: "Succès",
-          description: validated ? "Œuvre validée" : "Œuvre rejetée"
+          title: t('toasts.success'),
+          description: validated ? t('toasts.oeuvreValidated') : t('toasts.oeuvreRejected')
         });
         await loadPendingOeuvres();
       }
     } catch (error) {
-      console.error('Erreur validation œuvre:', error);
       toast({
-        title: "Erreur",
-        description: "Impossible de valider l'œuvre",
+        title: t('toasts.error'),
+        description: t('toasts.oeuvreValidationFailed'),
         variant: "destructive"
       });
     }
@@ -419,22 +424,21 @@ const validateUser = async ({ userId, validated }: { userId: number; validated: 
 
   const updateOeuvreStatus = async (oeuvreId: number, status: string) => {
     try {
-      const response = await httpClient.patch(`/oeuvres/${oeuvreId}/status`, {
-        statut: status,
-        admin_action: true
-      });
+      const endpoint = status === 'rejete' 
+        ? `/oeuvres/${oeuvreId}/reject` 
+        : `/oeuvres/${oeuvreId}/validate`;
+      const response = await httpClient.post(endpoint, { statut: status });
       if (response.success) {
         toast({
-          title: "Succès",
-          description: "Statut de l'œuvre mis à jour"
+          title: t('toasts.success'),
+          description: t('toasts.oeuvreStatusUpdated')
         });
         await loadOeuvres();
       }
     } catch (error) {
-      console.error('Erreur mise à jour statut œuvre:', error);
       toast({
-        title: "Erreur",
-        description: "Impossible de mettre à jour le statut",
+        title: t('toasts.error'),
+        description: t('toasts.statusUpdateFailed'),
         variant: "destructive"
       });
     }
@@ -448,22 +452,18 @@ const validateUser = async ({ userId, validated }: { userId: number; validated: 
 
   const updateEvenementStatus = async (evenementId: number, status: string) => {
     try {
-      const response = await httpClient.patch(`/evenements/${evenementId}/status`, {
-        statut: status,
-        admin_action: true
-      });
+      const response = await httpClient.post(`/evenements/${evenementId}/publish`, { statut: status });
       if (response.success) {
         toast({
-          title: "Succès",
-          description: "Statut de l'événement mis à jour"
+          title: t('toasts.success'),
+          description: t('toasts.eventStatusUpdated')
         });
         await loadEvenements();
       }
     } catch (error) {
-      console.error('Erreur mise à jour statut événement:', error);
       toast({
-        title: "Erreur",
-        description: "Impossible de mettre à jour le statut",
+        title: t('toasts.error'),
+        description: t('toasts.statusUpdateFailed'),
         variant: "destructive"
       });
     }
@@ -476,22 +476,21 @@ const validateUser = async ({ userId, validated }: { userId: number; validated: 
 
   const updateServiceStatus = async (serviceId: number, status: string) => {
     try {
-      const response = await httpClient.patch(`/services/${serviceId}/status`, {
-        statut: status,
-        admin_action: true
-      });
+      const endpoint = status === 'rejete'
+        ? `/services/${serviceId}/reject`
+        : `/services/${serviceId}/validate`;
+      const response = await httpClient.post(endpoint, { statut: status });
       if (response.success) {
         toast({
-          title: "Succès",
-          description: "Statut du service mis à jour"
+          title: t('toasts.success'),
+          description: t('toasts.serviceStatusUpdated')
         });
         await loadServices();
       }
     } catch (error) {
-      console.error('Erreur mise à jour statut service:', error);
       toast({
-        title: "Erreur",
-        description: "Impossible de mettre à jour le statut",
+        title: t('toasts.error'),
+        description: t('toasts.statusUpdateFailed'),
         variant: "destructive"
       });
     }
@@ -509,13 +508,11 @@ const loadOeuvres = useCallback(async (filters?: OeuvreFilters) => {
       setOeuvres(response.data);
     }
   } catch (error: any) {
-    console.error('Erreur chargement œuvres:', error);
-    
     // Gérer l'erreur sans redirection
     if (error.response?.status !== 401) {
       toast({
-        title: "Erreur",
-        description: "Impossible de charger les œuvres",
+        title: t('toasts.error'),
+        description: t('toasts.loadOeuvresFailed'),
         variant: "destructive"
       });
     }
@@ -537,12 +534,10 @@ const loadEvenements = useCallback(async (filters?: EvenementFilters) => {
       setEvenements(response.data);
     }
   } catch (error: any) {
-    console.error('Erreur chargement événements:', error);
-    
     if (error.response?.status !== 401) {
       toast({
-        title: "Erreur",
-        description: "Impossible de charger les événements",
+        title: t('toasts.error'),
+        description: t('toasts.loadEventsFailed'),
         variant: "destructive"
       });
     }
@@ -564,12 +559,10 @@ const loadPatrimoineItems = useCallback(async (filters?: PatrimoineFilters) => {
       setPatrimoineItems(response.data);
     }
   } catch (error: any) {
-    console.error('Erreur chargement sites patrimoniaux:', error);
-    
     if (error.response?.status !== 401) {
       toast({
-        title: "Erreur",
-        description: "Impossible de charger les sites patrimoniaux",
+        title: t('toasts.error'),
+        description: t('toasts.loadPatrimoineFailed'),
         variant: "destructive"
       });
     }
@@ -591,12 +584,10 @@ const loadServices = useCallback(async (filters?: ServiceFilters) => {
       setServices(response.data);
     }
   } catch (error: any) {
-    console.error('Erreur chargement services:', error);
-    
     if (error.response?.status !== 401) {
       toast({
-        title: "Erreur",
-        description: "Impossible de charger les services",
+        title: t('toasts.error'),
+        description: t('toasts.loadServicesFailed'),
         variant: "destructive"
       });
     }
@@ -613,16 +604,15 @@ const deleteOeuvre = async (oeuvreId: number) => {
     const response = await adminService.deleteOeuvre(oeuvreId);
     if (response.success) {
       toast({
-        title: "Succès",
-        description: "Œuvre supprimée"
+        title: t('toasts.success'),
+        description: t('toasts.oeuvreDeleted')
       });
       await loadOeuvres();
     }
   } catch (error) {
-    console.error('Erreur suppression œuvre:', error);
     toast({
-      title: "Erreur",
-      description: "Impossible de supprimer l'œuvre",
+      title: t('toasts.error'),
+      description: t('toasts.oeuvreDeleteFailed'),
       variant: "destructive"
     });
   }
@@ -633,16 +623,15 @@ const deleteEvenement = async (evenementId: number) => {
     const response = await adminService.deleteEvenement(evenementId);
     if (response.success) {
       toast({
-        title: "Succès",
-        description: "Événement supprimé"
+        title: t('toasts.success'),
+        description: t('toasts.eventDeleted')
       });
       await loadEvenements();
     }
   } catch (error) {
-    console.error('Erreur suppression événement:', error);
     toast({
-      title: "Erreur",
-      description: "Impossible de supprimer l'événement",
+      title: t('toasts.error'),
+      description: t('toasts.eventDeleteFailed'),
       variant: "destructive"
     });
   }
@@ -653,16 +642,15 @@ const deleteService = async (serviceId: number) => {
     const response = await adminService.deleteService(serviceId);
     if (response.success) {
       toast({
-        title: "Succès",
-        description: "Service supprimé"
+        title: t('toasts.success'),
+        description: t('toasts.serviceDeleted')
       });
       await loadServices();
     }
   } catch (error) {
-    console.error('Erreur suppression service:', error);
     toast({
-      title: "Erreur",
-      description: "Impossible de supprimer le service",
+      title: t('toasts.error'),
+      description: t('toasts.serviceDeleteFailed'),
       variant: "destructive"
     });
   }
@@ -676,16 +664,15 @@ const deleteService = async (serviceId: number) => {
       const response = await adminService.moderateSignalement(signalementId, action as any);
       if (response.success) {
         toast({
-          title: "Succès",
-          description: "Signalement traité"
+          title: t('toasts.success'),
+          description: t('toasts.signalementProcessed')
         });
         await loadModerationQueue();
       }
     } catch (error) {
-      console.error('Erreur modération signalement:', error);
       toast({
-        title: "Erreur",
-        description: "Impossible de traiter le signalement",
+        title: t('toasts.error'),
+        description: t('toasts.signalementProcessFailed'),
         variant: "destructive"
       });
     }
@@ -697,20 +684,29 @@ const deleteService = async (serviceId: number) => {
 
   const refreshAll = async () => {
     setLoading(true);
-    await Promise.all([
-      loadOverview(),
-      loadStats(),
-      loadPatrimoineStats(),
-      loadAllUsers(),
-      loadPendingUsers(),
-      loadPendingOeuvres(),
-      loadModerationQueue(),
-      loadAlerts(),
-      loadOeuvres(),
-      loadEvenements(),
-      loadPatrimoineItems(),
-      loadServices()
-    ]);
+    switch (activeTab) {
+      case 'overview':
+        await Promise.all([loadOverview(), loadStats(), loadPatrimoineStats(), loadPendingUsers(), loadPendingOeuvres(), loadAlerts()]);
+        break;
+      case 'users':
+        await Promise.all([loadAllUsers(), loadPendingUsers()]);
+        break;
+      case 'oeuvres':
+        await Promise.all([loadOeuvres(), loadPendingOeuvres()]);
+        break;
+      case 'evenements':
+        await loadEvenements();
+        break;
+      case 'patrimoine':
+        await loadPatrimoineItems();
+        break;
+      case 'services':
+        await loadServices();
+        break;
+      case 'moderation':
+        await loadModerationQueue();
+        break;
+    }
     setLoading(false);
   };
 
@@ -729,15 +725,14 @@ const deleteService = async (serviceId: number) => {
         
       if (response.success) {
         toast({
-          title: "Succès",
-          description: "Rapport exporté"
+          title: t('toasts.success'),
+          description: t('toasts.reportExported')
         });
       }
     } catch (error) {
-      console.error('Erreur export rapport:', error);
       toast({
-        title: "Erreur",
-        description: "Impossible d'exporter le rapport",
+        title: t('toasts.error'),
+        description: t('toasts.reportExportFailed'),
         variant: "destructive"
       });
     }
@@ -748,16 +743,15 @@ const deleteService = async (serviceId: number) => {
       const response = await adminService.clearCache();
       if (response.success) {
         toast({
-          title: "Succès",
-          description: "Cache vidé"
+          title: t('toasts.success'),
+          description: t('toasts.cacheCleared')
         });
         await refreshAll();
       }
     } catch (error) {
-      console.error('Erreur vidage cache:', error);
       toast({
-        title: "Erreur",
-        description: "Impossible de vider le cache",
+        title: t('toasts.error'),
+        description: t('toasts.cacheClearFailed'),
         variant: "destructive"
       });
     }
@@ -830,6 +824,7 @@ const deleteService = async (serviceId: number) => {
     loadServices,
     
     // État
+    activeTab,
     selectedPeriod,
   };
 };

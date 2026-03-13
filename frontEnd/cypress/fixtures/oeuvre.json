@@ -1,0 +1,16 @@
+{
+  "livre": {
+    "titre": { "fr": "Le Test de Cypress", "ar": "اختبار سايبرس", "en": "The Cypress Test", "tz-ltn": "Asenqed n Cypress", "tz-tfng": "ⴰⵙⴻⵏⵇⴻⴷ ⵏ Cypress" },
+    "description": { "fr": "Description du livre de test", "ar": "وصف كتاب الاختبار", "en": "Test book description", "tz-ltn": "Aglam n wedlis n usenqed", "tz-tfng": "ⴰⴳⵍⴰⵎ ⵏ ⵡⴻⴷⵍⵉⵙ" },
+    "annee_creation": 2024,
+    "isbn": "978-3-16-148410-0"
+  },
+  "evenement": {
+    "nom": { "fr": "Festival Test Cypress", "ar": "مهرجان اختبار", "en": "Cypress Test Festival", "tz-ltn": "Anelmad Cypress", "tz-tfng": "ⴰⵏⴻⵍⵎⴰⴷ" },
+    "description": { "fr": "Un événement de test", "ar": "حدث اختباري", "en": "A test event", "tz-ltn": "Tadyant n usenqed", "tz-tfng": "ⵜⴰⴷⵢⴰⵏⵜ" }
+  },
+  "artisanat": {
+    "nom": { "fr": "Artisanat Test", "ar": "حرف يدوية اختبار", "en": "Test Craft", "tz-ltn": "Amahil n usenqed", "tz-tfng": "ⴰⵎⴰⵀⵉⵍ" },
+    "description": { "fr": "Artisanat de test Cypress", "ar": "حرف يدوية اختبار", "en": "Cypress test craft", "tz-ltn": "Amahil n usenqed", "tz-tfng": "ⴰⵎⴰⵀⵉⵍ" }
+  }
+}

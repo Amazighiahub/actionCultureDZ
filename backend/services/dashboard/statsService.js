@@ -72,7 +72,7 @@ class DashboardStatsService {
   async getPendingValidationsCount() {
     const [pendingUsers, pendingOeuvres] = await Promise.all([
       this.models.User.count({
-        where: { statut_validation: 'en_attente' }
+        where: { statut: 'en_attente_validation' }
       }),
       this.models.Oeuvre?.count({
         where: { statut: 'en_attente' }

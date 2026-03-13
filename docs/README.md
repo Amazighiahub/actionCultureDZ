@@ -1,8 +1,17 @@
-# EventCulture - Plateforme de Patrimoine Culturel Algérien
+# EventCulture - Documentation
+
+> **Point d'entrée** : [README principal](../README.md) à la racine du projet
 
 ## Vue d'ensemble
 
-EventCulture est une plateforme web complète de gestion du patrimoine culturel algérien. Elle permet de gérer les œuvres culturelles, les événements, les sites patrimoniaux, et l'artisanat avec un support multilingue complet (Français, Arabe, Anglais, Tamazight).
+EventCulture est une plateforme web complète de gestion du patrimoine culturel algérien. Elle permet de gérer les œuvres culturelles, les événements, les sites patrimoniaux et l'artisanat avec un support multilingue complet (Français, Arabe, Anglais, Tamazight Latin, Tamazight Tifinagh).
+
+### Ports selon le mode d'exécution
+
+| Mode | Frontend | Backend API |
+|------|----------|-------------|
+| **Docker** | http://localhost:3000 | http://localhost:3001 |
+| **Local (Vite)** | http://localhost:8080 | http://localhost:3001 |
 
 ## Technologies
 
@@ -42,8 +51,8 @@ EventCulture est une plateforme web complète de gestion du patrimoine culturel 
 
 ```bash
 # Cloner le repository
-git clone https://github.com/votre-org/eventculture.git
-cd eventculture
+git clone https://github.com/Amazighiahub/actionCultureDZ.git
+cd actionCultureDZ
 
 # Backend
 cd backend
@@ -85,8 +94,9 @@ cd frontEnd
 npm run dev
 ```
 
-Le frontend sera accessible sur http://localhost:8080
-L'API sera accessible sur http://localhost:3001
+- **Frontend** (local) : http://localhost:8080
+- **Frontend** (Docker) : http://localhost:3000
+- **API** : http://localhost:3001/api
 
 ## Structure du Projet
 
@@ -120,10 +130,12 @@ eventculture/
 ## Documentation détaillée
 
 ### Pour démarrer
-- [Guide d'onboarding stagiaire](./ONBOARDING.md) — **Lire en premier !**
+- [README principal](../README.md) — Vue d'ensemble et démarrage rapide
+- [Guide d'onboarding stagiaire](./ONBOARDING.md) — **Lire en premier (stagiaires) !**
+- [Guide Docker complet](./README-DOCKER.md) — **Méthode recommandée**
+- [Guide installation locale](./README_LOCAL_DEV.md) — Sans Docker
 
 ### Technique
-- [Guide Docker + Base de données (source officielle)](./README-DOCKER.md) — **Référence unique Docker/BD**
 - [Architecture du projet](./ARCHITECTURE.md)
 - [Guide de l'API](./API.md)
 - [Guide du Frontend](./FRONTEND.md)

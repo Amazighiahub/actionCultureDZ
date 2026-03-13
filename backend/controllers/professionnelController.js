@@ -7,6 +7,8 @@ const { translate, translateDeep, createMultiLang, mergeTranslations } = require
 // ✅ OPTIMISATION: Import de l'utilitaire de recherche multilingue centralisé
 const { buildMultiLangSearch } = require('../utils/multiLangSearchBuilder');
 
+const ALLOWED_LANGS = ['fr', 'ar', 'en', 'tz-ltn', 'tz-tfng'];
+
 class ProfessionnelController {
   constructor(models) {
     this.models = models;
@@ -21,7 +23,7 @@ class ProfessionnelController {
   // Récupérer tous les professionnels
   async getAllProfessionnels(req, res) {
     try {
-      const lang = req.lang || 'fr';  // ⚡
+      const lang = ALLOWED_LANGS.includes(req.lang) ? req.lang : 'fr';
       const { page = 1, limit = 20, specialite, wilaya, search, verifie } = req.query;
       const offset = (page - 1) * limit;
 
@@ -60,7 +62,7 @@ class ProfessionnelController {
         attributes: { exclude: ['password', 'reset_token'] },
         limit: parseInt(limit),
         offset,
-        order: [[this.sequelize.literal(`JSON_EXTRACT(\`User\`.\`nom\`, '$.${lang}')`), 'ASC']]
+        order: [[this.sequelize.literal(`JSON_EXTRACT(\`User\`.\`nom\`, '$.${lang.replace(/[^a-z-]/gi, '')}')`), 'ASC']]
       });
 
       // ⚡ Traduire
@@ -79,7 +81,7 @@ class ProfessionnelController {
 
     } catch (error) {
       console.error('Erreur:', error);
-      res.status(500).json({ success: false, error: 'Erreur serveur' });
+      res.status(500).json({ success: false, error: req.t('common.serverError') });
     }
   }
 
@@ -111,7 +113,7 @@ class ProfessionnelController {
       });
 
       if (!professionnel) {
-        return res.status(404).json({ success: false, error: 'Professionnel non trouvé' });
+        return res.status(404).json({ success: false, error: req.t('common.notFound') });
       }
 
       // ⚡ Traduire
@@ -123,7 +125,7 @@ class ProfessionnelController {
 
     } catch (error) {
       console.error('Erreur:', error);
-      res.status(500).json({ success: false, error: 'Erreur serveur' });
+      res.status(500).json({ success: false, error: req.t('common.serverError') });
     }
   }
 
@@ -149,7 +151,7 @@ class ProfessionnelController {
 
     } catch (error) {
       console.error('Erreur:', error);
-      res.status(500).json({ success: false, error: 'Erreur serveur' });
+      res.status(500).json({ success: false, error: req.t('common.serverError') });
     }
   }
 
@@ -161,7 +163,7 @@ class ProfessionnelController {
 
       const user = await this.models.User.findByPk(req.user.id_user);
       if (!user) {
-        return res.status(404).json({ success: false, error: 'Utilisateur non trouvé' });
+        return res.status(404).json({ success: false, error: req.t('auth.userNotFound') });
       }
 
       const updates = { ...otherFields };
@@ -201,13 +203,13 @@ class ProfessionnelController {
       // ⚡ Traduire
       res.json({
         success: true,
-        message: 'Profil mis à jour',
+        message: req.t('user.profileUpdated'),
         data: translateDeep(userUpdated, lang)
       });
 
     } catch (error) {
       console.error('Erreur:', error);
-      res.status(500).json({ success: false, error: 'Erreur serveur' });
+      res.status(500).json({ success: false, error: req.t('common.serverError') });
     }
   }
 
@@ -248,7 +250,7 @@ class ProfessionnelController {
 
     } catch (error) {
       console.error('Erreur:', error);
-      res.status(500).json({ success: false, error: 'Erreur serveur' });
+      res.status(500).json({ success: false, error: req.t('common.serverError') });
     }
   }
 
@@ -289,7 +291,7 @@ class ProfessionnelController {
 
     } catch (error) {
       console.error('Erreur:', error);
-      res.status(500).json({ success: false, error: 'Erreur serveur' });
+      res.status(500).json({ success: false, error: req.t('common.serverError') });
     }
   }
 
@@ -330,7 +332,7 @@ class ProfessionnelController {
 
     } catch (error) {
       console.error('Erreur:', error);
-      res.status(500).json({ success: false, error: 'Erreur serveur' });
+      res.status(500).json({ success: false, error: req.t('common.serverError') });
     }
   }
 
@@ -369,7 +371,7 @@ class ProfessionnelController {
 
     } catch (error) {
       console.error('Erreur:', error);
-      res.status(500).json({ success: false, error: 'Erreur serveur' });
+      res.status(500).json({ success: false, error: req.t('common.serverError') });
     }
   }
 
@@ -452,7 +454,7 @@ class ProfessionnelController {
 
     } catch (error) {
       console.error('Erreur getDashboard:', error);
-      res.status(500).json({ success: false, error: 'Erreur serveur' });
+      res.status(500).json({ success: false, error: req.t('common.serverError') });
     }
   }
 
@@ -500,7 +502,7 @@ class ProfessionnelController {
 
     } catch (error) {
       console.error('Erreur getMyOeuvres:', error);
-      res.status(500).json({ success: false, error: 'Erreur serveur' });
+      res.status(500).json({ success: false, error: req.t('common.serverError') });
     }
   }
 
@@ -562,7 +564,7 @@ class ProfessionnelController {
 
     } catch (error) {
       console.error('Erreur getMyArtisanats:', error);
-      res.status(500).json({ success: false, error: 'Erreur serveur' });
+      res.status(500).json({ success: false, error: req.t('common.serverError') });
     }
   }
 
@@ -613,7 +615,7 @@ class ProfessionnelController {
 
     } catch (error) {
       console.error('Erreur getMyEvenements:', error);
-      res.status(500).json({ success: false, error: 'Erreur serveur' });
+      res.status(500).json({ success: false, error: req.t('common.serverError') });
     }
   }
 
@@ -628,7 +630,7 @@ class ProfessionnelController {
       });
 
       if (!oeuvre) {
-        return res.status(404).json({ success: false, error: 'Œuvre non trouvée' });
+        return res.status(404).json({ success: false, error: req.t('common.notFound') });
       }
 
       // Compter les vues, favoris, commentaires
@@ -649,7 +651,7 @@ class ProfessionnelController {
 
     } catch (error) {
       console.error('Erreur getOeuvreStats:', error);
-      res.status(500).json({ success: false, error: 'Erreur serveur' });
+      res.status(500).json({ success: false, error: req.t('common.serverError') });
     }
   }
 
@@ -664,7 +666,7 @@ class ProfessionnelController {
       });
 
       if (!evenement) {
-        return res.status(404).json({ success: false, error: 'Événement non trouvé' });
+        return res.status(404).json({ success: false, error: req.t('common.notFound') });
       }
 
       // Compter les participants via EvenementUser
@@ -687,7 +689,7 @@ class ProfessionnelController {
 
     } catch (error) {
       console.error('Erreur getEvenementStats:', error);
-      res.status(500).json({ success: false, error: 'Erreur serveur' });
+      res.status(500).json({ success: false, error: req.t('common.serverError') });
     }
   }
 
@@ -704,7 +706,7 @@ class ProfessionnelController {
       });
 
       if (!evenement) {
-        return res.status(404).json({ success: false, error: 'Événement non trouvé' });
+        return res.status(404).json({ success: false, error: req.t('common.notFound') });
       }
 
       // Trouver la participation (table evenementusers)
@@ -714,7 +716,7 @@ class ProfessionnelController {
       });
 
       if (!participation) {
-        return res.status(404).json({ success: false, error: 'Participant non trouvé' });
+        return res.status(404).json({ success: false, error: req.t('common.notFound') });
       }
 
       // Appliquer l'action - utiliser statut_participation selon le modèle EvenementUser
@@ -752,10 +754,7 @@ class ProfessionnelController {
 
       res.json({
         success: true,
-        message: action === 'confirmer' ? 'Participation confirmée' :
-                 action === 'rejeter' ? 'Participation refusée' :
-                 action === 'marquer_present' ? 'Présence enregistrée' :
-                 'Absence enregistrée',
+        message: req.t(`professionnel.participant.${action}`),
         data: {
           participation,
           participant: participant ? {
@@ -768,7 +767,7 @@ class ProfessionnelController {
 
     } catch (error) {
       console.error('Erreur manageParticipants:', error);
-      res.status(500).json({ success: false, error: 'Erreur serveur', details: error.message });
+      res.status(500).json({ success: false, error: req.t('common.serverError'), details: error.message });
     }
   }
 
@@ -809,7 +808,7 @@ class ProfessionnelController {
 
     } catch (error) {
       console.error('Erreur getEventCalendar:', error);
-      res.status(500).json({ success: false, error: 'Erreur serveur' });
+      res.status(500).json({ success: false, error: req.t('common.serverError') });
     }
   }
 
@@ -818,24 +817,27 @@ class ProfessionnelController {
     try {
       const lang = req.lang || 'fr';
       const userId = req.user.id_user;
-      const updates = req.body;
+      // Whitelist stricte : seuls ces champs sont modifiables par le professionnel
+      const allowedFields = ['nom', 'prenom', 'biographie', 'entreprise', 'telephone', 'photo_url', 'site_web', 'adresse', 'specialite'];
+      const updates = {};
+      allowedFields.forEach(f => { if (req.body[f] !== undefined) updates[f] = req.body[f]; });
 
       const user = await this.models.User.findByPk(userId);
       if (!user) {
-        return res.status(404).json({ success: false, error: 'Utilisateur non trouvé' });
+        return res.status(404).json({ success: false, error: req.t('auth.userNotFound') });
       }
 
       await user.update(updates);
 
       res.json({
         success: true,
-        message: 'Profil professionnel mis à jour',
+        message: req.t('user.profileUpdated'),
         data: translateDeep(user, lang)
       });
 
     } catch (error) {
       console.error('Erreur updateProfessionalProfile:', error);
-      res.status(500).json({ success: false, error: 'Erreur serveur' });
+      res.status(500).json({ success: false, error: req.t('common.serverError') });
     }
   }
 
@@ -845,12 +847,12 @@ class ProfessionnelController {
       // Cette méthode nécessite un middleware d'upload
       res.status(501).json({
         success: false,
-        error: 'Upload de portfolio nécessite configuration du middleware multer'
+        error: req.t('common.notImplemented')
       });
 
     } catch (error) {
       console.error('Erreur uploadPortfolio:', error);
-      res.status(500).json({ success: false, error: 'Erreur serveur' });
+      res.status(500).json({ success: false, error: req.t('common.serverError') });
     }
   }
 
@@ -892,12 +894,12 @@ class ProfessionnelController {
           filename = 'mes_artisanats';
           break;
         default:
-          return res.status(400).json({ success: false, error: 'Type d\'export invalide' });
+          return res.status(400).json({ success: false, error: req.t('common.badRequest') });
       }
 
       if (format === 'csv') {
         if (data.length === 0) {
-          return res.status(404).json({ success: false, error: 'Aucune donnée à exporter' });
+          return res.status(404).json({ success: false, error: req.t('common.notFound') });
         }
 
         const headers = Object.keys(data[0]).join(',');
@@ -912,13 +914,13 @@ class ProfessionnelController {
         res.json({
           success: true,
           data,
-          message: 'Format Excel nécessite une configuration supplémentaire'
+          message: req.t('common.notImplemented')
         });
       }
 
     } catch (error) {
       console.error('Erreur exportData:', error);
-      res.status(500).json({ success: false, error: 'Erreur serveur' });
+      res.status(500).json({ success: false, error: req.t('common.serverError') });
     }
   }
 
@@ -964,7 +966,7 @@ class ProfessionnelController {
 
     } catch (error) {
       console.error('Erreur getNotifications:', error);
-      res.status(500).json({ success: false, error: 'Erreur serveur' });
+      res.status(500).json({ success: false, error: req.t('common.serverError') });
     }
   }
 
@@ -1017,7 +1019,7 @@ class ProfessionnelController {
 
     } catch (error) {
       console.error('Erreur getAnalyticsOverview:', error);
-      res.status(500).json({ success: false, error: 'Erreur serveur' });
+      res.status(500).json({ success: false, error: req.t('common.serverError') });
     }
   }
 }

@@ -123,12 +123,12 @@ const AjouterEvenement = () => {
         if (evt.url_virtuel) setIsVirtual(true);
         console.log('✅ Événement chargé pour édition:', evt);
       } else {
-        toast({ title: 'Erreur', description: 'Événement introuvable', variant: 'destructive' });
+        toast({ title: t('toasts.error'), description: t('toasts.eventNotFound'), variant: 'destructive' });
         navigate('/dashboard-pro');
       }
     } catch (error: any) {
       console.error('❌ Erreur chargement événement:', error);
-      toast({ title: 'Erreur', description: 'Impossible de charger l\'événement', variant: 'destructive' });
+      toast({ title: t('toasts.error'), description: t('toasts.eventLoadFailed'), variant: 'destructive' });
     }
   };
 
@@ -190,7 +190,11 @@ const AjouterEvenement = () => {
     setGratuit(checked === true);
   };
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const submitEvent = async (statut: 'publie' | 'brouillon') => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     const fd = new FormData();
     fd.append('nom_evenement', JSON.stringify(formData.nom));
     fd.append('description', JSON.stringify(formData.description));
@@ -220,7 +224,7 @@ const AjouterEvenement = () => {
         toast({
           title: t('common.success', 'Succès'),
           description: isEditMode
-            ? 'Événement mis à jour avec succès'
+            ? t('events.create.updateSuccess', 'Événement mis à jour avec succès')
             : (statut === 'brouillon'
               ? t('events.create.draftSaved', 'Brouillon sauvegardé avec succès')
               : t('events.create.success', 'Événement créé avec succès!')),
@@ -229,25 +233,32 @@ const AjouterEvenement = () => {
       } else {
         toast({
           title: t('common.error', 'Erreur'),
-          description: response.error || (isEditMode ? 'Erreur lors de la mise à jour' : t('events.create.error', 'Erreur lors de la création')),
+          description: response.error || (isEditMode ? t('toasts.updateError') : t('events.create.error', 'Erreur lors de la création')),
           variant: 'destructive',
         });
       }
     } catch (error: unknown) {
-      console.error(isEditMode ? 'Erreur mise à jour événement:' : 'Erreur création événement:', error);
       toast({
         title: t('common.error', 'Erreur'),
-        description: isEditMode ? 'Erreur lors de la mise à jour' : t('events.create.error', 'Erreur lors de la création de l\'événement'),
+        description: isEditMode ? t('toasts.updateError') : t('events.create.error', 'Erreur lors de la création de l\'événement'),
         variant: 'destructive',
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validation: Nom requis
-    if (!formData.nom.fr && !formData.nom.ar) {
+    // Validation: Nom requis dans toutes les langues
+    if (
+      !formData.nom.fr ||
+      !formData.nom.ar ||
+      !formData.nom.en ||
+      !formData.nom['tz-ltn'] ||
+      !formData.nom['tz-tfng']
+    ) {
       toast({
         title: t('common.error'),
         description: t('events.create.nameRequired', 'Le nom de l\'événement est requis'),
@@ -785,9 +796,10 @@ const AjouterEvenement = () => {
                 type="button"
                 variant="outline"
                 onClick={() => submitEvent('brouillon')}
+                disabled={isSubmitting}
               >
                 <Save className={`h-4 w-4 ${rtlClasses.marginEnd(2)}`} />
-                {t('events.create.saveAsDraft')}
+                {isSubmitting ? t('common.saving', 'Saving...') : t('events.create.saveAsDraft')}
               </Button>
               <Button
                 type="submit"

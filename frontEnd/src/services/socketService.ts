@@ -361,6 +361,7 @@ interface SocketConfig {
   reconnectionDelayMax?: number;
   timeout?: number;
   transports?: string[];
+  withCredentials?: boolean;
 }
 
 // Type pour un handler d'événement générique
@@ -379,7 +380,8 @@ class SocketService {
     reconnectionDelay: 1000,
     reconnectionDelayMax: 5000,
     timeout: 20000,
-    transports: ['websocket', 'polling']
+    transports: ['websocket', 'polling'],
+    withCredentials: true
   };
   
   private listeners: Map<string, Set<EventHandler>> = new Map();
@@ -425,17 +427,14 @@ class SocketService {
     this.connectionPromise = new Promise((resolve, reject) => {
       try {
         const authToken = token || authService.getAuthToken();
-        if (!authToken) {
-          throw new Error('No authentication token');
-        }
 
         const wsUrl = API_BASE_URL.replace('/api', '');
-        
+
         this.socket = io(wsUrl, {
           ...this.config,
-          auth: {
-            token: authToken
-          },
+          // Token envoyé via cookie httpOnly (withCredentials: true)
+          // Fallback: auth handshake si token disponible en JS
+          ...(authToken ? { auth: { token: authToken } } : {}),
           query: {
             userId: authService.getCurrentUserId() || undefined
           }
@@ -461,7 +460,6 @@ class SocketService {
     if (!this.socket) return;
 
     this.socket.on('connect', () => {
-      console.log('✅ Socket connected');
       this.isConnected = true;
       this.isConnecting = false;
       this.connectionError = null;
@@ -471,7 +469,6 @@ class SocketService {
     });
 
     this.socket.on('disconnect', (reason) => {
-      console.log('❌ Socket disconnected:', reason);
       this.isConnected = false;
       this.onDisconnectCallbacks.forEach(cb => cb(reason));
     });
@@ -625,7 +622,6 @@ class SocketService {
   joinRoom(roomId: string): void {
     const user = authService.getCurrentUserFromCache();
     if (!user) {
-      console.warn('Pas d\'utilisateur connecté pour joindre la room');
       return;
     }
     
@@ -638,7 +634,6 @@ class SocketService {
   leaveRoom(roomId: string): void {
     const user = authService.getCurrentUserFromCache();
     if (!user) {
-      console.warn('Pas d\'utilisateur connecté pour quitter la room');
       return;
     }
     

@@ -154,14 +154,12 @@ class ArtisanatService extends BaseService<Artisanat, CreateArtisanatData, Updat
     files: File[]
   ): Promise<ApiResponse<MediaArtisanat[]>> {
     // TODO: Implémenter l'upload des médias
-    console.log('Upload médias pour artisanat:', artisanatId, files);
     return { success: false, error: 'Non implémenté' };
   }
 
   // Œuvres d'un artisan
   async getArtisanWorks(artisanId: number): Promise<ApiResponse<any[]>> {
     // TODO: Implémenter la récupération des œuvres de l'artisan
-    console.log('Récupération œuvres artisan:', artisanId);
     return { success: true, data: [] };
   }
 

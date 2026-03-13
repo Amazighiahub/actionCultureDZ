@@ -2,6 +2,7 @@
  * useOeuvreForm - Hook pour gérer le formulaire d'ajout d'œuvre
  */
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
 import { metadataService } from '@/services/metadata.service';
 import { oeuvreService } from '@/services/oeuvre.service';
@@ -68,6 +69,7 @@ const INITIAL_FORM_DATA: FormData = {
 
 export function useOeuvreForm() {
   const { toast } = useToast();
+  const { t } = useTranslation();
   
   // États
   const [formData, setFormData] = useState<FormData>(INITIAL_FORM_DATA);
@@ -119,10 +121,9 @@ export function useOeuvreForm() {
         categoriesGrouped: []
       });
     } catch (error) {
-      console.error('Erreur chargement métadonnées:', error);
       toast({
-        title: 'Erreur',
-        description: 'Impossible de charger les données',
+        title: t('toasts.error'),
+        description: t('toasts.loadDataFailed'),
         variant: 'destructive'
       });
     } finally {
@@ -210,7 +211,6 @@ export function useOeuvreForm() {
           }));
         }
       } catch (error) {
-        console.error('Erreur upload média:', error);
       }
     }
 
@@ -226,8 +226,8 @@ export function useOeuvreForm() {
       const isValid = await validateStep(4);
       if (!isValid && !asBrouillon) {
         toast({
-          title: 'Formulaire incomplet',
-          description: 'Veuillez corriger les erreurs',
+          title: t('toasts.formIncomplete'),
+          description: t('toasts.formIncompleteDesc'),
           variant: 'destructive'
         });
         return false;
@@ -279,10 +279,9 @@ export function useOeuvreForm() {
         throw new Error(response.error || 'Erreur lors de la création');
       }
     } catch (error) {
-      console.error('Erreur soumission:', error);
       toast({
-        title: 'Erreur',
-        description: error instanceof Error ? error.message : 'Erreur inconnue',
+        title: t('toasts.error'),
+        description: error instanceof Error ? error.message : t('toasts.unknownError'),
         variant: 'destructive'
       });
       return false;

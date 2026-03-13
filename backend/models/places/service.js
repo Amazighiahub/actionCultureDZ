@@ -111,7 +111,13 @@ module.exports = (sequelize) => {
     }
   }, {
     tableName: 'services',
-    timestamps: true
+    timestamps: true,
+    indexes: [
+      { fields: ['id_lieu'] },
+      { fields: ['id_user'] },
+      { fields: ['statut'] },
+      { fields: ['type_service'] }
+    ]
   });
 
   // Associations

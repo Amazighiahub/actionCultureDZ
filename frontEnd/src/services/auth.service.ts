@@ -75,10 +75,7 @@ class AuthService {
       localStorage.setItem(AUTH_CONFIG.tokenExpiryKey, expiresAt);
     }
 
-    // Stocker le token pour les composants utilisant fetch avec Authorization header
-    if ((data as any).token) {
-      localStorage.setItem(AUTH_CONFIG.tokenKey, (data as any).token);
-    }
+    // Token is managed via httpOnly cookies — do NOT store in localStorage
 
     // Stocker l'utilisateur pour l'affichage (données non sensibles)
     if ((data as any).user) {
@@ -119,9 +116,7 @@ class AuthService {
 
     if (response.success && response.data) {
       this.setAuthData(response.data);
-      console.log('✅ Token rafraîchi avec succès');
     } else {
-      console.warn('⚠️ Échec du rafraîchissement du token');
       // Si le refresh échoue, nettoyer les données locales
       if (response.error?.includes('expiré') || response.error?.includes('expired')) {
         this.clearLocalAuthData();
@@ -174,8 +169,6 @@ class AuthService {
       type_user: 'visiteur'
     };
     
-    console.log('Données envoyées à l\'API:', registerData);
-    
     const response = await httpClient.post<AuthTokenData>(API_ENDPOINTS.auth.register, registerData);
     if (response.success && response.data) {
       this.setAuthData(response.data);
@@ -203,22 +196,13 @@ async registerProfessional(data: RegisterProfessionalData): Promise<ApiResponse<
     accepte_newsletter: accepte_newsletter || false
   };
   
-  console.log('Données professionnel envoyées à l\'API:', registerData);
-  console.log('📸 Photo URL présente ?', !!registerData.photo_url);
-  console.log('📸 Photo URL:', registerData.photo_url);
-  console.log('📸 Longueur URL:', registerData.photo_url?.length);
-  
   const response = await httpClient.post<AuthTokenData>(API_ENDPOINTS.auth.register, registerData);
   
-  console.log('📥 Réponse inscription:', response);
-  
   if (response.success && response.data) {
-    console.log('✅ Inscription réussie, données reçues:', response.data);
     this.setAuthData(response.data);
     
     // Si l'API retourne aussi l'utilisateur
     if ((response.data as any).user) {
-      console.log('👤 Utilisateur reçu:', (response.data as any).user);
       localStorage.setItem('user', JSON.stringify((response.data as any).user));
     }
   }
@@ -247,7 +231,6 @@ async registerProfessional(data: RegisterProfessionalData): Promise<ApiResponse<
       // Si expiré, tenter un refresh automatique (en background)
       if (!isValid) {
         this.refreshToken().catch(() => {
-          console.log('🔄 Refresh automatique échoué, session expirée');
           this.clearUserCache();
         });
         // Retourner true pour éviter une déconnexion immédiate
@@ -293,7 +276,6 @@ async registerProfessional(data: RegisterProfessionalData): Promise<ApiResponse<
 
   async updateProfile(data: Partial<CurrentUser>): Promise<ApiResponse<CurrentUser>> {
   try {
-    console.log('📝 Mise à jour du profil:', data);
     const response = await httpClient.put<CurrentUser>(API_ENDPOINTS.auth.updateProfile, data);
     
     if (response.success && response.data) {
@@ -303,7 +285,6 @@ async registerProfessional(data: RegisterProfessionalData): Promise<ApiResponse<
     
     return response;
   } catch (error) {
-    console.error('❌ Erreur updateProfile:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Erreur lors de la mise à jour du profil'
@@ -313,18 +294,9 @@ async registerProfessional(data: RegisterProfessionalData): Promise<ApiResponse<
 
 async updateProfilePhoto(photoFile: File): Promise<ApiResponse<any>> {
   try {
-    console.log('📸 Upload photo profil après inscription');
-    console.log('📁 Fichier:', {
-      name: photoFile.name,
-      size: `${(photoFile.size / 1024 / 1024).toFixed(2)} MB`,
-      type: photoFile.type
-    });
-    
     // Option 1 : Utiliser mediaService.uploadProfilePhoto qui existe déjà
     const { mediaService } = MediaService;
     const uploadResult = await mediaService.uploadProfilePhoto(photoFile);
-    
-    console.log('📥 Réponse upload photo profil:', uploadResult);
     
     if (uploadResult.success && uploadResult.data) {
       // La méthode uploadProfilePhoto met déjà à jour le profil via l'API
@@ -337,16 +309,14 @@ async updateProfilePhoto(photoFile: File): Promise<ApiResponse<any>> {
           const user = JSON.parse(currentUser);
           user.photo_url = uploadResult.data.url || uploadResult.data.filename;
           localStorage.setItem('user', JSON.stringify(user));
-          console.log('✅ Photo URL mise à jour dans localStorage:', user.photo_url);
         } catch (e) {
-          console.error('❌ Erreur parsing user:', e);
+          // Ignorer erreur parsing
         }
       }
     }
     
     return uploadResult;
   } catch (error) {
-    console.error('❌ Erreur upload photo profil:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Erreur lors de l\'upload de la photo'
@@ -357,8 +327,6 @@ async updateProfilePhoto(photoFile: File): Promise<ApiResponse<any>> {
 // Alternative si vous voulez utiliser directement uploadService
 async updateProfilePhotoAlternative(photoFile: File): Promise<ApiResponse<any>> {
   try {
-    console.log('📸 Upload photo profil via uploadService');
-    
     // Importer uploadService directement
     const { uploadService } = UploadService;
     
@@ -378,17 +346,14 @@ async updateProfilePhotoAlternative(photoFile: File): Promise<ApiResponse<any>> 
       });
       
       if (updateResult.success) {
-        console.log('✅ Profil mis à jour avec la photo');
         return uploadResult;
       } else {
-        console.error('❌ Erreur mise à jour profil:', updateResult.error);
         return updateResult;
       }
     }
     
     return uploadResult;
   } catch (error) {
-    console.error('❌ Erreur upload photo:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Erreur upload photo'
@@ -408,7 +373,7 @@ async updateProfilePhotoAlternative(photoFile: File): Promise<ApiResponse<any>> 
         return user.id_user || null;
       }
     } catch (error) {
-      console.error('Erreur lors de la récupération de l\'ID utilisateur:', error);
+      // Ignorer erreur
     }
     return null;
   }
@@ -424,7 +389,7 @@ async updateProfilePhotoAlternative(photoFile: File): Promise<ApiResponse<any>> 
         return JSON.parse(userStr) as CurrentUser;
       }
     } catch (error) {
-      console.error('Erreur lors de la récupération de l\'utilisateur du cache:', error);
+      // Ignorer erreur
     }
     return null;
   }

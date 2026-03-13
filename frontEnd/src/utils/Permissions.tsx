@@ -624,7 +624,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
   
   if (permission && !permission()) {
-    return fallbackComponent || <Navigate to="/403" replace />;
+    return fallbackComponent || <Navigate to="/auth" replace />;
   }
   
   return <>{children}</>;

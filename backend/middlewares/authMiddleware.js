@@ -7,7 +7,7 @@ const jwt = require('jsonwebtoken');
 // ============================================================================
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 const IS_DEV_MODE = process.env.NODE_ENV === 'development';
-const SKIP_EMAIL_VERIFICATION = process.env.SKIP_EMAIL_VERIFICATION === 'true' || IS_DEV_MODE;
+const SKIP_EMAIL_VERIFICATION = process.env.SKIP_EMAIL_VERIFICATION === 'true';
 
 // Valeurs d'exemple à rejeter
 const INSECURE_SECRETS = [
@@ -66,7 +66,7 @@ module.exports = (modelsOrUser) => {
   // Vérifier un token JWT
   const verifyToken = (token) => {
     try {
-      return jwt.verify(token, JWT_SECRET);
+      return jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] });
     } catch (error) {
       console.error('❌ Erreur vérification token:', error.message);
       return null;
@@ -126,7 +126,7 @@ module.exports = (modelsOrUser) => {
         user.hasOrganisation = user.Organisations && user.Organisations.length > 0;
 
         // Helper pour la validation professionnelle
-        user.isProfessionnelValide = user.isProfessionnel && user.statut_validation === 'valide';
+        user.isProfessionnelValide = user.isProfessionnel && user.statut === 'actif';
       }
 
       return user;
@@ -149,7 +149,7 @@ module.exports = (modelsOrUser) => {
           user.isProfessionnel = isProfessionalByType;
           user.isUser = user.id_type_user === 1 || !isProfessionalByType;
           user.hasOrganisation = false;
-          user.isProfessionnelValide = isProfessionalByType && user.statut_validation === 'valide';
+          user.isProfessionnelValide = isProfessionalByType && user.statut === 'actif';
         }
         
         return user;
@@ -182,7 +182,7 @@ module.exports = (modelsOrUser) => {
       if (!token) {
         return res.status(401).json({
           success: false,
-          message: 'Token d\'authentification manquant'
+          message: req.t('auth.tokenMissing')
         });
       }
 
@@ -191,7 +191,7 @@ module.exports = (modelsOrUser) => {
       if (!decoded) {
         return res.status(401).json({
           success: false,
-          message: 'Token invalide ou expiré'
+          message: req.t('auth.tokenInvalid')
         });
       }
 
@@ -201,7 +201,7 @@ module.exports = (modelsOrUser) => {
       if (!user) {
         return res.status(401).json({
           success: false,
-          message: 'Utilisateur non trouvé'
+          message: req.t('auth.userNotFound')
         });
       }
 
@@ -213,7 +213,7 @@ module.exports = (modelsOrUser) => {
       if (blockedStatuses.includes(user.statut)) {
         return res.status(403).json({
           success: false,
-          message: `Votre compte est ${user.statut}. Veuillez contacter l'administrateur.`,
+          message: req.t('auth.accountBlocked', { status: user.statut }),
           statut: user.statut
         });
       }
@@ -226,7 +226,7 @@ module.exports = (modelsOrUser) => {
       if (!allowedStatuses.includes(user.statut)) {
         return res.status(401).json({
           success: false,
-          message: 'Statut de compte non reconnu',
+          message: req.t('auth.unknownAccountStatus'),
           statut: user.statut
         });
       }
@@ -241,7 +241,7 @@ module.exports = (modelsOrUser) => {
       console.error('❌ Erreur authentification:', error);
       return res.status(500).json({
         success: false,
-        message: 'Erreur lors de l\'authentification',
+        message: req.t('common.serverError'),
         details: IS_DEV_MODE ? error.message : undefined
       });
     }
@@ -280,7 +280,10 @@ module.exports = (modelsOrUser) => {
       
       next();
     } catch (error) {
-      // En cas d'erreur, continuer sans authentification
+      // En cas d'erreur, continuer sans authentification mais logger si c'est une erreur DB
+      if (error.name !== 'JsonWebTokenError' && error.name !== 'TokenExpiredError') {
+        console.warn('optionalAuth: unexpected error:', error.message);
+      }
       next();
     }
   };
@@ -298,14 +301,14 @@ module.exports = (modelsOrUser) => {
       if (!req.user) {
         return res.status(401).json({
           success: false,
-          message: 'Authentification requise'
+          message: req.t('auth.required')
         });
       }
 
       if (!req.user.email_verifie) {
         return res.status(403).json({
           success: false,
-          message: 'Veuillez vérifier votre email pour accéder à cette fonctionnalité.',
+          message: req.t('auth.emailNotVerified'),
           needsEmailVerification: true
         });
       }
@@ -315,7 +318,7 @@ module.exports = (modelsOrUser) => {
       console.error('❌ Erreur vérification email:', error);
       return res.status(500).json({
         success: false,
-        message: 'Erreur serveur'
+        message: req.t('common.serverError')
       });
     }
   };
@@ -328,14 +331,14 @@ module.exports = (modelsOrUser) => {
       if (!req.user) {
         return res.status(401).json({
           success: false,
-          message: 'Authentification requise'
+          message: req.t('auth.required')
         });
       }
 
       if (req.user.statut !== 'actif') {
         return res.status(403).json({
           success: false,
-          message: 'Votre compte doit être actif pour accéder à cette fonctionnalité.',
+          message: req.t('auth.accountNotActive'),
           statut: req.user.statut
         });
       }
@@ -345,7 +348,7 @@ module.exports = (modelsOrUser) => {
       console.error('❌ Erreur vérification compte actif:', error);
       return res.status(500).json({
         success: false,
-        message: 'Erreur serveur'
+        message: req.t('common.serverError')
       });
     }
   };
@@ -369,7 +372,7 @@ module.exports = (modelsOrUser) => {
       if (!req.user) {
         return res.status(401).json({
           success: false,
-          message: 'Authentification requise'
+          message: req.t('auth.required')
         });
       }
 
@@ -392,7 +395,7 @@ module.exports = (modelsOrUser) => {
       if (!hasRole) {
         return res.status(403).json({
           success: false,
-          message: 'Accès non autorisé. Rôle requis: ' + requiredRoles.join(' ou ')
+          message: req.t('auth.roleRequired', { roles: requiredRoles.join(' / ') })
         });
       }
 
@@ -407,14 +410,14 @@ module.exports = (modelsOrUser) => {
     if (!req.user) {
       return res.status(401).json({
         success: false,
-        message: 'Authentification requise'
+        message: req.t('auth.required')
       });
     }
 
     if (!req.user.isAdmin) {
       return res.status(403).json({
         success: false,
-        message: 'Accès réservé aux administrateurs'
+        message: req.t('auth.adminOnly')
       });
     }
 
@@ -434,7 +437,7 @@ module.exports = (modelsOrUser) => {
     if (!req.user) {
       return res.status(401).json({
         success: false,
-        message: 'Authentification requise'
+        message: req.t('auth.required')
       });
     }
 
@@ -447,17 +450,17 @@ module.exports = (modelsOrUser) => {
     if (!req.user.isProfessionnel) {
       return res.status(403).json({
         success: false,
-        message: 'Accès réservé aux professionnels'
+        message: req.t('auth.professionalOnly')
       });
     }
 
-    // ✅ CORRIGÉ: Vérifier statut_validation (pas statut)
-    if (req.user.statut_validation !== 'valide') {
+    // ✅ Merge statut/statut_validation: pro validé = statut === 'actif'
+    if (req.user.statut !== 'actif') {
       return res.status(403).json({
         success: false,
-        message: 'Votre compte professionnel est en attente de validation.',
+        message: req.t('auth.pendingValidation'),
         needsAdminValidation: true,
-        statut_validation: req.user.statut_validation
+        statut: req.user.statut
       });
     }
 
@@ -472,7 +475,7 @@ module.exports = (modelsOrUser) => {
       if (!req.user) {
         return res.status(401).json({
           success: false,
-          message: 'Authentification requise'
+          message: req.t('auth.required')
         });
       }
 
@@ -483,7 +486,7 @@ module.exports = (modelsOrUser) => {
       if (!isOwner && !isAdminUser) {
         return res.status(403).json({
           success: false,
-          message: 'Accès non autorisé à cette ressource'
+          message: req.t('auth.forbidden')
         });
       }
 
@@ -503,7 +506,7 @@ module.exports = (modelsOrUser) => {
         if (!req.user) {
           return res.status(401).json({
             success: false,
-            message: 'Authentification requise'
+            message: req.t('auth.required')
           });
         }
 
@@ -516,7 +519,7 @@ module.exports = (modelsOrUser) => {
         if (!resourceId) {
           return res.status(400).json({
             success: false,
-            message: `Paramètre ${paramName} manquant`
+            message: req.t('common.badRequest')
           });
         }
 
@@ -526,7 +529,7 @@ module.exports = (modelsOrUser) => {
           console.error(`❌ Modèle ${modelName} non trouvé`);
           return res.status(500).json({
             success: false,
-            message: 'Erreur de configuration serveur'
+            message: req.t('common.serverError')
           });
         }
 
@@ -535,7 +538,7 @@ module.exports = (modelsOrUser) => {
         if (!resource) {
           return res.status(404).json({
             success: false,
-            message: `${modelName} non trouvé(e)`
+            message: req.t('common.notFound')
           });
         }
 
@@ -544,7 +547,7 @@ module.exports = (modelsOrUser) => {
         if (ownerId !== req.user.id_user) {
           return res.status(403).json({
             success: false,
-            message: 'Vous n\'êtes pas autorisé à modifier cette ressource'
+            message: req.t('auth.forbidden')
           });
         }
 
@@ -555,7 +558,7 @@ module.exports = (modelsOrUser) => {
         console.error('❌ Erreur requireOwnership:', error);
         return res.status(500).json({
           success: false,
-          message: 'Erreur lors de la vérification des droits'
+          message: req.t('common.serverError')
         });
       }
     };
@@ -567,11 +570,22 @@ module.exports = (modelsOrUser) => {
 
   const rateLimitStore = new Map();
 
+  // Cleanup des entrées expirées toutes les 5 minutes
+  const _rlCleanup = setInterval(() => {
+    const now = Date.now();
+    for (const [key, record] of rateLimitStore.entries()) {
+      if (now > record.resetTime) {
+        rateLimitStore.delete(key);
+      }
+    }
+  }, 5 * 60 * 1000);
+  if (typeof _rlCleanup.unref === 'function') _rlCleanup.unref();
+
   const rateLimit = (options = {}) => {
     const {
       windowMs = 60 * 1000,
       max = 100,
-      message = 'Trop de requêtes, veuillez réessayer plus tard.'
+      message = null
     } = options;
 
     return (req, res, next) => {
@@ -596,7 +610,7 @@ module.exports = (modelsOrUser) => {
       if (record.count > max) {
         return res.status(429).json({
           success: false,
-          message,
+          message: message || (req.t ? req.t('auth.tooManyRequests') : 'Too many requests'),
           retryAfter: Math.ceil((record.resetTime - now) / 1000)
         });
       }
@@ -608,7 +622,7 @@ module.exports = (modelsOrUser) => {
   const strictRateLimit = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 5,
-    message: 'Trop de tentatives. Veuillez réessayer dans 15 minutes.'
+    message: null
   });
 
   // ====================

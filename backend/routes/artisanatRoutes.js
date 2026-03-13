@@ -4,7 +4,10 @@
  */
 
 const express = require('express');
+const { param, body } = require('express-validator');
 const artisanatController = require('../controllers/artisanatController');
+const { handleValidationErrors, validateId } = require('../middlewares/validationMiddleware');
+const asyncHandler = require('../utils/asyncHandler');
 
 const initArtisanatRoutesV2 = (models, authMiddleware) => {
   const router = express.Router();
@@ -14,27 +17,32 @@ const initArtisanatRoutesV2 = (models, authMiddleware) => {
   // ROUTES PUBLIQUES
   // ============================================================================
 
-  router.get('/', (req, res) => artisanatController.list(req, res));
-  router.get('/search', (req, res) => artisanatController.search(req, res));
-  router.get('/statistics', (req, res) => artisanatController.getStatistics(req, res));
-  router.get('/region/:wilayaId/artisans', (req, res) => artisanatController.getArtisansByRegion(req, res));
-  router.get('/:id', (req, res) => artisanatController.getById(req, res));
+  router.get('/', asyncHandler((req, res) => artisanatController.list(req, res)));
+  router.get('/search', asyncHandler((req, res) => artisanatController.search(req, res)));
+  router.get('/statistics', asyncHandler((req, res) => artisanatController.getStatistics(req, res)));
+  router.get('/region/:wilayaId/artisans', asyncHandler((req, res) => artisanatController.getArtisansByRegion(req, res)));
 
   // ============================================================================
-  // ROUTES AUTHENTIFIÉES
+  // ROUTES AUTHENTIFIÉES (specific paths BEFORE :id catch-all)
   // ============================================================================
 
-  router.get('/my/list', authenticate, (req, res) => artisanatController.getMyArtisanats(req, res));
-  router.post('/', authenticate, (req, res) => artisanatController.create(req, res));
-  router.put('/:id', authenticate, (req, res) => artisanatController.update(req, res));
-  router.delete('/:id', authenticate, (req, res) => artisanatController.delete(req, res));
-  router.post('/:id/medias', authenticate, (req, res) => artisanatController.uploadMedias(req, res));
+  router.get('/my/list', authenticate, asyncHandler((req, res) => artisanatController.getMyArtisanats(req, res)));
 
   // ============================================================================
-  // ROUTES ADMIN
+  // ROUTES ADMIN (specific paths BEFORE :id catch-all)
   // ============================================================================
 
-  router.get('/admin/stats', authenticate, requireRole(['Admin']), (req, res) => artisanatController.getStats(req, res));
+  router.get('/admin/stats', authenticate, requireRole(['Admin']), asyncHandler((req, res) => artisanatController.getStats(req, res)));
+
+  // ============================================================================
+  // ROUTES AVEC :id (après les routes spécifiques)
+  // ============================================================================
+
+  router.get('/:id', validateId(), asyncHandler((req, res) => artisanatController.getById(req, res)));
+  router.post('/', authenticate, asyncHandler((req, res) => artisanatController.create(req, res)));
+  router.put('/:id', authenticate, validateId(), asyncHandler((req, res) => artisanatController.update(req, res)));
+  router.delete('/:id', authenticate, validateId(), asyncHandler((req, res) => artisanatController.delete(req, res)));
+  router.post('/:id/medias', authenticate, validateId(), asyncHandler((req, res) => artisanatController.uploadMedias(req, res)));
 
   return router;
 };

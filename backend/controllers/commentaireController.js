@@ -65,7 +65,7 @@ class CommentaireController {
       console.error('Erreur lors de la récupération des commentaires:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur'
+        error: req.t('common.serverError')
       });
     }
   }
@@ -81,7 +81,7 @@ class CommentaireController {
       if (!oeuvre) {
         return res.status(404).json({
           success: false,
-          error: 'Œuvre non trouvée'
+          error: req.t('oeuvre.notFound')
         });
       }
 
@@ -106,7 +106,7 @@ class CommentaireController {
       // ⚡ Traduire
       res.status(201).json({
         success: true,
-        message: 'Commentaire ajouté avec succès',
+        message: req.t('comment.added'),
         data: translateDeep(commentaireComplet, lang)
       });
 
@@ -114,7 +114,7 @@ class CommentaireController {
       console.error('Erreur lors de la création du commentaire:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur'
+        error: req.t('common.serverError')
       });
     }
   }
@@ -130,7 +130,7 @@ class CommentaireController {
       if (!evenement) {
         return res.status(404).json({
           success: false,
-          error: 'Événement non trouvé'
+          error: req.t('event.notFound')
         });
       }
 
@@ -154,7 +154,7 @@ class CommentaireController {
 
       res.status(201).json({
         success: true,
-        message: 'Commentaire ajouté avec succès',
+        message: req.t('comment.added'),
         data: translateDeep(commentaireComplet, lang)
       });
 
@@ -162,7 +162,7 @@ class CommentaireController {
       console.error('Erreur lors de la création du commentaire:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur'
+        error: req.t('common.serverError')
       });
     }
   }
@@ -222,7 +222,7 @@ class CommentaireController {
       console.error('Erreur lors de la récupération des commentaires:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur'
+        error: req.t('common.serverError')
       });
     }
   }
@@ -243,7 +243,7 @@ class CommentaireController {
 
       res.json({
         success: true,
-        message: 'Commentaire modifié avec succès',
+        message: req.t('comment.updated'),
         data: commentaire
       });
 
@@ -251,7 +251,7 @@ class CommentaireController {
       console.error('Erreur lors de la modification du commentaire:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur'
+        error: req.t('common.serverError')
       });
     }
   }
@@ -265,14 +265,14 @@ class CommentaireController {
 
       res.json({
         success: true,
-        message: 'Commentaire supprimé avec succès'
+        message: req.t('comment.deleted')
       });
 
     } catch (error) {
       console.error('Erreur lors de la suppression du commentaire:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur'
+        error: req.t('common.serverError')
       });
     }
   }
@@ -287,7 +287,7 @@ class CommentaireController {
       if (!commentaire) {
         return res.status(404).json({
           success: false,
-          error: 'Commentaire non trouvé'
+          error: req.t('common.notFound')
         });
       }
 
@@ -295,14 +295,14 @@ class CommentaireController {
 
       res.json({
         success: true,
-        message: `Commentaire ${statut} avec succès`
+        message: req.t('comment.statusUpdated', { statut })
       });
 
     } catch (error) {
       console.error('Erreur lors de la modération du commentaire:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur'
+        error: req.t('common.serverError')
       });
     }
   }

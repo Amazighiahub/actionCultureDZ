@@ -2,7 +2,7 @@
  * Service de gestion des utilisateurs pour le Dashboard Admin
  */
 const { Op, fn, col } = require('sequelize');
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 
 class DashboardUserManagementService {
@@ -36,7 +36,7 @@ class DashboardUserManagementService {
     }
 
     if (type_user) where.id_type_user = type_user;
-    if (statut) where.statut_validation = statut;
+    if (statut) where.statut = statut;
 
     const { rows: users, count } = await this.models.User.findAndCountAll({
       where,
@@ -131,7 +131,7 @@ class DashboardUserManagementService {
     // Filtrer les champs modifiables
     const allowedFields = [
       'nom', 'prenom', 'email', 'telephone', 'id_type_user',
-      'entreprise', 'biographie', 'statut_validation', 'statut'
+      'entreprise', 'biographie', 'statut'
     ];
 
     const updateData = {};
@@ -230,7 +230,8 @@ class DashboardUserManagementService {
 
     // Générer un mot de passe temporaire
     const tempPassword = crypto.randomBytes(8).toString('hex');
-    const hashedPassword = await bcrypt.hash(tempPassword, 12);
+    const rounds = parseInt(process.env.BCRYPT_ROUNDS) || 12;
+    const hashedPassword = await bcrypt.hash(tempPassword, rounds);
 
     await user.update({
       password: hashedPassword,
@@ -264,7 +265,7 @@ class DashboardUserManagementService {
             break;
           case 'validate':
             await this.models.User.update(
-              { statut_validation: 'valide', id_user_validate: adminId, date_validation: new Date() },
+              { statut: 'actif', id_user_validate: adminId, date_validation: new Date() },
               { where: { id_user: userId } }
             );
             break;
@@ -281,29 +282,47 @@ class DashboardUserManagementService {
   }
 
   /**
-   * Export des utilisateurs
+   * Export des utilisateurs avec pagination pour éviter de surcharger la mémoire
    */
   async exportUsers(options = {}) {
-    const { format = 'json', filters = {} } = options;
+    const { format = 'json', filters = {}, maxResults = 10000 } = options;
 
     const where = {};
     if (filters.type_user) where.id_type_user = filters.type_user;
-    if (filters.statut) where.statut_validation = filters.statut;
+    if (filters.statut) where.statut = filters.statut;
     if (filters.dateFrom) {
       where.date_creation = { [Op.gte]: new Date(filters.dateFrom) };
     }
 
-    const users = await this.models.User.findAll({
-      where,
-      attributes: { exclude: ['password', 'refresh_token'] },
-      raw: true
-    });
+    const pageSize = 100;
+    let page = 1;
+    let allUsers = [];
+    let hasMore = true;
 
-    if (format === 'csv') {
-      return this.convertToCSV(users);
+    while (hasMore) {
+      const result = await this.models.User.findAll({
+        where,
+        attributes: { exclude: ['password', 'refresh_token'] },
+        limit: pageSize,
+        offset: (page - 1) * pageSize,
+        order: [['date_creation', 'DESC']],
+        raw: true
+      });
+
+      allUsers = allUsers.concat(result);
+      hasMore = result.length === pageSize && allUsers.length < maxResults;
+      page++;
     }
 
-    return users;
+    if (allUsers.length > maxResults) {
+      allUsers = allUsers.slice(0, maxResults);
+    }
+
+    if (format === 'csv') {
+      return this.convertToCSV(allUsers);
+    }
+
+    return allUsers;
   }
 
   /**

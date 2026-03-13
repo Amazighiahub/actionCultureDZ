@@ -10,9 +10,6 @@ const initUploadRoutes = (models, authMiddleware) => {
   const UploadController = require('../controllers/uploadController');
   const uploadController = new UploadController(models);
 
-  if (process.env.NODE_ENV !== 'production') {
-    console.log('🔧 Initialisation des routes upload...');
-  }
 
   // ========================================================================
   // ROUTE INFO
@@ -40,7 +37,7 @@ const initUploadRoutes = (models, authMiddleware) => {
           document: '50MB'
         },
         formats: {
-          image: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'],
+          image: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
           document: ['pdf', 'doc', 'docx', 'txt']
         }
       }
@@ -146,7 +143,7 @@ const initUploadRoutes = (models, authMiddleware) => {
         });
         return res.status(400).json({
           success: false,
-          error: 'Type de fichier non autorisé',
+          error: req.t ? req.t('upload.invalidFormat') : 'Invalid file type',
           details: invalidFiles
         });
       }
@@ -158,7 +155,7 @@ const initUploadRoutes = (models, authMiddleware) => {
         if (!req.files || req.files.length === 0) {
           return res.status(400).json({
             success: false,
-            error: 'Aucun fichier fourni'
+            error: req.t ? req.t('upload.noFile') : 'No file provided'
           });
         }
 
@@ -172,14 +169,14 @@ const initUploadRoutes = (models, authMiddleware) => {
 
         res.json({
           success: true,
-          message: `${uploadedFiles.length} fichiers uploadés`,
+          message: req.t ? req.t('upload.fileSuccess') : `${uploadedFiles.length} files uploaded`,
           data: uploadedFiles
         });
       } catch (error) {
         console.error('Erreur upload multiple:', error);
         res.status(500).json({
           success: false,
-          error: 'Erreur lors de l\'upload'
+          error: req.t ? req.t('common.serverError') : 'Server error'
         });
       }
     }
@@ -190,9 +187,6 @@ const initUploadRoutes = (models, authMiddleware) => {
   // ========================================================================
 
   const routeCount = router.stack.filter(layer => layer.route).length;
-  if (process.env.NODE_ENV !== 'production') {
-    console.log(`✅ Routes upload initialisées: ${routeCount} routes`);
-  }
 
   return router;
 };

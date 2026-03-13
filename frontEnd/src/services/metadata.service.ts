@@ -141,7 +141,6 @@ export class MetadataService {
       );
       return response.success && response.data ? response.data.hasCategories : false;
     } catch (error) {
-      console.error('Erreur vérification catégories:', error);
       return false;
     }
   }

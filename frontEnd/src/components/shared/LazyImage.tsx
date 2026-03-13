@@ -3,6 +3,7 @@
  * À utiliser dans toutes les pages pour optimiser les performances
  */
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/Utils';
 
 interface LazyImageProps {
@@ -44,6 +45,7 @@ export const LazyImage: React.FC<LazyImageProps> = ({
   onLoad,
   onError
 }) => {
+  const { t } = useTranslation();
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(false);
   const [isInView, setIsInView] = useState(false);
@@ -132,7 +134,7 @@ export const LazyImage: React.FC<LazyImageProps> = ({
       {error && (
         <div className="absolute inset-0 flex items-center justify-center bg-muted/50">
           <span className="text-xs text-muted-foreground">
-            Image non disponible
+            {t('shared.lazyImage.unavailable', 'Image non disponible')}
           </span>
         </div>
       )}

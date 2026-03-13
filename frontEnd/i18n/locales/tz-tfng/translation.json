@@ -11,7 +11,12 @@
       "title": "ⴽⵛⴻⵎ",
       "submit": "ⴽⵛⴻⵎ",
       "email": "ⵉⵎⴰⵢⵍ",
-      "password": "ⴰⵡⴰⵍ ⵓⴼⴼⵉⵔ"
+      "password": "ⴰⵡⴰⵍ ⵓⴼⴼⵉⵔ",
+      "tabTitle": "ⴰⵏⴻⴽⵛⵓⵎ",
+      "emailPlaceholder": "ⵉⵎⴰⵢⵍ-ⵉⴽ@ⴰⵎⴻⴷⵢⴰ.ⵛⵓⵎ",
+      "rememberMe": "ⵛⴼⵓ ⴼⴻⵍⵍ-ⵉ",
+      "forgotPassword": "ⵜⴻⵜⵜⵓⴹ ⴰⵡⴰⵍ ⵏ ⵓⵄⴻⴷⴷⵉ?",
+      "loggingIn": "ⴰⵏⴻⴽⵛⵓⵎ ⵉⵜⴻⴷⴷⵓ..."
     },
     "loginToComment": "ⵇⵇⵏ ⵉ ⵓⵡⵏⵏⵉⵜ",
     "loginToFavorite": "ⵇⵇⵏ ⵉ ⵜⵎⵔⵏⴰ ⵖⵔ ⵢⵉⵙⵎⵏⵢⵉⴼⵏ",
@@ -34,13 +39,56 @@
       "visitor": "ⴰⵏⵎⵉⵍⵉ",
       "visitorDesc": "ⵉ ⵜⵉⴼⵉⵏ ⴷ ⵓⵙⵏⵔⵏⵉ ⵏ ⵓⴳⴱⵓⵔ",
       "professionalDesc": "ⵉ ⴱⵟⵟⵓ ⵏ ⵜⵎⴰⵀⵉⵍⵉⵏ-ⵉⴽ ⴷ ⵜⴷⵢⴰⵏⵉⵏ",
-      "professionalNote": "ⵜⴰⵣⵎⵉⵍⵜ: ⵉⵎⵉⴹⴰⵏⵏ ⵉⵍⵎⴰⵙⵏ ⵙⵔⴰⵏ ⴰⵙⵏⵜⵎ",
+      "professionalNote": {
+        "title": "ⵜⴰⵎⴰⵡⵜ ⵜⴰⵎⵓⵇⵔⴰⵏⵜ:",
+        "description": "ⵉⵎⵉⴹⴰⵏⴻⵏ ⵉⵎⴰⵀⵉⵍⴻⵏ ⴰⴷ ⵜⴻⵏ-ⵉⵙⴻⵏⵇⴻⴷ ⵓⵖⵔⴻⴼ-ⵏⵏⴻⵖ ⴷⴻⴳ 24-48 ⵏ ⵢⵉⵙⵔⴰⴳⴻⵏ."
+      },
       "hasAccount": "ⵜⵙⵄⵉⴹ ⵢⴰⴽⴰⵏ ⴰⵎⵉⴹⴰⵏ?",
       "login": "ⵇⵇⵏ",
       "loading": "ⴰⵊⵔⴷ ⵉⵜⴷⴷⵓ...",
       "submit": "ⵔⵏⵓ ⴰⵎⵉⴹⴰⵏ-ⵉⵡ",
-      "acceptTerms": "ⵇⴱⵍⵖ ⵜⵉⵡⵜⵉⵍⵉⵏ ⵏ ⵓⵙⵇⴷⵛ",
-      "title": "ⵔⵏⵓ ⴰⵎⵉⴹⴰⵏ"
+      "acceptTerms": {
+        "prefix": "ⵇⴻⴱⵍⴻⵖ",
+        "terms": "ⵜⵉⵡⵜⵉⵍⵉⵏ ⵏ ⵓⵙⴻⵇⴷⴻⵛ",
+        "and": "ⴷ",
+        "privacy": "ⵜⴰⵙⴻⵔⵜⵉⵜ ⵏ ⵜⴱⴰⴹⵏⵉⵜ"
+      },
+      "title": "ⵔⵏⵓ ⴰⵎⵉⴹⴰⵏ",
+      "tabTitle": "ⴰⵊⴻⵔⵔⴻⴷ",
+      "profileType": "ⴰⵏⴰⵡ ⵏ ⵓⵎⴰⵖⵏⵓ",
+      "individual": "ⴰⵎⴻⵔⵣⴰⵡ (ⴰⵎⴷⴰⵏ)",
+      "professional": "ⴰⵎⴻⵙⵍⴰⵢ (ⴰⵏⴰⵥⵓⵔ, ⴰⵏⴻⵍⵎⴰⴷ, ⴰⵎⴻⵙⵖⵉⵡⴰⵏ)",
+      "firstName": "ⵉⵙⴻⵎ",
+      "firstNamePlaceholder": "ⵉⵙⴻⵎ-ⵉⴽ",
+      "lastName": "ⵎⵢⴻⴳⴳⴻⵏ",
+      "lastNamePlaceholder": "ⵎⵢⴻⴳⴳⴻⵏ-ⵉⴽ",
+      "gender": "ⵜⴰⵡⵙⵉⵜ",
+      "male": "ⴰⵔⴳⴰⵣ",
+      "female": "ⵜⴰⵎⴻⵟⵟⵓⵜ",
+      "birthDate": "ⴰⵣⴻⵎⵣ ⵏ ⵜⵍⴰⵍⵉⵜ",
+      "email": "ⵉⵎⴰⵢⵍ",
+      "emailPlaceholder": "ⵉⵎⴰⵢⵍ-ⵉⴽ@ⴰⵎⴻⴷⵢⴰ.ⵛⵓⵎ",
+      "password": "ⴰⵡⴰⵍ ⵓⴼⴼⵉⵔ",
+      "confirmPassword": "ⵙⴻⵏⵜⴻⵎ ⴰⵡⴰⵍ ⵓⴼⴼⵉⵔ",
+      "wilaya": "ⵜⴰⵎⵏⴰⴹⵜ",
+      "selectWilaya": "ⴼⵔⴻⵏ ⵜⴰⵎⵏⴰⴹⵜ-ⵉⴽ",
+      "phone": "ⵜⵉⵍⵉⴼⵓⵏ",
+      "professionalInfo": "ⵉⵙⴰⵍⵍⴻⵏ ⵉⵎⴻⵙⵍⴰⵢⴻⵏ",
+      "sector": "ⵜⵉⴳⵣⵉ ⵏ ⵍⴻⵇⴷⵉⵛ",
+      "selectSector": "ⴼⵔⴻⵏ ⵜⵉⴳⵣⵉ-ⵉⵏⴻⴽ",
+      "profilePhoto": "ⵜⵓⴳⵏⴰ ⵏ ⵓⵎⴰⵖⵏⵓ",
+      "photoPreview": "ⵜⴰⵙⴽⴰⵏⵜ ⵏ ⵜⵓⴳⵏⴰ",
+      "removePhoto": "ⴽⴽⴻⵙ ⵜⵓⴳⵏⴰ",
+      "photoFormats": "ⵉⴼⵓⵔⵎⴰ ⵢⴻⵜⵜⵡⴰⵇⴱⴰⵍⴻⵏ: ⵊⵒⴳ, ⵒⵏⴳ, ⴳⵉⴼ, ⵡⴻⴱⵒ (ⴰⴼⴻⵍⵍⴰⵢ 5ⵎⴱ)",
+      "uploadingPhoto": "ⴰⵙⴰⵍⵉ ⵉⵜⴻⴷⴷⵓ...",
+      "photoUploaded": "ⵜⵓⴳⵏⴰ ⵜⴻⵜⵜⵡⴰⵙⵓⵍⵉ ⴰⴽⴽⴻⵏ ⵉⵡⴰⵜⴰ",
+      "portfolio": "ⴰⵃⵔⵉⵛ ⵏ ⵍⴻⵇⴷⵉⵛ / ⴰⵙⵎⴻⵍ ⵡⴻⴱ",
+      "biography": "ⵜⴰⵎⴻⴷⴷⵓⵔⵜ",
+      "biographyPlaceholder": "ⵙⴽⴻⵏ-ⴰⵖ-ⴷ ⵉⵎⴰⵏ-ⵉⴽ, ⵎⵎⴻⵙⵍⴰⵢ-ⴰⵖ-ⴷ ⵖⴻⴼ ⵡⴻⴱⵔⵉⴷ-ⵉⴽ, ⵉⵙⴻⵏⴼⴰⵔⴻⵏ-ⵉⴽ, ⵜⵉⵖⴱⵓⵍⴰ-ⴽ... (ⴰⴷⴷⴰⵢ 50 ⵏ ⵉⵙⴻⴽⴽⵉⵍⴻⵏ)",
+      "charactersMinimum": "ⵉⵙⴻⴽⴽⵉⵍⴻⵏ (ⴰⴷⴷⴰⵢ 50)",
+      "newsletter": "ⴱⵖⵉⵖ ⴰⴷ ⴷ-ⵟⵟⴼⴻⵖ ⵉⵙⴰⵍⵍⴻⵏ ⴷ ⵢⵉⵍⴻⵇⵎⴰⵏ ⵙ ⵢⵉⵎⴰⵢⵍ",
+      "registering": "ⴰⵊⴻⵔⵔⴻⴷ ⵉⵜⴻⴷⴷⵓ...",
+      "createAccount": "ⵔⵏⵓ ⴰⵎⵉⴹⴰⵏ-ⵉⵡ"
     },
     "errors": {
       "required": "ⵓⵔⵜⵉ-ⴰ ⵢⵜⵜⵓⵙⵔⴰ",
@@ -49,11 +97,112 @@
       "passwordTooShort": "ⴰⵡⴰⵍ ⵓⴼⴼⵉⵔ ⵢⵙⵙⴼⴽ ⴰⴷ ⵢⵙⵄⵓ 8 ⵏ ⵢⵉⵙⴽⴽⵉⵍⵏ ⵎⴰ ⴷⵔⵓⵙ",
       "biographyTooShort": "ⵜⴰⵎⴷⴷⵓⵔⵜ ⵢⵙⵙⴼⴽ ⴰⴷ ⵜⵙⵄⵓ 50 ⵏ ⵢⵉⵙⴽⴽⵉⵍⵏ ⵎⴰ ⴷⵔⵓⵙ",
       "acceptTerms": "ⵢⵙⵙⴼⴽ ⴰⴷ ⵜⵇⵍⴹ ⵜⵉⵡⵜⵉⵍⵉⵏ ⵏ ⵓⵙⵇⴷⵛ",
-      "registerError": "ⵜⵓⵛⵛⴹⴰ ⴷⴳ ⵓⵊⵔⴷ"
+      "registerError": "ⵜⵓⵛⵛⴹⴰ ⴷⴳ ⵓⵊⵔⴷ",
+      "fileTooLarge": {
+        "title": "ⴰⴼⴰⵢⵍⵓ ⵎⴻⵇⵇⴻⵔ ⴰⵟⴰⵙ",
+        "description": "ⵜⵉⴷⴷⵉ ⵏ ⵓⴼⴰⵢⵍⵓ ⵓⵔ ⵉⵍⴰⵇ ⴰⵔⴰ ⴰⴷ ⵜⵄⴻⴷⴷⵉ 5ⵎⴱ"
+      },
+      "invalidFileType": {
+        "title": "ⴰⵏⴰⵡ ⵏ ⵓⴼⴰⵢⵍⵓ ⵓⵔ ⵢⴻⵖⴱⴻⵍ ⴰⵔⴰ",
+        "description": "ⴰⵍⴰ ⵉⴼⵓⵢⵍⴰ ⵊⵒⴳ, ⵒⵏⴳ, ⴳⵉⴼ ⴷ ⵡⴻⴱⵒ ⵉ ⵢⴻⵜⵜⵡⴰⵇⴱⴰⵍⴻⵏ"
+      },
+      "emailRequired": "ⵉⵎⴰⵢⵍ ⵉⵍⴰⵇ",
+      "emailInvalid": "ⵉⵎⴰⵢⵍ ⵓⵔ ⵢⴻⵖⴱⴻⵍ ⴰⵔⴰ",
+      "passwordRequired": "ⴰⵡⴰⵍ ⵓⴼⴼⵉⵔ ⵉⵍⴰⵇ",
+      "loginError": "ⵜⵓⵛⵛⴹⴰ ⴷⴻⴳ ⵓⵏⴻⴽⵛⵓⵎ",
+      "invalidCredentials": "ⵉⵎⴰⵢⵍ ⵏⴻⵖ ⴰⵡⴰⵍ ⵓⴼⴼⵉⵔ ⵓⵔ ⵚⴻⵃⵃⴰⵏ ⴰⵔⴰ",
+      "userNotFound": "ⵓⵍⴰⵛ ⴰⵎⵉⴹⴰⵏ ⵙ ⵢⵉⵎⴰⵢⵍ-ⴰⴳⵉ",
+      "wrongPassword": "ⴰⵡⴰⵍ ⵏ ⵓⵄⴻⴷⴷⵉ ⴷ ⴰⵔⴰⵎⴻⵖⵜⵓ",
+      "accountNotVerified": "ⵙⴻⵏⵇⴻⴷ ⵉⵎⴰⵢⵍ-ⵉⴽ ⵓⵇⴱⴻⵍ ⴰⴷ ⵜⴽⴻⵛⵎⴻⴹ",
+      "accountDisabled": "ⴰⵎⵉⴹⴰⵏ-ⵉⴽ ⵢⴻⵜⵜⵡⴰⴽⴽⴻⵙ. ⵏⴻⵔⵎⴻⵙ ⴰⵏⴻⴷⴱⴰⵍ.",
+      "accountPending": "ⴰⵎⵉⴹⴰⵏ-ⵉⴽ ⴰⵎⴰⵀⵉⵍ ⵢⴻⵜⵜⵔⴰⵊⵓ ⴰⵙⴻⵏⵇⴻⴷ",
+      "accountSuspended": "ⴰⵎⵉⴹⴰⵏ-ⵉⴽ ⵢⴻⵜⵜⵡⴰⵙⴻⵃⴱⴻⵙ. ⵏⴻⵔⵎⴻⵙ ⴰⵏⴻⴷⴱⴰⵍ.",
+      "accountBanned": "ⴰⵎⵉⴹⴰⵏ-ⵉⴽ ⵢⴻⵜⵜⵡⴰⴳⴷⴻⵍ",
+      "tooManyAttempts": "ⴰⵟⴰⵙ ⵏ ⵜⴻⴳⵔⴰⵜⵉⵏ ⵏ ⵓⵏⴻⴽⵛⵓⵎ. ⵄⵔⴻⴹ ⵜⵉⴽⴽⴻⵍⵜ-ⵏⵏⵉⴹⴻⵏ.",
+      "nameMinLength": "ⵎⵢⴻⴳⴳⴻⵏ ⵉⵍⴰⵇ ⴰⴷ ⵢⴻⵙⵄⵓ ⵎⴰ ⴷⵔⵓⵙ 2 ⵏ ⵉⵙⴻⴽⴽⵉⵍⴻⵏ",
+      "firstNameMinLength": "ⵉⵙⴻⵎ ⵉⵍⴰⵇ ⴰⴷ ⵢⴻⵙⵄⵓ ⵎⴰ ⴷⵔⵓⵙ 2 ⵏ ⵉⵙⴻⴽⴽⵉⵍⴻⵏ",
+      "passwordMinLength": "ⴰⵡⴰⵍ ⵓⴼⴼⵉⵔ ⵉⵍⴰⵇ ⴰⴷ ⵢⴻⵙⵄⵓ ⵎⴰ ⴷⵔⵓⵙ 8 ⵏ ⵉⵙⴻⴽⴽⵉⵍⴻⵏ",
+      "passwordMismatch": "ⴰⵡⴰⵍⴻⵏ ⵓⴼⴼⵉⵔⴻⵏ ⵓⵔ ⵎⵚⴰⴹⴰⵏ ⴰⵔⴰ",
+      "confirmPasswordRequired": "ⵙⴻⵏⵜⴻⵎ ⴰⵡⴰⵍ ⵏ ⵓⵄⴻⴷⴷⵉ",
+      "birthDateRequired": "ⴰⵣⴻⵎⵣ ⵏ ⵜⵍⴰⵍⵉⵜ ⵉⵍⴰⵇ",
+      "minAge": "ⵉⵍⴰⵇ ⴰⴷ ⵜⴻⵙⵄⵉⴹ ⵎⴰ ⴷⵔⵓⵙ 13 ⵏ ⵢⵉⵙⴻⴳⴳⴰⵙⴻⵏ ⴰⴽⴽⴻⵏ ⴰⴷ ⵜⵊⴻⵔⴷⴻⴹ",
+      "wilayaRequired": "ⵎⴰ ⵓⵍⴰⵛ ⴰⵖⵉⵍⵉⴼ ⴼⵔⴻⵏ ⵜⴰⵎⵏⴰⴹⵜ-ⵉⴽ",
+      "acceptTermsRequired": "ⵉⵍⴰⵇ ⴰⴷ ⵜⵇⴻⴱⵍⴻⴹ ⵜⵉⵡⵜⵉⵍⵉⵏ ⵏ ⵓⵙⴻⵇⴷⴻⵛ",
+      "sectorRequired": "ⵜⵉⴳⵣⵉ ⵏ ⵍⴻⵇⴷⵉⵛ ⵜⵍⴰⵇ ⵉ ⵢⵉⵎⴻⵙⵍⴰⵢⴻⵏ",
+      "biographyMinLength": "ⵜⴰⵎⴻⴷⴷⵓⵔⵜ ⵉⵍⴰⵇ ⴰⴷ ⵜⴻⵙⵄⵓ ⵎⴰ ⴷⵔⵓⵙ 50 ⵏ ⵉⵙⴻⴽⴽⵉⵍⴻⵏ",
+      "validationError": "ⵜⵓⵛⵛⴹⴰ ⵏ ⵓⵙⴻⵏⵇⴻⴷ",
+      "correctErrors": "ⵎⴰ ⵓⵍⴰⵛ ⴰⵖⵉⵍⵉⴼ ⵙⴻⵖⵜⵉ ⵜⵓⵛⵛⴹⵉⵡⵉⵏ-ⴰ",
+      "uploadError": "ⵜⵓⵛⵛⴹⴰ ⴷⴻⴳ ⵓⵙⴰⵍⵉ ⵏ ⵜⵓⴳⵏⴰ",
+      "uploadUrlNotReceived": "ⵜⴰⵏⵙⴰ ⵏ ⵜⵓⴳⵏⴰ ⵓⵔ ⴷ-ⵜⴻⵡⵡⵉⴹ ⴰⵔⴰ",
+      "uploadTitle": "ⵜⵓⵛⵛⴹⴰ ⵏ ⵓⵙⴰⵍⵉ",
+      "uploadContinueWithoutPhoto": "ⴰⵙⴰⵍⵉ ⵏ ⵜⵓⴳⵏⴰ ⵢⴻⵛⵛⴻⴹ. ⴰⴷ ⵏⴽⴻⵎⵎⴻⵍ ⴰⵊⴻⵔⵔⴻⴷ ⵡⴰⵔ ⵜⵓⴳⵏⴰ.",
+      "registrationError": "ⵜⵓⵛⵛⴹⴰ ⴷⴻⴳ ⵓⵊⴻⵔⵔⴻⴷ",
+      "registrationErrorDescription": "ⵜⴻⵍⵍⴰ-ⴷ ⵜⵓⵛⵛⴹⴰ. ⵎⴰ ⵓⵍⴰⵛ ⴰⵖⵉⵍⵉⴼ ⵄⵔⴻⴹ ⵜⵉⴽⴻⵍⵜ ⵏⵏⵉⴹⴻⵏ.",
+      "wilayasLoadError": "ⵜⵓⵛⵛⴹⴰ ⴷⴻⴳ ⵓⵙⴰⵍⵉ ⵏ ⵜⴻⵎⵏⴰⴹⵉⵏ",
+      "emailExistsDescription": "ⵢⴻⵍⵍⴰ ⵢⴰⴽⴰⵏ ⵓⵎⵉⴹⴰⵏ ⵙ ⵜⴰⵏⵙⴰ-ⴰⴳⵉ. ⴽⵛⵎ ⵏⴻⵖ ⵙⴻⵇⴷⴻⵛ ⵜⴰⵏⵙⴰ-ⵏⵏⵉⴹⴻⵏ.",
+      "emailNotVerified": "ⵉⵎⴰⵢⵍ ⵓⵔ ⵢⴻⵜⵜⵡⴰⵙⵏⴻⵇⴷ ⴰⵔⴰ",
+      "pleaseVerifyEmail": "ⵙⴻⵏⵇⴻⴷ ⵉⵎⴰⵢⵍ-ⵉⴽ ⵓⵇⴱⴻⵍ ⴰⴷ ⵜⴽⴻⵛⵎⴻⴹ. ⵡⴰⵍⵉ ⵜⴰⴱⵓⴹⵜ-ⵉⴽ ⵏ ⵢⵉⵣⵏⴰⵏ.",
+      "contactSupport": "ⴰⵎⵉⴹⴰⵏ-ⵉⴽ ⵢⴻⵜⵜⵡⴰⵙⴻⵃⴱⴻⵙ. ⵏⴻⵔⵎⴻⵙ ⵜⴰⵍⵍⴰⵍⵜ ⵉ ⵡⵓⴳⴰⵔ ⵏ ⵜⴻⵍⵖⵓⵜ.",
+      "passwordError": "ⴰⵡⴰⵍ ⵏ ⵓⵄⴻⴷⴷⵉ ⵓⵔ ⵉⵃⴻⵔⵔⴻⵣ ⴰⵔⴰ ⵉⵍⵓⴳⴰⵏ ⵏ ⵜⵖⴻⵍⵍⵉⵙⵜ (ⴰⴷⴰⵙⵉⵍ 8 ⵏ ⵢⵉⵙⴻⴽⴽⵉⵍⴻⵏ)"
     },
     "success": {
       "registerTitle": "ⴰⵊⵔⴷ ⵢⴷⴷⴰ ⴰⴽⴽⵏ ⵉⵡⴰⵜⴰ",
-      "registerDescription": "ⴰⵎⵉⴹⴰⵏ-ⵉⴽ ⵢⵜⵡⴰⵔⵏⴰ ⴰⴽⴽⵏ ⵉⵡⴰⵜⴰ!"
+      "registerDescription": "ⴰⵎⵉⴹⴰⵏ-ⵉⴽ ⵢⵜⵡⴰⵔⵏⴰ ⴰⴽⴽⵏ ⵉⵡⴰⵜⴰ!",
+      "loginTitle": "ⴰⴽⴻⵞⵞⵓⵎ ⵢⴻⴷⴷⴰ",
+      "loginDescription": "ⴰⵏⵙⵓⴼ ⵢⵉⵙ-ⴽ ⵖⴻⵔ ⵜⵉⵎⵍⵉⵍⵉⵜ ⵛⵓⵍⵜⵓⵔⴻ!",
+      "registrationTitle": "ⴰⵊⴻⵔⵔⴻⴷ ⵢⴻⴷⴷⴰ",
+      "professionalRegistration": "ⴰⵎⵉⴹⴰⵏ-ⵉⴽ ⴰⵎⴻⵙⵍⴰⵢ ⵢⴻⵜⵜⵡⴰⵔⵏⴰ ⵓ ⵢⴻⵜⵜⵔⴰⵊⵊⵓ ⴰⵙⴻⵏⵇⴻⴷ.",
+      "visitorRegistration": "ⴰⵎⵉⴹⴰⵏ-ⵉⴽ ⵢⴻⵜⵜⵡⴰⵔⵏⴰ ⴰⴽⴽⴻⵏ ⵉⵡⴰⵜⴰ. ⴰⵏⵙⵓⴼ!"
+    },
+    "title": "ⴰⴽⴻⵞⵞⵓⵎ ⴷ ⵓⵊⴻⵔⵔⴻⴷ",
+    "subtitle": "ⴽⵛⴻⵎ ⵖⴻⵔ ⵓⵎⴹⵉⵇ-ⵉⴽ ⵓⴷⵎⴰⵡⴰⵏ ⵏⴻⵖ ⵔⵏⵓ ⴰⵎⵉⴹⴰⵏ ⴰⵎⴰⵢⵏⵓⵜ",
+    "sectors": {
+      "artiste": "ⴰⵏⴰⵥⵓⵔ",
+      "artisan": "ⴰⵏⴻⵍⵎⴰⴷ",
+      "organisateur": "ⴰⵎⴻⵙⵖⵉⵡⴰⵏ ⵏ ⵜⴻⴷⵢⴰⵏⵉⵏ",
+      "guide": "ⴰⵎⵏⵉⵔ ⵏ ⵜⵎⴻⵖⵔⵉⵡⵉⵏ",
+      "chercheur": "ⴰⵎⵏⴰⴷⵉ / ⴰⵎⴰⵙⵙⴰⵏ",
+      "journaliste": "ⴰⵏⴻⵖⵎⴰⵙ ⴰⴷⵍⴰⵙⴰⵏ",
+      "conservateur": "ⴰⵃⴰⴼⵉⴹ ⵏ ⵓⵙⴰⵍⴰⵢ",
+      "editeur": "ⴰⵎⴰⵣⵔⴰⴳ",
+      "producteur": "ⴰⴼⴰⵔⴻⵙ",
+      "autre": "ⵡⴰⵢⴻⴹ"
+    },
+    "forgotPassword": {
+      "title": "ⵜⴻⵜⵜⵓⴹ ⴰⵡⴰⵍ ⵏ ⵓⵄⴻⴷⴷⵉ",
+      "description": "ⵙⴻⴽⵛⴻⵎ ⵜⴰⵏⵙⴰ ⵏ ⵢⵉⵎⴰⵢⵍ-ⵉⴽ, ⴰⴷ ⴰⴽ-ⴷ-ⵏⴰⵣⴻⵏ ⴰⵙⴻⵖⵡⴻⵏ ⵉ ⵓⵄⴰⵡⴻⴷ ⵏ ⵓⵙⴱⴻⴷⴷⵉ.",
+      "emailLabel": "ⵜⴰⵏⵙⴰ ⵉⵎⴰⵢⵍ",
+      "emailPlaceholder": "ⵉⵎⴰⵢⵍ-ⵉⴽ@ⴰⵎⴻⴷⵢⴰ.ⵛⵓⵎ",
+      "submit": "ⴰⵣⴻⵏ ⴰⵙⴻⵖⵡⴻⵏ",
+      "sending": "ⵜⵓⵣⵏⴰ ⵉⵜⴻⴷⴷⵓ...",
+      "backToLogin": "ⵓⵖⴰⵍ ⵖⴻⵔ ⵓⵏⴻⴽⵛⵓⵎ",
+      "successTitle": "ⵉⵎⴰⵢⵍ ⵢⴻⵜⵜⵡⴰⵣⴻⵏ",
+      "successDescription": "ⵎⴰ ⵢⴻⵍⵍⴰ ⵜⴰⵏⵙⴰ-ⴰⴳⵉ ⵜⴻⵍⵍⴰ ⴷⴻⴳ ⵓⵏⴰⴳⵔⴰⵡ-ⵏⵏⴻⵖ, ⴰⴷ ⵜⵔⴻⵎⵙⴻⴹ ⵉⵎⴰⵢⵍ.",
+      "emailSentTitle": "ⵉⵎⴰⵢⵍ ⵢⴻⵜⵜⵡⴰⵣⴻⵏ!",
+      "emailSentDescription": "ⵎⴰ ⵢⴻⵍⵍⴰ ⵉⵎⴰⵢⵍ-ⴰⴳⵉ ⵢⴻⵇⵇⴻⵏ ⵖⴻⵔ ⵓⵎⵉⴹⴰⵏ, ⴰⴷ ⴷ-ⵜⵔⴻⵎⵙⴻⴹ ⴰⵙⴻⵖⵡⴻⵏ ⵏ ⵓⵄⴰⵡⴻⴷ ⴷⴻⴳ ⴽⵔⴰ ⵏ ⵜⴻⵙⴷⴰⵜⵉⵏ.",
+      "checkSpam": "ⵡⴰⵍⵉ ⴷⴻⴳ ⵓⵎⴻⵙⴽⴰⵔ ⵏ ⵢⵉⵣⵏⴰⵏ ⵉⵏⵓⴹⴰⴼⴻⵏ ⵎⴰ ⵓⵔ ⴷ-ⵢⴻⵡⵡⵉⴹ ⴰⵔⴰ ⵢⵉⵎⴰⵢⵍ.",
+      "didntReceive": "ⵓⵔ ⴷ-ⵢⴻⵡⵡⵉⴹ ⴰⵔⴰ ⵢⵉⵎⴰⵢⵍ?",
+      "tryAgain": "ⵄⵔⴻⴹ ⵜⵉⴽⴽⴻⵍⵜ-ⵏⵏⵉⴹⴻⵏ"
+    },
+    "resetPassword": {
+      "title": "ⴰⵡⴰⵍ ⵏ ⵓⵄⴻⴷⴷⵉ ⴰⵎⴰⵢⵏⵓⵜ",
+      "description": "ⴼⵔⴻⵏ ⴰⵡⴰⵍ ⵏ ⵓⵄⴻⴷⴷⵉ ⴰⵎⴰⵢⵏⵓⵜ ⵢⴻⵜⵜⵡⴰⵃⴻⵔⵣⴻⵏ ⵉ ⵓⵎⵉⴹⴰⵏ-ⵉⴽ.",
+      "newPassword": "ⴰⵡⴰⵍ ⵏ ⵓⵄⴻⴷⴷⵉ ⴰⵎⴰⵢⵏⵓⵜ",
+      "confirmPassword": "ⵙⴻⵏⵜⴻⵎ ⴰⵡⴰⵍ ⵏ ⵓⵄⴻⴷⴷⵉ",
+      "passwordHint": "ⴰⴷⴰⵙⵉⵍ 8 ⵏ ⵢⵉⵙⴻⴽⴽⵉⵍⴻⵏ ⴰⴽⴽⴻⴷ ⵓⵙⴻⴽⴽⵉⵍ ⴰⵎⴻⵇⵇⵔⴰⵏ, ⴰⵎⴻⵥⵢⴰⵏ, ⴷ ⵓⵟⵟⵓⵏ.",
+      "passwordRequirements": "ⴰⵡⴰⵍ ⵏ ⵓⵄⴻⴷⴷⵉ ⵉⵍⴰⵇ ⴰⴷ ⵢⴻⵙⵄⵓ ⵓⵙⴻⴽⴽⵉⵍ ⴰⵎⴻⵇⵇⵔⴰⵏ, ⴰⵎⴻⵥⵢⴰⵏ, ⴷ ⵓⵟⵟⵓⵏ",
+      "submit": "ⴰⵍⴻⵙ ⴰⵙⴱⴻⴷⴷⵉ ⵏ ⵡⴰⵡⴰⵍ ⵏ ⵓⵄⴻⴷⴷⵉ",
+      "resetting": "ⴰⵍⴻⵙ ⴰⵙⴱⴻⴷⴷⵉ ⵉⵜⴻⴷⴷⵓ...",
+      "backToLogin": "ⵓⵖⴰⵍ ⵖⴻⵔ ⵓⵏⴻⴽⵛⵓⵎ",
+      "successTitle": "ⴰⵡⴰⵍ ⵏ ⵓⵄⴻⴷⴷⵉ ⵢⴻⵜⵜⵡⴰⴱⴻⴷⴷⴻⵍ",
+      "successDescription": "ⴰⵡⴰⵍ ⵏ ⵓⵄⴻⴷⴷⵉ ⵢⴻⵜⵜⵡⴰⴱⴻⴷⴷⴻⵍ ⴰⴽⴽⴻⵏ ⵉⵡⴰⵜⴰ. ⵜⵣⴻⵎⵔⴻⴹ ⴰⴷ ⵜⴽⴻⵛⵎⴻⴹ ⵜⵓⵔⴰ.",
+      "redirecting": "ⴰⴷ ⴰⴽ-ⵏⴰⵡⵉ ⵖⴻⵔ ⵓⵙⴻⴱⵜⴻⵔ ⵏ ⵓⵏⴻⴽⵛⵓⵎ...",
+      "goToLogin": "ⴷⴷⵓ ⵖⴻⵔ ⵓⵏⴻⴽⵛⵓⵎ",
+      "error": "ⵜⵓⵛⵛⴹⴰ ⴷⴻⴳ ⵓⵄⴰⵡⴻⴷ ⵏ ⵓⵙⴱⴻⴷⴷⵉ ⵏ ⵡⴰⵡⴰⵍ ⵏ ⵓⵄⴻⴷⴷⵉ",
+      "invalidToken": "ⴰⵙⴻⵖⵡⴻⵏ ⵏ ⵓⵄⴰⵡⴻⴷ ⵏ ⵓⵙⴱⴻⴷⴷⵉ ⴷ ⴰⵔⴰⵎⴻⵖⵜⵓ ⵏⴻⵖ ⵢⴻⵎⵎⴻⵜ.",
+      "invalidTokenTitle": "ⴰⵙⴻⵖⵡⴻⵏ ⴰⵔⴰⵎⴻⵖⵜⵓ",
+      "invalidTokenDescription": "ⴰⵙⴻⵖⵡⴻⵏ-ⴰⴳⵉ ⵏ ⵓⵄⴰⵡⴻⴷ ⵏ ⵓⵙⴱⴻⴷⴷⵉ ⴷ ⴰⵔⴰⵎⴻⵖⵜⵓ ⵏⴻⵖ ⵢⴻⵎⵎⴻⵜ. ⵙⵓⵜⴻⵔ ⴰⵙⴻⵖⵡⴻⵏ ⴰⵎⴰⵢⵏⵓⵜ.",
+      "requestNewLink": "ⵙⵓⵜⴻⵔ ⴰⵙⴻⵖⵡⴻⵏ ⴰⵎⴰⵢⵏⵓⵜ"
     }
   },
   "categories": {
@@ -63,7 +212,18 @@
       "modern": "ⴰⵎⵜⵔⴰⵔ ⴰⵜⵔⴰⵔ"
     },
     "workTypes": {
-      "unknown": "ⴰⵏⴰⵡ ⵓⵔ ⵉⵜⵜⵡⴰⵙⵙⵏ"
+      "unknown": "ⴰⵏⴰⵡ ⵓⵔ ⵉⵜⵜⵡⴰⵙⵙⵏ",
+      "articles": "ⵉⵎⴰⴳⵔⴰⴷⴻⵏ",
+      "cinema": "ⵙⵉⵏⵉⵎⴰ",
+      "literature": "ⵜⴰⵙⴻⴽⵍⴰ",
+      "musicalAlbum": "ⴰⵍⴱⵓⵎ ⴰⵥⴰⵡⴰⵏ",
+      "scientificArticle": "ⴰⵎⴰⴳⵔⴰⴷ ⵓⵙⵏⴰⵏ",
+      "art": "ⵜⴰⵥⵓⵔⵉ",
+      "artwork": "ⴰⵅⴻⴷⴷⵉⵎ ⵏ ⵜⵥⵓⵔⵉ",
+      "artworks": "ⵉⵅⴻⴷⴷⵉⵎⴻⵏ ⵏ ⵜⵥⵓⵔⵉ",
+      "music": "ⴰⵥⴰⵡⴰⵏ",
+      "musicalAlbums": "ⴰⵍⴱⵓⵎⴻⵏ ⵉⵥⴰⵡⴰⵏⴻⵏ",
+      "scientificArticles": "ⵉⵎⴰⴳⵔⴰⴷⴻⵏ ⵓⵙⵏⴰⵏⴻⵏ"
     }
   },
   "common": {
@@ -138,7 +298,19 @@
     "years": "ⵉⵙⴳⴳⴰⵙⵏ",
     "save": "ⵙⴻⴽⵍⴻⵙ",
     "submit": "ⴰⵣⴻⵏ",
-    "close": "ⵎⴷⴻⵍ"
+    "close": "ⵎⴷⴻⵍ",
+    "reset": "ⴰⵍⴻⵙ ⴰⵙⴱⴻⴷⴷⵉ",
+    "results": "ⵉⴳⵎⴰⴹ",
+    "allStatuses": "ⴰⴽⴽ ⴰⴷⴷⴰⴷⴻⵏ",
+    "allRoles": "ⴰⴽⴽ ⵜⵉⵙⵓⵔⴰⴳ",
+    "notes": "ⵜⵉⵣⵎⵉⵍⵉⵏ",
+    "works": "ⵉⵅⴻⴷⴷⵉⵎⴻⵏ",
+    "moreOptions": "ⵓⴳⴰⵔ ⵏ ⵜⴻⵅⵜⵉⵕⵉⵢⵉⵏ",
+    "clearSearch": "ⵙⴼⴻⴹ ⴰⵏⴰⴷⵉ",
+    "type": "ⴰⵏⴰⵡ",
+    "more": "ⵡⵉⵢⴰⴹ",
+    "linkCopied": "ⴰⵙⵖⵡⵏ ⵢⵜⵜⵡⴰⵏⵖⵍ",
+    "linkCopiedDesc": "ⴰⵙⵖⵡⵏ ⵢⵜⵜⵡⴰⵏⵖⵍ ⵖⵔ ⵜⴳⵏⵉⵜ"
   },
   "contributors": {
     "addedCount_one": "{{count}} ⴰⵎⵓⵜⵜⴽ ⵉⵜⵜⵡⴰⵔⵏⴰ",
@@ -201,7 +373,17 @@
       "startTime": "ⴰⴽⵓⴷ ⵏ ⵜⵣⵡⵓⵔⵉ",
       "subtitle": "ⵙⵏⵓⵍⴼⵓ ⵜⴰⴷⵢⴰⵏⵜ ⵜⴰⴷⵍⵙⴰⵏⵜ ⵜⴰⵎⴰⵢⵏⵓⵜ",
       "title": "ⵔⵏⵓ ⵜⴰⴷⵢⴰⵏⵜ",
-      "willBeAvailableSoon": "ⴰⴷ ⵢⵉⵍⵉ ⵜⴰⴳⴳⴰⵔⴰ"
+      "willBeAvailableSoon": "ⴰⴷ ⵢⵉⵍⵉ ⵜⴰⴳⴳⴰⵔⴰ",
+      "eventFormat": "ⵜⴰⵎⵚⵓⴽⵜ ⵏ ⵜⴻⴷⵢⴰⵏⵜ",
+      "inPerson": "ⵙ ⵓⴷⴻⵎ",
+      "inPersonDesc": "ⵜⴰⴷⵢⴰⵏⵜ ⵜⴰⵎⴰⴷⴷⴰⵢⵜ ⴰⴽⴽⴻⴷ ⴰⴷⴻⴳ ⴷ ⵜⵏⵓⴷⴱⴻⵍⵜ",
+      "virtual": "ⴰⵏⵎⴰⵡⴰⵢ / ⵙⵔⵉⴷ",
+      "virtualDesc": "ⴰⵙⴻⴳⵣⴰⵡⴰⵍ ⵙⵔⵉⴷ, ⴰⵙⵉⵣⵡⴻⵔ, ⴰⵏⴻⵎⴳⴰⵍ ⵙⵔⵉⴷ",
+      "organisation": "ⵜⴰⵏⵓⴷⴱⴰ",
+      "selectOrganisation": "ⴼⵔⴻⵏ ⵜⴰⵏⵓⴷⴱⴰ-ⵉⴽ",
+      "selectOrganisationPlaceholder": "ⴼⵔⴻⵏ ⵜⴰⵏⵓⴷⴱⴰ",
+      "location": "ⴰⴷⴻⴳ",
+      "locationRequired": "ⵜⵜⵅⵉⵍ ⴼⵔⵏ ⴰⴷⴳ ⵉ ⵜⵏⴹⴹⵓⵔⵜ"
     },
     "types": {
       "concert": "ⴰⵎⴰⵔⴳ",
@@ -212,7 +394,10 @@
       "screening": "ⴰⵙⴽⴰⵏ",
       "show": "ⴰⵙⴰⴼⵙⵔ",
       "workshop": "ⴰⵀⵉⵍ"
-    }
+    },
+    "participants": "ⵉⵎⵜⵜⴻⴽⴽⵉⵢⴻⵏ",
+    "full": "ⵢⴻⵞⵞⵓⵔ",
+    "free": "ⴱⴰⵟⴻⵍ"
   },
   "footer": {
     "legal": "ⴰⵙⵔⴼⴰⵏ",
@@ -291,6 +476,12 @@
       "subtitle": "ⵉⵎⴹⴰⵏⵏ ⵏⵏⴰ ⵉⵙⴰⵡⴰⵍⵏ",
       "title": "ⵜⴰⵙⵖⵓⵏⵜ ⵜⴰⴷⴷⵔⴰⵏⵜ",
       "works": "ⵜⵉⵡⵓⵔⵉⵡⵉⵏ"
+    },
+    "hero": {
+      "badge": "ⵉⵙⵙⵉⵏ ⴰⵢⵍⴰ ⴰⴷⴻⵍⵙⴰⵏ ⴰⵣⵣⴰⵢⵔⵉ",
+      "subtitle": "ⵙⵏⵉⵔⴻⵎ, ⵃⵔⴻⵣ, ⴱⴹⵓ ⴰⵢⵍⴰ ⴰⴷⴻⵍⵙⴰⵏ ⵏ ⵍⴻⵣⵣⴰⵢⴻⵔ",
+      "explore": "ⵙⵏⵉⵔⴻⵎ ⴰⵢⵍⴰ",
+      "contribute": "ⵜⵜⴻⴽⴽⵉ"
     }
   },
   "notifications": {
@@ -383,7 +574,9 @@
       "reviews": "ⵜⵉⵙⴽⵔⵉⵏ",
       "seeAll": "ⵡⴰⵍⵉ ⴰⴽⴽ",
       "subtitle": "ⴰⴼ ⵉⴳⵔⴰⵏ ⵏ ⵓⵎⵣⵔⵓⵢ ⴷ ⵜⴷⵍⵙⴰ ⵏ ⵍⵣⵣⴰⵢⵔ ⵙ ⵜⴽⴰⵔⴹⴰ ⵜⴰⵎⵢⴰⴳⴰⵏⵜ",
-      "title": "ⴰⴳⵍⴰ ⴰⴷⵍⵙⴰⵏ"
+      "title": "ⴰⴳⵍⴰ ⴰⴷⵍⵙⴰⵏ",
+      "search": "ⵏⴰⴷⵉ ⵖⴻⴼ ⵓⵙⵉⵜ...",
+      "tryDifferentSearch": "ⵄⵔⴻⴹ ⴰⵏⴰⴷⵉ-ⵏⵏⵉⴹⴻⵏ ⵏⴻⵖ ⴰⵍⴻⵙ ⴰⵙⴱⴻⴷⴷⵉ ⵏ ⵢⵉⵎⵣⵉⵣⴷⵉⴳⴻⵏ"
     },
     "works": {
       "actions": {
@@ -744,7 +937,20 @@
     "mon_patrimoine": "ⵜⴰⴳⵎⵎⵉ ⵉⵏⵓ (",
     "nouveau_site": "ⴰⵙⵉⵜ ⴰⵎⴰⵢⵏⵓ",
     "aucun_site_patrimoine": "ⵓⵔ ⵜⵜⵓⵙⵊⵊⵍ ⵓⵙⵉⵜ ⵏ ⵜⴳⵎⵎⵉ",
-    "ajouter_mon_premier": "ⵔⵏⵓ ⴰⵙⵉⵜ ⵉⵏⵓ ⴰⵎⵣⵡⴰⵔⵓ"
+    "ajouter_mon_premier": "ⵔⵏⵓ ⴰⵙⵉⵜ ⵉⵏⵓ ⴰⵎⵣⵡⴰⵔⵓ",
+    "ajouter": "ⵔⵏⵓ",
+    "artisanat": "ⵜⴰⵥⵓⵔⵉ ⵜⴰⴼⴻⵙⵙⴰⵙⵜ",
+    "nouveau_patrimoine": "ⴰⵢⵍⴰ ⴰⵎⴰⵢⵏⵓⵜ",
+    "mes_artisanats": "ⵜⵉⵣⴻⵖ-ⵉⵏⵓ ⵜⵉⴼⴻⵙⵏⴰⵙⵉⵏ",
+    "nouvel_artisanat": "ⵜⴰⵥⵓⵔⵉ ⵜⴰⴼⴻⵙⵙⴰⵙⵜ ⵜⴰⵎⴰⵢⵏⵓⵜ",
+    "aucun_artisanat": "ⵓⵍⴰⵛ ⵜⴰⵥⵓⵔⵉ ⵜⴰⴼⴻⵙⵙⴰⵙⵜ",
+    "creer_premier_artisanat": "ⵙⵏⵓⵍⴼⵓ ⵜⴰⵥⵓⵔⵉ-ⵉⵏⵓ ⵜⴰⵎⴻⵣⵡⴰⵔⵓⵜ",
+    "non_defini": "ⵓⵔ ⵢⴻⵜⵜⵡⴰⴱⴷⴻⵔ ⴰⵔⴰ",
+    "en_stock": "ⵢⴻⵍⵍⴰ",
+    "sur_commande": "ⵙ ⵓⴹⴰⵍⴰⴱ",
+    "indisponible": "ⵓⵍⴰⵛ-ⵉⵜ",
+    "manage": "ⵙⴻⴼⵔⴻⴽ",
+    "manage_event": "ⵙⴻⴼⵔⴻⴽ ⴰⵀⵉⵍⴻⵏ ⴷ ⵢⵉⵅⴻⴷⴷⵉⵎⴻⵏ"
   },
   "dashboardadmin": {
     "label_validation": "ⴰⵙⵖⵏⵜ",
@@ -1274,7 +1480,13 @@
     "statut": "ⴰⴷⴷⴰⴷ",
     "rserver_une_visite": "ⵃⴹⵓ ⵜⴰⵔⵣⴼⵜ",
     "plus_dinformations": "ⵓⴳⴳⴰⵔ ⵏ ⵉⵙⴰⵍⵏ",
-    "fermer": "ⵔⴳⵍ"
+    "fermer": "ⵔⴳⵍ",
+    "circuit_algerois": "ⵜⴰⵡⵡⵓⵔⵜ ⵜⴰⵣⵣⴰⵢⵔⵉⵜ",
+    "route_romaine": "ⴰⴱⵔⵉⴷ ⴰⵔⵓⵎⵉ",
+    "patrimoine_unesco": "ⴰⵢⵍⴰ ⵏ ⵓⵏⴻⵙⵛⵓ",
+    "facile": "ⴼⴻⵙⵙⵓⵙ",
+    "modere": "ⴰⵍⴻⵎⵎⴰⵙ",
+    "aventurier": "ⴰⵄⴻⵙⵙⴰⵙ"
   },
   "notifications_preferences": {
     "prfrences_notifications": "ⵜⵉⵙⵖⵉⵍⵉⵏ ⵏ ⵜⵉⵏⵖⵎⵉⵙⵉⵏ",
@@ -1373,6 +1585,7 @@
     "chargement": "ⴰⵙⵉⴷⵔ...",
     "chargement_1": "ⴰⵙⵉⴷⵔ...",
     "validation_attente": "ⴰⵙⵖⵏⵜ ⵉⵜⵜⵔⴰⵊⵓ",
+    "validation_par_admin": "ⴰⵎⵉⴹⴰⵏ ⵏⵏⵓⵏ ⴰⵎⴰⵣⵣⴰⵍ ⵉⵍⵍⴰ ⵉⵜⵜⵓⵙⵖⵏ ⵙⵖⵓⵔ ⵓⵏⴱⴷⴰⴷ ⵏⵏⵖ ⵎⵣⴰⵔ ⴰⴷ ⵜⵙⵏⵉⵔⵎⴹ ⵜⴰⵖⴰⵡⵙⴰ.",
     "chargement_2": "ⴰⵙⵉⴷⵔ...",
     "title_modifier": "ⵙⵏⴼⵍ",
     "title_supprimer": "ⴽⴽⵙ"
@@ -1461,7 +1674,7 @@
   },
   "auth_validatedprofessionalroute": {
     "compte_attente_validation": "ⴰⵎⵉⴹⴰⵏ ⵉⵜⵜⵔⴰⵊⵓⵏ ⴰⵙⵖⵏⵜ",
-    "votre_compte_professionnel": "ⴰⵎⵉⴹⴰⵏ ⵏⵏⵓⵏ ⴰⵎⴰⵣⵣⴰⵍ ⵉⵜⵜⵓⵙⵖⵏⵜ ⵙⵖⵓⵔ ⵜⵔⴰⴱⴱⵓⵜⵉⵏ ⵏⵏⵖ. \n                  ⵓⵔ ⵜⵣⵎⵔⴹ ⴰⴷ ⵜⵙⵏⵓⵍⴼⵓⴹ ⴰⴳⴱⵓⵔ ⴰⵔ ⴰⵙⵙⴰ.",
+    "votre_compte_professionnel": "ⴰⵎⵉⴹⴰⵏ ⵏⵏⵓⵏ ⴰⵎⴰⵣⵣⴰⵍ ⵉⵍⵓⵇⵉⵎ ⴰⴷ ⵜⵜⵓⵙⵖⵏ ⵙⵖⵓⵔ ⵓⵏⴱⴷⴰⴷ. ⵓⵔ ⵜⵣⵎⵔⴹ ⴰⴷ ⵜⵙⵏⵓⵍⴼⵓⴹ ⴰⴳⴱⵓⵔ ⴰⵔ ⴰⵙⵙⴰ.",
     "statut_actuel": "ⴰⴷⴷⴰⴷ ⴰⵎⵉⵔⴰⵏ:",
     "retour_tableau_bord": "ⵜⵓⵖⴰⵍⵉⵏ ⵖⵔ ⵜⴼⵍⵡⵉⵜ",
     "retour_laccueil": "ⵜⵓⵖⴰⵍⵉⵏ ⵖⵔ ⵓⵙⵏⵓⴱⴳ",
@@ -1477,8 +1690,8 @@
     "retour_1": "ⵜⵓⵖⴰⵍⵉⵏ",
     "sinscrire_comme_pro": "ⵥⵍⵎ ⴰⵎ ⵓⵎⴰⵣⵣⴰⵍ",
     "validation_attente": "ⴰⵙⵖⵏⵜ ⵉⵜⵜⵔⴰⵊⵓ",
-    "votre_compte_professionnel": "ⴰⵎⵉⴹⴰⵏ ⵏⵏⵓⵏ ⴰⵎⴰⵣⵣⴰⵍ ⵉⵜⵜⵓⵙⵖⵏⵜ ⵙⵖⵓⵔ ⵜⵔⴰⴱⴱⵓⵜ ⵏⵏⵖ.",
-    "vous_recevrez_email": "ⴰⴷ ⵜⴰⵎⵥⴹ ⵉⵎⴰⵢⵍ ⵎⴽ ⵉⵜⵜⵓⵙⵖⵏⵜ ⵓⵎⵉⴹⴰⵏ ⵏⵏⵓⵏ. \n                ⴰⵢⴰ ⵉⵜⵜⴰⵙⵉ ⵙⴳ 24 ⴰⵔ 48 ⵏ ⵜⵙⵔⴰⴳⵉⵏ.",
+    "votre_compte_professionnel": "ⴰⵎⵉⴹⴰⵏ ⵏⵏⵓⵏ ⴰⵎⴰⵣⵣⴰⵍ ⵉⵍⵓⵇⵉⵎ ⴰⴷ ⵜⵜⵓⵙⵖⵏ ⵙⵖⵓⵔ ⵓⵏⴱⴷⴰⴷ.",
+    "vous_recevrez_email": "ⵓⵏⴱⴷⴰⴷ ⴰⴷ ⵉⵙⵏⵉⵔⵎ ⴳ ⵜⵓⵜⵔⴰ ⵏⵏⵓⵏ. ⴰⴷ ⵜⴰⵎⵥⴹ ⵉⵎⴰⵢⵍ ⵎⴽ ⵉⵜⵜⵓⵙⵖⵏⵜ ⵓⵎⵉⴹⴰⵏ ⵏⵏⵓⵏ. ⴰⵢⴰ ⵉⵜⵜⴰⵙⵉ ⵙⴳ 24 ⴰⵔ 48 ⵏ ⵜⵙⵔⴰⴳⵉⵏ.",
     "attendant_vous_pouvez": "ⴳ ⵜⵔⴰⵊⵓⵜ, ⵜⵣⵎⵔⴹ ⴰⴷ ⵜⵙⵏⵉⵔⵎⴹ ⵜⴰⵙⵖⵓⵏⵜ ⴰⵎ ⵓⵏⵔⵣⴰⴼ.",
     "retour_laccueil": "ⵜⵓⵖⴰⵍⵉⵏ ⵖⵔ ⵓⵙⵏⵓⴱⴳ"
   },
@@ -1694,7 +1907,8 @@
       "searchPlaceholder": "ⵏⴰⴷⵉ...",
       "filters": {
         "allTypes": "ⴰⴽⴽ ⵜⵡⵙⴰⵜⵉⵏ",
-        "allWilayas": "ⴰⴽⴽ ⵜⵡⵉⵍⴰⵢⵉⵏ"
+        "allWilayas": "ⴰⴽⴽ ⵜⵡⵉⵍⴰⵢⵉⵏ",
+        "all": "ⴰⴽⴽ"
       },
       "types": {
         "historicalSite": "ⴰⵎⴹⵉⵇ ⴰⵎⵣⵔⵓⵢ",
@@ -1768,7 +1982,15 @@
       "title": "ⴰⵙⴼⵔⴽ ⵏ ⵜⴷⵢⴰⵏⵉⵏ"
     },
     "services": {
-      "title": "ⴰⵙⴼⵔⴽ ⵏ ⵜⵏⴼⵍⵉⵡⵉⵏ"
+      "title": "ⴰⵙⴼⵔⴽ ⵏ ⵜⵏⴼⵍⵉⵡⵉⵏ",
+      "searchPlaceholder": "ⵏⴰⴷⵉ ⵖⴻⴼ ⵓⵎⴻⵥⵍⵓ...",
+      "noServices": "ⵓⵍⴰⵛ ⵉⵎⴻⵥⵍⴰ",
+      "types": {
+        "tourGuide": "ⴰⵎⵙⵏⵉⵣⵡⴻⵔ",
+        "transport": "ⴰⵙⵙⵉⵡⴻⴹ",
+        "accommodation": "ⴰⵏⵙⴰⵢⴻⵏ",
+        "workshop": "ⵜⴰⵏⴻⵣⴷⵓⵖⵜ ⵏ ⵓⵎⴰⵀⵉⵍ"
+      }
     }
   },
   "wilayas": {
@@ -1961,7 +2183,24 @@
       "title": "ⴰⵊⴻⵔⵔⴻⴷ",
       "total": "ⴰⵎⴹⴰⵏ",
       "unavailable": "ⴰⵊⴻⵔⵔⴻⴷ ⵓⵍⴰⵛ-ⵉⵜ",
-      "waitingList": "ⵜⴰⴱⴷⴰⵔⵜ ⵏ ⵓⵕⴰⵊⵓ"
+      "waitingList": "ⵜⴰⴱⴷⴰⵔⵜ ⵏ ⵓⵕⴰⵊⵓ",
+      "submitWorks": "ⵉⵅⴻⴷⴷⵉⵎⴻⵏ ⵉ ⵓⵙⵓⵎⴻⵔ",
+      "worksRequired": "ⴼⵔⴻⵏ ⵉⵅⴻⴷⴷⵉⵎⴻⵏ ⵉ ⵜⴻⴱⵖⵉⴹ ⴰⴷ ⴷ-ⵜⴻⵙⵙⴻⴽⵏⴻⴹ (ⵉⵍⴰⵇ)",
+      "worksOptional": "ⴼⵔⴻⵏ ⵉⵅⴻⴷⴷⵉⵎⴻⵏ ⵉ ⵜⴻⴱⵖⵉⴹ ⴰⴷ ⴷ-ⵜⴻⵙⵙⴻⴽⵏⴻⴹ (ⴷ ⴰⴼⵔⴰⵏ)",
+      "maxWorks": "ⴰⴼⴻⵍⵍⴰⵢ: {{ⵎⴰⵅ}} ⵏ ⵢⵉⵅⴻⴷⴷⵉⵎⴻⵏ",
+      "acceptedTypes": "ⴰⵏⵡⴰⵏ ⵉⵇⵓⴱⵍⴻⵏ:",
+      "noWorks": "ⵓⵔ ⵜⴻⵙⵄⵉⴹ ⴰⵔⴰ ⵉⵅⴻⴷⴷⵉⵎⴻⵏ ⵉ ⵢⴻⵎⵙⴰⵙⴻⵏ ⴷ ⵡⴰⵏⴰⵡ-ⴰⴳⵉ ⵏ ⵜⴻⴷⵢⴰⵏⵜ",
+      "createWork": "ⵙⵏⵓⵍⴼⵓ ⴰⵅⴻⴷⴷⵉⵎ",
+      "selectedWorks": "ⵉⵅⴻⴷⴷⵉⵎⴻⵏ ⵉⴼⵔⴰⵏⵉⵏ:",
+      "worksSubmitted": "ⵉⵅⴻⴷⴷⵉⵎⴻⵏ ⵢⴻⵜⵜⵡⴰⵙⵓⵎⵔⴻⵏ",
+      "oeuvresRequired": "ⴼⵔⴻⵏ ⵅⴰⵔⵙⵓⵎ ⵢⵉⵡⴻⵏ ⵏ ⵓⵅⴻⴷⴷⵉⵎ ⵉ ⵓⵙⵓⵎⴻⵔ",
+      "professionalOnly": "ⴰⵙⵓⵎⴻⵔ ⵏ ⵢⵉⵅⴻⴷⴷⵉⵎⴻⵏ ⵉ ⵢⵉⵎⴰⵀⵉⵍⴻⵏ ⴽⴰⵏ",
+      "upgradeToPro": "ⵄⴻⴷⴷⵉ ⵖⴻⵔ ⵓⵎⵉⴹⴰⵏ ⴰⵎⴰⵀⵉⵍ ⵉ ⵓⵙⵓⵎⴻⵔ ⵏ ⵢⵉⵅⴻⴷⴷⵉⵎⴻⵏ-ⵉⴽ",
+      "becomePro": "ⵉⵍⵉ ⴷ ⴰⵎⴰⵀⵉⵍ",
+      "interestedVisitor": "ⵢⴻⵙⵙⴻⵃⴱⵉⴱⴻⵔⴻⴽ-ⴷ ⵜⴻⴷⵢⴰⵏⵜ-ⴰⴳⵉ?",
+      "connectToParticipate": "ⴽⵛⵎ ⵉ ⵓⵊⴻⵔⵔⴻⴷ ⵏⴻⵖ ⵔⵏⵓ ⵖⴻⵔ ⵢⵉⵙⵎⴻⵏⵢⵉⴼⴻⵏ",
+      "addToFavorites": "ⵔⵏⵓ ⵖⴻⵔ ⵢⵉⵙⵎⴻⵏⵢⵉⴼⴻⵏ",
+      "removeFromFavorites": "ⴽⴽⴻⵙ ⵙⴻⴳ ⵢⵉⵙⵎⴻⵏⵢⵉⴼⴻⵏ"
     },
     "registrationDeadline": "ⵜⴰⵍⴰⵙⵜ ⵜⴰⴳⴻⵊⴷⴰⵏⵜ ⵏ ⵓⵊⴻⵔⵔⴻⴷ",
     "relatedEvents": "ⵉⵏⴻⴹⵔⵓⵢⴻⵏ ⵉⵛⵓⴷⴷⴻⵏ",
@@ -1972,7 +2211,19 @@
       "info": "ⵜⴰⵍⵖⵓⵜ",
       "program": "ⴰⵀⵉⵍ"
     },
-    "viewOnMap": "ⵡⴰⵍⵉ ⴷⴻⴳ ⵓⴽⴰⵔⴹⴰ"
+    "viewOnMap": "ⵡⴰⵍⵉ ⴷⴻⴳ ⵓⴽⴰⵔⴹⴰ",
+    "roles": {
+      "organisateur_principal": "ⴰⵎⴰⵙⴰⵢ ⴰⴳⴻⵊⴷⴰⵏ",
+      "co_organisateur": "ⴰⵎⵜⴻⴽⴽⵉ ⴷⴻⴳ ⵓⵏⵓⴷⴻⴱ",
+      "organisateur": "ⴰⵎⴰⵙⴰⵢ",
+      "partenaire": "ⴰⵎⵛⴻⵔⵉⴽ",
+      "sponsor": "ⴰⵎⴰⵥⵍⴰⵢ",
+      "intervenant": "ⴰⵎⴻⵙⴽⴰⵏ",
+      "moderateur": "ⴰⵏⴻⵎⵀⴰⵍ",
+      "animateur": "ⴰⵎⴻⵙⴹⵓⴽⴻⵍ",
+      "benevole": "ⴰⵄⴰⵡⵏⵉ",
+      "staff": "ⴰⴳⵔⴰⵡ"
+    }
   },
   "places": {
     "address": "ⵜⴰⵏⵙⴰ",
@@ -2035,7 +2286,15 @@
       "total": "ⵉⵊⴻⵔⴷⴻⵏ",
       "search": "ⵏⴰⴷⵉ ⵖⴻⴼ ⵓⵎⵜⵜⴻⴽⴽⵉ...",
       "empty": "ⵓⵍⴰⵛ ⵉⵎⵜⵜⴻⴽⴽⵉⵢⴻⵏ",
-      "profile": "ⴰⵎⴰⵖⵏⵓ ⵏ ⵓⵎⵜⵜⴻⴽⴽⵉ"
+      "profile": "ⴰⵎⴰⵖⵏⵓ ⵏ ⵓⵎⵜⵜⴻⴽⴽⵉ",
+      "viewProfile": "ⵡⴰⵍⵉ ⴰⵎⴰⵖⵏⵓ",
+      "registeredOn": "ⵢⴻⵜⵜⵡⴰⵊⴻⵔⵔⴻⴷ ⴷⴻⴳ",
+      "worksSubmitted": "ⴰⵅⴻⴷⴷⵉⵎ ⵢⴻⵜⵜⵡⴰⵙⵓⵎⴻⵔ",
+      "eventRegistration": "ⴰⵊⴻⵔⵔⴻⴷ ⵖⴻⵔ ⵜⴻⴷⵢⴰⵏⵜ-ⴰⴳⵉ",
+      "submittedWorks": "ⵉⵅⴻⴷⴷⵉⵎⴻⵏ ⵢⴻⵜⵜⵡⴰⵙⵓⵎⵔⴻⵏ ⵉ ⵜⴻⴷⵢⴰⵏⵜ-ⴰⴳⵉ",
+      "portfolio": "ⴰⵖⴱⴰⵍⵓ ⵏ ⵢⵉⵅⴻⴷⴷⵉⵎⴻⵏ",
+      "participationHistory": "ⴰⵎⴻⵣⵔⵓⵢ ⵏ ⵢⵉⵜⵜⴻⴽⴽⵉⵢⴻⵏ",
+      "loadError": "ⴷ ⴰⵡⴻⵣⵖⵉ ⴰⵙⴰⵍⵉ ⵏ ⵓⵎⴰⵖⵏⵓ"
     }
   },
   "gestion": {
@@ -2065,5 +2324,272 @@
     "open": "ⵢⴻⵍⴷⵉ",
     "closed": "ⵢⴻⵎⴷⴻⵍ",
     "unknown": "ⴰⵔⵓⵙⵙⵉⵏ"
+  },
+  "ajouterService": {
+    "title": "ⵔⵏⵓ ⴰⵎⴻⵥⵍⵓ ⵏ ⵜⵥⵓⵔⵉ ⵜⴰⴼⴻⵙⵙⴰⵙⵜ",
+    "subtitle": "ⵙⵓⵎⴻⵔ ⵜⵉⵙⵏⵓⵍⴼⵓⵢⵉⵏ-ⵉⴽ ⵜⵉⴼⴻⵙⵏⴰⵙⵉⵏ",
+    "basicInfo": "ⵜⵉⵍⵖⴰ ⵜⵉⴳⴻⵊⴷⴰⵏⵉⵏ",
+    "basicInfoDesc": "ⴳⵍⴻⵎ ⴰⴼⴻⵔⴷⵉⵙ-ⵉⴽ ⵏⴻⵖ ⴰⵎⴻⵥⵍⵓ-ⵉⴽ ⴰⴼⴻⵙⵏⴰⵙ",
+    "nom": "ⵉⵙⴻⵎ ⵏ ⵓⴼⴻⵔⴷⵉⵙ/ⵓⵎⴻⵥⵍⵓ",
+    "nomPlaceholder": "ⴰⵎ: ⵜⴰⴼⴻⵅⴰⵔⵜ ⵜⴰⵇⴱⴰⵢⵍⵉⵜ ⵜⴰⵎⴻⵏⵙⴰⵢⵜ",
+    "description": "ⴰⴳⵍⴰⵎ",
+    "descriptionPlaceholder": "ⴳⵍⴻⵎ ⴰⵙⵏⵓⵍⴼⵓ-ⵉⴽ, ⴰⵎⴻⵣⵔⵓⵢ-ⵉⵙ, ⵉⵏⴻⵥⵔⵓⴼⴻⵏ-ⵉⵙ...",
+    "materiau": "ⴰⵎⴰⵡⴰⵍ",
+    "selectMateriau": "ⴼⵔⴻⵏ ⴰⵎⴰⵡⴰⵍ",
+    "technique": "ⵜⴰⵜⵉⴽⵏⵉⴽⵜ",
+    "selectTechnique": "ⴼⵔⴻⵏ ⵜⴰⵜⵉⴽⵏⵉⴽⵜ",
+    "pricingTitle": "ⵙⵙⵓⵎⴰ ⴷ ⵜⵖⴰⵔⴰ",
+    "prixMin": "ⵙⵙⵓⵎⴰ ⵜⴰⴷⴰⵙⵉⵍⵜ (ⴷⵣⴷ)",
+    "prixMax": "ⵙⵙⵓⵎⴰ ⵜⴰⴼⴻⵍⵍⴰⵢⵜ (ⴷⵣⴷ)",
+    "delaiFabrication": "ⴰⵎⵓⵔ ⵏ ⵓⵙⵏⵓⵍⴼⵓ (ⵓⵙⵙⴰⵏ)",
+    "delaiFabricationPlaceholder": "ⴰⵎ: 7",
+    "enStock": "ⴰⵎⴹⴰⵏ ⵢⴻⵍⵍⴰ",
+    "surCommande": "ⵙ ⵓⴹⴰⵍⴰⴱ",
+    "tagsTitle": "ⴰⵡⴰⵍⴻⵏ ⵏ ⵜⵏⵉⵍⴰ",
+    "tagPlaceholder": "ⵔⵏⵓ ⴰⵡⴰⵍ ⵏ ⵜⵏⵉⵍⴰ...",
+    "mediasTitle": "ⵜⵉⵡⵍⴰⴼⵉⵏ",
+    "mediasDesc": "ⵔⵏⵓ ⵜⵉⵡⵍⴰⴼⵉⵏ ⵏ ⵓⵙⵏⵓⵍⴼⵓ-ⵉⴽ",
+    "mediasUploadText": "ⵙⵉⵜ ⵏⴻⵖ ⵣⵓⵖⴻⵔ ⵜⵉⵡⵍⴰⴼⵉⵏ-ⵉⴽ ⴷⴰ",
+    "submit": "ⵙⵓⴼⴼⴻⵖ ⴰⵎⴻⵥⵍⵓ",
+    "submitting": "ⴰⵙⵓⴼⴼⴻⵖ ⵉⵜⴻⴷⴷⵓ...",
+    "success": "ⴰⵎⴻⵥⵍⵓ-ⵉⴽ ⵢⴻⵜⵜⵡⴰⵔⵏⴰ ⴰⴽⴽⴻⵏ ⵉⵡⴰⵜⴰ!",
+    "errors": {
+      "nomRequired": "ⵉⵙⴻⵎ ⵉⵍⴰⵇ",
+      "materiauRequired": "ⴼⵔⴻⵏ ⴰⵎⴰⵡⴰⵍ",
+      "techniqueRequired": "ⴼⵔⴻⵏ ⵜⴰⵜⵉⴽⵏⵉⴽⵜ",
+      "createFailed": "ⵜⵓⵛⵛⴹⴰ ⴷⴻⴳ ⵓⵙⵏⵓⵍⴼⵓ ⵏ ⵓⵎⴻⵥⵍⵓ"
+    }
+  },
+  "ajouterPatrimoine": {
+    "title": "ⵔⵏⵓ ⴰⵙⵉⵜ ⵏ ⵡⴰⵢⵍⴰ",
+    "subtitle": "ⵜⵜⴻⴽⴽⵉ ⴷⴻⴳ ⵓⵙⵉⵍⴻⵖ ⵏ ⵡⴰⵢⵍⴰ ⴰⵣⵣⴰⵢⵔⵉ",
+    "basicInfo": "ⵜⵉⵍⵖⴰ ⵜⵉⴳⴻⵊⴷⴰⵏⵉⵏ",
+    "basicInfoDesc": "ⴳⵍⴻⵎ ⴰⵙⵉⵜ ⵏ ⵡⴰⵢⵍⴰ",
+    "nom": "ⵉⵙⴻⵎ ⵏ ⵓⵙⵉⵜ",
+    "nomPlaceholder": "ⴰⵎ: ⵍⵇⴻⵙⴱⴰ ⵏ ⵍⴻⵣⵣⴰⵢⴻⵔ",
+    "description": "ⴰⴳⵍⴰⵎ",
+    "descriptionPlaceholder": "ⴳⵍⴻⵎ ⴰⵎⴻⵣⵔⵓⵢ ⴷ ⵢⵉⵏⴻⵥⵔⵓⴼⴻⵏ ⵏ ⵓⵙⵉⵜ...",
+    "type": "ⴰⵏⴰⵡ ⵏ ⵡⴰⵢⵍⴰ",
+    "selectType": "ⴼⵔⴻⵏ ⴰⵏⴰⵡ",
+    "epoque": "ⵜⴰⵇⴱⵓⵕⵜ ⵜⴰⵎⴻⵣⵔⵓⵢⵜ",
+    "selectEpoque": "ⴼⵔⴻⵏ ⵜⴰⵇⴱⵓⵕⵜ",
+    "locationTitle": "ⴰⴷⴻⴳ",
+    "wilaya": "ⵜⴰⵎⵏⴰⴹⵜ",
+    "selectWilaya": "ⴼⵔⴻⵏ ⵜⴰⵎⵏⴰⴹⵜ",
+    "adresse": "ⵜⴰⵏⵙⴰ",
+    "adressePlaceholder": "ⵜⴰⵏⵙⴰ ⵜⵓⵎⵎⵉⴷⵜ ⵏ ⵓⵙⵉⵜ",
+    "latitude": "ⵜⴰⵖⵣⵉ",
+    "longitude": "ⵜⴻⵀⵔⵉ",
+    "statusTitle": "ⴰⴷⴷⴰⴷ ⴷ ⵓⵙⴻⵎⵙⴻⵍ",
+    "statut": "ⴰⴷⴷⴰⴷ ⴰⵎⵉⵔⴰⵏ",
+    "classement": "ⴰⵙⴻⵎⵙⴻⵍ ⵏ ⵡⴰⵢⵍⴰ",
+    "selectClassement": "ⴼⵔⴻⵏ ⴰⵙⴻⵎⵙⴻⵍ",
+    "dateClassement": "ⴰⵣⴻⵎⵣ ⵏ ⵓⵙⴻⵎⵙⴻⵍ",
+    "visiteVirtuelle": "ⵓⵔⵍ ⵏ ⵜⵔⴻⵣⵣⵉⴼⵜ ⵜⴰⵏⵎⴰⵡⴰⵡⵜ (ⴷ ⴰⴼⵔⴰⵏ)",
+    "mediasTitle": "ⵜⵉⵡⵍⴰⴼⵉⵏ",
+    "mediasDesc": "ⵔⵏⵓ ⵜⵉⵡⵍⴰⴼⵉⵏ ⵏ ⵓⵙⵉⵜ",
+    "mediasUploadText": "ⵙⵉⵜ ⵏⴻⵖ ⵣⵓⵖⴻⵔ ⵜⵉⵡⵍⴰⴼⵉⵏ-ⵉⴽ ⴷⴰ",
+    "submit": "ⵙⵓⴼⴼⴻⵖ ⴰⵙⵉⵜ",
+    "submitting": "ⴰⵙⵓⴼⴼⴻⵖ ⵉⵜⴻⴷⴷⵓ...",
+    "success": "ⴰⵙⵉⵜ ⵏ ⵡⴰⵢⵍⴰ ⵢⴻⵜⵜⵡⴰⵔⵏⴰ ⴰⴽⴽⴻⵏ ⵉⵡⴰⵜⴰ!",
+    "errors": {
+      "nomRequired": "ⵉⵙⴻⵎ ⵉⵍⴰⵇ",
+      "typeRequired": "ⴼⵔⴻⵏ ⴰⵏⴰⵡ",
+      "wilayaRequired": "ⴼⵔⴻⵏ ⵜⴰⵎⵏⴰⴹⵜ",
+      "createFailed": "ⵜⵓⵛⵛⴹⴰ ⴷⴻⴳ ⵓⵙⵏⵓⵍⴼⵓ ⵏ ⵓⵙⵉⵜ"
+    }
+  },
+  "programmePages": {
+    "actions": {
+      "backToEvents": "ⵓⵖⴰⵍ ⵖⴻⵔ ⵜⴻⴷⵢⴰⵏⵉⵏ",
+      "backToEvent": "ⵓⵖⴰⵍ ⵖⴻⵔ ⵜⴻⴷⵢⴰⵏⵜ",
+      "edit": "ⵥⵔⴻⴳ",
+      "delete": "ⴽⴽⴻⵙ"
+    },
+    "status": {
+      "loadingProgram": "ⴰⵙⴰⵍⵉ ⵏ ⵡⴰⵀⵉⵍ..."
+    },
+    "errors": {
+      "prefix": "ⵜⵓⵛⵛⴹⴰ",
+      "generic": "ⵜⴻⵍⵍⴰ-ⴷ ⵜⵓⵛⵛⴹⴰ",
+      "eventIdMissing": "ⵉⴷ ⵏ ⵜⴻⴷⵢⴰⵏⵜ ⵓⵔ ⵢⴻⵜⵜⵡⴰⴱⴷⴻⵔ ⴰⵔⴰ",
+      "programmeIdMissing": "ⵉⴷ ⵏ ⵡⴰⵀⵉⵍ ⵓⵔ ⵢⴻⵜⵜⵡⴰⴱⴷⴻⵔ ⴰⵔⴰ",
+      "eventOrProgrammeIdMissing": "ⵉⴷ ⵏ ⵜⴻⴷⵢⴰⵏⵜ ⵏⴻⵖ ⵏ ⵡⴰⵀⵉⵍ ⵓⵔ ⵢⴻⵜⵜⵡⴰⴱⴷⴻⵔ ⴰⵔⴰ",
+      "eventIdMissingWithPrefix": "ⵜⵓⵛⵛⴹⴰ: ⵉⴷ ⵏ ⵜⴻⴷⵢⴰⵏⵜ ⵓⵔ ⵢⴻⵜⵜⵡⴰⴱⴷⴻⵔ ⴰⵔⴰ",
+      "eventOrProgrammeIdMissingWithPrefix": "ⵜⵓⵛⵛⴹⴰ: ⵉⴷ ⵏ ⵜⴻⴷⵢⴰⵏⵜ ⵏⴻⵖ ⵏ ⵡⴰⵀⵉⵍ ⵓⵔ ⵢⴻⵜⵜⵡⴰⴱⴷⴻⵔ ⴰⵔⴰ",
+      "loadFailed": "ⵜⵓⵛⵛⴹⴰ ⴷⴻⴳ ⵓⵙⴰⵍⵉ ⵏ ⵡⴰⵀⵉⵍ",
+      "createFailed": "ⵜⵓⵛⵛⴹⴰ ⴷⴻⴳ ⵓⵙⵏⵓⵍⴼⵓ ⵏ ⵡⴰⵀⵉⵍ",
+      "updateFailed": "ⵜⵓⵛⵛⴹⴰ ⴷⴻⴳ ⵓⵍⴻⵇⵇⴻⵎ ⵏ ⵡⴰⵀⵉⵍ",
+      "deleteFailed": "ⵜⵓⵛⵛⴹⴰ ⴷⴻⴳ ⵜⵓⴽⴽⵙⴰ ⵏ ⵡⴰⵀⵉⵍ"
+    },
+    "meta": {
+      "eventNumber": "ⵜⴰⴷⵢⴰⵏⵜ #{{ⵉⴷ}}",
+      "programNumber": "ⴰⵀⵉⵍ #{{ⵉⴷ}}",
+      "multiDay": "ⴷⴷⴻⵇⵙ ⵏ ⵡⵓⵙⵙⴰⵏ",
+      "multipleSpeakers": "ⴷⴷⴻⵇⵙ ⵏ ⵢⵉⵎⴻⵙⴽⴰⵏⴻⵏ",
+      "flexibleLocations": "ⵉⴷⴻⴳⴻⵏ ⵉⴼⴻⵙⵙⴰⵙⴻⵏ",
+      "speakersCount": "{{ⵛⵓⵓⵏⵜ}} ⵏ ⵢⵉⵎⴻⵙⴽⴰⵏⴻⵏ",
+      "locationNotSpecified": "ⴰⴷⴻⴳ ⵓⵔ ⵢⴻⵜⵜⵡⴰⴱⴷⴻⵔ ⴰⵔⴰ"
+    },
+    "create": {
+      "title": "ⵙⵏⵓⵍⴼⵓ ⴰⵀⵉⵍ",
+      "newProgram": "ⴰⵀⵉⵍ ⴰⵎⴰⵢⵏⵓⵜ"
+    },
+    "edit": {
+      "title": "ⵥⵔⴻⴳ ⴰⵀⵉⵍ",
+      "editProgram": "ⵥⵔⴻⴳ ⴰⵀⵉⵍ"
+    },
+    "view": {
+      "title": "ⵜⴰⵍⵖⵓⵜ ⵖⴻⴼ ⵡⴰⵀⵉⵍ",
+      "consultation": "ⴰⵙⵙⴻⵏⵇⴻⴷ ⵏ ⵡⴰⵀⵉⵍ",
+      "confirmDelete": "ⴷ ⵜⵉⴷⴻⵜ ⵜⴻⴱⵖⵉⴹ ⴰⴷ ⵜⴻⴽⴽⵙⴻⴹ ⴰⵀⵉⵍ-ⴰⴳⵉ?",
+      "quickActions": {
+        "editProgram": "ⵥⵔⴻⴳ ⴰⵀⵉⵍ-ⴰⴳⵉ",
+        "addAnotherProgram": "ⵔⵏⵓ ⴰⵀⵉⵍ-ⵏⵏⵉⴹⴻⵏ"
+      }
+    },
+    "info": {
+      "multiDayTitle": "ⴰⵙⴻⴼⵔⴻⴽ ⵏ ⴷⴷⴻⵇⵙ ⵏ ⵡⵓⵙⵙⴰⵏ",
+      "speakersTitle": "ⵉⵎⴻⵙⴽⴰⵏⴻⵏ",
+      "flexibleLocationsTitle": "ⵉⴷⴻⴳⴻⵏ ⵉⴼⴻⵙⵙⴰⵙⴻⵏ",
+      "locationAndOptionsTitle": "ⴰⴷⴻⴳ ⴷ ⵜⴻⵅⵜⵉⵕⵉⵢⵉⵏ",
+      "createMultiDayDesc": "ⵙⵏⵓⵍⴼⵓ ⵉⵀⵉⵍⴻⵏ ⵉ ⵢⴰⵍ ⴰⵙⵙ ⵏ ⵜⴻⴷⵢⴰⵏⵜ-ⵉⴽ. ⴰⵏⴰⴳⵔⴰⵡ ⵢⴻⵙⴳⵔⴻⵡ ⴰⵔⵎⵓⴷ ⵙ ⵡⴰⵙⵙ.",
+      "createSpeakersDesc": "ⵔⵏⵓ ⴷⴷⴻⵇⵙ ⵏ ⵢⵉⵎⴻⵙⴽⴰⵏⴻⵏ ⵙ ⵢⵉⵙⵓⵔⴰⴳ ⵢⴻⵎⵙⴻⴱⴹⴰⵏ. ⵢⴰⵍ ⴰⵎⴻⵙⴽⴰⵏ ⵢⴻⵣⵎⴻⵔ ⴰⴷ ⵢⴻⵙⵄⵓ ⵉⵖⴻⵡⵡⴰⵔⴻⵏ-ⵉⵙ.",
+      "createLocationsDesc": "ⵙⴻⵇⴷⴻⵛ ⵉⴷⴻⴳⴻⵏ ⵉⵃⴻⵔⵔⵣⴻⵏ ⵏⴻⵖ ⴱⴷⴻⵔ ⴰⴷⴻⴳ ⵓⵙⵍⵉⴳ ⵉ ⵢⴰⵍ ⴰⵔⵎⵓⴷ ⵏ ⵡⴰⵀⵉⵍ.",
+      "editMultiDayDesc": "ⵥⵔⴻⴳ ⵉⵀⵉⵍⴻⵏ ⵉ ⵢⴰⵍ ⴰⵙⵙ ⵏ ⵜⴻⴷⵢⴰⵏⵜ-ⵉⴽ. ⴰⵏⴰⴳⵔⴰⵡ ⵢⴻⵙⴳⵔⴻⵡ ⴰⵔⵎⵓⴷ ⵙ ⵡⴰⵙⵙ.",
+      "editSpeakersDesc": "ⵥⵔⴻⴳ ⵉⵎⴻⵙⴽⴰⵏⴻⵏ ⵙ ⵢⵉⵙⵓⵔⴰⴳ-ⵏⵙⴻⵏ. ⵢⴰⵍ ⴰⵎⴻⵙⴽⴰⵏ ⵢⴻⵣⵎⴻⵔ ⴰⴷ ⵢⴻⵙⵄⵓ ⵉⵖⴻⵡⵡⴰⵔⴻⵏ-ⵉⵙ.",
+      "editLocationsDesc": "ⴱⴻⴷⴷⴻⵍ ⵉⴷⴻⴳⴻⵏ ⵉⵃⴻⵔⵔⵣⴻⵏ ⵏⴻⵖ ⴱⴷⴻⵔ ⴰⴷⴻⴳ ⵓⵙⵍⵉⴳ ⵉ ⵢⴰⵍ ⴰⵔⵎⵓⴷ ⵏ ⵡⴰⵀⵉⵍ.",
+      "viewMultiDayDesc": "ⴰⵀⵉⵍ-ⴰⴳⵉ ⴷ ⴰⵃⵔⵉⵛ ⵏ ⵜⴻⴷⵢⴰⵏⵜ ⵖⴻⴼ ⴷⴷⴻⵇⵙ ⵏ ⵡⵓⵙⵙⴰⵏ. ⴰⵏⴰⴳⵔⴰⵡ ⵢⴻⵙⴳⵔⴻⵡ ⴰⵔⵎⵓⴷ ⵙ ⵡⴰⵙⵙ.",
+      "viewSpeakersDesc": "{{ⵛⵓⵓⵏⵜ}} ⵏ ⵢⵉⵎⴻⵙⴽⴰⵏⴻⵏ ⵜⵜⴻⴽⴽⵉⵏ ⴷⴻⴳ ⵓⵔⵎⵓⴷ-ⴰⴳⵉ. ⵢⴰⵍ ⴰⵎⴻⵙⴽⴰⵏ ⵢⴻⵙⵄⴰ ⴰⵙⵓⵔⴻⴳ-ⵉⵙ.",
+      "viewLocationOptionsDesc": "ⴰⵔⵎⵓⴷ ⴷⴻⴳ ⵓⴷⴻⴳ ⵓⵙⵍⵉⴳ ⵙ ⵜⴻⵅⵜⵉⵕⵉⵢⵉⵏ ⵏ ⵢⵉⵎⵜⵜⴻⴽⴽⵉⵢⴻⵏ ⴷ ⵜⵏⵓⴷⴱⴻⵍⵜ."
+    }
+  },
+  "shared": {
+    "errorBoundary": {
+      "title": "ⵜⴻⵍⵍⴰ-ⴷ ⵜⵓⵛⵛⴹⴰ",
+      "unexpected": "ⵜⵓⵛⵛⴹⴰ ⵓⵔ ⵏⴻⵜⵜⵓⵔⴰⴵⵓ ⴰⵔⴰ",
+      "retry": "ⵄⵔⴻⴹ ⵜⵉⴽⴽⴻⵍⵜ-ⵏⵏⵉⴹⴻⵏ"
+    },
+    "lazyImage": {
+      "unavailable": "ⵜⵓⴳⵏⴰ ⵓⵍⴰⵛ-ⵉⵜⵜ"
+    }
+  },
+  "patrimoine": {
+    "filters": {
+      "all": "ⴰⴽⴽ",
+      "allTypes": "ⴰⴽⴽ ⴰⵏⵡⴰⵏ",
+      "allWilayas": "ⴰⴽⴽ ⵜⵉⵎⵏⴰⴹⵉⵏ"
+    }
+  },
+  "toasts": {
+    "error": "ⵜⵓⵛⵛⴹⴰ",
+    "success": "ⵜⵉⴳⴰⵡⵜ",
+    "warning": "ⴰⵍⴰⵖⵉ",
+    "confirmation": "ⴰⵙⴻⵏⵜⴻⵎ",
+    "unknownError": "ⵜⴻⵍⵍⴰ-ⴷ ⵜⵓⵛⵛⴹⴰ",
+    "actionSuccess": "ⵜⵉⴳⴰⵡⵜ ⵜⴻⵜⵜⵡⴰⴳ ⵙ ⵡⴰⴷⴷⵓⴼ",
+    "userValidated": "ⴰⵙⴻⵇⴷⴰⵛ ⵢⴻⵜⵜⵡⴰⵙⴻⵏⵜⴻⵎ",
+    "userRejected": "ⴰⵙⴻⵇⴷⴰⵛ ⵢⴻⵜⵜⵡⴰⴳⵉ",
+    "userValidationFailed": "ⵓⵔ ⵢⴻⵣⵎⵉⵔ ⴰⴷ ⵢⴻⵜⵜⵡⴰⵙⴻⵏⵜⴻⵎ",
+    "userUpdated": "ⴰⵙⴻⵇⴷⴰⵛ ⵢⴻⵜⵜⵡⴰⵍⵇⴻⵎ",
+    "userUpdateFailed": "ⵓⵔ ⵢⴻⵣⵎⵉⵔ ⴰⴷ ⵢⴻⵜⵜⵡⴰⵍⵇⴻⵎ",
+    "userDeleted": "ⴰⵙⴻⵇⴷⴰⵛ ⵢⴻⵜⵜⵡⴰⴽⴽⴻⵙ",
+    "userDeleteFailed": "ⵓⵔ ⵢⴻⵣⵎⵉⵔ ⴰⴷ ⵢⴻⵜⵜⵡⴰⴽⴽⴻⵙ",
+    "userSuspended": "ⴰⵙⴻⵇⴷⴰⵛ ⵢⴻⵜⵜⵡⴰⵙⴻⵏⵙ",
+    "userSuspendFailed": "ⵓⵔ ⵢⴻⵣⵎⵉⵔ ⴰⴷ ⵢⴻⵜⵜⵡⴰⵙⴻⵏⵙ",
+    "userReactivated": "ⴰⵙⴻⵇⴷⴰⵛ ⵢⴻⵜⵜⵡⴰⵍⴻⵙ ⵢⴻⵔⵎⴻⴷ",
+    "userReactivateFailed": "ⵓⵔ ⵢⴻⵣⵎⵉⵔ ⴰⴷ ⵢⴻⵜⵜⵡⴰⵍⴻⵙ ⵢⴻⵔⵎⴻⴷ",
+    "passwordReset": "ⴰⵡⴰⵍ ⵓⴼⴼⵉⵔ ⵢⴻⵜⵜⵡⴰⵍⵇⴻⵎ",
+    "passwordResetFailed": "ⵓⵔ ⵢⴻⵣⵎⵉⵔ ⴰⴷ ⵢⴻⵜⵜⵡⴰⵍⵇⴻⵎ ⵡⴰⵡⴰⵍ ⵓⴼⴼⵉⵔ",
+    "bulkActionApplied": "ⵜⵉⴳⴰⵡⵜ ⵜⴻⵜⵜⵡⴰⴳ ⵉ {{count}} ⵉⵙⴻⵇⴷⴰⵛⴻⵏ",
+    "bulkActionFailed": "ⵓⵔ ⵢⴻⵣⵎⵉⵔ ⴰⴷ ⵜⴻⵜⵜⵡⴰⴳ ⵜⵉⴳⴰⵡⵜ",
+    "exportUsersDone": "ⴰⵙⵉⴼⴻⴹ ⵏ ⵉⵙⴻⵇⴷⴰⵛⴻⵏ ⵢⴻⵎⵎⴻⴷ",
+    "exportUsersFailed": "ⵓⵔ ⵢⴻⵣⵎⵉⵔ ⴰⴷ ⵉⵜⵜⵡⴰⴳ ⵓⵙⵉⴼⴻⴹ",
+    "oeuvreValidated": "ⴰⵎⴰⵀⵉⵍ ⵢⴻⵜⵜⵡⴰⵙⴻⵏⵜⴻⵎ",
+    "oeuvreRejected": "ⴰⵎⴰⵀⵉⵍ ⵢⴻⵜⵜⵡⴰⴳⵉ",
+    "oeuvreValidationFailed": "ⵓⵔ ⵢⴻⵣⵎⵉⵔ ⴰⴷ ⵢⴻⵜⵜⵡⴰⵙⴻⵏⵜⴻⵎ ⵓⵎⴰⵀⵉⵍ",
+    "oeuvreStatusUpdated": "ⴰⴷⴷⴰⴷ ⵏ ⵓⵎⴰⵀⵉⵍ ⵢⴻⵜⵜⵡⴰⵍⵇⴻⵎ",
+    "oeuvreDeleted": "ⴰⵎⴰⵀⵉⵍ ⵢⴻⵜⵜⵡⴰⴽⴽⴻⵙ",
+    "oeuvreDeleteFailed": "ⵓⵔ ⵢⴻⵣⵎⵉⵔ ⴰⴷ ⵢⴻⵜⵜⵡⴰⴽⴽⴻⵙ ⵓⵎⴰⵀⵉⵍ",
+    "oeuvreNotFound": "ⴰⵎⴰⵀⵉⵍ ⵓⵔ ⵢⴻⵜⵜⵡⴰⴼ ⴰⵔⴰ",
+    "oeuvreLoadFailed": "ⵓⵔ ⵢⴻⵣⵎⵉⵔ ⴰⴷ ⵢⴻⵜⵜⵡⴰⵙⴰⵎⴰⵔ ⵓⵎⴰⵀⵉⵍ",
+    "eventStatusUpdated": "ⴰⴷⴷⴰⴷ ⵏ ⵓⵏⴻⴹⵔⵓ ⵢⴻⵜⵜⵡⴰⵍⵇⴻⵎ",
+    "eventDeleted": "ⴰⵏⴻⴹⵔⵓ ⵢⴻⵜⵜⵡⴰⴽⴽⴻⵙ",
+    "eventDeleteFailed": "ⵓⵔ ⵢⴻⵣⵎⵉⵔ ⴰⴷ ⵢⴻⵜⵜⵡⴰⴽⴽⴻⵙ ⵓⵏⴻⴹⵔⵓ",
+    "eventValidated": "ⴰⵏⴻⴹⵔⵓ ⵢⴻⵜⵜⵡⴰⵙⴻⵏⵜⴻⵎ",
+    "eventRejected": "ⴰⵏⴻⴹⵔⵓ ⵢⴻⵜⵜⵡⴰⴳⵉ",
+    "eventNotFound": "ⴰⵏⴻⴹⵔⵓ ⵓⵔ ⵢⴻⵜⵜⵡⴰⴼ ⴰⵔⴰ",
+    "eventLoadFailed": "ⵓⵔ ⵢⴻⵣⵎⵉⵔ ⴰⴷ ⵢⴻⵜⵜⵡⴰⵙⴰⵎⴰⵔ ⵓⵏⴻⴹⵔⵓ",
+    "serviceStatusUpdated": "ⴰⴷⴷⴰⴷ ⵏ ⵓⵎⴻⵥⵍⵓ ⵢⴻⵜⵜⵡⴰⵍⵇⴻⵎ",
+    "serviceDeleted": "ⴰⵎⴻⵥⵍⵓ ⵢⴻⵜⵜⵡⴰⴽⴽⴻⵙ",
+    "serviceDeleteFailed": "ⵓⵔ ⵢⴻⵣⵎⵉⵔ ⴰⴷ ⵢⴻⵜⵜⵡⴰⴽⴽⴻⵙ ⵓⵎⴻⵥⵍⵓ",
+    "serviceNotFound": "ⴰⵎⴻⵥⵍⵓ ⵓⵔ ⵢⴻⵜⵜⵡⴰⴼ ⴰⵔⴰ",
+    "serviceLoadFailed": "ⵓⵔ ⵢⴻⵣⵎⵉⵔ ⴰⴷ ⵢⴻⵜⵜⵡⴰⵙⴰⵎⴰⵔ ⵓⵎⴻⵥⵍⵓ",
+    "statusUpdateFailed": "ⵓⵔ ⵢⴻⵣⵎⵉⵔ ⴰⴷ ⵢⴻⵜⵜⵡⴰⵍⵇⴻⵎ ⵡⴰⴷⴷⴰⴷ",
+    "loadOverviewFailed": "ⵓⵔ ⵢⴻⵣⵎⵉⵔ ⴰⴷ ⵢⴻⵜⵜⵡⴰⵙⴰⵎⴰⵔ ⵓⴳⵍⴰⵎ",
+    "loadOeuvresFailed": "ⵓⵔ ⵢⴻⵣⵎⵉⵔ ⴰⴷ ⵜⵜⵡⴰⵙⴰⵎⴻⵏⵜ ⵜⴻⵎⵀⴰⵍⵉⵏ",
+    "loadEventsFailed": "ⵓⵔ ⵢⴻⵣⵎⵉⵔ ⴰⴷ ⵜⵜⵡⴰⵙⴰⵎⴻⵏ ⵉⵏⴻⴹⵔⵓⵢⴻⵏ",
+    "loadPatrimoineFailed": "ⵓⵔ ⵢⴻⵣⵎⵉⵔ ⴰⴷ ⵜⵜⵡⴰⵙⴰⵎⴻⵏ ⵉⵙⵉⵜⴻⵏ",
+    "loadServicesFailed": "ⵓⵔ ⵢⴻⵣⵎⵉⵔ ⴰⴷ ⵜⵜⵡⴰⵙⴰⵎⴻⵏ ⵉⵎⴻⵥⵍⴰ",
+    "loadDataFailed": "ⵓⵔ ⵢⴻⵣⵎⵉⵔ ⴰⴷ ⵜⵜⵡⴰⵙⴰⵎⴻⵏⵜ ⵉⵙⴻⴼⴽⴰ",
+    "loadMyOeuvresFailed": "ⵓⵔ ⵢⴻⵣⵎⵉⵔ ⴰⴷ ⵜⵜⵡⴰⵙⴰⵎⴻⵏⵜ ⵜⴻⵎⵀⴰⵍⵉⵏ-ⵉⴽ",
+    "loadMyEventsFailed": "ⵓⵔ ⵢⴻⵣⵎⵉⵔ ⴰⴷ ⵜⵜⵡⴰⵙⴰⵎⴻⵏ ⵉⵏⴻⴹⵔⵓⵢⴻⵏ-ⵉⴽ",
+    "signalementProcessed": "ⴰⴱⴻⴳⴳⴻⵏ ⵢⴻⵜⵜⵡⴰⵙⴻⵍⴽⴻⵎ",
+    "signalementProcessFailed": "ⵓⵔ ⵢⴻⵣⵎⵉⵔ ⴰⴷ ⵢⴻⵜⵜⵡⴰⵙⴻⵍⴽⴻⵎ",
+    "signalementApproved": "ⴰⴱⴻⴳⴳⴻⵏ ⵢⴻⵜⵜⵡⴰⵇⴱⴻⵍ",
+    "signalementRejected": "ⴰⴱⴻⴳⴳⴻⵏ ⵢⴻⵜⵜⵡⴰⴳⵉ",
+    "warningSent": "ⴰⵍⴰⵖⵉ ⵢⴻⵜⵜⵡⴰⵣⴻⵏ",
+    "reportExported": "ⴰⵏⴻⵇⵇⵉⵙ ⵢⴻⵜⵜⵡⴰⵙⵙⵓⴼⴻⵖ",
+    "reportExportFailed": "ⵓⵔ ⵢⴻⵣⵎⵉⵔ ⴰⴷ ⵢⴻⵜⵜⵡⴰⵙⵙⵓⴼⴻⵖ",
+    "cacheCleared": "ⵜⴽⴰⵜⵓⵜ ⵜⴻⵜⵜⵡⴰⵙⴼⴰⴹ",
+    "cacheClearFailed": "ⵓⵔ ⵢⴻⵣⵎⵉⵔ ⴰⴷ ⵜⴻⵜⵜⵡⴰⵙⴼⴻⴹ ⵜⴽⴰⵜⵓⵜ",
+    "itemApproved": "ⴰⴼⴻⵔⴷⵉⵙ ⵢⴻⵜⵜⵡⴰⵇⴱⴻⵍ ⵙ ⵡⴰⴷⴷⵓⴼ",
+    "approvalFailed": "ⵓⵔ ⵢⴻⵣⵎⵉⵔ ⴰⴷ ⵢⴻⵜⵜⵡⴰⵇⴱⴻⵍ",
+    "itemRejected": "ⴰⴼⴻⵔⴷⵉⵙ ⵢⴻⵜⵜⵡⴰⴳⵉ",
+    "dataRefreshed": "ⵉⵙⴻⴼⴽⴰ ⵜⵜⵡⴰⵍⴻⵇⵎⴻⵏ",
+    "exportGenerated": "ⴰⵙⵉⴼⴻⴹ ⵢⴻⵜⵜⵡⴰⵔⵏⴰ ⵙ ⵡⴰⴷⴷⵓⴼ",
+    "exportFailed": "ⵜⵓⵛⵛⴹⴰ ⵏ ⵓⵙⵉⴼⴻⴹ",
+    "commentAdded": "ⴰⵡⴻⵏⵏⵉⵜ ⵢⴻⵜⵜⵡⴰⵔⵏⴰ",
+    "registrationSuccess": "ⴰⵙⴻⴽⵍⴻⵙ ⵢⴻⴷⴷⴰ!",
+    "registrationError": "ⵜⵓⵛⵛⴹⴰ ⵏ ⵓⵙⴻⴽⵍⴻⵙ",
+    "unregistered": "ⵜⵓⴽⴽⵙⴰ ⵏ ⵓⵙⴻⴽⵍⴻⵙ ⵜⴻⵜⵜⵡⴰⴳ",
+    "loginRequired": "ⴰⵏⴻⴽⵛⵓⵎ ⵉⵍⴰⵇ",
+    "addedToFavorites": "ⵢⴻⵜⵜⵡⴰⵔⵏⴰ ⵖⴻⵔ ⵉⵎⵓⵔⵉⵜⴻⵏ",
+    "addedToFavoritesDesc": "ⴰⴼⴻⵔⴷⵉⵙ ⵢⴻⵜⵜⵡⴰⵔⵏⴰ ⵖⴻⵔ ⵉⵎⵓⵔⵉⵜⴻⵏ-ⵉⴽ",
+    "addToFavoritesFailed": "ⵓⵔ ⵢⴻⵣⵎⵉⵔ ⴰⴷ ⵢⴻⵜⵜⵡⴰⵔⵏⴰ ⵖⴻⵔ ⵉⵎⵓⵔⵉⵜⴻⵏ",
+    "removedFromFavorites": "ⵢⴻⵜⵜⵡⴰⴽⴽⴻⵙ ⵙⴻⴳ ⵉⵎⵓⵔⵉⵜⴻⵏ",
+    "removedFromFavoritesDesc": "ⴰⴼⴻⵔⴷⵉⵙ ⵢⴻⵜⵜⵡⴰⴽⴽⴻⵙ ⵙⴻⴳ ⵉⵎⵓⵔⵉⵜⴻⵏ-ⵉⴽ",
+    "removeFromFavoritesFailed": "ⵓⵔ ⵢⴻⵣⵎⵉⵔ ⴰⴷ ⵢⴻⵜⵜⵡⴰⴽⴽⴻⵙ ⵙⴻⴳ ⵉⵎⵓⵔⵉⵜⴻⵏ",
+    "rateLimitReached": "ⵜⴰⵍⴰⵙⵜ ⵏ ⵉⵙⵓⵜⴰⵔ ⵜⴻⵜⵜⵡⴰⴱⴱⴻⴹ",
+    "rateLimitDesc": "ⴰⵄⵉⵡⴻⴷ ⴰⵡⵓⵔⵎⴰⵏ ⴷⴻⴳ {{seconds}} ⵜⵉⵙⵉⵏⵉⵏ.",
+    "accessDenied": "ⴰⵏⴻⴽⵛⵓⵎ ⵢⴻⵜⵜⵓⵡⴳⴷⴻⵍ",
+    "serverError": "ⵜⵓⵛⵛⴹⴰ ⵏ ⵓⵇⴻⴷⴷⴰⵛ",
+    "serverErrorDesc": "ⵜⴻⵍⵍⴰ-ⴷ ⵜⵓⵛⵛⴹⴰ. ⵄⵔⴻⴹ ⵜⵉⴽⴽⴻⵍⵜ-ⵏⵏⵉⴹⴻⵏ.",
+    "timeout": "ⴰⵣⴻⵎⵣ ⵢⴻⵣⵔⵉ",
+    "timeoutDesc": "ⴰⵙⵓⵜⴻⵔ ⵢⵓⵖ ⴰⵟⴰⵙ ⵏ ⵡⴰⴽⵓⴷ. ⵄⵔⴻⴹ ⵜⵉⴽⴽⴻⵍⵜ-ⵏⵏⵉⴹⴻⵏ.",
+    "formIncomplete": "ⵜⴼⴻⵔⴽⵉⵜ ⵓⵔ ⵜⴻⵎⴷⵉ ⴰⵔⴰ",
+    "formIncompleteDesc": "ⵙⵍⴻⵃ ⵜⵓⵛⵛⴹⵉⵡⵉⵏ",
+    "articleBlocksSaveFailed": "ⴰⵎⴰⴳⵔⴰⴷ ⵢⴻⵜⵜⵡⴰⵍⵇⴻⵎ ⵎⴰⵛⴰ ⴽⵔⴰ ⵓⵔ ⵜⵜⵡⴰⴽⵍⴰⵙⴻⵏ.",
+    "articleBlocksIdMissing": "ⵓⵔ ⵢⴻⵣⵎⵉⵔ ⴰⴷ ⵢⴻⵜⵜⵡⴰⴼⴻⵏ ⵓⵙⵓⵍⴰ ⵏ ⵓⵎⴰⴳⵔⴰⴷ.",
+    "articleCreatedBlocksFailed": "ⴰⵎⴰⴳⵔⴰⴷ ⵢⴻⵜⵜⵡⴰⵔⵏⴰ ⵎⴰⵛⴰ ⴰⴳⴱⵓⵔ ⵓⵔ ⵢⴻⵜⵜⵡⴰⴽⵍⴻⵙ.",
+    "updateError": "ⵜⵓⵛⵛⴹⴰ ⴷⴻⴳ ⵓⵍⵇⴻⵎ",
+    "actionTooFast": "ⵜⵉⴳⴰⵡⵜ ⵜⴻⵣⴳⴰ ⵥⵥⴰⵢ",
+    "actionTooFastDesc": "ⵔⵊⵓ {{seconds}} ⵜⴰⵙⵉⵏⵜ(ⵉⵏ)",
+    "actionInProgress": "ⵜⵉⴳⴰⵡⵜ ⵜⴻⵜⵜⴻⴷⴷⵓ",
+    "actionInProgressDesc": "ⵔⵊⵓ ⵜⵉⴳⴰⵡⵜ ⵜⴰⵎⴻⵣⵡⴰⵔⵓⵜ ⴰⴷ ⵜⴻⵎⵎⴻⴷ",
+    "confirmActionDelay": "ⵜⵉⴳⴰⵡⵜ ⴷⴻⴳ {{seconds}} ⵜⵉⵙⵉⵏⵉⵏ...",
+    "processing": "ⴰⵙⴻⵙⴼⴻⵔ...",
+    "confirmAction": "ⵙⴻⵏⵜⴻⵎ ⵜⵉⴳⴰⵡⵜ",
+    "confirmActionDesc": "ⴷ ⵜⵉⴷⴻⵜ ⵜⴻⴱⵖⵉⴹ ⴰⴷ ⵜⴰⴳⴻⴹ ⵜⵉⴳⴰⵡⵜ-ⴰ?",
+    "confirm": "ⵙⴻⵏⵜⴻⵎ",
+    "cancel": "ⵙⴻⴼⵙⴻⵅ",
+    "refreshSuccess": "ⴰⵍⴻⵇⵇⴻⵎ",
+    "refreshSuccessDesc": "ⵉⵙⴻⴼⴽⴰ ⵜⵜⵡⴰⵍⴻⵇⵎⴻⵏ ⵙ ⵡⴰⴷⴷⵓⴼ",
+    "deleteSuccess": "ⵜⵓⴽⴽⵙⴰ ⵙ ⵡⴰⴷⴷⵓⴼ",
+    "deleteSuccessDesc": "{{type}} ⵢⴻⵜⵜⵡⴰⴽⴽⴻⵙ ⵙ ⵡⴰⴷⴷⵓⴼ",
+    "deleteFailed": "ⵜⵓⵛⵛⴹⴰ ⵏ ⵜⵓⴽⴽⵙⴰ",
+    "alreadyDeleted": "ⴰⴼⴻⵔⴷⵉⵙ ⵢⴻⵜⵜⵡⴰⴽⴽⴻⵙ ⵢⴰⴽⴰⵏ",
+    "alreadyDeletedDesc": "ⵜⴰⴱⴷⴰⵔⵜ ⵜⴻⵜⵜⵡⴰⵍⵇⴻⵎ.",
+    "noPermission": "ⵓⵔ ⵜⴻⵙⵄⵉⴹ ⴰⵔⴰ ⵜⵉⵙⵉⵔⴰⴳ ⵉ ⵜⵉⴳⴰⵡⵜ-ⴰ"
   }
 }

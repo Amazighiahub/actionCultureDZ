@@ -110,7 +110,6 @@ async check(type: string, entityId: number): Promise<CheckFavoriResponse> {
     localStorage.removeItem(cacheKey);
     
     const response = await httpClient.get<any>(API_ENDPOINTS.favoris.check(type, entityId));
-    console.log('🔍 Check API response:', response);
     
     // L'API retourne probablement :
     // - Soit { success: true, data: { isFavorite: boolean } }
@@ -128,7 +127,6 @@ async check(type: string, entityId: number): Promise<CheckFavoriResponse> {
       data: response.data
     };
   } catch (error) {
-    console.error('❌ Erreur check favori:', error);
     return {
       success: false,
       isFavorite: false,
@@ -158,7 +156,6 @@ async check(type: string, entityId: number): Promise<CheckFavoriResponse> {
     try {
       // 1. Vérifier l'état actuel
       const checkResponse = await this.check(type, entityId);
-      console.log('🔍 Toggle - Check response:', checkResponse);
       
       if (!checkResponse.success) {
         return { 
@@ -172,7 +169,6 @@ async check(type: string, entityId: number): Promise<CheckFavoriResponse> {
       
       if (isFavorite) {
         // 2. Si c'est déjà en favori, on le retire
-        console.log('➖ Retrait du favori');
         const removeResponse = await this.removeByEntity(type, entityId);
         
         result = {
@@ -182,7 +178,6 @@ async check(type: string, entityId: number): Promise<CheckFavoriResponse> {
         };
       } else {
         // 3. Sinon on l'ajoute
-        console.log('➕ Ajout aux favoris');
         const addResponse = await this.add({ 
           type_entite: type, 
           id_entite: entityId 
@@ -202,13 +197,11 @@ async check(type: string, entityId: number): Promise<CheckFavoriResponse> {
       if (result.success) {
         const cacheKey = `cache_${API_ENDPOINTS.favoris.check(type, entityId)}`;
         localStorage.removeItem(cacheKey);
-        console.log('🗑️ Cache invalidé:', cacheKey);
       }
       
       return result;
       
     } catch (error) {
-      console.error('❌ Erreur toggle:', error);
       return { 
         success: false, 
         error: 'Erreur lors de la modification du favori' 
@@ -227,8 +220,6 @@ async check(type: string, entityId: number): Promise<CheckFavoriResponse> {
         count++;
       }
     });
-    
-    console.log(`🗑️ ${count} entrées de cache favoris supprimées`);
   }
 }
 

@@ -15,7 +15,6 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-      target: production
     container_name: eventculture-backend
     restart: unless-stopped
     ports:
@@ -24,7 +23,6 @@ services:
       - .env
     environment:
       - NODE_ENV=development
-      - SKIP_PRODUCTION_CHECKS=true
       - DB_HOST=mysql
       - REDIS_HOST=redis
     volumes:
@@ -83,11 +81,10 @@ services:
       - MYSQL_PASSWORD=${DB_PASSWORD:-root}
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./backend/database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     networks:
       - eventculture-network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost --silent"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -101,8 +98,8 @@ services:
     image: redis:7-alpine
     container_name: eventculture-redis
     restart: unless-stopped
-    ports:
-      - "127.0.0.1:6379:6379"
+    # Port non exposé à l'hôte - accessible uniquement via le réseau Docker interne
+    # Le backend se connecte via REDIS_HOST=redis (nom de service Docker)
     volumes:
       - redis_data:/data
     networks:
@@ -112,7 +109,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru --requirepass ${REDIS_PASSWORD:-redis_dev_password}
 
 # ==========================================
 # Networks

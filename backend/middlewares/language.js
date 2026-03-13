@@ -86,7 +86,7 @@ const validateLanguage = (req, res, next) => {
   if (!lang) {
     return res.status(400).json({
       success: false,
-      error: 'Code de langue requis'
+      error: req.t ? req.t('validation.invalidData') : 'Language code required'
     });
   }
   
@@ -95,7 +95,7 @@ const validateLanguage = (req, res, next) => {
   if (!SUPPORTED_LANGUAGES.includes(normalized)) {
     return res.status(400).json({
       success: false,
-      error: `Langue non supportée: ${lang}`,
+      error: req.t ? req.t('validation.invalidData') : `Unsupported language: ${lang}`,
       supportedLanguages: SUPPORTED_LANGUAGES
     });
   }
@@ -113,7 +113,7 @@ const setLanguageCookie = (req, res, next) => {
   if (!lang) {
     return res.status(400).json({
       success: false,
-      error: 'Code de langue requis dans le body'
+      error: req.t ? req.t('validation.invalidData') : 'Language code required'
     });
   }
   
@@ -122,7 +122,7 @@ const setLanguageCookie = (req, res, next) => {
   if (!SUPPORTED_LANGUAGES.includes(normalized)) {
     return res.status(400).json({
       success: false,
-      error: `Langue non supportée: ${lang}`,
+      error: req.t ? req.t('validation.invalidData') : `Unsupported language: ${lang}`,
       supportedLanguages: SUPPORTED_LANGUAGES
     });
   }

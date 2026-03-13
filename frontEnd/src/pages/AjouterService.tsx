@@ -194,7 +194,13 @@ const AjouterService: React.FC = () => {
 
   // Ajouter un service personnalisé à la liste
   const addCustomService = () => {
-    if (!customService.nom.fr && !customService.nom.ar) {
+    if (
+      !customService.nom.fr ||
+      !customService.nom.ar ||
+      !customService.nom.en ||
+      !customService.nom['tz-ltn'] ||
+      !customService.nom['tz-tfng']
+    ) {
       const errorMessage = t('ajouterService.errors.nomRequired', 'Le nom du service est requis');
       setError(errorMessage);
       toast({
@@ -236,8 +242,8 @@ const AjouterService: React.FC = () => {
       ...selectedPredefinedServices.map(id => {
         const service = SERVICES_PREDEFINIS.find(s => s.id === id);
         return {
-          nom: service?.label || { fr: id, ar: id, en: id },
-          description: { fr: '', ar: '', en: '' },
+          nom: service?.label || { fr: id, ar: id, en: id, 'tz-ltn': id, 'tz-tfng': id },
+          description: { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
           disponible: true
         };
       }),

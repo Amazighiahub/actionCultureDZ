@@ -241,7 +241,6 @@ export class ArticlePdfExportService {
 
       pdf.save(filename);
     } catch (error) {
-      console.error('Erreur export PDF:', error);
       throw error;
     }
   }
@@ -261,7 +260,6 @@ const handleDownloadPdf = async () => {
       includeComments: false
     });
   } catch (error) {
-    console.error('Erreur export PDF:', error);
     alert('Erreur lors de l\'export PDF');
   }
 };
@@ -274,7 +272,7 @@ const handleDownloadPdfFromHtml = async () => {
       `${oeuvre.titre}.pdf`
     );
   } catch (error) {
-    console.error('Erreur export PDF:', error);
+    // Handle error appropriately
   }
 };
 */

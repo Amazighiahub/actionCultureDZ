@@ -13,7 +13,12 @@
       "title": "Login",
       "submit": "Log in",
       "email": "Email",
-      "password": "Password"
+      "password": "Password",
+      "tabTitle": "Login",
+      "emailPlaceholder": "your.email@example.com",
+      "rememberMe": "Remember me",
+      "forgotPassword": "Forgot password?",
+      "loggingIn": "Logging in..."
     },
     "register": {
       "tabTitle": "Register",
@@ -49,11 +54,19 @@
       "biography": "Biography",
       "biographyPlaceholder": "Introduce yourself, talk about your journey, projects, inspirations... (minimum 50 characters)",
       "charactersMinimum": "characters (minimum 50)",
-      "acceptTerms": "I accept the terms of use",
+      "acceptTerms": {
+        "prefix": "I accept the",
+        "terms": "terms of use",
+        "and": "and the",
+        "privacy": "privacy policy"
+      },
       "newsletter": "I wish to receive news and updates by email",
       "registering": "Registering...",
       "createAccount": "Create My Account",
-      "professionalNote": "Note: Professional accounts require validation",
+      "professionalNote": {
+        "title": "Important note:",
+        "description": "Professional accounts are subject to validation by our team within 24-48 hours."
+      },
       "welcome": "Create your account",
       "chooseType": "Choose your account type",
       "visitor": "Visitor",
@@ -76,8 +89,6 @@
       "emailRequired": "Email is required",
       "emailInvalid": "Email is not valid",
       "passwordRequired": "Password is required",
-      "loginError": "Login error",
-      "invalidCredentials": "Incorrect email or password",
       "nameMinLength": "Last name must contain at least 2 characters",
       "firstNameMinLength": "First name must contain at least 2 characters",
       "passwordMinLength": "Password must contain at least 8 characters",
@@ -201,7 +212,18 @@
       "modern": "Modern monument"
     },
     "workTypes": {
-      "unknown": "Unknown type"
+      "unknown": "Unknown type",
+      "articles": "Articles",
+      "cinema": "Cinema",
+      "literature": "Literature",
+      "musicalAlbum": "Musical Album",
+      "scientificArticle": "Scientific Article",
+      "art": "Art",
+      "artwork": "Artwork",
+      "artworks": "Artworks",
+      "music": "Music",
+      "musicalAlbums": "Musical Albums",
+      "scientificArticles": "Scientific Articles"
     }
   },
   "common": {
@@ -276,7 +298,19 @@
     "years": "years",
     "save": "Save",
     "submit": "Submit",
-    "close": "Close"
+    "close": "Close",
+    "reset": "Reset",
+    "results": "results",
+    "allStatuses": "All statuses",
+    "allRoles": "All roles",
+    "notes": "Notes",
+    "works": "works",
+    "moreOptions": "More options",
+    "clearSearch": "Clear search",
+    "type": "Type",
+    "more": "more",
+    "linkCopied": "Link copied",
+    "linkCopiedDesc": "The link has been copied to the clipboard"
   },
   "contributors": {
     "addedCount_one": "contributors.addedCount",
@@ -338,7 +372,17 @@
       "startTime": "events.create.startTime",
       "subtitle": "events.create.subtitle",
       "title": "events.create.title",
-      "willBeAvailableSoon": "events.create.willBeAvailableSoon"
+      "willBeAvailableSoon": "events.create.willBeAvailableSoon",
+      "eventFormat": "Event format",
+      "inPerson": "In person",
+      "inPersonDesc": "Physical event with a venue and organization",
+      "virtual": "Virtual / Online",
+      "virtualDesc": "Webinar, streaming, online conference",
+      "organisation": "Organization",
+      "selectOrganisation": "Select your organization",
+      "selectOrganisationPlaceholder": "Choose an organization",
+      "location": "Location",
+      "locationRequired": "Please select a location for the event"
     },
     "types": {
       "concert": "Concert",
@@ -526,7 +570,9 @@
       "reviews": "sections.heritage.reviews",
       "seeAll": "See all",
       "subtitle": "Discover Algeria's historical and cultural treasures through an interactive map",
-      "title": "Cultural Heritage"
+      "title": "Cultural Heritage",
+      "search": "Search for a site...",
+      "tryDifferentSearch": "Try a different search or reset filters"
     },
     "works": {
       "actions": {
@@ -874,7 +920,20 @@
     "mon_patrimoine": "My heritage (",
     "nouveau_site": "New site",
     "aucun_site_patrimoine": "No heritage sites registered",
-    "ajouter_mon_premier": "Add my first site"
+    "ajouter_mon_premier": "Add my first site",
+    "ajouter": "Add",
+    "artisanat": "Crafts",
+    "nouveau_patrimoine": "New heritage",
+    "mes_artisanats": "My crafts",
+    "nouvel_artisanat": "New craft",
+    "aucun_artisanat": "No crafts created",
+    "creer_premier_artisanat": "Create my first craft",
+    "non_defini": "Not defined",
+    "en_stock": "in stock",
+    "sur_commande": "Made to order",
+    "indisponible": "Unavailable",
+    "manage": "Manage",
+    "manage_event": "Manage programs and works"
   },
   "dashboardadmin": {
     "label_validation": "Validation",
@@ -1404,7 +1463,13 @@
     "statut": "Status",
     "rserver_une_visite": "Book a visit",
     "plus_dinformations": "More information",
-    "fermer": "Close"
+    "fermer": "Close",
+    "circuit_algerois": "Algiers Circuit",
+    "route_romaine": "Roman Route",
+    "patrimoine_unesco": "UNESCO Heritage",
+    "facile": "Easy",
+    "modere": "Moderate",
+    "aventurier": "Adventurous"
   },
   "notifications_preferences": {
     "prfrences_notifications": "Notification preferences",
@@ -1503,6 +1568,7 @@
     "chargement": "Loading...",
     "chargement_1": "Loading...",
     "validation_attente": "Pending validation",
+    "validation_par_admin": "Your professional account must be validated by an administrator before you can access this feature.",
     "chargement_2": "Loading...",
     "title_modifier": "Edit",
     "title_supprimer": "Delete"
@@ -1591,7 +1657,7 @@
   },
   "auth_validatedprofessionalroute": {
     "compte_attente_validation": "Account pending validation",
-    "votre_compte_professionnel": "Your professional account is being validated by our teams. \n                  You cannot create content yet.",
+    "votre_compte_professionnel": "To access this feature, your professional account must be validated by an administrator. Your request is under review and you cannot create content yet.",
     "statut_actuel": "Current status:",
     "retour_tableau_bord": "Back to dashboard",
     "retour_laccueil": "Back to home",
@@ -1607,8 +1673,8 @@
     "retour_1": "Back",
     "sinscrire_comme_pro": "Register as professional",
     "validation_attente": "Validation pending",
-    "votre_compte_professionnel": "Your professional account is being validated by our team.",
-    "vous_recevrez_email": "You will receive an email as soon as your account is validated. \n                This usually takes 24 to 48 hours.",
+    "votre_compte_professionnel": "Your professional account must be validated by an administrator before you can create content.",
+    "vous_recevrez_email": "An administrator will review your request. You will receive an email as soon as your account is validated. This usually takes 24 to 48 hours.",
     "attendant_vous_pouvez": "In the meantime, you can explore the platform as a visitor.",
     "retour_laccueil": "Back to home"
   },
@@ -1824,7 +1890,8 @@
       "searchPlaceholder": "Search...",
       "filters": {
         "allTypes": "All types",
-        "allWilayas": "All wilayas"
+        "allWilayas": "All wilayas",
+        "all": "All"
       },
       "types": {
         "historicalSite": "Historical Site",
@@ -1898,7 +1965,15 @@
       "title": "Events Management"
     },
     "services": {
-      "title": "Services Management"
+      "title": "Services Management",
+      "searchPlaceholder": "Search for a service...",
+      "noServices": "No services",
+      "types": {
+        "tourGuide": "Tour guide",
+        "transport": "Transport",
+        "accommodation": "Accommodation",
+        "workshop": "Workshop"
+      }
     }
   },
   "wilayas": {
@@ -2268,7 +2343,90 @@
       "total": "registered",
       "search": "Search for a participant...",
       "empty": "No participants found",
-      "profile": "Participant profile"
+      "profile": "Participant profile",
+      "viewProfile": "View profile",
+      "registeredOn": "Registered on",
+      "worksSubmitted": "work(s) submitted",
+      "eventRegistration": "Event registration",
+      "submittedWorks": "Works submitted for this event",
+      "portfolio": "Portfolio",
+      "participationHistory": "Participation history",
+      "loadError": "Unable to load profile"
+    }
+  },
+  "programmePages": {
+    "actions": {
+      "backToEvents": "Back to events",
+      "backToEvent": "Back to event",
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "status": {
+      "loadingProgram": "Loading program..."
+    },
+    "errors": {
+      "prefix": "Error",
+      "generic": "An error occurred",
+      "eventIdMissing": "Event ID not specified",
+      "programmeIdMissing": "Program ID not specified",
+      "eventOrProgrammeIdMissing": "Event or program ID not specified",
+      "eventIdMissingWithPrefix": "Error: Event ID not specified",
+      "eventOrProgrammeIdMissingWithPrefix": "Error: Event or program ID not specified",
+      "loadFailed": "Error loading program",
+      "createFailed": "Error creating program",
+      "updateFailed": "Error updating program",
+      "deleteFailed": "Error deleting program"
+    },
+    "meta": {
+      "eventNumber": "Event #{{id}}",
+      "programNumber": "Program #{{id}}",
+      "multiDay": "Multiple days possible",
+      "multipleSpeakers": "Multiple speakers",
+      "flexibleLocations": "Flexible locations",
+      "speakersCount": "{{count}} speaker(s)",
+      "locationNotSpecified": "Location not specified"
+    },
+    "create": {
+      "title": "Create a program",
+      "newProgram": "New program"
+    },
+    "edit": {
+      "title": "Edit program",
+      "editProgram": "Edit program"
+    },
+    "view": {
+      "title": "Program details",
+      "consultation": "Program overview",
+      "confirmDelete": "Are you sure you want to delete this program?",
+      "quickActions": {
+        "editProgram": "Edit this program",
+        "addAnotherProgram": "Add another program"
+      }
+    },
+    "info": {
+      "multiDayTitle": "Multi-day management",
+      "speakersTitle": "Speakers",
+      "flexibleLocationsTitle": "Flexible locations",
+      "locationAndOptionsTitle": "Location and options",
+      "createMultiDayDesc": "Create programs for each day of your event. The system automatically groups activities by date.",
+      "createSpeakersDesc": "Add multiple speakers with specific roles. Each speaker can have their own settings.",
+      "createLocationsDesc": "Use predefined locations or specify a custom location for each program activity.",
+      "editMultiDayDesc": "Edit programs for each day of your event. The system automatically groups activities by date.",
+      "editSpeakersDesc": "Edit speakers and their specific roles. Each speaker can have their own settings.",
+      "editLocationsDesc": "Change predefined locations or specify a custom location for each program activity.",
+      "viewMultiDayDesc": "This program is part of a multi-day event. The system automatically groups activities by date.",
+      "viewSpeakersDesc": "{{count}} speaker(s) take part in this activity. Each speaker has a specific role and their own settings.",
+      "viewLocationOptionsDesc": "This activity takes place in a specific location with custom options for participants and organization."
+    }
+  },
+  "shared": {
+    "errorBoundary": {
+      "title": "An error occurred",
+      "unexpected": "Unexpected error",
+      "retry": "Retry"
+    },
+    "lazyImage": {
+      "unavailable": "Image unavailable"
     }
   },
   "gestion": {
@@ -2298,5 +2456,123 @@
     "open": "Open",
     "closed": "Closed",
     "unknown": "Unknown"
+  },
+  "patrimoine": {
+    "filters": {
+      "all": "All",
+      "allTypes": "All types",
+      "allWilayas": "All wilayas"
+    }
+  },
+  "toasts": {
+    "error": "Error",
+    "success": "Success",
+    "warning": "Warning",
+    "confirmation": "Confirmation",
+    "unknownError": "An error occurred",
+    "actionSuccess": "Action completed successfully",
+    "userValidated": "User validated",
+    "userRejected": "User rejected",
+    "userValidationFailed": "Unable to validate user",
+    "userUpdated": "User updated",
+    "userUpdateFailed": "Unable to update user",
+    "userDeleted": "User deleted",
+    "userDeleteFailed": "Unable to delete user",
+    "userSuspended": "User suspended",
+    "userSuspendFailed": "Unable to suspend user",
+    "userReactivated": "User reactivated",
+    "userReactivateFailed": "Unable to reactivate user",
+    "passwordReset": "Password reset",
+    "passwordResetFailed": "Unable to reset password",
+    "bulkActionApplied": "Action {{action}} applied to {{count}} users",
+    "bulkActionFailed": "Unable to apply action",
+    "exportUsersDone": "Users export completed",
+    "exportUsersFailed": "Unable to export users",
+    "oeuvreValidated": "Work validated",
+    "oeuvreRejected": "Work rejected",
+    "oeuvreValidationFailed": "Unable to validate work",
+    "oeuvreStatusUpdated": "Work status updated",
+    "oeuvreDeleted": "Work deleted",
+    "oeuvreDeleteFailed": "Unable to delete work",
+    "oeuvreNotFound": "Work not found",
+    "oeuvreLoadFailed": "Unable to load work",
+    "eventStatusUpdated": "Event status updated",
+    "eventDeleted": "Event deleted",
+    "eventDeleteFailed": "Unable to delete event",
+    "eventValidated": "Event validated",
+    "eventRejected": "Event rejected",
+    "eventNotFound": "Event not found",
+    "eventLoadFailed": "Unable to load event",
+    "serviceStatusUpdated": "Service status updated",
+    "serviceDeleted": "Service deleted",
+    "serviceDeleteFailed": "Unable to delete service",
+    "serviceNotFound": "Service not found",
+    "serviceLoadFailed": "Unable to load service",
+    "statusUpdateFailed": "Unable to update status",
+    "loadOverviewFailed": "Unable to load overview",
+    "loadOeuvresFailed": "Unable to load works",
+    "loadEventsFailed": "Unable to load events",
+    "loadPatrimoineFailed": "Unable to load heritage sites",
+    "loadServicesFailed": "Unable to load services",
+    "loadDataFailed": "Unable to load data",
+    "loadMyOeuvresFailed": "Unable to load your works",
+    "loadMyEventsFailed": "Unable to load your events",
+    "signalementProcessed": "Report processed",
+    "signalementProcessFailed": "Unable to process report",
+    "signalementApproved": "Report approved - content removed",
+    "signalementRejected": "Report rejected",
+    "warningSent": "Warning sent",
+    "reportExported": "Report exported",
+    "reportExportFailed": "Unable to export report",
+    "cacheCleared": "Cache cleared",
+    "cacheClearFailed": "Unable to clear cache",
+    "itemApproved": "Item approved successfully",
+    "approvalFailed": "Unable to approve",
+    "itemRejected": "Item rejected",
+    "dataRefreshed": "Data refreshed",
+    "exportGenerated": "Export generated successfully",
+    "exportFailed": "Export error",
+    "commentAdded": "Comment added",
+    "registrationSuccess": "Registration successful!",
+    "registrationError": "Registration error",
+    "unregistered": "Unregistered successfully",
+    "loginRequired": "Login required",
+    "addedToFavorites": "Added to favorites",
+    "addedToFavoritesDesc": "Item added to your favorites",
+    "addToFavoritesFailed": "Unable to add to favorites",
+    "removedFromFavorites": "Removed from favorites",
+    "removedFromFavoritesDesc": "Item removed from your favorites",
+    "removeFromFavoritesFailed": "Unable to remove from favorites",
+    "rateLimitReached": "Request limit reached",
+    "rateLimitDesc": "Automatic retry in {{seconds}} seconds.",
+    "accessDenied": "Access denied",
+    "serverError": "Server error",
+    "serverErrorDesc": "An error occurred. Please try again later.",
+    "timeout": "Timeout",
+    "timeoutDesc": "The request took too long. Please try again.",
+    "formIncomplete": "Incomplete form",
+    "formIncompleteDesc": "Please correct the errors",
+    "articleBlocksSaveFailed": "Article updated but some blocks could not be saved.",
+    "articleBlocksIdMissing": "Unable to find article ID to save blocks.",
+    "articleCreatedBlocksFailed": "Article created but content could not be saved.",
+    "updateError": "Error during update",
+    "actionTooFast": "Action too fast",
+    "actionTooFastDesc": "Please wait {{seconds}} second(s) before retrying",
+    "actionInProgress": "Action in progress",
+    "actionInProgressDesc": "Please wait for the previous action to complete",
+    "confirmActionDelay": "Action in {{seconds}} seconds...",
+    "processing": "Processing...",
+    "confirmAction": "Confirm action",
+    "confirmActionDesc": "Are you sure you want to perform this action?",
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "refreshSuccess": "Refresh",
+    "refreshSuccessDesc": "Data updated successfully",
+    "deleteSuccess": "Deletion successful",
+    "deleteSuccessDesc": "{{type}} deleted successfully",
+    "deleteFailed": "Deletion error",
+    "alreadyDeleted": "Item already deleted",
+    "alreadyDeletedDesc": "The list has been refreshed.",
+    "noPermission": "You do not have the required permissions for this action"
   }
 }

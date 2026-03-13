@@ -4,7 +4,7 @@
  */
 
 const BaseRepository = require('./baseRepository');
-const { Op } = require('sequelize');
+const { Op, fn, col, literal, where: seqWhere } = require('sequelize');
 
 class PatrimoineRepository extends BaseRepository {
   constructor(models) {
@@ -154,17 +154,17 @@ class PatrimoineRepository extends BaseRepository {
    */
   async searchSites(query, options = {}) {
     const { page = 1, limit = 20 } = options;
-    const { literal } = require('sequelize');
-    const sanitized = (query || '').replace(/'/g, "\\'").replace(/[%_]/g, '');
-    const pattern = `%${sanitized}%`;
+    const pattern = `%${this._sanitizeSearchQuery(query)}%`;
 
-    const where = literal(
-      `(JSON_EXTRACT(\`lieu\`.\`nom\`, '$.fr') LIKE '${pattern}' ` +
-      `OR JSON_EXTRACT(\`lieu\`.\`nom\`, '$.ar') LIKE '${pattern}' ` +
-      `OR JSON_EXTRACT(\`lieu\`.\`nom\`, '$.en') LIKE '${pattern}' ` +
-      `OR JSON_EXTRACT(\`lieu\`.\`adresse\`, '$.fr') LIKE '${pattern}' ` +
-      `OR JSON_EXTRACT(\`lieu\`.\`adresse\`, '$.ar') LIKE '${pattern}')`
-    );
+    const where = {
+      [Op.or]: [
+        seqWhere(fn('JSON_EXTRACT', col('lieu.nom'), literal("'$.fr'")), { [Op.like]: pattern }),
+        seqWhere(fn('JSON_EXTRACT', col('lieu.nom'), literal("'$.ar'")), { [Op.like]: pattern }),
+        seqWhere(fn('JSON_EXTRACT', col('lieu.nom'), literal("'$.en'")), { [Op.like]: pattern }),
+        seqWhere(fn('JSON_EXTRACT', col('lieu.adresse'), literal("'$.fr'")), { [Op.like]: pattern }),
+        seqWhere(fn('JSON_EXTRACT', col('lieu.adresse'), literal("'$.ar'")), { [Op.like]: pattern })
+      ]
+    };
 
     return this.findAll({
       page,

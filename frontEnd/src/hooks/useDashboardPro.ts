@@ -1,12 +1,14 @@
 // hooks/useDashboardPro.ts - Version simplifiée sans recommandations
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useCallback, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { professionnelService } from '@/services/professionnel.service';
 import { oeuvreService } from '@/services/oeuvre.service';
 import { evenementService } from '@/services/evenement.service';
 import { artisanatService } from '@/services/artisanat.service';
 import { patrimoineService } from '@/services/patrimoine.service';
+import { serviceService } from '@/services/service.service';
 import { httpClient } from '@/services/httpClient';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -18,6 +20,7 @@ interface UseDashboardProOptions {
 export function useDashboardPro(options: UseDashboardProOptions = {}) {
   const { autoFetch = true, refreshInterval } = options;
   const { toast } = useToast();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
 
   // Dashboard principal
@@ -49,28 +52,13 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
     queryKey: ['dashboard-pro-oeuvres'],
     queryFn: async () => {
       try {
-        console.log('🔍 Chargement des œuvres...');
-        
-        // Récupérer le token pour debug
-        const token = localStorage.getItem('auth_token');
-        console.log('🔑 Token présent:', !!token);
-        
         // Utiliser getMyOeuvres pour récupérer uniquement les œuvres de l'utilisateur connecté
         const response = await oeuvreService.getMyOeuvres({ 
           limit: 50,
           page: 1
         });
         
-        console.log('📚 Réponse API œuvres:', response);
-        
         if (!response.success) {
-          console.error('❌ Erreur API:', response.error);
-          
-          // Si c'est une erreur 401, le token est peut-être invalide
-          if (response.error?.includes('401') || response.error?.includes('auth')) {
-            console.error('🔐 Problème d\'authentification détecté');
-          }
-          
           throw new Error(response.error);
         }
         
@@ -78,24 +66,11 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
         const items = responseData.oeuvres || responseData.items || (Array.isArray(responseData) ? responseData : []);
         const pagination = response.pagination || responseData.pagination || { total: items.length || 0 };
 
-        const result = {
+        return {
           items,
           pagination
         };
-        
-        console.log(`✅ ${result.items.length} œuvres chargées sur ${result.pagination.total} au total`);
-        
-        // Log des premières œuvres pour debug
-        if (result.items.length > 0) {
-          console.log('Première œuvre:', result.items[0]);
-        }
-        
-        return result;
       } catch (error: any) {
-        console.error('❌ Erreur chargement œuvres:', error);
-        console.error('Message:', error.message);
-        console.error('Stack:', error.stack);
-        
         // Retourner une structure vide en cas d'erreur
         return { items: [], pagination: { total: 0 } };
       }
@@ -108,10 +83,9 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
   // Gérer l'erreur des œuvres avec useEffect
   useEffect(() => {
     if (errorOeuvres) {
-      console.error('❌ Query error œuvres:', errorOeuvres);
       toast({
-        title: "Erreur",
-        description: "Impossible de charger vos œuvres",
+        title: t('toasts.error'),
+        description: t('toasts.loadMyOeuvresFailed'),
         variant: "destructive",
       });
     }
@@ -127,29 +101,20 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
     queryKey: ['dashboard-pro-evenements'],
     queryFn: async () => {
       try {
-        console.log('🔍 Chargement des événements...');
         const response = await professionnelService.getEvenements({ limit: 50 });
-        console.log('📡 Réponse API événements:', response);
 
         if (!response.success) {
-          console.error('❌ Erreur API événements:', response.error);
           throw new Error(response.error || 'Erreur lors du chargement des événements');
         }
 
-        // L'API retourne { evenements: [...], pagination: {...} } ou { items: [...], pagination: {...} }
         const responseData = response.data as any;
         const evenementsList = responseData?.evenements || responseData?.items || [];
-        console.log('📋 Liste événements:', evenementsList);
 
         if (evenementsList.length > 0) {
-          // Ajouter les programmes à chaque événement
           const evenementsAvecProgrammes = await Promise.all(
             evenementsList.map(async (evenement: any) => {
               try {
                 const programmesResponse = await evenementService.getProgrammes(evenement.id_evenement);
-                console.log(`📅 Programmes pour événement ${evenement.id_evenement}:`, programmesResponse);
-
-                // L'API peut retourner les programmes dans différents formats
                 const programmes = programmesResponse.success
                   ? (programmesResponse.data?.programmes || programmesResponse.data || [])
                   : [];
@@ -158,8 +123,7 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
                   ...evenement,
                   programmes: Array.isArray(programmes) ? programmes : []
                 };
-              } catch (error) {
-                console.warn(`Erreur chargement programmes pour événement ${evenement.id_evenement}:`, error);
+              } catch {
                 return {
                   ...evenement,
                   programmes: []
@@ -167,22 +131,17 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
               }
             })
           );
-
-          console.log('✅ Événements chargés:', evenementsAvecProgrammes.length);
           return {
             items: evenementsAvecProgrammes,
             pagination: responseData?.pagination || { total: evenementsAvecProgrammes.length }
           };
         }
 
-        // Si l'API ne retourne pas de données
-        console.log('⚠️ Aucun événement trouvé');
         return {
           items: [],
           pagination: { total: 0 }
         };
       } catch (error: any) {
-        console.error('❌ Erreur chargement événements:', error);
         // Retourner une structure vide en cas d'erreur au lieu de données de test
         return {
           items: [],
@@ -198,14 +157,36 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
   // Gérer l'erreur des événements avec useEffect
   useEffect(() => {
     if (errorEvenements) {
-      console.error('❌ Query error événements:', errorEvenements);
       toast({
-        title: "Erreur",
-        description: "Impossible de charger vos événements",
+        title: t('toasts.error'),
+        description: t('toasts.loadMyEventsFailed'),
         variant: "destructive",
       });
     }
   }, [errorEvenements, toast]);
+
+  // Mes services (API /services/my/list - distinct de l'artisanat)
+  const {
+    data: mesServices,
+    isLoading: loadingServices,
+    refetch: refetchServices
+  } = useQuery({
+    queryKey: ['dashboard-pro-services'],
+    queryFn: async () => {
+      try {
+        const response = await serviceService.getMyServices({ limit: 50, page: 1 });
+        if (!response.success) throw new Error(response.error);
+        const data = response.data as any;
+        const items = Array.isArray(data) ? data : (data?.items || data?.data || []);
+        const pagination = response.pagination || data?.pagination || { total: items.length };
+        return { items, pagination };
+      } catch {
+        return { items: [], pagination: { total: 0 } };
+      }
+    },
+    enabled: autoFetch,
+    staleTime: 5 * 60 * 1000,
+  });
 
   // Mes artisanats (utilise l'API réelle pour récupérer MES artisanats)
   const {
@@ -244,7 +225,6 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
           pagination: { total: 0 }
         };
       } catch (error: any) {
-        console.error('❌ Erreur chargement artisanats:', error);
         return {
           items: [],
           pagination: { total: 0 }
@@ -274,8 +254,7 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
           items: response.data?.items || response.data || [],
           pagination: response.data?.pagination || { total: 0 }
         };
-      } catch (error) {
-        console.error('Erreur chargement patrimoine:', error);
+      } catch {
         return { items: [], pagination: { total: 0 } };
       }
     },
@@ -314,24 +293,26 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
 
   // Fonction pour rafraîchir toutes les données
   const refreshAll = useCallback(async () => {
-    httpClient.clearCache();
+    // Cache handled by React Query invalidation
     await Promise.all([
       refetchStats(),
       refetchOeuvres(),
       refetchEvenements(),
       refetchArtisanats(),
+      refetchServices(),
       refetchPatrimoines(),
     ]);
     
     toast({
-      title: "Actualisation",
-      description: "Données mises à jour avec succès",
+      title: t('toasts.refreshSuccess'),
+      description: t('toasts.refreshSuccessDesc'),
     });
   }, [
     refetchStats,
     refetchOeuvres,
     refetchEvenements,
     refetchArtisanats,
+    refetchServices,
     refetchPatrimoines,
     toast
   ]);
@@ -349,8 +330,10 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
           response = await evenementService.delete(id);
           break;
         case 'artisanat':
-        case 'service':
           response = await artisanatService.delete(id);
+          break;
+        case 'service':
+          response = await serviceService.delete(id);
           break;
         case 'patrimoine':
           response = await patrimoineService.delete(id);
@@ -364,11 +347,11 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
       }
 
       // Évite les listes obsolètes après mutation
-      httpClient.clearCache();
+      // Cache handled by React Query invalidation
       
       toast({
-        title: "Suppression réussie",
-        description: `${type} supprimé avec succès`,
+        title: t('toasts.deleteSuccess'),
+        description: t('toasts.deleteSuccessDesc', { type }),
       });
       
       // Rafraîchir les données correspondantes (invalidate + refetch)
@@ -380,8 +363,10 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
           await queryClient.invalidateQueries({ queryKey: ['dashboard-pro-evenements'] });
           break;
         case 'artisanat':
-        case 'service':
           await queryClient.invalidateQueries({ queryKey: ['dashboard-pro-artisanats'] });
+          break;
+        case 'service':
+          await queryClient.invalidateQueries({ queryKey: ['dashboard-pro-services'] });
           break;
         case 'patrimoine':
           await queryClient.invalidateQueries({ queryKey: ['dashboard-pro-patrimoines'] });
@@ -394,27 +379,28 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
 
       // Cas fréquent: élément déjà supprimé côté backend mais encore visible en cache local
       if (message.includes('404') || message.toLowerCase().includes('non trouv')) {
-        httpClient.clearCache();
+        // Cache handled by React Query invalidation
         await queryClient.invalidateQueries({ queryKey: ['dashboard-pro-oeuvres'] });
         await queryClient.invalidateQueries({ queryKey: ['dashboard-pro-evenements'] });
         await queryClient.invalidateQueries({ queryKey: ['dashboard-pro-artisanats'] });
+        await queryClient.invalidateQueries({ queryKey: ['dashboard-pro-services'] });
         await queryClient.invalidateQueries({ queryKey: ['dashboard-pro-patrimoines'] });
 
         toast({
-          title: 'Élément déjà supprimé',
-          description: 'La liste a été actualisée.',
+          title: t('toasts.alreadyDeleted'),
+          description: t('toasts.alreadyDeletedDesc'),
         });
         return true;
       }
 
       toast({
-        title: "Erreur de suppression",
+        title: t('toasts.deleteFailed'),
         description: message,
         variant: "destructive",
       });
       return false;
     }
-  }, [refetchOeuvres, refetchEvenements, refetchArtisanats, refetchPatrimoines, toast]);
+  }, [refetchOeuvres, refetchEvenements, refetchArtisanats, refetchServices, refetchPatrimoines, toast]);
 
   return {
     // Données principales
@@ -422,15 +408,17 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
     mesOeuvres,
     mesEvenements,
     mesArtisanats,
+    mesServices,
     mesPatrimoines,
     notifications,
     
     // États de chargement
-    loading: loadingStats || loadingOeuvres || loadingEvenements || loadingArtisanats || loadingPatrimoines,
+    loading: loadingStats || loadingOeuvres || loadingEvenements || loadingArtisanats || loadingServices || loadingPatrimoines,
     loadingStats,
     loadingOeuvres,
     loadingEvenements,
     loadingArtisanats,
+    loadingServices,
     loadingPatrimoines,
     loadingNotifications,
     

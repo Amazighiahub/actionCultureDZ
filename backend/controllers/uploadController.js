@@ -1,6 +1,7 @@
 // controllers/UploadController.js
 const path = require('path');
 const fs = require('fs').promises;
+const cloudinarySvc = require('../services/cloudinaryService');
 
 class UploadController {
   constructor(models) {
@@ -31,7 +32,7 @@ class UploadController {
 
     // 🔒 Vérifier que le chemin reste dans le dossier uploads
     if (!absolutePath.startsWith(this.uploadsRoot)) {
-      console.error('🚨 Path traversal détecté:', { original: filePath, resolved: absolutePath });
+      console.error('Path traversal détecté:', { original: filePath, resolved: absolutePath });
       return null;
     }
 
@@ -70,35 +71,17 @@ class UploadController {
    */
   async uploadPublicImage(req, res) {
     try {
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('📸 Upload public - Début');
-      }
-      
       // Vérifier la présence du fichier
       if (!req.file) {
-        if (process.env.NODE_ENV !== 'production') {
-          console.log('❌ Aucun fichier reçu');
-        }
         return res.status(400).json({
           success: false,
-          error: 'Aucun fichier fourni'
+          error: req.t('upload.noFile')
         });
       }
 
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('📁 Fichier reçu:', {
-          filename: req.file.filename,
-          originalname: req.file.originalname,
-          mimetype: req.file.mimetype,
-          size: req.file.size,
-          path: req.file.path
-        });
-      }
-
-      // Construire l'URL du fichier
-      const folder = req.file.fieldname === 'document' ? 'documents' : 'images';
-      const fileUrl = `/uploads/${folder}/${req.file.filename}`;
-      const fullUrl = `${this.baseUrl}${fileUrl}`;
+      // URL Cloudinary (déjà complète : https://res.cloudinary.com/...)
+      const fileUrl = req.file.path;
+      const fullUrl = req.file.path;
 
       // Si un modèle Media existe, enregistrer en base
       if (this.models.Media) {
@@ -112,16 +95,11 @@ class UploadController {
             metadata: {
               uploadedBy: null,
               originalName: req.file.originalname,
-              storagePath: `uploads/${folder}/${req.file.filename}`
+              cloudinaryPublicId: req.file.filename,
+              cloudinaryResourceType: 'image'
             }
           });
-          if (process.env.NODE_ENV !== 'production') {
-            console.log('✅ Media enregistré en base:', media.id_media);
-          }
         } catch (dbError) {
-          if (process.env.NODE_ENV !== 'production') {
-            console.log('⚠️ Erreur enregistrement base (ignorée):', dbError.message);
-          }
           // On continue même si l'enregistrement en base échoue
         }
       }
@@ -129,7 +107,7 @@ class UploadController {
       // Réponse succès
       const response = {
         success: true,
-        message: 'Image uploadée avec succès',
+        message: req.t('upload.imageSuccess'),
         data: {
           filename: req.file.filename,
           originalName: req.file.originalname,
@@ -140,16 +118,13 @@ class UploadController {
         }
       };
 
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('✅ Upload public réussi:', response.data.url);
-      }
       res.status(201).json(response);
 
     } catch (error) {
-      console.error('❌ Erreur upload public:', error);
+      console.error('Erreur upload public:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur lors de l\'upload de l\'image',
+        error: req.t('common.serverError'),
         details: process.env.NODE_ENV === 'development' ? error.message : undefined
       });
     }
@@ -162,7 +137,7 @@ class UploadController {
       if (!this.models.Media) {
         return res.status(501).json({
           success: false,
-          error: 'Modèle Media non disponible'
+          error: req.t('common.notImplemented')
         });
       }
 
@@ -170,7 +145,7 @@ class UploadController {
       if (!media) {
         return res.status(404).json({
           success: false,
-          error: 'Média non trouvé'
+          error: req.t('media.notFound')
         });
       }
 
@@ -181,22 +156,28 @@ class UploadController {
         if (!req.user) {
           return res.status(401).json({
             success: false,
-            error: 'Authentification requise'
+            error: req.t('auth.required')
           });
         }
         if (uploadedBy !== req.user.id_user && !req.user.isAdmin) {
           return res.status(403).json({
             success: false,
-            error: 'Accès non autorisé'
+            error: req.t('auth.forbidden')
           });
         }
       }
 
+      // Fichier Cloudinary : redirection directe vers l'URL CDN
+      if (cloudinarySvc.isCloudinaryUrl(media.url)) {
+        return res.redirect(media.url);
+      }
+
+      // Rétrocompatibilité : fichier local
       const storagePath = this._getStoragePath(media);
       if (!storagePath) {
         return res.status(500).json({
           success: false,
-          error: 'Chemin du fichier indisponible'
+          error: req.t('common.serverError')
         });
       }
 
@@ -204,16 +185,16 @@ class UploadController {
       if (!absolutePath) {
         return res.status(400).json({
           success: false,
-          error: 'Chemin du fichier invalide'
+          error: req.t('common.badRequest')
         });
       }
 
       return res.sendFile(absolutePath);
     } catch (error) {
-      console.error('❌ Erreur download média:', error);
+      console.error('Erreur download média:', error);
       return res.status(500).json({
         success: false,
-        error: 'Erreur serveur'
+        error: req.t('common.serverError')
       });
     }
   }
@@ -223,17 +204,15 @@ class UploadController {
    */
   async uploadProfilePhoto(req, res) {
     try {
-      console.log('👤 Upload photo profil - User:', req.user.id_user);
-
       if (!req.file) {
         return res.status(400).json({
           success: false,
-          error: 'Aucune image fournie'
+          error: req.t('upload.noFile')
         });
       }
 
       const userId = req.user.id_user;
-      const fileUrl = `/uploads/images/${req.file.filename}`;
+      const fileUrl = req.file.path; // URL Cloudinary complète
 
       // Récupérer l'ancienne photo pour la supprimer
       const user = await this.models.User.findByPk(userId);
@@ -242,18 +221,19 @@ class UploadController {
       // Mettre à jour l'utilisateur
       await user.update({ photo_url: fileUrl });
 
-      // 🔒 Supprimer l'ancienne photo si elle existe (avec protection path traversal)
+      // Supprimer l'ancienne photo Cloudinary si elle existe
       if (oldPhotoUrl && oldPhotoUrl !== fileUrl) {
         try {
-          const oldPath = this._securePath(oldPhotoUrl);
-          if (oldPath) {
-            await fs.unlink(oldPath);
-            console.log('🗑️ Ancienne photo supprimée');
+          if (cloudinarySvc.isCloudinaryUrl(oldPhotoUrl)) {
+            const oldPublicId = cloudinarySvc.extractPublicId(oldPhotoUrl);
+            if (oldPublicId) await cloudinarySvc.deleteAsset(oldPublicId, 'image');
           } else {
-            console.log('⚠️ Chemin non sécurisé ignoré:', oldPhotoUrl);
+            // Rétrocompatibilité : ancienne photo locale
+            const oldPath = this._securePath(oldPhotoUrl);
+            if (oldPath) await fs.unlink(oldPath).catch(() => {});
           }
         } catch (err) {
-          console.log('⚠️ Impossible de supprimer l\'ancienne photo:', err.message);
+          // Impossible de supprimer l'ancienne photo, continuer
         }
       }
 
@@ -269,19 +249,18 @@ class UploadController {
             metadata: {
               uploadedBy: userId,
               originalName: req.file.originalname,
-              storagePath: `uploads/images/${req.file.filename}`
+              cloudinaryPublicId: req.file.filename,
+              cloudinaryResourceType: 'image'
             }
           });
         } catch (dbError) {
-          console.log('⚠️ Erreur enregistrement Media:', dbError.message);
+          // Erreur enregistrement Media, continuer
         }
       }
 
-      console.log('✅ Photo profil mise à jour');
-
       res.json({
         success: true,
-        message: 'Photo de profil mise à jour',
+        message: req.t('upload.profilePhotoUpdated'),
         data: {
           filename: req.file.filename,
           url: fileUrl,
@@ -290,10 +269,10 @@ class UploadController {
       });
 
     } catch (error) {
-      console.error('❌ Erreur upload photo profil:', error);
+      console.error('Erreur upload photo profil:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur lors de l\'upload'
+        error: req.t('common.serverError')
       });
     }
   }
@@ -303,28 +282,16 @@ class UploadController {
    */
   async uploadImage(req, res) {
     try {
-      console.log('🖼️ Upload image - User:', req.user.email);
-
       if (!req.file) {
         return res.status(400).json({
           success: false,
-          error: 'Aucun fichier fourni'
+          error: req.t('upload.noFile')
         });
       }
 
-      const privateDir = path.join(this.uploadsRoot, 'private', `${req.file.fieldname}s`);
-      const privateStoragePath = path.join(privateDir, req.file.filename);
-
-      try {
-        await fs.mkdir(privateDir, { recursive: true });
-        await fs.rename(req.file.path, privateStoragePath);
-      } catch (moveError) {
-        console.error('❌ Erreur déplacement fichier vers private:', moveError);
-        return res.status(500).json({
-          success: false,
-          error: 'Erreur lors de la sécurisation du fichier'
-        });
-      }
+      // URL Cloudinary directe (pas de déplacement local nécessaire)
+      const fileUrl = req.file.path;
+      const resourceType = cloudinarySvc.getResourceType(req.file.mimetype);
 
       // Enregistrer en base si modèle Media existe
       let mediaId = null;
@@ -332,50 +299,57 @@ class UploadController {
         try {
           const media = await this.models.Media.create({
             type_media: this._inferTypeMedia(req.file.mimetype, 'image'),
-            url: '/api/upload/file/pending',
+            url: fileUrl,
             visible_public: false,
             mime_type: req.file.mimetype,
             taille_fichier: req.file.size,
             metadata: {
               uploadedBy: req.user.id_user,
               originalName: req.file.originalname,
-              storagePath: `uploads/private/${req.file.fieldname}s/${req.file.filename}`
+              cloudinaryPublicId: req.file.filename,
+              cloudinaryResourceType: resourceType
             }
           });
           mediaId = media.id_media;
-          const downloadUrl = `/api/upload/file/${mediaId}`;
-          await media.update({ url: downloadUrl });
-          const fileUrlForResponse = downloadUrl;
 
           return res.json({
             success: true,
-            message: 'Fichier uploadé avec succès',
+            message: req.t('upload.fileSuccess'),
             data: {
               id: mediaId,
               filename: req.file.filename,
               originalName: req.file.originalname,
-              url: fileUrlForResponse,
-              fullUrl: `${this.baseUrl}${fileUrlForResponse}`,
+              url: fileUrl,
+              fullUrl: fileUrl,
               size: req.file.size,
               mimetype: req.file.mimetype,
               uploadedBy: req.user.id_user
             }
           });
         } catch (dbError) {
-          console.log('⚠️ Erreur enregistrement Media:', dbError.message);
+          // Erreur enregistrement Media
         }
       }
 
-      return res.status(500).json({
-        success: false,
-        error: 'Erreur lors de l\'enregistrement du média'
+      // Pas de modèle Media : retourner l'URL Cloudinary directement
+      return res.json({
+        success: true,
+        message: req.t('upload.fileSuccess'),
+        data: {
+          filename: req.file.filename,
+          originalName: req.file.originalname,
+          url: fileUrl,
+          fullUrl: fileUrl,
+          size: req.file.size,
+          mimetype: req.file.mimetype
+        }
       });
 
     } catch (error) {
-      console.error('❌ Erreur upload:', error);
+      console.error('Erreur upload:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur lors de l\'upload'
+        error: req.t('common.serverError')
       });
     }
   }
@@ -390,7 +364,7 @@ class UploadController {
       if (!this.models.Media) {
         return res.status(501).json({
           success: false,
-          error: 'Modèle Media non disponible'
+          error: req.t('common.notImplemented')
         });
       }
 
@@ -399,7 +373,7 @@ class UploadController {
       if (!media) {
         return res.status(404).json({
           success: false,
-          error: 'Média non trouvé'
+          error: req.t('media.notFound')
         });
       }
 
@@ -409,7 +383,7 @@ class UploadController {
       if (!isPublic && uploadedBy !== req.user.id_user && !req.user.isAdmin) {
         return res.status(403).json({
           success: false,
-          error: 'Accès non autorisé'
+          error: req.t('auth.forbidden')
         });
       }
 
@@ -419,10 +393,10 @@ class UploadController {
       });
 
     } catch (error) {
-      console.error('❌ Erreur récupération média:', error);
+      console.error('Erreur récupération média:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur'
+        error: req.t('common.serverError')
       });
     }
   }
@@ -438,7 +412,7 @@ class UploadController {
         // Si pas de modèle Media, on ne peut pas supprimer
         return res.status(501).json({
           success: false,
-          error: 'Suppression non disponible'
+          error: req.t('common.notImplemented')
         });
       }
 
@@ -447,7 +421,7 @@ class UploadController {
       if (!media) {
         return res.status(404).json({
           success: false,
-          error: 'Média non trouvé'
+          error: req.t('media.notFound')
         });
       }
 
@@ -456,22 +430,27 @@ class UploadController {
       if (uploadedBy !== req.user.id_user && !req.user.isAdmin) {
         return res.status(403).json({
           success: false,
-          error: 'Non autorisé à supprimer ce média'
+          error: req.t('auth.forbidden')
         });
       }
 
-      // 🔒 Supprimer le fichier physique (avec protection path traversal)
+      // Supprimer le fichier Cloudinary ou local (rétrocompatibilité)
       try {
-        const storagePath = this._getStoragePath(media) || media.url;
-        const filePath = this._securePath(storagePath);
-        if (filePath) {
-          await fs.unlink(filePath);
-          console.log('🗑️ Fichier supprimé:', filePath);
+        const meta = media.metadata && typeof media.metadata === 'object' ? media.metadata : {};
+        const publicId = meta.cloudinaryPublicId || cloudinarySvc.extractPublicId(media.url);
+
+        if (publicId) {
+          const resourceType = meta.cloudinaryResourceType ||
+                               cloudinarySvc.getResourceType(media.mime_type);
+          await cloudinarySvc.deleteAsset(publicId, resourceType);
         } else {
-          console.log('⚠️ Chemin non sécurisé ignoré:', storagePath);
+          // Rétrocompatibilité : fichier local
+          const storagePath = this._getStoragePath(media) || media.url;
+          const filePath = this._securePath(storagePath);
+          if (filePath) await fs.unlink(filePath).catch(() => {});
         }
       } catch (err) {
-        console.log('⚠️ Erreur suppression fichier:', err.message);
+        // Erreur suppression fichier, continuer
       }
 
       // Supprimer de la base
@@ -479,14 +458,14 @@ class UploadController {
 
       res.json({
         success: true,
-        message: 'Média supprimé avec succès'
+        message: req.t('media.deleted')
       });
 
     } catch (error) {
-      console.error('❌ Erreur suppression média:', error);
+      console.error('Erreur suppression média:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur lors de la suppression'
+        error: req.t('common.serverError')
       });
     }
   }

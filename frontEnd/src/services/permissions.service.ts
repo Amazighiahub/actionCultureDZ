@@ -63,7 +63,7 @@ class PermissionsService {
           this.setCurrentUser(response.data);
         }
       } catch (error) {
-        console.error('Erreur lors de l\'initialisation des permissions:', error);
+        // Silently ignore permission init errors
       }
     }
   }
@@ -222,8 +222,8 @@ class PermissionsService {
   getUserStatusMessage(): string | null {
     if (!this.currentUser) return null;
     
-    if (this.currentUser.statut_validation === "en_attente" && this.isProfessional()) {
-      return 'Votre compte professionnel est en attente de validation. Vous ne pouvez pas encore créer de contenu.';
+    if ((this.currentUser.statut === 'en_attente_validation' || this.currentUser.statut_validation === "en_attente") && this.isProfessional()) {
+      return 'Votre compte professionnel doit être validé par un administrateur avant de pouvoir créer du contenu.';
     }
     
     if (this.currentUser.statut === 'suspendu') {

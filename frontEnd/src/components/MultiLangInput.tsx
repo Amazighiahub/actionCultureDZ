@@ -71,7 +71,7 @@ export const MultiLangInput: React.FC<MultiLangInputProps> = ({
   onChange,
   type = 'input',
   required = false,
-  requiredLanguages = ['fr'],
+  requiredLanguages = ['fr', 'ar', 'en', 'tz-ltn', 'tz-tfng'],
   placeholder,
   rows = 3,
   className = '',
@@ -190,18 +190,18 @@ export const MultiLangInput: React.FC<MultiLangInputProps> = ({
           <div className="flex items-center gap-2 text-amber-800">
             <span>⚠️</span>
             <span>
-              {activeLang === 'tz-tfng' ? 'Clavier Tifinagh non détecté' : 'Clavier Tamazight Latin non détecté'}
+              {activeLang === 'tz-tfng' ? t('multilang.keyboardTifinaghNotDetected', 'Tifinagh keyboard not detected') : t('multilang.keyboardTamazightNotDetected', 'Tamazight Latin keyboard not detected')}
             </span>
           </div>
           <p className="mt-1 text-amber-700">
             {activeLang === 'tz-tfng' 
-              ? 'Installez le clavier Tifinagh depuis les paramètres de votre appareil'
-              : 'Installez le clavier Tamazight Latin depuis les paramètres de votre appareil'
+              ? t('multilang.installTifinagh', 'Install Tifinagh keyboard from your device settings')
+              : t('multilang.installTamazight', 'Install Tamazight Latin keyboard from your device settings')
             }
           </p>
           <div className="mt-2 text-amber-600">
             <details className="cursor-pointer">
-              <summary className="font-medium">Voir les instructions</summary>
+              <summary className="font-medium">{t('multilang.seeInstructions', 'See instructions')}</summary>
               <div className="mt-1 space-y-1">
                 {KeyboardHelper && KeyboardHelper.getInstallationGuide && 
                   KeyboardHelper.getInstallationGuide().slice(0, 2).map((guide: any, index: number) => (
@@ -217,11 +217,11 @@ export const MultiLangInput: React.FC<MultiLangInputProps> = ({
                 }
                 {!KeyboardHelper && (
                   <div>
-                    <strong>Instructions générales:</strong>
+                    <strong>{t('multilang.generalInstructions', 'General instructions')}:</strong>
                     <ul className="ml-4 list-disc text-xs">
-                      <li>Installez un clavier Tamazight depuis les paramètres de votre appareil</li>
-                      <li>Recherchez "Tifinagh" ou "Tamazight Latin" dans votre store</li>
-                      <li>Activez le clavier dans les paramètres de langue</li>
+                      <li>{t('multilang.installKeyboard', 'Install a Tamazight keyboard from your device settings')}</li>
+                      <li>{t('multilang.searchStore', 'Search for "Tifinagh" or "Tamazight Latin" in your store')}</li>
+                      <li>{t('multilang.activateKeyboard', 'Activate the keyboard in language settings')}</li>
                     </ul>
                   </div>
                 )}
@@ -297,8 +297,10 @@ export const MultiLangInput: React.FC<MultiLangInputProps> = ({
 /*
 import { MultiLangInput } from '@/components/MultiLangInput';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const CategorieForm = () => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     nom: { fr: '', ar: '', en: '' },
     description: { fr: '', ar: '', en: '' },
@@ -319,7 +321,7 @@ const CategorieForm = () => {
     <form onSubmit={handleSubmit}>
       <MultiLangInput
         name="nom"
-        label="Nom de la catégorie"
+        label={t('category.form.name')}
         value={formData.nom}
         onChange={(value) => setFormData({ ...formData, nom: value })}
         required
@@ -328,7 +330,7 @@ const CategorieForm = () => {
 
       <MultiLangInput
         name="description"
-        label="Description"
+        label={t('common.description')}
         value={formData.description}
         onChange={(value) => setFormData({ ...formData, description: value })}
         type="textarea"
@@ -336,7 +338,7 @@ const CategorieForm = () => {
       />
 
       <button type="submit">
-        Enregistrer
+        {t('common.save')}
       </button>
     </form>
   );

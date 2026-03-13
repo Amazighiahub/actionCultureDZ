@@ -67,7 +67,7 @@ const AdminEvenementsTab: React.FC = () => {
     loadingEvenements,
     deleteEvenement,
     refreshAll
-  } = useDashboardAdmin();
+  } = useDashboardAdmin('evenements');
 
   // Filtrer les événements
   const filteredEvents = React.useMemo(() => {

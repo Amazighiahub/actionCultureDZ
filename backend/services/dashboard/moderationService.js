@@ -16,14 +16,14 @@ class DashboardModerationService {
     const { page = 1, limit = 20, type_user } = options;
     const offset = (page - 1) * limit;
 
-    const whereClause = { statut_validation: 'en_attente' };
+    const whereClause = { statut: 'en_attente_validation' };
     if (type_user) whereClause.type_user = type_user;
 
     const { rows: users, count } = await this.models.User.findAndCountAll({
       where: whereClause,
       attributes: [
         'id_user', 'nom', 'prenom', 'email', 'type_user',
-        'entreprise', 'date_creation', 'statut_validation'
+        'entreprise', 'date_creation', 'statut'
       ],
       order: [['date_creation', 'DESC']],
       limit,
@@ -80,7 +80,7 @@ class DashboardModerationService {
    */
   async getModerationQueue() {
     const [pendingUsers, pendingOeuvres, reportedContent] = await Promise.all([
-      this.models.User.count({ where: { statut_validation: 'en_attente' } }),
+      this.models.User.count({ where: { statut: 'en_attente_validation' } }),
       this.models.Oeuvre?.count({ where: { statut: 'en_attente' } }) || 0,
       this.getReportedContentCount()
     ]);
@@ -116,13 +116,13 @@ class DashboardModerationService {
 
     if (action === 'approve') {
       await user.update({
-        statut_validation: 'valide',
+        statut: 'actif',
         date_validation: new Date(),
         id_user_validate: moderatorId
       });
     } else if (action === 'reject') {
       await user.update({
-        statut_validation: 'rejete',
+        statut: 'rejete',
         raison_rejet: motif,
         date_validation: new Date(),
         id_user_validate: moderatorId

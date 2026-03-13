@@ -121,7 +121,7 @@ const AdminOverview: React.FC = () => {
     validateUser,
     validateOeuvre,
     refreshAll
-  } = useDashboardAdmin();
+  } = useDashboardAdmin('overview');
 
   // Afficher le skeleton pendant le chargement
   if (loadingOverview) {
@@ -165,38 +165,35 @@ const AdminOverview: React.FC = () => {
         </Button>
       </div>
 
-      {/* Statistiques principales */}
+      {/* Statistiques principales - tendances retirées (pas de données réelles de croissance) */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard
           title={t('admin.stats.users', 'Utilisateurs')}
           value={stats?.totalUsers || 0}
           icon={Users}
-          trend={{ value: 12, label: t('admin.stats.thisMonth') }}
           color="blue-500"
-          onClick={() => navigate('/admin?tab=users')}
+          onClick={() => navigate('/admin/dashboard?tab=users')}
         />
         <StatCard
           title={t('admin.stats.works', 'Œuvres')}
           value={stats?.totalOeuvres || 0}
           icon={BookOpen}
-          trend={{ value: 8, label: t('admin.stats.thisMonth') }}
           color="green-500"
-          onClick={() => navigate('/admin?tab=oeuvres')}
+          onClick={() => navigate('/admin/dashboard?tab=oeuvres')}
         />
         <StatCard
           title={t('admin.stats.events', 'Événements')}
           value={stats?.totalEvents || 0}
           icon={Calendar}
-          trend={{ value: 5, label: t('admin.stats.thisMonth') }}
           color="purple-500"
-          onClick={() => navigate('/admin?tab=evenements')}
+          onClick={() => navigate('/admin/dashboard?tab=evenements')}
         />
         <StatCard
           title={t('admin.stats.heritage', 'Sites patrimoniaux')}
           value={stats?.totalPatrimoine || 0}
           icon={MapPin}
           color="amber-500"
-          onClick={() => navigate('/admin?tab=patrimoine')}
+          onClick={() => navigate('/admin/dashboard?tab=patrimoine')}
         />
       </div>
 
@@ -257,7 +254,7 @@ const AdminOverview: React.FC = () => {
                   />
                 ))}
                 {pendingUsers.items.length > 5 && (
-                  <Button variant="link" className="w-full" onClick={() => navigate('/admin?tab=users')}>
+                  <Button variant="link" className="w-full" onClick={() => navigate('/admin/dashboard?tab=users')}>
                     {t('admin.pending.viewAll', { count: pendingUsers.items.length })}
                     <ArrowRight className="h-4 w-4 ml-2" />
                   </Button>
@@ -305,7 +302,7 @@ const AdminOverview: React.FC = () => {
                   />
                 ))}
                 {pendingOeuvres.items.length > 5 && (
-                  <Button variant="link" className="w-full" onClick={() => navigate('/admin?tab=oeuvres')}>
+                  <Button variant="link" className="w-full" onClick={() => navigate('/admin/dashboard?tab=oeuvres')}>
                     {t('admin.pending.viewAllWorks', { count: pendingOeuvres.items.length })}
                     <ArrowRight className="h-4 w-4 ml-2" />
                   </Button>
@@ -347,7 +344,7 @@ const AdminOverview: React.FC = () => {
                       <p className="font-medium text-sm">{getLocalizedText(item.entity_title || item.reason)}</p>
                       <p className="text-xs text-muted-foreground">{getLocalizedText(item.type)} - {getLocalizedText(item.motif || item.reason)}</p>
                     </div>
-                    <Button size="sm" variant="outline" onClick={() => navigate('/admin?tab=moderation')}>
+                    <Button size="sm" variant="outline" onClick={() => navigate('/admin/dashboard?tab=moderation')}>
                       {t('admin.moderation.actions.process')}
                     </Button>
                   </div>

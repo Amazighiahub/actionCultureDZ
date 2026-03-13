@@ -28,7 +28,7 @@ const initProgrammeRoutes = (models) => {
         }
         return false;
       })
-      .withMessage('Le titre doit contenir entre 3 et 255 caractères'),
+      .withMessage((value, { req }) => req.t('validation.invalidName')),
     body('description')
       .optional()
       .custom((value) => {
@@ -36,17 +36,17 @@ const initProgrammeRoutes = (models) => {
         if (typeof value === 'object') return true;
         return true;
       })
-      .withMessage('Description trop longue'),
-    body('id_lieu').optional().isInt().withMessage('Lieu invalide'),
+      .withMessage((value, { req }) => req.t('validation.descriptionTooLong')),
+    body('id_lieu').optional().isInt().withMessage((value, { req }) => req.t('validation.invalidId')),
     body('lieu_specifique').optional().isLength({ max: 255 }),
-    body('heure_debut').optional().isISO8601().withMessage('Heure de début invalide'),
+    body('heure_debut').optional().isISO8601().withMessage((value, { req }) => req.t('validation.invalidStartDate')),
     body('heure_fin')
       .optional()
       .isISO8601()
-      .withMessage('Heure de fin invalide')
+      .withMessage((value, { req }) => req.t('validation.invalidEndDate'))
       .custom((value, { req }) => {
         if (value && req.body.heure_debut && new Date(value) <= new Date(req.body.heure_debut)) {
-          throw new Error('L\'heure de fin doit être après l\'heure de début');
+          throw new Error(req.t ? req.t('validation.endAfterStart') : 'End time must be after start time');
         }
         return true;
       }),
@@ -61,15 +61,15 @@ const initProgrammeRoutes = (models) => {
   ];
 
   const reorderValidation = [
-    body('programmes').isArray().withMessage('Liste des programmes requise'),
-    body('programmes.*.id').isInt().withMessage('ID programme invalide'),
-    body('programmes.*.ordre').isInt({ min: 1 }).withMessage('Ordre invalide')
+    body('programmes').isArray().withMessage((value, { req }) => req.t('validation.invalidData')),
+    body('programmes.*.id').isInt().withMessage((value, { req }) => req.t('validation.invalidId')),
+    body('programmes.*.ordre').isInt({ min: 1 }).withMessage((value, { req }) => req.t('validation.invalidOrder'))
   ];
 
   const statutValidation = [
     body('statut')
       .isIn(['planifie', 'en_cours', 'termine', 'annule', 'reporte'])
-      .withMessage('Statut invalide')
+      .withMessage((value, { req }) => req.t('validation.invalidStatus'))
   ];
 
   // ========================================================================
@@ -78,7 +78,7 @@ const initProgrammeRoutes = (models) => {
 
   // Export du programme d'un événement
   router.get('/evenement/:evenementId/export', 
-    param('evenementId').isInt().withMessage('ID événement invalide'),
+    param('evenementId').isInt().withMessage((value, { req }) => req.t('validation.invalidEventId')),
     query('format').optional().isIn(['json', 'csv', 'pdf']),
     validationMiddleware.handleValidationErrors,
     programmeController.exportProgramme.bind(programmeController)
@@ -86,7 +86,7 @@ const initProgrammeRoutes = (models) => {
 
   // Liste des programmes d'un événement
   router.get('/evenement/:evenementId', 
-    param('evenementId').isInt().withMessage('ID événement invalide'),
+    param('evenementId').isInt().withMessage((value, { req }) => req.t('validation.invalidEventId')),
     query('date').optional().isISO8601(),
     query('type_activite').optional().isString(),
     validationMiddleware.handleValidationErrors,
@@ -137,7 +137,7 @@ const initProgrammeRoutes = (models) => {
   router.put('/evenement/:evenementId/reorder', 
     authMiddleware.authenticate,
     authMiddleware.requireValidatedProfessional,
-    param('evenementId').isInt().withMessage('ID événement invalide'),
+    param('evenementId').isInt().withMessage((value, { req }) => req.t('validation.invalidEventId')),
     reorderValidation,
     validationMiddleware.handleValidationErrors,
     programmeController.reorderProgrammes.bind(programmeController)
@@ -147,7 +147,7 @@ const initProgrammeRoutes = (models) => {
   router.post('/evenement/:evenementId', 
     authMiddleware.authenticate,
     authMiddleware.requireValidatedProfessional,
-    param('evenementId').isInt().withMessage('ID événement invalide'),
+    param('evenementId').isInt().withMessage((value, { req }) => req.t('validation.invalidEventId')),
     programmeValidation,
     validationMiddleware.handleValidationErrors,
     programmeController.createProgramme.bind(programmeController)
@@ -197,13 +197,9 @@ const initProgrammeRoutes = (models) => {
     validationMiddleware.validateId('userId'),
     programmeController.updateIntervenantStatus
       ? programmeController.updateIntervenantStatus.bind(programmeController)
-      : (req, res) => res.status(501).json({ success: false, error: 'Mise à jour statut intervenant non implémentée' })
+      : (req, res) => res.status(501).json({ success: false, error: req.t('common.notImplemented') })
   );
 
-  if (process.env.NODE_ENV !== 'production') {
-    console.log('✅ Routes programmes i18n initialisées');
-    console.log('  🌍 Routes traduction: GET /:id/translations, PATCH /:id/translation/:lang');
-  }
 
   return router;
 };

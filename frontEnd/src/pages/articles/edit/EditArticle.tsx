@@ -45,9 +45,11 @@ const EditArticle: React.FC = () => {
 
         const isScientific = oeuvre.id_type_oeuvre === 5;
         const articleType = isScientific ? 'article_scientifique' : 'article';
+        const articleData = oeuvre.Article || oeuvre.ArticleScientifique || oeuvre.article || oeuvre.article_scientifique;
+        const blocksRecordId = articleData?.id_article ?? articleData?.id_article_scientifique ?? parseInt(id!);
 
-        // Charger les blocs
-        const blocksResponse = await articleBlockService.getBlocksByArticle(parseInt(id!), articleType);
+        // Charger les blocs (utiliser l'ID article/article_scientifique, pas oeuvre)
+        const blocksResponse = await articleBlockService.getBlocksByArticle(blocksRecordId, articleType);
 
         // Préparer les données initiales avec les blocs
         setInitialData({
@@ -76,7 +78,7 @@ const EditArticle: React.FC = () => {
       }
     } catch (error) {
       console.error('Erreur:', error);
-      setError("Erreur lors du chargement de l'article");
+      setError(t('common.loadError', "Error loading article"));
     } finally {
       setLoading(false);
     }
@@ -122,8 +124,8 @@ const EditArticle: React.FC = () => {
         if (!articleRecordId) {
           console.error('❌ ID article spécifique introuvable pour oeuvre:', oeuvreId);
           toast({
-            title: 'Avertissement',
-            description: 'Impossible de trouver l\'ID article pour sauvegarder les blocs.',
+            title: t('toasts.warning'),
+            description: t('toasts.articleBlocksIdMissing'),
             variant: 'destructive',
           });
         } else {
@@ -185,8 +187,8 @@ const EditArticle: React.FC = () => {
           if (!blocksResponse.success) {
             console.warn('⚠️ Erreur sauvegarde blocs:', blocksResponse.error);
             toast({
-              title: 'Avertissement',
-              description: 'L\'article a été mis à jour mais certains blocs n\'ont pas pu être sauvegardés.',
+              title: t('toasts.warning'),
+              description: t('toasts.articleBlocksSaveFailed'),
               variant: 'destructive',
             });
           } else {
@@ -207,8 +209,8 @@ const EditArticle: React.FC = () => {
     } catch (err: any) {
       console.error('❌ Erreur mise à jour article:', err);
       toast({
-        title: 'Erreur',
-        description: err.message || 'Erreur lors de la mise à jour',
+        title: t('toasts.error'),
+        description: err.message || t('toasts.updateError'),
         variant: 'destructive',
       });
     }

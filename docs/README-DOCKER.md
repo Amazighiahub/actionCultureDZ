@@ -1,9 +1,14 @@
-# Démarrer le projet avec Docker
+# Guide Docker — EventCulture
+
+Guide complet pour exécuter le projet EventCulture via Docker. Permet de démarrer l'application en quelques minutes, reproductible sur toute machine.
+
+---
 
 ## Prérequis
 
-- [Docker](https://docs.docker.com/get-docker/) et [Docker Compose](https://docs.docker.com/compose/install/)
-- Le fichier `.env` à la racine du projet (fourni hors Git par l'équipe)
+- [Docker](https://docs.docker.com/get-docker/) (20.10+)
+- [Docker Compose](https://docs.docker.com/compose/install/) (v2+)
+- Le fichier `.env` à la racine du projet (copier depuis `.env.example`)
 
 ## Architecture des services
 
@@ -78,18 +83,40 @@ docker exec -it eventculture-backend node scripts/seed-all-data.js
 
 ## Variables d'environnement
 
-Le fichier `.env` à la racine du projet est chargé automatiquement par Docker Compose via la directive `env_file`.
+Le fichier `.env` à la racine est chargé par `docker-compose` via `env_file`. Créer le fichier avec :
 
-Les variables suivantes sont **surchargées** dans `docker-compose.yml` pour pointer vers les noms des services Docker :
+```bash
+cp .env.example .env
+```
 
-| Variable | Valeur dans Docker | Raison |
-|----------|-------------------|--------|
-| `NODE_ENV` | `development` | Environnement de dev local |
-| `SKIP_PRODUCTION_CHECKS` | `true` | Désactive les checks stricts de sécurité (dev local) |
-| `DB_HOST` | `mysql` | Nom du service MySQL dans Docker |
-| `REDIS_HOST` | `redis` | Nom du service Redis dans Docker |
+### Variables obligatoires
 
-> **Attention** : `FRONTEND_URL` dans le `.env` doit correspondre à l'URL réelle du frontend (`http://localhost:3000` et non `https://...`), sinon les requêtes seront bloquées par le CORS.
+| Variable | Exemple | Description |
+|----------|---------|-------------|
+| `DB_PASSWORD` | `VotreMotDePasse123` | Mot de passe MySQL (utilisateur `actionculture_user`) |
+| `JWT_SECRET` | (générer ci-dessous) | Secret JWT (min. 32 caractères) |
+| `FRONTEND_URL` | `http://localhost:3000` | URL du frontend (pour CORS) |
+| `VITE_API_URL` | `http://localhost:3001/api` | URL API pour le build frontend |
+
+### Variables surchargées par Docker
+
+| Variable | Valeur Docker | Raison |
+|----------|---------------|--------|
+| `NODE_ENV` | `development` | Environnement dev local |
+| `SKIP_PRODUCTION_CHECKS` | `true` | Désactive les checks stricts (dev) |
+| `DB_HOST` | `mysql` | Nom du service MySQL |
+| `REDIS_HOST` | `redis` | Nom du service Redis |
+
+### Autres variables utiles (optionnel)
+
+| Variable | Défaut | Description |
+|----------|--------|-------------|
+| `MYSQL_ROOT_PASSWORD` | `root` | Mot de passe root MySQL |
+| `DB_NAME` | `actionculture` | Nom de la base |
+| `DB_USER` | `actionculture_user` | Utilisateur MySQL |
+| `EMAIL_PAUSED` | `true` | Ne pas envoyer d'emails en dev |
+
+> **Important** : `FRONTEND_URL` doit être `http://localhost:3000` (Docker) ou `http://localhost:8080` (local Vite), sinon CORS bloque les requêtes.
 
 Pour générer un **JWT_SECRET** sécurisé (production) :
 
@@ -143,6 +170,46 @@ docker compose down
 # Arrêter et supprimer les volumes (données MySQL, Redis, uploads)
 docker compose down -v
 ```
+
+## Commandes de build et test
+
+### Reconstruire après modification du code
+
+```bash
+docker compose up -d --build
+```
+
+### Reconstruire un seul service
+
+```bash
+docker compose up -d --build --no-deps backend
+```
+
+### Voir les logs
+
+```bash
+docker compose logs -f              # Tous les services
+docker compose logs backend -f     # Backend uniquement
+docker compose logs mysql --tail 50
+```
+
+### Vérifier l'état des conteneurs
+
+```bash
+docker compose ps
+```
+
+### Exécuter des commandes dans un conteneur
+
+```bash
+# Shell dans le backend
+docker exec -it eventculture-backend sh
+
+# Exécuter un script
+docker exec -it eventculture-backend node scripts/seed-geography.js
+```
+
+---
 
 ## Build seul (sans compose)
 

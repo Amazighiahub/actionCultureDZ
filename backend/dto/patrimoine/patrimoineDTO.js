@@ -8,6 +8,7 @@ class PatrimoineDTO extends BaseDTO {
   constructor(data = {}) {
     super(data);
     this.id = data.id;
+    this.id_lieu = data.id_lieu ?? data.id;
     this.nom = data.nom;
     this.adresse = data.adresse;
     this.latitude = data.latitude;
@@ -33,6 +34,7 @@ class PatrimoineDTO extends BaseDTO {
 
     const dto = new PatrimoineDTO({
       id: raw.id_lieu,
+      id_lieu: raw.id_lieu,
       nom: BaseDTO.normalizeMultilang(raw.nom),
       adresse: BaseDTO.normalizeMultilang(raw.adresse),
       latitude: raw.latitude,
@@ -61,14 +63,18 @@ class PatrimoineDTO extends BaseDTO {
         contact: raw.DetailLieu.contact
       } : null,
       monuments: (raw.DetailLieu?.Monuments || raw.monuments || []).map(m => ({
-        id: m.id_monument,
+        id: m.id_monument ?? m.id,
         nom: BaseDTO.normalizeMultilang(m.nom),
+        description: BaseDTO.normalizeMultilang(m.description),
+        type: m.type,
         epoque: m.epoque,
         style: m.style
       })),
       vestiges: (raw.DetailLieu?.Vestiges || raw.vestiges || []).map(v => ({
-        id: v.id_vestige,
+        id: v.id_vestige ?? v.id,
         nom: BaseDTO.normalizeMultilang(v.nom),
+        description: BaseDTO.normalizeMultilang(v.description),
+        type: v.type,
         periode: v.periode,
         etatConservation: v.etat_conservation
       })),

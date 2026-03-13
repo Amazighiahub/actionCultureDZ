@@ -4,7 +4,10 @@
  */
 
 const express = require('express');
+const { param, body } = require('express-validator');
 const oeuvreController = require('../controllers/oeuvreController');
+const { handleValidationErrors, validateId, validatePagination } = require('../middlewares/validationMiddleware');
+const asyncHandler = require('../utils/asyncHandler');
 
 const initOeuvreRoutesV2 = (models, authMiddleware) => {
   const router = express.Router();
@@ -14,48 +17,59 @@ const initOeuvreRoutesV2 = (models, authMiddleware) => {
   // ROUTES PUBLIQUES
   // ============================================================================
 
-  router.get('/', (req, res) => oeuvreController.list(req, res));
-  router.get('/recent', (req, res) => oeuvreController.getRecent(req, res));
-  router.get('/popular', (req, res) => oeuvreController.getPopular(req, res));
-  router.get('/statistics', (req, res) => oeuvreController.getStatistics(req, res));
-  router.get('/search', (req, res) => oeuvreController.search(req, res));
-  router.get('/search/intervenants', (req, res) => oeuvreController.searchIntervenants(req, res));
-  router.get('/:id', (req, res) => oeuvreController.getById(req, res));
-  router.get('/:id/similar', (req, res) => oeuvreController.getSimilar(req, res));
-  router.get('/:id/share-links', (req, res) => oeuvreController.getShareLinks(req, res));
-  router.get('/:id/medias', (req, res) => oeuvreController.getMedias(req, res));
+  router.get('/', asyncHandler((req, res) => oeuvreController.list(req, res)));
+  router.get('/recent', asyncHandler((req, res) => oeuvreController.getRecent(req, res)));
+  router.get('/popular', asyncHandler((req, res) => oeuvreController.getPopular(req, res)));
+  router.get('/statistics', asyncHandler((req, res) => oeuvreController.getStatistics(req, res)));
+  router.get('/search', asyncHandler((req, res) => oeuvreController.search(req, res)));
+  router.get('/search/intervenants', asyncHandler((req, res) => oeuvreController.searchIntervenants(req, res)));
 
   // ============================================================================
-  // ROUTES AUTHENTIFIÉES (CRÉATEURS)
+  // ROUTES AUTHENTIFIÉES (specific paths BEFORE :id catch-all)
   // ============================================================================
 
-  router.get('/my/list', authenticate, (req, res) => oeuvreController.getMyOeuvres(req, res));
-  router.get('/my/statistics', authenticate, (req, res) => oeuvreController.getMyStatistics(req, res));
-  router.post('/', authenticate, (req, res) => oeuvreController.create(req, res));
-  router.put('/:id', authenticate, (req, res) => oeuvreController.update(req, res));
-  router.delete('/:id', authenticate, (req, res) => oeuvreController.delete(req, res));
-  router.post('/:id/submit', authenticate, (req, res) => oeuvreController.submit(req, res));
+  router.get('/my/list', authenticate, asyncHandler((req, res) => oeuvreController.getMyOeuvres(req, res)));
+  router.get('/my/statistics', authenticate, asyncHandler((req, res) => oeuvreController.getMyStatistics(req, res)));
+
+  // ============================================================================
+  // ROUTES ADMIN (specific paths BEFORE :id catch-all)
+  // ============================================================================
+
+  router.get('/admin/all', authenticate, requireRole(['Admin', 'Moderateur']), asyncHandler((req, res) => oeuvreController.listAll(req, res)));
+  router.get('/admin/pending', authenticate, requireRole(['Admin', 'Moderateur']), asyncHandler((req, res) => oeuvreController.getPending(req, res)));
+  router.get('/admin/rejected', authenticate, requireRole(['Admin', 'Moderateur']), asyncHandler((req, res) => oeuvreController.getRejected(req, res)));
+  router.get('/admin/stats', authenticate, requireRole(['Admin']), asyncHandler((req, res) => oeuvreController.getStats(req, res)));
+
+  // ============================================================================
+  // ROUTES AVEC :id (après les routes spécifiques)
+  // ============================================================================
+
+  router.get('/:id', validateId(), asyncHandler((req, res) => oeuvreController.getById(req, res)));
+  router.get('/:id/similar', validateId(), asyncHandler((req, res) => oeuvreController.getSimilar(req, res)));
+  router.get('/:id/share-links', validateId(), asyncHandler((req, res) => oeuvreController.getShareLinks(req, res)));
+  router.get('/:id/medias', validateId(), asyncHandler((req, res) => oeuvreController.getMedias(req, res)));
+
+  router.post('/', authenticate,
+    [body('titre').notEmpty().withMessage('Le titre est requis')],
+    handleValidationErrors,
+    asyncHandler((req, res) => oeuvreController.create(req, res)));
+  router.put('/:id', authenticate, validateId(), asyncHandler((req, res) => oeuvreController.update(req, res)));
+  router.delete('/:id', authenticate, validateId(), asyncHandler((req, res) => oeuvreController.delete(req, res)));
+  router.post('/:id/submit', authenticate, validateId(), asyncHandler((req, res) => oeuvreController.submit(req, res)));
 
   // Médias
-  router.post('/:id/medias/upload', authenticate, (req, res) => oeuvreController.uploadMedia(req, res));
-  router.put('/:id/medias/reorder', authenticate, (req, res) => oeuvreController.reorderMedias(req, res));
-  router.delete('/:id/medias/:mediaId', authenticate, (req, res) => oeuvreController.deleteMedia(req, res));
+  router.post('/:id/medias/upload', authenticate, validateId(), asyncHandler((req, res) => oeuvreController.uploadMedia(req, res)));
+  router.put('/:id/medias/reorder', authenticate, validateId(), asyncHandler((req, res) => oeuvreController.reorderMedias(req, res)));
+  router.delete('/:id/medias/:mediaId', authenticate, validateId(), validateId('mediaId'), asyncHandler((req, res) => oeuvreController.deleteMedia(req, res)));
 
-  // ============================================================================
-  // ROUTES ADMIN
-  // ============================================================================
-
-  router.get('/admin/all', authenticate, requireRole(['Admin', 'Moderateur']), (req, res) => oeuvreController.listAll(req, res));
-  router.get('/admin/pending', authenticate, requireRole(['Admin', 'Moderateur']), (req, res) => oeuvreController.getPending(req, res));
-  router.get('/admin/rejected', authenticate, requireRole(['Admin', 'Moderateur']), (req, res) => oeuvreController.getRejected(req, res));
-  router.get('/admin/stats', authenticate, requireRole(['Admin']), (req, res) => oeuvreController.getStats(req, res));
-  router.post('/:id/validate', authenticate, requireRole(['Admin', 'Moderateur']), (req, res) => oeuvreController.validate(req, res));
-  router.post('/:id/reject', authenticate, requireRole(['Admin', 'Moderateur']), (req, res) => oeuvreController.reject(req, res));
-  router.post('/:id/feature', authenticate, requireRole(['Admin']), (req, res) => oeuvreController.setFeatured(req, res));
+  // Admin actions sur :id
+  router.post('/:id/validate', authenticate, requireRole(['Admin', 'Moderateur']), validateId(), asyncHandler((req, res) => oeuvreController.validate(req, res)));
+  router.post('/:id/reject', authenticate, requireRole(['Admin', 'Moderateur']), validateId(), asyncHandler((req, res) => oeuvreController.reject(req, res)));
+  router.post('/:id/feature', authenticate, requireRole(['Admin']), validateId(), asyncHandler((req, res) => oeuvreController.setFeatured(req, res)));
 
   // Traductions (admin i18n)
-  router.get('/:id/translations', authenticate, requireRole(['Admin']), (req, res) => oeuvreController.getTranslations(req, res));
-  router.patch('/:id/translation/:lang', authenticate, requireRole(['Admin']), (req, res) => oeuvreController.updateTranslation(req, res));
+  router.get('/:id/translations', authenticate, requireRole(['Admin']), asyncHandler((req, res) => oeuvreController.getTranslations(req, res)));
+  router.patch('/:id/translation/:lang', authenticate, requireRole(['Admin']), asyncHandler((req, res) => oeuvreController.updateTranslation(req, res)));
 
   return router;
 };

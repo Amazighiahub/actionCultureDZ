@@ -88,6 +88,12 @@ class ServiceService extends BaseService {
       throw this._validationError('Le type de service est requis');
     }
 
+    const lieuId = data.id_lieu || data.lieuId;
+    if (lieuId && this.models?.Lieu) {
+      const lieu = await this.models.Lieu.findByPk(lieuId);
+      if (!lieu) throw this._validationError('Le lieu spécifié n\'existe pas');
+    }
+
     const entityData = {
       nom: data.nom,
       description: data.description || {},

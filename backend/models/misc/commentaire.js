@@ -52,7 +52,22 @@ module.exports = (sequelize) => {
     tableName: 'commentaire',
     timestamps: true,
     createdAt: 'date_creation',
-    updatedAt: 'date_modification'
+    updatedAt: 'date_modification',
+    indexes: [
+      { fields: ['id_user'] },
+      { fields: ['id_oeuvre'] },
+      { fields: ['id_evenement'] },
+      { fields: ['statut'] },
+      { fields: ['commentaire_parent_id'] },
+      { fields: ['date_creation'] }
+    ],
+    hooks: {
+      beforeValidate: (commentaire) => {
+        if (!commentaire.id_oeuvre && !commentaire.id_evenement) {
+          throw new Error('Un commentaire doit être associé à une œuvre ou un événement');
+        }
+      }
+    }
   });
 
   // Associations

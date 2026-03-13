@@ -58,6 +58,8 @@ interface TranslatableValue {
   fr?: string;
   ar?: string;
   en?: string;
+  'tz-ltn'?: string;
+  'tz-tfng'?: string;
   [key: string]: string | undefined;
 }
 
@@ -146,11 +148,17 @@ const TYPES_PATRIMOINE = [
   { value: 'autre', label: { fr: 'Autre', ar: 'أخرى', en: 'Other' }, icon: Building2 }
 ];
 
-// Types de monuments
-const TYPES_MONUMENT = ['Mosquée', 'Palais', 'Statue', 'Tour', 'Musée', 'Fort', 'Fontaine', 'Autre'];
+// Types de monuments (alignés avec la base de données)
+const TYPES_MONUMENT = ['Mosquée', 'Palais', 'Statue', 'Tour', 'Musée'];
 
-// Types de vestiges
-const TYPES_VESTIGE = ['Ruines', 'Murailles', 'Site archéologique', 'Fondations', 'Autre'];
+// Types de vestiges (alignés avec la base de données)
+const TYPES_VESTIGE = ['Ruines', 'Murailles', 'Site archéologique'];
+
+// Types de patrimoine pour lesquels on peut ajouter des monuments
+const TYPES_WITH_MONUMENTS: string[] = ['ville_village', 'palais_forteresse', 'site_archeologique', 'autre'];
+
+// Types de patrimoine pour lesquels on peut ajouter des vestiges
+const TYPES_WITH_VESTIGES: string[] = ['ville_village', 'site_archeologique', 'musee', 'palais_forteresse', 'autre'];
 
 // Icônes de services
 const SERVICE_ICONS = [
@@ -168,8 +176,8 @@ const AjouterPatrimoine: React.FC = () => {
 
   // État principal du formulaire
   const [formData, setFormData] = useState({
-    nom: { fr: '', ar: '', en: '' } as TranslatableValue,
-    adresse: { fr: '', ar: '', en: '' } as TranslatableValue,
+    nom: { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' } as TranslatableValue,
+    adresse: { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' } as TranslatableValue,
     typePatrimoine: 'monument',
     typeLieu: 'Commune',
     communeId: 0,
@@ -177,10 +185,10 @@ const AjouterPatrimoine: React.FC = () => {
     latitude: 36.7525,
     longitude: 3.04197,
     // DetailLieu
-    description: { fr: '', ar: '', en: '' } as TranslatableValue,
-    histoire: { fr: '', ar: '', en: '' } as TranslatableValue,
-    referencesHistoriques: { fr: '', ar: '', en: '' } as TranslatableValue,
-    horaires: { fr: '', ar: '', en: '' } as TranslatableValue,
+    description: { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' } as TranslatableValue,
+    histoire: { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' } as TranslatableValue,
+    referencesHistoriques: { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' } as TranslatableValue,
+    horaires: { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' } as TranslatableValue,
     // Options
     genererQRCode: true,
     estUNESCO: false,
@@ -223,7 +231,7 @@ const AjouterPatrimoine: React.FC = () => {
   });
   const [tempMonument, setTempMonument] = useState<MonumentItem>({
     nom: { fr: '' },
-    type: 'Autre'
+    type: 'Palais'
   });
   const [tempVestige, setTempVestige] = useState<VestigeItem>({
     nom: { fr: '' },
@@ -482,19 +490,20 @@ const AjouterPatrimoine: React.FC = () => {
       const response = await patrimoineService.getSiteDetail(parseInt(id));
       if (response.success && response.data) {
         const site = response.data as any;
+        const detail = site.detail || site.DetailLieu;
         setFormData({
           nom: site.nom || { fr: '' },
           adresse: site.adresse || { fr: '' },
           typePatrimoine: site.typePatrimoine || 'monument',
           typeLieu: site.typeLieu || 'Commune',
-          communeId: site.communeId || 0,
-          wilayaId: site.wilaya?.id_wilaya || 0,
+          communeId: site.communeId || detail?.communeId || site.commune?.id || 0,
+          wilayaId: site.wilaya?.id_wilaya || site.wilaya?.id || 0,
           latitude: site.latitude || 36.7525,
           longitude: site.longitude || 3.04197,
-          description: site.DetailLieu?.description || { fr: '' },
-          histoire: site.DetailLieu?.histoire || { fr: '' },
-          referencesHistoriques: site.DetailLieu?.referencesHistoriques || { fr: '' },
-          horaires: site.DetailLieu?.horaires || { fr: '' },
+          description: detail?.description || { fr: '' },
+          histoire: detail?.histoire || { fr: '' },
+          referencesHistoriques: detail?.referencesHistoriques || { fr: '' },
+          horaires: detail?.horaires || { fr: '' },
           genererQRCode: true,
           estUNESCO: site.estUNESCO || false,
           statut: site.statut || 'actif'
@@ -504,6 +513,7 @@ const AjouterPatrimoine: React.FC = () => {
         setMonuments(site.monuments || []);
         setVestiges(site.vestiges || []);
         setMedias(site.medias || []);
+        setCreatedLieuId(site.id_lieu ?? site.id ?? null);
         if (site.qrCodeGenerated) {
           setQrCodeGenerated(site.qrCodeGenerated);
         }
@@ -540,18 +550,24 @@ const AjouterPatrimoine: React.FC = () => {
   // Valider le formulaire
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
+    const requiredLangs = ['fr', 'ar', 'en', 'tz-ltn', 'tz-tfng'] as const;
 
-    if (!formData.nom.fr) {
-      newErrors.nom = t('validation.required');
+    const nomMissing = requiredLangs.some(lang => !formData.nom[lang]);
+    if (nomMissing) {
+      newErrors.nom = t('validation.allLanguagesRequired', 'Le nom est requis dans toutes les langues');
     }
-    if (!formData.adresse.fr) {
-      newErrors.adresse = t('validation.required');
+    const adresseMissing = requiredLangs.some(lang => !formData.adresse[lang]);
+    if (adresseMissing) {
+      newErrors.adresse = t('validation.allLanguagesRequired', 'L\'adresse est requise dans toutes les langues');
     }
     if (!formData.communeId) {
       newErrors.communeId = t('validation.required');
     }
     if (!formData.typePatrimoine) {
       newErrors.typePatrimoine = t('validation.required');
+    }
+    if (!formData.wilayaId) {
+      newErrors.wilayaId = t('validation.required');
     }
 
     setErrors(newErrors);
@@ -613,7 +629,7 @@ const AjouterPatrimoine: React.FC = () => {
         }
 
         if (!isEditMode) {
-          navigate(`/admin/patrimoine/${(response.data as any).id_lieu}`);
+          navigate(`/admin/patrimoine/modifier/${(response.data as any).id_lieu}`);
         }
       } else {
         throw new Error('Erreur lors de la sauvegarde');
@@ -670,7 +686,7 @@ const AjouterPatrimoine: React.FC = () => {
       setMonuments(prev => [...prev, { ...tempMonument }]);
     }
 
-    setTempMonument({ nom: { fr: '' }, type: 'Autre' });
+    setTempMonument({ nom: { fr: '' }, type: 'Palais' });
     setEditingItem(null);
     setMonumentDialogOpen(false);
   };
@@ -999,6 +1015,9 @@ const AjouterPatrimoine: React.FC = () => {
                     {errors.typePatrimoine && (
                       <p className="text-sm text-destructive">{errors.typePatrimoine}</p>
                     )}
+                    <p className="text-xs text-muted-foreground">
+                      {t('patrimoine.typeHint', 'Le type détermine les sections disponibles (monuments, vestiges, parcours) dans l\'onglet Détails.')}
+                    </p>
                   </div>
 
                   {/* Adresse multilingue */}
@@ -1018,7 +1037,7 @@ const AjouterPatrimoine: React.FC = () => {
                 <CardHeader>
                   <CardTitle>{t('patrimoine.location', 'Localisation')}</CardTitle>
                   <CardDescription>
-                    {t('patrimoine.locationDescription', 'Sélectionnez un lieu existant ou créez-en un nouveau')}
+                    {t('patrimoine.locationDescription', 'Sélectionnez un lieu existant dans la base ou créez-en un nouveau. Le lieu lie le patrimoine à une adresse précise.')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -1150,9 +1169,9 @@ const AjouterPatrimoine: React.FC = () => {
                 </CardContent>
               </Card>
 
-              {/* Monuments et Vestiges */}
+              {/* Monuments et Vestiges (affichés selon le type de patrimoine) */}
               <div className="space-y-6">
-                {/* Monuments */}
+                {TYPES_WITH_MONUMENTS.includes(formData.typePatrimoine) && (
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between">
                     <CardTitle className="flex items-center gap-2">
@@ -1160,7 +1179,7 @@ const AjouterPatrimoine: React.FC = () => {
                       {t('patrimoine.monuments', 'Monuments')} ({monuments.length})
                     </CardTitle>
                     <Button size="sm" onClick={() => {
-                      setTempMonument({ nom: { fr: '' }, type: 'Autre' });
+                      setTempMonument({ nom: { fr: '' }, type: 'Palais' });
                       setEditingItem(null);
                       setMonumentDialogOpen(true);
                     }}>
@@ -1207,8 +1226,9 @@ const AjouterPatrimoine: React.FC = () => {
                     )}
                   </CardContent>
                 </Card>
+                )}
 
-                {/* Vestiges */}
+                {TYPES_WITH_VESTIGES.includes(formData.typePatrimoine) && (
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between">
                     <CardTitle className="flex items-center gap-2">
@@ -1263,6 +1283,15 @@ const AjouterPatrimoine: React.FC = () => {
                     )}
                   </CardContent>
                 </Card>
+                )}
+
+                {!TYPES_WITH_MONUMENTS.includes(formData.typePatrimoine) && !TYPES_WITH_VESTIGES.includes(formData.typePatrimoine) && (
+                  <div className="p-4 bg-muted/50 rounded-lg border border-dashed">
+                    <p className="text-sm text-muted-foreground">
+                      {t('patrimoine.noMonumentsVestigesForType', 'Les monuments et vestiges ne sont pas pertinents pour ce type de patrimoine. Choisissez "Ville / Village", "Site archéologique", "Musée", "Palais / Forteresse" ou "Autre" pour les afficher.')}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </TabsContent>

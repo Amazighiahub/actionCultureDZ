@@ -43,7 +43,12 @@ module.exports = (sequelize) => {
     }
   }, {
     tableName: 'artisanat',
-    timestamps: false
+    timestamps: false,
+    indexes: [
+      { fields: ['id_oeuvre'] },
+      { fields: ['id_materiau'] },
+      { fields: ['id_technique'] }
+    ]
   });
 
   // Associations

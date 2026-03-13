@@ -508,7 +508,7 @@ const DashboardUser = () => {
                     </Button>
                   </Link>
                 </div>
-                <Button className="btn-hover" onClick={() => navigate('/profil/modifier')}>
+                <Button className="btn-hover" onClick={() => navigate('/dashboard-user')}>
                   {t("dashboarduser.modifier_profil")}
                 </Button>
               </div>

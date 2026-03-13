@@ -14,6 +14,7 @@ WORKDIR /app
 # ============================================
 FROM base AS deps
 
+RUN apk add --no-cache python3 make g++ vips-dev
 COPY package*.json ./
 RUN npm ci && npm cache clean --force
 

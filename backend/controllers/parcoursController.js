@@ -109,7 +109,7 @@ class ParcoursControllerV2 {
       const parcours = await this.parcoursService.create(req.body, req.user.id_user);
       res.status(201).json({
         success: true,
-        message: 'Parcours créé avec succès',
+        message: req.t('parcours.created'),
         data: parcours.toDetailJSON(req.lang)
       });
     } catch (error) {
@@ -126,7 +126,7 @@ class ParcoursControllerV2 {
       );
       res.json({
         success: true,
-        message: 'Parcours mis à jour',
+        message: req.t('parcours.updated'),
         data: parcours.toDetailJSON(req.lang)
       });
     } catch (error) {
@@ -137,7 +137,7 @@ class ParcoursControllerV2 {
   async delete(req, res) {
     try {
       await this.parcoursService.delete(parseInt(req.params.id), req.user.id_user);
-      res.json({ success: true, message: 'Parcours supprimé' });
+      res.json({ success: true, message: req.t('parcours.deleted') });
     } catch (error) {
       this._handleError(res, error);
     }
@@ -156,7 +156,7 @@ class ParcoursControllerV2 {
       );
       res.status(201).json({
         success: true,
-        message: 'Étape ajoutée',
+        message: req.t('parcours.stepAdded'),
         data: parcours.toDetailJSON(req.lang)
       });
     } catch (error) {
@@ -173,7 +173,7 @@ class ParcoursControllerV2 {
       );
       res.json({
         success: true,
-        message: 'Étape supprimée',
+        message: req.t('parcours.stepRemoved'),
         data: parcours.toDetailJSON(req.lang)
       });
     } catch (error) {
@@ -191,7 +191,7 @@ class ParcoursControllerV2 {
       );
       res.json({
         success: true,
-        message: 'Étapes réordonnées',
+        message: req.t('parcours.stepsReordered'),
         data: parcours.toDetailJSON(req.lang)
       });
     } catch (error) {
@@ -228,7 +228,7 @@ class ParcoursControllerV2 {
       );
       res.json({
         success: true,
-        message: 'Parcours activé',
+        message: req.t('parcours.activated'),
         data: parcours.toAdminJSON(req.lang)
       });
     } catch (error) {
@@ -244,7 +244,7 @@ class ParcoursControllerV2 {
       );
       res.json({
         success: true,
-        message: 'Parcours désactivé',
+        message: req.t('parcours.deactivated'),
         data: parcours.toAdminJSON(req.lang)
       });
     } catch (error) {
@@ -276,7 +276,7 @@ class ParcoursControllerV2 {
       if (!latitude || !longitude) {
         return res.status(400).json({
           success: false,
-          error: 'Les coordonnées GPS (latitude, longitude) sont requises'
+          error: req.t('parcours.gpsRequired')
         });
       }
 
@@ -486,7 +486,7 @@ class ParcoursControllerV2 {
       if (statusCode === 500) console.error(error.stack);
     }
 
-    const response = { success: false, error: error.message || 'Erreur serveur', code };
+    const response = { success: false, error: error.message || 'Internal server error', code };
     if (error.errors) response.errors = error.errors;
     if (IS_DEV_MODE && statusCode === 500) response.stack = error.stack;
 

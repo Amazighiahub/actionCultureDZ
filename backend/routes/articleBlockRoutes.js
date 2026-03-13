@@ -54,12 +54,12 @@ const initArticleBlockRoutes = (models, authMiddleware) => {
         if (err.code === 'LIMIT_FILE_SIZE') {
           return res.status(400).json({ 
             success: false, 
-            error: 'Fichier trop volumineux (limite: 10MB)' 
+            error: req.t ? req.t('upload.fileTooLarge') : 'File too large (limit: 10MB)' 
           });
         }
         return res.status(400).json({ 
           success: false, 
-          error: err.message || 'Erreur lors de l\'upload' 
+          error: req.t ? req.t('common.serverError') : 'Upload error' 
         });
       }
       next();
@@ -73,7 +73,7 @@ const initArticleBlockRoutes = (models, authMiddleware) => {
       console.error(`🚨 Middleware requis manquant: ${name} - accès refusé`);
       return res.status(503).json({
         success: false,
-        error: 'Service temporairement indisponible',
+        error: req.t ? req.t('common.serverError') : 'Service temporarily unavailable',
         code: 'MIDDLEWARE_UNAVAILABLE',
         details: name
       });
@@ -92,50 +92,50 @@ const initArticleBlockRoutes = (models, authMiddleware) => {
   const createBlockValidation = [
     body('id_article')
       .isInt()
-      .withMessage('ID article invalide'),
+      .withMessage((value, { req }) => req.t('validation.invalidId')),
     body('type_block')
       .isIn(['text', 'heading', 'image', 'video', 'citation', 'code', 'list', 'table', 'separator', 'embed'])
-      .withMessage('Type de bloc invalide'),
+      .withMessage((value, { req }) => req.t('validation.invalidType')),
     body('article_type')
       .optional()
       .isIn(['article', 'article_scientifique'])
-      .withMessage('Type d\'article invalide'),
+      .withMessage((value, { req }) => req.t('validation.invalidType')),
     body('contenu')
       .optional()
       .isLength({ max: 10000 })
-      .withMessage('Contenu trop long')
+      .withMessage((value, { req }) => req.t('validation.descriptionTooLong'))
   ];
 
   const updateBlockValidation = [
     body('type_block')
       .optional()
       .isIn(['text', 'heading', 'image', 'video', 'citation', 'code', 'list', 'table', 'separator', 'embed'])
-      .withMessage('Type de bloc invalide'),
+      .withMessage((value, { req }) => req.t('validation.invalidType')),
     body('contenu')
       .optional()
       .isLength({ max: 10000 })
-      .withMessage('Contenu trop long')
+      .withMessage((value, { req }) => req.t('validation.descriptionTooLong'))
   ];
 
   const reorderValidation = [
     body('blockIds')
       .isArray()
-      .withMessage('blockIds doit être un tableau'),
+      .withMessage((value, { req }) => req.t('validation.invalidData')),
     body('blockIds.*')
       .isInt()
-      .withMessage('Les IDs de blocs doivent être des entiers')
+      .withMessage((value, { req }) => req.t('validation.invalidId'))
   ];
 
   const createMultipleValidation = [
     body('id_article')
       .isInt()
-      .withMessage('ID article invalide'),
+      .withMessage((value, { req }) => req.t('validation.invalidId')),
     body('blocks')
       .isArray()
-      .withMessage('blocks doit être un tableau'),
+      .withMessage((value, { req }) => req.t('validation.invalidData')),
     body('blocks.*.type_block')
       .isIn(['text', 'heading', 'image', 'video', 'citation', 'code', 'list', 'table', 'separator', 'embed'])
-      .withMessage('Type de bloc invalide')
+      .withMessage((value, { req }) => req.t('validation.invalidType'))
   ];
 
   // ========================================================================
@@ -230,14 +230,11 @@ const initArticleBlockRoutes = (models, authMiddleware) => {
     }
     res.json({
       success: true,
-      message: 'Module article blocks opérationnel',
+      message: 'Module article blocks operational',
       timestamp: new Date().toISOString()
     });
   });
 
-  if (process.env.NODE_ENV !== 'production') {
-    console.log('✅ Routes article blocks initialisées avec succès');
-  }
   
   return router;
 };

@@ -49,104 +49,33 @@ async getNotifications(
   options: LoadNotificationsOptions = {}
 ): Promise<NotificationListResponse> {
   try {
-    const token = localStorage.getItem('auth_token');
-    if (!token) {
-      // CORRECTION: Retourner une réponse vide au lieu de throw
+    const params: any = {};
+    if (options.page) params.page = options.page;
+    if (options.limit) params.limit = options.limit;
+    if (options.nonLues !== undefined) params.nonLues = options.nonLues;
+    if (options.type) params.type = options.type;
+
+    const response = await httpClient.get<any>(API_ENDPOINTS.notifications.list, params);
+
+    if (!response.success) {
       return {
         notifications: [],
-        pagination: {
-          total: 0,
-          page: options.page || 1,
-          pages: 0,
-          limit: options.limit || 20
-        },
-        stats: {
-          nonLues: 0,
-          total: 0
-        }
+        pagination: { total: 0, page: options.page || 1, pages: 0, limit: options.limit || 20 },
+        stats: { nonLues: 0, total: 0 }
       };
     }
 
-    const params = new URLSearchParams();
-    if (options.page) params.append('page', options.page.toString());
-    if (options.limit) params.append('limit', options.limit.toString());
-    if (options.nonLues !== undefined) params.append('nonLues', options.nonLues.toString());
-    if (options.type) params.append('type', options.type);
-
-    const response = await fetch(
-      `${getApiUrl(API_ENDPOINTS.notifications.list)}?${params}`,
-      {
-        headers: getAuthHeaders(token)
-      }
-    );
-
-    // CORRECTION: Gérer les erreurs 503 et 404
-    if (response.status === 503 || response.status === 404) {
-      console.warn(`Service notifications non disponible (${response.status})`);
-      return {
-        notifications: [],
-        pagination: {
-          total: 0,
-          page: options.page || 1,
-          pages: 0,
-          limit: options.limit || 20
-        },
-        stats: {
-          nonLues: 0,
-          total: 0
-        }
-      };
-    }
-
-    if (!response.ok) {
-      // CORRECTION: Retourner des valeurs par défaut au lieu de throw
-      console.error(`Erreur API notifications: ${response.status} ${response.statusText}`);
-      return {
-        notifications: [],
-        pagination: {
-          total: 0,
-          page: options.page || 1,
-          pages: 0,
-          limit: options.limit || 20
-        },
-        stats: {
-          nonLues: 0,
-          total: 0
-        }
-      };
-    }
-
-    const data = await response.json();
-    
-    // Si l'API retourne le format avec underscore, on garde tel quel
-    // Sinon on mappe les données
-    const notifications = data.data.notifications.map((n: any) => {
-      // Si c'est déjà au bon format (id_notification existe)
-      if (n.id_notification) return n;
-      // Sinon on convertit depuis le format API
-      return mapAPIToNotification(n);
-    });
-
+    const data = response.data;
     return {
-      notifications,
-      pagination: data.data.pagination || data.pagination,
-      stats: data.data.stats || data.stats
+      notifications: (data?.notifications || data?.items || []).map((n: any) => mapAPIToNotification(n)),
+      pagination: data?.pagination || { total: 0, page: options.page || 1, pages: 0, limit: options.limit || 20 },
+      stats: data?.stats || { nonLues: 0, total: 0 }
     };
-  } catch (error) {
-    console.error('Erreur lors de la récupération des notifications:', error);
-    // CORRECTION: Retourner des valeurs par défaut au lieu de throw
+  } catch (error: any) {
     return {
       notifications: [],
-      pagination: {
-        total: 0,
-        page: options.page || 1,
-        pages: 0,
-        limit: options.limit || 20
-      },
-      stats: {
-        nonLues: 0,
-        total: 0
-      }
+      pagination: { total: 0, page: options.page || 1, pages: 0, limit: options.limit || 20 },
+      stats: { nonLues: 0, total: 0 }
     };
   }
 }
@@ -155,61 +84,23 @@ async getNotifications(
    */
   async getSummary(): Promise<NotificationSummary> {
     try {
-      const token = localStorage.getItem('auth_token');
-      if (!token) {
-        return {
-          total: 0,
-          nonLues: 0,
-          parType: {},
-          dernieres: []
-        };
+      const response = await httpClient.get<any>(API_ENDPOINTS.notifications.summary);
+
+      if (!response.success) {
+        return { total: 0, nonLues: 0, parType: {}, dernieres: [] };
       }
 
-      const response = await fetch(
-        getApiUrl(API_ENDPOINTS.notifications.summary),
-        {
-          headers: getAuthHeaders(token)
-        }
-      );
-      if (response.status === 503 || response.status === 404) {
-        console.warn(`Service notifications non disponible (${response.status})`);
-        return {
-          total: 0,
-          nonLues: 0,
-          parType: {},
-          dernieres: []
-        };
-      }
-      if (!response.ok) {
-        console.error(`Erreur API notifications: ${response.status} ${response.statusText}`);
-        return {
-          total: 0,
-          nonLues: 0,
-          parType: {},
-          dernieres: []
-        };
-      }
-     
+      const data = response.data;
 
-      const data = await response.json();
-      
-      // Si le format est déjà correct
-      if (data.data && data.data.nonLues !== undefined) {
-        return data.data;
-      }
-      
-      // Sinon on mappe depuis le format API
-      if (data.data && data.data.total_unread !== undefined) {
-        return mapAPISummaryToSummary(data.data);
+      if (data && data.nonLues !== undefined) {
+        return data;
       }
 
-      // Format par défaut
-      return {
-        total: 0,
-        nonLues: 0,
-        parType: {},
-        dernieres: []
-      };
+      if (data && data.total_unread !== undefined) {
+        return mapAPISummaryToSummary(data);
+      }
+
+      return { total: 0, nonLues: 0, parType: {}, dernieres: [] };
     } catch (error) {
       return {
         total: 0,
@@ -249,7 +140,6 @@ async getNotifications(
       }
       */
     } catch (error) {
-      console.error('Erreur markAsRead:', error);
       throw error;
     }
   }
@@ -280,7 +170,6 @@ async getNotifications(
         updated: response.data?.updated || response.data?.updated_count || 0
       };
     } catch (error) {
-      console.error('Erreur markAllAsRead:', error);
       throw error;
     }
   }
@@ -303,7 +192,6 @@ async getNotifications(
         updated: response.data?.updated || response.data?.updated_count || 0
       };
     } catch (error) {
-      console.error('Erreur markMultipleAsRead:', error);
       throw error;
     }
   }
@@ -321,7 +209,6 @@ async getNotifications(
         throw new Error(response.error || 'Erreur lors de la suppression');
       }
     } catch (error) {
-      console.error('Erreur deleteNotification:', error);
       throw error;
     }
   }
@@ -343,7 +230,6 @@ async getNotifications(
         deleted: response.data?.deleted || response.data?.deleted_count || 0
       };
     } catch (error) {
-      console.error('Erreur deleteAllRead:', error);
       throw error;
     }
   }
@@ -381,7 +267,6 @@ async getNotifications(
         }
       };
     } catch (error) {
-      console.error('Erreur getPreferences:', error);
       throw error;
     }
   }
@@ -404,7 +289,6 @@ async getNotifications(
 
       return response.data;
     } catch (error) {
-      console.error('Erreur updatePreferences:', error);
       throw error;
     }
   }
@@ -425,7 +309,6 @@ async getNotifications(
 
       return response.data;
     } catch (error) {
-      console.error('Erreur sendTestEmail:', error);
       throw error;
     }
   }
@@ -448,7 +331,6 @@ async getNotifications(
 
       return response.data.websocket;
     } catch (error) {
-      console.error('Erreur getWebSocketStatus:', error);
       return {
         connected: false,
         error: error.message || 'Erreur inconnue'
@@ -474,7 +356,6 @@ async getNotifications(
 
       return response.data;
     } catch (error) {
-      console.error('Erreur broadcastNotification:', error);
       throw error;
     }
   }
@@ -502,7 +383,6 @@ async getNotifications(
       const summary = await this.getSummary();
       return summary.nonLues || 0;
     } catch (error) {
-      console.error('Erreur getUnreadCount:', error);
       return 0;
     }
   }
@@ -512,7 +392,6 @@ async getNotifications(
    */
   async requestBrowserPermission(): Promise<boolean> {
     if (!('Notification' in window)) {
-      console.warn('Les notifications ne sont pas supportées par ce navigateur');
       return false;
     }
 
@@ -563,35 +442,12 @@ async getNotifications(
     metadata?: any;
   }): Promise<{ success: boolean; notification?: Notification }> {
     try {
-      const token = localStorage.getItem('auth_token');
-      if (!token) {
-        throw new Error('Non authentifié');
-      }
-
-      const response = await fetch(
-        `${getApiUrl('/notifications/send')}`,
-        {
-          method: 'POST',
-          headers: {
-            ...getAuthHeaders(token),
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(notificationData)
-        }
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Erreur lors de l\'envoi de la notification');
-      }
-
-      const result = await response.json();
+      const result = await httpClient.post<any>('/notifications/send', notificationData);
       return {
-        success: true,
+        success: result.success,
         notification: result.data?.notification
       };
     } catch (error) {
-      console.error('Erreur sendNotification:', error);
       throw error;
     }
   }
@@ -609,35 +465,12 @@ async getNotifications(
     metadata?: any;
   }): Promise<{ success: boolean; sent_count?: number }> {
     try {
-      const token = localStorage.getItem('auth_token');
-      if (!token) {
-        throw new Error('Non authentifié');
-      }
-
-      const response = await fetch(
-        `${getApiUrl('/notifications/broadcast')}`,
-        {
-          method: 'POST',
-          headers: {
-            ...getAuthHeaders(token),
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(notificationData)
-        }
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Erreur lors de l\'envoi de la notification globale');
-      }
-
-      const result = await response.json();
+      const result = await httpClient.post<any>('/notifications/broadcast', notificationData);
       return {
-        success: true,
+        success: result.success,
         sent_count: result.data?.sent_count || 0
       };
     } catch (error) {
-      console.error('Erreur sendGlobalNotification:', error);
       throw error;
     }
   }
@@ -647,45 +480,19 @@ async getNotifications(
    * Note: Cette méthode n'est disponible que si le backend supporte l'envoi d'emails
    */
   async sendEmail?(emailData: {
-    to: number | string; // userId ou email
+    to: number | string;
     subject: string;
     body: string;
     template?: string;
   }): Promise<{ success: boolean; messageId?: string }> {
     try {
-      const token = localStorage.getItem('auth_token');
-      if (!token) {
-        throw new Error('Non authentifié');
-      }
-
-      const response = await fetch(
-        `${getApiUrl('/notifications/email')}`,
-        {
-          method: 'POST',
-          headers: {
-            ...getAuthHeaders(token),
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(emailData)
-        }
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Erreur lors de l\'envoi de l\'email');
-      }
-
-      const result = await response.json();
+      const result = await httpClient.post<any>('/notifications/test-email', emailData);
       return {
-        success: true,
+        success: result.success,
         messageId: result.data?.messageId
       };
     } catch (error) {
-      console.error('Erreur sendEmail:', error);
-      // Ne pas throw l'erreur pour sendEmail car c'est optionnel
-      return {
-        success: false
-      };
+      return { success: false };
     }
   }
 }

@@ -96,7 +96,7 @@ class ArtisanatControllerV2 {
       const artisanat = await this.artisanatService.create(req.body, req.user.id_user);
       res.status(201).json({
         success: true,
-        message: 'Artisanat créé avec succès',
+        message: req.t('artisanat.created'),
         data: artisanat.toDetailJSON(req.lang)
       });
     } catch (error) {
@@ -109,7 +109,7 @@ class ArtisanatControllerV2 {
       const artisanat = await this.artisanatService.update(parseInt(req.params.id), req.body);
       res.json({
         success: true,
-        message: 'Artisanat mis à jour',
+        message: req.t('artisanat.updated'),
         data: artisanat.toDetailJSON(req.lang)
       });
     } catch (error) {
@@ -120,7 +120,7 @@ class ArtisanatControllerV2 {
   async delete(req, res) {
     try {
       await this.artisanatService.delete(parseInt(req.params.id));
-      res.json({ success: true, message: 'Artisanat supprimé' });
+      res.json({ success: true, message: req.t('artisanat.deleted') });
     } catch (error) {
       this._handleError(res, error);
     }
@@ -165,7 +165,7 @@ class ArtisanatControllerV2 {
   async uploadMedias(req, res) {
     res.status(501).json({
       success: false,
-      error: 'Upload de médias artisanat nécessite configuration du middleware multer'
+      error: req.t('upload.multerRequired')
     });
   }
 
@@ -195,7 +195,7 @@ class ArtisanatControllerV2 {
       if (statusCode === 500) console.error(error.stack);
     }
 
-    const response = { success: false, error: error.message || 'Erreur serveur', code };
+    const response = { success: false, error: error.message || 'Internal server error', code };
     if (error.errors) response.errors = error.errors;
     if (IS_DEV_MODE && statusCode === 500) response.stack = error.stack;
 

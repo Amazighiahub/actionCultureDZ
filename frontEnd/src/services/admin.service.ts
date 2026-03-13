@@ -206,15 +206,15 @@ class AdminService {
   }
 
   async getOeuvreDetails(oeuvreId: number): Promise<ApiResponse<any>> {
-    return httpClient.get<any>(`/admin/oeuvres/${oeuvreId}`);
+    return httpClient.get<any>(`/oeuvres/${oeuvreId}`);
   }
 
   async updateOeuvre(oeuvreId: number, data: Partial<any>): Promise<ApiResponse<any>> {
-    return httpClient.put<any>(`/admin/oeuvres/${oeuvreId}`, data);
+    return httpClient.put<any>(`/oeuvres/${oeuvreId}`, data);
   }
 
   async deleteOeuvre(oeuvreId: number): Promise<ApiResponse<void>> {
-    return httpClient.delete<void>(`/admin/oeuvres/${oeuvreId}`);
+    return httpClient.delete<void>(`/oeuvres/${oeuvreId}`);
   }
 
   // Événements
@@ -223,45 +223,45 @@ class AdminService {
   }
 
   async getEvenementDetails(evenementId: number): Promise<ApiResponse<any>> {
-    return httpClient.get<any>(`/admin/evenements/${evenementId}`);
+    return httpClient.get<any>(`/evenements/${evenementId}`);
   }
 
   async updateEvenement(evenementId: number, data: Partial<any>): Promise<ApiResponse<any>> {
-    return httpClient.put<any>(`/admin/evenements/${evenementId}`, data);
+    return httpClient.put<any>(`/evenements/${evenementId}`, data);
   }
 
   async deleteEvenement(evenementId: number): Promise<ApiResponse<void>> {
-    return httpClient.delete<void>(`/admin/evenements/${evenementId}`);
+    return httpClient.delete<void>(`/evenements/${evenementId}`);
   }
 
   // Patrimoine
   async getPatrimoineItems(params?: PatrimoineFilters): Promise<ApiResponse<PaginatedResponse<any>>> {
-    return httpClient.getPaginated<any>('/admin/patrimoine', params);
+    return httpClient.getPaginated<any>('/patrimoine', params);
   }
 
   async updatePatrimoine(patrimoineId: number, data: Partial<any>): Promise<ApiResponse<any>> {
-    return httpClient.put<any>(`/admin/patrimoine/${patrimoineId}`, data);
+    return httpClient.put<any>(`/patrimoine/${patrimoineId}`, data);
   }
 
   async deletePatrimoine(patrimoineId: number): Promise<ApiResponse<void>> {
-    return httpClient.delete<void>(`/admin/patrimoine/${patrimoineId}`);
+    return httpClient.delete<void>(`/patrimoine/${patrimoineId}`);
   }
 
   // Services
   async getServices(params?: ServiceFilters): Promise<ApiResponse<PaginatedResponse<any>>> {
-    return httpClient.getPaginated<any>(API_ENDPOINTS.dashboard.services.bulkAction, params);
+    return httpClient.getPaginated<any>('/services', params);
   }
 
   async getServiceDetails(serviceId: number): Promise<ApiResponse<any>> {
-    return httpClient.get<any>(`/admin/services/${serviceId}`);
+    return httpClient.get<any>(`/services/${serviceId}`);
   }
 
   async updateService(serviceId: number, data: Partial<any>): Promise<ApiResponse<any>> {
-    return httpClient.put<any>(`/admin/services/${serviceId}`, data);
+    return httpClient.put<any>(`/services/${serviceId}`, data);
   }
 
   async deleteService(serviceId: number): Promise<ApiResponse<void>> {
-    return httpClient.delete<void>(`/admin/services/${serviceId}`);
+    return httpClient.delete<void>(`/services/${serviceId}`);
   }
 
   // ========================================
@@ -281,8 +281,6 @@ class AdminService {
    * Utilise PATCH /dashboard/users/:id/validate
    */
   async validateUser(userId: number, validated: boolean, reason?: string): Promise<ApiResponse<any>> {
-    console.log('🔄 AdminService.validateUser appelé:', { userId, validated, reason });
-    
     // La route backend attend: { valide: boolean, raison?: string }
     return httpClient.patch<any>(`/dashboard/users/${userId}/validate`, {
       valide: validated,

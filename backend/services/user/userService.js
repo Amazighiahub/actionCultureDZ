@@ -14,15 +14,18 @@ const BaseService = require('../core/baseService');
 const UserDTO = require('../../dto/user/userDTO');
 const CreateUserDTO = require('../../dto/user/createUserDTO');
 const UpdateUserDTO = require('../../dto/user/updateUserDTO');
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
+
+const REFRESH_TOKEN_EXPIRY_DAYS = 7;
 
 class UserService extends BaseService {
   constructor(userRepository, options = {}) {
     super(userRepository, options);
-    this.jwtSecret = process.env.JWT_SECRET || 'default-secret';
-    this.jwtExpiration = process.env.JWT_EXPIRATION || '24h';
-    this.bcryptRounds = 10;
+    this.jwtSecret = process.env.JWT_SECRET || (process.env.NODE_ENV === 'development' ? 'dev-secret-key-only-for-development' : (() => { throw new Error('JWT_SECRET must be configured in production'); })());
+    this.jwtExpiration = process.env.JWT_EXPIRATION || '15m';
+    this.bcryptRounds = parseInt(process.env.BCRYPT_ROUNDS) || 12;
   }
 
   // ============================================================================
@@ -60,8 +63,10 @@ class UserService extends BaseService {
     // 6. Créer l'utilisateur
     const newUser = await this.repository.create(entityData);
 
-    // 7. Générer le token
+    // 7. Générer les tokens
     const token = this._generateToken(newUser);
+    const refreshToken = this._generateRefreshToken();
+    await this._saveRefreshToken(newUser.id_user, refreshToken);
 
     // 8. Transformer en DTO de réponse
     const userDTO = UserDTO.fromEntity(newUser);
@@ -70,7 +75,8 @@ class UserService extends BaseService {
 
     return {
       user: userDTO,
-      token
+      token,
+      refreshToken
     };
   }
 
@@ -105,8 +111,10 @@ class UserService extends BaseService {
     // 4. Mettre à jour la dernière connexion
     await this.repository.updateLastLogin(user.id_user);
 
-    // 5. Générer le token
+    // 5. Générer les tokens
     const token = this._generateToken(user);
+    const refreshToken = this._generateRefreshToken();
+    await this._saveRefreshToken(user.id_user, refreshToken);
 
     // 6. Transformer en DTO
     const userDTO = UserDTO.fromEntity(user);
@@ -115,42 +123,47 @@ class UserService extends BaseService {
 
     return {
       user: userDTO,
-      token
+      token,
+      refreshToken
     };
   }
 
   /**
-   * Rafraîchit un token JWT
-   * @param {string} token - Token actuel à rafraîchir
-   * @returns {Promise<{user: UserDTO, token: string}>}
+   * Rafraîchit les tokens à l'aide d'un refresh token opaque (rotation)
+   * @param {string} refreshToken - Refresh token actuel
+   * @returns {Promise<{user: UserDTO, token: string, refreshToken: string}>}
    */
-  async refreshToken(token) {
-    if (!token) {
-      throw this._unauthorizedError('Token requis');
+  async refreshToken(refreshToken) {
+    if (!refreshToken) {
+      throw this._unauthorizedError('Refresh token requis');
     }
 
-    try {
-      const decoded = jwt.verify(token, this.jwtSecret, { ignoreExpiration: true });
-      const user = await this.repository.findById(decoded.userId);
+    const hashedToken = crypto.createHash('sha256').update(refreshToken).digest('hex');
+    const user = await this.repository.findByRefreshToken(hashedToken);
 
-      if (!user) {
-        throw this._unauthorizedError('Utilisateur non trouvé');
-      }
-
-      if (user.statut === 'inactif' || user.statut === 'banni' || user.statut === 'suspendu') {
-        throw this._forbiddenError('Compte désactivé ou suspendu');
-      }
-
-      const newToken = this._generateToken(user);
-      const userDTO = UserDTO.fromEntity(user);
-
-      return { user: userDTO, token: newToken };
-    } catch (error) {
-      if (error.name === 'JsonWebTokenError') {
-        throw this._unauthorizedError('Token invalide');
-      }
-      throw error;
+    if (!user) {
+      throw this._unauthorizedError('Refresh token invalide');
     }
+
+    if (new Date() > new Date(user.refresh_token_expires)) {
+      await this._clearRefreshToken(user.id_user);
+      throw this._unauthorizedError('Refresh token expiré');
+    }
+
+    if (user.statut === 'inactif' || user.statut === 'banni' || user.statut === 'suspendu') {
+      await this._clearRefreshToken(user.id_user);
+      throw this._forbiddenError('Compte désactivé ou suspendu');
+    }
+
+    const newAccessToken = this._generateToken(user);
+    const newRefreshToken = this._generateRefreshToken();
+    await this._saveRefreshToken(user.id_user, newRefreshToken);
+
+    const userDTO = UserDTO.fromEntity(user);
+
+    this.logger.info(`Token rafraîchi pour: ${user.id_user}`);
+
+    return { user: userDTO, token: newAccessToken, refreshToken: newRefreshToken };
   }
 
   /**
@@ -160,7 +173,7 @@ class UserService extends BaseService {
    */
   async verifyToken(token) {
     try {
-      const decoded = jwt.verify(token, this.jwtSecret);
+      const decoded = jwt.verify(token, this.jwtSecret, { algorithms: ['HS256'] });
       const user = await this.repository.findById(decoded.userId);
 
       if (!user) {
@@ -319,14 +332,23 @@ class UserService extends BaseService {
       throw this._validationError('Mot de passe actuel incorrect');
     }
 
-    // Valider le nouveau mot de passe
+    // Valider le nouveau mot de passe (mêmes critères que l'inscription)
     if (!nouveauMotDePasse || nouveauMotDePasse.length < 12) {
       throw this._validationError('Le nouveau mot de passe doit contenir au moins 12 caractères');
+    }
+    if (!/[A-Z]/.test(nouveauMotDePasse) || !/[a-z]/.test(nouveauMotDePasse) || !/[0-9]/.test(nouveauMotDePasse)) {
+      throw this._validationError('Le mot de passe doit contenir majuscule, minuscule et chiffre');
     }
 
     // Hasher et mettre à jour
     const hashedPassword = await bcrypt.hash(nouveauMotDePasse, this.bcryptRounds);
-    await this.repository.update(userId, { password: hashedPassword });
+    await this.repository.update(userId, {
+      password: hashedPassword,
+      password_changed_at: new Date()
+    });
+
+    // Révoquer le refresh token pour forcer la re-authentification
+    await this._clearRefreshToken(userId);
 
     this.logger.info(`Mot de passe changé pour: ${userId}`);
 
@@ -435,7 +457,7 @@ class UserService extends BaseService {
       throw this._notFoundError(userId);
     }
 
-    if (user.statut_validation === 'valide') {
+    if (user.statut === 'actif') {
       throw this._conflictError('Cet utilisateur est déjà validé');
     }
 
@@ -545,6 +567,16 @@ class UserService extends BaseService {
   // ============================================================================
 
   /**
+   * Révoque le refresh token d'un utilisateur (pour le logout)
+   * @param {number} userId
+   * @returns {Promise<void>}
+   */
+  async revokeRefreshToken(userId) {
+    await this._clearRefreshToken(userId);
+    this.logger.info(`Refresh token révoqué pour: ${userId}`);
+  }
+
+  /**
    * Génère un token JWT
    * @private
    */
@@ -556,8 +588,42 @@ class UserService extends BaseService {
         typeUser: user.id_type_user
       },
       this.jwtSecret,
-      { expiresIn: this.jwtExpiration }
+      { expiresIn: this.jwtExpiration, algorithm: 'HS256' }
     );
+  }
+
+  /**
+   * Génère un refresh token opaque cryptographiquement sûr
+   * @private
+   */
+  _generateRefreshToken() {
+    return crypto.randomBytes(64).toString('hex');
+  }
+
+  /**
+   * Persiste le refresh token hashé avec une date d'expiration
+   * @private
+   */
+  async _saveRefreshToken(userId, refreshToken) {
+    const expires = new Date();
+    expires.setDate(expires.getDate() + REFRESH_TOKEN_EXPIRY_DAYS);
+
+    const hashedToken = crypto.createHash('sha256').update(refreshToken).digest('hex');
+    await this.repository.update(userId, {
+      refresh_token: hashedToken,
+      refresh_token_expires: expires
+    });
+  }
+
+  /**
+   * Efface le refresh token d'un utilisateur
+   * @private
+   */
+  async _clearRefreshToken(userId) {
+    await this.repository.update(userId, {
+      refresh_token: null,
+      refresh_token_expires: null
+    });
   }
 }
 

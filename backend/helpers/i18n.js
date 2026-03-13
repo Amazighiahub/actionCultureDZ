@@ -145,8 +145,16 @@ const mergeTranslations = (existing, updates) => {
   const updatesObj = typeof updates === 'string'
     ? { [DEFAULT_LANGUAGE]: updates }
     : updates;
-  
-  return { ...existingObj, ...updatesObj };
+
+  // Filtrer les clés dangereuses (prototype pollution)
+  const safeUpdates = {};
+  for (const key of Object.keys(updatesObj)) {
+    if (key !== '__proto__' && key !== 'constructor' && key !== 'prototype') {
+      safeUpdates[key] = updatesObj[key];
+    }
+  }
+
+  return { ...existingObj, ...safeUpdates };
 };
 
 /**

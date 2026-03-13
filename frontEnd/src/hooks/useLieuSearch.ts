@@ -1,5 +1,6 @@
 // hooks/useLieuSearch.ts
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
+import { httpClient } from '@/services/httpClient';
 
 interface Lieu {
   id_lieu: number;
@@ -52,51 +53,30 @@ interface UseLieuSearchReturn {
   clearErrors: () => void;
 }
 
-export const useLieuSearch = (apiUrl: string = ''): UseLieuSearchReturn => {
-  const API_BASE_URL = apiUrl || import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
-  
-  // États pour les lieux
+export const useLieuSearch = (): UseLieuSearchReturn => {
   const [lieux, setLieux] = useState<Lieu[]>([]);
   const [loadingLieux, setLoadingLieux] = useState(false);
   const [errorLieux, setErrorLieux] = useState<string | null>(null);
   
-  // États pour les DetailLieux
   const [detailLieux, setDetailLieux] = useState<DetailLieu[]>([]);
   const [loadingDetailLieux, setLoadingDetailLieux] = useState(false);
   const [errorDetailLieux, setErrorDetailLieux] = useState<string | null>(null);
 
-  // Rechercher des lieux
   const searchLieux = useCallback(async (search: string) => {
     setLoadingLieux(true);
     setErrorLieux(null);
     
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/lieux/search?search=${encodeURIComponent(search)}&limit=20`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          }
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`Erreur ${response.status}: ${response.statusText}`);
-      }
-
-      const data = await response.json();
+      const data = await httpClient.get<any>('/lieux/search', { search, limit: 20 });
       setLieux(data.data?.lieux || []);
     } catch (err) {
-      console.error('Erreur lors de la recherche de lieux:', err);
       setErrorLieux(err instanceof Error ? err.message : 'Erreur inconnue');
       setLieux([]);
     } finally {
       setLoadingLieux(false);
     }
-  }, [API_BASE_URL]);
+  }, []);
 
-  // Récupérer les DetailLieux d'un lieu
   const fetchDetailLieux = useCallback(async (lieuId: number) => {
     if (!lieuId) {
       setDetailLieux([]);
@@ -107,30 +87,15 @@ export const useLieuSearch = (apiUrl: string = ''): UseLieuSearchReturn => {
     setErrorDetailLieux(null);
     
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/lieux/${lieuId}/detail-lieux`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          }
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`Erreur ${response.status}: ${response.statusText}`);
-      }
-
-      const data = await response.json();
+      const data = await httpClient.get<any>(`/lieux/${lieuId}/details`);
       setDetailLieux(data.data || []);
     } catch (err) {
-      console.error('Erreur lors du chargement des DetailLieux:', err);
       setErrorDetailLieux(err instanceof Error ? err.message : 'Erreur inconnue');
       setDetailLieux([]);
     } finally {
       setLoadingDetailLieux(false);
     }
-  }, [API_BASE_URL]);
+  }, []);
 
   // Nettoyer les erreurs
   const clearErrors = useCallback(() => {
@@ -190,9 +155,7 @@ interface UseCreateServiceReturn {
   reset: () => void;
 }
 
-export const useCreateService = (apiUrl: string = ''): UseCreateServiceReturn => {
-  const API_BASE_URL = apiUrl || import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
-  
+export const useCreateService = (): UseCreateServiceReturn => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -203,23 +166,12 @@ export const useCreateService = (apiUrl: string = ''): UseCreateServiceReturn =>
     setSuccess(false);
 
     try {
-      const token = localStorage.getItem('auth_token');
-      
-      const response = await fetch(`${API_BASE_URL}/services/complet`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token && { 'Authorization': `Bearer ${token}` })
-        },
-        body: JSON.stringify(data)
-      });
+      const result = await httpClient.post<any>('/services', data);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || `Erreur ${response.status}`);
+      if (!result.success) {
+        throw new Error(result.error || 'Erreur lors de la création');
       }
 
-      const result = await response.json();
       setSuccess(true);
       return result.data;
     } catch (err) {

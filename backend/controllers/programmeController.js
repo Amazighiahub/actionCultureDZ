@@ -90,7 +90,7 @@ class ProgrammeController {
       console.error('Erreur lors de la récupération des programmes:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Erreur serveur lors de la récupération des programmes' 
+        error: req.t('common.serverError') 
       });
     }
   }
@@ -129,7 +129,7 @@ class ProgrammeController {
       if (!programme) {
         return res.status(404).json({ 
           success: false, 
-          error: 'Programme non trouvé' 
+          error: req.t('programme.notFound') 
         });
       }
 
@@ -144,7 +144,7 @@ class ProgrammeController {
       console.error('Erreur lors de la récupération du programme:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Erreur serveur' 
+        error: req.t('common.serverError') 
       });
     }
   }
@@ -187,7 +187,7 @@ class ProgrammeController {
       if (programmes.length === 0) {
         return res.status(404).json({
           success: false,
-          error: 'Aucun programme trouvé pour cet événement'
+          error: req.t('programme.notFound')
         });
       }
 
@@ -205,7 +205,7 @@ class ProgrammeController {
         case 'pdf':
           res.status(501).json({
             success: false,
-            error: 'Export PDF non encore implémenté'
+            error: req.t('common.notImplemented')
           });
           break;
 
@@ -239,7 +239,7 @@ class ProgrammeController {
       console.error('Erreur lors de l\'export du programme:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Erreur serveur lors de l\'export' 
+        error: req.t('common.serverError') 
       });
     }
   }
@@ -277,7 +277,7 @@ class ProgrammeController {
         await transaction.rollback();
         return res.status(404).json({
           success: false,
-          error: 'Événement non trouvé'
+          error: req.t('evenement.notFound')
         });
       }
 
@@ -286,11 +286,18 @@ class ProgrammeController {
         await transaction.rollback();
         return res.status(403).json({
           success: false,
-          error: 'Accès refusé'
+          error: req.t('auth.forbidden')
         });
       }
 
-      // ⚡ Préparer les champs multilingues
+      if (id_lieu) {
+        const lieu = await this.models.Lieu.findByPk(id_lieu);
+        if (!lieu) {
+          await transaction.rollback();
+          return res.status(404).json({ success: false, error: req.t('lieu.notFound') });
+        }
+      }
+
       const titreMultiLang = this.prepareMultiLangField(titre, lang);
       const descriptionMultiLang = this.prepareMultiLangField(description, lang);
 
@@ -335,7 +342,7 @@ class ProgrammeController {
       // ⚡ Traduire
       res.status(201).json({
         success: true,
-        message: 'Programme créé avec succès',
+        message: req.t('programme.created'),
         data: translateDeep(programmeComplet, lang)
       });
 
@@ -344,7 +351,7 @@ class ProgrammeController {
       console.error('Erreur lors de la création du programme:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur'
+        error: req.t('common.serverError')
       });
     }
   }
@@ -356,7 +363,12 @@ class ProgrammeController {
     try {
       const lang = req.lang || 'fr';  // ⚡
       const { id } = req.params;
-      const { titre, description, ...otherUpdates } = req.body;
+      const { titre, description } = req.body;
+
+      // Whitelist des champs modifiables
+      const allowedFields = ['id_lieu', 'lieu_specifique', 'heure_debut', 'heure_fin', 'type_activite', 'duree_estimee', 'nb_participants_max', 'materiel_requis', 'notes_organisateur', 'ordre', 'intervenants'];
+      const updates = {};
+      allowedFields.forEach(f => { if (req.body[f] !== undefined) updates[f] = req.body[f]; });
 
       const programme = await this.models.Programme.findByPk(id, {
         include: [{ model: this.models.Evenement }]
@@ -366,7 +378,7 @@ class ProgrammeController {
         await transaction.rollback();
         return res.status(404).json({
           success: false,
-          error: 'Programme non trouvé'
+          error: req.t('programme.notFound')
         });
       }
 
@@ -375,11 +387,9 @@ class ProgrammeController {
         await transaction.rollback();
         return res.status(403).json({
           success: false,
-          error: 'Accès refusé'
+          error: req.t('auth.forbidden')
         });
       }
-
-      const updates = { ...otherUpdates };
 
       // ⚡ Gérer les champs multilingues
       if (titre !== undefined) {
@@ -408,7 +418,7 @@ class ProgrammeController {
       // ⚡ Traduire
       res.json({
         success: true,
-        message: 'Programme mis à jour avec succès',
+        message: req.t('programme.updated'),
         data: translateDeep(programmeComplet, lang)
       });
 
@@ -417,7 +427,7 @@ class ProgrammeController {
       console.error('Erreur lors de la mise à jour:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur'
+        error: req.t('common.serverError')
       });
     }
   }
@@ -437,7 +447,7 @@ class ProgrammeController {
         await transaction.rollback();
         return res.status(404).json({
           success: false,
-          error: 'Programme non trouvé'
+          error: req.t('programme.notFound')
         });
       }
 
@@ -446,7 +456,7 @@ class ProgrammeController {
         await transaction.rollback();
         return res.status(403).json({
           success: false,
-          error: 'Accès refusé'
+          error: req.t('auth.forbidden')
         });
       }
 
@@ -462,7 +472,7 @@ class ProgrammeController {
 
       res.json({
         success: true,
-        message: 'Programme supprimé avec succès'
+        message: req.t('programme.deleted')
       });
 
     } catch (error) {
@@ -470,7 +480,7 @@ class ProgrammeController {
       console.error('Erreur lors de la suppression:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur'
+        error: req.t('common.serverError')
       });
     }
   }
@@ -487,7 +497,7 @@ class ProgrammeController {
       if (!programme) {
         return res.status(404).json({
           success: false,
-          error: 'Programme non trouvé'
+          error: req.t('programme.notFound')
         });
       }
 
@@ -498,7 +508,7 @@ class ProgrammeController {
 
     } catch (error) {
       console.error('Erreur:', error);
-      res.status(500).json({ success: false, error: 'Erreur serveur' });
+      res.status(500).json({ success: false, error: req.t('common.serverError') });
     }
   }
 
@@ -510,7 +520,7 @@ class ProgrammeController {
 
       const programme = await this.models.Programme.findByPk(id);
       if (!programme) {
-        return res.status(404).json({ success: false, error: 'Programme non trouvé' });
+        return res.status(404).json({ success: false, error: req.t('programme.notFound') });
       }
 
       const updates = {};
@@ -518,15 +528,15 @@ class ProgrammeController {
       if (description) updates.description = mergeTranslations(programme.description, { [lang]: description });
 
       if (Object.keys(updates).length === 0) {
-        return res.status(400).json({ success: false, error: 'Aucune donnée à mettre à jour' });
+        return res.status(400).json({ success: false, error: req.t('common.badRequest') });
       }
 
       await programme.update(updates);
-      res.json({ success: true, message: `Traduction ${lang} mise à jour`, data: programme });
+      res.json({ success: true, message: req.t('translation.updated', { lang }), data: programme });
 
     } catch (error) {
       console.error('Erreur:', error);
-      res.status(500).json({ success: false, error: 'Erreur serveur' });
+      res.status(500).json({ success: false, error: req.t('common.serverError') });
     }
   }
 
@@ -546,7 +556,7 @@ class ProgrammeController {
         await transaction.rollback();
         return res.status(404).json({ 
           success: false, 
-          error: 'Programme non trouvé' 
+          error: req.t('programme.notFound') 
         });
       }
 
@@ -554,7 +564,7 @@ class ProgrammeController {
         await transaction.rollback();
         return res.status(403).json({ 
           success: false, 
-          error: 'Accès refusé' 
+          error: req.t('auth.forbidden') 
         });
       }
 
@@ -577,7 +587,7 @@ class ProgrammeController {
 
       res.json({
         success: true,
-        message: `Statut du programme mis à jour: ${ancienStatut} → ${statut}`,
+        message: req.t('programme.statusUpdated'),
         data: {
           id_programme: programme.id_programme,
           titre: programme.titre,
@@ -591,7 +601,7 @@ class ProgrammeController {
       console.error('Erreur lors de la mise à jour du statut:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Erreur serveur' 
+        error: req.t('common.serverError') 
       });
     }
   }
@@ -616,7 +626,7 @@ class ProgrammeController {
         await transaction.rollback();
         return res.status(404).json({
           success: false,
-          error: 'Programme non trouvé'
+          error: req.t('programme.notFound')
         });
       }
 
@@ -625,7 +635,7 @@ class ProgrammeController {
         await transaction.rollback();
         return res.status(403).json({
           success: false,
-          error: 'Accès refusé'
+          error: req.t('auth.forbidden')
         });
       }
 
@@ -651,7 +661,7 @@ class ProgrammeController {
 
       res.status(201).json({
         success: true,
-        message: 'Programme dupliqué avec succès',
+        message: req.t('programme.duplicated'),
         data: translateDeep(programmeComplet, lang)
       });
 
@@ -660,7 +670,7 @@ class ProgrammeController {
       console.error('Erreur lors de la duplication:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur'
+        error: req.t('common.serverError')
       });
     }
   }
@@ -679,7 +689,7 @@ class ProgrammeController {
         await transaction.rollback();
         return res.status(404).json({
           success: false,
-          error: 'Événement non trouvé'
+          error: req.t('evenement.notFound')
         });
       }
 
@@ -688,7 +698,7 @@ class ProgrammeController {
         await transaction.rollback();
         return res.status(403).json({
           success: false,
-          error: 'Accès refusé'
+          error: req.t('auth.forbidden')
         });
       }
 
@@ -710,7 +720,7 @@ class ProgrammeController {
 
       res.json({
         success: true,
-        message: 'Ordre des programmes mis à jour'
+        message: req.t('programme.reordered')
       });
 
     } catch (error) {
@@ -718,7 +728,7 @@ class ProgrammeController {
       console.error('Erreur lors de la réorganisation:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur'
+        error: req.t('common.serverError')
       });
     }
   }

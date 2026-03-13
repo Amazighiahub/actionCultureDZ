@@ -63,7 +63,7 @@ class MetadataController {
       });
     } catch (error) {
       console.error('Erreur getAllMetadata:', error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
     }
   }
 
@@ -85,7 +85,7 @@ class MetadataController {
       });
     } catch (error) {
       console.error('Erreur getTypesOeuvres:', error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
     }
   }
 
@@ -115,7 +115,7 @@ class MetadataController {
       res.json({ success: true, data: genres, lang });
     } catch (error) {
       console.error('Erreur getGenresParType:', error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
     }
   }
 
@@ -145,7 +145,7 @@ class MetadataController {
       res.json({ success: true, data: categories, lang });
     } catch (error) {
       console.error('Erreur getCategoriesParGenre:', error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
     }
   }
 
@@ -209,7 +209,7 @@ class MetadataController {
       res.json({ success: true, data: hierarchy, lang });
     } catch (error) {
       console.error('Erreur getHierarchieComplete:', error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
     }
   }
 
@@ -223,7 +223,7 @@ class MetadataController {
       res.json({ success: true, data: translateDeep(genres, lang), lang });
     } catch (error) {
       console.error('Erreur getGenres:', error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
     }
   }
 
@@ -255,7 +255,7 @@ class MetadataController {
       res.json({ success: true, data: translateDeep(tags, lang), lang });
     } catch (error) {
       console.error('Erreur getTags:', error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
     }
   }
 
@@ -272,7 +272,7 @@ class MetadataController {
       res.json({ success: true, data: translateDeep(materiaux, lang), lang });
     } catch (error) {
       console.error('Erreur getMateriaux:', error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
     }
   }
 
@@ -289,7 +289,7 @@ class MetadataController {
       res.json({ success: true, data: translateDeep(techniques, lang), lang });
     } catch (error) {
       console.error('Erreur getTechniques:', error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
     }
   }
 
@@ -306,7 +306,7 @@ class MetadataController {
       res.json({ success: true, data: translateDeep(langues, lang), lang });
     } catch (error) {
       console.error('Erreur getLangues:', error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
     }
   }
 
@@ -355,7 +355,7 @@ class MetadataController {
       });
     } catch (error) {
       console.error('Erreur getWilayas:', error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
     }
   }
 
@@ -380,7 +380,7 @@ class MetadataController {
       res.json({ success: true, data: translateDeep(dairas, lang), lang });
     } catch (error) {
       console.error('Erreur getDairasParWilaya:', error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
     }
   }
 
@@ -405,7 +405,7 @@ class MetadataController {
       res.json({ success: true, data: translateDeep(communes, lang), lang });
     } catch (error) {
       console.error('Erreur getCommunesParDaira:', error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
     }
   }
 
@@ -427,7 +427,7 @@ class MetadataController {
       res.json({ success: true, data: translateDeep(types, lang), lang });
     } catch (error) {
       console.error('Erreur getTypesEvenements:', error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
     }
   }
 
@@ -444,7 +444,7 @@ class MetadataController {
       res.json({ success: true, data: translateDeep(types, lang), lang });
     } catch (error) {
       console.error('Erreur getTypesUsers:', error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
     }
   }
 
@@ -461,7 +461,7 @@ class MetadataController {
       res.json({ success: true, data: translateDeep(types, lang), lang });
     } catch (error) {
       console.error('Erreur getTypesOrganisations:', error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
     }
   }
 
@@ -478,7 +478,7 @@ class MetadataController {
       res.json({ success: true, data: translateDeep(editeurs, lang), lang });
     } catch (error) {
       console.error('Erreur getEditeurs:', error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
     }
   }
 
@@ -492,7 +492,7 @@ class MetadataController {
       const categorie = await this.models.Categorie.findByPk(id);
       
       if (!categorie) {
-        return res.status(404).json({ success: false, error: 'Catégorie non trouvée' });
+        return res.status(404).json({ success: false, error: req.t('common.notFound') });
       }
 
       res.json({
@@ -505,7 +505,7 @@ class MetadataController {
       });
     } catch (error) {
       console.error('Erreur getCategorieTranslations:', error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
     }
   }
 
@@ -517,7 +517,7 @@ class MetadataController {
 
       const categorie = await this.models.Categorie.findByPk(id);
       if (!categorie) {
-        return res.status(404).json({ success: false, error: 'Catégorie non trouvée' });
+        return res.status(404).json({ success: false, error: req.t('common.notFound') });
       }
 
       const updates = {};
@@ -532,12 +532,12 @@ class MetadataController {
 
       res.json({
         success: true,
-        message: `Traduction ${targetLang} mise à jour`,
+        message: req.t('translation.updated', { lang: targetLang }),
         data: { nom: categorie.nom, description: categorie.description }
       });
     } catch (error) {
       console.error('Erreur updateCategorieTranslation:', error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
     }
   }
 
@@ -551,7 +551,7 @@ class MetadataController {
       const genre = await this.models.Genre.findByPk(id);
       
       if (!genre) {
-        return res.status(404).json({ success: false, error: 'Genre non trouvé' });
+        return res.status(404).json({ success: false, error: req.t('common.notFound') });
       }
 
       res.json({
@@ -560,7 +560,7 @@ class MetadataController {
       });
     } catch (error) {
       console.error('Erreur getGenreTranslations:', error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
     }
   }
 
@@ -572,7 +572,7 @@ class MetadataController {
 
       const genre = await this.models.Genre.findByPk(id);
       if (!genre) {
-        return res.status(404).json({ success: false, error: 'Genre non trouvé' });
+        return res.status(404).json({ success: false, error: req.t('common.notFound') });
       }
 
       const updates = {};
@@ -580,10 +580,10 @@ class MetadataController {
       if (description !== undefined) updates.description = mergeTranslations(genre.description, { [targetLang]: description });
 
       await genre.update(updates);
-      res.json({ success: true, message: `Traduction ${targetLang} mise à jour` });
+      res.json({ success: true, message: req.t('translation.updated', { lang: targetLang }) });
     } catch (error) {
       console.error('Erreur updateGenreTranslation:', error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
     }
   }
 
@@ -597,7 +597,7 @@ class MetadataController {
       const type = await this.models.TypeOeuvre.findByPk(id);
       
       if (!type) {
-        return res.status(404).json({ success: false, error: 'Type non trouvé' });
+        return res.status(404).json({ success: false, error: req.t('common.notFound') });
       }
 
       res.json({
@@ -606,7 +606,7 @@ class MetadataController {
       });
     } catch (error) {
       console.error('Erreur getTypeOeuvreTranslations:', error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
     }
   }
 
@@ -618,7 +618,7 @@ class MetadataController {
 
       const type = await this.models.TypeOeuvre.findByPk(id);
       if (!type) {
-        return res.status(404).json({ success: false, error: 'Type non trouvé' });
+        return res.status(404).json({ success: false, error: req.t('common.notFound') });
       }
 
       const updates = {};
@@ -626,10 +626,10 @@ class MetadataController {
       if (description !== undefined) updates.description = mergeTranslations(type.description, { [targetLang]: description });
 
       await type.update(updates);
-      res.json({ success: true, message: `Traduction ${targetLang} mise à jour` });
+      res.json({ success: true, message: req.t('translation.updated', { lang: targetLang }) });
     } catch (error) {
       console.error('Erreur updateTypeOeuvreTranslation:', error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
     }
   }
 
@@ -643,13 +643,13 @@ class MetadataController {
       const tag = await this.models.TagMotCle.findByPk(id);
       
       if (!tag) {
-        return res.status(404).json({ success: false, error: 'Tag non trouvé' });
+        return res.status(404).json({ success: false, error: req.t('common.notFound') });
       }
 
       res.json({ success: true, data: { id_tag: tag.id_tag, nom: tag.nom } });
     } catch (error) {
       console.error('Erreur getTagTranslations:', error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
     }
   }
 
@@ -661,17 +661,17 @@ class MetadataController {
 
       const tag = await this.models.TagMotCle.findByPk(id);
       if (!tag) {
-        return res.status(404).json({ success: false, error: 'Tag non trouvé' });
+        return res.status(404).json({ success: false, error: req.t('common.notFound') });
       }
 
       if (nom !== undefined) {
         await tag.update({ nom: mergeTranslations(tag.nom, { [targetLang]: nom }) });
       }
 
-      res.json({ success: true, message: `Traduction ${targetLang} mise à jour` });
+      res.json({ success: true, message: req.t('translation.updated', { lang: targetLang }) });
     } catch (error) {
       console.error('Erreur updateTagTranslation:', error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
     }
   }
 
@@ -683,18 +683,18 @@ class MetadataController {
     try {
       const { id } = req.params;
       if (!this.models.Materiau) {
-        return res.status(404).json({ success: false, error: 'Modèle Materiau non disponible' });
+        return res.status(404).json({ success: false, error: req.t('common.notFound') });
       }
       const materiau = await this.models.Materiau.findByPk(id);
       
       if (!materiau) {
-        return res.status(404).json({ success: false, error: 'Matériau non trouvé' });
+        return res.status(404).json({ success: false, error: req.t('common.notFound') });
       }
 
       res.json({ success: true, data: { id_materiau: materiau.id_materiau, nom: materiau.nom, description: materiau.description } });
     } catch (error) {
       console.error('Erreur getMateriauTranslations:', error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
     }
   }
 
@@ -705,12 +705,12 @@ class MetadataController {
       const { nom, description } = req.body;
 
       if (!this.models.Materiau) {
-        return res.status(404).json({ success: false, error: 'Modèle Materiau non disponible' });
+        return res.status(404).json({ success: false, error: req.t('common.notFound') });
       }
 
       const materiau = await this.models.Materiau.findByPk(id);
       if (!materiau) {
-        return res.status(404).json({ success: false, error: 'Matériau non trouvé' });
+        return res.status(404).json({ success: false, error: req.t('common.notFound') });
       }
 
       const updates = {};
@@ -718,10 +718,10 @@ class MetadataController {
       if (description !== undefined) updates.description = mergeTranslations(materiau.description, { [targetLang]: description });
 
       await materiau.update(updates);
-      res.json({ success: true, message: `Traduction ${targetLang} mise à jour` });
+      res.json({ success: true, message: req.t('translation.updated', { lang: targetLang }) });
     } catch (error) {
       console.error('Erreur updateMateriauTranslation:', error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
     }
   }
 
@@ -733,18 +733,18 @@ class MetadataController {
     try {
       const { id } = req.params;
       if (!this.models.Technique) {
-        return res.status(404).json({ success: false, error: 'Modèle Technique non disponible' });
+        return res.status(404).json({ success: false, error: req.t('common.notFound') });
       }
       const technique = await this.models.Technique.findByPk(id);
       
       if (!technique) {
-        return res.status(404).json({ success: false, error: 'Technique non trouvée' });
+        return res.status(404).json({ success: false, error: req.t('common.notFound') });
       }
 
       res.json({ success: true, data: { id_technique: technique.id_technique, nom: technique.nom, description: technique.description } });
     } catch (error) {
       console.error('Erreur getTechniqueTranslations:', error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
     }
   }
 
@@ -755,12 +755,12 @@ class MetadataController {
       const { nom, description } = req.body;
 
       if (!this.models.Technique) {
-        return res.status(404).json({ success: false, error: 'Modèle Technique non disponible' });
+        return res.status(404).json({ success: false, error: req.t('common.notFound') });
       }
 
       const technique = await this.models.Technique.findByPk(id);
       if (!technique) {
-        return res.status(404).json({ success: false, error: 'Technique non trouvée' });
+        return res.status(404).json({ success: false, error: req.t('common.notFound') });
       }
 
       const updates = {};
@@ -768,10 +768,10 @@ class MetadataController {
       if (description !== undefined) updates.description = mergeTranslations(technique.description, { [targetLang]: description });
 
       await technique.update(updates);
-      res.json({ success: true, message: `Traduction ${targetLang} mise à jour` });
+      res.json({ success: true, message: req.t('translation.updated', { lang: targetLang }) });
     } catch (error) {
       console.error('Erreur updateTechniqueTranslation:', error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
     }
   }
 
@@ -791,12 +791,12 @@ class MetadataController {
 
       res.status(201).json({
         success: true,
-        message: 'Type d\'œuvre créé',
+        message: req.t('metadata.typeOeuvreCreated'),
         data: translateDeep(type, lang)
       });
     } catch (error) {
       console.error('Erreur createTypeOeuvre:', error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
     }
   }
 
@@ -822,12 +822,12 @@ class MetadataController {
 
       res.status(201).json({
         success: true,
-        message: 'Genre créé',
+        message: req.t('metadata.genreCreated'),
         data: translateDeep(genre, lang)
       });
     } catch (error) {
       console.error('Erreur createGenre:', error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
     }
   }
 
@@ -853,12 +853,12 @@ class MetadataController {
 
       res.status(201).json({
         success: true,
-        message: 'Catégorie créée',
+        message: req.t('metadata.categorieCreated'),
         data: translateDeep(categorie, lang)
       });
     } catch (error) {
       console.error('Erreur createCategorie:', error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
     }
   }
 
@@ -873,12 +873,12 @@ class MetadataController {
 
       res.status(201).json({
         success: true,
-        message: 'Tag créé',
+        message: req.t('metadata.tagCreated'),
         data: translateDeep(tag, lang)
       });
     } catch (error) {
       console.error('Erreur createTag:', error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
     }
   }
 
@@ -888,7 +888,7 @@ class MetadataController {
       const { nom, description } = req.body;
 
       if (!this.models.Materiau) {
-        return res.status(404).json({ success: false, error: 'Modèle Materiau non disponible' });
+        return res.status(404).json({ success: false, error: req.t('common.notFound') });
       }
 
       const materiau = await this.models.Materiau.create({
@@ -898,12 +898,12 @@ class MetadataController {
 
       res.status(201).json({
         success: true,
-        message: 'Matériau créé',
+        message: req.t('metadata.materiauCreated'),
         data: translateDeep(materiau, lang)
       });
     } catch (error) {
       console.error('Erreur createMateriau:', error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
     }
   }
 
@@ -913,7 +913,7 @@ class MetadataController {
       const { nom, description } = req.body;
 
       if (!this.models.Technique) {
-        return res.status(404).json({ success: false, error: 'Modèle Technique non disponible' });
+        return res.status(404).json({ success: false, error: req.t('common.notFound') });
       }
 
       const technique = await this.models.Technique.create({
@@ -923,12 +923,12 @@ class MetadataController {
 
       res.status(201).json({
         success: true,
-        message: 'Technique créée',
+        message: req.t('metadata.techniqueCreated'),
         data: translateDeep(technique, lang)
       });
     } catch (error) {
       console.error('Erreur createTechnique:', error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
     }
   }
 
@@ -975,7 +975,7 @@ class MetadataController {
       });
     } catch (error) {
       console.error('Erreur getUsageStatistics:', error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
     }
   }
 }

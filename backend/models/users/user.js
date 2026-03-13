@@ -95,17 +95,13 @@ module.exports = (sequelize) => {
     },
 
     // =============================================================================
-    // STATUTS ET VALIDATION
+    // STATUTS ET VALIDATION (fusionné: statut_validation supprimé - voir migration 20260312)
     // =============================================================================
     statut: {
-      type: DataTypes.ENUM('actif', 'en_attente_validation', 'inactif', 'suspendu', 'banni'),
+      type: DataTypes.ENUM('actif', 'en_attente_validation', 'inactif', 'suspendu', 'banni', 'rejete'),
       defaultValue: 'actif',
-      allowNull: false
-    },
-    statut_validation: {
-      type: DataTypes.ENUM('en_attente', 'valide', 'rejete', 'suspendu'),
-      allowNull: true,
-      comment: 'Statut de validation pour les professionnels'
+      allowNull: false,
+      comment: 'État global du compte. Pro validé = actif, en attente = en_attente_validation, rejeté = rejete'
     },
     date_validation: {
       type: DataTypes.DATE,
@@ -295,6 +291,18 @@ module.exports = (sequelize) => {
     notifications_evenements: {
       type: DataTypes.BOOLEAN,
       defaultValue: true
+    },
+
+    // =============================================================================
+    // REFRESH TOKEN
+    // =============================================================================
+    refresh_token: {
+      type: DataTypes.STRING(500),
+      allowNull: true
+    },
+    refresh_token_expires: {
+      type: DataTypes.DATE,
+      allowNull: true
     }
   }, {
     tableName: 'user',
@@ -331,19 +339,29 @@ module.exports = (sequelize) => {
     hooks: {
       beforeCreate: async (user) => {
         if (user.id_type_user === 1) {
-          user.statut_validation = 'valide';
+          user.statut = 'actif';
         } else {
-          user.statut_validation = 'en_attente';
+          user.statut = 'en_attente_validation';
         }
         
         if (!user.accepte_conditions) {
           throw new Error('Vous devez accepter les conditions d\'utilisation');
         }
+
+        if (user.password && !user.password.startsWith('$2')) {
+          const bcrypt = require('bcrypt');
+          user.password = await bcrypt.hash(user.password, parseInt(process.env.BCRYPT_ROUNDS) || 12);
+        }
       },
       
-      beforeUpdate: (user) => {
-        if (user.changed('statut_validation') && user.statut_validation === "valide") {
+      beforeUpdate: async (user) => {
+        if (user.changed('statut') && user.statut === 'actif') {
           user.date_validation = new Date();
+        }
+
+        if (user.changed('password') && user.password && !user.password.startsWith('$2')) {
+          const bcrypt = require('bcrypt');
+          user.password = await bcrypt.hash(user.password, parseInt(process.env.BCRYPT_ROUNDS) || 12);
         }
       }
     }
@@ -401,7 +419,8 @@ module.exports = (sequelize) => {
     
     User.hasMany(models.Oeuvre, { 
       as: 'OeuvresSaisies', 
-      foreignKey: 'saisi_par' 
+      foreignKey: 'saisi_par',
+      onDelete: 'SET NULL'
     });
     
     User.hasMany(models.Oeuvre, { 
@@ -416,7 +435,8 @@ module.exports = (sequelize) => {
     
     User.hasMany(models.Commentaire, { 
       foreignKey: 'id_user',
-      as: 'Commentaires'
+      as: 'Commentaires',
+      onDelete: 'CASCADE'
     });
     
     User.hasMany(models.CritiqueEvaluation, { 
@@ -439,7 +459,8 @@ module.exports = (sequelize) => {
 
     User.hasMany(models.Favori, { 
       foreignKey: 'id_user',
-      as: 'Favoris'
+      as: 'Favoris',
+      onDelete: 'CASCADE'
     });
   };
 

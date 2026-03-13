@@ -78,7 +78,7 @@ const AdminOeuvresTab: React.FC = () => {
     validateOeuvre,
     deleteOeuvre,
     refreshAll
-  } = useDashboardAdmin();
+  } = useDashboardAdmin('oeuvres');
 
   // Combiner œuvres et œuvres en attente
   const allOeuvres = React.useMemo(() => {

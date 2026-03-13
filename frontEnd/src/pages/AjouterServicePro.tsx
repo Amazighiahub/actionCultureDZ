@@ -5,6 +5,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { httpClient } from '@/services/httpClient';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -129,10 +130,7 @@ const AjouterServicePro: React.FC = () => {
   const loadExistingService = async () => {
     if (!editId) return;
     try {
-      const response = await fetch(`/api/services/${editId}`, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` },
-      });
-      const result = await response.json();
+      const result = await httpClient.get<any>(`/services/${editId}`);
       if (result.success && result.data) {
         const svc = result.data;
         const toML = (v: any) => typeof v === 'object' && v !== null ? { fr: v.fr || '', ar: v.ar || '', en: v.en || '', 'tz-ltn': v['tz-ltn'] || '', 'tz-tfng': v['tz-tfng'] || '' } : { fr: v || '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' };
@@ -154,12 +152,12 @@ const AjouterServicePro: React.FC = () => {
         });
         console.log('✅ Service chargé pour édition:', svc);
       } else {
-        toast({ title: 'Erreur', description: 'Service introuvable', variant: 'destructive' });
+        toast({ title: t('toasts.error'), description: t('toasts.serviceNotFound'), variant: 'destructive' });
         navigate('/dashboard-pro');
       }
     } catch (err: any) {
       console.error('❌ Erreur chargement service:', err);
-      toast({ title: 'Erreur', description: 'Impossible de charger le service', variant: 'destructive' });
+      toast({ title: t('toasts.error'), description: t('toasts.serviceLoadFailed'), variant: 'destructive' });
     }
   };
 
@@ -279,8 +277,14 @@ const AjouterServicePro: React.FC = () => {
 
   // Valider le formulaire
   const validateForm = (): boolean => {
-    if (!formData.nom.fr && !formData.nom.ar) {
-      setError(t('service.errors.nomRequired', 'Le nom du service est requis'));
+    if (
+      !formData.nom.fr ||
+      !formData.nom.ar ||
+      !formData.nom.en ||
+      !formData.nom['tz-ltn'] ||
+      !formData.nom['tz-tfng']
+    ) {
+      setError(t('service.errors.nomRequired', 'Le nom du service est requis dans toutes les langues'));
       return false;
     }
     if (!formData.type_service) {
@@ -295,14 +299,36 @@ const AjouterServicePro: React.FC = () => {
         return false;
       }
     } else if (lieuMode === 'new') {
-      if (!newLieu.nom.fr && !newLieu.nom.ar) {
-        setError(t('service.errors.newLieuNomRequired', 'Le nom du nouveau lieu est requis'));
+      if (
+        !newLieu.nom.fr ||
+        !newLieu.nom.ar ||
+        !newLieu.nom.en ||
+        !newLieu.nom['tz-ltn'] ||
+        !newLieu.nom['tz-tfng']
+      ) {
+        setError(t('service.errors.newLieuNomRequired', 'Le nom du nouveau lieu est requis dans toutes les langues'));
         return false;
       }
       if (!newLieu.latitude || !newLieu.longitude) {
         setError(t('service.errors.newLieuGpsRequired', 'Les coordonnées GPS du nouveau lieu sont requises'));
         return false;
       }
+    }
+    if (formData.tarif_min && formData.tarif_max && parseFloat(formData.tarif_min) > parseFloat(formData.tarif_max)) {
+      setError(t('service.errors.tarifMinMax', 'Le tarif minimum ne peut pas être supérieur au tarif maximum'));
+      return false;
+    }
+    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      setError(t('service.errors.emailInvalid', 'Adresse email invalide'));
+      return false;
+    }
+    if (formData.site_web && !/^https?:\/\/.+\..+/.test(formData.site_web)) {
+      setError(t('service.errors.urlInvalid', 'URL du site web invalide (doit commencer par http:// ou https://)'));
+      return false;
+    }
+    if (formData.telephone && !/^[0-9+\-\s()]{8,20}$/.test(formData.telephone)) {
+      setError(t('service.errors.phoneInvalid', 'Numéro de téléphone invalide'));
+      return false;
     }
     return true;
   };
@@ -331,16 +357,7 @@ const AjouterServicePro: React.FC = () => {
           typeLieu: 'service', // Type par défaut pour les lieux créés par les pros
         };
 
-        const lieuResponse = await fetch('/api/lieux', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
-          },
-          body: JSON.stringify(lieuData),
-        });
-
-        const lieuResult = await lieuResponse.json();
+        const lieuResult = await httpClient.post<any>('/lieux', lieuData);
 
         if (!lieuResult.success) {
           throw new Error(lieuResult.error || 'Erreur lors de la création du lieu');
@@ -372,39 +389,24 @@ const AjouterServicePro: React.FC = () => {
         disponible: formData.disponible,
       };
 
-      // Appel API pour créer ou mettre à jour le service
-      const url = isEditMode && editId ? `/api/services/${editId}` : '/api/services';
-      const method = isEditMode && editId ? 'PUT' : 'POST';
-      
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
-        },
-        body: JSON.stringify(serviceData),
-      });
-
-      const data = await response.json();
+      const data = isEditMode && editId
+        ? await httpClient.put<any>(`/services/${editId}`, serviceData)
+        : await httpClient.post<any>('/services', serviceData);
 
       if (data.success) {
-        // Upload photo si présente
         const serviceId = data.data?.id || editId;
         if (photoFile && serviceId) {
           const formDataPhoto = new FormData();
           formDataPhoto.append('image', photoFile);
-          await fetch(`/api/services/${serviceId}/photo`, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
-            },
-            body: formDataPhoto,
-          });
+          const uploadRes = await httpClient.upload<any>(`/upload/image`, formDataPhoto);
+          if (uploadRes.success && uploadRes.data?.url) {
+            await httpClient.put<any>(`/services/${serviceId}`, { photo_url: uploadRes.data.url });
+          }
         }
 
         toast({
-          title: isEditMode ? 'Service mis à jour' : t('service.success.title', 'Service ajouté'),
-          description: isEditMode ? 'Le service a été mis à jour avec succès.' : t('service.success.description', 'Votre service a été soumis et sera validé par un administrateur.'),
+          title: isEditMode ? t('toasts.serviceStatusUpdated') : t('service.success.title', 'Service ajouté'),
+          description: isEditMode ? t('toasts.actionSuccess') : t('service.success.description', 'Votre service a été soumis et sera validé par un administrateur.'),
         });
 
         navigate('/dashboard-pro');

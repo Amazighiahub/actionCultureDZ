@@ -4,6 +4,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { socketService } from '../services/socketService';
 import { notificationService } from '../services/notification.service';
+import { usePermissionsContext } from '@/providers/PermissionsProvider';
 import type {
   Notification,
   NotificationSummary,
@@ -60,7 +61,6 @@ export function useNotifications(): UseNotificationsReturn {
       if (isMountedRef.current) {
         const errorMessage = err.message || 'Une erreur est survenue';
         setError(errorMessage);
-        console.error('Erreur notification:', err);
       }
     }
   }, []);
@@ -137,8 +137,6 @@ export function useNotifications(): UseNotificationsReturn {
           };
         });
       }
-      
-      console.log(`${result.updated} notifications marquées comme lues`);
     });
   }, [safeCall]);
 
@@ -166,8 +164,6 @@ export function useNotifications(): UseNotificationsReturn {
       if (isMountedRef.current) {
         setNotifications(prev => prev.filter(n => !n.lu));
       }
-      
-      console.log(`${result.deleted} notifications supprimées`);
     });
   }, [safeCall]);
 
@@ -183,15 +179,15 @@ export function useNotifications(): UseNotificationsReturn {
     try {
       return await notificationService.requestBrowserPermission();
     } catch (error) {
-      console.error('Erreur permission notifications:', error);
       return false;
     }
   }, []);
 
-  // Configuration WebSocket avec une approche alternative
+  // Configuration WebSocket (le token est nécessaire car WebSocket ne supporte pas les cookies httpOnly)
+  const { isAuthenticated } = usePermissionsContext();
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
-    if (!token) return;
+    if (!isAuthenticated || !token) return;
 
     // Se connecter au WebSocket
     socketService.connect(token);
@@ -206,7 +202,6 @@ export function useNotifications(): UseNotificationsReturn {
         // Approche 1: Cast vers un type plus général
         (socketService as any).on(event, handler);
       } catch (error) {
-        console.warn(`Impossible d'écouter l'événement ${event}:`, error);
       }
     };
 
@@ -216,17 +211,13 @@ export function useNotifications(): UseNotificationsReturn {
       setIsConnected(connected);
       
       if (connected && !isConnected) {
-        console.log('✅ WebSocket connecté pour les notifications');
       } else if (!connected && isConnected) {
-        console.log('❌ WebSocket déconnecté');
       }
     }, 1000);
 
     // Handlers pour les événements de notification
     const handlers = {
       'notification:new': (notification: Notification) => {
-        console.log('🔔 Nouvelle notification reçue:', notification);
-        
         setNotifications(prev => [notification, ...prev]);
         
         setSummary(prev => {
@@ -286,7 +277,6 @@ export function useNotifications(): UseNotificationsReturn {
           refreshSummary()
         ]);
       } catch (error) {
-        console.error('Erreur initialisation notifications:', error);
       }
     };
 
@@ -302,7 +292,6 @@ export function useNotifications(): UseNotificationsReturn {
           try {
             (socketService as any).off(event);
           } catch (error) {
-            console.warn(`Erreur lors de la désinscription de ${event}:`, error);
           }
         });
       }

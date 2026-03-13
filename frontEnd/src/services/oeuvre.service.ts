@@ -82,11 +82,6 @@ class OeuvreService {
     mediaFiles?: File[]
   ): Promise<ApiResponse<CreateOeuvreResponse>> {
     try {
-      console.log('📝 Création œuvre avec médias:', {
-        titre: data.titre,
-        nb_medias: mediaFiles?.length || 0
-      });
-
       // ÉTAPE 1 : Créer l'œuvre d'abord
       const oeuvreResult = await this.createOeuvre(data);
 
@@ -95,35 +90,24 @@ class OeuvreService {
       }
 
       const oeuvreId = oeuvreResult.data.oeuvre.id_oeuvre;
-      console.log('✅ Œuvre créée avec ID:', oeuvreId);
 
       // ÉTAPE 2 : Upload des médias si présents
       if (mediaFiles && mediaFiles.length > 0) {
-        console.log('📤 Upload de', mediaFiles.length, 'médias...');
-
         const uploadResult = await mediaService.uploadMultiple(
-          mediaFiles,
-          'oeuvre',
-          oeuvreId,
-          (progress) => {
-            console.log(`Upload ${progress.file}: ${progress.percentage}%`);
-          }
+        mediaFiles,
+        'oeuvre',
+        oeuvreId,
+        () => {}
         );
 
         if (!uploadResult.success) {
-          console.error('⚠️ Erreur upload médias:', uploadResult.error);
-          // L'œuvre est créée mais les médias n'ont pas pu être uploadés
-          console.warn('⚠️ Œuvre créée mais certains médias n\'ont pas pu être uploadés');
           return oeuvreResult;
         }
-
-        console.log('✅ Médias uploadés avec succès');
       }
 
       return oeuvreResult;
 
     } catch (error: any) {
-      console.error('❌ Erreur création œuvre avec médias:', error);
       return {
         success: false,
         error: error.message || 'Erreur lors de la création'
@@ -142,32 +126,21 @@ class OeuvreService {
         categories: Array.isArray(data.categories) ? data.categories : data.categories ? [data.categories] : []
       };
 
-      console.log('📝 Création œuvre:', {
-        titre: normalizedData.titre,
-        type: normalizedData.id_type_oeuvre,
-        categories: normalizedData.categories
-      });
-
       const response = await httpClient.post<CreateOeuvreResponse>('/oeuvres', normalizedData);
 
       return response;
     } catch (error: any) {
-      console.error('❌ Erreur création œuvre:', error);
-
       // Gestion du timeout
       if (error.message &&
         (error.message.includes('timeout') ||
           error.message.includes('Timeout') ||
           error.code === 'ECONNABORTED')) {
 
-        console.log('⏱️ Timeout détecté, vérification de la création...');
-
         // Attendre un peu et vérifier si l'œuvre a été créée
         await new Promise(resolve => setTimeout(resolve, 2000));
 
         const checkResult = await this.checkRecentOeuvre(data.titre);
         if (checkResult.success && checkResult.data) {
-          console.log('✅ Œuvre trouvée malgré le timeout');
           return {
             success: true,
             data: {
@@ -260,16 +233,6 @@ class OeuvreService {
         }
       }
 
-      // Debug
-      console.log('📋 FormData entries:');
-      for (const [key, value] of formData.entries()) {
-        if (value instanceof File) {
-          console.log(`- ${key}: File(${value.name}, ${value.size} bytes, ${value.type})`);
-        } else {
-          console.log(`- ${key}:`, value);
-        }
-      }
-
       const response = await httpClient.postFormData<CreateOeuvreResponse>(
         '/oeuvres',
         formData
@@ -278,12 +241,6 @@ class OeuvreService {
       return response;
 
     } catch (error: any) {
-      console.error('❌ Erreur création œuvre FormData:', error);
-
-      if (error.response?.data) {
-        console.error('Détails de l\'erreur:', error.response.data);
-      }
-
       return {
         success: false,
         error: error.response?.data?.error || error.message || 'Erreur lors de la création'
@@ -296,18 +253,13 @@ class OeuvreService {
    */
   async uploadMedias(oeuvreId: number, files: File[]): Promise<ApiResponse<any>> {
     try {
-      console.log('📤 Upload médias pour œuvre', oeuvreId);
-
       return await mediaService.uploadMultiple(
         files,
         'oeuvre',
         oeuvreId,
-        (progress) => {
-          console.log(`Upload ${progress.file}: ${progress.percentage}%`);
-        }
+        () => {}
       );
     } catch (error: any) {
-      console.error('❌ Erreur upload médias:', error);
       return {
         success: false,
         error: error.message || 'Erreur lors de l\'upload'
@@ -320,8 +272,6 @@ class OeuvreService {
    */
   async searchIntervenants(params: { q: string }): Promise<IntervenantSearchResult[]> {
     try {
-      console.log('🔍 Recherche intervenants avec:', params);
-
       const response = await httpClient.get<IntervenantSearchResult[]>('/intervenants/search', params);
 
       if (response.success && response.data) {
@@ -330,7 +280,6 @@ class OeuvreService {
 
       return [];
     } catch (error) {
-      console.error('❌ Erreur recherche intervenants:', error);
       return [];
     }
   }
@@ -343,7 +292,6 @@ class OeuvreService {
       // Utiliser la bonne route de tracking
       return await httpClient.post(`/tracking/oeuvre/${idOeuvre}/view`);
     } catch (error: any) {
-      console.error('Erreur tracking vue:', error);
       return {
         success: false,
         error: error.message || 'Erreur lors du tracking de la vue'
@@ -356,28 +304,11 @@ class OeuvreService {
    */
   async getEventsByOeuvre(oeuvreId: number): Promise<ApiResponse<any[]>> {
     try {
-      return await httpClient.get(`/oeuvres/${oeuvreId}/evenements`);
+      return await httpClient.get(`/evenements/oeuvre/${oeuvreId}`);
     } catch (error: any) {
       return {
         success: false,
         error: error.message || 'Erreur lors de la récupération des événements'
-      };
-    }
-  }
-
-  /**
-   * Recommander une œuvre
-   */
-  async recommendOeuvre(oeuvreId: number, data: {
-    destinataire_email: string;
-    message?: string;
-  }): Promise<ApiResponse<void>> {
-    try {
-      return await httpClient.post(`/oeuvres/${oeuvreId}/recommander`, data);
-    } catch (error: any) {
-      return {
-        success: false,
-        error: error.message || 'Erreur lors de la recommandation'
       };
     }
   }
@@ -392,7 +323,7 @@ class OeuvreService {
     evolution: Array<{ date: string; vues: number }>;
   }>> {
     try {
-      return await httpClient.get(`/oeuvres/${oeuvreId}/stats/vues`);
+      return await httpClient.get(`/tracking/stats/oeuvre/${oeuvreId}`);
     } catch (error: any) {
       return {
         success: false,
@@ -406,7 +337,7 @@ class OeuvreService {
    */
   async getSimilarOeuvres(oeuvreId: number, limit = 6): Promise<ApiResponse<Oeuvre[]>> {
     try {
-      return await httpClient.get(`/oeuvres/${oeuvreId}/similaires`, { limit });
+      return await httpClient.get(`/oeuvres/${oeuvreId}/similar`, { limit });
     } catch (error: any) {
       return {
         success: false,
@@ -432,8 +363,6 @@ class OeuvreService {
     };
   }>> {
     try {
-      console.log('🔍 Récupération œuvres pour intervenant:', intervenantId);
-      
       // Utiliser l'endpoint approprié pour récupérer les œuvres d'un intervenant
       const response = await httpClient.get<{
         oeuvres: Oeuvre[];
@@ -444,15 +373,9 @@ class OeuvreService {
           limit: number;
         };
       }>(`/intervenants/${intervenantId}/oeuvres`, params);
-      
-      if (response.success && response.data) {
-        console.log(`✅ ${response.data.oeuvres.length} œuvres trouvées pour l'intervenant`);
-      }
-      
+
       return response;
     } catch (error: any) {
-      console.error('❌ Erreur récupération œuvres intervenant:', error);
-      
       // Alternative : utiliser l'endpoint de recherche d'œuvres avec filtre intervenant
       try {
         const searchResponse = await httpClient.get<{
@@ -479,23 +402,6 @@ class OeuvreService {
   }
 
   /**
-   * Noter une œuvre
-   */
-  async rateOeuvre(oeuvreId: number, rating: number): Promise<ApiResponse<{
-    note_moyenne: number;
-    nombre_notes: number;
-  }>> {
-    try {
-      return await httpClient.post(`/oeuvres/${oeuvreId}/noter`, { note: rating });
-    } catch (error: any) {
-      return {
-        success: false,
-        error: error.message || 'Erreur lors de la notation'
-      };
-    }
-  }
-
-  /**
    * Vérifier si un email existe
    */
   async checkUserByEmail(email: string): Promise<CheckUserByEmailResponse> {
@@ -508,7 +414,6 @@ class OeuvreService {
 
       return { success: false, exists: false };
     } catch (error) {
-      console.error('Erreur vérification email:', error);
       return { success: false, exists: false };
     }
   }
@@ -544,7 +449,6 @@ class OeuvreService {
         error: 'Aucune œuvre récente trouvée'
       };
     } catch (error) {
-      console.error('Erreur vérification œuvre:', error);
       return {
         success: false,
         error: 'Erreur lors de la vérification'
@@ -622,8 +526,6 @@ class OeuvreService {
     };
   }>> {
     try {
-      console.log('🔍 Appel API getMyOeuvres avec params:', params);
-
       // Spécifier le type attendu pour httpClient.get
       const response = await httpClient.get<{
         oeuvres: Oeuvre[];
@@ -635,31 +537,12 @@ class OeuvreService {
         };
       }>(API_ENDPOINTS.oeuvres.myWorks, params);
 
-      console.log('📚 Réponse API getMyOeuvres:', response);
-
       if (!response.success) {
-        console.error('❌ Erreur API:', response.error);
-
-        // Si c'est une erreur 401, afficher plus d'infos
-        if (response.error?.includes('401') || response.error?.includes('auth')) {
-          const token = localStorage.getItem('auth_token');
-          console.error('🔐 Problème d\'authentification:', {
-            tokenPresent: !!token,
-            tokenLength: token?.length,
-            error: response.error
-          });
-        }
+        return response;
       }
 
       return response;
     } catch (error: any) {
-      console.error('❌ Erreur getMyOeuvres:', error);
-
-      // Vérifier si c'est une erreur réseau
-      if (error.message?.includes('Network') || error.message?.includes('fetch')) {
-        console.error('🌐 Erreur réseau détectée');
-      }
-
       return {
         success: false,
         error: error.message || 'Erreur lors de la récupération'
@@ -804,8 +687,6 @@ class OeuvreService {
  */
 async getOeuvresByType(types: number[]): Promise<ApiResponse<Oeuvre[]>> {
   try {
-    console.log('🔍 Récupération œuvres par types:', types);
-    
     // Option 1: Utiliser un endpoint dédié si disponible
     // return await httpClient.get('/oeuvres/by-types', { types });
     
@@ -835,7 +716,6 @@ async getOeuvresByType(types: number[]): Promise<ApiResponse<Oeuvre[]>> {
       error: 'Erreur lors de la récupération des œuvres'
     };
   } catch (error: any) {
-    console.error('❌ Erreur récupération œuvres par types:', error);
     return {
       success: false,
       error: error.message || 'Erreur lors de la récupération'

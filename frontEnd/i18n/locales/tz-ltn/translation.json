@@ -13,7 +13,12 @@
       "title": "Kcem",
       "submit": "Kcem",
       "email": "Imayl",
-      "password": "Awal uffir"
+      "password": "Awal uffir",
+      "tabTitle": "Anekcum",
+      "emailPlaceholder": "imayl-ik@amedya.com",
+      "rememberMe": "Cfu fell-i",
+      "forgotPassword": "Tettuḍ awal n uɛeddi?",
+      "loggingIn": "Anekcum iteddu..."
     },
     "register": {
       "tabTitle": "Ajerred",
@@ -49,11 +54,19 @@
       "biography": "Tameddurt",
       "biographyPlaceholder": "Sken-aɣ-d iman-ik, mmeslay-aɣ-d ɣef webrid-ik, isenfaren-ik, tiɣbula-k... (adday 50 n isekkilen)",
       "charactersMinimum": "isekkilen (adday 50)",
-      "acceptTerms": "Qebleɣ tiwtilin n useqdec",
+      "acceptTerms": {
+        "prefix": "Qebleγ",
+        "terms": "tiwtilin n useqdec",
+        "and": "d",
+        "privacy": "tasertit n tbaḍnit"
+      },
       "newsletter": "Bɣiɣ ad d-ṭṭfeɣ isallen d yileqman s yimayl",
       "registering": "Ajerred iteddu...",
       "createAccount": "Rnu amiḍan-iw",
-      "professionalNote": "Tazmilt: Imiḍanen ilemmasen sran asentem",
+      "professionalNote": {
+        "title": "Tamawt tamuqrant:",
+        "description": "Imiḍanen imahilen ad ten-isenqed uγref-nneγ deg 24-48 n yisragen."
+      },
       "welcome": "Rnu amiḍan-ik",
       "chooseType": "Fren anaw n umiḍan",
       "visitor": "Anmili",
@@ -103,7 +116,21 @@
       "passwordTooShort": "Awal uffir yessefk ad yesɛu 8 n yisekkilen ma drus",
       "biographyTooShort": "Tameddurt yessefk ad tesɛu 50 n yisekkilen ma drus",
       "acceptTerms": "Yessefk ad teqleḍ tiwtilin n useqdec",
-      "registerError": "Tuccḍa deg ujerred"
+      "registerError": "Tuccḍa deg ujerred",
+      "userNotFound": "Ulac amiḍan s yimayl-agi",
+      "wrongPassword": "Awal n uɛeddi d arameγtu",
+      "accountNotVerified": "Senqed imayl-ik uqbel ad tkecmeḍ",
+      "accountDisabled": "Amiḍan-ik yettwakkes. Nermes anedbal.",
+      "accountPending": "Amiḍan-ik amahil yettraju asenqed",
+      "accountSuspended": "Amiḍan-ik yettwaseḥbes. Nermes anedbal.",
+      "accountBanned": "Amiḍan-ik yettwagdel",
+      "tooManyAttempts": "Aṭas n tegratin n unekcum. Ɛreḍ tikkelt-nniḍen.",
+      "confirmPasswordRequired": "Sentem awal n uɛeddi",
+      "emailExistsDescription": "Yella yakan umiḍan s tansa-agi. Kcm neɣ seqdec tansa-nniḍen.",
+      "emailNotVerified": "Imayl ur yettwasneqd ara",
+      "pleaseVerifyEmail": "Senqed imayl-ik uqbel ad tkecmeḍ. Wali taboḍt-ik n yiznan.",
+      "contactSupport": "Amiḍan-ik yettwaseḥbes. Nermes tallalt i wugar n telγut.",
+      "passwordError": "Awal n uɛeddi ur iḥerrez ara ilugan n tɣellist (adasil 8 n yisekkilen)"
     },
     "success": {
       "loginTitle": "Akeččum yedda",
@@ -140,6 +167,42 @@
       "biography": "Tameddurt",
       "biographyPlaceholder": "Ini-aɣ-d ɣef yiman-ik, leqdic-ik...",
       "photo": "Tawlaft n umaɣnu"
+    },
+    "forgotPassword": {
+      "title": "Tettuḍ awal n uɛeddi",
+      "description": "Sekcem tansa n yimayl-ik, ad ak-d-nazen aseγwen i uɛawed n usbeddi.",
+      "emailLabel": "Tansa imayl",
+      "emailPlaceholder": "imayl-ik@amedya.com",
+      "submit": "Azen aseγwen",
+      "sending": "Tuzna iteddu...",
+      "backToLogin": "Uγal γer unekcum",
+      "successTitle": "Imayl yettwazen",
+      "successDescription": "Ma yella tansa-agi tella deg unagraw-nneγ, ad tremseḍ imayl.",
+      "emailSentTitle": "Imayl yettwazen!",
+      "emailSentDescription": "Ma yella imayl-agi yeqqen γer umiḍan, ad d-tremseḍ aseγwen n uɛawed deg kra n tesdatin.",
+      "checkSpam": "Wali deg umeskar n yiznan inuḍafen ma ur d-yewwiḍ ara yimayl.",
+      "didntReceive": "Ur d-yewwiḍ ara yimayl?",
+      "tryAgain": "Ɛreḍ tikkelt-nniḍen"
+    },
+    "resetPassword": {
+      "title": "Awal n uɛeddi amaynut",
+      "description": "Fren awal n uɛeddi amaynut yettwaḥerzen i umiḍan-ik.",
+      "newPassword": "Awal n uɛeddi amaynut",
+      "confirmPassword": "Sentem awal n uɛeddi",
+      "passwordHint": "Adasil 8 n yisekkilen akked usekkil ameqqran, ameẓyan, d uṭṭun.",
+      "passwordRequirements": "Awal n uɛeddi ilaq ad yesɛu usekkil ameqqran, ameẓyan, d uṭṭun",
+      "submit": "Ales asbeddi n wawal n uɛeddi",
+      "resetting": "Ales asbeddi iteddu...",
+      "backToLogin": "Uγal γer unekcum",
+      "successTitle": "Awal n uɛeddi yettwabeddel",
+      "successDescription": "Awal n uɛeddi yettwabeddel akken iwata. Tzemreḍ ad tkecmeḍ tura.",
+      "redirecting": "Ad ak-nawi γer usebter n unekcum...",
+      "goToLogin": "Ddu γer unekcum",
+      "error": "Tuccḍa deg uɛawed n usbeddi n wawal n uɛeddi",
+      "invalidToken": "Aseγwen n uɛawed n usbeddi d arameγtu neγ yemmet.",
+      "invalidTokenTitle": "Aseγwen arameγtu",
+      "invalidTokenDescription": "Aseγwen-agi n uɛawed n usbeddi d arameγtu neγ yemmet. Suter aseγwen amaynut.",
+      "requestNewLink": "Suter aseγwen amaynut"
     }
   },
   "categories": {
@@ -149,7 +212,18 @@
       "modern": "Asalay atrar"
     },
     "workTypes": {
-      "unknown": "Anaw ur nettwassen"
+      "unknown": "Anaw ur nettwassen",
+      "articles": "Imagraden",
+      "cinema": "Sinima",
+      "literature": "Tasekla",
+      "musicalAlbum": "Album aẓawan",
+      "scientificArticle": "Amagrad usnan",
+      "art": "Taẓuri",
+      "artwork": "Axeddim n tẓuri",
+      "artworks": "Ixeddimen n tẓuri",
+      "music": "Aẓawan",
+      "musicalAlbums": "Albumen iẓawanen",
+      "scientificArticles": "Imagraden usnanen"
     }
   },
   "common": {
@@ -224,7 +298,19 @@
     "years": "iseggasen",
     "save": "Sekles",
     "submit": "Azen",
-    "close": "Mdel"
+    "close": "Mdel",
+    "reset": "Ales asbeddi",
+    "results": "igmaḍ",
+    "allStatuses": "Akk addaden",
+    "allRoles": "Akk tisurag",
+    "notes": "Tizmilin",
+    "works": "ixeddimen",
+    "moreOptions": "Ugar n textiṛiyin",
+    "clearSearch": "Sfeḍ anadi",
+    "type": "Anaw",
+    "more": "wiyaḍ",
+    "linkCopied": "Aseɣwen yettwanɣel",
+    "linkCopiedDesc": "Aseɣwen yettwanɣel ɣer tegnit"
   },
   "contributors": {
     "addedCount_one": "{{count}} amarag yettwarna",
@@ -287,7 +373,17 @@
       "startTime": "Akud n tazwara",
       "subtitle": "Snulfu-d tadyant tadelsant tamaynut",
       "title": "Rnu tadyant",
-      "willBeAvailableSoon": "Ad tili tewjed ɣer zdat"
+      "willBeAvailableSoon": "Ad tili tewjed ɣer zdat",
+      "eventFormat": "Tamṣukt n tedyant",
+      "inPerson": "S udem",
+      "inPersonDesc": "Tadyant tamaddayt akked adeg d tnudbelt",
+      "virtual": "Anmaway / Srid",
+      "virtualDesc": "Asegzawal srid, asizwer, anemgal srid",
+      "organisation": "Tanudba",
+      "selectOrganisation": "Fren tanudba-ik",
+      "selectOrganisationPlaceholder": "Fren tanudba",
+      "location": "Adeg",
+      "locationRequired": "Ttxil fren adeg i tneḍḍurt"
     },
     "types": {
       "concert": "Aḥebbi",
@@ -298,7 +394,10 @@
       "screening": "Askan",
       "show": "Asaḥḥa",
       "workshop": "Amahil"
-    }
+    },
+    "participants": "imttekkiyen",
+    "full": "Yeččur",
+    "free": "Baṭel"
   },
   "footer": {
     "legal": "Azref",
@@ -377,6 +476,12 @@
       "subtitle": "Imḍanen i d-yettmeslayen",
       "title": "Anḍel yeddren",
       "works": "tiẓuriyin"
+    },
+    "hero": {
+      "badge": "Issin ayla adelsan azzayri",
+      "subtitle": "Snirem, ḥrez, bḍu ayla adelsan n Lezzayer",
+      "explore": "Snirem ayla",
+      "contribute": "Ttekki"
     }
   },
   "notifications": {
@@ -469,7 +574,9 @@
       "reviews": "Tiktiwin",
       "seeAll": "Wali akk",
       "subtitle": "Snirem agerruj azayku d adelsan n Lezzayer s tkarḍa tamyigawt",
-      "title": "Agla adelsan"
+      "title": "Agla adelsan",
+      "search": "Nadi γef usit...",
+      "tryDifferentSearch": "Ɛreḍ anadi-nniḍen neγ ales asbeddi n yimzizdigen"
     },
     "works": {
       "actions": {
@@ -830,7 +937,20 @@
     "mon_patrimoine": "[TODO TZ-LTN] Mon patrimoine (",
     "nouveau_site": "[TODO TZ-LTN] Nouveau site",
     "aucun_site_patrimoine": "[TODO TZ-LTN] Aucun site patrimoine enregistré",
-    "ajouter_mon_premier": "[TODO TZ-LTN] Ajouter mon premier site"
+    "ajouter_mon_premier": "[TODO TZ-LTN] Ajouter mon premier site",
+    "ajouter": "Rnu",
+    "artisanat": "Taẓuri tafessast",
+    "nouveau_patrimoine": "Ayla amaynut",
+    "mes_artisanats": "Tizeγ-inu tifesnasin",
+    "nouvel_artisanat": "Taẓuri tafessast tamaynut",
+    "aucun_artisanat": "Ulac taẓuri tafessast",
+    "creer_premier_artisanat": "Snulfu taẓuri-inu tamezwarut",
+    "non_defini": "Ur yettwabder ara",
+    "en_stock": "yella",
+    "sur_commande": "S uḍalab",
+    "indisponible": "Ulac-it",
+    "manage": "Sefrek",
+    "manage_event": "Sefrek ahilen d yixeddimen"
   },
   "dashboardadmin": {
     "label_validation": "[TODO TZ-LTN] Validation",
@@ -1360,7 +1480,13 @@
     "statut": "[TODO TZ-LTN] Statut",
     "rserver_une_visite": "[TODO TZ-LTN] Réserver une visite",
     "plus_dinformations": "[TODO TZ-LTN] Plus d'informations",
-    "fermer": "[TODO TZ-LTN] Fermer"
+    "fermer": "[TODO TZ-LTN] Fermer",
+    "circuit_algerois": "Tawwurt tazzayrit",
+    "route_romaine": "Abrid arumi",
+    "patrimoine_unesco": "Ayla n UNESCO",
+    "facile": "Fessus",
+    "modere": "Alemmas",
+    "aventurier": "Aɛessas"
   },
   "notifications_preferences": {
     "prfrences_notifications": "[TODO TZ-LTN] Préférences de notifications",
@@ -1459,6 +1585,7 @@
     "chargement": "[TODO TZ-LTN] Chargement...",
     "chargement_1": "[TODO TZ-LTN] Chargement...",
     "validation_attente": "[TODO TZ-LTN] Validation en attente",
+    "validation_par_admin": "[TODO TZ-LTN] Votre compte professionnel doit être validé par un administrateur avant de pouvoir accéder à cette fonctionnalité.",
     "chargement_2": "[TODO TZ-LTN] Chargement...",
     "title_modifier": "[TODO TZ-LTN] Modifier",
     "title_supprimer": "[TODO TZ-LTN] Supprimer"
@@ -1547,7 +1674,7 @@
   },
   "auth_validatedprofessionalroute": {
     "compte_attente_validation": "[TODO TZ-LTN] Compte en attente de validation",
-    "votre_compte_professionnel": "[TODO TZ-LTN] Votre compte professionnel est en cours de validation par nos équipes. \n                  Vous ne pouvez pas encore créer de contenu.",
+    "votre_compte_professionnel": "[TODO TZ-LTN] Votre compte professionnel doit être validé par un administrateur avant de pouvoir créer du contenu.",
     "statut_actuel": "[TODO TZ-LTN] Statut actuel :",
     "retour_tableau_bord": "[TODO TZ-LTN] Retour au tableau de bord",
     "retour_laccueil": "[TODO TZ-LTN] Retour à l'accueil",
@@ -1563,8 +1690,8 @@
     "retour_1": "[TODO TZ-LTN] Retour",
     "sinscrire_comme_pro": "[TODO TZ-LTN] S'inscrire comme pro",
     "validation_attente": "[TODO TZ-LTN] Validation en attente",
-    "votre_compte_professionnel": "[TODO TZ-LTN] Votre compte professionnel est en cours de validation par notre équipe.",
-    "vous_recevrez_email": "[TODO TZ-LTN] Vous recevrez un email dès que votre compte sera validé. \n                Cela prend généralement 24 à 48 heures.",
+    "votre_compte_professionnel": "[TODO TZ-LTN] Votre compte professionnel doit être validé par un administrateur avant de pouvoir créer du contenu.",
+    "vous_recevrez_email": "[TODO TZ-LTN] Un administrateur examinera votre demande. Vous recevrez un email dès que votre compte sera validé. Cela prend généralement 24 à 48 heures.",
     "attendant_vous_pouvez": "[TODO TZ-LTN] En attendant, vous pouvez explorer la plateforme en tant que visiteur.",
     "retour_laccueil": "[TODO TZ-LTN] Retour à l'accueil"
   },
@@ -1780,7 +1907,8 @@
       "searchPlaceholder": "Nadi...",
       "filters": {
         "allTypes": "Akk tewsatin",
-        "allWilayas": "Akk twilayin"
+        "allWilayas": "Akk twilayin",
+        "all": "Akk"
       },
       "types": {
         "historicalSite": "Amḍiq amezruy",
@@ -1854,7 +1982,15 @@
       "title": "Asefrek n tedyanin"
     },
     "services": {
-      "title": "Asefrek n tenefliwin"
+      "title": "Asefrek n tenefliwin",
+      "searchPlaceholder": "Nadi γef umeẓlu...",
+      "noServices": "Ulac imeẓla",
+      "types": {
+        "tourGuide": "Amsnizwer",
+        "transport": "Assiweḍ",
+        "accommodation": "Ansayen",
+        "workshop": "Tanezduγt n umahil"
+      }
     }
   },
   "wilayas": {
@@ -2047,7 +2183,24 @@
       "title": "Ajerred",
       "total": "Amḍan",
       "unavailable": "Ajerred ulac-it",
-      "waitingList": "Tabdart n uṛaǧu"
+      "waitingList": "Tabdart n uṛaǧu",
+      "submitWorks": "Ixeddimen i usumer",
+      "worksRequired": "Fren ixeddimen i tebγiḍ ad d-tessekneḍ (ilaq)",
+      "worksOptional": "Fren ixeddimen i tebγiḍ ad d-tessekneḍ (d afran)",
+      "maxWorks": "Afellay: {{max}} n yixeddimen",
+      "acceptedTypes": "Anwan iqublen:",
+      "noWorks": "Ur tesɛiḍ ara ixeddimen i yemsasen d wanaw-agi n tedyant",
+      "createWork": "Snulfu axeddim",
+      "selectedWorks": "Ixeddimen ifranin:",
+      "worksSubmitted": "Ixeddimen yettwasumren",
+      "oeuvresRequired": "Fren xarsum yiwen n uxeddim i usumer",
+      "professionalOnly": "Asumer n yixeddimen i yimahilen kan",
+      "upgradeToPro": "Ɛeddi γer umiḍan amahil i usumer n yixeddimen-ik",
+      "becomePro": "Ili d amahil",
+      "interestedVisitor": "Yesseḥbiberek-d tedyant-agi?",
+      "connectToParticipate": "Kcm i ujerred neγ rnu γer yismenyifen",
+      "addToFavorites": "Rnu γer yismenyifen",
+      "removeFromFavorites": "Kkes seg yismenyifen"
     },
     "registrationDeadline": "Talast tagejdant n ujerred",
     "relatedEvents": "Ineḍruyen icudden",
@@ -2058,7 +2211,19 @@
       "info": "Talɣut",
       "program": "Ahil"
     },
-    "viewOnMap": "Wali deg ukarḍa"
+    "viewOnMap": "Wali deg ukarḍa",
+    "roles": {
+      "organisateur_principal": "Amasay agejdan",
+      "co_organisateur": "Amtekki deg unudeb",
+      "organisateur": "Amasay",
+      "partenaire": "Amcerik",
+      "sponsor": "Amaẓlay",
+      "intervenant": "Ameskan",
+      "moderateur": "Anemhal",
+      "animateur": "Amesḍukel",
+      "benevole": "Aɛawni",
+      "staff": "Agraw"
+    }
   },
   "places": {
     "address": "Tansa",
@@ -2121,7 +2286,15 @@
       "total": "ijerden",
       "search": "Nadi ɣef umttekki...",
       "empty": "Ulac imttekkiyen",
-      "profile": "Amaɣnu n umttekki"
+      "profile": "Amaɣnu n umttekki",
+      "viewProfile": "Wali amaγnu",
+      "registeredOn": "Yettwajerred deg",
+      "worksSubmitted": "axeddim yettwasumer",
+      "eventRegistration": "Ajerred γer tedyant-agi",
+      "submittedWorks": "Ixeddimen yettwasumren i tedyant-agi",
+      "portfolio": "Aγbalu n yixeddimen",
+      "participationHistory": "Amezruy n yittekkiyen",
+      "loadError": "D awezγi asali n umaγnu"
     }
   },
   "gestion": {
@@ -2151,5 +2324,272 @@
     "open": "Yeldi",
     "closed": "Yemdel",
     "unknown": "Arussin"
+  },
+  "ajouterService": {
+    "title": "Rnu ameẓlu n tẓuri tafessast",
+    "subtitle": "Sumer tisnulfuyin-ik tifesnasin",
+    "basicInfo": "Tilγa tigejdanin",
+    "basicInfoDesc": "Glem aferdis-ik neγ ameẓlu-ik afesnas",
+    "nom": "Isem n uferdis/umeẓlu",
+    "nomPlaceholder": "Am: Tafexart taqbaylit tamensayt",
+    "description": "Aglam",
+    "descriptionPlaceholder": "Glem asnulfu-ik, amezruy-is, ineẓrufen-is...",
+    "materiau": "Amawal",
+    "selectMateriau": "Fren amawal",
+    "technique": "Tatiknikt",
+    "selectTechnique": "Fren tatiknikt",
+    "pricingTitle": "Ssuma d tɣara",
+    "prixMin": "Ssuma tadasilt (DZD)",
+    "prixMax": "Ssuma tafellayt (DZD)",
+    "delaiFabrication": "Amur n usnulfu (ussan)",
+    "delaiFabricationPlaceholder": "Am: 7",
+    "enStock": "Amḍan yella",
+    "surCommande": "S uḍalab",
+    "tagsTitle": "Awalen n tnila",
+    "tagPlaceholder": "Rnu awal n tnila...",
+    "mediasTitle": "Tiwlafin",
+    "mediasDesc": "Rnu tiwlafin n usnulfu-ik",
+    "mediasUploadText": "Sit neγ zuγer tiwlafin-ik da",
+    "submit": "Suffeγ ameẓlu",
+    "submitting": "Asuffeγ iteddu...",
+    "success": "Ameẓlu-ik yettwarna akken iwata!",
+    "errors": {
+      "nomRequired": "Isem ilaq",
+      "materiauRequired": "Fren amawal",
+      "techniqueRequired": "Fren tatiknikt",
+      "createFailed": "Tuccḍa deg usnulfu n umeẓlu"
+    }
+  },
+  "ajouterPatrimoine": {
+    "title": "Rnu asit n wayla",
+    "subtitle": "Ttekki deg usileγ n wayla azzayri",
+    "basicInfo": "Tilγa tigejdanin",
+    "basicInfoDesc": "Glem asit n wayla",
+    "nom": "Isem n usit",
+    "nomPlaceholder": "Am: Lqesba n Lezzayer",
+    "description": "Aglam",
+    "descriptionPlaceholder": "Glem amezruy d yineẓrufen n usit...",
+    "type": "Anaw n wayla",
+    "selectType": "Fren anaw",
+    "epoque": "Taqbuṛt tamezruyt",
+    "selectEpoque": "Fren taqbuṛt",
+    "locationTitle": "Adeg",
+    "wilaya": "Tamnaḍt",
+    "selectWilaya": "Fren tamnaḍt",
+    "adresse": "Tansa",
+    "adressePlaceholder": "Tansa tummidt n usit",
+    "latitude": "Taγzi",
+    "longitude": "Tehri",
+    "statusTitle": "Addad d usemsel",
+    "statut": "Addad amiran",
+    "classement": "Asemsel n wayla",
+    "selectClassement": "Fren asemsel",
+    "dateClassement": "Azemz n usemsel",
+    "visiteVirtuelle": "URL n trezzift tanmawawt (d afran)",
+    "mediasTitle": "Tiwlafin",
+    "mediasDesc": "Rnu tiwlafin n usit",
+    "mediasUploadText": "Sit neγ zuγer tiwlafin-ik da",
+    "submit": "Suffeγ asit",
+    "submitting": "Asuffeγ iteddu...",
+    "success": "Asit n wayla yettwarna akken iwata!",
+    "errors": {
+      "nomRequired": "Isem ilaq",
+      "typeRequired": "Fren anaw",
+      "wilayaRequired": "Fren tamnaḍt",
+      "createFailed": "Tuccḍa deg usnulfu n usit"
+    }
+  },
+  "programmePages": {
+    "actions": {
+      "backToEvents": "Uγal γer tedyanin",
+      "backToEvent": "Uγal γer tedyant",
+      "edit": "Ẓreg",
+      "delete": "Kkes"
+    },
+    "status": {
+      "loadingProgram": "Asali n wahil..."
+    },
+    "errors": {
+      "prefix": "Tuccḍa",
+      "generic": "Tella-d tuccḍa",
+      "eventIdMissing": "ID n tedyant ur yettwabder ara",
+      "programmeIdMissing": "ID n wahil ur yettwabder ara",
+      "eventOrProgrammeIdMissing": "ID n tedyant neγ n wahil ur yettwabder ara",
+      "eventIdMissingWithPrefix": "Tuccḍa: ID n tedyant ur yettwabder ara",
+      "eventOrProgrammeIdMissingWithPrefix": "Tuccḍa: ID n tedyant neγ n wahil ur yettwabder ara",
+      "loadFailed": "Tuccḍa deg usali n wahil",
+      "createFailed": "Tuccḍa deg usnulfu n wahil",
+      "updateFailed": "Tuccḍa deg uleqqem n wahil",
+      "deleteFailed": "Tuccḍa deg tukksa n wahil"
+    },
+    "meta": {
+      "eventNumber": "Tadyant #{{id}}",
+      "programNumber": "Ahil #{{id}}",
+      "multiDay": "Ddeqs n wussan",
+      "multipleSpeakers": "Ddeqs n yimeskanen",
+      "flexibleLocations": "Idegen ifessasen",
+      "speakersCount": "{{count}} n yimeskanen",
+      "locationNotSpecified": "Adeg ur yettwabder ara"
+    },
+    "create": {
+      "title": "Snulfu ahil",
+      "newProgram": "Ahil amaynut"
+    },
+    "edit": {
+      "title": "Ẓreg ahil",
+      "editProgram": "Ẓreg ahil"
+    },
+    "view": {
+      "title": "Talγut γef wahil",
+      "consultation": "Assenqed n wahil",
+      "confirmDelete": "D tidet tebγiḍ ad tekkseḍ ahil-agi?",
+      "quickActions": {
+        "editProgram": "Ẓreg ahil-agi",
+        "addAnotherProgram": "Rnu ahil-nniḍen"
+      }
+    },
+    "info": {
+      "multiDayTitle": "Asefrek n ddeqs n wussan",
+      "speakersTitle": "Imeskanen",
+      "flexibleLocationsTitle": "Idegen ifessasen",
+      "locationAndOptionsTitle": "Adeg d textiṛiyin",
+      "createMultiDayDesc": "Snulfu ihilen i yal ass n tedyant-ik. Anagraw yesgrew armud s wass.",
+      "createSpeakersDesc": "Rnu ddeqs n yimeskanen s yisurag yemsebḍan. Yal ameskan yezmer ad yesɛu iɣewwaren-is.",
+      "createLocationsDesc": "Seqdec idegen iḥerrzen neγ bder adeg uslig i yal armud n wahil.",
+      "editMultiDayDesc": "Ẓreg ihilen i yal ass n tedyant-ik. Anagraw yesgrew armud s wass.",
+      "editSpeakersDesc": "Ẓreg imeskanen s yisurag-nsen. Yal ameskan yezmer ad yesɛu iɣewwaren-is.",
+      "editLocationsDesc": "Beddel idegen iḥerrzen neγ bder adeg uslig i yal armud n wahil.",
+      "viewMultiDayDesc": "Ahil-agi d aḥric n tedyant γef ddeqs n wussan. Anagraw yesgrew armud s wass.",
+      "viewSpeakersDesc": "{{count}} n yimeskanen ttekkin deg urmud-agi. Yal ameskan yesɛa asureg-is.",
+      "viewLocationOptionsDesc": "Armud deg udeg uslig s textiṛiyin n yimttekkiyen d tnudbelt."
+    }
+  },
+  "shared": {
+    "errorBoundary": {
+      "title": "Tella-d tuccḍa",
+      "unexpected": "Tuccḍa ur netturaǧu ara",
+      "retry": "Ɛreḍ tikkelt-nniḍen"
+    },
+    "lazyImage": {
+      "unavailable": "Tugna ulac-itt"
+    }
+  },
+  "patrimoine": {
+    "filters": {
+      "all": "Akk",
+      "allTypes": "Akk anwan",
+      "allWilayas": "Akk timnaḍin"
+    }
+  },
+  "toasts": {
+    "error": "Tuccḍa",
+    "success": "Tigawt",
+    "warning": "Alaɣi",
+    "confirmation": "Asentem",
+    "unknownError": "Tella-d tuccḍa",
+    "actionSuccess": "Tigawt tettwag s wadduf",
+    "userValidated": "Aseqdac yettwasentem",
+    "userRejected": "Aseqdac yettwagi",
+    "userValidationFailed": "Ur yezmir ara ad yettwasentem useqdac",
+    "userUpdated": "Aseqdac yettwalqem",
+    "userUpdateFailed": "Ur yezmir ara ad yettwalqem useqdac",
+    "userDeleted": "Aseqdac yettwakkes",
+    "userDeleteFailed": "Ur yezmir ara ad yettwakkes useqdac",
+    "userSuspended": "Aseqdac yettwasens",
+    "userSuspendFailed": "Ur yezmir ara ad yettwasens useqdac",
+    "userReactivated": "Aseqdac yettwales yermed",
+    "userReactivateFailed": "Ur yezmir ara ad yettwales yermed useqdac",
+    "passwordReset": "Awal uffir yettwalqem",
+    "passwordResetFailed": "Ur yezmir ara ad yettwalqem wawal uffir",
+    "bulkActionApplied": "Tigawt {{action}} tettwag i {{count}} iseqdacen",
+    "bulkActionFailed": "Ur yezmir ara ad tettwag tigawt",
+    "exportUsersDone": "Asifeḍ n iseqdacen yemmed",
+    "exportUsersFailed": "Ur yezmir ara ad ittwag usifeḍ n iseqdacen",
+    "oeuvreValidated": "Amahil yettwasentem",
+    "oeuvreRejected": "Amahil yettwagi",
+    "oeuvreValidationFailed": "Ur yezmir ara ad yettwasentem umahil",
+    "oeuvreStatusUpdated": "Addad n umahil yettwalqem",
+    "oeuvreDeleted": "Amahil yettwakkes",
+    "oeuvreDeleteFailed": "Ur yezmir ara ad yettwakkes umahil",
+    "oeuvreNotFound": "Amahil ur yettwaf ara",
+    "oeuvreLoadFailed": "Ur yezmir ara ad yettwasamar umahil",
+    "eventStatusUpdated": "Addad n uneḍru yettwalqem",
+    "eventDeleted": "Aneḍru yettwakkes",
+    "eventDeleteFailed": "Ur yezmir ara ad yettwakkes uneḍru",
+    "eventValidated": "Aneḍru yettwasentem",
+    "eventRejected": "Aneḍru yettwagi",
+    "eventNotFound": "Aneḍru ur yettwaf ara",
+    "eventLoadFailed": "Ur yezmir ara ad yettwasamar uneḍru",
+    "serviceStatusUpdated": "Addad n umeẓlu yettwalqem",
+    "serviceDeleted": "Ameẓlu yettwakkes",
+    "serviceDeleteFailed": "Ur yezmir ara ad yettwakkes umeẓlu",
+    "serviceNotFound": "Ameẓlu ur yettwaf ara",
+    "serviceLoadFailed": "Ur yezmir ara ad yettwasamar umeẓlu",
+    "statusUpdateFailed": "Ur yezmir ara ad yettwalqem waddad",
+    "loadOverviewFailed": "Ur yezmir ara ad yettwasamar uglam amatu",
+    "loadOeuvresFailed": "Ur yezmir ara ad ttwasament temhalin",
+    "loadEventsFailed": "Ur yezmir ara ad ttwasamen ineḍruyen",
+    "loadPatrimoineFailed": "Ur yezmir ara ad ttwasamen isiten n umezruy",
+    "loadServicesFailed": "Ur yezmir ara ad ttwasamen imeẓla",
+    "loadDataFailed": "Ur yezmir ara ad ttwasament isefka",
+    "loadMyOeuvresFailed": "Ur yezmir ara ad ttwasament temhalin-ik",
+    "loadMyEventsFailed": "Ur yezmir ara ad ttwasamen ineḍruyen-ik",
+    "signalementProcessed": "Abeggen yettwaselkem",
+    "signalementProcessFailed": "Ur yezmir ara ad yettwaselkem ubeggen",
+    "signalementApproved": "Abeggen yettwaqbel - agbur yettwakkes",
+    "signalementRejected": "Abeggen yettwagi",
+    "warningSent": "Alaɣi yettwazen",
+    "reportExported": "Aneqqis yettwassufeɣ",
+    "reportExportFailed": "Ur yezmir ara ad yettwassufeɣ uneqqis",
+    "cacheCleared": "Tkatut tettwasfaḍ",
+    "cacheClearFailed": "Ur yezmir ara ad tettwasfeḍ tkatut",
+    "itemApproved": "Aferdis yettwaqbel s wadduf",
+    "approvalFailed": "Ur yezmir ara ad yettwaqbel",
+    "itemRejected": "Aferdis yettwagi",
+    "dataRefreshed": "Isefka ttwaleqmen",
+    "exportGenerated": "Asifeḍ yettwarna s wadduf",
+    "exportFailed": "Tuccḍa n usifeḍ",
+    "commentAdded": "Awennit yettwarna",
+    "registrationSuccess": "Asekles yedda!",
+    "registrationError": "Tuccḍa n usekles",
+    "unregistered": "Tukksa n usekles tettwag",
+    "loginRequired": "Anekcum ilaq",
+    "addedToFavorites": "Yettwarna ɣer imuriten",
+    "addedToFavoritesDesc": "Aferdis yettwarna ɣer imuriten-ik",
+    "addToFavoritesFailed": "Ur yezmir ara ad yettwarna ɣer imuriten",
+    "removedFromFavorites": "Yettwakkes seg imuriten",
+    "removedFromFavoritesDesc": "Aferdis yettwakkes seg imuriten-ik",
+    "removeFromFavoritesFailed": "Ur yezmir ara ad yettwakkes seg imuriten",
+    "rateLimitReached": "Talast n isutar tettwabbeḍ",
+    "rateLimitDesc": "Aɛiwed awurman deg {{seconds}} tisinin.",
+    "accessDenied": "Anekcum yettuwgdel",
+    "serverError": "Tuccḍa n uqeddac",
+    "serverErrorDesc": "Tella-d tuccḍa. Ɛreḍ tikkelt-nniḍen.",
+    "timeout": "Azemz yezri",
+    "timeoutDesc": "Asuter yuɣ aṭas n wakud. Ɛreḍ tikkelt-nniḍen.",
+    "formIncomplete": "Tferkit ur temdi ara",
+    "formIncompleteDesc": "Sleḥ tuccḍiwin",
+    "articleBlocksSaveFailed": "Amagrad yettwalqem maca kra n iḥricen ur ttwaklasen ara.",
+    "articleBlocksIdMissing": "Ur yezmir ara ad yettwafen usula n umagrad i uklas n iḥricen.",
+    "articleCreatedBlocksFailed": "Amagrad yettwarna maca agbur ur yezmir ara ad yettwakles.",
+    "updateError": "Tuccḍa deg ulqem",
+    "actionTooFast": "Tigawt tezga ẓẓay",
+    "actionTooFastDesc": "Rǧu {{seconds}} tasint(in) send ad tɛerḍeḍ tikkelt-nniḍen",
+    "actionInProgress": "Tigawt tetteddu",
+    "actionInProgressDesc": "Rǧu tigawt tamezwarut ad temmed",
+    "confirmActionDelay": "Tigawt deg {{seconds}} tisinin...",
+    "processing": "Asesfer...",
+    "confirmAction": "Sentem tigawt",
+    "confirmActionDesc": "D tidet tebɣiḍ ad tageḍ tigawt-a?",
+    "confirm": "Sentem",
+    "cancel": "Sefsex",
+    "refreshSuccess": "Aleqqem",
+    "refreshSuccessDesc": "Isefka ttwaleqmen s wadduf",
+    "deleteSuccess": "Tukksa s wadduf",
+    "deleteSuccessDesc": "{{type}} yettwakkes s wadduf",
+    "deleteFailed": "Tuccḍa n tukksa",
+    "alreadyDeleted": "Aferdis yettwakkes yakan",
+    "alreadyDeletedDesc": "Tabdart tettwalqem.",
+    "noPermission": "Ur tesɛiḍ ara tisirag i tigawt-a"
   }
 }

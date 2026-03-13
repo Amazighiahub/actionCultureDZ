@@ -175,7 +175,6 @@ export const useLocalizedDate = () => {
       try {
         return new Intl.DateTimeFormat(validLocale, options);
       } catch (error) {
-        console.warn(`Failed to create DateTimeFormat for locale ${validLocale}`, error);
         // Fallback vers fr-DZ
         return new Intl.DateTimeFormat('fr-DZ', options);
       }
@@ -242,7 +241,6 @@ export const useLocalizedDate = () => {
         try {
           formatter = new Intl.DateTimeFormat(validLocale, customOptions);
         } catch (error) {
-          console.warn('Failed to create custom formatter', error);
           formatter = formatters.datetime;
         }
       } else {

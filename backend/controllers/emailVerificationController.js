@@ -17,7 +17,7 @@ class EmailVerificationController {
       if (!userId) {
         return res.status(400).json({
           success: false,
-          error: 'ID utilisateur requis'
+          error: req.t('common.badRequest')
         });
       }
 
@@ -27,14 +27,14 @@ class EmailVerificationController {
       if (!user) {
         return res.status(404).json({
           success: false,
-          error: 'Utilisateur non trouvé'
+          error: req.t('auth.userNotFound')
         });
       }
 
       if (user.email_verifie) {
         return res.status(400).json({
           success: false,
-          error: 'Email déjà vérifié'
+          error: req.t('email.alreadyVerified')
         });
       }
 
@@ -47,7 +47,7 @@ class EmailVerificationController {
       if (hasActiveToken) {
         return res.status(429).json({
           success: false,
-          error: 'Un email de vérification a déjà été envoyé. Veuillez vérifier votre boîte mail ou réessayer plus tard.'
+          error: req.t('email.verificationAlreadySent')
         });
       }
 
@@ -68,13 +68,13 @@ class EmailVerificationController {
         
         return res.status(500).json({
           success: false,
-          error: 'Erreur lors de l\'envoi de l\'email'
+          error: req.t('email.sendError')
         });
       }
 
       res.json({
         success: true,
-        message: 'Email de vérification envoyé',
+        message: req.t('email.verificationSent'),
         data: {
           email: user.email,
           expiresIn: '24 heures'
@@ -85,7 +85,7 @@ class EmailVerificationController {
       console.error('Erreur envoi email vérification:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur'
+        error: req.t('common.serverError')
       });
     }
   }
@@ -100,7 +100,7 @@ class EmailVerificationController {
       if (!token) {
         return res.status(400).json({
           success: false,
-          error: 'Token requis'
+          error: req.t('common.badRequest')
         });
       }
 
@@ -114,7 +114,7 @@ class EmailVerificationController {
       if (!result.success) {
         return res.status(400).json({
           success: false,
-          error: result.error || 'Token invalide'
+          error: result.error || req.t('email.invalidToken')
         });
       }
 
@@ -135,7 +135,7 @@ class EmailVerificationController {
       console.error('Erreur vérification email:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur lors de la vérification'
+        error: req.t('common.serverError')
       });
     }
   }
@@ -150,7 +150,7 @@ class EmailVerificationController {
       if (!email) {
         return res.status(400).json({
           success: false,
-          error: 'Email requis'
+          error: req.t('common.badRequest')
         });
       }
 
@@ -163,7 +163,7 @@ class EmailVerificationController {
       if (!user) {
         return res.json({
           success: true,
-          message: 'Si cet email existe dans notre système, vous recevrez un lien de réinitialisation.'
+          message: req.t('email.resetLinkSent')
         });
       }
 
@@ -176,7 +176,7 @@ class EmailVerificationController {
       if (hasActiveToken) {
         return res.status(429).json({
           success: false,
-          error: 'Une demande de réinitialisation est déjà en cours. Veuillez vérifier votre email.'
+          error: req.t('email.resetAlreadySent')
         });
       }
 
@@ -193,7 +193,7 @@ class EmailVerificationController {
 
       res.json({
         success: true,
-        message: 'Si cet email existe dans notre système, vous recevrez un lien de réinitialisation.',
+        message: req.t('email.resetLinkSent'),
         data: {
           expiresIn: '2 heures'
         }
@@ -203,7 +203,7 @@ class EmailVerificationController {
       console.error('Erreur demande reset password:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur'
+        error: req.t('common.serverError')
       });
     }
   }
@@ -218,7 +218,7 @@ class EmailVerificationController {
       if (!token || !newPassword) {
         return res.status(400).json({
           success: false,
-          error: 'Token et nouveau mot de passe requis'
+          error: req.t('common.badRequest')
         });
       }
 
@@ -226,25 +226,25 @@ class EmailVerificationController {
       if (newPassword.length < 12) {
         return res.status(400).json({
           success: false,
-          error: 'Le mot de passe doit contenir au moins 12 caractères'
+          error: req.t('auth.passwordMinLength')
         });
       }
       if (!/[a-z]/.test(newPassword)) {
         return res.status(400).json({
           success: false,
-          error: 'Le mot de passe doit contenir au moins une lettre minuscule'
+          error: req.t('auth.passwordLowercase')
         });
       }
       if (!/[A-Z]/.test(newPassword)) {
         return res.status(400).json({
           success: false,
-          error: 'Le mot de passe doit contenir au moins une lettre majuscule'
+          error: req.t('auth.passwordUppercase')
         });
       }
       if (!/[0-9]/.test(newPassword)) {
         return res.status(400).json({
           success: false,
-          error: 'Le mot de passe doit contenir au moins un chiffre'
+          error: req.t('auth.passwordDigit')
         });
       }
 
@@ -258,13 +258,14 @@ class EmailVerificationController {
       if (!result.success) {
         return res.status(400).json({
           success: false,
-          error: result.error || 'Token invalide'
+          error: result.error || req.t('email.invalidToken')
         });
       }
 
       // Changer le mot de passe
       const bcrypt = require('bcrypt');
-      const hashedPassword = await bcrypt.hash(newPassword, 12);
+      const rounds = parseInt(process.env.BCRYPT_ROUNDS) || 12;
+      const hashedPassword = await bcrypt.hash(newPassword, rounds);
 
       await result.user.update({
         password: hashedPassword,
@@ -279,7 +280,7 @@ class EmailVerificationController {
 
       res.json({
         success: true,
-        message: 'Mot de passe modifié avec succès',
+        message: req.t('auth.passwordChanged'),
         data: {
           email: result.user.email
         }
@@ -289,7 +290,7 @@ class EmailVerificationController {
       console.error('Erreur reset password:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur lors de la réinitialisation'
+        error: req.t('common.serverError')
       });
     }
   }
@@ -305,7 +306,7 @@ class EmailVerificationController {
       if (!newEmail || !password) {
         return res.status(400).json({
           success: false,
-          error: 'Nouvel email et mot de passe requis'
+          error: req.t('common.badRequest')
         });
       }
 
@@ -314,7 +315,7 @@ class EmailVerificationController {
       if (!emailRegex.test(newEmail)) {
         return res.status(400).json({
           success: false,
-          error: 'Format d\'email invalide'
+          error: req.t('auth.invalidEmail')
         });
       }
 
@@ -328,7 +329,7 @@ class EmailVerificationController {
       if (!isValidPassword) {
         return res.status(401).json({
           success: false,
-          error: 'Mot de passe incorrect'
+          error: req.t('auth.wrongPassword')
         });
       }
 
@@ -343,7 +344,7 @@ class EmailVerificationController {
       if (emailExists) {
         return res.status(409).json({
           success: false,
-          error: 'Cet email est déjà utilisé'
+          error: req.t('auth.emailAlreadyUsed')
         });
       }
 
@@ -365,7 +366,7 @@ class EmailVerificationController {
 
       res.json({
         success: true,
-        message: 'Emails de confirmation envoyés aux deux adresses',
+        message: req.t('email.changeConfirmationSent'),
         data: {
           currentEmail: user.email,
           newEmail,
@@ -377,7 +378,7 @@ class EmailVerificationController {
       console.error('Erreur changement email:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur'
+        error: req.t('common.serverError')
       });
     }
   }
@@ -398,13 +399,13 @@ class EmailVerificationController {
       if (!result.success) {
         return res.status(400).json({
           success: false,
-          error: result.error || 'Token invalide'
+          error: result.error || req.t('email.invalidToken')
         });
       }
 
       res.json({
         success: true,
-        message: 'Email mis à jour avec succès',
+        message: req.t('email.changeSuccess'),
         data: {
           newEmail: result.user.email
         }
@@ -414,7 +415,7 @@ class EmailVerificationController {
       console.error('Erreur confirmation changement email:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur'
+        error: req.t('common.serverError')
       });
     }
   }
@@ -435,7 +436,7 @@ class EmailVerificationController {
       console.error('Erreur stats vérifications:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur'
+        error: req.t('common.serverError')
       });
     }
   }
@@ -449,7 +450,7 @@ class EmailVerificationController {
 
       res.json({
         success: true,
-        message: `${count} tokens nettoyés`,
+        message: req.t ? req.t('dashboard.tokensCleared', { count }) : `${count} tokens cleaned`,
         data: { cleaned: count }
       });
 
@@ -457,7 +458,7 @@ class EmailVerificationController {
       console.error('Erreur nettoyage tokens:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur serveur'
+        error: req.t('common.serverError')
       });
     }
   }

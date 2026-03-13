@@ -114,7 +114,7 @@ class EvenementControllerV2 {
       const evenement = await this.evenementService.create(req.body, req.user.id_user);
       res.status(201).json({
         success: true,
-        message: 'Événement créé avec succès',
+        message: req.t('event.created'),
         data: evenement.toDetailJSON(req.lang)
       });
     } catch (error) {
@@ -131,7 +131,7 @@ class EvenementControllerV2 {
       );
       res.json({
         success: true,
-        message: 'Événement mis à jour',
+        message: req.t('event.updated'),
         data: evenement.toDetailJSON(req.lang)
       });
     } catch (error) {
@@ -142,7 +142,7 @@ class EvenementControllerV2 {
   async delete(req, res) {
     try {
       await this.evenementService.delete(parseInt(req.params.id), req.user.id_user);
-      res.json({ success: true, message: 'Événement supprimé' });
+      res.json({ success: true, message: req.t('event.deleted') });
     } catch (error) {
       this._handleError(res, error);
     }
@@ -158,7 +158,7 @@ class EvenementControllerV2 {
         parseInt(req.params.id),
         req.user.id_user
       );
-      res.json({ success: true, message: 'Inscription confirmée' });
+      res.json({ success: true, message: req.t('event.registered') });
     } catch (error) {
       this._handleError(res, error);
     }
@@ -170,7 +170,7 @@ class EvenementControllerV2 {
         parseInt(req.params.id),
         req.user.id_user
       );
-      res.json({ success: true, message: 'Désinscription effectuée' });
+      res.json({ success: true, message: req.t('event.unregistered') });
     } catch (error) {
       this._handleError(res, error);
     }
@@ -222,7 +222,7 @@ class EvenementControllerV2 {
       );
       res.json({
         success: true,
-        message: 'Événement publié',
+        message: req.t('event.published'),
         data: evenement.toAdminJSON(req.lang)
       });
     } catch (error) {
@@ -249,7 +249,7 @@ class EvenementControllerV2 {
 
       res.json({
         success: true,
-        message: 'Événement annulé',
+        message: req.t('event.cancelled'),
         data: evenement.toAdminJSON(req.lang)
       });
     } catch (error) {
@@ -304,6 +304,15 @@ class EvenementControllerV2 {
       const evenementId = parseInt(req.params.id);
       const models = container.models;
 
+      // Vérifier que le demandeur est le créateur ou un admin
+      const evenement = await models.Evenement.findByPk(evenementId, { attributes: ['id_evenement', 'id_user'] });
+      if (!evenement) {
+        return res.status(404).json({ success: false, error: 'Événement non trouvé' });
+      }
+      if (evenement.id_user !== req.user.id_user && req.user.id_type_user !== 1) {
+        return res.status(403).json({ success: false, error: 'Accès non autorisé' });
+      }
+
       const participants = await models.EvenementUser.findAll({
         where: { id_evenement: evenementId },
         include: [{
@@ -329,25 +338,29 @@ class EvenementControllerV2 {
       const userId = req.user.id_user;
       const models = container.models;
 
-      // Oeuvres déjà ajoutées à cet événement par l'utilisateur
-      const oeuvresAjoutees = await models.EvenementOeuvre.findAll({
-        where: { id_evenement: evenementId },
-        include: [{
-          model: models.Oeuvre,
-          as: 'Oeuvre',
-          where: { saisi_par: userId },
-          required: true
-        }],
-        order: [['ordre_presentation', 'ASC']]
-      });
+      // Fetch both queries in parallel instead of sequentially
+      const [oeuvresAjoutees, toutesOeuvres] = await Promise.all([
+        // Oeuvres already added to this event by the user
+        models.EvenementOeuvre.findAll({
+          where: { id_evenement: evenementId },
+          include: [{
+            model: models.Oeuvre,
+            as: 'Oeuvre',
+            where: { saisi_par: userId },
+            required: true
+          }],
+          order: [['ordre_presentation', 'ASC']]
+        }),
+        // All published oeuvres by the user
+        models.Oeuvre.findAll({
+          where: { saisi_par: userId, statut: 'publie' },
+          attributes: ['id_oeuvre', 'titre', 'statut', 'id_type_oeuvre']
+        })
+      ]);
 
-      // Toutes les oeuvres de l'utilisateur (pour proposer celles disponibles)
-      const toutesOeuvres = await models.Oeuvre.findAll({
-        where: { saisi_par: userId, statut: 'publie' }
-      });
-
-      const idsAjoutees = oeuvresAjoutees.map(eo => eo.id_oeuvre);
-      const oeuvresDisponibles = toutesOeuvres.filter(o => !idsAjoutees.includes(o.id_oeuvre));
+      // Filter available oeuvres using a Set for O(1) lookups instead of Array.includes O(n)
+      const idsAjoutees = new Set(oeuvresAjoutees.map(eo => eo.id_oeuvre));
+      const oeuvresDisponibles = toutesOeuvres.filter(o => !idsAjoutees.has(o.id_oeuvre));
 
       res.json({
         success: true,
@@ -434,7 +447,7 @@ class EvenementControllerV2 {
       const models = container.models;
 
       if (!Number.isInteger(oeuvreId)) {
-        return res.status(400).json({ success: false, error: 'ID œuvre invalide' });
+        return res.status(400).json({ success: false, error: req.t('oeuvre.invalidId') });
       }
 
       // Vérifier que l'oeuvre appartient à l'utilisateur
@@ -443,7 +456,7 @@ class EvenementControllerV2 {
       });
 
       if (!oeuvre) {
-        return res.status(404).json({ success: false, error: 'Œuvre non trouvée ou non autorisée' });
+        return res.status(404).json({ success: false, error: req.t('oeuvre.notFoundOrUnauthorized') });
       }
 
       // Vérifier si déjà ajoutée
@@ -452,7 +465,7 @@ class EvenementControllerV2 {
       });
 
       if (existing) {
-        return res.status(409).json({ success: false, error: 'Œuvre déjà ajoutée à cet événement' });
+        return res.status(409).json({ success: false, error: req.t('oeuvre.alreadyInEvent') });
       }
 
       // Obtenir le prochain ordre
@@ -475,7 +488,7 @@ class EvenementControllerV2 {
 
       res.status(201).json({
         success: true,
-        message: 'Œuvre ajoutée à l\'événement',
+        message: req.t('oeuvre.addedToEvent'),
         data: created || association
       });
     } catch (error) {
@@ -499,7 +512,7 @@ class EvenementControllerV2 {
       });
 
       if (!association) {
-        return res.status(404).json({ success: false, error: 'Association non trouvée' });
+        return res.status(404).json({ success: false, error: req.t('association.notFound') });
       }
 
       const updates = {};
@@ -524,7 +537,7 @@ class EvenementControllerV2 {
 
       res.json({
         success: true,
-        message: 'Œuvre mise à jour dans l\'événement',
+        message: req.t('oeuvre.updatedInEvent'),
         data: updated || association
       });
     } catch (error) {
@@ -540,7 +553,7 @@ class EvenementControllerV2 {
       const oeuvres = Array.isArray(req.body.oeuvres) ? req.body.oeuvres : [];
 
       if (!oeuvres.length) {
-        return res.status(400).json({ success: false, error: 'Liste d\'œuvres invalide' });
+        return res.status(400).json({ success: false, error: req.t('oeuvre.invalidList') });
       }
 
       const transaction = await models.sequelize.transaction();
@@ -575,7 +588,7 @@ class EvenementControllerV2 {
         await transaction.rollback();
         return res.status(400).json({
           success: false,
-          error: txError.message || 'Erreur lors de la réorganisation des œuvres'
+          error: txError.message || (req.t ? req.t('common.serverError') : 'Server error')
         });
       }
 
@@ -587,7 +600,7 @@ class EvenementControllerV2 {
 
       res.json({
         success: true,
-        message: 'Ordre des œuvres mis à jour',
+        message: req.t('oeuvre.orderUpdated'),
         data: reordered
       });
     } catch (error) {
@@ -611,10 +624,10 @@ class EvenementControllerV2 {
       });
 
       if (!deleted) {
-        return res.status(404).json({ success: false, error: 'Association non trouvée' });
+        return res.status(404).json({ success: false, error: req.t('association.notFound') });
       }
 
-      res.json({ success: true, message: 'Œuvre retirée de l\'événement' });
+      res.json({ success: true, message: req.t('oeuvre.removedFromEvent') });
     } catch (error) {
       this._handleError(res, error);
     }
@@ -627,12 +640,21 @@ class EvenementControllerV2 {
       const { validated } = req.body;
       const models = container.models;
 
+      // Vérifier que le demandeur est le créateur ou un admin
+      const evenement = await models.Evenement.findByPk(evenementId, { attributes: ['id_evenement', 'id_user'] });
+      if (!evenement) {
+        return res.status(404).json({ success: false, error: 'Événement non trouvé' });
+      }
+      if (evenement.id_user !== req.user.id_user && req.user.id_type_user !== 1) {
+        return res.status(403).json({ success: false, error: 'Accès non autorisé' });
+      }
+
       const participation = await models.EvenementUser.findOne({
         where: { id_evenement: evenementId, id_user: userId }
       });
 
       if (!participation) {
-        return res.status(404).json({ success: false, error: 'Participation non trouvée' });
+        return res.status(404).json({ success: false, error: req.t('participation.notFound') });
       }
 
       await participation.update({
@@ -656,7 +678,7 @@ class EvenementControllerV2 {
 
       res.json({
         success: true,
-        message: validated ? 'Participation confirmée' : 'Participation refusée',
+        message: validated ? req.t('professionnel.participant.confirmer') : req.t('professionnel.participant.rejeter'),
         data: participation
       });
     } catch (error) {
@@ -676,7 +698,7 @@ class EvenementControllerV2 {
       });
 
       if (!participation) {
-        return res.status(404).json({ success: false, error: 'Participant non trouvé pour cet événement' });
+        return res.status(404).json({ success: false, error: req.t('participant.notFoundForEvent') });
       }
 
       // Récupérer le profil complet du participant
@@ -696,7 +718,7 @@ class EvenementControllerV2 {
       });
 
       if (!user) {
-        return res.status(404).json({ success: false, error: 'Utilisateur non trouvé' });
+        return res.status(404).json({ success: false, error: req.t('user.notFound') });
       }
 
       res.json({
@@ -715,6 +737,15 @@ class EvenementControllerV2 {
     try {
       const evenementId = parseInt(req.params.id);
       const models = container.models;
+
+      // Vérifier que le demandeur est le créateur ou un admin
+      const evenement = await models.Evenement.findByPk(evenementId, { attributes: ['id_evenement', 'id_user'] });
+      if (!evenement) {
+        return res.status(404).json({ success: false, error: 'Événement non trouvé' });
+      }
+      if (evenement.id_user !== req.user.id_user && req.user.id_type_user !== 1) {
+        return res.status(403).json({ success: false, error: 'Accès non autorisé' });
+      }
 
       const participants = await models.EvenementUser.findAll({
         where: {
@@ -744,6 +775,17 @@ class EvenementControllerV2 {
   async exportEvent(req, res) {
     try {
       const evenementId = parseInt(req.params.id);
+      const models = container.models;
+
+      // Vérifier que le demandeur est le créateur ou un admin
+      const evt = await models.Evenement.findByPk(evenementId, { attributes: ['id_evenement', 'id_user'] });
+      if (!evt) {
+        return res.status(404).json({ success: false, error: 'Événement non trouvé' });
+      }
+      if (evt.id_user !== req.user.id_user && req.user.id_type_user !== 1) {
+        return res.status(403).json({ success: false, error: 'Accès non autorisé' });
+      }
+
       const evenement = await this.evenementService.findWithFullDetails(evenementId);
       const data = evenement.toDetailJSON(req.lang);
 
@@ -772,7 +814,7 @@ class EvenementControllerV2 {
       if (statusCode === 500) console.error(error.stack);
     }
 
-    const response = { success: false, error: error.message || 'Erreur serveur', code };
+    const response = { success: false, error: error.message || 'Internal server error', code };
     if (error.errors) response.errors = error.errors;
     if (IS_DEV_MODE && statusCode === 500) response.stack = error.stack;
 

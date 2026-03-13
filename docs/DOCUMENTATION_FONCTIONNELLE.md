@@ -70,7 +70,7 @@ La plateforme est **trilingue** (Français, Arabe, Anglais) avec support complet
 | Runtime | **Node.js** |
 | Framework | **Express.js** |
 | ORM | **Sequelize** |
-| Base de données | **PostgreSQL** / MySQL |
+| Base de données | **MySQL** 8+ |
 | Auth | **JWT** (JSON Web Tokens) |
 | Temps réel | **Socket.IO** |
 | Upload | **Multer** |

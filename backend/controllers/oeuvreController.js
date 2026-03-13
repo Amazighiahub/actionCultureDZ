@@ -190,12 +190,22 @@ class OeuvreControllerV2 {
    */
   async create(req, res) {
     try {
-      const oeuvre = await this.oeuvreService.create(req.body, req.user.id_user);
+      const result = await this.oeuvreService.create(req.body, req.user.id_user);
+
+      const responseData = {
+        oeuvre: this._translateOeuvre(result.oeuvre, req.lang)
+      };
+      if (result.article_scientifique) {
+        responseData.article_scientifique = result.article_scientifique;
+      }
+      if (result.article) {
+        responseData.article = result.article;
+      }
 
       res.status(201).json({
         success: true,
-        message: 'Œuvre créée avec succès',
-        data: this._translateOeuvre(oeuvre, req.lang)
+        message: req.t('oeuvre.created'),
+        data: responseData
       });
 
     } catch (error) {
@@ -217,7 +227,7 @@ class OeuvreControllerV2 {
 
       res.json({
         success: true,
-        message: 'Œuvre mise à jour',
+        message: req.t('oeuvre.updated'),
         data: this._translateOeuvre(oeuvre, req.lang)
       });
 
@@ -239,7 +249,7 @@ class OeuvreControllerV2 {
 
       res.json({
         success: true,
-        message: 'Œuvre supprimée'
+        message: req.t('oeuvre.deleted')
       });
 
     } catch (error) {
@@ -284,7 +294,7 @@ class OeuvreControllerV2 {
 
       res.json({
         success: true,
-        message: 'Œuvre soumise pour validation',
+        message: req.t('oeuvre.submitted'),
         data: this._translateOeuvre(oeuvre, req.lang)
       });
 
@@ -364,7 +374,7 @@ class OeuvreControllerV2 {
 
       res.json({
         success: true,
-        message: 'Œuvre validée',
+        message: req.t('oeuvre.validated'),
         data: this._translateOeuvre(oeuvre, req.lang)
       });
 
@@ -389,7 +399,7 @@ class OeuvreControllerV2 {
 
       res.json({
         success: true,
-        message: 'Œuvre refusée',
+        message: req.t('oeuvre.rejected'),
         data: this._translateOeuvre(oeuvre, req.lang)
       });
 
@@ -413,7 +423,7 @@ class OeuvreControllerV2 {
 
       res.json({
         success: true,
-        message: featured ? 'Œuvre mise en avant' : 'Œuvre retirée de la mise en avant',
+        message: featured ? (req.t ? req.t('oeuvre.featured') : 'Work featured') : (req.t ? req.t('oeuvre.unfeatured') : 'Work unfeatured'),
         data: this._translateOeuvre(oeuvre, req.lang)
       });
 
@@ -486,7 +496,7 @@ class OeuvreControllerV2 {
       );
       res.json({
         success: true,
-        message: `Traduction ${req.params.lang} mise à jour`,
+        message: req.t('translation.updated', { lang: req.params.lang }),
         data: this._translateOeuvre(oeuvre, req.lang, 'detail')
       });
     } catch (error) {
@@ -563,7 +573,7 @@ class OeuvreControllerV2 {
       );
       res.status(201).json({
         success: true,
-        message: 'Média uploadé',
+        message: req.t('media.uploaded'),
         data: result
       });
     } catch (error) {
@@ -583,7 +593,7 @@ class OeuvreControllerV2 {
         orderedIds,
         req.user.id_user
       );
-      res.json({ success: true, message: 'Médias réordonnés' });
+      res.json({ success: true, message: req.t('media.reordered') });
     } catch (error) {
       this._handleError(res, error);
     }
@@ -600,7 +610,7 @@ class OeuvreControllerV2 {
         parseInt(req.params.mediaId),
         req.user.id_user
       );
-      res.json({ success: true, message: 'Média supprimé' });
+      res.json({ success: true, message: req.t('media.deleted') });
     } catch (error) {
       this._handleError(res, error);
     }
@@ -695,7 +705,7 @@ class OeuvreControllerV2 {
 
     const response = {
       success: false,
-      error: error.message || 'Erreur serveur',
+      error: error.message || 'Internal server error',
       code
     };
 

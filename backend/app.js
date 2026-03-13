@@ -4,7 +4,28 @@ require('dotenv').config();
 const EnvAdapter = require('./config/envAdapter');
 const config = EnvAdapter.getConfig();
 
+let Sentry = null;
+try {
+  Sentry = require('@sentry/node');
+  if (process.env.SENTRY_DSN) {
+    Sentry.init({
+      dsn: process.env.SENTRY_DSN,
+      environment: process.env.NODE_ENV || 'development',
+      tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
+      integrations: [
+        Sentry.httpIntegration(),
+        Sentry.expressIntegration()
+      ]
+    });
+  } else {
+    Sentry = null;
+  }
+} catch (e) {
+  // @sentry/node not installed, skip
+}
+
 const express = require('express');
+const crypto = require('crypto');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const compression = require('compression');
@@ -24,6 +45,7 @@ const { httpsRedirect, hstsMiddleware } = require('./middlewares/httpsRedirect')
 // ⚡ Middleware de langue (i18n)
 const { languageMiddleware, setLanguageCookie } = require('./middlewares/language');
 const { SUPPORTED_LANGUAGES } = require('./helpers/i18n');
+const { i18nMiddleware } = require('./helpers/messages');
 
 // Importation des routes
 const initRoutes = require('./routes');
@@ -89,25 +111,36 @@ class App {
     this.app.use(httpsRedirect);
     this.app.use(hstsMiddleware);
 
-    // Sécurité avec Helmet
-    this.app.use(helmet({
-      crossOriginResourcePolicy: { policy: "cross-origin" },
-      contentSecurityPolicy: {
-        directives: {
-          defaultSrc: ["'self'"],
-          imgSrc: ["'self'", "data:", "https:", "blob:"],
-          scriptSrc: ["'self'", "'unsafe-inline'"],
-          styleSrc: ["'self'", "'unsafe-inline'"],
-          fontSrc: ["'self'", "https:", "data:"],
-          connectSrc: ["'self'", "https:"],
+    // Correlation ID + request timing (must be early in the chain)
+    const requestContext = require('./middlewares/requestContext');
+    this.app.use(requestContext);
+
+    // Sécurité avec Helmet — CSP with per-request nonce (no unsafe-inline for scripts)
+    this.app.use((req, res, next) => {
+      const nonce = crypto.randomBytes(16).toString('base64');
+      req.cspNonce = nonce;
+      res.locals.cspNonce = nonce;
+
+      helmet({
+        crossOriginResourcePolicy: { policy: "cross-origin" },
+        contentSecurityPolicy: {
+          directives: {
+            defaultSrc: ["'self'"],
+            imgSrc: ["'self'", "data:", "https:", "blob:"],
+            scriptSrc: ["'self'", `'nonce-${nonce}'`],
+            styleSrc: ["'self'"],
+            fontSrc: ["'self'", "https:", "data:"],
+            connectSrc: ["'self'", process.env.FRONTEND_URL || "http://localhost:3000", "wss:"],
+            frameAncestors: ["'none'"],
+          },
         },
-      },
-      hsts: {
-        maxAge: 31536000,
-        includeSubDomains: true,
-        preload: true
-      }
-    }));
+        hsts: {
+          maxAge: 31536000,
+          includeSubDomains: true,
+          preload: true
+        }
+      })(req, res, next);
+    });
 
     // CORS
     this.app.use(corsMiddleware);
@@ -144,15 +177,20 @@ class App {
     // ⚡ Middleware de détection de langue (i18n)
     // Détecte automatiquement via: ?lang=ar, cookie, header X-Language, Accept-Language
     this.app.use(languageMiddleware);
+    this.app.use(i18nMiddleware);
 
     // Augmenter les limites pour les uploads de médias
-    this.app.use(express.json({ 
-      limit: '50mb',
-      verify: (req, res, buf, encoding) => {
-        req.rawBody = buf.toString(encoding || 'utf8');
+    this.app.use(express.json({ limit: '5mb' }));
+    this.app.use((err, req, res, next) => {
+      if (err.type === 'entity.parse.failed') {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid JSON in request body'
+        });
       }
-    }));
-    this.app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+      next(err);
+    });
+    this.app.use(express.urlencoded({ extended: true, limit: '5mb' }));
 
     // Sanitization des entrées
     this.app.use(securityMiddleware.sanitizeInput);
@@ -198,8 +236,8 @@ class App {
 
     this.app.use('/public', express.static(path.join(__dirname, 'public'), staticOptions));
 
-    // Log des accès non autorisés
-    this.app.use(auditMiddleware.logUnauthorizedAccess);
+    // NOTE: auditMiddleware.logUnauthorizedAccess is registered in initialize()
+    // after the database is ready, so AuditLog is available when it runs.
     
     if (this.config.server.environment === 'development') {
       this.app.use((req, res, next) => {
@@ -209,17 +247,7 @@ class App {
     }
 
     // Headers de sécurité supplémentaires
-    this.app.use((req, res, next) => {
-      res.setHeader('X-Content-Type-Options', 'nosniff');
-      res.setHeader('X-Frame-Options', 'DENY');
-      res.setHeader('X-XSS-Protection', '1; mode=block');
-      res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-      res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
-      next();
-    });
-
-    console.log('✅ Middlewares de base initialisés');
-    console.log('🌍 Middleware i18n activé - Langues:', SUPPORTED_LANGUAGES.join(', '));
+    // Security headers sont gérés par Helmet (lignes 94-111)
   }
 
   // Initialiser la structure des dossiers uploads
@@ -403,11 +431,14 @@ class App {
   // Initialisation des rate limiters
   // ✅ CSRF supprimé des rate limiters
   initializeRateLimiters() {
-    // Rate limiting pour l'authentification
-    this.app.use('/api/users/login', ...rateLimitMiddleware.auth);
-    this.app.use('/api/users/register', ...rateLimitMiddleware.auth);
-    this.app.use('/api/users/forgot-password', ...rateLimitMiddleware.auth);
-    this.app.use('/api/users/reset-password', ...rateLimitMiddleware.auth);
+    // Rate limiting par endpoint (un seul limiter approprié par route)
+    this.app.use('/api/users/login', rateLimitMiddleware.endpointLimiters.login);
+    this.app.use('/api/users/register', rateLimitMiddleware.endpointLimiters.register);
+    this.app.use('/api/email-verification/request-password-reset', rateLimitMiddleware.endpointLimiters.forgotPassword);
+    this.app.use('/api/email-verification/reset-password', rateLimitMiddleware.endpointLimiters.forgotPassword);
+
+    // Account lockout protection (brute force par compte email)
+    this.app.use('/api/users/login', rateLimitMiddleware.accountRateLimiter.checkAccountLock);
 
     // Rate limiting pour les créations
     this.app.use('/api/oeuvres', ...rateLimitMiddleware.creation);
@@ -423,7 +454,11 @@ class App {
     // Rate limiting général
     this.app.use('/api/', ...rateLimitMiddleware.general);
 
-    console.log('✅ Rate limiters initialisés');
+    // Request timeout (30s for API, skips uploads)
+    const createTimeoutMiddleware = require('./middlewares/timeoutMiddleware');
+    this.app.use('/api/', createTimeoutMiddleware(30000));
+
+    console.log('✅ Rate limiters et timeout initialisés');
   }
 
   // Initialisation des routes
@@ -468,44 +503,78 @@ class App {
       });
     });
 
-    // Route de santé
-    this.app.get('/health', (req, res) => {
-      res.json({
-        status: 'healthy',
+    // Route de santé — vérifie DB + Redis
+    this.app.get('/health', async (req, res) => {
+      const checks = { db: false, redis: false };
+      const start = Date.now();
+
+      // Check database
+      try {
+        if (this.sequelize) {
+          await this.sequelize.authenticate();
+          checks.db = true;
+        }
+      } catch (e) {
+        checks.db = false;
+      }
+
+      // Check Redis
+      try {
+        const redis = this._getRedisClient();
+        if (redis) {
+          await redis.ping();
+          checks.redis = true;
+        } else {
+          checks.redis = 'not_configured';
+        }
+      } catch (e) {
+        checks.redis = false;
+      }
+
+      const allHealthy = checks.db === true && checks.redis !== false;
+      const isProduction = process.env.NODE_ENV === 'production';
+
+      res.status(allHealthy ? 200 : 503).json({
+        status: allHealthy ? 'healthy' : 'degraded',
         timestamp: new Date().toISOString(),
-        uptime: process.uptime(),
-        memory: process.memoryUsage(),
-        environment: this.config.server.environment,
-        lang: req.lang,
-        version: '1.0.0'
+        ...(isProduction ? {} : {
+          version: '1.0.0',
+          responseTimeMs: Date.now() - start,
+          checks,
+          uptime: process.uptime(),
+          memory: process.memoryUsage(),
+          environment: this.config.server.environment,
+          lang: req.lang,
+        })
       });
     });
 
     // Route racine
     this.app.get('/', (req, res) => {
+      const isProduction = process.env.NODE_ENV === 'production';
       res.json({
-        message: 'API Action Culture - Système de gestion culturelle algérien',
-        version: '1.0.0',
+        message: 'API Action Culture',
         status: 'running',
-        lang: req.lang,           // ⚡ Langue détectée
-        dir: req.dir,             // ⚡ Direction du texte (ltr/rtl)
-        documentation: '/api',
-        health: '/health',
-        languages: '/api/languages',  // ⚡ Endpoint langues
-        environment: this.config.server.environment,
-        uploads: {
-          public: 'POST /api/upload/image/public - Upload sans authentification',
-          private: 'POST /api/upload/image - Upload avec authentification',
-          config: {
-            images_dir: this.config.upload.dirs.images,
-            max_size: {
-              image: `${Math.round(this.config.upload.maxSizes.image / 1048576)}MB`,
-              document: `${Math.round(this.config.upload.maxSizes.document / 1048576)}MB`,
-              video: `${Math.round(this.config.upload.maxSizes.video / 1048576)}MB`
-            },
-            base_url: this.config.server.baseUrl
+        lang: req.lang,
+        dir: req.dir,
+        ...(isProduction ? {} : {
+          version: '1.0.0',
+          documentation: '/api',
+          health: '/health',
+          languages: '/api/languages',
+          environment: this.config.server.environment,
+          uploads: {
+            public: 'POST /api/upload/image/public',
+            private: 'POST /api/upload/image',
+            config: {
+              max_size: {
+                image: `${Math.round(this.config.upload.maxSizes.image / 1048576)}MB`,
+                document: `${Math.round(this.config.upload.maxSizes.document / 1048576)}MB`,
+                video: `${Math.round(this.config.upload.maxSizes.video / 1048576)}MB`
+              }
+            }
           }
-        }
+        })
       });
     });
 
@@ -541,8 +610,9 @@ class App {
       });
     });
 
-    // Route pour upload PUBLIC
-    this.app.post('/api/upload/image/public', 
+    // Route pour upload PUBLIC (rate limited: 5 uploads/heure par IP)
+    this.app.post('/api/upload/image/public',
+      ...rateLimitMiddleware.creation,
       auditMiddleware.logAction('upload_image_public', { entityType: 'media' }),
       uploadService.uploadImage().single('image'),
       FileValidator.uploadValidator(this.uploadInfo.allowedTypes.image, this.uploadInfo.maxFileSize.image),
@@ -594,7 +664,7 @@ class App {
             });
             return res.status(400).json({
               success: false,
-              error: 'Type de fichier non autorisé',
+              error: req.t('upload.invalidFileType'),
               details: invalidFiles
             });
           }
@@ -642,10 +712,15 @@ class App {
         this.authMiddleware.authenticate, 
         this.authMiddleware.isAdmin, 
         (req, res) => {
-          res.json({
-            message: 'Metrics endpoint not implemented yet',
-            todo: 'Integrate prometheus-client'
-          });
+          const metrics = {
+            uptime: process.uptime(),
+            memory: process.memoryUsage(),
+            cpu: process.cpuUsage(),
+            timestamp: Date.now(),
+            pid: process.pid,
+            nodeVersion: process.version
+          };
+          res.json(metrics);
         }
       );
     }
@@ -662,7 +737,7 @@ class App {
       if (!req.file) {
         return res.status(400).json({
           success: false,
-          error: 'Aucune image fournie'
+          error: req.t('upload.noImage')
         });
       }
 
@@ -672,7 +747,7 @@ class App {
       
       res.json({
         success: true,
-        message: 'Image uploadée avec succès',
+        message: req.t('upload.imageSuccess'),
         data: {
           filename: req.file.filename,
           originalName: req.file.originalname,
@@ -685,7 +760,7 @@ class App {
       console.error('❌ Erreur lors de l\'upload public:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur lors de l\'upload de l\'image'
+        error: req.t('upload.imageError')
       });
     }
   }
@@ -695,17 +770,17 @@ class App {
       if (!req.file) {
         return res.status(400).json({
           success: false,
-          error: 'Aucun fichier fourni'
+          error: req.t('upload.noFile')
         });
       }
 
       const fileUrl = `${this.config.server.baseUrl}/${req.file.path.replace(/\\/g, '/')}`;
       
-      console.log(`📸 Upload par ${req.user.email}: ${req.file.filename}`);
+      console.log(`📸 Upload par ${req.user.id_user}: ${req.file.filename}`);
       
       res.json({
         success: true,
-        message: 'Image uploadée avec succès',
+        message: req.t('upload.imageSuccess'),
         data: {
           filename: req.file.filename,
           originalName: req.file.originalname,
@@ -719,7 +794,7 @@ class App {
       console.error('❌ Erreur lors de l\'upload:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur lors de l\'upload de l\'image'
+        error: req.t('upload.imageError')
       });
     }
   }
@@ -729,17 +804,17 @@ class App {
       if (!req.file) {
         return res.status(400).json({
           success: false,
-          error: 'Aucun document fourni'
+          error: req.t('upload.noDocument')
         });
       }
 
       const fileUrl = `${this.config.server.baseUrl}/${req.file.path.replace(/\\/g, '/')}`;
       
-      console.log(`📄 Document uploadé par ${req.user.email}: ${req.file.filename}`);
+      console.log(`📄 Document uploadé par ${req.user.id_user}: ${req.file.filename}`);
       
       res.json({
         success: true,
-        message: 'Document uploadé avec succès',
+        message: req.t('upload.documentSuccess'),
         data: {
           filename: req.file.filename,
           originalName: req.file.originalname,
@@ -753,7 +828,7 @@ class App {
       console.error('❌ Erreur lors de l\'upload du document:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur lors de l\'upload du document'
+        error: req.t('upload.documentError')
       });
     }
   }
@@ -763,7 +838,7 @@ class App {
       if (!req.files || req.files.length === 0) {
         return res.status(400).json({
           success: false,
-          error: 'Aucun fichier fourni'
+          error: req.t('upload.noFile')
         });
       }
 
@@ -780,18 +855,18 @@ class App {
         };
       });
       
-      console.log(`📸 ${req.files.length} médias uploadés pour œuvre par ${req.user.email}`);
+      console.log(`📸 ${req.files.length} médias uploadés pour œuvre par user:${req.user.id_user}`);
       
       res.json({
         success: true,
-        message: `${req.files.length} fichier(s) uploadé(s) avec succès`,
+        message: req.t('upload.mediaSuccess', { count: req.files.length }),
         data: uploadedFiles
       });
     } catch (error) {
       console.error('❌ Erreur upload médias œuvre:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur lors de l\'upload des médias'
+        error: req.t('upload.mediaError')
       });
     }
   }
@@ -801,17 +876,17 @@ class App {
       if (!req.file) {
         return res.status(400).json({
           success: false,
-          error: 'Aucune vidéo fournie'
+          error: req.t('upload.noVideo')
         });
       }
 
       const fileUrl = `${this.config.server.baseUrl}/${req.file.path.replace(/\\/g, '/')}`;
       
-      console.log(`🎥 Vidéo uploadée par ${req.user.email}: ${req.file.filename}`);
+      console.log(`🎥 Vidéo uploadée par ${req.user.id_user}: ${req.file.filename}`);
       
       res.json({
         success: true,
-        message: 'Vidéo uploadée avec succès',
+        message: req.t('upload.videoSuccess'),
         data: {
           filename: req.file.filename,
           originalName: req.file.originalname,
@@ -825,7 +900,7 @@ class App {
       console.error('❌ Erreur upload vidéo:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur lors de l\'upload de la vidéo'
+        error: req.t('upload.videoError')
       });
     }
   }
@@ -835,17 +910,17 @@ class App {
       if (!req.file) {
         return res.status(400).json({
           success: false,
-          error: 'Aucun fichier audio fourni'
+          error: req.t('upload.noAudio')
         });
       }
 
       const fileUrl = `${this.config.server.baseUrl}/${req.file.path.replace(/\\/g, '/')}`;
       
-      console.log(`🎵 Audio uploadé par ${req.user.email}: ${req.file.filename}`);
+      console.log(`🎵 Audio uploadé par ${req.user.id_user}: ${req.file.filename}`);
       
       res.json({
         success: true,
-        message: 'Fichier audio uploadé avec succès',
+        message: req.t('upload.audioSuccess'),
         data: {
           filename: req.file.filename,
           originalName: req.file.originalname,
@@ -859,7 +934,7 @@ class App {
       console.error('❌ Erreur upload audio:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur lors de l\'upload du fichier audio'
+        error: req.t('upload.audioError')
       });
     }
   }
@@ -871,7 +946,7 @@ class App {
       if (!q || q.trim().length < this.config.limits.minSearchLength) {
         return res.status(400).json({
           success: false,
-          error: `Le terme de recherche doit contenir au moins ${this.config.limits.minSearchLength} caractères`
+          error: req.t('search.minLength', { min: this.config.limits.minSearchLength })
         });
       }
 
@@ -891,7 +966,7 @@ class App {
       console.error('Erreur lors de la recherche globale:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur lors de la recherche'
+        error: req.t('search.error')
       });
     }
   }
@@ -921,8 +996,22 @@ class App {
       console.error('Erreur lors de la génération de suggestions:', error);
       res.status(500).json({
         success: false,
-        error: 'Erreur lors de la génération de suggestions'
+        error: req.t('search.suggestionsError')
       });
+    }
+  }
+
+  // Helper pour obtenir le client Redis
+  _getRedisClient() {
+    try {
+      const redis = require('redis');
+      const client = redis.createClient({
+        url: process.env.REDIS_URL || `redis://${process.env.REDIS_HOST || 'localhost'}:${process.env.REDIS_PORT || 6379}`,
+        password: process.env.REDIS_PASSWORD || undefined
+      });
+      return client.isOpen ? client : null;
+    } catch (e) {
+      return null;
     }
   }
 
@@ -940,16 +1029,18 @@ class App {
     // Gestionnaire pour les promesses rejetées
     process.on('unhandledRejection', (reason, promise) => {
       console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-      if (this.config.server.environment === 'production') {
-        // Logger dans un service externe
-      }
+      if (Sentry) Sentry.captureException(reason);
     });
 
     // Gestionnaire pour les exceptions non capturées
     process.on('uncaughtException', (error) => {
       console.error('Uncaught Exception:', error);
+      if (Sentry) Sentry.captureException(error);
       this.gracefulShutdown(1);
     });
+
+    // Sentry error handler (must be before other error handlers)
+    if (Sentry) this.app.use(Sentry.expressErrorHandler());
 
     // Middleware 404
     this.app.use(errorMiddleware.notFound);
@@ -1037,6 +1128,12 @@ class App {
       this.initializeMiddlewares();
       // ✅ CSRF supprimé - this.initializeCSRFProtection() retiré
       await this.initializeDatabase();
+
+      // Re-initialize audit middleware now that models are loaded
+      auditMiddleware.initialize(this.models);
+
+      // Register logUnauthorizedAccess here (after DB init) so AuditLog is available
+      this.app.use(auditMiddleware.logUnauthorizedAccess);
       
       // Initialiser la structure des uploads
       await this.initializeUploadStructure();

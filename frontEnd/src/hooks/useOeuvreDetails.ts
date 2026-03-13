@@ -92,7 +92,6 @@ export function useOeuvreDetails(oeuvreId: number, options: UseOeuvreDetailsOpti
         }
         return [];
       } catch (error) {
-        console.warn('Médias non disponibles pour cette œuvre');
         return [];
       }
     },
@@ -114,7 +113,6 @@ export function useOeuvreDetails(oeuvreId: number, options: UseOeuvreDetailsOpti
         return [];
       } catch (error) {
         // Gérer silencieusement les erreurs 501 (Not Implemented)
-        console.warn('Commentaires non disponibles pour cette œuvre');
         return [];
       }
     },
@@ -134,7 +132,6 @@ export function useOeuvreDetails(oeuvreId: number, options: UseOeuvreDetailsOpti
         }
         return [];
       } catch (error) {
-        console.warn('Événements non disponibles pour cette œuvre');
         return [];
       }
     },

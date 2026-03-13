@@ -84,14 +84,14 @@ init_deploy() {
 
     check_prerequisites
 
-    # Utiliser la config Nginx initiale (sans SSL)
-    log_info "Configuration Nginx initiale (HTTP)..."
-    cp "$PROJECT_DIR/nginx/initial.conf" "$PROJECT_DIR/nginx/prod.conf.bak" 2>/dev/null || true
-
-    # Si pas de certificat SSL, utiliser la config initiale
+    # Si pas de certificat SSL, utiliser la config initiale (HTTP seulement)
     if [ ! -d "$PROJECT_DIR/nginx/ssl" ] || [ -z "$(ls -A $PROJECT_DIR/nginx/ssl 2>/dev/null)" ]; then
         log_warn "Pas de certificat SSL detecte."
-        log_info "Utilisation de la config HTTP temporaire."
+        if [ -f "$PROJECT_DIR/nginx/initial.conf" ]; then
+            log_info "Utilisation de la config HTTP temporaire..."
+            cp "$PROJECT_DIR/nginx/prod.conf" "$PROJECT_DIR/nginx/prod.conf.bak" 2>/dev/null || true
+            cp "$PROJECT_DIR/nginx/initial.conf" "$PROJECT_DIR/nginx/prod.conf"
+        fi
         log_info "Lancez './scripts/deploy.sh --ssl votredomaine.com' apres le deploiement."
     fi
 
@@ -103,9 +103,13 @@ init_deploy() {
     log_info "Lancement des services..."
     docker compose -f "$COMPOSE_FILE" up -d
 
-    # Attendre que les services soient prets
+    # Attendre que MySQL soit pret
     log_info "Attente du demarrage des services..."
-    sleep 10
+    sleep 15
+
+    # Executer les migrations
+    log_info "Execution des migrations..."
+    docker compose -f "$COMPOSE_FILE" run --rm backend npm run db:migrate 2>/dev/null || log_warn "Migrations skip (DB vide ou deja a jour)"
 
     # Verifier les santes
     check_health
@@ -149,6 +153,11 @@ update_deploy() {
     docker compose -f "$COMPOSE_FILE" up -d
 
     sleep 10
+
+    # Migrations (exec sur conteneur deja en marche)
+    log_info "Verification des migrations..."
+    docker compose -f "$COMPOSE_FILE" exec -T backend npm run db:migrate 2>/dev/null || true
+
     check_health
 
     # Nettoyer les anciennes images
@@ -196,7 +205,7 @@ setup_ssl() {
 
         # Mettre a jour la config Nginx avec SSL
         log_info "Mise a jour de la configuration Nginx..."
-        sed -i "s/votredomaine.com/$domain/g" "$PROJECT_DIR/nginx/prod.conf"
+        sed -i "s/actionculture\.dz/$domain/g" "$PROJECT_DIR/nginx/prod.conf"
 
         # Redemarrer Nginx
         docker compose -f "$COMPOSE_FILE" restart nginx
