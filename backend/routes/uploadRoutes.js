@@ -8,7 +8,7 @@ const FileValidator = require('../utils/fileValidator');
 
 const initUploadRoutes = (models, authMiddleware) => {
   const UploadController = require('../controllers/uploadController');
-  const uploadController = new UploadController(models);
+  const uploadController = new UploadController();
 
 
   // ========================================================================

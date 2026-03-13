@@ -4,6 +4,7 @@
  */
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { parcoursIntelligentService } from '@/services/parcours.service';
 import {
   Dialog,
   DialogContent,
@@ -179,34 +180,21 @@ const VisitePlanner: React.FC<VisitePlannerProps> = ({
     setError(null);
 
     try {
-      const response = await fetch('/api/parcours/personnalise', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
-        },
-        body: JSON.stringify({
-          latitude: siteLatitude,
-          longitude: siteLongitude,
-          interests,
-          duration,
-          transport,
-          accessibility,
-          familyFriendly,
-          maxSites,
-          includeRestaurants,
-          includeHotels,
-        }),
+      const result = await parcoursIntelligentService.generatePersonnalise({
+        latitude: siteLatitude,
+        longitude: siteLongitude,
+        interests,
+        dureeMaxParcours: duration,
+        transport,
+        accessibility,
+        familyFriendly,
+        maxSites,
+        includeRestaurants,
+        includeHotels,
       });
 
-      const data = await response.json();
-
-      if (data.success) {
-        setParcours(data.data);
-        setStep('result');
-      } else {
-        throw new Error(data.error || 'Erreur lors de la génération');
-      }
+      setParcours(result.data);
+      setStep('result');
     } catch (err) {
       console.error('Erreur génération parcours:', err);
       setError(t('visit.error.generation', 'Impossible de générer le parcours. Veuillez réessayer.'));

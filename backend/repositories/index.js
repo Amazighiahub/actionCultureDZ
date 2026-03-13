@@ -11,6 +11,8 @@ const PatrimoineRepository = require('./patrimoineRepository');
 const ArtisanatRepository = require('./artisanatRepository');
 const ServiceRepository = require('./serviceRepository');
 const ParcoursRepository = require('./parcoursRepository');
+const SignalementRepository = require('./signalementRepository');
+const NotificationRepository = require('./notificationRepository');
 
 /**
  * Factory pour créer tous les repositories
@@ -25,6 +27,8 @@ function createRepositories(models) {
     artisanat: models.Artisanat ? new ArtisanatRepository(models) : null,
     service: models.Service ? new ServiceRepository(models) : null,
     parcours: models.Parcours ? new ParcoursRepository(models) : null,
+    signalement: models.Signalement ? new SignalementRepository(models) : null,
+    notification: models.Notification ? new NotificationRepository(models) : null,
     // Repositories de base pour les modèles utilitaires
     lieu: models.Lieu ? new BaseRepository(models.Lieu) : null,
     categorie: models.Categorie ? new BaseRepository(models.Categorie) : null,
@@ -43,5 +47,7 @@ module.exports = {
   PatrimoineRepository,
   ArtisanatRepository,
   ServiceRepository,
-  ParcoursRepository
+  ParcoursRepository,
+  SignalementRepository,
+  NotificationRepository
 };

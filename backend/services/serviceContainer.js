@@ -154,7 +154,8 @@ class ServiceContainer {
         this._repositories.artisanat,
         {
           models: this._models,
-          cache: this._cache
+          cache: this._cache,
+          repositories: this._repositories
         }
       ));
     }
@@ -204,6 +205,27 @@ class ServiceContainer {
     return this._services.get('parcours');
   }
 
+  /**
+   * Recupere ou cree le SignalementService
+   * @returns {SignalementService}
+   */
+  get signalementService() {
+    this._checkInitialized();
+
+    if (!this._services.has('signalement')) {
+      const SignalementService = require('./signalement/signalementService');
+      this._services.set('signalement', new SignalementService(
+        this._repositories.signalement,
+        {
+          models: this._models,
+          cache: this._cache
+        }
+      ));
+    }
+
+    return this._services.get('signalement');
+  }
+
   // ============================================================================
   // SERVICES DASHBOARD (existants)
   // ============================================================================
@@ -235,7 +257,7 @@ class ServiceContainer {
 
     if (!this._services.has('userManagement')) {
       const UserManagementService = require('./dashboard/userManagementService');
-      this._services.set('userManagement', new UserManagementService(this._models));
+      this._services.set('userManagement', new UserManagementService(this._models, this._repositories));
     }
 
     return this._services.get('userManagement');
@@ -250,6 +272,170 @@ class ServiceContainer {
     }
 
     return this._services.get('analytics');
+  }
+
+  get monitoringService() {
+    this._checkInitialized();
+
+    if (!this._services.has('monitoring')) {
+      const MonitoringService = require('./dashboard/monitoringService');
+      this._services.set('monitoring', new MonitoringService(this._models, this._repositories));
+    }
+
+    return this._services.get('monitoring');
+  }
+
+  get notificationService() {
+    this._checkInitialized();
+
+    if (!this._services.has('notification')) {
+      const NotificationService = require('./notificationService');
+      this._services.set('notification', new NotificationService(this._models, {
+        repositories: this._repositories
+      }));
+    }
+
+    return this._services.get('notification');
+  }
+
+  get lieuService() {
+    this._checkInitialized();
+
+    if (!this._services.has('lieu')) {
+      const LieuService = require('./lieuService');
+      this._services.set('lieu', new LieuService(this._models));
+    }
+
+    return this._services.get('lieu');
+  }
+
+  get programmeService() {
+    this._checkInitialized();
+
+    if (!this._services.has('programme')) {
+      const ProgrammeService = require('./programmeService');
+      this._services.set('programme', new ProgrammeService(this._models));
+    }
+
+    return this._services.get('programme');
+  }
+
+  get intervenantService() {
+    this._checkInitialized();
+
+    if (!this._services.has('intervenant')) {
+      const IntervenantService = require('./intervenantService');
+      this._services.set('intervenant', new IntervenantService(this._models));
+    }
+
+    return this._services.get('intervenant');
+  }
+
+  get professionnelService() {
+    this._checkInitialized();
+
+    if (!this._services.has('professionnel')) {
+      const ProfessionnelService = require('./professionnelService');
+      this._services.set('professionnel', new ProfessionnelService(this._models));
+    }
+
+    return this._services.get('professionnel');
+  }
+
+  get metadataService() {
+    this._checkInitialized();
+
+    if (!this._services.has('metadata')) {
+      const MetadataService = require('./metadataService');
+      this._services.set('metadata', new MetadataService(this._models));
+    }
+
+    return this._services.get('metadata');
+  }
+
+  get commentaireService() {
+    this._checkInitialized();
+
+    if (!this._services.has('commentaire')) {
+      const CommentaireService = require('./commentaireService');
+      this._services.set('commentaire', new CommentaireService(this._models));
+    }
+
+    return this._services.get('commentaire');
+  }
+
+  get favoriService() {
+    this._checkInitialized();
+
+    if (!this._services.has('favori')) {
+      const FavoriService = require('./favoriService');
+      this._services.set('favori', new FavoriService(this._models));
+    }
+
+    return this._services.get('favori');
+  }
+
+  /**
+   * Recupere ou cree le VueService (tracking des vues)
+   * @returns {VueService}
+   */
+  get vueService() {
+    this._checkInitialized();
+
+    if (!this._services.has('vue')) {
+      const VueService = require('./vueService');
+      this._services.set('vue', new VueService(this._models));
+    }
+
+    return this._services.get('vue');
+  }
+
+  get articleBlockService() {
+    this._checkInitialized();
+
+    if (!this._services.has('articleBlock')) {
+      const ArticleBlockService = require('./articleBlockService');
+      this._services.set('articleBlock', new ArticleBlockService(this._models));
+    }
+
+    return this._services.get('articleBlock');
+  }
+
+  get emailVerificationService() {
+    this._checkInitialized();
+
+    if (!this._services.has('emailVerification')) {
+      const EmailVerificationService = require('./emailVerificationService');
+      this._services.set('emailVerification', new EmailVerificationService(this._models));
+    }
+
+    return this._services.get('emailVerification');
+  }
+
+  /**
+   * Recupere ou cree l'UploadService (media business logic)
+   * @returns {UploadService}
+   */
+  get uploadService() {
+    this._checkInitialized();
+
+    if (!this._services.has('upload')) {
+      const UploadService = require('./upload/uploadService');
+      this._services.set('upload', new UploadService(this._models));
+    }
+
+    return this._services.get('upload');
+  }
+
+  get multilingualService() {
+    this._checkInitialized();
+
+    if (!this._services.has('multilingual')) {
+      const MultilingualService = require('./multilingualService');
+      this._services.set('multilingual', new MultilingualService(this._models));
+    }
+
+    return this._services.get('multilingual');
   }
 
   // ============================================================================
@@ -318,6 +504,7 @@ class ServiceContainer {
       'artisanat',
       'service',
       'parcours',
+      'signalement',
       'stats',
       'moderation',
       'userManagement',

@@ -6,9 +6,9 @@ const VueController = require('../controllers/vueController');
 // Factory function qui reçoit les modèles et middlewares
 const initTrackingRoutes = (models, authMiddleware) => {
   // ========================================================================
-  // INITIALISATION DU CONTRÔLEUR - CORRECTION ICI
+  // INITIALISATION DU CONTRÔLEUR
   // ========================================================================
-  const vueController = new VueController(models);
+  const vueController = new VueController();
 
   const { 
     authenticate, 
@@ -339,62 +339,32 @@ const initTrackingRoutes = (models, authMiddleware) => {
             break;
         }
 
-        // Total des vues
-        const totalViews = await models.Vue.count({
-          where: {
-            date_vue: { [models.Sequelize.Op.gte]: dateDebut }
-          }
-        });
+        const dateWhere = { date_vue: { [models.Sequelize.Op.gte]: dateDebut } };
+        const seq = models.Vue.sequelize;
+        const countFn = seq.fn('COUNT', '*');
+        const dateFn = seq.fn('DATE', seq.col('date_vue'));
 
-        // Visiteurs uniques - Correction: compter les sessions uniques
-        const uniqueVisitors = await models.Vue.findOne({
-          attributes: [
-            [models.Vue.sequelize.fn('COUNT', models.Vue.sequelize.literal('DISTINCT COALESCE(id_user, session_id)')), 'count']
-          ],
-          where: {
-            date_vue: { [models.Sequelize.Op.gte]: dateDebut }
-          }
-        });
-
-        // Vues par type
-        const viewsByType = await models.Vue.findAll({
-          attributes: [
-            'type_entite',
-            [models.Vue.sequelize.fn('COUNT', '*'), 'count']
-          ],
-          where: {
-            date_vue: { [models.Sequelize.Op.gte]: dateDebut }
-          },
-          group: ['type_entite']
-        });
-
-        // Évolution temporelle
-        const viewsEvolution = await models.Vue.findAll({
-          attributes: [
-            [models.Vue.sequelize.fn('DATE', models.Vue.sequelize.col('date_vue')), 'date'],
-            [models.Vue.sequelize.fn('COUNT', '*'), 'views']
-          ],
-          where: {
-            date_vue: { [models.Sequelize.Op.gte]: dateDebut }
-          },
-          group: [models.Vue.sequelize.fn('DATE', models.Vue.sequelize.col('date_vue'))],
-          order: [[models.Vue.sequelize.fn('DATE', models.Vue.sequelize.col('date_vue')), 'ASC']]
-        });
-
-        // Top sources
-        const topSources = await models.Vue.findAll({
-          attributes: [
-            'source',
-            [models.Vue.sequelize.fn('COUNT', '*'), 'count']
-          ],
-          where: {
-            date_vue: { [models.Sequelize.Op.gte]: dateDebut },
-            source: { [models.Sequelize.Op.ne]: null }
-          },
-          group: ['source'],
-          order: [[models.Vue.sequelize.literal('count'), 'DESC']],
-          limit: 10
-        });
+        const [totalViews, uniqueVisitors, viewsByType, viewsEvolution, topSources] = await Promise.all([
+          models.Vue.count({ where: dateWhere }),
+          models.Vue.findOne({
+            attributes: [[seq.fn('COUNT', seq.literal('DISTINCT COALESCE(id_user, session_id)')), 'count']],
+            where: dateWhere
+          }),
+          models.Vue.findAll({
+            attributes: ['type_entite', [countFn, 'count']],
+            where: dateWhere, group: ['type_entite']
+          }),
+          models.Vue.findAll({
+            attributes: [[dateFn, 'date'], [countFn, 'views']],
+            where: dateWhere,
+            group: [dateFn], order: [[dateFn, 'ASC']]
+          }),
+          models.Vue.findAll({
+            attributes: ['source', [countFn, 'count']],
+            where: { ...dateWhere, source: { [models.Sequelize.Op.ne]: null } },
+            group: ['source'], order: [[seq.literal('count'), 'DESC']], limit: 10
+          })
+        ]);
 
         res.json({
           success: true,
@@ -539,7 +509,8 @@ const initTrackingRoutes = (models, authMiddleware) => {
     requireAdmin,
     async (req, res) => {
       try {
-        const { format = 'json', type, dateDebut, dateFin, limit = 1000 } = req.query;
+        const { format = 'json', type, dateDebut, dateFin, limit: rawLimit = 1000 } = req.query;
+        const limit = Math.min(parseInt(rawLimit) || 1000, 10000);
         
         const where = {};
         if (type) where.type_entite = type;

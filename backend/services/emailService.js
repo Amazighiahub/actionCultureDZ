@@ -506,10 +506,9 @@ class EmailService {
    * @returns {Array} Résultats d'envoi par participant
    */
   async notifierAnnulationEvenement(participants, evenement, raison) {
-    const results = [];
     const nomEvenementStr = typeof evenement.nom_evenement === 'object' ? (evenement.nom_evenement.fr || evenement.nom_evenement.ar || '') : (evenement.nom_evenement || '');
 
-    for (const participant of participants) {
+    const results = await Promise.all(participants.map(async (participant) => {
       try {
         const user = participant.User;
         const prenomStr = typeof user.prenom === 'object' ? (user.prenom.fr || user.prenom.ar || '') : (user.prenom || '');
@@ -529,17 +528,13 @@ class EmailService {
           </div>
         `;
 
-        const result = await this.sendEmail(
-          user.email,
-          `Événement annulé : ${nomEvenementStr}`,
-          html
-        );
-        results.push({ email: user.email, result });
+        const result = await this.sendEmail(user.email, `Événement annulé : ${nomEvenementStr}`, html);
+        return { email: user.email, result };
       } catch (error) {
         console.error(`Erreur envoi annulation à ${participant.User?.email}:`, error);
-        results.push({ email: participant.User?.email, result: { success: false, error: error.message } });
+        return { email: participant.User?.email, result: { success: false, error: error.message } };
       }
-    }
+    }));
 
     return results;
   }
@@ -553,7 +548,6 @@ class EmailService {
    * @returns {Array} Résultats d'envoi par participant
    */
   async notifierModificationProgramme(participants, evenement, programme, typeModification = 'general') {
-    const results = [];
     const nomEvenementStr = typeof evenement.nom_evenement === 'object' ? (evenement.nom_evenement.fr || evenement.nom_evenement.ar || '') : (evenement.nom_evenement || '');
     const titreProgramme = typeof programme.titre === 'object' ? (programme.titre.fr || programme.titre.ar || '') : (programme.titre || '');
 
@@ -565,7 +559,7 @@ class EmailService {
     };
     const sujet = titres[typeModification] || 'Programme modifié';
 
-    for (const participant of participants) {
+    const results = await Promise.all(participants.map(async (participant) => {
       try {
         const user = participant.User;
         const prenomStr = typeof user.prenom === 'object' ? (user.prenom.fr || user.prenom.ar || '') : (user.prenom || '');
@@ -586,17 +580,13 @@ class EmailService {
           </div>
         `;
 
-        const result = await this.sendEmail(
-          user.email,
-          `${sujet} : ${nomEvenementStr}`,
-          html
-        );
-        results.push({ email: user.email, result });
+        const result = await this.sendEmail(user.email, `${sujet} : ${nomEvenementStr}`, html);
+        return { email: user.email, result };
       } catch (error) {
         console.error(`Erreur envoi modification programme à ${participant.User?.email}:`, error);
-        results.push({ email: participant.User?.email, result: { success: false, error: error.message } });
+        return { email: participant.User?.email, result: { success: false, error: error.message } };
       }
-    }
+    }));
 
     return results;
   }
@@ -608,12 +598,11 @@ class EmailService {
    * @returns {Array} Résultats d'envoi par utilisateur
    */
   async notifierNouvelEvenement(users, evenement) {
-    const results = [];
     const nomEvenementStr = typeof evenement.nom_evenement === 'object' ? (evenement.nom_evenement.fr || evenement.nom_evenement.ar || '') : (evenement.nom_evenement || '');
     const descriptionStr = typeof evenement.description === 'object' ? (evenement.description.fr || evenement.description.ar || '') : (evenement.description || '');
     const eventUrl = `${process.env.FRONTEND_URL}/evenements/${evenement.id_evenement}`;
 
-    for (const user of users) {
+    const results = await Promise.all(users.map(async (user) => {
       try {
         const prenomStr = typeof user.prenom === 'object' ? (user.prenom.fr || user.prenom.ar || '') : (user.prenom || '');
 
@@ -633,17 +622,13 @@ class EmailService {
           </div>
         `;
 
-        const result = await this.sendEmail(
-          user.email,
-          `Nouvel événement : ${nomEvenementStr}`,
-          html
-        );
-        results.push({ email: user.email, result });
+        const result = await this.sendEmail(user.email, `Nouvel événement : ${nomEvenementStr}`, html);
+        return { email: user.email, result };
       } catch (error) {
         console.error(`Erreur envoi nouvel événement à ${user.email}:`, error);
-        results.push({ email: user.email, result: { success: false, error: error.message } });
+        return { email: user.email, result: { success: false, error: error.message } };
       }
-    }
+    }));
 
     return results;
   }

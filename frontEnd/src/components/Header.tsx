@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Menu, X, MapPin, Calendar, Palette, Hammer, Info, User, LogOut, Settings, Shield, UserCheck, Globe, ChevronDown } from 'lucide-react';
+import { Menu, X, MapPin, Calendar, Palette, Hammer, Info, User, LogOut, Settings, Shield, UserCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -16,69 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useRTL } from '@/utils/rtl';
-import { changeLanguage } from 'i18next';
-
-// LanguageSelector extracted to module scope to avoid re-creation on every render
-const LanguageSelector = ({
-  langDropdownOpen,
-  setLangDropdownOpen,
-  currentLanguage,
-  normalizeCurrentLang,
-  isRtl,
-}: {
-  langDropdownOpen: boolean;
-  setLangDropdownOpen: (open: boolean) => void;
-  currentLanguage: string;
-  normalizeCurrentLang: (lang: string | null | undefined) => string;
-  isRtl: boolean;
-}) => {
-  const languages = [
-    { code: 'ar', short: 'AR', name: 'العربية' },
-    { code: 'fr', short: 'FR', name: 'Français' },
-    { code: 'en', short: 'EN', name: 'English' },
-    { code: 'tz-ltn', short: 'TZ', name: 'Tamaziɣt' },
-    { code: 'tz-tfng', short: 'ⵜⵖ', name: 'ⵜⴰⵎⴰⵣⵉⵖⵜ' },
-  ];
-
-  const handleLanguageChange = (langCode: string) => {
-    changeLanguage(langCode);
-    setLangDropdownOpen(false);
-  };
-
-  const currentLangNormalized = normalizeCurrentLang(currentLanguage);
-  const currentLang = languages.find(l => l.code === currentLangNormalized) || languages[1];
-
-  return (
-    <DropdownMenu open={langDropdownOpen} onOpenChange={setLangDropdownOpen}>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors duration-200 px-2 min-w-[44px] min-h-[44px]"
-        >
-          <Globe className="h-4 w-4" />
-          <span className="font-medium hidden xs:inline ml-1">{currentLang.short}</span>
-          <ChevronDown className={`h-3 w-3 ml-0.5 opacity-60 transition-transform duration-200 hidden xs:inline ${langDropdownOpen ? 'rotate-180' : ''}`} />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent
-        align={isRtl ? "start" : "end"}
-        className="w-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-stone-200/50 dark:border-stone-700/50"
-      >
-        {languages.map(lang => (
-          <DropdownMenuItem
-            key={lang.code}
-            onClick={() => handleLanguageChange(lang.code)}
-            className={`${currentLangNormalized === lang.code ? 'bg-stone-100 dark:bg-stone-800' : ''} hover:bg-stone-50 dark:hover:bg-stone-800/50 cursor-pointer min-h-[44px]`}
-          >
-            <span className="font-medium mr-3">{lang.short}</span>
-            <span className="text-sm text-muted-foreground">{lang.name}</span>
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-};
+import LanguageSelector from '@/components/LanguageSelector';
 
 const MadgacenLogo = ({ className = "" }: { className?: string }) => (
   <svg
@@ -149,7 +87,6 @@ const MadgacenLogo = ({ className = "" }: { className?: string }) => (
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { t, i18n } = useTranslation();
@@ -224,17 +161,6 @@ const Header = () => {
     return '/dashboard-user';
   };
 
-  const normalizeCurrentLang = (lang: string | null | undefined): string => {
-    if (!lang || typeof lang !== 'string') return 'fr';
-    const langLower = lang.toLowerCase();
-    if (langLower.startsWith('ar')) return 'ar';
-    if (langLower.startsWith('fr')) return 'fr';
-    if (langLower.startsWith('en')) return 'en';
-    if (langLower === 'tz' || langLower === 'tz-ltn' || langLower === 'tz_ltn') return 'tz-ltn';
-    if (langLower === 'tz-tfng' || langLower === 'tz_tfng') return 'tz-tfng';
-    return 'fr';
-  };
-
   return (
     <>
       <header className="fixed top-0 left-0 right-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 py-2">
@@ -275,13 +201,10 @@ const Header = () => {
             {/* Actions droite */}
             <div className="flex items-center gap-1 sm:gap-2">
 
-              {/* Sélecteur de langue */}
+              {/* Selecteur de langue */}
               <LanguageSelector
-                langDropdownOpen={langDropdownOpen}
-                setLangDropdownOpen={setLangDropdownOpen}
-                currentLanguage={i18n.language || localStorage.getItem('i18nextLng') || 'fr'}
-                normalizeCurrentLang={normalizeCurrentLang}
-                isRtl={isRtl}
+                variant="compact"
+                className="hover:bg-stone-100 dark:hover:bg-stone-800 min-w-[44px] min-h-[44px]"
               />
 
               {/* Utilisateur connecté */}

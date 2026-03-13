@@ -8,7 +8,7 @@ const { body, param, query } = require('express-validator');
 const initNotificationRoutes = (models) => {
 
   const authMiddleware = createAuthMiddleware(models);
-  const notificationController = new NotificationController(models);
+  const notificationController = new NotificationController();
 
   // Middleware de validation
   let validationMiddleware;

@@ -1,14 +1,15 @@
 // routes/signalementRoutes.js - Version simplifiée sans upload
 const express = require('express');
 const router = express.Router();
-const signalementController = require('../controllers/signalementController');
+const SignalementController = require('../controllers/signalementController');
 
 // Factory function qui reçoit les modèles et middlewares
 const initSignalementRoutes = (models, authMiddleware) => {
-  const { 
-    authenticate, 
+  const controller = new SignalementController();
+  const {
+    authenticate,
     requireAdmin,
-    isAuthenticated 
+    isAuthenticated
   } = authMiddleware;
 
   // Middleware pour vérifier la propriété d'un signalement
@@ -108,13 +109,13 @@ const initSignalementRoutes = (models, authMiddleware) => {
   // Créer un signalement (sans upload de screenshot)
   router.post('/',
     authenticate,
-    signalementController.create
+    controller.create.bind(controller)
   );
 
   // Obtenir mes signalements
   router.get('/mes-signalements',
     authenticate,
-    signalementController.getMesSignalements
+    controller.getMesSignalements.bind(controller)
   );
 
   // Obtenir un signalement spécifique (si créateur)
@@ -181,20 +182,20 @@ const initSignalementRoutes = (models, authMiddleware) => {
   router.get('/moderation/queue',
     authenticate,
     requireAdmin,
-    signalementController.getModerationQueue
+    controller.getModerationQueue.bind(controller)
   );
 
   router.get('/moderation',
     authenticate,
     requireAdmin,
-    signalementController.getModerationQueue
+    controller.getModerationQueue.bind(controller)
   );
 
   // Traiter un signalement
   router.put('/:id/traiter',
     authenticate,
     requireAdmin,
-    signalementController.traiterSignalement
+    controller.traiterSignalement.bind(controller)
   );
 
   // Obtenir tous les signalements avec filtres
@@ -270,54 +271,29 @@ const initSignalementRoutes = (models, authMiddleware) => {
             break;
         }
 
-        // Stats par motif
-        const byMotif = await models.Signalement.findAll({
-          attributes: [
-            'motif',
-            [models.Signalement.sequelize.fn('COUNT', '*'), 'count']
-          ],
-          where: {
-            createdAt: { [models.Sequelize.Op.gte]: dateDebut }
-          },
-          group: ['motif']
-        });
+        const dateWhere = { createdAt: { [models.Sequelize.Op.gte]: dateDebut } };
+        const countFn = models.Signalement.sequelize.fn('COUNT', '*');
 
-        // Stats par statut
-        const byStatus = await models.Signalement.findAll({
-          attributes: [
-            'statut',
-            [models.Signalement.sequelize.fn('COUNT', '*'), 'count']
-          ],
-          where: {
-            createdAt: { [models.Sequelize.Op.gte]: dateDebut }
-          },
-          group: ['statut']
-        });
-
-        // Stats par type d'entité
-        const byType = await models.Signalement.findAll({
-          attributes: [
-            'type_entite',
-            [models.Signalement.sequelize.fn('COUNT', '*'), 'count']
-          ],
-          where: {
-            createdAt: { [models.Sequelize.Op.gte]: dateDebut }
-          },
-          group: ['type_entite']
-        });
-
-        // Temps moyen de traitement
-        const tempsTraitement = await models.Signalement.findOne({
-          attributes: [
-            [models.Signalement.sequelize.fn('AVG', 
+        const [byMotif, byStatus, byType, tempsTraitement] = await Promise.all([
+          models.Signalement.findAll({
+            attributes: ['motif', [countFn, 'count']],
+            where: dateWhere, group: ['motif']
+          }),
+          models.Signalement.findAll({
+            attributes: ['statut', [countFn, 'count']],
+            where: dateWhere, group: ['statut']
+          }),
+          models.Signalement.findAll({
+            attributes: ['type_entite', [countFn, 'count']],
+            where: dateWhere, group: ['type_entite']
+          }),
+          models.Signalement.findOne({
+            attributes: [[models.Signalement.sequelize.fn('AVG',
               models.Signalement.sequelize.literal('TIMESTAMPDIFF(HOUR, createdAt, date_traitement)')
-            ), 'avgHours']
-          ],
-          where: {
-            statut: 'traite',
-            createdAt: { [models.Sequelize.Op.gte]: dateDebut }
-          }
-        });
+            ), 'avgHours']],
+            where: { statut: 'traite', ...dateWhere }
+          })
+        ]);
 
         res.json({
           success: true,
@@ -362,7 +338,8 @@ const initSignalementRoutes = (models, authMiddleware) => {
             { model: models.User, as: 'Signalant', attributes: ['id_user', 'nom', 'prenom', 'email'] },
             { model: models.User, as: 'Moderateur', attributes: ['id_user', 'nom', 'prenom', 'email'] }
           ],
-          order: [['createdAt', 'DESC']]
+          order: [['createdAt', 'DESC']],
+          limit: Math.min(parseInt(req.query.limit) || 5000, 10000)
         });
 
         res.json({

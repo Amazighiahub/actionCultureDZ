@@ -11,7 +11,13 @@ const { validateLanguage } = require('../middlewares/language');
 
 const initMetadataRoutes = (models) => {
   const authMiddleware = createAuthMiddleware(models);
-  const metadataController = new MetadataController(models);
+  const metadataController = new MetadataController();
+
+  // Cache HTTP pour les données de référence (changent rarement)
+  const cacheMetadata = (req, res, next) => {
+    res.set('Cache-Control', 'public, max-age=600, stale-while-revalidate=60');
+    next();
+  };
 
   // ========================================================================
   // ROUTES PUBLIQUES - CONSULTATION
@@ -19,33 +25,39 @@ const initMetadataRoutes = (models) => {
 
   // Toutes les métadonnées
   router.get('/',
+    cacheMetadata,
     metadataController.getAllMetadata.bind(metadataController)
   );
 
   // Types d'œuvres
   router.get('/types-oeuvres',
+    cacheMetadata,
     metadataController.getTypesOeuvres.bind(metadataController)
   );
 
   // Genres par type
   router.get('/genres/:typeId',
+    cacheMetadata,
     validationMiddleware.validateId('typeId'),
     metadataController.getGenresParType.bind(metadataController)
   );
 
   // Catégories par genre
   router.get('/categories/:genreId',
+    cacheMetadata,
     validationMiddleware.validateId('genreId'),
     metadataController.getCategoriesParGenre.bind(metadataController)
   );
 
   // Hiérarchie complète
   router.get('/hierarchie',
+    cacheMetadata,
     metadataController.getHierarchieComplete.bind(metadataController)
   );
 
   // Tags avec recherche
   router.get('/tags',
+    cacheMetadata,
     [
       query('search').optional().trim(),
       query('limit').optional().isInt({ min: 1, max: 100 })
@@ -56,6 +68,7 @@ const initMetadataRoutes = (models) => {
 
   // Matériaux
   router.get('/materiaux',
+    cacheMetadata,
     [query('search').optional().trim()],
     validationMiddleware.handleValidationErrors,
     metadataController.getMateriaux.bind(metadataController)
@@ -63,6 +76,7 @@ const initMetadataRoutes = (models) => {
 
   // Techniques
   router.get('/techniques',
+    cacheMetadata,
     [query('search').optional().trim()],
     validationMiddleware.handleValidationErrors,
     metadataController.getTechniques.bind(metadataController)
@@ -70,53 +84,63 @@ const initMetadataRoutes = (models) => {
 
   // Langues
   router.get('/langues',
+    cacheMetadata,
     metadataController.getLangues.bind(metadataController)
   );
 
   // Wilayas
   router.get('/wilayas',
+    cacheMetadata,
     metadataController.getWilayas.bind(metadataController)
   );
 
   // Dairas par wilaya
   router.get('/wilayas/:wilayaId/dairas',
+    cacheMetadata,
     validationMiddleware.validateId('wilayaId'),
     metadataController.getDairasParWilaya.bind(metadataController)
   );
 
   // Communes par daira
   router.get('/dairas/:dairaId/communes',
+    cacheMetadata,
     validationMiddleware.validateId('dairaId'),
     metadataController.getCommunesParDaira.bind(metadataController)
   );
 
   // Types d'événements
   router.get('/types-evenements',
+    cacheMetadata,
     metadataController.getTypesEvenements.bind(metadataController)
   );
 
   // Tous les genres (sans filtre par type)
   router.get('/genres',
+    cacheMetadata,
     metadataController.getGenres.bind(metadataController)
   );
 
   // Types d'utilisateurs
   router.get('/types-users',
+    cacheMetadata,
     metadataController.getTypesUsers.bind(metadataController)
   );
 
   // Types d'organisations
   router.get('/types-organisations',
+    cacheMetadata,
     metadataController.getTypesOrganisations.bind(metadataController)
   );
 
   // Éditeurs
   router.get('/editeurs',
+    cacheMetadata,
     metadataController.getEditeurs.bind(metadataController)
   );
 
   // Statistiques metadata
   router.get('/statistics',
+    cacheMetadata,
     metadataController.getUsageStatistics.bind(metadataController)
   );
 

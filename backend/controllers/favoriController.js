@@ -1,405 +1,179 @@
-// controllers/FavoriController.js - VERSION i18n
-const { Op } = require('sequelize');
+/**
+ * FavoriController - Refactoré avec BaseController + Service Pattern
+ * Architecture: BaseController -> Controller -> Service -> Models
+ *
+ * ZÉRO accès direct aux models Sequelize.
+ * Toute logique métier/data access déléguée au FavoriService via le container.
+ */
+const BaseController = require('./baseController');
+const container = require('../services/serviceContainer');
+const { translateDeep } = require('../helpers/i18n');
 
-// ⚡ Import du helper i18n
-const { translate, translateDeep } = require('../helpers/i18n');
-
-class FavoriController {
-  constructor(models) {
-    this.models = models;
-    this.sequelize = models.sequelize || Object.values(models)[0]?.sequelize;
+class FavoriController extends BaseController {
+  get favoriService() {
+    return container.favoriService;
   }
 
-  // Récupérer tous les favoris d'un utilisateur
+  // ========================================================================
+  // CONSULTATION
+  // ========================================================================
+
+  /**
+   * Récupérer tous les favoris d'un utilisateur (paginé)
+   */
   async getUserFavoris(req, res) {
     try {
-      const lang = req.lang || 'fr';  // ⚡
-      const { page = 1, limit = 12, type } = req.query;
-      const offset = (page - 1) * limit;
-      const where = { id_user: req.user.id_user };
+      const lang = req.lang || 'fr';
+      const { type } = req.query;
+      const { page, limit, offset } = this._paginate(req, { limit: 12 });
 
-      if (type) {
-        where.type_entite = type;
-      }
+      const result = await this.favoriService.getUserFavoris(
+        req.user.id_user,
+        { page, limit, offset, type }
+      );
 
-      const favoris = await this.models.Favori.findAndCountAll({
-        where,
-        limit: parseInt(limit),
-        offset: parseInt(offset),
-        order: [['date_ajout', 'DESC']],
-        include: await this.getIncludesForFavoris()
-      });
-
-      const favorisEnrichis = await this.enrichirFavoris(favoris.rows, lang);
+      const favorisEnrichis = await this.favoriService.enrichirFavoris(result.rows);
+      const translated = translateDeep(favorisEnrichis, lang);
 
       res.json({
         success: true,
         data: {
-          favoris: favorisEnrichis,
-          pagination: {
-            total: favoris.count,
-            page: parseInt(page),
-            pages: Math.ceil(favoris.count / limit),
-            limit: parseInt(limit)
-          }
+          favoris: translated,
+          pagination: result.pagination
         },
         lang
       });
-
     } catch (error) {
-      console.error('Erreur lors de la récupération des favoris:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: req.t('favori.serverErrorGet') 
-      });
+      this._handleError(res, error);
     }
   }
 
-  // Ajouter un favori
-  async addFavori(req, res) {
-    try {
-      const lang = req.lang || 'fr';  // ⚡
-      const { type_entite, id_entite } = req.body;
-      const id_user = req.user.id_user;
-
-      const typesValides = ['oeuvre', 'evenement', 'lieu', 'artisanat'];
-      if (!typesValides.includes(type_entite)) {
-        return res.status(400).json({
-          success: false,
-          error: req.t('common.badRequest')
-        });
-      }
-
-      const entiteExiste = await this.verifierEntiteExiste(type_entite, id_entite);
-      if (!entiteExiste) {
-        return res.status(404).json({
-          success: false,
-          error: req.t('common.notFound')
-        });
-      }
-
-      const favoriExistant = await this.models.Favori.findOne({
-        where: { id_user, type_entite, id_entite }
-      });
-
-      if (favoriExistant) {
-        return res.status(409).json({
-          success: false,
-          error: req.t('favori.added')
-        });
-      }
-
-      const favori = await this.models.Favori.create({
-        id_user,
-        type_entite,
-        id_entite,
-        date_ajout: new Date()
-      });
-
-      const entiteDetails = await this.getEntiteDetails(type_entite, id_entite);
-
-      // ⚡ Traduire
-      res.status(201).json({
-        success: true,
-        message: req.t('favori.added'),
-        data: {
-          favori,
-          entite: translateDeep(entiteDetails, lang)
-        }
-      });
-
-    } catch (error) {
-      console.error('Erreur lors de l\'ajout du favori:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: req.t('common.serverError') 
-      });
-    }
-  }
-
-  // Supprimer un favori
-  async removeFavori(req, res) {
-    try {
-      const { id } = req.params;
-      const id_user = req.user.id_user;
-
-      const favori = await this.models.Favori.findOne({
-        where: { id_favori: id, id_user }
-      });
-
-      if (!favori) {
-        return res.status(404).json({
-          success: false,
-          error: req.t('favori.notFound')
-        });
-      }
-
-      await favori.destroy();
-
-      res.json({
-        success: true,
-        message: req.t('favori.removed')
-      });
-
-    } catch (error) {
-      console.error('Erreur lors de la suppression du favori:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: req.t('favori.serverErrorDelete') 
-      });
-    }
-  }
-
-  // Supprimer un favori par type et ID d'entité
-  async removeFavoriByEntity(req, res) {
-    try {
-      const { type, id } = req.params;
-      const id_user = req.user.id_user;
-
-      const favori = await this.models.Favori.findOne({
-        where: { 
-          id_user, 
-          type_entite: type, 
-          id_entite: id 
-        }
-      });
-
-      if (!favori) {
-        return res.status(404).json({
-          success: false,
-          error: req.t('favori.notFound')
-        });
-      }
-
-      await favori.destroy();
-
-      res.json({
-        success: true,
-        message: req.t('favori.removed')
-      });
-
-    } catch (error) {
-      console.error('Erreur lors de la suppression du favori:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: req.t('common.serverError') 
-      });
-    }
-  }
-
-  // Vérifier si une entité est dans les favoris
+  /**
+   * Vérifier si une entité est dans les favoris
+   */
   async checkFavori(req, res) {
     try {
       const { type, id } = req.params;
-      const id_user = req.user.id_user;
 
-      const favori = await this.models.Favori.findOne({
-        where: { 
-          id_user, 
-          type_entite: type, 
-          id_entite: id 
-        }
+      const result = await this.favoriService.checkFavori(
+        req.user.id_user, type, id
+      );
+
+      this._sendSuccess(res, {
+        isFavorite: result.isFavorite,
+        ...( result.favori && { favori: result.favori })
       });
-
-      res.json({
-        success: true,
-        isFavorite: !!favori,
-        data: favori
-      });
-
     } catch (error) {
-      console.error('Erreur lors de la vérification du favori:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: req.t('common.serverError') 
-      });
+      this._handleError(res, error);
     }
   }
 
-  // Statistiques des favoris
+  /**
+   * Statistiques des favoris de l'utilisateur
+   */
   async getUserFavorisStats(req, res) {
     try {
-      const id_user = req.user.id_user;
-
-      const stats = await this.models.Favori.findAll({
-        where: { id_user },
-        attributes: [
-          'type_entite',
-          [this.sequelize.fn('COUNT', this.sequelize.col('id_favori')), 'count']
-        ],
-        group: ['type_entite']
-      });
-
-      const total = await this.models.Favori.count({
-        where: { id_user }
-      });
-
-      const statsFormatted = {};
-      stats.forEach(stat => {
-        statsFormatted[stat.type_entite] = parseInt(stat.dataValues.count);
-      });
-
-      res.json({
-        success: true,
-        data: {
-          total,
-          byType: statsFormatted
-        }
-      });
-
+      const stats = await this.favoriService.getUserFavorisStats(req.user.id_user);
+      this._sendSuccess(res, stats);
     } catch (error) {
-      console.error('Erreur lors de la récupération des statistiques:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: req.t('common.serverError') 
-      });
+      this._handleError(res, error);
     }
   }
 
-  // Favoris populaires
+  /**
+   * Favoris populaires (entités les plus favorites)
+   */
   async getPopularFavorites(req, res) {
     try {
-      const lang = req.lang || 'fr';  // ⚡
+      const lang = req.lang || 'fr';
       const { type, limit = 10 } = req.query;
-      const where = {};
 
-      if (type) {
-        where.type_entite = type;
-      }
-
-      const populaires = await this.models.Favori.findAll({
-        where,
-        attributes: [
-          'type_entite',
-          'id_entite',
-          [this.sequelize.fn('COUNT', this.sequelize.col('id_favori')), 'count']
-        ],
-        group: ['type_entite', 'id_entite'],
-        order: [[this.sequelize.literal('count'), 'DESC']],
-        limit: parseInt(limit)
-      });
-
-      const populairesEnrichis = [];
-      for (const item of populaires) {
-        const entiteDetails = await this.getEntiteDetails(item.type_entite, item.id_entite);
-        if (entiteDetails) {
-          populairesEnrichis.push({
-            type: item.type_entite,
-            count: parseInt(item.dataValues.count),
-            entite: translateDeep(entiteDetails, lang)
-          });
-        }
-      }
+      const populaires = await this.favoriService.getPopularFavorites({ type, limit });
+      const translated = translateDeep(populaires, lang);
 
       res.json({
         success: true,
-        data: populairesEnrichis,
+        data: translated,
         lang
       });
-
     } catch (error) {
-      console.error('Erreur lors de la récupération des favoris populaires:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: req.t('common.serverError') 
-      });
+      this._handleError(res, error);
     }
   }
 
   // ========================================================================
-  // MÉTHODES UTILITAIRES
+  // ÉCRITURE
   // ========================================================================
 
-  async verifierEntiteExiste(type, id) {
+  /**
+   * Ajouter un favori
+   */
+  async addFavori(req, res) {
     try {
-      let entite;
-      switch (type) {
-        case 'oeuvre':
-          entite = await this.models.Oeuvre.findByPk(id);
-          break;
-        case 'evenement':
-          entite = await this.models.Evenement.findByPk(id);
-          break;
-        case 'lieu':
-          entite = await this.models.Lieu.findByPk(id);
-          break;
-        case 'artisanat':
-          entite = await this.models.Artisanat.findByPk(id);
-          break;
+      const lang = req.lang || 'fr';
+      const { type_entite, id_entite } = req.body;
+
+      const result = await this.favoriService.addFavori(
+        req.user.id_user, type_entite, id_entite
+      );
+
+      if (result.error === 'invalidType') {
+        return res.status(400).json({ success: false, error: req.t('common.badRequest') });
       }
-      return !!entite;
+      if (result.error === 'entityNotFound') {
+        return res.status(404).json({ success: false, error: req.t('common.notFound') });
+      }
+      if (result.error === 'duplicate') {
+        return res.status(409).json({ success: false, error: req.t('favori.added') });
+      }
+
+      this._sendCreated(res, {
+        favori: result.favori,
+        entite: translateDeep(result.entite, lang)
+      }, req.t('favori.added'));
     } catch (error) {
-      console.error('Erreur vérification entité:', error);
-      return false;
+      this._handleError(res, error);
     }
   }
 
-  async getEntiteDetails(type, id) {
+  /**
+   * Supprimer un favori par ID
+   */
+  async removeFavori(req, res) {
     try {
-      let entite;
-      switch (type) {
-        case 'oeuvre':
-          entite = await this.models.Oeuvre.findByPk(id, {
-            include: [
-              { model: this.models.TypeOeuvre, attributes: ['nom_type'] },
-              { model: this.models.Media, attributes: ['url'], limit: 1 }
-            ]
-          });
-          break;
-        case 'evenement':
-          entite = await this.models.Evenement.findByPk(id, {
-            include: [
-              { model: this.models.TypeEvenement, attributes: ['nom_type'] },
-              { model: this.models.Lieu, attributes: ['nom'] }
-            ]
-          });
-          break;
-        case 'lieu':
-          entite = await this.models.Lieu.findByPk(id, {
-            include: [
-              { model: this.models.Wilaya, attributes: ['nom'] },
-              { model: this.models.LieuMedia, attributes: ['url'], limit: 1 }
-            ]
-          });
-          break;
-        case 'artisanat':
-          entite = await this.models.Artisanat.findByPk(id, {
-            include: [
-              {
-                model: this.models.Oeuvre,
-                include: [
-                  { model: this.models.Media, attributes: ['url'], limit: 1 }
-                ]
-              },
-              { model: this.models.Materiau, attributes: ['nom'] },
-              { model: this.models.Technique, attributes: ['nom'] }
-            ]
-          });
-          break;
+      const result = await this.favoriService.removeFavori(
+        req.params.id, req.user.id_user
+      );
+
+      if (result.error === 'notFound') {
+        return res.status(404).json({ success: false, error: req.t('favori.notFound') });
       }
-      return entite;
+
+      this._sendMessage(res, req.t('favori.removed'));
     } catch (error) {
-      console.error('Erreur récupération détails entité:', error);
-      return null;
+      this._handleError(res, error);
     }
   }
 
-  async enrichirFavoris(favoris, lang = 'fr') {
-    const favorisEnrichis = [];
+  /**
+   * Supprimer un favori par type et ID d'entité
+   */
+  async removeFavoriByEntity(req, res) {
+    try {
+      const { type, id } = req.params;
 
-    for (const favori of favoris) {
-      const entiteDetails = await this.getEntiteDetails(favori.type_entite, favori.id_entite);
-      favorisEnrichis.push({
-        ...favori.toJSON(),
-        entite: translateDeep(entiteDetails, lang)  // ⚡ Traduire
-      });
+      const result = await this.favoriService.removeFavoriByEntity(
+        req.user.id_user, type, id
+      );
+
+      if (result.error === 'notFound') {
+        return res.status(404).json({ success: false, error: req.t('favori.notFound') });
+      }
+
+      this._sendMessage(res, req.t('favori.removed'));
+    } catch (error) {
+      this._handleError(res, error);
     }
-
-    return favorisEnrichis;
-  }
-
-  async getIncludesForFavoris() {
-    return [];
   }
 }
 

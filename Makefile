@@ -13,6 +13,7 @@
 #   make shell-backend Shell dans le conteneur backend
 #   make shell-mysql   Shell MySQL interactif
 #   make migrate       Lancer les migrations en attente
+#   make check-duplicates  Verifier doublons de fichiers (casse)
 # ============================================================
 
 SHELL := /bin/bash
@@ -26,7 +27,8 @@ COMPOSE := $(shell command -v docker-compose 2>/dev/null || echo "docker compose
 
 .PHONY: help setup up down seed reset build logs logs-backend status \
         shell-backend shell-mysql enable-sync disable-sync migrate \
-        prod-up prod-down prod-build prod-logs prod-status check-env
+        prod-up prod-down prod-build prod-logs prod-status \
+        check-env check-duplicates
 
 # ============================================================
 # AIDE
@@ -37,24 +39,25 @@ help:
 	@echo "  EventCulture - Commandes disponibles"
 	@echo "  ====================================="
 	@echo ""
-	@echo "  make setup         Setup complet (1ere utilisation)"
-	@echo "  make up            Lancer les conteneurs"
-	@echo "  make down          Arreter les conteneurs"
-	@echo "  make seed          Charger les donnees de reference"
-	@echo "  make reset         Tout supprimer et recommencer"
-	@echo "  make build         Rebuild les images Docker"
-	@echo "  make logs          Voir les logs en temps reel"
-	@echo "  make logs-backend  Logs backend uniquement"
-	@echo "  make status        Etat des conteneurs"
-	@echo "  make shell-backend Shell dans le conteneur backend"
-	@echo "  make shell-mysql   Shell MySQL interactif"
-	@echo "  make migrate       Lancer les migrations en attente"
+	@echo "  make setup            Setup complet (1ere utilisation)"
+	@echo "  make up               Lancer les conteneurs"
+	@echo "  make down             Arreter les conteneurs"
+	@echo "  make seed             Charger les donnees de reference"
+	@echo "  make reset            Tout supprimer et recommencer"
+	@echo "  make build            Rebuild les images Docker"
+	@echo "  make logs             Voir les logs en temps reel"
+	@echo "  make logs-backend     Logs backend uniquement"
+	@echo "  make status           Etat des conteneurs"
+	@echo "  make shell-backend    Shell dans le conteneur backend"
+	@echo "  make shell-mysql      Shell MySQL interactif"
+	@echo "  make migrate          Lancer les migrations en attente"
+	@echo "  make check-duplicates Verifier doublons de fichiers (casse)"
 	@echo ""
 	@echo "  --- Production ---"
-	@echo "  make prod-up       Lancer en production"
-	@echo "  make prod-down     Arreter la production"
-	@echo "  make prod-build    Rebuild production"
-	@echo "  make prod-logs     Logs production"
+	@echo "  make prod-up          Lancer en production"
+	@echo "  make prod-down        Arreter la production"
+	@echo "  make prod-build       Rebuild production"
+	@echo "  make prod-logs        Logs production"
 	@echo ""
 	@echo "  --- Workflow nouveau developpeur ---"
 	@echo "  1. cp .env.example .env && configurer les valeurs"
@@ -171,6 +174,13 @@ check-env:
 		exit 1; \
 	fi
 	@echo "[check] Fichier .env trouve"
+
+# ============================================================
+# VERIFICATION DOUBLONS (casse ui vs UI)
+# ============================================================
+
+check-duplicates:
+	@bash scripts/check-duplicates.sh
 
 # ============================================================
 # PRODUCTION (docker-compose.prod.yml)

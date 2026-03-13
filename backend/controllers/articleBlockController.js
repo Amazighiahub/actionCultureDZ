@@ -1,17 +1,12 @@
-// controllers/ArticleBlockController.js
-const { Op } = require('sequelize');
+// controllers/articleBlockController.js
 const path = require('path');
-const fs = require('fs').promises;
 const crypto = require('crypto');
+const BaseController = require('./baseController');
+const container = require('../services/serviceContainer');
 
-class ArticleBlockController {
-  constructor(models) {
-    this.models = models;
-    this.sequelize = models.sequelize || Object.values(models)[0]?.sequelize;
-    
-    if (!this.sequelize) {
-      console.error('❌ Sequelize non trouvé dans les modèles!');
-    }
+class ArticleBlockController extends BaseController {
+  get articleBlockService() {
+    return container.articleBlockService;
   }
 
   /**
@@ -20,31 +15,16 @@ class ArticleBlockController {
   async getBlocksByArticle(req, res) {
     try {
       const { articleId, articleType } = req.params;
-      
-      const blocks = await this.models.ArticleBlock.findAll({
-        where: { 
-          id_article: articleId,
-          article_type: articleType || 'article'
-        },
-        include: [{
-          model: this.models.Media,
-          as: 'media',
-          required: false
-        }],
-        order: [['ordre', 'ASC']]
-      });
 
-      res.json({
-        success: true,
-        data: blocks
-      });
+      const blocks = await this.articleBlockService.getBlocksByArticle(
+        articleId,
+        articleType || 'article'
+      );
+
+      this._sendSuccess(res, blocks);
 
     } catch (error) {
-      console.error('❌ Erreur récupération blocs:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: req.t('common.serverError') 
-      });
+      this._handleError(res, error);
     }
   }
 
@@ -52,67 +32,20 @@ class ArticleBlockController {
    * Créer un nouveau bloc
    */
   async createBlock(req, res) {
-    const transaction = await this.sequelize.transaction();
-
     try {
-      const {
-        id_article,
-        article_type = 'article',
-        type_block,
-        contenu,
-        contenu_json,
-        metadata = {},
-        id_media
-      } = req.body;
+      const result = await this.articleBlockService.createBlock(req.body);
 
-      // Validation
-      if (!id_article || !type_block) {
-        await transaction.rollback();
+      if (result.error === 'badRequest') {
         return res.status(400).json({
           success: false,
           error: req.t('common.badRequest')
         });
       }
 
-      // Déterminer l'ordre
-      const ordre = await this.models.ArticleBlock.getNextOrder(id_article);
-
-      // Créer le bloc
-      const block = await this.models.ArticleBlock.create({
-        id_article,
-        article_type,
-        type_block,
-        contenu,
-        contenu_json,
-        id_media,
-        ordre,
-        metadata,
-        visible: true
-      }, { transaction });
-
-      await transaction.commit();
-
-      // Récupérer le bloc avec ses associations
-      const newBlock = await this.models.ArticleBlock.findByPk(block.id_block, {
-        include: [{
-          model: this.models.Media,
-          as: 'media'
-        }]
-      });
-
-      res.status(201).json({
-        success: true,
-        message: req.t('articleBlock.created'),
-        data: newBlock
-      });
+      this._sendCreated(res, result.data, req.t('articleBlock.created'));
 
     } catch (error) {
-      await transaction.rollback();
-      console.error('❌ Erreur création bloc:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: req.t('common.serverError') 
-      });
+      this._handleError(res, error);
     }
   }
 
@@ -120,61 +53,24 @@ class ArticleBlockController {
    * Créer plusieurs blocs en batch
    */
   async createMultipleBlocks(req, res) {
-    const transaction = await this.sequelize.transaction();
-
     try {
-      const { id_article, article_type = 'article', blocks } = req.body;
+      const result = await this.articleBlockService.createMultipleBlocks(req.body);
 
-      if (!id_article || !blocks || !Array.isArray(blocks)) {
-        await transaction.rollback();
+      if (result.error === 'badRequest') {
         return res.status(400).json({
           success: false,
           error: req.t('common.badRequest')
         });
       }
 
-      // Supprimer les anciens blocs
-      await this.models.ArticleBlock.destroy({
-        where: { id_article, article_type },
-        transaction
-      });
-
-      // Créer les nouveaux blocs
-      const createdBlocks = [];
-      const allowedBlockFields = ['type', 'contenu', 'id_media', 'legende', 'alt_text', 'style', 'niveau'];
-      for (let i = 0; i < blocks.length; i++) {
-        const blockData = { id_article, article_type, ordre: i };
-        allowedBlockFields.forEach(f => { if (blocks[i][f] !== undefined) blockData[f] = blocks[i][f]; });
-
-        const block = await this.models.ArticleBlock.create(blockData, { transaction });
-        createdBlocks.push(block);
-      }
-
-      await transaction.commit();
-
-      // Récupérer les blocs avec associations
-      const newBlocks = await this.models.ArticleBlock.findAll({
-        where: { id_article, article_type },
-        include: [{
-          model: this.models.Media,
-          as: 'media'
-        }],
-        order: [['ordre', 'ASC']]
-      });
-
       res.json({
         success: true,
-        message: req.t('articleBlock.multipleCreated', { count: createdBlocks.length }),
-        data: newBlocks
+        message: req.t('articleBlock.multipleCreated', { count: result.count }),
+        data: result.data
       });
 
     } catch (error) {
-      await transaction.rollback();
-      console.error('❌ Erreur création multiple:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: req.t('common.serverError') 
-      });
+      this._handleError(res, error);
     }
   }
 
@@ -182,58 +78,25 @@ class ArticleBlockController {
    * Mettre à jour un bloc
    */
   async updateBlock(req, res) {
-    const transaction = await this.sequelize.transaction();
-
     try {
       const { blockId } = req.params;
-      const updates = req.body;
+      const result = await this.articleBlockService.updateBlock(blockId, req.body);
 
-      const block = await this.models.ArticleBlock.findByPk(blockId, { transaction });
-
-      if (!block) {
-        await transaction.rollback();
-        return res.status(404).json({ 
-          success: false, 
-          error: req.t('articleBlock.notFound') 
+      if (result.error === 'notFound') {
+        return res.status(404).json({
+          success: false,
+          error: req.t('articleBlock.notFound')
         });
       }
-
-      // Mettre à jour les champs autorisés
-      const allowedFields = [
-        'contenu', 'contenu_json', 'metadata', 
-        'id_media', 'visible', 'type_block'
-      ];
-
-      allowedFields.forEach(field => {
-        if (updates[field] !== undefined) {
-          block[field] = updates[field];
-        }
-      });
-
-      await block.save({ transaction });
-      await transaction.commit();
-
-      // Récupérer le bloc mis à jour avec associations
-      const updatedBlock = await this.models.ArticleBlock.findByPk(blockId, {
-        include: [{
-          model: this.models.Media,
-          as: 'media'
-        }]
-      });
 
       res.json({
         success: true,
         message: req.t('articleBlock.updated'),
-        data: updatedBlock
+        data: result.data
       });
 
     } catch (error) {
-      await transaction.rollback();
-      console.error('❌ Erreur mise à jour bloc:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: req.t('common.serverError') 
-      });
+      this._handleError(res, error);
     }
   }
 
@@ -241,40 +104,21 @@ class ArticleBlockController {
    * Supprimer un bloc
    */
   async deleteBlock(req, res) {
-    const transaction = await this.sequelize.transaction();
-
     try {
       const { blockId } = req.params;
+      const result = await this.articleBlockService.deleteBlock(blockId);
 
-      const block = await this.models.ArticleBlock.findByPk(blockId, { transaction });
-
-      if (!block) {
-        await transaction.rollback();
-        return res.status(404).json({ 
-          success: false, 
-          error: req.t('articleBlock.notFound') 
+      if (result.error === 'notFound') {
+        return res.status(404).json({
+          success: false,
+          error: req.t('articleBlock.notFound')
         });
       }
 
-      await block.destroy({ transaction });
-
-      // Réorganiser les blocs restants
-      await this.reorderAfterDelete(block.id_article, block.ordre, transaction);
-
-      await transaction.commit();
-
-      res.json({
-        success: true,
-        message: req.t('articleBlock.deleted')
-      });
+      this._sendMessage(res, req.t('articleBlock.deleted'));
 
     } catch (error) {
-      await transaction.rollback();
-      console.error('❌ Erreur suppression bloc:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: req.t('common.serverError') 
-      });
+      this._handleError(res, error);
     }
   }
 
@@ -282,65 +126,30 @@ class ArticleBlockController {
    * Réorganiser les blocs
    */
   async reorderBlocks(req, res) {
-    const transaction = await this.sequelize.transaction();
-    
     try {
       const { articleId } = req.params;
       const { blockIds } = req.body;
 
-      if (!Array.isArray(blockIds)) {
-        await transaction.rollback();
+      const result = await this.articleBlockService.reorderBlocks(articleId, blockIds);
+
+      if (result.error === 'badRequest') {
         return res.status(400).json({
           success: false,
           error: req.t('common.badRequest')
         });
       }
 
-      // Vérifier que tous les blocs appartiennent à l'article
-      const blocks = await this.models.ArticleBlock.findAll({
-        where: {
-          id_block: blockIds,
-          id_article: articleId
-        },
-        transaction
-      });
-
-      if (blocks.length !== blockIds.length) {
-        await transaction.rollback();
+      if (result.error === 'notBelongToArticle') {
         return res.status(400).json({
           success: false,
           error: req.t('articleBlock.notBelongToArticle')
         });
       }
 
-      // Mettre à jour l'ordre
-      for (let i = 0; i < blockIds.length; i++) {
-        await this.models.ArticleBlock.update(
-          { ordre: i },
-          { 
-            where: { 
-              id_block: blockIds[i],
-              id_article: articleId 
-            },
-            transaction 
-          }
-        );
-      }
-
-      await transaction.commit();
-
-      res.json({
-        success: true,
-        message: req.t('articleBlock.reordered')
-      });
+      this._sendMessage(res, req.t('articleBlock.reordered'));
 
     } catch (error) {
-      await transaction.rollback();
-      console.error('❌ Erreur réorganisation blocs:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: req.t('common.serverError') 
-      });
+      this._handleError(res, error);
     }
   }
 
@@ -348,49 +157,30 @@ class ArticleBlockController {
    * Uploader une image pour un bloc
    */
   async uploadBlockImage(req, res) {
-    const transaction = await this.sequelize.transaction();
-
     try {
       const { articleId } = req.params;
-      const file = req.file;
 
-      if (!file) {
-        await transaction.rollback();
-        return res.status(400).json({ 
-          success: false, 
-          error: req.t('upload.noFile') 
+      const result = await this.articleBlockService.uploadBlockImage(
+        articleId,
+        req.file,
+        { titre: req.body.titre, description: req.body.description }
+      );
+
+      if (result.error === 'noFile') {
+        return res.status(400).json({
+          success: false,
+          error: req.t('upload.noFile')
         });
       }
-
-      // Créer l'entrée média
-      const media = await this.models.Media.create({
-        id_oeuvre: articleId, // Lié à l'œuvre parent
-        type_media: 'image',
-        url: `/uploads/articles/${file.filename}`,
-        titre: req.body.titre || file.originalname,
-        description: req.body.description,
-        nom_fichier: file.originalname,
-        taille_fichier: file.size,
-        mime_type: file.mimetype,
-        visible_public: true,
-        date_creation: new Date()
-      }, { transaction });
-
-      await transaction.commit();
 
       res.json({
         success: true,
         message: req.t('upload.imageSuccess'),
-        data: media
+        data: result.data
       });
 
     } catch (error) {
-      await transaction.rollback();
-      console.error('❌ Erreur upload image:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: req.t('common.serverError') 
-      });
+      this._handleError(res, error);
     }
   }
 
@@ -398,61 +188,30 @@ class ArticleBlockController {
    * Dupliquer un bloc
    */
   async duplicateBlock(req, res) {
-    const transaction = await this.sequelize.transaction();
-
     try {
       const { blockId } = req.params;
+      const result = await this.articleBlockService.duplicateBlock(blockId);
 
-      const originalBlock = await this.models.ArticleBlock.findByPk(blockId, { transaction });
-
-      if (!originalBlock) {
-        await transaction.rollback();
-        return res.status(404).json({ 
-          success: false, 
-          error: req.t('articleBlock.notFound') 
+      if (result.error === 'notFound') {
+        return res.status(404).json({
+          success: false,
+          error: req.t('articleBlock.notFound')
         });
       }
-
-      // Créer une copie
-      const newBlock = await this.models.ArticleBlock.create({
-        id_article: originalBlock.id_article,
-        article_type: originalBlock.article_type,
-        type_block: originalBlock.type_block,
-        contenu: originalBlock.contenu,
-        contenu_json: originalBlock.contenu_json,
-        id_media: originalBlock.id_media,
-        metadata: originalBlock.metadata,
-        ordre: await this.models.ArticleBlock.getNextOrder(originalBlock.id_article),
-        visible: originalBlock.visible
-      }, { transaction });
-
-      await transaction.commit();
-
-      const duplicatedBlock = await this.models.ArticleBlock.findByPk(newBlock.id_block, {
-        include: [{
-          model: this.models.Media,
-          as: 'media'
-        }]
-      });
 
       res.json({
         success: true,
         message: req.t('articleBlock.duplicated'),
-        data: duplicatedBlock
+        data: result.data
       });
 
     } catch (error) {
-      await transaction.rollback();
-      console.error('❌ Erreur duplication bloc:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: req.t('common.serverError') 
-      });
+      this._handleError(res, error);
     }
   }
 
   /**
-   * Obtenir les templates de blocs
+   * Obtenir les templates de blocs (static data, no DB access)
    */
   async getBlockTemplates(req, res) {
     try {
@@ -522,38 +281,11 @@ class ArticleBlockController {
         }
       ];
 
-      res.json({
-        success: true,
-        data: templates
-      });
+      this._sendSuccess(res, templates);
 
     } catch (error) {
-      console.error('❌ Erreur templates:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: req.t('common.serverError') 
-      });
+      this._handleError(res, error);
     }
-  }
-
-  // ==================================================
-  // MÉTHODES HELPER
-  // ==================================================
-
-  /**
-   * Réorganiser après suppression
-   */
-  async reorderAfterDelete(articleId, deletedOrdre, transaction) {
-    await this.models.ArticleBlock.update(
-      { ordre: this.sequelize.literal('ordre - 1') },
-      {
-        where: {
-          id_article: articleId,
-          ordre: { [Op.gt]: deletedOrdre }
-        },
-        transaction
-      }
-    );
   }
 
   /**
@@ -562,15 +294,15 @@ class ArticleBlockController {
   static getMulterConfig() {
     const multer = require('multer');
     const fsSync = require('fs');
-    
+
     const storage = multer.diskStorage({
       destination: (req, file, cb) => {
         const uploadDir = path.join(__dirname, '..', 'uploads', 'articles');
-        
+
         if (!fsSync.existsSync(uploadDir)) {
           fsSync.mkdirSync(uploadDir, { recursive: true });
         }
-        
+
         cb(null, uploadDir);
       },
       filename: (req, file, cb) => {
@@ -599,7 +331,7 @@ class ArticleBlockController {
 
     return multer({
       storage,
-      limits: { 
+      limits: {
         fileSize: 10 * 1024 * 1024 // 10MB max
       },
       fileFilter

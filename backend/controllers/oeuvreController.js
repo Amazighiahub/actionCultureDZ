@@ -4,11 +4,10 @@
  * Architecture: Controller → Service → Repository → Database
  */
 
+const BaseController = require('./baseController');
 const container = require('../services/serviceContainer');
 
-const IS_DEV_MODE = process.env.NODE_ENV === 'development';
-
-class OeuvreControllerV2 {
+class OeuvreControllerV2 extends BaseController {
   /**
    * Getter pour le service œuvre
    * @private
@@ -690,35 +689,6 @@ class OeuvreControllerV2 {
     return oeuvreDTOs.map(dto => this._translateOeuvre(dto, lang, format));
   }
 
-  /**
-   * Gère les erreurs
-   * @private
-   */
-  _handleError(res, error) {
-    const statusCode = error.statusCode || 500;
-    const code = error.code || 'INTERNAL_ERROR';
-
-    if (IS_DEV_MODE) {
-      console.error(`❌ Error [${code}]:`, error.message);
-      console.error(error.stack);
-    }
-
-    const response = {
-      success: false,
-      error: error.message || 'Internal server error',
-      code
-    };
-
-    if (error.errors) {
-      response.errors = error.errors;
-    }
-
-    if (IS_DEV_MODE && statusCode === 500) {
-      response.stack = error.stack;
-    }
-
-    res.status(statusCode).json(response);
-  }
 }
 
 // Export singleton

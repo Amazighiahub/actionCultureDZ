@@ -304,7 +304,7 @@ const GestionArtisanat: React.FC = () => {
         setSuccess(true);
         setTimeout(() => {
           if (isAdmin()) {
-            navigate('/admin/Artisanat');
+            navigate('/gestion-artisanat');
           } else {
             navigate('/dashboard-pro');
           }

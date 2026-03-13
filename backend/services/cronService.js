@@ -1,6 +1,7 @@
 // services/cronService.js - Service de tâches planifiées
 const cron = require('node-cron');
 const { Op } = require('sequelize');
+const CronLock = require('../utils/cronLock');
 
 class CronService {
   constructor() {
@@ -8,6 +9,7 @@ class CronService {
     this.models = null;
     this.services = null;
     this.isRunning = false;
+    this.cronLock = null;
   }
 
   /**
@@ -16,10 +18,16 @@ class CronService {
   initialize(models, services) {
     this.models = models;
     this.services = services;
-    
+
+    // Verrou distribué pour multi-instance (PM2 cluster, Docker)
+    const sequelize = models.sequelize || Object.values(models)[0]?.sequelize;
+    if (sequelize) {
+      this.cronLock = new CronLock(sequelize);
+    }
+
     // Planifier toutes les tâches
     this.scheduleJobs();
-    
+
     this.isRunning = true;
     console.log('⏰ Service de tâches planifiées initialisé');
   }
@@ -93,26 +101,29 @@ class CronService {
     }
 
     const job = cron.schedule(cronExpression, async () => {
-      console.log(`🔄 Exécution de la tâche: ${name}`);
-      
-      try {
-        await taskFunction();
-        console.log(`✅ Tâche "${name}" complétée`);
-      } catch (error) {
-        console.error(`❌ Erreur dans la tâche "${name}":`, error);
-        
-        // Enregistrer l'erreur dans les logs
-        if (this.models?.AuditLog) {
-          await this.models.AuditLog.create({
-            action: 'cron_error',
-            entity_type: 'cron_job',
-            entity_id: name,
-            details: {
-              error: error.message,
-              stack: error.stack
-            }
-          });
+      // Verrou distribué : une seule instance exécute le job
+      const runTask = async () => {
+        console.log(`🔄 Exécution de la tâche: ${name}`);
+        try {
+          await taskFunction();
+          console.log(`✅ Tâche "${name}" complétée`);
+        } catch (error) {
+          console.error(`❌ Erreur dans la tâche "${name}":`, error);
+          if (this.models?.AuditLog) {
+            await this.models.AuditLog.create({
+              action: 'cron_error',
+              entity_type: 'cron_job',
+              entity_id: name,
+              details: { error: error.message, stack: error.stack }
+            });
+          }
         }
+      };
+
+      if (this.cronLock) {
+        await this.cronLock.withLock(name, runTask);
+      } else {
+        await runTask();
       }
     }, {
       scheduled: false // Ne pas démarrer automatiquement
@@ -149,26 +160,23 @@ class CronService {
         statut: 'publie',
         rappel_envoye: { [Op.not]: true } // Éviter les doublons
       },
+      attributes: ['id_evenement', 'nom_evenement', 'date_debut', 'id_lieu'],
       include: [
-        { model: this.models.Lieu },
-        { model: this.models.TypeEvenement }
+        { model: this.models.Lieu, attributes: ['id_lieu', 'nom_fr', 'nom_ar', 'adresse'] },
+        { model: this.models.TypeEvenement, attributes: ['id_type_evenement', 'nom'] }
       ]
     });
 
     console.log(`📧 ${evenements.length} événements à rappeler`);
 
-    for (const evenement of evenements) {
+    await Promise.all(evenements.map(async (evenement) => {
       try {
-        // Envoyer les rappels via NotificationService
         await this.services.notificationService.envoyerRappelEvenement(evenement.id_evenement);
-        
-        // Marquer comme envoyé
         await evenement.update({ rappel_envoye: true });
-        
       } catch (error) {
         console.error(`Erreur rappel événement ${evenement.id_evenement}:`, error);
       }
-    }
+    }));
   }
 
   /**
@@ -301,6 +309,7 @@ class CronService {
           date_creation: { [Op.gte]: lastWeek },
           statut: 'publie'
         },
+        attributes: ['id_evenement', 'nom_evenement', 'date_debut', 'date_creation'],
         limit: 5,
         order: [['date_creation', 'DESC']]
       }),
@@ -309,6 +318,7 @@ class CronService {
           date_creation: { [Op.gte]: lastWeek },
           statut: 'publie'
         },
+        attributes: ['id_oeuvre', 'titre', 'date_creation'],
         limit: 5,
         order: [['date_creation', 'DESC']]
       }) || []
@@ -353,7 +363,8 @@ class CronService {
         },
         statut: 'publie',
         rappel_derniere_minute: { [Op.not]: true }
-      }
+      },
+      attributes: ['id_evenement', 'nom_evenement', 'date_debut']
     });
 
     for (const event of upcomingEvents) {
@@ -397,15 +408,14 @@ class CronService {
       const now = Date.now();
       const maxAge = 24 * 60 * 60 * 1000; // 24 heures
       
-      for (const file of files) {
+      await Promise.all(files.map(async (file) => {
         const filePath = path.join(tempDir, file);
         const stats = await fs.stat(filePath);
-        
         if (now - stats.mtimeMs > maxAge) {
           await fs.unlink(filePath);
           console.log(`🗑️ Fichier temporaire supprimé: ${file}`);
         }
-      }
+      }));
     } catch (error) {
       console.error('Erreur nettoyage fichiers temp:', error);
     }
@@ -459,27 +469,23 @@ class CronService {
         date_creation: { [Op.lte]: threeDaysAgo },
         rappel_verification_envoye: { [Op.not]: true }
       },
+      attributes: ['id_user', 'email', 'nom', 'prenom'],
       limit: 100
     });
 
-    for (const user of unverifiedUsers) {
+    await Promise.all(unverifiedUsers.map(async (user) => {
       try {
-        // Créer un nouveau token
         const token = await this.models.EmailVerification.createVerificationToken(user.id_user);
-        
-        // Envoyer l'email
         await this.services.emailService.sendEmail(
           user.email,
           '🔔 Rappel : Vérifiez votre email',
           `Bonjour ${user.prenom},\n\nN'oubliez pas de vérifier votre email pour profiter pleinement d'Action Culture.\n\nCliquez ici : ${process.env.BASE_URL}/verify-email/${token.token}`
         );
-        
         await user.update({ rappel_verification_envoye: true });
-        
       } catch (error) {
         console.error(`Erreur rappel vérification pour ${user.email}:`, error);
       }
-    }
+    }));
 
     console.log(`📧 ${unverifiedUsers.length} rappels de vérification envoyés`);
   }

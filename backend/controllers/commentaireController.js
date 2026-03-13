@@ -1,83 +1,96 @@
-// controllers/CommentaireController.js - VERSION i18n
-const { Op } = require('sequelize');
+/**
+ * CommentaireController - Controller refactored with BaseController + Service Pattern
+ * Architecture: BaseController -> Controller -> Service -> Database
+ *
+ * All data access goes through container.commentaireService.
+ * Translation (translateDeep) stays here as presentation logic.
+ */
 
-// ⚡ Import du helper i18n
-const { translate, translateDeep } = require('../helpers/i18n');
+const BaseController = require('./baseController');
+const container = require('../services/serviceContainer');
+const { translateDeep } = require('../helpers/i18n');
 
-class CommentaireController {
-  constructor(models) {
-    this.models = models;
+class CommentaireController extends BaseController {
+  get service() {
+    return container.commentaireService;
   }
 
-  // Récupérer les commentaires d'une œuvre
+  // ========================================================================
+  // LECTURE
+  // ========================================================================
+
+  /**
+   * Recuperer les commentaires d'une oeuvre (pagine)
+   */
   async getCommentairesOeuvre(req, res) {
     try {
-      const lang = req.lang || 'fr';  // ⚡
+      const lang = req.lang || 'fr';
       const { oeuvreId } = req.params;
-      const { page = 1, limit = 10 } = req.query;
-      const offset = (page - 1) * limit;
+      const { page, limit, offset } = this._paginate(req, { limit: 10 });
 
-      const commentaires = await this.models.Commentaire.findAndCountAll({
-        where: { 
-          id_oeuvre: oeuvreId,
-          statut: 'publie',
-          commentaire_parent_id: null
-        },
-        include: [
-          {
-            model: this.models.User,
-            attributes: ['nom', 'prenom', 'id_type_user']
-          },
-          {
-            model: this.models.Commentaire,
-            as: 'Reponses',
-            where: { statut: 'publie' },
-            required: false,
-            include: [
-              {
-                model: this.models.User,
-                attributes: ['nom', 'prenom', 'id_type_user']
-              }
-            ]
-          }
-        ],
-        limit: parseInt(limit),
-        offset: parseInt(offset),
-        order: [['date_creation', 'DESC']]
-      });
+      const commentaires = await this.service.getCommentairesOeuvre(oeuvreId, { limit, offset });
 
-      // ⚡ Traduire les noms d'utilisateurs
       res.json({
         success: true,
         data: {
           commentaires: translateDeep(commentaires.rows, lang),
           pagination: {
             total: commentaires.count,
-            page: parseInt(page),
+            page,
             pages: Math.ceil(commentaires.count / limit),
-            limit: parseInt(limit)
+            limit
           }
         },
         lang
       });
-
     } catch (error) {
-      console.error('Erreur lors de la récupération des commentaires:', error);
-      res.status(500).json({
-        success: false,
-        error: req.t('common.serverError')
-      });
+      return this._handleError(res, error);
     }
   }
 
-  // Créer un commentaire sur une œuvre
+  /**
+   * Recuperer les commentaires d'un evenement (pagine)
+   */
+  async getCommentairesEvenement(req, res) {
+    try {
+      const lang = req.lang || 'fr';
+      const { evenementId } = req.params;
+      const { page, limit, offset } = this._paginate(req, { limit: 10 });
+
+      const commentaires = await this.service.getCommentairesEvenement(evenementId, { limit, offset });
+
+      res.json({
+        success: true,
+        data: {
+          commentaires: translateDeep(commentaires.rows, lang),
+          pagination: {
+            total: commentaires.count,
+            page,
+            pages: Math.ceil(commentaires.count / limit),
+            limit
+          }
+        },
+        lang
+      });
+    } catch (error) {
+      return this._handleError(res, error);
+    }
+  }
+
+  // ========================================================================
+  // CREATION
+  // ========================================================================
+
+  /**
+   * Creer un commentaire sur une oeuvre (authentifie)
+   */
   async createCommentaireOeuvre(req, res) {
     try {
-      const lang = req.lang || 'fr';  // ⚡
+      const lang = req.lang || 'fr';
       const { oeuvreId } = req.params;
       const { contenu, note_qualite, commentaire_parent_id } = req.body;
 
-      const oeuvre = await this.models.Oeuvre.findByPk(oeuvreId);
+      const oeuvre = await this.service.findOeuvre(oeuvreId);
       if (!oeuvre) {
         return res.status(404).json({
           success: false,
@@ -85,48 +98,30 @@ class CommentaireController {
         });
       }
 
-      const commentaire = await this.models.Commentaire.create({
+      const commentaireComplet = await this.service.createCommentaire({
         contenu,
         note_qualite,
         commentaire_parent_id,
         id_user: req.user.id_user,
-        id_oeuvre: oeuvreId,
-        statut: 'publie'
+        id_oeuvre: oeuvreId
       });
 
-      const commentaireComplet = await this.models.Commentaire.findByPk(commentaire.id_commentaire, {
-        include: [
-          {
-            model: this.models.User,
-            attributes: ['nom', 'prenom', 'id_type_user']
-          }
-        ]
-      });
-
-      // ⚡ Traduire
-      res.status(201).json({
-        success: true,
-        message: req.t('comment.added'),
-        data: translateDeep(commentaireComplet, lang)
-      });
-
+      return this._sendCreated(res, translateDeep(commentaireComplet, lang), req.t('comment.added'));
     } catch (error) {
-      console.error('Erreur lors de la création du commentaire:', error);
-      res.status(500).json({
-        success: false,
-        error: req.t('common.serverError')
-      });
+      return this._handleError(res, error);
     }
   }
 
-  // Créer un commentaire sur un événement
+  /**
+   * Creer un commentaire sur un evenement (authentifie)
+   */
   async createCommentaireEvenement(req, res) {
     try {
-      const lang = req.lang || 'fr';  // ⚡
+      const lang = req.lang || 'fr';
       const { evenementId } = req.params;
       const { contenu, note_qualite, commentaire_parent_id } = req.body;
 
-      const evenement = await this.models.Evenement.findByPk(evenementId);
+      const evenement = await this.service.findEvenement(evenementId);
       if (!evenement) {
         return res.status(404).json({
           success: false,
@@ -134,156 +129,69 @@ class CommentaireController {
         });
       }
 
-      const commentaire = await this.models.Commentaire.create({
+      const commentaireComplet = await this.service.createCommentaire({
         contenu,
         note_qualite,
         commentaire_parent_id,
         id_user: req.user.id_user,
-        id_evenement: evenementId,
-        statut: 'publie'
+        id_evenement: evenementId
       });
 
-      const commentaireComplet = await this.models.Commentaire.findByPk(commentaire.id_commentaire, {
-        include: [
-          {
-            model: this.models.User,
-            attributes: ['nom', 'prenom', 'id_type_user']
-          }
-        ]
-      });
-
-      res.status(201).json({
-        success: true,
-        message: req.t('comment.added'),
-        data: translateDeep(commentaireComplet, lang)
-      });
-
+      return this._sendCreated(res, translateDeep(commentaireComplet, lang), req.t('comment.added'));
     } catch (error) {
-      console.error('Erreur lors de la création du commentaire:', error);
-      res.status(500).json({
-        success: false,
-        error: req.t('common.serverError')
-      });
+      return this._handleError(res, error);
     }
   }
 
-  // Récupérer les commentaires d'un événement
-  async getCommentairesEvenement(req, res) {
-    try {
-      const lang = req.lang || 'fr';  // ⚡
-      const { evenementId } = req.params;
-      const { page = 1, limit = 10 } = req.query;
-      const offset = (page - 1) * limit;
+  // ========================================================================
+  // MODIFICATION / SUPPRESSION
+  // ========================================================================
 
-      const commentaires = await this.models.Commentaire.findAndCountAll({
-        where: { 
-          id_evenement: evenementId,
-          statut: 'publie',
-          commentaire_parent_id: null
-        },
-        include: [
-          {
-            model: this.models.User,
-            attributes: ['nom', 'prenom', 'id_type_user']
-          },
-          {
-            model: this.models.Commentaire,
-            as: 'Reponses',
-            where: { statut: 'publie' },
-            required: false,
-            include: [
-              {
-                model: this.models.User,
-                attributes: ['nom', 'prenom', 'id_type_user']
-              }
-            ]
-          }
-        ],
-        limit: parseInt(limit),
-        offset: parseInt(offset),
-        order: [['date_creation', 'DESC']]
-      });
-
-      res.json({
-        success: true,
-        data: {
-          commentaires: translateDeep(commentaires.rows, lang),
-          pagination: {
-            total: commentaires.count,
-            page: parseInt(page),
-            pages: Math.ceil(commentaires.count / limit),
-            limit: parseInt(limit)
-          }
-        },
-        lang
-      });
-
-    } catch (error) {
-      console.error('Erreur lors de la récupération des commentaires:', error);
-      res.status(500).json({
-        success: false,
-        error: req.t('common.serverError')
-      });
-    }
-  }
-
-  // Modifier un commentaire
+  /**
+   * Modifier un commentaire (req.resource deja charge par middleware)
+   */
   async updateCommentaire(req, res) {
     try {
-      const { id } = req.params;
       const { contenu, note_qualite } = req.body;
 
-      const commentaire = req.resource;
-
-      await commentaire.update({
-        contenu,
-        note_qualite,
-        date_modification: new Date()
-      });
+      const commentaire = await this.service.updateCommentaire(req.resource, { contenu, note_qualite });
 
       res.json({
         success: true,
         message: req.t('comment.updated'),
         data: commentaire
       });
-
     } catch (error) {
-      console.error('Erreur lors de la modification du commentaire:', error);
-      res.status(500).json({
-        success: false,
-        error: req.t('common.serverError')
-      });
+      return this._handleError(res, error);
     }
   }
 
-  // Supprimer un commentaire
+  /**
+   * Supprimer un commentaire (soft delete, req.resource deja charge par middleware)
+   */
   async deleteCommentaire(req, res) {
     try {
-      const commentaire = req.resource;
+      await this.service.deleteCommentaire(req.resource);
 
-      await commentaire.update({ statut: 'supprime' });
-
-      res.json({
-        success: true,
-        message: req.t('comment.deleted')
-      });
-
+      return this._sendMessage(res, req.t('comment.deleted'));
     } catch (error) {
-      console.error('Erreur lors de la suppression du commentaire:', error);
-      res.status(500).json({
-        success: false,
-        error: req.t('common.serverError')
-      });
+      return this._handleError(res, error);
     }
   }
 
-  // Modérer un commentaire (admin)
+  // ========================================================================
+  // MODERATION (ADMIN)
+  // ========================================================================
+
+  /**
+   * Moderer un commentaire (admin set statut)
+   */
   async moderateCommentaire(req, res) {
     try {
       const { id } = req.params;
       const { statut } = req.body;
 
-      const commentaire = await this.models.Commentaire.findByPk(id);
+      const commentaire = await this.service.moderateCommentaire(id, statut);
       if (!commentaire) {
         return res.status(404).json({
           success: false,
@@ -291,19 +199,9 @@ class CommentaireController {
         });
       }
 
-      await commentaire.update({ statut });
-
-      res.json({
-        success: true,
-        message: req.t('comment.statusUpdated', { statut })
-      });
-
+      return this._sendMessage(res, req.t('comment.statusUpdated', { statut }));
     } catch (error) {
-      console.error('Erreur lors de la modération du commentaire:', error);
-      res.status(500).json({
-        success: false,
-        error: req.t('common.serverError')
-      });
+      return this._handleError(res, error);
     }
   }
 }

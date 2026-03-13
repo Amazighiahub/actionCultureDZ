@@ -15,7 +15,7 @@ const { body, query, param } = require('express-validator');
 
 const initProfessionnelRoutes = (models) => {
   const authMiddleware = createAuthMiddleware(models);
-  const professionnelController = new ProfessionnelController(models);
+  const professionnelController = new ProfessionnelController();
 
   // 🔒 SÉCURITÉ: ne jamais bypass les contrôles si un middleware requis manque
   const requireMiddleware = (name, middleware) => {

@@ -1,181 +1,82 @@
-// controllers/MetadataController.js - VERSION i18n COMPLÈTE
-const { Op } = require('sequelize');
+/**
+ * MetadataController - Refactoré avec BaseController + Service Pattern
+ * Architecture: BaseController → Controller → Service → Models
+ *
+ * ZÉRO accès direct aux models Sequelize.
+ * Toute logique métier/data access délèguée au MetadataService via le container.
+ */
+const BaseController = require('./baseController');
+const container = require('../services/serviceContainer');
+const { translate, translateDeep } = require('../helpers/i18n');
 
-// ⚡ Import du helper i18n
-const { translate, translateDeep, createMultiLang, mergeTranslations, prepareMultiLangField, SUPPORTED_LANGUAGES } = require('../helpers/i18n');
-
-class MetadataController {
-  constructor(models) {
-    if (!models) {
-      throw new Error('MetadataController: Les modèles sont requis');
-    }
-    this.models = models;
-    this.sequelize = models.sequelize || Object.values(models)[0]?.sequelize;
+class MetadataController extends BaseController {
+  get metadataService() {
+    return container.metadataService;
   }
 
   // ========================================================================
   // MÉTHODES DE CONSULTATION PUBLIQUES
   // ========================================================================
 
-  /**
-   * GET /api/metadata/ ou /api/metadata/all
-   */
   async getAllMetadata(req, res) {
     try {
       const lang = req.lang || 'fr';
-
-      const [
-        langues,
-        categories,
-        genres,
-        types_oeuvres,
-        editeurs,
-        types_users,
-        tags,
-        materiaux,
-        techniques
-      ] = await Promise.all([
-        this.models.Langue?.findAll({ order: [['nom', 'ASC']] }) || [],
-        this.models.Categorie?.findAll({ order: [['id_categorie', 'ASC']] }) || [],
-        this.models.Genre?.findAll({ order: [['id_genre', 'ASC']] }) || [],
-        this.models.TypeOeuvre?.findAll({ order: [['id_type_oeuvre', 'ASC']] }) || [],
-        this.models.Editeur?.findAll({ where: { actif: true }, order: [['nom', 'ASC']] }) || [],
-        this.models.TypeUser?.findAll({ order: [['id_type_user', 'ASC']] }) || [],
-        this.models.TagMotCle?.findAll({ order: [['id_tag', 'ASC']], limit: 100 }) || [],
-        this.models.Materiau?.findAll({ order: [['id_materiau', 'ASC']] }) || [],
-        this.models.Technique?.findAll({ order: [['id_technique', 'ASC']] }) || []
-      ]);
+      const data = await this.metadataService.getAllMetadata();
 
       res.json({
         success: true,
         data: {
-          langues: translateDeep(langues, lang),
-          categories: translateDeep(categories, lang),
-          genres: translateDeep(genres, lang),
-          types_oeuvres: translateDeep(types_oeuvres, lang),
-          editeurs,
-          types_users: translateDeep(types_users, lang),
-          tags: translateDeep(tags, lang),
-          materiaux: translateDeep(materiaux, lang),
-          techniques: translateDeep(techniques, lang)
+          langues: translateDeep(data.langues, lang),
+          categories: translateDeep(data.categories, lang),
+          genres: translateDeep(data.genres, lang),
+          types_oeuvres: translateDeep(data.types_oeuvres, lang),
+          editeurs: data.editeurs,
+          types_users: translateDeep(data.types_users, lang),
+          tags: translateDeep(data.tags, lang),
+          materiaux: translateDeep(data.materiaux, lang),
+          techniques: translateDeep(data.techniques, lang)
         },
         lang
       });
     } catch (error) {
-      console.error('Erreur getAllMetadata:', error);
-      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
+      this._handleError(res, error);
     }
   }
 
-  /**
-   * GET /api/metadata/types-oeuvres
-   */
   async getTypesOeuvres(req, res) {
     try {
       const lang = req.lang || 'fr';
-
-      const types = await this.models.TypeOeuvre.findAll({
-        order: [['id_type_oeuvre', 'ASC']]
-      });
-      
-      res.json({
-        success: true,
-        data: translateDeep(types, lang),
-        lang
-      });
+      const types = await this.metadataService.getTypesOeuvres();
+      res.json({ success: true, data: translateDeep(types, lang), lang });
     } catch (error) {
-      console.error('Erreur getTypesOeuvres:', error);
-      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
+      this._handleError(res, error);
     }
   }
 
-  /**
-   * GET /api/metadata/genres/:typeId
-   */
   async getGenresParType(req, res) {
     try {
       const lang = req.lang || 'fr';
-      const { typeId } = req.params;
-      
-      const typeGenres = await this.models.TypeOeuvreGenre.findAll({
-        where: { id_type_oeuvre: typeId, actif: true },
-        include: [{
-          model: this.models.Genre,
-          as: 'genre',
-          attributes: ['id_genre', 'nom', 'description']
-        }],
-        order: [['ordre_affichage', 'ASC']]
-      });
-
-      const genres = typeGenres.map(tg => ({
-        ...translateDeep(tg.genre?.toJSON() || tg.genre, lang),
-        ordre_affichage: tg.ordre_affichage
-      }));
-
-      res.json({ success: true, data: genres, lang });
+      const genres = await this.metadataService.getGenresParType(req.params.typeId);
+      res.json({ success: true, data: translateDeep(genres, lang), lang });
     } catch (error) {
-      console.error('Erreur getGenresParType:', error);
-      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
+      this._handleError(res, error);
     }
   }
 
-  /**
-   * GET /api/metadata/categories/:genreId
-   */
   async getCategoriesParGenre(req, res) {
     try {
       const lang = req.lang || 'fr';
-      const { genreId } = req.params;
-      
-      const genreCategories = await this.models.GenreCategorie.findAll({
-        where: { id_genre: genreId, actif: true },
-        include: [{
-          model: this.models.Categorie,
-          as: 'categorie',
-          attributes: ['id_categorie', 'nom', 'description']
-        }],
-        order: [['ordre_affichage', 'ASC']]
-      });
-
-      const categories = genreCategories.map(gc => ({
-        ...translateDeep(gc.categorie?.toJSON() || gc.categorie, lang),
-        ordre_affichage: gc.ordre_affichage
-      }));
-
-      res.json({ success: true, data: categories, lang });
+      const categories = await this.metadataService.getCategoriesParGenre(req.params.genreId);
+      res.json({ success: true, data: translateDeep(categories, lang), lang });
     } catch (error) {
-      console.error('Erreur getCategoriesParGenre:', error);
-      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
+      this._handleError(res, error);
     }
   }
 
-  /**
-   * GET /api/metadata/hierarchie
-   */
   async getHierarchieComplete(req, res) {
     try {
       const lang = req.lang || 'fr';
-
-      const types = await this.models.TypeOeuvre.findAll({
-        include: [{
-          model: this.models.TypeOeuvreGenre,
-          as: 'typeOeuvreGenres',
-          where: { actif: true },
-          required: false,
-          include: [{
-            model: this.models.Genre,
-            as: 'genre',
-            include: [{
-              model: this.models.GenreCategorie,
-              as: 'genreCategories',
-              where: { actif: true },
-              required: false,
-              include: [{ model: this.models.Categorie, as: 'categorie' }]
-            }]
-          }]
-        }],
-        order: [['id_type_oeuvre', 'ASC']]
-      });
+      const types = await this.metadataService.getHierarchieComplete();
 
       const hierarchy = types.map(type => {
         const typeJson = type.toJSON ? type.toJSON() : type;
@@ -208,727 +109,328 @@ class MetadataController {
 
       res.json({ success: true, data: hierarchy, lang });
     } catch (error) {
-      console.error('Erreur getHierarchieComplete:', error);
-      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
+      this._handleError(res, error);
     }
   }
 
-  /**
-   * GET /api/metadata/genres
-   */
   async getGenres(req, res) {
     try {
       const lang = req.lang || 'fr';
-      const genres = await this.models.Genre.findAll({ order: [['id_genre', 'ASC']] });
+      const genres = await this.metadataService.getGenres();
       res.json({ success: true, data: translateDeep(genres, lang), lang });
     } catch (error) {
-      console.error('Erreur getGenres:', error);
-      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
+      this._handleError(res, error);
     }
   }
 
-  /**
-   * GET /api/metadata/tags
-   */
   async getTags(req, res) {
     try {
       const lang = req.lang || 'fr';
-      const { search, limit = 50 } = req.query;
-
-      const where = {};
-      if (search) {
-        where[Op.or] = SUPPORTED_LANGUAGES.map(l => {
-          const jsonPath = l.includes('-') ? `$."${l}"` : `$.${l}`;
-          return this.sequelize.where(
-            this.sequelize.fn('JSON_EXTRACT', this.sequelize.col('nom'), this.sequelize.literal(`'${jsonPath}'`)),
-            { [Op.like]: `%${search}%` }
-          );
-        });
-      }
-
-      const tags = await this.models.TagMotCle.findAll({
-        where,
-        order: [['id_tag', 'ASC']],
-        limit: parseInt(limit)
-      });
-
+      const { search, limit } = req.query;
+      const tags = await this.metadataService.getTags({ search, limit });
       res.json({ success: true, data: translateDeep(tags, lang), lang });
     } catch (error) {
-      console.error('Erreur getTags:', error);
-      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
+      this._handleError(res, error);
     }
   }
 
-  /**
-   * GET /api/metadata/materiaux
-   */
   async getMateriaux(req, res) {
     try {
       const lang = req.lang || 'fr';
-      if (!this.models.Materiau) {
-        return res.json({ success: true, data: [], lang });
-      }
-      const materiaux = await this.models.Materiau.findAll({ order: [['id_materiau', 'ASC']] });
+      const materiaux = await this.metadataService.getMateriaux();
       res.json({ success: true, data: translateDeep(materiaux, lang), lang });
     } catch (error) {
-      console.error('Erreur getMateriaux:', error);
-      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
+      this._handleError(res, error);
     }
   }
 
-  /**
-   * GET /api/metadata/techniques
-   */
   async getTechniques(req, res) {
     try {
       const lang = req.lang || 'fr';
-      if (!this.models.Technique) {
-        return res.json({ success: true, data: [], lang });
-      }
-      const techniques = await this.models.Technique.findAll({ order: [['id_technique', 'ASC']] });
+      const techniques = await this.metadataService.getTechniques();
       res.json({ success: true, data: translateDeep(techniques, lang), lang });
     } catch (error) {
-      console.error('Erreur getTechniques:', error);
-      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
+      this._handleError(res, error);
     }
   }
 
-  /**
-   * GET /api/metadata/langues
-   */
   async getLangues(req, res) {
     try {
       const lang = req.lang || 'fr';
-      if (!this.models.Langue) {
-        return res.json({ success: true, data: [], lang });
-      }
-      const langues = await this.models.Langue.findAll({ order: [['nom', 'ASC']] });
+      const langues = await this.metadataService.getLangues();
       res.json({ success: true, data: translateDeep(langues, lang), lang });
     } catch (error) {
-      console.error('Erreur getLangues:', error);
-      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
+      this._handleError(res, error);
     }
   }
 
-  /**
-   * GET /api/metadata/wilayas
-   */
   async getWilayas(req, res) {
     try {
       const lang = req.lang || 'fr';
       const { includeDairas = 'false', includeCommunes = 'false' } = req.query;
-
-      if (!this.models.Wilaya) {
-        return res.json({ success: true, data: [], lang });
-      }
-
-      const include = [];
-      
-      if (includeDairas === 'true' && this.models.Daira) {
-        const dairaInclude = {
-          model: this.models.Daira,
-          as: 'Dairas',
-          attributes: ['id_daira', 'nom', 'daira_name_ascii', 'wilayaId']
-        };
-        
-        if (includeCommunes === 'true' && this.models.Commune) {
-          dairaInclude.include = [{
-            model: this.models.Commune,
-            as: 'Communes',
-            attributes: ['id_commune', 'nom', 'commune_name_ascii', 'dairaId']
-          }];
-        }
-        
-        include.push(dairaInclude);
-      }
-
-      const wilayas = await this.models.Wilaya.findAll({
-        attributes: ['id_wilaya', 'codeW', 'nom', 'wilaya_name_ascii'],
-        include,
-        order: [['codeW', 'ASC']]
+      const wilayas = await this.metadataService.getWilayas({
+        includeDairas: includeDairas === 'true',
+        includeCommunes: includeCommunes === 'true'
       });
-      
-      res.json({
-        success: true,
-        data: translateDeep(wilayas, lang),
-        lang
-      });
+      res.json({ success: true, data: translateDeep(wilayas, lang), lang });
     } catch (error) {
-      console.error('Erreur getWilayas:', error);
-      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
+      this._handleError(res, error);
     }
   }
 
-  /**
-   * GET /api/metadata/wilayas/:wilayaId/dairas
-   */
   async getDairasParWilaya(req, res) {
     try {
       const lang = req.lang || 'fr';
-      const { wilayaId } = req.params;
-
-      if (!this.models.Daira) {
-        return res.json({ success: true, data: [], lang });
-      }
-      
-      const dairas = await this.models.Daira.findAll({
-        where: { wilayaId: wilayaId },
-        attributes: ['id_daira', 'nom', 'daira_name_ascii', 'wilayaId'],
-        order: [['daira_name_ascii', 'ASC']]
-      });
-      
+      const dairas = await this.metadataService.getDairasParWilaya(req.params.wilayaId);
       res.json({ success: true, data: translateDeep(dairas, lang), lang });
     } catch (error) {
-      console.error('Erreur getDairasParWilaya:', error);
-      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
+      this._handleError(res, error);
     }
   }
 
-  /**
-   * GET /api/metadata/dairas/:dairaId/communes
-   */
   async getCommunesParDaira(req, res) {
     try {
       const lang = req.lang || 'fr';
-      const { dairaId } = req.params;
-
-      if (!this.models.Commune) {
-        return res.json({ success: true, data: [], lang });
-      }
-      
-      const communes = await this.models.Commune.findAll({
-        where: { dairaId: dairaId },
-        attributes: ['id_commune', 'nom', 'commune_name_ascii', 'dairaId'],
-        order: [['commune_name_ascii', 'ASC']]
-      });
-      
+      const communes = await this.metadataService.getCommunesParDaira(req.params.dairaId);
       res.json({ success: true, data: translateDeep(communes, lang), lang });
     } catch (error) {
-      console.error('Erreur getCommunesParDaira:', error);
-      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
+      this._handleError(res, error);
     }
   }
 
-  /**
-   * GET /api/metadata/types-evenements
-   */
   async getTypesEvenements(req, res) {
     try {
       const lang = req.lang || 'fr';
-      
-      if (!this.models.TypeEvenement) {
-        return res.json({ success: true, data: [], lang });
-      }
-
-      const types = await this.models.TypeEvenement.findAll({
-        order: [['id_type_evenement', 'ASC']]
-      });
-      
+      const types = await this.metadataService.getTypesEvenements();
       res.json({ success: true, data: translateDeep(types, lang), lang });
     } catch (error) {
-      console.error('Erreur getTypesEvenements:', error);
-      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
+      this._handleError(res, error);
     }
   }
 
-  /**
-   * GET /api/metadata/types-users
-   */
   async getTypesUsers(req, res) {
     try {
       const lang = req.lang || 'fr';
-      if (!this.models.TypeUser) {
-        return res.json({ success: true, data: [], lang });
-      }
-      const types = await this.models.TypeUser.findAll({ order: [['id_type_user', 'ASC']] });
+      const types = await this.metadataService.getTypesUsers();
       res.json({ success: true, data: translateDeep(types, lang), lang });
     } catch (error) {
-      console.error('Erreur getTypesUsers:', error);
-      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
+      this._handleError(res, error);
     }
   }
 
-  /**
-   * GET /api/metadata/types-organisations
-   */
   async getTypesOrganisations(req, res) {
     try {
       const lang = req.lang || 'fr';
-      if (!this.models.TypeOrganisation) {
-        return res.json({ success: true, data: [], lang });
-      }
-      const types = await this.models.TypeOrganisation.findAll({ order: [['id_type_organisation', 'ASC']] });
+      const types = await this.metadataService.getTypesOrganisations();
       res.json({ success: true, data: translateDeep(types, lang), lang });
     } catch (error) {
-      console.error('Erreur getTypesOrganisations:', error);
-      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
+      this._handleError(res, error);
     }
   }
 
-  /**
-   * GET /api/metadata/editeurs
-   */
   async getEditeurs(req, res) {
     try {
       const lang = req.lang || 'fr';
-      if (!this.models.Editeur) {
-        return res.json({ success: true, data: [], lang });
-      }
-      const editeurs = await this.models.Editeur.findAll({ order: [['nom', 'ASC']] });
+      const editeurs = await this.metadataService.getEditeurs();
       res.json({ success: true, data: translateDeep(editeurs, lang), lang });
     } catch (error) {
-      console.error('Erreur getEditeurs:', error);
-      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
+      this._handleError(res, error);
     }
   }
 
   // ========================================================================
-  // ⚡ MÉTHODES DE TRADUCTION (ADMIN) - CATÉGORIES
+  // TRADUCTION ADMIN
   // ========================================================================
 
   async getCategorieTranslations(req, res) {
     try {
-      const { id } = req.params;
-      const categorie = await this.models.Categorie.findByPk(id);
-      
-      if (!categorie) {
-        return res.status(404).json({ success: false, error: req.t('common.notFound') });
-      }
-
-      res.json({
-        success: true,
-        data: {
-          id_categorie: categorie.id_categorie,
-          nom: categorie.nom,
-          description: categorie.description
-        }
-      });
+      const data = await this.metadataService.getCategorieTranslations(req.params.id);
+      if (!data) return res.status(404).json({ success: false, error: req.t('common.notFound') });
+      this._sendSuccess(res, data);
     } catch (error) {
-      console.error('Erreur getCategorieTranslations:', error);
-      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
+      this._handleError(res, error);
     }
   }
 
   async updateCategorieTranslation(req, res) {
     try {
-      const { id } = req.params;
       const targetLang = req.targetLanguage || req.params.lang;
-      const { nom, description } = req.body;
-
-      const categorie = await this.models.Categorie.findByPk(id);
-      if (!categorie) {
-        return res.status(404).json({ success: false, error: req.t('common.notFound') });
-      }
-
-      const updates = {};
-      if (nom !== undefined) {
-        updates.nom = mergeTranslations(categorie.nom, { [targetLang]: nom });
-      }
-      if (description !== undefined) {
-        updates.description = mergeTranslations(categorie.description, { [targetLang]: description });
-      }
-
-      await categorie.update(updates);
-
-      res.json({
-        success: true,
-        message: req.t('translation.updated', { lang: targetLang }),
-        data: { nom: categorie.nom, description: categorie.description }
-      });
+      const result = await this.metadataService.updateCategorieTranslation(req.params.id, targetLang, req.body);
+      if (!result) return res.status(404).json({ success: false, error: req.t('common.notFound') });
+      this._sendMessage(res, req.t('translation.updated', { lang: targetLang }));
     } catch (error) {
-      console.error('Erreur updateCategorieTranslation:', error);
-      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
+      this._handleError(res, error);
     }
   }
 
-  // ========================================================================
-  // ⚡ MÉTHODES DE TRADUCTION (ADMIN) - GENRES
-  // ========================================================================
-
   async getGenreTranslations(req, res) {
     try {
-      const { id } = req.params;
-      const genre = await this.models.Genre.findByPk(id);
-      
-      if (!genre) {
-        return res.status(404).json({ success: false, error: req.t('common.notFound') });
-      }
-
-      res.json({
-        success: true,
-        data: { id_genre: genre.id_genre, nom: genre.nom, description: genre.description }
-      });
+      const data = await this.metadataService.getGenreTranslations(req.params.id);
+      if (!data) return res.status(404).json({ success: false, error: req.t('common.notFound') });
+      this._sendSuccess(res, data);
     } catch (error) {
-      console.error('Erreur getGenreTranslations:', error);
-      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
+      this._handleError(res, error);
     }
   }
 
   async updateGenreTranslation(req, res) {
     try {
-      const { id } = req.params;
       const targetLang = req.targetLanguage || req.params.lang;
-      const { nom, description } = req.body;
-
-      const genre = await this.models.Genre.findByPk(id);
-      if (!genre) {
-        return res.status(404).json({ success: false, error: req.t('common.notFound') });
-      }
-
-      const updates = {};
-      if (nom !== undefined) updates.nom = mergeTranslations(genre.nom, { [targetLang]: nom });
-      if (description !== undefined) updates.description = mergeTranslations(genre.description, { [targetLang]: description });
-
-      await genre.update(updates);
-      res.json({ success: true, message: req.t('translation.updated', { lang: targetLang }) });
+      const result = await this.metadataService.updateGenreTranslation(req.params.id, targetLang, req.body);
+      if (!result) return res.status(404).json({ success: false, error: req.t('common.notFound') });
+      this._sendMessage(res, req.t('translation.updated', { lang: targetLang }));
     } catch (error) {
-      console.error('Erreur updateGenreTranslation:', error);
-      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
+      this._handleError(res, error);
     }
   }
 
-  // ========================================================================
-  // ⚡ MÉTHODES DE TRADUCTION (ADMIN) - TYPES D'ŒUVRES
-  // ========================================================================
-
   async getTypeOeuvreTranslations(req, res) {
     try {
-      const { id } = req.params;
-      const type = await this.models.TypeOeuvre.findByPk(id);
-      
-      if (!type) {
-        return res.status(404).json({ success: false, error: req.t('common.notFound') });
-      }
-
-      res.json({
-        success: true,
-        data: { id_type_oeuvre: type.id_type_oeuvre, nom_type: type.nom_type, description: type.description }
-      });
+      const data = await this.metadataService.getTypeOeuvreTranslations(req.params.id);
+      if (!data) return res.status(404).json({ success: false, error: req.t('common.notFound') });
+      this._sendSuccess(res, data);
     } catch (error) {
-      console.error('Erreur getTypeOeuvreTranslations:', error);
-      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
+      this._handleError(res, error);
     }
   }
 
   async updateTypeOeuvreTranslation(req, res) {
     try {
-      const { id } = req.params;
       const targetLang = req.targetLanguage || req.params.lang;
-      const { nom, description } = req.body;
-
-      const type = await this.models.TypeOeuvre.findByPk(id);
-      if (!type) {
-        return res.status(404).json({ success: false, error: req.t('common.notFound') });
-      }
-
-      const updates = {};
-      if (nom !== undefined) updates.nom_type = mergeTranslations(type.nom_type, { [targetLang]: nom });
-      if (description !== undefined) updates.description = mergeTranslations(type.description, { [targetLang]: description });
-
-      await type.update(updates);
-      res.json({ success: true, message: req.t('translation.updated', { lang: targetLang }) });
+      const result = await this.metadataService.updateTypeOeuvreTranslation(req.params.id, targetLang, req.body);
+      if (!result) return res.status(404).json({ success: false, error: req.t('common.notFound') });
+      this._sendMessage(res, req.t('translation.updated', { lang: targetLang }));
     } catch (error) {
-      console.error('Erreur updateTypeOeuvreTranslation:', error);
-      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
+      this._handleError(res, error);
     }
   }
 
-  // ========================================================================
-  // ⚡ MÉTHODES DE TRADUCTION (ADMIN) - TAGS
-  // ========================================================================
-
   async getTagTranslations(req, res) {
     try {
-      const { id } = req.params;
-      const tag = await this.models.TagMotCle.findByPk(id);
-      
-      if (!tag) {
-        return res.status(404).json({ success: false, error: req.t('common.notFound') });
-      }
-
-      res.json({ success: true, data: { id_tag: tag.id_tag, nom: tag.nom } });
+      const data = await this.metadataService.getTagTranslations(req.params.id);
+      if (!data) return res.status(404).json({ success: false, error: req.t('common.notFound') });
+      this._sendSuccess(res, data);
     } catch (error) {
-      console.error('Erreur getTagTranslations:', error);
-      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
+      this._handleError(res, error);
     }
   }
 
   async updateTagTranslation(req, res) {
     try {
-      const { id } = req.params;
       const targetLang = req.targetLanguage || req.params.lang;
-      const { nom } = req.body;
-
-      const tag = await this.models.TagMotCle.findByPk(id);
-      if (!tag) {
-        return res.status(404).json({ success: false, error: req.t('common.notFound') });
-      }
-
-      if (nom !== undefined) {
-        await tag.update({ nom: mergeTranslations(tag.nom, { [targetLang]: nom }) });
-      }
-
-      res.json({ success: true, message: req.t('translation.updated', { lang: targetLang }) });
+      const result = await this.metadataService.updateTagTranslation(req.params.id, targetLang, req.body);
+      if (!result) return res.status(404).json({ success: false, error: req.t('common.notFound') });
+      this._sendMessage(res, req.t('translation.updated', { lang: targetLang }));
     } catch (error) {
-      console.error('Erreur updateTagTranslation:', error);
-      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
+      this._handleError(res, error);
     }
   }
 
-  // ========================================================================
-  // ⚡ MÉTHODES DE TRADUCTION (ADMIN) - MATÉRIAUX
-  // ========================================================================
-
   async getMateriauTranslations(req, res) {
     try {
-      const { id } = req.params;
-      if (!this.models.Materiau) {
-        return res.status(404).json({ success: false, error: req.t('common.notFound') });
-      }
-      const materiau = await this.models.Materiau.findByPk(id);
-      
-      if (!materiau) {
-        return res.status(404).json({ success: false, error: req.t('common.notFound') });
-      }
-
-      res.json({ success: true, data: { id_materiau: materiau.id_materiau, nom: materiau.nom, description: materiau.description } });
+      const data = await this.metadataService.getMateriauTranslations(req.params.id);
+      if (!data) return res.status(404).json({ success: false, error: req.t('common.notFound') });
+      this._sendSuccess(res, data);
     } catch (error) {
-      console.error('Erreur getMateriauTranslations:', error);
-      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
+      this._handleError(res, error);
     }
   }
 
   async updateMateriauTranslation(req, res) {
     try {
-      const { id } = req.params;
       const targetLang = req.targetLanguage || req.params.lang;
-      const { nom, description } = req.body;
-
-      if (!this.models.Materiau) {
-        return res.status(404).json({ success: false, error: req.t('common.notFound') });
-      }
-
-      const materiau = await this.models.Materiau.findByPk(id);
-      if (!materiau) {
-        return res.status(404).json({ success: false, error: req.t('common.notFound') });
-      }
-
-      const updates = {};
-      if (nom !== undefined) updates.nom = mergeTranslations(materiau.nom, { [targetLang]: nom });
-      if (description !== undefined) updates.description = mergeTranslations(materiau.description, { [targetLang]: description });
-
-      await materiau.update(updates);
-      res.json({ success: true, message: req.t('translation.updated', { lang: targetLang }) });
+      const result = await this.metadataService.updateMateriauTranslation(req.params.id, targetLang, req.body);
+      if (!result) return res.status(404).json({ success: false, error: req.t('common.notFound') });
+      this._sendMessage(res, req.t('translation.updated', { lang: targetLang }));
     } catch (error) {
-      console.error('Erreur updateMateriauTranslation:', error);
-      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
+      this._handleError(res, error);
     }
   }
 
-  // ========================================================================
-  // ⚡ MÉTHODES DE TRADUCTION (ADMIN) - TECHNIQUES
-  // ========================================================================
-
   async getTechniqueTranslations(req, res) {
     try {
-      const { id } = req.params;
-      if (!this.models.Technique) {
-        return res.status(404).json({ success: false, error: req.t('common.notFound') });
-      }
-      const technique = await this.models.Technique.findByPk(id);
-      
-      if (!technique) {
-        return res.status(404).json({ success: false, error: req.t('common.notFound') });
-      }
-
-      res.json({ success: true, data: { id_technique: technique.id_technique, nom: technique.nom, description: technique.description } });
+      const data = await this.metadataService.getTechniqueTranslations(req.params.id);
+      if (!data) return res.status(404).json({ success: false, error: req.t('common.notFound') });
+      this._sendSuccess(res, data);
     } catch (error) {
-      console.error('Erreur getTechniqueTranslations:', error);
-      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
+      this._handleError(res, error);
     }
   }
 
   async updateTechniqueTranslation(req, res) {
     try {
-      const { id } = req.params;
       const targetLang = req.targetLanguage || req.params.lang;
-      const { nom, description } = req.body;
-
-      if (!this.models.Technique) {
-        return res.status(404).json({ success: false, error: req.t('common.notFound') });
-      }
-
-      const technique = await this.models.Technique.findByPk(id);
-      if (!technique) {
-        return res.status(404).json({ success: false, error: req.t('common.notFound') });
-      }
-
-      const updates = {};
-      if (nom !== undefined) updates.nom = mergeTranslations(technique.nom, { [targetLang]: nom });
-      if (description !== undefined) updates.description = mergeTranslations(technique.description, { [targetLang]: description });
-
-      await technique.update(updates);
-      res.json({ success: true, message: req.t('translation.updated', { lang: targetLang }) });
+      const result = await this.metadataService.updateTechniqueTranslation(req.params.id, targetLang, req.body);
+      if (!result) return res.status(404).json({ success: false, error: req.t('common.notFound') });
+      this._sendMessage(res, req.t('translation.updated', { lang: targetLang }));
     } catch (error) {
-      console.error('Erreur updateTechniqueTranslation:', error);
-      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
+      this._handleError(res, error);
     }
   }
 
   // ========================================================================
-  // MÉTHODES DE CRÉATION (ADMIN)
+  // CRÉATION ADMIN
   // ========================================================================
 
   async createTypeOeuvre(req, res) {
     try {
       const lang = req.lang || 'fr';
-      const { nom, description } = req.body;
-
-      const type = await this.models.TypeOeuvre.create({
-        nom_type: prepareMultiLangField(nom, lang),
-        description: prepareMultiLangField(description, lang)
-      });
-
-      res.status(201).json({
-        success: true,
-        message: req.t('metadata.typeOeuvreCreated'),
-        data: translateDeep(type, lang)
-      });
+      const type = await this.metadataService.createTypeOeuvre(lang, req.body);
+      this._sendCreated(res, translateDeep(type, lang), req.t('metadata.typeOeuvreCreated'));
     } catch (error) {
-      console.error('Erreur createTypeOeuvre:', error);
-      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
+      this._handleError(res, error);
     }
   }
 
   async createGenre(req, res) {
     try {
       const lang = req.lang || 'fr';
-      const { nom, description, id_type_oeuvre } = req.body;
-
-      const genre = await this.models.Genre.create({
-        nom: prepareMultiLangField(nom, lang),
-        description: prepareMultiLangField(description, lang)
-      });
-
-      // Créer la liaison avec le type d'œuvre
-      if (id_type_oeuvre) {
-        await this.models.TypeOeuvreGenre.create({
-          id_type_oeuvre,
-          id_genre: genre.id_genre,
-          actif: true,
-          ordre_affichage: 0
-        });
-      }
-
-      res.status(201).json({
-        success: true,
-        message: req.t('metadata.genreCreated'),
-        data: translateDeep(genre, lang)
-      });
+      const genre = await this.metadataService.createGenre(lang, req.body);
+      this._sendCreated(res, translateDeep(genre, lang), req.t('metadata.genreCreated'));
     } catch (error) {
-      console.error('Erreur createGenre:', error);
-      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
+      this._handleError(res, error);
     }
   }
 
   async createCategorie(req, res) {
     try {
       const lang = req.lang || 'fr';
-      const { nom, description, id_genre } = req.body;
-
-      const categorie = await this.models.Categorie.create({
-        nom: prepareMultiLangField(nom, lang),
-        description: prepareMultiLangField(description, lang)
-      });
-
-      // Créer la liaison avec le genre
-      if (id_genre) {
-        await this.models.GenreCategorie.create({
-          id_genre,
-          id_categorie: categorie.id_categorie,
-          actif: true,
-          ordre_affichage: 0
-        });
-      }
-
-      res.status(201).json({
-        success: true,
-        message: req.t('metadata.categorieCreated'),
-        data: translateDeep(categorie, lang)
-      });
+      const categorie = await this.metadataService.createCategorie(lang, req.body);
+      this._sendCreated(res, translateDeep(categorie, lang), req.t('metadata.categorieCreated'));
     } catch (error) {
-      console.error('Erreur createCategorie:', error);
-      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
+      this._handleError(res, error);
     }
   }
 
   async createTag(req, res) {
     try {
       const lang = req.lang || 'fr';
-      const { nom } = req.body;
-
-      const tag = await this.models.TagMotCle.create({
-        nom: prepareMultiLangField(nom, lang)
-      });
-
-      res.status(201).json({
-        success: true,
-        message: req.t('metadata.tagCreated'),
-        data: translateDeep(tag, lang)
-      });
+      const tag = await this.metadataService.createTag(lang, req.body);
+      this._sendCreated(res, translateDeep(tag, lang), req.t('metadata.tagCreated'));
     } catch (error) {
-      console.error('Erreur createTag:', error);
-      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
+      this._handleError(res, error);
     }
   }
 
   async createMateriau(req, res) {
     try {
       const lang = req.lang || 'fr';
-      const { nom, description } = req.body;
-
-      if (!this.models.Materiau) {
-        return res.status(404).json({ success: false, error: req.t('common.notFound') });
-      }
-
-      const materiau = await this.models.Materiau.create({
-        nom: prepareMultiLangField(nom, lang),
-        description: prepareMultiLangField(description, lang)
-      });
-
-      res.status(201).json({
-        success: true,
-        message: req.t('metadata.materiauCreated'),
-        data: translateDeep(materiau, lang)
-      });
+      const materiau = await this.metadataService.createMateriau(lang, req.body);
+      if (!materiau) return res.status(404).json({ success: false, error: req.t('common.notFound') });
+      this._sendCreated(res, translateDeep(materiau, lang), req.t('metadata.materiauCreated'));
     } catch (error) {
-      console.error('Erreur createMateriau:', error);
-      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
+      this._handleError(res, error);
     }
   }
 
   async createTechnique(req, res) {
     try {
       const lang = req.lang || 'fr';
-      const { nom, description } = req.body;
-
-      if (!this.models.Technique) {
-        return res.status(404).json({ success: false, error: req.t('common.notFound') });
-      }
-
-      const technique = await this.models.Technique.create({
-        nom: prepareMultiLangField(nom, lang),
-        description: prepareMultiLangField(description, lang)
-      });
-
-      res.status(201).json({
-        success: true,
-        message: req.t('metadata.techniqueCreated'),
-        data: translateDeep(technique, lang)
-      });
+      const technique = await this.metadataService.createTechnique(lang, req.body);
+      if (!technique) return res.status(404).json({ success: false, error: req.t('common.notFound') });
+      this._sendCreated(res, translateDeep(technique, lang), req.t('metadata.techniqueCreated'));
     } catch (error) {
-      console.error('Erreur createTechnique:', error);
-      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
+      this._handleError(res, error);
     }
   }
 
@@ -938,44 +440,10 @@ class MetadataController {
 
   async getUsageStatistics(req, res) {
     try {
-      const [
-        totalLangues,
-        totalCategories,
-        totalGenres,
-        totalTypesOeuvres,
-        totalEditeurs,
-        totalTags,
-        totalMateriaux,
-        totalTechniques
-      ] = await Promise.all([
-        this.models.Langue?.count() || 0,
-        this.models.Categorie?.count() || 0,
-        this.models.Genre?.count() || 0,
-        this.models.TypeOeuvre?.count() || 0,
-        this.models.Editeur?.count({ where: { actif: true } }) || 0,
-        this.models.TagMotCle?.count() || 0,
-        this.models.Materiau?.count() || 0,
-        this.models.Technique?.count() || 0
-      ]);
-
-      res.json({
-        success: true,
-        data: {
-          totals: {
-            langues: totalLangues,
-            categories: totalCategories,
-            genres: totalGenres,
-            typesOeuvres: totalTypesOeuvres,
-            editeurs: totalEditeurs,
-            tags: totalTags,
-            materiaux: totalMateriaux,
-            techniques: totalTechniques
-          }
-        }
-      });
+      const totals = await this.metadataService.getUsageStatistics();
+      this._sendSuccess(res, { totals });
     } catch (error) {
-      console.error('Erreur getUsageStatistics:', error);
-      res.status(500).json({ success: false, error: req.t ? req.t('common.serverError') : 'Internal server error' });
+      this._handleError(res, error);
     }
   }
 }

@@ -5,70 +5,18 @@ const analyticsMethods = require('./dashboard/analyticsMethods');
 const moderationMethods = require('./dashboard/moderationMethods');
 const usersMethods = require('./dashboard/usersMethods');
 const monitoringMethods = require('./dashboard/monitoringMethods');
-
-// ============================================================
-// LRU in-memory cache (internal to dashboard)
-// ============================================================
-class LRUCache {
-  constructor(maxSize = 200) {
-    this.maxSize = maxSize;
-    this.cache = new Map();
-  }
-
-  get(key) {
-    if (!this.cache.has(key)) return undefined;
-    const item = this.cache.get(key);
-    if (item.expiresAt && Date.now() > item.expiresAt) {
-      this.cache.delete(key);
-      return undefined;
-    }
-    this.cache.delete(key);
-    this.cache.set(key, item);
-    return item.value;
-  }
-
-  set(key, value, ttlMs) {
-    if (this.cache.has(key)) this.cache.delete(key);
-    if (this.cache.size >= this.maxSize) {
-      const firstKey = this.cache.keys().next().value;
-      this.cache.delete(firstKey);
-    }
-    this.cache.set(key, {
-      value,
-      expiresAt: ttlMs ? Date.now() + ttlMs : null
-    });
-  }
-
-  delete(key) { this.cache.delete(key); }
-  clear() { this.cache.clear(); }
-  get size() { return this.cache.size; }
-  keys() { return this.cache.keys(); }
-}
+const BaseController = require('./baseController');
+const { DASHBOARD_PERMISSIONS } = require('../constants/dashboardPermissions');
+const LRUCache = require('../utils/LRUCache');
 
 // ============================================================
 // DashboardController — constructor + shared infrastructure
 // ============================================================
-class DashboardController {
-  constructor(models) {
-    this.models = models;
-    this.sequelize = models.sequelize || Object.values(models)[0]?.sequelize;
+class DashboardController extends BaseController {
+  constructor() {
+    super();
     this.cache = new LRUCache(200);
-    this.adminPermissions = this.setupPermissions();
-  }
-
-  setupPermissions() {
-    return {
-      'Admin': [
-        'view_dashboard', 'validate_user', 'validate_oeuvre',
-        'moderate_comment', 'moderate_signalement', 'view_reports',
-        'manage_events', 'manage_patrimoine'
-      ],
-      'Super Admin': ['*'],
-      'Moderateur': [
-        'view_dashboard', 'moderate_comment', 'moderate_signalement',
-        'view_reports'
-      ]
-    };
+    this.adminPermissions = DASHBOARD_PERMISSIONS;
   }
 
   // ========================================
@@ -95,23 +43,6 @@ class DashboardController {
       }
     } else {
       this.cache.clear();
-    }
-  }
-
-  async checkAdminPermission(userId, action) {
-    try {
-      const user = await this.models.User.findByPk(userId, {
-        include: [{ model: this.models.Role, as: 'Roles', through: { attributes: [] }, attributes: ['nom_role'] }]
-      });
-      if (!user || !user.Roles) return false;
-      for (const role of user.Roles) {
-        const permissions = this.adminPermissions[role.nom_role];
-        if (permissions && (permissions.includes('*') || permissions.includes(action))) return true;
-      }
-      return false;
-    } catch (error) {
-      console.error('Erreur vérification permissions:', error.message);
-      return false;
     }
   }
 }

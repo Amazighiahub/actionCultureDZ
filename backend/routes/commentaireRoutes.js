@@ -4,7 +4,7 @@ const router = express.Router();
 
 module.exports = (models, middlewares = {}) => {
   const CommentaireController = require('../controllers/commentaireController');
-  const controller = new CommentaireController(models);
+  const controller = new CommentaireController();
   
   // Middleware d'authentification (optionnel si non fourni)
   const authMiddleware = middlewares.auth || ((req, res, next) => next());

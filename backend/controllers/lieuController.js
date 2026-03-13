@@ -1,287 +1,148 @@
-// controllers/LieuController.js - VERSION i18n
-const { Op } = require('sequelize');
+/**
+ * LieuController - Controller refactored with BaseController + Service Pattern
+ * Architecture: BaseController -> Controller -> Service -> Database
+ *
+ * All data access goes through container.lieuService.
+ * Translation (translateDeep, translate) stays here as presentation logic.
+ */
 
-// ⚡ Import du helper i18n
-const { translate, translateDeep, createMultiLang, mergeTranslations } = require('../helpers/i18n');
-
-// ✅ OPTIMISATION: Import de l'utilitaire de recherche multilingue centralisé
-const { buildMultiLangSearch } = require('../utils/multiLangSearchBuilder');
+const BaseController = require('./baseController');
+const container = require('../services/serviceContainer');
+const { translate, translateDeep, mergeTranslations } = require('../helpers/i18n');
 
 const ALLOWED_LANGS = ['fr', 'ar', 'en', 'tz-ltn', 'tz-tfng'];
 
-class LieuController {
-  constructor(models) {
-    this.models = models;
-    this.sequelize = models.sequelize || Object.values(models)[0]?.sequelize;
+class LieuController extends BaseController {
+  get service() {
+    return container.lieuService;
   }
 
-  // ⚡ Recherche multilingue - utilise l'utilitaire centralisé
-  buildMultiLangSearchLocal(field, search) {
-    return buildMultiLangSearch(this.sequelize, field, search, 'Lieu');
-  }
+  // ========================================================================
+  // LECTURE
+  // ========================================================================
 
-  // Récupérer tous les lieux
+  /**
+   * Recuperer tous les lieux avec pagination et filtres
+   */
   async getAllLieux(req, res) {
     try {
       const lang = ALLOWED_LANGS.includes(req.lang) ? req.lang : 'fr';
-      const {
-        page = 1,
-        limit = 10,
-        wilaya,
-        daira,
-        commune,
-        type_lieu,
-        search,
-        with_events = false
-      } = req.query;
+      const { page, limit } = this._paginate(req, { limit: 10 });
+      const { wilaya, daira, commune, type_lieu, search, with_events = false } = req.query;
 
-      const offset = (page - 1) * limit;
-      const where = {};
-
-      // Construire les inclusions de manière sécurisée
-      const include = [];
-
-      // Commune avec Daira et Wilaya
-      if (this.models.Commune) {
-        const communeInclude = {
-          model: this.models.Commune,
-          attributes: ['id_commune', 'nom', 'commune_name_ascii'],
-          required: false,
-          where: commune ? { id_commune: commune } : undefined
-        };
-
-        if (this.models.Daira) {
-          communeInclude.include = [{
-            model: this.models.Daira,
-            attributes: ['id_daira', 'nom', 'daira_name_ascii'],
-            required: false,
-            where: daira ? { id_daira: daira } : undefined
-          }];
-
-          if (this.models.Wilaya) {
-            communeInclude.include[0].include = [{
-              model: this.models.Wilaya,
-              attributes: ['id_wilaya', 'nom', 'wilaya_name_ascii'],
-              required: false,
-              where: wilaya ? { id_wilaya: wilaya } : undefined
-            }];
-          }
-        }
-        include.push(communeInclude);
-      }
-
-      // Localite
-      if (this.models.Localite) {
-        include.push({
-          model: this.models.Localite,
-          attributes: ['id_localite', 'nom', 'localite_name_ascii'],
-          required: false
-        });
-      }
-
-      // DetailLieu avec Monument et Vestige - seulement si pas trop de données
-      if (this.models.DetailLieu && parseInt(limit) <= 50) {
-        const detailInclude = {
-          model: this.models.DetailLieu,
-          required: false
-        };
-        // Ne pas inclure Monument/Vestige dans les listes pour éviter les erreurs
-        include.push(detailInclude);
-      }
-
-      // Service et LieuMedia - seulement si pas trop de données
-      if (this.models.Service && parseInt(limit) <= 50) {
-        include.push({ model: this.models.Service, required: false });
-      }
-      if (this.models.LieuMedia && parseInt(limit) <= 50) {
-        include.push({ model: this.models.LieuMedia, required: false });
-      }
-
-      if (type_lieu) where.typeLieu = type_lieu;
-
-      // ⚡ Recherche multilingue
-      if (search) {
-        where[Op.or] = [
-          ...this.buildMultiLangSearchLocal('nom', search),
-          ...this.buildMultiLangSearchLocal('adresse', search)
-        ];
-      }
-
-      if (with_events === 'true' && this.models.Evenement) {
-        include.push({
-          model: this.models.Evenement,
-          attributes: ['nom_evenement', 'date_debut', 'date_fin'],
-          where: { date_fin: { [Op.gte]: new Date() } },
-          required: false
-        });
-      }
-
-      // Ordre simplifié pour éviter les erreurs JSON_EXTRACT
-      let order = [['id_lieu', 'ASC']];
-      try {
-        // Tenter l'ordre par nom si JSON fonctionne
-        order = [[this.sequelize.literal(`JSON_EXTRACT(\`Lieu\`.\`nom\`, '$.${lang.replace(/[^a-z-]/gi, '')}')`), 'ASC']];
-      } catch {
-        // Fallback sur l'ID
-      }
-
-      const lieux = await this.models.Lieu.findAndCountAll({
-        where,
-        limit: parseInt(limit),
-        offset: parseInt(offset),
-        include,
-        order,
-        distinct: true,
-        subQuery: false
+      const result = await this.service.getAllLieux({
+        lang, page, limit, wilaya, daira, commune, type_lieu, search, with_events
       });
 
-      const lieuxFormates = lieux.rows.map(lieu => {
-        const lieuData = lieu.toJSON();
-        lieuData.wilaya = lieuData.Commune?.Daira?.Wilaya || null;
-        lieuData.daira = lieuData.Commune?.Daira || null;
-        lieuData.commune = lieuData.Commune || null;
-        return lieuData;
-      });
-
-      // ⚡ Traduire les résultats - Utiliser "items" pour être compatible avec le frontend
-      const translatedLieux = translateDeep(lieuxFormates, lang);
+      const translatedLieux = translateDeep(result.rows, lang);
       res.json({
         success: true,
         data: {
           items: translatedLieux,
-          lieux: translatedLieux, // Garder aussi "lieux" pour rétrocompatibilité
+          lieux: translatedLieux,
           pagination: {
-            total: lieux.count,
-            page: parseInt(page),
-            pages: Math.ceil(lieux.count / limit),
-            limit: parseInt(limit)
+            total: result.count,
+            page,
+            pages: Math.ceil(result.count / limit),
+            limit
           }
         },
         lang
       });
-
     } catch (error) {
-      console.error('Erreur lors de la récupération des lieux:', error.message);
-      console.error('Stack:', error.stack);
-      res.status(500).json({
-        success: false,
-        error: req.t('common.serverError'),
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
-      });
+      return this._handleError(res, error);
     }
   }
 
-  // Récupérer les lieux d'une wilaya spécifique
+  /**
+   * Recuperer les lieux d'une wilaya specifique
+   */
   async getLieuxByWilaya(req, res) {
     try {
       const lang = ALLOWED_LANGS.includes(req.lang) ? req.lang : 'fr';
       const { wilayaId } = req.params;
-      const { page = 1, limit = 10 } = req.query;
-      const offset = (page - 1) * limit;
+      const { page, limit } = this._paginate(req, { limit: 10 });
 
-      const wilaya = await this.models.Wilaya.findByPk(wilayaId);
-      if (!wilaya) {
+      const result = await this.service.getLieuxByWilaya(wilayaId, { lang, page, limit });
+
+      if (!result.wilaya) {
         return res.status(404).json({
           success: false,
           error: req.t('lieu.wilayaNotFound')
         });
       }
 
-      const lieux = await this.models.Lieu.findAndCountAll({
-        limit: parseInt(limit),
-        offset: parseInt(offset),
-        include: [
-          {
-            model: this.models.Commune,
-            required: true,
-            include: [
-              {
-                model: this.models.Daira,
-                required: true,
-                where: { wilayaId: wilayaId },
-                include: [
-                  {
-                    model: this.models.Wilaya,
-                    attributes: ['id_wilaya', 'nom']
-                  }
-                ]
-              }
-            ]
-          },
-          { model: this.models.DetailLieu },
-          { model: this.models.Service },
-          { model: this.models.LieuMedia }
-        ],
-        order: [[this.sequelize.literal(`JSON_EXTRACT(\`Lieu\`.\`nom\`, '$.${lang.replace(/[^a-z-]/gi, '')}')`), 'ASC']],
-        distinct: true
-      });
-
-      // ⚡ Traduire
       res.json({
         success: true,
         data: {
-          wilaya: translate(wilaya, lang),
-          lieux: translateDeep(lieux.rows, lang),
+          wilaya: translate(result.wilaya, lang),
+          lieux: translateDeep(result.rows, lang),
           pagination: {
-            total: lieux.count,
-            page: parseInt(page),
-            pages: Math.ceil(lieux.count / limit)
+            total: result.count,
+            page,
+            pages: Math.ceil(result.count / limit)
           }
         },
         lang
       });
-
     } catch (error) {
-      console.error('Erreur:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: req.t('common.serverError') 
-      });
+      return this._handleError(res, error);
     }
   }
 
-  // ⚡ Préparer un champ multilingue
-  prepareMultiLangField(value, lang = 'fr') {
-    if (!value) return null;
-    if (typeof value === 'object' && value !== null) return value;
-    return createMultiLang(value, lang);
+  /**
+   * Obtenir un lieu par ID
+   */
+  async getLieuById(req, res) {
+    try {
+      const lang = req.lang || 'fr';
+      const { id } = req.params;
+
+      const lieuData = await this.service.getLieuById(id);
+
+      if (!lieuData) {
+        return res.status(404).json({
+          success: false,
+          error: req.t('lieu.notFound')
+        });
+      }
+
+      res.json({
+        success: true,
+        data: translateDeep(lieuData, lang),
+        lang
+      });
+    } catch (error) {
+      return this._handleError(res, error);
+    }
   }
 
-  // Créer un nouveau lieu
+  // ========================================================================
+  // CREATION / MODIFICATION / SUPPRESSION
+  // ========================================================================
+
+  /**
+   * Creer un nouveau lieu
+   */
   async createLieu(req, res) {
     try {
-      const lang = req.lang || 'fr';  // ⚡
+      const lang = req.lang || 'fr';
       const {
-        nom,
-        typeLieu = 'Commune', // Valeur par défaut
-        typeLieuCulturel,
-        communeId,
-        wilayaId, // Le frontend peut envoyer wilayaId au lieu de communeId
-        localiteId,
-        adresse,
-        description,
-        histoire,
-        latitude,
-        longitude,
-        details,
-        detail // Alias pour details
+        nom, typeLieu = 'Commune', typeLieuCulturel, communeId, wilayaId,
+        localiteId, adresse, description, histoire, latitude, longitude,
+        details, detail
       } = req.body;
 
-      // Si pas de communeId mais wilayaId, chercher une commune de cette wilaya
+      // Resolve communeId from wilayaId if needed
       let finalCommuneId = communeId;
       if (!communeId && wilayaId) {
-        const commune = await this.models.Commune.findOne({
-          include: [{
-            model: this.models.Daira,
-            where: { wilayaId },
-            required: true
-          }]
-        });
+        const commune = await this.service.findCommuneByWilaya(wilayaId);
         if (commune) {
           finalCommuneId = commune.id_commune;
         }
       }
 
+      // Validation
       if (!nom || !adresse || !latitude || !longitude) {
         return res.status(400).json({
           success: false,
@@ -303,10 +164,10 @@ class LieuController {
         });
       }
 
-      // Vérifier la commune si fournie
+      // Validate commune if provided (via service's translations lookup as existence check)
       if (finalCommuneId) {
-        const commune = await this.models.Commune.findByPk(finalCommuneId);
-        if (!commune) {
+        const communeCheck = await this.service.findCommuneById(finalCommuneId);
+        if (!communeCheck) {
           return res.status(404).json({
             success: false,
             error: req.t('lieu.communeNotFound')
@@ -314,8 +175,8 @@ class LieuController {
         }
 
         if (localiteId) {
-          const localite = await this.models.Localite.findByPk(localiteId);
-          if (!localite || localite.id_commune !== finalCommuneId) {
+          const localiteCheck = await this.service.findLocaliteById(localiteId);
+          if (!localiteCheck || localiteCheck.id_commune !== finalCommuneId) {
             return res.status(400).json({
               success: false,
               error: req.t('lieu.invalidLocalite')
@@ -324,495 +185,194 @@ class LieuController {
         }
       }
 
-      // ⚡ Préparer les champs multilingues
-      const nomMultiLang = this.prepareMultiLangField(nom, lang);
-      const adresseMultiLang = this.prepareMultiLangField(adresse, lang);
-      const descriptionMultiLang = this.prepareMultiLangField(description, lang);
-      const histoireMultiLang = this.prepareMultiLangField(histoire, lang);
+      const lieuComplet = await this.service.createLieu({
+        nom, typeLieu, typeLieuCulturel,
+        communeId: finalCommuneId, localiteId,
+        adresse, description, histoire,
+        latitude, longitude, details, detail
+      }, lang);
 
-      const lieu = await this.models.Lieu.create({
-        nom: nomMultiLang,
-        adresse: adresseMultiLang,
-        description: descriptionMultiLang,
-        histoire: histoireMultiLang,
-        typeLieu,
-        typeLieuCulturel,
-        communeId: finalCommuneId,
-        localiteId,
-        latitude,
-        longitude
-      });
-
-      // Créer les détails si fournis (accepter details ou detail)
-      const detailsData = details || detail;
-      if (detailsData) {
-        await this.models.DetailLieu.create({
-          id_lieu: lieu.id_lieu,
-          description: this.prepareMultiLangField(detailsData.description, lang),
-          horaires: this.prepareMultiLangField(detailsData.horaires, lang),
-          histoire: this.prepareMultiLangField(detailsData.histoire, lang),
-          referencesHistoriques: detailsData.referencesHistoriques
-        });
-      }
-
-      const lieuComplet = await this.models.Lieu.findByPk(lieu.id_lieu, {
-        include: [
-          { 
-            model: this.models.Commune,
-            include: [{
-              model: this.models.Daira,
-              include: [{ model: this.models.Wilaya }]
-            }]
-          },
-          { model: this.models.Localite },
-          { model: this.models.DetailLieu }
-        ]
-      });
-
-      // ⚡ Traduire
       res.status(201).json({
         success: true,
         message: req.t('lieu.created'),
         data: translateDeep(lieuComplet, lang)
       });
-
     } catch (error) {
-      console.error('Erreur lors de la création du lieu:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: req.t('common.serverError') 
-      });
+      return this._handleError(res, error);
     }
   }
 
-  // Mettre à jour un lieu
+  /**
+   * Mettre a jour un lieu
+   */
   async updateLieu(req, res) {
     try {
-      const lang = req.lang || 'fr';  // ⚡
+      const lang = req.lang || 'fr';
       const { id } = req.params;
       const { nom, adresse, description, histoire } = req.body;
 
       // Whitelist des champs modifiables
-      const allowedFields = ['latitude', 'longitude', 'type_lieu', 'commune_id', 'wilaya_id', 'photo_url', 'site_web', 'telephone', 'email', 'capacite', 'accessibilite', 'statut'];
+      const allowedFields = [
+        'latitude', 'longitude', 'type_lieu', 'commune_id', 'wilaya_id',
+        'photo_url', 'site_web', 'telephone', 'email', 'capacite',
+        'accessibilite', 'statut'
+      ];
       const updates = {};
-      allowedFields.forEach(f => { if (req.body[f] !== undefined) updates[f] = req.body[f]; });
-
-      const lieu = await this.models.Lieu.findByPk(id, {
-        include: [{ model: this.models.DetailLieu }]
+      allowedFields.forEach(f => {
+        if (req.body[f] !== undefined) updates[f] = req.body[f];
       });
 
-      if (!lieu) {
+      // Fetch existing translations to merge multilang fields
+      const existingLieu = await this.service.getLieuTranslations(id);
+      if (!existingLieu) {
         return res.status(404).json({
           success: false,
           error: req.t('lieu.notFound')
         });
       }
 
-      // ⚡ Gérer les champs multilingues
+      // Merge multilang fields (presentation logic stays in controller)
       if (nom !== undefined) {
         if (typeof nom === 'object') {
-          updates.nom = mergeTranslations(lieu.nom, nom);
+          updates.nom = mergeTranslations(existingLieu.nom, nom);
         } else {
-          updates.nom = mergeTranslations(lieu.nom, { [lang]: nom });
+          updates.nom = mergeTranslations(existingLieu.nom, { [lang]: nom });
         }
       }
 
       if (adresse !== undefined) {
         if (typeof adresse === 'object') {
-          updates.adresse = mergeTranslations(lieu.adresse, adresse);
+          updates.adresse = mergeTranslations(existingLieu.adresse, adresse);
         } else {
-          updates.adresse = mergeTranslations(lieu.adresse, { [lang]: adresse });
+          updates.adresse = mergeTranslations(existingLieu.adresse, { [lang]: adresse });
         }
       }
 
       if (description !== undefined) {
         if (typeof description === 'object') {
-          updates.description = mergeTranslations(lieu.description, description);
+          updates.description = mergeTranslations(existingLieu.description, description);
         } else {
-          updates.description = mergeTranslations(lieu.description, { [lang]: description });
+          updates.description = mergeTranslations(existingLieu.description, { [lang]: description });
         }
       }
 
       if (histoire !== undefined) {
         if (typeof histoire === 'object') {
-          updates.histoire = mergeTranslations(lieu.histoire, histoire);
+          updates.histoire = mergeTranslations(existingLieu.histoire, histoire);
         } else {
-          updates.histoire = mergeTranslations(lieu.histoire, { [lang]: histoire });
+          updates.histoire = mergeTranslations(existingLieu.histoire, { [lang]: histoire });
         }
       }
 
-      await lieu.update(updates);
+      const lieuMisAJour = await this.service.updateLieu(id, updates);
 
-      const lieuMisAJour = await this.models.Lieu.findByPk(id, {
-        include: [
-          { 
-            model: this.models.Commune,
-            include: [{
-              model: this.models.Daira,
-              include: [{ model: this.models.Wilaya }]
-            }]
-          },
-          { model: this.models.Localite },
-          { model: this.models.DetailLieu },
-          { model: this.models.Service },
-          { model: this.models.LieuMedia }
-        ]
-      });
+      if (!lieuMisAJour) {
+        return res.status(404).json({
+          success: false,
+          error: req.t('lieu.notFound')
+        });
+      }
 
       res.json({
         success: true,
         message: req.t('lieu.updated'),
         data: translateDeep(lieuMisAJour, lang)
       });
-
     } catch (error) {
-      console.error('Erreur lors de la mise à jour du lieu:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: req.t('common.serverError') 
-      });
+      return this._handleError(res, error);
     }
   }
 
-  // Supprimer un lieu
+  /**
+   * Supprimer un lieu
+   */
   async deleteLieu(req, res) {
     try {
       const { id } = req.params;
 
-      const lieu = await this.models.Lieu.findByPk(id, {
-        include: [{ model: this.models.Evenement }]
-      });
+      const result = await this.service.deleteLieu(id);
 
-      if (!lieu) {
+      if (!result.lieu) {
         return res.status(404).json({
           success: false,
           error: req.t('lieu.notFound')
         });
       }
 
-      if (lieu.Evenements && lieu.Evenements.length > 0) {
+      if (result.hasEvents) {
         return res.status(400).json({
           success: false,
           error: req.t('lieu.hasEvents')
         });
       }
 
-      await lieu.destroy();
-
-      res.json({
-        success: true,
-        message: req.t('lieu.deleted')
-      });
-
+      return this._sendMessage(res, req.t('lieu.deleted'));
     } catch (error) {
-      console.error('Erreur lors de la suppression du lieu:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: req.t('common.serverError') 
-      });
+      return this._handleError(res, error);
     }
   }
 
-  // Rechercher des lieux
+  // ========================================================================
+  // RECHERCHE
+  // ========================================================================
+
+  /**
+   * Rechercher des lieux
+   */
   async searchLieux(req, res) {
     try {
       const lang = ALLOWED_LANGS.includes(req.lang) ? req.lang : 'fr';
-      const { 
-        q,
-        type,
-        commune,
-        daira,
-        wilaya,
-        radius,
-        lat,
-        lng,
-        page = 1,
-        limit = 20
-      } = req.query;
+      const { page, limit } = this._paginate(req, { limit: 20 });
+      const { q, type, commune, daira, wilaya, radius, lat, lng } = req.query;
 
-      const offset = (page - 1) * limit;
-      const where = {};
+      const result = await this.service.searchLieux({
+        lang, q, type, commune, daira, wilaya, radius, lat, lng, page, limit
+      });
 
-      // ⚡ Recherche multilingue
-      if (q) {
-        where[Op.or] = [
-          ...this.buildMultiLangSearchLocal('nom', q),
-          ...this.buildMultiLangSearchLocal('adresse', q)
-        ];
-      }
-
-      if (type) {
-        where.typeLieu = type;
-      }
-
-      const include = [
-        {
-          model: this.models.Commune,
-          required: true,
-          where: commune ? { id_commune: commune } : {},
-          include: [
-            {
-              model: this.models.Daira,
-              required: true,
-              where: daira ? { id_daira: daira } : {},
-              include: [
-                {
-                  model: this.models.Wilaya,
-                  required: true,
-                  where: wilaya ? { id_wilaya: wilaya } : {}
-                }
-              ]
-            }
-          ]
-        },
-        { model: this.models.DetailLieu },
-        { model: this.models.Service },
-        { model: this.models.LieuMedia }
-      ];
-
-      let lieux;
-      if (radius && lat && lng) {
-        // 🔒 Valider et nettoyer les coordonnées pour éviter l'injection SQL
-        const safeLat = parseFloat(lat);
-        const safeLng = parseFloat(lng);
-        const safeRadius = parseFloat(radius);
-
-        // Vérifier que les valeurs sont des nombres valides
-        if (isNaN(safeLat) || isNaN(safeLng) || isNaN(safeRadius)) {
-          return res.status(400).json({
-            success: false,
-            error: req.t('lieu.invalidCoords')
-          });
-        }
-
-        // Vérifier les limites géographiques
-        if (safeLat < -90 || safeLat > 90 || safeLng < -180 || safeLng > 180) {
-          return res.status(400).json({
-            success: false,
-            error: req.t('lieu.coordsOutOfRange')
-          });
-        }
-
-        // Limiter le rayon de recherche (max 500km)
-        const clampedRadius = Math.min(Math.max(safeRadius, 0), 500);
-
-        // Utiliser les valeurs validées (nombres purs, pas de risque d'injection)
-        const distance = this.sequelize.literal(
-          `6371 * acos(
-            cos(radians(${safeLat})) * cos(radians(latitude)) *
-            cos(radians(longitude) - radians(${safeLng})) +
-            sin(radians(${safeLat})) * sin(radians(latitude))
-          )`
-        );
-
-        lieux = await this.models.Lieu.findAndCountAll({
-          where: {
-            ...where,
-            [Op.and]: this.sequelize.literal(
-              `6371 * acos(
-                cos(radians(${safeLat})) * cos(radians(latitude)) *
-                cos(radians(longitude) - radians(${safeLng})) +
-                sin(radians(${safeLat})) * sin(radians(latitude))
-              ) <= ${clampedRadius}`
-            )
-          },
-          attributes: {
-            include: [[distance, 'distance']]
-          },
-          include,
-          order: [[this.sequelize.literal('distance'), 'ASC']],
-          limit: parseInt(limit),
-          offset: parseInt(offset),
-          distinct: true
-        });
-      } else {
-        lieux = await this.models.Lieu.findAndCountAll({
-          where,
-          include,
-          order: [[this.sequelize.literal(`JSON_EXTRACT(\`Lieu\`.\`nom\`, '$.${lang.replace(/[^a-z-]/gi, '')}')`), 'ASC']],
-          limit: parseInt(limit),
-          offset: parseInt(offset),
-          distinct: true
+      // Handle validation errors from the service
+      if (result.invalidCoords) {
+        return res.status(400).json({
+          success: false,
+          error: req.t('lieu.invalidCoords')
         });
       }
 
-      // ⚡ Traduire - Utiliser "items" pour être compatible avec le frontend
+      if (result.coordsOutOfRange) {
+        return res.status(400).json({
+          success: false,
+          error: req.t('lieu.coordsOutOfRange')
+        });
+      }
+
+      const translatedLieux = translateDeep(result.rows, lang);
       res.json({
         success: true,
         data: {
-          items: translateDeep(lieux.rows, lang),
-          lieux: translateDeep(lieux.rows, lang), // Garder aussi "lieux" pour rétrocompatibilité
+          items: translatedLieux,
+          lieux: translatedLieux,
           pagination: {
-            total: lieux.count,
-            page: parseInt(page),
-            pages: Math.ceil(lieux.count / limit)
+            total: result.count,
+            page,
+            pages: Math.ceil(result.count / limit)
           }
         },
         lang
       });
-
     } catch (error) {
-      console.error('Erreur lors de la recherche:', error);
-      res.status(500).json({
-        success: false,
-        error: req.t('common.serverError')
-      });
+      return this._handleError(res, error);
     }
   }
 
-  // Obtenir un lieu par ID
-  async getLieuById(req, res) {
-    try {
-      const lang = req.lang || 'fr';  // ⚡
-      const { id } = req.params;
-
-      const lieu = await this.models.Lieu.findByPk(id, {
-        include: [
-          { 
-            model: this.models.Commune,
-            include: [{
-              model: this.models.Daira,
-              include: [{ model: this.models.Wilaya }]
-            }]
-          },
-          { model: this.models.Localite },
-          { 
-            model: this.models.DetailLieu,
-            include: [
-              { model: this.models.Monument },
-              { model: this.models.Vestige }
-            ]
-          },
-          { model: this.models.Service },
-          { model: this.models.LieuMedia },
-          { model: this.models.QRCode },
-          {
-            model: this.models.Evenement,
-            where: { date_fin: { [Op.gte]: new Date() } },
-            required: false
-          }
-        ]
-      });
-
-      if (!lieu) {
-        return res.status(404).json({
-          success: false,
-          error: req.t('lieu.notFound')
-        });
-      }
-
-      const lieuData = lieu.toJSON();
-      lieuData.wilaya = lieuData.Commune?.Daira?.Wilaya || null;
-      lieuData.daira = lieuData.Commune?.Daira || null;
-
-      // ⚡ Traduire
-      res.json({
-        success: true,
-        data: translateDeep(lieuData, lang),
-        lang
-      });
-
-    } catch (error) {
-      console.error('Erreur:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: req.t('common.serverError') 
-      });
-    }
-  }
-
-  // ⚡ Récupérer toutes les traductions d'un lieu (admin)
-  async getLieuTranslations(req, res) {
-    try {
-      const { id } = req.params;
-
-      const lieu = await this.models.Lieu.findByPk(id, {
-        attributes: ['id_lieu', 'nom', 'adresse', 'description', 'histoire'],
-        include: [{
-          model: this.models.DetailLieu,
-          attributes: ['description', 'horaires', 'histoire']
-        }]
-      });
-
-      if (!lieu) {
-        return res.status(404).json({
-          success: false,
-          error: req.t('lieu.notFound')
-        });
-      }
-
-      res.json({
-        success: true,
-        data: lieu
-      });
-
-    } catch (error) {
-      console.error('Erreur:', error);
-      res.status(500).json({ success: false, error: req.t('common.serverError') });
-    }
-  }
-
-  // ⚡ Mettre à jour une traduction spécifique (admin)
-  async updateLieuTranslation(req, res) {
-    try {
-      const { id, lang } = req.params;
-      const { nom, adresse, description, histoire } = req.body;
-
-      const lieu = await this.models.Lieu.findByPk(id);
-      if (!lieu) {
-        return res.status(404).json({ success: false, error: req.t('lieu.notFound') });
-      }
-
-      const updates = {};
-      if (nom) updates.nom = mergeTranslations(lieu.nom, { [lang]: nom });
-      if (adresse) updates.adresse = mergeTranslations(lieu.adresse, { [lang]: adresse });
-      if (description) updates.description = mergeTranslations(lieu.description, { [lang]: description });
-      if (histoire) updates.histoire = mergeTranslations(lieu.histoire, { [lang]: histoire });
-
-      if (Object.keys(updates).length === 0) {
-        return res.status(400).json({ success: false, error: req.t('common.noDataToUpdate') });
-      }
-
-      await lieu.update(updates);
-      res.json({ success: true, message: req.t('translation.updated', { lang }), data: lieu });
-
-    } catch (error) {
-      console.error('Erreur:', error);
-      res.status(500).json({ success: false, error: req.t('common.serverError') });
-    }
-  }
-
-  // Lieux à proximité (pour patrimoine routes)
+  /**
+   * Lieux a proximite (pour patrimoine routes)
+   */
   async getLieuxProximite(req, res) {
     try {
       const lang = req.lang || 'fr';
       const { latitude, longitude, rayon = 10, limit = 20 } = req.query;
 
-      // Calcul simple de proximité (approximation)
-      const latDelta = rayon / 111; // 1 degré ≈ 111 km
-      const lngDelta = rayon / (111 * Math.cos(parseFloat(latitude) * Math.PI / 180));
-
-      const lieux = await this.models.Lieu.findAll({
-        where: {
-          latitude: {
-            [Op.between]: [parseFloat(latitude) - latDelta, parseFloat(latitude) + latDelta]
-          },
-          longitude: {
-            [Op.between]: [parseFloat(longitude) - lngDelta, parseFloat(longitude) + lngDelta]
-          }
-        },
-        include: [
-          { model: this.models.DetailLieu, required: true },
-          {
-            model: this.models.Commune,
-            include: [{
-              model: this.models.Daira,
-              include: [{ model: this.models.Wilaya }]
-            }]
-          },
-          { model: this.models.LieuMedia, limit: 1, required: false }
-        ],
-        limit: parseInt(limit)
+      const lieux = await this.service.getLieuxProximite({
+        latitude, longitude, rayon, limit
       });
 
       res.json({
@@ -820,196 +380,134 @@ class LieuController {
         data: translateDeep(lieux, lang),
         lang
       });
-
     } catch (error) {
-      console.error('Erreur getLieuxProximite:', error);
-      res.status(500).json({ success: false, error: req.t('common.serverError') });
+      return this._handleError(res, error);
     }
   }
 
-  // Statistiques des lieux (alias pour patrimoine routes)
+  // ========================================================================
+  // STATISTIQUES
+  // ========================================================================
+
+  /**
+   * Statistiques des lieux (alias pour patrimoine routes)
+   */
   async getStatistiquesLieux(req, res) {
     return this.getStatistiques(req, res);
   }
 
-  // Statistiques des lieux
+  /**
+   * Statistiques des lieux
+   */
   async getStatistiques(req, res) {
     try {
-      const lang = req.lang || 'fr';  // ⚡
-      
-      const totalLieux = await this.models.Lieu.count();
+      const lang = req.lang || 'fr';
 
-      const lieuxParType = await this.models.Lieu.findAll({
-        attributes: [
-          'typeLieu',
-          [this.sequelize.fn('COUNT', '*'), 'count']
-        ],
-        group: ['typeLieu']
-      });
-
-      const lieuxAvecDetails = await this.models.Lieu.count({
-        include: [{
-          model: this.models.DetailLieu,
-          required: true
-        }]
-      });
-
-      const lieuxAvecServices = await this.models.Lieu.count({
-        include: [{
-          model: this.models.Service,
-          required: true
-        }],
-        distinct: true
-      });
+      const stats = await this.service.getStatistiques();
 
       res.json({
         success: true,
-        data: {
-          totalLieux,
-          lieuxParType,
-          lieuxAvecDetails,
-          lieuxAvecServices
-        },
+        data: stats,
         lang
       });
-
     } catch (error) {
-      console.error('Erreur lors du calcul des statistiques:', error);
-      res.status(500).json({
-        success: false,
-        error: req.t('common.serverError')
-      });
+      return this._handleError(res, error);
     }
   }
 
-  // Vérifier les doublons de lieu/patrimoine
+  // ========================================================================
+  // VERIFICATION DOUBLONS
+  // ========================================================================
+
+  /**
+   * Verifier les doublons de lieu/patrimoine
+   */
   async checkDuplicate(req, res) {
     try {
       const { nom, latitude, longitude, typePatrimoine } = req.body;
       const lang = req.lang || 'fr';
-      const normalizedNom = typeof nom === 'string' ? nom.trim() : '';
-      const parsedLatitude = Number(latitude);
-      const parsedLongitude = Number(longitude);
-      const hasValidCoords = Number.isFinite(parsedLatitude) && Number.isFinite(parsedLongitude);
 
-      // Tolérance de 100 mètres (environ 0.001 degré)
-      const tolerance = 0.001;
+      const result = await this.service.checkDuplicate({
+        nom, latitude, longitude, typePatrimoine
+      });
 
-      // Condition de base pour les coordonnées
-      const coordsCondition = hasValidCoords ? {
-        latitude: { [Op.between]: [parsedLatitude - tolerance, parsedLatitude + tolerance] },
-        longitude: { [Op.between]: [parsedLongitude - tolerance, parsedLongitude + tolerance] }
-      } : {};
-
-      // Condition pour le type de patrimoine (si spécifié)
-      const typeCondition = typePatrimoine ? { typePatrimoine } : {};
-
-      // Includes communs
-      const commonIncludes = [
-        {
-          model: this.models.Commune,
-          include: [{
-            model: this.models.Daira,
-            include: [{ model: this.models.Wilaya }]
-          }]
-        },
-        {
-          model: this.models.DetailLieu,
-          required: false
-        }
-      ];
-
-      // Rechercher par nom similaire (priorité aux patrimoines)
-      let lieuByName = null;
-      if (normalizedNom.length >= 3) {
-        try {
-          lieuByName = await this.models.Lieu.findOne({
-            where: {
-              ...typeCondition,
-              [Op.or]: [
-                this.sequelize.where(
-                  this.sequelize.fn('JSON_EXTRACT', this.sequelize.col('nom'), '$.fr'),
-                  { [Op.like]: `%${normalizedNom}%` }
-                ),
-                this.sequelize.where(
-                  this.sequelize.fn('JSON_EXTRACT', this.sequelize.col('nom'), '$.ar'),
-                  { [Op.like]: `%${normalizedNom}%` }
-                ),
-                this.sequelize.where(
-                  this.sequelize.fn('JSON_EXTRACT', this.sequelize.col('nom'), '$.en'),
-                  { [Op.like]: `%${normalizedNom}%` }
-                )
-              ]
-            },
-            include: commonIncludes
-          });
-        } catch (nameSearchError) {
-          // Fallback tolérant si certaines lignes JSON sont invalides en base
-          console.warn('Fallback checkDuplicate nom (JSON_EXTRACT indisponible):', nameSearchError.message);
-          lieuByName = await this.models.Lieu.findOne({
-            where: {
-              ...typeCondition,
-              nom: { [Op.like]: `%${normalizedNom}%` }
-            },
-            include: commonIncludes
-          });
-        }
-      }
-
-      // Rechercher par coordonnées proches
-      let lieuByCoords = null;
-      if (hasValidCoords) {
-        lieuByCoords = await this.models.Lieu.findOne({
-          where: {
-            ...coordsCondition,
-            ...typeCondition
-          },
-          include: commonIncludes
+      if (result.exists) {
+        const translated = translateDeep(result.lieu, lang);
+        return this._sendSuccess(res, {
+          exists: true,
+          lieu: translated,
+          matchType: result.matchType,
+          isPatrimoine: result.isPatrimoine,
+          hasDetailLieu: result.hasDetailLieu,
+          typePatrimoine: result.typePatrimoine
         });
-
-        // Si pas trouvé avec le type, chercher sans le type
-        if (!lieuByCoords && typePatrimoine) {
-          lieuByCoords = await this.models.Lieu.findOne({
-            where: coordsCondition,
-            include: commonIncludes
-          });
-        }
       }
 
-      const existingLieu = lieuByName || lieuByCoords;
+      return this._sendSuccess(res, { exists: false });
+    } catch (error) {
+      return this._handleError(res, error);
+    }
+  }
 
-      if (existingLieu) {
-        const translated = translateDeep(existingLieu, lang);
-        // Un lieu est considéré comme patrimoine s'il a un DetailLieu OU un typePatrimoine
-        const hasDetailLieu = !!existingLieu.DetailLieu;
-        const isPatrimoine = hasDetailLieu || !!existingLieu.typePatrimoine;
-        
-        return res.json({
-          success: true,
-          data: {
-            exists: true,
-            lieu: translated,
-            matchType: lieuByName ? 'name' : 'coordinates',
-            isPatrimoine: isPatrimoine,
-            hasDetailLieu: hasDetailLieu,
-            typePatrimoine: existingLieu.typePatrimoine || null
-          }
+  // ========================================================================
+  // TRADUCTIONS (ADMIN)
+  // ========================================================================
+
+  /**
+   * Recuperer toutes les traductions d'un lieu (admin)
+   */
+  async getLieuTranslations(req, res) {
+    try {
+      const { id } = req.params;
+
+      const lieu = await this.service.getLieuTranslations(id);
+
+      if (!lieu) {
+        return res.status(404).json({
+          success: false,
+          error: req.t('lieu.notFound')
+        });
+      }
+
+      return this._sendSuccess(res, lieu);
+    } catch (error) {
+      return this._handleError(res, error);
+    }
+  }
+
+  /**
+   * Mettre a jour une traduction specifique (admin)
+   */
+  async updateLieuTranslation(req, res) {
+    try {
+      const { id, lang } = req.params;
+      const { nom, adresse, description, histoire } = req.body;
+
+      const { lieu, updates } = await this.service.updateLieuTranslation(
+        id, lang, { nom, adresse, description, histoire }
+      );
+
+      if (!lieu) {
+        return res.status(404).json({
+          success: false,
+          error: req.t('lieu.notFound')
+        });
+      }
+
+      if (Object.keys(updates).length === 0) {
+        return res.status(400).json({
+          success: false,
+          error: req.t('common.noDataToUpdate')
         });
       }
 
       res.json({
         success: true,
-        data: {
-          exists: false
-        }
+        message: req.t('translation.updated', { lang }),
+        data: lieu
       });
-
     } catch (error) {
-      console.error('Erreur checkDuplicate:', error);
-      res.status(500).json({
-        success: false,
-        error: req.t('common.serverError')
-      });
+      return this._handleError(res, error);
     }
   }
 
@@ -1025,29 +523,27 @@ class LieuController {
       const lang = req.lang || 'fr';
       const { id } = req.params;
 
-      const lieu = await this.models.Lieu.findByPk(id);
-      if (!lieu) {
-        return res.status(404).json({ success: false, error: req.t('lieu.notFound') });
-      }
+      const { lieu, services } = await this.service.getServicesLieu(id);
 
-      const services = await this.models.Service.findAll({
-        where: { id_lieu: id }
-      });
+      if (!lieu) {
+        return res.status(404).json({
+          success: false,
+          error: req.t('lieu.notFound')
+        });
+      }
 
       res.json({
         success: true,
         data: translateDeep(services, lang),
         lang
       });
-
     } catch (error) {
-      console.error('Erreur getServicesLieu:', error);
-      res.status(500).json({ success: false, error: req.t('common.serverError') });
+      return this._handleError(res, error);
     }
   }
 
   /**
-   * Ajouter un service à un lieu
+   * Ajouter un service a un lieu
    */
   async addServiceLieu(req, res) {
     try {
@@ -1055,57 +551,41 @@ class LieuController {
       const { id } = req.params;
       const { nom, description, disponible = true, services } = req.body;
 
-      const lieu = await this.models.Lieu.findByPk(id);
-      if (!lieu) {
-        return res.status(404).json({ success: false, error: req.t('lieu.notFound') });
+      const result = await this.service.addServiceLieu(
+        id,
+        { nom, description, disponible, services },
+        lang
+      );
+
+      if (!result.lieu) {
+        return res.status(404).json({
+          success: false,
+          error: req.t('lieu.notFound')
+        });
       }
 
-      // Support pour ajout multiple (array de noms) ou single
-      if (services && Array.isArray(services)) {
-        const createdServices = [];
-        for (const serviceName of services) {
-          const service = await this.models.Service.create({
-            id_lieu: id,
-            nom_service: typeof serviceName === 'string'
-              ? createMultiLang(serviceName, lang)
-              : serviceName,
-            disponible: true
-          });
-          createdServices.push(service);
-        }
+      if (result.isMultiple) {
         return res.status(201).json({
           success: true,
-          message: req.t ? req.t('lieu.serviceAdded') : `${createdServices.length} services added`,
-          data: translateDeep(createdServices, lang),
+          message: req.t ? req.t('lieu.serviceAdded') : `${result.created.length} services added`,
+          data: translateDeep(result.created, lang),
           lang
         });
       }
 
-      // Ajout d'un seul service
-      const service = await this.models.Service.create({
-        id_lieu: id,
-        nom_service: typeof nom === 'string' ? createMultiLang(nom, lang) : nom,
-        description: description
-          ? (typeof description === 'string' ? createMultiLang(description, lang) : description)
-          : null,
-        disponible
-      });
-
       res.status(201).json({
         success: true,
         message: req.t('lieu.serviceAdded'),
-        data: translateDeep(service, lang),
+        data: translateDeep(result.created, lang),
         lang
       });
-
     } catch (error) {
-      console.error('Erreur addServiceLieu:', error);
-      res.status(500).json({ success: false, error: req.t('common.serverError') });
+      return this._handleError(res, error);
     }
   }
 
   /**
-   * Mettre à jour un service
+   * Mettre a jour un service
    */
   async updateServiceLieu(req, res) {
     try {
@@ -1113,30 +593,16 @@ class LieuController {
       const { id, serviceId } = req.params;
       const { nom, description, disponible } = req.body;
 
-      const service = await this.models.Service.findOne({
-        where: { id: serviceId, id_lieu: id }
-      });
+      const service = await this.service.updateServiceLieu(
+        id, serviceId, { nom, description, disponible }, lang
+      );
 
       if (!service) {
-        return res.status(404).json({ success: false, error: req.t('lieu.serviceNotFound') });
+        return res.status(404).json({
+          success: false,
+          error: req.t('lieu.serviceNotFound')
+        });
       }
-
-      const updates = {};
-      if (nom !== undefined) {
-        updates.nom_service = typeof nom === 'string'
-          ? mergeTranslations(service.nom_service, { [lang]: nom })
-          : nom;
-      }
-      if (description !== undefined) {
-        updates.description = typeof description === 'string'
-          ? mergeTranslations(service.description, { [lang]: description })
-          : description;
-      }
-      if (disponible !== undefined) {
-        updates.disponible = disponible;
-      }
-
-      await service.update(updates);
 
       res.json({
         success: true,
@@ -1144,10 +610,8 @@ class LieuController {
         data: translateDeep(service, lang),
         lang
       });
-
     } catch (error) {
-      console.error('Erreur updateServiceLieu:', error);
-      res.status(500).json({ success: false, error: req.t('common.serverError') });
+      return this._handleError(res, error);
     }
   }
 
@@ -1158,49 +622,40 @@ class LieuController {
     try {
       const { id, serviceId } = req.params;
 
-      const service = await this.models.Service.findOne({
-        where: { id: serviceId, id_lieu: id }
-      });
+      const deleted = await this.service.deleteServiceLieu(id, serviceId);
 
-      if (!service) {
-        return res.status(404).json({ success: false, error: req.t('lieu.serviceNotFound') });
+      if (!deleted) {
+        return res.status(404).json({
+          success: false,
+          error: req.t('lieu.serviceNotFound')
+        });
       }
 
-      await service.destroy();
-
-      res.json({
-        success: true,
-        message: req.t('lieu.serviceDeleted')
-      });
-
+      return this._sendMessage(res, req.t('lieu.serviceDeleted'));
     } catch (error) {
-      console.error('Erreur deleteServiceLieu:', error);
-      res.status(500).json({ success: false, error: req.t('common.serverError') });
+      return this._handleError(res, error);
     }
   }
 
   // ========================================================================
-  // GESTION DES DÉTAILS D'UN LIEU
+  // GESTION DES DETAILS D'UN LIEU
   // ========================================================================
 
   /**
-   * Obtenir les détails d'un lieu
+   * Obtenir les details d'un lieu
    */
   async getDetailsLieu(req, res) {
     try {
       const lang = req.lang || 'fr';
       const { id } = req.params;
 
-      const details = await this.models.DetailLieu.findOne({
-        where: { id_lieu: id },
-        include: [
-          { model: this.models.Monument },
-          { model: this.models.Vestige }
-        ]
-      });
+      const details = await this.service.getDetailsLieu(id);
 
       if (!details) {
-        return res.status(404).json({ success: false, error: req.t('lieu.detailsNotFound') });
+        return res.status(404).json({
+          success: false,
+          error: req.t('lieu.detailsNotFound')
+        });
       }
 
       res.json({
@@ -1208,15 +663,13 @@ class LieuController {
         data: translateDeep(details, lang),
         lang
       });
-
     } catch (error) {
-      console.error('Erreur getDetailsLieu:', error);
-      res.status(500).json({ success: false, error: req.t('common.serverError') });
+      return this._handleError(res, error);
     }
   }
 
   /**
-   * Créer ou mettre à jour les détails d'un lieu
+   * Creer ou mettre a jour les details d'un lieu
    */
   async updateDetailsLieu(req, res) {
     try {
@@ -1224,77 +677,27 @@ class LieuController {
       const { id } = req.params;
       const { description, horaires, histoire, referencesHistoriques } = req.body;
 
-      const lieu = await this.models.Lieu.findByPk(id);
-      if (!lieu) {
-        return res.status(404).json({ success: false, error: req.t('lieu.notFound') });
-      }
+      const result = await this.service.updateDetailsLieu(
+        id,
+        { description, horaires, histoire, referencesHistoriques },
+        lang
+      );
 
-      let details = await this.models.DetailLieu.findOne({ where: { id_lieu: id } });
-
-      const data = {};
-      if (description !== undefined) {
-        data.description = typeof description === 'string'
-          ? createMultiLang(description, lang)
-          : description;
-      }
-      if (horaires !== undefined) {
-        data.horaires = typeof horaires === 'string'
-          ? createMultiLang(horaires, lang)
-          : horaires;
-      }
-      if (histoire !== undefined) {
-        data.histoire = typeof histoire === 'string'
-          ? createMultiLang(histoire, lang)
-          : histoire;
-      }
-      if (referencesHistoriques !== undefined) {
-        data.referencesHistoriques = typeof referencesHistoriques === 'string'
-          ? createMultiLang(referencesHistoriques, lang)
-          : referencesHistoriques;
-      }
-
-      if (details) {
-        // Mettre à jour en fusionnant les traductions
-        const updates = {};
-        if (description !== undefined) {
-          updates.description = typeof description === 'string'
-            ? mergeTranslations(details.description, { [lang]: description })
-            : description;
-        }
-        if (horaires !== undefined) {
-          updates.horaires = typeof horaires === 'string'
-            ? mergeTranslations(details.horaires, { [lang]: horaires })
-            : horaires;
-        }
-        if (histoire !== undefined) {
-          updates.histoire = typeof histoire === 'string'
-            ? mergeTranslations(details.histoire, { [lang]: histoire })
-            : histoire;
-        }
-        if (referencesHistoriques !== undefined) {
-          updates.referencesHistoriques = typeof referencesHistoriques === 'string'
-            ? mergeTranslations(details.referencesHistoriques, { [lang]: referencesHistoriques })
-            : referencesHistoriques;
-        }
-        await details.update(updates);
-      } else {
-        // Créer les détails
-        details = await this.models.DetailLieu.create({
-          id_lieu: id,
-          ...data
+      if (!result.lieu) {
+        return res.status(404).json({
+          success: false,
+          error: req.t('lieu.notFound')
         });
       }
 
       res.json({
         success: true,
         message: req.t('lieu.detailsUpdated'),
-        data: translateDeep(details, lang),
+        data: translateDeep(result.details, lang),
         lang
       });
-
     } catch (error) {
-      console.error('Erreur updateDetailsLieu:', error);
-      res.status(500).json({ success: false, error: req.t('common.serverError') });
+      return this._handleError(res, error);
     }
   }
 }

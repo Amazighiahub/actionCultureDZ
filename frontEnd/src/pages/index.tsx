@@ -140,7 +140,7 @@ const Index: React.FC = () => {
                   variant="link" 
                   size="sm" 
                   className={`${rtlClasses.marginStart(2)} p-0 h-auto`}
-                  onClick={() => navigate('/Notifications')}
+                  onClick={() => navigate('/notifications')}
                 >
                   {t('common.viewAll')}
                 </Button>

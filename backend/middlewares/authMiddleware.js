@@ -626,9 +626,41 @@ module.exports = (modelsOrUser) => {
   });
 
   // ====================
+  // PERMISSIONS DASHBOARD
+  // ====================
+
+  /**
+   * Vérifie qu'un utilisateur authentifié a une permission dashboard spécifique
+   * Utilise req.userRoles (déjà chargé par authenticate) + DASHBOARD_PERMISSIONS
+   * Zéro query supplémentaire
+   * @param {string} action - Permission requise (ex: 'validate_user', 'moderate_signalement')
+   */
+  const requireDashboardPermission = (action) => {
+    const { DASHBOARD_PERMISSIONS } = require('../constants/dashboardPermissions');
+
+    return (req, res, next) => {
+      if (!req.user) {
+        return res.status(401).json({ success: false, message: req.t('auth.required') });
+      }
+
+      const userRoles = req.userRoles || [];
+      const hasPermission = userRoles.some(roleName => {
+        const permissions = DASHBOARD_PERMISSIONS[roleName];
+        return permissions && (permissions.includes('*') || permissions.includes(action));
+      });
+
+      if (!hasPermission) {
+        return res.status(403).json({ success: false, message: req.t('auth.forbidden') });
+      }
+
+      next();
+    };
+  };
+
+  // ====================
   // EXPORT
   // ====================
-  
+
   return {
     // Authentification
     authenticate,
@@ -645,7 +677,8 @@ module.exports = (modelsOrUser) => {
     isAdmin,          // ✅ Alias pour app.js
     requireValidatedProfessional,
     requireOwnerOrAdmin,
-    requireOwnership,  // ✅ NOUVEAU: Vérification de propriété
+    requireOwnership,
+    requireDashboardPermission,
 
     // Rate limiting
     rateLimit,

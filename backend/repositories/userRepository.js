@@ -192,6 +192,219 @@ class UserRepository extends BaseRepository {
   }
 
   /**
+   * Liste paginée des utilisateurs avec filtres (dashboard admin)
+   * @param {Object} options - { where, page, limit }
+   * @returns {Promise<Object>} { data, pagination }
+   */
+  async findAllFiltered(options = {}) {
+    const { where = {}, page = 1, limit = 20 } = options;
+    return this.findAll({
+      where,
+      page,
+      limit,
+      attributes: { exclude: ['password', 'refresh_token'] },
+      order: [['date_creation', 'DESC']]
+    });
+  }
+
+  /**
+   * Recherche rapide d'utilisateurs par champ spécifique (dashboard)
+   * @param {Object} whereClause - clause where construite par le service
+   * @param {number} limit
+   * @returns {Promise<Array>}
+   */
+  async searchFiltered(whereClause, limit = 20) {
+    return this.model.findAll({
+      where: whereClause,
+      attributes: { exclude: ['password', 'refresh_token'] },
+      limit,
+      order: [['nom', 'ASC'], ['prenom', 'ASC']]
+    });
+  }
+
+  /**
+   * Utilisateurs en attente de validation (non-visiteurs) paginés
+   * @param {Object} options - { page, limit }
+   * @returns {Promise<Object>} { data, pagination }
+   */
+  async findPendingNonVisiteurs(options = {}) {
+    const { page = 1, limit = 10 } = options;
+    return this.findAll({
+      where: {
+        id_type_user: { [Op.ne]: 1 },
+        statut: 'en_attente_validation'
+      },
+      page,
+      limit,
+      attributes: { exclude: ['password', 'refresh_token'] },
+      order: [['date_creation', 'DESC']]
+    });
+  }
+
+  /**
+   * Trouve un utilisateur avec ses rôles (attributs limités pour dashboard)
+   * @param {number} userId
+   * @returns {Promise<Object>}
+   */
+  async findDetailsWithRoles(userId) {
+    return this.findById(userId, {
+      attributes: { exclude: ['password', 'refresh_token'] },
+      include: [{
+        model: this.models.Role,
+        as: 'Roles',
+        through: { attributes: [] },
+        attributes: ['id_role', 'nom_role']
+      }]
+    });
+  }
+
+  /**
+   * Export paginé des utilisateurs avec rôles
+   * @param {Object} options - { where, pageSize, maxResults }
+   * @returns {Promise<Array>}
+   */
+  async findForExport(options = {}) {
+    const { where = {}, pageSize = 200, maxResults = 10000 } = options;
+    let allUsers = [];
+    let offset = 0;
+
+    while (allUsers.length < maxResults) {
+      const batch = await this.model.findAll({
+        where,
+        attributes: { exclude: ['password', 'refresh_token'] },
+        include: [{
+          model: this.models.Role,
+          as: 'Roles',
+          through: { attributes: [] }
+        }],
+        order: [['date_creation', 'DESC']],
+        limit: pageSize,
+        offset
+      });
+      if (batch.length === 0) break;
+      allUsers = allUsers.concat(batch);
+      offset += pageSize;
+      if (batch.length < pageSize) break;
+    }
+
+    return allUsers.slice(0, maxResults);
+  }
+
+  /**
+   * Suppression définitive d'un utilisateur avec nettoyage transactionnel
+   * Anonymise les contenus liés, supprime les associations, crée un audit log
+   * @param {number} userId - ID de l'utilisateur à supprimer
+   * @param {Object} options - { adminId, userEmail, userType, userName }
+   * @returns {Promise<Object>} résultat de la suppression
+   */
+  async hardDeleteUser(userId, options = {}) {
+    const { adminId, userEmail, userType, userName } = options;
+
+    return this.withTransaction(async (transaction) => {
+      const txOpts = { transaction };
+
+      // 1. Anonymiser les audit logs de cet admin
+      if (this.models.AuditLog) {
+        await this.models.AuditLog.update(
+          { id_admin: null },
+          { where: { id_admin: userId }, ...txOpts }
+        );
+      }
+
+      // 2. Supprimer les associations directes
+      if (this.models.UserRole) {
+        await this.models.UserRole.destroy({ where: { id_user: userId }, ...txOpts });
+      }
+      if (this.models.UserOrganisation) {
+        await this.models.UserOrganisation.destroy({ where: { id_user: userId }, ...txOpts });
+      }
+      if (this.models.OeuvreUser) {
+        await this.models.OeuvreUser.destroy({ where: { id_user: userId }, ...txOpts });
+      }
+      if (this.models.EvenementUser) {
+        await this.models.EvenementUser.destroy({ where: { id_user: userId }, ...txOpts });
+      }
+
+      // 3. Anonymiser les contenus créés/validés
+      if (this.models.Oeuvre) {
+        await this.models.Oeuvre.update({ saisi_par: null }, { where: { saisi_par: userId }, ...txOpts });
+        await this.models.Oeuvre.update({ validateur_id: null }, { where: { validateur_id: userId }, ...txOpts });
+      }
+      if (this.models.Evenement) {
+        await this.models.Evenement.update({ id_user: null }, { where: { id_user: userId }, ...txOpts });
+      }
+      if (this.models.Commentaire) {
+        await this.models.Commentaire.update({ id_user: null }, { where: { id_user: userId }, ...txOpts });
+      }
+      if (this.models.CritiqueEvaluation) {
+        await this.models.CritiqueEvaluation.update({ id_user: null }, { where: { id_user: userId }, ...txOpts });
+      }
+      if (this.models.Signalement) {
+        await this.models.Signalement.update({ id_user: null }, { where: { id_user: userId }, ...txOpts });
+        await this.models.Signalement.update({ id_moderateur: null }, { where: { id_moderateur: userId }, ...txOpts });
+      }
+
+      // 4. Supprimer les données personnelles
+      if (this.models.Favori) {
+        await this.models.Favori.destroy({ where: { id_user: userId }, ...txOpts });
+      }
+      if (this.models.Notification) {
+        await this.models.Notification.destroy({ where: { id_user: userId }, ...txOpts });
+      }
+      if (this.models.Session) {
+        await this.models.Session.destroy({ where: { id_user: userId }, ...txOpts });
+      }
+
+      // 5. Créer l'entrée d'audit
+      if (this.models.AuditLog && adminId) {
+        await this.models.AuditLog.create({
+          id_admin: adminId,
+          action: 'DELETE_USER',
+          type_entite: 'user',
+          id_entite: userId,
+          details: JSON.stringify({
+            method: 'hard_delete',
+            user_email: userEmail,
+            user_type: userType,
+            user_name: userName,
+            deleted_at: new Date().toISOString()
+          }),
+          date_action: new Date()
+        }, txOpts);
+      }
+
+      // 6. Supprimer l'utilisateur
+      await this.model.destroy({ where: { id_user: userId }, ...txOpts });
+
+      return { deleted: true, type: 'hard' };
+    });
+  }
+
+  /**
+   * Artisans (non-visiteurs) par wilaya avec type et wilaya inclus
+   * @param {number} wilayaId
+   * @returns {Promise<Array>}
+   */
+  async findArtisansByWilaya(wilayaId) {
+    const includes = [];
+    if (this.models.TypeUser) {
+      includes.push({ model: this.models.TypeUser, attributes: ['nom_type'], required: false });
+    }
+    if (this.models.Wilaya) {
+      includes.push({ model: this.models.Wilaya, required: false });
+    }
+
+    return this.model.findAll({
+      where: {
+        wilaya_residence: parseInt(wilayaId),
+        id_type_user: { [Op.ne]: 1 }
+      },
+      attributes: { exclude: ['password', 'refresh_token'] },
+      include: includes
+    });
+  }
+
+  /**
    * Statistiques utilisateurs
    */
   async getStats() {

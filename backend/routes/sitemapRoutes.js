@@ -42,97 +42,49 @@ const initSitemapRoutes = (models) => {
       urls += urlBlock('/auth', 'monthly', '0.4');
 
       // ══════════════════════════════════════════
-      // 2. Œuvres publiées → /oeuvres/:id
+      // 2-6. Toutes les entités en parallèle
       // ══════════════════════════════════════════
-      if (models.Oeuvre) {
-        try {
-          const oeuvres = await models.Oeuvre.findAll({
-            where: { statut: 'publie' },
-            attributes: ['id_oeuvre', 'date_modification'],
-            order: [['date_modification', 'DESC']],
-            raw: true
-          });
-          oeuvres.forEach(o => {
-            urls += urlBlock(`/oeuvres/${o.id_oeuvre}`, 'weekly', '0.7', o.date_modification);
-          });
-        } catch (err) {
-          console.warn('⚠️ Sitemap: erreur chargement oeuvres:', err.message);
-        }
-      }
+      const SITEMAP_LIMIT = 50000;
+      const [oeuvres, evenements, lieux, artisanats, articles] = await Promise.all([
+        models.Oeuvre ? models.Oeuvre.findAll({
+          where: { statut: 'publie' },
+          attributes: ['id_oeuvre', 'date_modification'],
+          order: [['date_modification', 'DESC']],
+          limit: SITEMAP_LIMIT, raw: true
+        }).catch(err => { console.warn('⚠️ Sitemap: erreur oeuvres:', err.message); return []; }) : [],
 
-      // ══════════════════════════════════════════
-      // 3. Événements actifs → /evenements/:id
-      // ══════════════════════════════════════════
-      if (models.Evenement) {
-        try {
-          const evenements = await models.Evenement.findAll({
-            where: { statut: ['planifie', 'en_cours', 'a_venir'] },
-            attributes: ['id_evenement', 'date_modification'],
-            order: [['date_modification', 'DESC']],
-            raw: true
-          });
-          evenements.forEach(e => {
-            urls += urlBlock(`/evenements/${e.id_evenement}`, 'daily', '0.8', e.date_modification);
-          });
-        } catch (err) {
-          console.warn('⚠️ Sitemap: erreur chargement evenements:', err.message);
-        }
-      }
+        models.Evenement ? models.Evenement.findAll({
+          where: { statut: ['planifie', 'en_cours', 'a_venir'] },
+          attributes: ['id_evenement', 'date_modification'],
+          order: [['date_modification', 'DESC']],
+          limit: SITEMAP_LIMIT, raw: true
+        }).catch(err => { console.warn('⚠️ Sitemap: erreur evenements:', err.message); return []; }) : [],
 
-      // ══════════════════════════════════════════
-      // 4. Sites patrimoniaux → /patrimoine/:id
-      // ══════════════════════════════════════════
-      if (models.Lieu) {
-        try {
-          const lieux = await models.Lieu.findAll({
-            attributes: ['id_lieu', 'updatedAt'],
-            order: [['updatedAt', 'DESC']],
-            raw: true
-          });
-          lieux.forEach(l => {
-            urls += urlBlock(`/patrimoine/${l.id_lieu}`, 'monthly', '0.7', l.updatedAt);
-          });
-        } catch (err) {
-          console.warn('⚠️ Sitemap: erreur chargement patrimoine:', err.message);
-        }
-      }
+        models.Lieu ? models.Lieu.findAll({
+          attributes: ['id_lieu', 'updatedAt'],
+          order: [['updatedAt', 'DESC']],
+          limit: SITEMAP_LIMIT, raw: true
+        }).catch(err => { console.warn('⚠️ Sitemap: erreur patrimoine:', err.message); return []; }) : [],
 
-      // ══════════════════════════════════════════
-      // 5. Artisanat → /artisanat/:id
-      // ══════════════════════════════════════════
-      if (models.Artisanat) {
-        try {
-          const artisanats = await models.Artisanat.findAll({
-            attributes: ['id_artisanat', 'updated_at'],
-            order: [['updated_at', 'DESC']],
-            raw: true
-          });
-          artisanats.forEach(a => {
-            urls += urlBlock(`/artisanat/${a.id_artisanat}`, 'weekly', '0.7', a.updated_at);
-          });
-        } catch (err) {
-          console.warn('⚠️ Sitemap: erreur chargement artisanat:', err.message);
-        }
-      }
+        models.Artisanat ? models.Artisanat.findAll({
+          attributes: ['id_artisanat', 'updated_at'],
+          order: [['updated_at', 'DESC']],
+          limit: SITEMAP_LIMIT, raw: true
+        }).catch(err => { console.warn('⚠️ Sitemap: erreur artisanat:', err.message); return []; }) : [],
 
-      // ══════════════════════════════════════════
-      // 6. Articles → /articles/:id
-      // ══════════════════════════════════════════
-      if (models.Oeuvre) {
-        try {
-          const articles = await models.Oeuvre.findAll({
-            where: { statut: 'publie', id_type_oeuvre: [4, 5] },
-            attributes: ['id_oeuvre', 'date_modification'],
-            order: [['date_modification', 'DESC']],
-            raw: true
-          });
-          articles.forEach(a => {
-            urls += urlBlock(`/articles/${a.id_oeuvre}`, 'weekly', '0.7', a.date_modification);
-          });
-        } catch (err) {
-          console.warn('⚠️ Sitemap: erreur chargement articles:', err.message);
-        }
-      }
+        models.Oeuvre ? models.Oeuvre.findAll({
+          where: { statut: 'publie', id_type_oeuvre: [4, 5] },
+          attributes: ['id_oeuvre', 'date_modification'],
+          order: [['date_modification', 'DESC']],
+          limit: SITEMAP_LIMIT, raw: true
+        }).catch(err => { console.warn('⚠️ Sitemap: erreur articles:', err.message); return []; }) : []
+      ]);
+
+      oeuvres.forEach(o => { urls += urlBlock(`/oeuvres/${o.id_oeuvre}`, 'weekly', '0.7', o.date_modification); });
+      evenements.forEach(e => { urls += urlBlock(`/evenements/${e.id_evenement}`, 'daily', '0.8', e.date_modification); });
+      lieux.forEach(l => { urls += urlBlock(`/patrimoine/${l.id_lieu}`, 'monthly', '0.7', l.updatedAt); });
+      artisanats.forEach(a => { urls += urlBlock(`/artisanat/${a.id_artisanat}`, 'weekly', '0.7', a.updated_at); });
+      articles.forEach(a => { urls += urlBlock(`/articles/${a.id_oeuvre}`, 'weekly', '0.7', a.date_modification); });
 
       // ══════════════════════════════════════════
       // Assembler le XML final

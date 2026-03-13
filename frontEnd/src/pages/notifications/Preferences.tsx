@@ -220,7 +220,7 @@ export default function NotificationPreferences() {
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-4">
               <button
-                onClick={() => navigate('/Notifications')}
+                onClick={() => navigate('/notifications')}
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
 
                 <ArrowLeft className="w-5 h-5" />
@@ -370,7 +370,7 @@ export default function NotificationPreferences() {
         {/* Bouton de sauvegarde */}
         <div className="flex items-center justify-between mt-8">
           <button
-            onClick={() => navigate('/Notifications')}
+            onClick={() => navigate('/notifications')}
             className="text-gray-600 hover:text-gray-800">{t("notifications_preferences.retour_aux_notifications")}
 
 

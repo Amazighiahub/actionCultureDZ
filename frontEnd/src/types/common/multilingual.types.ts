@@ -46,6 +46,11 @@ export const LANGUAGE_DIRECTIONS: Record<SupportedLanguage, 'ltr' | 'rtl'> = {
   'tz-tfng': 'ltr'
 };
 
+export const LANGUAGE_FONT_CLASSES: Partial<Record<SupportedLanguage, string>> = {
+  ar: 'font-arabic',
+  'tz-tfng': 'tifinagh-font'
+};
+
 // Helpers pour le multilingue
 export function getTranslation(value: TranslatableValue | undefined, lang: SupportedLanguage = 'fr'): string {
   if (!value) return '';

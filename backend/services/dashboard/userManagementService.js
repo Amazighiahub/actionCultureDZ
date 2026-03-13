@@ -4,131 +4,95 @@
 const { Op, fn, col } = require('sequelize');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
+const { TYPE_USER_IDS } = require('../../constants/typeUserIds');
 
 class DashboardUserManagementService {
-  constructor(models) {
+  constructor(models, repositories = {}) {
     this.models = models;
+    this.repositories = repositories;
+    this.userRepo = repositories.user || null;
   }
 
   /**
-   * Recherche d'utilisateurs avec filtres
+   * Liste paginée des utilisateurs avec filtres (dashboard)
+   * Construit le where et délègue au repository
    */
-  async searchUsers(options = {}) {
-    const {
-      query,
-      type_user,
-      statut,
-      page = 1,
-      limit = 20,
-      sortBy = 'date_creation',
-      sortOrder = 'DESC'
-    } = options;
-
-    const offset = (page - 1) * limit;
+  async getAllUsersFiltered(options = {}) {
+    const { search, type_user, statut, page = 1, limit = 20 } = options;
     const where = {};
 
-    if (query) {
+    if (statut && statut !== 'tous') where.statut = statut;
+    if (type_user && type_user !== 'tous') where.id_type_user = parseInt(type_user);
+    if (search && search.trim().length >= 2) {
+      const { sanitizeLike } = require('../../utils/sanitize');
+      const { where: seqWhere, literal } = require('sequelize');
+      const searchTerm = `%${sanitizeLike(search)}%`;
       where[Op.or] = [
-        { nom: { [Op.like]: `%${query}%` } },
-        { prenom: { [Op.like]: `%${query}%` } },
-        { email: { [Op.like]: `%${query}%` } }
+        seqWhere(fn('JSON_UNQUOTE', fn('JSON_EXTRACT', col('nom'), literal("'$.fr'"))), { [Op.like]: searchTerm }),
+        seqWhere(fn('JSON_UNQUOTE', fn('JSON_EXTRACT', col('prenom'), literal("'$.fr'"))), { [Op.like]: searchTerm }),
+        { email: { [Op.like]: searchTerm } }
       ];
     }
 
-    if (type_user) where.id_type_user = type_user;
-    if (statut) where.statut = statut;
-
-    const { rows: users, count } = await this.models.User.findAndCountAll({
-      where,
-      attributes: { exclude: ['password', 'refresh_token'] },
-      order: [[sortBy, sortOrder]],
-      limit,
-      offset
-    });
-
-    return {
-      users,
-      pagination: {
-        page,
-        limit,
-        total: count,
-        totalPages: Math.ceil(count / limit)
-      }
-    };
+    return this.userRepo.findAllFiltered({ where, page: parseInt(page), limit: parseInt(limit) });
   }
 
   /**
-   * Détails d'un utilisateur
+   * Recherche rapide d'utilisateurs par type de champ
+   */
+  async quickSearchUsers(query, type = 'nom') {
+    const { sanitizeLike } = require('../../utils/sanitize');
+    const searchTerm = `%${sanitizeLike(query)}%`;
+    let whereClause = {};
+
+    switch (type) {
+      case 'email': whereClause = { email: { [Op.like]: searchTerm } }; break;
+      case 'telephone': whereClause = { telephone: { [Op.like]: searchTerm } }; break;
+      default: whereClause = { [Op.or]: [{ nom: { [Op.like]: searchTerm } }, { prenom: { [Op.like]: searchTerm } }] };
+    }
+
+    return this.userRepo.searchFiltered(whereClause, 20);
+  }
+
+  /**
+   * Utilisateurs en attente de validation (non-visiteurs)
+   */
+  async getPendingUsers(options = {}) {
+    return this.userRepo.findPendingNonVisiteurs(options);
+  }
+
+  /**
+   * Détails d'un utilisateur avec rôles (dashboard)
    */
   async getUserDetails(userId) {
-    const user = await this.models.User.findByPk(userId, {
-      attributes: { exclude: ['password', 'refresh_token'] },
-      include: [
-        {
-          model: this.models.Role,
-          as: 'Roles',
-          through: { attributes: [] }
-        },
-        {
-          model: this.models.Oeuvre,
-          as: 'Oeuvres',
-          attributes: ['id_oeuvre', 'titre', 'statut', 'date_creation'],
-          limit: 10
-        }
-      ]
-    });
-
+    const user = await this.userRepo.findDetailsWithRoles(userId);
     if (!user) {
       throw new Error('Utilisateur non trouvé');
     }
-
-    // Stats utilisateur
-    const stats = await this.getUserStats(userId);
-
-    return { user, stats };
+    return user;
   }
 
   /**
-   * Stats d'un utilisateur
+   * Stats d'un utilisateur via repositories
    */
   async getUserStats(userId) {
-    const stats = {
-      oeuvres: 0,
-      evenements: 0,
-      commentaires: 0
-    };
+    const oeuvreRepo = this.repositories.oeuvre;
+    const evenementRepo = this.repositories.evenement;
+    const commentaireRepo = this.repositories.commentaire;
 
-    if (this.models.Oeuvre) {
-      stats.oeuvres = await this.models.Oeuvre.count({
-        where: { saisi_par: userId }
-      });
-    }
+    const [oeuvres, evenements, commentaires] = await Promise.all([
+      oeuvreRepo ? oeuvreRepo.count({ saisi_par: userId }) : 0,
+      evenementRepo ? evenementRepo.count({ id_user: userId }) : 0,
+      commentaireRepo ? commentaireRepo.count({ id_user: userId }) : 0
+    ]);
 
-    if (this.models.Evenement) {
-      stats.evenements = await this.models.Evenement.count({
-        where: { id_user: userId }
-      });
-    }
-
-    if (this.models.Commentaire) {
-      stats.commentaires = await this.models.Commentaire.count({
-        where: { id_user: userId }
-      });
-    }
-
-    return stats;
+    return { oeuvres, evenements, commentaires };
   }
 
   /**
-   * Mise à jour d'un utilisateur
+   * Mise à jour d'un utilisateur (champs autorisés uniquement)
    */
-  async updateUser(userId, data, adminId) {
-    const user = await this.models.User.findByPk(userId);
-    if (!user) {
-      throw new Error('Utilisateur non trouvé');
-    }
-
-    // Filtrer les champs modifiables
+  async updateUser(userId, data) {
     const allowedFields = [
       'nom', 'prenom', 'email', 'telephone', 'id_type_user',
       'entreprise', 'biographie', 'statut'
@@ -140,33 +104,56 @@ class DashboardUserManagementService {
         updateData[field] = data[field];
       }
     }
-
     updateData.date_modification = new Date();
 
-    await user.update(updateData);
+    const user = await this.userRepo.update(userId, updateData);
+    if (!user) {
+      throw new Error('Utilisateur non trouvé');
+    }
     return user;
   }
 
   /**
-   * Suppression d'un utilisateur (soft delete)
+   * Suppression d'un utilisateur avec vérifications métier
+   * Vérifie qu'on ne supprime pas un admin ou soi-même, puis délègue au repository
+   * @param {number} userId - ID de l'utilisateur à supprimer
+   * @param {number} adminId - ID de l'admin qui supprime
+   * @param {Object} options - { hardDelete }
+   * @returns {Object} { deleted, type, userId, deletedBy, timestamp }
    */
   async deleteUser(userId, adminId, options = {}) {
-    const { hardDelete = false, reason } = options;
+    const { hardDelete = false } = options;
 
-    const user = await this.models.User.findByPk(userId);
+    // Charger l'utilisateur avec ses rôles via le repository
+    const user = await this.userRepo.findWithRoles(userId);
     if (!user) {
       throw new Error('Utilisateur non trouvé');
     }
 
+    // Vérification métier : ne pas supprimer un admin
+    if (user.Roles && user.Roles.some(r => r.nom_role === 'Admin' || r.nom_role === 'Super Admin')) {
+      throw new Error('CANNOT_DELETE_ADMIN');
+    }
+
+    // Vérification métier : ne pas se supprimer soi-même
+    if (user.id_user === adminId) {
+      throw new Error('CANNOT_DELETE_SELF');
+    }
+
     if (hardDelete) {
-      // Suppression définitive
-      await user.destroy();
-      return { deleted: true, type: 'hard' };
-    } else {
-      // Soft delete
-      await user.update({
-        statut: 'inactif'
+      await this.userRepo.hardDeleteUser(userId, {
+        adminId,
+        userEmail: user.email,
+        userType: user.type_user,
+        userName: `${user.nom} ${user.prenom}`
       });
+      return {
+        deleted: true, type: 'hard',
+        userId: parseInt(userId), deletedBy: adminId,
+        timestamp: new Date().toISOString()
+      };
+    } else {
+      await this.userRepo.update(userId, { statut: 'inactif' });
       return { deleted: true, type: 'soft' };
     }
   }
@@ -174,47 +161,36 @@ class DashboardUserManagementService {
   /**
    * Réactivation d'un utilisateur
    */
-  async reactivateUser(userId, adminId) {
-    const user = await this.models.User.findByPk(userId);
+  async reactivateUser(userId) {
+    const user = await this.userRepo.update(userId, {
+      statut: 'actif',
+      date_suspension: null,
+      date_fin_suspension: null,
+      raison_suspension: null,
+      suspendu_par: null
+    });
     if (!user) {
       throw new Error('Utilisateur non trouvé');
     }
-
-    await user.update({
-      statut: 'actif'
-    });
-
     return user;
   }
 
   /**
-   * Changement de rôle
+   * Changement de rôle (transactionnel)
    */
   async changeUserRole(userId, roleId, adminId) {
-    const user = await this.models.User.findByPk(userId);
-    if (!user) {
-      throw new Error('Utilisateur non trouvé');
-    }
+    const user = await this.userRepo.findById(userId);
+    if (!user) throw new Error('Utilisateur non trouvé');
 
     const role = await this.models.Role.findByPk(roleId);
-    if (!role) {
-      throw new Error('Rôle non trouvé');
-    }
+    if (!role) throw new Error('Rôle non trouvé');
 
-    // Transaction : destroy + create doivent être atomiques
     if (this.models.UserRole) {
-      const sequelize = this.models.UserRole.sequelize;
-      await sequelize.transaction(async (transaction) => {
-        await this.models.UserRole.destroy({
-          where: { id_user: userId },
-          transaction
-        });
-
+      await this.userRepo.withTransaction(async (transaction) => {
+        await this.models.UserRole.destroy({ where: { id_user: userId }, transaction });
         await this.models.UserRole.create({
-          id_user: userId,
-          id_role: roleId,
-          attribue_par: adminId,
-          date_attribution: new Date()
+          id_user: userId, id_role: roleId,
+          attribue_par: adminId, date_attribution: new Date()
         }, { transaction });
       });
     }
@@ -225,27 +201,21 @@ class DashboardUserManagementService {
   /**
    * Reset mot de passe
    */
-  async resetUserPassword(userId, adminId) {
-    const user = await this.models.User.findByPk(userId);
-    if (!user) {
-      throw new Error('Utilisateur non trouvé');
-    }
+  async resetUserPassword(userId) {
+    const user = await this.userRepo.findById(userId);
+    if (!user) throw new Error('Utilisateur non trouvé');
 
-    // Générer un mot de passe temporaire
     const tempPassword = crypto.randomBytes(8).toString('hex');
     const rounds = parseInt(process.env.BCRYPT_ROUNDS) || 12;
     const hashedPassword = await bcrypt.hash(tempPassword, rounds);
 
-    await user.update({
+    await this.userRepo.update(userId, {
       password: hashedPassword,
+      doit_changer_mdp: true,
       date_modification: new Date()
     });
 
-    return {
-      success: true,
-      tempPassword,
-      message: 'Mot de passe réinitialisé. L\'utilisateur devra le changer à sa prochaine connexion.'
-    };
+    return { success: true, tempPassword };
   }
 
   /**
@@ -254,12 +224,27 @@ class DashboardUserManagementService {
   async bulkUserAction(action, userIds, data, adminId) {
     const results = { success: [], errors: [] };
 
-    // Batch optimize : 'validate' = 1 seule query au lieu de N
+    // Batch optimize : 'validate' = 1 seule query via repository
     if (action === 'validate') {
-      const [affectedCount] = await this.models.User.update(
-        { statut: 'actif', id_user_validate: adminId, date_validation: new Date() },
-        { where: { id_user: { [Op.in]: userIds } } }
+      await this.userRepo.updateMany(
+        { id_user: { [Op.in]: userIds } },
+        { statut: 'actif', id_user_validate: adminId, date_validation: new Date() }
       );
+      results.success = userIds;
+      return results;
+    }
+
+    // change_role en batch via repository
+    if (action === 'change_role' && data.role_id) {
+      if (this.models.UserRole) {
+        await this.userRepo.withTransaction(async (transaction) => {
+          await this.models.UserRole.destroy({ where: { id_user: { [Op.in]: userIds } }, transaction });
+          await this.models.UserRole.bulkCreate(
+            userIds.map(id => ({ id_user: id, id_role: data.role_id })),
+            { transaction }
+          );
+        });
+      }
       results.success = userIds;
       return results;
     }
@@ -268,13 +253,13 @@ class DashboardUserManagementService {
       try {
         switch (action) {
           case 'activate':
-            await this.reactivateUser(userId, adminId);
+            await this.reactivateUser(userId);
             break;
           case 'deactivate':
-            await this.deleteUser(userId, adminId, { hardDelete: false, reason: data.reason });
+            await this.userRepo.update(userId, { statut: 'inactif' });
             break;
-          case 'changeRole':
-            await this.changeUserRole(userId, data.roleId, adminId);
+          case 'delete':
+            await this.userRepo.update(userId, { statut: 'supprime', date_suppression: new Date() });
             break;
           default:
             throw new Error(`Action non reconnue: ${action}`);
@@ -289,67 +274,78 @@ class DashboardUserManagementService {
   }
 
   /**
-   * Export des utilisateurs avec pagination pour éviter de surcharger la mémoire
+   * Export des utilisateurs via repository
    */
   async exportUsers(options = {}) {
-    const { format = 'json', filters = {}, maxResults = 10000 } = options;
-
+    const { filters = {}, maxResults = 10000 } = options;
     const where = {};
     if (filters.type_user) where.id_type_user = filters.type_user;
     if (filters.statut) where.statut = filters.statut;
-    if (filters.dateFrom) {
-      where.date_creation = { [Op.gte]: new Date(filters.dateFrom) };
+    if (filters.start_date && filters.end_date) {
+      where.date_creation = { [Op.between]: [new Date(filters.start_date), new Date(filters.end_date)] };
     }
 
-    const pageSize = 100;
-    let page = 1;
-    let allUsers = [];
-    let hasMore = true;
-
-    while (hasMore) {
-      const result = await this.models.User.findAll({
-        where,
-        attributes: { exclude: ['password', 'refresh_token'] },
-        limit: pageSize,
-        offset: (page - 1) * pageSize,
-        order: [['date_creation', 'DESC']],
-        raw: true
-      });
-
-      allUsers = allUsers.concat(result);
-      hasMore = result.length === pageSize && allUsers.length < maxResults;
-      page++;
-    }
-
-    if (allUsers.length > maxResults) {
-      allUsers = allUsers.slice(0, maxResults);
-    }
-
-    if (format === 'csv') {
-      return this.convertToCSV(allUsers);
-    }
-
-    return allUsers;
+    return this.userRepo.findForExport({ where, maxResults });
   }
 
   /**
-   * Convertit en CSV
+   * Valide ou rejette un utilisateur professionnel (dashboard admin)
+   * Vérifie les prérequis, met à jour le statut, crée une notification
+   * @param {number} userId
+   * @param {Object} data - { valide, validateur_id, raison }
+   * @returns {Object} { success, message, data }
    */
-  convertToCSV(data) {
-    if (!data.length) return '';
+  async validateUserAction(userId, data) {
+    const valide = data.valide !== undefined ? data.valide : data.validated;
+    const validateur_id = data.validateur_id || data.adminId;
+    const raison = data.raison || data.reason;
 
-    const headers = Object.keys(data[0]);
-    const rows = data.map(row =>
-      headers.map(h => {
-        const val = row[h];
-        if (val === null || val === undefined) return '';
-        if (typeof val === 'string' && val.includes(',')) return `"${val}"`;
-        return val;
-      }).join(',')
-    );
+    const user = await this.userRepo.findById(userId);
+    if (!user) throw new Error('Utilisateur non trouvé');
+    if (user.id_type_user === TYPE_USER_IDS.VISITEUR) throw new Error('Les visiteurs n\'ont pas besoin de validation');
+    if (user.statut !== 'en_attente_validation') throw new Error(`Cet utilisateur a déjà été traité (statut: ${user.statut})`);
 
-    return [headers.join(','), ...rows].join('\n');
+    const updateData = { statut: valide ? 'actif' : 'rejete', date_validation: new Date(), id_user_validate: validateur_id };
+    if (!valide && raison) updateData.raison_rejet = raison;
+    await this.userRepo.update(userId, updateData);
+    await user.reload();
+
+    if (this.models.Notification) {
+      try {
+        await this.models.Notification.create({
+          user_id: userId,
+          type: valide ? 'validation_acceptee' : 'validation_refusee',
+          titre: valide ? 'Votre compte a été validé !' : 'Validation refusée',
+          message: valide
+            ? 'Félicitations ! Votre compte professionnel a été validé.'
+            : `Votre demande a été refusée. ${raison ? `Raison : ${raison}` : ''}`,
+          lue: false
+        });
+      } catch (err) { console.error('Erreur création notification:', err.message); }
+    }
+
+    return {
+      success: true,
+      message: valide ? 'Utilisateur validé' : 'Utilisateur rejeté',
+      data: { id_user: user.id_user, nom: user.nom, prenom: user.prenom, email: user.email, id_type_user: user.id_type_user, statut: user.statut }
+    };
   }
+
+  /**
+   * Suspend un utilisateur (dashboard admin)
+   * @param {number} userId
+   * @param {Object} data - { raison, duree }
+   * @returns {Object} { message, data }
+   */
+  async suspendUserAction(userId, data) {
+    const { raison, duree } = data;
+    const user = await this.userRepo.findById(userId);
+    if (!user) throw new Error('Utilisateur non trouvé');
+    await this.userRepo.update(userId, { statut: 'suspendu', date_suspension: new Date(), raison_suspension: raison, duree_suspension: duree || null });
+    await user.reload();
+    return { message: 'Utilisateur suspendu', data: user };
+  }
+
 }
 
 module.exports = DashboardUserManagementService;

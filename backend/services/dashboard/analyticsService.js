@@ -2,7 +2,7 @@
  * Service d'analytics pour le Dashboard Admin
  */
 const { Op, fn, col, literal } = require('sequelize');
-const moment = require('moment');
+const { subDays } = require('date-fns');
 
 class DashboardAnalyticsService {
   constructor(models) {
@@ -11,143 +11,50 @@ class DashboardAnalyticsService {
   }
 
   /**
-   * Analytics avancés
+   * Analytics avancés — format utilisé par le controller dashboard
    */
-  async getAdvancedAnalytics(period = '30d') {
-    const days = parseInt(period) || 30;
-    const startDate = moment().subtract(days, 'days').toDate();
-
-    const [
-      userAnalytics,
-      contentAnalytics,
-      engagementAnalytics,
-      geographicAnalytics
-    ] = await Promise.all([
-      this.getUserAnalytics(startDate),
-      this.getContentAnalytics(startDate),
-      this.getEngagementAnalytics(startDate),
-      this.getGeographicAnalytics()
+  async generateAdvancedAnalytics(period) {
+    const startDate = subDays(new Date(), period);
+    const [userStats, contentStats, engagementStats] = await Promise.all([
+      this._getUserAnalytics(startDate),
+      this._getContentAnalytics(startDate),
+      this._getEngagementAnalytics(startDate)
     ]);
-
-    return {
-      period: `${days} jours`,
-      users: userAnalytics,
-      content: contentAnalytics,
-      engagement: engagementAnalytics,
-      geographic: geographicAnalytics,
-      generatedAt: new Date().toISOString()
-    };
+    return { period, startDate, userStats, contentStats, engagementStats };
   }
 
   /**
-   * Analytics utilisateurs
+   * Analytics utilisateurs (total + new + active + retentionRate)
    */
-  async getUserAnalytics(startDate) {
-    const [newUsers, activeUsers, usersByType] = await Promise.all([
-      this.models.User.count({
-        where: { date_creation: { [Op.gte]: startDate } }
-      }),
-      this.models.User.count({
-        where: { derniere_connexion: { [Op.gte]: startDate } }
-      }),
-      this.models.User.findAll({
-        attributes: [
-          'type_user',
-          [fn('COUNT', col('id_user')), 'count']
-        ],
-        group: ['type_user'],
-        raw: true
-      })
+  async _getUserAnalytics(startDate) {
+    const totalUsers = await this.models.User.count();
+    const newUsers = await this.models.User.count({ where: { date_creation: { [Op.gte]: startDate } } });
+    const activeUsers = await this.models.User.count({ where: { derniere_connexion: { [Op.gte]: startDate } } });
+    return { total: totalUsers, new: newUsers, active: activeUsers, retentionRate: totalUsers > 0 ? ((activeUsers / totalUsers) * 100).toFixed(2) : 0 };
+  }
+
+  /**
+   * Analytics contenu (oeuvres + evenements + commentaires)
+   */
+  async _getContentAnalytics(startDate) {
+    const [oeuvres, evenements, commentaires] = await Promise.all([
+      this.models.Oeuvre.count({ where: { date_creation: { [Op.gte]: startDate } } }),
+      this.models.Evenement.count({ where: { date_creation: { [Op.gte]: startDate } } }),
+      this.models.Commentaire?.count({ where: { date_creation: { [Op.gte]: startDate } } }) || 0
     ]);
-
-    return {
-      newUsers,
-      activeUsers,
-      byType: usersByType.reduce((acc, item) => {
-        acc[item.type_user] = parseInt(item.count);
-        return acc;
-      }, {})
-    };
+    return { oeuvres, evenements, commentaires, total: oeuvres + evenements + commentaires };
   }
 
   /**
-   * Analytics contenu
+   * Analytics engagement (vues + favoris + participations)
    */
-  async getContentAnalytics(startDate) {
-    const stats = {
-      oeuvres: { new: 0, published: 0, pending: 0 },
-      evenements: { new: 0, upcoming: 0, past: 0 },
-      patrimoine: { new: 0, total: 0 }
-    };
-
-    if (this.models.Oeuvre) {
-      const [newOeuvres, published, pending] = await Promise.all([
-        this.models.Oeuvre.count({
-          where: { date_creation: { [Op.gte]: startDate } }
-        }),
-        this.models.Oeuvre.count({
-          where: { statut: 'publie' }
-        }),
-        this.models.Oeuvre.count({
-          where: { statut: 'en_attente' }
-        })
-      ]);
-      stats.oeuvres = { new: newOeuvres, published, pending };
-    }
-
-    if (this.models.Evenement) {
-      const now = new Date();
-      const [newEvents, upcoming, past] = await Promise.all([
-        this.models.Evenement.count({
-          where: { date_creation: { [Op.gte]: startDate } }
-        }),
-        this.models.Evenement.count({
-          where: { date_debut: { [Op.gt]: now } }
-        }),
-        this.models.Evenement.count({
-          where: { date_fin: { [Op.lt]: now } }
-        })
-      ]);
-      stats.evenements = { new: newEvents, upcoming, past };
-    }
-
-    if (this.models.Patrimoine) {
-      const [newPatrimoine, total] = await Promise.all([
-        this.models.Patrimoine.count({
-          where: { date_creation: { [Op.gte]: startDate } }
-        }),
-        this.models.Patrimoine.count()
-      ]);
-      stats.patrimoine = { new: newPatrimoine, total };
-    }
-
-    return stats;
-  }
-
-  /**
-   * Analytics engagement
-   */
-  async getEngagementAnalytics(startDate) {
-    const stats = {
-      comments: 0,
-      likes: 0,
-      shares: 0,
-      views: 0
-    };
-
-    if (this.models.Commentaire) {
-      stats.comments = await this.models.Commentaire.count({
-        where: { date_creation: { [Op.gte]: startDate } }
-      });
-    }
-
-    if (this.models.Like) {
-      stats.likes = await this.models.Like.count({
-        where: { date_creation: { [Op.gte]: startDate } }
-      });
-    }
-
-    return stats;
+  async _getEngagementAnalytics(startDate) {
+    const [vues, favoris, participations] = await Promise.all([
+      this.models.Vue?.count({ where: { date_vue: { [Op.gte]: startDate } } }) || 0,
+      this.models.Favori?.count({ where: { date_ajout: { [Op.gte]: startDate } } }) || 0,
+      this.models.EvenementUser?.count({ where: { date_inscription: { [Op.gte]: startDate } } }) || 0
+    ]);
+    return { vues, favoris, participations };
   }
 
   /**
@@ -179,133 +86,67 @@ class DashboardAnalyticsService {
   }
 
   /**
-   * Logs d'audit
+   * Logs d'audit paginés
    */
-  async getAuditLogs(options = {}) {
-    const { page = 1, limit = 50, type, userId, startDate, endDate } = options;
+  async getAuditLogs({ page = 1, limit = 50, userId, action } = {}) {
     const offset = (page - 1) * limit;
-
-    if (!this.models.AuditLog) {
-      return { logs: [], pagination: { page, limit, total: 0, totalPages: 0 } };
-    }
-
     const where = {};
-    if (type) where.type = type;
-    if (userId) where.id_user = userId;
-    if (startDate || endDate) {
-      where.date_creation = {};
-      if (startDate) where.date_creation[Op.gte] = new Date(startDate);
-      if (endDate) where.date_creation[Op.lte] = new Date(endDate);
-    }
+    if (userId) where.id_admin = userId;
+    if (action) where.action = action;
 
-    const { rows: logs, count } = await this.models.AuditLog.findAndCountAll({
+    const logs = await this.models.AuditLog.findAndCountAll({
       where,
-      include: [{
-        model: this.models.User,
-        as: 'User',
-        attributes: ['id_user', 'nom', 'prenom', 'email']
-      }],
-      order: [['date_creation', 'DESC']],
-      limit,
-      offset
+      include: [{ model: this.models.User, as: 'Admin', attributes: ['nom', 'prenom', 'email'] }],
+      limit: parseInt(limit),
+      offset: parseInt(offset),
+      order: [['date_action', 'DESC']]
     });
 
     return {
-      logs,
-      pagination: {
-        page,
-        limit,
-        total: count,
-        totalPages: Math.ceil(count / limit)
-      }
+      logs: logs.rows,
+      pagination: { total: logs.count, page: parseInt(page), pages: Math.ceil(logs.count / limit), limit: parseInt(limit) }
     };
   }
 
   /**
-   * Génère un rapport d'activité
+   * Génère un rapport d'activité complet
    */
-  async generateActivityReport(startDate, endDate) {
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-
-    const [userReport, contentReport, engagementReport] = await Promise.all([
-      this.getUserReportData(start, end),
-      this.getContentReportData(start, end),
-      this.getEngagementReportData(start, end)
+  async generateReport(startDate, endDate) {
+    const [users, content, engagement] = await Promise.all([
+      this._getUserReportData(startDate, endDate),
+      this._getContentReportData(startDate, endDate),
+      this._getEngagementReportData(startDate, endDate)
     ]);
-
-    return {
-      period: { start: startDate, end: endDate },
-      users: userReport,
-      content: contentReport,
-      engagement: engagementReport,
-      generatedAt: new Date().toISOString()
-    };
+    return { period: { start: startDate.toISOString(), end: endDate.toISOString() }, users, content, engagement };
   }
 
-  /**
-   * Données utilisateurs pour rapport
-   */
-  async getUserReportData(startDate, endDate) {
-    const dateRange = { [Op.between]: [startDate, endDate] };
-
-    const [newUsers, validatedUsers, suspendedUsers] = await Promise.all([
-      this.models.User.count({
-        where: { date_creation: dateRange }
-      }),
-      this.models.User.count({
-        where: { date_validation: dateRange }
-      }),
-      this.models.User.count({
-        where: { date_suspension: dateRange }
-      })
+  async _getUserReportData(startDate, endDate) {
+    const where = { date_creation: { [Op.between]: [startDate, endDate] } };
+    const [total, byType, active] = await Promise.all([
+      this.models.User.count({ where }),
+      this.models.User.findAll({ where, attributes: ['id_type_user', [fn('COUNT', '*'), 'count']], group: ['id_type_user'], raw: true }),
+      this.models.User.count({ where: { derniere_connexion: { [Op.between]: [startDate, endDate] } } })
     ]);
-
-    return { newUsers, validatedUsers, suspendedUsers };
+    return { total, byType, active };
   }
 
-  /**
-   * Données contenu pour rapport
-   */
-  async getContentReportData(startDate, endDate) {
-    const dateRange = { [Op.between]: [startDate, endDate] };
-    const data = {};
-
-    if (this.models.Oeuvre) {
-      data.oeuvres = await this.models.Oeuvre.count({
-        where: { date_creation: dateRange }
-      });
-    }
-
-    if (this.models.Evenement) {
-      data.evenements = await this.models.Evenement.count({
-        where: { date_creation: dateRange }
-      });
-    }
-
-    return data;
+  async _getContentReportData(startDate, endDate) {
+    const where = { date_creation: { [Op.between]: [startDate, endDate] } };
+    const [oeuvres, evenements, commentaires] = await Promise.all([
+      this.models.Oeuvre.count({ where: { ...where, statut: 'publie' } }),
+      this.models.Evenement.count({ where }),
+      this.models.Commentaire?.count({ where: { ...where, statut: 'publie' } }) || 0
+    ]);
+    return { oeuvres, evenements, commentaires };
   }
 
-  /**
-   * Données engagement pour rapport
-   */
-  async getEngagementReportData(startDate, endDate) {
-    const dateRange = { [Op.between]: [startDate, endDate] };
-    const data = { comments: 0, inscriptions: 0 };
-
-    if (this.models.Commentaire) {
-      data.comments = await this.models.Commentaire.count({
-        where: { date_creation: dateRange }
-      });
-    }
-
-    if (this.models.InscriptionEvenement) {
-      data.inscriptions = await this.models.InscriptionEvenement.count({
-        where: { date_inscription: dateRange }
-      });
-    }
-
-    return data;
+  async _getEngagementReportData(startDate, endDate) {
+    const [favoris, participations, vues] = await Promise.all([
+      this.models.Favori?.count({ where: { date_ajout: { [Op.between]: [startDate, endDate] } } }) || 0,
+      this.models.EvenementUser?.count({ where: { date_inscription: { [Op.between]: [startDate, endDate] } } }) || 0,
+      this.models.Vue?.count({ where: { date_vue: { [Op.between]: [startDate, endDate] } } }) || 0
+    ]);
+    return { favoris, participations, vues };
   }
 
   /**
@@ -319,7 +160,7 @@ class DashboardAnalyticsService {
       where: {
         statut: 'en_attente_validation',
         date_creation: {
-          [Op.lt]: moment().subtract(7, 'days').toDate()
+          [Op.lt]: subDays(new Date(), 7)
         }
       }
     });

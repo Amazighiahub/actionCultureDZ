@@ -5,11 +5,22 @@ const whatsappService = require('./whatsappService');
 const { Op } = require('sequelize');
 
 class NotificationService {
-  constructor(models) {
+  constructor(models, options = {}) {
     this.models = models;
     this.emailService = emailService;
     this.smsService = smsService;
     this.whatsappService = whatsappService;
+    this.repositories = options.repositories || {};
+  }
+
+  /** @returns {import('../repositories/notificationRepository')} */
+  get notificationRepo() {
+    return this.repositories.notification;
+  }
+
+  /** @returns {import('../repositories/userRepository')} */
+  get userRepo() {
+    return this.repositories.user;
   }
 
   // Helper: extraire une string i18n
@@ -167,18 +178,18 @@ async envoyerRappelEvenement(evenementId) {
       include: [{
         model: this.models.User,
         as: 'User',
+        attributes: ['id_user', 'email', 'nom', 'prenom', 'telephone'],
         where: { notifications_evenements: true }
       }]
     });
 
-    for (const participant of participants) {
+    await Promise.all(participants.map(async (participant) => {
       await this.emailService.sendEmail(
         participant.User.email,
         `🔔 Rappel : ${evenement.nom_evenement} demain !`,
         `Rappel : L'événement "${evenement.nom_evenement}" aura lieu demain à ${dateEvenement.toLocaleTimeString()}.`
       );
 
-      // SMS + WhatsApp
       await this._envoyerSmsWhatsapp(participant.User, 'rappel', {
         nomEvenement: this._str(evenement.nom_evenement),
         dateEvenement: dateEvenement.toLocaleDateString('fr-FR'),
@@ -192,7 +203,7 @@ async envoyerRappelEvenement(evenementId) {
         message: `L'événement "${evenement.nom_evenement}" est demain !`,
         id_evenement: evenementId
       });
-    }
+    }));
   } catch (error) {
     console.error('Erreur rappel événement:', error);
   }
@@ -249,35 +260,39 @@ async notifierNouvelleOeuvre(oeuvreId) {
     const titreStr = typeof oeuvre.titre === 'object' ? (oeuvre.titre.fr || oeuvre.titre.ar || '') : (oeuvre.titre || '');
 
     // Notifier les utilisateurs qui ont mis en favori des œuvres de ces créateurs
-    for (const createur of (oeuvre.Users || [])) {
+    const createurs = oeuvre.Users || [];
+    if (createurs.length === 0) return;
+
+    const createurIds = createurs.map(c => c.id_user);
+
+    // Une seule requête pour tous les créateurs (au lieu de N requêtes en boucle)
+    const favorisUtilisateurs = await this.models.Favori.findAll({
+      where: { type_favori: 'oeuvre' },
+      include: [{
+        model: this.models.Oeuvre,
+        where: {},
+        include: [{ model: this.models.User, as: 'Users', where: { id_user: { [Op.in]: createurIds } } }]
+      }],
+      attributes: ['id_user'],
+      group: ['id_user']
+    }).catch(() => []);
+
+    const userIds = [...new Set(favorisUtilisateurs.map(f => f.id_user))]
+      .filter(userId => !createurIds.includes(userId));
+
+    if (userIds.length > 0) {
+      const createur = createurs[0];
       const prenomStr = typeof createur.prenom === 'object' ? (createur.prenom.fr || '') : (createur.prenom || '');
       const nomStr = typeof createur.nom === 'object' ? (createur.nom.fr || '') : (createur.nom || '');
 
-      // Trouver les utilisateurs qui ont des favoris du même créateur
-      const favorisUtilisateurs = await this.models.Favori.findAll({
-        where: { type_favori: 'oeuvre' },
-        include: [{
-          model: this.models.Oeuvre,
-          where: {},
-          include: [{ model: this.models.User, as: 'Users', where: { id_user: createur.id_user } }]
-        }],
-        attributes: ['id_user'],
-        group: ['id_user']
-      }).catch(() => []);
-
-      const userIds = [...new Set(favorisUtilisateurs.map(f => f.id_user))];
-
-      for (const userId of userIds) {
-        if (userId !== createur.id_user) {
-          await this.enregistrerNotification({
-            id_user: userId,
-            type_notification: 'nouvelle_oeuvre',
-            titre: 'Nouvelle œuvre',
-            message: `${prenomStr} ${nomStr} a publié "${titreStr}"`,
-            id_oeuvre: oeuvreId
-          });
-        }
-      }
+      const notifications = userIds.map(userId => ({
+        id_user: userId,
+        type_notification: 'nouvelle_oeuvre',
+        titre: 'Nouvelle œuvre',
+        message: `${prenomStr} ${nomStr} a publié "${titreStr}"`,
+        id_oeuvre: oeuvreId
+      }));
+      await this.enregistrerNotificationsMultiples(notifications);
     }
   } catch (error) {
     console.error('Erreur notification nouvelle œuvre:', error);
@@ -363,12 +378,13 @@ async planifierRappels() {
         ]
       },
       statut: 'publie'
-    }
+    },
+    attributes: ['id_evenement', 'nom_evenement', 'date_debut']
   });
 
-  for (const evenement of evenements) {
-    await this.envoyerRappelEvenement(evenement.id_evenement);
-  }
+  await Promise.all(
+    evenements.map(evenement => this.envoyerRappelEvenement(evenement.id_evenement))
+  );
 }
 
 // 7. NOTIFICATION BATCH (Newsletter)
@@ -394,22 +410,22 @@ async envoyerNewsletter(contenu, filtres = {}) {
       limit: 1000 // Traiter par batch
     });
 
+    // Envoyer par batch de 10 avec pause entre les batches
+    const BATCH_SIZE = 10;
     const results = [];
-    for (const user of users) {
-      const result = await this.emailService.sendEmail(
-        user.email,
-        contenu.sujet,
-        contenu.texte,
-        contenu.html
+    for (let i = 0; i < users.length; i += BATCH_SIZE) {
+      const batch = users.slice(i, i + BATCH_SIZE);
+      const batchResults = await Promise.all(
+        batch.map(async (user) => {
+          const result = await this.emailService.sendEmail(user.email, contenu.sujet, contenu.texte, contenu.html);
+          return { userId: user.id_user, success: result.success };
+        })
       );
-      
-      results.push({
-        userId: user.id_user,
-        success: result.success
-      });
-
-      // Pause entre les envois pour éviter le spam
-      await new Promise(resolve => setTimeout(resolve, 100));
+      results.push(...batchResults);
+      // Pause entre les batches pour éviter le spam
+      if (i + BATCH_SIZE < users.length) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
     }
 
     return {
@@ -467,26 +483,23 @@ async envoyerNewsletter(contenu, filtres = {}) {
         raison
       );
 
-      // SMS + WhatsApp pour chaque participant
-      for (const participant of participants) {
-        await this._envoyerSmsWhatsapp(participant.User, 'annulation', {
+      // SMS + WhatsApp pour chaque participant (en parallèle)
+      await Promise.all(participants.map(participant =>
+        this._envoyerSmsWhatsapp(participant.User, 'annulation', {
           nomEvenement: this._str(evenement.nom_evenement),
           raison
-        });
-      }
+        })
+      ));
 
-      // Enregistrer les notifications
-      const notifications = [];
-      for (const participant of participants) {
-        notifications.push({
-          id_user: participant.id_user,
-          type_notification: 'annulation_evenement',
-          titre: 'Événement annulé',
-          message: `L'événement "${evenement.nom_evenement}" a été annulé`,
-          id_evenement: evenementId,
-          email_envoye: results.find(r => r.email === participant.User.email)?.result.success || false
-        });
-      }
+      // Enregistrer les notifications (bulk)
+      const notifications = participants.map(participant => ({
+        id_user: participant.id_user,
+        type_notification: 'annulation_evenement',
+        titre: 'Événement annulé',
+        message: `L'événement "${evenement.nom_evenement}" a été annulé`,
+        id_evenement: evenementId,
+        email_envoye: results.find(r => r.email === participant.User.email)?.result.success || false
+      }));
 
       await this.enregistrerNotificationsMultiples(notifications);
 
@@ -560,14 +573,14 @@ async envoyerNewsletter(contenu, filtres = {}) {
         typeModification
       );
 
-      // SMS + WhatsApp pour chaque participant
-      for (const participant of participants) {
-        await this._envoyerSmsWhatsapp(participant.User, 'programme', {
+      // SMS + WhatsApp pour chaque participant (en parallèle)
+      await Promise.all(participants.map(participant =>
+        this._envoyerSmsWhatsapp(participant.User, 'programme', {
           nomEvenement: this._str(programme.Evenement.nom_evenement),
           titreProgramme: this._str(programme.titre),
           typeModification
-        });
-      }
+        })
+      ));
 
       // Enregistrer les notifications
       const notifications = participants.map(participant => ({
@@ -658,13 +671,13 @@ async envoyerNewsletter(contenu, filtres = {}) {
       const nomEvt = this._str(evenement.nom_evenement);
       const dateEvt = evenement.date_debut ? new Date(evenement.date_debut).toLocaleDateString('fr-FR') : '';
       const lieuEvt = evenement.Lieu ? this._str(evenement.Lieu.nom) : '';
-      for (const user of users) {
-        await this._envoyerSmsWhatsapp(user, 'nouvel_evenement', {
+      await Promise.all(users.map(user =>
+        this._envoyerSmsWhatsapp(user, 'nouvel_evenement', {
           nomEvenement: nomEvt,
           dateEvenement: dateEvt,
           lieu: lieuEvt
-        });
-      }
+        })
+      ));
 
       // Enregistrer les notifications
       const notifications = users.map(user => ({
@@ -821,6 +834,300 @@ async envoyerNewsletter(contenu, filtres = {}) {
       console.error('❌ Erreur récupération préférences:', error);
       return { actives: true, email: true, push: true, evenements: true, commentaires: true, favoris: true, newsletter: true };
     }
+  }
+
+  // ========================================================================
+  // NOTIFICATIONS ADMIN DASHBOARD
+  // ========================================================================
+
+  /**
+   * Récupère les notifications admin d'un utilisateur (dashboard)
+   * Filtre sur les types admin/système/modération
+   * @param {number} userId
+   * @param {Object} options - { page, limit, unreadOnly }
+   * @returns {Object} { items, pagination }
+   */
+  async getAdminNotifications(userId, options = {}) {
+    const { page = 1, limit = 20, unreadOnly = false } = options;
+    const offset = (page - 1) * limit;
+
+    const where = {
+      id_user: userId,
+      type_notification: { [Op.in]: ['admin_alert', 'system_notification', 'moderation_required'] }
+    };
+    if (unreadOnly) where.lu = false;
+
+    const result = await this.models.Notification?.findAndCountAll({
+      where,
+      order: [['date_creation', 'DESC']],
+      limit: parseInt(limit),
+      offset: parseInt(offset)
+    }) || { count: 0, rows: [] };
+
+    const parsedPage = parseInt(page);
+    const parsedLimit = parseInt(limit);
+    const pages = Math.ceil(result.count / parsedLimit);
+
+    return {
+      items: result.rows,
+      pagination: {
+        total: result.count, page: parsedPage, pages, limit: parsedLimit,
+        hasNext: parsedPage < pages, hasPrev: parsedPage > 1
+      }
+    };
+  }
+
+  /**
+   * Envoie une notification broadcast à un groupe d'utilisateurs (dashboard admin)
+   * Batch par 100, filtre les préférences, crée un audit log
+   * @param {Object} data - { title, message, target, type }
+   * @param {number} adminId - ID de l'admin émetteur
+   * @returns {Object} { total_users, notified, skipped, target, type, timestamp }
+   */
+  async broadcastNotification(data, adminId) {
+    const { title, message, target, type = 'info' } = data;
+
+    if (!title || !message) {
+      throw new Error('MISSING_TITLE_OR_MESSAGE');
+    }
+
+    // Construire le filtre cible
+    let whereClause = {};
+    const TYPE_USER_IDS = require('../constants/typeUserIds').TYPE_USER_IDS;
+    switch (target) {
+      case 'professionals': whereClause = { id_type_user: { [Op.ne]: TYPE_USER_IDS.VISITEUR } }; break;
+      case 'visitors': whereClause = { id_type_user: TYPE_USER_IDS.VISITEUR }; break;
+      default: whereClause = {};
+    }
+
+    const targetWhere = { ...whereClause, statut: 'actif', email_verifie: true };
+    const totalTargetUsers = await this.models.User.count({ where: targetWhere });
+    if (totalTargetUsers === 0) {
+      throw new Error('NO_TARGET_USERS');
+    }
+
+    // Envoi par batch de 100
+    const batchSize = 100;
+    let offset = 0;
+    let totalNotified = 0;
+    let totalSkipped = 0;
+
+    while (true) {
+      const users = await this.models.User.findAll({
+        where: targetWhere,
+        attributes: ['id_user', 'email', 'preferences_notification'],
+        limit: batchSize, offset, raw: true
+      });
+      if (users.length === 0) break;
+
+      // Filtrer par préférences notification
+      const usersToNotify = users.filter(user => {
+        if (!user.preferences_notification) return true;
+        try {
+          const prefs = typeof user.preferences_notification === 'string'
+            ? JSON.parse(user.preferences_notification)
+            : user.preferences_notification;
+          return prefs.admin_notifications !== false;
+        } catch { return true; }
+      });
+
+      totalSkipped += users.length - usersToNotify.length;
+
+      if (usersToNotify.length > 0 && this.models.Notification) {
+        const notifications = usersToNotify.map(user => ({
+          user_id: user.id_user, type: 'broadcast', titre: title, message,
+          lue: false, date_creation: new Date(),
+          metadata: JSON.stringify({ sender_id: adminId, target_group: target, notification_type: type })
+        }));
+        await this.models.Notification.bulkCreate(notifications, { validate: true, individualHooks: false });
+        totalNotified += usersToNotify.length;
+      }
+
+      offset += batchSize;
+      if (users.length < batchSize) break;
+    }
+
+    // Audit log
+    if (this.models.AuditLog) {
+      await this.models.AuditLog.create({
+        id_admin: adminId, action: 'BROADCAST_NOTIFICATION', type_entite: 'notification',
+        details: JSON.stringify({ title, target, recipients_count: totalNotified }),
+        date_action: new Date()
+      });
+    }
+
+    return {
+      total_users: totalTargetUsers, notified: totalNotified,
+      skipped: totalSkipped, target, type, timestamp: new Date()
+    };
+  }
+  // ========================================================================
+  // MÉTHODES USER-FACING (appelées par NotificationController)
+  // Délèguent au NotificationRepository — zéro Sequelize ici
+  // ========================================================================
+
+  /**
+   * Notifications paginées d'un utilisateur avec relations
+   */
+  async getUserNotificationsPaginated(userId, { page, limit, unreadOnly, type } = {}) {
+    return this.notificationRepo.findByUser(userId, { page, limit, unreadOnly, type });
+  }
+
+  /**
+   * Nombre de notifications non lues
+   */
+  async getUnreadCount(userId) {
+    return this.notificationRepo.countUnread(userId);
+  }
+
+  /**
+   * Résumé des notifications (total, non lues, par type, dernières)
+   */
+  async getNotificationsSummary(userId) {
+    return this.notificationRepo.getSummary(userId);
+  }
+
+  /**
+   * Marquer une notification comme lue
+   */
+  async markOneAsRead(notificationId, userId) {
+    const notification = await this.notificationRepo.findUserNotification(notificationId, userId);
+    if (!notification) return null;
+    await notification.marquerCommeLue();
+    return notification;
+  }
+
+  /**
+   * Marquer toutes les notifications comme lues (utilise méthode statique du model)
+   */
+  async markAllAsReadForUser(userId) {
+    return this.models.Notification.marquerToutesLues(userId);
+  }
+
+  /**
+   * Marquer plusieurs notifications comme lues
+   */
+  async markMultipleAsReadForUser(notificationIds, userId) {
+    return this.notificationRepo.markMultipleAsRead(notificationIds, userId);
+  }
+
+  /**
+   * Supprimer une notification
+   */
+  async deleteUserNotification(notificationId, userId) {
+    const deleted = await this.notificationRepo.deleteUserNotification(notificationId, userId);
+    return deleted;
+  }
+
+  /**
+   * Supprimer toutes les notifications lues
+   */
+  async deleteReadNotificationsForUser(userId) {
+    return this.notificationRepo.deleteReadByUser(userId);
+  }
+
+  /**
+   * Récupérer les préférences de notification (via UserRepository)
+   */
+  async getUserPreferences(userId) {
+    const user = await this.userRepo.findById(userId, {
+      attributes: [
+        'notifications_email', 'notifications_push', 'notifications_newsletter',
+        'notifications_commentaires', 'notifications_favoris', 'notifications_evenements'
+      ]
+    });
+    if (!user) return null;
+    return {
+      global: {
+        email: user.notifications_email ?? true,
+        push: user.notifications_push ?? true,
+        newsletter: user.notifications_newsletter ?? true
+      },
+      types: {
+        commentaires: user.notifications_commentaires ?? true,
+        favoris: user.notifications_favoris ?? true,
+        evenements: user.notifications_evenements ?? true
+      }
+    };
+  }
+
+  /**
+   * Mettre à jour les préférences de notification
+   */
+  async updateUserPreferences(userId, { global, types } = {}) {
+    const updates = {};
+    if (global) {
+      if (typeof global.email === 'boolean') updates.notifications_email = global.email;
+      if (typeof global.push === 'boolean') updates.notifications_push = global.push;
+      if (typeof global.newsletter === 'boolean') updates.notifications_newsletter = global.newsletter;
+    }
+    if (types) {
+      if (typeof types.commentaires === 'boolean') updates.notifications_commentaires = types.commentaires;
+      if (typeof types.favoris === 'boolean') updates.notifications_favoris = types.favoris;
+      if (typeof types.evenements === 'boolean') updates.notifications_evenements = types.evenements;
+    }
+    return this.userRepo.updateMany({ id_user: userId }, updates);
+  }
+
+  /**
+   * Envoyer une notification ciblée (admin → utilisateur)
+   */
+  async sendToUser(destinataireId, { titre, message, type_notification, url_action, priorite, metadata } = {}) {
+    const destinataire = await this.userRepo.findById(destinataireId);
+    if (!destinataire) return null;
+
+    const notification = await this.notificationRepo.create({
+      id_user: destinataireId,
+      type_notification: type_notification || 'message_admin',
+      titre,
+      message,
+      url_action: url_action || null,
+      priorite: priorite || 'normale',
+      metadata: metadata || null,
+      lu: false,
+      email_envoye: false
+    });
+    return notification;
+  }
+
+  /**
+   * Broadcast — envoie une notification à tous les utilisateurs actifs par lots
+   */
+  async broadcastToAllActive({ titre, message, type_notification, priorite, metadata } = {}) {
+    const batchSize = 100;
+    let offset = 0;
+    let totalSent = 0;
+
+    while (true) {
+      const users = await this.models.User.findAll({
+        where: { statut: 'actif' },
+        attributes: ['id_user'],
+        limit: batchSize,
+        offset,
+        raw: true
+      });
+
+      if (users.length === 0) break;
+
+      const notifications = users.map(user => ({
+        id_user: user.id_user,
+        type_notification: type_notification || 'message_admin',
+        titre,
+        message,
+        priorite: priorite || 'normale',
+        metadata: metadata || null,
+        lu: false,
+        email_envoye: false
+      }));
+
+      await this.notificationRepo.bulkCreate(notifications);
+      totalSent += users.length;
+      offset += batchSize;
+
+      if (users.length < batchSize) break;
+    }
+
+    return totalSent;
   }
 }
 

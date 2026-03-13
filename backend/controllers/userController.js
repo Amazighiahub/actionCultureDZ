@@ -14,21 +14,12 @@
  * - Transformer les données (c'est le rôle des DTOs)
  */
 
+const BaseController = require('./baseController');
 const container = require('../services/serviceContainer');
 const { translateDeep } = require('../helpers/i18n');
 const { accountRateLimiter } = require('../middlewares/rateLimitMiddleware');
 
-const IS_DEV_MODE = process.env.NODE_ENV === 'development';
-
-class UserControllerV2 {
-  constructor() {
-    // Le service est récupéré via le container (lazy loading)
-  }
-
-  /**
-   * Getter pour le service utilisateur
-   * @private
-   */
+class UserControllerV2 extends BaseController {
   get userService() {
     return container.userService;
   }
@@ -772,38 +763,6 @@ class UserControllerV2 {
     return userDTOs.map(dto => this._translateUser(dto, lang));
   }
 
-  /**
-   * Gère les erreurs et retourne la réponse appropriée
-   * @private
-   */
-  _handleError(res, error) {
-    const statusCode = error.statusCode || 500;
-    const code = error.code || 'INTERNAL_ERROR';
-
-    // Log en développement
-    if (IS_DEV_MODE) {
-      console.error(`❌ Error [${code}]:`, error.message);
-      console.error(error.stack);
-    }
-
-    const response = {
-      success: false,
-      error: error.message || 'Internal server error',
-      code
-    };
-
-    // Inclure les erreurs de validation
-    if (error.errors) {
-      response.errors = error.errors;
-    }
-
-    // Détails en dev uniquement
-    if (IS_DEV_MODE && statusCode === 500) {
-      response.stack = error.stack;
-    }
-
-    res.status(statusCode).json(response);
-  }
 
   /**
    * Configure le cookie d'access token

@@ -5,7 +5,7 @@ const ArticleBlockController = require('../controllers/articleBlockController');
 const { body } = require('express-validator');
 
 const initArticleBlockRoutes = (models, authMiddleware) => {
-  const articleBlockController = new ArticleBlockController(models);
+  const articleBlockController = new ArticleBlockController();
 
   // ========================================================================
   // MIDDLEWARES

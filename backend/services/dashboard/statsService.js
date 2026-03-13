@@ -3,24 +3,27 @@
  * Extrait de DashboardController pour une meilleure modularité
  */
 const { Op, fn, col, literal } = require('sequelize');
-const moment = require('moment');
+const { subDays, subHours, subMonths, subYears, startOfDay } = require('date-fns');
+const LRUCache = require('../../utils/LRUCache');
 
 class DashboardStatsService {
   constructor(models) {
     this.models = models;
     this.sequelize = models.sequelize || Object.values(models)[0]?.sequelize;
-    this.cache = new Map();
+    this.cache = new LRUCache(200);
   }
 
-  // Cache simple en mémoire
   async getCached(key, generator, ttl = 300) {
-    const cached = this.cache.get(key);
-    if (cached && cached.expires > Date.now()) {
-      return cached.data;
+    try {
+      const cached = this.cache.get(key);
+      if (cached !== undefined) return cached;
+      const data = await generator();
+      this.cache.set(key, data, ttl * 1000);
+      return data;
+    } catch (error) {
+      console.error('Erreur cache stats:', error.message);
+      return await generator();
     }
-    const data = await generator();
-    this.cache.set(key, { data, expires: Date.now() + (ttl * 1000) });
-    return data;
   }
 
   clearCache(pattern = null) {
@@ -38,31 +41,34 @@ class DashboardStatsService {
    */
   async generateOverviewStats() {
     const [
-      totalUsers,
-      totalOeuvres,
-      totalEvenements,
-      totalPatrimoine,
-      pendingValidations,
-      recentActivity
+      totalUsers, totalOeuvres, totalEvenements, totalArtisanats,
+      newUsersToday, oeuvresEnAttente, professionnelsEnAttente,
+      signalementsEnAttente, sitesPatrimoniaux, vuesAujourdhui
     ] = await Promise.all([
       this.models.User.count(),
-      this.models.Oeuvre?.count() || 0,
-      this.models.Evenement?.count() || 0,
-      this.models.Patrimoine?.count() || 0,
-      this.getPendingValidationsCount(),
-      this.getRecentActivityStats()
+      this.models.Oeuvre.count({ where: { statut: 'publie' } }),
+      this.models.Evenement.count(),
+      this.models.Artisanat?.count() || 0,
+      this.models.User.count({
+        where: { date_creation: { [Op.gte]: startOfDay(new Date()) } }
+      }),
+      this.models.Oeuvre.count({ where: { statut: 'en_attente' } }),
+      this.models.User.count({
+        where: { id_type_user: { [Op.ne]: 1 }, statut: 'en_attente_validation' }
+      }),
+      this.models.Signalement?.count({ where: { statut: 'en_attente' } }) || 0,
+      this.models.Lieu?.count() || 0,
+      this.models.Vue?.count({
+        where: { date_vue: { [Op.gte]: startOfDay(new Date()) } }
+      }) || 0
     ]);
 
     return {
-      counts: {
-        users: totalUsers,
-        oeuvres: totalOeuvres,
-        evenements: totalEvenements,
-        patrimoine: totalPatrimoine
-      },
-      pending: pendingValidations,
-      activity: recentActivity,
-      generatedAt: new Date().toISOString()
+      users: { total: totalUsers, newToday: newUsersToday, professionnelsEnAttente },
+      content: { oeuvres: totalOeuvres, evenements: totalEvenements, artisanats: totalArtisanats, enAttente: oeuvresEnAttente },
+      moderation: { signalementsEnAttente },
+      patrimoine: { sites: sitesPatrimoniaux },
+      engagement: { vuesAujourdhui }
     };
   }
 
@@ -90,8 +96,8 @@ class DashboardStatsService {
    * Statistiques d'activité récente
    */
   async getRecentActivityStats() {
-    const last24h = moment().subtract(24, 'hours').toDate();
-    const last7days = moment().subtract(7, 'days').toDate();
+    const last24h = subHours(new Date(), 24);
+    const last7days = subDays(new Date(), 7);
 
     const [newUsers24h, newUsers7d] = await Promise.all([
       this.models.User.count({
@@ -109,91 +115,101 @@ class DashboardStatsService {
 
   /**
    * Croissance des utilisateurs par période
+   * @param {Date} dateLimit - Date de début
    */
-  async getUserGrowth(days = 30) {
-    const dateLimit = moment().subtract(days, 'days').toDate();
-
-    const growth = await this.models.User.findAll({
-      attributes: [
-        [fn('DATE', col('date_creation')), 'date'],
-        [fn('COUNT', col('id_user')), 'count']
-      ],
-      where: { date_creation: { [Op.gte]: dateLimit } },
-      group: [fn('DATE', col('date_creation'))],
-      order: [[fn('DATE', col('date_creation')), 'ASC']],
-      raw: true
-    });
-
-    return growth;
+  async getUserGrowth(dateLimit) {
+    try {
+      return await this.models.User.findAll({
+        where: { date_creation: { [Op.gte]: dateLimit } },
+        attributes: [[fn('DATE', col('date_creation')), 'date'], [fn('COUNT', '*'), 'count']],
+        group: [fn('DATE', col('date_creation'))],
+        order: [[fn('DATE', col('date_creation')), 'ASC']],
+        raw: true
+      });
+    } catch (error) { return []; }
   }
 
   /**
    * Répartition du contenu par type
    */
   async getContentByType() {
-    const types = {};
-
-    if (this.models.Oeuvre) {
-      types.oeuvres = await this.models.Oeuvre.count();
-    }
-    if (this.models.Evenement) {
-      types.evenements = await this.models.Evenement.count();
-    }
-    if (this.models.Patrimoine) {
-      types.patrimoine = await this.models.Patrimoine.count();
-    }
-    if (this.models.Artisanat) {
-      types.artisanat = await this.models.Artisanat.count();
-    }
-
-    return types;
+    try {
+      const [oeuvres, evenements, artisanats] = await Promise.all([
+        this.models.Oeuvre.count({ group: ['id_type_oeuvre'] }),
+        this.models.Evenement.count(),
+        this.models.Artisanat?.count() || 0
+      ]);
+      return { oeuvres, evenements, artisanats };
+    } catch (error) { return { oeuvres: [], evenements: 0, artisanats: 0 }; }
   }
 
   /**
-   * Top contributeurs
+   * Top contributeurs (oeuvres + événements)
    */
   async getTopContributors(limit = 10) {
-    const contributors = await this.models.User.findAll({
-      attributes: [
-        'id_user',
-        'nom',
-        'prenom',
-        'email',
-        [fn('COUNT', col('Oeuvres.id_oeuvre')), 'oeuvresCount']
-      ],
-      include: [{
-        model: this.models.Oeuvre,
-        as: 'Oeuvres',
-        attributes: [],
-        required: false
-      }],
-      group: ['User.id_user'],
-      order: [[literal('oeuvresCount'), 'DESC']],
-      limit,
-      raw: true
-    });
+    try {
+      return await this.models.User.findAll({
+        attributes: [
+          'id_user', 'nom', 'prenom', 'id_type_user',
+          [literal(`(SELECT COUNT(*) FROM oeuvre WHERE oeuvre.saisi_par = User.id_user AND oeuvre.statut = 'publie')`), 'oeuvres_count'],
+          [literal(`(SELECT COUNT(*) FROM evenement WHERE evenement.id_user = User.id_user)`), 'evenements_count']
+        ],
+        order: [[literal('oeuvres_count + evenements_count'), 'DESC']],
+        limit, raw: true
+      });
+    } catch (error) { return []; }
+  }
 
-    return contributors;
+  /**
+   * Convertit un label de période en Date
+   */
+  getDateLimit(period) {
+    switch (period) {
+      case 'day': return subDays(new Date(), 1);
+      case 'week': return subDays(new Date(), 7);
+      case 'month': return subMonths(new Date(), 1);
+      case 'year': return subYears(new Date(), 1);
+      default: return subMonths(new Date(), 1);
+    }
+  }
+
+  /**
+   * Activité récente (5 derniers de chaque type)
+   */
+  async getRecentActivity() {
+    try {
+      const [oeuvres, evenements, commentaires] = await Promise.all([
+        this.models.Oeuvre.findAll({
+          attributes: ['id_oeuvre', 'titre', 'statut', 'date_creation', 'saisi_par'],
+          limit: 5, order: [['date_creation', 'DESC']],
+          include: [{ model: this.models.User, as: 'Saiseur', attributes: ['nom', 'prenom'] }]
+        }),
+        this.models.Evenement.findAll({
+          attributes: ['id_evenement', 'nom_evenement', 'date_debut', 'statut', 'date_creation'],
+          limit: 5, order: [['date_creation', 'DESC']]
+        }),
+        this.models.Commentaire?.findAll({
+          attributes: ['id_commentaire', 'contenu', 'date_creation', 'id_user'],
+          limit: 5, order: [['date_creation', 'DESC']],
+          include: [{ model: this.models.User, attributes: ['nom', 'prenom'] }]
+        }) || []
+      ]);
+      return { oeuvres, evenements, commentaires };
+    } catch (error) { return { oeuvres: [], evenements: [], commentaires: [] }; }
   }
 
   /**
    * Statistiques détaillées par période
    */
-  async getDetailedStats(period = '30d') {
-    const days = parseInt(period) || 30;
-    const startDate = moment().subtract(days, 'days').toDate();
-
-    const [userStats, contentStats] = await Promise.all([
-      this.getUserAnalytics(startDate),
-      this.getContentAnalytics(startDate)
+  async generateDetailedStats(period) {
+    const dateLimit = this.getDateLimit(period);
+    const [userGrowth, contentByType, recentActivity, topContributors] = await Promise.all([
+      this.getUserGrowth(dateLimit),
+      this.getContentByType(),
+      this.getRecentActivity(),
+      this.getTopContributors()
     ]);
-
-    return {
-      period: `${days} jours`,
-      users: userStats,
-      content: contentStats,
-      generatedAt: new Date().toISOString()
-    };
+    return { period, dateLimit, userGrowth, contentByType, recentActivity, topContributors };
   }
 
   /**
@@ -216,21 +232,93 @@ class DashboardStatsService {
    * Analytics contenu
    */
   async getContentAnalytics(startDate) {
-    const stats = {};
+    const dateWhere = { date_creation: { [Op.gte]: startDate } };
 
-    if (this.models.Oeuvre) {
-      stats.newOeuvres = await this.models.Oeuvre.count({
-        where: { date_creation: { [Op.gte]: startDate } }
+    const [newOeuvres, newEvenements] = await Promise.all([
+      this.models.Oeuvre ? this.models.Oeuvre.count({ where: dateWhere }) : 0,
+      this.models.Evenement ? this.models.Evenement.count({ where: dateWhere }) : 0
+    ]);
+
+    return { newOeuvres, newEvenements };
+  }
+
+  // ---- Patrimoine stats ----
+
+  /**
+   * Statistiques patrimoine complètes
+   */
+  async generatePatrimoineStats() {
+    const [totalSites, totalParcours, evolution, popularSites, activeParcoursCount] = await Promise.all([
+      this.models.Lieu?.count() || 0,
+      this.models.Parcours?.count() || 0,
+      this._getPatrimoineEvolution(),
+      this._getPopularPatrimoineSites(),
+      this._getActiveParcoursCount()
+    ]);
+    return { totalSites, totalParcours, activeParcoursCount, evolution, popularSites };
+  }
+
+  async _getPatrimoineEvolution() {
+    try {
+      if (!this.models.Lieu) return [];
+      return await this.models.Lieu.findAll({
+        attributes: [[fn('DATE_FORMAT', col('date_creation'), '%Y-%m'), 'month'], [fn('COUNT', '*'), 'count']],
+        where: { date_creation: { [Op.gte]: subMonths(new Date(), 12) } },
+        group: [fn('DATE_FORMAT', col('date_creation'), '%Y-%m')],
+        order: [[literal('month'), 'ASC']],
+        raw: true
       });
-    }
+    } catch (error) { return []; }
+  }
 
-    if (this.models.Evenement) {
-      stats.newEvenements = await this.models.Evenement.count({
-        where: { date_creation: { [Op.gte]: startDate } }
+  async _getPopularPatrimoineSites() {
+    try {
+      if (!this.models.Lieu || !this.models.Favori) return [];
+      return await this.models.Lieu.findAll({
+        attributes: [
+          'id_lieu', 'nom_fr', 'nom_ar', 'typeLieu',
+          [literal(`(SELECT COUNT(*) FROM favori WHERE favori.entity_type = 'lieu' AND favori.entity_id = Lieu.id_lieu)`), 'favorites_count']
+        ],
+        order: [[literal('favorites_count'), 'DESC']],
+        limit: 10, raw: true
       });
-    }
+    } catch (error) { return []; }
+  }
 
-    return stats;
+  async _getActiveParcoursCount() {
+    try {
+      if (!this.models.Parcours) return 0;
+      return await this.models.Parcours.count({ where: { statut: 'actif' } });
+    } catch (error) { return 0; }
+  }
+
+  // ---- QR stats ----
+
+  /**
+   * Statistiques QR codes
+   */
+  async generateQRStats(startDate) {
+    if (!this.models.QRScan) {
+      return { totalScans: 0, uniqueVisitors: 0, peakHours: [], topSites: [] };
+    }
+    const [totalScans, peakHours] = await Promise.all([
+      this.models.QRScan.count({ where: { scan_date: { [Op.gte]: startDate } } }),
+      this._getQRScanPeakHours(startDate)
+    ]);
+    return { totalScans, peakHours };
+  }
+
+  async _getQRScanPeakHours(startDate) {
+    try {
+      if (!this.models.QRScan) return [];
+      return await this.models.QRScan.findAll({
+        attributes: [[fn('HOUR', col('scan_date')), 'hour'], [fn('COUNT', '*'), 'scans']],
+        where: { scan_date: { [Op.gte]: startDate } },
+        group: [fn('HOUR', col('scan_date'))],
+        order: [[literal('hour'), 'ASC']],
+        raw: true
+      });
+    } catch (error) { return []; }
   }
 }
 

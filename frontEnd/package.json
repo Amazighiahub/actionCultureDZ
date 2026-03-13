@@ -74,7 +74,6 @@
     "i18next": "^25.3.0",
     "i18next-browser-languagedetector": "^8.2.0",
     "input-otp": "^1.2.4",
-    "joi": "^17.11.0",
     "js-cookie": "^3.0.5",
     "jspdf": "^4.0.0",
     "leaflet": "^1.9.4",
@@ -96,8 +95,7 @@
     "tailwindcss-animate": "^1.0.7",
     "tailwindcss-rtl": "^0.9.0",
     "vaul": "^0.9.3",
-    "zod": "^3.23.8",
-    "zustand": "^4.4.7"
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@babel/core": "^7.27.7",
@@ -134,7 +132,6 @@
     "globals": "^15.15.0",
     "i18next-parser": "^9.3.0",
     "jsdom": "^24.0.0",
-    "lovable-tagger": "^1.1.7",
     "ora": "^8.2.0",
     "postcss": "^8.4.47",
     "prettier": "^3.6.2",

@@ -11,7 +11,7 @@ const initIntervenantRoutes = (models, authMiddleware) => {
   const router = express.Router();
   
   
-  const intervenantController = new IntervenantController(models);
+  const intervenantController = new IntervenantController();
 
   // ===== MIDDLEWARE PERSONNALISÉ =====
   

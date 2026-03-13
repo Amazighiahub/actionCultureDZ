@@ -3,11 +3,10 @@
  * Architecture: Controller → Service → Repository → Database
  */
 
+const BaseController = require('./baseController');
 const container = require('../services/serviceContainer');
 
-const IS_DEV_MODE = process.env.NODE_ENV === 'development';
-
-class ServiceControllerV2 {
+class ServiceControllerV2 extends BaseController {
   get serviceService() {
     return container.serviceService;
   }
@@ -210,25 +209,6 @@ class ServiceControllerV2 {
     }
   }
 
-  // ============================================================================
-  // HELPERS
-  // ============================================================================
-
-  _handleError(res, error) {
-    const statusCode = error.statusCode || 500;
-    const code = error.code || 'INTERNAL_ERROR';
-
-    if (IS_DEV_MODE) {
-      console.error(`❌ Error [${code}]:`, error.message);
-      if (statusCode === 500) console.error(error.stack);
-    }
-
-    const response = { success: false, error: error.message || 'Internal server error', code };
-    if (error.errors) response.errors = error.errors;
-    if (IS_DEV_MODE && statusCode === 500) response.stack = error.stack;
-
-    res.status(statusCode).json(response);
-  }
 }
 
 module.exports = new ServiceControllerV2();

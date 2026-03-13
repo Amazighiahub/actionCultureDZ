@@ -1,1565 +1,49 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState, useEffect, useCallback } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
-  ArrowLeft, Save, Eye, Plus, Trash2, MoveUp, MoveDown,
-  Copy, Type, Heading1, Heading2, Image, Quote, List,
-  Table, Code, Minus, AlertCircle, Loader2, FileText, Film,
-  Upload, X, Star, ChevronDown, Grid3X3, Link2 } from
-'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import DOMPurify from 'dompurify';
+  ArrowLeft, Save, Eye, Loader2, FileText, AlertCircle
+} from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
-// Import des helpers
-import { getAssetUrl } from '@/helpers/assetUrl';
+import type { ArticleEditorProps } from '@/types/models/articles.types';
 
-// Import des services et types
-import { articleBlockService } from '@/services/articleBlock.service';
-import { metadataService } from '@/services/metadata.service';
-import { oeuvreService } from '@/services/oeuvre.service';
-import { mapToBackendDTO } from '@/types/api/create-oeuvre-backend.dto';
-import CategorySelection from '@/components/CategorieSection';
-import IntervenantEditeurManager from '@/components/oeuvre/IntervenantEditeurManager';
+import { PREVIEW_STYLES } from './articlePreview.styles';
+import { BLOCK_TEMPLATES, BLOCK_ICONS } from './articleEditor.constants';
+import InsertBlockBar from './InsertBlockBar';
+import ArticleBlockEditor from './ArticleBlockEditor';
+import ArticleMetadataTab from './ArticleMetadataTab';
+import ArticlePreview from './ArticlePreview';
+import { useArticleEditor } from './useArticleEditor';
 
-// Import des types depuis le fichier centralisé
-import type {
-  ArticleBlock,
-  ArticleFormData,
-  ArticleEditorProps,
-  ArticleBlockEditorProps,
-  ArticleSaveResponse,
-  BlockType,
-  BlockTemplate,
-  MediaInfo } from
-'@/types/models/articles.types';
+const LANG_OPTIONS = [
+  { code: 'fr', label: 'Français' },
+  { code: 'ar', label: 'العربية' },
+  { code: 'en', label: 'English' },
+  { code: 'tz-ltn', label: 'Tamazight (Latin)' },
+  { code: 'tz-tfng', label: 'ⵜⴰⵎⴰⵣⵉⵖⵜ' },
+];
 
-import {
-  createDefaultBlock,
-  isTextBlock,
-  isMediaBlock,
-  isListBlock,
-  isTableBlock } from
-'@/types/models/articles.types';
-
-// Import des types pour les contributeurs
-import type {
-  IntervenantExistant,
-  NouvelIntervenant,
-  ContributeurOeuvre,
-  EditeurOeuvre } from
-'@/types/api/oeuvre-creation.types';
-
-// Styles pour l'aperçu
-import { useTranslation } from "react-i18next";
-
-// Générateur d'ID unique pour les blocs (côté client uniquement)
-let _blockUidCounter = 0;
-const generateBlockUid = () => `block-uid-${Date.now()}-${++_blockUidCounter}`;
-
-const PREVIEW_STYLES = `
-  .article-preview {
-    font-family: Georgia, serif;
-    line-height: 1.8;
-    color: #333;
-  }
-  
-  .article-preview h1 {
-    font-size: 2.5rem;
-    font-weight: 700;
-    margin-bottom: 1rem;
-    color: #1a1a1a;
-  }
-  
-  .article-preview h2 {
-    font-size: 2rem;
-    font-weight: 600;
-    margin-top: 2rem;
-    margin-bottom: 1rem;
-    color: #2a2a2a;
-  }
-  
-  .article-preview h3 {
-    font-size: 1.5rem;
-    font-weight: 600;
-    margin-top: 1.5rem;
-    margin-bottom: 0.75rem;
-    color: #3a3a3a;
-  }
-  
-  .article-preview p {
-    margin-bottom: 1.5rem;
-  }
-  
-  .article-preview blockquote {
-    border-left: 4px solid #e5e7eb;
-    padding-left: 1.5rem;
-    margin: 2rem 0;
-    font-style: italic;
-    color: #6b7280;
-  }
-  
-  .article-preview blockquote cite {
-    display: block;
-    text-align: right;
-    margin-top: 0.5rem;
-    font-size: 0.875rem;
-    font-style: normal;
-  }
-  
-  .article-preview ul, .article-preview ol {
-    margin-bottom: 1.5rem;
-    padding-left: 2rem;
-  }
-  
-  .article-preview li {
-    margin-bottom: 0.5rem;
-  }
-  
-  .article-preview pre {
-    background-color: #f3f4f6;
-    padding: 1rem;
-    border-radius: 0.5rem;
-    overflow-x: auto;
-    margin-bottom: 1.5rem;
-  }
-  
-  .article-preview code {
-    font-family: 'Courier New', monospace;
-    font-size: 0.875rem;
-  }
-  
-  .article-preview img {
-    max-width: 100%;
-    height: auto;
-    margin: 2rem auto;
-    display: block;
-  }
-  
-  .article-preview img.full-width {
-    width: 100%;
-  }
-  
-  .article-preview img.float-left {
-    float: left;
-    margin-right: 2rem;
-    margin-bottom: 1rem;
-    max-width: 50%;
-  }
-  
-  .article-preview img.float-right {
-    float: right;
-    margin-left: 2rem;
-    margin-bottom: 1rem;
-    max-width: 50%;
-  }
-  
-  .article-preview .image-caption {
-    text-align: center;
-    font-size: 0.875rem;
-    color: #6b7280;
-    margin-top: 0.5rem;
-    font-style: italic;
-  }
-  
-  .article-preview hr {
-    border: none;
-    border-top: 2px solid #e5e7eb;
-    margin: 3rem 0;
-  }
-  
-  .article-preview table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 1.5rem;
-  }
-  
-  .article-preview th,
-  .article-preview td {
-    border: 1px solid #e5e7eb;
-    padding: 0.75rem;
-    text-align: left;
-  }
-  
-  .article-preview th {
-    background-color: #f9fafb;
-    font-weight: 600;
-  }
-  
-  .article-preview .embed-container {
-    position: relative;
-    padding-bottom: 56.25%;
-    height: 0;
-    overflow: hidden;
-    margin-bottom: 1.5rem;
-  }
-  
-  .article-preview .embed-container iframe {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-  }
-
-  /* ============================================
-     SCIENTIFIC ARTICLE — Academic Paper Style
-     ============================================ */
-
-  /* Journal banner bar */
-  .article-preview .journal-banner {
-    background: linear-gradient(135deg, #1e3a5f 0%, #1e40af 100%);
-    color: #fff;
-    padding: 0.625rem 1.25rem;
-    font-size: 0.75rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-radius: 0.375rem 0.375rem 0 0;
-    letter-spacing: 0.02em;
-  }
-
-  .article-preview .journal-banner .journal-name {
-    font-weight: 700;
-    font-style: italic;
-    font-size: 0.85rem;
-  }
-
-  .article-preview .journal-banner .journal-details {
-    opacity: 0.85;
-    font-size: 0.7rem;
-  }
-
-  /* Paper container */
-  .article-preview .paper {
-    border: 1px solid #d1d5db;
-    border-top: none;
-    background: #fff;
-    padding: 2.5rem 2.5rem 2rem;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-    border-radius: 0 0 0.375rem 0.375rem;
-  }
-
-  /* Title */
-  .article-preview .scientific-header h1 {
-    font-family: 'Times New Roman', Times, serif;
-    font-size: 1.6rem;
-    font-weight: 700;
-    line-height: 1.35;
-    color: #111827;
-    margin: 0 0 0.75rem 0;
-    text-align: center;
-  }
-
-  /* Authors line */
-  .article-preview .scientific-authors {
-    text-align: center;
-    font-size: 0.9rem;
-    color: #374151;
-    margin-bottom: 0.25rem;
-    font-weight: 500;
-  }
-
-  /* Affiliation / year */
-  .article-preview .scientific-affiliation {
-    text-align: center;
-    font-size: 0.78rem;
-    color: #6b7280;
-    margin-bottom: 1rem;
-    font-style: italic;
-  }
-
-  /* DOI + badges row */
-  .article-preview .scientific-badges {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 0.5rem;
-    margin-bottom: 1.5rem;
-    padding-bottom: 1.25rem;
-    border-bottom: 1px solid #e5e7eb;
-  }
-
-  .article-preview .sci-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-    font-size: 0.7rem;
-    padding: 0.2rem 0.55rem;
-    border-radius: 0.25rem;
-    font-weight: 600;
-    letter-spacing: 0.01em;
-  }
-
-  .article-preview .sci-badge.doi {
-    background: #eff6ff;
-    color: #1d4ed8;
-    border: 1px solid #bfdbfe;
-  }
-
-  .article-preview .sci-badge.doi a {
-    color: inherit;
-    text-decoration: none;
-  }
-
-  .article-preview .sci-badge.doi a:hover {
-    text-decoration: underline;
-  }
-
-  .article-preview .sci-badge.peer {
-    background: #f0fdf4;
-    color: #15803d;
-    border: 1px solid #bbf7d0;
-  }
-
-  .article-preview .sci-badge.issn {
-    background: #fefce8;
-    color: #a16207;
-    border: 1px solid #fde68a;
-  }
-
-  .article-preview .sci-badge.if-badge {
-    background: #fdf2f8;
-    color: #be185d;
-    border: 1px solid #fbcfe8;
-  }
-
-  /* Abstract box */
-  .article-preview .scientific-abstract {
-    background: #f9fafb;
-    border: 1px solid #e5e7eb;
-    padding: 1.25rem 1.5rem;
-    margin-bottom: 1.75rem;
-    border-radius: 0.25rem;
-  }
-
-  .article-preview .scientific-abstract h3 {
-    font-family: 'Times New Roman', Times, serif;
-    font-size: 0.8rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: #1e3a5f;
-    margin: 0 0 0.5rem 0;
-    padding-bottom: 0.35rem;
-    border-bottom: 1px solid #d1d5db;
-  }
-
-  .article-preview .scientific-abstract p {
-    font-family: 'Times New Roman', Times, serif;
-    font-size: 0.9rem;
-    color: #374151;
-    margin: 0;
-    line-height: 1.65;
-    text-align: justify;
-  }
-
-  /* Body — two-column on wide screens */
-  .article-preview .scientific-body {
-    font-family: 'Times New Roman', Times, serif;
-    font-size: 0.95rem;
-    line-height: 1.7;
-    color: #1f2937;
-  }
-
-  @media (min-width: 640px) {
-    .article-preview .scientific-body {
-      column-count: 2;
-      column-gap: 1.75rem;
-      column-rule: 1px solid #e5e7eb;
-    }
-  }
-
-  .article-preview .scientific-body p {
-    text-align: justify;
-    text-indent: 1.25em;
-    margin-bottom: 0.6rem;
-  }
-
-  .article-preview .scientific-body p:first-child {
-    text-indent: 0;
-  }
-
-  .article-preview .scientific-body h2,
-  .article-preview .scientific-body h3 {
-    font-family: 'Times New Roman', Times, serif;
-    column-span: all;
-    break-after: avoid;
-    margin-top: 1.25rem;
-    margin-bottom: 0.5rem;
-    color: #111827;
-  }
-
-  .article-preview .scientific-body h2 {
-    font-size: 1.1rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-    border-bottom: 1px solid #e5e7eb;
-    padding-bottom: 0.25rem;
-  }
-
-  .article-preview .scientific-body h3 {
-    font-size: 1rem;
-    font-weight: 700;
-    font-style: italic;
-  }
-
-  /* Figures inside scientific body */
-  .article-preview .scientific-body figure {
-    break-inside: avoid;
-    column-span: all;
-    margin: 1rem 0;
-    text-align: center;
-  }
-
-  .article-preview .scientific-body figure img {
-    max-width: 85%;
-    border: 1px solid #e5e7eb;
-    border-radius: 0.25rem;
-  }
-
-  .article-preview .scientific-body .image-caption {
-    font-size: 0.8rem;
-    color: #4b5563;
-    margin-top: 0.35rem;
-    font-style: italic;
-  }
-
-  /* Tables inside scientific body */
-  .article-preview .scientific-body table {
-    column-span: all;
-    break-inside: avoid;
-    font-size: 0.85rem;
-    margin: 1rem 0;
-  }
-
-  .article-preview .scientific-body th {
-    background: #f3f4f6;
-    font-weight: 700;
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-  }
-
-  /* Blockquote in scientific body */
-  .article-preview .scientific-body blockquote {
-    column-span: all;
-    break-inside: avoid;
-    border-left: 3px solid #1e40af;
-    background: #f8fafc;
-    padding: 0.75rem 1rem;
-    margin: 1rem 0;
-    font-size: 0.9rem;
-  }
-`;
-
-// Templates de blocs
-const BLOCK_TEMPLATES: BlockTemplate[] = [
-{ id: 'text', name: 'Paragraphe', type_block: 'text', icon: 'Type' },
-{ id: 'heading', name: 'Titre', type_block: 'heading', icon: 'Heading1' },
-{ id: 'image', name: 'Image', type_block: 'image', icon: 'Image' },
-{ id: 'video', name: 'Vidéo', type_block: 'video', icon: 'Film' },
-{ id: 'citation', name: 'Citation', type_block: 'citation', icon: 'Quote' },
-{ id: 'list', name: 'Liste', type_block: 'list', icon: 'List' },
-{ id: 'table', name: 'Tableau', type_block: 'table', icon: 'Grid3X3' },
-{ id: 'code', name: 'Code', type_block: 'code', icon: 'Code' },
-{ id: 'separator', name: 'Séparateur', type_block: 'separator', icon: 'Minus' },
-{ id: 'embed', name: 'Intégration', type_block: 'embed', icon: 'Link2' }];
-
-
-// Mapping des icônes
-const BLOCK_ICONS: Record<string, any> = {
-  Type, Heading1, Image, Film, Quote, List, Grid3X3, Code, Minus, Link2
-};
-
-// Composant pour insérer un bloc entre deux blocs existants
-const InsertBlockBar: React.FC<{
-  insertAt: number;
-  onInsert: (type: BlockType | string, insertAt?: number) => void;
-}> = ({ insertAt, onInsert }) => {
-  const [expanded, setExpanded] = React.useState(false);
-
-  if (!expanded) {
-    return (
-      <div className="flex items-center gap-2 my-2">
-        <div className="flex-1 border-t border-dashed border-muted-foreground/25" />
-        <button
-          type="button"
-          onClick={() => setExpanded(true)}
-          className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border border-dashed border-primary/40 text-primary/70 bg-primary/5 hover:bg-primary/10 hover:border-primary hover:text-primary transition-all"
-        >
-          <Plus className="h-3.5 w-3.5" />
-          Insérer ici
-        </button>
-        <div className="flex-1 border-t border-dashed border-muted-foreground/25" />
-      </div>
-    );
-  }
-
-  return (
-    <div className="my-2 p-3 rounded-lg bg-muted/60 border-2 border-dashed border-primary/40">
-      <p className="text-xs text-muted-foreground mb-2 font-medium">Choisir le type de bloc à insérer :</p>
-      <div className="flex flex-wrap gap-2">
-        {BLOCK_TEMPLATES.map((template) => {
-          const Icon = BLOCK_ICONS[template.icon];
-          return (
-            <Button
-              key={template.id}
-              type="button"
-              variant="outline"
-              size="sm"
-              className="h-8 px-3 text-xs gap-1.5"
-              onClick={() => {
-                onInsert(template.type_block, insertAt);
-                setExpanded(false);
-              }}
-            >
-              {Icon && <Icon className="h-3.5 w-3.5" />}
-              {template.name}
-            </Button>
-          );
-        })}
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="h-8 px-3 text-xs text-muted-foreground"
-          onClick={() => setExpanded(false)}
-        >
-          <X className="h-3.5 w-3.5 mr-1" />
-          Annuler
-        </Button>
-      </div>
-    </div>
-  );
-};
-
-// Composant pour un bloc d'article
-const ArticleBlockEditor: React.FC<ArticleBlockEditorProps> = ({
-  block, index, onUpdate, onDelete, onMoveUp, onMoveDown, onDuplicate, canMoveUp, canMoveDown
-}) => {
+const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, onBack, onSave }) => {
   const { t } = useTranslation();
-  const { toast } = useToast();
-  const handleContentChange = (value: string) => {
-    onUpdate(index, { contenu: value });
-  };
 
-  const handleMetadataChange = (key: string, value: any) => {
-    onUpdate(index, {
-      metadata: { ...block.metadata, [key]: value }
-    });
-  };
+  const editor = useArticleEditor({ articleId, initialData, onSave });
 
-  const handleImageUpload = (file: File) => {
-    // Validation
-    const maxSize = 10 * 1024 * 1024; // 10MB
-    if (file.size > maxSize) {
-      toast({
-        title: t('common.error', 'Erreur'),
-        description: t('article.imageTooLarge', 'L\'image est trop volumineuse (max 10MB)'),
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    if (!file.type.startsWith('image/')) {
-      toast({
-        title: t('common.error', 'Erreur'),
-        description: t('article.mustBeImage', 'Le fichier doit être une image'),
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    // Créer un aperçu de l'image
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const mediaInfo: MediaInfo = {
-        url: e.target?.result as string,
-        titre: file.name,
-        type_media: file.type,
-        taille_fichier: file.size
-      };
-
-      onUpdate(index, {
-        media: mediaInfo,
-        // Stocker temporairement le fichier dans metadata pour l'upload
-        metadata: {
-          ...block.metadata,
-          tempFile: file
-        }
-      });
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleVideoUrl = (url: string) => {
-    // Extraire l'ID YouTube si c'est une URL YouTube
-    const youtubeMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/);
-    if (youtubeMatch) {
-      onUpdate(index, {
-        contenu: `https://www.youtube.com/embed/${youtubeMatch[1]}`,
-        metadata: { ...block.metadata, videoType: 'youtube' }
-      });
-    } else {
-      onUpdate(index, { contenu: url });
-    }
-  };
-
-  const handleTableUpdate = (headers: string[], rows: string[][]) => {
-    onUpdate(index, { contenu_json: { headers, rows } });
-  };
-
-  const handleImageRemove = () => {
-    onUpdate(index, { media: undefined });
-  };
-
-  const renderBlockContent = () => {
-    switch (block.type_block) {
-      case 'text':
-        return (
-          <Textarea
-            value={block.contenu || ''}
-            onChange={(e) => handleContentChange(e.target.value)}
-            placeholder={t("article_articleeditor.placeholder_entrez_votre_texte")}
-            className="min-h-[100px]" />);
-
-
-
-      case 'heading':
-        return (
-          <div className="space-y-3">
-            <Select
-              value={block.metadata?.level?.toString() || '2'}
-              onValueChange={(value) => handleMetadataChange('level', parseInt(value))}>
-              
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="1">{t("article_articleeditor.titre")}</SelectItem>
-                <SelectItem value="2">{t("article_articleeditor.titre_1")}</SelectItem>
-                <SelectItem value="3">{t("article_articleeditor.titre_2")}</SelectItem>
-              </SelectContent>
-            </Select>
-            <Input
-              value={block.contenu || ''}
-              onChange={(e) => handleContentChange(e.target.value)}
-              placeholder={t("article_articleeditor.placeholder_entrez_votre_titre")}
-              className="text-lg font-semibold" />
-            
-          </div>);
-
-
-      case 'image':
-        return (
-          <div className="space-y-3">
-            {block.media?.url ?
-            <div className="relative group">
-                <img
-                src={getAssetUrl(block.media.url)}
-                alt={block.metadata?.caption || 'Image'}
-                className="w-full max-h-96 object-contain rounded-lg border" />
-              
-                <Button
-                size="icon"
-                variant="destructive"
-                className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={handleImageRemove}>
-                
-                  <X className="h-4 w-4" />
-                </Button>
-              </div> :
-
-            <div
-              className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:border-primary transition-colors"
-              onClick={() => document.getElementById(`image-upload-${index}`)?.click()}>
-              
-                <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-sm text-muted-foreground mb-2">{t("article_articleeditor.cliquez_pour_uploader")}
-
-              </p>
-                <p className="text-xs text-muted-foreground">{t("article_articleeditor.jpg_png_gif")}
-
-              </p>
-                <input
-                id={`image-upload-${index}`}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) handleImageUpload(file);
-                }} />
-              
-              </div>
-            }
-            
-            <div className="space-y-2">
-              <Label>{t("article_articleeditor.lgende_limage_optionnel")}</Label>
-              <Input
-                value={block.metadata?.caption || ''}
-                onChange={(e) => handleMetadataChange('caption', e.target.value)}
-                placeholder={t("article_articleeditor.placeholder_dcrivez_limage")} />
-              
-            </div>
-            
-            <div className="space-y-2">
-              <Label>{t("article_articleeditor.mise_page")}</Label>
-              <Select
-                value={block.metadata?.layout || 'full-width'}
-                onValueChange={(value) => handleMetadataChange('layout', value)}>
-                
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="full-width">{t("article_articleeditor.pleine_largeur")}</SelectItem>
-                  <SelectItem value="centered">{t("article_articleeditor.centre")}</SelectItem>
-                  <SelectItem value="float-left">{t("article_articleeditor.flottante_gauche")}</SelectItem>
-                  <SelectItem value="float-right">{t("article_articleeditor.flottante_droite")}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>);
-
-
-      case 'video':
-        return (
-          <div className="space-y-3">
-            <div className="space-y-2">
-              <Label>{t("article_articleeditor.url_vido")}</Label>
-              <Input
-                value={block.contenu || ''}
-                onChange={(e) => handleVideoUrl(e.target.value)}
-                placeholder="https://www.youtube.com/watch?v=..." />
-              
-              <p className="text-xs text-muted-foreground">{t("article_articleeditor.supporte_youtube_vimeo")}
-
-              </p>
-            </div>
-            
-            {block.contenu &&
-            <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
-                <Film className="h-12 w-12 text-muted-foreground" />
-                <span className="ml-2 text-sm text-muted-foreground">{t("article_articleeditor.aperu_vido")}</span>
-              </div>
-            }
-          </div>);
-
-
-      case 'citation':
-        return (
-          <div className="space-y-3">
-            <Textarea
-              value={block.contenu || ''}
-              onChange={(e) => handleContentChange(e.target.value)}
-              placeholder={t("article_articleeditor.placeholder_entrez_votre_citation")}
-              className="italic" />
-            
-            <Input
-              value={block.metadata?.author || ''}
-              onChange={(e) => handleMetadataChange('author', e.target.value)}
-              placeholder={t("article_articleeditor.placeholder_auteur_citation_optionnel")} />
-            
-          </div>);
-
-
-      case 'list':
-        return (
-          <div className="space-y-3">
-            <Select
-              value={block.metadata?.listType || 'unordered'}
-              onValueChange={(value) => handleMetadataChange('listType', value)}>
-              
-              <SelectTrigger className="w-40">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="unordered">{t("article_articleeditor.liste_puces")}</SelectItem>
-                <SelectItem value="ordered">{t("article_articleeditor.liste_numrote")}</SelectItem>
-              </SelectContent>
-            </Select>
-            <Textarea
-              value={isListBlock(block) ? block.contenu_json.join('\n') : ''}
-              onChange={(e) => onUpdate(index, {
-                contenu_json: e.target.value.split('\n').filter((line) => line.trim())
-              })}
-              placeholder={t("article_articleeditor.placeholder_lment_par_ligne")}
-              className="min-h-[100px]" />
-            
-          </div>);
-
-
-      case 'table':
-        return (
-          <div className="space-y-3">
-            <p className="text-sm text-muted-foreground">{t("article_articleeditor.diteur_tableau_fonctionnalit")}
-
-            </p>
-            {isTableBlock(block) ?
-            <div className="border rounded-lg p-4 space-y-2">
-                <div className="space-y-2">
-                  <Label>{t("article_articleeditor.enttes_spars_par")}</Label>
-                  <Input
-                  value={block.contenu_json.headers.join(', ')}
-                  onChange={(e) => {
-                    const headers = e.target.value.split(',').map((h) => h.trim());
-                    handleTableUpdate(headers, block.contenu_json.rows);
-                  }}
-                  placeholder={t("article_articleeditor.placeholder_colonne_colonne_colonne")} />
-                
-                </div>
-                <div className="space-y-2">
-                  <Label>{t("article_articleeditor.lignes_une_par")}</Label>
-                  <Textarea
-                  value={block.contenu_json.rows.map((row) => row.join(' | ')).join('\n')}
-                  onChange={(e) => {
-                    const rows = e.target.value.split('\n').map((line) =>
-                    line.split('|').map((cell) => cell.trim())
-                    );
-                    handleTableUpdate(block.contenu_json.headers, rows);
-                  }}
-                  placeholder={t("article_articleeditor.placeholder_cellule_cellule_cellule")}
-                  className="min-h-[100px]" />
-                
-                </div>
-              </div> :
-
-            <Button
-              onClick={() => handleTableUpdate(['Col 1', 'Col 2'], [['', '']])}>{t("article_articleeditor.crer_tableau")}
-
-
-            </Button>
-            }
-          </div>);
-
-
-      case 'code':
-        return (
-          <div className="space-y-3">
-            <Input
-              value={block.metadata?.language || ''}
-              onChange={(e) => handleMetadataChange('language', e.target.value)}
-              placeholder={t("article_articleeditor.placeholder_langage_javascript_python")} />
-            
-            <Textarea
-              value={block.contenu || ''}
-              onChange={(e) => handleContentChange(e.target.value)}
-              placeholder={t("article_articleeditor.placeholder_entrez_votre_code")}
-              className="font-mono text-sm min-h-[150px]" />
-            
-          </div>);
-
-
-      case 'separator':
-        return (
-          <div className="py-4">
-            <hr className="border-t-2" />
-          </div>);
-
-
-      case 'embed':
-        return (
-          <div className="space-y-3">
-            <div className="space-y-2">
-              <Label>{t("article_articleeditor.code_dintgration_url")}</Label>
-              <Textarea
-                value={block.contenu || ''}
-                onChange={(e) => handleContentChange(e.target.value)}
-                placeholder={t("article_articleeditor.placeholder_iframe_srciframe_url")}
-                className="min-h-[100px] font-mono text-sm" />
-              
-            </div>
-            <p className="text-xs text-muted-foreground">{t("article_articleeditor.collez_code_dintgration")}
-
-            </p>
-          </div>);
-
-
-      default:
-        return <p className="text-muted-foreground">{t("article_articleeditor.type_bloc_non")}</p>;
-    }
-  };
-
-  return (
-    <Card className="shadow-sm">
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between mb-3">
-          <Badge variant="secondary" className="capitalize">
-            {block.type_block.replace('_', ' ')}
-          </Badge>
-          <div className="flex gap-1">
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={onMoveUp}
-              disabled={!canMoveUp}
-              title={t("article_articleeditor.title_monter")}>
-              
-              <MoveUp className="h-4 w-4" />
-            </Button>
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={onMoveDown}
-              disabled={!canMoveDown}
-              title={t("article_articleeditor.title_descendre")}>
-              
-              <MoveDown className="h-4 w-4" />
-            </Button>
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={onDuplicate}
-              title={t("article_articleeditor.title_dupliquer")}>
-              
-              <Copy className="h-4 w-4" />
-            </Button>
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={() => onDelete(index)}
-              title={t("article_articleeditor.title_supprimer")}
-              className="text-destructive hover:text-destructive">
-              
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-        {renderBlockContent()}
-      </CardContent>
-    </Card>);
-
-};
-
-// Composant principal ArticleEditor avec types importés
-const ArticleEditor: React.FC<ArticleEditorProps> = ({
-  articleId,
-  initialData,
-  onBack,
-  onSave
-}) => {
-  // États
-  const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState('content');
-  const [metadata, setMetadata] = useState<any>({});
-
-  // État du formulaire avec toutes les métadonnées
-  const [formData, setFormData] = useState<ArticleFormData>({
-    titre: '',
-    description: '',
-    id_langue: 1,
-    categories: [],
-    tags: [],
-    type: 'article',
-    ...initialData
-  });
-
-  // État des blocs
-  const [blocks, setBlocks] = useState<ArticleBlock[]>([]);
-
-  // États pour les contributeurs et éditeurs
-  const [intervenantsExistants, setIntervenantsExistants] = useState<IntervenantExistant[]>([]);
-  const [nouveauxIntervenants, setNouveauxIntervenants] = useState<NouvelIntervenant[]>([]);
-  const [contributeurs, setContributeurs] = useState<ContributeurOeuvre[]>([]);
-  const [editeurs, setEditeurs] = useState<EditeurOeuvre[]>([]);
-
-  // Langue d'édition courante pour titre/description multilingue
-  const [editLang, setEditLang] = useState('fr');
-  const [translations, setTranslations] = useState<Record<string, { titre: string; description: string }>>(() => {
-    const init: Record<string, { titre: string; description: string }> = {
-      fr: { titre: '', description: '' },
-      ar: { titre: '', description: '' },
-      en: { titre: '', description: '' },
-    };
-    // Si initialData contient un titre/description string, le mettre en fr
-    if (initialData?.titre) {
-      if (typeof initialData.titre === 'object') {
-        Object.entries(initialData.titre).forEach(([lang, val]) => {
-          if (!init[lang]) init[lang] = { titre: '', description: '' };
-          init[lang].titre = String(val);
-        });
-      } else {
-        init.fr.titre = String(initialData.titre);
-      }
-    }
-    if (initialData?.description) {
-      if (typeof initialData.description === 'object') {
-        Object.entries(initialData.description as any).forEach(([lang, val]) => {
-          if (!init[lang]) init[lang] = { titre: '', description: '' };
-          init[lang].description = String(val);
-        });
-      } else {
-        init.fr.description = String(initialData.description);
-      }
-    }
-    return init;
-  });
-
-  // Tags management
-  const [newTag, setNewTag] = useState('');
-
-  // État pour afficher/cacher les sections
-  const [expandedSections, setExpandedSections] = useState({
-    categories: true,
-    contributeurs: true,
-    tags: true
-  });
-
-  // Charger les métadonnées au montage
-  const { t } = useTranslation();
-  const { toast } = useToast();
-
-  useEffect(() => {
-    loadMetadata();
-  }, []);
-
-  // Pré-remplir avec une structure scientifique guidée pour un nouvel article
-  useEffect(() => {
-    if (!articleId && formData.type === 'article_scientifique' && blocks.length === 0) {
-      const scientificTemplate: ArticleBlock[] = [
-        {
-          type_block: 'heading',
-          contenu: '1. Introduction',
-          metadata: { level: 2 },
-          ordre: 0,
-          visible: true,
-        },
-        {
-          type_block: 'text',
-          contenu: 'Présentez le contexte de votre recherche, la problématique étudiée et les objectifs de l\'étude. Terminez par l\'annonce du plan de l\'article.',
-          metadata: { alignment: 'justify' },
-          ordre: 1,
-          visible: true,
-        },
-        {
-          type_block: 'heading',
-          contenu: '2. Revue de littérature',
-          metadata: { level: 2 },
-          ordre: 2,
-          visible: true,
-        },
-        {
-          type_block: 'text',
-          contenu: 'Synthétisez les travaux antérieurs pertinents. Identifiez les lacunes dans la littérature existante que votre recherche vise à combler.',
-          metadata: { alignment: 'justify' },
-          ordre: 3,
-          visible: true,
-        },
-        {
-          type_block: 'heading',
-          contenu: '3. Méthodologie',
-          metadata: { level: 2 },
-          ordre: 4,
-          visible: true,
-        },
-        {
-          type_block: 'text',
-          contenu: 'Décrivez votre approche méthodologique : type de recherche, échantillon, instruments de collecte de données, procédure d\'analyse.',
-          metadata: { alignment: 'justify' },
-          ordre: 5,
-          visible: true,
-        },
-        {
-          type_block: 'heading',
-          contenu: '4. Résultats',
-          metadata: { level: 2 },
-          ordre: 6,
-          visible: true,
-        },
-        {
-          type_block: 'text',
-          contenu: 'Présentez vos résultats de manière objective. Utilisez des tableaux, figures et graphiques pour illustrer vos données.',
-          metadata: { alignment: 'justify' },
-          ordre: 7,
-          visible: true,
-        },
-        {
-          type_block: 'image',
-          contenu: '',
-          metadata: { caption: 'Figure 1 : Insérez ici un graphique ou une illustration de vos résultats', layout: 'full-width' },
-          ordre: 8,
-          visible: true,
-        },
-        {
-          type_block: 'heading',
-          contenu: '5. Discussion',
-          metadata: { level: 2 },
-          ordre: 9,
-          visible: true,
-        },
-        {
-          type_block: 'text',
-          contenu: 'Interprétez vos résultats en les comparant à la littérature existante. Discutez les implications, les limites de l\'étude et les perspectives futures.',
-          metadata: { alignment: 'justify' },
-          ordre: 10,
-          visible: true,
-        },
-        {
-          type_block: 'heading',
-          contenu: '6. Conclusion',
-          metadata: { level: 2 },
-          ordre: 11,
-          visible: true,
-        },
-        {
-          type_block: 'text',
-          contenu: 'Résumez les principaux apports de votre recherche et proposez des pistes pour de futurs travaux.',
-          metadata: { alignment: 'justify' },
-          ordre: 12,
-          visible: true,
-        },
-        {
-          type_block: 'heading',
-          contenu: 'Références',
-          metadata: { level: 2 },
-          ordre: 13,
-          visible: true,
-        },
-        {
-          type_block: 'text',
-          contenu: '[1] Nom, P. (Année). Titre de l\'article. Nom du journal, Volume(Numéro), pages. DOI\n[2] Nom, P. (Année). Titre du livre. Éditeur.',
-          metadata: { alignment: 'left' },
-          ordre: 14,
-          visible: true,
-        },
-      ];
-      setBlocks(scientificTemplate);
-    }
-  }, [formData.type]);
-
-  // Charger l'article existant si articleId
-  useEffect(() => {
-    if (articleId) {
-      loadArticle();
-    }
-  }, [articleId]);
-
-  const loadMetadata = async () => {
-    try {
-      const response = await metadataService.getAllCached();
-
-      if (response.success && response.data) {
-        setMetadata(response.data);
-      }
-    } catch (error) {
-      console.error('Erreur chargement métadonnées:', error);
-    }
-  };
-
-  const loadArticle = async () => {
-    if (!articleId) return;
-
-    setLoading(true);
-    try {
-      // Charger l'œuvre
-      const oeuvreResponse = await oeuvreService.getOeuvreById(Number(articleId));
-      if (oeuvreResponse.success && oeuvreResponse.data) {
-        const oeuvre = oeuvreResponse.data as any;
-
-        // Déterminer le type d'article (articleType dérivé de l'œuvre, pas de formData)
-        const articleType: 'article' | 'article_scientifique' =
-          oeuvre.ArticleScientifique || oeuvre.article_scientifique ? 'article_scientifique' : 'article';
-        const articleData = oeuvre.Article || oeuvre.ArticleScientifique || oeuvre.article || oeuvre.article_scientifique;
-
-        // ID de l'enregistrement article/blocs (id_article ou id_article_scientifique)
-        const blocksRecordId = articleData?.id_article ?? articleData?.id_article_scientifique ?? Number(articleId);
-
-        // Extraire les traductions si titre/description sont des objets multilingues
-        const titreObj: Record<string, string> = typeof oeuvre.titre === 'object' && oeuvre.titre !== null
-          ? oeuvre.titre : { fr: String(oeuvre.titre || '') };
-        const descObj: Record<string, string> = typeof oeuvre.description === 'object' && oeuvre.description !== null
-          ? oeuvre.description : { fr: String(oeuvre.description || '') };
-
-        setTranslations(prev => {
-          const updated = { ...prev };
-          Object.entries(titreObj).forEach(([lang, val]) => {
-            if (!updated[lang]) updated[lang] = { titre: '', description: '' };
-            updated[lang].titre = val as string;
-          });
-          Object.entries(descObj).forEach(([lang, val]) => {
-            if (!updated[lang]) updated[lang] = { titre: '', description: '' };
-            updated[lang].description = val as string;
-          });
-          return updated;
-        });
-
-        setFormData({
-          titre: titreObj.fr || Object.values(titreObj)[0] || '',
-          description: descObj.fr || Object.values(descObj)[0] || '',
-          id_langue: oeuvre.id_langue,
-          annee_creation: oeuvre.annee_creation,
-          categories: oeuvre.Categories?.map((c: any) => c.id_categorie) || [],
-          tags: oeuvre.Tags?.map((t: any) => t.nom) || [],
-          type: articleType,
-          ...articleData
-        });
-
-        // Charger les blocs avec articleType et blocksRecordId (pas formData.type ni oeuvre id)
-        const blocksResponse = await articleBlockService.getBlocksByArticle(
-          Number(blocksRecordId),
-          articleType
-        );
-
-        if (blocksResponse.success && blocksResponse.data) {
-          setBlocks(blocksResponse.data.map((b: any) => ({ ...b, _uid: generateBlockUid() })));
-        }
-      }
-    } catch (error) {
-      console.error('Erreur chargement article:', error);
-      setError('Erreur lors du chargement de l\'article');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Gestion des blocs avec les types importés
-  const addBlock = (type: BlockType | string, insertAt?: number) => {
-    const newBlock = createDefaultBlock(type as BlockType);
-    newBlock.visible = true;
-    (newBlock as any)._uid = generateBlockUid();
-    
-    let newBlocks: ArticleBlock[];
-    if (insertAt !== undefined && insertAt >= 0 && insertAt <= blocks.length) {
-      newBlocks = [...blocks.slice(0, insertAt), newBlock, ...blocks.slice(insertAt)];
-    } else {
-      newBlocks = [...blocks, newBlock];
-    }
-    // Recalculer l'ordre
-    newBlocks.forEach((b, idx) => { b.ordre = idx; });
-    setBlocks(newBlocks);
-  };
-
-  const updateBlock = (index: number, updates: Partial<ArticleBlock>) => {
-    const newBlocks = [...blocks];
-    newBlocks[index] = { ...newBlocks[index], ...updates };
-    setBlocks(newBlocks);
-  };
-
-  const deleteBlock = (index: number) => {
-    setBlocks(blocks.filter((_, i) => i !== index));
-  };
-
-  const moveBlock = (index: number, direction: 'up' | 'down') => {
-    if (
-    direction === 'up' && index === 0 ||
-    direction === 'down' && index === blocks.length - 1)
-    {
-      return;
-    }
-
-    const newBlocks = [...blocks];
-    const targetIndex = direction === 'up' ? index - 1 : index + 1;
-    [newBlocks[index], newBlocks[targetIndex]] = [newBlocks[targetIndex], newBlocks[index]];
-
-    // Mettre à jour l'ordre
-    newBlocks.forEach((block, idx) => {
-      block.ordre = idx;
-    });
-
-    setBlocks(newBlocks);
-  };
-
-  const duplicateBlock = (index: number) => {
-    const blockToDuplicate = blocks[index];
-    const newBlock = {
-      ...blockToDuplicate,
-      id_block: undefined,
-      ordre: blocks.length,
-      _uid: generateBlockUid()
-    } as any;
-    setBlocks([...blocks, newBlock]);
-  };
-
-  // Reste du composant identique...
-  // (handleAddTag, handleRemoveTag, toggleSection, handleIntervenantsChange, handleSave, etc.)
-
-  // Rendu du preview avec les types
-  const renderPreviewBlock = (block: ArticleBlock, index: number) => {
-    switch (block.type_block) {
-      case 'text':
-        return <p key={index}>{block.contenu}</p>;
-
-      case 'heading':{
-          const HeadingTag = `h${block.metadata?.level || 2}` as keyof JSX.IntrinsicElements;
-          return <HeadingTag key={index}>{block.contenu}</HeadingTag>;
-        }
-
-      case 'image':
-        return block.media?.url ?
-        <figure key={index} className="my-6">
-            <img
-            src={getAssetUrl(block.media.url)}
-            alt={block.metadata?.caption || 'Image'}
-            className="rounded-lg max-w-full max-h-[600px] object-contain mx-auto" />
-          
-            {block.metadata?.caption &&
-          <figcaption className="image-caption">
-                {block.metadata.caption}
-              </figcaption>
-          }
-          </figure> :
-        null;
-
-      case 'video':
-        return block.contenu ?
-        <div key={index} className="embed-container">
-            <iframe
-            src={block.contenu}
-            frameBorder="0"
-            allowFullScreen
-            title="Embedded content" />
-
-          </div> :
-        null;
-
-      case 'citation':
-        return (
-          <blockquote key={index}>
-            <p>{block.contenu}</p>
-            {block.metadata?.author && <cite>— {block.metadata.author}</cite>}
-          </blockquote>);
-
-
-      case 'list':{
-          if (!isListBlock(block)) return null;
-          return block.metadata?.listType === 'ordered' ?
-          <ol key={index}>
-            {block.contenu_json.map((item, i) => <li key={i}>{item}</li>)}
-          </ol> :
-
-          <ul key={index}>
-            {block.contenu_json.map((item, i) => <li key={i}>{item}</li>)}
-          </ul>;
-
-        }
-
-      case 'table':{
-          if (!isTableBlock(block)) return null;
-          return (
-            <table key={index}>
-            <thead>
-              <tr>
-                {block.contenu_json.headers.map((header, i) =>
-                  <th key={i}>{header}</th>
-                  )}
-              </tr>
-            </thead>
-            <tbody>
-              {block.contenu_json.rows.map((row, i) =>
-                <tr key={i}>
-                  {row.map((cell, j) =>
-                  <td key={j}>{cell}</td>
-                  )}
-                </tr>
-                )}
-            </tbody>
-          </table>);
-
-        }
-
-      case 'code':
-        return (
-          <pre key={index}>
-            <code>{block.contenu}</code>
-          </pre>);
-
-
-      case 'separator':
-        return <hr key={index} />;
-
-      case 'embed':
-        // ✅ SÉCURITÉ: Sanitiser le HTML pour prévenir les attaques XSS
-        if (block.contenu) {
-          // Utiliser DOMPurify pour nettoyer le HTML des embeds
-          const sanitizeEmbed = (html: string) => {
-            // Configuration stricte pour les embeds
-            const allowedTags = ['iframe', 'div', 'span'];
-            const allowedAttrs = ['src', 'width', 'height', 'frameborder', 'allow', 'allowfullscreen', 'class', 'title'];
-
-            // Créer un élément temporaire pour parser le HTML
-            const temp = document.createElement('div');
-            temp.innerHTML = html;
-
-            // Vérifier que c'est un iframe de source autorisée
-            const iframe = temp.querySelector('iframe');
-            if (iframe) {
-              const src = iframe.getAttribute('src') || '';
-              const allowedDomains = ['youtube.com', 'youtube-nocookie.com', 'vimeo.com', 'dailymotion.com', 'soundcloud.com'];
-              const isAllowed = allowedDomains.some(domain => src.includes(domain));
-              if (!isAllowed) return '';
-            }
-
-            // Sanitize with DOMPurify
-            return DOMPurify.sanitize(html, {
-              ALLOWED_TAGS: allowedTags,
-              ALLOWED_ATTR: allowedAttrs
-            });
-          };
-
-          const sanitizedContent = sanitizeEmbed(block.contenu);
-          return sanitizedContent ? (
-            <div key={index} className="embed-container"
-              dangerouslySetInnerHTML={{ __html: sanitizedContent }} />
-          ) : null;
-        }
-        return null;
-
-      default:
-        return null;
-    }
-  };
-
-  // Gestion des tags
-  const handleAddTag = async (tag: string) => {
-    const normalizedTag = tag.trim().toLowerCase();
-
-    if (normalizedTag && !formData.tags.includes(normalizedTag)) {
-      // Vérifier si le tag existe déjà (nom est un objet multilingue {fr: '...', ar: '...'})
-      const existingTag = metadata.tags?.find((t: any) => {
-        if (typeof t.nom === 'string') return t.nom.toLowerCase() === normalizedTag;
-        if (typeof t.nom === 'object' && t.nom) {
-          return Object.values(t.nom).some((v: any) => typeof v === 'string' && v.toLowerCase() === normalizedTag);
-        }
-        return false;
-      });
-
-      // Si le tag n'existe pas, le créer
-      if (!existingTag && metadata.tags) {
-        try {
-          const response = await metadataService.createTag({ nom: normalizedTag });
-          if (response.success && response.data) {
-            // Mettre à jour les métadonnées locales
-            metadata.tags.push(response.data);
-          }
-        } catch (error) {
-          console.error('Erreur création tag:', error);
-        }
-      }
-
-      setFormData((prev) => ({ ...prev, tags: [...prev.tags, normalizedTag] }));
-      setNewTag('');
-    }
-  };
-
-  const handleRemoveTag = (tag: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      tags: prev.tags.filter((t) => t !== tag)
-    }));
-  };
-
-  const toggleSection = (section: string) => {
-    setExpandedSections((prev) => ({
-      ...prev,
-      [section]: !prev[section]
-    }));
-  };
-
-  // Handler pour les changements d'intervenants
-  const handleIntervenantsChange = (existants: IntervenantExistant[], nouveaux: NouvelIntervenant[], contributeursList: ContributeurOeuvre[]) => {
-    setIntervenantsExistants(existants);
-    setNouveauxIntervenants(nouveaux);
-    setContributeurs(contributeursList);
-  };
-
-  // Sauvegarde complète
-  const handleSave = async () => {
-    setSaving(true);
-    setError(null);
-
-    try {
-      // Validation — au moins le titre en français (ou une langue) est requis
-      const hasAnyTitre = Object.values(translations).some(t => t.titre?.trim());
-      const hasAnyDescription = Object.values(translations).some(t => t.description?.trim());
-      if (!hasAnyTitre || !hasAnyDescription) {
-        throw new Error('Le titre et la description sont obligatoires (au moins dans une langue)');
-      }
-
-      const hasCategories = formData.type === 'article' ? 4 : 5;
-      const shouldHaveCategories = await metadataService.checkIfTypeHasCategories(hasCategories);
-
-      if (shouldHaveCategories && formData.categories.length === 0) {
-        throw new Error('Veuillez sélectionner au moins une catégorie');
-      }
-
-      // Construire les objets multilingues pour titre et description
-      const buildMultiLang = (field: 'titre' | 'description') => {
-        const obj: Record<string, string> = {};
-        Object.entries(translations).forEach(([lang, vals]) => {
-          if (vals[field]?.trim()) {
-            obj[lang] = vals[field].trim();
-          }
-        });
-        return obj;
-      };
-
-      const titreMultiLang = buildMultiLang('titre');
-      const descriptionMultiLang = buildMultiLang('description');
-
-      // Préparer les données pour la sauvegarde
-      // formData.titre/description restent des strings pour la preview,
-      // mais on envoie les objets multilingues dans le formData transmis au parent
-      const saveFormData = {
-        ...formData,
-        titre: titreMultiLang as any,
-        description: descriptionMultiLang as any,
-      };
-
-      const response: ArticleSaveResponse = {
-        article: {
-          id_oeuvre: articleId ? Number(articleId) : 0,
-          titre: titreMultiLang.fr || Object.values(titreMultiLang)[0] || '',
-          formData: saveFormData,
-          blocks,
-          contributeurs: {
-            existants: intervenantsExistants,
-            nouveaux: nouveauxIntervenants,
-            contributeurs: contributeurs
-          },
-          editeurs
-        }
-      };
-
-      if (onSave) {
-        await onSave(response);
-      } else {
-        // Sauvegarde par défaut
-        console.log('Sauvegarde article:', response);
-        toast({
-          title: t('common.success', 'Succès'),
-          description: t('article.savedSuccess', 'Article sauvegardé avec succès!'),
-        });
-      }
-    } catch (error: any) {
-      console.error('Erreur sauvegarde:', error);
-      setError(error.message || 'Erreur lors de la sauvegarde');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  if (loading) {
+  if (editor.loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
           <p className="text-lg text-muted-foreground">{t("article_articleeditor.chargement")}</p>
         </div>
-      </div>);
-
+      </div>
+    );
   }
 
   return (
@@ -1568,128 +52,108 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({
 
       <div className="container py-8">
         <div className="max-w-5xl mx-auto">
-          {/* En-tête */}
+          {/* Header */}
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center space-x-4">
-              {onBack &&
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onBack}>
-                
+              {onBack && (
+                <Button variant="outline" size="sm" onClick={onBack}>
                   <ArrowLeft className="h-4 w-4 mr-2" />{t("article_articleeditor.retour")}
-
-              </Button>
-              }
+                </Button>
+              )}
               <div>
                 <h1 className="text-3xl font-bold">
                   {articleId ? 'Modifier l\'article' : 'Créer un article'}
                 </h1>
                 <p className="text-muted-foreground mt-1">
-                  {formData.type === 'article_scientifique' ? 'Article scientifique' : 'Article'}
+                  {editor.formData.type === 'article_scientifique' ? 'Article scientifique' : 'Article'}
                 </p>
               </div>
             </div>
             <div className="flex space-x-2">
-              <Button
-                variant="outline"
-                onClick={() => setActiveTab(activeTab === 'preview' ? 'content' : 'preview')}>
-                
+              <Button variant="outline" onClick={() => editor.setActiveTab(editor.activeTab === 'preview' ? 'content' : 'preview')}>
                 <Eye className="h-4 w-4 mr-2" />
-                {activeTab === 'preview' ? 'Éditer' : 'Aperçu'}
+                {editor.activeTab === 'preview' ? 'Éditer' : 'Aperçu'}
               </Button>
-              <Button
-                onClick={handleSave}
-                disabled={saving}>
-                
-                {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              <Button onClick={editor.handleSave} disabled={editor.saving}>
+                {editor.saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                 <Save className="h-4 w-4 mr-2" />{t("article_articleeditor.sauvegarder")}
-
               </Button>
             </div>
           </div>
 
-          {error &&
-          <Alert variant="destructive" className="mb-6">
+          {editor.error && (
+            <Alert variant="destructive" className="mb-6">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription>{editor.error}</AlertDescription>
             </Alert>
-          }
+          )}
 
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <Tabs value={editor.activeTab} onValueChange={editor.setActiveTab}>
             <TabsList className="mb-6">
               <TabsTrigger value="content">{t("article_articleeditor.contenu")}</TabsTrigger>
               <TabsTrigger value="metadata">{t("article_articleeditor.mtadonnes")}</TabsTrigger>
               <TabsTrigger value="preview">{t("article_articleeditor.aperu")}</TabsTrigger>
             </TabsList>
 
-            {/* Onglet Contenu */}
+            {/* Tab: Content */}
             <TabsContent value="content" className="space-y-6">
-              {/* Informations de base */}
               <Card>
                 <CardHeader>
                   <CardTitle>{t("article_articleeditor.informations_principales")}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {/* Sélecteur de langue d'édition */}
+                  {/* Language selector */}
                   <div className="flex items-center gap-2 pb-2 border-b">
                     <Label className="text-sm text-muted-foreground">{t("article_articleeditor.langue", "Langue")} :</Label>
                     <div className="flex gap-1">
-                      {[
-                        { code: 'fr', label: 'Français' },
-                        { code: 'ar', label: 'العربية' },
-                        { code: 'en', label: 'English' },
-                        { code: 'tz-ltn', label: 'Tamazight (Latin)' },
-                        { code: 'tz-tfng', label: 'ⵜⴰⵎⴰⵣⵉⵖⵜ' },
-                      ].map((lang) => (
+                      {LANG_OPTIONS.map((lang) => (
                         <Button
                           key={lang.code}
                           type="button"
                           size="sm"
-                          variant={editLang === lang.code ? 'default' : 'outline'}
-                          onClick={() => setEditLang(lang.code)}
+                          variant={editor.editLang === lang.code ? 'default' : 'outline'}
+                          onClick={() => editor.setEditLang(lang.code)}
                           className="text-xs px-2 py-1 h-7">
                           {lang.label}
-                          {translations[lang.code]?.titre ? ' ✓' : ''}
+                          {editor.translations[lang.code]?.titre ? ' ✓' : ''}
                         </Button>
                       ))}
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="titre">{t("article_articleeditor.titre_3")} ({editLang.toUpperCase()})</Label>
+                    <Label htmlFor="titre">{t("article_articleeditor.titre_3")} ({editor.editLang.toUpperCase()})</Label>
                     <Input
                       id="titre"
-                      dir={editLang === 'ar' ? 'rtl' : 'ltr'}
-                      value={translations[editLang]?.titre || ''}
+                      dir={editor.editLang === 'ar' ? 'rtl' : 'ltr'}
+                      value={editor.translations[editor.editLang]?.titre || ''}
                       onChange={(e) => {
                         const val = e.target.value;
-                        setTranslations(prev => ({
+                        editor.setTranslations(prev => ({
                           ...prev,
-                          [editLang]: { ...prev[editLang], titre: val }
+                          [editor.editLang]: { ...prev[editor.editLang], titre: val }
                         }));
-                        // Sync formData.titre with the primary language (fr) or current
-                        if (editLang === 'fr' || !translations.fr?.titre) {
-                          setFormData(prev => ({ ...prev, titre: val }));
+                        if (editor.editLang === 'fr' || !editor.translations.fr?.titre) {
+                          editor.setFormData(prev => ({ ...prev, titre: val }));
                         }
                       }}
                       placeholder={t("article_articleeditor.placeholder_titre_larticle")} />
                   </div>
-                  
+
                   <div className="space-y-2">
-                    <Label htmlFor="description">{t("article_articleeditor.description_chapeau")} ({editLang.toUpperCase()})</Label>
+                    <Label htmlFor="description">{t("article_articleeditor.description_chapeau")} ({editor.editLang.toUpperCase()})</Label>
                     <Textarea
                       id="description"
-                      dir={editLang === 'ar' ? 'rtl' : 'ltr'}
-                      value={translations[editLang]?.description || ''}
+                      dir={editor.editLang === 'ar' ? 'rtl' : 'ltr'}
+                      value={editor.translations[editor.editLang]?.description || ''}
                       onChange={(e) => {
                         const val = e.target.value;
-                        setTranslations(prev => ({
+                        editor.setTranslations(prev => ({
                           ...prev,
-                          [editLang]: { ...prev[editLang], description: val }
+                          [editor.editLang]: { ...prev[editor.editLang], description: val }
                         }));
-                        if (editLang === 'fr' || !translations.fr?.description) {
-                          setFormData(prev => ({ ...prev, description: val }));
+                        if (editor.editLang === 'fr' || !editor.translations.fr?.description) {
+                          editor.setFormData(prev => ({ ...prev, description: val }));
                         }
                       }}
                       placeholder={t("article_articleeditor.placeholder_rsum_introduction_larticle")}
@@ -1698,58 +162,50 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({
                 </CardContent>
               </Card>
 
-              {/* Blocs de contenu */}
+              {/* Blocks */}
               <Card>
                 <CardHeader>
                   <CardTitle>{t("article_articleeditor.contenu_larticle")}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {blocks.length === 0 &&
-                  <div className="text-center py-8 text-muted-foreground">
+                  {editor.blocks.length === 0 && (
+                    <div className="text-center py-8 text-muted-foreground">
                       <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
                       <p>{t("article_articleeditor.aucun_contenu_pour")}</p>
                       <p className="text-sm">{t("article_articleeditor.ajoutez_des_blocs")}</p>
                     </div>
-                  }
+                  )}
 
                   <div className="space-y-1">
-                    {/* Bouton d'insertion avant le premier bloc */}
-                    {blocks.length > 0 && <InsertBlockBar insertAt={0} onInsert={addBlock} />}
-                    {blocks.map((block, index) =>
-                      <React.Fragment key={(block as any)._uid || `block-${block.id_block || index}-${blocks.length}`}>
+                    {editor.blocks.length > 0 && <InsertBlockBar insertAt={0} onInsert={editor.addBlock} />}
+                    {editor.blocks.map((block, index) => (
+                      <React.Fragment key={(block as any)._uid || `block-${block.id_block || index}-${editor.blocks.length}`}>
                         <ArticleBlockEditor
                           block={block}
                           index={index}
-                          onUpdate={updateBlock}
-                          onDelete={deleteBlock}
-                          onMoveUp={() => moveBlock(index, 'up')}
-                          onMoveDown={() => moveBlock(index, 'down')}
-                          onDuplicate={() => duplicateBlock(index)}
+                          onUpdate={editor.updateBlock}
+                          onDelete={editor.deleteBlock}
+                          onMoveUp={() => editor.moveBlock(index, 'up')}
+                          onMoveDown={() => editor.moveBlock(index, 'down')}
+                          onDuplicate={() => editor.duplicateBlock(index)}
                           canMoveUp={index > 0}
-                          canMoveDown={index < blocks.length - 1} />
-                        {/* Bouton d'insertion après chaque bloc */}
-                        <InsertBlockBar insertAt={index + 1} onInsert={addBlock} />
+                          canMoveDown={index < editor.blocks.length - 1} />
+                        <InsertBlockBar insertAt={index + 1} onInsert={editor.addBlock} />
                       </React.Fragment>
-                    )}
+                    ))}
                   </div>
-                  
-                  {/* Boutons d'ajout de blocs */}
+
                   <div className="pt-4 border-t">
                     <p className="text-sm text-muted-foreground mb-3">{t("article_articleeditor.ajouter_bloc")}</p>
                     <div className="flex flex-wrap gap-2">
                       {BLOCK_TEMPLATES.map((template) => {
                         const Icon = BLOCK_ICONS[template.icon];
                         return (
-                          <Button
-                            key={template.id}
-                            variant="outline"
-                            size="sm"
-                            onClick={() => addBlock(template.type_block)}>
-                            
+                          <Button key={template.id} variant="outline" size="sm" onClick={() => editor.addBlock(template.type_block)}>
                             {Icon && <Icon className="h-4 w-4 mr-2" />}
                             {template.name}
-                          </Button>);
-
+                          </Button>
+                        );
                       })}
                     </div>
                   </div>
@@ -1757,421 +213,39 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({
               </Card>
             </TabsContent>
 
-            {/* Onglet Métadonnées */}
-            <TabsContent value="metadata" className="space-y-6">
-              {/* Informations de base */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>{t("article_articleeditor.informations_base")}</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="id_langue">{t("article_articleeditor.langue")}</Label>
-                      <Select
-                        value={formData.id_langue.toString()}
-                        onValueChange={(value) => setFormData({ ...formData, id_langue: parseInt(value) })}>
-                        
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {metadata.langues?.map((langue: any) =>
-                          <SelectItem key={langue.id_langue} value={langue.id_langue.toString()}>
-                              {langue.nom}
-                            </SelectItem>
-                          )}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="annee_creation">{t("article_articleeditor.anne_cration")}</Label>
-                      <Input
-                        id="annee_creation"
-                        type="number"
-                        value={formData.annee_creation || new Date().getFullYear()}
-                        onChange={(e) => setFormData({
-                          ...formData,
-                          annee_creation: parseInt(e.target.value) || undefined
-                        })} />
-                      
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Catégories avec toggle */}
-              <Card>
-                <CardHeader
-                  className="cursor-pointer"
-                  onClick={() => toggleSection('categories')}>
-                  
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2">{t("article_articleeditor.catgories")}
-
-                      {formData.categories.length > 0 &&
-                      <Badge variant="secondary">{formData.categories.length}</Badge>
-                      }
-                    </CardTitle>
-                    <ChevronDown
-                      className={`h-4 w-4 transition-transform ${
-                      expandedSections.categories ? 'rotate-180' : ''}`
-                      } />
-                    
-                  </div>
-                </CardHeader>
-                {expandedSections.categories &&
-                <CardContent>
-                    <CategorySelection
-                    typeOeuvreId={formData.type === 'article_scientifique' ? 5 : 4}
-                    selectedCategories={formData.categories}
-                    onCategoriesChange={(categories) =>
-                    setFormData({ ...formData, categories })
-                    } />
-                  
-                  </CardContent>
-                }
-              </Card>
-
-              {/* Contributeurs et éditeurs */}
-              <Card>
-                <CardHeader
-                  className="cursor-pointer"
-                  onClick={() => toggleSection('contributeurs')}>
-                  
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2">{t("article_articleeditor.contributeurs_diteurs")}
-
-                      {contributeurs.length + nouveauxIntervenants.length + editeurs.length > 0 &&
-                      <Badge variant="secondary">
-                          {contributeurs.length + nouveauxIntervenants.length + editeurs.length}
-                        </Badge>
-                      }
-                    </CardTitle>
-                    <ChevronDown
-                      className={`h-4 w-4 transition-transform ${
-                      expandedSections.contributeurs ? 'rotate-180' : ''}`
-                      } />
-                    
-                  </div>
-                </CardHeader>
-                {expandedSections.contributeurs && metadata.types_users && metadata.editeurs &&
-                <CardContent>
-                    <IntervenantEditeurManager
-                    typeOeuvreId={formData.type === 'article_scientifique' ? 5 : 4}
-                    typesUsers={metadata.types_users}
-                    editeurs={metadata.editeurs}
-                    onIntervenantsChange={handleIntervenantsChange}
-                    onEditeursChange={setEditeurs} />
-                  
-                  </CardContent>
-                }
-              </Card>
-
-              {/* Tags */}
-              <Card>
-                <CardHeader
-                  className="cursor-pointer"
-                  onClick={() => toggleSection('tags')}>
-                  
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2">{t("article_articleeditor.tags")}
-
-                      {formData.tags.length > 0 &&
-                      <Badge variant="secondary">{formData.tags.length}</Badge>
-                      }
-                    </CardTitle>
-                    <ChevronDown
-                      className={`h-4 w-4 transition-transform ${
-                      expandedSections.tags ? 'rotate-180' : ''}`
-                      } />
-                    
-                  </div>
-                </CardHeader>
-                {expandedSections.tags &&
-                <CardContent className="space-y-4">
-                    <div className="flex flex-wrap gap-2 mb-2">
-                      {formData.tags.map((tag) =>
-                    <Badge key={tag} variant="secondary">
-                          {tag}
-                          <button
-                        type="button"
-                        onClick={() => handleRemoveTag(tag)}
-                        className="ml-1 hover:text-destructive">
-                        
-                            <X className="h-3 w-3" />
-                          </button>
-                        </Badge>
-                    )}
-                    </div>
-                    <div className="flex gap-2">
-                      <Input
-                      placeholder={t("article_articleeditor.placeholder_ajouter_tag")}
-                      value={newTag}
-                      onChange={(e) => setNewTag(e.target.value)}
-                      onKeyPress={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          handleAddTag(newTag);
-                        }
-                      }} />
-                    
-                      <Button
-                      type="button"
-                      size="sm"
-                      onClick={() => handleAddTag(newTag)}
-                      disabled={!newTag}>
-                      
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                }
-              </Card>
-
-              {/* Champs spécifiques selon le type */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>{t("article_articleeditor.informations_spcifiques")}
-                    {formData.type === 'article_scientifique' ? 'Article Scientifique' : 'Article'}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {formData.type === 'article' ?
-                  // Champs pour Article standard
-                  <>
-                      <div className="grid md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="auteur">{t("article_articleeditor.auteur")}</Label>
-                          <Input
-                          id="auteur"
-                          value={formData.auteur || ''}
-                          onChange={(e) => setFormData({ ...formData, auteur: e.target.value })}
-                          placeholder={t("article_articleeditor.placeholder_nom_lauteur")} />
-                        
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="source">{t("article_articleeditor.source")}</Label>
-                          <Input
-                          id="source"
-                          value={formData.source || ''}
-                          onChange={(e) => setFormData({ ...formData, source: e.target.value })}
-                          placeholder={t("article_articleeditor.placeholder_publication_source")} />
-                        
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="sous_titre">{t("article_articleeditor.soustitre")}</Label>
-                        <Input
-                        id="sous_titre"
-                        value={formData.sous_titre || ''}
-                        onChange={(e) => setFormData({ ...formData, sous_titre: e.target.value })}
-                        placeholder={t("article_articleeditor.placeholder_soustitre_larticle")} />
-                      
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="url_source">{t("article_articleeditor.url_source")}</Label>
-                        <Input
-                        id="url_source"
-                        type="url"
-                        value={formData.url_source || ''}
-                        onChange={(e) => setFormData({ ...formData, url_source: e.target.value })}
-                        placeholder="https://..." />
-                      
-                      </div>
-                    </> :
-
-                  // Champs pour Article Scientifique
-                  <>
-                      <div className="grid md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="journal">{t("article_articleeditor.journal")}</Label>
-                          <Input
-                          id="journal"
-                          value={formData.journal || ''}
-                          onChange={(e) => setFormData({ ...formData, journal: e.target.value })}
-                          placeholder={t("article_articleeditor.placeholder_nom_journal")} />
-                        
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="doi">{t("article_articleeditor.doi")}</Label>
-                          <Input
-                          id="doi"
-                          value={formData.doi || ''}
-                          onChange={(e) => setFormData({ ...formData, doi: e.target.value })}
-                          placeholder={t("article_articleeditor.placeholder_101234example")} />
-                        
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="volume">{t("article_articleeditor.volume")}</Label>
-                          <Input
-                          id="volume"
-                          value={formData.volume || ''}
-                          onChange={(e) => setFormData({ ...formData, volume: e.target.value })}
-                          placeholder={t("article_articleeditor.placeholder_ex_12")} />
-                        
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="numero">{t("article_articleeditor.numro")}</Label>
-                          <Input
-                          id="numero"
-                          value={formData.numero || ''}
-                          onChange={(e) => setFormData({ ...formData, numero: e.target.value })}
-                          placeholder={t("article_articleeditor.placeholder_ex_3")} />
-                        
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="pages">{t("article_articleeditor.pages")}</Label>
-                          <Input
-                          id="pages"
-                          value={formData.pages || ''}
-                          onChange={(e) => setFormData({ ...formData, pages: e.target.value })}
-                          placeholder={t("article_articleeditor.placeholder_123145")} />
-                        
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="issn">{t("article_articleeditor.issn")}</Label>
-                          <Input
-                          id="issn"
-                          value={formData.issn || ''}
-                          onChange={(e) => setFormData({ ...formData, issn: e.target.value })}
-                          placeholder={t("article_articleeditor.placeholder_xxxxxxxx")} />
-                        
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="impact_factor">{t("article_articleeditor.impact_factor")}</Label>
-                          <Input
-                          id="impact_factor"
-                          type="number"
-                          step="0.01"
-                          value={formData.impact_factor || ''}
-                          onChange={(e) => setFormData({
-                            ...formData,
-                            impact_factor: parseFloat(e.target.value) || undefined
-                          })}
-                          placeholder={t("article_articleeditor.placeholder_375")} />
-                        
-                        </div>
-                        <div className="space-y-2 flex items-center">
-                          <Checkbox
-                          id="peer_reviewed"
-                          checked={formData.peer_reviewed || false}
-                          onCheckedChange={(checked) =>
-                          setFormData({ ...formData, peer_reviewed: checked === true })
-                          } />
-                        
-                          <Label htmlFor="peer_reviewed" className="ml-2">{t("article_articleeditor.article_valu_par")}
-
-                        </Label>
-                        </div>
-                      </div>
-                    </>
-                  }
-                </CardContent>
-              </Card>
+            {/* Tab: Metadata */}
+            <TabsContent value="metadata">
+              <ArticleMetadataTab
+                formData={editor.formData}
+                setFormData={editor.setFormData}
+                metadata={editor.metadata}
+                expandedSections={editor.expandedSections}
+                toggleSection={editor.toggleSection}
+                contributeurs={editor.contributeurs}
+                nouveauxIntervenants={editor.nouveauxIntervenants}
+                editeurs={editor.editeurs}
+                setEditeurs={editor.setEditeurs}
+                handleIntervenantsChange={editor.handleIntervenantsChange}
+                newTag={editor.newTag}
+                setNewTag={editor.setNewTag}
+                handleAddTag={editor.handleAddTag}
+                handleRemoveTag={editor.handleRemoveTag} />
             </TabsContent>
 
-            {/* Onglet Aperçu */}
+            {/* Tab: Preview */}
             <TabsContent value="preview">
-              <Card>
-                <CardContent className="p-8">
-                  <article className="article-preview max-w-3xl mx-auto">
-                    {formData.type === 'article_scientifique' ? (
-                      <>
-                        {/* Journal banner */}
-                        {formData.journal && (
-                          <div className="journal-banner">
-                            <span className="journal-name">{formData.journal}</span>
-                            <span className="journal-details">
-                              {formData.volume ? `Vol. ${formData.volume}` : ''}
-                              {formData.numero ? `, N° ${formData.numero}` : ''}
-                              {formData.pages ? ` — pp. ${formData.pages}` : ''}
-                              {formData.annee_creation ? ` (${formData.annee_creation})` : ''}
-                            </span>
-                          </div>
-                        )}
-
-                        <div className={formData.journal ? 'paper' : ''}>
-                          {/* Title */}
-                          <div className="scientific-header">
-                            <h1>{formData.titre || 'Sans titre'}</h1>
-                          </div>
-
-                          {/* Authors */}
-                          {(contributeurs.length > 0 || intervenantsExistants.length > 0 || nouveauxIntervenants.length > 0) && (
-                            <div className="scientific-authors">
-                              {[
-                                ...nouveauxIntervenants.map((ni) => `${ni.prenom || ''} ${ni.nom || ''}`.trim()),
-                                ...contributeurs.map((_c, i) => `Contributeur ${i + 1}`),
-                                ...intervenantsExistants.map((_ie, i) => `Intervenant ${i + 1}`)
-                              ].filter(Boolean).join(', ')}
-                            </div>
-                          )}
-
-                          {formData.annee_creation && (
-                            <div className="scientific-affiliation">
-                              {formData.annee_creation}
-                            </div>
-                          )}
-
-                          {/* Badges: DOI, Peer-reviewed, ISSN, IF */}
-                          {(formData.doi || formData.peer_reviewed || formData.issn || formData.impact_factor) && (
-                            <div className="scientific-badges">
-                              {formData.doi && (
-                                <span className="sci-badge doi">
-                                  <a href={`https://doi.org/${formData.doi}`} target="_blank" rel="noopener noreferrer">DOI: {formData.doi}</a>
-                                </span>
-                              )}
-                              {formData.peer_reviewed && (
-                                <span className="sci-badge peer">✓ Peer-reviewed</span>
-                              )}
-                              {formData.issn && (
-                                <span className="sci-badge issn">ISSN: {formData.issn}</span>
-                              )}
-                              {formData.impact_factor && (
-                                <span className="sci-badge if-badge">IF: {formData.impact_factor}</span>
-                              )}
-                            </div>
-                          )}
-
-                          {/* Abstract */}
-                          {formData.description && (
-                            <div className="scientific-abstract">
-                              <h3>Abstract / Résumé</h3>
-                              <p>{formData.description}</p>
-                            </div>
-                          )}
-
-                          {/* Two-column body */}
-                          <div className="scientific-body">
-                            {blocks.map((block, index) => renderPreviewBlock(block, index))}
-                          </div>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <h1>{formData.titre || 'Sans titre'}</h1>
-                        {formData.sous_titre && (
-                          <p className="lead text-xl text-gray-600 mb-4">
-                            {formData.sous_titre}
-                          </p>
-                        )}
-                        <p className="lead text-lg text-gray-600 mb-6">
-                          {formData.description}
-                        </p>
-                        {blocks.map((block, index) => renderPreviewBlock(block, index))}
-                      </>
-                    )}
-                  </article>
-                </CardContent>
-              </Card>
+              <ArticlePreview
+                formData={editor.formData}
+                blocks={editor.blocks}
+                contributeurs={editor.contributeurs}
+                intervenantsExistants={editor.intervenantsExistants}
+                nouveauxIntervenants={editor.nouveauxIntervenants} />
             </TabsContent>
           </Tabs>
         </div>
       </div>
-    </div>);
-
+    </div>
+  );
 };
 
 export default ArticleEditor;

@@ -7,7 +7,7 @@ const { body } = require('express-validator');
 
 const initFavoriRoutes = (models) => {
   const authMiddleware = createAuthMiddleware(models);
-  const favoriController = new FavoriController(models);
+  const favoriController = new FavoriController();
 
   // Validation pour l'ajout de favoris
   const addFavoriValidation = [

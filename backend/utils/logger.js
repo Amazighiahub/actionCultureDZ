@@ -36,9 +36,10 @@ const fileFormat = format.combine(
 
 // Transports
 const loggerTransports = [
-  // Console - toujours actif
+  // Console - warn+ en production, debug en dev
   new transports.Console({
     format: consoleFormat,
+    level: env === 'production' ? 'warn' : 'debug',
     stderrLevels: ['error']
   })
 ];

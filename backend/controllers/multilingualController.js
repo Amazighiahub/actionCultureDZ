@@ -1,9 +1,11 @@
 // controllers/MultilingualController.js
-// Contrôleur pour gérer les opérations multilingues
 
-class MultilingualController {
-  constructor(models) {
-    this.models = models;
+const BaseController = require('./baseController');
+const container = require('../services/serviceContainer');
+
+class MultilingualController extends BaseController {
+  get multilingualService() {
+    return container.multilingualService;
   }
 
   /**
@@ -14,154 +16,60 @@ class MultilingualController {
       const { model, id, field } = req.params;
       const { language = 'fr' } = req.query;
 
-      // Valider le modèle
-      const validModels = ['Oeuvre', 'Evenement', 'Programme', 'Lieu', 'Artisanat'];
-      if (!validModels.includes(model)) {
-        return res.status(400).json({
-          success: false,
-          error: req.t('common.badRequest')
-        });
+      const result = await this.multilingualService.getTranslations(model, id, field, language);
+
+      if (result.error === 'invalidModel' || result.error === 'invalidField') {
+        return res.status(400).json({ success: false, error: req.t('common.badRequest') });
+      }
+      if (result.error === 'notFound') {
+        return res.status(404).json({ success: false, error: req.t('common.notFound') });
       }
 
-      // Valider le champ (seuls les champs multilingues sont autorisés)
-      const validFields = ['nom', 'titre', 'description', 'histoire', 'adresse', 'biographie', 'nom_evenement', 'lieu_specifique', 'materiel_requis', 'notes_organisateur'];
-      if (!validFields.includes(field)) {
-        return res.status(400).json({
-          success: false,
-          error: req.t('common.badRequest')
-        });
-      }
-
-      // Récupérer l'instance
-      const Model = this.models[model];
-      const instance = await Model.findByPk(id);
-
-      if (!instance) {
-        return res.status(404).json({
-          success: false,
-          error: req.t('common.notFound')
-        });
-      }
-
-      // Obtenir la traduction
-      const fieldValue = instance[field];
-      let translation = '';
-
-      if (fieldValue && typeof fieldValue === 'object') {
-        translation = fieldValue[language] || fieldValue.fr || fieldValue.ar || fieldValue.en || '';
-      } else if (typeof fieldValue === 'string') {
-        translation = fieldValue;
-      }
-
-      res.json({
-        success: true,
-        data: {
-          id,
-          model,
-          field,
-          language,
-          translation,
-          allTranslations: fieldValue
-        }
-      });
+      this._sendSuccess(res, result.data);
     } catch (error) {
-      console.error('Erreur getTranslations:', error);
-      res.status(500).json({
-        success: false,
-        error: req.t('common.serverError')
-      });
+      this._handleError(res, error);
     }
   }
 
   /**
-   * Mettre à jour les traductions d'un champ multilingue
+   * Mettre a jour les traductions d'un champ multilingue
    */
   async updateTranslations(req, res) {
     try {
       const { model, id, field } = req.params;
       const { translations } = req.body;
 
-      // Valider les traductions
-      if (!translations || typeof translations !== 'object') {
-        return res.status(400).json({
-          success: false,
-          error: req.t('common.badRequest')
-        });
+      const result = await this.multilingualService.updateTranslations(model, id, field, translations);
+
+      if (result.error === 'badRequest' || result.error === 'invalidModel' || result.error === 'invalidField') {
+        return res.status(400).json({ success: false, error: req.t('common.badRequest') });
+      }
+      if (result.error === 'notFound') {
+        return res.status(404).json({ success: false, error: req.t('common.notFound') });
       }
 
-      // Valider le modèle
-      const validModels = ['Oeuvre', 'Evenement', 'Programme', 'Lieu', 'Artisanat'];
-      if (!validModels.includes(model)) {
-        return res.status(400).json({
-          success: false,
-          error: req.t('common.badRequest')
-        });
-      }
-
-      // Valider le champ (seuls les champs multilingues sont autorisés)
-      const validFields = ['nom', 'titre', 'description', 'histoire', 'adresse', 'biographie', 'nom_evenement', 'lieu_specifique', 'materiel_requis', 'notes_organisateur'];
-      if (!validFields.includes(field)) {
-        return res.status(400).json({
-          success: false,
-          error: req.t('common.badRequest')
-        });
-      }
-
-      // Récupérer l'instance
-      const Model = this.models[model];
-      const instance = await Model.findByPk(id);
-
-      if (!instance) {
-        return res.status(404).json({
-          success: false,
-          error: req.t('common.notFound')
-        });
-      }
-
-      // Mettre à jour le champ
-      await instance.update({ [field]: translations });
-
-      res.json({
-        success: true,
-        data: {
-          id,
-          model,
-          field,
-          translations
-        }
-      });
+      this._sendSuccess(res, result.data);
     } catch (error) {
-      console.error('Erreur updateTranslations:', error);
-      res.status(500).json({
-        success: false,
-        error: req.t('common.serverError')
-      });
+      this._handleError(res, error);
     }
   }
 
   /**
-   * Obtenir toutes les langues supportées
+   * Obtenir toutes les langues supportees
    */
   async getSupportedLanguages(req, res) {
     try {
       const { getLanguagesInfo } = require('../middlewares/language');
       const languages = getLanguagesInfo();
 
-      res.json({
-        success: true,
-        data: languages
-      });
+      this._sendSuccess(res, languages);
     } catch (error) {
-      console.error('Erreur getSupportedLanguages:', error);
-      res.status(500).json({
-        success: false,
-        error: req.t('common.serverError')
-      });
+      this._handleError(res, error);
     }
   }
 
   /**
-   * Valider et normaliser les données multilingues
+   * Valider et normaliser les donnees multilingues
    */
   validateMultilingualData(data, requiredFields = []) {
     const errors = [];
@@ -176,10 +84,8 @@ class MultilingualController {
       }
 
       if (typeof value === 'string') {
-        // Convertir string en objet multilingue
         validatedData[field] = { fr: value };
       } else if (typeof value === 'object') {
-        // Valider que c'est un objet multilingue valide
         const hasRequiredLang = value.fr || value.ar || value.en;
         if (!hasRequiredLang) {
           errors.push(`Le champ ${field} doit contenir au moins une traduction (fr, ar, ou en)`);
@@ -191,48 +97,32 @@ class MultilingualController {
       }
     }
 
-    return {
-      isValid: errors.length === 0,
-      errors,
-      validatedData
-    };
+    return { isValid: errors.length === 0, errors, validatedData };
   }
 
   /**
-   * Extraire la traduction dans la langue demandée
+   * Extraire la traduction dans la langue demandee
    */
   extractTranslation(multilingualField, language = 'fr') {
     if (!multilingualField) return '';
-    
-    if (typeof multilingualField === 'string') {
-      return multilingualField;
-    }
-
+    if (typeof multilingualField === 'string') return multilingualField;
     if (typeof multilingualField === 'object') {
-      return multilingualField[language] || 
-             multilingualField.fr || 
-             multilingualField.ar || 
-             multilingualField.en || 
-             multilingualField['tz-ltn'] || 
-             multilingualField['tz-tfng'] || 
+      return multilingualField[language] ||
+             multilingualField.fr ||
+             multilingualField.ar ||
+             multilingualField.en ||
+             multilingualField['tz-ltn'] ||
+             multilingualField['tz-tfng'] ||
              '';
     }
-
     return '';
   }
 
   /**
-   * Créer un objet multilingue à partir d'une chaîne
+   * Creer un objet multilingue a partir d'une chaine
    */
   createMultilingualField(text, targetLanguage = 'fr') {
-    const multilingual = {
-      fr: '',
-      ar: '',
-      en: '',
-      'tz-ltn': '',
-      'tz-tfng': ''
-    };
-
+    const multilingual = { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' };
     multilingual[targetLanguage] = text;
     return multilingual;
   }

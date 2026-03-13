@@ -9,6 +9,7 @@ const ArtisanatDTO = require('../../dto/artisanat/artisanatDTO');
 class ArtisanatService extends BaseService {
   constructor(artisanatRepository, options = {}) {
     super(artisanatRepository, options);
+    this.repositories = options.repositories || {};
   }
 
   // ============================================================================
@@ -136,6 +137,19 @@ class ArtisanatService extends BaseService {
    */
   async getStats() {
     return this.repository.getStats();
+  }
+
+  /**
+   * Artisans (non-visiteurs) d'une wilaya donnée
+   * @param {number} wilayaId
+   * @returns {Promise<Array>}
+   */
+  async getArtisansByRegion(wilayaId) {
+    const userRepo = this.repositories.user;
+    if (!userRepo) {
+      throw this._validationError('UserRepository non disponible');
+    }
+    return userRepo.findArtisansByWilaya(wilayaId);
   }
 }
 

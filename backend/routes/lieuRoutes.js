@@ -11,7 +11,7 @@ const { validateLanguage } = require('../middlewares/language');
 
 const initLieuRoutes = (models) => {
   const authMiddleware = createAuthMiddleware(models);
-  const lieuController = new LieuController(models);
+  const lieuController = new LieuController();
 
   // ⚡ Validation acceptant string OU JSON pour les champs multilingues
   const createLieuValidation = [

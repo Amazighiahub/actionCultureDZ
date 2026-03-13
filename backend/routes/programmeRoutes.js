@@ -11,7 +11,7 @@ const { validateLanguage } = require('../middlewares/language');
 
 const initProgrammeRoutes = (models) => {
   const authMiddleware = createAuthMiddleware(models);
-  const programmeController = new ProgrammeController(models);
+  const programmeController = new ProgrammeController();
 
   // ========================================================================
   // VALIDATIONS - ⚡ Acceptant string OU JSON
