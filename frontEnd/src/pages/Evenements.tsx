@@ -57,6 +57,14 @@ const STATUS_OPTIONS = [
   { value: 'termine', label: 'Terminé' }
 ];
 
+// Fonction utilitaire hors composant — pas recréée à chaque render
+const formatEventDate = (date: string) =>
+  new Date(date).toLocaleDateString('fr-FR', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric'
+  });
+
 // Composant carte d'événement
 interface EventCardProps {
   event: any;
@@ -65,18 +73,10 @@ interface EventCardProps {
 
 const EventCard: React.FC<EventCardProps> = React.memo(({ event, onView }) => {
   const { t } = useTranslation();
-  
-  const capacityPercentage = event.capacite_max 
+
+  const capacityPercentage = event.capacite_max
     ? Math.round((event.nombre_inscrits || 0) / event.capacite_max * 100)
     : 0;
-
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString('fr-FR', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric'
-    });
-  };
 
   return (
     <Card 
@@ -131,9 +131,9 @@ const EventCard: React.FC<EventCardProps> = React.memo(({ event, onView }) => {
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 flex-shrink-0" />
               <span>
-                {formatDate(event.date_debut)}
+                {formatEventDate(event.date_debut)}
                 {event.date_fin && event.date_fin !== event.date_debut && (
-                  <> - {formatDate(event.date_fin)}</>
+                  <> - {formatEventDate(event.date_fin)}</>
                 )}
               </span>
             </div>
