@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Header from '@/components/Header';
@@ -26,6 +26,14 @@ const ResetPassword = () => {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
   const [errors, setErrors] = useState<{ password?: string; confirmPassword?: string }>({});
+  const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Cleanup redirect timer on unmount
+  useEffect(() => {
+    return () => {
+      if (redirectTimerRef.current) clearTimeout(redirectTimerRef.current);
+    };
+  }, []);
 
   const validateForm = (): boolean => {
     const newErrors: { password?: string; confirmPassword?: string } = {};
@@ -74,7 +82,7 @@ const ResetPassword = () => {
         });
 
         // Rediriger vers la page de connexion après 3 secondes
-        setTimeout(() => {
+        redirectTimerRef.current = setTimeout(() => {
           navigate('/auth');
         }, 3000);
       } else {

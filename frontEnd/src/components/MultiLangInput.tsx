@@ -1,7 +1,7 @@
 // components/MultiLangInput.tsx
 // ⚡ Composant de saisie multilingue pour les formulaires
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 // Import dynamique pour éviter les erreurs de chargement
@@ -80,6 +80,7 @@ export const MultiLangInput: React.FC<MultiLangInputProps> = ({
 }) => {
   const { t } = useTranslation();
   const [activeLang, setActiveLang] = useState<string>('fr');
+  const keyboardHelpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Gérer le changement de valeur pour une langue
   const handleChange = useCallback((langCode: string, newValue: string) => {
@@ -126,19 +127,26 @@ export const MultiLangInput: React.FC<MultiLangInputProps> = ({
     return () => clearTimeout(timer);
   }, []);
 
+  // Cleanup keyboard help timer on unmount
+  useEffect(() => {
+    return () => {
+      if (keyboardHelpTimerRef.current) clearTimeout(keyboardHelpTimerRef.current);
+    };
+  }, []);
+
   // Gérer le changement de langue active avec adaptation du clavier
   const handleLanguageChange = useCallback((langCode: string) => {
     setActiveLang(langCode);
-    
+
     // Afficher l'aide pour le tamazight si nécessaire
-    if (langCode === 'tz-tfng' && !keyboardStatus.tifinagh) {
+    if (
+      (langCode === 'tz-tfng' && !keyboardStatus.tifinagh) ||
+      (langCode === 'tz-ltn' && !keyboardStatus.latin)
+    ) {
+      // Clear previous timer to avoid stacking
+      if (keyboardHelpTimerRef.current) clearTimeout(keyboardHelpTimerRef.current);
       setShowKeyboardHelp(true);
-      // Masquer l'aide après 5 secondes
-      setTimeout(() => setShowKeyboardHelp(false), 5000);
-    } else if (langCode === 'tz-ltn' && !keyboardStatus.latin) {
-      setShowKeyboardHelp(true);
-      // Masquer l'aide après 5 secondes
-      setTimeout(() => setShowKeyboardHelp(false), 5000);
+      keyboardHelpTimerRef.current = setTimeout(() => setShowKeyboardHelp(false), 5000);
     }
   }, [keyboardStatus]);
 

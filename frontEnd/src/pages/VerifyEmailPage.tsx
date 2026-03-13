@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { authService } from '@/services/auth.service';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -15,8 +15,9 @@ const VerifyEmailPage = () => {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('Vérification de votre compte en cours...');const { t } = useTranslation();
 
+  const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
-    // S'exécute une seule fois au chargement de la page
     if (!token) {
       setStatus('error');
       setMessage("Aucun jeton de vérification n'a été fourni.");
@@ -31,8 +32,7 @@ const VerifyEmailPage = () => {
           setStatus('success');
           setMessage('Votre compte a été vérifié avec succès ! Redirection en cours...');
 
-          // Rediriger l'utilisateur vers son tableau de bord après 3 secondes
-          setTimeout(() => {
+          redirectTimerRef.current = setTimeout(() => {
             navigate('/');
           }, 3000);
 
@@ -47,6 +47,10 @@ const VerifyEmailPage = () => {
     };
 
     handleVerification();
+
+    return () => {
+      if (redirectTimerRef.current) clearTimeout(redirectTimerRef.current);
+    };
   }, [token, navigate]);
 
 

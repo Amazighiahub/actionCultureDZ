@@ -6,7 +6,7 @@
  * de socketService avec des propriétés optionnelles qui peuvent ne pas être
  * présentes dans toutes les implémentations.
  */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { socketService } from '@/services/socketService';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -68,7 +68,9 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
   );
   const [isVisible, setIsVisible] = useState(false);
   const [hideTimer, setHideTimer] = useState<NodeJS.Timeout | null>(null);
-  const [isReconnecting, setIsReconnecting] = useState(false);const { t } = useTranslation();
+  const [isReconnecting, setIsReconnecting] = useState(false);
+  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     let unsubscribe: (() => void) | undefined;
@@ -108,6 +110,9 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
       if (hideTimer) {
         clearTimeout(hideTimer);
       }
+      if (reconnectTimerRef.current) {
+        clearTimeout(reconnectTimerRef.current);
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoHide, autoHideDelay]);
@@ -138,7 +143,8 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
         socketServiceTyped.reconnect();
       }
       // Attendre un peu pour voir le résultat
-      setTimeout(() => {
+      if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
+      reconnectTimerRef.current = setTimeout(() => {
         setIsReconnecting(false);
       }, 2000);
     } catch (error) {
