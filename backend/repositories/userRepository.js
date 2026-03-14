@@ -271,7 +271,7 @@ class UserRepository extends BaseRepository {
    * @returns {Promise<Array>}
    */
   async findForExport(options = {}) {
-    const { where = {}, pageSize = 200, maxResults = 10000 } = options;
+    const { where = {}, pageSize = 200, maxResults = 2000 } = options;
     const allUsers = [];
     let offset = 0;
 

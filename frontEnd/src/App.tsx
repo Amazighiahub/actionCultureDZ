@@ -14,6 +14,7 @@ import NotificationToastListener from '@/components/NotificationToastListener';
 import RTLManager from './components/RtlManager';
 import { LanguagePersistenceManager } from '@/hooks/useLanguagePersistence';
 import { useToast } from '@/hooks/use-toast';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 
 // ============================================================================
 // LAZY LOADING — Chaque page est chargée à la demande (code splitting)
@@ -89,11 +90,12 @@ const queryClient = new QueryClient({
       gcTime: 10 * 60 * 1000, // 10 minutes (anciennement cacheTime)
       refetchOnWindowFocus: false,
       refetchOnReconnect: true,
-      retry: 1,
+      retry: 2,
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     },
     mutations: {
-      retry: 0,
+      retry: 1,
+      retryDelay: 1000,
     },
   },
 });
@@ -139,6 +141,17 @@ const GlobalToastListener = () => {
   return null;
 };
 
+// Bannière affichée quand le navigateur détecte une perte de connexion réseau
+const OfflineBanner = () => {
+  const isOnline = useOnlineStatus();
+  if (isOnline) return null;
+  return (
+    <div className="fixed top-0 inset-x-0 z-[100] bg-destructive text-destructive-foreground text-center py-2 text-sm font-medium">
+      Connexion réseau perdue — les données affichées peuvent ne plus être à jour.
+    </div>
+  );
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -153,6 +166,8 @@ const App = () => (
            <LanguagePersistenceManager />
           {/* Gestionnaire RTL */}
           <RTLManager />
+          {/* Bannière offline */}
+          <OfflineBanner />
           {/* Listener global pour les notifications toast */}
           <AuthenticatedFeatures />
           {/* Listener pour les toasts httpClient (erreurs HTTP, rate limit, etc.) */}

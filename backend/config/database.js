@@ -86,9 +86,12 @@ const config = {
     },
     pool: {
       max: parseInt(process.env.DB_POOL_MAX || '10'),
-      min: parseInt(process.env.DB_POOL_MIN || '0'),
+      min: parseInt(process.env.DB_POOL_MIN || '2'),
       acquire: parseInt(process.env.DB_POOL_ACQUIRE || '30000'),
       idle: parseInt(process.env.DB_POOL_IDLE || '10000')
+    },
+    dialectOptions: {
+      connectTimeout: 10000
     }
   },
   test: {
@@ -115,8 +118,15 @@ const config = {
       max: parseInt(process.env.DB_POOL_MAX || '50'),
       min: parseInt(process.env.DB_POOL_MIN || '10'),
       acquire: parseInt(process.env.DB_POOL_ACQUIRE || '30000'),
-      idle: parseInt(process.env.DB_POOL_IDLE || '10000'),
+      idle: parseInt(process.env.DB_POOL_IDLE || '30000'),
       evict: parseInt(process.env.DB_POOL_EVICT || '1000')
+    },
+    dialectOptions: {
+      connectTimeout: 10000,
+      // TCP keepalive pour détecter les connexions stale
+      socketPath: undefined,
+      supportBigNumbers: true,
+      bigNumberStrings: true
     }
   }
 };

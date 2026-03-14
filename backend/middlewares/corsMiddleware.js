@@ -43,7 +43,9 @@ const buildAllowedOrigins = () => {
 
     // Validation: au moins une origine doit être configurée
     if (origins.length === 0) {
-      console.error('❌ CORS: Aucune origine configurée en production! Définissez FRONTEND_URL.');
+      const msg = 'CORS: Aucune origine configurée en production! Définissez FRONTEND_URL.';
+      console.error('❌ ' + msg);
+      throw new Error(msg);
     }
   } else {
     // En développement: autoriser localhost + domaines configurés
