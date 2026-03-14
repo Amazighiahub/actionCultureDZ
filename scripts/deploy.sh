@@ -55,7 +55,7 @@ check_prerequisites() {
     source "$PROJECT_DIR/.env"
     local missing=0
 
-    for var in MYSQL_ROOT_PASSWORD DB_NAME DB_USER DB_PASSWORD JWT_SECRET FRONTEND_URL VITE_API_URL; do
+    for var in MYSQL_ROOT_PASSWORD DB_NAME DB_USER DB_PASSWORD JWT_SECRET REDIS_PASSWORD FRONTEND_URL VITE_API_URL; do
         if [ -z "${!var}" ]; then
             log_error "Variable manquante dans .env : $var"
             missing=1
@@ -103,9 +103,24 @@ init_deploy() {
     log_info "Lancement des services..."
     docker compose -f "$COMPOSE_FILE" up -d
 
-    # Attendre que MySQL soit pret
+    # Attendre que tous les services soient sains (healthchecks Docker)
     log_info "Attente du demarrage des services..."
-    sleep 15
+    local max_wait=120
+    local elapsed=0
+    while [ $elapsed -lt $max_wait ]; do
+        if docker compose -f "$COMPOSE_FILE" ps --format json 2>/dev/null | grep -q '"unhealthy"'; then
+            sleep 5
+            elapsed=$((elapsed + 5))
+        elif docker compose -f "$COMPOSE_FILE" ps --format json 2>/dev/null | grep -q '"starting"'; then
+            sleep 5
+            elapsed=$((elapsed + 5))
+        else
+            break
+        fi
+    done
+    if [ $elapsed -ge $max_wait ]; then
+        log_warn "Certains services n'ont pas demarré dans les ${max_wait}s"
+    fi
 
     # Executer les migrations
     log_info "Execution des migrations..."
@@ -152,7 +167,17 @@ update_deploy() {
     log_info "Redemarrage des services..."
     docker compose -f "$COMPOSE_FILE" up -d
 
-    sleep 10
+    # Attendre que le backend soit sain
+    log_info "Attente du demarrage..."
+    local max_wait=90
+    local elapsed=0
+    while [ $elapsed -lt $max_wait ]; do
+        if docker compose -f "$COMPOSE_FILE" exec -T backend wget -qO- http://localhost:3001/health 2>/dev/null | grep -qi "healthy"; then
+            break
+        fi
+        sleep 5
+        elapsed=$((elapsed + 5))
+    done
 
     # Migrations (exec sur conteneur deja en marche)
     log_info "Verification des migrations..."

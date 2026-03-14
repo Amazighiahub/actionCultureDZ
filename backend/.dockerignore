@@ -20,5 +20,7 @@ __tests__
 logs
 *.log
 uploads/temp/*
+backups
+scripts/archives
 .DS_Store
 Thumbs.db
