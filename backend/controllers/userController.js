@@ -112,6 +112,60 @@ class UserControllerV2 extends BaseController {
   }
 
   // ============================================================================
+  // RGPD — SUPPRESSION DE COMPTE ET EXPORT DE DONNÉES
+  // ============================================================================
+
+  /**
+   * DELETE /api/v2/users/profile
+   * Suppression du propre compte (RGPD art. 17 — droit à l'effacement)
+   * Requiert le mot de passe pour confirmer l'identité
+   */
+  async deleteMyAccount(req, res) {
+    try {
+      const { password } = req.body;
+
+      if (!password) {
+        return res.status(400).json({
+          success: false,
+          error: req.t('auth.passwordRequired')
+        });
+      }
+
+      await this.userService.deleteMyAccount(req.user.id_user, password);
+
+      this._clearAuthCookies(res);
+
+      res.json({
+        success: true,
+        message: req.t('auth.accountDeleted', { defaultValue: 'Votre compte a été supprimé avec succès.' })
+      });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  /**
+   * GET /api/v2/users/profile/export
+   * Export des données personnelles (RGPD art. 20 — droit à la portabilité)
+   * Retourne un JSON avec toutes les données de l'utilisateur
+   */
+  async exportMyData(req, res) {
+    try {
+      const data = await this.userService.exportMyData(req.user.id_user);
+
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', `attachment; filename="mes-donnees-${Date.now()}.json"`);
+
+      res.json({
+        success: true,
+        data
+      });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  // ============================================================================
   // CRUD UTILISATEURS
   // ============================================================================
 

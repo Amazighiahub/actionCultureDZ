@@ -380,6 +380,123 @@ class UserService extends BaseService {
   }
 
   // ============================================================================
+  // RGPD — DROIT À L'EFFACEMENT ET PORTABILITÉ
+  // ============================================================================
+
+  /**
+   * Suppression du propre compte de l'utilisateur (RGPD art. 17)
+   * Anonymise les contenus liés et supprime les données personnelles
+   * @param {number} userId - ID de l'utilisateur qui demande la suppression
+   * @param {string} password - Mot de passe pour confirmer l'identité
+   */
+  async deleteMyAccount(userId, password) {
+    const user = await this.repository.findById(userId);
+    if (!user) {
+      throw this._notFoundError(userId);
+    }
+
+    // Vérifier le mot de passe pour confirmer l'identité
+    const isValid = await bcrypt.compare(password, user.password);
+    if (!isValid) {
+      throw this._validationError('Mot de passe incorrect');
+    }
+
+    // Utiliser hardDeleteUser qui anonymise et nettoie tout
+    await this.repository.hardDeleteUser(userId, {
+      adminId: null,
+      userEmail: user.email,
+      userType: user.type_user,
+      userName: `${user.nom} ${user.prenom}`
+    });
+
+    this.logger.info(`RGPD: Compte supprimé par l'utilisateur lui-même: ${userId}`);
+
+    return { deleted: true };
+  }
+
+  /**
+   * Export des données personnelles de l'utilisateur (RGPD art. 20)
+   * Retourne toutes les données associées à l'utilisateur au format JSON
+   * @param {number} userId
+   */
+  async exportMyData(userId) {
+    const user = await this.repository.findById(userId);
+    if (!user) {
+      throw this._notFoundError(userId);
+    }
+
+    const data = {
+      export_date: new Date().toISOString(),
+      export_format: 'RGPD Article 20 — Droit à la portabilité',
+      personal_info: {
+        nom: user.nom,
+        prenom: user.prenom,
+        email: user.email,
+        telephone: user.telephone,
+        entreprise: user.entreprise,
+        type_user: user.type_user,
+        statut: user.statut,
+        wilaya_residence: user.wilaya_residence,
+        date_creation: user.date_creation,
+        derniere_connexion: user.derniere_connexion,
+        photo_url: user.photo_url,
+      },
+    };
+
+    // Collecter les données liées
+    const models = this.repository.models;
+
+    if (models.Oeuvre) {
+      const oeuvres = await models.Oeuvre.findAll({
+        where: { saisi_par: userId },
+        attributes: ['id_oeuvre', 'titre', 'description', 'date_creation', 'statut'],
+        raw: true,
+      });
+      data.oeuvres = oeuvres;
+    }
+
+    if (models.Evenement) {
+      const evenements = await models.Evenement.findAll({
+        where: { id_user: userId },
+        attributes: ['id_evenement', 'nom_evenement', 'date_debut', 'date_fin', 'statut'],
+        raw: true,
+      });
+      data.evenements = evenements;
+    }
+
+    if (models.Commentaire) {
+      const commentaires = await models.Commentaire.findAll({
+        where: { id_user: userId },
+        attributes: ['id_commentaire', 'contenu', 'date_creation'],
+        raw: true,
+      });
+      data.commentaires = commentaires;
+    }
+
+    if (models.Favori) {
+      const favoris = await models.Favori.findAll({
+        where: { id_user: userId },
+        attributes: ['id_favori', 'type_entite', 'id_entite', 'date_creation'],
+        raw: true,
+      });
+      data.favoris = favoris;
+    }
+
+    if (models.Notification) {
+      const notifications = await models.Notification.findAll({
+        where: { id_user: userId },
+        attributes: ['id_notification', 'type', 'message', 'lu', 'date_creation'],
+        raw: true,
+      });
+      data.notifications = notifications;
+    }
+
+    this.logger.info(`RGPD: Export de données demandé par l'utilisateur: ${userId}`);
+
+    return data;
+  }
+
+  // ============================================================================
   // RECHERCHE ET FILTRAGE
   // ============================================================================
 

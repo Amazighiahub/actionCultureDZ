@@ -44,6 +44,10 @@ const initUserRoutesV2 = (models, authMiddleware) => {
   router.put('/preferences', authenticate, asyncHandler((req, res) => userController.updatePreferences(req, res)));
   router.put('/privacy', authenticate, asyncHandler((req, res) => userController.updatePrivacy(req, res)));
 
+  // RGPD — Droit à l'effacement et portabilité des données
+  router.delete('/profile', authenticate, asyncHandler((req, res) => userController.deleteMyAccount(req, res)));
+  router.get('/profile/export', authenticate, asyncHandler((req, res) => userController.exportMyData(req, res)));
+
   // ============================================================================
   // ROUTES ADMIN
   // ============================================================================

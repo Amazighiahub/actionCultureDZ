@@ -16,6 +16,8 @@
   "auth": {
     "loginSuccess": "تم تسجيل الدخول بنجاح",
     "logoutSuccess": "تم تسجيل الخروج بنجاح",
+    "accountDeleted": "تم حذف حسابك بنجاح. تم مسح جميع بياناتك الشخصية.",
+    "passwordRequired": "كلمة المرور مطلوبة لتأكيد هذا الإجراء",
     "registerSuccess": "تم التسجيل بنجاح",
     "invalidCredentials": "بيانات الاعتماد غير صالحة",
     "incorrectPassword": "كلمة المرور غير صحيحة",

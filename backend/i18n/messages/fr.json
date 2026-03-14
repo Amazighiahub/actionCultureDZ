@@ -16,6 +16,8 @@
   "auth": {
     "loginSuccess": "Connexion réussie",
     "logoutSuccess": "Déconnexion réussie",
+    "accountDeleted": "Votre compte a été supprimé avec succès. Toutes vos données personnelles ont été effacées.",
+    "passwordRequired": "Le mot de passe est requis pour confirmer cette action",
     "registerSuccess": "Inscription réussie",
     "invalidCredentials": "Identifiants invalides",
     "incorrectPassword": "Mot de passe incorrect",

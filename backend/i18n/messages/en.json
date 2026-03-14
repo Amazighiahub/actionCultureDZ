@@ -16,6 +16,8 @@
   "auth": {
     "loginSuccess": "Login successful",
     "logoutSuccess": "Logout successful",
+    "accountDeleted": "Your account has been successfully deleted. All your personal data has been erased.",
+    "passwordRequired": "Password is required to confirm this action",
     "registerSuccess": "Registration successful",
     "invalidCredentials": "Invalid credentials",
     "incorrectPassword": "Incorrect password",
