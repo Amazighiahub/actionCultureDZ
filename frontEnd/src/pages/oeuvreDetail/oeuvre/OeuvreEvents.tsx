@@ -14,6 +14,7 @@ import {
 import { LazyImage, StatusBadge, EmptyState } from '@/components/shared';
 import { useLocalizedDate } from '@/hooks/useLocalizedDate';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import type { Evenement } from '@/types/models/evenement.types';
 
 interface OeuvreEventsProps {
@@ -25,6 +26,7 @@ const EventCard: React.FC<{ event: Evenement; onClick: () => void }> = ({ event,
   const { t } = useTranslation();
   const { formatDate } = useLocalizedDate();
   const { formatPrice } = useLocalizedNumber();
+  const { formatDate: formatDateLocale } = useFormatDate();
 
   const isUpcoming = event.date_debut ? new Date(event.date_debut) > new Date() : false;
   const isPast = event.date_fin ? new Date(event.date_fin) < new Date() : false;
@@ -51,7 +53,7 @@ const EventCard: React.FC<{ event: Evenement; onClick: () => void }> = ({ event,
                   {new Date(event.date_debut).getDate()}
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  {new Date(event.date_debut).toLocaleDateString('fr-FR', { month: 'short' })}
+                  {formatDateLocale(new Date(event.date_debut), { month: 'short' })}
                 </div>
               </div>
             </div>

@@ -7,11 +7,11 @@ interface I18nReadyWrapperProps {
   fallback?: React.ReactNode;
 }
 
-export const I18nReadyWrapper: React.FC<I18nReadyWrapperProps> = ({ 
-  children, 
-  fallback 
+export const I18nReadyWrapper: React.FC<I18nReadyWrapperProps> = ({
+  children,
+  fallback
 }) => {
-  const { ready } = useTranslation();
+  const { ready, t } = useTranslation();
   const [isReady, setIsReady] = useState(ready);
 
   useEffect(() => {
@@ -28,7 +28,7 @@ export const I18nReadyWrapper: React.FC<I18nReadyWrapperProps> = ({
           <div className="flex items-center justify-center min-h-screen">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-              <p className="text-muted-foreground">Chargement...</p>
+              <p className="text-muted-foreground">{t('common.loading', 'Chargement...')}</p>
             </div>
           </div>
         )}

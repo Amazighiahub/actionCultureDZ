@@ -424,8 +424,8 @@ async getNotifications(
   /**
    * Formater la date d'une notification
    */
-  formatDate(dateStr: string): string {
-    return formatNotificationDate(dateStr);
+  formatDate(dateStr: string, language = 'fr'): string {
+    return formatNotificationDate(dateStr, language);
   }
 
   /**

@@ -1,8 +1,10 @@
 // components/auth/ProtectedRoute.tsx
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useIdleTimeout } from '@/hooks/useIdleTimeout';
+import { useToast } from '@/components/ui/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, Lock, Clock } from 'lucide-react';import { useTranslation } from "react-i18next";
@@ -25,11 +27,38 @@ export function ProtectedRoute({
   redirectTo = '/auth'
 }: ProtectedRouteProps) {
   const location = useLocation();
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, logout } = useAuth();
   const { isAdmin, isProfessional, needsValidation } = usePermissions();
+  const { toast } = useToast();
+  const { t } = useTranslation();
+
+  const handleIdleWarning = useCallback(() => {
+    toast({
+      title: t('auth.idleWarning', 'Session bientôt expirée'),
+      description: t('auth.idleWarningDesc', 'Vous serez déconnecté dans 2 minutes pour inactivité.'),
+      variant: 'destructive',
+    });
+  }, [toast, t]);
+
+  const handleIdleLogout = useCallback(() => {
+    toast({
+      title: t('auth.idleLogout', 'Session expirée'),
+      description: t('auth.idleLogoutDesc', 'Vous avez été déconnecté pour inactivité.'),
+    });
+    logout();
+  }, [toast, t, logout]);
+
+  // Idle timeout: 30 min inactivity, warn 2 min before
+  useIdleTimeout({
+    timeout: 30 * 60 * 1000,
+    warningBefore: 2 * 60 * 1000,
+    onWarning: handleIdleWarning,
+    onIdle: handleIdleLogout,
+    enabled: isAuthenticated && requireAuth,
+  });
 
   // Afficher un loader pendant le chargement
-  const { t } = useTranslation();if (loading) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>

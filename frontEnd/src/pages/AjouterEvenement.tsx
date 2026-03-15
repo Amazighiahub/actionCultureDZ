@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from "react-i18next";
 import Header from '@/components/Header';
@@ -9,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Upload, Save, ArrowLeft, Calendar, Building2, Globe, AlertCircle, Plus } from 'lucide-react';
+import { Upload, Save, ArrowLeft, Calendar, Building2, Globe, AlertCircle, Plus, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Link } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
@@ -42,7 +43,8 @@ const AjouterEvenement = () => {
   const { t } = useTranslation();
   const { rtlClasses } = useRTL();
   const { toast } = useToast();
-  
+  const queryClient = useQueryClient();
+
   const [gratuit, setGratuit] = useState(false);
   const [wilayas, setWilayas] = useState<Wilaya[]>([]);
   const [typesEvenements, setTypesEvenements] = useState<Array<{ id_type_evenement: number; nom_type: any }>>([]);
@@ -119,6 +121,9 @@ const AjouterEvenement = () => {
           tarif: evt.tarif?.toString() || '',
           urlVirtuel: evt.url_virtuel || '',
         });
+        if (evt.image_url) {
+          setAffichePreview(evt.image_url);
+        }
         if (evt.id_lieu) setSelectedLieuId(evt.id_lieu);
         if (evt.id_organisation) setSelectedOrganisationId(evt.id_organisation);
         if (evt.tarif === 0 || !evt.tarif) setGratuit(true);
@@ -193,9 +198,33 @@ const AjouterEvenement = () => {
   };
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  const clearFieldError = (field: string) => {
+    setFieldErrors(prev => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  };
 
   const submitEvent = async (statut: 'publie' | 'brouillon') => {
     if (isSubmitting) return;
+
+    // Validation minimale même pour les brouillons
+    if (statut === 'brouillon') {
+      const hasAnyName = formData.nom.fr?.trim() || formData.nom.ar?.trim() || formData.nom.en?.trim() || formData.nom['tz-ltn']?.trim() || formData.nom['tz-tfng']?.trim();
+      if (!hasAnyName) {
+        toast({ title: t('common.error'), description: t('events.create.draftNameRequired', 'Le nom est requis même pour un brouillon (au moins une langue)'), variant: 'destructive' });
+        return;
+      }
+      if (!formData.idTypeEvenement) {
+        toast({ title: t('common.error'), description: t('events.create.typeRequired', 'Le type d\'événement est requis'), variant: 'destructive' });
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     const fd = new FormData();
     fd.append('nom_evenement', JSON.stringify(formData.nom));
@@ -223,6 +252,9 @@ const AjouterEvenement = () => {
       }
 
       if (response.success) {
+        queryClient.invalidateQueries({ queryKey: ['evenements'] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard-pro-evenements'] });
+        queryClient.invalidateQueries({ queryKey: ['evenement-stats'] });
         toast({
           title: t('common.success', 'Succès'),
           description: isEditMode
@@ -253,79 +285,64 @@ const AjouterEvenement = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validation: Nom requis dans toutes les langues
-    if (
-      !formData.nom.fr ||
-      !formData.nom.ar ||
-      !formData.nom.en ||
-      !formData.nom['tz-ltn'] ||
-      !formData.nom['tz-tfng']
-    ) {
-      toast({
-        title: t('common.error'),
-        description: t('events.create.nameRequired', 'Le nom de l\'événement est requis'),
-        variant: "destructive",
-      });
-      return;
+    const newErrors: Record<string, string> = {};
+
+    // Validation: Nom requis — aligné sur le backend (fr OU ar)
+    if (!formData.nom.fr?.trim() && !formData.nom.ar?.trim()) {
+      newErrors.nom = t('events.create.nameRequired', 'Le nom de l\'événement est requis (au moins en français ou arabe)');
     }
 
     // Validation: Type requis
     if (!formData.idTypeEvenement) {
-      toast({
-        title: t('common.error'),
-        description: t('events.create.typeRequired', 'Le type d\'événement est requis'),
-        variant: "destructive",
-      });
-      return;
+      newErrors.type = t('events.create.typeRequired', 'Le type d\'événement est requis');
     }
 
     // Validation: Date de début requise
     if (!formData.dateDebut) {
-      toast({
-        title: t('common.error'),
-        description: t('events.create.startDateRequired', 'La date de début est requise'),
-        variant: "destructive",
-      });
-      return;
+      newErrors.dateDebut = t('events.create.startDateRequired', 'La date de début est requise');
+    }
+
+    // Validation: Date de fin après date de début
+    if (formData.dateDebut && formData.dateFin && formData.dateFin < formData.dateDebut) {
+      newErrors.dateFin = t('events.create.endDateAfterStart', 'La date de fin doit être après la date de début');
     }
 
     // Validation: Organisation requise sauf pour événements virtuels
     if (!isVirtual && !selectedOrganisationId) {
-      toast({
-        title: t('common.error'),
-        description: t('events.create.organisationRequired', 'Une organisation est requise pour les événements en présentiel'),
-        variant: "destructive",
-      });
-      return;
+      newErrors.organisation = t('events.create.organisationRequired', 'Une organisation est requise pour les événements en présentiel');
     }
 
     // Validation: Lieu requis sauf pour événements virtuels
     if (!isVirtual && !selectedLieuId) {
-      toast({
-        title: t('common.error'),
-        description: t('events.create.locationRequired'),
-        variant: "destructive",
-      });
-      return;
+      newErrors.lieu = t('events.create.locationRequired');
     }
 
     // Validation: URL virtuel requis pour événements virtuels
-    if (isVirtual && !formData.urlVirtuel) {
-      toast({
-        title: t('common.error'),
-        description: t('events.create.virtualUrlRequired', 'Le lien de l\'événement virtuel est requis'),
-        variant: "destructive",
-      });
-      return;
+    if (isVirtual && !formData.urlVirtuel?.trim()) {
+      newErrors.urlVirtuel = t('events.create.virtualUrlRequired', 'Le lien de l\'événement virtuel est requis');
     }
 
-    // Validation: Affiche requise
-    if (!affiche) {
+    // Validation: Affiche requise (nouveau fichier OU image existante en mode édition)
+    if (!affiche && !affichePreview) {
+      newErrors.affiche = t('events.create.imageRequired', 'L\'image de l\'événement est requise');
+    }
+
+    setFieldErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) {
       toast({
         title: t('common.error'),
-        description: t('events.create.imageRequired', 'L\'image de l\'événement est requise'),
+        description: Object.values(newErrors)[0],
         variant: "destructive",
       });
+      // Focus first errored field
+      setTimeout(() => {
+        const firstError = document.querySelector('[aria-invalid="true"]');
+        if (firstError) {
+          (firstError as HTMLElement).focus();
+          firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 0);
       return;
     }
 
@@ -458,9 +475,9 @@ const AjouterEvenement = () => {
                       <Label>{t('events.create.selectOrganisation', 'Sélectionnez votre organisation')}</Label>
                       <Select
                         value={selectedOrganisationId?.toString() ?? ''}
-                        onValueChange={(value) => setSelectedOrganisationId(parseInt(value))}
+                        onValueChange={(value) => { clearFieldError('organisation'); setSelectedOrganisationId(parseInt(value)); }}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger aria-invalid={!!fieldErrors.organisation} aria-describedby={fieldErrors.organisation ? 'organisation-error' : undefined}>
                           <SelectValue placeholder={t('events.create.selectOrganisationPlaceholder', 'Choisir une organisation')} />
                         </SelectTrigger>
                         <SelectContent>
@@ -471,6 +488,7 @@ const AjouterEvenement = () => {
                           ))}
                         </SelectContent>
                       </Select>
+                      {fieldErrors.organisation && <p id="organisation-error" role="alert" className="text-sm text-destructive">{fieldErrors.organisation}</p>}
                     </div>
                   ) : (
                     <div className="text-center py-6 border-2 border-dashed rounded-lg">
@@ -503,14 +521,17 @@ const AjouterEvenement = () => {
                     name="nom"
                     label={t('events.create.eventName')}
                     value={formData.nom}
-                    onChange={(value) => setFormData(prev => ({ ...prev, nom: value as { fr: string; ar: string; en: string; 'tz-ltn': string; 'tz-tfng': string } }))}
+                    onChange={(value) => { clearFieldError('nom'); setFormData(prev => ({ ...prev, nom: value as { fr: string; ar: string; en: string; 'tz-ltn': string; 'tz-tfng': string } })); }}
                     required
+                    requiredLanguages={['fr', 'ar']}
                     placeholder={t('events.create.eventNamePlaceholder')}
+                    aria-invalid={!!fieldErrors.nom}
                   />
+                  {fieldErrors.nom && <p id="nom-error" role="alert" className="text-sm text-destructive">{fieldErrors.nom}</p>}
                 </div>
 
                 <div className="space-y-2">
-                  <Label>{t('common.description')} *</Label>
+                  <Label>{t('common.description')}</Label>
                   <MultiLangInput
                     name="description"
                     label={t('common.description')}
@@ -527,10 +548,10 @@ const AjouterEvenement = () => {
                     <Label htmlFor="type">{t('events.create.eventType')} *</Label>
                     <Select
                       value={formData.idTypeEvenement}
-                      onValueChange={(value) => setFormData(prev => ({ ...prev, idTypeEvenement: value }))}
+                      onValueChange={(value) => { clearFieldError('type'); setFormData(prev => ({ ...prev, idTypeEvenement: value })); }}
                       required
                     >
-                      <SelectTrigger>
+                      <SelectTrigger aria-invalid={!!fieldErrors.type} aria-describedby={fieldErrors.type ? 'type-error' : undefined}>
                         <SelectValue placeholder={t('common.selectType')} />
                       </SelectTrigger>
                       <SelectContent>
@@ -541,6 +562,7 @@ const AjouterEvenement = () => {
                         ))}
                       </SelectContent>
                     </Select>
+                    {fieldErrors.type && <p id="type-error" role="alert" className="text-sm text-destructive">{fieldErrors.type}</p>}
                   </div>
                   
                   {!isVirtual && (
@@ -595,11 +617,16 @@ const AjouterEvenement = () => {
                     <Input
                       id="url_virtuel"
                       type="url"
+                      autoComplete="url"
+                      maxLength={2048}
                       value={formData.urlVirtuel}
-                      onChange={(e) => setFormData(prev => ({ ...prev, urlVirtuel: e.target.value }))}
+                      onChange={(e) => { clearFieldError('urlVirtuel'); setFormData(prev => ({ ...prev, urlVirtuel: e.target.value })); }}
                       placeholder={t('events.create.virtualUrlPlaceholder', 'https://zoom.us/j/... ou https://meet.google.com/...')}
                       required={isVirtual}
+                      aria-invalid={!!fieldErrors.urlVirtuel}
+                      aria-describedby={fieldErrors.urlVirtuel ? 'urlVirtuel-error' : undefined}
                     />
+                    {fieldErrors.urlVirtuel && <p id="urlVirtuel-error" role="alert" className="text-sm text-destructive">{fieldErrors.urlVirtuel}</p>}
                     <p className="text-sm text-muted-foreground">
                       {t('events.create.virtualUrlHint', 'Lien Zoom, Google Meet, YouTube Live, etc.')}
                     </p>
@@ -620,9 +647,12 @@ const AjouterEvenement = () => {
                       id="date-debut"
                       type="date"
                       value={formData.dateDebut}
-                      onChange={(e) => setFormData(prev => ({ ...prev, dateDebut: e.target.value }))}
+                      onChange={(e) => { clearFieldError('dateDebut'); setFormData(prev => ({ ...prev, dateDebut: e.target.value })); }}
                       required
+                      aria-invalid={!!fieldErrors.dateDebut}
+                      aria-describedby={fieldErrors.dateDebut ? 'dateDebut-error' : undefined}
                     />
+                    {fieldErrors.dateDebut && <p id="dateDebut-error" role="alert" className="text-sm text-destructive">{fieldErrors.dateDebut}</p>}
                   </div>
 
                   <div className="space-y-2">
@@ -631,8 +661,11 @@ const AjouterEvenement = () => {
                       id="date-fin"
                       type="date"
                       value={formData.dateFin}
-                      onChange={(e) => setFormData(prev => ({ ...prev, dateFin: e.target.value }))}
+                      onChange={(e) => { clearFieldError('dateFin'); setFormData(prev => ({ ...prev, dateFin: e.target.value })); }}
+                      aria-invalid={!!fieldErrors.dateFin}
+                      aria-describedby={fieldErrors.dateFin ? 'dateFin-error' : undefined}
                     />
+                    {fieldErrors.dateFin && <p id="dateFin-error" role="alert" className="text-sm text-destructive">{fieldErrors.dateFin}</p>}
                   </div>
                 </div>
 
@@ -670,8 +703,12 @@ const AjouterEvenement = () => {
                   <Input
                     id="max-participants"
                     type="number"
+                    min="0"
                     value={formData.maxParticipants}
-                    onChange={(e) => setFormData(prev => ({ ...prev, maxParticipants: e.target.value }))}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '' || Number(val) >= 0) setFormData(prev => ({ ...prev, maxParticipants: val }));
+                    }}
                     placeholder={t('events.create.maxParticipantsPlaceholder')}
                   />
                 </div>
@@ -691,8 +728,13 @@ const AjouterEvenement = () => {
                     <Input
                       id="tarif"
                       type="number"
+                      min="0"
+                      step="0.01"
                       value={formData.tarif}
-                      onChange={(e) => setFormData(prev => ({ ...prev, tarif: e.target.value }))}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === '' || Number(val) >= 0) setFormData(prev => ({ ...prev, tarif: val }));
+                      }}
                       placeholder={t('events.create.pricePlaceholder')}
                     />
                   </div>
@@ -765,8 +807,9 @@ const AjouterEvenement = () => {
                       {affichePreview ? t('common.changeImage', 'Changer l\'image') : t('common.chooseFile')}
                     </Button>
                   </div>
+                  {fieldErrors.affiche && <p id="affiche-error" role="alert" className="text-sm text-destructive mt-2">{fieldErrors.affiche}</p>}
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="medias-post">{t('events.create.postEventMedia')}</Label>
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
@@ -777,7 +820,7 @@ const AjouterEvenement = () => {
                     <p className="text-xs text-gray-400">
                       {t('events.create.addAfterEvent')}
                     </p>
-                    <Button variant="outline" size="sm" className="mt-2">
+                    <Button variant="outline" size="sm" className="mt-2" disabled title={t('events.create.availableAfterCreation', 'Disponible après la création de l\'événement')}>
                       {t('common.chooseFiles')}
                     </Button>
                   </div>
@@ -787,7 +830,7 @@ const AjouterEvenement = () => {
 
             {/* Message si organisation requise mais manquante */}
             {!isVirtual && !hasOrganisation && !loadingOrganisations && (
-              <Alert variant="destructive">
+              <Alert variant="destructive" role="alert">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
                   {t('events.create.organisationRequiredMessage', 'Vous devez d\'abord créer une organisation pour publier un événement en présentiel.')}
@@ -808,10 +851,13 @@ const AjouterEvenement = () => {
               <Button
                 type="submit"
                 className="btn-hover"
-                disabled={!isVirtual && !hasOrganisation}
+                disabled={isSubmitting || (!isVirtual && !hasOrganisation)}
               >
-                <Calendar className={`h-4 w-4 ${rtlClasses.marginEnd(2)}`} />
-                {t('events.create.publishEvent')}
+                {isSubmitting
+                  ? <Loader2 className={`h-4 w-4 animate-spin ${rtlClasses.marginEnd(2)}`} />
+                  : <Calendar className={`h-4 w-4 ${rtlClasses.marginEnd(2)}`} />
+                }
+                {isSubmitting ? t('common.publishing', 'Publication...') : t('events.create.publishEvent')}
               </Button>
             </div>
           </form>

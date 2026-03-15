@@ -1,7 +1,8 @@
 /**
  * AdminPatrimoineTab - Onglet de gestion du patrimoine
+ * Utilise useDashboardAdmin
  */
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,131 +23,136 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import {
-  Search, MoreVertical, CheckCircle, XCircle,
-  Edit, Trash2, Eye, RefreshCw, MapPin, Award
+  Search, MoreVertical, Edit, Trash2, Eye, RefreshCw,
+  MapPin, Award, X, Landmark, AlertCircle
 } from 'lucide-react';
 
-// Composants partagés
-import { 
-  LazyImage, 
-  Pagination, 
-  ConfirmDialog, 
-  EmptyState, 
+import {
+  LazyImage,
+  ConfirmDialog,
+  EmptyState,
   LoadingSkeleton,
-  StatusBadge 
+  StatusBadge
 } from '@/components/shared';
 
-// Hook (à créer selon le même modèle)
-import { useDebounce } from '@/hooks/useAdmin';
+import { useDashboardAdmin } from '@/hooks/useDashboardAdmin';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import { getAssetUrl } from '@/helpers/assetUrl';
 
-// Types
-interface Patrimoine {
-  id_patrimoine: number;
-  nom: string;
-  description?: string;
-  type?: string;
-  wilaya?: string;
-  image_url?: string;
-  statut: string;
-  est_unesco?: boolean;
-  visites?: number;
-}
+// Helper pour extraire le texte multilingue
+const getLocalizedText = (value: any, lang: string = 'fr', fallback: string = ''): string => {
+  if (!value) return fallback;
+  if (typeof value === 'string') return value;
+  if (typeof value === 'object') {
+    return value[lang] || value.fr || value.ar || value.en || Object.values(value)[0] || fallback;
+  }
+  return String(value);
+};
+
+// Types de filtres
+const TYPE_OPTIONS = ['tous', 'monument', 'vestige', 'musee', 'site_naturel', 'ville_village', 'autre'];
 
 const AdminPatrimoineTab: React.FC = () => {
-  const { t } = useTranslation();
-  
+  const { t, i18n } = useTranslation();
+  const currentLang = i18n.language || 'fr';
+
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('tous');
-  const [wilayaFilter, setWilayaFilter] = useState('tous');
-  const [patrimoines, setPatrimoines] = useState<Patrimoine[]>([]);
-  const [loading, setLoading] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<Patrimoine | null>(null);
+  const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
+  const [selectedItemName, setSelectedItemName] = useState('');
 
-  const debouncedSearch = useDebounce(searchQuery, 300);
+  const debouncedSearch = useDebouncedValue(searchQuery, 300);
 
-  // Mock data pour l'exemple
-  React.useEffect(() => {
-    setLoading(true);
-    // Simuler un chargement
-    setTimeout(() => {
-      setPatrimoines([
-        {
-          id_patrimoine: 1,
-          nom: 'Casbah d\'Alger',
-          type: 'Site historique',
-          wilaya: 'Alger',
-          statut: 'valide',
-          est_unesco: true,
-          visites: 15000,
-          image_url: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400'
-        },
-        {
-          id_patrimoine: 2,
-          nom: 'Timgad',
-          type: 'Site archéologique',
-          wilaya: 'Batna',
-          statut: 'valide',
-          est_unesco: true,
-          visites: 8500,
-          image_url: 'https://images.unsplash.com/photo-1568322445389-f64ac2515020?w=400'
-        },
-        {
-          id_patrimoine: 3,
-          nom: 'Vallée du M\'Zab',
-          type: 'Patrimoine culturel',
-          wilaya: 'Ghardaïa',
-          statut: 'en_attente',
-          est_unesco: true,
-          visites: 5200
-        }
-      ]);
-      setLoading(false);
-    }, 500);
-  }, [debouncedSearch, typeFilter, wilayaFilter]);
+  const {
+    patrimoineItems,
+    loadingPatrimoine,
+    errorPatrimoine,
+    refreshAll
+  } = useDashboardAdmin('patrimoine');
+
+  // Filtrer les patrimoines
+  const filteredPatrimoines = React.useMemo(() => {
+    if (!patrimoineItems?.items) return [];
+
+    return patrimoineItems.items.filter((item: any) => {
+      // Filtre de recherche
+      if (debouncedSearch) {
+        const searchLower = debouncedSearch.toLowerCase();
+        const nom = getLocalizedText(item.nom, currentLang);
+        const description = getLocalizedText(item.description, currentLang);
+        const wilaya = item.wilaya?.nom || item.Commune?.Daira?.Wilaya?.nom || '';
+        const matchesSearch =
+          nom.toLowerCase().includes(searchLower) ||
+          description.toLowerCase().includes(searchLower) ||
+          wilaya.toLowerCase().includes(searchLower);
+        if (!matchesSearch) return false;
+      }
+
+      // Filtre de type
+      if (typeFilter !== 'tous') {
+        const itemType = item.type || item.typePatrimoine || '';
+        if (itemType !== typeFilter) return false;
+      }
+
+      return true;
+    });
+  }, [patrimoineItems, debouncedSearch, typeFilter, currentLang]);
+
+  const hasActiveFilters = searchQuery || typeFilter !== 'tous';
+
+  const resetFilters = () => {
+    setSearchQuery('');
+    setTypeFilter('tous');
+  };
 
   const handleView = (id: number) => {
-    window.open(`/patrimoine/${id}`, '_blank');
+    window.open(`/patrimoine/${id}`, '_blank', 'noopener,noreferrer');
   };
 
-  const handleEdit = (item: Patrimoine) => {
-    console.log('Edit patrimoine:', item);
-  };
-
-  const handleDelete = (id: number) => {
-    const item = patrimoines.find(p => p.id_patrimoine === id);
-    if (item) {
-      setSelectedItem(item);
-      setDeleteConfirmOpen(true);
-    }
+  const handleDelete = (id: number, nom: string) => {
+    setSelectedItemId(id);
+    setSelectedItemName(nom);
+    setDeleteConfirmOpen(true);
   };
 
   const confirmDelete = async () => {
-    if (selectedItem) {
-      // API call here
-      setPatrimoines(prev => prev.filter(p => p.id_patrimoine !== selectedItem.id_patrimoine));
+    if (selectedItemId) {
+      // TODO: wire to deletePatrimoine action when available in hook
+      console.log('Delete patrimoine:', selectedItemId);
       setDeleteConfirmOpen(false);
-      setSelectedItem(null);
+      setSelectedItemId(null);
+      setSelectedItemName('');
     }
   };
 
-  if (loading) {
-    return <LoadingSkeleton type="card" count={6} />;
-  }
-
   return (
     <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold flex items-center gap-2">
+            <Landmark className="h-6 w-6" />
+            {t('admin.patrimoine.title', 'Gestion du patrimoine')}
+          </h2>
+          <p className="text-muted-foreground">
+            {t('admin.patrimoine.count', '{{count}} site(s)', { count: filteredPatrimoines.length })}
+          </p>
+        </div>
+        <Button variant="outline" onClick={refreshAll}>
+          <RefreshCw className="h-4 w-4 mr-2" />
+          {t('common.refresh', 'Actualiser')}
+        </Button>
+      </div>
+
       {/* Filtres */}
       <Card>
-        <CardHeader>
-          <CardTitle>{t('admin.patrimoine.title', 'Gestion du patrimoine')}</CardTitle>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="p-4">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder={t('admin.patrimoine.searchPlaceholder', 'Rechercher...')}
+                placeholder={t('admin.patrimoine.searchPlaceholder', 'Rechercher un site...')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9"
@@ -155,107 +161,137 @@ const AdminPatrimoineTab: React.FC = () => {
 
             <Select value={typeFilter} onValueChange={setTypeFilter}>
               <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Type" />
+                <SelectValue placeholder={t('common.type', 'Type')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="tous">{t('admin.patrimoine.filters.allTypes')}</SelectItem>
-                <SelectItem value="site_historique">{t('admin.patrimoine.types.historicalSite')}</SelectItem>
-                <SelectItem value="site_archeologique">{t('admin.patrimoine.types.archaeologicalSite')}</SelectItem>
-                <SelectItem value="monument">{t('admin.patrimoine.types.monument')}</SelectItem>
-                <SelectItem value="musee">{t('admin.patrimoine.types.museum')}</SelectItem>
+                {TYPE_OPTIONS.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {type === 'tous'
+                      ? t('common.allTypes', 'Tous les types')
+                      : t(`admin.patrimoine.types.${type}`, type)}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
 
-            <Select value={wilayaFilter} onValueChange={setWilayaFilter}>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Wilaya" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="tous">{t('admin.patrimoine.filters.allWilayas')}</SelectItem>
-                <SelectItem value="alger">{t('wilayas.alger')}</SelectItem>
-                <SelectItem value="oran">{t('wilayas.oran')}</SelectItem>
-                <SelectItem value="constantine">{t('wilayas.constantine')}</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Button variant="outline" size="icon">
-              <RefreshCw className="h-4 w-4" />
-            </Button>
+            <div className="flex gap-2">
+              {hasActiveFilters && (
+                <Button variant="ghost" size="icon" onClick={resetFilters} aria-label={t('common.resetFilters', 'Réinitialiser les filtres')}>
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+              <Button variant="outline" size="icon" onClick={refreshAll} aria-label={t('common.refresh', 'Actualiser')}>
+                <RefreshCw className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Liste */}
-      {patrimoines.length === 0 ? (
-        <EmptyState type="locations" />
+      {loadingPatrimoine ? (
+        <LoadingSkeleton type="card" count={6} />
+      ) : errorPatrimoine ? (
+        <Card className="p-8 text-center">
+          <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
+          <p className="text-destructive mb-4">{errorPatrimoine}</p>
+          <Button onClick={refreshAll}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            {t('common.retry', 'Réessayer')}
+          </Button>
+        </Card>
+      ) : filteredPatrimoines.length === 0 ? (
+        <EmptyState
+          type="locations"
+          title={t('admin.patrimoine.noResults', 'Aucun site trouvé')}
+          description={t('admin.patrimoine.noResultsDesc', 'Aucun site ne correspond à vos critères')}
+          action={hasActiveFilters ? {
+            label: t('common.resetFilters', 'Réinitialiser'),
+            onClick: resetFilters
+          } : undefined}
+        />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {patrimoines.map((item) => (
-            <Card key={item.id_patrimoine} className="overflow-hidden hover:shadow-md transition-shadow">
-              <div className="relative h-40">
-                <LazyImage
-                  src={item.image_url || '/images/placeholder-patrimoine.png'}
-                  alt={item.nom}
-                  className="w-full h-full object-cover"
-                  fallback="/images/placeholder-patrimoine.png"
-                />
-                <div className="absolute top-2 left-2 flex gap-2">
-                  <StatusBadge status={item.statut} size="sm" />
-                  {item.est_unesco && (
-                    <Badge className="bg-blue-500 text-white gap-1">
-                      <Award className="h-3 w-3" />
-                      UNESCO
-                    </Badge>
-                  )}
-                </div>
-              </div>
+          {filteredPatrimoines.map((item: any) => {
+            const nom = getLocalizedText(item.nom, currentLang, 'Sans nom');
+            const description = getLocalizedText(item.description, currentLang);
+            const wilaya = item.wilaya?.nom || item.Commune?.Daira?.Wilaya?.nom || '';
+            const type = item.type || item.typePatrimoine || '';
+            const imageUrl = item.image_url || item.medias?.[0]?.url;
 
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-medium truncate">{item.nom}</h4>
-                    <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
-                      <MapPin className="h-3 w-3" />
-                      <span>{item.wilaya}</span>
-                      <span>•</span>
-                      <span>{item.type}</span>
-                    </div>
-                    {item.visites && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {t('admin.patrimoine.visits', { count: item.visites.toLocaleString() })}
-                      </p>
+            return (
+              <Card key={item.id_patrimoine || item.id_lieu || item.id} className="overflow-hidden hover:shadow-md transition-shadow">
+                <div className="relative h-40">
+                  <LazyImage
+                    src={imageUrl ? getAssetUrl(imageUrl) : '/images/placeholder-patrimoine.png'}
+                    alt={nom}
+                    className="w-full h-full object-cover"
+                    fallback="/images/placeholder-patrimoine.png"
+                  />
+                  <div className="absolute top-2 left-2 flex gap-2">
+                    <StatusBadge status={item.statut || 'en_attente'} size="sm" />
+                    {item.est_unesco && (
+                      <Badge className="bg-blue-500 text-white gap-1">
+                        <Award className="h-3 w-3" />
+                        UNESCO
+                      </Badge>
                     )}
                   </div>
-
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={t('common.moreOptions', 'Plus d\'options')}>
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleView(item.id_patrimoine)}>
-                        <Eye className="h-4 w-4 mr-2" />
-                        {t('common.view')}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleEdit(item)}>
-                        <Edit className="h-4 w-4 mr-2" />
-                        {t('common.edit')}
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        onClick={() => handleDelete(item.id_patrimoine)}
-                        className="text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        {t('common.delete')}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
+
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium truncate">{nom}</h4>
+                      <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
+                        {wilaya && (
+                          <>
+                            <MapPin className="h-3 w-3" />
+                            <span>{wilaya}</span>
+                          </>
+                        )}
+                        {type && (
+                          <>
+                            <span>-</span>
+                            <span>{t(`admin.patrimoine.types.${type}`, type)}</span>
+                          </>
+                        )}
+                      </div>
+                      {description && (
+                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{description}</p>
+                      )}
+                    </div>
+
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={t('common.moreOptions', 'Plus d\'options')}>
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleView(item.id_patrimoine || item.id_lieu || item.id)}>
+                          <Eye className="h-4 w-4 mr-2" />
+                          {t('common.view', 'Voir')}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                          <Edit className="h-4 w-4 mr-2" />
+                          {t('common.edit', 'Modifier')}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={() => handleDelete(item.id_patrimoine || item.id_lieu || item.id, nom)}
+                          className="text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          {t('common.delete', 'Supprimer')}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
 
@@ -263,9 +299,9 @@ const AdminPatrimoineTab: React.FC = () => {
       <ConfirmDialog
         open={deleteConfirmOpen}
         onOpenChange={setDeleteConfirmOpen}
-        title={t('admin.patrimoine.deleteDialog.title')}
-        description={t('admin.patrimoine.deleteDialog.description', { name: selectedItem?.nom })}
-        confirmLabel={t('common.delete')}
+        title={t('admin.patrimoine.deleteDialog.title', 'Supprimer le site')}
+        description={t('admin.patrimoine.deleteDialog.description', 'Voulez-vous supprimer "{{name}}" ? Cette action est irréversible.', { name: selectedItemName })}
+        confirmLabel={t('common.delete', 'Supprimer')}
         variant="destructive"
         onConfirm={confirmDelete}
       />

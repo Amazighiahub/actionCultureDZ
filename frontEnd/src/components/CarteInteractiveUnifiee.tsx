@@ -6,6 +6,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
 import { useTranslation } from 'react-i18next';
+import { getDateLocale } from '@/hooks/useFormatDate';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -186,7 +187,7 @@ const CarteInteractiveUnifiee: React.FC<CarteInteractiveUnifieeProps> = ({
           category: 'evenement',
           position: [lat, lng],
           title: translate(evt.nom_evenement || evt.titre, lang),
-          subtitle: evt.date_debut ? new Date(evt.date_debut).toLocaleDateString(lang) : '',
+          subtitle: evt.date_debut ? new Date(evt.date_debut).toLocaleDateString(getDateLocale(lang)) : '',
           description: translate(evt.description, lang),
           badge: evt.statut,
           link: `/evenements/${evt.id_evenement}`,
@@ -239,7 +240,7 @@ const CarteInteractiveUnifiee: React.FC<CarteInteractiveUnifieeProps> = ({
       >
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a>'
         />
 
         {visibleMarkers.map(marker => (

@@ -7,11 +7,10 @@
 export const formatting = {
   // Formatage des dates
   date: {
-    format(date: string | Date, format: 'short' | 'long' | 'time' | 'datetime' = 'short'): string {
+    format(date: string | Date, format: 'short' | 'long' | 'time' | 'datetime' = 'short', locale = 'fr-FR'): string {
       if (!date) return '';
-      
+
       const d = typeof date === 'string' ? new Date(date) : date;
-      const locale = 'fr-FR';
       
       switch (format) {
         case 'short':
@@ -48,7 +47,7 @@ export const formatting = {
       return d < new Date();
     },
 
-    timeAgo(date: string | Date): string {
+    timeAgo(date: string | Date, language = 'fr'): string {
       const d = typeof date === 'string' ? new Date(date) : date;
       const now = new Date();
       const diffMs = now.getTime() - d.getTime();
@@ -56,21 +55,30 @@ export const formatting = {
       const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
       const diffMinutes = Math.floor(diffMs / (1000 * 60));
 
-      if (diffDays > 0) return `Il y a ${diffDays} jour${diffDays > 1 ? 's' : ''}`;
-      if (diffHours > 0) return `Il y a ${diffHours} heure${diffHours > 1 ? 's' : ''}`;
-      if (diffMinutes > 0) return `Il y a ${diffMinutes} minute${diffMinutes > 1 ? 's' : ''}`;
-      return 'À l\'instant';
+      const translations: Record<string, { days: (n: number) => string; hours: (n: number) => string; minutes: (n: number) => string; now: string }> = {
+        'fr': { days: (n) => `Il y a ${n} jour${n > 1 ? 's' : ''}`, hours: (n) => `Il y a ${n} heure${n > 1 ? 's' : ''}`, minutes: (n) => `Il y a ${n} minute${n > 1 ? 's' : ''}`, now: "À l'instant" },
+        'ar': { days: (n) => `منذ ${n} يوم`, hours: (n) => `منذ ${n} ساعة`, minutes: (n) => `منذ ${n} دقيقة`, now: 'الآن' },
+        'en': { days: (n) => `${n} day${n > 1 ? 's' : ''} ago`, hours: (n) => `${n} hour${n > 1 ? 's' : ''} ago`, minutes: (n) => `${n} minute${n > 1 ? 's' : ''} ago`, now: 'Just now' },
+        'tz-ltn': { days: (n) => `${n} n wussan aya`, hours: (n) => `${n} n tsaɛtin aya`, minutes: (n) => `${n} n tesdatin aya`, now: 'Tura kan' },
+        'tz-tfng': { days: (n) => `${n} ⵏ ⵡⵓⵙⵙⴰⵏ ⴰⵢⴰ`, hours: (n) => `${n} ⵏ ⵜⵙⴰⵄⵜⵉⵏ ⴰⵢⴰ`, minutes: (n) => `${n} ⵏ ⵜⵙⴷⴰⵜⵉⵏ ⴰⵢⴰ`, now: 'ⵜⵓⵔⴰ ⴽⴰⵏ' },
+      };
+      const t = translations[language] || translations['fr'];
+
+      if (diffDays > 0) return t.days(diffDays);
+      if (diffHours > 0) return t.hours(diffHours);
+      if (diffMinutes > 0) return t.minutes(diffMinutes);
+      return t.now;
     }
   },
 
   // Formatage des nombres
   number: {
-    format(num: number, options: Intl.NumberFormatOptions = {}): string {
-      return new Intl.NumberFormat('fr-FR', options).format(num);
+    format(num: number, options: Intl.NumberFormatOptions = {}, locale = 'fr-FR'): string {
+      return new Intl.NumberFormat(locale, options).format(num);
     },
 
-    currency(amount: number, currency = 'DZD'): string {
-      return new Intl.NumberFormat('fr-FR', {
+    currency(amount: number, currency = 'DZD', locale = 'fr-FR'): string {
+      return new Intl.NumberFormat(locale, {
         style: 'currency',
         currency
       }).format(amount);
@@ -160,22 +168,28 @@ export const validation = {
     return phoneRegex.test(phone.replace(/\s/g, ''));
   },
 
-  password(password: string): { valid: boolean; errors: string[] } {
+  password(password: string, language = 'fr'): { valid: boolean; errors: string[] } {
+    const msgs: Record<string, { minLength: string; uppercase: string; lowercase: string; digit: string }> = {
+      'fr': { minLength: 'Le mot de passe doit contenir au moins 12 caractères', uppercase: 'Le mot de passe doit contenir au moins une majuscule', lowercase: 'Le mot de passe doit contenir au moins une minuscule', digit: 'Le mot de passe doit contenir au moins un chiffre' },
+      'ar': { minLength: 'يجب أن تحتوي كلمة المرور على 12 حرفًا على الأقل', uppercase: 'يجب أن تحتوي كلمة المرور على حرف كبير واحد على الأقل', lowercase: 'يجب أن تحتوي كلمة المرور على حرف صغير واحد على الأقل', digit: 'يجب أن تحتوي كلمة المرور على رقم واحد على الأقل' },
+      'en': { minLength: 'Password must contain at least 12 characters', uppercase: 'Password must contain at least one uppercase letter', lowercase: 'Password must contain at least one lowercase letter', digit: 'Password must contain at least one digit' },
+    };
+    const t = msgs[language] || msgs['fr'];
     const errors: string[] = [];
-    
+
     if (password.length < 12) {
-      errors.push('Le mot de passe doit contenir au moins 12 caractères');
+      errors.push(t.minLength);
     }
     if (!/[A-Z]/.test(password)) {
-      errors.push('Le mot de passe doit contenir au moins une majuscule');
+      errors.push(t.uppercase);
     }
     if (!/[a-z]/.test(password)) {
-      errors.push('Le mot de passe doit contenir au moins une minuscule');
+      errors.push(t.lowercase);
     }
     if (!/[0-9]/.test(password)) {
-      errors.push('Le mot de passe doit contenir au moins un chiffre');
+      errors.push(t.digit);
     }
-    
+
     return { valid: errors.length === 0, errors };
   },
 
@@ -305,7 +319,7 @@ export const geo = {
   async getCurrentPosition(): Promise<GeolocationPosition> {
     return new Promise((resolve, reject) => {
       if (!navigator.geolocation) {
-        reject(new Error('Géolocalisation non supportée'));
+        reject(new Error('Geolocation not supported'));
         return;
       }
 
@@ -332,7 +346,7 @@ export const errorHandling = {
     if (error?.message) return error.message;
     if (error?.error) return error.error;
     if (error?.response?.data?.error) return error.response.data.error;
-    return 'Une erreur est survenue';
+    return 'An error occurred';
   },
 
   isNetworkError(error: any): boolean {

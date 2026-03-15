@@ -12,9 +12,11 @@ import { usePermissions } from "@/hooks/usePermissions";
 // Import du listener de notifications toast
 import NotificationToastListener from '@/components/NotificationToastListener';
 import RTLManager from './components/RtlManager';
+import ScrollToTop from './components/ScrollToTop';
 import { LanguagePersistenceManager } from '@/hooks/useLanguagePersistence';
 import { useToast } from '@/hooks/use-toast';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
+import { useTranslation } from 'react-i18next';
 
 // ============================================================================
 // LAZY LOADING — Chaque page est chargée à la demande (code splitting)
@@ -144,10 +146,11 @@ const GlobalToastListener = () => {
 // Bannière affichée quand le navigateur détecte une perte de connexion réseau
 const OfflineBanner = () => {
   const isOnline = useOnlineStatus();
+  const { t } = useTranslation();
   if (isOnline) return null;
   return (
     <div className="fixed top-0 inset-x-0 z-[100] bg-destructive text-destructive-foreground text-center py-2 text-sm font-medium">
-      Connexion réseau perdue — les données affichées peuvent ne plus être à jour.
+      {t('app.offlineBanner', 'Connexion réseau perdue — les données affichées peuvent ne plus être à jour.')}
     </div>
   );
 };
@@ -166,6 +169,8 @@ const App = () => (
            <LanguagePersistenceManager />
           {/* Gestionnaire RTL */}
           <RTLManager />
+          {/* Scroll en haut à chaque changement de page */}
+          <ScrollToTop />
           {/* Bannière offline */}
           <OfflineBanner />
           {/* Listener global pour les notifications toast */}

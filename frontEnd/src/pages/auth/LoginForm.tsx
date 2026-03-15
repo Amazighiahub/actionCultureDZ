@@ -7,9 +7,9 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Mail, Lock, LogIn, Loader2, AlertCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -26,7 +26,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
   const [formData, setFormData] = useState({
     email: '',
     mot_de_passe: '',
-    remember: false
   });
 
   // Erreurs de validation
@@ -36,9 +35,9 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.email) {
+    if (!formData.email?.trim()) {
       newErrors.email = t('auth.errors.emailRequired', 'L\'email est requis');
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
       newErrors.email = t('auth.errors.emailInvalid', 'Email invalide');
     }
 
@@ -47,7 +46,17 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
     }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    const hasErrors = Object.keys(newErrors).length > 0;
+    if (hasErrors) {
+      setTimeout(() => {
+        const firstError = document.querySelector('[aria-invalid="true"]');
+        if (firstError) {
+          (firstError as HTMLElement).focus();
+          firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 0);
+    }
+    return !hasErrors;
   };
 
   // Traduire les erreurs du backend
@@ -145,7 +154,9 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
               <Input
                 id="email"
                 type="email"
+                autoComplete="email"
                 placeholder="votre@email.com"
+                maxLength={255}
                 value={formData.email}
                 onChange={(e) => {
                   setFormData({ ...formData, email: e.target.value });
@@ -153,10 +164,12 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
                 }}
                 className={`pl-9 ${errors.email ? 'border-destructive' : ''}`}
                 disabled={loginLoading}
+                aria-invalid={!!errors.email}
+                aria-describedby={errors.email ? 'email-error' : undefined}
               />
             </div>
             {errors.email && (
-              <p className="text-sm text-destructive">{errors.email}</p>
+              <p id="email-error" role="alert" className="text-sm text-destructive">{errors.email}</p>
             )}
           </div>
 
@@ -168,6 +181,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
               <Input
                 id="password"
                 type="password"
+                autoComplete="current-password"
                 placeholder="••••••••"
                 value={formData.mot_de_passe}
                 onChange={(e) => {
@@ -176,29 +190,21 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
                 }}
                 className={`pl-9 ${errors.password ? 'border-destructive' : ''}`}
                 disabled={loginLoading}
+                aria-invalid={!!errors.password}
+                aria-describedby={errors.password ? 'password-error' : undefined}
               />
             </div>
             {errors.password && (
-              <p className="text-sm text-destructive">{errors.password}</p>
+              <p id="password-error" role="alert" className="text-sm text-destructive">{errors.password}</p>
             )}
           </div>
 
           {/* Options */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="remember"
-                checked={formData.remember}
-                onCheckedChange={(checked) =>
-                  setFormData({ ...formData, remember: !!checked })
-                }
-              />
-              <Label htmlFor="remember" className="text-sm cursor-pointer">
-                {t('auth.login.remember', 'Se souvenir de moi')}
-              </Label>
-            </div>
-            <Button variant="link" size="sm" className="px-0" type="button">
-              {t('auth.login.forgotPassword', 'Mot de passe oublié ?')}
+          <div className="flex items-center justify-end">
+            <Button variant="link" size="sm" className="px-0" type="button" asChild>
+              <Link to="/forgot-password">
+                {t('auth.login.forgotPassword', 'Mot de passe oublié ?')}
+              </Link>
             </Button>
           </div>
         </CardContent>

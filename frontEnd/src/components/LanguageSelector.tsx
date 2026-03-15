@@ -37,7 +37,7 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
   showFlag = true,
   showLabel = true,
 }) => {
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
   const currentLang = (i18n.language || 'fr') as SupportedLanguage;
   const isRTL = LANGUAGE_DIRECTIONS[currentLang] === 'rtl';
 
@@ -131,7 +131,7 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
       </DropdownMenuTrigger>
       <DropdownMenuContent align={isRTL ? 'start' : align} className="w-56">
         <DropdownMenuLabel className="text-xs text-muted-foreground">
-          Choisir la langue
+          {t('languageSelector.chooseLanguage', 'Choisir la langue')}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         {SUPPORTED_LANGUAGES.map((lang) => (

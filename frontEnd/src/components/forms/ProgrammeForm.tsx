@@ -21,6 +21,7 @@ import {
 import MultiLangInput from '@/components/MultiLangInput';
 import FormField from './FormField';
 import { cn } from '@/lib/Utils';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { programmeService, CreateProgrammeData, IntervenantData } from '@/services/programme.service';
 
 export interface ProgrammeFormData {
@@ -149,12 +150,6 @@ const generateDateRange = (startDate: string, endDate: string): string[] => {
   return dates;
 };
 
-// Formater une date pour l'affichage
-const formatDateLabel = (dateStr: string): string => {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
-};
-
 // Niveaux requis - labels traduits via t()
 const niveauxKeys = ['debutant', 'intermediaire', 'avance', 'tous_niveaux'] as const;
 
@@ -182,10 +177,16 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
   eventDates
 }) => {
   // Générer les dates disponibles basées sur les dates de l'événement
-  const availableDates = eventDates 
+  const availableDates = eventDates
     ? generateDateRange(eventDates.dateDebut, eventDates.dateFin)
     : [];
   const { t } = useTranslation();
+  const { formatDate } = useFormatDate();
+
+  // Formater une date pour l'affichage
+  const formatDateLabel = (dateStr: string): string => {
+    return formatDate(new Date(dateStr), { weekday: 'long', day: 'numeric', month: 'long' });
+  };
   const [formData, setFormData] = useState<ProgrammeFormData>({
     titre: { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
     description: { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
@@ -303,15 +304,9 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    // Titre requis
-    if (
-      !formData.titre.fr ||
-      !formData.titre.ar ||
-      !formData.titre.en ||
-      !formData.titre['tz-ltn'] ||
-      !formData.titre['tz-tfng']
-    ) {
-      newErrors.titre = t('programme.form.errors.titleRequired');
+    // Titre requis — aligné sur le backend (fr OU ar)
+    if (!formData.titre.fr?.trim() && !formData.titre.ar?.trim()) {
+      newErrors.titre = t('programme.form.errors.titleRequired', 'Le titre est requis (au moins en français ou arabe)');
     }
 
     // Date et horaires requis
@@ -330,8 +325,26 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
       newErrors.heure_fin = t('programme.form.errors.endTimeAfterStart');
     }
 
+    // Validation des intervenants — chaque intervenant doit avoir un vrai user sélectionné
+    if (formData.intervenants.length > 0) {
+      const invalidIntervenant = formData.intervenants.some(i => !i.id_user || i.id_user <= 0);
+      if (invalidIntervenant) {
+        newErrors.intervenants = t('programme.form.errors.intervenantUserRequired', 'Chaque intervenant doit avoir un utilisateur sélectionné');
+      }
+    }
+
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    const hasErrors = Object.keys(newErrors).length > 0;
+    if (hasErrors) {
+      setTimeout(() => {
+        const firstError = document.querySelector('[aria-invalid="true"]');
+        if (firstError) {
+          (firstError as HTMLElement).focus();
+          firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 0);
+    }
+    return !hasErrors;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -395,6 +408,7 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
                 value={formData.titre}
                 onChange={(value) => handleMultiLangChange('titre', value)}
                 required={true}
+                requiredLanguages={['fr', 'ar']}
                 disabled={isReadOnly}
                 errors={errors}
               />
@@ -762,7 +776,8 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
                     onChange={(e) => setNewMateriel(e.target.value)}
                     placeholder={t('programme.form.options.addMaterial')}
                     disabled={isReadOnly}
-                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addMateriel())}
+                    maxLength={200}
+                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addMateriel())}
                   />
                   <Button type="button" variant="outline" onClick={addMateriel} disabled={isReadOnly}>
                     <Plus className="h-4 w-4" />

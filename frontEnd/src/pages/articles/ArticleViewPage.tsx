@@ -61,7 +61,8 @@ import type { Commentaire } from '@/types/models/tracking.types';
 import type { Article, ArticleScientifique } from '@/types/models/oeuvres-specialisees.types';
 
 // Helpers pour gérer les types d'articles
-import { useTranslation } from "react-i18next";type ArticleData =
+import { useTranslation } from "react-i18next";
+import { useFormatDate } from '@/hooks/useFormatDate';type ArticleData =
 {type: 'article';data: Article;} |
 {type: 'article_scientifique';data: ArticleScientifique;} |
 {type: 'none';data: null;};
@@ -196,6 +197,7 @@ const ArticleViewPage: React.FC = () => {
   const [commentLoading, setCommentLoading] = useState(false);
   const [replyToComment, setReplyToComment] = useState<number | null>(null);
   const { t } = useTranslation();
+  const { formatDate: hookFormatDate } = useFormatDate();
   const { toast } = useToast();
 
   const articleId = parseInt(id || '0');
@@ -445,16 +447,13 @@ const ArticleViewPage: React.FC = () => {
   };
 
   const formatDate = (date?: string) => {
-    if (!date) return 'Date non définie';
+    if (!date) return t('common.dateUndefined', 'Date non définie');
 
-    const dateObj = new Date(date);
-    const options: Intl.DateTimeFormatOptions = {
+    return hookFormatDate(date, {
       day: 'numeric',
       month: 'long',
       year: 'numeric'
-    };
-
-    return dateObj.toLocaleDateString('fr-FR', options);
+    });
   };
 
   // Rendu des blocs
@@ -604,7 +603,7 @@ const ArticleViewPage: React.FC = () => {
           <CardContent className="p-6 text-center">
             <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-semibold mb-2">{t("articles_articleviewpage.article_introuvable")}</h3>
-            <p className="text-muted-foreground mb-4">{error || 'L\'article demandé n\'existe pas.'}</p>
+            <p className="text-muted-foreground mb-4">{error || t('article.notFound', "L'article demandé n'existe pas.")}</p>
             <Button onClick={() => navigate('/oeuvres')} variant="outline">{t("articles_articleviewpage.retour_aux_uvres")}
 
             </Button>
@@ -680,7 +679,7 @@ const ArticleViewPage: React.FC = () => {
             <div className="flex flex-wrap items-center gap-3">
               <Badge variant="outline">
                 <FileText className="h-3 w-3 mr-1" />
-                {isScientific ? 'Article Scientifique' : 'Article'}
+                {isScientific ? t('article.scientific', 'Article Scientifique') : t('article.article', 'Article')}
               </Badge>
               
               {articleHelpers.isPeerReviewed(articleData) &&
@@ -748,9 +747,9 @@ const ArticleViewPage: React.FC = () => {
                 <span className="font-medium text-foreground">
                     {articleHelpers.getJournal(articleData) || articleHelpers.getSource(articleData)}
                   </span>
-                  {articleHelpers.getVolume(articleData) && ` • Volume ${articleHelpers.getVolume(articleData)}`}
-                  {articleHelpers.getNumero(articleData) && ` • Numéro ${articleHelpers.getNumero(articleData)}`}
-                  {articleHelpers.getPages(articleData) && ` • Pages ${articleHelpers.getPages(articleData)}`}
+                  {articleHelpers.getVolume(articleData) && ` • ${t('article.volume', 'Volume')} ${articleHelpers.getVolume(articleData)}`}
+                  {articleHelpers.getNumero(articleData) && ` • ${t('article.numero', 'Numéro')} ${articleHelpers.getNumero(articleData)}`}
+                  {articleHelpers.getPages(articleData) && ` • ${t('article.pages', 'Pages')} ${articleHelpers.getPages(articleData)}`}
                 </p>
               </div>
             }
@@ -880,7 +879,7 @@ const ArticleViewPage: React.FC = () => {
                   size="sm"
                   onClick={() => setShowComments(!showComments)}>
                   
-                  {showComments ? 'Masquer' : 'Afficher'}
+                  {showComments ? t('common.hide', 'Masquer') : t('common.show', 'Afficher')}
                 </Button>
                 <Button
                   size="sm"
@@ -1041,7 +1040,7 @@ const ArticleViewPage: React.FC = () => {
         <DialogContent className="sm:max-w-[525px]">
           <DialogHeader>
             <DialogTitle>
-              {replyToComment ? 'Répondre au commentaire' : 'Ajouter un commentaire'}
+              {replyToComment ? t('article.replyToComment', 'Répondre au commentaire') : t('article.addComment', 'Ajouter un commentaire')}
             </DialogTitle>
             <DialogDescription>{t("articles_articleviewpage.partagez_votre_avis")}
 
@@ -1059,7 +1058,7 @@ const ArticleViewPage: React.FC = () => {
                 disabled={commentLoading} />
               
               <p className="text-xs text-muted-foreground text-right">
-                {commentContent.length} / 500 caractères
+                {commentContent.length} / 500 {t('common.characters', 'caractères')}
               </p>
             </div>
           </div>

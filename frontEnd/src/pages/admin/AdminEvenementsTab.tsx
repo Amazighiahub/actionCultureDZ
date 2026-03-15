@@ -7,7 +7,6 @@ import { useTranslation } from 'react-i18next';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-// Badge not needed — StatusBadge handles status display
 import {
   Select,
   SelectContent,
@@ -16,30 +15,31 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
-  Calendar, Search, CheckCircle, XCircle, 
+  Calendar, Search, CheckCircle, XCircle,
   MoreVertical, Eye, Trash2, RefreshCw,
-  MapPin, Users, Clock
+  MapPin, Users, Clock, X, AlertCircle
 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-import { 
-  LazyImage, 
-  EmptyState, 
+import {
+  LazyImage,
+  EmptyState,
   LoadingSkeleton,
-  StatusBadge 
+  StatusBadge
 } from '@/components/shared';
 
-// ✅ CORRIGÉ: Utilise useDashboardAdmin
 import { useDashboardAdmin } from '@/hooks/useDashboardAdmin';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { getAssetUrl } from '@/helpers/assetUrl';
 
-// ✅ Helper pour extraire le texte multilingue
+// Helper pour extraire le texte multilingue
 const getLocalizedText = (value: any, lang: string = 'fr', fallback: string = ''): string => {
   if (!value) return fallback;
   if (typeof value === 'string') return value;
@@ -54,17 +54,18 @@ const STATUS_OPTIONS = ['tous', 'publie', 'brouillon', 'annule', 'termine'];
 
 const AdminEvenementsTab: React.FC = () => {
   const { t, i18n } = useTranslation();
+  const { formatDate } = useFormatDate();
   const currentLang = i18n.language || 'fr';
-  
+
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('tous');
-  
+
   const debouncedSearch = useDebouncedValue(searchQuery, 300);
 
-  // ✅ Utilise useDashboardAdmin
   const {
     evenements,
     loadingEvenements,
+    errorEvenements,
     deleteEvenement,
     refreshAll
   } = useDashboardAdmin('evenements');
@@ -72,39 +73,42 @@ const AdminEvenementsTab: React.FC = () => {
   // Filtrer les événements
   const filteredEvents = React.useMemo(() => {
     if (!evenements?.items) return [];
-    
+
     return evenements.items.filter((event: any) => {
       // Filtre de recherche
       if (debouncedSearch) {
         const searchLower = debouncedSearch.toLowerCase();
         const nom = getLocalizedText(event.nom_evenement || event.nom, currentLang);
         const description = getLocalizedText(event.description, currentLang);
-        const matchesSearch = 
+        const matchesSearch =
           nom.toLowerCase().includes(searchLower) ||
           description.toLowerCase().includes(searchLower);
         if (!matchesSearch) return false;
       }
-      
+
       // Filtre de statut
       if (statusFilter !== 'tous' && event.statut !== statusFilter) {
         return false;
       }
-      
+
       return true;
     });
   }, [evenements, debouncedSearch, statusFilter, currentLang]);
 
-  const formatDate = (dateString: string) => {
-    if (!dateString) return 'Date non définie';
-    try {
-      return new Date(dateString).toLocaleDateString('fr-FR', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric'
-      });
-    } catch {
-      return dateString;
-    }
+  const hasActiveFilters = searchQuery || statusFilter !== 'tous';
+
+  const resetFilters = () => {
+    setSearchQuery('');
+    setStatusFilter('tous');
+  };
+
+  const formatEventDate = (dateString: string) => {
+    if (!dateString) return t('common.dateUndefined', 'Date non définie');
+    return formatDate(dateString, {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    });
   };
 
   return (
@@ -117,12 +121,12 @@ const AdminEvenementsTab: React.FC = () => {
             {t('admin.events.title', 'Gestion des événements')}
           </h2>
           <p className="text-muted-foreground">
-            {filteredEvents.length} événement(s)
+            {t('admin.events.count', '{{count}} événement(s)', { count: filteredEvents.length })}
           </p>
         </div>
         <Button variant="outline" onClick={refreshAll}>
           <RefreshCw className="h-4 w-4 mr-2" />
-          Actualiser
+          {t('common.refresh', 'Actualiser')}
         </Button>
       </div>
 
@@ -133,24 +137,37 @@ const AdminEvenementsTab: React.FC = () => {
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Rechercher par nom..."
+                placeholder={t('admin.events.searchPlaceholder', 'Rechercher par nom...')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
               />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full md:w-[180px]">
-                <SelectValue placeholder="Statut" />
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <SelectValue placeholder={t('common.status', 'Statut')} />
               </SelectTrigger>
               <SelectContent>
                 {STATUS_OPTIONS.map((status) => (
                   <SelectItem key={status} value={status}>
-                    {status === 'tous' ? 'Tous les statuts' : status}
+                    {status === 'tous'
+                      ? t('common.allStatuses', 'Tous les statuts')
+                      : t(`admin.events.statuses.${status}`, status)}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+
+            <div className="flex gap-2">
+              {hasActiveFilters && (
+                <Button variant="ghost" size="icon" onClick={resetFilters} aria-label={t('common.resetFilters', 'Réinitialiser les filtres')}>
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+              <Button variant="outline" size="icon" onClick={refreshAll} aria-label={t('common.refresh', 'Actualiser')}>
+                <RefreshCw className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -158,20 +175,32 @@ const AdminEvenementsTab: React.FC = () => {
       {/* Liste des événements */}
       {loadingEvenements ? (
         <LoadingSkeleton type="card" count={4} />
+      ) : errorEvenements ? (
+        <Card className="p-8 text-center">
+          <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
+          <p className="text-destructive mb-4">{errorEvenements}</p>
+          <Button onClick={refreshAll}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            {t('common.retry', 'Réessayer')}
+          </Button>
+        </Card>
       ) : filteredEvents.length === 0 ? (
         <EmptyState
-          icon={<Calendar className="h-12 w-12" />}
-          title="Aucun événement"
-          description="Aucun événement ne correspond à vos critères"
+          type="events"
+          title={t('admin.events.noEvents', 'Aucun événement')}
+          description={t('admin.events.noEventsDesc', 'Aucun événement ne correspond à vos critères')}
+          action={hasActiveFilters ? {
+            label: t('common.resetFilters', 'Réinitialiser'),
+            onClick: resetFilters
+          } : undefined}
         />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filteredEvents.map((event: any) => {
-            // ✅ Extraire les textes multilingues
-            const nom = getLocalizedText(event.nom_evenement || event.nom, currentLang, 'Sans nom');
-            const description = getLocalizedText(event.description, currentLang, 'Pas de description');
+            const nom = getLocalizedText(event.nom_evenement || event.nom, currentLang, t('common.unnamed', 'Sans nom'));
+            const description = getLocalizedText(event.description, currentLang, t('common.noDescription', 'Pas de description'));
             const lieu = getLocalizedText(event.lieu?.nom || event.lieu_nom, currentLang, '');
-            
+
             return (
               <Card key={event.id_evenement} className="hover:shadow-md transition-shadow overflow-hidden">
                 {/* Image */}
@@ -190,7 +219,7 @@ const AdminEvenementsTab: React.FC = () => {
                   {/* Badge date */}
                   <div className="absolute top-2 left-2 bg-white/90 rounded px-2 py-1">
                     <p className="text-xs font-bold text-primary">
-                      {formatDate(event.date_debut)}
+                      {formatEventDate(event.date_debut)}
                     </p>
                   </div>
                   <div className="absolute top-2 right-2">
@@ -215,7 +244,7 @@ const AdminEvenementsTab: React.FC = () => {
                         {event.nombre_participants !== undefined && (
                           <span className="flex items-center gap-1">
                             <Users className="h-3 w-3" />
-                            {event.nombre_participants} participants
+                            {t('admin.events.participants', '{{count}} participants', { count: event.nombre_participants })}
                           </span>
                         )}
                         {event.heure_debut && (
@@ -236,26 +265,27 @@ const AdminEvenementsTab: React.FC = () => {
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem>
                           <Eye className="h-4 w-4 mr-2" />
-                          Voir
+                          {t('common.view', 'Voir')}
                         </DropdownMenuItem>
                         {event.statut === 'brouillon' && (
                           <DropdownMenuItem>
                             <CheckCircle className="h-4 w-4 mr-2" />
-                            Publier
+                            {t('admin.events.publish', 'Publier')}
                           </DropdownMenuItem>
                         )}
                         {event.statut === 'publie' && (
                           <DropdownMenuItem>
                             <XCircle className="h-4 w-4 mr-2" />
-                            Annuler
+                            {t('admin.events.cancel', 'Annuler')}
                           </DropdownMenuItem>
                         )}
-                        <DropdownMenuItem 
-                          className="text-red-600"
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="text-destructive"
                           onClick={() => deleteEvenement(event.id_evenement)}
                         >
                           <Trash2 className="h-4 w-4 mr-2" />
-                          Supprimer
+                          {t('common.delete', 'Supprimer')}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

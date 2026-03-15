@@ -1,41 +1,34 @@
 /**
  * AdminModerationTab - Onglet de modération des signalements
+ * Utilise useDashboardAdmin
  */
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
-  AlertTriangle, CheckCircle, XCircle, Eye, Shield, 
-  MessageSquare, Flag, Clock, User, FileText
+  AlertTriangle, AlertCircle, CheckCircle, XCircle, Shield,
+  MessageSquare, Flag, Clock, User, FileText,
+  Search, RefreshCw, X, Ban, Trash2
 } from 'lucide-react';
 
-import { LazyImage, EmptyState, LoadingSkeleton, StatusBadge } from '@/components/shared';
+import { EmptyState, LoadingSkeleton } from '@/components/shared';
 
-interface Signalement {
-  id: number;
-  type: 'oeuvre' | 'commentaire' | 'utilisateur' | 'evenement';
-  raison: string;
-  description?: string;
-  statut: 'en_attente' | 'traite' | 'rejete';
-  date_signalement: string;
-  signale_par: {
-    id: number;
-    nom: string;
-    prenom: string;
-  };
-  element_signale: {
-    id: number;
-    titre?: string;
-    nom?: string;
-    contenu?: string;
-  };
-}
+import { useDashboardAdmin } from '@/hooks/useDashboardAdmin';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import { useFormatDate } from '@/hooks/useFormatDate';
 
-const RAISONS_SIGNALEMENT_CONFIG = {
+const RAISONS_SIGNALEMENT_CONFIG: Record<string, string> = {
   contenu_inapproprie: 'admin.moderation.reasons.inappropriateContent',
   spam: 'admin.moderation.reasons.spam',
   harcelement: 'admin.moderation.reasons.harassment',
@@ -44,70 +37,94 @@ const RAISONS_SIGNALEMENT_CONFIG = {
   autre: 'admin.moderation.reasons.other'
 };
 
+const TYPE_OPTIONS = ['tous', 'commentaire', 'oeuvre', 'evenement', 'user'];
+
 const AdminModerationTab: React.FC = () => {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState('en_attente');
-  const [signalements, setSignalements] = useState<Signalement[]>([]);
-  const [loading, setLoading] = useState(false);
+  const { formatDate } = useFormatDate();
 
-  // Mock data
-  React.useEffect(() => {
-    setLoading(true);
-    setTimeout(() => {
-      setSignalements([
-        {
-          id: 1,
-          type: 'commentaire',
-          raison: 'contenu_inapproprie',
-          description: 'Commentaire offensant envers l\'artiste',
-          statut: 'en_attente',
-          date_signalement: new Date().toISOString(),
-          signale_par: { id: 1, nom: 'Benali', prenom: 'Ahmed' },
-          element_signale: { id: 1, contenu: 'Ce commentaire est très négatif...' }
-        },
-        {
-          id: 2,
-          type: 'oeuvre',
-          raison: 'droits_auteur',
-          description: 'Cette œuvre est copiée d\'un autre artiste',
-          statut: 'en_attente',
-          date_signalement: new Date(Date.now() - 86400000).toISOString(),
-          signale_par: { id: 2, nom: 'Mammeri', prenom: 'Fatima' },
-          element_signale: { id: 5, titre: 'Paysage saharien' }
-        }
-      ]);
-      setLoading(false);
-    }, 500);
-  }, [activeTab]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [typeFilter, setTypeFilter] = useState('tous');
 
-  const handleAction = async (signalementId: number, action: 'approuver' | 'rejeter' | 'avertir') => {
-    console.log('Action:', action, 'sur signalement:', signalementId);
-    // Mettre à jour localement
-    setSignalements(prev => prev.filter(s => s.id !== signalementId));
+  const debouncedSearch = useDebouncedValue(searchQuery, 300);
+
+  const {
+    moderationQueue,
+    loadingModeration,
+    errorModeration,
+    moderateSignalement,
+    refreshAll
+  } = useDashboardAdmin('moderation');
+
+  // Filtrer les signalements
+  const filteredSignalements = React.useMemo(() => {
+    if (!moderationQueue?.items) return [];
+
+    return moderationQueue.items.filter((item: any) => {
+      // Filtre de recherche
+      if (debouncedSearch) {
+        const searchLower = debouncedSearch.toLowerCase();
+        const title = (item.entity_title || '').toLowerCase();
+        const reason = (item.reason || '').toLowerCase();
+        const reporter = (item.reported_by?.nom || '').toLowerCase();
+        const matchesSearch =
+          title.includes(searchLower) ||
+          reason.includes(searchLower) ||
+          reporter.includes(searchLower);
+        if (!matchesSearch) return false;
+      }
+
+      // Filtre de type
+      if (typeFilter !== 'tous') {
+        if (item.type !== typeFilter) return false;
+      }
+
+      return true;
+    });
+  }, [moderationQueue, debouncedSearch, typeFilter]);
+
+  const hasActiveFilters = searchQuery || typeFilter !== 'tous';
+
+  const resetFilters = () => {
+    setSearchQuery('');
+    setTypeFilter('tous');
   };
 
   const getTypeIcon = (type: string) => {
     switch (type) {
       case 'commentaire': return MessageSquare;
-      case 'utilisateur': return User;
+      case 'user': return User;
       case 'oeuvre': return FileText;
+      case 'evenement': return Flag;
       default: return Flag;
     }
   };
 
-  const filteredSignalements = signalements.filter(s => {
-    if (activeTab === 'en_attente') return s.statut === 'en_attente';
-    if (activeTab === 'traite') return s.statut === 'traite';
-    if (activeTab === 'rejete') return s.statut === 'rejete';
-    return true;
-  });
+  const handleAction = async (signalementId: number, action: string) => {
+    await moderateSignalement({ signalementId, action });
+  };
 
-  if (loading) {
-    return <LoadingSkeleton type="list" count={5} />;
-  }
+  const totalCount = moderationQueue?.items?.length ?? 0;
 
   return (
     <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold flex items-center gap-2">
+            <Shield className="h-6 w-6" />
+            {t('admin.moderation.title', 'Modération')}
+          </h2>
+          <p className="text-muted-foreground">
+            {t('admin.moderation.count', '{{count}} signalement(s) en attente', { count: filteredSignalements.length })}
+          </p>
+        </div>
+        <Button variant="outline" onClick={refreshAll}>
+          <RefreshCw className="h-4 w-4 mr-2" />
+          {t('common.refresh', 'Actualiser')}
+        </Button>
+      </div>
+
       {/* Stats rapides */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card>
@@ -116,140 +133,190 @@ const AdminModerationTab: React.FC = () => {
               <Clock className="h-6 w-6 text-yellow-600" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">{t('admin.moderation.status.pending')}</p>
-              <p className="text-2xl font-bold">{signalements.filter(s => s.statut === 'en_attente').length}</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="p-3 bg-green-100 rounded-lg">
-              <CheckCircle className="h-6 w-6 text-green-600" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">{t('admin.moderation.status.processed')}</p>
-              <p className="text-2xl font-bold">{signalements.filter(s => s.statut === 'traite').length}</p>
+              <p className="text-sm text-muted-foreground">{t('admin.moderation.status.pending', 'En attente')}</p>
+              <p className="text-2xl font-bold">{totalCount}</p>
             </div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 flex items-center gap-4">
             <div className="p-3 bg-red-100 rounded-lg">
-              <XCircle className="h-6 w-6 text-red-600" />
+              <MessageSquare className="h-6 w-6 text-red-600" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">{t('admin.moderation.status.rejected')}</p>
-              <p className="text-2xl font-bold">{signalements.filter(s => s.statut === 'rejete').length}</p>
+              <p className="text-sm text-muted-foreground">{t('admin.moderation.commentReports', 'Commentaires')}</p>
+              <p className="text-2xl font-bold">
+                {moderationQueue?.items?.filter((s: any) => s.type === 'commentaire').length ?? 0}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 flex items-center gap-4">
+            <div className="p-3 bg-orange-100 rounded-lg">
+              <FileText className="h-6 w-6 text-orange-600" />
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">{t('admin.moderation.contentReports', 'Contenus')}</p>
+              <p className="text-2xl font-bold">
+                {moderationQueue?.items?.filter((s: any) => s.type === 'oeuvre' || s.type === 'evenement').length ?? 0}
+              </p>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Liste des signalements */}
+      {/* Filtres */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5" />
-            {t('admin.moderation.title', 'Modération')}
-          </CardTitle>
-          <CardDescription>
-            {t('admin.moderation.description', 'Gérez les signalements de la communauté')}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList>
-              <TabsTrigger value="en_attente" className="gap-2">
-                <Clock className="h-4 w-4" />
-                {t('admin.moderation.status.pending')}
-              </TabsTrigger>
-              <TabsTrigger value="traite">{t('admin.moderation.status.processed')}</TabsTrigger>
-              <TabsTrigger value="rejete">{t('admin.moderation.status.rejected')}</TabsTrigger>
-            </TabsList>
+        <CardContent className="p-4">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder={t('admin.moderation.searchPlaceholder', 'Rechercher un signalement...')}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
 
-            <TabsContent value={activeTab} className="mt-4">
-              {filteredSignalements.length === 0 ? (
-                <div className="text-center py-12">
-                  <Shield className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">{t('admin.moderation.noReports')}</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {filteredSignalements.map((signalement) => {
-                    const TypeIcon = getTypeIcon(signalement.type);
-                    
-                    return (
-                      <Card key={signalement.id} className="border-l-4 border-l-yellow-500">
-                        <CardContent className="p-4">
-                          <div className="flex items-start justify-between gap-4">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-2">
-                                <TypeIcon className="h-4 w-4 text-muted-foreground" />
-                                <Badge variant="outline">{t(`admin.moderation.types.${signalement.type}`)}</Badge>
-                                <Badge variant="secondary">
-                                  {t(RAISONS_SIGNALEMENT_CONFIG[signalement.raison as keyof typeof RAISONS_SIGNALEMENT_CONFIG] || signalement.raison)}
-                                </Badge>
-                              </div>
+            <Select value={typeFilter} onValueChange={setTypeFilter}>
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <SelectValue placeholder={t('common.type', 'Type')} />
+              </SelectTrigger>
+              <SelectContent>
+                {TYPE_OPTIONS.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {type === 'tous'
+                      ? t('common.allTypes', 'Tous les types')
+                      : t(`admin.moderation.types.${type}`, type)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-                              <p className="text-sm mb-2">
-                                {signalement.description || t('admin.moderation.noDescription')}
-                              </p>
-
-                              <div className="text-xs text-muted-foreground">
-                                {t('admin.moderation.reportedBy', { name: `${signalement.signale_par.prenom} ${signalement.signale_par.nom}` })} •
-                                {new Date(signalement.date_signalement).toLocaleDateString('fr-FR')}
-                              </div>
-
-                              {signalement.element_signale && (
-                                <Alert className="mt-3 bg-muted/50">
-                                  <AlertDescription className="text-sm">
-                                    <strong>{t('admin.moderation.concernedElement')}:</strong>{' '}
-                                    {signalement.element_signale.titre ||
-                                     signalement.element_signale.nom ||
-                                     signalement.element_signale.contenu?.substring(0, 100)}
-                                  </AlertDescription>
-                                </Alert>
-                              )}
-                            </div>
-
-                            {signalement.statut === 'en_attente' && (
-                              <div className="flex flex-col sm:flex-row gap-2 flex-shrink-0">
-                                <Button
-                                  size="sm"
-                                  onClick={() => handleAction(signalement.id, 'approuver')}
-                                >
-                                  <CheckCircle className="h-4 w-4 mr-1" />
-                                  {t('admin.moderation.actions.approve')}
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  onClick={() => handleAction(signalement.id, 'rejeter')}
-                                >
-                                  <XCircle className="h-4 w-4 mr-1" />
-                                  {t('admin.moderation.actions.reject')}
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => handleAction(signalement.id, 'avertir')}
-                                >
-                                  <AlertTriangle className="h-4 w-4 mr-1" />
-                                  {t('admin.moderation.actions.warn')}
-                                </Button>
-                              </div>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </div>
+            <div className="flex gap-2">
+              {hasActiveFilters && (
+                <Button variant="ghost" size="icon" onClick={resetFilters} aria-label={t('common.resetFilters', 'Réinitialiser les filtres')}>
+                  <X className="h-4 w-4" />
+                </Button>
               )}
-            </TabsContent>
-          </Tabs>
+              <Button variant="outline" size="icon" onClick={refreshAll} aria-label={t('common.refresh', 'Actualiser')}>
+                <RefreshCw className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
+
+      {/* Liste des signalements */}
+      {loadingModeration ? (
+        <LoadingSkeleton type="list" count={5} />
+      ) : errorModeration ? (
+        <Card className="p-8 text-center">
+          <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
+          <p className="text-destructive mb-4">{errorModeration}</p>
+          <Button onClick={refreshAll}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            {t('common.retry', 'Réessayer')}
+          </Button>
+        </Card>
+      ) : filteredSignalements.length === 0 ? (
+        <EmptyState
+          type="default"
+          title={t('admin.moderation.noReports', 'Aucun signalement')}
+          description={t('admin.moderation.noReportsDesc', 'Aucun signalement ne correspond à vos critères')}
+          action={hasActiveFilters ? {
+            label: t('common.resetFilters', 'Réinitialiser'),
+            onClick: resetFilters
+          } : undefined}
+        />
+      ) : (
+        <div className="space-y-4">
+          {filteredSignalements.map((signalement: any) => {
+            const TypeIcon = getTypeIcon(signalement.type);
+            const reasonKey = RAISONS_SIGNALEMENT_CONFIG[signalement.reason];
+
+            return (
+              <Card key={signalement.id} className="border-l-4 border-l-yellow-500 hover:shadow-md transition-shadow">
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2 flex-wrap">
+                        <TypeIcon className="h-4 w-4 text-muted-foreground" />
+                        <Badge variant="outline">
+                          {t(`admin.moderation.types.${signalement.type}`, signalement.type)}
+                        </Badge>
+                        <Badge variant="secondary">
+                          {reasonKey ? t(reasonKey, signalement.reason) : signalement.reason}
+                        </Badge>
+                      </div>
+
+                      {signalement.entity_title && (
+                        <Alert className="mt-2 mb-2 bg-muted/50">
+                          <AlertDescription className="text-sm">
+                            <strong>{t('admin.moderation.concernedElement', 'Élément concerné')}:</strong>{' '}
+                            {signalement.entity_title}
+                          </AlertDescription>
+                        </Alert>
+                      )}
+
+                      <div className="text-xs text-muted-foreground">
+                        {signalement.reported_by?.nom && (
+                          <>
+                            {t('admin.moderation.reportedBy', { name: signalement.reported_by.nom })}
+                            {' • '}
+                          </>
+                        )}
+                        {signalement.date_signalement && formatDate(signalement.date_signalement)}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row gap-2 flex-shrink-0">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleAction(signalement.id, 'aucune')}
+                        title={t('admin.moderation.actions.dismiss', 'Rejeter le signalement')}
+                      >
+                        <CheckCircle className="h-4 w-4 mr-1" />
+                        {t('admin.moderation.actions.dismiss', 'Ignorer')}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleAction(signalement.id, 'avertissement')}
+                        title={t('admin.moderation.actions.warn', 'Avertir')}
+                      >
+                        <AlertTriangle className="h-4 w-4 mr-1" />
+                        {t('admin.moderation.actions.warn', 'Avertir')}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleAction(signalement.id, 'suppression_contenu')}
+                        title={t('admin.moderation.actions.removeContent', 'Supprimer le contenu')}
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        {t('admin.moderation.actions.removeContent', 'Supprimer')}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleAction(signalement.id, 'suspension_temporaire')}
+                        title={t('admin.moderation.actions.suspend', 'Suspendre l\'utilisateur')}
+                      >
+                        <Ban className="h-4 w-4 mr-1" />
+                        {t('admin.moderation.actions.suspend', 'Suspendre')}
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };

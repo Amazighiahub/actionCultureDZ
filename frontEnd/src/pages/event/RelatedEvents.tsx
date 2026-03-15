@@ -18,6 +18,7 @@ import { evenementService } from '@/services/evenement.service';
 import { useLocalizedDate } from '@/hooks/useLocalizedDate';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { useTranslateData } from '@/hooks/useTranslateData';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import type { Evenement } from '@/types/models/evenement.types';
 
 interface RelatedEventsProps {
@@ -105,6 +106,7 @@ const EventFeatureCard: React.FC<EventFeatureCardProps> = ({ event, onClick }) =
   const { formatDate } = useLocalizedDate();
   const { formatPrice } = useLocalizedNumber();
   const { td, safe } = useTranslateData();
+  const { formatDate: formatDateLocale } = useFormatDate();
 
   const capacityPercentage = event.capacite_max
     ? Math.round((event.nombre_inscrits || 0) / event.capacite_max * 100)
@@ -140,7 +142,7 @@ const EventFeatureCard: React.FC<EventFeatureCardProps> = ({ event, onClick }) =
                 {new Date(event.date_debut).getDate()}
               </div>
               <div className="text-xs uppercase text-muted-foreground">
-                {new Date(event.date_debut).toLocaleDateString('fr-FR', { month: 'short' })}
+                {formatDateLocale(new Date(event.date_debut), { month: 'short' })}
               </div>
             </div>
           </div>

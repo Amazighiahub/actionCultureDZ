@@ -4,6 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
@@ -101,6 +102,7 @@ const ArtisanatDetail: React.FC = () => {
   const { t } = useTranslation();
   const { td } = useTranslateData();
   const { toast } = useToast();
+  const { formatDate: formatDateLocale } = useFormatDate();
 
   const [artisanat, setArtisanat] = useState<ArtisanatData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -183,7 +185,7 @@ const ArtisanatDetail: React.FC = () => {
     } catch {
       const shareUrl = encodeURIComponent(window.location.href);
       const _encodedText = encodeURIComponent(shareText);
-      window.open(`https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`, '_blank');
+      window.open(`https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`, '_blank', 'noopener,noreferrer');
     }
   };
 
@@ -606,7 +608,7 @@ const ArtisanatDetail: React.FC = () => {
                               </div>
                             )}
                             <span className="text-sm text-muted-foreground">
-                              {new Date(commentaire.date_creation).toLocaleDateString()}
+                              {formatDateLocale(commentaire.date_creation)}
                             </span>
                           </div>
                           <p className="text-sm text-muted-foreground leading-relaxed">

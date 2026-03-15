@@ -359,6 +359,22 @@ class HttpClient {
           });
         }
         
+        // Gestion du 404 (non trouvé)
+        if (error.response?.status === 404) {
+          let errorMessage = i18next.t('toasts.notFoundDesc', 'La ressource demandée est introuvable.');
+
+          if (error.response.data && typeof error.response.data === 'object') {
+            const data = error.response.data as Record<string, any>;
+            errorMessage = data.message || errorMessage;
+          }
+
+          this.showToast({
+            title: i18next.t('toasts.notFound', 'Ressource introuvable'),
+            description: errorMessage,
+            variant: "destructive",
+          });
+        }
+
         // Gestion des erreurs 5xx (serveur)
         if (error.response?.status && error.response.status >= 500) {
           this.showToast({

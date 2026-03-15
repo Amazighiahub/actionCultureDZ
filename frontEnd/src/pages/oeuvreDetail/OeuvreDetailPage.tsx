@@ -32,6 +32,7 @@ import { HeroSection } from '@/components/oeuvre/HeroSection';
 
 // Hook personnalisé
 import { useOeuvreDetails } from '@/hooks/useOeuvreDetails';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { useAuth } from '@/hooks/useAuth';
 
 // Services
@@ -138,6 +139,7 @@ const OeuvreDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const { isAuthenticated } = useAuth();
+  const { formatDate: hookFormatDate } = useFormatDate();
   const lang = (i18n.language || 'fr') as SupportedLanguage;
   
   const [activeTab, setActiveTab] = useState('description');
@@ -266,7 +268,7 @@ const OeuvreDetailPage: React.FC = () => {
     const title = oeuvre?.titre || '';
     const url = window.location.href;
     try {
-      await navigator.share({ title: String(title), text: `Découvrez cette œuvre : ${title}`, url });
+      await navigator.share({ title: String(title), text: t('oeuvre.shareText', 'Découvrez cette œuvre : {{title}}', { title: String(title) }), url });
     } catch {
       setShowShareModal(true);
     }
@@ -275,7 +277,7 @@ const OeuvreDetailPage: React.FC = () => {
   // Lire un extrait
   const handleLireExtrait = () => {
     if ((oeuvre?.Livre as any)?.url_extrait) {
-      window.open((oeuvre!.Livre as any).url_extrait, '_blank');
+      window.open((oeuvre!.Livre as any).url_extrait, '_blank', 'noopener,noreferrer');
     } else {
       // Scroll vers la section description qui contient l'extrait
       setActiveTab('description');
@@ -285,8 +287,8 @@ const OeuvreDetailPage: React.FC = () => {
 
   // Format date
   const formatDate = (date?: string) => {
-    if (!date) return 'Date non définie';
-    return new Date(date).toLocaleDateString('fr-FR', {
+    if (!date) return t('common.dateUndefined', 'Date non définie');
+    return hookFormatDate(date, {
       day: 'numeric',
       month: 'long',
       year: 'numeric'
@@ -343,15 +345,15 @@ const OeuvreDetailPage: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
       <SEOHead
         title={getTranslation(oeuvre.titre, lang)}
-        description={getTranslation(oeuvre.description, lang)?.substring(0, 160) || `Découvrez ${getTranslation(oeuvre.titre, lang)} — œuvre culturelle algérienne`}
+        description={getTranslation(oeuvre.description, lang)?.substring(0, 160) || t('oeuvre.seoDescription', 'Découvrez {{title}} — œuvre culturelle algérienne', { title: getTranslation(oeuvre.titre, lang) })}
         image={(oeuvre as any).image_url || (oeuvre as any).couverture_url}
         type="article"
         keywords={seoKeywords}
         jsonLd={[
           buildOeuvreJsonLd(oeuvre),
           buildBreadcrumbJsonLd([
-            { name: 'Accueil', url: '/' },
-            { name: 'Œuvres', url: '/oeuvres' },
+            { name: t('nav.home', 'Accueil'), url: '/' },
+            { name: t('nav.oeuvres', 'Œuvres'), url: '/oeuvres' },
             { name: getTranslation(oeuvre.titre, lang) || '', url: `/oeuvres/${oeuvre.id_oeuvre}` },
           ]),
         ]}
@@ -444,7 +446,7 @@ const OeuvreDetailPage: React.FC = () => {
                 <CardHeader>
                   <CardTitle className="text-xl flex items-center">
                     <BookOpen className="h-5 w-5 mr-2 text-primary" />
-                    {oeuvre.OeuvreArt ? "Présentation de l'artiste" : "Bibliographie de l'auteur"}
+                    {oeuvre.OeuvreArt ? t('oeuvre.artistPresentation', "Présentation de l'artiste") : t('oeuvre.authorBibliography', "Bibliographie de l'auteur")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -470,7 +472,7 @@ const OeuvreDetailPage: React.FC = () => {
                       </div>
                     </div>
                   ) : (
-                    <p className="text-muted-foreground">Aucune information sur l'auteur disponible.</p>
+                    <p className="text-muted-foreground">{t('oeuvre.noAuthorInfo', "Aucune information sur l'auteur disponible.")}</p>
                   )}
                 </CardContent>
               </Card>
@@ -480,7 +482,7 @@ const OeuvreDetailPage: React.FC = () => {
                 <CardHeader>
                   <CardTitle className="text-xl flex items-center">
                     <Sparkles className="h-5 w-5 mr-2 text-primary" />
-                    Découvrir d'autres œuvres {oeuvre.OeuvreArt ? "de l'artiste" : "de l'auteur"}
+                    {oeuvre.OeuvreArt ? t('oeuvre.discoverArtistWorks', "Découvrir d'autres œuvres de l'artiste") : t('oeuvre.discoverAuthorWorks', "Découvrir d'autres œuvres de l'auteur")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -534,7 +536,7 @@ const OeuvreDetailPage: React.FC = () => {
                     <div className="text-center py-12">
                       <BookOpen className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
                       <p className="text-muted-foreground">
-                        Aucune autre œuvre de {oeuvre.OeuvreArt ? "cet artiste" : "cet auteur"} disponible.
+                        {oeuvre.OeuvreArt ? t('oeuvre.noOtherArtistWorks', "Aucune autre œuvre de cet artiste disponible.") : t('oeuvre.noOtherAuthorWorks', "Aucune autre œuvre de cet auteur disponible.")}
                       </p>
                     </div>
                   )}
@@ -656,7 +658,7 @@ const OeuvreDetailPage: React.FC = () => {
                 disabled={commentLoading}
               />
               <p className="text-xs text-muted-foreground text-right">
-                {commentContent.length} / 500 caractères
+                {commentContent.length} / 500 {t('common.characters', 'caractères')}
               </p>
             </div>
           </div>

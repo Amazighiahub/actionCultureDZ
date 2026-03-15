@@ -18,6 +18,7 @@ import { LoadingSkeleton, LazyImage } from '@/components/shared';
 
 // ✅ CORRIGÉ: Utilise useDashboardAdmin au lieu de useAdminStats
 import { useDashboardAdmin } from '@/hooks/useDashboardAdmin';
+import { useFormatDate } from '@/hooks/useFormatDate';
 
 // Helper pour extraire le texte d'un champ multilingue {fr, ar, en} ou string
 const getLocalizedText = (value: any, lang: string = 'fr', fallback: string = ''): string => {
@@ -105,8 +106,9 @@ const PendingItem: React.FC<PendingItemProps> = ({ title, subtitle, date, imageU
 
 const AdminOverview: React.FC = () => {
   const { t } = useTranslation();
+  const { formatDate } = useFormatDate();
   const navigate = useNavigate();
-  
+
   // ✅ CORRIGÉ: Utilise useDashboardAdmin
   const {
     overview,
@@ -247,7 +249,7 @@ const AdminOverview: React.FC = () => {
                     key={user.id_user}
                     title={`${getLocalizedText(user.prenom)} ${getLocalizedText(user.nom)}`}
                     subtitle={getLocalizedText(user.type_user) || user.email}
-                    date={new Date(user.date_inscription).toLocaleDateString('fr-FR')}
+                    date={formatDate(user.date_inscription)}
                     imageUrl={user.photo_url}
                     onApprove={() => validateUser({ userId: user.id_user, validated: true })}
                     onReject={() => validateUser({ userId: user.id_user, validated: false })}
@@ -295,7 +297,7 @@ const AdminOverview: React.FC = () => {
                     key={oeuvre.id_oeuvre}
                     title={getLocalizedText(oeuvre.titre, 'fr', 'Sans titre')}
                     subtitle={oeuvre.auteur ? `${getLocalizedText(oeuvre.auteur.prenom)} ${getLocalizedText(oeuvre.auteur.nom)}` : getLocalizedText(oeuvre.type_oeuvre)}
-                    date={new Date(oeuvre.date_creation || oeuvre.created_at).toLocaleDateString('fr-FR')}
+                    date={formatDate(oeuvre.date_creation || oeuvre.created_at)}
                     imageUrl={getAssetUrl(oeuvre.medias?.[0]?.url)}
                     onApprove={() => validateOeuvre({ oeuvreId: oeuvre.id_oeuvre, validated: true })}
                     onReject={() => validateOeuvre({ oeuvreId: oeuvre.id_oeuvre, validated: false })}

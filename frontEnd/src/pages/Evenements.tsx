@@ -38,32 +38,11 @@ import SEOHead from '@/components/SEOHead';
 // Hook personnalisé
 import { useEvenements } from '@/hooks/useEvenements';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import { useFormatDate } from '@/hooks/useFormatDate';
 
-// Types d'événements
-const EVENT_TYPES = [
-  { value: 'tous', label: 'Tous les types' },
-  { value: 'exposition', label: 'Exposition' },
-  { value: 'concert', label: 'Concert' },
-  { value: 'festival', label: 'Festival' },
-  { value: 'conference', label: 'Conférence' },
-  { value: 'atelier', label: 'Atelier' },
-  { value: 'spectacle', label: 'Spectacle' }
-];
-
-const STATUS_OPTIONS = [
-  { value: 'tous', label: 'Tous' },
-  { value: 'a_venir', label: 'À venir' },
-  { value: 'en_cours', label: 'En cours' },
-  { value: 'termine', label: 'Terminé' }
-];
-
-// Fonction utilitaire hors composant — pas recréée à chaque render
-const formatEventDate = (date: string) =>
-  new Date(date).toLocaleDateString('fr-FR', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric'
-  });
+// Types d'événements — labels resolved via t() in JSX
+const EVENT_TYPE_VALUES = ['tous', 'exposition', 'concert', 'festival', 'conference', 'atelier', 'spectacle'];
+const STATUS_OPTION_VALUES = ['tous', 'a_venir', 'en_cours', 'termine'];
 
 // Composant carte d'événement
 interface EventCardProps {
@@ -73,6 +52,7 @@ interface EventCardProps {
 
 const EventCard: React.FC<EventCardProps> = React.memo(({ event, onView }) => {
   const { t } = useTranslation();
+  const { formatDate } = useFormatDate();
 
   const capacityPercentage = event.capacite_max
     ? Math.round((event.nombre_inscrits || 0) / event.capacite_max * 100)
@@ -105,7 +85,7 @@ const EventCard: React.FC<EventCardProps> = React.memo(({ event, onView }) => {
                 {new Date(event.date_debut).getDate()}
               </div>
               <div className="text-xs uppercase text-muted-foreground">
-                {new Date(event.date_debut).toLocaleDateString('fr-FR', { month: 'short' })}
+                {formatDate(event.date_debut, { month: 'short' })}
               </div>
             </div>
           </div>
@@ -131,9 +111,9 @@ const EventCard: React.FC<EventCardProps> = React.memo(({ event, onView }) => {
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 flex-shrink-0" />
               <span>
-                {formatEventDate(event.date_debut)}
+                {formatDate(event.date_debut, { day: 'numeric', month: 'short', year: 'numeric' })}
                 {event.date_fin && event.date_fin !== event.date_debut && (
-                  <> - {formatEventDate(event.date_fin)}</>
+                  <> - {formatDate(event.date_fin, { day: 'numeric', month: 'short', year: 'numeric' })}</>
                 )}
               </span>
             </div>
@@ -260,9 +240,11 @@ const Evenements: React.FC = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {STATUS_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
+                  {STATUS_OPTION_VALUES.map((status) => (
+                    <SelectItem key={status} value={status}>
+                      {status === 'tous'
+                        ? t('common.all', 'Tous')
+                        : t(`events.statuses.${status}`, status)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -274,9 +256,11 @@ const Evenements: React.FC = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {EVENT_TYPES.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
+                  {EVENT_TYPE_VALUES.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {type === 'tous'
+                        ? t('common.allTypes', 'Tous les types')
+                        : t(`events.types.${type}`, type)}
                     </SelectItem>
                   ))}
                 </SelectContent>

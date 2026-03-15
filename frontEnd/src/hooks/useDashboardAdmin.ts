@@ -84,6 +84,17 @@ export const useDashboardAdmin = (activeTab: AdminTab = 'overview') => {
   const [loadingEvenements, setLoadingEvenements] = useState(false);
   const [loadingPatrimoine, setLoadingPatrimoine] = useState(false);
   const [loadingServices, setLoadingServices] = useState(false);
+
+  // États d'erreur
+  const [errorOverview, setErrorOverview] = useState<string | null>(null);
+  const [errorAllUsers, setErrorAllUsers] = useState<string | null>(null);
+  const [errorPendingUsers, setErrorPendingUsers] = useState<string | null>(null);
+  const [errorPendingOeuvres, setErrorPendingOeuvres] = useState<string | null>(null);
+  const [errorModeration, setErrorModeration] = useState<string | null>(null);
+  const [errorOeuvres, setErrorOeuvres] = useState<string | null>(null);
+  const [errorEvenements, setErrorEvenements] = useState<string | null>(null);
+  const [errorPatrimoine, setErrorPatrimoine] = useState<string | null>(null);
+  const [errorServices, setErrorServices] = useState<string | null>(null);
   
   // État pour la période sélectionnée
   const [selectedPeriod, setSelectedPeriod] = useState<'day' | 'week' | 'month' | 'year'>('month');
@@ -128,12 +139,14 @@ export const useDashboardAdmin = (activeTab: AdminTab = 'overview') => {
 
   const loadOverview = async () => {
     setLoadingOverview(true);
+    setErrorOverview(null);
     try {
       const response = await adminService.getOverview();
       if (response.success && response.data) {
         setOverview(response.data);
       }
     } catch (error) {
+      setErrorOverview(t('toasts.loadOverviewFailed'));
       toast({
         title: t('toasts.error'),
         description: t('toasts.loadOverviewFailed'),
@@ -166,12 +179,14 @@ export const useDashboardAdmin = (activeTab: AdminTab = 'overview') => {
 
   const loadAllUsers = async (params?: { page?: number; limit?: number; statut?: string; statut_validation?: string; type_user?: string; search?: string }) => {
     setLoadingAllUsers(true);
+    setErrorAllUsers(null);
     try {
       const response = await adminService.getAllUsers({ page: 1, limit: 100, ...params });
       if (response.success && response.data) {
         setAllUsers(response.data);
       }
     } catch (error) {
+      setErrorAllUsers(t('toasts.loadUsersFailed', 'Erreur lors du chargement des utilisateurs'));
     } finally {
       setLoadingAllUsers(false);
     }
@@ -179,12 +194,14 @@ export const useDashboardAdmin = (activeTab: AdminTab = 'overview') => {
 
   const loadPendingUsers = async () => {
     setLoadingPendingUsers(true);
+    setErrorPendingUsers(null);
     try {
       const response = await adminService.getPendingUsers({ page: 1, limit: 100 });
       if (response.success && response.data) {
         setPendingUsers(response.data);
       }
     } catch (error) {
+      setErrorPendingUsers(t('toasts.loadPendingUsersFailed', 'Erreur lors du chargement des utilisateurs en attente'));
     } finally {
       setLoadingPendingUsers(false);
     }
@@ -192,12 +209,14 @@ export const useDashboardAdmin = (activeTab: AdminTab = 'overview') => {
 
   const loadPendingOeuvres = async () => {
     setLoadingPendingOeuvres(true);
+    setErrorPendingOeuvres(null);
     try {
       const response = await adminService.getPendingOeuvres({ page: 1, limit: 100 });
       if (response.success && response.data) {
         setPendingOeuvres(response.data);
       }
     } catch (error) {
+      setErrorPendingOeuvres(t('toasts.loadPendingOeuvresFailed', 'Erreur lors du chargement des œuvres en attente'));
     } finally {
       setLoadingPendingOeuvres(false);
     }
@@ -205,12 +224,14 @@ export const useDashboardAdmin = (activeTab: AdminTab = 'overview') => {
 
   const loadModerationQueue = async () => {
     setLoadingModeration(true);
+    setErrorModeration(null);
     try {
       const response = await adminService.getModerationQueue({ page: 1, limit: 100 });
       if (response.success && response.data) {
         setModerationQueue(response.data);
       }
     } catch (error) {
+      setErrorModeration(t('toasts.loadModerationFailed', 'Erreur lors du chargement de la modération'));
     } finally {
       setLoadingModeration(false);
     }
@@ -498,25 +519,26 @@ const validateUser = async ({ userId, validated }: { userId: number; validated: 
 
   
 const loadOeuvres = useCallback(async (filters?: OeuvreFilters) => {
-  if (loadingOeuvres) return; // Éviter les appels multiples
-  
+  if (loadingOeuvres) return;
+
   setLoadingOeuvres(true);
+  setErrorOeuvres(null);
   try {
     const response = await adminService.getOeuvres(filters);
-    
+
     if (response.success && response.data) {
       setOeuvres(response.data);
     }
   } catch (error: any) {
-    // Gérer l'erreur sans redirection
     if (error.response?.status !== 401) {
+      setErrorOeuvres(t('toasts.loadOeuvresFailed'));
       toast({
         title: t('toasts.error'),
         description: t('toasts.loadOeuvresFailed'),
         variant: "destructive"
       });
     }
-    
+
     setOeuvres({ items: [], pagination: { total: 0, page: 1, limit: filters?.limit || 10, totalPages: 1 } });
   } finally {
     setLoadingOeuvres(false);
@@ -525,23 +547,25 @@ const loadOeuvres = useCallback(async (filters?: OeuvreFilters) => {
 
 const loadEvenements = useCallback(async (filters?: EvenementFilters) => {
   if (loadingEvenements) return;
-  
+
   setLoadingEvenements(true);
+  setErrorEvenements(null);
   try {
     const response = await adminService.getEvenements(filters);
-    
+
     if (response.success && response.data) {
       setEvenements(response.data);
     }
   } catch (error: any) {
     if (error.response?.status !== 401) {
+      setErrorEvenements(t('toasts.loadEventsFailed'));
       toast({
         title: t('toasts.error'),
         description: t('toasts.loadEventsFailed'),
         variant: "destructive"
       });
     }
-    
+
     setEvenements({ items: [], pagination: { total: 0, page: 1, limit: filters?.limit || 10, totalPages: 1 } });
   } finally {
     setLoadingEvenements(false);
@@ -550,23 +574,25 @@ const loadEvenements = useCallback(async (filters?: EvenementFilters) => {
 
 const loadPatrimoineItems = useCallback(async (filters?: PatrimoineFilters) => {
   if (loadingPatrimoine) return;
-  
+
   setLoadingPatrimoine(true);
+  setErrorPatrimoine(null);
   try {
     const response = await adminService.getPatrimoineItems(filters);
-    
+
     if (response.success && response.data) {
       setPatrimoineItems(response.data);
     }
   } catch (error: any) {
     if (error.response?.status !== 401) {
+      setErrorPatrimoine(t('toasts.loadPatrimoineFailed'));
       toast({
         title: t('toasts.error'),
         description: t('toasts.loadPatrimoineFailed'),
         variant: "destructive"
       });
     }
-    
+
     setPatrimoineItems({ items: [], pagination: { total: 0, page: 1, limit: filters?.limit || 10, totalPages: 1 } });
   } finally {
     setLoadingPatrimoine(false);
@@ -575,23 +601,25 @@ const loadPatrimoineItems = useCallback(async (filters?: PatrimoineFilters) => {
 
 const loadServices = useCallback(async (filters?: ServiceFilters) => {
   if (loadingServices) return;
-  
+
   setLoadingServices(true);
+  setErrorServices(null);
   try {
     const response = await adminService.getServices(filters);
-    
+
     if (response.success && response.data) {
       setServices(response.data);
     }
   } catch (error: any) {
     if (error.response?.status !== 401) {
+      setErrorServices(t('toasts.loadServicesFailed'));
       toast({
         title: t('toasts.error'),
         description: t('toasts.loadServicesFailed'),
         variant: "destructive"
       });
     }
-    
+
     setServices({ items: [], pagination: { total: 0, page: 1, limit: filters?.limit || 10, totalPages: 1 } });
   } finally {
     setLoadingServices(false);
@@ -783,6 +811,17 @@ const deleteService = async (serviceId: number) => {
     loadingEvenements,
     loadingPatrimoine,
     loadingServices,
+
+    // États d'erreur
+    errorOverview,
+    errorAllUsers,
+    errorPendingUsers,
+    errorPendingOeuvres,
+    errorModeration,
+    errorOeuvres,
+    errorEvenements,
+    errorPatrimoine,
+    errorServices,
     
     // Actions utilisateurs
     validateUser,

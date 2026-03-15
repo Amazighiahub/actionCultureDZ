@@ -278,6 +278,60 @@ export type TestEmailType = 'test' | 'bienvenue' | 'notification';
 // UTILITAIRES
 // ================================================
 
+// Traductions pour les labels de groupement par date
+const DATE_GROUP_LABELS: Record<string, { today: string; yesterday: string; thisWeek: string; older: string }> = {
+  'fr': { today: "Aujourd'hui", yesterday: 'Hier', thisWeek: 'Cette semaine', older: 'Plus ancien' },
+  'ar': { today: 'اليوم', yesterday: 'أمس', thisWeek: 'هذا الأسبوع', older: 'أقدم' },
+  'en': { today: 'Today', yesterday: 'Yesterday', thisWeek: 'This week', older: 'Older' },
+  'tz-ltn': { today: 'Assa', yesterday: 'Iḍelli', thisWeek: 'Imalas-a', older: 'Aqbur' },
+  'tz-tfng': { today: 'ⴰⵙⵙⴰ', yesterday: 'ⵉⴹⵍⵍⵉ', thisWeek: 'ⵉⵎⴰⵍⴰⵙ-ⴰ', older: 'ⴰⵇⴱⵓⵔ' },
+};
+
+// Traductions pour les temps relatifs des notifications
+const NOTIF_RELATIVE_TIME: Record<string, {
+  justNow: string;
+  minutesAgo: (n: number) => string;
+  hoursAgo: (n: number) => string;
+  daysAgo: (n: number) => string;
+}> = {
+  'fr': {
+    justNow: "À l'instant",
+    minutesAgo: (n) => `Il y a ${n} minute${n > 1 ? 's' : ''}`,
+    hoursAgo: (n) => `Il y a ${n} heure${n > 1 ? 's' : ''}`,
+    daysAgo: (n) => `Il y a ${n} jour${n > 1 ? 's' : ''}`,
+  },
+  'ar': {
+    justNow: 'الآن',
+    minutesAgo: (n) => `منذ ${n} دقيقة`,
+    hoursAgo: (n) => `منذ ${n} ساعة`,
+    daysAgo: (n) => `منذ ${n} يوم`,
+  },
+  'en': {
+    justNow: 'Just now',
+    minutesAgo: (n) => `${n} minute${n > 1 ? 's' : ''} ago`,
+    hoursAgo: (n) => `${n} hour${n > 1 ? 's' : ''} ago`,
+    daysAgo: (n) => `${n} day${n > 1 ? 's' : ''} ago`,
+  },
+  'tz-ltn': {
+    justNow: 'Tura kan',
+    minutesAgo: (n) => `${n} n tesdatin aya`,
+    hoursAgo: (n) => `${n} n tsaɛtin aya`,
+    daysAgo: (n) => `${n} n wussan aya`,
+  },
+  'tz-tfng': {
+    justNow: 'ⵜⵓⵔⴰ ⴽⴰⵏ',
+    minutesAgo: (n) => `${n} ⵏ ⵜⵙⴷⴰⵜⵉⵏ ⴰⵢⴰ`,
+    hoursAgo: (n) => `${n} ⵏ ⵜⵙⴰⵄⵜⵉⵏ ⴰⵢⴰ`,
+    daysAgo: (n) => `${n} ⵏ ⵡⵓⵙⵙⴰⵏ ⴰⵢⴰ`,
+  },
+};
+
+// Mapping des codes de langue vers des locales BCP 47 valides
+const NOTIFICATION_LOCALE_MAP: Record<string, string> = {
+  'ar': 'ar-DZ', 'fr': 'fr-DZ', 'en': 'en-US',
+  'tz-ltn': 'fr-DZ', 'tz-tfng': 'ar-DZ',
+};
+
 // Vérifier si une notification est récente (moins de 24h)
 export function isRecentNotification(notification: Notification): boolean {
   const created = new Date(notification.date_creation);
@@ -287,12 +341,13 @@ export function isRecentNotification(notification: Notification): boolean {
 }
 
 // Grouper les notifications par date
-export function groupNotificationsByDate(notifications: Notification[]): Record<string, Notification[]> {
+export function groupNotificationsByDate(notifications: Notification[], language = 'fr'): Record<string, Notification[]> {
+  const labels = DATE_GROUP_LABELS[language] || DATE_GROUP_LABELS['fr'];
   const groups: Record<string, Notification[]> = {
-    "Aujourd'hui": [],
-    "Hier": [],
-    "Cette semaine": [],
-    "Plus ancien": []
+    [labels.today]: [],
+    [labels.yesterday]: [],
+    [labels.thisWeek]: [],
+    [labels.older]: []
   };
 
   const now = new Date();
@@ -304,15 +359,15 @@ export function groupNotificationsByDate(notifications: Notification[]): Record<
 
   notifications.forEach(notif => {
     const date = new Date(notif.date_creation);
-    
+
     if (date >= today) {
-      groups["Aujourd'hui"].push(notif);
+      groups[labels.today].push(notif);
     } else if (date >= yesterday) {
-      groups["Hier"].push(notif);
+      groups[labels.yesterday].push(notif);
     } else if (date >= weekAgo) {
-      groups["Cette semaine"].push(notif);
+      groups[labels.thisWeek].push(notif);
     } else {
-      groups["Plus ancien"].push(notif);
+      groups[labels.older].push(notif);
     }
   });
 
@@ -327,7 +382,7 @@ export function groupNotificationsByDate(notifications: Notification[]): Record<
 }
 
 // Formater la date de notification
-export function formatNotificationDate(dateStr: string): string {
+export function formatNotificationDate(dateStr: string, language = 'fr'): string {
   const date = new Date(dateStr);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
@@ -335,12 +390,15 @@ export function formatNotificationDate(dateStr: string): string {
   const diffHours = Math.floor(diffMs / 3600000);
   const diffDays = Math.floor(diffMs / 86400000);
 
-  if (diffMins < 1) return "À l'instant";
-  if (diffMins < 60) return `Il y a ${diffMins} minute${diffMins > 1 ? 's' : ''}`;
-  if (diffHours < 24) return `Il y a ${diffHours} heure${diffHours > 1 ? 's' : ''}`;
-  if (diffDays < 7) return `Il y a ${diffDays} jour${diffDays > 1 ? 's' : ''}`;
-  
-  return date.toLocaleDateString('fr-DZ', {
+  const t = NOTIF_RELATIVE_TIME[language] || NOTIF_RELATIVE_TIME['fr'];
+
+  if (diffMins < 1) return t.justNow;
+  if (diffMins < 60) return t.minutesAgo(diffMins);
+  if (diffHours < 24) return t.hoursAgo(diffHours);
+  if (diffDays < 7) return t.daysAgo(diffDays);
+
+  const locale = NOTIFICATION_LOCALE_MAP[language] || 'fr-DZ';
+  return date.toLocaleDateString(locale, {
     day: 'numeric',
     month: 'short',
     year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined

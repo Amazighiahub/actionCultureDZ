@@ -29,7 +29,8 @@ import {
   Briefcase,
   Settings,
   Hammer,
-  ChevronDown
+  ChevronDown,
+  AlertCircle
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -41,6 +42,8 @@ import { useToast } from '@/components/ui/use-toast';
 import { useDashboardPro } from '@/hooks/useDashboardPro';
 import { useTranslation } from "react-i18next";
 import { useTranslateData } from '@/hooks/useTranslateData';
+import { useFormatDate } from '@/hooks/useFormatDate';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import GestionEvenement from '@/components/event/GestionEvenement';
 
 const DashboardPro = () => {
@@ -67,12 +70,20 @@ const DashboardPro = () => {
     loadingArtisanats,
     loadingServices,
     loadingPatrimoines,
+    error: errorStats,
+    errorOeuvres,
+    errorEvenements,
+    errorArtisanats,
+    errorServices,
+    errorPatrimoines,
     deleteItem,
     refreshAll
   } = useDashboardPro();
 
   const { t } = useTranslation();
   const { td, safe } = useTranslateData();
+  const { formatDate } = useFormatDate();
+  const debouncedSearch = useDebouncedValue(searchQuery, 300);
 
   const oeuvresTotal = dashboardStats?.oeuvres?.total ?? 0;
   const evenementsTotal = dashboardStats?.evenements?.total ?? 0;
@@ -80,9 +91,9 @@ const DashboardPro = () => {
   const artisanatsTotal = mesArtisanats?.pagination?.total ?? dashboardStats?.artisanats?.total ?? 0;
   const vuesTotal = dashboardStats?.oeuvres?.vues_total ?? 0;
 
-  // Fonction de filtrage par recherche
+  // Fonction de filtrage par recherche (utilise la valeur debouncée)
   const filterBySearch = useCallback((items: any[]) => {
-    if (!items || !searchQuery) return items;
+    if (!items || !debouncedSearch) return items;
     return items.filter((item) => {
       // Extraire les valeurs string des champs (y compris objets multilingues)
       const getValue = (field: any): string => {
@@ -105,9 +116,9 @@ const DashboardPro = () => {
         getValue(item.type_service)
       ].filter(Boolean).join(' ').toLowerCase();
 
-      return searchFields.includes(searchQuery.toLowerCase());
+      return searchFields.includes(debouncedSearch.toLowerCase());
     });
-  }, [searchQuery]);
+  }, [debouncedSearch]);
 
   // Composant pour afficher une ligne d'item avec bordure pointillée
   const ItemRow = ({ item, type, onView, onEdit, onDelete }: any) => {
@@ -117,7 +128,7 @@ const DashboardPro = () => {
         case 'evenement':return td(item.nom_evenement);
         case 'patrimoine':return td(item.nom);
         case 'service':return td(item.nom);
-        default:return 'Sans titre';
+        default:return t('common.untitled', 'Sans titre');
       }
     };
 
@@ -126,7 +137,7 @@ const DashboardPro = () => {
         case 'oeuvre':
           return (
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <span>{td(item.TypeOeuvre?.nom_type) || td(item.type_oeuvre?.nom_type) || 'Non catégorisé'}</span>
+              <span>{td(item.TypeOeuvre?.nom_type) || td(item.type_oeuvre?.nom_type) || t('common.uncategorized', 'Non catégorisé')}</span>
               {typeof item.vues === 'number' &&
               <span className="flex items-center gap-1">
                   <Eye className="h-3 w-3" />
@@ -150,7 +161,7 @@ const DashboardPro = () => {
               {item.date_debut &&
               <span className="flex items-center gap-1">
                   <Calendar className="h-3 w-3" />
-                  {new Date(item.date_debut).toLocaleDateString('fr-FR')}
+                  {formatDate(item.date_debut)}
                 </span>
               }
               {item.Lieu &&
@@ -175,10 +186,10 @@ const DashboardPro = () => {
         case 'patrimoine':
           return (
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <span>{td(item.type) || 'Patrimoine'}</span>
+              <span>{td(item.type) || t('common.heritage', 'Patrimoine')}</span>
               <span className="flex items-center gap-1">
                 <MapPin className="h-3 w-3" />
-                {td(item.wilaya) || 'Non spécifié'}
+                {td(item.wilaya) || t('common.unspecified', 'Non spécifié')}
               </span>
               {typeof item.visites === 'number' &&
               <span className="flex items-center gap-1">
@@ -191,7 +202,7 @@ const DashboardPro = () => {
         case 'service':
           return (
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <span>{td(item.type_service) || td(item.type) || 'Service'}</span>
+              <span>{td(item.type_service) || td(item.type) || t('common.service', 'Service')}</span>
               {(typeof item.tarif_min === 'number' || typeof item.tarif_max === 'number') && (
                 <span className="font-medium text-primary">
                   {item.tarif_min ?? '0'} - {item.tarif_max ?? '?'} {t("dashboardpro.da")}
@@ -256,7 +267,7 @@ const DashboardPro = () => {
       oeuvre: `/oeuvres/${item.id_oeuvre}`,
       evenement: `/evenements/${item.id_evenement}`,
       patrimoine: `/patrimoine/${item.id_site || item.id}`,
-      service: `/services/${item.id || item.id_service}`
+      service: `/modifier-service/${item.id || item.id_service}`
     };
     navigate(routes[type] || '/');
   }, [navigate]);
@@ -447,6 +458,14 @@ const DashboardPro = () => {
                       <Skeleton className="h-16 mb-4" />
                       <Skeleton className="h-16" />
                     </> :
+                  errorOeuvres ?
+                  <div className="text-center py-12">
+                      <AlertCircle className="h-12 w-12 mx-auto text-destructive mb-4" />
+                      <p className="text-destructive mb-4">{t('dashboardpro.loadOeuvresFailed', 'Erreur lors du chargement des œuvres')}</p>
+                      <Button onClick={refreshAll} variant="outline" size="sm">
+                        <RefreshCw className="h-4 w-4 mr-2" />{t('common.retry', 'Réessayer')}
+                      </Button>
+                    </div> :
                   mesOeuvres?.items && mesOeuvres.items.length > 0 ?
                   filterBySearch(mesOeuvres.items).map((oeuvre: any) =>
                   <ItemRow
@@ -494,6 +513,14 @@ const DashboardPro = () => {
                       <Skeleton className="h-16 mb-4" />
                       <Skeleton className="h-16" />
                     </> :
+                  errorEvenements ?
+                  <div className="text-center py-12">
+                      <AlertCircle className="h-12 w-12 mx-auto text-destructive mb-4" />
+                      <p className="text-destructive mb-4">{t('dashboardpro.loadEventsFailed', 'Erreur lors du chargement des événements')}</p>
+                      <Button onClick={refreshAll} variant="outline" size="sm">
+                        <RefreshCw className="h-4 w-4 mr-2" />{t('common.retry', 'Réessayer')}
+                      </Button>
+                    </div> :
                   mesEvenements?.items && mesEvenements.items.length > 0 ?
                   filterBySearch(mesEvenements.items).map((evenement: any) =>
                   <div key={evenement.id_evenement} className="py-4 border-b border-dashed border-gray-200 last:border-0">
@@ -504,13 +531,13 @@ const DashboardPro = () => {
                           {evenement.date_debut &&
                           <span className="flex items-center gap-1">
                               <Calendar className="h-3 w-3" />
-                              {new Date(evenement.date_debut).toLocaleDateString('fr-FR')}
+                              {formatDate(evenement.date_debut)}
                             </span>
                           }
                           {evenement.Lieu &&
                           <span className="flex items-center gap-1">
                               <MapPin className="h-3 w-3" />
-                              {td(evenement.Lieu.nom) || td(evenement.Lieu.adresse) || 'Lieu non spécifié'}
+                              {td(evenement.Lieu.nom) || td(evenement.Lieu.adresse) || t('common.unspecifiedLocation', 'Lieu non spécifié')}
                             </span>
                           }
                           <span className="flex items-center gap-1">
@@ -597,6 +624,14 @@ const DashboardPro = () => {
                       <Skeleton className="h-16 mb-4" />
                       <Skeleton className="h-16" />
                     </>
+                  ) : errorServices ? (
+                    <div className="text-center py-12">
+                      <AlertCircle className="h-12 w-12 mx-auto text-destructive mb-4" />
+                      <p className="text-destructive mb-4">{t('dashboardpro.loadServicesFailed', 'Erreur lors du chargement des services')}</p>
+                      <Button onClick={refreshAll} variant="outline" size="sm">
+                        <RefreshCw className="h-4 w-4 mr-2" />{t('common.retry', 'Réessayer')}
+                      </Button>
+                    </div>
                   ) : mesServices?.items && mesServices.items.length > 0 ? (
                     filterBySearch(mesServices.items).map((item: any) => (
                       <ItemRow
@@ -641,6 +676,14 @@ const DashboardPro = () => {
                       <Skeleton className="h-16 mb-4" />
                       <Skeleton className="h-16" />
                     </> :
+                  errorArtisanats ?
+                  <div className="text-center py-12">
+                      <AlertCircle className="h-12 w-12 mx-auto text-destructive mb-4" />
+                      <p className="text-destructive mb-4">{t('dashboardpro.loadArtisanatsFailed', 'Erreur lors du chargement des artisanats')}</p>
+                      <Button onClick={refreshAll} variant="outline" size="sm">
+                        <RefreshCw className="h-4 w-4 mr-2" />{t('common.retry', 'Réessayer')}
+                      </Button>
+                    </div> :
                   mesArtisanats?.items && mesArtisanats.items.length > 0 ?
                   filterBySearch(mesArtisanats.items).map((item: any) =>
                   <div key={item.id_artisanat || item.id} className="py-4 border-b border-dashed border-gray-200 last:border-0">
@@ -720,6 +763,14 @@ const DashboardPro = () => {
                       <Skeleton className="h-16 mb-4" />
                       <Skeleton className="h-16" />
                     </> :
+                  errorPatrimoines ?
+                  <div className="text-center py-12">
+                      <AlertCircle className="h-12 w-12 mx-auto text-destructive mb-4" />
+                      <p className="text-destructive mb-4">{t('dashboardpro.loadPatrimoinesFailed', 'Erreur lors du chargement des sites patrimoine')}</p>
+                      <Button onClick={refreshAll} variant="outline" size="sm">
+                        <RefreshCw className="h-4 w-4 mr-2" />{t('common.retry', 'Réessayer')}
+                      </Button>
+                    </div> :
                   mesPatrimoines?.items && mesPatrimoines.items.length > 0 ?
                   filterBySearch(mesPatrimoines.items).map((site: any) =>
                   <ItemRow

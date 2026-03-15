@@ -1,4 +1,4 @@
-export function formatDate(dateString: string): string {
+export function formatDate(dateString: string, locale = 'fr-FR'): string {
     const options: Intl.DateTimeFormatOptions = {
         year: 'numeric',
         month: 'long',
@@ -8,5 +8,5 @@ export function formatDate(dateString: string): string {
     };
 
     const date = new Date(dateString);
-    return date.toLocaleDateString('fr-FR', options);
+    return date.toLocaleDateString(locale, options);
 }

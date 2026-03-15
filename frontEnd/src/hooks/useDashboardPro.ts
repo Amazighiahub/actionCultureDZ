@@ -51,29 +51,23 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
   } = useQuery({
     queryKey: ['dashboard-pro-oeuvres'],
     queryFn: async () => {
-      try {
-        // Utiliser getMyOeuvres pour récupérer uniquement les œuvres de l'utilisateur connecté
-        const response = await oeuvreService.getMyOeuvres({ 
-          limit: 50,
-          page: 1
-        });
-        
-        if (!response.success) {
-          throw new Error(response.error);
-        }
-        
-        const responseData: any = response.data || {};
-        const items = responseData.oeuvres || responseData.items || (Array.isArray(responseData) ? responseData : []);
-        const pagination = response.pagination || responseData.pagination || { total: items.length || 0 };
+      const response = await oeuvreService.getMyOeuvres({
+        limit: 50,
+        page: 1
+      });
 
-        return {
-          items,
-          pagination
-        };
-      } catch (error: any) {
-        // Retourner une structure vide en cas d'erreur
-        return { items: [], pagination: { total: 0 } };
+      if (!response.success) {
+        throw new Error(response.error);
       }
+
+      const responseData: any = response.data || {};
+      const items = responseData.oeuvres || responseData.items || (Array.isArray(responseData) ? responseData : []);
+      const pagination = response.pagination || responseData.pagination || { total: items.length || 0 };
+
+      return {
+        items,
+        pagination
+      };
     },
     enabled: autoFetch,
     staleTime: 5 * 60 * 1000,
@@ -100,54 +94,46 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
   } = useQuery({
     queryKey: ['dashboard-pro-evenements'],
     queryFn: async () => {
-      try {
-        const response = await professionnelService.getEvenements({ limit: 50 });
+      const response = await professionnelService.getEvenements({ limit: 50 });
 
-        if (!response.success) {
-          throw new Error(response.error || 'Erreur lors du chargement des événements');
-        }
+      if (!response.success) {
+        throw new Error(response.error || 'Erreur lors du chargement des événements');
+      }
 
-        const responseData = response.data as any;
-        const evenementsList = responseData?.evenements || responseData?.items || [];
+      const responseData = response.data as any;
+      const evenementsList = responseData?.evenements || responseData?.items || [];
 
-        if (evenementsList.length > 0) {
-          const evenementsAvecProgrammes = await Promise.all(
-            evenementsList.map(async (evenement: any) => {
-              try {
-                const programmesResponse = await evenementService.getProgrammes(evenement.id_evenement);
-                const programmes = programmesResponse.success
-                  ? (programmesResponse.data?.programmes || programmesResponse.data || [])
-                  : [];
+      if (evenementsList.length > 0) {
+        const evenementsAvecProgrammes = await Promise.all(
+          evenementsList.map(async (evenement: any) => {
+            try {
+              const programmesResponse = await evenementService.getProgrammes(evenement.id_evenement);
+              const programmes = programmesResponse.success
+                ? (programmesResponse.data?.programmes || programmesResponse.data || [])
+                : [];
 
-                return {
-                  ...evenement,
-                  programmes: Array.isArray(programmes) ? programmes : []
-                };
-              } catch {
-                return {
-                  ...evenement,
-                  programmes: []
-                };
-              }
-            })
-          );
-          return {
-            items: evenementsAvecProgrammes,
-            pagination: responseData?.pagination || { total: evenementsAvecProgrammes.length }
-          };
-        }
-
+              return {
+                ...evenement,
+                programmes: Array.isArray(programmes) ? programmes : []
+              };
+            } catch {
+              return {
+                ...evenement,
+                programmes: []
+              };
+            }
+          })
+        );
         return {
-          items: [],
-          pagination: { total: 0 }
-        };
-      } catch (error: any) {
-        // Retourner une structure vide en cas d'erreur au lieu de données de test
-        return {
-          items: [],
-          pagination: { total: 0 }
+          items: evenementsAvecProgrammes,
+          pagination: responseData?.pagination || { total: evenementsAvecProgrammes.length }
         };
       }
+
+      return {
+        items: [],
+        pagination: { total: 0 }
+      };
     },
     enabled: autoFetch,
     staleTime: 5 * 60 * 1000,
@@ -169,20 +155,17 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
   const {
     data: mesServices,
     isLoading: loadingServices,
+    error: errorServices,
     refetch: refetchServices
   } = useQuery({
     queryKey: ['dashboard-pro-services'],
     queryFn: async () => {
-      try {
-        const response = await serviceService.getMyServices({ limit: 50, page: 1 });
-        if (!response.success) throw new Error(response.error);
-        const data = response.data as any;
-        const items = Array.isArray(data) ? data : (data?.items || data?.data || []);
-        const pagination = response.pagination || data?.pagination || { total: items.length };
-        return { items, pagination };
-      } catch {
-        return { items: [], pagination: { total: 0 } };
-      }
+      const response = await serviceService.getMyServices({ limit: 50, page: 1 });
+      if (!response.success) throw new Error(response.error);
+      const data = response.data as any;
+      const items = Array.isArray(data) ? data : (data?.items || data?.data || []);
+      const pagination = response.pagination || data?.pagination || { total: items.length };
+      return { items, pagination };
     },
     enabled: autoFetch,
     staleTime: 5 * 60 * 1000,
@@ -192,44 +175,38 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
   const {
     data: mesArtisanats,
     isLoading: loadingArtisanats,
+    error: errorArtisanats,
     refetch: refetchArtisanats
   } = useQuery({
     queryKey: ['dashboard-pro-artisanats'],
     queryFn: async () => {
-      try {
-        const response = await professionnelService.getArtisanats({ limit: 50, page: 1 });
-        if (!response.success) throw new Error(response.error);
+      const response = await professionnelService.getArtisanats({ limit: 50, page: 1 });
+      if (!response.success) throw new Error(response.error);
 
-        const responseData: any = response.data;
+      const responseData: any = response.data;
 
-        if (responseData?.items) {
-          return responseData;
-        }
+      if (responseData?.items) {
+        return responseData;
+      }
 
-        if (responseData?.artisanats) {
-          return {
-            items: responseData.artisanats,
-            pagination: responseData.pagination || { total: responseData.artisanats.length || 0 }
-          };
-        }
-
-        if (Array.isArray(responseData)) {
-          return {
-            items: responseData,
-            pagination: { total: responseData.length }
-          };
-        }
-
+      if (responseData?.artisanats) {
         return {
-          items: [],
-          pagination: { total: 0 }
-        };
-      } catch (error: any) {
-        return {
-          items: [],
-          pagination: { total: 0 }
+          items: responseData.artisanats,
+          pagination: responseData.pagination || { total: responseData.artisanats.length || 0 }
         };
       }
+
+      if (Array.isArray(responseData)) {
+        return {
+          items: responseData,
+          pagination: { total: responseData.length }
+        };
+      }
+
+      return {
+        items: [],
+        pagination: { total: 0 }
+      };
     },
     enabled: autoFetch,
     staleTime: 5 * 60 * 1000,
@@ -239,24 +216,21 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
   const {
     data: mesPatrimoines,
     isLoading: loadingPatrimoines,
+    error: errorPatrimoines,
     refetch: refetchPatrimoines
   } = useQuery({
     queryKey: ['dashboard-pro-patrimoines'],
     queryFn: async () => {
-      try {
-        const response = await patrimoineService.getMySites({ limit: 50 });
-        
-        if (!response.success) {
-          return { items: [], pagination: { total: 0 } };
-        }
-        
-        return {
-          items: response.data?.items || response.data || [],
-          pagination: response.data?.pagination || { total: 0 }
-        };
-      } catch {
-        return { items: [], pagination: { total: 0 } };
+      const response = await patrimoineService.getMySites({ limit: 50 });
+
+      if (!response.success) {
+        throw new Error(response.error || 'Erreur lors du chargement des sites patrimoine');
       }
+
+      return {
+        items: response.data?.items || response.data || [],
+        pagination: response.data?.pagination || { total: 0 }
+      };
     },
     enabled: autoFetch,
     staleTime: 5 * 60 * 1000,
@@ -426,6 +400,9 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
     error: errorStats,
     errorOeuvres,
     errorEvenements,
+    errorServices,
+    errorArtisanats,
+    errorPatrimoines,
 
     // Actions
     getOeuvreStats,

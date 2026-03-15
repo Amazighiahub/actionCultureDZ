@@ -35,6 +35,7 @@ import {
 import { useToast } from '@/components/ui/use-toast';
 import { programmeService, type Programme } from '@/services/programme.service';
 import ProgrammeForm, { ProgrammeFormData } from '@/components/forms/ProgrammeForm';
+import { useFormatDate } from '@/hooks/useFormatDate';
 
 interface GestionEvenementSimpleProps {
   evenementId: number;
@@ -62,6 +63,7 @@ const GestionEvenementSimple: React.FC<GestionEvenementSimpleProps> = ({
 }) => {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const { formatTime: hookFormatTime } = useFormatDate();
 
   // États pour les programmes
   const [programmes, setProgrammes] = useState<Programme[]>([]);
@@ -211,7 +213,7 @@ const GestionEvenementSimple: React.FC<GestionEvenementSimpleProps> = ({
   const formatTime = (time: string) => {
     if (!time) return '--:--';
     const date = new Date(time);
-    return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    return hookFormatTime(date, { hour: '2-digit', minute: '2-digit' });
   };
 
   // Obtenir le type d'activité

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { getDateLocale } from '@/hooks/useFormatDate';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -554,7 +555,7 @@ const PatrimoineDetail = () => {
                         </CardHeader>
                         <CardContent>
                           <p className="text-sm text-muted-foreground">
-                            {translate(monument.description as any, lang) || 'Aucune description'}
+                            {translate(monument.description as any, lang) || t('common.noDescription', 'Aucune description')}
                           </p>
                         </CardContent>
                       </Card>
@@ -586,7 +587,7 @@ const PatrimoineDetail = () => {
                         </CardHeader>
                         <CardContent>
                           <p className="text-sm text-muted-foreground">
-                            {translate(vestige.description as any, lang) || 'Aucune description'}
+                            {translate(vestige.description as any, lang) || t('common.noDescription', 'Aucune description')}
                           </p>
                         </CardContent>
                       </Card>
@@ -630,13 +631,13 @@ const PatrimoineDetail = () => {
                           </div>
                           <CardDescription className="flex items-center gap-2">
                             <Calendar className="h-4 w-4" />
-                            {new Date(programme.date_debut).toLocaleDateString(lang)}
-                            {programme.date_fin && ` - ${new Date(programme.date_fin).toLocaleDateString(lang)}`}
+                            {new Date(programme.date_debut).toLocaleDateString(getDateLocale(lang))}
+                            {programme.date_fin && ` - ${new Date(programme.date_fin).toLocaleDateString(getDateLocale(lang))}`}
                           </CardDescription>
                         </CardHeader>
                         <CardContent>
                           <p className="text-sm text-muted-foreground">
-                            {translate(programme.description as any, lang) || 'Aucune description'}
+                            {translate(programme.description as any, lang) || t('common.noDescription', 'Aucune description')}
                           </p>
                           {programme.Evenement && (
                             <Link to={`/evenements/${programme.Evenement.id_evenement}`}>
@@ -683,7 +684,7 @@ const PatrimoineDetail = () => {
                         </CardHeader>
                         <CardContent>
                           <p className="text-sm text-muted-foreground mb-3">
-                            {translate(parcours.description as any, lang) || 'Aucune description'}
+                            {translate(parcours.description as any, lang) || t('common.noDescription', 'Aucune description')}
                           </p>
                           <div className="flex flex-wrap gap-4 text-sm">
                             {parcours.duree_estimee && (

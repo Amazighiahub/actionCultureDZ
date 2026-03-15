@@ -1,5 +1,6 @@
 /**
  * AdminServicesTab - Onglet de gestion des services
+ * Utilise useDashboardAdmin
  */
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -21,79 +22,102 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import {
-  Search, MoreVertical, Edit, Trash2, Eye, RefreshCw, 
-  Package, Star, MapPin, Phone
+  Search, MoreVertical, Edit, Trash2, Eye, RefreshCw,
+  Package, Star, MapPin, X, AlertCircle
 } from 'lucide-react';
 
-import { 
-  LazyImage, 
-  EmptyState, 
+import {
+  EmptyState,
   LoadingSkeleton,
-  StatusBadge 
+  StatusBadge
 } from '@/components/shared';
 
-interface Service {
-  id_service: number;
-  nom: string;
-  type: string;
-  wilaya?: string;
-  statut: string;
-  note_moyenne?: number;
-  tarif?: string;
-  image_url?: string;
-  prestataire?: {
-    nom: string;
-    prenom: string;
-  };
-}
+import { useDashboardAdmin } from '@/hooks/useDashboardAdmin';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+
+// Helper pour extraire le texte multilingue
+const getLocalizedText = (value: any, lang: string = 'fr', fallback: string = ''): string => {
+  if (!value) return fallback;
+  if (typeof value === 'string') return value;
+  if (typeof value === 'object') {
+    return value[lang] || value.fr || value.ar || value.en || Object.values(value)[0] || fallback;
+  }
+  return String(value);
+};
 
 const AdminServicesTab: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const currentLang = i18n.language || 'fr';
+
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('tous');
-  const [services, setServices] = useState<Service[]>([]);
-  const [loading, setLoading] = useState(false);
 
-  React.useEffect(() => {
-    setLoading(true);
-    setTimeout(() => {
-      setServices([
-        {
-          id_service: 1,
-          nom: 'Visite guidée Casbah',
-          type: 'guide_touristique',
-          wilaya: 'Alger',
-          statut: 'actif',
-          note_moyenne: 4.8,
-          tarif: '3000 DZD/personne',
-          prestataire: { nom: 'Benali', prenom: 'Ahmed' }
-        },
-        {
-          id_service: 2,
-          nom: 'Atelier poterie traditionnelle',
-          type: 'atelier',
-          wilaya: 'Tizi Ouzou',
-          statut: 'en_attente',
-          note_moyenne: 4.5,
-          tarif: '2500 DZD',
-          prestataire: { nom: 'Mammeri', prenom: 'Fatima' }
-        }
-      ]);
-      setLoading(false);
-    }, 500);
-  }, [searchQuery, typeFilter]);
+  const debouncedSearch = useDebouncedValue(searchQuery, 300);
 
-  if (loading) {
-    return <LoadingSkeleton type="list" count={5} />;
-  }
+  const {
+    services,
+    loadingServices,
+    errorServices,
+    deleteService,
+    refreshAll
+  } = useDashboardAdmin('services');
+
+  // Filtrer les services
+  const filteredServices = React.useMemo(() => {
+    if (!services?.items) return [];
+
+    return services.items.filter((service: any) => {
+      // Filtre de recherche
+      if (debouncedSearch) {
+        const searchLower = debouncedSearch.toLowerCase();
+        const nom = getLocalizedText(service.nom, currentLang);
+        const type = getLocalizedText(service.type_service || service.type, currentLang);
+        const matchesSearch =
+          nom.toLowerCase().includes(searchLower) ||
+          type.toLowerCase().includes(searchLower);
+        if (!matchesSearch) return false;
+      }
+
+      // Filtre de type
+      if (typeFilter !== 'tous') {
+        const serviceType = service.type_service || service.type || '';
+        const typeValue = typeof serviceType === 'string' ? serviceType : getLocalizedText(serviceType, 'fr');
+        if (typeValue !== typeFilter) return false;
+      }
+
+      return true;
+    });
+  }, [services, debouncedSearch, typeFilter, currentLang]);
+
+  const hasActiveFilters = searchQuery || typeFilter !== 'tous';
+
+  const resetFilters = () => {
+    setSearchQuery('');
+    setTypeFilter('tous');
+  };
 
   return (
     <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold flex items-center gap-2">
+            <Package className="h-6 w-6" />
+            {t('admin.services.title', 'Gestion des services')}
+          </h2>
+          <p className="text-muted-foreground">
+            {t('admin.services.count', '{{count}} service(s)', { count: filteredServices.length })}
+          </p>
+        </div>
+        <Button variant="outline" onClick={refreshAll}>
+          <RefreshCw className="h-4 w-4 mr-2" />
+          {t('common.refresh', 'Actualiser')}
+        </Button>
+      </div>
+
+      {/* Filtres */}
       <Card>
-        <CardHeader>
-          <CardTitle>{t('admin.services.title', 'Gestion des services')}</CardTitle>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="p-4">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -118,78 +142,118 @@ const AdminServicesTab: React.FC = () => {
               </SelectContent>
             </Select>
 
-            <Button variant="outline" size="icon" aria-label={t('common.refresh', 'Actualiser')}>
-              <RefreshCw className="h-4 w-4" />
-            </Button>
+            <div className="flex gap-2">
+              {hasActiveFilters && (
+                <Button variant="ghost" size="icon" onClick={resetFilters} aria-label={t('common.resetFilters', 'Réinitialiser les filtres')}>
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+              <Button variant="outline" size="icon" onClick={refreshAll} aria-label={t('common.refresh', 'Actualiser')}>
+                <RefreshCw className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      {services.length === 0 ? (
-        <EmptyState type="products" title={t('admin.services.noServices', 'Aucun service')} />
+      {/* Liste des services */}
+      {loadingServices ? (
+        <LoadingSkeleton type="list" count={5} />
+      ) : errorServices ? (
+        <Card className="p-8 text-center">
+          <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
+          <p className="text-destructive mb-4">{errorServices}</p>
+          <Button onClick={refreshAll}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            {t('common.retry', 'Réessayer')}
+          </Button>
+        </Card>
+      ) : filteredServices.length === 0 ? (
+        <EmptyState
+          type="products"
+          title={t('admin.services.noServices', 'Aucun service')}
+          description={t('admin.services.noServicesDesc', 'Aucun service ne correspond à vos critères')}
+          action={hasActiveFilters ? {
+            label: t('common.resetFilters', 'Réinitialiser'),
+            onClick: resetFilters
+          } : undefined}
+        />
       ) : (
         <div className="space-y-4">
-          {services.map((service) => (
-            <Card key={service.id_service} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-lg bg-muted flex items-center justify-center">
-                    <Package className="h-8 w-8 text-muted-foreground" />
-                  </div>
+          {filteredServices.map((service: any) => {
+            const nom = getLocalizedText(service.nom, currentLang, 'Sans nom');
+            const type = getLocalizedText(service.type_service || service.type, currentLang);
 
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-medium">{service.nom}</h4>
-                      <StatusBadge status={service.statut} size="sm" />
+            return (
+              <Card key={service.id_service || service.id} className="hover:shadow-md transition-shadow">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-16 h-16 rounded-lg bg-muted flex items-center justify-center">
+                      <Package className="h-8 w-8 text-muted-foreground" />
                     </div>
-                    <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
-                      {service.wilaya && (
-                        <span className="flex items-center gap-1">
-                          <MapPin className="h-3 w-3" />
-                          {service.wilaya}
-                        </span>
-                      )}
-                      {service.note_moyenne && (
-                        <span className="flex items-center gap-1">
-                          <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                          {service.note_moyenne}
-                        </span>
-                      )}
-                      {service.tarif && <span>{service.tarif}</span>}
-                    </div>
-                    {service.prestataire && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {t('common.by', 'Par')} {service.prestataire.prenom} {service.prestataire.nom}
-                      </p>
-                    )}
-                  </div>
 
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" aria-label={t('common.moreOptions', 'Plus d\'options')}>
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem>
-                        <Eye className="h-4 w-4 mr-2" />
-                        {t('common.view', 'Voir')}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <Edit className="h-4 w-4 mr-2" />
-                        {t('common.edit', 'Modifier')}
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem className="text-destructive">
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        {t('common.delete', 'Supprimer')}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-medium">{nom}</h4>
+                        <StatusBadge status={service.statut || 'en_attente'} size="sm" />
+                      </div>
+                      <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
+                        {type && <span>{type}</span>}
+                        {(service.wilaya || service.Lieu?.Commune?.Daira?.Wilaya?.nom) && (
+                          <span className="flex items-center gap-1">
+                            <MapPin className="h-3 w-3" />
+                            {service.wilaya || service.Lieu?.Commune?.Daira?.Wilaya?.nom}
+                          </span>
+                        )}
+                        {service.note_moyenne != null && (
+                          <span className="flex items-center gap-1">
+                            <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                            {Number(service.note_moyenne).toFixed(1)}
+                          </span>
+                        )}
+                        {(service.tarif_min != null || service.tarif) && (
+                          <span>
+                            {service.tarif || `${service.tarif_min ?? 0} - ${service.tarif_max ?? '?'} DZD`}
+                          </span>
+                        )}
+                      </div>
+                      {(service.prestataire || service.User) && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {t('common.by', 'Par')} {service.prestataire?.prenom || service.User?.prenom} {service.prestataire?.nom || service.User?.nom}
+                        </p>
+                      )}
+                    </div>
+
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" aria-label={t('common.moreOptions', 'Plus d\'options')}>
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem>
+                          <Eye className="h-4 w-4 mr-2" />
+                          {t('common.view', 'Voir')}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                          <Edit className="h-4 w-4 mr-2" />
+                          {t('common.edit', 'Modifier')}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="text-destructive"
+                          onClick={() => deleteService(service.id_service || service.id)}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          {t('common.delete', 'Supprimer')}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
     </div>

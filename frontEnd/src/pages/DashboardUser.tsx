@@ -20,11 +20,13 @@ import {
   Info,
   Bell,
   RefreshCw,
-  CheckCircle
+  CheckCircle,
+  AlertCircle
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from "react-i18next";
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { useFavoris } from '@/hooks/useFavoris';
 import { notificationService } from '@/services/notification.service';
 import type { Notification } from '@/services/notification.service';
@@ -33,12 +35,13 @@ import type { GroupedFavoris } from '@/services/favori.service';
 const DashboardUser = () => {
   const { user } = useAuth();
   const { t } = useTranslation();
+  const { formatDate } = useFormatDate();
   const navigate = useNavigate();
 
   // Notifications via React Query
   const queryClient = useQueryClient();
 
-  const { data: notifications = [], isLoading: loadingNotifs } = useQuery<Notification[]>({
+  const { data: notifications = [], isLoading: loadingNotifs, error: errorNotifs, refetch: refetchNotifs } = useQuery<Notification[]>({
     queryKey: ['notifications', 'user', 'list'],
     queryFn: async () => {
       const result = await notificationService.getNotifications({ page: 1, limit: 10 });
@@ -78,6 +81,7 @@ const DashboardUser = () => {
     favoris,
     stats,
     loading,
+    error: errorFavoris,
     refresh,
     removeFavorite
   } = useFavoris({ grouped: true, autoFetch: true });
@@ -256,6 +260,14 @@ const DashboardUser = () => {
                   <Skeleton className="h-20" />
                   <Skeleton className="h-20" />
                 </div>
+              ) : errorFavoris ? (
+                <Card className="p-8 text-center">
+                  <AlertCircle className="h-12 w-12 mx-auto text-destructive mb-4" />
+                  <p className="text-destructive mb-4">{t('dashboarduser.loadFavorisFailed', 'Erreur lors du chargement des favoris')}</p>
+                  <Button onClick={refresh} variant="outline" size="sm">
+                    <RefreshCw className="h-4 w-4 mr-2" />{t('common.retry', 'Réessayer')}
+                  </Button>
+                </Card>
               ) : mesFavoris.oeuvres.length > 0 ? (
                 <div className="grid gap-4">
                   {mesFavoris.oeuvres.map((oeuvre) => (
@@ -268,7 +280,7 @@ const DashboardUser = () => {
                           </p>
                           <p className="text-xs text-muted-foreground">
                             <Clock className="h-3 w-3 inline mr-1" />{t("dashboarduser.ajout_2")}
-                            {oeuvre.ajouteLe ? new Date(oeuvre.ajouteLe).toLocaleDateString('fr-FR') : '-'}
+                            {oeuvre.ajouteLe ? formatDate(oeuvre.ajouteLe) : '-'}
                           </p>
                         </div>
                         <div className="flex gap-2">
@@ -316,11 +328,11 @@ const DashboardUser = () => {
                           <h3 className="font-semibold">{event.nom}</h3>
                           <p className="text-xs sm:text-sm text-muted-foreground truncate">
                             <Calendar className="h-3 w-3 inline mr-1" />
-                            {event.date ? new Date(event.date).toLocaleDateString('fr-FR') : '-'} • {event.lieu}
+                            {event.date ? formatDate(event.date) : '-'} • {event.lieu}
                           </p>
                           <p className="text-xs text-muted-foreground">
                             <Clock className="h-3 w-3 inline mr-1" />{t("dashboarduser.ajout_2")}
-                            {event.ajouteLe ? new Date(event.ajouteLe).toLocaleDateString('fr-FR') : '-'}
+                            {event.ajouteLe ? formatDate(event.ajouteLe) : '-'}
                           </p>
                         </div>
                         <div className="flex gap-2">
@@ -371,7 +383,7 @@ const DashboardUser = () => {
                           </p>
                           <p className="text-xs text-muted-foreground">
                             <Clock className="h-3 w-3 inline mr-1" />{t("dashboarduser.ajout_2")}
-                            {site.ajouteLe ? new Date(site.ajouteLe).toLocaleDateString('fr-FR') : '-'}
+                            {site.ajouteLe ? formatDate(site.ajouteLe) : '-'}
                           </p>
                         </div>
                         <div className="flex gap-2">
@@ -422,6 +434,14 @@ const DashboardUser = () => {
                     <Skeleton className="h-16" />
                     <Skeleton className="h-16" />
                   </>
+                ) : errorNotifs ? (
+                  <div className="text-center py-8">
+                    <AlertCircle className="h-12 w-12 mx-auto text-destructive mb-4" />
+                    <p className="text-destructive mb-4">{t('dashboarduser.loadNotifsFailed', 'Erreur lors du chargement des notifications')}</p>
+                    <Button onClick={() => refetchNotifs()} variant="outline" size="sm">
+                      <RefreshCw className="h-4 w-4 mr-2" />{t('common.retry', 'Réessayer')}
+                    </Button>
+                  </div>
                 ) : notifications.length > 0 ? (
                   notifications.map((notif) => (
                     <Alert key={notif.id_notification} className={notif.lu ? 'opacity-60' : 'border-primary/30 bg-primary/5'}>
@@ -438,7 +458,7 @@ const DashboardUser = () => {
                         <p>{notif.message}</p>
                         <p className="text-xs text-muted-foreground mt-1">
                           <Clock className="h-3 w-3 inline mr-1" />
-                          {notif.date_creation ? new Date(notif.date_creation).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}
+                          {notif.date_creation ? formatDate(notif.date_creation, { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}
                         </p>
                       </AlertDescription>
                     </Alert>
@@ -463,6 +483,7 @@ const DashboardUser = () => {
                     <label className="block text-sm font-medium mb-2">{t("dashboarduser.prnom")}</label>
                     <input
                       className="w-full p-3 border rounded-lg"
+                      autoComplete="given-name"
                       value={user?.prenom || ''}
                       readOnly />
 
@@ -471,6 +492,7 @@ const DashboardUser = () => {
                     <label className="block text-sm font-medium mb-2">{t("dashboarduser.nom")}</label>
                     <input
                       className="w-full p-3 border rounded-lg"
+                      autoComplete="family-name"
                       value={user?.nom || ''}
                       readOnly />
 
@@ -479,6 +501,7 @@ const DashboardUser = () => {
                     <label className="block text-sm font-medium mb-2">{t("dashboarduser.email")}</label>
                     <input
                       className="w-full p-3 border rounded-lg"
+                      autoComplete="email"
                       value={user?.email || ''}
                       readOnly />
 
@@ -496,7 +519,7 @@ const DashboardUser = () => {
                     <label className="block text-sm font-medium mb-2">{t("dashboarduser.membre_depuis")}</label>
                     <input
                       className="w-full p-3 border rounded-lg"
-                      value={user?.date_creation ? new Date(user.date_creation).toLocaleDateString('fr-FR') : ''}
+                      value={user?.date_creation ? formatDate(user.date_creation) : ''}
                       readOnly />
 
                   </div>

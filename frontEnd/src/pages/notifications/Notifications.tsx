@@ -12,8 +12,16 @@ import {
   CheckCheck,
   BellOff,
   Calendar,
-  AlertCircle } from
+  AlertCircle,
+  RefreshCw } from
 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
 import { useNotifications } from '@/hooks/useNotifications';
 import {
   formatNotificationDate,
@@ -30,7 +38,7 @@ const NotificationItem: React.FC<{
   notification: Notification;
   onMarkAsRead: (id: number) => void;
   onDelete: (id: number) => void;
-}> = ({ notification, onMarkAsRead, onDelete }) => {const { t } = useTranslation();
+}> = ({ notification, onMarkAsRead, onDelete }) => {const { t, i18n } = useTranslation();
   const getIcon = (type: NotificationType): JSX.Element => {
     const icons: Record<NotificationType, JSX.Element> = {
       'validation_participation': <Check className="w-5 h-5 text-green-600" />,
@@ -76,7 +84,7 @@ const NotificationItem: React.FC<{
           
           <div className="flex items-center gap-4 mt-3 text-sm">
             <span className="text-gray-400">
-              {formatNotificationDate(notification.date_creation)}
+              {formatNotificationDate(notification.date_creation, i18n.language)}
             </span>
             
             {notification.url_action &&
@@ -137,7 +145,7 @@ export default function NotificationsPage() {
   const [page, setPage] = useState(1);
 
   // Vérifier les permissions au chargement
-  const { t } = useTranslation();useEffect(() => {
+  const { t, i18n } = useTranslation();useEffect(() => {
     if ('Notification' in window && window.Notification.permission === 'default') {
       setShowPermissionBanner(true);
     }
@@ -159,8 +167,8 @@ export default function NotificationsPage() {
 
   // Grouper par date avec typage explicite
   const groupedNotifications = React.useMemo((): GroupedNotifications => {
-    return groupNotificationsByDate(filteredNotifications);
-  }, [filteredNotifications]);
+    return groupNotificationsByDate(filteredNotifications, i18n.language);
+  }, [filteredNotifications, i18n.language]);
 
   // Gérer la demande de permission
   const handlePermissionRequest = async () => {
@@ -199,7 +207,7 @@ export default function NotificationsPage() {
               <div className="flex items-center gap-2 text-sm">
                 <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
                 <span className="text-gray-600">
-                  {isConnected ? 'Connecté' : 'Déconnecté'}
+                  {isConnected ? t("notifications_notifications.connected", "Connecté") : t("notifications_notifications.disconnected", "Déconnecté")}
                 </span>
               </div>
               
@@ -273,17 +281,18 @@ export default function NotificationsPage() {
                 <Filter className="w-4 h-4" />{t("notifications_notifications.filtrer")}
 
               </h2>
-              <select
-                value={filter}
-                onChange={(e) => setFilter(e.target.value as any)}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
-
-                {notificationTypes.map((type) =>
-                <option key={type.value} value={type.value}>
-                    {type.label}
-                  </option>
-                )}
-              </select>
+              <Select value={filter} onValueChange={(v) => setFilter(v as any)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {notificationTypes.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Actions rapides */}
@@ -310,7 +319,18 @@ export default function NotificationsPage() {
           <div className="lg:col-span-3">
             {error &&
             <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-                <p className="text-red-800">{error}</p>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
+                    <p className="text-red-800">{error}</p>
+                  </div>
+                  <button
+                    onClick={() => loadNotifications({ page: 1, limit: 20 })}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-red-600 text-white rounded-md text-sm hover:bg-red-700">
+                    <RefreshCw className="w-4 h-4" />
+                    {t("common.retry", "Réessayer")}
+                  </button>
+                </div>
               </div>
             }
 
@@ -351,7 +371,7 @@ export default function NotificationsPage() {
                   disabled={isLoading}
                   className="px-6 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 disabled:opacity-50">
 
-                      {isLoading ? 'Chargement...' : 'Charger plus'}
+                      {isLoading ? t("notifications_notifications.loading", "Chargement...") : t("notifications_notifications.loadMore", "Charger plus")}
                     </button>
                   </div>
               }

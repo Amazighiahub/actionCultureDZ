@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/use-toast';
 import { Calendar, MapPin, Users, ArrowRight } from 'lucide-react';
 import { useLocalizedDate } from '@/hooks/useLocalizedDate';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { useRTL } from '@/hooks/useRTL';
 import { evenementService } from '@/services/evenement.service';
@@ -39,6 +40,7 @@ const EvenementsDynamique: React.FC = () => {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const { formatDate } = useLocalizedDate();
+  const { formatDate: formatDateLocale } = useFormatDate();
   const { formatNumber, formatPrice } = useLocalizedNumber();
   const { rtlClasses } = useRTL();
   const lang = (i18n.language || 'fr') as SupportedLanguage;
@@ -163,7 +165,7 @@ const EvenementsDynamique: React.FC = () => {
                   <div className={`absolute bottom-4 ${rtlClasses.end(4)} bg-background/90 backdrop-blur-sm rounded-lg p-2`}>
                     <div className="text-center">
                       <div className="text-2xl font-bold">{new Date(event.date_debut).getDate()}</div>
-                      <div className="text-xs uppercase">{new Date(event.date_debut).toLocaleDateString('fr-FR', { month: 'short' })}</div>
+                      <div className="text-xs uppercase">{formatDateLocale(event.date_debut, { month: 'short' })}</div>
                     </div>
                   </div>
                 )}

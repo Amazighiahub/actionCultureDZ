@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { LazyImage, EmptyState } from '@/components/shared';
 import { useTranslateData } from '@/hooks/useTranslateData';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { cn } from '@/lib/Utils';
 import type { Programme } from '@/types/models/programme.types';
 
@@ -51,6 +52,7 @@ interface ProgramItemProps {
 const ProgramItem: React.FC<ProgramItemProps> = ({ program, isExpanded, onToggle }) => {
   const { t } = useTranslation();
   const { td } = useTranslateData();
+  const { formatTime: hookFormatTime } = useFormatDate();
 
   // Normaliser les champs qui peuvent être des objets multilingues
   const statut = program.statut || 'planifie';
@@ -58,7 +60,7 @@ const ProgramItem: React.FC<ProgramItemProps> = ({ program, isExpanded, onToggle
   const niveauRequis = program.niveau_requis || '';
 
   const Icon = activityIcons[typeActivite] || activityIcons.default;
-  
+
   const formatTime = (time?: string) => {
     if (!time) return '--:--';
 
@@ -70,7 +72,7 @@ const ProgramItem: React.FC<ProgramItemProps> = ({ program, isExpanded, onToggle
     // Si c'est une date ISO complète, parser et formater
     const date = new Date(time);
     if (!isNaN(date.getTime())) {
-      return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+      return hookFormatTime(date, { hour: '2-digit', minute: '2-digit' });
     }
 
     return '--:--';
@@ -277,15 +279,16 @@ const ProgramItem: React.FC<ProgramItemProps> = ({ program, isExpanded, onToggle
 // Composant principal
 const EventProgram: React.FC<EventProgramProps> = ({ programs }) => {
   const { t } = useTranslation();
+  const { formatDate } = useFormatDate();
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
   // Grouper par jour si plusieurs jours
   const programsByDay = programs.reduce((acc, program) => {
-    const day = program.date_programme 
-      ? new Date(program.date_programme).toLocaleDateString('fr-FR', { 
-          weekday: 'long', 
-          day: 'numeric', 
-          month: 'long' 
+    const day = program.date_programme
+      ? formatDate(new Date(program.date_programme), {
+          weekday: 'long',
+          day: 'numeric',
+          month: 'long'
         })
       : t('programme.noDate', 'Date non définie');
     

@@ -4,6 +4,7 @@
  */
 import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { getDateLocale } from '@/hooks/useFormatDate';
 import { useNavigate, useParams } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -553,28 +554,41 @@ const AjouterPatrimoine: React.FC = () => {
   // Valider le formulaire
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
-    const requiredLangs = ['fr', 'ar', 'en', 'tz-ltn', 'tz-tfng'] as const;
 
-    const nomMissing = requiredLangs.some(lang => !formData.nom[lang]);
-    if (nomMissing) {
-      newErrors.nom = t('validation.allLanguagesRequired', 'Le nom est requis dans toutes les langues');
+    if (!formData.nom.fr?.trim() && !formData.nom.ar?.trim()) {
+      newErrors.nom = t('validation.frOrArRequired', 'Le nom est requis (au moins en français ou arabe)');
     }
-    const adresseMissing = requiredLangs.some(lang => !formData.adresse[lang]);
-    if (adresseMissing) {
-      newErrors.adresse = t('validation.allLanguagesRequired', 'L\'adresse est requise dans toutes les langues');
+    if (!formData.adresse.fr?.trim() && !formData.adresse.ar?.trim()) {
+      newErrors.adresse = t('validation.frOrArRequired', 'L\'adresse est requise (au moins en français ou arabe)');
     }
     if (!formData.communeId) {
       newErrors.communeId = t('validation.required');
     }
-    if (!formData.typePatrimoine) {
+    if (!formData.typePatrimoine?.trim()) {
       newErrors.typePatrimoine = t('validation.required');
     }
     if (!formData.wilayaId) {
       newErrors.wilayaId = t('validation.required');
     }
+    // GPS validation
+    if (formData.latitude && formData.longitude) {
+      if (formData.latitude < -90 || formData.latitude > 90 || formData.longitude < -180 || formData.longitude > 180) {
+        newErrors.gps = t('validation.invalidGPS', 'Coordonnées GPS invalides (latitude : -90 à 90, longitude : -180 à 180)');
+      }
+    }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    const hasErrors = Object.keys(newErrors).length > 0;
+    if (hasErrors) {
+      setTimeout(() => {
+        const firstError = document.querySelector('[aria-invalid="true"]');
+        if (firstError) {
+          (firstError as HTMLElement).focus();
+          firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 0);
+    }
+    return !hasErrors;
   };
 
   // Soumettre le formulaire
@@ -988,9 +1002,12 @@ const AjouterPatrimoine: React.FC = () => {
                     name="nom"
                     label={t('patrimoine.name', 'Nom du patrimoine')}
                     value={formData.nom}
-                    onChange={(value) => setFormData({ ...formData, nom: value })}
+                    onChange={(value) => {
+                      setFormData({ ...formData, nom: value });
+                      if (errors.nom) setErrors(prev => { const { nom, ...rest } = prev; return rest; });
+                    }}
                     required
-                    requiredLanguages={['fr']}
+                    requiredLanguages={['fr', 'ar']}
                     errors={errors.nom ? { fr: errors.nom } : {}}
                   />
 
@@ -999,9 +1016,15 @@ const AjouterPatrimoine: React.FC = () => {
                     <Label>{t('patrimoine.type', 'Type de patrimoine')} *</Label>
                     <Select
                       value={formData.typePatrimoine}
-                      onValueChange={(value) => setFormData({ ...formData, typePatrimoine: value })}
+                      onValueChange={(value) => {
+                        setFormData({ ...formData, typePatrimoine: value });
+                        if (errors.typePatrimoine) setErrors(prev => { const { typePatrimoine, ...rest } = prev; return rest; });
+                      }}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger
+                        aria-invalid={!!errors.typePatrimoine}
+                        aria-describedby={errors.typePatrimoine ? 'typePatrimoine-error' : undefined}
+                      >
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -1016,7 +1039,7 @@ const AjouterPatrimoine: React.FC = () => {
                       </SelectContent>
                     </Select>
                     {errors.typePatrimoine && (
-                      <p className="text-sm text-destructive">{errors.typePatrimoine}</p>
+                      <p id="typePatrimoine-error" role="alert" className="text-sm text-destructive">{errors.typePatrimoine}</p>
                     )}
                     <p className="text-xs text-muted-foreground">
                       {t('patrimoine.typeHint', 'Le type détermine les sections disponibles (monuments, vestiges, parcours) dans l\'onglet Détails.')}
@@ -1028,9 +1051,12 @@ const AjouterPatrimoine: React.FC = () => {
                     name="adresse"
                     label={t('patrimoine.address', 'Adresse')}
                     value={formData.adresse}
-                    onChange={(value) => setFormData({ ...formData, adresse: value })}
+                    onChange={(value) => {
+                      setFormData({ ...formData, adresse: value });
+                      if (errors.adresse) setErrors(prev => { const { adresse, ...rest } = prev; return rest; });
+                    }}
                     required
-                    requiredLanguages={['fr']}
+                    requiredLanguages={['fr', 'ar']}
                     errors={errors.adresse ? { fr: errors.adresse } : {}}
                   />
                 </CardContent>
@@ -1052,9 +1078,13 @@ const AjouterPatrimoine: React.FC = () => {
                       onValueChange={(value) => {
                         setFormData({ ...formData, wilayaId: parseInt(value), communeId: 0 });
                         setCommunes([]);
+                        if (errors.wilayaId) setErrors(prev => { const { wilayaId, ...rest } = prev; return rest; });
                       }}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger
+                        aria-invalid={!!errors.wilayaId}
+                        aria-describedby={errors.wilayaId ? 'wilayaId-error' : undefined}
+                      >
                         <SelectValue placeholder={t('patrimoine.selectWilaya', 'Sélectionner une wilaya')} />
                       </SelectTrigger>
                       <SelectContent>
@@ -1065,6 +1095,9 @@ const AjouterPatrimoine: React.FC = () => {
                         ))}
                       </SelectContent>
                     </Select>
+                    {errors.wilayaId && (
+                      <p id="wilayaId-error" role="alert" className="text-sm text-destructive">{errors.wilayaId}</p>
+                    )}
                   </div>
 
                   {/* Commune */}
@@ -1072,10 +1105,16 @@ const AjouterPatrimoine: React.FC = () => {
                     <Label>{t('patrimoine.commune', 'Commune')} *</Label>
                     <Select
                       value={formData.communeId.toString()}
-                      onValueChange={(value) => setFormData({ ...formData, communeId: parseInt(value) })}
+                      onValueChange={(value) => {
+                        setFormData({ ...formData, communeId: parseInt(value) });
+                        if (errors.communeId) setErrors(prev => { const { communeId, ...rest } = prev; return rest; });
+                      }}
                       disabled={!formData.wilayaId}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger
+                        aria-invalid={!!errors.communeId}
+                        aria-describedby={errors.communeId ? 'communeId-error' : undefined}
+                      >
                         <SelectValue placeholder={t('patrimoine.selectCommune', 'Sélectionner une commune')} />
                       </SelectTrigger>
                       <SelectContent>
@@ -1087,7 +1126,7 @@ const AjouterPatrimoine: React.FC = () => {
                       </SelectContent>
                     </Select>
                     {errors.communeId && (
-                      <p className="text-sm text-destructive">{errors.communeId}</p>
+                      <p id="communeId-error" role="alert" className="text-sm text-destructive">{errors.communeId}</p>
                     )}
                   </div>
 
@@ -1113,6 +1152,7 @@ const AjouterPatrimoine: React.FC = () => {
                                 ? lieu.adresse as TranslatableValue
                                 : { ...prev.adresse, fr: lieu.adresse || '' }
                             }));
+                            if (errors.gps) setErrors(prev => { const { gps, ...rest } = prev; return rest; });
                           }
                         }}
                         wilayaId={formData.wilayaId || undefined}
@@ -1133,6 +1173,9 @@ const AjouterPatrimoine: React.FC = () => {
                         <span>{t('patrimoine.longitude', 'Longitude')}: {formData.longitude.toFixed(6)}</span>
                       </div>
                     </div>
+                  )}
+                  {errors.gps && (
+                    <p id="gps-error" role="alert" className="text-sm text-destructive">{errors.gps}</p>
                   )}
                 </CardContent>
               </Card>
@@ -1474,8 +1517,8 @@ const AjouterPatrimoine: React.FC = () => {
                             <div className="flex items-center gap-2">
                               <Calendar className="h-4 w-4 text-muted-foreground" />
                               <span>
-                                {new Date(prog.date_debut).toLocaleDateString(lang)}
-                                {prog.date_fin && ` - ${new Date(prog.date_fin).toLocaleDateString(lang)}`}
+                                {new Date(prog.date_debut).toLocaleDateString(getDateLocale(lang))}
+                                {prog.date_fin && ` - ${new Date(prog.date_fin).toLocaleDateString(getDateLocale(lang))}`}
                               </span>
                             </div>
                             {prog.heure_debut && (
@@ -1857,6 +1900,7 @@ const AjouterPatrimoine: React.FC = () => {
                   value={tempService.horaires || ''}
                   onChange={(e) => setTempService({ ...tempService, horaires: e.target.value })}
                   placeholder="9h - 17h"
+                  maxLength={100}
                 />
               </div>
               <div className="space-y-2">
@@ -2169,6 +2213,7 @@ const AjouterPatrimoine: React.FC = () => {
                   value={tempParcours.theme || ''}
                   onChange={(e) => setTempParcours({ ...tempParcours, theme: e.target.value })}
                   placeholder={t('patrimoine.themePlaceholder', 'Ex: Histoire, Architecture, Nature...')}
+                  maxLength={200}
                 />
               </div>
             </div>

@@ -16,30 +16,30 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
-  BookOpen, Search, CheckCircle, XCircle, 
+  BookOpen, Search, CheckCircle, XCircle,
   MoreVertical, Eye, Trash2, RefreshCw,
-  Book, Film, Music, Palette
+  Book, Film, Music, Palette, X, AlertCircle
 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-import { 
-  LazyImage, 
-  EmptyState, 
+import {
+  LazyImage,
+  EmptyState,
   LoadingSkeleton,
-  StatusBadge 
+  StatusBadge
 } from '@/components/shared';
 
-// ✅ CORRIGÉ: Utilise useDashboardAdmin
 import { useDashboardAdmin } from '@/hooks/useDashboardAdmin';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { getAssetUrl } from '@/helpers/assetUrl';
 
-// ✅ Helper pour extraire le texte multilingue
+// Helper pour extraire le texte multilingue
 const getLocalizedText = (value: any, lang: string = 'fr', fallback: string = ''): string => {
   if (!value) return fallback;
   if (typeof value === 'string') return value;
@@ -64,17 +64,17 @@ const TYPE_ICONS: Record<string, React.ElementType> = {
 const AdminOeuvresTab: React.FC = () => {
   const { t, i18n } = useTranslation();
   const currentLang = i18n.language || 'fr';
-  
+
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('tous');
-  
+
   const debouncedSearch = useDebouncedValue(searchQuery, 300);
 
-  // ✅ Utilise useDashboardAdmin
   const {
     oeuvres,
     pendingOeuvres,
     loadingOeuvres,
+    errorOeuvres,
     validateOeuvre,
     deleteOeuvre,
     refreshAll
@@ -84,7 +84,7 @@ const AdminOeuvresTab: React.FC = () => {
   const allOeuvres = React.useMemo(() => {
     const combined = [...(oeuvres?.items || []), ...(pendingOeuvres?.items || [])];
     // Dédupliquer par id
-    const unique = combined.filter((oeuvre, index, self) => 
+    const unique = combined.filter((oeuvre, index, self) =>
       index === self.findIndex(o => o.id_oeuvre === oeuvre.id_oeuvre)
     );
     return unique;
@@ -98,20 +98,27 @@ const AdminOeuvresTab: React.FC = () => {
         const searchLower = debouncedSearch.toLowerCase();
         const titre = getLocalizedText(oeuvre.titre, currentLang);
         const description = getLocalizedText(oeuvre.description, currentLang);
-        const matchesSearch = 
+        const matchesSearch =
           titre.toLowerCase().includes(searchLower) ||
           description.toLowerCase().includes(searchLower);
         if (!matchesSearch) return false;
       }
-      
+
       // Filtre de statut
       if (statusFilter !== 'tous' && oeuvre.statut !== statusFilter) {
         return false;
       }
-      
+
       return true;
     });
   }, [allOeuvres, debouncedSearch, statusFilter, currentLang]);
+
+  const hasActiveFilters = searchQuery || statusFilter !== 'tous';
+
+  const resetFilters = () => {
+    setSearchQuery('');
+    setStatusFilter('tous');
+  };
 
   const getTypeIcon = (type: string): React.ElementType => {
     const typeName = getLocalizedText(type, 'fr', '').toLowerCase();
@@ -130,12 +137,12 @@ const AdminOeuvresTab: React.FC = () => {
             {t('admin.oeuvres.title', 'Gestion des œuvres')}
           </h2>
           <p className="text-muted-foreground">
-            {filteredOeuvres.length} œuvre(s)
+            {t('admin.oeuvres.count', '{{count}} œuvre(s)', { count: filteredOeuvres.length })}
           </p>
         </div>
         <Button variant="outline" onClick={refreshAll}>
           <RefreshCw className="h-4 w-4 mr-2" />
-          Actualiser
+          {t('common.refresh', 'Actualiser')}
         </Button>
       </div>
 
@@ -146,24 +153,37 @@ const AdminOeuvresTab: React.FC = () => {
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Rechercher par titre..."
+                placeholder={t('admin.oeuvres.searchPlaceholder', 'Rechercher par titre...')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
               />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full md:w-[180px]">
-                <SelectValue placeholder="Statut" />
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <SelectValue placeholder={t('common.status', 'Statut')} />
               </SelectTrigger>
               <SelectContent>
                 {STATUS_OPTIONS.map((status) => (
                   <SelectItem key={status} value={status}>
-                    {status === 'tous' ? 'Tous les statuts' : status}
+                    {status === 'tous'
+                      ? t('common.allStatuses', 'Tous les statuts')
+                      : t(`admin.oeuvres.statuses.${status}`, status)}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+
+            <div className="flex gap-2">
+              {hasActiveFilters && (
+                <Button variant="ghost" size="icon" onClick={resetFilters} aria-label={t('common.resetFilters', 'Réinitialiser les filtres')}>
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+              <Button variant="outline" size="icon" onClick={refreshAll} aria-label={t('common.refresh', 'Actualiser')}>
+                <RefreshCw className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -171,25 +191,37 @@ const AdminOeuvresTab: React.FC = () => {
       {/* Liste des œuvres */}
       {loading ? (
         <LoadingSkeleton type="card" count={4} />
+      ) : errorOeuvres ? (
+        <Card className="p-8 text-center">
+          <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
+          <p className="text-destructive mb-4">{errorOeuvres}</p>
+          <Button onClick={refreshAll}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            {t('common.retry', 'Réessayer')}
+          </Button>
+        </Card>
       ) : filteredOeuvres.length === 0 ? (
         <EmptyState
-          icon={<BookOpen className="h-12 w-12" />}
-          title="Aucune œuvre"
-          description="Aucune œuvre ne correspond à vos critères"
+          type="default"
+          title={t('admin.oeuvres.noOeuvres', 'Aucune œuvre')}
+          description={t('admin.oeuvres.noOeuvresDesc', 'Aucune œuvre ne correspond à vos critères')}
+          action={hasActiveFilters ? {
+            label: t('common.resetFilters', 'Réinitialiser'),
+            onClick: resetFilters
+          } : undefined}
         />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filteredOeuvres.map((oeuvre: any) => {
             const TypeIcon = getTypeIcon(oeuvre.type_oeuvre || oeuvre.TypeOeuvre?.nom_type);
-            // ✅ Extraire les textes multilingues
-            const titre = getLocalizedText(oeuvre.titre, currentLang, 'Sans titre');
-            const description = getLocalizedText(oeuvre.description, currentLang, 'Pas de description');
+            const titre = getLocalizedText(oeuvre.titre, currentLang, t('common.untitled', 'Sans titre'));
+            const description = getLocalizedText(oeuvre.description, currentLang, t('common.noDescription', 'Pas de description'));
             const typeName = getLocalizedText(
-              oeuvre.type_oeuvre || oeuvre.TypeOeuvre?.nom_type, 
-              currentLang, 
-              'Non défini'
+              oeuvre.type_oeuvre || oeuvre.TypeOeuvre?.nom_type,
+              currentLang,
+              t('common.undefined', 'Non défini')
             );
-            
+
             return (
               <Card key={oeuvre.id_oeuvre} className="hover:shadow-md transition-shadow overflow-hidden">
                 {/* Image */}
@@ -224,7 +256,7 @@ const AdminOeuvresTab: React.FC = () => {
                         </Badge>
                         {oeuvre.note_moyenne && (
                           <Badge variant="secondary" className="text-xs">
-                            ⭐ {Number(oeuvre.note_moyenne).toFixed(1)}
+                            {Number(oeuvre.note_moyenne).toFixed(1)}
                           </Badge>
                         )}
                       </div>
@@ -239,30 +271,31 @@ const AdminOeuvresTab: React.FC = () => {
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem>
                           <Eye className="h-4 w-4 mr-2" />
-                          Voir
+                          {t('common.view', 'Voir')}
                         </DropdownMenuItem>
                         {(oeuvre.statut === 'en_attente' || oeuvre.statut === 'brouillon') && (
                           <>
-                            <DropdownMenuItem 
+                            <DropdownMenuItem
                               onClick={() => validateOeuvre({ oeuvreId: oeuvre.id_oeuvre, validated: true })}
                             >
                               <CheckCircle className="h-4 w-4 mr-2" />
-                              Valider
+                              {t('common.validate', 'Valider')}
                             </DropdownMenuItem>
-                            <DropdownMenuItem 
+                            <DropdownMenuItem
                               onClick={() => validateOeuvre({ oeuvreId: oeuvre.id_oeuvre, validated: false })}
                             >
                               <XCircle className="h-4 w-4 mr-2" />
-                              Rejeter
+                              {t('common.reject', 'Rejeter')}
                             </DropdownMenuItem>
                           </>
                         )}
-                        <DropdownMenuItem 
-                          className="text-red-600"
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="text-destructive"
                           onClick={() => deleteOeuvre(oeuvre.id_oeuvre)}
                         >
                           <Trash2 className="h-4 w-4 mr-2" />
-                          Supprimer
+                          {t('common.delete', 'Supprimer')}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

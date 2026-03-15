@@ -41,6 +41,7 @@ import { programmeService, type Programme } from '@/services/programme.service';
 import ProgrammeForm, { ProgrammeFormData } from '@/components/forms/ProgrammeForm';
 import { evenementOeuvreService, type EvenementOeuvre, type MesOeuvresResponse } from '@/services/evenement-oeuvre.service';
 import type { Oeuvre } from '@/types/models/oeuvre.types';
+import { useFormatDate } from '@/hooks/useFormatDate';
 
 interface GestionEvenementProps {
   evenementId: number;
@@ -78,6 +79,7 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
   const { t } = useTranslation();
   const { td } = useTranslateData();
   const { toast } = useToast();
+  const { formatTime: hookFormatTime } = useFormatDate();
 
   // État pour activer/désactiver la gestion des œuvres
   const [showOeuvresSection, setShowOeuvresSection] = useState(!hideOeuvres);
@@ -106,7 +108,7 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
     // Si c'est une date ISO complète
     const date = new Date(time);
     if (!isNaN(date.getTime())) {
-      return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+      return hookFormatTime(date, { hour: '2-digit', minute: '2-digit' });
     }
     return '--:--';
   };

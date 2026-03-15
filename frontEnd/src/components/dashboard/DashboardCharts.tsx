@@ -4,6 +4,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { TrendingUp, TrendingDown, Users, Calendar, BookOpen } from 'lucide-react';import { useTranslation } from "react-i18next";
+import { useFormatDate } from '@/hooks/useFormatDate';
 
 // Constantes extraites hors du composant — évite recréation à chaque render
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
@@ -22,6 +23,7 @@ interface DashboardChartsProps {
 }
 
 export const DashboardCharts: React.FC<DashboardChartsProps> = ({ stats, period }) => {const { t } = useTranslation();
+  const { formatDate } = useFormatDate();
 
   // Formatter les données pour les graphiques
   const formatChartData = (data: any) => {
@@ -30,7 +32,7 @@ export const DashboardCharts: React.FC<DashboardChartsProps> = ({ stats, period 
     // Pour les graphiques temporels
     if (data.users_by_day) {
       return data.users_by_day.map((item: any) => ({
-        date: new Date(item.date).toLocaleDateString('fr-FR', {
+        date: formatDate(item.date, {
           day: 'numeric',
           month: 'short'
         }),

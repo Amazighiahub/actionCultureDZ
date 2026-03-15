@@ -209,12 +209,12 @@ class ProgrammeService {
   }
 
   // Helpers
-  formatProgrammeTime(programme: Programme): string {
-    const debut = new Date(programme.heure_debut).toLocaleTimeString('fr-FR', {
+  formatProgrammeTime(programme: Programme, locale = 'fr-FR'): string {
+    const debut = new Date(programme.heure_debut).toLocaleTimeString(locale, {
       hour: '2-digit',
       minute: '2-digit'
     });
-    const fin = new Date(programme.heure_fin).toLocaleTimeString('fr-FR', {
+    const fin = new Date(programme.heure_fin).toLocaleTimeString(locale, {
       hour: '2-digit',
       minute: '2-digit'
     });
