@@ -24,19 +24,14 @@ const Footer = () => {
     {
       title: t('footer.resources'),
       links: [
-        { label: t('footer.links.userGuide'), href: '/guide' },
-        { label: t('footer.links.faq'), href: '/faq' },
-        { label: t('common.contact'), href: '/contact' },
         { label: t('common.about'), href: '/a-propos' },
       ]
     },
     {
       title: t('footer.legal'),
       links: [
-        { label: t('common.terms'), href: '/conditions' },
-        { label: t('common.privacy'), href: '/confidentialite' },
-        { label: t('footer.links.legalNotices'), href: '/mentions-legales' },
-        { label: t('common.copyright'), href: '/droits-auteur' },
+        { label: t('common.terms'), href: '/a-propos#conditions' },
+        { label: t('common.privacy'), href: '/a-propos#confidentialite' },
       ]
     }
   ];
@@ -45,9 +40,9 @@ const Footer = () => {
   const currentYear = new Date().getFullYear();
 
   const socialLinks = [
-    { icon: Facebook, href: '#', label: 'Facebook' },
-    { icon: Instagram, href: '#', label: 'Instagram' },
-    { icon: Youtube, href: '#', label: 'YouTube' },
+    { icon: Facebook, href: 'https://www.facebook.com/', label: 'Facebook' },
+    { icon: Instagram, href: 'https://www.instagram.com/', label: 'Instagram' },
+    { icon: Youtube, href: 'https://www.youtube.com/', label: 'YouTube' },
   ];
 
   return (

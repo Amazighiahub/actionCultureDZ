@@ -15,6 +15,15 @@ interface LazyImageProps {
   placeholder?: 'blur' | 'skeleton' | 'none';
   aspectRatio?: 'square' | 'video' | 'portrait' | 'auto';
   objectFit?: 'cover' | 'contain' | 'fill' | 'none';
+  /** URL WebP alternative (si dispo, navigateur l'utilise automatiquement) */
+  webpSrc?: string;
+  /** srcset pour images responsive ex: "/img/photo-400.jpg 400w, /img/photo-800.jpg 800w" */
+  srcSet?: string;
+  /** sizes pour images responsive ex: "(max-width: 768px) 100vw, 50vw" */
+  sizes?: string;
+  /** Largeur et hauteur intrinsèques (évite CLS - Cumulative Layout Shift) */
+  width?: number;
+  height?: number;
   onLoad?: () => void;
   onError?: () => void;
 }
@@ -42,6 +51,11 @@ export const LazyImage: React.FC<LazyImageProps> = ({
   placeholder = 'skeleton',
   aspectRatio = 'auto',
   objectFit = 'cover',
+  webpSrc,
+  srcSet,
+  sizes,
+  width,
+  height,
   onLoad,
   onError
 }) => {
@@ -114,20 +128,47 @@ export const LazyImage: React.FC<LazyImageProps> = ({
       {renderPlaceholder()}
       
       {isInView && (
-        <img
-          src={error ? fallback : src}
-          alt={alt}
-          loading="lazy"
-          decoding="async"
-          onLoad={handleLoad}
-          onError={handleError}
-          className={cn(
-            'w-full h-full transition-opacity duration-300',
-            objectFitClasses[objectFit],
-            loaded ? 'opacity-100' : 'opacity-0',
-            className
-          )}
-        />
+        (webpSrc || srcSet) ? (
+          <picture>
+            {webpSrc && <source srcSet={error ? undefined : webpSrc} type="image/webp" />}
+            {srcSet && <source srcSet={error ? undefined : srcSet} sizes={sizes} />}
+            <img
+              src={error ? fallback : src}
+              alt={alt}
+              loading="lazy"
+              decoding="async"
+              width={width}
+              height={height}
+              onLoad={handleLoad}
+              onError={handleError}
+              className={cn(
+                'w-full h-full transition-opacity duration-300',
+                objectFitClasses[objectFit],
+                loaded ? 'opacity-100' : 'opacity-0',
+                className
+              )}
+            />
+          </picture>
+        ) : (
+          <img
+            src={error ? fallback : src}
+            alt={alt}
+            loading="lazy"
+            decoding="async"
+            width={width}
+            height={height}
+            srcSet={srcSet}
+            sizes={sizes}
+            onLoad={handleLoad}
+            onError={handleError}
+            className={cn(
+              'w-full h-full transition-opacity duration-300',
+              objectFitClasses[objectFit],
+              loaded ? 'opacity-100' : 'opacity-0',
+              className
+            )}
+          />
+        )
       )}
 
       {/* Indicateur d'erreur */}
@@ -159,6 +200,16 @@ export const SimpleImage: React.FC<{
     }}
   />
 );
+
+/**
+ * Utilitaire : génère un src WebP à partir d'un chemin image classique
+ * Ex: "/uploads/images/photo.jpg" → "/uploads/images/photo.webp"
+ * Ne fonctionne que si le serveur dispose du fichier WebP correspondant
+ */
+export const toWebpSrc = (src: string): string | undefined => {
+  if (!src || src.includes('.webp') || src.startsWith('http')) return undefined;
+  return src.replace(/\.(jpg|jpeg|png|gif)$/i, '.webp');
+};
 
 // Hook pour précharger des images
 export const useImagePreload = (srcs: string[]) => {

@@ -96,6 +96,7 @@ const AjouterService: React.FC = () => {
   const [loadingServices, setLoadingServices] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [success, setSuccess] = useState(false);
 
   // Charger les lieux par type
@@ -194,25 +195,28 @@ const AjouterService: React.FC = () => {
 
   // Ajouter un service personnalisé à la liste
   const addCustomService = () => {
-    if (
-      !customService.nom.fr ||
-      !customService.nom.ar ||
-      !customService.nom.en ||
-      !customService.nom['tz-ltn'] ||
-      !customService.nom['tz-tfng']
-    ) {
+    if (!Object.values(customService.nom).some(v => v?.trim())) {
       const errorMessage = t('ajouterService.errors.nomRequired', 'Le nom du service est requis');
+      setFieldErrors({ customServiceNom: errorMessage });
       setError(errorMessage);
       toast({
         title: t('common.error', 'Erreur'),
         description: errorMessage,
         variant: 'destructive',
       });
+      setTimeout(() => {
+        const el = document.querySelector('[aria-invalid="true"]');
+        if (el) {
+          (el as HTMLElement).focus();
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 0);
       return;
     }
     setServicesToAdd(prev => [...prev, { ...customService }]);
     setCustomService(INITIAL_SERVICE);
     setError(null);
+    setFieldErrors({});
     toast({
       title: t('ajouterService.serviceAdded', 'Service ajouté'),
       description: t('ajouterService.serviceAddedDesc', 'Le service a été ajouté à la liste'),
@@ -347,7 +351,7 @@ const AjouterService: React.FC = () => {
 
         {/* Error message */}
         {error && (
-          <Alert variant="destructive" className="mb-6">
+          <Alert variant="destructive" className="mb-6" role="alert">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>{error}</AlertDescription>
           </Alert>
@@ -596,10 +600,15 @@ const AjouterService: React.FC = () => {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <MultiLangInput
+                      name="customServiceNom"
                       label={t('ajouterService.serviceName', 'Nom du service')}
                       value={customService.nom}
-                      onChange={(value) => setCustomService(prev => ({ ...prev, nom: value }))}
+                      onChange={(value) => {
+                        setCustomService(prev => ({ ...prev, nom: value }));
+                        setFieldErrors(prev => ({ ...prev, customServiceNom: '' }));
+                      }}
                       placeholder={t('ajouterService.serviceNamePlaceholder', 'Ex: Location de vélos')}
+                      errors={fieldErrors.customServiceNom ? { fr: fieldErrors.customServiceNom } : undefined}
                     />
 
                     <MultiLangInput

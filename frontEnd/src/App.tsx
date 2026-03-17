@@ -13,6 +13,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import NotificationToastListener from '@/components/NotificationToastListener';
 import RTLManager from './components/RtlManager';
 import ScrollToTop from './components/ScrollToTop';
+import ErrorBoundary from './components/shared/ErrorBoundary';
 import { LanguagePersistenceManager } from '@/hooks/useLanguagePersistence';
 import { useToast } from '@/hooks/use-toast';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
@@ -237,7 +238,7 @@ const App = () => (
               path="/dashboard-user" 
               element={
                 <ProtectedRoute>
-                  <DashboardUser />
+                  <ErrorBoundary><DashboardUser /></ErrorBoundary>
                 </ProtectedRoute>
               } 
             />
@@ -247,7 +248,7 @@ const App = () => (
               path="/ajouter-oeuvre" 
               element={
                 <ProfessionalRoute>
-                  <AjouterOeuvre />
+                  <ErrorBoundary><AjouterOeuvre /></ErrorBoundary>
                 </ProfessionalRoute>
               } 
             />
@@ -265,7 +266,7 @@ const App = () => (
               path="/ajouter-evenement"
               element={
                 <ProfessionalRoute>
-                  <AjouterEvenement />
+                  <ErrorBoundary><AjouterEvenement /></ErrorBoundary>
                 </ProfessionalRoute>
               }
             />
@@ -320,7 +321,7 @@ const App = () => (
               path="/modifier-oeuvre/:id"
               element={
                 <ProfessionalRoute>
-                  <AjouterOeuvre />
+                  <ErrorBoundary><AjouterOeuvre /></ErrorBoundary>
                 </ProfessionalRoute>
               }
             />
@@ -328,7 +329,7 @@ const App = () => (
               path="/modifier-evenement/:id"
               element={
                 <ProfessionalRoute>
-                  <AjouterEvenement />
+                  <ErrorBoundary><AjouterEvenement /></ErrorBoundary>
                 </ProfessionalRoute>
               }
             />
@@ -362,7 +363,7 @@ const App = () => (
               path="/programme/creer"
               element={
                 <ProfessionalRoute>
-                  <CreateProgrammePage />
+                  <ErrorBoundary><CreateProgrammePage /></ErrorBoundary>
                 </ProfessionalRoute>
               }
             />

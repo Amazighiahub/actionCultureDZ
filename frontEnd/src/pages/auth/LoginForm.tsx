@@ -211,7 +211,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
 
         <CardFooter className="flex flex-col gap-4">
           {/* Bouton de connexion */}
-          <Button type="submit" className="w-full" disabled={loginLoading}>
+          <Button type="submit" size="lg" className="w-full" disabled={loginLoading}>
             {loginLoading ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />

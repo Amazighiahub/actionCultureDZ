@@ -1,4 +1,6 @@
 // middleware/parseFormData.js
+const logger = require('../utils/logger');
+
 module.exports = function parseFormData(req, res, next) {
   // Si on a un champ 'data' dans le body
   if (req.body && req.body.data) {
@@ -15,9 +17,9 @@ module.exports = function parseFormData(req, res, next) {
       // Optionnel: supprimer le champ 'data' original
       delete req.body.data;
       
-      console.log('✅ FormData parsé avec succès');
+      logger.debug('FormData parsé avec succès');
     } catch (error) {
-      console.error('❌ Erreur parsing FormData:', error);
+      logger.warn('Erreur parsing FormData:', error.message);
       return res.status(400).json({
         success: false,
         error: req.t ? req.t('validation.invalidData') : 'Invalid data format'
@@ -33,7 +35,7 @@ module.exports = function parseFormData(req, res, next) {
       try {
         req.body[field] = JSON.parse(req.body[field]);
       } catch (e) {
-        console.warn(`Impossible de parser ${field}`);
+        logger.debug(`Impossible de parser ${field}`);
       }
     }
   });

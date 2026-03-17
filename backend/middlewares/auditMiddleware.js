@@ -1,5 +1,6 @@
 // middleware/auditMiddleware.js - VERSION CORRIGÉE
 // Ne PAS importer directement les modèles ici !
+const logger = require('../utils/logger');
 
 // Variables pour stocker les références
 let models = null;
@@ -57,7 +58,7 @@ const createAuditMiddleware = (injectedModels) => {
   if (injectedModels) {
     models = injectedModels;
     AuditLog = models.AuditLog;
-    console.log('✅ AuditLog initialisé:', !!AuditLog);
+    logger.info('AuditLog initialisé:', !!AuditLog);
   }
 
   // Middleware principal pour logger les actions
@@ -66,7 +67,7 @@ const createAuditMiddleware = (injectedModels) => {
       try {
         // Si AuditLog n'est pas disponible, continuer sans logger
         if (!AuditLog) {
-          console.warn('⚠️  AuditLog non disponible pour l\'action:', action);
+          logger.warn('AuditLog non disponible pour l\'action:', action);
           return next();
         }
 
@@ -114,7 +115,7 @@ const createAuditMiddleware = (injectedModels) => {
             // Enregistrer dans la base de données de manière asynchrone
             if (AuditLog && typeof AuditLog.create === 'function') {
               AuditLog.create(logData).catch(error => {
-                console.error('Erreur lors de l\'enregistrement du log d\'audit:', error);
+                logger.error('Erreur lors de l\'enregistrement du log d\'audit:', error.message);
               });
             }
           }
@@ -124,7 +125,7 @@ const createAuditMiddleware = (injectedModels) => {
         
         next();
       } catch (error) {
-        console.error('Erreur dans le middleware d\'audit:', error);
+        logger.error('Erreur dans le middleware d\'audit:', error.message);
         next(); // Continuer même si l'audit échoue
       }
     };
@@ -159,7 +160,7 @@ const createAuditMiddleware = (injectedModels) => {
           });
         }
       } catch (error) {
-        console.error('Erreur log accès données:', error);
+        logger.error('Erreur log accès données:', error.message);
       }
       next();
     };
@@ -186,7 +187,7 @@ const createAuditMiddleware = (injectedModels) => {
             },
             ip_address: getClientIp(req),
             user_agent: req.get('User-Agent') || 'Unknown'
-          }).catch(console.error);
+          }).catch(err => logger.error('Erreur log accès non autorisé (async):', err.message));
         }
         
         return originalJson(data);
@@ -194,7 +195,7 @@ const createAuditMiddleware = (injectedModels) => {
       
       next();
     } catch (error) {
-      console.error('Erreur log accès non autorisé:', error);
+      logger.error('Erreur log accès non autorisé:', error.message);
       next();
     }
   };
@@ -217,7 +218,7 @@ const createAuditMiddleware = (injectedModels) => {
         });
       }
     } catch (error) {
-      console.error('Erreur log manuel:', error);
+      logger.error('Erreur log manuel:', error.message);
     }
   };
 
@@ -225,7 +226,7 @@ const createAuditMiddleware = (injectedModels) => {
   const cleanOldLogs = async (daysToKeep = 90) => {
     try {
       if (!AuditLog) {
-        console.warn('⚠️ AuditLog non disponible pour le nettoyage');
+        logger.warn('AuditLog non disponible pour le nettoyage');
         return;
       }
 
@@ -241,9 +242,9 @@ const createAuditMiddleware = (injectedModels) => {
         }
       });
       
-      console.log(`✅ ${result} logs d'audit supprimés (plus de ${daysToKeep} jours)`);
+      logger.info(`${result} logs d'audit supprimés (plus de ${daysToKeep} jours)`);
     } catch (error) {
-      console.error('Erreur nettoyage logs:', error);
+      logger.error('Erreur nettoyage logs:', error.message);
     }
   };
 

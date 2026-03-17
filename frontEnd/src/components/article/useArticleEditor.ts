@@ -53,6 +53,7 @@ export function useArticleEditor({ articleId, initialData, onSave }: Pick<Articl
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [activeTab, setActiveTab] = useState('content');
   const [metadata, setMetadata] = useState<any>({});
 
@@ -292,17 +293,27 @@ export function useArticleEditor({ articleId, initialData, onSave }: Pick<Articl
     setError(null);
 
     try {
+      const errs: Record<string, string> = {};
       const hasAnyTitre = Object.values(translations).some(t => t.titre?.trim());
       const hasAnyDescription = Object.values(translations).some(t => t.description?.trim());
-      if (!hasAnyTitre || !hasAnyDescription) {
-        throw new Error('Le titre et la description sont obligatoires (au moins dans une langue)');
+      if (!hasAnyTitre) {
+        errs.titre = t('article.errors.titreRequired', 'Le titre est obligatoire (au moins dans une langue)');
+      }
+      if (!hasAnyDescription) {
+        errs.description = t('article.errors.descriptionRequired', 'La description est obligatoire (au moins dans une langue)');
       }
 
       const hasCategories = formData.type === 'article' ? 4 : 5;
       const shouldHaveCategories = await metadataService.checkIfTypeHasCategories(hasCategories);
 
       if (shouldHaveCategories && formData.categories.length === 0) {
-        throw new Error('Veuillez sélectionner au moins une catégorie');
+        errs.categories = t('article.errors.categoriesRequired', 'Veuillez sélectionner au moins une catégorie');
+      }
+
+      setFieldErrors(errs);
+      if (Object.keys(errs).length > 0) {
+        setActiveTab('content');
+        throw new Error(Object.values(errs)[0]);
       }
 
       const buildMultiLang = (field: 'titre' | 'description') => {
@@ -342,7 +353,6 @@ export function useArticleEditor({ articleId, initialData, onSave }: Pick<Articl
       if (onSave) {
         await onSave(response);
       } else {
-        console.log('Sauvegarde article:', response);
         toast({
           title: t('common.success', 'Succès'),
           description: t('article.savedSuccess', 'Article sauvegardé avec succès!'),
@@ -358,7 +368,7 @@ export function useArticleEditor({ articleId, initialData, onSave }: Pick<Articl
 
   return {
     // State
-    loading, saving, error, activeTab, setActiveTab,
+    loading, saving, error, fieldErrors, activeTab, setActiveTab,
     metadata, formData, setFormData,
     blocks, editLang, setEditLang,
     translations, setTranslations,

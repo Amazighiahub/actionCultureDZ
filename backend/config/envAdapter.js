@@ -53,7 +53,20 @@ class EnvAdapter {
     if (!process.env.BASE_URL && process.env.API_URL) {
       process.env.BASE_URL = process.env.API_URL;
     } else if (!process.env.BASE_URL) {
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error('BASE_URL is required in production. Set it in your .env file (must use https://).');
+      }
       process.env.BASE_URL = `http://localhost:${process.env.PORT || 3000}`;
+    }
+
+    // En production, BASE_URL et FRONTEND_URL doivent utiliser HTTPS
+    if (process.env.NODE_ENV === 'production') {
+      if (process.env.BASE_URL && !process.env.BASE_URL.startsWith('https://')) {
+        throw new Error('BASE_URL must use HTTPS in production.');
+      }
+      if (process.env.FRONTEND_URL && !process.env.FRONTEND_URL.startsWith('https://')) {
+        throw new Error('FRONTEND_URL must use HTTPS in production.');
+      }
     }
 
     // Adapter les limites de rate

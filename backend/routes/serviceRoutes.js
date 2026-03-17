@@ -6,7 +6,8 @@
 const express = require('express');
 const { param, body } = require('express-validator');
 const serviceController = require('../controllers/serviceController');
-const { handleValidationErrors, validateId } = require('../middlewares/validationMiddleware');
+const { handleValidationErrors, validateId, validateStringLengths, validateGPS } = require('../middlewares/validationMiddleware');
+const { createContentLimiter } = require('../middlewares/rateLimitMiddleware');
 const asyncHandler = require('../utils/asyncHandler');
 
 const initServiceRoutesV2 = (models, authMiddleware) => {
@@ -40,10 +41,16 @@ const initServiceRoutesV2 = (models, authMiddleware) => {
 
   router.get('/:id', validateId(), asyncHandler((req, res) => serviceController.getById(req, res)));
   router.post('/', authenticate,
+    createContentLimiter,
+    validateStringLengths,
+    validateGPS,
     [body('nom').notEmpty().withMessage('Le nom du service est requis')],
     handleValidationErrors,
     asyncHandler((req, res) => serviceController.create(req, res)));
-  router.put('/:id', authenticate, validateId(), asyncHandler((req, res) => serviceController.update(req, res)));
+  router.put('/:id', authenticate, validateId(),
+    validateStringLengths,
+    validateGPS,
+    asyncHandler((req, res) => serviceController.update(req, res)));
   router.delete('/:id', authenticate, validateId(), asyncHandler((req, res) => serviceController.delete(req, res)));
 
   // Admin actions sur :id

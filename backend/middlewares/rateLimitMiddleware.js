@@ -3,6 +3,7 @@ const rateLimit = require('express-rate-limit');
 const rateLimitRedis = require('rate-limit-redis');
 const RedisStore = rateLimitRedis?.RedisStore || rateLimitRedis?.default || rateLimitRedis;
 const Redis = require('ioredis');
+const logger = require('../utils/logger');
 
 // ✅ SÉCURITÉ: Configuration Redis pour rate limiting distribué
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
@@ -38,11 +39,11 @@ if (USE_REDIS) {
 
     // Tester la connexion
     redisClient.on('connect', () => {
-      console.log('✅ Redis connecté pour rate limiting');
+      logger.info('Redis connecté pour rate limiting');
     });
 
     redisClient.on('error', (err) => {
-      console.error('❌ Erreur Redis rate limiting:', err.message);
+      logger.error('Erreur Redis rate limiting:', err.message);
     });
 
     // Créer le store Redis
@@ -50,13 +51,13 @@ if (USE_REDIS) {
       sendCommand: (...args) => redisClient.call(...args),
     });
 
-    console.log('🔧 Rate limiting avec Redis activé');
+    logger.info('Rate limiting avec Redis activé');
   } catch (error) {
-    console.warn('⚠️ Redis non disponible, utilisation du store en mémoire:', error.message);
+    logger.warn('Redis non disponible, utilisation du store en mémoire:', error.message);
     redisStore = null;
   }
 } else {
-  console.log('🔧 Rate limiting avec store en mémoire (dev mode)');
+  logger.info('Rate limiting avec store en mémoire (dev mode)');
 }
 
 // 1. Rate limiter global (pour toutes les routes)
@@ -104,6 +105,34 @@ const createContentLimiter = rateLimit({
     });
   },
   // ✅ SÉCURITÉ: Redis en production
+  ...(redisStore && { store: redisStore }),
+});
+
+// 3b. Rate limiter spécifique commentaires (10/min/user)
+const commentLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 10, // 10 commentaires par minute
+  keyGenerator: (req) => req.user?.id_user || req.ip,
+  handler: (req, res) => {
+    res.status(429).json({
+      success: false,
+      error: req.t ? req.t('auth.tooManyRequests') : 'Too many comments, please slow down'
+    });
+  },
+  ...(redisStore && { store: redisStore }),
+});
+
+// 3c. Rate limiter spécifique uploads (10/h/user)
+const uploadLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 heure
+  max: IS_PRODUCTION ? 30 : 200, // 30 uploads/h en prod
+  keyGenerator: (req) => req.user?.id_user || req.ip,
+  handler: (req, res) => {
+    res.status(429).json({
+      success: false,
+      error: req.t ? req.t('auth.tooManyRequests') : 'Upload limit reached, please try again later'
+    });
+  },
   ...(redisStore && { store: redisStore }),
 });
 
@@ -166,7 +195,7 @@ const advancedLimiter = rateLimit({
   },
   handler: async (req, res) => {
     // Log des tentatives excessives
-    console.warn(`⚠️ Rate limit atteint pour ${req.ip} sur ${req.path}`);
+    logger.warn(`Rate limit atteint pour ${req.ip} sur ${req.path}`);
     
     // Optionnel : Enregistrer dans la base de données
     if (req.user) {
@@ -181,39 +210,53 @@ const advancedLimiter = rateLimit({
 });
 
 // 8. Rate limiter par endpoint avec configuration
+// Handler commun pour les réponses 429 (JSON propre + i18n)
+const authRateLimitHandler = (req, res) => {
+  res.status(429).json({
+    success: false,
+    error: req.t ? req.t('auth.tooManyRequests') : 'Too many requests, please try again later.',
+    code: 'RATE_LIMITED',
+  });
+};
+
 const endpointLimiters = {
   login: rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: IS_PRODUCTION ? 5 : 100,
-    skipSuccessfulRequests: true
+    windowMs: 60 * 60 * 1000,          // 1 heure
+    max: IS_PRODUCTION ? 5 : 100,       // 5 tentatives/h en prod
+    skipSuccessfulRequests: true,        // Ne compter que les échecs (brute force)
+    standardHeaders: false,
+    legacyHeaders: false,
+    handler: authRateLimitHandler,
+    ...(redisStore && { store: redisStore }),
   }),
-  
+
   register: rateLimit({
-    windowMs: 60 * 60 * 1000,
-    max: IS_PRODUCTION ? 3 : 50,
-    handler: (req, res) => {
-      res.status(429).json({
-        success: false,
-        error: req.t ? req.t('auth.tooManyRequests') : 'Too many requests'
-      });
-    }
+    windowMs: 60 * 60 * 1000,           // 1 heure
+    max: IS_PRODUCTION ? 5 : 50,         // 5 inscriptions/h par IP en prod
+    skipSuccessfulRequests: false,
+    standardHeaders: false,
+    legacyHeaders: false,
+    handler: authRateLimitHandler,
+    ...(redisStore && { store: redisStore }),
   }),
-  
+
   forgotPassword: rateLimit({
-    windowMs: 60 * 60 * 1000,
-    max: IS_PRODUCTION ? 3 : 50,
-    skipSuccessfulRequests: false
+    windowMs: 60 * 60 * 1000,           // 1 heure
+    max: IS_PRODUCTION ? 3 : 50,         // 3 demandes/h en prod
+    skipSuccessfulRequests: false,
+    standardHeaders: false,
+    legacyHeaders: false,
+    handler: authRateLimitHandler,
+    ...(redisStore && { store: redisStore }),
   }),
-  
+
   apiKey: rateLimit({
-    windowMs: 24 * 60 * 60 * 1000, // 24 heures
+    windowMs: 24 * 60 * 60 * 1000,     // 24 heures
     max: 5,
-    handler: (req, res) => {
-      res.status(429).json({
-        success: false,
-        error: req.t ? req.t('auth.tooManyRequests') : 'Too many requests'
-      });
-    }
+    standardHeaders: false,
+    legacyHeaders: false,
+    handler: authRateLimitHandler,
+    ...(redisStore && { store: redisStore }),
   })
 };
 
@@ -306,7 +349,7 @@ class AccountRateLimiter {
 
     if (attempts.count >= this.maxAttempts) {
       attempts.lockoutUntil = now + this.lockoutDuration;
-      console.warn(`🔒 Compte bloqué: ${email} après ${attempts.count} tentatives échouées`);
+      logger.warn(`Compte bloqué: ${email} après ${attempts.count} tentatives échouées`);
     }
 
     await this._setAttempts(email, attempts);
@@ -333,27 +376,30 @@ const accountRateLimiter = new AccountRateLimiter({
 
 // Fonction helper pour logger les violations
 async function logRateLimitViolation(userId, endpoint, ip) {
-  console.log(`Rate limit violation: User ${userId} on ${endpoint} from ${ip}`);
+  logger.warn(`Rate limit violation: User ${userId} on ${endpoint} from ${ip}`);
 }
 
 module.exports = {
   globalLimiter,
   strictLimiter,
   createContentLimiter,
+  commentLimiter,
+  uploadLimiter,
   viewLimiter,
   dynamicLimiter,
   progressiveLimiter,
   advancedLimiter,
   endpointLimiters,
   accountRateLimiter, // Rate limiting par compte email
-  
+
   // Arrays expected by app.js
   auth: [
     endpointLimiters.login,
     endpointLimiters.register,
     endpointLimiters.forgotPassword
-  ].filter(Boolean), 
+  ].filter(Boolean),
   creation: [createContentLimiter],
+  upload: [uploadLimiter],
   sensitiveActions: [strictLimiter],
   general: [globalLimiter]
 };

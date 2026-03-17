@@ -24,6 +24,8 @@ import { oeuvreService } from '@/services/oeuvre.service';
 import { articleBlockService } from '@/services/articleBlock.service';
 import { httpClient } from '@/services/httpClient';
 import { useAuth } from '@/hooks/useAuth';
+import { useRTL } from '@/hooks/useRTL';
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import { mapToBackendDTO } from '@/types/api/create-oeuvre-backend.dto';
 import ArticleEditor from '@/components/article/ArticleEditor';
 
@@ -176,11 +178,11 @@ const CategorySelection: React.FC<CategorySelectionProps> = React.memo(({
           onCategoriesChange(validCategories);
         }
       } else {
-        throw new Error(response.error || 'Erreur inconnue');
+        throw new Error(response.error || t('common.unknownError', 'Erreur inconnue'));
       }
     } catch (err) {
       console.error('Erreur chargement catégories:', err);
-      setError('Impossible de charger les catégories disponibles');
+      setError(t('ajouteroeuvre.categoriesLoadError', 'Impossible de charger les catégories'));
       setCategoriesGrouped([]);
     } finally {
       setLoading(false);
@@ -214,7 +216,7 @@ const CategorySelection: React.FC<CategorySelectionProps> = React.memo(({
       <Card className="shadow-cultural">
         <CardContent className="flex items-center justify-center py-8">
           <Loader2 className="h-6 w-6 animate-spin text-primary" />
-          <span className="ml-2">{t("ajouteroeuvre.chargement_des_catgories")}</span>
+          <span className="ms-2">{t("ajouteroeuvre.chargement_des_catgories")}</span>
         </CardContent>
       </Card>);
 
@@ -272,7 +274,7 @@ const CategorySelection: React.FC<CategorySelectionProps> = React.memo(({
                 <h3 className="font-semibold text-lg">
                   {genre.nom}
                   {selectedCount > 0 &&
-                  <Badge variant="secondary" className="ml-2">
+                  <Badge variant="secondary" className="ms-2">
                       {selectedCount}/{genre.categories.length}
                     </Badge>
                   }
@@ -285,7 +287,7 @@ const CategorySelection: React.FC<CategorySelectionProps> = React.memo(({
                   onClick={() => handleGenreToggleAll(genre.id_genre)}
                   className="text-xs">
 
-                    {allSelected ? 'Tout désélectionner' : 'Tout sélectionner'}
+                    {allSelected ? t('ajouteroeuvre.deselectAll', 'Tout désélectionner') : t('ajouteroeuvre.selectAll', 'Tout sélectionner')}
                   </Button>
                 }
               </div>
@@ -294,7 +296,7 @@ const CategorySelection: React.FC<CategorySelectionProps> = React.memo(({
               <p className="text-sm text-muted-foreground">{genre.description}</p>
               }
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pl-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 ps-4">
                 {genre.categories.map((category) =>
                 <div key={category.id_categorie} className="flex items-start gap-2">
                     <Checkbox
@@ -422,6 +424,7 @@ const EditorModeSelector: React.FC<EditorModeSelectorProps> = ({
 const AjouterOeuvre: React.FC = () => {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const { direction } = useRTL();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const isEditMode = !!id;
@@ -432,6 +435,7 @@ const AjouterOeuvre: React.FC = () => {
   const [loadingMetadata, setLoadingMetadata] = useState(true);
   const [loadingEdit, setLoadingEdit] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [uploadProgress, setUploadProgress] = useState<string>('');
 
   // Authentification
@@ -477,6 +481,10 @@ const AjouterOeuvre: React.FC = () => {
   // États pour ArticleEditor
   const [useArticleEditor, setUseArticleEditor] = useState(false);
   const [showEditorChoice, setShowEditorChoice] = useState(false);
+
+  // Track unsaved changes
+  const isDirty = formData.titre.fr !== '' || formData.titre.ar !== '' || formData.description.fr !== '' || formData.description.ar !== '' || formData.id_type_oeuvre !== 0 || medias.length > 0;
+  useUnsavedChanges(isDirty);
 
   // ============================================================================
   // EFFETS
@@ -537,7 +545,7 @@ const AjouterOeuvre: React.FC = () => {
           dimensions_art: oeuvre.dimensions_art,
           support: oeuvre.support,
         });
-        console.log('✅ Œuvre chargée pour édition:', oeuvre);
+        // Oeuvre loaded for editing
       } else {
         toast({ title: t('toasts.error'), description: t('toasts.oeuvreNotFound'), variant: 'destructive' });
         navigate('/dashboard-pro');
@@ -600,11 +608,11 @@ const AjouterOeuvre: React.FC = () => {
       if (response.success && response.data) {
         setMetadata(response.data as ExtendedMetadata);
       } else {
-        setSubmitError(response.error || 'Impossible de charger les données de référence');
+        setSubmitError(response.error || t('oeuvre.errors.loadRefFailed', 'Impossible de charger les données de référence'));
       }
     } catch (error) {
       console.error('Erreur chargement métadonnées:', error);
-      setSubmitError('Erreur de connexion au serveur. Veuillez réessayer.');
+      setSubmitError(t('oeuvre.errors.connectionError', 'Erreur de connexion au serveur. Veuillez réessayer.'));
     } finally {
       setLoadingMetadata(false);
     }
@@ -663,11 +671,18 @@ const AjouterOeuvre: React.FC = () => {
 
   const handleInputChange = useCallback((field: keyof FormData, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+    setFieldErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
   }, []);
 
   const handleTagAdd = useCallback(async (tag: string) => {
     const normalizedTag = tag.trim().toLowerCase();
 
+    if (formData.tags.length >= 10) return;
     if (normalizedTag && !formData.tags.includes(normalizedTag)) {
       // Vérifier si le tag existe déjà
       const existingTag = metadata.tags?.find((tag: TagMotCle) =>
@@ -710,7 +725,7 @@ const AjouterOeuvre: React.FC = () => {
       // Validation
       const maxSize = 100 * 1024 * 1024; // 100MB
       if (file.size > maxSize) {
-        errors.push(`${file.name}: Fichier trop volumineux (max 100MB)`);
+        errors.push(`${file.name}: ${t('validation.fileTooLarge', 'Fichier trop volumineux')} (max 100MB)`);
         return;
       }
 
@@ -804,7 +819,6 @@ const AjouterOeuvre: React.FC = () => {
 
   // Handler pour la sauvegarde depuis ArticleEditor
   const handleArticleEditorSave = useCallback(async (response: any) => {
-    console.log('📝 Sauvegarde article depuis l\'éditeur avancé:', response);
 
     try {
       const { formData: articleFormData, blocks, contributeurs: contribs, editeurs: eds } = response.article;
@@ -840,16 +854,6 @@ const AjouterOeuvre: React.FC = () => {
       // contribs.existants = IntervenantExistant[] (id_intervenant, id_type_user)
       // contribs.contributeurs = ContributeurOeuvre[] (id_user, id_type_user)
       // contribs.nouveaux = NouvelIntervenant[] (nom, prenom, etc.)
-      console.log('🔍 DEBUG contribs brut:', JSON.stringify(contribs, null, 2));
-      console.log('🔍 DEBUG eds brut:', JSON.stringify(eds, null, 2));
-      console.log('🔍 DEBUG blocks:', blocks?.map((b: any, i: number) => ({
-        index: i,
-        type: b.type_block,
-        hasMedia: !!b.media,
-        hasTempFile: !!(b.metadata?.tempFile),
-        tempFileIsFile: b.metadata?.tempFile instanceof File,
-        id_media: b.id_media
-      })));
       const utilisateurs_inscrits = contribs?.contributeurs?.map((c: any) => ({
         id_user: c.id_user,
         id_type_user: c.id_type_user,
@@ -888,21 +892,16 @@ const AjouterOeuvre: React.FC = () => {
         editeurs: editeursIds,
       };
 
-      console.log('📤 Création oeuvre:', JSON.stringify(oeuvreData, null, 2));
       const oeuvreResponse = await oeuvreService.createOeuvre(oeuvreData);
-      console.log('📥 Réponse création oeuvre:', JSON.stringify(oeuvreResponse, null, 2));
 
       if (!oeuvreResponse.success || !oeuvreResponse.data?.oeuvre?.id_oeuvre) {
-        throw new Error(oeuvreResponse.error || 'Erreur lors de la création de l\'article');
+        throw new Error(oeuvreResponse.error || t('ajouteroeuvre.articleCreateError', 'Erreur lors de la création de l\'article'));
       }
 
       const oeuvreId = oeuvreResponse.data.oeuvre.id_oeuvre;
-      console.log('✅ Oeuvre créée avec ID:', oeuvreId);
 
       const articleRecordId = (() => {
         const d = oeuvreResponse.data;
-        console.log('🔍 DEBUG oeuvreResponse.data keys:', Object.keys(d));
-        console.log('🔍 DEBUG oeuvre keys:', d.oeuvre ? Object.keys(d.oeuvre) : 'N/A');
         
         if (isScientific) {
           const id =
@@ -911,7 +910,6 @@ const AjouterOeuvre: React.FC = () => {
             d.oeuvre?.article_scientifique?.id_article_scientifique ||
             d.ArticleScientifique?.id_article_scientifique ||
             d.details_specifiques_record?.id_article_scientifique;
-          console.log('🔍 id_article_scientifique resolved:', id);
           return id;
         }
         const id =
@@ -920,10 +918,8 @@ const AjouterOeuvre: React.FC = () => {
           d.oeuvre?.article?.id_article ||
           d.Article?.id_article ||
           d.details_specifiques_record?.id_article;
-        console.log('🔍 id_article resolved:', id);
         return id;
       })();
-      console.log('🔍 articleRecordId final =', articleRecordId);
 
       // 5. Sauvegarder les blocs si présents
       let finalArticleRecordId = articleRecordId;
@@ -942,7 +938,6 @@ const AjouterOeuvre: React.FC = () => {
                 finalArticleRecordId = od.Article?.id_article
                   || od.article?.id_article;
               }
-              console.log('🔄 Fallback articleRecordId:', finalArticleRecordId);
             }
           } catch (fallbackErr) {
             console.error('❌ Fallback GET oeuvre échoué:', fallbackErr);
@@ -957,7 +952,6 @@ const AjouterOeuvre: React.FC = () => {
             variant: 'destructive',
           });
         }
-        console.log(`📦 Sauvegarde de ${blocks.length} bloc(s), finalArticleRecordId=${finalArticleRecordId}...`);
 
         // 5a. Upload des images des blocs image qui ont un tempFile
         const blocksWithMedia = await Promise.all(
@@ -967,7 +961,6 @@ const AjouterOeuvre: React.FC = () => {
             // Si le bloc a un fichier temporaire (image uploadée dans l'éditeur), l'envoyer au serveur
             if (block.type_block === 'image' && block.metadata?.tempFile instanceof File) {
               try {
-                console.log(`📤 Upload image bloc ${index}...`, block.metadata.tempFile.name);
                 // Upload direct via FormData vers le endpoint multer
                 const formData = new FormData();
                 formData.append('files', block.metadata.tempFile);
@@ -975,13 +968,11 @@ const AjouterOeuvre: React.FC = () => {
                   `/oeuvres/${oeuvreId}/medias/upload`,
                   formData
                 );
-                console.log(`📥 Résultat upload image bloc ${index}:`, uploadResult);
                 if (uploadResult.success && uploadResult.data) {
                   // Le backend retourne un tableau de medias créés
                   const medias = Array.isArray(uploadResult.data) ? uploadResult.data : [uploadResult.data];
                   if (medias[0]?.id_media) {
                     id_media = medias[0].id_media;
-                    console.log(`✅ Image bloc ${index} uploadée, media_id:`, id_media);
                   }
                 } else {
                   console.warn(`⚠️ Échec upload image bloc ${index}:`, uploadResult.error);
@@ -1021,7 +1012,6 @@ const AjouterOeuvre: React.FC = () => {
           console.warn('⚠️ Erreur sauvegarde blocs:', blocksResponse.error);
           // On continue même si les blocs échouent — l'oeuvre est créée
         } else {
-          console.log('✅ Blocs sauvegardés');
         }
       }
 
@@ -1040,7 +1030,7 @@ const AjouterOeuvre: React.FC = () => {
       console.error('❌ Erreur sauvegarde article avancé:', error);
       toast({
         title: t('common.error', 'Erreur'),
-        description: error.message || 'Erreur lors de la sauvegarde de l\'article',
+        description: error.message || t('ajouteroeuvre.articleSaveError', 'Erreur lors de la sauvegarde de l\'article'),
         variant: 'destructive',
       });
     }
@@ -1127,37 +1117,72 @@ const AjouterOeuvre: React.FC = () => {
     try {
       setLoading(true);
       setSubmitError(null);
+      setFieldErrors({});
 
-      // Validation
-      if (
-        !formData.titre?.fr ||
-        !formData.titre?.ar ||
-        !formData.titre?.en ||
-        !formData.titre?.['tz-ltn'] ||
-        !formData.titre?.['tz-tfng']
-      ) {
-        setSubmitError('Le titre est requis dans toutes les langues');
-        return;
+      // Collect ALL validation errors before returning
+      const errors: Record<string, string> = {};
+
+      // Validation — alignée sur le backend : fr OU ar requis
+      if (!formData.titre?.fr?.trim() && !formData.titre?.ar?.trim()) {
+        errors.titre = t('oeuvre.errors.titleRequired', 'Le titre est requis (au moins en français ou arabe)');
       }
       if (!formData.id_type_oeuvre) {
-        setSubmitError('Veuillez sélectionner un type d\'œuvre');
-        return;
+        errors.id_type_oeuvre = t('oeuvre.errors.typeRequired', 'Veuillez sélectionner un type d\'œuvre');
       }
-      if (
-        !formData.description?.fr ||
-        !formData.description?.ar ||
-        !formData.description?.en ||
-        !formData.description?.['tz-ltn'] ||
-        !formData.description?.['tz-tfng']
-      ) {
-        setSubmitError('La description est requise dans toutes les langues');
-        return;
+      if (!formData.description?.fr?.trim() && !formData.description?.ar?.trim()) {
+        errors.description = t('oeuvre.errors.descriptionRequired', 'La description est requise (au moins en français ou arabe)');
       }
 
       // Vérifier les catégories
-      const hasCategories = await metadataService.checkIfTypeHasCategories(formData.id_type_oeuvre);
-      if (hasCategories && formData.categories.length === 0) {
-        setSubmitError('Veuillez sélectionner au moins une catégorie');
+      if (formData.id_type_oeuvre) {
+        const hasCategories = await metadataService.checkIfTypeHasCategories(formData.id_type_oeuvre);
+        if (hasCategories && formData.categories.length === 0) {
+          errors.categories = t('oeuvre.errors.categoryRequired', 'Veuillez sélectionner au moins une catégorie');
+        }
+      }
+
+      // Validation année de création
+      if (formData.annee_creation) {
+        const currentYear = new Date().getFullYear();
+        if (formData.annee_creation < 1800 || formData.annee_creation > currentYear + 1) {
+          errors.annee_creation = t('oeuvre.errors.invalidYear', `L'année doit être entre 1800 et ${currentYear + 1}`);
+        }
+      }
+
+      // Validation prix >= 0
+      if (formData.prix !== undefined && formData.prix !== null && formData.prix < 0) {
+        errors.prix = t('oeuvre.errors.invalidPrice', 'Le prix ne peut pas être négatif');
+      }
+
+      // Validation ISBN
+      if (formData.isbn) {
+        const isbnClean = formData.isbn.replace(/[-\s]/g, '');
+        if (!/^(\d{10}|\d{13})$/.test(isbnClean)) {
+          errors.isbn = t('oeuvre.errors.invalidIsbn', 'ISBN invalide — 10 ou 13 chiffres attendus');
+        }
+      }
+
+      // If any validation errors, set them all and focus the first errored field
+      if (Object.keys(errors).length > 0) {
+        setFieldErrors(errors);
+        setSubmitError(t('oeuvre.errors.formHasErrors', 'Veuillez corriger les erreurs ci-dessous'));
+        // Focus and scroll to the first errored field
+        const fieldOrder = ['id_type_oeuvre', 'titre', 'description', 'annee_creation', 'prix', 'isbn', 'categories'];
+        const firstErrorField = fieldOrder.find((f) => errors[f]);
+        if (firstErrorField) {
+          // For multilang inputs, target the active lang input; for others target the input by id
+          const elementId = firstErrorField === 'titre' ? 'titre-fr'
+            : firstErrorField === 'description' ? 'description-fr'
+            : firstErrorField;
+          requestAnimationFrame(() => {
+            const el = document.getElementById(elementId)
+              || document.getElementById(`${firstErrorField}-error`);
+            if (el) {
+              el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              if (typeof (el as HTMLElement).focus === 'function') el.focus();
+            }
+          });
+        }
         return;
       }
 
@@ -1175,18 +1200,7 @@ const AjouterOeuvre: React.FC = () => {
         detailsSpecifiques
       );
 
-      setUploadProgress(isEditMode ? 'Mise à jour de l\'œuvre...' : 'Création de l\'œuvre...');
-
-      console.log('📝 Données envoyées:', {
-        ...oeuvreData,
-        isEditMode,
-        editId,
-        nb_categories: oeuvreData.categories?.length || 0,
-        nb_contributeurs: (oeuvreData.utilisateurs_inscrits?.length || 0) + (
-        oeuvreData.intervenants_non_inscrits?.length || 0) + (
-        oeuvreData.nouveaux_intervenants?.length || 0),
-        nb_medias: medias.length
-      });
+      setUploadProgress(isEditMode ? t('ajouteroeuvre.updatingOeuvre', 'Mise à jour de l\'oeuvre...') : t('ajouteroeuvre.creatingOeuvre', 'Création de l\'oeuvre...'));
 
       try {
         let oeuvreResponse;
@@ -1194,10 +1208,8 @@ const AjouterOeuvre: React.FC = () => {
 
         if (isEditMode && editId) {
           // Mode édition — appeler update
-          console.log('� Mise à jour de l\'œuvre', editId);
           oeuvreResponse = await oeuvreService.update(editId, oeuvreData as any);
         } else if (mediaFiles.length > 0) {
-          console.log('📤 Création avec médias (FormData)');
           const mediaMetadata = medias.map((m) => ({ is_principal: m.isPrincipal }));
 
           oeuvreResponse = await oeuvreService.createOeuvreFormData(
@@ -1206,12 +1218,11 @@ const AjouterOeuvre: React.FC = () => {
             mediaMetadata
           );
         } else {
-          console.log('📝 Création sans médias (JSON)');
           oeuvreResponse = await oeuvreService.createOeuvre(oeuvreData as any);
         }
 
         if (!oeuvreResponse.success) {
-          setSubmitError(oeuvreResponse.error || (isEditMode ? 'Erreur lors de la mise à jour' : 'Erreur lors de la création de l\'œuvre'));
+          setSubmitError(oeuvreResponse.error || (isEditMode ? t('ajouteroeuvre.updateError', 'Erreur lors de la mise à jour') : t('ajouteroeuvre.createError', 'Erreur lors de la création de l\'oeuvre')));
           return;
         }
 
@@ -1233,7 +1244,6 @@ const AjouterOeuvre: React.FC = () => {
         error.message.includes('Timeout') ||
         error.code === 'ECONNABORTED')) {
 
-          console.log('⏱️ Timeout détecté, vérification de la création...');
 
           await new Promise((resolve) => setTimeout(resolve, 2000));
 
@@ -1241,14 +1251,13 @@ const AjouterOeuvre: React.FC = () => {
           const checkResult = await oeuvreService.checkRecentOeuvre(titreStr);
 
           if (checkResult.success && checkResult.data) {
-            console.log('✅ Œuvre trouvée malgré le timeout');
 
             if (medias.length > 0) {
               // Uploader automatiquement les médias après timeout
             const uploadConfirm = true; // Auto-upload après timeout
 
               if (uploadConfirm) {
-                setUploadProgress('Upload des médias...');
+                setUploadProgress(t('ajouteroeuvre.uploadingMedia', 'Upload des médias...'));
                 const oeuvreId = checkResult.data.id_oeuvre;
 
                 // Utiliser mediaService pour uploader avec isPrincipal
@@ -1272,18 +1281,17 @@ const AjouterOeuvre: React.FC = () => {
 
           } else {
             setSubmitError(
-              'Impossible de vérifier si l\'œuvre a été créée. ' +
-              'Veuillez consulter votre tableau de bord ou réessayer.'
+              t('ajouteroeuvre.verifyError', 'Impossible de vérifier si l\'oeuvre a été créée. Veuillez consulter votre tableau de bord ou réessayer.')
             );
           }
         } else {
-          setSubmitError(error.message || 'Erreur lors de la création de l\'œuvre');
+          setSubmitError(error.message || t('ajouteroeuvre.createError', 'Erreur lors de la création de l\'oeuvre'));
         }
       }
 
     } catch (error) {
       console.error('Erreur lors de la soumission:', error);
-      setSubmitError(error instanceof Error ? error.message : 'Une erreur est survenue lors de l\'enregistrement');
+      setSubmitError(error instanceof Error ? error.message : t('ajouteroeuvre.saveError', 'Une erreur est survenue lors de l\'enregistrement'));
     } finally {
       setLoading(false);
       setUploadProgress('');
@@ -1304,13 +1312,18 @@ const AjouterOeuvre: React.FC = () => {
       'Livre':
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
           <div className="space-y-2">
-            <Label htmlFor="isbn">{t("ajouteroeuvre.isbn")}</Label>
+            <Label htmlFor="isbn">{t("ajouteroeuvre.isbn")} <span className="text-muted-foreground font-normal">({t('common.optional')})</span></Label>
             <Input
             id="isbn"
             placeholder="978-2-1234-5678-9"
+            maxLength={17}
+            autoComplete="off"
             value={formData.isbn || ''}
+            aria-invalid={!!fieldErrors.isbn || undefined}
+            aria-describedby={fieldErrors.isbn ? 'isbn-error' : 'isbn-helper'}
             onChange={(e) => handleInputChange('isbn', e.target.value)} />
-
+            <p id="isbn-helper" className="text-xs text-muted-foreground">{t("ajouteroeuvre.isbnHelper", "Format : 978-2-1234-5678-9")}</p>
+            {fieldErrors.isbn && <p id="isbn-error" role="alert" className="text-sm text-destructive">{fieldErrors.isbn}</p>}
           </div>
           <div className="space-y-2">
             <Label htmlFor="nb_pages">{t("ajouteroeuvre.nombre_pages")}</Label>
@@ -1342,6 +1355,8 @@ const AjouterOeuvre: React.FC = () => {
             <Input
             id="realisateur"
             placeholder={t("ajouteroeuvre.placeholder_nom_ralisateur")}
+            maxLength={200}
+            autoComplete="name"
             value={formData.realisateur || ''}
             onChange={(e) => handleInputChange('realisateur', e.target.value)} />
 
@@ -1351,6 +1366,8 @@ const AjouterOeuvre: React.FC = () => {
             <Input
             id="producteur"
             placeholder={t("ajouteroeuvre.placeholder_producteur", "Nom du producteur")}
+            maxLength={200}
+            autoComplete="name"
             value={formData.producteur || ''}
             onChange={(e) => handleInputChange('producteur', e.target.value)} />
 
@@ -1360,6 +1377,7 @@ const AjouterOeuvre: React.FC = () => {
             <Input
             id="studio"
             placeholder={t("ajouteroeuvre.placeholder_studio", "Nom du studio")}
+            maxLength={200}
             value={formData.studio || ''}
             onChange={(e) => handleInputChange('studio', e.target.value)} />
 
@@ -1374,6 +1392,7 @@ const AjouterOeuvre: React.FC = () => {
             <Input
             id="duree_album"
             placeholder={t("ajouteroeuvre.placeholder_4530")}
+            maxLength={10}
             value={formData.duree_album || ''}
             onChange={(e) => handleInputChange('duree_album', e.target.value)} />
 
@@ -1383,6 +1402,7 @@ const AjouterOeuvre: React.FC = () => {
             <Input
             id="label"
             placeholder={t("ajouteroeuvre.placeholder_nom_label")}
+            maxLength={200}
             value={formData.label || ''}
             onChange={(e) => handleInputChange('label', e.target.value)} />
 
@@ -1408,6 +1428,8 @@ const AjouterOeuvre: React.FC = () => {
               <Input
               id="auteur"
               placeholder={t("ajouteroeuvre.placeholder_nom_lauteur")}
+              maxLength={200}
+              autoComplete="name"
               value={formData.auteur || ''}
               onChange={(e) => handleInputChange('auteur', e.target.value)} />
 
@@ -1417,6 +1439,7 @@ const AjouterOeuvre: React.FC = () => {
               <Input
               id="source"
               placeholder={t("ajouteroeuvre.placeholder_watan_monde")}
+              maxLength={300}
               value={formData.source || ''}
               onChange={(e) => handleInputChange('source', e.target.value)} />
 
@@ -1428,6 +1451,7 @@ const AjouterOeuvre: React.FC = () => {
             id="resume_article"
             placeholder={t("ajouteroeuvre.placeholder_rsum_chapeau_larticle")}
             className="min-h-[100px]"
+            maxLength={5000}
             value={formData.resume_article || ''}
             onChange={(e) => handleInputChange('resume_article', e.target.value)} />
 
@@ -1437,9 +1461,12 @@ const AjouterOeuvre: React.FC = () => {
             <Input
             id="url_source"
             type="url"
+            autoComplete="url"
+            maxLength={2048}
             placeholder="https://..."
             value={formData.url_source || ''}
             onChange={(e) => handleInputChange('url_source', e.target.value)} />
+            <p className="text-xs text-muted-foreground">{t('common.urlHelper')}</p>
 
           </div>
         </div>,
@@ -1453,17 +1480,20 @@ const AjouterOeuvre: React.FC = () => {
               <Input
               id="journal"
               placeholder={t("ajouteroeuvre.placeholder_nom_journal_scientifique")}
+              maxLength={300}
               value={formData.journal || ''}
               onChange={(e) => handleInputChange('journal', e.target.value)} />
 
             </div>
             <div className="space-y-2">
-              <Label htmlFor="doi">{t("ajouteroeuvre.doi")}</Label>
+              <Label htmlFor="doi">{t("ajouteroeuvre.doi")} <span className="text-muted-foreground font-normal">({t('common.optional')})</span></Label>
               <Input
               id="doi"
               placeholder={t("ajouteroeuvre.placeholder_101234example")}
+              maxLength={100}
               value={formData.doi || ''}
               onChange={(e) => handleInputChange('doi', e.target.value)} />
+              <p className="text-xs text-muted-foreground">{t("ajouteroeuvre.doiHelper", "Format : 10.1234/example")}</p>
 
             </div>
             <div className="space-y-2">
@@ -1471,6 +1501,7 @@ const AjouterOeuvre: React.FC = () => {
               <Input
               id="volume"
               placeholder={t("ajouteroeuvre.placeholder_ex_12")}
+              maxLength={20}
               value={formData.volume || ''}
               onChange={(e) => handleInputChange('volume', e.target.value)} />
 
@@ -1480,6 +1511,7 @@ const AjouterOeuvre: React.FC = () => {
               <Input
               id="numero"
               placeholder={t("ajouteroeuvre.placeholder_ex_3")}
+              maxLength={20}
               value={formData.numero || ''}
               onChange={(e) => handleInputChange('numero', e.target.value)} />
 
@@ -1489,6 +1521,7 @@ const AjouterOeuvre: React.FC = () => {
               <Input
               id="pages"
               placeholder={t("ajouteroeuvre.placeholder_123145")}
+              maxLength={20}
               value={formData.pages || ''}
               onChange={(e) => handleInputChange('pages', e.target.value)} />
 
@@ -1499,7 +1532,7 @@ const AjouterOeuvre: React.FC = () => {
               checked={formData.peer_reviewed || false}
               onCheckedChange={(checked) => handleInputChange('peer_reviewed', checked === true)} />
 
-              <Label htmlFor="peer_reviewed" className="ml-2">{t("ajouteroeuvre.article_valu_par")}</Label>
+              <Label htmlFor="peer_reviewed" className="ms-2">{t("ajouteroeuvre.article_valu_par")}</Label>
             </div>
           </div>
         </div>,
@@ -1548,6 +1581,7 @@ const AjouterOeuvre: React.FC = () => {
             <Input
             id="dimensions"
             placeholder={t("ajouteroeuvre.placeholder_30x20x15")}
+            maxLength={50}
             value={formData.dimensions || ''}
             onChange={(e) => handleInputChange('dimensions', e.target.value)} />
 
@@ -1573,6 +1607,7 @@ const AjouterOeuvre: React.FC = () => {
             <Input
             id="technique_art"
             placeholder={t("ajouteroeuvre.placeholder_huile_sur_toile")}
+            maxLength={200}
             value={formData.technique_art || ''}
             onChange={(e) => handleInputChange('technique_art', e.target.value)} />
 
@@ -1582,6 +1617,7 @@ const AjouterOeuvre: React.FC = () => {
             <Input
             id="dimensions_art"
             placeholder={t("ajouteroeuvre.placeholder_100x80")}
+            maxLength={50}
             value={formData.dimensions_art || ''}
             onChange={(e) => handleInputChange('dimensions_art', e.target.value)} />
 
@@ -1591,6 +1627,7 @@ const AjouterOeuvre: React.FC = () => {
             <Input
             id="support"
             placeholder={t("ajouteroeuvre.placeholder_toile_papier_bois")}
+            maxLength={200}
             value={formData.support || ''}
             onChange={(e) => handleInputChange('support', e.target.value)} />
 
@@ -1604,6 +1641,7 @@ const AjouterOeuvre: React.FC = () => {
             <Input
             id="technique_art"
             placeholder={t("ajouteroeuvre.placeholder_huile_sur_toile")}
+            maxLength={200}
             value={formData.technique_art || ''}
             onChange={(e) => handleInputChange('technique_art', e.target.value)} />
 
@@ -1613,6 +1651,7 @@ const AjouterOeuvre: React.FC = () => {
             <Input
             id="dimensions_art"
             placeholder={t("ajouteroeuvre.placeholder_100x80")}
+            maxLength={50}
             value={formData.dimensions_art || ''}
             onChange={(e) => handleInputChange('dimensions_art', e.target.value)} />
 
@@ -1631,7 +1670,7 @@ const AjouterOeuvre: React.FC = () => {
     };
 
     return fieldsConfig[typeOeuvre.nom_type] || null;
-  }, [metadata.types_oeuvres, formData, handleInputChange]);
+  }, [metadata.types_oeuvres, formData, handleInputChange, fieldErrors]);
 
   // ============================================================================
   // RENDU CONDITIONNEL SELON L'ÉTAT
@@ -1652,13 +1691,13 @@ const AjouterOeuvre: React.FC = () => {
       <div className="min-h-screen bg-background pattern-geometric">
         <div className="container py-12">
           <div className="max-w-4xl mx-auto">
-            <Alert variant="destructive">
+            <Alert variant="destructive" role="alert">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                {submitError || 'Impossible de charger les données nécessaires au formulaire.'}
+                {submitError || t('oeuvre.errors.loadMetadataFailed', 'Impossible de charger les données nécessaires au formulaire.')}
                 <Button
                   variant="link"
-                  className="ml-2 px-0"
+                  className="ms-2 px-0"
                   onClick={() => {
                     setLoadingMetadata(true);
                     setSubmitError(null);
@@ -1680,7 +1719,7 @@ const AjouterOeuvre: React.FC = () => {
   // ============================================================================
 
   return (
-    <div className="min-h-screen bg-background pattern-geometric">
+    <div dir={direction} className="min-h-screen bg-background pattern-geometric">
       <div className="container py-12">
         <div className="max-w-4xl mx-auto">
           {/* Si l'éditeur d'article est activé ET qu'un type article est sélectionné */}
@@ -1712,7 +1751,7 @@ const AjouterOeuvre: React.FC = () => {
             onSave={handleArticleEditorSave} /> :
 
 
-          <>
+          <form onSubmit={(e) => { e.preventDefault(); handleSubmit(false); }}>
               {/* En-tête */}
               <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-4">
@@ -1722,7 +1761,7 @@ const AjouterOeuvre: React.FC = () => {
                   className="hover-lift"
                   onClick={() => window.history.back()}>
 
-                    <ArrowLeft className="h-4 w-4 mr-2" />{t("ajouteroeuvre.retour")}
+                    <ArrowLeft className="h-4 w-4 me-2" />{t("ajouteroeuvre.retour")}
 
                 </Button>
                   <div>
@@ -1735,7 +1774,7 @@ const AjouterOeuvre: React.FC = () => {
                   </div>
                 </div>
                 {isAuthenticated && user &&
-              <div className="text-right text-sm text-muted-foreground">
+              <div className="text-end text-sm text-muted-foreground">
                     <p>{t("ajouteroeuvre.connect_tant_que")}</p>
                     <p className="font-medium text-foreground">
                       {user.prenom || ''} {user.nom || user.email || 'Utilisateur'}
@@ -1759,12 +1798,13 @@ const AjouterOeuvre: React.FC = () => {
 
               {/* Erreur de soumission */}
               {submitError &&
-            <Alert variant="destructive" className="mb-6">
+            <Alert variant="destructive" className="mb-6" role="alert" aria-live="assertive">
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>{submitError}</AlertDescription>
                 </Alert>
             }
 
+              <p className="text-sm text-muted-foreground mb-2">{t('common.requiredFieldsLegend')}</p>
               <div className="space-y-8">
                 {/* Type d'œuvre */}
                 <Card className="shadow-cultural">
@@ -1775,7 +1815,7 @@ const AjouterOeuvre: React.FC = () => {
                     </p>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 gap-4">
+                    <div id="id_type_oeuvre" role="group" aria-label={t("ajouteroeuvre.type_duvre")} className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 gap-4" tabIndex={-1}>
                       {metadata.types_oeuvres?.map((type: any) =>
                     <Button
                       key={type.id_type_oeuvre}
@@ -1793,6 +1833,7 @@ const AjouterOeuvre: React.FC = () => {
                         </Button>
                     )}
                     </div>
+                    {fieldErrors.id_type_oeuvre && <p id="id_type_oeuvre-error" role="alert" className="mt-2 text-sm text-destructive">{fieldErrors.id_type_oeuvre}</p>}
                   </CardContent>
                 </Card>
 
@@ -1825,7 +1866,9 @@ const AjouterOeuvre: React.FC = () => {
                               value={formData.titre}
                               onChange={(value) => handleInputChange('titre', value)}
                               required
+                              requiredLanguages={['fr']}
                               placeholder={t("ajouteroeuvre.placeholder_lart_calligraphie_maghrebine")}
+                              errors={fieldErrors.titre ? { fr: fieldErrors.titre, ar: fieldErrors.titre } : {}}
                             />
                           </div>
                           
@@ -1838,34 +1881,54 @@ const AjouterOeuvre: React.FC = () => {
                               onChange={(value) => handleInputChange('description', value)}
                               type="textarea"
                               rows={4}
+                              requiredLanguages={['fr']}
                               placeholder={t("ajouteroeuvre.placeholder_dcrivez_votre_uvre")}
+                              errors={fieldErrors.description ? { fr: fieldErrors.description, ar: fieldErrors.description } : {}}
                             />
                           </div>
                         </div>
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                           <div className="space-y-2">
-                            <Label htmlFor="annee_creation" className="text-base">{t("ajouteroeuvre.anne_cration")}</Label>
+                            <Label htmlFor="annee_creation" className="text-base">{t("ajouteroeuvre.anne_cration")} <span className="text-muted-foreground font-normal">({t('common.optional')})</span></Label>
                             <Input
                           id="annee_creation"
                           type="number"
+                          min="1800"
+                          max={new Date().getFullYear() + 1}
                           placeholder={new Date().getFullYear().toString()}
                           value={formData.annee_creation || ''}
-                          onChange={(e) => handleInputChange('annee_creation', parseInt(e.target.value) || undefined)}
+                          aria-invalid={!!fieldErrors.annee_creation || undefined}
+                          aria-describedby={fieldErrors.annee_creation ? 'annee_creation-error' : undefined}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === '') { handleInputChange('annee_creation', undefined); return; }
+                            const num = parseInt(val);
+                            if (!isNaN(num) && num >= 0) handleInputChange('annee_creation', num);
+                          }}
                           className="hover:border-primary focus:border-primary" />
-
+                            {fieldErrors.annee_creation && <p id="annee_creation-error" role="alert" className="text-sm text-destructive">{fieldErrors.annee_creation}</p>}
                           </div>
                           
                           <div className="space-y-2">
-                            <Label htmlFor="prix" className="text-base">{t("ajouteroeuvre.prix")}</Label>
+                            <Label htmlFor="prix" className="text-base">{t("ajouteroeuvre.prix")} <span className="text-muted-foreground font-normal">({t('common.optional')})</span></Label>
                             <Input
                           id="prix"
                           type="number"
+                          min="0"
+                          step="0.01"
                           placeholder={t("ajouteroeuvre.placeholder_1200")}
                           value={formData.prix || ''}
-                          onChange={(e) => handleInputChange('prix', parseInt(e.target.value) || undefined)}
+                          aria-invalid={!!fieldErrors.prix || undefined}
+                          aria-describedby={fieldErrors.prix ? 'prix-error' : undefined}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === '') { handleInputChange('prix', undefined); return; }
+                            const num = parseFloat(val);
+                            if (!isNaN(num) && num >= 0) handleInputChange('prix', num);
+                          }}
                           className="hover:border-primary focus:border-primary" />
-
+                            {fieldErrors.prix && <p id="prix-error" role="alert" className="text-sm text-destructive">{fieldErrors.prix}</p>}
                           </div>
                         </div>
                       </CardContent>
@@ -1888,7 +1951,7 @@ const AjouterOeuvre: React.FC = () => {
                   typeOeuvreId={formData.id_type_oeuvre}
                   selectedCategories={formData.categories}
                   onCategoriesChange={(categories) => handleInputChange('categories', categories)} />
-
+                    {fieldErrors.categories && <p id="categories-error" role="alert" className="text-sm text-destructive mt-2">{fieldErrors.categories}</p>}
 
                     {/* Gestion des intervenants et éditeurs */}
                     {metadata.types_users && metadata.editeurs &&
@@ -1910,13 +1973,13 @@ const AjouterOeuvre: React.FC = () => {
                         {/* Tags sélectionnés */}
                         <div className="flex flex-wrap gap-2">
                           {formData.tags.map((tag) =>
-                      <Badge key={tag} variant="secondary" className="pl-3 pr-1 bg-secondary hover:bg-secondary/80">
+                      <Badge key={tag} variant="secondary" className="ps-3 pe-1 bg-secondary hover:bg-secondary/80">
                               {tag}
                               <Button
                           type="button"
                           variant="ghost"
                           size="sm"
-                          className="h-auto p-1 ml-1 hover:bg-transparent"
+                          className="h-auto p-1 ms-1 hover:bg-transparent"
                           onClick={() => handleTagRemove(tag)}>
 
                                 <X className="h-3 w-3" />
@@ -1935,7 +1998,7 @@ const AjouterOeuvre: React.FC = () => {
                             setNewTag(e.target.value);
                             setShowTagSuggestions(e.target.value.length > 0);
                           }}
-                          onKeyPress={(e) => {
+                          onKeyDown={(e) => {
                             if (e.key === 'Enter') {
                               e.preventDefault();
                               handleTagAdd(newTag);
@@ -1947,7 +2010,7 @@ const AjouterOeuvre: React.FC = () => {
                           type="button"
                           size="sm"
                           onClick={() => handleTagAdd(newTag)}
-                          disabled={!newTag}
+                          disabled={!newTag || formData.tags.length >= 10}
                           className="bg-primary hover:bg-primary/90">
 
                               <Plus className="h-4 w-4" />
@@ -1956,7 +2019,7 @@ const AjouterOeuvre: React.FC = () => {
                           
                           {/* Suggestions de tags */}
                           {showTagSuggestions && newTag && metadata.tags &&
-                      <div className="absolute top-full left-0 right-0 mt-1 bg-background border rounded-md shadow-lg z-10 max-h-48 overflow-auto">
+                      <div className="absolute top-full start-0 end-0 mt-1 bg-background border rounded-md shadow-lg z-10 max-h-48 overflow-auto">
                               {metadata.tags.
                         filter((tag: TagMotCle) => tag.nom.toLowerCase().includes(newTag.toLowerCase()) && !formData.tags.includes(tag.nom)).
                         slice(0, 5).
@@ -1964,7 +2027,7 @@ const AjouterOeuvre: React.FC = () => {
                         <button
                           key={tag.id_tag}
                           type="button"
-                          className="w-full text-left px-3 py-2 hover:bg-secondary transition-colors"
+                          className="w-full text-start px-3 py-2 hover:bg-secondary transition-colors"
                           onClick={() => handleTagAdd(tag.nom)}>
 
                                     {tag.nom}
@@ -1990,7 +2053,7 @@ const AjouterOeuvre: React.FC = () => {
                           onClick={() => handleTagAdd(tag)}
                           className="hover:bg-primary hover:text-primary-foreground hover:border-primary">
 
-                                    <Plus className="h-3 w-3 mr-1" />
+                                    <Plus className="h-3 w-3 me-1" />
                                     {tag}
                                   </Button>
                         )}
@@ -2022,7 +2085,7 @@ const AjouterOeuvre: React.FC = () => {
                           }>
                                     {/* Badge étoile pour l'image principale */}
                                     {media.isPrincipal &&
-                            <div className="absolute -top-2 -right-2 bg-primary text-primary-foreground rounded-full p-1.5 shadow-lg z-10">
+                            <div className="absolute -top-2 -end-2 bg-primary text-primary-foreground rounded-full p-1.5 shadow-lg z-10">
                                         <Star className="h-4 w-4 fill-current" />
                                       </div>
                             }
@@ -2070,7 +2133,7 @@ const AjouterOeuvre: React.FC = () => {
                               type="button"
                               size="sm"
                               variant="ghost"
-                              className="absolute top-2 right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 bg-background/80 hover:bg-destructive hover:text-destructive-foreground"
+                              className="absolute top-2 end-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 bg-background/80 hover:bg-destructive hover:text-destructive-foreground"
                               onClick={() => handleMediaRemove(media.id)}>
 
                                       <X className="h-4 w-4" />
@@ -2084,7 +2147,7 @@ const AjouterOeuvre: React.FC = () => {
                         
                         {/* Zone d'upload */}
                         <div className="space-y-2">
-                          <Label className="text-base">{t("ajouteroeuvre.ajouter_des_mdias")}</Label>
+                          <Label className="text-base">{t("ajouteroeuvre.ajouter_des_mdias")} <span className="text-muted-foreground font-normal">({t('common.optional')})</span></Label>
                           <div
                         className={`border-2 border-dashed rounded-lg p-8 text-center transition-all ${
                         isDragging ?
@@ -2138,17 +2201,17 @@ const AjouterOeuvre: React.FC = () => {
                       disabled={loading || !isAuthenticated}
                       className="hover:bg-secondary hover:text-secondary-foreground hover:border-secondary">
 
-                          {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}{t("ajouteroeuvre.sauvegarder_comme_brouillon")}
+                          {loading && <Loader2 className="h-4 w-4 me-2 animate-spin" />}{t("ajouteroeuvre.sauvegarder_comme_brouillon")}
 
                     </Button>
                         <Button
-                      type="button"
-                      onClick={() => handleSubmit(false)}
+                      type="submit"
+                      size="lg"
                       disabled={loading || !isAuthenticated}
-                      className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-cultural">
+                      className="w-full">
 
-                          {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                          <Save className="h-4 w-4 mr-2" />{t("ajouteroeuvre.publier_luvre")}
+                          {loading && <Loader2 className="h-4 w-4 me-2 animate-spin" />}
+                          <Save className="h-4 w-4 me-2" />{t("ajouteroeuvre.publier_luvre")}
 
                     </Button>
                       </div>
@@ -2156,7 +2219,7 @@ const AjouterOeuvre: React.FC = () => {
                   </>
               }
               </div>
-            </>
+            </form>
           }
         </div>
       </div>

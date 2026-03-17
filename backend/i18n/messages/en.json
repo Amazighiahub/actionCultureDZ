@@ -472,7 +472,7 @@
     "invalidId": "ID invalide",
     "tokenRequired": "Token requis",
     "passwordTooShort": "Password must be at least 12 characters long",
-    "passwordRequirements": "Le mot de passe doit contenir au moins une majuscule, une minuscule et un chiffre",
+    "passwordRequirements": "Password must contain at least one uppercase letter, one lowercase letter, one digit and one special character",
     "invalidToken": "Token invalide",
     "passwordRequired": "Mot de passe requis",
     "endAfterStart": "End time must be after start time"

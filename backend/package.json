@@ -35,6 +35,7 @@
   "author": "Action Culture Team",
   "license": "ISC",
   "dependencies": {
+    "@sentry/node": "^10.43.0",
     "axios": "^1.9.0",
     "bcrypt": "^6.0.0",
     "bull": "^4.16.5",
@@ -84,7 +85,7 @@
     "supertest": "^6.3.3"
   },
   "engines": {
-    "node": ">=14.0.0",
-    "npm": ">=6.0.0"
+    "node": ">=18.17.0",
+    "npm": ">=8.0.0"
   }
 }

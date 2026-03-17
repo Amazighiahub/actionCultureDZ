@@ -90,7 +90,6 @@ const EditArticle: React.FC = () => {
     const isScientific = articleFormData.type === 'article_scientifique';
     const articleType = isScientific ? 'article_scientifique' : 'article';
 
-    console.log('📝 Mise à jour article:', oeuvreId, '| blocs:', blocks?.length, '| type:', articleType);
 
     try {
       // 1. Mettre à jour les métadonnées de l'oeuvre
@@ -105,7 +104,6 @@ const EditArticle: React.FC = () => {
         updateData.tags = articleFormData.tags;
       }
       await oeuvreService.updateOeuvre(oeuvreId, updateData);
-      console.log('✅ Métadonnées oeuvre mises à jour');
 
       // 2. Sauvegarder les blocs
       if (blocks && blocks.length > 0) {
@@ -129,7 +127,6 @@ const EditArticle: React.FC = () => {
             variant: 'destructive',
           });
         } else {
-          console.log('🔍 articleRecordId:', articleRecordId);
 
           // 2a. Upload des nouvelles images (blocs avec tempFile)
           const blocksWithMedia = await Promise.all(
@@ -138,7 +135,6 @@ const EditArticle: React.FC = () => {
 
               if (block.type_block === 'image' && block.metadata?.tempFile instanceof File) {
                 try {
-                  console.log(`📤 Upload image bloc ${index}...`);
                   const formData = new FormData();
                   formData.append('files', block.metadata.tempFile);
                   const uploadResult = await httpClient.postFormData<any>(
@@ -149,11 +145,15 @@ const EditArticle: React.FC = () => {
                     const medias = Array.isArray(uploadResult.data) ? uploadResult.data : [uploadResult.data];
                     if (medias[0]?.id_media) {
                       id_media = medias[0].id_media;
-                      console.log(`✅ Image bloc ${index} uploadée, media_id:`, id_media);
                     }
                   }
                 } catch (uploadErr) {
                   console.warn(`⚠️ Erreur upload image bloc ${index}:`, uploadErr);
+                  toast({
+                    title: t('toasts.warning'),
+                    description: t('toasts.imageUploadFailed', `Échec de l'upload de l'image (bloc ${index + 1})`),
+                    variant: 'destructive',
+                  });
                 }
               }
 
@@ -192,7 +192,6 @@ const EditArticle: React.FC = () => {
               variant: 'destructive',
             });
           } else {
-            console.log('✅ Blocs sauvegardés:', blocksToSave.length);
           }
         }
       }

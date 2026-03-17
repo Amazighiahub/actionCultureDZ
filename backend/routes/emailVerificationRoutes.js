@@ -27,7 +27,7 @@ module.exports = (models, authMiddleware) => {
     body('newPassword')
       .isLength({ min: 12 })
       .withMessage((value, { req }) => req.t('validation.passwordTooShort'))
-      .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
+      .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])/)
       .withMessage((value, { req }) => req.t('validation.passwordRequirements'))
   ];
 

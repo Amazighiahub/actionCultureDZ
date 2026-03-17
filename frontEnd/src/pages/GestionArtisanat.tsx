@@ -2,7 +2,7 @@
  * GestionArtisanat - Formulaire adaptable pour professionnels et administrateurs
  * Permet d'ajouter, modifier et vérifier des produits artisanaux
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/useAuth';
@@ -87,6 +87,12 @@ const GestionArtisanat: React.FC = () => {
   const [success, setSuccess] = useState(false);
   const [newTag, setNewTag] = useState('');
   const [artisanatData, setArtisanatData] = useState<any>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  // Refs for focusing on first errored field
+  const nomRef = useRef<HTMLDivElement>(null);
+  const materiauRef = useRef<HTMLDivElement>(null);
+  const techniqueRef = useRef<HTMLDivElement>(null);
 
   // Metadata
   const [materiaux, setMateriaux] = useState<any[]>([]);
@@ -241,25 +247,38 @@ const GestionArtisanat: React.FC = () => {
     e.preventDefault();
     setError(null);
 
-    // Validation
-    if (
-      !formData.nom.fr ||
-      !formData.nom.ar ||
-      !formData.nom.en ||
-      !formData.nom['tz-ltn'] ||
-      !formData.nom['tz-tfng']
-    ) {
-      setError(t('gestionArtisanat.errors.nomRequired', 'Le nom est requis'));
-      return;
+    // Validation — collect ALL errors before returning
+    const errors: Record<string, string> = {};
+    if (!formData.nom.fr?.trim() && !formData.nom.ar?.trim()) {
+      errors.nom = t('gestionArtisanat.errors.nomRequired', 'Le nom est requis (au moins en français ou arabe)');
     }
     if (!formData.id_materiau) {
-      setError(t('gestionArtisanat.errors.materiauRequired', 'Le matériau est requis'));
-      return;
+      errors.id_materiau = t('gestionArtisanat.errors.materiauRequired', 'Le matériau est requis');
     }
     if (!formData.id_technique) {
-      setError(t('gestionArtisanat.errors.techniqueRequired', 'La technique est requise'));
+      errors.id_technique = t('gestionArtisanat.errors.techniqueRequired', 'La technique est requise');
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      setError(Object.values(errors).join(' — '));
+
+      // Focus and scroll to first errored field
+      const firstErrorKey = Object.keys(errors)[0];
+      const refMap: Record<string, React.RefObject<HTMLDivElement>> = {
+        nom: nomRef,
+        id_materiau: materiauRef,
+        id_technique: techniqueRef,
+      };
+      const targetRef = refMap[firstErrorKey];
+      if (targetRef?.current) {
+        targetRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const focusable = targetRef.current.querySelector<HTMLElement>('input, select, button, [tabindex]');
+        focusable?.focus();
+      }
       return;
     }
+    setFieldErrors({});
 
     try {
       setLoading(true);
@@ -407,14 +426,16 @@ const GestionArtisanat: React.FC = () => {
           <Alert className="mb-6 bg-green-50 border-green-200">
             <CheckCircle className="h-4 w-4" />
             <AlertDescription className="text-green-800">
-              {t('gestionArtisanat.success', 'Opération réussie!')}
+              {mode === 'edit'
+                ? t('gestionArtisanat.successEdit', 'Artisanat modifié avec succès !')
+                : t('gestionArtisanat.successCreate', 'Artisanat créé avec succès !')}
             </AlertDescription>
           </Alert>
         )}
 
         {/* Error message */}
         {error && (
-          <Alert variant="destructive" className="mb-6">
+          <Alert variant="destructive" className="mb-6" role="alert" aria-live="assertive">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>{error}</AlertDescription>
           </Alert>
@@ -451,15 +472,28 @@ const GestionArtisanat: React.FC = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {/* Nom multilingue */}
-                  <div className={mode === 'view' ? 'opacity-75' : ''}>
+                  <div ref={nomRef} className={mode === 'view' ? 'opacity-75' : ''}>
                     <MultiLangInput
+                      name="nom"
                       label={t('gestionArtisanat.nom', 'Nom du produit')}
                       value={formData.nom}
-                      onChange={(value) => setFormData(prev => ({ ...prev, nom: value }))}
+                      onChange={(value) => {
+                        setFormData(prev => ({ ...prev, nom: value }));
+                        if (fieldErrors.nom) {
+                          setFieldErrors(prev => { const { nom, ...rest } = prev; return rest; });
+                        }
+                      }}
                       required={mode !== 'view'}
+                      requiredLanguages={['fr']}
                       disabled={mode === 'view'}
                       placeholder={t('gestionArtisanat.nomPlaceholder', 'Ex: Tapis berbère traditionnel')}
+                      errors={fieldErrors.nom ? { fr: fieldErrors.nom, ar: fieldErrors.nom } : undefined}
                     />
+                    {fieldErrors.nom && (
+                      <p id="nom-error" role="alert" className="text-sm text-destructive">
+                        {fieldErrors.nom}
+                      </p>
+                    )}
                   </div>
 
                   {/* Description multilingue */}
@@ -477,17 +511,25 @@ const GestionArtisanat: React.FC = () => {
 
                   {/* Materiau et Technique */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
+                    <div ref={materiauRef} className="space-y-2">
                       <Label>{t('gestionArtisanat.materiau', 'Matériau')} *</Label>
                       <Select
                         value={formData.id_materiau ? String(formData.id_materiau) : ''}
-                        onValueChange={(value) => setFormData(prev => ({
-                          ...prev,
-                          id_materiau: parseInt(value)
-                        }))}
+                        onValueChange={(value) => {
+                          setFormData(prev => ({
+                            ...prev,
+                            id_materiau: parseInt(value)
+                          }));
+                          if (fieldErrors.id_materiau) {
+                            setFieldErrors(prev => { const { id_materiau, ...rest } = prev; return rest; });
+                          }
+                        }}
                         disabled={mode === 'view'}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger
+                          aria-invalid={!!fieldErrors.id_materiau}
+                          aria-describedby={fieldErrors.id_materiau ? 'id_materiau-error' : undefined}
+                        >
                           <SelectValue placeholder={t('gestionArtisanat.selectMateriau', 'Sélectionner un matériau')} />
                         </SelectTrigger>
                         <SelectContent>
@@ -498,19 +540,32 @@ const GestionArtisanat: React.FC = () => {
                           ))}
                         </SelectContent>
                       </Select>
+                      {fieldErrors.id_materiau && (
+                        <p id="id_materiau-error" role="alert" className="text-sm text-destructive">
+                          {fieldErrors.id_materiau}
+                        </p>
+                      )}
                     </div>
 
-                    <div className="space-y-2">
+                    <div ref={techniqueRef} className="space-y-2">
                       <Label>{t('gestionArtisanat.technique', 'Technique')} *</Label>
                       <Select
                         value={formData.id_technique ? String(formData.id_technique) : ''}
-                        onValueChange={(value) => setFormData(prev => ({
-                          ...prev,
-                          id_technique: parseInt(value)
-                        }))}
+                        onValueChange={(value) => {
+                          setFormData(prev => ({
+                            ...prev,
+                            id_technique: parseInt(value)
+                          }));
+                          if (fieldErrors.id_technique) {
+                            setFieldErrors(prev => { const { id_technique, ...rest } = prev; return rest; });
+                          }
+                        }}
                         disabled={mode === 'view'}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger
+                          aria-invalid={!!fieldErrors.id_technique}
+                          aria-describedby={fieldErrors.id_technique ? 'id_technique-error' : undefined}
+                        >
                           <SelectValue placeholder={t('gestionArtisanat.selectTechnique', 'Sélectionner une technique')} />
                         </SelectTrigger>
                         <SelectContent>
@@ -521,6 +576,11 @@ const GestionArtisanat: React.FC = () => {
                           ))}
                         </SelectContent>
                       </Select>
+                      {fieldErrors.id_technique && (
+                        <p id="id_technique-error" role="alert" className="text-sm text-destructive">
+                          {fieldErrors.id_technique}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -633,6 +693,7 @@ const GestionArtisanat: React.FC = () => {
                         value={newTag}
                         onChange={(e) => setNewTag(e.target.value)}
                         placeholder={t('gestionArtisanat.tagPlaceholder', 'Ajouter un tag...')}
+                        maxLength={50}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') {
                             e.preventDefault();

@@ -140,12 +140,6 @@ const IntervenantEditeurManager: React.FC<IntervenantEditeurManagerProps> = ({
       }
     });
 
-    console.log('📤 Envoi des intervenants au parent:', {
-      existants: existants.length,
-      nouveaux: nouveaux.length,
-      contributeurs: contributeurs.length
-    });
-
     onIntervenantsChange(existants, nouveaux, contributeurs);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedIntervenants]);
@@ -168,11 +162,9 @@ const IntervenantEditeurManager: React.FC<IntervenantEditeurManagerProps> = ({
       setSearchError(null);
       
       try {
-        console.log('🔍 Recherche intervenants pour:', searchQuery);
         
         const results = await oeuvreService.searchIntervenants({ q: searchQuery });
         
-        console.log('📋 Résultats de recherche:', results);
         setSearchResults(results);
         
       } catch (error) {
@@ -206,7 +198,6 @@ const IntervenantEditeurManager: React.FC<IntervenantEditeurManagerProps> = ({
 
   // Ajouter un intervenant existant
   const handleAddExistingIntervenant = (result: IntervenantSearchResult, typeUserId: number) => {
-    console.log('➕ Ajout intervenant existant:', { result, typeUserId });
     
     // Vérifier si déjà ajouté
     const alreadyAdded = selectedIntervenants.some(
@@ -242,7 +233,6 @@ const IntervenantEditeurManager: React.FC<IntervenantEditeurManagerProps> = ({
       } as IntervenantExistant
     };
 
-    console.log('✅ Intervenant prêt à ajouter:', displayIntervenant);
     
     setSelectedIntervenants(prev => [...prev, displayIntervenant]);
     setSearchQuery('');
@@ -251,7 +241,6 @@ const IntervenantEditeurManager: React.FC<IntervenantEditeurManagerProps> = ({
 
   // Ajouter un nouvel intervenant depuis la modal
   const handleAddNewIntervenant = (intervenant: NouvelIntervenant) => {
-    console.log('➕ Ajout nouvel intervenant:', intervenant);
     
     const typeUser = typesUsers.find(t => t.id_type_user === intervenant.id_type_user);
     if (!typeUser) {
@@ -277,20 +266,17 @@ const IntervenantEditeurManager: React.FC<IntervenantEditeurManagerProps> = ({
       data: intervenant
     };
 
-    console.log('✅ Nouvel intervenant prêt:', displayIntervenant);
     
     setSelectedIntervenants(prev => [...prev, displayIntervenant]);
   };
 
   // Supprimer un intervenant
   const handleRemoveIntervenant = (id: string) => {
-    console.log('🗑️ Suppression intervenant:', id);
     setSelectedIntervenants(prev => prev.filter(i => i.id !== id));
   };
 
   // Ajouter un éditeur
   const handleAddEditeur = (editeur: Editeur) => {
-    console.log('➕ Ajout éditeur:', editeur);
     
     // Vérifier si déjà ajouté
     const alreadyAdded = selectedEditeurs.some(e => e.id_editeur === editeur.id_editeur);
@@ -311,14 +297,12 @@ const IntervenantEditeurManager: React.FC<IntervenantEditeurManagerProps> = ({
 
   // Ajouter un nouvel éditeur depuis la modal
   const handleAddNewEditeur = (editeur: Editeur) => {
-    console.log('➕ Ajout nouvel éditeur:', editeur);
     setEditeurs(prev => [...prev, editeur]);
     handleAddEditeur(editeur);
   };
 
   // Supprimer un éditeur
   const handleRemoveEditeur = (index: number) => {
-    console.log('🗑️ Suppression éditeur à l\'index:', index);
     setSelectedEditeurs(prev => prev.filter((_, i) => i !== index));
   };
 

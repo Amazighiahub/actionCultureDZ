@@ -6,7 +6,8 @@
 const express = require('express');
 const { param, body } = require('express-validator');
 const oeuvreController = require('../controllers/oeuvreController');
-const { handleValidationErrors, validateId, validatePagination } = require('../middlewares/validationMiddleware');
+const { handleValidationErrors, validateId, validatePagination, validateWorkSubmission, validateStringLengths } = require('../middlewares/validationMiddleware');
+const { createContentLimiter } = require('../middlewares/rateLimitMiddleware');
 const asyncHandler = require('../utils/asyncHandler');
 
 const initOeuvreRoutesV2 = (models, authMiddleware) => {
@@ -56,10 +57,16 @@ const initOeuvreRoutesV2 = (models, authMiddleware) => {
   router.get('/:id/medias', validateId(), asyncHandler((req, res) => oeuvreController.getMedias(req, res)));
 
   router.post('/', authenticate,
+    createContentLimiter,
+    validateStringLengths,
     [body('titre').notEmpty().withMessage('Le titre est requis')],
     handleValidationErrors,
+    validateWorkSubmission,
     asyncHandler((req, res) => oeuvreController.create(req, res)));
-  router.put('/:id', authenticate, validateId(), asyncHandler((req, res) => oeuvreController.update(req, res)));
+  router.put('/:id', authenticate, validateId(),
+    validateStringLengths,
+    validateWorkSubmission,
+    asyncHandler((req, res) => oeuvreController.update(req, res)));
   router.delete('/:id', authenticate, validateId(), asyncHandler((req, res) => oeuvreController.delete(req, res)));
   router.post('/:id/submit', authenticate, validateId(), asyncHandler((req, res) => oeuvreController.submit(req, res)));
 

@@ -14,9 +14,11 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { User, Palette, Mail, Lock, UserPlus, LogIn, Upload, Calendar, Phone, MapPin, AlertCircle, X, Loader2, Check } from 'lucide-react';
+import { User, Palette, Mail, Lock, UserPlus, LogIn, Upload, Calendar, Phone, MapPin, AlertCircle, X, Loader2, Check, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useRTL } from '@/hooks/useRTL';
 import { useToast } from '@/components/ui/use-toast';
+import { PasswordStrengthIndicator } from '@/components/auth/PasswordStrengthIndicator';
 import { mediaService } from '@/services/media.service';
 import { httpClient } from '@/services/httpClient';
 import { SECTEUR_TYPE_USER_MAP, SECTEUR_OPTIONS, AUTH_ERROR_MESSAGES } from '@/types/models/auth.types';
@@ -26,9 +28,11 @@ import { authLogger } from '@/utils/logger';
 
 const Auth = () => {
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { toast } = useToast();
+  const { direction } = useRTL();
   const { login, registerVisitor, registerProfessional, loginLoading, registerLoading, isAuthenticated } = useAuth();
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
   
   // État pour les wilayas
   const { wilayas, loading: wilayasLoading, error: wilayasError } = useWilayas();
@@ -44,7 +48,6 @@ const Auth = () => {
   const [loginForm, setLoginForm] = useState({
     email: '',
     mot_de_passe: '',
-    remember: false
   });
 
   // État pour le formulaire d'inscription
@@ -137,6 +140,78 @@ const Auth = () => {
     }
   };
 
+  // Validation onBlur d'un champ individuel (login)
+  const validateLoginField = (field: string) => {
+    let error = '';
+    if (field === 'email') {
+      if (!loginForm.email) {
+        error = t('auth.errors.emailRequired');
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginForm.email)) {
+        error = t('auth.errors.emailInvalid');
+      }
+    } else if (field === 'password') {
+      if (!loginForm.mot_de_passe) {
+        error = t('auth.errors.passwordRequired');
+      }
+    }
+    setLoginErrors(prev => {
+      if (!error) {
+        if (!prev[field]) return prev;
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      }
+      return { ...prev, [field]: error };
+    });
+  };
+
+  // Validation onBlur d'un champ individuel (inscription)
+  const validateRegisterField = (field: string) => {
+    let error = '';
+    switch (field) {
+      case 'nom':
+        if (!registerForm.nom || registerForm.nom.length < 2) error = t('auth.errors.nameMinLength');
+        break;
+      case 'prenom':
+        if (!registerForm.prenom || registerForm.prenom.length < 2) error = t('auth.errors.firstNameMinLength');
+        break;
+      case 'email':
+        if (!registerForm.email) error = t('auth.errors.emailRequired');
+        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(registerForm.email)) error = t('auth.errors.emailInvalid');
+        break;
+      case 'mot_de_passe':
+        if (!registerForm.mot_de_passe || registerForm.mot_de_passe.length < 12) error = t('auth.errors.passwordMinLength');
+        else if (!/[A-Z]/.test(registerForm.mot_de_passe)) error = t('auth.errors.passwordNeedUppercase', 'Le mot de passe doit contenir au moins une majuscule');
+        else if (!/[a-z]/.test(registerForm.mot_de_passe)) error = t('auth.errors.passwordNeedLowercase', 'Le mot de passe doit contenir au moins une minuscule');
+        else if (!/[0-9]/.test(registerForm.mot_de_passe)) error = t('auth.errors.passwordNeedDigit', 'Le mot de passe doit contenir au moins un chiffre');
+        else if (!/[!@#$%^&*(),.?":{}|<>]/.test(registerForm.mot_de_passe)) error = t('auth.errors.passwordNeedSpecial', 'Le mot de passe doit contenir au moins un caractère spécial');
+        break;
+      case 'confirmation_mot_de_passe':
+        if (registerForm.mot_de_passe && registerForm.mot_de_passe !== registerForm.confirmation_mot_de_passe) error = t('auth.errors.passwordMismatch');
+        break;
+      case 'telephone':
+        if (registerForm.telephone && !/^(0|\+213)[567]\d{8}$/.test(registerForm.telephone.replace(/\s/g, ''))) error = t('auth.errors.phoneInvalid', 'Numéro de téléphone invalide (format: 05/06/07XXXXXXXX)');
+        break;
+      case 'portfolio':
+        if (registerForm.portfolio) {
+          try {
+            const url = new URL(registerForm.portfolio);
+            if (!['http:', 'https:'].includes(url.protocol)) error = t('auth.errors.portfolioInvalidUrl', 'URL invalide (doit commencer par http:// ou https://)');
+          } catch { error = t('auth.errors.portfolioInvalidUrl', 'URL invalide (doit commencer par http:// ou https://)'); }
+        }
+        break;
+    }
+    setRegisterErrors(prev => {
+      if (!error) {
+        if (!prev[field]) return prev;
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      }
+      return { ...prev, [field]: error };
+    });
+  };
+
   // Validation du formulaire de connexion
   const validateLoginForm = (): boolean => {
     const errors: Record<string, string> = {};
@@ -152,7 +227,17 @@ const Auth = () => {
     }
     
     setLoginErrors(errors);
-    return Object.keys(errors).length === 0;
+    const hasErrors = Object.keys(errors).length > 0;
+    if (hasErrors) {
+      setTimeout(() => {
+        const firstError = document.querySelector('[aria-invalid="true"]');
+        if (firstError) {
+          (firstError as HTMLElement).focus();
+          firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 0);
+    }
+    return !hasErrors;
   };
 
   // Soumission du formulaire de connexion
@@ -253,10 +338,22 @@ const Auth = () => {
       errors.date_naissance = t('auth.errors.birthDateRequired');
     } else {
       const birthDate = new Date(registerForm.date_naissance);
-      const today = new Date();
-      const age = today.getFullYear() - birthDate.getFullYear();
-      if (age < 13) {
-        errors.date_naissance = t('auth.errors.minAge');
+      if (isNaN(birthDate.getTime())) {
+        errors.date_naissance = t('auth.errors.invalidDate', 'Date invalide');
+      } else {
+        const today = new Date();
+        if (birthDate > today) {
+          errors.date_naissance = t('auth.errors.futureDateNotAllowed', 'La date ne peut pas être dans le futur');
+        } else {
+          let age = today.getFullYear() - birthDate.getFullYear();
+          const monthDiff = today.getMonth() - birthDate.getMonth();
+          if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+          }
+          if (age < 13) {
+            errors.date_naissance = t('auth.errors.minAge');
+          }
+        }
       }
     }
     
@@ -264,8 +361,19 @@ const Auth = () => {
       errors.wilaya_residence = t('auth.errors.wilayaRequired');
     }
     
-    if (registerForm.telephone && !/^(0[5-7]\d{8}|\+213[5-7]\d{8})$/.test(registerForm.telephone.replace(/\s/g, ''))) {
+    if (registerForm.telephone && !/^(0|\+213)[567]\d{8}$/.test(registerForm.telephone.replace(/\s/g, ''))) {
       errors.telephone = t('auth.errors.phoneInvalid', 'Numéro de téléphone invalide (format: 05/06/07XXXXXXXX)');
+    }
+
+    if (registerForm.portfolio) {
+      try {
+        const url = new URL(registerForm.portfolio);
+        if (!['http:', 'https:'].includes(url.protocol)) {
+          errors.portfolio = t('auth.errors.portfolioInvalidUrl', 'URL invalide (doit commencer par http:// ou https://)');
+        }
+      } catch {
+        errors.portfolio = t('auth.errors.portfolioInvalidUrl', 'URL invalide (doit commencer par http:// ou https://)');
+      }
     }
 
     if (!registerForm.accepte_conditions) {
@@ -284,7 +392,17 @@ const Auth = () => {
     }
     
     setRegisterErrors(errors);
-    return Object.keys(errors).length === 0;
+    const hasErrors = Object.keys(errors).length > 0;
+    if (hasErrors) {
+      setTimeout(() => {
+        const firstError = document.querySelector('[aria-invalid="true"]');
+        if (firstError) {
+          (firstError as HTMLElement).focus();
+          firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 0);
+    }
+    return !hasErrors;
   };
 
   // Soumission du formulaire d'inscription
@@ -482,7 +600,7 @@ const Auth = () => {
   };
  
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background" dir={direction}>
       <Header />
       
       <main className="container py-12">
@@ -521,50 +639,61 @@ const Auth = () => {
                   <form onSubmit={handleLogin} className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="login-email">{t('auth.login.email')}</Label>
-                      <Input 
-                        id="login-email" 
-                        type="email" 
+                      <Input
+                        id="login-email"
+                        type="email"
+                        autoComplete="email"
+                        maxLength={255}
                         placeholder={t('auth.login.emailPlaceholder')}
                         value={loginForm.email}
                         onChange={(e) => {
                           setLoginForm({...loginForm, email: e.target.value});
                           setLoginErrors({...loginErrors, email: ''});
                         }}
+                        onBlur={() => validateLoginField('email')}
                         className={loginErrors.email ? 'border-destructive' : ''}
                         required
+                        aria-invalid={!!loginErrors.email}
+                        aria-describedby={loginErrors.email ? 'auth-login-email-error' : undefined}
                       />
                       {loginErrors.email && (
-                        <p className="text-sm text-destructive">{loginErrors.email}</p>
+                        <p id="auth-login-email-error" role="alert" className="text-sm text-destructive">{loginErrors.email}</p>
                       )}
                     </div>
                     
                     <div className="space-y-2">
                       <Label htmlFor="login-password">{t('auth.login.password')}</Label>
-                      <Input 
-                        id="login-password" 
-                        type="password" 
-                        placeholder="••••••••"
-                        value={loginForm.mot_de_passe}
-                        onChange={(e) => {
-                          setLoginForm({...loginForm, mot_de_passe: e.target.value});
-                          setLoginErrors({...loginErrors, password: ''});
-                        }}
-                        className={loginErrors.password ? 'border-destructive' : ''}
-                        required
-                      />
+                      <div className="relative">
+                        <Input
+                          id="login-password"
+                          type={showLoginPassword ? 'text' : 'password'}
+                          autoComplete="current-password"
+                          placeholder="••••••••"
+                          value={loginForm.mot_de_passe}
+                          onChange={(e) => {
+                            setLoginForm({...loginForm, mot_de_passe: e.target.value});
+                            setLoginErrors({...loginErrors, password: ''});
+                          }}
+                          onBlur={() => validateLoginField('password')}
+                          className={loginErrors.password ? 'border-destructive pe-10' : 'pe-10'}
+                          required
+                          aria-invalid={!!loginErrors.password}
+                          aria-describedby={loginErrors.password ? 'auth-login-password-error' : undefined}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowLoginPassword(!showLoginPassword)}
+                          className="absolute end-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        >
+                          {showLoginPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
                       {loginErrors.password && (
-                        <p className="text-sm text-destructive">{loginErrors.password}</p>
+                        <p id="auth-login-password-error" role="alert" className="text-sm text-destructive">{loginErrors.password}</p>
                       )}
                     </div>
                     
-                    <div className="flex justify-between items-center text-sm">
-                      <label className="flex items-center gap-2">
-                        <Checkbox 
-                          checked={loginForm.remember}
-                          onCheckedChange={(checked) => setLoginForm({...loginForm, remember: !!checked})}
-                        />
-                        <span>{t('auth.login.rememberMe')}</span>
-                      </label>
+                    <div className="flex justify-end items-center text-sm">
                       <Link to="/forgot-password">
                         <Button variant="link" className="p-0 h-auto">
                           {t('auth.login.forgotPassword')}
@@ -572,19 +701,20 @@ const Auth = () => {
                       </Link>
                     </div>
                     
-                    <Button 
-                      type="submit" 
-                      className="w-full" 
+                    <Button
+                      type="submit"
+                      size="lg"
+                      className="w-full"
                       disabled={loginLoading}
                     >
                       {loginLoading ? (
                         <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          <Loader2 className="h-4 w-4 me-2 animate-spin" />
                           {t('auth.login.loggingIn')}
                         </>
                       ) : (
                         <>
-                          <LogIn className="h-4 w-4 mr-2" />
+                          <LogIn className="h-4 w-4 me-2" />
                           {t('auth.login.submit')}
                         </>
                       )}
@@ -605,6 +735,7 @@ const Auth = () => {
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={handleRegister} className="space-y-6">
+                    <p className="text-sm text-muted-foreground">{t('common.requiredFieldsLegend')}</p>
                     {/* Choix du profil */}
                     <div className="space-y-3">
                       <Label>{t('auth.register.profileType')}</Label>
@@ -633,36 +764,46 @@ const Auth = () => {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="prenom">{t('auth.register.firstName')} *</Label>
-                        <Input 
-                          id="prenom" 
+                        <Input
+                          id="prenom"
+                          autoComplete="given-name"
+                          maxLength={100}
                           placeholder={t('auth.register.firstNamePlaceholder')}
                           value={registerForm.prenom}
                           onChange={(e) => {
                             setRegisterForm({...registerForm, prenom: e.target.value});
                             setRegisterErrors({...registerErrors, prenom: ''});
                           }}
+                          onBlur={() => validateRegisterField('prenom')}
                           className={registerErrors.prenom ? 'border-destructive' : ''}
                           required
+                          aria-invalid={!!registerErrors.prenom}
+                          aria-describedby={registerErrors.prenom ? 'auth-prenom-error' : undefined}
                         />
                         {registerErrors.prenom && (
-                          <p className="text-sm text-destructive">{registerErrors.prenom}</p>
+                          <p id="auth-prenom-error" role="alert" className="text-sm text-destructive">{registerErrors.prenom}</p>
                         )}
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="nom">{t('auth.register.lastName')} *</Label>
-                        <Input 
-                          id="nom" 
+                        <Input
+                          id="nom"
+                          autoComplete="family-name"
+                          maxLength={100}
                           placeholder={t('auth.register.lastNamePlaceholder')}
                           value={registerForm.nom}
                           onChange={(e) => {
                             setRegisterForm({...registerForm, nom: e.target.value});
                             setRegisterErrors({...registerErrors, nom: ''});
                           }}
+                          onBlur={() => validateRegisterField('nom')}
                           className={registerErrors.nom ? 'border-destructive' : ''}
                           required
+                          aria-invalid={!!registerErrors.nom}
+                          aria-describedby={registerErrors.nom ? 'auth-nom-error' : undefined}
                         />
                         {registerErrors.nom && (
-                          <p className="text-sm text-destructive">{registerErrors.nom}</p>
+                          <p id="auth-nom-error" role="alert" className="text-sm text-destructive">{registerErrors.nom}</p>
                         )}
                       </div>
                     </div>
@@ -685,9 +826,10 @@ const Auth = () => {
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="date-naissance">{t('auth.register.birthDate')} *</Label>
-                        <Input 
-                          id="date-naissance" 
+                        <Input
+                          id="date-naissance"
                           type="date"
+                          autoComplete="bday"
                           value={registerForm.date_naissance}
                           onChange={(e) => {
                             setRegisterForm({...registerForm, date_naissance: e.target.value});
@@ -695,69 +837,86 @@ const Auth = () => {
                           }}
                           className={registerErrors.date_naissance ? 'border-destructive' : ''}
                           required
+                          aria-invalid={!!registerErrors.date_naissance}
+                          aria-describedby={registerErrors.date_naissance ? 'auth-date-naissance-error' : undefined}
                         />
                         {registerErrors.date_naissance && (
-                          <p className="text-sm text-destructive">{registerErrors.date_naissance}</p>
+                          <p id="auth-date-naissance-error" role="alert" className="text-sm text-destructive">{registerErrors.date_naissance}</p>
                         )}
                       </div>
                     </div>
                     
                     <div className="space-y-2">
                       <Label htmlFor="email">{t('auth.register.email')} *</Label>
-                      <Input 
-                        id="email" 
-                        type="email" 
+                      <Input
+                        id="email"
+                        type="email"
+                        autoComplete="email"
+                        maxLength={255}
                         placeholder={t('auth.register.emailPlaceholder')}
                         value={registerForm.email}
                         onChange={(e) => {
                           setRegisterForm({...registerForm, email: e.target.value});
                           setRegisterErrors({...registerErrors, email: ''});
                         }}
+                        onBlur={() => validateRegisterField('email')}
                         className={registerErrors.email ? 'border-destructive' : ''}
                         required
+                        aria-invalid={!!registerErrors.email}
+                        aria-describedby={registerErrors.email ? 'auth-register-email-error' : undefined}
                       />
                       {registerErrors.email && (
-                        <p className="text-sm text-destructive">{registerErrors.email}</p>
+                        <p id="auth-register-email-error" role="alert" className="text-sm text-destructive">{registerErrors.email}</p>
                       )}
                     </div>
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="password">{t('auth.register.password')} *</Label>
-                        <Input 
-                          id="password" 
-                          type="password" 
+                        <p className="text-xs text-muted-foreground">{t('auth.register.passwordHint', '12 caractères min., 1 majuscule, 1 minuscule, 1 chiffre, 1 caractère spécial')}</p>
+                        <Input
+                          id="password"
+                          type="password"
+                          autoComplete="new-password"
                           placeholder="••••••••"
                           value={registerForm.mot_de_passe}
                           onChange={(e) => {
                             setRegisterForm({...registerForm, mot_de_passe: e.target.value});
                             setRegisterErrors({...registerErrors, mot_de_passe: ''});
                           }}
+                          onBlur={() => validateRegisterField('mot_de_passe')}
                           className={registerErrors.mot_de_passe ? 'border-destructive' : ''}
                           required
                           minLength={12}
+                          aria-invalid={!!registerErrors.mot_de_passe}
+                          aria-describedby={registerErrors.mot_de_passe ? 'auth-mot-de-passe-error' : undefined}
                         />
+                        <PasswordStrengthIndicator password={registerForm.mot_de_passe} />
                         {registerErrors.mot_de_passe && (
-                          <p className="text-sm text-destructive">{registerErrors.mot_de_passe}</p>
+                          <p id="auth-mot-de-passe-error" role="alert" className="text-sm text-destructive">{registerErrors.mot_de_passe}</p>
                         )}
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="password-confirm">{t('auth.register.confirmPassword')} *</Label>
-                        <Input 
-                          id="password-confirm" 
-                          type="password" 
+                        <Input
+                          id="password-confirm"
+                          type="password"
+                          autoComplete="new-password"
                           placeholder="••••••••"
                           value={registerForm.confirmation_mot_de_passe}
                           onChange={(e) => {
                             setRegisterForm({...registerForm, confirmation_mot_de_passe: e.target.value});
                             setRegisterErrors({...registerErrors, confirmation_mot_de_passe: ''});
                           }}
+                          onBlur={() => validateRegisterField('confirmation_mot_de_passe')}
                           className={registerErrors.confirmation_mot_de_passe ? 'border-destructive' : ''}
                           required
                           minLength={12}
+                          aria-invalid={!!registerErrors.confirmation_mot_de_passe}
+                          aria-describedby={registerErrors.confirmation_mot_de_passe ? 'auth-confirmation-error' : undefined}
                         />
                         {registerErrors.confirmation_mot_de_passe && (
-                          <p className="text-sm text-destructive">{registerErrors.confirmation_mot_de_passe}</p>
+                          <p id="auth-confirmation-error" role="alert" className="text-sm text-destructive">{registerErrors.confirmation_mot_de_passe}</p>
                         )}
                       </div>
                     </div>
@@ -773,33 +932,50 @@ const Auth = () => {
                           }}
                           disabled={wilayasLoading}
                         >
-                          <SelectTrigger className={registerErrors.wilaya_residence ? 'border-destructive' : ''}>
+                          <SelectTrigger
+                            className={registerErrors.wilaya_residence ? 'border-destructive' : ''}
+                            aria-invalid={!!registerErrors.wilaya_residence}
+                            aria-describedby={registerErrors.wilaya_residence ? 'auth-wilaya-error' : undefined}
+                          >
                             <SelectValue placeholder={wilayasLoading ? t('common.loading') : t('auth.register.selectWilaya')} />
                           </SelectTrigger>
                           <SelectContent>
                             {wilayas.map((wilaya) => (
                               <SelectItem key={wilaya.id_wilaya} value={wilaya.id_wilaya.toString()}>
-                                {String(wilaya.codeW).padStart(2, '0')} - {wilaya.wilaya_name_ascii}
+                                {String(wilaya.codeW).padStart(2, '0')} - {i18n.language === 'ar' && wilaya.nom ? wilaya.nom : wilaya.wilaya_name_ascii}
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                         {registerErrors.wilaya_residence && (
-                          <p className="text-sm text-destructive">{registerErrors.wilaya_residence}</p>
+                          <p id="auth-wilaya-error" role="alert" className="text-sm text-destructive">{registerErrors.wilaya_residence}</p>
                         )}
                         {wilayasError && (
                           <p className="text-sm text-destructive">{t('auth.errors.wilayasLoadError')}</p>
                         )}
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="telephone">{t('auth.register.phone')}</Label>
-                        <Input 
-                          id="telephone" 
-                          type="tel" 
+                        <Label htmlFor="telephone">{t('auth.register.phone')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span></Label>
+                        <Input
+                          id="telephone"
+                          type="tel"
+                          autoComplete="tel"
+                          maxLength={20}
                           placeholder="+213 XXX XXX XXX"
                           value={registerForm.telephone}
-                          onChange={(e) => setRegisterForm({...registerForm, telephone: e.target.value})}
+                          onChange={(e) => {
+                            setRegisterForm({...registerForm, telephone: e.target.value});
+                            setRegisterErrors({...registerErrors, telephone: ''});
+                          }}
+                          onBlur={() => validateRegisterField('telephone')}
+                          className={registerErrors.telephone ? 'border-destructive' : ''}
+                          aria-invalid={!!registerErrors.telephone}
+                          aria-describedby={registerErrors.telephone ? 'auth-telephone-error' : 'auth-telephone-helper'}
                         />
+                        <p id="auth-telephone-helper" className="text-xs text-muted-foreground">{t('common.phoneHelper')}</p>
+                        {registerErrors.telephone && (
+                          <p id="auth-telephone-error" role="alert" className="text-sm text-destructive">{registerErrors.telephone}</p>
+                        )}
                       </div>
                     </div>
 
@@ -807,7 +983,7 @@ const Auth = () => {
                     {userType === 'professionnel' && (
                       <div className="space-y-4 p-4 bg-secondary/10 rounded-lg border border-secondary/20">
                         <h3 className="font-semibold text-secondary flex items-center">
-                          <Palette className="h-5 w-5 mr-2" />
+                          <Palette className="h-5 w-5 me-2" />
                           {t('auth.register.professionalInfo')}
                         </h3>
                         
@@ -821,7 +997,11 @@ const Auth = () => {
                             }}
                             required={userType === 'professionnel'}
                           >
-                            <SelectTrigger className={registerErrors.secteur ? 'border-destructive' : ''}>
+                            <SelectTrigger
+                              className={registerErrors.secteur ? 'border-destructive' : ''}
+                              aria-invalid={!!registerErrors.secteur}
+                              aria-describedby={registerErrors.secteur ? 'auth-secteur-error' : undefined}
+                            >
                               <SelectValue placeholder={t('auth.register.selectSector')} />
                             </SelectTrigger>
                             <SelectContent>
@@ -833,12 +1013,12 @@ const Auth = () => {
                             </SelectContent>
                           </Select>
                           {registerErrors.secteur && (
-                            <p className="text-sm text-destructive">{registerErrors.secteur}</p>
+                            <p id="auth-secteur-error" role="alert" className="text-sm text-destructive">{registerErrors.secteur}</p>
                           )}
                         </div>
                         
                         <div className="space-y-2">
-                          <Label htmlFor="photo">{t('auth.register.profilePhoto')}</Label>
+                          <Label htmlFor="photo">{t('auth.register.profilePhoto')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span></Label>
                           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                             {photoPreview && (
                               <div className="relative w-20 h-20">
@@ -868,20 +1048,20 @@ const Auth = () => {
                                 accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
                                 onChange={handlePhotoChange}
                                 disabled={uploadingPhoto}
-                                className="cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
+                                className="cursor-pointer file:me-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
                               />
                               <p className="text-xs text-muted-foreground mt-1">
                                 {t('auth.register.photoFormats')}
                               </p>
                               {uploadingPhoto && (
-                                <p className="text-xs text-blue-600 mt-1 flex items-center">
-                                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                <p className="text-xs text-accent mt-1 flex items-center">
+                                  <Loader2 className="h-3 w-3 me-1 animate-spin" />
                                   {t('auth.register.uploadingPhoto')}
                                 </p>
                               )}
                               {uploadedPhotoUrl && !uploadingPhoto && (
-                                <p className="text-xs text-green-600 mt-1 flex items-center">
-                                  <Check className="h-3 w-3 mr-1" />
+                                <p className="text-xs text-primary mt-1 flex items-center">
+                                  <Check className="h-3 w-3 me-1" />
                                   {t('auth.register.photoUploaded')}
                                 </p>
                               )}
@@ -890,20 +1070,33 @@ const Auth = () => {
                         </div>
                         
                         <div className="space-y-2">
-                          <Label htmlFor="portfolio">{t('auth.register.portfolio')}</Label>
-                          <Input 
-                            id="portfolio" 
+                          <Label htmlFor="portfolio">{t('auth.register.portfolio')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span></Label>
+                          <Input
+                            id="portfolio"
                             type="url"
+                            autoComplete="url"
+                            maxLength={2048}
                             placeholder="https://monportfolio.com"
                             value={registerForm.portfolio}
-                            onChange={(e) => setRegisterForm({...registerForm, portfolio: e.target.value})}
+                            onChange={(e) => {
+                              setRegisterForm({...registerForm, portfolio: e.target.value});
+                              setRegisterErrors({...registerErrors, portfolio: ''});
+                            }}
+                            className={registerErrors.portfolio ? 'border-destructive' : ''}
+                            aria-invalid={!!registerErrors.portfolio}
+                            aria-describedby={registerErrors.portfolio ? 'auth-portfolio-error' : 'auth-portfolio-helper'}
                           />
+                          <p id="auth-portfolio-helper" className="text-xs text-muted-foreground">{t('common.portfolioHelper')}</p>
+                          {registerErrors.portfolio && (
+                            <p id="auth-portfolio-error" role="alert" className="text-sm text-destructive">{registerErrors.portfolio}</p>
+                          )}
                         </div>
                         
                         <div className="space-y-2">
                           <Label htmlFor="biographie">{t('auth.register.biography')} *</Label>
-                          <Textarea 
-                            id="biographie" 
+                          <Textarea
+                            id="biographie"
+                            maxLength={500}
                             placeholder={t('auth.register.biographyPlaceholder')}
                             className={`min-h-[100px] ${registerErrors.biographie ? 'border-destructive' : ''}`}
                             value={registerForm.biographie}
@@ -912,12 +1105,14 @@ const Auth = () => {
                               setRegisterErrors({...registerErrors, biographie: ''});
                             }}
                             required={userType === 'professionnel'}
+                            aria-invalid={!!registerErrors.biographie}
+                            aria-describedby={registerErrors.biographie ? 'auth-biographie-error' : undefined}
                           />
                           <p className="text-xs text-muted-foreground">
                             {registerForm.biographie.length}/500 {t('auth.register.charactersMinimum')}
                           </p>
                           {registerErrors.biographie && (
-                            <p className="text-sm text-destructive">{registerErrors.biographie}</p>
+                            <p id="auth-biographie-error" role="alert" className="text-sm text-destructive">{registerErrors.biographie}</p>
                           )}
                         </div>
                       </div>
@@ -934,20 +1129,22 @@ const Auth = () => {
                           }}
                           required
                           className={registerErrors.accepte_conditions ? 'border-destructive' : ''}
+                          aria-invalid={!!registerErrors.accepte_conditions}
+                          aria-describedby={registerErrors.accepte_conditions ? 'auth-conditions-error' : undefined}
                         />
                         <Label htmlFor="conditions" className="text-sm cursor-pointer">
                           {t('auth.register.acceptTerms.prefix')}{' '}
-                          <a href="/conditions" className="text-primary underline">
+                          <a href="/a-propos#conditions" className="text-primary underline">
                             {t('auth.register.acceptTerms.terms')}
                           </a>{' '}
                           {t('auth.register.acceptTerms.and')}{' '}
-                          <a href="/confidentialite" className="text-primary underline">
+                          <a href="/a-propos#confidentialite" className="text-primary underline">
                             {t('auth.register.acceptTerms.privacy')}
                           </a>{' '}*
                         </Label>
                       </div>
                       {registerErrors.accepte_conditions && (
-                        <p className="text-sm text-destructive ml-6">{registerErrors.accepte_conditions}</p>
+                        <p id="auth-conditions-error" role="alert" className="text-sm text-destructive ml-6">{registerErrors.accepte_conditions}</p>
                       )}
                       
                       <div className="flex items-start gap-2">
@@ -962,19 +1159,20 @@ const Auth = () => {
                       </div>
                     </div>
                     
-                    <Button 
+                    <Button
                       type="submit"
-                      className="w-full" 
+                      size="lg"
+                      className="w-full"
                       disabled={registerLoading || wilayasLoading || uploadingPhoto}
                     >
                       {registerLoading ? (
                         <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          <Loader2 className="h-4 w-4 me-2 animate-spin" />
                           {t('auth.register.registering')}
                         </>
                       ) : (
                         <>
-                          <UserPlus className="h-4 w-4 mr-2" />
+                          <UserPlus className="h-4 w-4 me-2" />
                           {t('auth.register.createAccount')}
                         </>
                       )}

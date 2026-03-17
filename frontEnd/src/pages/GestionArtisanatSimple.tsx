@@ -79,6 +79,7 @@ const GestionArtisanatSimple: React.FC = () => {
   const [previews, setPreviews] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [success, setSuccess] = useState(false);
   const [newTag, setNewTag] = useState('');
 
@@ -167,23 +168,27 @@ const GestionArtisanatSimple: React.FC = () => {
     e.preventDefault();
     setError(null);
 
-    // Validation
-    if (
-      !formData.nom.fr ||
-      !formData.nom.ar ||
-      !formData.nom.en ||
-      !formData.nom['tz-ltn'] ||
-      !formData.nom['tz-tfng']
-    ) {
-      setError(t('gestionArtisanat.errors.nomRequired', 'Le nom est requis dans toutes les langues'));
-      return;
+    // Validation — collect all errors
+    const errs: Record<string, string> = {};
+    if (!Object.values(formData.nom).some(v => v?.trim())) {
+      errs.nom = t('gestionArtisanat.errors.nomRequired', 'Le nom est requis');
     }
     if (!formData.id_materiau) {
-      setError(t('gestionArtisanat.errors.materiauRequired', 'Le matériau est requis'));
-      return;
+      errs.id_materiau = t('gestionArtisanat.errors.materiauRequired', 'Le matériau est requis');
     }
     if (!formData.id_technique) {
-      setError(t('gestionArtisanat.errors.techniqueRequired', 'La technique est requise'));
+      errs.id_technique = t('gestionArtisanat.errors.techniqueRequired', 'La technique est requise');
+    }
+    setFieldErrors(errs);
+    if (Object.keys(errs).length > 0) {
+      setError(Object.values(errs)[0]);
+      setTimeout(() => {
+        const el = document.querySelector('[aria-invalid="true"]');
+        if (el) {
+          (el as HTMLElement).focus();
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 0);
       return;
     }
 
@@ -327,7 +332,7 @@ const GestionArtisanatSimple: React.FC = () => {
 
         {/* Error message */}
         {error && (
-          <Alert variant="destructive" className="mb-6">
+          <Alert variant="destructive" className="mb-6" role="alert">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>{error}</AlertDescription>
           </Alert>
@@ -358,31 +363,39 @@ const GestionArtisanatSimple: React.FC = () => {
                       <Input
                         placeholder="Français"
                         value={formData.nom.fr}
-                        onChange={(e) => setFormData(prev => ({
-                          ...prev,
-                          nom: { ...prev.nom, fr: e.target.value }
-                        }))}
+                        onChange={(e) => {
+                          setFormData(prev => ({ ...prev, nom: { ...prev.nom, fr: e.target.value } }));
+                          setFieldErrors(prev => ({ ...prev, nom: '' }));
+                        }}
                         disabled={mode === 'view'}
+                        className={fieldErrors.nom ? 'border-destructive' : ''}
+                        aria-invalid={!!fieldErrors.nom}
+                        aria-describedby={fieldErrors.nom ? 'simple-nom-error' : undefined}
                       />
                       <Input
                         placeholder="العربية"
                         value={formData.nom.ar}
-                        onChange={(e) => setFormData(prev => ({
-                          ...prev,
-                          nom: { ...prev.nom, ar: e.target.value }
-                        }))}
+                        onChange={(e) => {
+                          setFormData(prev => ({ ...prev, nom: { ...prev.nom, ar: e.target.value } }));
+                          setFieldErrors(prev => ({ ...prev, nom: '' }));
+                        }}
                         disabled={mode === 'view'}
+                        className={fieldErrors.nom ? 'border-destructive' : ''}
                       />
                       <Input
                         placeholder="English"
                         value={formData.nom.en}
-                        onChange={(e) => setFormData(prev => ({
-                          ...prev,
-                          nom: { ...prev.nom, en: e.target.value }
-                        }))}
+                        onChange={(e) => {
+                          setFormData(prev => ({ ...prev, nom: { ...prev.nom, en: e.target.value } }));
+                          setFieldErrors(prev => ({ ...prev, nom: '' }));
+                        }}
                         disabled={mode === 'view'}
+                        className={fieldErrors.nom ? 'border-destructive' : ''}
                       />
                     </div>
+                    {fieldErrors.nom && (
+                      <p id="simple-nom-error" role="alert" className="text-sm text-destructive">{fieldErrors.nom}</p>
+                    )}
                   </div>
 
                   {/* Description multilingue */}
@@ -430,13 +443,17 @@ const GestionArtisanatSimple: React.FC = () => {
                       </Label>
                       <Select
                         value={formData.id_materiau ? String(formData.id_materiau) : ''}
-                        onValueChange={(value) => setFormData(prev => ({
-                          ...prev,
-                          id_materiau: parseInt(value)
-                        }))}
+                        onValueChange={(value) => {
+                          setFormData(prev => ({ ...prev, id_materiau: parseInt(value) }));
+                          setFieldErrors(prev => ({ ...prev, id_materiau: '' }));
+                        }}
                         disabled={mode === 'view'}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger
+                          className={fieldErrors.id_materiau ? 'border-destructive' : ''}
+                          aria-invalid={!!fieldErrors.id_materiau}
+                          aria-describedby={fieldErrors.id_materiau ? 'simple-materiau-error' : undefined}
+                        >
                           <SelectValue placeholder={t('gestionArtisanat.selectMateriau', 'Sélectionner un matériau')} />
                         </SelectTrigger>
                         <SelectContent>
@@ -447,6 +464,9 @@ const GestionArtisanatSimple: React.FC = () => {
                           ))}
                         </SelectContent>
                       </Select>
+                      {fieldErrors.id_materiau && (
+                        <p id="simple-materiau-error" role="alert" className="text-sm text-destructive">{fieldErrors.id_materiau}</p>
+                      )}
                     </div>
 
                     <div className="space-y-2">
@@ -455,13 +475,17 @@ const GestionArtisanatSimple: React.FC = () => {
                       </Label>
                       <Select
                         value={formData.id_technique ? String(formData.id_technique) : ''}
-                        onValueChange={(value) => setFormData(prev => ({
-                          ...prev,
-                          id_technique: parseInt(value)
-                        }))}
+                        onValueChange={(value) => {
+                          setFormData(prev => ({ ...prev, id_technique: parseInt(value) }));
+                          setFieldErrors(prev => ({ ...prev, id_technique: '' }));
+                        }}
                         disabled={mode === 'view'}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger
+                          className={fieldErrors.id_technique ? 'border-destructive' : ''}
+                          aria-invalid={!!fieldErrors.id_technique}
+                          aria-describedby={fieldErrors.id_technique ? 'simple-technique-error' : undefined}
+                        >
                           <SelectValue placeholder={t('gestionArtisanat.selectTechnique', 'Sélectionner une technique')} />
                         </SelectTrigger>
                         <SelectContent>
@@ -472,6 +496,9 @@ const GestionArtisanatSimple: React.FC = () => {
                           ))}
                         </SelectContent>
                       </Select>
+                      {fieldErrors.id_technique && (
+                        <p id="simple-technique-error" role="alert" className="text-sm text-destructive">{fieldErrors.id_technique}</p>
+                      )}
                     </div>
                   </div>
                 </CardContent>

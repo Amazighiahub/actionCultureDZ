@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { BookOpen, Users, Globe, Mail, Send, Loader2 } from 'lucide-react';
 import { useTranslation } from "react-i18next";
 import { useToast } from '@/components/ui/use-toast';
+import SEOHead from '@/components/SEOHead';
 
 const CONTACT_EMAIL = 'contact@culture-algerie.dz';
 
@@ -65,8 +66,14 @@ const APropos = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead
+        title={t("apropos.propos_culture_algrie", "À propos de Culture Algérie")}
+        description="Découvrez la mission de Culture Algérie : préserver, transmettre et rendre accessible le patrimoine culturel algérien à travers une plateforme numérique collaborative."
+        keywords={['à propos', 'culture algérienne', 'mission', 'patrimoine', 'contact', 'équipe']}
+        type="website"
+      />
       <Header />
-      
+
       <main className="container py-12">
         {/* En-tête */}
         <div className="text-center space-y-4 mb-16">

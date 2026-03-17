@@ -162,7 +162,7 @@ const ArticleMetadataTab: React.FC<ArticleMetadataTabProps> = ({
                 placeholder={t("article_articleeditor.placeholder_ajouter_tag")}
                 value={newTag}
                 onChange={(e) => setNewTag(e.target.value)}
-                onKeyPress={(e) => {
+                onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault();
                     handleAddTag(newTag);
@@ -203,7 +203,7 @@ const ArticleMetadataTab: React.FC<ArticleMetadataTabProps> = ({
               </div>
               <div className="space-y-2">
                 <Label htmlFor="url_source">{t("article_articleeditor.url_source")}</Label>
-                <Input id="url_source" type="url" value={formData.url_source || ''} onChange={(e) => setFormData(prev => ({ ...prev, url_source: e.target.value }))} placeholder="https://..." />
+                <Input id="url_source" type="url" autoComplete="url" maxLength={2048} value={formData.url_source || ''} onChange={(e) => setFormData(prev => ({ ...prev, url_source: e.target.value }))} placeholder="https://..." />
               </div>
             </>
           ) : (

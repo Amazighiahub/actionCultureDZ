@@ -6,7 +6,8 @@
 const express = require('express');
 const { param, body } = require('express-validator');
 const artisanatController = require('../controllers/artisanatController');
-const { handleValidationErrors, validateId } = require('../middlewares/validationMiddleware');
+const { handleValidationErrors, validateId, validateStringLengths } = require('../middlewares/validationMiddleware');
+const { createContentLimiter } = require('../middlewares/rateLimitMiddleware');
 const asyncHandler = require('../utils/asyncHandler');
 
 const initArtisanatRoutesV2 = (models, authMiddleware) => {
@@ -39,10 +40,19 @@ const initArtisanatRoutesV2 = (models, authMiddleware) => {
   // ============================================================================
 
   router.get('/:id', validateId(), asyncHandler((req, res) => artisanatController.getById(req, res)));
-  router.post('/', authenticate, asyncHandler((req, res) => artisanatController.create(req, res)));
-  router.put('/:id', authenticate, validateId(), asyncHandler((req, res) => artisanatController.update(req, res)));
+  router.post('/', authenticate,
+    createContentLimiter,
+    validateStringLengths,
+    [body('nom').notEmpty().withMessage('Le nom est requis')],
+    handleValidationErrors,
+    asyncHandler((req, res) => artisanatController.create(req, res)));
+  router.put('/:id', authenticate, validateId(),
+    validateStringLengths,
+    asyncHandler((req, res) => artisanatController.update(req, res)));
   router.delete('/:id', authenticate, validateId(), asyncHandler((req, res) => artisanatController.delete(req, res)));
-  router.post('/:id/medias', authenticate, validateId(), asyncHandler((req, res) => artisanatController.uploadMedias(req, res)));
+  router.post('/:id/medias', authenticate, validateId(),
+    createContentLimiter,
+    asyncHandler((req, res) => artisanatController.uploadMedias(req, res)));
 
   return router;
 };

@@ -109,6 +109,9 @@ class EvenementControllerV2 extends BaseController {
 
   async create(req, res) {
     try {
+      if (req.file) {
+        req.body.image_url = req.file.path;
+      }
       const evenement = await this.evenementService.create(req.body, req.user.id_user);
       res.status(201).json({
         success: true,
@@ -122,6 +125,9 @@ class EvenementControllerV2 extends BaseController {
 
   async update(req, res) {
     try {
+      if (req.file) {
+        req.body.image_url = req.file.path;
+      }
       const evenement = await this.evenementService.update(
         parseInt(req.params.id),
         req.body,

@@ -3,6 +3,7 @@
 
 const cloudinary = require('cloudinary').v2;
 const { breakers } = require('../utils/circuitBreaker');
+const logger = require('../utils/logger');
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -85,7 +86,7 @@ async function deleteAsset(publicId, resourceType = 'image') {
   return breakers.cloudinary.execute(async () => {
     return await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
   }).catch(error => {
-    console.error('Cloudinary delete error:', error.message);
+    logger.error('Cloudinary delete error:', error.message);
     return null;
   });
 }

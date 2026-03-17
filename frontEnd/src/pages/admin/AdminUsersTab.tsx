@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
   SelectContent,
@@ -17,7 +18,7 @@ import {
 } from '@/components/ui/select';
 import {
   Users, Search, CheckCircle, XCircle,
-  MoreVertical, Mail, Shield, Trash2, RefreshCw, X, AlertCircle
+  MoreVertical, Mail, Shield, Trash2, RefreshCw, X, AlertCircle, UserCheck, UserX
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -60,6 +61,8 @@ const AdminUsersTab: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState('tous');
   const [typeFilter, setTypeFilter] = useState('tous');
   const [validationFilter, setValidationFilter] = useState('tous');
+  const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]);
+  const [bulkProcessing, setBulkProcessing] = useState(false);
 
   const debouncedSearch = useDebouncedValue(searchQuery, 300);
 
@@ -71,8 +74,30 @@ const AdminUsersTab: React.FC = () => {
     deleteUser,
     suspendUser,
     reactivateUser,
+    bulkUserAction,
     refreshAll
   } = useDashboardAdmin('users');
+
+  const toggleSelectUser = (userId: number) => {
+    setSelectedUserIds(prev =>
+      prev.includes(userId) ? prev.filter(id => id !== userId) : [...prev, userId]
+    );
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    setSelectedUserIds(checked ? filteredUsers.map((u: any) => u.id_user) : []);
+  };
+
+  const handleBulkAction = async (action: string) => {
+    if (selectedUserIds.length === 0) return;
+    setBulkProcessing(true);
+    try {
+      await bulkUserAction(selectedUserIds, action);
+      setSelectedUserIds([]);
+    } finally {
+      setBulkProcessing(false);
+    }
+  };
 
   // Filtrer les utilisateurs
   const filteredUsers = React.useMemo(() => {
@@ -208,6 +233,58 @@ const AdminUsersTab: React.FC = () => {
         </CardContent>
       </Card>
 
+      {/* Barre d'actions en masse */}
+      {selectedUserIds.length > 0 && (
+        <Card className="border-primary bg-primary/5">
+          <CardContent className="p-3 flex flex-wrap items-center gap-3">
+            <Checkbox
+              checked={selectedUserIds.length === filteredUsers.length}
+              onCheckedChange={(checked) => handleSelectAll(!!checked)}
+              aria-label={t('admin.users.selectAll', 'Tout sélectionner')}
+            />
+            <span className="text-sm font-medium">
+              {t('admin.users.selectedCount', '{{count}} sélectionné(s)', { count: selectedUserIds.length })}
+            </span>
+            <div className="flex-1" />
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={bulkProcessing}
+              onClick={() => handleBulkAction('activate')}
+            >
+              <UserCheck className="h-4 w-4 me-1" />
+              {t('admin.users.bulkActivate', 'Activer')}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={bulkProcessing}
+              onClick={() => handleBulkAction('deactivate')}
+            >
+              <UserX className="h-4 w-4 me-1" />
+              {t('admin.users.bulkDeactivate', 'Désactiver')}
+            </Button>
+            <Button
+              size="sm"
+              variant="destructive"
+              disabled={bulkProcessing}
+              onClick={() => handleBulkAction('delete')}
+            >
+              <Trash2 className="h-4 w-4 me-1" />
+              {t('common.delete', 'Supprimer')}
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setSelectedUserIds([])}
+              aria-label={t('admin.users.clearSelection', 'Désélectionner')}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Liste des utilisateurs */}
       {loadingAllUsers ? (
         <LoadingSkeleton type="table" count={5} />
@@ -233,9 +310,20 @@ const AdminUsersTab: React.FC = () => {
       ) : (
         <div className="grid gap-4">
           {filteredUsers.map((user: any) => (
-            <Card key={user.id_user} className="hover:shadow-md transition-shadow">
+            <Card
+              key={user.id_user}
+              className={`hover:shadow-md transition-shadow ${selectedUserIds.includes(user.id_user) ? 'ring-2 ring-primary bg-primary/5' : ''}`}
+            >
               <CardContent className="p-4">
                 <div className="flex items-center gap-4">
+                  {/* Checkbox */}
+                  <Checkbox
+                    checked={selectedUserIds.includes(user.id_user)}
+                    onCheckedChange={() => toggleSelectUser(user.id_user)}
+                    aria-label={t('admin.users.selectUser', 'Sélectionner {{name}}', {
+                      name: `${getLocalizedText(user.prenom)} ${getLocalizedText(user.nom)}`
+                    })}
+                  />
                   {/* Avatar */}
                   {user.photo_url ? (
                     <LazyImage

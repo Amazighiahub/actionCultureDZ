@@ -6,8 +6,10 @@
 const express = require('express');
 const { param, body } = require('express-validator');
 const evenementController = require('../controllers/evenementController');
-const { handleValidationErrors, validateId, validatePagination } = require('../middlewares/validationMiddleware');
+const { handleValidationErrors, validateId, validatePagination, validateEventCreation, validateStringLengths } = require('../middlewares/validationMiddleware');
+const { createContentLimiter } = require('../middlewares/rateLimitMiddleware');
 const asyncHandler = require('../utils/asyncHandler');
+const uploadService = require('../services/uploadService');
 
 const initEvenementRoutesV2 = (models, authMiddleware) => {
   const router = express.Router();
@@ -51,20 +53,28 @@ const initEvenementRoutesV2 = (models, authMiddleware) => {
   // ROUTES AVEC :id
   // ============================================================================
 
-  router.get('/:id/medias', asyncHandler((req, res) => evenementController.getMedias(req, res)));
-  router.get('/:id/share-data', asyncHandler((req, res) => evenementController.getShareData(req, res)));
-  router.get('/:id/participants', authenticate, asyncHandler((req, res) => evenementController.getParticipants(req, res)));
-  router.get('/:id/professionnels/en-attente', authenticate, asyncHandler((req, res) => evenementController.getProfessionnelsEnAttente(req, res)));
-  router.get('/:id/mes-oeuvres', authenticate, asyncHandler((req, res) => evenementController.getMesOeuvres(req, res)));
-  router.get('/:id/mon-inscription', authenticate, asyncHandler((req, res) => evenementController.getMyRegistration(req, res)));
-  router.get('/:id/export', authenticate, asyncHandler((req, res) => evenementController.exportEvent(req, res)));
+  router.get('/:id/medias', validateId(), asyncHandler((req, res) => evenementController.getMedias(req, res)));
+  router.get('/:id/share-data', validateId(), asyncHandler((req, res) => evenementController.getShareData(req, res)));
+  router.get('/:id/participants', authenticate, validateId(), asyncHandler((req, res) => evenementController.getParticipants(req, res)));
+  router.get('/:id/professionnels/en-attente', authenticate, validateId(), asyncHandler((req, res) => evenementController.getProfessionnelsEnAttente(req, res)));
+  router.get('/:id/mes-oeuvres', authenticate, validateId(), asyncHandler((req, res) => evenementController.getMesOeuvres(req, res)));
+  router.get('/:id/mon-inscription', authenticate, validateId(), asyncHandler((req, res) => evenementController.getMyRegistration(req, res)));
+  router.get('/:id/export', authenticate, validateId(), asyncHandler((req, res) => evenementController.exportEvent(req, res)));
   router.get('/:id', validateId(), asyncHandler((req, res) => evenementController.getById(req, res)));
 
   router.post('/', authenticate,
+    createContentLimiter,
+    uploadService.uploadImage().single('affiche'),
+    validateStringLengths,
     [body('nom_evenement').optional(), body('nom').optional()],
     handleValidationErrors,
+    validateEventCreation,
     asyncHandler((req, res) => evenementController.create(req, res)));
-  router.put('/:id', authenticate, validateId(), asyncHandler((req, res) => evenementController.update(req, res)));
+  router.put('/:id', authenticate, validateId(),
+    uploadService.uploadImage().single('affiche'),
+    validateStringLengths,
+    validateEventCreation,
+    asyncHandler((req, res) => evenementController.update(req, res)));
   router.delete('/:id', authenticate, validateId(), asyncHandler((req, res) => evenementController.delete(req, res)));
 
   // Inscription

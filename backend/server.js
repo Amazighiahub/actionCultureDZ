@@ -29,7 +29,7 @@ async function startServer() {
     // Attacher Socket.IO au serveur HTTP
     const io = new Server(server, {
       cors: {
-        origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+        origin: process.env.FRONTEND_URL || (process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : undefined),
         methods: ['GET', 'POST'],
         credentials: true
       },
@@ -41,7 +41,10 @@ async function startServer() {
     // Authentification Socket.IO via JWT cookie
     const cookie = require('cookie');
     const jwt = require('jsonwebtoken');
-    const JWT_SECRET = process.env.JWT_SECRET || (process.env.NODE_ENV === 'development' ? 'dev-secret-key-only-for-development' : null);
+    const JWT_SECRET = process.env.JWT_SECRET;
+    if (!JWT_SECRET) {
+      throw new Error('JWT_SECRET is required. Set it in your .env file.');
+    }
 
     io.use((socket, next) => {
       try {
@@ -192,9 +195,9 @@ async function startServer() {
 const nodeVersion = process.versions.node;
 const majorVersion = parseInt(nodeVersion.split('.')[0]);
 
-if (majorVersion < 14) {
+if (majorVersion < 18) {
   logger.error(`❌ Node.js version ${nodeVersion} détectée.`);
-  logger.error('   Cette application nécessite Node.js 14.0.0 ou supérieur.');
+  logger.error('   Cette application nécessite Node.js 18.0.0 ou supérieur.');
   process.exit(1);
 }
 

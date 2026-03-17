@@ -209,7 +209,7 @@ const StepCategories: React.FC<StepCategoriesProps> = ({
             <Input
               value={newTag}
               onChange={(e) => setNewTag(e.target.value)}
-              onKeyPress={handleTagKeyPress}
+              onKeyDown={handleTagKeyPress}
               placeholder={t('oeuvre.fields.tagsPlaceholder', 'Ajouter un tag...')}
               className="flex-1"
             />
@@ -275,10 +275,10 @@ const StepCategories: React.FC<StepCategoriesProps> = ({
 
         {/* Erreurs */}
         {errors.categories && (
-          <p className="text-sm text-destructive">{errors.categories}</p>
+          <p id="step-categories-error" role="alert" className="text-sm text-destructive">{errors.categories}</p>
         )}
         {errors.tags && (
-          <p className="text-sm text-destructive">{errors.tags}</p>
+          <p id="step-tags-error" role="alert" className="text-sm text-destructive">{errors.tags}</p>
         )}
       </CardContent>
     </Card>

@@ -6,7 +6,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Eye, Calendar, Clock, Users, MapPin, Edit, Trash2 } from 'lucide-react';
+import { ArrowLeft, Eye, Calendar, Clock, Users, MapPin, Edit, Trash2, Copy } from 'lucide-react';
 import ProgrammeForm, { ProgrammeFormData } from '@/components/forms/ProgrammeForm';
 import { programmeService } from '@/services/programme.service';
 import { useTranslation } from 'react-i18next';
@@ -125,7 +125,6 @@ const ViewProgrammePage: React.FC = () => {
         const response = await programmeService.delete(parseInt(programmeId));
         
         if (response.success) {
-          console.log('Programme supprimé avec succès');
           navigate(`/evenements/${eventId}`);
         } else {
           setError(response.error || t('programmePages.errors.deleteFailed'));
@@ -133,6 +132,25 @@ const ViewProgrammePage: React.FC = () => {
       } catch (err: any) {
         setError(err.message || t('programmePages.errors.generic'));
       }
+    }
+  };
+
+  const [duplicating, setDuplicating] = useState(false);
+
+  const handleDuplicate = async () => {
+    if (!programmeId) return;
+    setDuplicating(true);
+    try {
+      const response = await programmeService.duplicate(parseInt(programmeId));
+      if (response.success && response.data) {
+        navigate(`/programme/${eventId}/${response.data.id_programme}`);
+      } else {
+        setError(response.error || t('programmePages.errors.duplicateFailed', 'Erreur lors de la duplication'));
+      }
+    } catch (err: any) {
+      setError(err.message || t('programmePages.errors.generic'));
+    } finally {
+      setDuplicating(false);
     }
   };
 
@@ -199,6 +217,15 @@ const ViewProgrammePage: React.FC = () => {
           </div>
           
           <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={handleDuplicate}
+              disabled={duplicating}
+              className="flex items-center gap-2"
+            >
+              <Copy className="h-4 w-4" />
+              {t('programmePages.actions.duplicate', 'Dupliquer')}
+            </Button>
             <Button
               variant="outline"
               onClick={handleEdit}
@@ -318,17 +345,21 @@ const ViewProgrammePage: React.FC = () => {
       </div>
 
       {/* Actions rapides */}
-      <div className="mt-8 flex justify-center gap-4">
+      <div className="mt-8 flex flex-wrap justify-center gap-4">
+        <Button variant="outline" onClick={handleDuplicate} disabled={duplicating}>
+          <Copy className="h-4 w-4 me-2" />
+          {t('programmePages.view.quickActions.duplicateProgram', 'Dupliquer ce programme')}
+        </Button>
         <Button variant="outline" onClick={handleEdit}>
-          <Edit className="h-4 w-4 mr-2" />
+          <Edit className="h-4 w-4 me-2" />
           {t('programmePages.view.quickActions.editProgram')}
         </Button>
         <Button variant="outline" onClick={() => navigate(`/programme/creer?eventId=${eventId}`)}>
-          <Calendar className="h-4 w-4 mr-2" />
+          <Calendar className="h-4 w-4 me-2" />
           {t('programmePages.view.quickActions.addAnotherProgram')}
         </Button>
         <Button variant="outline" onClick={handleBack}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
+          <ArrowLeft className="h-4 w-4 me-2" />
           {t('programmePages.actions.backToEvent')}
         </Button>
       </div>

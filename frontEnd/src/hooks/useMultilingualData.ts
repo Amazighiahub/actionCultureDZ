@@ -164,7 +164,7 @@ export function useMultilingualData<T extends Record<string, any>>(
   const setLanguage = useCallback((language: SupportedLanguage) => {
     setCurrentLanguage(language);
     if (autoSave) {
-      localStorage.setItem('i18nextLng', language);
+      try { localStorage.setItem('i18nextLng', language); } catch { /* storage unavailable */ }
     }
   }, [autoSave]);
 

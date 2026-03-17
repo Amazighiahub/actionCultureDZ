@@ -11,12 +11,15 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Lock, ArrowLeft, Loader2, CheckCircle, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { userService } from '@/services/user.service';
+import { useRTL } from '@/hooks/useRTL';
+import { PasswordStrengthIndicator } from '@/components/auth/PasswordStrengthIndicator';
 
 const ResetPassword = () => {
   const { t } = useTranslation();
   const { toast } = useToast();
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
+  const { direction } = useRTL();
 
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -41,9 +44,15 @@ const ResetPassword = () => {
     if (!password) {
       newErrors.password = t('auth.errors.passwordRequired');
     } else if (password.length < 12) {
-      newErrors.password = t('auth.errors.passwordMinLength');
-    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
-      newErrors.password = t('auth.resetPassword.passwordRequirements');
+      newErrors.password = t('auth.errors.passwordMinLength', 'Minimum 12 caractères');
+    } else if (!/[A-Z]/.test(password)) {
+      newErrors.password = t('auth.errors.passwordNeedUppercase', 'Doit contenir une majuscule');
+    } else if (!/[a-z]/.test(password)) {
+      newErrors.password = t('auth.errors.passwordNeedLowercase', 'Doit contenir une minuscule');
+    } else if (!/[0-9]/.test(password)) {
+      newErrors.password = t('auth.errors.passwordNeedDigit', 'Doit contenir un chiffre');
+    } else if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+      newErrors.password = t('auth.errors.passwordNeedSpecial', 'Doit contenir un caractère spécial');
     }
 
     if (!confirmPassword) {
@@ -53,7 +62,44 @@ const ResetPassword = () => {
     }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    const hasErrors = Object.keys(newErrors).length > 0;
+    if (hasErrors) {
+      setTimeout(() => {
+        const firstError = document.querySelector('[aria-invalid="true"]');
+        if (firstError) {
+          (firstError as HTMLElement).focus();
+          firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 0);
+    }
+    return !hasErrors;
+  };
+
+  const validateField = (field: string) => {
+    switch (field) {
+      case 'password':
+        if (!password) {
+          setErrors((prev) => ({ ...prev, password: t('auth.errors.passwordRequired') }));
+        } else if (password.length < 12) {
+          setErrors((prev) => ({ ...prev, password: t('auth.errors.passwordMinLength', 'Minimum 12 caractères') }));
+        } else if (!/[A-Z]/.test(password)) {
+          setErrors((prev) => ({ ...prev, password: t('auth.errors.passwordNeedUppercase', 'Doit contenir une majuscule') }));
+        } else if (!/[a-z]/.test(password)) {
+          setErrors((prev) => ({ ...prev, password: t('auth.errors.passwordNeedLowercase', 'Doit contenir une minuscule') }));
+        } else if (!/[0-9]/.test(password)) {
+          setErrors((prev) => ({ ...prev, password: t('auth.errors.passwordNeedDigit', 'Doit contenir un chiffre') }));
+        } else if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+          setErrors((prev) => ({ ...prev, password: t('auth.errors.passwordNeedSpecial', 'Doit contenir un caractère spécial') }));
+        }
+        break;
+      case 'confirmPassword':
+        if (!confirmPassword) {
+          setErrors((prev) => ({ ...prev, confirmPassword: t('auth.errors.confirmPasswordRequired') }));
+        } else if (password !== confirmPassword) {
+          setErrors((prev) => ({ ...prev, confirmPassword: t('auth.errors.passwordMismatch') }));
+        }
+        break;
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -97,15 +143,15 @@ const ResetPassword = () => {
 
   if (!token) {
     return (
-      <div className="min-h-screen bg-background">
+      <div dir={direction} className="min-h-screen bg-background">
         <Header />
 
         <main className="container py-12">
           <div className="max-w-md mx-auto">
             <Card>
               <CardHeader className="text-center">
-                <div className="mx-auto w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-4">
-                  <AlertCircle className="h-6 w-6 text-red-600" />
+                <div className="mx-auto w-12 h-12 bg-destructive/10 rounded-full flex items-center justify-center mb-4">
+                  <AlertCircle className="h-6 w-6 text-destructive" />
                 </div>
                 <CardTitle>{t('auth.resetPassword.invalidTokenTitle')}</CardTitle>
                 <CardDescription>
@@ -128,15 +174,15 @@ const ResetPassword = () => {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-background">
+      <div dir={direction} className="min-h-screen bg-background">
         <Header />
 
         <main className="container py-12">
           <div className="max-w-md mx-auto">
             <Card>
               <CardHeader className="text-center">
-                <div className="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                  <CheckCircle className="h-6 w-6 text-green-600" />
+                <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                  <CheckCircle className="h-6 w-6 text-primary" />
                 </div>
                 <CardTitle>{t('auth.resetPassword.successTitle')}</CardTitle>
                 <CardDescription>
@@ -144,8 +190,8 @@ const ResetPassword = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Alert className="border-green-200 bg-green-50">
-                  <AlertDescription className="text-green-800">
+                <Alert className="border-primary/20 bg-primary/10">
+                  <AlertDescription className="text-primary">
                     {t('auth.resetPassword.redirecting')}
                   </AlertDescription>
                 </Alert>
@@ -168,7 +214,7 @@ const ResetPassword = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div dir={direction} className="min-h-screen bg-background">
       <Header />
 
       <main className="container py-12">
@@ -186,7 +232,7 @@ const ResetPassword = () => {
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
                 {error && (
-                  <Alert variant="destructive">
+                  <Alert variant="destructive" role="alert">
                     <AlertCircle className="h-4 w-4" />
                     <AlertDescription>{error}</AlertDescription>
                   </Alert>
@@ -198,25 +244,31 @@ const ResetPassword = () => {
                     <Input
                       id="password"
                       type={showPassword ? 'text' : 'password'}
+                      autoComplete="new-password"
                       placeholder="••••••••"
                       value={password}
                       onChange={(e) => {
                         setPassword(e.target.value);
                         setErrors({ ...errors, password: undefined });
                       }}
+                      onBlur={() => validateField('password')}
                       className={errors.password ? 'border-destructive pr-10' : 'pr-10'}
                       disabled={loading}
+                      aria-invalid={!!errors.password}
+                      aria-describedby={errors.password ? 'reset-password-error' : undefined}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      aria-label={t('auth.togglePassword', 'Afficher/masquer le mot de passe')}
                     >
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
+                  <PasswordStrengthIndicator password={password} />
                   {errors.password && (
-                    <p className="text-sm text-destructive">{errors.password}</p>
+                    <p id="reset-password-error" role="alert" className="text-sm text-destructive">{errors.password}</p>
                   )}
                   <p className="text-xs text-muted-foreground">
                     {t('auth.resetPassword.passwordHint')}
@@ -229,37 +281,42 @@ const ResetPassword = () => {
                     <Input
                       id="confirmPassword"
                       type={showConfirmPassword ? 'text' : 'password'}
+                      autoComplete="new-password"
                       placeholder="••••••••"
                       value={confirmPassword}
                       onChange={(e) => {
                         setConfirmPassword(e.target.value);
                         setErrors({ ...errors, confirmPassword: undefined });
                       }}
+                      onBlur={() => validateField('confirmPassword')}
                       className={errors.confirmPassword ? 'border-destructive pr-10' : 'pr-10'}
                       disabled={loading}
+                      aria-invalid={!!errors.confirmPassword}
+                      aria-describedby={errors.confirmPassword ? 'reset-confirm-error' : undefined}
                     />
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      aria-label={t('auth.togglePassword', 'Afficher/masquer le mot de passe')}
                     >
                       {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
                   {errors.confirmPassword && (
-                    <p className="text-sm text-destructive">{errors.confirmPassword}</p>
+                    <p id="reset-confirm-error" role="alert" className="text-sm text-destructive">{errors.confirmPassword}</p>
                   )}
                 </div>
 
-                <Button type="submit" className="w-full" disabled={loading}>
+                <Button type="submit" size="lg" className="w-full" disabled={loading}>
                   {loading ? (
                     <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      <Loader2 className="h-4 w-4 me-2 animate-spin" />
                       {t('auth.resetPassword.resetting')}
                     </>
                   ) : (
                     <>
-                      <Lock className="h-4 w-4 mr-2" />
+                      <Lock className="h-4 w-4 me-2" />
                       {t('auth.resetPassword.submit')}
                     </>
                   )}

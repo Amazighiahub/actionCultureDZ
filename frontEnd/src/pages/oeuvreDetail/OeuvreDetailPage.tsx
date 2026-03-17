@@ -380,15 +380,15 @@ const OeuvreDetailPage: React.FC = () => {
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="description">
-                <Info className="h-4 w-4 mr-2" />
+                <Info className="h-4 w-4 me-2" />
                 {t('oeuvre.tabs.info', 'Description')}
               </TabsTrigger>
               <TabsTrigger value="auteur">
-                <BookOpen className="h-4 w-4 mr-2" />
+                <BookOpen className="h-4 w-4 me-2" />
                 {t('oeuvre.tabs.author', 'Auteur & Œuvres')}
               </TabsTrigger>
               <TabsTrigger value="comments">
-                <MessageCircle className="h-4 w-4 mr-2" />
+                <MessageCircle className="h-4 w-4 me-2" />
                 {t('oeuvre.tabs.comments', 'Commentaires')}
                 {comments && comments.length > 0 && ` (${comments.length})`}
               </TabsTrigger>
@@ -445,7 +445,7 @@ const OeuvreDetailPage: React.FC = () => {
               <Card className="mb-6">
                 <CardHeader>
                   <CardTitle className="text-xl flex items-center">
-                    <BookOpen className="h-5 w-5 mr-2 text-primary" />
+                    <BookOpen className="h-5 w-5 me-2 text-primary" />
                     {oeuvre.OeuvreArt ? t('oeuvre.artistPresentation', "Présentation de l'artiste") : t('oeuvre.authorBibliography', "Bibliographie de l'auteur")}
                   </CardTitle>
                 </CardHeader>
@@ -481,7 +481,7 @@ const OeuvreDetailPage: React.FC = () => {
               <Card>
                 <CardHeader>
                   <CardTitle className="text-xl flex items-center">
-                    <Sparkles className="h-5 w-5 mr-2 text-primary" />
+                    <Sparkles className="h-5 w-5 me-2 text-primary" />
                     {oeuvre.OeuvreArt ? t('oeuvre.discoverArtistWorks', "Découvrir d'autres œuvres de l'artiste") : t('oeuvre.discoverAuthorWorks', "Découvrir d'autres œuvres de l'auteur")}
                   </CardTitle>
                 </CardHeader>
@@ -562,23 +562,23 @@ const OeuvreDetailPage: React.FC = () => {
           <Card className="mt-6">
             <CardHeader>
               <CardTitle className="text-lg flex items-center">
-                <Share2 className="h-5 w-5 mr-2 text-primary" />
+                <Share2 className="h-5 w-5 me-2 text-primary" />
                 {t('oeuvredetailpage.actions', 'Actions')}
               </CardTitle>
             </CardHeader>
             <CardContent className="pb-6">
               <div className={`grid gap-4 ${oeuvre.Livre ? 'sm:grid-cols-3' : 'sm:grid-cols-2'}`}>
                 <Button size="lg" className="w-full" variant="default" onClick={handleRecommander}>
-                  <ThumbsUp className="h-5 w-5 mr-2" />
+                  <ThumbsUp className="h-5 w-5 me-2" />
                   {t('oeuvredetailpage.recommander', 'Recommander')}
                 </Button>
                 <Button variant="outline" size="lg" className="w-full" onClick={openCommentModal}>
-                  <MessageCircle className="h-5 w-5 mr-2" />
+                  <MessageCircle className="h-5 w-5 me-2" />
                   {t('oeuvredetailpage.crire_avis', 'Écrire un avis')}
                 </Button>
                 {oeuvre.Livre && (
                   <Button variant="outline" size="lg" className="w-full" onClick={handleLireExtrait}>
-                    <BookOpen className="h-5 w-5 mr-2" />
+                    <BookOpen className="h-5 w-5 me-2" />
                     {t('oeuvredetailpage.lire_extrait', 'Lire un extrait')}
                   </Button>
                 )}
@@ -591,7 +591,7 @@ const OeuvreDetailPage: React.FC = () => {
             <Card className="mt-8">
               <CardHeader>
                 <CardTitle className="text-lg flex items-center">
-                  <CalendarCheck className="h-5 w-5 mr-2 text-primary" />
+                  <CalendarCheck className="h-5 w-5 me-2 text-primary" />
                   {t('oeuvredetailpage.prochains_vnements', 'Prochains événements')}
                 </CardTitle>
               </CardHeader>
@@ -679,12 +679,12 @@ const OeuvreDetailPage: React.FC = () => {
             >
               {commentLoading ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Loader2 className="h-4 w-4 me-2 animate-spin" />
                   {t('oeuvredetailpage.envoi', 'Envoi...')}
                 </>
               ) : (
                 <>
-                  <Send className="h-4 w-4 mr-2" />
+                  <Send className="h-4 w-4 me-2" />
                   {t('oeuvredetailpage.envoyer', 'Envoyer')}
                 </>
               )}

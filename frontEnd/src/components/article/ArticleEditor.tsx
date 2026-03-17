@@ -82,7 +82,7 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, o
           </div>
 
           {editor.error && (
-            <Alert variant="destructive" className="mb-6">
+            <Alert variant="destructive" className="mb-6" role="alert" aria-live="assertive">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>{editor.error}</AlertDescription>
             </Alert>
@@ -127,6 +127,8 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, o
                       id="titre"
                       dir={editor.editLang === 'ar' ? 'rtl' : 'ltr'}
                       value={editor.translations[editor.editLang]?.titre || ''}
+                      aria-invalid={!!editor.fieldErrors.titre}
+                      aria-describedby={editor.fieldErrors.titre ? 'titre-error' : undefined}
                       onChange={(e) => {
                         const val = e.target.value;
                         editor.setTranslations(prev => ({
@@ -138,6 +140,9 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, o
                         }
                       }}
                       placeholder={t("article_articleeditor.placeholder_titre_larticle")} />
+                    {editor.fieldErrors.titre && (
+                      <p id="titre-error" role="alert" className="text-sm text-destructive">{editor.fieldErrors.titre}</p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -146,6 +151,8 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, o
                       id="description"
                       dir={editor.editLang === 'ar' ? 'rtl' : 'ltr'}
                       value={editor.translations[editor.editLang]?.description || ''}
+                      aria-invalid={!!editor.fieldErrors.description}
+                      aria-describedby={editor.fieldErrors.description ? 'description-error' : undefined}
                       onChange={(e) => {
                         const val = e.target.value;
                         editor.setTranslations(prev => ({
@@ -158,6 +165,9 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ articleId, initialData, o
                       }}
                       placeholder={t("article_articleeditor.placeholder_rsum_introduction_larticle")}
                       className="min-h-[100px]" />
+                    {editor.fieldErrors.description && (
+                      <p id="description-error" role="alert" className="text-sm text-destructive">{editor.fieldErrors.description}</p>
+                    )}
                   </div>
                 </CardContent>
               </Card>

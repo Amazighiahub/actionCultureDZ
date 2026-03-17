@@ -43,7 +43,7 @@ const EventInfo: React.FC<EventInfoProps> = ({ event }) => {
   const openInMaps = () => {
     if (event.Lieu?.latitude && event.Lieu?.longitude) {
       const url = `https://www.google.com/maps/dir/?api=1&destination=${event.Lieu.latitude},${event.Lieu.longitude}`;
-      window.open(url, '_blank');
+      window.open(url, '_blank', 'noopener,noreferrer');
     }
   };
 

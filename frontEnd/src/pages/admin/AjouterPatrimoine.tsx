@@ -49,6 +49,8 @@ import {
   Download, Share2, Copy, RefreshCw, Search, Navigation, X
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useRTL } from '@/hooks/useRTL';
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import { patrimoineService } from '@/services/patrimoine.service';
 import { lieuService, GeocodingResult } from '@/services/lieu.service';
 import { parcoursIntelligentService } from '@/services/parcours.service';
@@ -175,8 +177,11 @@ const AjouterPatrimoine: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { toast } = useToast();
+  const { direction } = useRTL();
   const lang = i18n.language || 'fr';
   const isEditMode = !!id;
+  const [isDirty, setIsDirty] = useState(false);
+  useUnsavedChanges(isDirty);
 
   // État principal du formulaire
   const [formData, setFormData] = useState({
@@ -215,6 +220,7 @@ const AjouterPatrimoine: React.FC = () => {
   const [wilayas, setWilayas] = useState<WilayaOption[]>([]);
   const [communes, setCommunes] = useState<CommuneOption[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [dragOver, setDragOver] = useState(false);
 
   // Dialogues
   const [serviceDialogOpen, setServiceDialogOpen] = useState(false);
@@ -267,6 +273,16 @@ const AjouterPatrimoine: React.FC = () => {
   const [createdLieuId, setCreatedLieuId] = useState<number | null>(null);
   const addressDebounceRef = React.useRef<NodeJS.Timeout | null>(null);
 
+  // Mark form dirty on changes (skip initial render)
+  const initialLoadDone = React.useRef(false);
+  useEffect(() => {
+    if (!initialLoadDone.current) {
+      initialLoadDone.current = true;
+      return;
+    }
+    setIsDirty(true);
+  }, [formData, services, programmes, monuments, vestiges, medias, parcours]);
+
   // Charger les wilayas au montage
   useEffect(() => {
     loadWilayas();
@@ -289,8 +305,8 @@ const AjouterPatrimoine: React.FC = () => {
       if (response.success && response.data) {
         setWilayas(response.data as WilayaOption[]);
       }
-    } catch (err) {
-      console.error('Erreur chargement wilayas:', err);
+    } catch {
+      toast({ title: t('common.error', 'Erreur'), description: t('patrimoine.loadWilayasError', 'Erreur lors du chargement des wilayas'), variant: 'destructive' });
     }
   };
 
@@ -301,8 +317,8 @@ const AjouterPatrimoine: React.FC = () => {
       if (response.success && response.data) {
         setCommunes(response.data as CommuneOption[]);
       }
-    } catch (err) {
-      console.error('Erreur chargement communes:', err);
+    } catch {
+      toast({ title: t('common.error', 'Erreur'), description: t('patrimoine.loadCommunesError', 'Erreur lors du chargement des communes'), variant: 'destructive' });
     }
   };
 
@@ -317,8 +333,7 @@ const AjouterPatrimoine: React.FC = () => {
       const results = await lieuService.geocodeAddress(query, 'DZ');
       setAddressResults(results);
       setShowAddressResults(true);
-    } catch (err) {
-      console.error('Erreur recherche adresse:', err);
+    } catch {
       setAddressResults([]);
     } finally {
       setAddressLoading(false);
@@ -359,8 +374,7 @@ const AjouterPatrimoine: React.FC = () => {
       }
       setDuplicateWarning(null);
       return false;
-    } catch (err) {
-      console.error('Erreur vérification doublon:', err);
+    } catch {
       return false;
     } finally {
       setCheckingDuplicate(false);
@@ -418,7 +432,7 @@ const AjouterPatrimoine: React.FC = () => {
           const created = createResponse.data as any;
           setCreatedLieuId(created.id_lieu);
           toast({
-            title: t('common.success'),
+            title: t('common.success', 'Succès'),
             description: t('patrimoine.lieuCreated', 'Lieu créé automatiquement')
           });
         } else {
@@ -427,7 +441,7 @@ const AjouterPatrimoine: React.FC = () => {
       } catch (err: any) {
         const status = err?.response?.status;
         toast({
-          title: t('common.error'),
+          title: t('common.error', 'Erreur'),
           description: status === 401
             ? t('patrimoine.authRequiredCreateLieu', 'Connexion requise pour créer un lieu automatiquement')
             : t('patrimoine.createLieuError', 'Impossible de créer le lieu automatiquement'),
@@ -446,7 +460,7 @@ const AjouterPatrimoine: React.FC = () => {
   const handleUseCurrentLocation = async () => {
     if (!navigator.geolocation) {
       toast({
-        title: t('common.error'),
+        title: t('common.error', 'Erreur'),
         description: t('patrimoine.geolocationNotSupported', 'Géolocalisation non supportée'),
         variant: 'destructive'
       });
@@ -477,7 +491,7 @@ const AjouterPatrimoine: React.FC = () => {
       (error) => {
         console.error('Erreur géolocalisation:', error);
         toast({
-          title: t('common.error'),
+          title: t('common.error', 'Erreur'),
           description: t('patrimoine.geolocationError', 'Impossible d\'obtenir votre position'),
           variant: 'destructive'
         });
@@ -523,10 +537,9 @@ const AjouterPatrimoine: React.FC = () => {
         }
       }
     } catch (err) {
-      console.error('Erreur chargement patrimoine:', err);
       toast({
-        title: t('common.error'),
-        description: t('patrimoine.loadError'),
+        title: t('common.error', 'Erreur'),
+        description: t('patrimoine.loadError', 'Erreur lors du chargement'),
         variant: 'destructive'
       });
     } finally {
@@ -562,13 +575,13 @@ const AjouterPatrimoine: React.FC = () => {
       newErrors.adresse = t('validation.frOrArRequired', 'L\'adresse est requise (au moins en français ou arabe)');
     }
     if (!formData.communeId) {
-      newErrors.communeId = t('validation.required');
+      newErrors.communeId = t('validation.required', 'Ce champ est requis');
     }
     if (!formData.typePatrimoine?.trim()) {
-      newErrors.typePatrimoine = t('validation.required');
+      newErrors.typePatrimoine = t('validation.required', 'Ce champ est requis');
     }
     if (!formData.wilayaId) {
-      newErrors.wilayaId = t('validation.required');
+      newErrors.wilayaId = t('validation.required', 'Ce champ est requis');
     }
     // GPS validation
     if (formData.latitude && formData.longitude) {
@@ -595,8 +608,8 @@ const AjouterPatrimoine: React.FC = () => {
   const handleSubmit = async () => {
     if (!validateForm()) {
       toast({
-        title: t('common.error'),
-        description: t('validation.fixErrors'),
+        title: t('common.error', 'Erreur'),
+        description: t('validation.fixErrors', 'Veuillez corriger les erreurs'),
         variant: 'destructive'
       });
       return;
@@ -635,9 +648,10 @@ const AjouterPatrimoine: React.FC = () => {
       }
 
       if (response.success) {
+        setIsDirty(false);
         toast({
-          title: t('common.success'),
-          description: isEditMode ? t('patrimoine.updateSuccess') : t('patrimoine.createSuccess')
+          title: t('common.success', 'Succès'),
+          description: isEditMode ? t('patrimoine.updateSuccess', 'Patrimoine mis à jour avec succès') : t('patrimoine.createSuccess', 'Patrimoine créé avec succès')
         });
 
         // Si QR Code généré, l'afficher
@@ -652,10 +666,9 @@ const AjouterPatrimoine: React.FC = () => {
         throw new Error('Erreur lors de la sauvegarde');
       }
     } catch (err) {
-      console.error('Erreur sauvegarde:', err);
       toast({
-        title: t('common.error'),
-        description: t('patrimoine.saveError'),
+        title: t('common.error', 'Erreur'),
+        description: t('patrimoine.saveError', 'Erreur lors de la sauvegarde'),
         variant: 'destructive'
       });
     } finally {
@@ -755,7 +768,7 @@ const AjouterPatrimoine: React.FC = () => {
   const handleGenerateAutoParcours = async () => {
     if (!formData.latitude || !formData.longitude) {
       toast({
-        title: t('common.error'),
+        title: t('common.error', 'Erreur'),
         description: t('patrimoine.needCoordinates', 'Veuillez définir les coordonnées GPS'),
         variant: 'destructive'
       });
@@ -796,14 +809,13 @@ const AjouterPatrimoine: React.FC = () => {
 
         setParcours(prev => [...prev, generatedParcours]);
         toast({
-          title: t('common.success'),
+          title: t('common.success', 'Succès'),
           description: t('patrimoine.parcoursGenerated', 'Parcours généré avec succès')
         });
       }
     } catch (err) {
-      console.error('Erreur génération parcours:', err);
       toast({
-        title: t('common.error'),
+        title: t('common.error', 'Erreur'),
         description: t('patrimoine.parcoursGenerateError', 'Erreur lors de la génération du parcours'),
         variant: 'destructive'
       });
@@ -862,8 +874,8 @@ const AjouterPatrimoine: React.FC = () => {
             nom: typeof l.nom === 'object' ? l.nom.fr : l.nom
           })));
         }
-      } catch (err) {
-        console.error('Erreur chargement lieux:', err);
+      } catch {
+        toast({ title: t('common.error', 'Erreur'), description: t('patrimoine.loadLieuxError', 'Erreur lors du chargement des lieux'), variant: 'destructive' });
       }
     }
   };
@@ -873,7 +885,27 @@ const AjouterPatrimoine: React.FC = () => {
     const files = e.target.files;
     if (!files) return;
 
-    Array.from(files).forEach((file, index) => {
+    const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+    const validFiles: File[] = [];
+    const oversized: string[] = [];
+
+    Array.from(files).forEach((file) => {
+      if (file.size > MAX_SIZE) {
+        oversized.push(file.name);
+      } else {
+        validFiles.push(file);
+      }
+    });
+
+    if (oversized.length > 0) {
+      toast({
+        title: t('common.error', 'Erreur'),
+        description: t('patrimoine.fileTooLarge', 'Fichier(s) trop volumineux (max 10 Mo) : ') + oversized.join(', '),
+        variant: 'destructive'
+      });
+    }
+
+    validFiles.forEach((file, index) => {
       const reader = new FileReader();
       reader.onload = (event) => {
         const newMedia: MediaItem = {
@@ -918,7 +950,7 @@ const AjouterPatrimoine: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background" dir={direction}>
       <Header />
 
       <main className="container py-8">
@@ -947,9 +979,9 @@ const AjouterPatrimoine: React.FC = () => {
 
             <Button onClick={handleSubmit} disabled={saving}>
               {saving ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2 className="h-4 w-4 me-2 animate-spin" />
               ) : (
-                <Save className="h-4 w-4 mr-2" />
+                <Save className="h-4 w-4 me-2" />
               )}
               {t('common.save', 'Enregistrer')}
             </Button>
@@ -960,31 +992,31 @@ const AjouterPatrimoine: React.FC = () => {
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-7 mb-8">
             <TabsTrigger value="informations">
-              <Building2 className="h-4 w-4 mr-2" />
+              <Building2 className="h-4 w-4 me-2" />
               {t('patrimoine.tabs.info', 'Informations')}
             </TabsTrigger>
             <TabsTrigger value="details">
-              <Landmark className="h-4 w-4 mr-2" />
+              <Landmark className="h-4 w-4 me-2" />
               {t('patrimoine.tabs.details', 'Détails')}
             </TabsTrigger>
             <TabsTrigger value="services">
-              <CheckCircle2 className="h-4 w-4 mr-2" />
+              <CheckCircle2 className="h-4 w-4 me-2" />
               {t('patrimoine.tabs.services', 'Services')} ({services.length})
             </TabsTrigger>
             <TabsTrigger value="programmes">
-              <Calendar className="h-4 w-4 mr-2" />
+              <Calendar className="h-4 w-4 me-2" />
               {t('patrimoine.tabs.programmes', 'Programmes')} ({programmes.length})
             </TabsTrigger>
             <TabsTrigger value="parcours">
-              <Route className="h-4 w-4 mr-2" />
+              <Route className="h-4 w-4 me-2" />
               {t('patrimoine.tabs.parcours', 'Parcours')} ({parcours.length})
             </TabsTrigger>
             <TabsTrigger value="medias">
-              <ImageIcon className="h-4 w-4 mr-2" />
+              <ImageIcon className="h-4 w-4 me-2" />
               {t('patrimoine.tabs.medias', 'Médias')} ({medias.length})
             </TabsTrigger>
             <TabsTrigger value="qrcode">
-              <QrCode className="h-4 w-4 mr-2" />
+              <QrCode className="h-4 w-4 me-2" />
               {t('patrimoine.tabs.qrcode', 'QR Code')}
             </TabsTrigger>
           </TabsList>
@@ -1197,6 +1229,7 @@ const AjouterPatrimoine: React.FC = () => {
                     onChange={(value) => setFormData({ ...formData, description: value })}
                     type="textarea"
                     rows={4}
+                    requiredLanguages={[]}
                   />
 
                   <MultiLangInput
@@ -1206,6 +1239,7 @@ const AjouterPatrimoine: React.FC = () => {
                     onChange={(value) => setFormData({ ...formData, histoire: value })}
                     type="textarea"
                     rows={4}
+                    requiredLanguages={[]}
                   />
 
                   <MultiLangInput
@@ -1213,6 +1247,7 @@ const AjouterPatrimoine: React.FC = () => {
                     label={t('patrimoine.hours', 'Horaires d\'ouverture')}
                     value={formData.horaires}
                     onChange={(value) => setFormData({ ...formData, horaires: value })}
+                    requiredLanguages={[]}
                   />
                 </CardContent>
               </Card>
@@ -1231,7 +1266,7 @@ const AjouterPatrimoine: React.FC = () => {
                       setEditingItem(null);
                       setMonumentDialogOpen(true);
                     }}>
-                      <Plus className="h-4 w-4 mr-1" />
+                      <Plus className="h-4 w-4 me-1" />
                       {t('common.add', 'Ajouter')}
                     </Button>
                   </CardHeader>
@@ -1288,7 +1323,7 @@ const AjouterPatrimoine: React.FC = () => {
                       setEditingItem(null);
                       setVestigeDialogOpen(true);
                     }}>
-                      <Plus className="h-4 w-4 mr-1" />
+                      <Plus className="h-4 w-4 me-1" />
                       {t('common.add', 'Ajouter')}
                     </Button>
                   </CardHeader>
@@ -1359,7 +1394,7 @@ const AjouterPatrimoine: React.FC = () => {
                   setEditingItem(null);
                   setServiceDialogOpen(true);
                 }}>
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus className="h-4 w-4 me-2" />
                   {t('patrimoine.addService', 'Ajouter un service')}
                 </Button>
               </CardHeader>
@@ -1378,7 +1413,7 @@ const AjouterPatrimoine: React.FC = () => {
                         setServiceDialogOpen(true);
                       }}
                     >
-                      <Plus className="h-4 w-4 mr-2" />
+                      <Plus className="h-4 w-4 me-2" />
                       {t('patrimoine.addFirstService', 'Ajouter le premier service')}
                     </Button>
                   </div>
@@ -1458,7 +1493,7 @@ const AjouterPatrimoine: React.FC = () => {
                   setEditingItem(null);
                   setProgrammeDialogOpen(true);
                 }}>
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus className="h-4 w-4 me-2" />
                   {t('patrimoine.addProgramme', 'Ajouter un programme')}
                 </Button>
               </CardHeader>
@@ -1477,7 +1512,7 @@ const AjouterPatrimoine: React.FC = () => {
                         setProgrammeDialogOpen(true);
                       }}
                     >
-                      <Plus className="h-4 w-4 mr-2" />
+                      <Plus className="h-4 w-4 me-2" />
                       {t('patrimoine.addFirstProgramme', 'Ajouter le premier programme')}
                     </Button>
                   </div>
@@ -1566,9 +1601,9 @@ const AjouterPatrimoine: React.FC = () => {
                     disabled={generatingParcours}
                   >
                     {generatingParcours ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      <Loader2 className="h-4 w-4 me-2 animate-spin" />
                     ) : (
-                      <RefreshCw className="h-4 w-4 mr-2" />
+                      <RefreshCw className="h-4 w-4 me-2" />
                     )}
                     {t('patrimoine.generateAuto', 'Générer auto')}
                   </Button>
@@ -1578,7 +1613,7 @@ const AjouterPatrimoine: React.FC = () => {
                     loadAvailableLieux();
                     setParcoursDialogOpen(true);
                   }}>
-                    <Plus className="h-4 w-4 mr-2" />
+                    <Plus className="h-4 w-4 me-2" />
                     {t('patrimoine.addParcours', 'Créer un parcours')}
                   </Button>
                 </div>
@@ -1600,9 +1635,9 @@ const AjouterPatrimoine: React.FC = () => {
                         disabled={generatingParcours}
                       >
                         {generatingParcours ? (
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          <Loader2 className="h-4 w-4 me-2 animate-spin" />
                         ) : (
-                          <RefreshCw className="h-4 w-4 mr-2" />
+                          <RefreshCw className="h-4 w-4 me-2" />
                         )}
                         {t('patrimoine.generateAutoParcours', 'Générer automatiquement')}
                       </Button>
@@ -1611,7 +1646,7 @@ const AjouterPatrimoine: React.FC = () => {
                         loadAvailableLieux();
                         setParcoursDialogOpen(true);
                       }}>
-                        <Plus className="h-4 w-4 mr-2" />
+                        <Plus className="h-4 w-4 me-2" />
                         {t('patrimoine.createManual', 'Créer manuellement')}
                       </Button>
                     </div>
@@ -1715,8 +1750,51 @@ const AjouterPatrimoine: React.FC = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {/* Zone d'upload */}
-                <div className="border-2 border-dashed rounded-lg p-8 text-center mb-6">
+                {/* Zone d'upload avec drag & drop */}
+                <div
+                  className={`border-2 border-dashed rounded-lg p-8 text-center mb-6 transition-colors ${dragOver ? 'border-primary bg-primary/5' : ''}`}
+                  onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                  onDragLeave={() => setDragOver(false)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setDragOver(false);
+                    const dt = e.dataTransfer;
+                    if (dt?.files?.length) {
+                      // Reuse the same handler by synthesizing a change-like flow
+                      const MAX_SIZE = 10 * 1024 * 1024;
+                      const validFiles: File[] = [];
+                      const oversized: string[] = [];
+                      Array.from(dt.files).forEach((file) => {
+                        if (file.size > MAX_SIZE) {
+                          oversized.push(file.name);
+                        } else {
+                          validFiles.push(file);
+                        }
+                      });
+                      if (oversized.length > 0) {
+                        toast({
+                          title: t('common.error', 'Erreur'),
+                          description: t('patrimoine.fileTooLarge', 'Fichier(s) trop volumineux (max 10 Mo) : ') + oversized.join(', '),
+                          variant: 'destructive'
+                        });
+                      }
+                      validFiles.forEach((file, index) => {
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                          const newMedia: MediaItem = {
+                            url: event.target?.result as string,
+                            type: 'image',
+                            ordre: medias.length + index + 1,
+                            file,
+                            preview: event.target?.result as string
+                          };
+                          setMedias(prev => [...prev, newMedia]);
+                        };
+                        reader.readAsDataURL(file);
+                      });
+                    }
+                  }}
+                >
                   <input
                     type="file"
                     multiple
@@ -1797,14 +1875,14 @@ const AjouterPatrimoine: React.FC = () => {
                       />
                       <div className="flex justify-center gap-2">
                         <Button onClick={downloadQRCode}>
-                          <Download className="h-4 w-4 mr-2" />
+                          <Download className="h-4 w-4 me-2" />
                           {t('common.download', 'Télécharger')}
                         </Button>
                         <Button variant="outline" onClick={() => {
                           navigator.clipboard.writeText(window.location.href);
                           toast({ title: t('common.copied', 'Lien copié !') });
                         }}>
-                          <Copy className="h-4 w-4 mr-2" />
+                          <Copy className="h-4 w-4 me-2" />
                           {t('common.copyLink', 'Copier le lien')}
                         </Button>
                       </div>
@@ -1883,7 +1961,7 @@ const AjouterPatrimoine: React.FC = () => {
               value={tempService.nom}
               onChange={(value) => setTempService({ ...tempService, nom: value })}
               required
-              requiredLanguages={['fr']}
+              requiredLanguages={['fr', 'ar']}
             />
             <MultiLangInput
               name="service-description"
@@ -1947,7 +2025,7 @@ const AjouterPatrimoine: React.FC = () => {
               value={tempProgramme.titre}
               onChange={(value) => setTempProgramme({ ...tempProgramme, titre: value })}
               required
-              requiredLanguages={['fr']}
+              requiredLanguages={['fr', 'ar']}
             />
             <MultiLangInput
               name="programme-description"
@@ -2040,7 +2118,7 @@ const AjouterPatrimoine: React.FC = () => {
               value={tempMonument.nom}
               onChange={(value) => setTempMonument({ ...tempMonument, nom: value })}
               required
-              requiredLanguages={['fr']}
+              requiredLanguages={['fr', 'ar']}
             />
             <div className="space-y-2">
               <Label>{t('patrimoine.monumentType', 'Type')}</Label>
@@ -2093,7 +2171,7 @@ const AjouterPatrimoine: React.FC = () => {
               value={tempVestige.nom}
               onChange={(value) => setTempVestige({ ...tempVestige, nom: value })}
               required
-              requiredLanguages={['fr']}
+              requiredLanguages={['fr', 'ar']}
             />
             <div className="space-y-2">
               <Label>{t('patrimoine.vestigeType', 'Type')}</Label>
@@ -2153,7 +2231,7 @@ const AjouterPatrimoine: React.FC = () => {
                 value={tempParcours.nom_parcours}
                 onChange={(value) => setTempParcours({ ...tempParcours, nom_parcours: value })}
                 required
-                requiredLanguages={['fr']}
+                requiredLanguages={['fr', 'ar']}
               />
 
               <MultiLangInput
@@ -2336,7 +2414,7 @@ const AjouterPatrimoine: React.FC = () => {
                           nom: m.nom.fr || ''
                         })}
                       >
-                        <Landmark className="h-3 w-3 mr-1" />
+                        <Landmark className="h-3 w-3 me-1" />
                         {m.nom.fr}
                       </Badge>
                     ))}
@@ -2350,7 +2428,7 @@ const AjouterPatrimoine: React.FC = () => {
                           nom: v.nom.fr || ''
                         })}
                       >
-                        <Building2 className="h-3 w-3 mr-1" />
+                        <Building2 className="h-3 w-3 me-1" />
                         {v.nom.fr}
                       </Badge>
                     ))}

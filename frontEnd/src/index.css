@@ -489,12 +489,24 @@
     box-shadow: 0 0 0 3px hsl(var(--destructive) / 0.15);
   }
 
-  /* Message d'erreur sous le champ */
+  /* Message d'erreur sous le champ — fade in doux */
   .field-error,
   [role="alert"] {
     font-size: var(--text-sm);
     color: hsl(var(--destructive));
     margin-top: var(--space-xs);
+    animation: field-error-in 0.2s ease-out;
+  }
+
+  @keyframes field-error-in {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   /* Empêcher zoom iOS */

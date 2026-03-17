@@ -18,6 +18,7 @@ import MultiLangInput from '@/components/MultiLangInput';
 
 // Import des hooks de localisation
 import { useRTL } from '@/hooks/useRTL';
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 
 // Import des services
 import { metadataService } from '@/services/metadata.service';
@@ -40,10 +41,13 @@ const AjouterEvenement = () => {
   const { id } = useParams<{ id: string }>();
   const isEditMode = !!id;
   const editId = id ? parseInt(id) : null;
-  const { t } = useTranslation();
-  const { rtlClasses } = useRTL();
+  const { t, i18n } = useTranslation();
+  const { rtlClasses, direction } = useRTL();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  const [isDirty, setIsDirty] = useState(false);
+  useUnsavedChanges(isDirty);
 
   const [gratuit, setGratuit] = useState(false);
   const [wilayas, setWilayas] = useState<Wilaya[]>([]);
@@ -91,6 +95,43 @@ const AjouterEvenement = () => {
   // État pour les fichiers
   const [affiche, setAffiche] = useState<File | null>(null);
   const [affichePreview, setAffichePreview] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const DRAFT_KEY = 'eventculture_draft_event';
+
+  // Restaurer le brouillon si l'utilisateur revient après création d'organisation
+  useEffect(() => {
+    if (isEditMode) return; // Pas de restauration en mode édition
+    try {
+      const saved = sessionStorage.getItem(DRAFT_KEY);
+      if (saved) {
+        const draft = JSON.parse(saved);
+        if (draft.formData) setFormData(draft.formData);
+        if (draft.selectedLieuId) setSelectedLieuId(draft.selectedLieuId);
+        if (draft.selectedWilayaId) setSelectedWilayaId(draft.selectedWilayaId);
+        if (draft.selectedOrganisationId) setSelectedOrganisationId(draft.selectedOrganisationId);
+        if (draft.gratuit !== undefined) setGratuit(draft.gratuit);
+        if (draft.isVirtual !== undefined) setIsVirtual(draft.isVirtual);
+        sessionStorage.removeItem(DRAFT_KEY);
+        setIsDirty(true);
+        toast({ title: t('events.create.draftRestored', 'Brouillon restauré'), description: t('events.create.draftRestoredDesc', 'Vos données précédentes ont été restaurées.') });
+      }
+    } catch { /* ignore parsing errors */ }
+  }, [isEditMode]);
+
+  const saveDraftAndNavigate = (path: string) => {
+    try {
+      sessionStorage.setItem(DRAFT_KEY, JSON.stringify({
+        formData,
+        selectedLieuId,
+        selectedWilayaId,
+        selectedOrganisationId,
+        gratuit,
+        isVirtual,
+      }));
+    } catch { /* storage full — proceed without saving */ }
+    navigate(path);
+  };
 
   useEffect(() => {
     checkAuthAndLoadData();
@@ -128,13 +169,12 @@ const AjouterEvenement = () => {
         if (evt.id_organisation) setSelectedOrganisationId(evt.id_organisation);
         if (evt.tarif === 0 || !evt.tarif) setGratuit(true);
         if (evt.url_virtuel) setIsVirtual(true);
-        console.log('✅ Événement chargé pour édition:', evt);
+        // Data loaded for edit mode
       } else {
         toast({ title: t('toasts.error'), description: t('toasts.eventNotFound'), variant: 'destructive' });
         navigate('/dashboard-pro');
       }
     } catch (error: any) {
-      console.error('❌ Erreur chargement événement:', error);
       toast({ title: t('toasts.error'), description: t('toasts.eventLoadFailed'), variant: 'destructive' });
     }
   };
@@ -159,8 +199,8 @@ const AjouterEvenement = () => {
       if (wilayasResponse.success && wilayasResponse.data) {
         setWilayas(wilayasResponse.data);
       }
-    } catch (error) {
-      console.error('Erreur chargement wilayas:', error);
+    } catch {
+      toast({ title: t('toasts.error'), description: t('events.create.loadWilayasFailed', 'Erreur lors du chargement des wilayas'), variant: 'destructive' });
     }
 
     // Charger les types d'événements
@@ -169,10 +209,10 @@ const AjouterEvenement = () => {
       if (typesResponse.success && typesResponse.data) {
         setTypesEvenements(typesResponse.data);
       }
-    } catch (error) {
-      console.error('Erreur chargement types événements:', error);
+    } catch {
+      toast({ title: t('toasts.error'), description: t('events.create.loadTypesFailed', 'Erreur lors du chargement des types d\'événements'), variant: 'destructive' });
     }
-    
+
     // Charger les organisations de l'utilisateur
     try {
       setLoadingOrganisations(true);
@@ -184,8 +224,8 @@ const AjouterEvenement = () => {
           setSelectedOrganisationId(response.data[0].id_organisation);
         }
       }
-    } catch (error) {
-      console.error('Erreur chargement organisations:', error);
+    } catch {
+      toast({ title: t('toasts.error'), description: t('events.create.loadOrgsFailed', 'Erreur lors du chargement des organisations'), variant: 'destructive' });
     } finally {
       setLoadingOrganisations(false);
     }
@@ -207,6 +247,58 @@ const AjouterEvenement = () => {
       delete next[field];
       return next;
     });
+  };
+
+  const validateFieldOnBlur = (field: string) => {
+    let error: string | undefined;
+    switch (field) {
+      case 'dateDebut':
+        if (!formData.dateDebut) {
+          error = t('events.create.startDateRequired', 'La date de début est requise');
+        }
+        break;
+      case 'dateFin':
+        if (formData.dateDebut && formData.dateFin && formData.dateFin < formData.dateDebut) {
+          error = t('events.create.endDateAfterStart', 'La date de fin doit être après la date de début');
+        }
+        break;
+    }
+    setFieldErrors(prev => {
+      if (!error) { const next = { ...prev }; delete next[field]; return next; }
+      return { ...prev, [field]: error };
+    });
+  };
+
+  const handleImageFile = (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      toast({ title: t('common.error', 'Erreur'), description: t('validation.invalidFileType', 'Le fichier doit être une image'), variant: 'destructive' });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: t('common.error', 'Erreur'), description: t('validation.fileTooLarge', 'Fichier trop volumineux (max 5 Mo)'), variant: 'destructive' });
+      return;
+    }
+    clearFieldError('affiche');
+    setIsDirty(true);
+    setAffiche(file);
+    setAffichePreview(URL.createObjectURL(file));
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) handleImageFile(file);
   };
 
   const submitEvent = async (statut: 'publie' | 'brouillon') => {
@@ -245,13 +337,15 @@ const AjouterEvenement = () => {
     try {
       let response;
       if (isEditMode && editId) {
-        console.log('📝 Mise à jour événement', editId);
+        // Updating event
         response = await evenementService.update(editId, fd as any);
       } else {
         response = await evenementService.create(fd as any);
       }
 
       if (response.success) {
+        setIsDirty(false);
+        sessionStorage.removeItem(DRAFT_KEY);
         queryClient.invalidateQueries({ queryKey: ['evenements'] });
         queryClient.invalidateQueries({ queryKey: ['dashboard-pro-evenements'] });
         queryClient.invalidateQueries({ queryKey: ['evenement-stats'] });
@@ -350,7 +444,7 @@ const AjouterEvenement = () => {
   };
 
   return (
-    <div className={`min-h-screen bg-background`} dir="ltr">
+    <div className={`min-h-screen bg-background`} dir={direction}>
       <Header />
       
       <main className="container py-12">
@@ -373,12 +467,13 @@ const AjouterEvenement = () => {
             </div>
           </div>
 
-          <form className="space-y-8" onSubmit={handleSubmit}>
+          <form className="space-y-8" onSubmit={handleSubmit} onChange={() => setIsDirty(true)}>
+            <p className="text-sm text-muted-foreground">{t('common.requiredFieldsLegend')}</p>
             {/* Alerte si pas d'organisation et événement non-virtuel */}
             {!loadingOrganisations && !hasOrganisation && !isVirtual && (
-              <Alert className="border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-800">
-                <AlertCircle className="h-5 w-5 text-red-600" />
-                <AlertDescription className="text-red-800 dark:text-red-200">
+              <Alert className="border-destructive/20 bg-destructive/10">
+                <AlertCircle className="h-5 w-5 text-destructive" />
+                <AlertDescription className="text-destructive">
                   <div className="flex flex-col gap-3">
                     <div className="font-semibold">
                       {t('events.create.organisationRequired', 'Organisation requise')}
@@ -391,9 +486,9 @@ const AjouterEvenement = () => {
                         type="button"
                         size="sm"
                         className="bg-red-600 hover:bg-red-700 text-white"
-                        onClick={() => navigate('/ajouter-organisation')}
+                        onClick={() => saveDraftAndNavigate('/ajouter-organisation')}
                       >
-                        <Plus className="h-4 w-4 mr-1" />
+                        <Plus className="h-4 w-4 me-1" />
                         {t('events.create.createOrganisation', 'Créer une organisation')}
                       </Button>
                       <Button
@@ -499,9 +594,9 @@ const AjouterEvenement = () => {
                       <Button
                         type="button"
                         variant="outline"
-                        onClick={() => navigate('/ajouter-organisation')}
+                        onClick={() => saveDraftAndNavigate('/ajouter-organisation')}
                       >
-                        <Plus className="h-4 w-4 mr-2" />
+                        <Plus className="h-4 w-4 me-2" />
                         {t('events.create.createOrganisation', 'Créer une organisation')}
                       </Button>
                     </div>
@@ -523,7 +618,7 @@ const AjouterEvenement = () => {
                     value={formData.nom}
                     onChange={(value) => { clearFieldError('nom'); setFormData(prev => ({ ...prev, nom: value as { fr: string; ar: string; en: string; 'tz-ltn': string; 'tz-tfng': string } })); }}
                     required
-                    requiredLanguages={['fr', 'ar']}
+                    requiredLanguages={['fr']}
                     placeholder={t('events.create.eventNamePlaceholder')}
                     aria-invalid={!!fieldErrors.nom}
                   />
@@ -531,7 +626,7 @@ const AjouterEvenement = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>{t('common.description')}</Label>
+                  <Label>{t('common.description')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span></Label>
                   <MultiLangInput
                     name="description"
                     label={t('common.description')}
@@ -539,6 +634,7 @@ const AjouterEvenement = () => {
                     onChange={(value) => setFormData(prev => ({ ...prev, description: value as { fr: string; ar: string; en: string; 'tz-ltn': string; 'tz-tfng': string } }))}
                     type="textarea"
                     rows={4}
+                    requiredLanguages={[]}
                     placeholder={t('events.create.descriptionPlaceholder')}
                   />
                 </div>
@@ -567,7 +663,7 @@ const AjouterEvenement = () => {
                   
                   {!isVirtual && (
                     <div className="space-y-2">
-                      <Label htmlFor="wilaya">{t('common.wilaya')}</Label>
+                      <Label htmlFor="wilaya">{t('common.wilaya')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span></Label>
                       <Select 
                         value={selectedWilayaId?.toString() ?? ''}
                         onValueChange={(value) => setSelectedWilayaId(parseInt(value))}
@@ -578,7 +674,7 @@ const AjouterEvenement = () => {
                         <SelectContent>
                           {wilayas.map((wilaya) => (
                             <SelectItem key={wilaya.id_wilaya} value={wilaya.id_wilaya.toString()}>
-                              {wilaya.codeW} - {wilaya.wilaya_name_ascii}
+                              {String(wilaya.codeW).padStart(2, '0')} - {i18n.language === 'ar' && wilaya.nom ? wilaya.nom : wilaya.wilaya_name_ascii}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -595,6 +691,7 @@ const AjouterEvenement = () => {
                       <LieuSelector
                         value={selectedLieuId}
                         onChange={(lieuId, lieu) => {
+                          clearFieldError('lieu');
                           setSelectedLieuId(lieuId);
                           setSelectedLieu(lieu);
                         }}
@@ -606,6 +703,9 @@ const AjouterEvenement = () => {
                       <p className="text-sm text-muted-foreground mt-2">
                         {selectedLieu.adresse}
                       </p>
+                    )}
+                    {fieldErrors.lieu && (
+                      <p id="lieu-error" role="alert" className="text-sm text-destructive mt-1">{fieldErrors.lieu}</p>
                     )}
                   </div>
                 )}
@@ -648,6 +748,7 @@ const AjouterEvenement = () => {
                       type="date"
                       value={formData.dateDebut}
                       onChange={(e) => { clearFieldError('dateDebut'); setFormData(prev => ({ ...prev, dateDebut: e.target.value })); }}
+                      onBlur={() => validateFieldOnBlur('dateDebut')}
                       required
                       aria-invalid={!!fieldErrors.dateDebut}
                       aria-describedby={fieldErrors.dateDebut ? 'dateDebut-error' : undefined}
@@ -656,12 +757,13 @@ const AjouterEvenement = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="date-fin">{t('events.create.endDate')}</Label>
+                    <Label htmlFor="date-fin">{t('events.create.endDate')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span></Label>
                     <Input
                       id="date-fin"
                       type="date"
                       value={formData.dateFin}
                       onChange={(e) => { clearFieldError('dateFin'); setFormData(prev => ({ ...prev, dateFin: e.target.value })); }}
+                      onBlur={() => validateFieldOnBlur('dateFin')}
                       aria-invalid={!!fieldErrors.dateFin}
                       aria-describedby={fieldErrors.dateFin ? 'dateFin-error' : undefined}
                     />
@@ -671,7 +773,7 @@ const AjouterEvenement = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                   <div className="space-y-2">
-                    <Label htmlFor="heure-debut">{t('events.create.startTime')}</Label>
+                    <Label htmlFor="heure-debut">{t('events.create.startTime')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span></Label>
                     <Input
                       id="heure-debut"
                       type="time"
@@ -681,7 +783,7 @@ const AjouterEvenement = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="heure-fin">{t('events.create.endTime')}</Label>
+                    <Label htmlFor="heure-fin">{t('events.create.endTime')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span></Label>
                     <Input
                       id="heure-fin"
                       type="time"
@@ -699,15 +801,16 @@ const AjouterEvenement = () => {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="max-participants">{t('events.create.maxParticipants')}</Label>
+                  <Label htmlFor="max-participants">{t('events.create.maxParticipants')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span></Label>
                   <Input
                     id="max-participants"
                     type="number"
                     min="0"
+                    max="100000"
                     value={formData.maxParticipants}
                     onChange={(e) => {
                       const val = e.target.value;
-                      if (val === '' || Number(val) >= 0) setFormData(prev => ({ ...prev, maxParticipants: val }));
+                      if (val === '' || (Number(val) >= 0 && Number(val) <= 100000)) setFormData(prev => ({ ...prev, maxParticipants: val }));
                     }}
                     placeholder={t('events.create.maxParticipantsPlaceholder')}
                   />
@@ -724,16 +827,17 @@ const AjouterEvenement = () => {
                 
                 {!gratuit && (
                   <div className={`space-y-2 ${rtlClasses.marginStart(6)}`}>
-                    <Label htmlFor="tarif">{t('events.create.price')}</Label>
+                    <Label htmlFor="tarif">{t('events.create.price')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span></Label>
                     <Input
                       id="tarif"
                       type="number"
                       min="0"
+                      max="1000000"
                       step="0.01"
                       value={formData.tarif}
                       onChange={(e) => {
                         const val = e.target.value;
-                        if (val === '' || Number(val) >= 0) setFormData(prev => ({ ...prev, tarif: val }));
+                        if (val === '' || (Number(val) >= 0 && Number(val) <= 1000000)) setFormData(prev => ({ ...prev, tarif: val }));
                       }}
                       placeholder={t('events.create.pricePlaceholder')}
                     />
@@ -751,8 +855,11 @@ const AjouterEvenement = () => {
                   <Label htmlFor="affiche">{t('events.create.eventImage')} *</Label>
                   <div
                     className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-                      affichePreview ? 'border-primary bg-primary/5' : 'border-gray-300 hover:border-primary/50'
+                      isDragging ? 'border-primary bg-primary/10' : affichePreview ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
                     }`}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
                   >
                     {affichePreview ? (
                       <div className="relative">
@@ -776,12 +883,14 @@ const AjouterEvenement = () => {
                       </div>
                     ) : (
                       <>
-                        <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                        <p className="text-gray-600 mb-2">
-                          {t('common.dragDropImage')}
+                        <Upload className={`h-12 w-12 mx-auto mb-4 ${isDragging ? 'text-primary' : 'text-muted-foreground'}`} />
+                        <p className={`mb-2 ${isDragging ? 'text-primary font-medium' : 'text-muted-foreground'}`}>
+                          {isDragging
+                            ? t('common.dropImageHere', 'Déposez l\'image ici')
+                            : t('common.dragOrClickImage', 'Glissez-déposez ou cliquez pour ajouter une image')}
                         </p>
-                        <p className="text-sm text-gray-400">
-                          {t('common.imageFormats')}
+                        <p className="text-sm text-muted-foreground">
+                          {t('common.imageFormats')} — {t('validation.maxFileSize', 'Max 5 Mo')}
                         </p>
                       </>
                     )}
@@ -792,10 +901,7 @@ const AjouterEvenement = () => {
                       className="hidden"
                       onChange={(e) => {
                         const file = e.target.files?.[0];
-                        if (file) {
-                          setAffiche(file);
-                          setAffichePreview(URL.createObjectURL(file));
-                        }
+                        if (file) handleImageFile(file);
                       }}
                     />
                     <Button
@@ -811,13 +917,13 @@ const AjouterEvenement = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="medias-post">{t('events.create.postEventMedia')}</Label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                    <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                    <p className="text-sm text-gray-600">
+                  <Label htmlFor="medias-post">{t('events.create.postEventMedia')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span></Label>
+                  <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
+                    <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground">
                       {t('events.create.postEventMediaDesc')}
                     </p>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-muted-foreground">
                       {t('events.create.addAfterEvent')}
                     </p>
                     <Button variant="outline" size="sm" className="mt-2" disabled title={t('events.create.availableAfterCreation', 'Disponible après la création de l\'événement')}>
@@ -848,17 +954,22 @@ const AjouterEvenement = () => {
                 <Save className={`h-4 w-4 ${rtlClasses.marginEnd(2)}`} />
                 {isSubmitting ? t('common.saving', 'Saving...') : t('events.create.saveAsDraft')}
               </Button>
-              <Button
-                type="submit"
-                className="btn-hover"
-                disabled={isSubmitting || (!isVirtual && !hasOrganisation)}
+              <span
+                title={!isVirtual && !hasOrganisation ? t('events.create.organisationRequiredMessage') : undefined}
               >
-                {isSubmitting
-                  ? <Loader2 className={`h-4 w-4 animate-spin ${rtlClasses.marginEnd(2)}`} />
-                  : <Calendar className={`h-4 w-4 ${rtlClasses.marginEnd(2)}`} />
-                }
-                {isSubmitting ? t('common.publishing', 'Publication...') : t('events.create.publishEvent')}
-              </Button>
+                <Button
+                  type="submit"
+                  size="lg"
+                  className="w-full"
+                  disabled={isSubmitting || (!isVirtual && !hasOrganisation)}
+                >
+                  {isSubmitting
+                    ? <Loader2 className={`h-4 w-4 animate-spin ${rtlClasses.marginEnd(2)}`} />
+                    : <Calendar className={`h-4 w-4 ${rtlClasses.marginEnd(2)}`} />
+                  }
+                  {isSubmitting ? t('common.publishing', 'Publication...') : t('events.create.publishEvent')}
+                </Button>
+              </span>
             </div>
           </form>
         </div>

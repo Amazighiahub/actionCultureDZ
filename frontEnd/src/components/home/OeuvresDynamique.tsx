@@ -92,8 +92,11 @@ const OeuvresDynamique: React.FC = () => {
                 {oeuvre.Media && oeuvre.Media[0] ? (
                   <img
                     src={getAssetUrl(oeuvre.Media[0].url)}
-                    alt={getTranslation(oeuvre.titre, lang)}
+                    alt={getTranslation(oeuvre.titre, lang) || 'Oeuvre culturelle'}
                     loading="lazy"
+                    decoding="async"
+                    width={400}
+                    height={192}
                     className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                 ) : (

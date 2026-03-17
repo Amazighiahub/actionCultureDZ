@@ -102,6 +102,13 @@ class PatrimoineService extends BaseService {
     if (!data.latitude || !data.longitude) {
       throw this._validationError('Les coordonnées GPS sont requises');
     }
+    const { isValidLatitude, isValidLongitude } = require('../utils/geoUtils');
+    if (!isValidLatitude(data.latitude)) {
+      throw this._validationError('Coordonnées GPS invalides (latitude : -90 à 90)');
+    }
+    if (!isValidLongitude(data.longitude)) {
+      throw this._validationError('Coordonnées GPS invalides (longitude : -180 à 180)');
+    }
     if (!data.communeId) {
       throw this._validationError('La commune est requise');
     }

@@ -367,16 +367,16 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Messages d'erreur et succès */}
       {error && (
-        <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-          <AlertCircle className="h-4 w-4 text-red-500" />
-          <span className="text-sm text-red-700">{error}</span>
+        <div className="flex items-center gap-2 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+          <AlertCircle className="h-4 w-4 text-destructive" />
+          <span className="text-sm text-destructive">{error}</span>
         </div>
       )}
 
       {success && (
-        <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
-          <CheckCircle className="h-4 w-4 text-green-500" />
-          <span className="text-sm text-green-700">
+        <div className="flex items-center gap-2 p-3 bg-primary/10 border border-primary/20 rounded-lg">
+          <CheckCircle className="h-4 w-4 text-primary" />
+          <span className="text-sm text-primary">
             {mode === 'create' ? t('programme.form.success.created') : t('programme.form.success.updated')}
           </span>
         </div>
@@ -408,7 +408,7 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
                 value={formData.titre}
                 onChange={(value) => handleMultiLangChange('titre', value)}
                 required={true}
-                requiredLanguages={['fr', 'ar']}
+                requiredLanguages={['fr']}
                 disabled={isReadOnly}
                 errors={errors}
               />
@@ -522,7 +522,7 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
               </FormField>
 
               {/* Heures - Menus déroulants avec plages prédéfinies */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField label={t('programme.form.schedule.startTime')} required={true} error={errors.heure_debut}>
                   <Select
                     value={formData.heure_debut}
@@ -625,7 +625,7 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
                         )}
                       </div>
 
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormField label={t('programme.form.participants.user')}>
                           <Select
                             value={intervenant.id_user?.toString()}
@@ -724,7 +724,7 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
               {/* Options */}
               <div className="space-y-3">
                 <Label className="text-base font-medium">{t('programme.form.options.optionsLabel')}</Label>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex items-center space-x-2">
                     <Checkbox
                       id="traduction"

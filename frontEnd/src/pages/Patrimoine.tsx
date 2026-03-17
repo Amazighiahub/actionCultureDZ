@@ -15,6 +15,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { patrimoineService } from '@/services/patrimoine.service';
 import { useToast } from '@/hooks/use-toast';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import SEOHead from '@/components/SEOHead';
 
 // Lazy loading pour CartePatrimoine
@@ -98,6 +99,7 @@ const Patrimoine = () => {
   const lang = i18n.language || 'fr';
 
   const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearch = useDebouncedValue(searchQuery, 300);
   const [filterType, setFilterType] = useState<string | null>(null);
 
   // Types patrimoine — cachés 10min, rarement changent
@@ -125,12 +127,12 @@ const Patrimoine = () => {
   // Filtrer les sites (recherche locale uniquement, le type est filtré côté serveur)
   const filteredSites = useMemo(() => sites.filter(site => {
     const nom = translate(site.nom, lang);
-    const matchSearch = !searchQuery ||
-      nom.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      site.wilaya?.nom?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchSearch = !debouncedSearch ||
+      nom.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+      site.wilaya?.nom?.toLowerCase().includes(debouncedSearch.toLowerCase());
 
     return matchSearch;
-  }), [sites, searchQuery, lang]);
+  }), [sites, debouncedSearch, lang]);
 
   // Obtenir l'image principale d'un site
   const getMainImage = (site: SitePatrimoine): string => {

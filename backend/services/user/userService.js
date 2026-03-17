@@ -23,9 +23,12 @@ const REFRESH_TOKEN_EXPIRY_DAYS = 7;
 class UserService extends BaseService {
   constructor(userRepository, options = {}) {
     super(userRepository, options);
-    this.jwtSecret = process.env.JWT_SECRET || (process.env.NODE_ENV === 'development' ? 'dev-secret-key-only-for-development' : (() => { throw new Error('JWT_SECRET must be configured in production'); })());
+    if (!process.env.JWT_SECRET) {
+      throw new Error('JWT_SECRET must be configured. Set it in your .env file.');
+    }
+    this.jwtSecret = process.env.JWT_SECRET;
     this.jwtExpiration = process.env.JWT_EXPIRATION || '15m';
-    this.bcryptRounds = parseInt(process.env.BCRYPT_ROUNDS) || 12;
+    this.bcryptRounds = parseInt(process.env.BCRYPT_ROUNDS) || (process.env.NODE_ENV === 'production' ? 14 : 12);
   }
 
   // ============================================================================
@@ -60,23 +63,25 @@ class UserService extends BaseService {
     const entityData = createDTO.toEntity();
     entityData.password = hashedPassword;
 
-    // 6. Créer l'utilisateur
-    const newUser = await this.repository.create(entityData);
+    // 6. Créer l'utilisateur + refresh token dans une transaction
+    const result = await this.repository.withTransaction(async (transaction) => {
+      const newUser = await this.repository.create(entityData, { transaction });
 
-    // 7. Générer les tokens
-    const token = this._generateToken(newUser);
-    const refreshToken = this._generateRefreshToken();
-    await this._saveRefreshToken(newUser.id_user, refreshToken);
+      const token = this._generateToken(newUser);
+      const refreshToken = this._generateRefreshToken();
+      await this._saveRefreshToken(newUser.id_user, refreshToken, transaction);
 
-    // 8. Transformer en DTO de réponse
-    const userDTO = UserDTO.fromEntity(newUser);
+      const userDTO = UserDTO.fromEntity(newUser);
 
-    this.logger.info(`Nouvel utilisateur inscrit: ${newUser.id_user}`);
+      return { user: userDTO, token, refreshToken, userId: newUser.id_user };
+    });
+
+    this.logger.info(`Nouvel utilisateur inscrit: ${result.userId}`);
 
     return {
-      user: userDTO,
-      token,
-      refreshToken
+      user: result.user,
+      token: result.token,
+      refreshToken: result.refreshToken
     };
   }
 
@@ -336,8 +341,8 @@ class UserService extends BaseService {
     if (!nouveauMotDePasse || nouveauMotDePasse.length < 12) {
       throw this._validationError('Le nouveau mot de passe doit contenir au moins 12 caractères');
     }
-    if (!/[A-Z]/.test(nouveauMotDePasse) || !/[a-z]/.test(nouveauMotDePasse) || !/[0-9]/.test(nouveauMotDePasse)) {
-      throw this._validationError('Le mot de passe doit contenir majuscule, minuscule et chiffre');
+    if (!/[A-Z]/.test(nouveauMotDePasse) || !/[a-z]/.test(nouveauMotDePasse) || !/[0-9]/.test(nouveauMotDePasse) || !/[!@#$%^&*(),.?":{}|<>]/.test(nouveauMotDePasse)) {
+      throw this._validationError('Le mot de passe doit contenir majuscule, minuscule, chiffre et caractère spécial');
     }
 
     // Hasher et mettre à jour
@@ -721,15 +726,16 @@ class UserService extends BaseService {
    * Persiste le refresh token hashé avec une date d'expiration
    * @private
    */
-  async _saveRefreshToken(userId, refreshToken) {
+  async _saveRefreshToken(userId, refreshToken, transaction = null) {
     const expires = new Date();
     expires.setDate(expires.getDate() + REFRESH_TOKEN_EXPIRY_DAYS);
 
     const hashedToken = crypto.createHash('sha256').update(refreshToken).digest('hex');
+    const options = transaction ? { transaction } : {};
     await this.repository.update(userId, {
       refresh_token: hashedToken,
       refresh_token_expires: expires
-    });
+    }, options);
   }
 
   /**

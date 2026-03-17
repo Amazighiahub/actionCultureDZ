@@ -113,8 +113,11 @@ const ArtisanatDynamique: React.FC = () => {
                 {artisanat.medias && artisanat.medias[0] ? (
                   <img
                     src={getAssetUrl(artisanat.medias[0].url)}
-                    alt={artisanat.nom}
+                    alt={artisanat.nom || 'Artisanat algérien traditionnel'}
                     loading="lazy"
+                    decoding="async"
+                    width={400}
+                    height={192}
                     className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                 ) : (

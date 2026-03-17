@@ -23,6 +23,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useLocalizedDate } from '@/hooks/useLocalizedDate';
 import { useTranslateData } from '@/hooks/useTranslateData';
 import { cn } from '@/lib/Utils';
+import { httpClient } from '@/services/httpClient';
 
 interface Comment {
   id_commentaire?: number;
@@ -247,6 +248,20 @@ const EventComments: React.FC<EventCommentsProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Signaler un commentaire
+  const handleReport = async (commentId: number) => {
+    try {
+      await httpClient.post('/signalements', {
+        type_entite: 'commentaire',
+        id_entite: commentId,
+        motif: 'contenu_inapproprie',
+      });
+      alert(t('comments.reportSuccess', 'Signalement envoyé. Merci.'));
+    } catch {
+      alert(t('comments.reportError', 'Erreur lors du signalement.'));
+    }
+  };
+
   // Calculer la moyenne des notes
   const averageRating = comments.length > 0
     ? comments.reduce((acc, c) => acc + (c.note || 0), 0) / comments.filter(c => c.note).length
@@ -267,6 +282,13 @@ const EventComments: React.FC<EventCommentsProps> = ({
     
     if (!newComment.trim()) {
       setError(t('comments.errorEmpty', 'Veuillez écrire un commentaire'));
+      setTimeout(() => document.getElementById('event-comment')?.focus(), 0);
+      return;
+    }
+
+    if (newComment.trim().length < 3) {
+      setError(t('comments.errorTooShort', 'Le commentaire doit contenir au moins 3 caractères'));
+      setTimeout(() => document.getElementById('event-comment')?.focus(), 0);
       return;
     }
 
@@ -351,16 +373,23 @@ const EventComments: React.FC<EventCommentsProps> = ({
               {/* Textarea */}
               <div>
                 <Textarea
+                  id="event-comment"
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
                   placeholder={t('comments.placeholder', 'Partagez votre expérience...')}
                   className="min-h-[100px]"
+                  maxLength={2000}
+                  aria-invalid={!!error}
+                  aria-describedby={error ? 'event-comment-error' : undefined}
                 />
+                <p className="text-xs text-muted-foreground text-right mt-1">
+                  {newComment.length}/2000
+                </p>
               </div>
 
               {/* Erreur */}
               {error && (
-                <div className="flex items-center gap-2 text-destructive text-sm">
+                <div id="event-comment-error" role="alert" className="flex items-center gap-2 text-destructive text-sm">
                   <AlertCircle className="h-4 w-4" />
                   {error}
                 </div>
@@ -411,7 +440,7 @@ const EventComments: React.FC<EventCommentsProps> = ({
           <div className="space-y-6">
             {comments.map((comment, index) => (
               <React.Fragment key={comment.id_commentaire || comment.id || index}>
-                <CommentItem comment={comment} />
+                <CommentItem comment={comment} onReport={isAuthenticated ? handleReport : undefined} />
                 {index < comments.length - 1 && <Separator />}
               </React.Fragment>
             ))}

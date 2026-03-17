@@ -444,7 +444,7 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
                 )}
                 onClick={onToggleFavorite}
               >
-                <Heart className={cn("h-4 w-4 mr-2", isFavorite && "fill-current")} />
+                <Heart className={cn("h-4 w-4 me-2", isFavorite && "fill-current")} />
                 {isFavorite
                   ? t('event.registration.removeFromFavorites', 'Retirer des favoris')
                   : t('event.registration.addToFavorites', 'Ajouter aux favoris')
@@ -455,7 +455,7 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
             {/* Bouton connexion */}
             <Button asChild className="w-full" variant="outline">
               <Link to="/auth">
-                <UserPlus className="h-4 w-4 mr-2" />
+                <UserPlus className="h-4 w-4 me-2" />
                 {t('event.registration.loginToRegister', 'Se connecter pour s\'inscrire')}
               </Link>
             </Button>
@@ -477,7 +477,7 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
                 }
               }}
             >
-              <UserMinus className="h-4 w-4 mr-2" />
+              <UserMinus className="h-4 w-4 me-2" />
               {t('event.registration.cancel', 'Annuler mon inscription')}
             </Button>
           </>
@@ -485,7 +485,7 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button className="w-full" size="lg">
-                <UserPlus className="h-4 w-4 mr-2" />
+                <UserPlus className="h-4 w-4 me-2" />
                 {t('event.registration.register', 'S\'inscrire')}
               </Button>
             </DialogTrigger>
@@ -537,7 +537,7 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
                 {configLoading ? (
                   <div className="flex items-center justify-center py-4">
                     <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                    <span className="ml-2 text-sm text-muted-foreground">
+                    <span className="ms-2 text-sm text-muted-foreground">
                       {t('common.loading', 'Chargement...')}
                     </span>
                   </div>
@@ -548,7 +548,7 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
                       <Label className="text-base font-semibold">
                         {td(inscriptionConfig.config_soumission?.label) || t('event.registration.submitWorks', 'Œuvres à soumettre')}
                         {inscriptionConfig.config_soumission?.requis && (
-                          <span className="text-red-500 ml-1">*</span>
+                          <span className="text-red-500 ms-1">*</span>
                         )}
                       </Label>
                     </div>
@@ -717,12 +717,12 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
                 <Button onClick={handleSubmit} disabled={isSubmitting}>
                   {isSubmitting ? (
                     <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      <Loader2 className="h-4 w-4 me-2 animate-spin" />
                       {t('common.loading', 'Chargement...')}
                     </>
                   ) : (
                     <>
-                      <CheckCircle className="h-4 w-4 mr-2" />
+                      <CheckCircle className="h-4 w-4 me-2" />
                       {t('event.registration.confirm', 'Confirmer l\'inscription')}
                     </>
                   )}

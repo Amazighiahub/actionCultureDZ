@@ -1,4 +1,5 @@
 const cors = require('cors');
+const logger = require('../utils/logger');
 
 // ============================================================================
 // CONFIGURATION CORS SÉCURISÉE
@@ -44,7 +45,7 @@ const buildAllowedOrigins = () => {
     // Validation: au moins une origine doit être configurée
     if (origins.length === 0) {
       const msg = 'CORS: Aucune origine configurée en production! Définissez FRONTEND_URL.';
-      console.error('❌ ' + msg);
+      logger.error(msg);
       throw new Error(msg);
     }
   } else {
@@ -63,7 +64,7 @@ const allowedOrigins = buildAllowedOrigins();
 
 // Log des origines autorisées au démarrage (seulement en dev)
 if (!IS_PRODUCTION) {
-  console.log('🌐 CORS - Origines autorisées:', allowedOrigins);
+  logger.info('CORS - Origines autorisées:', allowedOrigins);
 }
 
 const corsOptions = {
@@ -87,7 +88,7 @@ const corsOptions = {
     } else {
       // Log uniquement en dev pour éviter le spam en prod
       if (!IS_PRODUCTION) {
-        console.warn(`⚠️ CORS: Requête rejetée de ${origin}`);
+        logger.warn(`CORS: Requête rejetée de ${origin}`);
       }
       callback(new Error(`Origine non autorisée: ${origin}`));
     }

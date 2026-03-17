@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Edit, Calendar, Clock, Users, MapPin } from 'lucide-react';
 import ProgrammeForm, { ProgrammeFormData } from '@/components/forms/ProgrammeForm';
 import { programmeService } from '@/services/programme.service';
+import { evenementService } from '@/services/evenement.service';
 import { lieuService } from '@/services/lieu.service';
 import { httpClient } from '@/services/httpClient';
 import { useTranslation } from 'react-i18next';
@@ -25,14 +26,19 @@ const EditProgrammePage: React.FC = () => {
   const [programmeData, setProgrammeData] = useState<Partial<ProgrammeFormData> | null>(null);
   const [lieux, setLieux] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
+  const [eventDates, setEventDates] = useState<{ dateDebut: string; dateFin: string } | undefined>();
 
   React.useEffect(() => {
     const loadRefData = async () => {
       try {
-        const [lieuxRes, usersRes] = await Promise.all([
+        const promises: Promise<any>[] = [
           lieuService.getAll({ limit: 100 }),
           httpClient.get<any>('/intervenants/search', { q: '', limit: 50 })
-        ]);
+        ];
+        if (eventId) {
+          promises.push(evenementService.getDetail(parseInt(eventId)));
+        }
+        const [lieuxRes, usersRes, eventRes] = await Promise.all(promises);
         if (lieuxRes.success && lieuxRes.data) {
           const items = (lieuxRes.data as any).lieux || lieuxRes.data;
           setLieux(Array.isArray(items) ? items : []);
@@ -41,10 +47,18 @@ const EditProgrammePage: React.FC = () => {
           const items = (usersRes.data as any).intervenants || usersRes.data;
           setUsers(Array.isArray(items) ? items : []);
         }
+        if (eventRes?.success && eventRes.data) {
+          const evt = eventRes.data;
+          const dateDebut = evt.date_debut?.split('T')[0] || evt.date_debut;
+          const dateFin = evt.date_fin?.split('T')[0] || evt.date_fin || dateDebut;
+          if (dateDebut) {
+            setEventDates({ dateDebut, dateFin });
+          }
+        }
       } catch (e) { /* empty lists as fallback */ }
     };
     loadRefData();
-  }, []);
+  }, [eventId]);
 
   // Charger les données du programme
   useEffect(() => {
@@ -153,8 +167,6 @@ const EditProgrammePage: React.FC = () => {
 
       if (response.success) {
         setSuccess(true);
-        console.log('Programme mis à jour avec succès');
-
         // Rediriger vers la page de l'événement après 2 secondes
         setTimeout(() => {
           navigate(`/evenements/${eventId}`);
@@ -275,6 +287,7 @@ const EditProgrammePage: React.FC = () => {
             success={success}
             lieux={lieux}
             users={users}
+            eventDates={eventDates}
           />
         </CardContent>
       </Card>

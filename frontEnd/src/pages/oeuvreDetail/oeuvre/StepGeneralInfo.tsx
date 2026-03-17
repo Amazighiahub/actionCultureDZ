@@ -88,9 +88,11 @@ const StepGeneralInfo: React.FC<StepGeneralInfoProps> = ({
             onChange={(e) => updateFormData('titre', e.target.value)}
             placeholder={t('oeuvre.fields.titlePlaceholder', 'Ex: La Casbah d\'Alger')}
             className={errors.titre ? 'border-destructive' : ''}
+            aria-invalid={!!errors.titre}
+            aria-describedby={errors.titre ? 'step-titre-error' : undefined}
           />
           {errors.titre && (
-            <p className="text-sm text-destructive">{errors.titre}</p>
+            <p id="step-titre-error" role="alert" className="text-sm text-destructive">{errors.titre}</p>
           )}
         </div>
 
@@ -124,7 +126,7 @@ const StepGeneralInfo: React.FC<StepGeneralInfoProps> = ({
             })}
           </div>
           {errors.id_type_oeuvre && (
-            <p className="text-sm text-destructive">{errors.id_type_oeuvre}</p>
+            <p id="step-type-oeuvre-error" role="alert" className="text-sm text-destructive">{errors.id_type_oeuvre}</p>
           )}
         </div>
 
@@ -139,13 +141,15 @@ const StepGeneralInfo: React.FC<StepGeneralInfoProps> = ({
             onChange={(e) => updateFormData('description', e.target.value)}
             placeholder={t('oeuvre.fields.descriptionPlaceholder', 'Décrivez votre œuvre...')}
             className={`min-h-[150px] ${errors.description ? 'border-destructive' : ''}`}
+            aria-invalid={!!errors.description}
+            aria-describedby={errors.description ? 'step-description-error' : undefined}
           />
           <div className="flex justify-between text-xs text-muted-foreground">
             <span>{formData.description.length} caractères</span>
             <span>{t('oeuvre.fields.descriptionHint', 'Minimum 50 caractères recommandés')}</span>
           </div>
           {errors.description && (
-            <p className="text-sm text-destructive">{errors.description}</p>
+            <p id="step-description-error" role="alert" className="text-sm text-destructive">{errors.description}</p>
           )}
         </div>
 

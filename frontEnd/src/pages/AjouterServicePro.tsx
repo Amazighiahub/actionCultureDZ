@@ -21,23 +21,25 @@ import { Separator } from '@/components/ui/separator';
 import {
   ArrowLeft, Save, Loader2, AlertCircle, CheckCircle2,
   MapPin, Building2, Utensils, Hotel, Car, Compass, ShoppingBag,
-  Phone, Mail, Globe, Clock, DollarSign, Camera, Upload, Search, Plus
+  Phone, Mail, Globe, Clock, DollarSign, Camera, Upload, Search, Plus, X
 } from 'lucide-react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { patrimoineService } from '@/services/patrimoine.service';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/use-toast';
 import MultiLangInput from '@/components/MultiLangInput';
+import { useRTL } from '@/hooks/useRTL';
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 
 // Types de services pour les professionnels
 const TYPES_SERVICE = [
-  { value: 'restaurant', label: { fr: 'Restaurant / Café', ar: 'مطعم / مقهى', en: 'Restaurant / Cafe' }, icon: Utensils },
-  { value: 'hotel', label: { fr: 'Hébergement', ar: 'إقامة', en: 'Accommodation' }, icon: Hotel },
-  { value: 'guide', label: { fr: 'Guide touristique', ar: 'مرشد سياحي', en: 'Tour Guide' }, icon: Compass },
-  { value: 'transport', label: { fr: 'Transport', ar: 'نقل', en: 'Transport' }, icon: Car },
-  { value: 'artisanat', label: { fr: 'Artisanat / Boutique', ar: 'حرف يدوية / متجر', en: 'Crafts / Shop' }, icon: ShoppingBag },
-  { value: 'location', label: { fr: 'Location (vélos, etc.)', ar: 'تأجير', en: 'Rental' }, icon: Car },
-  { value: 'autre', label: { fr: 'Autre service', ar: 'خدمة أخرى', en: 'Other service' }, icon: Building2 },
+  { value: 'restaurant', label: { fr: 'Restaurant / Café', ar: 'مطعم / مقهى', en: 'Restaurant / Cafe', 'tz-ltn': 'Asensu / Aqahwi', 'tz-tfng': 'ⴰⵙⵏⵙⵓ / ⴰⵇⴰⵀⵡⵉ' }, icon: Utensils },
+  { value: 'hotel', label: { fr: 'Hébergement', ar: 'إقامة', en: 'Accommodation', 'tz-ltn': 'Ansawen', 'tz-tfng': 'ⴰⵏⵙⴰⵡⵏ' }, icon: Hotel },
+  { value: 'guide', label: { fr: 'Guide touristique', ar: 'مرشد سياحي', en: 'Tour Guide', 'tz-ltn': 'Amessadaɣ n tmazirt', 'tz-tfng': 'ⴰⵎⵙⵙⴰⴷⴰⵖ ⵏ ⵜⵎⴰⵣⵉⵔⵜ' }, icon: Compass },
+  { value: 'transport', label: { fr: 'Transport', ar: 'نقل', en: 'Transport', 'tz-ltn': 'Anagi', 'tz-tfng': 'ⴰⵏⴰⴳⵉ' }, icon: Car },
+  { value: 'artisanat', label: { fr: 'Artisanat / Boutique', ar: 'حرف يدوية / متجر', en: 'Crafts / Shop', 'tz-ltn': 'Tawuri n ufus / Taḥanut', 'tz-tfng': 'ⵜⴰⵡⵓⵔⵉ ⵏ ⵓⴼⵓⵙ / ⵜⴰⵃⴰⵏⵓⵜ' }, icon: ShoppingBag },
+  { value: 'location', label: { fr: 'Location (vélos, etc.)', ar: 'تأجير', en: 'Rental', 'tz-ltn': 'Askari', 'tz-tfng': 'ⴰⵙⴽⴰⵔⵉ' }, icon: Car },
+  { value: 'autre', label: { fr: 'Autre service', ar: 'خدمة أخرى', en: 'Other service', 'tz-ltn': 'Tanbaḍt nniḍen', 'tz-tfng': 'ⵜⴰⵏⴱⴰⴹⵜ ⵏⵏⵉⴹⵏ' }, icon: Building2 },
 ];
 
 interface MultiLangText {
@@ -92,6 +94,7 @@ const AjouterServicePro: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const currentLang = i18n.language as 'fr' | 'ar' | 'en';
+  const { direction } = useRTL();
 
   // Form state
   const [formData, setFormData] = useState<ServiceFormData>(INITIAL_FORM);
@@ -119,6 +122,9 @@ const AjouterServicePro: React.FC = () => {
   // Submit state
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [isDirty, setIsDirty] = useState(false);
+  useUnsavedChanges(isDirty);
 
   // Charger les données existantes en mode édition
   useEffect(() => {
@@ -150,7 +156,7 @@ const AjouterServicePro: React.FC = () => {
           tarif_max: svc.tarif_max?.toString() || '',
           disponible: svc.disponible !== false,
         });
-        console.log('✅ Service chargé pour édition:', svc);
+        // Service loaded for editing
       } else {
         toast({ title: t('toasts.error'), description: t('toasts.serviceNotFound'), variant: 'destructive' });
         navigate('/dashboard-pro');
@@ -260,10 +266,58 @@ const AjouterServicePro: React.FC = () => {
     }
   };
 
+  const validateFieldOnBlur = (field: string) => {
+    let error: string | undefined;
+    switch (field) {
+      case 'email':
+        if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+          error = t('service.errors.emailInvalid', 'Adresse email invalide');
+        }
+        break;
+      case 'telephone':
+        if (formData.telephone && !/^[0-9+\-\s()]{8,20}$/.test(formData.telephone)) {
+          error = t('service.errors.phoneInvalid', 'Numéro de téléphone invalide');
+        }
+        break;
+      case 'site_web':
+        if (formData.site_web && !/^https?:\/\/.+\..+/.test(formData.site_web)) {
+          error = t('service.errors.urlInvalid', 'URL du site web invalide (doit commencer par http:// ou https://)');
+        }
+        break;
+      case 'tarif_min':
+      case 'tarif_max':
+        if (formData.tarif_min && formData.tarif_max && parseFloat(formData.tarif_min) > parseFloat(formData.tarif_max)) {
+          const tarifErr = t('service.errors.tarifMinMax', 'Le tarif minimum ne peut pas être supérieur au tarif maximum');
+          setFieldErrors(prev => ({ ...prev, tarif_min: tarifErr, tarif_max: tarifErr }));
+          return;
+        } else {
+          // Clear both tarif errors when the range becomes valid
+          setFieldErrors(prev => {
+            const next = { ...prev };
+            delete next.tarif_min;
+            delete next.tarif_max;
+            return next;
+          });
+          return;
+        }
+    }
+    setFieldErrors(prev => {
+      if (!error) { const next = { ...prev }; delete next[field]; return next; }
+      return { ...prev, [field]: error };
+    });
+  };
+
   // Mettre à jour un champ du formulaire
   const updateField = (field: keyof ServiceFormData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    setIsDirty(true);
     setError(null);
+    setFieldErrors(prev => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
   };
 
   // Mettre à jour un champ multilingue
@@ -272,62 +326,78 @@ const AjouterServicePro: React.FC = () => {
       ...prev,
       [field]: { ...(prev[field] as any), [lang]: value },
     }));
+    setIsDirty(true);
     setError(null);
   };
 
   // Valider le formulaire
   const validateForm = (): boolean => {
-    if (
-      !formData.nom.fr ||
-      !formData.nom.ar ||
-      !formData.nom.en ||
-      !formData.nom['tz-ltn'] ||
-      !formData.nom['tz-tfng']
-    ) {
-      setError(t('service.errors.nomRequired', 'Le nom du service est requis dans toutes les langues'));
-      return false;
+    const errs: Record<string, string> = {};
+
+    if (!formData.nom.fr?.trim() && !formData.nom.ar?.trim()) {
+      errs.nom = t('service.errors.nomRequired', 'Le nom du service est requis (au moins en français ou arabe)');
     }
     if (!formData.type_service) {
-      setError(t('service.errors.typeRequired', 'Le type de service est requis'));
-      return false;
+      errs.type_service = t('service.errors.typeRequired', 'Le type de service est requis');
     }
-    
+
     // Validation selon le mode de lieu
     if (lieuMode === 'existing') {
       if (!formData.id_lieu) {
-        setError(t('service.errors.lieuRequired', 'Veuillez sélectionner un lieu existant'));
-        return false;
+        errs.id_lieu = t('service.errors.lieuRequired', 'Veuillez sélectionner un lieu existant');
       }
     } else if (lieuMode === 'new') {
-      if (
-        !newLieu.nom.fr ||
-        !newLieu.nom.ar ||
-        !newLieu.nom.en ||
-        !newLieu.nom['tz-ltn'] ||
-        !newLieu.nom['tz-tfng']
-      ) {
-        setError(t('service.errors.newLieuNomRequired', 'Le nom du nouveau lieu est requis dans toutes les langues'));
-        return false;
+      if (!newLieu.nom.fr?.trim() && !newLieu.nom.ar?.trim()) {
+        errs.newLieuNom = t('service.errors.newLieuNomRequired', 'Le nom du nouveau lieu est requis (au moins en français ou arabe)');
       }
       if (!newLieu.latitude || !newLieu.longitude) {
-        setError(t('service.errors.newLieuGpsRequired', 'Les coordonnées GPS du nouveau lieu sont requises'));
-        return false;
+        errs.newLieuGps = t('service.errors.newLieuGpsRequired', 'Les coordonnées GPS du nouveau lieu sont requises');
+      } else {
+        const lat = parseFloat(newLieu.latitude);
+        const lng = parseFloat(newLieu.longitude);
+        if (isNaN(lat) || lat < -90 || lat > 90 || isNaN(lng) || lng < -180 || lng > 180) {
+          errs.newLieuGps = t('validation.invalidGPS', 'Coordonnées GPS invalides (latitude : -90 à 90, longitude : -180 à 180)');
+        }
       }
     }
     if (formData.tarif_min && formData.tarif_max && parseFloat(formData.tarif_min) > parseFloat(formData.tarif_max)) {
-      setError(t('service.errors.tarifMinMax', 'Le tarif minimum ne peut pas être supérieur au tarif maximum'));
-      return false;
+      const tarifErr = t('service.errors.tarifMinMax', 'Le tarif minimum ne peut pas être supérieur au tarif maximum');
+      errs.tarif_min = tarifErr;
+      errs.tarif_max = tarifErr;
     }
     if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      setError(t('service.errors.emailInvalid', 'Adresse email invalide'));
-      return false;
+      errs.email = t('service.errors.emailInvalid', 'Adresse email invalide');
     }
     if (formData.site_web && !/^https?:\/\/.+\..+/.test(formData.site_web)) {
-      setError(t('service.errors.urlInvalid', 'URL du site web invalide (doit commencer par http:// ou https://)'));
-      return false;
+      errs.site_web = t('service.errors.urlInvalid', 'URL du site web invalide (doit commencer par http:// ou https://)');
     }
     if (formData.telephone && !/^[0-9+\-\s()]{8,20}$/.test(formData.telephone)) {
-      setError(t('service.errors.phoneInvalid', 'Numéro de téléphone invalide'));
+      errs.telephone = t('service.errors.phoneInvalid', 'Numéro de téléphone invalide');
+    }
+    // GPS validation on standalone service coordinates
+    if (formData.latitude) {
+      const sLat = parseFloat(formData.latitude);
+      if (isNaN(sLat) || sLat < -90 || sLat > 90) {
+        errs.latitude = t('validation.invalidGPS', 'Coordonnées GPS invalides (latitude : -90 à 90, longitude : -180 à 180)');
+      }
+    }
+    if (formData.longitude) {
+      const sLng = parseFloat(formData.longitude);
+      if (isNaN(sLng) || sLng < -180 || sLng > 180) {
+        errs.longitude = t('validation.invalidGPS', 'Coordonnées GPS invalides (latitude : -90 à 90, longitude : -180 à 180)');
+      }
+    }
+
+    setFieldErrors(errs);
+    if (Object.keys(errs).length > 0) {
+      setError(Object.values(errs)[0]);
+      setTimeout(() => {
+        const firstError = document.querySelector('[aria-invalid="true"]');
+        if (firstError) {
+          (firstError as HTMLElement).focus();
+          firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 0);
       return false;
     }
     return true;
@@ -404,6 +474,7 @@ const AjouterServicePro: React.FC = () => {
           }
         }
 
+        setIsDirty(false);
         toast({
           title: isEditMode ? t('toasts.serviceStatusUpdated') : t('service.success.title', 'Service ajouté'),
           description: isEditMode ? t('toasts.actionSuccess') : t('service.success.description', 'Votre service a été soumis et sera validé par un administrateur.'),
@@ -446,7 +517,7 @@ const AjouterServicePro: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-emerald-50 via-white to-teal-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+    <div dir={direction} className="min-h-screen flex flex-col bg-gradient-to-br from-emerald-50 via-white to-teal-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       <Header />
 
       <main className="flex-1 container mx-auto px-4 py-8 max-w-4xl">
@@ -459,7 +530,7 @@ const AjouterServicePro: React.FC = () => {
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <Building2 className="h-6 w-6 text-emerald-600" />
-              {t('service.addTitle', 'Ajouter mon service')}
+              {id ? t('service.editTitle', 'Modifier mon service') : t('service.addTitle', 'Ajouter mon service')}
             </h1>
             <p className="text-muted-foreground">
               {t('service.addSubtitle', 'Proposez vos services aux visiteurs des sites patrimoniaux')}
@@ -469,13 +540,14 @@ const AjouterServicePro: React.FC = () => {
 
         {/* Error */}
         {error && (
-          <Alert variant="destructive" className="mb-6">
+          <Alert variant="destructive" className="mb-6" role="alert" aria-live="assertive">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
 
         <form onSubmit={handleSubmit}>
+          <p className="text-sm text-muted-foreground mb-4">{t('common.requiredFieldsLegend')}</p>
           <div className="grid gap-6">
             {/* Type de service */}
             <Card>
@@ -486,7 +558,7 @@ const AjouterServicePro: React.FC = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3" role="radiogroup" aria-invalid={!!fieldErrors.type_service} aria-describedby={fieldErrors.type_service ? 'type_service-error' : undefined}>
                   {TYPES_SERVICE.map((type) => {
                     const Icon = type.icon;
                     const isSelected = formData.type_service === type.value;
@@ -509,6 +581,7 @@ const AjouterServicePro: React.FC = () => {
                     );
                   })}
                 </div>
+                {fieldErrors.type_service && <p id="type_service-error" role="alert" className="text-sm text-destructive mt-2">{fieldErrors.type_service}</p>}
               </CardContent>
             </Card>
 
@@ -522,26 +595,33 @@ const AjouterServicePro: React.FC = () => {
                 <div className="space-y-2">
                   <Label>{t('service.name', 'Nom du service')} *</Label>
                   <MultiLangInput
+                    name="nom"
+                    label={t('service.name', 'Nom du service')}
                     value={formData.nom}
                     onChange={(value) => updateField('nom', value)}
-                    placeholder={{ fr: 'Ex: Restaurant Le Casbah', ar: 'مثال: مطعم القصبة', en: 'Ex: Le Casbah Restaurant' }}
+                    required
+                    requiredLanguages={['fr']}
+                    placeholder="Ex: Restaurant Le Casbah"
+                    aria-invalid={!!fieldErrors.nom}
                   />
+                  {fieldErrors.nom && <p id="nom-error" role="alert" className="text-sm text-destructive">{fieldErrors.nom}</p>}
                 </div>
 
                 {/* Description */}
                 <div className="space-y-2">
-                  <Label>{t('service.description', 'Description')}</Label>
+                  <Label>{t('service.description', 'Description')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span></Label>
                   <MultiLangInput
                     value={formData.description}
                     onChange={(value) => updateField('description', value)}
                     placeholder={{ fr: 'Décrivez votre service...', ar: 'صف خدمتك...', en: 'Describe your service...' }}
                     multiline
+                    requiredLanguages={[]}
                   />
                 </div>
 
                 {/* Photo */}
                 <div className="space-y-2">
-                  <Label>{t('service.photo', 'Photo')}</Label>
+                  <Label>{t('service.photo', 'Photo')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span></Label>
                   <div className="flex items-center gap-4">
                     {photoPreview ? (
                       <div className="relative">
@@ -554,8 +634,9 @@ const AjouterServicePro: React.FC = () => {
                           type="button"
                           onClick={() => { setPhotoFile(null); setPhotoPreview(null); }}
                           className="absolute -top-2 -right-2 bg-destructive text-white rounded-full p-1"
+                          aria-label={t('common.remove', 'Supprimer')}
                         >
-                          <AlertCircle className="h-4 w-4" />
+                          <X className="h-4 w-4" />
                         </button>
                       </div>
                     ) : (
@@ -604,13 +685,13 @@ const AjouterServicePro: React.FC = () => {
                     }}
                     className="flex gap-4"
                   >
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center gap-2">
                       <RadioGroupItem value="existing" id="existing" />
                       <Label htmlFor="existing" className="cursor-pointer">
                         {t('service.existingPlace', 'Lieu existant')}
                       </Label>
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center gap-2">
                       <RadioGroupItem value="new" id="new" />
                       <Label htmlFor="new" className="cursor-pointer flex items-center gap-1">
                         <Plus className="h-4 w-4" />
@@ -651,12 +732,12 @@ const AjouterServicePro: React.FC = () => {
                     <div className="relative">
                       <div className="flex gap-2">
                         <div className="relative flex-1">
-                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                           <Input
                             placeholder={t('service.searchPlace', 'Rechercher un lieu...')}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-10"
+                            className="ps-10"
                             onFocus={() => setShowLieuSearch(true)}
                           />
                         </div>
@@ -694,9 +775,9 @@ const AjouterServicePro: React.FC = () => {
 
                 {/* Nouveau lieu */}
                 {lieuMode === 'new' && (
-                  <Card className="border-2 border-dashed border-blue-300 dark:border-blue-700 bg-blue-50/50 dark:bg-blue-950/20">
+                  <Card className="border-2 border-dashed border-accent/30 bg-accent/5">
                     <CardHeader className="pb-3">
-                      <CardTitle className="text-base flex items-center gap-2 text-blue-700 dark:text-blue-300">
+                      <CardTitle className="text-base flex items-center gap-2 text-accent-foreground">
                         <Plus className="h-5 w-5" />
                         {t('service.newPlaceTitle', 'Informations du nouveau lieu')}
                       </CardTitle>
@@ -712,6 +793,7 @@ const AjouterServicePro: React.FC = () => {
                           value={newLieu.nom}
                           onChange={(value) => setNewLieu(prev => ({ ...prev, nom: value }))}
                           placeholder={{ fr: 'Ex: Place des Martyrs', ar: 'مثال: ساحة الشهداء', en: 'Ex: Martyrs Square' }}
+                          requiredLanguages={['fr']}
                         />
                       </div>
 
@@ -722,6 +804,7 @@ const AjouterServicePro: React.FC = () => {
                           value={newLieu.adresse}
                           onChange={(value) => setNewLieu(prev => ({ ...prev, adresse: value }))}
                           placeholder={{ fr: 'Adresse complète...', ar: 'العنوان الكامل...', en: 'Full address...' }}
+                          requiredLanguages={['fr']}
                         />
                       </div>
 
@@ -732,6 +815,8 @@ const AjouterServicePro: React.FC = () => {
                           <Input
                             type="number"
                             step="any"
+                            min="-90"
+                            max="90"
                             value={newLieu.latitude}
                             onChange={(e) => setNewLieu(prev => ({ ...prev, latitude: e.target.value }))}
                             placeholder="36.7538"
@@ -742,6 +827,8 @@ const AjouterServicePro: React.FC = () => {
                           <Input
                             type="number"
                             step="any"
+                            min="-180"
+                            max="180"
                             value={newLieu.longitude}
                             onChange={(e) => setNewLieu(prev => ({ ...prev, longitude: e.target.value }))}
                             placeholder="3.0588"
@@ -757,6 +844,7 @@ const AjouterServicePro: React.FC = () => {
                             value={newLieu.wilaya}
                             onChange={(e) => setNewLieu(prev => ({ ...prev, wilaya: e.target.value }))}
                             placeholder="Ex: Alger"
+                            maxLength={100}
                           />
                         </div>
                         <div className="space-y-2">
@@ -765,6 +853,7 @@ const AjouterServicePro: React.FC = () => {
                             value={newLieu.commune}
                             onChange={(e) => setNewLieu(prev => ({ ...prev, commune: e.target.value }))}
                             placeholder="Ex: Casbah"
+                            maxLength={100}
                           />
                         </div>
                       </div>
@@ -776,20 +865,25 @@ const AjouterServicePro: React.FC = () => {
 
                 {/* Adresse et coordonnées */}
                 <div className="space-y-2">
-                  <Label>{t('service.address', 'Adresse')}</Label>
+                  <Label>{t('service.address', 'Adresse')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span></Label>
                   <MultiLangInput
                     value={formData.adresse}
                     onChange={(value) => updateField('adresse', value)}
                     placeholder={{ fr: 'Adresse complète...', ar: 'العنوان الكامل...', en: 'Full address...' }}
+                    requiredLanguages={[]}
                   />
                 </div>
 
+                {/* Show standalone GPS fields only when NOT creating a new lieu and no existing lieu selected */}
+                {lieuMode !== 'new' && !selectedLieu && (
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>{t('service.latitude', 'Latitude')}</Label>
                     <Input
                       type="number"
                       step="any"
+                      min="-90"
+                      max="90"
                       value={formData.latitude}
                       onChange={(e) => updateField('latitude', e.target.value)}
                       placeholder="36.7538"
@@ -800,12 +894,15 @@ const AjouterServicePro: React.FC = () => {
                     <Input
                       type="number"
                       step="any"
+                      min="-180"
+                      max="180"
                       value={formData.longitude}
                       onChange={(e) => updateField('longitude', e.target.value)}
                       placeholder="3.0588"
                     />
                   </div>
                 </div>
+                )}
               </CardContent>
             </Card>
 
@@ -819,51 +916,72 @@ const AjouterServicePro: React.FC = () => {
                   <div className="space-y-2">
                     <Label className="flex items-center gap-2">
                       <Phone className="h-4 w-4" />
-                      {t('service.phone', 'Téléphone')}
+                      {t('service.phone', 'Téléphone')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span>
                     </Label>
                     <Input
                       type="tel"
+                      autoComplete="tel"
+                      maxLength={20}
                       value={formData.telephone}
                       onChange={(e) => updateField('telephone', e.target.value)}
+                      onBlur={() => validateFieldOnBlur('telephone')}
                       placeholder="+213 XX XX XX XX"
+                      aria-invalid={!!fieldErrors.telephone}
+                      aria-describedby={fieldErrors.telephone ? 'telephone-error' : 'telephone-helper'}
                     />
+                    <p id="telephone-helper" className="text-xs text-muted-foreground">{t('common.phoneHelper')}</p>
+                    {fieldErrors.telephone && <p id="telephone-error" role="alert" className="text-sm text-destructive">{fieldErrors.telephone}</p>}
                   </div>
                   <div className="space-y-2">
                     <Label className="flex items-center gap-2">
                       <Mail className="h-4 w-4" />
-                      {t('service.email', 'Email')}
+                      {t('service.email', 'Email')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span>
                     </Label>
                     <Input
                       type="email"
+                      autoComplete="email"
+                      maxLength={255}
                       value={formData.email}
                       onChange={(e) => updateField('email', e.target.value)}
+                      onBlur={() => validateFieldOnBlur('email')}
                       placeholder="contact@example.com"
+                      aria-invalid={!!fieldErrors.email}
+                      aria-describedby={fieldErrors.email ? 'email-error' : undefined}
                     />
+                    {fieldErrors.email && <p id="email-error" role="alert" className="text-sm text-destructive">{fieldErrors.email}</p>}
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <Label className="flex items-center gap-2">
                     <Globe className="h-4 w-4" />
-                    {t('service.website', 'Site web')}
+                    {t('service.website', 'Site web')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span>
                   </Label>
                   <Input
                     type="url"
+                    autoComplete="url"
+                    maxLength={2048}
                     value={formData.site_web}
                     onChange={(e) => updateField('site_web', e.target.value)}
+                    onBlur={() => validateFieldOnBlur('site_web')}
                     placeholder="https://www.example.com"
+                    aria-invalid={!!fieldErrors.site_web}
+                    aria-describedby={fieldErrors.site_web ? 'site_web-error' : 'service-site_web-helper'}
                   />
+                  <p id="service-site_web-helper" className="text-xs text-muted-foreground">{t('common.urlHelper')}</p>
+                  {fieldErrors.site_web && <p id="site_web-error" role="alert" className="text-sm text-destructive">{fieldErrors.site_web}</p>}
                 </div>
 
                 <div className="space-y-2">
                   <Label className="flex items-center gap-2">
                     <Clock className="h-4 w-4" />
-                    {t('service.hours', 'Horaires')}
+                    {t('service.hours', 'Horaires')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span>
                   </Label>
                   <MultiLangInput
                     value={formData.horaires}
                     onChange={(value) => updateField('horaires', value)}
                     placeholder={{ fr: 'Ex: Lun-Ven 9h-18h', ar: 'مثال: الاثنين-الجمعة 9-18', en: 'Ex: Mon-Fri 9am-6pm' }}
+                    requiredLanguages={[]}
                   />
                 </div>
 
@@ -871,32 +989,40 @@ const AjouterServicePro: React.FC = () => {
                   <div className="space-y-2">
                     <Label className="flex items-center gap-2">
                       <DollarSign className="h-4 w-4" />
-                      {t('service.priceMin', 'Tarif minimum (DA)')}
+                      {t('service.priceMin', 'Tarif minimum (DA)')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span>
                     </Label>
                     <Input
                       type="number"
                       min="0"
                       value={formData.tarif_min}
                       onChange={(e) => updateField('tarif_min', e.target.value)}
+                      onBlur={() => validateFieldOnBlur('tarif_min')}
                       placeholder="500"
+                      aria-invalid={!!fieldErrors.tarif_min}
+                      aria-describedby={fieldErrors.tarif_min ? 'tarif_min-error' : undefined}
                     />
+                    {fieldErrors.tarif_min && <p id="tarif_min-error" role="alert" className="text-sm text-destructive">{fieldErrors.tarif_min}</p>}
                   </div>
                   <div className="space-y-2">
                     <Label className="flex items-center gap-2">
                       <DollarSign className="h-4 w-4" />
-                      {t('service.priceMax', 'Tarif maximum (DA)')}
+                      {t('service.priceMax', 'Tarif maximum (DA)')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span>
                     </Label>
                     <Input
                       type="number"
                       min="0"
                       value={formData.tarif_max}
                       onChange={(e) => updateField('tarif_max', e.target.value)}
+                      onBlur={() => validateFieldOnBlur('tarif_max')}
                       placeholder="2000"
+                      aria-invalid={!!fieldErrors.tarif_max}
+                      aria-describedby={fieldErrors.tarif_max ? 'tarif_max-error' : undefined}
                     />
+                    {fieldErrors.tarif_max && <p id="tarif_max-error" role="alert" className="text-sm text-destructive">{fieldErrors.tarif_max}</p>}
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center gap-2">
                   <Checkbox
                     id="disponible"
                     checked={formData.disponible}
@@ -924,17 +1050,18 @@ const AjouterServicePro: React.FC = () => {
               </Button>
               <Button
                 type="submit"
+                size="lg"
                 disabled={submitting}
-                className="bg-emerald-600 hover:bg-emerald-700"
+                className="w-full sm:w-auto"
               >
                 {submitting ? (
                   <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    <Loader2 className="h-4 w-4 me-2 animate-spin" />
                     {t('common.submitting', 'Envoi...')}
                   </>
                 ) : (
                   <>
-                    <Save className="h-4 w-4 mr-2" />
+                    <Save className="h-4 w-4 me-2" />
                     {t('service.submit', 'Soumettre mon service')}
                   </>
                 )}

@@ -108,8 +108,11 @@ const PatrimoineDynamique: React.FC<PatrimoineDynamiqueProps> = ({ wilayasCache 
                 {site.medias && site.medias[0] ? (
                   <img
                     src={getAssetUrl(site.medias[0].url)}
-                    alt={site.nom}
+                    alt={site.nom || 'Site patrimonial algérien'}
                     loading="lazy"
+                    decoding="async"
+                    width={400}
+                    height={192}
                     className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
                   />
                 ) : (

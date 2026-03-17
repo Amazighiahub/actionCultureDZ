@@ -119,7 +119,6 @@ const AdminPatrimoineTab: React.FC = () => {
   const confirmDelete = async () => {
     if (selectedItemId) {
       // TODO: wire to deletePatrimoine action when available in hook
-      console.log('Delete patrimoine:', selectedItemId);
       setDeleteConfirmOpen(false);
       setSelectedItemId(null);
       setSelectedItemName('');

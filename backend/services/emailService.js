@@ -9,6 +9,21 @@ class EmailService {
     this.transporter = null;
     this.isPaused = process.env.EMAIL_PAUSED === 'true' || false;
     this.compiledTemplates = {}; // Cache pour les templates compilés
+  }
+
+  /**
+   * Échappe les caractères HTML pour prévenir les injections XSS dans les emails.
+   * @param {string} str - La chaîne à échapper.
+   * @returns {string} La chaîne échappée.
+   */
+  _escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#x27;');
 
     if (!this.isPaused) {
       this.initializeTransporter();
@@ -176,9 +191,9 @@ class EmailService {
         html = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2>Réinitialisation de mot de passe</h2>
-            <p>Bonjour ${user.prenom},</p>
+            <p>Bonjour ${this._escapeHtml(user.prenom)},</p>
             <p>Vous avez demandé à réinitialiser votre mot de passe. Cliquez sur le lien ci-dessous :</p>
-            <p><a href="${resetUrl}" style="background-color: #3498db; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px;">Réinitialiser mon mot de passe</a></p>
+            <p><a href="${encodeURI(resetUrl)}" style="background-color: #3498db; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px;">Réinitialiser mon mot de passe</a></p>
             <p>Ce lien est valable pendant 2 heures.</p>
             <p>Si vous n'avez pas demandé cette réinitialisation, ignorez cet email.</p>
             <p>L'équipe Action Culture</p>
@@ -211,7 +226,7 @@ class EmailService {
         html = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2>Mot de passe modifié</h2>
-            <p>Bonjour ${user.prenom},</p>
+            <p>Bonjour ${this._escapeHtml(user.prenom)},</p>
             <p>Votre mot de passe a été modifié avec succès le ${new Date().toLocaleString('fr-FR')}.</p>
             <p>Si vous n'êtes pas à l'origine de cette modification, veuillez nous contacter immédiatement.</p>
             <p>L'équipe Action Culture</p>
@@ -236,10 +251,10 @@ class EmailService {
       const html = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2>Demande de changement d'email</h2>
-          <p>Bonjour ${user.prenom},</p>
+          <p>Bonjour ${this._escapeHtml(user.prenom)},</p>
           <p>Une demande de changement d'adresse email a été effectuée sur votre compte.</p>
-          <p><strong>Ancien email :</strong> ${user.email}</p>
-          <p><strong>Nouvel email demandé :</strong> ${newEmail}</p>
+          <p><strong>Ancien email :</strong> ${this._escapeHtml(user.email)}</p>
+          <p><strong>Nouvel email demandé :</strong> ${this._escapeHtml(newEmail)}</p>
           <p>Un email de confirmation a été envoyé à la nouvelle adresse.</p>
           <p>Si vous n'êtes pas à l'origine de cette demande, veuillez nous contacter immédiatement.</p>
           <p>L'équipe Action Culture</p>
@@ -266,9 +281,9 @@ class EmailService {
       const html = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2>Confirmez votre nouvelle adresse email</h2>
-          <p>Bonjour ${user.prenom},</p>
-          <p>Pour confirmer que ${newEmail} est bien votre nouvelle adresse email, cliquez sur le lien ci-dessous :</p>
-          <p><a href="${confirmUrl}" style="background-color: #3498db; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px;">Confirmer mon email</a></p>
+          <p>Bonjour ${this._escapeHtml(user.prenom)},</p>
+          <p>Pour confirmer que ${this._escapeHtml(newEmail)} est bien votre nouvelle adresse email, cliquez sur le lien ci-dessous :</p>
+          <p><a href="${encodeURI(confirmUrl)}" style="background-color: #3498db; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px;">Confirmer mon email</a></p>
           <p>Ce lien est valable pendant 24 heures.</p>
           <p>L'équipe Action Culture</p>
         </div>
@@ -415,21 +430,22 @@ class EmailService {
       const statutText = statut === 'accepte' ? 'acceptée' : 'refusée';
       const statusColor = statut === 'accepte' ? '#27ae60' : '#e74c3c';
 
+      const esc = this._escapeHtml.bind(this);
       const html = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: ${statusColor};">Votre soumission a été ${statutText}</h2>
-          <p>Bonjour ${prenom},</p>
-          <p>L'organisateur de l'événement <strong>${nomEvenement}</strong> a examiné votre soumission.</p>
+          <p>Bonjour ${esc(prenom)},</p>
+          <p>L'organisateur de l'événement <strong>${esc(nomEvenement)}</strong> a examiné votre soumission.</p>
           <p style="font-size: 18px; color: ${statusColor}; font-weight: bold;">
             Statut : ${statutText.charAt(0).toUpperCase() + statutText.slice(1)}
           </p>
           ${message ? `
             <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0;">
               <p><strong>Message de l'organisateur :</strong></p>
-              <p style="font-style: italic;">${message}</p>
+              <p style="font-style: italic;">${esc(message)}</p>
             </div>
           ` : ''}
-          <p><a href="${eventUrl}" style="background-color: #3498db; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px;">Voir l'événement</a></p>
+          <p><a href="${encodeURI(eventUrl)}" style="background-color: #3498db; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px;">Voir l'événement</a></p>
           <p style="margin-top: 30px; font-size: 12px; color: #666;">L'équipe Action Culture</p>
         </div>
       `;
@@ -471,18 +487,19 @@ class EmailService {
       const statusColor = statut === 'confirme' ? '#27ae60' : '#e74c3c';
       const eventUrl = `${process.env.FRONTEND_URL}/evenements/${evenement.id_evenement}`;
 
+      const esc = this._escapeHtml.bind(this);
       const html = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: ${statusColor};">Participation ${statutText}</h2>
-          <p>Bonjour ${prenomStr},</p>
-          <p>Votre demande de participation à l'événement <strong>${nomEvenementStr}</strong> a été <strong style="color: ${statusColor};">${statutText}</strong>.</p>
+          <p>Bonjour ${esc(prenomStr)},</p>
+          <p>Votre demande de participation à l'événement <strong>${esc(nomEvenementStr)}</strong> a été <strong style="color: ${statusColor};">${statutText}</strong>.</p>
           ${notes ? `
             <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0;">
               <p><strong>Message de l'organisateur :</strong></p>
-              <p style="font-style: italic;">${notes}</p>
+              <p style="font-style: italic;">${esc(notes)}</p>
             </div>
           ` : ''}
-          <p><a href="${eventUrl}" style="background-color: #3498db; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px;">Voir l'événement</a></p>
+          <p><a href="${encodeURI(eventUrl)}" style="background-color: #3498db; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px;">Voir l'événement</a></p>
           <p style="margin-top: 30px; font-size: 12px; color: #666;">L'équipe Action Culture</p>
         </div>
       `;
@@ -513,14 +530,15 @@ class EmailService {
         const user = participant.User;
         const prenomStr = typeof user.prenom === 'object' ? (user.prenom.fr || user.prenom.ar || '') : (user.prenom || '');
 
+        const esc = this._escapeHtml.bind(this);
         const html = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2 style="color: #e74c3c;">⚠️ Événement annulé</h2>
-            <p>Bonjour ${prenomStr},</p>
-            <p>Nous sommes au regret de vous informer que l'événement <strong>${nomEvenementStr}</strong> a été annulé.</p>
+            <p>Bonjour ${esc(prenomStr)},</p>
+            <p>Nous sommes au regret de vous informer que l'événement <strong>${esc(nomEvenementStr)}</strong> a été annulé.</p>
             ${raison ? `
               <div style="background-color: #fff3cd; border: 1px solid #ffc107; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                <p><strong>Raison :</strong> ${raison}</p>
+                <p><strong>Raison :</strong> ${esc(raison)}</p>
               </div>
             ` : ''}
             <p>Nous nous excusons pour la gêne occasionnée.</p>

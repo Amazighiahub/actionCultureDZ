@@ -1,9 +1,23 @@
 const { Sequelize } = require('sequelize');
+const logger = require('../utils/logger');
 
 // ============================================================================
 // VALIDATION DES VARIABLES D'ENVIRONNEMENT CRITIQUES
 // ============================================================================
 const isProduction = process.env.NODE_ENV === 'production';
+
+// Seuil de requête lente en ms (configurable via env)
+const SLOW_QUERY_MS = parseInt(process.env.DB_SLOW_QUERY_MS || '500');
+
+/**
+ * Logger Sequelize pour les requêtes lentes en production.
+ * Logue toute requête dépassant SLOW_QUERY_MS.
+ */
+function slowQueryLogger(queryString, timing) {
+  if (timing && timing.elapsed >= SLOW_QUERY_MS) {
+    logger.warn(`🐌 Slow query (${timing.elapsed}ms): ${queryString.substring(0, 500)}`);
+  }
+}
 
 // 🔒 Liste des mots de passe faibles connus à bloquer
 const WEAK_PASSWORDS = [
@@ -25,7 +39,7 @@ const validateCredentials = (env) => {
   }
 
   // 🔒 Vérification stricte en production
-  if (isProduction && process.env.SKIP_PRODUCTION_CHECKS !== 'true') {
+  if (isProduction) {
     const dbUser = process.env.DB_USER;
     const dbPassword = process.env.DB_PASSWORD;
 
@@ -113,7 +127,8 @@ const config = {
     database: process.env.DB_NAME,
     host: process.env.DB_HOST,
     dialect: 'mysql',
-    logging: false,
+    logging: slowQueryLogger,
+    benchmark: true,
     pool: {
       max: parseInt(process.env.DB_POOL_MAX || '50'),
       min: parseInt(process.env.DB_POOL_MIN || '10'),
@@ -123,10 +138,14 @@ const config = {
     },
     dialectOptions: {
       connectTimeout: 10000,
-      // TCP keepalive pour détecter les connexions stale
-      socketPath: undefined,
       supportBigNumbers: true,
-      bigNumberStrings: true
+      bigNumberStrings: true,
+      // SSL pour les connexions DB distantes en production
+      ...(process.env.DB_SSL === 'true' ? {
+        ssl: {
+          rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false'
+        }
+      } : {})
     }
   }
 };

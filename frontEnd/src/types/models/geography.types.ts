@@ -169,8 +169,9 @@ export function formatGeographicAddress(
 /**
  * Helper pour obtenir le nom complet d'une wilaya
  */
-export function getWilayaFullName(wilaya: Wilaya): string {
-  return `${wilaya.codeW} - ${wilaya.wilaya_name_ascii}`;
+export function getWilayaFullName(wilaya: Wilaya, lang?: string): string {
+  const name = lang === 'ar' && wilaya.nom ? wilaya.nom : wilaya.wilaya_name_ascii;
+  return `${wilaya.codeW} - ${name}`;
 }
 
 // =====================================================

@@ -53,6 +53,7 @@ import { commentaireService } from '@/services/commentaire.service';
 import { authService } from '@/services/auth.service';
 import { useToast } from '@/hooks/use-toast';
 import { getAssetUrl } from '@/helpers/assetUrl';
+import SEOHead, { buildArticleJsonLd, buildBreadcrumbJsonLd } from '@/components/SEOHead';
 
 // Types
 import type { Oeuvre } from '@/types/models/oeuvre.types';
@@ -259,7 +260,6 @@ const ArticleViewPage: React.FC = () => {
         ? oeuvreData.ArticleScientifique?.id_article_scientifique
         : oeuvreData.Article?.id_article;
 
-      console.log('🔍 Article record ID:', specificArticleId, 'type:', isScientificType ? 'article_scientifique' : 'article');
 
       // Charger les blocs avec l'ID spécifique de l'article
       const blocksResponse = specificArticleId
@@ -617,8 +617,25 @@ const ArticleViewPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {oeuvre && (
+        <SEOHead
+          title={oeuvre.titre || 'Article'}
+          description={oeuvre.description?.substring(0, 160) || undefined}
+          image={oeuvre.image_url || oeuvre.couverture_url || undefined}
+          type="article"
+          keywords={oeuvre.tags?.map((t: any) => t.nom || t) || []}
+          jsonLd={[
+            buildArticleJsonLd(oeuvre),
+            buildBreadcrumbJsonLd([
+              { name: 'Accueil', url: '/' },
+              { name: 'Oeuvres', url: '/oeuvres' },
+              { name: oeuvre.titre || 'Article', url: `/articles/${oeuvre.id_oeuvre}` },
+            ]),
+          ]}
+        />
+      )}
       <ReadingProgress />
-      
+
       {/* Header fixe */}
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b">
         <div className="container max-w-4xl mx-auto px-4 py-4">
@@ -885,7 +902,7 @@ const ArticleViewPage: React.FC = () => {
                   size="sm"
                   onClick={() => openCommentModal()}>
                   
-                  <MessageCircle className="h-4 w-4 mr-2" />{t("articles_articleviewpage.commenter")}
+                  <MessageCircle className="h-4 w-4 me-2" />{t("articles_articleviewpage.commenter")}
 
                 </Button>
               </div>
@@ -1080,12 +1097,12 @@ const ArticleViewPage: React.FC = () => {
               
               {commentLoading ?
               <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />{t("articles_articleviewpage.envoi")}
+                  <Loader2 className="h-4 w-4 me-2 animate-spin" />{t("articles_articleviewpage.envoi")}
 
               </> :
 
               <>
-                  <Send className="h-4 w-4 mr-2" />{t("articles_articleviewpage.envoyer")}
+                  <Send className="h-4 w-4 me-2" />{t("articles_articleviewpage.envoyer")}
 
               </>
               }

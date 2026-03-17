@@ -1,7 +1,11 @@
 // routes/signalementRoutes.js - Version simplifiée sans upload
 const express = require('express');
+const { body } = require('express-validator');
 const router = express.Router();
 const SignalementController = require('../controllers/signalementController');
+const { handleValidationErrors, validateStringLengths } = require('../middlewares/validationMiddleware');
+const { createContentLimiter } = require('../middlewares/rateLimitMiddleware');
+const asyncHandler = require('../utils/asyncHandler');
 
 // Factory function qui reçoit les modèles et middlewares
 const initSignalementRoutes = (models, authMiddleware) => {
@@ -55,52 +59,38 @@ const initSignalementRoutes = (models, authMiddleware) => {
   // ========================================================================
 
   // Obtenir les statistiques publiques des signalements (anonymisées)
-  router.get('/stats/public', async (req, res) => {
-    try {
-      const stats = await models.Signalement.findAll({
-        attributes: [
-          'motif',
-          [models.Signalement.sequelize.fn('COUNT', '*'), 'count']
-        ],
-        where: { statut: 'traite' }, // Seulement les signalements traités
-        group: ['motif']
-      });
+  router.get('/stats/public', asyncHandler(async (req, res) => {
+    const stats = await models.Signalement.findAll({
+      attributes: [
+        'motif',
+        [models.Signalement.sequelize.fn('COUNT', '*'), 'count']
+      ],
+      where: { statut: 'traite' },
+      group: ['motif']
+    });
 
-      res.json({
-        success: true,
-        data: stats
-      });
-    } catch (error) {
-      res.status(500).json({
-        success: false,
-        message: req.t ? req.t('common.serverError') : 'Server error'
-      });
-    }
-  });
+    res.json({
+      success: true,
+      data: stats
+    });
+  }));
 
   // Alias compat frontend
-  router.get('/stats', async (req, res) => {
-    try {
-      const stats = await models.Signalement.findAll({
-        attributes: [
-          'motif',
-          [models.Signalement.sequelize.fn('COUNT', '*'), 'count']
-        ],
-        where: { statut: 'traite' },
-        group: ['motif']
-      });
+  router.get('/stats', asyncHandler(async (req, res) => {
+    const stats = await models.Signalement.findAll({
+      attributes: [
+        'motif',
+        [models.Signalement.sequelize.fn('COUNT', '*'), 'count']
+      ],
+      where: { statut: 'traite' },
+      group: ['motif']
+    });
 
-      res.json({
-        success: true,
-        data: stats
-      });
-    } catch (error) {
-      res.status(500).json({
-        success: false,
-        message: req.t ? req.t('common.serverError') : 'Server error'
-      });
-    }
-  });
+    res.json({
+      success: true,
+      data: stats
+    });
+  }));
 
   // ========================================================================
   // ROUTES PROTÉGÉES - UTILISATEURS AUTHENTIFIÉS
@@ -109,6 +99,15 @@ const initSignalementRoutes = (models, authMiddleware) => {
   // Créer un signalement (sans upload de screenshot)
   router.post('/',
     authenticate,
+    createContentLimiter,
+    validateStringLengths,
+    [
+      body('motif').notEmpty().withMessage('Le motif est requis'),
+      body('description').optional().isLength({ max: 5000 }).withMessage('Description trop longue (max 5000)'),
+      body('type_entite').notEmpty().withMessage('Le type d\'entité est requis'),
+      body('id_entite').isInt({ min: 1 }).withMessage('ID entité invalide'),
+    ],
+    handleValidationErrors,
     controller.create.bind(controller)
   );
 
@@ -122,56 +121,42 @@ const initSignalementRoutes = (models, authMiddleware) => {
   router.get('/:id(\\d+)',
     authenticate,
     checkSignalementOwnership,
-    async (req, res) => {
-      try {
-        const signalement = await models.Signalement.findByPk(req.params.id, {
-          include: [
-            { model: models.User, as: 'Signalant', attributes: ['id_user', 'nom', 'prenom', 'email'] },
-            { model: models.User, as: 'Moderateur', attributes: ['id_user', 'nom', 'prenom', 'email'] }
-          ]
-        });
+    asyncHandler(async (req, res) => {
+      const signalement = await models.Signalement.findByPk(req.params.id, {
+        include: [
+          { model: models.User, as: 'Signalant', attributes: ['id_user', 'nom', 'prenom', 'email'] },
+          { model: models.User, as: 'Moderateur', attributes: ['id_user', 'nom', 'prenom', 'email'] }
+        ]
+      });
 
-        res.json({
-          success: true,
-          data: signalement
-        });
-      } catch (error) {
-        res.status(500).json({
-          success: false,
-          message: req.t ? req.t('common.serverError') : 'Server error'
-        });
-      }
-    }
+      res.json({
+        success: true,
+        data: signalement
+      });
+    })
   );
 
   // Annuler un signalement (si créateur et en attente)
   router.delete('/:id(\\d+)',
     authenticate,
     checkSignalementOwnership,
-    async (req, res) => {
-      try {
-        const signalement = await models.Signalement.findByPk(req.params.id);
-        
-        if (signalement.statut !== 'en_attente') {
-          return res.status(400).json({
-            success: false,
-            message: req.t ? req.t('admin.onlyPendingCanCancel') : 'Only pending reports can be cancelled'
-          });
-        }
+    asyncHandler(async (req, res) => {
+      const signalement = await models.Signalement.findByPk(req.params.id);
 
-        await signalement.destroy();
-
-        res.json({
-          success: true,
-          message: req.t ? req.t('admin.reportCancelled') : 'Report cancelled'
-        });
-      } catch (error) {
-        res.status(500).json({
+      if (signalement.statut !== 'en_attente') {
+        return res.status(400).json({
           success: false,
-          message: req.t ? req.t('common.serverError') : 'Server error'
+          message: req.t ? req.t('admin.onlyPendingCanCancel') : 'Only pending reports can be cancelled'
         });
       }
-    }
+
+      await signalement.destroy();
+
+      res.json({
+        success: true,
+        message: req.t ? req.t('admin.reportCancelled') : 'Report cancelled'
+      });
+    })
   );
 
   // ========================================================================
@@ -195,6 +180,7 @@ const initSignalementRoutes = (models, authMiddleware) => {
   router.put('/:id/traiter',
     authenticate,
     requireAdmin,
+    validateStringLengths,
     controller.traiterSignalement.bind(controller)
   );
 
@@ -202,160 +188,136 @@ const initSignalementRoutes = (models, authMiddleware) => {
   router.get('/',
     authenticate,
     requireAdmin,
-    async (req, res) => {
-      try {
-        const { statut, motif, dateDebut, dateFin, page = 1, limit = 20 } = req.query;
-        
-        const where = {};
-        if (statut) where.statut = statut;
-        if (motif) where.motif = motif;
-        if (dateDebut || dateFin) {
-          where.createdAt = {};
-          if (dateDebut) where.createdAt[models.Sequelize.Op.gte] = new Date(dateDebut);
-          if (dateFin) where.createdAt[models.Sequelize.Op.lte] = new Date(dateFin);
-        }
+    asyncHandler(async (req, res) => {
+      const { statut, motif, dateDebut, dateFin, page = 1, limit = 20 } = req.query;
 
-        const { count, rows } = await models.Signalement.findAndCountAll({
-          where,
-          include: [
-            { model: models.User, as: 'Signalant', attributes: ['id_user', 'nom', 'prenom', 'email'] },
-            { model: models.User, as: 'Moderateur', attributes: ['id_user', 'nom', 'prenom', 'email'] }
-          ],
-          order: [['createdAt', 'DESC']],
-          limit: parseInt(limit),
-          offset: (parseInt(page) - 1) * parseInt(limit)
-        });
-
-        res.json({
-          success: true,
-          data: rows,
-          pagination: {
-            total: count,
-            pages: Math.ceil(count / limit),
-            currentPage: parseInt(page),
-            perPage: parseInt(limit)
-          }
-        });
-      } catch (error) {
-        console.error('Erreur récupération signalements:', error);
-        res.status(500).json({
-          success: false,
-          message: req.t ? req.t('common.serverError') : 'Server error'
-        });
+      const where = {};
+      if (statut) where.statut = statut;
+      if (motif) where.motif = motif;
+      if (dateDebut || dateFin) {
+        where.createdAt = {};
+        if (dateDebut) where.createdAt[models.Sequelize.Op.gte] = new Date(dateDebut);
+        if (dateFin) where.createdAt[models.Sequelize.Op.lte] = new Date(dateFin);
       }
-    }
+
+      const { count, rows } = await models.Signalement.findAndCountAll({
+        where,
+        include: [
+          { model: models.User, as: 'Signalant', attributes: ['id_user', 'nom', 'prenom', 'email'] },
+          { model: models.User, as: 'Moderateur', attributes: ['id_user', 'nom', 'prenom', 'email'] }
+        ],
+        order: [['createdAt', 'DESC']],
+        limit: parseInt(limit),
+        offset: (parseInt(page) - 1) * parseInt(limit)
+      });
+
+      res.json({
+        success: true,
+        data: rows,
+        pagination: {
+          total: count,
+          pages: Math.ceil(count / limit),
+          currentPage: parseInt(page),
+          perPage: parseInt(limit)
+        }
+      });
+    })
   );
 
   // Statistiques détaillées pour admin
   router.get('/stats/detailed',
     authenticate,
     requireAdmin,
-    async (req, res) => {
-      try {
-        const { periode = '30j' } = req.query;
-        
-        // Calculer la date de début selon la période
-        const dateDebut = new Date();
-        switch (periode) {
-          case '7j':
-            dateDebut.setDate(dateDebut.getDate() - 7);
-            break;
-          case '30j':
-            dateDebut.setDate(dateDebut.getDate() - 30);
-            break;
-          case '90j':
-            dateDebut.setDate(dateDebut.getDate() - 90);
-            break;
-          case 'annee':
-            dateDebut.setFullYear(dateDebut.getFullYear() - 1);
-            break;
-        }
+    asyncHandler(async (req, res) => {
+      const { periode = '30j' } = req.query;
 
-        const dateWhere = { createdAt: { [models.Sequelize.Op.gte]: dateDebut } };
-        const countFn = models.Signalement.sequelize.fn('COUNT', '*');
-
-        const [byMotif, byStatus, byType, tempsTraitement] = await Promise.all([
-          models.Signalement.findAll({
-            attributes: ['motif', [countFn, 'count']],
-            where: dateWhere, group: ['motif']
-          }),
-          models.Signalement.findAll({
-            attributes: ['statut', [countFn, 'count']],
-            where: dateWhere, group: ['statut']
-          }),
-          models.Signalement.findAll({
-            attributes: ['type_entite', [countFn, 'count']],
-            where: dateWhere, group: ['type_entite']
-          }),
-          models.Signalement.findOne({
-            attributes: [[models.Signalement.sequelize.fn('AVG',
-              models.Signalement.sequelize.literal('TIMESTAMPDIFF(HOUR, createdAt, date_traitement)')
-            ), 'avgHours']],
-            where: { statut: 'traite', ...dateWhere }
-          })
-        ]);
-
-        res.json({
-          success: true,
-          data: {
-            periode,
-            byMotif,
-            byStatus,
-            byType,
-            tempsTraitementMoyen: tempsTraitement?.dataValues?.avgHours || 0,
-            total: byMotif.reduce((sum, item) => sum + parseInt(item.dataValues.count), 0)
-          }
-        });
-      } catch (error) {
-        console.error('Erreur statistiques:', error);
-        res.status(500).json({
-          success: false,
-          message: req.t ? req.t('common.serverError') : 'Server error'
-        });
+      // Calculer la date de début selon la période
+      const dateDebut = new Date();
+      switch (periode) {
+        case '7j':
+          dateDebut.setDate(dateDebut.getDate() - 7);
+          break;
+        case '30j':
+          dateDebut.setDate(dateDebut.getDate() - 30);
+          break;
+        case '90j':
+          dateDebut.setDate(dateDebut.getDate() - 90);
+          break;
+        case 'annee':
+          dateDebut.setFullYear(dateDebut.getFullYear() - 1);
+          break;
       }
-    }
+
+      const dateWhere = { createdAt: { [models.Sequelize.Op.gte]: dateDebut } };
+      const countFn = models.Signalement.sequelize.fn('COUNT', '*');
+
+      const [byMotif, byStatus, byType, tempsTraitement] = await Promise.all([
+        models.Signalement.findAll({
+          attributes: ['motif', [countFn, 'count']],
+          where: dateWhere, group: ['motif']
+        }),
+        models.Signalement.findAll({
+          attributes: ['statut', [countFn, 'count']],
+          where: dateWhere, group: ['statut']
+        }),
+        models.Signalement.findAll({
+          attributes: ['type_entite', [countFn, 'count']],
+          where: dateWhere, group: ['type_entite']
+        }),
+        models.Signalement.findOne({
+          attributes: [[models.Signalement.sequelize.fn('AVG',
+            models.Signalement.sequelize.literal('TIMESTAMPDIFF(HOUR, createdAt, date_traitement)')
+          ), 'avgHours']],
+          where: { statut: 'traite', ...dateWhere }
+        })
+      ]);
+
+      res.json({
+        success: true,
+        data: {
+          periode,
+          byMotif,
+          byStatus,
+          byType,
+          tempsTraitementMoyen: tempsTraitement?.dataValues?.avgHours || 0,
+          total: byMotif.reduce((sum, item) => sum + parseInt(item.dataValues.count), 0)
+        }
+      });
+    })
   );
 
   // Export des signalements
   router.get('/export',
     authenticate,
     requireAdmin,
-    async (req, res) => {
-      try {
-        const { format = 'json', statut, dateDebut, dateFin } = req.query;
-        
-        const where = {};
-        if (statut) where.statut = statut;
-        if (dateDebut || dateFin) {
-          where.createdAt = {};
-          if (dateDebut) where.createdAt[models.Sequelize.Op.gte] = new Date(dateDebut);
-          if (dateFin) where.createdAt[models.Sequelize.Op.lte] = new Date(dateFin);
-        }
+    asyncHandler(async (req, res) => {
+      const { format = 'json', statut, dateDebut, dateFin } = req.query;
 
-        const signalements = await models.Signalement.findAll({
-          where,
-          include: [
-            { model: models.User, as: 'Signalant', attributes: ['id_user', 'nom', 'prenom', 'email'] },
-            { model: models.User, as: 'Moderateur', attributes: ['id_user', 'nom', 'prenom', 'email'] }
-          ],
-          order: [['createdAt', 'DESC']],
-          limit: Math.min(parseInt(req.query.limit) || 5000, 10000)
-        });
-
-        res.json({
-          success: true,
-          count: signalements.length,
-          format,
-          data: signalements
-        });
-      } catch (error) {
-        console.error('Erreur export:', error);
-        res.status(500).json({
-          success: false,
-          message: req.t ? req.t('common.serverError') : 'Server error'
-        });
+      const where = {};
+      if (statut) where.statut = statut;
+      if (dateDebut || dateFin) {
+        where.createdAt = {};
+        if (dateDebut) where.createdAt[models.Sequelize.Op.gte] = new Date(dateDebut);
+        if (dateFin) where.createdAt[models.Sequelize.Op.lte] = new Date(dateFin);
       }
-    }
+
+      const signalements = await models.Signalement.findAll({
+        where,
+        include: [
+          { model: models.User, as: 'Signalant', attributes: ['id_user', 'nom', 'prenom', 'email'] },
+          { model: models.User, as: 'Moderateur', attributes: ['id_user', 'nom', 'prenom', 'email'] }
+        ],
+        order: [['createdAt', 'DESC']],
+        limit: Math.min(parseInt(req.query.limit) || 5000, 10000)
+      });
+
+      res.json({
+        success: true,
+        count: signalements.length,
+        format,
+        data: signalements
+      });
+    })
   );
 
   return router;

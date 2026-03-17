@@ -367,10 +367,12 @@ export function useGeographicSelection() {
 
 /**
  * Formater le nom complet d'une wilaya (code + nom)
+ * @param lang - langue active (si 'ar', affiche le nom arabe)
  */
-export function formatWilayaName(wilaya: Wilaya): string {
+export function formatWilayaName(wilaya: Wilaya, lang?: string): string {
   const code = String(wilaya.codeW).padStart(2, '0');
-  return `${code} - ${wilaya.wilaya_name_ascii}`;
+  const name = lang === 'ar' && wilaya.nom ? wilaya.nom : wilaya.wilaya_name_ascii;
+  return `${code} - ${name}`;
 }
 
 /**
@@ -381,15 +383,17 @@ export function formatFullAddress(
   commune?: Commune | null,
   daira?: Daira | null,
   wilaya?: Wilaya | null,
-  adresse?: string
+  adresse?: string,
+  lang?: string
 ): string {
   const parts: string[] = [];
-  
+  const useAr = lang === 'ar';
+
   if (adresse) parts.push(adresse);
-  if (localite) parts.push(localite.localite_name_ascii || localite.nom);
-  if (commune) parts.push(commune.commune_name_ascii || commune.nom);
-  if (daira) parts.push(daira.daira_name_ascii || daira.nom);
-  if (wilaya) parts.push(formatWilayaName(wilaya));
-  
+  if (localite) parts.push(useAr ? (localite.nom || localite.localite_name_ascii) : (localite.localite_name_ascii || localite.nom));
+  if (commune) parts.push(useAr ? (commune.nom || commune.commune_name_ascii) : (commune.commune_name_ascii || commune.nom));
+  if (daira) parts.push(useAr ? (daira.nom || daira.daira_name_ascii) : (daira.daira_name_ascii || daira.nom));
+  if (wilaya) parts.push(formatWilayaName(wilaya, lang));
+
   return parts.join(', ');
 }

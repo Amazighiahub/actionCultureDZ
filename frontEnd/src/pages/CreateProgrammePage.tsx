@@ -6,9 +6,11 @@ import React, { useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Calendar, Clock, Users, MapPin } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { ArrowLeft, Calendar, Clock, Users, MapPin, AlertCircle, RefreshCw } from 'lucide-react';
 import ProgrammeForm, { ProgrammeFormData } from '@/components/forms/ProgrammeForm';
 import { programmeService } from '@/services/programme.service';
+import { evenementService } from '@/services/evenement.service';
 import { lieuService } from '@/services/lieu.service';
 import { httpClient } from '@/services/httpClient';
 import { useTranslation } from 'react-i18next';
@@ -24,14 +26,21 @@ const CreateProgrammePage: React.FC = () => {
   const [success, setSuccess] = useState(false);
   const [lieux, setLieux] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
+  const [eventDates, setEventDates] = useState<{ dateDebut: string; dateFin: string } | undefined>();
+  const [loadError, setLoadError] = useState<string | null>(null);
 
-  React.useEffect(() => {
-    const loadData = async () => {
-      try {
-        const [lieuxRes, usersRes] = await Promise.all([
+  const loadData = React.useCallback(async () => {
+    setLoadError(null);
+    try {
+        const promises: Promise<any>[] = [
           lieuService.getAll({ limit: 100 }),
           httpClient.get<any>('/intervenants/search', { q: '', limit: 50 })
-        ]);
+        ];
+        // Fetch event details for dates
+        if (eventId) {
+          promises.push(evenementService.getDetail(parseInt(eventId)));
+        }
+        const [lieuxRes, usersRes, eventRes] = await Promise.all(promises);
         if (lieuxRes.success && lieuxRes.data) {
           const items = (lieuxRes.data as any).lieux || lieuxRes.data;
           setLieux(Array.isArray(items) ? items : []);
@@ -40,12 +49,22 @@ const CreateProgrammePage: React.FC = () => {
           const items = (usersRes.data as any).intervenants || usersRes.data;
           setUsers(Array.isArray(items) ? items : []);
         }
+        if (eventRes?.success && eventRes.data) {
+          const evt = eventRes.data;
+          const dateDebut = evt.date_debut?.split('T')[0] || evt.date_debut;
+          const dateFin = evt.date_fin?.split('T')[0] || evt.date_fin || dateDebut;
+          if (dateDebut) {
+            setEventDates({ dateDebut, dateFin });
+          }
+        }
       } catch (e) {
-        // Silencieux — les selects seront vides
+        setLoadError(t('programmePages.errors.loadDataFailed', 'Impossible de charger les données de l\'événement. Vérifiez votre connexion.'));
       }
-    };
+    }, [eventId, t]);
+
+  React.useEffect(() => {
     loadData();
-  }, []);
+  }, [loadData]);
 
   const handleSubmit = async (data: ProgrammeFormData) => {
     if (!eventId) {
@@ -154,6 +173,20 @@ const CreateProgrammePage: React.FC = () => {
         </div>
       </div>
 
+      {/* Alerte si le chargement des données a échoué */}
+      {loadError && (
+        <Alert variant="destructive" className="mb-6" role="alert">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription className="flex items-center justify-between">
+            <span>{loadError}</span>
+            <Button variant="outline" size="sm" onClick={loadData}>
+              <RefreshCw className="h-4 w-4 me-1" />
+              {t('common.retry', 'Réessayer')}
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Formulaire */}
       <Card>
         <CardHeader>
@@ -173,6 +206,7 @@ const CreateProgrammePage: React.FC = () => {
             success={success}
             lieux={lieux || []}
             users={users || []}
+            eventDates={eventDates}
           />
         </CardContent>
       </Card>

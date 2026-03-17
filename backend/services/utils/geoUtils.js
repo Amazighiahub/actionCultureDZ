@@ -53,9 +53,27 @@ function vitesseParTransport(transport) {
   return 40;
 }
 
+/**
+ * Valide une latitude [-90, 90]
+ */
+function isValidLatitude(lat) {
+  const n = parseFloat(lat);
+  return !isNaN(n) && n >= -90 && n <= 90;
+}
+
+/**
+ * Valide une longitude [-180, 180]
+ */
+function isValidLongitude(lng) {
+  const n = parseFloat(lng);
+  return !isNaN(n) && n >= -180 && n <= 180;
+}
+
 module.exports = {
   haversineKm,
   boundingBox,
   rayonParTransport,
-  vitesseParTransport
+  vitesseParTransport,
+  isValidLatitude,
+  isValidLongitude
 };

@@ -212,9 +212,9 @@ const Index: React.FC = () => {
               {/* Mission */}
               <Card className="bg-gradient-to-br from-primary/5 to-transparent hover-lift overflow-hidden group">
                 <div className={`absolute top-0 ${rtlClasses.end(0)} w-32 h-32 opacity-10`}>
-                  <img 
+                  <img
                     src="https://images.unsplash.com/photo-1569163139394-de4798a9f0d5?w=400"
-                    alt=""
+                    alt="Patrimoine culturel algérien - Notre mission"
                     loading="lazy"
                     className="w-full h-full object-cover rounded-full"
                   />
@@ -243,9 +243,9 @@ const Index: React.FC = () => {
               {/* Ressources */}
               <Card className="bg-gradient-to-br from-accent/5 to-transparent hover-lift overflow-hidden group">
                 <div className={`absolute top-0 ${rtlClasses.end(0)} w-32 h-32 opacity-10`}>
-                  <img 
+                  <img
                     src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400"
-                    alt=""
+                    alt="Ressources culturelles et artisanat algérien"
                     loading="lazy"
                     className="w-full h-full object-cover rounded-full"
                   />

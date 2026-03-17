@@ -1,145 +1,255 @@
-# EventCulture — Plateforme de Patrimoine Culturel Algérien
+# EventCulture
 
-[![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org)
-[![React](https://img.shields.io/badge/React-18-blue.svg)](https://reactjs.org)
-[![MySQL](https://img.shields.io/badge/MySQL-8+-orange.svg)](https://www.mysql.com)
-[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg)](https://www.docker.com)
+Plateforme web de valorisation du patrimoine culturel algerien : sites patrimoniaux, evenements, oeuvres, artisanat, parcours intelligents et services professionnels. Support multilingue complet (Francais, Arabe, Anglais, Tamazight Latin, Tifinagh).
 
-**EventCulture** (Action Culture DZ) est une plateforme web complète de valorisation du patrimoine culturel algérien : sites patrimoniaux, événements, œuvres, artisanat, services et parcours intelligents, avec support multilingue (Français, Arabe, Anglais, Tamazight Latin et Tifinagh).
+## Stack technique
+
+| Couche | Technologies |
+|--------|-------------|
+| Backend | Node.js 20, Express, Sequelize, MySQL 8, Redis, JWT, Bull, Socket.IO |
+| Frontend | React 18, TypeScript, Vite, Tailwind CSS, React Query, i18next |
+| Infra | Docker, Nginx, GitHub Actions, GitLab CI |
+
+## Prerequis
+
+- **Node.js** 20+ (LTS)
+- **MySQL** 8+
+- **Redis** (optionnel en dev, requis en prod)
+- **Docker** + Docker Compose (optionnel mais recommande)
 
 ---
 
-## 🚀 Démarrage rapide
+## Installation
 
-### Option A : Docker (recommandé)
+### Option A : Docker (recommande)
 
 ```bash
-# 1. Cloner et configurer
 git clone https://github.com/Amazighiahub/actionCultureDZ.git
 cd actionCultureDZ
-cp .env.example .env
-# Éditer .env : DB_PASSWORD, JWT_SECRET, FRONTEND_URL=http://localhost:3000
-
-# 2. Lancer toute la stack
+cp .env.example .env         # editer : DB_PASSWORD, JWT_SECRET
 docker compose up -d --build
-
-# 3. Initialiser la base (première fois)
+docker exec -it eventculture-backend npx sequelize db:migrate
 docker exec -it eventculture-backend node scripts/seed-geography.js
 docker exec -it eventculture-backend node scripts/seed-all-data.js
 ```
 
-**URLs** : Frontend http://localhost:3000 | API http://localhost:3001/api | Santé http://localhost:3001/health
+Frontend : http://localhost:3000 | API : http://localhost:3001/api | Health : http://localhost:3001/health
 
-➡️ **Guide Docker détaillé** : [docs/README-DOCKER.md](docs/README-DOCKER.md)
-
----
-
-### Option B : Installation locale (sans Docker)
+### Option B : Local (sans Docker)
 
 ```bash
-# 1. Prérequis : Node.js 18+, MySQL 8+, Redis (optionnel)
-# 2. Cloner et installer
 git clone https://github.com/Amazighiahub/actionCultureDZ.git
 cd actionCultureDZ
 
 # Backend
 cd backend && npm install && cp .env.example .env
-node scripts/generateSecret.js  # copier le secret dans .env
+node scripts/generateSecret.js   # copier le JWT_SECRET dans .env
+npm run db:migrate
+npm run dev
 
-# Frontend
-cd ../frontEnd && npm install && cp .env.example .env
-
-# 3. Créer la base MySQL
-mysql -u root -p -e "CREATE DATABASE actionculture CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-
-# 4. Démarrer (2 terminaux)
-# Terminal 1 : cd backend && npm run dev
-# Terminal 2 : cd frontEnd && npm run dev
+# Frontend (autre terminal)
+cd frontEnd && npm install
+npm run dev
 ```
 
-**URLs** : Frontend http://localhost:8080 | API http://localhost:3001/api
-
-➡️ **Guide local détaillé** : [docs/README_LOCAL_DEV.md](docs/README_LOCAL_DEV.md)
+Frontend : http://localhost:8080 | API : http://localhost:3001/api
 
 ---
 
-## 📋 Architecture des services
+## Variables d'environnement
 
-| Service    | Port | Description                    |
-|------------|------|--------------------------------|
-| Frontend   | 3000 (Docker) / 8080 (local) | React + Vite / Nginx |
-| Backend API| 3001 | Node.js + Express              |
-| MySQL      | 3306 | Base de données                |
-| Redis      | 6379 | Cache et rate limiting         |
+Le fichier `.env.example` a la racine contient toutes les variables. Voici les principales :
+
+| Variable | Description | Defaut dev |
+|----------|-------------|------------|
+| `NODE_ENV` | Environnement (development/production) | `development` |
+| `PORT` | Port du serveur backend | `3001` |
+| `DB_NAME` | Nom de la base MySQL | `actionculture` |
+| `DB_USER` | Utilisateur MySQL | `root` |
+| `DB_PASSWORD` | Mot de passe MySQL (min 16 chars en prod) | `root` |
+| `DB_HOST` | Hote MySQL | `localhost` |
+| `JWT_SECRET` | Cle secrete JWT (min 32 chars en prod) | generer avec `node scripts/generateSecret.js` |
+| `JWT_EXPIRES_IN` | Duree de vie du token | `24h` |
+| `FRONTEND_URL` | URL du frontend (CORS) | `http://localhost:8080` |
+| `API_URL` | URL publique de l'API | `http://localhost:3001` |
+| `REDIS_HOST` | Hote Redis | `localhost` |
+| `REDIS_PASSWORD` | Mot de passe Redis | _(vide en dev)_ |
+| `CLOUDINARY_CLOUD_NAME` | Nom du cloud Cloudinary | _(requis en prod)_ |
+| `CLOUDINARY_API_KEY` | Cle API Cloudinary | _(requis en prod)_ |
+| `CLOUDINARY_API_SECRET` | Secret API Cloudinary | _(requis en prod)_ |
+| `EMAIL_HOST` | Serveur SMTP | `smtp.gmail.com` |
+| `EMAIL_USER` | Email expediteur | _(requis en prod)_ |
+| `EMAIL_PASSWORD` | Mot de passe SMTP | _(requis en prod)_ |
+| `SENTRY_DSN` | DSN Sentry (optionnel) | _(vide = desactive)_ |
+| `BCRYPT_ROUNDS` | Nombre de rounds bcrypt | `12` |
+| `DEFAULT_LANGUAGE` | Langue par defaut | `fr` |
+
+Voir `.env.example` et `backend/.env.example` pour la liste exhaustive avec commentaires.
 
 ---
 
-## 🛠 Technologies
+## Commandes utiles
 
-| Couche    | Stack                                           |
-|-----------|--------------------------------------------------|
-| Backend   | Node.js, Express, Sequelize, MySQL, JWT, Redis   |
-| Frontend  | React 18, TypeScript, Vite, Tailwind, React Query, i18next |
-| DevOps    | Docker, Docker Compose                          |
+### Backend (`cd backend`)
+
+| Commande | Description |
+|----------|-------------|
+| `npm run dev` | Demarrer en mode dev (nodemon) |
+| `npm run start:safe` | Demarrer avec validation des variables d'env |
+| `npm test` | Lancer les 298 tests unitaires |
+| `npm run lint` | Verifier le code (ESLint) |
+| `npm run db:migrate` | Executer les migrations |
+| `npm run db:seed` | Charger les donnees de reference |
+| `npm run db:reset` | Reinitialiser la base |
+
+### Frontend (`cd frontEnd`)
+
+| Commande | Description |
+|----------|-------------|
+| `npm run dev` | Demarrer Vite en mode dev |
+| `npm run build` | Build production |
+| `npm test` | Tests unitaires (Vitest) |
+| `npm run e2e` | Tests E2E (Cypress) |
+| `npm run lint` | Verifier le code (ESLint) |
+
+### Docker (racine)
+
+| Commande | Description |
+|----------|-------------|
+| `make up` | Demarrer tous les services |
+| `make down` | Arreter tous les services |
+| `make logs` | Voir les logs en temps reel |
+| `make migrate` | Executer les migrations |
+| `make seed` | Charger les donnees |
+| `make reset` | Tout supprimer et recommencer |
+| `make prod-up` | Demarrer en mode production |
 
 ---
 
-## 📁 Structure du projet
+## Structure du projet
 
 ```
 EventCulture/
-├── backend/          # API Node.js
-│   ├── controllers/  # Logique métier
-│   ├── services/     # Services métier (pattern Service/Repository)
-│   ├── routes/       # Routes API
-│   ├── models/       # Modèles Sequelize
-│   └── scripts/     # Seeds, migrations
-├── frontEnd/         # Application React
-│   └── src/
-│       ├── components/
-│       ├── pages/
-│       ├── hooks/
-│       └── services/
-├── docs/             # Documentation
-├── docker-compose.yml
-└── .env.example
+├── backend/                  # API Node.js/Express
+│   ├── app.js                # Configuration Express (Helmet, CORS, rate limiting)
+│   ├── server.js             # Point d'entree + Socket.IO + graceful shutdown
+│   ├── config/               # database.js, envValidator.js
+│   ├── controllers/          # 23 controllers (pattern Controller -> Service -> Repository)
+│   ├── services/             # 43 services (logique metier)
+│   ├── repositories/         # 11 repositories (acces donnees, anti-N+1)
+│   ├── models/               # 67 modeles Sequelize (users, oeuvres, events, places...)
+│   ├── routes/               # 25 fichiers de routes (~400 endpoints)
+│   ├── middlewares/           # Auth JWT, rate limiting, CORS, security, cache, audit
+│   ├── migrations/           # 10 migrations versionees
+│   ├── i18n/                 # Messages backend FR/AR/EN
+│   ├── tests/                # 298 tests Jest (unit + integration)
+│   └── scripts/              # Seeds, generation de secrets, init DB
+├── frontEnd/                 # SPA React/TypeScript
+│   ├── src/
+│   │   ├── components/       # Composants reutilisables (UI, shared, layout)
+│   │   ├── pages/            # Pages de l'application
+│   │   ├── services/         # Appels API (httpClient centralise)
+│   │   ├── hooks/            # Hooks custom (useOnlineStatus, useTranslateData...)
+│   │   ├── i18n/             # Traductions FR/AR/EN/TZ-LTN/TZ-TFNG
+│   │   └── lib/              # Utilitaires
+│   ├── cypress/              # 17 suites de tests E2E
+│   └── vite.config.ts        # Build config (code splitting, source maps, minification)
+├── nginx/                    # Configuration Nginx (dev + prod)
+├── docker-compose.yml        # Stack de developpement
+├── docker-compose.prod.yml   # Stack de production (resource limits, SSL, healthchecks)
+├── Makefile                  # Raccourcis Docker
+├── scripts/                  # deploy.sh, backup, SSL
+├── docs/                     # Documentation technique
+└── .env.example              # Template de configuration
 ```
 
 ---
 
-## 📚 Documentation
+## Architecture backend
 
-| Document | Description |
-|----------|-------------|
-| [docs/README-DOCKER.md](docs/README-DOCKER.md) | **Docker** — Setup, variables d'environnement, dépannage |
-| [docs/README_LOCAL_DEV.md](docs/README_LOCAL_DEV.md) | **Local** — Installation sans Docker |
-| [docs/ONBOARDING.md](docs/ONBOARDING.md) | **Onboarding stagiaire** — Lire en premier |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Architecture technique détaillée |
-| [docs/API.md](docs/API.md) | Documentation de l'API REST |
-| [docs/DOCUMENTATION_FONCTIONNELLE.md](docs/DOCUMENTATION_FONCTIONNELLE.md) | Fonctionnalités et parcours utilisateurs |
-| [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) | Guide de contribution |
-| [docs/PRODUCTION_CHECKLIST.md](docs/PRODUCTION_CHECKLIST.md) | Checklist production |
+```
+Request -> Nginx -> Express -> Middleware (auth, rate limit, sanitize)
+                                    |
+                              Controller (validation, formatting)
+                                    |
+                               Service (logique metier)
+                                    |
+                              Repository (requetes DB, includes, pagination)
+                                    |
+                               Sequelize ORM -> MySQL
+```
+
+Chaque couche a une responsabilite unique. Les controllers ne touchent jamais la DB directement.
 
 ---
 
-## 🔐 Comptes de test (après seed)
+## API — Endpoints principaux
 
-| Email | Mot de passe | Rôle |
-|-------|--------------|------|
-| `admin@actionculture.dz` | `admin123` | Administrateur |
+Base URL : `/api/v2`
+
+| Methode | Endpoint | Auth | Description |
+|---------|----------|------|-------------|
+| POST | `/users/register` | Non | Inscription |
+| POST | `/users/login` | Non | Connexion (retourne JWT) |
+| GET | `/users/profile` | Oui | Profil utilisateur |
+| DELETE | `/users/profile` | Oui | Supprimer mon compte (RGPD Art.17) |
+| GET | `/users/profile/export` | Oui | Exporter mes donnees (RGPD Art.20) |
+| GET | `/evenements` | Non | Liste des evenements |
+| GET | `/evenements/:id` | Non | Detail d'un evenement |
+| POST | `/evenements` | Pro | Creer un evenement |
+| GET | `/oeuvres` | Non | Liste des oeuvres |
+| GET | `/oeuvres/:id` | Non | Detail d'une oeuvre |
+| GET | `/patrimoine` | Non | Sites patrimoniaux |
+| GET | `/patrimoine/:id` | Non | Detail d'un site |
+| GET | `/artisanat` | Non | Artisanat |
+| GET | `/parcours` | Non | Parcours intelligents |
+| GET | `/favoris` | Oui | Mes favoris |
+| POST | `/favoris` | Oui | Ajouter un favori |
+| GET | `/commentaires/:type/:id` | Non | Commentaires |
+| POST | `/commentaires` | Oui | Ajouter un commentaire |
+| POST | `/upload/image` | Oui | Upload image (Cloudinary) |
+| GET | `/dashboard/overview` | Admin | Tableau de bord |
+| GET | `/health` | Non | Healthcheck (DB + Redis) |
+
+Documentation API complete : [docs/API.md](docs/API.md)
+
+---
+
+## Comptes de test (apres seed)
+
+| Email | Mot de passe | Role |
+|-------|-------------|------|
+| `admin@actionculture.dz` | `admin123` | Admin |
 | `m.benali@test.dz` | `password123` | Professionnel |
-| `f.saidi@test.com` | `password123` | Utilisateur |
+| `f.saidi@test.com` | `password123` | Visiteur |
 
 > Ne pas utiliser en production.
 
 ---
 
-## 🌍 Langues supportées
+## Documentation
 
-Français (fr) · العربية (ar) · English (en) · Tamazight Latin (tz-ltn) · ⵜⴰⵎⴰⵣⵉⵖⵜ (tz-tfng)
+| Document | Contenu |
+|----------|---------|
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Conventions, workflow Git, comment contribuer |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Architecture technique detaillee (backend + frontend) |
+| [docs/API.md](docs/API.md) | Documentation complete de l'API REST |
+| [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Guide de deploiement (Docker, SSL, backup, rollback) |
+| [docs/DOCUMENTATION_FONCTIONNELLE.md](docs/DOCUMENTATION_FONCTIONNELLE.md) | Specifications fonctionnelles |
+| [docs/CTO_ASSESSMENT.md](docs/CTO_ASSESSMENT.md) | Audit de production-readiness (79/100) |
+| [docs/CHANGELOG.md](docs/CHANGELOG.md) | Historique des versions |
+| [docs/modules/](docs/modules/) | Documentation par module (evenements, oeuvres, patrimoine, parcours, services) |
+
+---
+
+## Langues supportees
+
+Francais (fr) - Arabe (ar) - English (en) - Tamazight Latin (tz-ltn) - Tifinagh (tz-tfng)
+
+Le frontend supporte le RTL automatiquement pour l'arabe et le tifinagh.
 
 ---
 
 ## Licence
 
-Propriétaire — Tous droits réservés.
+Proprietaire — Tous droits reserves.

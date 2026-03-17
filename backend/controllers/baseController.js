@@ -12,6 +12,7 @@
  */
 
 const IS_DEV_MODE = process.env.NODE_ENV === 'development';
+const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 
 class BaseController {
   // ============================================================================
@@ -99,11 +100,13 @@ class BaseController {
 
     const response = {
       success: false,
-      error: error.message || 'Internal server error',
+      error: (IS_PRODUCTION && statusCode === 500)
+        ? 'Internal server error'
+        : (error.message || 'Internal server error'),
       code
     };
 
-    if (error.errors) response.errors = error.errors;
+    if (error.errors && !IS_PRODUCTION) response.errors = error.errors;
     if (IS_DEV_MODE && statusCode === 500) response.stack = error.stack;
 
     res.status(statusCode).json(response);

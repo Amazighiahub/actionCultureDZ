@@ -11,10 +11,12 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Mail, ArrowLeft, Loader2, CheckCircle } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { userService } from '@/services/user.service';
+import { useRTL } from '@/hooks/useRTL';
 
 const ForgotPassword = () => {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const { direction } = useRTL();
 
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
@@ -26,17 +28,39 @@ const ForgotPassword = () => {
     return regex.test(email);
   };
 
+  const validateEmailField = () => {
+    if (!email?.trim()) {
+      setError(t('auth.errors.emailRequired', 'L\'email est requis'));
+    } else if (!validateEmail(email.trim())) {
+      setError(t('auth.errors.emailInvalid', 'Format d\'email invalide'));
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    if (!email) {
-      setError(t('auth.errors.emailRequired'));
+    if (!email?.trim()) {
+      setError(t('auth.errors.emailRequired', 'L\'email est requis'));
+      setTimeout(() => {
+        const firstError = document.querySelector('[aria-invalid="true"]');
+        if (firstError) {
+          (firstError as HTMLElement).focus();
+          firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 0);
       return;
     }
 
-    if (!validateEmail(email)) {
-      setError(t('auth.errors.emailInvalid'));
+    if (!validateEmail(email.trim())) {
+      setError(t('auth.errors.emailInvalid', 'Format d\'email invalide'));
+      setTimeout(() => {
+        const firstError = document.querySelector('[aria-invalid="true"]');
+        if (firstError) {
+          (firstError as HTMLElement).focus();
+          firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 0);
       return;
     }
 
@@ -65,15 +89,15 @@ const ForgotPassword = () => {
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-background">
+      <div dir={direction} className="min-h-screen bg-background">
         <Header />
 
         <main className="container py-12">
           <div className="max-w-md mx-auto">
             <Card>
               <CardHeader className="text-center">
-                <div className="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                  <CheckCircle className="h-6 w-6 text-green-600" />
+                <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                  <CheckCircle className="h-6 w-6 text-primary" />
                 </div>
                 <CardTitle>{t('auth.forgotPassword.emailSentTitle')}</CardTitle>
                 <CardDescription>
@@ -81,8 +105,8 @@ const ForgotPassword = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Alert className="border-blue-200 bg-blue-50">
-                  <AlertDescription className="text-blue-800">
+                <Alert className="border-accent/20 bg-accent/10">
+                  <AlertDescription className="text-accent-foreground">
                     {t('auth.forgotPassword.checkSpam')}
                   </AlertDescription>
                 </Alert>
@@ -119,7 +143,7 @@ const ForgotPassword = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div dir={direction} className="min-h-screen bg-background">
       <Header />
 
       <main className="container py-12">
@@ -141,29 +165,34 @@ const ForgotPassword = () => {
                   <Input
                     id="email"
                     type="email"
+                    autoComplete="email"
+                    maxLength={255}
                     placeholder={t('auth.forgotPassword.emailPlaceholder')}
                     value={email}
                     onChange={(e) => {
                       setEmail(e.target.value);
                       setError('');
                     }}
+                    onBlur={() => validateEmailField()}
                     className={error ? 'border-destructive' : ''}
                     disabled={loading}
+                    aria-invalid={!!error}
+                    aria-describedby={error ? 'forgot-email-error' : undefined}
                   />
                   {error && (
-                    <p className="text-sm text-destructive">{error}</p>
+                    <p id="forgot-email-error" role="alert" className="text-sm text-destructive">{error}</p>
                   )}
                 </div>
 
-                <Button type="submit" className="w-full" disabled={loading}>
+                <Button type="submit" size="lg" className="w-full" disabled={loading}>
                   {loading ? (
                     <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      <Loader2 className="h-4 w-4 me-2 animate-spin" />
                       {t('auth.forgotPassword.sending')}
                     </>
                   ) : (
                     <>
-                      <Mail className="h-4 w-4 mr-2" />
+                      <Mail className="h-4 w-4 me-2" />
                       {t('auth.forgotPassword.submit')}
                     </>
                   )}

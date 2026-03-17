@@ -17,11 +17,15 @@ try {
         Sentry.expressIntegration()
       ]
     });
+  } else if (process.env.NODE_ENV === 'production') {
+    console.error('⚠️  SENTRY_DSN is not configured. Error tracking is disabled in production!');
   } else {
     Sentry = null;
   }
 } catch (e) {
-  // @sentry/node not installed, skip
+  if (process.env.NODE_ENV === 'production') {
+    console.error('⚠️  @sentry/node not installed. Error tracking is disabled in production!');
+  }
 }
 
 const express = require('express');
@@ -30,7 +34,7 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const compression = require('compression');
 const path = require('path');
-// ✅ CSRF supprimé - non nécessaire avec JWT
+const { csrfTokenProvider, csrfVerifier } = require('./middlewares/csrfMiddleware');
 const cookieParser = require('cookie-parser');
 
 // Importation des middlewares
@@ -66,15 +70,13 @@ class App {
     this.authMiddleware = null;
     this.sequelize = null;
     this.config = config;
-    // ✅ CSRF supprimé
-    
-    // Infos sur les uploads
+    // Infos sur les uploads — single source of truth via env
     this.uploadInfo = {
       maxFileSize: {
-        image: 10 * 1024 * 1024,    // 10MB
-        video: 500 * 1024 * 1024,   // 500MB
-        audio: 100 * 1024 * 1024,   // 100MB
-        document: 50 * 1024 * 1024  // 50MB
+        image: parseInt(process.env.UPLOAD_IMAGE_MAX_SIZE) || 10 * 1024 * 1024,       // default 10MB
+        video: parseInt(process.env.UPLOAD_VIDEO_MAX_SIZE) || 100 * 1024 * 1024,      // default 100MB
+        audio: parseInt(process.env.UPLOAD_AUDIO_MAX_SIZE) || 50 * 1024 * 1024,       // default 50MB
+        document: parseInt(process.env.UPLOAD_DOCUMENT_MAX_SIZE) || 20 * 1024 * 1024  // default 20MB
       },
       allowedTypes: {
         image: ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'],
@@ -100,8 +102,6 @@ class App {
     }
   }
 
-  // ✅ CSRF supprimé - méthode initializeCSRFProtection() retirée
-
   // Initialisation des middlewares de base
   initializeMiddlewares() {
     // Trust proxy pour obtenir la vraie IP derrière un reverse proxy
@@ -126,11 +126,11 @@ class App {
         contentSecurityPolicy: {
           directives: {
             defaultSrc: ["'self'"],
-            imgSrc: ["'self'", "data:", "https:", "blob:"],
+            imgSrc: ["'self'", "data:", "https:"],
             scriptSrc: ["'self'", `'nonce-${nonce}'`],
             styleSrc: ["'self'"],
             fontSrc: ["'self'", "https:", "data:"],
-            connectSrc: ["'self'", process.env.FRONTEND_URL || "http://localhost:3000", "wss:"],
+            connectSrc: ["'self'", process.env.FRONTEND_URL || "http://localhost:3000", process.env.FRONTEND_URL ? `wss://${new URL(process.env.FRONTEND_URL).host}` : "ws://localhost:3001"],
             frameAncestors: ["'none'"],
           },
         },
@@ -179,6 +179,9 @@ class App {
     // Détecte automatiquement via: ?lang=ar, cookie, header X-Language, Accept-Language
     this.app.use(languageMiddleware);
     this.app.use(i18nMiddleware);
+
+    // CSRF — Double Submit Cookie (set token on every response)
+    this.app.use(csrfTokenProvider);
 
     // Headers de performance pour les réponses API
     this.app.use('/api', (req, res, next) => {
@@ -441,7 +444,6 @@ class App {
   }
 
   // Initialisation des rate limiters
-  // ✅ CSRF supprimé des rate limiters
   initializeRateLimiters() {
     // Rate limiting par endpoint (un seul limiter approprié par route)
     this.app.use('/api/users/login', rateLimitMiddleware.endpointLimiters.login);
@@ -481,8 +483,6 @@ class App {
     if (!this.authMiddleware) {
       throw new Error('Le middleware d\'authentification doit être initialisé avant les routes');
     }
-
-    // ✅ Route CSRF supprimée - non nécessaire avec JWT
 
     // 🗺️ Sitemap.xml dynamique (SEO)
     const initSitemapRoutes = require('./routes/sitemapRoutes');
@@ -589,6 +589,9 @@ class App {
         })
       });
     });
+
+    // CSRF — verify token on mutating API requests (POST, PUT, PATCH, DELETE)
+    this.app.use('/api', csrfVerifier);
 
     // Routes API principales (utilise ServiceContainer en interne)
     this.app.use('/api', initRoutes(this.models, this.authMiddleware));
@@ -1138,7 +1141,6 @@ class App {
       
       // Initialiser dans l'ordre
       this.initializeMiddlewares();
-      // ✅ CSRF supprimé - this.initializeCSRFProtection() retiré
       await this.initializeDatabase();
 
       // Re-initialize audit middleware now that models are loaded

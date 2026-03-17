@@ -94,6 +94,15 @@ class ServiceService extends BaseService {
       if (!lieu) throw this._validationError('Le lieu spécifié n\'existe pas');
     }
 
+    // Validate GPS coordinates if provided
+    const { isValidLatitude, isValidLongitude } = require('../utils/geoUtils');
+    if (data.latitude != null && data.latitude !== '' && !isValidLatitude(data.latitude)) {
+      throw this._validationError('Coordonnées GPS invalides (latitude : -90 à 90)');
+    }
+    if (data.longitude != null && data.longitude !== '' && !isValidLongitude(data.longitude)) {
+      throw this._validationError('Coordonnées GPS invalides (longitude : -180 à 180)');
+    }
+
     const entityData = {
       nom: data.nom,
       description: data.description || {},

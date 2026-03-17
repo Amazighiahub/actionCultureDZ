@@ -10,6 +10,28 @@ class BaseRepository {
   }
 
   /**
+   * Includes par défaut — détecte automatiquement les méthodes des sous-classes :
+   *   _defaultIncludes() ou getDefaultIncludes()
+   * Les sous-classes peuvent aussi surcharger ce getter directement.
+   * @returns {Array}
+   */
+  get defaultIncludes() {
+    if (typeof this._defaultIncludes === 'function') return this._defaultIncludes();
+    if (typeof this.getDefaultIncludes === 'function') return this.getDefaultIncludes();
+    return [];
+  }
+
+  /**
+   * Fusionne les includes passés en paramètre avec les includes par défaut.
+   * Les includes explicites priment sur les défauts (par alias).
+   * @private
+   */
+  _mergeIncludes(explicit = []) {
+    if (explicit.length > 0) return explicit; // includes explicites = override complet
+    return this.defaultIncludes;
+  }
+
+  /**
    * Trouve tous les enregistrements avec pagination et filtres
    */
   async findAll(options = {}) {
@@ -17,7 +39,7 @@ class BaseRepository {
       page = 1,
       limit = 20,
       where = {},
-      include = [],
+      include,
       order = [['date_creation', 'DESC']],
       attributes
     } = options;
@@ -26,7 +48,7 @@ class BaseRepository {
 
     const { rows, count } = await this.model.findAndCountAll({
       where,
-      include,
+      include: this._mergeIncludes(include),
       order,
       limit,
       offset,
@@ -51,10 +73,10 @@ class BaseRepository {
    * Trouve un enregistrement par ID
    */
   async findById(id, options = {}) {
-    const { include = [], attributes } = options;
+    const { include, attributes } = options;
 
     return this.model.findByPk(id, {
-      include,
+      include: this._mergeIncludes(include),
       attributes
     });
   }
@@ -63,11 +85,11 @@ class BaseRepository {
    * Trouve un enregistrement par critères
    */
   async findOne(where, options = {}) {
-    const { include = [], attributes } = options;
+    const { include, attributes } = options;
 
     return this.model.findOne({
       where,
-      include,
+      include: this._mergeIncludes(include),
       attributes
     });
   }

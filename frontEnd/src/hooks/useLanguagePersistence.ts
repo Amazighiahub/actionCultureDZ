@@ -19,15 +19,16 @@ export const useLanguagePersistence = () => {
     const saveUserLanguage = () => {
       const currentLang = i18n.language;
       if (currentLang) {
-        localStorage.setItem(USER_LANG_KEY, currentLang);
+        try { localStorage.setItem(USER_LANG_KEY, currentLang); } catch { /* storage unavailable */ }
       }
     };
-    
+
     // Restaurer la langue préférée de l'utilisateur
     const restoreUserLanguage = () => {
-      const savedLang = localStorage.getItem(USER_LANG_KEY);
+      let savedLang: string | null = null;
+      try { savedLang = localStorage.getItem(USER_LANG_KEY); } catch { /* storage unavailable */ }
       const currentLang = i18n.language;
-      
+
       if (savedLang && savedLang !== currentLang) {
         i18n.changeLanguage(savedLang);
       }
@@ -49,26 +50,27 @@ export const useLanguagePersistence = () => {
   const preserveLanguageOnLogout = () => {
     const currentLang = i18n.language;
     if (currentLang) {
-      // Sauvegarder dans une clé temporaire pour le logout
-      sessionStorage.setItem('logout_language', currentLang);
+      try { sessionStorage.setItem('logout_language', currentLang); } catch { /* storage unavailable */ }
     }
   };
-  
+
   // Fonction pour restaurer la langue après le login/logout
   const restoreLanguageAfterAuth = () => {
-    // Vérifier d'abord la langue de logout
-    const logoutLang = sessionStorage.getItem('logout_language');
-    if (logoutLang) {
-      sessionStorage.removeItem('logout_language');
-      i18n.changeLanguage(logoutLang);
-      return;
-    }
-    
-    // Sinon, utiliser la préférence utilisateur
-    const userLang = localStorage.getItem(USER_LANG_KEY);
-    if (userLang && userLang !== i18n.language) {
-      i18n.changeLanguage(userLang);
-    }
+    try {
+      // Vérifier d'abord la langue de logout
+      const logoutLang = sessionStorage.getItem('logout_language');
+      if (logoutLang) {
+        sessionStorage.removeItem('logout_language');
+        i18n.changeLanguage(logoutLang);
+        return;
+      }
+
+      // Sinon, utiliser la préférence utilisateur
+      const userLang = localStorage.getItem(USER_LANG_KEY);
+      if (userLang && userLang !== i18n.language) {
+        i18n.changeLanguage(userLang);
+      }
+    } catch { /* storage unavailable */ }
   };
   
   return {

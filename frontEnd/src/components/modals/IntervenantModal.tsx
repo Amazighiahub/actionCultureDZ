@@ -75,6 +75,7 @@ const IntervenantModal: React.FC<IntervenantModalProps> = ({
   // Autres états
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [checkingEmail, setCheckingEmail] = useState(false);
   const [emailExists, setEmailExists] = useState<{exists: boolean;user?: any;} | null>(null);
   const [newSpecialite, setNewSpecialite] = useState('');
@@ -107,11 +108,11 @@ const IntervenantModal: React.FC<IntervenantModalProps> = ({
         if (response.success && response.data) {
           setTypesUsers(response.data);
         } else {
-          throw new Error(response.error || 'Erreur lors du chargement des types');
+          throw new Error(response.error || t('intervenant.errors.loadTypesFailed', 'Erreur lors du chargement des types'));
         }
       } catch (err) {
         console.error('Erreur chargement types users:', err);
-        setTypesError('Impossible de charger les types d\'intervenants');
+        setTypesError(t('intervenant.errors.loadTypesFailed', 'Impossible de charger les types d\'intervenants'));
         setTypesUsers([]);
       } finally {
         setLoadingTypes(false);
@@ -138,6 +139,7 @@ const IntervenantModal: React.FC<IntervenantModalProps> = ({
       });
       setEmailExists(null);
       setError(null);
+      setFieldErrors({});
       setNewSpecialite('');
     }
   }, [isOpen]);
@@ -221,14 +223,27 @@ const IntervenantModal: React.FC<IntervenantModalProps> = ({
 
   // Soumission du formulaire
   const handleSubmit = () => {
-    // Validation
-    if (!formData.nom || !formData.prenom) {
-      setError('Le nom et le prénom sont obligatoires');
-      return;
+    // Validation — collect all errors
+    const errs: Record<string, string> = {};
+    if (!formData.prenom) {
+      errs.prenom = t('modals_intervenantmodal.error_prenom_required', 'Le prénom est obligatoire');
     }
-
+    if (!formData.nom) {
+      errs.nom = t('modals_intervenantmodal.error_nom_required', 'Le nom est obligatoire');
+    }
     if (!formData.id_type_user) {
-      setError('Veuillez sélectionner un type de rôle');
+      errs.id_type_user = t('modals_intervenantmodal.error_role_required', 'Veuillez sélectionner un type de rôle');
+    }
+    setFieldErrors(errs);
+    if (Object.keys(errs).length > 0) {
+      setError(Object.values(errs)[0]);
+      setTimeout(() => {
+        const el = document.querySelector('[aria-invalid="true"]');
+        if (el) {
+          (el as HTMLElement).focus();
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 0);
       return;
     }
 
@@ -253,7 +268,7 @@ const IntervenantModal: React.FC<IntervenantModalProps> = ({
         </DialogHeader>
 
         {error &&
-        <Alert variant="destructive">
+        <Alert variant="destructive" role="alert">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>{error}</AlertDescription>
           </Alert>
@@ -276,20 +291,42 @@ const IntervenantModal: React.FC<IntervenantModalProps> = ({
                 <Label htmlFor="prenom">{t("modals_intervenantmodal.prnom")}</Label>
                 <Input
                   id="prenom"
+                  autoComplete="given-name"
+                  maxLength={100}
                   value={formData.prenom}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, prenom: e.target.value }))}
-                  placeholder={t("modals_intervenantmodal.placeholder_prnom")} />
-
+                  onChange={(e) => {
+                    setFormData((prev) => ({ ...prev, prenom: e.target.value }));
+                    setFieldErrors((prev) => ({ ...prev, prenom: '' }));
+                  }}
+                  placeholder={t("modals_intervenantmodal.placeholder_prnom")}
+                  className={fieldErrors.prenom ? 'border-destructive' : ''}
+                  aria-invalid={!!fieldErrors.prenom}
+                  aria-describedby={fieldErrors.prenom ? 'intervenant-prenom-error' : undefined}
+                />
+                {fieldErrors.prenom && (
+                  <p id="intervenant-prenom-error" role="alert" className="text-sm text-destructive">{fieldErrors.prenom}</p>
+                )}
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="nom">{t("modals_intervenantmodal.nom")}</Label>
                 <Input
                   id="nom"
+                  autoComplete="family-name"
+                  maxLength={100}
                   value={formData.nom}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, nom: e.target.value }))}
-                  placeholder={t("modals_intervenantmodal.placeholder_nom_famille")} />
-
+                  onChange={(e) => {
+                    setFormData((prev) => ({ ...prev, nom: e.target.value }));
+                    setFieldErrors((prev) => ({ ...prev, nom: '' }));
+                  }}
+                  placeholder={t("modals_intervenantmodal.placeholder_nom_famille")}
+                  className={fieldErrors.nom ? 'border-destructive' : ''}
+                  aria-invalid={!!fieldErrors.nom}
+                  aria-describedby={fieldErrors.nom ? 'intervenant-nom-error' : undefined}
+                />
+                {fieldErrors.nom && (
+                  <p id="intervenant-nom-error" role="alert" className="text-sm text-destructive">{fieldErrors.nom}</p>
+                )}
               </div>
             </div>
 
@@ -299,6 +336,8 @@ const IntervenantModal: React.FC<IntervenantModalProps> = ({
                 <Input
                   id="email"
                   type="email"
+                  autoComplete="email"
+                  maxLength={255}
                   value={formData.email || ''}
                   onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
                   placeholder={t("modals_intervenantmodal.placeholder_emailexemplecom")} />
@@ -327,6 +366,7 @@ const IntervenantModal: React.FC<IntervenantModalProps> = ({
                 <Label htmlFor="titre_professionnel">{t("modals_intervenantmodal.titre_professionnel")}</Label>
                 <Input
                   id="titre_professionnel"
+                  maxLength={255}
                   value={formData.titre_professionnel || ''}
                   onChange={(e) => setFormData((prev) => ({ ...prev, titre_professionnel: e.target.value }))}
                   placeholder={t("modals_intervenantmodal.placeholder_prof")} />
@@ -337,6 +377,8 @@ const IntervenantModal: React.FC<IntervenantModalProps> = ({
                 <Label htmlFor="organisation">{t("modals_intervenantmodal.organisation")}</Label>
                 <Input
                   id="organisation"
+                  autoComplete="organization"
+                  maxLength={255}
                   value={formData.organisation || ''}
                   onChange={(e) => setFormData((prev) => ({ ...prev, organisation: e.target.value }))}
                   placeholder={t("modals_intervenantmodal.placeholder_nom_lorganisation")} />
@@ -348,6 +390,7 @@ const IntervenantModal: React.FC<IntervenantModalProps> = ({
               <Label htmlFor="biographie">{t("modals_intervenantmodal.biographie")}</Label>
               <Textarea
                 id="biographie"
+                maxLength={500}
                 value={formData.biographie || ''}
                 onChange={(e) => setFormData((prev) => ({ ...prev, biographie: e.target.value }))}
                 placeholder={t("modals_intervenantmodal.placeholder_courte_biographie")}
@@ -366,7 +409,7 @@ const IntervenantModal: React.FC<IntervenantModalProps> = ({
                   placeholder={t("modals_intervenantmodal.placeholder_ajouter_une_spcialit")}
                   value={newSpecialite}
                   onChange={(e) => setNewSpecialite(e.target.value)}
-                  onKeyPress={(e) => {
+                  onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
                       handleAddSpecialite();
@@ -391,7 +434,7 @@ const IntervenantModal: React.FC<IntervenantModalProps> = ({
                       <button
                     type="button"
                     onClick={() => handleRemoveSpecialite(spec)}
-                    className="ml-1 hover:text-destructive">
+                    className="ms-1 hover:text-destructive">
 
                         <X className="h-3 w-3" />
                       </button>
@@ -411,7 +454,7 @@ const IntervenantModal: React.FC<IntervenantModalProps> = ({
               
               {loadingTypes ?
               <div className="flex items-center justify-center p-4 border rounded-md">
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  <Loader2 className="h-4 w-4 animate-spin me-2" />
                   <span className="text-sm text-muted-foreground">{t("modals_intervenantmodal.chargement_des_types")}
 
                 </span>
@@ -419,17 +462,21 @@ const IntervenantModal: React.FC<IntervenantModalProps> = ({
 
               <Select
                 value={formData.id_type_user?.toString() || ''}
-                onValueChange={(value) => setFormData((prev) => ({
-                  ...prev,
-                  id_type_user: parseInt(value)
-                }))}
+                onValueChange={(value) => {
+                  setFormData((prev) => ({ ...prev, id_type_user: parseInt(value) }));
+                  setFieldErrors((prev) => ({ ...prev, id_type_user: '' }));
+                }}
                 disabled={relevantTypes.length === 0}>
 
-                  <SelectTrigger>
+                  <SelectTrigger
+                    className={fieldErrors.id_type_user ? 'border-destructive' : ''}
+                    aria-invalid={!!fieldErrors.id_type_user}
+                    aria-describedby={fieldErrors.id_type_user ? 'intervenant-role-error' : undefined}
+                  >
                     <SelectValue placeholder={
                   relevantTypes.length === 0 ?
-                  "Aucun rôle disponible" :
-                  "Sélectionnez un rôle"
+                  t('intervenant.noRolesAvailable', 'Aucun rôle disponible') :
+                  t('intervenant.selectRole', 'Sélectionnez un rôle')
                   } />
                   </SelectTrigger>
                   <SelectContent>
@@ -440,7 +487,7 @@ const IntervenantModal: React.FC<IntervenantModalProps> = ({
 
                         <span className="capitalize">{type.nom_type}</span>
                         {type.description &&
-                    <span className="text-sm text-muted-foreground ml-2">
+                    <span className="text-sm text-muted-foreground ms-2">
                             - {type.description}
                           </span>
                     }
@@ -450,6 +497,10 @@ const IntervenantModal: React.FC<IntervenantModalProps> = ({
                 </Select>
               }
               
+              {fieldErrors.id_type_user && (
+                <p id="intervenant-role-error" role="alert" className="text-sm text-destructive">{fieldErrors.id_type_user}</p>
+              )}
+
               {relevantTypes.length > 0 &&
               <p className="text-xs text-muted-foreground">
                   {relevantTypes.length}{t("modals_intervenantmodal.type")}{relevantTypes.length > 1 ? 's' : ''}{t("modals_intervenantmodal.disponible")}{relevantTypes.length > 1 ? 's' : ''}
@@ -467,7 +518,7 @@ const IntervenantModal: React.FC<IntervenantModalProps> = ({
             onClick={handleSubmit}
             disabled={loading || loadingTypes || relevantTypes.length === 0}>
 
-            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{t("modals_intervenantmodal.ajouter_lintervenant")}
+            {loading && <Loader2 className="me-2 h-4 w-4 animate-spin" />}{t("modals_intervenantmodal.ajouter_lintervenant")}
 
           </Button>
         </DialogFooter>

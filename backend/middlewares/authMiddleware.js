@@ -1,6 +1,7 @@
 // middlewares/authMiddleware.js - VERSION CORRIGÉE ET SÉCURISÉE
 // Compatible avec: createAuthMiddleware(models) OU createAuthMiddleware(User)
 const jwt = require('jsonwebtoken');
+const logger = require('../utils/logger');
 
 // ============================================================================
 // VALIDATION DE SÉCURITÉ JWT
@@ -50,13 +51,13 @@ module.exports = (modelsOrUser) => {
     User = modelsOrUser;
     Role = null;
     Organisation = null;
-    if (!IS_PRODUCTION) console.log('🔐 AuthMiddleware initialisé avec User seul');
+    if (!IS_PRODUCTION) logger.debug('AuthMiddleware initialisé avec User seul');
   } else {
     // C'est l'objet models complet
     User = modelsOrUser.User;
     Role = modelsOrUser.Role;
     Organisation = modelsOrUser.Organisation;
-    if (!IS_PRODUCTION) console.log('🔐 AuthMiddleware initialisé avec models complet');
+    if (!IS_PRODUCTION) logger.debug('AuthMiddleware initialisé avec models complet');
   }
 
   // ====================
@@ -68,7 +69,7 @@ module.exports = (modelsOrUser) => {
     try {
       return jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] });
     } catch (error) {
-      console.error('❌ Erreur vérification token:', error.message);
+      logger.warn('Erreur vérification token:', error.message);
       return null;
     }
   };
@@ -117,7 +118,7 @@ module.exports = (modelsOrUser) => {
 
         // Log uniquement en développement
         if (IS_DEV_MODE) {
-          console.log(`🔍 Auth Debug: user.id_type_user=${user.id_type_user}, isProfessionalByType=${isProfessionalByType}`);
+          logger.debug(`Auth Debug: user.id_type_user=${user.id_type_user}, isProfessionalByType=${isProfessionalByType}`);
         }
 
         user.isAdmin = user.roleNames.includes('Administrateur') || user.id_type_user === 29;
@@ -131,7 +132,7 @@ module.exports = (modelsOrUser) => {
 
       return user;
     } catch (error) {
-      console.error('❌ Erreur getUserWithRoles:', error.message);
+      logger.error('Erreur getUserWithRoles:', error.message);
       
       // Fallback: récupérer l'utilisateur sans les associations
       try {
@@ -154,7 +155,7 @@ module.exports = (modelsOrUser) => {
         
         return user;
       } catch (fallbackError) {
-        console.error('❌ Erreur fallback getUserWithRoles:', fallbackError.message);
+        logger.error('Erreur fallback getUserWithRoles:', fallbackError.message);
         return null;
       }
     }
@@ -238,7 +239,7 @@ module.exports = (modelsOrUser) => {
       
       next();
     } catch (error) {
-      console.error('❌ Erreur authentification:', error);
+      logger.error('Erreur authentification:', error.message);
       return res.status(500).json({
         success: false,
         message: req.t('common.serverError'),
@@ -282,7 +283,7 @@ module.exports = (modelsOrUser) => {
     } catch (error) {
       // En cas d'erreur, continuer sans authentification mais logger si c'est une erreur DB
       if (error.name !== 'JsonWebTokenError' && error.name !== 'TokenExpiredError') {
-        console.warn('optionalAuth: unexpected error:', error.message);
+        logger.warn('optionalAuth: unexpected error:', error.message);
       }
       next();
     }
@@ -315,7 +316,7 @@ module.exports = (modelsOrUser) => {
 
       next();
     } catch (error) {
-      console.error('❌ Erreur vérification email:', error);
+      logger.error('Erreur vérification email:', error.message);
       return res.status(500).json({
         success: false,
         message: req.t('common.serverError')
@@ -345,7 +346,7 @@ module.exports = (modelsOrUser) => {
 
       next();
     } catch (error) {
-      console.error('❌ Erreur vérification compte actif:', error);
+      logger.error('Erreur vérification compte actif:', error.message);
       return res.status(500).json({
         success: false,
         message: req.t('common.serverError')
@@ -526,7 +527,7 @@ module.exports = (modelsOrUser) => {
         // Récupérer le modèle depuis modelsOrUser
         const Model = modelsOrUser[modelName];
         if (!Model) {
-          console.error(`❌ Modèle ${modelName} non trouvé`);
+          logger.error(`Modèle ${modelName} non trouvé`);
           return res.status(500).json({
             success: false,
             message: req.t('common.serverError')
@@ -555,7 +556,7 @@ module.exports = (modelsOrUser) => {
         req.resource = resource;
         next();
       } catch (error) {
-        console.error('❌ Erreur requireOwnership:', error);
+        logger.error('Erreur requireOwnership:', error.message);
         return res.status(500).json({
           success: false,
           message: req.t('common.serverError')

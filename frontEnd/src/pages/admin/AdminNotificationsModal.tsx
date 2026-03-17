@@ -84,22 +84,39 @@ const AdminNotificationsModal: React.FC<AdminNotificationsModalProps> = ({
   });
 
   const [sending, setSending] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   // Mise à jour des champs
   const updateField = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    setFieldErrors(prev => ({ ...prev, [field]: '' }));
   };
 
   // Envoi de la notification
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.title || !formData.message) {
+    const errs: Record<string, string> = {};
+    if (!formData.title?.trim()) {
+      errs.title = t('admin.notifications.titleRequired', 'Le titre est requis');
+    }
+    if (!formData.message?.trim()) {
+      errs.message = t('admin.notifications.messageRequired', 'Le message est requis');
+    }
+    setFieldErrors(errs);
+    if (Object.keys(errs).length > 0) {
       toast({
         title: t('admin.notifications.requiredFields'),
-        description: t('admin.notifications.titleMessageRequired'),
+        description: Object.values(errs)[0],
         variant: 'destructive'
       });
+      setTimeout(() => {
+        const el = document.querySelector('[aria-invalid="true"]');
+        if (el) {
+          (el as HTMLElement).focus();
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 0);
       return;
     }
 
@@ -276,7 +293,13 @@ const AdminNotificationsModal: React.FC<AdminNotificationsModalProps> = ({
               onChange={(e) => updateField('title', e.target.value)}
               placeholder={t('admin.notifications.form.titlePlaceholder')}
               required
+              className={fieldErrors.title ? 'border-destructive' : ''}
+              aria-invalid={!!fieldErrors.title}
+              aria-describedby={fieldErrors.title ? 'notif-title-error' : undefined}
             />
+            {fieldErrors.title && (
+              <p id="notif-title-error" role="alert" className="text-sm text-destructive">{fieldErrors.title}</p>
+            )}
           </div>
 
           {/* Message */}
@@ -287,9 +310,14 @@ const AdminNotificationsModal: React.FC<AdminNotificationsModalProps> = ({
               value={formData.message}
               onChange={(e) => updateField('message', e.target.value)}
               placeholder={t('admin.notifications.form.messagePlaceholder')}
-              className="min-h-[120px]"
+              className={`min-h-[120px] ${fieldErrors.message ? 'border-destructive' : ''}`}
               required
+              aria-invalid={!!fieldErrors.message}
+              aria-describedby={fieldErrors.message ? 'notif-message-error' : undefined}
             />
+            {fieldErrors.message && (
+              <p id="notif-message-error" role="alert" className="text-sm text-destructive">{fieldErrors.message}</p>
+            )}
             <p className="text-xs text-muted-foreground">
               {t('admin.notifications.form.characterCount', { count: formData.message.length, max: 500 })}
             </p>
@@ -329,12 +357,12 @@ const AdminNotificationsModal: React.FC<AdminNotificationsModalProps> = ({
             <Button type="submit" disabled={sending}>
               {sending ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Loader2 className="h-4 w-4 me-2 animate-spin" />
                   {t('admin.notifications.form.sending')}
                 </>
               ) : (
                 <>
-                  <Send className="h-4 w-4 mr-2" />
+                  <Send className="h-4 w-4 me-2" />
                   {t('admin.notifications.form.send')}
                 </>
               )}

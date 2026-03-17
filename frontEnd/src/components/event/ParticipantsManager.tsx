@@ -274,11 +274,11 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
 
   const getStatusBadge = (statut: string) => {
     const config: Record<string, { color: string; icon: React.ElementType; label: string }> = {
-      inscrit: { color: 'bg-blue-100 text-blue-800', icon: Clock, label: t('status.pending', 'Inscrit') },
-      confirme: { color: 'bg-green-100 text-green-800', icon: CheckCircle, label: t('status.validated', 'Confirmé') },
-      present: { color: 'bg-emerald-100 text-emerald-800', icon: CheckCircle, label: t('status.present', 'Présent') },
-      absent: { color: 'bg-gray-100 text-gray-800', icon: XCircle, label: t('status.absent', 'Absent') },
-      annule: { color: 'bg-red-100 text-red-800', icon: XCircle, label: t('status.cancelled', 'Annulé') }
+      inscrit: { color: 'bg-accent/15 text-accent', icon: Clock, label: t('status.pending', 'Inscrit') },
+      confirme: { color: 'bg-primary/15 text-primary', icon: CheckCircle, label: t('status.validated', 'Confirmé') },
+      present: { color: 'bg-primary/20 text-primary', icon: CheckCircle, label: t('status.present', 'Présent') },
+      absent: { color: 'bg-muted text-muted-foreground', icon: XCircle, label: t('status.absent', 'Absent') },
+      annule: { color: 'bg-destructive/15 text-destructive', icon: XCircle, label: t('status.cancelled', 'Annulé') }
     };
     const status = config[statut] || config.inscrit;
     const Icon = status.icon;
@@ -292,11 +292,11 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
 
   const getRoleBadge = (role: string) => {
     const config: Record<string, { color: string; label: string }> = {
-      participant: { color: 'bg-slate-100 text-slate-800', label: t('event.roles.participant', 'Participant') },
-      organisateur: { color: 'bg-purple-100 text-purple-800', label: t('event.roles.organisateur', 'Organisateur') },
-      intervenant: { color: 'bg-orange-100 text-orange-800', label: t('event.roles.intervenant', 'Intervenant') },
-      benevole: { color: 'bg-cyan-100 text-cyan-800', label: t('event.roles.benevole', 'Bénévole') },
-      staff: { color: 'bg-indigo-100 text-indigo-800', label: t('event.roles.staff', 'Staff') }
+      participant: { color: 'bg-muted text-muted-foreground', label: t('event.roles.participant', 'Participant') },
+      organisateur: { color: 'bg-purple-500/15 text-purple-700 dark:text-purple-300', label: t('event.roles.organisateur', 'Organisateur') },
+      intervenant: { color: 'bg-orange-500/15 text-orange-700 dark:text-orange-300', label: t('event.roles.intervenant', 'Intervenant') },
+      benevole: { color: 'bg-cyan-500/15 text-cyan-700 dark:text-cyan-300', label: t('event.roles.benevole', 'Bénévole') },
+      staff: { color: 'bg-indigo-500/15 text-indigo-700 dark:text-indigo-300', label: t('event.roles.staff', 'Staff') }
     };
     const roleConfig = config[role] || config.participant;
     return <Badge className={roleConfig.color}>{roleConfig.label}</Badge>;
@@ -488,7 +488,6 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
                             <Button
                               variant="default"
                               size="sm"
-                              className="bg-green-600 hover:bg-green-700"
                               onClick={() => handleParticipantAction(participant.id_user, 'confirmer')}
                               disabled={actionLoading === participant.id_user}
                             >
@@ -521,7 +520,6 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
                             <Button
                               variant="default"
                               size="sm"
-                              className="bg-emerald-600 hover:bg-emerald-700"
                               onClick={() => handleParticipantAction(participant.id_user, 'marquer_present')}
                               disabled={actionLoading === participant.id_user}
                             >
@@ -550,7 +548,7 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
 
                         {/* Si présent -> afficher badge */}
                         {participant.statut_participation === 'present' && (
-                          <Badge className="bg-emerald-100 text-emerald-800">
+                          <Badge className="bg-primary/15 text-primary">
                             <CheckCircle className="h-3 w-3 mr-1" />
                             {t('status.present', 'Présent')}
                           </Badge>
@@ -906,7 +904,7 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
                         src={getAssetUrl(media.url)}
                         alt=""
                         className="w-full h-24 object-cover rounded cursor-pointer hover:opacity-80"
-                        onClick={() => window.open(getAssetUrl(media.url), '_blank')}
+                        onClick={() => window.open(getAssetUrl(media.url), '_blank', 'noopener,noreferrer')}
                       />
                     ))}
                   </div>

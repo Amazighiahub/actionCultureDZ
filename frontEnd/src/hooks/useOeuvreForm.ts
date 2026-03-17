@@ -144,10 +144,10 @@ export function useOeuvreForm() {
 
     switch (step) {
       case 0: // Informations générales
-        if (!formData.titre || formData.titre.trim().length < 3) {
+        if (!formData.titre?.trim() || formData.titre.trim().length < 3) {
           newErrors.titre = 'Le titre doit contenir au moins 3 caractères';
         }
-        if (!formData.description || formData.description.trim().length < 20) {
+        if (!formData.description?.trim() || formData.description.trim().length < 20) {
           newErrors.description = 'La description doit contenir au moins 20 caractères';
         }
         if (!formData.id_type_oeuvre) {
@@ -172,14 +172,24 @@ export function useOeuvreForm() {
 
       case 4: // Récapitulatif
         // Validation finale
-        if (!formData.titre) newErrors.titre = 'Titre requis';
-        if (!formData.description) newErrors.description = 'Description requise';
+        if (!formData.titre?.trim()) newErrors.titre = 'Titre requis';
+        if (!formData.description?.trim()) newErrors.description = 'Description requise';
         if (!formData.id_type_oeuvre) newErrors.id_type_oeuvre = 'Type requis';
         break;
     }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    const hasErrors = Object.keys(newErrors).length > 0;
+    if (hasErrors) {
+      setTimeout(() => {
+        const firstError = document.querySelector('[aria-invalid="true"]');
+        if (firstError) {
+          (firstError as HTMLElement).focus();
+          firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 0);
+    }
+    return !hasErrors;
   }, [formData]);
 
   // Uploader les médias

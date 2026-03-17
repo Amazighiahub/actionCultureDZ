@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Header from '@/components/Header';
@@ -18,6 +18,8 @@ import { patrimoineService, CreateSiteData } from '@/services/patrimoine.service
 import { metadataService } from '@/services/metadata.service';
 // lieuService is used internally by LieuSelector
 import MultiLangInput from '@/components/MultiLangInput';
+import { useRTL } from '@/hooks/useRTL';
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 // LieuSelector chargé en lazy (inclut leaflet ~40KB)
 const LieuSelector = React.lazy(() =>
   import('@/components/LieuSelector').then(m => ({ default: m.LieuSelector }))
@@ -58,52 +60,37 @@ const INITIAL_FORM: FormData = {
   statut: 'ouvert'
 };
 
-const TYPES_PATRIMOINE = [
-  { value: 'monument', label: 'Monument' },
-  { value: 'vestige', label: 'Vestige archéologique' },
-  { value: 'musee', label: 'Musée' },
-  { value: 'site_naturel', label: 'Site naturel' },
-  { value: 'ville_village', label: 'Ville/Village historique' },
-  { value: 'autre', label: 'Autre' }
-];
-
-const STATUTS = [
-  { value: 'ouvert', label: 'Ouvert au public' },
-  { value: 'ferme', label: 'Fermé' },
-  { value: 'restauration', label: 'En restauration' },
-  { value: 'abandonne', label: 'Abandonné' }
-];
-
-const CLASSEMENTS = [
-  { value: 'mondial', label: 'Patrimoine mondial UNESCO' },
-  { value: 'national', label: 'Classement national' },
-  { value: 'regional', label: 'Classement régional' },
-  { value: 'local', label: 'Classement local' }
-];
-
-const EPOQUES = [
-  { value: 'prehistoire', label: 'Préhistoire' },
-  { value: 'antiquite', label: 'Antiquité' },
-  { value: 'moyen_age', label: 'Moyen Âge' },
-  { value: 'epoque_moderne', label: 'Époque moderne' },
-  { value: 'contemporain', label: 'Contemporain' }
-];
+// Values only — labels resolved via t() in getLocalizedLabel
+const TYPES_PATRIMOINE = ['monument', 'vestige', 'musee', 'site_naturel', 'ville_village', 'autre'];
+const STATUTS = ['ouvert', 'ferme', 'restauration', 'abandonne'];
+const CLASSEMENTS = ['mondial', 'national', 'regional', 'local'];
+const EPOQUES = ['prehistoire', 'antiquite', 'moyen_age', 'epoque_moderne', 'contemporain'];
 
 const AjouterPatrimoinePro: React.FC = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const { direction } = useRTL();
   const isEditMode = !!id;
   const editId = id ? parseInt(id) : null;
   i18n.language;
 
   // States
   const [formData, setFormData] = useState<FormData>(INITIAL_FORM);
+  const [isDirty, setIsDirty] = useState(false);
+  useUnsavedChanges(isDirty);
   const [medias, setMedias] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  // Refs for focusing on first errored field
+  const typeRef = useRef<HTMLButtonElement>(null);
+  const wilayaRef = useRef<HTMLButtonElement>(null);
+  const nomRef = useRef<HTMLDivElement>(null);
+  const gpsRef = useRef<HTMLDivElement>(null);
 
   // Charger les données existantes en mode édition
   useEffect(() => {
@@ -137,14 +124,14 @@ const AjouterPatrimoinePro: React.FC = () => {
           date_classement: site.date_classement,
           visite_virtuelle_url: site.visite_virtuelle_url,
         });
-        console.log('✅ Patrimoine chargé pour édition:', site);
+        // Patrimoine loaded for editing
       } else {
-        setError('Site introuvable');
+        setError(t('ajouterPatrimoine.errors.siteNotFound', 'Site introuvable'));
         navigate('/dashboard-pro');
       }
     } catch (err: any) {
       console.error('❌ Erreur chargement patrimoine:', err);
-      setError('Impossible de charger le site');
+      setError(t('ajouterPatrimoine.errors.loadFailed', 'Impossible de charger le site'));
     }
   };
 
@@ -177,11 +164,19 @@ const AjouterPatrimoinePro: React.FC = () => {
 
 
   // Handle file upload
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
-      const newFiles = Array.from(files);
+      const allFiles = Array.from(files);
+      const oversized = allFiles.filter(f => f.size > MAX_FILE_SIZE);
+      if (oversized.length > 0) {
+        setError(t('ajouterPatrimoine.errors.fileTooLarge', 'Chaque fichier doit faire moins de 10 Mo'));
+        return;
+      }
+      const newFiles = allFiles;
       setMedias(prev => [...prev, ...newFiles]);
+      setIsDirty(true);
 
       // Create previews
       newFiles.forEach(file => {
@@ -204,25 +199,43 @@ const AjouterPatrimoinePro: React.FC = () => {
     e.preventDefault();
     setError(null);
 
-    // Validation
-    if (
-      !formData.nom.fr ||
-      !formData.nom.ar ||
-      !formData.nom.en ||
-      !formData.nom['tz-ltn'] ||
-      !formData.nom['tz-tfng']
-    ) {
-      setError(t('ajouterPatrimoine.errors.nomRequired'));
-      return;
+    // Validation — collect ALL errors
+    const errors: Record<string, string> = {};
+
+    if (!formData.nom.fr?.trim() && !formData.nom.ar?.trim()) {
+      errors.nom = t('ajouterPatrimoine.errors.nomRequired', 'Le nom est requis (au moins en français ou arabe)');
     }
-    if (!formData.type) {
-      setError(t('ajouterPatrimoine.errors.typeRequired'));
-      return;
+    if (!formData.type?.trim()) {
+      errors.type = t('ajouterPatrimoine.errors.typeRequired', 'Le type est requis');
     }
     if (!formData.wilaya_id) {
-      setError(t('ajouterPatrimoine.errors.wilayaRequired'));
+      errors.wilaya = t('ajouterPatrimoine.errors.wilayaRequired', 'La wilaya est requise');
+    }
+    // GPS validation
+    if (formData.latitude && formData.longitude) {
+      if (formData.latitude < -90 || formData.latitude > 90 || formData.longitude < -180 || formData.longitude > 180) {
+        errors.gps = t('validation.invalidGPS', 'Coordonnées GPS invalides (latitude : -90 à 90, longitude : -180 à 180)');
+      }
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+
+      // Focus and scroll to the first errored field
+      const fieldOrder: { key: string; ref: React.RefObject<HTMLElement | null> }[] = [
+        { key: 'nom', ref: nomRef },
+        { key: 'type', ref: typeRef },
+        { key: 'wilaya', ref: wilayaRef },
+        { key: 'gps', ref: gpsRef },
+      ];
+      const firstErrorField = fieldOrder.find(f => errors[f.key]);
+      if (firstErrorField?.ref.current) {
+        firstErrorField.ref.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        firstErrorField.ref.current.focus();
+      }
       return;
     }
+    setFieldErrors({});
 
     try {
       setLoading(true);
@@ -261,11 +274,12 @@ const AjouterPatrimoinePro: React.FC = () => {
           }
         }
         setSuccess(true);
+        setIsDirty(false);
         setTimeout(() => {
           navigate('/dashboard-pro');
         }, 2000);
       } else {
-        setError(response.error || (isEditMode ? 'Erreur lors de la mise à jour' : t('ajouterPatrimoine.errors.createFailed')));
+        setError(response.error || (isEditMode ? t('ajouterPatrimoine.errors.updateFailed', 'Erreur lors de la mise à jour') : t('ajouterPatrimoine.errors.createFailed')));
       }
     } catch (err: any) {
       console.error('Erreur creation patrimoine:', err);
@@ -275,9 +289,8 @@ const AjouterPatrimoinePro: React.FC = () => {
     }
   };
 
-  const getLocalizedLabel = (item: { value: string; label: string }) => {
-    // Could be extended to support i18n labels
-    return item.label;
+  const getLocalizedLabel = (category: string, value: string) => {
+    return t(`ajouterPatrimoine.options.${category}.${value}`, value);
   };
 
   if (loadingMetadata) {
@@ -293,7 +306,7 @@ const AjouterPatrimoinePro: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-emerald-50 via-white to-teal-50">
+    <div dir={direction} className="min-h-screen flex flex-col bg-gradient-to-br from-emerald-50 via-white to-teal-50">
       <Header />
 
       <main className="flex-1 container mx-auto px-4 py-8">
@@ -314,8 +327,8 @@ const AjouterPatrimoinePro: React.FC = () => {
 
         {/* Success message */}
         {success && (
-          <Alert className="mb-6 bg-green-50 border-green-200">
-            <AlertDescription className="text-green-800">
+          <Alert className="mb-6 bg-primary/10 border-primary/20">
+            <AlertDescription className="text-primary">
               {t('ajouterPatrimoine.success')}
             </AlertDescription>
           </Alert>
@@ -323,13 +336,14 @@ const AjouterPatrimoinePro: React.FC = () => {
 
         {/* Error message */}
         {error && (
-          <Alert variant="destructive" className="mb-6">
+          <Alert variant="destructive" className="mb-6" role="alert" aria-live="assertive">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
 
         <form onSubmit={handleSubmit}>
+          <p className="text-sm text-muted-foreground mb-4">{t('common.requiredFieldsLegend')}</p>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Main form */}
             <div className="lg:col-span-2 space-y-6">
@@ -341,23 +355,35 @@ const AjouterPatrimoinePro: React.FC = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {/* Nom multilingue */}
-                  <MultiLangInput
-                    name="nom"
-                    label={t('ajouterPatrimoine.nom')}
-                    value={formData.nom}
-                    onChange={(value) => setFormData(prev => ({ ...prev, nom: value }))}
-                    required
-                    placeholder={t('ajouterPatrimoine.nomPlaceholder')}
-                  />
+                  <div ref={nomRef}>
+                    <MultiLangInput
+                      name="nom"
+                      label={t('ajouterPatrimoine.nom')}
+                      value={formData.nom}
+                      onChange={(value) => {
+                        setFormData(prev => ({ ...prev, nom: value }));
+                        setIsDirty(true);
+                        if (fieldErrors.nom) setFieldErrors(prev => { const { nom: _, ...rest } = prev; return rest; });
+                      }}
+                      required
+                      requiredLanguages={['fr']}
+                      placeholder={t('ajouterPatrimoine.nomPlaceholder')}
+                      errors={fieldErrors.nom ? { fr: fieldErrors.nom, ar: fieldErrors.nom } : undefined}
+                    />
+                  </div>
+                  {fieldErrors.nom && (
+                    <p id="nom-error" role="alert" className="text-sm text-destructive">{fieldErrors.nom}</p>
+                  )}
 
                   {/* Description multilingue */}
                   <MultiLangInput
                     name="description"
                     label={t('ajouterPatrimoine.description')}
                     value={formData.description}
-                    onChange={(value) => setFormData(prev => ({ ...prev, description: value }))}
+                    onChange={(value) => { setFormData(prev => ({ ...prev, description: value })); setIsDirty(true); }}
                     type="textarea"
                     rows={4}
+                    requiredLanguages={[]}
                     placeholder={t('ajouterPatrimoine.descriptionPlaceholder')}
                   />
 
@@ -367,34 +393,45 @@ const AjouterPatrimoinePro: React.FC = () => {
                       <Label>{t('ajouterPatrimoine.type')} *</Label>
                       <Select
                         value={formData.type}
-                        onValueChange={(value) => setFormData(prev => ({ ...prev, type: value }))}
+                        onValueChange={(value) => {
+                          setFormData(prev => ({ ...prev, type: value }));
+                          setIsDirty(true);
+                          if (fieldErrors.type) setFieldErrors(prev => { const { type: _, ...rest } = prev; return rest; });
+                        }}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger
+                          ref={typeRef}
+                          aria-invalid={!!fieldErrors.type}
+                          aria-describedby={fieldErrors.type ? 'type-error' : undefined}
+                        >
                           <SelectValue placeholder={t('ajouterPatrimoine.selectType')} />
                         </SelectTrigger>
                         <SelectContent>
                           {TYPES_PATRIMOINE.map((type) => (
-                            <SelectItem key={type.value} value={type.value}>
-                              {getLocalizedLabel(type)}
+                            <SelectItem key={type} value={type}>
+                              {getLocalizedLabel('types', type)}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
+                      {fieldErrors.type && (
+                        <p id="type-error" role="alert" className="text-sm text-destructive">{fieldErrors.type}</p>
+                      )}
                     </div>
 
                     <div className="space-y-2">
-                      <Label>{t('ajouterPatrimoine.epoque')}</Label>
+                      <Label>{t('ajouterPatrimoine.epoque')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span></Label>
                       <Select
                         value={formData.epoque || ''}
-                        onValueChange={(value) => setFormData(prev => ({ ...prev, epoque: value }))}
+                        onValueChange={(value) => { setFormData(prev => ({ ...prev, epoque: value })); setIsDirty(true); }}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder={t('ajouterPatrimoine.selectEpoque')} />
                         </SelectTrigger>
                         <SelectContent>
                           {EPOQUES.map((ep) => (
-                            <SelectItem key={ep.value} value={ep.value}>
-                              {getLocalizedLabel(ep)}
+                            <SelectItem key={ep} value={ep}>
+                              {getLocalizedLabel('epoques', ep)}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -418,12 +455,20 @@ const AjouterPatrimoinePro: React.FC = () => {
                     <Label>{t('ajouterPatrimoine.wilaya')} *</Label>
                     <Select
                       value={formData.wilaya_id ? String(formData.wilaya_id) : ''}
-                      onValueChange={(value) => setFormData(prev => ({
-                        ...prev,
-                        wilaya_id: parseInt(value)
-                      }))}
+                      onValueChange={(value) => {
+                        setFormData(prev => ({
+                          ...prev,
+                          wilaya_id: parseInt(value)
+                        }));
+                        setIsDirty(true);
+                        if (fieldErrors.wilaya) setFieldErrors(prev => { const { wilaya: _, ...rest } = prev; return rest; });
+                      }}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger
+                        ref={wilayaRef}
+                        aria-invalid={!!fieldErrors.wilaya}
+                        aria-describedby={fieldErrors.wilaya ? 'wilaya-error' : undefined}
+                      >
                         <SelectValue placeholder={t('ajouterPatrimoine.selectWilaya')} />
                       </SelectTrigger>
                       <SelectContent>
@@ -434,10 +479,13 @@ const AjouterPatrimoinePro: React.FC = () => {
                         ))}
                       </SelectContent>
                     </Select>
+                    {fieldErrors.wilaya && (
+                      <p id="wilaya-error" role="alert" className="text-sm text-destructive">{fieldErrors.wilaya}</p>
+                    )}
                   </div>
 
                   {/* LieuSelector — même composant que dans AjouterEvenement */}
-                  <div className="space-y-2">
+                  <div className="space-y-2" ref={gpsRef}>
                     <Label className="flex items-center gap-2">
                       <MapPin className="h-4 w-4" />
                       {t('ajouterPatrimoine.lieu', 'Lieu')} *
@@ -457,18 +505,22 @@ const AjouterPatrimoinePro: React.FC = () => {
                                 : lieu.adresse || ''
                             }));
                           }
+                          if (fieldErrors.gps) setFieldErrors(prev => { const { gps: _, ...rest } = prev; return rest; });
                         }}
                         wilayaId={formData.wilaya_id || undefined}
                         required
                       />
                     </React.Suspense>
+                    {fieldErrors.gps && (
+                      <p id="gps-error" role="alert" className="text-sm text-destructive">{fieldErrors.gps}</p>
+                    )}
                   </div>
 
                   {/* Afficher les coordonnées du lieu sélectionné */}
                   {createdLieuId && (
                     <div className="p-3 bg-muted/50 rounded-lg">
                       <div className="flex items-center gap-2 text-sm">
-                        <CheckCircle2 className="h-4 w-4 text-green-600" />
+                        <CheckCircle2 className="h-4 w-4 text-primary" />
                         <span className="font-medium">{t('ajouterPatrimoine.lieuSelected', 'Lieu sélectionné')}</span>
                       </div>
                       <div className="grid grid-cols-2 gap-4 mt-2 text-sm text-muted-foreground">
@@ -491,7 +543,7 @@ const AjouterPatrimoinePro: React.FC = () => {
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>{t('ajouterPatrimoine.statut')}</Label>
+                      <Label>{t('ajouterPatrimoine.statut')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span></Label>
                       <Select
                         value={formData.statut}
                         onValueChange={(value) => setFormData(prev => ({ ...prev, statut: value }))}
@@ -501,8 +553,8 @@ const AjouterPatrimoinePro: React.FC = () => {
                         </SelectTrigger>
                         <SelectContent>
                           {STATUTS.map((s) => (
-                            <SelectItem key={s.value} value={s.value}>
-                              {getLocalizedLabel(s)}
+                            <SelectItem key={s} value={s}>
+                              {getLocalizedLabel('statuts', s)}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -510,7 +562,7 @@ const AjouterPatrimoinePro: React.FC = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label>{t('ajouterPatrimoine.classement')}</Label>
+                      <Label>{t('ajouterPatrimoine.classement')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span></Label>
                       <Select
                         value={formData.classement || ''}
                         onValueChange={(value) => setFormData(prev => ({ ...prev, classement: value }))}
@@ -520,8 +572,8 @@ const AjouterPatrimoinePro: React.FC = () => {
                         </SelectTrigger>
                         <SelectContent>
                           {CLASSEMENTS.map((c) => (
-                            <SelectItem key={c.value} value={c.value}>
-                              {getLocalizedLabel(c)}
+                            <SelectItem key={c} value={c}>
+                              {getLocalizedLabel('classements', c)}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -531,7 +583,7 @@ const AjouterPatrimoinePro: React.FC = () => {
 
                   {formData.classement && (
                     <div className="space-y-2">
-                      <Label>{t('ajouterPatrimoine.dateClassement')}</Label>
+                      <Label>{t('ajouterPatrimoine.dateClassement')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span></Label>
                       <Input
                         type="date"
                         value={formData.date_classement || ''}
@@ -543,14 +595,17 @@ const AjouterPatrimoinePro: React.FC = () => {
                   <div className="space-y-2">
                     <Label className="flex items-center gap-2">
                       <Globe className="h-4 w-4" />
-                      {t('ajouterPatrimoine.visiteVirtuelle')}
+                      {t('ajouterPatrimoine.visiteVirtuelle')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span>
                     </Label>
                     <Input
                       type="url"
+                      autoComplete="url"
+                      maxLength={2048}
                       value={formData.visite_virtuelle_url || ''}
                       onChange={(e) => setFormData(prev => ({ ...prev, visite_virtuelle_url: e.target.value }))}
                       placeholder="https://..."
                     />
+                    <p className="text-xs text-muted-foreground">{t('common.urlHelper')}</p>
                   </div>
                 </CardContent>
               </Card>

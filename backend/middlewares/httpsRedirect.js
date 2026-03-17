@@ -7,8 +7,8 @@
  * - En développement: ne fait rien (pass-through)
  */
 const httpsRedirect = (req, res, next) => {
-  // Ne pas rediriger en développement ou si bypass activé pour tests locaux
-  if (process.env.NODE_ENV !== 'production' || process.env.SKIP_PRODUCTION_CHECKS === 'true') {
+  // Ne pas rediriger en développement
+  if (process.env.NODE_ENV !== 'production') {
     return next();
   }
 

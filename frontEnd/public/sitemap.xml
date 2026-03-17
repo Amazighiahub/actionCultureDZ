@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+
+  <!-- Page d'accueil -->
+  <url>
+    <loc>https://culture-algerie.com/</loc>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://culture-algerie.com/"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://culture-algerie.com/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://culture-algerie.com/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://culture-algerie.com/"/>
+  </url>
+
+  <!-- Patrimoine -->
+  <url>
+    <loc>https://culture-algerie.com/patrimoine</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Événements -->
+  <url>
+    <loc>https://culture-algerie.com/evenements</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Oeuvres -->
+  <url>
+    <loc>https://culture-algerie.com/oeuvres</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Artisanat -->
+  <url>
+    <loc>https://culture-algerie.com/artisanat</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- À propos -->
+  <url>
+    <loc>https://culture-algerie.com/a-propos</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <!-- Authentification -->
+  <url>
+    <loc>https://culture-algerie.com/auth</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.4</priority>
+  </url>
+
+  <!--
+    IMPORTANT : Les pages dynamiques (/patrimoine/:id, /evenements/:id, /oeuvres/:id, /artisanat/:id, /articles/:id)
+    doivent être ajoutées par un script backend ou un cron job.
+
+    Exemple d'endpoint backend à créer :
+    GET /api/sitemap/urls → retourne toutes les URLs dynamiques
+
+    Ou utiliser un script de build :
+    node scripts/generate-sitemap.js > frontEnd/public/sitemap-dynamic.xml
+
+    Puis référencer dans un sitemap index :
+    <sitemapindex>
+      <sitemap><loc>https://culture-algerie.com/sitemap.xml</loc></sitemap>
+      <sitemap><loc>https://culture-algerie.com/sitemap-dynamic.xml</loc></sitemap>
+    </sitemapindex>
+  -->
+
+</urlset>

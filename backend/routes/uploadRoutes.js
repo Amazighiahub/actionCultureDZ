@@ -50,7 +50,7 @@ const initUploadRoutes = (models, authMiddleware) => {
 
   // Upload public d'image (pour inscription)
   router.post('/image/public',
-    rateLimitMiddleware.creation,
+    rateLimitMiddleware.upload,
     uploadService.uploadImage().single('image'),
     FileValidator.uploadValidator(['image/jpeg', 'image/png', 'image/gif', 'image/webp'], 10 * 1024 * 1024),
     auditMiddleware.logAction('upload_image_public', { entityType: 'media' }),
@@ -59,7 +59,7 @@ const initUploadRoutes = (models, authMiddleware) => {
 
   // Upload public de document
   router.post('/document/public',
-    rateLimitMiddleware.creation,
+    rateLimitMiddleware.upload,
     uploadService.uploadDocument().single('document'),
     FileValidator.uploadValidator(['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'], 50 * 1024 * 1024),
     auditMiddleware.logAction('upload_document_public', { entityType: 'media' }),
@@ -77,7 +77,7 @@ const initUploadRoutes = (models, authMiddleware) => {
   // Upload photo de profil avec mise à jour automatique
   router.post('/profile-photo',
     authMiddleware.authenticate,
-    rateLimitMiddleware.creation,
+    rateLimitMiddleware.upload,
     uploadService.uploadImage().single('image'),
     FileValidator.uploadValidator(['image/jpeg', 'image/png', 'image/gif', 'image/webp'], 10 * 1024 * 1024),
     auditMiddleware.logAction('upload_profile_photo', { entityType: 'media' }),
@@ -87,7 +87,7 @@ const initUploadRoutes = (models, authMiddleware) => {
   // Upload image générique
   router.post('/image',
     authMiddleware.authenticate,
-    rateLimitMiddleware.creation,
+    rateLimitMiddleware.upload,
     uploadService.uploadImage().single('image'),
     FileValidator.uploadValidator(['image/jpeg', 'image/png', 'image/gif', 'image/webp'], 10 * 1024 * 1024),
     auditMiddleware.logAction('upload_image', { entityType: 'media' }),
@@ -97,7 +97,7 @@ const initUploadRoutes = (models, authMiddleware) => {
   // Upload document
   router.post('/document',
     authMiddleware.authenticate,
-    rateLimitMiddleware.creation,
+    rateLimitMiddleware.upload,
     uploadService.uploadDocument().single('document'),
     FileValidator.uploadValidator(['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'], 50 * 1024 * 1024),
     auditMiddleware.logAction('upload_document', { entityType: 'media' }),
@@ -124,7 +124,7 @@ const initUploadRoutes = (models, authMiddleware) => {
   // Upload multiple
   router.post('/multiple',
     authMiddleware.authenticate,
-    rateLimitMiddleware.creation,
+    rateLimitMiddleware.upload,
     uploadService.uploadImage().array('images', 10), // Max 10 images
     // 🔒 Validation du type réel des fichiers uploadés (batch)
     async (req, res, next) => {

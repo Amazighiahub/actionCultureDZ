@@ -16,9 +16,20 @@ Disallow: /admin/
 Disallow: /dashboard-pro
 Disallow: /dashboard-user
 Disallow: /ajouter-*
+Disallow: /modifier-*
+Disallow: /editer-*
+Disallow: /gestion-*
+Disallow: /programme/creer
+Disallow: /programme/modifier/
 Disallow: /api/
+Disallow: /notifications
+Disallow: /forgot-password
+Disallow: /reset-password/
+Disallow: /verify-email/
+Disallow: /verification-email-envoyee
 
-# Sitemap dynamique généré par le backend (inclut toutes les pages détail)
-# En production, remplacer par l'URL absolue du domaine :
-# Sitemap: https://votre-domaine.com/sitemap.xml
-Sitemap: /sitemap.xml
+# Sitemap statique (pages principales)
+Sitemap: https://culture-algerie.com/sitemap.xml
+
+# Sitemap dynamique (toutes les pages détail, généré par le backend)
+Sitemap: https://culture-algerie.com/api/sitemap.xml

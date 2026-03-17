@@ -123,6 +123,18 @@ export default function NotificationPreferences() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [browserPermission, setBrowserPermission] = useState<NotificationPermission>('default');
+  const [hasChanges, setHasChanges] = useState(false);
+
+  // Warn before leaving with unsaved changes
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (hasChanges) {
+        e.preventDefault();
+      }
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [hasChanges]);
 
   // Charger les préférences au montage
   const { t } = useTranslation();useEffect(() => {
@@ -146,7 +158,7 @@ export default function NotificationPreferences() {
       setPreferences(prefs);
     } catch (err: any) {
       console.error('Erreur chargement préférences:', err);
-      setError('Impossible de charger les préférences');
+      setError(t('notifications_preferences.errorLoad', 'Impossible de charger les préférences'));
     } finally {
       setLoading(false);
     }
@@ -167,10 +179,11 @@ export default function NotificationPreferences() {
       await notificationService.updatePreferences(updateData);
 
       setSaved(true);
+      setHasChanges(false);
       setTimeout(() => setSaved(false), 3000);
     } catch (err: any) {
       console.error('Erreur sauvegarde:', err);
-      setError('Impossible de sauvegarder les préférences');
+      setError(t('notifications_preferences.errorSave', 'Impossible de sauvegarder les préférences'));
     } finally {
       setSaving(false);
     }
@@ -184,6 +197,7 @@ export default function NotificationPreferences() {
 
   // Mettre à jour une préférence globale
   const updateGlobalPreference = (key: keyof typeof preferences.global, value: boolean) => {
+    setHasChanges(true);
     setPreferences((prev) => ({
       ...prev,
       global: {
@@ -195,6 +209,7 @@ export default function NotificationPreferences() {
 
   // Mettre à jour une préférence de type
   const updateTypePreference = (key: keyof typeof preferences.types, value: boolean) => {
+    setHasChanges(true);
     setPreferences((prev) => ({
       ...prev,
       types: {
@@ -335,8 +350,8 @@ export default function NotificationPreferences() {
                 <p className="font-medium">{t("notifications_preferences.navigateur_web")}</p>
                 <p className="text-sm text-gray-600">
                   {browserPermission === 'granted' ?
-                  '✓ Notifications activées' :
-                  '✗ Notifications désactivées'}
+                  t('notifications_preferences.browserEnabled', '✓ Notifications activées') :
+                  t('notifications_preferences.browserDisabled', '✗ Notifications désactivées')}
                 </p>
               </div>
             </div>
@@ -347,8 +362,8 @@ export default function NotificationPreferences() {
                 <p className="font-medium">{t("notifications_preferences.email")}</p>
                 <p className="text-sm text-gray-600">
                   {preferences.global.email ?
-                  '✓ Notifications par email activées' :
-                  '✗ Notifications par email désactivées'}
+                  t('notifications_preferences.emailEnabled', '✓ Notifications par email activées') :
+                  t('notifications_preferences.emailDisabled', '✗ Notifications par email désactivées')}
                 </p>
               </div>
             </div>
@@ -359,8 +374,8 @@ export default function NotificationPreferences() {
                 <p className="font-medium">{t("notifications_preferences.sms")}</p>
                 <p className="text-sm text-gray-600">
                   {preferences.global.sms ?
-                  '✓ Notifications SMS activées' :
-                  '✗ Notifications SMS désactivées'}
+                  t('notifications_preferences.smsEnabled', '✓ Notifications SMS activées') :
+                  t('notifications_preferences.smsDisabled', '✗ Notifications SMS désactivées')}
                 </p>
               </div>
             </div>

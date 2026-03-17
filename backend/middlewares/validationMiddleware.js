@@ -1,4 +1,5 @@
 const { validationResult } = require('express-validator');
+const { isValidLatitude, isValidLongitude } = require('../services/utils/geoUtils');
 
 const validationMiddleware = {
   // Gestionnaire des erreurs de validation
@@ -43,24 +44,34 @@ const validationMiddleware = {
   // Middleware pour valider la pagination
   validatePagination: (req, res, next) => {
     const { page = 1, limit = 10 } = req.query;
-    
+
     const pageNum = parseInt(page);
     const limitNum = parseInt(limit);
-    
+
     if (isNaN(pageNum) || pageNum < 1) {
       return res.status(400).json({
         success: false,
         error: req.t ? req.t('validation.invalidData') : 'Invalid page number'
       });
     }
-    
+
     if (isNaN(limitNum) || limitNum < 1 || limitNum > 100) {
       return res.status(400).json({
         success: false,
         error: req.t ? req.t('validation.invalidLimit') : 'Invalid limit (must be between 1 and 100)'
       });
     }
-    
+
+    // Limiter l'offset max pour éviter les DoS via pagination profonde
+    const maxOffset = 10000;
+    const offset = (pageNum - 1) * limitNum;
+    if (offset > maxOffset) {
+      return res.status(400).json({
+        success: false,
+        error: req.t ? req.t('validation.paginationTooDeep') : 'Pagination too deep (max offset: 10000)'
+      });
+    }
+
     req.query.page = pageNum;
     req.query.limit = limitNum;
     next();
@@ -69,17 +80,33 @@ const validationMiddleware = {
     try {
       const { date_debut, date_fin, capacite_max } = req.body;
       
-      if (new Date(date_debut) < new Date()) {
+      if (date_debut && new Date(date_debut) < new Date()) {
         return res.status(400).json({
           success: false,
           error: req.t ? req.t('validation.invalidStartDate') : 'Start date cannot be in the past'
         });
       }
-      
-      if (capacite_max && (capacite_max < 1 || capacite_max > 100000)) {
+
+      if (date_debut && date_fin && new Date(date_fin) < new Date(date_debut)) {
         return res.status(400).json({
           success: false,
-          error: req.t ? req.t('validation.invalidData') : 'Capacity must be between 1 and 100,000'
+          error: req.t ? req.t('validation.endDateAfterStart') : 'End date must be after start date'
+        });
+      }
+
+      const tarif = parseFloat(req.body.tarif);
+      if (req.body.tarif !== undefined && (isNaN(tarif) || tarif < 0)) {
+        return res.status(400).json({
+          success: false,
+          error: req.t ? req.t('validation.invalidPrice') : 'Price must be 0 or greater'
+        });
+      }
+
+      const cap = parseInt(capacite_max);
+      if (capacite_max !== undefined && (isNaN(cap) || cap < 0 || cap > 100000)) {
+        return res.status(400).json({
+          success: false,
+          error: req.t ? req.t('validation.invalidCapacity') : 'Capacity must be between 0 and 100,000'
         });
       }
       
@@ -146,6 +173,31 @@ const validationMiddleware = {
         }
       }
     }
+    next();
+  },
+
+  // Middleware pour valider les coordonnées GPS (latitude/longitude)
+  validateGPS: (req, res, next) => {
+    const { latitude, longitude } = req.body;
+
+    if (latitude !== undefined && latitude !== null && latitude !== '') {
+      if (!isValidLatitude(latitude)) {
+        return res.status(400).json({
+          success: false,
+          error: req.t ? req.t('validation.invalidGPS') : 'Coordonnées GPS invalides (latitude : -90 à 90)'
+        });
+      }
+    }
+
+    if (longitude !== undefined && longitude !== null && longitude !== '') {
+      if (!isValidLongitude(longitude)) {
+        return res.status(400).json({
+          success: false,
+          error: req.t ? req.t('validation.invalidGPS') : 'Coordonnées GPS invalides (longitude : -180 à 180)'
+        });
+      }
+    }
+
     next();
   }
 };

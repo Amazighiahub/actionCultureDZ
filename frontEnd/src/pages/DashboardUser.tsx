@@ -27,6 +27,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from "react-i18next";
 import { useFormatDate } from '@/hooks/useFormatDate';
+import { useToast } from '@/components/ui/use-toast';
 import { useFavoris } from '@/hooks/useFavoris';
 import { notificationService } from '@/services/notification.service';
 import type { Notification } from '@/services/notification.service';
@@ -37,6 +38,7 @@ const DashboardUser = () => {
   const { t } = useTranslation();
   const { formatDate } = useFormatDate();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   // Notifications via React Query
   const queryClient = useQueryClient();
@@ -57,6 +59,9 @@ const DashboardUser = () => {
         prev?.map(n => n.id_notification === id ? { ...n, lu: true } : n) ?? []
       );
     },
+    onError: () => {
+      toast({ title: t('common.error', 'Erreur'), description: t('dashboarduser.markReadFailed', 'Impossible de marquer la notification comme lue.'), variant: 'destructive' });
+    },
   });
 
   const markAllReadMutation = useMutation({
@@ -65,6 +70,9 @@ const DashboardUser = () => {
       queryClient.setQueryData<Notification[]>(['notifications', 'user', 'list'], (prev) =>
         prev?.map(n => ({ ...n, lu: true })) ?? []
       );
+    },
+    onError: () => {
+      toast({ title: t('common.error', 'Erreur'), description: t('dashboarduser.markAllReadFailed', 'Impossible de marquer toutes les notifications comme lues.'), variant: 'destructive' });
     },
   });
 

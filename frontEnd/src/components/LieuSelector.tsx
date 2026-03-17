@@ -118,6 +118,15 @@ export const LieuSelector: React.FC<LieuSelectorProps> = ({
     loadLieux();
   }, [wilayaId, filterTypeLieuCulturel]);
 
+  // Recherche debounced — déclenche loadLieux 400ms après la dernière frappe
+  useEffect(() => {
+    if (mode !== 'select') return;
+    const timer = setTimeout(() => {
+      loadLieux();
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   // Initialiser la carte
   useEffect(() => {
     if (mode === 'create' && mapContainerRef.current && !mapRef.current) {
@@ -402,7 +411,7 @@ export const LieuSelector: React.FC<LieuSelectorProps> = ({
                 placeholder={t('places.search.placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && loadLieux()}
+                onKeyDown={(e) => e.key === 'Enter' && loadLieux()}
               />
               <Button onClick={loadLieux} disabled={loading}>
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
@@ -599,7 +608,7 @@ export const LieuSelector: React.FC<LieuSelectorProps> = ({
                   value={addressSearch}
                   onChange={(e) => setAddressSearch(e.target.value)}
                   placeholder={t('places.addressSearchPlaceholder')}
-                  onKeyPress={(e) => e.key === 'Enter' && searchAddress()}
+                  onKeyDown={(e) => e.key === 'Enter' && searchAddress()}
                 />
                 <Button type="button" onClick={searchAddress} disabled={searching}>
                   {searching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}

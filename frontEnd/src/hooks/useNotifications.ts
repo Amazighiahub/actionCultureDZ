@@ -186,7 +186,8 @@ export function useNotifications(): UseNotificationsReturn {
   // Configuration WebSocket (le token est nécessaire car WebSocket ne supporte pas les cookies httpOnly)
   const { isAuthenticated } = usePermissionsContext();
   useEffect(() => {
-    const token = localStorage.getItem('auth_token');
+    let token: string | null = null;
+    try { token = localStorage.getItem('auth_token'); } catch { /* storage unavailable */ }
     if (!isAuthenticated || !token) return;
 
     // Se connecter au WebSocket

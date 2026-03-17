@@ -139,15 +139,21 @@ const EvenementsDynamique: React.FC = () => {
                 {event.Media && event.Media[0] ? (
                   <img
                     src={getAssetUrl(event.Media[0].url)}
-                    alt={getTranslation(event.nom_evenement, lang)}
+                    alt={getTranslation(event.nom_evenement, lang) || 'Événement culturel'}
                     loading="lazy"
+                    decoding="async"
+                    width={400}
+                    height={192}
                     className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                 ) : event.image_url ? (
                   <img
                     src={getAssetUrl(event.image_url)}
-                    alt={getTranslation(event.nom_evenement, lang)}
+                    alt={getTranslation(event.nom_evenement, lang) || 'Événement culturel'}
                     loading="lazy"
+                    decoding="async"
+                    width={400}
+                    height={192}
                     className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                 ) : (

@@ -17,6 +17,9 @@ import {
   Hammer, Tag, DollarSign, Clock, Package
 } from 'lucide-react';
 import { artisanatService, CreateArtisanatData } from '@/services/artisanat.service';
+import { useToast } from '@/hooks/use-toast';
+import { useRTL } from '@/hooks/useRTL';
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import { metadataService } from '@/services/metadata.service';
 import MultiLangInput from '@/components/MultiLangInput';
 
@@ -57,19 +60,25 @@ const INITIAL_FORM: FormData = {
 const AjouterArtisanat: React.FC = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const { id } = useParams<{ id: string }>();
   const isEditMode = !!id;
   const editId = id ? parseInt(id) : null;
   const currentLang = i18n.language;
+  const { direction } = useRTL();
 
   // States
   const [formData, setFormData] = useState<FormData>(INITIAL_FORM);
+  const [isDirty, setIsDirty] = useState(false);
   const [medias, setMedias] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [success, setSuccess] = useState(false);
   const [newTag, setNewTag] = useState('');
+
+  useUnsavedChanges(isDirty);
 
   // Metadata
   const [materiaux, setMateriaux] = useState<any[]>([]);
@@ -110,14 +119,13 @@ const AjouterArtisanat: React.FC = () => {
           en_stock: art.en_stock,
           tags: art.tags?.map((t: any) => t.nom || t) || [],
         });
-        console.log('✅ Artisanat chargé pour édition:', art);
+        // Artisanat loaded for editing
       } else {
         setError('Artisanat introuvable');
         navigate('/dashboard-pro');
       }
     } catch (err: any) {
-      console.error('❌ Erreur chargement artisanat:', err);
-      setError('Impossible de charger l\'artisanat');
+      setError(t('ajouterArtisanat.errors.loadFailed', 'Impossible de charger l\'artisanat'));
     }
   };
 
@@ -135,8 +143,8 @@ const AjouterArtisanat: React.FC = () => {
       if (techniquesRes.success && techniquesRes.data) {
         setTechniques(techniquesRes.data);
       }
-    } catch (err) {
-      console.error('Erreur chargement metadata:', err);
+    } catch {
+      toast({ title: t('common.error', 'Erreur'), description: t('ajouterArtisanat.errors.loadMetadataFailed', 'Erreur lors du chargement des matériaux et techniques'), variant: 'destructive' });
     } finally {
       setLoadingMetadata(false);
     }
@@ -146,8 +154,18 @@ const AjouterArtisanat: React.FC = () => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
-      const newFiles = Array.from(files);
+      let newFiles = Array.from(files);
+
+      const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+      const oversized = newFiles.filter(f => f.size > MAX_SIZE);
+      if (oversized.length > 0) {
+        toast({ title: t('common.error', 'Erreur'), description: t('validation.fileTooLarge', 'Fichier trop volumineux (max 5 Mo)'), variant: 'destructive' });
+        newFiles = newFiles.filter(f => f.size <= MAX_SIZE);
+        if (newFiles.length === 0) return;
+      }
+
       setMedias(prev => [...prev, ...newFiles]);
+      setIsDirty(true);
 
       // Create previews
       newFiles.forEach(file => {
@@ -173,6 +191,7 @@ const AjouterArtisanat: React.FC = () => {
         tags: [...prev.tags, newTag.trim()]
       }));
       setNewTag('');
+      setIsDirty(true);
     }
   };
 
@@ -181,6 +200,22 @@ const AjouterArtisanat: React.FC = () => {
       ...prev,
       tags: prev.tags.filter(t => t !== tag)
     }));
+    setIsDirty(true);
+  };
+
+  const validateFieldOnBlur = (field: string) => {
+    if (field === 'prix_min' || field === 'prix_max') {
+      if (formData.prix_min && formData.prix_max && Number(formData.prix_min) > Number(formData.prix_max)) {
+        const error = t('ajouterArtisanat.errors.prixMinMax', 'Le prix minimum ne peut pas être supérieur au prix maximum');
+        setFieldErrors(prev => ({ ...prev, prix: error }));
+      } else {
+        setFieldErrors(prev => {
+          const next = { ...prev };
+          delete next.prix;
+          return next;
+        });
+      }
+    }
   };
 
   // Handle form submission
@@ -188,23 +223,30 @@ const AjouterArtisanat: React.FC = () => {
     e.preventDefault();
     setError(null);
 
-    // Validation
-    if (
-      !formData.nom.fr ||
-      !formData.nom.ar ||
-      !formData.nom.en ||
-      !formData.nom['tz-ltn'] ||
-      !formData.nom['tz-tfng']
-    ) {
-      setError(t('ajouterArtisanat.errors.nomRequired', 'Le nom est requis'));
-      return;
+    // Validation — collect all errors
+    const errs: Record<string, string> = {};
+    if (!Object.values(formData.nom).some(v => v?.trim())) {
+      errs.nom = t('ajouterArtisanat.errors.nomRequired', 'Le nom est requis');
     }
     if (!formData.id_materiau) {
-      setError(t('ajouterArtisanat.errors.materiauRequired', 'Le matériau est requis'));
-      return;
+      errs.id_materiau = t('ajouterArtisanat.errors.materiauRequired', 'Le matériau est requis');
     }
     if (!formData.id_technique) {
-      setError(t('ajouterArtisanat.errors.techniqueRequired', 'La technique est requise'));
+      errs.id_technique = t('ajouterArtisanat.errors.techniqueRequired', 'La technique est requise');
+    }
+    if (formData.prix_min && formData.prix_max && Number(formData.prix_min) > Number(formData.prix_max)) {
+      errs.prix = t('ajouterArtisanat.errors.prixMinMax', 'Le prix minimum ne peut pas être supérieur au prix maximum');
+    }
+    setFieldErrors(errs);
+    if (Object.keys(errs).length > 0) {
+      setError(Object.values(errs)[0]);
+      setTimeout(() => {
+        const el = document.querySelector('[aria-invalid="true"]');
+        if (el) {
+          (el as HTMLElement).focus();
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 0);
       return;
     }
 
@@ -226,7 +268,7 @@ const AjouterArtisanat: React.FC = () => {
 
       let response;
       if (isEditMode && editId) {
-        console.log('📝 Mise à jour artisanat', editId);
+        // Updating artisanat
         response = await artisanatService.update(editId, createData);
       } else {
         response = await artisanatService.create(createData);
@@ -247,7 +289,6 @@ const AjouterArtisanat: React.FC = () => {
         setError(response.error || (isEditMode ? 'Erreur lors de la mise à jour' : t('ajouterArtisanat.errors.createFailed', 'Erreur lors de la création')));
       }
     } catch (err: any) {
-      console.error('Erreur creation artisanat:', err);
       setError(err.message || t('ajouterArtisanat.errors.createFailed', 'Erreur lors de la création'));
     } finally {
       setLoading(false);
@@ -280,13 +321,13 @@ const AjouterArtisanat: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-amber-50 via-white to-orange-50">
+    <div dir={direction} className="min-h-screen flex flex-col bg-gradient-to-br from-amber-50 via-white to-orange-50">
       <Header />
 
       <main className="flex-1 container mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
-          <Button variant="ghost" onClick={() => navigate(-1)}>
+          <Button variant="ghost" onClick={() => navigate('/dashboard-pro')}>
             <ArrowLeft className="h-5 w-5 me-2" />
             {t('common.back', 'Retour')}
           </Button>
@@ -301,8 +342,8 @@ const AjouterArtisanat: React.FC = () => {
 
         {/* Success message */}
         {success && (
-          <Alert className="mb-6 bg-green-50 border-green-200">
-            <AlertDescription className="text-green-800">
+          <Alert className="mb-6 bg-primary/10 border-primary/20">
+            <AlertDescription className="text-primary">
               {t('ajouterArtisanat.success', 'Artisanat ajouté avec succès!')}
             </AlertDescription>
           </Alert>
@@ -310,13 +351,14 @@ const AjouterArtisanat: React.FC = () => {
 
         {/* Error message */}
         {error && (
-          <Alert variant="destructive" className="mb-6">
+          <Alert variant="destructive" className="mb-6" role="alert">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
 
         <form onSubmit={handleSubmit}>
+          <p className="text-sm text-muted-foreground mb-4">{t('common.requiredFieldsLegend')}</p>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Main form */}
             <div className="lg:col-span-2 space-y-6">
@@ -332,9 +374,15 @@ const AjouterArtisanat: React.FC = () => {
                     name="nom"
                     label={t('ajouterArtisanat.nom', 'Nom du produit')}
                     value={formData.nom}
-                    onChange={(value) => setFormData(prev => ({ ...prev, nom: value as MultiLangText }))}
+                    onChange={(value) => {
+                      setFormData(prev => ({ ...prev, nom: value as MultiLangText }));
+                      setFieldErrors(prev => ({ ...prev, nom: '' }));
+                      setIsDirty(true);
+                    }}
                     required
+                    requiredLanguages={['fr']}
                     placeholder={t('ajouterArtisanat.nomPlaceholder', 'Ex: Tapis berbère traditionnel')}
+                    errors={fieldErrors.nom ? { fr: fieldErrors.nom } : undefined}
                   />
 
                   {/* Description multilingue */}
@@ -342,9 +390,13 @@ const AjouterArtisanat: React.FC = () => {
                     name="description"
                     label={t('ajouterArtisanat.description', 'Description')}
                     value={formData.description}
-                    onChange={(value) => setFormData(prev => ({ ...prev, description: value as MultiLangText }))}
+                    onChange={(value) => {
+                      setFormData(prev => ({ ...prev, description: value as MultiLangText }));
+                      setIsDirty(true);
+                    }}
                     type="textarea"
                     rows={4}
+                    requiredLanguages={[]}
                     placeholder={t('ajouterArtisanat.descriptionPlaceholder', 'Décrivez votre produit, ses caractéristiques...')}
                   />
 
@@ -354,12 +406,17 @@ const AjouterArtisanat: React.FC = () => {
                       <Label>{t('ajouterArtisanat.materiau', 'Matériau')} *</Label>
                       <Select
                         value={formData.id_materiau ? String(formData.id_materiau) : ''}
-                        onValueChange={(value) => setFormData(prev => ({
-                          ...prev,
-                          id_materiau: parseInt(value)
-                        }))}
+                        onValueChange={(value) => {
+                          setFormData(prev => ({ ...prev, id_materiau: parseInt(value) }));
+                          setFieldErrors(prev => ({ ...prev, id_materiau: '' }));
+                          setIsDirty(true);
+                        }}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger
+                          className={fieldErrors.id_materiau ? 'border-destructive' : ''}
+                          aria-invalid={!!fieldErrors.id_materiau}
+                          aria-describedby={fieldErrors.id_materiau ? 'materiau-error' : undefined}
+                        >
                           <SelectValue placeholder={t('ajouterArtisanat.selectMateriau', 'Sélectionner un matériau')} />
                         </SelectTrigger>
                         <SelectContent>
@@ -370,18 +427,26 @@ const AjouterArtisanat: React.FC = () => {
                           ))}
                         </SelectContent>
                       </Select>
+                      {fieldErrors.id_materiau && (
+                        <p id="materiau-error" role="alert" className="text-sm text-destructive">{fieldErrors.id_materiau}</p>
+                      )}
                     </div>
 
                     <div className="space-y-2">
                       <Label>{t('ajouterArtisanat.technique', 'Technique')} *</Label>
                       <Select
                         value={formData.id_technique ? String(formData.id_technique) : ''}
-                        onValueChange={(value) => setFormData(prev => ({
-                          ...prev,
-                          id_technique: parseInt(value)
-                        }))}
+                        onValueChange={(value) => {
+                          setFormData(prev => ({ ...prev, id_technique: parseInt(value) }));
+                          setFieldErrors(prev => ({ ...prev, id_technique: '' }));
+                          setIsDirty(true);
+                        }}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger
+                          className={fieldErrors.id_technique ? 'border-destructive' : ''}
+                          aria-invalid={!!fieldErrors.id_technique}
+                          aria-describedby={fieldErrors.id_technique ? 'technique-error' : undefined}
+                        >
                           <SelectValue placeholder={t('ajouterArtisanat.selectTechnique', 'Sélectionner une technique')} />
                         </SelectTrigger>
                         <SelectContent>
@@ -392,6 +457,9 @@ const AjouterArtisanat: React.FC = () => {
                           ))}
                         </SelectContent>
                       </Select>
+                      {fieldErrors.id_technique && (
+                        <p id="technique-error" role="alert" className="text-sm text-destructive">{fieldErrors.id_technique}</p>
+                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -408,76 +476,102 @@ const AjouterArtisanat: React.FC = () => {
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>{t('ajouterArtisanat.prixMin', 'Prix minimum (DA)')}</Label>
+                      <Label>{t('ajouterArtisanat.prixMin', 'Prix minimum (DA)')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span></Label>
                       <Input
                         type="number"
                         min={0}
+                        max={100000000}
                         value={formData.prix_min || ''}
-                        onChange={(e) => setFormData(prev => ({
-                          ...prev,
-                          prix_min: e.target.value ? parseFloat(e.target.value) : undefined
-                        }))}
+                        onChange={(e) => {
+                          setFormData(prev => ({
+                            ...prev,
+                            prix_min: e.target.value ? parseFloat(e.target.value) : undefined
+                          }));
+                          setIsDirty(true);
+                        }}
+                        onBlur={() => validateFieldOnBlur('prix_min')}
                         placeholder="0.00"
+                        aria-invalid={!!fieldErrors.prix}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>{t('ajouterArtisanat.prixMax', 'Prix maximum (DA)')}</Label>
+                      <Label>{t('ajouterArtisanat.prixMax', 'Prix maximum (DA)')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span></Label>
                       <Input
                         type="number"
                         min={0}
+                        max={100000000}
                         value={formData.prix_max || ''}
-                        onChange={(e) => setFormData(prev => ({
-                          ...prev,
-                          prix_max: e.target.value ? parseFloat(e.target.value) : undefined
-                        }))}
+                        onChange={(e) => {
+                          setFormData(prev => ({
+                            ...prev,
+                            prix_max: e.target.value ? parseFloat(e.target.value) : undefined
+                          }));
+                          setIsDirty(true);
+                        }}
+                        onBlur={() => validateFieldOnBlur('prix_max')}
                         placeholder="0.00"
+                        aria-invalid={!!fieldErrors.prix}
                       />
                     </div>
                   </div>
+                  {fieldErrors.prix && (
+                    <p role="alert" className="text-sm text-destructive">{fieldErrors.prix}</p>
+                  )}
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label className="flex items-center gap-2">
                         <Clock className="h-4 w-4" />
-                        {t('ajouterArtisanat.delaiFabrication', 'Délai de fabrication (jours)')}
+                        {t('ajouterArtisanat.delaiFabrication', 'Délai de fabrication (jours)')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span>
                       </Label>
                       <Input
                         type="number"
                         min={1}
+                        max={365}
                         value={formData.delai_fabrication || ''}
-                        onChange={(e) => setFormData(prev => ({
-                          ...prev,
-                          delai_fabrication: e.target.value ? parseInt(e.target.value) : undefined
-                        }))}
+                        onChange={(e) => {
+                          setFormData(prev => ({
+                            ...prev,
+                            delai_fabrication: e.target.value ? parseInt(e.target.value) : undefined
+                          }));
+                          setIsDirty(true);
+                        }}
                         placeholder={t('ajouterArtisanat.delaiFabricationPlaceholder', 'Nombre de jours')}
                       />
                     </div>
                     <div className="space-y-2">
                       <Label className="flex items-center gap-2">
                         <Package className="h-4 w-4" />
-                        {t('ajouterArtisanat.enStock', 'Quantité en stock')}
+                        {t('ajouterArtisanat.enStock', 'Quantité en stock')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span>
                       </Label>
                       <Input
                         type="number"
                         min={0}
+                        max={100000}
                         value={formData.en_stock || ''}
-                        onChange={(e) => setFormData(prev => ({
-                          ...prev,
-                          en_stock: e.target.value ? parseInt(e.target.value) : undefined
-                        }))}
+                        onChange={(e) => {
+                          setFormData(prev => ({
+                            ...prev,
+                            en_stock: e.target.value ? parseInt(e.target.value) : undefined
+                          }));
+                          setIsDirty(true);
+                        }}
                         placeholder="0"
                       />
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center gap-2">
                     <Checkbox
                       id="sur_commande"
                       checked={formData.sur_commande}
-                      onCheckedChange={(checked) => setFormData(prev => ({
-                        ...prev,
-                        sur_commande: !!checked
-                      }))}
+                      onCheckedChange={(checked) => {
+                        setFormData(prev => ({
+                          ...prev,
+                          sur_commande: !!checked
+                        }));
+                        setIsDirty(true);
+                      }}
                     />
                     <Label htmlFor="sur_commande">{t('ajouterArtisanat.surCommande', 'Disponible sur commande')}</Label>
                   </div>
@@ -582,9 +676,9 @@ const AjouterArtisanat: React.FC = () => {
                 </CardContent>
               </Card>
 
-              {/* Submit button */}
+              {/* Submit & Cancel buttons */}
               <Card>
-                <CardContent className="pt-6">
+                <CardContent className="pt-6 space-y-3">
                   <Button
                     type="submit"
                     className="w-full"
@@ -602,6 +696,15 @@ const AjouterArtisanat: React.FC = () => {
                         {t('ajouterArtisanat.submit', 'Créer l\'artisanat')}
                       </>
                     )}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    size="lg"
+                    onClick={() => navigate('/dashboard-pro')}
+                  >
+                    {t('common.cancel', 'Annuler')}
                   </Button>
                 </CardContent>
               </Card>

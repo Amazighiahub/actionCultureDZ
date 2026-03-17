@@ -9,13 +9,11 @@ const RTLManager = () => {
   useEffect(() => {
     // Si i18n n'est pas prêt, ne rien faire
     if (!ready || !i18n.language) {
-      console.log('[RTLManager] i18n pas encore prêt');
       return;
     }
     
     // Utiliser la langue directement depuis i18n sans normalisation supplémentaire
     const currentLang = i18n.language;
-    console.log('[RTLManager] Configuration pour la langue:', currentLang);
     
     // Langues RTL
     const rtlLanguages = ['ar', 'ar-DZ', 'he', 'fa', 'ur'];
@@ -63,7 +61,6 @@ const RTLManager = () => {
     // Mettre à jour les métadonnées
     updateMetaTags(currentLang);
     
-    console.log('[RTLManager] Configuration appliquée - Langue:', currentLang, 'RTL:', isRTL);
     
   }, [i18n.language, ready]);
   

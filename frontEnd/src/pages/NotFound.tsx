@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Home, ArrowLeft, Search } from "lucide-react";
+import SEOHead from "@/components/SEOHead";
 
 const NotFound = () => {
   const location = useLocation();
@@ -20,8 +21,13 @@ const NotFound = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      <SEOHead
+        title={t("notfound.oops_page_not", "Page introuvable")}
+        description="La page que vous recherchez n'existe pas ou a été déplacée."
+        noindex={true}
+      />
       <Header />
-      
+
       <main className="flex-1 container flex items-center justify-center py-12">
         <Card className="max-w-lg w-full text-center shadow-lg">
           <CardContent className="pt-12 pb-8 px-8">

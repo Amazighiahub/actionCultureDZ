@@ -133,6 +133,13 @@ const OeuvreComments: React.FC<OeuvreCommentsProps> = ({ comments, onAddComment,
     e.preventDefault();
     if (!newComment.trim()) {
       setError(t('comments.errorEmpty', 'Veuillez écrire un commentaire'));
+      setTimeout(() => document.getElementById('oeuvre-comment')?.focus(), 0);
+      return;
+    }
+
+    if (newComment.trim().length < 3) {
+      setError(t('comments.errorTooShort', 'Le commentaire doit contenir au moins 3 caractères'));
+      setTimeout(() => document.getElementById('oeuvre-comment')?.focus(), 0);
       return;
     }
 
@@ -202,13 +209,20 @@ const OeuvreComments: React.FC<OeuvreCommentsProps> = ({ comments, onAddComment,
                 <StarRating value={rating} onChange={setRating} size="lg" />
               </div>
               <Textarea
+                id="oeuvre-comment"
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
                 placeholder={t('comments.placeholder', 'Partagez votre avis...')}
                 className="min-h-[100px]"
+                maxLength={2000}
+                aria-invalid={!!error}
+                aria-describedby={error ? 'oeuvre-comment-error' : undefined}
               />
+              <p className="text-xs text-muted-foreground text-right mt-1">
+                {newComment.length}/2000
+              </p>
               {error && (
-                <div className="flex items-center gap-2 text-destructive text-sm">
+                <div id="oeuvre-comment-error" role="alert" className="flex items-center gap-2 text-destructive text-sm">
                   <AlertCircle className="h-4 w-4" />
                   {error}
                 </div>

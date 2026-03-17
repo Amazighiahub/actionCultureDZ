@@ -3,6 +3,10 @@
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
 
 // Import dynamique pour éviter les erreurs de chargement
 import { KeyboardHelper } from '@/utils/keyboardHelper';
@@ -153,39 +157,38 @@ export const MultiLangInput: React.FC<MultiLangInputProps> = ({
   return (
     <div className={`multi-lang-input ${className}`}>
       {/* Label */}
-      <label className="block text-sm font-medium text-gray-700 mb-1">
+      <Label className="mb-1">
         {label}
-        {required && <span className="text-red-500 ml-1">*</span>}
-      </label>
+        {required && <span className="text-destructive ms-1">*</span>}
+      </Label>
 
       {/* Onglets de langue */}
-      <div className="flex flex-wrap border-b border-gray-200 mb-2">
+      <div className="flex flex-wrap border-b border-border mb-2">
         {AVAILABLE_LANGUAGES.map((lang) => {
-          const hasValue = !!value[lang.code];
+          const hasValue = !!value[lang.code]?.trim();
           const isRequired = requiredLanguages.includes(lang.code);
           const hasError = errors[lang.code];
-          
+
           return (
             <button
               key={lang.code}
               type="button"
               onClick={() => handleLanguageChange(lang.code)}
-              className={`
-                px-3 py-2 text-sm font-medium border-b-2 transition-colors
-                ${activeLang === lang.code 
-                  ? 'border-blue-500 text-blue-600' 
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }
-                ${hasError ? 'text-red-500' : ''}
-              `}
+              className={cn(
+                'px-3 py-2 text-sm font-medium border-b-2 transition-colors',
+                activeLang === lang.code
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border',
+                hasError && 'text-destructive'
+              )}
             >
-              <span className="mr-1">{lang.flag}</span>
+              <span className="me-1">{lang.flag}</span>
               <span>{lang.label}</span>
               {isRequired && !hasValue && (
-                <span className="ml-1 text-red-500">•</span>
+                <span className="ms-1 text-destructive">•</span>
               )}
               {hasValue && (
-                <span className="ml-1 text-green-500">✓</span>
+                <span className="ms-1 text-primary">✓</span>
               )}
             </button>
           );
@@ -242,7 +245,8 @@ export const MultiLangInput: React.FC<MultiLangInputProps> = ({
       {/* Champ de saisie */}
       <div dir={activeLanguage.dir}>
         {type === 'textarea' ? (
-          <textarea
+          <Textarea
+            id={`${name}-${activeLang}`}
             name={`${name}.${activeLang}`}
             value={value[activeLang] || ''}
             onChange={(e) => handleChange(activeLang, e.target.value)}
@@ -251,45 +255,43 @@ export const MultiLangInput: React.FC<MultiLangInputProps> = ({
             disabled={disabled}
             lang={activeLang === 'ar' ? 'ar' : activeLang === 'tz-tfng' ? 'ber' : activeLang === 'tz-ltn' ? 'ber-Latn' : activeLang}
             spellCheck={activeLang === 'fr' || activeLang === 'en'}
-            className={`
-              w-full px-3 py-2 border rounded-md shadow-sm
-              focus:ring-blue-500 focus:border-blue-500
-              ${activeLanguage.dir === 'rtl' ? 'text-right' : 'text-left'}
-              ${errors[activeLang] ? 'border-red-500' : 'border-gray-300'}
-              ${disabled ? 'bg-gray-100 cursor-not-allowed' : ''}
-            `}
+            aria-invalid={!!errors[activeLang] || undefined}
+            aria-describedby={errors[activeLang] ? `${name}-${activeLang}-error` : undefined}
+            className={cn(
+              activeLanguage.dir === 'rtl' && 'text-right',
+              errors[activeLang] && 'border-destructive'
+            )}
           />
         ) : (
-          <input
+          <Input
             type="text"
+            id={`${name}-${activeLang}`}
             name={`${name}.${activeLang}`}
             value={value[activeLang] || ''}
             onChange={(e) => handleChange(activeLang, e.target.value)}
             placeholder={placeholder || t('common.enterText', { lang: activeLanguage.label })}
             disabled={disabled}
             lang={activeLang === 'ar' ? 'ar' : activeLang === 'tz-tfng' ? 'ber' : activeLang === 'tz-ltn' ? 'ber-Latn' : activeLang}
-            inputMode={activeLang === 'ar' ? 'text' : 'text'}
             autoCapitalize={activeLang === 'ar' ? 'none' : 'sentences'}
             autoComplete={activeLang === 'ar' ? 'off' : 'on'}
             spellCheck={activeLang === 'fr' || activeLang === 'en'}
-            className={`
-              w-full px-3 py-2 border rounded-md shadow-sm
-              focus:ring-blue-500 focus:border-blue-500
-              ${activeLanguage.dir === 'rtl' ? 'text-right' : 'text-left'}
-              ${errors[activeLang] ? 'border-red-500' : 'border-gray-300'}
-              ${disabled ? 'bg-gray-100 cursor-not-allowed' : ''}
-            `}
+            aria-invalid={!!errors[activeLang] || undefined}
+            aria-describedby={errors[activeLang] ? `${name}-${activeLang}-error` : undefined}
+            className={cn(
+              activeLanguage.dir === 'rtl' && 'text-right',
+              errors[activeLang] && 'border-destructive'
+            )}
           />
         )}
       </div>
 
       {/* Message d'erreur */}
       {errors[activeLang] && (
-        <p className="mt-1 text-sm text-red-500">{errors[activeLang]}</p>
+        <p id={`${name}-${activeLang}-error`} role="alert" className="mt-1 text-sm text-destructive">{errors[activeLang]}</p>
       )}
 
       {/* Indicateur de progression */}
-      <div className="mt-2 flex items-center text-xs text-gray-500">
+      <div className="mt-2 flex items-center text-xs text-muted-foreground">
         <span>
           {Object.values(value).filter(v => v).length} / {AVAILABLE_LANGUAGES.length} {t('common.languages')}
         </span>
@@ -333,7 +335,7 @@ const CategorieForm = () => {
         value={formData.nom}
         onChange={(value) => setFormData({ ...formData, nom: value })}
         required
-        requiredLanguages={['fr', 'ar']}
+        requiredLanguages={['fr']}
       />
 
       <MultiLangInput

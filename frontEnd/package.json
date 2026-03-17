@@ -29,6 +29,7 @@
     "e2e:auth": "cypress run --spec 'cypress/e2e/02-auth.cy.ts'",
     "e2e:navigation": "cypress run --spec 'cypress/e2e/01-navigation.cy.ts'",
     "e2e:security": "cypress run --spec 'cypress/e2e/11-api-security.cy.ts'",
+    "test:e2e": "cypress run --spec 'cypress/e2e/**/*.cy.ts'",
     "e2e:performance": "cypress run --spec 'cypress/e2e/15-performance.cy.ts'"
   },
   "dependencies": {

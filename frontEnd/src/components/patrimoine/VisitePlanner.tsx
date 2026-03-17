@@ -226,7 +226,7 @@ const VisitePlanner: React.FC<VisitePlannerProps> = ({
       .map(e => `${e.nom}`)
       .join('/');
     const url = `https://www.google.com/maps/dir/${siteName}/${waypoints}`;
-    window.open(url, '_blank');
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -471,7 +471,7 @@ const VisitePlanner: React.FC<VisitePlannerProps> = ({
                     scrollWheelZoom={true}
                   >
                     <TileLayer
-                      attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a>'
+                      attribution='&copy; <a href="https://osm.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a>'
                       url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                     />
                     {/* Point de départ */}

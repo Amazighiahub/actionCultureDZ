@@ -1,4 +1,6 @@
 // securityMiddleware.js - Version améliorée
+const logger = require('../utils/logger');
+
 const securityMiddleware = {
   sanitizeInput: (req, res, next) => {
     // Configuration des patterns d'URLs autorisées
@@ -81,9 +83,9 @@ const securityMiddleware = {
     // Logger les tentatives suspectes (en développement)
     const logSuspiciousActivity = (location, original, sanitized) => {
       if (process.env.NODE_ENV === 'development' && original !== sanitized) {
-        console.warn(`⚠️ Contenu suspect détecté dans ${location}:`, {
-          original: original.substring(0, 100) + '...',
-          sanitized: sanitized.substring(0, 100) + '...'
+        logger.warn(`Contenu suspect détecté dans ${location}`, {
+          original: original.substring(0, 100),
+          sanitized: sanitized.substring(0, 100)
         });
       }
     };
@@ -119,7 +121,7 @@ const securityMiddleware = {
       
       next();
     } catch (error) {
-      console.error('❌ Erreur dans le middleware de sécurité:', error);
+      logger.error('Erreur dans le middleware de sécurité:', error.message);
       // En cas d'erreur, on continue mais on log
       next();
     }

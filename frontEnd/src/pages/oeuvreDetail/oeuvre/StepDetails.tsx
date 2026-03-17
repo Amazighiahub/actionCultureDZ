@@ -387,6 +387,8 @@ const ArticleFields: React.FC<any> = ({ formData, updateFormData, errors }) => {
         <Input
           id="url_source"
           type="url"
+          autoComplete="url"
+          maxLength={2048}
           value={formData.url_source || ''}
           onChange={(e) => updateFormData('url_source', e.target.value)}
         />

@@ -292,6 +292,95 @@ const initRoutes = (models, authMiddleware) => {
     }
   });
 
+  // ========================================================================
+  // SITEMAP DYNAMIQUE — Génère le sitemap XML avec les pages dynamiques
+  // ========================================================================
+  router.get('/sitemap.xml', async (req, res) => {
+    try {
+      const SITE_URL = process.env.FRONTEND_URL || 'https://culture-algerie.com';
+      const { Op } = require('sequelize');
+
+      // Récupérer les IDs et dates de modification en parallèle
+      const [patrimoines, evenements, oeuvres, artisanats] = await Promise.all([
+        models.Lieu ? models.Lieu.findAll({
+          attributes: ['id_lieu', 'updatedAt'],
+          where: { statut: { [Op.ne]: 'supprime' } },
+          order: [['updatedAt', 'DESC']],
+          raw: true
+        }).catch(() => []) : [],
+
+        models.Evenement ? models.Evenement.findAll({
+          attributes: ['id_evenement', 'updatedAt'],
+          where: { statut: { [Op.ne]: 'supprime' } },
+          order: [['updatedAt', 'DESC']],
+          raw: true
+        }).catch(() => []) : [],
+
+        models.Oeuvre ? models.Oeuvre.findAll({
+          attributes: ['id_oeuvre', 'updatedAt'],
+          where: { statut: { [Op.ne]: 'supprime' } },
+          order: [['updatedAt', 'DESC']],
+          raw: true
+        }).catch(() => []) : [],
+
+        models.Artisanat ? models.Artisanat.findAll({
+          attributes: ['id_artisanat', 'updatedAt'],
+          order: [['updatedAt', 'DESC']],
+          raw: true
+        }).catch(() => []) : [],
+      ]);
+
+      // Construire le XML
+      const toDate = (d) => d ? new Date(d).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+
+      let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+      xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
+
+      // Pages statiques
+      const staticPages = [
+        { loc: '/', changefreq: 'daily', priority: '1.0' },
+        { loc: '/patrimoine', changefreq: 'weekly', priority: '0.9' },
+        { loc: '/evenements', changefreq: 'daily', priority: '0.9' },
+        { loc: '/oeuvres', changefreq: 'weekly', priority: '0.9' },
+        { loc: '/artisanat', changefreq: 'weekly', priority: '0.8' },
+        { loc: '/a-propos', changefreq: 'monthly', priority: '0.6' },
+      ];
+
+      for (const page of staticPages) {
+        xml += `  <url>\n    <loc>${SITE_URL}${page.loc}</loc>\n    <changefreq>${page.changefreq}</changefreq>\n    <priority>${page.priority}</priority>\n  </url>\n`;
+      }
+
+      // Pages dynamiques - Patrimoine
+      for (const p of patrimoines) {
+        xml += `  <url>\n    <loc>${SITE_URL}/patrimoine/${p.id_lieu}</loc>\n    <lastmod>${toDate(p.updatedAt)}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.7</priority>\n  </url>\n`;
+      }
+
+      // Pages dynamiques - Événements
+      for (const e of evenements) {
+        xml += `  <url>\n    <loc>${SITE_URL}/evenements/${e.id_evenement}</loc>\n    <lastmod>${toDate(e.updatedAt)}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.7</priority>\n  </url>\n`;
+      }
+
+      // Pages dynamiques - Oeuvres
+      for (const o of oeuvres) {
+        xml += `  <url>\n    <loc>${SITE_URL}/oeuvres/${o.id_oeuvre}</loc>\n    <lastmod>${toDate(o.updatedAt)}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.7</priority>\n  </url>\n`;
+      }
+
+      // Pages dynamiques - Artisanat
+      for (const a of artisanats) {
+        xml += `  <url>\n    <loc>${SITE_URL}/artisanat/${a.id_artisanat}</loc>\n    <lastmod>${toDate(a.updatedAt)}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.6</priority>\n  </url>\n`;
+      }
+
+      xml += '</urlset>';
+
+      res.set('Content-Type', 'application/xml');
+      res.set('Cache-Control', 'public, max-age=3600'); // Cache 1h
+      res.send(xml);
+    } catch (error) {
+      console.error('Erreur génération sitemap:', error);
+      res.status(500).send('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>');
+    }
+  });
+
   // Route de santé
   router.get('/health', async (req, res) => {
     try {

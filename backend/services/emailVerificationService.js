@@ -213,6 +213,12 @@ class EmailVerificationService {
       err.code = 'PASSWORD_DIGIT';
       throw err;
     }
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(newPassword)) {
+      const err = new Error('Password must contain special character');
+      err.statusCode = 400;
+      err.code = 'PASSWORD_SPECIAL';
+      throw err;
+    }
 
     const result = await this.models.EmailVerification.verifyToken(
       token,

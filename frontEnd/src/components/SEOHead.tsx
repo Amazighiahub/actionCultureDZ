@@ -40,6 +40,36 @@ function setCanonical(url: string) {
   el.setAttribute('href', url);
 }
 
+// Langues supportées et leurs codes hreflang
+const SUPPORTED_HREFLANGS: Array<{ lang: string; hreflang: string }> = [
+  { lang: 'fr', hreflang: 'fr-DZ' },
+  { lang: 'ar', hreflang: 'ar-DZ' },
+  { lang: 'en', hreflang: 'en' },
+  { lang: 'tz-ltn', hreflang: 'tzm-Latn' },
+  { lang: 'tz-tfng', hreflang: 'tzm-Tfng' },
+];
+
+function setHreflangTags(url: string) {
+  // Nettoyer les anciennes balises hreflang
+  document.querySelectorAll('link[rel="alternate"][hreflang]').forEach(el => el.remove());
+
+  // Ajouter une balise pour chaque langue
+  for (const { hreflang } of SUPPORTED_HREFLANGS) {
+    const el = document.createElement('link');
+    el.setAttribute('rel', 'alternate');
+    el.setAttribute('hreflang', hreflang);
+    el.setAttribute('href', url);
+    document.head.appendChild(el);
+  }
+
+  // Ajouter x-default (français par défaut)
+  const xDefault = document.createElement('link');
+  xDefault.setAttribute('rel', 'alternate');
+  xDefault.setAttribute('hreflang', 'x-default');
+  xDefault.setAttribute('href', url);
+  document.head.appendChild(xDefault);
+}
+
 function setJsonLd(data: Record<string, any> | Record<string, any>[]) {
   const id = 'seo-json-ld';
   let el = document.getElementById(id) as HTMLScriptElement | null;
@@ -88,6 +118,8 @@ const SEOHead: React.FC<SEOHeadProps> = ({
     setMeta('og:type', type === 'event' ? 'article' : type);
     setMeta('og:site_name', SITE_NAME);
     setMeta('og:locale', locale);
+    setMeta('og:locale:alternate', 'ar_DZ');
+    setMeta('og:locale:alternate', 'en_US');
 
     // Twitter Card
     setMeta('twitter:card', 'summary_large_image', true);
@@ -98,6 +130,9 @@ const SEOHead: React.FC<SEOHeadProps> = ({
     // Canonical
     setCanonical(fullUrl);
 
+    // Hreflang — indique à Google les versions linguistiques de la page
+    setHreflangTags(fullUrl);
+
     // JSON-LD
     if (jsonLd) {
       setJsonLd(jsonLd);
@@ -106,6 +141,8 @@ const SEOHead: React.FC<SEOHeadProps> = ({
     return () => {
       const ldEl = document.getElementById('seo-json-ld');
       if (ldEl) ldEl.remove();
+      // Nettoyer les hreflang
+      document.querySelectorAll('link[rel="alternate"][hreflang]').forEach(el => el.remove());
     };
   }, [fullTitle, desc, img, fullUrl, type, locale, noindex, keywords, jsonLd]);
 
@@ -208,6 +245,32 @@ export function buildArtisanatJsonLd(artisanat: any): Record<string, any> {
       priceCurrency: 'DZD',
       availability: 'https://schema.org/InStock',
     } : undefined,
+  };
+}
+
+export function buildArticleJsonLd(oeuvre: any): Record<string, any> {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: oeuvre.titre || '',
+    description: oeuvre.description?.substring(0, 300) || '',
+    author: oeuvre.Users?.[0]
+      ? { '@type': 'Person', name: `${oeuvre.Users[0].prenom || ''} ${oeuvre.Users[0].nom || ''}`.trim() }
+      : undefined,
+    datePublished: oeuvre.date_publication || oeuvre.date_creation,
+    dateModified: oeuvre.date_modification || oeuvre.date_publication || oeuvre.date_creation,
+    image: oeuvre.image_url || oeuvre.couverture_url || '',
+    url: `${SITE_URL}/articles/${oeuvre.id_oeuvre}`,
+    publisher: {
+      '@type': 'Organization',
+      name: SITE_NAME,
+      url: SITE_URL,
+    },
+    inLanguage: oeuvre.langue || 'fr',
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': `${SITE_URL}/articles/${oeuvre.id_oeuvre}`,
+    },
   };
 }
 

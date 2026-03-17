@@ -6,7 +6,8 @@
 const express = require('express');
 const { param, body } = require('express-validator');
 const patrimoineController = require('../controllers/patrimoineController');
-const { handleValidationErrors, validateId } = require('../middlewares/validationMiddleware');
+const { handleValidationErrors, validateId, validateStringLengths, validateGPS } = require('../middlewares/validationMiddleware');
+const { createContentLimiter } = require('../middlewares/rateLimitMiddleware');
 const asyncHandler = require('../utils/asyncHandler');
 
 const initPatrimoineRoutesV2 = (models, authMiddleware) => {
@@ -54,10 +55,16 @@ const initPatrimoineRoutesV2 = (models, authMiddleware) => {
 
   router.get('/admin/stats', authenticate, requireRole(['Admin']), asyncHandler((req, res) => patrimoineController.getStats(req, res)));
   router.post('/', authenticate, requireRole(['Admin', 'Moderateur']),
+    createContentLimiter,
+    validateStringLengths,
+    validateGPS,
     [body('nom').notEmpty().withMessage('Le nom est requis')],
     handleValidationErrors,
     asyncHandler((req, res) => patrimoineController.create(req, res)));
-  router.put('/:id', authenticate, requireRole(['Admin', 'Moderateur']), validateId(), asyncHandler((req, res) => patrimoineController.update(req, res)));
+  router.put('/:id', authenticate, requireRole(['Admin', 'Moderateur']), validateId(),
+    validateStringLengths,
+    validateGPS,
+    asyncHandler((req, res) => patrimoineController.update(req, res)));
   router.delete('/:id', authenticate, requireRole(['Admin']), validateId(), asyncHandler((req, res) => patrimoineController.delete(req, res)));
 
   return router;

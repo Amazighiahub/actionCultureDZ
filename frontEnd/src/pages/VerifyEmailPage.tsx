@@ -1,26 +1,25 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { authService } from '@/services/auth.service';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from 'lucide-react';import { useTranslation } from "react-i18next";
-
+import { Loader2 } from 'lucide-react';
 
 const VerifyEmailPage = () => {
-  // Hooks pour la navigation et les paramètres d'URL
   const { token } = useParams<{token: string;}>();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
-  // États pour gérer l'affichage
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
-  const [message, setMessage] = useState('Vérification de votre compte en cours...');const { t } = useTranslation();
+  const [message, setMessage] = useState('');
 
   const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!token) {
       setStatus('error');
-      setMessage("Aucun jeton de vérification n'a été fourni.");
+      setMessage(t('verifyemailpage.noToken'));
       return;
     }
 
@@ -30,7 +29,7 @@ const VerifyEmailPage = () => {
 
         if (response.success) {
           setStatus('success');
-          setMessage('Votre compte a été vérifié avec succès ! Redirection en cours...');
+          setMessage(t('verifyemailpage.successRedirect'));
 
           redirectTimerRef.current = setTimeout(() => {
             navigate('/');
@@ -38,11 +37,11 @@ const VerifyEmailPage = () => {
 
         } else {
           setStatus('error');
-          setMessage(response.error || 'Le jeton est invalide ou a expiré.');
+          setMessage(response.error || t('verifyemailpage.invalidToken'));
         }
       } catch (error: any) {
         setStatus('error');
-        setMessage(error.response?.data?.error || "Impossible de communiquer avec le serveur.");
+        setMessage(error.response?.data?.error || t('verifyemailpage.serverError'));
       }
     };
 
@@ -51,38 +50,38 @@ const VerifyEmailPage = () => {
     return () => {
       if (redirectTimerRef.current) clearTimeout(redirectTimerRef.current);
     };
-  }, [token, navigate]);
+  }, [token, navigate, t]);
 
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
-            <div className="p-8 max-w-md w-full">
-                {status === 'loading' &&
-        <div className="flex flex-col items-center text-center">
-                        <Loader2 className="h-12 w-12 animate-spin text-blue-600 mb-4" />
-                        <p className="text-lg font-medium">{message}</p>
-                    </div>
+      <div className="p-8 max-w-md w-full">
+        {status === 'loading' &&
+          <div className="flex flex-col items-center text-center">
+            <Loader2 className="h-12 w-12 animate-spin text-blue-600 mb-4" />
+            <p className="text-lg font-medium">{t('verifyemailpage.verifying')}</p>
+          </div>
         }
 
-                {status === 'success' &&
-        <Alert variant="default" className="bg-green-100 border-green-400 text-green-800">
-                        <AlertTitle className="font-bold">{t("verifyemailpage.vrification_russie")}</AlertTitle>
-                        <AlertDescription>{message}</AlertDescription>
-                    </Alert>
+        {status === 'success' &&
+          <Alert variant="default" className="bg-green-100 border-green-400 text-green-800">
+            <AlertTitle className="font-bold">{t('verifyemailpage.vrification_russie')}</AlertTitle>
+            <AlertDescription>{message}</AlertDescription>
+          </Alert>
         }
 
-                {status === 'error' &&
-        <Alert variant="destructive">
-                        <AlertTitle className="font-bold">{t("verifyemailpage.erreur_lors_vrification")}</AlertTitle>
-                        <AlertDescription>{message}</AlertDescription>
-                        <Button asChild className="mt-4">
-                            <Link to="/">{t("verifyemailpage.retour_page_daccueil")}</Link>
-                        </Button>
-                    </Alert>
+        {status === 'error' &&
+          <Alert variant="destructive">
+            <AlertTitle className="font-bold">{t('verifyemailpage.erreur_lors_vrification')}</AlertTitle>
+            <AlertDescription>{message}</AlertDescription>
+            <Button asChild className="mt-4">
+              <Link to="/">{t('verifyemailpage.retour_page_daccueil')}</Link>
+            </Button>
+          </Alert>
         }
-            </div>
-        </div>);
-
+      </div>
+    </div>
+  );
 };
 
 export default VerifyEmailPage;

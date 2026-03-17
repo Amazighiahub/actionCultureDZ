@@ -1,6 +1,9 @@
 // routes/commentaireRoutes.js
 const express = require('express');
+const { body } = require('express-validator');
 const router = express.Router();
+const { handleValidationErrors, validateStringLengths } = require('../middlewares/validationMiddleware');
+const { commentLimiter } = require('../middlewares/rateLimitMiddleware');
 
 module.exports = (models, middlewares = {}) => {
   const CommentaireController = require('../controllers/commentaireController');
@@ -34,7 +37,17 @@ module.exports = (models, middlewares = {}) => {
    * POST /commentaires/oeuvre/:oeuvreId
    * Créer un commentaire sur une œuvre (authentifié)
    */
-  router.post('/oeuvre/:oeuvreId', authMiddleware, async (req, res) => {
+  router.post('/oeuvre/:oeuvreId', authMiddleware,
+    commentLimiter,
+    validateStringLengths,
+    [
+      body('contenu').notEmpty().withMessage('Le contenu est requis')
+        .isLength({ min: 3 }).withMessage('Le commentaire doit contenir au moins 3 caractères')
+        .isLength({ max: 2000 }).withMessage('Contenu trop long (max 2000 caractères)'),
+      body('note').optional().isInt({ min: 1, max: 5 }).withMessage('La note doit être entre 1 et 5'),
+    ],
+    handleValidationErrors,
+    async (req, res) => {
     try {
       await controller.createCommentaireOeuvre(req, res);
     } catch (error) {
@@ -70,7 +83,17 @@ module.exports = (models, middlewares = {}) => {
    * POST /commentaires/evenement/:evenementId
    * Créer un commentaire sur un événement (authentifié)
    */
-  router.post('/evenement/:evenementId', authMiddleware, async (req, res) => {
+  router.post('/evenement/:evenementId', authMiddleware,
+    commentLimiter,
+    validateStringLengths,
+    [
+      body('contenu').notEmpty().withMessage('Le contenu est requis')
+        .isLength({ min: 3 }).withMessage('Le commentaire doit contenir au moins 3 caractères')
+        .isLength({ max: 2000 }).withMessage('Contenu trop long (max 2000 caractères)'),
+      body('note').optional().isInt({ min: 1, max: 5 }).withMessage('La note doit être entre 1 et 5'),
+    ],
+    handleValidationErrors,
+    async (req, res) => {
     try {
       await controller.createCommentaireEvenement(req, res);
     } catch (error) {
@@ -90,7 +113,15 @@ module.exports = (models, middlewares = {}) => {
    * PUT /commentaires/:id
    * Modifier un commentaire (propriétaire uniquement)
    */
-  router.put('/:id', authMiddleware, async (req, res) => {
+  router.put('/:id', authMiddleware,
+    validateStringLengths,
+    [
+      body('contenu').optional()
+        .isLength({ min: 3 }).withMessage('Le commentaire doit contenir au moins 3 caractères')
+        .isLength({ max: 2000 }).withMessage('Contenu trop long (max 2000 caractères)'),
+    ],
+    handleValidationErrors,
+    async (req, res) => {
     try {
       // Vérifier que l'utilisateur est propriétaire du commentaire
       const commentaire = await models.Commentaire.findByPk(req.params.id);
