@@ -4,8 +4,22 @@ import { StatutProgramme, TypeActivite, NiveauRequis } from '../enums/programme.
 import { MaterielRequis } from './specific-types';
 import { Evenement } from './evenement.types';
 import { Lieu } from './lieu.types';
-import { Intervenant } from './intervenant.types';
 import { User } from './user.types';
+
+/** Données pivot ProgrammeIntervenant (through table) */
+export interface ProgrammeIntervenantData {
+  role_intervenant?: 'principal' | 'co_intervenant' | 'moderateur' | 'invite' | 'animateur';
+  statut_confirmation?: 'en_attente' | 'confirme' | 'decline' | 'annule';
+  sujet_intervention?: string;
+  ordre_intervention?: number;
+  duree_intervention?: number;
+  biographie_courte?: string;
+}
+
+/** Un User en tant qu'intervenant dans un programme */
+export interface ProgrammeIntervenant extends User {
+  ProgrammeIntervenant?: ProgrammeIntervenantData;
+}
 
 export interface Programme {
   id_programme: number;
@@ -30,11 +44,14 @@ export interface Programme {
   diffusion_live: boolean;
   support_numerique: boolean;
   notes_organisateur?: string;
-  
+
   // Relations (optionnelles)
   Evenement?: Evenement;
   Lieu?: Lieu;
+  /** @deprecated Utiliser Intervenants à la place */
   Users?: User[];
+  /** Intervenants avec données pivot (rôle, sujet, bio...) */
+  Intervenants?: ProgrammeIntervenant[];
 }
 
 // Type pour la création d'un programme

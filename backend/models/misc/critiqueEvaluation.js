@@ -29,24 +29,18 @@ module.exports = (sequelize) => {
     },
     commentaire: {
       type: DataTypes.TEXT
-    },
-    date_creation: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW
-    },
-    date_modification: {
-      type: DataTypes.DATE,
-      allowNull: false
     }
   }, {
     tableName: 'critique_evaluation',
-    timestamps: false
+    timestamps: true,
+    createdAt: 'date_creation',
+    updatedAt: 'date_modification'
   });
 
   // Associations
   CritiqueEvaluation.associate = (models) => {
-    CritiqueEvaluation.belongsTo(models.Oeuvre, { foreignKey: 'id_oeuvre' });
-    CritiqueEvaluation.belongsTo(models.User, { foreignKey: 'id_user' });
+    CritiqueEvaluation.belongsTo(models.Oeuvre, { foreignKey: 'id_oeuvre', onDelete: 'CASCADE' });
+    CritiqueEvaluation.belongsTo(models.User, { foreignKey: 'id_user', onDelete: 'CASCADE' });
   };
 
   return CritiqueEvaluation;

@@ -39,9 +39,10 @@ const VerifyEmailPage = () => {
           setStatus('error');
           setMessage(response.error || t('verifyemailpage.invalidToken'));
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         setStatus('error');
-        setMessage(error.response?.data?.error || t('verifyemailpage.serverError'));
+        const err = error as Record<string, Record<string, Record<string, string>>>;
+        setMessage(err?.response?.data?.error || t('verifyemailpage.serverError'));
       }
     };
 

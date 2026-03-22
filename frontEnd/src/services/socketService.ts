@@ -1,5 +1,4 @@
 // services/socketService.ts
-/* eslint-disable @typescript-eslint/no-explicit-any */
 // socket.io-client (~45KB) est chargé dynamiquement au premier connect()
 import type { Socket } from 'socket.io-client';
 import { API_BASE_URL } from '@/config/api';
@@ -67,9 +66,9 @@ interface NotificationEvents {
     type_notification: string;
     priorite?: string;
     global: boolean;
-    metadata?: any;
+    metadata?: Record<string, unknown>;
   } & BaseSocketData) => void;
-  
+
   // Confirmation d'envoi
   'notification:sent': (data: {
     admin_id: string | number;
@@ -99,9 +98,9 @@ interface AdminEvents {
       id: number;
       name: string;
     };
-    metadata?: any;
+    metadata?: Record<string, unknown>;
   } & BaseSocketData) => void;
-  
+
   // Nouvel utilisateur
   'admin:new_user': (data: {
     user: {
@@ -149,7 +148,7 @@ interface AdminEvents {
     type: 'performance' | 'security' | 'error' | 'maintenance';
     level: 'info' | 'warning' | 'error' | 'critical';
     message: string;
-    details?: any;
+    details?: Record<string, unknown>;
   } & BaseSocketData) => void;
 
   // Mise à jour présence admin
@@ -230,7 +229,7 @@ interface ContentEvents {
   'content:update': (data: {
     type: 'oeuvre' | 'evenement' | 'site';
     id: number;
-    changes: any;
+    changes: Record<string, unknown>;
   } & BaseSocketData) => void;
 }
 
@@ -256,7 +255,7 @@ interface EventEvents {
   // Mise à jour événement
   'event:update': (data: {
     eventId: number;
-    changes: any;
+    changes: Record<string, unknown>;
     notification?: string;
   } & BaseSocketData) => void;
   
@@ -335,7 +334,7 @@ interface SystemEvents {
   'reconnect_attempt': (attemptNumber: number) => void;
   'reconnect_error': (error: Error) => void;
   'reconnect_failed': () => void;
-  'error': (error: any) => void;
+  'error': (error: Error) => void;
   'ping': () => void;
   'pong': (latency: number) => void;
 }
@@ -368,7 +367,7 @@ interface SocketConfig {
 }
 
 // Type pour un handler d'événement générique
-type EventHandler = (...args: any[]) => void;
+type EventHandler = (...args: unknown[]) => void;
 
 // ================================================
 // SERVICE SOCKET
@@ -388,7 +387,7 @@ class SocketService {
   };
   
   private listeners: Map<string, Set<EventHandler>> = new Map();
-  private messageQueue: Array<{ event: string; data: any }> = [];
+  private messageQueue: Array<{ event: string; data: unknown }> = [];
   private isConnecting = false;
   private connectionPromise: Promise<void> | null = null;
   
@@ -512,7 +511,7 @@ class SocketService {
     this.listeners.get(event)!.add(handler);
 
     if (this.socket && this.isConnected) {
-      this.socket.on(event, handler as any);
+      this.socket.on(event, handler as (...args: unknown[]) => void);
     }
   }
 
@@ -537,7 +536,7 @@ class SocketService {
         }
       }
       if (this.socket) {
-        this.socket.off(event, handler as any);
+        this.socket.off(event, handler as (...args: unknown[]) => void);
       }
     }
   }
@@ -559,7 +558,7 @@ class SocketService {
   /**
    * Émettre avec acknowledgment
    */
-  async emitWithAck<K extends keyof SocketEvents, R = any>(
+  async emitWithAck<K extends keyof SocketEvents, R = unknown>(
     event: K,
     data?: Parameters<SocketEvents[K]>[0],
     timeout = 5000

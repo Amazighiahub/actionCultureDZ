@@ -103,7 +103,7 @@ const corsOptions = {
     'X-Language',
     'Accept-Language'
   ],
-  exposedHeaders: ['X-Total-Count', 'X-Page-Count', 'X-Request-ID'],
+  exposedHeaders: ['X-Total-Count', 'X-Page-Count', 'X-Request-ID', 'X-CSRF-Token'],
   maxAge: IS_PRODUCTION ? 86400 : 3600, // 24h en prod, 1h en dev
   optionsSuccessStatus: 200 // Pour compatibilité avec certains navigateurs
 };

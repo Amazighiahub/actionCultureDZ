@@ -14,10 +14,10 @@ import { X, Plus, Tag, FolderTree, Sparkles } from 'lucide-react';
 import { metadataService } from '@/services/metadata.service';
 
 interface StepCategoriesProps {
-  formData: any;
-  updateFormData: (field: string, value: any) => void;
+  formData: Record<string, unknown>;
+  updateFormData: (field: string, value: unknown) => void;
   errors: Record<string, string>;
-  metadata: any;
+  metadata: Record<string, unknown>;
 }
 
 interface CategoryGroup {
@@ -106,7 +106,7 @@ const StepCategories: React.FC<StepCategoriesProps> = ({
     };
 
     const typeCode = metadata.types_oeuvres?.find(
-      (t: any) => t.id_type_oeuvre === formData.id_type_oeuvre
+      (t: Record<string, unknown>) => t.id_type_oeuvre === formData.id_type_oeuvre
     )?.code?.toLowerCase() || '';
 
     setSuggestedTags(suggestions[typeCode] || ['culture', 'algérie', 'patrimoine']);

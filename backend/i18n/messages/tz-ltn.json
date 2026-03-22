@@ -53,6 +53,7 @@
     "wrongPassword": "Awal uffir ur yeṣliḥ ara",
     "tokenMissing": "Token d'authentification manquant",
     "tokenInvalid": "Token invalide ou expiré",
+    "tokenRevoked": "Tagnit tfuk. Ttxil kcem-d tikelt-nniḍen.",
     "accountBlocked": "Votre compte est ${status}. Veuillez contacter l'administrateur.",
     "unknownAccountStatus": "Statut de compte non reconnu",
     "emailNotVerified": "Veuillez vérifier votre email pour accéder à cette fonctionnalité.",

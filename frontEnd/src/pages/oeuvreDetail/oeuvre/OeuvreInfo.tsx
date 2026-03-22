@@ -15,11 +15,12 @@ import {
 import type { Oeuvre } from '@/types/models/oeuvre.types';
 
 // Helper pour extraire le texte d'un champ multilingue
-const getLocalizedText = (value: any, fallback: string = ''): string => {
+const getLocalizedText = (value: unknown, fallback: string = ''): string => {
   if (!value) return fallback;
   if (typeof value === 'string') return value;
-  if (typeof value === 'object') {
-    return value.fr || value.ar || value.en || Object.values(value).find((v: any) => typeof v === 'string' && v) || fallback;
+  if (typeof value === 'object' && value !== null) {
+    const obj = value as Record<string, unknown>;
+    return String(obj.fr || obj.ar || obj.en || Object.values(obj).find((v) => typeof v === 'string' && v) || fallback);
   }
   return String(value);
 };
@@ -31,7 +32,7 @@ interface OeuvreInfoProps {
 
 const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false }) => {
   const { t } = useTranslation();
-  const oeuvreAny = oeuvre as any;
+  const oeuvreAny = oeuvre as Oeuvre & Record<string, unknown>;
 
   // Version compacte pour la sidebar
   if (compact) {
@@ -543,7 +544,7 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false }) => {
                   {t('oeuvre.genres', 'Genres')}
                 </h4>
                 <div className="flex flex-wrap gap-2">
-                  {oeuvreAny.Genres.map((genre: any) => (
+                  {(oeuvreAny.Genres as Array<Record<string, unknown>>).map((genre) => (
                     <Badge key={genre.id_genre} variant="secondary">
                       {genre.nom}
                     </Badge>
@@ -603,7 +604,7 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false }) => {
                   {t('oeuvre.awards', 'Récompenses')}
                 </h4>
                 <ul className="space-y-2">
-                  {oeuvreAny.recompenses.map((recompense: any, index: number) => (
+                  {(oeuvreAny.recompenses as Array<Record<string, unknown>>).map((recompense, index: number) => (
                     <li key={index} className="flex items-center gap-2 text-sm">
                       <Award className="h-4 w-4 text-yellow-500" />
                       {recompense}

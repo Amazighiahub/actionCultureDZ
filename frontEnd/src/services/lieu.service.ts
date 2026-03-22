@@ -4,6 +4,7 @@ import { httpClient } from './httpClient';
 import { ApiResponse, PaginatedResponse, PaginationParams } from '@/config/api';
 import { Lieu } from '@/types/models/lieu.types';
 import { DetailLieu, Service } from '@/types/models/lieux-details.types';
+import { Wilaya, Daira } from '@/types/models/geography.types';
 
 // Types pour les données multilingues
 interface MultiLangString {
@@ -130,15 +131,15 @@ class LieuService {
   /**
    * Obtenir les wilayas
    */
-  async getWilayas(): Promise<ApiResponse<any[]>> {
-    return httpClient.get<any[]>('/metadata/wilayas');
+  async getWilayas(): Promise<ApiResponse<Wilaya[]>> {
+    return httpClient.get<Wilaya[]>('/metadata/wilayas');
   }
 
   /**
    * Obtenir les communes d'une wilaya
    */
-  async getCommunesByWilaya(wilayaId: number): Promise<ApiResponse<any[]>> {
-    return httpClient.get<any[]>(`/metadata/wilayas/${wilayaId}/dairas`);
+  async getCommunesByWilaya(wilayaId: number): Promise<ApiResponse<Daira[]>> {
+    return httpClient.get<Daira[]>(`/metadata/wilayas/${wilayaId}/dairas`);
   }
 
   /**

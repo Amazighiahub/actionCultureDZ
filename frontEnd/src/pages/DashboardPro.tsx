@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
@@ -46,12 +45,61 @@ import { useFormatDate } from '@/hooks/useFormatDate';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import GestionEvenement from '@/components/event/GestionEvenement';
 
+/** Generic dashboard item with fields used across oeuvre/evenement/service/patrimoine/artisanat */
+interface DashboardItem {
+  id?: number;
+  id_oeuvre?: number;
+  id_evenement?: number;
+  id_site?: number;
+  id_service?: number;
+  id_artisanat?: number;
+  titre?: unknown;
+  nom?: unknown;
+  nom_evenement?: unknown;
+  description?: unknown;
+  lieu?: unknown;
+  type?: unknown;
+  type_service?: unknown;
+  type_oeuvre?: { nom_type?: unknown };
+  TypeOeuvre?: { nom_type?: unknown };
+  vues?: number;
+  visites?: number;
+  note_moyenne?: number;
+  statut?: string;
+  date_debut?: string;
+  Lieu?: { nom?: unknown; adresse?: unknown };
+  nombre_participants?: number;
+  wilaya?: unknown;
+  tarif_min?: number;
+  tarif_max?: number;
+  horaires?: unknown;
+  en_stock?: number;
+  sur_commande?: boolean;
+  prix_min?: number;
+  prix_max?: number;
+  Materiau?: { nom?: unknown };
+  Technique?: { nom?: unknown };
+  materiau?: unknown;
+  technique?: unknown;
+  [key: string]: unknown;
+}
+
+interface ItemRowProps {
+  item: DashboardItem;
+  type: string;
+  onView: (item: DashboardItem) => void;
+  onEdit: (item: DashboardItem) => void;
+  onDelete: (item: DashboardItem) => void;
+}
+
+type MultiLangValue = string | Record<string, string> | undefined | null;
+
 const DashboardPro = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('oeuvres');
   const [searchQuery, setSearchQuery] = useState('');
-  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; type: string; item: any }>({ open: false, type: '', item: null });
+  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; type: string; item: DashboardItem | null }>({ open: false, type: '', item: null });
 
   // État pour la gestion d'événement
   const [gestionEvenement, setGestionEvenement] = useState<{id: number; nom: string} | null>(null);
@@ -92,11 +140,11 @@ const DashboardPro = () => {
   const vuesTotal = dashboardStats?.oeuvres?.vues_total ?? 0;
 
   // Fonction de filtrage par recherche (utilise la valeur debouncée)
-  const filterBySearch = useCallback((items: any[]) => {
+  const filterBySearch = useCallback((items: DashboardItem[]) => {
     if (!items || !debouncedSearch) return items;
     return items.filter((item) => {
       // Extraire les valeurs string des champs (y compris objets multilingues)
-      const getValue = (field: any): string => {
+      const getValue = (field: MultiLangValue): string => {
         if (!field) return '';
         if (typeof field === 'string') return field;
         if (typeof field === 'object' && !Array.isArray(field)) {
@@ -121,7 +169,7 @@ const DashboardPro = () => {
   }, [debouncedSearch]);
 
   // Composant pour afficher une ligne d'item avec bordure pointillée
-  const ItemRow = ({ item, type, onView, onEdit, onDelete }: any) => {
+  const ItemRow = ({ item, type, onView, onEdit, onDelete }: ItemRowProps) => {
     const getItemTitle = () => {
       switch (type) {
         case 'oeuvre':return td(item.titre);
@@ -262,8 +310,8 @@ const DashboardPro = () => {
   };
 
   // Handlers pour les actions
-  const handleView = useCallback((type: string, item: any) => {
-    const routes: any = {
+  const handleView = useCallback((type: string, item: DashboardItem) => {
+    const routes: Record<string, string> = {
       oeuvre: `/oeuvres/${item.id_oeuvre}`,
       evenement: `/evenements/${item.id_evenement}`,
       patrimoine: `/patrimoine/${item.id_site || item.id}`,
@@ -272,8 +320,8 @@ const DashboardPro = () => {
     navigate(routes[type] || '/');
   }, [navigate]);
 
-  const handleEdit = useCallback((type: string, item: any) => {
-    const routes: any = {
+  const handleEdit = useCallback((type: string, item: DashboardItem) => {
+    const routes: Record<string, string> = {
       oeuvre: `/modifier-oeuvre/${item.id_oeuvre}`,
       evenement: `/modifier-evenement/${item.id_evenement}`,
       patrimoine: `/modifier-patrimoine/${item.id_site || item.id}`,
@@ -282,14 +330,14 @@ const DashboardPro = () => {
     navigate(routes[type] || '/');
   }, [navigate]);
 
-  const handleDeleteItem = useCallback((type: string, item: any) => {
+  const handleDeleteItem = useCallback((type: string, item: DashboardItem) => {
     setDeleteDialog({ open: true, type, item });
   }, []);
 
   const confirmDeleteItem = async () => {
     const { type, item } = deleteDialog;
     setDeleteDialog({ open: false, type: '', item: null });
-    const ids: any = {
+    const ids: Record<string, number | undefined> = {
       oeuvre: item?.id_oeuvre,
       evenement: item?.id_evenement,
       patrimoine: item?.id_site || item?.id,
@@ -467,7 +515,7 @@ const DashboardPro = () => {
                       </Button>
                     </div> :
                   mesOeuvres?.items && mesOeuvres.items.length > 0 ?
-                  filterBySearch(mesOeuvres.items).map((oeuvre: any) =>
+                  filterBySearch(mesOeuvres.items as DashboardItem[]).map((oeuvre) =>
                   <ItemRow
                     key={oeuvre.id_oeuvre}
                     item={oeuvre}
@@ -522,7 +570,7 @@ const DashboardPro = () => {
                       </Button>
                     </div> :
                   mesEvenements?.items && mesEvenements.items.length > 0 ?
-                  filterBySearch(mesEvenements.items).map((evenement: any) =>
+                  filterBySearch(mesEvenements.items as DashboardItem[]).map((evenement) =>
                   <div key={evenement.id_evenement} className="py-4 border-b border-dashed border-gray-200 last:border-0">
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
@@ -633,7 +681,7 @@ const DashboardPro = () => {
                       </Button>
                     </div>
                   ) : mesServices?.items && mesServices.items.length > 0 ? (
-                    filterBySearch(mesServices.items).map((item: any) => (
+                    filterBySearch(mesServices.items as DashboardItem[]).map((item) => (
                       <ItemRow
                         key={item.id || item.id_service}
                         item={item}
@@ -685,7 +733,7 @@ const DashboardPro = () => {
                       </Button>
                     </div> :
                   mesArtisanats?.items && mesArtisanats.items.length > 0 ?
-                  filterBySearch(mesArtisanats.items).map((item: any) =>
+                  filterBySearch(mesArtisanats.items as DashboardItem[]).map((item) =>
                   <div key={item.id_artisanat || item.id} className="py-4 border-b border-dashed border-gray-200 last:border-0">
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
@@ -772,7 +820,7 @@ const DashboardPro = () => {
                       </Button>
                     </div> :
                   mesPatrimoines?.items && mesPatrimoines.items.length > 0 ?
-                  filterBySearch(mesPatrimoines.items).map((site: any) =>
+                  filterBySearch(mesPatrimoines.items as DashboardItem[]).map((site) =>
                   <ItemRow
                     key={site.id_site || site.id}
                     item={site}

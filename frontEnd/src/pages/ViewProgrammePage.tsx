@@ -6,9 +6,10 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Eye, Calendar, Clock, Users, MapPin, Edit, Trash2, Copy } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { ArrowLeft, Eye, Calendar, Clock, Users, MapPin, Edit, Trash2, Copy, User, Mic } from 'lucide-react';
 import ProgrammeForm, { ProgrammeFormData } from '@/components/forms/ProgrammeForm';
-import { programmeService } from '@/services/programme.service';
+import { programmeService, IntervenantUser } from '@/services/programme.service';
 import { useTranslation } from 'react-i18next';
 
 const ViewProgrammePage: React.FC = () => {
@@ -19,22 +20,8 @@ const ViewProgrammePage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [programmeData, setProgrammeData] = useState<Partial<ProgrammeFormData> | null>(null);
-
-  // Données de test pour les lieux
-  const lieux = [
-    { id_lieu: 1, nom: 'Salle principale' },
-    { id_lieu: 2, nom: 'Salle de conférence A' },
-    { id_lieu: 3, nom: 'Atelier 1' },
-    { id_lieu: 4, nom: 'Espace extérieur' }
-  ];
-
-  // Données de test pour les utilisateurs
-  const users = [
-    { id_user: 1, prenom: 'Ahmed', nom: 'Benali' },
-    { id_user: 2, prenom: 'Fatima', nom: 'Messaoudi' },
-    { id_user: 3, prenom: 'Mohamed', nom: 'Kaci' },
-    { id_user: 4, prenom: 'Leila', nom: 'Boudiaf' }
-  ];
+  const [rawIntervenants, setRawIntervenants] = useState<IntervenantUser[]>([]);
+  const [lieuNom, setLieuNom] = useState<string | null>(null);
 
   // Charger les données du programme
   useEffect(() => {
@@ -50,18 +37,26 @@ const ViewProgrammePage: React.FC = () => {
         
         if (response.success && response.data) {
           const programme = response.data;
-          
+
+          // Stocker les intervenants complets (nom, prénom, etc.)
+          setRawIntervenants(programme.Intervenants || []);
+
+          // Stocker le nom du lieu
+          if (programme.Lieu?.nom) {
+            setLieuNom(typeof programme.Lieu.nom === 'object' ? (programme.Lieu.nom as any).fr || '' : programme.Lieu.nom);
+          }
+
           // Transformer les données pour le formulaire
           const formData: Partial<ProgrammeFormData> = {
-            titre: {
+            titre: typeof programme.titre === 'object' ? programme.titre as any : {
               fr: programme.titre || '',
-              ar: programme.titre || '',
-              en: programme.titre || ''
+              ar: '',
+              en: ''
             },
-            description: {
+            description: typeof programme.description === 'object' ? programme.description as any : {
               fr: programme.description || '',
-              ar: programme.description || '',
-              en: programme.description || ''
+              ar: '',
+              en: ''
             },
             date_programme: programme.heure_debut ? programme.heure_debut.split('T')[0] : '',
             heure_debut: programme.heure_debut ? programme.heure_debut.split('T')[1]?.substring(0, 5) : '',
@@ -73,11 +68,11 @@ const ViewProgrammePage: React.FC = () => {
               ar: programme.lieu_specifique,
               en: programme.lieu_specifique
             } : undefined,
-            type_activite: programme.type_activite as any,
+            type_activite: programme.type_activite as ProgrammeFormData['type_activite'],
             statut: programme.statut,
             ordre: programme.ordre,
             nb_participants_max: programme.nb_participants_max,
-            niveau_requis: programme.niveau_requis as any,
+            niveau_requis: programme.niveau_requis as ProgrammeFormData['niveau_requis'],
             materiel_requis: programme.materiel_requis || [],
             langue_principale: 'fr',
             traduction_disponible: false,
@@ -101,8 +96,8 @@ const ViewProgrammePage: React.FC = () => {
         } else {
           setError(response.error || t('programmePages.errors.loadFailed'));
         }
-      } catch (err: any) {
-        setError(err.message || t('programmePages.errors.generic'));
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : t('programmePages.errors.generic'));
       } finally {
         setLoading(false);
       }
@@ -129,8 +124,8 @@ const ViewProgrammePage: React.FC = () => {
         } else {
           setError(response.error || t('programmePages.errors.deleteFailed'));
         }
-      } catch (err: any) {
-        setError(err.message || t('programmePages.errors.generic'));
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : t('programmePages.errors.generic'));
       }
     }
   };
@@ -147,8 +142,8 @@ const ViewProgrammePage: React.FC = () => {
       } else {
         setError(response.error || t('programmePages.errors.duplicateFailed', 'Erreur lors de la duplication'));
       }
-    } catch (err: any) {
-      setError(err.message || t('programmePages.errors.generic'));
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : t('programmePages.errors.generic'));
     } finally {
       setDuplicating(false);
     }
@@ -264,7 +259,7 @@ const ViewProgrammePage: React.FC = () => {
           </div>
           <div className="flex items-center gap-2">
             <MapPin className="h-4 w-4" />
-            {lieux.find(l => l.id_lieu === programmeData?.id_lieu)?.nom || t('programmePages.meta.locationNotSpecified')}
+            {lieuNom || t('programmePages.meta.locationNotSpecified')}
           </div>
         </div>
       </div>
@@ -293,11 +288,85 @@ const ViewProgrammePage: React.FC = () => {
             loading={false}
             error={null}
             success={false}
-            lieux={lieux}
-            users={users}
+            lieux={[]}
+            users={[]}
           />
         </CardContent>
       </Card>
+
+      {/* Section Intervenants */}
+      {rawIntervenants.length > 0 && (
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              {t('programmePages.view.intervenants', 'Intervenants')} ({rawIntervenants.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {rawIntervenants.map((intervenant) => {
+                const pi = intervenant.ProgrammeIntervenant;
+                const nom = typeof intervenant.nom === 'object' ? (intervenant.nom as any).fr || '' : intervenant.nom || '';
+                const prenom = typeof intervenant.prenom === 'object' ? (intervenant.prenom as any).fr || '' : intervenant.prenom || '';
+                return (
+                  <div
+                    key={intervenant.id_user}
+                    className="flex items-start gap-4 p-4 rounded-lg border bg-muted/30"
+                  >
+                    {/* Avatar / icône */}
+                    <div className="flex-shrink-0 h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <User className="h-5 w-5 text-primary" />
+                    </div>
+
+                    {/* Détails */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold text-base">
+                          {prenom} {nom}
+                        </span>
+                        {pi?.role_intervenant && (
+                          <Badge variant="secondary">
+                            {t(`programme.form.participants.roles.${pi.role_intervenant}`, pi.role_intervenant)}
+                          </Badge>
+                        )}
+                        {pi?.statut_confirmation && (
+                          <Badge variant={pi.statut_confirmation === 'confirme' ? 'default' : 'outline'}>
+                            {t(`programme.form.participants.status.${pi.statut_confirmation}`, pi.statut_confirmation)}
+                          </Badge>
+                        )}
+                      </div>
+
+                      {/* Sujet d'intervention */}
+                      {pi?.sujet_intervention && (
+                        <div className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
+                          <Mic className="h-3.5 w-3.5 flex-shrink-0" />
+                          <span>{pi.sujet_intervention}</span>
+                        </div>
+                      )}
+
+                      {/* Biographie courte */}
+                      {pi?.biographie_courte && (
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {pi.biographie_courte}
+                        </p>
+                      )}
+
+                      {/* Durée d'intervention */}
+                      {pi?.duree_intervention && (
+                        <div className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
+                          <Clock className="h-3.5 w-3.5 flex-shrink-0" />
+                          <span>{pi.duree_intervention} min</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Informations supplémentaires */}
       <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">

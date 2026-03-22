@@ -304,23 +304,17 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    // Titre requis — aligné sur le backend (fr OU ar)
-    if (!formData.titre.fr?.trim() && !formData.titre.ar?.trim()) {
-      newErrors.titre = t('programme.form.errors.titleRequired', 'Le titre est requis (au moins en français ou arabe)');
+    // Description requise (fr OU ar)
+    if (!formData.description.fr?.trim() && !formData.description.ar?.trim()) {
+      newErrors.description = t('programme.form.errors.descriptionRequired', 'La description est requise (au moins en français ou arabe)');
     }
 
-    // Date et horaires requis
+    // Date requise
     if (!formData.date_programme) {
       newErrors.date_programme = t('programme.form.errors.dateRequired');
     }
-    if (!formData.heure_debut) {
-      newErrors.heure_debut = t('programme.form.errors.startTimeRequired');
-    }
-    if (!formData.heure_fin) {
-      newErrors.heure_fin = t('programme.form.errors.endTimeRequired');
-    }
 
-    // Validation des horaires
+    // Validation des horaires (optionnels, mais si remplis doivent être cohérents)
     if (formData.heure_debut && formData.heure_fin && formData.heure_debut >= formData.heure_fin) {
       newErrors.heure_fin = t('programme.form.errors.endTimeAfterStart');
     }
@@ -401,19 +395,18 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Titre multilingue */}
+              {/* Titre multilingue (optionnel) */}
               <MultiLangInput
                 name="titre"
                 label={t('programme.form.activityTitle')}
                 value={formData.titre}
                 onChange={(value) => handleMultiLangChange('titre', value)}
-                required={true}
-                requiredLanguages={['fr']}
+                required={false}
                 disabled={isReadOnly}
                 errors={errors}
               />
 
-              {/* Description multilingue */}
+              {/* Description multilingue (requise) */}
               <MultiLangInput
                 name="description"
                 label={t('programme.form.description')}
@@ -421,12 +414,14 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
                 onChange={(value) => handleMultiLangChange('description', value)}
                 type="textarea"
                 rows={4}
+                required={true}
+                requiredLanguages={['fr']}
                 disabled={isReadOnly}
                 errors={errors}
               />
 
               {/* Type d'activité */}
-              <FormField label={t('programme.form.activityType')} required={true} error={errors.type_activite}>
+              <FormField label={t('programme.form.activityType')} error={errors.type_activite}>
                 <Select
                   value={formData.type_activite}
                   onValueChange={(value) => handleChange('type_activite', value)}
@@ -523,7 +518,7 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
 
               {/* Heures - Menus déroulants avec plages prédéfinies */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField label={t('programme.form.schedule.startTime')} required={true} error={errors.heure_debut}>
+                <FormField label={t('programme.form.schedule.startTime')} error={errors.heure_debut}>
                   <Select
                     value={formData.heure_debut}
                     onValueChange={(value) => handleChange('heure_debut', value)}
@@ -542,7 +537,7 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
                   </Select>
                 </FormField>
 
-                <FormField label={t('programme.form.schedule.endTime')} required={true} error={errors.heure_fin}>
+                <FormField label={t('programme.form.schedule.endTime')} error={errors.heure_fin}>
                   <Select
                     value={formData.heure_fin}
                     onValueChange={(value) => handleChange('heure_fin', value)}

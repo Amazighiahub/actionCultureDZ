@@ -2,6 +2,8 @@
 const express = require('express');
 const router = express.Router();
 const { body, param } = require('express-validator');
+const { Op, Sequelize } = require('sequelize');
+const { SUPPORTED_LANGUAGES } = require('../helpers/i18n');
 
 module.exports = (models, authMiddleware) => {
   const { Organisation, TypeOrganisation, UserOrganisation } = models;
@@ -74,6 +76,29 @@ module.exports = (models, authMiddleware) => {
         const nomI18n = typeof nom === 'string' ? { fr: nom } : nom;
         const descI18n = typeof description === 'string' ? { fr: description } : (description || {});
 
+        // Vérifier si une organisation avec le même nom existe déjà
+        const searchStr = (typeof nom === 'string' ? nom : (nom?.fr || '')).trim().toLowerCase();
+        if (searchStr) {
+          const nomConditions = SUPPORTED_LANGUAGES.map(l => {
+            const jsonPath = l.includes('-') ? `$."${l}"` : `$.${l}`;
+            return Sequelize.where(
+              Sequelize.fn('LOWER', Sequelize.fn('JSON_UNQUOTE',
+                Sequelize.fn('JSON_EXTRACT', Sequelize.col('nom'), Sequelize.literal(`'${jsonPath}'`))
+              )),
+              searchStr
+            );
+          });
+          const existingOrg = await Organisation.findOne({ where: { [Op.or]: nomConditions } });
+          if (existingOrg) {
+            // Lier l'utilisateur s'il ne l'est pas déjà
+            await UserOrganisation.findOrCreate({
+              where: { id_user: userId, id_organisation: existingOrg.id_organisation },
+              defaults: { role: 'membre', actif: true }
+            });
+            return res.status(200).json({ success: true, data: existingOrg });
+          }
+        }
+
         const organisation = await Organisation.create({
           nom: nomI18n,
           id_type_organisation,
@@ -94,7 +119,8 @@ module.exports = (models, authMiddleware) => {
           data: organisation
         });
       } catch (error) {
-        console.error('Erreur création organisation:', error);
+        const logger = require('../utils/logger');
+        logger.error('Erreur création organisation:', error);
         res.status(500).json({
           success: false,
           error: req.t ? req.t('common.serverError') : 'Server error',

@@ -451,11 +451,14 @@ class UserService extends BaseService {
     // Collecter les données liées
     const models = this.repository.models;
 
+    const EXPORT_LIMIT = 10000;
+
     if (models.Oeuvre) {
       const oeuvres = await models.Oeuvre.findAll({
         where: { saisi_par: userId },
         attributes: ['id_oeuvre', 'titre', 'description', 'date_creation', 'statut'],
         raw: true,
+        limit: EXPORT_LIMIT,
       });
       data.oeuvres = oeuvres;
     }
@@ -465,6 +468,7 @@ class UserService extends BaseService {
         where: { id_user: userId },
         attributes: ['id_evenement', 'nom_evenement', 'date_debut', 'date_fin', 'statut'],
         raw: true,
+        limit: EXPORT_LIMIT,
       });
       data.evenements = evenements;
     }
@@ -474,6 +478,7 @@ class UserService extends BaseService {
         where: { id_user: userId },
         attributes: ['id_commentaire', 'contenu', 'date_creation'],
         raw: true,
+        limit: EXPORT_LIMIT,
       });
       data.commentaires = commentaires;
     }
@@ -483,6 +488,7 @@ class UserService extends BaseService {
         where: { id_user: userId },
         attributes: ['id_favori', 'type_entite', 'id_entite', 'date_creation'],
         raw: true,
+        limit: EXPORT_LIMIT,
       });
       data.favoris = favoris;
     }
@@ -490,8 +496,9 @@ class UserService extends BaseService {
     if (models.Notification) {
       const notifications = await models.Notification.findAll({
         where: { id_user: userId },
-        attributes: ['id_notification', 'type', 'message', 'lu', 'date_creation'],
+        attributes: ['id_notification', 'type_notification', 'message', 'lu', 'date_creation'],
         raw: true,
+        limit: EXPORT_LIMIT,
       });
       data.notifications = notifications;
     }
@@ -707,7 +714,8 @@ class UserService extends BaseService {
       {
         userId: user.id_user,
         email: user.email,
-        typeUser: user.id_type_user
+        typeUser: user.id_type_user,
+        pwdAt: user.password_changed_at ? Math.floor(new Date(user.password_changed_at).getTime() / 1000) : 0
       },
       this.jwtSecret,
       { expiresIn: this.jwtExpiration, algorithm: 'HS256' }

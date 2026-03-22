@@ -134,8 +134,8 @@ const ResetPassword = () => {
       } else {
         setError(response.error || t('auth.resetPassword.error'));
       }
-    } catch (err: any) {
-      setError(err.message || t('auth.resetPassword.error'));
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : t('auth.resetPassword.error'));
     } finally {
       setLoading(false);
     }

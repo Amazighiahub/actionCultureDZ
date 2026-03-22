@@ -157,4 +157,4 @@ class VueController extends BaseController {
   }
 }
 
-module.exports = VueController;
+module.exports = new VueController();

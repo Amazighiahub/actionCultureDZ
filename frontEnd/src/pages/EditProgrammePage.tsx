@@ -13,6 +13,18 @@ import { evenementService } from '@/services/evenement.service';
 import { lieuService } from '@/services/lieu.service';
 import { httpClient } from '@/services/httpClient';
 import { useTranslation } from 'react-i18next';
+import type { Lieu } from '@/types/models/lieu.types';
+import type { Intervenant } from '@/types/models/intervenant.types';
+
+/** API response shape for lieux list */
+interface LieuxResponseData {
+  lieux?: Lieu[];
+}
+
+/** API response shape for intervenants search */
+interface IntervenantsResponseData {
+  intervenants?: Intervenant[];
+}
 
 const EditProgrammePage: React.FC = () => {
   const { eventId, programmeId } = useParams<{ eventId: string; programmeId: string }>();
@@ -24,28 +36,25 @@ const EditProgrammePage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [programmeData, setProgrammeData] = useState<Partial<ProgrammeFormData> | null>(null);
-  const [lieux, setLieux] = useState<any[]>([]);
-  const [users, setUsers] = useState<any[]>([]);
+  const [lieux, setLieux] = useState<Lieu[]>([]);
+  const [users, setUsers] = useState<Intervenant[]>([]);
   const [eventDates, setEventDates] = useState<{ dateDebut: string; dateFin: string } | undefined>();
 
   React.useEffect(() => {
     const loadRefData = async () => {
       try {
-        const promises: Promise<any>[] = [
-          lieuService.getAll({ limit: 100 }),
-          httpClient.get<any>('/intervenants/search', { q: '', limit: 50 })
-        ];
-        if (eventId) {
-          promises.push(evenementService.getDetail(parseInt(eventId)));
-        }
-        const [lieuxRes, usersRes, eventRes] = await Promise.all(promises);
+        const lieuxPromise = lieuService.getAll({ limit: 100 });
+        const usersPromise = httpClient.get<IntervenantsResponseData>('/intervenants/search', { q: '', limit: 50 });
+        const eventPromise = eventId ? evenementService.getDetail(parseInt(eventId)) : null;
+
+        const [lieuxRes, usersRes, eventRes] = await Promise.all([lieuxPromise, usersPromise, eventPromise]);
         if (lieuxRes.success && lieuxRes.data) {
-          const items = (lieuxRes.data as any).lieux || lieuxRes.data;
+          const items = (lieuxRes.data as LieuxResponseData).lieux || lieuxRes.data;
           setLieux(Array.isArray(items) ? items : []);
         }
         if (usersRes.success && usersRes.data) {
-          const items = (usersRes.data as any).intervenants || usersRes.data;
-          setUsers(Array.isArray(items) ? items : []);
+          const items = usersRes.data.intervenants || usersRes.data;
+          setUsers(Array.isArray(items) ? items as Intervenant[] : []);
         }
         if (eventRes?.success && eventRes.data) {
           const evt = eventRes.data;
@@ -55,7 +64,7 @@ const EditProgrammePage: React.FC = () => {
             setEventDates({ dateDebut, dateFin });
           }
         }
-      } catch (e) { /* empty lists as fallback */ }
+      } catch (_e) { /* empty lists as fallback */ }
     };
     loadRefData();
   }, [eventId]);
@@ -93,11 +102,11 @@ const EditProgrammePage: React.FC = () => {
               ar: programme.lieu_specifique,
               en: programme.lieu_specifique
             } : undefined,
-            type_activite: programme.type_activite as any,
+            type_activite: programme.type_activite as ProgrammeFormData['type_activite'],
             statut: programme.statut,
             ordre: programme.ordre,
             nb_participants_max: programme.nb_participants_max,
-            niveau_requis: programme.niveau_requis as any,
+            niveau_requis: programme.niveau_requis as ProgrammeFormData['niveau_requis'],
             materiel_requis: programme.materiel_requis || [],
             langue_principale: 'fr',
             traduction_disponible: false,
@@ -121,8 +130,8 @@ const EditProgrammePage: React.FC = () => {
         } else {
           setError(response.error || t('programmePages.errors.loadFailed'));
         }
-      } catch (err: any) {
-        setError(err.message || t('programmePages.errors.generic'));
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : t('programmePages.errors.generic'));
       } finally {
         setFetchLoading(false);
       }
@@ -174,8 +183,8 @@ const EditProgrammePage: React.FC = () => {
       } else {
         setError(response.error || t('programmePages.errors.updateFailed'));
       }
-    } catch (err: any) {
-      setError(err.message || t('programmePages.errors.generic'));
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : t('programmePages.errors.generic'));
       console.error('Erreur:', err);
     } finally {
       setLoading(false);

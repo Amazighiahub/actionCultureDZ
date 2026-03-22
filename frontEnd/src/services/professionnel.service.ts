@@ -1,7 +1,14 @@
 // services/professionnel.service.ts
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { API_ENDPOINTS, ApiResponse, PaginatedResponse, FilterParams } from '@/config/api';
 import { httpClient } from './httpClient';
+import { Oeuvre } from '@/types/models/oeuvre.types';
+import { Evenement } from '@/types/models/evenement.types';
+import { Artisanat } from '@/types/models/oeuvres-specialisees.types';
+import { Notification } from '@/types/models/notification.types';
+import type {
+  EntityStatsResponse, ProfileUpdateData, ProfileResponse,
+  PortfolioMediaResponse, CalendarEventData, FAQItem
+} from '@/types/api/professionnel.types';
 
 interface DashboardStats {
   oeuvres: {
@@ -9,7 +16,6 @@ interface DashboardStats {
     publiees: number;
     en_attente: number;
     vues_total: number;
-    // Ajouter pour les top viewed
     top_viewed?: Array<{
       id_oeuvre: number;
       titre: string;
@@ -33,10 +39,8 @@ interface DashboardStats {
     commentaires_total: number;
     note_moyenne: number;
     evolution_mois: number;
-    // Ajouter le nombre total d'interactions
     total_interactions?: number;
   };
-  // Ajouter followers_count au niveau racine
   followers_count?: number;
 }
 
@@ -47,7 +51,7 @@ interface CalendarEvent {
   start: string;
   end: string;
   color: string;
-  data: any;
+  data: CalendarEventData;
 }
 
 interface AnalyticsOverview {
@@ -138,6 +142,15 @@ interface SupportTicket {
   pieces_jointes?: File[];
 }
 
+// Helper pour convertir ExportOptions en query string params
+function exportOptionsToParams(options: ExportOptions): Record<string, string> {
+  const params: Record<string, string> = { format: options.format };
+  if (options.date_debut) params.date_debut = options.date_debut;
+  if (options.date_fin) params.date_fin = options.date_fin;
+  if (options.include_stats !== undefined) params.include_stats = String(options.include_stats);
+  return params;
+}
+
 class ProfessionnelService {
   // Dashboard
   async getDashboard(): Promise<ApiResponse<DashboardStats>> {
@@ -148,39 +161,39 @@ class ProfessionnelService {
     const params: FilterParams = {};
     if (month) params.month = month;
     if (year) params.year = year;
-    
+
     return httpClient.get<CalendarEvent[]>(API_ENDPOINTS.professionnel.calendar, params);
   }
 
-  async getNotifications(params?: FilterParams): Promise<ApiResponse<PaginatedResponse<any>>> {
-    return httpClient.getPaginated<any>(API_ENDPOINTS.professionnel.notifications, params);
+  async getNotifications(params?: FilterParams): Promise<ApiResponse<PaginatedResponse<Notification>>> {
+    return httpClient.getPaginated<Notification>(API_ENDPOINTS.professionnel.notifications, params);
   }
 
   // Œuvres
-  async getOeuvres(params?: FilterParams): Promise<ApiResponse<PaginatedResponse<any>>> {
-    return httpClient.getPaginated<any>(API_ENDPOINTS.professionnel.oeuvres, params);
+  async getOeuvres(params?: FilterParams): Promise<ApiResponse<PaginatedResponse<Oeuvre>>> {
+    return httpClient.getPaginated<Oeuvre>(API_ENDPOINTS.professionnel.oeuvres, params);
   }
 
-  async getOeuvreStats(id: number): Promise<ApiResponse<any>> {
-    return httpClient.get<any>(API_ENDPOINTS.professionnel.oeuvreStats(id));
+  async getOeuvreStats(id: number): Promise<ApiResponse<EntityStatsResponse>> {
+    return httpClient.get<EntityStatsResponse>(API_ENDPOINTS.professionnel.oeuvreStats(id));
   }
 
   // Artisanats
-  async getArtisanats(params?: FilterParams): Promise<ApiResponse<PaginatedResponse<any>>> {
-    return httpClient.getPaginated<any>(API_ENDPOINTS.professionnel.artisanats, params);
+  async getArtisanats(params?: FilterParams): Promise<ApiResponse<PaginatedResponse<Artisanat>>> {
+    return httpClient.getPaginated<Artisanat>(API_ENDPOINTS.professionnel.artisanats, params);
   }
 
-  async getArtisanatStats(id: number): Promise<ApiResponse<any>> {
-    return httpClient.get<any>(API_ENDPOINTS.professionnel.artisanatStats(id));
+  async getArtisanatStats(id: number): Promise<ApiResponse<EntityStatsResponse>> {
+    return httpClient.get<EntityStatsResponse>(API_ENDPOINTS.professionnel.artisanatStats(id));
   }
 
   // Événements
-  async getEvenements(params?: FilterParams): Promise<ApiResponse<PaginatedResponse<any>>> {
-    return httpClient.getPaginated<any>(API_ENDPOINTS.professionnel.evenements, params);
+  async getEvenements(params?: FilterParams): Promise<ApiResponse<PaginatedResponse<Evenement>>> {
+    return httpClient.getPaginated<Evenement>(API_ENDPOINTS.professionnel.evenements, params);
   }
 
-  async getEvenementStats(id: number): Promise<ApiResponse<any>> {
-    return httpClient.get<any>(API_ENDPOINTS.professionnel.evenementStats(id));
+  async getEvenementStats(id: number): Promise<ApiResponse<EntityStatsResponse>> {
+    return httpClient.get<EntityStatsResponse>(API_ENDPOINTS.professionnel.evenementStats(id));
   }
 
   async manageParticipants(
@@ -196,15 +209,15 @@ class ProfessionnelService {
   }
 
   // Profil & Portfolio
-  async updateProfile(data: any): Promise<ApiResponse<any>> {
-    return httpClient.put<any>(API_ENDPOINTS.professionnel.updateProfile, data);
+  async updateProfile(data: ProfileUpdateData): Promise<ApiResponse<ProfileResponse>> {
+    return httpClient.put<ProfileResponse>(API_ENDPOINTS.professionnel.updateProfile, data);
   }
 
-  async uploadPortfolioMedia(files: File[]): Promise<ApiResponse<any[]>> {
+  async uploadPortfolioMedia(files: File[]): Promise<ApiResponse<PortfolioMediaResponse[]>> {
     try {
       const uploads = await Promise.all(
         files.map((file) =>
-          httpClient.uploadFile<any>(API_ENDPOINTS.professionnel.portfolioUpload, file, {
+          httpClient.uploadFile<PortfolioMediaResponse>(API_ENDPOINTS.professionnel.portfolioUpload, file, {
             fieldName: 'medias'
           })
         )
@@ -220,12 +233,12 @@ class ProfessionnelService {
 
       return {
         success: true,
-        data: uploads.map((item) => item.data).filter(Boolean)
+        data: uploads.map((item) => item.data).filter((d): d is PortfolioMediaResponse => d !== undefined)
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
-        error: error?.message || 'Erreur lors de l\'upload du portfolio'
+        error: error instanceof Error ? error.message : 'Erreur lors de l\'upload du portfolio'
       };
     }
   }
@@ -237,8 +250,8 @@ class ProfessionnelService {
   async updatePortfolioMedia(
     mediaId: number,
     data: { titre?: string; description?: string; ordre?: number }
-  ): Promise<ApiResponse<any>> {
-    return httpClient.put<any>(API_ENDPOINTS.professionnel.updatePortfolioMedia(mediaId), data);
+  ): Promise<ApiResponse<PortfolioMediaResponse>> {
+    return httpClient.put<PortfolioMediaResponse>(API_ENDPOINTS.professionnel.updatePortfolioMedia(mediaId), data);
   }
 
   // Analytics
@@ -274,31 +287,31 @@ class ProfessionnelService {
     return httpClient.get<CollaborationSuggestion[]>(API_ENDPOINTS.professionnel.collaborationSuggestions);
   }
 
-  // Export - UTILISER download AU LIEU DE downloadFile
+  // Export
   async exportData(options: ExportOptions): Promise<ApiResponse<Blob>> {
     return httpClient.download(
-      `${API_ENDPOINTS.professionnel.export}?${new URLSearchParams(options as any)}`,
+      `${API_ENDPOINTS.professionnel.export}?${new URLSearchParams(exportOptionsToParams(options))}`,
       `export_professionnel.${options.format}`
     );
   }
 
   async exportOeuvres(options: ExportOptions): Promise<ApiResponse<Blob>> {
     return httpClient.download(
-      `${API_ENDPOINTS.professionnel.exportOeuvres}?${new URLSearchParams(options as any)}`,
+      `${API_ENDPOINTS.professionnel.exportOeuvres}?${new URLSearchParams(exportOptionsToParams(options))}`,
       `export_oeuvres.${options.format}`
     );
   }
 
   async exportEvenements(options: ExportOptions): Promise<ApiResponse<Blob>> {
     return httpClient.download(
-      `${API_ENDPOINTS.professionnel.exportEvenements}?${new URLSearchParams(options as any)}`,
+      `${API_ENDPOINTS.professionnel.exportEvenements}?${new URLSearchParams(exportOptionsToParams(options))}`,
       `export_evenements.${options.format}`
     );
   }
 
   async exportArtisanats(options: ExportOptions): Promise<ApiResponse<Blob>> {
     return httpClient.download(
-      `${API_ENDPOINTS.professionnel.exportArtisanats}?${new URLSearchParams(options as any)}`,
+      `${API_ENDPOINTS.professionnel.exportArtisanats}?${new URLSearchParams(exportOptionsToParams(options))}`,
       `export_artisanats.${options.format}`
     );
   }
@@ -317,7 +330,7 @@ class ProfessionnelService {
     formData.append('categorie', ticket.categorie);
     formData.append('message', ticket.message);
     formData.append('urgence', ticket.urgence);
-    
+
     if (ticket.pieces_jointes) {
       ticket.pieces_jointes.forEach((file, index) => {
         formData.append(`pieces_jointes[${index}]`, file);
@@ -327,23 +340,18 @@ class ProfessionnelService {
     return httpClient.postFormData<{ ticket_id: string }>(API_ENDPOINTS.professionnel.createTicket, formData);
   }
 
-  async getHelpFAQ(category?: string): Promise<ApiResponse<Array<{
-    question: string;
-    answer: string;
-    category: string;
-    helpful_count: number;
-  }>>> {
+  async getHelpFAQ(category?: string): Promise<ApiResponse<FAQItem[]>> {
     const params: FilterParams = {};
     if (category) {
       params.category = category;
     }
-    return httpClient.get<any>(API_ENDPOINTS.professionnel.helpFaq, params);
+    return httpClient.get<FAQItem[]>(API_ENDPOINTS.professionnel.helpFaq, params);
   }
 }
 
 export const professionnelService = new ProfessionnelService();
-export type { 
-  DashboardStats, CalendarEvent, AnalyticsOverview, AnalyticsTrends, 
-  Demographics, BenchmarkData, Recommendation, CollaborationSuggestion, 
-  ExportOptions, SupportTicket 
+export type {
+  DashboardStats, CalendarEvent, AnalyticsOverview, AnalyticsTrends,
+  Demographics, BenchmarkData, Recommendation, CollaborationSuggestion,
+  ExportOptions, SupportTicket
 };

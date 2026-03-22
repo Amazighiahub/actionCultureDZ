@@ -25,7 +25,7 @@ export interface Service {
 
 class ServiceService {
   async getMyServices(params?: { page?: number; limit?: number }): Promise<ApiResponse<PaginatedResponse<Service>>> {
-    const response = await httpClient.get<any>('/services/my/list', {
+    const response = await httpClient.get<PaginatedResponse<Service>>('/services/my/list', {
       params: { page: params?.page ?? 1, limit: params?.limit ?? 50 },
     });
 

@@ -11,7 +11,7 @@ class CreateUserDTO extends BaseDTO {
     // Champs obligatoires
     this.email = BaseDTO.cleanString(data.email)?.toLowerCase();
     this.password = data.password; // Ne pas nettoyer le mot de passe
-    this.confirmationPassword = data.confirmation_mot_de_passe || data.confirmationPassword;
+    this.confirmationPassword = data.password_confirmation || data.confirmation_mot_de_passe || data.confirmationPassword;
     this.nom = BaseDTO.normalizeMultilang(data.nom);
     this.prenom = BaseDTO.normalizeMultilang(data.prenom);
 

@@ -111,11 +111,9 @@ const EditeurModal: React.FC<EditeurModalProps> = ({
     setError(null);
 
     try {
-      // Créer l'objet pour l'API avec cast en any pour éviter les erreurs de type
-      const selectedType = typesEditeurs.find(t2 => t2.value === formData.type_editeur);
       const editeurData: any = {
         nom: formData.nom,
-        type_editeur: selectedType?.label || formData.type_editeur,
+        type_editeur: formData.type_editeur, // Envoie la value enum, pas le label traduit
         site_web: formData.site_web || null,
         actif: true
       };

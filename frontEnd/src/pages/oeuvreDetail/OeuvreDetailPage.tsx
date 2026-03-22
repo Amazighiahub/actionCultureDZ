@@ -43,6 +43,34 @@ import { evenementService } from '@/services/evenement.service';
 import type { Oeuvre } from '@/types/models/oeuvre.types';
 import type { Evenement } from '@/types/models/evenement.types';
 import type { MediaExtended } from '@/types/models/media-extended.types';
+import type { Intervenant } from '@/types/models/intervenant.types';
+
+/** Extended Oeuvre with API-injected properties not in the base type */
+interface OeuvreWithExtras extends Oeuvre {
+  Intervenants?: (Intervenant & { OeuvreIntervenant?: { TypeUser?: { nom?: string }; role_principal?: boolean; personnage?: string; description_role?: string } })[];
+  nombre_vues?: number;
+  image_url?: string;
+  couverture_url?: string;
+  Genre?: { nom?: string };
+}
+
+/** Contributeur extracted from oeuvre relations */
+interface ContributeurInfo {
+  id: string;
+  id_user?: number;
+  id_intervenant?: number;
+  nom: string;
+  prenom: string;
+  photo_url?: string;
+  type: 'user' | 'intervenant';
+  role: string;
+  TypeUser?: { nom?: string; nom_type?: string };
+  role_principal?: boolean;
+  personnage?: string;
+  description_role?: string;
+  biographie?: string;
+  isInscrit: boolean;
+}
 
 // ✅ LAZY LOADING des autres sections (pas HeroSection)
 const OeuvreInfo = React.lazy(() => import('./oeuvre/OeuvreInfo'));
@@ -57,12 +85,13 @@ const SectionFallback: React.FC = () => (
 );
 
 // Helper pour extraire les contributeurs
-const extractContributeurs = (oeuvre: Oeuvre) => {
-  const contributeurs: any[] = [];
+const extractContributeurs = (oeuvre: Oeuvre): ContributeurInfo[] => {
+  const contributeurs: ContributeurInfo[] = [];
+  const oeuvreExt = oeuvre as OeuvreWithExtras;
 
   if (oeuvre.Users) {
-    oeuvre.Users.forEach((user: any) => {
-      const roleInfo = user.OeuvreUser || {};
+    oeuvre.Users.forEach((user) => {
+      const roleInfo = (user as unknown as { OeuvreUser?: { TypeUser?: { nom?: string }; role_principal?: boolean; personnage?: string; description_role?: string } }).OeuvreUser || {};
       contributeurs.push({
         id: `user-${user.id_user}`,
         id_user: user.id_user,
@@ -82,7 +111,7 @@ const extractContributeurs = (oeuvre: Oeuvre) => {
   }
 
   if (oeuvre.OeuvreIntervenants) {
-    oeuvre.OeuvreIntervenants.forEach((oeuvreIntervenant: any) => {
+    oeuvre.OeuvreIntervenants.forEach((oeuvreIntervenant) => {
       const intervenant = oeuvreIntervenant.Intervenant;
       if (intervenant) {
         contributeurs.push({
@@ -92,7 +121,7 @@ const extractContributeurs = (oeuvre: Oeuvre) => {
           prenom: intervenant.prenom,
           photo_url: intervenant.photo_url,
           type: 'intervenant',
-          role: oeuvreIntervenant.TypeUser?.nom || intervenant.specialite || 'Contributeur',
+          role: oeuvreIntervenant.TypeUser?.nom || intervenant.specialites?.[0] || 'Contributeur',
           TypeUser: oeuvreIntervenant.TypeUser,
           role_principal: oeuvreIntervenant.role_principal,
           personnage: oeuvreIntervenant.personnage,
@@ -104,8 +133,8 @@ const extractContributeurs = (oeuvre: Oeuvre) => {
     });
   }
 
-  if ((oeuvre as any).Intervenants) {
-    (oeuvre as any).Intervenants.forEach((intervenant: any) => {
+  if (oeuvreExt.Intervenants) {
+    oeuvreExt.Intervenants.forEach((intervenant) => {
       const exists = contributeurs.some(c => c.id === `intervenant-${intervenant.id_intervenant}`);
       if (!exists) {
         contributeurs.push({
@@ -115,8 +144,8 @@ const extractContributeurs = (oeuvre: Oeuvre) => {
           prenom: intervenant.prenom,
           photo_url: intervenant.photo_url,
           type: 'intervenant',
-          role: intervenant.OeuvreIntervenant?.TypeUser?.nom || intervenant.specialite || 'Contributeur',
-          TypeUser: intervenant.TypeUser,
+          role: intervenant.OeuvreIntervenant?.TypeUser?.nom || intervenant.specialites?.[0] || 'Contributeur',
+          TypeUser: intervenant.TypeUser as ContributeurInfo['TypeUser'],
           role_principal: intervenant.OeuvreIntervenant?.role_principal,
           personnage: intervenant.OeuvreIntervenant?.personnage,
           description_role: intervenant.OeuvreIntervenant?.description_role,
@@ -150,7 +179,7 @@ const OeuvreDetailPage: React.FC = () => {
   const [favoriteLoading, setFavoriteLoading] = useState(false);
   
   // États additionnels pour les fonctionnalités complètes
-  const [auteurInfo, setAuteurInfo] = useState<any>(null);
+  const [auteurInfo, setAuteurInfo] = useState<ContributeurInfo | null>(null);
   const [oeuvresAuteur, setOeuvresAuteur] = useState<Oeuvre[]>([]);
   const [evenementsCreateur, setEvenementsCreateur] = useState<Evenement[]>([]);
   const [viewCount, setViewCount] = useState(0);
@@ -181,7 +210,7 @@ const OeuvreDetailPage: React.FC = () => {
       loadAuteurInfo(oeuvre);
       loadOeuvresAuteur(oeuvre);
       loadEvenementsCreateur(oeuvre);
-      setViewCount((oeuvre as any).nombre_vues || Math.floor(Math.random() * 1000) + 100);
+      setViewCount((oeuvre as OeuvreWithExtras).nombre_vues || Math.floor(Math.random() * 1000) + 100);
     }
   }, [oeuvre]);
 
@@ -276,8 +305,9 @@ const OeuvreDetailPage: React.FC = () => {
 
   // Lire un extrait
   const handleLireExtrait = () => {
-    if ((oeuvre?.Livre as any)?.url_extrait) {
-      window.open((oeuvre!.Livre as any).url_extrait, '_blank', 'noopener,noreferrer');
+    const livreExtrait = (oeuvre?.Livre as unknown as { url_extrait?: string })?.url_extrait;
+    if (livreExtrait) {
+      window.open(livreExtrait, '_blank', 'noopener,noreferrer');
     } else {
       // Scroll vers la section description qui contient l'extrait
       setActiveTab('description');
@@ -337,7 +367,7 @@ const OeuvreDetailPage: React.FC = () => {
   const allContributeurs = contributeurs || extractContributeurs(oeuvre);
 
   const seoKeywords = [
-    getTranslation(oeuvre.titre, lang), oeuvre.TypeOeuvre?.nom_type, (oeuvre as any).Genre?.nom,
+    getTranslation(oeuvre.titre, lang), oeuvre.TypeOeuvre?.nom_type, (oeuvre as OeuvreWithExtras).Genre?.nom,
     'culture algérienne', 'littérature algérienne', 'œuvre algérienne'
   ].filter(Boolean) as string[];
 
@@ -346,7 +376,7 @@ const OeuvreDetailPage: React.FC = () => {
       <SEOHead
         title={getTranslation(oeuvre.titre, lang)}
         description={getTranslation(oeuvre.description, lang)?.substring(0, 160) || t('oeuvre.seoDescription', 'Découvrez {{title}} — œuvre culturelle algérienne', { title: getTranslation(oeuvre.titre, lang) })}
-        image={(oeuvre as any).image_url || (oeuvre as any).couverture_url}
+        image={(oeuvre as OeuvreWithExtras).image_url || (oeuvre as OeuvreWithExtras).couverture_url}
         type="article"
         keywords={seoKeywords}
         jsonLd={[

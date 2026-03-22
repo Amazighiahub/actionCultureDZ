@@ -13,6 +13,13 @@ const ServiceRepository = require('./serviceRepository');
 const ParcoursRepository = require('./parcoursRepository');
 const SignalementRepository = require('./signalementRepository');
 const NotificationRepository = require('./notificationRepository');
+const CommentaireRepository = require('./commentaireRepository');
+const FavoriRepository = require('./favoriRepository');
+const VueRepository = require('./vueRepository');
+const ProgrammeRepository = require('./programmeRepository');
+const IntervenantRepository = require('./intervenantRepository');
+const ArticleBlockRepository = require('./articleBlockRepository');
+const LieuRepository = require('./lieuRepository');
 
 /**
  * Factory pour créer tous les repositories
@@ -29,11 +36,15 @@ function createRepositories(models) {
     parcours: models.Parcours ? new ParcoursRepository(models) : null,
     signalement: models.Signalement ? new SignalementRepository(models) : null,
     notification: models.Notification ? new NotificationRepository(models) : null,
+    commentaire: models.Commentaire ? new CommentaireRepository(models) : null,
+    favori: models.Favori ? new FavoriRepository(models) : null,
+    vue: models.Vue ? new VueRepository(models) : null,
+    programme: models.Programme ? new ProgrammeRepository(models) : null,
+    intervenant: models.Intervenant ? new IntervenantRepository(models) : null,
+    articleBlock: models.ArticleBlock ? new ArticleBlockRepository(models) : null,
+    lieu: models.Lieu ? new LieuRepository(models) : null,
     // Repositories de base pour les modèles utilitaires
-    lieu: models.Lieu ? new BaseRepository(models.Lieu) : null,
     categorie: models.Categorie ? new BaseRepository(models.Categorie) : null,
-    commentaire: models.Commentaire ? new BaseRepository(models.Commentaire) : null,
-    programme: models.Programme ? new BaseRepository(models.Programme) : null,
     media: models.Media ? new BaseRepository(models.Media) : null
   };
 }
@@ -49,5 +60,12 @@ module.exports = {
   ServiceRepository,
   ParcoursRepository,
   SignalementRepository,
-  NotificationRepository
+  NotificationRepository,
+  CommentaireRepository,
+  FavoriRepository,
+  VueRepository,
+  ProgrammeRepository,
+  IntervenantRepository,
+  ArticleBlockRepository,
+  LieuRepository
 };

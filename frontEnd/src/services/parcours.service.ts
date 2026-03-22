@@ -1,5 +1,4 @@
 // services/parcours.service.ts
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { API_ENDPOINTS, ApiResponse } from '@/config/api';
 import { httpClient } from './httpClient';
 
@@ -39,8 +38,8 @@ interface ParcoursIntelligent {
   etapes: Etape[];
   qrCodeParcours?: string;
   services?: {
-    restaurants?: any[];
-    hotels?: any[];
+    restaurants?: Record<string, unknown>[];
+    hotels?: Record<string, unknown>[];
   };
   statistiques?: {
     vues?: number;
@@ -91,7 +90,7 @@ class ParcoursIntelligentService {
 
   // Générer un parcours autour d'un événement
   async generateForEvenement(evenementId: number, params?: Partial<GenerateParcoursParams>): Promise<ApiResponse<{
-    evenement: any;
+    evenement: Record<string, unknown>;
     parcours: ParcoursIntelligent;
     statistiques: ParcoursStats;
   }>> {
@@ -103,7 +102,11 @@ class ParcoursIntelligentService {
     if (params?.includeHotels !== undefined) queryParams.append('includeHotels', params.includeHotels.toString());
     if (params?.types?.length) queryParams.append('types', params.types.join(','));
 
-    return httpClient.post<any>(`${this.baseUrl}/personnalise`, {
+    return httpClient.post<{
+      evenement: Record<string, unknown>;
+      parcours: ParcoursIntelligent;
+      statistiques: ParcoursStats;
+    }>(`${this.baseUrl}/personnalise`, {
       evenementId,
       ...Object.fromEntries(queryParams.entries())
     });

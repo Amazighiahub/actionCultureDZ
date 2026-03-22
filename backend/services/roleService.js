@@ -1,4 +1,6 @@
 // services/roleService.js
+const logger = require('../utils/logger');
+
 class RoleService {
   constructor(models) {
     this.models = models;
@@ -41,7 +43,7 @@ class RoleService {
         throw new Error('Nom du rôle requis');
       }
 
-      console.log(`📋 Assignation du rôle "${roleName}" à l'utilisateur ID: ${userId}`);
+      logger.info(`📋 Assignation du rôle "${roleName}" à l'utilisateur ID: ${userId}`);
 
       // Récupérer le rôle
       const role = await this.models.Role.findOne({
@@ -63,7 +65,7 @@ class RoleService {
       });
 
       if (existingAssignment) {
-        console.log(`ℹ️  L'utilisateur ${userId} possède déjà le rôle "${roleName}"`);
+        logger.info(`ℹ️  L'utilisateur ${userId} possède déjà le rôle "${roleName}"`);
         return existingAssignment;
       }
 
@@ -73,11 +75,11 @@ class RoleService {
         id_role: role.id_role
       }, { transaction });
 
-      console.log(`✅ Rôle "${roleName}" assigné avec succès à l'utilisateur ${userId}`);
+      logger.info(`✅ Rôle "${roleName}" assigné avec succès à l'utilisateur ${userId}`);
       return userRole;
 
     } catch (error) {
-      console.error('❌ Erreur lors de l\'assignation du rôle:', error.message);
+      logger.error('❌ Erreur lors de l\'assignation du rôle:', error.message);
       throw error;
     }
   }
@@ -105,15 +107,15 @@ class RoleService {
       });
 
       if (result > 0) {
-        console.log(`✅ Rôle "${roleName}" retiré de l'utilisateur ${userId}`);
+        logger.info(`✅ Rôle "${roleName}" retiré de l'utilisateur ${userId}`);
       } else {
-        console.log(`ℹ️  L'utilisateur ${userId} n'avait pas le rôle "${roleName}"`);
+        logger.info(`ℹ️  L'utilisateur ${userId} n'avait pas le rôle "${roleName}"`);
       }
 
       return result;
 
     } catch (error) {
-      console.error('❌ Erreur lors de la suppression du rôle:', error.message);
+      logger.error('❌ Erreur lors de la suppression du rôle:', error.message);
       throw error;
     }
   }
@@ -134,7 +136,7 @@ class RoleService {
 
       return user ? user.Roles : [];
     } catch (error) {
-      console.error('❌ Erreur lors de la récupération des rôles:', error.message);
+      logger.error('❌ Erreur lors de la récupération des rôles:', error.message);
       throw error;
     }
   }
@@ -163,7 +165,7 @@ class RoleService {
 
       return !!userRole;
     } catch (error) {
-      console.error('❌ Erreur lors de la vérification du rôle:', error.message);
+      logger.error('❌ Erreur lors de la vérification du rôle:', error.message);
       return false;
     }
   }
@@ -188,10 +190,10 @@ class RoleService {
       // Assigner le nouveau rôle
       await this.assignRoleToUser(userId, newRole, transaction);
 
-      console.log(`✅ Rôles mis à jour: ${oldRole} → ${newRole}`);
+      logger.info(`✅ Rôles mis à jour: ${oldRole} → ${newRole}`);
 
     } catch (error) {
-      console.error('❌ Erreur lors de la mise à jour des rôles:', error.message);
+      logger.error('❌ Erreur lors de la mise à jour des rôles:', error.message);
       throw error;
     }
   }

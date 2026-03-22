@@ -13,36 +13,31 @@ class PatrimoineRepository extends BaseRepository {
   }
 
   /**
-   * Inclusions standard pour les sites patrimoniaux
+   * Inclusions légères pour les listes (separate: true évite le produit cartésien)
    */
   _defaultIncludes() {
     const includes = [];
 
+    // DetailLieu (hasOne)
     if (this.models.DetailLieu) {
-      const detailInclude = {
+      includes.push({
         model: this.models.DetailLieu,
+        attributes: ['id_detailLieu', 'description', 'horaires', 'noteMoyenne'],
         required: false
-      };
-      const detailNested = [];
-      if (this.models.Monument) detailNested.push({ model: this.models.Monument, required: false });
-      if (this.models.Vestige) detailNested.push({ model: this.models.Vestige, required: false });
-      if (detailNested.length) detailInclude.include = detailNested;
-      includes.push(detailInclude);
+      });
     }
 
+    // LieuMedia (hasMany) — separate: true évite le produit cartésien
     if (this.models.LieuMedia) {
-      includes.push({ model: this.models.LieuMedia, required: false });
+      includes.push({
+        model: this.models.LieuMedia,
+        required: false,
+        separate: true,
+        attributes: ['id', 'url', 'type']
+      });
     }
 
-    if (this.models.Service) {
-      includes.push({ model: this.models.Service, required: false });
-    }
-
-    if (this.models.QRCode) {
-      includes.push({ model: this.models.QRCode, required: false });
-    }
-
-    // Localisation (Commune → Daira → Wilaya) incluse directement pour éviter N+1
+    // Localisation (Commune → Daira → Wilaya)
     if (this.models.Commune) {
       const communeInclude = {
         model: this.models.Commune,
@@ -58,7 +53,64 @@ class PatrimoineRepository extends BaseRepository {
         if (this.models.Wilaya) {
           dairaInclude.include = [{
             model: this.models.Wilaya,
-            attributes: ['id_wilaya', 'nom', 'code'],
+            attributes: ['id_wilaya', 'nom', 'codeW'],
+            required: false
+          }];
+        }
+        communeInclude.include = [dairaInclude];
+      }
+      includes.push(communeInclude);
+    }
+
+    return includes;
+  }
+
+  /**
+   * Inclusions complètes pour le détail (1 seul record → joins acceptables)
+   */
+  _fullIncludes() {
+    const includes = [];
+
+    if (this.models.DetailLieu) {
+      const detailInclude = {
+        model: this.models.DetailLieu,
+        required: false
+      };
+      const detailNested = [];
+      if (this.models.Monument) detailNested.push({ model: this.models.Monument, required: false });
+      if (this.models.Vestige) detailNested.push({ model: this.models.Vestige, required: false });
+      if (detailNested.length) detailInclude.include = detailNested;
+      includes.push(detailInclude);
+    }
+
+    if (this.models.LieuMedia) {
+      includes.push({ model: this.models.LieuMedia, required: false, separate: true });
+    }
+
+    if (this.models.Service) {
+      includes.push({ model: this.models.Service, required: false, separate: true });
+    }
+
+    if (this.models.QRCode) {
+      includes.push({ model: this.models.QRCode, required: false, separate: true });
+    }
+
+    if (this.models.Commune) {
+      const communeInclude = {
+        model: this.models.Commune,
+        attributes: ['id_commune', 'nom'],
+        required: false
+      };
+      if (this.models.Daira) {
+        const dairaInclude = {
+          model: this.models.Daira,
+          attributes: ['id_daira', 'nom'],
+          required: false
+        };
+        if (this.models.Wilaya) {
+          dairaInclude.include = [{
+            model: this.models.Wilaya,
+            attributes: ['id_wilaya', 'nom', 'codeW'],
             required: false
           }];
         }
@@ -94,7 +146,8 @@ class PatrimoineRepository extends BaseRepository {
       where,
       include: this._defaultIncludes(),
       order: [['createdAt', 'DESC']],
-      limit: parseInt(limit)
+      limit: parseInt(limit),
+      subQuery: false
     });
 
     return sites.map(s => this._formatLocation(s.get({ plain: true })));
@@ -105,21 +158,27 @@ class PatrimoineRepository extends BaseRepository {
    */
   async findAllSites(options = {}) {
     const { page = 1, limit = 20, typePatrimoine, wilayaId } = options;
+    const p = parseInt(page);
+    const l = parseInt(limit);
     const where = {};
     if (typePatrimoine) where.typePatrimoine = typePatrimoine;
 
     let include = this._defaultIncludes();
 
-    // Filtre par wilaya via Commune → Daira → Wilaya
+    // Filtre par wilaya : remplacer le Commune include existant par un filtre strict
     if (wilayaId && this.models.Commune) {
+      include = include.filter(i => i.model !== this.models.Commune);
       include.push({
         model: this.models.Commune,
+        attributes: ['id_commune', 'nom'],
         required: true,
         include: [{
           model: this.models.Daira,
+          attributes: ['id_daira', 'nom'],
           required: true,
           include: [{
             model: this.models.Wilaya,
+            attributes: ['id_wilaya', 'nom', 'codeW'],
             where: { id_wilaya: wilayaId },
             required: true
           }]
@@ -127,24 +186,39 @@ class PatrimoineRepository extends BaseRepository {
       });
     }
 
-    const result = await this.findAll({
-      page: parseInt(page),
-      limit: parseInt(limit),
-      where,
-      include,
-      order: [['createdAt', 'DESC']]
-    });
+    // Séparer count + findAll pour éviter le hang de findAndCountAll avec includes
+    const [total, rows] = await Promise.all([
+      this.model.count({ where }),
+      this.model.findAll({
+        where,
+        include,
+        order: [['createdAt', 'DESC']],
+        limit: l,
+        offset: (p - 1) * l,
+        subQuery: false
+      })
+    ]);
 
-    const data = result.data.map(s => this._formatLocation(s.get ? s.get({ plain: true }) : s));
+    const data = rows.map(s => this._formatLocation(s.get ? s.get({ plain: true }) : s));
 
-    return { data, pagination: result.pagination };
+    return {
+      data,
+      pagination: {
+        page: p,
+        limit: l,
+        total,
+        totalPages: Math.ceil(total / l),
+        hasNext: p * l < total,
+        hasPrev: p > 1
+      }
+    };
   }
 
   /**
    * Détail complet d'un site
    */
   async findWithFullDetails(id) {
-    const includes = this._defaultIncludes();
+    const includes = this._fullIncludes();
 
     if (this.models.Programme) {
       includes.push({ model: this.models.Programme, required: false });

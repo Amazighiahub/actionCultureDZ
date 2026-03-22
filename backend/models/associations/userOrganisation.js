@@ -88,19 +88,22 @@ module.exports = (sequelize) => {
   });
 
   UserOrganisation.associate = (models) => {
-    UserOrganisation.belongsTo(models.User, { 
+    UserOrganisation.belongsTo(models.User, {
       foreignKey: 'id_user',
-      as: 'User'
+      as: 'User',
+      onDelete: 'CASCADE'
     });
-    
-    UserOrganisation.belongsTo(models.Organisation, { 
+
+    UserOrganisation.belongsTo(models.Organisation, {
       foreignKey: 'id_organisation',
-      as: 'Organisation'
+      as: 'Organisation',
+      onDelete: 'CASCADE'
     });
-    
-    UserOrganisation.belongsTo(models.User, { 
+
+    UserOrganisation.belongsTo(models.User, {
       foreignKey: 'id_superviseur',
-      as: 'Superviseur'
+      as: 'Superviseur',
+      onDelete: 'SET NULL'
     });
   };
   

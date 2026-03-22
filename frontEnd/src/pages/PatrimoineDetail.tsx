@@ -24,8 +24,11 @@ const VisitePlanner = React.lazy(() => import('@/components/patrimoine/VisitePla
 import ServicesProximite from '@/components/shared/ServicesProximite';
 import SEOHead, { buildPatrimoineJsonLd, buildBreadcrumbJsonLd } from '@/components/SEOHead';
 
+// Type multilingue réutilisé dans l'interface du site
+type MultilingualField = { fr?: string; ar?: string; en?: string };
+
 // Helper pour traduire les champs multilingues
-const translate = (value: string | { fr?: string; ar?: string; en?: string } | null | undefined, lang: string): string => {
+const translate = (value: string | MultilingualField | null | undefined, lang: string): string => {
   if (!value) return '';
   if (typeof value === 'string') return value;
   return value[lang as keyof typeof value] || value.fr || value.ar || value.en || '';
@@ -60,33 +63,34 @@ const TYPE_LABELS: Record<TypePatrimoine, { fr: string; ar: string; en: string }
 
 interface SitePatrimoineDetail {
   id_lieu: number;
-  nom: string | { fr?: string; ar?: string; en?: string };
-  adresse: string | { fr?: string; ar?: string; en?: string };
+  nom: string | MultilingualField;
+  adresse: string | MultilingualField;
   latitude: number;
   longitude: number;
   typeLieu: string;
-  typePatrimoine?: TypePatrimoine; // ⚡ Nouveau champ
+  typePatrimoine?: TypePatrimoine; // New field
+  Commune?: { id_commune: number; nom: string; Daira?: { id_daira: number; nom: string; Wilaya?: { id_wilaya: number; nom: string } } };
   DetailLieu?: {
     id_detailLieu: number;
-    description?: string | { fr?: string; ar?: string; en?: string };
-    horaires?: string | { fr?: string; ar?: string; en?: string };
-    histoire?: string | { fr?: string; ar?: string; en?: string };
-    referencesHistoriques?: string | { fr?: string; ar?: string; en?: string };
+    description?: string | MultilingualField;
+    horaires?: string | MultilingualField;
+    histoire?: string | MultilingualField;
+    referencesHistoriques?: string | MultilingualField;
     noteMoyenne?: number;
   };
-  medias?: Array<{ id: number; url: string; type: string; description?: string | object }>;
-  services?: Array<{ id: number; nom: string | object; description?: string | object; disponible: boolean }>;
-  monuments?: Array<{ id: number; nom: string | object; description?: string | object; type: string }>;
-  vestiges?: Array<{ id: number; nom: string | object; description?: string | object; type: string }>;
+  medias?: Array<{ id: number; url: string; type: string; description?: string | MultilingualField }>;
+  services?: Array<{ id: number; nom: string | MultilingualField; description?: string | MultilingualField; disponible: boolean }>;
+  monuments?: Array<{ id: number; nom: string | MultilingualField; description?: string | MultilingualField; type: string }>;
+  vestiges?: Array<{ id: number; nom: string | MultilingualField; description?: string | MultilingualField; type: string }>;
   programmes?: Array<{
     id_programme: number;
-    titre: string | object;
-    description?: string | object;
+    titre: string | MultilingualField;
+    description?: string | MultilingualField;
     date_debut: string;
     date_fin?: string;
     Evenement?: {
       id_evenement: number;
-      nom_evenement: string | object;
+      nom_evenement: string | MultilingualField;
       date_debut: string;
       date_fin?: string;
       statut: string;
@@ -94,8 +98,8 @@ interface SitePatrimoineDetail {
   }>;
   parcours?: Array<{
     id_parcours: number;
-    nom_parcours: string | object;
-    description?: string | object;
+    nom_parcours: string | MultilingualField;
+    description?: string | MultilingualField;
     duree_estimee?: number;
     difficulte?: string;
     theme?: string;
@@ -487,13 +491,13 @@ const PatrimoineDetail = () => {
                             <Card key={`m-${idx}`} className="hover:shadow-md transition-shadow">
                               <CardHeader className="pb-2">
                                 <div className="flex items-center justify-between">
-                                  <CardTitle className="text-lg">{translate(monument.nom as any, lang)}</CardTitle>
+                                  <CardTitle className="text-lg">{translate(monument.nom, lang)}</CardTitle>
                                   <Badge variant="outline">{monument.type}</Badge>
                                 </div>
                               </CardHeader>
                               <CardContent>
                                 <p className="text-sm text-muted-foreground">
-                                  {translate(monument.description as any, lang) || t('common.noDescription', 'Aucune description')}
+                                  {translate(monument.description, lang) || t('common.noDescription', 'Aucune description')}
                                 </p>
                               </CardContent>
                             </Card>
@@ -514,13 +518,13 @@ const PatrimoineDetail = () => {
                             <Card key={`v-${idx}`} className="hover:shadow-md transition-shadow">
                               <CardHeader className="pb-2">
                                 <div className="flex items-center justify-between">
-                                  <CardTitle className="text-lg">{translate(vestige.nom as any, lang)}</CardTitle>
+                                  <CardTitle className="text-lg">{translate(vestige.nom, lang)}</CardTitle>
                                   <Badge variant="outline">{vestige.type}</Badge>
                                 </div>
                               </CardHeader>
                               <CardContent>
                                 <p className="text-sm text-muted-foreground">
-                                  {translate(vestige.description as any, lang) || t('common.noDescription', 'Aucune description')}
+                                  {translate(vestige.description, lang) || t('common.noDescription', 'Aucune description')}
                                 </p>
                               </CardContent>
                             </Card>
@@ -548,14 +552,14 @@ const PatrimoineDetail = () => {
                         <CardHeader className="pb-2">
                           <div className="flex items-center justify-between">
                             <CardTitle className="text-lg">
-                              {translate(monument.nom as any, lang)}
+                              {translate(monument.nom, lang)}
                             </CardTitle>
                             <Badge variant="outline">{monument.type}</Badge>
                           </div>
                         </CardHeader>
                         <CardContent>
                           <p className="text-sm text-muted-foreground">
-                            {translate(monument.description as any, lang) || t('common.noDescription', 'Aucune description')}
+                            {translate(monument.description, lang) || t('common.noDescription', 'Aucune description')}
                           </p>
                         </CardContent>
                       </Card>
@@ -580,14 +584,14 @@ const PatrimoineDetail = () => {
                         <CardHeader className="pb-2">
                           <div className="flex items-center justify-between">
                             <CardTitle className="text-lg">
-                              {translate(vestige.nom as any, lang)}
+                              {translate(vestige.nom, lang)}
                             </CardTitle>
                             <Badge variant="outline">{vestige.type}</Badge>
                           </div>
                         </CardHeader>
                         <CardContent>
                           <p className="text-sm text-muted-foreground">
-                            {translate(vestige.description as any, lang) || t('common.noDescription', 'Aucune description')}
+                            {translate(vestige.description, lang) || t('common.noDescription', 'Aucune description')}
                           </p>
                         </CardContent>
                       </Card>
@@ -608,7 +612,7 @@ const PatrimoineDetail = () => {
                 <ServicesProximite
                   lieuId={site.id_lieu}
                   lieuName={translate(site.nom, lang)}
-                  services={site.services as any}
+                  services={site.services}
                   variant="full"
                   showTitle={false}
                 />
@@ -623,7 +627,7 @@ const PatrimoineDetail = () => {
                         <CardHeader className="pb-2">
                           <div className="flex items-center justify-between">
                             <CardTitle className="text-lg">
-                              {translate(programme.titre as any, lang)}
+                              {translate(programme.titre, lang)}
                             </CardTitle>
                             {programme.Evenement && (
                               <Badge>{programme.Evenement.statut}</Badge>
@@ -637,7 +641,7 @@ const PatrimoineDetail = () => {
                         </CardHeader>
                         <CardContent>
                           <p className="text-sm text-muted-foreground">
-                            {translate(programme.description as any, lang) || t('common.noDescription', 'Aucune description')}
+                            {translate(programme.description, lang) || t('common.noDescription', 'Aucune description')}
                           </p>
                           {programme.Evenement && (
                             <Link to={`/evenements/${programme.Evenement.id_evenement}`}>
@@ -670,7 +674,7 @@ const PatrimoineDetail = () => {
                         <CardHeader className="pb-2">
                           <div className="flex items-center justify-between">
                             <CardTitle className="text-lg">
-                              {translate(parcours.nom_parcours as any, lang)}
+                              {translate(parcours.nom_parcours, lang)}
                             </CardTitle>
                             {parcours.difficulte && (
                               <Badge variant={
@@ -684,7 +688,7 @@ const PatrimoineDetail = () => {
                         </CardHeader>
                         <CardContent>
                           <p className="text-sm text-muted-foreground mb-3">
-                            {translate(parcours.description as any, lang) || t('common.noDescription', 'Aucune description')}
+                            {translate(parcours.description, lang) || t('common.noDescription', 'Aucune description')}
                           </p>
                           <div className="flex flex-wrap gap-4 text-sm">
                             {parcours.duree_estimee && (

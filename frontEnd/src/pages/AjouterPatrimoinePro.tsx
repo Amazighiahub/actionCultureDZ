@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -104,8 +103,8 @@ const AjouterPatrimoinePro: React.FC = () => {
     try {
       const response = await patrimoineService.getById(editId);
       if (response.success && response.data) {
-        const site = response.data as any;
-        const toTV = (v: any): TranslatableValue =>
+        const site = response.data as Record<string, unknown>;
+        const toTV = (v: unknown): TranslatableValue =>
           typeof v === 'object' && v !== null
             ? { fr: v.fr || '', ar: v.ar || '', en: v.en || '', 'tz-ltn': v['tz-ltn'] || '', 'tz-tfng': v['tz-tfng'] || '' }
             : { fr: v || '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' };
@@ -129,7 +128,7 @@ const AjouterPatrimoinePro: React.FC = () => {
         setError(t('ajouterPatrimoine.errors.siteNotFound', 'Site introuvable'));
         navigate('/dashboard-pro');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('❌ Erreur chargement patrimoine:', err);
       setError(t('ajouterPatrimoine.errors.loadFailed', 'Impossible de charger le site'));
     }
@@ -139,7 +138,7 @@ const AjouterPatrimoinePro: React.FC = () => {
   const [createdLieuId, setCreatedLieuId] = useState<number | null>(null);
 
   // Metadata
-  const [wilayas, setWilayas] = useState<any[]>([]);
+  const [wilayas, setWilayas] = useState<Array<Record<string, unknown>>>([]);
   const [loadingMetadata, setLoadingMetadata] = useState(true);
 
   // Load metadata
@@ -265,7 +264,8 @@ const AjouterPatrimoinePro: React.FC = () => {
       }
 
       if (response.success) {
-        const siteId = (response.data as any)?.id_lieu || (response.data as any)?.id;
+        const responseData = response.data as Record<string, unknown> | undefined;
+        const siteId = responseData?.id_lieu || responseData?.id;
         if (siteId && medias.length > 0) {
           try {
             await patrimoineService.uploadMedias(siteId, medias);
@@ -281,9 +281,9 @@ const AjouterPatrimoinePro: React.FC = () => {
       } else {
         setError(response.error || (isEditMode ? t('ajouterPatrimoine.errors.updateFailed', 'Erreur lors de la mise à jour') : t('ajouterPatrimoine.errors.createFailed')));
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Erreur creation patrimoine:', err);
-      setError(err.message || t('ajouterPatrimoine.errors.createFailed'));
+      setError(err instanceof Error ? err.message : t('ajouterPatrimoine.errors.createFailed'));
     } finally {
       setLoading(false);
     }
@@ -501,7 +501,7 @@ const AjouterPatrimoinePro: React.FC = () => {
                               latitude: lieu.latitude,
                               longitude: lieu.longitude,
                               adresse: typeof lieu.adresse === 'object'
-                                ? (lieu.adresse as any).fr || ''
+                                ? (lieu.adresse as Record<string, string>).fr || ''
                                 : lieu.adresse || ''
                             }));
                           }

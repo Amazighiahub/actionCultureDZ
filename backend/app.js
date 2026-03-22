@@ -29,7 +29,6 @@ try {
 }
 
 const express = require('express');
-const crypto = require('crypto');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const compression = require('compression');
@@ -57,8 +56,6 @@ const initRoutes = require('./routes');
 // Importation des services
 const { initializeDatabase } = require('./models');
 const { createDatabase } = require('./config/database');
-const uploadService = require('./services/uploadService');
-const FileValidator = require('./utils/fileValidator');
 
 // ✅ Service Container pour l'architecture Service/Repository
 const serviceContainer = require('./services/serviceContainer');
@@ -115,32 +112,25 @@ class App {
     const requestContext = require('./middlewares/requestContext');
     this.app.use(requestContext);
 
-    // Sécurité avec Helmet — CSP with per-request nonce (no unsafe-inline for scripts)
-    this.app.use((req, res, next) => {
-      const nonce = crypto.randomBytes(16).toString('base64');
-      req.cspNonce = nonce;
-      res.locals.cspNonce = nonce;
-
-      helmet({
-        crossOriginResourcePolicy: { policy: "cross-origin" },
-        contentSecurityPolicy: {
-          directives: {
-            defaultSrc: ["'self'"],
-            imgSrc: ["'self'", "data:", "https:"],
-            scriptSrc: ["'self'", `'nonce-${nonce}'`],
-            styleSrc: ["'self'"],
-            fontSrc: ["'self'", "https:", "data:"],
-            connectSrc: ["'self'", process.env.FRONTEND_URL || "http://localhost:3000", process.env.FRONTEND_URL ? `wss://${new URL(process.env.FRONTEND_URL).host}` : "ws://localhost:3001"],
-            frameAncestors: ["'none'"],
-          },
+    // Sécurité avec Helmet — CSP statique pour API JSON (pas de nonce par requête)
+    this.app.use(helmet({
+      crossOriginResourcePolicy: { policy: "cross-origin" },
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'none'"],
+          imgSrc: ["'self'", "data:", "https:"],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          fontSrc: ["'self'", "https:", "data:"],
+          connectSrc: ["'self'", process.env.FRONTEND_URL || "http://localhost:3000", process.env.FRONTEND_URL ? `wss://${new URL(process.env.FRONTEND_URL).host}` : "ws://localhost:3001"],
+          frameAncestors: ["'none'"],
         },
-        hsts: {
-          maxAge: 31536000,
-          includeSubDomains: true,
-          preload: true
-        }
-      })(req, res, next);
-    });
+      },
+      hsts: {
+        maxAge: 31536000,
+        includeSubDomains: true,
+        preload: true
+      }
+    }));
 
     // CORS
     this.app.use(corsMiddleware);
@@ -219,8 +209,7 @@ class App {
       dotfiles: 'ignore',
       setHeaders: (res, path, stat) => {
         res.setHeader('X-Content-Type-Options', 'nosniff');
-        res.setHeader('Access-Control-Allow-Origin', '*');
-        res.setHeader('Access-Control-Allow-Methods', 'GET');
+        // CORS est géré par le corsMiddleware global — ne pas écraser avec '*'
         
         if (path.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
           res.setHeader('Cache-Control', 'public, max-age=604800');
@@ -235,7 +224,10 @@ class App {
     };
 
     this.app.use('/uploads/private', (req, res) => {
-      return res.status(404).end();
+      return res.status(403).json({
+        success: false,
+        error: { code: 'FORBIDDEN', message: 'Accès refusé' }
+      });
     });
 
     // Servir le dossier uploads
@@ -342,6 +334,10 @@ class App {
       this.db = db;
       this.models = db; 
       this.sequelize = db.sequelize;
+
+      // Initialiser le viewCounter avec les modèles pour le flush batch
+      const viewCounter = require('./utils/viewCounter');
+      viewCounter.setModels(db);
       
       const createAuthMiddleware = require('./middlewares/authMiddleware');
       if (createAuthMiddleware && this.models.User) {
@@ -596,131 +592,6 @@ class App {
     // Routes API principales (utilise ServiceContainer en interne)
     this.app.use('/api', initRoutes(this.models, this.authMiddleware));
 
-    // Route pour obtenir les infos d'upload
-    this.app.get('/api/upload/info', (req, res) => {
-      res.json({
-        success: true,
-        data: {
-          limits: {
-            image: `${this.uploadInfo.maxFileSize.image / 1024 / 1024}MB`,
-            video: `${this.uploadInfo.maxFileSize.video / 1024 / 1024}MB`,
-            audio: `${this.uploadInfo.maxFileSize.audio / 1024 / 1024}MB`,
-            document: `${this.uploadInfo.maxFileSize.document / 1024 / 1024}MB`
-          },
-          supportedFormats: {
-            image: ['JPEG', 'JPG', 'PNG', 'GIF', 'WebP'],
-            video: ['MP4', 'MPEG', 'MOV', 'AVI'],
-            audio: ['MP3', 'WAV', 'OGG'],
-            document: ['PDF', 'DOC', 'DOCX']
-          },
-          uploadEndpoints: {
-            public: '/api/upload/image/public',
-            image: '/api/upload/image',
-            video: '/api/upload/video',
-            audio: '/api/upload/audio',
-            document: '/api/upload/document',
-            oeuvreMedia: '/api/upload/oeuvre/media'
-          }
-        }
-      });
-    });
-
-    // Route pour upload PUBLIC (rate limited: 5 uploads/heure par IP)
-    this.app.post('/api/upload/image/public',
-      ...rateLimitMiddleware.creation,
-      auditMiddleware.logAction('upload_image_public', { entityType: 'media' }),
-      uploadService.uploadImage().single('image'),
-      FileValidator.uploadValidator(this.uploadInfo.allowedTypes.image, this.uploadInfo.maxFileSize.image),
-      this.handlePublicUpload.bind(this)
-    );
-
-    // Route pour upload avec authentification
-    this.app.post('/api/upload/image', 
-      this.authMiddleware.authenticate,
-      auditMiddleware.logAction('upload_image', { entityType: 'media' }),
-      uploadService.uploadImage().single('image'),
-      FileValidator.uploadValidator(this.uploadInfo.allowedTypes.image, this.uploadInfo.maxFileSize.image),
-      this.handleAuthenticatedUpload.bind(this)
-    );
-
-    // Route pour upload de documents
-    this.app.post('/api/upload/document',
-      this.authMiddleware.authenticate,
-      auditMiddleware.logAction('upload_document', { entityType: 'document' }),
-      uploadService.uploadDocument().single('document'),
-      FileValidator.uploadValidator(this.uploadInfo.allowedTypes.document, this.uploadInfo.maxFileSize.document),
-      this.handleDocumentUpload.bind(this)
-    );
-
-    // Routes pour upload de médias d'œuvres
-    this.app.post('/api/upload/oeuvre/media',
-      this.authMiddleware.authenticate,
-      this.authMiddleware.requireValidatedProfessional,
-      auditMiddleware.logAction('upload_oeuvre_media', { entityType: 'media' }),
-      uploadService.uploadMedia().array('medias', 10),
-      async (req, res, next) => {
-        try {
-          if (!req.files || req.files.length === 0) return next();
-          const allowedTypes = [
-            ...this.uploadInfo.allowedTypes.image,
-            ...this.uploadInfo.allowedTypes.video,
-            ...this.uploadInfo.allowedTypes.audio,
-            ...this.uploadInfo.allowedTypes.document
-          ];
-          const results = await FileValidator.validateFilesBatch(
-            req.files.map(f => f.path),
-            allowedTypes
-          );
-          const invalidFiles = results.filter(r => !r.valid);
-          if (invalidFiles.length > 0) {
-            const fs = require('fs');
-            req.files.forEach(f => {
-              try { fs.unlinkSync(f.path); } catch (e) { /* ignore */ }
-            });
-            return res.status(400).json({
-              success: false,
-              error: req.t('upload.invalidFileType'),
-              details: invalidFiles
-            });
-          }
-          next();
-        } catch (error) {
-          next(error);
-        }
-      },
-      this.handleOeuvreMediaUpload.bind(this)
-    );
-
-    // Upload de vidéo
-    this.app.post('/api/upload/video',
-      this.authMiddleware.authenticate,
-      auditMiddleware.logAction('upload_video', { entityType: 'video' }),
-      uploadService.uploadVideo().single('video'),
-      FileValidator.uploadValidator(this.uploadInfo.allowedTypes.video, this.uploadInfo.maxFileSize.video),
-      this.handleVideoUpload.bind(this)
-    );
-
-    // Upload d'audio
-    this.app.post('/api/upload/audio',
-      this.authMiddleware.authenticate,
-      auditMiddleware.logAction('upload_audio', { entityType: 'audio' }),
-      uploadService.uploadAudio().single('audio'),
-      FileValidator.uploadValidator(this.uploadInfo.allowedTypes.audio, this.uploadInfo.maxFileSize.audio),
-      this.handleAudioUpload.bind(this)
-    );
-
-    // Route de recherche globale
-    this.app.get('/api/search', 
-      this.authMiddleware.isAuthenticated,
-      this.handleGlobalSearch.bind(this)
-    );
-
-    // Route pour suggestions de recherche
-    this.app.get('/api/search/suggestions', 
-      this.authMiddleware.isAuthenticated,
-      this.handleSearchSuggestions.bind(this)
-    );
-
     // Route pour les métriques si activées
     if (this.config.features.metrics) {
       this.app.get('/metrics', 
@@ -746,297 +617,10 @@ class App {
     console.log(`  🌍 Routes i18n: /api/languages, /api/set-language`);
   }
 
-  // Handlers pour les routes upload
-  handlePublicUpload(req, res) {
-    try {
-      if (!req.file) {
-        return res.status(400).json({
-          success: false,
-          error: req.t('upload.noImage')
-        });
-      }
-
-      const fileUrl = `${this.config.server.baseUrl}/${req.file.path.replace(/\\/g, '/')}`;
-      
-      console.log(`📸 Upload public réussi: ${req.file.filename}`);
-      
-      res.json({
-        success: true,
-        message: req.t('upload.imageSuccess'),
-        data: {
-          filename: req.file.filename,
-          originalName: req.file.originalname,
-          url: fileUrl,
-          size: req.file.size,
-          mimetype: req.file.mimetype
-        }
-      });
-    } catch (error) {
-      console.error('❌ Erreur lors de l\'upload public:', error);
-      res.status(500).json({
-        success: false,
-        error: req.t('upload.imageError')
-      });
-    }
-  }
-
-  handleAuthenticatedUpload(req, res) {
-    try {
-      if (!req.file) {
-        return res.status(400).json({
-          success: false,
-          error: req.t('upload.noFile')
-        });
-      }
-
-      const fileUrl = `${this.config.server.baseUrl}/${req.file.path.replace(/\\/g, '/')}`;
-      
-      console.log(`📸 Upload par ${req.user.id_user}: ${req.file.filename}`);
-      
-      res.json({
-        success: true,
-        message: req.t('upload.imageSuccess'),
-        data: {
-          filename: req.file.filename,
-          originalName: req.file.originalname,
-          url: fileUrl,
-          size: req.file.size,
-          mimetype: req.file.mimetype,
-          uploadedBy: req.user.id_user
-        }
-      });
-    } catch (error) {
-      console.error('❌ Erreur lors de l\'upload:', error);
-      res.status(500).json({
-        success: false,
-        error: req.t('upload.imageError')
-      });
-    }
-  }
-
-  handleDocumentUpload(req, res) {
-    try {
-      if (!req.file) {
-        return res.status(400).json({
-          success: false,
-          error: req.t('upload.noDocument')
-        });
-      }
-
-      const fileUrl = `${this.config.server.baseUrl}/${req.file.path.replace(/\\/g, '/')}`;
-      
-      console.log(`📄 Document uploadé par ${req.user.id_user}: ${req.file.filename}`);
-      
-      res.json({
-        success: true,
-        message: req.t('upload.documentSuccess'),
-        data: {
-          filename: req.file.filename,
-          originalName: req.file.originalname,
-          url: fileUrl,
-          size: req.file.size,
-          mimetype: req.file.mimetype,
-          uploadedBy: req.user.id_user
-        }
-      });
-    } catch (error) {
-      console.error('❌ Erreur lors de l\'upload du document:', error);
-      res.status(500).json({
-        success: false,
-        error: req.t('upload.documentError')
-      });
-    }
-  }
-
-  handleOeuvreMediaUpload(req, res) {
-    try {
-      if (!req.files || req.files.length === 0) {
-        return res.status(400).json({
-          success: false,
-          error: req.t('upload.noFile')
-        });
-      }
-
-      const uploadedFiles = req.files.map(file => {
-        const fileUrl = `${this.config.server.baseUrl}/${file.path.replace(/\\/g, '/')}`;
-        
-        return {
-          filename: file.filename,
-          originalName: file.originalname,
-          url: fileUrl,
-          size: file.size,
-          mimetype: file.mimetype,
-          type: this.getFileType(file.mimetype)
-        };
-      });
-      
-      console.log(`📸 ${req.files.length} médias uploadés pour œuvre par user:${req.user.id_user}`);
-      
-      res.json({
-        success: true,
-        message: req.t('upload.mediaSuccess', { count: req.files.length }),
-        data: uploadedFiles
-      });
-    } catch (error) {
-      console.error('❌ Erreur upload médias œuvre:', error);
-      res.status(500).json({
-        success: false,
-        error: req.t('upload.mediaError')
-      });
-    }
-  }
-
-  handleVideoUpload(req, res) {
-    try {
-      if (!req.file) {
-        return res.status(400).json({
-          success: false,
-          error: req.t('upload.noVideo')
-        });
-      }
-
-      const fileUrl = `${this.config.server.baseUrl}/${req.file.path.replace(/\\/g, '/')}`;
-      
-      console.log(`🎥 Vidéo uploadée par ${req.user.id_user}: ${req.file.filename}`);
-      
-      res.json({
-        success: true,
-        message: req.t('upload.videoSuccess'),
-        data: {
-          filename: req.file.filename,
-          originalName: req.file.originalname,
-          url: fileUrl,
-          size: req.file.size,
-          mimetype: req.file.mimetype,
-          duration: null
-        }
-      });
-    } catch (error) {
-      console.error('❌ Erreur upload vidéo:', error);
-      res.status(500).json({
-        success: false,
-        error: req.t('upload.videoError')
-      });
-    }
-  }
-
-  handleAudioUpload(req, res) {
-    try {
-      if (!req.file) {
-        return res.status(400).json({
-          success: false,
-          error: req.t('upload.noAudio')
-        });
-      }
-
-      const fileUrl = `${this.config.server.baseUrl}/${req.file.path.replace(/\\/g, '/')}`;
-      
-      console.log(`🎵 Audio uploadé par ${req.user.id_user}: ${req.file.filename}`);
-      
-      res.json({
-        success: true,
-        message: req.t('upload.audioSuccess'),
-        data: {
-          filename: req.file.filename,
-          originalName: req.file.originalname,
-          url: fileUrl,
-          size: req.file.size,
-          mimetype: req.file.mimetype,
-          duration: null
-        }
-      });
-    } catch (error) {
-      console.error('❌ Erreur upload audio:', error);
-      res.status(500).json({
-        success: false,
-        error: req.t('upload.audioError')
-      });
-    }
-  }
-
-  async handleGlobalSearch(req, res) {
-    try {
-      const { q, types, limit, page } = req.query;
-      
-      if (!q || q.trim().length < this.config.limits.minSearchLength) {
-        return res.status(400).json({
-          success: false,
-          error: req.t('search.minLength', { min: this.config.limits.minSearchLength })
-        });
-      }
-
-      const SearchService = require('./services/searchService');
-      const searchService = new SearchService(this.models);
-      
-      const results = await searchService.globalSearch(q.trim(), {
-        types: types ? types.split(',') : undefined,
-        limit: limit ? parseInt(limit) : this.config.limits.defaultPageSize,
-        page: page ? parseInt(page) : 1,
-        userId: req.user?.id_user,
-        lang: req.lang  // ⚡ Passer la langue au service de recherche
-      });
-
-      res.json(results);
-    } catch (error) {
-      console.error('Erreur lors de la recherche globale:', error);
-      res.status(500).json({
-        success: false,
-        error: req.t('search.error')
-      });
-    }
-  }
-
-  async handleSearchSuggestions(req, res) {
-    try {
-      const { q, limit } = req.query;
-      
-      if (!q || q.trim().length < 1) {
-        return res.json({ 
-          success: true, 
-          suggestions: [] 
-        });
-      }
-
-      const SearchService = require('./services/searchService');
-      const searchService = new SearchService(this.models);
-      
-      const results = await searchService.getSuggestions(
-        q.trim(), 
-        limit ? parseInt(limit) : 5,
-        req.lang  // ⚡ Passer la langue
-      );
-
-      res.json(results);
-    } catch (error) {
-      console.error('Erreur lors de la génération de suggestions:', error);
-      res.status(500).json({
-        success: false,
-        error: req.t('search.suggestionsError')
-      });
-    }
-  }
-
-  // Helper pour obtenir le client Redis
+  // Helper pour obtenir le client Redis (singleton partagé)
   _getRedisClient() {
-    try {
-      const redis = require('redis');
-      const client = redis.createClient({
-        url: process.env.REDIS_URL || `redis://${process.env.REDIS_HOST || 'localhost'}:${process.env.REDIS_PORT || 6379}`,
-        password: process.env.REDIS_PASSWORD || undefined
-      });
-      return client.isOpen ? client : null;
-    } catch (e) {
-      return null;
-    }
-  }
-
-  // Méthode helper pour déterminer le type de fichier
-  getFileType(mimetype) {
-    if (mimetype.startsWith('image/')) return 'image';
-    if (mimetype.startsWith('video/')) return 'video';
-    if (mimetype.startsWith('audio/')) return 'audio';
-    if (mimetype === 'application/pdf') return 'pdf';
-    return 'document';
+    const { getClient } = require('./utils/redisClient');
+    return getClient();
   }
 
   // Initialisation de la gestion d'erreurs
@@ -1071,6 +655,13 @@ class App {
     console.log('🛑 Arrêt gracieux de l\'application...');
     
     try {
+      // Flush les vues bufferisées avant de fermer la DB
+      try {
+        const viewCounter = require('./utils/viewCounter');
+        await viewCounter.shutdown();
+        console.log('✅ ViewCounter flush terminé');
+      } catch (_) { /* best-effort */ }
+
       if (this.sequelize) {
         await this.sequelize.close();
         console.log('✅ Connexion à la base de données fermée');

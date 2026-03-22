@@ -1,5 +1,5 @@
 /**
- * UserControllerV2 - Controller refactoré avec Service Pattern
+ * UserController - Controller refactoré avec Service Pattern
  *
  * Architecture: Controller → Service → Repository → Database
  *
@@ -19,7 +19,7 @@ const container = require('../services/serviceContainer');
 const { translateDeep } = require('../helpers/i18n');
 const { accountRateLimiter } = require('../middlewares/rateLimitMiddleware');
 
-class UserControllerV2 extends BaseController {
+class UserController extends BaseController {
   get userService() {
     return container.userService;
   }
@@ -29,7 +29,7 @@ class UserControllerV2 extends BaseController {
   // ============================================================================
 
   /**
-   * POST /api/v2/users/register
+   * POST /api/users/register
    * Inscription d'un nouvel utilisateur
    */
   async register(req, res) {
@@ -43,7 +43,8 @@ class UserControllerV2 extends BaseController {
         success: true,
         message: req.t('auth.registerSuccess'),
         data: {
-          user: this._translateUser(result.user, req.lang)
+          user: this._translateUser(result.user, req.lang),
+          expiresIn: this._getTokenExpirySeconds()
         }
       });
 
@@ -53,7 +54,7 @@ class UserControllerV2 extends BaseController {
   }
 
   /**
-   * POST /api/v2/users/login
+   * POST /api/users/login
    * Connexion d'un utilisateur
    */
   async login(req, res) {
@@ -78,7 +79,8 @@ class UserControllerV2 extends BaseController {
         success: true,
         message: req.t('auth.loginSuccess'),
         data: {
-          user: this._translateUser(result.user, req.lang)
+          user: this._translateUser(result.user, req.lang),
+          expiresIn: this._getTokenExpirySeconds()
         }
       });
 
@@ -91,16 +93,42 @@ class UserControllerV2 extends BaseController {
   }
 
   /**
-   * POST /api/v2/users/logout
+   * POST /api/users/logout
    * Déconnexion
    */
   async logout(req, res) {
     try {
       if (req.user?.id_user) {
         await this.userService.revokeRefreshToken(req.user.id_user);
+        // Invalider le cache session Redis
+        const authMw = require('../middlewares/authMiddleware')(require('../models'));
+        await authMw.invalidateUserCache(req.user.id_user).catch(() => {});
       }
     } catch (_) {
       // Best-effort revocation; proceed with cookie cleanup regardless
+    }
+
+    // Blacklister l'access token dans Redis pour empêcher sa réutilisation
+    try {
+      const jwt = require('jsonwebtoken');
+      const { getClient } = require('../utils/redisClient');
+      const token = req.cookies?.access_token
+        || (req.headers.authorization?.startsWith('Bearer ') ? req.headers.authorization.substring(7) : null);
+
+      if (token) {
+        const decoded = jwt.decode(token);
+        if (decoded?.exp) {
+          const ttl = decoded.exp - Math.floor(Date.now() / 1000);
+          if (ttl > 0) {
+            const redis = getClient();
+            if (redis) {
+              await redis.setEx(`jwt:blacklist:${token}`, ttl, '1');
+            }
+          }
+        }
+      }
+    } catch (_blacklistErr) {
+      // Best-effort blacklist; proceed with cookie cleanup regardless
     }
 
     this._clearAuthCookies(res);
@@ -116,7 +144,7 @@ class UserControllerV2 extends BaseController {
   // ============================================================================
 
   /**
-   * DELETE /api/v2/users/profile
+   * DELETE /api/users/profile
    * Suppression du propre compte (RGPD art. 17 — droit à l'effacement)
    * Requiert le mot de passe pour confirmer l'identité
    */
@@ -145,7 +173,7 @@ class UserControllerV2 extends BaseController {
   }
 
   /**
-   * GET /api/v2/users/profile/export
+   * GET /api/users/profile/export
    * Export des données personnelles (RGPD art. 20 — droit à la portabilité)
    * Retourne un JSON avec toutes les données de l'utilisateur
    */
@@ -170,7 +198,7 @@ class UserControllerV2 extends BaseController {
   // ============================================================================
 
   /**
-   * GET /api/v2/users
+   * GET /api/users
    * Liste des utilisateurs avec pagination
    */
   async list(req, res) {
@@ -201,16 +229,24 @@ class UserControllerV2 extends BaseController {
   }
 
   /**
-   * GET /api/v2/users/:id
+   * GET /api/users/:id
    * Récupère un utilisateur par ID
    */
   async getById(req, res) {
     try {
       const user = await this.userService.findById(parseInt(req.params.id));
 
+      let data = this._translateUser(user, req.lang);
+
+      // Filtrer les PII pour les modérateurs (seuls les admins voient tout)
+      if (data && !req.user.isAdmin) {
+        const { email, telephone, adresse, ...safeData } = data;
+        data = safeData;
+      }
+
       res.json({
         success: true,
-        data: this._translateUser(user, req.lang)
+        data
       });
 
     } catch (error) {
@@ -219,7 +255,7 @@ class UserControllerV2 extends BaseController {
   }
 
   /**
-   * GET /api/v2/users/profile
+   * GET /api/users/profile
    * Récupère le profil de l'utilisateur connecté
    */
   async getProfile(req, res) {
@@ -237,7 +273,7 @@ class UserControllerV2 extends BaseController {
   }
 
   /**
-   * PUT /api/v2/users/profile
+   * PUT /api/users/profile
    * Met à jour le profil de l'utilisateur connecté
    */
   async updateProfile(req, res) {
@@ -260,7 +296,7 @@ class UserControllerV2 extends BaseController {
   }
 
   /**
-   * PUT /api/v2/users/:id
+   * PUT /api/users/:id
    * Met à jour un utilisateur (admin)
    */
   async update(req, res) {
@@ -283,7 +319,7 @@ class UserControllerV2 extends BaseController {
   }
 
   /**
-   * DELETE /api/v2/users/:id
+   * DELETE /api/users/:id
    * Supprime un utilisateur (admin)
    */
   async delete(req, res) {
@@ -304,13 +340,13 @@ class UserControllerV2 extends BaseController {
   }
 
   /**
-   * POST /api/v2/users/change-password
+   * POST /api/users/change-password
    * Change le mot de passe de l'utilisateur connecté
    */
   async changePassword(req, res) {
     try {
-      const current_password = req.body.current_password || req.body.currentPassword;
-      const new_password = req.body.new_password || req.body.newPassword;
+      const current_password = req.body.ancien_mot_de_passe || req.body.current_password || req.body.currentPassword;
+      const new_password = req.body.nouveau_mot_de_passe || req.body.new_password || req.body.newPassword;
 
       if (!current_password || !new_password) {
         return res.status(400).json({
@@ -324,6 +360,10 @@ class UserControllerV2 extends BaseController {
         current_password,
         new_password
       );
+
+      // Invalider le cache session Redis (password_changed_at a changé)
+      const authMw = require('../middlewares/authMiddleware')(require('../models'));
+      await authMw.invalidateUserCache(req.user.id_user).catch(() => {});
 
       res.json({
         success: true,
@@ -340,7 +380,7 @@ class UserControllerV2 extends BaseController {
   // ============================================================================
 
   /**
-   * GET /api/v2/users/search
+   * GET /api/users/search
    * Recherche d'utilisateurs
    */
   async search(req, res) {
@@ -371,7 +411,7 @@ class UserControllerV2 extends BaseController {
   }
 
   /**
-   * GET /api/v2/users/professionals
+   * GET /api/users/professionals
    * Liste des professionnels validés
    */
   async getProfessionals(req, res) {
@@ -399,7 +439,7 @@ class UserControllerV2 extends BaseController {
   // ============================================================================
 
   /**
-   * GET /api/v2/users/pending
+   * GET /api/users/pending
    * Liste des utilisateurs en attente de validation
    */
   async getPending(req, res) {
@@ -423,7 +463,7 @@ class UserControllerV2 extends BaseController {
   }
 
   /**
-   * POST /api/v2/users/:id/validate
+   * POST /api/users/:id/validate
    * Valide un utilisateur professionnel
    */
   async validate(req, res) {
@@ -445,7 +485,7 @@ class UserControllerV2 extends BaseController {
   }
 
   /**
-   * POST /api/v2/users/:id/reject
+   * POST /api/users/:id/reject
    * Refuse un utilisateur
    */
   async reject(req, res) {
@@ -470,7 +510,7 @@ class UserControllerV2 extends BaseController {
   }
 
   /**
-   * POST /api/v2/users/:id/suspend
+   * POST /api/users/:id/suspend
    * Suspend un utilisateur
    */
   async suspend(req, res) {
@@ -496,7 +536,7 @@ class UserControllerV2 extends BaseController {
   }
 
   /**
-   * POST /api/v2/users/:id/reactivate
+   * POST /api/users/:id/reactivate
    * Réactive un utilisateur
    */
   async reactivate(req, res) {
@@ -522,7 +562,7 @@ class UserControllerV2 extends BaseController {
   // ============================================================================
 
   /**
-   * GET /api/v2/users/stats
+   * GET /api/users/stats
    * Statistiques utilisateurs
    */
   async getStats(req, res) {
@@ -544,7 +584,7 @@ class UserControllerV2 extends BaseController {
   // ============================================================================
 
   /**
-   * POST /api/v2/users/refresh-token
+   * POST /api/users/refresh-token
    * Rafraîchir le token d'accès
    */
   async refreshToken(req, res) {
@@ -559,7 +599,8 @@ class UserControllerV2 extends BaseController {
       res.json({
         success: true,
         data: {
-          user: this._translateUser(result.user, req.lang)
+          user: this._translateUser(result.user, req.lang),
+          expiresIn: this._getTokenExpirySeconds()
         }
       });
     } catch (error) {
@@ -569,7 +610,7 @@ class UserControllerV2 extends BaseController {
   }
 
   /**
-   * POST /api/v2/users/check-email
+   * POST /api/users/check-email
    * Vérifier si un email existe déjà
    */
   async checkEmail(req, res) {
@@ -586,7 +627,7 @@ class UserControllerV2 extends BaseController {
   }
 
   /**
-   * GET /api/v2/users/types
+   * GET /api/users/types
    * Types d'utilisateurs disponibles
    */
   async getTypes(req, res) {
@@ -604,7 +645,7 @@ class UserControllerV2 extends BaseController {
   }
 
   /**
-   * PATCH /api/v2/users/profile/photo
+   * PATCH /api/users/profile/photo
    * Mettre à jour la photo de profil
    */
   async updateProfilePhoto(req, res) {
@@ -632,7 +673,7 @@ class UserControllerV2 extends BaseController {
   }
 
   /**
-   * DELETE /api/v2/users/profile/photo
+   * DELETE /api/users/profile/photo
    * Supprimer la photo de profil
    */
   async removeProfilePhoto(req, res) {
@@ -649,7 +690,7 @@ class UserControllerV2 extends BaseController {
   }
 
   /**
-   * POST /api/v2/users/verify-email/:token
+   * POST /api/users/verify-email/:token
    * Vérifier l'email avec un jeton
    */
   async verifyEmail(req, res) {
@@ -666,7 +707,7 @@ class UserControllerV2 extends BaseController {
   }
 
   /**
-   * GET /api/v2/users/:id/translations
+   * GET /api/users/:id/translations
    * Récupérer les traductions d'un utilisateur (admin)
    */
   async getUserTranslations(req, res) {
@@ -682,7 +723,7 @@ class UserControllerV2 extends BaseController {
   }
 
   /**
-   * PATCH /api/v2/users/:id/translation/:lang
+   * PATCH /api/users/:id/translation/:lang
    * Mettre à jour une traduction spécifique (admin)
    */
   async updateUserTranslation(req, res) {
@@ -825,13 +866,39 @@ class UserControllerV2 extends BaseController {
   _setAuthCookies(res, token) {
     const isProduction = process.env.NODE_ENV === 'production';
 
+    // Aligner maxAge cookie avec l'expiration JWT (défaut 15min)
+    const jwtExp = process.env.JWT_EXPIRATION || '15m';
+    const maxAgeMs = this._parseExpToMs(jwtExp);
+
     res.cookie('access_token', token, {
       httpOnly: true,
       secure: isProduction,
       sameSite: 'lax',
-      maxAge: 24 * 60 * 60 * 1000,
+      maxAge: maxAgeMs,
       path: '/'
     });
+  }
+
+  /**
+   * Parse une durée JWT (ex: '15m', '1h', '7d') en millisecondes
+   * @private
+   */
+  _parseExpToMs(exp) {
+    const match = String(exp).match(/^(\d+)\s*(s|m|h|d)$/i);
+    if (!match) return 15 * 60 * 1000; // fallback 15min
+    const value = parseInt(match[1]);
+    const unit = match[2].toLowerCase();
+    const multipliers = { s: 1000, m: 60000, h: 3600000, d: 86400000 };
+    return value * (multipliers[unit] || 60000);
+  }
+
+  /**
+   * Retourne la durée d'expiration du token JWT en secondes
+   * @private
+   */
+  _getTokenExpirySeconds() {
+    const jwtExp = process.env.JWT_EXPIRATION || '15m';
+    return Math.floor(this._parseExpToMs(jwtExp) / 1000);
   }
 
   /**
@@ -861,4 +928,4 @@ class UserControllerV2 extends BaseController {
 }
 
 // Export singleton
-module.exports = new UserControllerV2();
+module.exports = new UserController();

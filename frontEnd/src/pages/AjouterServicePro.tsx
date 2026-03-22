@@ -103,8 +103,8 @@ const AjouterServicePro: React.FC = () => {
 
   // Lieu selection
   const [searchQuery, setSearchQuery] = useState('');
-  const [lieux, setLieux] = useState<any[]>([]);
-  const [selectedLieu, setSelectedLieu] = useState<any | null>(null);
+  const [lieux, setLieux] = useState<Array<Record<string, unknown>>>([]);
+  const [selectedLieu, setSelectedLieu] = useState<Record<string, unknown> | null>(null);
   const [showLieuSearch, setShowLieuSearch] = useState(false);
   const [loadingLieux, setLoadingLieux] = useState(false);
   
@@ -136,10 +136,16 @@ const AjouterServicePro: React.FC = () => {
   const loadExistingService = async () => {
     if (!editId) return;
     try {
-      const result = await httpClient.get<any>(`/services/${editId}`);
+      const result = await httpClient.get<Record<string, unknown>>(`/services/${editId}`);
       if (result.success && result.data) {
         const svc = result.data;
-        const toML = (v: any) => typeof v === 'object' && v !== null ? { fr: v.fr || '', ar: v.ar || '', en: v.en || '', 'tz-ltn': v['tz-ltn'] || '', 'tz-tfng': v['tz-tfng'] || '' } : { fr: v || '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' };
+        const toML = (v: unknown): MultiLangText => {
+          if (typeof v === 'object' && v !== null) {
+            const obj = v as Record<string, unknown>;
+            return { fr: (obj.fr as string) || '', ar: (obj.ar as string) || '', en: (obj.en as string) || '', 'tz-ltn': (obj['tz-ltn'] as string) || '', 'tz-tfng': (obj['tz-tfng'] as string) || '' };
+          }
+          return { fr: (typeof v === 'string' ? v : '') || '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' };
+        };
         setFormData({
           nom: toML(svc.nom),
           description: toML(svc.description),
@@ -161,8 +167,8 @@ const AjouterServicePro: React.FC = () => {
         toast({ title: t('toasts.error'), description: t('toasts.serviceNotFound'), variant: 'destructive' });
         navigate('/dashboard-pro');
       }
-    } catch (err: any) {
-      console.error('❌ Erreur chargement service:', err);
+    } catch (err: unknown) {
+      console.error('Erreur chargement service:', err);
       toast({ title: t('toasts.error'), description: t('toasts.serviceLoadFailed'), variant: 'destructive' });
     }
   };
@@ -225,22 +231,26 @@ const AjouterServicePro: React.FC = () => {
   }, [searchLieux]);
 
   // Obtenir le nom localisé
-  const getLocalizedName = (item: any, field: string = 'nom') => {
+  const getLocalizedName = (item: Record<string, unknown> | null, field: string = 'nom') => {
     if (!item) return '';
     const value = item[field];
     if (!value) return '';
     if (typeof value === 'string') return value;
-    return value[currentLang] || value.fr || '';
+    if (typeof value === 'object' && value !== null) {
+      const obj = value as Record<string, string>;
+      return obj[currentLang] || obj.fr || '';
+    }
+    return '';
   };
 
   // Sélectionner un lieu
-  const handleSelectLieu = (lieu: any) => {
+  const handleSelectLieu = (lieu: Record<string, unknown>) => {
     setSelectedLieu(lieu);
     setFormData(prev => ({
       ...prev,
-      id_lieu: lieu.id_lieu,
-      latitude: lieu.latitude?.toString() || '',
-      longitude: lieu.longitude?.toString() || '',
+      id_lieu: lieu.id_lieu as number,
+      latitude: lieu.latitude != null ? String(lieu.latitude) : '',
+      longitude: lieu.longitude != null ? String(lieu.longitude) : '',
     }));
     setShowLieuSearch(false);
     setSearchQuery('');
@@ -308,7 +318,7 @@ const AjouterServicePro: React.FC = () => {
   };
 
   // Mettre à jour un champ du formulaire
-  const updateField = (field: keyof ServiceFormData, value: any) => {
+  const updateField = (field: keyof ServiceFormData, value: ServiceFormData[keyof ServiceFormData]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     setIsDirty(true);
     setError(null);
@@ -324,7 +334,7 @@ const AjouterServicePro: React.FC = () => {
   const updateMultiLangField = (field: keyof ServiceFormData, lang: string, value: string) => {
     setFormData(prev => ({
       ...prev,
-      [field]: { ...(prev[field] as any), [lang]: value },
+      [field]: { ...(prev[field] as MultiLangText), [lang]: value },
     }));
     setIsDirty(true);
     setError(null);
@@ -427,7 +437,7 @@ const AjouterServicePro: React.FC = () => {
           typeLieu: 'service', // Type par défaut pour les lieux créés par les pros
         };
 
-        const lieuResult = await httpClient.post<any>('/lieux', lieuData);
+        const lieuResult = await httpClient.post<{ id_lieu?: number; id?: number }>('/lieux', lieuData);
 
         if (!lieuResult.success) {
           throw new Error(lieuResult.error || 'Erreur lors de la création du lieu');
@@ -460,17 +470,17 @@ const AjouterServicePro: React.FC = () => {
       };
 
       const data = isEditMode && editId
-        ? await httpClient.put<any>(`/services/${editId}`, serviceData)
-        : await httpClient.post<any>('/services', serviceData);
+        ? await httpClient.put<{ id?: number }>(`/services/${editId}`, serviceData)
+        : await httpClient.post<{ id?: number }>('/services', serviceData);
 
       if (data.success) {
         const serviceId = data.data?.id || editId;
         if (photoFile && serviceId) {
           const formDataPhoto = new FormData();
           formDataPhoto.append('image', photoFile);
-          const uploadRes = await httpClient.upload<any>(`/upload/image`, formDataPhoto);
+          const uploadRes = await httpClient.upload<{ url?: string }>(`/upload/image`, formDataPhoto);
           if (uploadRes.success && uploadRes.data?.url) {
-            await httpClient.put<any>(`/services/${serviceId}`, { photo_url: uploadRes.data.url });
+            await httpClient.put<unknown>(`/services/${serviceId}`, { photo_url: uploadRes.data.url });
           }
         }
 
@@ -484,9 +494,9 @@ const AjouterServicePro: React.FC = () => {
       } else {
         throw new Error(data.error || (isEditMode ? 'Erreur lors de la mise à jour' : 'Erreur lors de la création'));
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Erreur création service:', err);
-      setError(err.message || t('service.errors.submitFailed', 'Erreur lors de la soumission'));
+      setError(err instanceof Error ? err.message : t('service.errors.submitFailed', 'Erreur lors de la soumission'));
     } finally {
       setSubmitting(false);
     }

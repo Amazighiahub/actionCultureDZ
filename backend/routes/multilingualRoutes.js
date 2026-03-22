@@ -8,7 +8,7 @@ const createAuthMiddleware = require('../middlewares/authMiddleware');
 
 const initMultilingualRoutes = (models) => {
   const authMiddleware = createAuthMiddleware(models);
-  const controller = new MultilingualController();
+  const controller = MultilingualController;
 
   // GET /multilingual/supported - Langues supportées (public)
   router.get('/supported', controller.getSupportedLanguages.bind(controller));

@@ -7,8 +7,7 @@ const rateLimitMiddleware = require('../middlewares/rateLimitMiddleware');
 const FileValidator = require('../utils/fileValidator');
 
 const initUploadRoutes = (models, authMiddleware) => {
-  const UploadController = require('../controllers/uploadController');
-  const uploadController = new UploadController();
+  const uploadController = require('../controllers/uploadController');
 
 
   // ========================================================================
@@ -50,7 +49,7 @@ const initUploadRoutes = (models, authMiddleware) => {
 
   // Upload public d'image (pour inscription)
   router.post('/image/public',
-    rateLimitMiddleware.upload,
+    ...rateLimitMiddleware.publicUpload,
     uploadService.uploadImage().single('image'),
     FileValidator.uploadValidator(['image/jpeg', 'image/png', 'image/gif', 'image/webp'], 10 * 1024 * 1024),
     auditMiddleware.logAction('upload_image_public', { entityType: 'media' }),
@@ -59,7 +58,7 @@ const initUploadRoutes = (models, authMiddleware) => {
 
   // Upload public de document
   router.post('/document/public',
-    rateLimitMiddleware.upload,
+    ...rateLimitMiddleware.publicUpload,
     uploadService.uploadDocument().single('document'),
     FileValidator.uploadValidator(['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'], 50 * 1024 * 1024),
     auditMiddleware.logAction('upload_document_public', { entityType: 'media' }),
@@ -116,6 +115,80 @@ const initUploadRoutes = (models, authMiddleware) => {
     auditMiddleware.logAction('delete_media', { entityType: 'media' }),
     (req, res) => uploadController.deleteMedia(req, res)
   );
+
+  // ========================================================================
+  // ROUTES VIDÉO / AUDIO / OEUVRE MEDIA
+  // ========================================================================
+
+  // Upload vidéo
+  router.post('/video',
+    authMiddleware.authenticate,
+    rateLimitMiddleware.upload,
+    uploadService.uploadVideo ? uploadService.uploadVideo().single('video') : uploadService.uploadMedia().single('video'),
+    FileValidator.uploadValidator(
+      ['video/mp4', 'video/mpeg', 'video/quicktime', 'video/x-msvideo', 'video/webm'],
+      parseInt(process.env.UPLOAD_VIDEO_MAX_SIZE) || 100 * 1024 * 1024
+    ),
+    auditMiddleware.logAction('upload_video', { entityType: 'video' }),
+    (req, res) => uploadController.uploadVideo(req, res)
+  );
+
+  // Upload audio
+  router.post('/audio',
+    authMiddleware.authenticate,
+    rateLimitMiddleware.upload,
+    uploadService.uploadAudio ? uploadService.uploadAudio().single('audio') : uploadService.uploadMedia().single('audio'),
+    FileValidator.uploadValidator(
+      ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/aac'],
+      parseInt(process.env.UPLOAD_AUDIO_MAX_SIZE) || 50 * 1024 * 1024
+    ),
+    auditMiddleware.logAction('upload_audio', { entityType: 'audio' }),
+    (req, res) => uploadController.uploadAudio(req, res)
+  );
+
+  // Upload médias d'œuvre (multiple)
+  router.post('/oeuvre/media',
+    authMiddleware.authenticate,
+    authMiddleware.requireValidatedProfessional,
+    rateLimitMiddleware.upload,
+    uploadService.uploadMedia().array('medias', 10),
+    async (req, res, next) => {
+      try {
+        if (!req.files || req.files.length === 0) return next();
+        const allowedTypes = [
+          'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
+          'video/mp4', 'video/mpeg', 'video/quicktime', 'video/x-msvideo', 'video/webm',
+          'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/aac',
+          'application/pdf', 'application/msword',
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        ];
+        const results = await FileValidator.validateFilesBatch(
+          req.files.map(f => f.path),
+          allowedTypes
+        );
+        const invalidFiles = results.filter(r => !r.valid);
+        if (invalidFiles.length > 0) {
+          const fs = require('fs');
+          req.files.forEach(f => {
+            try { fs.unlinkSync(f.path); } catch (e) { /* ignore */ }
+          });
+          return res.status(400).json({
+            success: false,
+            error: req.t ? req.t('upload.invalidFileType') : 'Invalid file type',
+            details: invalidFiles
+          });
+        }
+        next();
+      } catch (error) {
+        next(error);
+      }
+    },
+    auditMiddleware.logAction('upload_oeuvre_media', { entityType: 'media' }),
+    (req, res) => uploadController.uploadOeuvreMedia(req, res)
+  );
+
+  // Infos de configuration upload
+  router.get('/info', (req, res) => uploadController.getUploadInfo(req, res));
 
   // ========================================================================
   // ROUTES POUR GESTION AVANCÉE (si nécessaire)

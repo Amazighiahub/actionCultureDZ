@@ -294,6 +294,17 @@ class EvenementService extends BaseService {
   }
 
   /**
+   * Liste publique des participants confirmés (données limitées pour la confidentialité)
+   */
+  async getPublicParticipants(evenementId) {
+    const participants = await this.repository.getPublicParticipants(evenementId);
+    return {
+      participants,
+      total: participants.length
+    };
+  }
+
+  /**
    * Liste les participants d'un événement
    */
   async getParticipants(evenementId, requesterId, requesterTypeId) {

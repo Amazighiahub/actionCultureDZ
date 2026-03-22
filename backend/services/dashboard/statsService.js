@@ -5,35 +5,105 @@
 const { Op, fn, col, literal } = require('sequelize');
 const { subDays, subHours, subMonths, subYears, startOfDay } = require('date-fns');
 const LRUCache = require('../../utils/LRUCache');
+const { getClient: getRedisClient } = require('../../utils/redisClient');
+const logger = require('../../utils/logger');
+
+const STATS_CACHE_PREFIX = 'stats:';
 
 class DashboardStatsService {
   constructor(models) {
     this.models = models;
     this.sequelize = models.sequelize || Object.values(models)[0]?.sequelize;
-    this.cache = new LRUCache(200);
+    this.lru = new LRUCache(200);
   }
 
   async getCached(key, generator, ttl = 300) {
+    const fullKey = `${STATS_CACHE_PREFIX}${key}`;
+
+    // 1. Essayer Redis
+    const redis = getRedisClient();
+    if (redis) {
+      try {
+        const val = await redis.get(fullKey);
+        if (val) return JSON.parse(val);
+      } catch (_) { /* fallback LRU */ }
+    }
+
+    // 2. Essayer LRU (fallback in-memory)
+    const lruVal = this.lru.get(key);
+    if (lruVal !== undefined) return lruVal;
+
+    // 3. Générer et stocker dans les deux caches
     try {
-      const cached = this.cache.get(key);
-      if (cached !== undefined) return cached;
       const data = await generator();
-      this.cache.set(key, data, ttl * 1000);
+      this.lru.set(key, data, ttl * 1000);
+      if (redis) {
+        redis.setEx(fullKey, ttl, JSON.stringify(data)).catch(() => {});
+      }
       return data;
     } catch (error) {
-      console.error('Erreur cache stats:', error.message);
+      logger.error('Erreur cache stats:', error.message);
       return await generator();
     }
   }
 
   clearCache(pattern = null) {
+    // LRU
     if (pattern) {
-      for (const key of this.cache.keys()) {
-        if (key.includes(pattern)) this.cache.delete(key);
+      for (const key of this.lru.keys()) {
+        if (key.includes(pattern)) this.lru.delete(key);
       }
     } else {
-      this.cache.clear();
+      this.lru.clear();
     }
+
+    // Redis (non-bloquant)
+    const redis = getRedisClient();
+    if (redis) {
+      const redisPattern = pattern ? `${STATS_CACHE_PREFIX}*${pattern}*` : `${STATS_CACHE_PREFIX}*`;
+      (async () => {
+        try {
+          let cursor = 0;
+          do {
+            const reply = await redis.scan(cursor, { MATCH: redisPattern, COUNT: 200 });
+            cursor = reply.cursor;
+            if (reply.keys.length > 0) await redis.del(reply.keys);
+          } while (cursor !== 0);
+        } catch (_) { /* best-effort */ }
+      })();
+    }
+  }
+
+  /**
+   * Statistiques publiques pour la page d'accueil (hero section)
+   */
+  async getPublicStats() {
+    const [sitesPatrimoniaux, evenementsActifs, oeuvres, artisanats, membres] = await Promise.all([
+      this.models.Lieu ? this.models.Lieu.count() : 0,
+      this.models.Evenement ? this.models.Evenement.count({ where: { statut: { [Op.in]: ['planifie', 'en_cours'] } } }) : 0,
+      this.models.Oeuvre ? this.models.Oeuvre.count() : 0,
+      this.models.Artisanat ? this.models.Artisanat.count() : 0,
+      this.models.User ? this.models.User.count({ where: { statut: 'actif' } }) : 0
+    ]);
+
+    const formatStat = (num) => {
+      if (num >= 10000) return Math.floor(num / 1000) + 'k+';
+      if (num >= 1000) return (num / 1000).toFixed(1).replace('.0', '') + 'k+';
+      if (num >= 100) return Math.floor(num / 100) * 100 + '+';
+      if (num >= 10) return Math.floor(num / 10) * 10 + '+';
+      return num.toString();
+    };
+
+    return {
+      sites_patrimoniaux: sitesPatrimoniaux,
+      sites_patrimoniaux_formatted: formatStat(sitesPatrimoniaux),
+      evenements: evenementsActifs,
+      evenements_formatted: formatStat(evenementsActifs),
+      oeuvres: oeuvres + artisanats,
+      oeuvres_formatted: formatStat(oeuvres + artisanats),
+      membres: membres,
+      membres_formatted: formatStat(membres)
+    };
   }
 
   /**
@@ -276,8 +346,8 @@ class DashboardStatsService {
       if (!this.models.Lieu || !this.models.Favori) return [];
       return await this.models.Lieu.findAll({
         attributes: [
-          'id_lieu', 'nom_fr', 'nom_ar', 'typeLieu',
-          [literal(`(SELECT COUNT(*) FROM favori WHERE favori.entity_type = 'lieu' AND favori.entity_id = Lieu.id_lieu)`), 'favorites_count']
+          'id_lieu', 'nom', 'typeLieu',
+          [literal(`(SELECT COUNT(*) FROM favoris WHERE favoris.type_entite = 'lieu' AND favoris.id_entite = Lieu.id_lieu)`), 'favorites_count']
         ],
         order: [[literal('favorites_count'), 'DESC']],
         limit: 10, raw: true

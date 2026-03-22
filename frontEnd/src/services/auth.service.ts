@@ -1,5 +1,4 @@
 // services/auth.service.ts
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { API_ENDPOINTS, ApiResponse, AuthTokenData, LoginCredentials, RefreshTokenRequest, AUTH_CONFIG } from '@/config/api';
 import { httpClient } from './httpClient';
 import { uploadService as UploadService } from "./upload.service";
@@ -44,6 +43,8 @@ export interface CurrentUser {
   }>;
 }
 
+interface ValidationError { field?: string; message?: string; [key: string]: unknown }
+
 class AuthService {
   // ✅ SÉCURITÉ: Les tokens sont gérés UNIQUEMENT via cookies httpOnly
   // Le localStorage stocke uniquement les métadonnées (user, expiry) pour l'UX
@@ -63,9 +64,11 @@ class AuthService {
    * Le token est géré via cookie httpOnly côté serveur
    */
   private setAuthData(data: AuthTokenData): void {
+    const tokenData = data as AuthTokenData & { expiresIn?: number; user?: CurrentUser };
+
     // Stocker la date d'expiration pour l'UX (savoir quand rafraîchir)
-    if ((data as any).expiresIn) {
-      const expiresAt = new Date(Date.now() + (data as any).expiresIn * 1000).toISOString();
+    if (tokenData.expiresIn) {
+      const expiresAt = new Date(Date.now() + tokenData.expiresIn * 1000).toISOString();
       localStorage.setItem(AUTH_CONFIG.tokenExpiryKey, expiresAt);
     } else if (data.expiresAt) {
       localStorage.setItem(AUTH_CONFIG.tokenExpiryKey, data.expiresAt);
@@ -78,8 +81,8 @@ class AuthService {
     // Token is managed via httpOnly cookies — do NOT store in localStorage
 
     // Stocker l'utilisateur pour l'affichage (données non sensibles)
-    if ((data as any).user) {
-      localStorage.setItem('user', JSON.stringify((data as any).user));
+    if (tokenData.user) {
+      localStorage.setItem('user', JSON.stringify(tokenData.user));
     }
   }
 
@@ -202,8 +205,9 @@ async registerProfessional(data: RegisterProfessionalData): Promise<ApiResponse<
     this.setAuthData(response.data);
     
     // Si l'API retourne aussi l'utilisateur
-    if ((response.data as any).user) {
-      localStorage.setItem('user', JSON.stringify((response.data as any).user));
+    const tokenData = response.data as AuthTokenData & { user?: CurrentUser };
+    if (tokenData.user) {
+      localStorage.setItem('user', JSON.stringify(tokenData.user));
     }
   }
   
@@ -255,7 +259,7 @@ async registerProfessional(data: RegisterProfessionalData): Promise<ApiResponse<
    * Transforme les erreurs de validation de l'API
    * pour correspondre aux noms de champs français
    */
-  transformValidationErrors(errors: any[]): any[] {
+  transformValidationErrors(errors: ValidationError[]): ValidationError[] {
     if (!Array.isArray(errors)) return errors;
     
     const fieldMapping: Record<string, string> = {
@@ -292,7 +296,7 @@ async registerProfessional(data: RegisterProfessionalData): Promise<ApiResponse<
   }
 }
 
-async updateProfilePhoto(photoFile: File): Promise<ApiResponse<any>> {
+async updateProfilePhoto(photoFile: File): Promise<ApiResponse<{ url: string; filename: string }>> {
   try {
     // Option 1 : Utiliser mediaService.uploadProfilePhoto qui existe déjà
     const { mediaService } = MediaService;
@@ -325,7 +329,7 @@ async updateProfilePhoto(photoFile: File): Promise<ApiResponse<any>> {
 }
 
 // Alternative si vous voulez utiliser directement uploadService
-async updateProfilePhotoAlternative(photoFile: File): Promise<ApiResponse<any>> {
+async updateProfilePhotoAlternative(photoFile: File): Promise<ApiResponse<{ url: string; filename: string }>> {
   try {
     // Importer uploadService directement
     const { uploadService } = UploadService;

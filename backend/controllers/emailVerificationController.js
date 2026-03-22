@@ -73,11 +73,11 @@ class EmailVerificationController extends BaseController {
 
       const result = await this.emailVerificationService.requestPasswordReset(email, req.ip);
 
-      // Si l'utilisateur n'existe pas, on renvoie quand meme succes (securite)
+      // Toujours renvoyer la meme reponse (empeche l'enumeration de comptes)
       res.json({
         success: true,
         message: req.t('email.resetLinkSent'),
-        data: result.userNotFound ? undefined : { expiresIn: result.expiresIn }
+        data: { expiresIn: '2 heures' }
       });
     } catch (error) {
       this._handleError(res, error);
@@ -183,4 +183,4 @@ class EmailVerificationController extends BaseController {
   }
 }
 
-module.exports = EmailVerificationController;
+module.exports = new EmailVerificationController();

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -27,13 +26,16 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRTL } from '@/hooks/useRTL';
 import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import { mapToBackendDTO } from '@/types/api/create-oeuvre-backend.dto';
+import { getTranslation, type SupportedLanguage } from '@/types/common/multilingual.types';
 import ArticleEditor from '@/components/article/ArticleEditor';
 
 // Import du composant de gestion des intervenants
 import IntervenantEditeurManager from '@/components/oeuvre/IntervenantEditeurManager';
 
 // Import des types
-import type { TagMotCle, Editeur } from '@/types/models/references.types';
+import type { TagMotCle, Editeur, TypeOeuvre, Langue, Categorie, Materiau, Technique } from '@/types/models/references.types';
+import type { Oeuvre } from '@/types/models/oeuvre.types';
+import type { ArticleBlock, ArticleSaveResponse, ArticleFormData } from '@/types/models/articles.types';
 import type {
   IntervenantExistant,
   NouvelIntervenant,
@@ -64,11 +66,11 @@ interface MediaUpload {
 
 // Type pour les métadonnées étendues
 interface ExtendedMetadata {
-  types_oeuvres?: any[];
-  langues?: any[];
-  categories?: any[];
-  materiaux?: any[];
-  techniques?: any[];
+  types_oeuvres?: TypeOeuvre[];
+  langues?: Langue[];
+  categories?: Categorie[];
+  materiaux?: Materiau[];
+  techniques?: Technique[];
   editeurs?: Editeur[];
   tags?: TagMotCle[];
   types_users?: TypeUser[];
@@ -113,6 +115,43 @@ interface FormData {
   technique_art?: string;
   dimensions_art?: string;
   support?: string;
+}
+
+// Type for the article editor save response (expands on ArticleSaveResponse)
+interface ArticleEditorSavePayload {
+  article: {
+    formData: ArticleFormData;
+    blocks: ArticleBlock[];
+    contributeurs?: {
+      existants?: IntervenantExistant[];
+      contributeurs?: ContributeurOeuvre[];
+      nouveaux?: NouvelIntervenant[];
+    };
+    editeurs?: Array<EditeurOeuvre | number>;
+    id_oeuvre?: number;
+    titre?: string;
+    [key: string]: unknown;
+  };
+  blocks?: ArticleBlock[];
+}
+
+// Type for the media upload response
+interface MediaUploadResult {
+  id_media: number;
+  url?: string;
+  [key: string]: unknown;
+}
+
+// Type for an article block as saved to the backend
+interface ArticleBlockToSave {
+  type_block: string;
+  contenu: string;
+  contenu_json: unknown;
+  metadata: Record<string, unknown>;
+  id_media: number | null;
+  ordre: number;
+  visible: boolean;
+  id_article?: number;
 }
 
 // État initial du formulaire
@@ -346,7 +385,7 @@ const EditorModeSelector: React.FC<EditorModeSelectorProps> = ({
   setUseArticleEditor
 }) => {
   const { t } = useTranslation();
-  const typeOeuvre = metadata.types_oeuvres?.find((type: any) => type.id_type_oeuvre === formData.id_type_oeuvre);
+  const typeOeuvre = metadata.types_oeuvres?.find((type: TypeOeuvre) => type.id_type_oeuvre === formData.id_type_oeuvre);
   const isArticleType = typeOeuvre && (
   typeOeuvre.nom_type === 'Article' ||
   typeOeuvre.nom_type === 'Article Scientifique');
@@ -421,8 +460,20 @@ const EditorModeSelector: React.FC<EditorModeSelectorProps> = ({
 // COMPOSANT PRINCIPAL
 // ============================================================================
 
+/** Extrait le nom lisible d'un tag (gère JSON multilingue et string) */
+const getTagName = (nom: unknown, lang: SupportedLanguage = 'fr'): string => {
+  if (!nom) return '';
+  if (typeof nom === 'string') return nom;
+  if (typeof nom === 'object' && nom !== null) {
+    const record = nom as Record<string, string | undefined>;
+    return record[lang] || record.fr || record.ar || record.en || '';
+  }
+  return String(nom);
+};
+
 const AjouterOeuvre: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const lang = (i18n.language || 'fr') as SupportedLanguage;
   const { toast } = useToast();
   const { direction } = useRTL();
   const { id } = useParams<{ id: string }>();
@@ -508,49 +559,53 @@ const AjouterOeuvre: React.FC = () => {
       setLoadingEdit(true);
       const response = await oeuvreService.getById(editId);
       if (response.success && response.data) {
-        const oeuvre = response.data as any;
+        const oeuvre = response.data as Oeuvre & Record<string, unknown>;
+        const titre = oeuvre.titre;
+        const description = oeuvre.description;
+        const rawCategories = (oeuvre.Categories ?? (oeuvre as unknown as Record<string, unknown>).categories ?? []) as Array<Categorie | number>;
+        const rawTags = (oeuvre.Tags ?? (oeuvre as unknown as Record<string, unknown>).tags ?? []) as Array<TagMotCle | string>;
         setFormData({
-          titre: typeof oeuvre.titre === 'object' ? oeuvre.titre : { fr: oeuvre.titre || '', ar: '', en: '' },
-          description: typeof oeuvre.description === 'object' ? oeuvre.description : { fr: oeuvre.description || '', ar: '', en: '' },
+          titre: typeof titre === 'object' && titre !== null ? titre : { fr: typeof titre === 'string' ? titre : '', ar: '', en: '' },
+          description: typeof description === 'object' && description !== null ? description : { fr: typeof description === 'string' ? description : '', ar: '', en: '' },
           id_type_oeuvre: oeuvre.id_type_oeuvre || 0,
           id_langue: oeuvre.id_langue || 1,
-          categories: oeuvre.categories?.map((c: any) => c.id_categorie || c) || [],
-          tags: oeuvre.tags?.map((t: any) => t.nom || t) || [],
+          categories: rawCategories.map((c) => typeof c === 'object' && c !== null ? c.id_categorie : c) || [],
+          tags: rawTags.map((t) => typeof t === 'object' && t !== null ? String(t.nom) : String(t)) || [],
           annee_creation: oeuvre.annee_creation,
           prix: oeuvre.prix,
-          isbn: oeuvre.isbn,
-          nb_pages: oeuvre.nb_pages,
-          duree_minutes: oeuvre.duree_minutes,
-          realisateur: oeuvre.realisateur,
-          producteur: oeuvre.producteur,
-          studio: oeuvre.studio,
-          duree_album: oeuvre.duree_album,
-          label: oeuvre.label,
-          nb_pistes: oeuvre.nb_pistes,
-          auteur: oeuvre.auteur,
-          source: oeuvre.source,
-          resume_article: oeuvre.resume_article,
-          url_source: oeuvre.url_source,
-          journal: oeuvre.journal,
-          doi: oeuvre.doi,
-          pages: oeuvre.pages,
-          volume: oeuvre.volume,
-          numero: oeuvre.numero,
-          peer_reviewed: oeuvre.peer_reviewed,
-          id_materiau: oeuvre.id_materiau,
-          id_technique: oeuvre.id_technique,
-          dimensions: oeuvre.dimensions,
-          poids: oeuvre.poids,
-          technique_art: oeuvre.technique_art,
-          dimensions_art: oeuvre.dimensions_art,
-          support: oeuvre.support,
+          isbn: oeuvre['isbn'] as string | undefined,
+          nb_pages: oeuvre['nb_pages'] as number | undefined,
+          duree_minutes: oeuvre['duree_minutes'] as number | undefined,
+          realisateur: oeuvre['realisateur'] as string | undefined,
+          producteur: oeuvre['producteur'] as string | undefined,
+          studio: oeuvre['studio'] as string | undefined,
+          duree_album: oeuvre['duree_album'] as string | undefined,
+          label: oeuvre['label'] as string | undefined,
+          nb_pistes: oeuvre['nb_pistes'] as number | undefined,
+          auteur: oeuvre['auteur'] as string | undefined,
+          source: oeuvre['source'] as string | undefined,
+          resume_article: oeuvre['resume_article'] as string | undefined,
+          url_source: oeuvre['url_source'] as string | undefined,
+          journal: oeuvre['journal'] as string | undefined,
+          doi: oeuvre['doi'] as string | undefined,
+          pages: oeuvre['pages'] as string | undefined,
+          volume: oeuvre['volume'] as string | undefined,
+          numero: oeuvre['numero'] as string | undefined,
+          peer_reviewed: oeuvre['peer_reviewed'] as boolean | undefined,
+          id_materiau: oeuvre['id_materiau'] as number | undefined,
+          id_technique: oeuvre['id_technique'] as number | undefined,
+          dimensions: oeuvre['dimensions'] as string | undefined,
+          poids: oeuvre['poids'] as number | undefined,
+          technique_art: oeuvre['technique_art'] as string | undefined,
+          dimensions_art: oeuvre['dimensions_art'] as string | undefined,
+          support: oeuvre['support'] as string | undefined,
         });
         // Oeuvre loaded for editing
       } else {
         toast({ title: t('toasts.error'), description: t('toasts.oeuvreNotFound'), variant: 'destructive' });
         navigate('/dashboard-pro');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('❌ Erreur chargement œuvre:', error);
       toast({ title: t('toasts.error'), description: t('toasts.oeuvreLoadFailed'), variant: 'destructive' });
     } finally {
@@ -578,7 +633,7 @@ const AjouterOeuvre: React.FC = () => {
   useEffect(() => {
     if (!metadata.types_oeuvres || metadata.types_oeuvres.length === 0) return;
 
-    const typeOeuvre = metadata.types_oeuvres.find((type: any) => type.id_type_oeuvre === formData.id_type_oeuvre);
+    const typeOeuvre = metadata.types_oeuvres.find((type: TypeOeuvre) => type.id_type_oeuvre === formData.id_type_oeuvre);
 
     // Vérifier si c'est un type Article
     const isArticleType = typeOeuvre && (
@@ -622,7 +677,7 @@ const AjouterOeuvre: React.FC = () => {
     if (!metadata.types_oeuvres || metadata.types_oeuvres.length === 0) return;
 
     const suggestions: string[] = [];
-    const typeOeuvre = metadata.types_oeuvres.find((type: any) => type.id_type_oeuvre === formData.id_type_oeuvre);
+    const typeOeuvre = metadata.types_oeuvres.find((type: TypeOeuvre) => type.id_type_oeuvre === formData.id_type_oeuvre);
 
     // Tags basés sur le type d'œuvre
     if (typeOeuvre) {
@@ -669,7 +724,7 @@ const AjouterOeuvre: React.FC = () => {
   // HANDLERS
   // ============================================================================
 
-  const handleInputChange = useCallback((field: keyof FormData, value: any) => {
+  const handleInputChange = useCallback((field: keyof FormData, value: FormData[keyof FormData]) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setFieldErrors((prev) => {
       if (!prev[field]) return prev;
@@ -684,12 +739,12 @@ const AjouterOeuvre: React.FC = () => {
 
     if (formData.tags.length >= 10) return;
     if (normalizedTag && !formData.tags.includes(normalizedTag)) {
-      // Vérifier si le tag existe déjà
-      const existingTag = metadata.tags?.find((tag: TagMotCle) =>
-      tag.nom.toLowerCase() === normalizedTag
+      // Vérifier si le tag existe déjà (comparer sur toutes les langues du JSON)
+      const existingTag = metadata.tags?.find((t: TagMotCle) =>
+        getTagName(t.nom, lang).toLowerCase() === normalizedTag
       );
 
-      // Si le tag n'existe pas, le créer
+      // Si le tag n'existe pas, le créer (le backend fait aussi un findOrCreate)
       if (!existingTag && metadata.tags) {
         try {
           const response = await metadataService.createTag({ nom: normalizedTag });
@@ -708,7 +763,7 @@ const AjouterOeuvre: React.FC = () => {
       setNewTag('');
       setShowTagSuggestions(false);
     }
-  }, [formData.tags, metadata.tags]);
+  }, [formData.tags, metadata.tags, lang]);
 
   const handleTagRemove = useCallback((tag: string) => {
     setFormData((prev) => ({
@@ -818,35 +873,33 @@ const AjouterOeuvre: React.FC = () => {
   }, []);
 
   // Handler pour la sauvegarde depuis ArticleEditor
-  const handleArticleEditorSave = useCallback(async (response: any) => {
+  const handleArticleEditorSave = useCallback(async (response: ArticleSaveResponse) => {
 
     try {
-      const { formData: articleFormData, blocks, contributeurs: contribs, editeurs: eds } = response.article;
+      const articlePayload = response.article as unknown as ArticleEditorSavePayload['article'];
+      const { formData: articleFormData, blocks, contributeurs: contribs, editeurs: eds } = articlePayload;
 
       // 1. Déterminer le type d'oeuvre (article=4, article_scientifique=5)
       const isScientific = articleFormData.type === 'article_scientifique';
       const id_type_oeuvre = isScientific ? 5 : 4;
 
       // 2. Préparer les détails spécifiques selon le type
-      const details_specifiques: any = {};
+      const details_specifiques: DetailsSpecifiques = {};
       if (isScientific) {
         details_specifiques.article_scientifique = {
-          journal: articleFormData.journal || null,
-          doi: articleFormData.doi || null,
-          volume: articleFormData.volume || null,
-          numero: articleFormData.numero || null,
-          pages: articleFormData.pages || null,
-          issn: articleFormData.issn || null,
-          impact_factor: articleFormData.impact_factor || null,
+          journal: articleFormData.journal || undefined,
+          doi: articleFormData.doi || undefined,
+          volume: articleFormData.volume || undefined,
+          numero: articleFormData.numero || undefined,
+          pages: articleFormData.pages || undefined,
           peer_reviewed: articleFormData.peer_reviewed || false,
         };
       } else {
         details_specifiques.article = {
-          auteur: articleFormData.auteur || null,
-          source: articleFormData.source || null,
-          resume: articleFormData.resume || null,
-          url_source: articleFormData.url_source || null,
-          sous_titre: articleFormData.sous_titre || null,
+          auteur: articleFormData.auteur || undefined,
+          source: articleFormData.source || undefined,
+          resume: articleFormData.resume || undefined,
+          url_source: articleFormData.url_source || undefined,
         };
       }
 
@@ -854,26 +907,26 @@ const AjouterOeuvre: React.FC = () => {
       // contribs.existants = IntervenantExistant[] (id_intervenant, id_type_user)
       // contribs.contributeurs = ContributeurOeuvre[] (id_user, id_type_user)
       // contribs.nouveaux = NouvelIntervenant[] (nom, prenom, etc.)
-      const utilisateurs_inscrits = contribs?.contributeurs?.map((c: any) => ({
+      const utilisateurs_inscrits = contribs?.contributeurs?.map((c: ContributeurOeuvre) => ({
         id_user: c.id_user,
         id_type_user: c.id_type_user,
-        personnage: c.personnage || c.role || ''
+        personnage: c.personnage || c.description_role || ''
       })) || [];
 
-      const intervenants_existants = contribs?.existants?.map((c: any) => ({
+      const intervenants_existants = contribs?.existants?.map((c: IntervenantExistant) => ({
         id_intervenant: c.id_intervenant,
         id_type_user: c.id_type_user,
         personnage: c.personnage || ''
       })) || [];
 
-      const nouveaux_intervenants = contribs?.nouveaux?.map((c: any) => ({
+      const nouveaux_intervenants = contribs?.nouveaux?.map((c: NouvelIntervenant) => ({
         nom: c.nom,
         prenom: c.prenom,
-        role: c.role || c.personnage || 'Contributeur',
+        role: c.personnage || 'Contributeur',
         id_type_user: c.id_type_user
       })) || [];
 
-      const editeursIds = eds?.map((e: any) => e.id_editeur || e) || [];
+      const editeursIds = eds?.map((e: EditeurOeuvre | number) => typeof e === 'object' ? e.id_editeur : e) || [];
 
       // 4. Créer l'oeuvre via l'API
       const oeuvreData = {
@@ -930,13 +983,15 @@ const AjouterOeuvre: React.FC = () => {
           try {
             const oeuvreDetail = await oeuvreService.getOeuvreById(oeuvreId);
             if (oeuvreDetail.success && oeuvreDetail.data) {
-              const od = oeuvreDetail.data as any;
+              const od = oeuvreDetail.data as Oeuvre & Record<string, unknown>;
               if (isScientific) {
+                const altScientific = (od['article_scientifique'] as { id_article_scientifique?: number } | undefined);
                 finalArticleRecordId = od.ArticleScientifique?.id_article_scientifique
-                  || od.article_scientifique?.id_article_scientifique;
+                  || altScientific?.id_article_scientifique;
               } else {
+                const altArticle = (od['article'] as { id_article?: number } | undefined);
                 finalArticleRecordId = od.Article?.id_article
-                  || od.article?.id_article;
+                  || altArticle?.id_article;
               }
             }
           } catch (fallbackErr) {
@@ -955,7 +1010,7 @@ const AjouterOeuvre: React.FC = () => {
 
         // 5a. Upload des images des blocs image qui ont un tempFile
         const blocksWithMedia = await Promise.all(
-          blocks.map(async (block: any, index: number) => {
+          blocks.map(async (block: ArticleBlock, index: number) => {
             let id_media = block.id_media || null;
 
             // Si le bloc a un fichier temporaire (image uploadée dans l'éditeur), l'envoyer au serveur
@@ -964,7 +1019,7 @@ const AjouterOeuvre: React.FC = () => {
                 // Upload direct via FormData vers le endpoint multer
                 const formData = new FormData();
                 formData.append('files', block.metadata.tempFile);
-                const uploadResult = await httpClient.postFormData<any>(
+                const uploadResult = await httpClient.postFormData<MediaUploadResult | MediaUploadResult[]>(
                   `/oeuvres/${oeuvreId}/medias/upload`,
                   formData
                 );
@@ -1005,7 +1060,7 @@ const AjouterOeuvre: React.FC = () => {
         const blocksResponse = finalArticleRecordId ? await articleBlockService.createMultipleBlocks({
           id_article: finalArticleRecordId,
           article_type: isScientific ? 'article_scientifique' : 'article',
-          blocks: blocksToSave.map((b: any) => ({ ...b, id_article: finalArticleRecordId })),
+          blocks: blocksToSave.map((b: ArticleBlockToSave) => ({ ...b, id_article: finalArticleRecordId })),
         }) : { success: false, error: 'ID article manquant' };
 
         if (!blocksResponse.success) {
@@ -1026,11 +1081,12 @@ const AjouterOeuvre: React.FC = () => {
         navigate(`/articles/${oeuvreId}`);
       }, 1500);
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('❌ Erreur sauvegarde article avancé:', error);
+      const message = error instanceof Error ? error.message : t('ajouteroeuvre.articleSaveError', 'Erreur lors de la sauvegarde de l\'article');
       toast({
         title: t('common.error', 'Erreur'),
-        description: error.message || t('ajouteroeuvre.articleSaveError', 'Erreur lors de la sauvegarde de l\'article'),
+        description: message,
         variant: 'destructive',
       });
     }
@@ -1040,7 +1096,7 @@ const AjouterOeuvre: React.FC = () => {
   // SOUMISSION DU FORMULAIRE
   // ============================================================================
 
-  const prepareDetailsSpecifiques = useCallback((typeOeuvre: any): DetailsSpecifiques => {
+  const prepareDetailsSpecifiques = useCallback((typeOeuvre: TypeOeuvre): DetailsSpecifiques => {
     const details: DetailsSpecifiques = {};
 
     switch (typeOeuvre.nom_type) {
@@ -1187,7 +1243,7 @@ const AjouterOeuvre: React.FC = () => {
       }
 
       // Préparer les détails spécifiques
-      const typeOeuvre = metadata.types_oeuvres?.find((type: any) => type.id_type_oeuvre === formData.id_type_oeuvre);
+      const typeOeuvre = metadata.types_oeuvres?.find((type: TypeOeuvre) => type.id_type_oeuvre === formData.id_type_oeuvre);
       const detailsSpecifiques = typeOeuvre ? prepareDetailsSpecifiques(typeOeuvre) : {};
 
       // Préparer les données avec la fonction helper
@@ -1208,17 +1264,17 @@ const AjouterOeuvre: React.FC = () => {
 
         if (isEditMode && editId) {
           // Mode édition — appeler update
-          oeuvreResponse = await oeuvreService.update(editId, oeuvreData as any);
+          oeuvreResponse = await oeuvreService.updateOeuvre(editId, oeuvreData);
         } else if (mediaFiles.length > 0) {
           const mediaMetadata = medias.map((m) => ({ is_principal: m.isPrincipal }));
 
           oeuvreResponse = await oeuvreService.createOeuvreFormData(
-            oeuvreData as any,
+            oeuvreData,
             mediaFiles,
             mediaMetadata
           );
         } else {
-          oeuvreResponse = await oeuvreService.createOeuvre(oeuvreData as any);
+          oeuvreResponse = await oeuvreService.createOeuvre(oeuvreData);
         }
 
         if (!oeuvreResponse.success) {
@@ -1237,17 +1293,19 @@ const AjouterOeuvre: React.FC = () => {
           navigate('/dashboard-pro');
         }, 1500);
 
-      } catch (error: any) {
+      } catch (error: unknown) {
         // Gestion du timeout
-        if (error.message && (
-        error.message.includes('timeout') ||
-        error.message.includes('Timeout') ||
-        error.code === 'ECONNABORTED')) {
+        const errorMessage = error instanceof Error ? error.message : '';
+        const errorCode = (error as { code?: string })?.code;
+        if (errorMessage && (
+        errorMessage.includes('timeout') ||
+        errorMessage.includes('Timeout') ||
+        errorCode === 'ECONNABORTED')) {
 
 
           await new Promise((resolve) => setTimeout(resolve, 2000));
 
-          const titreStr = typeof formData.titre === 'object' ? (formData.titre as any).fr || '' : formData.titre;
+          const titreStr = formData.titre.fr || '';
           const checkResult = await oeuvreService.checkRecentOeuvre(titreStr);
 
           if (checkResult.success && checkResult.data) {
@@ -1285,7 +1343,7 @@ const AjouterOeuvre: React.FC = () => {
             );
           }
         } else {
-          setSubmitError(error.message || t('ajouteroeuvre.createError', 'Erreur lors de la création de l\'oeuvre'));
+          setSubmitError(errorMessage || t('ajouteroeuvre.createError', 'Erreur lors de la création de l\'oeuvre'));
         }
       }
 
@@ -1305,7 +1363,7 @@ const AjouterOeuvre: React.FC = () => {
   const renderSpecificFields = useCallback(() => {
     if (!metadata.types_oeuvres || metadata.types_oeuvres.length === 0) return null;
 
-    const typeOeuvre = metadata.types_oeuvres.find((type: any) => type.id_type_oeuvre === formData.id_type_oeuvre);
+    const typeOeuvre = metadata.types_oeuvres.find((type: TypeOeuvre) => type.id_type_oeuvre === formData.id_type_oeuvre);
     if (!typeOeuvre) return null;
 
     const fieldsConfig: Record<string, React.ReactNode> = {
@@ -1550,7 +1608,7 @@ const AjouterOeuvre: React.FC = () => {
                 <SelectValue placeholder={t("ajouteroeuvre.placeholder_slectionnez_matriau")} />
               </SelectTrigger>
               <SelectContent>
-                {metadata.materiaux?.map((materiau: any) =>
+                {metadata.materiaux?.map((materiau: Materiau) =>
               <SelectItem key={materiau.id_materiau} value={materiau.id_materiau.toString()}>
                     {materiau.nom}
                   </SelectItem>
@@ -1568,7 +1626,7 @@ const AjouterOeuvre: React.FC = () => {
                 <SelectValue placeholder={t("ajouteroeuvre.placeholder_slectionnez_une_technique")} />
               </SelectTrigger>
               <SelectContent>
-                {metadata.techniques?.map((technique: any) =>
+                {metadata.techniques?.map((technique: Technique) =>
               <SelectItem key={technique.id_technique} value={technique.id_technique.toString()}>
                     {technique.nom}
                   </SelectItem>
@@ -1726,8 +1784,8 @@ const AjouterOeuvre: React.FC = () => {
           {useArticleEditor && formData.id_type_oeuvre > 0 && showEditorChoice ?
           <ArticleEditor
             initialData={{
-              titre: typeof formData.titre === 'object' ? (formData.titre as any).fr || '' : formData.titre,
-              description: typeof formData.description === 'object' ? (formData.description as any).fr || '' : formData.description,
+              titre: formData.titre.fr || '',
+              description: formData.description.fr || '',
               id_langue: formData.id_langue,
               categories: formData.categories,
               tags: formData.tags,
@@ -1816,7 +1874,7 @@ const AjouterOeuvre: React.FC = () => {
                   </CardHeader>
                   <CardContent>
                     <div id="id_type_oeuvre" role="group" aria-label={t("ajouteroeuvre.type_duvre")} className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 gap-4" tabIndex={-1}>
-                      {metadata.types_oeuvres?.map((type: any) =>
+                      {metadata.types_oeuvres?.map((type: TypeOeuvre) =>
                     <Button
                       key={type.id_type_oeuvre}
                       type="button"
@@ -1938,7 +1996,7 @@ const AjouterOeuvre: React.FC = () => {
                     <Card className="shadow-cultural">
                       <CardHeader>
                         <CardTitle className="text-2xl font-serif">{t("ajouteroeuvre.informations_spcifiques")}
-                      {metadata.types_oeuvres?.find((type: any) => type.id_type_oeuvre === formData.id_type_oeuvre)?.nom_type}
+                      {metadata.types_oeuvres?.find((type: TypeOeuvre) => type.id_type_oeuvre === formData.id_type_oeuvre)?.nom_type}
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
@@ -2021,16 +2079,19 @@ const AjouterOeuvre: React.FC = () => {
                           {showTagSuggestions && newTag && metadata.tags &&
                       <div className="absolute top-full start-0 end-0 mt-1 bg-background border rounded-md shadow-lg z-10 max-h-48 overflow-auto">
                               {metadata.tags.
-                        filter((tag: TagMotCle) => tag.nom.toLowerCase().includes(newTag.toLowerCase()) && !formData.tags.includes(tag.nom)).
+                        filter((tag: TagMotCle) => {
+                          const tagName = getTagName(tag.nom, lang);
+                          return tagName.toLowerCase().includes(newTag.toLowerCase()) && !formData.tags.includes(tagName.toLowerCase());
+                        }).
                         slice(0, 5).
                         map((tag: TagMotCle) =>
                         <button
                           key={tag.id_tag}
                           type="button"
                           className="w-full text-start px-3 py-2 hover:bg-secondary transition-colors"
-                          onClick={() => handleTagAdd(tag.nom)}>
+                          onClick={() => handleTagAdd(getTagName(tag.nom, lang))}>
 
-                                    {tag.nom}
+                                    {getTagName(tag.nom, lang)}
                                   </button>
                         )}
                             </div>

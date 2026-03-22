@@ -86,7 +86,7 @@ const GestionArtisanat: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [newTag, setNewTag] = useState('');
-  const [artisanatData, setArtisanatData] = useState<any>(null);
+  const [artisanatData, setArtisanatData] = useState<Record<string, unknown> | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   // Refs for focusing on first errored field
@@ -95,8 +95,8 @@ const GestionArtisanat: React.FC = () => {
   const techniqueRef = useRef<HTMLDivElement>(null);
 
   // Metadata
-  const [materiaux, setMateriaux] = useState<any[]>([]);
-  const [techniques, setTechniques] = useState<any[]>([]);
+  const [materiaux, setMateriaux] = useState<Array<Record<string, unknown>>>([]);
+  const [techniques, setTechniques] = useState<Array<Record<string, unknown>>>([]);
   const [loadingMetadata, setLoadingMetadata] = useState(true);
 
   // Load metadata et données existantes
@@ -182,7 +182,7 @@ const GestionArtisanat: React.FC = () => {
 
         // Charger les médias si existants
         if (data.medias) {
-          setPreviews(data.medias.map((m: any) => m.url));
+          setPreviews(data.medias.map((m: Record<string, unknown>) => m.url as string));
         }
       }
     } catch (err) {
@@ -331,15 +331,15 @@ const GestionArtisanat: React.FC = () => {
       } else {
         setError(response.error || t('gestionArtisanat.errors.saveFailed', 'Erreur lors de la sauvegarde'));
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Erreur sauvegarde artisanat:', err);
-      setError(err.message || t('gestionArtisanat.errors.saveFailed', 'Erreur lors de la sauvegarde'));
+      setError(err instanceof Error ? err.message : t('gestionArtisanat.errors.saveFailed', 'Erreur lors de la sauvegarde'));
     } finally {
       setLoading(false);
     }
   };
 
-  const getLocalizedName = (item: any) => {
+  const getLocalizedName = (item: Record<string, unknown>) => {
     if (!item) return '';
     if (typeof item.nom === 'string') {
       try {

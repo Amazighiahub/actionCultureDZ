@@ -54,7 +54,7 @@ module.exports = (sequelize) => {
 
   // Associations
   Favori.associate = (models) => {
-    Favori.belongsTo(models.User, { foreignKey: 'id_user' });
+    Favori.belongsTo(models.User, { foreignKey: 'id_user', onDelete: 'CASCADE' });
   };
 
   return Favori;

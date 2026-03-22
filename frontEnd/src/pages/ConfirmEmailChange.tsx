@@ -38,9 +38,10 @@ const ConfirmEmailChange = () => {
           setStatus('error');
           setMessage(response.error || t('emailChange.tokenInvalidOrExpired'));
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         setStatus('error');
-        setMessage(error.response?.data?.error || t('emailChange.confirmationFailed'));
+        const err = error as Record<string, Record<string, Record<string, string>>>;
+        setMessage(err?.response?.data?.error || t('emailChange.confirmationFailed'));
       }
     };
 

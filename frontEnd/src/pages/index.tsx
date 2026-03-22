@@ -80,7 +80,7 @@ const Index: React.FC = () => {
   });
 
   // Notifications — seulement si authentifié
-  const { data: notifications = [] } = useQuery<any[]>({
+  const { data: notifications = [] } = useQuery<Array<Record<string, unknown>>>({
     queryKey: ['notifications', 'summary'],
     queryFn: async () => {
       const summary = await notificationService.getSummary();

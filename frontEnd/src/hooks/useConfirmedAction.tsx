@@ -1,5 +1,4 @@
 // hooks/useConfirmedAction.ts
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
@@ -24,7 +23,7 @@ interface ConfirmedActionState {
   lastExecutionTime: number | null;
 }
 
-interface ConfirmedActionReturn<T extends (...args: any[]) => Promise<any>> {
+interface ConfirmedActionReturn<T extends (...args: unknown[]) => Promise<unknown>> {
   execute: (...args: Parameters<T>) => Promise<ReturnType<T> | undefined>;
   executeWithoutConfirmation: (...args: Parameters<T>) => Promise<ReturnType<T> | undefined>;
   isLoading: boolean;
@@ -38,7 +37,7 @@ interface ConfirmedActionReturn<T extends (...args: any[]) => Promise<any>> {
 /**
  * Hook pour gérer les actions avec confirmation et protection anti-spam
  */
-export function useConfirmedAction<T extends (...args: any[]) => Promise<any>>(
+export function useConfirmedAction<T extends (...args: unknown[]) => Promise<unknown>>(
   action: T,
   options: UseConfirmedActionOptions = {}
 ): ConfirmedActionReturn<T> {
@@ -267,14 +266,14 @@ import {
 } from '@/components/ui/alert-dialog';
 
 interface UseConfirmedActionWithDialogOptions extends UseConfirmedActionOptions {
-  dialogTitle?: string | ((...args: any[]) => string);
-  dialogDescription?: string | ((...args: any[]) => string);
-  confirmButtonText?: string | ((...args: any[]) => string);
+  dialogTitle?: string | ((...args: unknown[]) => string);
+  dialogDescription?: string | ((...args: unknown[]) => string);
+  confirmButtonText?: string | ((...args: unknown[]) => string);
   cancelButtonText?: string;
-  confirmButtonVariant?: 'default' | 'destructive' | ((...args: any[]) => 'default' | 'destructive');
+  confirmButtonVariant?: 'default' | 'destructive' | ((...args: unknown[]) => 'default' | 'destructive');
 }
 
-export function useConfirmedActionWithDialog<T extends (...args: any[]) => Promise<any>>(
+export function useConfirmedActionWithDialog<T extends (...args: unknown[]) => Promise<unknown>>(
   action: T,
   options: UseConfirmedActionWithDialogOptions = {}
 ): ConfirmedActionReturn<T> & { dialog: React.ReactNode } {
@@ -319,9 +318,9 @@ export function useConfirmedActionWithDialog<T extends (...args: any[]) => Promi
   }, []);
 
   // Fonction helper pour résoudre les valeurs dynamiques
-  const resolveValue = <V,>(value: V | ((...args: any[]) => V)): V => {
+  const resolveValue = <V,>(value: V | ((...args: unknown[]) => V)): V => {
     if (typeof value === 'function' && pendingArgs) {
-      return (value as (...args: any[]) => V)(...pendingArgs);
+      return (value as (...args: unknown[]) => V)(...pendingArgs);
     }
     return value as V;
   };

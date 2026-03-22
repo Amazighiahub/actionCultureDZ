@@ -1,8 +1,10 @@
 // services/oeuvre.service.wrapper.ts
 // Wrapper pour gérer les IDs string | number de manière transparente
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { oeuvreService } from './oeuvre.service';
 import { ApiResponse } from '@/config/api';
+import type { Oeuvre } from '@/types/models/oeuvre.types';
+import type { CreateOeuvreBackendDTO } from '@/types/api/create-oeuvre-backend.dto';
+import type { CreateOeuvreCompleteDTO } from '@/types/api/oeuvre-creation.types';
 
 /**
  * Convertit un ID string | number en number
@@ -18,7 +20,7 @@ export const oeuvreServiceWrapper = {
   /**
    * Récupérer une œuvre par ID (accepte string ou number)
    */
-  async getOeuvreById(id: string | number): Promise<ApiResponse<any>> {
+  async getOeuvreById(id: string | number): Promise<ApiResponse<Oeuvre>> {
     const numericId = toNumericId(id);
     
     // Vérifier que la conversion est valide
@@ -35,7 +37,7 @@ export const oeuvreServiceWrapper = {
   /**
    * Mettre à jour une œuvre (accepte string ou number pour l'ID)
    */
-  async updateOeuvre(id: string | number, data: any): Promise<ApiResponse<any>> {
+  async updateOeuvre(id: string | number, data: Partial<CreateOeuvreBackendDTO | CreateOeuvreCompleteDTO>): Promise<ApiResponse<Oeuvre>> {
     const numericId = toNumericId(id);
     
     if (isNaN(numericId)) {
@@ -75,15 +77,15 @@ export function patchOeuvreService() {
   const originalDelete = oeuvreService.deleteOeuvre;
 
   // Override des méthodes
-  (oeuvreService as any).getOeuvreById = function(id: string | number) {
+  (oeuvreService as Record<string, Function>).getOeuvreById = function(id: string | number) {
     return originalGetById.call(this, toNumericId(id));
   };
 
-  (oeuvreService as any).updateOeuvre = function(id: string | number, data: any) {
+  (oeuvreService as Record<string, Function>).updateOeuvre = function(id: string | number, data: Partial<CreateOeuvreBackendDTO | CreateOeuvreCompleteDTO>) {
     return originalUpdate.call(this, toNumericId(id), data);
   };
 
-  (oeuvreService as any).deleteOeuvre = function(id: string | number) {
+  (oeuvreService as Record<string, Function>).deleteOeuvre = function(id: string | number) {
     return originalDelete.call(this, toNumericId(id));
   };
 }

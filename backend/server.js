@@ -62,25 +62,42 @@ async function startServer() {
       }
     });
 
+    // Rooms autorisées (préfixes whitelist) et limite par socket
+    const ALLOWED_ROOM_PREFIXES = ['user_', 'evenement_', 'oeuvre_', 'notifications'];
+    const MAX_ROOMS_PER_SOCKET = 10;
+
     io.on('connection', (socket) => {
       if (socket.userId) {
         socket.join(`user_${socket.userId}`);
       }
 
       socket.on('join_room', (room) => {
-        // Autoriser uniquement les rooms publiques ou les rooms de l'utilisateur
+        // Validation du type
+        if (typeof room !== 'string' || room.length > 100) return;
+
+        // Whitelist de préfixes autorisés
+        const isAllowed = ALLOWED_ROOM_PREFIXES.some(prefix => room.startsWith(prefix));
+        if (!isAllowed) return;
+
+        // Empêcher de rejoindre la room d'un autre utilisateur
         if (room.startsWith('user_') && room !== `user_${socket.userId}`) {
-          return; // Empêcher de rejoindre la room d'un autre utilisateur
+          return;
         }
+
+        // Limiter le nombre de rooms par socket (éviter l'abus mémoire)
+        if (socket.rooms.size >= MAX_ROOMS_PER_SOCKET) {
+          return;
+        }
+
         socket.join(room);
       });
 
       socket.on('leave_room', (room) => {
-        socket.leave(room);
+        if (typeof room === 'string') socket.leave(room);
       });
 
       socket.on('disconnect', () => {
-        // cleanup
+        logger.debug(`Socket déconnecté: ${socket.id} (user: ${socket.userId || 'anonymous'})`);
       });
     });
     

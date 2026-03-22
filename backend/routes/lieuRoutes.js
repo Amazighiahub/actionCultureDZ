@@ -11,7 +11,7 @@ const { validateLanguage } = require('../middlewares/language');
 
 const initLieuRoutes = (models) => {
   const authMiddleware = createAuthMiddleware(models);
-  const lieuController = new LieuController();
+  const lieuController = LieuController;
 
   // ⚡ Validation acceptant string OU JSON pour les champs multilingues
   const createLieuValidation = [
@@ -118,10 +118,11 @@ const initLieuRoutes = (models) => {
     lieuController.getLieuxProximite.bind(lieuController)
   );
 
-  // Recherche de lieux
+  // Recherche de lieux (accepts both ?q= and ?search= for frontend compatibility)
   router.get('/search',
     [
-      query('q').optional().trim(),
+      query('q').optional().trim().isLength({ min: 2 }).withMessage((value, { req }) => req.t('validation.searchMinLength', 'Search must be at least 2 characters')),
+      query('search').optional().trim().isLength({ min: 2 }).withMessage((value, { req }) => req.t('validation.searchMinLength', 'Search must be at least 2 characters')),
       query('typeLieuCulturel').optional().isString(),
       query('wilayaId').optional().isInt()
     ],

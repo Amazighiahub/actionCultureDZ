@@ -1,15 +1,14 @@
 /**
  * VueService - Service pour le tracking des vues
  *
- * Encapsule toute la logique d'acces aux donnees (Sequelize) pour les vues.
- * Le controller n'a plus qu'a appeler ces methodes et formater les reponses HTTP.
+ * Architecture: Controller → Service → Repository → Database
+ * Délègue tous les accès Sequelize au VueRepository.
  */
-const { Op } = require('sequelize');
+const BaseService = require('./core/baseService');
 
-class VueService {
-  constructor(models) {
-    this.models = models;
-    this.sequelize = models.sequelize || Object.values(models)[0]?.sequelize;
+class VueService extends BaseService {
+  constructor(repository, options = {}) {
+    super(repository, options);
   }
 
   // ========================================================================
@@ -57,9 +56,7 @@ class VueService {
    * @returns {Promise<Object|null>}
    */
   async findExistingView(type_entite, id_entite, sessionId) {
-    return this.models.Vue.findOne({
-      where: { type_entite, id_entite, session_id: sessionId }
-    });
+    return this.repository.findBySession(type_entite, id_entite, sessionId);
   }
 
   /**
@@ -68,7 +65,7 @@ class VueService {
    * @returns {Promise<Object>}
    */
   async createView(viewData) {
-    return this.models.Vue.create(viewData);
+    return this.repository.create(viewData);
   }
 
   /**
@@ -77,7 +74,7 @@ class VueService {
    * @returns {Promise<Object|null>}
    */
   async findById(id) {
-    return this.models.Vue.findByPk(id);
+    return this.repository.findById(id);
   }
 
   /**
@@ -87,10 +84,7 @@ class VueService {
    * @returns {Promise<Object>}
    */
   async updateDuration(vue, duration) {
-    return vue.update({
-      duree_secondes: duration,
-      date_fin: new Date()
-    });
+    return this.repository.updateDuration(vue, duration);
   }
 
   /**
@@ -100,45 +94,9 @@ class VueService {
    */
   async updateEntityViewCount(type, id) {
     try {
-      let model;
-      const field = 'nombre_vues';
-      let idField;
-
-      switch (type) {
-        case 'oeuvre':
-          model = this.models.Oeuvre;
-          idField = 'id_oeuvre';
-          break;
-        case 'evenement':
-          model = this.models.Evenement;
-          idField = 'id_evenement';
-          break;
-        case 'lieu':
-          model = this.models.Lieu;
-          idField = 'id_lieu';
-          break;
-        case 'artisanat':
-          model = this.models.Artisanat;
-          idField = 'id_artisanat';
-          break;
-        case 'article':
-          model = this.models.Article;
-          idField = 'id_article';
-          break;
-        default:
-          return;
-      }
-
-      if (model) {
-        const attributes = await model.describe();
-        if (attributes[field]) {
-          await model.increment(field, {
-            where: { [idField]: id }
-          });
-        }
-      }
+      await this.repository.incrementEntityViewCount(type, id);
     } catch (error) {
-      console.error('Erreur mise a jour compteur:', error);
+      this.logger.error('Erreur mise a jour compteur:', error);
       // Ne pas faire echouer la requete principale
     }
   }
@@ -183,67 +141,13 @@ class VueService {
    */
   async getViewStats(type, id, periode = '30j') {
     const dateDebut = this._calcDateDebut(periode);
-    const entityId = parseInt(id);
 
-    // Statistiques globales
-    const totalStats = await this.models.Vue.findOne({
-      where: {
-        type_entite: type,
-        id_entite: entityId
-      },
-      attributes: [
-        [this.sequelize.fn('COUNT', '*'), 'total_vues'],
-        [this.sequelize.fn('COUNT', this.sequelize.literal('DISTINCT session_id')), 'vues_uniques'],
-        [this.sequelize.fn('COUNT', this.sequelize.literal('DISTINCT id_user')), 'utilisateurs_uniques'],
-        [this.sequelize.fn('AVG', this.sequelize.col('duree_secondes')), 'duree_moyenne']
-      ]
-    });
-
-    // Evolution par jour
-    const dailyStats = await this.models.Vue.findAll({
-      where: {
-        type_entite: type,
-        id_entite: entityId,
-        date_vue: { [Op.gte]: dateDebut }
-      },
-      attributes: [
-        [this.sequelize.fn('DATE', this.sequelize.col('date_vue')), 'date'],
-        [this.sequelize.fn('COUNT', '*'), 'vues']
-      ],
-      group: [this.sequelize.fn('DATE', this.sequelize.col('date_vue'))],
-      order: [[this.sequelize.fn('DATE', this.sequelize.col('date_vue')), 'ASC']]
-    });
-
-    // Repartition par device
-    const deviceStats = await this.models.Vue.findAll({
-      where: {
-        type_entite: type,
-        id_entite: entityId,
-        date_vue: { [Op.gte]: dateDebut }
-      },
-      attributes: [
-        'device_type',
-        [this.sequelize.fn('COUNT', '*'), 'count']
-      ],
-      group: ['device_type']
-    });
-
-    // Sources de trafic
-    const sourceStats = await this.models.Vue.findAll({
-      where: {
-        type_entite: type,
-        id_entite: entityId,
-        date_vue: { [Op.gte]: dateDebut },
-        source: { [Op.ne]: null }
-      },
-      attributes: [
-        'source',
-        [this.sequelize.fn('COUNT', '*'), 'count']
-      ],
-      group: ['source'],
-      order: [[this.sequelize.literal('count'), 'DESC']],
-      limit: 10
-    });
+    const [totalStats, dailyStats, deviceStats, sourceStats] = await Promise.all([
+      this.repository.getGlobalStats(type, id),
+      this.repository.getDailyStats(type, id, dateDebut),
+      this.repository.getDeviceStats(type, id, dateDebut),
+      this.repository.getSourceStats(type, id, dateDebut)
+    ]);
 
     return {
       periode,

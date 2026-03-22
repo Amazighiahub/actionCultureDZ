@@ -1,91 +1,35 @@
 /**
  * IntervenantService - Service pour les intervenants culturels
  * Gère : CRUD intervenants, recherche, traductions, statistiques
+ *
+ * Architecture: Controller → Service → Repository → Database
  */
-const { Op } = require('sequelize');
-const { mergeTranslations, createMultiLang } = require('../helpers/i18n');
-const { buildMultiLangSearch } = require('../utils/multiLangSearchBuilder');
+const BaseService = require('./core/baseService');
+const { Op, Sequelize } = require('sequelize');
+const { mergeTranslations, createMultiLang, SUPPORTED_LANGUAGES } = require('../helpers/i18n');
+const { buildMultiLangSearch, buildMultiLangOrder } = require('../utils/multiLangSearchBuilder');
 const { sanitizeLike } = require('../utils/sanitize');
 
-class IntervenantService {
-  constructor(models) {
-    this.models = models;
-    this.sequelize = models.sequelize || Object.values(models)[0]?.sequelize;
+class IntervenantService extends BaseService {
+  constructor(repository, options = {}) {
+    super(repository, options);
+  }
+
+  /** @returns {import('sequelize').Sequelize} */
+  get sequelize() {
+    return this.repository.model.sequelize;
   }
 
   // ========================================================================
   // LECTURE
   // ========================================================================
 
-  async getIntervenants({ page = 1, limit = 20, search, organisation, pays_origine, actif, verifie, order = 'nom', direction = 'ASC', lang = 'fr' }) {
-    const offset = (page - 1) * limit;
-    const where = {};
-
-    if (search) {
-      const safeSearch = `%${sanitizeLike(search)}%`;
-      where[Op.or] = [
-        ...buildMultiLangSearch(this.sequelize, 'nom', search),
-        ...buildMultiLangSearch(this.sequelize, 'prenom', search),
-        ...buildMultiLangSearch(this.sequelize, 'biographie', search),
-        { organisation: { [Op.like]: safeSearch } },
-        { titre_professionnel: { [Op.like]: safeSearch } }
-      ];
-    }
-
-    if (organisation) {
-      where.organisation = { [Op.like]: `%${sanitizeLike(organisation)}%` };
-    }
-    if (pays_origine) where.pays_origine = pays_origine;
-    if (actif !== undefined) where.actif = actif === 'true';
-    if (verifie !== undefined) where.verifie = verifie === 'true';
-
-    const safeLang = lang.replace(/[^a-z-]/gi, '');
-    let orderClause;
-    if (['nom', 'prenom', 'biographie'].includes(order)) {
-      const safeOrder = order.replace(/[^a-z_]/gi, '');
-      orderClause = [[this.sequelize.literal(`JSON_EXTRACT(\`Intervenant\`.\`${safeOrder}\`, '$.${safeLang}')`), direction]];
-    } else {
-      orderClause = [[order, direction]];
-    }
-
-    const { count, rows } = await this.models.Intervenant.findAndCountAll({
-      where,
-      include: [{
-        model: this.models.User,
-        as: 'UserAccount',
-        attributes: ['id_user', 'prenom', 'nom', 'email'],
-        required: false
-      }],
-      order: orderClause,
-      limit: parseInt(limit),
-      offset
-    });
-
-    return {
-      data: rows,
-      total: count,
-      pagination: { total: count, page: parseInt(page), limit: parseInt(limit), totalPages: Math.ceil(count / limit) }
-    };
+  async getIntervenants(params) {
+    return this.repository.findFiltered(params);
   }
 
   async getIntervenantById(id) {
-    const intervenant = await this.models.Intervenant.findByPk(id, {
-      include: [
-        {
-          model: this.models.User,
-          as: 'UserAccount',
-          attributes: ['id_user', 'prenom', 'nom', 'email'],
-          required: false
-        },
-        {
-          model: this.models.Programme,
-          as: 'Programmes',
-          through: { attributes: ['role_intervenant', 'ordre_intervention', 'duree_intervention'] },
-          attributes: ['id_programme', 'titre', 'description'],
-          required: false
-        }
-      ]
-    });
+    const intervenant = await this.repository.findWithProgrammes(id);
 
     if (!intervenant) return null;
 
@@ -181,15 +125,35 @@ class IntervenantService {
 
   async createIntervenant(lang, data) {
     const { nom, prenom, biographie, email, ...rest } = data;
+    const normalizedEmail = this._normalizeEmail(email);
 
-    if (email) {
-      const existing = await this.models.Intervenant.findOne({ where: { email } });
-      if (existing) {
-        const error = new Error('Email already exists');
-        error.code = 'EMAIL_EXISTS';
-        error.statusCode = 400;
-        throw error;
+    // 1. Vérifier par email (si fourni) — comparaison insensible à la casse
+    if (normalizedEmail) {
+      const existing = await this.models.Intervenant.findOne({
+        where: Sequelize.where(
+          Sequelize.fn('LOWER', Sequelize.col('email')),
+          normalizedEmail
+        )
+      });
+      if (existing) return existing;
+    }
+
+    // 2. Vérifier par nom + prénom (protection contre doublons sans email)
+    const existingByName = await this._findByNameMatch(nom, prenom, lang);
+    if (existingByName) return existingByName;
+
+    let idUserToSet = rest.id_user !== undefined && rest.id_user !== null ? rest.id_user : null;
+    if (idUserToSet !== null) {
+      const conflict = await this._intervenantAlreadyLinkedToUser(idUserToSet, null);
+      if (conflict) {
+        const err = new Error('This user account is already linked to another intervenant');
+        err.code = 'USER_ALREADY_LINKED';
+        err.statusCode = 400;
+        throw err;
       }
+    } else if (normalizedEmail) {
+      const link = await this._tryLinkUserIdFromEmail(normalizedEmail, null);
+      if (link.id_user) idUserToSet = link.id_user;
     }
 
     const transaction = await this.sequelize.transaction();
@@ -198,7 +162,8 @@ class IntervenantService {
         nom: this._prepareMultiLang(nom, lang),
         prenom: this._prepareMultiLang(prenom, lang),
         biographie: this._prepareMultiLang(biographie, lang),
-        email,
+        email: normalizedEmail || null,
+        id_user: idUserToSet,
         specialites: rest.specialites || [],
         langues_parlees: rest.langues_parlees || ['ar'],
         reseaux_sociaux: rest.reseaux_sociaux || {},
@@ -214,6 +179,50 @@ class IntervenantService {
       await transaction.rollback();
       throw error;
     }
+  }
+
+  /**
+   * Cherche un intervenant par correspondance exacte nom + prénom (insensible à la casse)
+   * dans toutes les langues du champ JSON multilingue.
+   */
+  async _findByNameMatch(nom, prenom, lang = 'fr') {
+    const nomStr = typeof nom === 'string' ? nom.trim() : (nom?.[lang] || nom?.fr || '');
+    const prenomStr = typeof prenom === 'string' ? prenom.trim() : (prenom?.[lang] || prenom?.fr || '');
+
+    if (!nomStr || !prenomStr) return null;
+
+    const normalizedNom = nomStr.toLowerCase();
+    const normalizedPrenom = prenomStr.toLowerCase();
+
+    // Construire les conditions pour chaque langue
+    const nomConditions = SUPPORTED_LANGUAGES.map(l => {
+      const jsonPath = l.includes('-') ? `$."${l}"` : `$.${l}`;
+      return Sequelize.where(
+        Sequelize.fn('LOWER', Sequelize.fn('JSON_UNQUOTE',
+          Sequelize.fn('JSON_EXTRACT', Sequelize.col('nom'), Sequelize.literal(`'${jsonPath}'`))
+        )),
+        normalizedNom
+      );
+    });
+
+    const prenomConditions = SUPPORTED_LANGUAGES.map(l => {
+      const jsonPath = l.includes('-') ? `$."${l}"` : `$.${l}`;
+      return Sequelize.where(
+        Sequelize.fn('LOWER', Sequelize.fn('JSON_UNQUOTE',
+          Sequelize.fn('JSON_EXTRACT', Sequelize.col('prenom'), Sequelize.literal(`'${jsonPath}'`))
+        )),
+        normalizedPrenom
+      );
+    });
+
+    return this.models.Intervenant.findOne({
+      where: {
+        [Op.and]: [
+          { [Op.or]: nomConditions },
+          { [Op.or]: prenomConditions }
+        ]
+      }
+    });
   }
 
   async updateIntervenant(id, lang, data) {
@@ -232,17 +241,49 @@ class IntervenantService {
       const updates = {};
       allowedFields.forEach(f => { if (rest[f] !== undefined) updates[f] = rest[f]; });
 
-      // Check email uniqueness
-      if (updates.email && updates.email !== intervenant.email) {
-        const existing = await this.models.Intervenant.findOne({
-          where: { email: updates.email, id_intervenant: { [Op.ne]: id } }
-        });
-        if (existing) {
+      if (updates.id_user !== undefined && updates.id_user !== null) {
+        const conflict = await this._intervenantAlreadyLinkedToUser(updates.id_user, id);
+        if (conflict) {
           await transaction.rollback();
-          const error = new Error('Email already used');
-          error.code = 'EMAIL_EXISTS';
-          error.statusCode = 400;
-          throw error;
+          const err = new Error('This user account is already linked to another intervenant');
+          err.code = 'USER_ALREADY_LINKED';
+          err.statusCode = 400;
+          throw err;
+        }
+      }
+
+      // Email : normalisation + unicité (insensible à la casse)
+      if (updates.email !== undefined) {
+        const normalizedNew = this._normalizeEmail(updates.email);
+        updates.email = normalizedNew || null;
+
+        if (normalizedNew && normalizedNew !== this._normalizeEmail(intervenant.email)) {
+          const existing = await this.models.Intervenant.findOne({
+            where: {
+              [Op.and]: [
+                { id_intervenant: { [Op.ne]: id } },
+                Sequelize.where(
+                  Sequelize.fn('LOWER', Sequelize.col('email')),
+                  normalizedNew
+                )
+              ]
+            }
+          });
+          if (existing) {
+            await transaction.rollback();
+            const error = new Error('Email already used');
+            error.code = 'EMAIL_EXISTS';
+            error.statusCode = 400;
+            throw error;
+          }
+        }
+
+        // Liaison automatique si id_user non imposé dans la requête
+        if (rest.id_user === undefined && normalizedNew) {
+          const link = await this._tryLinkUserIdFromEmail(normalizedNew, id);
+          if (link.id_user) {
+            updates.id_user = link.id_user;
+          }
         }
       }
 
@@ -388,6 +429,59 @@ class IntervenantService {
     const result = {};
     fields.forEach(f => { if (obj[f] !== undefined) result[f] = obj[f]; });
     return result;
+  }
+
+  /**
+   * Email normalisé pour comparaisons et stockage (trim + lowercase).
+   */
+  _normalizeEmail(email) {
+    if (email === undefined || email === null) return null;
+    const s = String(email).trim().toLowerCase();
+    if (!s) return null;
+    return s;
+  }
+
+  /**
+   * Utilisateur plateforme dont l'email correspond (comparaison insensible à la casse).
+   */
+  async _findUserByEmailNormalized(normalizedEmail) {
+    if (!normalizedEmail) return null;
+    return this.models.User.findOne({
+      where: Sequelize.where(
+        Sequelize.fn('LOWER', Sequelize.col('email')),
+        normalizedEmail
+      ),
+      attributes: ['id_user', 'email']
+    });
+  }
+
+  /**
+   * Un autre intervenant utilise déjà cet id_user.
+   */
+  async _intervenantAlreadyLinkedToUser(idUser, excludeIntervenantId) {
+    if (!idUser) return false;
+    const where = { id_user: idUser };
+    if (excludeIntervenantId != null) {
+      where.id_intervenant = { [Op.ne]: excludeIntervenantId };
+    }
+    const row = await this.models.Intervenant.findOne({ where, attributes: ['id_intervenant'] });
+    return !!row;
+  }
+
+  /**
+   * Résout id_user depuis l'email d'un compte existant.
+   * Si un autre intervenant est déjà lié à ce compte, ne lie pas (pas d'erreur).
+   */
+  async _tryLinkUserIdFromEmail(normalizedEmail, excludeIntervenantId) {
+    const user = await this._findUserByEmailNormalized(normalizedEmail);
+    if (!user) {
+      return { id_user: null };
+    }
+    const taken = await this._intervenantAlreadyLinkedToUser(user.id_user, excludeIntervenantId);
+    if (taken) {
+      return { id_user: null, linkConflict: true };
+    }
+    return { id_user: user.id_user };
   }
 }
 

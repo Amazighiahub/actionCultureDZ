@@ -2,14 +2,14 @@
 const rateLimit = require('express-rate-limit');
 const rateLimitRedis = require('rate-limit-redis');
 const RedisStore = rateLimitRedis?.RedisStore || rateLimitRedis?.default || rateLimitRedis;
-const Redis = require('ioredis');
+const { getClient: getRedisClient } = require('../utils/redisClient');
 const logger = require('../utils/logger');
 
 // ✅ SÉCURITÉ: Configuration Redis pour rate limiting distribué
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 const USE_REDIS = process.env.USE_REDIS_RATE_LIMIT === 'true' || IS_PRODUCTION;
 
-// Configuration Redis
+// Configuration Redis — réutilise le client partagé (utils/redisClient)
 let redisClient = null;
 let redisStore = null;
 
@@ -28,30 +28,17 @@ const createRedisStore = (options) => {
 
 if (USE_REDIS) {
   try {
-    redisClient = new Redis({
-      host: process.env.REDIS_HOST || 'localhost',
-      port: parseInt(process.env.REDIS_PORT || '6379'),
-      password: process.env.REDIS_PASSWORD || undefined,
-      retryDelayOnFailover: 100,
-      maxRetriesPerRequest: 3,
-      lazyConnect: true
-    });
+    redisClient = getRedisClient();
 
-    // Tester la connexion
-    redisClient.on('connect', () => {
-      logger.info('Redis connecté pour rate limiting');
-    });
-
-    redisClient.on('error', (err) => {
-      logger.error('Erreur Redis rate limiting:', err.message);
-    });
-
-    // Créer le store Redis
-    redisStore = createRedisStore({
-      sendCommand: (...args) => redisClient.call(...args),
-    });
-
-    logger.info('Rate limiting avec Redis activé');
+    if (redisClient) {
+      // Créer le store Redis via le client partagé
+      redisStore = createRedisStore({
+        sendCommand: (...args) => redisClient.sendCommand(args),
+      });
+      logger.info('Rate limiting avec Redis activé (client partagé)');
+    } else {
+      logger.warn('Redis client non disponible, utilisation du store en mémoire');
+    }
   } catch (error) {
     logger.warn('Redis non disponible, utilisation du store en mémoire:', error.message);
     redisStore = null;
@@ -122,7 +109,7 @@ const commentLimiter = rateLimit({
   ...(redisStore && { store: redisStore }),
 });
 
-// 3c. Rate limiter spécifique uploads (10/h/user)
+// 3c. Rate limiter spécifique uploads authentifiés (30/h/user)
 const uploadLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 heure
   max: IS_PRODUCTION ? 30 : 200, // 30 uploads/h en prod
@@ -131,6 +118,22 @@ const uploadLimiter = rateLimit({
     res.status(429).json({
       success: false,
       error: req.t ? req.t('auth.tooManyRequests') : 'Upload limit reached, please try again later'
+    });
+  },
+  ...(redisStore && { store: redisStore }),
+});
+
+// 3d. Rate limiter strict pour uploads PUBLICS (sans auth) — 5/h/IP
+const publicUploadLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 heure
+  max: IS_PRODUCTION ? 5 : 50, // 5 uploads/h par IP en prod
+  keyGenerator: (req) => req.ip,
+  skipSuccessfulRequests: false,
+  handler: (req, res) => {
+    res.status(429).json({
+      success: false,
+      error: req.t ? req.t('auth.tooManyRequests') : 'Public upload limit reached, please try again later',
+      code: 'PUBLIC_UPLOAD_RATE_LIMITED'
     });
   },
   ...(redisStore && { store: redisStore }),
@@ -400,6 +403,7 @@ module.exports = {
   ].filter(Boolean),
   creation: [createContentLimiter],
   upload: [uploadLimiter],
+  publicUpload: [publicUploadLimiter],
   sensitiveActions: [strictLimiter],
   general: [globalLimiter]
 };

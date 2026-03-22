@@ -1,5 +1,4 @@
 // hooks/useOeuvres.ts
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { oeuvreService } from '@/services/oeuvre.service';
 import { httpClient } from '@/services/httpClient';
@@ -49,12 +48,12 @@ export function useOeuvres(): UseOeuvresReturn {
     if (lastRateLimit) {
       const timeSince = Date.now() - parseInt(lastRateLimit);
       if (timeSince < 5 * 60 * 1000) {
-        (httpClient as any).useConservativeMode?.();
+        httpClient.useConservativeMode();
       }
     }
 
     return () => {
-      (httpClient as any).useNormalMode?.();
+      httpClient.useNormalMode();
     };
   }, []);
 
@@ -83,7 +82,7 @@ export function useOeuvres(): UseOeuvresReturn {
       setLoading(true);
       setError(null);
       
-      const params: any = { 
+      const params: Record<string, string | number | boolean | undefined> = {
         limit: 50, // Plus d'œuvres pour compenser le filtrage
         statut: 'publie'
       };
@@ -92,11 +91,12 @@ export function useOeuvres(): UseOeuvresReturn {
       const result = await oeuvreService.getOeuvres(params);
       
       if (result.success && result.data) {
-        let oeuvresData = (result.data as any).oeuvres || 
-                         (result.data as any).items || 
-                         (result.data as any).results || 
-                         (result.data as any).data || 
-                         result.data || 
+        const data = result.data as { oeuvres?: unknown[]; items?: unknown[]; results?: unknown[]; data?: unknown[] };
+        let oeuvresData = data.oeuvres ||
+                         data.items ||
+                         data.results ||
+                         data.data ||
+                         result.data ||
                          [];
         
         // Filtrer pour exclure l'artisanat
@@ -122,10 +122,10 @@ export function useOeuvres(): UseOeuvresReturn {
       } else {
         throw new Error(result.error || 'Erreur lors du chargement des œuvres');
       }
-    } catch (err: any) {
-      
+    } catch (err: unknown) {
+      const errMessage = err instanceof Error ? err.message : '';
       // Gérer le rate limit
-      if (err.message?.includes('429') || err.message?.includes('rate limit')) {
+      if (errMessage.includes('429') || errMessage.includes('rate limit')) {
         localStorage.setItem('lastRateLimit', Date.now().toString());
         
         // Essayer le backup

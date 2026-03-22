@@ -139,16 +139,11 @@ module.exports = (sequelize) => {
       constraints: false
     });
     
-    Intervenant.hasMany(models.OeuvreIntervenant, { 
-      foreignKey: 'id_intervenant' 
+    Intervenant.hasMany(models.OeuvreIntervenant, {
+      foreignKey: 'id_intervenant',
+      onDelete: 'CASCADE'
     });
     
-    Intervenant.belongsToMany(models.Programme, {
-      through: models.ProgrammeIntervenant,
-      foreignKey: 'id_intervenant',
-      otherKey: 'id_programme',
-      as: 'Programmes'
-    });
   };
   
   // ⚡ NOUVELLES MÉTHODES I18N

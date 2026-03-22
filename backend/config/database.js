@@ -1,10 +1,16 @@
 const { Sequelize } = require('sequelize');
+const os = require('os');
 const logger = require('../utils/logger');
 
 // ============================================================================
 // VALIDATION DES VARIABLES D'ENVIRONNEMENT CRITIQUES
 // ============================================================================
 const isProduction = process.env.NODE_ENV === 'production';
+
+// Nombre de workers cluster (PM2 ou Node cluster)
+// En cluster, chaque worker crée son propre pool → diviser le budget total
+const CLUSTER_WORKERS = parseInt(process.env.CLUSTER_WORKERS || process.env.PM2_INSTANCES || '1') || 1;
+const EFFECTIVE_WORKERS = Math.max(1, CLUSTER_WORKERS === -1 ? os.cpus().length : CLUSTER_WORKERS);
 
 // Seuil de requête lente en ms (configurable via env)
 const SLOW_QUERY_MS = parseInt(process.env.DB_SLOW_QUERY_MS || '500');
@@ -130,8 +136,10 @@ const config = {
     logging: slowQueryLogger,
     benchmark: true,
     pool: {
-      max: parseInt(process.env.DB_POOL_MAX || '50'),
-      min: parseInt(process.env.DB_POOL_MIN || '10'),
+      // Budget total divisé par le nombre de workers cluster
+      // Avec 4 workers et DB_POOL_MAX=50 → chaque worker max=12
+      max: Math.max(5, Math.floor(parseInt(process.env.DB_POOL_MAX || '50') / EFFECTIVE_WORKERS)),
+      min: Math.max(2, Math.floor(parseInt(process.env.DB_POOL_MIN || '10') / EFFECTIVE_WORKERS)),
       acquire: parseInt(process.env.DB_POOL_ACQUIRE || '30000'),
       idle: parseInt(process.env.DB_POOL_IDLE || '30000'),
       evict: parseInt(process.env.DB_POOL_EVICT || '1000')
@@ -153,7 +161,7 @@ const config = {
 // Fonction pour créer la connexion à la base de données
 const createDatabaseConnection = (env = 'development') => {
   const dbConfig = config[env];
-  
+
   const sequelize = new Sequelize(
     dbConfig.database,
     dbConfig.username,
@@ -162,10 +170,38 @@ const createDatabaseConnection = (env = 'development') => {
       host: dbConfig.host,
       dialect: dbConfig.dialect,
       logging: dbConfig.logging,
+      benchmark: dbConfig.benchmark || false,
       define: dbConfig.define || {},
-      pool: dbConfig.pool || {}
+      pool: dbConfig.pool || {},
+      dialectOptions: dbConfig.dialectOptions || {},
+      retry: {
+        max: parseInt(process.env.DB_RETRY_MAX || '10'),
+        backoffBase: 1000,
+        backoffExponent: 1.5
+      }
     }
   );
+
+  // Reconnexion automatique sur perte de connexion
+  const handleDisconnect = () => {
+    sequelize.authenticate()
+      .then(() => logger.info('✅ Connexion DB rétablie'))
+      .catch((err) => {
+        logger.error(`❌ Reconnexion DB échouée: ${err.message} — nouvelle tentative dans 5s`);
+        setTimeout(handleDisconnect, 5000);
+      });
+  };
+
+  // Écouter les erreurs du pool de connexions
+  const pool = sequelize.connectionManager.pool;
+  if (pool) {
+    const originalDestroy = pool._destroy;
+    pool._destroy = function(resource) {
+      logger.warn('⚠️ Connexion DB perdue, tentative de reconnexion...');
+      handleDisconnect();
+      return originalDestroy ? originalDestroy.call(this, resource) : undefined;
+    };
+  }
 
   return sequelize;
 };

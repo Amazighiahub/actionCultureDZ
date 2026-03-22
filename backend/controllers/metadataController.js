@@ -231,7 +231,8 @@ class MetadataController extends BaseController {
   async getEditeurs(req, res) {
     try {
       const lang = req.lang || 'fr';
-      const editeurs = await this.metadataService.getEditeurs();
+      const { search, limit } = req.query;
+      const editeurs = await this.metadataService.getEditeurs({ search, limit });
       res.json({ success: true, data: translateDeep(editeurs, lang), lang });
     } catch (error) {
       this._handleError(res, error);
@@ -434,6 +435,17 @@ class MetadataController extends BaseController {
     }
   }
 
+  async createEditeur(req, res) {
+    try {
+      const lang = req.lang || 'fr';
+      const editeur = await this.metadataService.createEditeur(lang, req.body);
+      if (!editeur) return res.status(404).json({ success: false, error: req.t('common.notFound') });
+      this._sendCreated(res, translateDeep(editeur, lang), req.t('metadata.editeurCreated', 'Éditeur créé'));
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
   // ========================================================================
   // STATISTIQUES
   // ========================================================================
@@ -448,4 +460,4 @@ class MetadataController extends BaseController {
   }
 }
 
-module.exports = MetadataController;
+module.exports = new MetadataController();

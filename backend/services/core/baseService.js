@@ -10,6 +10,7 @@
  */
 
 const logger = require('../../utils/logger');
+const AppError = require('../../utils/appError');
 
 class BaseService {
   constructor(repository, options = {}) {
@@ -130,22 +131,17 @@ class BaseService {
    * @private
    */
   _notFoundError(id) {
-    const error = new Error(`Resource with id ${id} not found`);
-    error.code = 'NOT_FOUND';
-    error.statusCode = 404;
-    return error;
+    return AppError.notFound(`Resource with id ${id}`);
   }
 
   /**
    * Crée une erreur de validation standardisée
    * @param {string} message
-   * @param {Array} errors
+   * @param {Array} details
    */
-  _validationError(message, errors = []) {
-    const error = new Error(message);
-    error.code = 'VALIDATION_ERROR';
-    error.statusCode = 400;
-    error.errors = errors;
+  _validationError(message, details = []) {
+    const error = AppError.badRequest(message, 'VALIDATION_ERROR', details.length ? details : undefined);
+    if (details.length) error.errors = details;
     return error;
   }
 
@@ -154,10 +150,7 @@ class BaseService {
    * @param {string} message
    */
   _conflictError(message) {
-    const error = new Error(message);
-    error.code = 'CONFLICT';
-    error.statusCode = 409;
-    return error;
+    return AppError.conflict(message);
   }
 
   /**
@@ -165,10 +158,7 @@ class BaseService {
    * @param {string} message
    */
   _unauthorizedError(message = 'Non autorisé') {
-    const error = new Error(message);
-    error.code = 'UNAUTHORIZED';
-    error.statusCode = 401;
-    return error;
+    return AppError.unauthorized(message);
   }
 
   /**
@@ -176,41 +166,16 @@ class BaseService {
    * @param {string} message
    */
   _forbiddenError(message = 'Accès interdit') {
-    const error = new Error(message);
-    error.code = 'FORBIDDEN';
-    error.statusCode = 403;
-    return error;
+    return AppError.forbidden(message);
   }
 
   /**
-   * Transforme une erreur Sequelize en erreur standardisée
+   * Transforme une erreur Sequelize/générique en AppError standardisée.
+   * Délègue à AppError.fromError() pour un traitement unifié.
    * @private
    */
   _handleError(error) {
-    // Erreur de validation Sequelize
-    if (error.name === 'SequelizeValidationError') {
-      return this._validationError(
-        'Erreur de validation',
-        error.errors.map(e => ({ field: e.path, message: e.message }))
-      );
-    }
-
-    // Contrainte unique violée
-    if (error.name === 'SequelizeUniqueConstraintError') {
-      const field = error.errors?.[0]?.path || 'unknown';
-      return this._conflictError(`La valeur pour ${field} existe déjà`);
-    }
-
-    // Clé étrangère invalide
-    if (error.name === 'SequelizeForeignKeyConstraintError') {
-      return this._validationError('Référence invalide');
-    }
-
-    // Erreur générique
-    const genericError = new Error(error.message || 'Erreur serveur');
-    genericError.code = 'INTERNAL_ERROR';
-    genericError.statusCode = 500;
-    return genericError;
+    return AppError.fromError(error);
   }
 }
 

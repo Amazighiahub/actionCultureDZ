@@ -1,8 +1,8 @@
 // services/artisanat.service.ts
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { API_ENDPOINTS, ApiResponse, PaginatedResponse, FilterParams } from '@/config/api';
 import { BaseService } from './base.service';
 import { httpClient } from './httpClient';
+import { Oeuvre } from '@/types/models/oeuvre.types';
 
 interface Artisanat {
   id: number;
@@ -158,7 +158,7 @@ class ArtisanatService extends BaseService<Artisanat, CreateArtisanatData, Updat
   }
 
   // Œuvres d'un artisan
-  async getArtisanWorks(artisanId: number): Promise<ApiResponse<any[]>> {
+  async getArtisanWorks(artisanId: number): Promise<ApiResponse<Oeuvre[]>> {
     // TODO: Implémenter la récupération des œuvres de l'artisan
     return { success: true, data: [] };
   }

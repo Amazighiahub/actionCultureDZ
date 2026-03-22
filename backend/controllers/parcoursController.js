@@ -1,12 +1,12 @@
 /**
- * ParcoursControllerV2 - Controller refactoré avec Service Pattern
+ * ParcoursController - Controller refactoré avec Service Pattern
  * Architecture: Controller → Service → Repository → Database
  */
 
 const BaseController = require('./baseController');
 const container = require('../services/serviceContainer');
 
-class ParcoursControllerV2 extends BaseController {
+class ParcoursController extends BaseController {
   get parcoursService() {
     return container.parcoursService;
   }
@@ -295,4 +295,4 @@ class ParcoursControllerV2 extends BaseController {
 
 }
 
-module.exports = new ParcoursControllerV2();
+module.exports = new ParcoursController();

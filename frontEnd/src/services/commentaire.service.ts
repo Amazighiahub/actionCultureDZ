@@ -1,5 +1,4 @@
 // services/commentaire.service.ts - VERSION CORRIGÉE
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { httpClient } from './httpClient';
 import type { ApiResponse, PaginatedResponse } from '@/config/api';
 
@@ -71,7 +70,7 @@ class CommentaireService {
           limit,
         }
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: true, // ← Retourner succès avec liste vide
         data: {
@@ -122,7 +121,7 @@ class CommentaireService {
           limit,
         }
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: true,
         data: {
@@ -149,10 +148,10 @@ class CommentaireService {
         data
       );
       return response;
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
-        error: error.message || 'Erreur lors de la création du commentaire'
+        error: error instanceof Error ? error.message : 'Erreur inconnue'
       };
     }
   }
@@ -170,10 +169,10 @@ class CommentaireService {
         data
       );
       return response;
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
-        error: error.message || 'Erreur lors de la création du commentaire'
+        error: error instanceof Error ? error.message : 'Erreur inconnue'
       };
     }
   }
@@ -191,10 +190,10 @@ class CommentaireService {
         data
       );
       return response;
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
-        error: error.message || 'Erreur lors de la modification'
+        error: error instanceof Error ? error.message : 'Erreur inconnue'
       };
     }
   }
@@ -206,10 +205,10 @@ class CommentaireService {
     try {
       const response = await httpClient.delete<void>(`${this.endpoint}/${id}`);
       return response;
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
-        error: error.message || 'Erreur lors de la suppression'
+        error: error instanceof Error ? error.message : 'Erreur inconnue'
       };
     }
   }
@@ -227,10 +226,10 @@ class CommentaireService {
         { statut }
       );
       return response;
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
-        error: error.message || 'Erreur lors de la modération'
+        error: error instanceof Error ? error.message : 'Erreur inconnue'
       };
     }
   }

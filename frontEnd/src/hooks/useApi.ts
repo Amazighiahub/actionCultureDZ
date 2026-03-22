@@ -1,12 +1,19 @@
 // hooks/useApi.ts
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { ApiResponse, ApiError } from '@/config/api';
 
-interface UseApiOptions {
+interface PaginatedData<T> {
+  data: T[];
+  pagination?: {
+    totalPages: number;
+    total: number;
+  };
+}
+
+interface UseApiOptions<T = unknown> {
   immediate?: boolean; // Lancer la requête immédiatement
-  dependencies?: any[]; // Dépendances pour relancer la requête
-  onSuccess?: (data: any) => void;
+  dependencies?: unknown[]; // Dépendances pour relancer la requête
+  onSuccess?: (data: T) => void;
   onError?: (error: ApiError) => void;
   cache?: boolean; // Activer le cache
   cacheTime?: number; // Durée du cache en ms
@@ -16,16 +23,16 @@ interface UseApiReturn<T> {
   data: T | null;
   loading: boolean;
   error: ApiError | null;
-  execute: (...args: any[]) => Promise<ApiResponse<T>>;
+  execute: (...args: unknown[]) => Promise<ApiResponse<T>>;
   reset: () => void;
 }
 
 // Cache simple en mémoire
-const apiCache = new Map<string, { data: any; timestamp: number }>();
+const apiCache = new Map<string, { data: unknown; timestamp: number }>();
 
 export function useApi<T>(
-  apiCall: (...args: any[]) => Promise<ApiResponse<T>>,
-  options: UseApiOptions = {}
+  apiCall: (...args: unknown[]) => Promise<ApiResponse<T>>,
+  options: UseApiOptions<T> = {}
 ): UseApiReturn<T> {
   const {
     immediate = false,
@@ -44,7 +51,7 @@ export function useApi<T>(
   const mountedRef = useRef(true);
 
   // Fonction pour exécuter l'appel API
-  const execute = useCallback(async (...args: any[]): Promise<ApiResponse<T>> => {
+  const execute = useCallback(async (...args: unknown[]): Promise<ApiResponse<T>> => {
     // Annuler la requête précédente si elle existe
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -60,10 +67,10 @@ export function useApi<T>(
     if (cache && cacheKey) {
       const cached = apiCache.get(cacheKey);
       if (cached && Date.now() - cached.timestamp < cacheTime) {
-        setData(cached.data);
+        setData(cached.data as T);
         setLoading(false);
         setError(null);
-        return { success: true, data: cached.data };
+        return { success: true, data: cached.data as T };
       }
     }
 
@@ -151,7 +158,7 @@ export function useApi<T>(
 }
 
 // Hook pour les mutations (POST, PUT, DELETE)
-export function useMutation<TData = any, TVariables = any>(
+export function useMutation<TData = unknown, TVariables = unknown>(
   mutationFn: (variables: TVariables) => Promise<ApiResponse<TData>>,
   options?: {
     onSuccess?: (data: TData) => void;
@@ -217,8 +224,8 @@ export function useMutation<TData = any, TVariables = any>(
 
 // Hook pour la pagination
 export function usePaginatedApi<T>(
-  apiCall: (params: any) => Promise<ApiResponse<any>>,
-  initialParams: any = {}
+  apiCall: (params: Record<string, unknown>) => Promise<ApiResponse<PaginatedData<T>>>,
+  initialParams: Record<string, unknown> = {}
 ) {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -272,8 +279,8 @@ export function usePaginatedApi<T>(
 
 // Hook pour l'infinite scroll
 export function useInfiniteApi<T>(
-  apiCall: (params: any) => Promise<ApiResponse<any>>,
-  initialParams: any = {}
+  apiCall: (params: Record<string, unknown>) => Promise<ApiResponse<PaginatedData<T>>>,
+  initialParams: Record<string, unknown> = {}
 ) {
   const [items, setItems] = useState<T[]>([]);
   const [page, setPage] = useState(1);

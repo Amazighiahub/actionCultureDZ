@@ -1,5 +1,4 @@
 // services/user.service.ts
-/* eslint-disable @typescript-eslint/no-explicit-any *//* eslint-disable @typescript-eslint/no-explicit-any */
 import { API_ENDPOINTS, ApiResponse, PaginatedResponse } from '@/config/api';
 import { BaseService } from './base.service';
 import { httpClient } from './httpClient';
@@ -39,8 +38,8 @@ interface ProfessionalSubmissionData {
   type_user: string;
   biographie: string;
   specialites?: number[];
-  certifications?: any[];
-  portfolio?: any[];
+  certifications?: Array<{ id: number; nom: string; date_obtention?: string }>;
+  portfolio?: Array<{ url: string; type: string; titre?: string }>;
 }
 
 interface UserStatistics {
@@ -126,7 +125,7 @@ class UserService extends BaseService<User> {
     date_demande: string;
     commentaire?: string;
   }>> {
-    return httpClient.get<any>(API_ENDPOINTS.auth.professionalStatus);
+    return httpClient.get<{ statut: string; date_demande: string; commentaire?: string }>(API_ENDPOINTS.auth.professionalStatus);
   }
 
   // Préférences et confidentialité
@@ -149,11 +148,11 @@ class UserService extends BaseService<User> {
     description: string;
     requires_validation: boolean;
   }>>> {
-    return httpClient.get<any>(API_ENDPOINTS.auth.typesUtilisateurs);
+    return httpClient.get<Array<{ id: string; label: string; description: string; requires_validation: boolean }>>(API_ENDPOINTS.auth.typesUtilisateurs);
   }
 
   // Administration
-  async getAllUsers(params?: any): Promise<ApiResponse<PaginatedResponse<User>>> {
+  async getAllUsers(params?: Record<string, string | number | boolean>): Promise<ApiResponse<PaginatedResponse<User>>> {
     return httpClient.getPaginated<User>(API_ENDPOINTS.auth.admin.getAllUsers, params);
   }
 
@@ -193,7 +192,7 @@ class UserService extends BaseService<User> {
     users_by_status: Record<string, number>;
     registrations_by_month: Array<{ month: string; count: number }>;
   }>> {
-    return httpClient.get<any>(API_ENDPOINTS.auth.admin.globalStatistics);
+    return httpClient.get<{ total_users: number; users_by_type: Record<string, number>; users_by_status: Record<string, number>; registrations_by_month: Array<{ month: string; count: number }> }>(API_ENDPOINTS.auth.admin.globalStatistics);
   }
 }
 

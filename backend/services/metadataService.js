@@ -4,7 +4,7 @@
  *         Materiau, Technique, Wilaya, Daira, Commune, TypeEvenement, TypeOrganisation
  */
 const { Op } = require('sequelize');
-const { mergeTranslations, prepareMultiLangField, SUPPORTED_LANGUAGES } = require('../helpers/i18n');
+const { mergeTranslations, prepareMultiLangField, buildMultiLangExactMatch, SUPPORTED_LANGUAGES } = require('../helpers/i18n');
 const { sanitizeLike } = require('../utils/sanitize');
 const CacheManager = require('../utils/CacheManager');
 
@@ -121,12 +121,29 @@ class MetadataService {
   }
 
   async getTags({ search, limit = 50 } = {}) {
-    // Cache uniquement les requêtes sans recherche
+    const parsedLimit = Math.min(parseInt(limit) || 50, 100);
+
+    // Sans recherche : retourne les tags triés par fréquence d'utilisation
     if (!search) {
-      return this._cached(`tags_${limit}`, () =>
-        this.models.TagMotCle.findAll({ where: {}, order: [['id_tag', 'ASC']], limit: parseInt(limit) })
-      );
+      return this._cached(`tags_${parsedLimit}`, async () => {
+        // Trier par nombre d'oeuvres associées (les plus utilisés en premier)
+        if (this.models.OeuvreTag) {
+          return this.models.TagMotCle.findAll({
+            attributes: {
+              include: [[
+                this.sequelize.literal('(SELECT COUNT(*) FROM oeuvretag WHERE oeuvretag.id_tag = TagMotCle.id_tag)'),
+                'usage_count'
+              ]]
+            },
+            order: [[this.sequelize.literal('usage_count'), 'DESC']],
+            limit: parsedLimit
+          });
+        }
+        return this.models.TagMotCle.findAll({ order: [['id_tag', 'ASC']], limit: parsedLimit });
+      });
     }
+
+    // Avec recherche : recherche multilingue via JSON_EXTRACT, pas de cache
     const where = {};
     where[Op.or] = SUPPORTED_LANGUAGES.map(l => {
       const jsonPath = l.includes('-') ? `$."${l}"` : `$.${l}`;
@@ -135,7 +152,23 @@ class MetadataService {
         { [Op.like]: `%${sanitizeLike(search)}%` }
       );
     });
-    return this.models.TagMotCle.findAll({ where, order: [['id_tag', 'ASC']], limit: parseInt(limit) });
+
+    const queryOptions = { where, limit: parsedLimit };
+
+    // Trier par fréquence si possible
+    if (this.models.OeuvreTag) {
+      queryOptions.attributes = {
+        include: [[
+          this.sequelize.literal('(SELECT COUNT(*) FROM oeuvretag WHERE oeuvretag.id_tag = TagMotCle.id_tag)'),
+          'usage_count'
+        ]]
+      };
+      queryOptions.order = [[this.sequelize.literal('usage_count'), 'DESC']];
+    } else {
+      queryOptions.order = [['id_tag', 'ASC']];
+    }
+
+    return this.models.TagMotCle.findAll(queryOptions);
   }
 
   _findAllIfExists(modelName, options = {}) {
@@ -226,10 +259,36 @@ class MetadataService {
     );
   }
 
-  async getEditeurs() {
-    return this._cached('editeurs', () =>
-      this._findAllIfExists('Editeur', { order: [['nom', 'ASC']] })
-    );
+  async getEditeurs({ search, limit = 50 } = {}) {
+    const parsedLimit = Math.min(parseInt(limit) || 50, 100);
+
+    if (!search) {
+      return this._cached(`editeurs_${parsedLimit}`, () =>
+        this._findAllIfExists('Editeur', {
+          where: { actif: true },
+          order: [['nom', 'ASC']],
+          limit: parsedLimit
+        })
+      );
+    }
+
+    // Recherche multilingue sur le nom
+    const where = { actif: true };
+    where[Op.and] = [{
+      [Op.or]: SUPPORTED_LANGUAGES.map(l => {
+        const jsonPath = l.includes('-') ? `$."${l}"` : `$.${l}`;
+        return this.sequelize.where(
+          this.sequelize.fn('JSON_EXTRACT', this.sequelize.col('nom'), this.sequelize.literal(`'${jsonPath}'`)),
+          { [Op.like]: `%${sanitizeLike(search)}%` }
+        );
+      })
+    }];
+
+    return this.models.Editeur.findAll({
+      where,
+      order: [['nom', 'ASC']],
+      limit: parsedLimit
+    });
   }
 
   // ========================================================================
@@ -356,7 +415,11 @@ class MetadataService {
   // ========================================================================
 
   async createTypeOeuvre(lang, { nom, description }) {
-    this.clearCache(); // Invalider tout le cache (hiérarchie, all_metadata, etc.)
+    // Vérifier si un type avec le même nom existe déjà (insensible à la casse)
+    const existing = await this._findByMultiLangName(this.models.TypeOeuvre, 'nom_type', nom, lang);
+    if (existing) return existing;
+
+    this.clearCache();
     return this.models.TypeOeuvre.create({
       nom_type: prepareMultiLangField(nom, lang),
       description: prepareMultiLangField(description, lang)
@@ -364,40 +427,74 @@ class MetadataService {
   }
 
   async createGenre(lang, { nom, description, id_type_oeuvre }) {
+    // Vérifier si un genre avec le même nom existe déjà
+    const existing = await this._findByMultiLangName(this.models.Genre, 'nom', nom, lang);
+    if (existing) {
+      // Associer au type si nécessaire
+      if (id_type_oeuvre && this.models.TypeOeuvreGenre) {
+        await this.models.TypeOeuvreGenre.findOrCreate({
+          where: { id_type_oeuvre, id_genre: existing.id_genre },
+          defaults: { actif: true, ordre_affichage: 0 }
+        });
+      }
+      return existing;
+    }
+
     this.clearCache();
     const genre = await this.models.Genre.create({
       nom: prepareMultiLangField(nom, lang),
       description: prepareMultiLangField(description, lang)
     });
     if (id_type_oeuvre) {
-      await this.models.TypeOeuvreGenre.create({
-        id_type_oeuvre, id_genre: genre.id_genre, actif: true, ordre_affichage: 0
+      await this.models.TypeOeuvreGenre.findOrCreate({
+        where: { id_type_oeuvre, id_genre: genre.id_genre },
+        defaults: { actif: true, ordre_affichage: 0 }
       });
     }
     return genre;
   }
 
   async createCategorie(lang, { nom, description, id_genre }) {
+    // Vérifier si une catégorie avec le même nom existe déjà
+    const existing = await this._findByMultiLangName(this.models.Categorie, 'nom', nom, lang);
+    if (existing) {
+      if (id_genre && this.models.GenreCategorie) {
+        await this.models.GenreCategorie.findOrCreate({
+          where: { id_genre, id_categorie: existing.id_categorie },
+          defaults: { actif: true, ordre_affichage: 0 }
+        });
+      }
+      return existing;
+    }
+
     this.clearCache();
     const categorie = await this.models.Categorie.create({
       nom: prepareMultiLangField(nom, lang),
       description: prepareMultiLangField(description, lang)
     });
     if (id_genre) {
-      await this.models.GenreCategorie.create({
-        id_genre, id_categorie: categorie.id_categorie, actif: true, ordre_affichage: 0
+      await this.models.GenreCategorie.findOrCreate({
+        where: { id_genre, id_categorie: categorie.id_categorie },
+        defaults: { actif: true, ordre_affichage: 0 }
       });
     }
     return categorie;
   }
 
   async createTag(lang, { nom }) {
+    // Vérifier si un tag avec le même nom existe déjà (insensible à la casse)
+    const existing = await this._findByMultiLangName(this.models.TagMotCle, 'nom', nom, lang);
+    if (existing) return existing;
+
     this.clearCache('tag');
     return this.models.TagMotCle.create({ nom: prepareMultiLangField(nom, lang) });
   }
 
   async createMateriau(lang, { nom, description }) {
     if (!this.models.Materiau) return null;
+    const existing = await this._findByMultiLangName(this.models.Materiau, 'nom', nom, lang);
+    if (existing) return existing;
+
     this.clearCache('materiau');
     return this.models.Materiau.create({
       nom: prepareMultiLangField(nom, lang),
@@ -407,11 +504,61 @@ class MetadataService {
 
   async createTechnique(lang, { nom, description }) {
     if (!this.models.Technique) return null;
+    const existing = await this._findByMultiLangName(this.models.Technique, 'nom', nom, lang);
+    if (existing) return existing;
+
     this.clearCache('technique');
     return this.models.Technique.create({
       nom: prepareMultiLangField(nom, lang),
       description: prepareMultiLangField(description, lang)
     });
+  }
+
+  async createEditeur(lang, { nom, type_editeur, site_web, email, telephone, description }) {
+    if (!this.models.Editeur) return null;
+    // Vérifier si un éditeur avec le même nom existe déjà
+    const existing = await this._findByMultiLangName(this.models.Editeur, 'nom', nom, lang);
+    if (existing) return existing;
+
+    this.clearCache('editeur');
+    return this.models.Editeur.create({
+      nom: prepareMultiLangField(nom, lang),
+      type_editeur: type_editeur || 'autre',
+      site_web: site_web || null,
+      email: email || null,
+      telephone: telephone || null,
+      description: prepareMultiLangField(description, lang),
+      actif: true
+    });
+  }
+
+  // ========================================================================
+  // UTILITAIRES — Déduplication
+  // ========================================================================
+
+  /**
+   * Cherche une entité existante par correspondance exacte (insensible à la casse)
+   * sur un champ JSON multilingue. Cherche dans toutes les langues supportées.
+   * @param {Model} Model - Modèle Sequelize
+   * @param {string} field - Nom du champ JSON (ex: 'nom', 'nom_type')
+   * @param {string|Object} value - Valeur à chercher (string ou objet multilingue)
+   * @param {string} lang - Langue courante
+   * @returns {Object|null} - Entité existante ou null
+   */
+  async _findByMultiLangName(Model, field, value, lang = 'fr') {
+    if (!Model || !value) return null;
+
+    // Extraire la string à comparer
+    const searchStr = typeof value === 'string'
+      ? value.trim()
+      : (value[lang] || value.fr || Object.values(value).find(v => typeof v === 'string' && v.trim()) || '');
+
+    if (!searchStr) return null;
+
+    const whereClause = buildMultiLangExactMatch(field, searchStr);
+    if (!whereClause || !whereClause[Op.or]) return null;
+
+    return Model.findOne({ where: whereClause });
   }
 
   // ========================================================================

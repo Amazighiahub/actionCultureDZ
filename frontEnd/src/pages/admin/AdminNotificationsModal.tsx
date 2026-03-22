@@ -87,7 +87,7 @@ const AdminNotificationsModal: React.FC<AdminNotificationsModalProps> = ({
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   // Mise à jour des champs
-  const updateField = (field: string, value: any) => {
+  const updateField = (field: string, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     setFieldErrors(prev => ({ ...prev, [field]: '' }));
   };

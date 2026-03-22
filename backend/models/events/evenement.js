@@ -145,39 +145,18 @@ module.exports = (sequelize) => {
         }
       }
     },
+    rappel_envoye: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      comment: 'Rappel 24h avant envoyé (cron)'
+    },
+    rappel_derniere_minute: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      comment: 'Rappel 1h avant envoyé (cron)'
+    },
     
-    // Champs virtuels
-    nombre_participants: {
-      type: DataTypes.VIRTUAL,
-      async get() {
-        if (!this.id_evenement) return 0;
-        const count = await sequelize.models.EvenementUser.count({
-          where: { 
-            id_evenement: this.id_evenement,
-            statut_participation: ['confirme', 'present']
-          }
-        });
-        return count;
-      }
-    },
-    nombre_inscrits: {
-      type: DataTypes.VIRTUAL,
-      async get() {
-        if (!this.id_evenement) return 0;
-        const count = await sequelize.models.EvenementUser.count({
-          where: { id_evenement: this.id_evenement }
-        });
-        return count;
-      }
-    },
-    est_complet: {
-      type: DataTypes.VIRTUAL,
-      async get() {
-        if (!this.capacite_max) return false;
-        const inscrits = await this.get('nombre_inscrits');
-        return inscrits >= this.capacite_max;
-      }
-    },
+    // Champ virtuel synchrone (pas de requête DB)
     duree_totale: {
       type: DataTypes.VIRTUAL,
       get() {
@@ -185,24 +164,18 @@ module.exports = (sequelize) => {
         const diff = new Date(this.date_fin) - new Date(this.date_debut);
         return Math.round(diff / (1000 * 60 * 60));
       }
-    },
-    note_moyenne: {
-      type: DataTypes.VIRTUAL,
-      async get() {
-        if (!this.id_evenement) return null;
-        const result = await sequelize.models.EvenementUser.findOne({
-          where: { 
-            id_evenement: this.id_evenement,
-            evaluation_evenement: { [Op.not]: null }
-          },
-          attributes: [
-            [fn('AVG', col('evaluation_evenement')), 'moyenne']
-          ],
-          raw: true
-        });
-        return result?.moyenne ? parseFloat(result.moyenne).toFixed(1) : null;
-      }
     }
+
+    // ⚠️ DBA-01: Les anciens getters VIRTUAL async (nombre_participants, nombre_inscrits,
+    // est_complet, note_moyenne) ont été supprimés car ils déclenchaient des requêtes N+1
+    // silencieuses (4 queries par événement dans un findAll de 20 = 80 queries).
+    //
+    // Utiliser des sous-requêtes dans les attributes du findAll à la place :
+    //   attributes: { include: [
+    //     [sequelize.literal(`(SELECT COUNT(*) FROM evenementusers WHERE evenementusers.id_evenement = Evenement.id_evenement AND statut_participation IN ('confirme','present'))`), 'nombre_participants'],
+    //     [sequelize.literal(`(SELECT COUNT(*) FROM evenementusers WHERE evenementusers.id_evenement = Evenement.id_evenement)`), 'nombre_inscrits'],
+    //     [sequelize.literal(`(SELECT AVG(evaluation_evenement) FROM evenementusers WHERE evenementusers.id_evenement = Evenement.id_evenement AND evaluation_evenement IS NOT NULL)`), 'note_moyenne']
+    //   ]}
   }, {
     tableName: 'evenement',
     timestamps: true,
@@ -241,19 +214,22 @@ module.exports = (sequelize) => {
 
   // Associations
   Evenement.associate = (models) => {
-    Evenement.belongsTo(models.TypeEvenement, { 
+    Evenement.belongsTo(models.TypeEvenement, {
       foreignKey: 'id_type_evenement',
-      as: 'TypeEvenement'
+      as: 'TypeEvenement',
+      onDelete: 'RESTRICT'
     });
-    
-    Evenement.belongsTo(models.Lieu, { 
+
+    Evenement.belongsTo(models.Lieu, {
       foreignKey: 'id_lieu',
-      as: 'Lieu'
+      as: 'Lieu',
+      onDelete: 'SET NULL'
     });
-    
-    Evenement.belongsTo(models.User, { 
+
+    Evenement.belongsTo(models.User, {
       foreignKey: 'id_user',
-      as: 'Organisateur'
+      as: 'Organisateur',
+      onDelete: 'SET NULL'
     });
     
     Evenement.hasMany(models.EvenementUser, {
@@ -264,12 +240,14 @@ module.exports = (sequelize) => {
     
     Evenement.hasMany(models.EvenementOeuvre, {
       foreignKey: 'id_evenement',
-      as: 'EvenementOeuvres'
+      as: 'EvenementOeuvres',
+      onDelete: 'CASCADE'
     });
-    
+
     Evenement.hasMany(models.EvenementOrganisation, {
       foreignKey: 'id_evenement',
-      as: 'EvenementOrganisations'
+      as: 'EvenementOrganisations',
+      onDelete: 'CASCADE'
     });
     
     Evenement.belongsToMany(models.User, {
@@ -295,12 +273,14 @@ module.exports = (sequelize) => {
     
     Evenement.hasMany(models.Programme, {
       foreignKey: 'id_evenement',
-      as: 'Programmes'
+      as: 'Programmes',
+      onDelete: 'CASCADE'
     });
-    
+
     Evenement.hasMany(models.Media, {
       foreignKey: 'id_evenement',
-      as: 'Medias'
+      as: 'Medias',
+      onDelete: 'CASCADE'
     });
   };
   
@@ -328,12 +308,16 @@ module.exports = (sequelize) => {
     return new Date(this.date_debut) > new Date();
   };
   
-  Evenement.prototype.canRegister = function() {
+  Evenement.prototype.canRegister = async function() {
     if (!this.isActive()) return false;
     if (this.date_limite_inscription && new Date() > new Date(this.date_limite_inscription)) {
       return false;
     }
-    return !this.est_complet;
+    if (!this.capacite_max) return true;
+    const inscrits = await sequelize.models.EvenementUser.count({
+      where: { id_evenement: this.id_evenement }
+    });
+    return inscrits < this.capacite_max;
   };
   
   Evenement.prototype.updateStatus = async function() {
@@ -359,7 +343,7 @@ module.exports = (sequelize) => {
   };
   
   // Méthodes de classe
-  Evenement.getActiveEvents = function() {
+  Evenement.getActiveEvents = function(limit = 100) {
     return this.findAll({
       where: {
         [Op.or]: [
@@ -370,8 +354,37 @@ module.exports = (sequelize) => {
           }
         ]
       },
-      order: [['date_debut', 'ASC']]
+      order: [['date_debut', 'ASC']],
+      limit
     });
+  };
+
+  // ====================================================================
+  // Méthodes de sérialisation JSON
+  // ====================================================================
+
+  const resolveI18n = (value, lang = 'fr') => {
+    if (!value) return '';
+    if (typeof value === 'string') return value;
+    return value[lang] || value.fr || value.ar || value.en || '';
+  };
+
+  Evenement.prototype.toCardJSON = function(lang = 'fr') {
+    const plain = this.get({ plain: true });
+    return {
+      ...plain,
+      nom_evenement: resolveI18n(plain.nom_evenement, lang),
+      description: resolveI18n(plain.description, lang),
+      accessibilite: resolveI18n(plain.accessibilite, lang),
+    };
+  };
+
+  Evenement.prototype.toDetailJSON = function(lang = 'fr') {
+    return this.toCardJSON(lang);
+  };
+
+  Evenement.prototype.toAdminJSON = function(lang = 'fr') {
+    return this.toCardJSON(lang);
   };
 
   Evenement.afterDestroy(async (evenement, options) => {

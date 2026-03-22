@@ -6,8 +6,7 @@ const { handleValidationErrors, validateStringLengths } = require('../middleware
 const { commentLimiter } = require('../middlewares/rateLimitMiddleware');
 
 module.exports = (models, middlewares = {}) => {
-  const CommentaireController = require('../controllers/commentaireController');
-  const controller = new CommentaireController();
+  const controller = require('../controllers/commentaireController');
   
   // Middleware d'authentification (optionnel si non fourni)
   const authMiddleware = middlewares.auth || ((req, res, next) => next());

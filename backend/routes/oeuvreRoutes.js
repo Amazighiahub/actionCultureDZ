@@ -1,5 +1,5 @@
 /**
- * Routes v2 pour les œuvres
+ * Routes pour les œuvres
  * Utilise le nouveau pattern Controller → Service → Repository
  */
 
@@ -10,7 +10,7 @@ const { handleValidationErrors, validateId, validatePagination, validateWorkSubm
 const { createContentLimiter } = require('../middlewares/rateLimitMiddleware');
 const asyncHandler = require('../utils/asyncHandler');
 
-const initOeuvreRoutesV2 = (models, authMiddleware) => {
+const initOeuvreRoutes = (models, authMiddleware) => {
   const router = express.Router();
   const { authenticate, requireRole } = authMiddleware;
 
@@ -87,4 +87,4 @@ const initOeuvreRoutesV2 = (models, authMiddleware) => {
   return router;
 };
 
-module.exports = initOeuvreRoutesV2;
+module.exports = initOeuvreRoutes;

@@ -84,8 +84,8 @@ const GestionArtisanatSimple: React.FC = () => {
   const [newTag, setNewTag] = useState('');
 
   // Metadata
-  const [materiaux, setMateriaux] = useState<any[]>([]);
-  const [techniques, setTechniques] = useState<any[]>([]);
+  const [materiaux, setMateriaux] = useState<Array<Record<string, unknown>>>([]);
+  const [techniques, setTechniques] = useState<Array<Record<string, unknown>>>([]);
   const [loadingMetadata, setLoadingMetadata] = useState(true);
 
   // Load metadata
@@ -228,15 +228,15 @@ const GestionArtisanatSimple: React.FC = () => {
       } else {
         setError(response.error || t('gestionArtisanat.errors.saveFailed', 'Erreur lors de la sauvegarde'));
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Erreur sauvegarde artisanat:', err);
-      setError(err.message || t('gestionArtisanat.errors.saveFailed', 'Erreur lors de la sauvegarde'));
+      setError(err instanceof Error ? err.message : t('gestionArtisanat.errors.saveFailed', 'Erreur lors de la sauvegarde'));
     } finally {
       setLoading(false);
     }
   };
 
-  const getLocalizedName = (item: any) => {
+  const getLocalizedName = (item: Record<string, unknown>) => {
     if (!item) return '';
     if (typeof item.nom === 'string') {
       try {

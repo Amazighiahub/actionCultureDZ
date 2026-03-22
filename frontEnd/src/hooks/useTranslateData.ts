@@ -26,9 +26,9 @@ interface TranslateDataResult {
   /** Obtient toutes les traductions disponibles */
   getAllTranslations: (field: TranslatableField | null | undefined) => TranslatableField;
   /** Traduit un objet entier (tous ses champs traduisibles) */
-  translateObject: <T extends Record<string, any>>(obj: T, fields?: string[]) => T;
+  translateObject: <T extends Record<string, unknown>>(obj: T, fields?: string[]) => T;
   /** Traduit un tableau d'objets */
-  translateArray: <T extends Record<string, any>>(arr: T[], fields?: string[]) => T[];
+  translateArray: <T extends Record<string, unknown>>(arr: T[], fields?: string[]) => T[];
   /** Direction du texte (ltr ou rtl) */
   dir: 'ltr' | 'rtl';
   /** Vérifie si la langue actuelle est RTL */
@@ -171,7 +171,7 @@ export const useTranslateData = (): TranslateDataResult => {
   /**
    * Traduit tous les champs traduisibles d'un objet
    */
-  const translateObject = useCallback(<T extends Record<string, any>>(
+  const translateObject = useCallback(<T extends Record<string, unknown>>(
     obj: T, 
     fields: string[] = DEFAULT_TRANSLATABLE_FIELDS
   ): T => {
@@ -181,7 +181,7 @@ export const useTranslateData = (): TranslateDataResult => {
     
     fields.forEach(field => {
       if (result[field] && typeof result[field] === 'object' && !Array.isArray(result[field])) {
-        (result as any)[field] = td(result[field]);
+        (result as Record<string, unknown>)[field] = td(result[field]);
       }
     });
     
@@ -191,7 +191,7 @@ export const useTranslateData = (): TranslateDataResult => {
   /**
    * Traduit un tableau d'objets
    */
-  const translateArray = useCallback(<T extends Record<string, any>>(
+  const translateArray = useCallback(<T extends Record<string, unknown>>(
     arr: T[], 
     fields: string[] = DEFAULT_TRANSLATABLE_FIELDS
   ): T[] => {

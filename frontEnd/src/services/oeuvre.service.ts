@@ -1,5 +1,4 @@
 // services/oeuvre.service.ts - Version complètement corrigée
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   CreateOeuvreCompleteDTO,
   CreateOeuvreResponse,
@@ -10,6 +9,8 @@ import {
   EditeurOeuvre
 } from '@/types/api/oeuvre-creation.types';
 import { Oeuvre } from '@/types/models/oeuvre.types';
+import { Media } from '@/types/models/media.types';
+import { Evenement } from '@/types/models/evenement.types';
 import { httpClient } from './httpClient';
 import { API_ENDPOINTS, type ApiResponse } from '@/config/api';
 import { mediaService } from './media.service';
@@ -73,6 +74,36 @@ export interface ShareLinks {
   email: string;
   embed?: string;
 }
+
+// Interface pour la réponse paginée d'oeuvres
+interface OeuvreListResponse {
+  oeuvres: Oeuvre[];
+  pagination: {
+    total: number;
+    page: number;
+    pages: number;
+    limit: number;
+  };
+}
+
+// Helper pour extraire le message d'erreur
+function getErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'object' && error !== null && 'message' in error) {
+    return String((error as { message: string }).message);
+  }
+  return fallback;
+}
+
+// Helper pour extraire le message d'erreur de réponse API
+function getApiErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof Error) {
+    const axiosError = error as { response?: { data?: { error?: string } } };
+    return axiosError.response?.data?.error || error.message || fallback;
+  }
+  return fallback;
+}
+
 class OeuvreService {
   /**
    * Créer une nouvelle œuvre AVEC médias
@@ -107,10 +138,10 @@ class OeuvreService {
 
       return oeuvreResult;
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
-        error: error.message || 'Erreur lors de la création'
+        error: getErrorMessage(error, 'Erreur lors de la création')
       };
     }
   }
@@ -129,13 +160,12 @@ class OeuvreService {
       const response = await httpClient.post<CreateOeuvreResponse>('/oeuvres', normalizedData);
 
       return response;
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Gestion du timeout
-      if (error.message &&
-        (error.message.includes('timeout') ||
-          error.message.includes('Timeout') ||
-          error.code === 'ECONNABORTED')) {
+      const errMsg = getErrorMessage(error, '');
+      const errCode = (error as { code?: string }).code;
 
+      if (errMsg.includes('timeout') || errMsg.includes('Timeout') || errCode === 'ECONNABORTED') {
         // Attendre un peu et vérifier si l'œuvre a été créée
         await new Promise(resolve => setTimeout(resolve, 2000));
 
@@ -153,7 +183,7 @@ class OeuvreService {
 
       return {
         success: false,
-        error: error.response?.data?.error || error.message || 'Erreur lors de la création'
+        error: getApiErrorMessage(error, 'Erreur lors de la création')
       };
     }
   }
@@ -184,13 +214,7 @@ class OeuvreService {
 
       // Pour les tableaux et objets, les stringifier
       if (data.categories && data.categories.length > 0) {
-        // Option 1: Envoyer comme JSON
         formData.append('categories', JSON.stringify(data.categories));
-
-        // Option 2: Envoyer chaque élément séparément
-        // data.categories.forEach((cat, index) => {
-        //   formData.append(`categories[${index}]`, cat.toString());
-        // });
       }
 
       if (data.tags && data.tags.length > 0) {
@@ -202,8 +226,11 @@ class OeuvreService {
         formData.append('utilisateurs_inscrits', JSON.stringify(data.utilisateurs_inscrits));
       }
 
-      if ('intervenants_existants' in data && (data as any).intervenants_existants?.length) {
-        formData.append('intervenants_existants', JSON.stringify((data as any).intervenants_existants));
+      if ('intervenants_existants' in data) {
+        const completeData = data as CreateOeuvreCompleteDTO;
+        if (completeData.intervenants_existants?.length) {
+          formData.append('intervenants_existants', JSON.stringify(completeData.intervenants_existants));
+        }
       }
 
       if ('intervenants_non_inscrits' in data && data.intervenants_non_inscrits?.length) {
@@ -240,10 +267,10 @@ class OeuvreService {
 
       return response;
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
-        error: error.response?.data?.error || error.message || 'Erreur lors de la création'
+        error: getApiErrorMessage(error, 'Erreur lors de la création')
       };
     }
   }
@@ -251,18 +278,20 @@ class OeuvreService {
   /**
    * Upload de médias pour une œuvre existante
    */
-  async uploadMedias(oeuvreId: number, files: File[]): Promise<ApiResponse<any>> {
+  async uploadMedias(oeuvreId: number, files: File[]): Promise<ApiResponse<Media[]>> {
     try {
-      return await mediaService.uploadMultiple(
+      const result = await mediaService.uploadMultiple(
         files,
         'oeuvre',
         oeuvreId,
         () => {}
       );
-    } catch (error: any) {
+      // Map MediaUploadResponse[] to Media[] in the response
+      return result as ApiResponse<Media[]>;
+    } catch (error: unknown) {
       return {
         success: false,
-        error: error.message || 'Erreur lors de l\'upload'
+        error: getErrorMessage(error, 'Erreur lors de l\'upload')
       };
     }
   }
@@ -291,10 +320,10 @@ class OeuvreService {
     try {
       // Utiliser la bonne route de tracking
       return await httpClient.post(`/tracking/oeuvre/${idOeuvre}/view`);
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
-        error: error.message || 'Erreur lors du tracking de la vue'
+        error: getErrorMessage(error, 'Erreur lors du tracking de la vue')
       };
     }
   }
@@ -302,13 +331,13 @@ class OeuvreService {
   /**
    * Récupérer les événements où l'œuvre est présentée
    */
-  async getEventsByOeuvre(oeuvreId: number): Promise<ApiResponse<any[]>> {
+  async getEventsByOeuvre(oeuvreId: number): Promise<ApiResponse<Evenement[]>> {
     try {
       return await httpClient.get(`/evenements/oeuvre/${oeuvreId}`);
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
-        error: error.message || 'Erreur lors de la récupération des événements'
+        error: getErrorMessage(error, 'Erreur lors de la récupération des événements')
       };
     }
   }
@@ -324,10 +353,10 @@ class OeuvreService {
   }>> {
     try {
       return await httpClient.get(`/tracking/stats/oeuvre/${oeuvreId}`);
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
-        error: error.message || 'Erreur lors de la récupération des statistiques'
+        error: getErrorMessage(error, 'Erreur lors de la récupération des statistiques')
       };
     }
   }
@@ -338,10 +367,10 @@ class OeuvreService {
   async getSimilarOeuvres(oeuvreId: number, limit = 6): Promise<ApiResponse<Oeuvre[]>> {
     try {
       return await httpClient.get(`/oeuvres/${oeuvreId}/similar`, { limit });
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
-        error: error.message || 'Erreur lors de la récupération des œuvres similaires'
+        error: getErrorMessage(error, 'Erreur lors de la récupération des œuvres similaires')
       };
     }
   }
@@ -353,49 +382,26 @@ class OeuvreService {
     page?: number;
     limit?: number;
     role_principal?: boolean;
-  }): Promise<ApiResponse<{
-    oeuvres: Oeuvre[];
-    pagination: {
-      total: number;
-      page: number;
-      pages: number;
-      limit: number;
-    };
-  }>> {
+  }): Promise<ApiResponse<OeuvreListResponse>> {
     try {
-      // Utiliser l'endpoint approprié pour récupérer les œuvres d'un intervenant
-      const response = await httpClient.get<{
-        oeuvres: Oeuvre[];
-        pagination: {
-          total: number;
-          page: number;
-          pages: number;
-          limit: number;
-        };
-      }>(`/intervenants/${intervenantId}/oeuvres`, params);
+      const response = await httpClient.get<OeuvreListResponse>(
+        `/intervenants/${intervenantId}/oeuvres`, params
+      );
 
       return response;
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Alternative : utiliser l'endpoint de recherche d'œuvres avec filtre intervenant
       try {
-        const searchResponse = await httpClient.get<{
-          oeuvres: Oeuvre[];
-          pagination: {
-            total: number;
-            page: number;
-            pages: number;
-            limit: number;
-          };
-        }>('/oeuvres', {
+        const searchResponse = await httpClient.get<OeuvreListResponse>('/oeuvres', {
           ...params,
           intervenant_id: intervenantId
         });
-        
+
         return searchResponse;
-      } catch (searchError: any) {
+      } catch (searchError: unknown) {
         return {
           success: false,
-          error: searchError.message || error.message || 'Erreur lors de la récupération des œuvres de l\'intervenant'
+          error: getErrorMessage(searchError, getErrorMessage(error, 'Erreur lors de la récupération des œuvres de l\'intervenant'))
         };
       }
     }
@@ -421,9 +427,9 @@ class OeuvreService {
   /**
    * Vérifier si une œuvre récente existe
    */
-  async checkRecentOeuvre(titre: string): Promise<ApiResponse<any>> {
+  async checkRecentOeuvre(titre: string): Promise<ApiResponse<Oeuvre>> {
     try {
-      const response = await httpClient.get<any>('/oeuvres', {
+      const response = await httpClient.get<OeuvreListResponse>('/oeuvres', {
         search: titre,
         sort: 'recent',
         limit: 1
@@ -462,10 +468,10 @@ class OeuvreService {
   async getOeuvreById(id: number): Promise<ApiResponse<Oeuvre>> {
     try {
       return await httpClient.get<Oeuvre>(`/oeuvres/${id}`);
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
-        error: error.message || 'Erreur lors de la récupération'
+        error: getErrorMessage(error, 'Erreur lors de la récupération')
       };
     }
   }
@@ -489,22 +495,14 @@ class OeuvreService {
     categorie?: number;
     search?: string;
     sort?: string;
-    saisi_par?: number; // Ajout du paramètre pour filtrer par créateur
-  }): Promise<ApiResponse<{
-    oeuvres: Oeuvre[];
-    pagination: {
-      total: number;
-      page: number;
-      pages: number;
-      limit: number;
-    };
-  }>> {
+    saisi_par?: number;
+  }): Promise<ApiResponse<OeuvreListResponse>> {
     try {
       return await httpClient.get('/oeuvres', params);
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
-        error: error.message || 'Erreur lors de la récupération'
+        error: getErrorMessage(error, 'Erreur lors de la récupération')
       };
     }
   }
@@ -516,36 +514,19 @@ class OeuvreService {
     page?: number;
     limit?: number;
     statut?: string;
-  }): Promise<ApiResponse<{
-    oeuvres: Oeuvre[];
-    pagination: {
-      total: number;
-      page: number;
-      pages: number;
-      limit: number;
-    };
-  }>> {
+  }): Promise<ApiResponse<OeuvreListResponse>> {
     try {
-      // Spécifier le type attendu pour httpClient.get
-      const response = await httpClient.get<{
-        oeuvres: Oeuvre[];
-        pagination: {
-          total: number;
-          page: number;
-          pages: number;
-          limit: number;
-        };
-      }>(API_ENDPOINTS.oeuvres.myWorks, params);
+      const response = await httpClient.get<OeuvreListResponse>(API_ENDPOINTS.oeuvres.myWorks, params);
 
       if (!response.success) {
         return response;
       }
 
       return response;
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
-        error: error.message || 'Erreur lors de la récupération'
+        error: getErrorMessage(error, 'Erreur lors de la récupération')
       };
     }
   }
@@ -553,13 +534,13 @@ class OeuvreService {
   /**
    * Mettre à jour une œuvre
    */
-  async updateOeuvre(id: number, data: Partial<CreateOeuvreBackendDTO | CreateOeuvreCompleteDTO>): Promise<ApiResponse<any>> {
+  async updateOeuvre(id: number, data: Partial<CreateOeuvreBackendDTO | CreateOeuvreCompleteDTO>): Promise<ApiResponse<Oeuvre>> {
     try {
       return await httpClient.put(`/oeuvres/${id}`, data);
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
-        error: error.message || 'Erreur lors de la mise à jour'
+        error: getErrorMessage(error, 'Erreur lors de la mise à jour')
       };
     }
   }
@@ -570,10 +551,10 @@ class OeuvreService {
   async deleteOeuvre(id: number): Promise<ApiResponse<void>> {
     try {
       return await httpClient.delete(`/oeuvres/${id}`);
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
-        error: error.message || 'Erreur lors de la suppression'
+        error: getErrorMessage(error, 'Erreur lors de la suppression')
       };
     }
   }
@@ -595,21 +576,13 @@ class OeuvreService {
     intervenant?: string;
     limit?: number;
     page?: number;
-  }): Promise<ApiResponse<{
-    oeuvres: Oeuvre[];
-    pagination: {
-      total: number;
-      page: number;
-      pages: number;
-      limit: number;
-    };
-  }>> {
+  }): Promise<ApiResponse<OeuvreListResponse>> {
     try {
       return await httpClient.get('/oeuvres/search', params);
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
-        error: error.message || 'Erreur lors de la recherche'
+        error: getErrorMessage(error, 'Erreur lors de la recherche')
       };
     }
   }
@@ -617,18 +590,13 @@ class OeuvreService {
   /**
    * Récupérer les statistiques
    */
-  async getStatistics(): Promise<ApiResponse<{
-    total: number;
-    parType: Array<{ type: string; count: number }>;
-    parLangue: Array<{ langue: string; count: number }>;
-    noteMoyenneGlobale: number;
-  }>> {
+  async getStatistics(): Promise<ApiResponse<OeuvreStatistics>> {
     try {
       return await httpClient.get('/oeuvres/statistics');
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
-        error: error.message || 'Erreur lors de la récupération des statistiques'
+        error: getErrorMessage(error, 'Erreur lors de la récupération des statistiques')
       };
     }
   }
@@ -636,21 +604,13 @@ class OeuvreService {
   /**
    * Récupérer les œuvres récentes
    */
-  async getRecentOeuvres(limit = 6): Promise<ApiResponse<{
-    oeuvres: Oeuvre[];
-    pagination: {
-      total: number;
-      page: number;
-      pages: number;
-      limit: number;
-    };
-  }>> {
+  async getRecentOeuvres(limit = 6): Promise<ApiResponse<OeuvreListResponse>> {
     try {
       return await httpClient.get('/oeuvres/recent', { limit });
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
-        error: error.message || 'Erreur lors de la récupération'
+        error: getErrorMessage(error, 'Erreur lors de la récupération')
       };
     }
   }
@@ -658,13 +618,13 @@ class OeuvreService {
   /**
    * Récupérer les médias d'une œuvre
    */
-  async getMedias(oeuvreId: number): Promise<ApiResponse<any[]>> {
+  async getMedias(oeuvreId: number): Promise<ApiResponse<Media[]>> {
     try {
       return await httpClient.get(`/oeuvres/${oeuvreId}/medias`);
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
-        error: error.message || 'Erreur lors de la récupération des médias'
+        error: getErrorMessage(error, 'Erreur lors de la récupération des médias')
       };
     }
   }
@@ -675,10 +635,10 @@ class OeuvreService {
   async deleteMedia(oeuvreId: number, mediaId: number): Promise<ApiResponse<void>> {
     try {
       return await httpClient.delete(`/oeuvres/${oeuvreId}/medias/${mediaId}`);
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
-        error: error.message || 'Erreur lors de la suppression du média'
+        error: getErrorMessage(error, 'Erreur lors de la suppression du média')
       };
     }
   }
@@ -687,38 +647,26 @@ class OeuvreService {
  */
 async getOeuvresByType(types: number[]): Promise<ApiResponse<Oeuvre[]>> {
   try {
-    // Option 1: Utiliser un endpoint dédié si disponible
-    // return await httpClient.get('/oeuvres/by-types', { types });
-    
-    // Option 2: Utiliser l'endpoint existant avec un filtre
-    const response = await httpClient.get<{
-      oeuvres: Oeuvre[];
-      pagination: {
-        total: number;
-        page: number;
-        pages: number;
-        limit: number;
-      };
-    }>('/oeuvres', {
-      types: types.join(','), // ou types selon le format accepté par l'API
-      limit: 100 // Ajuster selon vos besoins
+    const response = await httpClient.get<OeuvreListResponse>('/oeuvres', {
+      types: types.join(','),
+      limit: 100
     });
-    
+
     if (response.success && response.data) {
       return {
         success: true,
         data: response.data.oeuvres
       };
     }
-    
+
     return {
       success: false,
       error: 'Erreur lors de la récupération des œuvres'
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     return {
       success: false,
-      error: error.message || 'Erreur lors de la récupération'
+      error: getErrorMessage(error, 'Erreur lors de la récupération')
     };
   }
 }

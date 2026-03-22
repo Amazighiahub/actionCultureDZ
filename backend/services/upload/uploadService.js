@@ -8,6 +8,7 @@
 
 const path = require('path');
 const fs = require('fs').promises;
+const logger = require('../../utils/logger');
 const cloudinarySvc = require('../cloudinaryService');
 
 class UploadService {
@@ -42,7 +43,7 @@ class UploadService {
 
     // Verifier que le chemin reste dans le dossier uploads
     if (!absolutePath.startsWith(this.uploadsRoot)) {
-      console.error('Path traversal detecte:', { original: filePath, resolved: absolutePath });
+      logger.error('Path traversal detecte:', { original: filePath, resolved: absolutePath });
       return null;
     }
 

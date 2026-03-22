@@ -14,6 +14,18 @@ import { evenementService } from '@/services/evenement.service';
 import { lieuService } from '@/services/lieu.service';
 import { httpClient } from '@/services/httpClient';
 import { useTranslation } from 'react-i18next';
+import type { Lieu } from '@/types/models/lieu.types';
+import type { Intervenant } from '@/types/models/intervenant.types';
+
+/** API response shape for lieux list */
+interface LieuxResponseData {
+  lieux?: Lieu[];
+}
+
+/** API response shape for intervenants search */
+interface IntervenantsResponseData {
+  intervenants?: Intervenant[];
+}
 
 const CreateProgrammePage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -24,30 +36,26 @@ const CreateProgrammePage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [lieux, setLieux] = useState<any[]>([]);
-  const [users, setUsers] = useState<any[]>([]);
+  const [lieux, setLieux] = useState<Lieu[]>([]);
+  const [users, setUsers] = useState<Intervenant[]>([]);
   const [eventDates, setEventDates] = useState<{ dateDebut: string; dateFin: string } | undefined>();
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const loadData = React.useCallback(async () => {
     setLoadError(null);
     try {
-        const promises: Promise<any>[] = [
-          lieuService.getAll({ limit: 100 }),
-          httpClient.get<any>('/intervenants/search', { q: '', limit: 50 })
-        ];
-        // Fetch event details for dates
-        if (eventId) {
-          promises.push(evenementService.getDetail(parseInt(eventId)));
-        }
-        const [lieuxRes, usersRes, eventRes] = await Promise.all(promises);
+        const lieuxPromise = lieuService.getAll({ limit: 100 });
+        const usersPromise = httpClient.get<IntervenantsResponseData>('/intervenants/search', { q: '', limit: 50 });
+        const eventPromise = eventId ? evenementService.getDetail(parseInt(eventId)) : null;
+
+        const [lieuxRes, usersRes, eventRes] = await Promise.all([lieuxPromise, usersPromise, eventPromise]);
         if (lieuxRes.success && lieuxRes.data) {
-          const items = (lieuxRes.data as any).lieux || lieuxRes.data;
+          const items = (lieuxRes.data as LieuxResponseData).lieux || lieuxRes.data;
           setLieux(Array.isArray(items) ? items : []);
         }
         if (usersRes.success && usersRes.data) {
-          const items = (usersRes.data as any).intervenants || usersRes.data;
-          setUsers(Array.isArray(items) ? items : []);
+          const items = usersRes.data.intervenants || usersRes.data;
+          setUsers(Array.isArray(items) ? items as Intervenant[] : []);
         }
         if (eventRes?.success && eventRes.data) {
           const evt = eventRes.data;
@@ -57,7 +65,7 @@ const CreateProgrammePage: React.FC = () => {
             setEventDates({ dateDebut, dateFin });
           }
         }
-      } catch (e) {
+      } catch (_e) {
         setLoadError(t('programmePages.errors.loadDataFailed', 'Impossible de charger les données de l\'événement. Vérifiez votre connexion.'));
       }
     }, [eventId, t]);
@@ -110,8 +118,8 @@ const CreateProgrammePage: React.FC = () => {
       } else {
         setError(response.error || t('programmePages.errors.createFailed'));
       }
-    } catch (err: any) {
-      setError(err.message || t('programmePages.errors.generic'));
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : t('programmePages.errors.generic'));
       console.error('Erreur:', err);
     } finally {
       setLoading(false);

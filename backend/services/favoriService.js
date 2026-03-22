@@ -2,17 +2,16 @@
  * FavoriService - Service pour la gestion des favoris
  * Gère : CRUD favoris, vérification entités, enrichissement, statistiques
  *
- * Architecture: Controller → Service → Models
- * Toutes les requêtes Sequelize sont ici, ZÉRO dans le controller.
+ * Architecture: Controller → Service → Repository → Database
+ * Délègue tous les accès Sequelize au FavoriRepository.
  */
-const { Op } = require('sequelize');
+const BaseService = require('./core/baseService');
 
 const TYPES_VALIDES = ['oeuvre', 'evenement', 'lieu', 'artisanat'];
 
-class FavoriService {
-  constructor(models) {
-    this.models = models;
-    this.sequelize = models.sequelize || Object.values(models)[0]?.sequelize;
+class FavoriService extends BaseService {
+  constructor(repository, options = {}) {
+    super(repository, options);
   }
 
   // ========================================================================
@@ -26,19 +25,7 @@ class FavoriService {
    * @returns {{ rows: Array, count: number }}
    */
   async getUserFavoris(idUser, { page, limit, offset, type }) {
-    const where = { id_user: idUser };
-
-    if (type) {
-      where.type_entite = type;
-    }
-
-    const result = await this.models.Favori.findAndCountAll({
-      where,
-      limit,
-      offset,
-      order: [['date_ajout', 'DESC']],
-      include: this._getIncludesForFavoris()
-    });
+    const result = await this.repository.findByUser(idUser, { limit, offset, type });
 
     return {
       rows: result.rows,
@@ -60,14 +47,7 @@ class FavoriService {
    * @returns {{ isFavorite: boolean, favori: object|null }}
    */
   async checkFavori(idUser, type, idEntite) {
-    const favori = await this.models.Favori.findOne({
-      where: {
-        id_user: idUser,
-        type_entite: type,
-        id_entite: idEntite
-      }
-    });
-
+    const favori = await this.repository.findByUserAndEntity(idUser, type, idEntite);
     return { isFavorite: !!favori, favori };
   }
 
@@ -77,14 +57,7 @@ class FavoriService {
    * @returns {{ total: number, byType: object }}
    */
   async getUserFavorisStats(idUser) {
-    const stats = await this.models.Favori.findAll({
-      where: { id_user: idUser },
-      attributes: [
-        'type_entite',
-        [this.sequelize.fn('COUNT', this.sequelize.col('id_favori')), 'count']
-      ],
-      group: ['type_entite']
-    });
+    const stats = await this.repository.statsByUser(idUser);
 
     const byType = {};
     let total = 0;
@@ -103,22 +76,7 @@ class FavoriService {
    * @returns {Array<{ type_entite, id_entite, count, entite }>}
    */
   async getPopularFavorites({ type, limit = 10 }) {
-    const where = {};
-    if (type) {
-      where.type_entite = type;
-    }
-
-    const populaires = await this.models.Favori.findAll({
-      where,
-      attributes: [
-        'type_entite',
-        'id_entite',
-        [this.sequelize.fn('COUNT', this.sequelize.col('id_favori')), 'count']
-      ],
-      group: ['type_entite', 'id_entite'],
-      order: [[this.sequelize.literal('count'), 'DESC']],
-      limit: parseInt(limit)
-    });
+    const populaires = await this.repository.findPopular({ type, limit });
 
     const enriched = await Promise.all(
       populaires.map(item => this._getEntiteDetails(item.type_entite, item.id_entite)
@@ -151,10 +109,7 @@ class FavoriService {
     }
 
     // findOrCreate atomique — élimine la race condition check-then-insert
-    const [favori, created] = await this.models.Favori.findOrCreate({
-      where: { id_user: idUser, type_entite: typeEntite, id_entite: idEntite },
-      defaults: { date_ajout: new Date() }
-    });
+    const [favori, created] = await this.repository.findOrCreateFavori(idUser, typeEntite, idEntite);
 
     if (!created) {
       return { error: 'duplicate' };
@@ -172,15 +127,8 @@ class FavoriService {
    * @returns {{ error?: string }}
    */
   async removeFavori(idFavori, idUser) {
-    const favori = await this.models.Favori.findOne({
-      where: { id_favori: idFavori, id_user: idUser }
-    });
-
-    if (!favori) {
-      return { error: 'notFound' };
-    }
-
-    await favori.destroy();
+    const result = await this.repository.removeByIdAndUser(idFavori, idUser);
+    if (!result) return { error: 'notFound' };
     return { success: true };
   }
 
@@ -192,19 +140,8 @@ class FavoriService {
    * @returns {{ error?: string }}
    */
   async removeFavoriByEntity(idUser, type, idEntite) {
-    const favori = await this.models.Favori.findOne({
-      where: {
-        id_user: idUser,
-        type_entite: type,
-        id_entite: idEntite
-      }
-    });
-
-    if (!favori) {
-      return { error: 'notFound' };
-    }
-
-    await favori.destroy();
+    const result = await this.repository.removeByEntity(idUser, type, idEntite);
+    if (!result) return { error: 'notFound' };
     return { success: true };
   }
 
@@ -249,7 +186,7 @@ class FavoriService {
       }
       return !!entite;
     } catch (error) {
-      console.error('Erreur vérification entité:', error);
+      this.logger.error('Erreur vérification entité:', error);
       return false;
     }
   }
@@ -303,7 +240,7 @@ class FavoriService {
       }
       return entite;
     } catch (error) {
-      console.error('Erreur récupération détails entité:', error);
+      this.logger.error('Erreur récupération détails entité:', error);
       return null;
     }
   }

@@ -128,4 +128,4 @@ class MultilingualController extends BaseController {
   }
 }
 
-module.exports = MultilingualController;
+module.exports = new MultilingualController();

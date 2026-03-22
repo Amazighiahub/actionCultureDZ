@@ -208,6 +208,128 @@ class UploadController extends BaseController {
       this._handleError(res, error);
     }
   }
+
+  // ============================================================================
+  // UPLOAD VIDÉO / AUDIO / DOCUMENT / OEUVRE MEDIA
+  // ============================================================================
+
+  /**
+   * Upload document (authentifié)
+   */
+  async uploadDocument(req, res) {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ success: false, error: req.t('upload.noDocument') });
+      }
+      const data = await this.service.createAuthenticatedMedia(req.file, req.user.id_user);
+      res.json({ success: true, message: req.t('upload.documentSuccess'), data });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  /**
+   * Upload vidéo (authentifié)
+   */
+  async uploadVideo(req, res) {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ success: false, error: req.t('upload.noVideo') });
+      }
+      const data = await this.service.createAuthenticatedMedia(req.file, req.user.id_user);
+      res.json({ success: true, message: req.t('upload.videoSuccess'), data });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  /**
+   * Upload audio (authentifié)
+   */
+  async uploadAudio(req, res) {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ success: false, error: req.t('upload.noAudio') });
+      }
+      const data = await this.service.createAuthenticatedMedia(req.file, req.user.id_user);
+      res.json({ success: true, message: req.t('upload.audioSuccess'), data });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  /**
+   * Upload multiple médias pour une œuvre
+   */
+  async uploadOeuvreMedia(req, res) {
+    try {
+      if (!req.files || req.files.length === 0) {
+        return res.status(400).json({ success: false, error: req.t('upload.noFile') });
+      }
+
+      const uploadedFiles = req.files.map(file => ({
+        filename: file.filename,
+        originalName: file.originalname,
+        url: `/uploads/${file.path.replace(/\\/g, '/').split('uploads/')[1] || file.filename}`,
+        size: file.size,
+        mimetype: file.mimetype,
+        type: this._getFileType(file.mimetype)
+      }));
+
+      res.json({
+        success: true,
+        message: req.t('upload.mediaSuccess', { count: req.files.length }),
+        data: uploadedFiles
+      });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  /**
+   * Obtenir les infos de configuration d'upload
+   */
+  getUploadInfo(req, res) {
+    const config = require('../config/envAdapter').getConfig();
+    const maxSizes = config.upload?.maxSizes || {};
+
+    res.json({
+      success: true,
+      data: {
+        limits: {
+          image: `${(maxSizes.image || 10485760) / 1048576}MB`,
+          video: `${(maxSizes.video || 104857600) / 1048576}MB`,
+          audio: `${(maxSizes.audio || 52428800) / 1048576}MB`,
+          document: `${(maxSizes.document || 20971520) / 1048576}MB`
+        },
+        supportedFormats: {
+          image: ['JPEG', 'JPG', 'PNG', 'GIF', 'WebP'],
+          video: ['MP4', 'MPEG', 'MOV', 'AVI'],
+          audio: ['MP3', 'WAV', 'OGG'],
+          document: ['PDF', 'DOC', 'DOCX']
+        },
+        uploadEndpoints: {
+          public: '/api/upload/image/public',
+          image: '/api/upload/image',
+          video: '/api/upload/video',
+          audio: '/api/upload/audio',
+          document: '/api/upload/document',
+          oeuvreMedia: '/api/upload/oeuvre/media'
+        }
+      }
+    });
+  }
+
+  /**
+   * Détermine le type de fichier depuis le mimetype
+   */
+  _getFileType(mimetype) {
+    if (mimetype.startsWith('image/')) return 'image';
+    if (mimetype.startsWith('video/')) return 'video';
+    if (mimetype.startsWith('audio/')) return 'audio';
+    if (mimetype === 'application/pdf') return 'pdf';
+    return 'document';
+  }
 }
 
-module.exports = UploadController;
+module.exports = new UploadController();

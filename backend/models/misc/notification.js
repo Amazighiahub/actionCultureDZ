@@ -1,5 +1,5 @@
 // models/Notification.js - Modèle pour l'historique des notifications
-const { DataTypes } = require('sequelize');
+const { DataTypes, Op } = require('sequelize');
 
 module.exports = (sequelize) => {
   const Notification = sequelize.define('Notification', {
@@ -114,24 +114,28 @@ module.exports = (sequelize) => {
 
   // Associations
   Notification.associate = (models) => {
-    Notification.belongsTo(models.User, { 
+    Notification.belongsTo(models.User, {
       foreignKey: 'id_user',
-      as: 'Utilisateur'
+      as: 'Utilisateur',
+      onDelete: 'CASCADE'
     });
-    
-    Notification.belongsTo(models.Evenement, { 
+
+    Notification.belongsTo(models.Evenement, {
       foreignKey: 'id_evenement',
-      as: 'Evenement'
+      as: 'Evenement',
+      onDelete: 'CASCADE'
     });
-    
-    Notification.belongsTo(models.Programme, { 
+
+    Notification.belongsTo(models.Programme, {
       foreignKey: 'id_programme',
-      as: 'Programme'
+      as: 'Programme',
+      onDelete: 'CASCADE'
     });
-    
-    Notification.belongsTo(models.Oeuvre, { 
+
+    Notification.belongsTo(models.Oeuvre, {
       foreignKey: 'id_oeuvre',
-      as: 'Oeuvre'
+      as: 'Oeuvre',
+      onDelete: 'CASCADE'
     });
   };
 
@@ -143,13 +147,14 @@ module.exports = (sequelize) => {
   };
 
   // Méthodes statiques
-  Notification.getNonLues = async function(userId) {
+  Notification.getNonLues = async function(userId, limit = 50) {
     return await this.findAll({
       where: {
         id_user: userId,
         lu: false
       },
-      order: [['date_creation', 'DESC']]
+      order: [['date_creation', 'DESC']],
+      limit
     });
   };
 

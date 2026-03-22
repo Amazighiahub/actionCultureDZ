@@ -28,7 +28,7 @@ describe('FavoriController', () => {
   let req, res;
 
   beforeEach(() => {
-    controller = new FavoriController();
+    controller = FavoriController;
     req = {
       t: jest.fn((key) => 'translated:' + key),
       lang: 'fr',

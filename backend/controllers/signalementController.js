@@ -91,4 +91,4 @@ class SignalementController extends BaseController {
   }
 }
 
-module.exports = SignalementController;
+module.exports = new SignalementController();

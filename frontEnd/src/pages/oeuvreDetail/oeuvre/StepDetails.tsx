@@ -19,10 +19,10 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Info } from 'lucide-react';
 
 interface StepDetailsProps {
-  formData: any;
-  updateFormData: (field: string, value: any) => void;
+  formData: Record<string, unknown>;
+  updateFormData: (field: string, value: unknown) => void;
   errors: Record<string, string>;
-  metadata: any;
+  metadata: Record<string, unknown>;
 }
 
 const StepDetails: React.FC<StepDetailsProps> = ({
@@ -35,7 +35,7 @@ const StepDetails: React.FC<StepDetailsProps> = ({
 
   // Déterminer le type d'œuvre sélectionné
   const selectedType = metadata.types_oeuvres?.find(
-    (t: any) => t.id_type_oeuvre === formData.id_type_oeuvre
+    (t: Record<string, unknown>) => t.id_type_oeuvre === formData.id_type_oeuvre
   );
   const typeCode = selectedType?.code?.toLowerCase() || '';
 
@@ -101,7 +101,7 @@ const StepDetails: React.FC<StepDetailsProps> = ({
 };
 
 // Champs pour les livres
-const LivreFields: React.FC<any> = ({ formData, updateFormData, errors, metadata }) => {
+const LivreFields: React.FC<StepDetailsProps> = ({ formData, updateFormData, errors, metadata }) => {
   const { t } = useTranslation();
   
   return (
@@ -139,7 +139,7 @@ const LivreFields: React.FC<any> = ({ formData, updateFormData, errors, metadata
             <SelectValue placeholder={t('common.select', 'Sélectionner')} />
           </SelectTrigger>
           <SelectContent>
-            {metadata.editeurs?.map((editeur: any) => (
+            {(metadata.editeurs as Array<Record<string, unknown>> | undefined)?.map((editeur) => (
               <SelectItem key={editeur.id_editeur} value={editeur.id_editeur.toString()}>
                 {editeur.nom}
               </SelectItem>
@@ -163,7 +163,7 @@ const LivreFields: React.FC<any> = ({ formData, updateFormData, errors, metadata
 };
 
 // Champs pour les films
-const FilmFields: React.FC<any> = ({ formData, updateFormData, errors }) => {
+const FilmFields: React.FC<StepDetailsProps> = ({ formData, updateFormData, errors }) => {
   const { t } = useTranslation();
   
   return (
@@ -204,7 +204,7 @@ const FilmFields: React.FC<any> = ({ formData, updateFormData, errors }) => {
 };
 
 // Champs pour la musique
-const MusiqueFields: React.FC<any> = ({ formData, updateFormData, errors }) => {
+const MusiqueFields: React.FC<StepDetailsProps> = ({ formData, updateFormData, errors }) => {
   const { t } = useTranslation();
   
   return (
@@ -244,7 +244,7 @@ const MusiqueFields: React.FC<any> = ({ formData, updateFormData, errors }) => {
 };
 
 // Champs pour l'art
-const ArtFields: React.FC<any> = ({ formData, updateFormData, errors, metadata }) => {
+const ArtFields: React.FC<StepDetailsProps> = ({ formData, updateFormData, errors, metadata }) => {
   const { t } = useTranslation();
   
   return (
@@ -260,7 +260,7 @@ const ArtFields: React.FC<any> = ({ formData, updateFormData, errors, metadata }
               <SelectValue placeholder={t('common.select', 'Sélectionner')} />
             </SelectTrigger>
             <SelectContent>
-              {metadata.techniques?.map((tech: any) => (
+              {(metadata.techniques as Array<Record<string, unknown>> | undefined)?.map((tech) => (
                 <SelectItem key={tech.id_technique} value={tech.id_technique.toString()}>
                   {tech.nom}
                 </SelectItem>
@@ -279,7 +279,7 @@ const ArtFields: React.FC<any> = ({ formData, updateFormData, errors, metadata }
               <SelectValue placeholder={t('common.select', 'Sélectionner')} />
             </SelectTrigger>
             <SelectContent>
-              {metadata.materiaux?.map((mat: any) => (
+              {(metadata.materiaux as Array<Record<string, unknown>> | undefined)?.map((mat) => (
                 <SelectItem key={mat.id_materiau} value={mat.id_materiau.toString()}>
                   {mat.nom}
                 </SelectItem>
@@ -326,7 +326,7 @@ const ArtFields: React.FC<any> = ({ formData, updateFormData, errors, metadata }
 };
 
 // Champs pour les articles/recherche
-const ArticleFields: React.FC<any> = ({ formData, updateFormData, errors }) => {
+const ArticleFields: React.FC<StepDetailsProps> = ({ formData, updateFormData, errors }) => {
   const { t } = useTranslation();
   
   return (
@@ -409,7 +409,7 @@ const ArticleFields: React.FC<any> = ({ formData, updateFormData, errors }) => {
 };
 
 // Champs pour l'artisanat
-const ArtisanatFields: React.FC<any> = ({ formData, updateFormData, errors, metadata }) => {
+const ArtisanatFields: React.FC<StepDetailsProps> = ({ formData, updateFormData, errors, metadata }) => {
   const { t } = useTranslation();
   
   return (
@@ -425,7 +425,7 @@ const ArtisanatFields: React.FC<any> = ({ formData, updateFormData, errors, meta
               <SelectValue placeholder={t('common.select', 'Sélectionner')} />
             </SelectTrigger>
             <SelectContent>
-              {metadata.materiaux?.map((mat: any) => (
+              {(metadata.materiaux as Array<Record<string, unknown>> | undefined)?.map((mat) => (
                 <SelectItem key={mat.id_materiau} value={mat.id_materiau.toString()}>
                   {mat.nom}
                 </SelectItem>
@@ -444,7 +444,7 @@ const ArtisanatFields: React.FC<any> = ({ formData, updateFormData, errors, meta
               <SelectValue placeholder={t('common.select', 'Sélectionner')} />
             </SelectTrigger>
             <SelectContent>
-              {metadata.techniques?.map((tech: any) => (
+              {(metadata.techniques as Array<Record<string, unknown>> | undefined)?.map((tech) => (
                 <SelectItem key={tech.id_technique} value={tech.id_technique.toString()}>
                   {tech.nom}
                 </SelectItem>
@@ -489,7 +489,7 @@ const ArtisanatFields: React.FC<any> = ({ formData, updateFormData, errors, meta
 };
 
 // Champs par défaut
-const DefaultFields: React.FC<any> = ({ formData, updateFormData, errors }) => {
+const DefaultFields: React.FC<StepDetailsProps> = ({ formData, updateFormData, errors }) => {
   const { t } = useTranslation();
   
   return (

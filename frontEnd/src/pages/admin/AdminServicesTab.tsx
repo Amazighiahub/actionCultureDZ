@@ -36,11 +36,12 @@ import { useDashboardAdmin } from '@/hooks/useDashboardAdmin';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 
 // Helper pour extraire le texte multilingue
-const getLocalizedText = (value: any, lang: string = 'fr', fallback: string = ''): string => {
+const getLocalizedText = (value: unknown, lang: string = 'fr', fallback: string = ''): string => {
   if (!value) return fallback;
   if (typeof value === 'string') return value;
-  if (typeof value === 'object') {
-    return value[lang] || value.fr || value.ar || value.en || Object.values(value)[0] || fallback;
+  if (typeof value === 'object' && value !== null) {
+    const obj = value as Record<string, unknown>;
+    return String(obj[lang] || obj.fr || obj.ar || obj.en || Object.values(obj)[0] || fallback);
   }
   return String(value);
 };
@@ -66,7 +67,7 @@ const AdminServicesTab: React.FC = () => {
   const filteredServices = React.useMemo(() => {
     if (!services?.items) return [];
 
-    return services.items.filter((service: any) => {
+    return services.items.filter((service: Record<string, unknown>) => {
       // Filtre de recherche
       if (debouncedSearch) {
         const searchLower = debouncedSearch.toLowerCase();
@@ -180,7 +181,7 @@ const AdminServicesTab: React.FC = () => {
         />
       ) : (
         <div className="space-y-4">
-          {filteredServices.map((service: any) => {
+          {filteredServices.map((service: Record<string, unknown>) => {
             const nom = getLocalizedText(service.nom, currentLang, 'Sans nom');
             const type = getLocalizedText(service.type_service || service.type, currentLang);
 

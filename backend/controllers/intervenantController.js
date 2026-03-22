@@ -136,6 +136,12 @@ class IntervenantController extends BaseController {
       const intervenant = await this.intervenantService.createIntervenant(lang, req.body);
       this._sendCreated(res, translate(intervenant, lang), req.t('intervenant.created'));
     } catch (error) {
+      if (error.code === 'USER_ALREADY_LINKED') {
+        return res.status(400).json({
+          success: false,
+          error: req.t('intervenant.userAlreadyLinked', 'Ce compte utilisateur est déjà lié à un autre intervenant.')
+        });
+      }
       if (error.code === 'EMAIL_EXISTS') {
         return res.status(400).json({ success: false, error: req.t('intervenant.emailExists') });
       }
@@ -165,6 +171,12 @@ class IntervenantController extends BaseController {
         data: translateDeep(updated, lang)
       });
     } catch (error) {
+      if (error.code === 'USER_ALREADY_LINKED') {
+        return res.status(400).json({
+          success: false,
+          error: req.t('intervenant.userAlreadyLinked', 'Ce compte utilisateur est déjà lié à un autre intervenant.')
+        });
+      }
       if (error.code === 'EMAIL_EXISTS') {
         return res.status(400).json({ success: false, error: req.t('auth.emailAlreadyUsed') });
       }
@@ -242,4 +254,4 @@ class IntervenantController extends BaseController {
   }
 }
 
-module.exports = IntervenantController;
+module.exports = new IntervenantController();

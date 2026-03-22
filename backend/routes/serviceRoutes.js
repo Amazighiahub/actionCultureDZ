@@ -1,5 +1,5 @@
 /**
- * Routes v2 pour les services culturels
+ * Routes pour les services culturels
  * Utilise le pattern Controller → Service → Repository
  */
 
@@ -10,7 +10,7 @@ const { handleValidationErrors, validateId, validateStringLengths, validateGPS }
 const { createContentLimiter } = require('../middlewares/rateLimitMiddleware');
 const asyncHandler = require('../utils/asyncHandler');
 
-const initServiceRoutesV2 = (models, authMiddleware) => {
+const initServiceRoutes = (models, authMiddleware) => {
   const router = express.Router();
   const { authenticate, requireRole } = authMiddleware;
 
@@ -60,4 +60,4 @@ const initServiceRoutesV2 = (models, authMiddleware) => {
   return router;
 };
 
-module.exports = initServiceRoutesV2;
+module.exports = initServiceRoutes;

@@ -1,5 +1,5 @@
 /**
- * Routes v2 pour les utilisateurs
+ * Routes pour les utilisateurs
  * Utilise le nouveau pattern Controller → Service → Repository
  */
 
@@ -10,7 +10,7 @@ const asyncHandler = require('../utils/asyncHandler');
 const { strictLimiter, endpointLimiters, accountRateLimiter } = require('../middlewares/rateLimitMiddleware');
 const { handleValidationErrors, validateStringLengths, validateId } = require('../middlewares/validationMiddleware');
 
-const initUserRoutesV2 = (models, authMiddleware) => {
+const initUserRoutes = (models, authMiddleware) => {
   const router = express.Router();
   const { authenticate, requireRole } = authMiddleware;
 
@@ -23,9 +23,9 @@ const initUserRoutesV2 = (models, authMiddleware) => {
     validateStringLengths,
     [
       body('email').isEmail().withMessage('Email invalide'),
-      body('mot_de_passe').isLength({ min: 12 }).withMessage('Mot de passe minimum 12 caractères'),
-      body('confirmation_mot_de_passe').custom((val, { req }) => {
-        if (val !== req.body.mot_de_passe) throw new Error('Les mots de passe ne correspondent pas');
+      body('password').isLength({ min: 12 }).withMessage('Mot de passe minimum 12 caractères'),
+      body('password_confirmation').custom((val, { req }) => {
+        if (val !== req.body.password) throw new Error('Les mots de passe ne correspondent pas');
         return true;
       }),
       body('nom').notEmpty().withMessage('Le nom est requis'),
@@ -41,7 +41,7 @@ const initUserRoutesV2 = (models, authMiddleware) => {
     accountRateLimiter.checkAccountLock,
     [
       body('email').isEmail().withMessage('Email invalide'),
-      body('mot_de_passe').notEmpty().withMessage('Mot de passe requis'),
+      body('password').notEmpty().withMessage('Mot de passe requis'),
     ],
     handleValidationErrors,
     asyncHandler((req, res) => userController.login(req, res)));
@@ -108,4 +108,4 @@ const initUserRoutesV2 = (models, authMiddleware) => {
   return router;
 };
 
-module.exports = initUserRoutesV2;
+module.exports = initUserRoutes;

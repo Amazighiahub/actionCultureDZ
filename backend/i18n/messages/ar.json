@@ -55,6 +55,7 @@
     "wrongPassword": "كلمة المرور غير صحيحة",
     "tokenMissing": "Token d'authentification manquant",
     "tokenInvalid": "Token invalide ou expiré",
+    "tokenRevoked": "انتهت الجلسة. يرجى تسجيل الدخول مرة أخرى.",
     "accountBlocked": "Votre compte est ${status}. Veuillez contacter l'administrateur.",
     "unknownAccountStatus": "Statut de compte non reconnu",
     "emailNotVerified": "Veuillez vérifier votre email pour accéder à cette fonctionnalité.",
@@ -242,6 +243,7 @@
     "updated": "تم تحديث المتحدث بنجاح",
     "deactivated": "تم تعطيل المتحدث بنجاح",
     "emailExists": "يوجد متحدث بهذا البريد الإلكتروني بالفعل",
+    "userAlreadyLinked": "حساب المستخدم هذا مرتبط بالفعل بمتحدث آخر",
     "hasPrograms": "لا يمكن تعطيل هذا المتحدث لأنه مرتبط بـ ${count} برنامج(برامج)",
     "serverErrorGet": "خطأ في الخادم أثناء استرجاع المتحدثين"
   },

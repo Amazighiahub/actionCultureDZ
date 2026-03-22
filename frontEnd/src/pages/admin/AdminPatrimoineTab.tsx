@@ -40,11 +40,12 @@ import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { getAssetUrl } from '@/helpers/assetUrl';
 
 // Helper pour extraire le texte multilingue
-const getLocalizedText = (value: any, lang: string = 'fr', fallback: string = ''): string => {
+const getLocalizedText = (value: unknown, lang: string = 'fr', fallback: string = ''): string => {
   if (!value) return fallback;
   if (typeof value === 'string') return value;
-  if (typeof value === 'object') {
-    return value[lang] || value.fr || value.ar || value.en || Object.values(value)[0] || fallback;
+  if (typeof value === 'object' && value !== null) {
+    const obj = value as Record<string, unknown>;
+    return String(obj[lang] || obj.fr || obj.ar || obj.en || Object.values(obj)[0] || fallback);
   }
   return String(value);
 };
@@ -75,7 +76,7 @@ const AdminPatrimoineTab: React.FC = () => {
   const filteredPatrimoines = React.useMemo(() => {
     if (!patrimoineItems?.items) return [];
 
-    return patrimoineItems.items.filter((item: any) => {
+    return patrimoineItems.items.filter((item: Record<string, unknown>) => {
       // Filtre de recherche
       if (debouncedSearch) {
         const searchLower = debouncedSearch.toLowerCase();
@@ -211,7 +212,7 @@ const AdminPatrimoineTab: React.FC = () => {
         />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredPatrimoines.map((item: any) => {
+          {filteredPatrimoines.map((item: Record<string, unknown>) => {
             const nom = getLocalizedText(item.nom, currentLang, 'Sans nom');
             const description = getLocalizedText(item.description, currentLang);
             const wilaya = item.wilaya?.nom || item.Commune?.Daira?.Wilaya?.nom || '';

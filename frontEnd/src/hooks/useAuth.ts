@@ -78,10 +78,10 @@ export function useAuth(): UseAuthReturn {
         success: false, 
         error: response.error || 'Email ou mot de passe incorrect'
       };
-    } catch (error: any) {
-      return { 
-        success: false, 
-        error: error.message || 'Erreur lors de la connexion'
+    } catch (error: unknown) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Erreur lors de la connexion'
       };
     } finally {
       setLoginLoading(false);
@@ -116,8 +116,9 @@ export function useAuth(): UseAuthReturn {
         await new Promise(resolve => setTimeout(resolve, 100));
         
         // Vérifier si vérification email nécessaire
-        const needsEmailVerification = (response.data as any).needsEmailVerification;
-        
+        const authData = response.data as { needsEmailVerification?: boolean };
+        const needsEmailVerification = authData.needsEmailVerification;
+
         if (needsEmailVerification) {
           // Rediriger vers page de confirmation email
           navigate('/verification-email-envoyee', {
@@ -139,10 +140,10 @@ export function useAuth(): UseAuthReturn {
         success: false, 
         error: response.error || 'Une erreur est survenue lors de l\'inscription'
       };
-    } catch (error: any) {
-      return { 
-        success: false, 
-        error: error.message || 'Une erreur est survenue lors de l\'inscription'
+    } catch (error: unknown) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Une erreur est survenue lors de l\'inscription'
       };
     } finally {
       setRegisterLoading(false);
@@ -163,8 +164,9 @@ export function useAuth(): UseAuthReturn {
         await new Promise(resolve => setTimeout(resolve, 100));
         
         // Vérifier si vérification email nécessaire
-        const needsEmailVerification = (response.data as any).needsEmailVerification;
-        const needsAdminValidation = (response.data as any).needsAdminValidation;
+        const authData = response.data as { needsEmailVerification?: boolean; needsAdminValidation?: boolean };
+        const needsEmailVerification = authData.needsEmailVerification;
+        const needsAdminValidation = authData.needsAdminValidation;
         
         if (needsEmailVerification) {
           // Rediriger vers page de confirmation email
@@ -195,10 +197,10 @@ export function useAuth(): UseAuthReturn {
         success: false, 
         error: response.error || 'Une erreur est survenue lors de l\'inscription'
       };
-    } catch (error: any) {
-      return { 
-        success: false, 
-        error: error.message || 'Une erreur est survenue lors de l\'inscription'
+    } catch (error: unknown) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Une erreur est survenue lors de l\'inscription'
       };
     } finally {
       setRegisterLoading(false);

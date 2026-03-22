@@ -25,8 +25,8 @@ interface MediaFile {
 }
 
 interface StepMediaProps {
-  formData: any;
-  updateFormData: (field: string, value: any) => void;
+  formData: Record<string, unknown>;
+  updateFormData: (field: string, value: unknown) => void;
   errors: Record<string, string>;
 }
 

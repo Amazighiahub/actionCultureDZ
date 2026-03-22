@@ -156,7 +156,7 @@ export default function NotificationPreferences() {
       setError(null);
       const prefs = await notificationService.getPreferences();
       setPreferences(prefs);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Erreur chargement préférences:', err);
       setError(t('notifications_preferences.errorLoad', 'Impossible de charger les préférences'));
     } finally {
@@ -181,7 +181,7 @@ export default function NotificationPreferences() {
       setSaved(true);
       setHasChanges(false);
       setTimeout(() => setSaved(false), 3000);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Erreur sauvegarde:', err);
       setError(t('notifications_preferences.errorSave', 'Impossible de sauvegarder les préférences'));
     } finally {

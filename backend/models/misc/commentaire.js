@@ -75,9 +75,9 @@ module.exports = (sequelize) => {
 
   // Associations
   Commentaire.associate = (models) => {
-    Commentaire.belongsTo(models.User, { foreignKey: 'id_user' });
-    Commentaire.belongsTo(models.Oeuvre, { foreignKey: 'id_oeuvre' });
-    Commentaire.belongsTo(models.Evenement, { foreignKey: 'id_evenement' });
+    Commentaire.belongsTo(models.User, { foreignKey: 'id_user', onDelete: 'CASCADE' });
+    Commentaire.belongsTo(models.Oeuvre, { foreignKey: 'id_oeuvre', onDelete: 'CASCADE' });
+    Commentaire.belongsTo(models.Evenement, { foreignKey: 'id_evenement', onDelete: 'CASCADE' });
     Commentaire.belongsTo(models.Commentaire, { as: 'CommentaireParent', foreignKey: 'commentaire_parent_id', onDelete: 'CASCADE' });
     Commentaire.hasMany(models.Commentaire, { as: 'Reponses', foreignKey: 'commentaire_parent_id', onDelete: 'CASCADE' });
   };

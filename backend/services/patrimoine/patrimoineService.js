@@ -3,6 +3,7 @@
  * Architecture: Controller → Service → Repository → Database
  */
 
+const { Op } = require('sequelize');
 const BaseService = require('../core/baseService');
 const PatrimoineDTO = require('../../dto/patrimoine/patrimoineDTO');
 
@@ -139,19 +140,41 @@ class PatrimoineService extends BaseService {
           localiteId: data.localiteId !== undefined ? data.localiteId : existing.localiteId
         }, { transaction });
       } else {
-        // Créer un nouveau lieu
-        const entityData = {
-          nom: data.nom,
-          adresse: data.adresse || {},
-          latitude: data.latitude,
-          longitude: data.longitude,
-          typeLieu: data.typeLieu || 'Commune',
-          typePatrimoine: data.typePatrimoine || 'monument',
-          communeId: data.communeId,
-          localiteId: data.localiteId || null
-        };
-        const site = await Lieu.create(entityData, { transaction });
-        lieuId = site.id_lieu;
+        // Vérifier si un lieu similaire existe déjà (par coordonnées proches)
+        const tolerance = 0.001; // ~100 mètres
+        const lat = Number(data.latitude);
+        const lon = Number(data.longitude);
+        let existingByCoords = null;
+        if (Number.isFinite(lat) && Number.isFinite(lon)) {
+          existingByCoords = await Lieu.findOne({
+            where: {
+              latitude: { [Op.between]: [lat - tolerance, lat + tolerance] },
+              longitude: { [Op.between]: [lon - tolerance, lon + tolerance] }
+            },
+            transaction
+          });
+        }
+
+        if (existingByCoords) {
+          lieuId = existingByCoords.id_lieu;
+          // Mettre à jour les champs manquants du lieu existant
+          await existingByCoords.update({
+            typePatrimoine: data.typePatrimoine || existingByCoords.typePatrimoine || 'monument'
+          }, { transaction });
+        } else {
+          const entityData = {
+            nom: data.nom,
+            adresse: data.adresse || {},
+            latitude: data.latitude,
+            longitude: data.longitude,
+            typeLieu: data.typeLieu || 'Commune',
+            typePatrimoine: data.typePatrimoine || 'monument',
+            communeId: data.communeId,
+            localiteId: data.localiteId || null
+          };
+          const site = await Lieu.create(entityData, { transaction });
+          lieuId = site.id_lieu;
+        }
       }
 
       // Créer ou mettre à jour DetailLieu
@@ -373,6 +396,112 @@ class PatrimoineService extends BaseService {
    */
   async getStats() {
     return this.repository.getStats();
+  }
+
+  // ============================================================================
+  // TYPES / NOTATION / FAVORIS / MÉDIAS
+  // ============================================================================
+
+  /**
+   * Liste des types de patrimoine avec compteurs
+   */
+  async getTypes() {
+    const { fn, col } = require('sequelize');
+    const { Lieu } = this.models || {};
+    if (!Lieu) return [];
+    const types = await Lieu.findAll({
+      attributes: ['typeLieu', [fn('COUNT', col('id_lieu')), 'count']],
+      group: ['typeLieu'],
+      raw: true
+    });
+    return types.map(t => ({ value: t.typeLieu, label: t.typeLieu, count: parseInt(t.count) }));
+  }
+
+  /**
+   * Noter un site patrimonial
+   */
+  async noter(siteId, note) {
+    if (!note || note < 1 || note > 5) {
+      throw this._validationError('La note doit être entre 1 et 5');
+    }
+    const { DetailLieu } = this.models || {};
+    if (!DetailLieu) throw this._validationError('Modèle DetailLieu non disponible');
+
+    const detailLieu = await DetailLieu.findOne({ where: { id_lieu: siteId } });
+    if (!detailLieu) {
+      throw this._notFoundError(siteId);
+    }
+    const currentNote = detailLieu.noteMoyenne || 0;
+    const newNote = currentNote === 0 ? note : (currentNote + note) / 2;
+    await detailLieu.update({ noteMoyenne: Math.round(newNote * 10) / 10 });
+    return { noteMoyenne: detailLieu.noteMoyenne };
+  }
+
+  /**
+   * Ajouter un site aux favoris
+   */
+  async ajouterFavoris(siteId, userId) {
+    const { Favori } = this.models || {};
+    if (!Favori) throw this._validationError('Modèle Favori non disponible');
+
+    const [favori, created] = await Favori.findOrCreate({
+      where: { id_user: userId, type_entite: 'patrimoine', id_entite: siteId },
+      defaults: { id_user: userId, type_entite: 'patrimoine', id_entite: siteId }
+    });
+    return { favori, created };
+  }
+
+  /**
+   * Retirer un site des favoris
+   */
+  async retirerFavoris(siteId, userId) {
+    const { Favori } = this.models || {};
+    if (!Favori) throw this._validationError('Modèle Favori non disponible');
+
+    const deleted = await Favori.destroy({
+      where: { id_user: userId, type_entite: 'patrimoine', id_entite: siteId }
+    });
+    return { deleted: deleted > 0 };
+  }
+
+  /**
+   * Upload de médias pour un site
+   */
+  async uploadMedias(siteId, files) {
+    const { Lieu, LieuMedia } = this.models || {};
+    if (!Lieu || !LieuMedia) throw this._validationError('Modèles non disponibles');
+
+    const lieu = await Lieu.findByPk(siteId);
+    if (!lieu) {
+      throw this._notFoundError(siteId);
+    }
+    if (!files || files.length === 0) {
+      throw this._validationError('Aucun fichier fourni');
+    }
+    const medias = await Promise.all(files.map(async (file) => {
+      return LieuMedia.create({
+        id_lieu: siteId,
+        type: file.mimetype.startsWith('image') ? 'image' : 'document',
+        url: `/uploads/${file.filename}`,
+        description: {}
+      });
+    }));
+    return medias;
+  }
+
+  /**
+   * Supprimer un média
+   */
+  async deleteMedia(mediaId) {
+    const { LieuMedia } = this.models || {};
+    if (!LieuMedia) throw this._validationError('Modèle LieuMedia non disponible');
+
+    const media = await LieuMedia.findByPk(parseInt(mediaId));
+    if (!media) {
+      throw this._notFoundError(mediaId);
+    }
+    await media.destroy();
+    return true;
   }
 }
 

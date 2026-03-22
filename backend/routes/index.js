@@ -25,10 +25,12 @@ const initServiceRoutes = require('./serviceRoutes');
 const initSignalementRoutes  = require('./signalementRoutes')
 const initTrackingRoutes = require('./trackingRoutes');
 const initEmailVerificationRoutes = require('./emailVerificationRoutes');
-// Routes admin toutes intégrées dans les controllers v2
+// Routes admin intégrées dans les controllers principaux
 const initArticleBlockRoutes = require('./articleBlockRoutes');
 const initOrganisationRoutes = require('./organisationRoutes');
 const initMultilingualRoutes = require('./multilingualRoutes');
+const initSearchRoutes = require('./searchRoutes');
+const initStatsRoutes = require('./statsRoutes');
 // ========================================================================
 // FONCTIONS UTILITAIRES
 // ========================================================================
@@ -230,156 +232,7 @@ const initRoutes = (models, authMiddleware) => {
   // ========================================================================
   // ROUTES SYSTÈME
   // ========================================================================
-
-  // Route des statistiques publiques pour la page d'accueil (hero section)
-  router.get('/stats/public', async (req, res) => {
-    try {
-      const { Lieu, Evenement, Oeuvre, User, Artisanat } = models;
-      
-      // Compter les sites patrimoniaux (lieux)
-      const sitesPatrimoniaux = Lieu ? await Lieu.count() : 0;
-      
-      // Compter les événements actifs (planifiés ou en cours)
-      const evenementsActifs = Evenement ? await Evenement.count({
-        where: {
-          statut: ['planifie', 'en_cours']
-        }
-      }) : 0;
-      
-      // Compter toutes les œuvres
-      const oeuvres = Oeuvre ? await Oeuvre.count() : 0;
-      
-      // Compter les artisanats
-      const artisanats = Artisanat ? await Artisanat.count() : 0;
-      
-      // Compter les membres (utilisateurs actifs)
-      const membres = User ? await User.count({
-        where: {
-          statut: 'actif'
-        }
-      }) : 0;
-
-      // Formater les nombres pour l'affichage
-      const formatStat = (num) => {
-        if (num >= 10000) return Math.floor(num / 1000) + 'k+';
-        if (num >= 1000) return (num / 1000).toFixed(1).replace('.0', '') + 'k+';
-        if (num >= 100) return Math.floor(num / 100) * 100 + '+';
-        if (num >= 10) return Math.floor(num / 10) * 10 + '+';
-        return num.toString();
-      };
-
-      res.json({
-        success: true,
-        data: {
-          sites_patrimoniaux: sitesPatrimoniaux,
-          sites_patrimoniaux_formatted: formatStat(sitesPatrimoniaux),
-          evenements: evenementsActifs,
-          evenements_formatted: formatStat(evenementsActifs),
-          oeuvres: oeuvres + artisanats,
-          oeuvres_formatted: formatStat(oeuvres + artisanats),
-          membres: membres,
-          membres_formatted: formatStat(membres)
-        },
-        cached: false,
-        timestamp: new Date().toISOString()
-      });
-    } catch (error) {
-      console.error('Erreur stats publiques:', error);
-      res.status(500).json({
-        success: false,
-        error: req.t ? req.t('common.serverError') : 'Server error'
-      });
-    }
-  });
-
-  // ========================================================================
-  // SITEMAP DYNAMIQUE — Génère le sitemap XML avec les pages dynamiques
-  // ========================================================================
-  router.get('/sitemap.xml', async (req, res) => {
-    try {
-      const SITE_URL = process.env.FRONTEND_URL || 'https://culture-algerie.com';
-      const { Op } = require('sequelize');
-
-      // Récupérer les IDs et dates de modification en parallèle
-      const [patrimoines, evenements, oeuvres, artisanats] = await Promise.all([
-        models.Lieu ? models.Lieu.findAll({
-          attributes: ['id_lieu', 'updatedAt'],
-          where: { statut: { [Op.ne]: 'supprime' } },
-          order: [['updatedAt', 'DESC']],
-          raw: true
-        }).catch(() => []) : [],
-
-        models.Evenement ? models.Evenement.findAll({
-          attributes: ['id_evenement', 'updatedAt'],
-          where: { statut: { [Op.ne]: 'supprime' } },
-          order: [['updatedAt', 'DESC']],
-          raw: true
-        }).catch(() => []) : [],
-
-        models.Oeuvre ? models.Oeuvre.findAll({
-          attributes: ['id_oeuvre', 'updatedAt'],
-          where: { statut: { [Op.ne]: 'supprime' } },
-          order: [['updatedAt', 'DESC']],
-          raw: true
-        }).catch(() => []) : [],
-
-        models.Artisanat ? models.Artisanat.findAll({
-          attributes: ['id_artisanat', 'updatedAt'],
-          order: [['updatedAt', 'DESC']],
-          raw: true
-        }).catch(() => []) : [],
-      ]);
-
-      // Construire le XML
-      const toDate = (d) => d ? new Date(d).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
-
-      let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
-      xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
-
-      // Pages statiques
-      const staticPages = [
-        { loc: '/', changefreq: 'daily', priority: '1.0' },
-        { loc: '/patrimoine', changefreq: 'weekly', priority: '0.9' },
-        { loc: '/evenements', changefreq: 'daily', priority: '0.9' },
-        { loc: '/oeuvres', changefreq: 'weekly', priority: '0.9' },
-        { loc: '/artisanat', changefreq: 'weekly', priority: '0.8' },
-        { loc: '/a-propos', changefreq: 'monthly', priority: '0.6' },
-      ];
-
-      for (const page of staticPages) {
-        xml += `  <url>\n    <loc>${SITE_URL}${page.loc}</loc>\n    <changefreq>${page.changefreq}</changefreq>\n    <priority>${page.priority}</priority>\n  </url>\n`;
-      }
-
-      // Pages dynamiques - Patrimoine
-      for (const p of patrimoines) {
-        xml += `  <url>\n    <loc>${SITE_URL}/patrimoine/${p.id_lieu}</loc>\n    <lastmod>${toDate(p.updatedAt)}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.7</priority>\n  </url>\n`;
-      }
-
-      // Pages dynamiques - Événements
-      for (const e of evenements) {
-        xml += `  <url>\n    <loc>${SITE_URL}/evenements/${e.id_evenement}</loc>\n    <lastmod>${toDate(e.updatedAt)}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.7</priority>\n  </url>\n`;
-      }
-
-      // Pages dynamiques - Oeuvres
-      for (const o of oeuvres) {
-        xml += `  <url>\n    <loc>${SITE_URL}/oeuvres/${o.id_oeuvre}</loc>\n    <lastmod>${toDate(o.updatedAt)}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.7</priority>\n  </url>\n`;
-      }
-
-      // Pages dynamiques - Artisanat
-      for (const a of artisanats) {
-        xml += `  <url>\n    <loc>${SITE_URL}/artisanat/${a.id_artisanat}</loc>\n    <lastmod>${toDate(a.updatedAt)}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.6</priority>\n  </url>\n`;
-      }
-
-      xml += '</urlset>';
-
-      res.set('Content-Type', 'application/xml');
-      res.set('Cache-Control', 'public, max-age=3600'); // Cache 1h
-      res.send(xml);
-    } catch (error) {
-      console.error('Erreur génération sitemap:', error);
-      res.status(500).send('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>');
-    }
-  });
+  // Stats publiques et sitemap sont dans statsRoutes.js et sitemapRoutes.js
 
   // Route de santé
   router.get('/health', async (req, res) => {
@@ -563,10 +416,10 @@ const initRoutes = (models, authMiddleware) => {
   signalements: typeof initSignalementRoutes === 'function' ? '✅ Chargé' : '❌ Non chargé',
         emailVerification: typeof initEmailVerificationRoutes === 'function' ? '✅ Chargé' : '❌ Non chargé',
         // Routes admin
-        'admin/oeuvres': '✅ Intégré dans routes v2',
-        'admin/evenements': '✅ Intégré dans routes v2',
-        'admin/patrimoine': '✅ Intégré dans routes v2',
-        'admin/services': '✅ Intégré dans routes v2'
+        'admin/oeuvres': '✅ Intégré dans routes principales',
+        'admin/evenements': '✅ Intégré dans routes principales',
+        'admin/patrimoine': '✅ Intégré dans routes principales',
+        'admin/services': '✅ Intégré dans routes principales'
       },
       
       middlewares: {
@@ -612,7 +465,7 @@ const initRoutes = (models, authMiddleware) => {
     { path: '/oeuvres', init: initOeuvreRoutes, args: [models, authMiddleware] },
     { path: '/article-blocks', init: initArticleBlockRoutes, args: [models, authMiddleware] },
     { path: '/services', init: initServiceRoutes, args: [models, authMiddleware] },
-    // Note: les routes v2 incluent déjà les endpoints admin intégrés
+    // Note: les routes incluent déjà les endpoints admin intégrés
     
     // Routes qui nécessitent tous les middlewares
     { path: '/organisations', init: initOrganisationRoutes, args: [models, authMiddleware] },
@@ -636,10 +489,12 @@ const initRoutes = (models, authMiddleware) => {
     { path: '/tracking', init: initTrackingRoutes, args: [models, authMiddleware] },
     { path: '/signalements', init: initSignalementRoutes, args: [models, authMiddleware] },
     { path: '/email-verification', init: initEmailVerificationRoutes, args: [models, authMiddleware] },
+    { path: '/search', init: initSearchRoutes, args: [models, authMiddleware] },
+    { path: '/stats', init: initStatsRoutes, args: [models, authMiddleware] },
     // ========================================================================
     // ROUTES ADMIN - AJOUT
     // ========================================================================
-    // Admin oeuvres, evenements, patrimoine, services tous intégrés dans les routes v2
+    // Admin oeuvres, evenements, patrimoine, services tous intégrés dans les routes principales
   ];
 
   let successCount = 0;

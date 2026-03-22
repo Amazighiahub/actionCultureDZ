@@ -206,4 +206,4 @@ class CommentaireController extends BaseController {
   }
 }
 
-module.exports = CommentaireController;
+module.exports = new CommentaireController();

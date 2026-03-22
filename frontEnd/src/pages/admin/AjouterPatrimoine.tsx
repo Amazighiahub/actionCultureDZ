@@ -228,7 +228,7 @@ const AjouterPatrimoine: React.FC = () => {
   const [monumentDialogOpen, setMonumentDialogOpen] = useState(false);
   const [vestigeDialogOpen, setVestigeDialogOpen] = useState(false);
   const [parcoursDialogOpen, setParcoursDialogOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<any>(null);
+  const [editingItem, setEditingItem] = useState<number | null>(null);
 
   // Formulaires temporaires pour les dialogues
   const [tempService, setTempService] = useState<ServiceItem>({
@@ -360,14 +360,17 @@ const AjouterPatrimoine: React.FC = () => {
       // Envoyer aussi le type de patrimoine pour une recherche plus précise
       const response = await lieuService.checkDuplicate(nom, lat, lon, formData.typePatrimoine);
       if (response.success && response.data?.exists && response.data.lieu) {
-        const lieu = response.data.lieu as any;
+        const lieu = response.data.lieu;
+        const lieuNom = lieu?.nom;
+        const lieuAdresse = lieu?.adresse;
+        const extendedData = response.data as typeof response.data & { hasDetailLieu?: boolean };
         setDuplicateWarning({
-          id_lieu: lieu.id_lieu,
-          nom: typeof lieu.nom === 'object' ? lieu.nom.fr || lieu.nom.ar : lieu.nom,
-          adresse: typeof lieu.adresse === 'object' ? lieu.adresse.fr || lieu.adresse.ar : lieu.adresse,
+          id_lieu: lieu?.id_lieu ?? 0,
+          nom: typeof lieuNom === 'object' && lieuNom !== null ? ((lieuNom as Record<string, string>).fr || (lieuNom as Record<string, string>).ar) : (typeof lieuNom === 'string' ? lieuNom : ''),
+          adresse: typeof lieuAdresse === 'object' && lieuAdresse !== null ? ((lieuAdresse as Record<string, string>).fr || (lieuAdresse as Record<string, string>).ar) : (typeof lieuAdresse === 'string' ? lieuAdresse : ''),
           matchType: response.data.matchType,
           isPatrimoine: response.data.isPatrimoine,
-          hasDetailLieu: (response.data as any).hasDetailLieu,
+          hasDetailLieu: extendedData.hasDetailLieu,
           typePatrimoine: response.data.typePatrimoine
         });
         return true;
@@ -426,11 +429,11 @@ const AjouterPatrimoine: React.FC = () => {
           longitude: lon,
           communeId: formData.communeId || undefined,
           wilayaId: formData.wilayaId || undefined
-        } as any);
+        });
 
         if (createResponse.success && createResponse.data) {
-          const created = createResponse.data as any;
-          setCreatedLieuId(created.id_lieu);
+          const created = createResponse.data;
+          setCreatedLieuId(created?.id_lieu ?? null);
           toast({
             title: t('common.success', 'Succès'),
             description: t('patrimoine.lieuCreated', 'Lieu créé automatiquement')
@@ -438,8 +441,8 @@ const AjouterPatrimoine: React.FC = () => {
         } else {
           throw new Error(createResponse.error || 'Erreur création lieu');
         }
-      } catch (err: any) {
-        const status = err?.response?.status;
+      } catch (err: unknown) {
+        const status = (err instanceof Object && 'response' in err) ? (err as { response?: { status?: number } }).response?.status : undefined;
         toast({
           title: t('common.error', 'Erreur'),
           description: status === 401
@@ -507,7 +510,31 @@ const AjouterPatrimoine: React.FC = () => {
     try {
       const response = await patrimoineService.getSiteDetail(parseInt(id));
       if (response.success && response.data) {
-        const site = response.data as any;
+        // Cast to a structural shape matching the API response
+        interface SiteResponse {
+          nom?: TranslatableValue;
+          adresse?: TranslatableValue;
+          typePatrimoine?: string;
+          typeLieu?: string;
+          communeId?: number;
+          wilaya?: { id_wilaya?: number; id?: number };
+          commune?: { id?: number };
+          latitude?: number;
+          longitude?: number;
+          estUNESCO?: boolean;
+          statut?: string;
+          id_lieu?: number;
+          id?: number;
+          qrCodeGenerated?: string;
+          detail?: { description?: TranslatableValue; histoire?: TranslatableValue; referencesHistoriques?: TranslatableValue; horaires?: TranslatableValue; communeId?: number };
+          DetailLieu?: { description?: TranslatableValue; histoire?: TranslatableValue; referencesHistoriques?: TranslatableValue; horaires?: TranslatableValue; communeId?: number };
+          services?: ServiceItem[];
+          programmes?: ProgrammeItem[];
+          monuments?: MonumentItem[];
+          vestiges?: VestigeItem[];
+          medias?: MediaItem[];
+        }
+        const site = response.data as unknown as SiteResponse;
         const detail = site.detail || site.DetailLieu;
         setFormData({
           nom: site.nom || { fr: '' },
@@ -642,9 +669,9 @@ const AjouterPatrimoine: React.FC = () => {
 
       let response;
       if (isEditMode) {
-        response = await patrimoineService.update(parseInt(id!), payload as any);
+        response = await patrimoineService.update(parseInt(id!), payload as unknown as Parameters<typeof patrimoineService.update>[1]);
       } else {
-        response = await patrimoineService.create(payload as any);
+        response = await patrimoineService.create(payload as unknown as Parameters<typeof patrimoineService.create>[0]);
       }
 
       if (response.success) {
@@ -655,12 +682,13 @@ const AjouterPatrimoine: React.FC = () => {
         });
 
         // Si QR Code généré, l'afficher
-        if (response.data && (response.data as any).qrCodeGenerated) {
-          setQrCodeGenerated((response.data as any).qrCodeGenerated);
+        const responseData = response.data as unknown as { qrCodeGenerated?: string; id_lieu?: number } | undefined;
+        if (responseData?.qrCodeGenerated) {
+          setQrCodeGenerated(responseData.qrCodeGenerated);
         }
 
         if (!isEditMode) {
-          navigate(`/admin/patrimoine/modifier/${(response.data as any).id_lieu}`);
+          navigate(`/admin/patrimoine/modifier/${responseData?.id_lieu}`);
         }
       } else {
         throw new Error('Erreur lors de la sauvegarde');
@@ -799,12 +827,16 @@ const AjouterPatrimoine: React.FC = () => {
           distance_km: result.data.distance_km || 0,
           difficulte: result.data.difficulte || 'moyen',
           theme: result.data.theme,
-          etapes: (result.data.etapes || []).map((e: any, index: number) => ({
-            id_lieu: e.id_lieu || e.id,
-            nom_lieu: typeof e.nom === 'object' ? e.nom.fr : e.nom,
-            ordre: index + 1,
-            duree_estimee: e.tempsVisite || 30
-          }))
+          etapes: (result.data.etapes || []).map((e: unknown, index: number) => {
+            const etape = e as Record<string, unknown>;
+            const nom = etape.nom;
+            return {
+              id_lieu: (etape.id_lieu as number) || (etape.id as number),
+              nom_lieu: typeof nom === 'object' && nom !== null ? (nom as Record<string, string>).fr : typeof nom === 'string' ? nom : undefined,
+              ordre: index + 1,
+              duree_estimee: (etape.tempsVisite as number) || 30
+            };
+          })
         };
 
         setParcours(prev => [...prev, generatedParcours]);
@@ -869,9 +901,9 @@ const AjouterPatrimoine: React.FC = () => {
       try {
         const response = await lieuService.getByWilaya(formData.wilayaId);
         if (response.success && response.data) {
-          setAvailableLieux((response.data as any[]).map((l: any) => ({
+          setAvailableLieux((response.data ?? []).map((l) => ({
             id_lieu: l.id_lieu,
-            nom: typeof l.nom === 'object' ? l.nom.fr : l.nom
+            nom: typeof l.nom === 'object' && l.nom !== null ? (l.nom as Record<string, string>).fr : typeof l.nom === 'string' ? l.nom : ''
           })));
         }
       } catch {

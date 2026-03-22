@@ -110,7 +110,7 @@ const ArtisanatDetail: React.FC = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
-  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; type: string; item: any }>({ open: false, type: '', item: null });
+  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; type: string; item: unknown }>({ open: false, type: '', item: null });
   const { isAuthenticated } = useAuth();
 
   useEffect(() => {
@@ -148,7 +148,7 @@ const ArtisanatDetail: React.FC = () => {
     }
   };
 
-  const _handleDeleteItem = (type: string, item: any) => {
+  const _handleDeleteItem = (type: string, item: unknown) => {
     setDeleteDialog({ open: true, type, item });
   };
 
@@ -277,7 +277,7 @@ const ArtisanatDetail: React.FC = () => {
   const artisan = artisanat?.Oeuvre?.Saiseur;
 
   const seoKeywords = [
-    td(artisanat?.Oeuvre?.titre) || td(artisanat?.nom), (artisanat as any)?.type_artisanat,
+    td(artisanat?.Oeuvre?.titre) || td(artisanat?.nom), (artisanat as Record<string, unknown>)?.type_artisanat as string | undefined,
     Materiau?.nom, Technique?.nom, 'artisanat algérien', 'artisanat traditionnel',
     'fait main', 'Algérie'
   ].filter(Boolean) as string[];
@@ -287,7 +287,7 @@ const ArtisanatDetail: React.FC = () => {
       <SEOHead
         title={td(artisanat?.Oeuvre?.titre) || td(artisanat?.nom) || 'Artisanat'}
         description={td(artisanat?.Oeuvre?.description)?.substring(0, 160) || `Artisanat traditionnel algérien`}
-        image={(medias[0] as any)?.url_media || medias[0]?.url || (artisanat as any)?.image_url}
+        image={(medias[0] as Record<string, unknown>)?.url_media as string || medias[0]?.url || (artisanat as Record<string, unknown>)?.image_url as string}
         type="product"
         keywords={seoKeywords}
         jsonLd={[
@@ -295,7 +295,7 @@ const ArtisanatDetail: React.FC = () => {
             ...artisanat,
             nom: td(artisanat?.Oeuvre?.titre) || td(artisanat?.nom),
             description: td(artisanat?.Oeuvre?.description),
-            images: medias.map((m: any) => m.url_media || m.url),
+            images: medias.map((m) => (m as Record<string, unknown>).url_media as string || m.url),
             artisan: artisan ? { nom: artisan.nom, prenom: artisan.prenom } : undefined,
           }),
           buildBreadcrumbJsonLd([

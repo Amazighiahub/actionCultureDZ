@@ -59,7 +59,7 @@ module.exports = (sequelize) => {
 
   // Associations
   DetailLieu.associate = (models) => {
-    DetailLieu.belongsTo(models.Lieu, { foreignKey: 'id_lieu' });
+    DetailLieu.belongsTo(models.Lieu, { foreignKey: 'id_lieu', onDelete: 'CASCADE' });
     DetailLieu.hasMany(models.Monument, { foreignKey: 'id_detail_lieu', onDelete: 'CASCADE' });
     DetailLieu.hasMany(models.Vestige, { foreignKey: 'id_detail_lieu', onDelete: 'CASCADE' });
   };

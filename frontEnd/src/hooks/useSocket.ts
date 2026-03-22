@@ -1,7 +1,9 @@
 // hooks/useSocket.ts
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { socketService, SocketEvents } from '@/services/socketService';
+
+// Utility type to extract the first parameter type of a SocketEvents handler
+type SocketEventData<K extends keyof SocketEvents> = Parameters<SocketEvents[K]>[0];
 
 interface UseSocketOptions {
   autoConnect?: boolean;
@@ -18,7 +20,7 @@ interface UseSocketReturn {
   on: <K extends keyof SocketEvents>(event: K, handler: SocketEvents[K]) => void;
   off: <K extends keyof SocketEvents>(event: K, handler?: SocketEvents[K]) => void;
   emit: <K extends keyof SocketEvents>(event: K, data?: Parameters<SocketEvents[K]>[0]) => void;
-  emitWithAck: <K extends keyof SocketEvents, R = any>(
+  emitWithAck: <K extends keyof SocketEvents, R = unknown>(
     event: K,
     data?: Parameters<SocketEvents[K]>[0],
     timeout?: number
@@ -121,7 +123,7 @@ export function useSocket(options: UseSocketOptions = {}): UseSocketReturn {
     socketService.emit(event, data);
   }, []);
   
-  const emitWithAck = useCallback(<K extends keyof SocketEvents, R = any>(
+  const emitWithAck = useCallback(<K extends keyof SocketEvents, R = unknown>(
     event: K,
     data?: Parameters<SocketEvents[K]>[0],
     timeout?: number
@@ -144,12 +146,12 @@ export function useSocket(options: UseSocketOptions = {}): UseSocketReturn {
 // Hook spécialisé pour les événements admin
 export function useAdminSocket() {
   const socket = useSocket();
-  const [activities, setActivities] = useState<any[]>([]);
+  const [activities, setActivities] = useState<SocketEventData<'admin:activity'>[]>([]);
   const [onlineAdmins, setOnlineAdmins] = useState<number[]>([]);
 
   useEffect(() => {
     // Écouter les activités admin
-    const handleActivity = (data: any) => {
+    const handleActivity = (data: SocketEventData<'admin:activity'>) => {
       setActivities(prev => [data, ...prev].slice(0, 100)); // Garder les 100 dernières
     };
 
@@ -158,11 +160,11 @@ export function useAdminSocket() {
     };
 
     socket.on('admin:activity', handleActivity);
-    socket.on('admin:presence_update' as any, handleAdminPresence);
+    socket.on('admin:presence_update' as keyof SocketEvents, handleAdminPresence);
 
     return () => {
       socket.off('admin:activity', handleActivity);
-      socket.off('admin:presence_update' as any);
+      socket.off('admin:presence_update' as keyof SocketEvents);
     };
   }, [socket]);
 
@@ -198,7 +200,7 @@ export function useUserPresence(userId?: number) {
   useEffect(() => {
     if (!userId) return;
 
-    const handlePresenceUpdate = (data: any) => {
+    const handlePresenceUpdate = (data: SocketEventData<'user:online'>) => {
       if (data.userId === userId) {
         setIsOnline(data.status === 'online');
         if (data.status === 'offline' && data.lastSeen) {
@@ -210,7 +212,7 @@ export function useUserPresence(userId?: number) {
     socket.on('user:online', handlePresenceUpdate);
     
     // Demander le statut initial
-    socket.emit('user:presence_update' as any, { requestUserId: userId });
+    socket.emit('user:presence_update' as keyof SocketEvents, { requestUserId: userId });
 
     return () => {
       socket.off('user:online', handlePresenceUpdate);
@@ -223,26 +225,26 @@ export function useUserPresence(userId?: number) {
 // Hook pour le chat
 export function useChat(roomId: string) {
   const socket = useSocket();
-  const [messages, setMessages] = useState<any[]>([]);
+  const [messages, setMessages] = useState<SocketEventData<'chat:message'>['message'][]>([]);
   const [typingUsers, setTypingUsers] = useState<Set<number>>(new Set());
   const typingTimeouts = useRef<Map<number, NodeJS.Timeout>>(new Map());
 
   useEffect(() => {
     // Joindre la room
-    socket.emit('chat:room_update' as any, { 
-      roomId, 
-      action: 'user_joined' 
+    socket.emit('chat:room_update' as keyof SocketEvents, {
+      roomId,
+      action: 'user_joined'
     });
 
     // Gérer les messages
-    const handleMessage = (data: any) => {
+    const handleMessage = (data: SocketEventData<'chat:message'>) => {
       if (data.message.roomId === roomId) {
         setMessages(prev => [...prev, data.message]);
       }
     };
 
     // Gérer le typing
-    const handleTyping = (data: any) => {
+    const handleTyping = (data: SocketEventData<'user:typing'>) => {
       if (data.context === roomId) {
         if (data.isTyping) {
           setTypingUsers(prev => new Set(prev).add(data.userId));
@@ -283,9 +285,9 @@ export function useChat(roomId: string) {
 
     return () => {
       // Quitter la room
-      socket.emit('chat:room_update' as any, { 
-        roomId, 
-        action: 'user_left' 
+      socket.emit('chat:room_update' as keyof SocketEvents, {
+        roomId,
+        action: 'user_left'
       });
       
       socket.off('chat:message', handleMessage);

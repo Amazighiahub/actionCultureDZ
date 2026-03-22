@@ -33,7 +33,7 @@ describe('NotificationController', () => {
   let req, res;
 
   beforeEach(() => {
-    controller = new NotificationController();
+    controller = NotificationController;
     req = {
       t: jest.fn((key) => 'translated:' + key),
       lang: 'fr',

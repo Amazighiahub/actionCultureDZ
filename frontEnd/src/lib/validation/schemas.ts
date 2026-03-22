@@ -243,12 +243,12 @@ export const profileSchema = z.object({
 });
 
 export const changePasswordSchema = z.object({
-  currentPassword: z.string().min(1, 'Le mot de passe actuel est requis'),
-  newPassword: passwordSchema,
-  confirmPassword: z.string()
-}).refine(data => data.newPassword === data.confirmPassword, {
+  ancien_mot_de_passe: z.string().min(1, 'Le mot de passe actuel est requis'),
+  nouveau_mot_de_passe: passwordSchema,
+  confirmation_mot_de_passe: z.string()
+}).refine(data => data.nouveau_mot_de_passe === data.confirmation_mot_de_passe, {
   message: 'Les mots de passe ne correspondent pas',
-  path: ['confirmPassword']
+  path: ['confirmation_mot_de_passe']
 });
 
 // ============================================================================

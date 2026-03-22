@@ -28,9 +28,9 @@ module.exports = (sequelize) => {
     
     // AJOUT DU CHAMP MANQUANT
     role_participation: {
-      type: DataTypes.ENUM('participant', 'organisateur', 'intervenant', 'benevole', 'staff'),
+      type: DataTypes.ENUM('participant', 'benevole', 'staff'),
       defaultValue: 'participant',
-      comment: 'Rôle de l\'utilisateur dans l\'événement'
+      comment: 'Rôle de l\'utilisateur dans l\'événement (organisateur géré par evenement.id_user, intervenant géré par programme_intervenant)'
     },
    
     date_inscription: {

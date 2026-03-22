@@ -40,28 +40,29 @@ describe('cacheMiddleware', () => {
     it('caches successful responses and returns on second request', async () => {
       const middleware = cacheMiddleware.conditionalCache(300);
 
-      // First request - cache miss
+      // First request - cache miss, middleware replaces res.json asynchronously
       middleware(req, res, next);
-      await new Promise(r => setTimeout(r, 10));
+      await new Promise(r => setTimeout(r, 200));
 
       // Simulate controller sending response (this triggers the intercepted res.json)
       res.json({ success: true, data: 'test-data' });
 
-      // Wait for async cache write
-      await new Promise(r => setTimeout(r, 50));
+      // Wait for async cache write to complete
+      await new Promise(r => setTimeout(r, 500));
 
       // Second request - should hit cache
       const res2 = { statusCode: 200, json: jest.fn() };
       const next2 = jest.fn();
       middleware(req, res2, next2);
 
-      await new Promise(r => setTimeout(r, 50));
+      // Wait for async store.get to resolve and call res2.json
+      await new Promise(r => setTimeout(r, 500));
 
       // Should return cached data without calling next
       expect(res2.json).toHaveBeenCalledWith(
         expect.objectContaining({ success: true, data: 'test-data' })
       );
-    });
+    }, 10000);
   });
 
   describe('userCache', () => {

@@ -1,12 +1,14 @@
 // hooks/useDashboardAdmin.ts - VERSION SIMPLIFIÉE
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { httpClient } from '@/services/httpClient';
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
 import { adminService } from '@/services/admin.service';
+import type { PaginatedResponse } from '@/config/api';
+import type { Oeuvre, Evenement, Lieu } from '@/types';
+import type { Service } from '@/types/models/lieux-details.types';
 
-import type { 
+import type {
   OverviewStats,
   DashboardStats,
   PatrimoineStats,
@@ -61,17 +63,17 @@ export const useDashboardAdmin = (activeTab: AdminTab = 'overview') => {
   const [overview, setOverview] = useState<OverviewStats | null>(null);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [patrimoineStats, setPatrimoineStats] = useState<PatrimoineStats | null>(null);
-  const [allUsers, setAllUsers] = useState<any>(null);
-  const [pendingUsers, setPendingUsers] = useState<any>(null);
-  const [pendingOeuvres, setPendingOeuvres] = useState<any>(null);
-  const [moderationQueue, setModerationQueue] = useState<any>(null);
+  const [allUsers, setAllUsers] = useState<PaginatedResponse<PendingUser> | null>(null);
+  const [pendingUsers, setPendingUsers] = useState<PaginatedResponse<PendingUser> | null>(null);
+  const [pendingOeuvres, setPendingOeuvres] = useState<PaginatedResponse<PendingOeuvre> | null>(null);
+  const [moderationQueue, setModerationQueue] = useState<PaginatedResponse<ModerationItem> | null>(null);
   const [alerts, setAlerts] = useState<Alert[]>([]);
   
   // États pour les données étendues (depuis les endpoints publics)
-  const [oeuvres, setOeuvres] = useState<any>(null);
-  const [evenements, setEvenements] = useState<any>(null);
-  const [patrimoineItems, setPatrimoineItems] = useState<any>(null);
-  const [services, setServices] = useState<any>(null);
+  const [oeuvres, setOeuvres] = useState<PaginatedResponse<Oeuvre> | null>(null);
+  const [evenements, setEvenements] = useState<PaginatedResponse<Evenement> | null>(null);
+  const [patrimoineItems, setPatrimoineItems] = useState<PaginatedResponse<Lieu> | null>(null);
+  const [services, setServices] = useState<PaginatedResponse<Service> | null>(null);
   
   // États de chargement
   const [loading, setLoading] = useState(false);
@@ -266,11 +268,11 @@ const validateUser = async ({ userId, validated }: { userId: number; validated: 
       });
       
       // ✅ SOLUTION: Mise à jour locale du state (plus fiable)
-      setPendingUsers((prev: any) => {
+      setPendingUsers((prev: PaginatedResponse<PendingUser> | null) => {
         if (!prev) return prev;
         return {
           ...prev,
-          items: prev.items?.filter((u: any) => u.id_user !== userId) || [],
+          items: prev.items?.filter((u: PendingUser) => u.id_user !== userId) || [],
           pagination: prev.pagination ? {
             ...prev.pagination,
             total: Math.max(0, (prev.pagination.total || 0) - 1)
@@ -289,7 +291,7 @@ const validateUser = async ({ userId, validated }: { userId: number; validated: 
   }
 };
 
-  const updateUser = async ({ userId, data }: { userId: number; data: any }) => {
+  const updateUser = async ({ userId, data }: { userId: number; data: Partial<PendingUser> }) => {
     try {
       const response = await adminService.updateUser(userId, data);
       if (response.success) {
@@ -385,7 +387,7 @@ const validateUser = async ({ userId, validated }: { userId: number; validated: 
 
   const bulkUserAction = async (userIds: number[], action: string) => {
     try {
-      const response = await adminService.bulkUserAction(userIds, action as any);
+      const response = await adminService.bulkUserAction(userIds, action as 'activate' | 'deactivate' | 'delete' | 'change_role');
       if (response.success) {
         toast({
           title: t('toasts.success'),
@@ -402,7 +404,7 @@ const validateUser = async ({ userId, validated }: { userId: number; validated: 
     }
   };
 
-  const exportUsers = async (format: 'csv' | 'excel', filters?: any) => {
+  const exportUsers = async (format: 'csv' | 'excel', filters?: Record<string, string>) => {
     try {
       const response = await adminService.exportUsers(format, filters);
       if (response.success) {
@@ -529,8 +531,9 @@ const loadOeuvres = useCallback(async (filters?: OeuvreFilters) => {
     if (response.success && response.data) {
       setOeuvres(response.data);
     }
-  } catch (error: any) {
-    if (error.response?.status !== 401) {
+  } catch (error: unknown) {
+    const status = error instanceof Error && 'status' in error ? (error as { status?: number }).status : undefined;
+    if (status !== 401) {
       setErrorOeuvres(t('toasts.loadOeuvresFailed'));
       toast({
         title: t('toasts.error'),
@@ -539,7 +542,7 @@ const loadOeuvres = useCallback(async (filters?: OeuvreFilters) => {
       });
     }
 
-    setOeuvres({ items: [], pagination: { total: 0, page: 1, limit: filters?.limit || 10, totalPages: 1 } });
+    setOeuvres({ items: [], pagination: { total: 0, page: 1, limit: filters?.limit || 10, pages: 1 } });
   } finally {
     setLoadingOeuvres(false);
   }
@@ -556,8 +559,9 @@ const loadEvenements = useCallback(async (filters?: EvenementFilters) => {
     if (response.success && response.data) {
       setEvenements(response.data);
     }
-  } catch (error: any) {
-    if (error.response?.status !== 401) {
+  } catch (error: unknown) {
+    const status = error instanceof Error && 'status' in error ? (error as { status?: number }).status : undefined;
+    if (status !== 401) {
       setErrorEvenements(t('toasts.loadEventsFailed'));
       toast({
         title: t('toasts.error'),
@@ -566,7 +570,7 @@ const loadEvenements = useCallback(async (filters?: EvenementFilters) => {
       });
     }
 
-    setEvenements({ items: [], pagination: { total: 0, page: 1, limit: filters?.limit || 10, totalPages: 1 } });
+    setEvenements({ items: [], pagination: { total: 0, page: 1, limit: filters?.limit || 10, pages: 1 } });
   } finally {
     setLoadingEvenements(false);
   }
@@ -583,8 +587,9 @@ const loadPatrimoineItems = useCallback(async (filters?: PatrimoineFilters) => {
     if (response.success && response.data) {
       setPatrimoineItems(response.data);
     }
-  } catch (error: any) {
-    if (error.response?.status !== 401) {
+  } catch (error: unknown) {
+    const status = error instanceof Error && 'status' in error ? (error as { status?: number }).status : undefined;
+    if (status !== 401) {
       setErrorPatrimoine(t('toasts.loadPatrimoineFailed'));
       toast({
         title: t('toasts.error'),
@@ -593,7 +598,7 @@ const loadPatrimoineItems = useCallback(async (filters?: PatrimoineFilters) => {
       });
     }
 
-    setPatrimoineItems({ items: [], pagination: { total: 0, page: 1, limit: filters?.limit || 10, totalPages: 1 } });
+    setPatrimoineItems({ items: [], pagination: { total: 0, page: 1, limit: filters?.limit || 10, pages: 1 } });
   } finally {
     setLoadingPatrimoine(false);
   }
@@ -610,8 +615,9 @@ const loadServices = useCallback(async (filters?: ServiceFilters) => {
     if (response.success && response.data) {
       setServices(response.data);
     }
-  } catch (error: any) {
-    if (error.response?.status !== 401) {
+  } catch (error: unknown) {
+    const status = error instanceof Error && 'status' in error ? (error as { status?: number }).status : undefined;
+    if (status !== 401) {
       setErrorServices(t('toasts.loadServicesFailed'));
       toast({
         title: t('toasts.error'),
@@ -620,7 +626,7 @@ const loadServices = useCallback(async (filters?: ServiceFilters) => {
       });
     }
 
-    setServices({ items: [], pagination: { total: 0, page: 1, limit: filters?.limit || 10, totalPages: 1 } });
+    setServices({ items: [], pagination: { total: 0, page: 1, limit: filters?.limit || 10, pages: 1 } });
   } finally {
     setLoadingServices(false);
   }
@@ -689,7 +695,7 @@ const deleteService = async (serviceId: number) => {
 
   const moderateSignalement = async ({ signalementId, action }: { signalementId: number; action: string }) => {
     try {
-      const response = await adminService.moderateSignalement(signalementId, action as any);
+      const response = await adminService.moderateSignalement(signalementId, action as 'aucune' | 'avertissement' | 'suppression_contenu' | 'suspension_temporaire' | 'suspension_permanente');
       if (response.success) {
         toast({
           title: t('toasts.success'),

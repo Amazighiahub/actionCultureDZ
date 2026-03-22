@@ -509,6 +509,7 @@ categoriesForType: (typeId: number) => `/metadata/types-oeuvres/${typeId}/catego
     inscription: (id: number) => `/evenements/${id}/register`,
     desinscription: (id: number) => `/evenements/${id}/register`, // DELETE
     participants: (id: number) => `/evenements/${id}/participants`,
+    publicParticipants: (id: number) => `/evenements/${id}/participants/public`,
     validateParticipation: (id: number, userId: number) => `/evenements/${id}/participants/${userId}/validate`,
     professionnelsEnAttente: (id: number) => `/evenements/${id}/professionnels/en-attente`,
     
@@ -527,6 +528,9 @@ categoriesForType: (typeId: number) => `/metadata/types-oeuvres/${typeId}/catego
     
     // Export
     export: (id: number) => `/evenements/${id}/export`,
+
+    // QR Code
+    qrcode: (id: number) => `/evenements/${id}/qrcode`,
   },
 
   // ================================================

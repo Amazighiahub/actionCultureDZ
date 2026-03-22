@@ -55,6 +55,7 @@
     "wrongPassword": "Incorrect password",
     "tokenMissing": "Authentication token missing",
     "tokenInvalid": "Invalid or expired token",
+    "tokenRevoked": "Session expired. Please log in again.",
     "accountBlocked": "Your account is ${status}. Please contact the administrator.",
     "unknownAccountStatus": "Unrecognized account status",
     "emailNotVerified": "Please verify your email to access this feature.",
@@ -242,6 +243,7 @@
     "updated": "Speaker updated successfully",
     "deactivated": "Speaker deactivated successfully",
     "emailExists": "A speaker with this email already exists",
+    "userAlreadyLinked": "This user account is already linked to another speaker",
     "hasPrograms": "Cannot deactivate this speaker as they are associated with ${count} program(s)",
     "serverErrorGet": "Server error while retrieving speakers"
   },

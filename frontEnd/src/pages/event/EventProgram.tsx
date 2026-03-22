@@ -4,20 +4,18 @@
  */
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Clock, User, MapPin, Users, ChevronDown, ChevronUp,
-  Play, Pause, CheckCircle, XCircle, AlertCircle,
+  Play, Pause, CheckCircle, XCircle,
   Mic, Video, FileText
 } from 'lucide-react';
 import { LazyImage, EmptyState } from '@/components/shared';
 import { useTranslateData } from '@/hooks/useTranslateData';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { cn } from '@/lib/Utils';
-import type { Programme } from '@/types/models/programme.types';
+import type { Programme, ProgrammeIntervenant } from '@/types/models/programme.types';
 
 interface EventProgramProps {
   programs: Programme[];
@@ -60,6 +58,9 @@ const ProgramItem: React.FC<ProgramItemProps> = ({ program, isExpanded, onToggle
   const niveauRequis = program.niveau_requis || '';
 
   const Icon = activityIcons[typeActivite] || activityIcons.default;
+
+  // Utiliser Intervenants (nouveau) avec fallback vers Users (ancien)
+  const intervenants: ProgrammeIntervenant[] = (program.Intervenants || program.Users || []) as ProgrammeIntervenant[];
 
   const formatTime = (time?: string) => {
     if (!time) return '--:--';
@@ -166,10 +167,10 @@ const ProgramItem: React.FC<ProgramItemProps> = ({ program, isExpanded, onToggle
               </span>
             )}
             
-            {program.Users && program.Users.length > 0 && (
+            {intervenants.length > 0 && (
               <span className="flex items-center gap-1">
                 <User className="h-3.5 w-3.5" />
-                {program.Users.length} intervenant(s)
+                {intervenants.length} {t('programme.speakerCount', 'intervenant(s)')}
               </span>
             )}
           </div>
@@ -200,29 +201,64 @@ const ProgramItem: React.FC<ProgramItemProps> = ({ program, isExpanded, onToggle
             )}
 
             {/* Intervenants */}
-            {program.Users && program.Users.length > 0 && (
+            {intervenants.length > 0 && (
               <div>
                 <h5 className="font-medium mb-2">{t('programme.speakers', 'Intervenants')}</h5>
-                <div className="flex flex-wrap gap-3">
-                  {program.Users.map((user) => (
-                    <div
-                      key={user.id_user}
-                      className="flex items-center gap-2 bg-background rounded-lg p-2 border"
-                    >
-                      <LazyImage
-                        src={user.photo_url || '/images/default-avatar.png'}
-                        alt={`${td(user.prenom)} ${td(user.nom)}`}
-                        className="w-8 h-8 rounded-full"
-                        aspectRatio="square"
-                        fallback="/images/default-avatar.png"
-                      />
-                      <div>
-                        <p className="text-sm font-medium">
-                          {td(user.prenom)} {td(user.nom)}
-                        </p>
+                <div className="space-y-3">
+                  {intervenants.map((user) => {
+                    const pi = user.ProgrammeIntervenant;
+                    return (
+                      <div
+                        key={user.id_user}
+                        className="flex items-start gap-3 bg-background rounded-lg p-3 border"
+                      >
+                        <LazyImage
+                          src={user.photo_url || '/images/default-avatar.png'}
+                          alt={`${td(user.prenom)} ${td(user.nom)}`}
+                          className="w-10 h-10 rounded-full flex-shrink-0"
+                          aspectRatio="square"
+                          fallback="/images/default-avatar.png"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="text-sm font-semibold">
+                              {td(user.prenom)} {td(user.nom)}
+                            </p>
+                            {pi?.role_intervenant && (
+                              <Badge variant="secondary" className="text-xs">
+                                {t(`programme.roles.${pi.role_intervenant}`, pi.role_intervenant)}
+                              </Badge>
+                            )}
+                            {pi?.statut_confirmation && pi.statut_confirmation !== 'en_attente' && (
+                              <Badge
+                                variant={pi.statut_confirmation === 'confirme' ? 'default' : 'outline'}
+                                className="text-xs"
+                              >
+                                {t(`programme.confirmation.${pi.statut_confirmation}`, pi.statut_confirmation)}
+                              </Badge>
+                            )}
+                          </div>
+                          {pi?.sujet_intervention && (
+                            <p className="text-sm text-muted-foreground mt-0.5 flex items-center gap-1">
+                              <Mic className="h-3.5 w-3.5 flex-shrink-0" />
+                              {pi.sujet_intervention}
+                            </p>
+                          )}
+                          {pi?.biographie_courte && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {pi.biographie_courte}
+                            </p>
+                          )}
+                          {pi?.duree_intervention && (
+                            <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              {pi.duree_intervention} min
+                            </p>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}

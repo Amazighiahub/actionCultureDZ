@@ -31,6 +31,7 @@ import { metadataService } from '@/services/metadata.service';
 import IntervenantModal from '@/components/modals/IntervenantModal';
 import EditeurModal from '@/components/modals/EditeurModal';
 import { useRTL } from '@/hooks/useRTL';
+import { getTranslation, type SupportedLanguage } from '@/types/common/multilingual.types';
 import type { 
   IntervenantExistant, 
   NouvelIntervenant, 
@@ -64,6 +65,14 @@ interface DisplayIntervenant {
   data: IntervenantExistant | NouvelIntervenant | ContributeurOeuvre;
 }
 
+/** Extrait le nom lisible d'un éditeur (gère JSON multilingue et string) */
+const getEditeurName = (nom: any, lang: SupportedLanguage = 'fr'): string => {
+  if (!nom) return '';
+  if (typeof nom === 'string') return nom;
+  if (typeof nom === 'object') return nom[lang] || nom.fr || nom.ar || nom.en || '';
+  return String(nom);
+};
+
 const IntervenantEditeurManager: React.FC<IntervenantEditeurManagerProps> = ({
   typeOeuvreId,
   typesUsers,
@@ -71,7 +80,8 @@ const IntervenantEditeurManager: React.FC<IntervenantEditeurManagerProps> = ({
   onIntervenantsChange,
   onEditeursChange
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const lang = (i18n.language || 'fr') as SupportedLanguage;
   const { rtlClasses } = useRTL();
   
   // États pour les intervenants
@@ -187,8 +197,8 @@ const IntervenantEditeurManager: React.FC<IntervenantEditeurManagerProps> = ({
     } else {
       const query = editeurSearchQuery.toLowerCase();
       setFilteredEditeurs(
-        editeurs.filter(e => 
-          e.nom.toLowerCase().includes(query) ||
+        editeurs.filter(e =>
+          getEditeurName(e.nom, lang).toLowerCase().includes(query) ||
           e.ville?.toLowerCase().includes(query) ||
           e.type_editeur?.toLowerCase().includes(query)
         )
@@ -510,7 +520,7 @@ const IntervenantEditeurManager: React.FC<IntervenantEditeurManagerProps> = ({
                           <div className={`flex items-center gap-3 ${rtlClasses.flexRow}`}>
                             <Building2 className="h-5 w-5 text-muted-foreground" />
                             <div>
-                              <p className="font-medium">{editeur.nom}</p>
+                              <p className="font-medium">{getEditeurName(editeur.nom, lang)}</p>
                               <p className="text-sm text-muted-foreground">
                                 {editeur.ville && `${editeur.ville} • `}
                                 {editeur.type_editeur}
@@ -627,7 +637,7 @@ const IntervenantEditeurManager: React.FC<IntervenantEditeurManagerProps> = ({
                         onClick={() => handleAddEditeur(editeur)}
                       >
                         <div>
-                          <p className="font-medium">{editeur.nom}</p>
+                          <p className="font-medium">{getEditeurName(editeur.nom, lang)}</p>
                           <p className="text-sm text-muted-foreground">
                             {editeur.ville && `${editeur.ville} • `}
                             {editeur.type_editeur}

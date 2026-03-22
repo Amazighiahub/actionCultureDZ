@@ -9,7 +9,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ChevronLeft, Calendar, Image, MessageCircle, Users, Info, MapPin } from 'lucide-react';
+import { ChevronLeft, Calendar, Image, MessageCircle, Users, Info, MapPin, Tag } from 'lucide-react';
 
 // Composants partagés
 import { LoadingSkeleton } from '@/components/shared';
@@ -27,8 +27,12 @@ const EventGallery = React.lazy(() => import('./event/EventGallery'));
 const EventComments = React.lazy(() => import('./event/EventComments'));
 const EventOrganizers = React.lazy(() => import('./event/EventOrganizers'));
 const EventRegistration = React.lazy(() => import('./event/EventRegistration'));
+const EventParticipants = React.lazy(() => import('./event/EventParticipants'));
+const EventMetadata = React.lazy(() => import('./event/EventMetadata'));
+const EventQRCode = React.lazy(() => import('./event/EventQRCode'));
 const RelatedEvents = React.lazy(() => import('./event/RelatedEvents'));
 const ServicesProximite = React.lazy(() => import('@/components/shared/ServicesProximite'));
+const CarteInteractiveUnifiee = React.lazy(() => import('@/components/CarteInteractiveUnifiee'));
 
 // Fallback
 const SectionFallback: React.FC = () => (
@@ -47,6 +51,7 @@ const EventDetailsPage: React.FC = () => {
     programs,
     medias,
     comments,
+    publicParticipants,
     organizers,
     loading,
     error,
@@ -161,6 +166,10 @@ const EventDetailsPage: React.FC = () => {
                     <Image className="h-4 w-4" />
                     {t('event.tabs.gallery', 'Galerie')}
                   </TabsTrigger>
+                  <TabsTrigger value="participants" className="gap-2">
+                    <Users className="h-4 w-4" />
+                    {t('event.tabs.participants', 'Participants')} ({publicParticipants.total})
+                  </TabsTrigger>
                   <TabsTrigger value="comments" className="gap-2">
                     <MessageCircle className="h-4 w-4" />
                     {t('event.tabs.comments', 'Avis')} ({comments?.length || 0})
@@ -171,6 +180,10 @@ const EventDetailsPage: React.FC = () => {
                       {t('event.tabs.services', 'Services')}
                     </TabsTrigger>
                   )}
+                  <TabsTrigger value="metadata" className="gap-2">
+                    <Tag className="h-4 w-4" />
+                    {t('event.tabs.metadata', 'Métadonnées')}
+                  </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="info" className="mt-6">
@@ -197,6 +210,17 @@ const EventDetailsPage: React.FC = () => {
                   </ErrorBoundary>
                 </TabsContent>
 
+                <TabsContent value="participants" className="mt-6">
+                  <ErrorBoundary>
+                    <Suspense fallback={<SectionFallback />}>
+                      <EventParticipants
+                        participants={publicParticipants.participants}
+                        total={publicParticipants.total}
+                      />
+                    </Suspense>
+                  </ErrorBoundary>
+                </TabsContent>
+
                 <TabsContent value="comments" className="mt-6">
                   <ErrorBoundary>
                     <Suspense fallback={<SectionFallback />}>
@@ -210,7 +234,24 @@ const EventDetailsPage: React.FC = () => {
                 </TabsContent>
 
                 {event.Lieu?.id_lieu && (
-                  <TabsContent value="services" className="mt-6">
+                  <TabsContent value="services" className="mt-6 space-y-6">
+                    {/* Carte interactive */}
+                    {event.Lieu.latitude && event.Lieu.longitude && (
+                      <ErrorBoundary>
+                        <Suspense fallback={<SectionFallback />}>
+                          <CarteInteractiveUnifiee
+                            lieux={[event.Lieu]}
+                            center={[event.Lieu.latitude, event.Lieu.longitude]}
+                            zoom={14}
+                            height="350px"
+                            showFilters={true}
+                            showFullscreen={true}
+                          />
+                        </Suspense>
+                      </ErrorBoundary>
+                    )}
+
+                    {/* Liste des services */}
                     <ErrorBoundary>
                       <Suspense fallback={<SectionFallback />}>
                         <ServicesProximite
@@ -223,6 +264,14 @@ const EventDetailsPage: React.FC = () => {
                     </ErrorBoundary>
                   </TabsContent>
                 )}
+
+                <TabsContent value="metadata" className="mt-6">
+                  <ErrorBoundary>
+                    <Suspense fallback={<SectionFallback />}>
+                      <EventMetadata event={event} />
+                    </Suspense>
+                  </ErrorBoundary>
+                </TabsContent>
               </Tabs>
             </div>
 
@@ -247,6 +296,13 @@ const EventDetailsPage: React.FC = () => {
               <ErrorBoundary>
                 <Suspense fallback={<SectionFallback />}>
                   <EventOrganizers organizers={organizers || []} />
+                </Suspense>
+              </ErrorBoundary>
+
+              {/* QR Code */}
+              <ErrorBoundary>
+                <Suspense fallback={<SectionFallback />}>
+                  <EventQRCode eventId={event.id_evenement} eventTitle={event.nom_evenement} />
                 </Suspense>
               </ErrorBoundary>
             </div>

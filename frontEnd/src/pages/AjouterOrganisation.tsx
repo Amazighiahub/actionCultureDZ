@@ -100,7 +100,7 @@ const AjouterOrganisation = () => {
 
     setLoading(true);
     try {
-      const response = await httpClient.post<any>(API_ENDPOINTS.organisations.create, {
+      const response = await httpClient.post<Record<string, unknown>>(API_ENDPOINTS.organisations.create, {
         nom: formData.nom,
         id_type_organisation: parseInt(formData.id_type_organisation),
         description: formData.description,

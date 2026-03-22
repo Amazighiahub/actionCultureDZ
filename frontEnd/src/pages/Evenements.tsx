@@ -46,7 +46,7 @@ const STATUS_OPTION_VALUES = ['tous', 'a_venir', 'en_cours', 'termine'];
 
 // Composant carte d'événement
 interface EventCardProps {
-  event: any;
+  event: Record<string, unknown>;
   onView: (id: number) => void;
 }
 

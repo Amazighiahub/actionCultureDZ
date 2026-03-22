@@ -1,4 +1,5 @@
 // services/NotificationService.js - Orchestrateur des notifications
+const logger = require('../utils/logger');
 const emailService = require('./emailService');
 const smsService = require('./smsService');
 const whatsappService = require('./whatsappService');
@@ -59,7 +60,7 @@ class NotificationService {
           break;
       }
     } catch (err) {
-      console.error(`⚠️ Erreur SMS (${type}):`, err.message);
+      logger.error(`⚠️ Erreur SMS (${type}):`, err.message);
     }
 
     try {
@@ -85,7 +86,7 @@ class NotificationService {
           break;
       }
     } catch (err) {
-      console.error(`⚠️ Erreur WhatsApp (${type}):`, err.message);
+      logger.error(`⚠️ Erreur WhatsApp (${type}):`, err.message);
     }
   }
 
@@ -96,7 +97,7 @@ class NotificationService {
   // Notifier la validation/refus d'un professionnel pour un événement
   async notifierValidationParticipation(evenementId, userId, statut, notes = '') {
     try {
-      console.log(`📧 Notification validation participation: Event ${evenementId}, User ${userId}, Statut ${statut}`);
+      logger.info(`📧 Notification validation participation: Event ${evenementId}, User ${userId}, Statut ${statut}`);
 
       // Récupérer les informations nécessaires
       const [professionnel, evenement] = await Promise.all([
@@ -143,7 +144,7 @@ class NotificationService {
       return result;
 
     } catch (error) {
-      console.error('❌ Erreur notification validation:', error);
+      logger.error('❌ Erreur notification validation:', error);
       throw error;
     }
   }
@@ -165,7 +166,7 @@ async envoyerRappelEvenement(evenementId) {
     const heuresAvant = (dateEvenement - maintenant) / (1000 * 60 * 60);
     
     if (heuresAvant < 23 || heuresAvant > 25) {
-      console.log('Pas le bon moment pour le rappel');
+      logger.info('Pas le bon moment pour le rappel');
       return;
     }
 
@@ -205,7 +206,7 @@ async envoyerRappelEvenement(evenementId) {
       });
     }));
   } catch (error) {
-    console.error('Erreur rappel événement:', error);
+    logger.error('Erreur rappel événement:', error);
   }
 }
 
@@ -241,7 +242,7 @@ async notifierNouveauCommentaire(commentaireId) {
       }
     }
   } catch (error) {
-    console.error('Erreur notification commentaire:', error);
+    logger.error('Erreur notification commentaire:', error);
   }
 }
 
@@ -295,7 +296,7 @@ async notifierNouvelleOeuvre(oeuvreId) {
       await this.enregistrerNotificationsMultiples(notifications);
     }
   } catch (error) {
-    console.error('Erreur notification nouvelle œuvre:', error);
+    logger.error('Erreur notification nouvelle œuvre:', error);
   }
 }
 
@@ -324,7 +325,7 @@ async notifierModeration(userId, type, raison) {
       `Bonjour,\n\n${raison}\n\nL'équipe de modération`
     );
   } catch (error) {
-    console.error('Erreur notification modération:', error);
+    logger.error('Erreur notification modération:', error);
   }
 }
 
@@ -359,7 +360,7 @@ async notifierFavoriAjoute(favoriId) {
       }
     }
   } catch (error) {
-    console.error('Erreur notification favori:', error);
+    logger.error('Erreur notification favori:', error);
   }
 }
 
@@ -433,14 +434,14 @@ async envoyerNewsletter(contenu, filtres = {}) {
       success: results.filter(r => r.success).length
     };
   } catch (error) {
-    console.error('Erreur newsletter:', error);
+    logger.error('Erreur newsletter:', error);
     throw error;
   }
 }
   // Notifier l'annulation d'un événement
   async notifierAnnulationEvenement(evenementId, raison) {
     try {
-      console.log(`📧 Notification annulation événement: ${evenementId}`);
+      logger.info(`📧 Notification annulation événement: ${evenementId}`);
 
       // Récupérer l'événement et ses participants
       const evenement = await this.models.Evenement.findByPk(evenementId, {
@@ -472,7 +473,7 @@ async envoyerNewsletter(contenu, filtres = {}) {
       });
 
       if (participants.length === 0) {
-        console.log('ℹ️ Aucun participant à notifier');
+        logger.info('ℹ️ Aucun participant à notifier');
         return { success: true, notified: 0 };
       }
 
@@ -504,7 +505,7 @@ async envoyerNewsletter(contenu, filtres = {}) {
       await this.enregistrerNotificationsMultiples(notifications);
 
       const successCount = results.filter(r => r.result.success).length;
-      console.log(`✅ ${successCount}/${participants.length} participants notifiés`);
+      logger.info(`✅ ${successCount}/${participants.length} participants notifiés`);
 
       return {
         success: true,
@@ -514,7 +515,7 @@ async envoyerNewsletter(contenu, filtres = {}) {
       };
 
     } catch (error) {
-      console.error('❌ Erreur notification annulation:', error);
+      logger.error('❌ Erreur notification annulation:', error);
       throw error;
     }
   }
@@ -526,7 +527,7 @@ async envoyerNewsletter(contenu, filtres = {}) {
   // Notifier la modification d'un programme
   async notifierModificationProgramme(programmeId, typeModification = 'general') {
     try {
-      console.log(`📧 Notification modification programme: ${programmeId}, Type: ${typeModification}`);
+      logger.info(`📧 Notification modification programme: ${programmeId}, Type: ${typeModification}`);
 
       // Récupérer le programme et l'événement
       const programme = await this.models.Programme.findByPk(programmeId, {
@@ -561,7 +562,7 @@ async envoyerNewsletter(contenu, filtres = {}) {
       });
 
       if (participants.length === 0) {
-        console.log('ℹ️ Aucun participant confirmé à notifier');
+        logger.info('ℹ️ Aucun participant confirmé à notifier');
         return { success: true, notified: 0 };
       }
 
@@ -596,7 +597,7 @@ async envoyerNewsletter(contenu, filtres = {}) {
       await this.enregistrerNotificationsMultiples(notifications);
 
       const successCount = results.filter(r => r.result.success).length;
-      console.log(`✅ ${successCount}/${participants.length} participants notifiés`);
+      logger.info(`✅ ${successCount}/${participants.length} participants notifiés`);
 
       return {
         success: true,
@@ -606,7 +607,7 @@ async envoyerNewsletter(contenu, filtres = {}) {
       };
 
     } catch (error) {
-      console.error('❌ Erreur notification modification programme:', error);
+      logger.error('❌ Erreur notification modification programme:', error);
       throw error;
     }
   }
@@ -628,7 +629,7 @@ async envoyerNewsletter(contenu, filtres = {}) {
   // Notifier un nouvel événement aux utilisateurs intéressés
   async notifierNouvelEvenement(evenementId, filtres = {}) {
     try {
-      console.log(`📧 Notification nouvel événement: ${evenementId}`);
+      logger.info(`📧 Notification nouvel événement: ${evenementId}`);
 
       const evenement = await this.models.Evenement.findByPk(evenementId, {
         include: [
@@ -660,7 +661,7 @@ async envoyerNewsletter(contenu, filtres = {}) {
       });
 
       if (users.length === 0) {
-        console.log('ℹ️ Aucun utilisateur à notifier');
+        logger.info('ℹ️ Aucun utilisateur à notifier');
         return { success: true, notified: 0 };
       }
 
@@ -692,7 +693,7 @@ async envoyerNewsletter(contenu, filtres = {}) {
       await this.enregistrerNotificationsMultiples(notifications);
 
       const successCount = results.filter(r => r.result.success).length;
-      console.log(`✅ ${successCount}/${users.length} utilisateurs notifiés`);
+      logger.info(`✅ ${successCount}/${users.length} utilisateurs notifiés`);
 
       return {
         success: true,
@@ -701,7 +702,7 @@ async envoyerNewsletter(contenu, filtres = {}) {
       };
 
     } catch (error) {
-      console.error('❌ Erreur notification nouvel événement:', error);
+      logger.error('❌ Erreur notification nouvel événement:', error);
       throw error;
     }
   }
@@ -723,10 +724,10 @@ async envoyerNewsletter(contenu, filtres = {}) {
       }
       
       // Log de l'activité
-      console.log(`📝 Notification enregistrée: ${data.type_notification} pour user ${data.id_user}`);
+      logger.info(`📝 Notification enregistrée: ${data.type_notification} pour user ${data.id_user}`);
       
     } catch (error) {
-      console.error('❌ Erreur enregistrement notification:', error);
+      logger.error('❌ Erreur enregistrement notification:', error);
       // Ne pas faire échouer l'envoi si l'enregistrement échoue
     }
   }
@@ -744,10 +745,10 @@ async envoyerNewsletter(contenu, filtres = {}) {
         await this.models.Notification.bulkCreate(notificationsAvecDate);
       }
       
-      console.log(`📝 ${notifications.length} notifications enregistrées`);
+      logger.info(`📝 ${notifications.length} notifications enregistrées`);
       
     } catch (error) {
-      console.error('❌ Erreur enregistrement notifications:', error);
+      logger.error('❌ Erreur enregistrement notifications:', error);
     }
   }
 
@@ -786,7 +787,7 @@ async envoyerNewsletter(contenu, filtres = {}) {
       };
 
     } catch (error) {
-      console.error('❌ Erreur récupération notifications:', error);
+      logger.error('❌ Erreur récupération notifications:', error);
       return { notifications: [], total: 0 };
     }
   }
@@ -806,10 +807,10 @@ async envoyerNewsletter(contenu, filtres = {}) {
         { where }
       );
 
-      console.log(`✅ Notifications marquées comme lues pour user ${userId}`);
+      logger.info(`✅ Notifications marquées comme lues pour user ${userId}`);
 
     } catch (error) {
-      console.error('❌ Erreur marquage notifications:', error);
+      logger.error('❌ Erreur marquage notifications:', error);
     }
   }
 
@@ -831,7 +832,7 @@ async envoyerNewsletter(contenu, filtres = {}) {
       };
 
     } catch (error) {
-      console.error('❌ Erreur récupération préférences:', error);
+      logger.error('❌ Erreur récupération préférences:', error);
       return { actives: true, email: true, push: true, evenements: true, commentaires: true, favoris: true, newsletter: true };
     }
   }

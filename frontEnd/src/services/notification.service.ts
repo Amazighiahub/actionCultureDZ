@@ -1,5 +1,4 @@
 // services/notificationService.unified.ts - Service unifié pour les notifications
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { API_ENDPOINTS, ApiResponse, PaginationParams, getApiUrl, getAuthHeaders } from '@/config/api';
 import { httpClient } from './httpClient';
 // ✅ Correction 1 : Import nommé au lieu de default
@@ -49,13 +48,13 @@ async getNotifications(
   options: LoadNotificationsOptions = {}
 ): Promise<NotificationListResponse> {
   try {
-    const params: any = {};
+    const params: Record<string, string | number | boolean> = {};
     if (options.page) params.page = options.page;
     if (options.limit) params.limit = options.limit;
     if (options.nonLues !== undefined) params.nonLues = options.nonLues;
     if (options.type) params.type = options.type;
 
-    const response = await httpClient.get<any>(API_ENDPOINTS.notifications.list, params);
+    const response = await httpClient.get<NotificationListResponse>(API_ENDPOINTS.notifications.list, params);
 
     if (!response.success) {
       return {
@@ -67,11 +66,11 @@ async getNotifications(
 
     const data = response.data;
     return {
-      notifications: (data?.notifications || data?.items || []).map((n: any) => mapAPIToNotification(n)),
+      notifications: (data?.notifications || data?.items || []).map((n: NotificationAPI) => mapAPIToNotification(n)),
       pagination: data?.pagination || { total: 0, page: options.page || 1, pages: 0, limit: options.limit || 20 },
       stats: data?.stats || { nonLues: 0, total: 0 }
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     return {
       notifications: [],
       pagination: { total: 0, page: options.page || 1, pages: 0, limit: options.limit || 20 },
@@ -84,7 +83,7 @@ async getNotifications(
    */
   async getSummary(): Promise<NotificationSummary> {
     try {
-      const response = await httpClient.get<any>(API_ENDPOINTS.notifications.summary);
+      const response = await httpClient.get<NotificationSummaryAPI | NotificationSummary>(API_ENDPOINTS.notifications.summary);
 
       if (!response.success) {
         return { total: 0, nonLues: 0, parType: {}, dernieres: [] };
@@ -296,9 +295,9 @@ async getNotifications(
   /**
    * Envoyer un email de test
    */
-  async sendTestEmail(type?: TestEmailType): Promise<{ sent: boolean; result: any }> {
+  async sendTestEmail(type?: TestEmailType): Promise<{ sent: boolean; result: Record<string, unknown> }> {
     try {
-      const response = await httpClient.post<{ sent: boolean; result: any }>(
+      const response = await httpClient.post<{ sent: boolean; result: Record<string, unknown> }>(
         API_ENDPOINTS.notifications.testEmail,
         { type }
       );
@@ -333,7 +332,7 @@ async getNotifications(
     } catch (error) {
       return {
         connected: false,
-        error: error.message || 'Erreur inconnue'
+        error: error instanceof Error ? error.message : 'Erreur inconnue'
       };
     }
   }
@@ -439,10 +438,10 @@ async getNotifications(
     url_action?: string;
     priorite?: string;
     canaux?: string[];
-    metadata?: any;
+    metadata?: Record<string, unknown>;
   }): Promise<{ success: boolean; notification?: Notification }> {
     try {
-      const result = await httpClient.post<any>('/notifications/send', notificationData);
+      const result = await httpClient.post<{ notification: Notification }>('/notifications/send', notificationData);
       return {
         success: result.success,
         notification: result.data?.notification
@@ -462,10 +461,10 @@ async getNotifications(
     priorite?: string;
     canaux?: string[];
     global: boolean;
-    metadata?: any;
+    metadata?: Record<string, unknown>;
   }): Promise<{ success: boolean; sent_count?: number }> {
     try {
-      const result = await httpClient.post<any>('/notifications/broadcast', notificationData);
+      const result = await httpClient.post<{ sent_count: number }>('/notifications/broadcast', notificationData);
       return {
         success: result.success,
         sent_count: result.data?.sent_count || 0
@@ -486,7 +485,7 @@ async getNotifications(
     template?: string;
   }): Promise<{ success: boolean; messageId?: string }> {
     try {
-      const result = await httpClient.post<any>('/notifications/test-email', emailData);
+      const result = await httpClient.post<{ messageId: string }>('/notifications/test-email', emailData);
       return {
         success: result.success,
         messageId: result.data?.messageId

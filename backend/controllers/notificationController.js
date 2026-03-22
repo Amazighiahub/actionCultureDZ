@@ -233,4 +233,4 @@ class NotificationController extends BaseController {
   }
 }
 
-module.exports = NotificationController;
+module.exports = new NotificationController();

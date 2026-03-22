@@ -1,4 +1,5 @@
 // services/HierarchieService.js - Version améliorée
+const logger = require('../utils/logger');
 const { Op } = require('sequelize');
 
 class HierarchieService {
@@ -28,8 +29,8 @@ class HierarchieService {
     this._models = models;
     this._initialized = true;
     
-    console.log('✅ HierarchieService initialisé avec succès');
-    console.log('   Modèles disponibles:', Object.keys(models).filter(k => requiredModels.includes(k)));
+    logger.info('✅ HierarchieService initialisé avec succès');
+    logger.info('   Modèles disponibles:', Object.keys(models).filter(k => requiredModels.includes(k)));
     
     return this;
   }
@@ -61,7 +62,7 @@ class HierarchieService {
         order: [['nom_type', 'ASC']]
       });
     } catch (error) {
-      console.error('Erreur dans getTypesOeuvres:', error);
+      logger.error('Erreur dans getTypesOeuvres:', error);
       throw new Error('Erreur lors de la récupération des types d\'œuvres');
     }
   }
@@ -71,7 +72,7 @@ class HierarchieService {
    */
   async getGenresParType(idTypeOeuvre) {
     try {
-      console.log(`🔍 Recherche des genres pour le type ${idTypeOeuvre}`);
+      logger.info(`🔍 Recherche des genres pour le type ${idTypeOeuvre}`);
       
       // Méthode 1: Via les associations
       const typeOeuvre = await this.models.TypeOeuvre.findByPk(idTypeOeuvre, {
@@ -111,7 +112,7 @@ class HierarchieService {
           ordre_affichage: assoc.ordre_affichage
         }));
 
-        console.log(`✅ ${genres.length} genres trouvés pour le type ${idTypeOeuvre} (méthode alternative)`);
+        logger.info(`✅ ${genres.length} genres trouvés pour le type ${idTypeOeuvre} (méthode alternative)`);
         return genres;
       }
 
@@ -126,10 +127,10 @@ class HierarchieService {
       // Trier par ordre d'affichage
       genres.sort((a, b) => a.ordre_affichage - b.ordre_affichage);
 
-      console.log(`✅ ${genres.length} genres trouvés pour le type ${idTypeOeuvre}`);
+      logger.info(`✅ ${genres.length} genres trouvés pour le type ${idTypeOeuvre}`);
       return genres;
     } catch (error) {
-      console.error('Erreur dans getGenresParType:', error);
+      logger.error('Erreur dans getGenresParType:', error);
       throw error;
     }
   }
@@ -139,7 +140,7 @@ class HierarchieService {
    */
   async getCategoriesParGenre(idGenre) {
     try {
-      console.log(`🔍 Recherche des catégories pour le genre ${idGenre}`);
+      logger.info(`🔍 Recherche des catégories pour le genre ${idGenre}`);
 
       // Méthode 1: Via les associations
       const genre = await this.models.Genre.findByPk(idGenre, {
@@ -179,7 +180,7 @@ class HierarchieService {
           ordre_affichage: assoc.ordre_affichage
         }));
 
-        console.log(`✅ ${categories.length} catégories trouvées pour le genre ${idGenre} (méthode alternative)`);
+        logger.info(`✅ ${categories.length} catégories trouvées pour le genre ${idGenre} (méthode alternative)`);
         return categories;
       }
 
@@ -194,10 +195,10 @@ class HierarchieService {
       // Trier par ordre d'affichage
       categories.sort((a, b) => a.ordre_affichage - b.ordre_affichage);
 
-      console.log(`✅ ${categories.length} catégories trouvées pour le genre ${idGenre}`);
+      logger.info(`✅ ${categories.length} catégories trouvées pour le genre ${idGenre}`);
       return categories;
     } catch (error) {
-      console.error('Erreur dans getCategoriesParGenre:', error);
+      logger.error('Erreur dans getCategoriesParGenre:', error);
       throw error;
     }
   }
@@ -243,7 +244,7 @@ class HierarchieService {
 
       return { valide: true };
     } catch (error) {
-      console.error('Erreur dans validerSelection:', error);
+      logger.error('Erreur dans validerSelection:', error);
       throw error;
     }
   }
@@ -277,7 +278,7 @@ class HierarchieService {
 
       return types;
     } catch (error) {
-      console.error('Erreur dans getHierarchieComplete:', error);
+      logger.error('Erreur dans getHierarchieComplete:', error);
       throw error;
     }
   }
@@ -289,7 +290,7 @@ class HierarchieService {
     try {
       // Vérifier que le modèle Oeuvre existe
       if (!this.models.Oeuvre) {
-        console.warn('Modèle Oeuvre non disponible pour les statistiques');
+        logger.warn('Modèle Oeuvre non disponible pour les statistiques');
         return {
           global: [],
           detaille: {}
@@ -339,7 +340,7 @@ class HierarchieService {
               parGenre: genreStats
             };
           } catch (err) {
-            console.warn(`Impossible d'obtenir les stats pour ${modelName}:`, err.message);
+            logger.warn(`Impossible d'obtenir les stats pour ${modelName}:`, err.message);
           }
         }
       }
@@ -352,7 +353,7 @@ class HierarchieService {
         detaille: statsDetaillees
       };
     } catch (error) {
-      console.error('Erreur dans getStatistiquesUtilisation:', error);
+      logger.error('Erreur dans getStatistiquesUtilisation:', error);
       throw error;
     }
   }
@@ -387,7 +388,7 @@ class HierarchieService {
 
       return relation;
     } catch (error) {
-      console.error('Erreur dans ajouterGenreAuType:', error);
+      logger.error('Erreur dans ajouterGenreAuType:', error);
       throw error;
     }
   }
@@ -422,7 +423,7 @@ class HierarchieService {
 
       return relation;
     } catch (error) {
-      console.error('Erreur dans ajouterCategorieAuGenre:', error);
+      logger.error('Erreur dans ajouterCategorieAuGenre:', error);
       throw error;
     }
   }
@@ -441,7 +442,7 @@ class HierarchieService {
       await relation.update(updates);
       return relation;
     } catch (error) {
-      console.error('Erreur dans modifierRelation:', error);
+      logger.error('Erreur dans modifierRelation:', error);
       throw error;
     }
   }
@@ -475,7 +476,7 @@ class HierarchieService {
   reset() {
     this._models = null;
     this._initialized = false;
-    console.log('⚠️ HierarchieService réinitialisé');
+    logger.info('⚠️ HierarchieService réinitialisé');
   }
 }
 

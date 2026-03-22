@@ -1,7 +1,10 @@
 // utils/errorHandler.js
+// ⚠️ DEPRECATED — Ce fichier n'est importé par aucun module.
+// Utiliser AppError (utils/appError.js) + errorMiddleware (middlewares/errorMiddleware.js) à la place.
+// Conservé temporairement pour référence. À supprimer lors du prochain nettoyage.
 
 /**
- * Classe d'erreur personnalisée pour l'API
+ * @deprecated Utiliser AppError à la place
  */
 class ApiError extends Error {
   constructor(statusCode, message, details = null) {

@@ -187,9 +187,11 @@ class OeuvreRepository extends BaseRepository {
 
   /**
    * Trouve une œuvre avec tous ses détails
+   * Split en 2 requêtes parallèles pour réduire le produit cartésien SQL
    */
   async findWithFullDetails(oeuvreId) {
-    const includes = [
+    // Groupe 1 : données essentielles (Saiseur, TypeOeuvre, Langue, Media, Tags, Categories, Users)
+    const coreIncludes = [
       ...this.getDefaultIncludes(),
       {
         model: this.models.TagMotCle,
@@ -205,55 +207,168 @@ class OeuvreRepository extends BaseRepository {
       }
     ];
 
-    // Associations optionnelles (peuvent ne pas exister)
     if (this.models.Categorie) {
-      includes.push({
+      coreIncludes.push({
         model: this.models.Categorie,
         attributes: ['id_categorie', 'nom', 'description'],
         through: { attributes: [] }
       });
     }
-    if (this.models.OeuvreIntervenant) {
-      includes.push({
-        model: this.models.OeuvreIntervenant,
-        attributes: ['id_oeuvre_intervenant', 'role', 'ordre'],
-        include: [
-          { model: this.models.Intervenant, as: 'Intervenant', attributes: ['id_intervenant', 'nom', 'prenom', 'specialites'], required: false },
-          { model: this.models.TypeUser, as: 'TypeUser', attributes: ['id_type_user', 'nom_type'], required: false }
-        ],
+
+    if (this.models.Editeur) {
+      coreIncludes.push({
+        model: this.models.Editeur,
+        attributes: ['id_editeur', 'nom', 'description'],
+        through: { attributes: ['role_editeur', 'date_edition'] },
         required: false
       });
     }
-    if (this.models.Livre) {
-      includes.push({ model: this.models.Livre, required: false });
-    }
-    if (this.models.OeuvreArt) {
-      includes.push({ model: this.models.OeuvreArt, required: false });
-    }
-    if (this.models.Article) {
-      includes.push({ model: this.models.Article, required: false });
-    }
-    if (this.models.ArticleScientifique) {
-      includes.push({ model: this.models.ArticleScientifique, required: false });
-    }
-    if (this.models.Film) {
-      includes.push({ model: this.models.Film, required: false });
-    }
-    if (this.models.AlbumMusical) {
-      includes.push({ model: this.models.AlbumMusical, required: false });
+
+    // Groupe 2 : intervenants + sous-type (requêtes séparées, en parallèle)
+    const secondaryPromises = [];
+
+    if (this.models.OeuvreIntervenant) {
+      secondaryPromises.push(
+        this.models.OeuvreIntervenant.findAll({
+          where: { id_oeuvre: oeuvreId },
+          attributes: [
+            'id', 'id_oeuvre', 'id_intervenant', 'id_type_user',
+            'personnage', 'ordre_apparition', 'role_principal', 'description_role'
+          ],
+          include: [
+            {
+              model: this.models.Intervenant,
+              as: 'Intervenant',
+              attributes: ['id_intervenant', 'nom', 'prenom', 'specialites', 'photo_url', 'biographie'],
+              required: false
+            },
+            { model: this.models.TypeUser, as: 'TypeUser', attributes: ['id_type_user', 'nom_type'], required: false }
+          ],
+          order: [['ordre_apparition', 'ASC'], ['id', 'ASC']]
+        }).catch(() => [])
+      );
+    } else {
+      secondaryPromises.push(Promise.resolve([]));
     }
 
-    return this.findById(oeuvreId, { include: includes });
+    // Lancer les 2 groupes en parallèle
+    const [oeuvre, intervenants] = await Promise.all([
+      this.findById(oeuvreId, { include: coreIncludes }),
+      ...secondaryPromises
+    ]);
+
+    if (!oeuvre) return null;
+
+    const result = oeuvre.get ? oeuvre.get({ plain: true }) : { ...oeuvre };
+
+    // TypeUser sur la liaison oeuvre_user (le front lit OeuvreUser.TypeUser)
+    if (Array.isArray(result.Users) && result.Users.length && this.models.TypeUser) {
+      const typeIds = [
+        ...new Set(
+          result.Users.map((u) => u.OeuvreUser && u.OeuvreUser.id_type_user).filter(Boolean)
+        )
+      ];
+      if (typeIds.length) {
+        const typeRows = await this.models.TypeUser.findAll({
+          where: { id_type_user: { [Op.in]: typeIds } },
+          attributes: ['id_type_user', 'nom_type']
+        });
+        const typeMap = new Map(typeRows.map((t) => [t.id_type_user, t.get({ plain: true })]));
+        for (const u of result.Users) {
+          if (u.OeuvreUser && u.OeuvreUser.id_type_user) {
+            u.OeuvreUser.TypeUser = typeMap.get(u.OeuvreUser.id_type_user) || null;
+          }
+        }
+      }
+    }
+
+    // Attacher les intervenants
+    result.OeuvreIntervenants = intervenants;
+
+    // Sous-type spécifique + clés attendues par le front (Livre, Film, …)
+    const subtype = await this._findSubtype(oeuvreId, result.id_type_oeuvre);
+    if (subtype) {
+      const plainSubtype = subtype.get ? subtype.get({ plain: true }) : subtype;
+      result.subtype = plainSubtype;
+      const key = this._subtypeAssociationKey(result.id_type_oeuvre);
+      if (key) {
+        result[key] = plainSubtype;
+      }
+      await this._attachGenreForSubtype(result, plainSubtype);
+    }
+
+    // Alias vues pour le front (nb_vues en base)
+    if (result.nb_vues != null && result.nombre_vues == null) {
+      result.nombre_vues = result.nb_vues;
+    }
+
+    return result;
   }
 
   /**
-   * Incrémente le compteur de vues
+   * Nom d'association Sequelize (hasOne) pour le sous-type
+   */
+  _subtypeAssociationKey(typeId) {
+    const map = {
+      1: 'Livre',
+      2: 'OeuvreArt',
+      3: 'Film',
+      4: 'Article',
+      5: 'ArticleScientifique',
+      6: 'AlbumMusical',
+      7: 'Artisanat'
+    };
+    return map[typeId] || null;
+  }
+
+  /**
+   * Remplit result.Genres (tableau) si id_genre présent sur le sous-type
+   */
+  async _attachGenreForSubtype(result, plainSubtype) {
+    if (!plainSubtype || !plainSubtype.id_genre || !this.models.Genre) return;
+    try {
+      const genre = await this.models.Genre.findByPk(plainSubtype.id_genre, {
+        attributes: ['id_genre', 'nom', 'description']
+      });
+      if (genre) {
+        const g = genre.get ? genre.get({ plain: true }) : genre;
+        result.Genres = [g];
+        result.Genre = g;
+      }
+    } catch (_) {
+      /* ignore */
+    }
+  }
+
+  /**
+   * Charge le sous-type spécifique d'une œuvre (Livre, Film, etc.)
+   * @private
+   */
+  async _findSubtype(oeuvreId, typeId) {
+    const subtypeModels = {
+      1: 'Livre',
+      2: 'OeuvreArt',
+      3: 'Film',
+      4: 'Article',
+      5: 'ArticleScientifique',
+      6: 'AlbumMusical',
+      7: 'Artisanat'
+    };
+    const modelName = subtypeModels[typeId];
+    if (!modelName || !this.models[modelName]) return null;
+    try {
+      return await this.models[modelName].findOne({ where: { id_oeuvre: oeuvreId } });
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /**
+   * Incrémente le compteur de vues (bufferisé via Redis, flush toutes les 30s)
    */
   async incrementViews(oeuvreId) {
-    return this.model.increment('nb_vues', {
-      by: 1,
-      where: { id_oeuvre: oeuvreId }
-    });
+    const viewCounter = require('../utils/viewCounter');
+    return viewCounter.increment('oeuvre', oeuvreId);
   }
 
   /**

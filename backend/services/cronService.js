@@ -1,4 +1,5 @@
 // services/cronService.js - Service de tâches planifiées
+const logger = require('../utils/logger');
 const cron = require('node-cron');
 const { Op } = require('sequelize');
 const CronLock = require('../utils/cronLock');
@@ -29,7 +30,7 @@ class CronService {
     this.scheduleJobs();
 
     this.isRunning = true;
-    console.log('⏰ Service de tâches planifiées initialisé');
+    logger.info('⏰ Service de tâches planifiées initialisé');
   }
 
   /**
@@ -88,7 +89,7 @@ class CronService {
       this.archiveOldEvents();
     });
 
-    console.log(`📅 ${this.jobs.size} tâches planifiées activées`);
+    logger.info(`📅 ${this.jobs.size} tâches planifiées activées`);
   }
 
   /**
@@ -96,19 +97,19 @@ class CronService {
    */
   scheduleJob(name, cronExpression, taskFunction) {
     if (this.jobs.has(name)) {
-      console.warn(`⚠️ Tâche "${name}" déjà planifiée`);
+      logger.warn(`⚠️ Tâche "${name}" déjà planifiée`);
       return;
     }
 
     const job = cron.schedule(cronExpression, async () => {
       // Verrou distribué : une seule instance exécute le job
       const runTask = async () => {
-        console.log(`🔄 Exécution de la tâche: ${name}`);
+        logger.info(`🔄 Exécution de la tâche: ${name}`);
         try {
           await taskFunction();
-          console.log(`✅ Tâche "${name}" complétée`);
+          logger.info(`✅ Tâche "${name}" complétée`);
         } catch (error) {
-          console.error(`❌ Erreur dans la tâche "${name}":`, error);
+          logger.error(`❌ Erreur dans la tâche "${name}":`, error);
           if (this.models?.AuditLog) {
             await this.models.AuditLog.create({
               action: 'cron_error',
@@ -167,14 +168,14 @@ class CronService {
       ]
     });
 
-    console.log(`📧 ${evenements.length} événements à rappeler`);
+    logger.info(`📧 ${evenements.length} événements à rappeler`);
 
     await Promise.all(evenements.map(async (evenement) => {
       try {
         await this.services.notificationService.envoyerRappelEvenement(evenement.id_evenement);
         await evenement.update({ rappel_envoye: true });
       } catch (error) {
-        console.error(`Erreur rappel événement ${evenement.id_evenement}:`, error);
+        logger.error(`Erreur rappel événement ${evenement.id_evenement}:`, error);
       }
     }));
   }
@@ -202,7 +203,7 @@ class CronService {
       }
     });
 
-    console.log(`🧹 ${result} tokens expirés supprimés`);
+    logger.info(`🧹 ${result} tokens expirés supprimés`);
   }
 
   /**
@@ -223,7 +224,7 @@ class CronService {
       }
     });
 
-    console.log(`🧹 ${result} notifications anciennes supprimées`);
+    logger.info(`🧹 ${result} notifications anciennes supprimées`);
   }
 
   /**
@@ -274,10 +275,10 @@ class CronService {
         });
       }
 
-      console.log(`📊 Stats du jour: ${newUsers} users, ${newOeuvres} œuvres, ${newEvents} événements`);
+      logger.info(`📊 Stats du jour: ${newUsers} users, ${newOeuvres} œuvres, ${newEvents} événements`);
       
     } catch (error) {
-      console.error('Erreur calcul stats:', error);
+      logger.error('Erreur calcul stats:', error);
     }
   }
 
@@ -347,7 +348,7 @@ class CronService {
       if (users.length < BATCH_SIZE) break;
     }
 
-    console.log(`📮 Newsletter envoyée à ${totalSent} abonnés`);
+    logger.info(`📮 Newsletter envoyée à ${totalSent} abonnés`);
   }
 
   /**
@@ -428,11 +429,11 @@ class CronService {
         const stats = await fs.stat(filePath);
         if (now - stats.mtimeMs > maxAge) {
           await fs.unlink(filePath);
-          console.log(`🗑️ Fichier temporaire supprimé: ${file}`);
+          logger.info(`🗑️ Fichier temporaire supprimé: ${file}`);
         }
       }));
     } catch (error) {
-      console.error('Erreur nettoyage fichiers temp:', error);
+      logger.error('Erreur nettoyage fichiers temp:', error);
     }
   }
 
@@ -498,11 +499,11 @@ class CronService {
         );
         await user.update({ rappel_verification_envoye: true });
       } catch (error) {
-        console.error(`Erreur rappel vérification pour ${user.email}:`, error);
+        logger.error(`Erreur rappel vérification pour ${user.email}:`, error);
       }
     }));
 
-    console.log(`📧 ${unverifiedUsers.length} rappels de vérification envoyés`);
+    logger.info(`📧 ${unverifiedUsers.length} rappels de vérification envoyés`);
   }
 
   /**
@@ -524,7 +525,7 @@ class CronService {
       }
     );
 
-    console.log(`📦 ${result[0]} événements archivés`);
+    logger.info(`📦 ${result[0]} événements archivés`);
   }
 
   // ========================================================================
@@ -573,7 +574,7 @@ class CronService {
     const job = this.jobs.get(name);
     if (job) {
       job.stop();
-      console.log(`⏹️ Tâche "${name}" arrêtée`);
+      logger.info(`⏹️ Tâche "${name}" arrêtée`);
       return true;
     }
     return false;
@@ -586,7 +587,7 @@ class CronService {
     const job = this.jobs.get(name);
     if (job) {
       job.start();
-      console.log(`▶️ Tâche "${name}" redémarrée`);
+      logger.info(`▶️ Tâche "${name}" redémarrée`);
       return true;
     }
     return false;
@@ -600,12 +601,12 @@ class CronService {
     const methodName = jobName.charAt(0).toLowerCase() + jobName.slice(1);
     
     if (typeof this[methodName] === 'function') {
-      console.log(`🔄 Exécution manuelle de: ${name}`);
+      logger.info(`🔄 Exécution manuelle de: ${name}`);
       await this[methodName]();
       return true;
     }
     
-    console.error(`❌ Tâche "${name}" non trouvée`);
+    logger.error(`❌ Tâche "${name}" non trouvée`);
     return false;
   }
 
@@ -633,11 +634,11 @@ class CronService {
   stopAll() {
     this.jobs.forEach((job, name) => {
       job.stop();
-      console.log(`⏹️ Tâche "${name}" arrêtée`);
+      logger.info(`⏹️ Tâche "${name}" arrêtée`);
     });
     
     this.isRunning = false;
-    console.log('⏹️ Service de tâches planifiées arrêté');
+    logger.info('⏹️ Service de tâches planifiées arrêté');
   }
 
   /**
@@ -646,11 +647,11 @@ class CronService {
   startAll() {
     this.jobs.forEach((job, name) => {
       job.start();
-      console.log(`▶️ Tâche "${name}" démarrée`);
+      logger.info(`▶️ Tâche "${name}" démarrée`);
     });
     
     this.isRunning = true;
-    console.log('▶️ Service de tâches planifiées redémarré');
+    logger.info('▶️ Service de tâches planifiées redémarré');
   }
 }
 

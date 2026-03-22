@@ -1,7 +1,13 @@
 // services/dashboard.service.ts
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { API_ENDPOINTS, ApiResponse, PaginatedResponse, FilterParams } from '@/config/api';
 import { httpClient } from './httpClient';
+import type {
+  PatrimoineSiteSummary, DashboardUserSummary, DashboardContentSummary,
+  CreatorMetrics, EngagementMetric, TopContributor, ModerationItem,
+  BulkActionResult, ParcoursStats, UsersStats, GeographicDistribution,
+  ContentStats, ModerationStats, RetentionAnalysis, FunnelAnalysis,
+  EngagementMetrics, CacheStatus
+} from '@/types/api/dashboard.types';
 
 
 interface OverviewStats {
@@ -49,8 +55,8 @@ interface PatrimoineStats {
   total_sites: number;
   sites_by_type: Record<string, number>;
   sites_by_wilaya: Array<{ wilaya: string; count: number }>;
-  recent_additions: Array<any>;
-  popular_sites: Array<any>;
+  recent_additions: Array<PatrimoineSiteSummary>;
+  popular_sites: Array<PatrimoineSiteSummary>;
 }
 
 interface QRStats {
@@ -98,7 +104,7 @@ interface ModerationAction {
   entity_type: 'user' | 'oeuvre' | 'commentaire' | 'evenement';
   entity_ids: number[];
   reason?: string;
-  duration?: number; // Pour suspension
+  duration?: number;
   notify_user?: boolean;
 }
 
@@ -109,7 +115,7 @@ interface AuditLog {
   action: string;
   entity_type: string;
   entity_id: number;
-  details: any;
+  details: Record<string, string | number | boolean | null>;
   ip_address: string;
   user_agent: string;
   timestamp: string;
@@ -123,9 +129,9 @@ interface AdvancedAnalytics {
     user_flow: Array<{ from: string; to: string; count: number }>;
   };
   content_performance: {
-    top_creators: Array<{ user: any; metrics: any }>;
-    viral_content: Array<{ content: any; shares: number; reach: number }>;
-    engagement_by_type: Record<string, any>;
+    top_creators: Array<{ user: DashboardUserSummary; metrics: CreatorMetrics }>;
+    viral_content: Array<{ content: DashboardContentSummary; shares: number; reach: number }>;
+    engagement_by_type: Record<string, EngagementMetric>;
   };
   geographic_insights: {
     active_regions: Array<{ wilaya: string; users: number; content: number }>;
@@ -176,13 +182,13 @@ class DashboardService {
 
   async getQRStats(period?: string): Promise<ApiResponse<QRStats>> {
     return httpClient.get<QRStats>(
-      API_ENDPOINTS.dashboard.qrStats, 
+      API_ENDPOINTS.dashboard.qrStats,
       period ? { period } : undefined
     );
   }
 
-  async getParcoursStats(): Promise<ApiResponse<any>> {
-    return httpClient.get<any>(API_ENDPOINTS.dashboard.parcours);
+  async getParcoursStats(): Promise<ApiResponse<ParcoursStats>> {
+    return httpClient.get<ParcoursStats>(API_ENDPOINTS.dashboard.parcours);
   }
 
   // Utilisateurs
@@ -190,12 +196,12 @@ class DashboardService {
     return httpClient.getPaginated<PendingUser>(API_ENDPOINTS.dashboard.pendingUsers, params);
   }
 
-  async getUsersStats(): Promise<ApiResponse<any>> {
-    return httpClient.get<any>(API_ENDPOINTS.dashboard.usersStats);
+  async getUsersStats(): Promise<ApiResponse<UsersStats>> {
+    return httpClient.get<UsersStats>(API_ENDPOINTS.dashboard.usersStats);
   }
 
-  async getGeographicDistribution(): Promise<ApiResponse<any>> {
-    return httpClient.get<any>(API_ENDPOINTS.dashboard.geographic);
+  async getGeographicDistribution(): Promise<ApiResponse<GeographicDistribution>> {
+    return httpClient.get<GeographicDistribution>(API_ENDPOINTS.dashboard.geographic);
   }
 
   // Contenu
@@ -203,34 +209,34 @@ class DashboardService {
     return httpClient.getPaginated<PendingOeuvre>(API_ENDPOINTS.dashboard.pendingOeuvres, params);
   }
 
-  async getContentStats(): Promise<ApiResponse<any>> {
-    return httpClient.get<any>(API_ENDPOINTS.dashboard.contentStats);
+  async getContentStats(): Promise<ApiResponse<ContentStats>> {
+    return httpClient.get<ContentStats>(API_ENDPOINTS.dashboard.contentStats);
   }
 
-  async getTopContributors(limit: number = 10): Promise<ApiResponse<any[]>> {
-    return httpClient.get<any[]>(API_ENDPOINTS.dashboard.topContributors, { limit });
+  async getTopContributors(limit: number = 10): Promise<ApiResponse<TopContributor[]>> {
+    return httpClient.get<TopContributor[]>(API_ENDPOINTS.dashboard.topContributors, { limit });
   }
 
   // Modération
-  async getModerationQueue(params?: FilterParams): Promise<ApiResponse<PaginatedResponse<any>>> {
-    return httpClient.getPaginated<any>(API_ENDPOINTS.dashboard.moderationQueue, params);
+  async getModerationQueue(params?: FilterParams): Promise<ApiResponse<PaginatedResponse<ModerationItem>>> {
+    return httpClient.getPaginated<ModerationItem>(API_ENDPOINTS.dashboard.moderationQueue, params);
   }
 
   async getSignalements(params?: FilterParams & { priorite?: string }): Promise<ApiResponse<PaginatedResponse<Signalement>>> {
     return httpClient.getPaginated<Signalement>(API_ENDPOINTS.dashboard.signalements, params);
   }
 
-  async getModerationStats(): Promise<ApiResponse<any>> {
-    return httpClient.get<any>(API_ENDPOINTS.dashboard.moderationStats);
+  async getModerationStats(): Promise<ApiResponse<ModerationStats>> {
+    return httpClient.get<ModerationStats>(API_ENDPOINTS.dashboard.moderationStats);
   }
 
   // Actions
   async performAction(action: ModerationAction): Promise<ApiResponse<{ affected: number }>> {
-    return httpClient.post<any>(API_ENDPOINTS.dashboard.performAction, action);
+    return httpClient.post<{ affected: number }>(API_ENDPOINTS.dashboard.performAction, action);
   }
 
-  async performBulkActions(actions: ModerationAction[]): Promise<ApiResponse<{ total_affected: number; results: any[] }>> {
-    return httpClient.post<any>(API_ENDPOINTS.dashboard.bulkActions, { actions });
+  async performBulkActions(actions: ModerationAction[]): Promise<ApiResponse<{ total_affected: number; results: BulkActionResult[] }>> {
+    return httpClient.post<{ total_affected: number; results: BulkActionResult[] }>(API_ENDPOINTS.dashboard.bulkActions, { actions });
   }
 
   async validateUser(id: number, approved: boolean, comment?: string): Promise<ApiResponse<void>> {
@@ -264,28 +270,28 @@ class DashboardService {
   // Analytics avancées
   async getAdvancedAnalytics(section?: string): Promise<ApiResponse<AdvancedAnalytics>> {
     return httpClient.get<AdvancedAnalytics>(
-      API_ENDPOINTS.dashboard.advancedAnalytics, 
+      API_ENDPOINTS.dashboard.advancedAnalytics,
       section ? { section } : undefined
     );
   }
 
-  async getRetentionAnalysis(cohort?: string): Promise<ApiResponse<any>> {
-    return httpClient.get<any>(
-      API_ENDPOINTS.dashboard.retention, 
+  async getRetentionAnalysis(cohort?: string): Promise<ApiResponse<RetentionAnalysis>> {
+    return httpClient.get<RetentionAnalysis>(
+      API_ENDPOINTS.dashboard.retention,
       cohort ? { cohort } : undefined
     );
   }
 
-  async getFunnelAnalysis(funnel_type: string): Promise<ApiResponse<any>> {
-    return httpClient.get<any>(
-      API_ENDPOINTS.dashboard.funnel, 
+  async getFunnelAnalysis(funnel_type: string): Promise<ApiResponse<FunnelAnalysis>> {
+    return httpClient.get<FunnelAnalysis>(
+      API_ENDPOINTS.dashboard.funnel,
       { type: funnel_type }
     );
   }
 
-  async getEngagementMetrics(period?: string): Promise<ApiResponse<any>> {
-    return httpClient.get<any>(
-      API_ENDPOINTS.dashboard.engagement, 
+  async getEngagementMetrics(period?: string): Promise<ApiResponse<EngagementMetrics>> {
+    return httpClient.get<EngagementMetrics>(
+      API_ENDPOINTS.dashboard.engagement,
       period ? { period } : undefined
     );
   }
@@ -322,14 +328,14 @@ class DashboardService {
   }
 
   // Configuration
-  
 
- 
 
- 
+
+
+
 
   // Monitoring
-  
+
 
   async getAlerts(active_only: boolean = true): Promise<ApiResponse<Alert[]>> {
 
@@ -338,24 +344,19 @@ class DashboardService {
 
   // Cache
   async clearCache(type?: 'all' | 'users' | 'content' | 'static'): Promise<ApiResponse<{ cleared: string[] }>> {
-   
-    return httpClient.post<any>(API_ENDPOINTS.dashboard.cache.clear, { type: type || 'all' });
+
+    return httpClient.post<{ cleared: string[] }>(API_ENDPOINTS.dashboard.cache.clear, { type: type || 'all' });
   }
 
-  async getCacheStatus(): Promise<ApiResponse<{
-    size: number;
-    entries: number;
-    hit_rate: number;
-    last_cleared: string;
-  }>> {
-   
-    return httpClient.get<any>(API_ENDPOINTS.dashboard.cache.status);
+  async getCacheStatus(): Promise<ApiResponse<CacheStatus>> {
+
+    return httpClient.get<CacheStatus>(API_ENDPOINTS.dashboard.cache.status);
   }
 }
 
 export const dashboardService = new DashboardService();
-export type { 
-  OverviewStats, DetailedStats, PatrimoineStats, QRStats, 
-  PendingUser, PendingOeuvre, Signalement, ModerationAction, 
-  AuditLog, AdvancedAnalytics, SystemHealth, Alert 
+export type {
+  OverviewStats, DetailedStats, PatrimoineStats, QRStats,
+  PendingUser, PendingOeuvre, Signalement, ModerationAction,
+  AuditLog, AdvancedAnalytics, SystemHealth, Alert
 };

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -21,6 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRTL } from '@/hooks/useRTL';
 import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import { metadataService } from '@/services/metadata.service';
+import type { Materiau, Technique } from '@/types/models/references.types';
 import MultiLangInput from '@/components/MultiLangInput';
 
 type MultiLangText = {
@@ -49,11 +49,11 @@ const INITIAL_FORM: FormData = {
   description: { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
   id_materiau: 0,
   id_technique: 0,
-  prix_min: undefined as any,
-  prix_max: undefined as any,
-  delai_fabrication: undefined as any,
+  prix_min: undefined,
+  prix_max: undefined,
+  delai_fabrication: undefined,
   sur_commande: true,
-  en_stock: undefined as any,
+  en_stock: undefined,
   tags: []
 };
 
@@ -81,8 +81,8 @@ const AjouterArtisanat: React.FC = () => {
   useUnsavedChanges(isDirty);
 
   // Metadata
-  const [materiaux, setMateriaux] = useState<any[]>([]);
-  const [techniques, setTechniques] = useState<any[]>([]);
+  const [materiaux, setMateriaux] = useState<Materiau[]>([]);
+  const [techniques, setTechniques] = useState<Technique[]>([]);
   const [loadingMetadata, setLoadingMetadata] = useState(true);
 
   // Load metadata
@@ -102,11 +102,14 @@ const AjouterArtisanat: React.FC = () => {
     try {
       const response = await artisanatService.getById(editId);
       if (response.success && response.data) {
-        const art = response.data as any;
-        const toObj = (v: any): MultiLangText =>
-          typeof v === 'object' && v !== null
-            ? { fr: v.fr || '', ar: v.ar || '', en: v.en || '', 'tz-ltn': v['tz-ltn'] || '', 'tz-tfng': v['tz-tfng'] || '' }
-            : { fr: v || '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' };
+        const art = response.data as Record<string, unknown>;
+        const toObj = (v: unknown): MultiLangText => {
+          if (typeof v === 'object' && v !== null) {
+            const obj = v as Record<string, unknown>;
+            return { fr: (obj.fr as string) || '', ar: (obj.ar as string) || '', en: (obj.en as string) || '', 'tz-ltn': (obj['tz-ltn'] as string) || '', 'tz-tfng': (obj['tz-tfng'] as string) || '' };
+          }
+          return { fr: (typeof v === 'string' ? v : '') || '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' };
+        };
         setFormData({
           nom: toObj(art.nom),
           description: toObj(art.description),
@@ -117,14 +120,17 @@ const AjouterArtisanat: React.FC = () => {
           delai_fabrication: art.delai_fabrication,
           sur_commande: art.sur_commande || false,
           en_stock: art.en_stock,
-          tags: art.tags?.map((t: any) => t.nom || t) || [],
+          tags: (Array.isArray(art.tags) ? art.tags : []).map((t: unknown) => {
+            if (typeof t === 'object' && t !== null && 'nom' in t) return (t as { nom: string }).nom;
+            return typeof t === 'string' ? t : '';
+          }).filter(Boolean),
         });
         // Artisanat loaded for editing
       } else {
         setError('Artisanat introuvable');
         navigate('/dashboard-pro');
       }
-    } catch (err: any) {
+    } catch (_err: unknown) {
       setError(t('ajouterArtisanat.errors.loadFailed', 'Impossible de charger l\'artisanat'));
     }
   };
@@ -276,7 +282,7 @@ const AjouterArtisanat: React.FC = () => {
 
       if (response.success) {
         // Upload medias if any (only for new items or new medias)
-        const itemId = (response.data as any)?.id || editId;
+        const itemId = (response.data as { id?: number } | undefined)?.id || editId;
         if (medias.length > 0 && itemId) {
           await artisanatService.uploadMedias(itemId, medias);
         }
@@ -288,18 +294,18 @@ const AjouterArtisanat: React.FC = () => {
       } else {
         setError(response.error || (isEditMode ? 'Erreur lors de la mise à jour' : t('ajouterArtisanat.errors.createFailed', 'Erreur lors de la création')));
       }
-    } catch (err: any) {
-      setError(err.message || t('ajouterArtisanat.errors.createFailed', 'Erreur lors de la création'));
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : t('ajouterArtisanat.errors.createFailed', 'Erreur lors de la création'));
     } finally {
       setLoading(false);
     }
   };
 
-  const getLocalizedName = (item: any) => {
+  const getLocalizedName = (item: { nom?: string | Record<string, string> } | null) => {
     if (!item) return '';
     if (typeof item.nom === 'string') {
       try {
-        const parsed = JSON.parse(item.nom);
+        const parsed = JSON.parse(item.nom) as Record<string, string>;
         return parsed[currentLang] || parsed.fr || item.nom;
       } catch {
         return item.nom;

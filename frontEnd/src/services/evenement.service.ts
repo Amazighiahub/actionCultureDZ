@@ -1,11 +1,11 @@
 // services/evenement.service.ts
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { API_ENDPOINTS, ApiResponse, PaginatedResponse, FilterParams } from '@/config/api';
 import { BaseService } from './base.service';
 import { httpClient } from './httpClient';
 import { Programme } from '@/types';
 import { mediaService } from './media.service';
 import { Evenement } from '@/types/models/evenement.types';
+import { Oeuvre } from '@/types/models/oeuvre.types';
 
 
 
@@ -54,6 +54,22 @@ interface Participant {
   statut: string;
   date_inscription: string;
   present?: boolean;
+}
+
+export interface PublicParticipant {
+  role_participation: string;
+  date_inscription: string;
+  User: {
+    id_user: number;
+    nom: string;
+    prenom: string;
+    photo_url?: string;
+  };
+}
+
+interface PublicParticipantsResponse {
+  participants: PublicParticipant[];
+  total: number;
 }
 
 interface ShareData {
@@ -134,8 +150,8 @@ class EvenementService extends BaseService<Evenement, CreateEvenementData, Updat
   }
 
   // Participation
-  async inscription(eventId: number, data?: { nombre_personnes?: number; commentaire?: string; oeuvres?: number[]; notes?: string }): Promise<ApiResponse<{ inscription: any; oeuvres_soumises: number; reference?: string }>> {
-    return httpClient.post<{ inscription: any; oeuvres_soumises: number; reference?: string }>(API_ENDPOINTS.evenements.inscription(eventId), data);
+  async inscription(eventId: number, data?: { nombre_personnes?: number; commentaire?: string; oeuvres?: number[]; notes?: string }): Promise<ApiResponse<{ inscription: { id: number; statut: string; date_inscription: string }; oeuvres_soumises: number; reference?: string }>> {
+    return httpClient.post<{ inscription: { id: number; statut: string; date_inscription: string }; oeuvres_soumises: number; reference?: string }>(API_ENDPOINTS.evenements.inscription(eventId), data);
   }
 
   async desinscription(eventId: number): Promise<ApiResponse<void>> {
@@ -145,15 +161,15 @@ class EvenementService extends BaseService<Evenement, CreateEvenementData, Updat
   /**
    * Vérifier si l'utilisateur est inscrit à un événement
    */
-  async checkRegistration(eventId: number): Promise<ApiResponse<{ isRegistered: boolean; status: string | null; inscription?: any }>> {
+  async checkRegistration(eventId: number): Promise<ApiResponse<{ isRegistered: boolean; status: string | null; inscription?: { id: number; statut: string; date_inscription: string } }>> {
     try {
-      const response = await httpClient.get<{ isRegistered: boolean; status: string | null; inscription?: any }>(
+      const response = await httpClient.get<{ isRegistered: boolean; status: string | null; inscription?: { id: number; statut: string; date_inscription: string } }>(
         `/evenements/${eventId}/mon-inscription`
       );
       return response;
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Si 404, l'utilisateur n'est pas inscrit
-      if (error.response?.status === 404) {
+      if ((error as { response?: { status?: number } }).response?.status === 404) {
         return {
           success: true,
           data: { isRegistered: false, status: null }
@@ -161,13 +177,17 @@ class EvenementService extends BaseService<Evenement, CreateEvenementData, Updat
       }
       return {
         success: false,
-        error: error.message || 'Erreur lors de la vérification'
+        error: error instanceof Error ? error.message : 'Erreur lors de la vérification'
       };
     }
   }
 
   async getParticipants(eventId: number, params?: FilterParams): Promise<ApiResponse<PaginatedResponse<Participant>>> {
     return httpClient.getPaginated<Participant>(API_ENDPOINTS.evenements.participants(eventId), params);
+  }
+
+  async getPublicParticipants(eventId: number): Promise<ApiResponse<PublicParticipantsResponse>> {
+    return httpClient.get<PublicParticipantsResponse>(API_ENDPOINTS.evenements.publicParticipants(eventId));
   }
 
   async validateParticipation(eventId: number, userId: number, validated: boolean): Promise<ApiResponse<void>> {
@@ -218,8 +238,8 @@ class EvenementService extends BaseService<Evenement, CreateEvenementData, Updat
   }
 
   // Espace professionnel
-  async getMesOeuvres(eventId: number): Promise<ApiResponse<any[]>> {
-    return httpClient.get<any[]>(API_ENDPOINTS.evenements.mesOeuvres(eventId));
+  async getMesOeuvres(eventId: number): Promise<ApiResponse<Oeuvre[]>> {
+    return httpClient.get<Oeuvre[]>(API_ENDPOINTS.evenements.mesOeuvres(eventId));
   }
 
   async addOeuvre(eventId: number, oeuvreId: number): Promise<ApiResponse<void>> {
@@ -246,13 +266,19 @@ class EvenementService extends BaseService<Evenement, CreateEvenementData, Updat
     upcoming_count: number;
     top_locations: Array<{ wilaya: string; count: number }>;
   }>> {
-    return httpClient.get<any>(API_ENDPOINTS.evenements.statistics);
+    return httpClient.get<{ total_evenements: number; evenements_by_status: Record<string, number>; participants_total: number; upcoming_count: number; top_locations: Array<{ wilaya: string; count: number }> }>(API_ENDPOINTS.evenements.statistics);
   }
 
   
 /**
  * Récupérer les événements où une œuvre est présentée
  */
+async getQRCode(eventId: number, size = 300): Promise<ApiResponse<{ qr_data_url: string; event_url: string; event_id: number }>> {
+  return httpClient.get<{ qr_data_url: string; event_url: string; event_id: number }>(
+    `${API_ENDPOINTS.evenements.qrcode(eventId)}?size=${size}`
+  );
+}
+
 async getByOeuvre(oeuvreId: number): Promise<ApiResponse<Evenement[]>> {
   try {
     const response = await httpClient.get<Evenement[]>(
@@ -267,10 +293,10 @@ async getByOeuvre(oeuvreId: number): Promise<ApiResponse<Evenement[]>> {
       success: false,
       error: response.error || 'Aucun événement trouvé'
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     return {
       success: false,
-      error: error.message || 'Erreur lors de la récupération des événements'
+      error: error instanceof Error ? error.message : 'Erreur lors de la récupération des événements'
     };
   }
 }

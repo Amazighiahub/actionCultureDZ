@@ -1,5 +1,4 @@
 // services/favori.service.ts
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { API_ENDPOINTS, ApiResponse, PaginatedResponse, PaginationParams } from '@/config/api';
 import { httpClient } from './httpClient';
 
@@ -10,7 +9,7 @@ interface Favori {
   id_entite: number;
   date_ajout: string;
   notes?: string;
-  entite?: any;
+  entite?: Record<string, unknown>;
   date_creation: string;
   date_modification: string;
 }
@@ -33,7 +32,7 @@ interface FavoriStats {
 interface PopularItem {
   type: string;
   count: number;
-  entite: any;
+  entite: Record<string, unknown>;
 }
 
 interface GroupedFavoris {
@@ -47,7 +46,7 @@ interface GroupedFavoris {
 interface CheckFavoriResponse {
   success: boolean;
   isFavorite: boolean;
-  data: any;
+  data: Record<string, unknown> | null;
 }
 
 class FavoriService {
@@ -109,7 +108,7 @@ async check(type: string, entityId: number): Promise<CheckFavoriResponse> {
     const cacheKey = `cache_${API_ENDPOINTS.favoris.check(type, entityId)}`;
     localStorage.removeItem(cacheKey);
     
-    const response = await httpClient.get<any>(API_ENDPOINTS.favoris.check(type, entityId));
+    const response = await httpClient.get<{ isFavorite?: boolean; is_favorite?: boolean }>(API_ENDPOINTS.favoris.check(type, entityId));
     
     // L'API retourne probablement :
     // - Soit { success: true, data: { isFavorite: boolean } }
@@ -118,7 +117,7 @@ async check(type: string, entityId: number): Promise<CheckFavoriResponse> {
     // Vérifier où se trouve isFavorite
     const isFavorite = response.data?.isFavorite || 
                       response.data?.is_favorite || 
-                      (response as any).isFavorite || 
+                      (response as Record<string, unknown>).isFavorite || 
                       false;
     
     return {

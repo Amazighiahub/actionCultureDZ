@@ -55,6 +55,7 @@
     "wrongPassword": "Mot de passe incorrect",
     "tokenMissing": "Token d'authentification manquant",
     "tokenInvalid": "Token invalide ou expiré",
+    "tokenRevoked": "Session expirée. Veuillez vous reconnecter.",
     "accountBlocked": "Votre compte est ${status}. Veuillez contacter l'administrateur.",
     "unknownAccountStatus": "Statut de compte non reconnu",
     "emailNotVerified": "Veuillez vérifier votre email pour accéder à cette fonctionnalité.",
@@ -242,6 +243,7 @@
     "updated": "Intervenant mis à jour avec succès",
     "deactivated": "Intervenant désactivé avec succès",
     "emailExists": "Un intervenant avec cet email existe déjà",
+    "userAlreadyLinked": "Ce compte utilisateur est déjà lié à un autre intervenant",
     "hasPrograms": "Impossible de désactiver cet intervenant car il est associé à ${count} programme(s)",
     "serverErrorGet": "Erreur serveur lors de la récupération des intervenants"
   },

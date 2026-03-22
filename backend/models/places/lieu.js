@@ -93,22 +93,25 @@ module.exports = (sequelize) => {
       },
       {
         fields: ['typeLieu']
+      },
+      {
+        fields: ['createdAt']
       }
     ]
   });
 
   // Associations
   Lieu.associate = (models) => {
-    Lieu.belongsTo(models.Commune, { foreignKey: 'communeId' });
-    Lieu.belongsTo(models.Localite, { foreignKey: 'localiteId' });
+    Lieu.belongsTo(models.Commune, { foreignKey: 'communeId', onDelete: 'RESTRICT' });
+    Lieu.belongsTo(models.Localite, { foreignKey: 'localiteId', onDelete: 'SET NULL' });
     
     Lieu.hasOne(models.DetailLieu, { foreignKey: 'id_lieu', onDelete: 'CASCADE' });
     Lieu.hasMany(models.Service, { foreignKey: 'id_lieu', onDelete: 'CASCADE' });
     Lieu.hasMany(models.LieuMedia, { foreignKey: 'id_lieu', onDelete: 'CASCADE' });
     Lieu.hasMany(models.QRCode, { foreignKey: 'id_lieu', onDelete: 'CASCADE' });
     
-    Lieu.hasMany(models.Evenement, { foreignKey: 'id_lieu' });
-    Lieu.hasMany(models.Programme, { foreignKey: 'id_lieu' });
+    Lieu.hasMany(models.Evenement, { foreignKey: 'id_lieu', onDelete: 'SET NULL' });
+    Lieu.hasMany(models.Programme, { foreignKey: 'id_lieu', onDelete: 'SET NULL' });
     
     Lieu.belongsToMany(models.Parcours, {
       through: models.ParcoursLieu,
@@ -118,7 +121,8 @@ module.exports = (sequelize) => {
 
     Lieu.hasMany(models.ParcoursLieu, {
       foreignKey: 'id_lieu',
-      as: 'ParcoursLieux'
+      as: 'ParcoursLieux',
+      onDelete: 'CASCADE'
     });
   };
 

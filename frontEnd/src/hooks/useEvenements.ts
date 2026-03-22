@@ -72,7 +72,7 @@ export function useEvenements(options: UseEvenementsOptions = {}) {
         // 1. { data: [...], pagination: {...} } (format actuel)
         // 2. { data: { items: [...], ... } } (format PaginatedResponse)
         const responseData = response.data;
-        const paginationData = (response as any).pagination;
+        const paginationData = response.pagination;
 
         // Si data est un tableau direct
         if (Array.isArray(responseData)) {

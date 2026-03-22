@@ -11,6 +11,7 @@ import { evenementService } from '@/services/evenement.service';
 import { programmeService } from '@/services/programme.service';
 import { commentaireService } from '@/services/commentaire.service';
 import type { Evenement } from '@/types/models/evenement.types';
+import type { Organisation } from '@/types/models/organisation.types';
 import type { Programme } from '@/types/models/programme.types';
 import type { Media } from '@/types/models/media.types';
 
@@ -59,6 +60,7 @@ export function useEventDetails(eventId: number, options: EventDetailsOptions = 
   const programsKey = ['event-programs', eventId];
   const mediasKey = ['event-medias', eventId];
   const commentsKey = ['event-comments', eventId];
+  const participantsKey = ['event-participants-public', eventId];
 
   // ============================================
   // QUERIES
@@ -127,6 +129,20 @@ export function useEventDetails(eventId: number, options: EventDetailsOptions = 
     },
     enabled: enabled && eventId > 0,
     staleTime: 1 * 60 * 1000, // 1 minute
+  });
+
+  // Charger les participants publics (confirmés)
+  const participantsQuery = useQuery({
+    queryKey: participantsKey,
+    queryFn: async () => {
+      const response = await evenementService.getPublicParticipants(eventId);
+      if (response.success && response.data) {
+        return response.data;
+      }
+      return { participants: [], total: 0 };
+    },
+    enabled: enabled && eventId > 0,
+    staleTime: 5 * 60 * 1000,
   });
 
   // Vérifier le statut d'inscription de l'utilisateur
@@ -279,13 +295,17 @@ export function useEventDetails(eventId: number, options: EventDetailsOptions = 
 
     // Organisations partenaires
     if (event.Organisations) {
-      event.Organisations.forEach((org) => {
+      type OrgWithJunction = Organisation & {
+        logo_url?: string;
+        EvenementOrganisation?: { role?: string };
+      };
+      (event.Organisations as OrgWithJunction[]).forEach((org) => {
         organizers.push({
           id: org.id_organisation,
           type: 'organisation',
           nom: org.nom,
-          logo_url: (org as any).logo_url,
-          role: (org as any).EvenementOrganisation?.role || 'partenaire',
+          logo_url: org.logo_url,
+          role: org.EvenementOrganisation?.role || 'partenaire',
           description: org.description,
           site_web: org.site_web,
           type_organisation: org.TypeOrganisation?.nom,
@@ -357,6 +377,7 @@ export function useEventDetails(eventId: number, options: EventDetailsOptions = 
     programs: programsQuery.data as Programme[] | undefined,
     medias: mediasQuery.data as Media[] | undefined,
     comments: commentsQuery.data as Comment[] | undefined,
+    publicParticipants: participantsQuery.data ?? { participants: [], total: 0 },
     organizers: extractOrganizers(),
 
     // États de chargement
@@ -364,6 +385,7 @@ export function useEventDetails(eventId: number, options: EventDetailsOptions = 
     loadingPrograms: programsQuery.isLoading,
     loadingMedias: mediasQuery.isLoading,
     loadingComments: commentsQuery.isLoading,
+    loadingParticipants: participantsQuery.isLoading,
 
     // Erreurs
     error: eventQuery.error?.message || null,
@@ -392,6 +414,7 @@ export function useEventDetails(eventId: number, options: EventDetailsOptions = 
       queryClient.invalidateQueries({ queryKey: programsKey });
       queryClient.invalidateQueries({ queryKey: mediasKey });
       queryClient.invalidateQueries({ queryKey: commentsKey });
+      queryClient.invalidateQueries({ queryKey: participantsKey });
       queryClient.invalidateQueries({ queryKey: registrationKey });
     },
   };

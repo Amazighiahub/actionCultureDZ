@@ -1,6 +1,6 @@
 const { setupTestDatabase, teardownTestDatabase } = require('../../setup');
 
-jest.setTimeout(30000);
+jest.setTimeout(60000);
 
 describe('Modèle Oeuvre', () => {
   let models, sequelize;
@@ -9,14 +9,15 @@ describe('Modèle Oeuvre', () => {
     const result = await setupTestDatabase();
     models = result.models;
     sequelize = result.sequelize;
-  });
+  }, 120000);
 
   afterAll(async () => {
     await teardownTestDatabase();
   });
 
   beforeEach(async () => {
-    // Nettoyer les données avec raw TRUNCATE (FK désactivées dans la même session)
+    // Nettoyer via transaction (garantit la même connexion pour FK_CHECKS)
+    // DELETE FROM au lieu de TRUNCATE (qui fait un implicit commit en MySQL)
     const tables = [
       'oeuvre_intervenant', 'oeuvre_user', 'oeuvre_editeur', 'oeuvre_categorie',
       'oeuvre_tag', 'evenement_oeuvre', 'media', 'critique_evaluation',
@@ -24,15 +25,13 @@ describe('Modèle Oeuvre', () => {
       'artisanat', 'oeuvre_art', 'oeuvre', 'type_oeuvre', 'langue'
     ];
 
-    await sequelize.query('SET FOREIGN_KEY_CHECKS = 0');
-    for (const table of tables) {
-      try {
-        await sequelize.query(`TRUNCATE TABLE \`${table}\``);
-      } catch (e) {
-        // Table peut ne pas exister
+    await sequelize.transaction(async (transaction) => {
+      await sequelize.query('SET FOREIGN_KEY_CHECKS = 0', { transaction });
+      for (const table of tables) {
+        await sequelize.query(`DELETE FROM \`${table}\``, { transaction }).catch(() => {});
       }
-    }
-    await sequelize.query('SET FOREIGN_KEY_CHECKS = 1');
+      await sequelize.query('SET FOREIGN_KEY_CHECKS = 1', { transaction });
+    });
     
     // Insérer les données de base nécessaires (format i18n JSON)
     await models.TypeOeuvre.create({

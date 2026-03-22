@@ -38,7 +38,7 @@ import { useDebounce } from '@/hooks/useAdmin';
 
 // Composant carte d'artisanat
 interface ArtisanatCardProps {
-  artisanat: any;
+  artisanat: Record<string, unknown>;
   onView: (id: number) => void;
   onFavorite?: (id: number) => void;
 }

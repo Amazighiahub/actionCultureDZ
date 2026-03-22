@@ -18,6 +18,7 @@ class ProfessionnelService {
   // ========================================================================
 
   async getAllProfessionnels({ page = 1, limit = 20, search, specialite, wilaya, verifie, lang = 'fr' }) {
+    limit = Math.min(Math.max(parseInt(limit) || 20, 1), 100);
     const offset = (page - 1) * limit;
 
     const where = {
@@ -131,6 +132,7 @@ class ProfessionnelService {
   }
 
   async searchProfessionnels(q, limit = 10) {
+    const safeLimit = Math.min(Math.max(parseInt(limit) || 10, 1), 100);
     const where = {
       id_type_user: { [Op.in]: [2, 3, 4] },
       [Op.or]: [
@@ -144,7 +146,7 @@ class ProfessionnelService {
       where,
       attributes: ['id_user', 'nom', 'prenom', 'photo_url', 'entreprise'],
       include: [{ model: this.models.TypeUser, attributes: ['nom_type'] }],
-      limit: parseInt(limit)
+      limit: safeLimit
     });
   }
 
@@ -153,7 +155,8 @@ class ProfessionnelService {
   // ========================================================================
 
   async getMesOeuvres(userId, { page = 1, limit = 20, statut }) {
-    const offset = (page - 1) * parseInt(limit);
+    limit = Math.min(Math.max(parseInt(limit) || 20, 1), 100);
+    const offset = (page - 1) * limit;
     const where = { saisi_par: userId };
     if (statut) where.statut = statut;
 
@@ -176,7 +179,8 @@ class ProfessionnelService {
   }
 
   async getMyOeuvres(userId, { page = 1, limit = 20, statut, type }) {
-    const offset = (page - 1) * parseInt(limit);
+    limit = Math.min(Math.max(parseInt(limit) || 20, 1), 100);
+    const offset = (page - 1) * limit;
     const where = { saisi_par: userId };
 
     if (statut) {
@@ -209,11 +213,12 @@ class ProfessionnelService {
   // ========================================================================
 
   async getMyArtisanats(userId, { page = 1, limit = 20, statut }) {
+    limit = Math.min(Math.max(parseInt(limit) || 20, 1), 100);
     if (!this.models.Artisanat) {
-      return { data: [], total: 0, pagination: { total: 0, page: 1, pages: 0, limit: parseInt(limit) } };
+      return { data: [], total: 0, pagination: { total: 0, page: 1, pages: 0, limit } };
     }
 
-    const offset = (page - 1) * parseInt(limit);
+    const offset = (page - 1) * limit;
     const oeuvreWhere = { saisi_par: userId };
     if (statut) oeuvreWhere.statut = statut;
 
@@ -245,7 +250,8 @@ class ProfessionnelService {
   // ========================================================================
 
   async getMesEvenements(userId, { page = 1, limit = 20, statut }) {
-    const offset = (page - 1) * parseInt(limit);
+    limit = Math.min(Math.max(parseInt(limit) || 20, 1), 100);
+    const offset = (page - 1) * limit;
     const where = { id_user: userId };
     if (statut) where.statut = statut;
 
@@ -268,7 +274,8 @@ class ProfessionnelService {
   }
 
   async getMyEvenements(userId, { page = 1, limit = 20, statut }) {
-    const offset = (page - 1) * parseInt(limit);
+    limit = Math.min(Math.max(parseInt(limit) || 20, 1), 100);
+    const offset = (page - 1) * limit;
     const where = { id_user: userId };
 
     if (statut === 'avenir') {
@@ -512,16 +519,18 @@ class ProfessionnelService {
   // ========================================================================
 
   async getExportData(userId, type) {
+    const EXPORT_LIMIT = 10000;
     switch (type) {
       case 'oeuvres':
-        return this.models.Oeuvre.findAll({ where: { saisi_par: userId }, raw: true });
+        return this.models.Oeuvre.findAll({ where: { saisi_par: userId }, raw: true, limit: EXPORT_LIMIT });
       case 'evenements':
-        return this.models.Evenement.findAll({ where: { id_user: userId }, raw: true });
+        return this.models.Evenement.findAll({ where: { id_user: userId }, raw: true, limit: EXPORT_LIMIT });
       case 'artisanats':
         if (!this.models.Artisanat) return [];
         return this.models.Artisanat.findAll({
           include: [{ model: this.models.Oeuvre, where: { saisi_par: userId }, required: true }],
-          raw: true
+          raw: true,
+          limit: EXPORT_LIMIT
         });
       default:
         return null;

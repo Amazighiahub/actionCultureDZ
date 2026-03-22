@@ -1,5 +1,4 @@
 // pages/EditArticle.tsx
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ArticleEditor from '@/components/article/ArticleEditor';
@@ -15,7 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 const EditArticle: React.FC = () => {
   const { id } = useParams<{id: string;}>();
   const navigate = useNavigate();
-  const [initialData, setInitialData] = useState<any>(null);
+  const [initialData, setInitialData] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { t } = useTranslation();
@@ -35,7 +34,7 @@ const EditArticle: React.FC = () => {
       const response = await oeuvreService.getOeuvreById(parseInt(id!));
 
       if (response.success && response.data) {
-        const oeuvre = response.data as any;
+        const oeuvre = response.data as Record<string, unknown>;
 
         // Vérifier que c'est un article (type 4 ou 5)
         if (oeuvre.id_type_oeuvre !== 4 && oeuvre.id_type_oeuvre !== 5) {
@@ -57,8 +56,8 @@ const EditArticle: React.FC = () => {
           titre: oeuvre.titre,
           description: oeuvre.description,
           id_langue: oeuvre.id_langue,
-          categories: oeuvre.Categories?.map((c: any) => c.id_categorie) || [],
-          tags: oeuvre.Tags?.map((t: any) => t.nom) || [],
+          categories: (oeuvre.Categories as Array<Record<string, unknown>> | undefined)?.map((c) => c.id_categorie) || [],
+          tags: (oeuvre.Tags as Array<Record<string, unknown>> | undefined)?.map((t) => t.nom) || [],
           type: articleType,
           // Champs spécifiques — accès sécurisé
           auteur: oeuvre.Article?.auteur || null,
@@ -84,7 +83,7 @@ const EditArticle: React.FC = () => {
     }
   };
 
-  const handleSave = async (response: any) => {
+  const handleSave = async (response: Record<string, unknown>) => {
     const oeuvreId = parseInt(id!);
     const { formData: articleFormData, blocks } = response.article;
     const isScientific = articleFormData.type === 'article_scientifique';
@@ -93,7 +92,7 @@ const EditArticle: React.FC = () => {
 
     try {
       // 1. Mettre à jour les métadonnées de l'oeuvre
-      const updateData: any = {
+      const updateData: Record<string, unknown> = {
         titre: articleFormData.titre,
         description: articleFormData.description,
       };
@@ -109,7 +108,7 @@ const EditArticle: React.FC = () => {
       if (blocks && blocks.length > 0) {
         // Récupérer l'ID de l'article spécifique
         const oeuvreDetail = await oeuvreService.getOeuvreById(oeuvreId);
-        const od = oeuvreDetail.data as any;
+        const od = oeuvreDetail.data as Record<string, Record<string, unknown>> | undefined;
         let articleRecordId: number | undefined;
         if (isScientific) {
           articleRecordId = od?.ArticleScientifique?.id_article_scientifique
@@ -130,14 +129,14 @@ const EditArticle: React.FC = () => {
 
           // 2a. Upload des nouvelles images (blocs avec tempFile)
           const blocksWithMedia = await Promise.all(
-            blocks.map(async (block: any, index: number) => {
+            blocks.map(async (block: Record<string, unknown>, index: number) => {
               let id_media = block.id_media || block.media?.id_media || null;
 
               if (block.type_block === 'image' && block.metadata?.tempFile instanceof File) {
                 try {
                   const formData = new FormData();
                   formData.append('files', block.metadata.tempFile);
-                  const uploadResult = await httpClient.postFormData<any>(
+                  const uploadResult = await httpClient.postFormData<Record<string, unknown>>(
                     `/oeuvres/${oeuvreId}/medias/upload`,
                     formData
                   );
@@ -181,7 +180,7 @@ const EditArticle: React.FC = () => {
           const blocksResponse = await articleBlockService.createMultipleBlocks({
             id_article: articleRecordId,
             article_type: articleType,
-            blocks: blocksToSave.map((b: any) => ({ ...b, id_article: articleRecordId })),
+            blocks: blocksToSave.map((b) => ({ ...b, id_article: articleRecordId })),
           });
 
           if (!blocksResponse.success) {
@@ -205,11 +204,11 @@ const EditArticle: React.FC = () => {
         navigate(`/articles/${id}`);
       }, 1000);
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('❌ Erreur mise à jour article:', err);
       toast({
         title: t('toasts.error'),
-        description: err.message || t('toasts.updateError'),
+        description: err instanceof Error ? err.message : t('toasts.updateError'),
         variant: 'destructive',
       });
     }

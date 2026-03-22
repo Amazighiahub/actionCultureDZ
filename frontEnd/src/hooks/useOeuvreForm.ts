@@ -4,11 +4,19 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
-import { metadataService } from '@/services/metadata.service';
+import { metadataService, CategoryGroupedByGenre } from '@/services/metadata.service';
 import { oeuvreService } from '@/services/oeuvre.service';
 import { mediaService } from '@/services/media.service';
+import { TypeOeuvre, Langue, Editeur, Technique, Materiau, TagMotCle } from '@/types/models/references.types';
 
 // Types
+interface FormMedia {
+  id_media?: number;
+  url: string;
+  type: string;
+  titre?: string;
+}
+
 interface FormData {
   titre: string;
   description: string;
@@ -18,7 +26,7 @@ interface FormData {
   prix?: number;
   categories: number[];
   tags: string[];
-  medias: any[];
+  medias: FormMedia[];
   // Champs spécifiques
   isbn?: string;
   nb_pages?: number;
@@ -44,17 +52,17 @@ interface FormData {
   peer_reviewed?: boolean;
   region_origine?: string;
   details_supplementaires?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 interface Metadata {
-  types_oeuvres: any[];
-  langues: any[];
-  editeurs: any[];
-  techniques: any[];
-  materiaux: any[];
-  tags: any[];
-  categoriesGrouped: any[];
+  types_oeuvres: TypeOeuvre[];
+  langues: Langue[];
+  editeurs: Editeur[];
+  techniques: Technique[];
+  materiaux: Materiau[];
+  tags: TagMotCle[];
+  categoriesGrouped: CategoryGroupedByGenre[];
 }
 
 const INITIAL_FORM_DATA: FormData = {
@@ -132,7 +140,7 @@ export function useOeuvreForm() {
   };
 
   // Mettre à jour un champ du formulaire
-  const updateFormData = useCallback((field: string, value: any) => {
+  const updateFormData = useCallback((field: string, value: unknown) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     // Effacer l'erreur pour ce champ
     setErrors((prev) => ({ ...prev, [field]: '' }));

@@ -8,26 +8,26 @@ module.exports = (sequelize) => {
       primaryKey: true,
       autoIncrement: true
     },
-    // ⚡ MODIFIÉ POUR I18N
+    // ⚡ MODIFIÉ POUR I18N — Titre optionnel
     titre: {
-      type: DataTypes.JSON,
-      allowNull: false,
-      defaultValue: { fr: '' },
-      comment: 'Titre en plusieurs langues { fr: "Conférence", ar: "محاضرة", en: "Conference" }',
-      validate: {
-        notEmpty(value) {
-          if (!value || (!value.fr && !value.ar)) {
-            throw new Error('Le titre est requis');
-          }
-        }
-      }
-    },
-    // ⚡ MODIFIÉ POUR I18N
-    description: {
       type: DataTypes.JSON,
       allowNull: true,
       defaultValue: {},
-      comment: 'Description en plusieurs langues'
+      comment: 'Titre en plusieurs langues (optionnel)'
+    },
+    // ⚡ MODIFIÉ POUR I18N — Description requise
+    description: {
+      type: DataTypes.JSON,
+      allowNull: false,
+      defaultValue: { fr: '' },
+      comment: 'Description en plusieurs langues (requis)',
+      validate: {
+        notEmpty(value) {
+          if (!value || (!value.fr && !value.ar)) {
+            throw new Error('La description est requise (au moins en français ou arabe)');
+          }
+        }
+      }
     },
     id_evenement: {
       type: DataTypes.INTEGER,
@@ -143,14 +143,16 @@ module.exports = (sequelize) => {
 
   // Associations
   Programme.associate = (models) => {
-    Programme.belongsTo(models.Evenement, { 
+    Programme.belongsTo(models.Evenement, {
       foreignKey: 'id_evenement',
-      as: 'Evenement'
+      as: 'Evenement',
+      onDelete: 'CASCADE'
     });
-    
-    Programme.belongsTo(models.Lieu, { 
+
+    Programme.belongsTo(models.Lieu, {
       foreignKey: 'id_lieu',
-      as: 'Lieu'
+      as: 'Lieu',
+      onDelete: 'SET NULL'
     });
     
     Programme.belongsToMany(models.User, {
@@ -159,10 +161,11 @@ module.exports = (sequelize) => {
       otherKey: 'id_user',
       as: 'Intervenants'
     });
-    
+
     Programme.hasMany(models.ProgrammeIntervenant, {
       foreignKey: 'id_programme',
-      as: 'ProgrammeIntervenants'
+      as: 'ProgrammeIntervenants',
+      onDelete: 'CASCADE'
     });
   };
 

@@ -1,5 +1,5 @@
 /**
- * Routes v2 pour le patrimoine
+ * Routes pour le patrimoine
  * Utilise le pattern Controller → Service → Repository
  */
 
@@ -8,9 +8,8 @@ const { param, body } = require('express-validator');
 const patrimoineController = require('../controllers/patrimoineController');
 const { handleValidationErrors, validateId, validateStringLengths, validateGPS } = require('../middlewares/validationMiddleware');
 const { createContentLimiter } = require('../middlewares/rateLimitMiddleware');
-const asyncHandler = require('../utils/asyncHandler');
 
-const initPatrimoineRoutesV2 = (models, authMiddleware) => {
+const initPatrimoineRoutes = (models, authMiddleware) => {
   const router = express.Router();
   const { authenticate, requireRole, requireValidatedProfessional } = authMiddleware;
 
@@ -19,21 +18,21 @@ const initPatrimoineRoutesV2 = (models, authMiddleware) => {
   // ============================================================================
 
   // Routes mobile (AVANT /:id pour éviter que "mobile" soit pris comme id)
-  router.get('/mobile/nearby', asyncHandler((req, res) => patrimoineController.getMobileNearby(req, res)));
-  router.post('/mobile/qr-scan', asyncHandler((req, res) => patrimoineController.scanQRCode(req, res)));
-  router.get('/mobile/offline/:wilayaId', asyncHandler((req, res) => patrimoineController.getMobileOffline(req, res)));
+  router.get('/mobile/nearby', patrimoineController.wrap('getMobileNearby'));
+  router.post('/mobile/qr-scan', patrimoineController.wrap('scanQRCode'));
+  router.get('/mobile/offline/:wilayaId', patrimoineController.wrap('getMobileOffline'));
 
-  router.get('/', asyncHandler((req, res) => patrimoineController.list(req, res)));
-  router.get('/popular', asyncHandler((req, res) => patrimoineController.popular(req, res)));
-  router.get('/search', asyncHandler((req, res) => patrimoineController.search(req, res)));
-  router.get('/types', asyncHandler((req, res) => patrimoineController.getTypes(req, res)));
-  router.get('/map', asyncHandler((req, res) => patrimoineController.getMap(req, res)));
-  router.get('/monuments/:type', asyncHandler((req, res) => patrimoineController.getByType(req, res)));
-  router.get('/vestiges/:type', asyncHandler((req, res) => patrimoineController.getByType(req, res)));
-  router.get('/:id/galerie', validateId(), asyncHandler((req, res) => patrimoineController.getGalerie(req, res)));
-  router.get('/:id/carte-visite', validateId(), asyncHandler((req, res) => patrimoineController.getCarteVisite(req, res)));
-  router.get('/:id/qrcode', validateId(), asyncHandler((req, res) => patrimoineController.getQRCode(req, res)));
-  router.get('/:id', validateId(), asyncHandler((req, res) => patrimoineController.getById(req, res)));
+  router.get('/', patrimoineController.wrap('list'));
+  router.get('/popular', (req, res, next) => { console.log('[DEBUG ROUTE] /popular hit'); next(); }, patrimoineController.wrap('popular'));
+  router.get('/search', patrimoineController.wrap('search'));
+  router.get('/types', patrimoineController.wrap('getTypes'));
+  router.get('/map', patrimoineController.wrap('getMap'));
+  router.get('/monuments/:type', patrimoineController.wrap('getByType'));
+  router.get('/vestiges/:type', patrimoineController.wrap('getByType'));
+  router.get('/:id/galerie', validateId(), patrimoineController.wrap('getGalerie'));
+  router.get('/:id/carte-visite', validateId(), patrimoineController.wrap('getCarteVisite'));
+  router.get('/:id/qrcode', validateId(), patrimoineController.wrap('getQRCode'));
+  router.get('/:id', validateId(), patrimoineController.wrap('getById'));
 
   // ============================================================================
   // ROUTES AUTHENTIFIÉES
@@ -42,32 +41,32 @@ const initPatrimoineRoutesV2 = (models, authMiddleware) => {
   router.post('/:id/noter', authenticate, validateId(),
     [body('note').isInt({ min: 1, max: 5 }).withMessage('La note doit être entre 1 et 5')],
     handleValidationErrors,
-    asyncHandler((req, res) => patrimoineController.noter(req, res)));
-  router.post('/:id/favoris', authenticate, validateId(), asyncHandler((req, res) => patrimoineController.ajouterFavoris(req, res)));
-  router.delete('/:id/favoris', authenticate, validateId(), asyncHandler((req, res) => patrimoineController.retirerFavoris(req, res)));
-  router.post('/:id/medias', authenticate, requireValidatedProfessional, validateId(), asyncHandler((req, res) => patrimoineController.uploadMedias(req, res)));
-  router.delete('/:id/medias/:mediaId', authenticate, requireValidatedProfessional, validateId(), validateId('mediaId'), asyncHandler((req, res) => patrimoineController.deleteMedia(req, res)));
-  router.put('/:id/horaires', authenticate, requireValidatedProfessional, validateId(), asyncHandler((req, res) => patrimoineController.updateHoraires(req, res)));
+    patrimoineController.wrap('noter'));
+  router.post('/:id/favoris', authenticate, validateId(), patrimoineController.wrap('ajouterFavoris'));
+  router.delete('/:id/favoris', authenticate, validateId(), patrimoineController.wrap('retirerFavoris'));
+  router.post('/:id/medias', authenticate, requireValidatedProfessional, validateId(), patrimoineController.wrap('uploadMedias'));
+  router.delete('/:id/medias/:mediaId', authenticate, requireValidatedProfessional, validateId(), validateId('mediaId'), patrimoineController.wrap('deleteMedia'));
+  router.put('/:id/horaires', authenticate, requireValidatedProfessional, validateId(), patrimoineController.wrap('updateHoraires'));
 
   // ============================================================================
   // ROUTES ADMIN
   // ============================================================================
 
-  router.get('/admin/stats', authenticate, requireRole(['Admin']), asyncHandler((req, res) => patrimoineController.getStats(req, res)));
+  router.get('/admin/stats', authenticate, requireRole(['Admin']), patrimoineController.wrap('getStats'));
   router.post('/', authenticate, requireRole(['Admin', 'Moderateur']),
     createContentLimiter,
     validateStringLengths,
     validateGPS,
     [body('nom').notEmpty().withMessage('Le nom est requis')],
     handleValidationErrors,
-    asyncHandler((req, res) => patrimoineController.create(req, res)));
+    patrimoineController.wrap('create'));
   router.put('/:id', authenticate, requireRole(['Admin', 'Moderateur']), validateId(),
     validateStringLengths,
     validateGPS,
-    asyncHandler((req, res) => patrimoineController.update(req, res)));
-  router.delete('/:id', authenticate, requireRole(['Admin']), validateId(), asyncHandler((req, res) => patrimoineController.delete(req, res)));
+    patrimoineController.wrap('update'));
+  router.delete('/:id', authenticate, requireRole(['Admin']), validateId(), patrimoineController.wrap('delete'));
 
   return router;
 };
 
-module.exports = initPatrimoineRoutesV2;
+module.exports = initPatrimoineRoutes;

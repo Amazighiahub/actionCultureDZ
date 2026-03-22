@@ -11,7 +11,7 @@ const { body, query, param } = require('express-validator');
 
 const initDashboardRoutes = (models) => {
   const authMiddleware = createAuthMiddleware(models);
-  const dashboardController = new DashboardController();
+  const dashboardController = DashboardController;
 
   // Auto-bind toutes les méthodes du controller
   Object.getOwnPropertyNames(Object.getPrototypeOf(dashboardController))

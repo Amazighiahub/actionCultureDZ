@@ -49,7 +49,7 @@ describe('DashboardController', () => {
   let req, res;
 
   beforeEach(() => {
-    controller = new DashboardController();
+    controller = DashboardController;
     req = {
       t: jest.fn((key) => 'translated:' + key),
       lang: 'fr',

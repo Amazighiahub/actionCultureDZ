@@ -60,4 +60,4 @@ for (const methods of allMethods) {
   }
 }
 
-module.exports = DashboardController;
+module.exports = new DashboardController();

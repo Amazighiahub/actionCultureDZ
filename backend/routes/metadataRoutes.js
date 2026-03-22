@@ -11,7 +11,7 @@ const { validateLanguage } = require('../middlewares/language');
 
 const initMetadataRoutes = (models) => {
   const authMiddleware = createAuthMiddleware(models);
-  const metadataController = new MetadataController();
+  const metadataController = MetadataController;
 
   // Cache HTTP pour les données de référence (changent rarement)
   const cacheMetadata = (req, res, next) => {
@@ -55,11 +55,11 @@ const initMetadataRoutes = (models) => {
     metadataController.getHierarchieComplete.bind(metadataController)
   );
 
-  // Tags avec recherche
+  // Tags avec recherche (autocomplete)
   router.get('/tags',
     cacheMetadata,
     [
-      query('search').optional().trim(),
+      query('search').optional().trim().isLength({ min: 2 }).withMessage((value, { req }) => req.t('validation.searchMinLength', 'Search must be at least 2 characters')),
       query('limit').optional().isInt({ min: 1, max: 100 })
     ],
     validationMiddleware.handleValidationErrors,
@@ -132,9 +132,14 @@ const initMetadataRoutes = (models) => {
     metadataController.getTypesOrganisations.bind(metadataController)
   );
 
-  // Éditeurs
+  // Éditeurs (avec recherche autocomplete)
   router.get('/editeurs',
     cacheMetadata,
+    [
+      query('search').optional().trim().isLength({ min: 2 }).withMessage((value, { req }) => req.t('validation.searchMinLength', 'Search must be at least 2 characters')),
+      query('limit').optional().isInt({ min: 1, max: 100 })
+    ],
+    validationMiddleware.handleValidationErrors,
     metadataController.getEditeurs.bind(metadataController)
   );
 
@@ -382,6 +387,21 @@ const initMetadataRoutes = (models) => {
     metadataController.createTechnique.bind(metadataController)
   );
 
+
+  // Créer un éditeur
+  router.post('/editeurs',
+    authMiddleware.authenticate,
+    [
+      body('nom').custom((value) => {
+        if (typeof value === 'string') return value.trim().length >= 2;
+        if (typeof value === 'object') return Object.values(value).some(v => v && v.length >= 2);
+        return false;
+      }).withMessage((value, { req }) => req.t('validation.invalidName')),
+      body('type_editeur').optional().isString()
+    ],
+    validationMiddleware.handleValidationErrors,
+    metadataController.createEditeur.bind(metadataController)
+  );
 
   return router;
 };

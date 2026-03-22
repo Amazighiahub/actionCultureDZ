@@ -1,3 +1,4 @@
+const logger = require('../utils/logger');
 /**
  * SMS Service - Service d'envoi de SMS
  * Supporte plusieurs providers : Twilio, Nexmo/Vonage, MessageBird, ou simulation
@@ -27,7 +28,7 @@ class SMSService {
     if (!this.isPaused) {
       this.initializeProvider();
     } else {
-      console.log('📱 Service SMS en pause - mode simulation activé.');
+      logger.info('📱 Service SMS en pause - mode simulation activé.');
     }
   }
 
@@ -47,11 +48,11 @@ class SMSService {
           this.initializeMessageBird();
           break;
         default:
-          console.log('📱 Service SMS en mode simulation (aucun provider configuré)');
+          logger.info('📱 Service SMS en mode simulation (aucun provider configuré)');
           this.isPaused = true;
       }
     } catch (error) {
-      console.error('❌ Erreur initialisation SMS service:', error);
+      logger.error('❌ Erreur initialisation SMS service:', error);
       this.isPaused = true;
     }
   }
@@ -72,9 +73,9 @@ class SMSService {
       // Import dynamique de Twilio
       const twilio = require('twilio');
       this.client = twilio(accountSid, authToken);
-      console.log('✅ Service SMS Twilio initialisé');
+      logger.info('✅ Service SMS Twilio initialisé');
     } catch (error) {
-      console.warn('⚠️ Twilio non configuré:', error.message);
+      logger.warn('⚠️ Twilio non configuré:', error.message);
       this.isPaused = true;
     }
   }
@@ -97,9 +98,9 @@ class SMSService {
         apiKey,
         apiSecret
       });
-      console.log('✅ Service SMS Vonage initialisé');
+      logger.info('✅ Service SMS Vonage initialisé');
     } catch (error) {
-      console.warn('⚠️ Vonage non configuré:', error.message);
+      logger.warn('⚠️ Vonage non configuré:', error.message);
       this.isPaused = true;
     }
   }
@@ -118,9 +119,9 @@ class SMSService {
 
       const messagebird = require('messagebird')(apiKey);
       this.client = messagebird;
-      console.log('✅ Service SMS MessageBird initialisé');
+      logger.info('✅ Service SMS MessageBird initialisé');
     } catch (error) {
-      console.warn('⚠️ MessageBird non configuré:', error.message);
+      logger.warn('⚠️ MessageBird non configuré:', error.message);
       this.isPaused = true;
     }
   }
@@ -174,15 +175,15 @@ class SMSService {
 
     // Validation du numéro
     if (!this.isValidPhoneNumber(normalizedTo)) {
-      console.error(`❌ Numéro de téléphone invalide: ${to}`);
+      logger.error(`❌ Numéro de téléphone invalide: ${to}`);
       return { success: false, error: 'Numéro de téléphone invalide' };
     }
 
     // Mode simulation
     if (this.isPaused) {
-      console.log(`\n📱 [SMS SIMULATION] Envoi à: ${normalizedTo}`);
-      console.log(`📱 [SMS SIMULATION] Message: ${message}`);
-      console.log(`📱 [SMS SIMULATION] Longueur: ${message.length} caractères\n`);
+      logger.info(`\n📱 [SMS SIMULATION] Envoi à: ${normalizedTo}`);
+      logger.info(`📱 [SMS SIMULATION] Message: ${message}`);
+      logger.info(`📱 [SMS SIMULATION] Longueur: ${message.length} caractères\n`);
       return { success: true, messageId: 'simulated-' + Date.now() };
     }
 
@@ -203,10 +204,10 @@ class SMSService {
           return { success: false, error: 'Provider SMS non configuré' };
       }
 
-      console.log(`✅ SMS envoyé à ${normalizedTo}. ID: ${result.messageId}`);
+      logger.info(`✅ SMS envoyé à ${normalizedTo}. ID: ${result.messageId}`);
       return result;
     } catch (error) {
-      console.error(`❌ Erreur envoi SMS à ${normalizedTo}:`, error);
+      logger.error(`❌ Erreur envoi SMS à ${normalizedTo}:`, error);
       return { success: false, error: error.message };
     }
   }

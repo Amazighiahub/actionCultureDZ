@@ -1,5 +1,4 @@
 // hooks/useDashboardPro.ts - Version simplifiée sans recommandations
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -34,8 +33,8 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
     queryFn: async () => {
       const response = await professionnelService.getDashboard();
       if (!response.success) throw new Error(response.error);
-      const rawData: any = response.data || {};
-      return rawData.statistiques || rawData;
+      const rawData = (response.data || {}) as Record<string, unknown>;
+      return (rawData.statistiques as Record<string, unknown>) || rawData;
     },
     enabled: autoFetch,
     staleTime: 5 * 60 * 1000,
@@ -60,9 +59,9 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
         throw new Error(response.error);
       }
 
-      const responseData: any = response.data || {};
-      const items = responseData.oeuvres || responseData.items || (Array.isArray(responseData) ? responseData : []);
-      const pagination = response.pagination || responseData.pagination || { total: items.length || 0 };
+      const responseData = (response.data || {}) as Record<string, unknown>;
+      const items = (responseData.oeuvres || responseData.items || (Array.isArray(responseData) ? responseData : [])) as unknown[];
+      const pagination = response.pagination || (responseData.pagination as Record<string, unknown>) || { total: items.length || 0 };
 
       return {
         items,
@@ -100,14 +99,14 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
         throw new Error(response.error || 'Erreur lors du chargement des événements');
       }
 
-      const responseData = response.data as any;
-      const evenementsList = responseData?.evenements || responseData?.items || [];
+      const responseData = (response.data || {}) as Record<string, unknown>;
+      const evenementsList = ((responseData?.evenements || responseData?.items || []) as Record<string, unknown>[]);
 
       if (evenementsList.length > 0) {
         const evenementsAvecProgrammes = await Promise.all(
-          evenementsList.map(async (evenement: any) => {
+          evenementsList.map(async (evenement: Record<string, unknown>) => {
             try {
-              const programmesResponse = await evenementService.getProgrammes(evenement.id_evenement);
+              const programmesResponse = await evenementService.getProgrammes(evenement.id_evenement as number);
               const programmes = programmesResponse.success
                 ? (programmesResponse.data?.programmes || programmesResponse.data || [])
                 : [];
@@ -162,9 +161,9 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
     queryFn: async () => {
       const response = await serviceService.getMyServices({ limit: 50, page: 1 });
       if (!response.success) throw new Error(response.error);
-      const data = response.data as any;
-      const items = Array.isArray(data) ? data : (data?.items || data?.data || []);
-      const pagination = response.pagination || data?.pagination || { total: items.length };
+      const data = (response.data || {}) as Record<string, unknown>;
+      const items = (Array.isArray(data) ? data : ((data?.items || data?.data || []) as unknown[]));
+      const pagination = response.pagination || (data?.pagination as Record<string, unknown>) || { total: items.length };
       return { items, pagination };
     },
     enabled: autoFetch,
@@ -183,16 +182,18 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
       const response = await professionnelService.getArtisanats({ limit: 50, page: 1 });
       if (!response.success) throw new Error(response.error);
 
-      const responseData: any = response.data;
+      const responseData = response.data as Record<string, unknown> | unknown[] | null;
 
-      if (responseData?.items) {
-        return responseData;
+      if (responseData && !Array.isArray(responseData) && (responseData as Record<string, unknown>)?.items) {
+        return responseData as { items: unknown[]; pagination: Record<string, unknown> };
       }
 
-      if (responseData?.artisanats) {
+      if (responseData && !Array.isArray(responseData) && (responseData as Record<string, unknown>)?.artisanats) {
+        const rd = responseData as Record<string, unknown>;
+        const artisanats = rd.artisanats as unknown[];
         return {
-          items: responseData.artisanats,
-          pagination: responseData.pagination || { total: responseData.artisanats.length || 0 }
+          items: artisanats,
+          pagination: (rd.pagination as Record<string, unknown>) || { total: artisanats.length || 0 }
         };
       }
 
@@ -348,8 +349,8 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
       }
       
       return true;
-    } catch (error: any) {
-      const message = error?.message || `Impossible de supprimer le ${type}`;
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : `Impossible de supprimer le ${type}`;
 
       // Cas fréquent: élément déjà supprimé côté backend mais encore visible en cache local
       if (message.includes('404') || message.toLowerCase().includes('non trouv')) {

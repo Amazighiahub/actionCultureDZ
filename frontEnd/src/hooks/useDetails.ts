@@ -49,7 +49,7 @@ export interface EventDetails {
   date_fin?: string;
   heure_debut?: string;
   heure_fin?: string;
-  lieu?: any;
+  lieu?: Record<string, unknown>;
   image_url?: string;
   statut: string;
   tarif?: number;
@@ -163,7 +163,7 @@ export function useEventDetails(eventId: number, options: UseEventDetailsOptions
       toast({ title: t('toasts.commentAdded') });
       queryClient.invalidateQueries({ queryKey: ['event-details', eventId] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({ title: t('toasts.error'), description: error.message, variant: 'destructive' });
     }
   });
@@ -179,7 +179,7 @@ export function useEventDetails(eventId: number, options: UseEventDetailsOptions
       toast({ title: t('toasts.registrationSuccess') });
       queryClient.invalidateQueries({ queryKey: ['event-details', eventId] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({ title: t('toasts.registrationError'), description: error.message, variant: 'destructive' });
     }
   });
@@ -195,7 +195,7 @@ export function useEventDetails(eventId: number, options: UseEventDetailsOptions
       toast({ title: t('toasts.unregistered') });
       queryClient.invalidateQueries({ queryKey: ['event-details', eventId] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({ title: t('toasts.error'), description: error.message, variant: 'destructive' });
     }
   });
@@ -415,7 +415,7 @@ export function useOeuvreDetails(oeuvreId: number, options: UseOeuvreDetailsOpti
       toast({ title: t('toasts.commentAdded') });
       queryClient.invalidateQueries({ queryKey: ['oeuvre-details', oeuvreId] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({ title: t('toasts.error'), description: error.message, variant: 'destructive' });
     }
   });
@@ -484,7 +484,7 @@ export function useRelatedItems(options: UseRelatedItemsOptions) {
         ? `/oeuvres/${itemId}/related`
         : `/evenements/${itemId}/related`;
       
-      const response = await httpClient.get<any>(endpoint, { limit });
+      const response = await httpClient.get<{ items?: Array<Record<string, unknown>> }>(endpoint, { limit });
       if (!response.success) throw new Error(response.error);
       return response.data;
     },

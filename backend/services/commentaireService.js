@@ -1,40 +1,14 @@
 /**
  * CommentaireService - Service pour la gestion des commentaires
  *
- * Encapsule toute la logique d'acces aux donnees (Sequelize) pour les commentaires.
- * Le controller n'a plus qu'a appeler ces methodes et formater les reponses HTTP.
+ * Architecture: Controller → Service → Repository → Database
+ * Délègue tous les accès Sequelize au CommentaireRepository.
  */
+const BaseService = require('./core/baseService');
 
-class CommentaireService {
-  constructor(models) {
-    this.models = models;
-  }
-
-  // ========================================================================
-  // INCLUDES HELPERS
-  // ========================================================================
-
-  /**
-   * Include standard pour un commentaire avec son auteur
-   */
-  _userInclude() {
-    return {
-      model: this.models.User,
-      attributes: ['nom', 'prenom', 'id_type_user']
-    };
-  }
-
-  /**
-   * Include pour les reponses imbriquees (replies) d'un commentaire
-   */
-  _reponsesInclude() {
-    return {
-      model: this.models.Commentaire,
-      as: 'Reponses',
-      where: { statut: 'publie' },
-      required: false,
-      include: [this._userInclude()]
-    };
+class CommentaireService extends BaseService {
+  constructor(repository, options = {}) {
+    super(repository, options);
   }
 
   // ========================================================================
@@ -48,20 +22,7 @@ class CommentaireService {
    * @returns {{ rows, count }}
    */
   async getCommentairesOeuvre(oeuvreId, { limit, offset }) {
-    return this.models.Commentaire.findAndCountAll({
-      where: {
-        id_oeuvre: oeuvreId,
-        statut: 'publie',
-        commentaire_parent_id: null
-      },
-      include: [
-        this._userInclude(),
-        this._reponsesInclude()
-      ],
-      limit,
-      offset,
-      order: [['date_creation', 'DESC']]
-    });
+    return this.repository.findByOeuvre(oeuvreId, { limit, offset });
   }
 
   /**
@@ -71,20 +32,7 @@ class CommentaireService {
    * @returns {{ rows, count }}
    */
   async getCommentairesEvenement(evenementId, { limit, offset }) {
-    return this.models.Commentaire.findAndCountAll({
-      where: {
-        id_evenement: evenementId,
-        statut: 'publie',
-        commentaire_parent_id: null
-      },
-      include: [
-        this._userInclude(),
-        this._reponsesInclude()
-      ],
-      limit,
-      offset,
-      order: [['date_creation', 'DESC']]
-    });
+    return this.repository.findByEvenement(evenementId, { limit, offset });
   }
 
   // ========================================================================
@@ -97,6 +45,7 @@ class CommentaireService {
    * @returns {object|null}
    */
   async findOeuvre(oeuvreId) {
+    if (!this.models.Oeuvre) return null;
     return this.models.Oeuvre.findByPk(oeuvreId);
   }
 
@@ -106,6 +55,7 @@ class CommentaireService {
    * @returns {object|null}
    */
   async findEvenement(evenementId) {
+    if (!this.models.Evenement) return null;
     return this.models.Evenement.findByPk(evenementId);
   }
 
@@ -115,19 +65,7 @@ class CommentaireService {
    * @returns {object} Commentaire complet avec User inclus
    */
   async createCommentaire(data) {
-    const commentaire = await this.models.Commentaire.create({
-      contenu: data.contenu,
-      note_qualite: data.note_qualite,
-      commentaire_parent_id: data.commentaire_parent_id,
-      id_user: data.id_user,
-      id_oeuvre: data.id_oeuvre || null,
-      id_evenement: data.id_evenement || null,
-      statut: 'publie'
-    });
-
-    return this.models.Commentaire.findByPk(commentaire.id_commentaire, {
-      include: [this._userInclude()]
-    });
+    return this.repository.createWithAuthor(data);
   }
 
   // ========================================================================
@@ -159,7 +97,7 @@ class CommentaireService {
    * @param {object} commentaireInstance - Instance Sequelize du commentaire (req.resource)
    */
   async deleteCommentaire(commentaireInstance) {
-    await commentaireInstance.update({ statut: 'supprime' });
+    return this.repository.softDelete(commentaireInstance);
   }
 
   // ========================================================================
@@ -173,11 +111,7 @@ class CommentaireService {
    * @returns {object|null} Commentaire mis a jour ou null si introuvable
    */
   async moderateCommentaire(id, statut) {
-    const commentaire = await this.models.Commentaire.findByPk(id);
-    if (!commentaire) return null;
-
-    await commentaire.update({ statut });
-    return commentaire;
+    return this.repository.updateStatut(id, statut);
   }
 }
 

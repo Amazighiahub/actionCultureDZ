@@ -1,13 +1,13 @@
 /**
- * CacheManager — Abstraction de cache avec adapter pattern
+ * CacheManager — Abstraction de cache avec Redis + LRU fallback
  *
- * Utilise LRU en mémoire par défaut.
- * Swappable vers Redis sans modifier les services :
- *   const cache = CacheManager.create({ adapter: 'redis', redis: redisClient });
+ * Redis est le store primaire (partagé entre workers en cluster).
+ * LRU en mémoire sert de fallback si Redis est indisponible.
  *
- * Interface unifiée : get, set, delete, clear, invalidate(pattern)
+ * Interface unifiée : get, set, delete, clear, invalidate(pattern), getOrSet
  */
 const LRUCache = require('./LRUCache');
+const { getClient: getRedisClient } = require('./redisClient');
 
 class CacheManager {
   /**
@@ -30,10 +30,9 @@ class CacheManager {
   }
 
   /**
-   * Factory method — point d'entrée pour futur adapter Redis
+   * Factory method
    */
   static create(options = {}) {
-    // Futur : if (options.adapter === 'redis') return new RedisCacheManager(options);
     return new CacheManager(options);
   }
 
@@ -45,9 +44,17 @@ class CacheManager {
   }
 
   /**
-   * Récupère une valeur du cache
+   * Clé Redis préfixée pour éviter les collisions globales
+   */
+  _redisKey(key) {
+    return `cm:${this.namespace}:${key}`;
+  }
+
+  /**
+   * Récupère une valeur du cache (Redis → LRU fallback)
    */
   get(key) {
+    // Synchrone : LRU seulement. Pour Redis, utiliser getAsync ou getOrSet.
     const value = this._store.get(this._key(key));
     if (value !== undefined) {
       this._stats.hits++;
@@ -58,13 +65,45 @@ class CacheManager {
   }
 
   /**
-   * Stocke une valeur dans le cache
+   * Récupère une valeur du cache (Redis → LRU fallback, async)
+   */
+  async getAsync(key) {
+    const redis = getRedisClient();
+    if (redis) {
+      try {
+        const val = await redis.get(this._redisKey(key));
+        if (val) {
+          this._stats.hits++;
+          return JSON.parse(val);
+        }
+      } catch (_) { /* fallback LRU */ }
+    }
+
+    const value = this._store.get(this._key(key));
+    if (value !== undefined) {
+      this._stats.hits++;
+    } else {
+      this._stats.misses++;
+    }
+    return value;
+  }
+
+  /**
+   * Stocke une valeur dans le cache (LRU + Redis)
    * @param {string} key
    * @param {*} value
    * @param {number} [ttl] - TTL en ms (utilise defaultTTL si omis)
    */
   set(key, value, ttl) {
-    this._store.set(this._key(key), value, ttl || this.defaultTTL);
+    const ttlMs = ttl || this.defaultTTL;
+    this._store.set(this._key(key), value, ttlMs);
+
+    // Write-through vers Redis (non-bloquant)
+    const redis = getRedisClient();
+    if (redis) {
+      const ttlSec = Math.max(1, Math.ceil(ttlMs / 1000));
+      redis.setEx(this._redisKey(key), ttlSec, JSON.stringify(value)).catch(() => {});
+    }
   }
 
   /**
@@ -72,18 +111,37 @@ class CacheManager {
    */
   delete(key) {
     this._store.delete(this._key(key));
+    const redis = getRedisClient();
+    if (redis) {
+      redis.del(this._redisKey(key)).catch(() => {});
+    }
   }
 
   /**
    * Vide tout le namespace
    */
   clear() {
-    // Ne supprimer que les clés de ce namespace
+    // LRU : ne supprimer que les clés de ce namespace
     const prefix = `${this.namespace}:`;
     for (const key of this._store.keys()) {
       if (key.startsWith(prefix)) {
         this._store.delete(key);
       }
+    }
+
+    // Redis : SCAN + DEL par préfixe (non-bloquant)
+    const redis = getRedisClient();
+    if (redis) {
+      (async () => {
+        try {
+          let cursor = 0;
+          do {
+            const reply = await redis.scan(cursor, { MATCH: `cm:${this.namespace}:*`, COUNT: 200 });
+            cursor = reply.cursor;
+            if (reply.keys.length > 0) await redis.del(reply.keys);
+          } while (cursor !== 0);
+        } catch (_) { /* best-effort */ }
+      })();
     }
   }
 
@@ -96,24 +154,59 @@ class CacheManager {
       this.clear();
       return;
     }
+    // LRU
     const prefix = `${this.namespace}:`;
     for (const key of this._store.keys()) {
       if (key.startsWith(prefix) && key.includes(pattern)) {
         this._store.delete(key);
       }
     }
+
+    // Redis
+    const redis = getRedisClient();
+    if (redis) {
+      (async () => {
+        try {
+          let cursor = 0;
+          do {
+            const reply = await redis.scan(cursor, { MATCH: `cm:${this.namespace}:*${pattern}*`, COUNT: 200 });
+            cursor = reply.cursor;
+            if (reply.keys.length > 0) await redis.del(reply.keys);
+          } while (cursor !== 0);
+        } catch (_) { /* best-effort */ }
+      })();
+    }
   }
 
   /**
    * Wrapper get-or-set : retourne le cache ou exécute le generator
+   * Essaie Redis → LRU → generator
    * @param {string} key
    * @param {Function} generator - Async function qui génère la valeur
    * @param {number} [ttl] - TTL en ms
    */
   async getOrSet(key, generator, ttl) {
-    const cached = this.get(key);
-    if (cached !== undefined) return cached;
+    // 1. Redis
+    const redis = getRedisClient();
+    if (redis) {
+      try {
+        const val = await redis.get(this._redisKey(key));
+        if (val) {
+          this._stats.hits++;
+          return JSON.parse(val);
+        }
+      } catch (_) { /* fallback LRU */ }
+    }
 
+    // 2. LRU
+    const cached = this._store.get(this._key(key));
+    if (cached !== undefined) {
+      this._stats.hits++;
+      return cached;
+    }
+
+    // 3. Generate + store both
+    this._stats.misses++;
     const value = await generator();
     this.set(key, value, ttl);
     return value;
@@ -129,7 +222,8 @@ class CacheManager {
       hits: this._stats.hits,
       misses: this._stats.misses,
       hitRate: total > 0 ? (this._stats.hits / total * 100).toFixed(1) + '%' : '0%',
-      size: this._store.size
+      size: this._store.size,
+      backend: getRedisClient() ? 'redis+lru' : 'lru'
     };
   }
 

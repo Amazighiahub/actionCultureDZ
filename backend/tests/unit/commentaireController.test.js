@@ -28,7 +28,7 @@ describe('CommentaireController', () => {
   let req, res;
 
   beforeEach(() => {
-    controller = new CommentaireController();
+    controller = CommentaireController;
     req = {
       t: jest.fn((key) => 'translated:' + key),
       lang: 'fr',

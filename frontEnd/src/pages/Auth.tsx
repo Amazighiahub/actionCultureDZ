@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -430,7 +429,7 @@ const Auth = () => {
           // Upload public de la photo
           const formData = new FormData();
           formData.append('image', photoFile);
-          const uploadResult = await httpClient.upload<any>('/upload/image/public', formData);
+          const uploadResult = await httpClient.upload<Record<string, unknown>>('/upload/image/public', formData);
 
           if (!uploadResult.success) {
             throw new Error(uploadResult.error || t('auth.errors.uploadError'));

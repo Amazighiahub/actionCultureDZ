@@ -127,7 +127,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
           setErrors({ ...errors, email: errorMessage });
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: t('auth.errors.loginError', 'Erreur'),
         description: t('auth.errors.serverError', 'Erreur serveur. Veuillez réessayer.'),

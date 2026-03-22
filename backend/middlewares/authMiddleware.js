@@ -2,6 +2,7 @@
 // Compatible avec: createAuthMiddleware(models) OU createAuthMiddleware(User)
 const jwt = require('jsonwebtoken');
 const logger = require('../utils/logger');
+const { getClient: getRedisClient } = require('../utils/redisClient');
 
 // ============================================================================
 // VALIDATION DE SÉCURITÉ JWT
@@ -74,15 +75,74 @@ module.exports = (modelsOrUser) => {
     }
   };
 
-  // Récupérer l'utilisateur complet avec ses rôles
+  // TTL du cache session utilisateur (15 minutes)
+  const USER_SESSION_TTL = 900;
+  const USER_CACHE_PREFIX = 'user:session:';
+
+  // Types professionnels: tout sauf visiteur (1) et admin (29)
+  const PROFESSIONAL_TYPE_IDS = new Set(
+    Array.from({ length: 27 }, (_, i) => i + 2) // [2..28]
+  );
+
+  // Attacher les propriétés helper dérivées sur un objet user (DB ou cache)
+  const attachUserHelpers = (user) => {
+    if (!user) return user;
+    if (!user.roleNames) user.roleNames = [];
+
+    const isProfessionalByType = user.id_type_user && PROFESSIONAL_TYPE_IDS.has(user.id_type_user);
+
+    user.isAdmin = user.roleNames.includes('Administrateur') || user.id_type_user === 29;
+    user.isProfessionnel = user.roleNames.includes('Professionnel') || isProfessionalByType;
+    user.isUser = user.roleNames.includes('User') || user.id_type_user === 1 || user.roleNames.length === 0;
+    user.hasOrganisation = Array.isArray(user.Organisations) && user.Organisations.length > 0;
+    user.isProfessionnelValide = user.isProfessionnel && user.statut === 'actif';
+
+    return user;
+  };
+
+  // Sérialiser l'utilisateur pour le cache Redis (données minimales)
+  const serializeForCache = (user) => {
+    return JSON.stringify({
+      id_user: user.id_user,
+      nom: user.nom,
+      prenom: user.prenom,
+      email: user.email,
+      photo_url: user.photo_url,
+      id_type_user: user.id_type_user,
+      statut: user.statut,
+      email_verifie: user.email_verifie,
+      password_changed_at: user.password_changed_at,
+      derniere_connexion: user.derniere_connexion,
+      roleNames: user.roleNames || [],
+      Organisations: (user.Organisations || []).map(o => ({
+        id_organisation: o.id_organisation || o.id,
+        nom: o.nom
+      }))
+    });
+  };
+
+  // Récupérer l'utilisateur complet avec ses rôles (avec cache Redis)
   const getUserWithRoles = async (userId) => {
+    // 1. Tenter le cache Redis
+    const redis = getRedisClient();
+    if (redis) {
+      try {
+        const cached = await redis.get(`${USER_CACHE_PREFIX}${userId}`);
+        if (cached) {
+          const userData = JSON.parse(cached);
+          return attachUserHelpers(userData);
+        }
+      } catch (cacheErr) {
+        logger.debug('Auth cache read skip:', cacheErr.message);
+      }
+    }
+
+    // 2. Requête DB (cache miss)
     try {
-      // Configuration de base
       const queryOptions = {
         attributes: { exclude: ['password'] }
       };
 
-      // Ajouter les includes si les modèles sont disponibles
       if (Role) {
         queryOptions.include = [{
           model: Role,
@@ -91,7 +151,6 @@ module.exports = (modelsOrUser) => {
           required: false
         }];
 
-        // Ajouter Organisation si disponible
         if (Organisation) {
           queryOptions.include.push({
             model: Organisation,
@@ -105,29 +164,24 @@ module.exports = (modelsOrUser) => {
       const user = await User.findByPk(userId, queryOptions);
 
       if (user) {
-        // Ajouter des propriétés helper
         if (user.Roles) {
           user.roleNames = user.Roles.map(role => role.nom_role);
         } else {
           user.roleNames = [];
         }
 
-        // Types professionnels: tout sauf visiteur (1) et admin (29)
-        const professionalTypeIds = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28];
-        const isProfessionalByType = user.id_type_user && professionalTypeIds.includes(user.id_type_user);
-
-        // Log uniquement en développement
         if (IS_DEV_MODE) {
+          const isProfessionalByType = user.id_type_user && PROFESSIONAL_TYPE_IDS.has(user.id_type_user);
           logger.debug(`Auth Debug: user.id_type_user=${user.id_type_user}, isProfessionalByType=${isProfessionalByType}`);
         }
 
-        user.isAdmin = user.roleNames.includes('Administrateur') || user.id_type_user === 29;
-        user.isProfessionnel = user.roleNames.includes('Professionnel') || isProfessionalByType;
-        user.isUser = user.roleNames.includes('User') || user.id_type_user === 1 || user.roleNames.length === 0;
-        user.hasOrganisation = user.Organisations && user.Organisations.length > 0;
+        attachUserHelpers(user);
 
-        // Helper pour la validation professionnelle
-        user.isProfessionnelValide = user.isProfessionnel && user.statut === 'actif';
+        // 3. Stocker en cache Redis (non-bloquant)
+        if (redis) {
+          redis.setEx(`${USER_CACHE_PREFIX}${userId}`, USER_SESSION_TTL, serializeForCache(user))
+            .catch(e => logger.debug('Auth cache write skip:', e.message));
+        }
       }
 
       return user;
@@ -142,21 +196,26 @@ module.exports = (modelsOrUser) => {
         
         if (user) {
           user.roleNames = [];
-          // Types professionnels: tout sauf visiteur (1) et admin (29)
-          const professionalTypeIds = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28];
-          const isProfessionalByType = user.id_type_user && professionalTypeIds.includes(user.id_type_user);
-
-          user.isAdmin = user.id_type_user === 29;
-          user.isProfessionnel = isProfessionalByType;
-          user.isUser = user.id_type_user === 1 || !isProfessionalByType;
-          user.hasOrganisation = false;
-          user.isProfessionnelValide = isProfessionalByType && user.statut === 'actif';
+          attachUserHelpers(user);
         }
         
         return user;
       } catch (fallbackError) {
         logger.error('Erreur fallback getUserWithRoles:', fallbackError.message);
         return null;
+      }
+    }
+  };
+
+  // Invalider le cache session d'un utilisateur
+  // À appeler après : login, logout, changement de rôle, changement de mot de passe, changement de statut
+  const invalidateUserCache = async (userId) => {
+    const redis = getRedisClient();
+    if (redis) {
+      try {
+        await redis.del(`${USER_CACHE_PREFIX}${userId}`);
+      } catch (e) {
+        logger.debug('Auth cache invalidate skip:', e.message);
       }
     }
   };
@@ -196,6 +255,23 @@ module.exports = (modelsOrUser) => {
         });
       }
 
+      // Vérifier si le token est blacklisté (logout)
+      const redis = getRedisClient();
+      if (redis) {
+        try {
+          const isBlacklisted = await redis.get(`jwt:blacklist:${token}`);
+          if (isBlacklisted) {
+            return res.status(401).json({
+              success: false,
+              message: req.t('auth.tokenRevoked')
+            });
+          }
+        } catch (e) {
+          // Redis indisponible — on laisse passer (dégradation gracieuse)
+          logger.debug('JWT blacklist check skipped — Redis unavailable');
+        }
+      }
+
       // Récupérer l'utilisateur avec ses rôles
       const user = await getUserWithRoles(decoded.userId || decoded.id || decoded.id_user);
 
@@ -204,6 +280,17 @@ module.exports = (modelsOrUser) => {
           success: false,
           message: req.t('auth.userNotFound')
         });
+      }
+
+      // Vérifier que le token n'a pas été émis avant un changement de mot de passe
+      if (user.password_changed_at && decoded.pwdAt) {
+        const pwdChangedAtSec = Math.floor(new Date(user.password_changed_at).getTime() / 1000);
+        if (decoded.pwdAt < pwdChangedAtSec) {
+          return res.status(401).json({
+            success: false,
+            message: req.t('auth.tokenInvalid')
+          });
+        }
       }
 
       // ✅ CORRIGÉ: Gestion des statuts avec les valeurs ENUM existantes
@@ -565,66 +652,8 @@ module.exports = (modelsOrUser) => {
     };
   };
 
-  // ====================
-  // MIDDLEWARES DE RATE LIMITING
-  // ====================
-
-  const rateLimitStore = new Map();
-
-  // Cleanup des entrées expirées toutes les 5 minutes
-  const _rlCleanup = setInterval(() => {
-    const now = Date.now();
-    for (const [key, record] of rateLimitStore.entries()) {
-      if (now > record.resetTime) {
-        rateLimitStore.delete(key);
-      }
-    }
-  }, 5 * 60 * 1000);
-  if (typeof _rlCleanup.unref === 'function') _rlCleanup.unref();
-
-  const rateLimit = (options = {}) => {
-    const {
-      windowMs = 60 * 1000,
-      max = 100,
-      message = null
-    } = options;
-
-    return (req, res, next) => {
-      const key = req.user?.id_user || req.ip;
-      const now = Date.now();
-      
-      if (!rateLimitStore.has(key)) {
-        rateLimitStore.set(key, { count: 1, resetTime: now + windowMs });
-        return next();
-      }
-
-      const record = rateLimitStore.get(key);
-      
-      if (now > record.resetTime) {
-        record.count = 1;
-        record.resetTime = now + windowMs;
-        return next();
-      }
-
-      record.count++;
-      
-      if (record.count > max) {
-        return res.status(429).json({
-          success: false,
-          message: message || (req.t ? req.t('auth.tooManyRequests') : 'Too many requests'),
-          retryAfter: Math.ceil((record.resetTime - now) / 1000)
-        });
-      }
-
-      next();
-    };
-  };
-
-  const strictRateLimit = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 5,
-    message: null
-  });
+  // Note: Le rate limiting est géré exclusivement par rateLimitMiddleware.js
+  // (Redis + progressive slowdown + account lockout). Ne pas dupliquer ici.
 
   // ====================
   // PERMISSIONS DASHBOARD
@@ -681,12 +710,9 @@ module.exports = (modelsOrUser) => {
     requireOwnership,
     requireDashboardPermission,
 
-    // Rate limiting
-    rateLimit,
-    strictRateLimit,
-
     // Helpers exposés
     verifyToken,
-    getUserWithRoles
+    getUserWithRoles,
+    invalidateUserCache
   };
 };

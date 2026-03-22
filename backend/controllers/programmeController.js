@@ -302,4 +302,4 @@ class ProgrammeController extends BaseController {
   }
 }
 
-module.exports = ProgrammeController;
+module.exports = new ProgrammeController();

@@ -37,14 +37,16 @@ module.exports = (sequelize) => {
   // Associations
   GenreCategorie.associate = (models) => {
     // Relations belongsTo pour les jointures
-    GenreCategorie.belongsTo(models.Genre, { 
+    GenreCategorie.belongsTo(models.Genre, {
       foreignKey: 'id_genre',
-      as: 'genre'
+      as: 'genre',
+      onDelete: 'CASCADE'
     });
-    
-    GenreCategorie.belongsTo(models.Categorie, { 
+
+    GenreCategorie.belongsTo(models.Categorie, {
       foreignKey: 'id_categorie',
-      as: 'categorie'
+      as: 'categorie',
+      onDelete: 'CASCADE'
     });
   };
 

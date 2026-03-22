@@ -150,8 +150,8 @@ module.exports = (sequelize) => {
 
   // Associations
   Media.associate = (models) => {
-    Media.belongsTo(models.Oeuvre, { foreignKey: 'id_oeuvre' });
-    Media.belongsTo(models.Evenement, { foreignKey: 'id_evenement' });
+    Media.belongsTo(models.Oeuvre, { foreignKey: 'id_oeuvre', onDelete: 'CASCADE' });
+    Media.belongsTo(models.Evenement, { foreignKey: 'id_evenement', onDelete: 'CASCADE' });
   };
   
   // ⚡ NOUVELLES MÉTHODES I18N

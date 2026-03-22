@@ -1,5 +1,6 @@
 // middlewares/cacheMiddleware.js - Cache with Redis + LRU fallback
 const logger = require('../utils/logger');
+const { getClient: getRedisClient, isReady: isRedisReady } = require('../utils/redisClient');
 
 // ============================================================
 // LRU in-memory cache (fallback when Redis unavailable)
@@ -44,50 +45,6 @@ class LRUCache {
 }
 
 // ============================================================
-// Redis cache adapter
-// ============================================================
-let redisClient = null;
-let redisReady = false;
-
-async function getRedisClient() {
-  if (redisClient && redisReady) return redisClient;
-
-  try {
-    const redis = require('redis');
-    const url = process.env.REDIS_URL || `redis://${process.env.REDIS_HOST || 'localhost'}:${process.env.REDIS_PORT || 6379}`;
-
-    redisClient = redis.createClient({
-      url,
-      password: process.env.REDIS_PASSWORD || undefined,
-      socket: { connectTimeout: 3000 }
-    });
-
-    redisClient.on('error', (err) => {
-      if (redisReady) {
-        logger.warn('Redis cache connection error — falling back to LRU', { error: err.message });
-        redisReady = false;
-      }
-    });
-
-    redisClient.on('ready', () => {
-      redisReady = true;
-    });
-
-    await redisClient.connect();
-    redisReady = true;
-    logger.info('Redis cache connected');
-    return redisClient;
-  } catch (e) {
-    logger.debug('Redis unavailable for cache — using in-memory LRU');
-    redisReady = false;
-    return null;
-  }
-}
-
-// Try to connect to Redis at startup (non-blocking)
-getRedisClient().catch(() => {});
-
-// ============================================================
 // Unified cache store — Redis with LRU fallback
 // ============================================================
 const lruCache = new LRUCache(500);
@@ -95,9 +52,10 @@ const lruCache = new LRUCache(500);
 const store = {
   async get(key) {
     // Try Redis first
-    if (redisReady && redisClient) {
+    const redis = getRedisClient();
+    if (redis) {
       try {
-        const val = await redisClient.get(`cache:${key}`);
+        const val = await redis.get(`cache:${key}`);
         if (val) return JSON.parse(val);
       } catch (e) { /* fallback below */ }
     }
@@ -107,9 +65,10 @@ const store = {
   async set(key, value, ttlSeconds) {
     // Write to both Redis and LRU
     lruCache.set(key, value, ttlSeconds * 1000);
-    if (redisReady && redisClient) {
+    const redis = getRedisClient();
+    if (redis) {
       try {
-        await redisClient.setEx(`cache:${key}`, ttlSeconds, JSON.stringify(value));
+        await redis.setEx(`cache:${key}`, ttlSeconds, JSON.stringify(value));
       } catch (e) { /* LRU fallback already written */ }
     }
   },
@@ -125,14 +84,15 @@ const store = {
     }
 
     // Redis invalidation using SCAN (non-blocking)
-    if (redisReady && redisClient) {
+    const redis = getRedisClient();
+    if (redis) {
       try {
         let cursor = 0;
         do {
-          const reply = await redisClient.scan(cursor, { MATCH: `cache:*${pattern}*`, COUNT: 100 });
+          const reply = await redis.scan(cursor, { MATCH: `cache:*${pattern}*`, COUNT: 100 });
           cursor = reply.cursor;
           if (reply.keys.length > 0) {
-            await redisClient.del(reply.keys);
+            await redis.del(reply.keys);
             count += reply.keys.length;
           }
         } while (cursor !== 0);
@@ -142,16 +102,60 @@ const store = {
     return count;
   },
 
+  async invalidatePrefix(prefix) {
+    // LRU invalidation par préfixe (plus précis que pattern)
+    let count = 0;
+    for (const key of lruCache.keys()) {
+      if (key.startsWith(prefix)) {
+        lruCache.delete(key);
+        count++;
+      }
+    }
+
+    // Redis: SCAN par préfixe exact
+    const redis = getRedisClient();
+    if (redis) {
+      try {
+        let cursor = 0;
+        do {
+          const reply = await redis.scan(cursor, { MATCH: `cache:${prefix}*`, COUNT: 200 });
+          cursor = reply.cursor;
+          if (reply.keys.length > 0) {
+            await redis.del(reply.keys);
+            count += reply.keys.length;
+          }
+        } while (cursor !== 0);
+      } catch (e) { /* LRU already invalidated */ }
+    }
+    return count;
+  },
+
+  async invalidateKeys(keys) {
+    let count = 0;
+    for (const key of keys) {
+      lruCache.delete(key);
+    }
+    const redis = getRedisClient();
+    if (redis && keys.length > 0) {
+      try {
+        const redisKeys = keys.map(k => `cache:${k}`);
+        count = await redis.del(redisKeys);
+      } catch (e) { /* LRU already invalidated */ }
+    }
+    return count;
+  },
+
   async clear() {
     lruCache.clear();
-    if (redisReady && redisClient) {
+    const redis = getRedisClient();
+    if (redis) {
       try {
         // Only clear cache: prefixed keys
         let cursor = 0;
         do {
-          const reply = await redisClient.scan(cursor, { MATCH: 'cache:*', COUNT: 100 });
+          const reply = await redis.scan(cursor, { MATCH: 'cache:*', COUNT: 100 });
           cursor = reply.cursor;
-          if (reply.keys.length > 0) await redisClient.del(reply.keys);
+          if (reply.keys.length > 0) await redis.del(reply.keys);
         } while (cursor !== 0);
       } catch (e) { /* LRU already cleared */ }
     }
@@ -211,10 +215,12 @@ function createInvalidateCacheMiddleware(patterns = []) {
   return (req, res, next) => {
     const originalJson = res.json.bind(res);
     res.json = function(data) {
-      // Invalidate after response
-      patterns.forEach(pattern => {
-        store.invalidatePattern(pattern).catch(() => {});
-      });
+      // N'invalider que si la mutation a réussi
+      if (res.statusCode < 400) {
+        patterns.forEach(pattern => {
+          store.invalidatePrefix(pattern).catch(() => {});
+        });
+      }
       return originalJson(data);
     };
     next();
@@ -255,12 +261,12 @@ const cacheMiddleware = {
     }
 
     return {
-      backend: redisReady ? 'redis' : 'memory',
+      backend: isRedisReady() ? 'redis' : 'memory',
       totalEntries: lruCache.size,
       validEntries,
       expiredEntries,
       maxSize: lruCache.maxSize,
-      redisConnected: redisReady
+      redisConnected: isRedisReady()
     };
   }
 };

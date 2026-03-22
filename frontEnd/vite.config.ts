@@ -1,7 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
-import { componentTagger } from "lovable-tagger";
 import type { Plugin } from 'vite';
 
 import checker from 'vite-plugin-checker'
@@ -82,7 +81,6 @@ export default defineConfig(({ mode }) => ({
       }
     }),
     spaFallback(), // Utiliser notre plugin personnalisé
-    mode === 'development' && componentTagger(),
   ].filter(Boolean),
   resolve: {
     alias: {

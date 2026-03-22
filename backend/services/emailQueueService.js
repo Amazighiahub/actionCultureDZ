@@ -1,4 +1,5 @@
 // services/emailQueueService.js - Service de queue pour emails avec retry
+const logger = require('../utils/logger');
 const Bull = require('bull');
 const emailService = require('./emailService');
 
@@ -62,10 +63,10 @@ class EmailQueueService {
       this.setupEventHandlers();
 
       this.isInitialized = true;
-      console.log('✅ Service de queue email initialisé');
+      logger.info('✅ Service de queue email initialisé');
       
     } catch (error) {
-      console.error('❌ Erreur initialisation queue:', error);
+      logger.error('❌ Erreur initialisation queue:', error);
       // En cas d'échec, on peut continuer sans queue
       this.isInitialized = false;
     }
@@ -79,7 +80,7 @@ class EmailQueueService {
     this.queues.email.process('send-email', async (job) => {
       const { to, subject, text, html, attachments } = job.data;
       
-      console.log(`📧 Traitement email: ${subject} → ${to}`);
+      logger.info(`📧 Traitement email: ${subject} → ${to}`);
       
       const result = await emailService.sendEmail(to, subject, text, html, attachments);
       
@@ -94,7 +95,7 @@ class EmailQueueService {
     this.queues.notification.process('send-notification', async (job) => {
       const { notification, emailData } = job.data;
       
-      console.log(`🔔 Traitement notification: ${notification.type}`);
+      logger.info(`🔔 Traitement notification: ${notification.type}`);
       
       // Enregistrer la notification en base
       if (notification.save) {
@@ -155,28 +156,28 @@ class EmailQueueService {
     Object.entries(this.queues).forEach(([name, queue]) => {
       // Job complété
       queue.on('completed', (job, result) => {
-        console.log(`✅ Job ${name} #${job.id} complété`);
+        logger.info(`✅ Job ${name} #${job.id} complété`);
       });
 
       // Job échoué
       queue.on('failed', (job, err) => {
-        console.error(`❌ Job ${name} #${job.id} échoué:`, err.message);
+        logger.error(`❌ Job ${name} #${job.id} échoué:`, err.message);
         
         // Logger les détails pour debug
         if (process.env.NODE_ENV === 'development') {
-          console.error('Détails du job:', job.data);
-          console.error('Stack:', err.stack);
+          logger.error('Détails du job:', job.data);
+          logger.error('Stack:', err.stack);
         }
       });
 
       // Job bloqué
       queue.on('stalled', (job) => {
-        console.warn(`⚠️ Job ${name} #${job.id} bloqué`);
+        logger.warn(`⚠️ Job ${name} #${job.id} bloqué`);
       });
 
       // Progression (pour bulk emails)
       queue.on('progress', (job, progress) => {
-        console.log(`📊 Job ${name} #${job.id}: ${progress}%`);
+        logger.info(`📊 Job ${name} #${job.id}: ${progress}%`);
       });
     });
   }
@@ -191,7 +192,7 @@ class EmailQueueService {
   async addEmail(emailData, options = {}) {
     if (!this.isInitialized) {
       // Fallback: envoyer directement
-      console.warn('⚠️ Queue non initialisée, envoi direct');
+      logger.warn('⚠️ Queue non initialisée, envoi direct');
       return emailService.sendEmail(
         emailData.to,
         emailData.subject,
@@ -263,7 +264,7 @@ class EmailQueueService {
    */
   async addBulkEmails(emails, template, options = {}) {
     if (!this.isInitialized) {
-      console.warn('⚠️ Queue non initialisée pour envoi en masse');
+      logger.warn('⚠️ Queue non initialisée pour envoi en masse');
       return { success: false, error: 'Queue non disponible' };
     }
 
@@ -448,7 +449,7 @@ class EmailQueueService {
     );
 
     this.isInitialized = false;
-    console.log('🔌 Queues fermées');
+    logger.info('🔌 Queues fermées');
   }
 }
 

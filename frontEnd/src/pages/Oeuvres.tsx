@@ -51,7 +51,7 @@ const TYPE_ICONS: Record<string, React.ElementType> = {
 
 // Composant carte d'œuvre
 interface OeuvreCardProps {
-  oeuvre: any;
+  oeuvre: Record<string, unknown>;
   onView: (id: number) => void;
   onFavorite?: (id: number) => void;
 }
@@ -300,7 +300,7 @@ const Oeuvres: React.FC = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="tous">{t('common.all', 'Tous')}</SelectItem>
-                  {typesOeuvres?.map((type: any) => (
+                  {typesOeuvres?.map((type: Record<string, unknown>) => (
                     <SelectItem key={type.id_type_oeuvre} value={type.id_type_oeuvre.toString()}>
                       {type.nom_type}
                     </SelectItem>

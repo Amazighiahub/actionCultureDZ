@@ -323,10 +323,11 @@ class LieuController extends BaseController {
     try {
       const lang = ALLOWED_LANGS.includes(req.lang) ? req.lang : 'fr';
       const { page, limit } = this._paginate(req, { limit: 20 });
-      const { q, type, commune, daira, wilaya, radius, lat, lng } = req.query;
+      const { q, search, type, commune, daira, wilaya, radius, lat, lng } = req.query;
+      const searchTerm = q || search; // Accept both ?q= and ?search= for frontend compatibility
 
       const result = await this.service.searchLieux({
-        lang, q, type, commune, daira, wilaya, radius, lat, lng, page, limit
+        lang, q: searchTerm, type, commune, daira, wilaya, radius, lat, lng, page, limit
       });
 
       // Handle validation errors from the service
@@ -702,4 +703,4 @@ class LieuController extends BaseController {
   }
 }
 
-module.exports = LieuController;
+module.exports = new LieuController();

@@ -79,7 +79,7 @@ const ForgotPassword = () => {
         // On affiche toujours un succès pour ne pas révéler si l'email existe
         setSubmitted(true);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Même en cas d'erreur, on affiche un succès pour des raisons de sécurité
       setSubmitted(true);
     } finally {

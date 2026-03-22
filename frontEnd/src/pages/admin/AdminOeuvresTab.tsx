@@ -40,11 +40,12 @@ import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { getAssetUrl } from '@/helpers/assetUrl';
 
 // Helper pour extraire le texte multilingue
-const getLocalizedText = (value: any, lang: string = 'fr', fallback: string = ''): string => {
+const getLocalizedText = (value: unknown, lang: string = 'fr', fallback: string = ''): string => {
   if (!value) return fallback;
   if (typeof value === 'string') return value;
-  if (typeof value === 'object') {
-    return value[lang] || value.fr || value.ar || value.en || Object.values(value)[0] || fallback;
+  if (typeof value === 'object' && value !== null) {
+    const obj = value as Record<string, unknown>;
+    return String(obj[lang] || obj.fr || obj.ar || obj.en || Object.values(obj)[0] || fallback);
   }
   return String(value);
 };
@@ -92,7 +93,7 @@ const AdminOeuvresTab: React.FC = () => {
 
   // Filtrer les œuvres
   const filteredOeuvres = React.useMemo(() => {
-    return allOeuvres.filter((oeuvre: any) => {
+    return allOeuvres.filter((oeuvre: Record<string, unknown>) => {
       // Filtre de recherche
       if (debouncedSearch) {
         const searchLower = debouncedSearch.toLowerCase();
@@ -212,7 +213,7 @@ const AdminOeuvresTab: React.FC = () => {
         />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredOeuvres.map((oeuvre: any) => {
+          {filteredOeuvres.map((oeuvre: Record<string, unknown>) => {
             const TypeIcon = getTypeIcon(oeuvre.type_oeuvre || oeuvre.TypeOeuvre?.nom_type);
             const titre = getLocalizedText(oeuvre.titre, currentLang, t('common.untitled', 'Sans titre'));
             const description = getLocalizedText(oeuvre.description, currentLang, t('common.noDescription', 'Pas de description'));

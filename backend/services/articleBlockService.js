@@ -2,13 +2,17 @@
  * ArticleBlockService - Service pour la gestion des blocs d'articles
  * Architecture: Controller → Service → Repository → Database
  */
-
+const BaseService = require('./core/baseService');
 const { Op } = require('sequelize');
 
-class ArticleBlockService {
-  constructor(models) {
-    this.models = models;
-    this.sequelize = models.sequelize || Object.values(models)[0]?.sequelize;
+class ArticleBlockService extends BaseService {
+  constructor(repository, options = {}) {
+    super(repository, options);
+  }
+
+  /** @returns {import('sequelize').Sequelize} */
+  get sequelize() {
+    return this.repository.model.sequelize;
   }
 
   // ============================================================================
@@ -19,30 +23,14 @@ class ArticleBlockService {
    * Récupérer tous les blocs d'un article
    */
   async getBlocksByArticle(articleId, articleType = 'article') {
-    return this.models.ArticleBlock.findAll({
-      where: {
-        id_article: articleId,
-        article_type: articleType
-      },
-      include: [{
-        model: this.models.Media,
-        as: 'media',
-        required: false
-      }],
-      order: [['ordre', 'ASC']]
-    });
+    return this.repository.findByArticle(articleId, articleType);
   }
 
   /**
    * Récupérer un bloc par son ID avec ses associations
    */
   async getBlockWithMedia(blockId) {
-    return this.models.ArticleBlock.findByPk(blockId, {
-      include: [{
-        model: this.models.Media,
-        as: 'media'
-      }]
-    });
+    return this.repository.findWithMedia(blockId);
   }
 
   // ============================================================================
@@ -70,9 +58,9 @@ class ArticleBlockService {
     const transaction = await this.sequelize.transaction();
 
     try {
-      const ordre = await this.models.ArticleBlock.getNextOrder(id_article);
+      const ordre = await this.repository.getNextOrdre(id_article, article_type);
 
-      const block = await this.models.ArticleBlock.create({
+      const block = await this.repository.create({
         id_article,
         article_type,
         type_block,
@@ -109,10 +97,7 @@ class ArticleBlockService {
 
     try {
       // Supprimer les anciens blocs
-      await this.models.ArticleBlock.destroy({
-        where: { id_article, article_type },
-        transaction
-      });
+      await this.repository.deleteByArticle(id_article, article_type, transaction);
 
       // Créer les nouveaux blocs
       const allowedBlockFields = ['type', 'contenu', 'id_media', 'legende', 'alt_text', 'style', 'niveau'];
@@ -122,21 +107,14 @@ class ArticleBlockService {
         const blockData = { id_article, article_type, ordre: i };
         allowedBlockFields.forEach(f => { if (blocks[i][f] !== undefined) blockData[f] = blocks[i][f]; });
 
-        const block = await this.models.ArticleBlock.create(blockData, { transaction });
+        const block = await this.repository.create(blockData, { transaction });
         createdBlocks.push(block);
       }
 
       await transaction.commit();
 
       // Récupérer les blocs avec associations
-      const newBlocks = await this.models.ArticleBlock.findAll({
-        where: { id_article, article_type },
-        include: [{
-          model: this.models.Media,
-          as: 'media'
-        }],
-        order: [['ordre', 'ASC']]
-      });
+      const newBlocks = await this.repository.findByArticle(id_article, article_type);
 
       return { data: newBlocks, count: createdBlocks.length };
 
@@ -153,7 +131,7 @@ class ArticleBlockService {
     const transaction = await this.sequelize.transaction();
 
     try {
-      const block = await this.models.ArticleBlock.findByPk(blockId, { transaction });
+      const block = await this.repository.findById(blockId);
 
       if (!block) {
         await transaction.rollback();
@@ -190,7 +168,7 @@ class ArticleBlockService {
     const transaction = await this.sequelize.transaction();
 
     try {
-      const block = await this.models.ArticleBlock.findByPk(blockId, { transaction });
+      const block = await this.repository.findById(blockId);
 
       if (!block) {
         await transaction.rollback();
@@ -221,7 +199,7 @@ class ArticleBlockService {
 
     try {
       // Vérifier que tous les blocs appartiennent à l'article
-      const blocks = await this.models.ArticleBlock.findAll({
+      const blocks = await this.repository.model.findAll({
         where: {
           id_block: blockIds,
           id_article: articleId
@@ -234,18 +212,13 @@ class ArticleBlockService {
         return { error: 'notBelongToArticle' };
       }
 
-      for (let i = 0; i < blockIds.length; i++) {
-        await this.models.ArticleBlock.update(
-          { ordre: i },
-          {
-            where: {
-              id_block: blockIds[i],
-              id_article: articleId
-            },
-            transaction
-          }
-        );
-      }
+      // Bulk update via single CASE WHEN query instead of N individual UPDATEs
+      const cases = blockIds.map((id, i) => `WHEN ${parseInt(id, 10)} THEN ${i}`).join(' ');
+      const ids = blockIds.map(id => parseInt(id, 10)).join(',');
+      await this.sequelize.query(
+        `UPDATE article_blocks SET ordre = CASE id_block ${cases} END WHERE id_block IN (${ids}) AND id_article = :articleId`,
+        { replacements: { articleId: parseInt(articleId, 10) }, transaction }
+      );
 
       await transaction.commit();
       return { success: true };
@@ -296,14 +269,16 @@ class ArticleBlockService {
     const transaction = await this.sequelize.transaction();
 
     try {
-      const originalBlock = await this.models.ArticleBlock.findByPk(blockId, { transaction });
+      const originalBlock = await this.repository.findById(blockId);
 
       if (!originalBlock) {
         await transaction.rollback();
         return { error: 'notFound' };
       }
 
-      const newBlock = await this.models.ArticleBlock.create({
+      const ordre = await this.repository.getNextOrdre(originalBlock.id_article, originalBlock.article_type);
+
+      const newBlock = await this.repository.create({
         id_article: originalBlock.id_article,
         article_type: originalBlock.article_type,
         type_block: originalBlock.type_block,
@@ -311,7 +286,7 @@ class ArticleBlockService {
         contenu_json: originalBlock.contenu_json,
         id_media: originalBlock.id_media,
         metadata: originalBlock.metadata,
-        ordre: await this.models.ArticleBlock.getNextOrder(originalBlock.id_article),
+        ordre,
         visible: originalBlock.visible
       }, { transaction });
 
@@ -334,7 +309,7 @@ class ArticleBlockService {
    * Réorganiser les ordres après suppression d'un bloc
    */
   async _reorderAfterDelete(articleId, deletedOrdre, transaction) {
-    await this.models.ArticleBlock.update(
+    await this.repository.model.update(
       { ordre: this.sequelize.literal('ordre - 1') },
       {
         where: {

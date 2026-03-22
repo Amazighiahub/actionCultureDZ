@@ -50,7 +50,7 @@ interface UseMultilingualDataReturn<T> {
  * @param initialData Données initiales
  * @param options Options de configuration
  */
-export function useMultilingualData<T extends Record<string, any>>(
+export function useMultilingualData<T extends Record<string, unknown>>(
   initialData: T,
   options: UseMultilingualDataOptions = {}
 ): UseMultilingualDataReturn<T> {

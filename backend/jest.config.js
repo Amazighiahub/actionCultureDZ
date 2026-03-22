@@ -14,6 +14,14 @@ module.exports = {
   ],
   coverageDirectory: "coverage",
   coverageReporters: ["text", "lcov", "html"],
+  coverageThreshold: {
+    global: {
+      branches: 50,
+      functions: 50,
+      lines: 60,
+      statements: 60
+    }
+  },
   verbose: true,
   testTimeout: 30000,
   modulePathIgnorePatterns: ["<rootDir>/node_modules/"]

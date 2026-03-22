@@ -1,12 +1,12 @@
 /**
- * Routes v2 pour les parcours intelligents
+ * Routes pour les parcours intelligents
  * Utilise le pattern Controller → Service → Repository
  */
 
 const express = require('express');
 const parcoursController = require('../controllers/parcoursController');
 
-const initParcoursRoutesV2 = (models, authMiddleware) => {
+const initParcoursRoutes = (models, authMiddleware) => {
   const router = express.Router();
   const { authenticate, requireRole } = authMiddleware;
 
@@ -46,4 +46,4 @@ const initParcoursRoutesV2 = (models, authMiddleware) => {
   return router;
 };
 
-module.exports = initParcoursRoutesV2;
+module.exports = initParcoursRoutes;

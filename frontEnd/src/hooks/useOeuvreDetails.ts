@@ -241,7 +241,15 @@ export function useOeuvreDetails(oeuvreId: number, options: UseOeuvreDetailsOpti
 
     // Users associés
     if (oeuvre.Users) {
-      oeuvre.Users.forEach((user: any) => {
+      type UserWithJunction = {
+        id_user: number;
+        nom: string;
+        prenom?: string;
+        photo_url?: string;
+        TypeUser?: { id_type_user: number; nom_type: string };
+        OeuvreUser?: { role_dans_oeuvre?: string; personnage?: string; role_principal?: boolean; description_role?: string };
+      };
+      (oeuvre.Users as UserWithJunction[]).forEach((user) => {
         contributeurs.push({
           id_user: user.id_user,
           nom: user.nom,
@@ -258,8 +266,17 @@ export function useOeuvreDetails(oeuvreId: number, options: UseOeuvreDetailsOpti
     }
 
     // Intervenants associés
-    if (oeuvre.Intervenants) {
-      oeuvre.Intervenants.forEach((intervenant: any) => {
+    type IntervenantWithJunction = {
+      id_intervenant: number;
+      nom: string;
+      prenom?: string;
+      photo_url?: string;
+      TypeUser?: { id_type_user: number; nom_type: string };
+      OeuvreIntervenant?: { personnage?: string; role_principal?: boolean; description_role?: string };
+    };
+    const intervenants = (oeuvre as Record<string, unknown>).Intervenants as IntervenantWithJunction[] | undefined;
+    if (intervenants) {
+      intervenants.forEach((intervenant) => {
         contributeurs.push({
           id_intervenant: intervenant.id_intervenant,
           nom: intervenant.nom,

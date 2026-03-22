@@ -1,5 +1,4 @@
 // services/metadata.service.ts - VERSION CORRIGÉE
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { httpClient } from './httpClient';
 import type { ApiResponse } from '../config/api';
 import type {
@@ -56,7 +55,7 @@ interface AllMetadata {
 
 export class MetadataService {
   // Cache pour éviter les requêtes répétées
-  private cache: Map<string, { data: any; timestamp: number }> = new Map();
+  private cache: Map<string, { data: AllMetadata; timestamp: number }> = new Map();
   private cacheTimeout = 5 * 60 * 1000; // 5 minutes
 
   /**
@@ -69,10 +68,10 @@ export class MetadataService {
       // ✅ APRÈS: La route backend est /metadata/ pas /metadata/all
       const response = await httpClient.get<AllMetadata>('/metadata');
       return response;
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
-        error: error.message || 'Erreur lors du chargement des métadonnées'
+        error: error instanceof Error ? error.message : 'Erreur lors du chargement des métadonnées'
       };
     }
   }
@@ -123,10 +122,10 @@ export class MetadataService {
         `/metadata/types-oeuvres/${typeOeuvreId}/categories`
       );
       return response;
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
-        error: error.message || 'Erreur lors de la récupération des catégories'
+        error: error instanceof Error ? error.message : 'Erreur lors de la récupération des catégories'
       };
     }
   }
@@ -155,10 +154,10 @@ export class MetadataService {
         { categories: categoryIds }
       );
       return response;
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
-        error: error.message || 'Erreur lors de la récupération des genres'
+        error: error instanceof Error ? error.message : 'Erreur lors de la récupération des genres'
       };
     }
   }
@@ -179,10 +178,10 @@ export class MetadataService {
         }
       );
       return response;
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
-        error: error.message || 'Erreur lors de la validation'
+        error: error instanceof Error ? error.message : 'Erreur lors de la validation'
       };
     }
   }
@@ -195,10 +194,10 @@ export class MetadataService {
     try {
       const response = await httpClient.get<TypeOeuvre[]>('/metadata/types-oeuvres');
       return response;
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
-        error: error.message || 'Erreur lors du chargement des types d\'œuvres'
+        error: error instanceof Error ? error.message : 'Erreur lors du chargement des types d\'œuvres'
       };
     }
   }
@@ -211,10 +210,10 @@ export class MetadataService {
     try {
       const response = await httpClient.get<Langue[]>('/metadata/langues');
       return response;
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
-        error: error.message || 'Erreur lors du chargement des langues'
+        error: error instanceof Error ? error.message : 'Erreur lors du chargement des langues'
       };
     }
   }
@@ -227,10 +226,10 @@ export class MetadataService {
     try {
       const response = await httpClient.get<TypeEvenement[]>('/metadata/types-evenements');
       return response;
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
-        error: error.message || 'Erreur lors du chargement des types d\'événements'
+        error: error instanceof Error ? error.message : 'Erreur lors du chargement des types d\'événements'
       };
     }
   }
@@ -243,10 +242,10 @@ export class MetadataService {
     try {
       const response = await httpClient.get<TypeUser[]>('/metadata/types-users');
       return response;
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
-        error: error.message || 'Erreur lors du chargement des types d\'utilisateurs'
+        error: error instanceof Error ? error.message : 'Erreur lors du chargement des types d\'utilisateurs'
       };
     }
   }
@@ -255,14 +254,18 @@ export class MetadataService {
   // ÉDITEURS
   // ================================================
 
-  async getEditeurs(): Promise<ApiResponse<Editeur[]>> {
+  async getEditeurs(search?: string, limit = 50): Promise<ApiResponse<Editeur[]>> {
     try {
-      const response = await httpClient.get<Editeur[]>('/metadata/editeurs');
+      const params: Record<string, string | number> = { limit };
+      if (search) {
+        params.search = search;
+      }
+      const response = await httpClient.get<Editeur[]>('/metadata/editeurs', params);
       return response;
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
-        error: error.message || 'Erreur lors du chargement des éditeurs'
+        error: error instanceof Error ? error.message : 'Erreur lors du chargement des éditeurs'
       };
     }
   }
@@ -279,10 +282,10 @@ export class MetadataService {
       const response = await httpClient.post<Editeur>('/metadata/editeurs', data);
       this.clearCache();
       return response;
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
-        error: error.message || 'Erreur lors de la création de l\'éditeur'
+        error: error instanceof Error ? error.message : 'Erreur lors de la création de l\'éditeur'
       };
     }
   }
@@ -293,17 +296,17 @@ export class MetadataService {
 
   async getTags(search?: string, limit = 50): Promise<ApiResponse<TagMotCle[]>> {
     try {
-      const params: any = { limit };
+      const params: Record<string, string | number> = { limit };
       if (search) {
         params.search = search;
       }
       
       const response = await httpClient.get<TagMotCle[]>('/metadata/tags', params);
       return response;
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
-        error: error.message || 'Erreur lors du chargement des tags'
+        error: error instanceof Error ? error.message : 'Erreur lors du chargement des tags'
       };
     }
   }
@@ -313,10 +316,10 @@ export class MetadataService {
       const response = await httpClient.post<TagMotCle>('/metadata/tags', data);
       this.clearCache();
       return response;
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
-        error: error.message || 'Erreur lors de la création du tag'
+        error: error instanceof Error ? error.message : 'Erreur lors de la création du tag'
       };
     }
   }
@@ -329,10 +332,10 @@ export class MetadataService {
     try {
       const response = await httpClient.get<Materiau[]>('/metadata/materiaux');
       return response;
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
-        error: error.message || 'Erreur lors du chargement des matériaux'
+        error: error instanceof Error ? error.message : 'Erreur lors du chargement des matériaux'
       };
     }
   }
@@ -341,10 +344,10 @@ export class MetadataService {
     try {
       const response = await httpClient.get<Technique[]>('/metadata/techniques');
       return response;
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
-        error: error.message || 'Erreur lors du chargement des techniques'
+        error: error instanceof Error ? error.message : 'Erreur lors du chargement des techniques'
       };
     }
   }
@@ -357,10 +360,10 @@ export class MetadataService {
     try {
       const response = await httpClient.get<Categorie[]>('/metadata/categories');
       return response;
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
-        error: error.message || 'Erreur lors du chargement des catégories'
+        error: error instanceof Error ? error.message : 'Erreur lors du chargement des catégories'
       };
     }
   }
@@ -369,10 +372,10 @@ export class MetadataService {
     try {
       const response = await httpClient.get<Genre[]>('/metadata/genres');
       return response;
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
-        error: error.message || 'Erreur lors du chargement des genres'
+        error: error instanceof Error ? error.message : 'Erreur lors du chargement des genres'
       };
     }
   }
@@ -385,10 +388,10 @@ export class MetadataService {
     try {
       const response = await httpClient.get<Wilaya[]>('/metadata/wilayas');
       return response;
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
-        error: error.message || 'Erreur lors du chargement des wilayas'
+        error: error instanceof Error ? error.message : 'Erreur lors du chargement des wilayas'
       };
     }
   }

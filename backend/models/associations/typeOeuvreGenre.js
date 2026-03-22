@@ -37,14 +37,16 @@ module.exports = (sequelize) => {
   // Associations
   TypeOeuvreGenre.associate = (models) => {
     // Relations belongsTo pour les jointures
-    TypeOeuvreGenre.belongsTo(models.TypeOeuvre, { 
+    TypeOeuvreGenre.belongsTo(models.TypeOeuvre, {
       foreignKey: 'id_type_oeuvre',
-      as: 'typeOeuvre'
+      as: 'typeOeuvre',
+      onDelete: 'CASCADE'
     });
-    
-    TypeOeuvreGenre.belongsTo(models.Genre, { 
+
+    TypeOeuvreGenre.belongsTo(models.Genre, {
       foreignKey: 'id_genre',
-      as: 'genre'
+      as: 'genre',
+      onDelete: 'CASCADE'
     });
   };
 

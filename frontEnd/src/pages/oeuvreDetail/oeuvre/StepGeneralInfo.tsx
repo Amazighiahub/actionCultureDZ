@@ -25,7 +25,7 @@ interface FormData {
   id_langue: number;
   annee_creation?: number;
   prix?: number;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 interface Metadata {
@@ -35,7 +35,7 @@ interface Metadata {
 
 interface StepGeneralInfoProps {
   formData: FormData;
-  updateFormData: (field: string, value: any) => void;
+  updateFormData: (field: string, value: unknown) => void;
   errors: Record<string, string>;
   metadata: Metadata;
 }

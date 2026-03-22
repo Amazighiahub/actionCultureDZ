@@ -1,12 +1,12 @@
 /**
- * ServiceControllerV2 - Controller refactoré avec Service Pattern
+ * ServiceController - Controller refactoré avec Service Pattern
  * Architecture: Controller → Service → Repository → Database
  */
 
 const BaseController = require('./baseController');
 const container = require('../services/serviceContainer');
 
-class ServiceControllerV2 extends BaseController {
+class ServiceController extends BaseController {
   get serviceService() {
     return container.serviceService;
   }
@@ -211,4 +211,4 @@ class ServiceControllerV2 extends BaseController {
 
 }
 
-module.exports = new ServiceControllerV2();
+module.exports = new ServiceController();

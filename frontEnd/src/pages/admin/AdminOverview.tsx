@@ -21,11 +21,12 @@ import { useDashboardAdmin } from '@/hooks/useDashboardAdmin';
 import { useFormatDate } from '@/hooks/useFormatDate';
 
 // Helper pour extraire le texte d'un champ multilingue {fr, ar, en} ou string
-const getLocalizedText = (value: any, lang: string = 'fr', fallback: string = ''): string => {
+const getLocalizedText = (value: unknown, lang: string = 'fr', fallback: string = ''): string => {
   if (!value) return fallback;
   if (typeof value === 'string') return value;
-  if (typeof value === 'object') {
-    return value[lang] || value.fr || value.ar || value.en || Object.values(value).find(v => typeof v === 'string' && v) || fallback;
+  if (typeof value === 'object' && value !== null) {
+    const obj = value as Record<string, unknown>;
+    return String(obj[lang] || obj.fr || obj.ar || obj.en || Object.values(obj).find(v => typeof v === 'string' && v) || fallback);
   }
   return String(value);
 };
@@ -244,7 +245,7 @@ const AdminOverview: React.FC = () => {
               <LoadingSkeleton type="list" count={3} />
             ) : pendingUsers?.items?.length > 0 ? (
               <div className="space-y-3">
-                {pendingUsers.items.slice(0, 5).map((user: any) => (
+                {pendingUsers.items.slice(0, 5).map((user: Record<string, unknown>) => (
                   <PendingItem
                     key={user.id_user}
                     title={`${getLocalizedText(user.prenom)} ${getLocalizedText(user.nom)}`}
@@ -292,7 +293,7 @@ const AdminOverview: React.FC = () => {
               <LoadingSkeleton type="list" count={3} />
             ) : pendingOeuvres?.items?.length > 0 ? (
               <div className="space-y-3">
-                {pendingOeuvres.items.slice(0, 5).map((oeuvre: any) => (
+                {pendingOeuvres.items.slice(0, 5).map((oeuvre: Record<string, unknown>) => (
                   <PendingItem
                     key={oeuvre.id_oeuvre}
                     title={getLocalizedText(oeuvre.titre, 'fr', 'Sans titre')}
@@ -340,7 +341,7 @@ const AdminOverview: React.FC = () => {
               <LoadingSkeleton type="list" count={3} />
             ) : moderationQueue?.items?.length > 0 ? (
               <div className="space-y-2">
-                {moderationQueue.items.slice(0, 5).map((item: any, index: number) => (
+                {moderationQueue.items.slice(0, 5).map((item: Record<string, unknown>, index: number) => (
                   <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
                     <div>
                       <p className="font-medium text-sm">{getLocalizedText(item.entity_title || item.reason)}</p>

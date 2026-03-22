@@ -1,3 +1,4 @@
+const logger = require('../utils/logger');
 /**
  * WhatsApp Service - Service d'envoi de messages WhatsApp
  * Utilise l'API Twilio WhatsApp Business ou Meta Cloud API
@@ -26,7 +27,7 @@ class WhatsAppService {
     if (!this.isPaused && this.provider !== 'simulation') {
       this.initializeProvider();
     } else {
-      console.log('💬 Service WhatsApp en pause - mode simulation activé.');
+      logger.info('💬 Service WhatsApp en pause - mode simulation activé.');
     }
   }
 
@@ -43,11 +44,11 @@ class WhatsAppService {
           this.initializeMeta();
           break;
         default:
-          console.log('💬 Service WhatsApp en mode simulation');
+          logger.info('💬 Service WhatsApp en mode simulation');
           this.isPaused = true;
       }
     } catch (error) {
-      console.error('❌ Erreur initialisation WhatsApp service:', error);
+      logger.error('❌ Erreur initialisation WhatsApp service:', error);
       this.isPaused = true;
     }
   }
@@ -67,9 +68,9 @@ class WhatsAppService {
 
       const twilio = require('twilio');
       this.client = twilio(accountSid, authToken);
-      console.log('✅ Service WhatsApp Twilio initialisé');
+      logger.info('✅ Service WhatsApp Twilio initialisé');
     } catch (error) {
-      console.warn('⚠️ Twilio WhatsApp non configuré:', error.message);
+      logger.warn('⚠️ Twilio WhatsApp non configuré:', error.message);
       this.isPaused = true;
     }
   }
@@ -86,9 +87,9 @@ class WhatsAppService {
         throw new Error('Configuration Meta WhatsApp incomplète');
       }
 
-      console.log('✅ Service WhatsApp Meta Cloud API initialisé');
+      logger.info('✅ Service WhatsApp Meta Cloud API initialisé');
     } catch (error) {
-      console.warn('⚠️ Meta WhatsApp non configuré:', error.message);
+      logger.warn('⚠️ Meta WhatsApp non configuré:', error.message);
       this.isPaused = true;
     }
   }
@@ -124,8 +125,8 @@ class WhatsAppService {
 
     // Mode simulation
     if (this.isPaused) {
-      console.log(`\n💬 [WHATSAPP SIMULATION] Envoi à: ${normalizedTo}`);
-      console.log(`💬 [WHATSAPP SIMULATION] Message: ${message}`);
+      logger.info(`\n💬 [WHATSAPP SIMULATION] Envoi à: ${normalizedTo}`);
+      logger.info(`💬 [WHATSAPP SIMULATION] Message: ${message}`);
       return { success: true, messageId: 'wa-simulated-' + Date.now() };
     }
 
@@ -143,10 +144,10 @@ class WhatsAppService {
           return { success: false, error: 'Provider WhatsApp non configuré' };
       }
 
-      console.log(`✅ WhatsApp envoyé à ${normalizedTo}. ID: ${result.messageId}`);
+      logger.info(`✅ WhatsApp envoyé à ${normalizedTo}. ID: ${result.messageId}`);
       return result;
     } catch (error) {
-      console.error(`❌ Erreur envoi WhatsApp à ${normalizedTo}:`, error);
+      logger.error(`❌ Erreur envoi WhatsApp à ${normalizedTo}:`, error);
       return { success: false, error: error.message };
     }
   }

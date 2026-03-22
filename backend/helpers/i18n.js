@@ -1,6 +1,8 @@
 // helpers/i18n.js
 // Fonctions utilitaires pour l'internationalisation (i18n)
 
+const { sanitizeLike } = require('../utils/sanitize');
+
 const SUPPORTED_LANGUAGES = ['fr', 'ar', 'en', 'tz-ltn', 'tz-tfng'];
 const DEFAULT_LANGUAGE = 'fr';
 
@@ -200,7 +202,7 @@ const buildMultiLangSearch = (field, searchTerm, lang = null) => {
   
   if (!searchTerm) return {};
   
-  const searchPattern = `%${searchTerm}%`;
+  const searchPattern = `%${sanitizeLike(searchTerm)}%`;
   
   if (lang) {
     // Recherche dans une langue spécifique
@@ -220,6 +222,37 @@ const buildMultiLangSearch = (field, searchTerm, lang = null) => {
     );
   });
   
+  return { [Op.or]: conditions };
+};
+
+/**
+ * Construit une clause WHERE pour correspondance exacte (insensible à la casse) sur un champ JSON multilingue.
+ * Cherche dans toutes les langues : si la valeur existe dans n'importe quelle langue, retourne un match.
+ * Utilisé par findOrCreate pour éviter les doublons.
+ * @param {string} field - Nom du champ JSON (ex: 'nom')
+ * @param {string} value - Valeur à chercher (string brute)
+ * @returns {Object} - Clause Sequelize WHERE
+ */
+const buildMultiLangExactMatch = (field, value) => {
+  const { Op, Sequelize } = require('sequelize');
+
+  if (!value || typeof value !== 'string') return {};
+
+  const normalized = value.trim().toLowerCase();
+  if (!normalized) return {};
+
+  const conditions = SUPPORTED_LANGUAGES.map(l => {
+    const jsonPath = l.includes('-') ? `$."${l}"` : `$.${l}`;
+    return Sequelize.where(
+      Sequelize.fn('LOWER',
+        Sequelize.fn('JSON_UNQUOTE',
+          Sequelize.fn('JSON_EXTRACT', Sequelize.col(field), Sequelize.literal(`'${jsonPath}'`))
+        )
+      ),
+      normalized
+    );
+  });
+
   return { [Op.or]: conditions };
 };
 
@@ -277,6 +310,7 @@ module.exports = {
   mergeTranslations,
   prepareMultiLangField,
   buildMultiLangSearch,
+  buildMultiLangExactMatch,
   buildMultiLangOrder,
   hasTranslation,
   getTranslationStatus

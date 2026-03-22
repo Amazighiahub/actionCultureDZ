@@ -23,7 +23,7 @@ describe('UploadController', () => {
   let req, res;
 
   beforeEach(() => {
-    controller = new UploadController();
+    controller = UploadController;
     req = {
       t: jest.fn((key) => 'translated:' + key),
       lang: 'fr',

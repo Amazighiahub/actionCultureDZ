@@ -40,7 +40,7 @@ describe('ProfessionnelController', () => {
   let req, res;
 
   beforeEach(() => {
-    controller = new ProfessionnelController();
+    controller = ProfessionnelController;
     req = {
       t: jest.fn((key) => 'translated:' + key),
       lang: 'fr',

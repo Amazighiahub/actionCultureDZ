@@ -85,42 +85,88 @@ class EvenementRepository extends BaseRepository {
    * Trouve les événements publiés avec pagination
    */
   async findPublished(options = {}) {
-    return this.findAll({
-      ...options,
-      where: { ...options.where, statut: { [Op.in]: ['publie', 'planifie', 'en_cours'] } },
-      include: this._defaultIncludes(),
-      order: [['date_debut', 'ASC']]
-    });
+    const { page = 1, limit = 20 } = options;
+    const p = parseInt(page);
+    const l = parseInt(limit);
+    const where = { ...options.where, statut: { [Op.in]: ['publie', 'planifie', 'en_cours'] } };
+
+    const [total, rows] = await Promise.all([
+      this.model.count({ where }),
+      this.model.findAll({
+        where,
+        include: this._defaultIncludes(),
+        order: [['date_debut', 'ASC']],
+        limit: l,
+        offset: (p - 1) * l,
+        subQuery: false
+      })
+    ]);
+
+    return {
+      data: rows,
+      pagination: {
+        page: p, limit: l, total,
+        totalPages: Math.ceil(total / l),
+        hasNext: p * l < total,
+        hasPrev: p > 1
+      }
+    };
   }
 
   /**
    * Trouve les événements à venir
    */
   async findUpcoming(options = {}) {
-    return this.findAll({
-      ...options,
-      where: {
-        ...options.where,
-        date_debut: { [Op.gte]: new Date() },
-        statut: { [Op.in]: ['publie', 'planifie'] }
-      },
-      include: this._defaultIncludes(),
-      order: [['date_debut', 'ASC']]
-    });
+    const { page = 1, limit = 20 } = options;
+    const p = parseInt(page);
+    const l = parseInt(limit);
+    const where = {
+      ...options.where,
+      date_debut: { [Op.gte]: new Date() },
+      statut: { [Op.in]: ['publie', 'planifie'] }
+    };
+
+    const [total, rows] = await Promise.all([
+      this.model.count({ where }),
+      this.model.findAll({
+        where,
+        include: this._defaultIncludes(),
+        order: [['date_debut', 'ASC']],
+        limit: l,
+        offset: (p - 1) * l,
+        subQuery: false
+      })
+    ]);
+
+    return {
+      data: rows,
+      pagination: {
+        page: p, limit: l, total,
+        totalPages: Math.ceil(total / l),
+        hasNext: p * l < total,
+        hasPrev: p > 1
+      }
+    };
   }
 
   /**
    * Trouve un événement avec tous ses détails
    */
   async findWithFullDetails(id) {
-    const includes = this._detailIncludes();
+    // Use default includes (lightweight) + Programme, Media, Organisation
+    const includes = this._defaultIncludes();
 
     if (this.models.Programme) {
       includes.push({
         model: this.models.Programme,
         as: 'Programmes',
         required: false,
-        order: [['date', 'ASC'], ['heure_debut', 'ASC']]
+        include: this.models.Lieu ? [{
+          model: this.models.Lieu,
+          as: 'Lieu',
+          attributes: ['nom', 'adresse', 'latitude', 'longitude'],
+          required: false
+        }] : []
       });
     }
 
@@ -141,7 +187,13 @@ class EvenementRepository extends BaseRepository {
       });
     }
 
-    return this.model.findByPk(id, { include: includes });
+    return this.model.findByPk(id, {
+      include: includes,
+      order: [
+        [{ model: this.models.Programme, as: 'Programmes' }, 'date_programme', 'ASC'],
+        [{ model: this.models.Programme, as: 'Programmes' }, 'heure_debut', 'ASC']
+      ]
+    });
   }
 
   /**
@@ -281,6 +333,25 @@ class EvenementRepository extends BaseRepository {
   // ============================================================================
 
   /**
+   * Liste publique des participants confirmés (données limitées, pas d'email)
+   */
+  async getPublicParticipants(evenementId) {
+    return this.models.EvenementUser.findAll({
+      where: {
+        id_evenement: evenementId,
+        statut_participation: { [Op.in]: ['confirme', 'present'] }
+      },
+      attributes: ['role_participation', 'date_inscription'],
+      include: [{
+        model: this.models.User,
+        as: 'User',
+        attributes: ['id_user', 'nom', 'prenom', 'photo_url']
+      }],
+      order: [['date_inscription', 'ASC']]
+    });
+  }
+
+  /**
    * Récupère les participants d'un événement avec profil utilisateur
    */
   async getParticipants(evenementId) {
@@ -319,7 +390,7 @@ class EvenementRepository extends BaseRepository {
   /**
    * Récupère les professionnels en attente pour un événement
    */
-  async getPendingProfessionals(evenementId) {
+  async getPendingProfessionals(evenementId, limit = 50) {
     return this.models.EvenementUser.findAll({
       where: {
         id_evenement: evenementId,
@@ -333,7 +404,8 @@ class EvenementRepository extends BaseRepository {
           { model: this.models.TypeUser, required: false }
         ]
       }],
-      order: [['date_inscription', 'ASC']]
+      order: [['date_inscription', 'ASC']],
+      limit
     });
   }
 
@@ -441,28 +513,35 @@ class EvenementRepository extends BaseRepository {
    * Réordonne les oeuvres d'un événement (dans une transaction)
    */
   async reorderOeuvres(evenementId, userId, oeuvres) {
-    return this.withTransaction(async (transaction) => {
-      for (const item of oeuvres) {
-        const idOeuvre = parseInt(item.id_oeuvre);
-        const ordre = parseInt(item.ordre ?? item.ordre_presentation);
+    if (!oeuvres || oeuvres.length === 0) return;
 
-        if (!Number.isInteger(idOeuvre) || !Number.isInteger(ordre)) {
-          throw new Error('Données de réorganisation invalides');
-        }
-
-        const [updatedCount] = await this.models.EvenementOeuvre.update(
-          { ordre_presentation: ordre },
-          {
-            where: { id_evenement: evenementId, id_oeuvre: idOeuvre, id_presentateur: userId },
-            transaction
-          }
-        );
-
-        if (!updatedCount) {
-          throw new Error(`Association introuvable pour l'œuvre ${idOeuvre}`);
-        }
+    // Valider toutes les données d'abord
+    const parsed = oeuvres.map(item => {
+      const idOeuvre = parseInt(item.id_oeuvre);
+      const ordre = parseInt(item.ordre ?? item.ordre_presentation);
+      if (!Number.isInteger(idOeuvre) || !Number.isInteger(ordre)) {
+        throw new Error('Données de réorganisation invalides');
       }
+      return { idOeuvre, ordre };
     });
+
+    // 1 seul UPDATE avec CASE WHEN au lieu de N UPDATEs séquentiels
+    const cases = parsed.map(p => `WHEN ${p.idOeuvre} THEN ${p.ordre}`).join(' ');
+    const ids = parsed.map(p => p.idOeuvre).join(',');
+
+    const tableName = this.models.EvenementOeuvre.tableName || 'evenement_oeuvre';
+
+    const [results] = await this.model.sequelize.query(
+      `UPDATE \`${tableName}\`
+       SET ordre_presentation = CASE id_oeuvre ${cases} END
+       WHERE id_evenement = ? AND id_presentateur = ? AND id_oeuvre IN (${ids})`,
+      {
+        replacements: [evenementId, userId],
+        type: 'UPDATE'
+      }
+    );
+
+    return results;
   }
 
   /**

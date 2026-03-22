@@ -365,7 +365,7 @@ class UploadService {
   }
 
   // Obtenir le statut d'un upload chunked
-  async getChunkUploadStatus(uploadId: string): Promise<ApiResponse<any>> {
+  async getChunkUploadStatus(uploadId: string): Promise<ApiResponse<{ uploadId: string; chunksReceived: number; totalChunks: number; complete: boolean }>> {
     return httpClient.get(API_ENDPOINTS.upload.chunkStatus(uploadId));
   }
 

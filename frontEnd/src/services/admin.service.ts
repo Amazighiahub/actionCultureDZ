@@ -1,10 +1,10 @@
 // services/admin.service.ts - VERSION CORRIGÉE
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { API_ENDPOINTS, ApiResponse, PaginatedResponse, FilterParams } from '@/config/api';
 import { httpClient } from './httpClient';
 import type { CurrentUser } from './auth.service';
-import { Oeuvre } from '@/types';
-import type { Evenement } from './evenement.service';
+import { Oeuvre, Evenement, Lieu } from '@/types';
+import { Service } from '@/types/models/lieux-details.types';
+import type { OverviewApiRawResponse, BulkUserActionResponse } from '@/types/api/dashboard.types';
 
 // Types pour les statistiques
 interface OverviewStats {
@@ -108,7 +108,7 @@ interface Alert {
   type: 'security' | 'performance' | 'content' | 'user';
   severity: 'low' | 'medium' | 'high' | 'critical';
   message: string;
-  details: any;
+  details: Record<string, string | number | boolean | null>;
   created_at: string;
   resolved: boolean;
 }
@@ -153,7 +153,7 @@ class AdminService {
   // ========================================
 
   async getOverview(): Promise<ApiResponse<OverviewStats>> {
-    const response = await httpClient.get<any>(API_ENDPOINTS.dashboard.overview);
+    const response = await httpClient.get<OverviewApiRawResponse>(API_ENDPOINTS.dashboard.overview);
 
     if (response.success && response.data) {
       const apiData = response.data;
@@ -190,7 +190,7 @@ class AdminService {
       };
     }
 
-    return response;
+    return response as ApiResponse<OverviewStats>;
   }
 
   async getStats(period: 'day' | 'week' | 'month' | 'year' = 'month'): Promise<ApiResponse<DashboardStats>> {
@@ -201,16 +201,16 @@ class AdminService {
     return httpClient.get<PatrimoineStats>(API_ENDPOINTS.dashboard.patrimoine.statistics);
   }
 
-  async getOeuvres(params?: OeuvreFilters): Promise<ApiResponse<PaginatedResponse<any>>> {
-    return httpClient.getPaginated<any>(API_ENDPOINTS.dashboard.oeuvres.list, params);
+  async getOeuvres(params?: OeuvreFilters): Promise<ApiResponse<PaginatedResponse<Oeuvre>>> {
+    return httpClient.getPaginated<Oeuvre>(API_ENDPOINTS.dashboard.oeuvres.list, params);
   }
 
-  async getOeuvreDetails(oeuvreId: number): Promise<ApiResponse<any>> {
-    return httpClient.get<any>(`/oeuvres/${oeuvreId}`);
+  async getOeuvreDetails(oeuvreId: number): Promise<ApiResponse<Oeuvre>> {
+    return httpClient.get<Oeuvre>(`/oeuvres/${oeuvreId}`);
   }
 
-  async updateOeuvre(oeuvreId: number, data: Partial<any>): Promise<ApiResponse<any>> {
-    return httpClient.put<any>(`/oeuvres/${oeuvreId}`, data);
+  async updateOeuvre(oeuvreId: number, data: Partial<Oeuvre>): Promise<ApiResponse<Oeuvre>> {
+    return httpClient.put<Oeuvre>(`/oeuvres/${oeuvreId}`, data);
   }
 
   async deleteOeuvre(oeuvreId: number): Promise<ApiResponse<void>> {
@@ -218,16 +218,16 @@ class AdminService {
   }
 
   // Événements
-  async getEvenements(params?: EvenementFilters): Promise<ApiResponse<PaginatedResponse<any>>> {
-    return httpClient.getPaginated<any>(API_ENDPOINTS.dashboard.evenements.list, params);
+  async getEvenements(params?: EvenementFilters): Promise<ApiResponse<PaginatedResponse<Evenement>>> {
+    return httpClient.getPaginated<Evenement>(API_ENDPOINTS.dashboard.evenements.list, params);
   }
 
-  async getEvenementDetails(evenementId: number): Promise<ApiResponse<any>> {
-    return httpClient.get<any>(`/evenements/${evenementId}`);
+  async getEvenementDetails(evenementId: number): Promise<ApiResponse<Evenement>> {
+    return httpClient.get<Evenement>(`/evenements/${evenementId}`);
   }
 
-  async updateEvenement(evenementId: number, data: Partial<any>): Promise<ApiResponse<any>> {
-    return httpClient.put<any>(`/evenements/${evenementId}`, data);
+  async updateEvenement(evenementId: number, data: Partial<Evenement>): Promise<ApiResponse<Evenement>> {
+    return httpClient.put<Evenement>(`/evenements/${evenementId}`, data);
   }
 
   async deleteEvenement(evenementId: number): Promise<ApiResponse<void>> {
@@ -235,12 +235,12 @@ class AdminService {
   }
 
   // Patrimoine
-  async getPatrimoineItems(params?: PatrimoineFilters): Promise<ApiResponse<PaginatedResponse<any>>> {
-    return httpClient.getPaginated<any>('/patrimoine', params);
+  async getPatrimoineItems(params?: PatrimoineFilters): Promise<ApiResponse<PaginatedResponse<Lieu>>> {
+    return httpClient.getPaginated<Lieu>('/patrimoine', params);
   }
 
-  async updatePatrimoine(patrimoineId: number, data: Partial<any>): Promise<ApiResponse<any>> {
-    return httpClient.put<any>(`/patrimoine/${patrimoineId}`, data);
+  async updatePatrimoine(patrimoineId: number, data: Partial<Lieu>): Promise<ApiResponse<Lieu>> {
+    return httpClient.put<Lieu>(`/patrimoine/${patrimoineId}`, data);
   }
 
   async deletePatrimoine(patrimoineId: number): Promise<ApiResponse<void>> {
@@ -248,16 +248,16 @@ class AdminService {
   }
 
   // Services
-  async getServices(params?: ServiceFilters): Promise<ApiResponse<PaginatedResponse<any>>> {
-    return httpClient.getPaginated<any>('/services', params);
+  async getServices(params?: ServiceFilters): Promise<ApiResponse<PaginatedResponse<Service>>> {
+    return httpClient.getPaginated<Service>('/services', params);
   }
 
-  async getServiceDetails(serviceId: number): Promise<ApiResponse<any>> {
-    return httpClient.get<any>(`/services/${serviceId}`);
+  async getServiceDetails(serviceId: number): Promise<ApiResponse<Service>> {
+    return httpClient.get<Service>(`/services/${serviceId}`);
   }
 
-  async updateService(serviceId: number, data: Partial<any>): Promise<ApiResponse<any>> {
-    return httpClient.put<any>(`/services/${serviceId}`, data);
+  async updateService(serviceId: number, data: Partial<Service>): Promise<ApiResponse<Service>> {
+    return httpClient.put<Service>(`/services/${serviceId}`, data);
   }
 
   async deleteService(serviceId: number): Promise<ApiResponse<void>> {
@@ -277,12 +277,11 @@ class AdminService {
   }
 
   /**
-   * ✅ CORRIGÉ: Validation d'un utilisateur
+   * Validation d'un utilisateur
    * Utilise PATCH /dashboard/users/:id/validate
    */
-  async validateUser(userId: number, validated: boolean, reason?: string): Promise<ApiResponse<any>> {
-    // La route backend attend: { valide: boolean, raison?: string }
-    return httpClient.patch<any>(`/dashboard/users/${userId}/validate`, {
+  async validateUser(userId: number, validated: boolean, reason?: string): Promise<ApiResponse<PendingUser>> {
+    return httpClient.patch<PendingUser>(`/dashboard/users/${userId}/validate`, {
       valide: validated,
       raison: reason
     });
@@ -311,18 +310,18 @@ class AdminService {
     return httpClient.post<{ temporaryPassword: string }>(`/dashboard/users/${userId}/reset-password`, {});
   }
 
-  async bulkUserAction(userIds: number[], action: 'activate' | 'deactivate' | 'delete' | 'change_role', roleId?: number): Promise<ApiResponse<any>> {
-    return httpClient.post<any>('/dashboard/users/bulk-action', {
+  async bulkUserAction(userIds: number[], action: 'activate' | 'deactivate' | 'delete' | 'change_role', roleId?: number): Promise<ApiResponse<BulkUserActionResponse>> {
+    return httpClient.post<BulkUserActionResponse>('/dashboard/users/bulk-action', {
       user_ids: userIds,
       action,
       role_id: roleId
     });
   }
 
-  async exportUsers(format: 'csv' | 'excel' = 'excel', filters?: any): Promise<ApiResponse<Blob>> {
+  async exportUsers(format: 'csv' | 'excel' = 'excel', filters?: Record<string, string>): Promise<ApiResponse<Blob>> {
     const params = { format, ...filters };
     return httpClient.download(
-      `/dashboard/users/export?${new URLSearchParams(params as any).toString()}`,
+      `/dashboard/users/export?${new URLSearchParams(params as Record<string, string>).toString()}`,
       `users_export_${new Date().toISOString().split('T')[0]}.${format === 'csv' ? 'csv' : 'xlsx'}`
     );
   }

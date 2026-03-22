@@ -40,11 +40,12 @@ import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useFormatDate } from '@/hooks/useFormatDate';
 
 // Helper pour extraire le texte d'un champ multilingue {fr, ar, en} ou string
-const getLocalizedText = (value: any, fallback: string = ''): string => {
+const getLocalizedText = (value: unknown, fallback: string = ''): string => {
   if (!value) return fallback;
   if (typeof value === 'string') return value;
-  if (typeof value === 'object') {
-    return value.fr || value.ar || value.en || Object.values(value).find(v => typeof v === 'string' && v) || fallback;
+  if (typeof value === 'object' && value !== null) {
+    const obj = value as Record<string, unknown>;
+    return String(obj.fr || obj.ar || obj.en || Object.values(obj).find(v => typeof v === 'string' && v) || fallback);
   }
   return String(value);
 };
@@ -85,7 +86,7 @@ const AdminUsersTab: React.FC = () => {
   };
 
   const handleSelectAll = (checked: boolean) => {
-    setSelectedUserIds(checked ? filteredUsers.map((u: any) => u.id_user) : []);
+    setSelectedUserIds(checked ? filteredUsers.map((u: Record<string, unknown>) => u.id_user as number) : []);
   };
 
   const handleBulkAction = async (action: string) => {
@@ -103,7 +104,7 @@ const AdminUsersTab: React.FC = () => {
   const filteredUsers = React.useMemo(() => {
     if (!allUsers?.items) return [];
 
-    return allUsers.items.filter((user: any) => {
+    return allUsers.items.filter((user: Record<string, unknown>) => {
       // Filtre de recherche
       if (debouncedSearch) {
         const searchLower = debouncedSearch.toLowerCase();
@@ -309,7 +310,7 @@ const AdminUsersTab: React.FC = () => {
         />
       ) : (
         <div className="grid gap-4">
-          {filteredUsers.map((user: any) => (
+          {filteredUsers.map((user: Record<string, unknown>) => (
             <Card
               key={user.id_user}
               className={`hover:shadow-md transition-shadow ${selectedUserIds.includes(user.id_user) ? 'ring-2 ring-primary bg-primary/5' : ''}`}

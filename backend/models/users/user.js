@@ -28,6 +28,7 @@ module.exports = (sequelize) => {
     email: {
       type: DataTypes.STRING(255),
       allowNull: false,
+      unique: true,
       validate: {
         isEmail: true
       }
@@ -198,6 +199,21 @@ module.exports = (sequelize) => {
       type: DataTypes.BOOLEAN,
       defaultValue: false
     },
+    rappel_verification_envoye: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      comment: 'Rappel de vérification email envoyé (cron)'
+    },
+    notifications_evenements: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
+      comment: 'Accepte les notifications liées aux événements'
+    },
+    notifications_favoris: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
+      comment: 'Accepte les notifications liées aux favoris'
+    },
 
     // =============================================================================
     // PARAMÈTRES DE CONFIDENTIALITÉ
@@ -305,6 +321,15 @@ module.exports = (sequelize) => {
     refresh_token_expires: {
       type: DataTypes.DATE,
       allowNull: true
+    },
+
+    // =============================================================================
+    // SÉCURITÉ MOT DE PASSE
+    // =============================================================================
+    password_changed_at: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      comment: 'Date du dernier changement de mot de passe (invalidation JWT)'
     }
   }, {
     tableName: 'user',
@@ -350,10 +375,8 @@ module.exports = (sequelize) => {
           throw new Error('Vous devez accepter les conditions d\'utilisation');
         }
 
-        if (user.password && !user.password.startsWith('$2')) {
-          const bcrypt = require('bcrypt');
-          user.password = await bcrypt.hash(user.password, parseInt(process.env.BCRYPT_ROUNDS) || 12);
-        }
+        // Le hachage du mot de passe est géré exclusivement par userService
+        // (register, changePassword). Ne PAS hacher ici pour éviter un double hash.
       },
       
       beforeUpdate: async (user) => {
@@ -361,10 +384,8 @@ module.exports = (sequelize) => {
           user.date_validation = new Date();
         }
 
-        if (user.changed('password') && user.password && !user.password.startsWith('$2')) {
-          const bcrypt = require('bcrypt');
-          user.password = await bcrypt.hash(user.password, parseInt(process.env.BCRYPT_ROUNDS) || 12);
-        }
+        // Le hachage du mot de passe est géré exclusivement par userService.changePassword().
+        // Ne PAS hacher ici pour éviter un double hash.
       }
     }
   });
@@ -375,17 +396,20 @@ module.exports = (sequelize) => {
   User.associate = (models) => {
     User.belongsTo(models.TypeUser, {
       foreignKey: 'id_type_user',
-      as: 'TypeUser'
+      as: 'TypeUser',
+      onDelete: 'RESTRICT'
     });
-    
+
     User.belongsTo(models.User, {
       foreignKey: 'id_user_validate',
-      as: 'Validateur'
+      as: 'Validateur',
+      onDelete: 'SET NULL'
     });
-    
+
     User.hasMany(models.User, {
       foreignKey: 'id_user_validate',
-      as: 'UsersValides'
+      as: 'UsersValides',
+      onDelete: 'SET NULL'
     });
     
     User.belongsToMany(models.Role, { 
@@ -425,14 +449,16 @@ module.exports = (sequelize) => {
       onDelete: 'SET NULL'
     });
     
-    User.hasMany(models.Oeuvre, { 
-      as: 'OeuvresValidees', 
-      foreignKey: 'validateur_id' 
+    User.hasMany(models.Oeuvre, {
+      as: 'OeuvresValidees',
+      foreignKey: 'validateur_id',
+      onDelete: 'SET NULL'
     });
-    
-    User.hasMany(models.Evenement, { 
+
+    User.hasMany(models.Evenement, {
       foreignKey: 'id_user',
-      as: 'EvenementsOrganises'
+      as: 'EvenementsOrganises',
+      onDelete: 'SET NULL'
     });
     
     User.hasMany(models.Commentaire, { 
@@ -441,14 +467,16 @@ module.exports = (sequelize) => {
       onDelete: 'CASCADE'
     });
     
-    User.hasMany(models.CritiqueEvaluation, { 
+    User.hasMany(models.CritiqueEvaluation, {
       foreignKey: 'id_user',
-      as: 'Critiques'
+      as: 'Critiques',
+      onDelete: 'CASCADE'
     });
-    
+
     User.hasMany(models.ProgrammeIntervenant, {
       foreignKey: 'id_user',
-      as: 'Interventions'
+      as: 'Interventions',
+      onDelete: 'CASCADE'
     });
 
     // ✅ Association bidirectionnelle avec Programme via ProgrammeIntervenant

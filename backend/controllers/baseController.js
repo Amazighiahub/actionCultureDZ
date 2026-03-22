@@ -3,18 +3,48 @@
  * Architecture: BaseController → Controller → Service → Repository → Database
  *
  * Fournit :
- * - _handleError(res, error) : gestion d'erreur standardisée
- * - _paginate(req)           : extraction page/limit depuis query params
+ * - wrap(methodName)          : asyncHandler auto — élimine les try/catch manuels
+ * - _handleError(res, error)  : gestion d'erreur legacy (rétro-compatible)
+ * - _paginate(req)            : extraction page/limit depuis query params
  * - _sendSuccess(res, data, statusCode)       : réponse succès simple
  * - _sendPaginated(res, data, pagination)     : réponse succès paginée
  * - _sendCreated(res, data, message)          : réponse 201
  * - _sendMessage(res, message)                : réponse succès avec message seul
+ *
+ * Usage dans les routes :
+ *   router.get('/', controller.wrap('list'));
+ *   // au lieu de : router.get('/', (req, res) => controller.list(req, res));
+ *   // le try/catch dans list() peut alors être supprimé.
  */
 
 const IS_DEV_MODE = process.env.NODE_ENV === 'development';
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 
 class BaseController {
+  // ============================================================================
+  // ASYNC HANDLER WRAPPER
+  // ============================================================================
+
+  /**
+   * Retourne un middleware Express qui appelle la méthode nommée et
+   * forward toute erreur vers le error middleware global (next(err)).
+   *
+   * Cela élimine le pattern try/catch + _handleError dans chaque méthode.
+   * Les erreurs AppError (statusCode, code) sont préservées par errorMiddleware.
+   *
+   * @param {string} methodName - Nom de la méthode du controller à wrapper
+   * @returns {Function} Express middleware (req, res, next)
+   */
+  wrap(methodName) {
+    const fn = this[methodName];
+    if (typeof fn !== 'function') {
+      throw new Error(`${this.constructor.name}.${methodName} is not a function`);
+    }
+    const bound = fn.bind(this);
+    return (req, res, next) => {
+      Promise.resolve(bound(req, res, next)).catch(next);
+    };
+  }
   // ============================================================================
   // RÉPONSES SUCCÈS
   // ============================================================================

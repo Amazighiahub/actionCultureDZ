@@ -303,7 +303,10 @@ class ServiceContainer {
 
     if (!this._services.has('lieu')) {
       const LieuService = require('./lieuService');
-      this._services.set('lieu', new LieuService(this._models));
+      this._services.set('lieu', new LieuService(
+        this._repositories.lieu,
+        { models: this._models, cache: this._cache }
+      ));
     }
 
     return this._services.get('lieu');
@@ -314,7 +317,10 @@ class ServiceContainer {
 
     if (!this._services.has('programme')) {
       const ProgrammeService = require('./programmeService');
-      this._services.set('programme', new ProgrammeService(this._models));
+      this._services.set('programme', new ProgrammeService(
+        this._repositories.programme,
+        { models: this._models, cache: this._cache }
+      ));
     }
 
     return this._services.get('programme');
@@ -325,7 +331,10 @@ class ServiceContainer {
 
     if (!this._services.has('intervenant')) {
       const IntervenantService = require('./intervenantService');
-      this._services.set('intervenant', new IntervenantService(this._models));
+      this._services.set('intervenant', new IntervenantService(
+        this._repositories.intervenant,
+        { models: this._models, cache: this._cache }
+      ));
     }
 
     return this._services.get('intervenant');
@@ -358,7 +367,10 @@ class ServiceContainer {
 
     if (!this._services.has('commentaire')) {
       const CommentaireService = require('./commentaireService');
-      this._services.set('commentaire', new CommentaireService(this._models));
+      this._services.set('commentaire', new CommentaireService(
+        this._repositories.commentaire,
+        { models: this._models, cache: this._cache }
+      ));
     }
 
     return this._services.get('commentaire');
@@ -369,7 +381,10 @@ class ServiceContainer {
 
     if (!this._services.has('favori')) {
       const FavoriService = require('./favoriService');
-      this._services.set('favori', new FavoriService(this._models));
+      this._services.set('favori', new FavoriService(
+        this._repositories.favori,
+        { models: this._models, cache: this._cache }
+      ));
     }
 
     return this._services.get('favori');
@@ -384,7 +399,10 @@ class ServiceContainer {
 
     if (!this._services.has('vue')) {
       const VueService = require('./vueService');
-      this._services.set('vue', new VueService(this._models));
+      this._services.set('vue', new VueService(
+        this._repositories.vue,
+        { models: this._models, cache: this._cache }
+      ));
     }
 
     return this._services.get('vue');
@@ -395,7 +413,10 @@ class ServiceContainer {
 
     if (!this._services.has('articleBlock')) {
       const ArticleBlockService = require('./articleBlockService');
-      this._services.set('articleBlock', new ArticleBlockService(this._models));
+      this._services.set('articleBlock', new ArticleBlockService(
+        this._repositories.articleBlock,
+        { models: this._models, cache: this._cache }
+      ));
     }
 
     return this._services.get('articleBlock');

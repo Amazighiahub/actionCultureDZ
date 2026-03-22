@@ -9,7 +9,7 @@ const asyncHandler = require('../utils/asyncHandler');
 
 // Factory function qui reçoit les modèles et middlewares
 const initSignalementRoutes = (models, authMiddleware) => {
-  const controller = new SignalementController();
+  const controller = SignalementController;
   const {
     authenticate,
     requireAdmin,

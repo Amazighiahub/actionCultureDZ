@@ -111,9 +111,10 @@ module.exports = (sequelize) => {
 
   // Associations
   Vue.associate = (models) => {
-    Vue.belongsTo(models.User, { 
+    Vue.belongsTo(models.User, {
       foreignKey: 'id_user',
-      as: 'Utilisateur'
+      as: 'Utilisateur',
+      onDelete: 'SET NULL'
     });
   };
 

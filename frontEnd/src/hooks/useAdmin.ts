@@ -149,7 +149,7 @@ export function useAdminStats(options: UseAdminStatsOptions = {}) {
   } = useQuery({
     queryKey: ['admin-stats'],
     queryFn: async () => {
-      const response = await httpClient.get<any>('/dashboard/overview');
+      const response = await httpClient.get<{ stats: Record<string, number>; pending: Record<string, number> }>('/dashboard/overview');
       if (!response.success) throw new Error(response.error);
       return response.data;
     },
@@ -166,7 +166,7 @@ export function useAdminStats(options: UseAdminStatsOptions = {}) {
   } = useQuery({
     queryKey: ['admin-pending'],
     queryFn: async () => {
-      const response = await httpClient.get<any>('/dashboard/moderation/queue');
+      const response = await httpClient.get<{ items: Array<Record<string, unknown>>; pagination: { total: number; page: number; pages: number } }>('/dashboard/moderation/queue');
       if (!response.success) throw new Error(response.error);
       return response.data;
     },
@@ -182,7 +182,7 @@ export function useAdminStats(options: UseAdminStatsOptions = {}) {
   } = useQuery({
     queryKey: ['admin-activity'],
     queryFn: async () => {
-      const response = await httpClient.get<any>('/dashboard/stats', { limit: 10 });
+      const response = await httpClient.get<{ items: Array<Record<string, unknown>> }>('/dashboard/stats', { limit: 10 });
       if (!response.success) throw new Error(response.error);
       return response.data;
     },
@@ -202,11 +202,11 @@ export function useAdminStats(options: UseAdminStatsOptions = {}) {
       queryClient.invalidateQueries({ queryKey: ['admin-pending'] });
       queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
     },
-    onError: (error: any) => {
-      toast({ 
-        title: t('toasts.error'), 
+    onError: (error: Error) => {
+      toast({
+        title: t('toasts.error'),
         description: error.message || t('toasts.approvalFailed'),
-        variant: 'destructive' 
+        variant: 'destructive'
       });
     }
   });
@@ -223,11 +223,11 @@ export function useAdminStats(options: UseAdminStatsOptions = {}) {
       queryClient.invalidateQueries({ queryKey: ['admin-pending'] });
       queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
     },
-    onError: (error: any) => {
-      toast({ 
-        title: t('toasts.error'), 
+    onError: (error: Error) => {
+      toast({
+        title: t('toasts.error'),
         description: error.message,
-        variant: 'destructive' 
+        variant: 'destructive'
       });
     }
   });
@@ -295,7 +295,7 @@ export function useAdminUsers(options: UseAdminUsersOptions = {}) {
   } = useQuery({
     queryKey: ['admin-users', debouncedSearch, statut, type, currentPage],
     queryFn: async () => {
-      const params: any = {
+      const params: Record<string, string | number | boolean | undefined> = {
         page: currentPage,
         limit: 12
       };
@@ -303,7 +303,7 @@ export function useAdminUsers(options: UseAdminUsersOptions = {}) {
       if (statut && statut !== 'tous') params.statut = statut;
       if (type && type !== 'tous') params.id_type_user = type;
 
-      const response = await httpClient.get<any>('/users', params);
+      const response = await httpClient.get<{ users: Array<Record<string, unknown>>; pagination: { total: number; page: number; pages: number; limit: number } }>('/users', params);
       if (!response.success) throw new Error(response.error);
       return response.data;
     },
@@ -325,7 +325,7 @@ export function useAdminUsers(options: UseAdminUsersOptions = {}) {
       toast({ title: t('toasts.userValidated') });
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({ title: t('toasts.error'), description: error.message, variant: 'destructive' });
     }
   });
@@ -341,7 +341,7 @@ export function useAdminUsers(options: UseAdminUsersOptions = {}) {
       toast({ title: t('toasts.userSuspended') });
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({ title: t('toasts.error'), description: error.message, variant: 'destructive' });
     }
   });
@@ -357,7 +357,7 @@ export function useAdminUsers(options: UseAdminUsersOptions = {}) {
       toast({ title: t('toasts.userReactivated') });
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({ title: t('toasts.error'), description: error.message, variant: 'destructive' });
     }
   });
@@ -373,7 +373,7 @@ export function useAdminUsers(options: UseAdminUsersOptions = {}) {
       toast({ title: t('toasts.userDeleted') });
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({ title: t('toasts.error'), description: error.message, variant: 'destructive' });
     }
   });
@@ -381,7 +381,7 @@ export function useAdminUsers(options: UseAdminUsersOptions = {}) {
   // Export des utilisateurs
   const exportUsers = useCallback(async (format: 'csv' | 'xlsx' = 'csv') => {
     try {
-      const params: any = { format };
+      const params: Record<string, string | number | boolean | undefined> = { format };
       if (debouncedSearch) params.search = debouncedSearch;
       if (statut && statut !== 'tous') params.statut = statut;
       if (type && type !== 'tous') params.id_type_user = type;
@@ -399,8 +399,8 @@ export function useAdminUsers(options: UseAdminUsersOptions = {}) {
         window.URL.revokeObjectURL(url);
         toast({ title: t('toasts.exportGenerated') });
       }
-    } catch (err: any) {
-      toast({ title: t('toasts.exportFailed'), description: err.message, variant: 'destructive' });
+    } catch (err: unknown) {
+      toast({ title: t('toasts.exportFailed'), description: err instanceof Error ? err.message : 'Export failed', variant: 'destructive' });
     }
   }, [debouncedSearch, statut, type, toast]);
 
@@ -457,7 +457,7 @@ export function useAdminOeuvres(options: UseAdminOeuvresOptions = {}) {
   } = useQuery({
     queryKey: ['admin-oeuvres', debouncedSearch, statut, type, currentPage],
     queryFn: async () => {
-      const params: any = {
+      const params: Record<string, string | number | boolean | undefined> = {
         page: currentPage,
         limit: 12
       };
@@ -465,7 +465,7 @@ export function useAdminOeuvres(options: UseAdminOeuvresOptions = {}) {
       if (statut && statut !== 'tous') params.statut = statut;
       if (type && type !== 'tous') params.id_type_oeuvre = type;
 
-      const response = await httpClient.get<any>('/oeuvres/admin/all', params);
+      const response = await httpClient.get<{ oeuvres: Array<Record<string, unknown>>; pagination: { total: number; page: number; pages: number; limit: number } }>('/oeuvres/admin/all', params);
       if (!response.success) throw new Error(response.error);
       return response.data;
     },
@@ -477,7 +477,7 @@ export function useAdminOeuvres(options: UseAdminOeuvresOptions = {}) {
   const { data: typesData } = useQuery({
     queryKey: ['types-oeuvres'],
     queryFn: async () => {
-      const response = await httpClient.get<any>('/metadata/types-oeuvres');
+      const response = await httpClient.get<Array<{ id_type_oeuvre: number; nom: string }>>('/metadata/types-oeuvres');
       if (!response.success) throw new Error(response.error);
       return response.data;
     },
@@ -499,7 +499,7 @@ export function useAdminOeuvres(options: UseAdminOeuvresOptions = {}) {
       toast({ title: t('toasts.oeuvreValidated') });
       queryClient.invalidateQueries({ queryKey: ['admin-oeuvres'] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({ title: t('toasts.error'), description: error.message, variant: 'destructive' });
     }
   });
@@ -514,7 +514,7 @@ export function useAdminOeuvres(options: UseAdminOeuvresOptions = {}) {
       toast({ title: t('toasts.oeuvreRejected') });
       queryClient.invalidateQueries({ queryKey: ['admin-oeuvres'] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({ title: t('toasts.error'), description: error.message, variant: 'destructive' });
     }
   });
@@ -529,7 +529,7 @@ export function useAdminOeuvres(options: UseAdminOeuvresOptions = {}) {
       toast({ title: t('toasts.oeuvreDeleted') });
       queryClient.invalidateQueries({ queryKey: ['admin-oeuvres'] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({ title: t('toasts.error'), description: error.message, variant: 'destructive' });
     }
   });
@@ -578,14 +578,14 @@ export function useAdminEvenements(options: UseAdminEvenementsOptions = {}) {
   } = useQuery({
     queryKey: ['admin-evenements', debouncedSearch, statut, currentPage],
     queryFn: async () => {
-      const params: any = {
+      const params: Record<string, string | number> = {
         page: currentPage,
         limit: 12
       };
       if (debouncedSearch) params.search = debouncedSearch;
       if (statut && statut !== 'tous') params.statut = statut;
 
-      const response = await httpClient.get<any>('/evenements/admin/all', params);
+      const response = await httpClient.get<{ evenements?: Evenement[]; items?: Evenement[]; pagination: { total: number; totalPages: number; currentPage: number } }>('/evenements/admin/all', params);
       if (!response.success) throw new Error(response.error);
       return response.data;
     },
@@ -607,7 +607,7 @@ export function useAdminEvenements(options: UseAdminEvenementsOptions = {}) {
       toast({ title: t('toasts.eventValidated') });
       queryClient.invalidateQueries({ queryKey: ['admin-evenements'] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({ title: t('toasts.error'), description: error.message, variant: 'destructive' });
     }
   });
@@ -622,7 +622,7 @@ export function useAdminEvenements(options: UseAdminEvenementsOptions = {}) {
       toast({ title: t('toasts.eventRejected') });
       queryClient.invalidateQueries({ queryKey: ['admin-evenements'] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({ title: t('toasts.error'), description: error.message, variant: 'destructive' });
     }
   });
@@ -637,7 +637,7 @@ export function useAdminEvenements(options: UseAdminEvenementsOptions = {}) {
       toast({ title: t('toasts.eventDeleted') });
       queryClient.invalidateQueries({ queryKey: ['admin-evenements'] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({ title: t('toasts.error'), description: error.message, variant: 'destructive' });
     }
   });
@@ -692,10 +692,10 @@ export function useAdminModeration(options: UseAdminModerationOptions = {}) {
   } = useQuery({
     queryKey: ['admin-signalements', statut],
     queryFn: async () => {
-      const params: any = {};
+      const params: Record<string, string> = {};
       if (statut !== 'tous') params.statut = statut;
 
-      const response = await httpClient.get<any>('/signalements', params);
+      const response = await httpClient.get<{ signalements?: Signalement[]; items?: Signalement[] }>('/signalements', params);
       if (!response.success) throw new Error(response.error);
       return response.data;
     },
@@ -722,7 +722,7 @@ export function useAdminModeration(options: UseAdminModerationOptions = {}) {
       queryClient.invalidateQueries({ queryKey: ['admin-signalements'] });
       queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({ title: t('toasts.error'), description: error.message, variant: 'destructive' });
     }
   });

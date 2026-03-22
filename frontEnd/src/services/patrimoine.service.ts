@@ -1,5 +1,4 @@
 // services/patrimoine.service.ts
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { API_ENDPOINTS, ApiResponse, PaginatedResponse, FilterParams } from '@/config/api';
 import { BaseService } from './base.service';
 import { httpClient } from './httpClient';
@@ -150,7 +149,7 @@ class PatrimoineService extends BaseService<SitePatrimoine, CreateSiteData, Upda
     label: string;
     count: number;
   }>>> {
-    return httpClient.get<any>(API_ENDPOINTS.patrimoine.types);
+    return httpClient.get<Array<{ value: string; label: string; count: number }>>(API_ENDPOINTS.patrimoine.types);
   }
 
   async recherche(params: SearchPatrimoineParams): Promise<ApiResponse<PaginatedResponse<SitePatrimoine>>> {
@@ -176,7 +175,7 @@ class PatrimoineService extends BaseService<SitePatrimoine, CreateSiteData, Upda
     sites_classes: number;
     visites_mois: number;
   }>> {
-    return httpClient.get<any>(API_ENDPOINTS.patrimoine.statistiques);
+    return httpClient.get<{ total_sites: number; sites_par_type: Record<string, number>; sites_par_wilaya: Array<{ wilaya: string; count: number }>; sites_classes: number; visites_mois: number }>(API_ENDPOINTS.patrimoine.statistiques);
   }
 
   async getCarteVisite(id: number): Promise<ApiResponse<CarteVisite>> {
@@ -215,8 +214,8 @@ class PatrimoineService extends BaseService<SitePatrimoine, CreateSiteData, Upda
     });
   }
 
-  async getLieuxStatistiques(): Promise<ApiResponse<any>> {
-    return httpClient.get<any>(API_ENDPOINTS.patrimoine.lieuxStatistiques);
+  async getLieuxStatistiques(): Promise<ApiResponse<{ total: number; par_wilaya: Array<{ wilaya: string; count: number }>; par_type: Record<string, number> }>> {
+    return httpClient.get<{ total: number; par_wilaya: Array<{ wilaya: string; count: number }>; par_type: Record<string, number> }>(API_ENDPOINTS.patrimoine.lieuxStatistiques);
   }
 
   // Gestion (auth)
@@ -254,7 +253,7 @@ class PatrimoineService extends BaseService<SitePatrimoine, CreateSiteData, Upda
     sites: SitePatrimoine[];
     parcours_suggeres: Parcours[];
   }>> {
-    return httpClient.get<any>(API_ENDPOINTS.patrimoine.nearbyMobile, {
+    return httpClient.get<{ sites: SitePatrimoine[]; parcours_suggeres: Parcours[] }>(API_ENDPOINTS.patrimoine.nearbyMobile, {
       latitude, 
       longitude
     });

@@ -342,22 +342,22 @@ class OeuvreService extends BaseService {
 
   /**
    * Met à jour une œuvre
+   * @param {number} id - ID de l'œuvre
+   * @param {Object} requestBody - Données à mettre à jour
+   * @param {number} userId - ID de l'utilisateur (créateur ou admin)
+   * @param {boolean} [isAdmin] - Si l'utilisateur est admin (rôle Administrateur ou id_type_user 29)
    */
-  async update(id, requestBody, userId) {
+  async update(id, requestBody, userId, isAdmin = false) {
     // 1. Vérifier que l'œuvre existe
     const existingOeuvre = await this.repository.findById(id);
     if (!existingOeuvre) {
       throw this._notFoundError(id);
     }
 
-    // 2. Vérifier les permissions
+    // 2. Vérifier les permissions (owner ou admin via rôle "Administrateur" / id_type_user 29)
     const ownerId = existingOeuvre.saisi_par ?? existingOeuvre.id_createur;
-    if (ownerId !== userId) {
-      // Vérifier si l'utilisateur est admin
-      const user = await this.models?.User?.findByPk(userId);
-      if (!user || user.type_user !== 'admin') {
-        throw this._forbiddenError('Vous ne pouvez pas modifier cette œuvre');
-      }
+    if (ownerId !== userId && !isAdmin) {
+      throw this._forbiddenError('Vous ne pouvez pas modifier cette œuvre');
     }
 
     // 3. Transformer en DTO
@@ -405,24 +405,35 @@ class OeuvreService extends BaseService {
 
   /**
    * Supprime une œuvre
+   * @param {number} id - ID de l'œuvre
+   * @param {number} userId - ID de l'utilisateur (créateur ou admin)
+   * @param {boolean} [isAdmin] - Si l'utilisateur est admin (rôle Administrateur ou id_type_user 29)
    */
-  async delete(id, userId) {
+  async delete(id, userId, isAdmin = false) {
     // 1. Vérifier que l'œuvre existe
     const oeuvre = await this.repository.findById(id);
     if (!oeuvre) {
       throw this._notFoundError(id);
     }
 
-    // 2. Vérifier les permissions
+    // 2. Vérifier les permissions : propriétaire ou admin (rôle Administrateur)
     const ownerId = oeuvre.saisi_par ?? oeuvre.id_createur;
-    if (ownerId !== userId) {
-      const user = await this.models?.User?.findByPk(userId);
-      if (!user || user.type_user !== 'admin') {
-        throw this._forbiddenError('Vous ne pouvez pas supprimer cette œuvre');
-      }
+    if (ownerId !== userId && !isAdmin) {
+      throw this._forbiddenError('Vous ne pouvez pas supprimer cette œuvre');
     }
 
-    // 3. Supprimer (les relations seront supprimées en cascade)
+    // 3. Nettoyer les ArticleBlocks orphelins (association polymorphique sans FK)
+    const article = await this.models.Article?.findOne({ where: { id_oeuvre: id }, attributes: ['id_article'] });
+    const articleSci = await this.models.ArticleScientifique?.findOne({ where: { id_oeuvre: id }, attributes: ['id_article_scientifique'] });
+
+    if (article) {
+      await this.models.ArticleBlock.destroy({ where: { id_article: article.id_article, article_type: 'article' } });
+    }
+    if (articleSci) {
+      await this.models.ArticleBlock.destroy({ where: { id_article: articleSci.id_article_scientifique, article_type: 'article_scientifique' } });
+    }
+
+    // 4. Supprimer (les autres relations seront supprimées en cascade)
     await this.repository.delete(id);
 
     this.cache.invalidate();

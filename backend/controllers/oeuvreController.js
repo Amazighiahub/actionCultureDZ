@@ -1,5 +1,5 @@
 /**
- * OeuvreControllerV2 - Controller refactoré avec Service Pattern
+ * OeuvreController - Controller refactoré avec Service Pattern
  *
  * Architecture: Controller → Service → Repository → Database
  */
@@ -7,7 +7,7 @@
 const BaseController = require('./baseController');
 const container = require('../services/serviceContainer');
 
-class OeuvreControllerV2 extends BaseController {
+class OeuvreController extends BaseController {
   /**
    * Getter pour le service œuvre
    * @private
@@ -21,7 +21,7 @@ class OeuvreControllerV2 extends BaseController {
   // ============================================================================
 
   /**
-   * GET /api/v2/oeuvres
+   * GET /api/oeuvres
    * Liste des œuvres publiées
    */
   async list(req, res) {
@@ -45,8 +45,10 @@ class OeuvreControllerV2 extends BaseController {
 
       res.json({
         success: true,
-        data: this._translateOeuvres(result.data, req.lang),
-        pagination: result.pagination
+        data: {
+          oeuvres: this._translateOeuvres(result.data, req.lang),
+          pagination: result.pagination
+        }
       });
 
     } catch (error) {
@@ -55,7 +57,7 @@ class OeuvreControllerV2 extends BaseController {
   }
 
   /**
-   * GET /api/v2/oeuvres/search
+   * GET /api/oeuvres/search
    * Recherche avancée
    */
   async search(req, res) {
@@ -92,8 +94,10 @@ class OeuvreControllerV2 extends BaseController {
 
       res.json({
         success: true,
-        data: this._translateOeuvres(result.data, req.lang),
-        pagination: result.pagination
+        data: {
+          oeuvres: this._translateOeuvres(result.data, req.lang),
+          pagination: result.pagination
+        }
       });
 
     } catch (error) {
@@ -102,7 +106,7 @@ class OeuvreControllerV2 extends BaseController {
   }
 
   /**
-   * GET /api/v2/oeuvres/popular
+   * GET /api/oeuvres/popular
    * Œuvres populaires
    */
   async getPopular(req, res) {
@@ -112,7 +116,9 @@ class OeuvreControllerV2 extends BaseController {
 
       res.json({
         success: true,
-        data: this._translateOeuvres(oeuvres, req.lang)
+        data: {
+          oeuvres: this._translateOeuvres(oeuvres, req.lang)
+        }
       });
 
     } catch (error) {
@@ -121,7 +127,7 @@ class OeuvreControllerV2 extends BaseController {
   }
 
   /**
-   * GET /api/v2/oeuvres/recent
+   * GET /api/oeuvres/recent
    * Œuvres récentes
    */
   async getRecent(req, res) {
@@ -131,7 +137,9 @@ class OeuvreControllerV2 extends BaseController {
 
       res.json({
         success: true,
-        data: this._translateOeuvres(oeuvres, req.lang)
+        data: {
+          oeuvres: this._translateOeuvres(oeuvres, req.lang)
+        }
       });
 
     } catch (error) {
@@ -140,7 +148,7 @@ class OeuvreControllerV2 extends BaseController {
   }
 
   /**
-   * GET /api/v2/oeuvres/:id
+   * GET /api/oeuvres/:id
    * Détails d'une œuvre
    */
   async getById(req, res) {
@@ -158,7 +166,7 @@ class OeuvreControllerV2 extends BaseController {
   }
 
   /**
-   * GET /api/v2/oeuvres/:id/similar
+   * GET /api/oeuvres/:id/similar
    * Œuvres similaires
    */
   async getSimilar(req, res) {
@@ -184,7 +192,7 @@ class OeuvreControllerV2 extends BaseController {
   // ============================================================================
 
   /**
-   * POST /api/v2/oeuvres
+   * POST /api/oeuvres
    * Créer une œuvre
    */
   async create(req, res) {
@@ -213,7 +221,7 @@ class OeuvreControllerV2 extends BaseController {
   }
 
   /**
-   * PUT /api/v2/oeuvres/:id
+   * PUT /api/oeuvres/:id
    * Mettre à jour une œuvre
    */
   async update(req, res) {
@@ -221,7 +229,8 @@ class OeuvreControllerV2 extends BaseController {
       const oeuvre = await this.oeuvreService.update(
         parseInt(req.params.id),
         req.body,
-        req.user.id_user
+        req.user.id_user,
+        req.user.isAdmin
       );
 
       res.json({
@@ -236,14 +245,15 @@ class OeuvreControllerV2 extends BaseController {
   }
 
   /**
-   * DELETE /api/v2/oeuvres/:id
+   * DELETE /api/oeuvres/:id
    * Supprimer une œuvre
    */
   async delete(req, res) {
     try {
       await this.oeuvreService.delete(
         parseInt(req.params.id),
-        req.user.id_user
+        req.user.id_user,
+        req.user.isAdmin
       );
 
       res.json({
@@ -257,7 +267,7 @@ class OeuvreControllerV2 extends BaseController {
   }
 
   /**
-   * GET /api/v2/oeuvres/my
+   * GET /api/oeuvres/my
    * Mes œuvres (créateur connecté)
    */
   async getMyOeuvres(req, res) {
@@ -271,8 +281,10 @@ class OeuvreControllerV2 extends BaseController {
 
       res.json({
         success: true,
-        data: this._translateOeuvres(result.data, req.lang),
-        pagination: result.pagination
+        data: {
+          oeuvres: this._translateOeuvres(result.data, req.lang),
+          pagination: result.pagination
+        }
       });
 
     } catch (error) {
@@ -281,7 +293,7 @@ class OeuvreControllerV2 extends BaseController {
   }
 
   /**
-   * POST /api/v2/oeuvres/:id/submit
+   * POST /api/oeuvres/:id/submit
    * Soumettre pour validation
    */
   async submit(req, res) {
@@ -307,7 +319,7 @@ class OeuvreControllerV2 extends BaseController {
   // ============================================================================
 
   /**
-   * GET /api/v2/oeuvres/admin/all
+   * GET /api/oeuvres/admin/all
    * Toutes les œuvres (admin)
    */
   async listAll(req, res) {
@@ -337,7 +349,7 @@ class OeuvreControllerV2 extends BaseController {
   }
 
   /**
-   * GET /api/v2/oeuvres/admin/pending
+   * GET /api/oeuvres/admin/pending
    * Œuvres en attente
    */
   async getPending(req, res) {
@@ -361,7 +373,7 @@ class OeuvreControllerV2 extends BaseController {
   }
 
   /**
-   * POST /api/v2/oeuvres/:id/validate
+   * POST /api/oeuvres/:id/validate
    * Valider une œuvre
    */
   async validate(req, res) {
@@ -383,7 +395,7 @@ class OeuvreControllerV2 extends BaseController {
   }
 
   /**
-   * POST /api/v2/oeuvres/:id/reject
+   * POST /api/oeuvres/:id/reject
    * Refuser une œuvre
    */
   async reject(req, res) {
@@ -408,7 +420,7 @@ class OeuvreControllerV2 extends BaseController {
   }
 
   /**
-   * POST /api/v2/oeuvres/:id/feature
+   * POST /api/oeuvres/:id/feature
    * Mettre en avant une œuvre
    */
   async setFeatured(req, res) {
@@ -432,7 +444,7 @@ class OeuvreControllerV2 extends BaseController {
   }
 
   /**
-   * GET /api/v2/oeuvres/stats
+   * GET /api/oeuvres/stats
    * Statistiques
    */
   async getStats(req, res) {
@@ -454,7 +466,7 @@ class OeuvreControllerV2 extends BaseController {
   // ============================================================================
 
   /**
-   * GET /api/v2/oeuvres/statistics
+   * GET /api/oeuvres/statistics
    * Statistiques publiques des œuvres
    */
   async getStatistics(req, res) {
@@ -467,7 +479,7 @@ class OeuvreControllerV2 extends BaseController {
   }
 
   /**
-   * GET /api/v2/oeuvres/:id/translations
+   * GET /api/oeuvres/:id/translations
    * Récupérer les traductions d'une œuvre (admin)
    */
   async getTranslations(req, res) {
@@ -483,7 +495,7 @@ class OeuvreControllerV2 extends BaseController {
   }
 
   /**
-   * PATCH /api/v2/oeuvres/:id/translation/:lang
+   * PATCH /api/oeuvres/:id/translation/:lang
    * Mettre à jour une traduction spécifique (admin)
    */
   async updateTranslation(req, res) {
@@ -504,7 +516,7 @@ class OeuvreControllerV2 extends BaseController {
   }
 
   /**
-   * GET /api/v2/oeuvres/:id/share-links
+   * GET /api/oeuvres/:id/share-links
    * Liens de partage pour une œuvre
    */
   async getShareLinks(req, res) {
@@ -530,7 +542,7 @@ class OeuvreControllerV2 extends BaseController {
   }
 
   /**
-   * GET /api/v2/oeuvres/:id/medias
+   * GET /api/oeuvres/:id/medias
    * Médias d'une œuvre
    */
   async getMedias(req, res) {
@@ -547,7 +559,7 @@ class OeuvreControllerV2 extends BaseController {
   }
 
   /**
-   * GET /api/v2/oeuvres/my/statistics
+   * GET /api/oeuvres/my/statistics
    * Statistiques des œuvres du créateur connecté
    */
   async getMyStatistics(req, res) {
@@ -560,7 +572,7 @@ class OeuvreControllerV2 extends BaseController {
   }
 
   /**
-   * POST /api/v2/oeuvres/:id/medias/upload
+   * POST /api/oeuvres/:id/medias/upload
    * Upload de médias pour une œuvre
    */
   async uploadMedia(req, res) {
@@ -581,7 +593,7 @@ class OeuvreControllerV2 extends BaseController {
   }
 
   /**
-   * PUT /api/v2/oeuvres/:id/medias/reorder
+   * PUT /api/oeuvres/:id/medias/reorder
    * Réordonner les médias
    */
   async reorderMedias(req, res) {
@@ -599,7 +611,7 @@ class OeuvreControllerV2 extends BaseController {
   }
 
   /**
-   * DELETE /api/v2/oeuvres/:id/medias/:mediaId
+   * DELETE /api/oeuvres/:id/medias/:mediaId
    * Supprimer un média
    */
   async deleteMedia(req, res) {
@@ -616,7 +628,7 @@ class OeuvreControllerV2 extends BaseController {
   }
 
   /**
-   * GET /api/v2/oeuvres/admin/rejected
+   * GET /api/oeuvres/admin/rejected
    * Œuvres rejetées (admin)
    */
   async getRejected(req, res) {
@@ -637,7 +649,7 @@ class OeuvreControllerV2 extends BaseController {
   }
 
   /**
-   * GET /api/v2/oeuvres/search/intervenants
+   * GET /api/oeuvres/search/intervenants
    * Recherche d'intervenants
    */
   async searchIntervenants(req, res) {
@@ -692,4 +704,4 @@ class OeuvreControllerV2 extends BaseController {
 }
 
 // Export singleton
-module.exports = new OeuvreControllerV2();
+module.exports = new OeuvreController();

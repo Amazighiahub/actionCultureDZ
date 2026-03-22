@@ -2,7 +2,7 @@
 // Signalement.js - Modèle pour signalements
 // ========================================
 
-const { DataTypes } = require('sequelize');
+const { DataTypes, Op } = require('sequelize');
 
 module.exports = (sequelize) => {
   const Signalement = sequelize.define('Signalement', {
@@ -127,14 +127,16 @@ module.exports = (sequelize) => {
 
   // Associations
   Signalement.associate = (models) => {
-    Signalement.belongsTo(models.User, { 
+    Signalement.belongsTo(models.User, {
       foreignKey: 'id_user_signalant',
-      as: 'Signalant'
+      as: 'Signalant',
+      onDelete: 'CASCADE'
     });
-    
-    Signalement.belongsTo(models.User, { 
+
+    Signalement.belongsTo(models.User, {
       foreignKey: 'id_moderateur',
-      as: 'Moderateur'
+      as: 'Moderateur',
+      onDelete: 'SET NULL'
     });
 
     // Relations polymorphiques selon type_entite
@@ -232,7 +234,7 @@ module.exports = (sequelize) => {
     }
   };
 
-  Signalement.getQueue = async function(moderatorId = null) {
+  Signalement.getQueue = async function(moderatorId = null, limit = 50) {
     const where = {
       statut: ['en_attente', 'en_cours']
     };
@@ -247,12 +249,13 @@ module.exports = (sequelize) => {
     return await this.findAll({
       where,
       include: [
-        { model: models.User, as: 'Signalant', attributes: ['nom', 'prenom'] }
+        { model: sequelize.models.User, as: 'Signalant', attributes: ['nom', 'prenom'] }
       ],
       order: [
         ['priorite', 'DESC'],
         ['date_signalement', 'ASC']
-      ]
+      ],
+      limit
     });
   };
 

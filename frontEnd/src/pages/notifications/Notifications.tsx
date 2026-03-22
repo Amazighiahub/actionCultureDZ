@@ -281,7 +281,7 @@ export default function NotificationsPage() {
                 <Filter className="w-4 h-4" />{t("notifications_notifications.filtrer")}
 
               </h2>
-              <Select value={filter} onValueChange={(v) => setFilter(v as any)}>
+              <Select value={filter} onValueChange={(v) => setFilter(v)}>
                 <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>

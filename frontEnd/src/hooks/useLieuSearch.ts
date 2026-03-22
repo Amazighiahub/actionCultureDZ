@@ -67,7 +67,7 @@ export const useLieuSearch = (): UseLieuSearchReturn => {
     setErrorLieux(null);
     
     try {
-      const data = await httpClient.get<any>('/lieux/search', { search, limit: 20 });
+      const data = await httpClient.get<{ lieux: Lieu[]; pagination?: Record<string, number> }>('/lieux/search', { search, limit: 20 });
       setLieux(data.data?.lieux || []);
     } catch (err) {
       setErrorLieux(err instanceof Error ? err.message : 'Erreur inconnue');
@@ -87,7 +87,7 @@ export const useLieuSearch = (): UseLieuSearchReturn => {
     setErrorDetailLieux(null);
     
     try {
-      const data = await httpClient.get<any>(`/lieux/${lieuId}/details`);
+      const data = await httpClient.get<DetailLieu[]>(`/lieux/${lieuId}/details`);
       setDetailLieux(data.data || []);
     } catch (err) {
       setErrorDetailLieux(err instanceof Error ? err.message : 'Erreur inconnue');
@@ -148,7 +148,7 @@ interface ServiceData {
 }
 
 interface UseCreateServiceReturn {
-  createService: (data: ServiceData) => Promise<any>;
+  createService: (data: ServiceData) => Promise<Record<string, unknown> | undefined>;
   loading: boolean;
   error: string | null;
   success: boolean;
@@ -166,7 +166,7 @@ export const useCreateService = (): UseCreateServiceReturn => {
     setSuccess(false);
 
     try {
-      const result = await httpClient.post<any>('/services', data);
+      const result = await httpClient.post<Record<string, unknown>>('/services', data);
 
       if (!result.success) {
         throw new Error(result.error || 'Erreur lors de la création');

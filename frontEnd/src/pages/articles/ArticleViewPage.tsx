@@ -1,5 +1,4 @@
 // pages/articles/ArticleViewPage.tsx
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -68,7 +67,7 @@ import { useFormatDate } from '@/hooks/useFormatDate';type ArticleData =
 {type: 'article_scientifique';data: ArticleScientifique;} |
 {type: 'none';data: null;};
 
-function getArticleData(oeuvre: any, isScientific: boolean): ArticleData {
+function getArticleData(oeuvre: Oeuvre, isScientific: boolean): ArticleData {
   if (isScientific && oeuvre?.ArticleScientifique) {
     return { type: 'article_scientifique', data: oeuvre.ArticleScientifique };
   } else if (!isScientific && oeuvre?.Article) {
@@ -282,9 +281,9 @@ const ArticleViewPage: React.FC = () => {
       // Tracker la vue
       oeuvreService.trackView(articleId);
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Erreur chargement article:', err);
-      setError(err.message || 'Erreur lors du chargement');
+      setError(err instanceof Error ? err.message : 'Erreur lors du chargement');
     } finally {
       setLoading(false);
     }
@@ -359,7 +358,7 @@ const ArticleViewPage: React.FC = () => {
             if (comment.id_commentaire === replyToComment) {
               return {
                 ...comment,
-                Reponses: [...(comment.Reponses || []), result.data as any]
+                Reponses: [...(comment.Reponses || []), result.data as Commentaire]
               };
             }
             return comment;
@@ -367,7 +366,7 @@ const ArticleViewPage: React.FC = () => {
           );
         } else {
           // Si c'est un nouveau commentaire, l'ajouter au début
-          setCommentaires((prevComments) => [result.data as any, ...prevComments]);
+          setCommentaires((prevComments) => [result.data as Commentaire, ...prevComments]);
         }
 
         setCommentContent('');
@@ -422,11 +421,20 @@ const ArticleViewPage: React.FC = () => {
   };
 
   // Extraire les contributeurs
-  const extractContributeurs = () => {
-    const contributeurs: any[] = [];
+  interface ContributeurInfo {
+    id?: number;
+    nom: string;
+    role: string;
+    principal: boolean;
+    photo?: string;
+    organisation?: string;
+  }
+
+  const extractContributeurs = (): ContributeurInfo[] => {
+    const contributeurs: ContributeurInfo[] = [];
 
     if (oeuvre?.OeuvreIntervenants) {
-      oeuvre.OeuvreIntervenants.forEach((oi: any) => {
+      oeuvre.OeuvreIntervenants.forEach((oi) => {
         if (oi.Intervenant) {
           contributeurs.push({
             nom: `${oi.Intervenant.prenom} ${oi.Intervenant.nom}`,
@@ -623,7 +631,7 @@ const ArticleViewPage: React.FC = () => {
           description={oeuvre.description?.substring(0, 160) || undefined}
           image={oeuvre.image_url || oeuvre.couverture_url || undefined}
           type="article"
-          keywords={oeuvre.tags?.map((t: any) => t.nom || t) || []}
+          keywords={oeuvre.Tags?.map((tag) => tag.nom) || []}
           jsonLd={[
             buildArticleJsonLd(oeuvre),
             buildBreadcrumbJsonLd([
@@ -917,7 +925,7 @@ const ArticleViewPage: React.FC = () => {
                       <div className="flex items-start space-x-4">
                         <Avatar>
                           <AvatarImage
-                      src={(comment.User as any)?.photo_url}
+                      src={comment.User?.photo_url}
                       alt={`${comment.User?.prenom} ${comment.User?.nom}`} />
                     
                           <AvatarFallback>
@@ -964,7 +972,7 @@ const ArticleViewPage: React.FC = () => {
                           {/* Afficher les réponses */}
                           {comment.Reponses && comment.Reponses.length > 0 &&
                     <div className="mt-4 ml-8 space-y-4">
-                              {comment.Reponses.map((reponse: any) =>
+                              {comment.Reponses.map((reponse) =>
                       <div key={reponse.id_commentaire} className="flex items-start space-x-3">
                                   <Avatar className="h-8 w-8">
                                     <AvatarImage src={reponse.User?.photo_url} />
@@ -1016,9 +1024,9 @@ const ArticleViewPage: React.FC = () => {
             <div>
                   <p className="text-sm font-medium mb-2">{t("articles_articleviewpage.catgories")}</p>
                   <div className="flex flex-wrap gap-2">
-                    {oeuvre.Categories.map((cat: any) =>
+                    {oeuvre.Categories.map((cat) =>
                 <Badge key={cat.id_categorie} variant="secondary">
-                        {cat.nom_categorie || cat.nom}
+                        {cat.nom}
                       </Badge>
                 )}
                   </div>
@@ -1028,9 +1036,9 @@ const ArticleViewPage: React.FC = () => {
             <div>
                   <p className="text-sm font-medium mb-2">{t("articles_articleviewpage.tags")}</p>
                   <div className="flex flex-wrap gap-2">
-                    {oeuvre.Tags.map((tag: any) =>
+                    {oeuvre.Tags.map((tag) =>
                 <Badge key={tag.id_tag} variant="outline">
-                        #{tag.nom_tag || tag.nom}
+                        #{tag.nom}
                       </Badge>
                 )}
                   </div>

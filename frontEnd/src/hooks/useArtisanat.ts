@@ -1,8 +1,19 @@
 // hooks/useArtisanat.ts
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { artisanatService, Artisanat, ArtisanatStatistics } from '@/services/artisanat.service';
 import { httpClient } from '@/services/httpClient';
+
+/** Extended Artisanat with optional `prix` field that may come from API responses */
+interface ArtisanatWithPrix extends Artisanat {
+  prix?: number;
+}
+
+/** Shape of possible paginated API response wrappers */
+interface ArtisanatResponseData {
+  artisanats?: Artisanat[];
+  items?: Artisanat[];
+  data?: Artisanat[];
+}
 
 interface Materiau {
   id_materiau: number;
@@ -97,7 +108,7 @@ export function useArtisanat(): UseArtisanatReturn {
       setLoading(true);
       setError(null);
 
-      const params: any = {
+      const params: Record<string, string | number | boolean | undefined> = {
         limit: 50,
         sort: sortBy
       };
@@ -105,9 +116,10 @@ export function useArtisanat(): UseArtisanatReturn {
       const result = await artisanatService.getAll(params);
 
       if (result.success && result.data) {
-        let artisanatsData = (result.data as any).artisanats ||
-                            (result.data as any).items ||
-                            (result.data as any).data ||
+        const responseData = result.data as unknown as ArtisanatResponseData;
+        let artisanatsData = responseData.artisanats ||
+                            responseData.items ||
+                            responseData.data ||
                             result.data ||
                             [];
 
@@ -122,9 +134,10 @@ export function useArtisanat(): UseArtisanatReturn {
       } else {
         throw new Error(result.error || 'Erreur lors du chargement des artisanats');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Gérer le rate limit
-      if (err.message?.includes('429') || err.message?.includes('rate limit')) {
+      const errMessage = err instanceof Error ? err.message : '';
+      if (errMessage.includes('429') || errMessage.includes('rate limit')) {
         localStorage.setItem('lastRateLimit', Date.now().toString());
 
         // Essayer le backup
@@ -163,9 +176,9 @@ export function useArtisanat(): UseArtisanatReturn {
       filtered = filtered.filter(a => {
         if (a.nom?.toLowerCase().includes(query)) return true;
         if (a.description?.toLowerCase().includes(query)) return true;
-        if ((a as any).Oeuvre?.titre?.toLowerCase().includes(query)) return true;
-        if ((a as any).Materiau?.nom?.toLowerCase().includes(query)) return true;
-        if ((a as any).Technique?.nom?.toLowerCase().includes(query)) return true;
+        if (a.Oeuvre?.titre?.toLowerCase().includes(query)) return true;
+        if (a.Materiau?.nom?.toLowerCase().includes(query)) return true;
+        if (a.Technique?.nom?.toLowerCase().includes(query)) return true;
         return false;
       });
     }
@@ -173,7 +186,7 @@ export function useArtisanat(): UseArtisanatReturn {
     // Filtrer par matériau
     if (selectedMateriau !== 'tous') {
       filtered = filtered.filter(a => {
-        const materiauId = a.id_materiau || (a as any).Materiau?.id_materiau;
+        const materiauId = a.id_materiau || a.Materiau?.id_materiau;
         return materiauId?.toString() === selectedMateriau;
       });
     }
@@ -181,7 +194,7 @@ export function useArtisanat(): UseArtisanatReturn {
     // Filtrer par technique
     if (selectedTechnique !== 'tous') {
       filtered = filtered.filter(a => {
-        const techniqueId = a.id_technique || (a as any).Technique?.id_technique;
+        const techniqueId = a.id_technique || a.Technique?.id_technique;
         return techniqueId?.toString() === selectedTechnique;
       });
     }
@@ -192,10 +205,10 @@ export function useArtisanat(): UseArtisanatReturn {
         filtered.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
         break;
       case 'prix_asc':
-        filtered.sort((a, b) => ((a as any).prix || a.prix_min || 0) - ((b as any).prix || b.prix_min || 0));
+        filtered.sort((a, b) => ((a as ArtisanatWithPrix).prix || a.prix_min || 0) - ((b as ArtisanatWithPrix).prix || b.prix_min || 0));
         break;
       case 'prix_desc':
-        filtered.sort((a, b) => ((b as any).prix || b.prix_max || 0) - ((a as any).prix || a.prix_max || 0));
+        filtered.sort((a, b) => ((b as ArtisanatWithPrix).prix || b.prix_max || 0) - ((a as ArtisanatWithPrix).prix || a.prix_max || 0));
         break;
       case 'populaire':
         filtered.sort((a, b) => (b.note_moyenne || 0) - (a.note_moyenne || 0));

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -82,9 +81,9 @@ const AjouterService: React.FC = () => {
   const [activeTab, setActiveTab] = useState('select-lieu');
   const [selectedTypePatrimoine, setSelectedTypePatrimoine] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [lieux, setLieux] = useState<any[]>([]);
-  const [selectedLieu, setSelectedLieu] = useState<any | null>(null);
-  const [existingServices, setExistingServices] = useState<any[]>([]);
+  const [lieux, setLieux] = useState<Array<Record<string, unknown>>>([]);
+  const [selectedLieu, setSelectedLieu] = useState<Record<string, unknown> | null>(null);
+  const [existingServices, setExistingServices] = useState<Array<Record<string, unknown>>>([]);
 
   // Services à ajouter
   const [selectedPredefinedServices, setSelectedPredefinedServices] = useState<string[]>([]);
@@ -105,7 +104,7 @@ const AjouterService: React.FC = () => {
       setLoadingLieux(true);
       setError(null);
 
-      const params: any = {
+      const params: Record<string, unknown> = {
         limit: 50,
         page: 1
       };
@@ -159,7 +158,7 @@ const AjouterService: React.FC = () => {
   }, [loadLieux]);
 
   // Obtenir le nom localisé
-  const getLocalizedName = (item: any, field: string = 'nom') => {
+  const getLocalizedName = (item: Record<string, unknown> | null, field: string = 'nom') => {
     if (!item) return '';
     const value = item[field];
     if (!value) return '';
@@ -175,7 +174,7 @@ const AjouterService: React.FC = () => {
   };
 
   // Sélectionner un lieu
-  const handleSelectLieu = (lieu: any) => {
+  const handleSelectLieu = (lieu: Record<string, unknown>) => {
     setSelectedLieu(lieu);
     setActiveTab('add-services');
     setSelectedPredefinedServices([]);
@@ -297,9 +296,9 @@ const AjouterService: React.FC = () => {
         setSuccess(false);
       }, 3000);
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Erreur ajout services:', err);
-      const errorMessage = err.message || t('ajouterService.errors.submitFailed', 'Erreur lors de l\'ajout des services');
+      const errorMessage = err instanceof Error ? err.message : t('ajouterService.errors.submitFailed', 'Erreur lors de l\'ajout des services');
       setError(errorMessage);
       toast({
         title: t('common.error', 'Erreur'),

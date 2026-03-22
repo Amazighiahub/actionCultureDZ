@@ -19,7 +19,7 @@ const useDashboardProSimple = () => {
         if (response.data?.items) {
           // Ajouter les programmes à chaque événement
           const evenementsAvecProgrammes = await Promise.all(
-            response.data.items.map(async (evenement: any) => {
+            response.data.items.map(async (evenement) => {
               try {
                 const programmesResponse = await evenementService.getProgrammes(evenement.id_evenement);
                 return {

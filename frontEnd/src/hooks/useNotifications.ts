@@ -1,8 +1,8 @@
 // hooks/useNotifications.ts - Hook React pour gérer les notifications
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { socketService } from '../services/socketService';
+import type { SocketEvents } from '../services/socketService';
 import { notificationService } from '../services/notification.service';
 import { usePermissionsContext } from '@/providers/PermissionsProvider';
 import type {
@@ -57,9 +57,9 @@ export function useNotifications(): UseNotificationsReturn {
     try {
       setError(null);
       await fn();
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (isMountedRef.current) {
-        const errorMessage = err.message || 'Une erreur est survenue';
+        const errorMessage = err instanceof Error ? err.message : 'Une erreur est survenue';
         setError(errorMessage);
       }
     }
@@ -198,12 +198,7 @@ export function useNotifications(): UseNotificationsReturn {
       event: K,
       handler: (data: NotificationEventMap[K]) => void
     ) => {
-      // Si socketService.on accepte seulement certains types, on peut essayer différentes approches
-      try {
-        // Approche 1: Cast vers un type plus général
-        (socketService as any).on(event, handler);
-      } catch (error) {
-      }
+      socketService.on(event as keyof SocketEvents, handler as SocketEvents[keyof SocketEvents]);
     };
 
     // Gérer l'état de connexion via polling
@@ -267,7 +262,7 @@ export function useNotifications(): UseNotificationsReturn {
 
     // Enregistrer les événements
     Object.entries(handlers).forEach(([event, handler]) => {
-      addEventListener(event as keyof NotificationEventMap, handler as any);
+      addEventListener(event as keyof NotificationEventMap, handler as NotificationEventMap[keyof NotificationEventMap]);
     });
 
     // Charger les données initiales
@@ -290,10 +285,7 @@ export function useNotifications(): UseNotificationsReturn {
       // Essayer de se désinscrire des événements
       if ('off' in socketService) {
         Object.keys(handlers).forEach(event => {
-          try {
-            (socketService as any).off(event);
-          } catch (error) {
-          }
+          socketService.off(event as keyof SocketEvents);
         });
       }
       

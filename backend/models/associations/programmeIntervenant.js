@@ -1,4 +1,4 @@
-// models/ProgrammeIntervenant.js - Version pour Users inscrits
+// models/ProgrammeIntervenant.js - Lien Programme ↔ User (intervenant)
 const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
@@ -12,14 +12,15 @@ module.exports = (sequelize) => {
         key: 'id_programme'
       }
     },
-    id_user: {  // Utiliser id_user pour les utilisateurs inscrits
+    id_user: {
       type: DataTypes.INTEGER,
       primaryKey: true,
       allowNull: false,
       references: {
-        model: 'user',  // Référence à la table user
+        model: 'user',
         key: 'id_user'
-      }
+      },
+      comment: 'L\'intervenant est toujours un User (créé automatiquement si nécessaire)'
     },
     role_intervenant: {
       type: DataTypes.ENUM('principal', 'co_intervenant', 'moderateur', 'invite', 'animateur'),
@@ -30,7 +31,6 @@ module.exports = (sequelize) => {
       defaultValue: 0,
       comment: 'Ordre de passage des intervenants'
     },
-    // ✅ AJOUT: Heures spécifiques par intervenant
     heure_debut_intervention: {
       type: DataTypes.TIME,
       allowNull: true,
@@ -81,17 +81,17 @@ module.exports = (sequelize) => {
       type: DataTypes.TEXT,
       comment: 'Notes internes sur cet intervenant'
     }
-    
+
   }, {
     tableName: 'programme_intervenant',
     timestamps: true,
     createdAt: 'date_creation',
     updatedAt: 'date_modification',
-    
+
     indexes: [
       {
         unique: true,
-        fields: ['id_programme', 'id_user']  // Index unique sur la combinaison
+        fields: ['id_programme', 'id_user']
       },
       {
         fields: ['statut_confirmation']
@@ -106,23 +106,24 @@ module.exports = (sequelize) => {
   ProgrammeIntervenant.associate = (models) => {
     ProgrammeIntervenant.belongsTo(models.Programme, {
       foreignKey: 'id_programme',
-      as: 'Programme'
+      as: 'Programme',
+      onDelete: 'CASCADE'
     });
-    
-    // Association avec User
+
     ProgrammeIntervenant.belongsTo(models.User, {
       foreignKey: 'id_user',
-      as: 'User'
+      as: 'User',
+      onDelete: 'CASCADE'
     });
   };
-  
+
   // Méthodes d'instance
   ProgrammeIntervenant.prototype.confirmer = async function() {
     this.statut_confirmation = 'confirme';
     this.date_confirmation = new Date();
     return this.save();
   };
-  
+
   ProgrammeIntervenant.prototype.decliner = async function(raison) {
     this.statut_confirmation = 'decline';
     this.date_confirmation = new Date();

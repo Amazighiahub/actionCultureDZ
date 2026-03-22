@@ -395,4 +395,4 @@ class ProfessionnelController extends BaseController {
   }
 }
 
-module.exports = ProfessionnelController;
+module.exports = new ProfessionnelController();

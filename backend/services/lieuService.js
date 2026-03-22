@@ -1,9 +1,11 @@
 /**
  * LieuService - Service pour la gestion des lieux
  *
- * Encapsule toute la logique d'acces aux donnees (Sequelize) pour les lieux.
- * Le controller n'a plus qu'a appeler ces methodes et formater les reponses HTTP.
+ * Architecture: Controller → Service → Repository → Database
+ * Délègue les accès simples au LieuRepository.
+ * Les requêtes complexes (geo, includes profondes) restent dans le service.
  */
+const BaseService = require('./core/baseService');
 const { Op } = require('sequelize');
 const { createMultiLang, mergeTranslations } = require('../helpers/i18n');
 const { buildMultiLangSearch } = require('../utils/multiLangSearchBuilder');
@@ -11,10 +13,14 @@ const { sanitizeLike } = require('../utils/sanitize');
 
 const ALLOWED_LANGS = ['fr', 'ar', 'en', 'tz-ltn', 'tz-tfng'];
 
-class LieuService {
-  constructor(models) {
-    this.models = models;
-    this.sequelize = models.sequelize || Object.values(models)[0]?.sequelize;
+class LieuService extends BaseService {
+  constructor(repository, options = {}) {
+    super(repository, options);
+  }
+
+  /** @returns {import('sequelize').Sequelize} */
+  get sequelize() {
+    return this.repository.model.sequelize;
   }
 
   // ========================================================================
@@ -115,6 +121,7 @@ class LieuService {
    * @returns {{ rows: Array, count: number }}
    */
   async getAllLieux({ lang = 'fr', page = 1, limit = 10, wilaya, daira, commune, type_lieu, search, with_events = false } = {}) {
+    limit = Math.min(Math.max(parseInt(limit) || 10, 1), 100);
     const offset = (page - 1) * limit;
     const where = {};
     const include = [];
@@ -244,27 +251,21 @@ class LieuService {
    * Trouver une commune appartenant a une wilaya (pour createLieu fallback)
    */
   async findCommuneByWilaya(wilayaId) {
-    return this.models.Commune.findOne({
-      include: [{
-        model: this.models.Daira,
-        where: { wilayaId },
-        required: true
-      }]
-    });
+    return this.repository.findCommuneByWilaya(wilayaId);
   }
 
   /**
    * Trouver une commune par ID (pour validation)
    */
   async findCommuneById(communeId) {
-    return this.models.Commune.findByPk(communeId);
+    return this.repository.findCommuneById(communeId);
   }
 
   /**
    * Trouver une localite par ID (pour validation)
    */
   async findLocaliteById(localiteId) {
-    return this.models.Localite.findByPk(localiteId);
+    return this.repository.findLocaliteById(localiteId);
   }
 
   /**
@@ -318,41 +319,67 @@ class LieuService {
       details, detail
     } = data;
 
-    const lieu = await this.models.Lieu.create({
-      nom: this._prepareMultiLangField(nom, lang),
-      adresse: this._prepareMultiLangField(adresse, lang),
-      description: this._prepareMultiLangField(description, lang),
-      histoire: this._prepareMultiLangField(histoire, lang),
-      typeLieu,
-      typeLieuCulturel,
-      communeId,
-      localiteId,
+    // Vérifier si un lieu similaire existe déjà (par nom ou coordonnées)
+    const dupCheck = await this.checkDuplicate({
+      nom: typeof nom === 'string' ? nom : (nom?.fr || nom?.[lang] || ''),
       latitude,
       longitude
     });
-
-    // Creer les details si fournis (accepter details ou detail)
-    const detailsData = details || detail;
-    if (detailsData) {
-      await this.models.DetailLieu.create({
-        id_lieu: lieu.id_lieu,
-        description: this._prepareMultiLangField(detailsData.description, lang),
-        horaires: this._prepareMultiLangField(detailsData.horaires, lang),
-        histoire: this._prepareMultiLangField(detailsData.histoire, lang),
-        referencesHistoriques: detailsData.referencesHistoriques
+    if (dupCheck.exists && dupCheck.lieu) {
+      // Retourner le lieu existant avec ses includes
+      const existingLieu = await this.models.Lieu.findByPk(dupCheck.lieu.id_lieu, {
+        include: [
+          this._fullCommuneInclude(),
+          { model: this.models.Localite },
+          { model: this.models.DetailLieu }
+        ]
       });
+      if (existingLieu) return existingLieu;
     }
 
-    // Recharger avec includes
-    const lieuComplet = await this.models.Lieu.findByPk(lieu.id_lieu, {
-      include: [
-        this._fullCommuneInclude(),
-        { model: this.models.Localite },
-        { model: this.models.DetailLieu }
-      ]
-    });
+    const transaction = await this.sequelize.transaction();
+    try {
+      const lieu = await this.models.Lieu.create({
+        nom: this._prepareMultiLangField(nom, lang),
+        adresse: this._prepareMultiLangField(adresse, lang),
+        description: this._prepareMultiLangField(description, lang),
+        histoire: this._prepareMultiLangField(histoire, lang),
+        typeLieu,
+        typeLieuCulturel,
+        communeId,
+        localiteId,
+        latitude,
+        longitude
+      }, { transaction });
 
-    return lieuComplet;
+      // Creer les details si fournis (accepter details ou detail)
+      const detailsData = details || detail;
+      if (detailsData) {
+        await this.models.DetailLieu.create({
+          id_lieu: lieu.id_lieu,
+          description: this._prepareMultiLangField(detailsData.description, lang),
+          horaires: this._prepareMultiLangField(detailsData.horaires, lang),
+          histoire: this._prepareMultiLangField(detailsData.histoire, lang),
+          referencesHistoriques: detailsData.referencesHistoriques
+        }, { transaction });
+      }
+
+      await transaction.commit();
+
+      // Recharger avec includes
+      const lieuComplet = await this.models.Lieu.findByPk(lieu.id_lieu, {
+        include: [
+          this._fullCommuneInclude(),
+          { model: this.models.Localite },
+          { model: this.models.DetailLieu }
+        ]
+      });
+
+      return lieuComplet;
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
   }
 
   /**
@@ -412,6 +439,7 @@ class LieuService {
    * @returns {{ rows: Array, count: number }} ou { invalidCoords: true } ou { coordsOutOfRange: true }
    */
   async searchLieux({ lang = 'fr', q, type, commune, daira, wilaya, radius, lat, lng, page = 1, limit = 20 } = {}) {
+    limit = Math.min(Math.max(parseInt(limit) || 20, 1), 100);
     const offset = (page - 1) * limit;
     const where = {};
 
@@ -452,7 +480,7 @@ class LieuService {
       { model: this.models.LieuMedia }
     ];
 
-    // Recherche geo (Haversine)
+    // Recherche geo (Bounding box + Haversine)
     if (radius && lat && lng) {
       const safeLat = parseFloat(lat);
       const safeLng = parseFloat(lng);
@@ -467,6 +495,14 @@ class LieuService {
       }
 
       const clampedRadius = Math.min(Math.max(safeRadius, 0), 500);
+
+      // Pré-filtre bounding box (utilise l'index sur latitude/longitude)
+      // Élimine 95%+ des lignes AVANT le calcul Haversine coûteux
+      const latDelta = clampedRadius / 111;
+      const lngDelta = clampedRadius / (111 * Math.cos(safeLat * Math.PI / 180));
+
+      where.latitude = { [Op.between]: [safeLat - latDelta, safeLat + latDelta] };
+      where.longitude = { [Op.between]: [safeLng - lngDelta, safeLng + lngDelta] };
 
       const distance = this.sequelize.literal(
         `6371 * acos(
@@ -667,7 +703,7 @@ class LieuService {
         });
       } catch (nameSearchError) {
         // Fallback tolerant si certaines lignes JSON sont invalides en base
-        console.warn('Fallback checkDuplicate nom (JSON_EXTRACT indisponible):', nameSearchError.message);
+        this.logger.warn('Fallback checkDuplicate nom (JSON_EXTRACT indisponible):', nameSearchError.message);
         lieuByName = await this.models.Lieu.findOne({
           where: {
             ...typeCondition,

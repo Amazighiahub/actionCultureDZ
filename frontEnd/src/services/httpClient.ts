@@ -1,11 +1,13 @@
 // services/httpClient.ts
 /* eslint-disable @typescript-eslint/no-explicit-any */
+// NOTE: 9 `any` restants sont structurels (signatures publiques get/post/put/patch, index signatures)
+// Les changer casserait tous les ~200 appelants du httpClient.
 import axios, { AxiosInstance, AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
 import i18next from 'i18next';
 import { API_BASE_URL, AUTH_CONFIG, ApiResponse, PaginatedResponse, FilterParams, buildUrl, UploadProgress } from '@/config/api';
 import { apiLogger } from '@/utils/logger';
 
-interface ApiUploadOptions<T = any> {
+interface ApiUploadOptions<T = unknown> {
   fieldName?: string;
   additionalData?: Record<string, any>;
   headers?: Record<string, string>;
@@ -21,12 +23,12 @@ interface ErrorResponse {
   success: false;
   error?: string;
   message?: string;
-  details?: any;
-  [key: string]: any;
+  details?: Record<string, unknown>;
+  [key: string]: unknown;
 }
 
 // Types pour les requêtes
-interface QueuedRequest<T = any> {
+interface QueuedRequest<T = unknown> {
   request: () => Promise<T>;
   resolve: (value: T) => void;
   reject: (error: any) => void;
@@ -45,9 +47,9 @@ interface ExtendedAxiosRequestConfig extends AxiosRequestConfig {
 class HttpError extends Error {
   status?: number;
   code?: string;
-  details?: any;
+  details?: Record<string, unknown>;
 
-  constructor(message: string, status?: number, code?: string, details?: any) {
+  constructor(message: string, status?: number, code?: string, details?: Record<string, unknown>) {
     super(message);
     this.name = 'HttpError';
     this.status = status;
@@ -110,9 +112,10 @@ class ImprovedRequestQueue {
           this.recordRequest(item.url || 'unknown');
           
           item.resolve(result);
-        } catch (error: any) {
+        } catch (error: unknown) {
           // Détecter le rate limit
-          if (error.response?.status === 429) {
+          const axiosErr = error as { response?: { status?: number } };
+          if (axiosErr.response?.status === 429) {
             this.rateLimitHits++;
             this.adjustDelayAfterRateLimit();
           }
@@ -282,22 +285,22 @@ class HttpClient {
          
           // Extraction plus intelligente du délai
           let actualDelay = delay;
-          const errorData = error.response.data as any;
+          const errorData = error.response.data as Record<string, unknown> | undefined;
          
           if (errorData?.retryAfter) {
-            actualDelay = errorData.retryAfter * 1000;
-          } else if (errorData?.message) {
+            actualDelay = Number(errorData.retryAfter) * 1000;
+          } else if (typeof errorData?.message === 'string') {
             const match = errorData.message.match(/(\d+)\s*secondes?/i);
             if (match) {
               actualDelay = parseInt(match[1]) * 1000;
             }
           }
-         
+
           // Notification plus détaillée
           this.showToast({
             title: i18next.t('toasts.rateLimitReached'),
-            description: `${i18next.t('toasts.rateLimitDesc', { seconds: Math.ceil(actualDelay/1000) })} ${errorData?.message || ''}`,
-            variant: "warning" as any,
+            description: `${i18next.t('toasts.rateLimitDesc', { seconds: Math.ceil(actualDelay/1000) })} ${typeof errorData?.message === 'string' ? errorData.message : ''}`,
+            variant: "warning",
           });
          
           // Ajuster la queue pour éviter d'autres 429
@@ -324,10 +327,10 @@ class HttpClient {
           // Vérifier si c'est une erreur de token expiré
           let errorMessage = '';
           if (error.response.data && typeof error.response.data === 'object') {
-            const data = error.response.data as Record<string, any>;
-            errorMessage = data.message || '';
+            const data = error.response.data as Record<string, unknown>;
+            errorMessage = typeof data.message === 'string' ? data.message : '';
           }
-          
+
           if (errorMessage.includes('token') || errorMessage.includes('expired')) {
             try {
               await this.refreshToken();
@@ -348,10 +351,10 @@ class HttpClient {
           let errorMessage = i18next.t('toasts.noPermission');
           
           if (error.response.data && typeof error.response.data === 'object') {
-            const data = error.response.data as Record<string, any>;
-            errorMessage = data.message || errorMessage;
+            const data = error.response.data as Record<string, unknown>;
+            errorMessage = typeof data.message === 'string' ? data.message : errorMessage;
           }
-          
+
           this.showToast({
             title: i18next.t('toasts.accessDenied'),
             description: errorMessage,
@@ -364,8 +367,8 @@ class HttpClient {
           let errorMessage = i18next.t('toasts.notFoundDesc', 'La ressource demandée est introuvable.');
 
           if (error.response.data && typeof error.response.data === 'object') {
-            const data = error.response.data as Record<string, any>;
-            errorMessage = data.message || errorMessage;
+            const data = error.response.data as Record<string, unknown>;
+            errorMessage = typeof data.message === 'string' ? data.message : errorMessage;
           }
 
           this.showToast({
@@ -416,16 +419,16 @@ class HttpClient {
     
     // Gérer le type unknown de response.data
     let message = error.message;
-    let details: any = undefined;
-    
+    let details: Record<string, unknown> | undefined = undefined;
+
     if (error.response?.data) {
       const responseData = error.response.data;
-      
+
       // Vérifier le type de responseData
       if (typeof responseData === 'object' && responseData !== null) {
-        const data = responseData as Record<string, any>;
-        message = data.error || data.message || message;
-        details = data.details;
+        const data = responseData as Record<string, unknown>;
+        message = typeof data.error === 'string' ? data.error : typeof data.message === 'string' ? data.message : message;
+        details = typeof data.details === 'object' && data.details !== null ? data.details as Record<string, unknown> : undefined;
       } else if (typeof responseData === 'string') {
         message = responseData;
       }
@@ -475,7 +478,7 @@ class HttpClient {
     // des boucles de redirection.
   }
 
-  private showToast(options: { title: string; description?: string; variant?: 'default' | 'destructive' | 'warning' | string }) {
+  private showToast(options: { title: string; description?: string; variant?: 'default' | 'destructive' | 'warning' }) {
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('app:toast', { detail: options }));
     }
@@ -526,7 +529,7 @@ class HttpClient {
 
   // Méthode pour les requêtes paginées
   async getPaginated<T>(url: string, params?: FilterParams): Promise<ApiResponse<PaginatedResponse<T>>> {
-    const fullUrl = buildUrl(url, params as any);
+    const fullUrl = buildUrl(url, params as FilterParams);
     return this.get<PaginatedResponse<T>>(fullUrl);
   }
 
@@ -585,7 +588,7 @@ class HttpClient {
   async uploadFile<T>(
     url: string, 
     file: File, 
-    options?: ApiUploadOptions<any>
+    options?: ApiUploadOptions
   ): Promise<ApiResponse<T>> {
     const formData = new FormData();
     
@@ -625,7 +628,7 @@ class HttpClient {
     }, url, 'POST');
   }
 
-  async postFormData<T = any>(
+  async postFormData<T = unknown>(
     endpoint: string,
     formData: FormData,
     config?: AxiosRequestConfig

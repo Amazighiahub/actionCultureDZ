@@ -105,13 +105,30 @@ logger.logDb = (operation, table, duration) => {
 
 // Override global console to use our logger
 const originalConsole = global.console;
+const safeStringify = (a) => {
+  if (typeof a === 'string') return a;
+  try { return JSON.stringify(a); } catch { return String(a); }
+};
+const formatArgs = (...args) => args.map(safeStringify).join(' ');
 global.console = {
-  log: (...args) => logger.info(args.map(a => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ')),
-  info: (...args) => logger.info(args.map(a => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ')),
-  warn: (...args) => logger.warn(args.map(a => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ')),
-  error: (...args) => logger.error(args.map(a => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ')),
-  debug: (...args) => logger.debug(args.map(a => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ')),
-  trace: (...args) => logger.debug(args.map(a => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ')),
+  log: (...args) => logger.info(formatArgs(...args)),
+  info: (...args) => logger.info(formatArgs(...args)),
+  warn: (...args) => logger.warn(formatArgs(...args)),
+  error: (...args) => logger.error(formatArgs(...args)),
+  debug: (...args) => logger.debug(formatArgs(...args)),
+  trace: (...args) => logger.debug(formatArgs(...args)),
+  // Conserver les méthodes natives pour les librairies tierces
+  table: originalConsole.table.bind(originalConsole),
+  dir: originalConsole.dir.bind(originalConsole),
+  time: originalConsole.time.bind(originalConsole),
+  timeEnd: originalConsole.timeEnd.bind(originalConsole),
+  timeLog: originalConsole.timeLog.bind(originalConsole),
+  assert: originalConsole.assert.bind(originalConsole),
+  clear: originalConsole.clear.bind(originalConsole),
+  count: originalConsole.count.bind(originalConsole),
+  countReset: originalConsole.countReset.bind(originalConsole),
+  group: originalConsole.group.bind(originalConsole),
+  groupEnd: originalConsole.groupEnd.bind(originalConsole),
   // Garder la console originale accessible si besoin
   _original: originalConsole
 };

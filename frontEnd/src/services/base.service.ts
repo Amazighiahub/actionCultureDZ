@@ -1,9 +1,9 @@
 // services/base.service.ts - VERSION CORRIGÉE
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { 
-  ApiResponse, 
-  PaginatedResponse, 
+import {
+  ApiResponse,
+  PaginatedResponse,
   PaginationParams,
+  QueryParamValue,
   buildUrl,
   getApiUrl,
 } from '@/config/api';
@@ -18,7 +18,7 @@ export abstract class BaseService<T, CreateDTO = unknown, UpdateDTO = unknown> {
    * ✅ CORRIGÉ: N'appelle plus buildUrl() avant getPaginated()
    * car getPaginated() fait déjà buildUrl() en interne
    */
-  async getAll(params?: PaginationParams & Record<string, any>): Promise<ApiResponse<PaginatedResponse<T>>> {
+  async getAll(params?: PaginationParams & Record<string, QueryParamValue>): Promise<ApiResponse<PaginatedResponse<T>>> {
     // ❌ AVANT (causait le double ?limit=100?limit=100):
     // const url = buildUrl(this.baseEndpoint, params);
     // return httpClient.getPaginated<T>(url, params);
@@ -45,7 +45,7 @@ export abstract class BaseService<T, CreateDTO = unknown, UpdateDTO = unknown> {
   }
 
   // Méthodes utilitaires
-  protected buildUrl(endpoint: string, params?: Record<string, any>): string {
+  protected buildUrl(endpoint: string, params?: Record<string, QueryParamValue>): string {
     return buildUrl(endpoint, params);
   }
 

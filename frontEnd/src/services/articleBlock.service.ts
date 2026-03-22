@@ -1,9 +1,10 @@
 // services/articleBlock.service.ts
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ApiResponse, API_ENDPOINTS } from '@/config/api';
 import { httpClient } from './httpClient';
 import { Oeuvre } from '@/types/models/oeuvre.types';
 import { oeuvreService } from './oeuvre.service';
+import { CreateOeuvreBackendDTO } from '@/types/api/create-oeuvre-backend.dto';
+import { CreateOeuvreResponse } from '@/types/api/oeuvre-creation.types';
 
 export interface ArticleBlock {
   id_block?: number;
@@ -11,10 +12,10 @@ export interface ArticleBlock {
   article_type: 'article' | 'article_scientifique';
   type_block: 'text' | 'heading' | 'image' | 'video' | 'citation' | 'code' | 'list' | 'table' | 'separator' | 'embed';
   contenu?: string;
-  contenu_json?: any;
+  contenu_json?: Record<string, unknown> | unknown[];
   id_media?: number;
   ordre: number;
-  metadata?: any;
+  metadata?: Record<string, string | number | boolean | null>;
   visible?: boolean;
   media?: {
     id_media: number;
@@ -30,7 +31,7 @@ export interface BlockTemplate {
   name: string;
   type_block: ArticleBlock['type_block'];
   icon: string;
-  metadata?: any;
+  metadata?: Record<string, string | number | boolean | null>;
 }
 
 export interface CreateBlockDTO {
@@ -38,15 +39,15 @@ export interface CreateBlockDTO {
   article_type?: 'article' | 'article_scientifique';
   type_block: ArticleBlock['type_block'];
   contenu?: string;
-  contenu_json?: any;
-  metadata?: any;
+  contenu_json?: Record<string, unknown> | unknown[];
+  metadata?: Record<string, string | number | boolean | null>;
   id_media?: number;
 }
 
 export interface UpdateBlockDTO {
   contenu?: string;
-  contenu_json?: any;
-  metadata?: any;
+  contenu_json?: Record<string, unknown> | unknown[];
+  metadata?: Record<string, string | number | boolean | null>;
   id_media?: number;
   visible?: boolean;
   type_block?: ArticleBlock['type_block'];
@@ -203,12 +204,12 @@ class ArticleBlockService {
    * Sauvegarder l'article complet avec ses blocs
    */
   async saveArticleWithBlocks(
-    articleData: any,
+    articleData: CreateOeuvreBackendDTO,
     blocks: Omit<CreateBlockDTO, 'id_article' | 'article_type'>[]
-  ): Promise<ApiResponse<any>> {
+  ): Promise<ApiResponse<{ article: { id_oeuvre: number; titre: string; [key: string]: unknown }; blocks: ArticleBlock[] | undefined }>> {
     try {
       // D'abord créer/mettre à jour l'article via l'API oeuvre
-      const oeuvreResponse = await httpClient.post<any>(
+      const oeuvreResponse = await httpClient.post<CreateOeuvreResponse>(
         API_ENDPOINTS.oeuvres.create, 
         articleData
       );
@@ -284,10 +285,10 @@ async saveBlocksForArticle(
     };
     
     return await this.createMultipleBlocks(blocksData);
-  } catch (error: any) {
+  } catch (error: unknown) {
     return {
       success: false,
-      error: error.message || 'Erreur lors de la sauvegarde des blocs'
+      error: error instanceof Error ? error.message : 'Erreur lors de la sauvegarde des blocs'
     };
   }
 }
@@ -302,26 +303,26 @@ async uploadBlockImage(
 ): Promise<ApiResponse<{
   url: string;
   media_id: number;
-  media: any;
+  media: { id_media: number; url: string; titre?: string };
 }>> {
   try {
     const formData = new FormData();
     formData.append('image', file);
     formData.append('article_id', articleId.toString());
     formData.append('block_id', blockId.toString());
-    
+
     return await httpClient.postFormData<{
       url: string;
       media_id: number;
-      media: any;
+      media: { id_media: number; url: string; titre?: string };
     }>(
       `/article-blocks/${blockId}/upload-image`,
       formData
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     return {
       success: false,
-      error: error.message || 'Erreur lors de l\'upload'
+      error: error instanceof Error ? error.message : 'Erreur lors de l\'upload'
     };
   }
 }
@@ -336,28 +337,28 @@ async uploadBlockVideo(
 ): Promise<ApiResponse<{
   url: string;
   media_id: number;
-  media: any;
+  media: { id_media: number; url: string; titre?: string };
 }>> {
   try {
     const formData = new FormData();
     formData.append('video', file);
     formData.append('article_id', articleId.toString());
     formData.append('block_id', blockId.toString());
-    
+
     // Timeout plus long pour les vidéos
     return await httpClient.postFormData<{
       url: string;
       media_id: number;
-      media: any;
+      media: { id_media: number; url: string; titre?: string };
     }>(
       `/article-blocks/${blockId}/upload-video`,
       formData,
       { timeout: 300000 } // 5 minutes
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     return {
       success: false,
-      error: error.message || 'Erreur lors de l\'upload de la vidéo'
+      error: error instanceof Error ? error.message : 'Erreur lors de l\'upload de la vidéo'
     };
   }
 }
@@ -382,10 +383,10 @@ async exportToMarkdown(articleId: number): Promise<ApiResponse<string>> {
       success: false,
       error: 'Erreur lors de l\'export'
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     return {
       success: false,
-      error: error.message || 'Erreur lors de l\'export'
+      error: error instanceof Error ? error.message : 'Erreur lors de l\'export'
     };
   }
 }
@@ -402,10 +403,10 @@ async importFromMarkdown(
       `/articles/${articleId}/blocks/import/markdown`,
       { markdown }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     return {
       success: false,
-      error: error.message || 'Erreur lors de l\'import'
+      error: error instanceof Error ? error.message : 'Erreur lors de l\'import'
     };
   }
 }
@@ -422,10 +423,10 @@ async searchBlocks(
       `/articles/${articleId}/blocks/search`,
       { q: query }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     return {
       success: false,
-      error: error.message || 'Erreur lors de la recherche'
+      error: error instanceof Error ? error.message : 'Erreur lors de la recherche'
     };
   }
 }
@@ -448,10 +449,10 @@ async getBlocksStats(articleId: number): Promise<ApiResponse<{
       totalImages: number;
       totalVideos: number;
     }>(`/articles/${articleId}/blocks/stats`);
-  } catch (error: any) {
+  } catch (error: unknown) {
     return {
       success: false,
-      error: error.message || 'Erreur lors de la récupération des statistiques'
+      error: error instanceof Error ? error.message : 'Erreur lors de la récupération des statistiques'
     };
   }
 }
@@ -490,10 +491,10 @@ async getOeuvresByType(types: number[]): Promise<ApiResponse<Oeuvre[]>> {
       success: true,
       data: uniqueOeuvres
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     return {
       success: false,
-      error: error.message || 'Erreur lors de la récupération'
+      error: error instanceof Error ? error.message : 'Erreur lors de la récupération'
     };
   }
 }

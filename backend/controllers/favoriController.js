@@ -177,4 +177,4 @@ class FavoriController extends BaseController {
   }
 }
 
-module.exports = FavoriController;
+module.exports = new FavoriController();

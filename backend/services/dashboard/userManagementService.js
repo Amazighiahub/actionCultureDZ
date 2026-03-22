@@ -2,9 +2,11 @@
  * Service de gestion des utilisateurs pour le Dashboard Admin
  */
 const { Op, fn, col } = require('sequelize');
+const logger = require('../../utils/logger');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const { TYPE_USER_IDS } = require('../../constants/typeUserIds');
+const { getClient: getRedisClient } = require('../../utils/redisClient');
 
 class DashboardUserManagementService {
   constructor(models, repositories = {}) {
@@ -110,6 +112,7 @@ class DashboardUserManagementService {
     if (!user) {
       throw new Error('Utilisateur non trouvé');
     }
+    await this._invalidateUserCache(userId);
     return user;
   }
 
@@ -147,6 +150,7 @@ class DashboardUserManagementService {
         userType: user.type_user,
         userName: `${user.nom} ${user.prenom}`
       });
+      await this._invalidateUserCache(userId);
       return {
         deleted: true, type: 'hard',
         userId: parseInt(userId), deletedBy: adminId,
@@ -154,6 +158,7 @@ class DashboardUserManagementService {
       };
     } else {
       await this.userRepo.update(userId, { statut: 'inactif' });
+      await this._invalidateUserCache(userId);
       return { deleted: true, type: 'soft' };
     }
   }
@@ -172,6 +177,7 @@ class DashboardUserManagementService {
     if (!user) {
       throw new Error('Utilisateur non trouvé');
     }
+    await this._invalidateUserCache(userId);
     return user;
   }
 
@@ -195,6 +201,7 @@ class DashboardUserManagementService {
       });
     }
 
+    await this._invalidateUserCache(userId);
     return { user, role };
   }
 
@@ -215,6 +222,7 @@ class DashboardUserManagementService {
       date_modification: new Date()
     });
 
+    await this._invalidateUserCache(userId);
     return { success: true, tempPassword };
   }
 
@@ -231,6 +239,7 @@ class DashboardUserManagementService {
         { statut: 'actif', id_user_validate: adminId, date_validation: new Date() }
       );
       results.success = userIds;
+      await this._invalidateUserCacheBulk(userIds);
       return results;
     }
 
@@ -246,6 +255,7 @@ class DashboardUserManagementService {
         });
       }
       results.success = userIds;
+      await this._invalidateUserCacheBulk(userIds);
       return results;
     }
 
@@ -256,6 +266,7 @@ class DashboardUserManagementService {
         { statut: 'inactif' }
       );
       results.success = userIds;
+      await this._invalidateUserCacheBulk(userIds);
       return results;
     }
 
@@ -265,6 +276,7 @@ class DashboardUserManagementService {
         { statut: 'supprime', date_suppression: new Date() }
       );
       results.success = userIds;
+      await this._invalidateUserCacheBulk(userIds);
       return results;
     }
 
@@ -318,6 +330,7 @@ class DashboardUserManagementService {
     const updateData = { statut: valide ? 'actif' : 'rejete', date_validation: new Date(), id_user_validate: validateur_id };
     if (!valide && raison) updateData.raison_rejet = raison;
     await this.userRepo.update(userId, updateData);
+    await this._invalidateUserCache(userId);
     await user.reload();
 
     if (this.models.Notification) {
@@ -331,7 +344,7 @@ class DashboardUserManagementService {
             : `Votre demande a été refusée. ${raison ? `Raison : ${raison}` : ''}`,
           lue: false
         });
-      } catch (err) { console.error('Erreur création notification:', err.message); }
+      } catch (err) { logger.error('Erreur création notification:', err.message); }
     }
 
     return {
@@ -352,8 +365,30 @@ class DashboardUserManagementService {
     const user = await this.userRepo.findById(userId);
     if (!user) throw new Error('Utilisateur non trouvé');
     await this.userRepo.update(userId, { statut: 'suspendu', date_suspension: new Date(), raison_suspension: raison, duree_suspension: duree || null });
+    await this._invalidateUserCache(userId);
     await user.reload();
     return { message: 'Utilisateur suspendu', data: user };
+  }
+
+  // ===========================================================================
+  // CACHE HELPERS
+  // ===========================================================================
+
+  async _invalidateUserCache(userId) {
+    const redis = getRedisClient();
+    if (redis) {
+      try { await redis.del(`user:session:${userId}`); } catch (_) { /* best-effort */ }
+    }
+  }
+
+  async _invalidateUserCacheBulk(userIds) {
+    const redis = getRedisClient();
+    if (redis && userIds.length > 0) {
+      try {
+        const keys = userIds.map(id => `user:session:${id}`);
+        await redis.del(keys);
+      } catch (_) { /* best-effort */ }
+    }
   }
 
 }

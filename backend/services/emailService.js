@@ -1,4 +1,5 @@
 // services/EmailService.js - Service email refactorisé avec templates externes
+const logger = require('../utils/logger');
 const nodemailer = require('nodemailer');
 const fs = require('fs').promises;
 const path = require('path');
@@ -28,7 +29,7 @@ class EmailService {
     if (!this.isPaused) {
       this.initializeTransporter();
     } else {
-      console.log('📧 Service email en pause - mode simulation activé.');
+      logger.info('📧 Service email en pause - mode simulation activé.');
     }
   }
 
@@ -67,9 +68,9 @@ class EmailService {
     if (this.isPaused || !this.transporter) return;
     try {
       await this.transporter.verify();
-      console.log('✅ Service email prêt à envoyer.');
+      logger.info('✅ Service email prêt à envoyer.');
     } catch (error) {
-      console.error('❌ Erreur de configuration du service email:', error);
+      logger.error('❌ Erreur de configuration du service email:', error);
     }
   }
 
@@ -92,7 +93,7 @@ class EmailService {
       this.compiledTemplates[templateName] = handlebars.compile(templateSource);
       return this.compiledTemplates[templateName];
     } catch (error) {
-      console.error(`❌ Erreur lors du chargement du template email "${templateName}":`, error);
+      logger.error(`❌ Erreur lors du chargement du template email "${templateName}":`, error);
       throw new Error(`Le template ${templateName} est introuvable.`);
     }
   }
@@ -102,7 +103,7 @@ class EmailService {
    */
   async sendEmail(to, subject, html, attachments = null) {
     if (this.isPaused) {
-      console.log(`\n📧 [SIMULATION] Envoi à: ${to} | Sujet: ${subject}`);
+      logger.info(`\n📧 [SIMULATION] Envoi à: ${to} | Sujet: ${subject}`);
       return { success: true, messageId: 'simulated-' + Date.now() };
     }
 
@@ -116,10 +117,10 @@ class EmailService {
       };
 
       const result = await this.transporter.sendMail(mailOptions);
-      console.log(`✅ Email envoyé avec succès à ${to}. Message ID: ${result.messageId}`);
+      logger.info(`✅ Email envoyé avec succès à ${to}. Message ID: ${result.messageId}`);
       return { success: true, messageId: result.messageId };
     } catch (error) {
-      console.error(`❌ Erreur lors de l'envoi de l'email à ${to}:`, error);
+      logger.error(`❌ Erreur lors de l'envoi de l'email à ${to}:`, error);
       return { success: false, error: error.message };
     }
   }
@@ -145,7 +146,7 @@ class EmailService {
 
       return await this.sendEmail(user.email, 'Vérifiez votre compte Action Culture', html);
     } catch (error) {
-      console.error("Erreur dans sendVerificationEmail:", error);
+      logger.error("Erreur dans sendVerificationEmail:", error);
       return { success: false, error: error.message };
     }
   }
@@ -164,7 +165,7 @@ class EmailService {
 
       return await this.sendEmail(user.email, 'Confirmation de changement de mot de passe', html);
     } catch (error) {
-      console.error("Erreur dans sendPasswordChangeEmail:", error);
+      logger.error("Erreur dans sendPasswordChangeEmail:", error);
       return { success: false, error: error.message };
     }
   }
@@ -203,7 +204,7 @@ class EmailService {
 
       return await this.sendEmail(user.email, 'Réinitialisation de votre mot de passe', html);
     } catch (error) {
-      console.error("Erreur dans sendPasswordResetEmail:", error);
+      logger.error("Erreur dans sendPasswordResetEmail:", error);
       return { success: false, error: error.message };
     }
   }
@@ -236,7 +237,7 @@ class EmailService {
 
       return await this.sendEmail(user.email, 'Votre mot de passe a été modifié', html);
     } catch (error) {
-      console.error("Erreur dans sendPasswordChangedEmail:", error);
+      logger.error("Erreur dans sendPasswordChangedEmail:", error);
       return { success: false, error: error.message };
     }
   }
@@ -263,7 +264,7 @@ class EmailService {
 
       return await this.sendEmail(user.email, 'Demande de changement d\'email', html);
     } catch (error) {
-      console.error("Erreur dans sendEmailChangeNotification:", error);
+      logger.error("Erreur dans sendEmailChangeNotification:", error);
       return { success: false, error: error.message };
     }
   }
@@ -291,7 +292,7 @@ class EmailService {
 
       return await this.sendEmail(newEmail, 'Confirmez votre nouvelle adresse email', html);
     } catch (error) {
-      console.error("Erreur dans sendEmailChangeConfirmation:", error);
+      logger.error("Erreur dans sendEmailChangeConfirmation:", error);
       return { success: false, error: error.message };
     }
   }
@@ -408,7 +409,7 @@ class EmailService {
         html
       );
     } catch (error) {
-      console.error("Erreur dans sendEventRegistrationConfirmation:", error);
+      logger.error("Erreur dans sendEventRegistrationConfirmation:", error);
       return { success: false, error: error.message };
     }
   }
@@ -456,7 +457,7 @@ class EmailService {
         html
       );
     } catch (error) {
-      console.error("Erreur dans sendSubmissionValidationEmail:", error);
+      logger.error("Erreur dans sendSubmissionValidationEmail:", error);
       return { success: false, error: error.message };
     }
   }
@@ -510,7 +511,7 @@ class EmailService {
         html
       );
     } catch (error) {
-      console.error("Erreur dans notifierValidationProfessionnel:", error);
+      logger.error("Erreur dans notifierValidationProfessionnel:", error);
       return { success: false, error: error.message };
     }
   }
@@ -549,7 +550,7 @@ class EmailService {
         const result = await this.sendEmail(user.email, `Événement annulé : ${nomEvenementStr}`, html);
         return { email: user.email, result };
       } catch (error) {
-        console.error(`Erreur envoi annulation à ${participant.User?.email}:`, error);
+        logger.error(`Erreur envoi annulation à ${participant.User?.email}:`, error);
         return { email: participant.User?.email, result: { success: false, error: error.message } };
       }
     }));
@@ -601,7 +602,7 @@ class EmailService {
         const result = await this.sendEmail(user.email, `${sujet} : ${nomEvenementStr}`, html);
         return { email: user.email, result };
       } catch (error) {
-        console.error(`Erreur envoi modification programme à ${participant.User?.email}:`, error);
+        logger.error(`Erreur envoi modification programme à ${participant.User?.email}:`, error);
         return { email: participant.User?.email, result: { success: false, error: error.message } };
       }
     }));
@@ -643,7 +644,7 @@ class EmailService {
         const result = await this.sendEmail(user.email, `Nouvel événement : ${nomEvenementStr}`, html);
         return { email: user.email, result };
       } catch (error) {
-        console.error(`Erreur envoi nouvel événement à ${user.email}:`, error);
+        logger.error(`Erreur envoi nouvel événement à ${user.email}:`, error);
         return { email: user.email, result: { success: false, error: error.message } };
       }
     }));
@@ -677,7 +678,7 @@ class EmailService {
         html
       );
     } catch (error) {
-      console.error("Erreur dans sendEventReminder:", error);
+      logger.error("Erreur dans sendEventReminder:", error);
       return { success: false, error: error.message };
     }
   }

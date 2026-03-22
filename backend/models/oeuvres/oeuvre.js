@@ -109,16 +109,17 @@ module.exports = (sequelize) => {
 
   // Associations
   Oeuvre.associate = (models) => {
-    Oeuvre.belongsTo(models.TypeOeuvre, { foreignKey: 'id_type_oeuvre' });
-    Oeuvre.belongsTo(models.Langue, { foreignKey: 'id_langue' });
-    Oeuvre.belongsTo(models.User, { as: 'Saiseur', foreignKey: 'saisi_par' });
-    Oeuvre.belongsTo(models.User, { as: 'Validateur', foreignKey: 'validateur_id' });
-    Oeuvre.belongsTo(models.Oeuvre, { as: 'OeuvreOriginale', foreignKey: 'id_oeuvre_originale' });
-    Oeuvre.hasMany(models.OeuvreIntervenant, { foreignKey: 'id_oeuvre' });
-    
-    Oeuvre.hasMany(models.Oeuvre, { 
-      as: 'Traductions', 
-      foreignKey: 'id_oeuvre_originale' 
+    Oeuvre.belongsTo(models.TypeOeuvre, { foreignKey: 'id_type_oeuvre', onDelete: 'RESTRICT' });
+    Oeuvre.belongsTo(models.Langue, { foreignKey: 'id_langue', onDelete: 'RESTRICT' });
+    Oeuvre.belongsTo(models.User, { as: 'Saiseur', foreignKey: 'saisi_par', onDelete: 'SET NULL' });
+    Oeuvre.belongsTo(models.User, { as: 'Validateur', foreignKey: 'validateur_id', onDelete: 'SET NULL' });
+    Oeuvre.belongsTo(models.Oeuvre, { as: 'OeuvreOriginale', foreignKey: 'id_oeuvre_originale', onDelete: 'SET NULL' });
+    Oeuvre.hasMany(models.OeuvreIntervenant, { foreignKey: 'id_oeuvre', onDelete: 'CASCADE' });
+
+    Oeuvre.hasMany(models.Oeuvre, {
+      as: 'Traductions',
+      foreignKey: 'id_oeuvre_originale',
+      onDelete: 'SET NULL'
     });
     
     Oeuvre.belongsToMany(models.User, { 
@@ -148,16 +149,16 @@ module.exports = (sequelize) => {
       foreignKey: 'id_oeuvre' 
     });
     
-    Oeuvre.hasOne(models.Livre, { foreignKey: 'id_oeuvre' });
-    Oeuvre.hasOne(models.Film, { foreignKey: 'id_oeuvre' });
-    Oeuvre.hasOne(models.AlbumMusical, { foreignKey: 'id_oeuvre' });
-    Oeuvre.hasOne(models.Article, { foreignKey: 'id_oeuvre' });
-    Oeuvre.hasOne(models.ArticleScientifique, { foreignKey: 'id_oeuvre' });
-    Oeuvre.hasOne(models.Artisanat, { foreignKey: 'id_oeuvre' });
-    Oeuvre.hasOne(models.OeuvreArt, { foreignKey: 'id_oeuvre' });
-    
+    Oeuvre.hasOne(models.Livre, { foreignKey: 'id_oeuvre', onDelete: 'CASCADE' });
+    Oeuvre.hasOne(models.Film, { foreignKey: 'id_oeuvre', onDelete: 'CASCADE' });
+    Oeuvre.hasOne(models.AlbumMusical, { foreignKey: 'id_oeuvre', onDelete: 'CASCADE' });
+    Oeuvre.hasOne(models.Article, { foreignKey: 'id_oeuvre', onDelete: 'CASCADE' });
+    Oeuvre.hasOne(models.ArticleScientifique, { foreignKey: 'id_oeuvre', onDelete: 'CASCADE' });
+    Oeuvre.hasOne(models.Artisanat, { foreignKey: 'id_oeuvre', onDelete: 'CASCADE' });
+    Oeuvre.hasOne(models.OeuvreArt, { foreignKey: 'id_oeuvre', onDelete: 'CASCADE' });
+
     Oeuvre.hasMany(models.Media, { foreignKey: 'id_oeuvre', onDelete: 'CASCADE' });
-    Oeuvre.hasMany(models.CritiqueEvaluation, { foreignKey: 'id_oeuvre' });
+    Oeuvre.hasMany(models.CritiqueEvaluation, { foreignKey: 'id_oeuvre', onDelete: 'CASCADE' });
   };
 
   // ⚡ NOUVELLES MÉTHODES I18N

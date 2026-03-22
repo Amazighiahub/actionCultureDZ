@@ -37,7 +37,7 @@ const OeuvreCard: React.FC<{ oeuvre: Oeuvre; onClick: () => void }> = ({ oeuvre,
       {/* Image */}
       <div className="relative aspect-[3/4] overflow-hidden">
         <LazyImage
-          src={(oeuvre as any).image_url || (oeuvre as any).couverture_url || '/images/placeholder-oeuvre.png'}
+          src={(oeuvre as Oeuvre & Record<string, unknown>).image_url || (oeuvre as Oeuvre & Record<string, unknown>).couverture_url || '/images/placeholder-oeuvre.png'}
           alt={getTranslation(oeuvre.titre, lang)}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           fallback="/images/placeholder-oeuvre.png"
@@ -56,11 +56,11 @@ const OeuvreCard: React.FC<{ oeuvre: Oeuvre; onClick: () => void }> = ({ oeuvre,
         )}
 
         {/* Note */}
-        {(oeuvre as any).note_moyenne && (oeuvre as any).note_moyenne > 0 && (
+        {(oeuvre as Oeuvre & Record<string, unknown>).note_moyenne && (oeuvre as Oeuvre & Record<string, unknown>).note_moyenne > 0 && (
           <div className="absolute top-2 right-2">
             <Badge className="bg-yellow-500 text-black text-xs">
               <Star className="h-3 w-3 mr-0.5 fill-current" />
-              {(oeuvre as any).note_moyenne.toFixed(1)}
+              {(oeuvre as Oeuvre & Record<string, unknown>).note_moyenne.toFixed(1)}
             </Badge>
           </div>
         )}
@@ -72,9 +72,9 @@ const OeuvreCard: React.FC<{ oeuvre: Oeuvre; onClick: () => void }> = ({ oeuvre,
           {getTranslation(oeuvre.titre, lang)}
         </h4>
         
-        {(oeuvre as any).sous_titre && (
+        {(oeuvre as Oeuvre & Record<string, unknown>).sous_titre && (
           <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5 italic">
-            {(oeuvre as any).sous_titre}
+            {(oeuvre as Oeuvre & Record<string, unknown>).sous_titre}
           </p>
         )}
 
@@ -82,10 +82,10 @@ const OeuvreCard: React.FC<{ oeuvre: Oeuvre; onClick: () => void }> = ({ oeuvre,
           {oeuvre.annee_creation && (
             <span>{oeuvre.annee_creation}</span>
           )}
-          {(oeuvre as any).nombre_vues !== undefined && (
+          {(oeuvre as Oeuvre & Record<string, unknown>).nombre_vues !== undefined && (
             <span className="flex items-center gap-1">
               <Eye className="h-3 w-3" />
-              {(oeuvre as any).nombre_vues.toLocaleString()}
+              {(oeuvre as Oeuvre & Record<string, unknown>).nombre_vues.toLocaleString()}
             </span>
           )}
         </div>
@@ -108,7 +108,7 @@ const RelatedOeuvres: React.FC<RelatedOeuvresProps> = ({
     queryKey: ['related-oeuvres', oeuvreId, typeId],
     queryFn: async () => {
       // Rechercher des œuvres du même type
-      const response = await (oeuvreService as any).search({
+      const response = await (oeuvreService as unknown as { search: (params: Record<string, unknown>) => Promise<{ success: boolean; data: { items: Oeuvre[] } }> }).search({
         ...(typeId && { type_oeuvre_id: typeId }),
         exclude_id: oeuvreId,
         statut: 'publie',

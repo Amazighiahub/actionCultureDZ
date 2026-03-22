@@ -51,10 +51,10 @@ const AjouterEvenement = () => {
 
   const [gratuit, setGratuit] = useState(false);
   const [wilayas, setWilayas] = useState<Wilaya[]>([]);
-  const [typesEvenements, setTypesEvenements] = useState<Array<{ id_type_evenement: number; nom_type: any }>>([]);
+  const [typesEvenements, setTypesEvenements] = useState<Array<{ id_type_evenement: number; nom_type: string | Record<string, string> }>>([]);
   
   // État pour l'organisation
-  const [organisations, setOrganisations] = useState<any[]>([]);
+  const [organisations, setOrganisations] = useState<Array<Record<string, unknown>>>([]);
   const [selectedOrganisationId, setSelectedOrganisationId] = useState<number | undefined>();
   const [hasOrganisation, setHasOrganisation] = useState(false);
   const [loadingOrganisations, setLoadingOrganisations] = useState(true);
@@ -149,7 +149,7 @@ const AjouterEvenement = () => {
     try {
       const response = await evenementService.getById(editId);
       if (response.success && response.data) {
-        const evt = response.data as any;
+        const evt = response.data as Record<string, unknown>;
         setFormData({
           nom: typeof evt.nom_evenement === 'object' ? evt.nom_evenement : { fr: evt.nom_evenement || '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
           description: typeof evt.description === 'object' ? evt.description : { fr: evt.description || '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
@@ -174,7 +174,7 @@ const AjouterEvenement = () => {
         toast({ title: t('toasts.error'), description: t('toasts.eventNotFound'), variant: 'destructive' });
         navigate('/dashboard-pro');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({ title: t('toasts.error'), description: t('toasts.eventLoadFailed'), variant: 'destructive' });
     }
   };
@@ -216,7 +216,7 @@ const AjouterEvenement = () => {
     // Charger les organisations de l'utilisateur
     try {
       setLoadingOrganisations(true);
-      const response = await httpClient.get<any[]>(API_ENDPOINTS.organisations.me);
+      const response = await httpClient.get<Array<Record<string, unknown>>>(API_ENDPOINTS.organisations.me);
       if (response.success && response.data) {
         setOrganisations(response.data);
         setHasOrganisation(response.data.length > 0);
@@ -338,9 +338,9 @@ const AjouterEvenement = () => {
       let response;
       if (isEditMode && editId) {
         // Updating event
-        response = await evenementService.update(editId, fd as any);
+        response = await evenementService.update(editId, fd as unknown as Parameters<typeof evenementService.update>[1]);
       } else {
-        response = await evenementService.create(fd as any);
+        response = await evenementService.create(fd as unknown as Parameters<typeof evenementService.create>[0]);
       }
 
       if (response.success) {

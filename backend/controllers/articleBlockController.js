@@ -339,4 +339,4 @@ class ArticleBlockController extends BaseController {
   }
 }
 
-module.exports = ArticleBlockController;
+module.exports = new ArticleBlockController();

@@ -8,7 +8,7 @@ const initTrackingRoutes = (models, authMiddleware) => {
   // ========================================================================
   // INITIALISATION DU CONTRÔLEUR
   // ========================================================================
-  const vueController = new VueController();
+  const vueController = VueController;
 
   const { 
     authenticate, 

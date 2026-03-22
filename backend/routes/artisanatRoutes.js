@@ -1,5 +1,5 @@
 /**
- * Routes v2 pour l'artisanat
+ * Routes pour l'artisanat
  * Utilise le pattern Controller → Service → Repository
  */
 
@@ -10,7 +10,7 @@ const { handleValidationErrors, validateId, validateStringLengths } = require('.
 const { createContentLimiter } = require('../middlewares/rateLimitMiddleware');
 const asyncHandler = require('../utils/asyncHandler');
 
-const initArtisanatRoutesV2 = (models, authMiddleware) => {
+const initArtisanatRoutes = (models, authMiddleware) => {
   const router = express.Router();
   const { authenticate, requireRole } = authMiddleware;
 
@@ -57,4 +57,4 @@ const initArtisanatRoutesV2 = (models, authMiddleware) => {
   return router;
 };
 
-module.exports = initArtisanatRoutesV2;
+module.exports = initArtisanatRoutes;

@@ -1,5 +1,5 @@
 /**
- * Routes v2 pour les événements
+ * Routes pour les événements
  * Utilise le pattern Controller → Service → Repository
  */
 
@@ -11,7 +11,7 @@ const { createContentLimiter } = require('../middlewares/rateLimitMiddleware');
 const asyncHandler = require('../utils/asyncHandler');
 const uploadService = require('../services/uploadService');
 
-const initEvenementRoutesV2 = (models, authMiddleware) => {
+const initEvenementRoutes = (models, authMiddleware) => {
   const router = express.Router();
   const { authenticate, requireRole } = authMiddleware;
 
@@ -53,8 +53,10 @@ const initEvenementRoutesV2 = (models, authMiddleware) => {
   // ROUTES AVEC :id
   // ============================================================================
 
+  router.get('/:id/qrcode', cachePublic, validateId(), asyncHandler((req, res) => evenementController.getQRCode(req, res)));
   router.get('/:id/medias', validateId(), asyncHandler((req, res) => evenementController.getMedias(req, res)));
   router.get('/:id/share-data', validateId(), asyncHandler((req, res) => evenementController.getShareData(req, res)));
+  router.get('/:id/participants/public', cachePublic, validateId(), asyncHandler((req, res) => evenementController.getPublicParticipants(req, res)));
   router.get('/:id/participants', authenticate, validateId(), asyncHandler((req, res) => evenementController.getParticipants(req, res)));
   router.get('/:id/professionnels/en-attente', authenticate, validateId(), asyncHandler((req, res) => evenementController.getProfessionnelsEnAttente(req, res)));
   router.get('/:id/mes-oeuvres', authenticate, validateId(), asyncHandler((req, res) => evenementController.getMesOeuvres(req, res)));
@@ -99,4 +101,4 @@ const initEvenementRoutesV2 = (models, authMiddleware) => {
   return router;
 };
 
-module.exports = initEvenementRoutesV2;
+module.exports = initEvenementRoutes;

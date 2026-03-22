@@ -1,4 +1,6 @@
 const { Op } = require('sequelize');
+const { sanitizeLike } = require('../utils/sanitize');
+const logger = require('../utils/logger');
 
 class SearchService {
   constructor(models) {
@@ -7,7 +9,9 @@ class SearchService {
 
   // Recherche globale dans toutes les entités
   async globalSearch(query, options = {}) {
-    const { limit = 20, types = ['oeuvres', 'evenements', 'lieux', 'users'] } = options;
+    const { limit: rawLimit = 20, types = ['oeuvres', 'evenements', 'lieux', 'users'] } = options;
+    const limit = Math.min(Math.max(parseInt(rawLimit) || 20, 1), 100);
+    const safeQuery = sanitizeLike(query);
     const results = {};
 
     try {
@@ -19,8 +23,8 @@ class SearchService {
               { statut: 'publie' },
               {
                 [Op.or]: [
-                  { titre: { [Op.like]: `%${query}%` } },
-                  { description: { [Op.like]: `%${query}%` } }
+                  { titre: { [Op.like]: `%${safeQuery}%` } },
+                  { description: { [Op.like]: `%${safeQuery}%` } }
                 ]
               }
             ]
@@ -39,8 +43,8 @@ class SearchService {
         results.evenements = await this.models.Evenement.findAll({
           where: {
             [Op.or]: [
-              { nom_evenement: { [Op.like]: `%${query}%` } },
-              { description: { [Op.like]: `%${query}%` } }
+              { nom_evenement: { [Op.like]: `%${safeQuery}%` } },
+              { description: { [Op.like]: `%${safeQuery}%` } }
             ]
           },
           include: [
@@ -57,8 +61,8 @@ class SearchService {
         results.lieux = await this.models.Lieu.findAll({
           where: {
             [Op.or]: [
-              { nom: { [Op.like]: `%${query}%` } },
-              { adresse: { [Op.like]: `%${query}%` } }
+              { nom: { [Op.like]: `%${safeQuery}%` } },
+              { adresse: { [Op.like]: `%${safeQuery}%` } }
             ]
           },
           include: [
@@ -74,8 +78,8 @@ class SearchService {
         results.users = await this.models.User.findAll({
           where: {
             [Op.or]: [
-              { nom: { [Op.like]: `%${query}%` } },
-              { prenom: { [Op.like]: `%${query}%` } }
+              { nom: { [Op.like]: `%${safeQuery}%` } },
+              { prenom: { [Op.like]: `%${safeQuery}%` } }
             ]
           },
           attributes: ['id_user', 'nom', 'prenom', 'type_user'],
@@ -92,7 +96,7 @@ class SearchService {
       };
 
     } catch (error) {
-      console.error('Erreur lors de la recherche globale:', error);
+      logger.error('Erreur lors de la recherche globale:', error);
       return {
         success: false,
         error: 'Erreur lors de la recherche'
@@ -102,17 +106,19 @@ class SearchService {
 
   // Suggestions de recherche
   async getSuggestions(query, limit = 10) {
+    const safeLimit = Math.min(Math.max(parseInt(limit) || 10, 1), 50);
+    const safeQuery = sanitizeLike(query);
     try {
       const suggestions = [];
 
       // Suggestions depuis les titres d'œuvres
       const oeuvres = await this.models.Oeuvre.findAll({
         where: {
-          titre: { [Op.like]: `%${query}%` },
+          titre: { [Op.like]: `%${safeQuery}%` },
           statut: 'publie'
         },
         attributes: ['titre'],
-        limit: limit / 2
+        limit: Math.floor(safeLimit / 2)
       });
 
       suggestions.push(...oeuvres.map(o => ({ text: o.titre, type: 'oeuvre' })));
@@ -120,21 +126,21 @@ class SearchService {
       // Suggestions depuis les noms d'événements
       const evenements = await this.models.Evenement.findAll({
         where: {
-          nom_evenement: { [Op.like]: `%${query}%` }
+          nom_evenement: { [Op.like]: `%${safeQuery}%` }
         },
         attributes: ['nom_evenement'],
-        limit: limit / 2
+        limit: Math.floor(safeLimit / 2)
       });
 
       suggestions.push(...evenements.map(e => ({ text: e.nom_evenement, type: 'evenement' })));
 
       return {
         success: true,
-        suggestions: suggestions.slice(0, limit)
+        suggestions: suggestions.slice(0, safeLimit)
       };
 
     } catch (error) {
-      console.error('Erreur lors de la génération de suggestions:', error);
+      logger.error('Erreur lors de la génération de suggestions:', error);
       return {
         success: false,
         error: 'Erreur lors de la génération de suggestions'

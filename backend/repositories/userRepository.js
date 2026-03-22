@@ -395,7 +395,8 @@ class UserRepository extends BaseRepository {
    * @param {number} wilayaId
    * @returns {Promise<Array>}
    */
-  async findArtisansByWilaya(wilayaId) {
+  async findArtisansByWilaya(wilayaId, options = {}) {
+    const { limit = 100, offset = 0 } = options;
     const includes = [];
     if (this.models.TypeUser) {
       includes.push({ model: this.models.TypeUser, attributes: ['id_type_user', 'nom_type'], required: false });
@@ -411,7 +412,9 @@ class UserRepository extends BaseRepository {
       },
       attributes: ['id_user', 'nom', 'prenom', 'email', 'photo_url',
         'entreprise', 'id_type_user', 'statut', 'wilaya_residence'],
-      include: includes
+      include: includes,
+      limit,
+      offset
     });
   }
 

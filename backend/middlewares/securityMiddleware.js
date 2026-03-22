@@ -125,85 +125,11 @@ const securityMiddleware = {
       // En cas d'erreur, on continue mais on log
       next();
     }
-  },
-
-  // Middleware pour valider les uploads
-  validateUpload: (req, res, next) => {
-    if (!req.file && !req.files) {
-      return next();
-    }
-
-    const files = req.files || [req.file];
-    const maxSize = 10 * 1024 * 1024; // 10MB par défaut
-    const allowedMimes = [
-      'image/jpeg',
-      'image/jpg', 
-      'image/png',
-      'image/gif',
-      'image/webp',
-      'application/pdf',
-      'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    ];
-
-    for (const file of files) {
-      // Vérifier la taille
-      if (file.size > maxSize) {
-        return res.status(400).json({
-          success: false,
-          error: req.t ? req.t('upload.fileTooLarge') : `File ${file.originalname} exceeds maximum size (10MB)`
-        });
-      }
-
-      // Vérifier le type MIME
-      if (!allowedMimes.includes(file.mimetype)) {
-        return res.status(400).json({
-          success: false,
-          error: req.t ? req.t('upload.invalidFormat') : `File type ${file.mimetype} is not allowed`
-        });
-      }
-
-      // Vérifier l'extension
-      const ext = file.originalname.split('.').pop().toLowerCase();
-      const validExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'doc', 'docx'];
-      if (!validExtensions.includes(ext)) {
-        return res.status(400).json({
-          success: false,
-          error: req.t ? req.t('upload.invalidFormat') : `Extension .${ext} is not allowed`
-        });
-      }
-    }
-
-    next();
-  },
-
-  // Middleware pour les headers de sécurité
-  securityHeaders: (req, res, next) => {
-    // Protection XSS
-    res.setHeader('X-XSS-Protection', '1; mode=block');
-    
-    // Protection contre le sniffing MIME
-    res.setHeader('X-Content-Type-Options', 'nosniff');
-    
-    // Protection clickjacking
-    res.setHeader('X-Frame-Options', 'DENY');
-    
-    // HSTS (si HTTPS)
-    if (req.secure || req.headers['x-forwarded-proto'] === 'https') {
-      res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
-    }
-    
-    // Referrer Policy
-    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-    
-    // Content Security Policy basique
-    res.setHeader(
-      'Content-Security-Policy',
-      "default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline';"
-    );
-    
-    next();
   }
+  // Note: La validation des uploads est gérée par FileValidator.uploadValidator (utils/fileValidator.js)
+  // qui vérifie les magic bytes, la taille configurable, et nettoie les fichiers invalides.
+  // Les headers de sécurité (CSP, HSTS, X-Frame-Options, etc.) sont gérés
+  // exclusivement par Helmet dans app.js. Ne pas ajouter de doublon ici.
 };
 
 module.exports = securityMiddleware;

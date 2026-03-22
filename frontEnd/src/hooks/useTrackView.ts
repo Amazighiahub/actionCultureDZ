@@ -1,5 +1,4 @@
 // hooks/useTrackView.ts
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useRef, useState } from 'react';
 import { httpClient } from '@/services/httpClient';
 
@@ -75,7 +74,7 @@ export const useViewStats = (
   entityType: 'oeuvre' | 'evenement' | 'lieu' | 'artisanat',
   entityId: number
 ) => {
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
