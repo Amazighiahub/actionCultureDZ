@@ -26,7 +26,6 @@ import {
 import { useRTL } from '@/hooks/useRTL';
 
 // Services
-import { dashboardService } from '@/services/dashboard.service';
 import { notificationService } from '@/services/notification.service';
 import { authService } from '@/services/auth.service';
 import { metadataService } from '@/services/metadata.service';
@@ -66,17 +65,6 @@ const Index: React.FC = () => {
       return res.success && res.data ? res.data : null;
     },
     staleTime: 30 * 60 * 1000,
-  });
-
-  // Stats dashboard — seulement si authentifié
-  const { data: stats = null } = useQuery({
-    queryKey: ['dashboard', 'overview'],
-    queryFn: async () => {
-      const res = await dashboardService.getOverview();
-      return res.success && res.data ? res.data : null;
-    },
-    enabled: isAuthenticated,
-    staleTime: 5 * 60 * 1000,
   });
 
   // Notifications — seulement si authentifié
