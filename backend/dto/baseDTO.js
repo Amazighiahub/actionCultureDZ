@@ -149,11 +149,15 @@ class BaseDTO {
    * @param {string} lang - Langue cible
    * @returns {any}
    */
-  static translateRaw(data, lang = 'fr') {
+  static translateRaw(data, lang = 'fr', _depth = 0) {
     if (data === null || data === undefined) return data;
     if (data instanceof Date) return data;
     if (typeof data !== 'object') return data;
-    if (Array.isArray(data)) return data.map(item => this.translateRaw(item, lang));
+
+    // Protection contre la récursion infinie (références circulaires Sequelize)
+    if (_depth > 10) return data;
+
+    if (Array.isArray(data)) return data.map(item => this.translateRaw(item, lang, _depth + 1));
 
     // Objet vide {} → null (évite l'erreur React "Objects are not valid as a React child")
     const keys = Object.keys(data);
@@ -168,7 +172,7 @@ class BaseDTO {
     // Parcourir récursivement pour traduire les sous-objets multilingues
     const result = {};
     for (const [key, value] of Object.entries(data)) {
-      result[key] = this.translateRaw(value, lang);
+      result[key] = this.translateRaw(value, lang, _depth + 1);
     }
     return result;
   }

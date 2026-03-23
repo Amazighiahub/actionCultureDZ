@@ -283,8 +283,10 @@ class OeuvreRepository extends BaseRepository {
       }
     }
 
-    // Attacher les intervenants
-    result.OeuvreIntervenants = intervenants;
+    // Attacher les intervenants (convertir en plain objects pour éviter les refs circulaires)
+    result.OeuvreIntervenants = Array.isArray(intervenants)
+      ? intervenants.map(i => i.get ? i.get({ plain: true }) : i)
+      : [];
 
     // Sous-type spécifique + clés attendues par le front (Livre, Film, …)
     const subtype = await this._findSubtype(oeuvreId, result.id_type_oeuvre);
