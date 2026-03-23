@@ -59,17 +59,125 @@ const EventHero: React.FC<EventHeroProps> = ({
     }
   };
 
+  const hasImage = !!(event.image_url || event.couverture_url);
+
+  // Version compacte sans image
+  if (!hasImage) {
+    return (
+      <section className="bg-primary/10">
+        <div className="container py-8">
+          <div className="max-w-4xl space-y-4">
+            {/* Badges */}
+            <div className="flex flex-wrap items-center gap-2">
+              <StatusBadge status={event.statut} />
+              {event.TypeEvenement && (
+                <Badge variant="secondary">
+                  {td(event.TypeEvenement.nom_type) || td(event.TypeEvenement)}
+                </Badge>
+              )}
+              {event.tarif === 0 && (
+                <Badge className="bg-green-500 text-white">
+                  {t('events.free', 'Gratuit')}
+                </Badge>
+              )}
+              {capacityPercentage >= 90 && (
+                <Badge variant="destructive">
+                  {t('events.almostFull', 'Presque complet')}
+                </Badge>
+              )}
+            </div>
+
+            {/* Titre */}
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold font-serif">
+              {td(event.nom_evenement)}
+            </h1>
+
+            {/* Infos principales */}
+            <div className="flex flex-wrap items-center gap-4 text-muted-foreground">
+              {event.date_debut && (
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  <span>
+                    {event.date_fin && event.date_fin !== event.date_debut
+                      ? formatDateRange(event.date_debut, event.date_fin, { dateStyle: 'long' })
+                      : formatDate(event.date_debut, { dateStyle: 'long' })
+                    }
+                  </span>
+                </div>
+              )}
+              {event.Lieu && (
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-5 w-5" />
+                  <span>{td(event.Lieu.nom)}</span>
+                  {event.Lieu.Commune?.Daira?.Wilaya && (
+                    <span className="text-muted-foreground/70">
+                      ({td(event.Lieu.Commune.Daira.Wilaya.nom)})
+                    </span>
+                  )}
+                </div>
+              )}
+              {event.capacite_max && (
+                <div className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  <span>
+                    {safe(event.nombre_inscrits, '0')} / {safe(event.capacite_max)} {t('events.participants', 'participants')}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="flex flex-wrap items-center gap-3 pt-2">
+              {event.tarif > 0 && (
+                <div className="flex items-center gap-2 bg-primary/10 rounded-lg px-4 py-2">
+                  <Ticket className="h-5 w-5 text-primary" />
+                  <span className="text-xl font-bold text-primary">
+                    {formatPrice(event.tarif)}
+                  </span>
+                </div>
+              )}
+              <Button
+                variant={isFavorite ? "default" : "outline"}
+                size="lg"
+                onClick={onToggleFavorite}
+                className={isFavorite ? "bg-red-500 hover:bg-red-600 border-0" : ""}
+              >
+                <Heart className={`h-5 w-5 mr-2 ${isFavorite ? 'fill-current' : ''}`} />
+                {isFavorite
+                  ? t('events.removeFromFavorites', 'Retirer des favoris')
+                  : t('events.addToFavorites', 'Ajouter aux favoris')
+                }
+              </Button>
+              <Button variant="outline" size="lg" onClick={handleShare}>
+                <Share2 className="h-5 w-5 mr-2" />
+                {t('common.share', 'Partager')}
+              </Button>
+              {event.contact_email && (
+                <Button variant="outline" size="lg" asChild>
+                  <a href={`mailto:${event.contact_email}`}>
+                    <ExternalLink className="h-5 w-5 mr-2" />
+                    {t('events.contact', 'Contact')}
+                  </a>
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Version avec image
   return (
     <section className="relative">
-      {/* Image de fond avec overlay */}
       <div className="relative h-[50vh] min-h-[400px] max-h-[600px]">
         <LazyImage
-          src={event.image_url || '/images/placeholder-event.svg'}
+          src={event.image_url || event.couverture_url || '/images/placeholder-event.svg'}
           alt={td(event.nom_evenement)}
           className="w-full h-full object-cover"
           fallback="/images/placeholder-event.svg"
         />
-        
+
         {/* Overlay gradient */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
 
@@ -80,19 +188,19 @@ const EventHero: React.FC<EventHeroProps> = ({
               {/* Badges */}
               <div className="flex flex-wrap items-center gap-2">
                 <StatusBadge status={event.statut} />
-                
+
                 {event.TypeEvenement && (
                   <Badge variant="secondary" className="bg-white/20 text-white border-0">
                     {td(event.TypeEvenement.nom_type) || td(event.TypeEvenement)}
                   </Badge>
                 )}
-                
+
                 {event.tarif === 0 && (
                   <Badge className="bg-green-500 text-white">
                     {t('events.free', 'Gratuit')}
                   </Badge>
                 )}
-                
+
                 {capacityPercentage >= 90 && (
                   <Badge variant="destructive">
                     {t('events.almostFull', 'Presque complet')}
@@ -107,7 +215,6 @@ const EventHero: React.FC<EventHeroProps> = ({
 
               {/* Infos principales */}
               <div className="flex flex-wrap items-center gap-4 text-white/90">
-                {/* Dates */}
                 {event.date_debut && (
                   <div className="flex items-center gap-2">
                     <Calendar className="h-5 w-5" />
@@ -120,7 +227,6 @@ const EventHero: React.FC<EventHeroProps> = ({
                   </div>
                 )}
 
-                {/* Lieu */}
                 {event.Lieu && (
                   <div className="flex items-center gap-2">
                     <MapPin className="h-5 w-5" />
@@ -133,7 +239,6 @@ const EventHero: React.FC<EventHeroProps> = ({
                   </div>
                 )}
 
-                {/* Capacité */}
                 {event.capacite_max && (
                   <div className="flex items-center gap-2">
                     <Users className="h-5 w-5" />
@@ -146,7 +251,6 @@ const EventHero: React.FC<EventHeroProps> = ({
 
               {/* Actions */}
               <div className="flex flex-wrap items-center gap-3 pt-2">
-                {/* Prix */}
                 {event.tarif > 0 && (
                   <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2">
                     <Ticket className="h-5 w-5 text-white" />
@@ -156,24 +260,22 @@ const EventHero: React.FC<EventHeroProps> = ({
                   </div>
                 )}
 
-                {/* Bouton favoris */}
                 <Button
                   variant={isFavorite ? "default" : "outline"}
                   size="lg"
                   onClick={onToggleFavorite}
-                  className={isFavorite 
-                    ? "bg-red-500 hover:bg-red-600 border-0" 
+                  className={isFavorite
+                    ? "bg-red-500 hover:bg-red-600 border-0"
                     : "bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30"
                   }
                 >
                   <Heart className={`h-5 w-5 mr-2 ${isFavorite ? 'fill-current' : ''}`} />
-                  {isFavorite 
+                  {isFavorite
                     ? t('events.removeFromFavorites', 'Retirer des favoris')
                     : t('events.addToFavorites', 'Ajouter aux favoris')
                   }
                 </Button>
 
-                {/* Bouton partage */}
                 <Button
                   variant="outline"
                   size="lg"
@@ -184,7 +286,6 @@ const EventHero: React.FC<EventHeroProps> = ({
                   {t('common.share', 'Partager')}
                 </Button>
 
-                {/* Lien externe si disponible */}
                 {event.contact_email && (
                   <Button
                     variant="outline"
