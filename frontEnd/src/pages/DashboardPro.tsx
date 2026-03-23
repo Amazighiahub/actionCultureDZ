@@ -29,7 +29,8 @@ import {
   Settings,
   Hammer,
   ChevronDown,
-  AlertCircle
+  AlertCircle,
+  XCircle
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -125,6 +126,7 @@ const DashboardPro = () => {
     errorServices,
     errorPatrimoines,
     deleteItem,
+    cancelEvent,
     refreshAll
   } = useDashboardPro();
 
@@ -627,6 +629,17 @@ const DashboardPro = () => {
                           onClick={() => handleEdit('evenement', evenement)}>
                           <Edit className="h-4 w-4" />
                         </Button>
+                        {evenement.statut !== 'brouillon' && evenement.statut !== 'annule' && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => cancelEvent(evenement.id_evenement)}
+                            className="text-orange-500 hover:text-orange-600"
+                            title={t('events.cancel', 'Annuler l\'événement')}
+                          >
+                            <XCircle className="h-4 w-4" />
+                          </Button>
+                        )}
                         <Button
                           variant="ghost"
                           size="sm"

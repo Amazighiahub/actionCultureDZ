@@ -377,6 +377,30 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
     }
   }, [refetchOeuvres, refetchEvenements, refetchArtisanats, refetchServices, refetchPatrimoines, toast]);
 
+  // Annuler un événement (planifié/publié → annulé)
+  const cancelEvent = useCallback(async (id: number, motif?: string) => {
+    try {
+      const response = await evenementService.cancel(id, motif || 'Annulé par l\'organisateur');
+      if (!response.success) {
+        throw new Error(response.error || 'Erreur lors de l\'annulation');
+      }
+      toast({
+        title: t('toasts.success', 'Succès'),
+        description: t('toasts.eventCancelled', 'Événement annulé avec succès'),
+      });
+      await queryClient.invalidateQueries({ queryKey: ['dashboard-pro-evenements'] });
+      return true;
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Erreur inconnue';
+      toast({
+        title: t('toasts.error', 'Erreur'),
+        description: message,
+        variant: 'destructive',
+      });
+      return false;
+    }
+  }, [toast, queryClient, t]);
+
   return {
     // Données principales
     dashboardStats,
@@ -409,6 +433,7 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
     getOeuvreStats,
     getEvenementStats,
     deleteItem,
+    cancelEvent,
     refreshAll,
   };
 }

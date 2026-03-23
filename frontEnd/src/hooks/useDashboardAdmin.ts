@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
 import { adminService } from '@/services/admin.service';
+import { evenementService } from '@/services/evenement.service';
 import type { PaginatedResponse } from '@/config/api';
 import type { Oeuvre, Evenement, Lieu } from '@/types';
 import type { Service } from '@/types/models/lieux-details.types';
@@ -671,6 +672,25 @@ const deleteEvenement = async (evenementId: number) => {
   }
 };
 
+const cancelEvenement = async (evenementId: number, motif?: string) => {
+  try {
+    const response = await evenementService.cancel(evenementId, motif || 'Annulé par l\'administrateur');
+    if (response.success) {
+      toast({
+        title: t('toasts.success'),
+        description: t('toasts.eventCancelled', 'Événement annulé avec succès')
+      });
+      await loadEvenements();
+    }
+  } catch (error) {
+    toast({
+      title: t('toasts.error'),
+      description: t('toasts.eventCancelFailed', 'Erreur lors de l\'annulation'),
+      variant: "destructive"
+    });
+  }
+};
+
 const deleteService = async (serviceId: number) => {
   try {
     const response = await adminService.deleteService(serviceId);
@@ -847,6 +867,7 @@ const deleteService = async (serviceId: number) => {
     // Actions événements
     updateEvenementStatus,
     deleteEvenement,
+    cancelEvenement,
     
     // Actions services
     updateServiceStatus,

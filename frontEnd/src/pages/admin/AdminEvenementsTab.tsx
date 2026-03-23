@@ -68,6 +68,7 @@ const AdminEvenementsTab: React.FC = () => {
     loadingEvenements,
     errorEvenements,
     deleteEvenement,
+    cancelEvenement,
     refreshAll
   } = useDashboardAdmin('evenements');
 
@@ -274,8 +275,8 @@ const AdminEvenementsTab: React.FC = () => {
                             {t('admin.events.publish', 'Publier')}
                           </DropdownMenuItem>
                         )}
-                        {event.statut === 'publie' && (
-                          <DropdownMenuItem>
+                        {event.statut !== 'brouillon' && event.statut !== 'annule' && (
+                          <DropdownMenuItem onClick={() => cancelEvenement(event.id_evenement)}>
                             <XCircle className="h-4 w-4 mr-2" />
                             {t('admin.events.cancel', 'Annuler')}
                           </DropdownMenuItem>
