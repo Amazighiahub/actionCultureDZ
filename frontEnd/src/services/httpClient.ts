@@ -222,9 +222,10 @@ class HttpClient {
         // ✅ SÉCURITÉ: Le token est envoyé via cookie httpOnly (withCredentials: true)
         // Pas besoin d'ajouter le header Authorization manuellement
 
-        // Ajouter le token CSRF si disponible
-        if (this.csrfToken) {
-          config.headers['X-CSRF-Token'] = this.csrfToken;
+        // Ajouter le token CSRF (header mémorisé ou cookie fallback)
+        const csrf = this.csrfToken || document.cookie.split('; ').find(c => c.startsWith('csrf_token='))?.split('=')[1];
+        if (csrf) {
+          config.headers['X-CSRF-Token'] = csrf;
         }
 
         // Log pour debug (dev uniquement)

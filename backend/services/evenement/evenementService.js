@@ -579,8 +579,11 @@ class EvenementService extends BaseService {
     const evenement = await this.repository.findById(id);
     if (!evenement) throw this._notFoundError(id);
 
-    // Vérifier propriété (admin bypass)
-    if (evenement.id_user !== userId && !options.isAdmin) {
+    // Vérifier propriété (admin bypass) — parseInt pour éviter mismatch string/int
+    const ownerId = parseInt(evenement.id_user);
+    const callerId = parseInt(userId);
+    if (ownerId !== callerId && !options.isAdmin) {
+      this.logger.warn(`Cancel denied: event owner=${ownerId}, caller=${callerId}, isAdmin=${options.isAdmin}`);
       throw this._forbiddenError('Vous ne pouvez annuler que vos propres événements');
     }
 

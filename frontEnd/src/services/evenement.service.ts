@@ -146,7 +146,7 @@ class EvenementService extends BaseService<Evenement, CreateEvenementData, Updat
 
   // Gestion de l'événement
   async cancel(id: number, reason: string): Promise<ApiResponse<Evenement>> {
-    return httpClient.post<Evenement>(API_ENDPOINTS.evenements.cancel(id), { reason });
+    return httpClient.post<Evenement>(API_ENDPOINTS.evenements.cancel(id), { motif: reason });
   }
 
   // Participation
