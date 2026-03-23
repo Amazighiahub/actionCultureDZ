@@ -95,6 +95,30 @@ interface ItemRowProps {
 
 type MultiLangValue = string | Record<string, string> | undefined | null;
 
+// Helper pour le badge statut événement
+const getEventStatusBadge = (statut: string | undefined, t: (key: string, fallback?: string) => string) => {
+  const s = statut || 'brouillon';
+  const labels: Record<string, string> = {
+    brouillon: t('events.status.draft', 'Brouillon'),
+    planifie: t('events.status.planned', 'Planifié'),
+    publie: t('events.status.published', 'Publié'),
+    a_venir: t('events.status.upcoming', 'À venir'),
+    en_cours: t('events.status.ongoing', 'En cours'),
+    termine: t('events.status.finished', 'Terminé'),
+    annule: t('events.status.cancelled', 'Annulé'),
+  };
+  const variants: Record<string, 'default' | 'secondary' | 'outline' | 'destructive'> = {
+    brouillon: 'outline',
+    planifie: 'default',
+    publie: 'default',
+    a_venir: 'default',
+    en_cours: 'secondary',
+    termine: 'outline',
+    annule: 'destructive',
+  };
+  return { label: labels[s] || s, variant: variants[s] || 'outline' };
+};
+
 const DashboardPro = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -224,13 +248,7 @@ const DashboardPro = () => {
                 <Users className="h-3 w-3" />
                 {typeof item.nombre_participants === 'number' ? item.nombre_participants : 0} {t("dashboardpro.participants")}
               </span>
-              <Badge variant={
-              item.statut === 'a_venir' || item.statut === 'planifie' ? 'default' :
-              item.statut === 'en_cours' ? 'secondary' :
-              'outline'
-              }>
-                {typeof item.statut === 'string' ? item.statut : 'planifie'}
-              </Badge>
+              {(() => { const b = getEventStatusBadge(item.statut, t); return <Badge variant={b.variant}>{b.label}</Badge>; })()}
             </div>);
 
         case 'patrimoine':
@@ -594,13 +612,7 @@ const DashboardPro = () => {
                             <Users className="h-3 w-3" />
                             {typeof evenement.nombre_participants === 'number' ? evenement.nombre_participants : 0} {t("dashboardpro.participants")}
                           </span>
-                          <Badge variant={
-                          evenement.statut === 'a_venir' || evenement.statut === 'planifie' ? 'default' :
-                          evenement.statut === 'en_cours' ? 'secondary' :
-                          'outline'
-                          }>
-                            {typeof evenement.statut === 'string' ? evenement.statut : 'planifie'}
-                          </Badge>
+                          {(() => { const b = getEventStatusBadge(evenement.statut, t); return <Badge variant={b.variant}>{b.label}</Badge>; })()}
                         </div>
                       </div>
 
