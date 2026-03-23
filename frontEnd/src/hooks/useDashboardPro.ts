@@ -388,7 +388,9 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
         title: t('toasts.success', 'Succès'),
         description: t('toasts.eventCancelled', 'Événement annulé avec succès'),
       });
+      // Refetch les événements (le cache backend est invalidé par le service cancel)
       await queryClient.invalidateQueries({ queryKey: ['dashboard-pro-evenements'] });
+      await queryClient.invalidateQueries({ queryKey: ['dashboard-pro-stats'] });
       return true;
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Erreur inconnue';

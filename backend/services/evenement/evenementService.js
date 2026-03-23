@@ -599,6 +599,10 @@ class EvenementService extends BaseService {
     }
 
     this.cache.invalidate();
+    // Invalider le cache middleware (professionnel/dashboard, listes)
+    const cacheMiddleware = require('../../middlewares/cacheMiddleware');
+    cacheMiddleware.clearCache('professionnel');
+    cacheMiddleware.clearCache('evenement');
     this.logger.info(`Événement annulé: ${id} par user: ${userId}, motif: ${motif}`);
     return EvenementDTO.fromEntity(updated);
   }
