@@ -49,28 +49,24 @@ const EventInfo: React.FC<EventInfoProps> = ({ event }) => {
 
   return (
     <div className="space-y-6">
-      {/* Description */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CheckCircle className="h-5 w-5 text-primary" />
-            {t('event.description', 'Description')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="prose prose-sm max-w-none dark:prose-invert">
-            {hasContent(event.description) ? (
+      {/* Description - masquée si vide */}
+      {hasContent(event.description) && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-primary" />
+              {t('event.description', 'Description')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="prose prose-sm max-w-none dark:prose-invert">
               <p className="whitespace-pre-line text-muted-foreground leading-relaxed">
                 {td(event.description)}
               </p>
-            ) : (
-              <p className="text-muted-foreground italic">
-                {t('event.noDescription', 'Aucune description disponible')}
-              </p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Détails pratiques */}
       <Card>

@@ -134,8 +134,9 @@ const initProgrammeRoutes = (models) => {
   // ========================================================================
 
   // Réorganiser l'ordre des programmes
-  router.put('/evenement/:evenementId/reorder', 
+  router.put('/evenement/:evenementId/reorder',
     authMiddleware.authenticate,
+    authMiddleware.requireVerifiedEmail,
     authMiddleware.requireValidatedProfessional,
     param('evenementId').isInt().withMessage((value, { req }) => req.t('validation.invalidEventId')),
     reorderValidation,
@@ -144,8 +145,9 @@ const initProgrammeRoutes = (models) => {
   );
 
   // Créer un programme
-  router.post('/evenement/:evenementId', 
+  router.post('/evenement/:evenementId',
     authMiddleware.authenticate,
+    authMiddleware.requireVerifiedEmail,
     authMiddleware.requireValidatedProfessional,
     param('evenementId').isInt().withMessage((value, { req }) => req.t('validation.invalidEventId')),
     programmeValidation,
@@ -154,8 +156,9 @@ const initProgrammeRoutes = (models) => {
   );
 
   // Dupliquer un programme
-  router.post('/:id/duplicate', 
+  router.post('/:id/duplicate',
     authMiddleware.authenticate,
+    authMiddleware.requireVerifiedEmail,
     authMiddleware.requireValidatedProfessional,
     validationMiddleware.validateId('id'),
     validationMiddleware.handleValidationErrors,
@@ -163,8 +166,9 @@ const initProgrammeRoutes = (models) => {
   );
 
   // Mettre à jour le statut
-  router.patch('/:id/statut', 
+  router.patch('/:id/statut',
     authMiddleware.authenticate,
+    authMiddleware.requireVerifiedEmail,
     authMiddleware.requireValidatedProfessional,
     validationMiddleware.validateId('id'),
     statutValidation,
@@ -173,8 +177,9 @@ const initProgrammeRoutes = (models) => {
   );
 
   // Mettre à jour un programme
-  router.put('/:id', 
+  router.put('/:id',
     authMiddleware.authenticate,
+    authMiddleware.requireVerifiedEmail,
     authMiddleware.requireValidatedProfessional,
     validationMiddleware.validateId('id'),
     programmeValidation,
@@ -185,6 +190,7 @@ const initProgrammeRoutes = (models) => {
   // Supprimer un programme
   router.delete('/:id',
     authMiddleware.authenticate,
+    authMiddleware.requireVerifiedEmail,
     authMiddleware.requireValidatedProfessional,
     validationMiddleware.validateId('id'),
     programmeController.deleteProgramme.bind(programmeController)
@@ -193,11 +199,12 @@ const initProgrammeRoutes = (models) => {
   // Mettre à jour le statut d'un intervenant (confirmer/décliner)
   router.patch('/:id/intervenant/:userId/statut',
     authMiddleware.authenticate,
+    authMiddleware.requireVerifiedEmail,
     validationMiddleware.validateId('id'),
     validationMiddleware.validateId('userId'),
-    programmeController.updateIntervenantStatus
-      ? programmeController.updateIntervenantStatus.bind(programmeController)
-      : (req, res) => res.status(501).json({ success: false, error: req.t('common.notImplemented') })
+    [body('statut').isIn(['en_attente', 'confirme', 'decline', 'annule']).withMessage((value, { req }) => req.t('validation.invalidStatus'))],
+    validationMiddleware.handleValidationErrors,
+    programmeController.updateIntervenantStatus.bind(programmeController)
   );
 
 

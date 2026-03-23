@@ -64,10 +64,10 @@ const EventHero: React.FC<EventHeroProps> = ({
       {/* Image de fond avec overlay */}
       <div className="relative h-[50vh] min-h-[400px] max-h-[600px]">
         <LazyImage
-          src={event.image_url || '/images/placeholder-event.png'}
+          src={event.image_url || '/images/placeholder-event.svg'}
           alt={td(event.nom_evenement)}
           className="w-full h-full object-cover"
-          fallback="/images/placeholder-event.png"
+          fallback="/images/placeholder-event.svg"
         />
         
         {/* Overlay gradient */}

@@ -289,13 +289,18 @@ class EvenementRepository extends BaseRepository {
     });
 
     if (existing) {
-      return existing.update({ statut_participation: 'confirme', ...data }, queryOpts);
+      // Un participant rejeté (annulé) ne peut pas se ré-inscrire
+      if (existing.statut_participation === 'annule') {
+        throw new Error('Inscription refusée — participation annulée par l\'organisateur');
+      }
+      // Déjà inscrit/confirmé/présent → pas de changement
+      return existing;
     }
 
     return this.models.EvenementUser.create({
       id_evenement: evenementId,
       id_user: userId,
-      statut_participation: 'confirme',
+      statut_participation: 'inscrit',
       date_inscription: new Date(),
       ...data
     }, queryOpts);
@@ -394,14 +399,14 @@ class EvenementRepository extends BaseRepository {
     return this.models.EvenementUser.findAll({
       where: {
         id_evenement: evenementId,
-        statut_participation: 'en_attente'
+        statut_participation: 'inscrit'
       },
       include: [{
         model: this.models.User,
         as: 'User',
         attributes: { exclude: ['password'] },
         include: [
-          { model: this.models.TypeUser, required: false }
+          { model: this.models.TypeUser, as: 'TypeUser', required: false }
         ]
       }],
       order: [['date_inscription', 'ASC']],

@@ -146,6 +146,13 @@ class EvenementService extends BaseService {
       if (!type) throw this._validationError('Le type d\'événement spécifié n\'existe pas');
     }
 
+    // Événement présentiel (pas de url_virtuel) → organisation requise
+    const urlVirtuel = data.url_virtuel || data.urlVirtuel;
+    const orgId = data.id_organisation || data.organisationId;
+    if (!urlVirtuel && !orgId) {
+      throw this._validationError('Une organisation est requise pour les événements en présentiel');
+    }
+
     const entityData = {
       nom_evenement: data.nom_evenement || data.nom,
       description: data.description || {},
@@ -153,7 +160,7 @@ class EvenementService extends BaseService {
       date_fin: data.date_fin || data.dateFin,
       id_lieu: data.id_lieu || data.lieuId,
       id_type_evenement: data.id_type_evenement || data.typeEvenementId,
-      statut: data.statut || 'brouillon',
+      statut: 'brouillon', // Toujours brouillon à la création — publication via modération admin uniquement
       capacite_max: data.capacite_max || data.capaciteMax,
       tarif: data.tarif || 0,
       inscription_requise: data.inscription_requise || data.inscriptionRequise || false,
@@ -169,6 +176,16 @@ class EvenementService extends BaseService {
     };
 
     const evenement = await this.repository.create(entityData);
+
+    // Attacher l'organisation si fournie
+    if (orgId && this.models?.EvenementOrganisation) {
+      await this.models.EvenementOrganisation.create({
+        id_evenement: evenement.id_evenement,
+        id_organisation: parseInt(orgId),
+        role: 'organisateur_principal'
+      });
+    }
+
     const full = await this.repository.findWithFullDetails(evenement.id_evenement);
 
     this.cache.invalidate();
@@ -180,15 +197,20 @@ class EvenementService extends BaseService {
   /**
    * Modifier un événement
    */
-  async update(id, data, userId) {
+  async update(id, data, userId, options = {}) {
     const existing = await this.repository.findById(id);
     if (!existing) {
       throw this._notFoundError(id);
     }
 
-    // Vérifier propriété
+    // Seul le propriétaire peut modifier son événement
     if (existing.id_user !== userId) {
       throw this._forbiddenError('Vous ne pouvez modifier que vos propres événements');
+    }
+
+    // Contrôle d'état : seuls les brouillons sont modifiables
+    if (existing.statut !== 'brouillon') {
+      throw this._validationError('Seuls les événements en brouillon peuvent être modifiés');
     }
 
     const updateData = {};
@@ -198,14 +220,50 @@ class EvenementService extends BaseService {
     if (data.date_fin || data.dateFin) updateData.date_fin = data.date_fin || data.dateFin;
     if (data.id_lieu || data.lieuId) updateData.id_lieu = data.id_lieu || data.lieuId;
     if (data.id_type_evenement || data.typeEvenementId) updateData.id_type_evenement = data.id_type_evenement || data.typeEvenementId;
-    if (data.statut) updateData.statut = data.statut;
+    // statut: non modifiable via update — utiliser les routes dédiées (/publish, /cancel)
     if (data.capacite_max || data.capaciteMax) updateData.capacite_max = data.capacite_max || data.capaciteMax;
     if (data.tarif !== undefined) updateData.tarif = data.tarif;
     if (data.image_url || data.imageUrl) updateData.image_url = data.image_url || data.imageUrl;
     if (data.contact_email || data.contactEmail) updateData.contact_email = data.contact_email || data.contactEmail;
     if (data.contact_telephone || data.contactTelephone) updateData.contact_telephone = data.contact_telephone || data.contactTelephone;
+    if (data.url_virtuel !== undefined || data.urlVirtuel !== undefined) {
+      updateData.url_virtuel = data.url_virtuel ?? data.urlVirtuel ?? null;
+    }
+
+    // Validation présentiel → organisation requise (état final après merge)
+    const finalUrlVirtuel = updateData.url_virtuel !== undefined ? updateData.url_virtuel : existing.url_virtuel;
+    if (!finalUrlVirtuel) {
+      // Événement présentiel — vérifier qu'il a au moins une organisation
+      const newOrgId = data.id_organisation || data.organisationId;
+      if (!newOrgId && this.models?.EvenementOrganisation) {
+        const existingOrgs = await this.models.EvenementOrganisation.count({
+          where: { id_evenement: id }
+        });
+        if (existingOrgs === 0) {
+          throw this._validationError('Une organisation est requise pour les événements en présentiel');
+        }
+      }
+    }
 
     await this.repository.update(id, updateData);
+
+    // Mettre à jour l'organisation si fournie
+    const newOrgId = data.id_organisation || data.organisationId;
+    if (newOrgId && this.models?.EvenementOrganisation) {
+      const existingOrg = await this.models.EvenementOrganisation.findOne({
+        where: { id_evenement: id, role: 'organisateur_principal' }
+      });
+      if (existingOrg) {
+        await existingOrg.update({ id_organisation: parseInt(newOrgId) });
+      } else {
+        await this.models.EvenementOrganisation.create({
+          id_evenement: id,
+          id_organisation: parseInt(newOrgId),
+          role: 'organisateur_principal'
+        });
+      }
+    }
+
     const updated = await this.repository.findWithFullDetails(id);
 
     this.cache.invalidate();
@@ -217,14 +275,20 @@ class EvenementService extends BaseService {
   /**
    * Supprimer un événement
    */
-  async delete(id, userId) {
+  async delete(id, userId, options = {}) {
     const existing = await this.repository.findById(id);
     if (!existing) {
       throw this._notFoundError(id);
     }
 
-    if (existing.id_user !== userId) {
+    // Vérifier propriété (admin bypass)
+    if (existing.id_user !== userId && !options.isAdmin) {
       throw this._forbiddenError('Vous ne pouvez supprimer que vos propres événements');
+    }
+
+    // Contrôle d'état : seuls les brouillons peuvent être supprimés (admin bypass)
+    if (!options.isAdmin && existing.statut !== 'brouillon') {
+      throw this._validationError('Seuls les événements en brouillon peuvent être supprimés. Utilisez l\'annulation pour les événements publiés.');
     }
 
     await this.repository.delete(id);
@@ -244,6 +308,12 @@ class EvenementService extends BaseService {
     const evenement = await this.repository.findById(evenementId);
     if (!evenement) {
       throw this._notFoundError(evenementId);
+    }
+
+    // Seuls les événements publiés ou en cours acceptent les inscriptions
+    const openStatuses = ['publie', 'planifie', 'en_cours'];
+    if (!openStatuses.includes(evenement.statut)) {
+      throw this._validationError('Les inscriptions ne sont pas ouvertes pour cet événement');
     }
 
     if (evenement.date_limite_inscription && new Date() > new Date(evenement.date_limite_inscription)) {
@@ -284,10 +354,10 @@ class EvenementService extends BaseService {
   /**
    * Vérifie que le demandeur est le créateur ou un admin
    */
-  async _assertEventOwnerOrAdmin(evenementId, userId, userTypeId) {
+  async _assertEventOwnerOrAdmin(evenementId, userId, isAdmin) {
     const evenement = await this.repository.findById(evenementId);
     if (!evenement) throw this._notFoundError(evenementId);
-    if (evenement.id_user !== userId && userTypeId !== 1) {
+    if (evenement.id_user !== userId && !isAdmin) {
       throw this._forbiddenError('Accès non autorisé');
     }
     return evenement;
@@ -307,8 +377,8 @@ class EvenementService extends BaseService {
   /**
    * Liste les participants d'un événement
    */
-  async getParticipants(evenementId, requesterId, requesterTypeId) {
-    await this._assertEventOwnerOrAdmin(evenementId, requesterId, requesterTypeId);
+  async getParticipants(evenementId, requesterId, isAdmin) {
+    await this._assertEventOwnerOrAdmin(evenementId, requesterId, isAdmin);
     return this.repository.getParticipants(evenementId);
   }
 
@@ -331,7 +401,7 @@ class EvenementService extends BaseService {
    * Valide ou refuse la participation d'un utilisateur
    */
   async validateParticipation(evenementId, userId, validated, validatedBy, notes) {
-    await this._assertEventOwnerOrAdmin(evenementId, validatedBy.id, validatedBy.typeId);
+    await this._assertEventOwnerOrAdmin(evenementId, validatedBy.id, validatedBy.isAdmin);
 
     const participation = await this.repository.updateParticipationStatus(evenementId, userId, {
       statut_participation: validated ? 'confirme' : 'annule',
@@ -343,17 +413,15 @@ class EvenementService extends BaseService {
       throw this._notFoundError(userId);
     }
 
-    // Notification (best effort)
-    try {
-      if (this.models?.Notification) {
-        const NotificationService = require('../notificationService');
-        const notifService = new NotificationService(this.models);
-        await notifService.notifierValidationParticipation(
-          evenementId, userId, validated ? 'confirme' : 'refuse', notes || ''
-        );
-      }
-    } catch (notifError) {
-      this.logger.error('Erreur notification validation participation:', notifError);
+    // Notification (best effort, fire-and-forget — ne pas bloquer la réponse HTTP)
+    if (this.models?.Notification) {
+      const NotificationService = require('../notificationService');
+      const notifService = new NotificationService(this.models);
+      notifService.notifierValidationParticipation(
+        evenementId, userId, validated ? 'confirme' : 'refuse', notes || ''
+      ).catch(notifError => {
+        this.logger.error('Erreur notification validation participation:', notifError);
+      });
     }
 
     return participation;
@@ -379,8 +447,8 @@ class EvenementService extends BaseService {
   /**
    * Liste les professionnels en attente pour un événement
    */
-  async getProfessionnelsEnAttente(evenementId, requesterId, requesterTypeId) {
-    await this._assertEventOwnerOrAdmin(evenementId, requesterId, requesterTypeId);
+  async getProfessionnelsEnAttente(evenementId, requesterId, isAdmin) {
+    await this._assertEventOwnerOrAdmin(evenementId, requesterId, isAdmin);
     return this.repository.getPendingProfessionals(evenementId);
   }
 
@@ -467,8 +535,8 @@ class EvenementService extends BaseService {
   /**
    * Exporte les données d'un événement (après vérification d'autorisation)
    */
-  async exportEventData(evenementId, requesterId, requesterTypeId) {
-    await this._assertEventOwnerOrAdmin(evenementId, requesterId, requesterTypeId);
+  async exportEventData(evenementId, requesterId, isAdmin) {
+    await this._assertEventOwnerOrAdmin(evenementId, requesterId, isAdmin);
     const evenement = await this.repository.findWithFullDetails(evenementId);
     if (!evenement) throw this._notFoundError(evenementId);
     return EvenementDTO.fromEntity(evenement);
@@ -507,26 +575,28 @@ class EvenementService extends BaseService {
   /**
    * Annuler un événement
    */
-  async cancel(id, adminId, motif) {
+  async cancel(id, userId, motif, options = {}) {
     const evenement = await this.repository.findById(id);
     if (!evenement) throw this._notFoundError(id);
+
+    // Vérifier propriété (admin bypass)
+    if (evenement.id_user !== userId && !options.isAdmin) {
+      throw this._forbiddenError('Vous ne pouvez annuler que vos propres événements');
+    }
 
     await this.repository.update(id, { statut: 'annule' });
     const updated = await this.repository.findWithFullDetails(id);
 
-    // Notification annulation (best effort)
-    try {
-      if (this.models?.Notification) {
-        const NotificationService = require('../notificationService');
-        const notifService = new NotificationService(this.models);
-        await notifService.notifierAnnulationEvenement(id, motif || 'Annulation par l\'organisateur');
-      }
-    } catch (notifError) {
-      this.logger.error('Erreur notification annulation:', notifError);
+    // Notification annulation (best effort, fire-and-forget)
+    if (this.models?.Notification) {
+      const NotificationService = require('../notificationService');
+      const notifService = new NotificationService(this.models);
+      notifService.notifierAnnulationEvenement(id, motif || 'Annulation par l\'organisateur')
+        .catch(notifError => this.logger.error('Erreur notification annulation:', notifError));
     }
 
     this.cache.invalidate();
-    this.logger.info(`Événement annulé: ${id} par admin: ${adminId}, motif: ${motif}`);
+    this.logger.info(`Événement annulé: ${id} par user: ${userId}, motif: ${motif}`);
     return EvenementDTO.fromEntity(updated);
   }
 

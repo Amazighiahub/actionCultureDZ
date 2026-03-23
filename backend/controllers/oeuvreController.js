@@ -202,11 +202,8 @@ class OeuvreController extends BaseController {
       const responseData = {
         oeuvre: this._translateOeuvre(result.oeuvre, req.lang)
       };
-      if (result.article_scientifique) {
-        responseData.article_scientifique = result.article_scientifique;
-      }
-      if (result.article) {
-        responseData.article = result.article;
+      if (result.subtype) {
+        responseData.subtype = result.subtype;
       }
 
       res.status(201).json({

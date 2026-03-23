@@ -40,10 +40,10 @@ const EventCard: React.FC<{ event: Evenement; onClick: () => void }> = ({ event,
         {/* Image */}
         <div className="relative w-32 h-32 flex-shrink-0">
           <LazyImage
-            src={event.image_url || '/images/placeholder-event.png'}
+            src={event.image_url || '/images/placeholder-event.svg'}
             alt={event.nom_evenement}
             className="w-full h-full object-cover"
-            fallback="/images/placeholder-event.png"
+            fallback="/images/placeholder-event.svg"
           />
           {/* Badge date */}
           {event.date_debut && (

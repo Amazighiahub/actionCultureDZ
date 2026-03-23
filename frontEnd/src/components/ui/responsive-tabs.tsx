@@ -33,13 +33,13 @@ const TabsList = React.forwardRef<
   const gridClasses = columns && !scrollable
     ? `grid grid-cols-${columns}`
     : scrollable
-    ? 'sm:inline-flex sm:overflow-visible sm:flex-wrap'
+    ? 'sm:inline-flex sm:overflow-x-auto sm:flex-nowrap'
     : '';
 
   return (
     <div className={cn(
       'relative w-full',
-      scrollable && 'overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0 sm:overflow-visible'
+      scrollable && 'overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0 sm:overflow-x-auto'
     )}>
       <TabsPrimitive.List
         ref={ref}
@@ -48,7 +48,7 @@ const TabsList = React.forwardRef<
           scrollableClasses,
           gridClasses,
           // Sur mobile, la liste s'étend
-          scrollable && 'w-max sm:w-full',
+          scrollable && 'w-max',
           className
         )}
         {...props}
@@ -115,11 +115,8 @@ const TabsContent = React.forwardRef<
   <TabsPrimitive.Content
     ref={ref}
     className={cn(
-      'mt-4 ring-offset-background',
+      'mt-2 ring-offset-background',
       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-      // Animation d'apparition
-      'data-[state=inactive]:animate-out data-[state=inactive]:fade-out-0',
-      'data-[state=active]:animate-in data-[state=active]:fade-in-0',
       className
     )}
     {...props}

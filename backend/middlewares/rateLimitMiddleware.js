@@ -79,11 +79,11 @@ const strictLimiter = rateLimit({
   ...(redisStore && { store: redisStore }),
 });
 
-// 3. Rate limiter pour la création de contenu
+// 3. Rate limiter pour la création de contenu (POST/PUT/PATCH/DELETE uniquement)
 const createContentLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 heure
   max: 20, // 20 créations par heure
-  skipSuccessfulRequests: false, // Compter toutes les requêtes
+  skip: (req) => req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS',
   keyGenerator: (req) => req.user?.id_user || req.ip,
   handler: (req, res) => {
     res.status(429).json({

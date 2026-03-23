@@ -38,6 +38,8 @@ import {
 import { useDashboardAdmin } from '@/hooks/useDashboardAdmin';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { getAssetUrl } from '@/helpers/assetUrl';
+import { adminService } from '@/services/admin.service';
+import { toast } from 'sonner';
 
 // Helper pour extraire le texte multilingue
 const getLocalizedText = (value: unknown, lang: string = 'fr', fallback: string = ''): string => {
@@ -119,10 +121,17 @@ const AdminPatrimoineTab: React.FC = () => {
 
   const confirmDelete = async () => {
     if (selectedItemId) {
-      // TODO: wire to deletePatrimoine action when available in hook
-      setDeleteConfirmOpen(false);
-      setSelectedItemId(null);
-      setSelectedItemName('');
+      try {
+        await adminService.deletePatrimoine(selectedItemId);
+        toast.success(t('admin.patrimoine.deleted', 'Site supprimé avec succès'));
+        refreshAll();
+      } catch {
+        toast.error(t('common.error', 'Une erreur est survenue'));
+      } finally {
+        setDeleteConfirmOpen(false);
+        setSelectedItemId(null);
+        setSelectedItemName('');
+      }
     }
   };
 
@@ -273,7 +282,7 @@ const AdminPatrimoineTab: React.FC = () => {
                           <Eye className="h-4 w-4 mr-2" />
                           {t('common.view', 'Voir')}
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => window.open(`/admin/patrimoine/${item.id_patrimoine || item.id_lieu || item.id}/edit`, '_blank', 'noopener,noreferrer')}>
                           <Edit className="h-4 w-4 mr-2" />
                           {t('common.edit', 'Modifier')}
                         </DropdownMenuItem>

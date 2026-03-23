@@ -124,7 +124,7 @@ class ProgrammeController extends BaseController {
       const { evenementId } = req.params;
 
       const result = await this.programmeService.createProgramme(
-        evenementId, req.user.id_user, req.user.isAdmin, lang, req.body
+        evenementId, req.user.id_user, lang, req.body
       );
 
       if (result.error === 'evenementNotFound') {
@@ -148,7 +148,7 @@ class ProgrammeController extends BaseController {
       const lang = req.lang || 'fr';
 
       const result = await this.programmeService.updateProgramme(
-        req.params.id, req.user.id_user, req.user.isAdmin, lang, req.body
+        req.params.id, req.user.id_user, lang, req.body
       );
 
       if (result.error === 'notFound') {
@@ -171,7 +171,7 @@ class ProgrammeController extends BaseController {
   async deleteProgramme(req, res) {
     try {
       const result = await this.programmeService.deleteProgramme(
-        req.params.id, req.user.id_user, req.user.isAdmin
+        req.params.id, req.user.id_user
       );
 
       if (result.error === 'notFound') {
@@ -192,7 +192,7 @@ class ProgrammeController extends BaseController {
       const { statut } = req.body;
 
       const result = await this.programmeService.updateStatut(
-        req.params.id, req.user.id_user, req.user.isAdmin, statut
+        req.params.id, req.user.id_user, statut
       );
 
       if (result.error === 'notFound') {
@@ -227,7 +227,7 @@ class ProgrammeController extends BaseController {
       const lang = req.lang || 'fr';
 
       const result = await this.programmeService.duplicateProgramme(
-        req.params.id, req.user.id_user, req.user.isAdmin
+        req.params.id, req.user.id_user
       );
 
       if (result.error === 'notFound') {
@@ -249,7 +249,7 @@ class ProgrammeController extends BaseController {
       const { programmes } = req.body;
 
       const result = await this.programmeService.reorderProgrammes(
-        evenementId, req.user.id_user, req.user.isAdmin, programmes
+        evenementId, req.user.id_user, programmes
       );
 
       if (result.error === 'evenementNotFound') {
@@ -278,6 +278,39 @@ class ProgrammeController extends BaseController {
       }
 
       this._sendSuccess(res, data);
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  async updateIntervenantStatus(req, res) {
+    try {
+      const { statut } = req.body;
+      if (!statut || typeof statut !== 'string') {
+        return res.status(400).json({ success: false, error: req.t('validation.invalidData') });
+      }
+
+      const result = await this.programmeService.updateIntervenantStatus(
+        parseInt(req.params.id, 10),
+        parseInt(req.params.userId, 10),
+        req.user.id_user,
+        statut
+      );
+
+      if (result.error === 'notFound') {
+        return res.status(404).json({ success: false, error: req.t('programme.notFound') });
+      }
+      if (result.error === 'intervenantNotFound') {
+        return res.status(404).json({ success: false, error: req.t('common.notFound') });
+      }
+      if (result.error === 'forbidden') {
+        return res.status(403).json({ success: false, error: req.t('auth.forbidden') });
+      }
+      if (result.error === 'invalidStatus') {
+        return res.status(400).json({ success: false, error: req.t('validation.invalidStatus') });
+      }
+
+      this._sendSuccess(res, result.data);
     } catch (error) {
       this._handleError(res, error);
     }

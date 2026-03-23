@@ -48,10 +48,10 @@ const EventMiniCard: React.FC<EventMiniCardProps> = ({ event, onClick }) => {
         {/* Image */}
         <div className="relative w-24 h-24 flex-shrink-0">
           <LazyImage
-            src={event.image_url || '/images/placeholder-event.png'}
+            src={event.image_url || '/images/placeholder-event.svg'}
             alt={td(event.nom_evenement)}
             className="w-full h-full object-cover"
-            fallback="/images/placeholder-event.png"
+            fallback="/images/placeholder-event.svg"
           />
           {/* Date badge */}
           {event.date_debut && (
@@ -120,10 +120,10 @@ const EventFeatureCard: React.FC<EventFeatureCardProps> = ({ event, onClick }) =
       {/* Image */}
       <div className="relative h-40 overflow-hidden">
         <LazyImage
-          src={event.image_url || '/images/placeholder-event.png'}
+          src={event.image_url || '/images/placeholder-event.svg'}
           alt={td(event.nom_evenement)}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          fallback="/images/placeholder-event.png"
+          fallback="/images/placeholder-event.svg"
         />
         
         {/* Overlay gradient */}

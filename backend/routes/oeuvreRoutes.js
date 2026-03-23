@@ -12,7 +12,7 @@ const asyncHandler = require('../utils/asyncHandler');
 
 const initOeuvreRoutes = (models, authMiddleware) => {
   const router = express.Router();
-  const { authenticate, requireRole } = authMiddleware;
+  const { authenticate, requireRole, requireVerifiedEmail } = authMiddleware;
 
   // Cache HTTP pour les listes publiques (données changent toutes les ~3 min)
   const cachePublic = (req, res, next) => {
@@ -56,24 +56,24 @@ const initOeuvreRoutes = (models, authMiddleware) => {
   router.get('/:id/share-links', validateId(), asyncHandler((req, res) => oeuvreController.getShareLinks(req, res)));
   router.get('/:id/medias', validateId(), asyncHandler((req, res) => oeuvreController.getMedias(req, res)));
 
-  router.post('/', authenticate,
+  router.post('/', authenticate, requireVerifiedEmail,
     createContentLimiter,
     validateStringLengths,
     [body('titre').notEmpty().withMessage('Le titre est requis')],
     handleValidationErrors,
     validateWorkSubmission,
     asyncHandler((req, res) => oeuvreController.create(req, res)));
-  router.put('/:id', authenticate, validateId(),
+  router.put('/:id', authenticate, requireVerifiedEmail, validateId(),
     validateStringLengths,
     validateWorkSubmission,
     asyncHandler((req, res) => oeuvreController.update(req, res)));
-  router.delete('/:id', authenticate, validateId(), asyncHandler((req, res) => oeuvreController.delete(req, res)));
-  router.post('/:id/submit', authenticate, validateId(), asyncHandler((req, res) => oeuvreController.submit(req, res)));
+  router.delete('/:id', authenticate, requireVerifiedEmail, validateId(), asyncHandler((req, res) => oeuvreController.delete(req, res)));
+  router.post('/:id/submit', authenticate, requireVerifiedEmail, validateId(), asyncHandler((req, res) => oeuvreController.submit(req, res)));
 
   // Médias
-  router.post('/:id/medias/upload', authenticate, validateId(), asyncHandler((req, res) => oeuvreController.uploadMedia(req, res)));
-  router.put('/:id/medias/reorder', authenticate, validateId(), asyncHandler((req, res) => oeuvreController.reorderMedias(req, res)));
-  router.delete('/:id/medias/:mediaId', authenticate, validateId(), validateId('mediaId'), asyncHandler((req, res) => oeuvreController.deleteMedia(req, res)));
+  router.post('/:id/medias/upload', authenticate, requireVerifiedEmail, validateId(), asyncHandler((req, res) => oeuvreController.uploadMedia(req, res)));
+  router.put('/:id/medias/reorder', authenticate, requireVerifiedEmail, validateId(), asyncHandler((req, res) => oeuvreController.reorderMedias(req, res)));
+  router.delete('/:id/medias/:mediaId', authenticate, requireVerifiedEmail, validateId(), validateId('mediaId'), asyncHandler((req, res) => oeuvreController.deleteMedia(req, res)));
 
   // Admin actions sur :id
   router.post('/:id/validate', authenticate, requireRole(['Admin', 'Moderateur']), validateId(), asyncHandler((req, res) => oeuvreController.validate(req, res)));

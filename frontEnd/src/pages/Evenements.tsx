@@ -66,10 +66,10 @@ const EventCard: React.FC<EventCardProps> = React.memo(({ event, onView }) => {
       {/* Image avec lazy loading */}
       <div className="relative h-48 overflow-hidden">
         <LazyImage
-          src={event.image_url || event.affiche_url || '/images/placeholder-event.png'}
+          src={event.image_url || event.affiche_url || '/images/placeholder-event.svg'}
           alt={event.nom_evenement}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          fallback="/images/placeholder-event.png"
+          fallback="/images/placeholder-event.svg"
         />
         
         {/* Badge statut */}

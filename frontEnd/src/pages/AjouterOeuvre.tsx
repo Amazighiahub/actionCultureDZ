@@ -958,6 +958,7 @@ const AjouterOeuvre: React.FC = () => {
         
         if (isScientific) {
           const id =
+            d.subtype?.id_article_scientifique ||
             d.article_scientifique?.id_article_scientifique ||
             d.oeuvre?.ArticleScientifique?.id_article_scientifique ||
             d.oeuvre?.article_scientifique?.id_article_scientifique ||
@@ -966,6 +967,7 @@ const AjouterOeuvre: React.FC = () => {
           return id;
         }
         const id =
+          d.subtype?.id_article ||
           d.article?.id_article ||
           d.oeuvre?.Article?.id_article ||
           d.oeuvre?.article?.id_article ||

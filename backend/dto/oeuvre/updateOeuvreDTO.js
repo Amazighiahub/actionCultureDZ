@@ -188,7 +188,7 @@ class UpdateOeuvreDTO extends BaseDTO {
 
     // Validation statut si fourni
     if (this.hasField('statut')) {
-      const validStatuts = ['brouillon', 'en_attente', 'publie', 'refuse', 'archive'];
+      const validStatuts = ['brouillon', 'en_attente', 'publie', 'rejete', 'archive', 'supprime'];
       if (!validStatuts.includes(this.statut)) {
         errors.push({
           field: 'statut',
@@ -215,14 +215,7 @@ class UpdateOeuvreDTO extends BaseDTO {
     if (this.hasField('id_type_oeuvre')) entity.id_type_oeuvre = this.idTypeOeuvre;
     if (this.hasField('id_langue')) entity.id_langue = this.idLangue;
     if (this.hasField('annee_creation')) entity.annee_creation = this.anneeCreation;
-    if (this.hasField('isbn')) entity.isbn = this.isbn;
-    if (this.hasField('editeur')) entity.editeur = this.editeur;
-    if (this.hasField('pages')) entity.pages = this.pages;
-    if (this.hasField('duree')) entity.duree = this.duree;
     if (this.hasField('prix')) entity.prix = this.prix;
-    if (this.hasField('devise')) entity.devise = this.devise;
-    if (this.hasField('image_url')) entity.image_url = this.imageUrl;
-    if (this.hasField('cover_url')) entity.cover_url = this.coverUrl;
     if (this.hasField('statut')) entity.statut = this.statut;
     if (this.hasField('est_mis_en_avant')) entity.est_mis_en_avant = this.estMisEnAvant;
 

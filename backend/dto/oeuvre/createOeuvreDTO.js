@@ -88,6 +88,14 @@ class CreateOeuvreDTO extends BaseDTO {
       });
     }
 
+    // Langue obligatoire
+    if (!this.idLangue || this.idLangue <= 0) {
+      errors.push({
+        field: 'id_langue',
+        message: 'La langue de l\'œuvre est obligatoire'
+      });
+    }
+
     // Créateur obligatoire
     if (!this.idCreateur || this.idCreateur <= 0) {
       errors.push({
@@ -152,18 +160,11 @@ class CreateOeuvreDTO extends BaseDTO {
       statut: 'brouillon' // Les nouvelles œuvres commencent en brouillon
     };
 
-    // Champs optionnels
+    // Champs optionnels (uniquement ceux qui existent dans le modèle Oeuvre)
     if (this.resume) entity.resume = this.resume;
     if (this.idLangue) entity.id_langue = this.idLangue;
     if (this.anneeCreation) entity.annee_creation = this.anneeCreation;
-    if (this.isbn) entity.isbn = this.isbn;
-    if (this.editeur) entity.editeur = this.editeur;
-    if (this.pages) entity.pages = this.pages;
-    if (this.duree) entity.duree = this.duree;
     if (this.prix !== null) entity.prix = this.prix;
-    if (this.devise) entity.devise = this.devise;
-    if (this.imageUrl) entity.image_url = this.imageUrl;
-    if (this.coverUrl) entity.cover_url = this.coverUrl;
 
     return entity;
   }

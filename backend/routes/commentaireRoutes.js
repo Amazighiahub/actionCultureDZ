@@ -8,8 +8,8 @@ const { commentLimiter } = require('../middlewares/rateLimitMiddleware');
 module.exports = (models, middlewares = {}) => {
   const controller = require('../controllers/commentaireController');
   
-  // Middleware d'authentification (optionnel si non fourni)
-  const authMiddleware = middlewares.auth || ((req, res, next) => next());
+  // Middleware d'authentification — fail-closed si non fourni
+  const authMiddleware = middlewares.auth || ((req, res) => res.status(401).json({ success: false, error: 'Authentication required' }));
   const optionalAuth = middlewares.optionalAuth || ((req, res, next) => next());
 
   // ════════════════════════════════════════════════════════════════════════════

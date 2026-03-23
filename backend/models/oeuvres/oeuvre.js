@@ -69,6 +69,10 @@ module.exports = (sequelize) => {
       defaultValue: 'brouillon',
       index: true
     },
+    date_soumission: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
     date_validation: {
       type: DataTypes.DATE,
       allowNull: true
@@ -82,6 +86,11 @@ module.exports = (sequelize) => {
     },
     raison_rejet: {
       type: DataTypes.TEXT
+    },
+    est_mis_en_avant: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      allowNull: false
     },
     nb_vues: {
       type: DataTypes.INTEGER,
@@ -103,7 +112,8 @@ module.exports = (sequelize) => {
       { fields: ['date_creation'] },
       { fields: ['id_type_oeuvre'] },
       { fields: ['nb_vues'] },
-      { fields: ['validateur_id'] }
+      { fields: ['validateur_id'] },
+      { fields: ['est_mis_en_avant'] }
     ]
   });
 

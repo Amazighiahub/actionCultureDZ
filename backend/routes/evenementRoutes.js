@@ -13,7 +13,7 @@ const uploadService = require('../services/uploadService');
 
 const initEvenementRoutes = (models, authMiddleware) => {
   const router = express.Router();
-  const { authenticate, requireRole } = authMiddleware;
+  const { authenticate, requireRole, requireValidatedProfessional, requireVerifiedEmail } = authMiddleware;
 
   // Cache HTTP pour les listes publiques (données changent toutes les ~2 min)
   const cachePublic = (req, res, next) => {
@@ -57,14 +57,16 @@ const initEvenementRoutes = (models, authMiddleware) => {
   router.get('/:id/medias', validateId(), asyncHandler((req, res) => evenementController.getMedias(req, res)));
   router.get('/:id/share-data', validateId(), asyncHandler((req, res) => evenementController.getShareData(req, res)));
   router.get('/:id/participants/public', cachePublic, validateId(), asyncHandler((req, res) => evenementController.getPublicParticipants(req, res)));
-  router.get('/:id/participants', authenticate, validateId(), asyncHandler((req, res) => evenementController.getParticipants(req, res)));
-  router.get('/:id/professionnels/en-attente', authenticate, validateId(), asyncHandler((req, res) => evenementController.getProfessionnelsEnAttente(req, res)));
+  router.get('/:id/participants', authenticate, requireVerifiedEmail, validateId(), asyncHandler((req, res) => evenementController.getParticipants(req, res)));
+  router.get('/:id/professionnels/en-attente', authenticate, requireVerifiedEmail, validateId(), asyncHandler((req, res) => evenementController.getProfessionnelsEnAttente(req, res)));
   router.get('/:id/mes-oeuvres', authenticate, validateId(), asyncHandler((req, res) => evenementController.getMesOeuvres(req, res)));
   router.get('/:id/mon-inscription', authenticate, validateId(), asyncHandler((req, res) => evenementController.getMyRegistration(req, res)));
   router.get('/:id/export', authenticate, validateId(), asyncHandler((req, res) => evenementController.exportEvent(req, res)));
   router.get('/:id', validateId(), asyncHandler((req, res) => evenementController.getById(req, res)));
 
   router.post('/', authenticate,
+    requireVerifiedEmail,
+    requireValidatedProfessional,
     createContentLimiter,
     uploadService.uploadImage().single('affiche'),
     validateStringLengths,
@@ -72,16 +74,19 @@ const initEvenementRoutes = (models, authMiddleware) => {
     handleValidationErrors,
     validateEventCreation,
     asyncHandler((req, res) => evenementController.create(req, res)));
-  router.put('/:id', authenticate, validateId(),
+  router.put('/:id', authenticate,
+    requireVerifiedEmail,
+    requireValidatedProfessional,
+    validateId(),
     uploadService.uploadImage().single('affiche'),
     validateStringLengths,
     validateEventCreation,
     asyncHandler((req, res) => evenementController.update(req, res)));
-  router.delete('/:id', authenticate, validateId(), asyncHandler((req, res) => evenementController.delete(req, res)));
+  router.delete('/:id', authenticate, requireVerifiedEmail, requireValidatedProfessional, validateId(), asyncHandler((req, res) => evenementController.delete(req, res)));
 
   // Inscription
-  router.post('/:id/register', authenticate, validateId(), asyncHandler((req, res) => evenementController.register(req, res)));
-  router.delete('/:id/register', authenticate, validateId(), asyncHandler((req, res) => evenementController.unregister(req, res)));
+  router.post('/:id/register', authenticate, requireVerifiedEmail, validateId(), asyncHandler((req, res) => evenementController.register(req, res)));
+  router.delete('/:id/register', authenticate, requireVerifiedEmail, validateId(), asyncHandler((req, res) => evenementController.unregister(req, res)));
 
   // Oeuvres dans un événement
   router.post('/:id/oeuvres', authenticate, validateId(), asyncHandler((req, res) => evenementController.addOeuvre(req, res)));
@@ -89,8 +94,8 @@ const initEvenementRoutes = (models, authMiddleware) => {
   router.put('/:id/oeuvres/reorder', authenticate, validateId(), asyncHandler((req, res) => evenementController.reorderOeuvres(req, res)));
   router.delete('/:id/oeuvres/:oeuvreId', authenticate, validateId(), validateId('oeuvreId'), asyncHandler((req, res) => evenementController.removeOeuvre(req, res)));
 
-  // Participants validation
-  router.put('/:id/participants/:userId/validate', authenticate, validateId(), validateId('userId'), asyncHandler((req, res) => evenementController.validateParticipation(req, res)));
+  // Participants validation (owner ou admin)
+  router.put('/:id/participants/:userId/validate', authenticate, requireVerifiedEmail, validateId(), validateId('userId'), asyncHandler((req, res) => evenementController.validateParticipation(req, res)));
 
   // Cancel (owner or admin)
   router.post('/:id/cancel', authenticate, validateId(), asyncHandler((req, res) => evenementController.cancel(req, res)));

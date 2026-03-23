@@ -183,7 +183,7 @@ export interface DetailsArtisanat {
 export interface DetailsSpecifiques {
   livre?: DetailsLivre;
   film?: DetailsFilm;
-  album?: DetailsAlbumMusical;
+  album_musical?: DetailsAlbumMusical;
   article?: DetailsArticle;
   article_scientifique?: DetailsArticleScientifique;
   oeuvre_art?: DetailsOeuvreArt;
@@ -266,7 +266,9 @@ export interface CreateOeuvreResponse {
   };
   message?: string;
   intervenants_crees?: any[];
-  // Détails spécifiques retournés par le backend selon le type
+  // Sous-type retourné par le backend (nouveau format unifié)
+  subtype?: { [key: string]: any };
+  // Détails spécifiques retournés par le backend selon le type (ancien format, gardé pour compatibilité)
   article_scientifique?: { id_article_scientifique: number; [key: string]: any };
   article?: { id_article: number; [key: string]: any };
   details_specifiques_record?: any;

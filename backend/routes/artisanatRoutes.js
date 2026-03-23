@@ -12,7 +12,7 @@ const asyncHandler = require('../utils/asyncHandler');
 
 const initArtisanatRoutes = (models, authMiddleware) => {
   const router = express.Router();
-  const { authenticate, requireRole } = authMiddleware;
+  const { authenticate, requireRole, requireVerifiedEmail } = authMiddleware;
 
   // ============================================================================
   // ROUTES PUBLIQUES
@@ -40,17 +40,21 @@ const initArtisanatRoutes = (models, authMiddleware) => {
   // ============================================================================
 
   router.get('/:id', validateId(), asyncHandler((req, res) => artisanatController.getById(req, res)));
-  router.post('/', authenticate,
+  router.post('/', authenticate, requireVerifiedEmail,
     createContentLimiter,
     validateStringLengths,
     [body('nom').notEmpty().withMessage('Le nom est requis')],
     handleValidationErrors,
     asyncHandler((req, res) => artisanatController.create(req, res)));
-  router.put('/:id', authenticate, validateId(),
+  router.put('/:id', authenticate, requireVerifiedEmail,
+    validateId(),
     validateStringLengths,
     asyncHandler((req, res) => artisanatController.update(req, res)));
-  router.delete('/:id', authenticate, validateId(), asyncHandler((req, res) => artisanatController.delete(req, res)));
-  router.post('/:id/medias', authenticate, validateId(),
+  router.delete('/:id', authenticate, requireVerifiedEmail,
+    validateId(),
+    asyncHandler((req, res) => artisanatController.delete(req, res)));
+  router.post('/:id/medias', authenticate, requireVerifiedEmail,
+    validateId(),
     createContentLimiter,
     asyncHandler((req, res) => artisanatController.uploadMedias(req, res)));
 

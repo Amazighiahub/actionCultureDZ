@@ -48,6 +48,7 @@ import type { Intervenant } from '@/types/models/intervenant.types';
 /** Extended Oeuvre with API-injected properties not in the base type */
 interface OeuvreWithExtras extends Oeuvre {
   Intervenants?: (Intervenant & { OeuvreIntervenant?: { TypeUser?: { nom?: string }; role_principal?: boolean; personnage?: string; description_role?: string } })[];
+  nb_vues?: number;
   nombre_vues?: number;
   image_url?: string;
   couverture_url?: string;
@@ -210,7 +211,7 @@ const OeuvreDetailPage: React.FC = () => {
       loadAuteurInfo(oeuvre);
       loadOeuvresAuteur(oeuvre);
       loadEvenementsCreateur(oeuvre);
-      setViewCount((oeuvre as OeuvreWithExtras).nombre_vues || Math.floor(Math.random() * 1000) + 100);
+      setViewCount((oeuvre as OeuvreWithExtras).nb_vues || (oeuvre as OeuvreWithExtras).nombre_vues || 0);
     }
   }, [oeuvre]);
 

@@ -138,7 +138,8 @@ class EvenementController extends BaseController {
       const evenement = await this.evenementService.update(
         parseInt(req.params.id),
         req.body,
-        req.user.id_user
+        req.user.id_user,
+        { isAdmin: req.user.isAdmin }
       );
       res.json({
         success: true,
@@ -152,7 +153,7 @@ class EvenementController extends BaseController {
 
   async delete(req, res) {
     try {
-      await this.evenementService.delete(parseInt(req.params.id), req.user.id_user);
+      await this.evenementService.delete(parseInt(req.params.id), req.user.id_user, { isAdmin: req.user.isAdmin });
       res.json({ success: true, message: req.t('event.deleted') });
     } catch (error) {
       this._handleError(res, error);
@@ -246,7 +247,8 @@ class EvenementController extends BaseController {
       const evenement = await this.evenementService.cancel(
         parseInt(req.params.id),
         req.user.id_user,
-        req.body.motif
+        req.body.motif,
+        { isAdmin: req.user.isAdmin }
       );
 
       res.json({
@@ -318,7 +320,7 @@ class EvenementController extends BaseController {
       const participants = await this.evenementService.getParticipants(
         parseInt(req.params.id),
         req.user.id_user,
-        req.user.id_type_user
+        req.user.isAdmin
       );
       res.json({ success: true, data: participants });
     } catch (error) {
@@ -464,11 +466,14 @@ class EvenementController extends BaseController {
   async validateParticipation(req, res) {
     try {
       const { validated } = req.body;
+      if (typeof validated !== 'boolean') {
+        return res.status(400).json({ success: false, error: req.t('validation.invalidData') });
+      }
       const participation = await this.evenementService.validateParticipation(
         parseInt(req.params.id),
         parseInt(req.params.userId),
         validated,
-        { id: req.user.id_user, typeId: req.user.id_type_user },
+        { id: req.user.id_user, isAdmin: req.user.isAdmin },
         req.body.notes
       );
 
@@ -499,7 +504,7 @@ class EvenementController extends BaseController {
       const participants = await this.evenementService.getProfessionnelsEnAttente(
         parseInt(req.params.id),
         req.user.id_user,
-        req.user.id_type_user
+        req.user.isAdmin
       );
       res.json({ success: true, data: participants });
     } catch (error) {
@@ -512,7 +517,7 @@ class EvenementController extends BaseController {
       const evenement = await this.evenementService.exportEventData(
         parseInt(req.params.id),
         req.user.id_user,
-        req.user.id_type_user
+        req.user.isAdmin
       );
 
       res.json({

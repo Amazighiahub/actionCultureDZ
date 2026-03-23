@@ -4,6 +4,7 @@
  */
 const BaseRepository = require('./baseRepository');
 const { Op, fn, col, literal, where: seqWhere } = require('sequelize');
+const subtypeRegistry = require('../services/oeuvre/subtypes/subtypeRegistry');
 
 class OeuvreRepository extends BaseRepository {
   constructor(models) {
@@ -307,18 +308,10 @@ class OeuvreRepository extends BaseRepository {
 
   /**
    * Nom d'association Sequelize (hasOne) pour le sous-type
+   * Utilise le registre centralisé (source de vérité unique)
    */
   _subtypeAssociationKey(typeId) {
-    const map = {
-      1: 'Livre',
-      2: 'OeuvreArt',
-      3: 'Film',
-      4: 'Article',
-      5: 'ArticleScientifique',
-      6: 'AlbumMusical',
-      7: 'Artisanat'
-    };
-    return map[typeId] || null;
+    return subtypeRegistry.getAssociationKey(typeId);
   }
 
   /**
@@ -342,19 +335,11 @@ class OeuvreRepository extends BaseRepository {
 
   /**
    * Charge le sous-type spécifique d'une œuvre (Livre, Film, etc.)
+   * Utilise le registre centralisé (source de vérité unique)
    * @private
    */
   async _findSubtype(oeuvreId, typeId) {
-    const subtypeModels = {
-      1: 'Livre',
-      2: 'OeuvreArt',
-      3: 'Film',
-      4: 'Article',
-      5: 'ArticleScientifique',
-      6: 'AlbumMusical',
-      7: 'Artisanat'
-    };
-    const modelName = subtypeModels[typeId];
+    const modelName = subtypeRegistry.getModelName(typeId);
     if (!modelName || !this.models[modelName]) return null;
     try {
       return await this.models[modelName].findOne({ where: { id_oeuvre: oeuvreId } });

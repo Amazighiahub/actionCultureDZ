@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="450" viewBox="0 0 800 450">
+  <rect width="800" height="450" fill="#f5f0eb"/>
+  <g transform="translate(400,190)" text-anchor="middle">
+    <rect x="-35" y="-55" width="70" height="85" rx="4" fill="none" stroke="#c4a882" stroke-width="3"/>
+    <rect x="-25" y="-45" width="50" height="65" rx="2" fill="none" stroke="#c4a882" stroke-width="1.5"/>
+    <circle cx="0" cy="-20" r="12" fill="#c4a882" opacity="0.5"/>
+    <polygon points="-15,10 0,-10 15,10" fill="#c4a882" opacity="0.5"/>
+    <text y="60" font-family="system-ui,sans-serif" font-size="18" fill="#a0896e">Oeuvre non disponible</text>
+  </g>
+</svg>

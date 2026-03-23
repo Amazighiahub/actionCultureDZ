@@ -190,43 +190,8 @@ export function useOeuvreDetails(oeuvreId: number, options: UseOeuvreDetailsOpti
     },
   });
 
-  // Incrémenter les vues
-  const incrementViewsMutation = useMutation({
-    mutationFn: async () => {
-      // Appeler l'API pour incrémenter les vues
-      const response = await oeuvreService.incrementViews?.(oeuvreId);
-      return response;
-    },
-    onSuccess: () => {
-      // Mettre à jour le cache local
-      queryClient.setQueryData(oeuvreKey, (oldData: Oeuvre | undefined) => {
-        if (oldData) {
-          return {
-            ...oldData,
-            nombre_vues: (oldData.nombre_vues || 0) + 1
-          };
-        }
-        return oldData;
-      });
-    },
-  });
-
-  // ============================================
-  // EFFETS
-  // ============================================
-
-  // Incrémenter les vues une fois par session
-  useEffect(() => {
-    if (oeuvreId > 0 && oeuvreQuery.data) {
-      const viewedKey = `oeuvre-viewed-${oeuvreId}`;
-      const alreadyViewed = sessionStorage.getItem(viewedKey);
-      
-      if (!alreadyViewed && oeuvreService.incrementViews) {
-        incrementViewsMutation.mutate();
-        sessionStorage.setItem(viewedKey, 'true');
-      }
-    }
-  }, [oeuvreId, oeuvreQuery.data]);
+  // Note : l'incrémentation des vues est gérée côté backend
+  // dans findWithFullDetails() lors du GET /oeuvres/:id
 
   // ============================================
   // HELPERS
@@ -316,10 +281,6 @@ export function useOeuvreDetails(oeuvreId: number, options: UseOeuvreDetailsOpti
     }
   };
 
-  const incrementViews = () => {
-    incrementViewsMutation.mutate();
-  };
-
   // ============================================
   // RETURN
   // ============================================
@@ -347,7 +308,6 @@ export function useOeuvreDetails(oeuvreId: number, options: UseOeuvreDetailsOpti
 
     // Actions
     addComment,
-    incrementViews,
 
     // États des mutations
     isAddingComment: addCommentMutation.isPending,

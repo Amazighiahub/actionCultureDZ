@@ -41,13 +41,20 @@ class ProgrammeService extends BaseService {
   // CRÉATION / MODIFICATION / SUPPRESSION
   // ========================================================================
 
-  async createProgramme(evenementId, userId, isAdmin, lang, data) {
+  async createProgramme(evenementId, userId, lang, data) {
     const { titre, description, intervenants = [], id_lieu, ...rest } = data;
 
     const evenement = await this.models.Evenement.findByPk(evenementId);
     if (!evenement) return { error: 'evenementNotFound' };
 
-    if (evenement.id_user !== userId && !isAdmin) {
+    // Seul le propriétaire de l'événement peut gérer les programmes
+    if (evenement.id_user !== userId) {
+      return { error: 'forbidden' };
+    }
+
+    // Vérifier que l'événement est modifiable
+    const unmodifiableStatuses = ['annule', 'termine'];
+    if (unmodifiableStatuses.includes(evenement.statut)) {
       return { error: 'forbidden' };
     }
 
@@ -59,14 +66,18 @@ class ProgrammeService extends BaseService {
     const transaction = await this.sequelize.transaction();
     try {
       const programmeData = {
-        titre: this._prepareMultiLang(titre, lang),
-        description: this._prepareMultiLang(description, lang),
+        titre: this._prepareMultiLang(titre, lang) || {},
+        description: this._prepareMultiLang(description, lang) || { fr: '' },
         id_evenement: evenementId,
         id_lieu,
         ordre: rest.ordre || await this.repository.getNextOrdre(evenementId),
         statut: 'planifie',
         ...this._pickFields(rest, ['heure_debut', 'heure_fin', 'lieu_specifique', 'type_activite', 'duree_estimee', 'nb_participants_max', 'materiel_requis', 'notes_organisateur'])
       };
+
+      // Convert ISO datetime to TIME for MySQL TIME columns
+      if (programmeData.heure_debut) programmeData.heure_debut = this._toTimeOnly(programmeData.heure_debut);
+      if (programmeData.heure_fin) programmeData.heure_fin = this._toTimeOnly(programmeData.heure_fin);
 
       const programme = await this.repository.create(programmeData, { transaction });
 
@@ -93,17 +104,21 @@ class ProgrammeService extends BaseService {
     }
   }
 
-  async updateProgramme(id, userId, isAdmin, lang, data) {
+  async updateProgramme(id, userId, lang, data) {
     const { titre, description, ...rest } = data;
 
-    const allowedFields = ['id_lieu', 'lieu_specifique', 'heure_debut', 'heure_fin', 'type_activite', 'duree_estimee', 'nb_participants_max', 'materiel_requis', 'notes_organisateur', 'ordre', 'intervenants'];
+    const allowedFields = ['id_lieu', 'lieu_specifique', 'heure_debut', 'heure_fin', 'type_activite', 'duree_estimee', 'nb_participants_max', 'materiel_requis', 'notes_organisateur', 'ordre'];
     const updates = {};
     allowedFields.forEach(f => { if (rest[f] !== undefined) updates[f] = rest[f]; });
+
+    // Convert ISO datetime to TIME for MySQL TIME columns
+    if (updates.heure_debut) updates.heure_debut = this._toTimeOnly(updates.heure_debut);
+    if (updates.heure_fin) updates.heure_fin = this._toTimeOnly(updates.heure_fin);
 
     const transaction = await this.sequelize.transaction();
     try {
       const programme = await this.repository.model.findByPk(id, {
-        include: [{ model: this.models.Evenement }]
+        include: [{ model: this.models.Evenement, as: 'Evenement' }]
       });
 
       if (!programme) {
@@ -111,7 +126,14 @@ class ProgrammeService extends BaseService {
         return { error: 'notFound' };
       }
 
-      if (programme.Evenement.id_user !== userId && !isAdmin) {
+      if (programme.Evenement.id_user !== userId) {
+        await transaction.rollback();
+        return { error: 'forbidden' };
+      }
+
+      // Vérifier que l'événement est modifiable
+      const unmodifiableStatuses = ['annule', 'termine'];
+      if (unmodifiableStatuses.includes(programme.Evenement.statut)) {
         await transaction.rollback();
         return { error: 'forbidden' };
       }
@@ -137,11 +159,11 @@ class ProgrammeService extends BaseService {
     }
   }
 
-  async deleteProgramme(id, userId, isAdmin) {
+  async deleteProgramme(id, userId) {
     const transaction = await this.sequelize.transaction();
     try {
       const programme = await this.repository.model.findByPk(id, {
-        include: [{ model: this.models.Evenement }]
+        include: [{ model: this.models.Evenement, as: 'Evenement' }]
       });
 
       if (!programme) {
@@ -149,7 +171,7 @@ class ProgrammeService extends BaseService {
         return { error: 'notFound' };
       }
 
-      if (programme.Evenement.id_user !== userId && !isAdmin) {
+      if (programme.Evenement.id_user !== userId) {
         await transaction.rollback();
         return { error: 'forbidden' };
       }
@@ -167,11 +189,11 @@ class ProgrammeService extends BaseService {
     }
   }
 
-  async updateStatut(id, userId, isAdmin, statut) {
+  async updateStatut(id, userId, statut) {
     const transaction = await this.sequelize.transaction();
     try {
       const programme = await this.repository.model.findByPk(id, {
-        include: [{ model: this.models.Evenement }]
+        include: [{ model: this.models.Evenement, as: 'Evenement' }]
       });
 
       if (!programme) {
@@ -179,12 +201,27 @@ class ProgrammeService extends BaseService {
         return { error: 'notFound' };
       }
 
-      if (programme.Evenement.id_user !== userId && !isAdmin) {
+      if (programme.Evenement.id_user !== userId) {
         await transaction.rollback();
         return { error: 'forbidden' };
       }
 
       const ancienStatut = programme.statut;
+
+      // Validation des transitions de statut
+      const validTransitions = {
+        planifie: ['en_cours', 'annule', 'reporte'],
+        en_cours: ['termine', 'annule'],
+        reporte: ['planifie', 'annule'],
+        termine: [],
+        annule: []
+      };
+      const allowed = validTransitions[ancienStatut] || [];
+      if (!allowed.includes(statut)) {
+        await transaction.rollback();
+        return { error: 'forbidden' };
+      }
+
       await programme.update({ statut }, { transaction });
       await transaction.commit();
 
@@ -203,11 +240,11 @@ class ProgrammeService extends BaseService {
     }
   }
 
-  async duplicateProgramme(id, userId, isAdmin) {
+  async duplicateProgramme(id, userId) {
     const transaction = await this.sequelize.transaction();
     try {
       const programme = await this.repository.model.findByPk(id, {
-        include: [{ model: this.models.Evenement }]
+        include: [{ model: this.models.Evenement, as: 'Evenement' }]
       });
 
       if (!programme) {
@@ -215,7 +252,7 @@ class ProgrammeService extends BaseService {
         return { error: 'notFound' };
       }
 
-      if (programme.Evenement.id_user !== userId && !isAdmin) {
+      if (programme.Evenement.id_user !== userId) {
         await transaction.rollback();
         return { error: 'forbidden' };
       }
@@ -243,11 +280,11 @@ class ProgrammeService extends BaseService {
     }
   }
 
-  async reorderProgrammes(evenementId, userId, isAdmin, programmes) {
+  async reorderProgrammes(evenementId, userId, programmes) {
     const evenement = await this.models.Evenement.findByPk(evenementId);
     if (!evenement) return { error: 'evenementNotFound' };
 
-    if (evenement.id_user !== userId && !isAdmin) {
+    if (evenement.id_user !== userId) {
       return { error: 'forbidden' };
     }
 
@@ -287,6 +324,50 @@ class ProgrammeService extends BaseService {
 
     await programme.update(updates);
     return programme;
+  }
+
+  // ========================================================================
+  // INTERVENANTS
+  // ========================================================================
+
+  async updateIntervenantStatus(programmeId, targetUserId, requestUserId, statut) {
+    const validStatuts = ['en_attente', 'confirme', 'decline', 'annule'];
+    if (!validStatuts.includes(statut)) {
+      return { error: 'invalidStatus' };
+    }
+
+    const programme = await this.repository.model.findByPk(programmeId, {
+      include: [{ model: this.models.Evenement, as: 'Evenement' }]
+    });
+
+    if (!programme) return { error: 'notFound' };
+
+    const isEventOwner = programme.Evenement.id_user === requestUserId;
+    const isIntervenant = targetUserId === requestUserId;
+
+    if (!isEventOwner && !isIntervenant) {
+      return { error: 'forbidden' };
+    }
+
+    // L'intervenant ne peut que confirmer ou décliner
+    if (isIntervenant && !isEventOwner) {
+      if (!['confirme', 'decline'].includes(statut)) {
+        return { error: 'forbidden' };
+      }
+    }
+
+    const pi = await this.models.ProgrammeIntervenant.findOne({
+      where: { id_programme: programmeId, id_user: targetUserId }
+    });
+
+    if (!pi) return { error: 'intervenantNotFound' };
+
+    await pi.update({
+      statut_confirmation: statut,
+      date_confirmation: new Date()
+    });
+
+    return { success: true, data: pi };
   }
 
   // ========================================================================
@@ -347,8 +428,8 @@ class ProgrammeService extends BaseService {
       email: interv.email,
       password: hashedPassword,
       id_type_user: 1,
-      statut: 'actif',
-      accepte_conditions: true
+      statut: 'en_attente_validation', // Compte créé par invitation — nécessite activation
+      accepte_conditions: false // L'utilisateur n'a pas encore accepté
     }, { transaction });
 
     // Envoyer le mail d'invitation en arrière-plan (ne pas bloquer la transaction)
@@ -398,6 +479,24 @@ class ProgrammeService extends BaseService {
     const result = {};
     fields.forEach(f => { if (obj[f] !== undefined) result[f] = obj[f]; });
     return result;
+  }
+
+  /**
+   * Convertit une valeur ISO datetime ou datetime en format TIME (HH:MM:SS)
+   * pour stockage dans une colonne TIME de MySQL.
+   */
+  _toTimeOnly(value) {
+    if (!value) return value;
+    const str = String(value);
+    // Already TIME format (HH:MM or HH:MM:SS)
+    if (/^\d{2}:\d{2}(:\d{2})?$/.test(str)) return str;
+    // Extract time from ISO format (2026-12-01T09:00:00Z)
+    const match = str.match(/T(\d{2}:\d{2}:\d{2})/);
+    if (match) return match[1];
+    // Try parsing as Date and extract UTC time
+    const d = new Date(str);
+    if (!isNaN(d.getTime())) return d.toISOString().slice(11, 19);
+    return value;
   }
 
   _groupByDay(programmes) {

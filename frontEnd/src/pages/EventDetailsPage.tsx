@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/responsive-tabs';
 import { ChevronLeft, Calendar, Image, MessageCircle, Users, Info, MapPin, Tag } from 'lucide-react';
 
 // Composants partagés
@@ -153,7 +153,7 @@ const EventDetailsPage: React.FC = () => {
             {/* Colonne principale */}
             <div className="lg:col-span-2 space-y-8">
               <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="w-full justify-start">
+                <TabsList scrollable>
                   <TabsTrigger value="info" className="gap-2">
                     <Info className="h-4 w-4" />
                     {t('event.tabs.info', 'Informations')}
@@ -186,92 +186,95 @@ const EventDetailsPage: React.FC = () => {
                   </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="info" className="mt-6">
-                  <ErrorBoundary>
-                    <Suspense fallback={<SectionFallback />}>
-                      <EventInfo event={event} />
-                    </Suspense>
-                  </ErrorBoundary>
-                </TabsContent>
-
-                <TabsContent value="program" className="mt-6">
-                  <ErrorBoundary>
-                    <Suspense fallback={<SectionFallback />}>
-                      <EventProgram programs={programs || []} />
-                    </Suspense>
-                  </ErrorBoundary>
-                </TabsContent>
-
-                <TabsContent value="gallery" className="mt-6">
-                  <ErrorBoundary>
-                    <Suspense fallback={<SectionFallback />}>
-                      <EventGallery medias={medias || []} />
-                    </Suspense>
-                  </ErrorBoundary>
-                </TabsContent>
-
-                <TabsContent value="participants" className="mt-6">
-                  <ErrorBoundary>
-                    <Suspense fallback={<SectionFallback />}>
-                      <EventParticipants
-                        participants={publicParticipants.participants}
-                        total={publicParticipants.total}
-                      />
-                    </Suspense>
-                  </ErrorBoundary>
-                </TabsContent>
-
-                <TabsContent value="comments" className="mt-6">
-                  <ErrorBoundary>
-                    <Suspense fallback={<SectionFallback />}>
-                      <EventComments
-                        comments={comments || []}
-                        onAddComment={addComment}
-                        eventId={event.id_evenement}
-                      />
-                    </Suspense>
-                  </ErrorBoundary>
-                </TabsContent>
-
-                {event.Lieu?.id_lieu && (
-                  <TabsContent value="services" className="mt-6 space-y-6">
-                    {/* Carte interactive */}
-                    {event.Lieu.latitude && event.Lieu.longitude && (
-                      <ErrorBoundary>
-                        <Suspense fallback={<SectionFallback />}>
-                          <CarteInteractiveUnifiee
-                            lieux={[event.Lieu]}
-                            center={[event.Lieu.latitude, event.Lieu.longitude]}
-                            zoom={14}
-                            height="350px"
-                            showFilters={true}
-                            showFullscreen={true}
-                          />
-                        </Suspense>
-                      </ErrorBoundary>
-                    )}
-
-                    {/* Liste des services */}
+                {/* Contenu de l'onglet actif - rendu conditionnel pour éviter les espaces vides */}
+                <div className="mt-6">
+                  {activeTab === 'info' && (
                     <ErrorBoundary>
                       <Suspense fallback={<SectionFallback />}>
-                        <ServicesProximite
-                          lieuId={event.Lieu.id_lieu}
-                          lieuName={event.Lieu.nom || ''}
-                          variant="full"
-                          showTitle={true}
+                        <EventInfo event={event} />
+                      </Suspense>
+                    </ErrorBoundary>
+                  )}
+
+                  {activeTab === 'program' && (
+                    <ErrorBoundary>
+                      <Suspense fallback={<SectionFallback />}>
+                        <EventProgram programs={programs || []} />
+                      </Suspense>
+                    </ErrorBoundary>
+                  )}
+
+                  {activeTab === 'gallery' && (
+                    <ErrorBoundary>
+                      <Suspense fallback={<SectionFallback />}>
+                        <EventGallery medias={medias || []} />
+                      </Suspense>
+                    </ErrorBoundary>
+                  )}
+
+                  {activeTab === 'participants' && (
+                    <ErrorBoundary>
+                      <Suspense fallback={<SectionFallback />}>
+                        <EventParticipants
+                          participants={publicParticipants.participants}
+                          total={publicParticipants.total}
                         />
                       </Suspense>
                     </ErrorBoundary>
-                  </TabsContent>
-                )}
+                  )}
 
-                <TabsContent value="metadata" className="mt-6">
-                  <ErrorBoundary>
-                    <Suspense fallback={<SectionFallback />}>
-                      <EventMetadata event={event} />
-                    </Suspense>
-                  </ErrorBoundary>
-                </TabsContent>
+                  {activeTab === 'comments' && (
+                    <ErrorBoundary>
+                      <Suspense fallback={<SectionFallback />}>
+                        <EventComments
+                          comments={comments || []}
+                          onAddComment={addComment}
+                          eventId={event.id_evenement}
+                        />
+                      </Suspense>
+                    </ErrorBoundary>
+                  )}
+
+                  {activeTab === 'services' && event.Lieu?.id_lieu && (
+                    <div className="space-y-6">
+                      {/* Carte interactive */}
+                      {event.Lieu.latitude && event.Lieu.longitude && (
+                        <ErrorBoundary>
+                          <Suspense fallback={<SectionFallback />}>
+                            <CarteInteractiveUnifiee
+                              lieux={[event.Lieu]}
+                              center={[event.Lieu.latitude, event.Lieu.longitude]}
+                              zoom={14}
+                              height="350px"
+                              showFilters={true}
+                              showFullscreen={true}
+                            />
+                          </Suspense>
+                        </ErrorBoundary>
+                      )}
+
+                      {/* Liste des services */}
+                      <ErrorBoundary>
+                        <Suspense fallback={<SectionFallback />}>
+                          <ServicesProximite
+                            lieuId={event.Lieu.id_lieu}
+                            lieuName={event.Lieu.nom || ''}
+                            variant="full"
+                            showTitle={true}
+                          />
+                        </Suspense>
+                      </ErrorBoundary>
+                    </div>
+                  )}
+
+                  {activeTab === 'metadata' && (
+                    <ErrorBoundary>
+                      <Suspense fallback={<SectionFallback />}>
+                        <EventMetadata event={event} />
+                      </Suspense>
+                    </ErrorBoundary>
+                  )}
+                </div>
               </Tabs>
             </div>
 

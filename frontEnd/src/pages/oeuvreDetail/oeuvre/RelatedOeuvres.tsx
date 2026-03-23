@@ -103,22 +103,14 @@ const RelatedOeuvres: React.FC<RelatedOeuvresProps> = ({
   const { t } = useTranslation();
   const navigate = useNavigate();
 
-  // Charger les œuvres similaires
+  // Charger les œuvres similaires via la route dédiée GET /oeuvres/:id/similar
   const { data: relatedOeuvres, isLoading } = useQuery({
-    queryKey: ['related-oeuvres', oeuvreId, typeId],
+    queryKey: ['related-oeuvres', oeuvreId, limit],
     queryFn: async () => {
-      // Rechercher des œuvres du même type
-      const response = await (oeuvreService as unknown as { search: (params: Record<string, unknown>) => Promise<{ success: boolean; data: { items: Oeuvre[] } }> }).search({
-        ...(typeId && { type_oeuvre_id: typeId }),
-        exclude_id: oeuvreId,
-        statut: 'publie',
-        limit
-      });
-
+      const response = await oeuvreService.getSimilarOeuvres(oeuvreId, limit);
       if (response.success && response.data) {
-        return response.data.items
-          .filter((o: Oeuvre) => o.id_oeuvre !== oeuvreId)
-          .slice(0, limit);
+        const oeuvres = Array.isArray(response.data) ? response.data : [];
+        return oeuvres.filter((o: Oeuvre) => o.id_oeuvre !== oeuvreId).slice(0, limit);
       }
       return [];
     },

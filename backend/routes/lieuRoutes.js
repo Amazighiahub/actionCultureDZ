@@ -190,8 +190,9 @@ const initLieuRoutes = (models) => {
   // ========================================================================
 
   // Créer un lieu
-  router.post('/', 
+  router.post('/',
     authMiddleware.authenticate,
+    authMiddleware.requireVerifiedEmail,
     authMiddleware.requireRole(['Contributeur', 'Modérateur', 'Administrateur']),
     createLieuValidation,
     validationMiddleware.handleValidationErrors,

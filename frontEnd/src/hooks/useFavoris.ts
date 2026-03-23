@@ -168,18 +168,19 @@ export function useFavoris(options: UseFavorisOptions = {}) {
     
     try {
       const response = await favoriService.check(entityType, entityId);
-      if (response.success && response.data) {
+      if (response.success) {
+        const favori = response.data?.favori as { id_favori?: number } | undefined;
         const result = {
-          isFavorite: response.data.is_favorite,
-          favoriId: response.data.favori_id,
+          isFavorite: Boolean(response.isFavorite),
+          favoriId: favori?.id_favori as number | undefined,
           loading: false
         };
-        
+
         setFavoriChecks(prev => ({
           ...prev,
           [key]: result
         }));
-        
+
         return result;
       }
     } catch (error) {
@@ -325,9 +326,10 @@ export function useFavoriCheck(
       try {
         setLoading(true);
         const response = await favoriService.check(entityType, entityId);
-        if (response.success && response.data) {
-          setIsFavorite(response.data.is_favorite);
-          setFavoriId(response.data.favori_id);
+        if (response.success) {
+          setIsFavorite(Boolean(response.isFavorite));
+          const favori = response.data?.favori as { id_favori?: number } | undefined;
+          setFavoriId(favori?.id_favori);
         }
       } catch (error) {
         setIsFavorite(false);

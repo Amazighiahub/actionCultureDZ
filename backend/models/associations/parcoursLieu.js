@@ -144,12 +144,14 @@ module.exports = (sequelize) => {
     const toUpdate = etapes.filter((e, i) => e.ordre !== i + 1);
     if (toUpdate.length === 0) return;
 
-    // Batch update avec CASE WHEN (1 query au lieu de N)
-    const cases = etapes.map((e, i) => `WHEN ${e.id_parcours_lieu} THEN ${i + 1}`).join(' ');
-    const ids = etapes.map(e => e.id_parcours_lieu).join(',');
+    // Batch update avec CASE WHEN paramétré (1 query au lieu de N)
+    const ids = etapes.map(e => e.id_parcours_lieu);
+    const cases = etapes.map((_, i) => `WHEN ? THEN ?`).join(' ');
+    const caseReplacements = etapes.flatMap((e, i) => [e.id_parcours_lieu, i + 1]);
+    const placeholders = ids.map(() => '?').join(',');
     await sequelize.query(
-      `UPDATE parcours_lieux SET ordre = CASE id_parcours_lieu ${cases} END WHERE id_parcours_lieu IN (${ids})`,
-      { transaction }
+      `UPDATE parcours_lieux SET ordre = CASE id_parcours_lieu ${cases} END WHERE id_parcours_lieu IN (${placeholders})`,
+      { replacements: [...caseReplacements, ...ids], transaction }
     );
   };
 

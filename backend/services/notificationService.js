@@ -106,8 +106,8 @@ class NotificationService {
         }),
         this.models.Evenement.findByPk(evenementId, {
           include: [
-            { model: this.models.Lieu, attributes: ['nom'] },
-            { model: this.models.TypeEvenement, attributes: ['nom_type'] }
+            { model: this.models.Lieu, as: 'Lieu', attributes: ['nom'] },
+            { model: this.models.TypeEvenement, as: 'TypeEvenement', attributes: ['nom_type'] }
           ]
         })
       ]);
@@ -155,8 +155,8 @@ async envoyerRappelEvenement(evenementId) {
   try {
     const evenement = await this.models.Evenement.findByPk(evenementId, {
       include: [
-        { model: this.models.Lieu },
-        { model: this.models.TypeEvenement }
+        { model: this.models.Lieu, as: 'Lieu' },
+        { model: this.models.TypeEvenement, as: 'TypeEvenement' }
       ]
     });
 
@@ -446,8 +446,8 @@ async envoyerNewsletter(contenu, filtres = {}) {
       // Récupérer l'événement et ses participants
       const evenement = await this.models.Evenement.findByPk(evenementId, {
         include: [
-          { model: this.models.Lieu },
-          { model: this.models.TypeEvenement }
+          { model: this.models.Lieu, as: 'Lieu' },
+          { model: this.models.TypeEvenement, as: 'TypeEvenement' }
         ]
       });
 
@@ -455,19 +455,20 @@ async envoyerNewsletter(contenu, filtres = {}) {
         throw new Error('Événement non trouvé');
       }
 
-      // Récupérer tous les participants (confirmés et en attente)
+      // Récupérer les participants ayant activé les notifications événements
       const participants = await this.models.EvenementUser.findAll({
         where: {
           id_evenement: evenementId,
           statut_participation: {
-            [Op.in]: ['confirme', 'en_attente', 'inscrit']
+            [Op.in]: ['confirme', 'inscrit']
           }
         },
         include: [
           {
             model: this.models.User,
             as: 'User',
-            attributes: ['id_user', 'nom', 'prenom', 'email', 'telephone']
+            attributes: ['id_user', 'nom', 'prenom', 'email', 'telephone'],
+            where: { notifications_evenements: true }
           }
         ]
       });
@@ -535,8 +536,8 @@ async envoyerNewsletter(contenu, filtres = {}) {
           {
             model: this.models.Evenement,
             include: [
-              { model: this.models.Lieu },
-              { model: this.models.TypeEvenement }
+              { model: this.models.Lieu, as: 'Lieu' },
+              { model: this.models.TypeEvenement, as: 'TypeEvenement' }
             ]
           }
         ]
@@ -546,7 +547,7 @@ async envoyerNewsletter(contenu, filtres = {}) {
         throw new Error('Programme ou événement non trouvé');
       }
 
-      // Récupérer les participants confirmés uniquement
+      // Récupérer les participants confirmés ayant activé les notifications
       const participants = await this.models.EvenementUser.findAll({
         where: {
           id_evenement: programme.id_evenement,
@@ -556,7 +557,8 @@ async envoyerNewsletter(contenu, filtres = {}) {
           {
             model: this.models.User,
             as: 'User',
-            attributes: ['id_user', 'nom', 'prenom', 'email', 'telephone']
+            attributes: ['id_user', 'nom', 'prenom', 'email', 'telephone'],
+            where: { notifications_evenements: true }
           }
         ]
       });
@@ -634,7 +636,7 @@ async envoyerNewsletter(contenu, filtres = {}) {
       const evenement = await this.models.Evenement.findByPk(evenementId, {
         include: [
           { model: this.models.Lieu, include: [{ model: this.models.Wilaya }] },
-          { model: this.models.TypeEvenement }
+          { model: this.models.TypeEvenement, as: 'TypeEvenement' }
         ]
       });
 

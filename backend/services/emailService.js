@@ -25,12 +25,6 @@ class EmailService {
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#x27;');
-
-    if (!this.isPaused) {
-      this.initializeTransporter();
-    } else {
-      logger.info('📧 Service email en pause - mode simulation activé.');
-    }
   }
 
   /**
@@ -102,6 +96,12 @@ class EmailService {
    * Méthode d'envoi d'email principale et générique.
    */
   async sendEmail(to, subject, html, attachments = null) {
+    // Protection contre l'injection CRLF dans les en-têtes email
+    if (/[\r\n]/.test(to) || /[\r\n]/.test(subject)) {
+      logger.error(`Tentative d'injection email détectée — to: ${to?.substring(0, 50)}`);
+      return { success: false, error: 'Invalid email headers' };
+    }
+
     if (this.isPaused) {
       logger.info(`\n📧 [SIMULATION] Envoi à: ${to} | Sujet: ${subject}`);
       return { success: true, messageId: 'simulated-' + Date.now() };

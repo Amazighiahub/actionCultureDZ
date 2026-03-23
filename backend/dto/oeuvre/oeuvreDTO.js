@@ -26,7 +26,7 @@ class OeuvreDTO extends BaseDTO {
 
     // Créateur
     this.idCreateur = BaseDTO.toInt(data.saisi_par || data.id_createur || data.idCreateur);
-    this.createur = data.Createur ? this._mapCreateur(data.Createur) : null;
+    this.createur = (data.Saiseur || data.Createur) ? this._mapCreateur(data.Saiseur || data.Createur) : null;
 
     // Détails
     this.anneeCreation = BaseDTO.toInt(data.annee_creation || data.anneeCreation);
@@ -59,7 +59,7 @@ class OeuvreDTO extends BaseDTO {
 
     // Relations chargées
     this.categories = data.Categories ? data.Categories.map(c => this._mapCategorie(c)) : [];
-    this.medias = data.Medias ? data.Medias.map(m => this._mapMedia(m)) : [];
+    this.medias = (data.Media || data.Medias) ? (data.Media || data.Medias).map(m => this._mapMedia(m)) : [];
     this.tags = data.Tags ? data.Tags.map(t => this._mapTag(t)) : [];
     this.intervenants = data.Intervenants ? data.Intervenants.map(i => this._mapIntervenant(i)) : [];
   }
@@ -89,10 +89,10 @@ class OeuvreDTO extends BaseDTO {
       description: BaseDTO.extractMultilang(data.description, lang)?.substring(0, 200),
       imageUrl: data.image_url,
       typeOeuvre: data.TypeOeuvre?.nom || null,
-      createur: data.Createur ? {
-        id: data.Createur.id_user,
-        nom: BaseDTO.extractMultilang(data.Createur.nom, lang),
-        prenom: BaseDTO.extractMultilang(data.Createur.prenom, lang)
+      createur: (data.Saiseur || data.Createur) ? {
+        id: (data.Saiseur || data.Createur).id_user,
+        nom: BaseDTO.extractMultilang((data.Saiseur || data.Createur).nom, lang),
+        prenom: BaseDTO.extractMultilang((data.Saiseur || data.Createur).prenom, lang)
       } : null,
       statut: data.statut,
       nbVues: data.nb_vues || 0,

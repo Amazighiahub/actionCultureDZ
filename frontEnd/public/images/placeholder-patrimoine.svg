@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="450" viewBox="0 0 800 450">
+  <rect width="800" height="450" fill="#f0ede5"/>
+  <g transform="translate(400,190)" text-anchor="middle">
+    <rect x="-30" y="-20" width="60" height="40" rx="2" fill="none" stroke="#a09070" stroke-width="3"/>
+    <line x1="-30" y1="-20" x2="0" y2="-40" stroke="#a09070" stroke-width="3"/>
+    <line x1="30" y1="-20" x2="0" y2="-40" stroke="#a09070" stroke-width="3"/>
+    <rect x="-10" y="0" width="20" height="20" rx="1" fill="none" stroke="#a09070" stroke-width="2"/>
+    <rect x="-25" y="-15" width="10" height="15" rx="1" fill="#a09070" opacity="0.3"/>
+    <rect x="15" y="-15" width="10" height="15" rx="1" fill="#a09070" opacity="0.3"/>
+    <text y="55" font-family="system-ui,sans-serif" font-size="18" fill="#a09070">Patrimoine non disponible</text>
+  </g>
+</svg>
