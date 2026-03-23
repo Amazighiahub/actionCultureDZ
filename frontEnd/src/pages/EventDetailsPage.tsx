@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/responsive-tabs';
+import { cn } from '@/lib/Utils';
 import { ChevronLeft, Calendar, Image, MessageCircle, Users, Info, MapPin, Tag } from 'lucide-react';
 
 // Composants partagés
@@ -152,130 +152,121 @@ const EventDetailsPage: React.FC = () => {
           <div className="grid gap-8 lg:grid-cols-3">
             {/* Colonne principale */}
             <div className="lg:col-span-2 space-y-8">
-              <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList scrollable>
-                  <TabsTrigger value="info" className="gap-2">
-                    <Info className="h-4 w-4" />
-                    {t('event.tabs.info', 'Informations')}
-                  </TabsTrigger>
-                  <TabsTrigger value="program" className="gap-2">
-                    <Calendar className="h-4 w-4" />
-                    {t('event.tabs.program', 'Programme')}
-                  </TabsTrigger>
-                  <TabsTrigger value="gallery" className="gap-2">
-                    <Image className="h-4 w-4" />
-                    {t('event.tabs.gallery', 'Galerie')}
-                  </TabsTrigger>
-                  <TabsTrigger value="participants" className="gap-2">
-                    <Users className="h-4 w-4" />
-                    {t('event.tabs.participants', 'Participants')} ({publicParticipants.total})
-                  </TabsTrigger>
-                  <TabsTrigger value="comments" className="gap-2">
-                    <MessageCircle className="h-4 w-4" />
-                    {t('event.tabs.comments', 'Avis')} ({comments?.length || 0})
-                  </TabsTrigger>
-                  {event.Lieu?.id_lieu && (
-                    <TabsTrigger value="services" className="gap-2">
-                      <MapPin className="h-4 w-4" />
-                      {t('event.tabs.services', 'Services')}
-                    </TabsTrigger>
-                  )}
-                  <TabsTrigger value="metadata" className="gap-2">
-                    <Tag className="h-4 w-4" />
-                    {t('event.tabs.metadata', 'Métadonnées')}
-                  </TabsTrigger>
-                </TabsList>
-
-                {/* Contenu de l'onglet actif - rendu conditionnel pour éviter les espaces vides */}
-                <div className="mt-6">
-                  {activeTab === 'info' && (
-                    <ErrorBoundary>
-                      <Suspense fallback={<SectionFallback />}>
-                        <EventInfo event={event} />
-                      </Suspense>
-                    </ErrorBoundary>
-                  )}
-
-                  {activeTab === 'program' && (
-                    <ErrorBoundary>
-                      <Suspense fallback={<SectionFallback />}>
-                        <EventProgram programs={programs || []} />
-                      </Suspense>
-                    </ErrorBoundary>
-                  )}
-
-                  {activeTab === 'gallery' && (
-                    <ErrorBoundary>
-                      <Suspense fallback={<SectionFallback />}>
-                        <EventGallery medias={medias || []} />
-                      </Suspense>
-                    </ErrorBoundary>
-                  )}
-
-                  {activeTab === 'participants' && (
-                    <ErrorBoundary>
-                      <Suspense fallback={<SectionFallback />}>
-                        <EventParticipants
-                          participants={publicParticipants.participants}
-                          total={publicParticipants.total}
-                        />
-                      </Suspense>
-                    </ErrorBoundary>
-                  )}
-
-                  {activeTab === 'comments' && (
-                    <ErrorBoundary>
-                      <Suspense fallback={<SectionFallback />}>
-                        <EventComments
-                          comments={comments || []}
-                          onAddComment={addComment}
-                          eventId={event.id_evenement}
-                        />
-                      </Suspense>
-                    </ErrorBoundary>
-                  )}
-
-                  {activeTab === 'services' && event.Lieu?.id_lieu && (
-                    <div className="space-y-6">
-                      {/* Carte interactive */}
-                      {event.Lieu.latitude && event.Lieu.longitude && (
-                        <ErrorBoundary>
-                          <Suspense fallback={<SectionFallback />}>
-                            <CarteInteractiveUnifiee
-                              lieux={[event.Lieu]}
-                              center={[event.Lieu.latitude, event.Lieu.longitude]}
-                              zoom={14}
-                              height="350px"
-                              showFilters={true}
-                              showFullscreen={true}
-                            />
-                          </Suspense>
-                        </ErrorBoundary>
+              {/* Onglets simples sans Radix */}
+              <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+                <div className="inline-flex items-center gap-1 rounded-lg bg-muted p-1 flex-nowrap">
+                  {[
+                    { key: 'info', icon: Info, label: t('event.tabs.info', 'Informations') },
+                    { key: 'program', icon: Calendar, label: t('event.tabs.program', 'Programme') },
+                    { key: 'gallery', icon: Image, label: t('event.tabs.gallery', 'Galerie') },
+                    { key: 'participants', icon: Users, label: `${t('event.tabs.participants', 'Participants')} (${publicParticipants.total})` },
+                    { key: 'comments', icon: MessageCircle, label: `${t('event.tabs.comments', 'Avis')} (${comments?.length || 0})` },
+                    ...(event.Lieu?.id_lieu ? [{ key: 'services', icon: MapPin, label: t('event.tabs.services', 'Services') }] : []),
+                    { key: 'metadata', icon: Tag, label: t('event.tabs.metadata', 'Métadonnées') },
+                  ].map(({ key, icon: Icon, label }) => (
+                    <button
+                      key={key}
+                      onClick={() => setActiveTab(key)}
+                      className={cn(
+                        'inline-flex items-center gap-2 whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium transition-colors flex-shrink-0',
+                        activeTab === key
+                          ? 'bg-background text-foreground shadow-sm'
+                          : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
                       )}
+                    >
+                      <Icon className="h-4 w-4" />
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-                      {/* Liste des services */}
+              {/* Contenu de l'onglet actif */}
+              <div className="mt-6">
+                {activeTab === 'info' && (
+                  <ErrorBoundary>
+                    <Suspense fallback={<SectionFallback />}>
+                      <EventInfo event={event} />
+                    </Suspense>
+                  </ErrorBoundary>
+                )}
+
+                {activeTab === 'program' && (
+                  <ErrorBoundary>
+                    <Suspense fallback={<SectionFallback />}>
+                      <EventProgram programs={programs || []} />
+                    </Suspense>
+                  </ErrorBoundary>
+                )}
+
+                {activeTab === 'gallery' && (
+                  <ErrorBoundary>
+                    <Suspense fallback={<SectionFallback />}>
+                      <EventGallery medias={medias || []} />
+                    </Suspense>
+                  </ErrorBoundary>
+                )}
+
+                {activeTab === 'participants' && (
+                  <ErrorBoundary>
+                    <Suspense fallback={<SectionFallback />}>
+                      <EventParticipants
+                        participants={publicParticipants.participants}
+                        total={publicParticipants.total}
+                      />
+                    </Suspense>
+                  </ErrorBoundary>
+                )}
+
+                {activeTab === 'comments' && (
+                  <ErrorBoundary>
+                    <Suspense fallback={<SectionFallback />}>
+                      <EventComments
+                        comments={comments || []}
+                        onAddComment={addComment}
+                        eventId={event.id_evenement}
+                      />
+                    </Suspense>
+                  </ErrorBoundary>
+                )}
+
+                {activeTab === 'services' && event.Lieu?.id_lieu && (
+                  <div className="space-y-6">
+                    {event.Lieu.latitude && event.Lieu.longitude && (
                       <ErrorBoundary>
                         <Suspense fallback={<SectionFallback />}>
-                          <ServicesProximite
-                            lieuId={event.Lieu.id_lieu}
-                            lieuName={event.Lieu.nom || ''}
-                            variant="full"
-                            showTitle={true}
+                          <CarteInteractiveUnifiee
+                            lieux={[event.Lieu]}
+                            center={[event.Lieu.latitude, event.Lieu.longitude]}
+                            zoom={14}
+                            height="350px"
+                            showFilters={true}
+                            showFullscreen={true}
                           />
                         </Suspense>
                       </ErrorBoundary>
-                    </div>
-                  )}
-
-                  {activeTab === 'metadata' && (
+                    )}
                     <ErrorBoundary>
                       <Suspense fallback={<SectionFallback />}>
-                        <EventMetadata event={event} />
+                        <ServicesProximite
+                          lieuId={event.Lieu.id_lieu}
+                          lieuName={event.Lieu.nom || ''}
+                          variant="full"
+                          showTitle={true}
+                        />
                       </Suspense>
                     </ErrorBoundary>
-                  )}
-                </div>
-              </Tabs>
+                  </div>
+                )}
+
+                {activeTab === 'metadata' && (
+                  <ErrorBoundary>
+                    <Suspense fallback={<SectionFallback />}>
+                      <EventMetadata event={event} />
+                    </Suspense>
+                  </ErrorBoundary>
+                )}
+              </div>
             </div>
 
             {/* Sidebar */}
