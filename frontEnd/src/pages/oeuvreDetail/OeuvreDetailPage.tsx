@@ -49,7 +49,6 @@ import type { Intervenant } from '@/types/models/intervenant.types';
 interface OeuvreWithExtras extends Oeuvre {
   Intervenants?: (Intervenant & { OeuvreIntervenant?: { TypeUser?: { nom?: string }; role_principal?: boolean; personnage?: string; description_role?: string } })[];
   nb_vues?: number;
-  nombre_vues?: number;
   image_url?: string;
   couverture_url?: string;
   Genre?: { nom?: string };
@@ -85,84 +84,7 @@ const SectionFallback: React.FC = () => (
   <LoadingSkeleton type="card" count={1} />
 );
 
-// Helper pour extraire les contributeurs
-const extractContributeurs = (oeuvre: Oeuvre): ContributeurInfo[] => {
-  const contributeurs: ContributeurInfo[] = [];
-  const oeuvreExt = oeuvre as OeuvreWithExtras;
-
-  if (oeuvre.Users) {
-    oeuvre.Users.forEach((user) => {
-      const roleInfo = (user as unknown as { OeuvreUser?: { TypeUser?: { nom?: string }; role_principal?: boolean; personnage?: string; description_role?: string } }).OeuvreUser || {};
-      contributeurs.push({
-        id: `user-${user.id_user}`,
-        id_user: user.id_user,
-        nom: user.nom,
-        prenom: user.prenom,
-        photo_url: user.photo_url,
-        type: 'user',
-        role: roleInfo.TypeUser?.nom || user.TypeUser?.nom_type || 'Contributeur',
-        TypeUser: user.TypeUser,
-        role_principal: roleInfo.role_principal,
-        personnage: roleInfo.personnage,
-        description_role: roleInfo.description_role,
-        biographie: user.biographie,
-        isInscrit: true
-      });
-    });
-  }
-
-  if (oeuvre.OeuvreIntervenants) {
-    oeuvre.OeuvreIntervenants.forEach((oeuvreIntervenant) => {
-      const intervenant = oeuvreIntervenant.Intervenant;
-      if (intervenant) {
-        contributeurs.push({
-          id: `intervenant-${intervenant.id_intervenant}`,
-          id_intervenant: intervenant.id_intervenant,
-          nom: intervenant.nom,
-          prenom: intervenant.prenom,
-          photo_url: intervenant.photo_url,
-          type: 'intervenant',
-          role: oeuvreIntervenant.TypeUser?.nom || intervenant.specialites?.[0] || 'Contributeur',
-          TypeUser: oeuvreIntervenant.TypeUser,
-          role_principal: oeuvreIntervenant.role_principal,
-          personnage: oeuvreIntervenant.personnage,
-          description_role: oeuvreIntervenant.description_role,
-          biographie: intervenant.biographie,
-          isInscrit: false
-        });
-      }
-    });
-  }
-
-  if (oeuvreExt.Intervenants) {
-    oeuvreExt.Intervenants.forEach((intervenant) => {
-      const exists = contributeurs.some(c => c.id === `intervenant-${intervenant.id_intervenant}`);
-      if (!exists) {
-        contributeurs.push({
-          id: `intervenant-${intervenant.id_intervenant}`,
-          id_intervenant: intervenant.id_intervenant,
-          nom: intervenant.nom,
-          prenom: intervenant.prenom,
-          photo_url: intervenant.photo_url,
-          type: 'intervenant',
-          role: intervenant.OeuvreIntervenant?.TypeUser?.nom || intervenant.specialites?.[0] || 'Contributeur',
-          TypeUser: intervenant.TypeUser as ContributeurInfo['TypeUser'],
-          role_principal: intervenant.OeuvreIntervenant?.role_principal,
-          personnage: intervenant.OeuvreIntervenant?.personnage,
-          description_role: intervenant.OeuvreIntervenant?.description_role,
-          biographie: intervenant.biographie,
-          isInscrit: false
-        });
-      }
-    });
-  }
-
-  return contributeurs.sort((a, b) => {
-    if (a.role_principal && !b.role_principal) return -1;
-    if (!a.role_principal && b.role_principal) return 1;
-    return 0;
-  });
-};
+// extractContributeurs supprimé — on utilise contributeurs du hook useOeuvreDetails
 
 const OeuvreDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -208,26 +130,45 @@ const OeuvreDetailPage: React.FC = () => {
   // Charger les données additionnelles quand l'œuvre est chargée
   useEffect(() => {
     if (oeuvre) {
-      loadAuteurInfo(oeuvre);
       loadOeuvresAuteur(oeuvre);
       loadEvenementsCreateur(oeuvre);
-      setViewCount((oeuvre as OeuvreWithExtras).nb_vues || (oeuvre as OeuvreWithExtras).nombre_vues || 0);
+      setViewCount((oeuvre as OeuvreWithExtras).nb_vues || 0);
     }
   }, [oeuvre]);
 
-  // Extraire l'auteur principal
-  const loadAuteurInfo = (oeuvre: Oeuvre) => {
-    const contribs = extractContributeurs(oeuvre);
-    const auteurPrincipal = contribs.find((c) => c.role_principal) || contribs[0];
-    if (auteurPrincipal) {
-      setAuteurInfo(auteurPrincipal);
+  // Extraire l'auteur principal depuis les contributeurs du hook
+  useEffect(() => {
+    if (contributeurs && contributeurs.length > 0) {
+      const auteur = contributeurs.find((c) => c.role_principal) || contributeurs[0];
+      if (auteur) {
+        setAuteurInfo({
+          id: `${auteur.id_user ? 'user' : 'intervenant'}-${auteur.id_user || auteur.id_intervenant}`,
+          id_user: auteur.id_user,
+          id_intervenant: auteur.id_intervenant,
+          nom: auteur.nom,
+          prenom: auteur.prenom || '',
+          photo_url: auteur.photo_url,
+          type: auteur.id_user ? 'user' : 'intervenant',
+          role: auteur.type_user || auteur.TypeUser?.nom_type || auteur.role || 'Contributeur',
+          TypeUser: auteur.TypeUser,
+          role_principal: auteur.role_principal,
+          personnage: auteur.personnage,
+          description_role: auteur.description_role,
+          isInscrit: !!auteur.id_user
+        });
+      }
     }
-  };
+  }, [contributeurs]);
 
-  // Charger les autres œuvres de l'auteur
+  // Charger les autres œuvres de l'auteur réel (contributeur principal)
   const loadOeuvresAuteur = async (oeuvre: Oeuvre) => {
     try {
-      const result = await oeuvreService.getRecentOeuvres(10);
+      if (!contributeurs || contributeurs.length === 0) return;
+      const auteur = contributeurs.find((c) => c.role_principal) || contributeurs[0];
+      if (!auteur) return;
+
+      const query = `${auteur.prenom || ''} ${auteur.nom}`.trim();
+      const result = await oeuvreService.searchOeuvres({ q: query, limit: 10 });
       if (result.success && result.data) {
         const oeuvresData = result.data.oeuvres || result.data;
         const filtered = (Array.isArray(oeuvresData) ? oeuvresData : [])
@@ -365,7 +306,7 @@ const OeuvreDetailPage: React.FC = () => {
     );
   }
 
-  const allContributeurs = contributeurs || extractContributeurs(oeuvre);
+  const allContributeurs = contributeurs || [];
 
   const seoKeywords = [
     getTranslation(oeuvre.titre, lang), oeuvre.TypeOeuvre?.nom_type, (oeuvre as OeuvreWithExtras).Genre?.nom,

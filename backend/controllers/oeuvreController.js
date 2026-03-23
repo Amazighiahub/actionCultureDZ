@@ -513,32 +513,6 @@ class OeuvreController extends BaseController {
   }
 
   /**
-   * GET /api/oeuvres/:id/share-links
-   * Liens de partage pour une œuvre
-   */
-  async getShareLinks(req, res) {
-    try {
-      const oeuvre = await this.oeuvreService.findWithFullDetails(parseInt(req.params.id));
-      const baseUrl = process.env.FRONTEND_URL || process.env.BASE_URL || 'http://localhost:5173';
-      const oeuvreUrl = `${baseUrl}/oeuvres/${req.params.id}`;
-      const title = oeuvre.toJSON(req.lang)?.titre || '';
-
-      res.json({
-        success: true,
-        data: {
-          url: oeuvreUrl,
-          facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(oeuvreUrl)}`,
-          twitter: `https://twitter.com/intent/tweet?url=${encodeURIComponent(oeuvreUrl)}&text=${encodeURIComponent(title)}`,
-          linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(oeuvreUrl)}`,
-          whatsapp: `https://wa.me/?text=${encodeURIComponent(title + ' ' + oeuvreUrl)}`
-        }
-      });
-    } catch (error) {
-      this._handleError(res, error);
-    }
-  }
-
-  /**
    * GET /api/oeuvres/:id/medias
    * Médias d'une œuvre
    */

@@ -2,7 +2,7 @@
  * Hooks pour les pages de détails (événements et œuvres)
  * Compatible avec l'infrastructure existante: useQuery, useFavoris
  */
-import { useState, useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/components/ui/use-toast';
@@ -323,16 +323,14 @@ export interface Contributeur {
 
 interface UseOeuvreDetailsOptions {
   autoFetch?: boolean;
-  incrementViews?: boolean;
 }
 
 export function useOeuvreDetails(oeuvreId: number, options: UseOeuvreDetailsOptions = {}) {
-  const { autoFetch = true, incrementViews = true } = options;
+  const { autoFetch = true } = options;
   const { toast } = useToast();
   const { t } = useTranslation();
   const { isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
-  const [viewIncremented, setViewIncremented] = useState(false);
   
   // Utiliser useFavoriCheck pour les favoris
   const { isFavorite, toggle: toggleFavorite, loading: favoriteLoading } = useFavoriCheck('oeuvre', oeuvreId);
@@ -354,13 +352,7 @@ export function useOeuvreDetails(oeuvreId: number, options: UseOeuvreDetailsOpti
     staleTime: 5 * 60 * 1000,
   });
 
-  // Incrémenter les vues une seule fois
-  useEffect(() => {
-    if (oeuvreId && incrementViews && !viewIncremented && oeuvreData) {
-      oeuvreService.incrementViews?.(oeuvreId).catch(() => {});
-      setViewIncremented(true);
-    }
-  }, [oeuvreId, incrementViews, viewIncremented, oeuvreData]);
+  // Note : les vues sont incrémentées côté backend dans findWithFullDetails()
 
   // Extraire les données
   const oeuvre = oeuvreData as OeuvreDetails | null;

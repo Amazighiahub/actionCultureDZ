@@ -53,7 +53,6 @@ const initOeuvreRoutes = (models, authMiddleware) => {
 
   router.get('/:id', validateId(), asyncHandler((req, res) => oeuvreController.getById(req, res)));
   router.get('/:id/similar', validateId(), asyncHandler((req, res) => oeuvreController.getSimilar(req, res)));
-  router.get('/:id/share-links', validateId(), asyncHandler((req, res) => oeuvreController.getShareLinks(req, res)));
   router.get('/:id/medias', validateId(), asyncHandler((req, res) => oeuvreController.getMedias(req, res)));
 
   router.post('/', authenticate, requireVerifiedEmail,

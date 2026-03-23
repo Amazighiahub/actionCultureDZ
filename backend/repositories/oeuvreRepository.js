@@ -298,11 +298,6 @@ class OeuvreRepository extends BaseRepository {
       await this._attachGenreForSubtype(result, plainSubtype);
     }
 
-    // Alias vues pour le front (nb_vues en base)
-    if (result.nb_vues != null && result.nombre_vues == null) {
-      result.nombre_vues = result.nb_vues;
-    }
-
     return result;
   }
 
@@ -387,8 +382,6 @@ class OeuvreRepository extends BaseRepository {
     const oeuvre = await this.findById(oeuvreId);
     if (!oeuvre) return [];
 
-    // Fetch more candidates ordered by views, then shuffle in JS
-    // Avoids ORDER BY RAND() which causes full table scans
     const candidates = await this.model.findAll({
       where: {
         id_oeuvre: { [Op.ne]: oeuvreId },
@@ -397,15 +390,10 @@ class OeuvreRepository extends BaseRepository {
       },
       include: this.getDefaultIncludes(),
       order: [['nb_vues', 'DESC']],
-      limit: limit * 3
+      limit
     });
 
-    // Fisher-Yates shuffle in application layer
-    for (let i = candidates.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
-    }
-    return candidates.slice(0, limit);
+    return candidates;
   }
 
   /**

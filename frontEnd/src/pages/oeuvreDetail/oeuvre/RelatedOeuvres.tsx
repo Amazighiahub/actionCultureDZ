@@ -82,10 +82,10 @@ const OeuvreCard: React.FC<{ oeuvre: Oeuvre; onClick: () => void }> = ({ oeuvre,
           {oeuvre.annee_creation && (
             <span>{oeuvre.annee_creation}</span>
           )}
-          {(oeuvre as Oeuvre & Record<string, unknown>).nombre_vues !== undefined && (
+          {(oeuvre as Oeuvre & Record<string, unknown>).nb_vues !== undefined && (
             <span className="flex items-center gap-1">
               <Eye className="h-3 w-3" />
-              {(oeuvre as Oeuvre & Record<string, unknown>).nombre_vues.toLocaleString()}
+              {((oeuvre as Oeuvre & Record<string, unknown>).nb_vues as number).toLocaleString()}
             </span>
           )}
         </div>
