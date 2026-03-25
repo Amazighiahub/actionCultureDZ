@@ -93,8 +93,6 @@ interface FormData {
   nb_pages?: number;
   duree_minutes?: number;
   realisateur?: string;
-  producteur?: string;
-  studio?: string;
   duree_album?: string;
   label?: string;
   nb_pistes?: number;
@@ -564,34 +562,42 @@ const AjouterOeuvre: React.FC = () => {
         const description = oeuvre.description;
         const rawCategories = (oeuvre.Categories ?? (oeuvre as unknown as Record<string, unknown>).categories ?? []) as Array<Categorie | number>;
         const rawTags = (oeuvre.Tags ?? (oeuvre as unknown as Record<string, unknown>).tags ?? []) as Array<TagMotCle | string>;
+        const filmData = (oeuvre['Film'] ?? oeuvre['film'] ?? {}) as Record<string, unknown>;
+        const articleData = (oeuvre['Article'] ?? oeuvre['article'] ?? {}) as Record<string, unknown>;
+        const articleScientifiqueData = (oeuvre['ArticleScientifique'] ?? oeuvre['article_scientifique'] ?? {}) as Record<string, unknown>;
         setFormData({
           titre: typeof titre === 'object' && titre !== null ? titre : { fr: typeof titre === 'string' ? titre : '', ar: '', en: '' },
           description: typeof description === 'object' && description !== null ? description : { fr: typeof description === 'string' ? description : '', ar: '', en: '' },
           id_type_oeuvre: oeuvre.id_type_oeuvre || 0,
           id_langue: oeuvre.id_langue || 1,
           categories: rawCategories.map((c) => typeof c === 'object' && c !== null ? c.id_categorie : c) || [],
-          tags: rawTags.map((t) => typeof t === 'object' && t !== null ? String(t.nom) : String(t)) || [],
+          tags: rawTags.map((t) => {
+            if (typeof t === 'object' && t !== null && 'nom' in t) {
+              const nom = (t as TagMotCle).nom;
+              if (typeof nom === 'string') return nom;
+              if (nom && typeof nom === 'object') return nom.fr || nom.ar || nom.en || Object.values(nom)[0] || '';
+            }
+            return String(t);
+          }).filter(Boolean) || [],
           annee_creation: oeuvre.annee_creation,
           prix: oeuvre.prix,
           isbn: oeuvre['isbn'] as string | undefined,
           nb_pages: oeuvre['nb_pages'] as number | undefined,
-          duree_minutes: oeuvre['duree_minutes'] as number | undefined,
-          realisateur: oeuvre['realisateur'] as string | undefined,
-          producteur: oeuvre['producteur'] as string | undefined,
-          studio: oeuvre['studio'] as string | undefined,
+          duree_minutes: (filmData['duree_minutes'] ?? oeuvre['duree_minutes']) as number | undefined,
+          realisateur: (filmData['realisateur'] ?? oeuvre['realisateur']) as string | undefined,
           duree_album: oeuvre['duree_album'] as string | undefined,
           label: oeuvre['label'] as string | undefined,
           nb_pistes: oeuvre['nb_pistes'] as number | undefined,
-          auteur: oeuvre['auteur'] as string | undefined,
-          source: oeuvre['source'] as string | undefined,
-          resume_article: oeuvre['resume_article'] as string | undefined,
-          url_source: oeuvre['url_source'] as string | undefined,
-          journal: oeuvre['journal'] as string | undefined,
-          doi: oeuvre['doi'] as string | undefined,
-          pages: oeuvre['pages'] as string | undefined,
-          volume: oeuvre['volume'] as string | undefined,
-          numero: oeuvre['numero'] as string | undefined,
-          peer_reviewed: oeuvre['peer_reviewed'] as boolean | undefined,
+          auteur: (articleData['auteur'] ?? oeuvre['auteur']) as string | undefined,
+          source: (articleData['source'] ?? oeuvre['source']) as string | undefined,
+          resume_article: (articleData['resume'] ?? oeuvre['resume_article']) as string | undefined,
+          url_source: (articleData['url_source'] ?? oeuvre['url_source']) as string | undefined,
+          journal: (articleScientifiqueData['journal'] ?? oeuvre['journal']) as string | undefined,
+          doi: (articleScientifiqueData['doi'] ?? oeuvre['doi']) as string | undefined,
+          pages: (articleScientifiqueData['pages'] ?? oeuvre['pages']) as string | undefined,
+          volume: (articleScientifiqueData['volume'] ?? oeuvre['volume']) as string | undefined,
+          numero: (articleScientifiqueData['numero'] ?? oeuvre['numero']) as string | undefined,
+          peer_reviewed: (articleScientifiqueData['peer_reviewed'] ?? oeuvre['peer_reviewed']) as boolean | undefined,
           id_materiau: oeuvre['id_materiau'] as number | undefined,
           id_technique: oeuvre['id_technique'] as number | undefined,
           dimensions: oeuvre['dimensions'] as string | undefined,
@@ -1114,9 +1120,7 @@ const AjouterOeuvre: React.FC = () => {
       case 'Film':
         details.film = {
           duree_minutes: formData.duree_minutes,
-          realisateur: formData.realisateur,
-          producteur: formData.producteur,
-          studio: formData.studio
+          realisateur: formData.realisateur
         };
         break;
 
@@ -1419,27 +1423,6 @@ const AjouterOeuvre: React.FC = () => {
             autoComplete="name"
             value={formData.realisateur || ''}
             onChange={(e) => handleInputChange('realisateur', e.target.value)} />
-
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="producteur">{t("ajouteroeuvre.producteur", "Producteur")}</Label>
-            <Input
-            id="producteur"
-            placeholder={t("ajouteroeuvre.placeholder_producteur", "Nom du producteur")}
-            maxLength={200}
-            autoComplete="name"
-            value={formData.producteur || ''}
-            onChange={(e) => handleInputChange('producteur', e.target.value)} />
-
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="studio">{t("ajouteroeuvre.studio", "Studio de production")}</Label>
-            <Input
-            id="studio"
-            placeholder={t("ajouteroeuvre.placeholder_studio", "Nom du studio")}
-            maxLength={200}
-            value={formData.studio || ''}
-            onChange={(e) => handleInputChange('studio', e.target.value)} />
 
           </div>
         </div>,

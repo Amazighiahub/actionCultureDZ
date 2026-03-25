@@ -60,7 +60,7 @@ export interface Categorie {
 
 export interface TagMotCle {
   id_tag: number;
-  nom: string;
+  nom: string | { fr?: string; ar?: string; en?: string; [key: string]: string | undefined };
 }
 
 export interface Langue {

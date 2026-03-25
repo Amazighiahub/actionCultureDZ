@@ -193,7 +193,7 @@ const initLieuRoutes = (models) => {
   router.post('/',
     authMiddleware.authenticate,
     authMiddleware.requireVerifiedEmail,
-    authMiddleware.requireRole(['Contributeur', 'Modérateur', 'Administrateur']),
+    authMiddleware.requireRole(['Professionnel', 'Contributeur', 'Modérateur', 'Administrateur']),
     createLieuValidation,
     validationMiddleware.handleValidationErrors,
     lieuController.createLieu.bind(lieuController)

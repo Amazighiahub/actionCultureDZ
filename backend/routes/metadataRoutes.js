@@ -35,6 +35,20 @@ const initMetadataRoutes = (models) => {
     metadataController.getTypesOeuvres.bind(metadataController)
   );
 
+  // Catégories par type d'œuvre (groupées par genre)
+  router.get('/types-oeuvres/:typeId/categories',
+    cacheMetadata,
+    validationMiddleware.validateId('typeId'),
+    metadataController.getCategoriesForType.bind(metadataController)
+  );
+
+  // Vérifier si un type d'œuvre possède des catégories
+  router.get('/types-oeuvres/:typeId/has-categories',
+    cacheMetadata,
+    validationMiddleware.validateId('typeId'),
+    metadataController.hasCategoriesForType.bind(metadataController)
+  );
+
   // Genres par type
   router.get('/genres/:typeId',
     cacheMetadata,

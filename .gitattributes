@@ -3,6 +3,9 @@
 # Force LF for critical files that break with CRLF
 Makefile     text eol=lf
 *.sh         text eol=lf
+*.conf      text eol=lf
+*.sql       text eol=lf
+*.dockerignore text eol=lf
 *.yml        text eol=lf
 *.yaml       text eol=lf
 *.json       text eol=lf
@@ -15,6 +18,11 @@ Makefile     text eol=lf
 *.env*       text eol=lf
 Dockerfile*  text eol=lf
 .gitattributes text eol=lf
+
+# Windows scripts
+*.bat       text eol=crlf
+*.cmd       text eol=crlf
+*.ps1       text eol=crlf
 
 # Binary files (no conversion)
 *.png  binary

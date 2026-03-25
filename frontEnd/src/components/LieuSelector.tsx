@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { MapPin, Search, Plus, X, Loader2, Copy, Locate } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { lieuService } from '@/services/lieu.service';
@@ -64,6 +65,7 @@ export const LieuSelector: React.FC<LieuSelectorProps> = ({
   };
 
   const [mode, setMode] = useState<'select' | 'create'>('select');
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [lieux, setLieux] = useState<Lieu[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -127,37 +129,42 @@ export const LieuSelector: React.FC<LieuSelectorProps> = ({
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Initialiser la carte
+  // Initialiser la carte quand le dialog de création s'ouvre
   useEffect(() => {
-    if (mode === 'create' && mapContainerRef.current && !mapRef.current) {
-      mapRef.current = L.map(mapContainerRef.current).setView(
-        [newLieu.latitude, newLieu.longitude], 
-        13
-      );
+    if (showCreateDialog && mapContainerRef.current && !mapRef.current) {
+      // Petit délai pour s'assurer que le Dialog est rendu
+      const timer = setTimeout(() => {
+        if (!mapContainerRef.current || mapRef.current) return;
+        mapRef.current = L.map(mapContainerRef.current).setView(
+          [newLieu.latitude, newLieu.longitude],
+          13
+        );
 
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
-      }).addTo(mapRef.current);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '© OpenStreetMap contributors'
+        }).addTo(mapRef.current);
 
-      // Ajouter le marqueur initial
-      markerRef.current = L.marker([newLieu.latitude, newLieu.longitude])
-        .addTo(mapRef.current);
+        markerRef.current = L.marker([newLieu.latitude, newLieu.longitude])
+          .addTo(mapRef.current);
 
-      // Gérer le clic sur la carte
-      mapRef.current.on('click', (e: L.LeafletMouseEvent) => {
-        const { lat, lng } = e.latlng;
-        updateMarkerPosition(lat, lng);
-      });
+        mapRef.current.on('click', (e: L.LeafletMouseEvent) => {
+          const { lat, lng } = e.latlng;
+          updateMarkerPosition(lat, lng);
+        });
+
+        // Forcer le recalcul de la taille (nécessaire dans un Dialog)
+        mapRef.current.invalidateSize();
+      }, 200);
+
+      return () => clearTimeout(timer);
     }
 
-    return () => {
-      if (mode !== 'create' && mapRef.current) {
-        mapRef.current.remove();
-        mapRef.current = null;
-        markerRef.current = null;
-      }
-    };
-  }, [mode]);
+    if (!showCreateDialog && mapRef.current) {
+      mapRef.current.remove();
+      mapRef.current = null;
+      markerRef.current = null;
+    }
+  }, [showCreateDialog]);
 
   const loadLieux = async () => {
     setLoading(true);
@@ -321,7 +328,9 @@ export const LieuSelector: React.FC<LieuSelectorProps> = ({
         });
         
         if (duplicateCheck.data.lieu) {
+          setSelectedLieu(duplicateCheck.data.lieu);
           onChange(duplicateCheck.data.lieu.id_lieu, duplicateCheck.data.lieu);
+          setShowCreateDialog(false);
           setMode('select');
         }
         return;
@@ -345,10 +354,12 @@ export const LieuSelector: React.FC<LieuSelectorProps> = ({
           title: t('common.success'),
           description: t('places.create.success')
         });
-        
+
+        setSelectedLieu(response.data);
         onChange(response.data.id_lieu, response.data);
+        setShowCreateDialog(false);
         setMode('select');
-        loadLieux(); // Recharger la liste
+        loadLieux();
       }
     } catch (error) {
       toast({
@@ -379,70 +390,79 @@ export const LieuSelector: React.FC<LieuSelectorProps> = ({
   ];
 
   return (
-    <div className="space-y-4">
-      {/* Toggle mode */}
-      <div className={`flex gap-2 ${rtlClasses.flexRow}`}>
-        <Button
-          type="button"
-          variant={mode === 'select' ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => setMode('select')}
-        >
-          <Search className={`h-4 w-4 ${rtlClasses.marginEnd(2)}`} />
-          {t('places.selectExisting')}
-        </Button>
-        <Button
-          type="button"
-          variant={mode === 'create' ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => setMode('create')}
-        >
-          <Plus className={`h-4 w-4 ${rtlClasses.marginEnd(2)}`} />
-          {t('places.createNew')}
-        </Button>
-      </div>
-
-      {mode === 'select' ? (
-        <div className="space-y-4">
-          {/* Recherche et filtres */}
-          <div className="space-y-3">
-            <div className={`flex gap-2 ${rtlClasses.flexRow}`}>
-              <Input
-                placeholder={t('places.search.placeholder')}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && loadLieux()}
-              />
-              <Button onClick={loadLieux} disabled={loading}>
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+    <div className="space-y-3">
+      {/* Lieu sélectionné — confirmation claire */}
+      {value && selectedLieu ? (
+        <Card className="border-primary bg-primary/5">
+          <CardContent className="p-3">
+            <div className={`flex items-center justify-between ${rtlClasses.flexRow}`}>
+              <div className={`flex items-center gap-2 ${rtlClasses.flexRow}`}>
+                <MapPin className="h-5 w-5 text-primary flex-shrink-0" />
+                <div>
+                  <p className="font-medium text-primary">{getLocalizedText(selectedLieu.nom)}</p>
+                  <p className="text-sm text-muted-foreground">{getLocalizedText(selectedLieu.adresse)}</p>
+                </div>
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  setSelectedLieu(null);
+                  onChange(undefined, undefined);
+                }}
+              >
+                <X className={`h-4 w-4 ${rtlClasses.marginEnd(1)}`} />
+                {t('common.change', 'Changer')}
               </Button>
             </div>
-            
-            {/* Filtre par type */}
-            <Select
-              value={filterTypeLieuCulturel}
-              onValueChange={(value) => {
-                setFilterTypeLieuCulturel(value as TypeLieuCulturel | 'all');
-                // Pas d'appel à loadLieux() ici, il sera fait par l'effet
-              }}
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          {/* Barre de recherche + bouton Créer */}
+          <div className={`flex gap-2 ${rtlClasses.flexRow}`}>
+            <Input
+              className="flex-1"
+              placeholder={t('places.search.placeholder')}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && loadLieux()}
+            />
+            <Button type="button" onClick={loadLieux} disabled={loading}>
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => { setMode('create'); setShowCreateDialog(true); }}
             >
-              <SelectTrigger>
-                <SelectValue placeholder={t('places.filterByType')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t('places.allTypes')}</SelectItem>
-                {typesLieuxCulturels.map((type) => (
-                  <SelectItem key={type.value} value={type.value}>
-                    {type.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              <Plus className="h-4 w-4 me-1" />
+              {t('places.createNew', 'Créer')}
+            </Button>
           </div>
+
+          {/* Filtre par type */}
+          <Select
+            value={filterTypeLieuCulturel}
+            onValueChange={(v) => setFilterTypeLieuCulturel(v as TypeLieuCulturel | 'all')}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder={t('places.filterByType')} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t('places.allTypes')}</SelectItem>
+              {typesLieuxCulturels.map((type) => (
+                <SelectItem key={type.value} value={type.value}>
+                  {type.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
           {/* Liste des lieux */}
           {userLocation && lieux.length > 0 && (
-            <p className="text-xs text-muted-foreground mb-2">
+            <p className="text-xs text-muted-foreground">
               {t('places.sortedByDistance')}
             </p>
           )}
@@ -459,18 +479,14 @@ export const LieuSelector: React.FC<LieuSelectorProps> = ({
               lieux.map((lieu) => (
                 <Card
                   key={lieu.id_lieu}
-                  className={`cursor-pointer transition-colors ${
-                    value === lieu.id_lieu ? 'border-primary' : ''
-                  }`}
+                  className="cursor-pointer transition-colors hover:border-primary"
+                  onClick={() => {
+                    setSelectedLieu(lieu);
+                    onChange(lieu.id_lieu, lieu);
+                  }}
                 >
                   <CardContent className="p-3">
-                    <div 
-                      className={`flex items-start ${rtlClasses.flexRow}`}
-                      onClick={() => {
-                        setSelectedLieu(lieu);
-                        onChange(lieu.id_lieu, lieu);
-                      }}
-                    >
+                    <div className={`flex items-start ${rtlClasses.flexRow}`}>
                       <MapPin className={`h-4 w-4 text-muted-foreground ${rtlClasses.marginEnd(2)} mt-0.5 flex-shrink-0`} />
                       <div className="flex-1">
                         <div className={`flex items-center gap-2 ${rtlClasses.flexRow}`}>
@@ -482,41 +498,12 @@ export const LieuSelector: React.FC<LieuSelectorProps> = ({
                           )}
                         </div>
                         <p className="text-sm text-muted-foreground">{getLocalizedText(lieu.adresse)}</p>
-                        <div className={`flex items-center gap-4 mt-1 text-xs text-muted-foreground ${rtlClasses.flexRow}`}>
-                          <span>Lat: {lieu.latitude.toFixed(6)}</span>
-                          <span>Lng: {lieu.longitude.toFixed(6)}</span>
-                          {userLocation && (
-                            <span className="text-primary">
-                              {calculateDistance(userLocation.lat, userLocation.lng, lieu.latitude, lieu.longitude).toFixed(1)} km
-                            </span>
-                          )}
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="ghost"
-                            className="h-5 px-1"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              copyCoordinates(lieu.latitude, lieu.longitude);
-                            }}
-                          >
-                            <Copy className="h-3 w-3" />
-                          </Button>
-                        </div>
+                        {userLocation && (
+                          <span className="text-xs text-primary">
+                            {calculateDistance(userLocation.lat, userLocation.lng, lieu.latitude, lieu.longitude).toFixed(1)} km
+                          </span>
+                        )}
                       </div>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setPreviewLieu(lieu);
-                          setShowMapPreview(true);
-                        }}
-                        className={rtlClasses.marginStart(2)}
-                      >
-                        <MapPin className="h-4 w-4" />
-                      </Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -524,76 +511,61 @@ export const LieuSelector: React.FC<LieuSelectorProps> = ({
             )}
           </div>
 
-          {/* Modal de prévisualisation de la carte */}
+          {/* Prévisualisation carte */}
           {showMapPreview && previewLieu && (
-            <Card className="mt-4">
+            <Card className="mt-2">
               <CardContent className="p-4">
                 <div className={`flex justify-between items-center mb-2 ${rtlClasses.flexRow}`}>
                   <h4 className="font-medium">{getLocalizedText(previewLieu.nom)}</h4>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => {
-                      setShowMapPreview(false);
-                      setPreviewLieu(null);
-                    }}
-                  >
+                  <Button type="button" size="sm" variant="ghost" onClick={() => { setShowMapPreview(false); setPreviewLieu(null); }}>
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
-                <p className="text-sm text-muted-foreground mb-2">{getLocalizedText(previewLieu.adresse)}</p>
-                <div className="text-xs text-muted-foreground mb-2">
-                  Coordonnées: {previewLieu.latitude.toFixed(6)}, {previewLieu.longitude.toFixed(6)}
-                </div>
-                <div 
-                  ref={previewMapContainerRef}
-                  className="h-48 rounded-lg border"
-                />
+                <div ref={previewMapContainerRef} className="h-48 rounded-lg border" />
                 <Button
                   type="button"
                   className="w-full mt-3"
-                  onClick={() => {
-                    setSelectedLieu(previewLieu);
-                    onChange(previewLieu.id_lieu, previewLieu);
-                    setShowMapPreview(false);
-                  }}
+                  onClick={() => { setSelectedLieu(previewLieu); onChange(previewLieu.id_lieu, previewLieu); setShowMapPreview(false); }}
                 >
                   {t('places.selectThisLocation')}
                 </Button>
               </CardContent>
             </Card>
           )}
-        </div>
-      ) : (
-        <Card>
-          <CardContent className="p-6 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="nom">{t('places.name')} *</Label>
+        </>
+      )}
+
+      {/* Dialog de création de lieu */}
+      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+        <DialogContent className="sm:max-w-lg max-h-[90vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MapPin className="h-5 w-5" />
+              {t('places.createNew', 'Créer un nouveau lieu')}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-3 overflow-y-auto flex-1 pe-1">
+            {/* Nom + Type */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label>{t('places.name')} *</Label>
                 <Input
-                  id="nom"
                   value={newLieu.nom}
                   onChange={(e) => setNewLieu(prev => ({ ...prev, nom: e.target.value }))}
                   placeholder={t('places.namePlaceholder')}
-                  required
                 />
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="type">{t('places.type')} *</Label>
+              <div className="space-y-1">
+                <Label>{t('places.type')} *</Label>
                 <Select
                   value={newLieu.typeLieuCulturel}
-                  onValueChange={(value) => setNewLieu(prev => ({ ...prev, typeLieuCulturel: value as TypeLieuCulturel }))}
+                  onValueChange={(v) => setNewLieu(prev => ({ ...prev, typeLieuCulturel: v as TypeLieuCulturel }))}
                 >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {typesLieuxCulturels.map((type) => (
-                      <SelectItem key={type.value} value={type.value}>
-                        {type.label}
-                      </SelectItem>
+                      <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -601,7 +573,7 @@ export const LieuSelector: React.FC<LieuSelectorProps> = ({
             </div>
 
             {/* Recherche d'adresse */}
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label>{t('places.addressSearch')}</Label>
               <div className={`flex gap-2 ${rtlClasses.flexRow}`}>
                 <Input
@@ -614,26 +586,15 @@ export const LieuSelector: React.FC<LieuSelectorProps> = ({
                   {searching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
                 </Button>
                 {userLocation && (
-                  <Button 
-                    type="button" 
-                    variant="outline"
-                    onClick={() => updateMarkerPosition(userLocation.lat, userLocation.lng)}
-                    title={t('places.useCurrentLocation')}
-                  >
+                  <Button type="button" variant="outline" onClick={() => updateMarkerPosition(userLocation.lat, userLocation.lng)} title={t('places.useCurrentLocation')}>
                     <Locate className="h-4 w-4" />
                   </Button>
                 )}
               </div>
-
-              {/* Résultats de recherche */}
               {searchResults.length > 0 && (
-                <div className="mt-2 space-y-1 max-h-40 overflow-y-auto border rounded p-2">
+                <div className="mt-1 space-y-1 max-h-28 overflow-y-auto border rounded p-2">
                   {searchResults.map((result, index) => (
-                    <div
-                      key={index}
-                      className="p-2 hover:bg-accent cursor-pointer rounded text-sm"
-                      onClick={() => selectSearchResult(result)}
-                    >
+                    <div key={index} className="p-2 hover:bg-accent cursor-pointer rounded text-sm" onClick={() => selectSearchResult(result)}>
                       {result.display_name}
                     </div>
                   ))}
@@ -641,11 +602,10 @@ export const LieuSelector: React.FC<LieuSelectorProps> = ({
               )}
             </div>
 
-            {/* Adresse actuelle */}
-            <div className="space-y-2">
-              <Label htmlFor="adresse">{t('places.address')} *</Label>
+            {/* Adresse */}
+            <div className="space-y-1">
+              <Label>{t('places.address')} *</Label>
               <Textarea
-                id="adresse"
                 value={newLieu.adresse}
                 onChange={(e) => setNewLieu(prev => ({ ...prev, adresse: e.target.value }))}
                 placeholder={t('places.addressPlaceholder')}
@@ -654,70 +614,41 @@ export const LieuSelector: React.FC<LieuSelectorProps> = ({
             </div>
 
             {/* Carte */}
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label>{t('places.mapLocation')}</Label>
-              <p className="text-sm text-muted-foreground">
-                {t('places.mapInstructions')}
+              <p className="text-xs text-muted-foreground">{t('places.mapInstructions')}</p>
+              <div ref={mapContainerRef} className="h-40 rounded-lg border" />
+              <p className="text-xs text-muted-foreground">
+                {t('places.coordinates')}: {newLieu.latitude.toFixed(6)}, {newLieu.longitude.toFixed(6)}
               </p>
-              <div 
-                ref={mapContainerRef}
-                className="h-64 rounded-lg border"
-              />
-              <div className="text-sm text-muted-foreground">
-                <div className={`flex items-center gap-2 ${rtlClasses.flexRow}`}>
-                  <span>{t('places.coordinates')}: {newLieu.latitude.toFixed(6)}, {newLieu.longitude.toFixed(6)}</span>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    className="h-5 px-1"
-                    onClick={() => copyCoordinates(newLieu.latitude, newLieu.longitude)}
-                  >
-                    <Copy className="h-3 w-3" />
-                  </Button>
-                </div>
-              </div>
             </div>
 
             {/* Description */}
-            <div className="space-y-2">
-              <Label htmlFor="description">{t('places.description')}</Label>
+            <div className="space-y-1">
+              <Label>{t('places.description')} <span className="text-muted-foreground font-normal text-xs">({t('common.optional', 'Optionnel')})</span></Label>
               <Textarea
-                id="description"
                 value={newLieu.description}
                 onChange={(e) => setNewLieu(prev => ({ ...prev, description: e.target.value }))}
                 placeholder={t('places.descriptionPlaceholder')}
-                rows={3}
+                rows={2}
               />
             </div>
+          </div>
 
-            {/* Actions */}
-            <div className={`flex justify-end gap-2 ${rtlClasses.flexRow}`}>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setMode('select')}
-              >
-                {t('common.cancel')}
-              </Button>
-              <Button
-                type="button"
-                onClick={handleCreateLieu}
-                disabled={loading || !newLieu.nom || !newLieu.adresse}
-              >
-                {loading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <>
-                    <Plus className={`h-4 w-4 ${rtlClasses.marginEnd(2)}`} />
-                    {t('places.create.button')}
-                  </>
-                )}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+          <DialogFooter className="border-t pt-4">
+            <Button type="button" variant="outline" onClick={() => setShowCreateDialog(false)}>
+              {t('common.cancel')}
+            </Button>
+            <Button
+              type="button"
+              onClick={handleCreateLieu}
+              disabled={loading || !newLieu.nom || !newLieu.adresse}
+            >
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Plus className="h-4 w-4 me-2" />{t('places.create.button', 'Créer le lieu')}</>}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

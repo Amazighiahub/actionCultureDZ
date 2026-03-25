@@ -94,6 +94,32 @@ class MetadataService {
     });
   }
 
+  async getCategoriesForType(typeId) {
+    return this._cached(`categories_for_type_${typeId}`, async () => {
+      const genres = await this.getGenresParType(typeId);
+      const categoriesByGenre = await Promise.all(
+        genres.map(async (genre) => ({
+          id_genre: genre.id_genre,
+          nom: genre.nom,
+          description: genre.description,
+          categories: await this.getCategoriesParGenre(genre.id_genre)
+        }))
+      );
+
+      return categoriesByGenre.filter(group => Array.isArray(group.categories) && group.categories.length > 0);
+    });
+  }
+
+  async hasCategoriesForType(typeId) {
+    const categories = await this.getCategoriesForType(typeId);
+    const hasCategories = Array.isArray(categories) && categories.length > 0;
+
+    return {
+      hasCategories,
+      requiresCategories: hasCategories
+    };
+  }
+
   async getHierarchieComplete() {
     return this._cached('hierarchie_complete', () =>
       this.models.TypeOeuvre.findAll({

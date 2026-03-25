@@ -7,20 +7,22 @@ import {
   ContributeurOeuvre
 } from './oeuvre-creation.types';
 
+type MultiLangText = string | { fr?: string; ar?: string; en?: string; [key: string]: string | undefined };
+
 /**
  * Type DTO pour la création d'œuvre qui correspond exactement
  * à ce que le backend attend
  */
 export interface CreateOeuvreBackendDTO {
   // Informations de base de l'œuvre
-  titre: string;
-  description: string;
+  titre: MultiLangText;
+  description: MultiLangText;
   id_type_oeuvre: number;
   id_langue: number;
   annee_creation?: number;
   prix?: number;
   categories: number[];
-  tags: string[];
+  tags: Array<string | number>;
   
   // Contributeurs : utilisateurs inscrits
   utilisateurs_inscrits?: Array<{

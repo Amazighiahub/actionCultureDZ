@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Upload, Save, ArrowLeft, Calendar, Building2, Globe, AlertCircle, Plus, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Link } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
 import MultiLangInput from '@/components/MultiLangInput';
@@ -58,7 +59,19 @@ const AjouterEvenement = () => {
   const [selectedOrganisationId, setSelectedOrganisationId] = useState<number | undefined>();
   const [hasOrganisation, setHasOrganisation] = useState(false);
   const [loadingOrganisations, setLoadingOrganisations] = useState(true);
-  
+
+  // État pour le dialog de création d'organisation
+  const [showOrgDialog, setShowOrgDialog] = useState(false);
+  const [orgTypes, setOrgTypes] = useState<Array<{ id_type_organisation: number; nom: string | Record<string, string> }>>([]);
+  const [creatingOrg, setCreatingOrg] = useState(false);
+  const [orgForm, setOrgForm] = useState({
+    nom: { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
+    description: { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
+    id_type_organisation: '',
+    site_web: '',
+  });
+  const [orgFormErrors, setOrgFormErrors] = useState<Record<string, string>>({});
+
   // État pour événement virtuel
   const [isVirtual, setIsVirtual] = useState(false);
     
@@ -231,7 +244,76 @@ const AjouterEvenement = () => {
     }
   };
 
-  // Les types d'événements sont chargés depuis l'API dans checkAuthAndLoadData
+  // Charger les types d'organisation pour le dialog de création
+  const loadOrgTypes = async () => {
+    if (orgTypes.length > 0) return; // déjà chargé
+    try {
+      const response = await httpClient.get<Array<{ id_type_organisation: number; nom: string | Record<string, string> }>>(API_ENDPOINTS.organisations.types);
+      if (response.success && response.data) {
+        setOrgTypes(response.data);
+      }
+    } catch {
+      // Silently fail — error shown in dialog if types empty
+    }
+  };
+
+  // Créer une organisation depuis le dialog
+  const handleCreateOrg = async () => {
+    const errs: Record<string, string> = {};
+    if (!orgForm.nom.fr?.trim() && !orgForm.nom.ar?.trim()) {
+      errs.nom = t('organisations.create.nameRequired', 'Le nom est requis (au moins en français ou arabe)');
+    }
+    if (!orgForm.id_type_organisation) {
+      errs.id_type_organisation = t('organisations.create.typeRequired', 'Le type d\'organisation est requis');
+    }
+    setOrgFormErrors(errs);
+    if (Object.keys(errs).length > 0) return;
+
+    setCreatingOrg(true);
+    try {
+      const response = await httpClient.post<Record<string, unknown>>(API_ENDPOINTS.organisations.create, {
+        nom: orgForm.nom,
+        id_type_organisation: parseInt(orgForm.id_type_organisation),
+        description: orgForm.description,
+        site_web: orgForm.site_web || undefined,
+      });
+
+      if (response.success && response.data) {
+        const newOrg = response.data;
+        setOrganisations(prev => [...prev, newOrg]);
+        setSelectedOrganisationId(newOrg.id_organisation as number);
+        setHasOrganisation(true);
+        clearFieldError('organisation');
+        setShowOrgDialog(false);
+        // Réinitialiser le formulaire
+        setOrgForm({
+          nom: { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
+          description: { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
+          id_type_organisation: '',
+          site_web: '',
+        });
+        setOrgFormErrors({});
+        toast({
+          title: t('common.success', 'Succès'),
+          description: t('organisations.create.success', 'Organisation créée avec succès'),
+        });
+      } else {
+        toast({
+          title: t('common.error', 'Erreur'),
+          description: response.error || t('organisations.create.error', 'Erreur lors de la création'),
+          variant: 'destructive',
+        });
+      }
+    } catch {
+      toast({
+        title: t('common.error', 'Erreur'),
+        description: t('organisations.create.error', 'Erreur lors de la création'),
+        variant: 'destructive',
+      });
+    } finally {
+      setCreatingOrg(false);
+    }
+  };
 
   const handleGratuitChange = (checked: boolean | "indeterminate") => {
     setGratuit(checked === true);
@@ -568,21 +650,31 @@ const AjouterEvenement = () => {
                   ) : organisations.length > 0 ? (
                     <div className="space-y-2">
                       <Label>{t('events.create.selectOrganisation', 'Sélectionnez votre organisation')}</Label>
-                      <Select
-                        value={selectedOrganisationId?.toString() ?? ''}
-                        onValueChange={(value) => { clearFieldError('organisation'); setSelectedOrganisationId(parseInt(value)); }}
-                      >
-                        <SelectTrigger aria-invalid={!!fieldErrors.organisation} aria-describedby={fieldErrors.organisation ? 'organisation-error' : undefined}>
-                          <SelectValue placeholder={t('events.create.selectOrganisationPlaceholder', 'Choisir une organisation')} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {organisations.map((org) => (
-                            <SelectItem key={org.id_organisation} value={org.id_organisation.toString()}>
-                              {typeof org.nom === 'object' ? org.nom.fr || org.nom.ar : org.nom}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <div className="flex gap-2">
+                        <Select
+                          value={selectedOrganisationId?.toString() ?? ''}
+                          onValueChange={(value) => { clearFieldError('organisation'); setSelectedOrganisationId(parseInt(value)); }}
+                        >
+                          <SelectTrigger className="flex-1" aria-invalid={!!fieldErrors.organisation} aria-describedby={fieldErrors.organisation ? 'organisation-error' : undefined}>
+                            <SelectValue placeholder={t('events.create.selectOrganisationPlaceholder', 'Choisir une organisation')} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {organisations.map((org) => (
+                              <SelectItem key={org.id_organisation as number} value={(org.id_organisation as number).toString()}>
+                                {typeof org.nom === 'object' ? (org.nom as Record<string, string>).fr || (org.nom as Record<string, string>).ar : org.nom as string}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => { loadOrgTypes(); setShowOrgDialog(true); }}
+                        >
+                          <Plus className="h-4 w-4 me-1" />
+                          {t('events.create.createOrganisation', 'Créer')}
+                        </Button>
+                      </div>
                       {fieldErrors.organisation && <p id="organisation-error" role="alert" className="text-sm text-destructive">{fieldErrors.organisation}</p>}
                     </div>
                   ) : (
@@ -594,7 +686,7 @@ const AjouterEvenement = () => {
                       <Button
                         type="button"
                         variant="outline"
-                        onClick={() => saveDraftAndNavigate('/ajouter-organisation')}
+                        onClick={() => { loadOrgTypes(); setShowOrgDialog(true); }}
                       >
                         <Plus className="h-4 w-4 me-2" />
                         {t('events.create.createOrganisation', 'Créer une organisation')}
@@ -974,6 +1066,99 @@ const AjouterEvenement = () => {
           </form>
         </div>
       </main>
+
+      {/* Dialog de création d'organisation */}
+      <Dialog open={showOrgDialog} onOpenChange={setShowOrgDialog}>
+        <DialogContent className="sm:max-w-lg max-h-[90vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Building2 className="h-5 w-5" />
+              {t('organisations.create.title', 'Créer une organisation')}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2 overflow-y-auto flex-1 pe-1">
+            <div className="space-y-2">
+              <Label>{t('organisations.create.name', 'Nom de l\'organisation')} *</Label>
+              <MultiLangInput
+                name="org-nom"
+                label={t('organisations.create.name', 'Nom')}
+                value={orgForm.nom}
+                onChange={(value) => {
+                  setOrgForm(prev => ({ ...prev, nom: value as typeof prev.nom }));
+                  setOrgFormErrors(prev => { const next = { ...prev }; delete next.nom; return next; });
+                }}
+                required
+                requiredLanguages={['fr']}
+                placeholder={t('organisations.create.namePlaceholder', 'Ex: Association culturelle...')}
+                errors={orgFormErrors.nom ? { fr: orgFormErrors.nom } : undefined}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>{t('organisations.create.type', 'Type d\'organisation')} *</Label>
+              <Select
+                value={orgForm.id_type_organisation}
+                onValueChange={(value) => {
+                  setOrgForm(prev => ({ ...prev, id_type_organisation: value }));
+                  setOrgFormErrors(prev => { const next = { ...prev }; delete next.id_type_organisation; return next; });
+                }}
+              >
+                <SelectTrigger
+                  className={orgFormErrors.id_type_organisation ? 'border-destructive' : ''}
+                  aria-invalid={!!orgFormErrors.id_type_organisation}
+                >
+                  <SelectValue placeholder={t('organisations.create.typePlaceholder', 'Choisir un type')} />
+                </SelectTrigger>
+                <SelectContent>
+                  {orgTypes.map((type) => (
+                    <SelectItem key={type.id_type_organisation} value={type.id_type_organisation.toString()}>
+                      {typeof type.nom === 'object' ? type.nom.fr || type.nom.ar || '' : type.nom}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {orgFormErrors.id_type_organisation && (
+                <p className="text-sm text-destructive">{orgFormErrors.id_type_organisation}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label>{t('common.description', 'Description')} <span className="text-muted-foreground font-normal">({t('common.optional', 'Optionnel')})</span></Label>
+              <MultiLangInput
+                name="org-description"
+                label={t('common.description', 'Description')}
+                value={orgForm.description}
+                onChange={(value) => setOrgForm(prev => ({ ...prev, description: value as typeof prev.description }))}
+                type="textarea"
+                rows={2}
+                requiredLanguages={[]}
+                placeholder={t('organisations.create.descriptionPlaceholder', 'Décrivez votre organisation...')}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>{t('organisations.create.website', 'Site web')} <span className="text-muted-foreground font-normal">({t('common.optional', 'Optionnel')})</span></Label>
+              <Input
+                type="url"
+                value={orgForm.site_web}
+                onChange={(e) => setOrgForm(prev => ({ ...prev, site_web: e.target.value }))}
+                placeholder="https://www.example.com"
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="border-t pt-4">
+            <Button type="button" variant="outline" onClick={() => setShowOrgDialog(false)} disabled={creatingOrg}>
+              {t('common.cancel', 'Annuler')}
+            </Button>
+            <Button type="button" onClick={handleCreateOrg} disabled={creatingOrg}>
+              {creatingOrg && <Loader2 className="h-4 w-4 me-2 animate-spin" />}
+              {t('common.create', 'Créer')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Footer />
     </div>

@@ -184,6 +184,13 @@ class CreateOeuvreDTO extends BaseDTO {
   }
 
   /**
+   * Retourne les tags fournis dans la requête (IDs ou noms)
+   */
+  getTags() {
+    return Array.isArray(this.tags) ? this.tags.filter(tag => tag !== null && tag !== undefined && tag !== '') : [];
+  }
+
+  /**
    * Validation URL image
    * @private
    */

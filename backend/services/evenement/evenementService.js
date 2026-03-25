@@ -204,7 +204,7 @@ class EvenementService extends BaseService {
     }
 
     // Seul le propriétaire peut modifier son événement
-    if (existing.id_user !== userId) {
+    if (parseInt(existing.id_user) !== parseInt(userId)) {
       throw this._forbiddenError('Vous ne pouvez modifier que vos propres événements');
     }
 
@@ -267,6 +267,10 @@ class EvenementService extends BaseService {
     const updated = await this.repository.findWithFullDetails(id);
 
     this.cache.invalidate();
+    // Invalider le cache middleware pour que les listes soient à jour
+    const cacheMiddleware = require('../../middlewares/cacheMiddleware');
+    await cacheMiddleware.clearCache('professionnel');
+    await cacheMiddleware.clearCache('evenement');
     this.logger.info(`Événement modifié: ${id} par user: ${userId}`);
 
     return EvenementDTO.fromEntity(updated);
@@ -281,8 +285,8 @@ class EvenementService extends BaseService {
       throw this._notFoundError(id);
     }
 
-    // Vérifier propriété (admin bypass)
-    if (existing.id_user !== userId && !options.isAdmin) {
+    // Vérifier propriété (admin bypass) — parseInt pour éviter mismatch string/int
+    if (parseInt(existing.id_user) !== parseInt(userId) && !options.isAdmin) {
       throw this._forbiddenError('Vous ne pouvez supprimer que vos propres événements');
     }
 
@@ -293,6 +297,10 @@ class EvenementService extends BaseService {
 
     await this.repository.delete(id);
     this.cache.invalidate();
+    // Invalider le cache middleware pour que les listes soient à jour — await pour que Redis soit vidé avant la réponse
+    const cacheMiddleware = require('../../middlewares/cacheMiddleware');
+    await cacheMiddleware.clearCache('professionnel');
+    await cacheMiddleware.clearCache('evenement');
     this.logger.info(`Événement supprimé: ${id} par user: ${userId}`);
     return true;
   }
@@ -599,10 +607,10 @@ class EvenementService extends BaseService {
     }
 
     this.cache.invalidate();
-    // Invalider le cache middleware (professionnel/dashboard, listes)
+    // Invalider le cache middleware (professionnel/dashboard, listes) — await pour que Redis soit vidé avant la réponse
     const cacheMiddleware = require('../../middlewares/cacheMiddleware');
-    cacheMiddleware.clearCache('professionnel');
-    cacheMiddleware.clearCache('evenement');
+    await cacheMiddleware.clearCache('professionnel');
+    await cacheMiddleware.clearCache('evenement');
     this.logger.info(`Événement annulé: ${id} par user: ${userId}, motif: ${motif}`);
     return EvenementDTO.fromEntity(updated);
   }

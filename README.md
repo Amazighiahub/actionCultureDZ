@@ -2,6 +2,8 @@
 
 Plateforme web de valorisation du patrimoine culturel algerien : sites patrimoniaux, evenements, oeuvres, artisanat, parcours intelligents et services professionnels. Support multilingue complet (Francais, Arabe, Anglais, Tamazight Latin, Tifinagh).
 
+> Guide recommande pour les etudiants : [docs/INSTALLATION_ETUDIANTE.md](docs/INSTALLATION_ETUDIANTE.md)
+
 ## Stack technique
 
 | Couche | Technologies |
@@ -28,9 +30,8 @@ git clone https://github.com/Amazighiahub/actionCultureDZ.git
 cd actionCultureDZ
 cp .env.example .env         # editer : DB_PASSWORD, JWT_SECRET
 docker compose up -d --build
-docker exec -it eventculture-backend npx sequelize db:migrate
-docker exec -it eventculture-backend node scripts/seed-geography.js
-docker exec -it eventculture-backend node scripts/seed-all-data.js
+docker exec -it eventculture-backend npm run db:migrate
+docker exec -it eventculture-backend npm run db:seed
 ```
 
 Frontend : http://localhost:3000 | API : http://localhost:3001/api | Health : http://localhost:3001/health
@@ -185,7 +186,7 @@ Chaque couche a une responsabilite unique. Les controllers ne touchent jamais la
 
 ## API — Endpoints principaux
 
-Base URL : `/api/v2`
+Base URL : `/api`
 
 | Methode | Endpoint | Auth | Description |
 |---------|----------|------|-------------|
@@ -231,6 +232,7 @@ Documentation API complete : [docs/API.md](docs/API.md)
 
 | Document | Contenu |
 |----------|---------|
+| [docs/INSTALLATION_ETUDIANTE.md](docs/INSTALLATION_ETUDIANTE.md) | Guide pas a pas pour installer et lancer le projet en local ou avec Docker |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Conventions, workflow Git, comment contribuer |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Architecture technique detaillee (backend + frontend) |
 | [docs/API.md](docs/API.md) | Documentation complete de l'API REST |

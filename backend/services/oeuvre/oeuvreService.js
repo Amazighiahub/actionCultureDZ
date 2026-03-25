@@ -218,7 +218,7 @@ class OeuvreService extends BaseService {
       }
 
       // Associer les tags
-      const tagIds = createDTO.getTagIds();
+      const tagIds = await this._resolveTagIds(createDTO.getTags(), transaction);
       if (tagIds.length > 0 && this.models?.OeuvreTag) {
         await this._associateTags(newOeuvre.id_oeuvre, tagIds, transaction);
       }
@@ -240,7 +240,7 @@ class OeuvreService extends BaseService {
     this.logger.info(`Œuvre créée: ${oeuvre.id_oeuvre} par utilisateur: ${userId}`);
 
     // 5. Retourner l'œuvre complète et l'enregistrement sous-type
-    const oeuvreFull = await this.findById(oeuvre.id_oeuvre);
+    const oeuvreFull = await this.findWithFullDetails(oeuvre.id_oeuvre);
     return {
       oeuvre: oeuvreFull,
       subtype: subtypeRecord ? subtypeRecord.get({ plain: true }) : null
@@ -297,7 +297,7 @@ class OeuvreService extends BaseService {
       }
 
       // Mettre à jour les tags si fournis
-      const tagIds = updateDTO.getTagIds();
+      const tagIds = await this._resolveTagIds(updateDTO.getTags(), transaction);
       if (tagIds !== null && this.models?.OeuvreTag) {
         await this._syncTags(id, tagIds, transaction);
       }
@@ -319,7 +319,7 @@ class OeuvreService extends BaseService {
     this.logger.info(`Œuvre mise à jour: ${id} par utilisateur: ${userId}`);
 
     // 8. Retourner l'œuvre mise à jour
-    return this.findById(id);
+    return this.findWithFullDetails(id);
   }
 
   /**
@@ -558,6 +558,57 @@ class OeuvreService extends BaseService {
     if (tagIds.length > 0) {
       await this._associateTags(oeuvreId, tagIds, transaction);
     }
+  }
+
+  /**
+   * Résout des tags envoyés sous forme d'IDs ou de noms multilingues
+   * @private
+   */
+  async _resolveTagIds(tags, transaction) {
+    if (tags == null) return null;
+    if (!Array.isArray(tags) || tags.length === 0 || !this.models?.TagMotCle) return [];
+
+    const resolvedIds = [];
+    const existingTags = await this.models.TagMotCle.findAll({ transaction });
+
+    for (const tag of tags) {
+      const numericTagId = Number(tag);
+      if (Number.isInteger(numericTagId) && numericTagId > 0) {
+        resolvedIds.push(numericTagId);
+        continue;
+      }
+
+      if (typeof tag !== 'string') {
+        continue;
+      }
+
+      const normalizedTag = tag.trim().toLowerCase();
+      if (!normalizedTag) {
+        continue;
+      }
+
+      const existingTag = existingTags.find((tagRecord) => {
+        const tagNames = Object.values(tagRecord.nom || {})
+          .filter(value => typeof value === 'string')
+          .map(value => value.trim().toLowerCase())
+          .filter(Boolean);
+        return tagNames.includes(normalizedTag);
+      });
+
+      if (existingTag) {
+        resolvedIds.push(existingTag.id_tag);
+        continue;
+      }
+
+      const createdTag = await this.models.TagMotCle.create({
+        nom: { fr: tag.trim() }
+      }, { transaction });
+
+      existingTags.push(createdTag);
+      resolvedIds.push(createdTag.id_tag);
+    }
+
+    return [...new Set(resolvedIds)];
   }
 }
 

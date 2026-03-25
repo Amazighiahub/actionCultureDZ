@@ -257,6 +257,14 @@ class UpdateOeuvreDTO extends BaseDTO {
     if (!this.hasField('tags')) return null;
     return this.tags.filter(id => id > 0);
   }
+
+  /**
+   * Retourne les tags fournis dans la requête (IDs ou noms)
+   */
+  getTags() {
+    if (!this.hasField('tags')) return null;
+    return Array.isArray(this.tags) ? this.tags.filter(tag => tag !== null && tag !== undefined && tag !== '') : [];
+  }
 }
 
 module.exports = UpdateOeuvreDTO;

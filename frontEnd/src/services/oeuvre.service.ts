@@ -200,8 +200,8 @@ class OeuvreService {
       const formData = new FormData();
 
       // Ajouter les champs simples directement
-      formData.append('titre', data.titre);
-      formData.append('description', data.description || '');
+      formData.append('titre', typeof data.titre === 'string' ? data.titre : JSON.stringify(data.titre));
+      formData.append('description', typeof data.description === 'string' ? data.description : JSON.stringify(data.description || {}));
       formData.append('id_type_oeuvre', data.id_type_oeuvre.toString());
       formData.append('id_langue', data.id_langue.toString());
 

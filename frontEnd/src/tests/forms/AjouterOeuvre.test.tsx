@@ -60,6 +60,10 @@ const MOCK_TYPES_OEUVRES = [
   { id_type_oeuvre: 1, nom_type: 'Livre' },
   { id_type_oeuvre: 2, nom_type: 'Film' },
   { id_type_oeuvre: 3, nom_type: 'Album Musical' },
+  { id_type_oeuvre: 4, nom_type: 'Article' },
+  { id_type_oeuvre: 5, nom_type: 'Article Scientifique' },
+  { id_type_oeuvre: 6, nom_type: 'Artisanat' },
+  { id_type_oeuvre: 8, nom_type: 'Œuvre d\'Art' },
 ];
 
 const MOCK_LANGUES = [
@@ -128,6 +132,7 @@ vi.mock('@/services/oeuvre.service', () => ({
     createOeuvreFormData: (...args: any[]) => mockCreateOeuvreFormData(...args),
     createOeuvreWithMedias: (...args: any[]) => mockCreateOeuvreWithMedias(...args),
     update: (...args: any[]) => mockUpdate(...args),
+    updateOeuvre: (...args: any[]) => mockUpdate(...args),
     getById: (...args: any[]) => mockGetById(...args),
     getOeuvreById: (...args: any[]) => mockGetById(...args),
     checkRecentOeuvre: (...args: any[]) => mockCheckRecentOeuvre(...args),
@@ -322,6 +327,16 @@ async function fillMinimalForm(user: ReturnType<typeof userEvent.setup>) {
   await user.type(titreInput, 'Mon oeuvre test');
 
   // Description FR
+  const descInput = screen.getByTestId('input-description-fr');
+  await user.clear(descInput);
+  await user.type(descInput, 'Une description test');
+}
+
+async function fillCommonRequiredFields(user: ReturnType<typeof userEvent.setup>) {
+  const titreInput = screen.getByTestId('input-titre-fr');
+  await user.clear(titreInput);
+  await user.type(titreInput, 'Mon oeuvre test');
+
   const descInput = screen.getByTestId('input-description-fr');
   await user.clear(descInput);
   await user.type(descInput, 'Une description test');
@@ -667,6 +682,127 @@ describe('AjouterOeuvre', () => {
         (c: any[]) => !c[0]?.variant || c[0]?.variant !== 'destructive'
       );
       expect(toastCall).toBeTruthy();
+    });
+
+    test.each([
+      {
+        typeName: 'Livre',
+        setup: async () => {
+          const isbnInput = document.getElementById('isbn') as HTMLInputElement;
+          fireEvent.change(isbnInput, { target: { value: '9782123456789' } });
+        },
+        expectedTypeId: 1,
+        expectedDetails: { livre: { isbn: '9782123456789', nb_pages: undefined, format: 'standard', collection: undefined } },
+      },
+      {
+        typeName: 'Film',
+        setup: async () => {
+          const dureeInput = document.getElementById('duree_minutes') as HTMLInputElement;
+          const realisateurInput = document.getElementById('realisateur') as HTMLInputElement;
+          fireEvent.change(dureeInput, { target: { value: '120' } });
+          fireEvent.change(realisateurInput, { target: { value: 'Merzak Allouache' } });
+        },
+        expectedTypeId: 2,
+        expectedDetails: { film: { duree_minutes: 120, realisateur: 'Merzak Allouache' } },
+      },
+      {
+        typeName: 'Album Musical',
+        setup: async () => {
+          const dureeInput = document.getElementById('duree_album') as HTMLInputElement;
+          const labelInput = document.getElementById('label') as HTMLInputElement;
+          const pistesInput = document.getElementById('nb_pistes') as HTMLInputElement;
+          fireEvent.change(dureeInput, { target: { value: '45' } });
+          fireEvent.change(labelInput, { target: { value: 'ENRS' } });
+          fireEvent.change(pistesInput, { target: { value: '10' } });
+        },
+        expectedTypeId: 3,
+        expectedDetails: { album_musical: { duree: '45', label: 'ENRS', nb_pistes: 10 } },
+      },
+      {
+        typeName: 'Article',
+        setup: async () => {
+          const auteurInput = document.getElementById('auteur') as HTMLInputElement;
+          const sourceInput = document.getElementById('source') as HTMLInputElement;
+          const resumeInput = document.getElementById('resume_article') as HTMLTextAreaElement;
+          const urlInput = document.getElementById('url_source') as HTMLInputElement;
+          fireEvent.change(auteurInput, { target: { value: 'Auteur Test' } });
+          fireEvent.change(sourceInput, { target: { value: 'Source Test' } });
+          fireEvent.change(resumeInput, { target: { value: 'Résumé test' } });
+          fireEvent.change(urlInput, { target: { value: 'https://example.com' } });
+        },
+        expectedTypeId: 4,
+        expectedDetails: { article: { auteur: 'Auteur Test', source: 'Source Test', resume: 'Résumé test', url_source: 'https://example.com' } },
+      },
+      {
+        typeName: 'Article Scientifique',
+        setup: async () => {
+          const journalInput = document.getElementById('journal') as HTMLInputElement;
+          const doiInput = document.getElementById('doi') as HTMLInputElement;
+          const pagesInput = document.getElementById('pages') as HTMLInputElement;
+          const volumeInput = document.getElementById('volume') as HTMLInputElement;
+          const numeroInput = document.getElementById('numero') as HTMLInputElement;
+          fireEvent.change(journalInput, { target: { value: 'Nature' } });
+          fireEvent.change(doiInput, { target: { value: '10.1234/test' } });
+          fireEvent.change(pagesInput, { target: { value: '1-10' } });
+          fireEvent.change(volumeInput, { target: { value: '42' } });
+          fireEvent.change(numeroInput, { target: { value: '7' } });
+        },
+        expectedTypeId: 5,
+        expectedDetails: { article_scientifique: { journal: 'Nature', doi: '10.1234/test', pages: '1-10', volume: '42', numero: '7', peer_reviewed: undefined } },
+      },
+      {
+        typeName: 'Artisanat',
+        setup: async () => {
+          const dimensionsInput = document.getElementById('dimensions') as HTMLInputElement;
+          const poidsInput = document.getElementById('poids') as HTMLInputElement;
+          const prixInput = document.getElementById('prix') as HTMLInputElement;
+          fireEvent.change(dimensionsInput, { target: { value: '20x30 cm' } });
+          fireEvent.change(poidsInput, { target: { value: '2.5' } });
+          fireEvent.change(prixInput, { target: { value: '1500' } });
+        },
+        expectedTypeId: 6,
+        expectedDetails: { artisanat: { id_materiau: undefined, id_technique: undefined, dimensions: '20x30 cm', poids: 2.5, prix: 1500 } },
+      },
+      {
+        typeName: 'Œuvre d\'Art',
+        setup: async () => {
+          const techniqueInput = document.getElementById('technique_art') as HTMLInputElement;
+          const dimensionsInput = document.getElementById('dimensions_art') as HTMLInputElement;
+          const supportInput = document.getElementById('support') as HTMLInputElement;
+          fireEvent.change(techniqueInput, { target: { value: 'Huile sur toile' } });
+          fireEvent.change(dimensionsInput, { target: { value: '100x100 cm' } });
+          fireEvent.change(supportInput, { target: { value: 'Toile' } });
+        },
+        expectedTypeId: 8,
+        expectedDetails: { oeuvre_art: { technique: 'Huile sur toile', dimensions: '100x100 cm', support: 'Toile' } },
+      },
+    ])('construit les details specifiques corrects pour $typeName', async ({ typeName, setup, expectedTypeId, expectedDetails }) => {
+      mockMapToBackendDTO.mockImplementation((formData: any, contributeurs: any, intervenantsExistants: any, nouveauxIntervenants: any, editeurs: any, detailsSpecifiques: any) => ({
+        titre: formData.titre,
+        description: formData.description,
+        id_type_oeuvre: formData.id_type_oeuvre,
+        id_langue: formData.id_langue,
+        categories: formData.categories,
+        tags: formData.tags,
+        details_specifiques: detailsSpecifiques,
+      }));
+
+      render(<AjouterOeuvre />);
+      await waitForDataLoad();
+      await selectOeuvreType(user, typeName);
+      await fillCommonRequiredFields(user);
+      await setup();
+
+      submitForm();
+
+      await waitFor(() => {
+        expect(mockMapToBackendDTO).toHaveBeenCalled();
+      });
+
+      const lastCall = mockMapToBackendDTO.mock.calls[mockMapToBackendDTO.mock.calls.length - 1];
+      expect(lastCall[0]).toEqual(expect.objectContaining({ id_type_oeuvre: expectedTypeId }));
+      expect(lastCall[5]).toEqual(expectedDetails);
+      expect(mockCreateOeuvre).toHaveBeenCalled();
     });
   });
 

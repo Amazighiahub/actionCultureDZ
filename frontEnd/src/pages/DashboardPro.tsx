@@ -635,12 +635,16 @@ const DashboardPro = () => {
                           onClick={() => handleView('evenement', evenement)}>
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEdit('evenement', evenement)}>
-                          <Edit className="h-4 w-4" />
-                        </Button>
+                        {evenement.statut === 'brouillon' && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEdit('evenement', evenement)}
+                            title={t('common.edit', 'Modifier')}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        )}
                         {evenement.statut !== 'brouillon' && evenement.statut !== 'annule' && (
                           <Button
                             variant="ghost"
@@ -652,13 +656,17 @@ const DashboardPro = () => {
                             <XCircle className="h-4 w-4" />
                           </Button>
                         )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteItem('evenement', evenement)}
-                          className="text-destructive hover:text-destructive">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {evenement.statut === 'brouillon' && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteItem('evenement', evenement)}
+                            className="text-destructive hover:text-destructive"
+                            title={t('common.delete', 'Supprimer')}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </div>

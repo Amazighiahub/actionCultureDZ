@@ -661,7 +661,16 @@ const deleteEvenement = async (evenementId: number) => {
         title: t('toasts.success'),
         description: t('toasts.eventDeleted')
       });
-      await loadEvenements();
+      // Mise à jour optimiste : retirer l'élément du state local
+      setEvenements((prev) => {
+        if (!prev?.items) return prev;
+        return {
+          ...prev,
+          items: prev.items.filter((e) =>
+            (e as unknown as Record<string, unknown>).id_evenement !== evenementId
+          ),
+        };
+      });
     }
   } catch (error) {
     toast({
@@ -680,7 +689,18 @@ const cancelEvenement = async (evenementId: number, motif?: string) => {
         title: t('toasts.success'),
         description: t('toasts.eventCancelled', 'Événement annulé avec succès')
       });
-      await loadEvenements();
+      // Mise à jour optimiste : modifier le statut directement dans le state local
+      setEvenements((prev) => {
+        if (!prev?.items) return prev;
+        return {
+          ...prev,
+          items: prev.items.map((e) =>
+            (e as unknown as Record<string, unknown>).id_evenement === evenementId
+              ? { ...e, statut: 'annule' } as Evenement
+              : e
+          ),
+        };
+      });
     }
   } catch (error) {
     toast({

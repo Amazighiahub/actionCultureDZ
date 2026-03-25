@@ -53,6 +53,34 @@ class MetadataController extends BaseController {
     }
   }
 
+  async getCategoriesForType(req, res) {
+    try {
+      const lang = req.lang || 'fr';
+      const categories = await this.metadataService.getCategoriesForType(req.params.typeId);
+      res.json({
+        success: true,
+        data: categories.map(group => ({
+          ...group,
+          nom: translate(group.nom, lang),
+          description: translate(group.description, lang),
+          categories: translateDeep(group.categories, lang)
+        })),
+        lang
+      });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  async hasCategoriesForType(req, res) {
+    try {
+      const result = await this.metadataService.hasCategoriesForType(req.params.typeId);
+      res.json({ success: true, data: result });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
   async getGenresParType(req, res) {
     try {
       const lang = req.lang || 'fr';

@@ -321,32 +321,34 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
         throw new Error(response.error || 'Erreur lors de la suppression');
       }
 
-      // Évite les listes obsolètes après mutation
-      // Cache handled by React Query invalidation
-      
       toast({
         title: t('toasts.deleteSuccess'),
         description: t('toasts.deleteSuccessDesc', { type }),
       });
-      
-      // Rafraîchir les données correspondantes (invalidate + refetch)
-      switch(type) {
-        case 'oeuvre':
-          await queryClient.invalidateQueries({ queryKey: ['dashboard-pro-oeuvres'] });
-          break;
-        case 'evenement':
-          await queryClient.invalidateQueries({ queryKey: ['dashboard-pro-evenements'] });
-          break;
-        case 'artisanat':
-          await queryClient.invalidateQueries({ queryKey: ['dashboard-pro-artisanats'] });
-          break;
-        case 'service':
-          await queryClient.invalidateQueries({ queryKey: ['dashboard-pro-services'] });
-          break;
-        case 'patrimoine':
-          await queryClient.invalidateQueries({ queryKey: ['dashboard-pro-patrimoines'] });
-          break;
+
+      // Mise à jour optimiste : retirer l'élément du cache local immédiatement
+      const idFields: Record<string, string> = {
+        oeuvre: 'id_oeuvre', evenement: 'id_evenement', artisanat: 'id_artisanat',
+        service: 'id_service', patrimoine: 'id_site',
+      };
+      const queryKeys: Record<string, string> = {
+        oeuvre: 'dashboard-pro-oeuvres', evenement: 'dashboard-pro-evenements',
+        artisanat: 'dashboard-pro-artisanats', service: 'dashboard-pro-services',
+        patrimoine: 'dashboard-pro-patrimoines',
+      };
+      const idField = idFields[type];
+      const queryKey = queryKeys[type];
+      if (queryKey && idField) {
+        queryClient.setQueryData([queryKey], (old: { items: Record<string, unknown>[]; pagination: unknown } | undefined) => {
+          if (!old?.items) return old;
+          return {
+            ...old,
+            items: old.items.filter((item) => (item[idField] as number) !== id && (item.id as number) !== id),
+          };
+        });
       }
+      // Refetch stats en arrière-plan
+      queryClient.invalidateQueries({ queryKey: ['dashboard-pro-stats'] });
       
       return true;
     } catch (error: unknown) {
@@ -388,9 +390,19 @@ export function useDashboardPro(options: UseDashboardProOptions = {}) {
         title: t('toasts.success', 'Succès'),
         description: t('toasts.eventCancelled', 'Événement annulé avec succès'),
       });
-      // Refetch les événements (le cache backend est invalidé par le service cancel)
-      await queryClient.invalidateQueries({ queryKey: ['dashboard-pro-evenements'] });
-      await queryClient.invalidateQueries({ queryKey: ['dashboard-pro-stats'] });
+      // Mise à jour optimiste : modifier le statut directement dans le cache React Query
+      // pour que l'UI se mette à jour immédiatement (badge rouge + icône disparaît)
+      queryClient.setQueryData(['dashboard-pro-evenements'], (old: { items: Record<string, unknown>[]; pagination: unknown } | undefined) => {
+        if (!old?.items) return old;
+        return {
+          ...old,
+          items: old.items.map((item) =>
+            (item.id_evenement as number) === id ? { ...item, statut: 'annule' } : item
+          ),
+        };
+      });
+      // Refetch en arrière-plan pour synchroniser avec le serveur
+      queryClient.invalidateQueries({ queryKey: ['dashboard-pro-stats'] });
       return true;
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Erreur inconnue';

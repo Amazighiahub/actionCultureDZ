@@ -76,27 +76,38 @@ const store = {
   async invalidatePattern(pattern) {
     // LRU invalidation
     let count = 0;
-    for (const key of lruCache.keys()) {
+    const lruKeys = Array.from(lruCache.keys());
+    for (const key of lruKeys) {
       if (key.includes(pattern)) {
         lruCache.delete(key);
         count++;
       }
     }
+    if (count > 0) {
+      logger.info(`Cache LRU: ${count} entries invalidated for pattern "${pattern}"`);
+    }
 
-    // Redis invalidation using SCAN (non-blocking)
+    // Redis invalidation using SCAN
     const redis = getRedisClient();
     if (redis) {
       try {
+        let redisDel = 0;
         let cursor = 0;
         do {
           const reply = await redis.scan(cursor, { MATCH: `cache:*${pattern}*`, COUNT: 100 });
           cursor = reply.cursor;
           if (reply.keys.length > 0) {
             await redis.del(reply.keys);
+            redisDel += reply.keys.length;
             count += reply.keys.length;
           }
         } while (cursor !== 0);
-      } catch (e) { /* LRU already invalidated */ }
+        if (redisDel > 0) {
+          logger.info(`Cache Redis: ${redisDel} entries invalidated for pattern "${pattern}"`);
+        }
+      } catch (e) {
+        logger.warn(`Cache Redis invalidation error for "${pattern}":`, e.message);
+      }
     }
 
     return count;
@@ -239,11 +250,17 @@ const cacheMiddleware = {
     return createInvalidateCacheMiddleware([`/${resourceType}`]);
   },
 
-  clearCache: (type = 'all') => {
-    if (type === 'all') {
-      store.clear().catch(() => {});
-    } else {
-      store.invalidatePattern(type).catch(() => {});
+  clearCache: async (type = 'all') => {
+    try {
+      logger.info(`clearCache called with type="${type}"`);
+      if (type === 'all') {
+        await store.clear();
+      } else {
+        const cleared = await store.invalidatePattern(type);
+        logger.info(`clearCache("${type}"): ${cleared} entries cleared`);
+      }
+    } catch (e) {
+      logger.warn(`clearCache error for "${type}":`, e.message);
     }
   },
 
