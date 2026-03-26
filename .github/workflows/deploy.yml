@@ -1,161 +1,22 @@
-name: CI/CD Pipeline - EventCulture
+name: Deploy to VPS
 
-# ============================================
-# Declencheurs
-# ============================================
 on:
   push:
     branches:
       - main
-      - develop
-  pull_request:
-    branches:
-      - main
-      - develop
-
-env:
-  NODE_VERSION: '20'
-
-# ============================================
-# Permissions minimales (securite)
-# ============================================
-permissions:
-  contents: read
 
 jobs:
-  # ============================================
-  # JOB 1: Tests + Qualite du code
-  # ============================================
-  quality-gates:
-    name: Tests et qualite
+  deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: |
-            backend/package-lock.json
-            frontEnd/package-lock.json
-
-      # ---- Backend ----
-      - name: Backend - Install
-        working-directory: ./backend
-        run: npm ci
-
-      - name: Backend - Lint
-        working-directory: ./backend
-        run: npm run lint
-
-      - name: Backend - Tests
-        working-directory: ./backend
-        run: npm test -- --coverage --coverageReporters=text-summary
-        env:
-          NODE_ENV: test
-          JWT_SECRET: ci-test-secret-key-minimum-32-characters-long
-
-      - name: Backend - Security audit
-        working-directory: ./backend
-        run: npm audit --audit-level=high
-
-      # ---- Frontend ----
-      - name: Frontend - Install
-        working-directory: ./frontEnd
-        run: npm ci
-
-      - name: Frontend - Lint
-        working-directory: ./frontEnd
-        run: npm run lint
-
-      - name: Frontend - Build
-        working-directory: ./frontEnd
-        run: npm run build
-        env:
-          CI: true
-
-  # ============================================
-  # JOB 2: Deploy Production (main)
-  # ============================================
-  deploy-production:
-    name: Deploy Production
-    runs-on: ubuntu-latest
-    needs: quality-gates
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    environment: production
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup SSH
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY_B64 }}" | base64 -d > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts 2>/dev/null
-
-      - name: Backup DB before deploy
-        run: |
-          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
-            cd /home/EventCulture
-            ./scripts/deploy.sh --backup || echo "Backup skipped (first deploy?)"
-          EOF
-
-      - name: Deploy
-        run: |
-          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
-            set -e
-            cd /home/EventCulture
-
-            git fetch origin main
-            git checkout main
-            git pull origin main
-
-            ./scripts/deploy.sh
-          EOF
-
-      - name: Health check
-        run: |
-          sleep 15
-          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
-            cd /home/EventCulture
-            ./scripts/deploy.sh --status
-          EOF
-
-  # ============================================
-  # JOB 3: Deploy Staging (develop)
-  # ============================================
-  deploy-staging:
-    name: Deploy Staging
-    runs-on: ubuntu-latest
-    needs: quality-gates
-    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
-    environment: staging
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup SSH
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY_B64 }}" | base64 -d > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts 2>/dev/null
-
-      - name: Deploy Staging
-        run: |
-          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
-            set -e
-            cd /home/EventCulture
-
-            git fetch origin develop
-            git checkout develop
-            git pull origin develop
-
-            ./scripts/deploy.sh
-          EOF
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd /home/actionCultureDZ
+            sudo git pull origin main
+            sudo docker compose -f docker-compose.prod.yml up -d --build
+            sudo docker image prune -f
