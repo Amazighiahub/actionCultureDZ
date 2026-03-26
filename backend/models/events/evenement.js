@@ -229,7 +229,7 @@ module.exports = (sequelize) => {
     Evenement.belongsTo(models.User, {
       foreignKey: 'id_user',
       as: 'Organisateur',
-      onDelete: 'SET NULL'
+      onDelete: 'RESTRICT'
     });
     
     Evenement.hasMany(models.EvenementUser, {
