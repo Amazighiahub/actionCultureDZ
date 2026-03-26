@@ -458,7 +458,7 @@ module.exports = (sequelize) => {
     User.hasMany(models.Evenement, {
       foreignKey: 'id_user',
       as: 'EvenementsOrganises',
-      onDelete: 'SET NULL'
+      onDelete: 'RESTRICT'
     });
     
     User.hasMany(models.Commentaire, { 

@@ -26,7 +26,7 @@ const INDEXES = [
   { table: 'programme', column: 'id_evenement', name: 'idx_programme_evenement' },
 
   // ── Association: evenement_user ──
-  { table: 'evenement_user', column: 'valide_par', name: 'idx_evenement_user_valideur' },
+  { table: 'evenementusers', column: 'valide_par', name: 'idx_evenement_user_valideur' },
 
   // ── Association: evenement_oeuvre ──
   { table: 'evenement_oeuvre', column: 'id_presentateur', name: 'idx_evenement_oeuvre_presentateur' },
@@ -36,11 +36,11 @@ const INDEXES = [
   { table: 'critique_evaluation', column: 'id_user', name: 'idx_critique_user' },
 
   // ── Signalement ──
-  { table: 'signalement', column: 'id_moderateur', name: 'idx_signalement_moderateur' },
+  { table: 'signalements', column: 'id_moderateur', name: 'idx_signalement_moderateur' },
 
   // ── QR Code / Scan ──
   { table: 'qr_codes', column: 'id_lieu', name: 'idx_qrcode_lieu' },
-  { table: 'qr_scan', column: 'id_user', name: 'idx_qrscan_user' },
+  { table: 'qr_scans', column: 'id_user', name: 'idx_qrscan_user' },
 
   // ── Association: oeuvre_editeur ──
   { table: 'oeuvre_editeur', column: 'id_oeuvre', name: 'idx_oeuvre_editeur_oeuvre' },
@@ -52,21 +52,21 @@ const INDEXES = [
   { table: 'oeuvre_user', column: 'id_type_user', name: 'idx_oeuvre_user_type' },
 
   // ── Association: oeuvre_tag ──
-  { table: 'oeuvre_tag', column: 'id_oeuvre', name: 'idx_oeuvre_tag_oeuvre' },
-  { table: 'oeuvre_tag', column: 'id_tag', name: 'idx_oeuvre_tag_tag' },
+  { table: 'oeuvretags', column: 'id_oeuvre', name: 'idx_oeuvre_tag_oeuvre' },
+  { table: 'oeuvretags', column: 'id_tag', name: 'idx_oeuvre_tag_tag' },
 
   // ── Association: oeuvre_categorie ──
-  { table: 'oeuvre_categorie', column: 'id_oeuvre', name: 'idx_oeuvre_categorie_oeuvre' },
-  { table: 'oeuvre_categorie', column: 'id_categorie', name: 'idx_oeuvre_categorie_categorie' },
+  { table: 'oeuvrecategories', column: 'id_oeuvre', name: 'idx_oeuvre_categorie_oeuvre' },
+  { table: 'oeuvrecategories', column: 'id_categorie', name: 'idx_oeuvre_categorie_categorie' },
 
   // ── Association: programme_intervenant ──
   { table: 'programme_intervenant', column: 'id_programme', name: 'idx_prog_interv_programme' },
   { table: 'programme_intervenant', column: 'id_user', name: 'idx_prog_interv_user' },
 
   // ── Association: user_organisation ──
-  { table: 'user_organisation', column: 'id_user', name: 'idx_user_org_user' },
-  { table: 'user_organisation', column: 'id_organisation', name: 'idx_user_org_org' },
-  { table: 'user_organisation', column: 'id_superviseur', name: 'idx_user_org_superviseur' },
+  { table: 'userorganisation', column: 'id_user', name: 'idx_user_org_user' },
+  { table: 'userorganisation', column: 'id_organisation', name: 'idx_user_org_org' },
+  { table: 'userorganisation', column: 'id_superviseur', name: 'idx_user_org_superviseur' },
 
   // ── Association: evenement_organisation ──
   { table: 'evenement_organisation', column: 'id_evenement', name: 'idx_event_org_evenement' },
@@ -74,9 +74,9 @@ const INDEXES = [
 
   // ── Lieux détails ──
   { table: 'detail_lieux', column: 'id_lieu', name: 'idx_detail_lieu' },
-  { table: 'lieu_media', column: 'id_lieu', name: 'idx_lieu_media_lieu' },
-  { table: 'monument', column: 'id_detail_lieu', name: 'idx_monument_detail' },
-  { table: 'vestige', column: 'id_detail_lieu', name: 'idx_vestige_detail' },
+  { table: 'lieu_medias', column: 'id_lieu', name: 'idx_lieu_media_lieu' },
+  { table: 'monuments', column: 'id_detail_lieu', name: 'idx_monument_detail' },
+  { table: 'vestiges', column: 'id_detail_lieu', name: 'idx_vestige_detail' },
 
   // ── Organisation ──
   { table: 'organisation', column: 'id_type_organisation', name: 'idx_org_type' },
@@ -86,7 +86,7 @@ const INDEXES = [
   { table: 'livre', column: 'id_genre', name: 'idx_livre_genre' },
 
   // ── Certification / Spécialité ──
-  { table: 'user_certification', column: 'id_user', name: 'idx_user_cert_user' },
+  { table: 'user_certifications', column: 'id_user', name: 'idx_user_cert_user' },
   { table: 'user_specialite', column: 'id_user', name: 'idx_user_spec_user' },
   { table: 'user_specialite', column: 'id_specialite', name: 'idx_user_spec_specialite' },
 ];
