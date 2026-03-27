@@ -20,13 +20,15 @@ module.exports = {
         }, { transaction });
       }
 
-      // Migrer les données de id_detailLieu vers id_lieu
-      await queryInterface.sequelize.query(`
-        UPDATE services s
-        JOIN detail_lieux dl ON s.id_detailLieu = dl.id_detailLieu
-        SET s.id_lieu = dl.id_lieu
-        WHERE s.id_lieu IS NULL
-      `, { transaction });
+      // Migrer les données de id_detailLieu vers id_lieu (seulement si la colonne existe encore)
+      if (servicesTable.id_detailLieu) {
+        await queryInterface.sequelize.query(`
+          UPDATE services s
+          JOIN detail_lieux dl ON s.id_detailLieu = dl.id_detailLieu
+          SET s.id_lieu = dl.id_lieu
+          WHERE s.id_lieu IS NULL
+        `, { transaction });
+      }
 
       // Rendre id_lieu NOT NULL
       await queryInterface.changeColumn('services', 'id_lieu', {
@@ -44,18 +46,25 @@ module.exports = {
       }
 
       // Ajouter les nouvelles colonnes
-      await queryInterface.addColumn('services', 'disponible', {
-        type: Sequelize.BOOLEAN,
-        defaultValue: true
-      }, { transaction });
+      if (!servicesTable.disponible) {
+        await queryInterface.addColumn('services', 'disponible', {
+          type: Sequelize.BOOLEAN,
+          defaultValue: true
+        }, { transaction });
+      }
 
-      await queryInterface.addColumn('services', 'description', {
-        type: Sequelize.TEXT
-      }, { transaction });
+      if (!servicesTable.description) {
+        await queryInterface.addColumn('services', 'description', {
+          type: Sequelize.TEXT
+        }, { transaction });
+      }
 
       // 2. CORRECTION TABLE MONUMENTS
-      // Renommer detailLieuId en id_detail_lieu
-      await queryInterface.renameColumn('monuments', 'detailLieuId', 'id_detail_lieu', { transaction });
+      const monumentsTable = await queryInterface.describeTable('monuments');
+      // Renommer detailLieuId en id_detail_lieu (seulement si l'ancienne colonne existe)
+      if (monumentsTable.detailLieuId) {
+        await queryInterface.renameColumn('monuments', 'detailLieuId', 'id_detail_lieu', { transaction });
+      }
 
       // Corriger l'encodage du type ENUM
       await queryInterface.changeColumn('monuments', 'type', {
@@ -64,8 +73,11 @@ module.exports = {
       }, { transaction });
 
       // 3. CORRECTION TABLE VESTIGES
-      // Renommer detailLieuId en id_detail_lieu
-      await queryInterface.renameColumn('vestiges', 'detailLieuId', 'id_detail_lieu', { transaction });
+      const vestigesTable = await queryInterface.describeTable('vestiges');
+      // Renommer detailLieuId en id_detail_lieu (seulement si l'ancienne colonne existe)
+      if (vestigesTable.detailLieuId) {
+        await queryInterface.renameColumn('vestiges', 'detailLieuId', 'id_detail_lieu', { transaction });
+      }
 
       // Corriger l'encodage du type ENUM
       await queryInterface.changeColumn('vestiges', 'type', {
@@ -95,45 +107,37 @@ module.exports = {
         }
       }, { transaction });
 
-      // 5. AJOUTER LES CONTRAINTES CHECK
-      // Contraintes GPS sur lieu
-      await queryInterface.sequelize.query(`
-        ALTER TABLE lieu 
-        ADD CONSTRAINT chk_latitude CHECK (latitude BETWEEN -90 AND 90),
-        ADD CONSTRAINT chk_longitude CHECK (longitude BETWEEN -180 AND 180)
-      `, { transaction });
+      // 5. AJOUTER LES CONTRAINTES CHECK (ignorer si déjà existantes)
+      try {
+        await queryInterface.sequelize.query(`
+          ALTER TABLE lieu
+          ADD CONSTRAINT chk_latitude CHECK (latitude BETWEEN -90 AND 90),
+          ADD CONSTRAINT chk_longitude CHECK (longitude BETWEEN -180 AND 180)
+        `, { transaction });
+      } catch (e) {
+        if (!e.message.includes('Duplicate') && !e.message.includes('already exists')) throw e;
+      }
 
-      // Contrainte sur noteMoyenne dans detail_lieux
-      await queryInterface.sequelize.query(`
-        ALTER TABLE detail_lieux
-        ADD CONSTRAINT chk_note_moyenne CHECK (noteMoyenne IS NULL OR (noteMoyenne >= 0 AND noteMoyenne <= 5))
-      `, { transaction });
+      try {
+        await queryInterface.sequelize.query(`
+          ALTER TABLE detail_lieux
+          ADD CONSTRAINT chk_note_moyenne CHECK (noteMoyenne IS NULL OR (noteMoyenne >= 0 AND noteMoyenne <= 5))
+        `, { transaction });
+      } catch (e) {
+        if (!e.message.includes('Duplicate') && !e.message.includes('already exists')) throw e;
+      }
 
-      // 6. AJOUTER LES INDEX POUR PERFORMANCE
-      await queryInterface.addIndex('lieu', ['latitude', 'longitude'], {
-        name: 'idx_lieu_coords',
-        transaction
-      });
-
-      await queryInterface.addIndex('lieu', ['communeId'], {
-        name: 'idx_lieu_commune',
-        transaction
-      });
-
-      await queryInterface.addIndex('services', ['id_lieu'], {
-        name: 'idx_services_lieu',
-        transaction
-      });
-
-      await queryInterface.addIndex('monuments', ['id_detail_lieu'], {
-        name: 'idx_monuments_detail',
-        transaction
-      });
-
-      await queryInterface.addIndex('vestiges', ['id_detail_lieu'], {
-        name: 'idx_vestiges_detail',
-        transaction
-      });
+      // 6. AJOUTER LES INDEX POUR PERFORMANCE (ignorer si déjà existants)
+      const addIndexSafe = async (table, cols, opts) => {
+        try { await queryInterface.addIndex(table, cols, opts); } catch (e) {
+          if (!e.message.includes('Duplicate') && !e.message.includes('already exists')) throw e;
+        }
+      };
+      await addIndexSafe('lieu', ['latitude', 'longitude'], { name: 'idx_lieu_coords', transaction });
+      await addIndexSafe('lieu', ['communeId'], { name: 'idx_lieu_commune', transaction });
+      await addIndexSafe('services', ['id_lieu'], { name: 'idx_services_lieu', transaction });
+      await addIndexSafe('monuments', ['id_detail_lieu'], { name: 'idx_monuments_detail', transaction });
+      await addIndexSafe('vestiges', ['id_detail_lieu'], { name: 'idx_vestiges_detail', transaction });
 
       // 7. SUPPRIMER ParcourIdParcours SI ELLE EXISTE
       const parcoursLieuxTable = await queryInterface.describeTable('parcours_lieux');
