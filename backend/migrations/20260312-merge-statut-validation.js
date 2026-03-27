@@ -34,12 +34,12 @@ module.exports = {
       console.warn('Migration: statut_validation may not exist or already migrated:', e.message);
     }
 
-    // 3. Supprimer statut_validation
-    try {
+    // 3. Supprimer statut_validation (skip si déjà supprimée)
+    const userTable = await queryInterface.describeTable('user');
+    if (userTable.statut_validation) {
       await queryInterface.removeColumn('user', 'statut_validation');
-    } catch (e) {
-      if (!e.message.includes('Unknown column')) throw e;
-      console.warn('Migration: statut_validation already removed');
+    } else {
+      console.log('  ⏭ statut_validation déjà supprimée');
     }
   },
 
