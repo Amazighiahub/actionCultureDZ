@@ -155,10 +155,10 @@ module.exports = (sequelize) => {
       onDelete: 'SET NULL'
     });
     
-    Programme.belongsToMany(models.User, {
+    Programme.belongsToMany(models.Intervenant, {
       through: models.ProgrammeIntervenant,
       foreignKey: 'id_programme',
-      otherKey: 'id_user',
+      otherKey: 'id_intervenant',
       as: 'Intervenants'
     });
 

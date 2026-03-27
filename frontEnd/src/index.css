@@ -10,7 +10,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Tifinagh&display=swap');
 
 /* Import fichiers personnalisés */
-@import './styles/article-print.css';
 @import './styles/language-styles.css';
 
 /* Tailwind */

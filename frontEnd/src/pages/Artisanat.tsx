@@ -2,7 +2,7 @@
  * Artisanat.tsx - Page de listing des produits artisanaux
  * Avec lazy loading des images et composants partagés
  */
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Header from '@/components/Header';
@@ -48,11 +48,12 @@ const ArtisanatCard: React.FC<ArtisanatCardProps> = React.memo(({ artisanat, onV
   const [isFavorite, setIsFavorite] = useState(false);
 
   // Extraire les données de l'artisanat (peut venir de Oeuvre ou directement)
-  const titre = artisanat.Oeuvre?.titre || artisanat.nom || artisanat.titre || 'Sans titre';
+  const rawTitre = artisanat.Oeuvre?.titre || artisanat.nom || artisanat.titre || 'Sans titre';
+  const titre = typeof rawTitre === 'object' && rawTitre !== null ? (rawTitre as Record<string, string>).fr || Object.values(rawTitre)[0] || 'Sans titre' : rawTitre;
   const imageUrl = artisanat.Oeuvre?.Media?.[0]?.url ||
                    artisanat.medias?.[0]?.url ||
                    artisanat.image_url ||
-                   '/images/placeholder-artisanat.png';
+                   '/images/placeholder-artisanat.svg';
   const artisan = artisanat.Oeuvre?.Saiseur || artisanat.artisan;
   const materiau = artisanat.Materiau?.nom || '';
   const technique = artisanat.Technique?.nom || '';
@@ -76,7 +77,7 @@ const ArtisanatCard: React.FC<ArtisanatCardProps> = React.memo(({ artisanat, onV
           src={imageUrl}
           alt={titre}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          fallback="/images/placeholder-artisanat.png"
+          fallback="/images/placeholder-artisanat.svg"
         />
 
         {/* Overlay au survol */}

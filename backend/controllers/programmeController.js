@@ -98,8 +98,9 @@ class ProgrammeController extends BaseController {
                 lieu: p.Lieu?.nom || p.lieu_specifique,
                 type_activite: p.type_activite,
                 intervenants: p.Intervenants?.map(i => ({
-                  nom: `${i.prenom} ${i.nom}`,
-                  entreprise: i.entreprise,
+                  id_intervenant: i.id_intervenant,
+                  nom: `${i.prenom || ''} ${i.nom || ''}`.trim(),
+                  photo_url: i.photo_url || i.UserAccount?.photo_url,
                   role: i.ProgrammeIntervenant?.role_intervenant,
                   sujet: i.ProgrammeIntervenant?.sujet_intervention
                 }))
@@ -292,7 +293,7 @@ class ProgrammeController extends BaseController {
 
       const result = await this.programmeService.updateIntervenantStatus(
         parseInt(req.params.id, 10),
-        parseInt(req.params.userId, 10),
+        parseInt(req.params.intervenantId, 10),
         req.user.id_user,
         statut
       );

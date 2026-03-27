@@ -7,8 +7,6 @@
 const BaseService = require('./core/baseService');
 const { Op } = require('sequelize');
 const { createMultiLang, mergeTranslations } = require('../helpers/i18n');
-const crypto = require('crypto');
-const bcrypt = require('bcrypt');
 
 class ProgrammeService extends BaseService {
   constructor(repository, options = {}) {
@@ -81,13 +79,13 @@ class ProgrammeService extends BaseService {
 
       const programme = await this.repository.create(programmeData, { transaction });
 
-      // Résoudre chaque intervenant : toujours un User
+      // Résoudre chaque intervenant : cherche/crée dans table Intervenant
       for (const interv of intervenants) {
-        const userId = await this._resolveIntervenantAsUser(interv, transaction);
+        const intervenantId = await this._resolveIntervenant(interv, transaction);
 
         await this.models.ProgrammeIntervenant.create({
           id_programme: programme.id_programme,
-          id_user: userId,
+          id_intervenant: intervenantId,
           role_intervenant: interv.role || 'principal',
           sujet_intervention: interv.sujet,
           ordre_intervention: interv.ordre || 1,
@@ -357,7 +355,7 @@ class ProgrammeService extends BaseService {
     }
 
     const pi = await this.models.ProgrammeIntervenant.findOne({
-      where: { id_programme: programmeId, id_user: targetUserId }
+      where: { id_programme: programmeId, id_intervenant: targetUserId }
     });
 
     if (!pi) return { error: 'intervenantNotFound' };
@@ -379,67 +377,70 @@ class ProgrammeService extends BaseService {
       include: [
         { model: this.models.Lieu, as: 'Lieu' },
         {
-          model: this.models.User,
+          model: this.models.Intervenant,
           as: 'Intervenants',
-          attributes: ['id_user', 'prenom', 'nom', 'email', 'photo_url'],
+          attributes: ['id_intervenant', 'nom', 'prenom', 'email', 'photo_url', 'biographie', 'id_user'],
           through: {
             attributes: ['role_intervenant', 'statut_confirmation', 'sujet_intervention', 'ordre_intervention', 'duree_intervention', 'biographie_courte']
-          }
+          },
+          include: [{
+            model: this.models.User,
+            as: 'UserAccount',
+            attributes: ['id_user', 'nom', 'prenom', 'photo_url', 'email'],
+            required: false
+          }]
         }
       ]
     });
   }
 
   /**
-   * Résout un intervenant : cherche dans User, sinon crée un compte User.
-   * Génère un mot de passe temporaire et envoie un email d'invitation.
+   * Résout un intervenant : cherche dans la table Intervenant par id ou email.
+   * Si l'email correspond à un User existant, lie l'intervenant à ce User.
+   * Crée un nouvel Intervenant si nécessaire.
    *
-   * @param {Object} interv - { email, nom, prenom, id_user, ... }
+   * @param {Object} interv - { email, nom, prenom, id_intervenant, id_user, ... }
    * @param {Transaction} transaction
-   * @returns {number} id_user
+   * @returns {number} id_intervenant
    */
-  async _resolveIntervenantAsUser(interv, transaction) {
-    // Cas 1 : id_user fourni directement
-    if (interv.id_user) {
-      const user = await this.models.User.findByPk(interv.id_user, { transaction });
-      if (user) return user.id_user;
+  async _resolveIntervenant(interv, transaction) {
+    // Cas 1 : id_intervenant fourni directement
+    if (interv.id_intervenant) {
+      const existing = await this.models.Intervenant.findByPk(interv.id_intervenant, { transaction });
+      if (existing) return existing.id_intervenant;
     }
 
-    // Cas 2 : Chercher par email
+    // Cas 2 : Chercher un intervenant existant par email
     if (interv.email) {
+      const existing = await this.models.Intervenant.findOne({
+        where: { email: interv.email },
+        transaction
+      });
+      if (existing) return existing.id_intervenant;
+    }
+
+    // Cas 3 : Créer un nouvel Intervenant
+    // Vérifier si un User existe avec cet email pour lier id_user
+    let userId = interv.id_user || null;
+    if (!userId && interv.email) {
       const user = await this.models.User.findOne({
         where: { email: interv.email },
         transaction
       });
-      if (user) return user.id_user;
+      if (user) userId = user.id_user;
     }
 
-    // Cas 3 : Pas trouvé → créer un nouveau User
-    if (!interv.email) {
-      throw new Error('Email obligatoire pour créer un intervenant');
-    }
-
-    const tempPassword = crypto.randomBytes(12).toString('base64url');
-    const hashedPassword = await bcrypt.hash(tempPassword, 12);
-
-    const newUser = await this.models.User.create({
+    const newIntervenant = await this.models.Intervenant.create({
       nom: this._prepareMultiLang(interv.nom, 'fr') || { fr: '', ar: '' },
       prenom: this._prepareMultiLang(interv.prenom, 'fr') || { fr: '', ar: '' },
-      email: interv.email,
-      password: hashedPassword,
-      id_type_user: 1,
-      statut: 'en_attente_validation', // Compte créé par invitation — nécessite activation
-      accepte_conditions: false // L'utilisateur n'a pas encore accepté
+      email: interv.email || null,
+      telephone: interv.telephone || null,
+      biographie: interv.biographie ? this._prepareMultiLang(interv.biographie, 'fr') : null,
+      id_user: userId,
+      statut: 'actif'
     }, { transaction });
 
-    // Envoyer le mail d'invitation en arrière-plan (ne pas bloquer la transaction)
-    setImmediate(() => {
-      this._sendIntervenantInviteEmail(newUser, tempPassword).catch(err => {
-        console.error('Erreur envoi mail intervenant:', err.message);
-      });
-    });
-
-    return newUser.id_user;
+    return newIntervenant.id_intervenant;
   }
 
   /**

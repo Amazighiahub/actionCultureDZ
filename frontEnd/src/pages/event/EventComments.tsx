@@ -132,11 +132,11 @@ const CommentItem: React.FC<CommentItemProps> = ({
     <div className="flex gap-4">
       {/* Avatar */}
       <LazyImage
-        src={user?.photo_url || '/images/default-avatar.png'}
+        src={user?.photo_url || '/images/default-avatar.svg'}
         alt={user ? `${td(user.prenom)} ${td(user.nom)}` : 'Utilisateur'}
         className="w-10 h-10 rounded-full flex-shrink-0"
         aspectRatio="square"
-        fallback="/images/default-avatar.png"
+        fallback="/images/default-avatar.svg"
       />
 
       {/* Contenu */}

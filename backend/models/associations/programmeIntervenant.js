@@ -1,4 +1,4 @@
-// models/ProgrammeIntervenant.js - Lien Programme ↔ User (intervenant)
+// models/ProgrammeIntervenant.js - Lien Programme ↔ Intervenant
 const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
@@ -12,15 +12,15 @@ module.exports = (sequelize) => {
         key: 'id_programme'
       }
     },
-    id_user: {
+    id_intervenant: {
       type: DataTypes.INTEGER,
       primaryKey: true,
       allowNull: false,
       references: {
-        model: 'user',
-        key: 'id_user'
+        model: 'intervenant',
+        key: 'id_intervenant'
       },
-      comment: 'L\'intervenant est toujours un User (créé automatiquement si nécessaire)'
+      comment: 'Lien vers l\'intervenant (qui peut optionnellement avoir un compte User via id_user)'
     },
     role_intervenant: {
       type: DataTypes.ENUM('principal', 'co_intervenant', 'moderateur', 'invite', 'animateur'),
@@ -91,7 +91,7 @@ module.exports = (sequelize) => {
     indexes: [
       {
         unique: true,
-        fields: ['id_programme', 'id_user']
+        fields: ['id_programme', 'id_intervenant']
       },
       {
         fields: ['statut_confirmation']
@@ -110,9 +110,9 @@ module.exports = (sequelize) => {
       onDelete: 'CASCADE'
     });
 
-    ProgrammeIntervenant.belongsTo(models.User, {
-      foreignKey: 'id_user',
-      as: 'User',
+    ProgrammeIntervenant.belongsTo(models.Intervenant, {
+      foreignKey: 'id_intervenant',
+      as: 'Intervenant',
       onDelete: 'CASCADE'
     });
   };

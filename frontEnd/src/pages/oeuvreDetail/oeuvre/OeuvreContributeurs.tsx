@@ -77,11 +77,11 @@ const ContributeurCard: React.FC<ContributeurCardProps> = ({ contributeur, featu
           // Version featured (principale)
           <>
             <LazyImage
-              src={contributeur.photo_url || '/images/default-avatar.png'}
+              src={contributeur.photo_url || '/images/default-avatar.svg'}
               alt={displayName}
               className="w-20 h-20 rounded-full flex-shrink-0"
               aspectRatio="square"
-              fallback="/images/default-avatar.png"
+              fallback="/images/default-avatar.svg"
             />
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between gap-2">
@@ -124,11 +124,11 @@ const ContributeurCard: React.FC<ContributeurCardProps> = ({ contributeur, featu
           // Version compacte
           <div className="flex items-center gap-3">
             <LazyImage
-              src={contributeur.photo_url || '/images/default-avatar.png'}
+              src={contributeur.photo_url || '/images/default-avatar.svg'}
               alt={displayName}
               className="w-12 h-12 rounded-full flex-shrink-0"
               aspectRatio="square"
-              fallback="/images/default-avatar.png"
+              fallback="/images/default-avatar.svg"
             />
             <div className="flex-1 min-w-0">
               <p className="font-medium truncate flex items-center gap-1">

@@ -143,7 +143,19 @@ module.exports = (sequelize) => {
       foreignKey: 'id_intervenant',
       onDelete: 'CASCADE'
     });
-    
+
+    Intervenant.belongsToMany(models.Programme, {
+      through: models.ProgrammeIntervenant,
+      foreignKey: 'id_intervenant',
+      otherKey: 'id_programme',
+      as: 'Programmes'
+    });
+
+    Intervenant.hasMany(models.ProgrammeIntervenant, {
+      foreignKey: 'id_intervenant',
+      as: 'ProgrammeIntervenants',
+      onDelete: 'CASCADE'
+    });
   };
   
   // ⚡ NOUVELLES MÉTHODES I18N
@@ -193,14 +205,17 @@ module.exports = (sequelize) => {
       prochaineProgramme: null
     };
     
+    // ProgrammeIntervenant links via id_user, not id_intervenant
+    if (!this.id_user) return stats;
+
     const programmes = await sequelize.models.ProgrammeIntervenant.count({
-      where: { id_intervenant: this.id_intervenant }
+      where: { id_user: this.id_user }
     });
     stats.nombreProgrammes = programmes;
-    
+
     const prochainProg = await sequelize.models.ProgrammeIntervenant.findOne({
-      where: { 
-        id_intervenant: this.id_intervenant,
+      where: {
+        id_user: this.id_user,
         statut_confirmation: 'confirme'
       },
       include: [{
