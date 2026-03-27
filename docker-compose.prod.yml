@@ -24,9 +24,9 @@ services:
       - backend_uploads:/var/www/uploads:ro
     depends_on:
       backend:
-        condition: service_healthy
+        condition: service_started
       frontend:
-        condition: service_healthy
+        condition: service_started
     networks:
       - eventculture-network
     healthcheck:
@@ -44,6 +44,8 @@ services:
       dockerfile: Dockerfile
       target: production
     container_name: eventculture-backend
+    env_file:
+      - .env
     restart: unless-stopped
     expose:
       - "3001"
@@ -78,9 +80,9 @@ services:
       - backend_logs:/app/logs
     depends_on:
       mysql:
-        condition: service_healthy
+        condition: service_started
       redis:
-        condition: service_healthy
+        condition: service_started
     networks:
       - eventculture-network
     healthcheck:
