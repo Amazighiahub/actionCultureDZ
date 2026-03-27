@@ -19,12 +19,15 @@ module.exports = {
       }
     });
 
-    // 3. Add url_virtuel column
-    await queryInterface.addColumn('evenement', 'url_virtuel', {
-      type: Sequelize.STRING(500),
-      allowNull: true,
-      comment: 'Lien pour les événements en ligne (Zoom, Meet, etc.)'
-    });
+    // 3. Add url_virtuel column (skip if already exists)
+    const table = await queryInterface.describeTable('evenement');
+    if (!table.url_virtuel) {
+      await queryInterface.addColumn('evenement', 'url_virtuel', {
+        type: Sequelize.STRING(500),
+        allowNull: true,
+        comment: 'Lien pour les événements en ligne (Zoom, Meet, etc.)'
+      });
+    }
   },
 
   async down(queryInterface, Sequelize) {
