@@ -157,7 +157,7 @@ class MetadataService {
           return this.models.TagMotCle.findAll({
             attributes: {
               include: [[
-                this.sequelize.literal('(SELECT COUNT(*) FROM oeuvretag WHERE oeuvretag.id_tag = TagMotCle.id_tag)'),
+                this.sequelize.literal('(SELECT COUNT(*) FROM oeuvretags WHERE oeuvretags.id_tag = TagMotCle.id_tag)'),
                 'usage_count'
               ]]
             },

@@ -23,15 +23,21 @@ class ProgrammeRepository extends BaseRepository {
         attributes: ['nom', 'adresse', 'latitude', 'longitude']
       });
     }
-    if (this.models.User && this.models.ProgrammeIntervenant) {
+    if (this.models.Intervenant && this.models.ProgrammeIntervenant) {
       includes.push({
-        model: this.models.User,
+        model: this.models.Intervenant,
         through: {
           model: this.models.ProgrammeIntervenant,
           attributes: ['role_intervenant', 'statut_confirmation', 'sujet_intervention', 'ordre_intervention', 'duree_intervention']
         },
-        attributes: ['id_user', 'nom', 'prenom', 'id_type_user', 'photo_url', 'email', 'telephone', 'entreprise', 'biographie'],
-        as: 'Intervenants'
+        attributes: ['id_intervenant', 'nom', 'prenom', 'email', 'telephone', 'photo_url', 'biographie', 'specialites', 'id_user'],
+        as: 'Intervenants',
+        include: [{
+          model: this.models.User,
+          as: 'UserAccount',
+          attributes: ['id_user', 'nom', 'prenom', 'photo_url', 'email'],
+          required: false
+        }]
       });
     }
     return includes;

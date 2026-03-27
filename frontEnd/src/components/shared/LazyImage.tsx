@@ -47,7 +47,7 @@ export const LazyImage: React.FC<LazyImageProps> = ({
   alt,
   className = '',
   containerClassName = '',
-  fallback = '/images/placeholder.png',
+  fallback = '/images/placeholder.svg',
   placeholder = 'skeleton',
   aspectRatio = 'auto',
   objectFit = 'cover',
@@ -196,7 +196,7 @@ export const SimpleImage: React.FC<{
     decoding="async"
     className={className}
     onError={(e) => {
-      e.currentTarget.src = '/images/placeholder.png';
+      e.currentTarget.src = '/images/placeholder.svg';
     }}
   />
 );

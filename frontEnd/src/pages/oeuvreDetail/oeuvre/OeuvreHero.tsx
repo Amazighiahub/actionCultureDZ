@@ -51,7 +51,7 @@ const OeuvreHero: React.FC<OeuvreHeroProps> = ({
   };
 
   // Image principale
-  const imageUrl = mainImage?.url || oeuvre.image_url || oeuvre.couverture_url || '/images/placeholder-oeuvre.png';
+  const imageUrl = mainImage?.url || oeuvre.image_url || oeuvre.couverture_url || '/images/placeholder-oeuvre.svg';
 
   return (
     <section className="relative">
@@ -61,7 +61,7 @@ const OeuvreHero: React.FC<OeuvreHeroProps> = ({
           src={imageUrl}
           alt={oeuvre.titre}
           className="w-full h-full object-cover"
-          fallback="/images/placeholder-oeuvre.png"
+          fallback="/images/placeholder-oeuvre.svg"
         />
         
         {/* Overlay gradient */}

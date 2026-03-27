@@ -587,7 +587,13 @@ class App {
     });
 
     // CSRF — verify token on mutating API requests (POST, PUT, PATCH, DELETE)
-    this.app.use('/api', csrfVerifier);
+    // Exempt tracking routes (non-destructive view counting)
+    this.app.use('/api', (req, res, next) => {
+      if (req.path.startsWith('/tracking/') && req.path.includes('/view')) {
+        return next();
+      }
+      return csrfVerifier(req, res, next);
+    });
 
     // Routes API principales (utilise ServiceContainer en interne)
     this.app.use('/api', initRoutes(this.models, this.authMiddleware));

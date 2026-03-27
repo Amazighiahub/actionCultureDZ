@@ -60,11 +60,11 @@ const EventParticipants: React.FC<EventParticipantsProps> = ({ participants, tot
                   className="flex flex-col items-center gap-2 p-3 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors"
                 >
                   <LazyImage
-                    src={user.photo_url || '/images/default-avatar.png'}
+                    src={user.photo_url || '/images/default-avatar.svg'}
                     alt={`${td(user.prenom)} ${td(user.nom)}`}
                     className="w-14 h-14 rounded-full"
                     aspectRatio="square"
-                    fallback="/images/default-avatar.png"
+                    fallback="/images/default-avatar.svg"
                   />
                   <div className="text-center min-w-0 w-full">
                     <p className="text-sm font-medium truncate">

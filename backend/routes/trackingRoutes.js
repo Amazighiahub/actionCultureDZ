@@ -186,25 +186,25 @@ const initTrackingRoutes = (models, authMiddleware) => {
           case 'oeuvre':
             entities = await models.Oeuvre.findAll({
               where: { id_oeuvre: entityIds },
-              attributes: ['id_oeuvre', 'titre', 'image_principale']
+              attributes: ['id_oeuvre', 'titre']
             });
             break;
           case 'evenement':
             entities = await models.Evenement.findAll({
               where: { id_evenement: entityIds },
-              attributes: ['id_evenement', 'titre', 'date_debut', 'image']
+              attributes: ['id_evenement', 'nom_evenement', 'date_debut', 'image_url']
             });
             break;
           case 'lieu':
             entities = await models.Lieu.findAll({
               where: { id_lieu: entityIds },
-              attributes: ['id_lieu', 'nom_lieu', 'type_lieu']
+              attributes: ['id_lieu', 'nom']
             });
             break;
           case 'artisanat':
             entities = await models.Artisanat.findAll({
               where: { id_artisanat: entityIds },
-              attributes: ['id_artisanat', 'nom', 'image_principale']
+              attributes: ['id_artisanat', 'id_oeuvre']
             });
             break;
         }

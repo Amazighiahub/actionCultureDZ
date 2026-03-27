@@ -78,10 +78,10 @@ const CommentItem: React.FC<{ comment: Comment }> = ({ comment }) => {
   return (
     <div className="flex gap-4">
       <LazyImage
-        src={user?.photo_url || '/images/default-avatar.png'}
+        src={user?.photo_url || '/images/default-avatar.svg'}
         alt={user ? `${user.prenom} ${user.nom}` : 'Utilisateur'}
         className="w-10 h-10 rounded-full flex-shrink-0"
-        fallback="/images/default-avatar.png"
+        fallback="/images/default-avatar.svg"
       />
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">

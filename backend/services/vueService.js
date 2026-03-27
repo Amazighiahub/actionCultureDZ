@@ -142,12 +142,15 @@ class VueService extends BaseService {
   async getViewStats(type, id, periode = '30j') {
     const dateDebut = this._calcDateDebut(periode);
 
-    const [totalStats, dailyStats, deviceStats, sourceStats] = await Promise.all([
+    const [totalStats, dailyStats, deviceStats] = await Promise.all([
       this.repository.getGlobalStats(type, id),
       this.repository.getDailyStats(type, id, dateDebut),
       this.repository.getDeviceStats(type, id, dateDebut),
-      this.repository.getSourceStats(type, id, dateDebut)
     ]);
+
+    // sourceStats uses 'source' column which does not exist in the DB schema
+    // Skipping to avoid Sequelize hang on missing column
+    const sourceStats = [];
 
     return {
       periode,

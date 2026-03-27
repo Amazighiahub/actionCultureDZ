@@ -44,10 +44,10 @@ const GalleryItem: React.FC<{ media: Media; onClick: () => void }> = ({ media, o
     >
       {media.type_media === 'image' || isVideo ? (
         <LazyImage
-          src={media.url || media.thumbnail_url || '/images/placeholder-media.png'}
+          src={media.url || media.thumbnail_url || '/images/placeholder-media.svg'}
           alt={media.titre || 'Media'}
           className="w-full h-full object-cover transition-transform group-hover:scale-105"
-          fallback="/images/placeholder-media.png"
+          fallback="/images/placeholder-media.svg"
         />
       ) : (
         <div className="w-full h-full flex items-center justify-center bg-muted">

@@ -213,11 +213,11 @@ const ProgramItem: React.FC<ProgramItemProps> = ({ program, isExpanded, onToggle
                         className="flex items-start gap-3 bg-background rounded-lg p-3 border"
                       >
                         <LazyImage
-                          src={user.photo_url || '/images/default-avatar.png'}
+                          src={user.photo_url || '/images/default-avatar.svg'}
                           alt={`${td(user.prenom)} ${td(user.nom)}`}
                           className="w-10 h-10 rounded-full flex-shrink-0"
                           aspectRatio="square"
-                          fallback="/images/default-avatar.png"
+                          fallback="/images/default-avatar.svg"
                         />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">

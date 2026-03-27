@@ -77,10 +77,10 @@ const OeuvreCard: React.FC<OeuvreCardProps> = React.memo(({ oeuvre, onView, onFa
       {/* Image avec lazy loading */}
       <div className="relative aspect-[4/3] overflow-hidden">
         <LazyImage
-          src={oeuvre.image_principale || oeuvre.image_url || '/images/placeholder-oeuvre.png'}
+          src={oeuvre.image_principale || oeuvre.image_url || '/images/placeholder-oeuvre.svg'}
           alt={oeuvre.titre}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          fallback="/images/placeholder-oeuvre.png"
+          fallback="/images/placeholder-oeuvre.svg"
         />
         
         {/* Overlay au survol */}

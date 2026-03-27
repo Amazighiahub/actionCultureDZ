@@ -473,19 +473,8 @@ module.exports = (sequelize) => {
       onDelete: 'CASCADE'
     });
 
-    User.hasMany(models.ProgrammeIntervenant, {
-      foreignKey: 'id_user',
-      as: 'Interventions',
-      onDelete: 'CASCADE'
-    });
-
-    // ✅ Association bidirectionnelle avec Programme via ProgrammeIntervenant
-    User.belongsToMany(models.Programme, {
-      through: models.ProgrammeIntervenant,
-      foreignKey: 'id_user',
-      otherKey: 'id_programme',
-      as: 'Programmes'
-    });
+    // Programme ↔ Intervenant (not User) via ProgrammeIntervenant
+    // User accesses programmes through Intervenant.id_user
 
     User.hasMany(models.Favori, { 
       foreignKey: 'id_user',

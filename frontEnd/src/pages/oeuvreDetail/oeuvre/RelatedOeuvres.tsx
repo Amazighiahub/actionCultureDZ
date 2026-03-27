@@ -37,10 +37,10 @@ const OeuvreCard: React.FC<{ oeuvre: Oeuvre; onClick: () => void }> = ({ oeuvre,
       {/* Image */}
       <div className="relative aspect-[3/4] overflow-hidden">
         <LazyImage
-          src={(oeuvre as Oeuvre & Record<string, unknown>).image_url || (oeuvre as Oeuvre & Record<string, unknown>).couverture_url || '/images/placeholder-oeuvre.png'}
+          src={(oeuvre as Oeuvre & Record<string, unknown>).image_url || (oeuvre as Oeuvre & Record<string, unknown>).couverture_url || '/images/placeholder-oeuvre.svg'}
           alt={getTranslation(oeuvre.titre, lang)}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          fallback="/images/placeholder-oeuvre.png"
+          fallback="/images/placeholder-oeuvre.svg"
         />
         
         {/* Overlay au survol */}

@@ -55,10 +55,10 @@ const GalleryItem: React.FC<GalleryItemProps> = ({ media, onClick }) => {
       {/* Image ou placeholder */}
       {media.type_media === 'image' || isVideo ? (
         <LazyImage
-          src={media.url || media.thumbnail_url || '/images/placeholder-media.png'}
+          src={media.url || media.thumbnail_url || '/images/placeholder-media.svg'}
           alt={td(media.titre) || td(media.description) || 'Media'}
           className="w-full h-full object-cover transition-transform group-hover:scale-105"
-          fallback="/images/placeholder-media.png"
+          fallback="/images/placeholder-media.svg"
         />
       ) : (
         <div className="w-full h-full flex items-center justify-center bg-muted">
@@ -375,7 +375,7 @@ const EventGallery: React.FC<EventGalleryProps> = ({ medias }) => {
                       src={media.url || media.thumbnail_url}
                       alt={td(media.titre) || 'Media'}
                       className="w-full h-full object-cover"
-                      fallback="/images/placeholder-media.png"
+                      fallback="/images/placeholder-media.svg"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-muted">

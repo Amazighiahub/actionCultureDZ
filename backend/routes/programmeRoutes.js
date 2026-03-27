@@ -197,11 +197,11 @@ const initProgrammeRoutes = (models) => {
   );
 
   // Mettre à jour le statut d'un intervenant (confirmer/décliner)
-  router.patch('/:id/intervenant/:userId/statut',
+  router.patch('/:id/intervenant/:intervenantId/statut',
     authMiddleware.authenticate,
     authMiddleware.requireVerifiedEmail,
     validationMiddleware.validateId('id'),
-    validationMiddleware.validateId('userId'),
+    validationMiddleware.validateId('intervenantId'),
     [body('statut').isIn(['en_attente', 'confirme', 'decline', 'annule']).withMessage((value, { req }) => req.t('validation.invalidStatus'))],
     validationMiddleware.handleValidationErrors,
     programmeController.updateIntervenantStatus.bind(programmeController)
