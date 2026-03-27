@@ -110,10 +110,10 @@ const ArtisanatCard: React.FC<ArtisanatCardProps> = React.memo(({ artisanat, onV
                 {artisanat.statistiques.nombre_vues}
               </span>
             )}
-            {artisanat.note_moyenne !== undefined && (
+            {artisanat.note_moyenne != null && Number(artisanat.note_moyenne) > 0 && (
               <span className="flex items-center gap-1">
                 <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                {artisanat.note_moyenne.toFixed(1)}
+                {Number(artisanat.note_moyenne).toFixed(1)}
               </span>
             )}
           </div>
