@@ -115,13 +115,15 @@ export function useArtisanat(): UseArtisanatReturn {
 
       const result = await artisanatService.getAll(params);
 
-      if (result.success && result.data) {
-        const responseData = result.data as unknown as ArtisanatResponseData;
-        let artisanatsData = responseData.artisanats ||
-                            responseData.items ||
-                            responseData.data ||
-                            result.data ||
-                            [];
+      if (result.success) {
+        let artisanatsData: Artisanat[] = [];
+
+        if (Array.isArray(result.data)) {
+          artisanatsData = result.data;
+        } else if (result.data && typeof result.data === 'object') {
+          const responseData = result.data as unknown as ArtisanatResponseData;
+          artisanatsData = responseData.artisanats || responseData.items || responseData.data || [];
+        }
 
         setArtisanats(Array.isArray(artisanatsData) ? artisanatsData : []);
 
