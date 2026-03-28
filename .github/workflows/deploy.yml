@@ -18,5 +18,8 @@ jobs:
           script: |
             cd /home/actionCultureDZ
             sudo git pull origin main
-            sudo docker compose -f docker-compose.prod.yml up -d --build
+            sudo docker compose -f docker-compose.prod.yml stop frontend nginx
+            sudo docker volume rm -f actionculturedz_frontend_build
+            sudo docker compose -f docker-compose.prod.yml build --no-cache frontend backend
+            sudo docker compose -f docker-compose.prod.yml up -d --force-recreate
             sudo docker image prune -f
