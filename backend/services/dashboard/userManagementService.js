@@ -273,7 +273,7 @@ class DashboardUserManagementService {
     if (action === 'delete') {
       await this.userRepo.updateMany(
         { id_user: { [Op.in]: userIds } },
-        { statut: 'supprime', date_suppression: new Date() }
+        { statut: 'banni' }
       );
       results.success = userIds;
       await this._invalidateUserCacheBulk(userIds);
