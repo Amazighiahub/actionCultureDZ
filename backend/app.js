@@ -464,9 +464,10 @@ class App {
     // Rate limiting général
     this.app.use('/api/', ...rateLimitMiddleware.general);
 
-    // Request timeout (30s for API, skips uploads)
+    // Request timeout (skips uploads)
     const createTimeoutMiddleware = require('./middlewares/timeoutMiddleware');
-    this.app.use('/api/', createTimeoutMiddleware(30000));
+    this.app.use('/api/dashboard/', createTimeoutMiddleware(120000)); // 2 min for admin actions
+    this.app.use('/api/', createTimeoutMiddleware(30000)); // 30s for normal API
 
     console.log('✅ Rate limiters et timeout initialisés');
   }
