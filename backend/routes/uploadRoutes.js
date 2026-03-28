@@ -50,7 +50,19 @@ const initUploadRoutes = (models, authMiddleware) => {
   // Upload public d'image (pour inscription)
   router.post('/image/public',
     ...rateLimitMiddleware.publicUpload,
-    uploadService.uploadImage().single('image'),
+    (req, res, next) => {
+      const upload = uploadService.uploadImage().single('image');
+      upload(req, res, (err) => {
+        if (err) {
+          console.error('Erreur upload Cloudinary:', err.message, err.http_code || '');
+          return res.status(500).json({
+            success: false,
+            error: 'Erreur upload image: ' + err.message
+          });
+        }
+        next();
+      });
+    },
     FileValidator.uploadValidator(['image/jpeg', 'image/png', 'image/gif', 'image/webp'], 10 * 1024 * 1024),
     auditMiddleware.logAction('upload_image_public', { entityType: 'media' }),
     (req, res) => uploadController.uploadPublicImage(req, res)
