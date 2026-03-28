@@ -47,13 +47,25 @@ class EmailService {
       });
     } else {
       // Configuration SMTP (supporte EMAIL_* et SMTP_* variables)
+      const smtpHost = process.env.SMTP_HOST || process.env.EMAIL_HOST;
+      const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER;
+      const smtpPass = process.env.SMTP_PASS || process.env.SMTP_PASSWORD || process.env.EMAIL_PASSWORD;
+      const smtpPort = process.env.SMTP_PORT || process.env.EMAIL_PORT || 587;
+
+      logger.info(`📧 SMTP config: host=${smtpHost} port=${smtpPort} user=${smtpUser ? smtpUser.substring(0, 5) + '...' : 'MISSING'}`);
+
+      if (!smtpHost || !smtpUser || !smtpPass) {
+        logger.error('❌ Configuration SMTP incomplète — emails désactivés');
+        return;
+      }
+
       this.transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST || process.env.EMAIL_HOST,
-        port: process.env.SMTP_PORT || process.env.EMAIL_PORT || 587,
+        host: smtpHost,
+        port: parseInt(smtpPort),
         secure: (process.env.SMTP_SECURE || process.env.EMAIL_SECURE) === 'true',
         auth: {
-          user: process.env.SMTP_USER || process.env.EMAIL_USER,
-          pass: process.env.SMTP_PASS || process.env.SMTP_PASSWORD || process.env.EMAIL_PASSWORD,
+          user: smtpUser,
+          pass: smtpPass,
         },
       });
     }
