@@ -66,8 +66,10 @@ class FavoriService {
         lieux: [],
         artisanats: []
       };
-      
-      response.data.forEach(fav => {
+
+      // response.data peut être un tableau ou {favoris: [], pagination: {}}
+      const items = Array.isArray(response.data) ? response.data : (response.data as Record<string, unknown>).favoris as Favori[] || [];
+      items.forEach(fav => {
         switch (fav.type_entite) {
           case 'oeuvre':
             grouped.oeuvres.push(fav);
