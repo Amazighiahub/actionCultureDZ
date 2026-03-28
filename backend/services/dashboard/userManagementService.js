@@ -271,35 +271,38 @@ class DashboardUserManagementService {
     }
 
     if (action === 'delete') {
-      // Suppression définitive avec nettoyage des données liées
-      for (const userId of userIds) {
-        try {
-          // Nettoyage de toutes les données liées avant suppression
-          const cleanup = [
-            'Favori', 'Commentaire', 'Vue', 'Notification',
-            'EvenementUser', 'UserRole', 'EmailVerification',
-            'CritiqueEvaluation', 'Signalement', 'QRScan',
-            'OeuvreUser', 'UserSpecialite', 'UserOrganisation'
-          ];
-          for (const model of cleanup) {
-            if (this.models[model]) {
-              await this.models[model].destroy({ where: { id_user: userId } }).catch(() => {});
-            }
-          }
-          // Nullifier les FK optionnelles (ne pas supprimer les oeuvres/events)
-          if (this.models.Oeuvre) await this.models.Oeuvre.update({ saisi_par: null }, { where: { saisi_par: userId } }).catch(() => {});
-          if (this.models.Oeuvre) await this.models.Oeuvre.update({ validateur_id: null }, { where: { validateur_id: userId } }).catch(() => {});
-          if (this.models.Evenement) await this.models.Evenement.update({ id_user: null }, { where: { id_user: userId } }).catch(() => {});
-          if (this.models.Intervenant) await this.models.Intervenant.update({ id_user: null }, { where: { id_user: userId } }).catch(() => {});
-          if (this.models.Service) await this.models.Service.update({ id_user: null }, { where: { id_user: userId } }).catch(() => {});
+      // Répondre immédiatement — suppression en arrière-plan
+      results.success = userIds;
 
-          await this.userRepo.delete(userId);
-          results.success.push(userId);
-        } catch (err) {
-          results.errors.push({ id: userId, error: err.message });
+      // Lancer le nettoyage en arrière-plan (ne bloque pas la réponse)
+      setImmediate(async () => {
+        for (const userId of userIds) {
+          try {
+            const cleanup = [
+              'Favori', 'Commentaire', 'Vue', 'Notification',
+              'EvenementUser', 'UserRole', 'EmailVerification',
+              'CritiqueEvaluation', 'Signalement', 'QRScan',
+              'OeuvreUser', 'UserSpecialite', 'UserOrganisation'
+            ];
+            for (const model of cleanup) {
+              if (this.models[model]) {
+                await this.models[model].destroy({ where: { id_user: userId } }).catch(() => {});
+              }
+            }
+            if (this.models.Oeuvre) await this.models.Oeuvre.update({ saisi_par: null }, { where: { saisi_par: userId } }).catch(() => {});
+            if (this.models.Oeuvre) await this.models.Oeuvre.update({ validateur_id: null }, { where: { validateur_id: userId } }).catch(() => {});
+            if (this.models.Evenement) await this.models.Evenement.update({ id_user: null }, { where: { id_user: userId } }).catch(() => {});
+            if (this.models.Intervenant) await this.models.Intervenant.update({ id_user: null }, { where: { id_user: userId } }).catch(() => {});
+            if (this.models.Service) await this.models.Service.update({ id_user: null }, { where: { id_user: userId } }).catch(() => {});
+            await this.userRepo.delete(userId);
+            logger.info(`Utilisateur ${userId} supprimé définitivement`);
+          } catch (err) {
+            logger.error(`Erreur suppression utilisateur ${userId}:`, err.message);
+          }
         }
-      }
-      await this._invalidateUserCacheBulk(userIds);
+        await this._invalidateUserCacheBulk(userIds);
+      });
+
       return results;
     }
 
