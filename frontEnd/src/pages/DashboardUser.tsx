@@ -520,7 +520,7 @@ const DashboardUser = () => {
                   <div>
                     <label className="block text-sm font-medium mb-2">{t("dashboarduser.type_compte")}</label>
                     <div className="p-3 border rounded-lg bg-muted">
-                      <Badge variant="secondary">{t("dashboarduser.visiteur")}</Badge>
+                      <Badge variant="secondary">{user?.TypeUser?.nom_type || user?.type_user || t("dashboarduser.visiteur")}</Badge>
                     </div>
                   </div>
                   <div>
