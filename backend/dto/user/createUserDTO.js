@@ -172,8 +172,9 @@ class CreateUserDTO extends BaseDTO {
   }
 
   _isValidPhone(phone) {
-    // Format algérien
-    return /^(0|\+213)[567][0-9]{8}$/.test(phone.replace(/\s/g, ''));
+    // Format international : +indicatif suivi de 6-14 chiffres
+    const digits = phone.replace(/[\s\-().]/g, '');
+    return /^\+?[0-9]{8,15}$/.test(digits);
   }
 
   _isSafeUrl(url) {
