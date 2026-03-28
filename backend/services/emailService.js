@@ -10,6 +10,11 @@ class EmailService {
     this.transporter = null;
     this.isPaused = process.env.EMAIL_PAUSED === 'true' || false;
     this.compiledTemplates = {}; // Cache pour les templates compilés
+
+    // Initialiser le transporter si les emails ne sont pas en pause
+    if (!this.isPaused) {
+      this.initializeTransporter();
+    }
   }
 
   /**
