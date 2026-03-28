@@ -64,7 +64,7 @@
       "registering": "Registering...",
       "createAccount": "Create My Account",
       "requiredFieldsLegend": "* Required field",
-      "phoneHelper": "Example: +213 555 123 456",
+      "phoneHelper": "Enter your number without the country code",
       "portfolioHelper": "Example: https://myportfolio.com",
       "professionalNote": {
         "title": "Important note:",
@@ -289,7 +289,7 @@
     "noData": "No data",
     "optional": "Optional",
     "requiredFieldsLegend": "* Required field",
-    "phoneHelper": "Example: +213 555 123 456",
+    "phoneHelper": "Enter your number without the country code",
     "portfolioHelper": "Example: https://myportfolio.com",
     "urlHelper": "Example: https://example.com",
     "pagination": "Pagination",

@@ -64,7 +64,7 @@
       "registering": "جارٍ التسجيل...",
       "createAccount": "إنشاء حسابي",
       "requiredFieldsLegend": "* حقل إلزامي",
-      "phoneHelper": "مثال: 456 123 555 213+",
+      "phoneHelper": "أدخل رقمك بدون رمز البلد",
       "portfolioHelper": "مثال: https://monportfolio.com",
       "professionalNote": {
         "title": "ملاحظة مهمة:",
@@ -293,7 +293,7 @@
     "noData": "لا توجد بيانات",
     "optional": "اختياري",
     "requiredFieldsLegend": "* حقل إلزامي",
-    "phoneHelper": "مثال: 456 123 555 213+",
+    "phoneHelper": "أدخل رقمك بدون رمز البلد",
     "portfolioHelper": "مثال: https://monportfolio.com",
     "urlHelper": "مثال: https://example.com",
     "pagination": "ترقيم الصفحات",

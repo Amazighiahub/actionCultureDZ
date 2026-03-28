@@ -92,7 +92,7 @@
       "registering": "Inscription en cours...",
       "createAccount": "Créer mon compte",
       "requiredFieldsLegend": "* Champ obligatoire",
-      "phoneHelper": "Exemple : +213 555 123 456",
+      "phoneHelper": "Saisissez votre numéro sans le code pays",
       "portfolioHelper": "Exemple : https://monportfolio.com"
     },
     "errors": {
@@ -284,7 +284,7 @@
     "noDescription": "Aucune description",
     "optional": "Optionnel",
     "requiredFieldsLegend": "* Champ obligatoire",
-    "phoneHelper": "Exemple : +213 555 123 456",
+    "phoneHelper": "Saisissez votre numéro sans le code pays",
     "portfolioHelper": "Exemple : https://monportfolio.com",
     "urlHelper": "Exemple : https://example.com",
     "pagination": "Pagination",
