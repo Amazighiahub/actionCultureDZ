@@ -38,11 +38,13 @@ FROM nginx:alpine AS production
 
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-COPY --from=builder /app/dist /usr/share/nginx/html
+# Copier le build dans un dossier temporaire (pas le volume)
+COPY --from=builder /app/dist /app/dist
 
 EXPOSE 80
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:80 || exit 1
 
-CMD ["nginx", "-g", "daemon off;"]
+# Au démarrage : copier les fichiers frais dans le volume, puis lancer nginx
+CMD ["sh", "-c", "cp -r /app/dist/* /usr/share/nginx/html/ && nginx -g 'daemon off;'"]
