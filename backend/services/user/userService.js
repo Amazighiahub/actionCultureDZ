@@ -78,6 +78,21 @@ class UserService extends BaseService {
 
     this.logger.info(`Nouvel utilisateur inscrit: ${result.userId}`);
 
+    // Envoyer l'email de vérification (fire-and-forget)
+    if (process.env.SKIP_EMAIL_VERIFICATION !== 'true') {
+      try {
+        const container = require('../serviceContainer');
+        const evService = container.emailVerificationService;
+        if (evService) {
+          evService.sendVerificationEmail(result.userId, '0.0.0.0').catch(err => {
+            this.logger.error('Erreur envoi email vérification:', err.message);
+          });
+        }
+      } catch (err) {
+        this.logger.error('Email verification service non disponible:', err.message);
+      }
+    }
+
     return {
       user: result.user,
       token: result.token,
