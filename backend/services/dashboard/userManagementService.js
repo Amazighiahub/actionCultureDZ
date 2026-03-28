@@ -271,11 +271,22 @@ class DashboardUserManagementService {
     }
 
     if (action === 'delete') {
-      await this.userRepo.updateMany(
-        { id_user: { [Op.in]: userIds } },
-        { statut: 'banni' }
-      );
-      results.success = userIds;
+      // Suppression définitive avec nettoyage des données liées
+      for (const userId of userIds) {
+        try {
+          // Supprimer les données liées (FK CASCADE devrait gérer, sinon nettoyage manuel)
+          if (this.models.Favori) await this.models.Favori.destroy({ where: { id_user: userId } });
+          if (this.models.Commentaire) await this.models.Commentaire.destroy({ where: { id_user: userId } });
+          if (this.models.Vue) await this.models.Vue.destroy({ where: { id_user: userId } });
+          if (this.models.Notification) await this.models.Notification.destroy({ where: { id_user: userId } });
+          if (this.models.EvenementUser) await this.models.EvenementUser.destroy({ where: { id_user: userId } });
+          if (this.models.UserRole) await this.models.UserRole.destroy({ where: { id_user: userId } });
+          await this.userRepo.delete(userId);
+          results.success.push(userId);
+        } catch (err) {
+          results.errors.push({ id: userId, error: err.message });
+        }
+      }
       await this._invalidateUserCacheBulk(userIds);
       return results;
     }
