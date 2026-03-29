@@ -32,13 +32,20 @@ const APropos = () => {
     }
     setSending(true);
     try {
-      const subject = encodeURIComponent(formData.sujet || 'Contact via Culture Algérie');
-      const body = encodeURIComponent(`De: ${formData.prenom} ${formData.nom}\nEmail: ${formData.email}\n\n${formData.message}`);
-      window.location.href = `mailto:${CONTACT_EMAIL}?subject=${subject}&body=${body}`;
-      toast({ title: t('apropos.messagePret', 'Message prêt'), description: t('apropos.clientEmailOuvert', 'Votre client email va s\'ouvrir avec le message pré-rempli.') });
-      setFormData({ prenom: '', nom: '', email: '', sujet: '', message: '' });
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+      const data = await response.json();
+      if (data.success) {
+        toast({ title: t('apropos.messageEnvoye', 'Message envoyé'), description: t('apropos.messageEnvoyeDesc', 'Nous avons bien reçu votre message. Nous vous répondrons rapidement.') });
+        setFormData({ prenom: '', nom: '', email: '', sujet: '', message: '' });
+      } else {
+        toast({ title: t('common.error', 'Erreur'), description: data.error || t('apropos.erreurEnvoi', 'Erreur lors de l\'envoi.'), variant: 'destructive' });
+      }
     } catch {
-      toast({ title: t('common.error', 'Erreur'), description: t('apropos.erreurEnvoi', 'Impossible d\'ouvrir le client email.'), variant: 'destructive' });
+      toast({ title: t('common.error', 'Erreur'), description: t('apropos.erreurEnvoi', 'Erreur lors de l\'envoi du message.'), variant: 'destructive' });
     } finally {
       setSending(false);
     }

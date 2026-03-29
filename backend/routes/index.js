@@ -491,6 +491,7 @@ const initRoutes = (models, authMiddleware) => {
     { path: '/email-verification', init: initEmailVerificationRoutes, args: [models, authMiddleware] },
     { path: '/search', init: initSearchRoutes, args: [models, authMiddleware] },
     { path: '/stats', init: initStatsRoutes, args: [models, authMiddleware] },
+    { path: '/contact', init: require('./contactRoutes'), args: [] },
     // ========================================================================
     // ROUTES ADMIN - AJOUT
     // ========================================================================
