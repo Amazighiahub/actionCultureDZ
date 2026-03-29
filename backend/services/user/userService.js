@@ -122,6 +122,20 @@ class UserService extends BaseService {
       throw this._forbiddenError('Votre compte est suspendu');
     }
 
+    // 2b. Vérifier l'email
+    if (!user.email_verifie) {
+      throw this._forbiddenError('Veuillez vérifier votre adresse email avant de vous connecter');
+    }
+
+    // 2c. Vérifier la validation admin (professionnels)
+    if (user.statut === 'en_attente_validation') {
+      throw this._forbiddenError('Votre compte est en attente de validation par un administrateur');
+    }
+
+    if (user.statut === 'rejete') {
+      throw this._forbiddenError('Votre demande de compte professionnel a été refusée');
+    }
+
     // 3. Vérifier le mot de passe
     const isValidPassword = await bcrypt.compare(motDePasse, user.password);
     if (!isValidPassword) {
