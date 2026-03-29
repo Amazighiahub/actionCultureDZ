@@ -433,7 +433,8 @@
     },
     "participants": "participants",
     "full": "Complet",
-    "free": "Gratuit"
+    "free": "Gratuit",
+    "resultsCount": "événement(s) trouvé(s)"
   },
   "footer": {
     "legal": "Légal",
@@ -764,7 +765,8 @@
       "album": "Album",
       "book": "Livre",
       "film": "Film"
-    }
+    },
+    "resultsCount": "œuvre(s) trouvée(s)"
   },
   "verifyemailpage": {
     "vrification_russie": "Vérification Réussie !",
@@ -2496,11 +2498,6 @@
       "all": "Tous",
       "allTypes": "Tous les types",
       "allWilayas": "Toutes les wilayas"
-    }
-  },
-  "category": {
-    "form": {
-      "name": "Nom de la catégorie"
     }
   },
   "toasts": {

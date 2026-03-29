@@ -359,7 +359,7 @@ const Oeuvres: React.FC = () => {
             <>
               {/* Stats résultats */}
               <div className="mb-6 text-sm text-muted-foreground">
-                {displayedOeuvres.length} œuvre(s) trouvée(s)
+                {displayedOeuvres.length} {t('works.resultsCount', 'œuvre(s) trouvée(s)')}
               </div>
 
               {/* Grille des œuvres */}

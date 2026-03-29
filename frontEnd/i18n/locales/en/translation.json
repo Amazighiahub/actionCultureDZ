@@ -436,7 +436,8 @@
     },
     "participants": "participants",
     "full": "Full",
-    "free": "Free"
+    "free": "Free",
+    "resultsCount": "event(s) found"
   },
   "footer": {
     "legal": "Legal",
@@ -767,7 +768,8 @@
       "album": "works.types.album",
       "book": "works.types.book",
       "film": "works.types.film"
-    }
+    },
+    "resultsCount": "work(s) found"
   },
   "verifyemailpage": {
     "vrification_russie": "Verification Successful!",

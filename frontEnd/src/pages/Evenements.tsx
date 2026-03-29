@@ -304,7 +304,7 @@ const Evenements: React.FC = () => {
             <>
               {/* Stats */}
               <div className="mb-6 text-sm text-muted-foreground">
-                {pagination?.total || evenements.length} événement(s) trouvé(s)
+                {pagination?.total || evenements.length} {t('events.resultsCount', 'événement(s) trouvé(s)')}
               </div>
 
               {/* Grille des événements */}

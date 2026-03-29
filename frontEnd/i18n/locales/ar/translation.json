@@ -441,7 +441,8 @@
     },
     "participants": "مشاركين",
     "full": "مكتمل",
-    "free": "مجاني"
+    "free": "مجاني",
+    "resultsCount": "حدث (أحداث) تم العثور عليها"
   },
   "footer": {
     "legal": "قانوني",
@@ -1050,7 +1051,8 @@
     },
     "create": {
       "success": "تم إنشاء العمل بنجاح! جاري التحويل..."
-    }
+    },
+    "resultsCount": "عمل (أعمال) تم العثور عليها"
   },
   "verifyemailpage": {
     "vrification_russie": "تم التحقق بنجاح!",
