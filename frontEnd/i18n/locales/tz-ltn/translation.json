@@ -273,7 +273,7 @@
     "activeFilters": "Imzizdigen urmiden",
     "all": "Akk",
     "anonymous": "Udrig",
-    "appName": "Taẓmmart n Dzayer",
+    "appName": "Tala DZ",
     "back": "Uɣal",
     "call": "Siwel",
     "clearAll": "Sfeḍ akk",
@@ -437,7 +437,8 @@
     },
     "participants": "imttekkiyen",
     "full": "Yeččur",
-    "free": "Baṭel"
+    "free": "Baṭel",
+    "resultsCount": "taneṣlit(in) yettwafen"
   },
   "footer": {
     "legal": "Azref",
@@ -784,7 +785,8 @@
       "album": "Album",
       "book": "Adlis",
       "film": "Asaru"
-    }
+    },
+    "resultsCount": "amahil(en) yettwafen"
   },
   "verifyemailpage": {
     "vrification_russie": "Asenqed yedda!",

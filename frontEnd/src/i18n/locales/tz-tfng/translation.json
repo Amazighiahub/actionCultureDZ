@@ -39,7 +39,8 @@
     "selectType": "ⴼⵔⴻⵏ ⴰⵏⴰⵡ",
     "signup": "ⵊⵊⵔⴷ",
     "terms": "ⵜⵉⴼⴰⴷⵉⵡⵉⵏ ⵏ ⵓⵙⵎⵔⵙ",
-    "viewAll": "ⵡⴰⵍⵉ ⴰⴽⴽ"
+    "viewAll": "ⵡⴰⵍⵉ ⴰⴽⴽ",
+    "appName": "ⵜⴰⵍⴰ ⴷⵣ"
   },
   "contributors": {
     "addedCount_one": "{{count}} ⴰⵎⵓⵜⵜⴽ ⵉⵜⵜⵡⴰⵔⵏⴰ",
@@ -112,7 +113,8 @@
       "screening": "ⴰⵙⴽⴰⵏ",
       "show": "ⴰⵙⴰⴼⵙⵔ",
       "workshop": "ⴰⵀⵉⵍ"
-    }
+    },
+    "resultsCount": "ⵜⴰⵏⴻⵚⵍⵉⵜ(ⵉⵏ) ⵢⴻⵜⵜⵡⴰⴼⴻⵏ"
   },
   "footer": {
     "legal": "ⴰⵙⵔⴼⴰⵏ",
@@ -139,8 +141,8 @@
       "heritage": "ⴰⴳⵍⴰ",
       "works": "ⵜⵉⵡⵓⵔⵉⵡⵉⵏ"
     },
-    "subtitle": "ⵜⴰⵖⵓⵖⵜ ⵏ ⵍⵣⵣⴰⵢⵔ",
-    "title": "ⵜⵉⵎⵍⵉⵍⵉⵜ ⵏ ⵜⴷⵍⵙⴰ",
+    "subtitle": "ⵜⴰⵍⴰ ⴷⵣ",
+    "title": "ⵜⴰⵍⴰ ⴷⵣ",
     "userMenu": {
       "addWork": "ⵔⵏⵓ ⵜⴰⵡⵓⵔⵉ",
       "administration": "ⵜⴰⴷⴱⵉⵔⵜ",
@@ -451,6 +453,7 @@
       "album": "ⴰⵍⴱⵓⵎ",
       "book": "ⴰⴷⵍⵉⵙ",
       "film": "ⴰⴼⵉⵍⵎ"
-    }
+    },
+    "resultsCount": "ⴰⵎⴰⵀⵉⵍ(ⴻⵏ) ⵢⴻⵜⵜⵡⴰⴼⴻⵏ"
   }
 }
