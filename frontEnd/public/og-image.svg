@@ -1,178 +1,21 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
   <defs>
-    <!-- Background gradient bleu nuit profond -->
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#0a1628;stop-opacity:1" />
-      <stop offset="40%" style="stop-color:#132e4a;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#0b3d5e;stop-opacity:1" />
+      <stop offset="0%" style="stop-color:#0c4a6e"/>
+      <stop offset="100%" style="stop-color:#164e63"/>
     </linearGradient>
-    <!-- Accent drapeau algérien : vert → blanc → rouge -->
-    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#006233;stop-opacity:1" />
-      <stop offset="45%" style="stop-color:#ffffff;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#d21034;stop-opacity:1" />
-    </linearGradient>
-    <!-- Glow amazigh doré -->
-    <linearGradient id="amazighGold" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#f59e0b;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#d97706;stop-opacity:1" />
-    </linearGradient>
-    <linearGradient id="goldFade" x1="50%" y1="0%" x2="50%" y2="100%">
-      <stop offset="0%" style="stop-color:#fbbf24;stop-opacity:0.15" />
-      <stop offset="100%" style="stop-color:#fbbf24;stop-opacity:0" />
+    <linearGradient id="drop" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#38bdf8"/>
+      <stop offset="100%" style="stop-color:#0e7490"/>
     </linearGradient>
   </defs>
-
-  <!-- Background -->
-  <rect width="1200" height="630" fill="url(#bg)" />
-  <!-- Subtle golden glow top-center -->
-  <ellipse cx="600" cy="0" rx="500" ry="250" fill="url(#goldFade)" />
-
-  <!-- ═══════════════════════════════════════════════ -->
-  <!-- MOTIFS AMAZIGHS TRADITIONNELS (losanges, Yaz ⵣ, chevrons, triangles berbères) -->
-  <!-- ═══════════════════════════════════════════════ -->
-
-  <!-- Frise de losanges amazighs en haut -->
-  <g opacity="0.07" stroke="white" fill="none" stroke-width="1.8">
-    <!-- Losanges berbères répétés (symbole de féminité / protection) -->
-    <polygon points="100,30 130,60 100,90 70,60" />
-    <polygon points="180,30 210,60 180,90 150,60" />
-    <polygon points="260,30 290,60 260,90 230,60" />
-    <polygon points="340,30 370,60 340,90 310,60" />
-    <polygon points="420,30 450,60 420,90 390,60" />
-    <polygon points="500,30 530,60 500,90 470,60" />
-    <polygon points="580,30 610,60 580,90 550,60" />
-    <polygon points="660,30 690,60 660,90 630,60" />
-    <polygon points="740,30 770,60 740,90 710,60" />
-    <polygon points="820,30 850,60 820,90 790,60" />
-    <polygon points="900,30 930,60 900,90 870,60" />
-    <polygon points="980,30 1010,60 980,90 950,60" />
-    <polygon points="1060,30 1090,60 1060,90 1030,60" />
-    <polygon points="1140,30 1170,60 1140,90 1110,60" />
-    <!-- Points centraux des losanges -->
-    <circle cx="100" cy="60" r="3" fill="white" stroke="none" />
-    <circle cx="260" cy="60" r="3" fill="white" stroke="none" />
-    <circle cx="420" cy="60" r="3" fill="white" stroke="none" />
-    <circle cx="580" cy="60" r="3" fill="white" stroke="none" />
-    <circle cx="740" cy="60" r="3" fill="white" stroke="none" />
-    <circle cx="900" cy="60" r="3" fill="white" stroke="none" />
-    <circle cx="1060" cy="60" r="3" fill="white" stroke="none" />
-  </g>
-
-  <!-- Grand symbole Yaz ⵣ (liberté amazighe) - côté droit -->
-  <g opacity="0.08" stroke="white" fill="none" stroke-width="2.5" transform="translate(980, 180)">
-    <!-- Yaz : trait vertical + V inversé + point -->
-    <line x1="0" y1="-80" x2="0" y2="80" />
-    <line x1="-50" y1="30" x2="0" y2="-20" />
-    <line x1="50" y1="30" x2="0" y2="-20" />
-    <circle cx="0" cy="-80" r="6" fill="white" stroke="none" />
-  </g>
-
-  <!-- Second Yaz plus petit, en haut à droite -->
-  <g opacity="0.05" stroke="white" fill="none" stroke-width="2" transform="translate(1120, 100) scale(0.6)">
-    <line x1="0" y1="-80" x2="0" y2="80" />
-    <line x1="-50" y1="30" x2="0" y2="-20" />
-    <line x1="50" y1="30" x2="0" y2="-20" />
-    <circle cx="0" cy="-80" r="6" fill="white" stroke="none" />
-  </g>
-
-  <!-- Motifs chevrons berbères (zigzag) - côté gauche bas -->
-  <g opacity="0.06" stroke="white" fill="none" stroke-width="1.5">
-    <polyline points="30,450 55,420 80,450 105,420 130,450 155,420 180,450" />
-    <polyline points="30,470 55,440 80,470 105,440 130,470 155,440 180,470" />
-    <polyline points="30,490 55,460 80,490 105,460 130,490 155,460 180,490" />
-  </g>
-
-  <!-- Triangles amazighs (symbole de la montagne / Djurdjura) - coin droit bas -->
-  <g opacity="0.06" fill="white" stroke="none">
-    <polygon points="1050,520 1070,480 1090,520" />
-    <polygon points="1100,520 1120,480 1140,520" />
-    <polygon points="1075,480 1095,440 1115,480" />
-    <!-- Triangles inversés (motif tapis berbère) -->
-    <polygon points="1050,530 1070,570 1090,530" />
-    <polygon points="1100,530 1120,570 1140,530" />
-  </g>
-
-  <!-- Frise losanges en bas (miroir de celle du haut) -->
-  <g opacity="0.05" stroke="white" fill="none" stroke-width="1.2">
-    <polygon points="100,540 125,560 100,580 75,560" />
-    <polygon points="170,540 195,560 170,580 145,560" />
-    <polygon points="240,540 265,560 240,580 215,560" />
-    <polygon points="310,540 335,560 310,580 285,560" />
-    <polygon points="380,540 405,560 380,580 355,560" />
-    <polygon points="450,540 475,560 450,580 425,560" />
-    <polygon points="520,540 545,560 520,580 495,560" />
-    <polygon points="590,540 615,560 590,580 565,560" />
-    <polygon points="660,540 685,560 660,580 635,560" />
-    <polygon points="730,540 755,560 730,580 705,560" />
-    <polygon points="800,540 825,560 800,580 775,560" />
-    <polygon points="870,540 895,560 870,580 845,560" />
-    <polygon points="940,540 965,560 940,580 915,560" />
-  </g>
-
-  <!-- Croix berbère (symbole solaire amazigh) - côté droit milieu -->
-  <g opacity="0.06" stroke="white" fill="none" stroke-width="2" transform="translate(1100, 400)">
-    <line x1="0" y1="-25" x2="0" y2="25" />
-    <line x1="-25" y1="0" x2="25" y2="0" />
-    <line x1="-18" y1="-18" x2="18" y2="18" />
-    <line x1="18" y1="-18" x2="-18" y2="18" />
-    <circle cx="0" cy="0" r="8" />
-  </g>
-
-  <!-- Motif losange imbriqué (œil amazigh / protection) - gauche milieu -->
-  <g opacity="0.07" stroke="white" fill="none" stroke-width="1.5" transform="translate(50, 280)">
-    <polygon points="0,-40 40,0 0,40 -40,0" />
-    <polygon points="0,-25 25,0 0,25 -25,0" />
-    <circle cx="0" cy="0" r="5" fill="white" stroke="none" />
-  </g>
-
-  <!-- ═══════════════════════════════════════════════ -->
-  <!-- CONTENU TEXTUEL -->
-  <!-- ═══════════════════════════════════════════════ -->
-
-  <!-- Accent line doré -->
-  <rect x="120" y="230" width="120" height="4" fill="url(#amazighGold)" rx="2" />
-
-  <!-- Flag colors strip -->
-  <rect x="120" y="242" width="38" height="3" fill="#006233" rx="1.5" opacity="0.8" />
-  <rect x="163" y="242" width="38" height="3" fill="#ffffff" rx="1.5" opacity="0.5" />
-  <rect x="206" y="242" width="38" height="3" fill="#d21034" rx="1.5" opacity="0.8" />
-
-  <!-- Titre principal -->
-  <text x="120" y="310" font-family="Georgia, 'Times New Roman', serif" font-size="62" font-weight="bold" fill="white" letter-spacing="-1">
-    Action Culture
-  </text>
-
-  <!-- Sous-titre amazigh en tifinagh -->
-  <text x="120" y="355" font-family="system-ui, sans-serif" font-size="22" fill="rgba(251,191,36,0.7)" letter-spacing="2">
-    ⵜⴰⴷⵍⵙⴰ ⵏ ⴷⵣⴰⵢⵔ
-  </text>
-
-  <!-- Sous-titre français -->
-  <text x="120" y="400" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="24" fill="rgba(255,255,255,0.85)" letter-spacing="0.5">
-    Patrimoine · Événements · Œuvres · Artisanat
-  </text>
-
-  <!-- Description -->
-  <text x="120" y="445" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="18" fill="rgba(255,255,255,0.5)">
-    Plateforme culturelle algérienne — Amazigh · Arabe · Français
-  </text>
-
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <!-- Goutte d'eau -->
+  <path d="M480 80 C480 80 380 200 380 260 C380 315 413 350 480 350 C547 350 580 315 580 260 C580 200 480 80 480 80Z" fill="url(#drop)" opacity="0.3"/>
+  <!-- Titre -->
+  <text x="600" y="280" text-anchor="middle" font-family="Georgia, serif" font-size="120" font-weight="bold" fill="white">Tala DZ</text>
+  <!-- Sous-titre -->
+  <text x="600" y="380" text-anchor="middle" font-family="system-ui, sans-serif" font-size="36" fill="#94a3b8">La source de la culture algérienne</text>
   <!-- URL -->
-  <text x="120" y="585" font-family="monospace" font-size="15" fill="rgba(255,255,255,0.3)" letter-spacing="1.5">
-    actionculture.dz
-  </text>
-
-  <!-- Petit Yaz doré à côté du titre -->
-  <g opacity="0.25" stroke="#f59e0b" fill="none" stroke-width="2" transform="translate(640, 290) scale(0.35)">
-    <line x1="0" y1="-80" x2="0" y2="80" />
-    <line x1="-50" y1="30" x2="0" y2="-20" />
-    <line x1="50" y1="30" x2="0" y2="-20" />
-    <circle cx="0" cy="-80" r="6" fill="#f59e0b" stroke="none" />
-  </g>
-
-  <!-- Bottom accent bar (drapeau algérien) -->
-  <rect x="0" y="618" width="400" height="12" fill="#006233" />
-  <rect x="400" y="618" width="400" height="12" fill="#ffffff" opacity="0.9" />
-  <rect x="800" y="618" width="400" height="12" fill="#d21034" />
+  <text x="600" y="560" text-anchor="middle" font-family="system-ui, sans-serif" font-size="24" fill="#64748b">taladz.com</text>
 </svg>
