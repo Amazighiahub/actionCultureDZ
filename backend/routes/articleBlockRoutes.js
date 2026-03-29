@@ -35,31 +35,24 @@ const initArticleBlockRoutes = (models, authMiddleware) => {
     next();
   };
 
-  // Configuration upload
-  let multerConfig;
-  try {
-    multerConfig = ArticleBlockController.getMulterConfig();
-  } catch (e) {
-    console.warn('⚠️ Configuration multer par défaut');
-    const multer = require('multer');
-    multerConfig = multer({ dest: 'uploads/articles/' });
-  }
+  // Configuration upload via Cloudinary
+  const uploadService = require('../services/uploadService');
 
   // Gestionnaire d'upload
   const handleImageUpload = (req, res, next) => {
-    const upload = multerConfig.single('image');
+    const upload = uploadService.uploadImage().single('image');
     upload(req, res, (err) => {
       if (err) {
-        console.error('Erreur upload:', err);
+        console.error('Erreur upload article:', err.message);
         if (err.code === 'LIMIT_FILE_SIZE') {
-          return res.status(400).json({ 
-            success: false, 
-            error: req.t ? req.t('upload.fileTooLarge') : 'File too large (limit: 10MB)' 
+          return res.status(400).json({
+            success: false,
+            error: req.t ? req.t('upload.fileTooLarge') : 'File too large (limit: 10MB)'
           });
         }
-        return res.status(400).json({ 
-          success: false, 
-          error: req.t ? req.t('common.serverError') : 'Upload error' 
+        return res.status(400).json({
+          success: false,
+          error: req.t ? req.t('common.serverError') : 'Upload error: ' + err.message
         });
       }
       next();
