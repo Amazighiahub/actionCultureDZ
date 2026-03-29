@@ -161,7 +161,7 @@ class EmailService {
         verificationUrl: verificationUrl,
       });
 
-      return await this.sendEmail(user.email, 'Vérifiez votre compte Talat DZ', html);
+      return await this.sendEmail(user.email, 'Vérifiez votre compte Tala DZ', html);
     } catch (error) {
       logger.error("Erreur dans sendVerificationEmail:", error);
       return { success: false, error: error.message };
@@ -214,7 +214,7 @@ class EmailService {
             <p><a href="${encodeURI(resetUrl)}" style="background-color: #3498db; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px;">Réinitialiser mon mot de passe</a></p>
             <p>Ce lien est valable pendant 2 heures.</p>
             <p>Si vous n'avez pas demandé cette réinitialisation, ignorez cet email.</p>
-            <p>L'équipe Talat DZ</p>
+            <p>L'équipe Tala DZ</p>
           </div>
         `;
       }
@@ -247,7 +247,7 @@ class EmailService {
             <p>Bonjour ${this._escapeHtml(user.prenom)},</p>
             <p>Votre mot de passe a été modifié avec succès le ${new Date().toLocaleString('fr-FR')}.</p>
             <p>Si vous n'êtes pas à l'origine de cette modification, veuillez nous contacter immédiatement.</p>
-            <p>L'équipe Talat DZ</p>
+            <p>L'équipe Tala DZ</p>
           </div>
         `;
       }
@@ -275,7 +275,7 @@ class EmailService {
           <p><strong>Nouvel email demandé :</strong> ${this._escapeHtml(newEmail)}</p>
           <p>Un email de confirmation a été envoyé à la nouvelle adresse.</p>
           <p>Si vous n'êtes pas à l'origine de cette demande, veuillez nous contacter immédiatement.</p>
-          <p>L'équipe Talat DZ</p>
+          <p>L'équipe Tala DZ</p>
         </div>
       `;
 
@@ -303,7 +303,7 @@ class EmailService {
           <p>Pour confirmer que ${this._escapeHtml(newEmail)} est bien votre nouvelle adresse email, cliquez sur le lien ci-dessous :</p>
           <p><a href="${encodeURI(confirmUrl)}" style="background-color: #3498db; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px;">Confirmer mon email</a></p>
           <p>Ce lien est valable pendant 24 heures.</p>
-          <p>L'équipe Talat DZ</p>
+          <p>L'équipe Tala DZ</p>
         </div>
       `;
 
@@ -415,7 +415,7 @@ class EmailService {
               </div>
             ` : ''}
             <p><a href="${eventUrl}" style="background-color: #3498db; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px;">Voir l'événement</a></p>
-            <p style="margin-top: 30px; font-size: 12px; color: #666;">L'équipe Talat DZ</p>
+            <p style="margin-top: 30px; font-size: 12px; color: #666;">L'équipe Tala DZ</p>
           </div>
         `;
       }
@@ -464,7 +464,7 @@ class EmailService {
             </div>
           ` : ''}
           <p><a href="${encodeURI(eventUrl)}" style="background-color: #3498db; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px;">Voir l'événement</a></p>
-          <p style="margin-top: 30px; font-size: 12px; color: #666;">L'équipe Talat DZ</p>
+          <p style="margin-top: 30px; font-size: 12px; color: #666;">L'équipe Tala DZ</p>
         </div>
       `;
 
@@ -518,7 +518,7 @@ class EmailService {
             </div>
           ` : ''}
           <p><a href="${encodeURI(eventUrl)}" style="background-color: #3498db; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px;">Voir l'événement</a></p>
-          <p style="margin-top: 30px; font-size: 12px; color: #666;">L'équipe Talat DZ</p>
+          <p style="margin-top: 30px; font-size: 12px; color: #666;">L'équipe Tala DZ</p>
         </div>
       `;
 
@@ -560,7 +560,7 @@ class EmailService {
               </div>
             ` : ''}
             <p>Nous nous excusons pour la gêne occasionnée.</p>
-            <p style="margin-top: 30px; font-size: 12px; color: #666;">L'équipe Talat DZ</p>
+            <p style="margin-top: 30px; font-size: 12px; color: #666;">L'équipe Tala DZ</p>
           </div>
         `;
 
@@ -612,7 +612,7 @@ class EmailService {
               ${programme.heure_debut ? `<p><strong>Heure :</strong> ${programme.heure_debut}</p>` : ''}
             </div>
             <p><a href="${eventUrl}" style="background-color: #3498db; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px;">Voir les détails</a></p>
-            <p style="margin-top: 30px; font-size: 12px; color: #666;">L'équipe Talat DZ</p>
+            <p style="margin-top: 30px; font-size: 12px; color: #666;">L'équipe Tala DZ</p>
           </div>
         `;
 
@@ -654,7 +654,7 @@ class EmailService {
               ${evenement.TypeEvenement?.nom_type ? `<p><strong>🏷️ Type :</strong> ${evenement.TypeEvenement.nom_type}</p>` : ''}
             </div>
             <p><a href="${eventUrl}" style="background-color: #3498db; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px;">Découvrir l'événement</a></p>
-            <p style="margin-top: 30px; font-size: 12px; color: #666;">L'équipe Talat DZ</p>
+            <p style="margin-top: 30px; font-size: 12px; color: #666;">L'équipe Tala DZ</p>
           </div>
         `;
 
@@ -685,7 +685,7 @@ class EmailService {
           </div>
           <p><a href="${eventUrl}" style="background-color: #3498db; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px;">Voir les détails</a></p>
           <p style="margin-top: 30px;">À demain !</p>
-          <p style="font-size: 12px; color: #666;">L'équipe Talat DZ</p>
+          <p style="font-size: 12px; color: #666;">L'équipe Tala DZ</p>
         </div>
       `;
 

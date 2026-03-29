@@ -2,8 +2,8 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
-const SITE_NAME = 'Culture Algérie';
-const SITE_URL = typeof window !== 'undefined' ? window.location.origin : 'https://culture-algerie.com';
+const SITE_NAME = 'Tala DZ';
+const SITE_URL = typeof window !== 'undefined' ? window.location.origin : 'https://taladz.com';
 const DEFAULT_IMAGE = `${SITE_URL}/og-image.png`;
 const DEFAULT_DESCRIPTION = 'Découvrez le riche patrimoine culturel algérien : événements, sites historiques, œuvres littéraires et artistiques, artisanat traditionnel.';
 

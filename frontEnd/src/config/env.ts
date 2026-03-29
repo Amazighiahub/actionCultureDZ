@@ -20,7 +20,7 @@ export const API_BASE_URL = makeAbsoluteUrl(rawApiUrl);
 const rawUploadUrl = import.meta.env.VITE_UPLOAD_URL || '/uploads';
 export const UPLOAD_URL = makeAbsoluteUrl(rawUploadUrl);
 
-export const APP_NAME = import.meta.env.VITE_APP_NAME || 'Action Culture';
+export const APP_NAME = import.meta.env.VITE_APP_NAME || 'Tala DZ';
 export const APP_VERSION = import.meta.env.VITE_APP_VERSION || '1.0.0';
 export const ENABLE_DEBUG = import.meta.env.VITE_ENABLE_DEBUG === 'true';
 

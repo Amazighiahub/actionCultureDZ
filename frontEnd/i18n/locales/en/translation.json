@@ -137,10 +137,10 @@
     },
     "success": {
       "loginTitle": "Login successful!",
-      "loginDescription": "Welcome to Écho Algérie! You will be redirected...",
+      "loginDescription": "Welcome to Tala DZ! You will be redirected...",
       "registrationTitle": "Registration successful!",
       "professionalRegistration": "Your professional account has been created. An administrator will validate it within 24-48 hours. You will receive a confirmation email.",
-      "visitorRegistration": "Welcome to Écho Algérie! Your account has been created successfully. You can now explore the content.",
+      "visitorRegistration": "Welcome to Tala DZ! Your account has been created successfully. You can now explore the content.",
       "registerTitle": "Registration successful!",
       "registerDescription": "Your account has been created successfully!"
     },
@@ -273,7 +273,7 @@
     "activeFilters": "Active filters",
     "all": "All",
     "anonymous": "Anonymous",
-    "appName": "Écho Algérie",
+    "appName": "Tala DZ",
     "back": "Back",
     "call": "Call",
     "clearAll": "Clear all",
@@ -463,8 +463,8 @@
       "heritage": "Heritage",
       "works": "Works"
     },
-    "subtitle": "Écho Algérie",
-    "title": "Timlilit Culture",
+    "subtitle": "Tala DZ",
+    "title": "Tala DZ",
     "userMenu": {
       "addWork": "Add work",
       "administration": "Administration",
@@ -1034,7 +1034,7 @@
     "annuler": "Cancel",
     "envoyer": "Send",
     "tableau_bord_administrateur": "Administrator dashboard",
-    "vue_densemble_plateforme": "Action Culture platform overview",
+    "vue_densemble_plateforme": "Tala DZ platform overview",
     "connect": "Connected",
     "dconnect": "Disconnected",
     "notifications_rcentes": "Recent notifications",
@@ -1306,7 +1306,7 @@
     "envoyer_message": "Send message",
     "contact_direct": "Direct contact",
     "pour_toute_question": "For any questions or collaboration:",
-    "contactculturealgeriedz": "contact@culturealgerie.dz"
+    "contactculturealgeriedz": "contact@taladz.com"
   },
   "ajouteroeuvre": {
     "chargement_des_catgories": "Loading categories...",
@@ -1988,7 +1988,7 @@
     },
     "dashboard": {
       "title": "Dashboard",
-      "subtitle": "Manage your Écho Algérie platform"
+      "subtitle": "Manage your Tala DZ platform"
     },
     "tabs": {
       "overview": "Overview",

@@ -152,12 +152,12 @@
     },
     "success": {
       "loginTitle": "Connexion réussie !",
-      "loginDescription": "Bienvenue sur Écho Algérie ! Vous allez être redirigé...",
+      "loginDescription": "Bienvenue sur Tala DZ ! Vous allez être redirigé...",
       "registerTitle": "Inscription réussie !",
       "registerDescription": "Votre compte a été créé avec succès !",
       "registrationTitle": "Inscription réussie !",
       "professionalRegistration": "Votre compte professionnel a été créé. Un administrateur va le valider sous 24-48h. Vous recevrez un email de confirmation.",
-      "visitorRegistration": "Bienvenue sur Écho Algérie ! Votre compte a été créé avec succès. Vous pouvez maintenant explorer le contenu."
+      "visitorRegistration": "Bienvenue sur Tala DZ ! Votre compte a été créé avec succès. Vous pouvez maintenant explorer le contenu."
     },
     "sectors": {
       "artiste": "Artiste",
@@ -247,7 +247,7 @@
     "activeFilters": "Filtres actifs",
     "all": "Tous",
     "anonymous": "Anonyme",
-    "appName": "Écho Algérie",
+    "appName": "Tala DZ",
     "back": "Retour",
     "backToDashboard": "Retour au tableau de bord",
     "by": "par",
@@ -460,8 +460,8 @@
       "heritage": "Patrimoine",
       "works": "Œuvres"
     },
-    "subtitle": "Écho Algérie",
-    "title": "Timlilit Culture",
+    "subtitle": "Tala DZ",
+    "title": "Tala DZ",
     "userMenu": {
       "addWork": "Ajouter une œuvre",
       "administration": "Administration",
@@ -1031,7 +1031,7 @@
     "annuler": "Annuler",
     "envoyer": "Envoyer",
     "tableau_bord_administrateur": "Tableau de bord administrateur",
-    "vue_densemble_plateforme": "Vue d'ensemble de la plateforme Action Culture",
+    "vue_densemble_plateforme": "Vue d'ensemble de la plateforme Tala DZ",
     "connect": "Connecté",
     "dconnect": "Déconnecté",
     "notifications_rcentes": "Notifications récentes",
@@ -1284,9 +1284,9 @@
     "description_rendre_culture_accessible": "Rendre la culture accessible à tous, sans barrières géographiques ou économiques.",
     "title_visibilit_locale_internationale": "Visibilité locale & internationale",
     "description_mettre_lumire_richesse": "Mettre en lumière la richesse culturelle algérienne sur la scène mondiale.",
-    "propos_culture_algrie": "À propos de Culture Algérie",
+    "propos_culture_algrie": "À propos de Tala DZ",
     "notre_mission": "Notre Mission",
-    "culture_algrie_est": "Culture Algérie est une initiative indépendante portée par des passionnés \n                  de patrimoine, de littérature, de cinéma et d'art algérien.",
+    "culture_algrie_est": "Tala DZ est une initiative indépendante portée par des passionnés \n                  de patrimoine, de littérature, de cinéma et d'art algérien.",
     "notre_mission_mettre": "Notre mission : mettre en lumière la richesse culturelle de notre pays, \n                  faciliter l'accès aux œuvres, relier les acteurs et favoriser la transmission \n                  aux jeunes générations.",
     "nos_valeurs": "Nos Valeurs",
     "nous_contacter": "Nous Contacter",
@@ -1303,7 +1303,7 @@
     "envoyer_message": "Envoyer le message",
     "contact_direct": "Contact direct",
     "pour_toute_question": "Pour toute question ou collaboration :",
-    "contactculturealgeriedz": "contact@culturealgerie.dz"
+    "contactculturealgeriedz": "contact@taladz.com"
   },
   "ajouteroeuvre": {
     "chargement_des_catgories": "Chargement des catégories...",
@@ -1837,7 +1837,7 @@
   "admin": {
     "dashboard": {
       "title": "Tableau de bord",
-      "subtitle": "Gérez votre plateforme Écho Algérie"
+      "subtitle": "Gérez votre plateforme Tala DZ"
     },
     "tabs": {
       "overview": "Vue d'ensemble",

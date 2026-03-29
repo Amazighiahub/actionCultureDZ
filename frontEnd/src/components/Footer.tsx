@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Separator } from '@/components/ui/separator';
-import { MapPin, Phone, Mail, Facebook, Instagram, Youtube, ExternalLink } from 'lucide-react';
+import { MapPin, Mail, Facebook, Instagram, Youtube, ExternalLink } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useRTL } from '@/utils/rtl';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
@@ -36,7 +36,7 @@ const Footer = () => {
     }
   ];
 
-  const phoneNumber = '+213 21 XX XX XX';
+  const contactEmail = 'contact@taladz.com';
   const currentYear = new Date().getFullYear();
 
   const socialLinks = [
@@ -79,19 +79,13 @@ const Footer = () => {
                 <span>{t('footer.location')}</span>
               </div>
               <div className="flex items-center gap-3">
-                <Phone className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                {/* ✅ CORRECTION: Numéro de téléphone toujours LTR */}
-                <span dir="ltr" className="rtl-preserve">{phoneNumber}</span>
-              </div>
-              <div className="flex items-center gap-3">
                 <Mail className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                {/* ✅ CORRECTION: Email toujours LTR */}
-                <a 
-                  href="mailto:contact@echoalgerie.com" 
-                  dir="ltr" 
+                <a
+                  href={`mailto:${contactEmail}`}
+                  dir="ltr"
                   className="rtl-preserve hover:text-primary transition-colors"
                 >
-                  contact@echoalgerie.com
+                  {contactEmail}
                 </a>
               </div>
             </div>

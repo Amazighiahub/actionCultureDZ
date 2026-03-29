@@ -137,7 +137,7 @@
     },
     "success": {
       "loginTitle": "Akeččum yedda",
-      "loginDescription": "Ansuf yis-k ɣer Timlilit Culture!",
+      "loginDescription": "Ansuf yis-k ɣer Tala DZ!",
       "registrationTitle": "Ajerred yedda",
       "professionalRegistration": "Amiḍan-ik ameslay yettwarna u yettrajju asenqed.",
       "visitorRegistration": "Amiḍan-ik yettwarna akken iwata. Ansuf!",
@@ -1051,7 +1051,7 @@
     "annuler": "[TODO TZ-LTN] Annuler",
     "envoyer": "[TODO TZ-LTN] Envoyer",
     "tableau_bord_administrateur": "[TODO TZ-LTN] Tableau de bord administrateur",
-    "vue_densemble_plateforme": "[TODO TZ-LTN] Vue d'ensemble de la plateforme Action Culture",
+    "vue_densemble_plateforme": "[TODO TZ-LTN] Vue d'ensemble de la plateforme Tala DZ",
     "connect": "[TODO TZ-LTN] Connecté",
     "dconnect": "[TODO TZ-LTN] Déconnecté",
     "notifications_rcentes": "[TODO TZ-LTN] Notifications récentes",
@@ -1323,7 +1323,7 @@
     "envoyer_message": "Azen izen",
     "contact_direct": "Anermis usrid",
     "pour_toute_question": "I yal asteqsi neɣ amɛiwen:",
-    "contactculturealgeriedz": "contact@culturealgerie.dz"
+    "contactculturealgeriedz": "contact@taladz.com"
   },
   "ajouteroeuvre": {
     "chargement_des_catgories": "[TODO TZ-LTN] Chargement des catégories...",

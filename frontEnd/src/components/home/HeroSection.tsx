@@ -186,7 +186,7 @@ const HeroSection: React.FC = () => {
               font-serif text-white
               leading-tight
             ">
-              {t('common.appName', 'Patrimoine culturel')}
+              {t('common.appName', 'Tala DZ')}
             </h1>
 
             {/* ✅ Sous-titre responsive */}
@@ -197,7 +197,7 @@ const HeroSection: React.FC = () => {
               max-w-2xl
               mx-auto sm:mx-0
             ">
-              {t('home.hero.subtitle', 'Explorez, préservez et partagez la richesse culturelle de l\'Algérie')}
+              {t('home.hero.subtitle', 'La source de la culture algérienne')}
             </p>
 
             {/* ✅ Boutons CTA - Stack sur mobile, côte à côte sur tablet+ */}

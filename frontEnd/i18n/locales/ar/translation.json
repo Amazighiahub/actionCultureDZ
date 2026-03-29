@@ -138,10 +138,10 @@
     },
     "success": {
       "loginTitle": "تم تسجيل الدخول بنجاح!",
-      "loginDescription": "مرحباً بك في صدى الجزائر! سيتم توجيهك...",
+      "loginDescription": "مرحباً بك في تالا دي زد! سيتم توجيهك...",
       "registrationTitle": "تم التسجيل بنجاح!",
       "professionalRegistration": "تم إنشاء حسابك المهني. سيتم التحقق منه خلال 24-48 ساعة. ستتلقى بريداً إلكترونياً للتأكيد.",
-      "visitorRegistration": "مرحباً بك في صدى الجزائر! تم إنشاء حسابك بنجاح. يمكنك الآن استكشاف المحتوى.",
+      "visitorRegistration": "مرحباً بك في تالا دي زد! تم إنشاء حسابك بنجاح. يمكنك الآن استكشاف المحتوى.",
       "registerTitle": "تم التسجيل بنجاح!",
       "registerDescription": "تم إنشاء حسابك بنجاح!"
     },
@@ -278,7 +278,7 @@
     "activeFilters": "الفلاتر النشطة",
     "all": "الكل",
     "anonymous": "مجهول",
-    "appName": "صدى الجزائر",
+    "appName": "تالا دي زد",
     "back": "رجوع",
     "call": "اتصال",
     "clearAll": "مسح الكل",
@@ -468,8 +468,8 @@
       "heritage": "التراث",
       "works": "الأعمال"
     },
-    "subtitle": "صدى الجزائر",
-    "title": "تمليليت ثقافة",
+    "subtitle": "تالا دي زد",
+    "title": "تالا دي زد",
     "userMenu": {
       "addWork": "إضافة عمل",
       "administration": "الإدارة",
@@ -784,7 +784,7 @@
         "explore": "استكشف المنصة"
       },
       "title": "مرحباً بكم في",
-      "titleHighlight": "تمليليت ثقافة",
+      "titleHighlight": "تالا دي زد",
       "subtitle": "منصة رقمية مخصصة للحفاظ على التراث الثقافي الأمازيغي وتعزيزه"
     }
   },
@@ -956,7 +956,7 @@
     },
     "dashboard": {
       "title": "لوحة التحكم",
-      "subtitle": "إدارة منصة صدى الجزائر"
+      "subtitle": "إدارة منصة تالا دي زد"
     },
     "tabs": {
       "overview": "نظرة عامة",
@@ -1319,7 +1319,7 @@
     "annuler": "إلغاء",
     "envoyer": "إرسال",
     "tableau_bord_administrateur": "لوحة تحكم المسؤول",
-    "vue_densemble_plateforme": "نظرة عامة على منصة Action Culture",
+    "vue_densemble_plateforme": "نظرة عامة على منصة Tala DZ",
     "connect": "متصل",
     "dconnect": "غير متصل",
     "notifications_rcentes": "الإشعارات الأخيرة",
@@ -1591,7 +1591,7 @@
     "envoyer_message": "إرسال الرسالة",
     "contact_direct": "اتصال مباشر",
     "pour_toute_question": "لأي سؤال أو تعاون:",
-    "contactculturealgeriedz": "contact@culturealgerie.dz"
+    "contactculturealgeriedz": "contact@taladz.com"
   },
   "ajouteroeuvre": {
     "chargement_des_catgories": "جاري تحميل الفئات...",

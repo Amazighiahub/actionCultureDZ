@@ -12,7 +12,7 @@ import { useTranslation } from "react-i18next";
 import { useToast } from '@/components/ui/use-toast';
 import SEOHead from '@/components/SEOHead';
 
-const CONTACT_EMAIL = 'contact@culture-algerie.dz';
+const CONTACT_EMAIL = 'contact@taladz.com';
 
 const APropos = () => {
   const { t } = useTranslation();
