@@ -121,10 +121,23 @@ class ArtisanatController extends BaseController {
   }
 
   async uploadMedias(req, res) {
-    res.status(501).json({
-      success: false,
-      error: req.t('upload.multerRequired')
-    });
+    try {
+      if (!req.files || req.files.length === 0) {
+        return res.status(400).json({ success: false, error: req.t('upload.noFile') });
+      }
+
+      const medias = req.files.map(file => ({
+        url: file.path,
+        type_media: file.mimetype.startsWith('image') ? 'image' : 'document',
+        mime_type: file.mimetype,
+        taille_fichier: file.size,
+        originalname: file.originalname
+      }));
+
+      res.status(201).json({ success: true, data: medias });
+    } catch (error) {
+      this._handleError(res, error);
+    }
   }
 
   // ============================================================================

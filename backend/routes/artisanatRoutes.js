@@ -8,6 +8,7 @@ const { param, body } = require('express-validator');
 const artisanatController = require('../controllers/artisanatController');
 const { handleValidationErrors, validateId, validateStringLengths } = require('../middlewares/validationMiddleware');
 const { createContentLimiter } = require('../middlewares/rateLimitMiddleware');
+const uploadService = require('../services/uploadService');
 const asyncHandler = require('../utils/asyncHandler');
 
 const initArtisanatRoutes = (models, authMiddleware) => {
@@ -56,6 +57,7 @@ const initArtisanatRoutes = (models, authMiddleware) => {
   router.post('/:id/medias', authenticate, requireVerifiedEmail,
     validateId(),
     createContentLimiter,
+    uploadService.uploadMedia().array('medias', 10),
     asyncHandler((req, res) => artisanatController.uploadMedias(req, res)));
 
   return router;

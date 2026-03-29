@@ -9,6 +9,7 @@ const oeuvreController = require('../controllers/oeuvreController');
 const { handleValidationErrors, validateId, validatePagination, validateWorkSubmission, validateStringLengths } = require('../middlewares/validationMiddleware');
 const { createContentLimiter } = require('../middlewares/rateLimitMiddleware');
 const asyncHandler = require('../utils/asyncHandler');
+const uploadService = require('../services/uploadService');
 
 const initOeuvreRoutes = (models, authMiddleware) => {
   const router = express.Router();
@@ -70,7 +71,9 @@ const initOeuvreRoutes = (models, authMiddleware) => {
   router.post('/:id/submit', authenticate, requireVerifiedEmail, validateId(), asyncHandler((req, res) => oeuvreController.submit(req, res)));
 
   // Médias
-  router.post('/:id/medias/upload', authenticate, requireVerifiedEmail, validateId(), asyncHandler((req, res) => oeuvreController.uploadMedia(req, res)));
+  router.post('/:id/medias/upload', authenticate, requireVerifiedEmail, validateId(),
+    uploadService.uploadMedia().array('medias', 10),
+    asyncHandler((req, res) => oeuvreController.uploadMedia(req, res)));
   router.put('/:id/medias/reorder', authenticate, requireVerifiedEmail, validateId(), asyncHandler((req, res) => oeuvreController.reorderMedias(req, res)));
   router.delete('/:id/medias/:mediaId', authenticate, requireVerifiedEmail, validateId(), validateId('mediaId'), asyncHandler((req, res) => oeuvreController.deleteMedia(req, res)));
 
