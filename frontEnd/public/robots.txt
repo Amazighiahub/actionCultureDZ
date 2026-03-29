@@ -29,7 +29,7 @@ Disallow: /verify-email/
 Disallow: /verification-email-envoyee
 
 # Sitemap statique (pages principales)
-Sitemap: https://culture-algerie.com/sitemap.xml
+Sitemap: https://taladz.com/sitemap.xml
 
 # Sitemap dynamique (toutes les pages détail, généré par le backend)
-Sitemap: https://culture-algerie.com/api/sitemap.xml
+Sitemap: https://taladz.com/api/sitemap.xml
