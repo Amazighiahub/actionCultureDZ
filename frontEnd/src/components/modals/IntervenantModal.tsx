@@ -511,10 +511,11 @@ const IntervenantModal: React.FC<IntervenantModalProps> = ({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>{t("modals_intervenantmodal.annuler")}
+          <Button type="button" variant="outline" onClick={onClose}>{t("modals_intervenantmodal.annuler")}
 
           </Button>
           <Button
+            type="button"
             onClick={handleSubmit}
             disabled={loading || loadingTypes || relevantTypes.length === 0}>
 

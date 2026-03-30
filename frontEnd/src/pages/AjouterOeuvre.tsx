@@ -325,7 +325,7 @@ const CategorySelection: React.FC<CategorySelectionProps> = React.memo(({
                   }
                 </h3>
                 {genre.categories.length > 1 &&
-                <Button
+                <Button type="button"
                   type="button"
                   variant="ghost"
                   size="sm"
@@ -1749,7 +1749,7 @@ const AjouterOeuvre: React.FC = () => {
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
                 {submitError || t('oeuvre.errors.loadMetadataFailed', 'Impossible de charger les données nécessaires au formulaire.')}
-                <Button
+                <Button type="button"
                   variant="link"
                   className="ms-2 px-0"
                   onClick={() => {
@@ -1809,7 +1809,7 @@ const AjouterOeuvre: React.FC = () => {
               {/* En-tête */}
               <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-4">
-                  <Button
+                  <Button type="button"
                   variant="outline"
                   size="sm"
                   className="hover-lift"
@@ -1843,7 +1843,7 @@ const AjouterOeuvre: React.FC = () => {
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>{t("ajouteroeuvre.vous_devez_tre")}
 
-                <Button variant="link" className="px-1" onClick={() => navigate('/auth')}>{t("ajouteroeuvre.connecter")}
+                <Button type="button" variant="link" className="px-1" onClick={() => navigate('/auth')}>{t("ajouteroeuvre.connecter")}
 
                 </Button>
                   </AlertDescription>
@@ -1871,7 +1871,7 @@ const AjouterOeuvre: React.FC = () => {
                   <CardContent>
                     <div id="id_type_oeuvre" role="group" aria-label={t("ajouteroeuvre.type_duvre")} className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 gap-4" tabIndex={-1}>
                       {metadata.types_oeuvres?.map((type: TypeOeuvre) =>
-                    <Button
+                    <Button type="button"
                       key={type.id_type_oeuvre}
                       type="button"
                       variant={formData.id_type_oeuvre === type.id_type_oeuvre ? "default" : "outline"}
@@ -2161,7 +2161,7 @@ const AjouterOeuvre: React.FC = () => {
                           {formData.tags.map((tag) =>
                       <Badge key={tag} variant="secondary" className="ps-3 pe-1 bg-secondary hover:bg-secondary/80">
                               {tag}
-                              <Button
+                              <Button type="button"
                           type="button"
                           variant="ghost"
                           size="sm"
@@ -2192,7 +2192,7 @@ const AjouterOeuvre: React.FC = () => {
                           }}
                           className="hover:border-primary focus:border-primary" />
 
-                            <Button
+                            <Button type="button"
                           type="button"
                           size="sm"
                           onClick={() => handleTagAdd(newTag)}
@@ -2234,7 +2234,7 @@ const AjouterOeuvre: React.FC = () => {
                               {suggestedTags.
                         filter((tag) => !formData.tags.includes(tag)).
                         map((tag) =>
-                        <Button
+                        <Button type="button"
                           key={tag}
                           type="button"
                           variant="outline"
@@ -2318,7 +2318,7 @@ const AjouterOeuvre: React.FC = () => {
                             </p>
                                     
                                     {/* Bouton supprimer */}
-                                    <Button
+                                    <Button type="button"
                               type="button"
                               size="sm"
                               variant="ghost"
@@ -2362,7 +2362,7 @@ const AjouterOeuvre: React.FC = () => {
                           className="hidden"
                           id="media-upload" />
 
-                            <Button
+                            <Button type="button"
                           type="button"
                           variant="outline"
                           onClick={() => document.getElementById('media-upload')?.click()}
@@ -2383,7 +2383,7 @@ const AjouterOeuvre: React.FC = () => {
                         </div>
                   }
                       <div className="flex justify-end gap-4">
-                        <Button
+                        <Button type="button"
                       type="button"
                       variant="outline"
                       onClick={() => handleSubmit(true)}

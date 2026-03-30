@@ -235,10 +235,10 @@ const EditeurModal: React.FC<EditeurModalProps> = ({
         </div>
 
         <DialogFooter className="mt-6">
-          <Button variant="outline" onClick={onClose} disabled={loading}>{t("modals_editeurmodal.annuler")}
+          <Button type="button" variant="outline" onClick={onClose} disabled={loading}>{t("modals_editeurmodal.annuler")}
 
           </Button>
-          <Button onClick={handleSubmit} disabled={loading}>
+          <Button type="button" onClick={handleSubmit} disabled={loading}>
             {loading && <Loader2 className="me-2 h-4 w-4 animate-spin" />}{t("modals_editeurmodal.crer_lditeur")}
 
           </Button>
