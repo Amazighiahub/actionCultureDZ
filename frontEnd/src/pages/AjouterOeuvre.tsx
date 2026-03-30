@@ -88,6 +88,11 @@ interface FormData {
   categories: number[];
   tags: string[];
 
+  // Traduction
+  is_traduction?: boolean;
+  id_oeuvre_originale?: number;
+  oeuvre_originale_titre?: string;
+
   // Champs spécifiques selon le type
   isbn?: string;
   nb_pages?: number;
@@ -505,6 +510,9 @@ const AjouterOeuvre: React.FC = () => {
   const [nouveauxIntervenants, setNouveauxIntervenants] = useState<NouvelIntervenant[]>([]);
   const [contributeurs, setContributeurs] = useState<ContributeurOeuvre[]>([]);
   const [editeurs, setEditeurs] = useState<EditeurOeuvre[]>([]);
+
+  // État pour recherche oeuvre originale (traduction)
+  const [searchOeuvreResults, setSearchOeuvreResults] = useState<any[]>([]);
 
   // État pour les médias
   const [medias, setMedias] = useState<MediaUpload[]>([]);
@@ -1974,6 +1982,76 @@ const AjouterOeuvre: React.FC = () => {
                             {fieldErrors.prix && <p id="prix-error" role="alert" className="text-sm text-destructive">{fieldErrors.prix}</p>}
                           </div>
                         </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Traduction */}
+                    <Card className="shadow-cultural">
+                      <CardContent className="pt-6 space-y-4">
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="checkbox"
+                            id="is_traduction"
+                            checked={formData.is_traduction || false}
+                            onChange={(e) => {
+                              handleInputChange('is_traduction', e.target.checked);
+                              if (!e.target.checked) {
+                                handleInputChange('id_oeuvre_originale', undefined);
+                                handleInputChange('oeuvre_originale_titre', undefined);
+                              }
+                            }}
+                            className="h-4 w-4 rounded border-gray-300"
+                          />
+                          <Label htmlFor="is_traduction" className="text-base cursor-pointer">
+                            {t('ajouteroeuvre.isTraduction', 'Cette œuvre est une traduction')}
+                          </Label>
+                        </div>
+                        {formData.is_traduction && (
+                          <div className="space-y-2 pl-7">
+                            <Label>{t('ajouteroeuvre.oeuvreOriginale', 'Œuvre originale')}</Label>
+                            <Input
+                              placeholder={t('ajouteroeuvre.rechercherOeuvre', 'Rechercher l\'œuvre originale par titre...')}
+                              value={formData.oeuvre_originale_titre || ''}
+                              onChange={async (e) => {
+                                handleInputChange('oeuvre_originale_titre', e.target.value);
+                                if (e.target.value.length >= 3) {
+                                  try {
+                                    const res = await oeuvreService.searchOeuvres({ q: e.target.value, limit: 5 });
+                                    if (res.success && res.data) {
+                                      const items = Array.isArray(res.data) ? res.data : (res.data as any).oeuvres || [];
+                                      setSearchOeuvreResults(items);
+                                    }
+                                  } catch { /* ignore */ }
+                                }
+                              }}
+                            />
+                            {searchOeuvreResults.length > 0 && !formData.id_oeuvre_originale && (
+                              <div className="border rounded-lg divide-y max-h-40 overflow-y-auto">
+                                {searchOeuvreResults.map((o: any) => (
+                                  <button
+                                    key={o.id_oeuvre}
+                                    type="button"
+                                    className="w-full text-left p-2 hover:bg-muted text-sm"
+                                    onClick={() => {
+                                      handleInputChange('id_oeuvre_originale', o.id_oeuvre);
+                                      const titre = typeof o.titre === 'object' ? o.titre.fr || Object.values(o.titre)[0] : o.titre;
+                                      handleInputChange('oeuvre_originale_titre', titre);
+                                      setSearchOeuvreResults([]);
+                                    }}
+                                  >
+                                    {typeof o.titre === 'object' ? o.titre.fr || Object.values(o.titre)[0] : o.titre}
+                                    {o.Langue && <span className="text-muted-foreground ml-2">({o.Langue.nom})</span>}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                            {formData.id_oeuvre_originale && (
+                              <p className="text-sm text-green-600">
+                                ✓ {t('ajouteroeuvre.oeuvreSelectionnee', 'Œuvre originale sélectionnée')}
+                              </p>
+                            )}
+                          </div>
+                        )}
                       </CardContent>
                     </Card>
 
