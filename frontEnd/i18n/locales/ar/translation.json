@@ -337,21 +337,22 @@
       "searchError": "خطأ في البحث"
     },
     "externalContributor": "مساهم خارجي",
-    "mainContributors": "المساهمون الرئيسيون",
+    "mainContributors": "المؤلف(ون) الرئيسي(ون)",
     "new": "جديد",
-    "noContributors": "لا يوجد مساهمون",
+    "noContributors": "لم يتم إضافة مؤلف",
     "noResultsFor": "لا توجد نتائج لـ",
-    "otherContributors": "مساهمون آخرون",
+    "otherContributors": "مساهمون آخرون (مترجم، رسام...)",
     "registeredMember": "عضو مسجل",
     "searchExisting": "البحث في الموجود",
-    "searchPlaceholder": "ابحث عن مساهم...",
+    "searchPlaceholder": "ابحث عن مؤلف بالاسم...",
     "selectRole": "اختر الدور",
-    "title": "المساهمون",
+    "title": "المؤلفون والمساهمون",
     "addedCount_zero": "لم تتم إضافة أي مساهم",
     "addedCount_two": "تمت إضافة مساهمين اثنين",
     "addedCount_few": "تمت إضافة {{count}} مساهمين",
     "addedCount_many": "تمت إضافة {{count}} مساهماً",
-    "addedCount": "تمت إضافة {{count}} مساهمين"
+    "addedCount": "تمت إضافة {{count}} مساهمين",
+    "helperText": "أضف المؤلف الرئيسي، ثم المساهمين. إذا كنت المؤلف، ابحث عن اسمك."
   },
   "errors": {
     "generic": {
@@ -1676,7 +1677,7 @@
     "prix": "السعر (بالدينار الجزائري)",
     "placeholder_1200": "مثال: 1200",
     "description": "الوصف *",
-    "placeholder_dcrivez_votre_uvre": "صف عملك، سياقه، تأثيراته...",
+    "placeholder_dcrivez_votre_uvre": "اكتب ملخصاً للعمل...",
     "informations_spcifiques": "معلومات محددة -",
     "tags": "الوسوم",
     "placeholder_ajouter_tag": "إضافة وسم...",
@@ -1691,7 +1692,12 @@
     "images_vidos_audio": "صور، فيديوهات، صوت أو مستندات (100 ميجابايت كحد أقصى لكل ملف)",
     "choisir_des_fichiers": "اختيار الملفات",
     "sauvegarder_comme_brouillon": "حفظ كمسودة",
-    "publier_luvre": "نشر العمل"
+    "publier_luvre": "نشر العمل",
+    "isTraduction": "هذا العمل هو ترجمة لعمل موجود",
+    "oeuvreOriginale": "العمل الأصلي",
+    "rechercherOeuvre": "ابحث عن العمل الأصلي بالعنوان...",
+    "oeuvreSelectionnee": "تم اختيار العمل الأصلي",
+    "description_label": "ملخص العمل"
   },
   "common_patrimoinesection": {
     "description_citadelle_historique_classe": "قلعة تاريخية مصنفة كتراث عالمي لليونسكو",

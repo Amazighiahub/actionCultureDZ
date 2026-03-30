@@ -1927,7 +1927,7 @@ const AjouterOeuvre: React.FC = () => {
                           <div>
                             <MultiLangInput
                               name="description"
-                              label={t("ajouteroeuvre.description")}
+                              label={t("ajouteroeuvre.description_label", "Résumé de l'œuvre")}
                               value={formData.description}
                               onChange={(value) => handleInputChange('description', value)}
                               type="textarea"

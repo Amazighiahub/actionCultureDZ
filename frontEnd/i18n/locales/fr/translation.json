@@ -337,21 +337,22 @@
     "addedCount_one": "{{count}} contributeur ajouté",
     "addedCount_other": "{{count}} contributeurs ajoutés",
     "alreadyAdded": "Déjà ajouté",
-    "createNew": "Créer nouveau",
+    "createNew": "Ajouter un nouvel auteur",
     "errors": {
       "searchError": "Erreur de recherche"
     },
-    "externalContributor": "Contributeur externe",
-    "mainContributors": "Contributeurs principaux",
+    "externalContributor": "Auteur externe (pas de compte)",
+    "mainContributors": "Auteur(s) principal(aux)",
     "new": "Nouveau",
-    "noContributors": "Aucun contributeur",
+    "noContributors": "Aucun auteur ajouté",
     "noResultsFor": "Aucun résultat pour",
-    "otherContributors": "Autres contributeurs",
-    "registeredMember": "Membre inscrit",
+    "otherContributors": "Autres contributeurs (traducteur, illustrateur...)",
+    "registeredMember": "Auteur inscrit sur la plateforme",
     "searchExisting": "Rechercher dans l'existant",
-    "searchPlaceholder": "Rechercher un contributeur...",
-    "selectRole": "Sélectionner un rôle",
-    "title": "Contributeurs"
+    "searchPlaceholder": "Rechercher un auteur par nom...",
+    "selectRole": "Rôle (Auteur, Traducteur, Illustrateur...)",
+    "title": "Auteurs et contributeurs",
+    "helperText": "Ajoutez l'auteur principal de l'œuvre, puis les contributeurs (traducteur, illustrateur, préfacier...). Si vous êtes l'auteur, recherchez votre nom."
   },
   "comments": {
     "title": "Commentaires",
@@ -1395,7 +1396,7 @@
     "prix": "Prix (en DA)",
     "placeholder_1200": "Ex: 1200",
     "description": "Description *",
-    "placeholder_dcrivez_votre_uvre": "Décrivez votre œuvre, son contexte, ses influences...",
+    "placeholder_dcrivez_votre_uvre": "Rédigez un résumé de l'œuvre...",
     "informations_spcifiques": "Informations spécifiques -",
     "tags": "Tags",
     "placeholder_ajouter_tag": "Ajouter un tag...",
@@ -1410,7 +1411,12 @@
     "images_vidos_audio": "Images, vidéos, audio ou documents (max 100MB par fichier)",
     "choisir_des_fichiers": "Choisir des fichiers",
     "sauvegarder_comme_brouillon": "Sauvegarder comme brouillon",
-    "publier_luvre": "Publier l'œuvre"
+    "publier_luvre": "Publier l'œuvre",
+    "isTraduction": "Cette œuvre est une traduction d'une œuvre existante",
+    "oeuvreOriginale": "Œuvre originale",
+    "rechercherOeuvre": "Rechercher l'œuvre originale par titre...",
+    "oeuvreSelectionnee": "Œuvre originale sélectionnée",
+    "description_label": "Résumé de l'œuvre"
   },
   "common_patrimoinesection": {
     "description_citadelle_historique_classe": "Citadelle historique classée au patrimoine mondial de l'UNESCO",

@@ -331,22 +331,23 @@
     "addedCount_one": "contributors.addedCount",
     "addedCount_other": "contributors.addedCount",
     "alreadyAdded": "contributors.alreadyAdded",
-    "createNew": "contributors.createNew",
+    "createNew": "Add a new author",
     "errors": {
       "searchError": "contributors.errors.searchError"
     },
     "externalContributor": "contributors.externalContributor",
-    "mainContributors": "contributors.mainContributors",
+    "mainContributors": "Main author(s)",
     "new": "contributors.new",
-    "noContributors": "contributors.noContributors",
+    "noContributors": "No author added",
     "noResultsFor": "contributors.noResultsFor",
-    "otherContributors": "contributors.otherContributors",
+    "otherContributors": "Other contributors (translator, illustrator...)",
     "registeredMember": "contributors.registeredMember",
     "searchExisting": "contributors.searchExisting",
-    "searchPlaceholder": "contributors.searchPlaceholder",
-    "selectRole": "contributors.selectRole",
-    "title": "contributors.title",
-    "addedCount": "{{count}} contributors added"
+    "searchPlaceholder": "Search an author by name...",
+    "selectRole": "Role (Author, Translator, Illustrator...)",
+    "title": "Authors and contributors",
+    "addedCount": "{{count}} contributors added",
+    "helperText": "Add the main author, then contributors. If you are the author, search your name."
   },
   "errors": {
     "generic": {
@@ -1391,7 +1392,7 @@
     "prix": "Price (in DA)",
     "placeholder_1200": "E.g.: 1200",
     "description": "Description *",
-    "placeholder_dcrivez_votre_uvre": "Describe your work, its context, its influences...",
+    "placeholder_dcrivez_votre_uvre": "Write a summary of the work...",
     "informations_spcifiques": "Specific information -",
     "tags": "Tags",
     "placeholder_ajouter_tag": "Add a tag...",
@@ -1406,7 +1407,12 @@
     "images_vidos_audio": "Images, videos, audio or documents (max 100MB per file)",
     "choisir_des_fichiers": "Choose files",
     "sauvegarder_comme_brouillon": "Save as draft",
-    "publier_luvre": "Publish work"
+    "publier_luvre": "Publish work",
+    "isTraduction": "This work is a translation of an existing work",
+    "oeuvreOriginale": "Original work",
+    "rechercherOeuvre": "Search the original work by title...",
+    "oeuvreSelectionnee": "Original work selected",
+    "description_label": "Work summary"
   },
   "common_patrimoinesection": {
     "description_citadelle_historique_classe": "Historic citadel listed as UNESCO World Heritage Site",
