@@ -1282,6 +1282,24 @@ const AjouterOeuvre: React.FC = () => {
         if (isEditMode && editId) {
           // Mode édition — appeler update
           oeuvreResponse = await oeuvreService.updateOeuvre(editId, oeuvreData);
+
+          // Upload des nouveaux médias si ajoutés
+          if (oeuvreResponse.success && mediaFiles.length > 0) {
+            setUploadProgress(t('ajouteroeuvre.uploadingMedias', 'Upload des médias...'));
+            for (const file of mediaFiles) {
+              try {
+                const formData = new FormData();
+                formData.append('medias', file);
+                await fetch(`/api/oeuvres/${editId}/medias/upload`, {
+                  method: 'POST',
+                  body: formData,
+                  credentials: 'include',
+                });
+              } catch (err) {
+                console.error('Erreur upload média:', err);
+              }
+            }
+          }
         } else if (mediaFiles.length > 0) {
           const mediaMetadata = medias.map((m) => ({ is_principal: m.isPrincipal }));
 
