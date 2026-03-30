@@ -494,6 +494,47 @@ class OeuvreService extends BaseService {
   // ============================================================================
 
   /**
+   * Ajouter des médias à une œuvre existante
+   * @param {number} oeuvreId
+   * @param {Array|Object} files - fichier(s) uploadé(s) par multer
+   * @param {number} userId
+   */
+  async addMedia(oeuvreId, files, userId) {
+    const oeuvre = await this.repository.findById(oeuvreId);
+    if (!oeuvre) throw this._notFoundError(oeuvreId);
+
+    // Vérifier que l'utilisateur est le propriétaire
+    if (oeuvre.saisi_par !== userId) {
+      throw this._forbiddenError('Vous ne pouvez modifier que vos propres œuvres');
+    }
+
+    const fileArray = Array.isArray(files) ? files : [files];
+    const results = [];
+
+    for (const file of fileArray) {
+      if (!file) continue;
+      if (this.models?.Media) {
+        const media = await this.models.Media.create({
+          id_oeuvre: oeuvreId,
+          type_media: file.mimetype?.startsWith('image') ? 'image' : file.mimetype?.startsWith('video') ? 'video' : 'document',
+          url: file.path || file.location || file.url,
+          mime_type: file.mimetype,
+          taille_fichier: file.size,
+          visible_public: true,
+          metadata: {
+            originalName: file.originalname,
+            cloudinaryPublicId: file.filename
+          }
+        });
+        results.push(media);
+      }
+    }
+
+    this.cache.invalidate();
+    return results;
+  }
+
+  /**
    * Récupère les statistiques des œuvres
    */
   async getStats() {
