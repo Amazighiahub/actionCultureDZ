@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -30,6 +30,7 @@ import { useFormatDate } from '@/hooks/useFormatDate';
 import { useToast } from '@/components/ui/use-toast';
 import { useFavoris } from '@/hooks/useFavoris';
 import { notificationService } from '@/services/notification.service';
+import { httpClient } from '@/services/httpClient';
 import type { Notification } from '@/services/notification.service';
 import type { GroupedFavoris } from '@/services/favori.service';
 
@@ -483,73 +484,7 @@ const DashboardUser = () => {
 
           {/* Onglet Profil */}
           <TabsContent value="profil" className="space-y-6">
-            <Card className="p-8">
-              <h2 className="text-2xl font-semibold mb-6 font-serif">{t("dashboarduser.informations_personnelles")}</h2>
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">{t("dashboarduser.prnom")}</label>
-                    <input
-                      className="w-full p-3 border rounded-lg"
-                      autoComplete="given-name"
-                      value={user?.prenom || ''}
-                      readOnly />
-
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">{t("dashboarduser.nom")}</label>
-                    <input
-                      className="w-full p-3 border rounded-lg"
-                      autoComplete="family-name"
-                      value={user?.nom || ''}
-                      readOnly />
-
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">{t("dashboarduser.email")}</label>
-                    <input
-                      className="w-full p-3 border rounded-lg"
-                      autoComplete="email"
-                      value={user?.email || ''}
-                      readOnly />
-
-                  </div>
-                </div>
-                
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">{t("dashboarduser.type_compte")}</label>
-                    <div className="p-3 border rounded-lg bg-muted">
-                      <Badge variant="secondary">{user?.TypeUser?.nom_type || user?.type_user || t("dashboarduser.visiteur")}</Badge>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">{t("dashboarduser.membre_depuis")}</label>
-                    <input
-                      className="w-full p-3 border rounded-lg"
-                      value={user?.date_creation ? formatDate(user.date_creation) : ''}
-                      readOnly />
-
-                  </div>
-                </div>
-              </div>
-              
-              <div className="flex justify-between items-center mt-8 pt-8 border-t">
-                <div>
-                  <p className="text-sm text-muted-foreground mb-2">{t("dashboarduser.vous_souhaitez_crer")}
-
-                  </p>
-                  <Link to="/auth">
-                    <Button variant="outline">{t("dashboarduser.devenir_professionnel")}
-
-                    </Button>
-                  </Link>
-                </div>
-                <Button className="btn-hover" onClick={() => navigate('/dashboard-user')}>
-                  {t("dashboarduser.modifier_profil")}
-                </Button>
-              </div>
-            </Card>
+            <ProfilEditableTab user={user} t={t} formatDate={formatDate} />
           </TabsContent>
         </Tabs>
       </main>
@@ -575,6 +510,199 @@ const DashboardUser = () => {
       <Footer />
     </div>);
 
+};
+
+// Composant Profil Éditable
+const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ user, t, formatDate }) => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [form, setForm] = useState({
+    prenom: '',
+    nom: '',
+    telephone: '',
+    biographie: '',
+  });
+
+  // Initialiser le formulaire quand user change
+  const startEditing = useCallback(() => {
+    setForm({
+      prenom: typeof user?.prenom === 'object' ? user?.prenom?.fr || '' : user?.prenom || '',
+      nom: typeof user?.nom === 'object' ? user?.nom?.fr || '' : user?.nom || '',
+      telephone: user?.telephone || '',
+      biographie: typeof user?.biographie === 'object' ? user?.biographie?.fr || '' : user?.biographie || '',
+    });
+    setEditing(true);
+  }, [user]);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const response = await httpClient.put('/users/profile', {
+        prenom: form.prenom,
+        nom: form.nom,
+        telephone: form.telephone,
+        biographie: form.biographie,
+      });
+      if (response.success) {
+        toast({ title: t('dashboarduser.profileUpdated', 'Profil mis à jour') });
+        setEditing(false);
+        queryClient.invalidateQueries({ queryKey: ['user-profile'] });
+      } else {
+        toast({ title: t('common.error'), description: response.error, variant: 'destructive' });
+      }
+    } catch {
+      toast({ title: t('common.error'), description: t('dashboarduser.updateFailed', 'Erreur lors de la mise à jour'), variant: 'destructive' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: t('common.error'), description: t('upload.fileTooLarge', 'Fichier trop volumineux (max 5 MB)'), variant: 'destructive' });
+      return;
+    }
+    setUploadingPhoto(true);
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      const response = await fetch('/api/upload/profile-photo', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+      const data = await response.json();
+      if (data.success) {
+        toast({ title: t('dashboarduser.photoUpdated', 'Photo mise à jour') });
+        queryClient.invalidateQueries({ queryKey: ['user-profile'] });
+      } else {
+        toast({ title: t('common.error'), description: data.error, variant: 'destructive' });
+      }
+    } catch {
+      toast({ title: t('common.error'), description: t('upload.uploadFailed', 'Erreur upload'), variant: 'destructive' });
+    } finally {
+      setUploadingPhoto(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const displayName = (val: any) => {
+    if (!val) return '';
+    if (typeof val === 'object') return val.fr || Object.values(val)[0] || '';
+    return val;
+  };
+
+  return (
+    <Card className="p-8">
+      <h2 className="text-2xl font-semibold mb-6 font-serif">{t("dashboarduser.informations_personnelles")}</h2>
+
+      {/* Photo de profil */}
+      <div className="flex items-center gap-6 mb-8">
+        <div className="relative">
+          <div className="w-24 h-24 rounded-full overflow-hidden bg-muted border-2 border-border">
+            {user?.photo_url ? (
+              <img src={user.photo_url} alt="Photo de profil" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-3xl font-bold text-muted-foreground">
+                {displayName(user?.prenom)?.[0]?.toUpperCase() || '?'}
+              </div>
+            )}
+          </div>
+          {uploadingPhoto && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full">
+              <RefreshCw className="h-6 w-6 text-white animate-spin" />
+            </div>
+          )}
+        </div>
+        <div>
+          <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={uploadingPhoto}>
+            {uploadingPhoto ? t('common.loading', 'Chargement...') : t('dashboarduser.changePhoto', 'Changer la photo')}
+          </Button>
+          <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
+          <p className="text-xs text-muted-foreground mt-1">{t('dashboarduser.photoHelper', 'JPG, PNG ou WebP. Max 5 MB.')}</p>
+        </div>
+      </div>
+
+      {/* Informations */}
+      <div className="grid md:grid-cols-2 gap-6">
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-2">{t("dashboarduser.prnom")}</label>
+            {editing ? (
+              <input className="w-full p-3 border rounded-lg" value={form.prenom} onChange={(e) => setForm(f => ({...f, prenom: e.target.value}))} />
+            ) : (
+              <input className="w-full p-3 border rounded-lg bg-muted" value={displayName(user?.prenom)} readOnly />
+            )}
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2">{t("dashboarduser.nom")}</label>
+            {editing ? (
+              <input className="w-full p-3 border rounded-lg" value={form.nom} onChange={(e) => setForm(f => ({...f, nom: e.target.value}))} />
+            ) : (
+              <input className="w-full p-3 border rounded-lg bg-muted" value={displayName(user?.nom)} readOnly />
+            )}
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2">{t("dashboarduser.email")}</label>
+            <input className="w-full p-3 border rounded-lg bg-muted" value={user?.email || ''} readOnly />
+            <p className="text-xs text-muted-foreground mt-1">{t('dashboarduser.emailReadOnly', 'L\'email ne peut pas être modifié')}</p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2">{t("auth.register.phone", "Téléphone")}</label>
+            {editing ? (
+              <input className="w-full p-3 border rounded-lg" type="tel" value={form.telephone} onChange={(e) => setForm(f => ({...f, telephone: e.target.value}))} />
+            ) : (
+              <input className="w-full p-3 border rounded-lg bg-muted" value={user?.telephone || t('common.notProvided', 'Non renseigné')} readOnly />
+            )}
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-2">{t("dashboarduser.type_compte")}</label>
+            <div className="p-3 border rounded-lg bg-muted">
+              <Badge variant="secondary">{(user as any)?.TypeUser?.nom_type || (user as any)?.type_user || t("dashboarduser.visiteur")}</Badge>
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2">{t("dashboarduser.membre_depuis")}</label>
+            <input className="w-full p-3 border rounded-lg bg-muted" value={user?.date_creation ? formatDate(user.date_creation) : ''} readOnly />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2">{t("dashboarduser.biographie", "Biographie")}</label>
+            {editing ? (
+              <textarea className="w-full p-3 border rounded-lg min-h-[120px]" value={form.biographie} onChange={(e) => setForm(f => ({...f, biographie: e.target.value}))} placeholder={t('dashboarduser.biographiePlaceholder', 'Décrivez-vous en quelques lignes...')} />
+            ) : (
+              <div className="p-3 border rounded-lg bg-muted min-h-[80px]">
+                {displayName(user?.biographie) || <span className="text-muted-foreground">{t('common.notProvided', 'Non renseigné')}</span>}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Boutons */}
+      <div className="flex justify-end gap-3 mt-8 pt-6 border-t">
+        {editing ? (
+          <>
+            <Button variant="outline" onClick={() => setEditing(false)} disabled={saving}>{t('common.cancel', 'Annuler')}</Button>
+            <Button onClick={handleSave} disabled={saving}>
+              {saving ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : null}
+              {t('common.save', 'Enregistrer')}
+            </Button>
+          </>
+        ) : (
+          <Button onClick={startEditing}>{t("dashboarduser.modifier_profil", "Modifier le profil")}</Button>
+        )}
+      </div>
+    </Card>
+  );
 };
 
 export default DashboardUser;
