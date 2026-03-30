@@ -234,10 +234,14 @@ class OeuvreService extends BaseService {
 
       // "Je suis l'auteur" → ajouter dans OeuvreUser
       if (requestBody.je_suis_auteur && this.models?.OeuvreUser) {
+        // id_type_user: chercher le type du user connecté, ou 1 (Auteur par défaut)
+        const user = await this.models.User.findByPk(userId, { attributes: ['id_type_user'], transaction });
         await this.models.OeuvreUser.create({
           id_oeuvre: newOeuvre.id_oeuvre,
-          id_user: userId
-        }, { transaction }).catch(() => {});
+          id_user: userId,
+          id_type_user: user?.id_type_user || 1,
+          role_principal: true
+        }, { transaction }).catch(err => this.logger.error('Erreur OeuvreUser:', err.message));
         this.logger.info(`User ${userId} ajouté comme auteur de l'oeuvre ${newOeuvre.id_oeuvre}`);
       }
 
