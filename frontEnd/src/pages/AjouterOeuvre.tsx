@@ -1214,6 +1214,11 @@ const AjouterOeuvre: React.FC = () => {
         }
       }
 
+      // Validation langue obligatoire
+      if (!formData.id_langue || formData.id_langue === 0) {
+        errors.id_langue = t('oeuvre.errors.languageRequired', 'Veuillez sélectionner la langue originale');
+      }
+
       // Validation année de création
       if (formData.annee_creation) {
         const currentYear = new Date().getFullYear();
@@ -1998,6 +2003,25 @@ const AjouterOeuvre: React.FC = () => {
                           className="hover:border-primary focus:border-primary" />
                             {fieldErrors.prix && <p id="prix-error" role="alert" className="text-sm text-destructive">{fieldErrors.prix}</p>}
                           </div>
+                        </div>
+
+                        {/* Sélecteur de langue */}
+                        <div className="space-y-2 mt-4">
+                          <Label htmlFor="id_langue" className="text-base">{t("ajouteroeuvre.langueOriginale", "Langue originale de l'œuvre")} *</Label>
+                          <select
+                            id="id_langue"
+                            value={formData.id_langue || ''}
+                            onChange={(e) => handleInputChange('id_langue', parseInt(e.target.value) || 0)}
+                            className={`w-full p-3 border rounded-lg hover:border-primary focus:border-primary ${fieldErrors.id_langue ? 'border-destructive' : ''}`}
+                          >
+                            <option value="">{t("ajouteroeuvre.choisirLangue", "-- Choisir la langue --")}</option>
+                            {metadata.langues?.map((langue: any) => (
+                              <option key={langue.id_langue} value={langue.id_langue}>
+                                {typeof langue.nom === 'object' ? langue.nom.fr || langue.nom.ar || Object.values(langue.nom)[0] : langue.nom}
+                              </option>
+                            ))}
+                          </select>
+                          {fieldErrors.id_langue && <p id="id_langue-error" role="alert" className="text-sm text-destructive">{fieldErrors.id_langue}</p>}
                         </div>
                       </CardContent>
                     </Card>
