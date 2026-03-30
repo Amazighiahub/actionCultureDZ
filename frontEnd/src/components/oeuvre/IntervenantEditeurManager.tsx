@@ -380,6 +380,7 @@ const IntervenantEditeurManager: React.FC<IntervenantEditeurManagerProps> = ({
                       )}
                     </div>
                     <Button
+                      type="button"
                       variant="ghost"
                       size="sm"
                       onClick={() => handleRemoveIntervenant(intervenant.id)}
@@ -482,6 +483,7 @@ const IntervenantEditeurManager: React.FC<IntervenantEditeurManagerProps> = ({
 
           {/* Bouton pour ajouter un nouvel intervenant */}
           <Button
+            type="button"
             variant="outline"
             onClick={() => setShowIntervenantModal(true)}
             className="w-full"
@@ -528,6 +530,7 @@ const IntervenantEditeurManager: React.FC<IntervenantEditeurManagerProps> = ({
                             </div>
                           </div>
                           <Button
+                            type="button"
                             variant="ghost"
                             size="sm"
                             onClick={() => handleRemoveEditeur(index)}
@@ -658,6 +661,7 @@ const IntervenantEditeurManager: React.FC<IntervenantEditeurManagerProps> = ({
 
             {/* Bouton pour ajouter un nouvel éditeur */}
             <Button
+              type="button"
               variant="outline"
               onClick={() => setShowEditeurModal(true)}
               className="w-full"
