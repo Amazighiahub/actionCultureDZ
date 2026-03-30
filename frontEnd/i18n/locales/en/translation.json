@@ -1412,7 +1412,14 @@
     "oeuvreOriginale": "Original work",
     "rechercherOeuvre": "Search the original work by title...",
     "oeuvreSelectionnee": "Original work selected",
-    "description_label": "Work summary"
+    "description_label": "Work summary",
+    "quiEstAuteur": "Who is the author?",
+    "jeSuisAuteur": "I am the author of this work",
+    "jeSuisAuteurDesc": "Your name will be displayed as the main author",
+    "autreAuteur": "I am adding another author's work",
+    "autreAuteurDesc": "You are the contributor referencing this work on the platform",
+    "ajouterAuteurObligatoire": "Add at least the main author, then any contributors (translator, illustrator...)",
+    "coAuteursOptionnel": "You can also add co-authors or contributors (translator, illustrator, preface writer...)"
   },
   "common_patrimoinesection": {
     "description_citadelle_historique_classe": "Historic citadel listed as UNESCO World Heritage Site",

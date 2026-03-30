@@ -22,6 +22,7 @@ export interface CreateOeuvreBackendDTO {
   annee_creation?: number;
   prix?: number;
   id_oeuvre_originale?: number;
+  je_suis_auteur?: boolean;
   categories: number[];
   tags: Array<string | number>;
   
@@ -75,6 +76,7 @@ export function mapToBackendDTO(
     annee_creation: formData.annee_creation,
     prix: formData.prix,
     id_oeuvre_originale: formData.id_oeuvre_originale || undefined,
+    je_suis_auteur: formData.je_suis_auteur,
     categories: formData.categories,
     tags: formData.tags,
     

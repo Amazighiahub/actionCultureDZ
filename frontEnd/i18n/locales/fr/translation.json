@@ -1416,7 +1416,14 @@
     "oeuvreOriginale": "Œuvre originale",
     "rechercherOeuvre": "Rechercher l'œuvre originale par titre...",
     "oeuvreSelectionnee": "Œuvre originale sélectionnée",
-    "description_label": "Résumé de l'œuvre"
+    "description_label": "Résumé de l'œuvre",
+    "quiEstAuteur": "Qui est l'auteur ?",
+    "jeSuisAuteur": "Je suis l'auteur de cette œuvre",
+    "jeSuisAuteurDesc": "Votre nom sera affiché comme auteur principal",
+    "autreAuteur": "J'ajoute l'œuvre d'un autre auteur",
+    "autreAuteurDesc": "Vous êtes le contributeur qui référence cette œuvre sur la plateforme",
+    "ajouterAuteurObligatoire": "Ajoutez au moins l'auteur principal de l'œuvre, puis les éventuels contributeurs (traducteur, illustrateur...)",
+    "coAuteursOptionnel": "Vous pouvez aussi ajouter des co-auteurs ou contributeurs (traducteur, illustrateur, préfacier...)"
   },
   "common_patrimoinesection": {
     "description_citadelle_historique_classe": "Citadelle historique classée au patrimoine mondial de l'UNESCO",

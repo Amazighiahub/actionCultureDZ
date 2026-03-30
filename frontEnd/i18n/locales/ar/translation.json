@@ -1697,7 +1697,14 @@
     "oeuvreOriginale": "العمل الأصلي",
     "rechercherOeuvre": "ابحث عن العمل الأصلي بالعنوان...",
     "oeuvreSelectionnee": "تم اختيار العمل الأصلي",
-    "description_label": "ملخص العمل"
+    "description_label": "ملخص العمل",
+    "quiEstAuteur": "من هو المؤلف؟",
+    "jeSuisAuteur": "أنا مؤلف هذا العمل",
+    "jeSuisAuteurDesc": "سيظهر اسمك كمؤلف رئيسي",
+    "autreAuteur": "أضيف عمل مؤلف آخر",
+    "autreAuteurDesc": "أنت المساهم الذي يوثق هذا العمل على المنصة",
+    "ajouterAuteurObligatoire": "أضف على الأقل المؤلف الرئيسي، ثم المساهمين (مترجم، رسام...)",
+    "coAuteursOptionnel": "يمكنك أيضاً إضافة مؤلفين مشاركين أو مساهمين (مترجم، رسام...)"
   },
   "common_patrimoinesection": {
     "description_citadelle_historique_classe": "قلعة تاريخية مصنفة كتراث عالمي لليونسكو",

@@ -232,7 +232,16 @@ class OeuvreService extends BaseService {
         subtypeRecord = await subService.createForOeuvre(newOeuvre.id_oeuvre, ds, transaction);
       }
 
-      // Associer les intervenants (auteurs/contributeurs)
+      // "Je suis l'auteur" → ajouter dans OeuvreUser
+      if (requestBody.je_suis_auteur && this.models?.OeuvreUser) {
+        await this.models.OeuvreUser.create({
+          id_oeuvre: newOeuvre.id_oeuvre,
+          id_user: userId
+        }, { transaction }).catch(() => {});
+        this.logger.info(`User ${userId} ajouté comme auteur de l'oeuvre ${newOeuvre.id_oeuvre}`);
+      }
+
+      // Associer les intervenants (auteurs/contributeurs externes)
       await this._associateIntervenants(newOeuvre.id_oeuvre, requestBody, transaction);
 
       // Associer les éditeurs

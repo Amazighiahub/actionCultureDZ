@@ -88,6 +88,9 @@ interface FormData {
   categories: number[];
   tags: string[];
 
+  // Auteur
+  je_suis_auteur?: boolean;
+
   // Traduction
   is_traduction?: boolean;
   id_oeuvre_originale?: number;
@@ -2074,16 +2077,74 @@ const AjouterOeuvre: React.FC = () => {
                   onCategoriesChange={(categories) => handleInputChange('categories', categories)} />
                     {fieldErrors.categories && <p id="categories-error" role="alert" className="text-sm text-destructive mt-2">{fieldErrors.categories}</p>}
 
-                    {/* Gestion des intervenants et éditeurs */}
-                    {metadata.types_users && metadata.editeurs &&
-                <IntervenantEditeurManager
-                  typeOeuvreId={formData.id_type_oeuvre}
-                  typesUsers={metadata.types_users}
-                  editeurs={metadata.editeurs}
-                  onIntervenantsChange={handleIntervenantsChange}
-                  onEditeursChange={handleEditeursChange} />
+                    {/* Qui est l'auteur ? */}
+                    <Card className="shadow-cultural">
+                      <CardHeader>
+                        <CardTitle className="text-2xl font-serif">
+                          {t('ajouteroeuvre.quiEstAuteur', 'Qui est l\'auteur ?')}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="space-y-3">
+                          <label className="flex items-start gap-3 p-4 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+                            <input
+                              type="radio"
+                              name="auteur_type"
+                              checked={formData.je_suis_auteur === true}
+                              onChange={() => handleInputChange('je_suis_auteur', true)}
+                              className="mt-1 h-4 w-4"
+                            />
+                            <div>
+                              <p className="font-medium">{t('ajouteroeuvre.jeSuisAuteur', 'Je suis l\'auteur de cette œuvre')}</p>
+                              <p className="text-sm text-muted-foreground">{t('ajouteroeuvre.jeSuisAuteurDesc', 'Votre nom sera affiché comme auteur principal')}</p>
+                            </div>
+                          </label>
+                          <label className="flex items-start gap-3 p-4 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+                            <input
+                              type="radio"
+                              name="auteur_type"
+                              checked={formData.je_suis_auteur === false}
+                              onChange={() => handleInputChange('je_suis_auteur', false)}
+                              className="mt-1 h-4 w-4"
+                            />
+                            <div>
+                              <p className="font-medium">{t('ajouteroeuvre.autreAuteur', 'J\'ajoute l\'œuvre d\'un autre auteur')}</p>
+                              <p className="text-sm text-muted-foreground">{t('ajouteroeuvre.autreAuteurDesc', 'Vous êtes le contributeur qui référence cette œuvre sur la plateforme')}</p>
+                            </div>
+                          </label>
+                        </div>
 
-                }
+                        {/* Si "autre auteur" → afficher le gestionnaire d'intervenants */}
+                        {formData.je_suis_auteur === false && metadata.types_users && metadata.editeurs && (
+                          <div className="mt-4 pt-4 border-t">
+                            <p className="text-sm text-muted-foreground mb-4">
+                              {t('ajouteroeuvre.ajouterAuteurObligatoire', 'Ajoutez au moins l\'auteur principal de l\'œuvre, puis les éventuels contributeurs (traducteur, illustrateur...)')}
+                            </p>
+                            <IntervenantEditeurManager
+                              typeOeuvreId={formData.id_type_oeuvre}
+                              typesUsers={metadata.types_users}
+                              editeurs={metadata.editeurs}
+                              onIntervenantsChange={handleIntervenantsChange}
+                              onEditeursChange={handleEditeursChange} />
+                          </div>
+                        )}
+
+                        {/* Si "je suis l'auteur" → option d'ajouter des co-auteurs */}
+                        {formData.je_suis_auteur === true && metadata.types_users && metadata.editeurs && (
+                          <div className="mt-4 pt-4 border-t">
+                            <p className="text-sm text-muted-foreground mb-4">
+                              {t('ajouteroeuvre.coAuteursOptionnel', 'Vous pouvez aussi ajouter des co-auteurs ou contributeurs (traducteur, illustrateur, préfacier...)')}
+                            </p>
+                            <IntervenantEditeurManager
+                              typeOeuvreId={formData.id_type_oeuvre}
+                              typesUsers={metadata.types_users}
+                              editeurs={metadata.editeurs}
+                              onIntervenantsChange={handleIntervenantsChange}
+                              onEditeursChange={handleEditeursChange} />
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
 
                     {/* Tags */}
                     <Card className="shadow-cultural">
