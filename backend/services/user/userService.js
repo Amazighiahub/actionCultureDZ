@@ -122,8 +122,9 @@ class UserService extends BaseService {
       throw this._forbiddenError('Votre compte est suspendu');
     }
 
-    // 2b. Vérifier l'email
-    if (!user.email_verifie) {
+    // 2b. Vérifier l'email (admins exemptés)
+    const isAdmin = user.Roles?.some(r => r.nom_role === 'Administrateur') || user.statut === 'actif' && user.id_type_user === 29;
+    if (!user.email_verifie && !isAdmin) {
       throw this._forbiddenError('Veuillez vérifier votre adresse email avant de vous connecter');
     }
 

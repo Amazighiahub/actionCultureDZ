@@ -616,7 +616,6 @@ class OeuvreService extends BaseService {
 
     return [...new Set(resolvedIds)];
   }
-}
 
   /**
    * Associe les intervenants (auteurs/contributeurs) à une oeuvre
