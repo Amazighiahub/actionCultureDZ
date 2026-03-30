@@ -416,7 +416,6 @@ const CategorySelection: React.FC<CategorySelectionProps> = React.memo(({
                 </h3>
                 {genre.categories.length > 1 &&
                 <Button type="button"
-                  type="button"
                   variant="ghost"
                   size="sm"
                   onClick={() => handleGenreToggleAll(genre.id_genre)}
@@ -1921,7 +1920,6 @@ const AjouterOeuvre: React.FC = () => {
                       {metadata.types_oeuvres?.map((type: TypeOeuvre) =>
                     <Button type="button"
                       key={type.id_type_oeuvre}
-                      type="button"
                       variant={formData.id_type_oeuvre === type.id_type_oeuvre ? "default" : "outline"}
                       className={`h-auto py-4 flex flex-col items-center space-y-2 hover-lift ${
                       formData.id_type_oeuvre === type.id_type_oeuvre ?
@@ -2229,7 +2227,6 @@ const AjouterOeuvre: React.FC = () => {
                       <Badge key={tag} variant="secondary" className="ps-3 pe-1 bg-secondary hover:bg-secondary/80">
                               {tag}
                               <Button type="button"
-                          type="button"
                           variant="ghost"
                           size="sm"
                           className="h-auto p-1 ms-1 hover:bg-transparent"
@@ -2260,7 +2257,6 @@ const AjouterOeuvre: React.FC = () => {
                           className="hover:border-primary focus:border-primary" />
 
                             <Button type="button"
-                          type="button"
                           size="sm"
                           onClick={() => handleTagAdd(newTag)}
                           disabled={!newTag || formData.tags.length >= 10}
@@ -2303,7 +2299,6 @@ const AjouterOeuvre: React.FC = () => {
                         map((tag) =>
                         <Button type="button"
                           key={tag}
-                          type="button"
                           variant="outline"
                           size="sm"
                           onClick={() => handleTagAdd(tag)}
@@ -2386,7 +2381,6 @@ const AjouterOeuvre: React.FC = () => {
                                     
                                     {/* Bouton supprimer */}
                                     <Button type="button"
-                              type="button"
                               size="sm"
                               variant="ghost"
                               className="absolute top-2 end-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 bg-background/80 hover:bg-destructive hover:text-destructive-foreground"
@@ -2430,7 +2424,6 @@ const AjouterOeuvre: React.FC = () => {
                           id="media-upload" />
 
                             <Button type="button"
-                          type="button"
                           variant="outline"
                           onClick={() => document.getElementById('media-upload')?.click()}
                           className="hover:bg-primary hover:text-primary-foreground hover:border-primary">{t("ajouteroeuvre.choisir_des_fichiers")}
@@ -2451,7 +2444,6 @@ const AjouterOeuvre: React.FC = () => {
                   }
                       <div className="flex justify-end gap-4">
                         <Button type="button"
-                      type="button"
                       variant="outline"
                       onClick={() => handleSubmit(true)}
                       disabled={loading || !isAuthenticated}

@@ -420,7 +420,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                        <>
+                        <div className="h-full">
                         {/* Motif décoratif en fond (fallback si pas de 2e image) */}
                         <div className="absolute inset-0 opacity-5">
                           <div className="absolute inset-0" style={{
@@ -507,10 +507,10 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                           </div>
                         </div>
                       </div>
-                        </>
-                        )}
+                      )}
                     </div>
                   </div>
+                </div>
                 </div>
                 
                 {/* Instruction flip (en dessous du livre) */}
