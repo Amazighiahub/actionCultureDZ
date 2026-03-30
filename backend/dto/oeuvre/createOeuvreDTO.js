@@ -22,6 +22,9 @@ class CreateOeuvreDTO extends BaseDTO {
     // Créateur (sera défini par le contrôleur)
     this.idCreateur = BaseDTO.toInt(data.saisi_par || data.id_createur || data.idCreateur);
 
+    // Oeuvre originale (si c'est une traduction)
+    this.idOeuvreOriginale = data.id_oeuvre_originale ? BaseDTO.toInt(data.id_oeuvre_originale) : null;
+
     // Détails optionnels
     this.anneeCreation = data.annee_creation || data.anneeCreation
       ? BaseDTO.toInt(data.annee_creation || data.anneeCreation)
@@ -165,6 +168,7 @@ class CreateOeuvreDTO extends BaseDTO {
     if (this.idLangue) entity.id_langue = this.idLangue;
     if (this.anneeCreation) entity.annee_creation = this.anneeCreation;
     if (this.prix !== null) entity.prix = this.prix;
+    if (this.idOeuvreOriginale) entity.id_oeuvre_originale = this.idOeuvreOriginale;
 
     return entity;
   }

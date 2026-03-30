@@ -232,6 +232,12 @@ class OeuvreService extends BaseService {
         subtypeRecord = await subService.createForOeuvre(newOeuvre.id_oeuvre, ds, transaction);
       }
 
+      // Associer les intervenants (auteurs/contributeurs)
+      await this._associateIntervenants(newOeuvre.id_oeuvre, requestBody, transaction);
+
+      // Associer les éditeurs
+      await this._associateEditeurs(newOeuvre.id_oeuvre, requestBody.editeurs, transaction);
+
       return { oeuvre: newOeuvre, subtypeRecord };
     });
 
@@ -609,6 +615,129 @@ class OeuvreService extends BaseService {
     }
 
     return [...new Set(resolvedIds)];
+  }
+}
+
+  /**
+   * Associe les intervenants (auteurs/contributeurs) à une oeuvre
+   * Gère 3 sources : utilisateurs inscrits, intervenants existants, nouveaux intervenants
+   * @private
+   */
+  async _associateIntervenants(oeuvreId, requestBody, transaction) {
+    if (!this.models?.OeuvreIntervenant) return;
+
+    const records = [];
+
+    // 1. Intervenants existants (déjà dans la table intervenant)
+    const intervenantsExistants = requestBody.intervenants_non_inscrits || requestBody.intervenants_existants || [];
+    for (const interv of intervenantsExistants) {
+      if (interv.id_intervenant && interv.id_type_user) {
+        records.push({
+          id_oeuvre: oeuvreId,
+          id_intervenant: interv.id_intervenant,
+          id_type_user: interv.id_type_user,
+          personnage: interv.personnage || null,
+          ordre_apparition: interv.ordre_apparition || null,
+          role_principal: interv.role_principal || false,
+          description_role: interv.description_role || null
+        });
+      }
+    }
+
+    // 2. Contributeurs (utilisateurs inscrits → chercher/créer leur intervenant)
+    const contributeurs = requestBody.utilisateurs_inscrits || [];
+    for (const contrib of contributeurs) {
+      if (contrib.id_user && contrib.id_type_user) {
+        // Chercher un intervenant lié à cet utilisateur
+        let intervenant = await this.models.Intervenant.findOne({
+          where: { id_user: contrib.id_user },
+          transaction
+        });
+        // Créer si inexistant
+        if (!intervenant) {
+          const user = await this.models.User.findByPk(contrib.id_user, { transaction });
+          if (user) {
+            intervenant = await this.models.Intervenant.create({
+              nom: user.nom,
+              prenom: user.prenom,
+              email: user.email,
+              id_user: user.id_user,
+              statut: 'actif'
+            }, { transaction });
+          }
+        }
+        if (intervenant) {
+          records.push({
+            id_oeuvre: oeuvreId,
+            id_intervenant: intervenant.id_intervenant,
+            id_type_user: contrib.id_type_user,
+            personnage: contrib.personnage || null,
+            ordre_apparition: contrib.ordre_apparition || null,
+            role_principal: contrib.role_principal || false,
+            description_role: contrib.description_role || null
+          });
+        }
+      }
+    }
+
+    // 3. Nouveaux intervenants (à créer)
+    const nouveaux = requestBody.nouveaux_intervenants || [];
+    for (const nouveau of nouveaux) {
+      if (nouveau.nom && nouveau.id_type_user) {
+        const newIntervenant = await this.models.Intervenant.create({
+          nom: typeof nouveau.nom === 'string' ? { fr: nouveau.nom } : nouveau.nom,
+          prenom: typeof nouveau.prenom === 'string' ? { fr: nouveau.prenom } : (nouveau.prenom || {}),
+          email: nouveau.email || null,
+          telephone: nouveau.telephone || null,
+          statut: 'actif'
+        }, { transaction });
+
+        records.push({
+          id_oeuvre: oeuvreId,
+          id_intervenant: newIntervenant.id_intervenant,
+          id_type_user: nouveau.id_type_user,
+          personnage: nouveau.personnage || null,
+          ordre_apparition: nouveau.ordre_apparition || null,
+          role_principal: nouveau.role_principal || false,
+          description_role: nouveau.description_role || null
+        });
+      }
+    }
+
+    if (records.length > 0) {
+      await this.models.OeuvreIntervenant.bulkCreate(records, {
+        transaction,
+        ignoreDuplicates: true
+      });
+      this.logger.info(`${records.length} intervenant(s) associé(s) à l'oeuvre ${oeuvreId}`);
+    }
+  }
+
+  /**
+   * Associe les éditeurs à une oeuvre
+   * @private
+   */
+  async _associateEditeurs(oeuvreId, editeurs, transaction) {
+    if (!editeurs || editeurs.length === 0 || !this.models?.OeuvreEditeur) return;
+
+    const records = [];
+    for (const editeur of editeurs) {
+      const editeurId = typeof editeur === 'number' ? editeur : editeur.id_editeur;
+      if (editeurId) {
+        records.push({
+          id_oeuvre: oeuvreId,
+          id_editeur: editeurId
+        });
+      }
+    }
+
+    if (records.length > 0) {
+      await this.models.OeuvreEditeur.bulkCreate(records, {
+        transaction,
+        ignoreDuplicates: true
+      });
+      this.logger.info(`${records.length} éditeur(s) associé(s) à l'oeuvre ${oeuvreId}`);
+    }
   }
 }
 
