@@ -160,6 +160,96 @@ interface ArticleBlockToSave {
   id_article?: number;
 }
 
+// Composant champs Art avec sélecteurs
+const TECHNIQUES_ART = [
+  "Peinture à l'huile", "Aquarelle", "Acrylique", "Gouache", "Pastel",
+  "Fusain", "Encre", "Gravure", "Sérigraphie", "Lithographie",
+  "Sculpture", "Céramique", "Mosaïque", "Calligraphie",
+  "Art numérique", "Photographie", "Art mixte"
+];
+
+const SUPPORTS_ART = [
+  "Toile", "Papier", "Bois", "Métal", "Verre",
+  "Pierre", "Argile", "Tissu", "Cuir", "Numérique"
+];
+
+const ArtFields: React.FC<{ formData: FormData; handleInputChange: (field: string, value: any) => void; t: any }> = ({ formData, handleInputChange, t }) => {
+  const [customTechnique, setCustomTechnique] = React.useState(false);
+  const [customSupport, setCustomSupport] = React.useState(false);
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+      <div className="space-y-2">
+        <Label htmlFor="technique_art">{t("ajouteroeuvre.technique_artistique")}</Label>
+        {customTechnique ? (
+          <div className="flex gap-2">
+            <Input
+              id="technique_art"
+              placeholder={t("ajouteroeuvre.preciserTechnique", "Précisez la technique...")}
+              maxLength={200}
+              value={formData.technique_art || ''}
+              onChange={(e) => handleInputChange('technique_art', e.target.value)} />
+            <Button type="button" variant="outline" size="sm" onClick={() => { setCustomTechnique(false); handleInputChange('technique_art', ''); }}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        ) : (
+          <select
+            id="technique_art"
+            className="w-full p-3 border rounded-lg hover:border-primary focus:border-primary"
+            value={formData.technique_art || ''}
+            onChange={(e) => {
+              if (e.target.value === '__autre__') { setCustomTechnique(true); handleInputChange('technique_art', ''); }
+              else handleInputChange('technique_art', e.target.value);
+            }}>
+            <option value="">{t("ajouteroeuvre.choisirTechnique", "-- Choisir une technique --")}</option>
+            {TECHNIQUES_ART.map(tech => <option key={tech} value={tech}>{tech}</option>)}
+            <option value="__autre__">{t("common.other", "Autre...")}</option>
+          </select>
+        )}
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="dimensions_art">{t("ajouteroeuvre.dimensions_1")}</Label>
+        <Input
+          id="dimensions_art"
+          placeholder={t("ajouteroeuvre.placeholder_100x80", "100x80 cm")}
+          maxLength={50}
+          value={formData.dimensions_art || ''}
+          onChange={(e) => handleInputChange('dimensions_art', e.target.value)} />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="support">{t("ajouteroeuvre.support")}</Label>
+        {customSupport ? (
+          <div className="flex gap-2">
+            <Input
+              id="support"
+              placeholder={t("ajouteroeuvre.preciserSupport", "Précisez le support...")}
+              maxLength={200}
+              value={formData.support || ''}
+              onChange={(e) => handleInputChange('support', e.target.value)} />
+            <Button type="button" variant="outline" size="sm" onClick={() => { setCustomSupport(false); handleInputChange('support', ''); }}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        ) : (
+          <select
+            id="support"
+            className="w-full p-3 border rounded-lg hover:border-primary focus:border-primary"
+            value={formData.support || ''}
+            onChange={(e) => {
+              if (e.target.value === '__autre__') { setCustomSupport(true); handleInputChange('support', ''); }
+              else handleInputChange('support', e.target.value);
+            }}>
+            <option value="">{t("ajouteroeuvre.choisirSupport", "-- Choisir un support --")}</option>
+            {SUPPORTS_ART.map(sup => <option key={sup} value={sup}>{sup}</option>)}
+            <option value="__autre__">{t("common.other", "Autre...")}</option>
+          </select>
+        )}
+      </div>
+    </div>
+  );
+};
+
 // État initial du formulaire
 const INITIAL_FORM_DATA: FormData = {
   titre: { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
@@ -1674,71 +1764,10 @@ const AjouterOeuvre: React.FC = () => {
 
 
       'Œuvre d\'Art':
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-          <div className="space-y-2">
-            <Label htmlFor="technique_art">{t("ajouteroeuvre.technique_artistique")}</Label>
-            <Input
-            id="technique_art"
-            placeholder={t("ajouteroeuvre.placeholder_huile_sur_toile")}
-            maxLength={200}
-            value={formData.technique_art || ''}
-            onChange={(e) => handleInputChange('technique_art', e.target.value)} />
-
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="dimensions_art">{t("ajouteroeuvre.dimensions_1")}</Label>
-            <Input
-            id="dimensions_art"
-            placeholder={t("ajouteroeuvre.placeholder_100x80")}
-            maxLength={50}
-            value={formData.dimensions_art || ''}
-            onChange={(e) => handleInputChange('dimensions_art', e.target.value)} />
-
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="support">{t("ajouteroeuvre.support")}</Label>
-            <Input
-            id="support"
-            placeholder={t("ajouteroeuvre.placeholder_toile_papier_bois")}
-            maxLength={200}
-            value={formData.support || ''}
-            onChange={(e) => handleInputChange('support', e.target.value)} />
-
-          </div>
-        </div>,
+      <ArtFields formData={formData} handleInputChange={handleInputChange} t={t} />,
 
       'Art':
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-          <div className="space-y-2">
-            <Label htmlFor="technique_art">{t("ajouteroeuvre.technique_artistique")}</Label>
-            <Input
-            id="technique_art"
-            placeholder={t("ajouteroeuvre.placeholder_huile_sur_toile")}
-            maxLength={200}
-            value={formData.technique_art || ''}
-            onChange={(e) => handleInputChange('technique_art', e.target.value)} />
-
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="dimensions_art">{t("ajouteroeuvre.dimensions_1")}</Label>
-            <Input
-            id="dimensions_art"
-            placeholder={t("ajouteroeuvre.placeholder_100x80")}
-            maxLength={50}
-            value={formData.dimensions_art || ''}
-            onChange={(e) => handleInputChange('dimensions_art', e.target.value)} />
-
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="support">{t("ajouteroeuvre.support")}</Label>
-            <Input
-            id="support"
-            placeholder={t("ajouteroeuvre.placeholder_toile_papier_bois")}
-            value={formData.support || ''}
-            onChange={(e) => handleInputChange('support', e.target.value)} />
-
-          </div>
-        </div>
+      <ArtFields formData={formData} handleInputChange={handleInputChange} t={t} />
 
     };
 
