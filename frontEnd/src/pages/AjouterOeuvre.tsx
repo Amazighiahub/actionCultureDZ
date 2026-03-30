@@ -1290,11 +1290,7 @@ const AjouterOeuvre: React.FC = () => {
               try {
                 const formData = new FormData();
                 formData.append('medias', file);
-                await fetch(`/api/oeuvres/${editId}/medias/upload`, {
-                  method: 'POST',
-                  body: formData,
-                  credentials: 'include',
-                });
+                await httpClient.upload(`/oeuvres/${editId}/medias/upload`, formData);
               } catch (err) {
                 console.error('Erreur upload média:', err);
               }
