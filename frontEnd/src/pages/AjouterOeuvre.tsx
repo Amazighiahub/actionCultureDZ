@@ -165,7 +165,7 @@ const INITIAL_FORM_DATA: FormData = {
   titre: { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
   description: { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '' },
   id_type_oeuvre: 0,
-  id_langue: 1,
+  id_langue: 0,
   categories: [],
   tags: []
 };

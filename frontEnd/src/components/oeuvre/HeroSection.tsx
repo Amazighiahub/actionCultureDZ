@@ -408,12 +408,20 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                       {/* Contenu du dos */}
                       <div className={cn(
                         "relative w-full h-full overflow-hidden shadow-2xl",
-                        "bg-gradient-to-br from-amber-800 via-amber-900 to-amber-950",
-                        "dark:from-amber-900 dark:via-amber-950 dark:to-black",
+                        medias[1] ? '' : "bg-gradient-to-br from-amber-800 via-amber-900 to-amber-950 dark:from-amber-900 dark:via-amber-950 dark:to-black",
                         rtlClasses.direction === 'rtl' ? 'rounded-r-lg border-l-4' : 'rounded-l-lg border-r-4',
                         "border-amber-600/30"
                       )}>
-                        {/* Motif décoratif en fond */}
+                        {/* Si 2e image existe → l'afficher comme dos */}
+                        {medias[1] ? (
+                          <img
+                            src={medias[1].url}
+                            alt={t('oeuvre.backCover', 'Dos de couverture')}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                        <>
+                        {/* Motif décoratif en fond (fallback si pas de 2e image) */}
                         <div className="absolute inset-0 opacity-5">
                           <div className="absolute inset-0" style={{
                             backgroundImage: `repeating-linear-gradient(
@@ -425,7 +433,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                             )`
                           }} />
                         </div>
-                        
+
                         <div className="relative h-full flex flex-col p-6 text-amber-50">
                           {/* En-tête */}
                           <div className="flex items-center justify-between mb-4">
@@ -434,12 +442,12 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                               {oeuvre.TypeOeuvre?.nom_type || 'Livre'}
                             </Badge>
                           </div>
-                          
+
                           {/* Titre */}
                           <h3 className="text-xl font-bold font-serif mb-3 text-amber-100">
                             {oeuvre.titre}
                           </h3>
-                          
+
                           {/* Citation / Description */}
                           <div className="flex-1 overflow-hidden">
                             <Quote className="h-5 w-5 text-amber-500/50 mb-2" />
@@ -499,6 +507,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                           </div>
                         </div>
                       </div>
+                        </>
+                        )}
                     </div>
                   </div>
                 </div>
