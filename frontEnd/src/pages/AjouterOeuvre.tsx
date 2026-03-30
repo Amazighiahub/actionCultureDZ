@@ -2086,32 +2086,36 @@ const AjouterOeuvre: React.FC = () => {
                       </CardHeader>
                       <CardContent className="space-y-4">
                         <div className="space-y-3">
-                          <label className="flex items-start gap-3 p-4 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
-                            <input
-                              type="radio"
-                              name="auteur_type"
-                              checked={formData.je_suis_auteur === true}
-                              onChange={() => handleInputChange('je_suis_auteur', true)}
-                              className="mt-1 h-4 w-4"
-                            />
+                          <div
+                            role="button"
+                            tabIndex={0}
+                            className={`flex items-start gap-3 p-4 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors ${formData.je_suis_auteur === true ? 'border-primary bg-primary/5' : ''}`}
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleInputChange('je_suis_auteur', true); }}
+                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleInputChange('je_suis_auteur', true); } }}
+                          >
+                            <div className={`mt-1 h-4 w-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${formData.je_suis_auteur === true ? 'border-primary' : 'border-gray-300'}`}>
+                              {formData.je_suis_auteur === true && <div className="h-2 w-2 rounded-full bg-primary" />}
+                            </div>
                             <div>
                               <p className="font-medium">{t('ajouteroeuvre.jeSuisAuteur', 'Je suis l\'auteur de cette œuvre')}</p>
                               <p className="text-sm text-muted-foreground">{t('ajouteroeuvre.jeSuisAuteurDesc', 'Votre nom sera affiché comme auteur principal')}</p>
                             </div>
-                          </label>
-                          <label className="flex items-start gap-3 p-4 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
-                            <input
-                              type="radio"
-                              name="auteur_type"
-                              checked={formData.je_suis_auteur === false}
-                              onChange={() => handleInputChange('je_suis_auteur', false)}
-                              className="mt-1 h-4 w-4"
-                            />
+                          </div>
+                          <div
+                            role="button"
+                            tabIndex={0}
+                            className={`flex items-start gap-3 p-4 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors ${formData.je_suis_auteur === false ? 'border-primary bg-primary/5' : ''}`}
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleInputChange('je_suis_auteur', false); }}
+                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleInputChange('je_suis_auteur', false); } }}
+                          >
+                            <div className={`mt-1 h-4 w-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${formData.je_suis_auteur === false ? 'border-primary' : 'border-gray-300'}`}>
+                              {formData.je_suis_auteur === false && <div className="h-2 w-2 rounded-full bg-primary" />}
+                            </div>
                             <div>
                               <p className="font-medium">{t('ajouteroeuvre.autreAuteur', 'J\'ajoute l\'œuvre d\'un autre auteur')}</p>
                               <p className="text-sm text-muted-foreground">{t('ajouteroeuvre.autreAuteurDesc', 'Vous êtes le contributeur qui référence cette œuvre sur la plateforme')}</p>
                             </div>
-                          </label>
+                          </div>
                         </div>
 
                         {/* Si "autre auteur" → afficher le gestionnaire d'intervenants */}
