@@ -51,7 +51,7 @@ const DashboardAdmin = React.lazy(() => import('./pages/DashboardAdmin'));
 const DashboardUser = React.lazy(() => import('./pages/DashboardUser'));
 
 // Pages de création/modification (professionnels)
-const AjouterOeuvre = React.lazy(() => import('./pages/AjouterOeuvre'));
+const AjouterOeuvre = React.lazy(() => import('./pages/ajouterOeuvre'));
 const AjouterEvenement = React.lazy(() => import('./pages/AjouterEvenement'));
 const AjouterService = React.lazy(() => import('./pages/AjouterService'));
 const AjouterServicePro = React.lazy(() => import('./pages/AjouterServicePro'));

@@ -6,7 +6,7 @@ const makeAbsoluteUrl = (url: string): string => {
   if (url.startsWith('http://') || url.startsWith('https://')) {
     return url;
   }
-  
+
   // Sinon, créer une URL absolue basée sur l'origin actuel
   const origin = window.location.origin;
   const cleanUrl = url.startsWith('/') ? url : `/${url}`;
@@ -28,5 +28,3 @@ export const ENABLE_DEBUG = import.meta.env.VITE_ENABLE_DEBUG === 'true';
 export const IS_DEVELOPMENT = import.meta.env.DEV;
 export const IS_PRODUCTION = import.meta.env.PROD;
 export const MODE = import.meta.env.MODE;
-
-// ... reste du code inchangé ...

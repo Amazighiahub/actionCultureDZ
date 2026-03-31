@@ -275,7 +275,7 @@ vi.mock('@/components/ui/checkbox', () => ({
 // ---------------------------------------------------------------------------
 // Import APRES les mocks
 // ---------------------------------------------------------------------------
-import AjouterOeuvre from '@/pages/AjouterOeuvre';
+import AjouterOeuvre from '@/pages/ajouterOeuvre';
 
 // ---------------------------------------------------------------------------
 // Helpers

@@ -8,7 +8,6 @@
 // ============================================================================
 export { useApi, useMutation, usePaginatedApi, useInfiniteApi } from './useApi';
 export { useAuth } from './useAuth';
-export { useConfirmedAction, useConfirmedActionWithDialog } from './useConfirmedAction';
 export { useDashboardPro } from './useDashboardPro';
 export { useDebouncedValue } from './useDebouncedValue';
 export { useFavoris, useFavoriCheck } from './useFavoris';
@@ -24,7 +23,6 @@ export {
 } from './useGeographie';
 export { useLanguage, useDirection } from './useLanguage';
 export { useLanguagePersistence, LanguagePersistenceManager } from './useLanguagePersistence';
-export { useLieuSearch, useCreateService } from './useLieuSearch';
 export { useLocalizedDate } from './useLocalizedDate';
 export { useLocalizedNumber } from './useLocalizedNumber';
 export { useIsMobile } from './use-mobile';
@@ -59,8 +57,3 @@ export { useOeuvreDetails } from './useOeuvreDetails';
 
 // Hook artisanat
 export { useArtisanat } from './useArtisanat';
-
-// ============================================================================
-// Hook pour le formulaire d'œuvre (si présent)
-// ============================================================================
-export * from './useOeuvreForm';
