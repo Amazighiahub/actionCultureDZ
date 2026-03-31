@@ -29,7 +29,7 @@ class SubtypeRegistry {
       [3, { modelName: 'AlbumMusical',          key: 'AlbumMusical',          detailsKey: 'album_musical' }],
       [4, { modelName: 'Article',               key: 'Article',               detailsKey: 'article' }],
       [5, { modelName: 'ArticleScientifique',   key: 'ArticleScientifique',   detailsKey: 'article_scientifique' }],
-      [6, { modelName: 'Artisanat',             key: 'Artisanat',             detailsKey: 'artisanat' }],
+      [6, { modelName: 'OeuvreArt',             key: 'OeuvreArt',             detailsKey: 'oeuvre_art' }],
       [7, { modelName: 'Artisanat',             key: 'Artisanat',             detailsKey: 'artisanat' }],
       [8, { modelName: 'OeuvreArt',             key: 'OeuvreArt',             detailsKey: 'oeuvre_art' }]
     ]);

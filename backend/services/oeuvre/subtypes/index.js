@@ -33,8 +33,8 @@ function initSubtypeServices(models) {
   subtypeRegistry.registerService(3, albumMusical);
   subtypeRegistry.registerService(4, article);
   subtypeRegistry.registerService(5, articleScientifique);
-  subtypeRegistry.registerService(6, artisanat);
-  subtypeRegistry.registerService(7, artisanat);   // Artisanat aussi pour type 7
+  subtypeRegistry.registerService(6, oeuvreArt);   // Œuvre d'Art
+  subtypeRegistry.registerService(7, artisanat);   // Artisanat
   subtypeRegistry.registerService(8, oeuvreArt);
 }
 
