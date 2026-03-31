@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { RequiredLabel } from '@/components/ui/required-label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
@@ -390,7 +391,7 @@ const AjouterPatrimoinePro: React.FC = () => {
                   {/* Type et Epoque */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>{t('ajouterPatrimoine.type')} *</Label>
+                      <RequiredLabel required>{t('ajouterPatrimoine.type')}</RequiredLabel>
                       <Select
                         value={formData.type}
                         onValueChange={(value) => {
@@ -452,7 +453,7 @@ const AjouterPatrimoinePro: React.FC = () => {
                 <CardContent className="space-y-4">
                   {/* Wilaya selector */}
                   <div className="space-y-2">
-                    <Label>{t('ajouterPatrimoine.wilaya')} *</Label>
+                    <RequiredLabel required>{t('ajouterPatrimoine.wilaya')}</RequiredLabel>
                     <Select
                       value={formData.wilaya_id ? String(formData.wilaya_id) : ''}
                       onValueChange={(value) => {

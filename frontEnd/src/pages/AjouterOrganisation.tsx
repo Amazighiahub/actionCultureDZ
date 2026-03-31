@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { RequiredLabel } from '@/components/ui/required-label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, Building2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -174,7 +175,7 @@ const AjouterOrganisation = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label>{t('organisations.create.name', 'Nom de l\'organisation')} *</Label>
+                  <RequiredLabel required>{t('organisations.create.name', 'Nom de l\'organisation')}</RequiredLabel>
                   <MultiLangInput
                     name="nom"
                     label={t('organisations.create.name', 'Nom')}
@@ -192,7 +193,7 @@ const AjouterOrganisation = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>{t('organisations.create.type', 'Type d\'organisation')} *</Label>
+                  <RequiredLabel required>{t('organisations.create.type', 'Type d\'organisation')}</RequiredLabel>
                   <Select
                     value={formData.id_type_organisation}
                     onValueChange={(value) => {

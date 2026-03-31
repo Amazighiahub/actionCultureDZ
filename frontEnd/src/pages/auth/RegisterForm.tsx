@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { RequiredLabel } from '@/components/ui/required-label';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -545,7 +546,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                     {/* Formulaire commun */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="prenom">{t('auth.register.firstName')} *</Label>
+                        <RequiredLabel htmlFor="prenom" required>{t('auth.register.firstName')}</RequiredLabel>
                         <Input
                           id="prenom"
                           autoComplete="given-name"
@@ -567,7 +568,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                         )}
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="nom">{t('auth.register.lastName')} *</Label>
+                        <RequiredLabel htmlFor="nom" required>{t('auth.register.lastName')}</RequiredLabel>
                         <Input
                           id="nom"
                           autoComplete="family-name"
@@ -592,7 +593,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="sexe">{t('auth.register.gender')} *</Label>
+                        <RequiredLabel htmlFor="sexe" required>{t('auth.register.gender')}</RequiredLabel>
                         <Select 
                           value={registerForm.sexe}
                           onValueChange={(value) => setRegisterForm({...registerForm, sexe: value as 'M' | 'F'})}
@@ -607,7 +608,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                         </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label>{t('auth.register.birthDate')} *</Label>
+                        <RequiredLabel required>{t('auth.register.birthDate')}</RequiredLabel>
                         <div className="grid grid-cols-3 gap-2">
                           <select
                             className={`p-2 border rounded-lg ${registerErrors.date_naissance ? 'border-destructive' : ''}`}
@@ -665,7 +666,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="email">{t('auth.register.email')} *</Label>
+                      <RequiredLabel htmlFor="email" required>{t('auth.register.email')}</RequiredLabel>
                       <Input
                         id="email"
                         type="email"
@@ -690,7 +691,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="password">{t('auth.register.password')} *</Label>
+                        <RequiredLabel htmlFor="password" required>{t('auth.register.password')}</RequiredLabel>
                         <p className="text-xs text-muted-foreground">{t('auth.register.passwordHint', '12 caractères min., 1 majuscule, 1 minuscule, 1 chiffre, 1 caractère spécial')}</p>
                         <Input
                           id="password"
@@ -715,7 +716,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                         )}
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="password-confirm">{t('auth.register.confirmPassword')} *</Label>
+                        <RequiredLabel htmlFor="password-confirm" required>{t('auth.register.confirmPassword')}</RequiredLabel>
                         <Input
                           id="password-confirm"
                           type="password"
@@ -741,7 +742,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="wilaya">{t('auth.register.wilaya')} *</Label>
+                        <RequiredLabel htmlFor="wilaya" required>{t('auth.register.wilaya')}</RequiredLabel>
                         <Select 
                           value={registerForm.wilaya_residence.toString()}
                           onValueChange={(value) => {
@@ -842,7 +843,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                         </h3>
                         
                         <div className="space-y-2">
-                          <Label htmlFor="secteur">{t('auth.register.sector')} *</Label>
+                          <RequiredLabel htmlFor="secteur" required>{t('auth.register.sector')}</RequiredLabel>
                           <Select 
                             value={registerForm.secteur}
                             onValueChange={(value) => {
@@ -947,7 +948,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                         </div>
                         
                         <div className="space-y-2">
-                          <Label htmlFor="biographie">{t('auth.register.biography')} *</Label>
+                          <RequiredLabel htmlFor="biographie" required>{t('auth.register.biography')}</RequiredLabel>
                           <Textarea
                             id="biographie"
                             maxLength={500}

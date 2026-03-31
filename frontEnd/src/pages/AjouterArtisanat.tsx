@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { RequiredLabel } from '@/components/ui/required-label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -409,7 +410,7 @@ const AjouterArtisanat: React.FC = () => {
                   {/* Materiau et Technique */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>{t('ajouterArtisanat.materiau', 'Matériau')} *</Label>
+                      <RequiredLabel required>{t('ajouterArtisanat.materiau', 'Matériau')}</RequiredLabel>
                       <Select
                         value={formData.id_materiau ? String(formData.id_materiau) : ''}
                         onValueChange={(value) => {
@@ -439,7 +440,7 @@ const AjouterArtisanat: React.FC = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label>{t('ajouterArtisanat.technique', 'Technique')} *</Label>
+                      <RequiredLabel required>{t('ajouterArtisanat.technique', 'Technique')}</RequiredLabel>
                       <Select
                         value={formData.id_technique ? String(formData.id_technique) : ''}
                         onValueChange={(value) => {

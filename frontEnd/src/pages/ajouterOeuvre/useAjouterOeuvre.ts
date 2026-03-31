@@ -677,6 +677,15 @@ export function useAjouterOeuvre() {
       const detailsSpecifiques = typeOeuvre ? prepareDetailsSpecifiques(typeOeuvre) : {};
       const oeuvreData = mapToBackendDTO(formData, contributeurs, intervenantsExistants, nouveauxIntervenants, editeurs, detailsSpecifiques);
 
+      // 🔍 DEBUG TEMPORAIRE — à supprimer après diagnostic
+      console.group('🔍 DEBUG: Soumission oeuvre');
+      console.log('typeOeuvre:', typeOeuvre?.nom_type, '(id:', formData.id_type_oeuvre, ')');
+      console.log('detailsSpecifiques:', JSON.stringify(detailsSpecifiques, null, 2));
+      console.log('oeuvreData (payload complet):', JSON.stringify(oeuvreData, null, 2));
+      console.log('Nombre de médias:', medias.length);
+      console.log('Path:', medias.length > 0 ? 'createOeuvreFormData (multipart)' : 'createOeuvre (JSON)');
+      console.groupEnd();
+
       setUploadProgress(isEditMode ? t('ajouteroeuvre.updatingOeuvre', 'Mise à jour de l\'oeuvre...') : t('ajouteroeuvre.creatingOeuvre', 'Création de l\'oeuvre...'));
 
       try {
@@ -705,6 +714,10 @@ export function useAjouterOeuvre() {
         }
 
         if (!oeuvreResponse.success) {
+          // 🔍 DEBUG TEMPORAIRE — à supprimer après diagnostic
+          console.group('🔴 DEBUG: Erreur création oeuvre');
+          console.log('Response complète:', JSON.stringify(oeuvreResponse, null, 2));
+          console.groupEnd();
           setSubmitError(oeuvreResponse.error || (isEditMode ? t('ajouteroeuvre.updateError', 'Erreur lors de la mise à jour') : t('ajouteroeuvre.createError', 'Erreur lors de la création de l\'oeuvre')));
           return;
         }

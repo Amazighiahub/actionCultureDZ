@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { RequiredLabel } from '@/components/ui/required-label';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
@@ -253,7 +254,7 @@ const AjouterOeuvre: React.FC = () => {
                           </div>
                         </div>
                         <div className="space-y-2 mt-4">
-                          <Label htmlFor="id_langue" className="text-base">{t("ajouteroeuvre.langueOriginale", "Langue originale de l'œuvre")} *</Label>
+                          <RequiredLabel htmlFor="id_langue" required className="text-base">{t("ajouteroeuvre.langueOriginale", "Langue originale de l'œuvre")}</RequiredLabel>
                           <select id="id_langue" value={formData.id_langue || ''}
                             onChange={(e) => handleInputChange('id_langue', parseInt(e.target.value) || 0)}
                             className={`w-full p-3 border rounded-lg hover:border-primary focus:border-primary ${fieldErrors.id_langue ? 'border-destructive' : ''}`}>

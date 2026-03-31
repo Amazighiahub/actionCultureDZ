@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { RequiredLabel } from '@/components/ui/required-label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -603,7 +604,7 @@ const AjouterServicePro: React.FC = () => {
               <CardContent className="space-y-4">
                 {/* Nom */}
                 <div className="space-y-2">
-                  <Label>{t('service.name', 'Nom du service')} *</Label>
+                  <RequiredLabel required>{t('service.name', 'Nom du service')}</RequiredLabel>
                   <MultiLangInput
                     name="nom"
                     label={t('service.name', 'Nom du service')}
@@ -798,7 +799,7 @@ const AjouterServicePro: React.FC = () => {
                     <CardContent className="space-y-4">
                       {/* Nom du lieu */}
                       <div className="space-y-2">
-                        <Label>{t('service.placeName', 'Nom du lieu')} *</Label>
+                        <RequiredLabel required>{t('service.placeName', 'Nom du lieu')}</RequiredLabel>
                         <MultiLangInput
                           value={newLieu.nom}
                           onChange={(value) => setNewLieu(prev => ({ ...prev, nom: value }))}
@@ -809,7 +810,7 @@ const AjouterServicePro: React.FC = () => {
 
                       {/* Adresse du lieu */}
                       <div className="space-y-2">
-                        <Label>{t('service.placeAddress', 'Adresse du lieu')} *</Label>
+                        <RequiredLabel required>{t('service.placeAddress', 'Adresse du lieu')}</RequiredLabel>
                         <MultiLangInput
                           value={newLieu.adresse}
                           onChange={(value) => setNewLieu(prev => ({ ...prev, adresse: value }))}
@@ -821,7 +822,7 @@ const AjouterServicePro: React.FC = () => {
                       {/* Coordonnées GPS */}
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label>{t('service.latitude', 'Latitude')} *</Label>
+                          <RequiredLabel required>{t('service.latitude', 'Latitude')}</RequiredLabel>
                           <Input
                             type="number"
                             step="any"
@@ -833,7 +834,7 @@ const AjouterServicePro: React.FC = () => {
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label>{t('service.longitude', 'Longitude')} *</Label>
+                          <RequiredLabel required>{t('service.longitude', 'Longitude')}</RequiredLabel>
                           <Input
                             type="number"
                             step="any"

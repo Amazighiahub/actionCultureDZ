@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { RequiredLabel } from '@/components/ui/required-label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Upload, Save, ArrowLeft, Calendar, Building2, Globe, AlertCircle, Plus, Loader2 } from 'lucide-react';
@@ -703,7 +704,7 @@ const AjouterEvenement = () => {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-2">
-                  <Label>{t('events.create.eventName')} *</Label>
+                  <RequiredLabel required>{t('events.create.eventName')}</RequiredLabel>
                   <MultiLangInput
                     name="nom"
                     label={t('events.create.eventName')}
@@ -733,7 +734,7 @@ const AjouterEvenement = () => {
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                   <div className="space-y-2">
-                    <Label htmlFor="type">{t('events.create.eventType')} *</Label>
+                    <RequiredLabel htmlFor="type" required>{t('events.create.eventType')}</RequiredLabel>
                     <Select
                       value={formData.idTypeEvenement}
                       onValueChange={(value) => { clearFieldError('type'); setFormData(prev => ({ ...prev, idTypeEvenement: value })); }}
@@ -778,7 +779,7 @@ const AjouterEvenement = () => {
                 {/* Lieu pour événements en présentiel */}
                 {!isVirtual && (
                   <div className="space-y-2">
-                    <Label>{t('events.create.location')} *</Label>
+                    <RequiredLabel required>{t('events.create.location')}</RequiredLabel>
                     <React.Suspense fallback={<div className="h-20 bg-muted animate-pulse rounded" />}>
                       <LieuSelector
                         value={selectedLieuId}
@@ -805,7 +806,7 @@ const AjouterEvenement = () => {
                 {/* URL pour événements virtuels */}
                 {isVirtual && (
                   <div className="space-y-2">
-                    <Label htmlFor="url_virtuel">{t('events.create.virtualUrl', 'Lien de l\'événement')} *</Label>
+                    <RequiredLabel htmlFor="url_virtuel" required>{t('events.create.virtualUrl', 'Lien de l\'événement')}</RequiredLabel>
                     <Input
                       id="url_virtuel"
                       type="url"
@@ -834,7 +835,7 @@ const AjouterEvenement = () => {
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                   <div className="space-y-2">
-                    <Label htmlFor="date-debut">{t('events.create.startDate')} *</Label>
+                    <RequiredLabel htmlFor="date-debut" required>{t('events.create.startDate')}</RequiredLabel>
                     <Input
                       id="date-debut"
                       type="date"
@@ -944,7 +945,7 @@ const AjouterEvenement = () => {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="affiche">{t('events.create.eventImage')} *</Label>
+                  <RequiredLabel htmlFor="affiche" required>{t('events.create.eventImage')}</RequiredLabel>
                   <div
                     className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
                       isDragging ? 'border-primary bg-primary/10' : affichePreview ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
@@ -1079,7 +1080,7 @@ const AjouterEvenement = () => {
 
           <div className="space-y-4 py-2 overflow-y-auto flex-1 pe-1">
             <div className="space-y-2">
-              <Label>{t('organisations.create.name', 'Nom de l\'organisation')} *</Label>
+              <RequiredLabel required>{t('organisations.create.name', 'Nom de l\'organisation')}</RequiredLabel>
               <MultiLangInput
                 name="org-nom"
                 label={t('organisations.create.name', 'Nom')}
@@ -1096,7 +1097,7 @@ const AjouterEvenement = () => {
             </div>
 
             <div className="space-y-2">
-              <Label>{t('organisations.create.type', 'Type d\'organisation')} *</Label>
+              <RequiredLabel required>{t('organisations.create.type', 'Type d\'organisation')}</RequiredLabel>
               <Select
                 value={orgForm.id_type_organisation}
                 onValueChange={(value) => {
