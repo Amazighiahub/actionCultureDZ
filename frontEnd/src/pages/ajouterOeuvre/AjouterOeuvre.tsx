@@ -255,8 +255,11 @@ const AjouterOeuvre: React.FC = () => {
                         </div>
                         <div className="space-y-2 mt-4">
                           <RequiredLabel htmlFor="id_langue" required className="text-base">{t("ajouteroeuvre.langueOriginale", "Langue originale de l'œuvre")}</RequiredLabel>
-                          <select id="id_langue" value={formData.id_langue || ''}
-                            onChange={(e) => handleInputChange('id_langue', parseInt(e.target.value) || 0)}
+                          <select id="id_langue" value={formData.id_langue > 0 ? formData.id_langue : ''}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value);
+                              handleInputChange('id_langue', isNaN(val) ? 0 : val);
+                            }}
                             className={`w-full p-3 border rounded-lg hover:border-primary focus:border-primary ${fieldErrors.id_langue ? 'border-destructive' : ''}`}>
                             <option value="">{t("ajouteroeuvre.choisirLangue", "-- Choisir la langue --")}</option>
                             {metadata.langues?.map((langue: any) => (
