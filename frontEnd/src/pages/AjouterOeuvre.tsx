@@ -1263,7 +1263,6 @@ const AjouterOeuvre: React.FC = () => {
         break;
 
       case 'Œuvre d\'Art':
-      case 'Art':
         details.oeuvre_art = {
           technique: formData.technique_art,
           dimensions: formData.dimensions_art,
@@ -1763,9 +1762,6 @@ const AjouterOeuvre: React.FC = () => {
 
 
       'Œuvre d\'Art':
-      <ArtFields formData={formData} handleInputChange={handleInputChange} t={t} />,
-
-      'Art':
       <ArtFields formData={formData} handleInputChange={handleInputChange} t={t} />
 
     };
@@ -1928,7 +1924,7 @@ const AjouterOeuvre: React.FC = () => {
                       }
                       onClick={() => {
                         handleInputChange('id_type_oeuvre', type.id_type_oeuvre);
-                        if (['Œuvre d\'Art', 'Art', 'Artisanat'].includes(type.nom_type)) {
+                        if (['Œuvre d\'Art', 'Artisanat'].includes(type.nom_type)) {
                           handleInputChange('je_suis_auteur', true);
                         }
                       }}>

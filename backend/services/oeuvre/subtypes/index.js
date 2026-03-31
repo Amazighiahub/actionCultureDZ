@@ -35,7 +35,6 @@ function initSubtypeServices(models) {
   subtypeRegistry.registerService(5, articleScientifique);
   subtypeRegistry.registerService(6, oeuvreArt);   // Œuvre d'Art
   subtypeRegistry.registerService(7, artisanat);   // Artisanat
-  subtypeRegistry.registerService(8, oeuvreArt);
 }
 
 module.exports = {
