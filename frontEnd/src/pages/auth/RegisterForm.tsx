@@ -23,17 +23,30 @@ import { useWilayas } from '@/hooks/useGeographie';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import { authLogger } from '@/utils/logger';
 
-// Mapping des noms de wilayas ASCII → noms avec accents
+// Mapping complet des 58 wilayas ASCII → noms avec accents français
 const WILAYA_ACCENTS: Record<string, string> = {
-  'Bejaia': 'Béjaïa', 'Medea': 'Médéa', 'Setif': 'Sétif', 'Tebessa': 'Tébessa',
-  'Annaba': 'Annaba', 'Tlemcen': 'Tlemcen', 'Mascara': 'Mascara',
-  'Ain Defla': 'Aïn Defla', 'Ain Temouchent': 'Aïn Témouchent',
-  'Bordj Bou Arreridj': 'Bordj Bou Arréridj', 'Mila': 'Mila',
-  'Boumerdes': 'Boumerdès', 'Chlef': 'Chlef', 'Djelfa': 'Djelfa',
-  'Khenchela': 'Khenchela', 'Msila': "M'sila", 'Relizane': 'Relizane',
-  'Souk Ahras': 'Souk Ahras', 'Tissemsilt': 'Tissemsilt',
-  'El Oued': 'El Oued', 'El Tarf': 'El Tarf', 'El Bayadh': 'El Bayadh',
-  'Oum El Bouaghi': 'Oum El Bouaghi', 'Sidi Bel Abbes': 'Sidi Bel Abbès',
+  'Adrar': 'Adrar', 'Chlef': 'Chlef', 'Laghouat': 'Laghouat',
+  'Oum El Bouaghi': 'Oum El Bouaghi', 'Batna': 'Batna', 'Bejaia': 'Béjaïa',
+  'Biskra': 'Biskra', 'Bechar': 'Béchar', 'Blida': 'Blida',
+  'Bouira': 'Bouira', 'Tamanrasset': 'Tamanrasset', 'Tebessa': 'Tébessa',
+  'Tlemcen': 'Tlemcen', 'Tiaret': 'Tiaret', 'Tizi Ouzou': 'Tizi Ouzou',
+  'Alger': 'Alger', 'Djelfa': 'Djelfa', 'Jijel': 'Jijel',
+  'Setif': 'Sétif', 'Saida': 'Saïda', 'Skikda': 'Skikda',
+  'Sidi Bel Abbes': 'Sidi Bel Abbès', 'Annaba': 'Annaba', 'Guelma': 'Guelma',
+  'Constantine': 'Constantine', 'Medea': 'Médéa', 'Mostaganem': 'Mostaganem',
+  'Msila': "M'sila", 'Mascara': 'Mascara', 'Ouargla': 'Ouargla',
+  'Oran': 'Oran', 'El Bayadh': 'El Bayadh', 'Illizi': 'Illizi',
+  'Bordj Bou Arreridj': 'Bordj Bou Arréridj', 'Boumerdes': 'Boumerdès',
+  'El Tarf': 'El Tarf', 'Tindouf': 'Tindouf', 'Tissemsilt': 'Tissemsilt',
+  'El Oued': 'El Oued', 'Khenchela': 'Khenchela', 'Souk Ahras': 'Souk Ahras',
+  'Tipaza': 'Tipaza', 'Mila': 'Mila', 'Ain Defla': 'Aïn Defla',
+  'Naama': 'Naâma', 'Ain Temouchent': 'Aïn Témouchent',
+  'Ghardaia': 'Ghardaïa', 'Relizane': 'Relizane',
+  'Timimoun': 'Timimoun', 'Bordj Badji Mokhtar': 'Bordj Badji Mokhtar',
+  'Ouled Djellal': 'Ouled Djellal', 'Beni Abbes': 'Béni Abbès',
+  'In Salah': 'In Salah', 'In Guezzam': 'In Guezzam',
+  'Touggourt': 'Touggourt', 'Djanet': 'Djanet',
+  'El Meghaier': "El M'Ghair", 'El Meniaa': 'El Ménéa',
 };
 
 const getWilayaName = (wilaya: any, lang: string): string => {
