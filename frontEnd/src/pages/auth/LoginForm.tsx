@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Mail, Lock, LogIn, Loader2, AlertCircle } from 'lucide-react';
+import { Mail, Lock, LogIn, Loader2, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/use-toast';
@@ -30,6 +30,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
 
   // Erreurs de validation
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showPassword, setShowPassword] = useState(false);
 
   // Validation
   const validateForm = (): boolean => {
@@ -180,7 +181,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 id="password"
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 autoComplete="current-password"
                 placeholder="••••••••"
                 value={formData.mot_de_passe}
@@ -188,11 +189,20 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
                   setFormData({ ...formData, mot_de_passe: e.target.value });
                   setErrors({ ...errors, password: '' });
                 }}
-                className={`pl-9 ${errors.password ? 'border-destructive' : ''}`}
+                className={`pl-9 pr-10 ${errors.password ? 'border-destructive' : ''}`}
                 disabled={loginLoading}
                 aria-invalid={!!errors.password}
                 aria-describedby={errors.password ? 'password-error' : undefined}
               />
+              <button
+                type="button"
+                tabIndex={-1}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? t('auth.hidePassword', 'Masquer le mot de passe') : t('auth.showPassword', 'Afficher le mot de passe')}
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
             </div>
             {errors.password && (
               <p id="password-error" role="alert" className="text-sm text-destructive">{errors.password}</p>

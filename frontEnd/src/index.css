@@ -949,6 +949,26 @@ html, body, #root {
   }
 }
 
+/* ==========================================================================
+   AUTOFILL FIX - Supprime le fond bleu/jaune du navigateur
+   ========================================================================== */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px hsl(var(--background)) inset !important;
+  -webkit-text-fill-color: hsl(var(--foreground)) !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+.dark input:-webkit-autofill,
+.dark input:-webkit-autofill:hover,
+.dark input:-webkit-autofill:focus,
+.dark input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px hsl(var(--background)) inset !important;
+  -webkit-text-fill-color: hsl(var(--foreground)) !important;
+}
+
 /* Leaflet */
 .leaflet-container { width: 100%; z-index: 1; }
 .leaflet-popup-content-wrapper { max-width: 300px; }
