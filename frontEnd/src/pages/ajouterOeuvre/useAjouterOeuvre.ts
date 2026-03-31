@@ -706,11 +706,24 @@ export function useAjouterOeuvre() {
               }
             }
           }
-        } else if (mediaFiles.length > 0) {
-          const mediaMetadata = medias.map((m) => ({ is_principal: m.isPrincipal }));
-          oeuvreResponse = await oeuvreService.createOeuvreFormData(oeuvreData, mediaFiles, mediaMetadata);
         } else {
+          // Toujours créer en JSON, uploader les médias après
           oeuvreResponse = await oeuvreService.createOeuvre(oeuvreData);
+
+          // Upload des médias après création si succès
+          if (oeuvreResponse.success && mediaFiles.length > 0 && oeuvreResponse.data?.oeuvre?.id_oeuvre) {
+            const oeuvreId = oeuvreResponse.data.oeuvre.id_oeuvre;
+            setUploadProgress(t('ajouteroeuvre.uploadingMedias', 'Upload des médias...'));
+            for (const file of mediaFiles) {
+              try {
+                const fd = new FormData();
+                fd.append('medias', file);
+                await httpClient.upload(`/oeuvres/${oeuvreId}/medias/upload`, fd);
+              } catch (err) {
+                console.error('Erreur upload média:', err);
+              }
+            }
+          }
         }
 
         if (!oeuvreResponse.success) {
