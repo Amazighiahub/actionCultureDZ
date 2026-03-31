@@ -80,18 +80,18 @@ export const SECTEUR_TYPE_USER_MAP: Record<string, number> = {
 
 // Options de secteurs pour le formulaire
 export const SECTEUR_OPTIONS = [
-  { value: 'ecrivain', label: 'Écrivain' },
-  { value: 'poete', label: 'Poète' },
-  { value: 'conteur', label: 'Conteur' },
-  { value: 'journaliste', label: 'Journaliste' },
-  { value: 'scientifique', label: 'Scientifique' },
   { value: 'acteur', label: 'Acteur' },
-  { value: 'artiste', label: 'Artiste' },
   { value: 'artisan', label: 'Artisan' },
-  { value: 'realisateur', label: 'Réalisateur' },
+  { value: 'artiste', label: 'Artiste' },
+  { value: 'conteur', label: 'Conteur' },
+  { value: 'danseur', label: 'Danseur' },
+  { value: 'ecrivain', label: 'Écrivain' },
+  { value: 'journaliste', label: 'Journaliste' },
   { value: 'musicien', label: 'Musicien' },
   { value: 'photographe', label: 'Photographe' },
-  { value: 'danseur', label: 'Danseur' },
+  { value: 'poete', label: 'Poète' },
+  { value: 'realisateur', label: 'Réalisateur' },
+  { value: 'scientifique', label: 'Scientifique' },
   { value: 'sculpteur', label: 'Sculpteur' },
   { value: 'autre', label: 'Autre' }
 ];
