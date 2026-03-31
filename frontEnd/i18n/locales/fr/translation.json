@@ -177,7 +177,9 @@
       "photographe": "Photographe",
       "danseur": "Danseur",
       "sculpteur": "Sculpteur",
-      "autre": "Autre"
+      "autre": "Autre",
+      "poete": "Poète",
+      "conteur": "Conteur"
     },
     "forgotPassword": {
       "title": "Mot de passe oublié",

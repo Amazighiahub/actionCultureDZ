@@ -163,7 +163,9 @@
       "photographe": "مصور",
       "danseur": "راقص",
       "sculpteur": "نحات",
-      "autre": "آخر"
+      "autre": "آخر",
+      "poete": "شاعر",
+      "conteur": "حكواتي"
     },
     "loginToComment": "سجل الدخول للتعليق",
     "loginToFavorite": "سجل الدخول للإضافة إلى المفضلة",

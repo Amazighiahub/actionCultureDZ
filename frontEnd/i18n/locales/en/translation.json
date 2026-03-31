@@ -162,7 +162,9 @@
       "photographe": "Photographer",
       "danseur": "Dancer",
       "sculpteur": "Sculptor",
-      "autre": "Other"
+      "autre": "Other",
+      "poete": "Poet",
+      "conteur": "Storyteller"
     },
     "forgotPassword": {
       "title": "Forgot Password",
