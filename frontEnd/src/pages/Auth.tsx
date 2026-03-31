@@ -24,14 +24,15 @@ import { SECTEUR_TYPE_USER_MAP, SECTEUR_OPTIONS, AUTH_ERROR_MESSAGES } from '@/t
 import { useWilayas } from '@/hooks/useGeographie';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import { authLogger } from '@/utils/logger';
+import LoginFormComponent from '@/pages/auth/LoginForm';
 
 const Auth = () => {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const { toast } = useToast();
   const { direction } = useRTL();
-  const { login, registerVisitor, registerProfessional, loginLoading, registerLoading, isAuthenticated } = useAuth();
-  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const { registerVisitor, registerProfessional, registerLoading, isAuthenticated } = useAuth();
+  const [activeTab, setActiveTab] = useState('connexion');
   
   // État pour les wilayas
   const { wilayas, loading: wilayasLoading, error: wilayasError } = useWilayas();
@@ -42,12 +43,6 @@ const Auth = () => {
       navigate('/');
     }
   }, [isAuthenticated, navigate]);
-
-  // État pour le formulaire de connexion
-  const [loginForm, setLoginForm] = useState({
-    email: '',
-    mot_de_passe: '',
-  });
 
   // État pour le formulaire d'inscription
   const [userType, setUserType] = useState<'visiteur' | 'professionnel'>('visiteur');
@@ -78,7 +73,6 @@ const Auth = () => {
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   // État pour les erreurs de validation
-  const [loginErrors, setLoginErrors] = useState<Record<string, string>>({});
   const [registerErrors, setRegisterErrors] = useState<Record<string, string>>({});
 
   // Gestion de l'upload de photo
@@ -139,31 +133,6 @@ const Auth = () => {
     }
   };
 
-  // Validation onBlur d'un champ individuel (login)
-  const validateLoginField = (field: string) => {
-    let error = '';
-    if (field === 'email') {
-      if (!loginForm.email) {
-        error = t('auth.errors.emailRequired');
-      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginForm.email)) {
-        error = t('auth.errors.emailInvalid');
-      }
-    } else if (field === 'password') {
-      if (!loginForm.mot_de_passe) {
-        error = t('auth.errors.passwordRequired');
-      }
-    }
-    setLoginErrors(prev => {
-      if (!error) {
-        if (!prev[field]) return prev;
-        const next = { ...prev };
-        delete next[field];
-        return next;
-      }
-      return { ...prev, [field]: error };
-    });
-  };
-
   // Validation onBlur d'un champ individuel (inscription)
   const validateRegisterField = (field: string) => {
     let error = '';
@@ -214,93 +183,6 @@ const Auth = () => {
       }
       return { ...prev, [field]: error };
     });
-  };
-
-  // Validation du formulaire de connexion
-  const validateLoginForm = (): boolean => {
-    const errors: Record<string, string> = {};
-    
-    if (!loginForm.email) {
-      errors.email = t('auth.errors.emailRequired');
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginForm.email)) {
-      errors.email = t('auth.errors.emailInvalid');
-    }
-    
-    if (!loginForm.mot_de_passe) {
-      errors.password = t('auth.errors.passwordRequired');
-    }
-    
-    setLoginErrors(errors);
-    const hasErrors = Object.keys(errors).length > 0;
-    if (hasErrors) {
-      setTimeout(() => {
-        const firstError = document.querySelector('[aria-invalid="true"]');
-        if (firstError) {
-          (firstError as HTMLElement).focus();
-          firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      }, 0);
-    }
-    return !hasErrors;
-  };
-
-  // Soumission du formulaire de connexion
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!validateLoginForm()) {
-      return;
-    }
-
-    try {
-      const result = await login({
-        email: loginForm.email,
-        password: loginForm.mot_de_passe
-      });
-
-      if (!result.success) {
-        // Afficher le message d'erreur spécifique du backend
-        const errorMessage = result.error || t('auth.errors.invalidCredentials');
-
-        // Messages d'erreur spécifiques selon le type d'erreur
-        let title = t('auth.errors.loginError');
-        let description = errorMessage;
-
-        if (errorMessage.toLowerCase().includes('email') && errorMessage.toLowerCase().includes('mot de passe')) {
-          description = t('auth.errors.invalidCredentials', 'Email ou mot de passe incorrect');
-        } else if (errorMessage.toLowerCase().includes('trouvé') || errorMessage.toLowerCase().includes('exist')) {
-          description = t('auth.errors.userNotFound', 'Aucun compte trouvé avec cet email');
-        } else if (errorMessage.toLowerCase().includes('mot de passe') || errorMessage.toLowerCase().includes('password')) {
-          description = t('auth.errors.wrongPassword', 'Mot de passe incorrect');
-        } else if (errorMessage.toLowerCase().includes('vérifié') || errorMessage.toLowerCase().includes('verif')) {
-          title = t('auth.errors.emailNotVerified', 'Email non vérifié');
-          description = t('auth.errors.pleaseVerifyEmail', 'Veuillez vérifier votre email avant de vous connecter');
-        } else if (errorMessage.toLowerCase().includes('suspendu') || errorMessage.toLowerCase().includes('banni')) {
-          title = t('auth.errors.accountSuspended', 'Compte suspendu');
-          description = t('auth.errors.contactSupport', 'Votre compte a été suspendu. Contactez le support.');
-        }
-
-        toast({
-          title,
-          description,
-          variant: "destructive",
-        });
-      } else {
-        // Succès - afficher un toast de bienvenue
-        toast({
-          title: t('auth.success.loginTitle', 'Connexion réussie'),
-          description: t('auth.success.loginDescription', 'Bienvenue sur Écho Algérie !'),
-        });
-      }
-    } catch (error: unknown) {
-      console.error('Erreur login:', error);
-      const errorMessage = error instanceof Error ? error.message : t('errors.generic.message');
-      toast({
-        title: t('errors.generic.title', 'Erreur'),
-        description: errorMessage,
-        variant: "destructive",
-      });
-    }
   };
 
   // Validation du formulaire d'inscription
@@ -618,7 +500,7 @@ const Auth = () => {
             </p>
           </div>
 
-          <Tabs defaultValue="connexion" className="space-y-6">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="connexion" className="flex items-center gap-2">
                 <LogIn className="h-4 w-4" />
@@ -632,100 +514,7 @@ const Auth = () => {
 
             {/* Onglet Connexion */}
             <TabsContent value="connexion">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <LogIn className="h-5 w-5" />
-                    <span>{t('auth.login.title')}</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <form onSubmit={handleLogin} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="login-email">{t('auth.login.email')}</Label>
-                      <Input
-                        id="login-email"
-                        type="email"
-                        autoComplete="email"
-                        maxLength={255}
-                        placeholder={t('auth.login.emailPlaceholder')}
-                        value={loginForm.email}
-                        onChange={(e) => {
-                          setLoginForm({...loginForm, email: e.target.value});
-                          setLoginErrors({...loginErrors, email: ''});
-                        }}
-                        onBlur={() => validateLoginField('email')}
-                        className={loginErrors.email ? 'border-destructive' : ''}
-                        required
-                        aria-invalid={!!loginErrors.email}
-                        aria-describedby={loginErrors.email ? 'auth-login-email-error' : undefined}
-                      />
-                      {loginErrors.email && (
-                        <p id="auth-login-email-error" role="alert" className="text-sm text-destructive">{loginErrors.email}</p>
-                      )}
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="login-password">{t('auth.login.password')}</Label>
-                      <div className="relative">
-                        <Input
-                          id="login-password"
-                          type={showLoginPassword ? 'text' : 'password'}
-                          autoComplete="current-password"
-                          placeholder="••••••••"
-                          value={loginForm.mot_de_passe}
-                          onChange={(e) => {
-                            setLoginForm({...loginForm, mot_de_passe: e.target.value});
-                            setLoginErrors({...loginErrors, password: ''});
-                          }}
-                          onBlur={() => validateLoginField('password')}
-                          className={loginErrors.password ? 'border-destructive pe-10' : 'pe-10'}
-                          required
-                          aria-invalid={!!loginErrors.password}
-                          aria-describedby={loginErrors.password ? 'auth-login-password-error' : undefined}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowLoginPassword(!showLoginPassword)}
-                          className="absolute end-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                        >
-                          {showLoginPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </button>
-                      </div>
-                      {loginErrors.password && (
-                        <p id="auth-login-password-error" role="alert" className="text-sm text-destructive">{loginErrors.password}</p>
-                      )}
-                    </div>
-                    
-                    <div className="flex justify-end items-center text-sm">
-                      <Link to="/forgot-password" tabIndex={-1}>
-                        <Button type="button" variant="link" className="p-0 h-auto">
-                          {t('auth.login.forgotPassword')}
-                        </Button>
-                      </Link>
-                    </div>
-                    
-                    <Button
-                      type="submit"
-                      size="lg"
-                      className="w-full"
-                      disabled={loginLoading}
-                    >
-                      {loginLoading ? (
-                        <>
-                          <Loader2 className="h-4 w-4 me-2 animate-spin" />
-                          {t('auth.login.loggingIn')}
-                        </>
-                      ) : (
-                        <>
-                          <LogIn className="h-4 w-4 me-2" />
-                          {t('auth.login.submit')}
-                        </>
-                      )}
-                    </Button>
-                  </form>
-                </CardContent>
-              </Card>
+              <LoginFormComponent onSwitchToRegister={() => setActiveTab('inscription')} />
             </TabsContent>
 
             {/* Onglet Inscription */}
