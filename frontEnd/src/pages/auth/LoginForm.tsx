@@ -149,26 +149,24 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
         <CardContent className="space-y-4">
           {/* Email */}
           <div className="space-y-2">
-            <Label htmlFor="email">{t('auth.fields.email', 'Email')}</Label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="email"
-                type="email"
-                autoComplete="email"
-                placeholder="votre@email.com"
-                maxLength={255}
-                value={formData.email}
-                onChange={(e) => {
-                  setFormData({ ...formData, email: e.target.value });
-                  setErrors({ ...errors, email: '' });
-                }}
-                className={`pl-9 ${errors.email ? 'border-destructive' : ''}`}
-                disabled={loginLoading}
-                aria-invalid={!!errors.email}
-                aria-describedby={errors.email ? 'email-error' : undefined}
-              />
-            </div>
+            <Label htmlFor="login-email">{t('auth.login.email', 'Email')}</Label>
+            <Input
+              id="login-email"
+              type="email"
+              autoComplete="email"
+              maxLength={255}
+              placeholder={t('auth.login.emailPlaceholder', 'votre@email.com')}
+              value={formData.email}
+              onChange={(e) => {
+                setFormData({ ...formData, email: e.target.value });
+                setErrors({ ...errors, email: '' });
+              }}
+              className={errors.email ? 'border-destructive' : ''}
+              disabled={loginLoading}
+              required
+              aria-invalid={!!errors.email}
+              aria-describedby={errors.email ? 'email-error' : undefined}
+            />
             {errors.email && (
               <p id="email-error" role="alert" className="text-sm text-destructive">{errors.email}</p>
             )}
@@ -176,11 +174,10 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
 
           {/* Mot de passe */}
           <div className="space-y-2">
-            <Label htmlFor="password">{t('auth.fields.password', 'Mot de passe')}</Label>
+            <Label htmlFor="login-password">{t('auth.login.password', 'Mot de passe')}</Label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                id="password"
+                id="login-password"
                 type={showPassword ? 'text' : 'password'}
                 autoComplete="current-password"
                 placeholder="••••••••"
@@ -189,17 +186,18 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
                   setFormData({ ...formData, mot_de_passe: e.target.value });
                   setErrors({ ...errors, password: '' });
                 }}
-                className={`pl-9 pr-10 ${errors.password ? 'border-destructive' : ''}`}
+                className={`pe-10 ${errors.password ? 'border-destructive' : ''}`}
                 disabled={loginLoading}
+                required
                 aria-invalid={!!errors.password}
                 aria-describedby={errors.password ? 'password-error' : undefined}
               />
               <button
                 type="button"
                 tabIndex={-1}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                className="absolute end-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                 onClick={() => setShowPassword(!showPassword)}
-                aria-label={showPassword ? t('auth.hidePassword', 'Masquer le mot de passe') : t('auth.showPassword', 'Afficher le mot de passe')}
+                aria-label={showPassword ? t('auth.hidePassword', 'Masquer') : t('auth.showPassword', 'Afficher')}
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
