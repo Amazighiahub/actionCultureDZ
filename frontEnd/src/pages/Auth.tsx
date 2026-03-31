@@ -698,8 +698,8 @@ const Auth = () => {
                     </div>
                     
                     <div className="flex justify-end items-center text-sm">
-                      <Link to="/forgot-password">
-                        <Button variant="link" className="p-0 h-auto">
+                      <Link to="/forgot-password" tabIndex={-1}>
+                        <Button type="button" variant="link" className="p-0 h-auto">
                           {t('auth.login.forgotPassword')}
                         </Button>
                       </Link>
