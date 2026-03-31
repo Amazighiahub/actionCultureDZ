@@ -23,6 +23,25 @@ import { useWilayas } from '@/hooks/useGeographie';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import { authLogger } from '@/utils/logger';
 
+// Mapping des noms de wilayas ASCII → noms avec accents
+const WILAYA_ACCENTS: Record<string, string> = {
+  'Bejaia': 'Béjaïa', 'Medea': 'Médéa', 'Setif': 'Sétif', 'Tebessa': 'Tébessa',
+  'Annaba': 'Annaba', 'Tlemcen': 'Tlemcen', 'Mascara': 'Mascara',
+  'Ain Defla': 'Aïn Defla', 'Ain Temouchent': 'Aïn Témouchent',
+  'Bordj Bou Arreridj': 'Bordj Bou Arréridj', 'Mila': 'Mila',
+  'Boumerdes': 'Boumerdès', 'Chlef': 'Chlef', 'Djelfa': 'Djelfa',
+  'Khenchela': 'Khenchela', 'Msila': "M'sila", 'Relizane': 'Relizane',
+  'Souk Ahras': 'Souk Ahras', 'Tissemsilt': 'Tissemsilt',
+  'El Oued': 'El Oued', 'El Tarf': 'El Tarf', 'El Bayadh': 'El Bayadh',
+  'Oum El Bouaghi': 'Oum El Bouaghi', 'Sidi Bel Abbes': 'Sidi Bel Abbès',
+};
+
+const getWilayaName = (wilaya: any, lang: string): string => {
+  if (lang === 'ar' && wilaya.nom) return wilaya.nom;
+  const ascii = wilaya.wilaya_name_ascii || '';
+  return WILAYA_ACCENTS[ascii] || wilaya.nom_fr || wilaya.wilaya_name || ascii;
+};
+
 interface RegisterFormProps {
   onSwitchToLogin: () => void;
 }
@@ -574,18 +593,54 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                         </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="date-naissance">{t('auth.register.birthDate')} *</Label>
-                        <Input
-                          id="date-naissance"
-                          type="date"
-                          autoComplete="bday"
-                          value={registerForm.date_naissance}
-                          onChange={(e) => {
-                            setRegisterForm({...registerForm, date_naissance: e.target.value});
-                            setRegisterErrors({...registerErrors, date_naissance: ''});
-                          }}
-                          className={registerErrors.date_naissance ? 'border-destructive' : ''}
-                          required
+                        <Label>{t('auth.register.birthDate')} *</Label>
+                        <div className="grid grid-cols-3 gap-2">
+                          <select
+                            className={`p-2 border rounded-lg ${registerErrors.date_naissance ? 'border-destructive' : ''}`}
+                            value={registerForm.date_naissance ? new Date(registerForm.date_naissance).getDate() : ''}
+                            onChange={(e) => {
+                              const d = registerForm.date_naissance ? new Date(registerForm.date_naissance) : new Date(2000, 0, 1);
+                              d.setDate(parseInt(e.target.value) || 1);
+                              setRegisterForm({...registerForm, date_naissance: d.toISOString().split('T')[0]});
+                              setRegisterErrors({...registerErrors, date_naissance: ''});
+                            }}
+                          >
+                            <option value="">{t('auth.register.day', 'Jour')}</option>
+                            {Array.from({length: 31}, (_, i) => <option key={i+1} value={i+1}>{i+1}</option>)}
+                          </select>
+                          <select
+                            className={`p-2 border rounded-lg ${registerErrors.date_naissance ? 'border-destructive' : ''}`}
+                            value={registerForm.date_naissance ? new Date(registerForm.date_naissance).getMonth() : ''}
+                            onChange={(e) => {
+                              const d = registerForm.date_naissance ? new Date(registerForm.date_naissance) : new Date(2000, 0, 1);
+                              d.setMonth(parseInt(e.target.value));
+                              setRegisterForm({...registerForm, date_naissance: d.toISOString().split('T')[0]});
+                              setRegisterErrors({...registerErrors, date_naissance: ''});
+                            }}
+                          >
+                            <option value="">{t('auth.register.month', 'Mois')}</option>
+                            {[
+                              t('common.months.jan', 'Janvier'), t('common.months.feb', 'Février'), t('common.months.mar', 'Mars'),
+                              t('common.months.apr', 'Avril'), t('common.months.may', 'Mai'), t('common.months.jun', 'Juin'),
+                              t('common.months.jul', 'Juillet'), t('common.months.aug', 'Août'), t('common.months.sep', 'Septembre'),
+                              t('common.months.oct', 'Octobre'), t('common.months.nov', 'Novembre'), t('common.months.dec', 'Décembre')
+                            ].map((m, i) => <option key={i} value={i}>{m}</option>)}
+                          </select>
+                          <select
+                            className={`p-2 border rounded-lg ${registerErrors.date_naissance ? 'border-destructive' : ''}`}
+                            value={registerForm.date_naissance ? new Date(registerForm.date_naissance).getFullYear() : ''}
+                            onChange={(e) => {
+                              const d = registerForm.date_naissance ? new Date(registerForm.date_naissance) : new Date(2000, 0, 1);
+                              d.setFullYear(parseInt(e.target.value));
+                              setRegisterForm({...registerForm, date_naissance: d.toISOString().split('T')[0]});
+                              setRegisterErrors({...registerErrors, date_naissance: ''});
+                            }}
+                          >
+                            <option value="">{t('auth.register.year', 'Année')}</option>
+                            {Array.from({length: 80}, (_, i) => new Date().getFullYear() - 13 - i).map(y => <option key={y} value={y}>{y}</option>)}
+                          </select>
+                        </div>
+                        <input type="hidden" value={registerForm.date_naissance}
                           aria-invalid={!!registerErrors.date_naissance}
                           aria-describedby={registerErrors.date_naissance ? 'auth-date-naissance-error' : undefined}
                         />
@@ -691,7 +746,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                           <SelectContent>
                             {wilayas.map((wilaya) => (
                               <SelectItem key={wilaya.id_wilaya} value={wilaya.id_wilaya.toString()}>
-                                {String(wilaya.codeW).padStart(2, '0')} - {i18n.language === 'ar' && wilaya.nom ? wilaya.nom : wilaya.wilaya_name_ascii}
+                                {String(wilaya.codeW).padStart(2, '0')} - {getWilayaName(wilaya, i18n.language)}
                               </SelectItem>
                             ))}
                           </SelectContent>
