@@ -51,8 +51,9 @@ const WILAYA_ACCENTS: Record<string, string> = {
 
 const getWilayaName = (wilaya: any, lang: string): string => {
   if (lang === 'ar' && wilaya.nom) return wilaya.nom;
+  // Toujours utiliser le mapping ASCII → accents français
   const ascii = wilaya.wilaya_name_ascii || '';
-  return WILAYA_ACCENTS[ascii] || wilaya.nom_fr || wilaya.wilaya_name || ascii;
+  return WILAYA_ACCENTS[ascii] || ascii;
 };
 
 interface RegisterFormProps {
