@@ -16,7 +16,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import {
-  Info, Users, Image, MessageCircle, Calendar,
+  Info, Users, Image, MessageCircle, Calendar, ArrowLeft,
   BookOpen, Sparkles, ThumbsUp, Send, Loader2,
   Share2, MapPin, CalendarCheck, ImageIcon
 } from 'lucide-react';
@@ -345,6 +345,13 @@ const OeuvreDetailPage: React.FC = () => {
       <Header />
 
       <main>
+        {/* Bouton retour */}
+        <div className="container pt-4">
+          <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="text-muted-foreground hover:text-foreground">
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            {t('common.back', 'Retour')}
+          </Button>
+        </div>
         {/* ════════════════════════════════════════════════════════════════════
             ✅ HERO SECTION AVEC EFFET FLIP 3D POUR LES LIVRES
             ════════════════════════════════════════════════════════════════════ */}
