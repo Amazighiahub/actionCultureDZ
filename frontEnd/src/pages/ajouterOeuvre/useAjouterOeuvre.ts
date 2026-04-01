@@ -139,9 +139,14 @@ export function useAjouterOeuvre() {
         const description = oeuvre.description;
         const rawCategories = (oeuvre.Categories ?? (oeuvre as unknown as Record<string, unknown>).categories ?? []) as Array<Categorie | number>;
         const rawTags = (oeuvre.Tags ?? (oeuvre as unknown as Record<string, unknown>).tags ?? []) as Array<TagMotCle | string>;
+        // Extraire les données des sous-types depuis les associations Sequelize
+        const livreData = (oeuvre['Livre'] ?? oeuvre['livre'] ?? {}) as Record<string, unknown>;
         const filmData = (oeuvre['Film'] ?? oeuvre['film'] ?? {}) as Record<string, unknown>;
+        const albumData = (oeuvre['AlbumMusical'] ?? oeuvre['album_musical'] ?? {}) as Record<string, unknown>;
         const articleData = (oeuvre['Article'] ?? oeuvre['article'] ?? {}) as Record<string, unknown>;
         const articleScientifiqueData = (oeuvre['ArticleScientifique'] ?? oeuvre['article_scientifique'] ?? {}) as Record<string, unknown>;
+        const artisanatData = (oeuvre['Artisanat'] ?? oeuvre['artisanat'] ?? {}) as Record<string, unknown>;
+        const oeuvreArtData = (oeuvre['OeuvreArt'] ?? oeuvre['oeuvre_art'] ?? {}) as Record<string, unknown>;
         setFormData({
           titre: typeof titre === 'object' && titre !== null ? titre : { fr: typeof titre === 'string' ? titre : '', ar: '', en: '' },
           description: typeof description === 'object' && description !== null ? description : { fr: typeof description === 'string' ? description : '', ar: '', en: '' },
@@ -158,30 +163,37 @@ export function useAjouterOeuvre() {
           }).filter(Boolean) || [],
           annee_creation: oeuvre.annee_creation,
           prix: oeuvre.prix,
-          isbn: oeuvre['isbn'] as string | undefined,
-          nb_pages: oeuvre['nb_pages'] as number | undefined,
+          // Livre
+          isbn: (livreData['isbn'] ?? oeuvre['isbn']) as string | undefined,
+          nb_pages: (livreData['nb_pages'] ?? oeuvre['nb_pages']) as number | undefined,
+          // Film
           duree_minutes: (filmData['duree_minutes'] ?? oeuvre['duree_minutes']) as number | undefined,
           realisateur: (filmData['realisateur'] ?? oeuvre['realisateur']) as string | undefined,
-          duree_album: oeuvre['duree_album'] as string | undefined,
-          label: oeuvre['label'] as string | undefined,
-          nb_pistes: oeuvre['nb_pistes'] as number | undefined,
+          // Album Musical
+          duree_album: (albumData['duree'] ?? oeuvre['duree_album']) as string | undefined,
+          label: (albumData['label'] ?? oeuvre['label']) as string | undefined,
+          nb_pistes: (albumData['nb_pistes'] ?? oeuvre['nb_pistes']) as number | undefined,
+          // Article
           auteur: (articleData['auteur'] ?? oeuvre['auteur']) as string | undefined,
           source: (articleData['source'] ?? oeuvre['source']) as string | undefined,
           resume_article: (articleData['resume'] ?? oeuvre['resume_article']) as string | undefined,
           url_source: (articleData['url_source'] ?? oeuvre['url_source']) as string | undefined,
+          // Article Scientifique
           journal: (articleScientifiqueData['journal'] ?? oeuvre['journal']) as string | undefined,
           doi: (articleScientifiqueData['doi'] ?? oeuvre['doi']) as string | undefined,
           pages: (articleScientifiqueData['pages'] ?? oeuvre['pages']) as string | undefined,
           volume: (articleScientifiqueData['volume'] ?? oeuvre['volume']) as string | undefined,
           numero: (articleScientifiqueData['numero'] ?? oeuvre['numero']) as string | undefined,
           peer_reviewed: (articleScientifiqueData['peer_reviewed'] ?? oeuvre['peer_reviewed']) as boolean | undefined,
-          id_materiau: oeuvre['id_materiau'] as number | undefined,
-          id_technique: oeuvre['id_technique'] as number | undefined,
-          dimensions: oeuvre['dimensions'] as string | undefined,
-          poids: oeuvre['poids'] as number | undefined,
-          technique_art: oeuvre['technique_art'] as string | undefined,
-          dimensions_art: oeuvre['dimensions_art'] as string | undefined,
-          support: oeuvre['support'] as string | undefined,
+          // Artisanat
+          id_materiau: (artisanatData['id_materiau'] ?? oeuvre['id_materiau']) as number | undefined,
+          id_technique: (artisanatData['id_technique'] ?? oeuvre['id_technique']) as number | undefined,
+          dimensions: (artisanatData['dimensions'] ?? oeuvre['dimensions']) as string | undefined,
+          poids: (artisanatData['poids'] ?? oeuvre['poids']) as number | undefined,
+          // Œuvre d'Art
+          technique_art: (oeuvreArtData['technique'] ?? oeuvre['technique_art']) as string | undefined,
+          dimensions_art: (oeuvreArtData['dimensions'] ?? oeuvre['dimensions_art']) as string | undefined,
+          support: (oeuvreArtData['support'] ?? oeuvre['support']) as string | undefined,
         });
       } else {
         toast({ title: t('toasts.error'), description: t('toasts.oeuvreNotFound'), variant: 'destructive' });
