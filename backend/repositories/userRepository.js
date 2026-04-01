@@ -205,6 +205,7 @@ class UserRepository extends BaseRepository {
       attributes: ['id_user', 'nom', 'prenom', 'email', 'telephone', 'photo_url',
         'entreprise', 'id_type_user', 'statut', 'wilaya_residence',
         'date_creation', 'derniere_connexion', 'email_verifie'],
+      include: [{ model: this.models.TypeUser, attributes: ['id_type_user', 'nom_type'], required: false }],
       order: [['date_creation', 'DESC']]
     });
   }

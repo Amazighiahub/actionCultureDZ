@@ -227,8 +227,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             {/* ════════════════════════════════════════════════════════════════ */}
             <div className="lg:col-span-2">
               <div 
-                className="relative mx-auto w-[240px] sm:w-[280px] md:w-[320px] lg:w-[340px]"
-                style={{ perspective: '1200px' }}
+                className="relative mx-auto w-[180px] sm:w-[200px] md:w-[240px] lg:w-[260px]"
+                style={{ perspective: '900px' }}
               >
                 {/* Conteneur du livre avec effet flip */}
                 <div
@@ -737,8 +737,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             {/* ════════════════════════════════════════════════════════════════ */}
             <div className="lg:col-span-2">
               <div
-                className="relative mx-auto w-[240px] sm:w-[280px] md:w-[320px] lg:w-[340px]"
-                style={{ perspective: '1200px' }}
+                className="relative mx-auto w-[180px] sm:w-[200px] md:w-[240px] lg:w-[260px]"
+                style={{ perspective: '900px' }}
               >
                 <div
                   className={cn(

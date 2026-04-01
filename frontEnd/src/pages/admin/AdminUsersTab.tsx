@@ -114,7 +114,7 @@ const AdminUsersTab: React.FC = () => {
       }
 
       // Filtre de type
-      if (typeFilter !== 'tous' && getLocalizedText(user.type_user) !== typeFilter) {
+      if (typeFilter !== 'tous' && getLocalizedText(user.TypeUser?.nom_type || user.type_user) !== typeFilter) {
         return false;
       }
 
@@ -316,7 +316,7 @@ const AdminUsersTab: React.FC = () => {
                     <p className="text-sm text-muted-foreground truncate">{user.email}</p>
                     <div className="flex items-center gap-2 mt-1">
                       <Badge variant="outline" className="text-xs">
-                        {getLocalizedText(user.type_user, 'fr', 'visiteur')}
+                        {getLocalizedText(user.TypeUser?.nom_type || user.type_user, 'fr', 'visiteur')}
                       </Badge>
                       <span className="text-xs text-muted-foreground">
                         {t('admin.users.registeredOn', 'Inscrit le {{date}}', {
