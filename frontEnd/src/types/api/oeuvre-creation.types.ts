@@ -268,9 +268,11 @@ export interface CreateOeuvreResponse {
   intervenants_crees?: any[];
   // Sous-type retourné par le backend (nouveau format unifié)
   subtype?: { [key: string]: any };
-  // Détails spécifiques retournés par le backend selon le type (ancien format, gardé pour compatibilité)
+  // Détails spécifiques retournés par le backend selon le type
   article_scientifique?: { id_article_scientifique: number; [key: string]: any };
+  ArticleScientifique?: { id_article_scientifique: number; [key: string]: any };
   article?: { id_article: number; [key: string]: any };
+  Article?: { id_article: number; [key: string]: any };
   details_specifiques_record?: any;
 }
 
