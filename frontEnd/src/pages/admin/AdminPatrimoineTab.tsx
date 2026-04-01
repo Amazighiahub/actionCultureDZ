@@ -1,3 +1,4 @@
+import { getLocalizedText } from '@/utils/getLocalizedText';
 /**
  * AdminPatrimoineTab - Onglet de gestion du patrimoine
  * Utilise useDashboardAdmin
@@ -42,15 +43,6 @@ import { adminService } from '@/services/admin.service';
 import { toast } from 'sonner';
 
 // Helper pour extraire le texte multilingue
-const getLocalizedText = (value: unknown, lang: string = 'fr', fallback: string = ''): string => {
-  if (!value) return fallback;
-  if (typeof value === 'string') return value;
-  if (typeof value === 'object' && value !== null) {
-    const obj = value as Record<string, unknown>;
-    return String(obj[lang] || obj.fr || obj.ar || obj.en || Object.values(obj)[0] || fallback);
-  }
-  return String(value);
-};
 
 // Types de filtres
 const TYPE_OPTIONS = ['tous', 'monument', 'vestige', 'musee', 'site_naturel', 'ville_village', 'autre'];

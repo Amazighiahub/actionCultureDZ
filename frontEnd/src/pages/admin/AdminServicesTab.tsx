@@ -1,3 +1,4 @@
+import { getLocalizedText } from '@/utils/getLocalizedText';
 /**
  * AdminServicesTab - Onglet de gestion des services
  * Utilise useDashboardAdmin
@@ -36,15 +37,6 @@ import { useDashboardAdmin } from '@/hooks/useDashboardAdmin';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 
 // Helper pour extraire le texte multilingue
-const getLocalizedText = (value: unknown, lang: string = 'fr', fallback: string = ''): string => {
-  if (!value) return fallback;
-  if (typeof value === 'string') return value;
-  if (typeof value === 'object' && value !== null) {
-    const obj = value as Record<string, unknown>;
-    return String(obj[lang] || obj.fr || obj.ar || obj.en || Object.values(obj)[0] || fallback);
-  }
-  return String(value);
-};
 
 const AdminServicesTab: React.FC = () => {
   const { t, i18n } = useTranslation();
