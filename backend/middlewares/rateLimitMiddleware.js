@@ -225,7 +225,7 @@ const authRateLimitHandler = (req, res) => {
 const endpointLimiters = {
   login: rateLimit({
     windowMs: 60 * 60 * 1000,          // 1 heure
-    max: IS_PRODUCTION ? 5 : 100,       // 5 tentatives/h en prod
+    max: IS_PRODUCTION ? 15 : 100,      // 15 tentatives/h en prod
     skipSuccessfulRequests: true,        // Ne compter que les échecs (brute force)
     standardHeaders: false,
     legacyHeaders: false,
@@ -245,7 +245,7 @@ const endpointLimiters = {
 
   forgotPassword: rateLimit({
     windowMs: 60 * 60 * 1000,           // 1 heure
-    max: IS_PRODUCTION ? 3 : 50,         // 3 demandes/h en prod
+    max: IS_PRODUCTION ? 10 : 50,        // 10 demandes/h en prod
     skipSuccessfulRequests: false,
     standardHeaders: false,
     legacyHeaders: false,
