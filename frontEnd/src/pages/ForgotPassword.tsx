@@ -76,12 +76,23 @@ const ForgotPassword = () => {
           description: t('auth.forgotPassword.successDescription'),
         });
       } else {
-        // On affiche toujours un succès pour ne pas révéler si l'email existe
-        setSubmitted(true);
+        const errMsg = (response.error || '').toLowerCase();
+        if (errMsg.includes('429') || errMsg.includes('too many') || errMsg.includes('trop de') || errMsg.includes('rate')) {
+          setError(t('auth.errors.tooManyAttempts', 'Trop de tentatives. Veuillez patienter quelques minutes avant de réessayer.'));
+        } else {
+          // Pour les autres erreurs, afficher succès (ne pas révéler si l'email existe)
+          setSubmitted(true);
+        }
       }
     } catch (err: unknown) {
-      // Même en cas d'erreur, on affiche un succès pour des raisons de sécurité
-      setSubmitted(true);
+      const errMsg = err instanceof Error ? err.message.toLowerCase() : '';
+      if (errMsg.includes('429') || errMsg.includes('rate') || errMsg.includes('trop')) {
+        setError(t('auth.errors.tooManyAttempts', 'Trop de tentatives. Veuillez patienter quelques minutes avant de réessayer.'));
+      } else if (errMsg.includes('timeout') || errMsg.includes('network') || errMsg.includes('connection')) {
+        setError(t('auth.errors.networkError', 'Problème de connexion. Vérifiez votre connexion internet et réessayez.'));
+      } else {
+        setSubmitted(true);
+      }
     } finally {
       setLoading(false);
     }

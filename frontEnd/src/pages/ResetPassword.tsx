@@ -127,15 +127,30 @@ const ResetPassword = () => {
           description: t('auth.resetPassword.successDescription'),
         });
 
-        // Rediriger vers la page de connexion après 3 secondes
         redirectTimerRef.current = setTimeout(() => {
           navigate('/auth');
         }, 3000);
       } else {
-        setError(response.error || t('auth.resetPassword.error'));
+        const errMsg = response.error || '';
+        if (errMsg.includes('429') || errMsg.toLowerCase().includes('too many') || errMsg.toLowerCase().includes('trop de')) {
+          setError(t('auth.errors.tooManyAttempts', 'Trop de tentatives. Veuillez patienter quelques minutes avant de réessayer.'));
+        } else if (errMsg.toLowerCase().includes('token') || errMsg.toLowerCase().includes('expiré') || errMsg.toLowerCase().includes('expired')) {
+          setError(t('auth.resetPassword.tokenExpired', 'Ce lien a expiré. Veuillez demander un nouveau lien de réinitialisation.'));
+        } else {
+          setError(errMsg || t('auth.resetPassword.error', 'Une erreur est survenue. Veuillez réessayer.'));
+        }
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : t('auth.resetPassword.error'));
+      const errMsg = err instanceof Error ? err.message : '';
+      if (errMsg.includes('429') || errMsg.toLowerCase().includes('rate')) {
+        setError(t('auth.errors.tooManyAttempts', 'Trop de tentatives. Veuillez patienter quelques minutes avant de réessayer.'));
+      } else if (errMsg.includes('timeout') || errMsg.includes('Timeout') || errMsg.includes('ECONNABORTED')) {
+        setError(t('auth.errors.timeout', 'Le serveur met trop de temps à répondre. Veuillez réessayer.'));
+      } else if (errMsg.includes('ERR_CONNECTION') || errMsg.includes('Network')) {
+        setError(t('auth.errors.networkError', 'Problème de connexion. Vérifiez votre connexion internet et réessayez.'));
+      } else {
+        setError(errMsg || t('auth.resetPassword.error', 'Une erreur est survenue. Veuillez réessayer.'));
+      }
     } finally {
       setLoading(false);
     }
