@@ -175,6 +175,8 @@ class App {
 
     // Headers de performance pour les réponses API
     this.app.use('/api', (req, res, next) => {
+      // Charset UTF-8 explicite sur toutes les réponses JSON
+      res.set('Content-Type', 'application/json; charset=utf-8');
       // Vary pour CDN/proxies (langue + encoding)
       res.set('Vary', 'Accept-Encoding, Accept-Language');
       // Empêcher le cache sur les mutations
