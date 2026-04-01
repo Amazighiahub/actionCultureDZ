@@ -98,8 +98,38 @@ function getErrorMessage(error: unknown, fallback: string): string {
 // Helper pour extraire le message d'erreur de réponse API
 function getApiErrorMessage(error: unknown, fallback: string): string {
   if (error instanceof Error) {
-    const axiosError = error as { response?: { data?: { error?: string } } };
-    return axiosError.response?.data?.error || error.message || fallback;
+    const axiosError = error as {
+      response?: {
+        data?: {
+          error?: string;
+          details?: Array<{ field?: string; message?: string }> | Record<string, unknown>;
+          errors?: Array<{ field?: string; message?: string }>;
+        };
+      };
+    };
+    const apiError = axiosError.response?.data?.error;
+    const apiDetails = axiosError.response?.data?.details;
+    const apiErrors = axiosError.response?.data?.errors;
+
+    const detailItems = Array.isArray(apiDetails)
+      ? apiDetails
+      : Array.isArray(apiErrors)
+        ? apiErrors
+        : [];
+
+    const formattedDetails = detailItems
+      .map((item) => {
+        const field = item.field ? `${item.field}: ` : '';
+        return item.message ? `${field}${item.message}` : null;
+      })
+      .filter((item): item is string => Boolean(item));
+
+    if (formattedDetails.length > 0) {
+      const baseMessage = apiError || error.message || fallback;
+      return `${baseMessage} — ${formattedDetails.join(' | ')}`;
+    }
+
+    return apiError || error.message || fallback;
   }
   return fallback;
 }

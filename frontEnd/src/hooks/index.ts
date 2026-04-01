@@ -6,7 +6,6 @@
 // ============================================================================
 // Hooks existants (du projet)
 // ============================================================================
-export { useApi, useMutation, usePaginatedApi, useInfiniteApi } from './useApi';
 export { useAuth } from './useAuth';
 export { useDashboardPro } from './useDashboardPro';
 export { useDebouncedValue } from './useDebouncedValue';
