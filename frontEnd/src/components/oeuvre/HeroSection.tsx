@@ -579,6 +579,9 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                   <div className="space-y-2">
                     {mainContributors.map((contributeur, index) => (
                       <p key={contributeur.id_contributeur || contributeur.id || `contrib-${contributeur.nom}-${index}`} className="text-xl text-muted-foreground">
+                        {gt(contributeur.TypeUser?.nom_type || contributeur.type_user) && (
+                          <span className="text-muted-foreground">{gt(contributeur.TypeUser?.nom_type || contributeur.type_user)} : </span>
+                        )}
                         <span className="text-foreground font-medium">
                           {gt(contributeur.prenom)} {gt(contributeur.nom)}
                         </span>
