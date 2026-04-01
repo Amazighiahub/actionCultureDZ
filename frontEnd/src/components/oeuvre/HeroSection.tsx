@@ -322,9 +322,6 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                           </div>
                         )}
                         
-                        {/* Overlay gradient */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/10" />
-                        
                         {/* Badge gratuit */}
                         {oeuvre.prix === 0 && (
                           <div className={`absolute top-4 ${rtlClasses.end(4)}`}>
@@ -344,17 +341,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                           </div>
                         )}
                         
-                        {/* Infos en bas de couverture */}
-                        <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                          <h2 className="text-2xl font-bold font-serif mb-1 line-clamp-2 drop-shadow-lg">
-                            {titre}
-                          </h2>
-                          {mainContributors.length > 0 && (
-                            <p className="text-white/90 font-medium drop-shadow">
-                              {mainContributors[0].prenom} {mainContributors[0].nom}
-                            </p>
-                          )}
-                        </div>
+                        {/* Couverture propre - pas de texte overlay */}
                         
                         {/* Boutons d'action (zoom et flip) */}
                         <div className="absolute bottom-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
@@ -457,7 +444,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                           <div className="flex items-center justify-between mb-4">
                             <BookMarked className="h-8 w-8 text-amber-400" />
                             <Badge variant="outline" className="border-amber-400/50 text-amber-200 bg-amber-950/50">
-                              {oeuvre.TypeOeuvre?.nom_type || 'Livre'}
+                              {typeOeuvre}
                             </Badge>
                           </div>
 
@@ -470,7 +457,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                           <div className="flex-1 overflow-hidden">
                             <Quote className="h-5 w-5 text-amber-500/50 mb-2" />
                             <p className="text-sm leading-relaxed text-amber-100/90 line-clamp-[8]">
-                              {oeuvre.description || t('works.noDescription', 'Aucune description disponible pour cet ouvrage.')}
+                              {description || t('works.noDescription', 'Aucune description disponible pour cet ouvrage.')}
                             </p>
                           </div>
                           
@@ -587,8 +574,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                   <div className="space-y-2">
                     {mainContributors.map((contributeur, index) => (
                       <p key={contributeur.id_contributeur || contributeur.id || `contrib-${contributeur.nom}-${index}`} className="text-xl text-muted-foreground">
-                        {contributeur.role ? `${contributeur.role} : ` : ''}<span className="text-foreground font-medium">
-                          {contributeur.prenom} {contributeur.nom}
+                        <span className="text-foreground font-medium">
+                          {gt(contributeur.prenom)} {gt(contributeur.nom)}
                         </span>
                       </p>
                     ))}

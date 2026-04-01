@@ -205,7 +205,7 @@ const AdminOeuvresTab: React.FC = () => {
             );
 
             return (
-              <Card key={oeuvre.id_oeuvre} className="hover:shadow-md transition-shadow overflow-hidden">
+              <Card key={oeuvre.id_oeuvre} className="hover:shadow-md transition-shadow overflow-hidden cursor-pointer" onClick={() => navigate(`/oeuvres/${oeuvre.id_oeuvre}`)}>
                 {/* Image */}
                 <div className="aspect-video relative bg-muted">
                   {oeuvre.image_url || oeuvre.medias?.[0]?.url ? (
@@ -244,17 +244,17 @@ const AdminOeuvresTab: React.FC = () => {
                       </div>
                     </div>
 
+                    <Button variant="outline" size="sm" className="shrink-0" onClick={() => navigate(`/oeuvres/${oeuvre.id_oeuvre}`)}>
+                      <Eye className="h-3 w-3 mr-1" />
+                      {t('common.view', 'Voir')}
+                    </Button>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" aria-label={t('common.moreOptions', 'Plus d\'options')}>
+                        <Button variant="ghost" size="icon" aria-label={t('common.moreOptions', 'Plus d\'options')} onClick={(e) => e.stopPropagation()}>
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => navigate(`/oeuvres/${oeuvre.id_oeuvre}`)}>
-                          <Eye className="h-4 w-4 mr-2" />
-                          {t('common.view', 'Voir')}
-                        </DropdownMenuItem>
                         {(oeuvre.statut === 'en_attente' || oeuvre.statut === 'brouillon') && (
                           <>
                             <DropdownMenuItem
