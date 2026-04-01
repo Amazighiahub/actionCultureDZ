@@ -112,7 +112,7 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false }) => {
               <div className="flex flex-wrap gap-1">
                 {oeuvre.Tags.slice(0, 5).map((tag) => (
                   <Badge key={tag.id_tag} variant="secondary" className="text-xs">
-                    #{tag.nom}
+                    #{getLocalizedText(tag.nom)}
                   </Badge>
                 ))}
               </div>
@@ -585,8 +585,8 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false }) => {
                 </h4>
                 <div className="flex flex-wrap gap-2">
                   {oeuvre.Tags.map((tag) => (
-                    <Badge key={tag.id_tag} className="bg-muted">
-                      #{tag.nom}
+                    <Badge key={tag.id_tag} variant="secondary">
+                      #{getLocalizedText(tag.nom)}
                     </Badge>
                   ))}
                 </div>
