@@ -10,7 +10,7 @@ import { metadataService } from '@/services/metadata.service';
 import { oeuvreService } from '@/services/oeuvre.service';
 import { articleBlockService } from '@/services/articleBlock.service';
 import { httpClient } from '@/services/httpClient';
-import { mapToBackendDTO } from '@/types/api/create-oeuvre-backend.dto';
+import { mapToBackendDTO, type CreateOeuvreBackendDTO } from '@/types/api/create-oeuvre-backend.dto';
 import { getTranslation, type SupportedLanguage } from '@/types/common/multilingual.types';
 import type { TagMotCle, TypeOeuvre, Categorie } from '@/types/models/references.types';
 import type { Oeuvre } from '@/types/models/oeuvre.types';
@@ -463,11 +463,11 @@ export function useAjouterOeuvre() {
         id_type_user: c.id_type_user
       })) || [];
 
-      const editeursIds = eds?.map((e: EditeurOeuvre | number) => typeof e === 'object' ? e.id_editeur : e) || [];
+      const editeursData = eds?.map((e: EditeurOeuvre | number) => typeof e === 'object' ? e : { id_editeur: e }) || [];
 
       const oeuvreData = {
-        titre: articleFormData.titre,
-        description: articleFormData.description,
+        titre: typeof articleFormData.titre === 'string' ? { fr: articleFormData.titre } : articleFormData.titre,
+        description: typeof articleFormData.description === 'string' ? { fr: articleFormData.description } : articleFormData.description,
         id_type_oeuvre,
         id_langue: articleFormData.id_langue,
         annee_creation: articleFormData.annee_creation || new Date().getFullYear(),
@@ -475,11 +475,10 @@ export function useAjouterOeuvre() {
         tags: articleFormData.tags || [],
         details_specifiques,
         utilisateurs_inscrits,
-        intervenants_existants,
-        intervenants_non_inscrits: [],
+        intervenants_non_inscrits: intervenants_existants,
         nouveaux_intervenants,
-        editeurs: editeursIds,
-      };
+        editeurs: editeursData,
+      } as CreateOeuvreBackendDTO;
 
       const oeuvreResponse = await oeuvreService.createOeuvre(oeuvreData);
 
