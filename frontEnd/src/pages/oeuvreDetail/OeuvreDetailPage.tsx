@@ -496,7 +496,7 @@ const OeuvreDetailPage: React.FC = () => {
                               </h4>
                               <div className="flex items-center gap-2 mt-1">
                                 <Badge variant="secondary" className="text-xs">
-                                  {oeuvreAuteur.TypeOeuvre?.nom_type}
+                                  {getTranslation(oeuvreAuteur.TypeOeuvre?.nom_type, lang)}
                                 </Badge>
                                 {oeuvreAuteur.annee_creation && (
                                   <span className="text-xs text-muted-foreground">
@@ -593,7 +593,7 @@ const OeuvreDetailPage: React.FC = () => {
                       {event.Lieu && (
                         <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
                           <MapPin className="h-3 w-3" />
-                          <span className="line-clamp-1">{event.Lieu.nom}</span>
+                          <span className="line-clamp-1">{getTranslation(event.Lieu.nom, lang)}</span>
                         </div>
                       )}
                     </Link>
