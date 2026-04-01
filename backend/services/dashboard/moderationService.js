@@ -187,6 +187,44 @@ class DashboardModerationService {
     const oeuvre = await this.models.Oeuvre.findByPk(oeuvreId);
     if (!oeuvre) throw new Error('Œuvre non trouvée');
     await oeuvre.update({ statut: valide ? 'publie' : 'rejete', date_validation: new Date(), validateur_id, raison_rejet: !valide ? raison_rejet : null });
+
+    // Envoyer un email de notification au créateur
+    try {
+      if (oeuvre.saisi_par) {
+        const user = await this.models.User.findByPk(oeuvre.saisi_par);
+        if (user?.email) {
+          const emailService = require('../emailService');
+          const titre = typeof oeuvre.titre === 'object' ? (oeuvre.titre.fr || oeuvre.titre.ar || Object.values(oeuvre.titre)[0]) : oeuvre.titre;
+          const prenom = typeof user.prenom === 'object' ? (user.prenom.fr || Object.values(user.prenom)[0]) : user.prenom;
+
+          if (valide) {
+            await emailService.sendEmail(user.email, 'Votre œuvre a été validée - Tala DZ', `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #16a34a;">Œuvre validée !</h2>
+                <p>Bonjour ${emailService._escapeHtml(prenom || '')},</p>
+                <p>Votre œuvre <strong>${emailService._escapeHtml(titre || '')}</strong> a été validée et est maintenant publiée sur Tala DZ.</p>
+                <p><a href="${process.env.FRONTEND_URL}/oeuvres/${oeuvreId}" style="background-color: #3498db; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px;">Voir mon œuvre</a></p>
+                <p>L'équipe Tala DZ</p>
+              </div>
+            `);
+          } else {
+            await emailService.sendEmail(user.email, 'Votre œuvre n\'a pas été validée - Tala DZ', `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #dc2626;">Œuvre non validée</h2>
+                <p>Bonjour ${emailService._escapeHtml(prenom || '')},</p>
+                <p>Votre œuvre <strong>${emailService._escapeHtml(titre || '')}</strong> n'a pas été validée.</p>
+                ${raison_rejet ? `<p><strong>Raison :</strong> ${emailService._escapeHtml(raison_rejet)}</p>` : ''}
+                <p>Vous pouvez modifier votre œuvre et la soumettre à nouveau depuis votre tableau de bord.</p>
+                <p>L'équipe Tala DZ</p>
+              </div>
+            `);
+          }
+        }
+      }
+    } catch (emailErr) {
+      console.error('Erreur envoi email validation oeuvre:', emailErr.message);
+    }
+
     return { message: valide ? 'Œuvre validée' : 'Œuvre rejetée', data: oeuvre };
   }
 
