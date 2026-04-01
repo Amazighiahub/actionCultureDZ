@@ -395,6 +395,9 @@ const IntervenantModal: React.FC<IntervenantModalProps> = ({
                 onChange={(e) => setFormData((prev) => ({ ...prev, biographie: e.target.value }))}
                 placeholder={t("modals_intervenantmodal.placeholder_courte_biographie")}
                 className="min-h-[100px]" />
+              <p className={`text-xs mt-1 ${(formData.biographie?.length || 0) > 450 ? 'text-amber-500' : 'text-muted-foreground'}`}>
+                {formData.biographie?.length || 0}/500
+              </p>
 
             </div>
           </div>

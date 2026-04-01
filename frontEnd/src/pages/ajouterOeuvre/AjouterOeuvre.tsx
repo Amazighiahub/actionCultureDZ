@@ -215,12 +215,14 @@ const AjouterOeuvre: React.FC = () => {
                             <MultiLangInput name="titre" label={t("ajouteroeuvre.titre_luvre")} value={formData.titre}
                               onChange={(value: any) => handleInputChange('titre', value)} required requiredLanguages={['fr']}
                               placeholder={t("ajouteroeuvre.placeholder_lart_calligraphie_maghrebine")}
+                              maxLength={500} showCharCount
                               errors={fieldErrors.titre ? { fr: fieldErrors.titre, ar: fieldErrors.titre } : {}} />
                           </div>
                           <div>
                             <MultiLangInput name="description" label={t("ajouteroeuvre.description_label", "Résumé de l'œuvre")} value={formData.description}
                               onChange={(value: any) => handleInputChange('description', value)} type="textarea" rows={4} requiredLanguages={['fr']}
                               placeholder={t("ajouteroeuvre.placeholder_dcrivez_votre_uvre")}
+                              maxLength={5000} showCharCount
                               errors={fieldErrors.description ? { fr: fieldErrors.description, ar: fieldErrors.description } : {}} />
                           </div>
                         </div>

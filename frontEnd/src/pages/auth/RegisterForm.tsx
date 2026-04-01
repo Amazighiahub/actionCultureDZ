@@ -963,8 +963,8 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                             aria-invalid={!!registerErrors.biographie}
                             aria-describedby={registerErrors.biographie ? 'auth-biographie-error' : undefined}
                           />
-                          <p className="text-xs text-muted-foreground">
-                            {registerForm.biographie.length}/500 {t('auth.register.charactersMinimum')}
+                          <p className={`text-xs ${registerForm.biographie.length > 450 ? 'text-amber-500' : registerForm.biographie.length < 50 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                            {registerForm.biographie.length}/500 {registerForm.biographie.length < 50 ? t('auth.register.min50chars', '(min 50 caractères)') : ''}
                           </p>
                           {registerErrors.biographie && (
                             <p id="auth-biographie-error" role="alert" className="text-sm text-destructive">{registerErrors.biographie}</p>

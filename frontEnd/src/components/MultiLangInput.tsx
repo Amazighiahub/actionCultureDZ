@@ -53,6 +53,10 @@ interface MultiLangInputProps {
   disabled?: boolean;
   /** Erreurs de validation */
   errors?: Record<string, string>;
+  /** Nombre max de caractères */
+  maxLength?: number;
+  /** Afficher le compteur de caractères */
+  showCharCount?: boolean;
 }
 
 // Langues disponibles
@@ -81,6 +85,8 @@ export const MultiLangInput: React.FC<MultiLangInputProps> = ({
   className = '',
   disabled = false,
   errors = {},
+  maxLength,
+  showCharCount = false,
 }) => {
   const { t } = useTranslation();
   const [activeLang, setActiveLang] = useState<string>('fr');
@@ -253,6 +259,7 @@ export const MultiLangInput: React.FC<MultiLangInputProps> = ({
             placeholder={placeholder || t('common.enterText', { lang: activeLanguage.label })}
             rows={rows}
             disabled={disabled}
+            maxLength={maxLength}
             lang={activeLang === 'ar' ? 'ar' : activeLang === 'tz-tfng' ? 'ber' : activeLang === 'tz-ltn' ? 'ber-Latn' : activeLang}
             spellCheck={activeLang === 'fr' || activeLang === 'en'}
             aria-invalid={!!errors[activeLang] || undefined}
@@ -275,6 +282,7 @@ export const MultiLangInput: React.FC<MultiLangInputProps> = ({
             autoCapitalize={activeLang === 'ar' ? 'none' : 'sentences'}
             autoComplete={activeLang === 'ar' ? 'off' : 'on'}
             spellCheck={activeLang === 'fr' || activeLang === 'en'}
+            maxLength={maxLength}
             aria-invalid={!!errors[activeLang] || undefined}
             aria-describedby={errors[activeLang] ? `${name}-${activeLang}-error` : undefined}
             className={cn(
@@ -284,6 +292,16 @@ export const MultiLangInput: React.FC<MultiLangInputProps> = ({
           />
         )}
       </div>
+
+      {/* Compteur de caractères */}
+      {maxLength && showCharCount && (
+        <p className={cn(
+          'text-xs mt-1',
+          (value[activeLang]?.length || 0) > maxLength * 0.9 ? 'text-amber-500' : 'text-muted-foreground'
+        )}>
+          {value[activeLang]?.length || 0}/{maxLength}
+        </p>
+      )}
 
       {/* Message d'erreur */}
       {errors[activeLang] && (
