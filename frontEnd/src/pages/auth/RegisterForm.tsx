@@ -743,29 +743,25 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <RequiredLabel htmlFor="wilaya" required>{t('auth.register.wilaya')}</RequiredLabel>
-                        <Select 
-                          value={registerForm.wilaya_residence.toString()}
-                          onValueChange={(value) => {
-                            setRegisterForm({ ...registerForm, wilaya_residence: parseInt(value) });
+                        <select
+                          id="wilaya"
+                          value={registerForm.wilaya_residence || ''}
+                          onChange={(e) => {
+                            setRegisterForm({ ...registerForm, wilaya_residence: parseInt(e.target.value) || 0 });
                             setRegisterErrors({...registerErrors, wilaya_residence: ''});
                           }}
                           disabled={wilayasLoading}
+                          className={`w-full p-3 border rounded-lg bg-background hover:border-primary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 ${registerErrors.wilaya_residence ? 'border-destructive' : 'border-input'}`}
+                          aria-invalid={!!registerErrors.wilaya_residence}
+                          aria-describedby={registerErrors.wilaya_residence ? 'auth-wilaya-error' : undefined}
                         >
-                          <SelectTrigger
-                            className={registerErrors.wilaya_residence ? 'border-destructive' : ''}
-                            aria-invalid={!!registerErrors.wilaya_residence}
-                            aria-describedby={registerErrors.wilaya_residence ? 'auth-wilaya-error' : undefined}
-                          >
-                            <SelectValue placeholder={wilayasLoading ? t('common.loading') : t('auth.register.selectWilaya')} />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {wilayas.map((wilaya) => (
-                              <SelectItem key={wilaya.id_wilaya} value={wilaya.id_wilaya.toString()}>
-                                {String(wilaya.codeW).padStart(2, '0')} - {getWilayaName(wilaya, i18n.language)}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                          <option value="">{wilayasLoading ? t('common.loading') : t('auth.register.selectWilaya')}</option>
+                          {wilayas.map((wilaya) => (
+                            <option key={wilaya.id_wilaya} value={wilaya.id_wilaya}>
+                              {String(wilaya.codeW).padStart(2, '0')} - {getWilayaName(wilaya, i18n.language)}
+                            </option>
+                          ))}
+                        </select>
                         {registerErrors.wilaya_residence && (
                           <p id="auth-wilaya-error" role="alert" className="text-sm text-destructive">{registerErrors.wilaya_residence}</p>
                         )}
