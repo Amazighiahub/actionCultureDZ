@@ -575,7 +575,14 @@ export function useAjouterOeuvre() {
         const blocksResponse = finalArticleRecordId ? await articleBlockService.createMultipleBlocks({
           id_article: finalArticleRecordId,
           article_type: isScientific ? 'article_scientifique' : 'article',
-          blocks: blocksToSave.map((b: ArticleBlockToSave) => ({ ...b, id_article: finalArticleRecordId })),
+          blocks: blocksToSave.map((b) => ({
+            id_article: finalArticleRecordId as number,
+            type_block: b.type_block,
+            contenu: b.contenu,
+            contenu_json: b.contenu_json as Record<string, unknown> | unknown[] | undefined,
+            metadata: b.metadata,
+            ...(b.id_media ? { id_media: b.id_media } : {}),
+          })),
         }) : { success: false, error: 'ID article manquant' };
 
         if (!blocksResponse.success) {
