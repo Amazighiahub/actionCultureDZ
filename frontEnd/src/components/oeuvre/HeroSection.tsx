@@ -587,7 +587,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                   <div className="space-y-2">
                     {mainContributors.map((contributeur, index) => (
                       <p key={contributeur.id_contributeur || contributeur.id || `contrib-${contributeur.nom}-${index}`} className="text-xl text-muted-foreground">
-                        {contributeur.role} : <span className="text-foreground font-medium">
+                        {contributeur.role ? `${contributeur.role} : ` : ''}<span className="text-foreground font-medium">
                           {contributeur.prenom} {contributeur.nom}
                         </span>
                       </p>

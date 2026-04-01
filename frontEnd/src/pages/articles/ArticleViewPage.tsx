@@ -62,7 +62,8 @@ import type { Article, ArticleScientifique } from '@/types/models/oeuvres-specia
 
 // Helpers pour gérer les types d'articles
 import { useTranslation } from "react-i18next";
-import { useFormatDate } from '@/hooks/useFormatDate';type ArticleData =
+import { useFormatDate } from '@/hooks/useFormatDate';
+import { getLocalizedText } from '@/utils/getLocalizedText';type ArticleData =
 {type: 'article';data: Article;} |
 {type: 'article_scientifique';data: ArticleScientifique;} |
 {type: 'none';data: null;};
@@ -437,7 +438,7 @@ const ArticleViewPage: React.FC = () => {
       oeuvre.OeuvreIntervenants.forEach((oi) => {
         if (oi.Intervenant) {
           contributeurs.push({
-            nom: `${oi.Intervenant.prenom} ${oi.Intervenant.nom}`,
+            nom: `${getLocalizedText(oi.Intervenant.prenom)} ${getLocalizedText(oi.Intervenant.nom)}`,
             role: oi.TypeUser?.nom || 'Contributeur',
             principal: oi.role_principal,
             photo: oi.Intervenant.photo_url,
@@ -926,17 +927,17 @@ const ArticleViewPage: React.FC = () => {
                         <Avatar>
                           <AvatarImage
                       src={comment.User?.photo_url}
-                      alt={`${comment.User?.prenom} ${comment.User?.nom}`} />
+                      alt={`${getLocalizedText(comment.User?.prenom)} ${getLocalizedText(comment.User?.nom)}`} />
                     
                           <AvatarFallback>
-                            {comment.User?.prenom?.[0]}{comment.User?.nom?.[0]}
+                            {getLocalizedText(comment.User?.prenom)?.[0]}{getLocalizedText(comment.User?.nom)?.[0]}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1">
                           <div className="flex items-start justify-between">
                             <div>
                               <h4 className="font-semibold">
-                                {comment.User ? `${comment.User.prenom} ${comment.User.nom}` : 'Utilisateur'}
+                                {comment.User ? `${getLocalizedText(comment.User.prenom)} ${getLocalizedText(comment.User.nom)}` : 'Utilisateur'}
                               </h4>
                               <p className="text-sm text-muted-foreground">
                                 {formatDate(comment.date_creation)}
@@ -977,13 +978,13 @@ const ArticleViewPage: React.FC = () => {
                                   <Avatar className="h-8 w-8">
                                     <AvatarImage src={reponse.User?.photo_url} />
                                     <AvatarFallback className="text-xs">
-                                      {reponse.User?.prenom?.[0]}{reponse.User?.nom?.[0]}
+                                      {getLocalizedText(reponse.User?.prenom)?.[0]}{getLocalizedText(reponse.User?.nom)?.[0]}
                                     </AvatarFallback>
                                   </Avatar>
                                   <div className="flex-1">
                                     <div className="flex items-center gap-2">
                                       <p className="text-sm font-medium">
-                                        {reponse.User?.prenom} {reponse.User?.nom}
+                                        {getLocalizedText(reponse.User?.prenom)} {getLocalizedText(reponse.User?.nom)}
                                       </p>
                                       <span className="text-xs text-muted-foreground">
                                         {formatDate(reponse.date_creation)}

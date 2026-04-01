@@ -19,6 +19,7 @@ import CategorySelection from './CategorySelection';
 import EditorModeSelector from './EditorModeSelector';
 import OeuvreSpecificFields from './OeuvreSpecificFields';
 import { oeuvreService } from '@/services/oeuvre.service';
+import { getLocalizedText } from '@/utils/getLocalizedText';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -190,7 +191,7 @@ const AjouterOeuvre: React.FC = () => {
                           }
                         }}>
                           {getTypeIcon(type.id_type_oeuvre)}
-                          <span className="font-medium">{type.nom_type}</span>
+                          <span className="font-medium">{getLocalizedText(type.nom_type)}</span>
                         </Button>
                       )}
                     </div>
@@ -319,7 +320,7 @@ const AjouterOeuvre: React.FC = () => {
                                       setSearchOeuvreResults([]);
                                     }}>
                                     {typeof o.titre === 'object' ? o.titre.fr || Object.values(o.titre)[0] : o.titre}
-                                    {o.Langue && <span className="text-muted-foreground ml-2">({o.Langue.nom})</span>}
+                                    {o.Langue && <span className="text-muted-foreground ml-2">({getLocalizedText(o.Langue.nom)})</span>}
                                   </button>
                                 ))}
                               </div>
@@ -336,7 +337,7 @@ const AjouterOeuvre: React.FC = () => {
                     <Card className="shadow-cultural">
                       <CardHeader>
                         <CardTitle className="text-2xl font-serif">{t("ajouteroeuvre.informations_spcifiques")}
-                          {metadata.types_oeuvres?.find((type: TypeOeuvre) => type.id_type_oeuvre === formData.id_type_oeuvre)?.nom_type}
+                          {getLocalizedText(metadata.types_oeuvres?.find((type: TypeOeuvre) => type.id_type_oeuvre === formData.id_type_oeuvre)?.nom_type)}
                         </CardTitle>
                       </CardHeader>
                       <CardContent>

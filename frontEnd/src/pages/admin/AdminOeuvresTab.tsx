@@ -4,6 +4,7 @@ import { getLocalizedText } from '@/utils/getLocalizedText';
  * Utilise useDashboardAdmin
  */
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -50,6 +51,7 @@ const TYPE_ICONS: Record<string, React.ElementType> = {
 
 const AdminOeuvresTab: React.FC = () => {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   const currentLang = i18n.language || 'fr';
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -249,7 +251,7 @@ const AdminOeuvresTab: React.FC = () => {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => navigate(`/oeuvres/${oeuvre.id_oeuvre}`)}>
                           <Eye className="h-4 w-4 mr-2" />
                           {t('common.view', 'Voir')}
                         </DropdownMenuItem>

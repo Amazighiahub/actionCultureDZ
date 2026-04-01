@@ -296,7 +296,7 @@ const AdminUsersTab: React.FC = () => {
                   {user.photo_url ? (
                     <LazyImage
                       src={user.photo_url}
-                      alt={`${user.prenom} ${user.nom}`}
+                      alt={`${getLocalizedText(user.prenom)} ${getLocalizedText(user.nom)}`}
                       className="w-12 h-12 rounded-full object-cover"
                     />
                   ) : (

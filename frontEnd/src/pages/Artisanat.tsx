@@ -35,6 +35,7 @@ import SEOHead from '@/components/SEOHead';
 // Hook personnalisé
 import { useArtisanat } from '@/hooks/useArtisanat';
 import { useDebounce } from '@/hooks/useAdmin';
+import { getLocalizedText } from '@/utils/getLocalizedText';
 
 // Composant carte d'artisanat
 interface ArtisanatCardProps {
@@ -132,7 +133,7 @@ const ArtisanatCard: React.FC<ArtisanatCardProps> = React.memo(({ artisanat, onV
         {/* Artisan */}
         {artisan && (
           <p className="text-sm text-muted-foreground mb-2">
-            {artisan.prenom} {artisan.nom}
+            {getLocalizedText(artisan.prenom)} {getLocalizedText(artisan.nom)}
           </p>
         )}
 

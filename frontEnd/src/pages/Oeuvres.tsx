@@ -35,6 +35,7 @@ import SEOHead from '@/components/SEOHead';
 // Hook personnalisé
 import { useOeuvres } from '@/hooks/useOeuvres';
 import { useDebounce } from '@/hooks/useAdmin';
+import { getLocalizedText } from '@/utils/getLocalizedText';
 
 // Icônes par type
 const TYPE_ICONS: Record<string, React.ElementType> = {
@@ -130,7 +131,7 @@ const OeuvreCard: React.FC<OeuvreCardProps> = React.memo(({ oeuvre, onView, onFa
         {/* Auteur / Saiseur */}
         {(oeuvre.auteur || oeuvre.Saiseur) && (
           <p className="text-sm text-muted-foreground mb-2">
-            {oeuvre.auteur || `${oeuvre.Saiseur?.prenom} ${oeuvre.Saiseur?.nom}`}
+            {oeuvre.auteur || `${getLocalizedText(oeuvre.Saiseur?.prenom)} ${getLocalizedText(oeuvre.Saiseur?.nom)}`}
           </p>
         )}
 
@@ -138,12 +139,12 @@ const OeuvreCard: React.FC<OeuvreCardProps> = React.memo(({ oeuvre, onView, onFa
         <div className="flex items-center gap-2 flex-wrap">
           {oeuvre.TypeOeuvre?.nom_type && (
             <Badge variant="secondary" className="text-xs">
-              {oeuvre.TypeOeuvre.nom_type}
+              {getLocalizedText(oeuvre.TypeOeuvre.nom_type)}
             </Badge>
           )}
           {oeuvre.Langue?.nom && (
             <Badge variant="outline" className="text-xs">
-              {oeuvre.Langue.nom}
+              {getLocalizedText(oeuvre.Langue.nom)}
             </Badge>
           )}
         </div>
@@ -302,7 +303,7 @@ const Oeuvres: React.FC = () => {
                   <SelectItem value="tous">{t('common.all', 'Tous')}</SelectItem>
                   {typesOeuvres?.map((type: Record<string, unknown>) => (
                     <SelectItem key={type.id_type_oeuvre} value={type.id_type_oeuvre.toString()}>
-                      {type.nom_type}
+                      {getLocalizedText(type.nom_type)}
                     </SelectItem>
                   ))}
                 </SelectContent>

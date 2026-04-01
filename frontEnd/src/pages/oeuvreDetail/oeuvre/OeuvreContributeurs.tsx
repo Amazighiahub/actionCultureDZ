@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Users, Award, Star, ExternalLink } from 'lucide-react';
 import { LazyImage, EmptyState } from '@/components/shared';
 import { cn } from '@/lib/Utils';
+import { getLocalizedText } from '@/utils/getLocalizedText';
 
 interface Contributeur {
   id_user?: number;
@@ -61,11 +62,11 @@ interface ContributeurCardProps {
 const ContributeurCard: React.FC<ContributeurCardProps> = ({ contributeur, featured = false }) => {
   const { t } = useTranslation();
   
-  const displayName = contributeur.prenom 
-    ? `${contributeur.prenom} ${contributeur.nom}` 
-    : contributeur.nom;
+  const displayName = contributeur.prenom
+    ? `${getLocalizedText(contributeur.prenom)} ${getLocalizedText(contributeur.nom)}`
+    : getLocalizedText(contributeur.nom);
 
-  const roleLabel = contributeur.TypeUser?.nom_type || contributeur.type_user || contributeur.role;
+  const roleLabel = getLocalizedText(contributeur.TypeUser?.nom_type) || getLocalizedText(contributeur.type_user) || contributeur.role;
 
   return (
     <Card className={cn(
@@ -175,7 +176,7 @@ const OeuvreContributeurs: React.FC<OeuvreContributeursProps> = ({ contributeurs
 
   // Grouper par type de rôle
   const groupedByRole = contributeurs.reduce((acc, c) => {
-    const role = c.TypeUser?.nom_type || c.type_user || c.role || 'Autre';
+    const role = getLocalizedText(c.TypeUser?.nom_type) || getLocalizedText(c.type_user) || c.role || 'Autre';
     if (!acc[role]) {
       acc[role] = [];
     }

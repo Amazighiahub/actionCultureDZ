@@ -15,6 +15,7 @@ import { LazyImage, EmptyState } from '@/components/shared';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocalizedDate } from '@/hooks/useLocalizedDate';
 import { cn } from '@/lib/Utils';
+import { getLocalizedText } from '@/utils/getLocalizedText';
 
 interface Comment {
   id_commentaire?: number;
@@ -48,7 +49,7 @@ const CommentItem: React.FC<{ comment: Comment }> = ({ comment }) => {
     <div className="flex gap-4">
       <LazyImage
         src={user?.photo_url || '/images/default-avatar.svg'}
-        alt={user ? `${user.prenom} ${user.nom}` : 'Utilisateur'}
+        alt={user ? `${getLocalizedText(user.prenom)} ${getLocalizedText(user.nom)}` : 'Utilisateur'}
         className="w-10 h-10 rounded-full flex-shrink-0"
         fallback="/images/default-avatar.svg"
       />
@@ -57,7 +58,7 @@ const CommentItem: React.FC<{ comment: Comment }> = ({ comment }) => {
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <span className="font-medium">
-                {user ? `${user.prenom} ${user.nom}` : 'Anonyme'}
+                {user ? `${getLocalizedText(user.prenom)} ${getLocalizedText(user.nom)}` : 'Anonyme'}
               </span>
               {comment.note && <StarRating value={comment.note} readonly size="sm" />}
             </div>
