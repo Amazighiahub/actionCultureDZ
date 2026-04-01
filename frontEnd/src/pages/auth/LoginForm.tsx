@@ -118,14 +118,20 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
           variant: 'destructive'
         });
 
-        // Afficher aussi l'erreur dans le formulaire si c'est lié au mot de passe ou email
-        if (result.error?.toLowerCase().includes('mot de passe') ||
-            result.error?.toLowerCase().includes('password')) {
-          setErrors({ ...errors, password: errorMessage });
-        } else if (result.error?.toLowerCase().includes('email') ||
-                   result.error?.toLowerCase().includes('utilisateur') ||
-                   result.error?.toLowerCase().includes('user')) {
-          setErrors({ ...errors, email: errorMessage });
+        // Afficher l'erreur sur le(s) champ(s) concerné(s)
+        const errLower = (result.error || '').toLowerCase();
+        const isGeneric = errLower.includes('incorrect') || errLower.includes('invalid');
+        const isEmailError = errLower.includes('email') || errLower.includes('utilisateur') || errLower.includes('user') || errLower.includes('trouvé') || errLower.includes('found');
+        const isPasswordError = errLower.includes('mot de passe') || errLower.includes('password');
+
+        if (isGeneric || (isEmailError && isPasswordError)) {
+          setErrors({ email: t('auth.errors.checkEmail', 'Vérifiez votre email'), password: t('auth.errors.checkPassword', 'Vérifiez votre mot de passe') });
+        } else if (isPasswordError) {
+          setErrors({ password: errorMessage });
+        } else if (isEmailError) {
+          setErrors({ email: errorMessage });
+        } else {
+          setErrors({ email: errorMessage });
         }
       }
     } catch (error: unknown) {
