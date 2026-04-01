@@ -185,7 +185,7 @@ const AjouterOeuvre: React.FC = () => {
                         'hover:bg-secondary hover:text-secondary-foreground'}`}
                         onClick={() => {
                           handleInputChange('id_type_oeuvre', type.id_type_oeuvre);
-                          if (['Œuvre d\'Art', 'Artisanat'].includes(type.nom_type)) {
+                          if ([6, 7].includes(type.id_type_oeuvre)) { // Œuvre d'Art, Artisanat
                             handleInputChange('je_suis_auteur', true);
                           }
                         }}>

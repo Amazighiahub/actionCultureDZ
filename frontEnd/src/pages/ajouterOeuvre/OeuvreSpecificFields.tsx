@@ -112,8 +112,9 @@ const OeuvreSpecificFields: React.FC<OeuvreSpecificFieldsProps> = ({
   const typeOeuvre = metadata.types_oeuvres.find((type: TypeOeuvre) => type.id_type_oeuvre === formData.id_type_oeuvre);
   if (!typeOeuvre) return null;
 
-  const fieldsConfig: Record<string, React.ReactNode> = {
-    'Livre':
+  // Utiliser id_type_oeuvre (numérique) au lieu de nom_type (traduit selon la langue)
+  const fieldsConfig: Record<number, React.ReactNode> = {
+    1: /* Livre */
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
         <div className="space-y-2">
           <Label htmlFor="isbn">{t("ajouteroeuvre.isbn")} <span className="text-muted-foreground font-normal">({t('common.optional')})</span></Label>
@@ -140,7 +141,7 @@ const OeuvreSpecificFields: React.FC<OeuvreSpecificFieldsProps> = ({
         </div>
       </div>,
 
-    'Film':
+    2: /* Film */
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
         <div className="space-y-2">
           <Label htmlFor="duree_minutes">{t("ajouteroeuvre.dure_minutes")}</Label>
@@ -163,7 +164,7 @@ const OeuvreSpecificFields: React.FC<OeuvreSpecificFieldsProps> = ({
         </div>
       </div>,
 
-    'Album Musical':
+    3: /* Album Musical */
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
         <div className="space-y-2">
           <Label htmlFor="duree_album">{t("ajouteroeuvre.dure_totale")}</Label>
@@ -194,7 +195,7 @@ const OeuvreSpecificFields: React.FC<OeuvreSpecificFieldsProps> = ({
         </div>
       </div>,
 
-    'Article':
+    4: /* Article */
     <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
           <div className="space-y-2">
@@ -241,7 +242,7 @@ const OeuvreSpecificFields: React.FC<OeuvreSpecificFieldsProps> = ({
         </div>
       </div>,
 
-    'Article Scientifique':
+    5: /* Article Scientifique */
     <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
           <div className="space-y-2">
@@ -300,7 +301,7 @@ const OeuvreSpecificFields: React.FC<OeuvreSpecificFieldsProps> = ({
         </div>
       </div>,
 
-    'Artisanat':
+    7: /* Artisanat */
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
         <div className="space-y-2">
           <Label htmlFor="id_materiau">{t("ajouteroeuvre.matriau_principal")}</Label>
@@ -357,11 +358,11 @@ const OeuvreSpecificFields: React.FC<OeuvreSpecificFieldsProps> = ({
         </div>
       </div>,
 
-    'Œuvre d\'Art':
+    6: /* Œuvre d'Art */
     <ArtFields formData={formData} handleInputChange={handleInputChange} t={t} />
   };
 
-  return fieldsConfig[typeOeuvre.nom_type] || null;
+  return fieldsConfig[typeOeuvre.id_type_oeuvre] || null;
 };
 
 export default OeuvreSpecificFields;

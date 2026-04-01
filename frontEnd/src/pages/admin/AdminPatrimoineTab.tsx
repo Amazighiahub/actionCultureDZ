@@ -9,13 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
+import AdminStatusFilter from '@/components/admin/AdminStatusFilter';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -160,20 +154,14 @@ const AdminPatrimoineTab: React.FC = () => {
               />
             </div>
 
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder={t('common.type', 'Type')} />
-              </SelectTrigger>
-              <SelectContent>
-                {TYPE_OPTIONS.map((type) => (
-                  <SelectItem key={type} value={type}>
-                    {type === 'tous'
-                      ? t('common.allTypes', 'Tous les types')
-                      : t(`admin.patrimoine.types.${type}`, type)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <AdminStatusFilter
+              value={typeFilter}
+              onChange={setTypeFilter}
+              options={TYPE_OPTIONS}
+              placeholder={t('common.type', 'Type')}
+              translationPrefix="admin.patrimoine.types"
+              allLabel={t('common.allTypes', 'Tous les types')}
+            />
 
             <div className="flex gap-2">
               {hasActiveFilters && (

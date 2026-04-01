@@ -8,13 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import AdminStatusFilter from '@/components/admin/AdminStatusFilter';
 import {
   Calendar, Search, CheckCircle, XCircle,
   MoreVertical, Eye, Trash2, RefreshCw,
@@ -137,20 +131,13 @@ const AdminEvenementsTab: React.FC = () => {
                 className="pl-10"
               />
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder={t('common.status', 'Statut')} />
-              </SelectTrigger>
-              <SelectContent>
-                {STATUS_OPTIONS.map((status) => (
-                  <SelectItem key={status} value={status}>
-                    {status === 'tous'
-                      ? t('common.allStatuses', 'Tous les statuts')
-                      : t(`admin.events.statuses.${status}`, status)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <AdminStatusFilter
+              value={statusFilter}
+              onChange={setStatusFilter}
+              options={STATUS_OPTIONS}
+              placeholder={t('common.status', 'Statut')}
+              translationPrefix="admin.events.statuses"
+            />
 
             <div className="flex gap-2">
               {hasActiveFilters && (

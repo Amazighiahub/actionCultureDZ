@@ -213,8 +213,8 @@ export function useAjouterOeuvre() {
     if (!metadata.types_oeuvres || metadata.types_oeuvres.length === 0) return;
     const typeOeuvre = metadata.types_oeuvres.find((type: TypeOeuvre) => type.id_type_oeuvre === formData.id_type_oeuvre);
     const isArticleType = typeOeuvre && (
-    typeOeuvre.nom_type === 'Article' ||
-    typeOeuvre.nom_type === 'Article Scientifique');
+    typeOeuvre.id_type_oeuvre === 4 ||  // Article
+    typeOeuvre.id_type_oeuvre === 5);   // Article Scientifique
     setShowEditorChoice(!!isArticleType);
     if (!isArticleType) {
       setUseArticleEditor(false);
@@ -247,17 +247,19 @@ export function useAjouterOeuvre() {
     const suggestions: string[] = [];
     const typeOeuvre = metadata.types_oeuvres.find((type: TypeOeuvre) => type.id_type_oeuvre === formData.id_type_oeuvre);
     if (typeOeuvre) {
-      const typeTags: Record<string, string[]> = {
-        'Livre': ['littérature', 'lecture', 'roman'],
-        'Film': ['cinéma', 'audiovisuel', 'réalisation'],
-        'Artisanat': ['fait-main', 'artisanal', 'traditionnel'],
-        'Article Scientifique': ['recherche', 'science', 'académique']
+      const typeTags: Record<number, string[]> = {
+        1: ['littérature', 'lecture', 'roman'],        // Livre
+        2: ['cinéma', 'audiovisuel', 'réalisation'],   // Film
+        7: ['fait-main', 'artisanal', 'traditionnel'], // Artisanat
+        5: ['recherche', 'science', 'académique']      // Article Scientifique
       };
-      if (typeTags[typeOeuvre.nom_type]) {
-        suggestions.push(...typeTags[typeOeuvre.nom_type]);
+      if (typeTags[typeOeuvre.id_type_oeuvre]) {
+        suggestions.push(...typeTags[typeOeuvre.id_type_oeuvre]);
       }
     }
-    const text = `${formData.titre} ${formData.description}`.toLowerCase();
+    const titreTxt = typeof formData.titre === 'object' ? Object.values(formData.titre).join(' ') : String(formData.titre || '');
+    const descTxt = typeof formData.description === 'object' ? Object.values(formData.description).join(' ') : String(formData.description || '');
+    const text = `${titreTxt} ${descTxt}`.toLowerCase();
     const keywords = ['algérie', 'maghreb', 'berbère', 'tradition', 'moderne', 'contemporain', 'patrimoine', 'culture'];
     keywords.forEach((keyword) => {
       if (text.includes(keyword) && !suggestions.includes(keyword)) {
@@ -586,27 +588,28 @@ export function useAjouterOeuvre() {
 
   const prepareDetailsSpecifiques = useCallback((typeOeuvre: TypeOeuvre): DetailsSpecifiques => {
     const details: DetailsSpecifiques = {};
-    switch (typeOeuvre.nom_type) {
-      case 'Livre':
-        details.livre = { isbn: formData.isbn, nb_pages: formData.nb_pages, format: 'standard', collection: undefined };
+    // Utiliser id_type_oeuvre (numérique) au lieu de nom_type (traduit selon la langue)
+    switch (typeOeuvre.id_type_oeuvre) {
+      case 1: // Livre
+        details.livre = { isbn: formData.isbn, nb_pages: formData.nb_pages };
         break;
-      case 'Film':
+      case 2: // Film
         details.film = { duree_minutes: formData.duree_minutes, realisateur: formData.realisateur };
         break;
-      case 'Album Musical':
+      case 3: // Album Musical
         details.album_musical = { duree: formData.duree_album, label: formData.label, nb_pistes: formData.nb_pistes };
         break;
-      case 'Article':
+      case 4: // Article
         details.article = { auteur: formData.auteur, source: formData.source, resume: formData.resume_article, url_source: formData.url_source };
         break;
-      case 'Article Scientifique':
+      case 5: // Article Scientifique
         details.article_scientifique = { journal: formData.journal, doi: formData.doi, pages: formData.pages, volume: formData.volume, numero: formData.numero, peer_reviewed: formData.peer_reviewed };
         break;
-      case 'Artisanat':
-        details.artisanat = { id_materiau: formData.id_materiau, id_technique: formData.id_technique, dimensions: formData.dimensions, poids: formData.poids, prix: formData.prix };
-        break;
-      case 'Œuvre d\'Art':
+      case 6: // Œuvre d'Art
         details.oeuvre_art = { technique: formData.technique_art, dimensions: formData.dimensions_art, support: formData.support };
+        break;
+      case 7: // Artisanat
+        details.artisanat = { id_materiau: formData.id_materiau, id_technique: formData.id_technique, dimensions: formData.dimensions, poids: formData.poids, prix: formData.prix };
         break;
     }
     return details;

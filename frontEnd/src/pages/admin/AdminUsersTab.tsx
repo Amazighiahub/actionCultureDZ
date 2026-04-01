@@ -9,13 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import AdminStatusFilter from '@/components/admin/AdminStatusFilter';
 import {
   Users, Search, CheckCircle, XCircle,
   MoreVertical, Mail, Shield, Trash2, RefreshCw, X, AlertCircle, UserCheck, UserX
@@ -169,48 +163,29 @@ const AdminUsersTab: React.FC = () => {
                 className="pl-10"
               />
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder={t('common.status', 'Statut')} />
-              </SelectTrigger>
-              <SelectContent>
-                {STATUS_OPTIONS.map((status) => (
-                  <SelectItem key={status} value={status}>
-                    {status === 'tous'
-                      ? t('common.allStatuses', 'Tous les statuts')
-                      : t(`admin.users.statuses.${status}`, status)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={validationFilter} onValueChange={setValidationFilter}>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder={t('common.validation', 'Validation')} />
-              </SelectTrigger>
-              <SelectContent>
-                {VALIDATION_OPTIONS.map((v) => (
-                  <SelectItem key={v} value={v}>
-                    {v === 'tous'
-                      ? t('common.allValidations', 'Toutes validations')
-                      : t(`admin.users.validations.${v}`, v)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder={t('common.type', 'Type')} />
-              </SelectTrigger>
-              <SelectContent>
-                {TYPE_OPTIONS.map((type) => (
-                  <SelectItem key={type} value={type}>
-                    {type === 'tous'
-                      ? t('common.allTypes', 'Tous les types')
-                      : t(`admin.users.types.${type}`, type)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <AdminStatusFilter
+              value={statusFilter}
+              onChange={setStatusFilter}
+              options={STATUS_OPTIONS}
+              placeholder={t('common.status', 'Statut')}
+              translationPrefix="admin.users.statuses"
+            />
+            <AdminStatusFilter
+              value={validationFilter}
+              onChange={setValidationFilter}
+              options={VALIDATION_OPTIONS}
+              placeholder={t('common.validation', 'Validation')}
+              translationPrefix="admin.users.validations"
+              allLabel={t('common.allValidations', 'Toutes validations')}
+            />
+            <AdminStatusFilter
+              value={typeFilter}
+              onChange={setTypeFilter}
+              options={TYPE_OPTIONS}
+              placeholder={t('common.type', 'Type')}
+              translationPrefix="admin.users.types"
+              allLabel={t('common.allTypes', 'Tous les types')}
+            />
 
             <div className="flex gap-2">
               {hasActiveFilters && (

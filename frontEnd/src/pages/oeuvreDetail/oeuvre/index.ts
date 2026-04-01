@@ -12,9 +12,3 @@ export { default as OeuvreComments } from './OeuvreComments';
 export { default as OeuvreEvents } from './OeuvreEvents';
 export { default as RelatedOeuvres } from './RelatedOeuvres';
 
-// Steps pour AjouterOeuvre
-export { default as StepGeneralInfo } from './StepGeneralInfo';
-export { default as StepCategories } from './StepCategories';
-export { default as StepDetails } from './StepDetails';
-export { default as StepMedia } from './StepMedia';
-// export { default as StepReview } from './stepReview'; // TODO: Create this file

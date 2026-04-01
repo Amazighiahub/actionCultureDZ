@@ -24,8 +24,8 @@ const EditorModeSelector: React.FC<EditorModeSelectorProps> = ({
   const { t } = useTranslation();
   const typeOeuvre = metadata.types_oeuvres?.find((type: TypeOeuvre) => type.id_type_oeuvre === formData.id_type_oeuvre);
   const isArticleType = typeOeuvre && (
-  typeOeuvre.nom_type === 'Article' ||
-  typeOeuvre.nom_type === 'Article Scientifique');
+  typeOeuvre.id_type_oeuvre === 4 ||  // Article
+  typeOeuvre.id_type_oeuvre === 5);   // Article Scientifique
 
   if (!isArticleType || !showEditorChoice) return null;
 

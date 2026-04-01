@@ -8,13 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
+import AdminStatusFilter from '@/components/admin/AdminStatusFilter';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   AlertTriangle, AlertCircle, CheckCircle, XCircle, Shield,
@@ -180,20 +174,14 @@ const AdminModerationTab: React.FC = () => {
               />
             </div>
 
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder={t('common.type', 'Type')} />
-              </SelectTrigger>
-              <SelectContent>
-                {TYPE_OPTIONS.map((type) => (
-                  <SelectItem key={type} value={type}>
-                    {type === 'tous'
-                      ? t('common.allTypes', 'Tous les types')
-                      : t(`admin.moderation.types.${type}`, type)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <AdminStatusFilter
+              value={typeFilter}
+              onChange={setTypeFilter}
+              options={TYPE_OPTIONS}
+              placeholder={t('common.type', 'Type')}
+              translationPrefix="admin.moderation.types"
+              allLabel={t('common.allTypes', 'Tous les types')}
+            />
 
             <div className="flex gap-2">
               {hasActiveFilters && (
