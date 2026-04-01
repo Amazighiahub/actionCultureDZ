@@ -314,11 +314,16 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                           />
                         ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900 dark:to-orange-900 flex flex-col items-center justify-center p-8">
-                            <BookOpen className="h-24 w-24 text-amber-600/50 dark:text-amber-400/50 mb-4" />
-                            <h3 className="text-xl font-bold text-center line-clamp-3 text-amber-900 dark:text-amber-100">
+                          <div className="w-full h-full bg-gradient-to-br from-amber-800 via-amber-900 to-amber-950 dark:from-amber-900 dark:to-black flex flex-col items-center justify-center p-6 text-center">
+                            <BookOpen className="h-12 w-12 text-amber-400/50 mb-4" />
+                            <h3 className="text-lg font-bold font-serif line-clamp-3 text-amber-50">
                               {titre}
                             </h3>
+                            {mainContributors.length > 0 && (
+                              <p className="text-sm text-amber-200/80 mt-2">
+                                {gt(mainContributors[0].prenom)} {gt(mainContributors[0].nom)}
+                              </p>
+                            )}
                           </div>
                         )}
                         
