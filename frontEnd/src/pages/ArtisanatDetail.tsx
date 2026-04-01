@@ -114,6 +114,7 @@ const ArtisanatDetail: React.FC = () => {
   const { isAuthenticated } = useAuth();
 
   useEffect(() => {
+    window.scrollTo(0, 0);
     if (id) {
       loadArtisanat(parseInt(id));
     }

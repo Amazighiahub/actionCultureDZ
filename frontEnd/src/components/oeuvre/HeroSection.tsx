@@ -105,15 +105,16 @@ interface HeroSectionProps {
   onShare?: () => void; // Optional - le composant gère le partage en interne maintenant
 }
 
-const OeuvreTypeIcon = ({ type }: { type: string }) => {
-  const iconMap: Record<string, any> = {
-    'Livre': BookOpen,
-    'Film': Film,
-    'Musique': Music,
-    'Art': Palette,
+const OeuvreTypeIcon = ({ typeId }: { typeId: number }) => {
+  const iconMap: Record<number, typeof BookOpen> = {
+    1: BookOpen,   // Livre
+    2: Film,       // Film
+    3: Music,      // Album Musical
+    6: Palette,    // Œuvre d'Art
+    7: Sparkles,   // Artisanat
   };
-  
-  const Icon = iconMap[type] || Sparkles;
+
+  const Icon = iconMap[typeId] || Sparkles;
   return <Icon className="h-5 w-5" />;
 };
 
@@ -130,7 +131,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { formatNumber, formatPrice } = useLocalizedNumber();
-  const { rtlClasses } = useRTL();
+  const { rtlClasses, direction } = useRTL();
 
   // État pour l'effet flip du livre
   const [isFlipped, setIsFlipped] = useState(false);
@@ -163,7 +164,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   const handleShare = async (platform: string) => {
     const url = window.location.href;
     const text = t('oeuvre.share.text', 'Découvrez "{{title}}" - {{type}}', {
-      title: oeuvre.titre,
+      title: titre,
       type: oeuvre.TypeOeuvre?.nom_type || 'Œuvre'
     });
 
@@ -193,8 +194,25 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
     setShareOpen(false);
   };
 
+  // Helper pour extraire le texte d'un champ multilingue
+  const gt = (field: unknown): string => {
+    if (!field) return '';
+    if (typeof field === 'string') return field;
+    if (typeof field === 'object' && field !== null) {
+      const obj = field as Record<string, string>;
+      return obj.fr || obj.ar || obj.en || Object.values(obj).find(v => typeof v === 'string' && v) || '';
+    }
+    return String(field);
+  };
+
+  const titre = gt(oeuvre.titre);
+  const description = gt(oeuvre.description);
+
   const mainImage = getMainImage(medias);
-  const typeOeuvre = oeuvre.TypeOeuvre?.nom_type || 'Œuvre';
+  const typeId = oeuvre.id_type_oeuvre;
+  const typeOeuvre = typeof oeuvre.TypeOeuvre?.nom_type === 'object'
+    ? (oeuvre.TypeOeuvre.nom_type as Record<string, string>).fr || Object.values(oeuvre.TypeOeuvre.nom_type as Record<string, string>)[0] || 'Œuvre'
+    : oeuvre.TypeOeuvre?.nom_type || 'Œuvre';
   
   // Fonction helper pour obtenir les contributeurs principaux
   const getMainContributors = () => {
@@ -207,7 +225,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   // ═══════════════════════════════════════════════════════════════════════════
   // HERO POUR LIVRE - AVEC EFFET FLIP COUVERTURE AVANT/ARRIÈRE
   // ═══════════════════════════════════════════════════════════════════════════
-  if (typeOeuvre === 'Livre') {
+  if (typeId === 1) { // Livre
     return (
       <div className="relative bg-gradient-to-br from-amber-50/50 via-background to-orange-50/30 dark:from-amber-950/20 dark:via-background dark:to-orange-950/10 min-h-[500px]">
         <div className="container max-w-7xl mx-auto px-4 py-8">
@@ -238,7 +256,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                   style={{
                     transformStyle: 'preserve-3d',
                     transform: isFlipped
-                      ? `rotateY(${rtlClasses.direction === 'rtl' ? '-180deg' : '180deg'})`
+                      ? `rotateY(${direction === 'rtl' ? '-180deg' : '180deg'})`
                       : 'rotateY(0deg)',
                   }}
                   onClick={() => setIsFlipped(!isFlipped)}
@@ -265,12 +283,12 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                           "dark:from-amber-900 dark:via-amber-800 dark:to-amber-700"
                         )}
                         style={{
-                          [rtlClasses.direction === 'rtl' ? 'right' : 'left']: 0,
-                          transform: `translateX(${rtlClasses.direction === 'rtl' ? '100%' : '-100%'})`,
-                          boxShadow: rtlClasses.direction === 'rtl' 
+                          [direction === 'rtl' ? 'right' : 'left']: 0,
+                          transform: `translateX(${direction === 'rtl' ? '100%' : '-100%'})`,
+                          boxShadow: direction === 'rtl' 
                             ? 'inset -3px 0 8px rgba(0,0,0,0.15)' 
                             : 'inset 3px 0 8px rgba(0,0,0,0.15)',
-                          borderRadius: rtlClasses.direction === 'rtl' ? '0 4px 4px 0' : '4px 0 0 4px'
+                          borderRadius: direction === 'rtl' ? '0 4px 4px 0' : '4px 0 0 4px'
                         }}
                       >
                         {/* Lignes de pages */}
@@ -292,14 +310,14 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                         {mainImage ? (
                           <img 
                             src={mainImage} 
-                            alt={oeuvre.titre}
+                            alt={titre}
                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                           />
                         ) : (
                           <div className="w-full h-full bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900 dark:to-orange-900 flex flex-col items-center justify-center p-8">
                             <BookOpen className="h-24 w-24 text-amber-600/50 dark:text-amber-400/50 mb-4" />
                             <h3 className="text-xl font-bold text-center line-clamp-3 text-amber-900 dark:text-amber-100">
-                              {oeuvre.titre}
+                              {titre}
                             </h3>
                           </div>
                         )}
@@ -317,11 +335,11 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                         )}
                         
                         {/* Note */}
-                        {oeuvre.note_moyenne && oeuvre.note_moyenne > 0 && (
+                        {(oeuvre as any).note_moyenne && (oeuvre as any).note_moyenne > 0 && (
                           <div className={`absolute top-4 ${rtlClasses.start(4)}`}>
                             <Badge className="bg-yellow-500 text-black shadow-lg">
                               <Star className="h-3 w-3 mr-1 fill-current" />
-                              {oeuvre.note_moyenne.toFixed(1)}
+                              {(oeuvre as any).note_moyenne.toFixed(1)}
                             </Badge>
                           </div>
                         )}
@@ -329,7 +347,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                         {/* Infos en bas de couverture */}
                         <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
                           <h2 className="text-2xl font-bold font-serif mb-1 line-clamp-2 drop-shadow-lg">
-                            {oeuvre.titre}
+                            {titre}
                           </h2>
                           {mainContributors.length > 0 && (
                             <p className="text-white/90 font-medium drop-shadow">
@@ -371,7 +389,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                     style={{ 
                       backfaceVisibility: 'hidden',
                       WebkitBackfaceVisibility: 'hidden',
-                      transform: `rotateY(${rtlClasses.direction === 'rtl' ? '-180deg' : '180deg'})`
+                      transform: `rotateY(${direction === 'rtl' ? '-180deg' : '180deg'})`
                     }}
                   >
                     <div className="relative w-full h-full group">
@@ -383,12 +401,12 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                           "dark:from-amber-900 dark:via-amber-800 dark:to-amber-700"
                         )}
                         style={{
-                          [rtlClasses.direction === 'rtl' ? 'left' : 'right']: 0,
-                          transform: `translateX(${rtlClasses.direction === 'rtl' ? '-100%' : '100%'})`,
-                          boxShadow: rtlClasses.direction === 'rtl' 
+                          [direction === 'rtl' ? 'left' : 'right']: 0,
+                          transform: `translateX(${direction === 'rtl' ? '-100%' : '100%'})`,
+                          boxShadow: direction === 'rtl' 
                             ? 'inset 3px 0 8px rgba(0,0,0,0.15)' 
                             : 'inset -3px 0 8px rgba(0,0,0,0.15)',
-                          borderRadius: rtlClasses.direction === 'rtl' ? '4px 0 0 4px' : '0 4px 4px 0'
+                          borderRadius: direction === 'rtl' ? '4px 0 0 4px' : '0 4px 4px 0'
                         }}
                       >
                         {/* Lignes de pages */}
@@ -409,7 +427,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                       <div className={cn(
                         "relative w-full h-full overflow-hidden shadow-2xl",
                         medias[1] ? '' : "bg-gradient-to-br from-amber-800 via-amber-900 to-amber-950 dark:from-amber-900 dark:via-amber-950 dark:to-black",
-                        rtlClasses.direction === 'rtl' ? 'rounded-r-lg border-l-4' : 'rounded-l-lg border-r-4',
+                        direction === 'rtl' ? 'rounded-r-lg border-l-4' : 'rounded-l-lg border-r-4',
                         "border-amber-600/30"
                       )}>
                         {/* Si 2e image existe → l'afficher comme dos */}
@@ -445,7 +463,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
                           {/* Titre */}
                           <h3 className="text-xl font-bold font-serif mb-3 text-amber-100">
-                            {oeuvre.titre}
+                            {titre}
                           </h3>
 
                           {/* Citation / Description */}
@@ -555,15 +573,15 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                   {oeuvre.Livre?.Genre && (
                     <Badge variant="secondary">{oeuvre.Livre.Genre.nom}</Badge>
                   )}
-                  {oeuvre.note_moyenne && oeuvre.note_moyenne > 0 && (
+                  {(oeuvre as any).note_moyenne && (oeuvre as any).note_moyenne > 0 && (
                     <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
                       <Star className="h-3 w-3 mr-1 fill-current" />
-                      {oeuvre.note_moyenne.toFixed(1)}
+                      {(oeuvre as any).note_moyenne.toFixed(1)}
                     </Badge>
                   )}
                 </div>
 
-                <h1 className="text-4xl lg:text-5xl font-bold font-serif mb-4">{typeof oeuvre.titre === 'string' ? oeuvre.titre : (oeuvre.titre as any)?.fr || ''}</h1>
+                <h1 className="text-4xl lg:text-5xl font-bold font-serif mb-4">{titre}</h1>
                 
                 {mainContributors.length > 0 && (
                   <div className="space-y-2">
@@ -605,7 +623,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                   <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                       <BookOpen className="h-5 w-5 text-primary" />
-                      {t('works.excerpt.title', 'Extrait de')} "{typeof oeuvre.titre === 'string' ? oeuvre.titre : (oeuvre.titre as any)?.fr || ''}"
+                      {t('works.excerpt.title', 'Extrait de')} "{titre}"
                     </DialogTitle>
                   </DialogHeader>
                   <div className="mt-4">
@@ -635,7 +653,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                     {mainImage ? (
                       <img 
                         src={mainImage} 
-                        alt={oeuvre.titre}
+                        alt={titre}
                         className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl"
                       />
                     ) : (
@@ -646,7 +664,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                     )}
                   </div>
                   <div className="absolute bottom-4 left-0 right-0 text-center">
-                    <p className="text-white/80 font-medium text-lg">{oeuvre.titre}</p>
+                    <p className="text-white/80 font-medium text-lg">{titre}</p>
                     {mainContributors.length > 0 && (
                       <p className="text-white/60 text-sm">
                         {mainContributors[0].prenom} {mainContributors[0].nom}
@@ -665,7 +683,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                       {t('works.synopsis', 'Synopsis')}
                     </h3>
                     <p className="leading-relaxed text-muted-foreground">
-                      {oeuvre.description}
+                      {description}
                     </p>
                   </CardContent>
                 </Card>
@@ -717,7 +735,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   // ═══════════════════════════════════════════════════════════════════════════
   // HERO POUR FILM - AVEC AFFICHE FLIP 3D
   // ═══════════════════════════════════════════════════════════════════════════
-  if (typeOeuvre === 'Film') {
+  if (typeId === 2) { // Film
     return (
       <div className="relative bg-gradient-to-br from-slate-900/50 via-background to-purple-950/30 dark:from-slate-950 dark:via-background dark:to-purple-950/20 min-h-[500px]">
         <div className="container max-w-7xl mx-auto px-4 py-8">
@@ -747,7 +765,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                   style={{
                     transformStyle: 'preserve-3d',
                     transform: isFlipped
-                      ? `rotateY(${rtlClasses.direction === 'rtl' ? '-180deg' : '180deg'})`
+                      ? `rotateY(${direction === 'rtl' ? '-180deg' : '180deg'})`
                       : 'rotateY(0deg)',
                   }}
                   onClick={() => setIsFlipped(!isFlipped)}
@@ -772,14 +790,14 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                         {mainImage ? (
                           <img
                             src={mainImage}
-                            alt={oeuvre.titre}
+                            alt={titre}
                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                           />
                         ) : (
                           <div className="w-full h-full bg-gradient-to-br from-purple-900 to-slate-900 flex flex-col items-center justify-center p-8">
                             <Film className="h-24 w-24 text-purple-400/50 mb-4" />
                             <h3 className="text-xl font-bold text-center line-clamp-3 text-purple-100">
-                              {oeuvre.titre}
+                              {titre}
                             </h3>
                           </div>
                         )}
@@ -788,11 +806,11 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/10" />
 
                         {/* Note */}
-                        {oeuvre.note_moyenne && oeuvre.note_moyenne > 0 && (
+                        {(oeuvre as any).note_moyenne && (oeuvre as any).note_moyenne > 0 && (
                           <div className={`absolute top-4 ${rtlClasses.start(4)}`}>
                             <Badge className="bg-yellow-500 text-black shadow-lg">
                               <Star className="h-3 w-3 mr-1 fill-current" />
-                              {oeuvre.note_moyenne.toFixed(1)}
+                              {(oeuvre as any).note_moyenne.toFixed(1)}
                             </Badge>
                           </div>
                         )}
@@ -810,7 +828,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                         {/* Infos en bas d'affiche */}
                         <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
                           <h2 className="text-2xl font-bold mb-1 line-clamp-2 drop-shadow-lg">
-                            {oeuvre.titre}
+                            {titre}
                           </h2>
                           {mainContributors.length > 0 && (
                             <p className="text-white/90 font-medium drop-shadow">
@@ -848,7 +866,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                     style={{
                       backfaceVisibility: 'hidden',
                       WebkitBackfaceVisibility: 'hidden',
-                      transform: `rotateY(${rtlClasses.direction === 'rtl' ? '-180deg' : '180deg'})`
+                      transform: `rotateY(${direction === 'rtl' ? '-180deg' : '180deg'})`
                     }}
                   >
                     <div className="relative w-full h-full group">
@@ -885,7 +903,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                           </div>
 
                           <h3 className="text-xl font-bold mb-3 text-purple-100">
-                            {oeuvre.titre}
+                            {titre}
                           </h3>
 
                           {/* Synopsis */}
@@ -990,15 +1008,15 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                       {oeuvre.Film.duree_minutes} min
                     </Badge>
                   )}
-                  {oeuvre.note_moyenne && oeuvre.note_moyenne > 0 && (
+                  {(oeuvre as any).note_moyenne && (oeuvre as any).note_moyenne > 0 && (
                     <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
                       <Star className="h-3 w-3 mr-1 fill-current" />
-                      {oeuvre.note_moyenne.toFixed(1)}
+                      {(oeuvre as any).note_moyenne.toFixed(1)}
                     </Badge>
                   )}
                 </div>
 
-                <h1 className="text-4xl lg:text-5xl font-bold mb-4">{typeof oeuvre.titre === 'string' ? oeuvre.titre : (oeuvre.titre as any)?.fr || ''}</h1>
+                <h1 className="text-4xl lg:text-5xl font-bold mb-4">{titre}</h1>
 
                 {mainContributors.length > 0 && (
                   <div className="space-y-2">
@@ -1048,7 +1066,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                     {mainImage ? (
                       <img
                         src={mainImage}
-                        alt={oeuvre.titre}
+                        alt={titre}
                         className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl"
                       />
                     ) : (
@@ -1074,7 +1092,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                     <DialogHeader className="mb-4">
                       <DialogTitle className="text-white flex items-center gap-2">
                         <Film className="h-5 w-5" />
-                        {typeof oeuvre.titre === 'string' ? oeuvre.titre : (oeuvre.titre as any)?.fr || ''}
+                        {titre}
                       </DialogTitle>
                     </DialogHeader>
                     {playableMedia && videoMedia ? (
@@ -1101,7 +1119,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                       {t('works.synopsis', 'Synopsis')}
                     </h3>
                     <p className="leading-relaxed text-muted-foreground">
-                      {oeuvre.description}
+                      {description}
                     </p>
                   </CardContent>
                 </Card>
@@ -1153,7 +1171,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   // ═══════════════════════════════════════════════════════════════════════════
   // HERO POUR MUSIQUE - AVEC POCHETTE FLIP 3D VINYLE
   // ═══════════════════════════════════════════════════════════════════════════
-  if (typeOeuvre === 'Musique' || typeOeuvre === 'AlbumMusical' || typeOeuvre === 'Album Musical') {
+  if (typeId === 3) { // Album Musical
     return (
       <div className="relative bg-gradient-to-br from-emerald-50/50 via-background to-teal-50/30 dark:from-emerald-950/20 dark:via-background dark:to-teal-950/10 min-h-[500px]">
         <div className="container max-w-7xl mx-auto px-4 py-8">
@@ -1183,7 +1201,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                   style={{
                     transformStyle: 'preserve-3d',
                     transform: isFlipped
-                      ? `rotateY(${rtlClasses.direction === 'rtl' ? '-180deg' : '180deg'})`
+                      ? `rotateY(${direction === 'rtl' ? '-180deg' : '180deg'})`
                       : 'rotateY(0deg)',
                   }}
                   onClick={() => setIsFlipped(!isFlipped)}
@@ -1211,14 +1229,14 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                         {mainImage ? (
                           <img
                             src={mainImage}
-                            alt={oeuvre.titre}
+                            alt={titre}
                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                           />
                         ) : (
                           <div className="w-full h-full bg-gradient-to-br from-emerald-800 to-teal-900 flex flex-col items-center justify-center p-8">
                             <Music className="h-24 w-24 text-emerald-400/50 mb-4" />
                             <h3 className="text-xl font-bold text-center line-clamp-3 text-emerald-100">
-                              {oeuvre.titre}
+                              {titre}
                             </h3>
                           </div>
                         )}
@@ -1227,11 +1245,11 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
                         {/* Note */}
-                        {oeuvre.note_moyenne && oeuvre.note_moyenne > 0 && (
+                        {(oeuvre as any).note_moyenne && (oeuvre as any).note_moyenne > 0 && (
                           <div className={`absolute top-4 ${rtlClasses.start(4)}`}>
                             <Badge className="bg-yellow-500 text-black shadow-lg">
                               <Star className="h-3 w-3 mr-1 fill-current" />
-                              {oeuvre.note_moyenne.toFixed(1)}
+                              {(oeuvre as any).note_moyenne.toFixed(1)}
                             </Badge>
                           </div>
                         )}
@@ -1248,7 +1266,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                         {/* Infos en bas de pochette */}
                         <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
                           <h2 className="text-2xl font-bold mb-1 line-clamp-2 drop-shadow-lg">
-                            {oeuvre.titre}
+                            {titre}
                           </h2>
                           {mainContributors.length > 0 && (
                             <p className="text-white/90 font-medium drop-shadow">
@@ -1286,7 +1304,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                     style={{
                       backfaceVisibility: 'hidden',
                       WebkitBackfaceVisibility: 'hidden',
-                      transform: `rotateY(${rtlClasses.direction === 'rtl' ? '-180deg' : '180deg'})`
+                      transform: `rotateY(${direction === 'rtl' ? '-180deg' : '180deg'})`
                     }}
                   >
                     <div className="relative w-full h-full group">
@@ -1318,7 +1336,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                           </div>
 
                           <h3 className="text-xl font-bold mb-3 text-emerald-100">
-                            {oeuvre.titre}
+                            {titre}
                           </h3>
 
                           {/* Description */}
@@ -1417,15 +1435,15 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                   {oeuvre.AlbumMusical?.Genre && (
                     <Badge variant="secondary">{oeuvre.AlbumMusical.Genre.nom}</Badge>
                   )}
-                  {oeuvre.note_moyenne && oeuvre.note_moyenne > 0 && (
+                  {(oeuvre as any).note_moyenne && (oeuvre as any).note_moyenne > 0 && (
                     <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
                       <Star className="h-3 w-3 mr-1 fill-current" />
-                      {oeuvre.note_moyenne.toFixed(1)}
+                      {(oeuvre as any).note_moyenne.toFixed(1)}
                     </Badge>
                   )}
                 </div>
 
-                <h1 className="text-4xl lg:text-5xl font-bold mb-4">{typeof oeuvre.titre === 'string' ? oeuvre.titre : (oeuvre.titre as any)?.fr || ''}</h1>
+                <h1 className="text-4xl lg:text-5xl font-bold mb-4">{titre}</h1>
 
                 {mainContributors.length > 0 && (
                   <div className="space-y-2">
@@ -1475,7 +1493,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                     {mainImage ? (
                       <img
                         src={mainImage}
-                        alt={oeuvre.titre}
+                        alt={titre}
                         className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl"
                       />
                     ) : (
@@ -1501,13 +1519,13 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                     <DialogHeader className="mb-6">
                       <DialogTitle className="text-white flex items-center gap-2">
                         <Headphones className="h-5 w-5" />
-                        {typeof oeuvre.titre === 'string' ? oeuvre.titre : (oeuvre.titre as any)?.fr || ''}
+                        {titre}
                       </DialogTitle>
                     </DialogHeader>
                     <div className="flex flex-col items-center">
                       <div className="w-48 h-48 rounded-lg overflow-hidden mb-6 shadow-xl">
                         {mainImage ? (
-                          <img src={mainImage} alt={oeuvre.titre} className="w-full h-full object-cover" />
+                          <img src={mainImage} alt={titre} className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full bg-gradient-to-br from-emerald-800 to-teal-900 flex items-center justify-center">
                             <Music className="h-16 w-16 text-emerald-400/50" />
@@ -1533,7 +1551,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                       {t('works.description', 'Description')}
                     </h3>
                     <p className="leading-relaxed text-muted-foreground">
-                      {oeuvre.description}
+                      {description}
                     </p>
                   </CardContent>
                 </Card>
@@ -1585,8 +1603,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   // ═══════════════════════════════════════════════════════════════════════════
   // HERO POUR ARTICLE SCIENTIFIQUE
   // ═══════════════════════════════════════════════════════════════════════════
-  if (typeOeuvre === 'Article Scientifique' || typeOeuvre === 'Article') {
-    const isScientific = typeOeuvre === 'Article Scientifique';
+  if (typeId === 4 || typeId === 5) { // Article / Article Scientifique
+    const isScientific = typeId === 5;
     const articleSci = oeuvre.ArticleScientifique;
     const article = oeuvre.Article;
 
@@ -1652,7 +1670,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
             {/* Titre — style académique */}
             <h1 className="text-3xl lg:text-4xl xl:text-5xl font-bold font-serif leading-tight text-foreground">
-              {typeof oeuvre.titre === 'string' ? oeuvre.titre : (oeuvre.titre as any)?.fr || ''}
+              {titre}
             </h1>
 
             {/* Auteurs */}
@@ -1802,14 +1820,14 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
           <>
             <img 
               src={mainImage} 
-              alt={oeuvre.titre}
+              alt={titre}
               className="w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
           </>
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
-            <OeuvreTypeIcon type={typeOeuvre} />
+            <OeuvreTypeIcon typeId={typeId} />
           </div>
         )}
         
@@ -1827,7 +1845,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             <div className="space-y-4">
               <div className={`flex items-center gap-3 ${rtlClasses.flexRow}`}>
                 <Badge className="bg-primary/90 backdrop-blur-sm text-primary-foreground">
-                  <OeuvreTypeIcon type={typeOeuvre} />
+                  <OeuvreTypeIcon typeId={typeId} />
                   <span className={rtlClasses.marginStart(2)}>{typeOeuvre}</span>
                 </Badge>
                 {oeuvre.annee_creation && (
@@ -1837,7 +1855,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                 )}
               </div>
               <h1 className="text-3xl lg:text-5xl font-bold">
-                {oeuvre.titre}
+                {titre}
               </h1>
               {mainContributors.length > 0 && (
                 <div className={`flex items-center gap-2 ${rtlClasses.flexRow}`}>

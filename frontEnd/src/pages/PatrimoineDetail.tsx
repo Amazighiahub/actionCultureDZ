@@ -167,6 +167,7 @@ const PatrimoineDetail = () => {
 
   // Charger les détails du site
   useEffect(() => {
+    window.scrollTo(0, 0);
     const loadSiteDetail = async () => {
       if (!id) return;
       setLoading(true);

@@ -45,6 +45,11 @@ const EventDetailsPage: React.FC = () => {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('info');
 
+  // Scroll to top when navigating to a different event
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [id]);
+
   // Hook pour charger les données
   const {
     event,
