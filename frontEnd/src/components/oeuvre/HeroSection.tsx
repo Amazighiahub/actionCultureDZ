@@ -308,15 +308,11 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                       {/* Couverture principale */}
                       <div className="relative w-full h-full rounded-r-lg overflow-hidden shadow-2xl border-l-4 border-amber-700/30 dark:border-amber-500/30">
                         {mainImage ? (
-                          <>
-                            <img
-                              src={mainImage}
-                              alt={titre}
-                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                            />
-                            {/* Gradient subtil en bas pour contraste */}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent pointer-events-none" />
-                          </>
+                          <img
+                            src={mainImage}
+                            alt={titre}
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
                         ) : (
                           <div className="w-full h-full bg-gradient-to-br from-amber-800 via-amber-900 to-amber-950 dark:from-amber-900 dark:to-black flex flex-col items-center justify-center p-6 text-center">
                             <BookOpen className="h-12 w-12 text-amber-400/50 mb-4" />
@@ -582,10 +578,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                 {mainContributors.length > 0 && (
                   <div className="space-y-2">
                     {mainContributors.map((contributeur, index) => (
-                      <p key={contributeur.id_contributeur || contributeur.id || `contrib-${contributeur.nom}-${index}`} className="text-xl text-muted-foreground">
-                        {gt(contributeur.TypeUser?.nom_type || contributeur.type_user) && (
-                          <span className="text-muted-foreground">{gt(contributeur.TypeUser?.nom_type || contributeur.type_user)} : </span>
-                        )}
+                      <p key={contributeur.id_contributeur || contributeur.id || `contrib-${contributeur.nom}-${index}`} className="text-xl">
                         <span className="text-foreground font-medium">
                           {gt(contributeur.prenom)} {gt(contributeur.nom)}
                         </span>
