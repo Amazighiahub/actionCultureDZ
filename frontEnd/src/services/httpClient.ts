@@ -474,10 +474,19 @@ class HttpClient {
     localStorage.removeItem(AUTH_CONFIG.tokenExpiryKey);
     localStorage.removeItem('user');
 
-    // Ne PAS faire de hard redirect ici — laisser React (ProtectedRoute)
-    // gérer la redirection proprement via le PermissionsProvider.
-    // Un hard redirect (window.location.href) casse le flux React et crée
-    // des boucles de redirection.
+    // Notifier l'utilisateur et rediriger vers login
+    this.showToast({
+      title: i18next.t('auth.sessionExpired', 'Session expirée'),
+      description: i18next.t('auth.pleaseReconnect', 'Veuillez vous reconnecter'),
+      variant: 'destructive',
+    });
+
+    // Rediriger vers login seulement si pas déjà sur /auth
+    if (!window.location.pathname.startsWith('/auth')) {
+      setTimeout(() => {
+        window.location.href = '/auth';
+      }, 500);
+    }
   }
 
   private showToast(options: { title: string; description?: string; variant?: 'default' | 'destructive' | 'warning' }) {
