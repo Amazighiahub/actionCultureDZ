@@ -107,10 +107,10 @@ export interface MediaUploadResult {
 // Type for an article block as saved to the backend
 export interface ArticleBlockToSave {
   type_block: string;
-  contenu: string;
-  contenu_json: unknown;
-  metadata: Record<string, unknown>;
-  id_media: number | null;
+  contenu?: string;
+  contenu_json?: Record<string, unknown> | unknown[] | null;
+  metadata?: Record<string, string | number | boolean | null>;
+  id_media?: number | null;
   ordre: number;
   visible: boolean;
   id_article?: number;
