@@ -319,7 +319,9 @@ const OeuvreDetailPage: React.FC = () => {
   const allContributeurs = contributeurs || [];
 
   const seoKeywords = [
-    getTranslation(oeuvre.titre, lang), oeuvre.TypeOeuvre?.nom_type, (oeuvre as OeuvreWithExtras).Genre?.nom,
+    getTranslation(oeuvre.titre, lang),
+    getTranslation(oeuvre.TypeOeuvre?.nom_type, lang),
+    getTranslation((oeuvre as OeuvreWithExtras).Genre?.nom, lang),
     'culture algérienne', 'littérature algérienne', 'œuvre algérienne'
   ].filter(Boolean) as string[];
 
