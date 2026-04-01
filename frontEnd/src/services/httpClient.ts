@@ -332,7 +332,8 @@ class HttpClient {
             errorMessage = typeof data.message === 'string' ? data.message : '';
           }
 
-          if (errorMessage.includes('token') || errorMessage.includes('expired')) {
+          const errorLower = errorMessage.toLowerCase();
+          if (errorLower.includes('token') || errorLower.includes('expired') || errorLower.includes('authentification')) {
             try {
               await this.refreshToken();
               return this.axiosInstance(originalRequest);

@@ -867,7 +867,7 @@ class UserController extends BaseController {
     const isProduction = process.env.NODE_ENV === 'production';
 
     // Aligner maxAge cookie avec l'expiration JWT (défaut 15min)
-    const jwtExp = process.env.JWT_EXPIRATION || '15m';
+    const jwtExp = process.env.JWT_EXPIRATION || '1h';
     const maxAgeMs = this._parseExpToMs(jwtExp);
 
     res.cookie('access_token', token, {
@@ -897,7 +897,7 @@ class UserController extends BaseController {
    * @private
    */
   _getTokenExpirySeconds() {
-    const jwtExp = process.env.JWT_EXPIRATION || '15m';
+    const jwtExp = process.env.JWT_EXPIRATION || '1h';
     return Math.floor(this._parseExpToMs(jwtExp) / 1000);
   }
 

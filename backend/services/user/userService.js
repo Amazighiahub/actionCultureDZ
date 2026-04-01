@@ -27,7 +27,7 @@ class UserService extends BaseService {
       throw new Error('JWT_SECRET must be configured. Set it in your .env file.');
     }
     this.jwtSecret = process.env.JWT_SECRET;
-    this.jwtExpiration = process.env.JWT_EXPIRATION || '15m';
+    this.jwtExpiration = process.env.JWT_EXPIRATION || '1h';
     this.bcryptRounds = parseInt(process.env.BCRYPT_ROUNDS) || (process.env.NODE_ENV === 'production' ? 14 : 12);
   }
 
