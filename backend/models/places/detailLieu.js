@@ -45,6 +45,43 @@ module.exports = (sequelize) => {
       defaultValue: {},
       comment: 'Références historiques en plusieurs langues'
     },
+    // ⚡ NOUVEAUX CHAMPS CULTURELS
+    gastronomie: {
+      type: DataTypes.JSON,
+      allowNull: true,
+      defaultValue: null,
+      comment: 'Gastronomie locale en plusieurs langues'
+    },
+    traditions: {
+      type: DataTypes.JSON,
+      allowNull: true,
+      defaultValue: null,
+      comment: 'Traditions et coutumes locales en plusieurs langues'
+    },
+    artisanat_local: {
+      type: DataTypes.JSON,
+      allowNull: true,
+      defaultValue: null,
+      comment: 'Artisanat et savoir-faire locaux en plusieurs langues'
+    },
+    personnalites: {
+      type: DataTypes.JSON,
+      allowNull: true,
+      defaultValue: null,
+      comment: 'Personnalités historiques et figures locales en plusieurs langues'
+    },
+    architecture: {
+      type: DataTypes.JSON,
+      allowNull: true,
+      defaultValue: null,
+      comment: 'Style architectural et patrimoine bâti en plusieurs langues'
+    },
+    infos_pratiques: {
+      type: DataTypes.JSON,
+      allowNull: true,
+      defaultValue: null,
+      comment: 'Informations pratiques (accès, tarifs, conseils) en plusieurs langues'
+    },
     noteMoyenne: {
       type: DataTypes.FLOAT,
       validate: {
