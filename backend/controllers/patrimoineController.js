@@ -176,6 +176,62 @@ class PatrimoineController extends BaseController {
   }
 
   // ============================================================================
+  // ENRICHISSEMENT COLLABORATIF
+  // ============================================================================
+
+  async enrichDetail(req, res) {
+    try {
+      const lieuId = parseInt(req.params.id);
+      const userId = req.user?.id_user;
+      const allowedFields = ['histoire', 'gastronomie', 'traditions', 'artisanat_local', 'personnalites', 'architecture', 'infos_pratiques', 'referencesHistoriques', 'description', 'horaires'];
+
+      // Filtrer seulement les champs autorisés
+      const updates = {};
+      for (const field of allowedFields) {
+        if (req.body[field] !== undefined) {
+          updates[field] = req.body[field];
+        }
+      }
+
+      if (Object.keys(updates).length === 0) {
+        return res.status(400).json({ success: false, error: 'Aucun champ valide à mettre à jour' });
+      }
+
+      // Trouver ou créer le DetailLieu
+      const models = container.patrimoineService.models;
+      let detail = await models.DetailLieu.findOne({ where: { id_lieu: lieuId } });
+
+      if (!detail) {
+        detail = await models.DetailLieu.create({ id_lieu: lieuId, ...updates, id_dernier_contributeur: userId, date_derniere_contribution: new Date(), nb_contributions: 1 });
+      } else {
+        await detail.update({ ...updates, id_dernier_contributeur: userId, date_derniere_contribution: new Date(), nb_contributions: (detail.nb_contributions || 0) + 1 });
+      }
+
+      // Notifier le créateur du lieu
+      try {
+        const lieu = await models.Lieu.findByPk(lieuId, { attributes: ['id_createur', 'nom'] });
+        if (lieu?.id_createur && lieu.id_createur !== userId && models.Notification) {
+          const nomLieu = typeof lieu.nom === 'object' ? (lieu.nom.fr || lieu.nom.ar || '') : lieu.nom;
+          await models.Notification.create({
+            id_user: lieu.id_createur,
+            type_notification: 'autre',
+            titre: 'Nouvelle contribution',
+            message: `Un utilisateur a enrichi la section de "${nomLieu}"`,
+            url_action: `/patrimoine/${lieuId}`,
+            lu: false,
+          });
+        }
+      } catch (notifErr) {
+        console.error('Erreur notification contribution:', notifErr.message);
+      }
+
+      res.json({ success: true, data: detail, message: 'Contribution enregistrée' });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  // ============================================================================
   // ROUTES MOBILE
   // ============================================================================
 

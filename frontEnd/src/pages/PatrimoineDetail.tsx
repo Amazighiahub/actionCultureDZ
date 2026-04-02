@@ -22,6 +22,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 // VisitePlanner chargé en lazy (inclut leaflet ~40KB, rendu conditionnel)
 const VisitePlanner = React.lazy(() => import('@/components/patrimoine/VisitePlanner'));
 import ServicesProximite from '@/components/shared/ServicesProximite';
+import SectionEnrichissable from '@/components/patrimoine/SectionEnrichissable';
 import SEOHead, { buildPatrimoineJsonLd, buildBreadcrumbJsonLd } from '@/components/SEOHead';
 
 // Type multilingue réutilisé dans l'interface du site
@@ -832,69 +833,14 @@ const PatrimoineDetail = () => {
             {/* SECTIONS CULTURELLES ENRICHISSABLES                        */}
             {/* ════════════════════════════════════════════════════════════ */}
             <div className="space-y-6 mt-8">
-              {/* Histoire */}
-              {site.DetailLieu?.histoire && translate(site.DetailLieu.histoire, lang) && (
-                <Card>
-                  <CardHeader><CardTitle className="flex items-center gap-2"><History className="h-5 w-5 text-primary" />{t('patrimoine.sections.histoire', 'Histoire')}</CardTitle></CardHeader>
-                  <CardContent><p className="leading-relaxed text-muted-foreground whitespace-pre-wrap">{translate(site.DetailLieu.histoire, lang)}</p></CardContent>
-                </Card>
-              )}
-
-              {/* Architecture */}
-              {site.DetailLieu?.architecture && translate(site.DetailLieu.architecture, lang) && (
-                <Card>
-                  <CardHeader><CardTitle className="flex items-center gap-2"><Building2 className="h-5 w-5 text-primary" />{t('patrimoine.sections.architecture', 'Architecture')}</CardTitle></CardHeader>
-                  <CardContent><p className="leading-relaxed text-muted-foreground whitespace-pre-wrap">{translate(site.DetailLieu.architecture, lang)}</p></CardContent>
-                </Card>
-              )}
-
-              {/* Traditions */}
-              {site.DetailLieu?.traditions && translate(site.DetailLieu.traditions, lang) && (
-                <Card>
-                  <CardHeader><CardTitle className="flex items-center gap-2">🎭 {t('patrimoine.sections.traditions', 'Traditions & Coutumes')}</CardTitle></CardHeader>
-                  <CardContent><p className="leading-relaxed text-muted-foreground whitespace-pre-wrap">{translate(site.DetailLieu.traditions, lang)}</p></CardContent>
-                </Card>
-              )}
-
-              {/* Gastronomie */}
-              {site.DetailLieu?.gastronomie && translate(site.DetailLieu.gastronomie, lang) && (
-                <Card>
-                  <CardHeader><CardTitle className="flex items-center gap-2"><Utensils className="h-5 w-5 text-primary" />{t('patrimoine.sections.gastronomie', 'Gastronomie locale')}</CardTitle></CardHeader>
-                  <CardContent><p className="leading-relaxed text-muted-foreground whitespace-pre-wrap">{translate(site.DetailLieu.gastronomie, lang)}</p></CardContent>
-                </Card>
-              )}
-
-              {/* Artisanat local */}
-              {site.DetailLieu?.artisanat_local && translate(site.DetailLieu.artisanat_local, lang) && (
-                <Card>
-                  <CardHeader><CardTitle className="flex items-center gap-2">🏺 {t('patrimoine.sections.artisanat', 'Artisanat local')}</CardTitle></CardHeader>
-                  <CardContent><p className="leading-relaxed text-muted-foreground whitespace-pre-wrap">{translate(site.DetailLieu.artisanat_local, lang)}</p></CardContent>
-                </Card>
-              )}
-
-              {/* Personnalités */}
-              {site.DetailLieu?.personnalites && translate(site.DetailLieu.personnalites, lang) && (
-                <Card>
-                  <CardHeader><CardTitle className="flex items-center gap-2">👤 {t('patrimoine.sections.personnalites', 'Personnalités')}</CardTitle></CardHeader>
-                  <CardContent><p className="leading-relaxed text-muted-foreground whitespace-pre-wrap">{translate(site.DetailLieu.personnalites, lang)}</p></CardContent>
-                </Card>
-              )}
-
-              {/* Infos pratiques détaillées */}
-              {site.DetailLieu?.infos_pratiques && translate(site.DetailLieu.infos_pratiques, lang) && (
-                <Card>
-                  <CardHeader><CardTitle className="flex items-center gap-2"><Info className="h-5 w-5 text-primary" />{t('patrimoine.sections.infosPratiques', 'Informations pratiques')}</CardTitle></CardHeader>
-                  <CardContent><p className="leading-relaxed text-muted-foreground whitespace-pre-wrap">{translate(site.DetailLieu.infos_pratiques, lang)}</p></CardContent>
-                </Card>
-              )}
-
-              {/* Références historiques */}
-              {site.DetailLieu?.referencesHistoriques && translate(site.DetailLieu.referencesHistoriques, lang) && (
-                <Card>
-                  <CardHeader><CardTitle className="flex items-center gap-2">📚 {t('patrimoine.sections.references', 'Références historiques')}</CardTitle></CardHeader>
-                  <CardContent><p className="leading-relaxed text-muted-foreground whitespace-pre-wrap">{translate(site.DetailLieu.referencesHistoriques, lang)}</p></CardContent>
-                </Card>
-              )}
+              <SectionEnrichissable icon={<History className="h-5 w-5 text-primary" />} title={t('patrimoine.sections.histoire', 'Histoire')} content={site.DetailLieu?.histoire} lang={lang} lieuId={site.id_lieu} fieldName="histoire" onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, histoire: val } } : prev)} />
+              <SectionEnrichissable icon={<Building2 className="h-5 w-5 text-primary" />} title={t('patrimoine.sections.architecture', 'Architecture')} content={site.DetailLieu?.architecture} lang={lang} lieuId={site.id_lieu} fieldName="architecture" onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, architecture: val } } : prev)} />
+              <SectionEnrichissable icon={<span className="text-xl">🎭</span>} title={t('patrimoine.sections.traditions', 'Traditions & Coutumes')} content={site.DetailLieu?.traditions} lang={lang} lieuId={site.id_lieu} fieldName="traditions" onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, traditions: val } } : prev)} />
+              <SectionEnrichissable icon={<Utensils className="h-5 w-5 text-primary" />} title={t('patrimoine.sections.gastronomie', 'Gastronomie locale')} content={site.DetailLieu?.gastronomie} lang={lang} lieuId={site.id_lieu} fieldName="gastronomie" onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, gastronomie: val } } : prev)} />
+              <SectionEnrichissable icon={<span className="text-xl">🏺</span>} title={t('patrimoine.sections.artisanat', 'Artisanat local')} content={site.DetailLieu?.artisanat_local} lang={lang} lieuId={site.id_lieu} fieldName="artisanat_local" onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, artisanat_local: val } } : prev)} />
+              <SectionEnrichissable icon={<span className="text-xl">👤</span>} title={t('patrimoine.sections.personnalites', 'Personnalités')} content={site.DetailLieu?.personnalites} lang={lang} lieuId={site.id_lieu} fieldName="personnalites" onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, personnalites: val } } : prev)} />
+              <SectionEnrichissable icon={<Info className="h-5 w-5 text-primary" />} title={t('patrimoine.sections.infosPratiques', 'Informations pratiques')} content={site.DetailLieu?.infos_pratiques} lang={lang} lieuId={site.id_lieu} fieldName="infos_pratiques" onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, infos_pratiques: val } } : prev)} />
+              <SectionEnrichissable icon={<span className="text-xl">📚</span>} title={t('patrimoine.sections.references', 'Références historiques')} content={site.DetailLieu?.referencesHistoriques} lang={lang} lieuId={site.id_lieu} fieldName="referencesHistoriques" onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, referencesHistoriques: val } } : prev)} />
             </div>
           </div>
 

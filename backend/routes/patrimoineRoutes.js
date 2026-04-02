@@ -51,19 +51,26 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
   router.delete('/:id/medias/:mediaId', authenticate, requireValidatedProfessional, validateId(), validateId('mediaId'), patrimoineController.wrap('deleteMedia'));
   router.put('/:id/horaires', authenticate, requireValidatedProfessional, validateId(), patrimoineController.wrap('updateHoraires'));
 
+  // Enrichir les détails culturels d'un site (contribution collaborative)
+  router.patch('/:id/detail', authenticate, validateId(),
+    validateStringLengths,
+    handleValidationErrors,
+    patrimoineController.wrap('enrichDetail'));
+
   // ============================================================================
   // ROUTES ADMIN
   // ============================================================================
 
   router.get('/admin/stats', authenticate, requireRole(['Admin']), patrimoineController.wrap('getStats'));
-  router.post('/', authenticate, requireRole(['Admin', 'Moderateur']),
+  // Création de site (admin, modérateur ET professionnels validés)
+  router.post('/', authenticate,
     createContentLimiter,
     validateStringLengths,
     validateGPS,
     [body('nom').notEmpty().withMessage('Le nom est requis')],
     handleValidationErrors,
     patrimoineController.wrap('create'));
-  router.put('/:id', authenticate, requireRole(['Admin', 'Moderateur']), validateId(),
+  router.put('/:id', authenticate, validateId(),
     validateStringLengths,
     validateGPS,
     patrimoineController.wrap('update'));
