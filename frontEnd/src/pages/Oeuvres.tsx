@@ -34,7 +34,7 @@ import SEOHead from '@/components/SEOHead';
 
 // Hook personnalisé
 import { useOeuvres } from '@/hooks/useOeuvres';
-import { useDebounce } from '@/hooks/useAdmin';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { getLocalizedText } from '@/utils/getLocalizedText';
 
 // Icônes par type
@@ -170,7 +170,7 @@ const Oeuvres: React.FC = () => {
   const [typeFilter, setTypeFilter] = useState('tous');
   const [sortBy, setSortBy] = useState('recent');
 
-  const debouncedSearch = useDebounce(searchQuery, 300);
+  const debouncedSearch = useDebouncedValue(searchQuery, 300);
 
   // Hook personnalisé
   const {

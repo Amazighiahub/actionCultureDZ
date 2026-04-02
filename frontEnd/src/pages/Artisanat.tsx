@@ -34,7 +34,7 @@ import SEOHead from '@/components/SEOHead';
 
 // Hook personnalisé
 import { useArtisanat } from '@/hooks/useArtisanat';
-import { useDebounce } from '@/hooks/useAdmin';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { getLocalizedText } from '@/utils/getLocalizedText';
 
 // Composant carte d'artisanat
@@ -165,7 +165,7 @@ const Artisanat: React.FC = () => {
 
   // États des filtres locaux
   const [searchQuery, setSearchQueryLocal] = useState('');
-  const debouncedSearch = useDebounce(searchQuery, 300);
+  const debouncedSearch = useDebouncedValue(searchQuery, 300);
 
   // Hook personnalisé
   const {

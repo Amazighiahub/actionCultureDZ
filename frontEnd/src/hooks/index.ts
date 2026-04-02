@@ -39,9 +39,7 @@ export {
   useAdminUsers,
   useAdminOeuvres,
   useAdminEvenements,
-  useAdminModeration,
-  // Alias pour compatibilité
-  useDebouncedValue as useDebounce
+  useAdminModeration
 } from './useAdmin';
 
 // Hook Socket.IO plus complet

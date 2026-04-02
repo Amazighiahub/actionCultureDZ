@@ -11,8 +11,6 @@ import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { httpClient } from '@/services/httpClient';
 import { API_ENDPOINTS } from '@/config/api';
 
-// Re-export pour compatibilité
-export { useDebouncedValue as useDebounce } from '@/hooks/useDebouncedValue';
 
 // ============================================================================
 // Types
