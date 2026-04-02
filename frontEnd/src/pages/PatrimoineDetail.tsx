@@ -76,7 +76,14 @@ interface SitePatrimoineDetail {
     horaires?: string | MultilingualField;
     histoire?: string | MultilingualField;
     referencesHistoriques?: string | MultilingualField;
+    gastronomie?: string | MultilingualField;
+    traditions?: string | MultilingualField;
+    artisanat_local?: string | MultilingualField;
+    personnalites?: string | MultilingualField;
+    architecture?: string | MultilingualField;
+    infos_pratiques?: string | MultilingualField;
     noteMoyenne?: number;
+    nb_contributions?: number;
   };
   medias?: Array<{ id: number; url: string; type: string; description?: string | MultilingualField }>;
   services?: Array<{ id: number; nom: string | MultilingualField; description?: string | MultilingualField; disponible: boolean }>;
@@ -152,6 +159,7 @@ const PatrimoineDetail = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [showVisitePlanner, setShowVisitePlanner] = useState(false);
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
 
   // Partager le site
   const handleShareSite = async () => {
@@ -188,6 +196,15 @@ const PatrimoineDetail = () => {
     };
     loadSiteDetail();
   }, [id]);
+
+  // Charger le QR code depuis l'API backend
+  useEffect(() => {
+    if (!site?.id_lieu) return;
+    fetch(`/api/patrimoine/${site.id_lieu}/qrcode`)
+      .then(r => r.json())
+      .then(d => { if (d.success && d.data?.qr_data_url) setQrDataUrl(d.data.qr_data_url); })
+      .catch(() => {});
+  }, [site?.id_lieu]);
 
   // Télécharger le QR Code
   const downloadQRCode = async () => {
@@ -264,7 +281,7 @@ const PatrimoineDetail = () => {
     <div className="min-h-screen bg-background">
       <SEOHead
         title={translate(site?.nom, lang)}
-        description={translate(site?.description, lang)?.substring(0, 160) || `Découvrez ${translate(site?.nom, lang)} — patrimoine culturel algérien`}
+        description={translate(site?.DetailLieu?.description, lang)?.substring(0, 160) || `Découvrez ${translate(site?.nom, lang)} — patrimoine culturel algérien`}
         image={getMainImage()}
         type="place"
         keywords={seoKeywords}
@@ -810,6 +827,75 @@ const PatrimoineDetail = () => {
             </Tabs>
               );
             })()}
+
+            {/* ════════════════════════════════════════════════════════════ */}
+            {/* SECTIONS CULTURELLES ENRICHISSABLES                        */}
+            {/* ════════════════════════════════════════════════════════════ */}
+            <div className="space-y-6 mt-8">
+              {/* Histoire */}
+              {site.DetailLieu?.histoire && translate(site.DetailLieu.histoire, lang) && (
+                <Card>
+                  <CardHeader><CardTitle className="flex items-center gap-2"><History className="h-5 w-5 text-primary" />{t('patrimoine.sections.histoire', 'Histoire')}</CardTitle></CardHeader>
+                  <CardContent><p className="leading-relaxed text-muted-foreground whitespace-pre-wrap">{translate(site.DetailLieu.histoire, lang)}</p></CardContent>
+                </Card>
+              )}
+
+              {/* Architecture */}
+              {site.DetailLieu?.architecture && translate(site.DetailLieu.architecture, lang) && (
+                <Card>
+                  <CardHeader><CardTitle className="flex items-center gap-2"><Building2 className="h-5 w-5 text-primary" />{t('patrimoine.sections.architecture', 'Architecture')}</CardTitle></CardHeader>
+                  <CardContent><p className="leading-relaxed text-muted-foreground whitespace-pre-wrap">{translate(site.DetailLieu.architecture, lang)}</p></CardContent>
+                </Card>
+              )}
+
+              {/* Traditions */}
+              {site.DetailLieu?.traditions && translate(site.DetailLieu.traditions, lang) && (
+                <Card>
+                  <CardHeader><CardTitle className="flex items-center gap-2">🎭 {t('patrimoine.sections.traditions', 'Traditions & Coutumes')}</CardTitle></CardHeader>
+                  <CardContent><p className="leading-relaxed text-muted-foreground whitespace-pre-wrap">{translate(site.DetailLieu.traditions, lang)}</p></CardContent>
+                </Card>
+              )}
+
+              {/* Gastronomie */}
+              {site.DetailLieu?.gastronomie && translate(site.DetailLieu.gastronomie, lang) && (
+                <Card>
+                  <CardHeader><CardTitle className="flex items-center gap-2"><Utensils className="h-5 w-5 text-primary" />{t('patrimoine.sections.gastronomie', 'Gastronomie locale')}</CardTitle></CardHeader>
+                  <CardContent><p className="leading-relaxed text-muted-foreground whitespace-pre-wrap">{translate(site.DetailLieu.gastronomie, lang)}</p></CardContent>
+                </Card>
+              )}
+
+              {/* Artisanat local */}
+              {site.DetailLieu?.artisanat_local && translate(site.DetailLieu.artisanat_local, lang) && (
+                <Card>
+                  <CardHeader><CardTitle className="flex items-center gap-2">🏺 {t('patrimoine.sections.artisanat', 'Artisanat local')}</CardTitle></CardHeader>
+                  <CardContent><p className="leading-relaxed text-muted-foreground whitespace-pre-wrap">{translate(site.DetailLieu.artisanat_local, lang)}</p></CardContent>
+                </Card>
+              )}
+
+              {/* Personnalités */}
+              {site.DetailLieu?.personnalites && translate(site.DetailLieu.personnalites, lang) && (
+                <Card>
+                  <CardHeader><CardTitle className="flex items-center gap-2">👤 {t('patrimoine.sections.personnalites', 'Personnalités')}</CardTitle></CardHeader>
+                  <CardContent><p className="leading-relaxed text-muted-foreground whitespace-pre-wrap">{translate(site.DetailLieu.personnalites, lang)}</p></CardContent>
+                </Card>
+              )}
+
+              {/* Infos pratiques détaillées */}
+              {site.DetailLieu?.infos_pratiques && translate(site.DetailLieu.infos_pratiques, lang) && (
+                <Card>
+                  <CardHeader><CardTitle className="flex items-center gap-2"><Info className="h-5 w-5 text-primary" />{t('patrimoine.sections.infosPratiques', 'Informations pratiques')}</CardTitle></CardHeader>
+                  <CardContent><p className="leading-relaxed text-muted-foreground whitespace-pre-wrap">{translate(site.DetailLieu.infos_pratiques, lang)}</p></CardContent>
+                </Card>
+              )}
+
+              {/* Références historiques */}
+              {site.DetailLieu?.referencesHistoriques && translate(site.DetailLieu.referencesHistoriques, lang) && (
+                <Card>
+                  <CardHeader><CardTitle className="flex items-center gap-2">📚 {t('patrimoine.sections.references', 'Références historiques')}</CardTitle></CardHeader>
+                  <CardContent><p className="leading-relaxed text-muted-foreground whitespace-pre-wrap">{translate(site.DetailLieu.referencesHistoriques, lang)}</p></CardContent>
+                </Card>
+              )}
+            </div>
           </div>
 
           {/* Sidebar */}
@@ -865,21 +951,15 @@ const PatrimoineDetail = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="text-center space-y-4">
-                {site.qrCodeGenerated ? (
+                {qrDataUrl ? (
                   <img
-                    src={site.qrCodeGenerated}
+                    src={qrDataUrl}
                     alt="QR Code"
-                    className="w-40 h-40 mx-auto border rounded-lg"
-                  />
-                ) : site.qrcodes && site.qrcodes[0]?.qr_image_url ? (
-                  <img
-                    src={site.qrcodes[0].qr_image_url}
-                    alt="QR Code"
-                    className="w-40 h-40 mx-auto border rounded-lg"
+                    className="w-40 h-40 mx-auto border rounded-lg bg-white p-2"
                   />
                 ) : (
                   <div className="w-40 h-40 mx-auto border rounded-lg bg-muted flex items-center justify-center">
-                    <QrCode className="h-16 w-16 text-muted-foreground" />
+                    <QrCode className="h-16 w-16 text-muted-foreground animate-pulse" />
                   </div>
                 )}
                 <p className="text-sm text-muted-foreground">
