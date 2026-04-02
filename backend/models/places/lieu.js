@@ -74,6 +74,21 @@ module.exports = (sequelize) => {
         min: -180,
         max: 180
       }
+    },
+    id_createur: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'user',
+        key: 'id_user'
+      },
+      comment: 'Utilisateur qui a créé ce lieu (pour notifications de contributions)'
+    },
+    statut: {
+      type: DataTypes.ENUM('brouillon', 'publie', 'archive'),
+      allowNull: false,
+      defaultValue: 'publie',
+      comment: 'Statut de publication du lieu'
     }
   }, {
     tableName: 'lieu',
@@ -104,6 +119,7 @@ module.exports = (sequelize) => {
   Lieu.associate = (models) => {
     Lieu.belongsTo(models.Commune, { foreignKey: 'communeId', onDelete: 'RESTRICT' });
     Lieu.belongsTo(models.Localite, { foreignKey: 'localiteId', onDelete: 'SET NULL' });
+    Lieu.belongsTo(models.User, { as: 'Createur', foreignKey: 'id_createur', onDelete: 'SET NULL' });
     
     Lieu.hasOne(models.DetailLieu, { foreignKey: 'id_lieu', onDelete: 'CASCADE' });
     Lieu.hasMany(models.Service, { foreignKey: 'id_lieu', onDelete: 'CASCADE' });

@@ -88,6 +88,26 @@ module.exports = (sequelize) => {
         min: 0,
         max: 5
       }
+    },
+    // Suivi des contributions
+    id_dernier_contributeur: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'user',
+        key: 'id_user'
+      },
+      comment: 'Dernier utilisateur qui a enrichi ce contenu'
+    },
+    date_derniere_contribution: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
+    nb_contributions: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+      comment: 'Nombre total de contributions sur ce lieu'
     }
   }, {
     tableName: 'detail_lieux',
@@ -97,6 +117,7 @@ module.exports = (sequelize) => {
   // Associations
   DetailLieu.associate = (models) => {
     DetailLieu.belongsTo(models.Lieu, { foreignKey: 'id_lieu', onDelete: 'CASCADE' });
+    DetailLieu.belongsTo(models.User, { as: 'DernierContributeur', foreignKey: 'id_dernier_contributeur', onDelete: 'SET NULL' });
     DetailLieu.hasMany(models.Monument, { foreignKey: 'id_detail_lieu', onDelete: 'CASCADE' });
     DetailLieu.hasMany(models.Vestige, { foreignKey: 'id_detail_lieu', onDelete: 'CASCADE' });
   };
