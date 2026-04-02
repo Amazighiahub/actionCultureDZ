@@ -55,13 +55,13 @@ const AjouterOeuvre = React.lazy(() => import('./pages/ajouterOeuvre'));
 const AjouterEvenement = React.lazy(() => import('./pages/AjouterEvenement'));
 const AjouterService = React.lazy(() => import('./pages/AjouterService'));
 const AjouterServicePro = React.lazy(() => import('./pages/AjouterServicePro'));
-const AjouterPatrimoinePro = React.lazy(() => import('./pages/AjouterPatrimoinePro'));
+const AjouterPatrimoineRapide = React.lazy(() => import('./pages/AjouterPatrimoineRapide'));
 const AjouterArtisanat = React.lazy(() => import('./pages/AjouterArtisanat'));
 const AjouterOrganisation = React.lazy(() => import('./pages/AjouterOrganisation'));
 const EditArticle = React.lazy(() => import('./pages/articles/edit/EditArticle'));
 
 // Pages admin
-const AjouterPatrimoine = React.lazy(() => import('./pages/admin/AjouterPatrimoine'));
+// AjouterPatrimoine admin remplacé par AjouterPatrimoineRapide (même formulaire pour tous)
 
 // Pages Programme
 const CreateProgrammePage = React.lazy(() => import('./pages/CreateProgrammePage'));
@@ -293,7 +293,7 @@ const App = () => (
               path="/ajouter-patrimoine"
               element={
                 <ProfessionalRoute>
-                  <AjouterPatrimoinePro />
+                  <AjouterPatrimoineRapide />
                 </ProfessionalRoute>
               }
             />
@@ -345,7 +345,7 @@ const App = () => (
               path="/modifier-patrimoine/:id"
               element={
                 <ProfessionalRoute>
-                  <AjouterPatrimoinePro />
+                  <AjouterPatrimoineRapide />
                 </ProfessionalRoute>
               }
             />
@@ -419,7 +419,7 @@ const App = () => (
               path="/admin/patrimoine/ajouter"
               element={
                 <AdminRoute>
-                  <AjouterPatrimoine />
+                  <AjouterPatrimoineRapide />
                 </AdminRoute>
               }
             />
@@ -427,7 +427,7 @@ const App = () => (
               path="/admin/patrimoine/modifier/:id"
               element={
                 <AdminRoute>
-                  <AjouterPatrimoine />
+                  <AjouterPatrimoineRapide />
                 </AdminRoute>
               }
             />
