@@ -5,6 +5,7 @@
 
 const BaseController = require('./baseController');
 const container = require('../services/serviceContainer');
+const QRCode = require('qrcode');
 
 class PatrimoineController extends BaseController {
   get patrimoineService() {
@@ -142,10 +143,36 @@ class PatrimoineController extends BaseController {
   }
 
   async getQRCode(req, res) {
-    const siteId = req.params.id;
-    const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-    const qrUrl = `${baseUrl}/patrimoine/${siteId}`;
-    res.json({ success: true, data: { url: qrUrl, qr_data: qrUrl } });
+    try {
+      const siteId = parseInt(req.params.id);
+      const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+      const siteUrl = `${baseUrl}/patrimoine/${siteId}`;
+
+      const { format = 'dataurl', size = 300 } = req.query;
+      const qrSize = Math.min(Math.max(parseInt(size) || 300, 100), 1000);
+
+      if (format === 'svg') {
+        const svg = await QRCode.toString(siteUrl, { type: 'svg', width: qrSize, margin: 2, color: { dark: '#000000', light: '#ffffff' } });
+        res.set('Content-Type', 'image/svg+xml');
+        res.set('Cache-Control', 'public, max-age=86400');
+        return res.send(svg);
+      }
+
+      if (format === 'png') {
+        const buffer = await QRCode.toBuffer(siteUrl, { width: qrSize, margin: 2, color: { dark: '#000000', light: '#ffffff' } });
+        res.set('Content-Type', 'image/png');
+        res.set('Cache-Control', 'public, max-age=86400');
+        res.set('Content-Disposition', `inline; filename="patrimoine-${siteId}-qr.png"`);
+        return res.send(buffer);
+      }
+
+      // Default: data URL
+      const dataUrl = await QRCode.toDataURL(siteUrl, { width: qrSize, margin: 2, color: { dark: '#000000', light: '#ffffff' } });
+      res.set('Cache-Control', 'public, max-age=86400');
+      res.json({ success: true, data: { qr_data_url: dataUrl, site_url: siteUrl, site_id: siteId } });
+    } catch (error) {
+      this._handleError(res, error);
+    }
   }
 
   // ============================================================================
