@@ -1,7 +1,8 @@
 import React, { lazy, Suspense, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -96,6 +97,8 @@ interface SitePatrimoine {
 const Patrimoine = () => {
   const { t, i18n } = useTranslation();
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const lang = i18n.language || 'fr';
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -195,6 +198,10 @@ const Patrimoine = () => {
             <Button variant="outline" onClick={() => refetch()} disabled={loading}>
               <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
               {t('common.refresh', 'Actualiser')}
+            </Button>
+            <Button onClick={() => navigate(isAuthenticated ? '/ajouter-patrimoine' : '/auth')}>
+              <MapPin className="h-4 w-4 mr-2" />
+              {isAuthenticated ? t('patrimoine.addSite', 'Ajouter un site') : t('patrimoine.contribute', 'Contribuer')}
             </Button>
           </div>
 
