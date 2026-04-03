@@ -390,7 +390,7 @@ const AjouterPatrimoineRapide: React.FC = () => {
                   longitude={formData.longitude}
                   onPositionChange={(lat, lng) => setFormData(prev => ({ ...prev, latitude: lat, longitude: lng }))}
                 />
-              </div>
+              </React.Suspense>
 
               {/* Alerte doublons */}
               {duplicates.length > 0 && (
