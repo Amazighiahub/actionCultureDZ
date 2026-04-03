@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { ChevronRight, MapPin, Calendar, Palette, Users, Sparkles } from 'lucide-react';
 import { useRTL } from '@/hooks/useRTL';
+import { useAuth } from '@/hooks/useAuth';
 import { httpClient } from '@/services/httpClient';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -27,6 +28,7 @@ const HeroSection: React.FC = () => {
   const { t } = useTranslation();
   const { isRtl } = useRTL();
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [imagesLoaded, setImagesLoaded] = useState<boolean[]>([]);
   const [publicStats, setPublicStats] = useState<PublicStats | null>(null);
@@ -238,9 +240,9 @@ const HeroSection: React.FC = () => {
                   h-11 sm:h-12
                   px-5 sm:px-6
                 "
-                onClick={() => navigate('/auth')}
+                onClick={() => navigate(isAuthenticated ? '/ajouter-patrimoine' : '/auth')}
               >
-                {t('home.hero.contribute', 'Contribuer')}
+                {isAuthenticated ? t('home.hero.addSite', 'Ajouter un site') : t('home.hero.contribute', 'Contribuer')}
               </Button>
             </div>
 
