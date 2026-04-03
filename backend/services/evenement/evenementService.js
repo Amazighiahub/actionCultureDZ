@@ -140,6 +140,29 @@ class EvenementService extends BaseService {
       if (!lieu) throw this._validationError('Le lieu spécifié n\'existe pas');
     }
 
+    // Vérifier les doublons (même nom + même date + même lieu)
+    const nomEvent = data.nom_evenement || data.nom;
+    const nomFr = typeof nomEvent === 'object' ? nomEvent.fr : nomEvent;
+    if (nomFr && data.date_debut) {
+      const { Sequelize, Op } = require('sequelize');
+      const dupWhere = { date_debut: data.date_debut };
+      if (lieuId) dupWhere.id_lieu = lieuId;
+      const existing = await this.repository.model.findOne({
+        where: {
+          ...dupWhere,
+          [Op.or]: [
+            Sequelize.where(Sequelize.fn('JSON_EXTRACT', Sequelize.col('nom_evenement'), Sequelize.literal("'$.fr'")), nomFr),
+          ]
+        }
+      });
+      if (existing) {
+        const err = new Error('Un événement avec ce nom existe déjà à cette date');
+        err.statusCode = 409;
+        err.code = 'DUPLICATE_EVENT';
+        throw err;
+      }
+    }
+
     const typeId = data.id_type_evenement || data.typeEvenementId;
     if (typeId && this.models?.TypeEvenement) {
       const type = await this.models.TypeEvenement.findByPk(typeId);

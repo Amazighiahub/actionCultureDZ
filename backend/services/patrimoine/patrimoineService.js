@@ -218,9 +218,10 @@ class PatrimoineService extends BaseService {
 
       const detailId = detail?.id_detailLieu;
 
-      // Synchroniser les monuments (bulkCreate au lieu de boucle)
+      // Synchroniser les monuments (dédupliqués par nom+type)
       if (detailId && Monument && Array.isArray(data.monuments)) {
         await Monument.destroy({ where: { id_detail_lieu: detailId }, transaction });
+        const seen = new Set();
         const monumentRows = data.monuments
           .filter(m => m?.nom?.fr || m?.nom)
           .map(m => ({
@@ -228,15 +229,22 @@ class PatrimoineService extends BaseService {
             nom: m.nom || { fr: '' },
             description: m.description || { fr: '' },
             type: this._normalizeMonumentType(m.type)
-          }));
+          }))
+          .filter(m => {
+            const key = `${(typeof m.nom === 'object' ? m.nom.fr : m.nom) || ''}_${m.type}`.toLowerCase();
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+          });
         if (monumentRows.length) {
           await Monument.bulkCreate(monumentRows, { transaction });
         }
       }
 
-      // Synchroniser les vestiges (bulkCreate)
+      // Synchroniser les vestiges (dédupliqués par nom+type)
       if (detailId && Vestige && Array.isArray(data.vestiges)) {
         await Vestige.destroy({ where: { id_detail_lieu: detailId }, transaction });
+        const seen = new Set();
         const vestigeRows = data.vestiges
           .filter(v => v?.nom?.fr || v?.nom)
           .map(v => ({
@@ -244,7 +252,13 @@ class PatrimoineService extends BaseService {
             nom: v.nom || { fr: '' },
             description: v.description || { fr: '' },
             type: this._normalizeVestigeType(v.type)
-          }));
+          }))
+          .filter(v => {
+            const key = `${(typeof v.nom === 'object' ? v.nom.fr : v.nom) || ''}_${v.type}`.toLowerCase();
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+          });
         if (vestigeRows.length) {
           await Vestige.bulkCreate(vestigeRows, { transaction });
         }

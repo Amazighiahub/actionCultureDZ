@@ -184,21 +184,27 @@ class OeuvreService extends BaseService {
       }
     }
 
-    // 3b. Vérifier les doublons potentiels (titre + type + langue)
+    // 3b. Vérifier les doublons (titre + type + langue)
     const titreFr = createDTO.titre?.fr;
     const titreAr = createDTO.titre?.ar;
     if (titreFr || titreAr) {
-      const { Op } = require('sequelize');
-      const where = {
-        id_type_oeuvre: createDTO.idTypeOeuvre,
-        ...(createDTO.idLangue ? { id_langue: createDTO.idLangue } : {})
-      };
-      const existing = await this.repository.model.findOne({ where });
-      if (existing) {
-        const existingTitre = existing.titre || {};
-        if ((titreFr && existingTitre.fr === titreFr) || (titreAr && existingTitre.ar === titreAr)) {
-          this.logger.warn(`Doublon potentiel détecté: titre="${titreFr || titreAr}", type=${createDTO.idTypeOeuvre}`);
+      const { Op, Sequelize } = require('sequelize');
+      const conditions = [];
+      if (titreFr) conditions.push(Sequelize.where(Sequelize.fn('JSON_EXTRACT', Sequelize.col('titre'), Sequelize.literal("'$.fr'")), titreFr));
+      if (titreAr) conditions.push(Sequelize.where(Sequelize.fn('JSON_EXTRACT', Sequelize.col('titre'), Sequelize.literal("'$.ar'")), titreAr));
+      const existing = await this.repository.model.findOne({
+        where: {
+          id_type_oeuvre: createDTO.idTypeOeuvre,
+          ...(createDTO.idLangue ? { id_langue: createDTO.idLangue } : {}),
+          [Op.or]: conditions
         }
+      });
+      if (existing) {
+        this.logger.warn(`Doublon détecté: titre="${titreFr || titreAr}", type=${createDTO.idTypeOeuvre}, existant id=${existing.id_oeuvre}`);
+        const err = new Error('Une œuvre avec ce titre existe déjà pour ce type et cette langue');
+        err.statusCode = 409;
+        err.code = 'DUPLICATE_OEUVRE';
+        throw err;
       }
     }
 

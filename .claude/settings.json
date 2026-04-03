@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -r \"async create\" /c/Users/sabab/EventCulture/backend/controllers/*.js)"
+    ]
+  }
+}
