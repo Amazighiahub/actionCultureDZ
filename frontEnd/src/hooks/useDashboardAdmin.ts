@@ -739,6 +739,25 @@ const deleteService = async (serviceId: number) => {
     });
   }
 };
+
+const validateService = async (serviceId: number, validated: boolean) => {
+  try {
+    const response = await adminService.validateService(serviceId, validated);
+    if (response.success) {
+      toast({
+        title: t('toasts.success'),
+        description: validated ? t('toasts.serviceValidated', 'Service validé') : t('toasts.serviceRejected', 'Service rejeté')
+      });
+      await loadServices();
+    }
+  } catch (error) {
+    toast({
+      title: t('toasts.error'),
+      description: t('toasts.serviceValidationFailed', 'Erreur de validation'),
+      variant: "destructive"
+    });
+  }
+};
   // ========================================
   // ACTIONS MODÉRATION
   // ========================================
@@ -902,6 +921,7 @@ const deleteService = async (serviceId: number) => {
     // Actions services
     updateServiceStatus,
     deleteService,
+    validateService,
     
     // Actions modération
     moderateSignalement,

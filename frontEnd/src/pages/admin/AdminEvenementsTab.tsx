@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import AdminStatusFilter from '@/components/admin/AdminStatusFilter';
 import {
-  Calendar, Search, CheckCircle, XCircle,
+  Calendar, Search, CheckCircle, XCircle, Edit,
   MoreVertical, Eye, Trash2, RefreshCw,
   MapPin, Users, Clock, X, AlertCircle
 } from 'lucide-react';
@@ -250,12 +250,10 @@ const AdminEvenementsTab: React.FC = () => {
                           <Eye className="h-4 w-4 mr-2" />
                           {t('common.view', 'Voir')}
                         </DropdownMenuItem>
-                        {event.statut === 'brouillon' && (
-                          <DropdownMenuItem>
-                            <CheckCircle className="h-4 w-4 mr-2" />
-                            {t('admin.events.publish', 'Publier')}
-                          </DropdownMenuItem>
-                        )}
+                        <DropdownMenuItem onClick={() => navigate(`/modifier-evenement/${event.id_evenement}`)}>
+                          <Edit className="h-4 w-4 mr-2" />
+                          {t('common.edit', 'Modifier')}
+                        </DropdownMenuItem>
                         {event.statut !== 'brouillon' && event.statut !== 'annule' && (
                           <DropdownMenuItem onClick={() => cancelEvenement(event.id_evenement)}>
                             <XCircle className="h-4 w-4 mr-2" />

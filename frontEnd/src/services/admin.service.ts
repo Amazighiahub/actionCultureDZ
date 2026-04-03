@@ -264,6 +264,10 @@ class AdminService {
     return httpClient.delete<void>(`/services/${serviceId}`);
   }
 
+  async validateService(serviceId: number, validated: boolean): Promise<ApiResponse<void>> {
+    return httpClient.patch<void>(API_ENDPOINTS.dashboard.services.updateStatus(serviceId), { valide: validated });
+  }
+
   // ========================================
   // GESTION DES UTILISATEURS
   // ========================================

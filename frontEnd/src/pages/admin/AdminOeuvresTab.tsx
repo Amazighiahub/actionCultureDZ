@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import AdminStatusFilter from '@/components/admin/AdminStatusFilter';
 import {
-  BookOpen, Search, CheckCircle, XCircle,
+  BookOpen, Search, CheckCircle, XCircle, Edit,
   MoreVertical, Eye, Trash2, RefreshCw,
   Book, Film, Music, Palette, X, AlertCircle
 } from 'lucide-react';
@@ -282,10 +282,14 @@ const AdminOeuvresTab: React.FC = () => {
                             </DropdownMenuItem>
                           </>
                         )}
+                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate(`/modifier-oeuvre/${oeuvre.id_oeuvre}`); }}>
+                          <Edit className="h-4 w-4 mr-2" />
+                          {t('common.edit', 'Modifier')}
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           className="text-destructive"
-                          onClick={() => deleteOeuvre(oeuvre.id_oeuvre)}
+                          onClick={(e) => { e.stopPropagation(); deleteOeuvre(oeuvre.id_oeuvre); }}
                         >
                           <Trash2 className="h-4 w-4 mr-2" />
                           {t('common.delete', 'Supprimer')}

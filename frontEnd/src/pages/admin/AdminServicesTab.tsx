@@ -24,7 +24,7 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import {
-  Search, MoreVertical, Edit, Trash2, Eye, RefreshCw,
+  Search, MoreVertical, Edit, Trash2, Eye, RefreshCw, CheckCircle, XCircle,
   Package, Star, MapPin, X, AlertCircle
 } from 'lucide-react';
 
@@ -233,6 +233,18 @@ const AdminServicesTab: React.FC = () => {
                           <Eye className="h-4 w-4 mr-2" />
                           {t('common.view', 'Voir le lieu')}
                         </DropdownMenuItem>
+                        {service.statut === 'en_attente' && (
+                          <>
+                            <DropdownMenuItem onClick={() => validateService && validateService(service.id_service || service.id, true)}>
+                              <CheckCircle className="h-4 w-4 mr-2" />
+                              {t('common.validate', 'Valider')}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => validateService && validateService(service.id_service || service.id, false)}>
+                              <XCircle className="h-4 w-4 mr-2" />
+                              {t('common.reject', 'Rejeter')}
+                            </DropdownMenuItem>
+                          </>
+                        )}
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           className="text-destructive"
