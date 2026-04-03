@@ -69,6 +69,8 @@ const AjouterPatrimoineRapide: React.FC = () => {
   const [mediaPreviews, setMediaPreviews] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [duplicates, setDuplicates] = useState<Array<{ id_lieu: number; nom: any; typePatrimoine: string }>>([]);
+  const [checkingDuplicate, setCheckingDuplicate] = useState(false);
 
   // Validation par étape
   const validateStep = (currentStep: number): boolean => {
@@ -98,11 +100,30 @@ const AjouterPatrimoineRapide: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const nextStep = () => {
-    if (validateStep(step)) {
-      setStep(step + 1);
-      window.scrollTo(0, 0);
+  const nextStep = async () => {
+    if (!validateStep(step)) return;
+
+    // Vérification doublons à l'étape 2
+    if (step === 2 && formData.communeId) {
+      const nom = formData.nom.fr?.trim() || formData.nom.ar?.trim() || '';
+      if (nom) {
+        setCheckingDuplicate(true);
+        try {
+          const res = await fetch(`/api/patrimoine/check-duplicate?nom=${encodeURIComponent(nom)}&communeId=${formData.communeId}`);
+          const data = await res.json();
+          if (data.success && data.data?.exists) {
+            setDuplicates(data.data.sites);
+            setCheckingDuplicate(false);
+            return; // Ne pas avancer, montrer les doublons
+          }
+        } catch { /* ignorer, laisser créer */ }
+        setCheckingDuplicate(false);
+        setDuplicates([]);
+      }
     }
+
+    setStep(step + 1);
+    window.scrollTo(0, 0);
   };
 
   const prevStep = () => {
@@ -352,14 +373,43 @@ const AjouterPatrimoineRapide: React.FC = () => {
                 />
               </div>
 
+              {/* Alerte doublons */}
+              {duplicates.length > 0 && (
+                <Alert className="border-amber-300 bg-amber-50 dark:bg-amber-950/20">
+                  <AlertCircle className="h-4 w-4 text-amber-600" />
+                  <AlertDescription>
+                    <p className="font-medium text-amber-800 dark:text-amber-200 mb-2">
+                      {t('patrimoine.duplicate.found', 'Un site similaire existe déjà dans cette commune :')}
+                    </p>
+                    {duplicates.map((d) => (
+                      <div key={d.id_lieu} className="flex items-center justify-between p-2 bg-white dark:bg-background rounded border mb-1">
+                        <span className="text-sm">{typeof d.nom === 'object' ? d.nom.fr || d.nom.ar : d.nom} ({d.typePatrimoine})</span>
+                        <Button variant="outline" size="sm" onClick={() => navigate(`/patrimoine/${d.id_lieu}`)}>
+                          {t('common.view', 'Voir')}
+                        </Button>
+                      </div>
+                    ))}
+                    <div className="flex gap-2 mt-3">
+                      <Button variant="outline" size="sm" onClick={() => { setDuplicates([]); setStep(step + 1); window.scrollTo(0, 0); }}>
+                        {t('patrimoine.duplicate.createAnyway', 'Créer quand même')}
+                      </Button>
+                      <Button variant="default" size="sm" onClick={() => navigate(`/patrimoine/${duplicates[0].id_lieu}`)}>
+                        {t('patrimoine.duplicate.goToExisting', 'Enrichir le site existant')}
+                      </Button>
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
+
               <div className="flex justify-between mt-6">
                 <Button variant="outline" onClick={prevStep}>
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   {t('common.previous', 'Précédent')}
                 </Button>
-                <Button onClick={nextStep} size="lg">
-                  {t('common.next', 'Suivant')}
-                  <ArrowRight className="h-4 w-4 ml-2" />
+                <Button onClick={nextStep} size="lg" disabled={checkingDuplicate}>
+                  {checkingDuplicate ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+                  {checkingDuplicate ? t('patrimoine.checking', 'Vérification...') : t('common.next', 'Suivant')}
+                  {!checkingDuplicate && <ArrowRight className="h-4 w-4 ml-2" />}
                 </Button>
               </div>
             </CardContent>

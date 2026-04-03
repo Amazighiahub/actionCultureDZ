@@ -87,8 +87,41 @@ class PatrimoineController extends BaseController {
     });
   }
 
+  // Vérifier si un site existe déjà (nom + commune)
+  async checkDuplicate(req, res) {
+    try {
+      const { nom, communeId } = req.query;
+      if (!nom || !communeId) {
+        return res.json({ success: true, data: { exists: false } });
+      }
+      const { Sequelize } = require('sequelize');
+      const Lieu = this.patrimoineService.models.Lieu;
+      const search = String(nom).trim();
+      const existing = await Lieu.findAll({
+        where: {
+          communeId: parseInt(communeId),
+          [Sequelize.Op.or]: [
+            Sequelize.where(Sequelize.fn('LOWER', Sequelize.fn('JSON_EXTRACT', Sequelize.col('nom'), Sequelize.literal("'$.fr'"))), search.toLowerCase()),
+            Sequelize.where(Sequelize.fn('LOWER', Sequelize.fn('JSON_EXTRACT', Sequelize.col('nom'), Sequelize.literal("'$.ar'"))), search.toLowerCase()),
+          ]
+        },
+        attributes: ['id_lieu', 'nom', 'typePatrimoine'],
+        limit: 5
+      });
+      res.json({
+        success: true,
+        data: {
+          exists: existing.length > 0,
+          sites: existing.map(s => ({ id_lieu: s.id_lieu, nom: s.nom, typePatrimoine: s.typePatrimoine }))
+        }
+      });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
   // ============================================================================
-  // ROUTES ADMIN
+  // ROUTES CREATION / MODIFICATION
   // ============================================================================
 
   async create(req, res) {

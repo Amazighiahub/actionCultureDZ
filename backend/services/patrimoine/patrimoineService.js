@@ -140,12 +140,36 @@ class PatrimoineService extends BaseService {
           localiteId: data.localiteId !== undefined ? data.localiteId : existing.localiteId
         }, { transaction });
       } else {
-        // Vérifier si un lieu similaire existe déjà (par coordonnées proches)
+        // Vérifier si un lieu avec le même nom existe dans la même commune
+        const nomSearch = typeof data.nom === 'object' ? (data.nom.fr || data.nom.ar || '') : data.nom;
+        if (nomSearch && data.communeId) {
+          const { Sequelize } = require('sequelize');
+          const existingByName = await Lieu.findOne({
+            where: {
+              communeId: data.communeId,
+              [Op.or]: [
+                Sequelize.where(Sequelize.fn('JSON_EXTRACT', Sequelize.col('nom'), Sequelize.literal("'$.fr'")), nomSearch),
+                Sequelize.where(Sequelize.fn('JSON_EXTRACT', Sequelize.col('nom'), Sequelize.literal("'$.ar'")), nomSearch),
+              ]
+            },
+            transaction
+          });
+
+          if (existingByName) {
+            const err = new Error('Un site avec ce nom existe déjà dans cette commune');
+            err.statusCode = 409;
+            err.code = 'DUPLICATE_SITE';
+            err.data = { existingId: existingByName.id_lieu, existingNom: existingByName.nom };
+            throw err;
+          }
+        }
+
+        // Vérifier aussi par coordonnées proches
         const tolerance = 0.001; // ~100 mètres
         const lat = Number(data.latitude);
         const lon = Number(data.longitude);
         let existingByCoords = null;
-        if (Number.isFinite(lat) && Number.isFinite(lon)) {
+        if (Number.isFinite(lat) && Number.isFinite(lon) && lat !== 0 && lon !== 0) {
           existingByCoords = await Lieu.findOne({
             where: {
               latitude: { [Op.between]: [lat - tolerance, lat + tolerance] },
@@ -157,7 +181,6 @@ class PatrimoineService extends BaseService {
 
         if (existingByCoords) {
           lieuId = existingByCoords.id_lieu;
-          // Mettre à jour les champs manquants du lieu existant
           await existingByCoords.update({
             typePatrimoine: data.typePatrimoine || existingByCoords.typePatrimoine || 'monument'
           }, { transaction });

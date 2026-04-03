@@ -26,6 +26,8 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
   router.get('/', patrimoineController.wrap('list'));
   router.get('/popular', (req, res, next) => { console.log('[DEBUG ROUTE] /popular hit'); next(); }, patrimoineController.wrap('popular'));
   router.get('/search', patrimoineController.wrap('search'));
+  // Vérifier les doublons avant création (nom + commune)
+  router.get('/check-duplicate', patrimoineController.wrap('checkDuplicate'));
   router.get('/types', patrimoineController.wrap('getTypes'));
   router.get('/map', patrimoineController.wrap('getMap'));
   router.get('/monuments/:type', patrimoineController.wrap('getByType'));
