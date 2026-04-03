@@ -104,7 +104,7 @@ export function useOeuvres(): UseOeuvresReturn {
           return o.id_type_oeuvre !== 7;
         });
         
-        setOeuvres(Array.isArray(oeuvresData) ? oeuvresData : []);
+        setOeuvres(Array.isArray(oeuvresData) ? oeuvresData as Oeuvre[] : []);
         
         // Sauvegarder en localStorage
         try {
