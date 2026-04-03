@@ -164,20 +164,21 @@ const AjouterPatrimoineRapide: React.FC = () => {
   const handleSubmit = async () => {
     if (!validateStep(3)) return;
 
+    // Vérifier GPS
+    if (formData.latitude === 0 || formData.longitude === 0) {
+      toast({ title: t('common.warning', 'Attention'), description: t('patrimoine.errors.gpsRecommended', 'Position GPS non définie. Le site sera placé au centre de l\'Algérie.'), variant: 'destructive' });
+    }
+
     setLoading(true);
     try {
       const createData = {
         nom: formData.nom,
         description: { fr: '', ar: '', en: '' },
         typePatrimoine: formData.typePatrimoine,
-        type: formData.typePatrimoine,
-        wilaya_id: formData.wilayaId,
-        commune_id: formData.communeId,
         communeId: formData.communeId,
         adresse: formData.adresse,
         latitude: formData.latitude || 36.75,
         longitude: formData.longitude || 3.05,
-        statut: 'ouvert',
       };
 
       const response = await patrimoineService.create(createData as any);
@@ -187,36 +188,40 @@ const AjouterPatrimoineRapide: React.FC = () => {
         const siteId = responseData?.id_lieu || responseData?.id;
 
         // Upload des photos
+        let uploadFailed = false;
         if (siteId && medias.length > 0) {
           try {
             await patrimoineService.uploadMedias(siteId as number, medias);
           } catch {
-            // L'upload échoue mais le site est créé
+            uploadFailed = true;
           }
         }
 
         toast({
-          title: t('patrimoine.success.created', 'Site créé !'),
-          description: t('patrimoine.success.createdDesc', 'Vous pouvez maintenant enrichir ce site avec plus de détails.'),
+          title: uploadFailed ? t('patrimoine.success.partial', 'Site créé (photos non uploadées)') : t('patrimoine.success.created', 'Site créé !'),
+          description: uploadFailed
+            ? t('patrimoine.success.partialDesc', 'Le site a été créé mais certaines photos n\'ont pas pu être uploadées. Vous pouvez les ajouter plus tard.')
+            : t('patrimoine.success.createdDesc', 'Vous pouvez maintenant enrichir ce site avec plus de détails.'),
+          variant: uploadFailed ? 'destructive' : 'default',
         });
 
-        // Rediriger vers la page détail pour enrichir
-        setTimeout(() => {
-          navigate(`/patrimoine/${siteId}`);
-        }, 1500);
+        setTimeout(() => { navigate(`/patrimoine/${siteId}`); }, 1500);
       } else {
-        toast({
-          title: t('common.error'),
-          description: response.error || t('patrimoine.errors.createFailed', 'Erreur lors de la création'),
-          variant: 'destructive'
-        });
+        // Gestion erreur 409 (doublon)
+        const errMsg = response.error || '';
+        if (errMsg.includes('existe déjà') || errMsg.includes('DUPLICATE')) {
+          toast({ title: t('patrimoine.duplicate.found', 'Site déjà existant'), description: t('patrimoine.duplicate.tryEnrich', 'Un site avec ce nom existe dans cette commune. Essayez de l\'enrichir plutôt.'), variant: 'destructive' });
+        } else {
+          toast({ title: t('common.error'), description: errMsg || t('patrimoine.errors.createFailed', 'Erreur lors de la création'), variant: 'destructive' });
+        }
       }
     } catch (err: unknown) {
-      toast({
-        title: t('common.error'),
-        description: err instanceof Error ? err.message : t('patrimoine.errors.createFailed'),
-        variant: 'destructive'
-      });
+      const errMsg = err instanceof Error ? err.message : '';
+      if (errMsg.includes('409') || errMsg.includes('existe déjà') || errMsg.includes('DUPLICATE')) {
+        toast({ title: t('patrimoine.duplicate.found', 'Site déjà existant'), description: t('patrimoine.duplicate.tryEnrich', 'Un site avec ce nom existe dans cette commune.'), variant: 'destructive' });
+      } else {
+        toast({ title: t('common.error'), description: errMsg || t('patrimoine.errors.createFailed'), variant: 'destructive' });
+      }
     } finally {
       setLoading(false);
     }

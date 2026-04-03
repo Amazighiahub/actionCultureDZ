@@ -10,6 +10,7 @@ import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-lea
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { MapPin, Navigation, Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -53,16 +54,17 @@ const RecenterMap: React.FC<{ lat: number; lng: number }> = ({ lat, lng }) => {
 
 const GPSPicker: React.FC<GPSPickerProps> = ({ latitude, longitude, onPositionChange, error }) => {
   const { t } = useTranslation();
+  const { toast } = useToast();
   const [locating, setLocating] = useState(false);
 
   const hasPosition = latitude !== 0 && longitude !== 0;
 
-  // Centre par défaut : Algérie
   const defaultCenter: [number, number] = [36.75, 3.05];
   const center: [number, number] = hasPosition ? [latitude, longitude] : defaultCenter;
 
   const handleGeolocation = useCallback(() => {
     if (!navigator.geolocation) {
+      toast({ title: t('patrimoine.gps.unavailable', 'Géolocalisation non disponible'), description: t('patrimoine.gps.unavailableDesc', 'Votre appareil ne supporte pas la géolocalisation. Cliquez sur la carte pour placer le marqueur.'), variant: 'destructive' });
       return;
     }
     setLocating(true);
@@ -70,13 +72,20 @@ const GPSPicker: React.FC<GPSPickerProps> = ({ latitude, longitude, onPositionCh
       (pos) => {
         onPositionChange(pos.coords.latitude, pos.coords.longitude);
         setLocating(false);
+        toast({ title: t('patrimoine.gps.found', 'Position trouvée'), description: `${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}` });
       },
-      () => {
+      (err) => {
         setLocating(false);
+        const messages: Record<number, string> = {
+          1: t('patrimoine.gps.denied', 'Accès à la position refusé. Autorisez la géolocalisation dans les paramètres.'),
+          2: t('patrimoine.gps.unavailablePos', 'Position indisponible. Cliquez sur la carte pour placer le marqueur.'),
+          3: t('patrimoine.gps.timeout', 'Délai dépassé. Réessayez ou cliquez sur la carte.'),
+        };
+        toast({ title: t('patrimoine.gps.error', 'Erreur de géolocalisation'), description: messages[err.code] || messages[2], variant: 'destructive' });
       },
       { enableHighAccuracy: true, timeout: 10000 }
     );
-  }, [onPositionChange]);
+  }, [onPositionChange, toast, t]);
 
   return (
     <div className="space-y-3">
