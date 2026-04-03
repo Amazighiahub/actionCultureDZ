@@ -66,7 +66,7 @@ const AdminPatrimoineTab: React.FC = () => {
   const filteredPatrimoines = React.useMemo(() => {
     if (!patrimoineItems?.items) return [];
 
-    return patrimoineItems.items.filter((item: Record<string, unknown>) => {
+    return patrimoineItems.items.filter((item: any) => {
       // Filtre de recherche
       if (debouncedSearch) {
         const searchLower = debouncedSearch.toLowerCase();
@@ -203,7 +203,7 @@ const AdminPatrimoineTab: React.FC = () => {
         />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredPatrimoines.map((item: Record<string, unknown>) => {
+          {filteredPatrimoines.map((item: any) => {
             const nom = getLocalizedText(item.nom, currentLang, 'Sans nom');
             const description = getLocalizedText(item.description, currentLang);
             const wilaya = item.wilaya?.nom || item.Commune?.Daira?.Wilaya?.nom || '';

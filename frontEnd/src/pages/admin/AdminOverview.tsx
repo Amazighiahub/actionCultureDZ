@@ -245,7 +245,7 @@ const AdminOverview: React.FC = () => {
               <LoadingSkeleton type="list" count={3} />
             ) : pendingUsers?.items?.length > 0 ? (
               <div className="space-y-3">
-                {pendingUsers.items.slice(0, 5).map((user: Record<string, unknown>) => (
+                {pendingUsers.items.slice(0, 5).map((user: any) => (
                   <PendingItem
                     key={user.id_user}
                     title={`${getLocalizedText(user.prenom)} ${getLocalizedText(user.nom)}`}
@@ -293,7 +293,7 @@ const AdminOverview: React.FC = () => {
               <LoadingSkeleton type="list" count={3} />
             ) : pendingOeuvres?.items?.length > 0 ? (
               <div className="space-y-3">
-                {pendingOeuvres.items.slice(0, 5).map((oeuvre: Record<string, unknown>) => (
+                {pendingOeuvres.items.slice(0, 5).map((oeuvre: any) => (
                   <PendingItem
                     key={oeuvre.id_oeuvre}
                     title={getLocalizedText(oeuvre.titre, 'fr', 'Sans titre')}
@@ -341,7 +341,7 @@ const AdminOverview: React.FC = () => {
               <LoadingSkeleton type="list" count={3} />
             ) : moderationQueue?.items?.length > 0 ? (
               <div className="space-y-2">
-                {moderationQueue.items.slice(0, 5).map((item: Record<string, unknown>, index: number) => (
+                {moderationQueue.items.slice(0, 5).map((item: any, index: number) => (
                   <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
                     <div>
                       <p className="font-medium text-sm">{getLocalizedText(item.entity_title || item.reason)}</p>

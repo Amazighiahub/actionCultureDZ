@@ -62,7 +62,7 @@ const AdminServicesTab: React.FC = () => {
   const filteredServices = React.useMemo(() => {
     if (!services?.items) return [];
 
-    return services.items.filter((service: Record<string, unknown>) => {
+    return services.items.filter((service: any) => {
       // Filtre de recherche
       if (debouncedSearch) {
         const searchLower = debouncedSearch.toLowerCase();
@@ -176,7 +176,7 @@ const AdminServicesTab: React.FC = () => {
         />
       ) : (
         <div className="space-y-4">
-          {filteredServices.map((service: Record<string, unknown>) => {
+          {filteredServices.map((service: any) => {
             const nom = getLocalizedText(service.nom, currentLang, 'Sans nom');
             const type = getLocalizedText(service.type_service || service.type, currentLang);
 

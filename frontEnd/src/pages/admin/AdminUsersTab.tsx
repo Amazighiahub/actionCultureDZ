@@ -72,7 +72,7 @@ const AdminUsersTab: React.FC = () => {
   };
 
   const handleSelectAll = (checked: boolean) => {
-    setSelectedUserIds(checked ? filteredUsers.map((u: Record<string, unknown>) => u.id_user as number) : []);
+    setSelectedUserIds(checked ? filteredUsers.map((u: any) => u.id_user as number) : []);
   };
 
   const handleBulkAction = async (action: string) => {
@@ -90,7 +90,7 @@ const AdminUsersTab: React.FC = () => {
   const filteredUsers = React.useMemo(() => {
     if (!allUsers?.items) return [];
 
-    return allUsers.items.filter((user: Record<string, unknown>) => {
+    return allUsers.items.filter((user: any) => {
       // Filtre de recherche
       if (debouncedSearch) {
         const searchLower = debouncedSearch.toLowerCase();
@@ -277,7 +277,7 @@ const AdminUsersTab: React.FC = () => {
         />
       ) : (
         <div className="grid gap-4">
-          {filteredUsers.map((user: Record<string, unknown>) => (
+          {filteredUsers.map((user: any) => (
             <Card
               key={user.id_user}
               className={`hover:shadow-md transition-shadow ${selectedUserIds.includes(user.id_user) ? 'ring-2 ring-primary bg-primary/5' : ''}`}

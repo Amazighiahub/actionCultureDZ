@@ -54,7 +54,7 @@ const AdminModerationTab: React.FC = () => {
   const filteredSignalements = React.useMemo(() => {
     if (!moderationQueue?.items) return [];
 
-    return moderationQueue.items.filter((item: Record<string, unknown>) => {
+    return moderationQueue.items.filter((item: any) => {
       // Filtre de recherche
       if (debouncedSearch) {
         const searchLower = debouncedSearch.toLowerCase();
@@ -140,7 +140,7 @@ const AdminModerationTab: React.FC = () => {
             <div>
               <p className="text-sm text-muted-foreground">{t('admin.moderation.commentReports', 'Commentaires')}</p>
               <p className="text-2xl font-bold">
-                {moderationQueue?.items?.filter((s: Record<string, unknown>) => s.type === 'commentaire').length ?? 0}
+                {moderationQueue?.items?.filter((s: any) => s.type === 'commentaire').length ?? 0}
               </p>
             </div>
           </CardContent>
@@ -153,7 +153,7 @@ const AdminModerationTab: React.FC = () => {
             <div>
               <p className="text-sm text-muted-foreground">{t('admin.moderation.contentReports', 'Contenus')}</p>
               <p className="text-2xl font-bold">
-                {moderationQueue?.items?.filter((s: Record<string, unknown>) => s.type === 'oeuvre' || s.type === 'evenement').length ?? 0}
+                {moderationQueue?.items?.filter((s: any) => s.type === 'oeuvre' || s.type === 'evenement').length ?? 0}
               </p>
             </div>
           </CardContent>
@@ -221,7 +221,7 @@ const AdminModerationTab: React.FC = () => {
         />
       ) : (
         <div className="space-y-4">
-          {filteredSignalements.map((signalement: Record<string, unknown>) => {
+          {filteredSignalements.map((signalement: any) => {
             const TypeIcon = getTypeIcon(signalement.type);
             const reasonKey = RAISONS_SIGNALEMENT_CONFIG[signalement.reason];
 

@@ -64,7 +64,7 @@ const AdminEvenementsTab: React.FC = () => {
   const filteredEvents = React.useMemo(() => {
     if (!evenements?.items) return [];
 
-    return evenements.items.filter((event: Record<string, unknown>) => {
+    return evenements.items.filter((event: any) => {
       // Filtre de recherche
       if (debouncedSearch) {
         const searchLower = debouncedSearch.toLowerCase();
@@ -179,7 +179,7 @@ const AdminEvenementsTab: React.FC = () => {
         />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredEvents.map((event: Record<string, unknown>) => {
+          {filteredEvents.map((event: any) => {
             const nom = getLocalizedText(event.nom_evenement || event.nom, currentLang, t('common.unnamed', 'Sans nom'));
             const description = getLocalizedText(event.description, currentLang, t('common.noDescription', 'Pas de description'));
             const lieu = getLocalizedText(event.lieu?.nom || event.lieu_nom, currentLang, '');
