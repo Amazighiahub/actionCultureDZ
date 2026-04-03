@@ -54,6 +54,14 @@ const AdminOeuvresTab: React.FC = () => {
   const navigate = useNavigate();
   const currentLang = i18n.language || 'fr';
 
+  const navigateToOeuvre = (oeuvreId: number) => {
+    navigate(`/oeuvres/${oeuvreId}`, {
+      state: {
+        from: '/admin/dashboard?tab=oeuvres'
+      }
+    });
+  };
+
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('tous');
 
@@ -205,7 +213,7 @@ const AdminOeuvresTab: React.FC = () => {
             );
 
             return (
-              <Card key={oeuvre.id_oeuvre} className="hover:shadow-md transition-shadow overflow-hidden cursor-pointer" onClick={() => navigate(`/oeuvres/${oeuvre.id_oeuvre}`)}>
+              <Card key={oeuvre.id_oeuvre} className="hover:shadow-md transition-shadow overflow-hidden cursor-pointer" onClick={() => navigateToOeuvre(oeuvre.id_oeuvre)}>
                 {/* Image */}
                 <div className="aspect-video relative bg-muted">
                   {oeuvre.image_url || oeuvre.medias?.[0]?.url ? (
@@ -244,7 +252,10 @@ const AdminOeuvresTab: React.FC = () => {
                       </div>
                     </div>
 
-                    <Button variant="outline" size="sm" className="shrink-0" onClick={() => navigate(`/oeuvres/${oeuvre.id_oeuvre}`)}>
+                    <Button variant="outline" size="sm" className="shrink-0" onClick={(e) => {
+                      e.stopPropagation();
+                      navigateToOeuvre(oeuvre.id_oeuvre);
+                    }}>
                       <Eye className="h-3 w-3 mr-1" />
                       {t('common.view', 'Voir')}
                     </Button>

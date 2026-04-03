@@ -3,7 +3,7 @@
  * Utilise HeroSection avec effet flip 3D pour les livres
  */
 import React, { Suspense, useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -89,18 +89,35 @@ const SectionFallback: React.FC = () => (
 const OeuvreDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { t, i18n } = useTranslation();
   const { isAuthenticated } = useAuth();
   const { formatDate: hookFormatDate } = useFormatDate();
   const lang = (i18n.language || 'fr') as SupportedLanguage;
-  
+
+  const fromPath = typeof location.state?.from === 'string' ? location.state.from : null;
+
+  const handleBackNavigation = () => {
+    if (fromPath) {
+      navigate(fromPath);
+      return;
+    }
+
+    if (window.history.length > 1) {
+      navigate(-1);
+      return;
+    }
+
+    navigate('/oeuvres');
+  };
+
   const [activeTab, setActiveTab] = useState('description');
   const [showCommentModal, setShowCommentModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [commentContent, setCommentContent] = useState('');
   const [commentLoading, setCommentLoading] = useState(false);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
-  
+
   // États additionnels pour les fonctionnalités complètes
   const [auteurInfo, setAuteurInfo] = useState<ContributeurInfo | null>(null);
   const [oeuvresAuteur, setOeuvresAuteur] = useState<Oeuvre[]>([]);
@@ -347,7 +364,7 @@ const OeuvreDetailPage: React.FC = () => {
       <main>
         {/* Bouton retour */}
         <div className="container pt-4">
-          <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="text-muted-foreground hover:text-foreground">
+          <Button variant="ghost" size="sm" onClick={handleBackNavigation} className="text-muted-foreground hover:text-foreground">
             <ArrowLeft className="h-4 w-4 mr-1" />
             {t('common.back', 'Retour')}
           </Button>
