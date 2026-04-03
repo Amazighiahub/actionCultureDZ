@@ -2526,6 +2526,83 @@
       "all": "Akk",
       "allTypes": "Akk anwan",
       "allWilayas": "Akk timnaḍin"
+    },
+    "create": {
+      "title": "Rnu adeg n ugama",
+      "subtitle": "Rnu s zreb, snerni-t mbeɛd",
+      "step1": "Anda yella wadeg-a?",
+      "step1Desc": "Fren adeg anamkan",
+      "step2": "D acu-t wadeg-a?",
+      "step2Desc": "Fk-as isem, fren anaw",
+      "step3": "Rnu tiwlafin",
+      "step3Desc": "Ma drus yiwet n twlaft",
+      "uploadHint": "Sit neɣ zuɣer tiwlafin-ik da",
+      "uploadFormats": "JPG, PNG, WebP — afellay 10 Mo",
+      "summary": "Agzul",
+      "photos": "tiwlaft(tiwlafin)",
+      "noGPS": "Ur yettwasbadu ara (talemmast n Lezzayer)",
+      "publish": "Suffeɣ adeg",
+      "publishing": "Asuffeɣ iteddu..."
+    },
+    "fields": {
+      "nom": "Isem n udeg",
+      "type": "Anaw n ugama",
+      "adresse": "Tansa / Adeg izedgen",
+      "position": "Adeg ɣef tkarḍa",
+      "myPosition": "Adeg-iw",
+      "clickMap": "Sit ɣef tkarḍa neɣ seqdec \"Adeg-iw\""
+    },
+    "types": {
+      "monument": "Agemmaḍ",
+      "musee": "Amussu",
+      "ville_village": "Tamdint / Taddart",
+      "site_archeologique": "Adeg aẓayri",
+      "site_naturel": "Adeg agaman",
+      "edifice_religieux": "Adeg adeynani",
+      "palais_forteresse": "Axxam ameqqran / Tageṣṣabt",
+      "autre": "Wayeḍ"
+    },
+    "errors": {
+      "wilayaRequired": "Tamnaḍt tettwasra",
+      "communeRequired": "Taɣiwant tettwasra",
+      "nomRequired": "Isem yettwasra (s tefransist neɣ s taɛrabt ma drus)",
+      "typeRequired": "Anaw n ugama yettwasra",
+      "photoRequired": "Ma drus yiwet n twlaft tettwasra",
+      "createFailed": "Tuccḍa deg urmay",
+      "gpsRecommended": "Adeg GPS ur yettwasbadu ara."
+    },
+    "success": {
+      "created": "Adeg yettwarna!",
+      "createdDesc": "Tzemreḍ tura ad tesnernayeḍ adeg-a s wugar n telqayin."
+    },
+    "duplicate": {
+      "found": "Adeg yella yakan",
+      "tryEnrich": "Adeg s yisem-a yella deg teɣiwant-a.",
+      "createAnyway": "Rnu ɣas akken",
+      "goToExisting": "Snerni adeg yellan"
+    },
+    "sections": {
+      "histoire": "Amezruy",
+      "architecture": "Tasnebnayt",
+      "traditions": "Timsal d leɛwayed",
+      "gastronomie": "Učči amecṭuḥ",
+      "artisanat": "Tacekkart tamecṭuḥt",
+      "personnalites": "Imdanen imeqqranen",
+      "infosPratiques": "Isallen usligen",
+      "references": "Iɣbula umezruyen"
+    },
+    "contribute": {
+      "add": "Ttekki",
+      "empty": "Tigezmi-ya ur tettwaru ara mazal.",
+      "saved": "Attekki yettwaḥraz!",
+      "thanks": "Tanemmirt ɣef uttekki-ik",
+      "saveFailed": "Tuccḍa deg uḥraz"
+    },
+    "gps": {
+      "found": "Adeg yettwaf",
+      "denied": "Anekcum ɣer udeg yettwaggel.",
+      "timeout": "Akud ifuk. Ɛreḍ tikelt-nniḍen.",
+      "error": "Tuccḍa deg unadi n udeg"
     }
   },
   "toasts": {
