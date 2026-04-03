@@ -536,7 +536,7 @@ const loadOeuvres = useCallback(async (filters?: OeuvreFilters) => {
       // Le backend renvoie { data: [...], pagination } mais PaginatedResponse attend { items: [...], pagination }
       const raw = response.data as any;
       setOeuvres({
-        items: raw.items || raw.data || [],
+        items: raw.items || raw.oeuvres || raw.data || [],
         pagination: raw.pagination || { total: 0, page: 1, limit: 20, pages: 1 }
       });
     }
