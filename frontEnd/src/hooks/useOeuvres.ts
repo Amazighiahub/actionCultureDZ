@@ -99,16 +99,9 @@ export function useOeuvres(): UseOeuvresReturn {
                          result.data ||
                          [];
         
-        // Filtrer pour exclure l'artisanat
-        oeuvresData = oeuvresData.filter((o: Oeuvre) => {
-          const typeNom = o.TypeOeuvre?.nom_type?.toLowerCase() || '';
-          const typeId = o.id_type_oeuvre;
-          
-          // Trouver le type dans la liste des types
-          const type = typesOeuvres.find(t => t.id_type_oeuvre === typeId);
-          const typeNomFromList = type?.nom_type?.toLowerCase() || '';
-          
-          return !typeNom.includes('artisanat') && !typeNomFromList.includes('artisanat');
+        // Filtrer pour exclure l'artisanat (type 7)
+        oeuvresData = oeuvresData.filter((o: any) => {
+          return o.id_type_oeuvre !== 7;
         });
         
         setOeuvres(Array.isArray(oeuvresData) ? oeuvresData : []);
