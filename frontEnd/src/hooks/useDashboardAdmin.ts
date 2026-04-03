@@ -186,7 +186,8 @@ export const useDashboardAdmin = (activeTab: AdminTab = 'overview') => {
     try {
       const response = await adminService.getAllUsers({ page: 1, limit: 100, ...params });
       if (response.success && response.data) {
-        setAllUsers(response.data);
+        const raw = response.data as any;
+        setAllUsers({ items: raw.items || raw.data || [], pagination: raw.pagination || { total: 0, page: 1, limit: 100, pages: 1 } });
       }
     } catch (error) {
       setErrorAllUsers(t('toasts.loadUsersFailed', 'Erreur lors du chargement des utilisateurs'));
@@ -216,7 +217,8 @@ export const useDashboardAdmin = (activeTab: AdminTab = 'overview') => {
     try {
       const response = await adminService.getPendingOeuvres({ page: 1, limit: 100 });
       if (response.success && response.data) {
-        setPendingOeuvres(response.data);
+        const raw = response.data as any;
+        setPendingOeuvres({ items: raw.items || raw.data || [], pagination: raw.pagination || { total: 0, page: 1, limit: 100, pages: 1 } });
       }
     } catch (error) {
       setErrorPendingOeuvres(t('toasts.loadPendingOeuvresFailed', 'Erreur lors du chargement des œuvres en attente'));
@@ -530,7 +532,12 @@ const loadOeuvres = useCallback(async (filters?: OeuvreFilters) => {
     const response = await adminService.getOeuvres(filters);
 
     if (response.success && response.data) {
-      setOeuvres(response.data);
+      // Le backend renvoie { data: [...], pagination } mais PaginatedResponse attend { items: [...], pagination }
+      const raw = response.data as any;
+      setOeuvres({
+        items: raw.items || raw.data || [],
+        pagination: raw.pagination || { total: 0, page: 1, limit: 20, pages: 1 }
+      });
     }
   } catch (error: unknown) {
     const status = error instanceof Error && 'status' in error ? (error as { status?: number }).status : undefined;
@@ -558,7 +565,8 @@ const loadEvenements = useCallback(async (filters?: EvenementFilters) => {
     const response = await adminService.getEvenements(filters);
 
     if (response.success && response.data) {
-      setEvenements(response.data);
+      const raw = response.data as any;
+      setEvenements({ items: raw.items || raw.data || [], pagination: raw.pagination || { total: 0, page: 1, limit: 20, pages: 1 } });
     }
   } catch (error: unknown) {
     const status = error instanceof Error && 'status' in error ? (error as { status?: number }).status : undefined;
@@ -586,7 +594,8 @@ const loadPatrimoineItems = useCallback(async (filters?: PatrimoineFilters) => {
     const response = await adminService.getPatrimoineItems(filters);
 
     if (response.success && response.data) {
-      setPatrimoineItems(response.data);
+      const raw = response.data as any;
+      setPatrimoineItems({ items: raw.items || raw.data || [], pagination: raw.pagination || { total: 0, page: 1, limit: 20, pages: 1 } });
     }
   } catch (error: unknown) {
     const status = error instanceof Error && 'status' in error ? (error as { status?: number }).status : undefined;
@@ -614,7 +623,8 @@ const loadServices = useCallback(async (filters?: ServiceFilters) => {
     const response = await adminService.getServices(filters);
 
     if (response.success && response.data) {
-      setServices(response.data);
+      const raw = response.data as any;
+      setServices({ items: raw.items || raw.data || [], pagination: raw.pagination || { total: 0, page: 1, limit: 20, pages: 1 } });
     }
   } catch (error: unknown) {
     const status = error instanceof Error && 'status' in error ? (error as { status?: number }).status : undefined;
