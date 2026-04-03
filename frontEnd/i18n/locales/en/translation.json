@@ -2524,6 +2524,83 @@
       "all": "All",
       "allTypes": "All types",
       "allWilayas": "All wilayas"
+    },
+    "create": {
+      "title": "Add a heritage site",
+      "subtitle": "Create quickly, enrich later",
+      "step1": "Where is this site?",
+      "step1Desc": "Select the geographic location",
+      "step2": "What is this site?",
+      "step2Desc": "Give a name and choose the type",
+      "step3": "Add photos",
+      "step3Desc": "At least one photo to illustrate the site",
+      "uploadHint": "Click or drag your photos here",
+      "uploadFormats": "JPG, PNG, WebP — max 10 MB",
+      "summary": "Summary",
+      "photos": "photo(s)",
+      "noGPS": "Not set (center of Algeria)",
+      "publish": "Publish site",
+      "publishing": "Publishing..."
+    },
+    "fields": {
+      "nom": "Site name",
+      "type": "Heritage type",
+      "adresse": "Address / Precise location",
+      "position": "Position on map",
+      "myPosition": "My location",
+      "clickMap": "Click on the map or use \"My location\""
+    },
+    "types": {
+      "monument": "Monument",
+      "musee": "Museum",
+      "ville_village": "City / Village",
+      "site_archeologique": "Archaeological site",
+      "site_naturel": "Natural site",
+      "edifice_religieux": "Religious building",
+      "palais_forteresse": "Palace / Fortress",
+      "autre": "Other"
+    },
+    "errors": {
+      "wilayaRequired": "Wilaya is required",
+      "communeRequired": "Commune is required",
+      "nomRequired": "Name is required (at least in French or Arabic)",
+      "typeRequired": "Heritage type is required",
+      "photoRequired": "At least one photo is required",
+      "createFailed": "Error during creation",
+      "gpsRecommended": "GPS position not set."
+    },
+    "success": {
+      "created": "Site created!",
+      "createdDesc": "You can now enrich this site with more details."
+    },
+    "duplicate": {
+      "found": "Site already exists",
+      "tryEnrich": "A site with this name exists in this commune.",
+      "createAnyway": "Create anyway",
+      "goToExisting": "Enrich existing site"
+    },
+    "sections": {
+      "histoire": "History",
+      "architecture": "Architecture",
+      "traditions": "Traditions & Customs",
+      "gastronomie": "Local cuisine",
+      "artisanat": "Local crafts",
+      "personnalites": "Personalities",
+      "infosPratiques": "Practical information",
+      "references": "Historical references"
+    },
+    "contribute": {
+      "add": "Contribute",
+      "empty": "This section is not yet documented.",
+      "saved": "Contribution saved!",
+      "thanks": "Thank you for your contribution",
+      "saveFailed": "Error saving"
+    },
+    "gps": {
+      "found": "Position found",
+      "denied": "Location access denied.",
+      "timeout": "Timeout. Try again or click the map.",
+      "error": "Geolocation error"
     }
   },
   "toasts": {

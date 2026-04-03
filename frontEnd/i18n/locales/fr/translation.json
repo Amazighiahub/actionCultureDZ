@@ -2513,6 +2513,95 @@
       "all": "Tous",
       "allTypes": "Tous les types",
       "allWilayas": "Toutes les wilayas"
+    },
+    "create": {
+      "title": "Ajouter un site patrimonial",
+      "subtitle": "Créez rapidement, enrichissez ensuite",
+      "step1": "Où se trouve ce site ?",
+      "step1Desc": "Sélectionnez la localisation géographique",
+      "step2": "Quel est ce site ?",
+      "step2Desc": "Donnez un nom et choisissez le type",
+      "step3": "Ajoutez des photos",
+      "step3Desc": "Au moins une photo pour illustrer le site",
+      "uploadHint": "Cliquez ou glissez vos photos ici",
+      "uploadFormats": "JPG, PNG, WebP — max 10 Mo",
+      "summary": "Récapitulatif",
+      "photos": "photo(s)",
+      "noGPS": "Non défini (centre Algérie)",
+      "publish": "Publier le site",
+      "publishing": "Publication en cours..."
+    },
+    "fields": {
+      "nom": "Nom du site",
+      "type": "Type de patrimoine",
+      "adresse": "Adresse / Localisation précise",
+      "position": "Position sur la carte",
+      "myPosition": "Ma position",
+      "clickMap": "Cliquez sur la carte ou utilisez \"Ma position\""
+    },
+    "placeholders": {
+      "nom": "Ex: Casbah d'Alger, Djemila...",
+      "adresse": "Ex: Centre-ville, Route de..."
+    },
+    "types": {
+      "monument": "Monument",
+      "musee": "Musée",
+      "ville_village": "Ville / Village",
+      "site_archeologique": "Site archéologique",
+      "site_naturel": "Site naturel",
+      "edifice_religieux": "Édifice religieux",
+      "palais_forteresse": "Palais / Forteresse",
+      "autre": "Autre"
+    },
+    "errors": {
+      "wilayaRequired": "La wilaya est requise",
+      "communeRequired": "La commune est requise",
+      "nomRequired": "Le nom est requis (au moins en français ou arabe)",
+      "typeRequired": "Le type de patrimoine est requis",
+      "photoRequired": "Au moins une photo est requise",
+      "invalidFiles": "Certains fichiers sont invalides (images < 10 Mo)",
+      "createFailed": "Erreur lors de la création",
+      "gpsRecommended": "Position GPS non définie. Le site sera placé au centre de l'Algérie."
+    },
+    "success": {
+      "created": "Site créé !",
+      "createdDesc": "Vous pouvez maintenant enrichir ce site avec plus de détails.",
+      "partial": "Site créé (photos non uploadées)",
+      "partialDesc": "Le site a été créé mais certaines photos n'ont pas pu être uploadées."
+    },
+    "duplicate": {
+      "found": "Site déjà existant",
+      "tryEnrich": "Un site avec ce nom existe dans cette commune. Essayez de l'enrichir plutôt.",
+      "createAnyway": "Créer quand même",
+      "goToExisting": "Enrichir le site existant"
+    },
+    "checking": "Vérification...",
+    "sections": {
+      "histoire": "Histoire",
+      "architecture": "Architecture",
+      "traditions": "Traditions & Coutumes",
+      "gastronomie": "Gastronomie locale",
+      "artisanat": "Artisanat local",
+      "personnalites": "Personnalités",
+      "infosPratiques": "Informations pratiques",
+      "references": "Références historiques"
+    },
+    "contribute": {
+      "add": "Contribuer",
+      "empty": "Cette section n'est pas encore documentée.",
+      "saved": "Contribution enregistrée !",
+      "thanks": "Merci pour votre contribution",
+      "contentRequired": "Veuillez saisir du contenu (au moins en français ou arabe)",
+      "saveFailed": "Erreur lors de la sauvegarde"
+    },
+    "gps": {
+      "unavailable": "Géolocalisation non disponible",
+      "unavailableDesc": "Votre appareil ne supporte pas la géolocalisation.",
+      "found": "Position trouvée",
+      "denied": "Accès à la position refusé. Autorisez la géolocalisation.",
+      "unavailablePos": "Position indisponible. Cliquez sur la carte.",
+      "timeout": "Délai dépassé. Réessayez ou cliquez sur la carte.",
+      "error": "Erreur de géolocalisation"
     }
   },
   "toasts": {

@@ -2626,6 +2626,83 @@
       "all": "الكل",
       "allTypes": "جميع الأنواع",
       "allWilayas": "جميع الولايات"
+    },
+    "create": {
+      "title": "إضافة موقع تراثي",
+      "subtitle": "أنشئ بسرعة، أثرِ لاحقاً",
+      "step1": "أين يقع هذا الموقع؟",
+      "step1Desc": "اختر الموقع الجغرافي",
+      "step2": "ما هو هذا الموقع؟",
+      "step2Desc": "أدخل الاسم واختر النوع",
+      "step3": "أضف صوراً",
+      "step3Desc": "صورة واحدة على الأقل لتوضيح الموقع",
+      "uploadHint": "انقر أو اسحب صورك هنا",
+      "uploadFormats": "JPG, PNG, WebP — حد أقصى 10 ميغا",
+      "summary": "ملخص",
+      "photos": "صورة(صور)",
+      "noGPS": "غير محدد (وسط الجزائر)",
+      "publish": "نشر الموقع",
+      "publishing": "جارٍ النشر..."
+    },
+    "fields": {
+      "nom": "اسم الموقع",
+      "type": "نوع التراث",
+      "adresse": "العنوان / الموقع الدقيق",
+      "position": "الموقع على الخريطة",
+      "myPosition": "موقعي",
+      "clickMap": "انقر على الخريطة أو استخدم \"موقعي\""
+    },
+    "types": {
+      "monument": "نصب تذكاري",
+      "musee": "متحف",
+      "ville_village": "مدينة / قرية",
+      "site_archeologique": "موقع أثري",
+      "site_naturel": "موقع طبيعي",
+      "edifice_religieux": "مبنى ديني",
+      "palais_forteresse": "قصر / حصن",
+      "autre": "أخرى"
+    },
+    "errors": {
+      "wilayaRequired": "الولاية مطلوبة",
+      "communeRequired": "البلدية مطلوبة",
+      "nomRequired": "الاسم مطلوب (بالفرنسية أو العربية على الأقل)",
+      "typeRequired": "نوع التراث مطلوب",
+      "photoRequired": "صورة واحدة على الأقل مطلوبة",
+      "createFailed": "خطأ أثناء الإنشاء",
+      "gpsRecommended": "الموقع الجغرافي غير محدد."
+    },
+    "success": {
+      "created": "تم إنشاء الموقع!",
+      "createdDesc": "يمكنك الآن إثراء هذا الموقع بمزيد من التفاصيل."
+    },
+    "duplicate": {
+      "found": "موقع موجود مسبقاً",
+      "tryEnrich": "يوجد موقع بهذا الاسم في هذه البلدية.",
+      "createAnyway": "إنشاء على أي حال",
+      "goToExisting": "إثراء الموقع الموجود"
+    },
+    "sections": {
+      "histoire": "التاريخ",
+      "architecture": "العمارة",
+      "traditions": "التقاليد والعادات",
+      "gastronomie": "المطبخ المحلي",
+      "artisanat": "الحرف المحلية",
+      "personnalites": "الشخصيات",
+      "infosPratiques": "معلومات عملية",
+      "references": "المراجع التاريخية"
+    },
+    "contribute": {
+      "add": "ساهم",
+      "empty": "هذا القسم لم يُوثّق بعد.",
+      "saved": "تم تسجيل المساهمة!",
+      "thanks": "شكراً لمساهمتك",
+      "saveFailed": "خطأ أثناء الحفظ"
+    },
+    "gps": {
+      "found": "تم العثور على الموقع",
+      "denied": "تم رفض الوصول إلى الموقع.",
+      "timeout": "انتهت المهلة. أعد المحاولة.",
+      "error": "خطأ في تحديد الموقع"
     }
   },
   "toasts": {
