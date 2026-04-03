@@ -89,7 +89,7 @@ const AdminOeuvresTab: React.FC = () => {
 
   // Filtrer les œuvres
   const filteredOeuvres = React.useMemo(() => {
-    return allOeuvres.filter((oeuvre: Record<string, unknown>) => {
+    return allOeuvres.filter((oeuvre: any) => {
       // Filtre de recherche
       if (debouncedSearch) {
         const searchLower = debouncedSearch.toLowerCase();
@@ -202,7 +202,7 @@ const AdminOeuvresTab: React.FC = () => {
         />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredOeuvres.map((oeuvre: Record<string, unknown>) => {
+          {filteredOeuvres.map((oeuvre: any) => {
             const TypeIcon = getTypeIcon(oeuvre.type_oeuvre || oeuvre.TypeOeuvre?.nom_type);
             const titre = getLocalizedText(oeuvre.titre, currentLang, t('common.untitled', 'Sans titre'));
             const description = getLocalizedText(oeuvre.description, currentLang, t('common.noDescription', 'Pas de description'));
