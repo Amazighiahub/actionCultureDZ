@@ -130,10 +130,9 @@ export function useOeuvres(): UseOeuvresReturn {
           if (age < 30 * 60 * 1000) {
             try {
               const oeuvresData = JSON.parse(backup);
-              // Filtrer l'artisanat même dans le backup
+              // Filtrer l'artisanat même dans le backup (type 7)
               const filteredData = oeuvresData.filter((o: Oeuvre) => {
-                const typeNom = o.TypeOeuvre?.nom_type?.toLowerCase() || '';
-                return !typeNom.includes('artisanat');
+                return o.id_type_oeuvre !== 7;
               });
               setOeuvres(filteredData);
               setError('Limite de requêtes atteinte. Affichage des données en cache.');
@@ -160,11 +159,13 @@ export function useOeuvres(): UseOeuvresReturn {
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(o => {
-        // Recherche dans le titre
-        if (o.titre?.toLowerCase().includes(query)) return true;
-        
-        // Recherche dans la description
-        if (o.description?.toLowerCase().includes(query)) return true;
+        // Recherche dans le titre (multilingue)
+        const titre = typeof o.titre === 'object' ? Object.values(o.titre || {}).join(' ') : String(o.titre || '');
+        if (titre.toLowerCase().includes(query)) return true;
+
+        // Recherche dans la description (multilingue)
+        const desc = typeof o.description === 'object' ? Object.values(o.description || {}).join(' ') : String(o.description || '');
+        if (desc.toLowerCase().includes(query)) return true;
         
         // Recherche dans les contributeurs
         const contributeurs = [];
