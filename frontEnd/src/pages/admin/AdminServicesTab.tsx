@@ -54,6 +54,7 @@ const AdminServicesTab: React.FC = () => {
     loadingServices,
     errorServices,
     deleteService,
+    validateService,
     refreshAll
   } = useDashboardAdmin('services');
 

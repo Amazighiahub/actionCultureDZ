@@ -283,7 +283,8 @@ const validateUser = async ({ userId, validated }: { userId: number; validated: 
         };
       });
       
-      // Cache handled by React Query invalidation
+      // Rafraîchir aussi la liste complète
+      await loadAllUsers();
     }
   } catch (error) {
     toast({
@@ -396,7 +397,7 @@ const validateUser = async ({ userId, validated }: { userId: number; validated: 
           title: t('toasts.success'),
           description: t('toasts.bulkActionApplied', { action, count: userIds.length })
         });
-        await loadPendingUsers();
+        await Promise.all([loadAllUsers(), loadPendingUsers()]);
       }
     } catch (error) {
       toast({

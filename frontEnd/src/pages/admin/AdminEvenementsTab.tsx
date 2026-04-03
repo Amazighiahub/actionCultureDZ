@@ -185,7 +185,7 @@ const AdminEvenementsTab: React.FC = () => {
             const lieu = getLocalizedText(event.lieu?.nom || event.lieu_nom, currentLang, '');
 
             return (
-              <Card key={event.id_evenement} className="hover:shadow-md transition-shadow overflow-hidden">
+              <Card key={event.id_evenement} className="hover:shadow-md transition-shadow overflow-hidden cursor-pointer" onClick={() => navigate(`/evenements/${event.id_evenement}`, { state: { from: '/admin/dashboard?tab=evenements' } })}>
                 {/* Image */}
                 <div className="aspect-video relative bg-muted">
                   {event.image_url || event.medias?.[0]?.url ? (
