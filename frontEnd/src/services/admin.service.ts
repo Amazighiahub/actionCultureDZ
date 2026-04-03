@@ -265,7 +265,9 @@ class AdminService {
   }
 
   async validateService(serviceId: number, validated: boolean): Promise<ApiResponse<void>> {
-    return httpClient.patch<void>(API_ENDPOINTS.dashboard.services.updateStatus(serviceId), { valide: validated });
+    // Backend uses POST /services/:id/validate OR /services/:id/reject
+    const endpoint = validated ? `/services/${serviceId}/validate` : `/services/${serviceId}/reject`;
+    return httpClient.post<void>(endpoint, {});
   }
 
   // ========================================
