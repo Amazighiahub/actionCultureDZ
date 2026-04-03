@@ -4,6 +4,7 @@ import { getLocalizedText } from '@/utils/getLocalizedText';
  * Utilise useDashboardAdmin
  */
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -43,6 +44,7 @@ const TYPE_OPTIONS = ['tous', 'monument', 'vestige', 'musee', 'site_naturel', 'v
 
 const AdminPatrimoineTab: React.FC = () => {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   const currentLang = i18n.language || 'fr';
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -96,7 +98,7 @@ const AdminPatrimoineTab: React.FC = () => {
   };
 
   const handleView = (id: number) => {
-    window.open(`/patrimoine/${id}`, '_blank', 'noopener,noreferrer');
+    navigate(`/patrimoine/${id}`, { state: { from: '/admin/dashboard?tab=patrimoine' } });
   };
 
   const handleDelete = (id: number, nom: string) => {
@@ -262,7 +264,7 @@ const AdminPatrimoineTab: React.FC = () => {
                           <Eye className="h-4 w-4 mr-2" />
                           {t('common.view', 'Voir')}
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => window.open(`/admin/patrimoine/${item.id_patrimoine || item.id_lieu || item.id}/edit`, '_blank', 'noopener,noreferrer')}>
+                        <DropdownMenuItem onClick={() => navigate(`/patrimoine/${item.id_patrimoine || item.id_lieu || item.id}`, { state: { from: '/admin/dashboard?tab=patrimoine' } })}>
                           <Edit className="h-4 w-4 mr-2" />
                           {t('common.edit', 'Modifier')}
                         </DropdownMenuItem>

@@ -4,6 +4,7 @@ import { getLocalizedText } from '@/utils/getLocalizedText';
  * Utilise useDashboardAdmin
  */
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -40,6 +41,7 @@ import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 
 const AdminServicesTab: React.FC = () => {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   const currentLang = i18n.language || 'fr';
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -224,13 +226,12 @@ const AdminServicesTab: React.FC = () => {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => {
+                          const lieuId = service.id_lieu || service.Lieu?.id_lieu;
+                          if (lieuId) navigate(`/patrimoine/${lieuId}`, { state: { from: '/admin/dashboard?tab=services' } });
+                        }}>
                           <Eye className="h-4 w-4 mr-2" />
-                          {t('common.view', 'Voir')}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Edit className="h-4 w-4 mr-2" />
-                          {t('common.edit', 'Modifier')}
+                          {t('common.view', 'Voir le lieu')}
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem

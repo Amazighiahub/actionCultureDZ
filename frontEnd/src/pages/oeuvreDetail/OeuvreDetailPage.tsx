@@ -3,7 +3,7 @@
  * Utilise HeroSection avec effet flip 3D pour les livres
  */
 import React, { Suspense, useState, useEffect } from 'react';
-import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
+import { useParams, useNavigate, Link, useLocation, Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -99,11 +99,12 @@ const OeuvreDetailPage: React.FC = () => {
 
   const handleBackNavigation = () => {
     if (fromPath) {
-      navigate(fromPath);
+      // Use window.location for maximum reliability
+      window.location.href = fromPath;
       return;
     }
 
-    if (window.history.length > 1) {
+    if (window.history.length > 2) {
       navigate(-1);
       return;
     }
@@ -294,10 +295,9 @@ const OeuvreDetailPage: React.FC = () => {
     });
   };
 
-  // Retour si pas d'ID
+  // Retour si pas d'ID — utiliser <Navigate> au lieu de navigate() pendant le render
   if (!id) {
-    navigate('/oeuvres');
-    return null;
+    return <Navigate to="/oeuvres" replace />;
   }
 
   // État de chargement
@@ -364,10 +364,17 @@ const OeuvreDetailPage: React.FC = () => {
       <main>
         {/* Bouton retour */}
         <div className="container pt-4">
-          <Button variant="ghost" size="sm" onClick={handleBackNavigation} className="text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            {t('common.back', 'Retour')}
-          </Button>
+          {fromPath ? (
+            <a href={fromPath} className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground px-3 py-1.5 rounded-md hover:bg-accent transition-colors">
+              <ArrowLeft className="h-4 w-4 mr-1" />
+              {t('common.back', 'Retour')}
+            </a>
+          ) : (
+            <Button variant="ghost" size="sm" onClick={handleBackNavigation} className="text-muted-foreground hover:text-foreground">
+              <ArrowLeft className="h-4 w-4 mr-1" />
+              {t('common.back', 'Retour')}
+            </Button>
+          )}
         </div>
         {/* ════════════════════════════════════════════════════════════════════
             ✅ HERO SECTION AVEC EFFET FLIP 3D POUR LES LIVRES

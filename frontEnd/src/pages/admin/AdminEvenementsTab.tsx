@@ -4,6 +4,7 @@ import { getLocalizedText } from '@/utils/getLocalizedText';
  * Utilise useDashboardAdmin
  */
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -41,6 +42,7 @@ const STATUS_OPTIONS = ['tous', 'publie', 'brouillon', 'annule', 'termine'];
 
 const AdminEvenementsTab: React.FC = () => {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   const { formatDate } = useFormatDate();
   const currentLang = i18n.language || 'fr';
 
@@ -244,7 +246,7 @@ const AdminEvenementsTab: React.FC = () => {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => navigate(`/evenements/${event.id_evenement}`, { state: { from: '/admin/dashboard?tab=evenements' } })}>
                           <Eye className="h-4 w-4 mr-2" />
                           {t('common.view', 'Voir')}
                         </DropdownMenuItem>

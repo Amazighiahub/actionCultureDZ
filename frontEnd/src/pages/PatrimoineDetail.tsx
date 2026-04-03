@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { getDateLocale } from '@/hooks/useFormatDate';
 import Header from '@/components/Header';
@@ -150,6 +150,8 @@ const DetailSkeleton = () => (
 
 const PatrimoineDetail = () => {
   const { id } = useParams<{ id: string }>();
+  const location = useLocation();
+  const fromPath = typeof (location.state as any)?.from === 'string' ? (location.state as any).from : null;
   const { t, i18n } = useTranslation();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -298,13 +300,14 @@ const PatrimoineDetail = () => {
       <Header />
 
       <main className="container py-8">
-        {/* Navigation */}
-        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
-          <Link to="/patrimoine" className="hover:text-primary transition-colors">
-            {t('nav.heritage', 'Patrimoine')}
-          </Link>
-          <ChevronRight className="h-4 w-4" />
-          <span className="text-foreground">{translate(site.nom, lang)}</span>
+        {/* Navigation retour */}
+        <div className="flex items-center gap-2 mb-6">
+          <Button variant="ghost" size="sm" onClick={() => fromPath ? navigate(fromPath) : navigate('/patrimoine')} className="text-muted-foreground hover:text-foreground">
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            {t('common.back', 'Retour')}
+          </Button>
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm text-foreground">{translate(site.nom, lang)}</span>
         </div>
 
         {/* Image principale et galerie */}
