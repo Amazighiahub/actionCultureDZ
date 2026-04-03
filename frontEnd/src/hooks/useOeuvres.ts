@@ -94,9 +94,9 @@ export function useOeuvres(): UseOeuvresReturn {
         let oeuvresData: Oeuvre[] = [];
 
         if (Array.isArray(result.data)) {
-          oeuvresData = result.data;
+          oeuvresData = result.data as Oeuvre[];
         } else if (result.data && typeof result.data === 'object') {
-          const data = result.data as Record<string, unknown>;
+          const data = result.data as unknown as Record<string, unknown>;
           const items = data.oeuvres || data.items || data.results || data.data;
           oeuvresData = Array.isArray(items) ? items as Oeuvre[] : [];
         }
