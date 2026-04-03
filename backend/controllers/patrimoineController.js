@@ -92,11 +92,13 @@ class PatrimoineController extends BaseController {
   // ============================================================================
 
   async create(req, res) {
+    // Ajouter l'id du créateur
+    req.body.id_createur = req.user?.id_user;
     const site = await this.patrimoineService.create(req.body);
     res.status(201).json({
       success: true,
       message: req.t('patrimoine.created'),
-      data: site.toDetailJSON(req.lang)
+      data: site.toDetailJSON ? site.toDetailJSON(req.lang) : site
     });
   }
 

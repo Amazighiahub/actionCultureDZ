@@ -141,14 +141,16 @@ const AjouterPatrimoineRapide: React.FC = () => {
     setLoading(true);
     try {
       const createData = {
-        nom: JSON.stringify(formData.nom),
-        description: JSON.stringify({ fr: '', ar: '', en: '' }),
+        nom: formData.nom,
+        description: { fr: '', ar: '', en: '' },
+        typePatrimoine: formData.typePatrimoine,
         type: formData.typePatrimoine,
         wilaya_id: formData.wilayaId,
         commune_id: formData.communeId,
-        adresse: formData.adresse.fr || formData.adresse.ar || '',
-        latitude: 0,
-        longitude: 0,
+        communeId: formData.communeId,
+        adresse: formData.adresse,
+        latitude: 36.75,
+        longitude: 3.05,
         statut: 'ouvert',
       };
 

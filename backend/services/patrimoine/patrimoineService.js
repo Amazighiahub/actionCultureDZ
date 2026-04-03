@@ -170,7 +170,9 @@ class PatrimoineService extends BaseService {
             typeLieu: data.typeLieu || 'Commune',
             typePatrimoine: data.typePatrimoine || 'monument',
             communeId: data.communeId,
-            localiteId: data.localiteId || null
+            localiteId: data.localiteId || null,
+            id_createur: data.id_createur || null,
+            statut: data.statut || 'publie'
           };
           const site = await Lieu.create(entityData, { transaction });
           lieuId = site.id_lieu;
