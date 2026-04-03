@@ -27,6 +27,7 @@ import { patrimoineService } from '@/services/patrimoine.service';
 import MultiLangInput from '@/components/MultiLangInput';
 import GeoSelector from '@/components/shared/GeoSelector';
 import { useAuth } from '@/hooks/useAuth';
+const GPSPicker = React.lazy(() => import('@/components/shared/GPSPicker'));
 import { useRTL } from '@/hooks/useRTL';
 import { useToast } from '@/hooks/use-toast';
 
@@ -45,6 +46,8 @@ interface FormData {
   wilayaId: number | null;
   dairaId: number | null;
   communeId: number | null;
+  latitude: number;
+  longitude: number;
 }
 
 const INITIAL_FORM: FormData = {
@@ -54,6 +57,8 @@ const INITIAL_FORM: FormData = {
   wilayaId: null,
   dairaId: null,
   communeId: null,
+  latitude: 0,
+  longitude: 0,
 };
 
 const AjouterPatrimoineRapide: React.FC = () => {
@@ -170,8 +175,8 @@ const AjouterPatrimoineRapide: React.FC = () => {
         commune_id: formData.communeId,
         communeId: formData.communeId,
         adresse: formData.adresse,
-        latitude: 36.75,
-        longitude: 3.05,
+        latitude: formData.latitude || 36.75,
+        longitude: formData.longitude || 3.05,
         statut: 'ouvert',
       };
 
@@ -373,6 +378,15 @@ const AjouterPatrimoineRapide: React.FC = () => {
                 />
               </div>
 
+              {/* GPS via carte */}
+              <React.Suspense fallback={<div className="h-[250px] bg-muted rounded-lg animate-pulse" />}>
+                <GPSPicker
+                  latitude={formData.latitude}
+                  longitude={formData.longitude}
+                  onPositionChange={(lat, lng) => setFormData(prev => ({ ...prev, latitude: lat, longitude: lng }))}
+                />
+              </div>
+
               {/* Alerte doublons */}
               {duplicates.length > 0 && (
                 <Alert className="border-amber-300 bg-amber-50 dark:bg-amber-950/20">
@@ -474,17 +488,24 @@ const AjouterPatrimoineRapide: React.FC = () => {
                 </div>
               )}
 
-              {/* Récapitulatif */}
-              <Alert className="bg-muted/50">
-                <CheckCircle2 className="h-4 w-4" />
-                <AlertDescription>
-                  <strong>{t('patrimoine.create.summary', 'Récapitulatif :')}</strong>
-                  <br />
-                  {formData.nom.fr || formData.nom.ar} — {getTypeLabel(formData.typePatrimoine)}
-                  <br />
-                  {medias.length} {t('patrimoine.create.photos', 'photo(s)')}
-                </AlertDescription>
-              </Alert>
+              {/* Récapitulatif complet */}
+              <Card className="bg-muted/30 border-dashed">
+                <CardContent className="p-4 space-y-3">
+                  <h4 className="font-semibold flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-primary" /> {t('patrimoine.create.summary', 'Récapitulatif')}</h4>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div className="text-muted-foreground">{t('patrimoine.fields.nom', 'Nom')}</div>
+                    <div className="font-medium">{formData.nom.fr || formData.nom.ar || '—'}</div>
+                    <div className="text-muted-foreground">{t('patrimoine.fields.type', 'Type')}</div>
+                    <div className="font-medium">{getTypeLabel(formData.typePatrimoine)}</div>
+                    <div className="text-muted-foreground">{t('patrimoine.fields.adresse', 'Adresse')}</div>
+                    <div className="font-medium">{formData.adresse.fr || formData.adresse.ar || '—'}</div>
+                    <div className="text-muted-foreground">{t('patrimoine.fields.position', 'GPS')}</div>
+                    <div className="font-medium">{formData.latitude !== 0 ? `${formData.latitude.toFixed(4)}, ${formData.longitude.toFixed(4)}` : t('patrimoine.create.noGPS', 'Non défini (centre Algérie)')}</div>
+                    <div className="text-muted-foreground">{t('patrimoine.create.photos', 'Photos')}</div>
+                    <div className="font-medium">{medias.length}</div>
+                  </div>
+                </CardContent>
+              </Card>
 
               <div className="flex justify-between mt-6">
                 <Button variant="outline" onClick={prevStep}>
