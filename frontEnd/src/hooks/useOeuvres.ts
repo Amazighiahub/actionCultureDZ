@@ -91,20 +91,20 @@ export function useOeuvres(): UseOeuvresReturn {
       const result = await oeuvreService.getOeuvres(params);
       
       if (result.success && result.data) {
-        const data = result.data as { oeuvres?: unknown[]; items?: unknown[]; results?: unknown[]; data?: unknown[] };
-        let oeuvresData = data.oeuvres ||
-                         data.items ||
-                         data.results ||
-                         data.data ||
-                         result.data ||
-                         [];
-        
+        let oeuvresData: Oeuvre[] = [];
+
+        if (Array.isArray(result.data)) {
+          oeuvresData = result.data;
+        } else if (result.data && typeof result.data === 'object') {
+          const data = result.data as Record<string, unknown>;
+          const items = data.oeuvres || data.items || data.results || data.data;
+          oeuvresData = Array.isArray(items) ? items as Oeuvre[] : [];
+        }
+
         // Filtrer pour exclure l'artisanat (type 7)
-        oeuvresData = oeuvresData.filter((o: any) => {
-          return o.id_type_oeuvre !== 7;
-        });
-        
-        setOeuvres(Array.isArray(oeuvresData) ? oeuvresData as Oeuvre[] : []);
+        oeuvresData = oeuvresData.filter((o) => o.id_type_oeuvre !== 7);
+
+        setOeuvres(oeuvresData);
         
         // Sauvegarder en localStorage
         try {
