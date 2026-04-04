@@ -533,11 +533,12 @@ const loadOeuvres = useCallback(async (filters?: OeuvreFilters) => {
     const response = await adminService.getOeuvres(filters);
 
     if (response.success && response.data) {
-      // Le backend renvoie { data: [...], pagination } mais PaginatedResponse attend { items: [...], pagination }
+      // Le backend peut renvoyer un tableau direct ou un objet paginé
       const raw = response.data as any;
+      const items = Array.isArray(raw) ? raw : (raw.items || raw.oeuvres || raw.data || []);
       setOeuvres({
-        items: raw.items || raw.oeuvres || raw.data || [],
-        pagination: raw.pagination || { total: 0, page: 1, limit: 20, pages: 1 }
+        items,
+        pagination: Array.isArray(raw) ? { total: items.length, page: 1, limit: items.length, pages: 1 } : (raw.pagination || { total: 0, page: 1, limit: 20, pages: 1 })
       });
     }
   } catch (error: unknown) {
