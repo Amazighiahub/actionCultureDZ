@@ -201,107 +201,89 @@ const AdminOeuvresTab: React.FC = () => {
           } : undefined}
         />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredOeuvres.map((oeuvre: any) => {
-            const TypeIcon = getTypeIcon(oeuvre.type_oeuvre || oeuvre.TypeOeuvre?.nom_type);
-            const titre = getLocalizedText(oeuvre.titre, currentLang, t('common.untitled', 'Sans titre'));
-            const description = getLocalizedText(oeuvre.description, currentLang, t('common.noDescription', 'Pas de description'));
-            const typeName = getLocalizedText(
-              oeuvre.type_oeuvre || oeuvre.TypeOeuvre?.nom_type,
-              currentLang,
-              t('common.undefined', 'Non défini')
-            );
+        <Card>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b bg-muted/50">
+                  <th className="text-left p-3 text-sm font-medium">#</th>
+                  <th className="text-left p-3 text-sm font-medium">{t('admin.oeuvres.table.title', 'Titre')}</th>
+                  <th className="text-left p-3 text-sm font-medium">{t('admin.oeuvres.table.type', 'Type')}</th>
+                  <th className="text-left p-3 text-sm font-medium">{t('admin.oeuvres.table.author', 'Auteur')}</th>
+                  <th className="text-left p-3 text-sm font-medium">{t('admin.oeuvres.table.status', 'Statut')}</th>
+                  <th className="text-left p-3 text-sm font-medium">{t('admin.oeuvres.table.date', 'Date')}</th>
+                  <th className="text-right p-3 text-sm font-medium">{t('admin.oeuvres.table.actions', 'Actions')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredOeuvres.map((oeuvre: any) => {
+                  const titre = getLocalizedText(oeuvre.titre, currentLang, t('common.untitled', 'Sans titre'));
+                  const typeName = getLocalizedText(
+                    oeuvre.type_oeuvre || oeuvre.TypeOeuvre?.nom_type,
+                    currentLang,
+                    t('common.undefined', 'Non défini')
+                  );
+                  const auteur = oeuvre.Saiseur
+                    ? `${getLocalizedText(oeuvre.Saiseur.prenom, currentLang)} ${getLocalizedText(oeuvre.Saiseur.nom, currentLang)}`
+                    : '-';
+                  const date = oeuvre.date_creation ? new Date(oeuvre.date_creation).toLocaleDateString('fr-FR') : '-';
 
-            return (
-              <Card key={oeuvre.id_oeuvre} className="hover:shadow-md transition-shadow overflow-hidden cursor-pointer" onClick={() => navigateToOeuvre(oeuvre.id_oeuvre)}>
-                {/* Image */}
-                <div className="aspect-video relative bg-muted">
-                  {oeuvre.image_url || oeuvre.medias?.[0]?.url ? (
-                    <LazyImage
-                      src={getAssetUrl(oeuvre.image_url || oeuvre.medias?.[0]?.url)}
-                      alt={titre}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <TypeIcon className="h-12 w-12 text-muted-foreground" />
-                    </div>
-                  )}
-                  <div className="absolute top-2 right-2">
-                    <StatusBadge status={oeuvre.statut || 'en_attente'} size="sm" />
-                  </div>
-                </div>
-
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-medium truncate">{titre}</h3>
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {description}
-                      </p>
-                      <div className="flex items-center gap-2 mt-2">
-                        <Badge variant="outline" className="text-xs">
-                          <TypeIcon className="h-3 w-3 mr-1" />
-                          {typeName}
-                        </Badge>
-                        {oeuvre.note_moyenne && (
-                          <Badge variant="secondary" className="text-xs">
-                            {Number(oeuvre.note_moyenne).toFixed(1)}
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-
-                    <Button variant="outline" size="sm" className="shrink-0" onClick={(e) => {
-                      e.stopPropagation();
-                      navigateToOeuvre(oeuvre.id_oeuvre);
-                    }}>
-                      <Eye className="h-3 w-3 mr-1" />
-                      {t('common.view', 'Voir')}
-                    </Button>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" aria-label={t('common.moreOptions', 'Plus d\'options')} onClick={(e) => e.stopPropagation()}>
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        {(oeuvre.statut === 'en_attente' || oeuvre.statut === 'brouillon') && (
-                          <>
-                            <DropdownMenuItem
-                              onClick={() => validateOeuvre({ oeuvreId: oeuvre.id_oeuvre, validated: true })}
-                            >
-                              <CheckCircle className="h-4 w-4 mr-2" />
-                              {t('common.validate', 'Valider')}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => validateOeuvre({ oeuvreId: oeuvre.id_oeuvre, validated: false })}
-                            >
-                              <XCircle className="h-4 w-4 mr-2" />
-                              {t('common.reject', 'Rejeter')}
-                            </DropdownMenuItem>
-                          </>
-                        )}
-                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate(`/modifier-oeuvre/${oeuvre.id_oeuvre}`); }}>
-                          <Edit className="h-4 w-4 mr-2" />
-                          {t('common.edit', 'Modifier')}
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          className="text-destructive"
-                          onClick={(e) => { e.stopPropagation(); deleteOeuvre(oeuvre.id_oeuvre); }}
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          {t('common.delete', 'Supprimer')}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+                  return (
+                    <tr key={oeuvre.id_oeuvre} className="border-b hover:bg-muted/30 transition-colors">
+                      <td className="p-3 text-sm text-muted-foreground">{oeuvre.id_oeuvre}</td>
+                      <td className="p-3">
+                        <div className="flex items-center gap-3">
+                          {oeuvre.Media?.[0]?.url || oeuvre.image_url ? (
+                            <img src={getAssetUrl(oeuvre.Media?.[0]?.url || oeuvre.image_url)} alt="" className="w-10 h-10 rounded object-cover" />
+                          ) : (
+                            <div className="w-10 h-10 rounded bg-muted flex items-center justify-center">
+                              <BookOpen className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <p className="font-medium truncate max-w-[200px]">{titre}</p>
+                            <p className="text-xs text-muted-foreground">{oeuvre.id_langue ? `Langue: ${oeuvre.id_langue}` : ''}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-3">
+                        <Badge variant="outline" className="text-xs">{typeName}</Badge>
+                      </td>
+                      <td className="p-3 text-sm">{auteur}</td>
+                      <td className="p-3">
+                        <StatusBadge status={oeuvre.statut || 'en_attente'} size="sm" />
+                      </td>
+                      <td className="p-3 text-sm text-muted-foreground">{date}</td>
+                      <td className="p-3">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button type="button" variant="ghost" size="icon" title={t('common.view', 'Voir')} onClick={() => navigateToOeuvre(oeuvre.id_oeuvre)}>
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button type="button" variant="ghost" size="icon" title={t('common.edit', 'Modifier')} onClick={() => navigate(`/modifier-oeuvre/${oeuvre.id_oeuvre}`)}>
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          {(oeuvre.statut === 'en_attente' || oeuvre.statut === 'brouillon') && (
+                            <>
+                              <Button type="button" variant="ghost" size="icon" title={t('common.validate', 'Valider')} className="text-green-600 hover:text-green-700" onClick={() => validateOeuvre({ oeuvreId: oeuvre.id_oeuvre, validated: true })}>
+                                <CheckCircle className="h-4 w-4" />
+                              </Button>
+                              <Button type="button" variant="ghost" size="icon" title={t('common.reject', 'Rejeter')} className="text-amber-600 hover:text-amber-700" onClick={() => validateOeuvre({ oeuvreId: oeuvre.id_oeuvre, validated: false })}>
+                                <XCircle className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
+                          <Button type="button" variant="ghost" size="icon" title={t('common.delete', 'Supprimer')} className="text-destructive hover:text-destructive" onClick={() => deleteOeuvre(oeuvre.id_oeuvre)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </Card>
       )}
     </div>
   );
