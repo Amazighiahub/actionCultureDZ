@@ -18,7 +18,8 @@ import { Label } from '@/components/ui/label';
 import {
   Info, Users, Image, MessageCircle, Calendar, ArrowLeft,
   BookOpen, Sparkles, ThumbsUp, Send, Loader2,
-  Share2, MapPin, CalendarCheck, ImageIcon
+  Share2, MapPin, CalendarCheck, ImageIcon,
+  Palette, Ruler, Frame, PenTool, Stamp, CheckCircle2, Weight, Tag
 } from 'lucide-react';
 
 // Composants partagés
@@ -29,6 +30,8 @@ import { getTranslation, type SupportedLanguage } from '@/types/common/multiling
 
 // ✅ Import du HeroSection avec effet flip 3D
 import { HeroSection } from '@/components/oeuvre/HeroSection';
+import { getAssetUrl } from '@/helpers/assetUrl';
+import { getMainImage } from '@/types/models/media-extended.types';
 
 // Hook personnalisé
 import { useOeuvreDetails } from '@/hooks/useOeuvreDetails';
@@ -389,6 +392,170 @@ const OeuvreDetailPage: React.FC = () => {
           favoriteLoading={favoriteLoading}
           onToggleFavorite={handleToggleFavorite}
         />
+
+        {/* Section détaillée style galerie pour Œuvre d'Art et Artisanat */}
+        {(oeuvre.id_type_oeuvre === 6 || oeuvre.id_type_oeuvre === 7) && (() => {
+          const allImages = (medias || []).filter(m => m.type_media === 'image');
+          const mainImg = getMainImage((medias || []) as MediaExtended[]);
+          const artData = (oeuvre as OeuvreWithExtras).OeuvreArt;
+          const artisanatData = (oeuvre as OeuvreWithExtras).Artisanat;
+          const auteurNom = allContributeurs.length > 0
+            ? allContributeurs.map(c => `${c.prenom || ''} ${c.nom || ''}`).join(', ').trim()
+            : undefined;
+
+          return (
+            <div className="container max-w-6xl py-8">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Gauche — Galerie */}
+                <div className="space-y-4">
+                  {/* Image principale */}
+                  <div className="aspect-[4/3] rounded-xl overflow-hidden bg-muted border">
+                    {mainImg ? (
+                      <img
+                        src={getAssetUrl(mainImg)}
+                        alt={getTranslation(oeuvre.titre, lang)}
+                        className="w-full h-full object-contain"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Palette className="h-16 w-16 text-muted-foreground/30" />
+                      </div>
+                    )}
+                  </div>
+                  {/* Miniatures */}
+                  {allImages.length > 1 && (
+                    <div className="flex gap-2 overflow-x-auto pb-2">
+                      {allImages.map((media, idx) => (
+                        <button
+                          key={media.id_media || idx}
+                          className="w-16 h-16 rounded-lg overflow-hidden border-2 border-transparent hover:border-primary transition-colors flex-shrink-0 bg-muted"
+                          onClick={() => {
+                            // Scroll to gallery tab
+                            setActiveTab('description');
+                          }}
+                        >
+                          <img
+                            src={getAssetUrl(media.url)}
+                            alt={media.titre || `Image ${idx + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Droite — Infos détaillées */}
+                <div className="space-y-6">
+                  {/* Titre et artiste */}
+                  <div>
+                    <h2 className="text-2xl font-bold mb-1">
+                      {getTranslation(oeuvre.titre, lang)}
+                      {oeuvre.annee_creation && <span className="text-muted-foreground font-normal">, {oeuvre.annee_creation}</span>}
+                    </h2>
+                    {auteurNom && (
+                      <p className="text-lg text-primary font-medium">{auteurNom}</p>
+                    )}
+                  </div>
+
+                  {/* Section "À propos de l'œuvre" */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4 border-b pb-2">
+                      {oeuvre.id_type_oeuvre === 6
+                        ? t('oeuvre.aboutArt', "À propos de l'œuvre")
+                        : t('oeuvre.aboutCraft', "À propos de l'artisanat")}
+                    </h3>
+
+                    <div className="space-y-4">
+                      {/* Technique */}
+                      {(artData?.technique || artisanatData?.Technique?.nom) && (
+                        <div className="flex items-start gap-3">
+                          <PenTool className="h-5 w-5 text-muted-foreground mt-0.5" />
+                          <div>
+                            <p className="text-sm text-muted-foreground">{t('oeuvre.technique', 'Technique')}</p>
+                            <p className="font-medium">{artData?.technique || artisanatData?.Technique?.nom}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Support (Art) */}
+                      {artData?.support && (
+                        <div className="flex items-start gap-3">
+                          <Frame className="h-5 w-5 text-muted-foreground mt-0.5" />
+                          <div>
+                            <p className="text-sm text-muted-foreground">{t('oeuvre.support', 'Support')}</p>
+                            <p className="font-medium">{artData.support}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Matériau (Artisanat) */}
+                      {artisanatData?.Materiau?.nom && (
+                        <div className="flex items-start gap-3">
+                          <Sparkles className="h-5 w-5 text-muted-foreground mt-0.5" />
+                          <div>
+                            <p className="text-sm text-muted-foreground">{t('oeuvre.material', 'Matériau')}</p>
+                            <p className="font-medium">{artisanatData.Materiau.nom}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Dimensions */}
+                      {(artData?.dimensions || artisanatData?.dimensions) && (
+                        <div className="flex items-start gap-3">
+                          <Ruler className="h-5 w-5 text-muted-foreground mt-0.5" />
+                          <div>
+                            <p className="text-sm text-muted-foreground">{t('oeuvre.dimensions', 'Dimensions')}</p>
+                            <p className="font-medium">{artData?.dimensions || artisanatData?.dimensions}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Poids (Artisanat) */}
+                      {artisanatData?.poids && (
+                        <div className="flex items-start gap-3">
+                          <Weight className="h-5 w-5 text-muted-foreground mt-0.5" />
+                          <div>
+                            <p className="text-sm text-muted-foreground">{t('oeuvre.weight', 'Poids')}</p>
+                            <p className="font-medium">{artisanatData.poids} kg</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Prix */}
+                      {(oeuvre.prix || artisanatData?.prix) && (
+                        <div className="flex items-start gap-3">
+                          <Tag className="h-5 w-5 text-muted-foreground mt-0.5" />
+                          <div>
+                            <p className="text-sm text-muted-foreground">{t('oeuvre.price', 'Prix')}</p>
+                            <p className="font-semibold text-xl text-primary">{(oeuvre.prix || artisanatData?.prix)?.toLocaleString('fr-DZ')} DZD</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Statut */}
+                      {oeuvre.statut === 'publie' && (
+                        <div className="flex items-center gap-3 text-green-600">
+                          <CheckCircle2 className="h-5 w-5" />
+                          <p className="font-medium">{t('oeuvre.verified', 'Œuvre vérifiée et publiée')}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Description courte */}
+                  {oeuvre.description && (
+                    <div className="border-t pt-4">
+                      <p className="text-sm text-muted-foreground leading-relaxed line-clamp-4">
+                        {getTranslation(oeuvre.description, lang)}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Contenu principal avec Tabs */}
         <div className="container max-w-6xl py-8">

@@ -568,7 +568,8 @@ const loadEvenements = useCallback(async (filters?: EvenementFilters) => {
 
     if (response.success && response.data) {
       const raw = response.data as any;
-      setEvenements({ items: raw.items || raw.data || [], pagination: raw.pagination || { total: 0, page: 1, limit: 20, pages: 1 } });
+      const items = Array.isArray(raw) ? raw : (raw.items || raw.data || []);
+      setEvenements({ items, pagination: response.pagination || raw.pagination || { total: items.length, page: 1, limit: 20, pages: 1 } });
     }
   } catch (error: unknown) {
     const status = error instanceof Error && 'status' in error ? (error as { status?: number }).status : undefined;
