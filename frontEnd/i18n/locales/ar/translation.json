@@ -2274,7 +2274,16 @@
     "type": "النوع",
     "upcomingEvents": "الأحداث القادمة",
     "views": "المشاهدات",
-    "year": "السنة"
+    "year": "السنة",
+    "aboutArt": "عن العمل الفني",
+    "aboutCraft": "عن الحرفة",
+    "technique": "تقنية",
+    "support": "الدعامة",
+    "material": "المادة",
+    "dimensions": "الأبعاد",
+    "weight": "الوزن",
+    "price": "السعر",
+    "verified": "عمل موثق ومنشور"
   },
   "event": {
     "accessibility": "إمكانية الوصول",
