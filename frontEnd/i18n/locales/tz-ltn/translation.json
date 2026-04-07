@@ -2174,7 +2174,16 @@
     "type": "Anaw",
     "upcomingEvents": "Ineḍruyen ara d-yasen",
     "views": "timerna",
-    "year": "Aseggwas"
+    "year": "Aseggwas",
+    "aboutArt": "Γef tewzla n tẓuri",
+    "aboutCraft": "Γef tihnaccin",
+    "technique": "Tasenselkimt",
+    "support": "Asefkay",
+    "material": "Talγa",
+    "dimensions": "Tisekta",
+    "weight": "Aẓayer",
+    "price": "Atig",
+    "verified": "Tawzla tettwasentem yerna tettwasenher"
   },
   "event": {
     "accessibility": "Tuffra",

@@ -2161,7 +2161,16 @@
     "type": "Type",
     "upcomingEvents": "Événements à venir",
     "views": "vues",
-    "year": "Année"
+    "year": "Année",
+    "aboutArt": "À propos de l'œuvre",
+    "aboutCraft": "À propos de l'artisanat",
+    "technique": "Technique",
+    "support": "Support",
+    "material": "Matériau",
+    "dimensions": "Dimensions",
+    "weight": "Poids",
+    "price": "Prix",
+    "verified": "Œuvre vérifiée et publiée"
   },
   "event": {
     "accessibility": "Accessibilité",
