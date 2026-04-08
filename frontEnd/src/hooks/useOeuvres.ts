@@ -57,19 +57,14 @@ export function useOeuvres(): UseOeuvresReturn {
     };
   }, []);
 
-  // Charger les types d'œuvres (sans artisanat)
+  // Charger les types d'œuvres (sans artisanat - type 7)
   const loadTypesOeuvres = async () => {
     try {
       const response = await httpClient.get<TypeOeuvre[]>('/metadata/types-oeuvres');
       if (response.success && response.data) {
-        // Filtrer pour exclure l'artisanat
-        let types = Array.isArray(response.data) ? response.data : [];
-        types = types.filter(t => {
-          const nomLower = t.nom_type?.toLowerCase() || '';
-          return !nomLower.includes('artisanat');
-        });
-        
-        setTypesOeuvres(types);
+        const types = Array.isArray(response.data) ? response.data : [];
+        // Exclure l'artisanat par id (fiable, pas dépendant de la langue)
+        setTypesOeuvres(types.filter(t => t.id_type_oeuvre !== 7));
       }
     } catch (error) {
       setTypesOeuvres([]);
