@@ -43,10 +43,12 @@ const securityMiddleware = {
       }
       
       // Sanitisation standard pour tous les champs
+      // Utiliser [\s\S]*? au lieu de .*? pour matcher aussi les retours à la ligne
+      // (le flag 's' n'est pas universellement supporté, [\s\S] est plus sûr)
       return str
-        .replace(/<script[^>]*>.*?<\/script>/gi, '') // Supprimer les scripts
-        .replace(/<iframe[^>]*>.*?<\/iframe>/gi, '') // Supprimer les iframes
-        .replace(/<object[^>]*>.*?<\/object>/gi, '') // Supprimer les objects
+        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '') // Supprimer les scripts (multi-ligne)
+        .replace(/<iframe[^>]*>[\s\S]*?<\/iframe>/gi, '') // Supprimer les iframes (multi-ligne)
+        .replace(/<object[^>]*>[\s\S]*?<\/object>/gi, '') // Supprimer les objects (multi-ligne)
         .replace(/<embed[^>]*>/gi, '') // Supprimer les embeds
         .replace(/on\w+\s*=\s*["'][^"']*["']/gi, '') // Supprimer les event handlers
         .replace(/<[\/\!]*?[^<>]*?>/gi, '') // Supprimer tous les autres tags HTML

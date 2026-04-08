@@ -174,9 +174,9 @@ class App {
     this.app.use(csrfTokenProvider);
 
     // Headers de performance pour les réponses API
+    // NOTE: ne PAS forcer Content-Type ici — res.json() le définit automatiquement
+    // Forcer application/json clobberait les res.sendFile/res.download/exports binaires
     this.app.use('/api', (req, res, next) => {
-      // Charset UTF-8 explicite sur toutes les réponses JSON
-      res.set('Content-Type', 'application/json; charset=utf-8');
       // Vary pour CDN/proxies (langue + encoding)
       res.set('Vary', 'Accept-Encoding, Accept-Language');
       // Empêcher le cache sur les mutations
@@ -232,16 +232,16 @@ class App {
       });
     });
 
-    // Servir le dossier uploads
-    this.app.use('/uploads', express.static(path.join(__dirname, this.config.upload.baseDir || 'uploads'), staticOptions));
-
-    // Logger les accès aux fichiers en développement
+    // Logger les accès aux fichiers en développement (AVANT static, sinon static répond direct)
     if (this.config.server.environment === 'development') {
       this.app.use('/uploads', (req, res, next) => {
         console.log(`📁 Accès fichier: ${req.path}`);
         next();
       });
     }
+
+    // Servir le dossier uploads
+    this.app.use('/uploads', express.static(path.join(__dirname, this.config.upload.baseDir || 'uploads'), staticOptions));
 
     this.app.use('/public', express.static(path.join(__dirname, 'public'), staticOptions));
 
@@ -810,6 +810,3 @@ if (require.main === module) {
 }
 
 module.exports = App;
-
-// FOR TEST PURPOSES
-module.exports.appInstance = new App().app;
