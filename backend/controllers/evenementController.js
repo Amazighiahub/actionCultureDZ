@@ -12,10 +12,19 @@ class EvenementController extends BaseController {
     return container.evenementService;
   }
 
-  /** Safe serialization — works whether e is a DTO instance or a plain cached object */
+  /**
+   * Safe serialization — gère 2 cas :
+   * 1. e est une instance EvenementDTO (méthodes toCardJSON/toDetailJSON/toAdminJSON)
+   * 2. e est un plain object (récupéré du cache Redis sérialisé) — perd les méthodes
+   *    Dans ce cas, on utilise BaseDTO.translateRaw() sur _raw pour traduire correctement
+   */
   _serialize(e, method, lang) {
+    if (!e) return null;
     if (typeof e[method] === 'function') return e[method](lang);
-    return e; // Already a plain object from cache
+    // Plain object depuis cache : utiliser _raw via BaseDTO.translateRaw pour traduire
+    const BaseDTO = require('../dto/baseDTO');
+    const raw = e._raw || e;
+    return BaseDTO.translateRaw(raw, lang);
   }
 
   // ============================================================================
