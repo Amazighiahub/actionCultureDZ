@@ -67,32 +67,11 @@ if (!IS_PRODUCTION) {
   logger.info('CORS - Origines autorisées:', allowedOrigins);
 }
 
-const corsOptions = {
-  origin: function (origin, callback) {
-    // Requêtes sans origin (applications mobiles, Postman, curl, etc.)
-    if (!origin) {
-      if (IS_DEVELOPMENT) {
-        // Autorisé en développement
-        return callback(null, true);
-      }
-      // En production: autoriser seulement si explicitement configuré
-      if (process.env.CORS_ALLOW_NO_ORIGIN === 'true') {
-        return callback(null, true);
-      }
-      return callback(new Error('Requêtes sans origin non autorisées en production'));
-    }
+// Méthodes HTTP "safe" (lecture seule) — autorisées sans Origin en production
+// car elles ne peuvent pas modifier l'état du serveur (pas de risque CSRF)
+const SAFE_METHODS = ['GET', 'HEAD', 'OPTIONS'];
 
-    // Vérifier si l'origine est autorisée
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      // Log uniquement en dev pour éviter le spam en prod
-      if (!IS_PRODUCTION) {
-        logger.warn(`CORS: Requête rejetée de ${origin}`);
-      }
-      callback(new Error(`Origine non autorisée: ${origin}`));
-    }
-  },
+const baseCorsOptions = {
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: [
@@ -108,4 +87,41 @@ const corsOptions = {
   optionsSuccessStatus: 200 // Pour compatibilité avec certains navigateurs
 };
 
-module.exports = cors(corsOptions);
+// Delegate function : reçoit req pour accéder à req.method
+const corsOptionsDelegate = (req, callback) => {
+  const origin = req.header('Origin');
+  const method = req.method;
+
+  // Cas 1: Origin présent → vérifier la whitelist
+  if (origin) {
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, { ...baseCorsOptions, origin: true });
+    }
+    if (!IS_PRODUCTION) {
+      logger.warn(`CORS: Requête rejetée de ${origin}`);
+    }
+    return callback(new Error(`Origine non autorisée: ${origin}`));
+  }
+
+  // Cas 2: Pas d'Origin (curl, mobile apps, Googlebot, server-to-server, etc.)
+
+  // Dev: tout autorisé
+  if (IS_DEVELOPMENT) {
+    return callback(null, { ...baseCorsOptions, origin: true });
+  }
+
+  // Prod: autoriser seulement les méthodes safe (lecture seule)
+  // Les mutations (POST/PUT/PATCH/DELETE) restent protégées par CSRF token
+  if (SAFE_METHODS.includes(method)) {
+    return callback(null, { ...baseCorsOptions, origin: true });
+  }
+
+  // Backward compat: variable d'env pour autoriser tout
+  if (process.env.CORS_ALLOW_NO_ORIGIN === 'true') {
+    return callback(null, { ...baseCorsOptions, origin: true });
+  }
+
+  return callback(new Error('Requêtes sans origin non autorisées en production'));
+};
+
+module.exports = cors(corsOptionsDelegate);
