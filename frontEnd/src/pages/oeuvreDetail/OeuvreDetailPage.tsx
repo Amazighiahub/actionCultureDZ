@@ -2,7 +2,7 @@
  * OeuvreDetailPage.tsx - Page détail œuvre
  * Utilise HeroSection avec effet flip 3D pour les livres
  */
-import React, { Suspense, useState, useEffect } from 'react';
+import React, { Suspense, useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, Link, useLocation, Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Header from '@/components/Header';
@@ -338,12 +338,23 @@ const OeuvreDetailPage: React.FC = () => {
 
   const allContributeurs = contributeurs || [];
 
-  const seoKeywords = [
+  // Mémoriser seoKeywords et seoJsonLd pour éviter de recréer les références à chaque render
+  // (sinon SEOHead boucle son useEffect et bloque la navigation entre pages)
+  const seoKeywords = useMemo(() => [
     getTranslation(oeuvre.titre, lang),
     getTranslation(oeuvre.TypeOeuvre?.nom_type, lang),
     getTranslation((oeuvre as OeuvreWithExtras).Genre?.nom, lang),
     'culture algérienne', 'littérature algérienne', 'œuvre algérienne'
-  ].filter(Boolean) as string[];
+  ].filter(Boolean) as string[], [oeuvre, lang]);
+
+  const seoJsonLd = useMemo(() => [
+    buildOeuvreJsonLd(oeuvre),
+    buildBreadcrumbJsonLd([
+      { name: t('nav.home', 'Accueil'), url: '/' },
+      { name: t('nav.oeuvres', 'Œuvres'), url: '/oeuvres' },
+      { name: getTranslation(oeuvre.titre, lang) || '', url: `/oeuvres/${oeuvre.id_oeuvre}` },
+    ]),
+  ], [oeuvre, lang, t]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
@@ -353,14 +364,7 @@ const OeuvreDetailPage: React.FC = () => {
         image={(oeuvre as OeuvreWithExtras).image_url || (oeuvre as OeuvreWithExtras).couverture_url}
         type="article"
         keywords={seoKeywords}
-        jsonLd={[
-          buildOeuvreJsonLd(oeuvre),
-          buildBreadcrumbJsonLd([
-            { name: t('nav.home', 'Accueil'), url: '/' },
-            { name: t('nav.oeuvres', 'Œuvres'), url: '/oeuvres' },
-            { name: getTranslation(oeuvre.titre, lang) || '', url: `/oeuvres/${oeuvre.id_oeuvre}` },
-          ]),
-        ]}
+        jsonLd={seoJsonLd}
       />
       <Header />
 
