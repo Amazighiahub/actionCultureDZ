@@ -647,20 +647,35 @@ class OeuvreController extends BaseController {
   /**
    * Traduit une œuvre selon la langue et le format
    * @private
+   *
+   * Gère 2 cas :
+   * 1. oeuvreDTO est une instance de OeuvreDTO (méthodes toCardJSON, etc.)
+   * 2. oeuvreDTO est un plain object (récupéré du cache Redis sérialisé)
+   *    Dans ce cas, on utilise directement le _raw via BaseDTO.translateRaw()
    */
   _translateOeuvre(oeuvreDTO, lang = 'fr', format = 'default') {
     if (!oeuvreDTO) return null;
 
-    switch (format) {
-      case 'card':
-        return oeuvreDTO.toCardJSON(lang);
-      case 'detail':
-        return oeuvreDTO.toDetailJSON(lang);
-      case 'admin':
-        return oeuvreDTO.toAdminJSON(lang);
-      default:
-        return oeuvreDTO.toJSON(lang);
+    // Cas 1 : c'est un vrai DTO avec méthodes
+    if (typeof oeuvreDTO.toCardJSON === 'function') {
+      switch (format) {
+        case 'card':
+          return oeuvreDTO.toCardJSON(lang);
+        case 'detail':
+          return oeuvreDTO.toDetailJSON(lang);
+        case 'admin':
+          return oeuvreDTO.toAdminJSON(lang);
+        default:
+          return oeuvreDTO.toJSON(lang);
+      }
     }
+
+    // Cas 2 : plain object (depuis cache Redis), utiliser _raw ou l'objet lui-même
+    const BaseDTO = require('../dto/baseDTO');
+    const OeuvreDTO = require('../dto/oeuvre/oeuvreDTO');
+    const raw = oeuvreDTO._raw || oeuvreDTO;
+    const result = BaseDTO.translateRaw(raw, lang);
+    return OeuvreDTO._addComputedFields(result);
   }
 
   /**
