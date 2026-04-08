@@ -2,7 +2,7 @@
  * useOeuvreDetails - Hook pour la page détail œuvre
  * Gère le chargement des données et les actions
  */
-import { useEffect } from 'react';
+import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
@@ -198,11 +198,14 @@ export function useOeuvreDetails(oeuvreId: number, options: UseOeuvreDetailsOpti
   // ============================================
 
   // Extraire les contributeurs depuis l'œuvre
-  const extractContributeurs = (): Contributeur[] => {
+  // CRITIQUE : useMemo obligatoire — sinon nouvelle référence à chaque render
+  // → boucle infinie dans les useEffect qui dépendent de `contributeurs`
+  // → React Router bloqué pendant la navigation
+  const contributeurs = useMemo<Contributeur[]>(() => {
     const oeuvre = oeuvreQuery.data;
     if (!oeuvre) return [];
 
-    const contributeurs: Contributeur[] = [];
+    const result: Contributeur[] = [];
 
     // Users associés
     if (oeuvre.Users) {
@@ -215,7 +218,7 @@ export function useOeuvreDetails(oeuvreId: number, options: UseOeuvreDetailsOpti
         OeuvreUser?: { role_dans_oeuvre?: string; personnage?: string; role_principal?: boolean; description_role?: string };
       };
       (oeuvre.Users as UserWithJunction[]).forEach((user) => {
-        contributeurs.push({
+        result.push({
           id_user: user.id_user,
           nom: user.nom,
           prenom: user.prenom,
@@ -242,7 +245,7 @@ export function useOeuvreDetails(oeuvreId: number, options: UseOeuvreDetailsOpti
     const intervenants = (oeuvre as Record<string, unknown>).Intervenants as IntervenantWithJunction[] | undefined;
     if (intervenants) {
       intervenants.forEach((intervenant) => {
-        contributeurs.push({
+        result.push({
           id_intervenant: intervenant.id_intervenant,
           nom: intervenant.nom,
           prenom: intervenant.prenom,
@@ -256,8 +259,8 @@ export function useOeuvreDetails(oeuvreId: number, options: UseOeuvreDetailsOpti
       });
     }
 
-    return contributeurs;
-  };
+    return result;
+  }, [oeuvreQuery.data]);
 
   // ============================================
   // ACTIONS WRAPPER
@@ -289,7 +292,7 @@ export function useOeuvreDetails(oeuvreId: number, options: UseOeuvreDetailsOpti
     // Données
     oeuvre: oeuvreQuery.data as Oeuvre | undefined,
     medias: mediasQuery.data as Media[] | undefined,
-    contributeurs: extractContributeurs(),
+    contributeurs,
     comments: commentsQuery.data as Comment[] | undefined,
     relatedEvents: eventsQuery.data as Evenement[] | undefined,
 
