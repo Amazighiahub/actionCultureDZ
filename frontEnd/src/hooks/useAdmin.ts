@@ -238,13 +238,13 @@ export function useAdminStats(options: UseAdminStatsOptions = {}) {
       refetchActivity()
     ]);
     toast({ title: t('toasts.dataRefreshed') });
-  }, [refetchStats, refetchPending, refetchActivity, toast]);
+  }, [refetchStats, refetchPending, refetchActivity, toast, t]);
 
   return {
     // Données
     stats: statsData?.stats as AdminStats | null,
     pendingItems: (pendingData?.items || []) as PendingItem[],
-    recentActivity: (activityData?.activities || []) as Activity[],
+    recentActivity: (activityData?.items || []) as Activity[],
     
     // États
     loading: loadingStats || loadingPending || loadingActivity,

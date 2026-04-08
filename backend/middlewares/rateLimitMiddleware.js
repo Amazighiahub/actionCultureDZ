@@ -294,7 +294,7 @@ class AccountRateLimiter {
   async _setAttempts(key, data) {
     if (this.redis) {
       try {
-        await this.redis.set(`lockout:${key}`, JSON.stringify(data), 'PX', this.lockoutDuration);
+        await this.redis.set(`lockout:${key}`, JSON.stringify(data), { PX: this.lockoutDuration });
         return;
       } catch { /* fallback to local */ }
     }
