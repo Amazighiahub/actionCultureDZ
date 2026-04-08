@@ -273,8 +273,11 @@ const AjouterPatrimoineRapide: React.FC = () => {
         <h1 className="text-3xl font-bold font-serif text-center mb-2">
           {t('patrimoine.create.title', 'Ajouter un site patrimonial')}
         </h1>
-        <p className="text-center text-muted-foreground mb-8">
+        <p className="text-center text-muted-foreground mb-2">
           {t('patrimoine.create.subtitle', 'Créez rapidement, enrichissez ensuite')}
+        </p>
+        <p className="text-center text-xs text-muted-foreground mb-8">
+          {t('common.requiredFieldsLegend')}
         </p>
 
         {stepIndicator}
@@ -442,6 +445,7 @@ const AjouterPatrimoineRapide: React.FC = () => {
               <CardTitle className="flex items-center gap-2">
                 <Camera className="h-5 w-5 text-primary" />
                 {t('patrimoine.create.step3', 'Ajoutez des photos')}
+                <span className="text-destructive ml-1">*</span>
               </CardTitle>
               <CardDescription>
                 {t('patrimoine.create.step3Desc', 'Au moins une photo pour illustrer le site')}

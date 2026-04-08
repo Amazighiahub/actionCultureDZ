@@ -359,6 +359,8 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      <p className="text-sm text-muted-foreground">{t('common.requiredFieldsLegend')}</p>
+
       {/* Messages d'erreur et succès */}
       {error && (
         <div className="flex items-center gap-2 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
@@ -621,7 +623,7 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormField label={t('programme.form.participants.user')}>
+                        <FormField label={t('programme.form.participants.user')} required={true}>
                           <Select
                             value={intervenant.id_user?.toString()}
                             onValueChange={(value) => updateIntervenant(index, 'id_user', parseInt(value))}

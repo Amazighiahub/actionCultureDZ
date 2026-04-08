@@ -11,7 +11,7 @@ import { cn } from '@/lib/Utils';
 
 interface FormFieldProps {
   label: string;
-  name: string;
+  name?: string;
   type?: 'text' | 'email' | 'password' | 'textarea' | 'select';
   placeholder?: string;
   required?: boolean;
@@ -22,6 +22,7 @@ interface FormFieldProps {
   options?: Array<{ value: string; label: string }>;
   className?: string;
   rows?: number;
+  children?: React.ReactNode;
 }
 
 const FormField: React.FC<FormFieldProps> = ({
@@ -36,9 +37,10 @@ const FormField: React.FC<FormFieldProps> = ({
   onChange,
   options,
   className,
-  rows = 3
+  rows = 3,
+  children
 }) => {
-  const inputId = `field-${name}`;
+  const inputId = `field-${name || label}`;
   const hasError = !!error;
 
   const renderInput = () => {
@@ -109,9 +111,9 @@ const FormField: React.FC<FormFieldProps> = ({
       <Label htmlFor={inputId} required={required}>
         {label}
       </Label>
-      
-      {renderInput()}
-      
+
+      {children ?? renderInput()}
+
       {hasError && (
         <p id={`${inputId}-error`} className="text-sm text-destructive" role="alert">
           {error}
