@@ -141,6 +141,31 @@ const OeuvreDetailPage: React.FC = () => {
     addComment
   } = useOeuvreDetails(id ? parseInt(id) : 0);
 
+  // Mémoriser seoKeywords et seoJsonLd pour stabiliser les références entre renders
+  // (sinon SEOHead boucle son useEffect et bloque la navigation entre pages)
+  // Les hooks DOIVENT être appelés inconditionnellement (Rules of Hooks)
+  const seoKeywords = useMemo(() => {
+    if (!oeuvre) return [];
+    return [
+      getTranslation(oeuvre.titre, lang),
+      getTranslation(oeuvre.TypeOeuvre?.nom_type, lang),
+      getTranslation((oeuvre as OeuvreWithExtras).Genre?.nom, lang),
+      'culture algérienne', 'littérature algérienne', 'œuvre algérienne'
+    ].filter(Boolean) as string[];
+  }, [oeuvre, lang]);
+
+  const seoJsonLd = useMemo(() => {
+    if (!oeuvre) return undefined;
+    return [
+      buildOeuvreJsonLd(oeuvre),
+      buildBreadcrumbJsonLd([
+        { name: t('nav.home', 'Accueil'), url: '/' },
+        { name: t('nav.oeuvres', 'Œuvres'), url: '/oeuvres' },
+        { name: getTranslation(oeuvre.titre, lang) || '', url: `/oeuvres/${oeuvre.id_oeuvre}` },
+      ]),
+    ];
+  }, [oeuvre, lang, t]);
+
   // Scroll en haut et reset des états locaux quand l'ID change (navigation entre oeuvres)
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -337,24 +362,6 @@ const OeuvreDetailPage: React.FC = () => {
   }
 
   const allContributeurs = contributeurs || [];
-
-  // Mémoriser seoKeywords et seoJsonLd pour éviter de recréer les références à chaque render
-  // (sinon SEOHead boucle son useEffect et bloque la navigation entre pages)
-  const seoKeywords = useMemo(() => [
-    getTranslation(oeuvre.titre, lang),
-    getTranslation(oeuvre.TypeOeuvre?.nom_type, lang),
-    getTranslation((oeuvre as OeuvreWithExtras).Genre?.nom, lang),
-    'culture algérienne', 'littérature algérienne', 'œuvre algérienne'
-  ].filter(Boolean) as string[], [oeuvre, lang]);
-
-  const seoJsonLd = useMemo(() => [
-    buildOeuvreJsonLd(oeuvre),
-    buildBreadcrumbJsonLd([
-      { name: t('nav.home', 'Accueil'), url: '/' },
-      { name: t('nav.oeuvres', 'Œuvres'), url: '/oeuvres' },
-      { name: getTranslation(oeuvre.titre, lang) || '', url: `/oeuvres/${oeuvre.id_oeuvre}` },
-    ]),
-  ], [oeuvre, lang, t]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
