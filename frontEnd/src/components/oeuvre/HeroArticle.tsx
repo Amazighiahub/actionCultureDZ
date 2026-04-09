@@ -37,6 +37,7 @@ const HeroArticle: React.FC<HeroArticleProps> = ({
   titre,
   typeId,
   mainContributors,
+  gt,
   viewCount,
   commentsCount,
   isFavorite,
@@ -126,9 +127,9 @@ const HeroArticle: React.FC<HeroArticleProps> = ({
           {mainContributors.length > 0 && (
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-lg text-muted-foreground">
               {mainContributors.map((contributeur, index) => (
-                <span key={contributeur.id_contributeur || contributeur.id || `contrib-${contributeur.nom}-${index}`}>
+                <span key={contributeur.id_contributeur || contributeur.id || `contrib-${index}`}>
                   <span className="font-medium text-foreground">
-                    {contributeur.prenom} {contributeur.nom}
+                    {gt(contributeur.prenom)} {gt(contributeur.nom)}
                   </span>
                   {contributeur.role && contributeur.role !== 'Contributeur' && (
                     <span className="text-sm text-muted-foreground ml-1">({contributeur.role})</span>

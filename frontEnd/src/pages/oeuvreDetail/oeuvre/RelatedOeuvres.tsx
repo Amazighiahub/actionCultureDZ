@@ -50,7 +50,7 @@ const OeuvreCard: React.FC<{ oeuvre: Oeuvre; onClick: () => void }> = ({ oeuvre,
         {oeuvre.TypeOeuvre && (
           <div className="absolute top-2 left-2">
             <Badge variant="secondary" className="bg-black/50 text-white border-0 text-xs">
-              {oeuvre.TypeOeuvre.nom_type}
+              {getTranslation(oeuvre.TypeOeuvre.nom_type, lang)}
             </Badge>
           </div>
         )}

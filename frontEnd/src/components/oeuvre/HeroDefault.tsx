@@ -19,6 +19,18 @@ const OeuvreTypeIcon = ({ typeId }: { typeId: number }) => {
   return <Icon className="h-5 w-5" />;
 };
 
+// Extrait une string lisible d'un champ qui peut être string OU objet multilingue {fr, ar, en, ...}
+const localizeText = (value: unknown): string => {
+  if (!value) return '';
+  if (typeof value === 'string') return value;
+  if (typeof value === 'object') {
+    const obj = value as Record<string, unknown>;
+    const found = obj.fr || obj.ar || obj.en || obj['tz-ltn'] || obj['tz-tfng'] || Object.values(obj).find(v => typeof v === 'string' && v);
+    return typeof found === 'string' ? found : '';
+  }
+  return String(value);
+};
+
 interface HeroDefaultProps {
   oeuvre: Oeuvre;
   mainImage: string | null;
@@ -98,7 +110,7 @@ const HeroDefault: React.FC<HeroDefaultProps> = ({
                 <div className={`flex items-center gap-2 ${rtlClasses.flexRow}`}>
                   <User className="h-4 w-4" />
                   <span className="text-lg">
-                    {t('common.by', 'par')} {mainContributors.map(c => `${c.prenom} ${c.nom}`).join(', ')}
+                    {t('common.by', 'par')} {mainContributors.map(c => `${localizeText(c.prenom)} ${localizeText(c.nom)}`.trim()).filter(Boolean).join(', ')}
                   </span>
                 </div>
               )}

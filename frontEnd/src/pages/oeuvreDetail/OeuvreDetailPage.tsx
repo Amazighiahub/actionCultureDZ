@@ -411,7 +411,7 @@ const OeuvreDetailPage: React.FC = () => {
           const artData = (oeuvre as OeuvreWithExtras).OeuvreArt;
           const artisanatData = (oeuvre as OeuvreWithExtras).Artisanat;
           const auteurNom = allContributeurs.length > 0
-            ? allContributeurs.map(c => `${c.prenom || ''} ${c.nom || ''}`).join(', ').trim()
+            ? allContributeurs.map(c => `${getTranslation(c.prenom, lang) || ''} ${getTranslation(c.nom, lang) || ''}`.trim()).filter(Boolean).join(', ')
             : undefined;
 
           return (
@@ -484,7 +484,7 @@ const OeuvreDetailPage: React.FC = () => {
                           <PenTool className="h-5 w-5 text-muted-foreground mt-0.5" />
                           <div>
                             <p className="text-sm text-muted-foreground">{t('oeuvre.technique', 'Technique')}</p>
-                            <p className="font-medium">{artData?.technique || artisanatData?.Technique?.nom}</p>
+                            <p className="font-medium">{artData?.technique || getTranslation(artisanatData?.Technique?.nom, lang)}</p>
                           </div>
                         </div>
                       )}
@@ -506,7 +506,7 @@ const OeuvreDetailPage: React.FC = () => {
                           <Sparkles className="h-5 w-5 text-muted-foreground mt-0.5" />
                           <div>
                             <p className="text-sm text-muted-foreground">{t('oeuvre.material', 'Matériau')}</p>
-                            <p className="font-medium">{artisanatData.Materiau.nom}</p>
+                            <p className="font-medium">{getTranslation(artisanatData.Materiau.nom, lang)}</p>
                           </div>
                         </div>
                       )}
