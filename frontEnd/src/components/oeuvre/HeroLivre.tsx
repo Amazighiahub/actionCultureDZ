@@ -238,7 +238,7 @@ const HeroLivre: React.FC<HeroLivreProps> = ({
               {mainContributors.length > 0 && (
                 <div className="space-y-2">
                   {mainContributors.map((contributeur: any, index: number) => (
-                    <p key={contributeur.id_contributeur || contributeur.id || `contrib-${contributeur.nom}-${index}`} className="text-xl">
+                    <p key={contributeur.id_contributeur || contributeur.id || `contrib-${index}`} className="text-xl">
                       <span className="text-foreground font-medium">{gt(contributeur.prenom)} {gt(contributeur.nom)}</span>
                     </p>
                   ))}

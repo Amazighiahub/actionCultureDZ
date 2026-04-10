@@ -172,7 +172,7 @@ const ForgotPassword = () => {
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email">{t('auth.forgotPassword.emailLabel')}</Label>
+                  <Label htmlFor="email" required>{t('auth.forgotPassword.emailLabel')}</Label>
                   <Input
                     id="email"
                     type="email"

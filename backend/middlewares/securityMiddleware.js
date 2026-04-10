@@ -33,24 +33,48 @@ const securityMiddleware = {
              (process.env.ALLOW_EXTERNAL_URLS === 'true' && URL_PATTERNS.external.test(str));
     };
 
+    // Décoder les entités HTML communes pour détecter les attaques encodées
+    // Ex: &lt;script&gt; → <script> qui sera ensuite supprimé
+    const decodeHtmlEntities = (str) => {
+      return str
+        .replace(/&lt;/gi, '<')
+        .replace(/&gt;/gi, '>')
+        .replace(/&quot;/gi, '"')
+        .replace(/&#x27;|&apos;/gi, "'")
+        .replace(/&#x2F;|&#47;/gi, '/')
+        .replace(/&#x3C;|&#60;/gi, '<')
+        .replace(/&#x3E;|&#62;/gi, '>')
+        .replace(/&amp;/gi, '&'); // En dernier pour éviter le double-décodage
+    };
+
     // Sanitiser une chaîne en préservant certains contenus
     const sanitizeString = (str, fieldName = '') => {
       if (typeof str !== 'string') return str;
-      
+
       // Ne pas sanitiser les champs exclus avec des URLs valides
       if (EXCLUDED_FIELDS.includes(fieldName) && isValidUrl(str)) {
         return str.trim();
       }
-      
-      // Sanitisation standard pour tous les champs
+
+      // Defense in depth : décoder les entités HTML AVANT le regex
+      // Ainsi &lt;script&gt;alert(1)&lt;/script&gt; devient <script>alert(1)</script>
+      // qui sera supprimé par le regex ci-dessous
+      let decoded = decodeHtmlEntities(str);
+      // Double-décoder au cas où l'attaquant aurait double-encodé
+      decoded = decodeHtmlEntities(decoded);
+
+      // Sanitisation standard
       // Utiliser [\s\S]*? au lieu de .*? pour matcher aussi les retours à la ligne
       // (le flag 's' n'est pas universellement supporté, [\s\S] est plus sûr)
-      return str
+      return decoded
         .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '') // Supprimer les scripts (multi-ligne)
         .replace(/<iframe[^>]*>[\s\S]*?<\/iframe>/gi, '') // Supprimer les iframes (multi-ligne)
         .replace(/<object[^>]*>[\s\S]*?<\/object>/gi, '') // Supprimer les objects (multi-ligne)
         .replace(/<embed[^>]*>/gi, '') // Supprimer les embeds
-        .replace(/on\w+\s*=\s*["'][^"']*["']/gi, '') // Supprimer les event handlers
+        .replace(/javascript:/gi, '') // Supprimer les protocole javascript:
+        .replace(/data:text\/html/gi, '') // Supprimer data: HTML
+        .replace(/on\w+\s*=\s*["'][^"']*["']/gi, '') // Supprimer les event handlers (avec quotes)
+        .replace(/on\w+\s*=\s*[^\s>]+/gi, '') // Event handlers sans quotes (onclick=foo)
         .replace(/<[\/\!]*?[^<>]*?>/gi, '') // Supprimer tous les autres tags HTML
         .trim();
     };

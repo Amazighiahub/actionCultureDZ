@@ -136,6 +136,16 @@ module.exports = (sequelize) => {
       defaultValue: false,
       comment: 'Acceptation des conditions d\'utilisation'
     },
+    date_acceptation_conditions: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      comment: 'Date et heure de l\'acceptation des conditions (preuve RGPD Art. 7)'
+    },
+    ip_acceptation_conditions: {
+      type: DataTypes.STRING(45),
+      allowNull: true,
+      comment: 'Adresse IP lors de l\'acceptation des conditions (preuve RGPD Art. 7)'
+    },
     langue_preferee: {
       type: DataTypes.STRING(10),
       defaultValue: 'fr',
@@ -360,6 +370,13 @@ module.exports = (sequelize) => {
       },
       {
         fields: ['id_user_validate']
+      },
+      {
+        // Index sur refresh_token pour:
+        // 1. Performance (lookup O(log n) au lieu de full table scan)
+        // 2. Mitigation timing attack (temps de réponse constant via B-tree)
+        name: 'idx_user_refresh_token',
+        fields: ['refresh_token']
       }
     ],
     

@@ -46,7 +46,7 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false }) => {
           {oeuvre.TypeOeuvre && (
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">{t('oeuvre.type', 'Type')}</span>
-              <Badge variant="secondary">{oeuvre.TypeOeuvre.nom_type}</Badge>
+              <Badge variant="secondary">{getLocalizedText(oeuvre.TypeOeuvre.nom_type)}</Badge>
             </div>
           )}
 
@@ -62,7 +62,7 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false }) => {
           {oeuvre.Langue && (
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">{t('oeuvre.language', 'Langue')}</span>
-              <span className="font-medium">{oeuvre.Langue.nom}</span>
+              <span className="font-medium">{getLocalizedText(oeuvre.Langue.nom)}</span>
             </div>
           )}
 
@@ -177,7 +177,7 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false }) => {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">{t('oeuvre.type', 'Type')}</p>
-                  <p className="font-medium">{oeuvre.TypeOeuvre.nom_type}</p>
+                  <p className="font-medium">{getLocalizedText(oeuvre.TypeOeuvre.nom_type)}</p>
                 </div>
               </div>
             )}
@@ -203,7 +203,7 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false }) => {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">{t('oeuvre.language', 'Langue')}</p>
-                  <p className="font-medium">{oeuvre.Langue.nom}</p>
+                  <p className="font-medium">{getLocalizedText(oeuvre.Langue.nom)}</p>
                 </div>
               </div>
             )}
@@ -242,7 +242,7 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false }) => {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">{t('oeuvre.origin', 'Origine')}</p>
-                  <p className="font-medium">{oeuvreAny.lieu_origine}</p>
+                  <p className="font-medium">{getLocalizedText(oeuvreAny.lieu_origine)}</p>
                 </div>
               </div>
             )}
@@ -535,7 +535,7 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false }) => {
           )}
 
           {/* Genres */}
-          {oeuvreAny.Genres && oeuvreAny.Genres.length > 0 && (
+          {Array.isArray(oeuvreAny.Genres) && (oeuvreAny.Genres as unknown[]).length > 0 && (
             <>
               <Separator />
               <div>
@@ -544,9 +544,9 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false }) => {
                   {t('oeuvre.genres', 'Genres')}
                 </h4>
                 <div className="flex flex-wrap gap-2">
-                  {(oeuvreAny.Genres as Array<Record<string, unknown>>).map((genre) => (
-                    <Badge key={genre.id_genre} variant="secondary">
-                      {genre.nom}
+                  {(oeuvreAny.Genres as Array<{ id_genre?: number; nom?: unknown }>).map((genre, idx) => (
+                    <Badge key={genre.id_genre ?? idx} variant="secondary">
+                      {getLocalizedText(genre.nom)}
                     </Badge>
                   ))}
                 </div>
@@ -595,7 +595,7 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false }) => {
           )}
 
           {/* Récompenses */}
-          {oeuvreAny.recompenses && oeuvreAny.recompenses.length > 0 && (
+          {Array.isArray(oeuvreAny.recompenses) && (oeuvreAny.recompenses as unknown[]).length > 0 && (
             <>
               <Separator />
               <div>
@@ -604,10 +604,10 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false }) => {
                   {t('oeuvre.awards', 'Récompenses')}
                 </h4>
                 <ul className="space-y-2">
-                  {(oeuvreAny.recompenses as Array<Record<string, unknown>>).map((recompense, index: number) => (
+                  {(oeuvreAny.recompenses as unknown[]).map((recompense, index: number) => (
                     <li key={index} className="flex items-center gap-2 text-sm">
                       <Award className="h-4 w-4 text-yellow-500" />
-                      {recompense}
+                      {getLocalizedText(recompense)}
                     </li>
                   ))}
                 </ul>

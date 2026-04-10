@@ -169,7 +169,7 @@ const AjouterOeuvre: React.FC = () => {
                 {/* Type d'œuvre */}
                 <Card className="shadow-cultural">
                   <CardHeader>
-                    <CardTitle className="text-2xl font-serif">{t("ajouteroeuvre.type_duvre")}</CardTitle>
+                    <CardTitle className="text-2xl font-serif">{t("ajouteroeuvre.type_duvre")}<span className="text-destructive ml-1">*</span></CardTitle>
                     <p className="text-sm text-muted-foreground mt-2">
                       {t("ajouteroeuvre.type_hint", "Sélectionnez le type qui correspond le mieux à votre œuvre. Pour les articles et articles scientifiques, l'éditeur avancé permet une mise en page riche avec blocs (titres, images, citations, tableaux).")}
                     </p>
@@ -221,7 +221,7 @@ const AjouterOeuvre: React.FC = () => {
                           </div>
                           <div>
                             <MultiLangInput name="description" label={t("ajouteroeuvre.description_label", "Résumé de l'œuvre")} value={formData.description}
-                              onChange={(value: any) => handleInputChange('description', value)} type="textarea" rows={4} requiredLanguages={['fr']}
+                              onChange={(value: any) => handleInputChange('description', value)} type="textarea" rows={4} required requiredLanguages={['fr']}
                               placeholder={t("ajouteroeuvre.placeholder_dcrivez_votre_uvre")}
                               maxLength={5000} showCharCount
                               errors={fieldErrors.description ? { fr: fieldErrors.description, ar: fieldErrors.description } : {}} />
@@ -353,7 +353,7 @@ const AjouterOeuvre: React.FC = () => {
                     {/* Qui est l'auteur ? */}
                     <Card className="shadow-cultural">
                       <CardHeader>
-                        <CardTitle className="text-2xl font-serif">{t('ajouteroeuvre.quiEstAuteur', 'Qui est l\'auteur ?')}</CardTitle>
+                        <CardTitle className="text-2xl font-serif">{t('ajouteroeuvre.quiEstAuteur', 'Qui est l\'auteur ?')}<span className="text-destructive ml-1">*</span></CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-4">
                         <div className="space-y-3">

@@ -34,7 +34,7 @@ class UserController extends BaseController {
    */
   async register(req, res) {
     try {
-      const result = await this.userService.register(req.body);
+      const result = await this.userService.register(req.body, req.ip);
 
       this._setAuthCookies(res, result.token);
       this._setRefreshTokenCookie(res, result.refreshToken);

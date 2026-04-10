@@ -233,7 +233,7 @@ const HeroAlbum: React.FC<HeroAlbumProps> = ({
                         <div className="flex-1 overflow-hidden">
                           <Quote className="h-5 w-5 text-emerald-500/50 mb-2" />
                           <p className="text-sm leading-relaxed text-emerald-100/90 line-clamp-[8]">
-                            {oeuvre.description || t('works.noDescription', 'Aucune description disponible pour cet album.')}
+                            {gt(oeuvre.description) || t('works.noDescription', 'Aucune description disponible pour cet album.')}
                           </p>
                         </div>
 
@@ -338,9 +338,9 @@ const HeroAlbum: React.FC<HeroAlbumProps> = ({
               {mainContributors.length > 0 && (
                 <div className="space-y-2">
                   {mainContributors.map((contributeur, index) => (
-                    <p key={contributeur.id_contributeur || contributeur.id || `contrib-${contributeur.nom}-${index}`} className="text-xl text-muted-foreground">
+                    <p key={contributeur.id_contributeur || contributeur.id || `contrib-${index}`} className="text-xl text-muted-foreground">
                       {contributeur.role || t('works.artist', 'Artiste')} : <span className="text-foreground font-medium">
-                        {contributeur.prenom} {contributeur.nom}
+                        {gt(contributeur.prenom)} {gt(contributeur.nom)}
                       </span>
                     </p>
                   ))}

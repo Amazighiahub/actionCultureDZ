@@ -254,7 +254,7 @@ const ResetPassword = () => {
                 )}
 
                 <div className="space-y-2">
-                  <Label htmlFor="password">{t('auth.resetPassword.newPassword')}</Label>
+                  <Label htmlFor="password" required>{t('auth.resetPassword.newPassword')}</Label>
                   <div className="relative">
                     <Input
                       id="password"
@@ -291,7 +291,7 @@ const ResetPassword = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">{t('auth.resetPassword.confirmPassword')}</Label>
+                  <Label htmlFor="confirmPassword" required>{t('auth.resetPassword.confirmPassword')}</Label>
                   <div className="relative">
                     <Input
                       id="confirmPassword"

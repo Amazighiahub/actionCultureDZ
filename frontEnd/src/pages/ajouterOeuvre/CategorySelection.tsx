@@ -120,7 +120,7 @@ const CategorySelection: React.FC<CategorySelectionProps> = React.memo(({
     return (
       <Card className="shadow-cultural">
         <CardHeader>
-          <CardTitle className="text-2xl font-serif">{t("ajouteroeuvre.catgories_1")}</CardTitle>
+          <CardTitle className="text-2xl font-serif">{t("ajouteroeuvre.catgories_1")}<span className="text-destructive ml-1">*</span></CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground">{t("ajouteroeuvre.aucune_catgorie_disponible")}</p>
@@ -131,7 +131,7 @@ const CategorySelection: React.FC<CategorySelectionProps> = React.memo(({
   return (
     <Card className="shadow-cultural">
       <CardHeader>
-        <CardTitle className="text-2xl font-serif">{t("ajouteroeuvre.catgories_1")}</CardTitle>
+        <CardTitle className="text-2xl font-serif">{t("ajouteroeuvre.catgories_1")}<span className="text-destructive ml-1">*</span></CardTitle>
         <p className="text-sm text-muted-foreground mt-2">{t("ajouteroeuvre.slectionnez_une_plusieurs")}</p>
       </CardHeader>
       <CardContent className="space-y-6">

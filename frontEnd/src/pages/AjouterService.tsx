@@ -335,6 +335,9 @@ const AjouterService: React.FC = () => {
             <p className="text-muted-foreground">
               {t('ajouterService.subtitle', 'Ajoutez des services aux sites patrimoniaux')}
             </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {t('common.requiredFieldsLegend')}
+            </p>
           </div>
         </div>
 
@@ -606,6 +609,8 @@ const AjouterService: React.FC = () => {
                         setCustomService(prev => ({ ...prev, nom: value }));
                         setFieldErrors(prev => ({ ...prev, customServiceNom: '' }));
                       }}
+                      required
+                      requiredLanguages={['fr']}
                       placeholder={t('ajouterService.serviceNamePlaceholder', 'Ex: Location de vélos')}
                       errors={fieldErrors.customServiceNom ? { fr: fieldErrors.customServiceNom } : undefined}
                     />

@@ -40,9 +40,9 @@ class UserService extends BaseService {
    * @param {Object} requestBody - Corps de la requête
    * @returns {Promise<{user: UserDTO, token: string}>}
    */
-  async register(requestBody) {
-    // 1. Transformer la requête en DTO
-    const createDTO = CreateUserDTO.fromRequest(requestBody);
+  async register(requestBody, clientIp = null) {
+    // 1. Transformer la requête en DTO (injecter l'IP pour RGPD Art. 7)
+    const createDTO = CreateUserDTO.fromRequest({ ...requestBody, _ipClient: clientIp });
 
     // 2. Valider les données
     const validation = createDTO.validate();

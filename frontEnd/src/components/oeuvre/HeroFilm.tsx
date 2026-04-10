@@ -251,7 +251,7 @@ const HeroFilm: React.FC<HeroFilmProps> = ({
                         <div className="flex-1 overflow-hidden">
                           <Quote className="h-5 w-5 text-purple-500/50 mb-2" />
                           <p className="text-sm leading-relaxed text-purple-100/90 line-clamp-[8]">
-                            {oeuvre.description || t('works.noDescription', 'Aucun synopsis disponible pour ce film.')}
+                            {gt(oeuvre.description) || t('works.noDescription', 'Aucun synopsis disponible pour ce film.')}
                           </p>
                         </div>
 
@@ -362,9 +362,9 @@ const HeroFilm: React.FC<HeroFilmProps> = ({
               {mainContributors.length > 0 && (
                 <div className="space-y-2">
                   {mainContributors.map((contributeur, index) => (
-                    <p key={contributeur.id_contributeur || contributeur.id || `contrib-${contributeur.nom}-${index}`} className="text-xl text-muted-foreground">
+                    <p key={contributeur.id_contributeur || contributeur.id || `contrib-${index}`} className="text-xl text-muted-foreground">
                       {contributeur.role || t('works.directedBy', 'Réalisateur')} : <span className="text-foreground font-medium">
-                        {contributeur.prenom} {contributeur.nom}
+                        {gt(contributeur.prenom)} {gt(contributeur.nom)}
                       </span>
                     </p>
                   ))}
