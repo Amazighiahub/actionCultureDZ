@@ -94,12 +94,38 @@ class PatrimoineController extends BaseController {
       if (!nom || !communeId) {
         return res.json({ success: true, data: { exists: false } });
       }
+
+      // 🔒 Validation des paramètres : type, longueur, NaN
+      if (typeof nom !== 'string') {
+        return res.status(400).json({
+          success: false,
+          error: 'Le paramètre "nom" doit être une chaîne de caractères',
+          code: 'INVALID_PARAM'
+        });
+      }
+      const search = String(nom).trim();
+      if (search.length === 0 || search.length > 200) {
+        return res.status(400).json({
+          success: false,
+          error: 'Le paramètre "nom" doit faire entre 1 et 200 caractères',
+          code: 'INVALID_PARAM'
+        });
+      }
+
+      const communeIdInt = parseInt(communeId, 10);
+      if (isNaN(communeIdInt) || communeIdInt <= 0) {
+        return res.status(400).json({
+          success: false,
+          error: 'Le paramètre "communeId" doit être un entier positif',
+          code: 'INVALID_PARAM'
+        });
+      }
+
       const { Sequelize } = require('sequelize');
       const Lieu = this.patrimoineService.models.Lieu;
-      const search = String(nom).trim();
       const existing = await Lieu.findAll({
         where: {
-          communeId: parseInt(communeId),
+          communeId: communeIdInt,
           [Sequelize.Op.or]: [
             Sequelize.where(Sequelize.fn('LOWER', Sequelize.fn('JSON_EXTRACT', Sequelize.col('nom'), Sequelize.literal("'$.fr'"))), search.toLowerCase()),
             Sequelize.where(Sequelize.fn('LOWER', Sequelize.fn('JSON_EXTRACT', Sequelize.col('nom'), Sequelize.literal("'$.ar'"))), search.toLowerCase()),

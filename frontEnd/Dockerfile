@@ -27,7 +27,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 ARG VITE_API_URL
-ENV VITE_API_URL=${VITE_API_URL:-http://localhost:3001/api}
+ENV VITE_API_URL=${VITE_API_URL:-/api}
 
 RUN npm run build
 

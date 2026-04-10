@@ -218,6 +218,7 @@ class HttpClient {
       async (config) => {
         // Header de langue
         config.headers['X-Language'] = localStorage.getItem('i18nextLng') || 'fr';
+        config.headers['Accept'] = 'application/json';
 
         // ✅ SÉCURITÉ: Le token est envoyé via cookie httpOnly (withCredentials: true)
         // Pas besoin d'ajouter le header Authorization manuellement
@@ -239,6 +240,17 @@ class HttpClient {
     // Response interceptor avec gestion du rate limiting
     this.axiosInstance.interceptors.response.use(
       (response) => {
+        const unexpectedApiResponse = this.getUnexpectedApiResponseError(response);
+        if (unexpectedApiResponse) {
+          this.showToast({
+            title: i18next.t('toasts.serverError'),
+            description: unexpectedApiResponse.message,
+            variant: 'destructive',
+          });
+
+          return Promise.reject(unexpectedApiResponse);
+        }
+
         // Extraire le token CSRF si présent
         const csrfToken = response.headers['x-csrf-token'];
         if (csrfToken) {
@@ -399,6 +411,28 @@ class HttpClient {
         }
         
         return Promise.reject(this.transformError(error));
+      }
+    );
+  }
+
+  private getUnexpectedApiResponseError(response: AxiosResponse): HttpError | null {
+    const requestUrl = response.config.url || '';
+    const contentType = String(response.headers['content-type'] || '').toLowerCase();
+    const responseData = response.data;
+    const isApiRequest = requestUrl.startsWith('/') || requestUrl.startsWith(API_BASE_URL);
+    const isHtml = contentType.includes('text/html') || (typeof responseData === 'string' && responseData.trim().startsWith('<'));
+
+    if (!isApiRequest || !isHtml) {
+      return null;
+    }
+
+    return new HttpError(
+      'L\'API a renvoyé une page HTML au lieu du JSON attendu. Vérifiez le proxy, le CDN ou une protection anti-bot sur /api.',
+      response.status || 502,
+      'INVALID_API_RESPONSE',
+      {
+        url: requestUrl,
+        contentType,
       }
     );
   }
