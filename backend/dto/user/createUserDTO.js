@@ -33,6 +33,9 @@ class CreateUserDTO extends BaseDTO {
     this.accepteConditions = BaseDTO.toBool(data.accepte_conditions || data.accepteConditions);
     this.accepteNewsletter = BaseDTO.toBool(data.accepte_newsletter || data.accepteNewsletter);
 
+    // RGPD Art. 7 — preuve du consentement (injecté par le contrôleur/service, pas par le frontend)
+    this.ipClient = BaseDTO.cleanString(data._ipClient) || null;
+
     // Photo (URL si fournie)
     this.photoUrl = BaseDTO.cleanString(data.photo_url || data.photoUrl);
   }
@@ -64,6 +67,9 @@ class CreateUserDTO extends BaseDTO {
       adresse: this.commune,
       accepte_conditions: this.accepteConditions,
       accepte_newsletter: this.accepteNewsletter,
+      date_acceptation_conditions: this.accepteConditions ? new Date() : null,
+      ip_acceptation_conditions: this.accepteConditions ? this.ipClient : null,
+      ip_inscription: this.ipClient,
       photo_url: this.photoUrl,
       statut: this.typeUser === 'visiteur' ? 'actif' : 'en_attente_validation',
       date_creation: new Date()
