@@ -32,6 +32,7 @@ const Footer = () => {
       links: [
         { label: t('common.terms'), href: '/a-propos#conditions' },
         { label: t('common.privacy'), href: '/a-propos#confidentialite' },
+        { label: t('common.legalNotice', 'Mentions légales'), href: '/a-propos#mentions-legales' },
       ]
     }
   ];
