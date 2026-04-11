@@ -89,6 +89,11 @@ class CronService {
       this.archiveOldEvents();
     });
 
+    // 11. RGPD : Purge des vues anciennes (>90 jours) - Tous les dimanches à 3h
+    this.scheduleJob('clean-old-views', '0 3 * * 0', () => {
+      this.cleanOldViews();
+    });
+
     logger.info(`📅 ${this.jobs.size} tâches planifiées activées`);
   }
 
@@ -225,6 +230,27 @@ class CronService {
     });
 
     logger.info(`🧹 ${result} notifications anciennes supprimées`);
+  }
+
+  /**
+   * RGPD : Purger les vues de plus de 90 jours
+   * Les vues contiennent ip_address, user_agent, referer — données personnelles
+   */
+  async cleanOldViews() {
+    if (!this.models?.Vue) return;
+
+    const dateLimit = new Date();
+    dateLimit.setDate(dateLimit.getDate() - (parseInt(process.env.VIEW_RETENTION_DAYS) || 90));
+
+    const result = await this.models.Vue.destroy({
+      where: {
+        date_vue: {
+          [Op.lt]: dateLimit
+        }
+      }
+    });
+
+    logger.info(`🧹 ${result} vues anciennes supprimées (RGPD rétention ${process.env.VIEW_RETENTION_DAYS || 90}j)`);
   }
 
   /**

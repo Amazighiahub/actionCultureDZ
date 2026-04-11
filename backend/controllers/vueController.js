@@ -50,10 +50,17 @@ class VueController extends BaseController {
       }
 
       const userAgent = req.get('User-Agent') || '';
-      const ipAddress = req.ip ||
-                       req.connection?.remoteAddress ||
-                       req.headers['x-forwarded-for']?.split(',')[0] ||
-                       '0.0.0.0';
+      const rawIp = req.ip ||
+                    req.connection?.remoteAddress ||
+                    req.headers['x-forwarded-for']?.split(',')[0] ||
+                    '0.0.0.0';
+
+      // RGPD : anonymiser l'IP avant stockage (recommandation CNIL)
+      // IPv4 : tronquer le dernier octet (192.168.1.42 → 192.168.1.0)
+      // IPv6 : tronquer les 80 derniers bits (garder les 48 premiers)
+      const ipAddress = rawIp.includes(':')
+        ? rawIp.split(':').slice(0, 3).join(':') + '::'
+        : rawIp.replace(/\.\d+$/, '.0');
 
       // Verifier si c'est une vue unique pour cette session
       const existingView = await this.vueService.findExistingView(type_entite, id_entite, sessionId);
