@@ -162,29 +162,32 @@ export function useOeuvres(): UseOeuvresReturn {
         const desc = typeof o.description === 'object' ? Object.values(o.description || {}).join(' ') : String(o.description || '');
         if (desc.toLowerCase().includes(query)) return true;
         
-        // Recherche dans les contributeurs
-        const contributeurs = [];
+        // Helper : extraire texte d'un champ string ou objet multilingue {fr, ar, ...}
+        const ml = (v: unknown): string => typeof v === 'object' && v ? Object.values(v).join(' ') : String(v || '');
+
+        // Recherche dans les contributeurs (nom/prenom multilingues)
+        const contributeurs: string[] = [];
         if (o.OeuvreIntervenants) {
-          contributeurs.push(...o.OeuvreIntervenants.map(oi => 
-            oi.Intervenant?.nom || `${oi.Intervenant?.nom} ${oi.Intervenant?.prenom}`
+          contributeurs.push(...o.OeuvreIntervenants.map(oi =>
+            `${ml(oi.Intervenant?.nom)} ${ml(oi.Intervenant?.prenom)}`
           ));
         }
         if (o.Users) {
-          contributeurs.push(...o.Users.map(u => 
-            u.nom || `${u.nom} ${u.prenom}`
+          contributeurs.push(...o.Users.map(u =>
+            `${ml(u.nom)} ${ml(u.prenom)}`
           ));
         }
         const contributeursStr = contributeurs.join(' ').toLowerCase();
         if (contributeursStr.includes(query)) return true;
-        
-        // Recherche dans les tags
+
+        // Recherche dans les tags (nom multilingue)
         if (o.Tags) {
-          const tagsStr = o.Tags.map(t => t.nom).join(' ').toLowerCase();
+          const tagsStr = o.Tags.map(t => ml(t.nom)).join(' ').toLowerCase();
           if (tagsStr.includes(query)) return true;
         }
-        
-        // Recherche dans le type
-        const typeNom = o.TypeOeuvre?.nom_type?.toLowerCase() || '';
+
+        // Recherche dans le type (nom_type multilingue)
+        const typeNom = ml(o.TypeOeuvre?.nom_type).toLowerCase();
         if (typeNom.includes(query)) return true;
         
         return false;
