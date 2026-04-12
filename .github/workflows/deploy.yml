@@ -6,7 +6,30 @@ on:
       - main
 
 jobs:
+  # ============================================
+  # Job 1 : Audit de sécurité des dépendances
+  # ============================================
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Audit backend dependencies
+        working-directory: ./backend
+        run: npm audit --audit-level=high --omit=dev || true
+
+      - name: Audit frontend dependencies
+        working-directory: ./frontEnd
+        run: npm audit --audit-level=high --omit=dev || true
+
+  # ============================================
+  # Job 2 : Déploiement sur VPS (après audit)
+  # ============================================
   deploy:
+    needs: security
     runs-on: ubuntu-latest
     steps:
       - name: Deploy via SSH
