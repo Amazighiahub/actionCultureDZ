@@ -56,8 +56,8 @@ const ArtisanatCard: React.FC<ArtisanatCardProps> = React.memo(({ artisanat, onV
                    artisanat.image_url ||
                    '/images/placeholder-artisanat.svg';
   const artisan = artisanat.Oeuvre?.Saiseur || artisanat.artisan;
-  const materiau = artisanat.Materiau?.nom || '';
-  const technique = artisanat.Technique?.nom || '';
+  const materiau = getLocalizedText(artisanat.Materiau?.nom) || '';
+  const technique = getLocalizedText(artisanat.Technique?.nom) || '';
   const prix = artisanat.prix || artisanat.prix_min;
   const id = artisanat.id_artisanat || artisanat.id;
 
