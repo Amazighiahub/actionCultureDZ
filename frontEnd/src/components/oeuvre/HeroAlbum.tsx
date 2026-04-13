@@ -160,7 +160,7 @@ const HeroAlbum: React.FC<HeroAlbumProps> = ({
                         </h2>
                         {mainContributors.length > 0 && (
                           <p className="text-white/90 font-medium drop-shadow">
-                            {mainContributors[0].prenom} {mainContributors[0].nom}
+                            {gt(mainContributors[0].prenom)} {gt(mainContributors[0].nom)}
                           </p>
                         )}
                       </div>
@@ -261,7 +261,7 @@ const HeroAlbum: React.FC<HeroAlbumProps> = ({
                           {oeuvre.Langue && (
                             <div className="flex items-center gap-2 text-emerald-200/80">
                               <Globe className="h-4 w-4" />
-                              <span>{oeuvre.Langue.nom}</span>
+                              <span>{gt(oeuvre.Langue.nom)}</span>
                             </div>
                           )}
                           {oeuvre.annee_creation && (
@@ -323,7 +323,7 @@ const HeroAlbum: React.FC<HeroAlbumProps> = ({
                   <Badge variant="outline">{oeuvre.annee_creation}</Badge>
                 )}
                 {oeuvre.AlbumMusical?.Genre && (
-                  <Badge variant="secondary">{oeuvre.AlbumMusical.Genre.nom}</Badge>
+                  <Badge variant="secondary">{gt(oeuvre.AlbumMusical.Genre.nom)}</Badge>
                 )}
                 {(oeuvre as any).note_moyenne && (oeuvre as any).note_moyenne > 0 && (
                   <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
@@ -473,12 +473,12 @@ const HeroAlbum: React.FC<HeroAlbumProps> = ({
               <div className="flex flex-wrap gap-2">
                 {oeuvre.Categories?.map((cat: any) => (
                   <Badge key={cat.id_categorie} variant="outline">
-                    {cat.nom || cat.nom_categorie}
+                    {gt(cat.nom) || gt(cat.nom_categorie)}
                   </Badge>
                 ))}
                 {oeuvre.Tags?.map((tag: any) => (
                   <Badge key={tag.id_tag} variant="secondary" className="text-xs">
-                    #{tag.nom || tag.nom_tag}
+                    #{gt(tag.nom) || gt(tag.nom_tag)}
                   </Badge>
                 ))}
               </div>

@@ -186,7 +186,7 @@ const HeroLivre: React.FC<HeroLivreProps> = ({
                             <div className="space-y-2 text-sm">
                               {oeuvre.Livre?.isbn && (<div className="flex items-center justify-between text-amber-200/80"><span>ISBN</span><span className="font-mono text-xs">{oeuvre.Livre.isbn}</span></div>)}
                               {oeuvre.Livre?.nb_pages && (<div className="flex items-center justify-between text-amber-200/80"><span>{t('works.fields.pages', 'Pages')}</span><span>{formatNumber(oeuvre.Livre.nb_pages)}</span></div>)}
-                              {oeuvre.Langue && (<div className="flex items-center gap-2 text-amber-200/80"><Globe className="h-4 w-4" /><span>{oeuvre.Langue.nom}</span></div>)}
+                              {oeuvre.Langue && (<div className="flex items-center gap-2 text-amber-200/80"><Globe className="h-4 w-4" /><span>{gt(oeuvre.Langue.nom)}</span></div>)}
                               {oeuvre.annee_creation && (<div className="flex items-center gap-2 text-amber-200/80"><Calendar className="h-4 w-4" /><span>{oeuvre.annee_creation}</span></div>)}
                             </div>
                             <div className="mt-4 text-center">
@@ -225,7 +225,7 @@ const HeroLivre: React.FC<HeroLivreProps> = ({
                   {t('works.types.book', 'Livre')}
                 </Badge>
                 {oeuvre.annee_creation && <Badge variant="outline">{oeuvre.annee_creation}</Badge>}
-                {oeuvre.Livre?.Genre && <Badge variant="secondary">{oeuvre.Livre.Genre.nom}</Badge>}
+                {oeuvre.Livre?.Genre && <Badge variant="secondary">{gt(oeuvre.Livre.Genre.nom)}</Badge>}
                 {(oeuvre as any).note_moyenne && (oeuvre as any).note_moyenne > 0 && (
                   <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
                     <Star className="h-3 w-3 mr-1 fill-current" />{(oeuvre as any).note_moyenne.toFixed(1)}
@@ -318,8 +318,8 @@ const HeroLivre: React.FC<HeroLivreProps> = ({
             {/* Catégories et tags */}
             {((oeuvre.Categories && oeuvre.Categories.length > 0) || (oeuvre.Tags && oeuvre.Tags.length > 0)) && (
               <div className="flex flex-wrap gap-2">
-                {oeuvre.Categories?.map((cat: any) => <Badge key={cat.id_categorie} variant="outline">{cat.nom || cat.nom_categorie}</Badge>)}
-                {oeuvre.Tags?.map((tag: any) => <Badge key={tag.id_tag} variant="secondary" className="text-xs">#{tag.nom || tag.nom_tag}</Badge>)}
+                {oeuvre.Categories?.map((cat: any) => <Badge key={cat.id_categorie} variant="outline">{gt(cat.nom) || gt(cat.nom_categorie)}</Badge>)}
+                {oeuvre.Tags?.map((tag: any) => <Badge key={tag.id_tag} variant="secondary" className="text-xs">#{gt(tag.nom) || gt(tag.nom_tag)}</Badge>)}
               </div>
             )}
           </div>

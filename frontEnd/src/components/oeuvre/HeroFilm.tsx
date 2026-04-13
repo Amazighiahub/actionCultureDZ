@@ -173,7 +173,7 @@ const HeroFilm: React.FC<HeroFilmProps> = ({
                         </h2>
                         {mainContributors.length > 0 && (
                           <p className="text-white/90 font-medium drop-shadow">
-                            {mainContributors[0].prenom} {mainContributors[0].nom}
+                            {gt(mainContributors[0].prenom)} {gt(mainContributors[0].nom)}
                           </p>
                         )}
                       </div>
@@ -239,7 +239,7 @@ const HeroFilm: React.FC<HeroFilmProps> = ({
                         <div className="flex items-center justify-between mb-4">
                           <Film className="h-8 w-8 text-purple-400" />
                           <Badge variant="outline" className="border-purple-400/50 text-purple-200 bg-purple-950/50">
-                            {oeuvre.TypeOeuvre?.nom_type || 'Film'}
+                            {gt(oeuvre.TypeOeuvre?.nom_type) || 'Film'}
                           </Badge>
                         </div>
 
@@ -279,7 +279,7 @@ const HeroFilm: React.FC<HeroFilmProps> = ({
                           {oeuvre.Langue && (
                             <div className="flex items-center gap-2 text-purple-200/80">
                               <Globe className="h-4 w-4" />
-                              <span>{oeuvre.Langue.nom}</span>
+                              <span>{gt(oeuvre.Langue.nom)}</span>
                             </div>
                           )}
                           {oeuvre.annee_creation && (
@@ -341,7 +341,7 @@ const HeroFilm: React.FC<HeroFilmProps> = ({
                   <Badge variant="outline">{oeuvre.annee_creation}</Badge>
                 )}
                 {oeuvre.Film?.Genre && (
-                  <Badge variant="secondary">{oeuvre.Film.Genre.nom}</Badge>
+                  <Badge variant="secondary">{gt(oeuvre.Film.Genre.nom)}</Badge>
                 )}
                 {oeuvre.Film?.duree_minutes && (
                   <Badge variant="outline">
@@ -492,12 +492,12 @@ const HeroFilm: React.FC<HeroFilmProps> = ({
               <div className="flex flex-wrap gap-2">
                 {oeuvre.Categories?.map((cat: any) => (
                   <Badge key={cat.id_categorie} variant="outline">
-                    {cat.nom || cat.nom_categorie}
+                    {gt(cat.nom) || gt(cat.nom_categorie)}
                   </Badge>
                 ))}
                 {oeuvre.Tags?.map((tag: any) => (
                   <Badge key={tag.id_tag} variant="secondary" className="text-xs">
-                    #{tag.nom || tag.nom_tag}
+                    #{gt(tag.nom) || gt(tag.nom_tag)}
                   </Badge>
                 ))}
               </div>

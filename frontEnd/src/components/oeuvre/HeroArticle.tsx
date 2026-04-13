@@ -185,7 +185,7 @@ const HeroArticle: React.FC<HeroArticleProps> = ({
             {oeuvre.Langue && (
               <div className="flex items-center gap-1">
                 <Globe className="h-3.5 w-3.5" />
-                <span>{oeuvre.Langue.nom}</span>
+                <span>{gt(oeuvre.Langue.nom)}</span>
               </div>
             )}
           </div>
@@ -244,12 +244,12 @@ const HeroArticle: React.FC<HeroArticleProps> = ({
             <div className="flex flex-wrap gap-2">
               {oeuvre.Categories?.map((cat: any) => (
                 <Badge key={cat.id_categorie} variant="outline" className="text-xs">
-                  {cat.nom || cat.nom_categorie}
+                  {gt(cat.nom) || gt(cat.nom_categorie)}
                 </Badge>
               ))}
               {oeuvre.Tags?.map((tag: any) => (
                 <Badge key={tag.id_tag} variant="secondary" className="text-xs">
-                  #{tag.nom || tag.nom_tag}
+                  #{gt(tag.nom) || gt(tag.nom_tag)}
                 </Badge>
               ))}
             </div>
