@@ -79,7 +79,7 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false }) => {
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">{t('oeuvre.publisher', 'Éditeur')}</span>
               <span className="font-medium truncate max-w-[150px]">
-                {oeuvre.Editeurs[0].nom}
+                {getLocalizedText(oeuvre.Editeurs[0].nom)}
               </span>
             </div>
           )}
@@ -95,7 +95,7 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false }) => {
                 <div className="flex flex-wrap gap-1">
                   {oeuvre.Categories.slice(0, 5).map((cat) => (
                     <Badge key={cat.id_categorie} variant="outline" className="text-xs">
-                      {cat.nom}
+                      {getLocalizedText(cat.nom)}
                     </Badge>
                   ))}
                 </div>
@@ -526,7 +526,7 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false }) => {
                 <div className="flex flex-wrap gap-2">
                   {oeuvre.Editeurs.map((editeur) => (
                     <Badge key={editeur.id_editeur} variant="outline">
-                      {editeur.nom}
+                      {getLocalizedText(editeur.nom)}
                     </Badge>
                   ))}
                 </div>
@@ -566,7 +566,7 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false }) => {
                 <div className="flex flex-wrap gap-2">
                   {oeuvre.Categories.map((cat) => (
                     <Badge key={cat.id_categorie} variant="outline">
-                      {cat.nom}
+                      {getLocalizedText(cat.nom)}
                     </Badge>
                   ))}
                 </div>
