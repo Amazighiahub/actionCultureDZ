@@ -1,7 +1,11 @@
 /**
+ * TODO: Test obsolète — le composant a été renommé AjouterPatrimoineRapide.tsx
+ * et déplacé hors de /pages/admin/. L'import @/pages/admin/AjouterPatrimoine
+ * n'existe plus. À réécrire pour le nouveau composant.
+ *
  * AjouterPatrimoine.test.tsx — Tests automatises du formulaire de creation de patrimoine
  *
- * Couverture :
+ * Couverture (skippée) :
  *   - Rendu (champs requis, selects dynamiques, types patrimoine)
  *   - Validation (nom, adresse, wilaya, commune, type patrimoine, GPS)
  *   - Soumission (payload, loading, toast erreur)

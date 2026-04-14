@@ -611,6 +611,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                         <RequiredLabel required>{t('auth.register.birthDate')}</RequiredLabel>
                         <div className="grid grid-cols-3 gap-2">
                           <select
+                            aria-label={t('auth.register.day', 'Jour')}
                             className={`p-2 border rounded-lg ${registerErrors.date_naissance ? 'border-destructive' : ''}`}
                             value={registerForm.date_naissance ? new Date(registerForm.date_naissance).getDate() : ''}
                             onChange={(e) => {
@@ -624,6 +625,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                             {Array.from({length: 31}, (_, i) => <option key={i+1} value={i+1}>{i+1}</option>)}
                           </select>
                           <select
+                            aria-label={t('auth.register.month', 'Mois')}
                             className={`p-2 border rounded-lg ${registerErrors.date_naissance ? 'border-destructive' : ''}`}
                             value={registerForm.date_naissance ? new Date(registerForm.date_naissance).getMonth() : ''}
                             onChange={(e) => {
@@ -642,6 +644,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                             ].map((m, i) => <option key={i} value={i}>{m}</option>)}
                           </select>
                           <select
+                            aria-label={t('auth.register.year', 'Année')}
                             className={`p-2 border rounded-lg ${registerErrors.date_naissance ? 'border-destructive' : ''}`}
                             value={registerForm.date_naissance ? new Date(registerForm.date_naissance).getFullYear() : ''}
                             onChange={(e) => {
