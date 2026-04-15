@@ -1706,7 +1706,14 @@
     "autreAuteur": "أضيف عمل مؤلف آخر",
     "autreAuteurDesc": "أنت المساهم الذي يوثق هذا العمل على المنصة",
     "ajouterAuteurObligatoire": "أضف على الأقل المؤلف الرئيسي، ثم المساهمين (مترجم، رسام...)",
-    "coAuteursOptionnel": "يمكنك أيضاً إضافة مؤلفين مشاركين أو مساهمين (مترجم، رسام...)"
+    "coAuteursOptionnel": "يمكنك أيضاً إضافة مؤلفين مشاركين أو مساهمين (مترجم، رسام...)",
+    "nb_pistes": "عدد المقاطع",
+    "placeholder_nb_pistes": "Ex: 12",
+    "producteur": "المنتج",
+    "placeholder_producteur": "Nom du producteur",
+    "studio": "Studio de production",
+    "placeholder_studio": "Nom du studio",
+    "type_hint": "Sélectionnez le type qui correspond le mieux à votre œuvre. Pour les articles et articles scientifiques, l'éditeur avancé permet une mise en page riche avec blocs (titres, images, citations, tableaux)."
   },
   "common_patrimoinesection": {
     "description_citadelle_historique_classe": "قلعة تاريخية مصنفة كتراث عالمي لليونسكو",
@@ -2678,11 +2685,14 @@
       "typeRequired": "نوع التراث مطلوب",
       "photoRequired": "صورة واحدة على الأقل مطلوبة",
       "createFailed": "خطأ أثناء الإنشاء",
-      "gpsRecommended": "الموقع الجغرافي غير محدد."
+      "gpsRecommended": "الموقع الجغرافي غير محدد.",
+      "invalidFiles": "Certains fichiers sont invalides (images < 10 Mo)"
     },
     "success": {
       "created": "تم إنشاء الموقع!",
-      "createdDesc": "يمكنك الآن إثراء هذا الموقع بمزيد من التفاصيل."
+      "createdDesc": "يمكنك الآن إثراء هذا الموقع بمزيد من التفاصيل.",
+      "partial": "Site créé (photos non uploadées)",
+      "partialDesc": "Le site a été créé mais certaines photos n'ont pas pu être uploadées."
     },
     "duplicate": {
       "found": "موقع موجود مسبقاً",
@@ -2705,14 +2715,23 @@
       "empty": "هذا القسم لم يُوثّق بعد.",
       "saved": "تم تسجيل المساهمة!",
       "thanks": "شكراً لمساهمتك",
-      "saveFailed": "خطأ أثناء الحفظ"
+      "saveFailed": "خطأ أثناء الحفظ",
+      "contentRequired": "Veuillez saisir du contenu (au moins en français ou arabe)"
     },
     "gps": {
       "found": "تم العثور على الموقع",
       "denied": "تم رفض الوصول إلى الموقع.",
       "timeout": "انتهت المهلة. أعد المحاولة.",
-      "error": "خطأ في تحديد الموقع"
-    }
+      "error": "خطأ في تحديد الموقع",
+      "unavailable": "Géolocalisation non disponible",
+      "unavailableDesc": "Votre appareil ne supporte pas la géolocalisation.",
+      "unavailablePos": "Position indisponible. Cliquez sur la carte."
+    },
+    "placeholders": {
+      "nom": "Ex: Casbah d'Alger, Djemila...",
+      "adresse": "Ex: Centre-ville, Route de..."
+    },
+    "checking": "Vérification..."
   },
   "toasts": {
     "error": "خطأ",
@@ -2944,5 +2963,201 @@
     "invalidGPS": "إحداثيات GPS غير صالحة",
     "fileTooLarge": "الملف كبير جدًا",
     "invalidFileType": "نوع الملف غير مدعوم"
+  },
+  "category": {
+    "form": {
+      "name": "اسم الفئة"
+    }
+  },
+  "visit": {
+    "title": "Planifier votre visite",
+    "subtitle": "Créez un parcours personnalisé autour de",
+    "duration": "Durée de la visite",
+    "durationHint": "De 1h à 8h selon votre disponibilité",
+    "transport": "Mode de transport",
+    "interests": "Centres d'intérêt",
+    "maxSites": "Nombre de sites à visiter",
+    "options": "خيارات",
+    "includeRestaurants": "Inclure des restaurants",
+    "includeHotels": "Inclure des hébergements",
+    "accessibility": "Accessibilité PMR",
+    "familyFriendly": "Adapté aux familles",
+    "generating": "Génération du parcours...",
+    "generatingHint": "Nous analysons les meilleurs sites autour de vous",
+    "sites": "sites",
+    "distance": "distance",
+    "estimatedTime": "durée",
+    "map": "Carte du parcours",
+    "startPoint": "Point de départ",
+    "itinerary": "Votre itinéraire",
+    "includedServices": "Services inclus dans le parcours",
+    "info": "Les horaires et disponibilités peuvent varier. Nous vous conseillons de vérifier avant votre visite.",
+    "generate": "Générer le parcours",
+    "modify": "تعديل",
+    "openMaps": "Ouvrir dans Maps",
+    "error": {
+      "generation": "Impossible de générer le parcours. Veuillez réessayer."
+    }
+  },
+  "multilang": {
+    "keyboardTifinaghNotDetected": "Clavier Tifinagh non détecté",
+    "keyboardTamazightNotDetected": "Clavier Tamazight Latin non détecté",
+    "installTifinagh": "Installez le clavier Tifinagh depuis les paramètres de votre appareil",
+    "installTamazight": "Installez le clavier Tamazight Latin depuis les paramètres de votre appareil",
+    "seeInstructions": "Voir les instructions",
+    "generalInstructions": "Instructions générales",
+    "installKeyboard": "Installez un clavier Tamazight depuis les paramètres de votre appareil",
+    "searchStore": "Recherchez \"Tifinagh\" ou \"Tamazight Latin\" dans votre store",
+    "activateKeyboard": "Activez le clavier dans les paramètres de langue"
+  },
+  "programme": {
+    "form": {
+      "tabs": {
+        "basic": "معلومات",
+        "schedule": "المواعيد",
+        "participants": "المتدخلون",
+        "options": "خيارات"
+      },
+      "basicInfo": {
+        "title": "المعلومات الأساسية",
+        "description": "المعلومات الرئيسية عن نشاط البرنامج"
+      },
+      "activityTitle": "عنوان النشاط",
+      "description": "الوصف",
+      "activityType": "نوع النشاط",
+      "selectType": "اختر نوعاً",
+      "status": "الحالة",
+      "selectStatus": "اختر الحالة",
+      "order": "الترتيب في البرنامج",
+      "types": {
+        "conference": "محاضرة",
+        "atelier": "ورشة عمل",
+        "projection": "عرض",
+        "presentation": "تقديم",
+        "spectacle": "عرض فني",
+        "exposition": "معرض",
+        "visite": "زيارة موجهة",
+        "concert": "حفل موسيقي",
+        "lecture": "قراءة",
+        "debat": "نقاش",
+        "formation": "تكوين",
+        "ceremonie": "حفل",
+        "pause": "استراحة",
+        "autre": "أخرى"
+      },
+      "statuses": {
+        "planifie": "مخطط",
+        "en_cours": "جاري",
+        "termine": "منتهي",
+        "annule": "ملغى",
+        "reporte": "مؤجل"
+      },
+      "schedule": {
+        "title": "المواعيد والمكان",
+        "description": "تاريخ ووقت ومكان النشاط",
+        "activityDate": "تاريخ النشاط",
+        "selectDate": "اختر تاريخاً",
+        "noDateAvailable": "لا يوجد تاريخ متاح",
+        "startTime": "وقت البداية",
+        "endTime": "وقت النهاية",
+        "selectTime": "اختر الوقت",
+        "place": "المكان",
+        "selectPlace": "اختر مكاناً"
+      },
+      "participants": {
+        "title": "المتدخلون",
+        "description": "إدارة المتدخلين في النشاط",
+        "label": "المتدخلون",
+        "addIntervenant": "إضافة متدخل",
+        "intervenantNum": "Intervenant #{{num}}",
+        "user": "مستخدم",
+        "selectUser": "اختر مستخدماً",
+        "role": "الدور",
+        "selectRole": "اختر دوراً",
+        "interventionSubject": "موضوع المداخلة",
+        "subjectPlaceholder": "موضوع المداخلة",
+        "shortBiography": "سيرة ذاتية مختصرة",
+        "biographyPlaceholder": "سيرة ذاتية مختصرة",
+        "roles": {
+          "principal": "المتدخل الرئيسي",
+          "co_intervenant": "متدخل مشارك",
+          "moderateur": "مشرف",
+          "animateur": "منشط",
+          "invite": "ضيف"
+        }
+      },
+      "options": {
+        "title": "خيارات ومعدات",
+        "description": "خيارات إضافية ومعدات مطلوبة",
+        "mainLanguage": "اللغة الرئيسية",
+        "selectLanguage": "اختر لغة",
+        "optionsLabel": "خيارات",
+        "translationAvailable": "ترجمة متاحة",
+        "recordingAllowed": "تسجيل مسموح",
+        "liveBroadcast": "بث مباشر",
+        "digitalSupport": "دعم رقمي",
+        "requiredMaterial": "المعدات المطلوبة",
+        "addMaterial": "إضافة معدات",
+        "organizerNotes": "ملاحظات المنظم",
+        "organizerNotesPlaceholder": "ملاحظات داخلية للمنظم"
+      },
+      "languages": {
+        "fr": "Français",
+        "ar": "العربية",
+        "en": "English",
+        "tz-ltn": "Tamazight (Latin)",
+        "tz-tfng": "Tamazight (Tifinagh)"
+      },
+      "levels": {
+        "debutant": "Débutant",
+        "intermediaire": "Intermédiaire",
+        "avance": "Avancé",
+        "tous_niveaux": "Tous niveaux"
+      },
+      "actions": {
+        "cancel": "إلغاء",
+        "saving": "جاري الحفظ...",
+        "create": "إنشاء",
+        "update": "تحديث"
+      },
+      "success": {
+        "created": "تم إنشاء البرنامج بنجاح",
+        "updated": "تم تحديث البرنامج بنجاح"
+      },
+      "errors": {
+        "titleRequired": "Le titre est requis dans toutes les langues",
+        "dateRequired": "La date est requise",
+        "startTimeRequired": "L'heure de début est requise",
+        "endTimeRequired": "L'heure de fin est requise",
+        "endTimeAfterStart": "وقت النهاية يجب أن يكون بعد وقت البداية"
+      }
+    }
+  },
+  "emailChange": {
+    "noTokenProvided": "Aucun jeton de confirmation fourni.",
+    "emailUpdatedSuccess": "Votre adresse email a été mise à jour avec succès.",
+    "tokenInvalidOrExpired": "Le jeton est invalide ou a expiré.",
+    "confirmationFailed": "Impossible de confirmer le changement d'email.",
+    "confirming": "Confirmation en cours...",
+    "emailUpdated": "Email mis à jour",
+    "newEmail": "Votre nouvel email :",
+    "reconnect": "Se reconnecter",
+    "backToHome": "Retour à l'accueil"
+  },
+  "eventManagement": {
+    "programmeManagement": "Gestion des programmes",
+    "addProgramme": "Ajouter un programme",
+    "editProgramme": "Modifier le programme",
+    "createProgramme": "Créer un programme",
+    "fillProgrammeInfo": "Remplissez les informations du programme",
+    "noProgramme": "Aucun programme",
+    "startByAddingProgramme": "Commencez par ajouter un programme à cet événement",
+    "confirmDeleteProgramme": "Êtes-vous sûr de vouloir supprimer ce programme ?",
+    "loadProgrammesError": "Erreur lors du chargement des programmes",
+    "programmeUpdated": "تم تحديث البرنامج بنجاح",
+    "programmeCreated": "تم إنشاء البرنامج بنجاح",
+    "programmeDeleted": "Programme supprimé avec succès",
+    "saveError": "Erreur lors de la sauvegarde",
+    "deleteError": "Erreur lors de la suppression"
   }
 }

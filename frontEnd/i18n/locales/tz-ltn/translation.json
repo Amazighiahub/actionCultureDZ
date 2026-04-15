@@ -162,7 +162,9 @@
       "photographe": "Amessawed",
       "danseur": "Amrcac",
       "sculpteur": "Anɣac",
-      "autre": "Wayeḍ"
+      "autre": "Wayeḍ",
+      "poete": "Poète",
+      "conteur": "Conteur"
     },
     "loginToComment": "Qqen i uwennit",
     "loginToFavorite": "Qqen i tmerna ɣer yismenyifen",
@@ -347,7 +349,8 @@
     "selectRole": "Fren tamlilt",
     "title": "Imuragen",
     "addedCount_many": "{{count}} imuragen ttwarna",
-    "addedCount": "{{count}} imutatken ttwarnant"
+    "addedCount": "{{count}} imutatken ttwarnant",
+    "helperText": "Ajoutez l'auteur principal de l'œuvre, puis les contributeurs (traducteur, illustrateur, préfacier...). Si vous êtes l'auteur, recherchez votre nom."
   },
   "errors": {
     "generic": {
@@ -1423,7 +1426,26 @@
     "images_vidos_audio": "[TODO TZ-LTN] Images, vidéos, audio ou documents (max 100MB par fichier)",
     "choisir_des_fichiers": "[TODO TZ-LTN] Choisir des fichiers",
     "sauvegarder_comme_brouillon": "[TODO TZ-LTN] Sauvegarder comme brouillon",
-    "publier_luvre": "[TODO TZ-LTN] Publier l'œuvre"
+    "publier_luvre": "[TODO TZ-LTN] Publier l'œuvre",
+    "nb_pistes": "Nombre de pistes",
+    "placeholder_nb_pistes": "Ex: 12",
+    "producteur": "Producteur",
+    "placeholder_producteur": "Nom du producteur",
+    "studio": "Studio de production",
+    "placeholder_studio": "Nom du studio",
+    "type_hint": "Sélectionnez le type qui correspond le mieux à votre œuvre. Pour les articles et articles scientifiques, l'éditeur avancé permet une mise en page riche avec blocs (titres, images, citations, tableaux).",
+    "isTraduction": "Cette œuvre est une traduction d'une œuvre existante",
+    "oeuvreOriginale": "Œuvre originale",
+    "rechercherOeuvre": "Rechercher l'œuvre originale par titre...",
+    "oeuvreSelectionnee": "Œuvre originale sélectionnée",
+    "description_label": "Résumé de l'œuvre",
+    "quiEstAuteur": "Qui est l'auteur ?",
+    "jeSuisAuteur": "Je suis l'auteur de cette œuvre",
+    "jeSuisAuteurDesc": "Votre nom sera affiché comme auteur principal",
+    "autreAuteur": "J'ajoute l'œuvre d'un autre auteur",
+    "autreAuteurDesc": "Vous êtes le contributeur qui référence cette œuvre sur la plateforme",
+    "ajouterAuteurObligatoire": "Ajoutez au moins l'auteur principal de l'œuvre, puis les éventuels contributeurs (traducteur, illustrateur...)",
+    "coAuteursOptionnel": "Vous pouvez aussi ajouter des co-auteurs ou contributeurs (traducteur, illustrateur, préfacier...)"
   },
   "common_patrimoinesection": {
     "description_citadelle_historique_classe": "[TODO TZ-LTN] Citadelle historique classée au patrimoine mondial de l'UNESCO",
@@ -2578,11 +2600,14 @@
       "typeRequired": "Anaw n ugama yettwasra",
       "photoRequired": "Ma drus yiwet n twlaft tettwasra",
       "createFailed": "Tuccḍa deg urmay",
-      "gpsRecommended": "Adeg GPS ur yettwasbadu ara."
+      "gpsRecommended": "Adeg GPS ur yettwasbadu ara.",
+      "invalidFiles": "Certains fichiers sont invalides (images < 10 Mo)"
     },
     "success": {
       "created": "Adeg yettwarna!",
-      "createdDesc": "Tzemreḍ tura ad tesnernayeḍ adeg-a s wugar n telqayin."
+      "createdDesc": "Tzemreḍ tura ad tesnernayeḍ adeg-a s wugar n telqayin.",
+      "partial": "Site créé (photos non uploadées)",
+      "partialDesc": "Le site a été créé mais certaines photos n'ont pas pu être uploadées."
     },
     "duplicate": {
       "found": "Adeg yella yakan",
@@ -2605,14 +2630,23 @@
       "empty": "Tigezmi-ya ur tettwaru ara mazal.",
       "saved": "Attekki yettwaḥraz!",
       "thanks": "Tanemmirt ɣef uttekki-ik",
-      "saveFailed": "Tuccḍa deg uḥraz"
+      "saveFailed": "Tuccḍa deg uḥraz",
+      "contentRequired": "Veuillez saisir du contenu (au moins en français ou arabe)"
     },
     "gps": {
       "found": "Adeg yettwaf",
       "denied": "Anekcum ɣer udeg yettwaggel.",
       "timeout": "Akud ifuk. Ɛreḍ tikelt-nniḍen.",
-      "error": "Tuccḍa deg unadi n udeg"
-    }
+      "error": "Tuccḍa deg unadi n udeg",
+      "unavailable": "Géolocalisation non disponible",
+      "unavailableDesc": "Votre appareil ne supporte pas la géolocalisation.",
+      "unavailablePos": "Position indisponible. Cliquez sur la carte."
+    },
+    "placeholders": {
+      "nom": "Ex: Casbah d'Alger, Djemila...",
+      "adresse": "Ex: Centre-ville, Route de..."
+    },
+    "checking": "Vérification..."
   },
   "toasts": {
     "error": "Tuccḍa",
@@ -2844,5 +2878,201 @@
     "invalidGPS": "Tinniḍin GPS d tirmeɣtutin",
     "fileTooLarge": "Afaylu meqqer aṭas",
     "invalidFileType": "Anaw n ufaylu ur yettwaseḥbiber ara"
+  },
+  "category": {
+    "form": {
+      "name": "Nom de la catégorie"
+    }
+  },
+  "visit": {
+    "title": "Planifier votre visite",
+    "subtitle": "Créez un parcours personnalisé autour de",
+    "duration": "Durée de la visite",
+    "durationHint": "De 1h à 8h selon votre disponibilité",
+    "transport": "Mode de transport",
+    "interests": "Centres d'intérêt",
+    "maxSites": "Nombre de sites à visiter",
+    "options": "Options",
+    "includeRestaurants": "Inclure des restaurants",
+    "includeHotels": "Inclure des hébergements",
+    "accessibility": "Accessibilité PMR",
+    "familyFriendly": "Adapté aux familles",
+    "generating": "Génération du parcours...",
+    "generatingHint": "Nous analysons les meilleurs sites autour de vous",
+    "sites": "sites",
+    "distance": "distance",
+    "estimatedTime": "durée",
+    "map": "Carte du parcours",
+    "startPoint": "Point de départ",
+    "itinerary": "Votre itinéraire",
+    "includedServices": "Services inclus dans le parcours",
+    "info": "Les horaires et disponibilités peuvent varier. Nous vous conseillons de vérifier avant votre visite.",
+    "generate": "Générer le parcours",
+    "modify": "Modifier",
+    "openMaps": "Ouvrir dans Maps",
+    "error": {
+      "generation": "Impossible de générer le parcours. Veuillez réessayer."
+    }
+  },
+  "multilang": {
+    "keyboardTifinaghNotDetected": "Clavier Tifinagh non détecté",
+    "keyboardTamazightNotDetected": "Clavier Tamazight Latin non détecté",
+    "installTifinagh": "Installez le clavier Tifinagh depuis les paramètres de votre appareil",
+    "installTamazight": "Installez le clavier Tamazight Latin depuis les paramètres de votre appareil",
+    "seeInstructions": "Voir les instructions",
+    "generalInstructions": "Instructions générales",
+    "installKeyboard": "Installez un clavier Tamazight depuis les paramètres de votre appareil",
+    "searchStore": "Recherchez \"Tifinagh\" ou \"Tamazight Latin\" dans votre store",
+    "activateKeyboard": "Activez le clavier dans les paramètres de langue"
+  },
+  "programme": {
+    "form": {
+      "tabs": {
+        "basic": "Informations",
+        "schedule": "Horaires",
+        "participants": "Intervenants",
+        "options": "Options"
+      },
+      "basicInfo": {
+        "title": "Informations de base",
+        "description": "Informations principales sur l'activité du programme"
+      },
+      "activityTitle": "Titre de l'activité",
+      "description": "Description",
+      "activityType": "Type d'activité",
+      "selectType": "Sélectionner un type",
+      "status": "Statut",
+      "selectStatus": "Sélectionner un statut",
+      "order": "Ordre dans le programme",
+      "types": {
+        "conference": "Conférence",
+        "atelier": "Atelier",
+        "projection": "Projection",
+        "presentation": "Présentation",
+        "spectacle": "Spectacle",
+        "exposition": "Exposition",
+        "visite": "Visite guidée",
+        "concert": "Concert",
+        "lecture": "Lecture",
+        "debat": "Débat",
+        "formation": "Formation",
+        "ceremonie": "Cérémonie",
+        "pause": "Pause",
+        "autre": "Autre"
+      },
+      "statuses": {
+        "planifie": "Planifié",
+        "en_cours": "En cours",
+        "termine": "Terminé",
+        "annule": "Annulé",
+        "reporte": "Reporté"
+      },
+      "schedule": {
+        "title": "Horaires et lieu",
+        "description": "Date, horaires et lieu de l'activité",
+        "activityDate": "Date de l'activité",
+        "selectDate": "Sélectionner une date",
+        "noDateAvailable": "Aucune date disponible",
+        "startTime": "Heure de début",
+        "endTime": "Heure de fin",
+        "selectTime": "Sélectionner l'heure",
+        "place": "Lieu",
+        "selectPlace": "Sélectionner un lieu"
+      },
+      "participants": {
+        "title": "Intervenants",
+        "description": "Gestion des intervenants de l'activité",
+        "label": "Intervenants",
+        "addIntervenant": "Ajouter un intervenant",
+        "intervenantNum": "Intervenant #{{num}}",
+        "user": "Utilisateur",
+        "selectUser": "Sélectionner un utilisateur",
+        "role": "Rôle",
+        "selectRole": "Sélectionner un rôle",
+        "interventionSubject": "Sujet d'intervention",
+        "subjectPlaceholder": "Sujet de l'intervention",
+        "shortBiography": "Biographie courte",
+        "biographyPlaceholder": "Brève biographie",
+        "roles": {
+          "principal": "Intervenant principal",
+          "co_intervenant": "Co-intervenant",
+          "moderateur": "Modérateur",
+          "animateur": "Animateur",
+          "invite": "Invité"
+        }
+      },
+      "options": {
+        "title": "Options et matériel",
+        "description": "Options supplémentaires et matériel requis",
+        "mainLanguage": "Langue principale",
+        "selectLanguage": "Sélectionner une langue",
+        "optionsLabel": "Options",
+        "translationAvailable": "Traduction disponible",
+        "recordingAllowed": "Enregistrement autorisé",
+        "liveBroadcast": "Diffusion en direct",
+        "digitalSupport": "Support numérique",
+        "requiredMaterial": "Matériel requis",
+        "addMaterial": "Ajouter un matériel",
+        "organizerNotes": "Notes organisateur",
+        "organizerNotesPlaceholder": "Notes internes pour l'organisateur"
+      },
+      "languages": {
+        "fr": "Français",
+        "ar": "العربية",
+        "en": "English",
+        "tz-ltn": "Tamazight (Latin)",
+        "tz-tfng": "Tamazight (Tifinagh)"
+      },
+      "levels": {
+        "debutant": "Débutant",
+        "intermediaire": "Intermédiaire",
+        "avance": "Avancé",
+        "tous_niveaux": "Tous niveaux"
+      },
+      "actions": {
+        "cancel": "Annuler",
+        "saving": "Enregistrement...",
+        "create": "Créer",
+        "update": "Mettre à jour"
+      },
+      "success": {
+        "created": "Programme créé avec succès",
+        "updated": "Programme mis à jour avec succès"
+      },
+      "errors": {
+        "titleRequired": "Le titre est requis dans toutes les langues",
+        "dateRequired": "La date est requise",
+        "startTimeRequired": "L'heure de début est requise",
+        "endTimeRequired": "L'heure de fin est requise",
+        "endTimeAfterStart": "L'heure de fin doit être après l'heure de début"
+      }
+    }
+  },
+  "emailChange": {
+    "noTokenProvided": "Aucun jeton de confirmation fourni.",
+    "emailUpdatedSuccess": "Votre adresse email a été mise à jour avec succès.",
+    "tokenInvalidOrExpired": "Le jeton est invalide ou a expiré.",
+    "confirmationFailed": "Impossible de confirmer le changement d'email.",
+    "confirming": "Confirmation en cours...",
+    "emailUpdated": "Email mis à jour",
+    "newEmail": "Votre nouvel email :",
+    "reconnect": "Se reconnecter",
+    "backToHome": "Retour à l'accueil"
+  },
+  "eventManagement": {
+    "programmeManagement": "Gestion des programmes",
+    "addProgramme": "Ajouter un programme",
+    "editProgramme": "Modifier le programme",
+    "createProgramme": "Créer un programme",
+    "fillProgrammeInfo": "Remplissez les informations du programme",
+    "noProgramme": "Aucun programme",
+    "startByAddingProgramme": "Commencez par ajouter un programme à cet événement",
+    "confirmDeleteProgramme": "Êtes-vous sûr de vouloir supprimer ce programme ?",
+    "loadProgrammesError": "Erreur lors du chargement des programmes",
+    "programmeUpdated": "Programme mis à jour avec succès",
+    "programmeCreated": "Programme créé avec succès",
+    "programmeDeleted": "Programme supprimé avec succès",
+    "saveError": "Erreur lors de la sauvegarde",
+    "deleteError": "Erreur lors de la suppression"
   }
 }

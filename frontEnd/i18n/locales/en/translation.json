@@ -1421,7 +1421,14 @@
     "autreAuteur": "I am adding another author's work",
     "autreAuteurDesc": "You are the contributor referencing this work on the platform",
     "ajouterAuteurObligatoire": "Add at least the main author, then any contributors (translator, illustrator...)",
-    "coAuteursOptionnel": "You can also add co-authors or contributors (translator, illustrator, preface writer...)"
+    "coAuteursOptionnel": "You can also add co-authors or contributors (translator, illustrator, preface writer...)",
+    "nb_pistes": "Number of tracks",
+    "placeholder_nb_pistes": "Ex: 12",
+    "producteur": "Producer",
+    "placeholder_producteur": "Nom du producteur",
+    "studio": "Studio de production",
+    "placeholder_studio": "Nom du studio",
+    "type_hint": "Sélectionnez le type qui correspond le mieux à votre œuvre. Pour les articles et articles scientifiques, l'éditeur avancé permet une mise en page riche avec blocs (titres, images, citations, tableaux)."
   },
   "common_patrimoinesection": {
     "description_citadelle_historique_classe": "Historic citadel listed as UNESCO World Heritage Site",
@@ -2576,11 +2583,14 @@
       "typeRequired": "Heritage type is required",
       "photoRequired": "At least one photo is required",
       "createFailed": "Error during creation",
-      "gpsRecommended": "GPS position not set."
+      "gpsRecommended": "GPS position not set.",
+      "invalidFiles": "Certains fichiers sont invalides (images < 10 Mo)"
     },
     "success": {
       "created": "Site created!",
-      "createdDesc": "You can now enrich this site with more details."
+      "createdDesc": "You can now enrich this site with more details.",
+      "partial": "Site créé (photos non uploadées)",
+      "partialDesc": "Le site a été créé mais certaines photos n'ont pas pu être uploadées."
     },
     "duplicate": {
       "found": "Site already exists",
@@ -2603,14 +2613,23 @@
       "empty": "This section is not yet documented.",
       "saved": "Contribution saved!",
       "thanks": "Thank you for your contribution",
-      "saveFailed": "Error saving"
+      "saveFailed": "Error saving",
+      "contentRequired": "Veuillez saisir du contenu (au moins en français ou arabe)"
     },
     "gps": {
       "found": "Position found",
       "denied": "Location access denied.",
       "timeout": "Timeout. Try again or click the map.",
-      "error": "Geolocation error"
-    }
+      "error": "Geolocation error",
+      "unavailable": "Géolocalisation non disponible",
+      "unavailableDesc": "Votre appareil ne supporte pas la géolocalisation.",
+      "unavailablePos": "Position indisponible. Cliquez sur la carte."
+    },
+    "placeholders": {
+      "nom": "Ex: Casbah d'Alger, Djemila...",
+      "adresse": "Ex: Centre-ville, Route de..."
+    },
+    "checking": "Vérification..."
   },
   "toasts": {
     "error": "Error",
@@ -2842,5 +2861,201 @@
     "invalidGPS": "Invalid GPS coordinates",
     "fileTooLarge": "File is too large",
     "invalidFileType": "Unsupported file type"
+  },
+  "category": {
+    "form": {
+      "name": "Category name"
+    }
+  },
+  "visit": {
+    "title": "Planifier votre visite",
+    "subtitle": "Créez un parcours personnalisé autour de",
+    "duration": "Durée de la visite",
+    "durationHint": "De 1h à 8h selon votre disponibilité",
+    "transport": "Mode de transport",
+    "interests": "Centres d'intérêt",
+    "maxSites": "Nombre de sites à visiter",
+    "options": "Options",
+    "includeRestaurants": "Inclure des restaurants",
+    "includeHotels": "Inclure des hébergements",
+    "accessibility": "Accessibilité PMR",
+    "familyFriendly": "Adapté aux familles",
+    "generating": "Génération du parcours...",
+    "generatingHint": "Nous analysons les meilleurs sites autour de vous",
+    "sites": "sites",
+    "distance": "distance",
+    "estimatedTime": "durée",
+    "map": "Carte du parcours",
+    "startPoint": "Point de départ",
+    "itinerary": "Votre itinéraire",
+    "includedServices": "Services inclus dans le parcours",
+    "info": "Les horaires et disponibilités peuvent varier. Nous vous conseillons de vérifier avant votre visite.",
+    "generate": "Générer le parcours",
+    "modify": "Edit",
+    "openMaps": "Ouvrir dans Maps",
+    "error": {
+      "generation": "Impossible de générer le parcours. Veuillez réessayer."
+    }
+  },
+  "multilang": {
+    "keyboardTifinaghNotDetected": "Clavier Tifinagh non détecté",
+    "keyboardTamazightNotDetected": "Clavier Tamazight Latin non détecté",
+    "installTifinagh": "Installez le clavier Tifinagh depuis les paramètres de votre appareil",
+    "installTamazight": "Installez le clavier Tamazight Latin depuis les paramètres de votre appareil",
+    "seeInstructions": "Voir les instructions",
+    "generalInstructions": "Instructions générales",
+    "installKeyboard": "Installez un clavier Tamazight depuis les paramètres de votre appareil",
+    "searchStore": "Recherchez \"Tifinagh\" ou \"Tamazight Latin\" dans votre store",
+    "activateKeyboard": "Activez le clavier dans les paramètres de langue"
+  },
+  "programme": {
+    "form": {
+      "tabs": {
+        "basic": "Information",
+        "schedule": "Schedule",
+        "participants": "Speakers",
+        "options": "Options"
+      },
+      "basicInfo": {
+        "title": "Basic Information",
+        "description": "Main information about the program activity"
+      },
+      "activityTitle": "Activity Title",
+      "description": "Description",
+      "activityType": "Activity Type",
+      "selectType": "Select a type",
+      "status": "Status",
+      "selectStatus": "Select a status",
+      "order": "Order in program",
+      "types": {
+        "conference": "Conference",
+        "atelier": "Workshop",
+        "projection": "Screening",
+        "presentation": "Presentation",
+        "spectacle": "Show",
+        "exposition": "Exhibition",
+        "visite": "Guided Tour",
+        "concert": "Concert",
+        "lecture": "Reading",
+        "debat": "Debate",
+        "formation": "Training",
+        "ceremonie": "Ceremony",
+        "pause": "Break",
+        "autre": "Other"
+      },
+      "statuses": {
+        "planifie": "Planned",
+        "en_cours": "In Progress",
+        "termine": "Completed",
+        "annule": "Cancelled",
+        "reporte": "Postponed"
+      },
+      "schedule": {
+        "title": "Schedule and Venue",
+        "description": "Date, time and venue of the activity",
+        "activityDate": "Activity Date",
+        "selectDate": "Select a date",
+        "noDateAvailable": "No date available",
+        "startTime": "Start Time",
+        "endTime": "End Time",
+        "selectTime": "Select time",
+        "place": "Venue",
+        "selectPlace": "Select a venue"
+      },
+      "participants": {
+        "title": "Speakers",
+        "description": "Activity speakers management",
+        "label": "Speakers",
+        "addIntervenant": "Add a speaker",
+        "intervenantNum": "Intervenant #{{num}}",
+        "user": "User",
+        "selectUser": "Select a user",
+        "role": "Role",
+        "selectRole": "Select a role",
+        "interventionSubject": "Intervention subject",
+        "subjectPlaceholder": "Intervention subject",
+        "shortBiography": "Short biography",
+        "biographyPlaceholder": "Brief biography",
+        "roles": {
+          "principal": "Main Speaker",
+          "co_intervenant": "Co-speaker",
+          "moderateur": "Moderator",
+          "animateur": "Host",
+          "invite": "Guest"
+        }
+      },
+      "options": {
+        "title": "Options and Equipment",
+        "description": "Additional options and required equipment",
+        "mainLanguage": "Main Language",
+        "selectLanguage": "Select a language",
+        "optionsLabel": "Options",
+        "translationAvailable": "Translation available",
+        "recordingAllowed": "Recording allowed",
+        "liveBroadcast": "Live broadcast",
+        "digitalSupport": "Digital support",
+        "requiredMaterial": "Required equipment",
+        "addMaterial": "Add equipment",
+        "organizerNotes": "Organizer notes",
+        "organizerNotesPlaceholder": "Internal notes for the organizer"
+      },
+      "languages": {
+        "fr": "Français",
+        "ar": "العربية",
+        "en": "English",
+        "tz-ltn": "Tamazight (Latin)",
+        "tz-tfng": "Tamazight (Tifinagh)"
+      },
+      "levels": {
+        "debutant": "Débutant",
+        "intermediaire": "Intermédiaire",
+        "avance": "Avancé",
+        "tous_niveaux": "Tous niveaux"
+      },
+      "actions": {
+        "cancel": "Cancel",
+        "saving": "Saving...",
+        "create": "Create",
+        "update": "Update"
+      },
+      "success": {
+        "created": "Program created successfully",
+        "updated": "Program updated successfully"
+      },
+      "errors": {
+        "titleRequired": "Le titre est requis dans toutes les langues",
+        "dateRequired": "La date est requise",
+        "startTimeRequired": "L'heure de début est requise",
+        "endTimeRequired": "L'heure de fin est requise",
+        "endTimeAfterStart": "End time must be after start time"
+      }
+    }
+  },
+  "emailChange": {
+    "noTokenProvided": "Aucun jeton de confirmation fourni.",
+    "emailUpdatedSuccess": "Votre adresse email a été mise à jour avec succès.",
+    "tokenInvalidOrExpired": "Le jeton est invalide ou a expiré.",
+    "confirmationFailed": "Impossible de confirmer le changement d'email.",
+    "confirming": "Confirmation en cours...",
+    "emailUpdated": "Email mis à jour",
+    "newEmail": "Votre nouvel email :",
+    "reconnect": "Se reconnecter",
+    "backToHome": "Retour à l'accueil"
+  },
+  "eventManagement": {
+    "programmeManagement": "Gestion des programmes",
+    "addProgramme": "Ajouter un programme",
+    "editProgramme": "Modifier le programme",
+    "createProgramme": "Créer un programme",
+    "fillProgrammeInfo": "Remplissez les informations du programme",
+    "noProgramme": "Aucun programme",
+    "startByAddingProgramme": "Commencez par ajouter un programme à cet événement",
+    "confirmDeleteProgramme": "Êtes-vous sûr de vouloir supprimer ce programme ?",
+    "loadProgrammesError": "Erreur lors du chargement des programmes",
+    "programmeUpdated": "Program updated successfully",
+    "programmeCreated": "Program created successfully",
+    "programmeDeleted": "Programme supprimé avec succès",
+    "saveError": "Erreur lors de la sauvegarde",
+    "deleteError": "Erreur lors de la suppression"
   }
 }
