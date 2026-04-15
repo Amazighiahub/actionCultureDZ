@@ -2,15 +2,19 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
-// Import direct des traductions
-import arTranslation from './locales/ar/translation.json';
+// Import UNIQUEMENT le français (langue par défaut) — les autres sont lazy-loaded
 import frTranslation from './locales/fr/translation.json';
-import enTranslation from './locales/en/translation.json';
-import tzLtnTranslation from './locales/tz-ltn/translation.json';
-import tzTfngTranslation from './locales/tz-tfng/translation.json';
 
 // Liste des langues supportées
 const supportedLanguages = ['ar', 'fr', 'en', 'tz-ltn', 'tz-tfng'];
+
+// Chargeurs dynamiques pour les autres langues (code splitting)
+const lazyTranslations: Record<string, () => Promise<{ default: Record<string, unknown> }>> = {
+  ar: () => import('./locales/ar/translation.json'),
+  en: () => import('./locales/en/translation.json'),
+  'tz-ltn': () => import('./locales/tz-ltn/translation.json'),
+  'tz-tfng': () => import('./locales/tz-tfng/translation.json'),
+};
 
 // Normaliser la langue - Version simplifiée
 const normalizeLanguage = (lang: string | null | undefined): string => {
@@ -53,11 +57,7 @@ i18n
   .use(initReactI18next)
   .init({
     resources: {
-      ar: { translation: arTranslation },
       fr: { translation: frTranslation },
-      en: { translation: enTranslation },
-      'tz-ltn': { translation: tzLtnTranslation },
-      'tz-tfng': { translation: tzTfngTranslation },
     },
 
     lng: getInitialLanguage(),
@@ -78,6 +78,15 @@ i18n
     },
   });
 
+/** Charge dynamiquement les traductions d'une langue (si pas encore chargée) */
+async function loadLanguage(lang: string): Promise<void> {
+  if (i18n.hasResourceBundle(lang, 'translation')) return;
+  const loader = lazyTranslations[lang];
+  if (!loader) return;
+  const module = await loader();
+  i18n.addResourceBundle(lang, 'translation', module.default, true, true);
+}
+
 // Intercepter les changements de langue pour la persistance
 const originalChangeLanguage = i18n.changeLanguage.bind(i18n);
 i18n.changeLanguage = async (lng: string | undefined, callback?: any) => {
@@ -85,7 +94,9 @@ i18n.changeLanguage = async (lng: string | undefined, callback?: any) => {
 
   // IMPORTANT: Forcer en minuscules pour tz-tfng et tz-ltn
   const normalized = lng.trim().toLowerCase();
-  console.log(`[i18n] changeLanguage: ${lng} -> ${normalized}`);
+
+  // Charger dynamiquement les traductions si nécessaire
+  await loadLanguage(normalized);
 
   // Sauvegarder la version normalisée
   localStorage.setItem('i18nextLng', normalized);
@@ -129,12 +140,17 @@ export const getAvailableLanguages = () => [
   { code: 'tz-tfng', label: 'ⵜⴰⵎⴰⵣⵉⵖⵜ', dir: 'ltr' }
 ];
 
-// Initialisation au démarrage (sans modification agressive)
-const initialize = () => {
-  // S'assurer que le HTML est synchronisé
+// Initialisation au démarrage
+const initialize = async () => {
   const currentLang = getCurrentLanguage();
   document.documentElement.lang = currentLang;
   document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+
+  // Si la langue initiale n'est pas FR, charger ses traductions dynamiquement
+  if (currentLang !== 'fr') {
+    await loadLanguage(currentLang);
+    await originalChangeLanguage(currentLang);
+  }
 };
 
 // Exécuter l'initialisation
