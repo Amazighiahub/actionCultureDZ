@@ -5,6 +5,9 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '@/hooks/useAuth';
+import { favoriService } from '@/services/favori.service';
+import { useToast } from '@/hooks/use-toast';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Card, CardContent } from '@/components/ui/card';
@@ -44,9 +47,13 @@ interface ArtisanatCardProps {
   onFavorite?: (id: number) => void;
 }
 
-const ArtisanatCard: React.FC<ArtisanatCardProps> = React.memo(({ artisanat, onView, onFavorite }) => {
+const ArtisanatCard: React.FC<ArtisanatCardProps> = React.memo(({ artisanat, onView }) => {
   const { t } = useTranslation();
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const [isFavorite, setIsFavorite] = useState(false);
+  const [favLoading, setFavLoading] = useState(false);
 
   // Extraire les données de l'artisanat (peut venir de Oeuvre ou directement)
   const rawTitre = artisanat.Oeuvre?.titre || artisanat.nom || artisanat.titre || 'Sans titre';
@@ -61,10 +68,28 @@ const ArtisanatCard: React.FC<ArtisanatCardProps> = React.memo(({ artisanat, onV
   const prix = artisanat.prix || artisanat.prix_min;
   const id = artisanat.id_artisanat || artisanat.id;
 
-  const handleFavoriteClick = (e: React.MouseEvent) => {
+  const handleFavoriteClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    setIsFavorite(!isFavorite);
-    onFavorite?.(id);
+    if (!isAuthenticated) {
+      navigate('/auth');
+      return;
+    }
+    if (favLoading) return;
+    setFavLoading(true);
+    try {
+      const result = await favoriService.toggle('artisanat', id as number);
+      if (result.success) {
+        const added = result.data?.added ?? !isFavorite;
+        setIsFavorite(added);
+        toast({
+          title: added ? t('favoris.added', 'Ajouté aux favoris') : t('favoris.removed', 'Retiré des favoris'),
+        });
+      }
+    } catch {
+      toast({ title: t('common.error', 'Erreur'), variant: 'destructive' });
+    } finally {
+      setFavLoading(false);
+    }
   };
 
   return (
