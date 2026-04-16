@@ -5,6 +5,9 @@
 import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '@/hooks/useAuth';
+import { favoriService } from '@/services/favori.service';
+import { useToast } from '@/hooks/use-toast';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Card, CardContent } from '@/components/ui/card';
@@ -57,17 +60,39 @@ interface OeuvreCardProps {
   onFavorite?: (id: number) => void;
 }
 
-const OeuvreCard: React.FC<OeuvreCardProps> = React.memo(({ oeuvre, onView, onFavorite }) => {
+const OeuvreCard: React.FC<OeuvreCardProps> = React.memo(({ oeuvre, onView }) => {
   const { t } = useTranslation();
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const [isFavorite, setIsFavorite] = useState(false);
-  
+  const [favLoading, setFavLoading] = useState(false);
+
   const typeCode = oeuvre.TypeOeuvre?.code?.toLowerCase() || oeuvre.type?.toLowerCase() || 'default';
   const TypeIcon = TYPE_ICONS[typeCode] || TYPE_ICONS.default;
 
-  const handleFavoriteClick = (e: React.MouseEvent) => {
+  const handleFavoriteClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    setIsFavorite(!isFavorite);
-    onFavorite?.(oeuvre.id_oeuvre);
+    if (!isAuthenticated) {
+      navigate('/auth');
+      return;
+    }
+    if (favLoading) return;
+    setFavLoading(true);
+    try {
+      const result = await favoriService.toggle('oeuvre', oeuvre.id_oeuvre as number);
+      if (result.success) {
+        const added = result.data?.added ?? !isFavorite;
+        setIsFavorite(added);
+        toast({
+          title: added ? t('favoris.added', 'Ajouté aux favoris') : t('favoris.removed', 'Retiré des favoris'),
+        });
+      }
+    } catch {
+      toast({ title: t('common.error', 'Erreur'), variant: 'destructive' });
+    } finally {
+      setFavLoading(false);
+    }
   };
 
   return (
