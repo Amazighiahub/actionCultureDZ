@@ -1,5 +1,5 @@
-import { useEffect, useState, useRef } from 'react';
-import { Menu, X, MapPin, Calendar, Palette, Hammer, Info, User, LogOut, Settings, Shield, UserCheck, BookOpen, Film, Music, FileText, Beaker, ChevronDown } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Menu, X, MapPin, Calendar, Palette, Hammer, Info, User, LogOut, Settings, Shield, UserCheck, BookOpen, Film, Music, FileText, Beaker, Landmark, Building2, Trees, Compass } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -374,67 +374,133 @@ const Header = () => {
         </div>
       </header>
 
-      {/* Sous-nav bar — catégories d'œuvres (style Amazon) */}
-      <nav className="fixed top-[52px] sm:top-[60px] left-0 right-0 z-40 w-full bg-stone-800 dark:bg-stone-900 border-b border-stone-700">
-        <div className="w-full px-4 sm:px-6 lg:px-8 max-w-[1800px] mx-auto">
-          <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide py-1">
-            <Link
-              to="/oeuvres"
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium text-stone-200 hover:text-white hover:bg-stone-700 rounded transition-colors whitespace-nowrap"
-            >
-              {t('common.all', 'Tous')}
-            </Link>
-            <Link
-              to="/oeuvres?type=1"
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium text-stone-300 hover:text-white hover:bg-stone-700 rounded transition-colors whitespace-nowrap"
-            >
-              <BookOpen className="h-3.5 w-3.5" />
-              {t('header.nav.books', 'Livres')}
-            </Link>
-            <Link
-              to="/oeuvres?type=2"
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium text-stone-300 hover:text-white hover:bg-stone-700 rounded transition-colors whitespace-nowrap"
-            >
-              <Film className="h-3.5 w-3.5" />
-              {t('header.nav.films', 'Films')}
-            </Link>
-            <Link
-              to="/oeuvres?type=3"
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium text-stone-300 hover:text-white hover:bg-stone-700 rounded transition-colors whitespace-nowrap"
-            >
-              <Music className="h-3.5 w-3.5" />
-              {t('header.nav.albums', 'Albums')}
-            </Link>
-            <Link
-              to="/oeuvres?type=4"
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium text-stone-300 hover:text-white hover:bg-stone-700 rounded transition-colors whitespace-nowrap"
-            >
-              <FileText className="h-3.5 w-3.5" />
-              {t('header.nav.articles', 'Articles')}
-            </Link>
-            <Link
-              to="/oeuvres?type=5"
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium text-stone-300 hover:text-white hover:bg-stone-700 rounded transition-colors whitespace-nowrap"
-            >
-              <Beaker className="h-3.5 w-3.5" />
-              {t('header.nav.scientific', 'Scientifiques')}
-            </Link>
-            <Link
-              to="/oeuvres?type=6"
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium text-stone-300 hover:text-white hover:bg-stone-700 rounded transition-colors whitespace-nowrap"
-            >
-              <Palette className="h-3.5 w-3.5" />
-              {t('header.nav.art', 'Œuvres d\'art')}
-            </Link>
+      {/* Sous-nav bar — visible uniquement sur /oeuvres et /evenements */}
+      {['/oeuvres', '/evenements', '/patrimoine', '/artisanat'].includes(location.pathname) && (
+        <nav className="fixed top-[52px] sm:top-[60px] left-0 right-0 z-40 w-full bg-stone-800 dark:bg-stone-900 border-b border-stone-700">
+          <div className="w-full px-4 sm:px-6 lg:px-8 max-w-[1800px] mx-auto">
+            <div className="flex items-center justify-center gap-1 overflow-x-auto scrollbar-hide py-1">
+              {location.pathname === '/oeuvres' && (
+                <>
+                  <Link to="/oeuvres" className="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium text-stone-200 hover:text-white hover:bg-stone-700 rounded transition-colors whitespace-nowrap">
+                    {t('common.all', 'Tous')}
+                  </Link>
+                  <Link to="/oeuvres?type=1" className="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium text-stone-300 hover:text-white hover:bg-stone-700 rounded transition-colors whitespace-nowrap">
+                    <BookOpen className="h-3.5 w-3.5" />
+                    {t('header.nav.books', 'Livres')}
+                  </Link>
+                  <Link to="/oeuvres?type=2" className="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium text-stone-300 hover:text-white hover:bg-stone-700 rounded transition-colors whitespace-nowrap">
+                    <Film className="h-3.5 w-3.5" />
+                    {t('header.nav.films', 'Films')}
+                  </Link>
+                  <Link to="/oeuvres?type=3" className="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium text-stone-300 hover:text-white hover:bg-stone-700 rounded transition-colors whitespace-nowrap">
+                    <Music className="h-3.5 w-3.5" />
+                    {t('header.nav.albums', 'Albums')}
+                  </Link>
+                  <Link to="/oeuvres?type=4" className="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium text-stone-300 hover:text-white hover:bg-stone-700 rounded transition-colors whitespace-nowrap">
+                    <FileText className="h-3.5 w-3.5" />
+                    {t('header.nav.articles', 'Articles')}
+                  </Link>
+                  <Link to="/oeuvres?type=5" className="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium text-stone-300 hover:text-white hover:bg-stone-700 rounded transition-colors whitespace-nowrap">
+                    <Beaker className="h-3.5 w-3.5" />
+                    {t('header.nav.scientific', 'Scientifiques')}
+                  </Link>
+                  <Link to="/oeuvres?type=6" className="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium text-stone-300 hover:text-white hover:bg-stone-700 rounded transition-colors whitespace-nowrap">
+                    <Palette className="h-3.5 w-3.5" />
+                    {t('header.nav.art', 'Œuvres d\'art')}
+                  </Link>
+                </>
+              )}
+              {location.pathname === '/evenements' && (
+                <>
+                  <Link to="/evenements" className="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium text-stone-200 hover:text-white hover:bg-stone-700 rounded transition-colors whitespace-nowrap">
+                    {t('common.all', 'Tous')}
+                  </Link>
+                  <Link to="/evenements?type=exposition" className="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium text-stone-300 hover:text-white hover:bg-stone-700 rounded transition-colors whitespace-nowrap">
+                    {t('events.types.exposition', 'Expositions')}
+                  </Link>
+                  <Link to="/evenements?type=concert" className="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium text-stone-300 hover:text-white hover:bg-stone-700 rounded transition-colors whitespace-nowrap">
+                    {t('events.types.concert', 'Concerts')}
+                  </Link>
+                  <Link to="/evenements?type=festival" className="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium text-stone-300 hover:text-white hover:bg-stone-700 rounded transition-colors whitespace-nowrap">
+                    {t('events.types.festival', 'Festivals')}
+                  </Link>
+                  <Link to="/evenements?type=conference" className="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium text-stone-300 hover:text-white hover:bg-stone-700 rounded transition-colors whitespace-nowrap">
+                    {t('events.types.conference', 'Conférences')}
+                  </Link>
+                  <Link to="/evenements?type=atelier" className="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium text-stone-300 hover:text-white hover:bg-stone-700 rounded transition-colors whitespace-nowrap">
+                    {t('events.types.atelier', 'Ateliers')}
+                  </Link>
+                  <Link to="/evenements?type=spectacle" className="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium text-stone-300 hover:text-white hover:bg-stone-700 rounded transition-colors whitespace-nowrap">
+                    {t('events.types.spectacle', 'Spectacles')}
+                  </Link>
+                </>
+              )}
+              {location.pathname === '/patrimoine' && (
+                <>
+                  <Link to="/patrimoine" className="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium text-stone-200 hover:text-white hover:bg-stone-700 rounded transition-colors whitespace-nowrap">
+                    {t('common.all', 'Tous')}
+                  </Link>
+                  <Link to="/patrimoine?type=monument" className="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium text-stone-300 hover:text-white hover:bg-stone-700 rounded transition-colors whitespace-nowrap">
+                    <Landmark className="h-3.5 w-3.5" />
+                    {t('patrimoine.types.monument', 'Monuments')}
+                  </Link>
+                  <Link to="/patrimoine?type=musee" className="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium text-stone-300 hover:text-white hover:bg-stone-700 rounded transition-colors whitespace-nowrap">
+                    <Building2 className="h-3.5 w-3.5" />
+                    {t('patrimoine.types.musee', 'Musées')}
+                  </Link>
+                  <Link to="/patrimoine?type=site_archeologique" className="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium text-stone-300 hover:text-white hover:bg-stone-700 rounded transition-colors whitespace-nowrap">
+                    <Building2 className="h-3.5 w-3.5" />
+                    {t('patrimoine.types.site_archeologique', 'Sites archéologiques')}
+                  </Link>
+                  <Link to="/patrimoine?type=site_naturel" className="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium text-stone-300 hover:text-white hover:bg-stone-700 rounded transition-colors whitespace-nowrap">
+                    <Trees className="h-3.5 w-3.5" />
+                    {t('patrimoine.types.site_naturel', 'Sites naturels')}
+                  </Link>
+                  <Link to="/patrimoine?type=ville_village" className="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium text-stone-300 hover:text-white hover:bg-stone-700 rounded transition-colors whitespace-nowrap">
+                    <Compass className="h-3.5 w-3.5" />
+                    {t('patrimoine.types.ville_village', 'Villes historiques')}
+                  </Link>
+                  <Link to="/patrimoine?type=edifice_religieux" className="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium text-stone-300 hover:text-white hover:bg-stone-700 rounded transition-colors whitespace-nowrap">
+                    <Landmark className="h-3.5 w-3.5" />
+                    {t('patrimoine.types.edifice_religieux', 'Édifices religieux')}
+                  </Link>
+                </>
+              )}
+              {location.pathname === '/artisanat' && (
+                <>
+                  <Link to="/artisanat" className="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium text-stone-200 hover:text-white hover:bg-stone-700 rounded transition-colors whitespace-nowrap">
+                    {t('common.all', 'Tous')}
+                  </Link>
+                  <Link to="/artisanat?materiau=bois" className="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium text-stone-300 hover:text-white hover:bg-stone-700 rounded transition-colors whitespace-nowrap">
+                    {t('artisanat.materiaux.bois', 'Bois')}
+                  </Link>
+                  <Link to="/artisanat?materiau=cuir" className="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium text-stone-300 hover:text-white hover:bg-stone-700 rounded transition-colors whitespace-nowrap">
+                    {t('artisanat.materiaux.cuir', 'Cuir')}
+                  </Link>
+                  <Link to="/artisanat?materiau=ceramique" className="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium text-stone-300 hover:text-white hover:bg-stone-700 rounded transition-colors whitespace-nowrap">
+                    {t('artisanat.materiaux.ceramique', 'Céramique')}
+                  </Link>
+                  <Link to="/artisanat?materiau=textile" className="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium text-stone-300 hover:text-white hover:bg-stone-700 rounded transition-colors whitespace-nowrap">
+                    {t('artisanat.materiaux.textile', 'Textile')}
+                  </Link>
+                  <Link to="/artisanat?materiau=metal" className="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium text-stone-300 hover:text-white hover:bg-stone-700 rounded transition-colors whitespace-nowrap">
+                    {t('artisanat.materiaux.metal', 'Métal')}
+                  </Link>
+                  <Link to="/artisanat?materiau=bijoux" className="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium text-stone-300 hover:text-white hover:bg-stone-700 rounded transition-colors whitespace-nowrap">
+                    {t('artisanat.materiaux.bijoux', 'Bijoux')}
+                  </Link>
+                </>
+              )}
+            </div>
           </div>
-        </div>
-      </nav>
+        </nav>
+      )}
 
       {/* Menu mobile déroulant — visible uniquement sur mobile (< lg) */}
       {isMenuOpen && (
         <div
-          className="fixed inset-0 top-[84px] sm:top-[92px] z-40 bg-background lg:hidden overflow-y-auto"
-          style={{ height: 'calc(100dvh - 84px)' }}
+          className={`fixed inset-0 ${['/oeuvres', '/evenements', '/patrimoine', '/artisanat'].includes(location.pathname) ? 'top-[84px] sm:top-[92px]' : 'top-[52px] sm:top-[60px]'} z-40 bg-background lg:hidden overflow-y-auto`}
+          style={{ height: ['/oeuvres', '/evenements', '/patrimoine', '/artisanat'].includes(location.pathname) ? 'calc(100dvh - 84px)' : 'calc(100dvh - 52px)' }}
         >
           <div className="px-4 py-4 space-y-3">
             <nav className="space-y-1">

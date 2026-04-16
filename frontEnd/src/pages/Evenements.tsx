@@ -2,8 +2,8 @@
  * Evenements.tsx - Page de listing des événements refactorisée
  * Avec lazy loading des images et composants séparés
  */
-import React, { Suspense, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { Suspense, useState, useCallback, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -162,11 +162,22 @@ const EventCard: React.FC<EventCardProps> = React.memo(({ event, onView }) => {
 const Evenements: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   // États des filtres
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('tous');
   const [typeFilter, setTypeFilter] = useState('tous');
+
+  // Lire le query param ?type=X (depuis la sous-nav du Header)
+  useEffect(() => {
+    const typeParam = searchParams.get('type');
+    if (typeParam) {
+      setTypeFilter(typeParam);
+    } else {
+      setTypeFilter('tous');
+    }
+  }, [searchParams]);
 
   const debouncedSearch = useDebouncedValue(searchQuery, 300);
 
