@@ -372,7 +372,6 @@ categoriesForType: (typeId: number) => `/metadata/types-oeuvres/${typeId}/catego
     hierarchy: {
       complete: '/metadata/hierarchie',
       simplified: '/metadata/hierarchie?simplified=true',
-      statistics: '/metadata/hierarchie/statistics',
       validate: '/metadata/validate-hierarchy',
     },
     
@@ -420,7 +419,6 @@ categoriesForType: (typeId: number) => `/metadata/types-oeuvres/${typeId}/catego
     
     categories: {
       list: '/metadata/categories',
-      search: '/metadata/categories/search',
     },
     
     
@@ -430,7 +428,6 @@ categoriesForType: (typeId: number) => `/metadata/types-oeuvres/${typeId}/catego
    
     geographie: {
       wilayas: '/metadata/wilayas',
-      searchWilayas: '/metadata/wilayas/search',
       
       // Dairas par wilaya
       dairasByWilaya: (wilayaId: number) => `/metadata/wilayas/${wilayaId}/dairas`,
@@ -470,7 +467,6 @@ categoriesForType: (typeId: number) => `/metadata/types-oeuvres/${typeId}/catego
     detail: (id: number) => `/oeuvres/${id}`,
     shareLinks: (id: number) => `/oeuvres/${id}/share-links`,
     medias: (id: number) => `/oeuvres/${id}/medias`,
-    documentation: '/oeuvres/api/documentation',
     
     // Authentifié
     create: '/oeuvres',
@@ -577,9 +573,7 @@ categoriesForType: (typeId: number) => `/metadata/types-oeuvres/${typeId}/catego
     qrScan: '/patrimoine/mobile/qr-scan',
     offlineData: (wilaya: number) => `/patrimoine/mobile/offline/${wilaya}`,
     
-    // Admin
-    import: '/patrimoine/admin/import',
-    export: '/patrimoine/admin/export',
+    // Admin (planifié)
   },
 
   // ================================================
@@ -754,8 +748,7 @@ categoriesForType: (typeId: number) => `/metadata/types-oeuvres/${typeId}/catego
     recommendations: '/professionnel/recommendations',
     collaborationSuggestions: '/professionnel/collaboration/suggestions',
     
-    // Support
-    createTicket: '/professionnel/support/ticket',
+    // Support (planifié — pas encore de route backend)
     helpFaq: '/professionnel/help/faq',
   },
   tracking: {
@@ -830,18 +823,12 @@ categoriesForType: (typeId: number) => `/metadata/types-oeuvres/${typeId}/catego
     moderationStats: '/dashboard/moderation/stats',
     
     // Actions
-    performAction: '/dashboard/actions',
-    bulkActions: '/dashboard/actions/bulk',
     validateUser: (id: number) => `/dashboard/users/${id}/validate`,
     validateOeuvre: (id: number) => `/dashboard/oeuvres/${id}/validate`,
     moderateSignalement: (id: number) => `/dashboard/signalements/${id}/moderate`,
     suspendUser: (id: number) => `/dashboard/users/${id}/suspend`,
     
-    // Analytics
-    advancedAnalytics: '/dashboard/analytics/advanced',
-    retention: '/dashboard/analytics/retention',
-    funnel: '/dashboard/analytics/funnel',
-    engagement: '/dashboard/analytics/engagement',
+    // Analytics (planifié — pas encore de route backend)
     
     // Audit
     auditLogs: '/dashboard/audit/logs',
@@ -852,13 +839,10 @@ categoriesForType: (typeId: number) => `/metadata/types-oeuvres/${typeId}/catego
     moderationReport: '/dashboard/reports/moderation',
     patrimoineReport: '/dashboard/reports/patrimoine',
     
-    // Configuration
-    permissions: '/dashboard/config/permissions',
-    metrics: '/dashboard/config/metrics',
+    // Configuration (planifié)
     
     // Notifications
     notifications: '/dashboard/notifications',
-    broadcastNotification: '/dashboard/notifications/broadcast',
     
     // Monitoring (AJOUT)
     monitoring: {
