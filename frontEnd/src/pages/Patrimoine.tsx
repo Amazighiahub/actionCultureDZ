@@ -1,7 +1,7 @@
-import React, { lazy, Suspense, useMemo, useState } from 'react';
+import React, { lazy, Suspense, useMemo, useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -101,9 +101,16 @@ const Patrimoine = () => {
   const { isAuthenticated } = useAuth();
   const lang = i18n.language || 'fr';
 
+  const [searchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearch = useDebouncedValue(searchQuery, 300);
   const [filterType, setFilterType] = useState<string | null>(null);
+
+  // Lire le query param ?type=X (depuis la sous-nav du Header)
+  useEffect(() => {
+    const typeParam = searchParams.get('type');
+    setFilterType(typeParam);
+  }, [searchParams]);
 
   // Types patrimoine — cachés 10min, rarement changent
   const { data: typesPatrimoine = [] } = useQuery<TypePatrimoineOption[]>({
