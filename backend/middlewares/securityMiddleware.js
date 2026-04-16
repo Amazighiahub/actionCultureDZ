@@ -21,6 +21,10 @@ const securityMiddleware = {
       'cover_url'
     ];
 
+    // Routes dont le champ "contenu" est sanitisé par le contrôleur lui-même
+    // (via sanitize-html avec whitelist stricte, pas le strip global)
+    const isArticleBlockRoute = req.originalUrl?.startsWith('/api/article-blocks');
+
     // Vérifier si c'est une URL valide et sûre
     const isValidUrl = (str) => {
       // Vérifier les tentatives de path traversal
@@ -47,9 +51,17 @@ const securityMiddleware = {
         .replace(/&amp;/gi, '&'); // En dernier pour éviter le double-décodage
     };
 
+    // Champs exclus inconditionnellement (sanitisés par leur propre contrôleur)
+    const UNCONDITIONAL_EXCLUDED = isArticleBlockRoute ? ['contenu'] : [];
+
     // Sanitiser une chaîne en préservant certains contenus
     const sanitizeString = (str, fieldName = '') => {
       if (typeof str !== 'string') return str;
+
+      // Exclusion inconditionnelle (le contrôleur applique sa propre sanitisation)
+      if (UNCONDITIONAL_EXCLUDED.includes(fieldName)) {
+        return str;
+      }
 
       // Ne pas sanitiser les champs exclus avec des URLs valides
       if (EXCLUDED_FIELDS.includes(fieldName) && isValidUrl(str)) {
