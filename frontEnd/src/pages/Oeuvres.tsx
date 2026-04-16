@@ -2,8 +2,8 @@
  * Oeuvres.tsx - Page de listing des œuvres refactorisée
  * Avec lazy loading des images et composants séparés
  */
-import React, { useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useCallback, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/useAuth';
 import { favoriService } from '@/services/favori.service';
@@ -189,11 +189,22 @@ const OeuvreCard: React.FC<OeuvreCardProps> = React.memo(({ oeuvre, onView }) =>
 const Oeuvres: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   // États des filtres
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('tous');
   const [sortBy, setSortBy] = useState('recent');
+
+  // Lire le query param ?type=X (depuis la sous-nav du Header)
+  useEffect(() => {
+    const typeParam = searchParams.get('type');
+    if (typeParam) {
+      setTypeFilter(typeParam);
+    } else {
+      setTypeFilter('tous');
+    }
+  }, [searchParams]);
 
   const debouncedSearch = useDebouncedValue(searchQuery, 300);
 
