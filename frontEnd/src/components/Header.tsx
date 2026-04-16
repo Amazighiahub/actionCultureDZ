@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Menu, X, MapPin, Calendar, Palette, Hammer, Info, User, LogOut, Settings, Shield, UserCheck } from 'lucide-react';
+import { useEffect, useState, useRef } from 'react';
+import { Menu, X, MapPin, Calendar, Palette, Hammer, Info, User, LogOut, Settings, Shield, UserCheck, BookOpen, Film, Music, FileText, Beaker, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -374,11 +374,67 @@ const Header = () => {
         </div>
       </header>
 
+      {/* Sous-nav bar — catégories d'œuvres (style Amazon) */}
+      <nav className="fixed top-[52px] sm:top-[60px] left-0 right-0 z-40 w-full bg-stone-800 dark:bg-stone-900 border-b border-stone-700">
+        <div className="w-full px-4 sm:px-6 lg:px-8 max-w-[1800px] mx-auto">
+          <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide py-1">
+            <Link
+              to="/oeuvres"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium text-stone-200 hover:text-white hover:bg-stone-700 rounded transition-colors whitespace-nowrap"
+            >
+              {t('common.all', 'Tous')}
+            </Link>
+            <Link
+              to="/oeuvres?type=1"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium text-stone-300 hover:text-white hover:bg-stone-700 rounded transition-colors whitespace-nowrap"
+            >
+              <BookOpen className="h-3.5 w-3.5" />
+              {t('header.nav.books', 'Livres')}
+            </Link>
+            <Link
+              to="/oeuvres?type=2"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium text-stone-300 hover:text-white hover:bg-stone-700 rounded transition-colors whitespace-nowrap"
+            >
+              <Film className="h-3.5 w-3.5" />
+              {t('header.nav.films', 'Films')}
+            </Link>
+            <Link
+              to="/oeuvres?type=3"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium text-stone-300 hover:text-white hover:bg-stone-700 rounded transition-colors whitespace-nowrap"
+            >
+              <Music className="h-3.5 w-3.5" />
+              {t('header.nav.albums', 'Albums')}
+            </Link>
+            <Link
+              to="/oeuvres?type=4"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium text-stone-300 hover:text-white hover:bg-stone-700 rounded transition-colors whitespace-nowrap"
+            >
+              <FileText className="h-3.5 w-3.5" />
+              {t('header.nav.articles', 'Articles')}
+            </Link>
+            <Link
+              to="/oeuvres?type=5"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium text-stone-300 hover:text-white hover:bg-stone-700 rounded transition-colors whitespace-nowrap"
+            >
+              <Beaker className="h-3.5 w-3.5" />
+              {t('header.nav.scientific', 'Scientifiques')}
+            </Link>
+            <Link
+              to="/oeuvres?type=6"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium text-stone-300 hover:text-white hover:bg-stone-700 rounded transition-colors whitespace-nowrap"
+            >
+              <Palette className="h-3.5 w-3.5" />
+              {t('header.nav.art', 'Œuvres d\'art')}
+            </Link>
+          </div>
+        </div>
+      </nav>
+
       {/* Menu mobile déroulant — visible uniquement sur mobile (< lg) */}
       {isMenuOpen && (
         <div
-          className="fixed inset-0 top-[52px] sm:top-[60px] z-40 bg-background lg:hidden overflow-y-auto"
-          style={{ height: 'calc(100dvh - 52px)' }}
+          className="fixed inset-0 top-[84px] sm:top-[92px] z-40 bg-background lg:hidden overflow-y-auto"
+          style={{ height: 'calc(100dvh - 84px)' }}
         >
           <div className="px-4 py-4 space-y-3">
             <nav className="space-y-1">
