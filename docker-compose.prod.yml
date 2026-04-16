@@ -192,6 +192,49 @@ services:
           memory: 64M
 
   # ==========================================
+  # Backup automatique (cron chaque nuit 3h)
+  # ==========================================
+  backup:
+    image: mysql:8.0
+    container_name: eventculture-backup
+    restart: unless-stopped
+    volumes:
+      - ./scripts/backup.sh:/backup.sh:ro
+      - backup_data:/backups
+      - backend_uploads:/app/uploads:ro
+    environment:
+      - DB_HOST=mysql
+      - DB_NAME=${DB_NAME}
+      - DB_USER=root
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    depends_on:
+      mysql:
+        condition: service_started
+    networks:
+      - eventculture-network
+    entrypoint: >
+      /bin/bash -c '
+        chmod +x /backup.sh;
+        echo "Backup service started — next run at 03:00";
+        while true; do
+          NEXT=$(date -d "tomorrow 03:00" +%s 2>/dev/null || date -d "03:00" +%s);
+          NOW=$(date +%s);
+          SLEEP=$((NEXT - NOW));
+          if [ $$SLEEP -le 0 ]; then SLEEP=86400; fi;
+          echo "[backup] Sleeping $$SLEEP seconds until next run...";
+          sleep $$SLEEP;
+          echo "[backup] Starting backup at $$(date)";
+          /backup.sh;
+        done
+      '
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 64M
+
+  # ==========================================
   # Certbot (SSL auto-renewal)
   # ==========================================
   certbot:
@@ -222,6 +265,8 @@ volumes:
   backend_logs:
     driver: local
   frontend_build:
+    driver: local
+  backup_data:
     driver: local
   certbot_webroot:
     driver: local
