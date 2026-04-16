@@ -3,6 +3,7 @@ const path = require('path');
 const crypto = require('crypto');
 const BaseController = require('./baseController');
 const container = require('../services/serviceContainer');
+const { sanitizeBlockContent } = require('../utils/sanitizeArticle');
 
 class ArticleBlockController extends BaseController {
   get articleBlockService() {
@@ -33,6 +34,10 @@ class ArticleBlockController extends BaseController {
    */
   async createBlock(req, res) {
     try {
+      // Sanitiser le contenu selon le type de bloc (XSS prevention)
+      if (req.body.contenu && req.body.type_block) {
+        req.body.contenu = sanitizeBlockContent(req.body.type_block, req.body.contenu);
+      }
       const result = await this.articleBlockService.createBlock(req.body);
 
       if (result.error === 'badRequest') {
@@ -54,6 +59,15 @@ class ArticleBlockController extends BaseController {
    */
   async createMultipleBlocks(req, res) {
     try {
+      // Sanitiser chaque bloc du batch
+      if (Array.isArray(req.body.blocks)) {
+        req.body.blocks = req.body.blocks.map(block => {
+          if (block.contenu && block.type_block) {
+            block.contenu = sanitizeBlockContent(block.type_block, block.contenu);
+          }
+          return block;
+        });
+      }
       const result = await this.articleBlockService.createMultipleBlocks(req.body);
 
       if (result.error === 'badRequest') {
@@ -80,6 +94,10 @@ class ArticleBlockController extends BaseController {
   async updateBlock(req, res) {
     try {
       const { blockId } = req.params;
+      // Sanitiser le contenu si présent
+      if (req.body.contenu && req.body.type_block) {
+        req.body.contenu = sanitizeBlockContent(req.body.type_block, req.body.contenu);
+      }
       const result = await this.articleBlockService.updateBlock(blockId, req.body);
 
       if (result.error === 'notFound') {
