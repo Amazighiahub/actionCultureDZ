@@ -1445,7 +1445,7 @@
     "placeholder_producteur": "Nom du producteur",
     "studio": "Studio de production",
     "placeholder_studio": "Nom du studio",
-    "type_hint": "Sélectionnez le type qui correspond le mieux à votre œuvre. Pour les articles et articles scientifiques, l'éditeur avancé permet une mise en page riche avec blocs (titres, images, citations, tableaux)."
+    "type_hint": "Select the type that best matches your work. For articles and scientific articles, the advanced editor allows rich formatting with blocks (headings, images, quotes, tables)."
   },
   "common_patrimoinesection": {
     "description_citadelle_historique_classe": "Historic citadel listed as UNESCO World Heritage Site",
@@ -2606,8 +2606,8 @@
     "success": {
       "created": "Site created!",
       "createdDesc": "You can now enrich this site with more details.",
-      "partial": "Site créé (photos non uploadées)",
-      "partialDesc": "Le site a été créé mais certaines photos n'ont pas pu être uploadées."
+      "partial": "Site created (photos not uploaded)",
+      "partialDesc": "The site was created but some photos could not be uploaded."
     },
     "duplicate": {
       "found": "Site already exists",
@@ -2631,22 +2631,22 @@
       "saved": "Contribution saved!",
       "thanks": "Thank you for your contribution",
       "saveFailed": "Error saving",
-      "contentRequired": "Veuillez saisir du contenu (au moins en français ou arabe)"
+      "contentRequired": "Please enter content (at least in French or Arabic)"
     },
     "gps": {
       "found": "Position found",
       "denied": "Location access denied.",
       "timeout": "Timeout. Try again or click the map.",
       "error": "Geolocation error",
-      "unavailable": "Géolocalisation non disponible",
-      "unavailableDesc": "Votre appareil ne supporte pas la géolocalisation.",
-      "unavailablePos": "Position indisponible. Cliquez sur la carte."
+      "unavailable": "Geolocation unavailable",
+      "unavailableDesc": "Your device does not support geolocation.",
+      "unavailablePos": "Position unavailable. Click on the map."
     },
     "placeholders": {
       "nom": "Ex: Casbah d'Alger, Djemila...",
       "adresse": "Ex: Centre-ville, Route de..."
     },
-    "checking": "Vérification..."
+    "checking": "Checking..."
   },
   "toasts": {
     "error": "Error",
@@ -2888,30 +2888,30 @@
     "title": "Plan your visit",
     "subtitle": "Create a personalized itinerary around",
     "duration": "Visit duration",
-    "durationHint": "De 1h à 8h selon votre disponibilité",
+    "durationHint": "From 1h to 8h depending on your availability",
     "transport": "Transport mode",
     "interests": "Interests",
-    "maxSites": "Nombre de sites à visiter",
+    "maxSites": "Number of sites to visit",
     "options": "Options",
-    "includeRestaurants": "Inclure des restaurants",
-    "includeHotels": "Inclure des hébergements",
-    "accessibility": "Accessibilité PMR",
-    "familyFriendly": "Adapté aux familles",
-    "generating": "Génération du parcours...",
-    "generatingHint": "Nous analysons les meilleurs sites autour de vous",
+    "includeRestaurants": "Include restaurants",
+    "includeHotels": "Include accommodation",
+    "accessibility": "Wheelchair accessibility",
+    "familyFriendly": "Family friendly",
+    "generating": "Generating itinerary...",
+    "generatingHint": "We are analyzing the best sites around you",
     "sites": "sites",
     "distance": "distance",
-    "estimatedTime": "durée",
-    "map": "Carte du parcours",
-    "startPoint": "Point de départ",
-    "itinerary": "Votre itinéraire",
-    "includedServices": "Services inclus dans le parcours",
-    "info": "Les horaires et disponibilités peuvent varier. Nous vous conseillons de vérifier avant votre visite.",
-    "generate": "Générer le parcours",
+    "estimatedTime": "duration",
+    "map": "Route map",
+    "startPoint": "Starting point",
+    "itinerary": "Your itinerary",
+    "includedServices": "Services included in the route",
+    "info": "Hours and availability may vary. We recommend checking before your visit.",
+    "generate": "Generate itinerary",
     "modify": "Edit",
-    "openMaps": "Ouvrir dans Maps",
+    "openMaps": "Open in Maps",
     "error": {
-      "generation": "Impossible de générer le parcours. Veuillez réessayer."
+      "generation": "Unable to generate itinerary. Please try again."
     }
   },
   "multilang": {
@@ -2919,11 +2919,11 @@
     "keyboardTamazightNotDetected": "Clavier Tamazight Latin non détecté",
     "installTifinagh": "Installez le clavier Tifinagh depuis les paramètres de votre appareil",
     "installTamazight": "Installez le clavier Tamazight Latin depuis les paramètres de votre appareil",
-    "seeInstructions": "Voir les instructions",
-    "generalInstructions": "Instructions générales",
-    "installKeyboard": "Installez un clavier Tamazight depuis les paramètres de votre appareil",
-    "searchStore": "Recherchez \"Tifinagh\" ou \"Tamazight Latin\" dans votre store",
-    "activateKeyboard": "Activez le clavier dans les paramètres de langue"
+    "seeInstructions": "See instructions",
+    "generalInstructions": "General instructions",
+    "installKeyboard": "Install a Tamazight keyboard from your device settings",
+    "searchStore": "Search for \"Tifinagh\" or \"Tamazight Latin\" in your store",
+    "activateKeyboard": "Activate the keyboard in language settings"
   },
   "programme": {
     "form": {
@@ -3024,10 +3024,10 @@
         "tz-tfng": "Tamazight (Tifinagh)"
       },
       "levels": {
-        "debutant": "Débutant",
-        "intermediaire": "Intermédiaire",
-        "avance": "Avancé",
-        "tous_niveaux": "Tous niveaux"
+        "debutant": "Beginner",
+        "intermediaire": "Intermediate",
+        "avance": "Advanced",
+        "tous_niveaux": "All levels"
       },
       "actions": {
         "cancel": "Cancel",
@@ -3040,10 +3040,10 @@
         "updated": "Program updated successfully"
       },
       "errors": {
-        "titleRequired": "Le titre est requis dans toutes les langues",
-        "dateRequired": "La date est requise",
-        "startTimeRequired": "L'heure de début est requise",
-        "endTimeRequired": "L'heure de fin est requise",
+        "titleRequired": "Title is required in all languages",
+        "dateRequired": "Date is required",
+        "startTimeRequired": "Start time is required",
+        "endTimeRequired": "End time is required",
         "endTimeAfterStart": "End time must be after start time"
       }
     }
@@ -3052,10 +3052,10 @@
     "noTokenProvided": "No confirmation token provided.",
     "emailUpdatedSuccess": "Your email address has been updated successfully.",
     "tokenInvalidOrExpired": "Token is invalid or expired.",
-    "confirmationFailed": "Impossible de confirmer le changement d'email.",
+    "confirmationFailed": "Unable to confirm email change.",
     "confirming": "Confirming...",
-    "emailUpdated": "Email mis à jour",
-    "newEmail": "Votre nouvel email :",
+    "emailUpdated": "Email updated",
+    "newEmail": "Your new email:",
     "reconnect": "Sign in again",
     "backToHome": "Back to home"
   },
@@ -3063,16 +3063,16 @@
     "programmeManagement": "Program management",
     "addProgramme": "Add program",
     "editProgramme": "Edit program",
-    "createProgramme": "Créer un programme",
-    "fillProgrammeInfo": "Remplissez les informations du programme",
-    "noProgramme": "Aucun programme",
-    "startByAddingProgramme": "Commencez par ajouter un programme à cet événement",
-    "confirmDeleteProgramme": "Êtes-vous sûr de vouloir supprimer ce programme ?",
-    "loadProgrammesError": "Erreur lors du chargement des programmes",
+    "createProgramme": "Create program",
+    "fillProgrammeInfo": "Fill in program information",
+    "noProgramme": "No program",
+    "startByAddingProgramme": "Start by adding a program to this event",
+    "confirmDeleteProgramme": "Are you sure you want to delete this program?",
+    "loadProgrammesError": "Error loading programs",
     "programmeUpdated": "Program updated successfully",
     "programmeCreated": "Program created successfully",
     "programmeDeleted": "Programme supprimé avec succès",
-    "saveError": "Erreur lors de la sauvegarde",
-    "deleteError": "Erreur lors de la suppression"
+    "saveError": "Error saving",
+    "deleteError": "Error deleting"
   }
 }
