@@ -436,7 +436,10 @@
       "literaryMeeting": "Tamlilit taseklant",
       "screening": "Askan",
       "show": "Asaḥḥa",
-      "workshop": "Amahil"
+      "workshop": "Amahil",
+      "exposition": "Expositions",
+      "atelier": "Ateliers",
+      "spectacle": "Spectacles"
     },
     "participants": "imttekkiyen",
     "full": "Yeččur",
@@ -466,7 +469,13 @@
       "crafts": "Taẓuri tameɣradt",
       "events": "Tidyanin",
       "heritage": "Agla",
-      "works": "Timellilin"
+      "works": "Timellilin",
+      "books": "Livres",
+      "films": "Films",
+      "albums": "Albums",
+      "articles": "Articles",
+      "scientific": "Scientifiques",
+      "art": "Œuvres d'art"
     },
     "subtitle": "Taɣect n Lezzayer",
     "title": "Timlilit Tadelsant",
@@ -1300,7 +1309,15 @@
     "boutique_ligne": "[TODO TZ-LTN] Boutique en ligne",
     "bientt_disponible_achetez": "[TODO TZ-LTN] Bientôt disponible : achetez directement auprès des artisans algériens \n              et soutenez le patrimoine vivant de notre pays.",
     "acheter_produit_local": "[TODO TZ-LTN] Acheter un produit local (à venir)",
-    "tre_notifi_lancement": "[TODO TZ-LTN] Être notifié du lancement"
+    "tre_notifi_lancement": "[TODO TZ-LTN] Être notifié du lancement",
+    "materiaux": {
+      "bois": "Bois",
+      "cuir": "Cuir",
+      "ceramique": "Céramique",
+      "textile": "Textile",
+      "metal": "Métal",
+      "bijoux": "Bijoux"
+    }
   },
   "apropos": {
     "title_transmission": "Tawilt",

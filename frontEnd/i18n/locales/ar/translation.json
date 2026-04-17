@@ -440,7 +440,10 @@
       "literaryMeeting": "لقاء أدبي",
       "screening": "عرض فيلم",
       "show": "عرض",
-      "workshop": "ورشة عمل"
+      "workshop": "ورشة عمل",
+      "exposition": "معارض",
+      "atelier": "ورشات",
+      "spectacle": "عروض"
     },
     "participants": "مشاركين",
     "full": "مكتمل",
@@ -470,7 +473,13 @@
       "crafts": "الحرف",
       "events": "الفعاليات",
       "heritage": "التراث",
-      "works": "الأعمال"
+      "works": "الأعمال",
+      "books": "كتب",
+      "films": "أفلام",
+      "albums": "ألبومات",
+      "articles": "مقالات",
+      "scientific": "علمية",
+      "art": "أعمال فنية"
     },
     "subtitle": "تالا دي زد",
     "title": "تالا دي زد",
@@ -1568,7 +1577,15 @@
     "boutique_ligne": "متجر إلكتروني",
     "bientt_disponible_achetez": "قريبًا: اشترِ مباشرة من الحرفيين الجزائريين\nوادعم التراث الحي لبلادنا.",
     "acheter_produit_local": "شراء منتج محلي (قريبًا)",
-    "tre_notifi_lancement": "احصل على إشعار عند الإطلاق"
+    "tre_notifi_lancement": "احصل على إشعار عند الإطلاق",
+    "materiaux": {
+      "bois": "خشب",
+      "cuir": "جلد",
+      "ceramique": "خزف",
+      "textile": "نسيج",
+      "metal": "معدن",
+      "bijoux": "مجوهرات"
+    }
   },
   "apropos": {
     "title_transmission": "النقل",
