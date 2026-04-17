@@ -208,7 +208,7 @@ const Patrimoine = () => {
             </Button>
             <Button onClick={() => navigate(isAuthenticated ? '/ajouter-patrimoine' : '/auth')}>
               <MapPin className="h-4 w-4 mr-2" />
-              {isAuthenticated ? t('patrimoine.addSite', 'Ajouter un site') : t('patrimoine.contribute', 'Contribuer')}
+              {isAuthenticated ? t('patrimoine.addSite', 'Ajouter un site') : t('patrimoine.contribute.add', 'Contribuer')}
             </Button>
           </div>
 
