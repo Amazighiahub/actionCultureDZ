@@ -432,7 +432,10 @@
       "literaryMeeting": "Rencontre littéraire",
       "screening": "Projection",
       "show": "Spectacle",
-      "workshop": "Atelier"
+      "workshop": "Atelier",
+      "exposition": "Expositions",
+      "atelier": "Ateliers",
+      "spectacle": "Spectacles"
     },
     "participants": "participants",
     "full": "Complet",
@@ -462,7 +465,13 @@
       "crafts": "Artisanat",
       "events": "Événements",
       "heritage": "Patrimoine",
-      "works": "Œuvres"
+      "works": "Œuvres",
+      "books": "Livres",
+      "films": "Films",
+      "albums": "Albums",
+      "articles": "Articles",
+      "scientific": "Scientifiques",
+      "art": "Œuvres d'art"
     },
     "subtitle": "Tala DZ",
     "title": "Tala DZ",
@@ -1280,7 +1289,15 @@
     "boutique_ligne": "Boutique en ligne",
     "bientt_disponible_achetez": "Bientôt disponible : achetez directement auprès des artisans algériens \n              et soutenez le patrimoine vivant de notre pays.",
     "acheter_produit_local": "Acheter un produit local (à venir)",
-    "tre_notifi_lancement": "Être notifié du lancement"
+    "tre_notifi_lancement": "Être notifié du lancement",
+    "materiaux": {
+      "bois": "Bois",
+      "cuir": "Cuir",
+      "ceramique": "Céramique",
+      "textile": "Textile",
+      "metal": "Métal",
+      "bijoux": "Bijoux"
+    }
   },
   "apropos": {
     "title_transmission": "Transmission",

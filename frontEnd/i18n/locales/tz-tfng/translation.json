@@ -436,7 +436,10 @@
       "literaryMeeting": "ⵜⴰⵎⵍⵉⵍⵉⵜ ⵜⴰⵙⴽⵍⴰⵏⵜ",
       "screening": "ⴰⵙⴽⴰⵏ",
       "show": "ⴰⵙⴰⴼⵙⵔ",
-      "workshop": "ⴰⵀⵉⵍ"
+      "workshop": "ⴰⵀⵉⵍ",
+      "exposition": "Expositions",
+      "atelier": "Ateliers",
+      "spectacle": "Spectacles"
     },
     "participants": "ⵉⵎⵜⵜⴻⴽⴽⵉⵢⴻⵏ",
     "full": "ⵢⴻⵞⵞⵓⵔ",
@@ -466,7 +469,13 @@
       "crafts": "ⵜⵉⵥⵓⵕⵉⵏ",
       "events": "ⵜⵉⵎⵖⵔⵉⵡⵉⵏ",
       "heritage": "ⴰⴳⵍⴰ",
-      "works": "ⵜⵉⵡⵓⵔⵉⵡⵉⵏ"
+      "works": "ⵜⵉⵡⵓⵔⵉⵡⵉⵏ",
+      "books": "Livres",
+      "films": "Films",
+      "albums": "Albums",
+      "articles": "Articles",
+      "scientific": "Scientifiques",
+      "art": "Œuvres d'art"
     },
     "subtitle": "ⵜⴰⵖⵓⵖⵜ ⵏ ⵍⵣⵣⴰⵢⵔ",
     "title": "ⵜⵉⵎⵍⵉⵍⵉⵜ ⵏ ⵜⴷⵍⵙⴰ",
@@ -1300,7 +1309,15 @@
     "boutique_ligne": "ⵜⴰⵃⴰⵏⵓⵜ ⵙ ⵓⵣⵔⵉⵔⴳ",
     "bientt_disponible_achetez": "ⵖⴰⵙ ⴰⴷ ⵜⵉⵍⵉ: ⵙⵖ ⵙⵔⵉⴷ ⵖⵓⵔ ⵉⵏⴰⵥⵓⵕⵏ ⵉⴷⵣⴰⵢⵔⵉⵏ \n              ⵜⴰⵡⵙⴹ ⵜⴰⴳⵎⵎⵉ ⵜⴰⵎⴷⴷⵔⵜ ⵏ ⵜⵎⵓⵔⵜ ⵏⵏⵖ.",
     "acheter_produit_local": "ⵙⵖ ⴰⴼⴰⵔⵙ ⴰⴷⵖⴰⵔⴰⵏ (ⴷ ⵢⵓⵛⴽⴰⵏ)",
-    "tre_notifi_lancement": "ⴰⵎⵥ ⵜⴰⵏⵖⵎⵉⵙⵜ ⵏ ⵓⵙⵙⵏⵜⵉ"
+    "tre_notifi_lancement": "ⴰⵎⵥ ⵜⴰⵏⵖⵎⵉⵙⵜ ⵏ ⵓⵙⵙⵏⵜⵉ",
+    "materiaux": {
+      "bois": "Bois",
+      "cuir": "Cuir",
+      "ceramique": "Céramique",
+      "textile": "Textile",
+      "metal": "Métal",
+      "bijoux": "Bijoux"
+    }
   },
   "apropos": {
     "title_transmission": "ⴰⵙⵉⵡⴹ",
