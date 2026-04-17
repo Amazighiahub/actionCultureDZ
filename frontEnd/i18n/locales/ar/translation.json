@@ -1730,7 +1730,7 @@
     "placeholder_producteur": "اسم المنتج",
     "studio": "استوديو الإنتاج",
     "placeholder_studio": "Nom du studio",
-    "type_hint": "Sélectionnez le type qui correspond le mieux à votre œuvre. Pour les articles et articles scientifiques, l'éditeur avancé permet une mise en page riche avec blocs (titres, images, citations, tableaux)."
+    "type_hint": "اختر النوع الذي يتوافق مع عملك. للمقالات والمقالات العلمية، يتيح المحرر المتقدم تنسيقاً غنياً بالكتل (عناوين، صور، اقتباسات، جداول)."
   },
   "common_patrimoinesection": {
     "description_citadelle_historique_classe": "قلعة تاريخية مصنفة كتراث عالمي لليونسكو",
@@ -2708,8 +2708,8 @@
     "success": {
       "created": "تم إنشاء الموقع!",
       "createdDesc": "يمكنك الآن إثراء هذا الموقع بمزيد من التفاصيل.",
-      "partial": "Site créé (photos non uploadées)",
-      "partialDesc": "Le site a été créé mais certaines photos n'ont pas pu être uploadées."
+      "partial": "تم إنشاء الموقع (الصور لم تُرفع)",
+      "partialDesc": "تم إنشاء الموقع لكن بعض الصور لم تُرفع."
     },
     "duplicate": {
       "found": "موقع موجود مسبقاً",
@@ -2733,22 +2733,22 @@
       "saved": "تم تسجيل المساهمة!",
       "thanks": "شكراً لمساهمتك",
       "saveFailed": "خطأ أثناء الحفظ",
-      "contentRequired": "Veuillez saisir du contenu (au moins en français ou arabe)"
+      "contentRequired": "يرجى إدخال محتوى (على الأقل بالفرنسية أو العربية)"
     },
     "gps": {
       "found": "تم العثور على الموقع",
       "denied": "تم رفض الوصول إلى الموقع.",
       "timeout": "انتهت المهلة. أعد المحاولة.",
       "error": "خطأ في تحديد الموقع",
-      "unavailable": "Géolocalisation non disponible",
-      "unavailableDesc": "Votre appareil ne supporte pas la géolocalisation.",
-      "unavailablePos": "Position indisponible. Cliquez sur la carte."
+      "unavailable": "تحديد الموقع غير متاح",
+      "unavailableDesc": "جهازك لا يدعم تحديد الموقع الجغرافي.",
+      "unavailablePos": "الموقع غير متاح. انقر على الخريطة."
     },
     "placeholders": {
       "nom": "مثال: قصبة الجزائر، جميلة...",
       "adresse": "مثال: وسط المدينة، طريق..."
     },
-    "checking": "Vérification..."
+    "checking": "جاري التحقق..."
   },
   "toasts": {
     "error": "خطأ",
@@ -2990,30 +2990,30 @@
     "title": "خطط لزيارتك",
     "subtitle": "أنشئ مساراً مخصصاً حول",
     "duration": "مدة الزيارة",
-    "durationHint": "De 1h à 8h selon votre disponibilité",
+    "durationHint": "من ساعة إلى 8 ساعات حسب توفرك",
     "transport": "وسيلة النقل",
     "interests": "الاهتمامات",
-    "maxSites": "Nombre de sites à visiter",
+    "maxSites": "عدد المواقع للزيارة",
     "options": "خيارات",
-    "includeRestaurants": "Inclure des restaurants",
-    "includeHotels": "Inclure des hébergements",
-    "accessibility": "Accessibilité PMR",
-    "familyFriendly": "Adapté aux familles",
-    "generating": "Génération du parcours...",
-    "generatingHint": "Nous analysons les meilleurs sites autour de vous",
-    "sites": "sites",
-    "distance": "distance",
-    "estimatedTime": "durée",
-    "map": "Carte du parcours",
-    "startPoint": "Point de départ",
-    "itinerary": "Votre itinéraire",
-    "includedServices": "Services inclus dans le parcours",
-    "info": "Les horaires et disponibilités peuvent varier. Nous vous conseillons de vérifier avant votre visite.",
-    "generate": "Générer le parcours",
+    "includeRestaurants": "تضمين المطاعم",
+    "includeHotels": "تضمين أماكن الإقامة",
+    "accessibility": "إمكانية الوصول لذوي الاحتياجات",
+    "familyFriendly": "مناسب للعائلات",
+    "generating": "جاري إنشاء المسار...",
+    "generatingHint": "نحلل أفضل المواقع حولك",
+    "sites": "مواقع",
+    "distance": "المسافة",
+    "estimatedTime": "المدة",
+    "map": "خريطة المسار",
+    "startPoint": "نقطة الانطلاق",
+    "itinerary": "مسارك",
+    "includedServices": "الخدمات المتضمنة في المسار",
+    "info": "قد تختلف المواعيد والتوفر. ننصحك بالتحقق قبل زيارتك.",
+    "generate": "إنشاء المسار",
     "modify": "تعديل",
-    "openMaps": "Ouvrir dans Maps",
+    "openMaps": "فتح في الخرائط",
     "error": {
-      "generation": "Impossible de générer le parcours. Veuillez réessayer."
+      "generation": "تعذر إنشاء المسار. يرجى المحاولة مرة أخرى."
     }
   },
   "multilang": {
@@ -3021,11 +3021,11 @@
     "keyboardTamazightNotDetected": "لوحة مفاتيح الأمازيغية اللاتينية غير مكتشفة",
     "installTifinagh": "ثبّت لوحة مفاتيح التيفيناغ من إعدادات جهازك",
     "installTamazight": "ثبّت لوحة مفاتيح الأمازيغية اللاتينية من إعدادات جهازك",
-    "seeInstructions": "Voir les instructions",
-    "generalInstructions": "Instructions générales",
-    "installKeyboard": "Installez un clavier Tamazight depuis les paramètres de votre appareil",
-    "searchStore": "Recherchez \"Tifinagh\" ou \"Tamazight Latin\" dans votre store",
-    "activateKeyboard": "Activez le clavier dans les paramètres de langue"
+    "seeInstructions": "عرض التعليمات",
+    "generalInstructions": "تعليمات عامة",
+    "installKeyboard": "ثبّت لوحة مفاتيح أمازيغية من إعدادات جهازك",
+    "searchStore": "ابحث عن \"تيفيناغ\" أو \"أمازيغية لاتينية\" في متجرك",
+    "activateKeyboard": "فعّل لوحة المفاتيح في إعدادات اللغة"
   },
   "programme": {
     "form": {
@@ -3126,10 +3126,10 @@
         "tz-tfng": "Tamazight (Tifinagh)"
       },
       "levels": {
-        "debutant": "Débutant",
-        "intermediaire": "Intermédiaire",
-        "avance": "Avancé",
-        "tous_niveaux": "Tous niveaux"
+        "debutant": "مبتدئ",
+        "intermediaire": "متوسط",
+        "avance": "متقدم",
+        "tous_niveaux": "جميع المستويات"
       },
       "actions": {
         "cancel": "إلغاء",
@@ -3142,10 +3142,10 @@
         "updated": "تم تحديث البرنامج بنجاح"
       },
       "errors": {
-        "titleRequired": "Le titre est requis dans toutes les langues",
-        "dateRequired": "La date est requise",
-        "startTimeRequired": "L'heure de début est requise",
-        "endTimeRequired": "L'heure de fin est requise",
+        "titleRequired": "العنوان مطلوب بجميع اللغات",
+        "dateRequired": "التاريخ مطلوب",
+        "startTimeRequired": "وقت البداية مطلوب",
+        "endTimeRequired": "وقت النهاية مطلوب",
         "endTimeAfterStart": "وقت النهاية يجب أن يكون بعد وقت البداية"
       }
     }
@@ -3154,10 +3154,10 @@
     "noTokenProvided": "لم يتم تقديم رمز التأكيد.",
     "emailUpdatedSuccess": "تم تحديث عنوان بريدك الإلكتروني بنجاح.",
     "tokenInvalidOrExpired": "الرمز غير صالح أو منتهي الصلاحية.",
-    "confirmationFailed": "Impossible de confirmer le changement d'email.",
+    "confirmationFailed": "تعذر تأكيد تغيير البريد الإلكتروني.",
     "confirming": "جاري التأكيد...",
-    "emailUpdated": "Email mis à jour",
-    "newEmail": "Votre nouvel email :",
+    "emailUpdated": "تم تحديث البريد",
+    "newEmail": "بريدك الجديد:",
     "reconnect": "إعادة تسجيل الدخول",
     "backToHome": "العودة إلى الصفحة الرئيسية"
   },
@@ -3165,16 +3165,16 @@
     "programmeManagement": "إدارة البرامج",
     "addProgramme": "إضافة برنامج",
     "editProgramme": "تعديل البرنامج",
-    "createProgramme": "Créer un programme",
-    "fillProgrammeInfo": "Remplissez les informations du programme",
-    "noProgramme": "Aucun programme",
-    "startByAddingProgramme": "Commencez par ajouter un programme à cet événement",
-    "confirmDeleteProgramme": "Êtes-vous sûr de vouloir supprimer ce programme ?",
-    "loadProgrammesError": "Erreur lors du chargement des programmes",
+    "createProgramme": "إنشاء برنامج",
+    "fillProgrammeInfo": "املأ معلومات البرنامج",
+    "noProgramme": "لا يوجد برنامج",
+    "startByAddingProgramme": "ابدأ بإضافة برنامج لهذا الحدث",
+    "confirmDeleteProgramme": "هل أنت متأكد من حذف هذا البرنامج؟",
+    "loadProgrammesError": "خطأ أثناء تحميل البرامج",
     "programmeUpdated": "تم تحديث البرنامج بنجاح",
     "programmeCreated": "تم إنشاء البرنامج بنجاح",
     "programmeDeleted": "تم حذف البرنامج بنجاح",
-    "saveError": "Erreur lors de la sauvegarde",
-    "deleteError": "Erreur lors de la suppression"
+    "saveError": "خطأ أثناء الحفظ",
+    "deleteError": "خطأ أثناء الحذف"
   }
 }
