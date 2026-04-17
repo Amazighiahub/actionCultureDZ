@@ -2885,12 +2885,12 @@
     }
   },
   "visit": {
-    "title": "Planifier votre visite",
-    "subtitle": "Créez un parcours personnalisé autour de",
-    "duration": "Durée de la visite",
+    "title": "Plan your visit",
+    "subtitle": "Create a personalized itinerary around",
+    "duration": "Visit duration",
     "durationHint": "De 1h à 8h selon votre disponibilité",
-    "transport": "Mode de transport",
-    "interests": "Centres d'intérêt",
+    "transport": "Transport mode",
+    "interests": "Interests",
     "maxSites": "Nombre de sites à visiter",
     "options": "Options",
     "includeRestaurants": "Inclure des restaurants",
@@ -3049,20 +3049,20 @@
     }
   },
   "emailChange": {
-    "noTokenProvided": "Aucun jeton de confirmation fourni.",
-    "emailUpdatedSuccess": "Votre adresse email a été mise à jour avec succès.",
-    "tokenInvalidOrExpired": "Le jeton est invalide ou a expiré.",
+    "noTokenProvided": "No confirmation token provided.",
+    "emailUpdatedSuccess": "Your email address has been updated successfully.",
+    "tokenInvalidOrExpired": "Token is invalid or expired.",
     "confirmationFailed": "Impossible de confirmer le changement d'email.",
-    "confirming": "Confirmation en cours...",
+    "confirming": "Confirming...",
     "emailUpdated": "Email mis à jour",
     "newEmail": "Votre nouvel email :",
-    "reconnect": "Se reconnecter",
-    "backToHome": "Retour à l'accueil"
+    "reconnect": "Sign in again",
+    "backToHome": "Back to home"
   },
   "eventManagement": {
-    "programmeManagement": "Gestion des programmes",
-    "addProgramme": "Ajouter un programme",
-    "editProgramme": "Modifier le programme",
+    "programmeManagement": "Program management",
+    "addProgramme": "Add program",
+    "editProgramme": "Edit program",
     "createProgramme": "Créer un programme",
     "fillProgrammeInfo": "Remplissez les informations du programme",
     "noProgramme": "Aucun programme",

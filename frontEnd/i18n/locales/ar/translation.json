@@ -1725,10 +1725,10 @@
     "ajouterAuteurObligatoire": "أضف على الأقل المؤلف الرئيسي، ثم المساهمين (مترجم، رسام...)",
     "coAuteursOptionnel": "يمكنك أيضاً إضافة مؤلفين مشاركين أو مساهمين (مترجم، رسام...)",
     "nb_pistes": "عدد المقاطع",
-    "placeholder_nb_pistes": "Ex: 12",
+    "placeholder_nb_pistes": "مثال: 12",
     "producteur": "المنتج",
-    "placeholder_producteur": "Nom du producteur",
-    "studio": "Studio de production",
+    "placeholder_producteur": "اسم المنتج",
+    "studio": "استوديو الإنتاج",
     "placeholder_studio": "Nom du studio",
     "type_hint": "Sélectionnez le type qui correspond le mieux à votre œuvre. Pour les articles et articles scientifiques, l'éditeur avancé permet une mise en page riche avec blocs (titres, images, citations, tableaux)."
   },
@@ -2703,7 +2703,7 @@
       "photoRequired": "صورة واحدة على الأقل مطلوبة",
       "createFailed": "خطأ أثناء الإنشاء",
       "gpsRecommended": "الموقع الجغرافي غير محدد.",
-      "invalidFiles": "Certains fichiers sont invalides (images < 10 Mo)"
+      "invalidFiles": "بعض الملفات غير صالحة (صور < 10 ميجابايت)"
     },
     "success": {
       "created": "تم إنشاء الموقع!",
@@ -2745,8 +2745,8 @@
       "unavailablePos": "Position indisponible. Cliquez sur la carte."
     },
     "placeholders": {
-      "nom": "Ex: Casbah d'Alger, Djemila...",
-      "adresse": "Ex: Centre-ville, Route de..."
+      "nom": "مثال: قصبة الجزائر، جميلة...",
+      "adresse": "مثال: وسط المدينة، طريق..."
     },
     "checking": "Vérification..."
   },
@@ -2987,12 +2987,12 @@
     }
   },
   "visit": {
-    "title": "Planifier votre visite",
-    "subtitle": "Créez un parcours personnalisé autour de",
-    "duration": "Durée de la visite",
+    "title": "خطط لزيارتك",
+    "subtitle": "أنشئ مساراً مخصصاً حول",
+    "duration": "مدة الزيارة",
     "durationHint": "De 1h à 8h selon votre disponibilité",
-    "transport": "Mode de transport",
-    "interests": "Centres d'intérêt",
+    "transport": "وسيلة النقل",
+    "interests": "الاهتمامات",
     "maxSites": "Nombre de sites à visiter",
     "options": "خيارات",
     "includeRestaurants": "Inclure des restaurants",
@@ -3017,10 +3017,10 @@
     }
   },
   "multilang": {
-    "keyboardTifinaghNotDetected": "Clavier Tifinagh non détecté",
-    "keyboardTamazightNotDetected": "Clavier Tamazight Latin non détecté",
-    "installTifinagh": "Installez le clavier Tifinagh depuis les paramètres de votre appareil",
-    "installTamazight": "Installez le clavier Tamazight Latin depuis les paramètres de votre appareil",
+    "keyboardTifinaghNotDetected": "لوحة مفاتيح التيفيناغ غير مكتشفة",
+    "keyboardTamazightNotDetected": "لوحة مفاتيح الأمازيغية اللاتينية غير مكتشفة",
+    "installTifinagh": "ثبّت لوحة مفاتيح التيفيناغ من إعدادات جهازك",
+    "installTamazight": "ثبّت لوحة مفاتيح الأمازيغية اللاتينية من إعدادات جهازك",
     "seeInstructions": "Voir les instructions",
     "generalInstructions": "Instructions générales",
     "installKeyboard": "Installez un clavier Tamazight depuis les paramètres de votre appareil",
@@ -3086,7 +3086,7 @@
         "description": "إدارة المتدخلين في النشاط",
         "label": "المتدخلون",
         "addIntervenant": "إضافة متدخل",
-        "intervenantNum": "Intervenant #{{num}}",
+        "intervenantNum": "المتدخل رقم {{num}}",
         "user": "مستخدم",
         "selectUser": "اختر مستخدماً",
         "role": "الدور",
@@ -3119,7 +3119,7 @@
         "organizerNotesPlaceholder": "ملاحظات داخلية للمنظم"
       },
       "languages": {
-        "fr": "Français",
+        "fr": "الفرنسية",
         "ar": "العربية",
         "en": "English",
         "tz-ltn": "Tamazight (Latin)",
@@ -3151,20 +3151,20 @@
     }
   },
   "emailChange": {
-    "noTokenProvided": "Aucun jeton de confirmation fourni.",
-    "emailUpdatedSuccess": "Votre adresse email a été mise à jour avec succès.",
-    "tokenInvalidOrExpired": "Le jeton est invalide ou a expiré.",
+    "noTokenProvided": "لم يتم تقديم رمز التأكيد.",
+    "emailUpdatedSuccess": "تم تحديث عنوان بريدك الإلكتروني بنجاح.",
+    "tokenInvalidOrExpired": "الرمز غير صالح أو منتهي الصلاحية.",
     "confirmationFailed": "Impossible de confirmer le changement d'email.",
-    "confirming": "Confirmation en cours...",
+    "confirming": "جاري التأكيد...",
     "emailUpdated": "Email mis à jour",
     "newEmail": "Votre nouvel email :",
-    "reconnect": "Se reconnecter",
-    "backToHome": "Retour à l'accueil"
+    "reconnect": "إعادة تسجيل الدخول",
+    "backToHome": "العودة إلى الصفحة الرئيسية"
   },
   "eventManagement": {
-    "programmeManagement": "Gestion des programmes",
-    "addProgramme": "Ajouter un programme",
-    "editProgramme": "Modifier le programme",
+    "programmeManagement": "إدارة البرامج",
+    "addProgramme": "إضافة برنامج",
+    "editProgramme": "تعديل البرنامج",
     "createProgramme": "Créer un programme",
     "fillProgrammeInfo": "Remplissez les informations du programme",
     "noProgramme": "Aucun programme",
@@ -3173,7 +3173,7 @@
     "loadProgrammesError": "Erreur lors du chargement des programmes",
     "programmeUpdated": "تم تحديث البرنامج بنجاح",
     "programmeCreated": "تم إنشاء البرنامج بنجاح",
-    "programmeDeleted": "Programme supprimé avec succès",
+    "programmeDeleted": "تم حذف البرنامج بنجاح",
     "saveError": "Erreur lors de la sauvegarde",
     "deleteError": "Erreur lors de la suppression"
   }
