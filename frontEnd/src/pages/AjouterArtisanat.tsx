@@ -643,7 +643,7 @@ const AjouterArtisanat: React.FC = () => {
                     <input
                       type="file"
                       multiple
-                      accept="image/*"
+                      accept="image/*,video/*,.pdf,.doc,.docx"
                       onChange={handleFileChange}
                       className="hidden"
                       id="media-upload"
