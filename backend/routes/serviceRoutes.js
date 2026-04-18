@@ -44,7 +44,15 @@ const initServiceRoutes = (models, authMiddleware) => {
     createContentLimiter,
     validateStringLengths,
     validateGPS,
-    [body('nom').notEmpty().withMessage('Le nom du service est requis')],
+    [
+      body('nom').notEmpty().withMessage('Le nom du service est requis'),
+      body('type_service').optional().notEmpty().withMessage('Le type de service est requis'),
+      body('email').optional().isEmail().withMessage('Email invalide'),
+      body('telephone').optional().matches(/^[0-9+\-\s()]{8,20}$/).withMessage('Numéro de téléphone invalide'),
+      body('site_web').optional().isURL().withMessage('URL du site web invalide'),
+      body('tarif_min').optional().isFloat({ min: 0 }).withMessage('Tarif minimum invalide'),
+      body('tarif_max').optional().isFloat({ min: 0 }).withMessage('Tarif maximum invalide'),
+    ],
     handleValidationErrors,
     asyncHandler((req, res) => serviceController.create(req, res)));
   router.put('/:id', authenticate, validateId(),

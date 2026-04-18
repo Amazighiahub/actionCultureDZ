@@ -69,7 +69,13 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
     createContentLimiter,
     validateStringLengths,
     validateGPS,
-    [body('nom').notEmpty().withMessage('Le nom est requis')],
+    [
+      body('nom').notEmpty().withMessage('Le nom est requis'),
+      body('typePatrimoine').optional().isIn(['ville_village', 'monument', 'musee', 'site_archeologique', 'site_naturel', 'edifice_religieux', 'palais_forteresse', 'autre']).withMessage('Type de patrimoine invalide'),
+      body('communeId').optional().isInt({ min: 1 }).withMessage('Commune invalide'),
+      body('latitude').optional().isFloat({ min: -90, max: 90 }).withMessage('Latitude invalide'),
+      body('longitude').optional().isFloat({ min: -180, max: 180 }).withMessage('Longitude invalide'),
+    ],
     handleValidationErrors,
     patrimoineController.wrap('create'));
   router.put('/:id', authenticate, validateId(),

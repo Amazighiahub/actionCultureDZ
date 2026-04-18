@@ -59,7 +59,14 @@ const initOeuvreRoutes = (models, authMiddleware) => {
   router.post('/', authenticate, requireVerifiedEmail,
     createContentLimiter,
     validateStringLengths,
-    [body('titre').notEmpty().withMessage('Le titre est requis')],
+    [
+      body('titre').notEmpty().withMessage('Le titre est requis'),
+      body('id_type_oeuvre').isInt({ min: 1 }).withMessage('Le type d\'œuvre est requis'),
+      body('description').optional().isLength({ max: 10000 }).withMessage('Description trop longue (max 10000 caractères)'),
+      body('id_langue').optional().isInt({ min: 1 }).withMessage('Langue invalide'),
+      body('prix').optional().isFloat({ min: 0 }).withMessage('Le prix doit être positif'),
+      body('annee_creation').optional().isInt({ min: 1800, max: new Date().getFullYear() + 1 }).withMessage('Année de création invalide'),
+    ],
     handleValidationErrors,
     validateWorkSubmission,
     asyncHandler((req, res) => oeuvreController.create(req, res)));
