@@ -23,16 +23,23 @@ const initUserRoutes = (models, authMiddleware) => {
     validateStringLengths,
     [
       body('email').isEmail().withMessage('Email invalide'),
-      body('password').isLength({ min: 12 }).withMessage('Mot de passe minimum 12 caractères'),
+      body('password').isLength({ min: 12 }).withMessage('Mot de passe minimum 12 caractères')
+        .matches(/[A-Z]/).withMessage('Le mot de passe doit contenir au moins une majuscule')
+        .matches(/[a-z]/).withMessage('Le mot de passe doit contenir au moins une minuscule')
+        .matches(/[0-9]/).withMessage('Le mot de passe doit contenir au moins un chiffre')
+        .matches(/[!@#$%^&*(),.?":{}|<>]/).withMessage('Le mot de passe doit contenir au moins un caractère spécial'),
       body('password_confirmation').custom((val, { req }) => {
         if (val !== req.body.password) throw new Error('Les mots de passe ne correspondent pas');
         return true;
       }),
-      body('nom').notEmpty().withMessage('Le nom est requis'),
-      body('prenom').notEmpty().withMessage('Le prénom est requis'),
+      body('nom').notEmpty().withMessage('Le nom est requis').isLength({ min: 2 }).withMessage('Le nom doit contenir au moins 2 caractères'),
+      body('prenom').notEmpty().withMessage('Le prénom est requis').isLength({ min: 2 }).withMessage('Le prénom doit contenir au moins 2 caractères'),
       body('sexe').optional().isIn(['M', 'F']).withMessage('Le sexe doit être M ou F'),
       body('date_naissance').optional().isISO8601().withMessage('Date de naissance invalide'),
+      body('wilaya_residence').optional().isInt({ min: 1 }).withMessage('Wilaya invalide'),
+      body('telephone').optional().matches(/^(0|\+213)[567]\d{8}$/).withMessage('Numéro de téléphone invalide'),
       body('portfolio').optional().isURL({ protocols: ['http', 'https'], require_protocol: true }).withMessage('URL de portfolio invalide'),
+      body('accepte_conditions').equals('true').withMessage('Vous devez accepter les conditions'),
     ],
     handleValidationErrors,
     asyncHandler((req, res) => userController.register(req, res)));

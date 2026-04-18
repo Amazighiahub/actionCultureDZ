@@ -44,7 +44,19 @@ const initArtisanatRoutes = (models, authMiddleware) => {
   router.post('/', authenticate, requireVerifiedEmail,
     createContentLimiter,
     validateStringLengths,
-    [body('nom').notEmpty().withMessage('Le nom est requis')],
+    [
+      body('nom').notEmpty().withMessage('Le nom est requis'),
+      body('id_materiau').isInt({ min: 1 }).withMessage('Le matériau est requis'),
+      body('id_technique').isInt({ min: 1 }).withMessage('La technique est requise'),
+      body('prix_min').optional().isFloat({ min: 0 }).withMessage('Le prix minimum doit être positif'),
+      body('prix_max').optional().isFloat({ min: 0 }).withMessage('Le prix maximum doit être positif')
+        .custom((val, { req }) => {
+          if (req.body.prix_min && parseFloat(val) < parseFloat(req.body.prix_min)) {
+            throw new Error('Le prix maximum doit être supérieur au prix minimum');
+          }
+          return true;
+        }),
+    ],
     handleValidationErrors,
     asyncHandler((req, res) => artisanatController.create(req, res)));
   router.put('/:id', authenticate, requireVerifiedEmail,
