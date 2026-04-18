@@ -470,7 +470,7 @@ const AjouterPatrimoineRapide: React.FC = () => {
                   <input
                     id="media-upload"
                     type="file"
-                    accept="image/*,video/*,.pdf,.doc,.docx"
+                    accept="image/*,video/*,.pdf"
                     multiple
                     className="hidden"
                     onChange={handleMediaAdd}

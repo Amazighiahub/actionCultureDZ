@@ -477,7 +477,7 @@ const ArtisanatForm: React.FC<ArtisanatFormProps> = ({
                     <input
                       type="file"
                       multiple
-                      accept="image/*,video/*,.pdf,.doc,.docx"
+                      accept="image/*,video/*,.pdf"
                       onChange={handleFileChange}
                       className="hidden"
                       id="media-upload"
