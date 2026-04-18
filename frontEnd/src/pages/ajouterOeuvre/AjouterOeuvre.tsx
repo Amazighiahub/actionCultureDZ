@@ -521,7 +521,7 @@ const AjouterOeuvre: React.FC = () => {
                             <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                             <p className="text-foreground mb-2">{t("ajouteroeuvre.glissezdposez_vos_fichiers")}</p>
                             <p className="text-sm text-muted-foreground mb-4">{t("ajouteroeuvre.images_vidos_audio")}</p>
-                            <input type="file" multiple accept="image/*,video/*,audio/*,.pdf,.doc,.docx"
+                            <input type="file" multiple accept="image/*,video/*,audio/*,.pdf"
                               onChange={(e) => e.target.files && handleMediaUpload(e.target.files)} className="hidden" id="media-upload" />
                             <Button type="button" variant="outline" onClick={() => document.getElementById('media-upload')?.click()}
                               className="hover:bg-primary hover:text-primary-foreground hover:border-primary">
