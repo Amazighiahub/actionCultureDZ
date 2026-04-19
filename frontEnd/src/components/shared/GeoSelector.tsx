@@ -84,7 +84,7 @@ const GeoSelector: React.FC<GeoSelectorProps> = ({
           </select>
           {wilayasLoading && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />}
         </div>
-        {errors.wilaya && <p className="text-sm text-destructive">{errors.wilaya}</p>}
+        {errors.wilaya && <p role="alert" className="text-sm text-destructive">{errors.wilaya}</p>}
       </div>
 
       {/* Daïra */}
@@ -118,7 +118,7 @@ const GeoSelector: React.FC<GeoSelectorProps> = ({
           </select>
           {dairasLoading && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />}
         </div>
-        {errors.daira && <p className="text-sm text-destructive">{errors.daira}</p>}
+        {errors.daira && <p role="alert" className="text-sm text-destructive">{errors.daira}</p>}
       </div>
 
       {/* Commune */}
@@ -151,7 +151,7 @@ const GeoSelector: React.FC<GeoSelectorProps> = ({
           </select>
           {communesLoading && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />}
         </div>
-        {errors.commune && <p className="text-sm text-destructive">{errors.commune}</p>}
+        {errors.commune && <p role="alert" className="text-sm text-destructive">{errors.commune}</p>}
       </div>
     </div>
   );

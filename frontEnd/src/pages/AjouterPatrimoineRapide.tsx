@@ -371,7 +371,7 @@ const AjouterPatrimoineRapide: React.FC = () => {
                     </button>
                   ))}
                 </div>
-                {errors.type && <p className="text-sm text-destructive">{errors.type}</p>}
+                {errors.type && <p role="alert" className="text-sm text-destructive">{errors.type}</p>}
               </div>
 
               {/* Adresse */}
@@ -476,7 +476,7 @@ const AjouterPatrimoineRapide: React.FC = () => {
                     onChange={handleMediaAdd}
                   />
                 </label>
-                {errors.medias && <p className="text-sm text-destructive mt-2">{errors.medias}</p>}
+                {errors.medias && <p role="alert" className="text-sm text-destructive mt-2">{errors.medias}</p>}
               </div>
 
               {/* Prévisualisations */}

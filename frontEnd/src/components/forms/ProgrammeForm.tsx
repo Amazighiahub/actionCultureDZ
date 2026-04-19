@@ -363,7 +363,7 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
 
       {/* Messages d'erreur et succès */}
       {error && (
-        <div className="flex items-center gap-2 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+        <div role="alert" className="flex items-center gap-2 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
           <AlertCircle className="h-4 w-4 text-destructive" />
           <span className="text-sm text-destructive">{error}</span>
         </div>
