@@ -93,6 +93,9 @@ const AjouterPatrimoineRapide: React.FC = () => {
       if (!formData.typePatrimoine) {
         newErrors.type = t('patrimoine.errors.typeRequired', 'Le type de patrimoine est requis');
       }
+      if (formData.latitude === 0 && formData.longitude === 0) {
+        newErrors.gps = t('patrimoine.errors.gpsRequired', 'Positionnez le site sur la carte (cliquez, cherchez une adresse ou utilisez la géolocalisation)');
+      }
     }
 
     if (currentStep === 3) {
@@ -164,11 +167,6 @@ const AjouterPatrimoineRapide: React.FC = () => {
   const handleSubmit = async () => {
     if (!validateStep(3)) return;
 
-    // Vérifier GPS
-    if (formData.latitude === 0 || formData.longitude === 0) {
-      toast({ title: t('common.warning', 'Attention'), description: t('patrimoine.errors.gpsRecommended', 'Position GPS non définie. Le site sera placé au centre de l\'Algérie.'), variant: 'destructive' });
-    }
-
     setLoading(true);
     try {
       const createData = {
@@ -177,8 +175,8 @@ const AjouterPatrimoineRapide: React.FC = () => {
         typePatrimoine: formData.typePatrimoine,
         communeId: formData.communeId,
         adresse: formData.adresse,
-        latitude: formData.latitude || 36.75,
-        longitude: formData.longitude || 3.05,
+        latitude: formData.latitude,
+        longitude: formData.longitude,
       };
 
       const response = await patrimoineService.create(createData as any);
@@ -391,9 +389,13 @@ const AjouterPatrimoineRapide: React.FC = () => {
                 <GPSPicker
                   latitude={formData.latitude}
                   longitude={formData.longitude}
-                  onPositionChange={(lat, lng) => setFormData(prev => ({ ...prev, latitude: lat, longitude: lng }))}
+                  onPositionChange={(lat, lng) => {
+                    setFormData(prev => ({ ...prev, latitude: lat, longitude: lng }));
+                    setErrors(prev => { const { gps: _, ...rest } = prev; return rest; });
+                  }}
                 />
               </React.Suspense>
+              {errors.gps && <p role="alert" className="text-sm text-destructive mt-2">{errors.gps}</p>}
 
               {/* Alerte doublons */}
               {duplicates.length > 0 && (
