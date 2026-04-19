@@ -183,15 +183,15 @@ const App = () => (
           <Routes>
             {/* Routes publiques (canonical = lowercase) */}
             <Route path="/" element={<Index />} />
-            <Route path="/patrimoine" element={<Patrimoine />} />
-            <Route path="/patrimoine/:id" element={<PatrimoineDetail />} />
+            <Route path="/patrimoine" element={<ErrorBoundary><Patrimoine /></ErrorBoundary>} />
+            <Route path="/patrimoine/:id" element={<ErrorBoundary><PatrimoineDetail /></ErrorBoundary>} />
             <Route path="/evenements" element={<Evenements />} />
             <Route path="/evenements/:id" element={<EventDetailsPage />} />
             <Route path="/oeuvres" element={<Oeuvres />} />
             <Route path="/oeuvres/:id" element={<OeuvreDetail />} />
             <Route path="/artisanat" element={<Artisanat />} />
-            <Route path="/artisanat/:id" element={<ArtisanatDetail />} />
-            <Route path="/a-propos" element={<APropos />} />
+            <Route path="/artisanat/:id" element={<ErrorBoundary><ArtisanatDetail /></ErrorBoundary>} />
+            <Route path="/a-propos" element={<ErrorBoundary><APropos /></ErrorBoundary>} />
             <Route path="/auth" element={<Auth />} />
             {/* Redirects SEO : anciennes URLs PascalCase → lowercase */}
             <Route path="/Patrimoine" element={<Navigate to="/patrimoine" replace />} />
@@ -201,7 +201,7 @@ const App = () => (
             <Route path="/Auth" element={<Navigate to="/auth" replace />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />
-            <Route path="/articles/:id" element={<ArticleViewPage />} />
+            <Route path="/articles/:id" element={<ErrorBoundary><ArticleViewPage /></ErrorBoundary>} />
             
             {/* Route dashboard qui redirige selon le rôle */}
             <Route 
@@ -228,7 +228,7 @@ const App = () => (
               path="/dashboard-pro" 
               element={
                 <ProfessionalRoute>
-                  <DashboardPro />
+                  <ErrorBoundary><DashboardPro /></ErrorBoundary>
                 </ProfessionalRoute>
               } 
             />
@@ -375,7 +375,7 @@ const App = () => (
                 </ProfessionalRoute>
               }
             />
-            <Route path="/programme/:id" element={<ViewProgrammePage />} />
+            <Route path="/programme/:id" element={<ErrorBoundary><ViewProgrammePage /></ErrorBoundary>} />
 
             {/* Gestion Artisanat */}
             <Route
