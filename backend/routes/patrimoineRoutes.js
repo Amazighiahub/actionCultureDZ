@@ -59,6 +59,103 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
     handleValidationErrors,
     patrimoineController.wrap('enrichDetail'));
 
+  // Articles patrimoine (blocs éditeur riche liés à un lieu + section)
+  router.get('/:id/articles', validateId(), async (req, res) => {
+    try {
+      const { section } = req.query;
+      const where = { id_article: parseInt(req.params.id), article_type: 'patrimoine' };
+      if (section) where.section_patrimoine = section;
+
+      // models déjà disponible via initPatrimoineRoutes(models, ...)
+      const blocks = await models.ArticleBlock.findAll({
+        where,
+        order: [['section_patrimoine', 'ASC'], ['ordre', 'ASC']],
+        include: [{ model: models.Media, as: 'media', required: false }]
+      });
+
+      res.json({ success: true, data: blocks });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  router.post('/:id/articles', authenticate, validateId(),
+    [
+      body('type_block').isIn(['text', 'heading', 'image', 'video', 'citation', 'code', 'list', 'table', 'separator', 'embed']).withMessage('Type de bloc invalide'),
+      body('section_patrimoine').isIn(['histoire', 'architecture', 'traditions', 'gastronomie', 'artisanat_local', 'personnalites', 'infos_pratiques', 'referencesHistoriques']).withMessage('Section invalide'),
+      body('contenu').optional().isLength({ max: 10000 }).withMessage('Contenu trop long'),
+    ],
+    handleValidationErrors,
+    async (req, res) => {
+      try {
+        // models déjà disponible via initPatrimoineRoutes(models, ...)
+        const { sanitizeBlockContent } = require('../utils/sanitizeArticle');
+
+        const lieuId = parseInt(req.params.id);
+        const { type_block, section_patrimoine, contenu, contenu_json, metadata } = req.body;
+
+        // Sanitiser le contenu
+        const sanitizedContenu = contenu ? sanitizeBlockContent(type_block, contenu) : null;
+
+        // Trouver le prochain ordre
+        const maxOrder = await models.ArticleBlock.max('ordre', {
+          where: { id_article: lieuId, article_type: 'patrimoine', section_patrimoine }
+        });
+
+        const block = await models.ArticleBlock.create({
+          id_article: lieuId,
+          article_type: 'patrimoine',
+          section_patrimoine,
+          type_block,
+          contenu: sanitizedContenu,
+          contenu_json: contenu_json || {},
+          metadata: metadata || {},
+          ordre: (maxOrder || 0) + 1,
+          visible: true
+        });
+
+        // Incrémenter nb_contributions sur DetailLieu
+        const DetailLieu = models.DetailLieu;
+        const detail = await DetailLieu.findOne({ where: { id_lieu: lieuId } });
+        if (detail) {
+          await detail.update({
+            id_dernier_contributeur: req.user?.id_user,
+            date_derniere_contribution: new Date(),
+            nb_contributions: (detail.nb_contributions || 0) + 1
+          });
+        }
+
+        res.status(201).json({ success: true, data: block });
+      } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+      }
+    }
+  );
+
+  router.delete('/:id/articles/:blockId', authenticate, validateId(),
+    async (req, res) => {
+      try {
+        // models déjà disponible via initPatrimoineRoutes(models, ...)
+        const block = await models.ArticleBlock.findOne({
+          where: {
+            id_block: parseInt(req.params.blockId),
+            id_article: parseInt(req.params.id),
+            article_type: 'patrimoine'
+          }
+        });
+
+        if (!block) {
+          return res.status(404).json({ success: false, error: 'Bloc non trouvé' });
+        }
+
+        await block.destroy();
+        res.json({ success: true, message: 'Bloc supprimé' });
+      } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+      }
+    }
+  );
+
   // ============================================================================
   // ROUTES ADMIN
   // ============================================================================
