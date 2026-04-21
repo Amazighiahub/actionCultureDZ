@@ -18,6 +18,7 @@ const BaseController = require('./baseController');
 const container = require('../services/serviceContainer');
 const { translateDeep } = require('../helpers/i18n');
 const { accountRateLimiter } = require('../middlewares/rateLimitMiddleware');
+const logger = require('../utils/logger');
 
 class UserController extends BaseController {
   get userService() {
@@ -70,7 +71,7 @@ class UserController extends BaseController {
 
       const result = await this.userService.login(email, password);
 
-      accountRateLimiter.resetAttempts(email);
+      await accountRateLimiter.resetAttempts(email);
 
       this._setAuthCookies(res, result.token);
       this._setRefreshTokenCookie(res, result.refreshToken);
@@ -86,7 +87,12 @@ class UserController extends BaseController {
 
     } catch (error) {
       if (req.body?.email) {
-        accountRateLimiter.recordFailedAttempt(req.body.email);
+        try {
+          await accountRateLimiter.recordFailedAttempt(req.body.email);
+        } catch (limiterError) {
+          // Ne jamais masquer l'erreur d'origine si le limiter échoue
+          logger.warn('accountRateLimiter.recordFailedAttempt failed', { error: limiterError.message });
+        }
       }
       this._handleError(res, error);
     }

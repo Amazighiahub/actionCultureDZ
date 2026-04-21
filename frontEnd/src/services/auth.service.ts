@@ -50,6 +50,15 @@ class AuthService {
   // Le localStorage stocke uniquement les métadonnées (user, expiry) pour l'UX
 
   /**
+   * Promesse partagée du refresh en cours.
+   * Plusieurs composants peuvent détecter un token expiré en même temps
+   * (ex: quand isAuthenticated() est appelé par plusieurs hooks au montage).
+   * Sans ce verrou, on envoie N appels /refresh-token concurrents, dont
+   * N-1 échoueront avec INVALID_REFRESH_TOKEN car ce jeton est à usage unique.
+   */
+  private refreshInFlight: Promise<ApiResponse<AuthTokenData>> | null = null;
+
+  /**
    * Nettoie les données de session locales
    * Note: Les cookies httpOnly sont supprimés côté serveur via /logout
    */
@@ -111,22 +120,33 @@ class AuthService {
 
   /**
    * ✅ SÉCURITÉ: Rafraîchit le token d'accès via cookie httpOnly
-   * Le refresh token est envoyé automatiquement via le cookie
+   * Le refresh token est envoyé automatiquement via le cookie.
+   *
+   * Déduplique les appels concurrents : tant qu'un refresh est en vol,
+   * tout nouvel appel récupère la même promesse.
    */
   async refreshToken(): Promise<ApiResponse<AuthTokenData>> {
-    // Appel à l'API - le cookie httpOnly refresh_token sera envoyé automatiquement
-    const response = await httpClient.post<AuthTokenData>('/users/refresh-token', {});
-
-    if (response.success && response.data) {
-      this.setAuthData(response.data);
-    } else {
-      // Si le refresh échoue, nettoyer les données locales
-      if (response.error?.includes('expiré') || response.error?.includes('expired')) {
-        this.clearLocalAuthData();
-        this.clearUserCache();
-      }
+    if (this.refreshInFlight) {
+      return this.refreshInFlight;
     }
-    return response;
+
+    this.refreshInFlight = (async () => {
+      try {
+        const response = await httpClient.post<AuthTokenData>('/users/refresh-token', {});
+
+        if (response.success && response.data) {
+          this.setAuthData(response.data);
+        } else if (response.error?.includes('expiré') || response.error?.includes('expired')) {
+          this.clearLocalAuthData();
+          this.clearUserCache();
+        }
+        return response;
+      } finally {
+        this.refreshInFlight = null;
+      }
+    })();
+
+    return this.refreshInFlight;
   }
 
   async getCurrentUser(): Promise<ApiResponse<CurrentUser>> {

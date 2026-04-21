@@ -52,7 +52,9 @@ const initUserRoutes = (models, authMiddleware) => {
     ],
     handleValidationErrors,
     asyncHandler((req, res) => userController.login(req, res)));
-  router.post('/refresh-token', asyncHandler((req, res) => userController.refreshToken(req, res)));
+  router.post('/refresh-token',
+    endpointLimiters.refreshToken,
+    asyncHandler((req, res) => userController.refreshToken(req, res)));
   router.post('/check-email', strictLimiter, asyncHandler((req, res) => userController.checkEmail(req, res)));
   router.post('/verify-email/:token', asyncHandler((req, res) => userController.verifyEmail(req, res)));
   router.get('/types', asyncHandler((req, res) => userController.getTypes(req, res)));

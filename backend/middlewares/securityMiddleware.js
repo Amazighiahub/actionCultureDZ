@@ -9,7 +9,7 @@ const securityMiddleware = {
       external: /^https?:\/\/([\w\-]+\.)+[\w\-]+(\/[\w\-._~:/?#[\]@!$&'()*+,;=]*)?$/
     };
 
-    // Champs à exclure de la sanitisation
+    // Champs URL — préservés si l'URL correspond à un pattern autorisé
     const EXCLUDED_FIELDS = [
       'photo_url',
       'image_url',
@@ -20,6 +20,29 @@ const securityMiddleware = {
       'thumbnail_url',
       'cover_url'
     ];
+
+    // Champs à NE JAMAIS sanitiser : secrets, identifiants, jetons.
+    // Strip HTML sur un mot de passe = corruption silencieuse + impossibilité
+    // de se reconnecter si des caractères comme <, > ou & sont utilisés.
+    const NEVER_SANITIZE = new Set([
+      'password',
+      'mot_de_passe',
+      'ancien_mot_de_passe',
+      'nouveau_mot_de_passe',
+      'password_confirmation',
+      'confirmation_mot_de_passe',
+      'current_password',
+      'new_password',
+      'token',
+      'refresh_token',
+      'refreshToken',
+      'access_token',
+      'csrf_token',
+      'api_key',
+      'secret',
+      'email',
+      'telephone'
+    ]);
 
     // Routes dont le champ "contenu" est sanitisé par le contrôleur lui-même
     // (via sanitize-html avec whitelist stricte, pas le strip global)
@@ -57,6 +80,11 @@ const securityMiddleware = {
     // Sanitiser une chaîne en préservant certains contenus
     const sanitizeString = (str, fieldName = '') => {
       if (typeof str !== 'string') return str;
+
+      // Jamais sanitiser les secrets/identifiants : corruption silencieuse
+      if (NEVER_SANITIZE.has(fieldName)) {
+        return str;
+      }
 
       // Exclusion inconditionnelle (le contrôleur applique sa propre sanitisation)
       if (UNCONDITIONAL_EXCLUDED.includes(fieldName)) {
