@@ -255,17 +255,29 @@ const initRoutes = (models, authMiddleware) => {
       
       res.json(health);
     } catch (error) {
+      const isProduction = process.env.NODE_ENV === 'production';
       res.status(503).json({
         status: 'ERROR',
         timestamp: new Date().toISOString(),
         database: 'Disconnected',
-        error: error.message
+        // Ne pas leaker la stack/message SQL en prod (infos internes)
+        ...(isProduction ? {} : { error: error.message })
       });
     }
   });
 
-  // Documentation API dynamique
-  router.get('/', (req, res) => {
+  // Documentation API dynamique — enumere tous les endpoints (y compris admin)
+  // avec leurs middlewares. En production, on exige isAdmin pour eviter la
+  // cartographie gratuite de l'API par un attaquant anonyme.
+  const docsGuard = (req, res, next) => {
+    if (process.env.NODE_ENV !== 'production') return next();
+    return authMiddleware.authenticate(req, res, (err) => {
+      if (err) return next(err);
+      return authMiddleware.isAdmin(req, res, next);
+    });
+  };
+
+  router.get('/', docsGuard, (req, res) => {
     // Extraire toutes les routes dynamiquement
     const allRoutes = extractRoutes(router, '/api');
     const groupedRoutes = groupRoutesByModule(allRoutes);
@@ -324,8 +336,8 @@ const initRoutes = (models, authMiddleware) => {
     res.json(documentation);
   });
 
-  // Liste simple des endpoints
-  router.get('/endpoints', (req, res) => {
+  // Liste simple des endpoints — meme guard qu'au-dessus
+  router.get('/endpoints', docsGuard, (req, res) => {
     const allRoutes = extractRoutes(router, '/api');
     const format = req.query.format || 'simple';
     
@@ -348,8 +360,8 @@ const initRoutes = (models, authMiddleware) => {
     }
   });
 
-  // Documentation par module
-  router.get('/docs/:module', (req, res) => {
+  // Documentation par module — meme guard qu'au-dessus
+  router.get('/docs/:module', docsGuard, (req, res) => {
     const { module } = req.params;
     const allRoutes = extractRoutes(router, '/api');
     

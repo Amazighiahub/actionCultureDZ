@@ -58,7 +58,9 @@ const globalLimiter = rateLimit({
       retryAfter: new Date(Date.now() + 15 * 60 * 1000)
     });
   },
-  standardHeaders: false, // Ne pas exposer les headers RateLimit-*
+  // Exposer les headers RateLimit-* (RFC draft) pour que le frontend puisse
+  // appliquer un backoff adaptatif (cf. httpClient.ts qui lit RateLimit-Remaining)
+  standardHeaders: true,
   legacyHeaders: false,
   // ✅ SÉCURITÉ: Utiliser Redis en production pour scalabilité
   ...(redisStore && { store: redisStore }),
@@ -227,7 +229,7 @@ const endpointLimiters = {
     windowMs: 60 * 60 * 1000,          // 1 heure
     max: IS_PRODUCTION ? 15 : 100,      // 15 tentatives/h en prod
     skipSuccessfulRequests: true,        // Ne compter que les échecs (brute force)
-    standardHeaders: false,
+    standardHeaders: true,
     legacyHeaders: false,
     handler: authRateLimitHandler,
     ...(redisStore && { store: redisStore }),
@@ -237,7 +239,7 @@ const endpointLimiters = {
     windowMs: 60 * 60 * 1000,           // 1 heure
     max: IS_PRODUCTION ? 5 : 50,         // 5 inscriptions/h par IP en prod
     skipSuccessfulRequests: false,
-    standardHeaders: false,
+    standardHeaders: true,
     legacyHeaders: false,
     handler: authRateLimitHandler,
     ...(redisStore && { store: redisStore }),
@@ -247,7 +249,7 @@ const endpointLimiters = {
     windowMs: 60 * 60 * 1000,           // 1 heure
     max: IS_PRODUCTION ? 10 : 50,        // 10 demandes/h en prod
     skipSuccessfulRequests: false,
-    standardHeaders: false,
+    standardHeaders: true,
     legacyHeaders: false,
     handler: authRateLimitHandler,
     ...(redisStore && { store: redisStore }),

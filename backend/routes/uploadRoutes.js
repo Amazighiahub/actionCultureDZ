@@ -54,10 +54,14 @@ const initUploadRoutes = (models, authMiddleware) => {
       const upload = uploadService.uploadImage().single('image');
       upload(req, res, (err) => {
         if (err) {
-          console.error('Erreur upload Cloudinary:', err.message, err.http_code || '');
+          // Log complet cote serveur (inclut stack, chemins internes, clef
+          // Cloudinary, etc.) mais ne renvoie au client qu'un message
+          // generique + code machine pour eviter de leaker des details infra.
+          console.error('Erreur upload Cloudinary:', err.message, err.http_code || '', err.stack);
           return res.status(500).json({
             success: false,
-            error: 'Erreur upload image: ' + err.message
+            code: 'UPLOAD_FAILED',
+            error: req.t ? req.t('upload.failed') : "Echec de l'upload, veuillez reessayer."
           });
         }
         next();
