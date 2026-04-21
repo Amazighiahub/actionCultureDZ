@@ -118,6 +118,15 @@ async function startServer() {
           io.close();
           logger.info('Socket.IO fermé');
 
+          // Arrêter crons + queue Bull AVANT la DB
+          try {
+            const serviceContainer = require('./services/serviceContainer');
+            await serviceContainer.shutdownBackgroundServices();
+            logger.info('Services background arrêtés');
+          } catch (e) {
+            logger.warn('Shutdown services background (best-effort):', e?.message);
+          }
+
           // Close database
           await appInstance.closeDatabase();
           logger.info('Base de données fermée');
