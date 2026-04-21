@@ -116,7 +116,9 @@ describe('ResetPassword — Réinitialisation du mot de passe', () => {
     vi.useRealTimers();
   });
 
-  test('mot de passe doit respecter les mêmes règles que l inscription', async () => {
+  // Timeout étendu : le test enchaîne ~8 règles avec clear/type (userEvent réel),
+  // ce qui dépasse facilement les 5 s par défaut de Vitest.
+  test('mot de passe doit respecter les mêmes règles que l inscription', { timeout: 30000 }, async () => {
     renderResetPassword();
 
     const passwordInput = getPasswordInput();

@@ -9,10 +9,11 @@
  */
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Loader2, Plus, Pencil } from 'lucide-react';
+import { Loader2, Plus, Pencil, FileText } from 'lucide-react';
 import MultiLangInput from '@/components/MultiLangInput';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -49,6 +50,7 @@ const SectionEnrichissable: React.FC<SectionEnrichissableProps> = ({
   const { t } = useTranslation();
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -101,10 +103,16 @@ const SectionEnrichissable: React.FC<SectionEnrichissableProps> = ({
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">{icon} {title}</CardTitle>
             {isAuthenticated && (
-              <Button variant="ghost" size="sm" onClick={openEditor} className="text-muted-foreground hover:text-primary">
-                <Pencil className="h-4 w-4 mr-1" />
-                {t('common.edit', 'Modifier')}
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="ghost" size="sm" onClick={openEditor} className="text-muted-foreground hover:text-primary">
+                  <Pencil className="h-4 w-4 mr-1" />
+                  {t('common.edit', 'Modifier')}
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => navigate(`/editer-article/nouveau?lieu=${lieuId}&section=${fieldName}`)} className="text-muted-foreground hover:text-primary">
+                  <FileText className="h-4 w-4 mr-1" />
+                  {t('patrimoine.contribute.addArticle', 'Article')}
+                </Button>
+              </div>
             )}
           </div>
         </CardHeader>
@@ -156,10 +164,16 @@ const SectionEnrichissable: React.FC<SectionEnrichissableProps> = ({
           <p className="text-sm text-muted-foreground mb-4">
             {t('patrimoine.contribute.empty', 'Cette section n\'est pas encore documentée.')}
           </p>
-          <Button variant="outline" onClick={openEditor}>
-            <Plus className="h-4 w-4 mr-2" />
-            {t('patrimoine.contribute.add', 'Contribuer')}
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Button variant="outline" onClick={openEditor}>
+              <Plus className="h-4 w-4 mr-2" />
+              {t('patrimoine.contribute.addQuick', 'Texte rapide')}
+            </Button>
+            <Button variant="default" onClick={() => navigate(`/editer-article/nouveau?lieu=${lieuId}&section=${fieldName}`)}>
+              <FileText className="h-4 w-4 mr-2" />
+              {t('patrimoine.contribute.addArticle', 'Écrire un article')}
+            </Button>
+          </div>
         </CardContent>
       </Card>
 

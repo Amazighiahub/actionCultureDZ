@@ -1,18 +1,17 @@
 # ============================================
 # GitLab CI/CD - EventCulture
 # ============================================
-# Pipeline : Test -> Build -> Deploy
+# Pipeline : Test -> Deploy
 #
 # Variables a configurer dans GitLab CI/CD Settings :
 #   SSH_PRIVATE_KEY  : cle privee SSH (type: File)
 #   SERVER_IP        : IP du VPS OVH
 #   SERVER_USER      : utilisateur SSH (ex: deploy)
-#   DOMAIN           : nom de domaine (ex: eventculture.com)
+#   DOMAIN           : nom de domaine (ex: taladz.com)
 # ============================================
 
 stages:
   - test
-  - build
   - deploy
 
 variables:
@@ -41,15 +40,25 @@ variables:
 # ============================================
 # Stage: TEST
 # ============================================
+# Les etapes critiques (lint, tests, audit) DOIVENT etre bloquantes :
+# un echec fait echouer le job et bloque le deploiement.
+#
+# Pour tolerer temporairement un warning npm audit, utiliser
+# allow_failure: true sur le job plutot que masquer avec `|| echo`.
+# ============================================
 test:backend:
   <<: *node_template
   stage: test
   script:
     - cd backend
     - npm ci
-    - npm run lint 2>/dev/null || echo "Lint skipped"
-    - npm test -- --passWithNoTests 2>/dev/null || echo "Tests skipped"
-    - npm audit --audit-level=high 2>/dev/null || echo "Audit warnings"
+    - npm run lint
+    # test:ci exclut les suites qui requierent MySQL/Redis
+    # (voir backend/jest.ci.config.js).
+    # TODO : quand on ajoutera `services: [mysql:8, redis:7]` + migrations,
+    # repasser a `npm test -- --passWithNoTests`.
+    - npm run test:ci
+    - npm audit --audit-level=high --omit=dev
   rules:
     - if: $CI_MERGE_REQUEST_ID
     - if: $CI_COMMIT_BRANCH == "main"
@@ -61,8 +70,10 @@ test:frontend:
   script:
     - cd frontEnd
     - npm ci
-    - npm run lint 2>/dev/null || echo "Lint skipped"
+    - npm run lint
+    - npm test -- --run --passWithNoTests
     - npm run build
+    - npm audit --audit-level=high --omit=dev
   rules:
     - if: $CI_MERGE_REQUEST_ID
     - if: $CI_COMMIT_BRANCH == "main"
@@ -71,9 +82,14 @@ test:frontend:
 # ============================================
 # Stage: DEPLOY Production (branche main)
 # ============================================
+# Declenche manuellement uniquement ET seulement si test:* passent.
+# ============================================
 deploy:production:
   <<: *ssh_template
   stage: deploy
+  needs:
+    - test:backend
+    - test:frontend
   script:
     - |
       ssh "$SERVER_USER@$SERVER_IP" << 'DEPLOY_SCRIPT'
@@ -100,9 +116,15 @@ deploy:production:
 # ============================================
 # Stage: DEPLOY Staging (branche develop)
 # ============================================
+# Manuel egalement : evite qu'un push develop deploie automatiquement
+# un code qui n'a pas encore ete valide sur staging.
+# ============================================
 deploy:staging:
   <<: *ssh_template
   stage: deploy
+  needs:
+    - test:backend
+    - test:frontend
   script:
     - |
       ssh "$SERVER_USER@$SERVER_IP" << 'DEPLOY_SCRIPT'
@@ -120,6 +142,7 @@ deploy:staging:
       DEPLOY_SCRIPT
   rules:
     - if: $CI_COMMIT_BRANCH == "develop"
+      when: manual
   environment:
     name: staging
     url: http://$SERVER_IP

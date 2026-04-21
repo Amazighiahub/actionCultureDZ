@@ -97,12 +97,10 @@ class DashboardMonitoringService {
    * @returns {Object|null} { total, used, free, percentUsed }
    */
   async checkDiskSpace() {
-    try {
-      // TODO: Remplacer ce stub par un vrai check OS
-      return { total: 100000000000, used: 50000000000, free: 50000000000, percentUsed: 50 };
-    } catch (error) {
-      return null;
-    }
+    // TODO: Remplacer ce stub par un vrai check OS (diskusage, check-disk-space, etc.)
+    // Le try/catch a été retiré : tant que c'est un return littéral, il ne peut pas throw.
+    // À réintroduire lors de l'implémentation réelle (appel async qui peut échouer).
+    return { total: 100000000000, used: 50000000000, free: 50000000000, percentUsed: 50 };
   }
 
   /**

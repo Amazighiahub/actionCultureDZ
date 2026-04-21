@@ -35,9 +35,14 @@ module.exports = (sequelize) => {
       },
      // Type d'article (polymorphique)
      article_type: {
-        type: DataTypes.ENUM('article', 'article_scientifique'),
+        type: DataTypes.ENUM('article', 'article_scientifique', 'patrimoine'),
         allowNull: false,
-        comment: 'Type d\'article auquel ce bloc appartient'
+        comment: 'Type : article, article_scientifique, ou patrimoine (id_article = id_lieu)'
+      },
+    section_patrimoine: {
+        type: DataTypes.STRING(50),
+        allowNull: true,
+        comment: 'Section du lieu patrimoine (histoire, gastronomie, etc.) — uniquement si article_type = patrimoine'
       },
     contenu: {
       type: DataTypes.TEXT,
@@ -111,7 +116,19 @@ module.exports = (sequelize) => {
       }
     });
     
-    ArticleBlock.belongsTo(models.Media, { 
+    // Association avec Lieu (patrimoine)
+    if (models.Lieu) {
+      ArticleBlock.belongsTo(models.Lieu, {
+        foreignKey: 'id_article',
+        constraints: false,
+        as: 'lieu',
+        scope: {
+          article_type: 'patrimoine'
+        }
+      });
+    }
+
+    ArticleBlock.belongsTo(models.Media, {
       foreignKey: 'id_media',
       as: 'media'
     });

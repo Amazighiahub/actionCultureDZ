@@ -253,6 +253,20 @@ const endpointLimiters = {
     ...(redisStore && { store: redisStore }),
   }),
 
+  // Rafraîchissement de session : un client normal en fait quelques-uns par
+  // heure (rotation de JWT). Une fréquence élevée indique soit un bug côté
+  // client (boucle de refresh), soit une tentative de bruteforce du cookie
+  // refresh_token. On limite par IP pour contenir les deux cas.
+  refreshToken: rateLimit({
+    windowMs: 15 * 60 * 1000,           // 15 min
+    max: IS_PRODUCTION ? 30 : 200,       // 30 refresh / 15 min en prod (2/min)
+    skipSuccessfulRequests: false,
+    standardHeaders: true,
+    legacyHeaders: false,
+    handler: authRateLimitHandler,
+    ...(redisStore && { store: redisStore }),
+  }),
+
   apiKey: rateLimit({
     windowMs: 24 * 60 * 60 * 1000,     // 24 heures
     max: 5,

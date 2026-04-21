@@ -13,9 +13,28 @@ class UserRepository extends BaseRepository {
 
   /**
    * Trouve un utilisateur par email
+   * @param {string} email
+   * @param {Object} [options]
+   * @param {boolean} [options.includeRoles] - Charge aussi les rôles (nécessaire pour
+   *   détecter un admin lors du login, par exemple)
    */
   async findByEmail(email, options = {}) {
-    return this.findOne({ email }, options);
+    const { includeRoles, ...rest } = options;
+    const finalOptions = { ...rest };
+
+    if (includeRoles && this.models.Role) {
+      finalOptions.include = [
+        ...(finalOptions.include || []),
+        {
+          model: this.models.Role,
+          as: 'Roles',
+          through: { attributes: [] },
+          required: false
+        }
+      ];
+    }
+
+    return this.findOne({ email }, finalOptions);
   }
 
   /**
@@ -175,19 +194,35 @@ class UserRepository extends BaseRepository {
 
   /**
    * Suspend un utilisateur
+   * @param {number} userId
+   * @param {number} adminId - Admin à l'origine de la suspension
+   * @param {number} duree - Durée en jours (0 ou null = indéfinie)
+   * @param {string} motif - Motif obligatoire (tracé pour audit)
    */
   async suspend(userId, adminId, duree, motif) {
+    const now = new Date();
+    const suspensionJusquAu = duree && duree > 0
+      ? new Date(now.getTime() + duree * 24 * 60 * 60 * 1000)
+      : null;
+
     return this.update(userId, {
-      statut: 'suspendu'
+      statut: 'suspendu',
+      suspension_motif: motif,
+      suspension_jusqu_au: suspensionJusquAu,
+      suspendu_par: adminId,
+      suspendu_le: now
     });
   }
 
   /**
-   * Réactive un utilisateur
+   * Réactive un utilisateur (conserve le motif pour historique, mais efface la date de fin)
    */
   async reactivate(userId, adminId) {
     return this.update(userId, {
-      statut: 'actif'
+      statut: 'actif',
+      suspension_jusqu_au: null,
+      suspendu_par: adminId,
+      suspendu_le: new Date()
     });
   }
 
