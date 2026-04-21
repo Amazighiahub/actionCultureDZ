@@ -233,6 +233,61 @@ class UploadService {
     return this.uploadImage('profile');
   }
 
+  // ============================================================
+  // PIPELINE "SAFE" : memoryStorage + magic bytes check AVANT
+  // Cloudinary. Utilise pour images et documents (fichiers de taille
+  // raisonnable qu'on peut se permettre de passer en RAM).
+  // Pour videos/audio (100+ MB), on garde Cloudinary direct pour eviter
+  // la pression memoire sur Node.
+  //
+  // Ces variantes expectent que la route :
+  //  1. utilise multer.memoryStorage()
+  //  2. passe par validateMagicBytesBuffer() (middleware)
+  //  3. puis appelle uploadImageBuffer / uploadDocumentBuffer
+  //     (cf. services/upload/cloudinaryUploader.js)
+  // ============================================================
+  uploadImageSafe(maxSize = 10 * 1024 * 1024) {
+    const fileFilter = (req, file, cb) => {
+      // Whitelist MIME cliente-basee : defense en premiere ligne.
+      // La vraie validation se fait ensuite via magic bytes sur le buffer.
+      const allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+      if (allowed.includes(file.mimetype)) {
+        cb(null, true);
+      } else {
+        cb(new Error('Format d\'image non supporte. Formats acceptes : JPG, PNG, GIF, WEBP'));
+      }
+    };
+    return multer({
+      storage: multer.memoryStorage(),
+      limits: { fileSize: maxSize },
+      fileFilter
+    });
+  }
+
+  uploadDocumentSafe(maxSize = 50 * 1024 * 1024) {
+    const fileFilter = (req, file, cb) => {
+      const allowed = [
+        'application/pdf', 'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'text/plain', 'application/vnd.oasis.opendocument.text', 'application/rtf',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-powerpoint',
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+      ];
+      if (allowed.includes(file.mimetype)) {
+        cb(null, true);
+      } else {
+        cb(new Error('Format de document non supporte'));
+      }
+    };
+    return multer({
+      storage: multer.memoryStorage(),
+      limits: { fileSize: maxSize },
+      fileFilter
+    });
+  }
+
   // Upload générique (réutilise uploadMedia)
   uploadAny() {
     return this.uploadMedia();

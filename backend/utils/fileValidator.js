@@ -34,6 +34,81 @@ const MAGIC_NUMBERS = [
 
 class FileValidator {
   /**
+   * Detecte le type reel a partir d'un buffer (premiers 16 octets suffisent).
+   * Utilise pour le pipeline memoryStorage qui valide AVANT Cloudinary.
+   *
+   * @param {Buffer} buffer      buffer entier du fichier (on lit les 16 premiers bytes)
+   * @param {string[]} allowedTypes  whitelist MIME
+   * @returns {{ valid: boolean, mimeType?: string, extension?: string, detected?: string, message?: string }}
+   */
+  static validateBuffer(buffer, allowedTypes, { originalname = '' } = {}) {
+    if (!Buffer.isBuffer(buffer) || buffer.length < 4) {
+      return { valid: false, detected: 'empty', message: 'Buffer vide ou trop court' };
+    }
+
+    const header = buffer.subarray(0, Math.min(16, buffer.length));
+    const magicHex = header.subarray(0, 4).toString('hex');
+
+    // MP4 / ISO base media : le magic number est 'ftyp' a l'offset 4..8.
+    if (header.length >= 8 && header.subarray(4, 8).toString('ascii') === 'ftyp') {
+      const detected = 'video/mp4';
+      if (allowedTypes.includes(detected)) {
+        return { valid: true, mimeType: detected, extension: '.mp4' };
+      }
+      return { valid: false, detected, allowed: allowedTypes, message: `Type detecte (${detected}) non autorise` };
+    }
+
+    // RIFF : WEBP / AVI / WAVE se distinguent par le token a l'offset 8..12.
+    if (magicHex === '52494646' && header.length >= 12) {
+      const riffType = header.subarray(8, 12).toString('ascii');
+      const riffMap = {
+        WEBP: { type: 'image/webp', ext: '.webp' },
+        'AVI ': { type: 'video/avi', ext: '.avi' },
+        WAVE: { type: 'audio/wav', ext: '.wav' }
+      };
+      const info = riffMap[riffType];
+      if (info) {
+        if (allowedTypes.includes(info.type)) {
+          return { valid: true, mimeType: info.type, extension: info.ext };
+        }
+        return { valid: false, detected: info.type, allowed: allowedTypes, message: `Type detecte (${info.type}) non autorise` };
+      }
+    }
+
+    // Signatures simples (PNG, JPEG, GIF, PDF, MP3, OGG, DOC, ZIP...).
+    const magicHexFull = header.toString('hex');
+    for (const info of MAGIC_NUMBERS) {
+      if (magicHexFull.startsWith(info.magic)) {
+        // Les formats Office modernes (.docx/.xlsx/.pptx) sont des ZIP :
+        // on regarde l'extension du fichier client pour le MIME final.
+        if (info.type === 'application/zip') {
+          const ext = path.extname(originalname).toLowerCase();
+          const officeMimeByExt = {
+            '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+          };
+          const officeMime = officeMimeByExt[ext];
+          if (officeMime && allowedTypes.includes(officeMime)) {
+            return { valid: true, mimeType: officeMime, extension: ext };
+          }
+        }
+
+        if (allowedTypes.includes(info.type)) {
+          return { valid: true, mimeType: info.type, extension: info.ext };
+        }
+        return { valid: false, detected: info.type, allowed: allowedTypes, message: `Type detecte (${info.type}) non autorise` };
+      }
+    }
+
+    return {
+      valid: false,
+      detected: 'unknown',
+      message: 'Signature de fichier inconnue'
+    };
+  }
+
+  /**
    * Obtient le magic number (premiers bytes) d'un fichier
    */
   static async getMagicNumber(filePath) {
