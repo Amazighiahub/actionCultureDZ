@@ -294,6 +294,34 @@ module.exports = (sequelize) => {
     },
 
     // =============================================================================
+    // AUDIT SUSPENSION / MODÉRATION
+    // =============================================================================
+    suspension_motif: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      comment: 'Motif de la suspension du compte (audit modération)'
+    },
+    suspension_jusqu_au: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      comment: 'Date de fin de suspension (NULL = indéfinie). Le cron peut réactiver automatiquement'
+    },
+    suspendu_par: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'user',
+        key: 'id_user'
+      },
+      comment: 'ID de l\'admin ayant suspendu ou réactivé le compte'
+    },
+    suspendu_le: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      comment: 'Date de la dernière action de suspension/réactivation'
+    },
+
+    // =============================================================================
     // PARAMÈTRES DE NOTIFICATION
     // =============================================================================
     notifications_email: {
@@ -309,14 +337,6 @@ module.exports = (sequelize) => {
       defaultValue: true
     },
     notifications_commentaires: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: true
-    },
-    notifications_favoris: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: true
-    },
-    notifications_evenements: {
       type: DataTypes.BOOLEAN,
       defaultValue: true
     },

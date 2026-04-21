@@ -11,6 +11,7 @@
     "dev": "concurrently \"npm run redis:dev\" \"npm run start:dev\"",
     "dev:safe": "nodemon startWithChecks.js",
     "test": "jest",
+    "test:ci": "jest --config jest.ci.config.js --passWithNoTests",
     "test:routes": "node testAllRoutes.js",
     "generate:secret": "node scripts/generateSecret.js",
     "setup": "npm run setup:env && npm run generate:secret && npm run setup:uploads",

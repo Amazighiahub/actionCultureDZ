@@ -2,7 +2,7 @@
 // Vue.js - Modèle pour tracking des vues
 // ========================================
 
-const { DataTypes } = require('sequelize');
+const { DataTypes, Op } = require('sequelize');
 
 module.exports = (sequelize) => {
   const Vue = sequelize.define('Vue', {

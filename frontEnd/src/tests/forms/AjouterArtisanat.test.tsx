@@ -427,12 +427,13 @@ describe('AjouterArtisanat', () => {
       });
     });
 
-    test('accept=image/* sur le champ fichier', async () => {
+    test('accept accepte image, vidéo et pdf', async () => {
       render(<AjouterArtisanat />);
       await waitForDataLoad();
 
       const fileInput = document.getElementById('media-upload') as HTMLInputElement;
-      expect(fileInput.getAttribute('accept')).toBe('image/*');
+      // Le formulaire accepte désormais images + vidéos + PDF (voir AjouterArtisanat.tsx).
+      expect(fileInput.getAttribute('accept')).toBe('image/*,video/*,.pdf');
     });
   });
 
