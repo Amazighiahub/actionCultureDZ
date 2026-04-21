@@ -15,8 +15,8 @@ const UserDTO = require('../../dto/user/userDTO');
 const CreateUserDTO = require('../../dto/user/createUserDTO');
 const UpdateUserDTO = require('../../dto/user/updateUserDTO');
 const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
+const { signAccessToken, verifyAccessToken } = require('../../utils/jwtHelper');
 
 const REFRESH_TOKEN_EXPIRY_DAYS = 7;
 
@@ -27,7 +27,12 @@ class UserService extends BaseService {
       throw new Error('JWT_SECRET must be configured. Set it in your .env file.');
     }
     this.jwtSecret = process.env.JWT_SECRET;
-    this.jwtExpiration = process.env.JWT_EXPIRATION || '1h';
+    // JWT_EXPIRATION (legacy) prime, sinon on retombe sur JWT_EXPIRES_IN
+    // (utilise par .env.example + envAdapter). Le helper jwtHelper fait la
+    // meme fallback pour rester coherent.
+    this.jwtExpiration = process.env.JWT_EXPIRATION
+      || process.env.JWT_EXPIRES_IN
+      || '1h';
     this.bcryptRounds = parseInt(process.env.BCRYPT_ROUNDS) || (process.env.NODE_ENV === 'production' ? 14 : 12);
   }
 
@@ -208,21 +213,15 @@ class UserService extends BaseService {
    * @returns {Promise<UserDTO>}
    */
   async verifyToken(token) {
-    try {
-      const decoded = jwt.verify(token, this.jwtSecret, { algorithms: ['HS256'] });
-      const user = await this.repository.findById(decoded.userId);
-
-      if (!user) {
-        throw this._unauthorizedError('Token invalide');
-      }
-
-      return UserDTO.fromEntity(user);
-    } catch (error) {
-      if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
-        throw this._unauthorizedError('Token invalide ou expiré');
-      }
-      throw error;
+    const decoded = verifyAccessToken(token);
+    if (!decoded) {
+      throw this._unauthorizedError('Token invalide ou expiré');
     }
+    const user = await this.repository.findById(decoded.userId);
+    if (!user) {
+      throw this._unauthorizedError('Token invalide');
+    }
+    return UserDTO.fromEntity(user);
   }
 
   /**
@@ -741,16 +740,21 @@ class UserService extends BaseService {
    * @private
    */
   _generateToken(user) {
-    return jwt.sign(
+    // Delegue au helper central : ajoute jti (UUID v4), issuer et audience.
+    // On conserve la signature de retour (string) pour ne pas casser les
+    // callers historiques (register/login/verifyEmail/refreshSession).
+    const { token } = signAccessToken(
       {
         userId: user.id_user,
         email: user.email,
         typeUser: user.id_type_user,
-        pwdAt: user.password_changed_at ? Math.floor(new Date(user.password_changed_at).getTime() / 1000) : 0
+        pwdAt: user.password_changed_at
+          ? Math.floor(new Date(user.password_changed_at).getTime() / 1000)
+          : 0,
       },
-      this.jwtSecret,
-      { expiresIn: this.jwtExpiration, algorithm: 'HS256' }
+      { expiresIn: this.jwtExpiration, subject: user.id_user }
     );
+    return token;
   }
 
   /**

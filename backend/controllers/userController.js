@@ -114,10 +114,15 @@ class UserController extends BaseController {
       // Best-effort revocation; proceed with cookie cleanup regardless
     }
 
-    // Blacklister l'access token dans Redis pour empêcher sa réutilisation
+    // Blacklister l'access token cote Redis pour empecher sa reutilisation
+    // avant son expiration naturelle (clef = jti si present, sinon token
+    // complet pour retro-compat avec les anciennes sessions en vol).
     try {
       const jwt = require('jsonwebtoken');
       const { getClient } = require('../utils/redisClient');
+      const { buildBlacklistKey } = require('../utils/jwtHelper');
+      const logger = require('../utils/logger');
+
       const token = req.cookies?.access_token
         || (req.headers.authorization?.startsWith('Bearer ') ? req.headers.authorization.substring(7) : null);
 
@@ -127,14 +132,21 @@ class UserController extends BaseController {
           const ttl = decoded.exp - Math.floor(Date.now() / 1000);
           if (ttl > 0) {
             const redis = getClient();
-            if (redis) {
-              await redis.setEx(`jwt:blacklist:${token}`, ttl, '1');
+            if (!redis) {
+              // Redis absent : en prod, un token logue reste valide jusqu'a
+              // expiration naturelle (fail-open explicite). On log pour
+              // pouvoir en eter alerte via Sentry.
+              logger.warn('logout: Redis unavailable, token not blacklisted');
+            } else {
+              const key = buildBlacklistKey({ jti: decoded.jti, token });
+              if (key) await redis.setEx(key, ttl, '1');
             }
           }
         }
       }
-    } catch (_blacklistErr) {
-      // Best-effort blacklist; proceed with cookie cleanup regardless
+    } catch (blacklistErr) {
+      const logger = require('../utils/logger');
+      logger.warn('logout: best-effort blacklist failed:', blacklistErr.message);
     }
 
     this._clearAuthCookies(res);
@@ -872,8 +884,9 @@ class UserController extends BaseController {
   _setAuthCookies(res, token) {
     const isProduction = process.env.NODE_ENV === 'production';
 
-    // Aligner maxAge cookie avec l'expiration JWT (défaut 15min)
-    const jwtExp = process.env.JWT_EXPIRATION || '1h';
+    // Aligner maxAge cookie avec l'expiration JWT.
+    // JWT_EXPIRATION prime sur JWT_EXPIRES_IN (cf. jwtHelper).
+    const jwtExp = process.env.JWT_EXPIRATION || process.env.JWT_EXPIRES_IN || '1h';
     const maxAgeMs = this._parseExpToMs(jwtExp);
 
     res.cookie('access_token', token, {
@@ -903,7 +916,7 @@ class UserController extends BaseController {
    * @private
    */
   _getTokenExpirySeconds() {
-    const jwtExp = process.env.JWT_EXPIRATION || '1h';
+    const jwtExp = process.env.JWT_EXPIRATION || process.env.JWT_EXPIRES_IN || '1h';
     return Math.floor(this._parseExpToMs(jwtExp) / 1000);
   }
 

@@ -1,8 +1,12 @@
 // middlewares/authMiddleware.js - VERSION CORRIGÉE ET SÉCURISÉE
 // Compatible avec: createAuthMiddleware(models) OU createAuthMiddleware(User)
-const jwt = require('jsonwebtoken');
 const logger = require('../utils/logger');
 const { getClient: getRedisClient } = require('../utils/redisClient');
+const {
+  verifyAccessToken,
+  buildBlacklistKey,
+  JWT_BLACKLIST_FAIL_CLOSED,
+} = require('../utils/jwtHelper');
 
 // ============================================================================
 // VALIDATION DE SÉCURITÉ JWT
@@ -40,8 +44,8 @@ const validateJwtSecret = () => {
   return secret || 'dev-secret-key-only-for-development';
 };
 
-// Valider au chargement du module
-const JWT_SECRET = validateJwtSecret();
+// Valider au chargement du module (le helper jwtHelper relit JWT_SECRET)
+validateJwtSecret();
 
 module.exports = (modelsOrUser) => {
   // ✅ COMPATIBILITÉ: Accepte soit models complet, soit juste User
@@ -64,14 +68,47 @@ module.exports = (modelsOrUser) => {
   // ====================
   // HELPERS INTERNES
   // ====================
-  
-  // Vérifier un token JWT
-  const verifyToken = (token) => {
+
+  // Verifier un token JWT (delegue au helper central : iss/aud/algorithm)
+  const verifyToken = (token) => verifyAccessToken(token);
+
+  /**
+   * Verifie si un token est blackliste.
+   *
+   * - Si `jti` present dans le payload : cherche `jwt:blacklist:jti:<jti>`
+   *   (cles Redis courtes, aligne sur logout nouvelle generation).
+   * - Sinon (ancien token sans jti emis avant le deploiement Lot 1) :
+   *   cherche `jwt:blacklist:<token>` pour retro-compat.
+   *
+   * Politique fail-closed :
+   * - En production (ou JWT_BLACKLIST_FAIL_CLOSED=true) : si Redis est HS,
+   *   on REFUSE le token (on ne peut pas verifier qu'il n'a pas ete revoque).
+   * - En dev : on log et on laisse passer, pour ne pas bloquer les devs.
+   *
+   * @returns {{ blacklisted: boolean, failure: boolean }}
+   */
+  const checkTokenBlacklist = async (token, decoded) => {
+    const redis = getRedisClient();
+    if (!redis) {
+      return { blacklisted: false, failure: true };
+    }
     try {
-      return jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] });
-    } catch (error) {
-      logger.warn('Erreur vérification token:', error.message);
-      return null;
+      const jti = decoded && decoded.jti;
+      const primaryKey = buildBlacklistKey({ jti, token });
+      const hit = primaryKey ? await redis.get(primaryKey) : null;
+      if (hit) return { blacklisted: true, failure: false };
+
+      // Transition : si un jti est present, on regarde AUSSI l'ancienne cle
+      // par token complet (certaines sessions ont pu etre revoquees avant
+      // le deploiement du helper). Bruit minimal : 1 GET supplementaire.
+      if (jti) {
+        const legacy = await redis.get(buildBlacklistKey({ token }));
+        if (legacy) return { blacklisted: true, failure: false };
+      }
+      return { blacklisted: false, failure: false };
+    } catch (e) {
+      logger.warn('JWT blacklist check failed:', e.message);
+      return { blacklisted: false, failure: true };
     }
   };
 
@@ -255,21 +292,23 @@ module.exports = (modelsOrUser) => {
         });
       }
 
-      // Vérifier si le token est blacklisté (logout)
-      const redis = getRedisClient();
-      if (redis) {
-        try {
-          const isBlacklisted = await redis.get(`jwt:blacklist:${token}`);
-          if (isBlacklisted) {
-            return res.status(401).json({
-              success: false,
-              message: req.t('auth.tokenRevoked')
-            });
-          }
-        } catch (e) {
-          // Redis indisponible — on laisse passer (dégradation gracieuse)
-          logger.debug('JWT blacklist check skipped — Redis unavailable');
-        }
+      // Verifier si le token est blackliste (logout / revocation admin)
+      const blacklistCheck = await checkTokenBlacklist(token, decoded);
+      if (blacklistCheck.blacklisted) {
+        return res.status(401).json({
+          success: false,
+          message: req.t('auth.tokenRevoked')
+        });
+      }
+      if (blacklistCheck.failure && JWT_BLACKLIST_FAIL_CLOSED) {
+        // Fail-closed : en prod, si on ne peut pas consulter la blacklist
+        // on refuse. Sinon un attaquant pourrait se maintenir logue en
+        // faisant tomber Redis apres un logout.
+        logger.error('JWT blacklist check unavailable, failing closed');
+        return res.status(503).json({
+          success: false,
+          message: req.t('common.serverError')
+        });
       }
 
       // Récupérer l'utilisateur avec ses rôles
@@ -357,11 +396,19 @@ module.exports = (modelsOrUser) => {
       if (token) {
         const decoded = verifyToken(token);
         if (decoded) {
-          const user = await getUserWithRoles(decoded.userId || decoded.id || decoded.id_user);
-          if (user && !['suspendu', 'banni', 'inactif'].includes(user.statut)) {
-            req.user = user;
-            req.userId = user.id_user;
-            req.userRoles = user.roleNames;
+          // Consulter la blacklist comme dans authenticate : un access token
+          // revoque par logout doit etre refuse meme en mode optionnel.
+          // (Ne pas rejeter la requete ici : optionalAuth = on continue
+          // simplement en anonyme si le token est blackliste.)
+          const blacklistCheck = await checkTokenBlacklist(token, decoded);
+          if (!blacklistCheck.blacklisted
+            && !(blacklistCheck.failure && JWT_BLACKLIST_FAIL_CLOSED)) {
+            const user = await getUserWithRoles(decoded.userId || decoded.id || decoded.id_user);
+            if (user && !['suspendu', 'banni', 'inactif'].includes(user.statut)) {
+              req.user = user;
+              req.userId = user.id_user;
+              req.userRoles = user.roleNames;
+            }
           }
         }
       }

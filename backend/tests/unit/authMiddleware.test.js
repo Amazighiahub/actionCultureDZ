@@ -77,7 +77,11 @@ describe('authMiddleware', () => {
 
       await authMiddleware.authenticate(req, res, next);
 
-      expect(jwt.verify).toHaveBeenCalledWith(token, JWT_SECRET, { algorithms: ['HS256'] });
+      expect(jwt.verify).toHaveBeenCalledWith(
+        token,
+        JWT_SECRET,
+        expect.objectContaining({ algorithms: ['HS256'] })
+      );
       expect(req.user).toBeDefined();
       expect(req.userId).toBe(1);
       expect(next).toHaveBeenCalled();
@@ -90,7 +94,11 @@ describe('authMiddleware', () => {
 
       await authMiddleware.authenticate(req, res, next);
 
-      expect(jwt.verify).toHaveBeenCalledWith(token, JWT_SECRET, { algorithms: ['HS256'] });
+      expect(jwt.verify).toHaveBeenCalledWith(
+        token,
+        JWT_SECRET,
+        expect.objectContaining({ algorithms: ['HS256'] })
+      );
       expect(req.user).toBeDefined();
       expect(next).toHaveBeenCalled();
     });
@@ -102,7 +110,11 @@ describe('authMiddleware', () => {
 
       await authMiddleware.authenticate(req, res, next);
 
-      expect(jwt.verify).toHaveBeenCalledWith(token, JWT_SECRET, { algorithms: ['HS256'] });
+      expect(jwt.verify).toHaveBeenCalledWith(
+        token,
+        JWT_SECRET,
+        expect.objectContaining({ algorithms: ['HS256'] })
+      );
       expect(next).toHaveBeenCalled();
     });
 
@@ -113,7 +125,11 @@ describe('authMiddleware', () => {
 
       await authMiddleware.authenticate(req, res, next);
 
-      expect(jwt.verify).toHaveBeenCalledWith('cookie-token', JWT_SECRET, { algorithms: ['HS256'] });
+      expect(jwt.verify).toHaveBeenCalledWith(
+        'cookie-token',
+        JWT_SECRET,
+        expect.objectContaining({ algorithms: ['HS256'] })
+      );
     });
 
     it('should return 401 for expired/invalid token (verify returns null)', async () => {
