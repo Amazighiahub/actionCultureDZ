@@ -174,10 +174,15 @@ services:
     networks:
       - eventculture-network
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      # Redis est demarre avec --requirepass, donc redis-cli ping sans auth
+      # renvoie NOAUTH et le healthcheck reste "unhealthy" meme si Redis tourne.
+      # On passe le mot de passe via la variable d'env injectee dans le container.
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" ping | grep -q PONG"]
       interval: 10s
       timeout: 5s
       retries: 5
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD:?REDIS_PASSWORD must be set in production}
     command: >
       redis-server
       --appendonly yes
