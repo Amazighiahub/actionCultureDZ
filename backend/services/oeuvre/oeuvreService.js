@@ -70,15 +70,24 @@ class OeuvreService extends BaseService {
 
   /**
    * Récupère une œuvre avec tous ses détails
+   * @param {number} id
+   * @param {Object} [options]
+   * @param {boolean} [options.incrementViews=true] - Incrémenter le compteur de vues.
+   *   À passer à false quand on ré-hydrate l'œuvre après une mutation, sinon créer
+   *   ou éditer une œuvre lui donnerait artificiellement une vue.
    */
-  async findWithFullDetails(id) {
+  async findWithFullDetails(id, options = {}) {
+    const { incrementViews = true } = options;
+
     const oeuvre = await this.repository.findWithFullDetails(id);
     if (!oeuvre) {
       throw this._notFoundError(id);
     }
 
-    // Incrémenter les vues (non-bloquant)
-    try { await this.repository.incrementViews(id); } catch (e) { /* colonne nb_vues peut ne pas exister */ }
+    if (incrementViews) {
+      // Non-bloquant : viewCounter bufferise dans Redis
+      try { await this.repository.incrementViews(id); } catch (e) { /* colonne nb_vues peut ne pas exister */ }
+    }
 
     return OeuvreDTO.fromEntity(oeuvre);
   }
@@ -185,19 +194,27 @@ class OeuvreService extends BaseService {
     }
 
     // 3b. Vérifier les doublons (titre + type + langue)
+    //     Note: JSON_EXTRACT renvoie une valeur JSON (quoted). Sans JSON_UNQUOTE,
+    //     la comparaison avec une string brute ne matche jamais en MySQL.
     const titreFr = createDTO.titre?.fr;
     const titreAr = createDTO.titre?.ar;
     if (titreFr || titreAr) {
       const { Op, Sequelize } = require('sequelize');
       const conditions = [];
-      if (titreFr) conditions.push(Sequelize.where(Sequelize.fn('JSON_EXTRACT', Sequelize.col('titre'), Sequelize.literal("'$.fr'")), titreFr));
-      if (titreAr) conditions.push(Sequelize.where(Sequelize.fn('JSON_EXTRACT', Sequelize.col('titre'), Sequelize.literal("'$.ar'")), titreAr));
+      const buildJsonMatch = (jsonPath, value) =>
+        Sequelize.where(
+          Sequelize.fn('JSON_UNQUOTE', Sequelize.fn('JSON_EXTRACT', Sequelize.col('titre'), Sequelize.literal(`'${jsonPath}'`))),
+          value
+        );
+      if (titreFr) conditions.push(buildJsonMatch('$.fr', titreFr));
+      if (titreAr) conditions.push(buildJsonMatch('$.ar', titreAr));
       const existing = await this.repository.model.findOne({
         where: {
           id_type_oeuvre: createDTO.idTypeOeuvre,
           ...(createDTO.idLangue ? { id_langue: createDTO.idLangue } : {}),
           [Op.or]: conditions
-        }
+        },
+        attributes: ['id_oeuvre']
       });
       if (existing) {
         this.logger.warn(`Doublon détecté: titre="${titreFr || titreAr}", type=${createDTO.idTypeOeuvre}, existant id=${existing.id_oeuvre}`);
@@ -239,15 +256,16 @@ class OeuvreService extends BaseService {
       }
 
       // "Je suis l'auteur" → ajouter dans OeuvreUser
+      // L'erreur doit remonter pour rollback la transaction : si on ne peut
+      // pas enregistrer l'auteur, l'œuvre ne doit pas être créée sans auteur.
       if (requestBody.je_suis_auteur && this.models?.OeuvreUser) {
-        // id_type_user: chercher le type du user connecté, ou 1 (Auteur par défaut)
         const user = await this.models.User.findByPk(userId, { attributes: ['id_type_user'], transaction });
         await this.models.OeuvreUser.create({
           id_oeuvre: newOeuvre.id_oeuvre,
           id_user: userId,
           id_type_user: user?.id_type_user || 1,
           role_principal: true
-        }, { transaction }).catch(err => this.logger.error('Erreur OeuvreUser:', err.message));
+        }, { transaction });
         this.logger.info(`User ${userId} ajouté comme auteur de l'oeuvre ${newOeuvre.id_oeuvre}`);
       }
 
@@ -265,7 +283,8 @@ class OeuvreService extends BaseService {
     this.logger.info(`Œuvre créée: ${oeuvre.id_oeuvre} par utilisateur: ${userId}`);
 
     // 5. Retourner l'œuvre complète et l'enregistrement sous-type
-    const oeuvreFull = await this.findWithFullDetails(oeuvre.id_oeuvre);
+    //    (sans compter comme vue : c'est la réponse à la création)
+    const oeuvreFull = await this.findWithFullDetails(oeuvre.id_oeuvre, { incrementViews: false });
     return {
       oeuvre: oeuvreFull,
       subtype: subtypeRecord ? subtypeRecord.get({ plain: true }) : null
@@ -343,8 +362,8 @@ class OeuvreService extends BaseService {
     this.cache.invalidate();
     this.logger.info(`Œuvre mise à jour: ${id} par utilisateur: ${userId}`);
 
-    // 8. Retourner l'œuvre mise à jour
-    return this.findWithFullDetails(id);
+    // 8. Retourner l'œuvre mise à jour (sans compter comme vue)
+    return this.findWithFullDetails(id, { incrementViews: false });
   }
 
   /**
@@ -366,19 +385,30 @@ class OeuvreService extends BaseService {
       throw this._forbiddenError('Vous ne pouvez pas supprimer cette œuvre');
     }
 
-    // 3. Nettoyer les ArticleBlocks orphelins (association polymorphique sans FK)
-    const article = await this.models.Article?.findOne({ where: { id_oeuvre: id }, attributes: ['id_article'] });
-    const articleSci = await this.models.ArticleScientifique?.findOne({ where: { id_oeuvre: id }, attributes: ['id_article_scientifique'] });
+    // 3. Suppression atomique : les ArticleBlock (polymorphique sans FK)
+    // doivent être liés au sort de l'Oeuvre. Un échec DB ne doit pas laisser
+    // l'article orphelin vidé de ses blocs.
+    await this.withTransaction(async (transaction) => {
+      const [article, articleSci] = await Promise.all([
+        this.models.Article?.findOne({ where: { id_oeuvre: id }, attributes: ['id_article'], transaction }),
+        this.models.ArticleScientifique?.findOne({ where: { id_oeuvre: id }, attributes: ['id_article_scientifique'], transaction })
+      ]);
 
-    if (article) {
-      await this.models.ArticleBlock.destroy({ where: { id_article: article.id_article, article_type: 'article' } });
-    }
-    if (articleSci) {
-      await this.models.ArticleBlock.destroy({ where: { id_article: articleSci.id_article_scientifique, article_type: 'article_scientifique' } });
-    }
+      if (article && this.models.ArticleBlock) {
+        await this.models.ArticleBlock.destroy({
+          where: { id_article: article.id_article, article_type: 'article' },
+          transaction
+        });
+      }
+      if (articleSci && this.models.ArticleBlock) {
+        await this.models.ArticleBlock.destroy({
+          where: { id_article: articleSci.id_article_scientifique, article_type: 'article_scientifique' },
+          transaction
+        });
+      }
 
-    // 4. Supprimer (les autres relations seront supprimées en cascade)
-    await this.repository.delete(id);
+      await this.repository.delete(id, { transaction });
+    });
 
     this.cache.invalidate();
     this.logger.info(`Œuvre supprimée: ${id} par utilisateur: ${userId}`);

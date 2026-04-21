@@ -137,7 +137,7 @@ class BaseRepository {
    * Supprime un enregistrement
    */
   async delete(id, options = {}) {
-    const instance = await this.findById(id);
+    const instance = await this.findById(id, options);
     if (!instance) {
       return false;
     }
