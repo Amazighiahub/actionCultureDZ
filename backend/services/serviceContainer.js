@@ -460,6 +460,121 @@ class ServiceContainer {
   }
 
   // ============================================================================
+  // SERVICES BACKGROUND (singletons externes : queue Bull + crons)
+  // ============================================================================
+
+  /**
+   * Retourne le singleton emailService (pas instancié via le container)
+   * @returns {EmailService}
+   */
+  get emailService() {
+    if (!this._services.has('email')) {
+      this._services.set('email', require('./emailService'));
+    }
+    return this._services.get('email');
+  }
+
+  /**
+   * Retourne le singleton emailQueueService
+   * @returns {EmailQueueService}
+   */
+  get emailQueueService() {
+    if (!this._services.has('emailQueue')) {
+      this._services.set('emailQueue', require('./emailQueueService'));
+    }
+    return this._services.get('emailQueue');
+  }
+
+  /**
+   * Retourne le singleton cronService
+   * @returns {CronService}
+   */
+  get cronService() {
+    if (!this._services.has('cron')) {
+      this._services.set('cron', require('./cronService'));
+    }
+    return this._services.get('cron');
+  }
+
+  /**
+   * Démarre les services background : queue email Bull + crons planifiés.
+   * Idempotent : peut être appelé plusieurs fois, ne fera rien si déjà démarré.
+   *
+   * @param {Object} [opts]
+   * @param {boolean} [opts.enableCrons=true]  Active les crons (respecte ENABLE_SCHEDULED_TASKS)
+   * @param {boolean} [opts.enableQueue=true]  Active la queue email
+   */
+  async bootBackgroundServices(opts = {}) {
+    this._checkInitialized();
+
+    const { enableCrons = true, enableQueue = true } = opts;
+    const results = { queue: null, crons: null };
+
+    if (enableQueue) {
+      try {
+        const queue = this.emailQueueService;
+        if (!queue.isInitialized) {
+          await queue.initialize();
+        }
+        results.queue = queue.isInitialized ? 'ok' : 'degraded';
+      } catch (error) {
+        logger.error('Erreur démarrage queue email:', error);
+        results.queue = 'failed';
+      }
+    } else {
+      results.queue = 'disabled';
+    }
+
+    if (enableCrons) {
+      try {
+        const cron = this.cronService;
+        if (!cron.isRunning) {
+          // Bag de services minimal nécessaire aux jobs
+          const servicesBag = {
+            emailService: this.emailService,
+            emailQueueService: this.emailQueueService,
+            notificationService: this.notificationService
+          };
+          cron.initialize(this._models, servicesBag);
+        }
+        results.crons = cron.isRunning ? 'ok' : 'failed';
+      } catch (error) {
+        logger.error('Erreur démarrage crons:', error);
+        results.crons = 'failed';
+      }
+    } else {
+      results.crons = 'disabled';
+    }
+
+    logger.info(`Background services: queue=${results.queue}, crons=${results.crons}`);
+    return results;
+  }
+
+  /**
+   * Arrête proprement les services background (pour graceful shutdown).
+   */
+  async shutdownBackgroundServices() {
+    const tasks = [];
+
+    if (this._services.has('cron')) {
+      const cron = this._services.get('cron');
+      if (cron.isRunning) {
+        try { cron.stopAll(); } catch (e) { logger.error('Erreur stopAll crons:', e); }
+      }
+    }
+
+    if (this._services.has('emailQueue')) {
+      const queue = this._services.get('emailQueue');
+      if (queue.isInitialized) {
+        tasks.push(queue.close().catch(e => logger.error('Erreur close queue email:', e)));
+      }
+    }
+
+    await Promise.all(tasks);
+    logger.info('Services background arrêtés');
+  }
+
+  // ============================================================================
   // ACCÈS AUX REPOSITORIES (pour cas spéciaux)
   // ============================================================================
 

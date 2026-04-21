@@ -662,8 +662,15 @@ class App {
   // Fermeture gracieuse
   async gracefulShutdown(code = 0) {
     console.log('🛑 Arrêt gracieux de l\'application...');
-    
+
     try {
+      // Arrêter les crons + queue email AVANT de fermer la DB
+      // (sinon un job en cours pourrait échouer sur connexion fermée)
+      try {
+        await serviceContainer.shutdownBackgroundServices();
+        console.log('✅ Services background arrêtés');
+      } catch (_) { /* best-effort */ }
+
       // Flush les vues bufferisées avant de fermer la DB
       try {
         const viewCounter = require('./utils/viewCounter');
@@ -755,10 +762,21 @@ class App {
       this.initializeRateLimiters();
       this.initializeRoutes();
       this.initializeErrorHandling();
-      
-      // Démarrer les tâches planifiées
+
+      // Démarrer les tâches planifiées locales (audit logs, temp files)
       await this.startScheduledTasks();
-      
+
+      // Démarrer les services background (queue email Bull + crons métier)
+      // Contrôlé par ENABLE_SCHEDULED_TASKS et ENABLE_EMAIL_QUEUE
+      if (this.config.features.scheduledTasks) {
+        await serviceContainer.bootBackgroundServices({
+          enableCrons: process.env.ENABLE_CRONS !== 'false',
+          enableQueue: process.env.ENABLE_EMAIL_QUEUE !== 'false'
+        });
+      } else {
+        console.log('⏰ Services background désactivés (ENABLE_SCHEDULED_TASKS=false)');
+      }
+
       console.log('🎉 Application initialisée avec succès !');
       console.log('🌍 Support multilingue: FR, AR, EN, TZ-LTN, TZ-TFNG');
       return this.app;
