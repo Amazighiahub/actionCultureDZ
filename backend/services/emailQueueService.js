@@ -77,17 +77,20 @@ class EmailQueueService {
    */
   setupProcessors() {
     // Processeur pour emails simples
+    // NOTE: emailService.sendEmail(to, subject, html, attachments)
+    // Si seul `text` est fourni, on l'encapsule en HTML minimal.
     this.queues.email.process('send-email', async (job) => {
       const { to, subject, text, html, attachments } = job.data;
-      
+
       logger.info(`📧 Traitement email: ${subject} → ${to}`);
-      
-      const result = await emailService.sendEmail(to, subject, text, html, attachments);
-      
+
+      const body = html || (text ? `<pre style="font-family:inherit">${text}</pre>` : '');
+      const result = await emailService.sendEmail(to, subject, body, attachments);
+
       if (!result.success) {
         throw new Error(result.error || 'Échec envoi email');
       }
-      
+
       return result;
     });
 
@@ -104,13 +107,14 @@ class EmailQueueService {
       
       // Envoyer l'email si nécessaire
       if (emailData) {
+        const body = emailData.html || (emailData.text ? `<pre style="font-family:inherit">${emailData.text}</pre>` : '');
         const result = await emailService.sendEmail(
           emailData.to,
           emailData.subject,
-          emailData.text,
-          emailData.html
+          body,
+          emailData.attachments
         );
-        
+
         return { notification: true, email: result };
       }
       
@@ -121,14 +125,20 @@ class EmailQueueService {
     this.queues.bulk.process('send-bulk', 10, async (job) => {
       const { emails, template } = job.data;
       const results = [];
-      
+
+      const interpolate = (str, data) =>
+        str ? str.replace(/\{\{(.*?)\}\}/g, (match, key) => data?.[key.trim()] ?? match) : '';
+
       for (const email of emails) {
         try {
+          const html = template.html ? interpolate(template.html, email.data) : '';
+          const text = template.text ? interpolate(template.text, email.data) : '';
+          const body = html || (text ? `<pre style="font-family:inherit">${text}</pre>` : '');
+
           const result = await emailService.sendEmail(
             email.to,
             template.subject,
-            template.text.replace(/\{\{(.*?)\}\}/g, (match, key) => email.data[key] || match),
-            template.html?.replace(/\{\{(.*?)\}\}/g, (match, key) => email.data[key] || match)
+            body
           );
           
           results.push({ email: email.to, success: result.success });
@@ -193,11 +203,11 @@ class EmailQueueService {
     if (!this.isInitialized) {
       // Fallback: envoyer directement
       logger.warn('⚠️ Queue non initialisée, envoi direct');
+      const body = emailData.html || (emailData.text ? `<pre style="font-family:inherit">${emailData.text}</pre>` : '');
       return emailService.sendEmail(
         emailData.to,
         emailData.subject,
-        emailData.text,
-        emailData.html,
+        body,
         emailData.attachments
       );
     }
@@ -232,11 +242,12 @@ class EmailQueueService {
     if (!this.isInitialized) {
       // Fallback
       if (emailData) {
+        const body = emailData.html || (emailData.text ? `<pre style="font-family:inherit">${emailData.text}</pre>` : '');
         await emailService.sendEmail(
           emailData.to,
           emailData.subject,
-          emailData.text,
-          emailData.html
+          body,
+          emailData.attachments
         );
       }
       return { success: true };
