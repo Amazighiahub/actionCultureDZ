@@ -38,24 +38,26 @@ async function startServer() {
 
     app.set('io', io);
 
-    // Authentification Socket.IO via JWT cookie
+    // Authentification Socket.IO via JWT cookie (utilise le helper central
+    // pour verifier iss/aud/algorithm comme le middleware HTTP)
     const cookie = require('cookie');
-    const jwt = require('jsonwebtoken');
-    const JWT_SECRET = process.env.JWT_SECRET;
-    if (!JWT_SECRET) {
+    const { verifyAccessToken } = require('./utils/jwtHelper');
+    if (!process.env.JWT_SECRET) {
       throw new Error('JWT_SECRET is required. Set it in your .env file.');
     }
 
     io.use((socket, next) => {
       try {
-        // Priorité : cookie httpOnly > auth handshake (compatibilité frontend)
         const cookies = cookie.parse(socket.handshake.headers.cookie || '');
         const token = cookies.token || cookies.access_token || socket.handshake.auth?.token;
         if (!token) {
           return next(new Error('Authentication required'));
         }
-        const decoded = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] });
-        socket.userId = decoded.id_user || decoded.id;
+        const decoded = verifyAccessToken(token);
+        if (!decoded) {
+          return next(new Error('Authentication failed'));
+        }
+        socket.userId = decoded.userId || decoded.id_user || decoded.id;
         next();
       } catch (err) {
         next(new Error('Authentication failed'));
@@ -125,6 +127,15 @@ async function startServer() {
             logger.info('Services background arrêtés');
           } catch (e) {
             logger.warn('Shutdown services background (best-effort):', e?.message);
+          }
+
+          // Flush le buffer des compteurs de vues (viewCounter) AVANT la DB
+          try {
+            const viewCounter = require('./utils/viewCounter');
+            await viewCounter.shutdown();
+            logger.info('ViewCounter flushé');
+          } catch (e) {
+            logger.warn('Shutdown viewCounter (best-effort):', e?.message);
           }
 
           // Close database
