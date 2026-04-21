@@ -95,17 +95,45 @@ class ViewCounter {
 
     if (redis) {
       try {
-        const keys = await redis.keys(`${REDIS_KEY_PREFIX}*`);
-        if (keys.length === 0) return [];
+        // SCAN non-bloquant au lieu de KEYS (qui peut bloquer Redis sur un
+        // gros dataset). On collecte par pages de 500 cles et on accumule.
+        const match = `${REDIS_KEY_PREFIX}*`;
+        const collected = [];
+        let cursor = 0;
+        // node-redis v4 : scan() renvoie { cursor, keys }. Boucle jusqu'a
+        // cursor === 0. En cas d'API incompatible, on fallback sur keys().
+        if (typeof redis.scan === 'function') {
+          try {
+            do {
+              const res = await redis.scan(cursor, { MATCH: match, COUNT: 500 });
+              cursor = Number(res.cursor || res[0] || 0);
+              const page = res.keys || res[1] || [];
+              for (const k of page) collected.push(k);
+              if (collected.length > 100000) break; // ceinture de securite
+            } while (cursor !== 0);
+          } catch (_) {
+            // Fallback sur KEYS si l'API scan differe (mock, vieille version)
+            const fallback = await redis.keys(match);
+            for (const k of fallback) collected.push(k);
+          }
+        } else {
+          const fallback = await redis.keys(match);
+          for (const k of fallback) collected.push(k);
+        }
+
+        if (collected.length === 0) return [];
+
+        // Deduplique (SCAN peut repasser une meme cle si le dataset bouge)
+        const uniqueKeys = Array.from(new Set(collected));
 
         const pipeline = redis.multi();
-        for (const key of keys) {
+        for (const key of uniqueKeys) {
           pipeline.getDel(key); // GET + DELETE atomique (Redis 6.2+)
         }
         const values = await pipeline.exec();
 
-        return keys.map((key, i) => [key, values[i]]).filter(([, v]) => v && parseInt(v) > 0);
-      } catch (_) { /* fallback */ }
+        return uniqueKeys.map((key, i) => [key, values[i]]).filter(([, v]) => v && parseInt(v) > 0);
+      } catch (_) { /* fallback memoire */ }
     }
 
     // Fallback : buffer mémoire
