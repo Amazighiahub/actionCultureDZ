@@ -136,7 +136,6 @@
     "ora": "^8.2.0",
     "postcss": "^8.4.47",
     "prettier": "^3.6.2",
-    "redis-server": "^1.2.2",
     "rollup-plugin-visualizer": "^6.0.3",
     "tailwindcss": "^3.4.11",
     "terser": "^5.43.1",

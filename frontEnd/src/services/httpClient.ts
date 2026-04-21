@@ -27,6 +27,69 @@ interface ErrorResponse {
   [key: string]: unknown;
 }
 
+// ============================================================================
+// Refresh token: helper partage (deduplication concurrente)
+// ============================================================================
+// Plusieurs chemins peuvent declencher un refresh :
+//  1) l'intercepteur 401 du httpClient (quand une requete metier renvoie 401)
+//  2) authService.refreshToken() (appele explicitement par isAuthenticated/UX)
+// Sans verrou partage, deux refresh concurrents envoient deux requetes vers
+// /users/refresh-token, et puisque le refresh token backend est a usage unique
+// (rotation), le second echoue avec INVALID_REFRESH_TOKEN et deconnecte l'user.
+//
+// On expose donc un singleton module-level : tant qu'un refresh est en vol,
+// tous les appelants partagent la meme promesse.
+
+let refreshInFlight: Promise<RefreshResult> | null = null;
+
+interface RefreshResult {
+  success: boolean;
+  expiresIn?: number;
+  user?: Record<string, unknown>;
+  error?: string;
+}
+
+export async function doRefreshToken(): Promise<RefreshResult> {
+  if (refreshInFlight) return refreshInFlight;
+
+  refreshInFlight = (async () => {
+    try {
+      // Appel direct via axios (et non this.axiosInstance) pour contourner
+      // l'intercepteur 401 et eviter une boucle infinie si /refresh-token
+      // renvoie lui-meme 401 avec un message contenant "token".
+      const response = await axios.post(
+        `${API_BASE_URL}/users/refresh-token`,
+        {},
+        { withCredentials: true }
+      );
+
+      const body = response.data as { success?: boolean; data?: { expiresIn?: number; user?: Record<string, unknown> }; error?: string };
+
+      if (body?.success && body.data) {
+        // Sync localStorage (pas de token, juste metadonnees UX)
+        if (body.data.expiresIn) {
+          const expiresAt = new Date(Date.now() + body.data.expiresIn * 1000).toISOString();
+          localStorage.setItem(AUTH_CONFIG.tokenExpiryKey, expiresAt);
+        }
+        if (body.data.user) {
+          localStorage.setItem('user', JSON.stringify(body.data.user));
+        }
+        apiLogger.debug('Token rafraichi avec succes');
+        return { success: true, expiresIn: body.data.expiresIn, user: body.data.user };
+      }
+
+      return { success: false, error: body?.error || 'Token refresh failed' };
+    } catch (err) {
+      apiLogger.error('Erreur lors du rafraichissement du token:', err);
+      throw err;
+    } finally {
+      refreshInFlight = null;
+    }
+  })();
+
+  return refreshInFlight;
+}
+
 // Types pour les requêtes
 interface QueuedRequest<T = unknown> {
   request: () => Promise<T>;
@@ -347,7 +410,11 @@ class HttpClient {
           const errorLower = errorMessage.toLowerCase();
           if (errorLower.includes('token') || errorLower.includes('expired') || errorLower.includes('authentification')) {
             try {
-              await this.refreshToken();
+              // Utilise le helper partage (deduplication avec authService.refreshToken)
+              const result = await doRefreshToken();
+              if (!result.success) {
+                throw new Error(result.error || 'Token refresh failed');
+              }
               return this.axiosInstance(originalRequest);
             } catch (refreshError) {
               // Token refresh a échoué, rediriger vers login
@@ -476,31 +543,6 @@ class HttpClient {
       error.code,
       details
     );
-  }
-
-  private async refreshToken(): Promise<void> {
-    // ✅ SÉCURITÉ: Le refresh token est envoyé via cookie httpOnly
-    try {
-      const response = await axios.post(
-        `${API_BASE_URL}/users/refresh-token`,
-        {},
-        { withCredentials: true }
-      );
-
-      if (response.data.success && response.data.data) {
-        // Stocker uniquement la date d'expiration pour l'UX
-        if (response.data.data.expiresIn) {
-          const expiresAt = new Date(Date.now() + response.data.data.expiresIn * 1000).toISOString();
-          localStorage.setItem(AUTH_CONFIG.tokenExpiryKey, expiresAt);
-        }
-        apiLogger.debug('Token rafraîchi avec succès');
-      } else {
-        throw new Error('Token refresh failed');
-      }
-    } catch (error) {
-      apiLogger.error('Erreur lors du rafraîchissement du token:', error);
-      throw error;
-    }
   }
 
   private handleAuthError() {

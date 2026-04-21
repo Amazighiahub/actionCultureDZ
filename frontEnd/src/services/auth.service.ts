@@ -1,6 +1,6 @@
 // services/auth.service.ts
-import { API_ENDPOINTS, ApiResponse, AuthTokenData, LoginCredentials, RefreshTokenRequest, AUTH_CONFIG } from '@/config/api';
-import { httpClient } from './httpClient';
+import { API_ENDPOINTS, ApiResponse, AuthTokenData, LoginCredentials, AUTH_CONFIG } from '@/config/api';
+import { httpClient, doRefreshToken } from './httpClient';
 import { uploadService as UploadService } from "./upload.service";
 import { mediaService as MediaService } from "./media.service";
 
@@ -48,15 +48,10 @@ interface ValidationError { field?: string; message?: string; [key: string]: unk
 class AuthService {
   // ✅ SÉCURITÉ: Les tokens sont gérés UNIQUEMENT via cookies httpOnly
   // Le localStorage stocke uniquement les métadonnées (user, expiry) pour l'UX
-
-  /**
-   * Promesse partagée du refresh en cours.
-   * Plusieurs composants peuvent détecter un token expiré en même temps
-   * (ex: quand isAuthenticated() est appelé par plusieurs hooks au montage).
-   * Sans ce verrou, on envoie N appels /refresh-token concurrents, dont
-   * N-1 échoueront avec INVALID_REFRESH_TOKEN car ce jeton est à usage unique.
-   */
-  private refreshInFlight: Promise<ApiResponse<AuthTokenData>> | null = null;
+  //
+  // La deduplication des refresh concurrents est gérée par `doRefreshToken()`
+  // dans httpClient.ts (module-level singleton) — partagée avec l'intercepteur
+  // 401 du httpClient.
 
   /**
    * Nettoie les données de session locales
@@ -122,31 +117,34 @@ class AuthService {
    * ✅ SÉCURITÉ: Rafraîchit le token d'accès via cookie httpOnly
    * Le refresh token est envoyé automatiquement via le cookie.
    *
-   * Déduplique les appels concurrents : tant qu'un refresh est en vol,
-   * tout nouvel appel récupère la même promesse.
+   * Délègue à `doRefreshToken()` (module-level dans httpClient.ts) qui
+   * déduplique entre tous les appelants : l'intercepteur 401 du httpClient
+   * et cet appel direct partagent la même promesse en vol, évitant les
+   * INVALID_REFRESH_TOKEN dus aux refresh concurrents (rotation usage unique).
    */
   async refreshToken(): Promise<ApiResponse<AuthTokenData>> {
-    if (this.refreshInFlight) {
-      return this.refreshInFlight;
-    }
-
-    this.refreshInFlight = (async () => {
-      try {
-        const response = await httpClient.post<AuthTokenData>('/users/refresh-token', {});
-
-        if (response.success && response.data) {
-          this.setAuthData(response.data);
-        } else if (response.error?.includes('expiré') || response.error?.includes('expired')) {
-          this.clearLocalAuthData();
-          this.clearUserCache();
-        }
-        return response;
-      } finally {
-        this.refreshInFlight = null;
+    try {
+      const result = await doRefreshToken();
+      if (result.success) {
+        // setAuthData deja fait dans doRefreshToken (expiry + user).
+        // On reconstruit juste une ApiResponse<AuthTokenData> pour compat caller.
+        return {
+          success: true,
+          data: {
+            expiresIn: result.expiresIn,
+            user: result.user,
+          } as unknown as AuthTokenData,
+        };
       }
-    })();
-
-    return this.refreshInFlight;
+      if (result.error?.includes('expiré') || result.error?.includes('expired')) {
+        this.clearLocalAuthData();
+        this.clearUserCache();
+      }
+      return { success: false, error: result.error || 'Token refresh failed' };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return { success: false, error: msg };
+    }
   }
 
   async getCurrentUser(): Promise<ApiResponse<CurrentUser>> {
