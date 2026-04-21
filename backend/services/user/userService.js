@@ -107,8 +107,8 @@ class UserService extends BaseService {
    * @returns {Promise<{user: UserDTO, token: string}>}
    */
   async login(email, motDePasse) {
-    // 1. Trouver l'utilisateur
-    const user = await this.repository.findByEmail(email);
+    // 1. Trouver l'utilisateur avec ses rôles (nécessaire pour détecter un admin)
+    const user = await this.repository.findByEmail(email, { includeRoles: true });
     if (!user) {
       throw this._unauthorizedError('Email ou mot de passe incorrect');
     }
@@ -123,7 +123,8 @@ class UserService extends BaseService {
     }
 
     // 2b. Vérifier l'email (admins exemptés)
-    const isAdmin = user.Roles?.some(r => r.nom_role === 'Administrateur') || user.statut === 'actif' && user.id_type_user === 29;
+    const hasAdminRole = Array.isArray(user.Roles) && user.Roles.some(r => r.nom_role === 'Administrateur');
+    const isAdmin = hasAdminRole || user.id_type_user === 29;
     if (!user.email_verifie && !isAdmin) {
       throw this._forbiddenError('Veuillez vérifier votre adresse email avant de vous connecter');
     }
