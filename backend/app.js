@@ -4,6 +4,10 @@ require('dotenv').config();
 const EnvAdapter = require('./config/envAdapter');
 const config = EnvAdapter.getConfig();
 
+// Initialisation Sentry : on laisse le logger faire les warnings
+// manquants / absents (via EnvironmentValidator au boot). Ici on se contente
+// d'initialiser si le DSN est present et le paquet installe ; sinon Sentry
+// reste null et les handlers plus bas le skipperont.
 let Sentry = null;
 try {
   Sentry = require('@sentry/node');
@@ -17,15 +21,11 @@ try {
         Sentry.expressIntegration()
       ]
     });
-  } else if (process.env.NODE_ENV === 'production') {
-    console.error('⚠️  SENTRY_DSN is not configured. Error tracking is disabled in production!');
   } else {
     Sentry = null;
   }
-} catch (e) {
-  if (process.env.NODE_ENV === 'production') {
-    console.error('⚠️  @sentry/node not installed. Error tracking is disabled in production!');
-  }
+} catch (_e) {
+  Sentry = null;
 }
 
 const express = require('express');
