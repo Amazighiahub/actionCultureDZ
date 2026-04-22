@@ -2,22 +2,65 @@
 require('dotenv').config();
 const http = require('http');
 const { Server } = require('socket.io');
-const App = require('./app');
 const logger = require('./utils/logger');
 const EnvironmentValidator = require('./config/envValidator');
+
+// IMPORTANT: on NE require PAS './app' ici au top-level.
+// Raison: app.js charge rateLimitMiddleware au module load, qui lui-meme
+// appelle getClient() SYNCHRONE sur redisClient. Si Redis n'est pas encore
+// pret a ce moment-la, tous les rate-limiters sont fige avec un store memoire
+// et ne se re-initialiseront jamais meme apres que Redis devienne dispo.
+// Cf. investigation Lot 10.
+// On charge ./app DYNAMIQUEMENT dans startServer() APRES await Redis.
 
 // Configuration du port
 const PORT = process.env.PORT || 3001;
 const HOST = process.env.HOST || '0.0.0.0';
 
+// Delai max d'attente de Redis au boot. Au-dela on demarre quand meme
+// (mode degrade memoire), le client continuera d'essayer en arriere-plan.
+const REDIS_BOOT_TIMEOUT_MS = parseInt(process.env.REDIS_BOOT_TIMEOUT_MS, 10) || 5000;
+
+/**
+ * Attend que le singleton Redis soit pret, ou timeout.
+ * Retourne un diagnostic pour logger l'etat au demarrage.
+ */
+async function waitForRedis() {
+  const { getRedisClient, isReady } = require('./utils/redisClient');
+  const start = Date.now();
+  try {
+    await Promise.race([
+      getRedisClient(),
+      new Promise((resolve) => setTimeout(resolve, REDIS_BOOT_TIMEOUT_MS))
+    ]);
+  } catch (_e) {
+    // getRedisClient() ne throw pas normalement (il retourne null en cas d'echec),
+    // mais on reste defensif pour ne jamais bloquer le boot.
+  }
+  return { ready: isReady(), elapsedMs: Date.now() - start };
+}
+
 // Fonction principale pour démarrer le serveur
 async function startServer() {
   try {
     logger.info('🚀 Démarrage du serveur Action Culture...');
-    
+
     // Valider la configuration d'environnement avant d'initialiser
     EnvironmentValidator.validate();
     EnvironmentValidator.printReport();
+
+    // Attendre Redis AVANT de charger ./app (sinon rate-limit fige sur memoire).
+    const redisDiag = await waitForRedis();
+    if (redisDiag.ready) {
+      logger.info(`Redis pret (${redisDiag.elapsedMs} ms) — rate-limit distribue actif`);
+    } else if (process.env.NODE_ENV === 'production') {
+      logger.warn(`Redis non disponible apres ${redisDiag.elapsedMs} ms — rate-limit en memoire (degrade). Verifier REDIS_HOST/REDIS_PASSWORD.`);
+    } else {
+      logger.info(`Redis indisponible (dev mode) — rate-limit en memoire`);
+    }
+
+    // Charger App APRES Redis : rateLimitMiddleware pourra obtenir le client.
+    const App = require('./app');
 
     // Créer et initialiser l'application
     const appInstance = new App();

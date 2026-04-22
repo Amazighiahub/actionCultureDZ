@@ -634,16 +634,56 @@ class App {
 
   // Initialisation de la gestion d'erreurs
   initializeErrorHandling() {
+    const logger = require('./utils/logger');
+
+    // Serialise proprement une "raison" de rejet ou une erreur.
+    // - instance Error: on extrait message/stack/name/code (non-enumerables)
+    // - string/number/bool: affiche tel quel
+    // - objet: essaie JSON.stringify mais fallback String() si cyclique
+    // - null/undefined: chaine explicite pour eviter "reason: {}"
+    const serializeReason = (reason) => {
+      if (reason === null || reason === undefined) {
+        return { message: `<${reason === null ? 'null' : 'undefined'} reason>` };
+      }
+      if (reason instanceof Error) {
+        return {
+          message: reason.message,
+          name: reason.name,
+          stack: reason.stack,
+          code: reason.code
+        };
+      }
+      if (typeof reason === 'object') {
+        try {
+          return { message: 'Non-Error rejection', value: JSON.stringify(reason).slice(0, 500) };
+        } catch (_e) {
+          return { message: 'Non-Error rejection (unserializable)', value: String(reason).slice(0, 200) };
+        }
+      }
+      return { message: String(reason) };
+    };
+
     // Gestionnaire pour les promesses rejetées
-    process.on('unhandledRejection', (reason, promise) => {
-      console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-      if (Sentry) Sentry.captureException(reason);
+    process.on('unhandledRejection', (reason, _promise) => {
+      const meta = serializeReason(reason);
+      // _promise est tjrs un objet Promise natif : on ajoute juste un marqueur
+      meta.origin = 'unhandledRejection';
+      logger.error(`Unhandled Rejection: ${meta.message}`, meta);
+      if (Sentry) {
+        try { Sentry.captureException(reason instanceof Error ? reason : new Error(meta.message), { extra: meta }); } catch (_e) {}
+      }
     });
 
-    // Gestionnaire pour les exceptions non capturées
+    // Gestionnaire pour les exceptions non capturees.
+    // Une uncaughtException laisse l'etat du process incertain ; on logue
+    // puis on coupe proprement via gracefulShutdown(1).
     process.on('uncaughtException', (error) => {
-      console.error('Uncaught Exception:', error);
-      if (Sentry) Sentry.captureException(error);
+      const meta = serializeReason(error);
+      meta.origin = 'uncaughtException';
+      logger.error(`Uncaught Exception: ${meta.message}`, meta);
+      if (Sentry) {
+        try { Sentry.captureException(error, { extra: meta }); } catch (_e) {}
+      }
       this.gracefulShutdown(1);
     });
 

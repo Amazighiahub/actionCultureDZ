@@ -105,8 +105,22 @@ logger.logDb = (operation, table, duration) => {
 
 // Override global console to use our logger
 const originalConsole = global.console;
+
+// Serialise un argument console de maniere lisible.
+// - Error : name + message + stack complet (les proprietes sont non-enumerables,
+//   JSON.stringify les perd = on voyait "{}" partout)
+// - null / undefined : chaine explicite
+// - string / number / boolean : as-is
+// - objet : JSON.stringify(indent=0) avec fallback String() si cycles
 const safeStringify = (a) => {
   if (typeof a === 'string') return a;
+  if (a === null) return 'null';
+  if (a === undefined) return 'undefined';
+  if (a instanceof Error) {
+    const head = `${a.name || 'Error'}: ${a.message}`;
+    return a.stack ? `${head}\n${a.stack}` : head;
+  }
+  if (typeof a !== 'object') return String(a);
   try { return JSON.stringify(a); } catch { return String(a); }
 };
 const formatArgs = (...args) => args.map(safeStringify).join(' ');
