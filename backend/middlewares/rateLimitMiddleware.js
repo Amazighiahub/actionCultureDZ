@@ -11,13 +11,12 @@ const USE_REDIS = process.env.USE_REDIS_RATE_LIMIT === 'true' || IS_PRODUCTION;
 
 // Configuration Redis — réutilise le client partagé (utils/redisClient)
 let redisClient = null;
-let redisStore = null;
+let redisAvailable = false;
 
 const createRedisStore = (options) => {
   if (typeof RedisStore !== 'function') {
     throw new Error('RedisStore export incompatible');
   }
-
   // Certaines versions exportent une classe, d'autres une factory
   try {
     return new RedisStore(options);
@@ -26,29 +25,59 @@ const createRedisStore = (options) => {
   }
 };
 
+/**
+ * Construit un store Redis dedie avec un prefixe unique par limiter.
+ *
+ * Probleme resolu : sans prefixe distinct, tous les rate-limiters partagent
+ * la meme cle Redis (rl:<ip>). rate-limit-redis v4 ne reset PAS le TTL lors
+ * des increments suivants (resetExpiryOnChange=false par defaut), donc le
+ * premier limiter qui cree la cle fige le TTL (observe en prod : header
+ * ratelimit-reset=86400 quand une cle est creee par apiKey 24h puis
+ * reutilisee par globalLimiter 15min).
+ *
+ * Chaque limiter obtient un namespace propre (rl:<name>:<ip>), ce qui
+ * isole correctement les compteurs et fait refleter le bon TTL dans
+ * l'entete `ratelimit-reset` renvoye au client.
+ */
+const makeStore = (name) => {
+  if (!redisAvailable || !redisClient) return undefined;
+  try {
+    return createRedisStore({
+      sendCommand: (...args) => redisClient.sendCommand(args),
+      prefix: `rl:${name}:`,
+    });
+  } catch (e) {
+    logger.warn(`Impossible de creer le store Redis pour "${name}":`, e.message);
+    return undefined;
+  }
+};
+
 if (USE_REDIS) {
   try {
     redisClient = getRedisClient();
-
     if (redisClient) {
-      // Créer le store Redis via le client partagé
-      redisStore = createRedisStore({
-        sendCommand: (...args) => redisClient.sendCommand(args),
-      });
-      logger.info('Rate limiting avec Redis activé (client partagé)');
+      redisAvailable = true;
+      logger.info('Rate limiting avec Redis active (client partage, prefixes isoles par limiter)');
     } else {
-      logger.warn('Redis client non disponible, utilisation du store en mémoire');
+      logger.warn('Redis client non disponible, utilisation du store en memoire');
     }
   } catch (error) {
-    logger.warn('Redis non disponible, utilisation du store en mémoire:', error.message);
-    redisStore = null;
+    logger.warn('Redis non disponible, utilisation du store en memoire:', error.message);
+    redisAvailable = false;
   }
 } else {
-  logger.info('Rate limiting avec store en mémoire (dev mode)');
+  logger.info('Rate limiting avec store en memoire (dev mode)');
 }
 
+// Helper : n'inclut le store que si Redis est dispo. Un store=undefined fait
+// fallback automatique sur la MemoryStore interne d'express-rate-limit.
+const withStore = (name, config) => {
+  const store = makeStore(name);
+  return store ? { ...config, store } : config;
+};
+
 // 1. Rate limiter global (pour toutes les routes)
-const globalLimiter = rateLimit({
+const globalLimiter = rateLimit(withStore('global', {
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: IS_PRODUCTION ? 100 : 1000, // 100 en prod, 1000 en dev
   handler: (req, res) => {
@@ -62,12 +91,10 @@ const globalLimiter = rateLimit({
   // appliquer un backoff adaptatif (cf. httpClient.ts qui lit RateLimit-Remaining)
   standardHeaders: true,
   legacyHeaders: false,
-  // ✅ SÉCURITÉ: Utiliser Redis en production pour scalabilité
-  ...(redisStore && { store: redisStore }),
-});
+}));
 
 // 2. Rate limiter strict pour les endpoints sensibles
-const strictLimiter = rateLimit({
+const strictLimiter = rateLimit(withStore('strict', {
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: IS_PRODUCTION ? 5 : 100, // 5 en prod, 100 en dev
   skipSuccessfulRequests: false,
@@ -77,12 +104,10 @@ const strictLimiter = rateLimit({
       error: req.t ? req.t('auth.tooManyRequests') : 'Too many requests'
     });
   },
-  // ✅ SÉCURITÉ: Redis en production
-  ...(redisStore && { store: redisStore }),
-});
+}));
 
 // 3. Rate limiter pour la création de contenu (POST/PUT/PATCH/DELETE uniquement)
-const createContentLimiter = rateLimit({
+const createContentLimiter = rateLimit(withStore('create', {
   windowMs: 60 * 60 * 1000, // 1 heure
   max: 20, // 20 créations par heure
   skip: (req) => req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS',
@@ -93,12 +118,10 @@ const createContentLimiter = rateLimit({
       error: req.t ? req.t('auth.tooManyRequests') : 'Creation limit reached'
     });
   },
-  // ✅ SÉCURITÉ: Redis en production
-  ...(redisStore && { store: redisStore }),
-});
+}));
 
 // 3b. Rate limiter spécifique commentaires (10/min/user)
-const commentLimiter = rateLimit({
+const commentLimiter = rateLimit(withStore('comment', {
   windowMs: 60 * 1000, // 1 minute
   max: 10, // 10 commentaires par minute
   keyGenerator: (req) => req.user?.id_user || req.ip,
@@ -108,11 +131,10 @@ const commentLimiter = rateLimit({
       error: req.t ? req.t('auth.tooManyRequests') : 'Too many comments, please slow down'
     });
   },
-  ...(redisStore && { store: redisStore }),
-});
+}));
 
 // 3c. Rate limiter spécifique uploads authentifiés (30/h/user)
-const uploadLimiter = rateLimit({
+const uploadLimiter = rateLimit(withStore('upload', {
   windowMs: 60 * 60 * 1000, // 1 heure
   max: IS_PRODUCTION ? 30 : 200, // 30 uploads/h en prod
   keyGenerator: (req) => req.user?.id_user || req.ip,
@@ -122,11 +144,10 @@ const uploadLimiter = rateLimit({
       error: req.t ? req.t('auth.tooManyRequests') : 'Upload limit reached, please try again later'
     });
   },
-  ...(redisStore && { store: redisStore }),
-});
+}));
 
 // 3d. Rate limiter strict pour uploads PUBLICS (sans auth) — 5/h/IP
-const publicUploadLimiter = rateLimit({
+const publicUploadLimiter = rateLimit(withStore('upload-public', {
   windowMs: 60 * 60 * 1000, // 1 heure
   max: IS_PRODUCTION ? 5 : 50, // 5 uploads/h par IP en prod
   keyGenerator: (req) => req.ip,
@@ -138,8 +159,7 @@ const publicUploadLimiter = rateLimit({
       code: 'PUBLIC_UPLOAD_RATE_LIMITED'
     });
   },
-  ...(redisStore && { store: redisStore }),
-});
+}));
 
 // 4. Rate limiter pour les vues/statistiques
 const viewLimiter = rateLimit({
@@ -225,58 +245,53 @@ const authRateLimitHandler = (req, res) => {
 };
 
 const endpointLimiters = {
-  login: rateLimit({
+  login: rateLimit(withStore('login', {
     windowMs: 60 * 60 * 1000,          // 1 heure
     max: IS_PRODUCTION ? 15 : 100,      // 15 tentatives/h en prod
     skipSuccessfulRequests: true,        // Ne compter que les échecs (brute force)
     standardHeaders: true,
     legacyHeaders: false,
     handler: authRateLimitHandler,
-    ...(redisStore && { store: redisStore }),
-  }),
+  })),
 
-  register: rateLimit({
+  register: rateLimit(withStore('register', {
     windowMs: 60 * 60 * 1000,           // 1 heure
     max: IS_PRODUCTION ? 5 : 50,         // 5 inscriptions/h par IP en prod
     skipSuccessfulRequests: false,
     standardHeaders: true,
     legacyHeaders: false,
     handler: authRateLimitHandler,
-    ...(redisStore && { store: redisStore }),
-  }),
+  })),
 
-  forgotPassword: rateLimit({
+  forgotPassword: rateLimit(withStore('forgot', {
     windowMs: 60 * 60 * 1000,           // 1 heure
     max: IS_PRODUCTION ? 10 : 50,        // 10 demandes/h en prod
     skipSuccessfulRequests: false,
     standardHeaders: true,
     legacyHeaders: false,
     handler: authRateLimitHandler,
-    ...(redisStore && { store: redisStore }),
-  }),
+  })),
 
   // Rafraîchissement de session : un client normal en fait quelques-uns par
   // heure (rotation de JWT). Une fréquence élevée indique soit un bug côté
   // client (boucle de refresh), soit une tentative de bruteforce du cookie
   // refresh_token. On limite par IP pour contenir les deux cas.
-  refreshToken: rateLimit({
+  refreshToken: rateLimit(withStore('refresh', {
     windowMs: 15 * 60 * 1000,           // 15 min
     max: IS_PRODUCTION ? 30 : 200,       // 30 refresh / 15 min en prod (2/min)
     skipSuccessfulRequests: false,
     standardHeaders: true,
     legacyHeaders: false,
     handler: authRateLimitHandler,
-    ...(redisStore && { store: redisStore }),
-  }),
+  })),
 
-  apiKey: rateLimit({
+  apiKey: rateLimit(withStore('apikey', {
     windowMs: 24 * 60 * 60 * 1000,     // 24 heures
     max: 5,
     standardHeaders: false,
     legacyHeaders: false,
     handler: authRateLimitHandler,
-    ...(redisStore && { store: redisStore }),
-  })
+  }))
 };
 
 // ============================================================================

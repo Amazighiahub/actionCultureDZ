@@ -340,21 +340,33 @@ class EnvironmentValidator {
   }
 
   /**
-   * Affiche un rapport de configuration (non sensible).
+   * Affiche un rapport de configuration (non sensible) au boot.
+   *
+   * IMPORTANT : on ecrit directement sur process.stdout.write plutot que
+   * d'utiliser console.log. Raison : utils/logger.js override global.console
+   * pour passer par winston ; en production, le transport Console est filtre
+   * a 'warn'+ donc un console.log ne sortirait JAMAIS de `docker logs`
+   * (il partirait uniquement dans combined.log, invisible pour
+   * l'operateur qui surveille le boot).
+   *
+   * Ce rapport est purement diagnostique / humain, donc stdout direct est
+   * approprie et garantit sa visibilite quel que soit le niveau de log.
    */
   static printReport() {
     const env = process.env.NODE_ENV || 'development';
-    // On utilise console.log (intercepte par logger) car ce rapport est
-    // essentiellement humain / boot-time et pas structure.
-    console.log('\nRAPPORT DE CONFIGURATION');
-    console.log(`  Environnement : ${env}`);
-    console.log(`  Port          : ${process.env.PORT || 3001}`);
-    console.log(`  DB            : ${process.env.DB_HOST || 'localhost'}/${process.env.DB_NAME}`);
-    console.log(`  Frontend URL  : ${process.env.FRONTEND_URL || 'Non configure'}`);
-    console.log(`  Redis         : ${process.env.REDIS_HOST || 'localhost'}:${process.env.REDIS_PORT || 6379}${process.env.REDIS_PASSWORD ? ' (auth)' : ' (no-auth)'}`);
-    console.log(`  Cloudinary    : ${process.env.CLOUDINARY_CLOUD_NAME || 'Non configure'}`);
-    console.log(`  Sentry        : ${process.env.SENTRY_DSN ? 'configure' : 'non configure'}`);
-    console.log('');
+    const lines = [
+      '',
+      'RAPPORT DE CONFIGURATION',
+      `  Environnement : ${env}`,
+      `  Port          : ${process.env.PORT || 3001}`,
+      `  DB            : ${process.env.DB_HOST || 'localhost'}/${process.env.DB_NAME}`,
+      `  Frontend URL  : ${process.env.FRONTEND_URL || 'Non configure'}`,
+      `  Redis         : ${process.env.REDIS_HOST || 'localhost'}:${process.env.REDIS_PORT || 6379}${process.env.REDIS_PASSWORD ? ' (auth)' : ' (no-auth)'}`,
+      `  Cloudinary    : ${process.env.CLOUDINARY_CLOUD_NAME || 'Non configure'}`,
+      `  Sentry        : ${process.env.SENTRY_DSN ? 'configure' : 'non configure'}`,
+      ''
+    ];
+    process.stdout.write(lines.join('\n') + '\n');
   }
 }
 
