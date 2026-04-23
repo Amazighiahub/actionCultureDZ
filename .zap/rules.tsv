@@ -1,0 +1,29 @@
+# OWASP ZAP baseline - regles desactivees / downgradees
+#
+# Format : <ruleId>	<action>	<description>
+#   action = IGNORE / WARN / FAIL
+#
+# On decroche certaines regles bruyantes connues pour generer des faux positifs
+# sur une API REST (vs un site web classique).
+
+# 10020 : X-Frame-Options header manquant
+# -> on renvoie deja X-Frame-Options: SAMEORIGIN via helmet (verifie en prod).
+# ZAP baseline peut faussement alerter sur les reponses JSON.
+10020	WARN	X-Frame-Options (gere par helmet, warning au lieu de fail)
+
+# 10021 : X-Content-Type-Options header manquant
+# -> deja envoye par helmet (nosniff)
+10021	WARN	X-Content-Type-Options (gere par helmet)
+
+# 10096 : Timestamp disclosure - normal pour JSON APIs qui renvoient created_at
+10096	IGNORE	Timestamp disclosure (normal pour API REST qui expose created_at)
+
+# 10109 : Modern Web Application - informatif, pas une vuln
+10109	IGNORE	Modern Web Application (informatif)
+
+# 10049 : Non-Storable Content - pas applicable aux APIs REST (Cache-Control)
+10049	IGNORE	Non-Storable Content (API REST, pas un site avec cache CDN)
+
+# 10015 : Incomplete or No Cache-control
+# -> gere au cas par cas dans les middlewares, pas une fail globale
+10015	WARN	Cache-control partiel (warning)

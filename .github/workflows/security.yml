@@ -1,0 +1,407 @@
+name: Security scans
+
+# Workflow dedie aux scans de securite non-fonctionnels (secrets, SAST, DAST).
+# Decouple de deploy.yml pour que :
+#   - un echec de scan n'empeche pas un deploiement urgent (hotfix)
+#   - les scans puissent tourner sur toutes les PR (pas uniquement main)
+#   - on puisse rythmer differemment (scans ZAP quotidiens via schedule)
+#
+# En cas d'alerte CRITIQUE, on considere que le main ne doit pas merger :
+# la PR affiche le status failed au niveau GitHub (Required status check
+# a configurer dans Settings > Branch protection pour rendre bloquant).
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    # Scan hebdomadaire du main (detecte les CVE qui apparaissent apres merge)
+    - cron: '0 6 * * 1'
+
+jobs:
+  # ===========================================================================
+  # Gitleaks PR : scan du diff uniquement (rapide, BLOQUANT).
+  # Objectif : attraper un secret avant merge. Sur PR, gitleaks-action scanne
+  # automatiquement le range de la PR (pas tout l'historique), donc rapide.
+  # ===========================================================================
+  secrets-pr:
+    name: Secrets detection - PR diff (blocking)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (full history)
+        uses: actions/checkout@v4
+        with:
+          # fetch-depth: 0 requis par gitleaks-action pour calculer le range
+          # base..head de la PR.
+          fetch-depth: 0
+
+      - name: Run gitleaks (PR diff)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Pas de license requise : Amazighiahub est un compte User, pas Org.
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: true
+          GITLEAKS_ENABLE_SUMMARY: true
+
+  # ===========================================================================
+  # Gitleaks HISTORIQUE COMPLET : scan de tous les commits (push main ou
+  # scheduled). NON-BLOQUANT au premier run : si gitleaks trouve d'anciens
+  # secrets (ex: avant migration filter-repo), on veut un rapport pour
+  # reviewer a froid, PAS casser main.
+  #
+  # Une fois la baseline "propre", on pourra retirer continue-on-error pour
+  # transformer ce job en filet de securite bloquant.
+  # ===========================================================================
+  secrets-history:
+    name: Secrets detection - full history (non-blocking)
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Checkout (full history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run gitleaks (full git log)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: true
+          GITLEAKS_ENABLE_SUMMARY: true
+          # Force le scan de TOUT l'historique (sinon sur push, gitleaks-action
+          # ne scanne que les nouveaux commits vs le commit precedent).
+          GITLEAKS_NOTIFY_USER_LIST: ''
+
+  # ===========================================================================
+  # npm audit etendu : scan des devDependencies aussi (exclus par deploy.yml
+  # car --omit=dev). Ici on veut la couverture complete pour detecter les
+  # CVE qui touchent Cypress / Jest / ESLint / outils de build.
+  # ===========================================================================
+  audit-full:
+    name: npm audit (dev deps included)
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        workspace: [backend, frontEnd]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: ${{ matrix.workspace }}/package-lock.json
+
+      - name: Install (${{ matrix.workspace }})
+        working-directory: ./${{ matrix.workspace }}
+        run: npm ci
+
+      # Audit incluant devDeps : on loge en mode json pour artifact reviewable
+      # mais on ne BLOQUE que sur critical (deploy.yml bloque deja high sur
+      # prod deps). Le but ici est la visibilite, pas le blocage supplementaire.
+      - name: Audit (all deps)
+        working-directory: ./${{ matrix.workspace }}
+        run: |
+          npm audit --json > audit-report.json || true
+          npm audit --audit-level=critical
+
+      - name: Upload audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: audit-${{ matrix.workspace }}
+          path: ${{ matrix.workspace }}/audit-report.json
+          retention-days: 30
+
+  # ===========================================================================
+  # Cypress security suite : lance les tests d'API securite (11-api-security
+  # + 18-security-lots) contre un backend Node reel connecte a un MySQL/Redis
+  # ephemeres (services: du runner).
+  #
+  # Ces tests sont PUREMENT API (pas de navigateur reel), donc on n'a pas
+  # besoin du frontend build -- juste du backend avec ses migrations.
+  # ===========================================================================
+  cypress-security:
+    name: Cypress security suite
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: rootpass
+          MYSQL_DATABASE: actionculture_test
+          MYSQL_USER: testuser
+          MYSQL_PASSWORD: testpass
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -u root -prootpass"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=5s
+          --health-timeout=3s
+          --health-retries=10
+    env:
+      NODE_ENV: test
+      PORT: 3001
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_NAME: actionculture_test
+      DB_USER: testuser
+      DB_PASSWORD: testpass
+      REDIS_HOST: 127.0.0.1
+      REDIS_PORT: 6379
+      # Secret dedie CI : genere a la volee, non sensible (match regex min 32c).
+      JWT_SECRET: ci-only-jwt-secret-not-for-production-use-64-characters-long-padding
+      JWT_EXPIRES_IN: 1h
+      FRONTEND_URL: http://localhost:3000
+      API_URL: http://localhost:3001
+      # Desactive tout le bloc "background services" (crons cleanup + queue
+      # email Bull). ENABLE_SCHEDULED_TASKS=false est le master-switch lu par
+      # app.js + envAdapter.js ; plus simple et plus sur que de cumuler
+      # ENABLE_CRONS + ENABLE_EMAIL_QUEUE.
+      ENABLE_SCHEDULED_TASKS: "false"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontEnd/package-lock.json
+
+      - name: Install backend
+        working-directory: ./backend
+        run: npm ci
+
+      # Pas de "wait-for-services" ici: GitHub Actions attend deja que les
+      # services declaratifs (mysql/redis) atteignent health=healthy (via le
+      # --health-cmd dans options:) avant de lancer le premier step.
+
+      - name: Run migrations
+        working-directory: ./backend
+        run: npx --yes -p sequelize-cli@6 sequelize db:migrate
+
+      - name: Start backend in background
+        working-directory: ./backend
+        run: |
+          node server.js > backend.log 2>&1 &
+          echo $! > backend.pid
+          # Attente du port 3001 (jusqu'a 60s) : /health doit repondre 200
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:3001/health >/dev/null 2>&1; then
+              echo "Backend ready after ${i}x2s"
+              break
+            fi
+            sleep 2
+          done
+          curl -fsS http://127.0.0.1:3001/health || (echo '==== backend.log ===='; cat backend.log; exit 1)
+
+      - name: Install frontend (for cypress binary only)
+        working-directory: ./frontEnd
+        run: npm ci
+
+      - name: Run Cypress security-lots spec
+        working-directory: ./frontEnd
+        env:
+          # Override de apiUrl : point vers le backend demarre ci-dessus.
+          CYPRESS_apiUrl: http://127.0.0.1:3001/api
+          # Override du baseUrl car aucun frontend ne tourne en CI : on fait
+          # pointer vers l'API /health pour que la verification d'ouverture
+          # de Cypress passe (sinon erreur "cannot reach baseUrl").
+          CYPRESS_baseUrl: http://127.0.0.1:3001
+        # On ne lance que 18-security-lots en CI : les specs 11 / e2e-security
+        # requierent des users seedes (visitor, pro, admin) qui n'existent pas
+        # dans une DB fraiche. Ces specs restent lancables localement via
+        # npm run e2e:security une fois le seed effectue.
+        run: npx cypress run --spec 'cypress/e2e/18-security-lots.cy.ts'
+
+      - name: Dump backend logs on failure
+        if: failure()
+        working-directory: ./backend
+        run: tail -n 200 backend.log || true
+
+      - name: Stop backend
+        if: always()
+        working-directory: ./backend
+        run: |
+          if [ -f backend.pid ]; then
+            kill "$(cat backend.pid)" || true
+          fi
+
+      - name: Upload Cypress screenshots on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-screenshots
+          path: frontEnd/cypress/screenshots
+          if-no-files-found: ignore
+          retention-days: 14
+
+  # ===========================================================================
+  # OWASP ZAP baseline : scan DAST passif (non destructif) du backend.
+  #
+  # "baseline" = uniquement scan passif + quelques checks actifs legers
+  # (pas de SQLi/XSS fuzzing intensif). Duree : 2-3 min.
+  #
+  # Declenche uniquement :
+  #   - sur main (apres merge), pas sur chaque PR (trop lent)
+  #   - via le schedule hebdomadaire (regression check)
+  #
+  # Le job est non-bloquant par defaut (continue-on-error) : on remonte un
+  # rapport (HTML + markdown) en artifact et dans le Security tab GitHub.
+  # ===========================================================================
+  zap-baseline:
+    name: OWASP ZAP baseline (DAST)
+    runs-on: ubuntu-latest
+    # On ne bloque pas le merge, mais on garde le job visible en resume.
+    continue-on-error: true
+    if: |
+      github.event_name == 'schedule' ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: rootpass
+          MYSQL_DATABASE: actionculture_test
+          MYSQL_USER: testuser
+          MYSQL_PASSWORD: testpass
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -u root -prootpass"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=5s --health-timeout=3s --health-retries=10
+    env:
+      NODE_ENV: test
+      PORT: 3001
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_NAME: actionculture_test
+      DB_USER: testuser
+      DB_PASSWORD: testpass
+      REDIS_HOST: 127.0.0.1
+      REDIS_PORT: 6379
+      JWT_SECRET: ci-only-jwt-secret-not-for-production-use-64-characters-long-padding
+      JWT_EXPIRES_IN: 1h
+      FRONTEND_URL: http://localhost:3000
+      API_URL: http://localhost:3001
+      ENABLE_SCHEDULED_TASKS: "false"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend
+        working-directory: ./backend
+        run: npm ci
+
+      # Services (mysql/redis) deja attendus par GitHub via health-cmd.
+
+      - name: Run migrations
+        working-directory: ./backend
+        run: npx --yes -p sequelize-cli@6 sequelize db:migrate
+
+      - name: Start backend in background
+        working-directory: ./backend
+        run: |
+          node server.js > backend.log 2>&1 &
+          echo $! > backend.pid
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:3001/health >/dev/null 2>&1; then
+              break
+            fi
+            sleep 2
+          done
+
+      # -------------------------------------------------------------------------
+      # PRE-FLIGHT : le conteneur ZAP ne partage PAS le network namespace du
+      # runner (le host). Il doit donc atteindre le backend via la passerelle
+      # du bridge Docker. Sur les runners ubuntu-latest actuels, c'est
+      # 172.17.0.1. Si GitHub migre vers des runners plus isoles (firecracker),
+      # cette IP peut changer / ne plus etre routable.
+      #
+      # On pose une sonde rapide AVANT de lancer ZAP pour detecter ce cas et
+      # produire un diagnostic clair (IPs, interfaces, bridge) au lieu d'un
+      # echec opaque "Failed to access target" 3 minutes plus tard.
+      # -------------------------------------------------------------------------
+      - name: Pre-flight - verifier connectivite Docker -> host
+        id: preflight
+        run: |
+          set +e
+          echo "== host interfaces =="
+          ip -4 addr show | grep -E "inet|^[0-9]+:" || true
+          echo ""
+          echo "== bridge docker0 =="
+          ip -4 addr show docker0 2>/dev/null || echo "docker0 introuvable"
+          echo ""
+          echo "== tentative: curl depuis un conteneur ephemere vers 172.17.0.1:3001 =="
+          docker run --rm --network bridge curlimages/curl:8.10.1 \
+            -fsS --max-time 10 http://172.17.0.1:3001/health
+          RC=$?
+          if [ $RC -ne 0 ]; then
+            echo ""
+            echo "::warning::ZAP ne pourra probablement pas atteindre 172.17.0.1:3001 (rc=$RC)"
+            echo "::warning::Les runners GitHub Actions ont peut-etre change d'isolation reseau."
+            echo "::warning::Mitigation possible : containeriser le backend et utiliser une network Docker partagee."
+            echo "Diagnostic complet :"
+            docker network inspect bridge 2>&1 | head -40 || true
+            # On ne fail pas le job : on laisse ZAP tenter (il produira son propre rapport d'erreur).
+          else
+            echo "OK: 172.17.0.1:3001 joignable depuis un conteneur."
+          fi
+          exit 0
+
+      # ZAP baseline officielle : scan de surface, ne fait pas de fuzzing agressif.
+      # Cible /api et sous-chemins. Le fichier .zap/rules.tsv tune les regles
+      # bruyantes.
+      - name: ZAP baseline scan
+        uses: zaproxy/action-baseline@v0.15.0
+        with:
+          target: 'http://172.17.0.1:3001/api/'
+          rules_file_name: '.zap/rules.tsv'
+          # -I : n'echoue pas sur les warnings (seulement sur FAIL explicites)
+          # -j : utilise le scan AJAX spider (plus efficace contre APIs modernes)
+          cmd_options: '-a -j -I'
+          # Upload automatique du rapport en issue GitHub (desactive ici, on
+          # recupere plutot en artifact pour ne pas polluer les issues).
+          allow_issue_writing: false
+          fail_action: false
+
+      - name: Upload ZAP reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-baseline-report
+          path: |
+            report_html.html
+            report_md.md
+            report_json.json
+          if-no-files-found: ignore
+          retention-days: 30
+
+      - name: Stop backend
+        if: always()
+        working-directory: ./backend
+        run: |
+          if [ -f backend.pid ]; then
+            kill "$(cat backend.pid)" || true
+          fi

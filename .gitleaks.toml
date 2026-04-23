@@ -1,0 +1,46 @@
+# Configuration gitleaks pour EventCulture
+#
+# Gitleaks scanne l'historique git et le diff des PR a la recherche de secrets
+# (tokens, private keys, mots de passe). Cette config ajoute les regles par
+# defaut et ajoute un allowlist pour eviter les faux positifs sur les fichiers
+# d'exemple qui contiennent legitimement des placeholders.
+
+# On herite du ruleset par defaut (JWT, AWS, GCP, GitHub, Stripe, ...)
+[extend]
+useDefault = true
+
+# ----------------------------------------------------------------------------
+# Allowlist : paths / regex / commits qui ne doivent PAS declencher d'alerte
+# ----------------------------------------------------------------------------
+[allowlist]
+description = "Fichiers d'exemple et valeurs placeholder documentes"
+
+paths = [
+  # Fichiers d'exemple : contiennent intentionnellement des placeholders
+  # (your_api_secret, REMPLACER_PAR_UN_SECRET_GENERE, ...). Le validator
+  # envValidator.js refuse deja ces valeurs en prod.
+  '''\.env\.example$''',
+  '''\.env\.sample$''',
+  # Lockfiles : trop de faux positifs sur les hashes d'integrite npm
+  '''package-lock\.json$''',
+  # Docs : peuvent documenter des formats de tokens pour les exemples
+  '''docs/.*\.md$''',
+  # Archives de scripts : code legacy, pas deploye
+  '''backend/scripts/archives/.*''',
+  # Cypress fixtures : emails / mots de passe de test evidents
+  '''frontEnd/cypress/fixtures/.*''',
+]
+
+# Valeurs litterales a whitelister meme si elles matchent une regle
+regexes = [
+  # Placeholders documentes dans .env.example et consorts
+  '''your[-_]?(api[-_]?secret|api[-_]?key|cloud[-_]?name|email|app[-_]?password)''',
+  '''REMPLACER_PAR_UN_SECRET_GENERE''',
+  '''votre_secret_jwt_tres_long''',
+  '''changeme''',
+  '''admin123|password123''', # creds de test Cypress (config.ts)
+]
+
+# Commits whitelistes (ex: un rebase qui a reintroduit un ancien secret deja
+# fait tourner) -- a ajouter manuellement si besoin, format:
+# commits = ["abc1234..."]
