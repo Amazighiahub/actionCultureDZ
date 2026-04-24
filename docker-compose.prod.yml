@@ -23,10 +23,16 @@ services:
       - frontend_build:/usr/share/nginx/html:ro
       - backend_uploads:/var/www/uploads:ro
     depends_on:
+      # service_healthy: attend que le healthcheck du backend passe avant
+      # que nginx demarre. Evite de servir une 502 pendant ~40s apres un
+      # redeploy (backend encore en train de wait Redis + migrations).
       backend:
-        condition: service_started
+        condition: service_healthy
+      # service_healthy: le container frontend copie le build dans le volume
+      # frontend_build au demarrage (cp -r). Sans cette condition, nginx
+      # peut servir un volume vide -> 404 sur / pendant 5-15s au redeploy.
       frontend:
-        condition: service_started
+        condition: service_healthy
     networks:
       - eventculture-network
     healthcheck:
@@ -79,10 +85,16 @@ services:
       - backend_uploads:/app/uploads
       - backend_logs:/app/logs
     depends_on:
+      # service_healthy: sinon le backend peut demarrer avant MySQL -> crash au
+      # premier model.sync / migration. Docker restart, re-crash = boucle de
+      # 5-10 restarts qui retarde la prod.
       mysql:
-        condition: service_started
+        condition: service_healthy
+      # service_healthy: depuis le Lot 10, server.js fait waitForRedis() au
+      # boot. Si Redis n'est pas healthy, le backend attend jusqu'a timeout
+      # puis fallback en memoire. Mieux: attendre que Redis reponde.
       redis:
-        condition: service_started
+        condition: service_healthy
     networks:
       - eventculture-network
     healthcheck:
@@ -120,6 +132,10 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+      # Au premier boot le container copie le build (cp -r /app/dist/* ...) puis
+      # lance nginx. start_period donne une grace window pour eviter un faux
+      # "unhealthy" si la copie est lente sur un disque lent.
+      start_period: 10s
 
   # ==========================================
   # MySQL Database
@@ -213,8 +229,10 @@ services:
       - DB_USER=root
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
     depends_on:
+      # service_healthy: inutile de tenter un mysqldump si MySQL n'est pas
+      # pret (backup fail au premier run apres un reboot VPS).
       mysql:
-        condition: service_started
+        condition: service_healthy
     networks:
       - eventculture-network
     entrypoint: >
