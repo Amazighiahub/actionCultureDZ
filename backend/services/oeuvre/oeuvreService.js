@@ -214,11 +214,25 @@ class OeuvreService extends BaseService {
           ...(createDTO.idLangue ? { id_langue: createDTO.idLangue } : {}),
           [Op.or]: conditions
         },
-        attributes: ['id_oeuvre']
+        attributes: ['id_oeuvre', 'saisi_par', 'created_at']
       });
       if (existing) {
+        // Si c'est le même utilisateur et créé il y a moins de 60s → double-envoi mobile
+        // Retourner l'oeuvre existante au lieu de bloquer
+        const createdAt = existing.created_at ? new Date(existing.created_at) : null;
+        const isRecentDuplicate = createdAt && (Date.now() - createdAt.getTime()) < 60000;
+        const isSameUser = existing.saisi_par === userId;
+        if (isSameUser && isRecentDuplicate) {
+          this.logger.info(`Double-envoi détecté pour user=${userId}, retour de l'oeuvre existante id=${existing.id_oeuvre}`);
+          const existingOeuvre = await this.findWithFullDetails(existing.id_oeuvre, { incrementViews: false });
+          return { oeuvre: existingOeuvre, subtype: null, duplicate: true };
+        }
         this.logger.warn(`Doublon détecté: titre="${titreFr || titreAr}", type=${createDTO.idTypeOeuvre}, existant id=${existing.id_oeuvre}`);
-        const err = new Error('Une œuvre avec ce titre existe déjà pour ce type et cette langue');
+        const isSameUserDuplicate = existing.saisi_par === userId;
+        const message = isSameUserDuplicate
+          ? 'Vous avez déjà soumis une œuvre avec ce titre. Elle est peut-être en attente de validation par un administrateur. Consultez votre tableau de bord pour suivre son statut.'
+          : 'Une œuvre avec ce titre existe déjà pour ce type et cette langue';
+        const err = new Error(message);
         err.statusCode = 409;
         err.code = 'DUPLICATE_OEUVRE';
         throw err;

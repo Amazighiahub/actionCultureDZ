@@ -507,6 +507,20 @@ class OeuvreService {
   }
 
   /**
+   * Soumettre une œuvre pour validation (brouillon → en_attente)
+   */
+  async submitForValidation(oeuvreId: number): Promise<ApiResponse<Oeuvre>> {
+    try {
+      return await httpClient.post<Oeuvre>(`/oeuvres/${oeuvreId}/submit`, {});
+    } catch (error: unknown) {
+      return {
+        success: false,
+        error: getApiErrorMessage(error, 'Erreur lors de la soumission pour validation')
+      };
+    }
+  }
+
+  /**
    * Alias rétrocompatible pour les consommateurs historiques
    */
   async getById(id: number): Promise<ApiResponse<Oeuvre>> {

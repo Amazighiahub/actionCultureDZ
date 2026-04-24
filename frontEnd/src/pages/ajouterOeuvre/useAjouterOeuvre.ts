@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/useAuth';
@@ -109,6 +109,9 @@ export function useAjouterOeuvre() {
   // États pour ArticleEditor
   const [useArticleEditor, setUseArticleEditor] = useState(false);
   const [showEditorChoice, setShowEditorChoice] = useState(false);
+
+  // Ref synchrone pour bloquer les double-envois (mobile double-tap)
+  const submittingRef = useRef(false);
 
   // Track unsaved changes
   const isDirty = formData.titre.fr !== '' || formData.titre.ar !== '' || formData.description.fr !== '' || formData.description.ar !== '' || formData.id_type_oeuvre !== 0 || medias.length > 0;
@@ -418,6 +421,8 @@ export function useAjouterOeuvre() {
 
   // Handler pour la sauvegarde depuis ArticleEditor
   const handleArticleEditorSave = useCallback(async (response: ArticleSaveResponse) => {
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     try {
       const articlePayload = response.article as unknown as ArticleEditorSavePayload['article'];
       const { formData: articleFormData, blocks, contributeurs: contribs, editeurs: eds } = articlePayload;
@@ -597,6 +602,8 @@ export function useAjouterOeuvre() {
       console.error('❌ Erreur sauvegarde article avancé:', error);
       const message = error instanceof Error ? error.message : t('ajouteroeuvre.articleSaveError', 'Erreur lors de la sauvegarde de l\'article');
       toast({ title: t('common.error', 'Erreur'), description: message, variant: 'destructive' });
+    } finally {
+      submittingRef.current = false;
     }
   }, [toast, t]);
 
@@ -634,6 +641,10 @@ export function useAjouterOeuvre() {
   }, [formData]);
 
   const handleSubmit = useCallback(async (isDraft = false) => {
+    // Protection synchrone contre le double-envoi (mobile double-tap)
+    if (submittingRef.current) return;
+    submittingRef.current = true;
+
     try {
       setLoading(true);
       setSubmitError(null);
@@ -741,6 +752,15 @@ export function useAjouterOeuvre() {
           return;
         }
 
+        // Si l'utilisateur a cliqué "Publier" (pas brouillon), soumettre automatiquement pour validation
+        if (!isDraft && !isEditMode && oeuvreResponse.data?.oeuvre?.id_oeuvre) {
+          try {
+            await oeuvreService.submitForValidation(oeuvreResponse.data.oeuvre.id_oeuvre);
+          } catch (err) {
+            console.warn('Soumission auto pour validation échouée:', err);
+          }
+        }
+
         toast({
           title: t('ajouteroeuvre.succes'),
           description: isEditMode ? t('toasts.oeuvreStatusUpdated') : (isDraft ? t('ajouteroeuvre.brouillon_sauvegarde') : t('ajouteroeuvre.oeuvre_creee_succes')),
@@ -778,6 +798,7 @@ export function useAjouterOeuvre() {
     } finally {
       setLoading(false);
       setUploadProgress('');
+      submittingRef.current = false;
     }
   }, [formData, metadata.types_oeuvres, contributeurs, nouveauxIntervenants, editeurs, medias, prepareDetailsSpecifiques, toast, t]);
 

@@ -74,7 +74,11 @@ let _testModels = null;
 const setupTestDatabase = async () => {
   require("dotenv").config({ path: require("path").resolve(__dirname, "../.env") });
   const { createDatabaseConnection } = require("../config/database");
-  const { loadModels, initializeAssociations } = require("../models/index-original");
+  // NB: on importe depuis ../models (qui re-exporte loadModels/initializeAssociations
+  // pour usage par les tests). L'import declenche aussi la creation d'une instance
+  // Sequelize module-level que l'on ignore volontairement ici : le test cree sa
+  // propre instance pour garantir l'isolation et pouvoir fermer proprement.
+  const { loadModels, initializeAssociations } = require("../models");
 
   _testSequelize = createDatabaseConnection("test");
   await _testSequelize.authenticate();

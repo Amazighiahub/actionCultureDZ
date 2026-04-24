@@ -52,6 +52,8 @@ const moderationMethods = {
           break;
         case 'validate_oeuvre':
           result = await this.validateOeuvreAction(entityId, data);
+          // Invalider le cache du service oeuvre pour que le listing public se rafraîchisse
+          try { container.oeuvreService.cache.invalidate(); } catch (_) { /* cache optionnel */ }
           break;
         case 'moderate_signalement':
           result = await this.moderateSignalementAction(entityId, data, req.user.id_user, req);

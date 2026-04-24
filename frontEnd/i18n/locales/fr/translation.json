@@ -1442,7 +1442,11 @@
     "autreAuteur": "J'ajoute l'œuvre d'un autre auteur",
     "autreAuteurDesc": "Vous êtes le contributeur qui référence cette œuvre sur la plateforme",
     "ajouterAuteurObligatoire": "Ajoutez au moins l'auteur principal de l'œuvre, puis les éventuels contributeurs (traducteur, illustrateur...)",
-    "coAuteursOptionnel": "Vous pouvez aussi ajouter des co-auteurs ou contributeurs (traducteur, illustrateur, préfacier...)"
+    "coAuteursOptionnel": "Vous pouvez aussi ajouter des co-auteurs ou contributeurs (traducteur, illustrateur, préfacier...)",
+    "succes": "Œuvre enregistrée",
+    "oeuvre_creee_succes": "Votre œuvre a été soumise avec succès. Elle sera visible publiquement après validation par un administrateur.",
+    "brouillon_sauvegarde": "Votre brouillon a été sauvegardé. Vous pourrez le modifier et le publier plus tard depuis votre tableau de bord.",
+    "article_cree_succes": "Votre article a été soumis avec succès. Il sera visible publiquement après validation par un administrateur."
   },
   "common_patrimoinesection": {
     "description_citadelle_historique_classe": "Citadelle historique classée au patrimoine mondial de l'UNESCO",
