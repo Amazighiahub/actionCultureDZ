@@ -7,9 +7,8 @@
  *
  * Inclut un bouton "Modifier" pour les contributeurs connectés
  */
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -18,6 +17,11 @@ import MultiLangInput from '@/components/MultiLangInput';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { httpClient } from '@/services/httpClient';
+import SectionArticleEditor from '@/components/patrimoine/SectionArticleEditor';
+import {
+  PATRIMOINE_SECTIONS,
+  type PatrimoineSection,
+} from '@/services/patrimoineArticles.service';
 
 type MultilingualField = { fr?: string; ar?: string; en?: string; [key: string]: string | undefined };
 
@@ -50,11 +54,22 @@ const SectionEnrichissable: React.FC<SectionEnrichissableProps> = ({
   const { t } = useTranslation();
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
-  const navigate = useNavigate();
 
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editValue, setEditValue] = useState<MultilingualField>({ fr: '', ar: '', en: '' });
+  const [isArticleEditorOpen, setIsArticleEditorOpen] = useState(false);
+
+  // fieldName n'est typé `string` côté API mais doit correspondre aux 8 sections
+  // patrimoine valides côté backend. On filtre defensivement : si la section
+  // n'est pas reconnue, on masque simplement le bouton "Article".
+  const patrimoineSection = useMemo<PatrimoineSection | null>(() => {
+    return (PATRIMOINE_SECTIONS as readonly string[]).includes(fieldName)
+      ? (fieldName as PatrimoineSection)
+      : null;
+  }, [fieldName]);
+
+  const openArticleEditor = () => setIsArticleEditorOpen(true);
 
   const hasContent = content && translate(content, lang).trim().length > 0;
 
@@ -98,6 +113,7 @@ const SectionEnrichissable: React.FC<SectionEnrichissableProps> = ({
   // Section remplie
   if (hasContent) {
     return (
+      <>
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -108,10 +124,12 @@ const SectionEnrichissable: React.FC<SectionEnrichissableProps> = ({
                   <Pencil className="h-4 w-4 mr-1" />
                   {t('common.edit', 'Modifier')}
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => navigate(`/editer-article/nouveau?lieu=${lieuId}&section=${fieldName}`)} className="text-muted-foreground hover:text-primary">
-                  <FileText className="h-4 w-4 mr-1" />
-                  {t('patrimoine.contribute.addArticle', 'Article')}
-                </Button>
+                {patrimoineSection && (
+                  <Button variant="ghost" size="sm" onClick={openArticleEditor} className="text-muted-foreground hover:text-primary">
+                    <FileText className="h-4 w-4 mr-1" />
+                    {t('patrimoine.contribute.addArticle', 'Article')}
+                  </Button>
+                )}
               </div>
             )}
           </div>
@@ -149,6 +167,20 @@ const SectionEnrichissable: React.FC<SectionEnrichissableProps> = ({
           </DialogContent>
         </Dialog>
       </Card>
+
+      {/* Modal blocs riches (articles) */}
+      {patrimoineSection && (
+        <SectionArticleEditor
+          lieuId={lieuId}
+          section={patrimoineSection}
+          sectionTitle={title}
+          sectionIcon={icon}
+          isOpen={isArticleEditorOpen}
+          onClose={() => setIsArticleEditorOpen(false)}
+          onSaved={() => onSaved?.(editValue)}
+        />
+      )}
+      </>
     );
   }
 
@@ -169,10 +201,12 @@ const SectionEnrichissable: React.FC<SectionEnrichissableProps> = ({
               <Plus className="h-4 w-4 mr-2" />
               {t('patrimoine.contribute.addQuick', 'Texte rapide')}
             </Button>
-            <Button variant="default" onClick={() => navigate(`/editer-article/nouveau?lieu=${lieuId}&section=${fieldName}`)}>
-              <FileText className="h-4 w-4 mr-2" />
-              {t('patrimoine.contribute.addArticle', 'Écrire un article')}
-            </Button>
+            {patrimoineSection && (
+              <Button variant="default" onClick={openArticleEditor}>
+                <FileText className="h-4 w-4 mr-2" />
+                {t('patrimoine.contribute.addArticle', 'Écrire un article')}
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -205,6 +239,19 @@ const SectionEnrichissable: React.FC<SectionEnrichissableProps> = ({
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Modal blocs riches (articles) */}
+      {patrimoineSection && (
+        <SectionArticleEditor
+          lieuId={lieuId}
+          section={patrimoineSection}
+          sectionTitle={title}
+          sectionIcon={icon}
+          isOpen={isArticleEditorOpen}
+          onClose={() => setIsArticleEditorOpen(false)}
+          onSaved={() => onSaved?.(editValue)}
+        />
+      )}
     </>
   );
 };
