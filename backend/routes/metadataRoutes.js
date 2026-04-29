@@ -122,6 +122,29 @@ const initMetadataRoutes = (models) => {
     metadataController.getCommunesParDaira.bind(metadataController)
   );
 
+  // Localités par commune
+  router.get('/communes/:communeId/localites',
+    cacheMetadata,
+    validationMiddleware.validateId('communeId'),
+    async (req, res) => {
+      try {
+        const communeId = parseInt(req.params.communeId);
+        const Localite = models.Localite;
+        if (!Localite) {
+          return res.json({ success: true, data: [] });
+        }
+        const localites = await Localite.findAll({
+          where: { id_commune: communeId },
+          order: [['nom', 'ASC']],
+          attributes: ['id_localite', 'nom', 'localite_name_ascii']
+        });
+        res.json({ success: true, data: localites });
+      } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+      }
+    }
+  );
+
   // Types d'événements
   router.get('/types-evenements',
     cacheMetadata,
