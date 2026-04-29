@@ -572,7 +572,12 @@ categoriesForType: (typeId: number) => `/metadata/types-oeuvres/${typeId}/catego
     nearbyMobile: '/patrimoine/mobile/nearby',
     qrScan: '/patrimoine/mobile/qr-scan',
     offlineData: (wilaya: number) => `/patrimoine/mobile/offline/${wilaya}`,
-    
+
+    // Articles riches par section (blocs ArticleBlock liés au lieu)
+    // Backend: backend/routes/patrimoineRoutes.js
+    sectionArticles: (id: number) => `/patrimoine/${id}/articles`,
+    sectionArticleDelete: (id: number, blockId: number) => `/patrimoine/${id}/articles/${blockId}`,
+
     // Admin (planifié)
   },
 
