@@ -61,7 +61,8 @@ const INDEXES = [
 
   // ── Association: programme_intervenant ──
   { table: 'programme_intervenant', column: 'id_programme', name: 'idx_prog_interv_programme' },
-  { table: 'programme_intervenant', column: 'id_user', name: 'idx_prog_interv_user' },
+  { table: 'programme_intervenant', column: 'id_intervenant', name: 'idx_prog_interv_intervenant' },
+  // Note: id_intervenant est PK composite → ER_DUP_KEYNAME ignoré
 
   // ── Association: user_organisation ──
   { table: 'userorganisation', column: 'id_user', name: 'idx_user_org_user' },

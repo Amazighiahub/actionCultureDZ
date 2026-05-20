@@ -35,6 +35,24 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
   router.get('/:id/galerie', validateId(), patrimoineController.wrap('getGalerie'));
   router.get('/:id/carte-visite', validateId(), patrimoineController.wrap('getCarteVisite'));
   router.get('/:id/qrcode', validateId(), patrimoineController.wrap('getQRCode'));
+
+  router.get('/:id/intervenants', validateId(), async (req, res) => {
+    try {
+      const intervenants = await models.LieuIntervenant.findAll({
+        where: { id_lieu: parseInt(req.params.id) },
+        order: [['ordre', 'ASC'], ['date_creation', 'ASC']],
+        include: [{
+          model: models.Intervenant,
+          as: 'Intervenant',
+          attributes: ['id_intervenant', 'nom', 'prenom', 'titre_professionnel', 'photo_url', 'specialites', 'biographie', 'wikipedia_url']
+        }]
+      });
+      res.json({ success: true, data: intervenants });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
   router.get('/:id', validateId(), patrimoineController.wrap('getById'));
 
   // ============================================================================
@@ -58,6 +76,74 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
     validateStringLengths,
     handleValidationErrors,
     patrimoineController.wrap('enrichDetail'));
+
+  // Intervenants / personnalités d'un site patrimoine
+  router.post('/:id/intervenants', authenticate, validateId(),
+    [
+      body('id_intervenant').isInt({ min: 1 }).withMessage('id_intervenant requis'),
+      body('role_sur_site').optional().isLength({ max: 80 }).withMessage('role_sur_site trop long'),
+      body('periode').optional().isLength({ max: 100 }).withMessage('periode trop long'),
+      body('contexte').optional().isLength({ max: 5000 }).withMessage('contexte trop long'),
+      body('ordre').optional().isInt({ min: 0 }).withMessage('ordre invalide'),
+    ],
+    handleValidationErrors,
+    async (req, res) => {
+      try {
+        const lieuId = parseInt(req.params.id);
+        const { id_intervenant, role_sur_site, periode, contexte, ordre } = req.body;
+
+        const lieu = await models.Lieu.findByPk(lieuId, { attributes: ['id_lieu'] });
+        if (!lieu) return res.status(404).json({ success: false, error: 'Site patrimoine non trouvé' });
+
+        const intervenant = await models.Intervenant.findByPk(id_intervenant, { attributes: ['id_intervenant'] });
+        if (!intervenant) return res.status(404).json({ success: false, error: 'Intervenant non trouvé' });
+
+        let finalOrdre = ordre;
+        if (finalOrdre === undefined) {
+          const maxOrdre = await models.LieuIntervenant.max('ordre', { where: { id_lieu: lieuId } });
+          finalOrdre = (maxOrdre || 0) + 1;
+        }
+
+        const lien = await models.LieuIntervenant.create({
+          id_lieu: lieuId,
+          id_intervenant,
+          role_sur_site: role_sur_site || null,
+          periode: periode || null,
+          contexte: contexte || null,
+          ordre: finalOrdre,
+          id_contributeur: req.user?.id_user || null
+        });
+
+        const result = await models.LieuIntervenant.findByPk(lien.id_lieu_intervenant, {
+          include: [{ model: models.Intervenant, as: 'Intervenant', attributes: ['id_intervenant', 'nom', 'prenom', 'titre_professionnel', 'photo_url', 'specialites'] }]
+        });
+
+        res.status(201).json({ success: true, data: result });
+      } catch (error) {
+        if (error.name === 'SequelizeUniqueConstraintError') {
+          return res.status(409).json({ success: false, error: 'Cet intervenant est déjà associé à ce site' });
+        }
+        res.status(500).json({ success: false, error: error.message });
+      }
+    }
+  );
+
+  router.delete('/:id/intervenants/:lieuIntervenantId', authenticate, validateId(), async (req, res) => {
+    try {
+      const lieuIntervenantId = parseInt(req.params.lieuIntervenantId);
+      if (isNaN(lieuIntervenantId)) {
+        return res.status(400).json({ success: false, error: 'identifiant invalide' });
+      }
+      const lien = await models.LieuIntervenant.findOne({
+        where: { id_lieu_intervenant: lieuIntervenantId, id_lieu: parseInt(req.params.id) }
+      });
+      if (!lien) return res.status(404).json({ success: false, error: 'Association non trouvée' });
+      await lien.destroy();
+      res.json({ success: true, message: 'Intervenant retiré du site' });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
 
   // Articles patrimoine (blocs éditeur riche liés à un lieu + section)
   router.get('/:id/articles', validateId(), async (req, res) => {

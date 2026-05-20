@@ -10,6 +10,17 @@
 
 module.exports = {
   async up(queryInterface) {
+    // Si la table est déjà dans l'état final (id_intervenant = PK, pas de id_user),
+    // ces migrations de nettoyage ne s'appliquent pas (DB fraîche).
+    const [allCols] = await queryInterface.sequelize.query(
+      "SHOW COLUMNS FROM programme_intervenant"
+    );
+    const allColNames = allCols.map(c => c.Field);
+    if (!allColNames.includes('id_user') && allColNames.includes('id_intervenant')) {
+      console.log('  ⏭ programme_intervenant already uses id_intervenant — skip');
+      return;
+    }
+
     // ================================================================
     // ÉTAPE 1: Supprimer id_intervenant (colonne + FK orphelines)
     // ================================================================

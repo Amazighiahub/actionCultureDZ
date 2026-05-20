@@ -140,6 +140,21 @@ module.exports = (sequelize) => {
       as: 'ParcoursLieux',
       onDelete: 'CASCADE'
     });
+
+    if (models.LieuIntervenant) {
+      Lieu.hasMany(models.LieuIntervenant, {
+        foreignKey: 'id_lieu',
+        as: 'LieuIntervenants',
+        onDelete: 'CASCADE'
+      });
+
+      Lieu.belongsToMany(models.Intervenant, {
+        through: models.LieuIntervenant,
+        foreignKey: 'id_lieu',
+        otherKey: 'id_intervenant',
+        as: 'Intervenants'
+      });
+    }
   };
 
   // ⚡ NOUVELLES MÉTHODES I18N

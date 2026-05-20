@@ -36,10 +36,9 @@ const fileFormat = format.combine(
 
 // Transports
 const loggerTransports = [
-  // Console - warn+ en production, debug en dev
+  // Console - toujours actif
   new transports.Console({
     format: consoleFormat,
-    level: env === 'production' ? 'warn' : 'debug',
     stderrLevels: ['error']
   })
 ];
@@ -80,7 +79,6 @@ const logger = createLogger({
 // Méthodes utilitaires pour le logging structuré
 logger.logRequest = (req, message = 'Request') => {
   logger.info(message, {
-    requestId: req.requestId,
     method: req.method,
     path: req.path,
     ip: req.ip,
@@ -91,7 +89,6 @@ logger.logRequest = (req, message = 'Request') => {
 
 logger.logError = (error, context = {}) => {
   logger.error(error.message, {
-    requestId: context.requestId,
     stack: error.stack,
     code: error.code,
     ...context
@@ -99,50 +96,18 @@ logger.logError = (error, context = {}) => {
 };
 
 logger.logDb = (operation, table, duration) => {
-  const level = duration > 1000 ? 'warn' : 'debug';
-  logger[level](`DB ${operation} on ${table}`, { duration: `${duration}ms`, slow: duration > 1000 });
+  logger.debug(`DB ${operation} on ${table}`, { duration: `${duration}ms` });
 };
 
 // Override global console to use our logger
 const originalConsole = global.console;
-
-// Serialise un argument console de maniere lisible.
-// - Error : name + message + stack complet (les proprietes sont non-enumerables,
-//   JSON.stringify les perd = on voyait "{}" partout)
-// - null / undefined : chaine explicite
-// - string / number / boolean : as-is
-// - objet : JSON.stringify(indent=0) avec fallback String() si cycles
-const safeStringify = (a) => {
-  if (typeof a === 'string') return a;
-  if (a === null) return 'null';
-  if (a === undefined) return 'undefined';
-  if (a instanceof Error) {
-    const head = `${a.name || 'Error'}: ${a.message}`;
-    return a.stack ? `${head}\n${a.stack}` : head;
-  }
-  if (typeof a !== 'object') return String(a);
-  try { return JSON.stringify(a); } catch { return String(a); }
-};
-const formatArgs = (...args) => args.map(safeStringify).join(' ');
 global.console = {
-  log: (...args) => logger.info(formatArgs(...args)),
-  info: (...args) => logger.info(formatArgs(...args)),
-  warn: (...args) => logger.warn(formatArgs(...args)),
-  error: (...args) => logger.error(formatArgs(...args)),
-  debug: (...args) => logger.debug(formatArgs(...args)),
-  trace: (...args) => logger.debug(formatArgs(...args)),
-  // Conserver les méthodes natives pour les librairies tierces
-  table: originalConsole.table.bind(originalConsole),
-  dir: originalConsole.dir.bind(originalConsole),
-  time: originalConsole.time.bind(originalConsole),
-  timeEnd: originalConsole.timeEnd.bind(originalConsole),
-  timeLog: originalConsole.timeLog.bind(originalConsole),
-  assert: originalConsole.assert.bind(originalConsole),
-  clear: originalConsole.clear.bind(originalConsole),
-  count: originalConsole.count.bind(originalConsole),
-  countReset: originalConsole.countReset.bind(originalConsole),
-  group: originalConsole.group.bind(originalConsole),
-  groupEnd: originalConsole.groupEnd.bind(originalConsole),
+  log: (...args) => logger.info(args.map(a => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ')),
+  info: (...args) => logger.info(args.map(a => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ')),
+  warn: (...args) => logger.warn(args.map(a => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ')),
+  error: (...args) => logger.error(args.map(a => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ')),
+  debug: (...args) => logger.debug(args.map(a => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ')),
+  trace: (...args) => logger.debug(args.map(a => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ')),
   // Garder la console originale accessible si besoin
   _original: originalConsole
 };

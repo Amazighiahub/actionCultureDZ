@@ -225,6 +225,9 @@ const loadModels = (sequelize) => {
   const parcoursLieuModel = loadModelSafely('./associations/parcoursLieu', 'ParcoursLieu', sequelize);
   if (parcoursLieuModel) models.ParcoursLieu = parcoursLieuModel;
 
+  const lieuIntervenantModel = loadModelSafely('./associations/lieuIntervenant', 'LieuIntervenant', sequelize);
+  if (lieuIntervenantModel) models.LieuIntervenant = lieuIntervenantModel;
+
   const userOrganisationModel = loadModelSafely('./associations/userOrganisation', 'UserOrganisation', sequelize);
   if (userOrganisationModel) models.UserOrganisation = userOrganisationModel;
 
