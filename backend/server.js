@@ -1,66 +1,22 @@
 // server.js - Point d'entrée principal de l'application
 require('dotenv').config();
 const http = require('http');
-const { Server } = require('socket.io');
+const App = require('./app');
 const logger = require('./utils/logger');
 const EnvironmentValidator = require('./config/envValidator');
-
-// IMPORTANT: on NE require PAS './app' ici au top-level.
-// Raison: app.js charge rateLimitMiddleware au module load, qui lui-meme
-// appelle getClient() SYNCHRONE sur redisClient. Si Redis n'est pas encore
-// pret a ce moment-la, tous les rate-limiters sont fige avec un store memoire
-// et ne se re-initialiseront jamais meme apres que Redis devienne dispo.
-// Cf. investigation Lot 10.
-// On charge ./app DYNAMIQUEMENT dans startServer() APRES await Redis.
 
 // Configuration du port
 const PORT = process.env.PORT || 3001;
 const HOST = process.env.HOST || '0.0.0.0';
 
-// Delai max d'attente de Redis au boot. Au-dela on demarre quand meme
-// (mode degrade memoire), le client continuera d'essayer en arriere-plan.
-const REDIS_BOOT_TIMEOUT_MS = parseInt(process.env.REDIS_BOOT_TIMEOUT_MS, 10) || 5000;
-
-/**
- * Attend que le singleton Redis soit pret, ou timeout.
- * Retourne un diagnostic pour logger l'etat au demarrage.
- */
-async function waitForRedis() {
-  const { getRedisClient, isReady } = require('./utils/redisClient');
-  const start = Date.now();
-  try {
-    await Promise.race([
-      getRedisClient(),
-      new Promise((resolve) => setTimeout(resolve, REDIS_BOOT_TIMEOUT_MS))
-    ]);
-  } catch (_e) {
-    // getRedisClient() ne throw pas normalement (il retourne null en cas d'echec),
-    // mais on reste defensif pour ne jamais bloquer le boot.
-  }
-  return { ready: isReady(), elapsedMs: Date.now() - start };
-}
-
 // Fonction principale pour démarrer le serveur
 async function startServer() {
   try {
     logger.info('🚀 Démarrage du serveur Action Culture...');
-
+    
     // Valider la configuration d'environnement avant d'initialiser
     EnvironmentValidator.validate();
     EnvironmentValidator.printReport();
-
-    // Attendre Redis AVANT de charger ./app (sinon rate-limit fige sur memoire).
-    const redisDiag = await waitForRedis();
-    if (redisDiag.ready) {
-      logger.info(`Redis pret (${redisDiag.elapsedMs} ms) — rate-limit distribue actif`);
-    } else if (process.env.NODE_ENV === 'production') {
-      logger.warn(`Redis non disponible apres ${redisDiag.elapsedMs} ms — rate-limit en memoire (degrade). Verifier REDIS_HOST/REDIS_PASSWORD.`);
-    } else {
-      logger.info(`Redis indisponible (dev mode) — rate-limit en memoire`);
-    }
-
-    // Charger App APRES Redis : rateLimitMiddleware pourra obtenir le client.
-    const App = require('./app');
 
     // Créer et initialiser l'application
     const appInstance = new App();
@@ -69,136 +25,36 @@ async function startServer() {
     // Créer le serveur HTTP
     const server = http.createServer(app);
     
-    // Attacher Socket.IO au serveur HTTP
-    const io = new Server(server, {
-      cors: {
-        origin: process.env.FRONTEND_URL || (process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : undefined),
-        methods: ['GET', 'POST'],
-        credentials: true
-      },
-      transports: ['websocket', 'polling']
-    });
-
-    app.set('io', io);
-
-    // Authentification Socket.IO via JWT cookie (utilise le helper central
-    // pour verifier iss/aud/algorithm comme le middleware HTTP)
-    const cookie = require('cookie');
-    const { verifyAccessToken } = require('./utils/jwtHelper');
-    if (!process.env.JWT_SECRET) {
-      throw new Error('JWT_SECRET is required. Set it in your .env file.');
-    }
-
-    io.use((socket, next) => {
-      try {
-        const cookies = cookie.parse(socket.handshake.headers.cookie || '');
-        const token = cookies.token || cookies.access_token || socket.handshake.auth?.token;
-        if (!token) {
-          return next(new Error('Authentication required'));
-        }
-        const decoded = verifyAccessToken(token);
-        if (!decoded) {
-          return next(new Error('Authentication failed'));
-        }
-        socket.userId = decoded.userId || decoded.id_user || decoded.id;
-        next();
-      } catch (err) {
-        next(new Error('Authentication failed'));
-      }
-    });
-
-    // Rooms autorisées (préfixes whitelist) et limite par socket
-    const ALLOWED_ROOM_PREFIXES = ['user_', 'evenement_', 'oeuvre_', 'notifications'];
-    const MAX_ROOMS_PER_SOCKET = 10;
-
-    io.on('connection', (socket) => {
-      if (socket.userId) {
-        socket.join(`user_${socket.userId}`);
-      }
-
-      socket.on('join_room', (room) => {
-        // Validation du type
-        if (typeof room !== 'string' || room.length > 100) return;
-
-        // Whitelist de préfixes autorisés
-        const isAllowed = ALLOWED_ROOM_PREFIXES.some(prefix => room.startsWith(prefix));
-        if (!isAllowed) return;
-
-        // Empêcher de rejoindre la room d'un autre utilisateur
-        if (room.startsWith('user_') && room !== `user_${socket.userId}`) {
-          return;
-        }
-
-        // Limiter le nombre de rooms par socket (éviter l'abus mémoire)
-        if (socket.rooms.size >= MAX_ROOMS_PER_SOCKET) {
-          return;
-        }
-
-        socket.join(room);
-      });
-
-      socket.on('leave_room', (room) => {
-        if (typeof room === 'string') socket.leave(room);
-      });
-
-      socket.on('disconnect', () => {
-        logger.debug(`Socket déconnecté: ${socket.id} (user: ${socket.userId || 'anonymous'})`);
-      });
+    // Gérer les connexions WebSocket si nécessaire
+    server.on('upgrade', (request, socket, head) => {
+      logger.info('WebSocket connection attempt');
+      // Implémenter la logique WebSocket si nécessaire
     });
     
     // Gérer la fermeture gracieuse
-    let isShuttingDown = false;
     const gracefulShutdown = async (signal) => {
-      if (isShuttingDown) return;
-      isShuttingDown = true;
-
-      logger.info(`${signal} reçu, arrêt gracieux du serveur...`);
-
-      // Stop accepting new connections
+      logger.info(`\n${signal} reçu, arrêt gracieux du serveur...`);
+      
       server.close(async () => {
-        logger.info('Serveur HTTP fermé');
-
+        logger.info('✅ Serveur HTTP fermé');
+        
         try {
-          // Close Socket.IO connections
-          io.close();
-          logger.info('Socket.IO fermé');
-
-          // Arrêter crons + queue Bull AVANT la DB
-          try {
-            const serviceContainer = require('./services/serviceContainer');
-            await serviceContainer.shutdownBackgroundServices();
-            logger.info('Services background arrêtés');
-          } catch (e) {
-            logger.warn('Shutdown services background (best-effort):', e?.message);
-          }
-
-          // Flush le buffer des compteurs de vues (viewCounter) AVANT la DB
-          try {
-            const viewCounter = require('./utils/viewCounter');
-            await viewCounter.shutdown();
-            logger.info('ViewCounter flushé');
-          } catch (e) {
-            logger.warn('Shutdown viewCounter (best-effort):', e?.message);
-          }
-
-          // Close database
+          // Fermer la base de données
           await appInstance.closeDatabase();
-          logger.info('Base de données fermée');
-
-          logger.info('Application arrêtée proprement');
+          
+          logger.info('👋 Application arrêtée proprement');
           process.exit(0);
         } catch (error) {
-          logger.error('Erreur lors de l\'arrêt:', error);
+          logger.error('❌ Erreur lors de l\'arrêt:', error);
           process.exit(1);
         }
       });
-
-      // Force exit after 30 seconds
-      const forceTimeout = setTimeout(() => {
-        logger.error('Arrêt forcé après timeout de 30s');
+      
+      // Forcer l'arrêt après 30 secondes
+      setTimeout(() => {
+        logger.error('⚠️ Arrêt forcé après timeout');
         process.exit(1);
       }, 30000);
-      if (forceTimeout.unref) forceTimeout.unref();
     };
     
     // Écouter les signaux de fermeture
@@ -217,7 +73,7 @@ async function startServer() {
       logger.info('═══════════════════════════════════════════════════');
       logger.info(`🌍 Environnement: ${process.env.NODE_ENV || 'development'}`);
       logger.info(`🗄️  Base de données: ${process.env.DB_NAME || 'actionculture'}`);
-      logger.info(`👤 Utilisateur DB: ***`);
+      logger.info(`👤 Utilisateur DB: ${process.env.DB_USER || 'root'}`);
       logger.info('═══════════════════════════════════════════════════');
       
       // Afficher les routes disponibles en développement
@@ -275,9 +131,9 @@ async function startServer() {
 const nodeVersion = process.versions.node;
 const majorVersion = parseInt(nodeVersion.split('.')[0]);
 
-if (majorVersion < 18) {
+if (majorVersion < 14) {
   logger.error(`❌ Node.js version ${nodeVersion} détectée.`);
-  logger.error('   Cette application nécessite Node.js 18.0.0 ou supérieur.');
+  logger.error('   Cette application nécessite Node.js 14.0.0 ou supérieur.');
   process.exit(1);
 }
 

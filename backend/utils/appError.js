@@ -77,17 +77,16 @@ class AppError extends Error {
 
     // Erreurs de base de données Sequelize
     if (error.name === 'SequelizeValidationError') {
-      const messages = process.env.NODE_ENV === 'development'
-        ? error.errors.map(e => e.message).join(', ')
-        : 'Erreur de validation des données';
+      const messages = error.errors.map(e => e.message).join(', ');
       return AppError.badRequest(messages, 'DB_VALIDATION_ERROR');
     }
 
     if (error.name === 'SequelizeUniqueConstraintError') {
-      return AppError.conflict('Cette valeur existe déjà', 'UNIQUE_CONSTRAINT');
+      const field = error.fields ? Object.keys(error.fields)[0] : 'field';
+      return AppError.conflict(`${field} doit être unique`, 'UNIQUE_CONSTRAINT');
     }
 
-    if (error.name === 'SequelizeForeignKeyConstraintError') {
+    if (error.name === 'SequeleizeForeignKeyConstraintError') {
       return AppError.badRequest('Référence invalide', 'FK_CONSTRAINT');
     }
 
@@ -109,11 +108,8 @@ class AppError extends Error {
       return AppError.badRequest('Trop de fichiers', 'TOO_MANY_FILES');
     }
 
-    // Erreur générique — ne JAMAIS exposer error.message au client pour les 5xx
-    if (process.env.NODE_ENV === 'development') {
-      return AppError.internalError(error.message || 'Une erreur inattendue s\'est produite');
-    }
-    return AppError.internalError('Une erreur inattendue s\'est produite');
+    // Erreur générique
+    return AppError.internalError(error.message || 'Une erreur inattendue s\'est produite');
   }
 
   /**
