@@ -36,24 +36,28 @@ const monitoringMethods = {
   async broadcastNotification(req, res) {
     try {
       const { title, message, target, type = 'info', sendEmail = true } = req.body;
-      const result = await container.notificationService.broadcastNotification(
-        { title, message, target, type, sendEmail },
-        req.user.id_user
-      );
+
+      // Répondre immédiatement — le broadcast s'exécute en arrière-plan
       res.json({
         success: true,
-        message: req.t('notification.broadcastSent', { count: result.notified }),
-        data: result
+        message: req.t('notification.broadcastQueued', 'Notification en cours d\'envoi en arrière-plan'),
+        data: { queued: true, target, type }
       });
+
+      // Traitement asynchrone après la réponse
+      container.notificationService.broadcastNotification(
+        { title, message, target, type, sendEmail },
+        req.user.id_user
+      ).catch(err => console.error('Erreur broadcastNotification (background):', err.message));
+
     } catch (error) {
-      if (error.message === 'MISSING_TITLE_OR_MESSAGE') {
-        return res.status(400).json({ success: false, error: req.t('common.badRequest') });
+      if (!res.headersSent) {
+        if (error.message === 'MISSING_TITLE_OR_MESSAGE') {
+          return res.status(400).json({ success: false, error: req.t('common.badRequest') });
+        }
+        console.error('Erreur broadcastNotification:', error.message);
+        res.status(500).json({ success: false, error: req.t('common.serverError') });
       }
-      if (error.message === 'NO_TARGET_USERS') {
-        return res.status(400).json({ success: false, error: req.t('admin.noUsersFound') });
-      }
-      console.error('Erreur broadcastNotification:', error.message);
-      res.status(500).json({ success: false, error: req.t('common.serverError') });
     }
   }
 };
