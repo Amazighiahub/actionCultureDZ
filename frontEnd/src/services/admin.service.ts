@@ -320,6 +320,16 @@ class AdminService {
     return httpClient.post<void>(`/dashboard/users/${userId}/verify-email`, {});
   }
 
+  async broadcastNotification(data: {
+    title: string;
+    message: string;
+    target: 'all' | 'professionals' | 'visitors';
+    type?: string;
+    sendEmail?: boolean;
+  }): Promise<ApiResponse<{ notified: number; skipped: number; total_users: number }>> {
+    return httpClient.post('/dashboard/notifications/broadcast', data);
+  }
+
   async bulkUserAction(userIds: number[], action: 'activate' | 'deactivate' | 'delete' | 'change_role', roleId?: number): Promise<ApiResponse<BulkUserActionResponse>> {
     return httpClient.post<BulkUserActionResponse>('/dashboard/users/bulk-action', {
       user_ids: userIds,
