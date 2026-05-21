@@ -35,9 +35,9 @@ const monitoringMethods = {
 
   async broadcastNotification(req, res) {
     try {
-      const { title, message, target, type = 'info' } = req.body;
+      const { title, message, target, type = 'info', sendEmail = true } = req.body;
       const result = await container.notificationService.broadcastNotification(
-        { title, message, target, type },
+        { title, message, target, type, sendEmail },
         req.user.id_user
       );
       res.json({

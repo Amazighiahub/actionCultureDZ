@@ -946,6 +946,23 @@ async envoyerNewsletter(contenu, filtres = {}) {
         totalNotified += usersToNotify.length;
       }
 
+      // Envoi email si demandé
+      if (data.sendEmail !== false) {
+        const htmlBody = `
+          <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px">
+            <h2 style="color:#1a1a1a">${title}</h2>
+            <p style="color:#444;line-height:1.6;white-space:pre-wrap">${message}</p>
+            <hr style="border:none;border-top:1px solid #eee;margin:24px 0"/>
+            <p style="color:#999;font-size:12px">Taladz — ActionCulture DZ</p>
+          </div>`;
+        for (const user of usersToNotify) {
+          if (user.email) {
+            this.emailService.sendEmail(user.email, title, htmlBody)
+              .catch(err => logger.warn(`Broadcast email failed for ${user.email}:`, err.message));
+          }
+        }
+      }
+
       offset += batchSize;
       if (users.length < batchSize) break;
     }

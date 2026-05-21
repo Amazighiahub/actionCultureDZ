@@ -30,6 +30,7 @@ import {
   CheckCircle, Loader2
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import adminService from '@/services/admin.service';
 
 interface AdminNotificationsModalProps {
   isOpen: boolean;
@@ -50,13 +51,11 @@ const NOTIFICATION_TYPES_CONFIG = [
   { value: 'custom', key: 'admin.notifications.types.custom', icon: Bell, color: 'text-gray-600' }
 ];
 
-// Groupes cibles - will be translated in component
+// Groupes cibles — valeurs alignées sur le backend (all/professionals/visitors)
 const TARGET_GROUPS_CONFIG = [
   { value: 'all', key: 'admin.notifications.targetGroups.all' },
-  { value: 'professionnels', key: 'admin.notifications.targetGroups.professionals' },
-  { value: 'visiteurs', key: 'admin.notifications.targetGroups.visitors' },
-  { value: 'non_verifies', key: 'admin.notifications.targetGroups.unverified' },
-  { value: 'inactifs', key: 'admin.notifications.targetGroups.inactive' }
+  { value: 'professionals', key: 'admin.notifications.targetGroups.professionals' },
+  { value: 'visitors', key: 'admin.notifications.targetGroups.visitors' }
 ];
 
 const AdminNotificationsModal: React.FC<AdminNotificationsModalProps> = ({
@@ -123,22 +122,29 @@ const AdminNotificationsModal: React.FC<AdminNotificationsModalProps> = ({
     setSending(true);
 
     try {
-      // Simuler l'envoi (remplacer par l'API réelle)
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      const groupLabel = TARGET_GROUPS_CONFIG.find(g => g.value === formData.targetGroup)?.key;
-      toast({
-        title: t('admin.notifications.sent'),
-        description: formData.target === 'user'
-          ? t('admin.notifications.sentToUser', { name: targetName || t('common.user') })
-          : t('admin.notifications.sentToGroup', { group: groupLabel ? t(groupLabel) : '' })
+      const target = formData.target === 'user' ? 'all' : (formData.targetGroup as 'all' | 'professionals' | 'visitors');
+      const result = await adminService.broadcastNotification({
+        title: formData.title,
+        message: formData.message,
+        target,
+        type: formData.type,
+        sendEmail: formData.sendEmail
       });
 
-      onClose();
+      if (result.success) {
+        toast({
+          title: t('admin.notifications.sent'),
+          description: t('admin.notifications.sentCount', {
+            count: result.data?.notified ?? 0,
+            defaultValue: `Envoyé à ${result.data?.notified ?? 0} utilisateur(s)`
+          })
+        });
+        onClose();
+      }
     } catch (error) {
       toast({
         title: t('common.error'),
-        description: t('admin.notifications.sendError'),
+        description: t('admin.notifications.sendError', 'Erreur lors de l\'envoi'),
         variant: 'destructive'
       });
     } finally {
@@ -148,7 +154,7 @@ const AdminNotificationsModal: React.FC<AdminNotificationsModalProps> = ({
 
   // Templates prédéfinis
   const applyTemplate = (type: string) => {
-    const templates: Record<string, { titleKey: string; messageKey: string }> = {
+    const templates: Record<string, { titleKey?: string; messageKey?: string; title?: string; message?: string; targetGroup?: string }> = {
       validation: {
         titleKey: 'admin.notifications.templates.validation.title',
         messageKey: 'admin.notifications.templates.validation.message'
@@ -164,14 +170,22 @@ const AdminNotificationsModal: React.FC<AdminNotificationsModalProps> = ({
       nouveaute: {
         titleKey: 'admin.notifications.templates.nouveaute.title',
         messageKey: 'admin.notifications.templates.nouveaute.message'
+      },
+      oeuvres: {
+        title: t('admin.notifications.templates.oeuvres.title', 'Ajoutez vos œuvres sur Taladz !'),
+        message: t('admin.notifications.templates.oeuvres.message',
+          'Bonjour,\n\nNous avons le plaisir de vous informer que vous pouvez désormais ajouter vos œuvres sur notre plateforme Taladz.\n\nConnectez-vous à votre espace professionnel et commencez à partager votre travail avec notre communauté.\n\nL\'équipe Taladz'),
+        targetGroup: 'professionals'
       }
     };
 
-    if (templates[type]) {
+    const tpl = templates[type];
+    if (tpl) {
       setFormData(prev => ({
         ...prev,
-        title: t(templates[type].titleKey),
-        message: t(templates[type].messageKey)
+        title: tpl.title ?? (tpl.titleKey ? t(tpl.titleKey) : prev.title),
+        message: tpl.message ?? (tpl.messageKey ? t(tpl.messageKey) : prev.message),
+        ...(tpl.targetGroup ? { target: 'group', targetGroup: tpl.targetGroup } : {})
       }));
     }
   };
@@ -270,7 +284,7 @@ const AdminNotificationsModal: React.FC<AdminNotificationsModalProps> = ({
           <div className="space-y-2">
             <Label>{t('admin.notifications.form.quickTemplates')}</Label>
             <div className="flex flex-wrap gap-2">
-              {['validation', 'rejection', 'maintenance', 'nouveaute'].map((tpl) => (
+              {['oeuvres', 'validation', 'rejection', 'maintenance', 'nouveaute'].map((tpl) => (
                 <Button
                   key={tpl}
                   type="button"
