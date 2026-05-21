@@ -30,7 +30,7 @@ import {
   CheckCircle, Loader2
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
-import adminService from '@/services/admin.service';
+import { adminService } from '@/services/admin.service';
 
 interface AdminNotificationsModalProps {
   isOpen: boolean;
