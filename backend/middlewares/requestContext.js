@@ -33,7 +33,7 @@ function requestContext(req, res, next) {
     if (durationMs > 2000) {
       logger.warn('Slow request detected', logData);
     } else if (res.statusCode >= 500) {
-      logger.error('Server error response', logData);
+      logger.error(`Server error response ${req.method} ${req.originalUrl} ${res.statusCode}`, logData);
     } else if (res.statusCode >= 400) {
       logger.debug('Client error response', logData);
     }
