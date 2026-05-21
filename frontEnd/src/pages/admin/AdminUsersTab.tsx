@@ -33,7 +33,7 @@ import {
 import { useDashboardAdmin } from '@/hooks/useDashboardAdmin';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useFormatDate } from '@/hooks/useFormatDate';
-import adminService from '@/services/admin.service';
+import { adminService } from '@/services/admin.service';
 
 // Helper pour extraire le texte d'un champ multilingue {fr, ar, en} ou string
 import { getLocalizedText } from '@/utils/getLocalizedText';
