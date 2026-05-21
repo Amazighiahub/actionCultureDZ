@@ -4,6 +4,7 @@
  */
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useToast } from '@/components/ui/use-toast';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,7 +13,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import AdminStatusFilter from '@/components/admin/AdminStatusFilter';
 import {
   Users, Search, CheckCircle, XCircle,
-  MoreVertical, Mail, Shield, Trash2, RefreshCw, X, AlertCircle, UserCheck, UserX, MailCheck
+  MoreVertical, Mail, Shield, Trash2, RefreshCw, X, AlertCircle, UserCheck, UserX, MailCheck, Bell
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -32,6 +33,7 @@ import {
 import { useDashboardAdmin } from '@/hooks/useDashboardAdmin';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useFormatDate } from '@/hooks/useFormatDate';
+import adminService from '@/services/admin.service';
 
 // Helper pour extraire le texte d'un champ multilingue {fr, ar, en} ou string
 import { getLocalizedText } from '@/utils/getLocalizedText';
@@ -43,6 +45,7 @@ const TYPE_OPTIONS = ['tous', 'visiteur', 'artiste', 'organisateur', 'guide', 'a
 
 const AdminUsersTab: React.FC = () => {
   const { t } = useTranslation();
+  const { toast } = useToast();
   const { formatDate } = useFormatDate();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('tous');
@@ -50,6 +53,32 @@ const AdminUsersTab: React.FC = () => {
   const [validationFilter, setValidationFilter] = useState('tous');
   const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]);
   const [bulkProcessing, setBulkProcessing] = useState(false);
+  const [notifying, setNotifying] = useState(false);
+
+  const notifyProfessionals = async () => {
+    setNotifying(true);
+    try {
+      const result = await adminService.broadcastNotification({
+        title: 'Ajoutez vos œuvres sur Taladz !',
+        message: 'Bonjour,\n\nNous avons le plaisir de vous informer que vous pouvez désormais ajouter vos œuvres sur notre plateforme Taladz.\n\nConnectez-vous à votre espace professionnel et commencez à partager votre travail avec notre communauté.\n\nL\'équipe Taladz',
+        target: 'professionals',
+        type: 'info',
+        sendEmail: true
+      });
+      toast({
+        title: t('toasts.success'),
+        description: `Notification envoyée à ${result.data?.notified ?? 0} professionnel(s)`
+      });
+    } catch {
+      toast({
+        title: t('toasts.error'),
+        description: 'Erreur lors de l\'envoi de la notification',
+        variant: 'destructive'
+      });
+    } finally {
+      setNotifying(false);
+    }
+  };
 
   const debouncedSearch = useDebouncedValue(searchQuery, 300);
 
@@ -145,10 +174,20 @@ const AdminUsersTab: React.FC = () => {
             {t('admin.users.count', '{{count}} utilisateur(s)', { count: filteredUsers.length })}
           </p>
         </div>
-        <Button variant="outline" onClick={refreshAll}>
-          <RefreshCw className="h-4 w-4 mr-2" />
-          {t('common.refresh', 'Actualiser')}
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={notifyProfessionals} disabled={notifying}>
+            {notifying ? (
+              <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Bell className="h-4 w-4 mr-2" />
+            )}
+            {notifying ? 'Envoi...' : t('admin.users.notifyProfessionals', 'Notifier les professionnels')}
+          </Button>
+          <Button variant="outline" onClick={refreshAll}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            {t('common.refresh', 'Actualiser')}
+          </Button>
+        </div>
       </div>
 
       {/* Filtres */}
