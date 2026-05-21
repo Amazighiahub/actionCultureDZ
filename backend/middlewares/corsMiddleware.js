@@ -105,4 +105,10 @@ const corsOptions = {
   optionsSuccessStatus: 200 // Pour compatibilité avec certains navigateurs
 };
 
-module.exports = cors(corsOptions);
+const corsHandler = cors(corsOptions);
+
+// /health est appelé par le healthcheck Docker (sans Origin) — bypass CORS
+module.exports = (req, res, next) => {
+  if (req.path === '/health') return next();
+  return corsHandler(req, res, next);
+};
