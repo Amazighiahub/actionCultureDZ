@@ -253,6 +253,14 @@ const initDashboardRoutes = (models) => {
     dashboardController.resetUserPassword
   );
 
+  // Vérifier manuellement l'email d'un utilisateur
+  router.post('/users/:id/verify-email',
+    validationMiddleware.validateId('id'),
+    rateLimitMiddleware.sensitiveActions,
+    auditMiddleware.logAction('VERIFY_USER_EMAIL'),
+    dashboardController.verifyEmailManually
+  );
+
   // Actions en masse sur les utilisateurs
   router.post('/users/bulk-action',
     [

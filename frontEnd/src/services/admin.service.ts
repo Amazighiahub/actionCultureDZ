@@ -316,6 +316,10 @@ class AdminService {
     return httpClient.post<{ temporaryPassword: string }>(`/dashboard/users/${userId}/reset-password`, {});
   }
 
+  async verifyEmailManually(userId: number): Promise<ApiResponse<void>> {
+    return httpClient.post<void>(`/dashboard/users/${userId}/verify-email`, {});
+  }
+
   async bulkUserAction(userIds: number[], action: 'activate' | 'deactivate' | 'delete' | 'change_role', roleId?: number): Promise<ApiResponse<BulkUserActionResponse>> {
     return httpClient.post<BulkUserActionResponse>('/dashboard/users/bulk-action', {
       user_ids: userIds,

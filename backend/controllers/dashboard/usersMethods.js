@@ -134,6 +134,23 @@ const usersMethods = {
     }
   },
 
+  async verifyEmailManually(req, res) {
+    try {
+      const { id } = req.params;
+      await container.userManagementService.verifyEmailManually(id);
+      res.json({ success: true, message: req.t('admin.emailVerified', 'Email vérifié avec succès') });
+    } catch (error) {
+      if (error.message === 'Utilisateur non trouvé') {
+        return res.status(404).json({ success: false, error: req.t('auth.userNotFound') });
+      }
+      if (error.message === 'EMAIL_ALREADY_VERIFIED') {
+        return res.status(409).json({ success: false, error: req.t('admin.emailAlreadyVerified', 'L\'email est déjà vérifié') });
+      }
+      console.error('Erreur verifyEmailManually:', error.message);
+      res.status(500).json({ success: false, error: req.t('common.serverError') });
+    }
+  },
+
   async searchUsers(req, res) {
     try {
       const { q, type = 'nom' } = req.query;

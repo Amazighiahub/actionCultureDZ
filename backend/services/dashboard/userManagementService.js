@@ -227,6 +227,23 @@ class DashboardUserManagementService {
   }
 
   /**
+   * Vérifie manuellement l'email d'un utilisateur (action admin)
+   */
+  async verifyEmailManually(userId) {
+    const user = await this.userRepo.findById(userId);
+    if (!user) throw new Error('Utilisateur non trouvé');
+    if (user.email_verifie) throw new Error('EMAIL_ALREADY_VERIFIED');
+
+    await this.userRepo.update(userId, {
+      email_verifie: true,
+      date_modification: new Date()
+    });
+
+    await this._invalidateUserCache(userId);
+    return { success: true };
+  }
+
+  /**
    * Actions groupées sur les utilisateurs
    */
   async bulkUserAction(action, userIds, data, adminId) {
