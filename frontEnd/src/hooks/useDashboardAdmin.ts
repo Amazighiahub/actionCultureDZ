@@ -389,6 +389,25 @@ const validateUser = async ({ userId, validated }: { userId: number; validated: 
     }
   };
 
+  const verifyEmailManually = async ({ userId }: { userId: number }) => {
+    try {
+      const response = await adminService.verifyEmailManually(userId);
+      if (response.success) {
+        toast({
+          title: t('toasts.success'),
+          description: t('admin.emailVerified', 'Email vérifié avec succès')
+        });
+        await loadAllUsers();
+      }
+    } catch (error) {
+      toast({
+        title: t('toasts.error'),
+        description: t('admin.emailVerifyFailed', 'Impossible de vérifier l\'email'),
+        variant: "destructive"
+      });
+    }
+  };
+
   const bulkUserAction = async (userIds: number[], action: string) => {
     try {
       const response = await adminService.bulkUserAction(userIds, action as 'activate' | 'deactivate' | 'delete' | 'change_role');
@@ -908,6 +927,7 @@ const validateService = async (serviceId: number, validated: boolean) => {
     suspendUser,
     reactivateUser,
     resetUserPassword,
+    verifyEmailManually,
     bulkUserAction,
     exportUsers,
     

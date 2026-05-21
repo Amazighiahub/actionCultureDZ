@@ -12,7 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import AdminStatusFilter from '@/components/admin/AdminStatusFilter';
 import {
   Users, Search, CheckCircle, XCircle,
-  MoreVertical, Mail, Shield, Trash2, RefreshCw, X, AlertCircle, UserCheck, UserX
+  MoreVertical, Mail, Shield, Trash2, RefreshCw, X, AlertCircle, UserCheck, UserX, MailCheck
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -61,6 +61,7 @@ const AdminUsersTab: React.FC = () => {
     deleteUser,
     suspendUser,
     reactivateUser,
+    verifyEmailManually,
     bulkUserAction,
     refreshAll
   } = useDashboardAdmin('users');
@@ -359,6 +360,12 @@ const AdminUsersTab: React.FC = () => {
                           <Mail className="h-4 w-4 mr-2" />
                           {t('admin.users.sendEmail', 'Envoyer un email')}
                         </DropdownMenuItem>
+                        {!user.email_verifie && (
+                          <DropdownMenuItem onClick={() => verifyEmailManually({ userId: user.id_user })}>
+                            <MailCheck className="h-4 w-4 mr-2" />
+                            {t('admin.users.verifyEmail', 'Vérifier l\'email')}
+                          </DropdownMenuItem>
+                        )}
                         {user.statut === 'suspendu' ? (
                           <DropdownMenuItem onClick={() => reactivateUser({ userId: user.id_user })}>
                             <CheckCircle className="h-4 w-4 mr-2" />
