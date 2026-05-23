@@ -537,8 +537,17 @@
     }
   },
   "notifications": {
-    "youHave_one": "notifications.youHave",
-    "youHave_other": "notifications.youHave"
+    "youHave_one": "You have {{count}} notification",
+    "youHave_other": "You have {{count}} notifications",
+    "title": "Notifications",
+    "markAllRead": "Mark all as read",
+    "empty": "No notifications",
+    "permissionGranted": "Notifications enabled",
+    "permissionGrantedDesc": "You will receive real-time alerts.",
+    "browserBanner": "Enable notifications to receive real-time alerts about your sales, events and messages.",
+    "enable": "Enable",
+    "later": "Later",
+    "neverShow": "Don't show again"
   },
   "price": {
     "fixed": "{{price}} DA",

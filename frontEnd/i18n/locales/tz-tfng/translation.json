@@ -540,7 +540,16 @@
   "notifications": {
     "youHave_one": "ⵖⵓⵔⴽ {{count}} ⵜⵏⵎⵖⵉⵡⵜ",
     "youHave_other": "ⵖⵓⵔⴽ {{count}} ⵜⵏⵎⵖⵉⵡⵉⵏ",
-    "youHave_many": "ⵖⵓⵔⴽ {{count}} ⵜⵏⵎⵖⵉⵡⵉⵏ"
+    "youHave_many": "ⵖⵓⵔⴽ {{count}} ⵜⵏⵎⵖⵉⵡⵉⵏ",
+    "title": "ⵜⵉⵏⵖⵎⵉⵙⵉⵏ",
+    "markAllRead": "ⵙⵓⵖⵍ ⵎⵉⴷ ⵉⵜⵜⵓⵖⵔⴰⵏ",
+    "empty": "ⵓⵍⴰⵛ ⵜⵉⵏⵖⵎⵉⵙⵉⵏ",
+    "permissionGranted": "ⵜⵉⵏⵖⵎⵉⵙⵉⵏ ⵜⵜⵓⴼⴰⵏ",
+    "permissionGrantedDesc": "ⴰⴷ ⴷ-ⵜⵜⵓⵖⴰⵍⴻⵎ ⵜⵉⵏⵖⵎⵉⵙⵉⵏ ⵙ ⵓⴼⴰⵔⵙ.",
+    "browserBanner": "ⵙⵔⵎⴷ ⵜⵉⵏⵖⵎⵉⵙⵉⵏ ⴰⴽⴽⴻⵏ ⴰⴷ ⴷ-ⵜⵜⵓⵖⴰⵍⴻⵎ ⵙ ⵓⴼⴰⵔⵙ.",
+    "enable": "ⵙⵔⵎⴷ",
+    "later": "ⵎⴰⵣⴰⵍ",
+    "neverShow": "ⵓⵔ ⴷ-ⵢⴻⵜⵜⴱⴰⵏ ⴰⵔⴰ"
   },
   "price": {
     "fixed": "ⵜⴰⵎⴰⵏⵜ ⵉⵣⴳⴰⵏ",

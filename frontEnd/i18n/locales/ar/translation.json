@@ -550,6 +550,15 @@
     "youHave_zero": "ليس لديك إشعارات",
     "youHave_two": "لديك إشعاران",
     "youHave_few": "لديك {{count}} إشعارات",
+    "title": "الإشعارات",
+    "markAllRead": "تحديد الكل كمقروء",
+    "empty": "لا توجد إشعارات",
+    "permissionGranted": "تم تفعيل الإشعارات",
+    "permissionGrantedDesc": "ستتلقى تنبيهات في الوقت الفعلي.",
+    "browserBanner": "فعّل الإشعارات لتلقي تنبيهات فورية حول مبيعاتك وفعالياتك ورسائلك.",
+    "enable": "تفعيل",
+    "later": "لاحقاً",
+    "neverShow": "عدم الإظهار مجدداً",
     "youHave_many": "لديك {{count}} إشعاراً"
   },
   "price": {
