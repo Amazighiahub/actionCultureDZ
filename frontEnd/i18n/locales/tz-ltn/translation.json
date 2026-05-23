@@ -540,7 +540,16 @@
   "notifications": {
     "youHave_one": "Ɣur-k {{count}} ulɣu",
     "youHave_other": "Ɣur-k {{count}} yilɣan",
-    "youHave_many": "Ɣur-k {{count}} yilɣan"
+    "youHave_many": "Ɣur-k {{count}} yilɣan",
+    "title": "Yilɣan",
+    "markAllRead": "Suɣel meṛṛa d-ittwaɣran",
+    "empty": "Ulac yilɣan",
+    "permissionGranted": "Yilɣan ufan-d",
+    "permissionGrantedDesc": "Ad d-ttuɣalem yilɣan si sdat.",
+    "browserBanner": "Srmed yilɣan akken ad d-ttuɣalem s wudem usrid ɣef tezrawin-ik, tiɣawsiwin d yiznan-ik.",
+    "enable": "Srmed",
+    "later": "Mazal",
+    "neverShow": "Ur d-yettban ara"
   },
   "price": {
     "fixed": "Ssuma tukkist",

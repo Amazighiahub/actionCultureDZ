@@ -535,7 +535,16 @@
   },
   "notifications": {
     "youHave_one": "Vous avez {{count}} notification",
-    "youHave_other": "Vous avez {{count}} notifications"
+    "youHave_other": "Vous avez {{count}} notifications",
+    "title": "Notifications",
+    "markAllRead": "Tout marquer lu",
+    "empty": "Aucune notification",
+    "permissionGranted": "Notifications activées",
+    "permissionGrantedDesc": "Vous recevrez des alertes en temps réel.",
+    "browserBanner": "Activez les notifications pour être alerté en temps réel de vos ventes, événements et messages.",
+    "enable": "Activer",
+    "later": "Plus tard",
+    "neverShow": "Ne plus afficher"
   },
   "price": {
     "fixed": "Prix fixe",
