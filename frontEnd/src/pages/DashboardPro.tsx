@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -163,9 +163,31 @@ const DashboardPro = () => {
 
   const { t } = useTranslation();
   const { td, safe } = useTranslateData();
-  const { notifications, summary, markAsRead, markAllAsRead } = useNotifications();
+  const { notifications, summary, markAsRead, markAllAsRead, requestNotificationPermission } = useNotifications();
   const [notifOpen, setNotifOpen] = useState(false);
   const unreadCount = summary?.nonLues ?? 0;
+
+  // Bannière permission push navigateur
+  const [showNotifBanner, setShowNotifBanner] = useState(false);
+  useEffect(() => {
+    const dismissed = localStorage.getItem('notif_permission_dismissed');
+    const permission = ('Notification' in window) ? window.Notification.permission : 'denied';
+    if (!dismissed && permission === 'default') {
+      setShowNotifBanner(true);
+    }
+  }, []);
+
+  const handleEnableNotifications = async () => {
+    const granted = await requestNotificationPermission();
+    setShowNotifBanner(false);
+    if (granted) {
+      toast({ title: t('notifications.permissionGranted', 'Notifications activées'), description: t('notifications.permissionGrantedDesc', 'Vous recevrez des alertes en temps réel.') });
+    }
+  };
+  const handleDismissNotifBanner = (permanent: boolean) => {
+    if (permanent) localStorage.setItem('notif_permission_dismissed', '1');
+    setShowNotifBanner(false);
+  };
   const { formatDate } = useFormatDate();
   const debouncedSearch = useDebouncedValue(searchQuery, 300);
 
@@ -480,6 +502,29 @@ const DashboardPro = () => {
               </Button>
             </div>
           </div>
+
+          {/* Bannière activation notifications navigateur */}
+          {showNotifBanner && (
+            <div className="flex items-center justify-between gap-3 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 mb-4">
+              <div className="flex items-center gap-3">
+                <Bell className="h-5 w-5 text-primary shrink-0" />
+                <p className="text-sm">
+                  {t('notifications.browserBanner', 'Activez les notifications pour être alerté en temps réel de vos ventes, événements et messages.')}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <Button size="sm" onClick={handleEnableNotifications}>
+                  {t('notifications.enable', 'Activer')}
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => handleDismissNotifBanner(false)}>
+                  {t('notifications.later', 'Plus tard')}
+                </Button>
+                <Button size="sm" variant="ghost" className="text-muted-foreground text-xs" onClick={() => handleDismissNotifBanner(true)}>
+                  {t('notifications.neverShow', 'Ne plus afficher')}
+                </Button>
+              </div>
+            </div>
+          )}
 
           {/* Stats simplifiées */}
           <div className="grid gap-4 md:grid-cols-4 mb-6">
