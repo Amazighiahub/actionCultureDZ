@@ -330,21 +330,21 @@
     "linkCopiedDesc": "The link has been copied to the clipboard"
   },
   "contributors": {
-    "addedCount_one": "contributors.addedCount",
-    "addedCount_other": "contributors.addedCount",
-    "alreadyAdded": "contributors.alreadyAdded",
+    "addedCount_one": "{{count}} contributor added",
+    "addedCount_other": "{{count}} contributors added",
+    "alreadyAdded": "Already added",
     "createNew": "Add a new author",
     "errors": {
-      "searchError": "contributors.errors.searchError"
+      "searchError": "Search error"
     },
-    "externalContributor": "contributors.externalContributor",
+    "externalContributor": "External author (no account)",
     "mainContributors": "Main author(s)",
-    "new": "contributors.new",
+    "new": "New",
     "noContributors": "No author added",
-    "noResultsFor": "contributors.noResultsFor",
+    "noResultsFor": "No results for",
     "otherContributors": "Other contributors (translator, illustrator...)",
-    "registeredMember": "contributors.registeredMember",
-    "searchExisting": "contributors.searchExisting",
+    "registeredMember": "Author registered on the platform",
+    "searchExisting": "Search existing",
     "searchPlaceholder": "Search an author by name...",
     "selectRole": "Role (Author, Translator, Illustrator...)",
     "title": "Authors and contributors",
@@ -353,46 +353,46 @@
   },
   "errors": {
     "generic": {
-      "message": "errors.generic.message",
-      "title": "errors.generic.title"
+      "message": "An unexpected error occurred. Please try again.",
+      "title": "Error"
     },
-    "loadingCraftsError": "errors.loadingCraftsError",
-    "loadingError": "errors.loadingError",
-    "partialDataLoad": "errors.partialDataLoad"
+    "loadingCraftsError": "Failed to load crafts",
+    "loadingError": "Loading error",
+    "partialDataLoad": "Data partially loaded"
   },
   "events": {
     "create": {
-      "addAfterEvent": "events.create.addAfterEvent",
-      "datesAndTimes": "events.create.datesAndTimes",
-      "descriptionPlaceholder": "events.create.descriptionPlaceholder",
+      "addAfterEvent": "Add after the event",
+      "datesAndTimes": "Dates and times",
+      "descriptionPlaceholder": "Describe your event in detail: program, activities, what to bring...",
       "draftSaved": "Draft saved",
       "draftRestored": "Draft restored",
       "draftRestoredDesc": "Your previous data has been restored.",
-      "endDate": "events.create.endDate",
-      "endTime": "events.create.endTime",
-      "eventImage": "events.create.eventImage",
-      "eventName": "events.create.eventName",
-      "eventNamePlaceholder": "events.create.eventNamePlaceholder",
-      "eventType": "events.create.eventType",
-      "exactLocation": "events.create.exactLocation",
-      "freeEvent": "events.create.freeEvent",
-      "generalInfo": "events.create.generalInfo",
-      "imageAndMedia": "events.create.imageAndMedia",
-      "locationPlaceholder": "events.create.locationPlaceholder",
-      "maxParticipants": "events.create.maxParticipants",
-      "maxParticipantsPlaceholder": "events.create.maxParticipantsPlaceholder",
-      "participationAndPricing": "events.create.participationAndPricing",
-      "postEventMedia": "events.create.postEventMedia",
-      "postEventMediaDesc": "events.create.postEventMediaDesc",
-      "price": "events.create.price",
-      "pricePlaceholder": "events.create.pricePlaceholder",
-      "publishEvent": "events.create.publishEvent",
-      "saveAsDraft": "events.create.saveAsDraft",
-      "startDate": "events.create.startDate",
-      "startTime": "events.create.startTime",
-      "subtitle": "events.create.subtitle",
-      "title": "events.create.title",
-      "willBeAvailableSoon": "events.create.willBeAvailableSoon",
+      "endDate": "End date",
+      "endTime": "End time",
+      "eventImage": "Event image",
+      "eventName": "Event name",
+      "eventNamePlaceholder": "E.g.: Amazigh Culture Festival",
+      "eventType": "Event type",
+      "exactLocation": "Exact location",
+      "freeEvent": "Free event",
+      "generalInfo": "General information",
+      "imageAndMedia": "Images and media",
+      "locationPlaceholder": "E.g.: Bardo National Museum, Algiers",
+      "maxParticipants": "Maximum participants",
+      "maxParticipantsPlaceholder": "E.g.: 100",
+      "participationAndPricing": "Participation and pricing",
+      "postEventMedia": "Post-event media",
+      "postEventMediaDesc": "Add photos or videos after the event",
+      "price": "Price (DA)",
+      "pricePlaceholder": "E.g.: 500",
+      "publishEvent": "Publish event",
+      "saveAsDraft": "Save as draft",
+      "startDate": "Start date",
+      "startTime": "Start time",
+      "subtitle": "Share your cultural event with the community",
+      "title": "Create Event",
+      "willBeAvailableSoon": "This section will be available soon",
       "eventFormat": "Event format",
       "inPerson": "In person",
       "inPersonDesc": "Physical event with a venue and organization",
@@ -509,9 +509,9 @@
       "title": "Explore"
     },
     "mission": {
-      "description": "home.mission.description",
-      "learnMore": "home.mission.learnMore",
-      "title": "home.mission.title"
+      "description": "Tala DZ is an independent initiative dedicated to preserving and promoting Algeria's rich cultural heritage, literature, cinema and arts.",
+      "learnMore": "Learn more",
+      "title": "Our Mission"
     },
     "professionals": {
       "benefits": "Get better visibility for your works and events",
@@ -521,19 +521,19 @@
       "title": "For professionals"
     },
     "resources": {
-      "access": "home.resources.access",
-      "calendar": "home.resources.calendar",
-      "directory": "home.resources.directory",
-      "guide": "home.resources.guide",
-      "title": "home.resources.title"
+      "access": "Access resources",
+      "calendar": "Cultural calendar",
+      "directory": "Artists directory",
+      "guide": "Visitor guide",
+      "title": "Resources"
     },
     "stats": {
-      "events": "home.stats.events",
-      "heritage": "home.stats.heritage",
-      "members": "home.stats.members",
-      "subtitle": "home.stats.subtitle",
-      "title": "home.stats.title",
-      "works": "home.stats.works"
+      "events": "events",
+      "heritage": "heritage sites",
+      "members": "members",
+      "subtitle": "Our platform in numbers",
+      "title": "Tala DZ in numbers",
+      "works": "works"
     }
   },
   "notifications": {
@@ -554,73 +554,73 @@
     "free": "Free"
   },
   "publishers": {
-    "addedCount_one": "publishers.addedCount",
-    "addedCount_other": "publishers.addedCount",
-    "createNew": "publishers.createNew",
-    "isbn": "publishers.isbn",
-    "noResultsFor": "publishers.noResultsFor",
-    "pricePlaceholder": "publishers.pricePlaceholder",
-    "role": "publishers.role",
+    "addedCount_one": "{{count}} publisher added",
+    "addedCount_other": "{{count}} publishers added",
+    "createNew": "Add a new publisher",
+    "isbn": "ISBN",
+    "noResultsFor": "No results for",
+    "pricePlaceholder": "E.g.: 1200",
+    "role": "Role",
     "roles": {
-      "coPublisher": "publishers.roles.coPublisher",
-      "distributor": "publishers.roles.distributor",
-      "mainPublisher": "publishers.roles.mainPublisher",
-      "originalPublisher": "publishers.roles.originalPublisher",
-      "translationPublisher": "publishers.roles.translationPublisher"
+      "coPublisher": "Co-publisher",
+      "distributor": "Distributor",
+      "mainPublisher": "Main publisher",
+      "originalPublisher": "Original publisher",
+      "translationPublisher": "Translation publisher"
     },
-    "salePrice": "publishers.salePrice",
-    "search": "publishers.search",
-    "searchPlaceholder": "publishers.searchPlaceholder",
-    "status": "publishers.status",
+    "salePrice": "Sale price",
+    "search": "Search",
+    "searchPlaceholder": "Search a publisher...",
+    "status": "Status",
     "statuses": {
-      "cancelled": "publishers.statuses.cancelled",
-      "inProgress": "publishers.statuses.inProgress",
-      "outOfStock": "publishers.statuses.outOfStock",
-      "published": "publishers.statuses.published"
+      "cancelled": "Cancelled",
+      "inProgress": "In progress",
+      "outOfStock": "Out of stock",
+      "published": "Published"
     },
-    "title": "publishers.title"
+    "title": "Publishers"
   },
   "sections": {
     "crafts": {
-      "exploreAll": "sections.crafts.exploreAll",
-      "noCrafts": "sections.crafts.noCrafts",
-      "onOrder": "sections.crafts.onOrder",
+      "exploreAll": "Explore all crafts",
+      "noCrafts": "No crafts available",
+      "onOrder": "On order",
       "price": {
         "from": "From {{min}} DA",
         "range": "{{min}} - {{max}} DA",
         "upTo": "Up to {{max}} DA"
       },
-      "seeDetails": "sections.crafts.seeDetails",
+      "seeDetails": "See details",
       "stock": {
-        "inStock_one": "sections.crafts.stock.inStock",
-        "inStock_other": "sections.crafts.stock.inStock",
+        "inStock_one": "{{count}} in stock",
+        "inStock_other": "{{count}} in stock",
         "outOfStock": "Out of stock"
       },
       "subtitle": "Discover ancestral skills passed down from generation to generation",
       "title": "Traditional Crafts"
     },
     "events": {
-      "dateToConfirm": "sections.events.dateToConfirm",
-      "noEvents": "sections.events.noEvents",
-      "register": "sections.events.register",
-      "registration": "sections.events.registration",
+      "dateToConfirm": "Date to confirm",
+      "noEvents": "No events available",
+      "register": "Register",
+      "registration": "Registration",
       "seeAllEvents": "See all events",
       "subtitle": "Participate in events that bring the Algerian cultural scene to life",
       "title": "Cultural Events"
     },
     "heritage": {
-      "discover": "sections.heritage.discover",
+      "discover": "Discover",
       "filters": {
         "allRegions": "All regions",
         "archaeological": "Archaeological sites",
         "monuments": "UNESCO monuments",
         "traditional": "Traditional architecture"
       },
-      "interactiveMap": "sections.heritage.interactiveMap",
+      "interactiveMap": "Interactive map",
       "map": {
         "explore": "Explore on the map"
       },
-      "mapDescription": "sections.heritage.mapDescription",
+      "mapDescription": "Explore heritage sites across Algeria",
       "noResults": "No results",
       "otherSites": "Other remarkable sites",
       "planVisit": {
@@ -629,7 +629,7 @@
         "start": "Start exploring",
         "title": "Plan your visit"
       },
-      "reviews": "sections.heritage.reviews",
+      "reviews": "reviews",
       "seeAll": "See all",
       "subtitle": "Discover Algeria's historical and cultural treasures through an interactive map",
       "title": "Cultural Heritage",
@@ -638,7 +638,7 @@
     },
     "works": {
       "actions": {
-        "readArticle": "sections.works.actions.readArticle",
+        "readArticle": "Read article",
         "view": "View work"
       },
       "ageLabels": {
@@ -650,8 +650,8 @@
         "new": "New",
         "popular": "Popular"
       },
-      "createdIn": "sections.works.createdIn",
-      "details": "sections.works.details",
+      "createdIn": "Created in {{year}}",
+      "details": "Details",
       "empty": {
         "noFeatured": "No featured works at the moment.",
         "noNew": "No new works this month. Come back soon!",
@@ -661,7 +661,7 @@
         "noType": "No works match the selected type.",
         "noWorks": "No works available at the moment."
       },
-      "exploreLibrary": "sections.works.exploreLibrary",
+      "exploreLibrary": "Explore library",
       "filters": {
         "all": "All works",
         "allTypes": "All types",
@@ -672,19 +672,19 @@
       },
       "info": {
         "classicsDesc": "Discover our timeless classics (over 10 years old) and our recent successes (last 5 years)",
-        "featuredCount_one": "sections.works.info.featuredCount",
-        "featuredCount_other": "sections.works.info.featuredCount",
-        "newCount_one": "sections.works.info.newCount",
-        "newCount_other": "sections.works.info.newCount",
-        "popularCount_one": "sections.works.info.popularCount",
-        "popularCount_other": "sections.works.info.popularCount",
-        "recommendedCount_one": "sections.works.info.recommendedCount",
-        "recommendedCount_other": "sections.works.info.recommendedCount"
+        "featuredCount_one": "{{count}} featured work",
+        "featuredCount_other": "{{count}} featured works",
+        "newCount_one": "{{count}} new work",
+        "newCount_other": "{{count}} new works",
+        "popularCount_one": "{{count}} popular work",
+        "popularCount_other": "{{count}} popular works",
+        "recommendedCount_one": "{{count}} recommended work",
+        "recommendedCount_other": "{{count}} recommended works"
       },
       "loading": "Loading works...",
       "noTitle": "Untitled",
-      "noWorks": "sections.works.noWorks",
-      "preview": "sections.works.preview",
+      "noWorks": "No works available",
+      "preview": "Preview",
       "rateLimit": {
         "cache": "Cache:",
         "clearCache": "Clear cache & reload",
@@ -705,19 +705,19 @@
         "title": "Rate Limit"
       },
       "results": {
-        "count_one": "sections.works.results.count",
-        "count_other": "sections.works.results.count"
+        "count_one": "{{count}} result",
+        "count_other": "{{count}} results"
       },
       "searchPlaceholder": "Search by title, author, actor, director...",
       "stats": {
-        "classics_one": "sections.works.stats.classics",
-        "classics_other": "sections.works.stats.classics",
-        "new_one": "sections.works.stats.new",
-        "new_other": "sections.works.stats.new",
-        "recent_one": "sections.works.stats.recent",
-        "recent_other": "sections.works.stats.recent",
-        "total_one": "sections.works.stats.total",
-        "total_other": "sections.works.stats.total"
+        "classics_one": "{{count}} classic",
+        "classics_other": "{{count}} classics",
+        "new_one": "{{count}} new",
+        "new_other": "{{count}} new",
+        "recent_one": "{{count}} recent",
+        "recent_other": "{{count}} recent",
+        "total_one": "{{count}} work",
+        "total_other": "{{count}} works"
       },
       "subtitle": "Explore the treasures of Algerian culture: literary, cinematic and artistic works",
       "title": "Discover our collection"
@@ -749,46 +749,46 @@
   },
   "works": {
     "actions": {
-      "favorites": "works.actions.favorites",
-      "listenNow": "works.actions.listenNow",
-      "myList": "works.actions.myList",
-      "preview": "works.actions.preview",
-      "readExcerpt": "works.actions.readExcerpt",
-      "readNow": "works.actions.readNow",
-      "trailer": "works.actions.trailer",
-      "watchNow": "works.actions.watchNow"
+      "favorites": "Add to favorites",
+      "listenNow": "Listen now",
+      "myList": "My list",
+      "preview": "Preview",
+      "readExcerpt": "Read excerpt",
+      "readNow": "Read now",
+      "trailer": "Trailer",
+      "watchNow": "Watch now"
     },
     "album": {
-      "tracksCount_one": "works.album.tracksCount",
-      "tracksCount_other": "works.album.tracksCount"
+      "tracksCount_one": "{{count}} track",
+      "tracksCount_other": "{{count}} tracks"
     },
     "duration": {
-      "minutes_one": "works.duration.minutes",
-      "minutes_other": "works.duration.minutes"
+      "minutes_one": "{{count}} minute",
+      "minutes_other": "{{count}} minutes"
     },
     "fields": {
-      "isbn": "works.fields.isbn",
-      "pages": "works.fields.pages"
+      "isbn": "ISBN",
+      "pages": "Pages"
     },
     "pricing": {
-      "free": "works.pricing.free"
+      "free": "Free"
     },
     "sections": {
-      "synopsis": "works.sections.synopsis"
+      "synopsis": "Synopsis"
     },
     "stats": {
-      "listensCount_one": "works.stats.listensCount",
-      "listensCount_other": "works.stats.listensCount",
-      "readingTime": "works.stats.readingTime",
-      "readingTimeValue": "works.stats.readingTimeValue",
-      "reviewsCount_one": "works.stats.reviewsCount",
-      "reviewsCount_other": "works.stats.reviewsCount",
-      "views": "works.stats.views"
+      "listensCount_one": "{{count}} listen",
+      "listensCount_other": "{{count}} listens",
+      "readingTime": "Reading time",
+      "readingTimeValue": "{{value}} min",
+      "reviewsCount_one": "{{count}} review",
+      "reviewsCount_other": "{{count}} reviews",
+      "views": "Views"
     },
     "types": {
-      "album": "works.types.album",
-      "book": "works.types.book",
-      "film": "works.types.film"
+      "album": "Album",
+      "book": "Book",
+      "film": "Film"
     },
     "resultsCount": "work(s) found"
   },
@@ -1943,6 +1943,8 @@
       "requiredFields": "Required fields",
       "titleMessageRequired": "Title and message are required",
       "sent": "Notification sent",
+      "sentCount_one": "Sent to {{count}} user",
+      "sentCount_other": "Sent to {{count}} users",
       "sentToUser": "Notification sent to {{name}}",
       "sentToGroup": "Notification sent to group {{group}}",
       "sendError": "Error sending notification"

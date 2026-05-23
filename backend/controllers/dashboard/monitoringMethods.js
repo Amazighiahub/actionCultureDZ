@@ -37,11 +37,19 @@ const monitoringMethods = {
     try {
       const { title, message, target, type = 'info', sendEmail = true } = req.body;
 
-      // Répondre immédiatement — le broadcast s'exécute en arrière-plan
+      // Compter les destinataires de façon synchrone pour l'affichage immédiat
+      let notified = 0;
+      try {
+        notified = await container.notificationService.countTargetUsers(target);
+      } catch (countErr) {
+        console.warn('broadcastNotification: impossible de compter les cibles:', countErr.message);
+      }
+
+      // Répondre immédiatement avec le nombre d'utilisateurs ciblés
       res.json({
         success: true,
         message: req.t('notification.broadcastQueued', 'Notification en cours d\'envoi en arrière-plan'),
-        data: { queued: true, target, type }
+        data: { queued: true, target, type, notified }
       });
 
       // Traitement asynchrone après la réponse

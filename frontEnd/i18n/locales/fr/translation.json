@@ -1982,6 +1982,8 @@
       "requiredFields": "Champs requis",
       "titleMessageRequired": "Le titre et le message sont obligatoires",
       "sent": "Notification envoyée",
+      "sentCount_one": "Envoyé à {{count}} utilisateur",
+      "sentCount_other": "Envoyé à {{count}} utilisateurs",
       "sentToUser": "Notification envoyée à {{name}}",
       "sentToGroup": "Notification envoyée au groupe {{group}}",
       "sendError": "Erreur lors de l'envoi de la notification"
