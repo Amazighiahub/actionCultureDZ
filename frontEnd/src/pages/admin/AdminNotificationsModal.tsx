@@ -132,11 +132,12 @@ const AdminNotificationsModal: React.FC<AdminNotificationsModalProps> = ({
       });
 
       if (result.success) {
+        const count = result.data?.notified ?? 0;
         toast({
           title: t('admin.notifications.sent'),
-          description: t('admin.notifications.sentCount', {
-            count: result.data?.notified ?? 0,
-            defaultValue: `Envoyé à ${result.data?.notified ?? 0} utilisateur(s)`
+          description: t(`admin.notifications.sentCount_${count === 1 ? 'one' : 'other'}`, {
+            count,
+            defaultValue: `Envoyé à ${count} utilisateur(s)`
           })
         });
         onClose();

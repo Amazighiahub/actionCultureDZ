@@ -1960,6 +1960,8 @@
       "requiredFields": "ⵓⵔⵜⴰⵏ ⵉⵍⴰⵇⵏ",
       "titleMessageRequired": "ⴰⵣⵡⵍ ⴷ ⵢⵉⵣⵏ ⵍⴰⵇⵏⵜ",
       "sent": "ⴰⵍⵖⵓ ⵢⵜⵡⴰⵣⵏ",
+      "sentCount_one": "ⵢⵜⵡⴰⵣⵏ ⵉ {{count}} ⵏ ⵓⵙⵇⴷⴰⵛ",
+      "sentCount_other": "ⵢⵜⵡⴰⵣⵏ ⵉ {{count}} ⵏ ⵢⵉⵙⵇⴷⴰⵛⵏ",
       "sentToUser": "ⴰⵍⵖⵓ ⵢⵜⵡⴰⵣⵏ ⵉ {{name}}",
       "sentToGroup": "ⴰⵍⵖⵓ ⵢⵜⵡⴰⵣⵏ ⵉ ⵓⴳⵔⴰⵡ {{group}}",
       "sendError": "ⵜⵓⵛⵛⴹⴰ ⴷⴳ ⵜⵓⵣⵏⴰ ⵏ ⵓⵍⵖⵓ"

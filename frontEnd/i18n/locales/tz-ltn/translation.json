@@ -1960,6 +1960,8 @@
       "requiredFields": "Urtan ilaqen",
       "titleMessageRequired": "Azwel d yizen laqent",
       "sent": "Alɣu yettwazen",
+      "sentCount_one": "Yettwazen i {{count}} n useqdac",
+      "sentCount_other": "Yettwazen i {{count}} n yiseqdacen",
       "sentToUser": "Alɣu yettwazen i {{name}}",
       "sentToGroup": "Alɣu yettwazen i ugraw {{group}}",
       "sendError": "Tuccḍa deg tuzna n ulɣu"

@@ -1943,6 +1943,8 @@
       "requiredFields": "Required fields",
       "titleMessageRequired": "Title and message are required",
       "sent": "Notification sent",
+      "sentCount_one": "Sent to {{count}} user",
+      "sentCount_other": "Sent to {{count}} users",
       "sentToUser": "Notification sent to {{name}}",
       "sentToGroup": "Notification sent to group {{group}}",
       "sendError": "Error sending notification"

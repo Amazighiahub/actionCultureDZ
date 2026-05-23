@@ -883,6 +883,8 @@
       "requiredFields": "حقول مطلوبة",
       "titleMessageRequired": "العنوان والرسالة مطلوبان",
       "sent": "تم إرسال الإشعار",
+      "sentCount_one": "أُرسل إلى {{count}} مستخدم",
+      "sentCount_other": "أُرسل إلى {{count}} مستخدمين",
       "sentToUser": "تم إرسال الإشعار إلى {{name}}",
       "sentToGroup": "تم إرسال الإشعار إلى المجموعة {{group}}",
       "sendError": "خطأ في إرسال الإشعار"

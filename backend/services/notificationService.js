@@ -881,6 +881,22 @@ async envoyerNewsletter(contenu, filtres = {}) {
   }
 
   /**
+   * Compte les utilisateurs cibles pour un broadcast (rapide, synchrone)
+   * @param {'all'|'professionals'|'visitors'} target
+   * @returns {number}
+   */
+  async countTargetUsers(target) {
+    const TYPE_USER_IDS = require('../constants/typeUserIds').TYPE_USER_IDS;
+    let whereClause = {};
+    switch (target) {
+      case 'professionals': whereClause = { id_type_user: { [Op.ne]: TYPE_USER_IDS.VISITEUR } }; break;
+      case 'visitors':      whereClause = { id_type_user: TYPE_USER_IDS.VISITEUR }; break;
+      default:              whereClause = {};
+    }
+    return this.models.User.count({ where: { ...whereClause, statut: 'actif', email_verifie: true } });
+  },
+
+  /**
    * Envoie une notification broadcast à un groupe d'utilisateurs (dashboard admin)
    * Batch par 100, filtre les préférences, crée un audit log
    * @param {Object} data - { title, message, target, type }
