@@ -30,8 +30,15 @@ import {
   Hammer,
   ChevronDown,
   AlertCircle,
-  XCircle
+  XCircle,
+  Bell
 } from 'lucide-react';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { useNotifications } from '@/hooks/useNotifications';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -156,6 +163,9 @@ const DashboardPro = () => {
 
   const { t } = useTranslation();
   const { td, safe } = useTranslateData();
+  const { notifications, summary, markAsRead, markAllAsRead } = useNotifications();
+  const [notifOpen, setNotifOpen] = useState(false);
+  const unreadCount = summary?.nonLues ?? 0;
   const { formatDate } = useFormatDate();
   const debouncedSearch = useDebouncedValue(searchQuery, 300);
 
@@ -380,6 +390,54 @@ const DashboardPro = () => {
             </div>
 
             <div className="flex gap-2">
+              {/* Cloche de notifications */}
+              <Popover open={notifOpen} onOpenChange={setNotifOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="icon" className="relative">
+                    <Bell className="h-4 w-4" />
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-white">
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent align="end" className="w-80 p-0">
+                  <div className="flex items-center justify-between px-4 py-3 border-b">
+                    <span className="font-semibold text-sm">{t('notifications.title', 'Notifications')}</span>
+                    {unreadCount > 0 && (
+                      <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => markAllAsRead()}>
+                        {t('notifications.markAllRead', 'Tout marquer lu')}
+                      </Button>
+                    )}
+                  </div>
+                  <div className="max-h-72 overflow-y-auto">
+                    {notifications.length === 0 ? (
+                      <div className="py-8 text-center text-sm text-muted-foreground">
+                        <Bell className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                        {t('notifications.empty', 'Aucune notification')}
+                      </div>
+                    ) : (
+                      notifications.slice(0, 8).map((notif) => (
+                        <div
+                          key={notif.id_notification}
+                          className={`px-4 py-3 border-b last:border-0 cursor-pointer hover:bg-muted/50 transition-colors ${!notif.lu ? 'bg-primary/5' : ''}`}
+                          onClick={() => !notif.lu && markAsRead(notif.id_notification)}
+                        >
+                          <div className="flex items-start gap-2">
+                            {!notif.lu && <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-primary" />}
+                            <div className={!notif.lu ? '' : 'ml-4'}>
+                              <p className="text-sm font-medium leading-tight">{notif.titre}</p>
+                              <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{notif.message}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </PopoverContent>
+              </Popover>
+
               {/* Menu d'ajout rapide */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
