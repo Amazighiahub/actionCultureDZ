@@ -1919,6 +1919,11 @@
         "send": "Send"
       },
       "templates": {
+        "oeuvres": {
+          "label": "Works",
+          "title": "Add your works on Taladz!",
+          "message": "Hello,\n\nWe are pleased to inform you that you can now add your works on our Taladz platform.\n\nLog in to your professional space and start sharing your work with our community.\n\nThe Taladz Team"
+        },
         "validation": {
           "label": "Validation",
           "title": "Account Validated",

@@ -1958,6 +1958,11 @@
         "send": "Envoyer"
       },
       "templates": {
+        "oeuvres": {
+          "label": "Œuvres",
+          "title": "Ajoutez vos œuvres sur Taladz !",
+          "message": "Bonjour,\n\nNous avons le plaisir de vous informer que vous pouvez désormais ajouter vos œuvres sur notre plateforme Taladz.\n\nConnectez-vous à votre espace professionnel et commencez à partager votre travail avec notre communauté.\n\nL'équipe Taladz"
+        },
         "validation": {
           "label": "Validation",
           "title": "Compte validé",
