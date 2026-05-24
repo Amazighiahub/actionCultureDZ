@@ -934,23 +934,13 @@ async envoyerNewsletter(contenu, filtres = {}) {
     while (true) {
       const users = await this.models.User.findAll({
         where: targetWhere,
-        attributes: ['id_user', 'email', 'preferences_notification'],
+        attributes: ['id_user', 'email'],
         limit: batchSize, offset, raw: true
       });
       if (users.length === 0) break;
 
-      // Filtrer par préférences notification
-      const usersToNotify = users.filter(user => {
-        if (!user.preferences_notification) return true;
-        try {
-          const prefs = typeof user.preferences_notification === 'string'
-            ? JSON.parse(user.preferences_notification)
-            : user.preferences_notification;
-          return prefs.admin_notifications !== false;
-        } catch { return true; }
-      });
-
-      totalSkipped += users.length - usersToNotify.length;
+      const usersToNotify = users;
+      totalSkipped += 0;
 
       if (usersToNotify.length > 0 && this.models.Notification) {
         const notifications = usersToNotify.map(user => ({
