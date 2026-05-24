@@ -2,6 +2,7 @@
 // Monitoring, alerts, and notification methods for DashboardController
 
 const container = require('../../services/serviceContainer');
+const { Op } = require('sequelize');
 
 const monitoringMethods = {
 
@@ -37,10 +38,19 @@ const monitoringMethods = {
     try {
       const { title, message, target, type = 'info', sendEmail = true } = req.body;
 
-      // Compter les destinataires de façon synchrone pour l'affichage immédiat
+      // Compter les destinataires directement depuis les modèles (fiable, sans dépendance service)
       let notified = 0;
       try {
-        notified = await container.notificationService.countTargetUsers(target);
+        const User = container._models?.User;
+        if (User) {
+          const VISITEUR_TYPE = 1;
+          const whereClause = target === 'professionals'
+            ? { id_type_user: { [Op.ne]: VISITEUR_TYPE } }
+            : target === 'visitors'
+              ? { id_type_user: VISITEUR_TYPE }
+              : {};
+          notified = await User.count({ where: { ...whereClause, statut: 'actif' } });
+        }
       } catch (countErr) {
         console.warn('broadcastNotification: impossible de compter les cibles:', countErr.message);
       }

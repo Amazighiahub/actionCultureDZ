@@ -893,8 +893,8 @@ async envoyerNewsletter(contenu, filtres = {}) {
       case 'visitors':      whereClause = { id_type_user: TYPE_USER_IDS.VISITEUR }; break;
       default:              whereClause = {};
     }
-    return this.models.User.count({ where: { ...whereClause, statut: 'actif', email_verifie: true } });
-  },
+    return this.models.User.count({ where: { ...whereClause, statut: 'actif' } });
+  }
 
   /**
    * Envoie une notification broadcast à un groupe d'utilisateurs (dashboard admin)
@@ -919,7 +919,7 @@ async envoyerNewsletter(contenu, filtres = {}) {
       default: whereClause = {};
     }
 
-    const targetWhere = { ...whereClause, statut: 'actif', email_verifie: true };
+    const targetWhere = { ...whereClause, statut: 'actif' };
     const totalTargetUsers = await this.models.User.count({ where: targetWhere });
     if (totalTargetUsers === 0) {
       throw new Error('NO_TARGET_USERS');
