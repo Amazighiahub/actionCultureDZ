@@ -38,19 +38,17 @@ const monitoringMethods = {
     try {
       const { title, message, target, type = 'info', sendEmail = true } = req.body;
 
-      // Compter les destinataires directement depuis les modèles (fiable, sans dépendance service)
+      // Compter les destinataires directement depuis les modèles
       let notified = 0;
       try {
-        const User = container._models?.User;
-        if (User) {
-          const VISITEUR_TYPE = 1;
-          const whereClause = target === 'professionals'
-            ? { id_type_user: { [Op.ne]: VISITEUR_TYPE } }
-            : target === 'visitors'
-              ? { id_type_user: VISITEUR_TYPE }
-              : {};
-          notified = await User.count({ where: { ...whereClause, statut: 'actif' } });
-        }
+        const { User } = container._models || require('../../models');
+        const VISITEUR_TYPE = 1;
+        const whereClause = target === 'professionals'
+          ? { id_type_user: { [Op.ne]: VISITEUR_TYPE } }
+          : target === 'visitors'
+            ? { id_type_user: VISITEUR_TYPE }
+            : {};
+        notified = await User.count({ where: { ...whereClause, statut: 'actif' } });
       } catch (countErr) {
         console.warn('broadcastNotification: impossible de compter les cibles:', countErr.message);
       }
