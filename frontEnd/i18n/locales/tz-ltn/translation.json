@@ -1936,6 +1936,11 @@
         "send": "Azen"
       },
       "templates": {
+        "oeuvres": {
+          "label": "Tigawin",
+          "title": "Rnu tigawin-ik s Taladz!",
+          "message": "Azul,\n\nNettfaraj-ik s wannect-a : tzemreḍ tura ad trennut tigawin-ik ɣef tfelwit n Taladz.\n\nKcem aɣerbaz-ik n tmiṭṭinin sakin bdu a tserreḥ tifekka-ik d taɣult-nneɣ.\n\nAseklu n Taladz"
+        },
         "validation": {
           "label": "Asentem",
           "title": "Amiḍan yettwasenten",
