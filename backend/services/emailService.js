@@ -112,7 +112,7 @@ class EmailService {
   /**
    * Méthode d'envoi d'email principale et générique.
    */
-  async sendEmail(to, subject, html, attachments = null) {
+  async sendEmail(to, subject, html, attachments = null, text = null) {
     // Protection contre l'injection CRLF dans les en-têtes email
     if (/[\r\n]/.test(to) || /[\r\n]/.test(subject)) {
       logger.error(`Tentative d'injection email détectée — to: ${to?.substring(0, 50)}`);
@@ -130,6 +130,7 @@ class EmailService {
         to,
         subject,
         html,
+        ...(text ? { text } : {}),
         attachments,
       };
 
