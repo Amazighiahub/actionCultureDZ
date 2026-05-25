@@ -963,9 +963,10 @@ async envoyerNewsletter(contenu, filtres = {}) {
             <hr style="border:none;border-top:1px solid #eee;margin:24px 0"/>
             <p style="color:#999;font-size:12px">Taladz — ActionCulture DZ</p>
           </div>`;
+        const textBody = `${title}\n\n${message}\n\n--\nTaladz — ActionCulture DZ`;
         for (const user of usersToNotify) {
           if (user.email) {
-            this.emailService.sendEmail(user.email, title, htmlBody)
+            this.emailService.sendEmail(user.email, title, htmlBody, null, textBody)
               .catch(err => logger.warn(`Broadcast email failed for ${user.email}:`, err.message));
           }
         }
