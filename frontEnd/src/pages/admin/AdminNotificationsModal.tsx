@@ -173,9 +173,8 @@ const AdminNotificationsModal: React.FC<AdminNotificationsModalProps> = ({
         messageKey: 'admin.notifications.templates.nouveaute.message'
       },
       oeuvres: {
-        title: t('admin.notifications.templates.oeuvres.title', 'Ajoutez vos œuvres sur Taladz !'),
-        message: t('admin.notifications.templates.oeuvres.message',
-          'Bonjour,\n\nNous avons le plaisir de vous informer que vous pouvez désormais ajouter vos œuvres sur notre plateforme Taladz.\n\nConnectez-vous à votre espace professionnel et commencez à partager votre travail avec notre communauté.\n\nL\'équipe Taladz'),
+        titleKey: 'admin.notifications.templates.oeuvres.title',
+        messageKey: 'admin.notifications.templates.oeuvres.message',
         targetGroup: 'professionals'
       }
     };
