@@ -180,11 +180,8 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
         if (registerForm.mot_de_passe && registerForm.mot_de_passe !== registerForm.confirmation_mot_de_passe) error = t('auth.errors.passwordMismatch');
         break;
       case 'telephone':
-        if (registerForm.telephone) {
-          const phoneDigits = registerForm.telephone.replace(/[^\d]/g, '');
-          if (phoneDigits.length < 8 || phoneDigits.length > 15) {
-            error = t('auth.errors.phoneInvalid', 'Numéro de téléphone invalide (8 à 15 chiffres)');
-          }
+        if (registerForm.telephone && !/^\+\d{7,15}$/.test(registerForm.telephone.replace(/\s/g, ''))) {
+          error = t('auth.errors.phoneInvalid', 'Numéro de téléphone invalide');
         }
         break;
       case 'portfolio':
@@ -265,12 +262,12 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
       }
     }
     
-    if (!registerForm.wilaya_residence || registerForm.wilaya_residence === 0) {
+    if (registerForm.wilaya_residence === 0) {
       errors.wilaya_residence = t('auth.errors.wilayaRequired');
     }
-    
-    if (registerForm.telephone && !/^(0|\+213)[567]\d{8}$/.test(registerForm.telephone.replace(/\s/g, ''))) {
-      errors.telephone = t('auth.errors.phoneInvalid', 'Numéro de téléphone invalide (format: 05/06/07XXXXXXXX)');
+
+    if (registerForm.telephone && !/^\+\d{7,15}$/.test(registerForm.telephone.replace(/\s/g, ''))) {
+      errors.telephone = t('auth.errors.phoneInvalid', 'Numéro de téléphone invalide');
     }
 
     if (registerForm.portfolio) {
@@ -372,7 +369,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
         email: registerForm.email.trim().toLowerCase(),
         mot_de_passe: registerForm.mot_de_passe,
         confirmation_mot_de_passe: registerForm.confirmation_mot_de_passe,
-        wilaya_residence: Number(registerForm.wilaya_residence),
+        wilaya_residence: registerForm.wilaya_residence !== null ? Number(registerForm.wilaya_residence) : null,
         accepte_conditions: registerForm.accepte_conditions,
         accepte_newsletter: registerForm.accepte_newsletter || false
       };
@@ -748,9 +745,13 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                         <RequiredLabel htmlFor="wilaya" required>{t('auth.register.wilaya')}</RequiredLabel>
                         <select
                           id="wilaya"
-                          value={registerForm.wilaya_residence || ''}
+                          value={registerForm.wilaya_residence === null ? 'etranger' : registerForm.wilaya_residence || ''}
                           onChange={(e) => {
-                            setRegisterForm({ ...registerForm, wilaya_residence: parseInt(e.target.value) || 0 });
+                            const val = e.target.value;
+                            setRegisterForm({
+                              ...registerForm,
+                              wilaya_residence: val === 'etranger' ? null : (parseInt(val) || 0)
+                            });
                             setRegisterErrors({...registerErrors, wilaya_residence: ''});
                           }}
                           disabled={wilayasLoading}
@@ -764,6 +765,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                               {String(wilaya.codeW).padStart(2, '0')} - {getWilayaName(wilaya, i18n.language)}
                             </option>
                           ))}
+                          <option value="etranger">{t('auth.register.foreignResident', 'Étranger (hors Algérie)')}</option>
                         </select>
                         {registerErrors.wilaya_residence && (
                           <p id="auth-wilaya-error" role="alert" className="text-sm text-destructive">{registerErrors.wilaya_residence}</p>
