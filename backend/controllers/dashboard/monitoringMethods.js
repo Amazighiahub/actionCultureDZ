@@ -64,7 +64,7 @@ const monitoringMethods = {
       container.notificationService.broadcastNotification(
         { title, message, target, type, sendEmail },
         req.user.id_user
-      ).catch(err => console.error('Erreur broadcastNotification (background):', err.message));
+      ).catch(err => console.error('Erreur broadcastNotification (background):', err?.message || String(err)));
 
     } catch (error) {
       if (!res.headersSent) {

@@ -944,9 +944,11 @@ async envoyerNewsletter(contenu, filtres = {}) {
 
       if (usersToNotify.length > 0 && this.models.Notification) {
         const notifications = usersToNotify.map(user => ({
-          user_id: user.id_user, type: 'broadcast', titre: title, message,
-          lue: false, date_creation: new Date(),
-          metadata: JSON.stringify({ sender_id: adminId, target_group: target, notification_type: type })
+          id_user: user.id_user,
+          type_notification: 'message_admin',
+          titre: title,
+          message,
+          lu: false
         }));
         await this.models.Notification.bulkCreate(notifications, { validate: true, individualHooks: false });
         totalNotified += usersToNotify.length;
