@@ -20,6 +20,7 @@ const ProgrammeRepository = require('./programmeRepository');
 const IntervenantRepository = require('./intervenantRepository');
 const ArticleBlockRepository = require('./articleBlockRepository');
 const LieuRepository = require('./lieuRepository');
+const OrganisationRepository = require('./organisationRepository');
 
 /**
  * Factory pour créer tous les repositories
@@ -43,6 +44,7 @@ function createRepositories(models) {
     intervenant: models.Intervenant ? new IntervenantRepository(models) : null,
     articleBlock: models.ArticleBlock ? new ArticleBlockRepository(models) : null,
     lieu: models.Lieu ? new LieuRepository(models) : null,
+    organisation: models.Organisation ? new OrganisationRepository(models) : null,
     // Repositories de base pour les modèles utilitaires
     categorie: models.Categorie ? new BaseRepository(models.Categorie) : null,
     media: models.Media ? new BaseRepository(models.Media) : null
@@ -67,5 +69,6 @@ module.exports = {
   ProgrammeRepository,
   IntervenantRepository,
   ArticleBlockRepository,
-  LieuRepository
+  LieuRepository,
+  OrganisationRepository
 };

@@ -459,6 +459,20 @@ class ServiceContainer {
     return this._services.get('multilingual');
   }
 
+  get organisationService() {
+    this._checkInitialized();
+
+    if (!this._services.has('organisation')) {
+      const OrganisationService = require('./organisations/organisationService');
+      this._services.set('organisation', new OrganisationService(
+        this._repositories.organisation,
+        { models: this._models }
+      ));
+    }
+
+    return this._services.get('organisation');
+  }
+
   // ============================================================================
   // SERVICES BACKGROUND (singletons externes : queue Bull + crons)
   // ============================================================================

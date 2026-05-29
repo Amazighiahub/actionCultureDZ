@@ -34,22 +34,17 @@ class PatrimoineController extends BaseController {
 
   async popular(req, res) {
     const { limit = 6, typePatrimoine } = req.query;
-    console.log('[DEBUG popular] START', { limit, typePatrimoine });
-    const t0 = Date.now();
     const sites = await this.patrimoineService.findPopular({
       limit: parseInt(limit),
       typePatrimoine
     });
-    console.log('[DEBUG popular] service done in', Date.now() - t0, 'ms, sites:', sites.length);
     const data = sites.map(s => s.toCardJSON(req.lang));
-    console.log('[DEBUG popular] toCardJSON done in', Date.now() - t0, 'ms');
 
     res.json({
       success: true,
       data,
       count: sites.length
     });
-    console.log('[DEBUG popular] response sent in', Date.now() - t0, 'ms');
   }
 
   async search(req, res) {
