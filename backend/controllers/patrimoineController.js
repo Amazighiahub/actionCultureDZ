@@ -17,69 +17,75 @@ class PatrimoineController extends BaseController {
   // ============================================================================
 
   async list(req, res) {
-    const { page = 1, limit = 20, typePatrimoine, wilayaId } = req.query;
-    const result = await this.patrimoineService.findAllSites({
-      page: parseInt(page),
-      limit: parseInt(limit),
-      typePatrimoine,
-      wilayaId: wilayaId ? parseInt(wilayaId) : null
-    });
-
-    res.json({
-      success: true,
-      data: result.data.map(s => s.toCardJSON(req.lang)),
-      pagination: result.pagination
-    });
+    try {
+      const { page = 1, limit = 20, typePatrimoine, wilayaId } = req.query;
+      const result = await this.patrimoineService.findAllSites({
+        page: parseInt(page),
+        limit: parseInt(limit),
+        typePatrimoine,
+        wilayaId: wilayaId ? parseInt(wilayaId) : null
+      });
+      res.json({
+        success: true,
+        data: result.data.map(s => s.toCardJSON(req.lang)),
+        pagination: result.pagination
+      });
+    } catch (error) {
+      this._handleError(res, error);
+    }
   }
 
   async popular(req, res) {
-    const { limit = 6, typePatrimoine } = req.query;
-    const sites = await this.patrimoineService.findPopular({
-      limit: parseInt(limit),
-      typePatrimoine
-    });
-    const data = sites.map(s => s.toCardJSON(req.lang));
-
-    res.json({
-      success: true,
-      data,
-      count: sites.length
-    });
+    try {
+      const { limit = 6, typePatrimoine } = req.query;
+      const sites = await this.patrimoineService.findPopular({
+        limit: parseInt(limit),
+        typePatrimoine
+      });
+      const data = sites.map(s => s.toCardJSON(req.lang));
+      res.json({ success: true, data, count: sites.length });
+    } catch (error) {
+      this._handleError(res, error);
+    }
   }
 
   async search(req, res) {
-    const { q, page = 1, limit = 20 } = req.query;
-    const result = await this.patrimoineService.search(q, {
-      page: parseInt(page),
-      limit: parseInt(limit)
-    });
-
-    res.json({
-      success: true,
-      data: result.data.map(s => s.toCardJSON(req.lang)),
-      pagination: result.pagination
-    });
+    try {
+      const { q, page = 1, limit = 20 } = req.query;
+      const result = await this.patrimoineService.search(q, {
+        page: parseInt(page),
+        limit: parseInt(limit)
+      });
+      res.json({
+        success: true,
+        data: result.data.map(s => s.toCardJSON(req.lang)),
+        pagination: result.pagination
+      });
+    } catch (error) {
+      this._handleError(res, error);
+    }
   }
 
   async getById(req, res) {
-    const site = await this.patrimoineService.findWithFullDetails(parseInt(req.params.id));
-    res.json({
-      success: true,
-      data: site.toDetailJSON(req.lang)
-    });
+    try {
+      const site = await this.patrimoineService.findWithFullDetails(parseInt(req.params.id));
+      res.json({ success: true, data: site.toDetailJSON(req.lang) });
+    } catch (error) {
+      this._handleError(res, error);
+    }
   }
 
   async getMap(req, res) {
-    const { typePatrimoine, wilayaId } = req.query;
-    const sites = await this.patrimoineService.findForMap({
-      typePatrimoine,
-      wilayaId: wilayaId ? parseInt(wilayaId) : null
-    });
-
-    res.json({
-      success: true,
-      data: sites.map(s => s.toMapJSON(req.lang))
-    });
+    try {
+      const { typePatrimoine, wilayaId } = req.query;
+      const sites = await this.patrimoineService.findForMap({
+        typePatrimoine,
+        wilayaId: wilayaId ? parseInt(wilayaId) : null
+      });
+      res.json({ success: true, data: sites.map(s => s.toMapJSON(req.lang)) });
+    } catch (error) {
+      this._handleError(res, error);
+    }
   }
 
   // Vérifier si un site existe déjà (nom + commune)

@@ -4,9 +4,6 @@
  */
 
 class EnvironmentValidator {
-  /**
-   * Variables requises par environnement
-   */
   static REQUIRED_VARS = {
     all: [
       'NODE_ENV',
@@ -22,14 +19,15 @@ class EnvironmentValidator {
       'FRONTEND_URL',
       'EMAIL_HOST',
       'EMAIL_USER',
-      'EMAIL_PASSWORD'
+      'EMAIL_PASSWORD',
+      'CLOUDINARY_CLOUD_NAME',
+      'CLOUDINARY_API_KEY',
+      'CLOUDINARY_API_SECRET',
+      'REDIS_PASSWORD'
     ],
     development: []
   };
 
-  /**
-   * Variables optionnelles avec valeurs par défaut
-   */
   static OPTIONAL_VARS = {
     'DB_PORT': '3306',
     'DB_DIALECT': 'mysql',
@@ -68,15 +66,16 @@ class EnvironmentValidator {
   };
 
   /**
-   * Valide les variables d'environnement au démarrage
-   * @throws {Error} Si des variables requises sont manquantes
+   * Valide les variables d'environnement au démarrage.
+   * @returns {{ errors: string[], warnings: string[] }}
+   * @throws {Error} Si des variables requises sont manquantes ou invalides
    */
   static validate() {
     const env = process.env.NODE_ENV || 'development';
     const errors = [];
     const warnings = [];
 
-    // Vérifier les variables requises
+    // Variables requises
     const requiredVars = [
       ...EnvironmentValidator.REQUIRED_VARS.all,
       ...(EnvironmentValidator.REQUIRED_VARS[env] || [])
@@ -84,40 +83,47 @@ class EnvironmentValidator {
 
     for (const varName of requiredVars) {
       if (!process.env[varName]) {
-        errors.push(`❌ Variable d'environnement requise manquante: ${varName}`);
+        errors.push(`Variable d'environnement requise manquante: ${varName}`);
       }
     }
 
-    // Avertissements pour les valeurs par défaut utilisées
-    for (const [varName, defaultValue] of Object.entries(
-      EnvironmentValidator.OPTIONAL_VARS
-    )) {
-      if (!process.env[varName]) {
-        warnings.push(
-          `⚠️ ${varName} utilise la valeur par défaut: "${defaultValue}"`
-        );
-      }
-    }
-
-    // Validations spécifiques
+    // NODE_ENV valide
     if (process.env.NODE_ENV && !['development', 'test', 'production'].includes(process.env.NODE_ENV)) {
-      errors.push(
-        `❌ NODE_ENV invalide: "${process.env.NODE_ENV}". Doit être: development, test, ou production`
-      );
+      errors.push(`NODE_ENV invalide: "${process.env.NODE_ENV}". Doit etre: development, test, ou production`);
     }
 
+    // Numériques
     if (process.env.PORT && isNaN(parseInt(process.env.PORT))) {
-      errors.push(`❌ PORT doit être un nombre, reçu: "${process.env.PORT}"`);
+      errors.push(`PORT doit etre un nombre, recu: "${process.env.PORT}"`);
     }
 
     if (process.env.DB_PORT && isNaN(parseInt(process.env.DB_PORT))) {
-      errors.push(`❌ DB_PORT doit être un nombre, reçu: "${process.env.DB_PORT}"`);
+      errors.push(`DB_PORT doit etre un nombre, recu: "${process.env.DB_PORT}"`);
     }
 
-    // Valeurs d'exemple à rejeter
+    if (process.env.BCRYPT_ROUNDS) {
+      const rounds = parseInt(process.env.BCRYPT_ROUNDS);
+      if (isNaN(rounds)) {
+        errors.push(`BCRYPT_ROUNDS doit etre un nombre`);
+      } else if (rounds < 4) {
+        errors.push(`BCRYPT_ROUNDS doit etre >= 4, recu: ${rounds}`);
+      }
+    }
+
+    if (process.env.UPLOAD_IMAGE_MAX_SIZE && isNaN(parseInt(process.env.UPLOAD_IMAGE_MAX_SIZE))) {
+      errors.push(`UPLOAD_IMAGE_MAX_SIZE doit etre un nombre, recu: "${process.env.UPLOAD_IMAGE_MAX_SIZE}"`);
+    }
+
+    // Booléens
+    if (process.env.CORS_ALLOW_NO_ORIGIN && !['true', 'false'].includes(process.env.CORS_ALLOW_NO_ORIGIN)) {
+      errors.push(`CORS_ALLOW_NO_ORIGIN doit valoir "true" ou "false", recu: "${process.env.CORS_ALLOW_NO_ORIGIN}"`);
+    }
+
+    // Valeurs d'exemple interdites
     const INSECURE_EXAMPLE_VALUES = [
       'your-secret-key-change-in-production',
       'votre_secret_jwt_tres_long_et_aleatoire_min_32_caracteres',
+      'REMPLACER_PAR_UN_SECRET_GENERE_AVEC_LE_SCRIPT',
       'your-email@gmail.com',
       'your-app-password',
       'changeme',
@@ -125,105 +131,107 @@ class EnvironmentValidator {
       'password'
     ];
 
-    // Validation JWT_SECRET
+    // JWT_SECRET
     if (process.env.JWT_SECRET) {
       if (process.env.JWT_SECRET.length < 32) {
         if (env === 'production') {
-          errors.push(
-            `❌ JWT_SECRET trop court (${process.env.JWT_SECRET.length} caractères). Minimum 32 requis en production.`
-          );
+          errors.push(`JWT_SECRET trop court (${process.env.JWT_SECRET.length} chars). Minimum 32 requis en production.`);
         } else {
-          warnings.push(
-            `⚠️ JWT_SECRET est très court (${process.env.JWT_SECRET.length} caractères), recommandé: 32+`
-          );
+          warnings.push(`JWT_SECRET est trop court (${process.env.JWT_SECRET.length} chars), recommande: 32+`);
         }
       }
-
-      // Vérifier si c'est une valeur d'exemple
       const isExampleValue = INSECURE_EXAMPLE_VALUES.some(
-        example => process.env.JWT_SECRET.toLowerCase().includes(example.toLowerCase())
+        ex => process.env.JWT_SECRET.toLowerCase().includes(ex.toLowerCase())
       );
       if (isExampleValue && env === 'production') {
-        errors.push(
-          `❌ JWT_SECRET contient une valeur d'exemple non sécurisée! Générez un nouveau secret avec: node scripts/generateSecret.js`
-        );
+        errors.push(`JWT_SECRET contient une valeur d'exemple non securisee!`);
       }
     }
 
-    if (process.env.BCRYPT_ROUNDS && isNaN(parseInt(process.env.BCRYPT_ROUNDS))) {
-      errors.push(`❌ BCRYPT_ROUNDS doit être un nombre`);
+    // URLs
+    if (process.env.API_URL && !/^https?:\/\//.test(process.env.API_URL)) {
+      errors.push(`API_URL doit etre une URL absolue (https://...), recu: "${process.env.API_URL}"`);
     }
 
-    // Validations strictes en production (bypass avec SKIP_PRODUCTION_CHECKS=true)
+    // EMAIL_FROM format
+    if (process.env.EMAIL_FROM) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(process.env.EMAIL_FROM)) {
+        errors.push(`EMAIL_FROM n'est pas un email valide: "${process.env.EMAIL_FROM}"`);
+      }
+    }
+
+    // Validations strictes en production
     if (env === 'production' && process.env.SKIP_PRODUCTION_CHECKS !== 'true') {
-      // Vérifier DB_USER n'est pas root
       if (process.env.DB_USER === 'root') {
-        errors.push(
-          `❌ DB_USER ne doit pas être "root" en production! Créez un utilisateur dédié avec des privilèges limités.`
-        );
+        errors.push(`DB_USER ne doit pas etre "root" en production!`);
       }
 
-      // Vérifier DB_PASSWORD n'est pas faible
       if (process.env.DB_PASSWORD && process.env.DB_PASSWORD.length < 12) {
-        errors.push(
-          `❌ DB_PASSWORD trop court (${process.env.DB_PASSWORD.length} caractères). Minimum 12 requis en production.`
-        );
+        errors.push(`DB_PASSWORD trop court (${process.env.DB_PASSWORD.length} chars). Minimum 12 en production.`);
       }
 
-      // Vérifier que FRONTEND_URL utilise HTTPS
       if (process.env.FRONTEND_URL && !process.env.FRONTEND_URL.startsWith('https://')) {
-        errors.push(
-          `❌ FRONTEND_URL doit utiliser HTTPS en production. Actuel: ${process.env.FRONTEND_URL}`
-        );
+        errors.push(`FRONTEND_URL doit utiliser HTTPS en production. Actuel: ${process.env.FRONTEND_URL}`);
       }
 
-      // Vérifier que EMAIL n'utilise pas les valeurs d'exemple
       if (process.env.EMAIL_USER) {
         const isExampleEmail = INSECURE_EXAMPLE_VALUES.some(
-          example => process.env.EMAIL_USER.toLowerCase().includes(example.toLowerCase())
+          ex => process.env.EMAIL_USER.toLowerCase().includes(ex.toLowerCase())
         );
         if (isExampleEmail) {
-          errors.push(
-            `❌ EMAIL_USER contient une valeur d'exemple. Configurez un vrai service email.`
-          );
+          errors.push(`EMAIL_USER contient une valeur d'exemple. Configurez un vrai service email.`);
         }
       }
 
-      if (process.env.NODE_ENV !== 'production') {
-        warnings.push('⚠️ NODE_ENV ne vaut pas "production" en environnement production');
+      if (process.env.CLOUDINARY_API_SECRET) {
+        const CLOUDINARY_EXAMPLES = ['your_api_secret', 'your-api-secret', 'your_api_key', 'placeholder'];
+        const isPlaceholder = CLOUDINARY_EXAMPLES.some(
+          ex => process.env.CLOUDINARY_API_SECRET.toLowerCase().includes(ex.toLowerCase())
+        );
+        if (isPlaceholder) {
+          errors.push(`CLOUDINARY_API_SECRET contient une valeur d'exemple. Configurez votre vrai secret.`);
+        } else if (process.env.CLOUDINARY_API_SECRET.length < 10) {
+          errors.push(`CLOUDINARY_API_SECRET semble trop court (${process.env.CLOUDINARY_API_SECRET.length} chars).`);
+        }
+      }
+
+      // Avertissements production
+      if (process.env.CORS_ALLOW_NO_ORIGIN === 'true') {
+        warnings.push(`CORS_ALLOW_NO_ORIGIN=true en production desactive la verification d'origine CORS`);
+      }
+
+      if (!process.env.SENTRY_DSN) {
+        warnings.push(`SENTRY_DSN non configure — les erreurs production ne seront pas capturees`);
       }
     }
 
-    // Afficher les résultats
+    // Afficher et lever les erreurs
     if (errors.length > 0) {
       const logger = require('../utils/logger');
       logger.error('\n🔴 ERREURS DE CONFIGURATION:\n');
-        errors.forEach(error => logger.error(error));
-        logger.error('\n');
-      throw new Error('Configuration invalide. Voir les erreurs ci-dessus.');
+      errors.forEach(e => logger.error(`  ❌ ${e}`));
+      logger.error('\n');
+      throw new Error(errors.join('\n'));
     }
 
-      if (warnings.length > 0) {
-        const logger = require('../utils/logger');
-        logger.warn('\n🟡 AVERTISSEMENTS DE CONFIGURATION:\n');
-        warnings.forEach(warning => logger.warn(warning));
-        logger.warn('\n');
-      }
-
+    if (warnings.length > 0) {
       const logger = require('../utils/logger');
-      logger.info('✅ Validation des variables d\'environnement réussie\n');
+      logger.warn('\n🟡 AVERTISSEMENTS DE CONFIGURATION:\n');
+      warnings.forEach(w => logger.warn(`  ⚠️  ${w}`));
+      logger.warn('\n');
+    }
+
+    const logger = require('../utils/logger');
+    logger.info('✅ Validation des variables d\'environnement réussie\n');
+
+    return { errors: [], warnings };
   }
 
-  /**
-   * Obtient la valeur d'une variable d'environnement avec valeur par défaut
-   */
   static get(varName, defaultValue = undefined) {
     return process.env[varName] || defaultValue || EnvironmentValidator.OPTIONAL_VARS[varName];
   }
 
-  /**
-   * Affiche un rapport de configuration
-   */
   static printReport() {
     const env = process.env.NODE_ENV || 'development';
     console.log('\n📋 RAPPORT DE CONFIGURATION\n');

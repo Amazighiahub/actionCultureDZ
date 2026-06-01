@@ -14,7 +14,7 @@ class DashboardStatsService {
   constructor(models) {
     this.models = models;
     this.sequelize = models.sequelize || Object.values(models)[0]?.sequelize;
-    this.lru = new LRUCache(200);
+    this.cache = new LRUCache(200);
   }
 
   async getCached(key, generator, ttl = 300) {
@@ -30,13 +30,15 @@ class DashboardStatsService {
     }
 
     // 2. Essayer LRU (fallback in-memory)
-    const lruVal = this.lru.get(key);
-    if (lruVal !== undefined) return lruVal;
+    try {
+      const lruVal = this.cache.get(key);
+      if (lruVal !== undefined) return lruVal;
+    } catch (_) { /* fallback to generator */ }
 
     // 3. Générer et stocker dans les deux caches
     try {
       const data = await generator();
-      this.lru.set(key, data, ttl * 1000);
+      this.cache.set(key, data, ttl * 1000);
       if (redis) {
         redis.setEx(fullKey, ttl, JSON.stringify(data)).catch(() => {});
       }
@@ -50,11 +52,11 @@ class DashboardStatsService {
   clearCache(pattern = null) {
     // LRU
     if (pattern) {
-      for (const key of this.lru.keys()) {
-        if (key.includes(pattern)) this.lru.delete(key);
+      for (const key of this.cache.keys()) {
+        if (key.includes(pattern)) this.cache.delete(key);
       }
     } else {
-      this.lru.clear();
+      this.cache.clear();
     }
 
     // Redis (non-bloquant)

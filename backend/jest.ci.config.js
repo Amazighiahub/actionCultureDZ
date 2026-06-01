@@ -25,6 +25,8 @@ module.exports = {
     'tests/unit/evenementController\\.test\\.js$',
     // authMiddleware : test écrit pour une ancienne signature jwt.verify
     'tests/unit/authMiddleware\\.test\\.js$',
+    // oeuvre model : nécessite une vraie connexion MySQL (hostname "mysql")
+    'tests/models/oeuvres/oeuvre\\.test\\.js$',
   ],
   // Pas de coverage en CI "rapide" (pour éviter que le threshold 60% bloque
   // alors qu'une partie des tests est exclue — à réévaluer quand tout passera)
