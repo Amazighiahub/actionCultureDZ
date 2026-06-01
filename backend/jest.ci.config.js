@@ -20,20 +20,13 @@ module.exports = {
   ...baseConfig,
   testPathIgnorePatterns: [
     '/node_modules/',
-    // --- Nécessitent une vraie DB MySQL ---
-    'tests/models/',
-    'tests/controllers/',
-    'tests/integration/',
-    'tests/unit/statsService\\.test\\.js$',
-    'tests/unit/patrimoineController\\.test\\.js$',
-    'tests/unit/dashboardController\\.test\\.js$',
-    'tests/unit/userManagementService\\.test\\.js$',
-    'tests/unit/userRepository\\.test\\.js$',
-    // --- Tests désynchronisés avec le code source (à corriger) ---
+    // --- Tests désynchronisés avec le code source (à corriger séparément) ---
     // evenementController : mock attendu à 0 call mais le controller en fait 1
     'tests/unit/evenementController\\.test\\.js$',
     // authMiddleware : test écrit pour une ancienne signature jwt.verify
     'tests/unit/authMiddleware\\.test\\.js$',
+    // oeuvre model : nécessite une vraie connexion MySQL (hostname "mysql")
+    'tests/models/oeuvres/oeuvre\\.test\\.js$',
   ],
   // Pas de coverage en CI "rapide" (pour éviter que le threshold 60% bloque
   // alors qu'une partie des tests est exclue — à réévaluer quand tout passera)

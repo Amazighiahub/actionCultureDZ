@@ -253,7 +253,7 @@ describe('DashboardUserManagementService', () => {
       const result = await service.validateUserAction(1, { valide: true, validateur_id: 2 });
 
       expect(mockUserRepo.update).toHaveBeenCalledWith(1, expect.objectContaining({ statut: 'actif' }));
-      expect(mockModels.Notification.create).toHaveBeenCalledWith(expect.objectContaining({ type: 'validation_acceptee' }));
+      expect(mockModels.Notification.create).toHaveBeenCalledWith(expect.objectContaining({ type_notification: 'validation_compte' }));
       expect(result.success).toBe(true);
     });
 
@@ -265,7 +265,7 @@ describe('DashboardUserManagementService', () => {
       const result = await service.validateUserAction(1, { valide: false, validateur_id: 2, raison: 'Documents manquants' });
 
       expect(mockUserRepo.update).toHaveBeenCalledWith(1, expect.objectContaining({ statut: 'rejete', raison_rejet: 'Documents manquants' }));
-      expect(mockModels.Notification.create).toHaveBeenCalledWith(expect.objectContaining({ type: 'validation_refusee' }));
+      expect(mockModels.Notification.create).toHaveBeenCalledWith(expect.objectContaining({ type_notification: 'message_admin' }));
       expect(result.message).toContain('rejeté');
     });
   });

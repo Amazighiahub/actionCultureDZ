@@ -55,12 +55,13 @@ const EditeurModal: React.FC<EditeurModalProps> = ({
   const { t } = useTranslation();
   const typesEditeurs = [
     { value: 'maison_edition', label: t('editeur.types.maisonEdition', 'Maison d\'édition') },
-    { value: 'independant', label: t('editeur.types.independant', 'Éditeur indépendant') },
-    { value: 'entreprise_publique', label: t('editeur.types.entreprisePublique', 'Entreprise publique') },
-    { value: 'label_musical', label: t('editeur.types.labelMusical', 'Label musical') },
-    { value: 'auto_edition', label: t('editeur.types.autoEdition', 'Auto-édition') },
-    { value: 'institutionnel', label: t('editeur.types.institutionnel', 'Éditeur institutionnel') },
-    { value: 'universitaire', label: t('editeur.types.universitaire', 'Éditeur universitaire') },
+    { value: 'label_musique', label: t('editeur.types.labelMusique', 'Label musical') },
+    { value: 'studio_cinema', label: t('editeur.types.studioCinema', 'Studio cinéma') },
+    { value: 'galerie_art', label: t('editeur.types.galerieArt', 'Galerie d\'art') },
+    { value: 'editeur_scientifique', label: t('editeur.types.editeurScientifique', 'Éditeur scientifique') },
+    { value: 'presse', label: t('editeur.types.presse', 'Presse') },
+    { value: 'editeur_numerique', label: t('editeur.types.editeurNumerique', 'Éditeur numérique') },
+    { value: 'autre', label: t('editeur.types.autre', 'Autre') },
   ];
 
 

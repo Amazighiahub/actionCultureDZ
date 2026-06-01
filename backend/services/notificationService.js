@@ -934,13 +934,22 @@ async envoyerNewsletter(contenu, filtres = {}) {
     while (true) {
       const users = await this.models.User.findAll({
         where: targetWhere,
-        attributes: ['id_user', 'email'],
+        attributes: ['id_user', 'email', 'preferences_notification'],
         limit: batchSize, offset, raw: true
       });
       if (users.length === 0) break;
 
-      const usersToNotify = users;
-      totalSkipped += 0;
+      const usersToNotify = users.filter(user => {
+        try {
+          const prefs = user.preferences_notification
+            ? (typeof user.preferences_notification === 'string'
+                ? JSON.parse(user.preferences_notification)
+                : user.preferences_notification)
+            : {};
+          return prefs.admin_notifications !== false;
+        } catch (_) { return true; }
+      });
+      totalSkipped += users.length - usersToNotify.length;
 
       if (usersToNotify.length > 0 && this.models.Notification) {
         const notifications = usersToNotify.map(user => ({
@@ -967,7 +976,7 @@ async envoyerNewsletter(contenu, filtres = {}) {
         for (const user of usersToNotify) {
           if (user.email) {
             this.emailService.sendEmail(user.email, title, htmlBody, null, textBody)
-              .catch(err => logger.warn(`Broadcast email failed for ${user.email}:`, err.message));
+              ?.catch(err => logger.warn(`Broadcast email failed for ${user.email}:`, err.message));
           }
         }
       }

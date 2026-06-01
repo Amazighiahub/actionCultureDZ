@@ -50,7 +50,9 @@ describe('OeuvreController', () => {
     const authMiddleware = {
       authenticate: (req, res, next) => next(),
       optionalAuth: (req, res, next) => next(),
-      requireRole: () => (req, res, next) => next()
+      requireRole: () => (req, res, next) => next(),
+      requireVerifiedEmail: (req, res, next) => next(),
+      requireValidatedProfessional: (req, res, next) => next(),
     };
 
     app = express();
@@ -74,8 +76,8 @@ describe('OeuvreController', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.data).toEqual([]);
-      expect(response.body.pagination.total).toBe(0);
+      expect(response.body.data.oeuvres).toEqual([]);
+      expect(response.body.data.pagination.total).toBe(0);
     });
 
     test('Doit retourner les œuvres publiées', async () => {
@@ -95,8 +97,8 @@ describe('OeuvreController', () => {
         .get('/api/oeuvres')
         .expect(200);
 
-      expect(response.body.data).toHaveLength(1);
-      expect(response.body.data[0].titre).toBe('Œuvre Publiée');
+      expect(response.body.data.oeuvres).toHaveLength(1);
+      expect(response.body.data.oeuvres[0].titre).toBe('Œuvre Publiée');
     });
 
     test('Doit supporter la pagination', async () => {
@@ -117,9 +119,9 @@ describe('OeuvreController', () => {
         .get('/api/oeuvres?page=2&limit=10')
         .expect(200);
 
-      expect(response.body.data).toHaveLength(5);
-      expect(response.body.pagination.page).toBe(2);
-      expect(response.body.pagination.total).toBe(15);
+      expect(response.body.data.oeuvres).toHaveLength(5);
+      expect(response.body.data.pagination.page).toBe(2);
+      expect(response.body.data.pagination.total).toBe(15);
     });
   });
 

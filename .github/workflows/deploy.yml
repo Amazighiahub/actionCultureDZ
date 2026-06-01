@@ -12,6 +12,45 @@ jobs:
   # ============================================
   test-backend:
     runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: actionculture_test
+          MYSQL_USER: test_user
+          MYSQL_PASSWORD: test_pass
+          MYSQL_ROOT_PASSWORD: rootpassword
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+        ports:
+          - 3306:3306
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+        ports:
+          - 6379:6379
+
+    env:
+      NODE_ENV: test
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_NAME_TEST: actionculture_test
+      DB_USER_TEST: test_user
+      DB_PASSWORD_TEST: test_pass
+      DB_DIALECT: mysql
+      REDIS_HOST: 127.0.0.1
+      REDIS_PORT: 6379
+      JWT_SECRET: ci-test-secret-not-used-in-prod
+
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -28,10 +67,10 @@ jobs:
         working-directory: ./backend
         run: npm run lint
 
-      # test:ci exclut les suites qui requierent MySQL/Redis
-      # (voir backend/jest.ci.config.js).
-      # TODO : quand on branchera des services mysql:8 + redis:7 au runner
-      # et qu'on lancera les migrations, repasser a `npm test`.
+      - name: Run migrations on test DB
+        working-directory: ./backend
+        run: npx sequelize-cli db:migrate --env test
+
       - name: Test backend
         working-directory: ./backend
         run: npm run test:ci

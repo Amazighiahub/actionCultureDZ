@@ -50,6 +50,7 @@ describe('DashboardController', () => {
 
   beforeEach(() => {
     controller = DashboardController;
+    controller.clearCache();
     req = {
       t: jest.fn((key) => 'translated:' + key),
       lang: 'fr',

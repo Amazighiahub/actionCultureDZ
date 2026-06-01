@@ -296,11 +296,11 @@ class OeuvreService extends BaseService {
     this.cache.invalidate();
     this.logger.info(`Œuvre créée: ${oeuvre.id_oeuvre} par utilisateur: ${userId}`);
 
-    // 5. Retourner l'œuvre complète et l'enregistrement sous-type
-    //    (sans compter comme vue : c'est la réponse à la création)
-    const oeuvreFull = await this.findWithFullDetails(oeuvre.id_oeuvre, { incrementViews: false });
+    // 5. Retourner l'œuvre depuis l'entité déjà en mémoire — pas besoin
+    //    de recharger depuis la DB (évite 4-5 requêtes séquentielles = timeout 30s).
+    //    Le frontend n'utilise que id_oeuvre pour la suite (upload médias, soumission).
     return {
-      oeuvre: oeuvreFull,
+      oeuvre: OeuvreDTO.fromEntity(oeuvre),
       subtype: subtypeRecord ? subtypeRecord.get({ plain: true }) : null
     };
   }
@@ -765,7 +765,7 @@ class OeuvreService extends BaseService {
               prenom: user.prenom,
               email: user.email,
               id_user: user.id_user,
-              statut: 'actif'
+              actif: true
             }, { transaction });
           }
         }
@@ -792,7 +792,7 @@ class OeuvreService extends BaseService {
           prenom: typeof nouveau.prenom === 'string' ? { fr: nouveau.prenom } : (nouveau.prenom || {}),
           email: nouveau.email || null,
           telephone: nouveau.telephone || null,
-          statut: 'actif'
+          actif: true
         }, { transaction });
 
         records.push({
@@ -827,10 +827,12 @@ class OeuvreService extends BaseService {
     for (const editeur of editeurs) {
       const editeurId = typeof editeur === 'number' ? editeur : editeur.id_editeur;
       if (editeurId) {
-        records.push({
-          id_oeuvre: oeuvreId,
-          id_editeur: editeurId
-        });
+        const record = { id_oeuvre: oeuvreId, id_editeur: editeurId };
+        if (typeof editeur === 'object') {
+          if (editeur.role_editeur) record.role_editeur = editeur.role_editeur;
+          if (editeur.statut_edition) record.statut_edition = editeur.statut_edition;
+        }
+        records.push(record);
       }
     }
 

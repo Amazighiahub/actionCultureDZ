@@ -70,6 +70,8 @@ describe('Evenement Routes Integration', () => {
       },
       optionalAuth: (req, res, next) => next(),
       requireRole: () => (req, res, next) => next(),
+      requireVerifiedEmail: (req, res, next) => next(),
+      requireValidatedProfessional: (req, res, next) => next(),
     };
 
     app = express();
