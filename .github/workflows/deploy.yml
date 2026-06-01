@@ -67,10 +67,6 @@ jobs:
         working-directory: ./backend
         run: npm run lint
 
-      - name: Run migrations on test DB
-        working-directory: ./backend
-        run: npx sequelize-cli db:migrate --env test
-
       - name: Test backend
         working-directory: ./backend
         run: npm run test:ci
