@@ -23,6 +23,7 @@ import { SECTEUR_TYPE_USER_MAP, SECTEUR_OPTIONS } from '@/types/models/auth.type
 import { useWilayas } from '@/hooks/useGeographie';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import { authLogger } from '@/utils/logger';
+import { PhoneInput } from '@/components/shared/PhoneInput';
 
 // Mapping complet des 58 wilayas ASCII → noms avec accents français
 const WILAYA_ACCENTS: Record<string, string> = {
@@ -776,58 +777,20 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="telephone">{t('auth.register.phone')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span></Label>
-                        <div className="flex gap-2">
-                          <Select
-                            value={registerForm.telephone?.split(' ')[0] || '+213'}
-                            onValueChange={(code) => {
-                              const num = registerForm.telephone?.replace(/^\+\d{1,4}\s?/, '') || '';
-                              setRegisterForm({...registerForm, telephone: code + ' ' + num});
-                              setRegisterErrors({...registerErrors, telephone: ''});
-                            }}
-                          >
-                            <SelectTrigger className="w-[130px] flex-shrink-0">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="+213">🇩🇿 +213</SelectItem>
-                              <SelectItem value="+33">🇫🇷 +33</SelectItem>
-                              <SelectItem value="+212">🇲🇦 +212</SelectItem>
-                              <SelectItem value="+216">🇹🇳 +216</SelectItem>
-                              <SelectItem value="+218">🇱🇾 +218</SelectItem>
-                              <SelectItem value="+222">🇲🇷 +222</SelectItem>
-                              <SelectItem value="+223">🇲🇱 +223</SelectItem>
-                              <SelectItem value="+227">🇳🇪 +227</SelectItem>
-                              <SelectItem value="+1">🇺🇸 +1</SelectItem>
-                              <SelectItem value="+44">🇬🇧 +44</SelectItem>
-                              <SelectItem value="+49">🇩🇪 +49</SelectItem>
-                              <SelectItem value="+34">🇪🇸 +34</SelectItem>
-                              <SelectItem value="+39">🇮🇹 +39</SelectItem>
-                              <SelectItem value="+90">🇹🇷 +90</SelectItem>
-                              <SelectItem value="+966">🇸🇦 +966</SelectItem>
-                              <SelectItem value="+971">🇦🇪 +971</SelectItem>
-                              <SelectItem value="+974">🇶🇦 +974</SelectItem>
-                              <SelectItem value="+20">🇪🇬 +20</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <Input
-                            id="telephone"
-                            type="tel"
-                            autoComplete="tel"
-                            maxLength={15}
-                            placeholder="5XX XXX XXX"
-                            value={registerForm.telephone?.replace(/^\+\d{1,4}\s?/, '') || ''}
-                            onChange={(e) => {
-                              const code = registerForm.telephone?.split(' ')[0] || '+213';
-                              const num = e.target.value.replace(/[^\d\s]/g, '');
-                              setRegisterForm({...registerForm, telephone: code + ' ' + num});
-                              setRegisterErrors({...registerErrors, telephone: ''});
-                            }}
-                            onBlur={() => validateRegisterField('telephone')}
-                            className={`flex-1 ${registerErrors.telephone ? 'border-destructive' : ''}`}
-                            aria-invalid={!!registerErrors.telephone}
-                            aria-describedby={registerErrors.telephone ? 'auth-telephone-error' : 'auth-telephone-helper'}
-                          />
-                        </div>
+                        <PhoneInput
+                          id="telephone"
+                          value={registerForm.telephone || '+213 '}
+                          onChange={(val) => {
+                            setRegisterForm({...registerForm, telephone: val});
+                            setRegisterErrors({...registerErrors, telephone: ''});
+                          }}
+                          onBlur={() => validateRegisterField('telephone')}
+                          error={!!registerErrors.telephone}
+                          placeholder="5XX XXX XXX"
+                          autoComplete="tel"
+                          maxLength={15}
+                          aria-describedby={registerErrors.telephone ? 'auth-telephone-error' : 'auth-telephone-helper'}
+                        />
                         <p id="auth-telephone-helper" className="text-xs text-muted-foreground">{t('common.phoneHelper')}</p>
                         {registerErrors.telephone && (
                           <p id="auth-telephone-error" role="alert" className="text-sm text-destructive">{registerErrors.telephone}</p>
