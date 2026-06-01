@@ -457,7 +457,7 @@ describe('Register — Formulaire d inscription', () => {
     test('telephone au mauvais format affiche une erreur', async () => {
       renderRegister();
 
-      await user.type(getPhoneInput(), '1234');
+      await user.type(getPhoneInput(), '12');
       await user.tab();
 
       await waitFor(() => {
