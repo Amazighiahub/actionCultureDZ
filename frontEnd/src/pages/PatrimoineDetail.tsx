@@ -24,6 +24,7 @@ const VisitePlanner = React.lazy(() => import('@/components/patrimoine/VisitePla
 import ServicesProximite from '@/components/shared/ServicesProximite';
 import SectionEnrichissable from '@/components/patrimoine/SectionEnrichissable';
 import SectionPersonnalites from '@/components/patrimoine/SectionPersonnalites';
+import SectionElements, { type PatrimoineElement } from '@/components/patrimoine/SectionElements';
 import SEOHead, { buildPatrimoineJsonLd, buildBreadcrumbJsonLd } from '@/components/SEOHead';
 
 // Type multilingue réutilisé dans l'interface du site
@@ -568,66 +569,26 @@ const PatrimoineDetail = () => {
 
               {/* Monuments */}
               <TabsContent value="monuments" className="mt-4">
-                {site.monuments && site.monuments.length > 0 ? (
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    {site.monuments.map((monument, idx) => (
-                      <Card key={idx}>
-                        <CardHeader className="pb-2">
-                          <div className="flex items-center justify-between">
-                            <CardTitle className="text-lg">
-                              {translate(monument.nom, lang)}
-                            </CardTitle>
-                            <Badge variant="outline">{monument.type}</Badge>
-                          </div>
-                        </CardHeader>
-                        <CardContent>
-                          <p className="text-sm text-muted-foreground">
-                            {translate(monument.description, lang) || t('common.noDescription', 'Aucune description')}
-                          </p>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                ) : (
-                  <Card className="text-center py-8">
-                    <CardContent>
-                      <Landmark className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-                      <p className="text-muted-foreground">{t('patrimoine.noMonuments', 'Aucun monument répertorié')}</p>
-                    </CardContent>
-                  </Card>
-                )}
+                <SectionElements
+                  lieuId={site.id_lieu}
+                  kind="monument"
+                  items={(site.monuments || []) as PatrimoineElement[]}
+                  lang={lang}
+                  onItemAdded={(item) => setSite(prev => prev ? { ...prev, monuments: [...(prev.monuments || []), item as { id: number; nom: string; description?: string; type: string }] } : prev)}
+                  onItemDeleted={(id) => setSite(prev => prev ? { ...prev, monuments: (prev.monuments || []).filter(m => m.id !== id) } : prev)}
+                />
               </TabsContent>
 
               {/* Vestiges */}
               <TabsContent value="vestiges" className="mt-4">
-                {site.vestiges && site.vestiges.length > 0 ? (
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    {site.vestiges.map((vestige, idx) => (
-                      <Card key={idx}>
-                        <CardHeader className="pb-2">
-                          <div className="flex items-center justify-between">
-                            <CardTitle className="text-lg">
-                              {translate(vestige.nom, lang)}
-                            </CardTitle>
-                            <Badge variant="outline">{vestige.type}</Badge>
-                          </div>
-                        </CardHeader>
-                        <CardContent>
-                          <p className="text-sm text-muted-foreground">
-                            {translate(vestige.description, lang) || t('common.noDescription', 'Aucune description')}
-                          </p>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                ) : (
-                  <Card className="text-center py-8">
-                    <CardContent>
-                      <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-                      <p className="text-muted-foreground">{t('patrimoine.noVestiges', 'Aucun vestige répertorié')}</p>
-                    </CardContent>
-                  </Card>
-                )}
+                <SectionElements
+                  lieuId={site.id_lieu}
+                  kind="vestige"
+                  items={(site.vestiges || []) as PatrimoineElement[]}
+                  lang={lang}
+                  onItemAdded={(item) => setSite(prev => prev ? { ...prev, vestiges: [...(prev.vestiges || []), item as { id: number; nom: string; description?: string; type: string }] } : prev)}
+                  onItemDeleted={(id) => setSite(prev => prev ? { ...prev, vestiges: (prev.vestiges || []).filter(v => v.id !== id) } : prev)}
+                />
               </TabsContent>
 
               {/* Services — utilise le composant enrichi */}
