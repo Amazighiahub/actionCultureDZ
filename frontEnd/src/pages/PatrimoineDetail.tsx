@@ -806,6 +806,38 @@ const PatrimoineDetail = () => {
               <SectionPersonnalites icon={<span className="text-xl">👤</span>} title={t('patrimoine.sections.personnalites', 'Personnalités')} content={site.DetailLieu?.personnalites} lang={lang} lieuId={site.id_lieu} onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, personnalites: val } } : prev)} />
               <SectionEnrichissable icon={<Info className="h-5 w-5 text-primary" />} title={t('patrimoine.sections.infosPratiques', 'Informations pratiques')} content={site.DetailLieu?.infos_pratiques} lang={lang} lieuId={site.id_lieu} fieldName="infos_pratiques" onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, infos_pratiques: val } } : prev)} />
               <SectionEnrichissable icon={<span className="text-xl">📚</span>} title={t('patrimoine.sections.references', 'Références historiques')} content={site.DetailLieu?.referencesHistoriques} lang={lang} lieuId={site.id_lieu} fieldName="referencesHistoriques" onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, referencesHistoriques: val } } : prev)} />
+
+              {/* Monuments — visible pour tous les types de site */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 font-semibold text-base">
+                  <Landmark className="h-5 w-5 text-primary" />
+                  <span>{t('patrimoine.monuments', 'Monuments')}</span>
+                </div>
+                <SectionElements
+                  lieuId={site.id_lieu}
+                  kind="monument"
+                  items={(site.monuments || []) as PatrimoineElement[]}
+                  lang={lang}
+                  onItemAdded={(item) => setSite(prev => prev ? { ...prev, monuments: [...(prev.monuments || []), item as { id: number; nom: string; description?: string; type: string }] } : prev)}
+                  onItemDeleted={(id) => setSite(prev => prev ? { ...prev, monuments: (prev.monuments || []).filter(m => m.id !== id) } : prev)}
+                />
+              </div>
+
+              {/* Vestiges — visible pour tous les types de site */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 font-semibold text-base">
+                  <Building2 className="h-5 w-5 text-primary" />
+                  <span>{t('patrimoine.vestiges', 'Vestiges')}</span>
+                </div>
+                <SectionElements
+                  lieuId={site.id_lieu}
+                  kind="vestige"
+                  items={(site.vestiges || []) as PatrimoineElement[]}
+                  lang={lang}
+                  onItemAdded={(item) => setSite(prev => prev ? { ...prev, vestiges: [...(prev.vestiges || []), item as { id: number; nom: string; description?: string; type: string }] } : prev)}
+                  onItemDeleted={(id) => setSite(prev => prev ? { ...prev, vestiges: (prev.vestiges || []).filter(v => v.id !== id) } : prev)}
+                />
+              </div>
             </div>
           </div>
 
