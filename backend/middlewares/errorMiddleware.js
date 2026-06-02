@@ -30,6 +30,17 @@ const errorMiddleware = {
 
   // Gestionnaire d'erreurs global
   errorHandler: (error, req, res, next) => {
+    // Si la réponse a déjà été envoyée (ex: timeout middleware 408),
+    // ne pas tenter d'envoyer une autre réponse — juste logger et déléguer à Express.
+    if (res.headersSent) {
+      logger.warn('errorHandler: headers already sent, skipping response', {
+        error: error.message,
+        path: req.originalUrl,
+        method: req.method
+      });
+      return next(error);
+    }
+
     const isIgnoredPath = [
       '/.well-known',
       '/favicon.ico',
