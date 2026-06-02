@@ -193,49 +193,31 @@ class OeuvreService extends BaseService {
       }
     }
 
-    // 3b. Vérifier les doublons (titre + type + langue)
-    //     Note: JSON_EXTRACT renvoie une valeur JSON (quoted). Sans JSON_UNQUOTE,
-    //     la comparaison avec une string brute ne matche jamais en MySQL.
-    const titreFr = createDTO.titre?.fr;
-    const titreAr = createDTO.titre?.ar;
+    // 3b. Protection anti double-envoi (même user, même type, < 60s)
+    //     Utilise uniquement des colonnes indexées (saisi_par, id_type_oeuvre, created_at)
+    //     pour éviter un full table scan sur la colonne JSON `titre`.
+    const titreFr = createDTO.titre?.fr?.trim();
+    const titreAr = createDTO.titre?.ar?.trim();
     if (titreFr || titreAr) {
-      const { Op, Sequelize } = require('sequelize');
-      const conditions = [];
-      const buildJsonMatch = (jsonPath, value) =>
-        Sequelize.where(
-          Sequelize.fn('JSON_UNQUOTE', Sequelize.fn('JSON_EXTRACT', Sequelize.col('titre'), Sequelize.literal(`'${jsonPath}'`))),
-          value
-        );
-      if (titreFr) conditions.push(buildJsonMatch('$.fr', titreFr));
-      if (titreAr) conditions.push(buildJsonMatch('$.ar', titreAr));
-      const existing = await this.repository.model.findOne({
+      const { Op } = require('sequelize');
+      const recentOeuvre = await this.repository.model.findOne({
         where: {
+          saisi_par: userId,
           id_type_oeuvre: createDTO.idTypeOeuvre,
-          ...(createDTO.idLangue ? { id_langue: createDTO.idLangue } : {}),
-          [Op.or]: conditions
+          created_at: { [Op.gte]: new Date(Date.now() - 60000) }
         },
-        attributes: ['id_oeuvre', 'saisi_par', 'created_at']
+        attributes: ['id_oeuvre', 'titre']
       });
-      if (existing) {
-        // Si c'est le même utilisateur et créé il y a moins de 60s → double-envoi mobile
-        // Retourner l'oeuvre existante au lieu de bloquer
-        const createdAt = existing.created_at ? new Date(existing.created_at) : null;
-        const isRecentDuplicate = createdAt && (Date.now() - createdAt.getTime()) < 60000;
-        const isSameUser = existing.saisi_par === userId;
-        if (isSameUser && isRecentDuplicate) {
-          this.logger.info(`Double-envoi détecté pour user=${userId}, retour de l'oeuvre existante id=${existing.id_oeuvre}`);
-          const existingOeuvre = await this.findWithFullDetails(existing.id_oeuvre, { incrementViews: false });
+      if (recentOeuvre) {
+        // Comparer le titre en mémoire (pas de JSON_EXTRACT en DB)
+        const t = recentOeuvre.titre || {};
+        const frMatch = titreFr && (t.fr === titreFr || (typeof t === 'string' && t.includes(titreFr)));
+        const arMatch = titreAr && (t.ar === titreAr || (typeof t === 'string' && t.includes(titreAr)));
+        if (frMatch || arMatch) {
+          this.logger.info(`Double-envoi détecté pour user=${userId}, retour de l'oeuvre existante id=${recentOeuvre.id_oeuvre}`);
+          const existingOeuvre = await this.findWithFullDetails(recentOeuvre.id_oeuvre, { incrementViews: false });
           return { oeuvre: existingOeuvre, subtype: null, duplicate: true };
         }
-        this.logger.warn(`Doublon détecté: titre="${titreFr || titreAr}", type=${createDTO.idTypeOeuvre}, existant id=${existing.id_oeuvre}`);
-        const isSameUserDuplicate = existing.saisi_par === userId;
-        const message = isSameUserDuplicate
-          ? 'Vous avez déjà soumis une œuvre avec ce titre. Elle est peut-être en attente de validation par un administrateur. Consultez votre tableau de bord pour suivre son statut.'
-          : 'Une œuvre avec ce titre existe déjà pour ce type et cette langue';
-        const err = new Error(message);
-        err.statusCode = 409;
-        err.code = 'DUPLICATE_OEUVRE';
-        throw err;
       }
     }
 
