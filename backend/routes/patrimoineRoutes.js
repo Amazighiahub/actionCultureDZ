@@ -145,6 +145,130 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
     }
   });
 
+  // ============================================================================
+  // MONUMENTS — ajout / suppression depuis la fiche enrichissement
+  // ============================================================================
+
+  router.post('/:id/monuments', authenticate, validateId(),
+    [
+      body('nom').isObject().withMessage('nom doit être un objet multilingue {fr, ar, en}'),
+      body('type').isIn(['Mosquée', 'Palais', 'Statue', 'Tour', 'Musée']).withMessage('Type de monument invalide'),
+      body('description').optional().isObject(),
+    ],
+    handleValidationErrors,
+    async (req, res) => {
+      try {
+        const lieuId = parseInt(req.params.id);
+        const { nom, type, description } = req.body;
+
+        const lieu = await models.Lieu.findByPk(lieuId, { attributes: ['id_lieu'] });
+        if (!lieu) return res.status(404).json({ success: false, error: 'Site non trouvé' });
+
+        let detail = await models.DetailLieu.findOne({ where: { id_lieu: lieuId } });
+        if (!detail) {
+          detail = await models.DetailLieu.create({
+            id_lieu: lieuId,
+            id_dernier_contributeur: req.user?.id_user || null,
+            date_derniere_contribution: new Date(),
+            nb_contributions: 1
+          });
+        }
+
+        const monument = await models.Monument.create({
+          id_detail_lieu: detail.id_detailLieu,
+          nom,
+          description: description || {},
+          type
+        });
+
+        res.status(201).json({ success: true, data: monument });
+      } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+      }
+    }
+  );
+
+  router.delete('/:id/monuments/:monumentId', authenticate, validateId(), async (req, res) => {
+    try {
+      const lieuId = parseInt(req.params.id);
+      const monumentId = parseInt(req.params.monumentId);
+      if (isNaN(monumentId)) return res.status(400).json({ success: false, error: 'Identifiant invalide' });
+
+      const monument = await models.Monument.findOne({
+        where: { id: monumentId },
+        include: [{ model: models.DetailLieu, where: { id_lieu: lieuId }, required: true, attributes: [] }]
+      });
+      if (!monument) return res.status(404).json({ success: false, error: 'Monument non trouvé' });
+
+      await monument.destroy();
+      res.json({ success: true, message: 'Monument supprimé' });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  // ============================================================================
+  // VESTIGES — ajout / suppression depuis la fiche enrichissement
+  // ============================================================================
+
+  router.post('/:id/vestiges', authenticate, validateId(),
+    [
+      body('nom').isObject().withMessage('nom doit être un objet multilingue {fr, ar, en}'),
+      body('type').isIn(['Ruines', 'Murailles', 'Site archéologique']).withMessage('Type de vestige invalide'),
+      body('description').optional().isObject(),
+    ],
+    handleValidationErrors,
+    async (req, res) => {
+      try {
+        const lieuId = parseInt(req.params.id);
+        const { nom, type, description } = req.body;
+
+        const lieu = await models.Lieu.findByPk(lieuId, { attributes: ['id_lieu'] });
+        if (!lieu) return res.status(404).json({ success: false, error: 'Site non trouvé' });
+
+        let detail = await models.DetailLieu.findOne({ where: { id_lieu: lieuId } });
+        if (!detail) {
+          detail = await models.DetailLieu.create({
+            id_lieu: lieuId,
+            id_dernier_contributeur: req.user?.id_user || null,
+            date_derniere_contribution: new Date(),
+            nb_contributions: 1
+          });
+        }
+
+        const vestige = await models.Vestige.create({
+          id_detail_lieu: detail.id_detailLieu,
+          nom,
+          description: description || {},
+          type
+        });
+
+        res.status(201).json({ success: true, data: vestige });
+      } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+      }
+    }
+  );
+
+  router.delete('/:id/vestiges/:vestigeId', authenticate, validateId(), async (req, res) => {
+    try {
+      const lieuId = parseInt(req.params.id);
+      const vestigeId = parseInt(req.params.vestigeId);
+      if (isNaN(vestigeId)) return res.status(400).json({ success: false, error: 'Identifiant invalide' });
+
+      const vestige = await models.Vestige.findOne({
+        where: { id: vestigeId },
+        include: [{ model: models.DetailLieu, where: { id_lieu: lieuId }, required: true, attributes: [] }]
+      });
+      if (!vestige) return res.status(404).json({ success: false, error: 'Vestige non trouvé' });
+
+      await vestige.destroy();
+      res.json({ success: true, message: 'Vestige supprimé' });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
   // Articles patrimoine (blocs éditeur riche liés à un lieu + section)
   router.get('/:id/articles', validateId(), async (req, res) => {
     try {
