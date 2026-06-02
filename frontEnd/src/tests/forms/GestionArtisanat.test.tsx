@@ -235,8 +235,8 @@ function renderComponent() {
 
 async function waitForDataLoad() {
   await waitFor(() => {
-    expect(mockGetMateriaux).toHaveBeenCalled();
-  });
+    expect(screen.getByTestId('nom-fr')).toBeInTheDocument();
+  }, { timeout: 5000 });
 }
 
 function submitForm() {
