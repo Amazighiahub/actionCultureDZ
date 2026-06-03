@@ -168,7 +168,7 @@ class CronService {
       },
       attributes: ['id_evenement', 'nom_evenement', 'date_debut', 'id_lieu'],
       include: [
-        { model: this.models.Lieu, attributes: ['id_lieu', 'nom_fr', 'nom_ar', 'adresse'] },
+        { model: this.models.Lieu, as: 'Lieu', attributes: ['id_lieu', 'nom', 'adresse'] },
         { model: this.models.TypeEvenement, attributes: ['id_type_evenement', 'nom'] }
       ]
     });
