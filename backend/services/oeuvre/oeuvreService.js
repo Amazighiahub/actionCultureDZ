@@ -204,7 +204,7 @@ class OeuvreService extends BaseService {
         where: {
           saisi_par: userId,
           id_type_oeuvre: createDTO.idTypeOeuvre,
-          created_at: { [Op.gte]: new Date(Date.now() - 60000) }
+          date_creation: { [Op.gte]: new Date(Date.now() - 60000) }
         },
         attributes: ['id_oeuvre', 'titre']
       });
