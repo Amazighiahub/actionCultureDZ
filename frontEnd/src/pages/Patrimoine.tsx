@@ -322,7 +322,7 @@ const Patrimoine = () => {
                     {site.DetailLieu?.noteMoyenne && (
                       <Badge className="absolute top-2 right-2 bg-yellow-500/90">
                         <Star className="h-3 w-3 mr-1 fill-current" />
-                        {site.DetailLieu.noteMoyenne.toFixed(1)}
+                        {Number(site.DetailLieu.noteMoyenne).toFixed(1)}
                       </Badge>
                     )}
                     {site.qrcodes && site.qrcodes.length > 0 && (
