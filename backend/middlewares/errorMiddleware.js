@@ -112,7 +112,10 @@ const errorMiddleware = {
       code = 'TOKEN_EXPIRED';
     }
 
-    if (process.env.NODE_ENV === 'development' && !(statusCode === 404 && isIgnoredPath)) {
+    // Toujours logger les erreurs 500 (pas seulement en dev)
+    if (statusCode >= 500 && !(statusCode === 404 && isIgnoredPath)) {
+      logger.error('Erreur serveur: %s | %s %s | %s', error.message, req.method, req.originalUrl, error.stack?.split('\n')[1]?.trim() || '');
+    } else if (process.env.NODE_ENV === 'development') {
       logger.error('Erreur: %o', error);
     }
 
