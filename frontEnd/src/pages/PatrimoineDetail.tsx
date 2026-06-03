@@ -331,7 +331,7 @@ const PatrimoineDetail = () => {
                 <div className="flex items-center gap-2 text-white/90 mb-4">
                   <MapPin className="h-4 w-4" />
                   <span>
-                    {site.wilaya?.nom || site.commune?.nom || translate(site.adresse, lang)}
+                    {(site.wilaya as any)?.wilaya_name_ascii || (site.commune as any)?.commune_name_ascii || translate(site.adresse, lang)}
                   </span>
                 </div>
                 {/* 🎯 CTA Principal - Planifier votre visite */}
@@ -872,7 +872,7 @@ const PatrimoineDetail = () => {
                     </p>
                     {site.commune && (
                       <p className="text-sm text-muted-foreground">
-                        {site.commune.nom}, {site.daira?.nom}, {site.wilaya?.nom}
+                        {(site.commune as any).commune_name_ascii || site.commune.nom}, {(site.daira as any)?.daira_name_ascii || site.daira?.nom}, {(site.wilaya as any)?.wilaya_name_ascii || site.wilaya?.nom}
                       </p>
                     )}
                   </div>
