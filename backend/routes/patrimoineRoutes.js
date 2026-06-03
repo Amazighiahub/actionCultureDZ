@@ -65,11 +65,11 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
     patrimoineController.wrap('noter'));
   router.post('/:id/favoris', authenticate, validateId(), patrimoineController.wrap('ajouterFavoris'));
   router.delete('/:id/favoris', authenticate, validateId(), patrimoineController.wrap('retirerFavoris'));
-  router.post('/:id/medias', authenticate, requireValidatedProfessional, validateId(),
+  router.post('/:id/medias', authenticate, validateId(),
     uploadService.uploadMedia().array('medias', 10),
     patrimoineController.wrap('uploadMedias'));
-  router.delete('/:id/medias/:mediaId', authenticate, requireValidatedProfessional, validateId(), validateId('mediaId'), patrimoineController.wrap('deleteMedia'));
-  router.put('/:id/horaires', authenticate, requireValidatedProfessional, validateId(), patrimoineController.wrap('updateHoraires'));
+  router.delete('/:id/medias/:mediaId', authenticate, validateId(), validateId('mediaId'), patrimoineController.wrap('deleteMedia'));
+  router.put('/:id/horaires', authenticate, validateId(), patrimoineController.wrap('updateHoraires'));
 
   // Enrichir les détails culturels d'un site (contribution collaborative)
   router.patch('/:id/detail', authenticate, validateId(),
