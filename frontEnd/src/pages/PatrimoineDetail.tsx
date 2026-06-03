@@ -880,7 +880,7 @@ const PatrimoineDetail = () => {
 
                 {/* Coordonnées GPS */}
                 <div className="text-xs text-muted-foreground bg-muted p-2 rounded">
-                  GPS: {site.latitude.toFixed(6)}, {site.longitude.toFixed(6)}
+                  GPS: {Number(site.latitude).toFixed(6)}, {Number(site.longitude).toFixed(6)}
                 </div>
               </CardContent>
             </Card>
