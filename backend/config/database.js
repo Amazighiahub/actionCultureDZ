@@ -111,7 +111,8 @@ const config = {
       idle: parseInt(process.env.DB_POOL_IDLE || '10000')
     },
     dialectOptions: {
-      connectTimeout: 10000
+      connectTimeout: 10000,
+      charset: 'utf8mb4'
     }
   },
   test: {
@@ -148,6 +149,9 @@ const config = {
       connectTimeout: 10000,
       supportBigNumbers: true,
       bigNumberStrings: true,
+      // Force utf8mb4 sur la connexion (SET NAMES utf8mb4) pour eviter
+      // le mojibake sur les caracteres arabes/tamazight
+      charset: 'utf8mb4',
       // SSL pour les connexions DB distantes en production
       ...(process.env.DB_SSL === 'true' ? {
         ssl: {
