@@ -41,7 +41,7 @@ class PatrimoineRepository extends BaseRepository {
     if (this.models.Commune) {
       const communeInclude = {
         model: this.models.Commune,
-        attributes: ['id_commune', 'nom'],
+        attributes: ['id_commune', 'nom', 'commune_name_ascii'],
         required: false
       };
       if (this.models.Daira) {
@@ -53,7 +53,7 @@ class PatrimoineRepository extends BaseRepository {
         if (this.models.Wilaya) {
           dairaInclude.include = [{
             model: this.models.Wilaya,
-            attributes: ['id_wilaya', 'nom', 'codeW'],
+            attributes: ['id_wilaya', 'nom', 'wilaya_name_ascii', 'codeW'],
             required: false
           }];
         }
@@ -98,7 +98,7 @@ class PatrimoineRepository extends BaseRepository {
     if (this.models.Commune) {
       const communeInclude = {
         model: this.models.Commune,
-        attributes: ['id_commune', 'nom'],
+        attributes: ['id_commune', 'nom', 'commune_name_ascii'],
         required: false
       };
       if (this.models.Daira) {
@@ -110,7 +110,7 @@ class PatrimoineRepository extends BaseRepository {
         if (this.models.Wilaya) {
           dairaInclude.include = [{
             model: this.models.Wilaya,
-            attributes: ['id_wilaya', 'nom', 'codeW'],
+            attributes: ['id_wilaya', 'nom', 'wilaya_name_ascii', 'codeW'],
             required: false
           }];
         }
@@ -170,7 +170,7 @@ class PatrimoineRepository extends BaseRepository {
       include = include.filter(i => i.model !== this.models.Commune);
       include.push({
         model: this.models.Commune,
-        attributes: ['id_commune', 'nom'],
+        attributes: ['id_commune', 'nom', 'commune_name_ascii'],
         required: true,
         include: [{
           model: this.models.Daira,
@@ -178,7 +178,7 @@ class PatrimoineRepository extends BaseRepository {
           required: true,
           include: [{
             model: this.models.Wilaya,
-            attributes: ['id_wilaya', 'nom', 'codeW'],
+            attributes: ['id_wilaya', 'nom', 'wilaya_name_ascii', 'codeW'],
             where: { id_wilaya: wilayaId },
             required: true
           }]

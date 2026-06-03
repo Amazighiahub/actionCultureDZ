@@ -151,7 +151,7 @@ const Patrimoine = () => {
       if (imageMedia?.url) return imageMedia.url;
     }
     // Image par défaut selon le type
-    return 'https://images.unsplash.com/photo-1539650116574-75c0c6d73c6e?auto=format&fit=crop&w=600&q=80';
+    return '/images/placeholder-patrimoine.svg';
   };
 
   // ⚡ Icônes pour les types de patrimoine
@@ -341,7 +341,7 @@ const Patrimoine = () => {
                         <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
                           <MapPin className="h-3 w-3" />
                           <span>
-                            {site.wilaya?.nom || site.commune?.nom || translate(site.adresse, lang)}
+                            {(site.wilaya as any)?.wilaya_name_ascii || (site.commune as any)?.commune_name_ascii || translate(site.adresse, lang)}
                           </span>
                         </div>
                       </div>
