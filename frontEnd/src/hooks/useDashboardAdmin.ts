@@ -615,9 +615,13 @@ const loadPatrimoineItems = useCallback(async (filters?: PatrimoineFilters) => {
   try {
     const response = await adminService.getPatrimoineItems(filters);
 
-    if (response.success && response.data) {
+    if (response.success) {
       const raw = response.data as any;
-      setPatrimoineItems({ items: raw.items || raw.data || [], pagination: raw.pagination || { total: 0, page: 1, limit: 20, pages: 1 } });
+      // Le contrôleur GET /patrimoine retourne { data: [...], pagination: {...} }
+      // data est l'array directement, pagination est à la racine de la réponse
+      const items = Array.isArray(raw) ? raw : (raw?.items || raw?.data || raw?.sites || []);
+      const pagination = (response as any).pagination || raw?.pagination || { total: 0, page: 1, limit: 20, pages: 1 };
+      setPatrimoineItems({ items, pagination });
     }
   } catch (error: unknown) {
     const status = error instanceof Error && 'status' in error ? (error as { status?: number }).status : undefined;
