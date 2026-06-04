@@ -518,10 +518,16 @@ class PatrimoineService extends BaseService {
       throw this._validationError('Aucun fichier fourni');
     }
     const medias = await Promise.all(files.map(async (file) => {
+      // multer-storage-cloudinary expose file.path = URL Cloudinary securisee
+      // file.filename = public_id Cloudinary (pour suppression future)
+      const url = file.path || file.secure_url || file.url || `/uploads/${file.filename}`;
+      const type = file.mimetype?.startsWith('image') ? 'image'
+                 : file.mimetype?.startsWith('video') ? 'video'
+                 : 'document';
       return LieuMedia.create({
         id_lieu: siteId,
-        type: file.mimetype.startsWith('image') ? 'image' : 'document',
-        url: `/uploads/${file.filename}`,
+        type,
+        url,
         description: {}
       });
     }));
