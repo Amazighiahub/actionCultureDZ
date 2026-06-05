@@ -206,7 +206,7 @@ const AdminPatrimoineTab: React.FC = () => {
           {filteredPatrimoines.map((item: any) => {
             const nom = getLocalizedText(item.nom, currentLang, 'Sans nom');
             const description = getLocalizedText(item.description, currentLang);
-            const wilaya = item.wilaya?.nom || item.Commune?.Daira?.Wilaya?.nom || '';
+            const wilaya = (item.wilaya as any)?.wilaya_name_ascii || item.wilaya?.nom || (item.Commune?.Daira?.Wilaya as any)?.wilaya_name_ascii || item.Commune?.Daira?.Wilaya?.nom || '';
             const type = item.type || item.typePatrimoine || '';
             const imageUrl = item.image_url || item.medias?.[0]?.url;
 
@@ -214,10 +214,10 @@ const AdminPatrimoineTab: React.FC = () => {
               <Card key={item.id_patrimoine || item.id_lieu || item.id} className="overflow-hidden hover:shadow-md transition-shadow">
                 <div className="relative h-40">
                   <LazyImage
-                    src={imageUrl ? getAssetUrl(imageUrl) : '/images/placeholder-patrimoine.png'}
+                    src={imageUrl ? getAssetUrl(imageUrl) : '/images/placeholder-patrimoine.svg'}
                     alt={nom}
                     className="w-full h-full object-cover"
-                    fallback="/images/placeholder-patrimoine.png"
+                    fallback="/images/placeholder-patrimoine.svg"
                   />
                   <div className="absolute top-2 left-2 flex gap-2">
                     <StatusBadge status={item.statut || 'en_attente'} size="sm" />
