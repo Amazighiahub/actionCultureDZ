@@ -522,7 +522,8 @@ class PatrimoineService extends BaseService {
     const medias = await Promise.all(files.map(async (file) => {
       // multer-storage-cloudinary expose file.path = URL Cloudinary securisee
       // file.filename = public_id Cloudinary (pour suppression future)
-      const url = file.path || file.secure_url || file.url || `/uploads/${file.filename}`;
+      const url = file.path || file.secure_url || file.url;
+      if (!url) throw new Error(`Upload Cloudinary échoué pour ${file.originalname}`);
       const type = file.mimetype?.startsWith('image') ? 'image'
                  : file.mimetype?.startsWith('video') ? 'video'
                  : 'document';
