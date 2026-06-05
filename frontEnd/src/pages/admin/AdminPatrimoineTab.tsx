@@ -230,54 +230,43 @@ const AdminPatrimoineTab: React.FC = () => {
                   </div>
                 </div>
 
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-medium truncate">{nom}</h4>
-                      <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
-                        {wilaya && (
-                          <>
-                            <MapPin className="h-3 w-3" />
-                            <span>{wilaya}</span>
-                          </>
-                        )}
-                        {type && (
-                          <>
-                            <span>-</span>
-                            <span>{t(`admin.patrimoine.types.${type}`, type)}</span>
-                          </>
-                        )}
-                      </div>
-                      {description && (
-                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{description}</p>
-                      )}
+                <CardContent className="p-4 space-y-3">
+                  <div>
+                    <h4 className="font-semibold truncate">{nom || t('common.noName', 'Sans nom')}</h4>
+                    <div className="flex items-center gap-1 mt-1 text-sm text-muted-foreground">
+                      {wilaya && <><MapPin className="h-3 w-3 shrink-0" /><span className="truncate">{wilaya}</span></>}
+                      {type && <><span>·</span><span>{t(`admin.patrimoine.types.${type}`, type)}</span></>}
                     </div>
+                  </div>
 
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={t('common.moreOptions', 'Plus d\'options')}>
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleView(item.id_patrimoine || item.id_lieu || item.id)}>
-                          <Eye className="h-4 w-4 mr-2" />
-                          {t('common.view', 'Voir')}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => navigate(`/patrimoine/${item.id_patrimoine || item.id_lieu || item.id}`, { state: { from: '/admin/dashboard?tab=patrimoine' } })}>
-                          <Edit className="h-4 w-4 mr-2" />
-                          {t('common.edit', 'Modifier')}
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => handleDelete(item.id_patrimoine || item.id_lieu || item.id, nom)}
-                          className="text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          {t('common.delete', 'Supprimer')}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                  {/* Actions visibles */}
+                  <div className="flex gap-2 pt-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 h-8 text-xs"
+                      onClick={() => handleView(item.id_patrimoine || item.id_lieu || item.id)}
+                    >
+                      <Eye className="h-3 w-3 mr-1" />
+                      {t('common.view', 'Voir')}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 h-8 text-xs"
+                      onClick={() => navigate(`/patrimoine/${item.id_patrimoine || item.id_lieu || item.id}`, { state: { from: '/admin/dashboard?tab=patrimoine' } })}
+                    >
+                      <Edit className="h-3 w-3 mr-1" />
+                      {t('common.edit', 'Modifier')}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => handleDelete(item.id_patrimoine || item.id_lieu || item.id, nom)}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
