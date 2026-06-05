@@ -299,9 +299,11 @@ class PatrimoineService extends BaseService {
         }
       }
 
-      const full = await this.repository.findWithFullDetails(lieuId);
       this.logger.info(`Site patrimonial créé: ${lieuId}`);
-      return PatrimoineDTO.fromEntity(full);
+      // Retourner un objet minimal depuis la mémoire pour éviter findWithFullDetails
+      // (même pattern que oeuvreService : évite 4-5 requêtes séquentielles = timeout/null)
+      // Le frontend n'utilise que id_lieu pour la navigation après création.
+      return { id_lieu: lieuId, id: lieuId, toDetailJSON: () => ({ id_lieu: lieuId, id: lieuId }) };
     });
   }
 
