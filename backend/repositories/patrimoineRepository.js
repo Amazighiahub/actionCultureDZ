@@ -47,7 +47,7 @@ class PatrimoineRepository extends BaseRepository {
       if (this.models.Daira) {
         const dairaInclude = {
           model: this.models.Daira,
-          attributes: ['id_daira', 'nom'],
+          attributes: ['id_daira', 'nom', 'daira_name_ascii'],
           required: false
         };
         if (this.models.Wilaya) {
@@ -104,7 +104,7 @@ class PatrimoineRepository extends BaseRepository {
       if (this.models.Daira) {
         const dairaInclude = {
           model: this.models.Daira,
-          attributes: ['id_daira', 'nom'],
+          attributes: ['id_daira', 'nom', 'daira_name_ascii'],
           required: false
         };
         if (this.models.Wilaya) {
@@ -174,7 +174,7 @@ class PatrimoineRepository extends BaseRepository {
         required: true,
         include: [{
           model: this.models.Daira,
-          attributes: ['id_daira', 'nom'],
+          attributes: ['id_daira', 'nom', 'daira_name_ascii'],
           required: true,
           include: [{
             model: this.models.Wilaya,
