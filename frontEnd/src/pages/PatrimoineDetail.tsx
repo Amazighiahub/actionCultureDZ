@@ -239,7 +239,7 @@ const PatrimoineDetail = () => {
       const imageMedia = site.medias.find(m => m.type === 'image');
       if (imageMedia?.url) return imageMedia.url;
     }
-    return 'https://images.unsplash.com/photo-1539650116574-75c0c6d73c6e?auto=format&fit=crop&w=1200&q=80';
+    return '/images/placeholder-patrimoine.svg';
   };
 
   if (loading) {

@@ -183,7 +183,8 @@ class PatrimoineService extends BaseService<SitePatrimoine, CreateSiteData, Upda
   }
 
   async getQRCode(id: number): Promise<ApiResponse<Blob>> {
-    return httpClient.download(API_ENDPOINTS.patrimoine.qrcode(id), `qrcode_site_${id}.png`);
+    // format=png pour recevoir un vrai buffer PNG (pas du JSON dataurl)
+    return httpClient.download(`${API_ENDPOINTS.patrimoine.qrcode(id)}?format=png`, `qrcode_site_${id}.png`);
   }
 
   // Parcours
@@ -279,7 +280,7 @@ class PatrimoineService extends BaseService<SitePatrimoine, CreateSiteData, Upda
 
   async exportSites(format: 'excel' | 'csv' | 'json' = 'excel'): Promise<ApiResponse<Blob>> {
     return httpClient.download(
-      `${API_ENDPOINTS.patrimoine.export}?format=${format}`,
+      `/patrimoine/export?format=${format}`,
       `sites_patrimoine.${format}`
     );
   }
