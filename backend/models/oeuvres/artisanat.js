@@ -36,7 +36,8 @@ module.exports = (sequelize) => {
       type: DataTypes.DECIMAL(8, 3)
     },
     prix: {
-      type: DataTypes.DECIMAL(10, 2)
+      type: DataTypes.DECIMAL(10, 2),
+      validate: { min: 0 }
     },
     date_creation: {
       type: DataTypes.DATE,
@@ -54,7 +55,7 @@ module.exports = (sequelize) => {
 
   // Associations
   Artisanat.associate = (models) => {
-    Artisanat.belongsTo(models.Oeuvre, { foreignKey: 'id_oeuvre' });
+    Artisanat.belongsTo(models.Oeuvre, { foreignKey: 'id_oeuvre', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
     Artisanat.belongsTo(models.Materiau, { foreignKey: 'id_materiau' });
     Artisanat.belongsTo(models.Technique, { foreignKey: 'id_technique' });
   };

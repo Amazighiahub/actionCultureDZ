@@ -36,8 +36,12 @@ module.exports = (sequelize) => {
 
   // Associations
   UserRole.associate = (models) => {
-    UserRole.belongsTo(models.User, { foreignKey: 'id_user' });
-    UserRole.belongsTo(models.Role, { foreignKey: 'id_role' });
+    UserRole.belongsTo(models.User, {
+      foreignKey: 'id_user', onDelete: 'CASCADE', onUpdate: 'CASCADE'
+    });
+    UserRole.belongsTo(models.Role, {
+      foreignKey: 'id_role', onDelete: 'RESTRICT', onUpdate: 'CASCADE'
+    });
   };
 
   return UserRole;

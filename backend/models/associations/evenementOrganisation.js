@@ -105,8 +105,7 @@ module.exports = (sequelize) => {
         id_evenement,
         role: 'sponsor'
       },
-      include: ['Organisation'],
-      order: [['montant_sponsoring', 'DESC']]
+      include: ['Organisation']
     });
   };
   

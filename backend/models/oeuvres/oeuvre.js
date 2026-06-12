@@ -45,7 +45,8 @@ module.exports = (sequelize) => {
     },
     prix: {
       type: DataTypes.DECIMAL(10, 2),
-      allowNull: true
+      allowNull: true,
+      validate: { min: 0 }
     },
     saisi_par: {
       type: DataTypes.INTEGER,
@@ -202,6 +203,15 @@ module.exports = (sequelize) => {
   };
 
   // Hooks
+  Oeuvre.addHook('beforeCreate', (oeuvre) => {
+    if (!['brouillon', 'en_attente'].includes(oeuvre.statut)) {
+      oeuvre.statut = 'brouillon';
+    }
+    if (oeuvre.statut === 'en_attente' && !oeuvre.date_soumission) {
+      oeuvre.date_soumission = new Date();
+    }
+  });
+
   Oeuvre.beforeUpdate(async (oeuvre, options) => {
     if (oeuvre.id_oeuvre_originale === oeuvre.id_oeuvre) {
       throw new Error("Une œuvre ne peut pas être sa propre traduction");

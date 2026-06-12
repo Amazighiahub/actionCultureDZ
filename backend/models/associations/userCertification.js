@@ -58,5 +58,12 @@ module.exports = (sequelize) => {
     updatedAt: 'date_modification'
   });
 
+  UserCertification.associate = (models) => {
+    UserCertification.belongsTo(models.User, {
+      foreignKey: 'id_user', as: 'User',
+      onDelete: 'CASCADE', onUpdate: 'CASCADE'
+    });
+  };
+
   return UserCertification;
 };

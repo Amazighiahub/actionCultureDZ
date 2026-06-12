@@ -20,6 +20,11 @@ BACKEND_CONTAINER="eventculture-backend"
 DB_NAME="${DB_NAME:-actionculture}"
 ROOT_PASSWORD="${MYSQL_ROOT_PASSWORD:-root}"
 
+# Identifiants admin pour la validation post-seed
+# Surcharger via: SEED_ADMIN_EMAIL=... SEED_ADMIN_PASSWORD=... bash run-seeds-mysql.sh
+ADMIN_EMAIL="${SEED_ADMIN_EMAIL:-admin@actionculture.dz}"
+ADMIN_PASSWORD="${SEED_ADMIN_PASSWORD:-}"
+
 # Chemin absolu vers la racine du projet (2 niveaux au-dessus de seeds/)
 PROJECT_ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
 SEEDS_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -128,6 +133,44 @@ run_sql_required "${SEEDS_DIR}/seed-reference-data.sql" "Données de référence
 # exposition-art-contemporain.sql) utilisent des noms de tables incompatibles
 # avec les modèles Sequelize actuels. Ils ne sont pas chargés automatiquement.
 
+# --- Sécuriser le mot de passe admin (REQUIS en production) ---
+# Le seed SQL contient un hash bcrypt du mot de passe par défaut.
+# Cette étape le remplace par un mot de passe fort fourni par l'opérateur.
+echo ""
+if [ "${NODE_ENV}" = "production" ] && [ -z "${SEED_ADMIN_PASSWORD}" ]; then
+    echo "❌ ERREUR: SEED_ADMIN_PASSWORD est obligatoire en production."
+    echo "   Le seed SQL contient un mot de passe par défaut non sécurisé."
+    echo "   Lancez: SEED_ADMIN_PASSWORD='<mot_de_passe_fort>' bash run-seeds-mysql.sh"
+    exit 1
+fi
+
+if [ -n "${SEED_ADMIN_PASSWORD}" ]; then
+    echo "🔐 Mise à jour du hash admin en base..."
+    # Générer le hash bcrypt via Node.js dans le conteneur backend
+    NEW_HASH=$(docker exec \
+        -e "ADMIN_PW=${SEED_ADMIN_PASSWORD}" \
+        "${BACKEND_CONTAINER}" \
+        node -e "require('bcrypt').hash(process.env.ADMIN_PW, 12).then(h => process.stdout.write(h))" \
+        2>/dev/null)
+    if [ -z "${NEW_HASH}" ]; then
+        echo "   ❌ Impossible de générer le hash (conteneur backend non disponible)"
+        exit 1
+    fi
+    # Écrire le UPDATE dans un fichier tmp pour éviter les problèmes d'échappement
+    TMPFILE=$(mktemp)
+    printf "UPDATE user SET password='%s', doit_changer_mdp=0 WHERE email='%s';\n" \
+        "${NEW_HASH}" "${ADMIN_EMAIL}" > "${TMPFILE}"
+    docker exec -i "${CONTAINER}" mysql \
+        -u root -p"${ROOT_PASSWORD}" \
+        --default-character-set=utf8mb4 \
+        "${DB_NAME}" < "${TMPFILE}" 2>/dev/null
+    rm -f "${TMPFILE}"
+    echo "   ✅ Mot de passe admin mis à jour pour ${ADMIN_EMAIL}"
+else
+    echo "⚠️  Mot de passe admin par défaut (seeds) — environnement de développement uniquement"
+    echo "   Sur VPS: SEED_ADMIN_PASSWORD='<mdp_fort>' bash run-seeds-mysql.sh"
+fi
+
 # --- Résumé ---
 echo ""
 echo "============================================"
@@ -199,16 +242,22 @@ done
 
 # --- Validation des identifiants admin ---
 if curl -sf http://localhost:3001/health > /dev/null 2>&1; then
-    echo ""
-    echo "🔐 Validation des identifiants admin..."
-    ADMIN_LOGIN_RESPONSE=$(curl -s -X POST http://localhost:3001/api/users/login \
-        -H "Content-Type: application/json" \
-        -d '{"email":"admin@actionculture.dz","password":"admin123"}')
-    if echo "$ADMIN_LOGIN_RESPONSE" | grep -q '"success":true'; then
-        echo "   ✅ Admin OK : admin@actionculture.dz / admin123"
+    if [ -n "$ADMIN_PASSWORD" ]; then
+        echo ""
+        echo "🔐 Validation des identifiants admin..."
+        ADMIN_LOGIN_RESPONSE=$(curl -s -X POST http://localhost:3001/api/users/login \
+            -H "Content-Type: application/json" \
+            -d "{\"email\":\"${ADMIN_EMAIL}\",\"password\":\"${ADMIN_PASSWORD}\"}")
+        if echo "$ADMIN_LOGIN_RESPONSE" | grep -q '"success":true'; then
+            echo "   ✅ Admin OK : ${ADMIN_EMAIL}"
+        else
+            echo "   ❌ Échec connexion admin (email/mot de passe invalides ou utilisateur absent)"
+            echo "      Vérifiez que seed-reference-data.sql a bien chargé l'utilisateur admin."
+        fi
     else
-        echo "   ❌ Échec connexion admin (email/mot de passe invalides ou utilisateur absent)"
-        echo "      Vérifiez que seed-reference-data.sql a bien chargé l'utilisateur admin."
+        echo ""
+        echo "ℹ️  Validation admin ignorée (SEED_ADMIN_PASSWORD non défini)"
+        echo "   Pour valider: SEED_ADMIN_PASSWORD=<mdp> bash run-seeds-mysql.sh"
     fi
 fi
 
@@ -221,6 +270,6 @@ echo "  Frontend : http://localhost:3000"
 echo "  API      : http://localhost:3001"
 echo "  Health   : http://localhost:3001/health"
 echo ""
-echo "  Admin    : admin@actionculture.dz / admin123"
+echo "  Admin    : ${ADMIN_EMAIL} (mot de passe dans .env ou SEED_ADMIN_PASSWORD)"
 echo "  DB_SYNC  : false (tables déjà créées)"
 echo ""

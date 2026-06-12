@@ -101,7 +101,7 @@ module.exports = (sequelize) => {
     // =============================================================================
     statut: {
       type: DataTypes.ENUM('actif', 'en_attente_validation', 'inactif', 'suspendu', 'banni', 'rejete'),
-      defaultValue: 'actif',
+      defaultValue: 'en_attente_validation',
       allowNull: false,
       comment: 'État global du compte. Pro validé = actif, en attente = en_attente_validation, rejeté = rejete'
     },
@@ -366,7 +366,14 @@ module.exports = (sequelize) => {
     timestamps: true,
     createdAt: 'date_creation',
     updatedAt: 'date_modification',
-    
+
+    defaultScope: {
+      attributes: {
+        exclude: ['password', 'refresh_token', 'refresh_token_expires',
+                  'ip_inscription', 'ip_acceptation_conditions']
+      }
+    },
+
     indexes: [
       {
         name: 'id_index_email',
@@ -419,6 +426,10 @@ module.exports = (sequelize) => {
       beforeUpdate: async (user) => {
         if (user.changed('statut') && user.statut === 'actif') {
           user.date_validation = new Date();
+        }
+
+        if (user.changed('password')) {
+          user.password_changed_at = new Date();
         }
 
         // Le hachage du mot de passe est géré exclusivement par userService.changePassword().
@@ -538,9 +549,15 @@ module.exports = (sequelize) => {
   
   User.prototype.toPublicJSON = function(lang = 'fr') {
     const values = this.toJSON();
-    delete values.password;
-    delete values.ip_inscription;
-    
+
+    const PRIVATE_FIELDS = [
+      'password', 'refresh_token', 'refresh_token_expires', 'password_changed_at',
+      'ip_inscription', 'ip_acceptation_conditions',
+      'raison_rejet', 'documents_fournis', 'suspension_motif',
+      'suspendu_par', 'suspendu_le', 'rappel_verification_envoye'
+    ];
+    PRIVATE_FIELDS.forEach(f => delete values[f]);
+
     // Traduire les champs
     values.nom_display = this.getNomComplet(lang);
     values.biographie_display = this.getBiographie(lang);
