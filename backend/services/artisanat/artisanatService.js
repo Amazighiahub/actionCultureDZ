@@ -94,10 +94,15 @@ class ArtisanatService extends BaseService {
   /**
    * Modifier un artisanat
    */
-  async update(id, data) {
+  async update(id, data, userId, isAdmin = false) {
     const existing = await this.repository.findById(id);
     if (!existing) {
       throw this._notFoundError(id);
+    }
+
+    const ownerId = existing.Oeuvre?.saisi_par ?? existing.Oeuvre?.id_createur;
+    if (ownerId !== userId && !isAdmin) {
+      throw this._forbiddenError('Vous ne pouvez pas modifier cet artisanat');
     }
 
     const updateData = {};
@@ -114,21 +119,26 @@ class ArtisanatService extends BaseService {
     await this.repository.update(id, updateData);
     const updated = await this.repository.findWithFullDetails(id);
 
-    this.logger.info(`Artisanat modifié: ${id}`);
+    this.logger.info(`Artisanat modifié: ${id} par user: ${userId}`);
     return ArtisanatDTO.fromEntity(updated);
   }
 
   /**
    * Supprimer
    */
-  async delete(id) {
+  async delete(id, userId, isAdmin = false) {
     const existing = await this.repository.findById(id);
     if (!existing) {
       throw this._notFoundError(id);
     }
 
+    const ownerId = existing.Oeuvre?.saisi_par ?? existing.Oeuvre?.id_createur;
+    if (ownerId !== userId && !isAdmin) {
+      throw this._forbiddenError('Vous ne pouvez pas supprimer cet artisanat');
+    }
+
     await this.repository.delete(id);
-    this.logger.info(`Artisanat supprimé: ${id}`);
+    this.logger.info(`Artisanat supprimé: ${id} par user: ${userId}`);
     return true;
   }
 

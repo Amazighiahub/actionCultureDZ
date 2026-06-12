@@ -106,7 +106,7 @@ class UploadService {
       }
     };
 
-    return multer({ storage, limits: { fileSize: 500 * 1024 * 1024 }, fileFilter });
+    return multer({ storage, limits: { fileSize: 100 * 1024 * 1024 }, fileFilter });
   }
 
   // ============================================================

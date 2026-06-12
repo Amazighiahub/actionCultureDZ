@@ -36,13 +36,9 @@ class UserAdminController extends BaseController {
 
   async list(req, res) {
     try {
-      const { page = 1, limit = 20, type, statut, search } = req.query;
-
-      const options = {
-        page: parseInt(page, 10),
-        limit: parseInt(limit, 10),
-        where: {}
-      };
+      const { type, statut, search } = req.query;
+      const { page, limit } = this._paginate(req);
+      const options = { page, limit, where: {} };
 
       if (type) options.where.type_user = type;
       if (statut) options.where.statut = statut;
@@ -80,7 +76,7 @@ class UserAdminController extends BaseController {
 
   async search(req, res) {
     try {
-      const { q, page = 1, limit = 20 } = req.query;
+      const { q } = req.query;
 
       if (!q || q.length < 2) {
         return res.status(400).json({
@@ -89,10 +85,8 @@ class UserAdminController extends BaseController {
         });
       }
 
-      const result = await this.userService.search(q, {
-        page: parseInt(page, 10),
-        limit: parseInt(limit, 10)
-      });
+      const { page, limit } = this._paginate(req);
+      const result = await this.userService.search(q, { page, limit });
 
       res.json({
         success: true,
@@ -146,12 +140,8 @@ class UserAdminController extends BaseController {
 
   async getPending(req, res) {
     try {
-      const { page = 1, limit = 20 } = req.query;
-
-      const result = await this.userService.findPendingValidation({
-        page: parseInt(page, 10),
-        limit: parseInt(limit, 10)
-      });
+      const { page, limit } = this._paginate(req);
+      const result = await this.userService.findPendingValidation({ page, limit });
 
       res.json({
         success: true,
@@ -263,6 +253,10 @@ class UserAdminController extends BaseController {
 
   async updateUserTranslation(req, res) {
     try {
+      const ALLOWED_LANGS = ['fr', 'ar', 'en', 'tmz'];
+      if (!ALLOWED_LANGS.includes(req.params.lang)) {
+        return res.status(400).json({ success: false, error: 'Code langue invalide' });
+      }
       const user = await this.userService.updateTranslation(
         parseInt(req.params.id, 10),
         req.params.lang,

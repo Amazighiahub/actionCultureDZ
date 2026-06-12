@@ -90,8 +90,10 @@ function verifyAccessToken(token) {
         || err.message === 'jwt audience invalid. expected: ' + JWT_AUDIENCE
         || /jwt (issuer|audience) invalid/i.test(err.message || ''));
 
-    const strict = process.env.JWT_VERIFY_STRICT === 'true';
-    if (!strict && isIssAudErr) {
+    // Strict par défaut — opt-out uniquement en développement explicite
+    const strict = process.env.JWT_VERIFY_STRICT !== 'false';
+    const isDev = process.env.NODE_ENV !== 'production';
+    if (!strict && isDev && isIssAudErr) {
       try {
         return jwt.verify(token, JWT_SECRET, { algorithms: [JWT_ALGORITHM] });
       } catch (_) {
@@ -125,7 +127,11 @@ function readJti(token) {
  */
 function buildBlacklistKey({ jti, token } = {}) {
   if (jti) return `jwt:blacklist:jti:${jti}`;
-  if (token) return `jwt:blacklist:${token}`;
+  // Rétrocompat : hacher le token pour ne pas stocker le JWT brut dans Redis
+  if (token) {
+    const hash = require('crypto').createHash('sha256').update(token).digest('hex').slice(0, 16);
+    return `jwt:blacklist:legacy:${hash}`;
+  }
   return null;
 }
 

@@ -33,8 +33,9 @@ class EvenementController extends BaseController {
 
   async list(req, res) {
     try {
-      const { page = 1, limit = 20, upcoming } = req.query;
-      const options = { page: parseInt(page), limit: parseInt(limit) };
+      const { upcoming } = req.query;
+      const { page, limit } = this._paginate(req);
+      const options = { page, limit };
 
       let result;
       if (upcoming === 'true') {
@@ -55,11 +56,9 @@ class EvenementController extends BaseController {
 
   async search(req, res) {
     try {
-      const { q, page = 1, limit = 20 } = req.query;
-      const result = await this.evenementService.search(q, {
-        page: parseInt(page),
-        limit: parseInt(limit)
-      });
+      const { q } = req.query;
+      const { page, limit } = this._paginate(req);
+      const result = await this.evenementService.search(q, { page, limit });
 
       res.json({
         success: true,
@@ -85,11 +84,8 @@ class EvenementController extends BaseController {
 
   async getByWilaya(req, res) {
     try {
-      const { page = 1, limit = 20 } = req.query;
-      const result = await this.evenementService.findByWilaya(parseInt(req.params.wilayaId), {
-        page: parseInt(page),
-        limit: parseInt(limit)
-      });
+      const { page, limit } = this._paginate(req);
+      const result = await this.evenementService.findByWilaya(parseInt(req.params.wilayaId), { page, limit });
 
       res.json({
         success: true,
@@ -107,11 +103,8 @@ class EvenementController extends BaseController {
 
   async getMyEvenements(req, res) {
     try {
-      const { page = 1, limit = 20 } = req.query;
-      const result = await this.evenementService.findByOrganisateur(req.user.id_user, {
-        page: parseInt(page),
-        limit: parseInt(limit)
-      });
+      const { page, limit } = this._paginate(req);
+      const result = await this.evenementService.findByOrganisateur(req.user.id_user, { page, limit });
 
       res.json({
         success: true,
@@ -203,8 +196,9 @@ class EvenementController extends BaseController {
 
   async listAll(req, res) {
     try {
-      const { page = 1, limit = 20, statut } = req.query;
-      const options = { page: parseInt(page), limit: parseInt(limit) };
+      const { statut } = req.query;
+      const { page, limit } = this._paginate(req);
+      const options = { page, limit };
       if (statut) options.where = { statut };
 
       const result = await this.evenementService.findAll(options);
@@ -220,11 +214,8 @@ class EvenementController extends BaseController {
 
   async getPending(req, res) {
     try {
-      const { page = 1, limit = 20 } = req.query;
-      const result = await this.evenementService.findPending({
-        page: parseInt(page),
-        limit: parseInt(limit)
-      });
+      const { page, limit } = this._paginate(req);
+      const result = await this.evenementService.findPending({ page, limit });
       res.json({
         success: true,
         data: result.data.map(e => this._serialize(e, 'toAdminJSON', req.lang)),

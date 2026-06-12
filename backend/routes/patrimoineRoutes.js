@@ -24,7 +24,7 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
   router.get('/mobile/offline/:wilayaId', patrimoineController.wrap('getMobileOffline'));
 
   router.get('/', patrimoineController.wrap('list'));
-  router.get('/popular', (req, res, next) => { console.log('[DEBUG ROUTE] /popular hit'); next(); }, patrimoineController.wrap('popular'));
+  router.get('/popular', patrimoineController.wrap('popular'));
   router.get('/search', patrimoineController.wrap('search'));
   // Vérifier les doublons avant création (nom + commune)
   router.get('/check-duplicate', patrimoineController.wrap('checkDuplicate'));
@@ -152,7 +152,7 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
   router.post('/:id/monuments', authenticate, validateId(),
     [
       body('nom').isObject().withMessage('nom doit être un objet multilingue {fr, ar, en}'),
-      body('type').isIn(['Mosquée', 'Palais', 'Statue', 'Tour', 'Musée']).withMessage('Type de monument invalide'),
+      body('type').isIn(['Mosquée', 'Palais', 'Casbah', 'Ksar', 'Fort', 'Mausolée', 'Zaouia', 'Hammam', 'Fontaine', 'Statue', 'Tour', 'Minaret', 'Musée', 'Rempart', 'Borj', 'Pont', 'Théâtre', 'Église', 'Marché', 'Grenier collectif', 'Ancienne maison', 'Autre']).withMessage('Type de monument invalide'),
       body('description').optional().isObject(),
     ],
     handleValidationErrors,
@@ -207,6 +207,38 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
     }
   });
 
+  router.patch('/:id/monuments/:monumentId', authenticate, validateId(),
+    [
+      body('nom').optional().isObject(),
+      body('type').optional().isIn(['Mosquée', 'Palais', 'Casbah', 'Ksar', 'Fort', 'Mausolée', 'Zaouia', 'Hammam', 'Fontaine', 'Statue', 'Tour', 'Minaret', 'Musée', 'Rempart', 'Borj', 'Pont', 'Théâtre', 'Église', 'Marché', 'Grenier collectif', 'Ancienne maison', 'Autre']),
+      body('description').optional().isObject(),
+    ],
+    handleValidationErrors,
+    async (req, res) => {
+      try {
+        const lieuId = parseInt(req.params.id);
+        const monumentId = parseInt(req.params.monumentId);
+        if (isNaN(monumentId)) return res.status(400).json({ success: false, error: 'Identifiant invalide' });
+
+        const monument = await models.Monument.findOne({
+          where: { id: monumentId },
+          include: [{ model: models.DetailLieu, where: { id_lieu: lieuId }, required: true, attributes: [] }]
+        });
+        if (!monument) return res.status(404).json({ success: false, error: 'Monument non trouvé' });
+
+        const { nom, type, description } = req.body;
+        if (nom !== undefined) monument.nom = nom;
+        if (type !== undefined) monument.type = type;
+        if (description !== undefined) monument.description = description;
+        await monument.save();
+
+        res.json({ success: true, data: monument });
+      } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+      }
+    }
+  );
+
   // ============================================================================
   // VESTIGES — ajout / suppression depuis la fiche enrichissement
   // ============================================================================
@@ -214,7 +246,7 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
   router.post('/:id/vestiges', authenticate, validateId(),
     [
       body('nom').isObject().withMessage('nom doit être un objet multilingue {fr, ar, en}'),
-      body('type').isIn(['Ruines', 'Murailles', 'Site archéologique']).withMessage('Type de vestige invalide'),
+      body('type').isIn(['Ruines', 'Murailles', 'Vestiges numides', 'Tombeau numide', 'Inscriptions berbères', 'Gravures rupestres', 'Site archéologique', 'Dolmen', 'Théâtre antique', 'Thermes romains', 'Mosaïque', 'Aqueduc', 'Tombe', 'Autre']).withMessage('Type de vestige invalide'),
       body('description').optional().isObject(),
     ],
     handleValidationErrors,
@@ -268,6 +300,38 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
       res.status(500).json({ success: false, error: error.message });
     }
   });
+
+  router.patch('/:id/vestiges/:vestigeId', authenticate, validateId(),
+    [
+      body('nom').optional().isObject(),
+      body('type').optional().isIn(['Ruines', 'Murailles', 'Vestiges numides', 'Tombeau numide', 'Inscriptions berbères', 'Gravures rupestres', 'Site archéologique', 'Dolmen', 'Théâtre antique', 'Thermes romains', 'Mosaïque', 'Aqueduc', 'Tombe', 'Autre']),
+      body('description').optional().isObject(),
+    ],
+    handleValidationErrors,
+    async (req, res) => {
+      try {
+        const lieuId = parseInt(req.params.id);
+        const vestigeId = parseInt(req.params.vestigeId);
+        if (isNaN(vestigeId)) return res.status(400).json({ success: false, error: 'Identifiant invalide' });
+
+        const vestige = await models.Vestige.findOne({
+          where: { id: vestigeId },
+          include: [{ model: models.DetailLieu, where: { id_lieu: lieuId }, required: true, attributes: [] }]
+        });
+        if (!vestige) return res.status(404).json({ success: false, error: 'Vestige non trouvé' });
+
+        const { nom, type, description } = req.body;
+        if (nom !== undefined) vestige.nom = nom;
+        if (type !== undefined) vestige.type = type;
+        if (description !== undefined) vestige.description = description;
+        await vestige.save();
+
+        res.json({ success: true, data: vestige });
+      } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+      }
+    }
+  );
 
   // Articles patrimoine (blocs éditeur riche liés à un lieu + section)
   router.get('/:id/articles', validateId(), async (req, res) => {

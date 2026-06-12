@@ -73,11 +73,13 @@ class BaseRepository {
    * Trouve un enregistrement par ID
    */
   async findById(id, options = {}) {
-    const { include, attributes } = options;
+    const { include, attributes, transaction, lock } = options;
 
     return this.model.findByPk(id, {
       include: this._mergeIncludes(include),
-      attributes
+      attributes,
+      ...(transaction ? { transaction } : {}),
+      ...(lock ? { lock } : {})
     });
   }
 
@@ -115,7 +117,7 @@ class BaseRepository {
    * Met à jour un enregistrement
    */
   async update(id, data, options = {}) {
-    const instance = await this.findById(id);
+    const instance = await this.findById(id, options);
     if (!instance) {
       return null;
     }

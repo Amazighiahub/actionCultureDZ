@@ -17,13 +17,9 @@ class ServiceController extends BaseController {
 
   async list(req, res) {
     try {
-      const { page = 1, limit = 20, type, lieu } = req.query;
-      const result = await this.serviceService.findValidated({
-        page: parseInt(page),
-        limit: parseInt(limit),
-        type,
-        lieuId: lieu
-      });
+      const { type, lieu } = req.query;
+      const { page, limit } = this._paginate(req);
+      const result = await this.serviceService.findValidated({ page, limit, type, lieuId: lieu });
 
       res.json({
         success: true,
@@ -37,11 +33,9 @@ class ServiceController extends BaseController {
 
   async search(req, res) {
     try {
-      const { q, page = 1, limit = 20 } = req.query;
-      const result = await this.serviceService.search(q, {
-        page: parseInt(page),
-        limit: parseInt(limit)
-      });
+      const { q } = req.query;
+      const { page, limit } = this._paginate(req);
+      const result = await this.serviceService.search(q, { page, limit });
 
       res.json({
         success: true,
@@ -67,11 +61,8 @@ class ServiceController extends BaseController {
 
   async getByLieu(req, res) {
     try {
-      const { page = 1, limit = 20 } = req.query;
-      const result = await this.serviceService.findByLieu(parseInt(req.params.lieuId), {
-        page: parseInt(page),
-        limit: parseInt(limit)
-      });
+      const { page, limit } = this._paginate(req);
+      const result = await this.serviceService.findByLieu(parseInt(req.params.lieuId), { page, limit });
 
       res.json({
         success: true,
@@ -89,11 +80,8 @@ class ServiceController extends BaseController {
 
   async getMyServices(req, res) {
     try {
-      const { page = 1, limit = 20 } = req.query;
-      const result = await this.serviceService.findByProfessionnel(req.user.id_user, {
-        page: parseInt(page),
-        limit: parseInt(limit)
-      });
+      const { page, limit } = this._paginate(req);
+      const result = await this.serviceService.findByProfessionnel(req.user.id_user, { page, limit });
 
       res.json({
         success: true,
@@ -150,11 +138,8 @@ class ServiceController extends BaseController {
 
   async getPending(req, res) {
     try {
-      const { page = 1, limit = 20 } = req.query;
-      const result = await this.serviceService.findPending({
-        page: parseInt(page),
-        limit: parseInt(limit)
-      });
+      const { page, limit } = this._paginate(req);
+      const result = await this.serviceService.findPending({ page, limit });
 
       res.json({
         success: true,

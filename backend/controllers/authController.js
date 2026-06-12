@@ -168,7 +168,10 @@ class AuthController extends BaseController {
 
   async refreshToken(req, res) {
     try {
-      const incomingRefreshToken = req.cookies?.refresh_token || req.body.refreshToken;
+      const incomingRefreshToken = req.cookies?.refresh_token;
+      if (!incomingRefreshToken) {
+        return res.status(401).json({ success: false, error: 'Refresh token manquant' });
+      }
 
       const result = await this.userService.refreshToken(incomingRefreshToken);
 

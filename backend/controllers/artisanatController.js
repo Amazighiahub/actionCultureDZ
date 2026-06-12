@@ -82,7 +82,7 @@ class ArtisanatController extends BaseController {
 
   async update(req, res) {
     try {
-      const artisanat = await this.artisanatService.update(parseInt(req.params.id), req.body);
+      const artisanat = await this.artisanatService.update(parseInt(req.params.id), req.body, req.user.id_user, req.user.isAdmin);
       this._sendSuccess(res, artisanat.toDetailJSON(req.lang));
     } catch (error) {
       this._handleError(res, error);
@@ -91,7 +91,7 @@ class ArtisanatController extends BaseController {
 
   async delete(req, res) {
     try {
-      await this.artisanatService.delete(parseInt(req.params.id));
+      await this.artisanatService.delete(parseInt(req.params.id), req.user.id_user, req.user.isAdmin);
       this._sendMessage(res, req.t('artisanat.deleted'));
     } catch (error) {
       this._handleError(res, error);

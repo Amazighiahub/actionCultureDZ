@@ -113,7 +113,7 @@ class UserService extends BaseService {
    */
   async login(email, motDePasse) {
     // 1. Trouver l'utilisateur avec ses rôles (nécessaire pour détecter un admin)
-    const user = await this.repository.findByEmail(email, { includeRoles: true });
+    const user = await this.repository.findByEmail(email, { includeRoles: true, includeAuth: true });
     if (!user) {
       throw this._unauthorizedError('Email ou mot de passe incorrect');
     }
@@ -127,10 +127,9 @@ class UserService extends BaseService {
       throw this._forbiddenError('Votre compte est suspendu');
     }
 
-    // 2b. Vérifier l'email (admins exemptés)
+    // 2b. Vérifier l'email (admins exemptés uniquement par rôle DB, pas par id_type_user hardcodé)
     const hasAdminRole = Array.isArray(user.Roles) && user.Roles.some(r => r.nom_role === 'Administrateur');
-    const isAdmin = hasAdminRole || user.id_type_user === 29;
-    if (!user.email_verifie && !isAdmin) {
+    if (!user.email_verifie && !hasAdminRole) {
       throw this._forbiddenError('Veuillez vérifier votre adresse email avant de vous connecter');
     }
 
@@ -180,31 +179,47 @@ class UserService extends BaseService {
     }
 
     const hashedToken = crypto.createHash('sha256').update(refreshToken).digest('hex');
-    const user = await this.repository.findByRefreshToken(hashedToken);
 
-    if (!user) {
-      throw this._unauthorizedError('Refresh token invalide');
-    }
+    const result = await this.repository.withTransaction(async (transaction) => {
+      const user = await this.repository.findByRefreshToken(hashedToken, {
+        transaction,
+        lock: transaction.LOCK.UPDATE
+      });
 
-    if (new Date() > new Date(user.refresh_token_expires)) {
-      await this._clearRefreshToken(user.id_user);
-      throw this._unauthorizedError('Refresh token expiré');
-    }
+      if (!user) {
+        this.logger.warn(`Refresh token invalide ou déjà consommé — possible réutilisation`);
+        throw this._unauthorizedError('Refresh token invalide');
+      }
 
-    if (user.statut === 'inactif' || user.statut === 'banni' || user.statut === 'suspendu') {
-      await this._clearRefreshToken(user.id_user);
-      throw this._forbiddenError('Compte désactivé ou suspendu');
-    }
+      // Invalider immédiatement le token avant tout traitement
+      await this.repository.update(user.id_user, {
+        refresh_token: '__consumed__',
+        refresh_token_expires: new Date()
+      }, { transaction });
 
-    const newAccessToken = this._generateToken(user);
-    const newRefreshToken = this._generateRefreshToken();
-    await this._saveRefreshToken(user.id_user, newRefreshToken);
+      if (new Date() > new Date(user.refresh_token_expires)) {
+        await this._clearRefreshToken(user.id_user, { transaction });
+        throw this._unauthorizedError('Refresh token expiré');
+      }
 
-    const userDTO = UserDTO.fromEntity(user);
+      if (user.statut === 'inactif' || user.statut === 'banni' || user.statut === 'suspendu') {
+        await this._clearRefreshToken(user.id_user, { transaction });
+        throw this._forbiddenError('Compte désactivé ou suspendu');
+      }
 
-    this.logger.info(`Token rafraîchi pour: ${user.id_user}`);
+      const newAccessToken = this._generateToken(user);
+      const newRefreshToken = this._generateRefreshToken();
+      await this._saveRefreshToken(user.id_user, newRefreshToken, transaction);
 
-    return { user: userDTO, token: newAccessToken, refreshToken: newRefreshToken };
+      return { user, newAccessToken, newRefreshToken };
+    });
+
+    this.logger.info(`Token rafraîchi pour: ${result.user.id_user}`);
+    return {
+      user: UserDTO.fromEntity(result.user),
+      token: result.newAccessToken,
+      refreshToken: result.newRefreshToken
+    };
   }
 
   /**
@@ -356,7 +371,7 @@ class UserService extends BaseService {
    * @returns {Promise<boolean>}
    */
   async changePassword(userId, ancienMotDePasse, nouveauMotDePasse) {
-    const user = await this.repository.findById(userId);
+    const user = await this.repository.findByIdWithAuth(userId);
     if (!user) {
       throw this._notFoundError(userId);
     }
@@ -368,6 +383,11 @@ class UserService extends BaseService {
     }
 
     // Valider le nouveau mot de passe (mêmes critères que l'inscription)
+    // Interdire la réutilisation du même mot de passe
+    const isSamePassword = await bcrypt.compare(nouveauMotDePasse, user.password);
+    if (isSamePassword) {
+      throw this._validationError('Le nouveau mot de passe doit être différent de l\'ancien');
+    }
     if (!nouveauMotDePasse || nouveauMotDePasse.length < 12) {
       throw this._validationError('Le nouveau mot de passe doit contenir au moins 12 caractères');
     }
@@ -425,7 +445,7 @@ class UserService extends BaseService {
    * @param {string} password - Mot de passe pour confirmer l'identité
    */
   async deleteMyAccount(userId, password) {
-    const user = await this.repository.findById(userId);
+    const user = await this.repository.findByIdWithAuth(userId);
     if (!user) {
       throw this._notFoundError(userId);
     }
@@ -748,9 +768,10 @@ class UserService extends BaseService {
         userId: user.id_user,
         email: user.email,
         typeUser: user.id_type_user,
-        pwdAt: user.password_changed_at
-          ? Math.floor(new Date(user.password_changed_at).getTime() / 1000)
-          : 0,
+        // Omettre pwdAt si null — 0 serait falsy et annulerait la vérification côté middleware
+        ...(user.password_changed_at ? {
+          pwdAt: Math.floor(new Date(user.password_changed_at).getTime() / 1000)
+        } : {}),
       },
       { expiresIn: this.jwtExpiration, subject: user.id_user }
     );
@@ -785,11 +806,11 @@ class UserService extends BaseService {
    * Efface le refresh token d'un utilisateur
    * @private
    */
-  async _clearRefreshToken(userId) {
+  async _clearRefreshToken(userId, options = {}) {
     await this.repository.update(userId, {
       refresh_token: null,
       refresh_token_expires: null
-    });
+    }, options);
   }
 }
 

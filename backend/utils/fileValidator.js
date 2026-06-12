@@ -23,13 +23,17 @@ const MAGIC_NUMBERS = [
   { magic: 'd0cf11e0', type: 'application/msword', ext: '.doc' },
   { magic: '504b0304', type: 'application/zip', ext: '.zip' },
 
+  // Vidéos supplémentaires
+  { magic: '3026b275', type: 'video/x-ms-wmv', ext: '.wmv' }, // ASF (WMV/WMA)
+
   // Audio
   { magic: '494433', type: 'audio/mpeg', ext: '.mp3' },
   { magic: 'fffb', type: 'audio/mpeg', ext: '.mp3' },
   { magic: 'fff3', type: 'audio/mpeg', ext: '.mp3' },
   { magic: 'fff1', type: 'audio/aac', ext: '.aac' },
   { magic: 'fff9', type: 'audio/aac', ext: '.aac' },
-  { magic: '4f676753', type: 'audio/ogg', ext: '.ogg' }
+  { magic: '4f676753', type: 'audio/ogg', ext: '.ogg' },
+  { magic: '664c6143', type: 'audio/flac', ext: '.flac' }
 ];
 
 class FileValidator {
@@ -76,12 +80,18 @@ class FileValidator {
       const header = await FileValidator.getHeader(filePath, 16);
       const magicHex = header.subarray(0, 4).toString('hex');
 
-      // Détection MP4 via ftyp (offset 4..8)
+      // Détection MP4/M4A/MOV via ftyp box (offset 4..8), brand à offset 8..12
       const boxType = header.subarray(4, 8).toString('ascii');
       if (boxType === 'ftyp') {
-        const detected = 'video/mp4';
+        const brand = header.subarray(8, 12).toString('ascii');
+        const detected = ['M4A ', 'M4B ', 'M4P '].includes(brand) ? 'audio/m4a'
+          : brand === 'qt  ' ? 'video/quicktime'
+          : 'video/mp4';
+        const extension = detected === 'audio/m4a' ? '.m4a'
+          : detected === 'video/quicktime' ? '.mov'
+          : '.mp4';
         if (allowedTypes.includes(detected)) {
-          return { valid: true, mimeType: detected, extension: '.mp4' };
+          return { valid: true, mimeType: detected, extension };
         }
         return {
           valid: false,
@@ -128,6 +138,16 @@ class FileValidator {
             const officeMime = officeMimeByExt[ext];
             if (officeMime && allowedTypes.includes(officeMime)) {
               return { valid: true, mimeType: officeMime, extension: ext };
+            }
+          }
+
+          // Cas particulier ASF : WMV vs WMA selon extension
+          if (info.type === 'video/x-ms-wmv') {
+            const ext = path.extname(filePath).toLowerCase();
+            if (ext === '.wma') {
+              const wmaType = 'audio/x-ms-wma';
+              if (allowedTypes.includes(wmaType)) return { valid: true, mimeType: wmaType, extension: '.wma' };
+              return { valid: false, detected: wmaType, allowed: allowedTypes, message: `Type détecté (${wmaType}) non autorisé` };
             }
           }
 
@@ -210,6 +230,100 @@ class FileValidator {
       req.file.mimetype = validation.mimeType;
 
       next();
+    };
+  }
+
+  /**
+   * Valide un Buffer en mémoire (multer memoryStorage) — synchrone.
+   * Réutilise la même logique de détection que validateFileType.
+   *
+   * @param {Buffer} buffer
+   * @param {string[]} allowedTypes
+   * @param {Object} [opts]
+   * @param {string} [opts.originalname]
+   * @returns {{ valid: boolean, mimeType?: string, extension?: string, detected?: string, message?: string }}
+   */
+  static validateBuffer(buffer, allowedTypes, opts = {}) {
+    if (!Buffer.isBuffer(buffer) || buffer.length < 4) {
+      return { valid: false, detected: 'unknown', message: 'Buffer vide ou trop court' };
+    }
+
+    const header = buffer.subarray(0, Math.min(16, buffer.length));
+    const magicHexFull = header.toString('hex');
+    const magicHex = header.subarray(0, 4).toString('hex');
+
+    // Détection MP4/M4A/MOV via ftyp box (offset 4..8), brand à offset 8..12
+    if (header.length >= 12) {
+      const boxType = header.subarray(4, 8).toString('ascii');
+      if (boxType === 'ftyp') {
+        const brand = header.subarray(8, 12).toString('ascii');
+        const mime = ['M4A ', 'M4B ', 'M4P '].includes(brand) ? 'audio/m4a'
+          : brand === 'qt  ' ? 'video/quicktime'
+          : 'video/mp4';
+        const ext = mime === 'audio/m4a' ? '.m4a'
+          : mime === 'video/quicktime' ? '.mov'
+          : '.mp4';
+        return allowedTypes.includes(mime)
+          ? { valid: true, mimeType: mime, extension: ext }
+          : { valid: false, detected: mime, message: `Type non autorisé: ${mime}` };
+      }
+    }
+
+    // Détection RIFF (WEBP / AVI / WAV)
+    if (header.length >= 12 && magicHex === '52494646') {
+      const riffType = header.subarray(8, 12).toString('ascii');
+      const riffMap = {
+        'WEBP': { type: 'image/webp', ext: '.webp' },
+        'AVI ': { type: 'video/avi', ext: '.avi' },
+        'WAVE': { type: 'audio/wav', ext: '.wav' }
+      };
+      const info = riffMap[riffType];
+      if (info) {
+        return allowedTypes.includes(info.type)
+          ? { valid: true, mimeType: info.type, extension: info.ext }
+          : { valid: false, detected: info.type, message: `Type non autorisé: ${info.type}` };
+      }
+    }
+
+    // Cas ZIP → détecter Office via extension
+    if (magicHexFull.startsWith('504b0304') && opts.originalname) {
+      const ext = path.extname(opts.originalname).toLowerCase();
+      const officeMimeByExt = {
+        '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+      };
+      const officeMime = officeMimeByExt[ext];
+      if (officeMime) {
+        return allowedTypes.includes(officeMime)
+          ? { valid: true, mimeType: officeMime, extension: ext }
+          : { valid: false, detected: officeMime, message: `Type non autorisé: ${officeMime}` };
+      }
+    }
+
+    // Signatures connues (MAGIC_NUMBERS)
+    for (const info of MAGIC_NUMBERS) {
+      if (magicHexFull.startsWith(info.magic)) {
+        // Cas particulier ASF : WMV vs WMA selon extension
+        if (info.type === 'video/x-ms-wmv' && opts.originalname) {
+          const ext = path.extname(opts.originalname).toLowerCase();
+          if (ext === '.wma') {
+            const wmaType = 'audio/x-ms-wma';
+            return allowedTypes.includes(wmaType)
+              ? { valid: true, mimeType: wmaType, extension: '.wma' }
+              : { valid: false, detected: wmaType, message: `Type non autorisé: ${wmaType}` };
+          }
+        }
+        return allowedTypes.includes(info.type)
+          ? { valid: true, mimeType: info.type, extension: info.ext }
+          : { valid: false, detected: info.type, message: `Type non autorisé: ${info.type}` };
+      }
+    }
+
+    return {
+      valid: false,
+      detected: 'unknown',
+      message: `Signature de fichier inconnue${opts.originalname ? ': ' + path.extname(opts.originalname) : ''}`
     };
   }
 

@@ -133,8 +133,11 @@ class DashboardUserManagementService {
       throw new Error('Utilisateur non trouvé');
     }
 
-    // Vérification métier : ne pas supprimer un admin
-    if (user.Roles && user.Roles.some(r => r.nom_role === 'Admin' || r.nom_role === 'Super Admin')) {
+    // Vérification métier : ne pas supprimer un admin (via Roles OU id_type_user=29)
+    if (
+      (user.Roles && user.Roles.some(r => r.nom_role === 'Admin' || r.nom_role === 'Super Admin' || r.nom_role === 'Administrateur'))
+      || user.id_type_user === 29
+    ) {
       throw new Error('CANNOT_DELETE_ADMIN');
     }
 
@@ -191,6 +194,16 @@ class DashboardUserManagementService {
     const role = await this.models.Role.findByPk(roleId);
     if (!role) throw new Error('Rôle non trouvé');
 
+    // Récupérer l'ancien rôle pour l'audit log
+    let previousRole = null;
+    if (this.models.UserRole) {
+      const existing = await this.models.UserRole.findOne({ where: { id_user: userId } });
+      if (existing) {
+        const prevRole = await this.models.Role.findByPk(existing.id_role);
+        previousRole = prevRole ? prevRole.nom_role : existing.id_role;
+      }
+    }
+
     if (this.models.UserRole) {
       await this.userRepo.withTransaction(async (transaction) => {
         await this.models.UserRole.destroy({ where: { id_user: userId }, transaction });
@@ -200,6 +213,17 @@ class DashboardUserManagementService {
         }, { transaction });
       });
     }
+
+    logger.info('Role change', {
+      action: 'CHANGE_ROLE',
+      targetUserId: userId,
+      targetUserEmail: user.email,
+      previousRole,
+      newRole: role.nom_role,
+      newRoleId: roleId,
+      adminId,
+      timestamp: new Date().toISOString()
+    });
 
     await this._invalidateUserCache(userId);
     return { user, role };

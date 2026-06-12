@@ -460,21 +460,20 @@ class OeuvreService extends BaseService {
    * Valide une œuvre
    */
   async validate(id, validatorId) {
-    const oeuvre = await this.repository.findById(id);
-    if (!oeuvre) {
-      throw this._notFoundError(id);
-    }
-
-    if (oeuvre.statut !== 'en_attente') {
-      throw this._conflictError('Cette œuvre n\'est pas en attente de validation');
-    }
-
-    const updated = await this.repository.validate(id, validatorId);
+    const updated = await this.withTransaction(async (transaction) => {
+      const oeuvre = await this.repository.findById(id, {
+        transaction,
+        lock: transaction.LOCK.UPDATE
+      });
+      if (!oeuvre) throw this._notFoundError(id);
+      if (oeuvre.statut !== 'en_attente') {
+        throw this._conflictError('Cette œuvre n\'est pas en attente de validation');
+      }
+      return this.repository.validate(id, validatorId, { transaction });
+    });
 
     this.cache.invalidate();
     this.logger.info(`Œuvre validée: ${id} par: ${validatorId}`);
-
-    // TODO: Envoyer notification au créateur
 
     return OeuvreDTO.fromEntity(updated);
   }
@@ -483,25 +482,24 @@ class OeuvreService extends BaseService {
    * Refuse une œuvre
    */
   async reject(id, validatorId, motif) {
-    const oeuvre = await this.repository.findById(id);
-    if (!oeuvre) {
-      throw this._notFoundError(id);
-    }
-
     if (!motif || motif.trim().length === 0) {
       throw this._validationError('Un motif de refus est requis');
     }
 
-    if (oeuvre.statut !== 'en_attente') {
-      throw this._conflictError('Cette œuvre n\'est pas en attente de validation');
-    }
-
-    const updated = await this.repository.reject(id, validatorId, motif);
+    const updated = await this.withTransaction(async (transaction) => {
+      const oeuvre = await this.repository.findById(id, {
+        transaction,
+        lock: transaction.LOCK.UPDATE
+      });
+      if (!oeuvre) throw this._notFoundError(id);
+      if (oeuvre.statut !== 'en_attente') {
+        throw this._conflictError('Cette œuvre n\'est pas en attente de validation');
+      }
+      return this.repository.reject(id, validatorId, motif, { transaction });
+    });
 
     this.cache.invalidate();
     this.logger.info(`Œuvre refusée: ${id} par: ${validatorId}`);
-
-    // TODO: Envoyer notification au créateur
 
     return OeuvreDTO.fromEntity(updated);
   }
@@ -661,43 +659,56 @@ class OeuvreService extends BaseService {
     if (!Array.isArray(tags) || tags.length === 0 || !this.models?.TagMotCle) return [];
 
     const resolvedIds = [];
-    const existingTags = await this.models.TagMotCle.findAll({ transaction });
+    const stringTags = [];
 
+    // Séparer IDs numériques et noms de tags
     for (const tag of tags) {
       const numericTagId = Number(tag);
       if (Number.isInteger(numericTagId) && numericTagId > 0) {
         resolvedIds.push(numericTagId);
-        continue;
+      } else if (typeof tag === 'string' && tag.trim()) {
+        stringTags.push(tag.trim());
       }
+    }
 
-      if (typeof tag !== 'string') {
-        continue;
+    if (stringTags.length === 0) return [...new Set(resolvedIds)];
+
+    const { Op } = require('sequelize');
+
+    // Chercher uniquement les tags demandés (pas un full scan)
+    const existing = await this.models.TagMotCle.findAll({
+      where: {
+        [Op.or]: stringTags.map(name => ({
+          nom: { [Op.like]: `%"${name.toLowerCase()}"%` }
+        }))
+      },
+      transaction
+    });
+
+    const existingNames = new Map();
+    for (const t of existing) {
+      const names = Object.values(t.nom || {})
+        .filter(v => typeof v === 'string')
+        .map(v => v.trim().toLowerCase());
+      for (const n of names) existingNames.set(n, t.id_tag);
+    }
+
+    const toCreate = stringTags.filter(n => !existingNames.has(n.toLowerCase()));
+
+    if (toCreate.length > 0) {
+      const created = await this.models.TagMotCle.bulkCreate(
+        toCreate.map(n => ({ nom: { fr: n } })),
+        { ignoreDuplicates: true, transaction, returning: true }
+      );
+      for (const t of created) {
+        const frName = t.nom?.fr?.trim()?.toLowerCase();
+        if (frName) existingNames.set(frName, t.id_tag);
       }
+    }
 
-      const normalizedTag = tag.trim().toLowerCase();
-      if (!normalizedTag) {
-        continue;
-      }
-
-      const existingTag = existingTags.find((tagRecord) => {
-        const tagNames = Object.values(tagRecord.nom || {})
-          .filter(value => typeof value === 'string')
-          .map(value => value.trim().toLowerCase())
-          .filter(Boolean);
-        return tagNames.includes(normalizedTag);
-      });
-
-      if (existingTag) {
-        resolvedIds.push(existingTag.id_tag);
-        continue;
-      }
-
-      const createdTag = await this.models.TagMotCle.create({
-        nom: { fr: tag.trim() }
-      }, { transaction });
-
-      existingTags.push(createdTag);
-      resolvedIds.push(createdTag.id_tag);
+    for (const name of stringTags) {
+      const id = existingNames.get(name.toLowerCase());
+      if (id) resolvedIds.push(id);
     }
 
     return [...new Set(resolvedIds)];
@@ -729,28 +740,40 @@ class OeuvreService extends BaseService {
       }
     }
 
-    // 2. Contributeurs (utilisateurs inscrits → chercher/créer leur intervenant)
+    // 2. Contributeurs (utilisateurs inscrits → chercher/créer leur intervenant) — batch
     const contributeurs = requestBody.utilisateurs_inscrits || [];
-    for (const contrib of contributeurs) {
-      if (contrib.id_user && contrib.id_type_user) {
-        // Chercher un intervenant lié à cet utilisateur
-        let intervenant = await this.models.Intervenant.findOne({
-          where: { id_user: contrib.id_user },
+    const validContributeurs = contributeurs.filter(c => c.id_user && c.id_type_user);
+    if (validContributeurs.length > 0) {
+      const { Op } = require('sequelize');
+      const allUserIds = validContributeurs.map(c => c.id_user);
+
+      const existingIntervenants = await this.models.Intervenant.findAll({
+        where: { id_user: { [Op.in]: allUserIds } },
+        transaction
+      });
+      const intervenantByUserId = new Map(existingIntervenants.map(i => [i.id_user, i]));
+
+      const missingUserIds = allUserIds.filter(uid => !intervenantByUserId.has(uid));
+      if (missingUserIds.length > 0) {
+        const users = await this.models.User.findAll({
+          where: { id_user: { [Op.in]: missingUserIds } },
           transaction
         });
-        // Créer si inexistant
-        if (!intervenant) {
-          const user = await this.models.User.findByPk(contrib.id_user, { transaction });
-          if (user) {
-            intervenant = await this.models.Intervenant.create({
-              nom: user.nom,
-              prenom: user.prenom,
-              email: user.email,
-              id_user: user.id_user,
-              actif: true
-            }, { transaction });
-          }
+        if (users.length > 0) {
+          await this.models.Intervenant.bulkCreate(
+            users.map(u => ({ nom: u.nom, prenom: u.prenom, email: u.email, id_user: u.id_user, actif: true })),
+            { transaction, ignoreDuplicates: true }
+          );
+          const created = await this.models.Intervenant.findAll({
+            where: { id_user: { [Op.in]: missingUserIds } },
+            transaction
+          });
+          for (const interv of created) intervenantByUserId.set(interv.id_user, interv);
         }
+      }
+
+      for (const contrib of validContributeurs) {
+        const intervenant = intervenantByUserId.get(contrib.id_user);
         if (intervenant) {
           records.push({
             id_oeuvre: oeuvreId,

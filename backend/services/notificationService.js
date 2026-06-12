@@ -4,6 +4,7 @@ const emailService = require('./emailService');
 const smsService = require('./smsService');
 const whatsappService = require('./whatsappService');
 const { Op } = require('sequelize');
+const { getClient: getRedisClient } = require('../utils/redisClient');
 
 class NotificationService {
   constructor(models, options = {}) {
@@ -88,6 +89,26 @@ class NotificationService {
     } catch (err) {
       logger.error(`⚠️ Erreur WhatsApp (${type}):`, err.message);
     }
+  }
+
+  /**
+   * Exécute asyncFn sur les items en batches pour éviter de saturer le serveur SMTP.
+   * @param {Array} items
+   * @param {Function} asyncFn - reçoit un item, retourne une Promise
+   * @param {number} batchSize
+   * @param {number} delayMs - pause entre batches (ms)
+   */
+  async _sendBatch(items, asyncFn, batchSize = 10, delayMs = 200) {
+    const results = [];
+    for (let i = 0; i < items.length; i += batchSize) {
+      const batch = items.slice(i, i + batchSize);
+      const batchResults = await Promise.all(batch.map(item => asyncFn(item).catch(err => ({ error: err.message }))));
+      results.push(...batchResults);
+      if (i + batchSize < items.length && delayMs > 0) {
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+      }
+    }
+    return results;
   }
 
   // ========================================================================
@@ -184,7 +205,17 @@ async envoyerRappelEvenement(evenementId) {
       }]
     });
 
-    await Promise.all(participants.map(async (participant) => {
+    const redis = getRedisClient();
+    await this._sendBatch(participants, async (participant) => {
+      // Déduplication : éviter d'envoyer le rappel plusieurs fois si le cron est relancé
+      if (redis) {
+        try {
+          const dedupeKey = `notif:rappel:${evenementId}:${participant.id_user}`;
+          const claimed = await redis.set(dedupeKey, '1', { NX: true, EX: 26 * 3600 });
+          if (!claimed) return; // rappel déjà envoyé à ce participant
+        } catch { /* si Redis indisponible, on continue sans déduplication */ }
+      }
+
       await this.emailService.sendEmail(
         participant.User.email,
         `🔔 Rappel : ${evenement.nom_evenement} demain !`,
@@ -204,7 +235,7 @@ async envoyerRappelEvenement(evenementId) {
         message: `L'événement "${evenement.nom_evenement}" est demain !`,
         id_evenement: evenementId
       });
-    }));
+    });
   } catch (error) {
     logger.error('Erreur rappel événement:', error);
   }
@@ -319,6 +350,10 @@ async notifierModeration(userId, type, raison) {
 
     // Email obligatoire pour les notifications importantes
     const user = await this.models.User.findByPk(userId);
+    if (!user?.email) {
+      logger.warn(`Impossible de notifier userId ${userId}: utilisateur introuvable`);
+      return;
+    }
     await this.emailService.sendEmail(
       user.email,
       `⚠️ ${messages[type]}`,

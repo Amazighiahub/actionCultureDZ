@@ -19,7 +19,7 @@ class UserRepository extends BaseRepository {
    *   détecter un admin lors du login, par exemple)
    */
   async findByEmail(email, options = {}) {
-    const { includeRoles, ...rest } = options;
+    const { includeRoles, includeAuth, ...rest } = options;
     const finalOptions = { ...rest };
 
     if (includeRoles && this.models.Role) {
@@ -34,6 +34,10 @@ class UserRepository extends BaseRepository {
       ];
     }
 
+    // includeAuth: true → bypass defaultScope pour avoir password + refresh_token
+    if (includeAuth) {
+      return this.model.unscoped().findOne({ where: { email }, ...finalOptions });
+    }
     return this.findOne({ email }, finalOptions);
   }
 
@@ -156,8 +160,18 @@ class UserRepository extends BaseRepository {
   /**
    * Trouve un utilisateur par refresh token
    */
-  async findByRefreshToken(refreshToken) {
-    return this.findOne({ refresh_token: refreshToken });
+  async findByIdWithAuth(userId) {
+    return this.model.unscoped().findByPk(userId);
+  }
+
+  async findByRefreshToken(refreshToken, options = {}) {
+    const { transaction, lock } = options;
+    // unscoped() car refresh_token est exclu par defaultScope
+    return this.model.unscoped().findOne({
+      where: { refresh_token: refreshToken },
+      ...(transaction ? { transaction } : {}),
+      ...(lock ? { lock } : {})
+    });
   }
 
   /**

@@ -71,8 +71,8 @@ function csrfVerifier(req, res, next) {
     return next();
   }
 
-  const cookieToken = req.cookies?.[CSRF_COOKIE];
-  const headerToken = req.headers[CSRF_HEADER];
+  const cookieToken = req.cookies?.[CSRF_COOKIE] || '';
+  const headerToken = req.headers?.[CSRF_HEADER] || '';
 
   if (!cookieToken || !headerToken) {
     return res.status(403).json({

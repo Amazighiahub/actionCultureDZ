@@ -253,12 +253,8 @@ class UserProfileController extends BaseController {
 
   async getProfessionals(req, res) {
     try {
-      const { page = 1, limit = 20 } = req.query;
-
-      const result = await this.userService.findValidatedProfessionals({
-        page: parseInt(page, 10),
-        limit: parseInt(limit, 10)
-      });
+      const { page, limit } = this._paginate(req);
+      const result = await this.userService.findValidatedProfessionals({ page, limit });
 
       res.json({
         success: true,

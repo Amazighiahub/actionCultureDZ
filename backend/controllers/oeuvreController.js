@@ -26,12 +26,9 @@ class OeuvreController extends BaseController {
    */
   async list(req, res) {
     try {
-      const { page = 1, limit = 20, type, category } = req.query;
-
-      const options = {
-        page: parseInt(page),
-        limit: parseInt(limit)
-      };
+      const { type, category } = req.query;
+      const { page, limit } = this._paginate(req);
+      const options = { page, limit };
 
       let result;
 
@@ -71,11 +68,14 @@ class OeuvreController extends BaseController {
         anneeMax,
         prixMin,
         prixMax,
-        page = 1,
-        limit = 20,
-        sortBy = 'date_creation',
-        sortOrder = 'DESC'
       } = req.query;
+      const { page, limit } = this._paginate(req);
+
+      const ALLOWED_SORT_FIELDS = ['date_creation', 'titre', 'prix', 'annee_creation', 'nb_vues'];
+      const ALLOWED_SORT_ORDERS = ['ASC', 'DESC'];
+      const sortBy = ALLOWED_SORT_FIELDS.includes(req.query.sortBy) ? req.query.sortBy : 'date_creation';
+      const sortOrder = ALLOWED_SORT_ORDERS.includes((req.query.sortOrder || '').toUpperCase())
+        ? req.query.sortOrder.toUpperCase() : 'DESC';
 
       const result = await this.oeuvreService.searchAdvanced({
         query,
@@ -86,8 +86,8 @@ class OeuvreController extends BaseController {
         anneeMax: anneeMax ? parseInt(anneeMax) : null,
         prixMin: prixMin ? parseFloat(prixMin) : null,
         prixMax: prixMax ? parseFloat(prixMax) : null,
-        page: parseInt(page),
-        limit: parseInt(limit),
+        page,
+        limit,
         sortBy,
         sortOrder
       });
@@ -111,8 +111,8 @@ class OeuvreController extends BaseController {
    */
   async getPopular(req, res) {
     try {
-      const { limit = 10 } = req.query;
-      const oeuvres = await this.oeuvreService.findPopular(parseInt(limit));
+      const limit = Math.min(50, Math.max(1, parseInt(req.query.limit) || 10));
+      const oeuvres = await this.oeuvreService.findPopular(limit);
 
       res.json({
         success: true,
@@ -132,8 +132,8 @@ class OeuvreController extends BaseController {
    */
   async getRecent(req, res) {
     try {
-      const { limit = 10 } = req.query;
-      const oeuvres = await this.oeuvreService.findRecent(parseInt(limit));
+      const limit = Math.min(50, Math.max(1, parseInt(req.query.limit) || 10));
+      const oeuvres = await this.oeuvreService.findRecent(limit);
 
       res.json({
         success: true,
@@ -171,11 +171,8 @@ class OeuvreController extends BaseController {
    */
   async getSimilar(req, res) {
     try {
-      const { limit = 5 } = req.query;
-      const oeuvres = await this.oeuvreService.findSimilar(
-        parseInt(req.params.id),
-        parseInt(limit)
-      );
+      const limit = Math.min(20, Math.max(1, parseInt(req.query.limit) || 5));
+      const oeuvres = await this.oeuvreService.findSimilar(parseInt(req.params.id), limit);
 
       res.json({
         success: true,
@@ -269,12 +266,8 @@ class OeuvreController extends BaseController {
    */
   async getMyOeuvres(req, res) {
     try {
-      const { page = 1, limit = 20 } = req.query;
-
-      const result = await this.oeuvreService.findByCreator(req.user.id_user, {
-        page: parseInt(page),
-        limit: parseInt(limit)
-      });
+      const { page, limit } = this._paginate(req);
+      const result = await this.oeuvreService.findByCreator(req.user.id_user, { page, limit });
 
       res.json({
         success: true,
@@ -321,16 +314,10 @@ class OeuvreController extends BaseController {
    */
   async listAll(req, res) {
     try {
-      const { page = 1, limit = 20, statut } = req.query;
-
-      const options = {
-        page: parseInt(page),
-        limit: parseInt(limit)
-      };
-
-      if (statut) {
-        options.where = { statut };
-      }
+      const { statut } = req.query;
+      const { page, limit } = this._paginate(req);
+      const options = { page, limit };
+      if (statut) options.where = { statut };
 
       const result = await this.oeuvreService.findAll(options);
 
@@ -351,12 +338,8 @@ class OeuvreController extends BaseController {
    */
   async getPending(req, res) {
     try {
-      const { page = 1, limit = 20 } = req.query;
-
-      const result = await this.oeuvreService.findPending({
-        page: parseInt(page),
-        limit: parseInt(limit)
-      });
+      const { page, limit } = this._paginate(req);
+      const result = await this.oeuvreService.findPending({ page, limit });
 
       res.json({
         success: true,
@@ -497,6 +480,10 @@ class OeuvreController extends BaseController {
    */
   async updateTranslation(req, res) {
     try {
+      const ALLOWED_LANGS = ['fr', 'ar', 'en', 'tmz'];
+      if (!ALLOWED_LANGS.includes(req.params.lang)) {
+        return res.status(400).json({ success: false, error: 'Code langue invalide' });
+      }
       const oeuvre = await this.oeuvreService.updateTranslation(
         parseInt(req.params.id),
         req.params.lang,
@@ -604,11 +591,8 @@ class OeuvreController extends BaseController {
    */
   async getRejected(req, res) {
     try {
-      const { page = 1, limit = 20 } = req.query;
-      const result = await this.oeuvreService.findRejected({
-        page: parseInt(page),
-        limit: parseInt(limit)
-      });
+      const { page, limit } = this._paginate(req);
+      const result = await this.oeuvreService.findRejected({ page, limit });
       res.json({
         success: true,
         data: this._translateOeuvres(result.data, req.lang, 'admin'),
@@ -625,11 +609,9 @@ class OeuvreController extends BaseController {
    */
   async searchIntervenants(req, res) {
     try {
-      const { q, page = 1, limit = 20 } = req.query;
-      const result = await this.oeuvreService.searchIntervenants(q, {
-        page: parseInt(page),
-        limit: parseInt(limit)
-      });
+      const { q } = req.query;
+      const { page, limit } = this._paginate(req);
+      const result = await this.oeuvreService.searchIntervenants(q, { page, limit });
       res.json({
         success: true,
         data: result.data,

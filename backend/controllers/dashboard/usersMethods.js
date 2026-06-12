@@ -18,8 +18,9 @@ const usersMethods = {
 
   async getPendingUsers(req, res) {
     try {
-      const { page = 1, limit = 10 } = req.query;
-      const result = await container.userManagementService.getPendingUsers({ page: parseInt(page), limit: parseInt(limit) });
+      const page = Math.max(1, parseInt(req.query.page) || 1);
+      const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 10));
+      const result = await container.userManagementService.getPendingUsers({ page, limit });
       res.json({ success: true, data: { items: result.data, pagination: result.pagination } });
     } catch (error) {
       console.error('Erreur getPendingUsers:', error.message);

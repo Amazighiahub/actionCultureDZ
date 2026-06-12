@@ -264,7 +264,7 @@ const initDashboardRoutes = (models) => {
   // Actions en masse sur les utilisateurs
   router.post('/users/bulk-action',
     [
-      body('user_ids').isArray({ min: 1 }).withMessage((value, { req }) => req.t('validation.userListRequired')),
+      body('user_ids').isArray({ min: 1, max: 100 }).withMessage((value, { req }) => req.t('validation.userListRequired')),
       body('user_ids.*').isInt({ min: 1 }).withMessage((value, { req }) => req.t('validation.invalidUserId')),
       body('action').isIn(['activate', 'deactivate', 'delete', 'change_role']).withMessage((value, { req }) => req.t('validation.invalidAction')),
       body('role_id').optional().isInt({ min: 1 }).withMessage((value, { req }) => req.t('validation.invalidRoleId'))

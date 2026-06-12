@@ -120,14 +120,20 @@ const securityMiddleware = {
     };
 
     // Sanitiser un objet récursivement
+    const DANGEROUS_KEYS = ['__proto__', 'constructor', 'prototype'];
     const sanitizeObject = (obj, parentKey = '') => {
-      for (const key in obj) {
+      for (const key of Object.keys(obj)) {
+        if (DANGEROUS_KEYS.includes(key)) {
+          delete obj[key];
+          continue;
+        }
+
         const fullKey = parentKey ? `${parentKey}.${key}` : key;
-        
+
         if (obj[key] === null || obj[key] === undefined) {
           continue;
         }
-        
+
         if (typeof obj[key] === 'string') {
           obj[key] = sanitizeString(obj[key], key);
         } else if (Array.isArray(obj[key])) {

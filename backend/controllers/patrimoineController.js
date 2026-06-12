@@ -6,6 +6,7 @@
 const BaseController = require('./baseController');
 const container = require('../services/serviceContainer');
 const QRCode = require('qrcode');
+const logger = require('../utils/logger');
 
 class PatrimoineController extends BaseController {
   get patrimoineService() {
@@ -18,10 +19,11 @@ class PatrimoineController extends BaseController {
 
   async list(req, res) {
     try {
-      const { page = 1, limit = 20, typePatrimoine, wilayaId } = req.query;
+      const { typePatrimoine, wilayaId } = req.query;
+      const { page, limit } = this._paginate(req);
       const result = await this.patrimoineService.findAllSites({
-        page: parseInt(page),
-        limit: parseInt(limit),
+        page,
+        limit,
         typePatrimoine,
         wilayaId: wilayaId ? parseInt(wilayaId) : null
       });
@@ -37,11 +39,9 @@ class PatrimoineController extends BaseController {
 
   async popular(req, res) {
     try {
-      const { limit = 6, typePatrimoine } = req.query;
-      const sites = await this.patrimoineService.findPopular({
-        limit: parseInt(limit),
-        typePatrimoine
-      });
+      const { typePatrimoine } = req.query;
+      const limit = Math.min(50, Math.max(1, parseInt(req.query.limit) || 6));
+      const sites = await this.patrimoineService.findPopular({ limit, typePatrimoine });
       const data = sites.map(s => s.toCardJSON(req.lang));
       res.json({ success: true, data, count: sites.length });
     } catch (error) {
@@ -51,11 +51,9 @@ class PatrimoineController extends BaseController {
 
   async search(req, res) {
     try {
-      const { q, page = 1, limit = 20 } = req.query;
-      const result = await this.patrimoineService.search(q, {
-        page: parseInt(page),
-        limit: parseInt(limit)
-      });
+      const { q } = req.query;
+      const { page, limit } = this._paginate(req);
+      const result = await this.patrimoineService.search(q, { page, limit });
       res.json({
         success: true,
         data: result.data.map(s => s.toCardJSON(req.lang)),
@@ -284,7 +282,7 @@ class PatrimoineController extends BaseController {
           });
         }
       } catch (notifErr) {
-        console.error('Erreur notification contribution:', notifErr.message);
+        logger.error('Erreur notification contribution:', { message: notifErr.message });
       }
 
       res.json({ success: true, data: detail, message: 'Contribution enregistrée' });

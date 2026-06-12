@@ -1,6 +1,6 @@
 // routes/signalementRoutes.js - Version simplifiée sans upload
 const express = require('express');
-const { body } = require('express-validator');
+const { body, query } = require('express-validator');
 const router = express.Router();
 const SignalementController = require('../controllers/signalementController');
 const { handleValidationErrors, validateStringLengths } = require('../middlewares/validationMiddleware');
@@ -184,10 +184,18 @@ const initSignalementRoutes = (models, authMiddleware) => {
     controller.traiterSignalement.bind(controller)
   );
 
+  const STATUT_VALUES = ['en_attente', 'en_cours', 'resolu', 'rejete', 'archive'];
+  const MOTIF_VALUES = ['contenu_inapproprie', 'spam', 'harcelement', 'desinformation', 'droits_auteur', 'autre'];
+
   // Obtenir tous les signalements avec filtres
   router.get('/',
     authenticate,
     requireAdmin,
+    query('statut').optional().isIn(STATUT_VALUES).withMessage('Statut invalide'),
+    query('motif').optional().isIn(MOTIF_VALUES).withMessage('Motif invalide'),
+    query('page').optional().isInt({ min: 1 }).toInt(),
+    query('limit').optional().isInt({ min: 1, max: 100 }).toInt(),
+    handleValidationErrors,
     asyncHandler(async (req, res) => {
       const { statut, motif, dateDebut, dateFin, page = 1, limit = 20 } = req.query;
 

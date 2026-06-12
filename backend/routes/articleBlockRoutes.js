@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const ArticleBlockController = require('../controllers/articleBlockController');
 const { body } = require('express-validator');
+const { createContentLimiter, uploadLimiter } = require('../middlewares/rateLimitMiddleware');
 
 const initArticleBlockRoutes = (models, authMiddleware) => {
   const articleBlockController = ArticleBlockController;
@@ -154,6 +155,7 @@ const initArticleBlockRoutes = (models, authMiddleware) => {
   router.post('/',
     safeAuth.authenticate,
     safeAuth.requireValidatedProfessional,
+    createContentLimiter,
     createBlockValidation,
     handleValidationErrors,
     (req, res) => articleBlockController.createBlock(req, res)
@@ -163,6 +165,7 @@ const initArticleBlockRoutes = (models, authMiddleware) => {
   router.post('/batch',
     safeAuth.authenticate,
     safeAuth.requireValidatedProfessional,
+    createContentLimiter,
     createMultipleValidation,
     handleValidationErrors,
     (req, res) => articleBlockController.createMultipleBlocks(req, res)
@@ -209,6 +212,7 @@ const initArticleBlockRoutes = (models, authMiddleware) => {
     safeAuth.authenticate,
     safeAuth.requireValidatedProfessional,
     validateId('articleId'),
+    uploadLimiter,
     handleImageUpload,
     (req, res) => articleBlockController.uploadBlockImage(req, res)
   );

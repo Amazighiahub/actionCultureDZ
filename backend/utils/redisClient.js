@@ -40,6 +40,13 @@ async function getRedisClient() {
       const url = process.env.REDIS_URL
         || `redis://${process.env.REDIS_HOST || 'localhost'}:${process.env.REDIS_PORT || 6379}`;
 
+      // Sécurité : rejeter le démarrage en production si Redis n'est pas authentifié
+      if (process.env.NODE_ENV === 'production' &&
+          !process.env.REDIS_PASSWORD &&
+          !url.includes('@')) {
+        throw new Error('[SECURITY] Redis en production sans authentification — configurer REDIS_PASSWORD ou inclure les credentials dans REDIS_URL');
+      }
+
       const newClient = redis.createClient({
         url,
         password: process.env.REDIS_PASSWORD || undefined,

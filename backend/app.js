@@ -101,8 +101,15 @@ class App {
 
   // Initialisation des middlewares de base
   initializeMiddlewares() {
-    // Trust proxy pour obtenir la vraie IP derrière un reverse proxy
-    this.app.set('trust proxy', 1);
+    // Trust proxy — utiliser l'IP exacte du proxy en prod pour éviter le spoofing X-Forwarded-For
+    const trustedProxy = process.env.TRUSTED_PROXY_IP;
+    if (trustedProxy) {
+      this.app.set('trust proxy', trustedProxy);
+    } else if (process.env.NODE_ENV === 'production') {
+      this.app.set('trust proxy', 'loopback');
+    } else {
+      this.app.set('trust proxy', 1);
+    }
 
     // Redirection HTTPS et HSTS en production
     this.app.use(httpsRedirect);

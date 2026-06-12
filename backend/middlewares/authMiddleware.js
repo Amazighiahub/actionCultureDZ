@@ -137,14 +137,10 @@ module.exports = (modelsOrUser) => {
     return user;
   };
 
-  // Sérialiser l'utilisateur pour le cache Redis (données minimales)
+  // Sérialiser l'utilisateur pour le cache Redis — champs d'auth uniquement, sans PII
   const serializeForCache = (user) => {
     return JSON.stringify({
       id_user: user.id_user,
-      nom: user.nom,
-      prenom: user.prenom,
-      email: user.email,
-      photo_url: user.photo_url,
       id_type_user: user.id_type_user,
       statut: user.statut,
       email_verifie: user.email_verifie,
@@ -322,7 +318,7 @@ module.exports = (modelsOrUser) => {
       }
 
       // Vérifier que le token n'a pas été émis avant un changement de mot de passe
-      if (user.password_changed_at && decoded.pwdAt) {
+      if (user.password_changed_at && decoded.pwdAt !== undefined) {
         const pwdChangedAtSec = Math.floor(new Date(user.password_changed_at).getTime() / 1000);
         if (decoded.pwdAt < pwdChangedAtSec) {
           return res.status(401).json({

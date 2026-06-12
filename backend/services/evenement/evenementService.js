@@ -198,16 +198,17 @@ class EvenementService extends BaseService {
       id_user: userId
     };
 
-    const evenement = await this.repository.create(entityData);
-
-    // Attacher l'organisation si fournie
-    if (orgId && this.models?.EvenementOrganisation) {
-      await this.models.EvenementOrganisation.create({
-        id_evenement: evenement.id_evenement,
-        id_organisation: parseInt(orgId),
-        role: 'organisateur_principal'
-      });
-    }
+    const evenement = await this.withTransaction(async (transaction) => {
+      const created = await this.repository.create(entityData, { transaction });
+      if (orgId && this.models?.EvenementOrganisation) {
+        await this.models.EvenementOrganisation.create({
+          id_evenement: created.id_evenement,
+          id_organisation: parseInt(orgId),
+          role: 'organisateur_principal'
+        }, { transaction });
+      }
+      return created;
+    });
 
     const full = await this.repository.findWithFullDetails(evenement.id_evenement);
 
@@ -221,71 +222,67 @@ class EvenementService extends BaseService {
    * Modifier un événement
    */
   async update(id, data, userId, options = {}) {
-    const existing = await this.repository.findById(id);
-    if (!existing) {
-      throw this._notFoundError(id);
-    }
+    await this.withTransaction(async (transaction) => {
+      const existing = await this.repository.findById(id, { transaction, lock: transaction.LOCK.UPDATE });
+      if (!existing) throw this._notFoundError(id);
 
-    // Seul le propriétaire peut modifier son événement
-    if (parseInt(existing.id_user) !== parseInt(userId)) {
-      throw this._forbiddenError('Vous ne pouvez modifier que vos propres événements');
-    }
+      if (parseInt(existing.id_user) !== parseInt(userId)) {
+        throw this._forbiddenError('Vous ne pouvez modifier que vos propres événements');
+      }
 
-    // Contrôle d'état : seuls les brouillons sont modifiables
-    if (existing.statut !== 'brouillon') {
-      throw this._validationError('Seuls les événements en brouillon peuvent être modifiés');
-    }
+      if (existing.statut !== 'brouillon') {
+        throw this._validationError('Seuls les événements en brouillon peuvent être modifiés');
+      }
 
-    const updateData = {};
-    if (data.nom_evenement || data.nom) updateData.nom_evenement = data.nom_evenement || data.nom;
-    if (data.description !== undefined) updateData.description = data.description;
-    if (data.date_debut || data.dateDebut) updateData.date_debut = data.date_debut || data.dateDebut;
-    if (data.date_fin || data.dateFin) updateData.date_fin = data.date_fin || data.dateFin;
-    if (data.id_lieu || data.lieuId) updateData.id_lieu = data.id_lieu || data.lieuId;
-    if (data.id_type_evenement || data.typeEvenementId) updateData.id_type_evenement = data.id_type_evenement || data.typeEvenementId;
-    // statut: non modifiable via update — utiliser les routes dédiées (/publish, /cancel)
-    if (data.capacite_max || data.capaciteMax) updateData.capacite_max = data.capacite_max || data.capaciteMax;
-    if (data.tarif !== undefined) updateData.tarif = data.tarif;
-    if (data.image_url || data.imageUrl) updateData.image_url = data.image_url || data.imageUrl;
-    if (data.contact_email || data.contactEmail) updateData.contact_email = data.contact_email || data.contactEmail;
-    if (data.contact_telephone || data.contactTelephone) updateData.contact_telephone = data.contact_telephone || data.contactTelephone;
-    if (data.url_virtuel !== undefined || data.urlVirtuel !== undefined) {
-      updateData.url_virtuel = data.url_virtuel ?? data.urlVirtuel ?? null;
-    }
+      const updateData = {};
+      if (data.nom_evenement || data.nom) updateData.nom_evenement = data.nom_evenement || data.nom;
+      if (data.description !== undefined) updateData.description = data.description;
+      if (data.date_debut || data.dateDebut) updateData.date_debut = data.date_debut || data.dateDebut;
+      if (data.date_fin || data.dateFin) updateData.date_fin = data.date_fin || data.dateFin;
+      if (data.id_lieu || data.lieuId) updateData.id_lieu = data.id_lieu || data.lieuId;
+      if (data.id_type_evenement || data.typeEvenementId) updateData.id_type_evenement = data.id_type_evenement || data.typeEvenementId;
+      // statut: non modifiable via update — utiliser les routes dédiées (/publish, /cancel)
+      if (data.capacite_max || data.capaciteMax) updateData.capacite_max = data.capacite_max || data.capaciteMax;
+      if (data.tarif !== undefined) updateData.tarif = data.tarif;
+      if (data.image_url || data.imageUrl) updateData.image_url = data.image_url || data.imageUrl;
+      if (data.contact_email || data.contactEmail) updateData.contact_email = data.contact_email || data.contactEmail;
+      if (data.contact_telephone || data.contactTelephone) updateData.contact_telephone = data.contact_telephone || data.contactTelephone;
+      if (data.url_virtuel !== undefined || data.urlVirtuel !== undefined) {
+        updateData.url_virtuel = data.url_virtuel ?? data.urlVirtuel ?? null;
+      }
 
-    // Validation présentiel → organisation requise (état final après merge)
-    const finalUrlVirtuel = updateData.url_virtuel !== undefined ? updateData.url_virtuel : existing.url_virtuel;
-    if (!finalUrlVirtuel) {
-      // Événement présentiel — vérifier qu'il a au moins une organisation
       const newOrgId = data.id_organisation || data.organisationId;
-      if (!newOrgId && this.models?.EvenementOrganisation) {
+
+      // Validation présentiel → organisation requise (état final après merge)
+      const finalUrlVirtuel = updateData.url_virtuel !== undefined ? updateData.url_virtuel : existing.url_virtuel;
+      if (!finalUrlVirtuel && !newOrgId && this.models?.EvenementOrganisation) {
         const existingOrgs = await this.models.EvenementOrganisation.count({
-          where: { id_evenement: id }
+          where: { id_evenement: id },
+          transaction
         });
         if (existingOrgs === 0) {
           throw this._validationError('Une organisation est requise pour les événements en présentiel');
         }
       }
-    }
 
-    await this.repository.update(id, updateData);
+      await this.repository.update(id, updateData, { transaction });
 
-    // Mettre à jour l'organisation si fournie
-    const newOrgId = data.id_organisation || data.organisationId;
-    if (newOrgId && this.models?.EvenementOrganisation) {
-      const existingOrg = await this.models.EvenementOrganisation.findOne({
-        where: { id_evenement: id, role: 'organisateur_principal' }
-      });
-      if (existingOrg) {
-        await existingOrg.update({ id_organisation: parseInt(newOrgId) });
-      } else {
-        await this.models.EvenementOrganisation.create({
-          id_evenement: id,
-          id_organisation: parseInt(newOrgId),
-          role: 'organisateur_principal'
+      if (newOrgId && this.models?.EvenementOrganisation) {
+        const existingOrg = await this.models.EvenementOrganisation.findOne({
+          where: { id_evenement: id, role: 'organisateur_principal' },
+          transaction
         });
+        if (existingOrg) {
+          await existingOrg.update({ id_organisation: parseInt(newOrgId) }, { transaction });
+        } else {
+          await this.models.EvenementOrganisation.create({
+            id_evenement: id,
+            id_organisation: parseInt(newOrgId),
+            role: 'organisateur_principal'
+          }, { transaction });
+        }
       }
-    }
+    });
 
     const updated = await this.repository.findWithFullDetails(id);
 
@@ -336,22 +333,22 @@ class EvenementService extends BaseService {
    * Inscrire un participant
    */
   async registerParticipant(evenementId, userId) {
-    const evenement = await this.repository.findById(evenementId);
-    if (!evenement) {
-      throw this._notFoundError(evenementId);
-    }
-
-    // Seuls les événements publiés ou en cours acceptent les inscriptions
-    const openStatuses = ['publie', 'planifie', 'en_cours'];
-    if (!openStatuses.includes(evenement.statut)) {
-      throw this._validationError('Les inscriptions ne sont pas ouvertes pour cet événement');
-    }
-
-    if (evenement.date_limite_inscription && new Date() > new Date(evenement.date_limite_inscription)) {
-      throw this._validationError('La date limite d\'inscription est dépassée');
-    }
-
     const registration = await this.withTransaction(async (transaction) => {
+      const evenement = await this.repository.findById(evenementId, {
+        transaction,
+        lock: transaction.LOCK.UPDATE
+      });
+      if (!evenement) throw this._notFoundError(evenementId);
+
+      const openStatuses = ['publie', 'planifie', 'en_cours'];
+      if (!openStatuses.includes(evenement.statut)) {
+        throw this._validationError('Les inscriptions ne sont pas ouvertes pour cet événement');
+      }
+
+      if (evenement.date_limite_inscription && new Date() > new Date(evenement.date_limite_inscription)) {
+        throw this._validationError('La date limite d\'inscription est dépassée');
+      }
+
       if (evenement.capacite_max) {
         const count = await this.repository.countParticipants(evenementId, { transaction });
         if (count >= evenement.capacite_max) {

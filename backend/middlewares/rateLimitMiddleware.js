@@ -162,7 +162,7 @@ const publicUploadLimiter = rateLimit(withStore('upload-public', {
 }));
 
 // 4. Rate limiter pour les vues/statistiques
-const viewLimiter = rateLimit({
+const viewLimiter = rateLimit(withStore('views', {
   windowMs: 5 * 60 * 1000, // 5 minutes
   max: 30, // 30 vues par 5 minutes
   keyGenerator: (req) => {
@@ -173,7 +173,7 @@ const viewLimiter = rateLimit({
     // Skip pour les utilisateurs authentifiés premium
     return req.user?.isPremium === true;
   }
-});
+}));
 
 // 5. Rate limiter dynamique basé sur le rôle
 const dynamicLimiter = (options = {}) => {
@@ -198,11 +198,11 @@ const dynamicLimiter = (options = {}) => {
 const speedLimiter = require('express-slow-down');
 
 const progressiveLimiter = speedLimiter({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  delayAfter: 50, // Commence à ralentir après 50 requêtes
-  delayMs: (hits) => hits * 100, // Ajoute 100ms de délai par requête supplémentaire
-  maxDelayMs: 5000, // Maximum 5 secondes de délai
-  // store: new RedisStore({ client: redisClient }), // Pour Redis
+  windowMs: 15 * 60 * 1000,
+  delayAfter: 50,
+  delayMs: (hits) => hits * 100,
+  maxDelayMs: 5000,
+  store: makeStore('slow'),
 });
 
 // 7. Configuration avancée avec gestion des IPs trustées
@@ -372,21 +372,49 @@ class AccountRateLimiter {
     email = email.toLowerCase();
 
     const now = Date.now();
-    const attempts = (await this._getAttempts(email)) || {
-      count: 0,
-      lastAttempt: now,
-      lockoutUntil: 0
-    };
 
+    if (this.redis) {
+      try {
+        // Lua script : read-modify-write atomique pour éviter la race condition
+        const LUA_INCR = `
+local key = KEYS[1]
+local max = tonumber(ARGV[1])
+local lockout_px = tonumber(ARGV[2])
+local now = tonumber(ARGV[3])
+local raw = redis.call('GET', key)
+local d
+if raw then d = cjson.decode(raw) else d = {count=0,lastAttempt=now,lockoutUntil=0} end
+d.count = d.count + 1
+d.lastAttempt = now
+if d.count >= max then d.lockoutUntil = now + lockout_px end
+redis.call('SET', key, cjson.encode(d), 'PX', lockout_px)
+return cjson.encode(d)
+`;
+        const result = await this.redis.eval(LUA_INCR, {
+          keys: [`lockout:${email}`],
+          arguments: [
+            String(this.maxAttempts),
+            String(this.lockoutDuration),
+            String(now)
+          ]
+        });
+        const attempts = JSON.parse(result);
+        if (attempts.count >= this.maxAttempts && attempts.lockoutUntil > 0) {
+          logger.warn(`Compte bloqué: ${email} après ${attempts.count} tentatives échouées`);
+        }
+        return attempts;
+      } catch { /* fallback local */ }
+    }
+
+    // Fallback local (mono-process)
+    const attempts = this.localStore.get(email) || { count: 0, lastAttempt: now, lockoutUntil: 0 };
     attempts.count++;
     attempts.lastAttempt = now;
-
     if (attempts.count >= this.maxAttempts) {
       attempts.lockoutUntil = now + this.lockoutDuration;
       logger.warn(`Compte bloqué: ${email} après ${attempts.count} tentatives échouées`);
     }
-
-    await this._setAttempts(email, attempts);
+    this.localStore.set(email, attempts);
     return attempts;
   };
 

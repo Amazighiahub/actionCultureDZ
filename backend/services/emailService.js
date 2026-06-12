@@ -110,6 +110,14 @@ class EmailService {
   }
 
   /**
+   * Sanitise un sujet d'email : supprime CRLF, tab, tronque à 200 chars.
+   * @private
+   */
+  _sanitizeSubject(str) {
+    return String(str || '').replace(/[\r\n\t]/g, ' ').trim().substring(0, 200);
+  }
+
+  /**
    * Méthode d'envoi d'email principale et générique.
    */
   async sendEmail(to, subject, html, attachments = null, text = null) {
@@ -135,10 +143,11 @@ class EmailService {
       };
 
       const result = await this.transporter.sendMail(mailOptions);
-      logger.info(`✅ Email envoyé avec succès à ${to}. Message ID: ${result.messageId}`);
+      const maskedTo = to.replace(/(.{2}).+(@.+)/, '$1***$2');
+      logger.info(`Email envoyé. ID: ${result.messageId} → ${maskedTo}`);
       return { success: true, messageId: result.messageId };
     } catch (error) {
-      logger.error(`❌ Erreur lors de l'envoi de l'email à ${to}:`, error);
+      logger.error('Erreur envoi email:', error.message);
       return { success: false, error: error.message };
     }
   }
@@ -398,24 +407,25 @@ class EmailService {
         });
       } catch {
         // Template de secours
+        const esc = this._escapeHtml.bind(this);
         html = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2 style="color: #2c3e50;">Inscription Confirmée ✓</h2>
-            <p>Bonjour ${prenom},</p>
-            <p>Votre inscription à l'événement <strong>${nomEvenement}</strong> a été confirmée !</p>
+            <p>Bonjour ${esc(prenom)},</p>
+            <p>Votre inscription à l'événement <strong>${esc(nomEvenement)}</strong> a été confirmée !</p>
             <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0;">
-              <p><strong>Date :</strong> ${dateDebut}${dateFin ? ' - ' + dateFin : ''}</p>
-              ${lieu ? `<p><strong>Lieu :</strong> ${lieu}</p>` : ''}
-              ${adresse ? `<p><strong>Adresse :</strong> ${adresse}</p>` : ''}
-              ${reference ? `<p><strong>Référence :</strong> ${reference}</p>` : ''}
+              <p><strong>Date :</strong> ${esc(dateDebut)}${dateFin ? ' - ' + esc(dateFin) : ''}</p>
+              ${lieu ? `<p><strong>Lieu :</strong> ${esc(lieu)}</p>` : ''}
+              ${adresse ? `<p><strong>Adresse :</strong> ${esc(adresse)}</p>` : ''}
+              ${reference ? `<p><strong>Référence :</strong> ${esc(reference)}</p>` : ''}
             </div>
             ${oeuvresSoumises && oeuvresSoumises.length > 0 ? `
               <div style="background-color: #e8f4f8; padding: 15px; border-radius: 8px; margin: 20px 0;">
                 <h4>Vos œuvres soumises (${oeuvresSoumises.length})</h4>
-                <ul>${oeuvresSoumises.map(o => `<li>${o.titre}</li>`).join('')}</ul>
+                <ul>${oeuvresSoumises.map(o => `<li>${esc(o.titre)}</li>`).join('')}</ul>
               </div>
             ` : ''}
-            <p><a href="${eventUrl}" style="background-color: #3498db; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px;">Voir l'événement</a></p>
+            <p><a href="${encodeURI(eventUrl)}" style="background-color: #3498db; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px;">Voir l'événement</a></p>
             <p style="margin-top: 30px; font-size: 12px; color: #666;">L'équipe Tala DZ</p>
           </div>
         `;
@@ -423,7 +433,7 @@ class EmailService {
 
       return await this.sendEmail(
         email,
-        `Confirmation d'inscription : ${nomEvenement}`,
+        `Confirmation d'inscription : ${this._sanitizeSubject(nomEvenement)}`,
         html
       );
     } catch (error) {
@@ -471,7 +481,7 @@ class EmailService {
 
       return await this.sendEmail(
         email,
-        `Soumission ${statutText} : ${nomEvenement}`,
+        `Soumission ${this._sanitizeSubject(statutText)} : ${this._sanitizeSubject(nomEvenement)}`,
         html
       );
     } catch (error) {
@@ -565,7 +575,7 @@ class EmailService {
           </div>
         `;
 
-        const result = await this.sendEmail(user.email, `Événement annulé : ${nomEvenementStr}`, html);
+        const result = await this.sendEmail(user.email, `Événement annulé : ${this._sanitizeSubject(nomEvenementStr)}`, html);
         return { email: user.email, result };
       } catch (error) {
         logger.error(`Erreur envoi annulation à ${participant.User?.email}:`, error);
@@ -617,7 +627,7 @@ class EmailService {
           </div>
         `;
 
-        const result = await this.sendEmail(user.email, `${sujet} : ${nomEvenementStr}`, html);
+        const result = await this.sendEmail(user.email, `${this._sanitizeSubject(sujet)} : ${this._sanitizeSubject(nomEvenementStr)}`, html);
         return { email: user.email, result };
       } catch (error) {
         logger.error(`Erreur envoi modification programme à ${participant.User?.email}:`, error);
@@ -643,23 +653,25 @@ class EmailService {
       try {
         const prenomStr = typeof user.prenom === 'object' ? (user.prenom.fr || user.prenom.ar || '') : (user.prenom || '');
 
+        const esc = this._escapeHtml.bind(this);
+        const lieuNom = evenement.Lieu?.nom ? (typeof evenement.Lieu.nom === 'object' ? (evenement.Lieu.nom.fr || '') : evenement.Lieu.nom) : '';
         const html = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2 style="color: #27ae60;">🎉 Nouvel événement</h2>
-            <p>Bonjour ${prenomStr},</p>
-            <p>Un nouvel événement vient d'être publié : <strong>${nomEvenementStr}</strong></p>
-            ${descriptionStr ? `<p>${descriptionStr.substring(0, 200)}${descriptionStr.length > 200 ? '...' : ''}</p>` : ''}
+            <p>Bonjour ${esc(prenomStr)},</p>
+            <p>Un nouvel événement vient d'être publié : <strong>${esc(nomEvenementStr)}</strong></p>
+            ${descriptionStr ? `<p>${esc(descriptionStr.substring(0, 200))}${descriptionStr.length > 200 ? '...' : ''}</p>` : ''}
             <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0;">
               ${evenement.date_debut ? `<p><strong>📅 Date :</strong> ${new Date(evenement.date_debut).toLocaleDateString('fr-FR')}</p>` : ''}
-              ${evenement.Lieu?.nom ? `<p><strong>📍 Lieu :</strong> ${typeof evenement.Lieu.nom === 'object' ? (evenement.Lieu.nom.fr || '') : evenement.Lieu.nom}</p>` : ''}
-              ${evenement.TypeEvenement?.nom_type ? `<p><strong>🏷️ Type :</strong> ${evenement.TypeEvenement.nom_type}</p>` : ''}
+              ${lieuNom ? `<p><strong>📍 Lieu :</strong> ${esc(lieuNom)}</p>` : ''}
+              ${evenement.TypeEvenement?.nom_type ? `<p><strong>🏷️ Type :</strong> ${esc(evenement.TypeEvenement.nom_type)}</p>` : ''}
             </div>
-            <p><a href="${eventUrl}" style="background-color: #3498db; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px;">Découvrir l'événement</a></p>
+            <p><a href="${encodeURI(eventUrl)}" style="background-color: #3498db; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px;">Découvrir l'événement</a></p>
             <p style="margin-top: 30px; font-size: 12px; color: #666;">L'équipe Tala DZ</p>
           </div>
         `;
 
-        const result = await this.sendEmail(user.email, `Nouvel événement : ${nomEvenementStr}`, html);
+        const result = await this.sendEmail(user.email, `Nouvel événement : ${this._sanitizeSubject(nomEvenementStr)}`, html);
         return { email: user.email, result };
       } catch (error) {
         logger.error(`Erreur envoi nouvel événement à ${user.email}:`, error);
@@ -674,17 +686,18 @@ class EmailService {
     try {
       const { email, prenom, nomEvenement, dateDebut, heureDebut, lieu, eventUrl } = params;
 
+      const esc = this._escapeHtml.bind(this);
       const html = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #f39c12;">⏰ Rappel : Événement demain !</h2>
-          <p>Bonjour ${prenom},</p>
-          <p>Nous vous rappelons que l'événement <strong>${nomEvenement}</strong> aura lieu demain !</p>
+          <p>Bonjour ${esc(prenom)},</p>
+          <p>Nous vous rappelons que l'événement <strong>${esc(nomEvenement)}</strong> aura lieu demain !</p>
           <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0;">
-            <p><strong>📅 Date :</strong> ${dateDebut}</p>
-            <p><strong>🕐 Heure :</strong> ${heureDebut}</p>
-            ${lieu ? `<p><strong>📍 Lieu :</strong> ${lieu}</p>` : ''}
+            <p><strong>📅 Date :</strong> ${esc(dateDebut)}</p>
+            <p><strong>🕐 Heure :</strong> ${esc(heureDebut)}</p>
+            ${lieu ? `<p><strong>📍 Lieu :</strong> ${esc(lieu)}</p>` : ''}
           </div>
-          <p><a href="${eventUrl}" style="background-color: #3498db; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px;">Voir les détails</a></p>
+          <p><a href="${encodeURI(eventUrl)}" style="background-color: #3498db; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px;">Voir les détails</a></p>
           <p style="margin-top: 30px;">À demain !</p>
           <p style="font-size: 12px; color: #666;">L'équipe Tala DZ</p>
         </div>

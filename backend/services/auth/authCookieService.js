@@ -61,7 +61,7 @@ function setAccessTokenCookie(res, token) {
   res.cookie('access_token', token, {
     httpOnly: true,
     secure: isProduction(),
-    sameSite: 'lax',
+    sameSite: 'strict',
     maxAge: parseExpToMs(jwtExp),
     path: ACCESS_COOKIE_PATH
   });
@@ -76,7 +76,7 @@ function setRefreshTokenCookie(res, refreshToken) {
   res.cookie('refresh_token', refreshToken, {
     httpOnly: true,
     secure: isProduction(),
-    sameSite: 'lax',
+    sameSite: 'strict',
     path: REFRESH_COOKIE_PATH,
     maxAge: REFRESH_COOKIE_MAX_AGE_MS
   });
@@ -99,8 +99,9 @@ function setAuthCookies(res, { token, refreshToken }) {
  * @param {import('express').Response} res
  */
 function clearAuthCookies(res) {
-  res.clearCookie('access_token', { path: ACCESS_COOKIE_PATH });
-  res.clearCookie('refresh_token', { path: REFRESH_COOKIE_PATH });
+  const prod = isProduction();
+  res.clearCookie('access_token', { path: ACCESS_COOKIE_PATH, httpOnly: true, secure: prod, sameSite: 'strict' });
+  res.clearCookie('refresh_token', { path: REFRESH_COOKIE_PATH, httpOnly: true, secure: prod, sameSite: 'strict' });
 }
 
 module.exports = {

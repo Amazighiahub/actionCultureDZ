@@ -17,8 +17,9 @@ class ParcoursController extends BaseController {
 
   async list(req, res) {
     try {
-      const { page = 1, limit = 20, theme, difficulte } = req.query;
-      const options = { page: parseInt(page), limit: parseInt(limit) };
+      const { theme, difficulte } = req.query;
+      const { page, limit } = this._paginate(req);
+      const options = { page, limit };
 
       let result;
       if (theme) {
@@ -41,11 +42,9 @@ class ParcoursController extends BaseController {
 
   async search(req, res) {
     try {
-      const { q, page = 1, limit = 20 } = req.query;
-      const result = await this.parcoursService.search(q, {
-        page: parseInt(page),
-        limit: parseInt(limit)
-      });
+      const { q } = req.query;
+      const { page, limit } = this._paginate(req);
+      const result = await this.parcoursService.search(q, { page, limit });
 
       res.json({
         success: true,
@@ -87,11 +86,8 @@ class ParcoursController extends BaseController {
 
   async getMyParcours(req, res) {
     try {
-      const { page = 1, limit = 20 } = req.query;
-      const result = await this.parcoursService.findByCreateur(req.user.id_user, {
-        page: parseInt(page),
-        limit: parseInt(limit)
-      });
+      const { page, limit } = this._paginate(req);
+      const result = await this.parcoursService.findByCreateur(req.user.id_user, { page, limit });
 
       res.json({
         success: true,
@@ -204,8 +200,9 @@ class ParcoursController extends BaseController {
 
   async listAll(req, res) {
     try {
-      const { page = 1, limit = 20, statut } = req.query;
-      const options = { page: parseInt(page), limit: parseInt(limit) };
+      const { statut } = req.query;
+      const { page, limit } = this._paginate(req);
+      const options = { page, limit };
       if (statut) options.where = { statut };
 
       const result = await this.parcoursService.findAll(options);

@@ -53,6 +53,15 @@ function validateMagicBytesBuffer(allowedMimeTypes, opts = {}) {
       return next();
     }
 
+    // Sanitiser originalname avant tout traitement (évite path traversal dans logs/stockage)
+    for (const file of files) {
+      file.originalname = (file.originalname || 'file')
+        .replace(/\x00/g, '')
+        .replace(/[/\\]/g, '_')
+        .replace(/\.\./g, '_')
+        .substring(0, 255);
+    }
+
     for (const file of files) {
       if (!Buffer.isBuffer(file.buffer) || file.buffer.length === 0) {
         logger.warn('uploadSecurity: file without buffer', {
