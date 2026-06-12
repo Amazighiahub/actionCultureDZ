@@ -337,14 +337,18 @@ export function useAjouterOeuvre() {
     const newMedias: MediaUpload[] = [];
     const errors: string[] = [];
     Array.from(files).forEach((file) => {
-      const maxSize = 100 * 1024 * 1024;
+      const fileType = file.type.startsWith('image/') ? 'image'
+        : file.type.startsWith('video/') ? 'video'
+        : file.type.startsWith('audio/') ? 'audio'
+        : 'document';
+      const maxSizes: Record<string, number> = { image: 10, video: 100, audio: 100, document: 50 };
+      const maxSizeMB = maxSizes[fileType];
+      const maxSize = maxSizeMB * 1024 * 1024;
       if (file.size > maxSize) {
-        errors.push(`${file.name}: ${t('validation.fileTooLarge', 'Fichier trop volumineux')} (max 100MB)`);
+        errors.push(`${file.name}: ${t('validation.fileTooLarge', 'Fichier trop volumineux')} (max ${maxSizeMB}MB)`);
         return;
       }
-      const type = file.type.startsWith('image/') ? 'image' :
-      file.type.startsWith('video/') ? 'video' :
-      file.type.startsWith('audio/') ? 'audio' : 'document';
+      const type = fileType;
       const media: MediaUpload = {
         id: `media-${Date.now()}-${Math.random()}`,
         file,

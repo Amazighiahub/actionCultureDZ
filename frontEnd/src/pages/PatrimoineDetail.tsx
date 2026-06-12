@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import {
   MapPin, Clock, Star, QrCode, ArrowLeft, Landmark, Building2,
   Camera, Calendar, Route, ChevronRight, Download, Share2,
@@ -117,9 +117,9 @@ interface SitePatrimoineDetail {
   }>;
   qrcodes?: Array<{ id_qr_code: number; code_unique: string; url_destination: string; qr_image_url?: string }>;
   qrCodeGenerated?: string;
-  wilaya?: { id_wilaya: number; nom: string };
-  commune?: { id_commune: number; nom: string };
-  daira?: { id_daira: number; nom: string };
+  wilaya?: { id_wilaya: number; nom: string; wilaya_name_ascii?: string };
+  commune?: { id_commune: number; nom: string; commune_name_ascii?: string };
+  daira?: { id_daira: number; nom: string; daira_name_ascii?: string };
   stats?: {
     totalMedias: number;
     totalServices: number;
@@ -205,10 +205,12 @@ const PatrimoineDetail = () => {
   // Charger le QR code depuis l'API backend
   useEffect(() => {
     if (!site?.id_lieu) return;
+    let mounted = true;
     fetch(`/api/patrimoine/${site.id_lieu}/qrcode`)
       .then(r => r.json())
-      .then(d => { if (d.success && d.data?.qr_data_url) setQrDataUrl(d.data.qr_data_url); })
+      .then(d => { if (mounted && d.success && d.data?.qr_data_url) setQrDataUrl(d.data.qr_data_url); })
       .catch(() => {});
+    return () => { mounted = false; };
   }, [site?.id_lieu]);
 
   // Télécharger le QR Code
@@ -301,8 +303,9 @@ const PatrimoineDetail = () => {
       />
       <Header />
 
+
       <main className="container py-8">
-        {/* Navigation retour */}
+        {/* Breadcrumb */}
         <div className="flex items-center gap-2 mb-6">
           <Button variant="ghost" size="sm" onClick={() => fromPath ? navigate(fromPath) : navigate('/patrimoine')} className="text-muted-foreground hover:text-foreground">
             <ArrowLeft className="h-4 w-4 mr-1" />
@@ -331,18 +334,9 @@ const PatrimoineDetail = () => {
                 <div className="flex items-center gap-2 text-white/90 mb-4">
                   <MapPin className="h-4 w-4" />
                   <span>
-                    {(site.wilaya as any)?.wilaya_name_ascii || (site.commune as any)?.commune_name_ascii || translate(site.adresse, lang)}
+                    {site.wilaya?.wilaya_name_ascii || site.commune?.commune_name_ascii || translate(site.adresse, lang)}
                   </span>
                 </div>
-                {/* 🎯 CTA Principal - Planifier votre visite */}
-                <Button 
-                  size="lg"
-                  onClick={() => setShowVisitePlanner(true)}
-                  className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
-                >
-                  <Route className="h-5 w-5 mr-2" />
-                  {t('patrimoine.planVisit', 'Planifier votre visite')}
-                </Button>
               </div>
               <div className="flex flex-col gap-2 items-end">
                 {site.stats?.noteMoyenne && (
@@ -433,411 +427,259 @@ const PatrimoineDetail = () => {
               </CardContent>
             </Card>
 
-            {/* Histoire */}
-            {site.DetailLieu?.histoire && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <History className="h-5 w-5" />
-                    {t('patrimoine.history', 'Histoire')}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground leading-relaxed">
-                    {translate(site.DetailLieu.histoire, lang)}
-                  </p>
-                  {site.DetailLieu.referencesHistoriques && (
-                    <div className="mt-4 pt-4 border-t">
-                      <h4 className="font-semibold mb-2">{t('patrimoine.references', 'Références')}</h4>
-                      <p className="text-sm text-muted-foreground">
-                        {translate(site.DetailLieu.referencesHistoriques, lang)}
-                      </p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
-
-            {/* ⚡ Onglets adaptatifs selon le type de patrimoine */}
+            {/* ─────────────────────────────────────────────────────────── */}
+            {/* SECTIONS DÉPLIABLES — adaptées au type de patrimoine      */}
+            {/* ─────────────────────────────────────────────────────────── */}
             {(() => {
               const typePatrimoine = (site.typePatrimoine || 'autre') as TypePatrimoine;
-              const availableTabs = TABS_CONFIG[typePatrimoine] || TABS_CONFIG.autre;
-              const defaultTab = availableTabs[0];
+              const availableSections = TABS_CONFIG[typePatrimoine] || TABS_CONFIG.autre;
 
-              // Définition des onglets avec leurs données
-              const allTabs = {
-                monuments: { label: t('patrimoine.monuments', 'Monuments'), icon: Landmark, count: site.monuments?.length || 0 },
-                vestiges: { label: t('patrimoine.vestiges', 'Vestiges'), icon: Building2, count: site.vestiges?.length || 0 },
-                services: { label: t('patrimoine.services', 'Services'), icon: CheckCircle2, count: site.services?.length || 0 },
-                programmes: { label: t('patrimoine.programmes', 'Programmes'), icon: Calendar, count: site.programmes?.length || 0 },
-                parcours: { label: t('patrimoine.parcours', 'Parcours'), icon: Route, count: site.parcours?.length || 0 },
-                galerie: { label: t('patrimoine.gallery', 'Galerie'), icon: Camera, count: site.medias?.length || 0 },
-                histoire: { label: t('patrimoine.history', 'Histoire'), icon: History, count: site.DetailLieu?.histoire ? 1 : 0 },
-                a_visiter: { label: t('patrimoine.toVisit', 'À Visiter'), icon: Compass, count: (site.monuments?.length || 0) + (site.vestiges?.length || 0) },
-                musees: { label: t('patrimoine.museums', 'Musées'), icon: Building2, count: 0 },
-                collections: { label: t('patrimoine.collections', 'Collections'), icon: ImageIcon, count: 0 },
-                faune_flore: { label: t('patrimoine.wildlife', 'Faune & Flore'), icon: Info, count: 0 }
+              const counts: Record<string, number> = {
+                a_visiter:   (site.monuments?.length || 0) + (site.vestiges?.length || 0),
+                monuments:   site.monuments?.length || 0,
+                vestiges:    site.vestiges?.length || 0,
+                services:    site.services?.length || 0,
+                programmes:  site.programmes?.length || 0,
+                parcours:    site.parcours?.length || 0,
+                galerie:     site.medias?.length || 0,
+                histoire:    site.DetailLieu?.histoire ? 1 : 0,
+                musees:      0,
+                collections: 0,
+                faune_flore: 0,
               };
 
-              // Filtrer les onglets disponibles
-              const visibleTabs = availableTabs.filter(tab => allTabs[tab as keyof typeof allTabs]);
-              const gridCols = visibleTabs.length <= 3 ? 'grid-cols-3' : visibleTabs.length === 4 ? 'grid-cols-4' : 'grid-cols-5';
+              const SECTION_META: Record<string, { label: string; icon: React.ElementType }> = {
+                a_visiter:   { label: t('patrimoine.toVisit', 'À Visiter'),     icon: Compass },
+                monuments:   { label: t('patrimoine.monuments', 'Monuments'),   icon: Landmark },
+                vestiges:    { label: t('patrimoine.vestiges', 'Vestiges'),     icon: Building2 },
+                services:    { label: t('patrimoine.services', 'Services'),     icon: CheckCircle2 },
+                programmes:  { label: t('patrimoine.programmes', 'Programmes'), icon: Calendar },
+                parcours:    { label: t('patrimoine.parcours', 'Parcours'),     icon: Route },
+                galerie:     { label: t('patrimoine.gallery', 'Galerie'),       icon: Camera },
+                histoire:    { label: t('patrimoine.history', 'Histoire'),      icon: History },
+                musees:      { label: t('patrimoine.museums', 'Musées'),        icon: Building2 },
+                collections: { label: t('patrimoine.collections', 'Collections'), icon: ImageIcon },
+                faune_flore: { label: t('patrimoine.wildlife', 'Faune & Flore'), icon: Info },
+              };
+
+              const defaultOpen = availableSections.filter(s => (counts[s] || 0) > 0);
+              const openValues = defaultOpen.length > 0 ? defaultOpen : [availableSections[0]];
 
               return (
-                <Tabs defaultValue={defaultTab} className="w-full">
-                  <TabsList className={`grid w-full ${gridCols}`}>
-                    {visibleTabs.map(tabKey => {
-                      const tab = allTabs[tabKey as keyof typeof allTabs];
-                      if (!tab) return null;
-                      const Icon = tab.icon;
-                      return (
-                        <TabsTrigger key={tabKey} value={tabKey} className="text-xs sm:text-sm">
-                          <Icon className="h-4 w-4 mr-1 hidden sm:inline" />
-                          {tab.label} ({tab.count})
-                        </TabsTrigger>
-                      );
-                    })}
-                  </TabsList>
+                <Accordion type="multiple" defaultValue={openValues} className="w-full border rounded-xl overflow-hidden divide-y bg-card">
+                  {availableSections.map((sectionKey) => {
+                    const meta = SECTION_META[sectionKey];
+                    if (!meta) return null;
+                    const count = counts[sectionKey] || 0;
+                    const Icon = meta.icon;
 
-              {/* À Visiter — vue combinée monuments + vestiges pour ville/village */}
-              <TabsContent value="a_visiter" className="mt-4">
-                {((site.monuments && site.monuments.length > 0) || (site.vestiges && site.vestiges.length > 0)) ? (
-                  <div className="space-y-6">
-                    {/* Monuments */}
-                    {site.monuments && site.monuments.length > 0 && (
-                      <div className="space-y-3">
-                        <h4 className="font-medium flex items-center gap-2 text-primary">
-                          <Landmark className="h-4 w-4" />
-                          {t('patrimoine.monuments', 'Monuments')} ({site.monuments.length})
-                        </h4>
-                        <div className="grid gap-4 sm:grid-cols-2">
-                          {site.monuments.map((monument, idx) => (
-                            <Card key={`m-${idx}`} className="hover:shadow-md transition-shadow">
-                              <CardHeader className="pb-2">
-                                <div className="flex items-center justify-between">
-                                  <CardTitle className="text-lg">{translate(monument.nom, lang)}</CardTitle>
-                                  <Badge variant="outline">{monument.type}</Badge>
-                                </div>
-                              </CardHeader>
-                              <CardContent>
-                                <p className="text-sm text-muted-foreground">
-                                  {translate(monument.description, lang) || t('common.noDescription', 'Aucune description')}
-                                </p>
-                              </CardContent>
-                            </Card>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Vestiges */}
-                    {site.vestiges && site.vestiges.length > 0 && (
-                      <div className="space-y-3">
-                        <h4 className="font-medium flex items-center gap-2 text-amber-600">
-                          <Building2 className="h-4 w-4" />
-                          {t('patrimoine.vestiges', 'Vestiges')} ({site.vestiges.length})
-                        </h4>
-                        <div className="grid gap-4 sm:grid-cols-2">
-                          {site.vestiges.map((vestige, idx) => (
-                            <Card key={`v-${idx}`} className="hover:shadow-md transition-shadow">
-                              <CardHeader className="pb-2">
-                                <div className="flex items-center justify-between">
-                                  <CardTitle className="text-lg">{translate(vestige.nom, lang)}</CardTitle>
-                                  <Badge variant="outline">{vestige.type}</Badge>
-                                </div>
-                              </CardHeader>
-                              <CardContent>
-                                <p className="text-sm text-muted-foreground">
-                                  {translate(vestige.description, lang) || t('common.noDescription', 'Aucune description')}
-                                </p>
-                              </CardContent>
-                            </Card>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <Card className="text-center py-8">
-                    <CardContent>
-                      <Compass className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-                      <p className="text-muted-foreground">{t('patrimoine.noPlacesToVisit', 'Aucun endroit à visiter répertorié pour le moment')}</p>
-                    </CardContent>
-                  </Card>
-                )}
-              </TabsContent>
-
-              {/* Monuments */}
-              <TabsContent value="monuments" className="mt-4">
-                <SectionElements
-                  lieuId={site.id_lieu}
-                  kind="monument"
-                  items={(site.monuments || []) as PatrimoineElement[]}
-                  lang={lang}
-                  onItemAdded={(item) => setSite(prev => prev ? { ...prev, monuments: [...(prev.monuments || []), item as { id: number; nom: string; description?: string; type: string }] } : prev)}
-                  onItemDeleted={(id) => setSite(prev => prev ? { ...prev, monuments: (prev.monuments || []).filter(m => m.id !== id) } : prev)}
-                />
-              </TabsContent>
-
-              {/* Vestiges */}
-              <TabsContent value="vestiges" className="mt-4">
-                <SectionElements
-                  lieuId={site.id_lieu}
-                  kind="vestige"
-                  items={(site.vestiges || []) as PatrimoineElement[]}
-                  lang={lang}
-                  onItemAdded={(item) => setSite(prev => prev ? { ...prev, vestiges: [...(prev.vestiges || []), item as { id: number; nom: string; description?: string; type: string }] } : prev)}
-                  onItemDeleted={(id) => setSite(prev => prev ? { ...prev, vestiges: (prev.vestiges || []).filter(v => v.id !== id) } : prev)}
-                />
-              </TabsContent>
-
-              {/* Services — utilise le composant enrichi */}
-              <TabsContent value="services" className="mt-4">
-                <ServicesProximite
-                  lieuId={site.id_lieu}
-                  lieuName={translate(site.nom, lang)}
-                  services={site.services}
-                  variant="full"
-                  showTitle={false}
-                />
-              </TabsContent>
-
-              {/* Programmes */}
-              <TabsContent value="programmes" className="mt-4">
-                {site.programmes && site.programmes.length > 0 ? (
-                  <div className="space-y-4">
-                    {site.programmes.map((programme, idx) => (
-                      <Card key={idx}>
-                        <CardHeader className="pb-2">
-                          <div className="flex items-center justify-between">
-                            <CardTitle className="text-lg">
-                              {translate(programme.titre, lang)}
-                            </CardTitle>
-                            {programme.Evenement && (
-                              <Badge>{programme.Evenement.statut}</Badge>
-                            )}
+                    return (
+                      <AccordionItem key={sectionKey} value={sectionKey} className="border-0">
+                        <AccordionTrigger className="px-5 py-4 hover:no-underline hover:bg-muted/40 transition-colors">
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 shrink-0">
+                              <Icon className="h-4 w-4 text-primary" />
+                            </span>
+                            <span className="font-medium text-sm">{meta.label}</span>
+                            <span className="ml-auto mr-2 shrink-0">
+                              {count > 0
+                                ? <Badge variant="secondary" className="text-xs font-normal">{count}</Badge>
+                                : <span className="text-xs text-muted-foreground/50 italic font-normal">vide</span>}
+                            </span>
                           </div>
-                          <CardDescription className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4" />
-                            {new Date(programme.date_debut).toLocaleDateString(getDateLocale(lang))}
-                            {programme.date_fin && ` - ${new Date(programme.date_fin).toLocaleDateString(getDateLocale(lang))}`}
-                          </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                          <p className="text-sm text-muted-foreground">
-                            {translate(programme.description, lang) || t('common.noDescription', 'Aucune description')}
-                          </p>
-                          {programme.Evenement && (
-                            <Link to={`/evenements/${programme.Evenement.id_evenement}`}>
-                              <Button variant="link" className="p-0 mt-2">
-                                {t('patrimoine.viewEvent', 'Voir l\'événement')}
-                                <ChevronRight className="h-4 w-4 ml-1" />
-                              </Button>
-                            </Link>
+                        </AccordionTrigger>
+
+                        <AccordionContent className="px-5 pb-5 pt-2">
+
+                          {/* À Visiter — monuments + vestiges combinés (ville/village) */}
+                          {sectionKey === 'a_visiter' && (
+                            <div className="space-y-6">
+                              <div>
+                                <h4 className="text-sm font-semibold flex items-center gap-2 mb-3 text-primary">
+                                  <Landmark className="h-4 w-4" />
+                                  {t('patrimoine.monuments', 'Monuments')}
+                                  {(site.monuments?.length || 0) > 0 && <Badge variant="secondary" className="font-normal">{site.monuments!.length}</Badge>}
+                                </h4>
+                                <SectionElements
+                                  lieuId={site.id_lieu} kind="monument"
+                                  items={(site.monuments || []) as PatrimoineElement[]} lang={lang}
+                                  onItemAdded={(item) => setSite(prev => prev ? { ...prev, monuments: [...(prev.monuments || []), item as any] } : prev)}
+                                  onItemUpdated={(item) => setSite(prev => prev ? { ...prev, monuments: (prev.monuments || []).map(m => m.id === item.id ? item as any : m) } : prev)}
+                                  onItemDeleted={(id) => setSite(prev => prev ? { ...prev, monuments: (prev.monuments || []).filter(m => m.id !== id) } : prev)}
+                                />
+                              </div>
+                              <div>
+                                <h4 className="text-sm font-semibold flex items-center gap-2 mb-3 text-amber-600">
+                                  <Building2 className="h-4 w-4" />
+                                  {t('patrimoine.vestiges', 'Vestiges')}
+                                  {(site.vestiges?.length || 0) > 0 && <Badge variant="secondary" className="font-normal">{site.vestiges!.length}</Badge>}
+                                </h4>
+                                <SectionElements
+                                  lieuId={site.id_lieu} kind="vestige"
+                                  items={(site.vestiges || []) as PatrimoineElement[]} lang={lang}
+                                  onItemAdded={(item) => setSite(prev => prev ? { ...prev, vestiges: [...(prev.vestiges || []), item as any] } : prev)}
+                                  onItemUpdated={(item) => setSite(prev => prev ? { ...prev, vestiges: (prev.vestiges || []).map(v => v.id === item.id ? item as any : v) } : prev)}
+                                  onItemDeleted={(id) => setSite(prev => prev ? { ...prev, vestiges: (prev.vestiges || []).filter(v => v.id !== id) } : prev)}
+                                />
+                              </div>
+                            </div>
                           )}
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                ) : (
-                  <Card className="text-center py-8">
-                    <CardContent>
-                      <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-                      <p className="text-muted-foreground">{t('patrimoine.noProgrammes', 'Aucun programme prévu')}</p>
-                    </CardContent>
-                  </Card>
-                )}
-              </TabsContent>
 
-              {/* Parcours */}
-              <TabsContent value="parcours" className="mt-4">
-                {site.parcours && site.parcours.length > 0 ? (
-                  <div className="space-y-4">
-                    {site.parcours.map((parcours, idx) => (
-                      <Card key={idx} className="hover:shadow-md transition-shadow">
-                        <CardHeader className="pb-2">
-                          <div className="flex items-center justify-between">
-                            <CardTitle className="text-lg">
-                              {translate(parcours.nom_parcours, lang)}
-                            </CardTitle>
-                            {parcours.difficulte && (
-                              <Badge variant={
-                                parcours.difficulte === 'facile' ? 'secondary' :
-                                  parcours.difficulte === 'moyen' ? 'default' : 'destructive'
-                              }>
-                                {parcours.difficulte}
-                              </Badge>
-                            )}
-                          </div>
-                        </CardHeader>
-                        <CardContent>
-                          <p className="text-sm text-muted-foreground mb-3">
-                            {translate(parcours.description, lang) || t('common.noDescription', 'Aucune description')}
-                          </p>
-                          <div className="flex flex-wrap gap-4 text-sm">
-                            {parcours.duree_estimee && (
-                              <span className="flex items-center gap-1">
-                                <Clock className="h-4 w-4" />
-                                {parcours.duree_estimee} min
-                              </span>
-                            )}
-                            {parcours.distance_km && (
-                              <span className="flex items-center gap-1">
-                                <Route className="h-4 w-4" />
-                                {parcours.distance_km} km
-                              </span>
-                            )}
-                            {parcours.theme && (
-                              <Badge variant="outline">{parcours.theme}</Badge>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                ) : (
-                  <Card className="text-center py-8">
-                    <CardContent>
-                      <Route className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-                      <p className="text-muted-foreground">{t('patrimoine.noParcours', 'Aucun parcours associé')}</p>
-                    </CardContent>
-                  </Card>
-                )}
-              </TabsContent>
+                          {/* Monuments */}
+                          {sectionKey === 'monuments' && (
+                            <SectionElements
+                              lieuId={site.id_lieu} kind="monument"
+                              items={(site.monuments || []) as PatrimoineElement[]} lang={lang}
+                              onItemAdded={(item) => setSite(prev => prev ? { ...prev, monuments: [...(prev.monuments || []), item as any] } : prev)}
+                              onItemUpdated={(item) => setSite(prev => prev ? { ...prev, monuments: (prev.monuments || []).map(m => m.id === item.id ? item as any : m) } : prev)}
+                              onItemDeleted={(id) => setSite(prev => prev ? { ...prev, monuments: (prev.monuments || []).filter(m => m.id !== id) } : prev)}
+                            />
+                          )}
 
-              {/* Onglet Galerie (pour certains types) */}
-              <TabsContent value="galerie" className="mt-4">
-                {site.medias && site.medias.length > 0 ? (
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {site.medias.map((media, idx) => (
-                      <div key={idx} className="aspect-video cursor-pointer overflow-hidden rounded-lg">
-                        {media.type === 'video' ? (
-                          <div className="w-full h-full bg-muted flex items-center justify-center">
-                            <Play className="h-8 w-8" />
-                          </div>
-                        ) : (
-                          <img
-                            src={getAssetUrl(media.url)}
-                            alt={`Photo ${idx + 1}`}
-                            className="w-full h-full object-cover hover:scale-105 transition-transform"
-                          />
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <Card className="text-center py-8">
-                    <CardContent>
-                      <Camera className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-                      <p className="text-muted-foreground">{t('patrimoine.noGallery', 'Aucune photo disponible')}</p>
-                    </CardContent>
-                  </Card>
-                )}
-              </TabsContent>
+                          {/* Vestiges */}
+                          {sectionKey === 'vestiges' && (
+                            <SectionElements
+                              lieuId={site.id_lieu} kind="vestige"
+                              items={(site.vestiges || []) as PatrimoineElement[]} lang={lang}
+                              onItemAdded={(item) => setSite(prev => prev ? { ...prev, vestiges: [...(prev.vestiges || []), item as any] } : prev)}
+                              onItemUpdated={(item) => setSite(prev => prev ? { ...prev, vestiges: (prev.vestiges || []).map(v => v.id === item.id ? item as any : v) } : prev)}
+                              onItemDeleted={(id) => setSite(prev => prev ? { ...prev, vestiges: (prev.vestiges || []).filter(v => v.id !== id) } : prev)}
+                            />
+                          )}
 
-              {/* Onglet Histoire (pour certains types) */}
-              <TabsContent value="histoire" className="mt-4">
-                {site.DetailLieu?.histoire ? (
-                  <Card>
-                    <CardContent className="pt-6">
-                      <p className="text-muted-foreground leading-relaxed">
-                        {translate(site.DetailLieu.histoire, lang)}
-                      </p>
-                      {site.DetailLieu.referencesHistoriques && (
-                        <div className="mt-4 pt-4 border-t">
-                          <h4 className="font-semibold mb-2">{t('patrimoine.references', 'Références historiques')}</h4>
-                          <p className="text-sm text-muted-foreground">
-                            {translate(site.DetailLieu.referencesHistoriques, lang)}
-                          </p>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <Card className="text-center py-8">
-                    <CardContent>
-                      <History className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-                      <p className="text-muted-foreground">{t('patrimoine.noHistory', 'Aucune information historique disponible')}</p>
-                    </CardContent>
-                  </Card>
-                )}
-              </TabsContent>
+                          {/* Services */}
+                          {sectionKey === 'services' && (
+                            <ServicesProximite
+                              lieuId={site.id_lieu}
+                              lieuName={translate(site.nom, lang)}
+                              services={site.services}
+                              variant="full"
+                              showTitle={false}
+                            />
+                          )}
 
-              {/* Placeholder pour les futurs onglets (musees, collections, faune_flore) */}
-              <TabsContent value="musees" className="mt-4">
-                <Card className="text-center py-8">
-                  <CardContent>
-                    <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-                    <p className="text-muted-foreground">{t('patrimoine.noMuseums', 'Aucun musée répertorié')}</p>
-                  </CardContent>
-                </Card>
-              </TabsContent>
+                          {/* Programmes */}
+                          {sectionKey === 'programmes' && (
+                            site.programmes && site.programmes.length > 0 ? (
+                              <div className="space-y-4">
+                                {site.programmes.map((programme, idx) => (
+                                  <Card key={idx}>
+                                    <CardHeader className="pb-2">
+                                      <div className="flex items-center justify-between">
+                                        <CardTitle className="text-base">{translate(programme.titre, lang)}</CardTitle>
+                                        {programme.Evenement && <Badge>{programme.Evenement.statut}</Badge>}
+                                      </div>
+                                      <CardDescription className="flex items-center gap-2">
+                                        <Calendar className="h-4 w-4" />
+                                        {new Date(programme.date_debut).toLocaleDateString(getDateLocale(lang))}
+                                        {programme.date_fin && ` — ${new Date(programme.date_fin).toLocaleDateString(getDateLocale(lang))}`}
+                                      </CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                      <p className="text-sm text-muted-foreground">{translate(programme.description, lang) || t('common.noDescription', 'Aucune description')}</p>
+                                      {programme.Evenement && (
+                                        <Link to={`/evenements/${programme.Evenement.id_evenement}`}>
+                                          <Button variant="link" className="p-0 mt-2">
+                                            {t('patrimoine.viewEvent', "Voir l'événement")}
+                                            <ChevronRight className="h-4 w-4 ml-1" />
+                                          </Button>
+                                        </Link>
+                                      )}
+                                    </CardContent>
+                                  </Card>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-sm text-muted-foreground text-center py-4">{t('patrimoine.noProgrammes', 'Aucun programme prévu pour le moment')}</p>
+                            )
+                          )}
 
-              <TabsContent value="collections" className="mt-4">
-                <Card className="text-center py-8">
-                  <CardContent>
-                    <ImageIcon className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-                    <p className="text-muted-foreground">{t('patrimoine.noCollections', 'Aucune collection disponible')}</p>
-                  </CardContent>
-                </Card>
-              </TabsContent>
+                          {/* Parcours */}
+                          {sectionKey === 'parcours' && (
+                            site.parcours && site.parcours.length > 0 ? (
+                              <div className="space-y-4">
+                                {site.parcours.map((parcours, idx) => (
+                                  <Card key={idx} className="hover:shadow-md transition-shadow">
+                                    <CardHeader className="pb-2">
+                                      <div className="flex items-center justify-between">
+                                        <CardTitle className="text-base">{translate(parcours.nom_parcours, lang)}</CardTitle>
+                                        {parcours.difficulte && (
+                                          <Badge variant={parcours.difficulte === 'facile' ? 'secondary' : parcours.difficulte === 'moyen' ? 'default' : 'destructive'}>
+                                            {parcours.difficulte}
+                                          </Badge>
+                                        )}
+                                      </div>
+                                    </CardHeader>
+                                    <CardContent>
+                                      <p className="text-sm text-muted-foreground mb-3">{translate(parcours.description, lang) || t('common.noDescription', 'Aucune description')}</p>
+                                      <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
+                                        {parcours.duree_estimee && <span className="flex items-center gap-1"><Clock className="h-4 w-4" />{parcours.duree_estimee} min</span>}
+                                        {parcours.distance_km && <span className="flex items-center gap-1"><Route className="h-4 w-4" />{parcours.distance_km} km</span>}
+                                        {parcours.theme && <Badge variant="outline">{parcours.theme}</Badge>}
+                                      </div>
+                                    </CardContent>
+                                  </Card>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-sm text-muted-foreground text-center py-4">{t('patrimoine.noParcours', 'Aucun parcours associé')}</p>
+                            )
+                          )}
 
-              <TabsContent value="faune_flore" className="mt-4">
-                <Card className="text-center py-8">
-                  <CardContent>
-                    <Info className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-                    <p className="text-muted-foreground">{t('patrimoine.noWildlife', 'Informations sur la faune et flore à venir')}</p>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
+                          {/* Galerie */}
+                          {sectionKey === 'galerie' && (
+                            site.medias && site.medias.length > 0 ? (
+                              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                {site.medias.map((media, idx) => (
+                                  <div key={idx} className="aspect-video cursor-pointer overflow-hidden rounded-lg" onClick={() => setSelectedImage(media.url)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter') setSelectedImage(media.url); }}>
+                                    {media.type === 'video'
+                                      ? <div className="w-full h-full bg-muted flex items-center justify-center"><Play className="h-8 w-8" /></div>
+                                      : <img src={getAssetUrl(media.url)} alt={`Photo ${idx + 1}`} className="w-full h-full object-cover hover:scale-105 transition-transform" />}
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-sm text-muted-foreground text-center py-4">{t('patrimoine.noGallery', 'Aucune photo disponible')}</p>
+                            )
+                          )}
+
+                          {/* Histoire */}
+                          {sectionKey === 'histoire' && (
+                            <div className="space-y-4">
+                              <SectionEnrichissable icon={<History className="h-5 w-5 text-primary" />} title={t('patrimoine.sections.histoire', 'Histoire')} content={site.DetailLieu?.histoire} lang={lang} lieuId={site.id_lieu} fieldName="histoire" onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, histoire: val } } : prev)} />
+                              <SectionEnrichissable icon={<span className="text-xl">📚</span>} title={t('patrimoine.sections.references', 'Références historiques')} content={site.DetailLieu?.referencesHistoriques} lang={lang} lieuId={site.id_lieu} fieldName="referencesHistoriques" onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, referencesHistoriques: val } } : prev)} />
+                            </div>
+                          )}
+
+                          {sectionKey === 'musees' && <p className="text-sm text-muted-foreground text-center py-4">{t('patrimoine.noMuseums', 'Aucun musée répertorié')}</p>}
+                          {sectionKey === 'collections' && <p className="text-sm text-muted-foreground text-center py-4">{t('patrimoine.noCollections', 'Aucune collection disponible')}</p>}
+                          {sectionKey === 'faune_flore' && <p className="text-sm text-muted-foreground text-center py-4">{t('patrimoine.noWildlife', 'Informations sur la faune et flore à venir')}</p>}
+
+                        </AccordionContent>
+                      </AccordionItem>
+                    );
+                  })}
+                </Accordion>
               );
             })()}
 
             {/* ════════════════════════════════════════════════════════════ */}
-            {/* SECTIONS CULTURELLES ENRICHISSABLES                        */}
+            {/* CULTURE & PATRIMOINE VIVANT                                 */}
             {/* ════════════════════════════════════════════════════════════ */}
             <div className="space-y-6 mt-8">
-              <SectionEnrichissable icon={<History className="h-5 w-5 text-primary" />} title={t('patrimoine.sections.histoire', 'Histoire')} content={site.DetailLieu?.histoire} lang={lang} lieuId={site.id_lieu} fieldName="histoire" onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, histoire: val } } : prev)} />
+              <div className="flex items-center gap-3 pb-3 border-b">
+                <span className="text-2xl">🌿</span>
+                <div>
+                  <h2 className="text-lg font-semibold">{t('patrimoine.sections.cultureVivante', 'Culture & Patrimoine vivant')}</h2>
+                  <p className="text-sm text-muted-foreground">{t('patrimoine.sections.cultureVivanteDesc', 'Enrichissez ces sections avec vos connaissances')}</p>
+                </div>
+              </div>
               <SectionEnrichissable icon={<Building2 className="h-5 w-5 text-primary" />} title={t('patrimoine.sections.architecture', 'Architecture')} content={site.DetailLieu?.architecture} lang={lang} lieuId={site.id_lieu} fieldName="architecture" onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, architecture: val } } : prev)} />
               <SectionEnrichissable icon={<span className="text-xl">🎭</span>} title={t('patrimoine.sections.traditions', 'Traditions & Coutumes')} content={site.DetailLieu?.traditions} lang={lang} lieuId={site.id_lieu} fieldName="traditions" onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, traditions: val } } : prev)} />
               <SectionEnrichissable icon={<Utensils className="h-5 w-5 text-primary" />} title={t('patrimoine.sections.gastronomie', 'Gastronomie locale')} content={site.DetailLieu?.gastronomie} lang={lang} lieuId={site.id_lieu} fieldName="gastronomie" onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, gastronomie: val } } : prev)} />
               <SectionEnrichissable icon={<span className="text-xl">🏺</span>} title={t('patrimoine.sections.artisanat', 'Artisanat local')} content={site.DetailLieu?.artisanat_local} lang={lang} lieuId={site.id_lieu} fieldName="artisanat_local" onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, artisanat_local: val } } : prev)} />
               <SectionPersonnalites icon={<span className="text-xl">👤</span>} title={t('patrimoine.sections.personnalites', 'Personnalités')} content={site.DetailLieu?.personnalites} lang={lang} lieuId={site.id_lieu} onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, personnalites: val } } : prev)} />
               <SectionEnrichissable icon={<Info className="h-5 w-5 text-primary" />} title={t('patrimoine.sections.infosPratiques', 'Informations pratiques')} content={site.DetailLieu?.infos_pratiques} lang={lang} lieuId={site.id_lieu} fieldName="infos_pratiques" onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, infos_pratiques: val } } : prev)} />
-              <SectionEnrichissable icon={<span className="text-xl">📚</span>} title={t('patrimoine.sections.references', 'Références historiques')} content={site.DetailLieu?.referencesHistoriques} lang={lang} lieuId={site.id_lieu} fieldName="referencesHistoriques" onSaved={(val) => setSite(prev => prev ? { ...prev, DetailLieu: { ...prev.DetailLieu!, referencesHistoriques: val } } : prev)} />
-
-              {/* Monuments — visible pour tous les types de site */}
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 font-semibold text-base">
-                  <Landmark className="h-5 w-5 text-primary" />
-                  <span>{t('patrimoine.monuments', 'Monuments')}</span>
-                </div>
-                <SectionElements
-                  lieuId={site.id_lieu}
-                  kind="monument"
-                  items={(site.monuments || []) as PatrimoineElement[]}
-                  lang={lang}
-                  onItemAdded={(item) => setSite(prev => prev ? { ...prev, monuments: [...(prev.monuments || []), item as { id: number; nom: string; description?: string; type: string }] } : prev)}
-                  onItemDeleted={(id) => setSite(prev => prev ? { ...prev, monuments: (prev.monuments || []).filter(m => m.id !== id) } : prev)}
-                />
-              </div>
-
-              {/* Vestiges — visible pour tous les types de site */}
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 font-semibold text-base">
-                  <Building2 className="h-5 w-5 text-primary" />
-                  <span>{t('patrimoine.vestiges', 'Vestiges')}</span>
-                </div>
-                <SectionElements
-                  lieuId={site.id_lieu}
-                  kind="vestige"
-                  items={(site.vestiges || []) as PatrimoineElement[]}
-                  lang={lang}
-                  onItemAdded={(item) => setSite(prev => prev ? { ...prev, vestiges: [...(prev.vestiges || []), item as { id: number; nom: string; description?: string; type: string }] } : prev)}
-                  onItemDeleted={(id) => setSite(prev => prev ? { ...prev, vestiges: (prev.vestiges || []).filter(v => v.id !== id) } : prev)}
-                />
-              </div>
             </div>
           </div>
 
@@ -872,7 +714,7 @@ const PatrimoineDetail = () => {
                     </p>
                     {site.commune && (
                       <p className="text-sm text-muted-foreground">
-                        {(site.commune as any).commune_name_ascii || site.commune.nom}, {(site.daira as any)?.daira_name_ascii || site.daira?.nom}, {(site.wilaya as any)?.wilaya_name_ascii || site.wilaya?.nom}
+                        {site.commune.commune_name_ascii || site.commune.nom}, {site.daira?.daira_name_ascii || site.daira?.nom}, {site.wilaya?.wilaya_name_ascii || site.wilaya?.nom}
                       </p>
                     )}
                   </div>

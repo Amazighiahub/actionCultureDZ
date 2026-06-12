@@ -317,7 +317,11 @@ const GestionArtisanat: React.FC = () => {
       if (response.success && response.data) {
         // Upload medias if any
         if (medias.length > 0 && (mode === 'create' || mode === 'edit')) {
-          await artisanatService.uploadMedias(response.data.id, medias);
+          try {
+            await artisanatService.uploadMedias(response.data.id, medias);
+          } catch {
+            // L'artisanat est sauvegardé, l'upload des médias a échoué - non bloquant
+          }
         }
 
         setSuccess(true);

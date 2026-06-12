@@ -35,7 +35,7 @@ import { useDashboardAdmin } from '@/hooks/useDashboardAdmin';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import { adminService } from '@/services/admin.service';
-import { toast } from 'sonner';
+import { useToast } from '@/components/ui/use-toast';
 
 // Helper pour extraire le texte multilingue
 
@@ -45,6 +45,7 @@ const TYPE_OPTIONS = ['tous', 'monument', 'vestige', 'musee', 'site_naturel', 'v
 const AdminPatrimoineTab: React.FC = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const currentLang = i18n.language || 'fr';
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -52,6 +53,7 @@ const AdminPatrimoineTab: React.FC = () => {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
   const [selectedItemName, setSelectedItemName] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const debouncedSearch = useDebouncedValue(searchQuery, 300);
 
@@ -109,13 +111,15 @@ const AdminPatrimoineTab: React.FC = () => {
 
   const confirmDelete = async () => {
     if (selectedItemId) {
+      setIsDeleting(true);
       try {
         await adminService.deletePatrimoine(selectedItemId);
-        toast.success(t('admin.patrimoine.deleted', 'Site supprimé avec succès'));
+        toast({ title: t('admin.patrimoine.deleted', 'Site supprimé avec succès') });
         refreshAll();
       } catch {
-        toast.error(t('common.error', 'Une erreur est survenue'));
+        toast({ title: t('common.error', 'Une erreur est survenue'), variant: 'destructive' });
       } finally {
+        setIsDeleting(false);
         setDeleteConfirmOpen(false);
         setSelectedItemId(null);
         setSelectedItemName('');
@@ -278,11 +282,12 @@ const AdminPatrimoineTab: React.FC = () => {
       {/* Dialog suppression */}
       <ConfirmDialog
         open={deleteConfirmOpen}
-        onOpenChange={setDeleteConfirmOpen}
+        onOpenChange={(open) => !isDeleting && setDeleteConfirmOpen(open)}
         title={t('admin.patrimoine.deleteDialog.title', 'Supprimer le site')}
         description={t('admin.patrimoine.deleteDialog.description', 'Voulez-vous supprimer "{{name}}" ? Cette action est irréversible.', { name: selectedItemName })}
         confirmLabel={t('common.delete', 'Supprimer')}
         variant="destructive"
+        loading={isDeleting}
         onConfirm={confirmDelete}
       />
     </div>

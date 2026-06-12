@@ -47,11 +47,14 @@ interface ValidationError { field?: string; message?: string; [key: string]: unk
 
 class AuthService {
   // ✅ SÉCURITÉ: Les tokens sont gérés UNIQUEMENT via cookies httpOnly
-  // Le localStorage stocke uniquement les métadonnées (user, expiry) pour l'UX
+  // Le user est stocké en mémoire (pas localStorage) pour éviter l'exposition XSS.
+  // Sur rechargement de page, loadUser() recharge depuis l'API via le cookie httpOnly.
   //
   // La deduplication des refresh concurrents est gérée par `doRefreshToken()`
   // dans httpClient.ts (module-level singleton) — partagée avec l'intercepteur
   // 401 du httpClient.
+
+  private userCache: CurrentUser | null = null;
 
   /**
    * Nettoie les données de session locales
@@ -84,9 +87,9 @@ class AuthService {
 
     // Token is managed via httpOnly cookies — do NOT store in localStorage
 
-    // Stocker l'utilisateur pour l'affichage (données non sensibles)
+    // Stocker l'utilisateur en mémoire (pas localStorage — évite XSS)
     if (tokenData.user) {
-      localStorage.setItem('user', JSON.stringify(tokenData.user));
+      this.userCache = tokenData.user;
     }
   }
 
@@ -225,7 +228,7 @@ async registerProfessional(data: RegisterProfessionalData): Promise<ApiResponse<
     // Si l'API retourne aussi l'utilisateur
     const tokenData = response.data as AuthTokenData & { user?: CurrentUser };
     if (tokenData.user) {
-      localStorage.setItem('user', JSON.stringify(tokenData.user));
+      this.userCache = tokenData.user;
     }
   }
   
@@ -301,8 +304,7 @@ async registerProfessional(data: RegisterProfessionalData): Promise<ApiResponse<
     const response = await httpClient.put<CurrentUser>(API_ENDPOINTS.auth.updateProfile, data);
     
     if (response.success && response.data) {
-      // Mettre à jour le localStorage
-      localStorage.setItem('user', JSON.stringify(response.data));
+      this.userCache = response.data;
     }
     
     return response;
@@ -324,16 +326,9 @@ async updateProfilePhoto(photoFile: File): Promise<ApiResponse<{ url: string; fi
       // La méthode uploadProfilePhoto met déjà à jour le profil via l'API
       // Elle retourne aussi l'URL de la photo
       
-      // Mettre à jour l'utilisateur en localStorage
-      const currentUser = localStorage.getItem('user');
-      if (currentUser) {
-        try {
-          const user = JSON.parse(currentUser);
-          user.photo_url = uploadResult.data.url || uploadResult.data.filename;
-          localStorage.setItem('user', JSON.stringify(user));
-        } catch (e) {
-          // Ignorer erreur parsing
-        }
+      // Mettre à jour le cache in-memory
+      if (this.userCache) {
+        this.userCache = { ...this.userCache, photo_url: uploadResult.data.url || uploadResult.data.filename };
       }
     }
     
@@ -388,32 +383,15 @@ async updateProfilePhotoAlternative(photoFile: File): Promise<ApiResponse<{ url:
    * @returns L'ID de l'utilisateur ou null
    */
   getCurrentUserId(): number | null {
-    try {
-      const userStr = localStorage.getItem('user');
-      if (userStr) {
-        const user = JSON.parse(userStr);
-        return user.id_user || null;
-      }
-    } catch (error) {
-      // Ignorer erreur
-    }
-    return null;
+    return this.userCache?.id_user ?? null;
   }
 
   /**
-   * Récupère l'utilisateur actuel depuis le localStorage (sans appel API)
+   * Récupère l'utilisateur actuel depuis le cache in-memory (sans appel API)
    * @returns L'utilisateur ou null
    */
   getCurrentUserFromCache(): CurrentUser | null {
-    try {
-      const userStr = localStorage.getItem('user');
-      if (userStr) {
-        return JSON.parse(userStr) as CurrentUser;
-      }
-    } catch (error) {
-      // Ignorer erreur
-    }
-    return null;
+    return this.userCache;
   }
 
   /**
@@ -433,8 +411,7 @@ async updateProfilePhotoAlternative(photoFile: File): Promise<ApiResponse<{ url:
     // Sinon, on récupère depuis l'API
     const response = await this.getCurrentUser();
     if (response.success && response.data) {
-      // Mettre en cache
-      localStorage.setItem('user', JSON.stringify(response.data));
+      this.userCache = response.data;
       return response.data;
     }
 
@@ -446,10 +423,8 @@ async updateProfilePhotoAlternative(photoFile: File): Promise<ApiResponse<{ url:
    * @param user Les données utilisateur à mettre en cache
    */
   updateUserCache(user: Partial<CurrentUser>): void {
-    const currentUser = this.getCurrentUserFromCache();
-    if (currentUser) {
-      const updatedUser = { ...currentUser, ...user };
-      localStorage.setItem('user', JSON.stringify(updatedUser));
+    if (this.userCache) {
+      this.userCache = { ...this.userCache, ...user };
     }
   }
 
@@ -457,17 +432,17 @@ async updateProfilePhotoAlternative(photoFile: File): Promise<ApiResponse<{ url:
    * Efface le cache utilisateur
    */
   clearUserCache(): void {
-    localStorage.removeItem('user');
+    this.userCache = null;
   }
 
   /**
    * Déconnexion - efface les données locales et appelle l'API pour supprimer les cookies
    */
   async logout(): Promise<ApiResponse<void>> {
-    const response = await httpClient.post<void>(API_ENDPOINTS.auth.logout);
+    // Nettoyer le cache local avant l'appel réseau (session invalide même si réseau échoue)
     this.clearLocalAuthData();
     this.clearUserCache();
-    return response;
+    return httpClient.post<void>(API_ENDPOINTS.auth.logout);
   }
 
 }

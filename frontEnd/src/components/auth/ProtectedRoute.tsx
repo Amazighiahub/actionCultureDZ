@@ -7,7 +7,8 @@ import { useIdleTimeout } from '@/hooks/useIdleTimeout';
 import { useToast } from '@/components/ui/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, Lock, Clock } from 'lucide-react';import { useTranslation } from "react-i18next";
+import { AlertCircle, Lock, Clock } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -73,8 +74,8 @@ export function ProtectedRoute({
 
   // Vérifier les rôles admin — rediriger vers le bon dashboard au lieu d'afficher "Accès refusé"
   if (requireAdmin && !isAdmin) {
-    const redirectTo = isProfessional ? '/dashboard-pro' : '/';
-    return <Navigate to={redirectTo} replace />;
+    const adminRedirect = isProfessional ? '/dashboard-pro' : '/';
+    return <Navigate to={adminRedirect} replace />;
   }
 
   // Vérifier les rôles professionnels
@@ -148,26 +149,26 @@ export function ProtectedRoute({
 
 // Composants spécialisés pour faciliter l'utilisation
 
-export function AdminRoute({ children }: {children: React.ReactNode;}) {const { t } = useTranslation();
+export function AdminRoute({ children }: { children: React.ReactNode }) {
   return (
     <ProtectedRoute requireAuth requireAdmin>
       {children}
-    </ProtectedRoute>);
-
+    </ProtectedRoute>
+  );
 }
 
-export function ProfessionalRoute({ children }: {children: React.ReactNode;}) {const { t } = useTranslation();
+export function ProfessionalRoute({ children }: { children: React.ReactNode }) {
   return (
     <ProtectedRoute requireAuth requireProfessional requireValidated>
       {children}
-    </ProtectedRoute>);
-
+    </ProtectedRoute>
+  );
 }
 
-export function AuthenticatedRoute({ children }: {children: React.ReactNode;}) {const { t } = useTranslation();
+export function AuthenticatedRoute({ children }: { children: React.ReactNode }) {
   return (
     <ProtectedRoute requireAuth>
       {children}
-    </ProtectedRoute>);
-
+    </ProtectedRoute>
+  );
 }

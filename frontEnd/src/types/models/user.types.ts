@@ -39,15 +39,6 @@ export type CreateTypeUserDTO = Omit<TypeUser, 'id_type_user' | 'Users' | 'Oeuvr
 // Type pour la mise à jour d'un type user
 export type UpdateTypeUserDTO = Partial<CreateTypeUserDTO>;
 
-// Types prédéfinis courants (à adapter selon vos besoins)
-export enum TypeUserEnum {
-  ADMIN = 'admin',
-  MODERATEUR = 'moderateur',
-  CONTRIBUTEUR = 'contributeur',
-  MEMBRE = 'membre',
-  INVITE = 'invite'
-}
-
 // Helper pour vérifier les permissions d'un type
 export function hasPermission(typeUser: TypeUser, permission: string): boolean {
   // Logique à implémenter selon vos besoins

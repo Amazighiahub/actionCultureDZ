@@ -224,7 +224,7 @@ Documentation API complete : [docs/API.md](docs/API.md)
 | `m.benali@test.dz` | `password123` | Professionnel |
 | `f.saidi@test.com` | `password123` | Visiteur |
 
-> Ne pas utiliser en production.
+> ⚠️ **Environnement de développement uniquement.** Ces mots de passe doivent être changés avant tout déploiement en production.
 
 ---
 

@@ -183,15 +183,13 @@ export function useNotifications(): UseNotificationsReturn {
     }
   }, []);
 
-  // Configuration WebSocket (le token est nécessaire car WebSocket ne supporte pas les cookies httpOnly)
+  // Configuration WebSocket
   const { isAuthenticated } = usePermissionsContext();
   useEffect(() => {
-    let token: string | null = null;
-    try { token = localStorage.getItem('auth_token'); } catch { /* storage unavailable */ }
-    if (!isAuthenticated || !token) return;
+    if (!isAuthenticated) return;
 
-    // Se connecter au WebSocket
-    socketService.connect(token);
+    // Se connecter au WebSocket (authService.getAuthToken() gère l'auth en interne)
+    socketService.connect();
 
     // Créer un wrapper pour écouter les événements de manière type-safe
     const addEventListener = <K extends keyof NotificationEventMap>(

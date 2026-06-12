@@ -396,8 +396,9 @@ class HttpClient {
           return this.axiosInstance(originalRequest);
         }
         
-        // Gestion du 401 (non autorisé)
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        // Gestion du 401 (non autorisé) — exclure l'endpoint refresh lui-même pour éviter la boucle infinie
+        const isRefreshEndpoint = originalRequest.url?.includes('/users/refresh-token');
+        if (error.response?.status === 401 && !originalRequest._retry && !isRefreshEndpoint) {
           originalRequest._retry = true;
           
           // Vérifier si c'est une erreur de token expiré

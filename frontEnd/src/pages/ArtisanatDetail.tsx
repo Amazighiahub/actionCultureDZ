@@ -328,6 +328,7 @@ const ArtisanatDetail: React.FC = () => {
                     src={getAssetUrl(currentMedia.url)}
                     alt={td(Oeuvre?.titre || '')}
                     className="w-full h-full object-cover"
+                    onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
@@ -394,8 +395,9 @@ const ArtisanatDetail: React.FC = () => {
                     >
                       <img
                         src={getAssetUrl(media.thumbnail_url || media.url)}
-                        alt=""
+                        alt={td(Oeuvre?.titre || '') + ` — photo ${index + 1}`}
                         className="w-full h-full object-cover"
+                        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
                       />
                     </button>
                   ))}

@@ -285,7 +285,11 @@ const AjouterArtisanat: React.FC = () => {
         // Upload medias if any (only for new items or new medias)
         const itemId = (response.data as { id?: number } | undefined)?.id || editId;
         if (medias.length > 0 && itemId) {
-          await artisanatService.uploadMedias(itemId, medias);
+          try {
+            await artisanatService.uploadMedias(itemId, medias);
+          } catch {
+            // L'artisanat est créé, l'upload des médias a échoué - non bloquant
+          }
         }
 
         setSuccess(true);
