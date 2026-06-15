@@ -180,7 +180,7 @@ function createCacheMiddleware(ttl = 300) {
   return (req, res, next) => {
     if (req.method !== 'GET') return next();
 
-    const lang = req.lang || req.headers['accept-language']?.split(',')[0]?.split('-')[0]?.toLowerCase() || 'fr';
+    const lang = req.lang || req.headers?.['accept-language']?.split(',')[0]?.split('-')[0]?.toLowerCase() || 'fr';
     const key = `${lang}:${req.originalUrl || req.url}`;
 
     store.get(key).then(cachedData => {
@@ -206,7 +206,7 @@ function createUserCacheMiddleware(ttl = 300) {
   return (req, res, next) => {
     if (req.method !== 'GET' || !req.user) return next();
 
-    const lang = req.lang || req.headers['accept-language']?.split(',')[0]?.split('-')[0]?.toLowerCase() || 'fr';
+    const lang = req.lang || req.headers?.['accept-language']?.split(',')[0]?.split('-')[0]?.toLowerCase() || 'fr';
     const key = `user:${req.user.id_user}:${lang}:${req.originalUrl || req.url}`;
 
     store.get(key).then(cachedData => {
