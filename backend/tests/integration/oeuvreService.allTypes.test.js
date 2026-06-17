@@ -47,6 +47,7 @@ function buildModels(typeId) {
     TagMotCle: {
       findAll: jest.fn().mockResolvedValue([]),
       create: jest.fn().mockResolvedValue({ id_tag: 1, nom: { fr: "tag" } }),
+      bulkCreate: jest.fn().mockResolvedValue([{ id_tag: 1, nom: { fr: "tag" } }]),
     },
     OeuvreTag: { bulkCreate: jest.fn().mockResolvedValue([]) },
     OeuvreUser: { create: jest.fn().mockResolvedValue({}) },
@@ -423,8 +424,8 @@ describe("OeuvreService — Options communes (tous types)", function() {
       const payload = basePayload(typeId, DETAILS[typeId], { tags: ["culture", "nouveau"] });
       await ctx.service.create(payload, 99);
       expect(ctx.models.OeuvreTag.bulkCreate).toHaveBeenCalled();
-      expect(ctx.models.TagMotCle.create).toHaveBeenCalledWith(
-        expect.objectContaining({ nom: { fr: "nouveau" } }),
+      expect(ctx.models.TagMotCle.bulkCreate).toHaveBeenCalledWith(
+        expect.arrayContaining([expect.objectContaining({ nom: { fr: "nouveau" } })]),
         expect.any(Object)
       );
     });

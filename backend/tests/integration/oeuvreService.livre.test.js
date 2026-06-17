@@ -62,6 +62,9 @@ function buildModels(opts) {
       create: jest.fn().mockImplementation(function(data) {
         return Promise.resolve({ id_tag: 99, nom: data.nom });
       }),
+      bulkCreate: jest.fn().mockImplementation(function(items) {
+        return Promise.resolve(items.map((item, i) => ({ id_tag: 100 + i, nom: item.nom })));
+      }),
     },
     OeuvreTag: {
       bulkCreate: jest.fn().mockResolvedValue([]),
@@ -193,8 +196,8 @@ describe("OeuvreService.create() — Livre (integration)", function() {
 
   test("resout les tags existants et cree le nouveau tag", async function() {
     await service.create(livrePayloadComplet(), 99);
-    expect(models.TagMotCle.create).toHaveBeenCalledWith(
-      expect.objectContaining({ nom: { fr: "nouveau-tag" } }),
+    expect(models.TagMotCle.bulkCreate).toHaveBeenCalledWith(
+      expect.arrayContaining([expect.objectContaining({ nom: { fr: "nouveau-tag" } })]),
       expect.any(Object)
     );
     expect(models.OeuvreTag.bulkCreate).toHaveBeenCalled();
