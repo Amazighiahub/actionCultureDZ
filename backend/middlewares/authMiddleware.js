@@ -2,6 +2,7 @@
 // Compatible avec: createAuthMiddleware(models) OU createAuthMiddleware(User)
 const logger = require('../utils/logger');
 const { getClient: getRedisClient } = require('../utils/redisClient');
+const { TYPE_USER_IDS } = require('../constants/typeUserIds');
 const {
   verifyAccessToken,
   buildBlacklistKey,
@@ -128,7 +129,7 @@ module.exports = (modelsOrUser) => {
 
     const isProfessionalByType = user.id_type_user && PROFESSIONAL_TYPE_IDS.has(user.id_type_user);
 
-    user.isAdmin = user.roleNames.includes('Administrateur') || user.id_type_user === 29;
+    user.isAdmin = user.roleNames.includes('Administrateur') || user.id_type_user === TYPE_USER_IDS.ADMINISTRATEUR;
     user.isProfessionnel = user.roleNames.includes('Professionnel') || isProfessionalByType;
     user.isUser = user.roleNames.includes('User') || user.id_type_user === 1 || user.roleNames.length === 0;
     user.hasOrganisation = Array.isArray(user.Organisations) && user.Organisations.length > 0;

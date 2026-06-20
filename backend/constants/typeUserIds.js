@@ -15,7 +15,8 @@ const TYPE_USER_IDS = {
   PHOTOGRAPHE: 10,
   DANSEUR: 11,
   SCULPTEUR: 12,
-  AUTRE: 13
+  AUTRE: 13,
+  ADMINISTRATEUR: 29
 };
 
 module.exports = { TYPE_USER_IDS };

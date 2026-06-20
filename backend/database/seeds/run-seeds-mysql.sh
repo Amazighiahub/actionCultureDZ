@@ -156,10 +156,15 @@ if [ -n "${SEED_ADMIN_PASSWORD}" ]; then
         echo "   ❌ Impossible de générer le hash (conteneur backend non disponible)"
         exit 1
     fi
-    # Écrire le UPDATE dans un fichier tmp pour éviter les problèmes d'échappement
+    # Valider et échapper l'email avant injection SQL
+    if ! printf '%s' "${ADMIN_EMAIL}" | grep -qE '^[a-zA-Z0-9._%+@-]+$'; then
+        echo "   ❌ ADMIN_EMAIL contient des caractères invalides"
+        exit 1
+    fi
+    SAFE_EMAIL=$(printf '%s' "${ADMIN_EMAIL}" | sed "s/'/''/g")
     TMPFILE=$(mktemp)
     printf "UPDATE user SET password='%s', doit_changer_mdp=0 WHERE email='%s';\n" \
-        "${NEW_HASH}" "${ADMIN_EMAIL}" > "${TMPFILE}"
+        "${NEW_HASH}" "${SAFE_EMAIL}" > "${TMPFILE}"
     docker exec -i "${CONTAINER}" mysql \
         -u root -p"${ROOT_PASSWORD}" \
         --default-character-set=utf8mb4 \

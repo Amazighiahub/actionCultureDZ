@@ -166,13 +166,13 @@ module.exports = (models, middlewares = {}) => {
         });
       }
       
-      if (commentaire.id_user !== req.user.id_user) {
+      if (commentaire.id_user !== req.user.id_user && !req.user.isAdmin) {
         return res.status(403).json({
           success: false,
           error: req.t ? req.t('auth.forbidden') : 'Forbidden'
         });
       }
-      
+
       req.resource = commentaire;
       await controller.deleteCommentaire(req, res);
     } catch (error) {

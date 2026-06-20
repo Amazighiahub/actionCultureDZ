@@ -330,7 +330,7 @@ class UserService extends BaseService {
     if (currentUserId && currentUserId !== id) {
       // Seul l'utilisateur lui-même ou un admin peut modifier
       const currentUser = await this.repository.findById(currentUserId);
-      if (!currentUser || currentUser.id_type_user !== 29) {
+      if (!currentUser || currentUser.id_type_user !== TYPE_USER_IDS.ADMINISTRATEUR) {
         throw this._forbiddenError('Vous ne pouvez pas modifier ce profil');
       }
     }
