@@ -9,6 +9,7 @@ const patrimoineController = require('../controllers/patrimoineController');
 const { handleValidationErrors, validateId, validateStringLengths, validateGPS } = require('../middlewares/validationMiddleware');
 const { createContentLimiter } = require('../middlewares/rateLimitMiddleware');
 const uploadService = require('../services/uploadService');
+const logger = require('../utils/logger');
 
 const initPatrimoineRoutes = (models, authMiddleware) => {
   const router = express.Router();
@@ -49,7 +50,8 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
       });
       res.json({ success: true, data: intervenants });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      logger.error('patrimoineRoutes error', { message: error.message, stack: error.stack });
+      res.status(500).json({ success: false, error: 'Internal server error' });
     }
   });
 
@@ -123,7 +125,8 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
         if (error.name === 'SequelizeUniqueConstraintError') {
           return res.status(409).json({ success: false, error: 'Cet intervenant est déjà associé à ce site' });
         }
-        res.status(500).json({ success: false, error: error.message });
+        logger.error('patrimoineRoutes error', { message: error.message, stack: error.stack });
+      res.status(500).json({ success: false, error: 'Internal server error' });
       }
     }
   );
@@ -141,7 +144,8 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
       await lien.destroy();
       res.json({ success: true, message: 'Intervenant retiré du site' });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      logger.error('patrimoineRoutes error', { message: error.message, stack: error.stack });
+      res.status(500).json({ success: false, error: 'Internal server error' });
     }
   });
 
@@ -183,7 +187,8 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
 
         res.status(201).json({ success: true, data: monument });
       } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        logger.error('patrimoineRoutes error', { message: error.message, stack: error.stack });
+      res.status(500).json({ success: false, error: 'Internal server error' });
       }
     }
   );
@@ -203,7 +208,8 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
       await monument.destroy();
       res.json({ success: true, message: 'Monument supprimé' });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      logger.error('patrimoineRoutes error', { message: error.message, stack: error.stack });
+      res.status(500).json({ success: false, error: 'Internal server error' });
     }
   });
 
@@ -234,7 +240,8 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
 
         res.json({ success: true, data: monument });
       } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        logger.error('patrimoineRoutes error', { message: error.message, stack: error.stack });
+      res.status(500).json({ success: false, error: 'Internal server error' });
       }
     }
   );
@@ -277,7 +284,8 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
 
         res.status(201).json({ success: true, data: vestige });
       } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        logger.error('patrimoineRoutes error', { message: error.message, stack: error.stack });
+      res.status(500).json({ success: false, error: 'Internal server error' });
       }
     }
   );
@@ -297,7 +305,8 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
       await vestige.destroy();
       res.json({ success: true, message: 'Vestige supprimé' });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      logger.error('patrimoineRoutes error', { message: error.message, stack: error.stack });
+      res.status(500).json({ success: false, error: 'Internal server error' });
     }
   });
 
@@ -328,7 +337,8 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
 
         res.json({ success: true, data: vestige });
       } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        logger.error('patrimoineRoutes error', { message: error.message, stack: error.stack });
+      res.status(500).json({ success: false, error: 'Internal server error' });
       }
     }
   );
@@ -349,11 +359,12 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
 
       res.json({ success: true, data: blocks });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      logger.error('patrimoineRoutes error', { message: error.message, stack: error.stack });
+      res.status(500).json({ success: false, error: 'Internal server error' });
     }
   });
 
-  router.post('/:id/articles', authenticate, validateId(),
+  router.post('/:id/articles', authenticate, requireRole('Administrateur', 'Moderateur'), validateId(),
     [
       body('type_block').isIn(['text', 'heading', 'image', 'video', 'citation', 'code', 'list', 'table', 'separator', 'embed']).withMessage('Type de bloc invalide'),
       body('section_patrimoine').isIn(['histoire', 'architecture', 'traditions', 'gastronomie', 'artisanat_local', 'personnalites', 'infos_pratiques', 'referencesHistoriques']).withMessage('Section invalide'),
@@ -401,7 +412,8 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
 
         res.status(201).json({ success: true, data: block });
       } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        logger.error('patrimoineRoutes error', { message: error.message, stack: error.stack });
+      res.status(500).json({ success: false, error: 'Internal server error' });
       }
     }
   );
@@ -425,7 +437,8 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
         await block.destroy();
         res.json({ success: true, message: 'Bloc supprimé' });
       } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        logger.error('patrimoineRoutes error', { message: error.message, stack: error.stack });
+      res.status(500).json({ success: false, error: 'Internal server error' });
       }
     }
   );

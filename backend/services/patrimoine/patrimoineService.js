@@ -473,9 +473,12 @@ class PatrimoineService extends BaseService {
       throw this._notFoundError(siteId);
     }
     const currentNote = detailLieu.noteMoyenne || 0;
-    const newNote = currentNote === 0 ? note : (currentNote + note) / 2;
-    await detailLieu.update({ noteMoyenne: Math.round(newNote * 10) / 10 });
-    return { noteMoyenne: detailLieu.noteMoyenne };
+    const currentCount = detailLieu.nb_notations || 0;
+    const newCount = currentCount + 1;
+    const newNote = (currentNote * currentCount + note) / newCount;
+    const rounded = Math.round(newNote * 10) / 10;
+    await detailLieu.update({ noteMoyenne: rounded, nb_notations: newCount });
+    return { noteMoyenne: rounded };
   }
 
   /**

@@ -405,13 +405,15 @@ async planifierRappels() {
   const demain = new Date();
   demain.setDate(demain.getDate() + 1);
   
+  const debutDemain = new Date(demain);
+  debutDemain.setHours(0, 0, 0, 0);
+  const finDemain = new Date(demain);
+  finDemain.setHours(23, 59, 59, 999);
+
   const evenements = await this.models.Evenement.findAll({
     where: {
       date_debut: {
-        [Op.between]: [
-          new Date(demain.setHours(0, 0, 0, 0)),
-          new Date(demain.setHours(23, 59, 59, 999))
-        ]
+        [Op.between]: [debutDemain, finDemain]
       },
       statut: 'publie'
     },
