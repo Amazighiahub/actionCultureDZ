@@ -53,7 +53,7 @@ const NotificationItem: React.FC<{
       'validation_compte': <Check className="w-5 h-5 text-green-600" />,
       'message_admin': <AlertCircle className="w-5 h-5 text-orange-600" />,
       'rappel_evenement': <Bell className="w-5 h-5 text-blue-600" />,
-      'autre': <Bell className="w-5 h-5 text-gray-600" />
+      'autre': <Bell className="w-5 h-5 text-muted-foreground" />
     };
     return icons[type] || icons.autre;
   };
@@ -63,7 +63,7 @@ const NotificationItem: React.FC<{
       case 'urgente':return 'border-l-4 border-red-500';
       case 'haute':return 'border-l-4 border-orange-500';
       case 'normale':return 'border-l-4 border-blue-500';
-      default:return 'border-l-4 border-gray-300';
+      default:return 'border-l-4 border-border';
     }
   };
 
@@ -238,12 +238,13 @@ export default function NotificationsPage() {
                 <Button size="sm" onClick={handlePermissionRequest}>
                   {t("notifications_notifications.activer")}
                 </Button>
-                <button
-                onClick={() => setShowPermissionBanner(false)}
-                className="text-gray-500 hover:text-gray-700">
-
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => setShowPermissionBanner(false)}>
                   <X className="w-4 h-4" />
-                </button>
+                </Button>
               </div>
             </div>
           </div>
