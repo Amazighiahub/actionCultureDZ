@@ -8,7 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useToast } from '@/components/ui/use-toast';
 import { Calendar, MapPin, Users, ArrowRight } from 'lucide-react';
 import { useLocalizedDate } from '@/hooks/useLocalizedDate';
 import { useFormatDate } from '@/hooks/useFormatDate';
@@ -47,7 +46,6 @@ const EvenementsDynamique: React.FC = () => {
   const [evenements, setEvenements] = useState<Evenement[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
@@ -232,17 +230,15 @@ const EvenementsDynamique: React.FC = () => {
                 )}
                 
                 {event.inscription_requise && (
-                  <Button 
-                    className="w-full group" 
+                  <Button
+                    className="w-full group"
                     size="sm"
                     onClick={() => {
+                      const eventPath = `/evenements/${event.id_evenement}`;
                       if (isAuthenticated) {
-                        toast({
-                          title: t('sections.events.registration'),
-                          description: t('common.featureInDevelopment'),
-                        });
+                        navigate(eventPath);
                       } else {
-                        navigate('/auth');
+                        navigate(`/auth?redirect=${eventPath}`);
                       }
                     }}
                   >
