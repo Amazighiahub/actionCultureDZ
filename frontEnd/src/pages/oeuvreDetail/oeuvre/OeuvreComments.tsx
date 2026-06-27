@@ -14,6 +14,7 @@ import {
 import { LazyImage, EmptyState } from '@/components/shared';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocalizedDate } from '@/hooks/useLocalizedDate';
+import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/Utils';
 import { getLocalizedText } from '@/utils/getLocalizedText';
 
@@ -78,7 +79,8 @@ const CommentItem: React.FC<{ comment: Comment }> = ({ comment }) => {
 const OeuvreComments: React.FC<OeuvreCommentsProps> = ({ comments, onAddComment, oeuvreId: _oeuvreId }) => {
   const { t } = useTranslation();
   const { isAuthenticated } = useAuth();
-  
+  const { toast } = useToast();
+
   const [newComment, setNewComment] = useState('');
   const [rating, setRating] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -121,6 +123,7 @@ const OeuvreComments: React.FC<OeuvreCommentsProps> = ({ comments, onAddComment,
       if (success) {
         setNewComment('');
         setRating(0);
+        toast({ title: t('comments.successTitle', 'Commentaire publié'), description: t('comments.successDesc', 'Votre avis a été publié avec succès.') });
       } else {
         setError(t('comments.errorSubmit', 'Erreur lors de l\'envoi'));
       }

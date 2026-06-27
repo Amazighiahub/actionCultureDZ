@@ -105,6 +105,8 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
   const [mesOeuvres, setMesOeuvres] = useState<OeuvreSimple[]>([]);
   const [selectedOeuvres, setSelectedOeuvres] = useState<number[]>([]);
   const [oeuvresLoading, setOeuvresLoading] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
   // Charger la configuration d'inscription quand le dialog s'ouvre
   useEffect(() => {
@@ -179,17 +181,20 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
   };
 
   const toggleOeuvreSelection = (oeuvreId: number) => {
-    setSelectedOeuvres(prev => {
-      if (prev.includes(oeuvreId)) {
-        return prev.filter(id => id !== oeuvreId);
-      }
-      // Vérifier la limite max
-      const maxSoumissions = inscriptionConfig?.config_soumission?.max_soumissions || 10;
-      if (prev.length >= maxSoumissions) {
-        return prev;
-      }
-      return [...prev, oeuvreId];
-    });
+    const maxSoumissions = inscriptionConfig?.config_soumission?.max_soumissions || 10;
+    if (selectedOeuvres.includes(oeuvreId)) {
+      setSelectedOeuvres(prev => prev.filter(id => id !== oeuvreId));
+      return;
+    }
+    if (selectedOeuvres.length >= maxSoumissions) {
+      toast({
+        title: t('event.registration.limitTitle', 'Limite atteinte'),
+        description: t('event.registration.limitDesc', `Maximum ${maxSoumissions} œuvre(s) autorisée(s) pour cet événement`),
+        variant: 'destructive',
+      });
+      return;
+    }
+    setSelectedOeuvres(prev => [...prev, oeuvreId]);
   };
 
   const getOeuvreTypeIcon = (type?: string) => {
@@ -239,6 +244,7 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
     }
 
     setIsSubmitting(true);
+    setSubmitError(null);
     try {
       const success = await onRegister({
         nombre_personnes: nombrePersonnes,
@@ -246,13 +252,15 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
         oeuvres: selectedOeuvres.length > 0 ? selectedOeuvres : undefined,
         notes: commentaire.trim() || undefined
       });
-      
+
       if (success) {
         setIsDialogOpen(false);
         setNombrePersonnes(1);
         setCommentaire('');
         setSelectedOeuvres([]);
       }
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : t('event.registration.error', 'Une erreur est survenue lors de l\'inscription'));
     } finally {
       setIsSubmitting(false);
     }
@@ -466,14 +474,10 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
                 {t('event.registration.alreadyRegistered', 'Vous êtes inscrit(e)')}
               </p>
             </div>
-            <Button 
-              variant="outline" 
-              className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
-              onClick={async () => {
-                if (onUnregister) {
-                  await onUnregister();
-                }
-              }}
+            <Button
+              variant="destructive"
+              className="w-full"
+              onClick={() => setShowCancelConfirm(true)}
             >
               <UserMinus className="h-4 w-4 me-2" />
               {t('event.registration.cancel', 'Annuler mon inscription')}
@@ -708,6 +712,12 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
                 </div>
               </div>
 
+              {submitError && (
+                <div className="w-full p-3 bg-destructive/10 rounded-lg text-sm text-destructive" role="alert">
+                  {submitError}
+                </div>
+              )}
+
               <DialogFooter>
                 <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
                   {t('common.cancel', 'Annuler')}
@@ -759,6 +769,33 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
           </div>
         )}
       </CardFooter>
+
+      {/* Dialog confirmation désinscription */}
+      <Dialog open={showCancelConfirm} onOpenChange={setShowCancelConfirm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('event.registration.cancelTitle', 'Annuler mon inscription')}</DialogTitle>
+            <DialogDescription>
+              {t('event.registration.cancelConfirm', 'Êtes-vous sûr(e) de vouloir annuler votre inscription à cet événement ? Cette action est irréversible.')}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCancelConfirm(false)}>
+              {t('common.back', 'Retour')}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={async () => {
+                setShowCancelConfirm(false);
+                if (onUnregister) await onUnregister();
+              }}
+            >
+              <UserMinus className="h-4 w-4 me-2" />
+              {t('event.registration.confirmCancel', 'Confirmer l\'annulation')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };

@@ -35,7 +35,8 @@ import {
   BookOpen,
   ArrowUp,
   ArrowDown,
-  UserCheck
+  UserCheck,
+  Loader2
 } from 'lucide-react';
 import ParticipantsManager from './ParticipantsManager';
 import { useToast } from '@/components/ui/use-toast';
@@ -103,6 +104,7 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
   const [selectedOeuvre, setSelectedOeuvre] = useState<Oeuvre | null>(null);
   const [oeuvreDescription, setOeuvreDescription] = useState('');
   const [oeuvresDuree, setOeuvresDuree] = useState<number | undefined>();
+  const [addingOeuvre, setAddingOeuvre] = useState(false);
 
   // Helper pour formater les heures (gère TIME et datetime ISO)
   const formatTime = (time?: string) => {
@@ -260,6 +262,7 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
   const handleAddOeuvre = async () => {
     if (!selectedOeuvre) return;
 
+    setAddingOeuvre(true);
     try {
       const response = await evenementOeuvreService.addOeuvre(evenementId, {
         id_oeuvre: selectedOeuvre.id_oeuvre,
@@ -278,6 +281,8 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
     } catch (error) {
       console.error('Erreur ajout œuvre:', error);
       toast({ title: t('common.error'), description: t('oeuvres.addError', 'Erreur lors de l\'ajout'), variant: 'destructive' });
+    } finally {
+      setAddingOeuvre(false);
     }
   };
 
@@ -590,8 +595,10 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
                   <Button variant="outline" onClick={() => setShowOeuvreDialog(false)}>
                     {t('common.cancel', 'Annuler')}
                   </Button>
-                  <Button onClick={handleAddOeuvre} disabled={!selectedOeuvre}>
-                    <Plus className="h-4 w-4 mr-2" />
+                  <Button onClick={handleAddOeuvre} disabled={!selectedOeuvre || addingOeuvre}>
+                    {addingOeuvre
+                      ? <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      : <Plus className="h-4 w-4 mr-2" />}
                     {t('common.add', 'Ajouter')}
                   </Button>
                 </DialogFooter>

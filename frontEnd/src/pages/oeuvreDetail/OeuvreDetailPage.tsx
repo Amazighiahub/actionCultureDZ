@@ -37,6 +37,7 @@ import { getMainImage } from '@/types/models/media-extended.types';
 import { useOeuvreDetails } from '@/hooks/useOeuvreDetails';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
 
 // Services
 import { oeuvreService } from '@/services/oeuvre.service';
@@ -96,6 +97,7 @@ const OeuvreDetailPage: React.FC = () => {
   const { t, i18n } = useTranslation();
   const { isAuthenticated } = useAuth();
   const { formatDate: hookFormatDate } = useFormatDate();
+  const { toast } = useToast();
   const lang = (i18n.language || 'fr') as SupportedLanguage;
 
   const fromPath = typeof location.state?.from === 'string' ? location.state.from : null;
@@ -275,6 +277,7 @@ const OeuvreDetailPage: React.FC = () => {
       }
     } catch (err) {
       console.error('Erreur ajout commentaire:', err);
+      toast({ title: t('common.error', 'Erreur'), description: t('comments.errorSubmit', 'Impossible d\'envoyer votre commentaire. Veuillez réessayer.'), variant: 'destructive' });
     } finally {
       setCommentLoading(false);
     }

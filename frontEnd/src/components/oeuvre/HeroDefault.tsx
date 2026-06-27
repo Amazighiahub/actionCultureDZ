@@ -83,6 +83,7 @@ const HeroDefault: React.FC<HeroDefaultProps> = ({
         <Button
           variant="ghost"
           size="icon"
+          aria-label={t('common.back', 'Retour')}
           className={`absolute top-4 ${rtlClasses.start(4)} bg-background/10 backdrop-blur-md hover:bg-background/20`}
           onClick={() => navigate(-1)}
         >
