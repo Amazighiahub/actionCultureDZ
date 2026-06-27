@@ -126,8 +126,7 @@ const HeroDefault: React.FC<HeroDefaultProps> = ({
             size="lg"
             onClick={onToggleFavorite}
             disabled={favoriteLoading}
-            variant={isFavorite ? "default" : "outline"}
-            className={cn(isFavorite && "bg-red-500 hover:bg-red-600")}
+            variant="favorite" data-active={isFavorite}
           >
             <Heart className={cn("h-5 w-5 mr-2", isFavorite && "fill-current")} />
             {isFavorite ? t('works.inFavorites', 'Favori') : t('works.actions.addFavorite', 'Ajouter aux favoris')}

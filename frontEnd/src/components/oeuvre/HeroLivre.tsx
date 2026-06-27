@@ -209,7 +209,7 @@ const HeroLivre: React.FC<HeroLivreProps> = ({
 
           {/* Actions sous le livre */}
           <div className="flex gap-2 mt-6 justify-center lg:justify-start">
-            <Button size="lg" onClick={onToggleFavorite} disabled={favoriteLoading} variant={isFavorite ? "default" : "outline"} className={cn(isFavorite && "bg-red-500 hover:bg-red-600")}>
+            <Button size="lg" onClick={onToggleFavorite} disabled={favoriteLoading} variant="favorite" data-active={isFavorite}>
               <Heart className={cn("h-5 w-5 mr-2", isFavorite && "fill-current")} />
               {isFavorite ? t('works.inFavorites', 'Favori') : t('works.actions.addFavorite', 'Favoris')}
             </Button>

@@ -31,7 +31,9 @@ import {
 '@/types/models/notification.types';
 
 // Type pour les notifications groupées
-import { useTranslation } from "react-i18next";type GroupedNotifications = Record<string, Notification[]>;
+import { useTranslation } from "react-i18next";
+import { Button } from '@/components/ui/button';
+type GroupedNotifications = Record<string, Notification[]>;
 
 // Composant pour une notification individuelle
 const NotificationItem: React.FC<{
@@ -67,8 +69,8 @@ const NotificationItem: React.FC<{
 
   return (
     <div
-      className={`bg-white rounded-lg shadow-sm p-4 mb-3 transition-all ${
-      !notification.lu ? 'bg-blue-50' : ''} ${
+      className={`bg-card rounded-lg shadow-sm p-4 mb-3 transition-all ${
+      !notification.lu ? 'bg-primary/5' : ''} ${
       getPriorityStyles(notification.priorite)}`}>
 
       <div className="flex items-start gap-4">
@@ -79,11 +81,11 @@ const NotificationItem: React.FC<{
 
         {/* Contenu */}
         <div className="flex-1">
-          <h3 className="font-semibold text-gray-900">{notification.titre}</h3>
-          <p className="text-gray-600 mt-1">{notification.message}</p>
-          
+          <h3 className="font-semibold text-foreground">{notification.titre}</h3>
+          <p className="text-muted-foreground mt-1">{notification.message}</p>
+
           <div className="flex items-center gap-4 mt-3 text-sm">
-            <span className="text-gray-400">
+            <span className="text-muted-foreground/60">
               {formatNotificationDate(notification.date_creation, i18n.language)}
             </span>
             
@@ -102,22 +104,21 @@ const NotificationItem: React.FC<{
         {/* Actions */}
         <div className="flex items-center gap-2">
           {!notification.lu &&
-          <button
+          <Button
+            variant="ghost" size="icon"
+            className="h-8 w-8"
             onClick={() => onMarkAsRead(notification.id_notification)}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
             title={t("notifications_notifications.title_marquer_comme")}>
-
-              <Check className="w-4 h-4 text-gray-600" />
-            </button>
+              <Check className="w-4 h-4" />
+            </Button>
           }
-          
-          <button
+          <Button
+            variant="ghost" size="icon"
+            className="h-8 w-8 hover:text-destructive"
             onClick={() => onDelete(notification.id_notification)}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
             title={t("notifications_notifications.title_supprimer")}>
-
-            <Trash2 className="w-4 h-4 text-gray-600" />
-          </button>
+            <Trash2 className="w-4 h-4" />
+          </Button>
         </div>
       </div>
     </div>);
@@ -195,18 +196,18 @@ export default function NotificationsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-muted/30">
       {/* Header */}
-      <div className="bg-white shadow-sm">
+      <div className="bg-card shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <h1 className="text-2xl font-bold text-gray-900">{t("notifications_notifications.notifications")}</h1>
+            <h1 className="text-2xl font-bold text-foreground">{t("notifications_notifications.notifications")}</h1>
             
             <div className="flex items-center gap-4">
               {/* Statut WebSocket */}
               <div className="flex items-center gap-2 text-sm">
                 <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
-                <span className="text-gray-600">
+                <span className="text-muted-foreground">
                   {isConnected ? t("notifications_notifications.connected", "Connecté") : t("notifications_notifications.disconnected", "Déconnecté")}
                 </span>
               </div>
@@ -214,9 +215,8 @@ export default function NotificationsPage() {
               {/* Bouton paramètres */}
               <a
                 href="/notifications/preferences"
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-
-                <Settings className="w-5 h-5 text-gray-600" />
+                className="p-2 hover:bg-muted rounded-lg transition-colors">
+                <Settings className="w-5 h-5 text-muted-foreground" />
               </a>
             </div>
           </div>
@@ -235,12 +235,9 @@ export default function NotificationsPage() {
               </p>
               </div>
               <div className="flex items-center gap-2">
-                <button
-                onClick={handlePermissionRequest}
-                className="bg-blue-600 text-white px-4 py-1.5 rounded-md text-sm hover:bg-blue-700">{t("notifications_notifications.activer")}
-
-
-              </button>
+                <Button size="sm" onClick={handlePermissionRequest}>
+                  {t("notifications_notifications.activer")}
+                </Button>
                 <button
                 onClick={() => setShowPermissionBanner(false)}
                 className="text-gray-500 hover:text-gray-700">
@@ -260,15 +257,15 @@ export default function NotificationsPage() {
           <div className="lg:col-span-1">
             {/* Résumé */}
             {summary &&
-            <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-                <h2 className="font-semibold text-gray-900 mb-4">{t("notifications_notifications.rsum")}</h2>
+            <div className="bg-card rounded-lg shadow-sm p-4 mb-6">
+                <h2 className="font-semibold text-foreground mb-4">{t("notifications_notifications.rsum")}</h2>
                 <div className="space-y-3">
                   <div className="flex justify-between">
-                    <span className="text-gray-600">{t("notifications_notifications.total")}</span>
+                    <span className="text-muted-foreground">{t("notifications_notifications.total")}</span>
                     <span className="font-medium">{summary.total}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">{t("notifications_notifications.non_lues")}</span>
+                    <span className="text-muted-foreground">{t("notifications_notifications.non_lues")}</span>
                     <span className="font-medium text-blue-600">{summary.nonLues}</span>
                   </div>
                 </div>
@@ -276,8 +273,8 @@ export default function NotificationsPage() {
             }
 
             {/* Filtres */}
-            <div className="bg-white rounded-lg shadow-sm p-4">
-              <h2 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <div className="bg-card rounded-lg shadow-sm p-4">
+              <h2 className="font-semibold text-foreground mb-4 flex items-center gap-2">
                 <Filter className="w-4 h-4" />{t("notifications_notifications.filtrer")}
 
               </h2>
@@ -297,21 +294,12 @@ export default function NotificationsPage() {
 
             {/* Actions rapides */}
             <div className="mt-6 space-y-2">
-              <button
-                onClick={() => markAllAsRead()}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
-
+              <Button className="w-full" onClick={() => markAllAsRead()}>
                 <CheckCheck className="w-4 h-4" />{t("notifications_notifications.tout_marquer_comme")}
-
-              </button>
-              
-              <button
-                onClick={() => deleteAllRead()}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">
-
+              </Button>
+              <Button variant="outline" className="w-full" onClick={() => deleteAllRead()}>
                 <Trash2 className="w-4 h-4" />{t("notifications_notifications.supprimer_les_lues")}
-
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -324,32 +312,30 @@ export default function NotificationsPage() {
                     <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
                     <p className="text-red-800">{error}</p>
                   </div>
-                  <button
-                    onClick={() => loadNotifications({ page: 1, limit: 20 })}
-                    className="flex items-center gap-2 px-3 py-1.5 bg-red-600 text-white rounded-md text-sm hover:bg-red-700">
+                  <Button variant="destructive" size="sm" onClick={() => loadNotifications({ page: 1, limit: 20 })}>
                     <RefreshCw className="w-4 h-4" />
                     {t("common.retry", "Réessayer")}
-                  </button>
+                  </Button>
                 </div>
               </div>
             }
 
             {isLoading && notifications.length === 0 ?
             <div className="text-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                <p className="mt-4 text-gray-600">{t("notifications_notifications.chargement_des_notifications")}</p>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                <p className="mt-4 text-muted-foreground">{t("notifications_notifications.chargement_des_notifications")}</p>
               </div> :
             Object.keys(groupedNotifications).length === 0 ?
-            <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-                <Bell className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500">{t("notifications_notifications.aucune_notification")}</p>
+            <div className="bg-card rounded-lg shadow-sm p-12 text-center">
+                <Bell className="w-12 h-12 text-muted-foreground/20 mx-auto mb-4" />
+                <p className="text-muted-foreground">{t("notifications_notifications.aucune_notification")}</p>
               </div> :
 
             <>
                 {/* Notifications groupées par date */}
                 {getGroupedEntries().map(([dateGroup, notifs]) =>
               <div key={dateGroup} className="mb-8">
-                    <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                    <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
                       {dateGroup}
                     </h3>
                     {notifs.map((notification: Notification) =>
@@ -366,13 +352,9 @@ export default function NotificationsPage() {
                 {/* Bouton charger plus */}
                 {notifications.length >= 20 &&
               <div className="text-center mt-8">
-                    <button
-                  onClick={loadMore}
-                  disabled={isLoading}
-                  className="px-6 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 disabled:opacity-50">
-
+                    <Button variant="outline" onClick={loadMore} disabled={isLoading}>
                       {isLoading ? t("notifications_notifications.loading", "Chargement...") : t("notifications_notifications.loadMore", "Charger plus")}
-                    </button>
+                    </Button>
                   </div>
               }
               </>

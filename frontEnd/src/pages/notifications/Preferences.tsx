@@ -6,14 +6,11 @@ import {
   Bell,
   Mail,
   MessageSquare,
-  Calendar,
   Settings,
   Save,
   ArrowLeft,
   Smartphone,
   Monitor,
-  Moon,
-  Sun,
   Info,
   Check } from
 'lucide-react';
@@ -23,7 +20,9 @@ import { useNotifications } from '@/hooks/useNotifications';
 import type { NotificationPreferences, UpdatePreferencesData } from '@/types/models/notification.types';
 
 // Composant Switch personnalisé
-import { useTranslation } from "react-i18next";const Switch: React.FC<{
+import { useTranslation } from "react-i18next";
+import { Button } from '@/components/ui/button';
+const Switch: React.FC<{
   checked: boolean;
   onCheckedChange: (checked: boolean) => void;
   disabled?: boolean;
@@ -37,9 +36,9 @@ import { useTranslation } from "react-i18next";const Switch: React.FC<{
       onClick={() => onCheckedChange(!checked)}
       className={`
         relative inline-flex h-6 w-11 items-center rounded-full
-        transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+        transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2
         ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-        ${checked ? 'bg-blue-600' : 'bg-gray-200'}
+        ${checked ? 'bg-primary' : 'bg-input'}
       `}>
 
       <span
@@ -60,13 +59,13 @@ const PreferenceSection: React.FC<{
   children: React.ReactNode;
 }> = ({ title, description, icon, children }) => {const { t } = useTranslation();
   return (
-    <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+    <div className="bg-card rounded-lg shadow-sm p-6 mb-6">
       <div className="flex items-start gap-3 mb-4">
-        {icon && <div className="text-gray-600 mt-1">{icon}</div>}
+        {icon && <div className="text-muted-foreground mt-1">{icon}</div>}
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+          <h2 className="text-lg font-semibold text-foreground">{title}</h2>
           {description &&
-          <p className="text-sm text-gray-600 mt-1">{description}</p>
+          <p className="text-sm text-muted-foreground mt-1">{description}</p>
           }
         </div>
       </div>
@@ -86,9 +85,9 @@ const PreferenceItem: React.FC<{
   return (
     <label className={`flex items-start justify-between ${disabled ? 'opacity-60' : ''}`}>
       <div className="flex-1 pr-4">
-        <span className="font-medium text-gray-900">{label}</span>
+        <span className="font-medium text-foreground">{label}</span>
         {description &&
-        <p className="text-sm text-gray-600 mt-1">{description}</p>
+        <p className="text-sm text-muted-foreground mt-1">{description}</p>
         }
       </div>
       <Switch
@@ -221,26 +220,26 @@ export default function NotificationPreferences() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-muted/30 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>);
 
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-muted/30">
       {/* Header */}
-      <div className="bg-white shadow-sm">
+      <div className="bg-card shadow-sm">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-4">
-              <button
-                onClick={() => navigate('/notifications')}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate('/notifications')}>
                 <ArrowLeft className="w-5 h-5" />
-              </button>
-              <h1 className="text-2xl font-bold text-gray-900">{t("notifications_preferences.prfrences_notifications")}</h1>
+              </Button>
+              <h1 className="text-2xl font-bold text-foreground">{t("notifications_preferences.prfrences_notifications")}</h1>
             </div>
           </div>
         </div>
@@ -265,12 +264,12 @@ export default function NotificationPreferences() {
                 <p className="text-sm text-blue-800 mt-1">{t("notifications_preferences.activez_les_notifications")}
 
               </p>
-                <button
-                onClick={handleRequestPermission}
-                className="mt-3 bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700">{t("notifications_preferences.activer_les_notifications")}
-
-
-              </button>
+                <Button
+                  size="sm"
+                  className="mt-3"
+                  onClick={handleRequestPermission}>
+                  {t("notifications_preferences.activer_les_notifications")}
+                </Button>
               </div>
             </div>
           </div>
@@ -344,35 +343,35 @@ export default function NotificationPreferences() {
           icon={<Smartphone className="w-5 h-5" />}>
 
           <div className="space-y-3">
-            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-              <Monitor className="w-5 h-5 text-gray-600" />
+            <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+              <Monitor className="w-5 h-5 text-muted-foreground" />
               <div className="flex-1">
                 <p className="font-medium">{t("notifications_preferences.navigateur_web")}</p>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-muted-foreground">
                   {browserPermission === 'granted' ?
                   t('notifications_preferences.browserEnabled', '✓ Notifications activées') :
                   t('notifications_preferences.browserDisabled', '✗ Notifications désactivées')}
                 </p>
               </div>
             </div>
-            
-            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-              <Mail className="w-5 h-5 text-gray-600" />
+
+            <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+              <Mail className="w-5 h-5 text-muted-foreground" />
               <div className="flex-1">
                 <p className="font-medium">{t("notifications_preferences.email")}</p>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-muted-foreground">
                   {preferences.global.email ?
                   t('notifications_preferences.emailEnabled', '✓ Notifications par email activées') :
                   t('notifications_preferences.emailDisabled', '✗ Notifications par email désactivées')}
                 </p>
               </div>
             </div>
-            
-            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-              <MessageSquare className="w-5 h-5 text-gray-600" />
+
+            <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+              <MessageSquare className="w-5 h-5 text-muted-foreground" />
               <div className="flex-1">
                 <p className="font-medium">{t("notifications_preferences.sms")}</p>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-muted-foreground">
                   {preferences.global.sms ?
                   t('notifications_preferences.smsEnabled', '✓ Notifications SMS activées') :
                   t('notifications_preferences.smsDisabled', '✗ Notifications SMS désactivées')}
@@ -384,40 +383,29 @@ export default function NotificationPreferences() {
 
         {/* Bouton de sauvegarde */}
         <div className="flex items-center justify-between mt-8">
-          <button
-            onClick={() => navigate('/notifications')}
-            className="text-gray-600 hover:text-gray-800">{t("notifications_preferences.retour_aux_notifications")}
+          <Button
+            variant="ghost"
+            onClick={() => navigate('/notifications')}>
+            {t("notifications_preferences.retour_aux_notifications")}
+          </Button>
 
-
-          </button>
-          
-          <button
+          <Button
             onClick={handleSave}
             disabled={saving}
-            className={`
-              flex items-center gap-2 px-6 py-2 rounded-lg font-medium transition-colors
-              ${saving ?
-            'bg-gray-300 text-gray-500 cursor-not-allowed' :
-            'bg-blue-600 text-white hover:bg-blue-700'}
-            `}>
-
+            className="flex items-center gap-2">
             {saving ?
             <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>{t("notifications_preferences.enregistrement")}
-
             </> :
             saved ?
             <>
                 <Check className="w-4 h-4" />{t("notifications_preferences.enregistr")}
-
             </> :
-
             <>
                 <Save className="w-4 h-4" />{t("notifications_preferences.enregistrer_les_prfrences")}
-
             </>
             }
-          </button>
+          </Button>
         </div>
       </div>
     </div>);

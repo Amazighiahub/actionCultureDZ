@@ -437,11 +437,9 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
             {/* Bouton favoris pour visiteurs */}
             {onToggleFavorite && (
               <Button
-                variant={isFavorite ? "default" : "outline"}
-                className={cn(
-                  "w-full",
-                  isFavorite && "bg-red-500 hover:bg-red-600 text-white"
-                )}
+                variant="favorite"
+                data-active={isFavorite}
+                className="w-full"
                 onClick={onToggleFavorite}
               >
                 <Heart className={cn("h-4 w-4 me-2", isFavorite && "fill-current")} />
