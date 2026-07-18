@@ -232,13 +232,16 @@ const OeuvreSpecificFields: React.FC<OeuvreSpecificFieldsProps> = ({
           <Label htmlFor="url_source">{t("ajouteroeuvre.url_larticle_optionnel")}</Label>
           <Input
           id="url_source"
-          type="url"
+          type="text"
           autoComplete="url"
           maxLength={2048}
           placeholder="https://..."
           value={formData.url_source || ''}
+          aria-invalid={!!fieldErrors.url_source || undefined}
+          aria-describedby={fieldErrors.url_source ? 'url_source-error' : 'url_source-helper'}
           onChange={(e) => handleInputChange('url_source', e.target.value)} />
-          <p className="text-xs text-muted-foreground">{t('common.urlHelper')}</p>
+          <p id="url_source-helper" className="text-xs text-muted-foreground">{t('common.urlHelper')}</p>
+          {fieldErrors.url_source && <p id="url_source-error" role="alert" className="text-sm text-destructive">{fieldErrors.url_source}</p>}
         </div>
       </div>,
 

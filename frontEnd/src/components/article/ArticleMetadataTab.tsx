@@ -203,7 +203,7 @@ const ArticleMetadataTab: React.FC<ArticleMetadataTabProps> = ({
               </div>
               <div className="space-y-2">
                 <Label htmlFor="url_source">{t("article_articleeditor.url_source")}</Label>
-                <Input id="url_source" type="url" autoComplete="url" maxLength={2048} value={formData.url_source || ''} onChange={(e) => setFormData(prev => ({ ...prev, url_source: e.target.value }))} placeholder="https://..." />
+                <Input id="url_source" type="text" autoComplete="url" maxLength={2048} value={formData.url_source || ''} onChange={(e) => setFormData(prev => ({ ...prev, url_source: e.target.value }))} placeholder="https://..." />
               </div>
             </>
           ) : (

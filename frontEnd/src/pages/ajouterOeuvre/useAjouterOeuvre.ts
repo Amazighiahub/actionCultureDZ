@@ -688,11 +688,19 @@ export function useAjouterOeuvre() {
           errors.isbn = t('oeuvre.errors.invalidIsbn', 'ISBN invalide — 10 ou 13 chiffres attendus');
         }
       }
+      if (formData.url_source) {
+        try {
+          const url = new URL(formData.url_source.trim());
+          if (url.protocol !== 'http:' && url.protocol !== 'https:') throw new Error('protocol');
+        } catch {
+          errors.url_source = t('oeuvre.errors.invalidUrl', 'URL invalide — utilisez le format https://exemple.com');
+        }
+      }
 
       if (Object.keys(errors).length > 0) {
         setFieldErrors(errors);
         setSubmitError(t('oeuvre.errors.formHasErrors', 'Veuillez corriger les erreurs ci-dessous'));
-        const fieldOrder = ['id_type_oeuvre', 'titre', 'description', 'annee_creation', 'prix', 'isbn', 'categories'];
+        const fieldOrder = ['id_type_oeuvre', 'titre', 'description', 'annee_creation', 'prix', 'isbn', 'url_source', 'categories'];
         const firstErrorField = fieldOrder.find((f) => errors[f]);
         if (firstErrorField) {
           const elementId = firstErrorField === 'titre' ? 'titre-fr'
