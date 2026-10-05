@@ -29,6 +29,7 @@ try {
 }
 
 const express = require('express');
+const { resolveTrustProxy } = require('./utils/trustProxy');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const compression = require('compression');
@@ -101,15 +102,8 @@ class App {
 
   // Initialisation des middlewares de base
   initializeMiddlewares() {
-    // Trust proxy — utiliser l'IP exacte du proxy en prod pour éviter le spoofing X-Forwarded-For
-    const trustedProxy = process.env.TRUSTED_PROXY_IP;
-    if (trustedProxy) {
-      this.app.set('trust proxy', trustedProxy);
-    } else if (process.env.NODE_ENV === 'production') {
-      this.app.set('trust proxy', 'loopback');
-    } else {
-      this.app.set('trust proxy', 1);
-    }
+    // IP réelle des clients derrière nginx (voir utils/trustProxy.js)
+    this.app.set('trust proxy', resolveTrustProxy(process.env.TRUSTED_PROXY_IP));
 
     // Redirection HTTPS et HSTS en production
     this.app.use(httpsRedirect);
