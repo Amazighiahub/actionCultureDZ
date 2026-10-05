@@ -566,8 +566,8 @@ class UserService extends BaseService {
    * @param {Object} options
    * @returns {Promise<{data: Array<UserDTO>, pagination: Object}>}
    */
-  async search(query, options = {}) {
-    const result = await this.repository.searchUsers(query, options);
+  async search(query, options = {}, { includePrivate = false } = {}) {
+    const result = await this.repository.searchUsers(query, options, { includePrivate });
 
     return {
       data: UserDTO.fromEntities(result.data),

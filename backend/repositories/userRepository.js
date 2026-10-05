@@ -4,6 +4,10 @@
  */
 const BaseRepository = require('./baseRepository');
 const { Op } = require('sequelize');
+const { PUBLIC_USER_PROFILE_ATTRIBUTES, stripPrivateContact } = require('../constants/publicAttributes');
+
+// Types professionnels (2..28) : ni visiteur (1) ni administrateur (29)
+const PROFESSIONAL_TYPE_IDS = Array.from({ length: 27 }, (_, i) => i + 2);
 
 class UserRepository extends BaseRepository {
   constructor(models) {
@@ -85,35 +89,44 @@ class UserRepository extends BaseRepository {
    * Trouve les professionnels validés
    */
   async findValidatedProfessionals(options = {}) {
-    const professionalTypeIds = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28];
-
-    return this.findAll({
+    // Route publique : uniquement le profil public, contact selon les préférences
+    const result = await this.findAll({
       ...options,
+      attributes: PUBLIC_USER_PROFILE_ATTRIBUTES,
       where: {
-        id_type_user: { [Op.in]: professionalTypeIds },
+        id_type_user: { [Op.in]: PROFESSIONAL_TYPE_IDS },
         statut: 'actif'
       }
     });
+    result.data.forEach(stripPrivateContact);
+    return result;
   }
 
   /**
    * Recherche d'utilisateurs
    */
-  async searchUsers(query, options = {}) {
+  async searchUsers(query, options = {}, { includePrivate = false } = {}) {
     // Échapper les wildcards LIKE pour éviter la manipulation de résultats
     const escaped = query.replace(/[%_\\]/g, '\\$&');
-    return this.findAll({
+    const criteria = [
+      { nom: { [Op.like]: `%${escaped}%` } },
+      { prenom: { [Op.like]: `%${escaped}%` } },
+      { entreprise: { [Op.like]: `%${escaped}%` } }
+    ];
+    // Recherche par email et comptes non actifs : réservés à l'administration
+    if (includePrivate) criteria.push({ email: { [Op.like]: `%${escaped}%` } });
+
+    const result = await this.findAll({
       ...options,
+      ...(includePrivate ? {} : { attributes: PUBLIC_USER_PROFILE_ATTRIBUTES }),
       where: {
-        [Op.or]: [
-          { nom: { [Op.like]: `%${escaped}%` } },
-          { prenom: { [Op.like]: `%${escaped}%` } },
-          { email: { [Op.like]: `%${escaped}%` } },
-          { entreprise: { [Op.like]: `%${escaped}%` } }
-        ],
+        [Op.or]: criteria,
+        ...(includePrivate ? {} : { statut: 'actif' }),
         ...options.where
       }
     });
+    if (!includePrivate) result.data.forEach(stripPrivateContact);
+    return result;
   }
 
   /**
@@ -455,17 +468,20 @@ class UserRepository extends BaseRepository {
       includes.push({ model: this.models.Wilaya, attributes: ['id_wilaya', 'nom', 'code'], required: false });
     }
 
-    return this.model.findAll({
+    // Route publique : professionnels actifs uniquement (jamais les admins),
+    // contact selon les préférences de confidentialité
+    const artisans = await this.model.findAll({
       where: {
         wilaya_residence: parseInt(wilayaId),
-        id_type_user: { [Op.ne]: 1 }
+        id_type_user: { [Op.in]: PROFESSIONAL_TYPE_IDS },
+        statut: 'actif'
       },
-      attributes: ['id_user', 'nom', 'prenom', 'email', 'photo_url',
-        'entreprise', 'id_type_user', 'statut', 'wilaya_residence'],
+      attributes: PUBLIC_USER_PROFILE_ATTRIBUTES,
       include: includes,
       limit,
       offset
     });
+    return artisans.map(stripPrivateContact);
   }
 
   /**

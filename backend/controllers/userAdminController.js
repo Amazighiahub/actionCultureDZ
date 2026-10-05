@@ -48,7 +48,7 @@ class UserAdminController extends BaseController {
 
       res.json({
         success: true,
-        data: this._translateUsers(result.data, req.lang),
+        data: this._maskForModerator(req, this._translateUsers(result.data, req.lang)),
         pagination: result.pagination
       });
     } catch (error) {
@@ -56,17 +56,24 @@ class UserAdminController extends BaseController {
     }
   }
 
+  /**
+   * Les modérateurs ne voient pas les coordonnées personnelles (email, téléphone,
+   * adresse, date de naissance) ; les admins voient tout.
+   */
+  _maskForModerator(req, data) {
+    if (req.user?.isAdmin) return data;
+    const mask = (u) => {
+      if (!u) return u;
+      const { email: _e, telephone: _t, adresse: _a, date_naissance: _d, ...safe } = u;
+      return safe;
+    };
+    return Array.isArray(data) ? data.map(mask) : mask(data);
+  }
+
   async getById(req, res) {
     try {
       const user = await this.userService.findById(parseInt(req.params.id, 10));
-      let data = this._translateUser(user, req.lang);
-
-      // PII masking : les moderateurs ne voient pas email/telephone/adresse.
-      // Les admins (isAdmin = true) voient tout.
-      if (data && !req.user.isAdmin) {
-        const { email: _email, telephone: _telephone, adresse: _adresse, ...safeData } = data;
-        data = safeData;
-      }
+      const data = this._maskForModerator(req, this._translateUser(user, req.lang));
 
       res.json({ success: true, data });
     } catch (error) {
@@ -86,7 +93,10 @@ class UserAdminController extends BaseController {
       }
 
       const { page, limit } = this._paginate(req);
-      const result = await this.userService.search(q, { page, limit });
+      // Admin : recherche complète ; autres utilisateurs : profils publics actifs
+      const result = await this.userService.search(q, { page, limit }, {
+        includePrivate: req.user?.isAdmin === true
+      });
 
       res.json({
         success: true,
@@ -146,7 +156,7 @@ class UserAdminController extends BaseController {
 
       res.json({
         success: true,
-        data: this._translateUsers(result.data, req.lang),
+        data: this._maskForModerator(req, this._translateUsers(result.data, req.lang)),
         pagination: result.pagination
       });
     } catch (error) {
