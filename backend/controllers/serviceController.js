@@ -111,7 +111,8 @@ class ServiceController extends BaseController {
       const service = await this.serviceService.update(
         parseInt(req.params.id),
         req.body,
-        req.user.id_user
+        req.user.id_user,
+        req.user.isAdmin === true || req.user.isModerateur === true
       );
       res.json({
         success: true,
@@ -125,7 +126,11 @@ class ServiceController extends BaseController {
 
   async delete(req, res) {
     try {
-      await this.serviceService.delete(parseInt(req.params.id), req.user.id_user);
+      await this.serviceService.delete(
+        parseInt(req.params.id),
+        req.user.id_user,
+        req.user.isAdmin === true || req.user.isModerateur === true
+      );
       res.json({ success: true, message: req.t('service.deleted') });
     } catch (error) {
       this._handleError(res, error);

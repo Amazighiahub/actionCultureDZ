@@ -8,10 +8,6 @@ const container = require('../services/serviceContainer');
 const QRCode = require('qrcode');
 const logger = require('../utils/logger');
 
-// Admin ou modérateur (rôles chargés par authMiddleware dans req.userRoles)
-const isModerator = (req) => req.user?.isAdmin === true
-  || (req.userRoles || []).some(r => r === 'Modérateur' || r === 'Moderateur');
-
 class PatrimoineController extends BaseController {
   get patrimoineService() {
     return container.patrimoineService;
@@ -156,7 +152,7 @@ class PatrimoineController extends BaseController {
   async create(req, res) {
     // Ajouter l'id du créateur
     req.body.id_createur = req.user?.id_user;
-    const site = await this.patrimoineService.create(req.body, { isModerator: isModerator(req) });
+    const site = await this.patrimoineService.create(req.body, { isModerator: req.user?.isAdmin === true || req.user?.isModerateur === true });
     res.status(201).json({
       success: true,
       message: req.t('patrimoine.created'),

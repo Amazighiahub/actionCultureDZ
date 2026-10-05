@@ -131,16 +131,25 @@ class ServiceService extends BaseService {
   }
 
   /**
-   * Modifier un service
+   * Propriétaire du service, ou modération (admin / modérateur).
+   * Un service sans propriétaire (équipement d'un site) n'est gérable que par la modération.
    */
-  async update(id, data, userId) {
+  _canManage(existing, userId, isModerator) {
+    if (isModerator) return true;
+    return existing.id_user != null && existing.id_user === userId;
+  }
+
+  /**
+   * Modifier un service
+   * @param {boolean} [isModerator] - admin ou modérateur
+   */
+  async update(id, data, userId, isModerator = false) {
     const existing = await this.repository.findById(id);
     if (!existing) {
       throw this._notFoundError(id);
     }
 
-    // Vérifier propriété
-    if (existing.id_user && existing.id_user !== userId) {
+    if (!this._canManage(existing, userId, isModerator)) {
       throw this._forbiddenError('Vous ne pouvez modifier que vos propres services');
     }
 
@@ -161,6 +170,14 @@ class ServiceService extends BaseService {
     if (data.tarif_max !== undefined || data.tarifMax !== undefined) updateData.tarif_max = data.tarif_max || data.tarifMax;
     if (data.photo_url || data.photoUrl) updateData.photo_url = data.photo_url || data.photoUrl;
 
+    // Un service déjà validé dont le contenu public change repasse en modération
+    // (sinon un pro pourrait faire valider un contenu puis le remplacer).
+    const PUBLIC_FIELDS = ['nom', 'description', 'site_web', 'email', 'telephone', 'photo_url', 'adresse'];
+    if (!isModerator && existing.statut === 'valide'
+        && PUBLIC_FIELDS.some(f => updateData[f] !== undefined)) {
+      updateData.statut = 'en_attente';
+    }
+
     await this.repository.update(id, updateData);
     const updated = await this.repository.findWithFullDetails(id);
 
@@ -171,13 +188,13 @@ class ServiceService extends BaseService {
   /**
    * Supprimer
    */
-  async delete(id, userId) {
+  async delete(id, userId, isModerator = false) {
     const existing = await this.repository.findById(id);
     if (!existing) {
       throw this._notFoundError(id);
     }
 
-    if (existing.id_user && existing.id_user !== userId) {
+    if (!this._canManage(existing, userId, isModerator)) {
       throw this._forbiddenError('Vous ne pouvez supprimer que vos propres services');
     }
 

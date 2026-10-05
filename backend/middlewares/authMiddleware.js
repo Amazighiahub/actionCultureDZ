@@ -130,6 +130,7 @@ module.exports = (modelsOrUser) => {
     const isProfessionalByType = user.id_type_user && PROFESSIONAL_TYPE_IDS.has(user.id_type_user);
 
     user.isAdmin = user.roleNames.includes('Administrateur') || user.id_type_user === TYPE_USER_IDS.ADMINISTRATEUR;
+    user.isModerateur = user.roleNames.includes('Modérateur') || user.roleNames.includes('Moderateur');
     user.isProfessionnel = user.roleNames.includes('Professionnel') || isProfessionalByType;
     user.isUser = user.roleNames.includes('User') || user.id_type_user === 1 || user.roleNames.length === 0;
     user.hasOrganisation = Array.isArray(user.Organisations) && user.Organisations.length > 0;
