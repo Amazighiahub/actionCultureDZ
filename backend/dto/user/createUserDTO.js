@@ -3,6 +3,7 @@
  * Utilisé pour valider et transformer les données d'inscription
  */
 const BaseDTO = require('../baseDTO');
+const { REGISTRABLE_TYPE_USER_IDS } = require('../../constants/typeUserIds');
 
 class CreateUserDTO extends BaseDTO {
   constructor(data = {}) {
@@ -20,7 +21,9 @@ class CreateUserDTO extends BaseDTO {
     this.dateNaissance = BaseDTO.cleanString(data.date_naissance || data.dateNaissance) || null;
     this.telephone = BaseDTO.cleanString(data.telephone);
     this.typeUser = data.type_user || data.typeUser || 'visiteur';
-    this.idTypeUser = parseInt(data.id_type_user || data.idTypeUser) || 1;
+    // Absent ou non numerique => visiteur ; toute autre valeur est controlee dans validate()
+    const rawTypeUser = parseInt(data.id_type_user ?? data.idTypeUser, 10);
+    this.idTypeUser = Number.isInteger(rawTypeUser) ? rawTypeUser : 1;
     this.entreprise = BaseDTO.cleanString(data.entreprise);
     this.biographie = BaseDTO.normalizeMultilang(data.biographie);
     this.siteWeb = BaseDTO.cleanString(data.site_web || data.siteWeb);
@@ -141,6 +144,11 @@ class CreateUserDTO extends BaseDTO {
           }
         }
       }
+    }
+
+    // Type d'utilisateur : uniquement les types inscriptibles (jamais administrateur)
+    if (!REGISTRABLE_TYPE_USER_IDS.has(this.idTypeUser)) {
+      errors.push({ field: 'id_type_user', message: 'Type d\'utilisateur invalide' });
     }
 
     // Conditions acceptées

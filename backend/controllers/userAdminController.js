@@ -107,7 +107,8 @@ class UserAdminController extends BaseController {
       const user = await this.userService.update(
         parseInt(req.params.id, 10),
         req.body,
-        req.user.id_user
+        req.user.id_user,
+        req.user.isAdmin === true
       );
       res.json({
         success: true,

@@ -319,7 +319,7 @@ class UserService extends BaseService {
    * @param {number} currentUserId - ID de l'utilisateur faisant la modification
    * @returns {Promise<UserDTO>}
    */
-  async update(id, requestBody, currentUserId = null) {
+  async update(id, requestBody, currentUserId = null, isAdmin = false) {
     // 1. Vérifier que l'utilisateur existe
     const existingUser = await this.repository.findById(id);
     if (!existingUser) {
@@ -327,12 +327,9 @@ class UserService extends BaseService {
     }
 
     // 2. Vérifier les permissions (si currentUserId fourni)
-    if (currentUserId && currentUserId !== id) {
-      // Seul l'utilisateur lui-même ou un admin peut modifier
-      const currentUser = await this.repository.findById(currentUserId);
-      if (!currentUser || currentUser.id_type_user !== TYPE_USER_IDS.ADMINISTRATEUR) {
-        throw this._forbiddenError('Vous ne pouvez pas modifier ce profil');
-      }
+    // Seul l'utilisateur lui-même ou un admin (calculé par authMiddleware) peut modifier
+    if (currentUserId && Number(currentUserId) !== Number(id) && !isAdmin) {
+      throw this._forbiddenError('Vous ne pouvez pas modifier ce profil');
     }
 
     // 3. Transformer en DTO
