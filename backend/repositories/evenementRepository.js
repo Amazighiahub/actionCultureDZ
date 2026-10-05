@@ -219,6 +219,7 @@ class EvenementRepository extends BaseRepository {
    */
   async findByOeuvre(oeuvreId) {
     return this.model.findAll({
+      where: { statut: { [Op.ne]: 'brouillon' } },
       include: [
         ...this._defaultIncludes(),
         {
@@ -240,6 +241,7 @@ class EvenementRepository extends BaseRepository {
   async searchEvenements(query, options = {}) {
     return this.search(query, ['nom_evenement', 'description'], {
       ...options,
+      additionalWhere: { ...options.additionalWhere, statut: { [Op.ne]: 'brouillon' } },
       include: this._defaultIncludes()
     });
   }

@@ -109,6 +109,19 @@ class BaseController {
     return { page, limit, offset };
   }
 
+  /**
+   * Un contenu non publié (brouillon, en attente, rejeté...) n'est visible que
+   * par son auteur et par la modération. Nécessite optionalAuth sur la route.
+   * @param {object} req
+   * @param {number|null|undefined} ownerId - id_user de l'auteur
+   */
+  _canSeeUnpublished(req, ownerId) {
+    const user = req.user;
+    if (!user) return false;
+    if (user.isAdmin || user.isModerateur) return true;
+    return ownerId != null && Number(ownerId) === Number(user.id_user);
+  }
+
   // ============================================================================
   // GESTION D'ERREURS
   // ============================================================================

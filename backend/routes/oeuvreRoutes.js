@@ -13,7 +13,7 @@ const uploadService = require('../services/uploadService');
 
 const initOeuvreRoutes = (models, authMiddleware) => {
   const router = express.Router();
-  const { authenticate, requireRole, requireVerifiedEmail } = authMiddleware;
+  const { authenticate, optionalAuth, requireRole, requireVerifiedEmail } = authMiddleware;
 
   // Cache HTTP pour les listes publiques (données changent toutes les ~3 min)
   const cachePublic = (req, res, next) => {
@@ -52,7 +52,7 @@ const initOeuvreRoutes = (models, authMiddleware) => {
   // ROUTES AVEC :id (après les routes spécifiques)
   // ============================================================================
 
-  router.get('/:id', validateId(), asyncHandler((req, res) => oeuvreController.getById(req, res)));
+  router.get('/:id', optionalAuth, validateId(), asyncHandler((req, res) => oeuvreController.getById(req, res)));
   router.get('/:id/similar', validateId(), asyncHandler((req, res) => oeuvreController.getSimilar(req, res)));
   router.get('/:id/medias', validateId(), asyncHandler((req, res) => oeuvreController.getMedias(req, res)));
 

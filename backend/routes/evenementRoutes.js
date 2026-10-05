@@ -13,7 +13,7 @@ const uploadService = require('../services/uploadService');
 
 const initEvenementRoutes = (models, authMiddleware) => {
   const router = express.Router();
-  const { authenticate, requireRole, requireValidatedProfessional, requireVerifiedEmail } = authMiddleware;
+  const { authenticate, optionalAuth, requireRole, requireValidatedProfessional, requireVerifiedEmail } = authMiddleware;
 
   // Cache HTTP pour les listes publiques (données changent toutes les ~2 min)
   const cachePublic = (req, res, next) => {
@@ -62,7 +62,7 @@ const initEvenementRoutes = (models, authMiddleware) => {
   router.get('/:id/mes-oeuvres', authenticate, validateId(), asyncHandler((req, res) => evenementController.getMesOeuvres(req, res)));
   router.get('/:id/mon-inscription', authenticate, validateId(), asyncHandler((req, res) => evenementController.getMyRegistration(req, res)));
   router.get('/:id/export', authenticate, validateId(), asyncHandler((req, res) => evenementController.exportEvent(req, res)));
-  router.get('/:id', validateId(), asyncHandler((req, res) => evenementController.getById(req, res)));
+  router.get('/:id', optionalAuth, validateId(), asyncHandler((req, res) => evenementController.getById(req, res)));
 
   router.post('/', authenticate,
     requireVerifiedEmail,

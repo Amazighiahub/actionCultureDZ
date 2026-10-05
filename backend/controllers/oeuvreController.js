@@ -155,6 +155,12 @@ class OeuvreController extends BaseController {
     try {
       const oeuvre = await this.oeuvreService.findWithFullDetails(parseInt(req.params.id));
 
+      // Non publiée (brouillon, en attente, rejetée...) : auteur et modération uniquement
+      const raw = oeuvre?._raw || oeuvre;
+      if (raw && raw.statut !== 'publie' && !this._canSeeUnpublished(req, raw.saisi_par)) {
+        return res.status(404).json({ success: false, error: req.t('common.notFound') });
+      }
+
       res.json({
         success: true,
         data: this._translateOeuvre(oeuvre, req.lang, 'detail')

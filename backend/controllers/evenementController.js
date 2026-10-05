@@ -73,6 +73,11 @@ class EvenementController extends BaseController {
   async getById(req, res) {
     try {
       const evenement = await this.evenementService.findWithFullDetails(parseInt(req.params.id));
+      // Brouillon : visible seulement par l'organisateur et la modération
+      const raw = evenement._raw || evenement;
+      if (raw.statut === 'brouillon' && !this._canSeeUnpublished(req, raw.id_user)) {
+        return res.status(404).json({ success: false, error: req.t('common.notFound') });
+      }
       res.json({
         success: true,
         data: this._serialize(evenement, 'toDetailJSON', req.lang)
