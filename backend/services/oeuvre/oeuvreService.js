@@ -308,7 +308,14 @@ class OeuvreService extends BaseService {
     }
 
     // 3. Transformer en DTO
-    const updateDTO = UpdateOeuvreDTO.fromRequest(requestBody);
+    // Les champs de modération ne passent que par les routes dédiées
+    // (validate/reject/feature) : un propriétaire non admin ne peut pas les fixer ici.
+    let safeBody = requestBody;
+    if (!isAdmin && requestBody) {
+      safeBody = { ...requestBody };
+      for (const field of ['statut', 'est_mis_en_avant', 'estMisEnAvant']) delete safeBody[field];
+    }
+    const updateDTO = UpdateOeuvreDTO.fromRequest(safeBody);
 
     // 4. Vérifier s'il y a des modifications
     if (!updateDTO.hasChanges()) {
