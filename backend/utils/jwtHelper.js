@@ -135,8 +135,25 @@ function buildBlacklistKey({ jti, token } = {}) {
   return null;
 }
 
+/**
+ * Vrai si le token a été émis avant le dernier changement de mot de passe.
+ * Les tokens émis avant le premier changement n'ont pas de pwdAt : on se rabat
+ * alors sur leur date d'émission (iat), avec 1 s de tolérance car
+ * password_changed_at (DATETIME MySQL) est arrondi à la seconde.
+ * @param {{pwdAt?: number, iat?: number}} decoded
+ * @param {Date|string|null} passwordChangedAt
+ */
+function issuedBeforePasswordChange(decoded, passwordChangedAt) {
+  if (!passwordChangedAt || !decoded) return false;
+  const changedAtSec = Math.floor(new Date(passwordChangedAt).getTime() / 1000);
+  if (typeof decoded.pwdAt === 'number') return decoded.pwdAt < changedAtSec;
+  if (typeof decoded.iat === 'number') return decoded.iat < changedAtSec - 1;
+  return false;
+}
+
 module.exports = {
   signAccessToken,
+  issuedBeforePasswordChange,
   verifyAccessToken,
   readJti,
   buildBlacklistKey,

@@ -65,7 +65,7 @@ services:
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_DIALECT=mysql
       - JWT_SECRET=${JWT_SECRET}
-      - JWT_EXPIRES_IN=24h
+      - JWT_EXPIRES_IN=1h
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD}

@@ -239,6 +239,10 @@ class DashboardUserManagementService {
     await this.userRepo.update(userId, {
       password: hashedPassword,
       doit_changer_mdp: true,
+      // coupe les sessions existantes (contrôle pwdAt/iat + plus de refresh)
+      password_changed_at: new Date(),
+      refresh_token: null,
+      refresh_token_expires: null,
       date_modification: new Date()
     });
 

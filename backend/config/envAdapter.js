@@ -90,7 +90,7 @@ class EnvAdapter {
     process.env.DB_POOL_IDLE = process.env.DB_POOL_IDLE || '10000';
 
     // JWT
-    process.env.JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h';
+    process.env.JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1h';
 
     // Fonctionnalités
     process.env.ENABLE_SCHEDULED_TASKS = process.env.ENABLE_SCHEDULED_TASKS || 'true';

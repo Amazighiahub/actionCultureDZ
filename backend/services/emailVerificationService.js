@@ -7,6 +7,7 @@
  */
 const { Op } = require('sequelize');
 const emailService = require('./emailService');
+const { invalidateUserSession } = require('../utils/sessionCache');
 
 class EmailVerificationService {
   constructor(models) {
@@ -237,10 +238,15 @@ class EmailVerificationService {
     const rounds = parseInt(process.env.BCRYPT_ROUNDS) || 12;
     const hashedPassword = await bcrypt.hash(newPassword, rounds);
 
+    // Nouveau mot de passe => toutes les sessions existantes sont coupées :
+    // refresh token effacé (plus de renouvellement) et cache de session invalidé.
     await result.user.update({
       password: hashedPassword,
-      password_changed_at: new Date()
+      password_changed_at: new Date(),
+      refresh_token: null,
+      refresh_token_expires: null
     });
+    await invalidateUserSession(result.user.id_user);
 
     await this.models.EmailVerification.invalidateUserTokens(result.user.id_user);
 

@@ -7,6 +7,7 @@ const { TYPE_USER_IDS } = require('../constants/typeUserIds');
 const {
   verifyAccessToken,
   buildBlacklistKey,
+  issuedBeforePasswordChange,
   JWT_BLACKLIST_FAIL_CLOSED,
 } = require('../utils/jwtHelper');
 
@@ -312,14 +313,11 @@ module.exports = (modelsOrUser) => {
       }
 
       // Vérifier que le token n'a pas été émis avant un changement de mot de passe
-      if (user.password_changed_at && decoded.pwdAt !== undefined) {
-        const pwdChangedAtSec = Math.floor(new Date(user.password_changed_at).getTime() / 1000);
-        if (decoded.pwdAt < pwdChangedAtSec) {
-          return res.status(401).json({
-            success: false,
-            message: req.t('auth.tokenInvalid')
-          });
-        }
+      if (issuedBeforePasswordChange(decoded, user.password_changed_at)) {
+        return res.status(401).json({
+          success: false,
+          message: req.t('auth.tokenInvalid')
+        });
       }
 
       // ✅ CORRIGÉ: Gestion des statuts avec les valeurs ENUM existantes
