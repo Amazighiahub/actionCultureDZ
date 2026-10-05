@@ -6,7 +6,7 @@ const logger = require('../../utils/logger');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const { TYPE_USER_IDS } = require('../../constants/typeUserIds');
-const { getClient: getRedisClient } = require('../../utils/redisClient');
+const { invalidateUserSession } = require('../../utils/sessionCache');
 
 class DashboardUserManagementService {
   constructor(models, repositories = {}) {
@@ -455,20 +455,11 @@ class DashboardUserManagementService {
   // ===========================================================================
 
   async _invalidateUserCache(userId) {
-    const redis = getRedisClient();
-    if (redis) {
-      try { await redis.del(`user:session:${userId}`); } catch (_) { /* best-effort */ }
-    }
+    await invalidateUserSession(userId);
   }
 
   async _invalidateUserCacheBulk(userIds) {
-    const redis = getRedisClient();
-    if (redis && userIds.length > 0) {
-      try {
-        const keys = userIds.map(id => `user:session:${id}`);
-        await redis.del(keys);
-      } catch (_) { /* best-effort */ }
-    }
+    await invalidateUserSession(userIds);
   }
 
 }

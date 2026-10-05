@@ -17,6 +17,7 @@ const UpdateUserDTO = require('../../dto/user/updateUserDTO');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const { signAccessToken, verifyAccessToken } = require('../../utils/jwtHelper');
+const { invalidateUserSession } = require('../../utils/sessionCache');
 
 const REFRESH_TOKEN_EXPIRY_DAYS = 7;
 
@@ -633,11 +634,14 @@ class UserService extends BaseService {
       throw this._notFoundError(userId);
     }
 
-    if (user.statut === 'actif') {
-      throw this._conflictError('Cet utilisateur est déjà validé');
+    // Valider ne sert qu'à sortir un compte de l'attente : un compte suspendu/banni
+    // se réactive via reactivate (réservé à l'admin).
+    if (user.statut !== 'en_attente_validation') {
+      throw this._conflictError(`Seul un compte en attente peut être validé (statut: ${user.statut})`);
     }
 
     const updatedUser = await this.repository.validate(userId, validatorId);
+    await invalidateUserSession(userId);
 
     this.logger.info(`Utilisateur validé: ${userId} par: ${validatorId}`);
 
@@ -654,9 +658,20 @@ class UserService extends BaseService {
    * @returns {Promise<UserDTO>}
    */
   async rejectUser(userId, validatorId, motif) {
-    const user = await this.repository.findById(userId);
+    const user = await this.repository.findWithRoles(userId);
     if (!user) {
       throw this._notFoundError(userId);
+    }
+
+    if (Number(userId) === Number(validatorId)) {
+      throw this._forbiddenError('Vous ne pouvez pas refuser votre propre compte');
+    }
+    const STAFF_ROLES = ['Administrateur', 'Modérateur', 'Moderateur'];
+    if (user.Roles?.some(r => STAFF_ROLES.includes(r.nom_role))) {
+      throw this._forbiddenError('Impossible de refuser un compte administrateur ou modérateur');
+    }
+    if (user.statut !== 'en_attente_validation') {
+      throw this._conflictError(`Seul un compte en attente peut être refusé (statut: ${user.statut})`);
     }
 
     if (!motif || motif.trim().length === 0) {
@@ -664,6 +679,7 @@ class UserService extends BaseService {
     }
 
     const updatedUser = await this.repository.reject(userId, validatorId, motif);
+    await invalidateUserSession(userId);
 
     this.logger.info(`Utilisateur refusé: ${userId} par: ${validatorId}`);
 
@@ -695,6 +711,7 @@ class UserService extends BaseService {
     }
 
     const updatedUser = await this.repository.suspend(userId, adminId, duree, motif);
+    await invalidateUserSession(userId);
 
     this.logger.info(`Utilisateur suspendu: ${userId} par: ${adminId} pour ${duree} jours`);
 
@@ -720,6 +737,7 @@ class UserService extends BaseService {
     }
 
     const updatedUser = await this.repository.reactivate(userId, adminId);
+    await invalidateUserSession(userId);
 
     this.logger.info(`Utilisateur réactivé: ${userId} par: ${adminId}`);
 

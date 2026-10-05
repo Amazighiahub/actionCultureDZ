@@ -2,6 +2,7 @@
 // Compatible avec: createAuthMiddleware(models) OU createAuthMiddleware(User)
 const logger = require('../utils/logger');
 const { getClient: getRedisClient } = require('../utils/redisClient');
+const { USER_SESSION_PREFIX, invalidateUserSession } = require('../utils/sessionCache');
 const { TYPE_USER_IDS } = require('../constants/typeUserIds');
 const {
   verifyAccessToken,
@@ -115,7 +116,7 @@ module.exports = (modelsOrUser) => {
 
   // TTL du cache session utilisateur (15 minutes)
   const USER_SESSION_TTL = 900;
-  const USER_CACHE_PREFIX = 'user:session:';
+  const USER_CACHE_PREFIX = USER_SESSION_PREFIX;
 
   // Types professionnels: tout sauf visiteur (1) et admin (29)
   const PROFESSIONAL_TYPE_IDS = new Set(
@@ -244,16 +245,7 @@ module.exports = (modelsOrUser) => {
 
   // Invalider le cache session d'un utilisateur
   // À appeler après : login, logout, changement de rôle, changement de mot de passe, changement de statut
-  const invalidateUserCache = async (userId) => {
-    const redis = getRedisClient();
-    if (redis) {
-      try {
-        await redis.del(`${USER_CACHE_PREFIX}${userId}`);
-      } catch (e) {
-        logger.debug('Auth cache invalidate skip:', e.message);
-      }
-    }
-  };
+  const invalidateUserCache = (userId) => invalidateUserSession(userId);
 
   // ====================
   // MIDDLEWARES PRINCIPAUX
