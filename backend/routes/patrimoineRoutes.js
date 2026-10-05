@@ -14,6 +14,8 @@ const logger = require('../utils/logger');
 const initPatrimoineRoutes = (models, authMiddleware) => {
   const router = express.Router();
   const { authenticate, requireRole, requireValidatedProfessional } = authMiddleware;
+  // Actions destructives sur un site (partagé) : réservées à la modération
+  const requireModeration = requireRole('Administrateur', 'Moderateur');
 
   // ============================================================================
   // ROUTES PUBLIQUES
@@ -67,10 +69,10 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
     patrimoineController.wrap('noter'));
   router.post('/:id/favoris', authenticate, validateId(), patrimoineController.wrap('ajouterFavoris'));
   router.delete('/:id/favoris', authenticate, validateId(), patrimoineController.wrap('retirerFavoris'));
-  router.post('/:id/medias', authenticate, validateId(),
+  router.post('/:id/medias', authenticate, requireValidatedProfessional, validateId(),
     uploadService.uploadMedia().array('medias', 10),
     patrimoineController.wrap('uploadMedias'));
-  router.delete('/:id/medias/:mediaId', authenticate, validateId(), validateId('mediaId'), patrimoineController.wrap('deleteMedia'));
+  router.delete('/:id/medias/:mediaId', authenticate, requireModeration, validateId(), validateId('mediaId'), patrimoineController.wrap('deleteMedia'));
   router.put('/:id/horaires', authenticate, validateId(), patrimoineController.wrap('updateHoraires'));
 
   // Enrichir les détails culturels d'un site (contribution collaborative)
@@ -193,7 +195,7 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
     }
   );
 
-  router.delete('/:id/monuments/:monumentId', authenticate, validateId(), async (req, res) => {
+  router.delete('/:id/monuments/:monumentId', authenticate, requireModeration, validateId(), async (req, res) => {
     try {
       const lieuId = parseInt(req.params.id);
       const monumentId = parseInt(req.params.monumentId);
@@ -290,7 +292,7 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
     }
   );
 
-  router.delete('/:id/vestiges/:vestigeId', authenticate, validateId(), async (req, res) => {
+  router.delete('/:id/vestiges/:vestigeId', authenticate, requireModeration, validateId(), async (req, res) => {
     try {
       const lieuId = parseInt(req.params.id);
       const vestigeId = parseInt(req.params.vestigeId);
@@ -418,7 +420,7 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
     }
   );
 
-  router.delete('/:id/articles/:blockId', authenticate, validateId(),
+  router.delete('/:id/articles/:blockId', authenticate, requireModeration, validateId(),
     async (req, res) => {
       try {
         // models déjà disponible via initPatrimoineRoutes(models, ...)
@@ -449,7 +451,7 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
 
   router.get('/admin/stats', authenticate, requireRole(['Admin']), patrimoineController.wrap('getStats'));
   // Création de site (admin, modérateur ET professionnels validés)
-  router.post('/', authenticate,
+  router.post('/', authenticate, requireValidatedProfessional,
     createContentLimiter,
     validateStringLengths,
     validateGPS,
@@ -462,7 +464,7 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
     ],
     handleValidationErrors,
     patrimoineController.wrap('create'));
-  router.put('/:id', authenticate, validateId(),
+  router.put('/:id', authenticate, requireModeration, validateId(),
     validateStringLengths,
     validateGPS,
     patrimoineController.wrap('update'));

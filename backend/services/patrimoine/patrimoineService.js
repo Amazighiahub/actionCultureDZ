@@ -7,6 +7,17 @@ const { Op } = require('sequelize');
 const BaseService = require('../core/baseService');
 const PatrimoineDTO = require('../../dto/patrimoine/patrimoineDTO');
 
+/**
+ * Vrai si la valeur ne contient aucun texte (null, '', {} ou objet dont toutes
+ * les valeurs, même imbriquées, sont vides). Sert à ne compléter que les champs vides.
+ */
+function isEmptyMultilang(value) {
+  if (value === null || value === undefined) return true;
+  if (typeof value === 'string') return value.trim() === '';
+  if (typeof value === 'object') return Object.values(value).every(isEmptyMultilang);
+  return false;
+}
+
 class PatrimoineService extends BaseService {
   constructor(patrimoineRepository, options = {}) {
     super(patrimoineRepository, options);
@@ -94,9 +105,17 @@ class PatrimoineService extends BaseService {
 
   /**
    * Créer un site patrimonial (Lieu + DetailLieu + monuments, vestiges, services, medias)
-   * Si lieuId fourni : met à jour le lieu existant et synchronise les entités liées
+   * Si lieuId fourni (modération uniquement) : met à jour le lieu existant et synchronise les entités liées.
+   * Si un lieu existe déjà aux mêmes coordonnées, il est réutilisé sans rien écraser :
+   * seuls les champs de détail encore vides sont complétés.
+   * @param {Object} data
+   * @param {Object} [options]
+   * @param {boolean} [options.isModerator] - admin ou modérateur (calculé par authMiddleware)
    */
-  async create(data) {
+  async create(data, { isModerator = false } = {}) {
+    if (data.lieuId && !isModerator) {
+      throw this._forbiddenError('Seule la modération peut rattacher un site à un lieu existant');
+    }
     if (!data.nom) {
       throw this._validationError('Le nom du site est requis');
     }
@@ -121,6 +140,9 @@ class PatrimoineService extends BaseService {
 
     return this.repository.withTransaction(async (transaction) => {
       let lieuId;
+      // true quand on a retrouvé un lieu existant par ses coordonnées :
+      // ce lieu appartient à quelqu'un d'autre, on ne doit rien y détruire.
+      let reusedByCoords = false;
 
       if (data.lieuId) {
         // Réutiliser un lieu existant
@@ -181,9 +203,10 @@ class PatrimoineService extends BaseService {
 
         if (existingByCoords) {
           lieuId = existingByCoords.id_lieu;
-          await existingByCoords.update({
-            typePatrimoine: data.typePatrimoine || existingByCoords.typePatrimoine || 'monument'
-          }, { transaction });
+          reusedByCoords = true;
+          if (!existingByCoords.typePatrimoine && data.typePatrimoine) {
+            await existingByCoords.update({ typePatrimoine: data.typePatrimoine }, { transaction });
+          }
         } else {
           const entityData = {
             nom: data.nom,
@@ -195,7 +218,7 @@ class PatrimoineService extends BaseService {
             communeId: data.communeId,
             localiteId: data.localiteId || null,
             id_createur: data.id_createur || null,
-            statut: data.statut || 'publie'
+            statut: (isModerator && data.statut) || 'publie'
           };
           const site = await Lieu.create(entityData, { transaction });
           lieuId = site.id_lieu;
@@ -210,13 +233,26 @@ class PatrimoineService extends BaseService {
         histoire: data.histoire || {},
         referencesHistoriques: data.referencesHistoriques || {}
       };
-      if (detail) {
+      if (detail && reusedByCoords) {
+        // Ne compléter que les champs vides : ne jamais écraser la fiche d'un site existant
+        const fill = {};
+        for (const [key, value] of Object.entries(detailData)) {
+          if (isEmptyMultilang(detail[key]) && !isEmptyMultilang(value)) fill[key] = value;
+        }
+        if (Object.keys(fill).length > 0) await detail.update(fill, { transaction });
+      } else if (detail) {
         await detail.update(detailData, { transaction });
       } else if (DetailLieu) {
         detail = await DetailLieu.create({ id_lieu: lieuId, ...detailData }, { transaction });
       }
 
       const detailId = detail?.id_detailLieu;
+
+      // Site existant retrouvé par coordonnées : aucune synchronisation destructive
+      if (reusedByCoords) {
+        this.logger.info(`Site patrimonial existant réutilisé (coordonnées): ${lieuId}`);
+        return { id_lieu: lieuId, id: lieuId, toDetailJSON: () => ({ id_lieu: lieuId, id: lieuId }) };
+      }
 
       // Synchroniser les monuments (dédupliqués par nom+type)
       if (detailId && Monument && Array.isArray(data.monuments)) {
@@ -266,7 +302,8 @@ class PatrimoineService extends BaseService {
 
       // Synchroniser les services (bulkCreate)
       if (Service && Array.isArray(data.services)) {
-        await Service.destroy({ where: { id_lieu: lieuId }, transaction });
+        // Ne supprimer que les équipements du site, jamais les services appartenant à un pro
+        await Service.destroy({ where: { id_lieu: lieuId, id_user: null }, transaction });
         const serviceRows = data.services
           .filter(s => s?.nom?.fr || s?.nom)
           .map(s => ({
@@ -382,7 +419,8 @@ class PatrimoineService extends BaseService {
       }
 
       if (Array.isArray(data.services) && Service) {
-        await Service.destroy({ where: { id_lieu: lieuId }, transaction });
+        // Ne supprimer que les équipements du site, jamais les services appartenant à un pro
+        await Service.destroy({ where: { id_lieu: lieuId, id_user: null }, transaction });
         const serviceRows = data.services
           .filter(s => s?.nom?.fr || s?.nom)
           .map(s => ({
@@ -543,11 +581,13 @@ class PatrimoineService extends BaseService {
   /**
    * Supprimer un média
    */
-  async deleteMedia(mediaId) {
+  async deleteMedia(siteId, mediaId) {
     const { LieuMedia } = this.models || {};
     if (!LieuMedia) throw this._validationError('Modèle LieuMedia non disponible');
 
-    const media = await LieuMedia.findByPk(parseInt(mediaId));
+    const media = await LieuMedia.findOne({
+      where: { id: parseInt(mediaId, 10), id_lieu: parseInt(siteId, 10) }
+    });
     if (!media) {
       throw this._notFoundError(mediaId);
     }

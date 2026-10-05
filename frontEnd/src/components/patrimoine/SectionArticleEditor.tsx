@@ -52,6 +52,7 @@ import {
   Minus,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 import {
   patrimoineArticlesService,
   type PatrimoineSection,
@@ -125,6 +126,8 @@ const SectionArticleEditor: React.FC<SectionArticleEditorProps> = ({
   onSaved,
 }) => {
   const { t } = useTranslation();
+  // Suppression réservée à la modération (contrôlée aussi côté API)
+  const { isAdmin } = useAuth();
   const { toast } = useToast();
 
   const [blocks, setBlocks] = useState<PatrimoineBlock[]>([]);
@@ -327,7 +330,7 @@ const SectionArticleEditor: React.FC<SectionArticleEditorProps> = ({
                       {blockPreview(block, t('patrimoine.editor.empty', '(vide)') as string)}
                     </p>
                   </div>
-                  <Button
+                  {isAdmin && <Button
                     type="button"
                     variant="ghost"
                     size="sm"
@@ -340,7 +343,7 @@ const SectionArticleEditor: React.FC<SectionArticleEditorProps> = ({
                     ) : (
                       <Trash2 className="h-4 w-4 text-destructive" />
                     )}
-                  </Button>
+                  </Button>}
                 </li>
               ))}
             </ul>

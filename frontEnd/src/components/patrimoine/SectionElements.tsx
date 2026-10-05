@@ -180,7 +180,8 @@ export default function SectionElements({
   onItemDeleted,
   className,
 }: SectionElementsProps) {
-  const { isAuthenticated } = useAuth();
+  // La suppression est réservée à la modération (contrôlée aussi côté API)
+  const { isAuthenticated, isAdmin } = useAuth();
   const { toast } = useToast();
   const cfg = CONFIG[kind];
   const Icon = cfg.icon;
@@ -293,19 +294,21 @@ export default function SectionElements({
                       >
                         <Pencil className="h-3.5 w-3.5" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                        disabled={deletingId === item.id}
-                        onClick={() => handleDelete(item.id)}
-                        title="Supprimer"
-                        aria-label={`Supprimer ${translate(item.nom, lang)}`}
-                      >
-                        {deletingId === item.id
-                          ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                          : <Trash2 className="h-3.5 w-3.5" />}
-                      </Button>
+                      {isAdmin && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                          disabled={deletingId === item.id}
+                          onClick={() => handleDelete(item.id)}
+                          title="Supprimer"
+                          aria-label={`Supprimer ${translate(item.nom, lang)}`}
+                        >
+                          {deletingId === item.id
+                            ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            : <Trash2 className="h-3.5 w-3.5" />}
+                        </Button>
+                      )}
                     </div>
                   )}
                 </div>
