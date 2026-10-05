@@ -125,7 +125,7 @@ const initSignalementRoutes = (models, authMiddleware) => {
       const signalement = await models.Signalement.findByPk(req.params.id, {
         include: [
           { model: models.User, as: 'Signalant', attributes: ['id_user', 'nom', 'prenom', 'email'] },
-          { model: models.User, as: 'Moderateur', attributes: ['id_user', 'nom', 'prenom', 'email'] }
+          { model: models.User, as: 'Moderateur', attributes: ['id_user', 'nom', 'prenom'] }
         ]
       });
 

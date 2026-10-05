@@ -13,9 +13,13 @@ const initMultilingualRoutes = (models) => {
   // GET /multilingual/supported - Langues supportées (public)
   router.get('/supported', controller.getSupportedLanguages.bind(controller));
 
-  // GET /multilingual/translations/:model/:id/:field - Obtenir une traduction
+  // GET /multilingual/translations/:model/:id/:field - Obtenir une traduction (admin)
+  // Lit n'importe quel enregistrement, brouillons et champs internes compris :
+  // réservé à l'outil d'administration des traductions, comme l'écriture.
   router.get(
     '/translations/:model/:id/:field',
+    authMiddleware.authenticate,
+    authMiddleware.requireAdmin,
     controller.getTranslations.bind(controller)
   );
 

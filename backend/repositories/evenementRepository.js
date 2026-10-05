@@ -4,6 +4,10 @@
  */
 
 const BaseRepository = require('./baseRepository');
+const { PUBLIC_USER_ATTRIBUTES } = require('../constants/publicAttributes');
+
+// Programme vu publiquement : tout sauf les notes internes de l'organisateur
+const PUBLIC_PROGRAMME_EXCLUDE = ['notes_organisateur'];
 const { Op } = require('sequelize');
 
 class EvenementRepository extends BaseRepository {
@@ -42,7 +46,8 @@ class EvenementRepository extends BaseRepository {
       includes.push({
         model: this.models.User,
         as: 'Organisateur',
-        attributes: ['id_user', 'nom', 'prenom', 'email', 'photo_url']
+        // Pas d'email : le contact public de l'événement est contact_email
+        attributes: PUBLIC_USER_ATTRIBUTES
       });
     }
 
@@ -161,6 +166,7 @@ class EvenementRepository extends BaseRepository {
         model: this.models.Programme,
         as: 'Programmes',
         required: false,
+        attributes: { exclude: PUBLIC_PROGRAMME_EXCLUDE },
         include: this.models.Lieu ? [{
           model: this.models.Lieu,
           as: 'Lieu',

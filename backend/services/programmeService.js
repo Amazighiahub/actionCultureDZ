@@ -5,6 +5,7 @@
  * Architecture: Controller → Service → Repository → Database
  */
 const BaseService = require('./core/baseService');
+const { PUBLIC_USER_ATTRIBUTES } = require('../constants/publicAttributes');
 const { Op } = require('sequelize');
 const { createMultiLang, mergeTranslations } = require('../helpers/i18n');
 
@@ -374,19 +375,20 @@ class ProgrammeService extends BaseService {
 
   async _getProgrammeComplet(id) {
     return this.repository.model.findByPk(id, {
+      attributes: { exclude: ['notes_organisateur'] },
       include: [
-        { model: this.models.Lieu, as: 'Lieu' },
+        { model: this.models.Lieu, as: 'Lieu', attributes: ['id_lieu', 'nom', 'adresse', 'latitude', 'longitude'] },
         {
           model: this.models.Intervenant,
           as: 'Intervenants',
-          attributes: ['id_intervenant', 'nom', 'prenom', 'email', 'photo_url', 'biographie', 'id_user'],
+          attributes: ['id_intervenant', 'nom', 'prenom', 'photo_url', 'biographie', 'id_user'],
           through: {
             attributes: ['role_intervenant', 'statut_confirmation', 'sujet_intervention', 'ordre_intervention', 'duree_intervention', 'biographie_courte']
           },
           include: [{
             model: this.models.User,
             as: 'UserAccount',
-            attributes: ['id_user', 'nom', 'prenom', 'photo_url', 'email'],
+            attributes: PUBLIC_USER_ATTRIBUTES,
             required: false
           }]
         }

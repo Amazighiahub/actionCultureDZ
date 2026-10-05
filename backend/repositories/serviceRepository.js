@@ -4,6 +4,7 @@
  */
 
 const BaseRepository = require('./baseRepository');
+const { PUBLIC_USER_ATTRIBUTES } = require('../constants/publicAttributes');
 const { Op } = require('sequelize');
 
 class ServiceRepository extends BaseRepository {
@@ -30,7 +31,7 @@ class ServiceRepository extends BaseRepository {
       includes.push({
         model: this.models.User,
         as: 'Professionnel',
-        attributes: ['id_user', 'nom', 'prenom', 'email', 'photo_url'],
+        attributes: PUBLIC_USER_ATTRIBUTES,
         required: false
       });
     }
