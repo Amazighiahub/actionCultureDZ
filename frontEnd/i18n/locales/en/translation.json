@@ -457,6 +457,11 @@
     "location": "Algeria",
     "navigation": "Navigation",
     "platform": "Platform dedicated to promoting and preserving Algeria's rich cultural heritage.",
+    "qrCode": {
+      "alt": "QR code linking to taladz.com",
+      "download": "Download the QR code",
+      "title": "Scan to visit the platform"
+    },
     "resources": "Resources"
   },
   "header": {
