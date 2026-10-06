@@ -32,6 +32,7 @@ const express = require('express');
 const { resolveTrustProxy } = require('./utils/trustProxy');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const { redactUrl } = require('./utils/maskPII');
 const compression = require('compression');
 const path = require('path');
 const { csrfTokenProvider, csrfVerifier } = require('./middlewares/csrfMiddleware');
@@ -160,7 +161,9 @@ class App {
     if (this.config.server.environment === 'development') {
       this.app.use(morgan('dev'));
     } else {
-      this.app.use(morgan(':remote-addr - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent" - :response-time ms'));
+      // :safe-url : URL sans les jetons (vérification email, désinscription...) pour ne pas les conserver dans les logs
+      morgan.token('safe-url', (req) => redactUrl(req.originalUrl || req.url));
+      this.app.use(morgan(':remote-addr - :remote-user [:date[clf]] ":method :safe-url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent" - :response-time ms'));
     }
 
     // Cookie Parser (nécessaire pour langue)

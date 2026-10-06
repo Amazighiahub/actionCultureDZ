@@ -1,5 +1,6 @@
 // services/cronService.js - Service de tâches planifiées
 const logger = require('../utils/logger');
+const { maskEmail } = require('../utils/maskPII');
 const cron = require('node-cron');
 const { Op } = require('sequelize');
 const CronLock = require('../utils/cronLock');
@@ -220,12 +221,12 @@ class CronService {
     const dateLimit = new Date();
     dateLimit.setDate(dateLimit.getDate() - (process.env.NOTIFICATION_RETENTION_DAYS || 90));
 
+    // Lues ou non : la politique de confidentialité annonce 90 jours de conservation
     const result = await this.models.Notification.destroy({
       where: {
         date_creation: {
           [Op.lt]: dateLimit
-        },
-        lu: true // Ne supprimer que les notifications lues
+        }
       }
     });
 
@@ -528,7 +529,7 @@ class CronService {
         );
         await user.update({ rappel_verification_envoye: true });
       } catch (error) {
-        logger.error(`Erreur rappel vérification pour ${user.email}:`, error);
+        logger.error(`Erreur rappel vérification pour ${maskEmail(user.email)}:`, error);
       }
     }));
 

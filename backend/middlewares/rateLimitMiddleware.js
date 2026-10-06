@@ -4,6 +4,7 @@ const rateLimitRedis = require('rate-limit-redis');
 const RedisStore = rateLimitRedis?.RedisStore || rateLimitRedis?.default || rateLimitRedis;
 const { getClient: getRedisClient } = require('../utils/redisClient');
 const logger = require('../utils/logger');
+const { maskEmail } = require('../utils/maskPII');
 
 // ✅ SÉCURITÉ: Configuration Redis pour rate limiting distribué
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
@@ -400,7 +401,7 @@ return cjson.encode(d)
         });
         const attempts = JSON.parse(result);
         if (attempts.count >= this.maxAttempts && attempts.lockoutUntil > 0) {
-          logger.warn(`Compte bloqué: ${email} après ${attempts.count} tentatives échouées`);
+          logger.warn(`Compte bloqué: ${maskEmail(email)} après ${attempts.count} tentatives échouées`);
         }
         return attempts;
       } catch { /* fallback local */ }
@@ -412,7 +413,7 @@ return cjson.encode(d)
     attempts.lastAttempt = now;
     if (attempts.count >= this.maxAttempts) {
       attempts.lockoutUntil = now + this.lockoutDuration;
-      logger.warn(`Compte bloqué: ${email} après ${attempts.count} tentatives échouées`);
+      logger.warn(`Compte bloqué: ${maskEmail(email)} après ${attempts.count} tentatives échouées`);
     }
     this.localStore.set(email, attempts);
     return attempts;

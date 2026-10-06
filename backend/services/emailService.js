@@ -1,5 +1,6 @@
 // services/EmailService.js - Service email refactorisé avec templates externes
 const logger = require('../utils/logger');
+const { maskEmail } = require('../utils/maskPII');
 const nodemailer = require('nodemailer');
 const fs = require('fs').promises;
 const path = require('path');
@@ -125,12 +126,12 @@ class EmailService {
     // Protection contre l'injection CRLF dans les en-têtes email
     if (/[\r\n]/.test(to) || /[\r\n]/.test(subject)
         || (headers && Object.values(headers).some(v => /[\r\n]/.test(String(v))))) {
-      logger.error(`Tentative d'injection email détectée — to: ${to?.substring(0, 50)}`);
+      logger.error(`Tentative d'injection email détectée — to: ${maskEmail(to)}`);
       return { success: false, error: 'Invalid email headers' };
     }
 
     if (this.isPaused) {
-      logger.info(`\n📧 [SIMULATION] Envoi à: ${to} | Sujet: ${subject}`);
+      logger.info(`\n📧 [SIMULATION] Envoi à: ${maskEmail(to)} | Sujet: ${subject}`);
       return { success: true, messageId: 'simulated-' + Date.now() };
     }
 
@@ -146,8 +147,7 @@ class EmailService {
       };
 
       const result = await this.transporter.sendMail(mailOptions);
-      const maskedTo = to.replace(/(.{2}).+(@.+)/, '$1***$2');
-      logger.info(`Email envoyé. ID: ${result.messageId} → ${maskedTo}`);
+      logger.info(`Email envoyé. ID: ${result.messageId} → ${maskEmail(to)}`);
       return { success: true, messageId: result.messageId };
     } catch (error) {
       logger.error('Erreur envoi email:', error.message);
@@ -581,7 +581,7 @@ class EmailService {
         const result = await this.sendEmail(user.email, `Événement annulé : ${this._sanitizeSubject(nomEvenementStr)}`, html);
         return { email: user.email, result };
       } catch (error) {
-        logger.error(`Erreur envoi annulation à ${participant.User?.email}:`, error);
+        logger.error(`Erreur envoi annulation à ${maskEmail(participant.User?.email)}:`, error);
         return { email: participant.User?.email, result: { success: false, error: error.message } };
       }
     }));
@@ -633,7 +633,7 @@ class EmailService {
         const result = await this.sendEmail(user.email, `${this._sanitizeSubject(sujet)} : ${this._sanitizeSubject(nomEvenementStr)}`, html);
         return { email: user.email, result };
       } catch (error) {
-        logger.error(`Erreur envoi modification programme à ${participant.User?.email}:`, error);
+        logger.error(`Erreur envoi modification programme à ${maskEmail(participant.User?.email)}:`, error);
         return { email: participant.User?.email, result: { success: false, error: error.message } };
       }
     }));
@@ -677,7 +677,7 @@ class EmailService {
         const result = await this.sendEmail(user.email, `Nouvel événement : ${this._sanitizeSubject(nomEvenementStr)}`, html);
         return { email: user.email, result };
       } catch (error) {
-        logger.error(`Erreur envoi nouvel événement à ${user.email}:`, error);
+        logger.error(`Erreur envoi nouvel événement à ${maskEmail(user.email)}:`, error);
         return { email: user.email, result: { success: false, error: error.message } };
       }
     }));

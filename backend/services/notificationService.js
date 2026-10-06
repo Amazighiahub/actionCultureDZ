@@ -1,5 +1,6 @@
 // services/NotificationService.js - Orchestrateur des notifications
 const logger = require('../utils/logger');
+const { maskEmail } = require('../utils/maskPII');
 const { buildUnsubscribeUrl, unsubscribeHeaders, withUnsubscribeFooter } = require('../utils/newsletterUnsubscribe');
 const emailService = require('./emailService');
 const smsService = require('./smsService');
@@ -1023,7 +1024,7 @@ async envoyerNewsletter(contenu, filtres = {}) {
         for (const user of usersToNotify) {
           if (user.email) {
             this.emailService.sendEmail(user.email, title, htmlBody, null, textBody)
-              ?.catch(err => logger.warn(`Broadcast email failed for ${user.email}:`, err.message));
+              ?.catch(err => logger.warn(`Broadcast email failed for ${maskEmail(user.email)}:`, err.message));
           }
         }
       }

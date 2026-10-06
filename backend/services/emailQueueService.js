@@ -1,5 +1,6 @@
 // services/emailQueueService.js - Service de queue pour emails avec retry
 const logger = require('../utils/logger');
+const { maskEmail } = require('../utils/maskPII');
 const Bull = require('bull');
 const emailService = require('./emailService');
 
@@ -82,7 +83,7 @@ class EmailQueueService {
     this.queues.email.process('send-email', async (job) => {
       const { to, subject, text, html, attachments } = job.data;
 
-      logger.info(`📧 Traitement email: ${subject} → ${to}`);
+      logger.info(`📧 Traitement email: ${subject} → ${maskEmail(to)}`);
 
       const body = html || (text ? `<pre style="font-family:inherit">${text}</pre>` : '');
       const result = await emailService.sendEmail(to, subject, body, attachments);

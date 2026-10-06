@@ -1,4 +1,5 @@
 const logger = require('../utils/logger');
+const { maskPhone } = require('../utils/maskPII');
 /**
  * SMS Service - Service d'envoi de SMS
  * Supporte plusieurs providers : Twilio, Nexmo/Vonage, MessageBird, ou simulation
@@ -175,7 +176,7 @@ class SMSService {
 
     // Validation du numéro
     if (!this.isValidPhoneNumber(normalizedTo)) {
-      logger.error(`❌ Numéro de téléphone invalide: ${to}`);
+      logger.error(`❌ Numéro de téléphone invalide: ${maskPhone(to)}`);
       return { success: false, error: 'Numéro de téléphone invalide' };
     }
 
