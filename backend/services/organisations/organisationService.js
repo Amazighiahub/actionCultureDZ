@@ -34,8 +34,11 @@ class OrganisationService extends BaseService {
     if (searchStr) {
       const existing = await this.repository.findByName(searchStr);
       if (existing) {
-        await this.repository.linkUser(userId, existing.id_organisation, 'membre');
-        return { organisation: existing, created: false };
+        // Ne pas rattacher automatiquement : sinon il suffirait de connaître le nom
+        // d'une organisation pour publier des événements en son nom.
+        throw this._conflictError(
+          'Cette organisation existe déjà. Demandez à son responsable de vous ajouter comme membre.'
+        );
       }
     }
 

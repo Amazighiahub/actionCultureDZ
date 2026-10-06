@@ -123,7 +123,7 @@ class IntervenantService extends BaseService {
   // CRÉATION / MODIFICATION / SUPPRESSION
   // ========================================================================
 
-  async createIntervenant(lang, data) {
+  async createIntervenant(lang, data, { isAdmin = false } = {}) {
     const { nom, prenom, biographie, email, ...rest } = data;
     const normalizedEmail = this._normalizeEmail(email);
 
@@ -142,7 +142,9 @@ class IntervenantService extends BaseService {
     const existingByName = await this._findByNameMatch(nom, prenom, lang);
     if (existingByName) return existingByName;
 
-    let idUserToSet = rest.id_user !== undefined && rest.id_user !== null ? rest.id_user : null;
+    // Lier une fiche à un compte choisi librement est réservé à l'admin (sinon usurpation
+    // ou blocage du rattachement d'un tiers) ; sinon seul le rattachement par email est utilisé.
+    let idUserToSet = isAdmin && rest.id_user !== undefined && rest.id_user !== null ? rest.id_user : null;
     if (idUserToSet !== null) {
       const conflict = await this._intervenantAlreadyLinkedToUser(idUserToSet, null);
       if (conflict) {

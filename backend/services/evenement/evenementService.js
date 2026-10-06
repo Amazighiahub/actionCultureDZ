@@ -129,7 +129,7 @@ class EvenementService extends BaseService {
   /**
    * Créer un événement
    */
-  async create(data, userId) {
+  async create(data, userId, options = {}) {
     if (!data.nom_evenement && !data.nom) {
       throw this._validationError('Le nom de l\'événement est requis');
     }
@@ -199,6 +199,7 @@ class EvenementService extends BaseService {
     };
 
     const evenement = await this.withTransaction(async (transaction) => {
+      await this._assertOrganisationMember(orgId, userId, options.isAdmin, transaction);
       const created = await this.repository.create(entityData, { transaction });
       if (orgId && this.models?.EvenementOrganisation) {
         await this.models.EvenementOrganisation.create({
@@ -221,6 +222,21 @@ class EvenementService extends BaseService {
   /**
    * Modifier un événement
    */
+  /**
+   * L'utilisateur doit être membre actif de l'organisation qu'il associe à un événement
+   * (sinon il pourrait publier au nom de n'importe quelle organisation).
+   */
+  async _assertOrganisationMember(orgId, userId, isAdmin, transaction) {
+    if (!orgId || isAdmin || !this.models?.UserOrganisation) return;
+    const membership = await this.models.UserOrganisation.findOne({
+      where: { id_user: userId, id_organisation: parseInt(orgId, 10) },
+      transaction
+    });
+    if (!membership || membership.actif === false) {
+      throw this._forbiddenError('Vous n\'êtes pas membre de cette organisation');
+    }
+  }
+
   async update(id, data, userId, options = {}) {
     await this.withTransaction(async (transaction) => {
       const existing = await this.repository.findById(id, { transaction, lock: transaction.LOCK.UPDATE });
@@ -268,6 +284,7 @@ class EvenementService extends BaseService {
       await this.repository.update(id, updateData, { transaction });
 
       if (newOrgId && this.models?.EvenementOrganisation) {
+        await this._assertOrganisationMember(newOrgId, userId, options.isAdmin, transaction);
         const existingOrg = await this.models.EvenementOrganisation.findOne({
           where: { id_evenement: id, role: 'organisateur_principal' },
           transaction
@@ -497,8 +514,26 @@ class EvenementService extends BaseService {
   /**
    * Ajoute une oeuvre à un événement
    */
-  async addOeuvreToEvent(evenementId, oeuvreId, userId, data = {}) {
-    // Vérifier ownership
+  async addOeuvreToEvent(evenementId, oeuvreId, userId, data = {}, options = {}) {
+    // L'événement doit exister et être encore ouvert
+    const evenement = await this.repository.findById(evenementId);
+    if (!evenement) throw this._notFoundError(evenementId);
+    if (['annule', 'termine'].includes(evenement.statut)) {
+      throw this._validationError('Cet événement n\'accepte plus de nouvelles œuvres');
+    }
+
+    // Seuls l'organisateur, un participant confirmé ou un admin peuvent y présenter une œuvre
+    const isOrganizer = Number(evenement.id_user) === Number(userId);
+    if (!isOrganizer && !options.isAdmin) {
+      const participation = this.models?.EvenementUser && await this.models.EvenementUser.findOne({
+        where: { id_evenement: evenementId, id_user: userId, statut_participation: ['confirme', 'present'] }
+      });
+      if (!participation) {
+        throw this._forbiddenError('Seuls l\'organisateur et les participants confirmés peuvent ajouter une œuvre');
+      }
+    }
+
+    // Vérifier ownership de l'œuvre
     const oeuvre = await this.repository.findOeuvreByOwner(oeuvreId, userId);
     if (!oeuvre) {
       throw this._notFoundError(oeuvreId);

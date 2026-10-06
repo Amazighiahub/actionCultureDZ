@@ -329,7 +329,11 @@ class ProgrammeService extends BaseService {
   // INTERVENANTS
   // ========================================================================
 
-  async updateIntervenantStatus(programmeId, targetUserId, requestUserId, statut) {
+  /**
+   * @param {number} intervenantId - id_intervenant (et non id_user) de l'intervenant visé
+   */
+  async updateIntervenantStatus(programmeId, intervenantId, requestUserId, statut, isAdmin = false) {
+    const targetUserId = intervenantId;
     const validStatuts = ['en_attente', 'confirme', 'decline', 'annule'];
     if (!validStatuts.includes(statut)) {
       return { error: 'invalidStatus' };
@@ -341,8 +345,13 @@ class ProgrammeService extends BaseService {
 
     if (!programme) return { error: 'notFound' };
 
-    const isEventOwner = programme.Evenement.id_user === requestUserId;
-    const isIntervenant = targetUserId === requestUserId;
+    const isEventOwner = programme.Evenement.id_user === requestUserId || isAdmin === true;
+    // L'intervenant est la personne dont le compte est lié à la fiche intervenant
+    // (comparer id_intervenant à id_user donnait les droits à un autre utilisateur)
+    const intervenant = this.models.Intervenant
+      ? await this.models.Intervenant.findByPk(intervenantId, { attributes: ['id_intervenant', 'id_user'] })
+      : null;
+    const isIntervenant = intervenant?.id_user != null && Number(intervenant.id_user) === Number(requestUserId);
 
     if (!isEventOwner && !isIntervenant) {
       return { error: 'forbidden' };

@@ -101,7 +101,7 @@ class ParcoursController extends BaseController {
 
   async create(req, res) {
     try {
-      const parcours = await this.parcoursService.create(req.body, req.user.id_user);
+      const parcours = await this.parcoursService.create(req.body, req.user.id_user, req.user.isAdmin === true);
       res.status(201).json({
         success: true,
         message: req.t('parcours.created'),
@@ -117,7 +117,8 @@ class ParcoursController extends BaseController {
       const parcours = await this.parcoursService.update(
         parseInt(req.params.id),
         req.body,
-        req.user.id_user
+        req.user.id_user,
+        req.user.isAdmin === true
       );
       res.json({
         success: true,

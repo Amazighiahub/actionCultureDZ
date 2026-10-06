@@ -107,7 +107,7 @@ class ParcoursService extends BaseService {
   /**
    * Créer un parcours
    */
-  async create(data, userId) {
+  async create(data, userId, isAdmin = false) {
     if (!data.nom_parcours && !data.nom) {
       throw this._validationError('Le nom du parcours est requis');
     }
@@ -121,7 +121,8 @@ class ParcoursService extends BaseService {
       distance_km: data.distance_km || data.distanceKm || null,
       point_depart: data.point_depart || data.pointDepart || null,
       point_arrivee: data.point_arrivee || data.pointArrivee || null,
-      statut: data.statut || 'actif',
+      // Le statut (actif / inactif / maintenance) relève de la modération
+      statut: (isAdmin && data.statut) || 'actif',
       id_createur: userId
     };
 
@@ -145,13 +146,13 @@ class ParcoursService extends BaseService {
   /**
    * Modifier un parcours
    */
-  async update(id, data, userId) {
+  async update(id, data, userId, isAdmin = false) {
     const existing = await this.repository.findById(id);
     if (!existing) {
       throw this._notFoundError(id);
     }
 
-    if (existing.id_createur !== userId) {
+    if (existing.id_createur !== userId && !isAdmin) {
       throw this._forbiddenError('Vous ne pouvez modifier que vos propres parcours');
     }
 
@@ -164,7 +165,8 @@ class ParcoursService extends BaseService {
     if (data.distance_km !== undefined || data.distanceKm !== undefined) updateData.distance_km = data.distance_km || data.distanceKm;
     if (data.point_depart !== undefined || data.pointDepart !== undefined) updateData.point_depart = data.point_depart || data.pointDepart;
     if (data.point_arrivee !== undefined || data.pointArrivee !== undefined) updateData.point_arrivee = data.point_arrivee || data.pointArrivee;
-    if (data.statut) updateData.statut = data.statut;
+    // Un créateur ne peut pas réactiver un parcours désactivé par la modération
+    if (data.statut && isAdmin) updateData.statut = data.statut;
 
     await this.repository.update(id, updateData);
     const updated = await this.repository.findWithFullDetails(id);

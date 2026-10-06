@@ -295,7 +295,8 @@ class ProgrammeController extends BaseController {
         parseInt(req.params.id, 10),
         parseInt(req.params.intervenantId, 10),
         req.user.id_user,
-        statut
+        statut,
+        req.user.isAdmin === true
       );
 
       if (result.error === 'notFound') {

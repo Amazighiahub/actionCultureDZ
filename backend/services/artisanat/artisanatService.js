@@ -70,9 +70,24 @@ class ArtisanatService extends BaseService {
   /**
    * Créer un artisanat (nécessite une Oeuvre parente)
    */
-  async create(data, userId) {
+  async create(data, userId, isAdmin = false) {
     if (!data.id_oeuvre && !data.oeuvreId) {
       throw this._validationError('L\'ID de l\'oeuvre parente est requis');
+    }
+
+    // L'œuvre parente doit appartenir à l'utilisateur (sinon il se rattacherait à
+    // l'œuvre d'un autre, qui en deviendrait responsable) et n'avoir qu'un artisanat
+    const oeuvreId = parseInt(data.id_oeuvre || data.oeuvreId, 10);
+    if (this.models?.Oeuvre) {
+      const oeuvre = await this.models.Oeuvre.findByPk(oeuvreId, { attributes: ['id_oeuvre', 'saisi_par'] });
+      if (!oeuvre) throw this._notFoundError(oeuvreId);
+      if (!isAdmin && Number(oeuvre.saisi_par) !== Number(userId)) {
+        throw this._forbiddenError('Vous ne pouvez rattacher un artisanat qu\'à vos propres œuvres');
+      }
+    }
+    if (this.models?.Artisanat) {
+      const already = await this.models.Artisanat.count({ where: { id_oeuvre: oeuvreId } });
+      if (already > 0) throw this._conflictError('Cette œuvre a déjà une fiche artisanat');
     }
 
     const entityData = {

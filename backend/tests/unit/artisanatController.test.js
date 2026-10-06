@@ -130,7 +130,7 @@ describe('ArtisanatController', () => {
 
       await controller.create(req, res);
 
-      expect(mockArtisanatService.create).toHaveBeenCalledWith(req.body, 1);
+      expect(mockArtisanatService.create).toHaveBeenCalledWith(req.body, 1, false);
       expect(res.status).toHaveBeenCalledWith(201);
     });
   });

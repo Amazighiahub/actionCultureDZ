@@ -126,7 +126,7 @@ class EvenementController extends BaseController {
       if (req.file) {
         req.body.image_url = req.file.path;
       }
-      const evenement = await this.evenementService.create(req.body, req.user.id_user);
+      const evenement = await this.evenementService.create(req.body, req.user.id_user, { isAdmin: req.user.isAdmin });
       res.status(201).json({
         success: true,
         message: req.t('event.created'),
@@ -404,7 +404,8 @@ class EvenementController extends BaseController {
         {
           description_presentation: req.body.description_presentation,
           duree_presentation: req.body.duree_presentation
-        }
+        },
+        { isAdmin: req.user.isAdmin }
       );
 
       res.status(201).json({

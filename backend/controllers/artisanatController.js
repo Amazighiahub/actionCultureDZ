@@ -73,7 +73,7 @@ class ArtisanatController extends BaseController {
 
   async create(req, res) {
     try {
-      const artisanat = await this.artisanatService.create(req.body, req.user.id_user);
+      const artisanat = await this.artisanatService.create(req.body, req.user.id_user, req.user.isAdmin === true);
       this._sendCreated(res, artisanat.toDetailJSON(req.lang), req.t('artisanat.created'));
     } catch (error) {
       this._handleError(res, error);
