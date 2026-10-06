@@ -2,20 +2,24 @@
  * ArtisanatDynamique - Section artisanat avec lazy loading des images
  */
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/use-toast';
-import { Hammer, Star, Heart, ArrowRight } from 'lucide-react';
+import { Hammer, Star, ArrowRight } from 'lucide-react';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { useRTL } from '@/hooks/useRTL';
 import { artisanatService } from '@/services/artisanat.service';
 import type { Artisanat } from '@/services/artisanat.service';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import ErrorMessage from './ErrorMessage';
+
+// Lien « étiré » : le titre porte le lien, son ::after couvre toute la carte (cliquable + crawlable)
+const STRETCHED_LINK_CLASS =
+  'after:absolute after:inset-0 after:rounded-lg focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-inset focus-visible:after:ring-ring';
 
 // Helper pour extraire les données d'une réponse
 function extractDataFromResponse<T>(responseData: any): T[] {
@@ -33,7 +37,6 @@ function extractDataFromResponse<T>(responseData: any): T[] {
 }
 
 const ArtisanatDynamique: React.FC = () => {
-  const navigate = useNavigate();
   const { t } = useTranslation();
   const { formatNumber, formatPrice } = useLocalizedNumber();
   const { rtlClasses } = useRTL();
@@ -108,7 +111,7 @@ const ArtisanatDynamique: React.FC = () => {
           </div>
         ) : (
           artisanatsArray.map((artisanat) => (
-            <Card key={artisanat.id} className="overflow-hidden hover-lift group">
+            <Card key={artisanat.id} className="relative overflow-hidden hover-lift group">
               <div className="relative h-48 overflow-hidden">
                 {artisanat.medias && artisanat.medias[0] ? (
                   <img
@@ -132,14 +135,14 @@ const ArtisanatDynamique: React.FC = () => {
                     </Badge>
                   </div>
                 )}
-                {/* Like button */}
-                <button className={`absolute top-4 ${rtlClasses.start(4)} p-2 rounded-full bg-background/90 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity`}>
-                  <Heart className="h-4 w-4" />
-                </button>
-              </div>
+</div>
               
               <CardHeader className="pb-3">
-                <CardTitle className="text-lg">{artisanat.nom}</CardTitle>
+                <CardTitle className="text-lg">
+                  <Link to={`/artisanat/${artisanat.id}`} className={STRETCHED_LINK_CLASS}>
+                    {artisanat.nom}
+                  </Link>
+                </CardTitle>
                 {(artisanat.prix_min !== undefined || artisanat.prix_max !== undefined) && (
                   <div className="flex items-center justify-between">
                     <span className="text-lg font-bold text-primary">
@@ -173,19 +176,21 @@ const ArtisanatDynamique: React.FC = () => {
                   )}
                   {artisanat.note_moyenne !== undefined && (
                     <div className={`flex items-center space-x-1 ${rtlClasses.flexRow}`}>
-                      <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                      <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" aria-hidden="true" />
                       <span>{formatNumber(artisanat.note_moyenne, { maximumFractionDigits: 1 })}</span>
                     </div>
                   )}
                 </div>
                 
-                <Button 
-                  size="sm" 
-                  className="w-full group"
-                  onClick={() => navigate(`/artisanat/${artisanat.id}`)}
-                >
-                  {t('sections.crafts.seeDetails')}
-                  <ArrowRight className={`h-4 w-4 ${rtlClasses.marginStart(2)} group-hover:translate-x-1 transition-transform`} />
+                <Button asChild size="sm" className="w-full group">
+                  <Link
+                    to={`/artisanat/${artisanat.id}`}
+                    tabIndex={-1}
+                    aria-label={`${t('sections.crafts.seeDetails', 'Voir les détails')} : ${artisanat.nom}`}
+                  >
+                    {t('sections.crafts.seeDetails')}
+                    <ArrowRight className={`h-4 w-4 ${rtlClasses.marginStart(2)} group-hover:translate-x-1 transition-transform`} aria-hidden="true" />
+                  </Link>
                 </Button>
               </CardContent>
             </Card>
@@ -194,9 +199,11 @@ const ArtisanatDynamique: React.FC = () => {
       </div>
 
       <div className="text-center">
-        <Button size="lg" variant="outline" onClick={() => navigate('/artisanat')} className="group">
-          {t('sections.crafts.exploreAll')}
-          <Hammer className={`h-4 w-4 ${rtlClasses.marginStart(2)} group-hover:rotate-12 transition-transform`} />
+        <Button asChild size="lg" variant="outline" className="group">
+          <Link to="/artisanat">
+            {t('sections.crafts.exploreAll')}
+            <Hammer className={`h-4 w-4 ${rtlClasses.marginStart(2)} group-hover:rotate-12 transition-transform`} aria-hidden="true" />
+          </Link>
         </Button>
       </div>
     </div>

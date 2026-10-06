@@ -59,8 +59,9 @@ const HeroLivre: React.FC<HeroLivreProps> = ({
           size="icon"
           className="mb-6 hover:bg-background/80"
           onClick={() => navigate(-1)}
+          aria-label={t('common.back', 'Retour')}
         >
-          <ChevronLeft className="h-5 w-5" />
+          <ChevronLeft className="h-5 w-5" aria-hidden="true" />
         </Button>
 
         <div className="grid lg:grid-cols-5 gap-8 items-start">
@@ -130,8 +131,8 @@ const HeroLivre: React.FC<HeroLivreProps> = ({
                       )}
 
                       <div className="absolute bottom-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <button onClick={(e) => { e.stopPropagation(); setShowZoom(true); }} className="bg-white/20 backdrop-blur-sm rounded-full p-2 shadow-lg hover:bg-white/40 transition-colors" title={t('works.zoom', 'Agrandir')}>
-                          <ZoomIn className="h-5 w-5 text-white" />
+                        <button onClick={(e) => { e.stopPropagation(); setShowZoom(true); }} className="bg-white/20 backdrop-blur-sm rounded-full p-2 shadow-lg hover:bg-white/40 transition-colors" title={t('works.zoom', 'Agrandir')} aria-label={t('works.zoom', 'Agrandir')}>
+                          <ZoomIn className="h-5 w-5 text-white" aria-hidden="true" />
                         </button>
                         <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 shadow-lg">
                           <RotateCcw className="h-5 w-5 text-white" />
@@ -210,7 +211,7 @@ const HeroLivre: React.FC<HeroLivreProps> = ({
           {/* Actions sous le livre */}
           <div className="flex gap-2 mt-6 justify-center lg:justify-start">
             <Button size="lg" onClick={onToggleFavorite} disabled={favoriteLoading} variant="favorite" data-active={isFavorite}>
-              <Heart className={cn("h-5 w-5 mr-2", isFavorite && "fill-current")} />
+              <Heart className={cn("h-5 w-5 mr-2", isFavorite && "fill-current")} aria-hidden="true" />
               {isFavorite ? t('works.removeFromFavorites', 'Retirer des favoris') : t('works.actions.addToFavorites', 'Ajouter aux favoris')}
             </Button>
             {shareButton}
@@ -278,9 +279,10 @@ const HeroLivre: React.FC<HeroLivreProps> = ({
 
             {/* Modal Zoom */}
             <Dialog open={showZoom} onOpenChange={setShowZoom}>
-              <DialogContent className="max-w-3xl p-0 bg-black/95 border-0">
-                <button onClick={() => setShowZoom(false)} className="absolute top-4 right-4 z-50 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors">
-                  <X className="h-6 w-6 text-white" />
+              <DialogContent className="max-w-3xl p-0 bg-black/95 border-0" aria-describedby={undefined}>
+                <DialogTitle className="sr-only">{titre}</DialogTitle>
+                <button onClick={() => setShowZoom(false)} className="absolute top-4 right-4 z-50 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors" aria-label={t('common.close', 'Fermer')}>
+                  <X className="h-6 w-6 text-white" aria-hidden="true" />
                 </button>
                 <div className="flex items-center justify-center min-h-[60vh] p-4">
                   {mainImage ? (

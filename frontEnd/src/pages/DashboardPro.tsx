@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import {
   Dialog,
   DialogContent,
+  DialogTitle,
 } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import {
@@ -982,7 +983,10 @@ const DashboardPro = () => {
         open={gestionEvenement !== null}
         onOpenChange={(open) => !open && setGestionEvenement(null)}
       >
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" aria-describedby={undefined}>
+          <DialogTitle className="sr-only">
+            {t('gestion.title', "Gestion de l'événement")}{gestionEvenement?.nom ? ` – ${gestionEvenement.nom}` : ''}
+          </DialogTitle>
           {gestionEvenement && (
             <GestionEvenement
               evenementId={gestionEvenement.id}

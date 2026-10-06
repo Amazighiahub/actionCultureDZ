@@ -2,7 +2,7 @@
  * EvenementsDynamique - Section événements avec lazy loading des images
  */
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,10 @@ import { getAssetUrl } from '@/helpers/assetUrl';
 import { getTranslation, type SupportedLanguage } from '@/types/common/multilingual.types';
 import ErrorMessage from './ErrorMessage';
 
+// Lien « étiré » : le titre porte le lien, son ::after couvre toute la carte (cliquable + crawlable)
+const STRETCHED_LINK_CLASS =
+  'after:absolute after:inset-0 after:rounded-lg focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-inset focus-visible:after:ring-ring';
+
 // Helper pour extraire les données d'une réponse
 function extractDataFromResponse<T>(responseData: any): T[] {
   if (!responseData) return [];
@@ -36,7 +40,6 @@ function extractDataFromResponse<T>(responseData: any): T[] {
 }
 
 const EvenementsDynamique: React.FC = () => {
-  const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const { formatDate } = useLocalizedDate();
   const { formatDate: formatDateLocale } = useFormatDate();
@@ -132,7 +135,7 @@ const EvenementsDynamique: React.FC = () => {
           </div>
         ) : (
           evenementsArray.map((event) => (
-            <Card key={event.id_evenement} className="overflow-hidden hover-lift group">
+            <Card key={event.id_evenement} className="relative overflow-hidden hover-lift group">
               <div className="relative h-48 overflow-hidden">
                 {event.Media && event.Media[0] ? (
                   <img
@@ -177,7 +180,9 @@ const EvenementsDynamique: React.FC = () => {
               
               <CardHeader className="pb-3">
                 <CardTitle className="line-clamp-2 leading-tight">
-                  {getTranslation(event.nom_evenement, lang)}
+                  <Link to={`/evenements/${event.id_evenement}`} className={STRETCHED_LINK_CLASS}>
+                    {getTranslation(event.nom_evenement, lang)}
+                  </Link>
                 </CardTitle>
                 
                 <div className="space-y-2 text-sm text-muted-foreground">
@@ -230,20 +235,16 @@ const EvenementsDynamique: React.FC = () => {
                 )}
                 
                 {event.inscription_requise && (
-                  <Button
-                    className="w-full group"
-                    size="sm"
-                    onClick={() => {
-                      const eventPath = `/evenements/${event.id_evenement}`;
-                      if (isAuthenticated) {
-                        navigate(eventPath);
-                      } else {
-                        navigate(`/auth?redirect=${eventPath}`);
-                      }
-                    }}
-                  >
-                    {t('sections.events.register')}
-                    <ArrowRight className={`h-4 w-4 ${rtlClasses.marginStart(2)} group-hover:translate-x-1 transition-transform`} />
+                  <Button asChild className="relative z-10 w-full group" size="sm">
+                    <Link
+                      to={isAuthenticated
+                        ? `/evenements/${event.id_evenement}`
+                        : `/auth?redirect=/evenements/${event.id_evenement}`}
+                      aria-label={`${t('sections.events.register', "S'inscrire")} : ${getTranslation(event.nom_evenement, lang)}`}
+                    >
+                      {t('sections.events.register')}
+                      <ArrowRight className={`h-4 w-4 ${rtlClasses.marginStart(2)} group-hover:translate-x-1 transition-transform`} aria-hidden="true" />
+                    </Link>
                   </Button>
                 )}
               </CardContent>
@@ -253,9 +254,11 @@ const EvenementsDynamique: React.FC = () => {
       </div>
 
       <div className="text-center">
-        <Button size="lg" variant="outline" onClick={() => navigate('/evenements')} className="group">
-          {t('sections.events.seeAllEvents')}
-          <Calendar className={`h-4 w-4 ${rtlClasses.marginStart(2)} group-hover:rotate-12 transition-transform`} />
+        <Button asChild size="lg" variant="outline" className="group">
+          <Link to="/evenements">
+            {t('sections.events.seeAllEvents')}
+            <Calendar className={`h-4 w-4 ${rtlClasses.marginStart(2)} group-hover:rotate-12 transition-transform`} aria-hidden="true" />
+          </Link>
         </Button>
       </div>
     </div>

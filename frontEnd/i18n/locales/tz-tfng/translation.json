@@ -441,7 +441,9 @@
     "unspecifiedLocation": "ⴰⴷⵉⴳ ⵓⵔ ⵢⴻⵜⵜⵡⴰⴱⴷⴻⵔ ⴰⵔⴰ",
     "removeFrom": "ⴽⴽⴻⵙ",
     "notProvided": "ⵓⵔ ⵢⴻⵜⵜⵡⴰⵞⵞⴰⵔ ⴰⵔⴰ",
-    "unknown": "ⴰⵔⵓⵙⵙⵉⵏ"
+    "unknown": "ⴰⵔⵓⵙⵙⵉⵏ",
+    "sortBy": "ⵙⵎⵉⵣⵣⵡⴻⵔ ⵙ",
+    "photo": "ⵜⴰⵡⵍⴰⴼⵜ"
   },
   "contributors": {
     "addedCount_one": "{{count}} ⴰⵎⵓⵜⵜⴽ ⵉⵜⵜⵡⴰⵔⵏⴰ",
@@ -586,7 +588,8 @@
     "past": "ⵉⵄⴻⴷⴷⴰ",
     "upcoming": "ⴰⴷ ⴷ-ⵢⴰⵙ",
     "upcomingLower": "ⴰⴷ ⴷ-ⴰⵙⴻⵏⵜ",
-    "pastLower": "ⵉⵄⴻⴷⴷⴰⵏ"
+    "pastLower": "ⵉⵄⴻⴷⴷⴰⵏ",
+    "resultsHeading": "ⵜⴰⴱⴷⴰⵔⵜ ⵏ ⵜⴻⴷⵢⴰⵏⵉⵏ"
   },
   "footer": {
     "legal": "ⴰⵙⵔⴼⴰⵏ",
@@ -622,7 +625,9 @@
       "albums": "ⴰⵍⴱⵓⵎⵙ",
       "articles": "ⴰⵔⵜⵉⵛⵍⴻⵙ",
       "scientific": "ⵙⵛⵉⴻⵏⵜⵉⴼⵉⵇⵓⴻⵙ",
-      "art": "ⵉⵅⴻⴷⴷⵉⵎⴻⵏ ⵏ ⵜⵥⵓⵔⵉ"
+      "art": "ⵉⵅⴻⴷⴷⵉⵎⴻⵏ ⵏ ⵜⵥⵓⵔⵉ",
+      "mainLabel": "ⵜⵓⵏⵉⴳⵉⵏ ⵜⴰⴳⴻⵊⴷⴰⵏⵜ",
+      "subLabel": "ⵜⴰⴳⴳⴰⵢⵉⵏ ⵏ ⵜⴳⴻⵣⵎⵉ"
     },
     "subtitle": "ⵜⴰⵖⵓⵖⵜ ⵏ ⵍⵣⵣⴰⵢⵔ",
     "title": "ⵜⵉⵎⵍⵉⵍⵉⵜ ⵏ ⵜⴷⵍⵙⴰ",
@@ -635,7 +640,12 @@
       "myProfile": "ⵉⴼⵔⵙ ⵉⵏⵓ",
       "mySpace": "ⴰⵙⴰⵢⵔⴰⵔ ⵉⵏⵓ",
       "pendingValidations": "ⵉⵙⵖⵣⴰⵏ ⵉⵜⵜⵔⴰⵊⵓⵏ",
-      "proDashboard": "ⵜⴰⴼⵍⵡⵉⵜ ⵏ ⵓⵎⴰⵣⵣⴰⵍ"
+      "proDashboard": "ⵜⴰⴼⵍⵡⵉⵜ ⵏ ⵓⵎⴰⵣⵣⴰⵍ",
+      "open": "ⵓⵎⵓⵖ ⵏ ⵓⵎⵉⴹⴰⵏ-ⵉⵡ"
+    },
+    "menu": {
+      "close": "ⵎⴷⴻⵍ ⵓⵎⵓⵖ",
+      "open": "ⵍⴷⵉ ⵓⵎⵓⵖ"
     }
   },
   "home": {
@@ -686,7 +696,16 @@
       "subtitle": "ⵙⵏⵉⵔⴻⵎ, ⵃⵔⴻⵣ, ⴱⴹⵓ ⴰⵢⵍⴰ ⴰⴷⴻⵍⵙⴰⵏ ⵏ ⵍⴻⵣⵣⴰⵢⴻⵔ",
       "explore": "ⵙⵏⵉⵔⴻⵎ ⴰⵢⵍⴰ",
       "contribute": "ⵜⵜⴻⴽⴽⵉ",
-      "addSite": "ⵔⵏⵓ ⴰⵙⵎⴻⵍ"
+      "addSite": "ⵔⵏⵓ ⴰⵙⵎⴻⵍ",
+      "slides": {
+        "timgad": "ⵉⵖⴻⵔⴱⴰⵏ ⵉⵔⵓⵎⴰⵏⵉⵢⴻⵏ ⵏ ⵜⴰⵎⵓⴳⴰⴷⵉ",
+        "sahara": "ⵜⴰⵏⴻⵥⵔⵓⴼⵜ ⵜⴰⵣⵣⴰⵢⵔⵉⵜ",
+        "casbah": "ⵍⵇⴻⵙⴱⴰ ⵏ ⴷⵣⴰⵢⴻⵔ",
+        "grenier": "ⴰⴳⴰⴷⵉⵔ ⴰⵇⴱⵓⵔ"
+      },
+      "goToSlide": "ⵜⵓⴳⵏⴰ {{index}} ⵙⴻⴳ {{total}}: {{title}}",
+      "play": "ⴽⴻⵎⵎⴻⵍ ⴰⵙⴽⴰⵏ",
+      "pause": "ⵙⴻⵃⴱⴻⵙ ⴰⵙⴽⴰⵏ"
     }
   },
   "notifications": {
@@ -1015,7 +1034,8 @@
       "title": "ⴰⵣⵡⴻⵍ ⴰ-ⵣ"
     },
     "noResults": "ⵓⵍⴰⵛ ⴰⵅⴻⴷⴷⵉⵎ ⵉ ⵢⴻⵜⵜⵡⴰⴼⴻⵏ",
-    "noResultsDesc": "ⵄⵔⴻⴹ ⴰⴷ ⵜⴱⴻⴷⴷⵍⴻⴹ ⵜⵉⵡⵜⵉⵍⵉⵏ ⵏ ⵓⵏⴰⴷⵉ-ⵉⴽ"
+    "noResultsDesc": "ⵄⵔⴻⴹ ⴰⴷ ⵜⴱⴻⴷⴷⵍⴻⴹ ⵜⵉⵡⵜⵉⵍⵉⵏ ⵏ ⵓⵏⴰⴷⵉ-ⵉⴽ",
+    "resultsHeading": "ⵜⴰⴱⴷⴰⵔⵜ ⵏ ⵢⵉⵅⴻⴷⴷⵉⵎⴻⵏ"
   },
   "verifyemailpage": {
     "vrification_russie": "ⴰⵙⵖⵏⵜ ⵢⵓⴼⴰ!",
@@ -1591,7 +1611,10 @@
     "comments": "ⵉⵡⴻⵏⵏⵉⵜⴻⵏ",
     "artisanWorks": "ⵉⵅⴻⴷⴷⵉⵎⴻⵏ-ⵏⵏⵉⴹⴻⵏ ⵏ ⵓⵏⴰⵥⵓⵔ",
     "noOtherWorks": "ⴰⵏⴰⵥⵓⵔ-ⴰ ⵓⵔ ⵢⴻⵙⵄⵉ ⴰⵔⴰ ⵉⵅⴻⴷⴷⵉⵎⴻⵏ-ⵏⵏⵉⴹⴻⵏ ⴰⴽⴽⴰ ⵜⵓⵔⴰ",
-    "similarCreations": "ⵜⵉⵎⴻⵙⴽⴰⵔ ⵢⴻⵎⵛⴰⴱⵉⵏ"
+    "similarCreations": "ⵜⵉⵎⴻⵙⴽⴰⵔ ⵢⴻⵎⵛⴰⴱⵉⵏ",
+    "removeFromFavorites": "ⴽⴽⴻⵙ ⵙⴻⴳ ⵢⵉⵙⵎⴻⵏⵢⵉⴼⴻⵏ",
+    "addToFavorites": "ⵔⵏⵓ ⵖⴻⵔ ⵢⵉⵙⵎⴻⵏⵢⵉⴼⴻⵏ",
+    "resultsHeading": "ⵜⴰⴱⴷⴰⵔⵜ ⵏ ⵢⵉⴼⴰⵔⵉⵙⴻⵏ ⵏ ⵜⵥⵓⵔⵉ"
   },
   "apropos": {
     "title_transmission": "ⴰⵙⵉⵡⴹ",
@@ -2837,7 +2860,9 @@
       "error": "ⵜⴻⵍⵍⴰ-ⴷ ⵜⵓⵛⵛⴹⴰ ⴷⴻⴳ ⵓⵊⴻⵔⵔⴻⴷ",
       "cancelTitle": "ⵙⴻⴼⵙⴻⵅ ⴰⵊⴻⵔⵔⴻⴷ-ⵉⵡ",
       "cancelConfirm": "ⵜⴻⴱⵖⵉⴹ ⵙ ⵜⵉⴷⴻⵜ ⴰⴷ ⵜⴻⵙⴼⴻⵙⵅⴻⴹ ⴰⵊⴻⵔⵔⴻⴷ-ⵉⴽ ⵖⴻⵔ ⵜⴻⴷⵢⴰⵏⵜ-ⴰ? ⵜⵉⴳⴰⵡⵜ-ⴰ ⵓⵔ ⵜⴻⵜⵜⵓⵖⴰⵍ ⴰⵔⴰ.",
-      "confirmCancel": "ⵙⴻⵏⵜⴻⵎ ⴰⵙⴻⴼⵙⴻⵅ"
+      "confirmCancel": "ⵙⴻⵏⵜⴻⵎ ⴰⵙⴻⴼⵙⴻⵅ",
+      "contactByEmail": "ⵏⴻⵔⵎⴻⵙ ⴰⵎⵙⵓⴷⴷⴻⵙ ⵙ ⵉⵎⴰⵢⵍ",
+      "contactByPhone": "ⵙⵉⵡⴻⵍ ⵉ ⵓⵎⵙⵓⴷⴷⴻⵙ"
     },
     "registrationDeadline": "ⵜⴰⵍⴰⵙⵜ ⵜⴰⴳⴻⵊⴷⴰⵏⵜ ⵏ ⵓⵊⴻⵔⵔⴻⴷ",
     "relatedEvents": "ⵉⵏⴻⴹⵔⵓⵢⴻⵏ ⵉⵛⵓⴷⴷⴻⵏ",
@@ -3379,7 +3404,8 @@
     "proService": "ⴷ ⴰⵎⵙⴰⴷⵓⵔ ⵉ ⵜⴻⵍⵍⵉⴹ?",
     "addYourService": "ⵙⵓⵎⴻⵔ-ⴷ ⵉⵎⴻⵥⵍⴰ-ⴽ ⴷⴰ",
     "backToList": "ⵓⵖⴰⵍ ⵖⴻⵔ ⵜⴻⴱⴷⴰⵔⵜ",
-    "notFound": "ⴰⵙⵎⴻⵍ ⵓⵍⴰⵛ-ⵉⵜ"
+    "notFound": "ⴰⵙⵎⴻⵍ ⵓⵍⴰⵛ-ⵉⵜ",
+    "playVideo": "ⵙⵙⴻⴽ ⵜⴰⵠⵉⴷⵢⵓⵜ: {{title}}"
   },
   "toasts": {
     "error": "ⵜⵓⵛⵛⴹⴰ",
@@ -3540,7 +3566,9 @@
       "loadFailed": "ⵓⵔ ⵢⴻⵣⵎⵉⵔ ⴰⵔⴰ ⴰⴷ ⴷ-ⵢⴰⵍⵉ ⵓⵎⵥⵓⵏ ⴰⵙⵏⵓⴼⵔⵉ",
       "loadMetadataFailed": "ⵜⵓⵛⵛⴹⴰ ⴷⴻⴳ ⵓⵙⴰⵍⵉ ⵏ ⵜⵖⴰⵡⵙⵉⵡⵉⵏ ⴷ ⵜⵉⵇⵏⵉⵢⵉⵏ",
       "prixMinMax": "ⵙⵙⵓⵎⴰ ⵜⴰⴷⴷⴰⵢ ⵓⵔ ⵜⴻⵣⵎⵉⵔ ⴰⵔⴰ ⴰⴷ ⵜⵉⵍⵉ ⵜⵓⴳⴰⵔ ⵙⵙⵓⵎⴰ ⵜⴰⴼⴻⵍⵍⴰⵢ"
-    }
+    },
+    "addTag": "ⵔⵏⵓ ⵜⴰⴱⵣⵉⵎⵜ",
+    "removeTag": "ⴽⴽⴻⵙ ⵜⴰⴱⵣⵉⵎⵜ {{tag}}"
   },
   "service": {
     "addTitle": "ⵔⵏⵓ ⴰⵎⴻⵥⵍⵓ-ⵡ",
@@ -3683,7 +3711,11 @@
     "generalInstructions": "ⵉⵡⴻⵍⵍⵉⵀⴻⵏ ⵉⵎⴰⵜⵓⵜⴻⵏ",
     "installKeyboard": "ⵙⴻⴱⴷⴻⴷ ⴰⵏⴰⵙⵉⵡ ⵏ ⵜⵎⴰⵣⵉⵖⵜ ⵙⴻⴳ ⵢⵉⵖⴻⵡⵡⴰⵔⴻⵏ ⵏ ⵢⵉⴱⴻⵏⴽ-ⵉⴽ",
     "searchStore": "ⵏⴰⴷⵉ \"ⵜⵉⴼⵉⵏⴰⴳⵀ\" ⵏⴻⵖ \"ⵜⴰⵎⴰⵣⵉⴳⵀⵜ ⵍⴰⵜⵉⵏ\" ⴷⴻⴳ ⵜⵃⴰⵏⵓⵜ-ⵉⴽ",
-    "activateKeyboard": "ⵔⵎⴻⴷ ⴰⵏⴰⵙⵉⵡ ⴷⴻⴳ ⵢⵉⵖⴻⵡⵡⴰⵔⴻⵏ ⵏ ⵜⵓⵜⵍⴰⵢⵜ"
+    "activateKeyboard": "ⵔⵎⴻⴷ ⴰⵏⴰⵙⵉⵡ ⴷⴻⴳ ⵢⵉⵖⴻⵡⵡⴰⵔⴻⵏ ⵏ ⵜⵓⵜⵍⴰⵢⵜ",
+    "languagesGroup": "{{label}}: ⵜⵓⵜⵍⴰⵢⵜ ⵏ ⵜⵉⵔⴰ",
+    "requiredEmpty": "(ⵉⵍⴰⵇ, ⵓⵔ ⵢⴻⵞⵞⵓⵔ ⴰⵔⴰ)",
+    "filled": "(ⵢⴻⵞⵞⵓⵔ)",
+    "hasError": "(ⵜⵓⵛⵛⴹⴰ)"
   },
   "programme": {
     "form": {
@@ -4061,7 +4093,9 @@
     "empty": "ⵓⵍⴰⵛ ⴰⵎⵉⴷⵢⴰ ⵢⴻⵍⵍⴰⵏ",
     "emptyDesc": "ⵜⴰⵎⵉⴷⴻⵍⵜ ⵏ ⵜⴻⴷⵢⴰⵏⵜ-ⴰ ⴷ ⵜⵉⵍⴻⵎⵜ ⴰⴽⴽⴰ ⵜⵓⵔⴰ",
     "all": "ⴰⴽⴽ",
-    "emptyDescOeuvre": "ⵜⴰⵎⵉⴷⴻⵍⵜ ⴷ ⵜⵉⵍⴻⵎⵜ ⴰⴽⴽⴰ ⵜⵓⵔⴰ"
+    "emptyDescOeuvre": "ⵜⴰⵎⵉⴷⴻⵍⵜ ⴷ ⵜⵉⵍⴻⵎⵜ ⴰⴽⴽⴰ ⵜⵓⵔⴰ",
+    "gridView": "ⴰⵙⴽⴰⵏ ⵙ ⵓⵥⴻⵟⵟⴰ",
+    "listView": "ⴰⵙⴽⴰⵏ ⵙ ⵜⴻⴱⴷⴰⵔⵜ"
   },
   "gestionArtisanat": {
     "errors": {
@@ -4159,5 +4193,13 @@
     "newsletterOn": "ⵜⵊⴻⵔⵔⴷⴻⴹ ⵖⴻⵔ ⵜⴻⴱⵔⴰⵜ ⵏ ⵢⵉⵙⴰⵍⵍⴻⵏ",
     "newsletterOff": "ⵜⴻⴽⴽⵙⴻⴹ ⴰⵊⴻⵔⵔⴻⴷ-ⵉⴽ ⵙⴻⴳ ⵜⴻⴱⵔⴰⵜ ⵏ ⵢⵉⵙⴰⵍⵍⴻⵏ",
     "newsletterFailed": "ⴰⴱⴻⴷⴷⴻⵍ ⵓⵔ ⵢⴻⴷⴷⵉ ⴰⵔⴰ, ⵄⵔⴻⴹ ⵜⵉⴽⴽⴻⵍⵜ-ⵏⵏⵉⴹⴻⵏ"
+  },
+  "rating": {
+    "value": "ⵜⴰⵣⵎⵉⵍⵜ: {{value}} ⵙⴻⴳ {{max}}",
+    "label": "ⵜⴰⵣⵎⵉⵍⵜ",
+    "star": "{{count}} ⵏ ⵢⵉⵜⵔⵉ ⵙⴻⴳ 5"
+  },
+  "a11y": {
+    "skipToContent": "ⴷⴷⵓ ⵖⴻⵔ ⵓⴳⴱⵓⵔ ⴰⴳⴻⵊⴷⴰⵏ"
   }
 }

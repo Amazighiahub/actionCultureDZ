@@ -427,10 +427,16 @@ export const LieuSelector: React.FC<LieuSelectorProps> = ({
               placeholder={t('places.search.placeholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && loadLieux()}
+              aria-label={t('places.search.placeholder')}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  loadLieux();
+                }
+              }}
             />
-            <Button type="button" onClick={loadLieux} disabled={loading}>
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+            <Button type="button" onClick={loadLieux} disabled={loading} aria-label={t('common.search', 'Rechercher')}>
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Search className="h-4 w-4" aria-hidden="true" />}
             </Button>
             <Button
               type="button"
@@ -447,7 +453,7 @@ export const LieuSelector: React.FC<LieuSelectorProps> = ({
             value={filterTypeLieuCulturel}
             onValueChange={(v) => setFilterTypeLieuCulturel(v as TypeLieuCulturel | 'all')}
           >
-            <SelectTrigger>
+            <SelectTrigger aria-label={t('places.filterByType')}>
               <SelectValue placeholder={t('places.filterByType')} />
             </SelectTrigger>
             <SelectContent>
@@ -477,15 +483,17 @@ export const LieuSelector: React.FC<LieuSelectorProps> = ({
               </p>
             ) : (
               lieux.map((lieu) => (
-                <Card
+                <button
+                  type="button"
                   key={lieu.id_lieu}
-                  className="cursor-pointer transition-colors hover:border-primary"
+                  aria-pressed={value === lieu.id_lieu}
+                  className="block w-full text-start rounded-lg border bg-card text-card-foreground shadow-sm duration-200 cursor-pointer transition-colors hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   onClick={() => {
                     setSelectedLieu(lieu);
                     onChange(lieu.id_lieu, lieu);
                   }}
                 >
-                  <CardContent className="p-3">
+                  <div className="p-3">
                     <div className={`flex items-start ${rtlClasses.flexRow}`}>
                       <MapPin className={`h-4 w-4 text-muted-foreground ${rtlClasses.marginEnd(2)} mt-0.5 flex-shrink-0`} />
                       <div className="flex-1">
@@ -505,8 +513,8 @@ export const LieuSelector: React.FC<LieuSelectorProps> = ({
                         )}
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </button>
               ))
             )}
           </div>
@@ -549,20 +557,23 @@ export const LieuSelector: React.FC<LieuSelectorProps> = ({
             {/* Nom + Type */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="space-y-1">
-                <Label>{t('places.name')} *</Label>
+                <Label htmlFor="lieu-create-nom">{t('places.name')} *</Label>
                 <Input
+                  id="lieu-create-nom"
+                  required
+                  aria-required="true"
                   value={newLieu.nom}
                   onChange={(e) => setNewLieu(prev => ({ ...prev, nom: e.target.value }))}
                   placeholder={t('places.namePlaceholder')}
                 />
               </div>
               <div className="space-y-1">
-                <Label>{t('places.type')} *</Label>
+                <Label htmlFor="lieu-create-type">{t('places.type')} *</Label>
                 <Select
                   value={newLieu.typeLieuCulturel}
                   onValueChange={(v) => setNewLieu(prev => ({ ...prev, typeLieuCulturel: v as TypeLieuCulturel }))}
                 >
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger id="lieu-create-type" aria-required="true"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {typesLieuxCulturels.map((type) => (
                       <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
@@ -574,16 +585,22 @@ export const LieuSelector: React.FC<LieuSelectorProps> = ({
 
             {/* Recherche d'adresse */}
             <div className="space-y-1">
-              <Label>{t('places.addressSearch')}</Label>
+              <Label htmlFor="lieu-create-address-search">{t('places.addressSearch')}</Label>
               <div className={`flex gap-2 ${rtlClasses.flexRow}`}>
                 <Input
+                  id="lieu-create-address-search"
                   value={addressSearch}
                   onChange={(e) => setAddressSearch(e.target.value)}
                   placeholder={t('places.addressSearchPlaceholder')}
-                  onKeyDown={(e) => e.key === 'Enter' && searchAddress()}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      searchAddress();
+                    }
+                  }}
                 />
-                <Button type="button" onClick={searchAddress} disabled={searching}>
-                  {searching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                <Button type="button" onClick={searchAddress} disabled={searching} aria-label={t('common.search', 'Rechercher')}>
+                  {searching ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Search className="h-4 w-4" aria-hidden="true" />}
                 </Button>
                 {userLocation && (
                   <Button type="button" variant="outline" onClick={() => updateMarkerPosition(userLocation.lat, userLocation.lng)} title={t('places.useCurrentLocation')}>
@@ -594,9 +611,14 @@ export const LieuSelector: React.FC<LieuSelectorProps> = ({
               {searchResults.length > 0 && (
                 <div className="mt-1 space-y-1 max-h-28 overflow-y-auto border rounded p-2">
                   {searchResults.map((result, index) => (
-                    <div key={index} className="p-2 hover:bg-accent cursor-pointer rounded text-sm" onClick={() => selectSearchResult(result)}>
+                    <button
+                      type="button"
+                      key={index}
+                      className="block w-full text-start p-2 hover:bg-accent cursor-pointer rounded text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      onClick={() => selectSearchResult(result)}
+                    >
                       {result.display_name}
-                    </div>
+                    </button>
                   ))}
                 </div>
               )}
@@ -604,8 +626,11 @@ export const LieuSelector: React.FC<LieuSelectorProps> = ({
 
             {/* Adresse */}
             <div className="space-y-1">
-              <Label>{t('places.address')} *</Label>
+              <Label htmlFor="lieu-create-adresse">{t('places.address')} *</Label>
               <Textarea
+                id="lieu-create-adresse"
+                required
+                aria-required="true"
                 value={newLieu.adresse}
                 onChange={(e) => setNewLieu(prev => ({ ...prev, adresse: e.target.value }))}
                 placeholder={t('places.addressPlaceholder')}
@@ -615,9 +640,9 @@ export const LieuSelector: React.FC<LieuSelectorProps> = ({
 
             {/* Carte */}
             <div className="space-y-1">
-              <Label>{t('places.mapLocation')}</Label>
-              <p className="text-xs text-muted-foreground">{t('places.mapInstructions')}</p>
-              <div ref={mapContainerRef} className="h-40 rounded-lg border" />
+              <Label id="lieu-create-map-label">{t('places.mapLocation')}</Label>
+              <p id="lieu-create-map-help" className="text-xs text-muted-foreground">{t('places.mapInstructions')}</p>
+              <div ref={mapContainerRef} role="group" aria-labelledby="lieu-create-map-label" aria-describedby="lieu-create-map-help" className="h-40 rounded-lg border" />
               <p className="text-xs text-muted-foreground">
                 {t('places.coordinates')}: {newLieu.latitude.toFixed(6)}, {newLieu.longitude.toFixed(6)}
               </p>
@@ -625,8 +650,9 @@ export const LieuSelector: React.FC<LieuSelectorProps> = ({
 
             {/* Description */}
             <div className="space-y-1">
-              <Label>{t('places.description')} <span className="text-muted-foreground font-normal text-xs">({t('common.optional', 'Optionnel')})</span></Label>
+              <Label htmlFor="lieu-create-description">{t('places.description')} <span className="text-muted-foreground font-normal text-xs">({t('common.optional', 'Optionnel')})</span></Label>
               <Textarea
+                id="lieu-create-description"
                 value={newLieu.description}
                 onChange={(e) => setNewLieu(prev => ({ ...prev, description: e.target.value }))}
                 placeholder={t('places.descriptionPlaceholder')}

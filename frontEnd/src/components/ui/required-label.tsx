@@ -4,6 +4,7 @@
  * + CharCount - Compteur de caractères
  */
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/Utils';
 
@@ -21,13 +22,16 @@ export const RequiredLabel: React.FC<RequiredLabelProps> = ({
   optional = false,
   children,
   className
-}) => (
-  <Label htmlFor={htmlFor} className={cn('text-sm font-medium', className)}>
-    {children}
-    {required && <span className="text-destructive ml-1">*</span>}
-    {optional && <span className="text-muted-foreground font-normal ml-1">(optionnel)</span>}
-  </Label>
-);
+}) => {
+  const { t } = useTranslation();
+  return (
+    <Label htmlFor={htmlFor} className={cn('text-sm font-medium', className)}>
+      {children}
+      {required && <span className="text-destructive ml-1">*</span>}
+      {optional && <span className="text-muted-foreground font-normal ml-1">({t('common.optional', 'optionnel')})</span>}
+    </Label>
+  );
+};
 
 interface FieldErrorProps {
   error?: string;

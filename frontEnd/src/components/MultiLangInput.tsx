@@ -163,13 +163,17 @@ export const MultiLangInput: React.FC<MultiLangInputProps> = ({
   return (
     <div className={`multi-lang-input ${className}`}>
       {/* Label */}
-      <Label className="mb-1">
+      <Label htmlFor={`${name}-${activeLang}`} className="mb-1">
         {label}
-        {required && <span className="text-destructive ms-1">*</span>}
+        {required && <span className="text-destructive ms-1" aria-hidden="true">*</span>}
       </Label>
 
       {/* Onglets de langue */}
-      <div className="flex flex-wrap border-b border-border mb-2">
+      <div
+        className="flex flex-wrap border-b border-border mb-2"
+        role="group"
+        aria-label={t('multilang.languagesGroup', '{{label}} : langue de saisie', { label })}
+      >
         {AVAILABLE_LANGUAGES.map((lang) => {
           const hasValue = !!value[lang.code]?.trim();
           const isRequired = requiredLanguages.includes(lang.code);
@@ -180,6 +184,8 @@ export const MultiLangInput: React.FC<MultiLangInputProps> = ({
               key={lang.code}
               type="button"
               onClick={() => handleLanguageChange(lang.code)}
+              aria-pressed={activeLang === lang.code}
+              aria-controls={`${name}-${activeLang}`}
               className={cn(
                 'px-3 py-2 text-sm font-medium border-b-2 transition-colors',
                 activeLang === lang.code
@@ -188,13 +194,22 @@ export const MultiLangInput: React.FC<MultiLangInputProps> = ({
                 hasError && 'text-destructive'
               )}
             >
-              <span className="me-1">{lang.flag}</span>
+              <span className="me-1" aria-hidden="true">{lang.flag}</span>
               <span>{lang.label}</span>
               {isRequired && !hasValue && (
-                <span className="ms-1 text-destructive">•</span>
+                <>
+                  <span className="ms-1 text-destructive" aria-hidden="true">•</span>
+                  <span className="sr-only">{t('multilang.requiredEmpty', '(obligatoire, non rempli)')}</span>
+                </>
               )}
               {hasValue && (
-                <span className="ms-1 text-primary">✓</span>
+                <>
+                  <span className="ms-1 text-primary" aria-hidden="true">✓</span>
+                  <span className="sr-only">{t('multilang.filled', '(rempli)')}</span>
+                </>
+              )}
+              {hasError && (
+                <span className="sr-only">{t('multilang.hasError', '(erreur)')}</span>
               )}
             </button>
           );
@@ -262,6 +277,7 @@ export const MultiLangInput: React.FC<MultiLangInputProps> = ({
             maxLength={maxLength}
             lang={activeLang === 'ar' ? 'ar' : activeLang === 'tz-tfng' ? 'ber' : activeLang === 'tz-ltn' ? 'ber-Latn' : activeLang}
             spellCheck={activeLang === 'fr' || activeLang === 'en'}
+            aria-required={(required && requiredLanguages.includes(activeLang)) || undefined}
             aria-invalid={!!errors[activeLang] || undefined}
             aria-describedby={errors[activeLang] ? `${name}-${activeLang}-error` : undefined}
             className={cn(
@@ -283,6 +299,7 @@ export const MultiLangInput: React.FC<MultiLangInputProps> = ({
             autoComplete={activeLang === 'ar' ? 'off' : 'on'}
             spellCheck={activeLang === 'fr' || activeLang === 'en'}
             maxLength={maxLength}
+            aria-required={(required && requiredLanguages.includes(activeLang)) || undefined}
             aria-invalid={!!errors[activeLang] || undefined}
             aria-describedby={errors[activeLang] ? `${name}-${activeLang}-error` : undefined}
             className={cn(

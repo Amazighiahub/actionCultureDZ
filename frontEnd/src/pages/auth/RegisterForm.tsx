@@ -576,7 +576,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                           value={registerForm.sexe}
                           onValueChange={(value) => setRegisterForm({...registerForm, sexe: value as 'M' | 'F'})}
                         >
-                          <SelectTrigger>
+                          <SelectTrigger id="sexe" aria-required="true">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -808,6 +808,8 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                             required={userType === 'professionnel'}
                           >
                             <SelectTrigger
+                              id="secteur"
+                              aria-required="true"
                               className={registerErrors.secteur ? 'border-destructive' : ''}
                               aria-invalid={!!registerErrors.secteur}
                               aria-describedby={registerErrors.secteur ? 'auth-secteur-error' : undefined}

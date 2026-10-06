@@ -3,7 +3,7 @@
  * Affiche une liste d'événements similaires à l'événement actuel
  */
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent } from '@/components/ui/card';
@@ -28,80 +28,83 @@ interface RelatedEventsProps {
   limit?: number;
 }
 
+// Classes du lien englobant une carte (carte entière cliquable, crawlable et focusable)
+const CARD_LINK_CLASS = 'block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2';
+
+// Remonter en haut de page après navigation vers un autre événement
+const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+
 // Carte d'événement compact
 interface EventMiniCardProps {
   event: Evenement;
-  onClick: () => void;
 }
 
-const EventMiniCard: React.FC<EventMiniCardProps> = ({ event, onClick }) => {
+const EventMiniCard: React.FC<EventMiniCardProps> = ({ event }) => {
   const { t } = useTranslation();
   const { formatPrice } = useLocalizedNumber();
   const { td } = useTranslateData();
 
   return (
-    <Card 
-      className="overflow-hidden hover:shadow-md transition-all cursor-pointer group"
-      onClick={onClick}
-    >
-      <div className="flex">
-        {/* Image */}
-        <div className="relative w-24 h-24 flex-shrink-0">
-          <LazyImage
-            src={event.image_url || '/images/placeholder-event.svg'}
-            alt={td(event.nom_evenement)}
-            className="w-full h-full object-cover"
-            fallback="/images/placeholder-event.svg"
-          />
-          {/* Date badge */}
-          {event.date_debut && (
-            <div className="absolute bottom-1 left-1 bg-background/90 backdrop-blur-sm rounded px-1.5 py-0.5 text-xs font-medium">
-              {new Date(event.date_debut).getDate()}/{new Date(event.date_debut).getMonth() + 1}
-            </div>
-          )}
-        </div>
-
-        {/* Contenu */}
-        <CardContent className="flex-1 p-3">
-          <h4 className="font-medium text-sm line-clamp-2 group-hover:text-primary transition-colors">
-            {td(event.nom_evenement)}
-          </h4>
-
-          <div className="mt-1 space-y-1 text-xs text-muted-foreground">
-            {event.Lieu && (
-              <div className="flex items-center gap-1">
-                <MapPin className="h-3 w-3 flex-shrink-0" />
-                <span className="truncate">{td(event.Lieu.nom)}</span>
+    <Link to={`/evenements/${event.id_evenement}`} onClick={scrollToTop} className={CARD_LINK_CLASS}>
+      <Card className="overflow-hidden hover:shadow-md transition-all cursor-pointer group">
+        <div className="flex">
+          {/* Image */}
+          <div className="relative w-24 h-24 flex-shrink-0">
+            <LazyImage
+              src={event.image_url || '/images/placeholder-event.svg'}
+              alt={td(event.nom_evenement)}
+              className="w-full h-full object-cover"
+              fallback="/images/placeholder-event.svg"
+            />
+            {/* Date badge */}
+            {event.date_debut && (
+              <div className="absolute bottom-1 left-1 bg-background/90 backdrop-blur-sm rounded px-1.5 py-0.5 text-xs font-medium">
+                {new Date(event.date_debut).getDate()}/{new Date(event.date_debut).getMonth() + 1}
               </div>
             )}
-            
-            <div className="flex items-center justify-between">
-              {event.tarif === 0 ? (
-                <Badge variant="secondary" className="text-xs h-5">
-                  {t('events.free', 'Gratuit')}
-                </Badge>
-              ) : (
-                <span className="font-medium text-primary">
-                  {formatPrice(event.tarif)}
-                </span>
-              )}
-              
-              <ArrowRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-            </div>
           </div>
-        </CardContent>
-      </div>
-    </Card>
+
+          {/* Contenu */}
+          <CardContent className="flex-1 p-3">
+            <h4 className="font-medium text-sm line-clamp-2 group-hover:text-primary transition-colors">
+              {td(event.nom_evenement)}
+            </h4>
+
+            <div className="mt-1 space-y-1 text-xs text-muted-foreground">
+              {event.Lieu && (
+                <div className="flex items-center gap-1">
+                  <MapPin className="h-3 w-3 flex-shrink-0" aria-hidden="true" />
+                  <span className="truncate">{td(event.Lieu.nom)}</span>
+                </div>
+              )}
+            
+              <div className="flex items-center justify-between">
+                {event.tarif === 0 ? (
+                  <Badge variant="secondary" className="text-xs h-5">
+                    {t('events.free', 'Gratuit')}
+                  </Badge>
+                ) : (
+                  <span className="font-medium text-primary">
+                    {formatPrice(event.tarif)}
+                  </span>
+                )}
+              
+                <ArrowRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" aria-hidden="true" />
+              </div>
+            </div>
+          </CardContent>
+        </div>
+      </Card>
+    </Link>
   );
 };
 
 // Composant carte large (pour le premier événement)
 interface EventFeatureCardProps {
   event: Evenement;
-  onClick: () => void;
 }
 
-const EventFeatureCard: React.FC<EventFeatureCardProps> = ({ event, onClick }) => {
+const EventFeatureCard: React.FC<EventFeatureCardProps> = ({ event }) => {
   const { t } = useTranslation();
   const { formatDate } = useLocalizedDate();
   const { formatPrice } = useLocalizedNumber();
@@ -113,100 +116,102 @@ const EventFeatureCard: React.FC<EventFeatureCardProps> = ({ event, onClick }) =
     : 0;
 
   return (
-    <Card 
-      className="overflow-hidden hover:shadow-lg transition-all cursor-pointer group"
-      onClick={onClick}
-    >
-      {/* Image */}
-      <div className="relative h-40 overflow-hidden">
-        <LazyImage
-          src={event.image_url || '/images/placeholder-event.svg'}
-          alt={td(event.nom_evenement)}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          fallback="/images/placeholder-event.svg"
-        />
+    <Link to={`/evenements/${event.id_evenement}`} onClick={scrollToTop} className={CARD_LINK_CLASS}>
+      <Card className="overflow-hidden hover:shadow-lg transition-all cursor-pointer group">
+        {/* Image */}
+        <div className="relative h-40 overflow-hidden">
+          <LazyImage
+            src={event.image_url || '/images/placeholder-event.svg'}
+            alt={td(event.nom_evenement)}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            fallback="/images/placeholder-event.svg"
+          />
         
-        {/* Overlay gradient */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+          {/* Overlay gradient */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
         
-        {/* Badge statut */}
-        <div className="absolute top-3 left-3">
-          <StatusBadge status={event.statut} />
-        </div>
-
-        {/* Date */}
-        {event.date_debut && (
-          <div className="absolute bottom-3 right-3 bg-background/95 backdrop-blur-sm rounded-lg px-3 py-2 shadow-lg">
-            <div className="text-center">
-              <div className="text-lg font-bold leading-none">
-                {new Date(event.date_debut).getDate()}
-              </div>
-              <div className="text-xs uppercase text-muted-foreground">
-                {formatDateLocale(new Date(event.date_debut), { month: 'short' })}
-              </div>
-            </div>
+          {/* Badge statut */}
+          <div className="absolute top-3 left-3">
+            <StatusBadge status={event.statut} />
           </div>
-        )}
 
-        {/* Titre superposé */}
-        <div className="absolute bottom-3 left-3 right-16">
-          <h3 className="text-white font-semibold text-lg line-clamp-2">
-            {td(event.nom_evenement)}
-          </h3>
-        </div>
-      </div>
-
-      <CardContent className="p-4">
-        <div className="space-y-2 text-sm text-muted-foreground">
-          {/* Lieu */}
-          {event.Lieu && (
-            <div className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 flex-shrink-0" />
-              <span className="truncate">{td(event.Lieu.nom)}</span>
-            </div>
-          )}
-
-          {/* Date complète */}
+          {/* Date */}
           {event.date_debut && (
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 flex-shrink-0" />
-              <span>{formatDate(event.date_debut, { dateStyle: 'long' })}</span>
+            <div className="absolute bottom-3 right-3 bg-background/95 backdrop-blur-sm rounded-lg px-3 py-2 shadow-lg">
+              <div className="text-center">
+                <div className="text-lg font-bold leading-none">
+                  {new Date(event.date_debut).getDate()}
+                </div>
+                <div className="text-xs uppercase text-muted-foreground">
+                  {formatDateLocale(new Date(event.date_debut), { month: 'short' })}
+                </div>
+              </div>
             </div>
           )}
 
-          {/* Capacité */}
-          {event.capacite_max && (
-            <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 flex-shrink-0" />
-              <span>{safe(event.nombre_inscrits, '0')} / {safe(event.capacite_max)}</span>
-              {capacityPercentage >= 90 && (
-                <Badge variant="destructive" className="text-xs">
-                  {t('events.almostFull', 'Presque complet')}
-                </Badge>
-              )}
-            </div>
-          )}
+          {/* Titre superposé */}
+          <div className="absolute bottom-3 left-3 right-16">
+            <h3 className="text-white font-semibold text-lg line-clamp-2">
+              {td(event.nom_evenement)}
+            </h3>
+          </div>
         </div>
 
-        {/* Prix et action */}
-        <div className="flex items-center justify-between mt-4 pt-3 border-t">
-          {event.tarif === 0 ? (
-            <Badge className="bg-green-500 text-white">
-              {t('events.free', 'Gratuit')}
-            </Badge>
-          ) : (
-            <span className="font-semibold text-primary text-lg">
-              {formatPrice(event.tarif)}
-            </span>
-          )}
+        <CardContent className="p-4">
+          <div className="space-y-2 text-sm text-muted-foreground">
+            {/* Lieu */}
+            {event.Lieu && (
+              <div className="flex items-center gap-2">
+                <MapPin className="h-4 w-4 flex-shrink-0" />
+                <span className="truncate">{td(event.Lieu.nom)}</span>
+              </div>
+            )}
+
+            {/* Date complète */}
+            {event.date_debut && (
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 flex-shrink-0" />
+                <span>{formatDate(event.date_debut, { dateStyle: 'long' })}</span>
+              </div>
+            )}
+
+            {/* Capacité */}
+            {event.capacite_max && (
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4 flex-shrink-0" />
+                <span>{safe(event.nombre_inscrits, '0')} / {safe(event.capacite_max)}</span>
+                {capacityPercentage >= 90 && (
+                  <Badge variant="destructive" className="text-xs">
+                    {t('events.almostFull', 'Presque complet')}
+                  </Badge>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Prix et action */}
+          <div className="flex items-center justify-between mt-4 pt-3 border-t">
+            {event.tarif === 0 ? (
+              <Badge className="bg-green-500 text-white">
+                {t('events.free', 'Gratuit')}
+              </Badge>
+            ) : (
+              <span className="font-semibold text-primary text-lg">
+                {formatPrice(event.tarif)}
+              </span>
+            )}
           
-          <Button variant="ghost" size="sm" className="group-hover:bg-primary group-hover:text-primary-foreground">
-            {t('common.viewDetails', 'Voir')}
-            <ChevronRight className="h-4 w-4 ml-1" />
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+            {/* Indicateur visuel uniquement : toute la carte est déjà un lien (pas de bouton dans un lien) */}
+            <Button asChild variant="ghost" size="sm" className="group-hover:bg-primary group-hover:text-primary-foreground">
+              <span aria-hidden="true">
+                {t('common.viewDetails', 'Voir')}
+                <ChevronRight className="h-4 w-4 ml-1" />
+              </span>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </Link>
   );
 };
 
@@ -218,7 +223,6 @@ const RelatedEvents: React.FC<RelatedEventsProps> = ({
   limit = 4
 }) => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
 
   // Charger les événements similaires
   const { data: relatedEvents, isLoading } = useQuery({
@@ -245,19 +249,7 @@ const RelatedEvents: React.FC<RelatedEventsProps> = ({
     enabled: !!eventId
   });
 
-  // Navigation
-  const handleEventClick = (id: number) => {
-    navigate(`/evenements/${id}`);
-    // Scroll to top
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  // Voir tous les événements
-  const handleViewAll = () => {
-    navigate('/evenements');
-  };
-
-  // Chargement
+// Chargement
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -284,9 +276,11 @@ const RelatedEvents: React.FC<RelatedEventsProps> = ({
           <p className="text-muted-foreground mb-4">
             {t('event.noRelatedEvents', 'Aucun événement similaire pour le moment')}
           </p>
-          <Button variant="outline" onClick={handleViewAll}>
-            {t('event.browseAllEvents', 'Parcourir tous les événements')}
-            <ChevronRight className="h-4 w-4 ml-1" />
+          <Button asChild variant="outline">
+            <Link to="/evenements">
+              {t('event.browseAllEvents', 'Parcourir tous les événements')}
+              <ChevronRight className="h-4 w-4 ml-1" aria-hidden="true" />
+            </Link>
           </Button>
         </Card>
       </div>
@@ -304,9 +298,11 @@ const RelatedEvents: React.FC<RelatedEventsProps> = ({
           <Sparkles className="h-6 w-6 text-primary" />
           {t('event.relatedEvents', 'Événements similaires')}
         </h2>
-        <Button variant="ghost" onClick={handleViewAll}>
-          {t('common.viewAll', 'Voir tout')}
-          <ChevronRight className="h-4 w-4 ml-1" />
+        <Button asChild variant="ghost">
+          <Link to="/evenements">
+            {t('common.viewAll', 'Voir tout')}
+            <ChevronRight className="h-4 w-4 ml-1" aria-hidden="true" />
+          </Link>
         </Button>
       </div>
 
@@ -315,10 +311,7 @@ const RelatedEvents: React.FC<RelatedEventsProps> = ({
         {/* Événement mis en avant */}
         {featuredEvent && (
           <div className="md:col-span-2 lg:col-span-1">
-            <EventFeatureCard
-              event={featuredEvent}
-              onClick={() => handleEventClick(featuredEvent.id_evenement)}
-            />
+            <EventFeatureCard event={featuredEvent} />
           </div>
         )}
 
@@ -328,7 +321,6 @@ const RelatedEvents: React.FC<RelatedEventsProps> = ({
             <EventMiniCard
               key={event.id_evenement}
               event={event}
-              onClick={() => handleEventClick(event.id_evenement)}
             />
           ))}
         </div>
@@ -337,9 +329,11 @@ const RelatedEvents: React.FC<RelatedEventsProps> = ({
       {/* Bouton voir plus */}
       {relatedEvents.length >= limit && (
         <div className="text-center">
-          <Button variant="outline" onClick={handleViewAll}>
-            {t('event.moreEvents', 'Découvrir plus d\'événements')}
-            <ArrowRight className="h-4 w-4 ml-2" />
+          <Button asChild variant="outline">
+            <Link to="/evenements">
+              {t('event.moreEvents', 'Découvrir plus d\'événements')}
+              <ArrowRight className="h-4 w-4 ml-2" aria-hidden="true" />
+            </Link>
           </Button>
         </div>
       )}

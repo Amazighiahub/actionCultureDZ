@@ -70,8 +70,9 @@ const HeroAlbum: React.FC<HeroAlbumProps> = ({
           size="icon"
           className="mb-6 hover:bg-background/80"
           onClick={() => navigate(-1)}
+          aria-label={t('common.back', 'Retour')}
         >
-          <ChevronLeft className="h-5 w-5" />
+          <ChevronLeft className="h-5 w-5" aria-hidden="true" />
         </Button>
 
         <div className="grid lg:grid-cols-5 gap-8 items-start">
@@ -174,8 +175,9 @@ const HeroAlbum: React.FC<HeroAlbumProps> = ({
                           }}
                           className="bg-white/20 backdrop-blur-sm rounded-full p-2 shadow-lg hover:bg-white/40 transition-colors"
                           title={t('works.zoom', 'Agrandir')}
+                          aria-label={t('works.zoom', 'Agrandir')}
                         >
-                          <ZoomIn className="h-5 w-5 text-white" />
+                          <ZoomIn className="h-5 w-5 text-white" aria-hidden="true" />
                         </button>
                         <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 shadow-lg">
                           <RotateCcw className="h-5 w-5 text-white" />
@@ -300,8 +302,9 @@ const HeroAlbum: React.FC<HeroAlbumProps> = ({
                 onClick={onToggleFavorite}
                 disabled={favoriteLoading}
                 variant="favorite" data-active={isFavorite}
+                aria-label={isFavorite ? t('works.removeFromFavorites', 'Retirer des favoris') : t('works.actions.addToFavorites', 'Ajouter aux favoris')}
               >
-                <Heart className={cn("h-5 w-5 mr-2", isFavorite && "fill-current")} />
+                <Heart className={cn("h-5 w-5 mr-2", isFavorite && "fill-current")} aria-hidden="true" />
                 {isFavorite ? t('works.inFavorites', 'Favori') : t('works.actions.addFavorite', 'Favoris')}
               </Button>
               {shareButton}
@@ -371,12 +374,14 @@ const HeroAlbum: React.FC<HeroAlbumProps> = ({
 
             {/* Modal Zoom Pochette */}
             <Dialog open={showZoom} onOpenChange={setShowZoom}>
-              <DialogContent className="max-w-3xl p-0 bg-black/95 border-0">
+              <DialogContent className="max-w-3xl p-0 bg-black/95 border-0" aria-describedby={undefined}>
+                <DialogTitle className="sr-only">{titre}</DialogTitle>
                 <button
                   onClick={() => setShowZoom(false)}
                   className="absolute top-4 right-4 z-50 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+                  aria-label={t('common.close', 'Fermer')}
                 >
-                  <X className="h-6 w-6 text-white" />
+                  <X className="h-6 w-6 text-white" aria-hidden="true" />
                 </button>
                 <div className="flex items-center justify-center min-h-[60vh] p-4">
                   {mainImage ? (
@@ -401,8 +406,9 @@ const HeroAlbum: React.FC<HeroAlbumProps> = ({
                 <button
                   onClick={() => setShowPlayer(false)}
                   className="absolute top-4 right-4 z-50 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+                  aria-label={t('common.close', 'Fermer')}
                 >
-                  <X className="h-6 w-6 text-white" />
+                  <X className="h-6 w-6 text-white" aria-hidden="true" />
                 </button>
                 <div className="p-6">
                   <DialogHeader className="mb-6">

@@ -4,7 +4,7 @@ import { getLocalizedText } from '@/utils/getLocalizedText';
  * Utilise useDashboardAdmin
  */
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -129,8 +129,9 @@ const AdminEvenementsTab: React.FC = () => {
         <CardContent className="p-4">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
               <Input
+                aria-label={t('admin.events.searchPlaceholder', 'Rechercher par nom...')}
                 placeholder={t('admin.events.searchPlaceholder', 'Rechercher par nom...')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -189,7 +190,7 @@ const AdminEvenementsTab: React.FC = () => {
             const lieu = getLocalizedText(event.lieu?.nom || event.lieu_nom, currentLang, '');
 
             return (
-              <Card key={event.id_evenement} className="hover:shadow-md transition-shadow overflow-hidden cursor-pointer" onClick={() => navigate(`/evenements/${event.id_evenement}`, { state: { from: '/admin/dashboard?tab=evenements' } })}>
+              <Card key={event.id_evenement} className="relative hover:shadow-md transition-shadow overflow-hidden cursor-pointer">
                 {/* Image */}
                 <div className="aspect-video relative bg-muted">
                   {event.image_url || event.medias?.[0]?.url ? (
@@ -217,7 +218,16 @@ const AdminEvenementsTab: React.FC = () => {
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-medium truncate">{nom}</h3>
+                      <h3 className="font-medium truncate">
+                        {/* Lien « étiré » : son ::after couvre toute la carte (cliquable, crawlable, accessible au clavier) */}
+                        <Link
+                          to={`/evenements/${event.id_evenement}`}
+                          state={{ from: '/admin/dashboard?tab=evenements' }}
+                          className="after:absolute after:inset-0 after:rounded-lg focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-inset focus-visible:after:ring-ring"
+                        >
+                          {nom}
+                        </Link>
+                      </h3>
                       <p className="text-sm text-muted-foreground line-clamp-2">
                         {description}
                       </p>
@@ -245,7 +255,7 @@ const AdminEvenementsTab: React.FC = () => {
 
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" aria-label={t('common.moreOptions', 'Plus d\'options')} onClick={(e) => e.stopPropagation()}>
+                        <Button variant="ghost" size="icon" className="relative z-10" aria-label={t('common.moreOptions', 'Plus d\'options')} onClick={(e) => e.stopPropagation()}>
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>

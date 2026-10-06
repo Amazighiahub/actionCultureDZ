@@ -441,7 +441,9 @@
     "unspecifiedLocation": "Location not specified",
     "removeFrom": "Remove",
     "notProvided": "Not provided",
-    "unknown": "Unknown"
+    "unknown": "Unknown",
+    "sortBy": "Sort by",
+    "photo": "photo"
   },
   "contributors": {
     "addedCount_one": "{{count}} contributor added",
@@ -585,7 +587,8 @@
     "past": "Past",
     "upcoming": "Upcoming",
     "upcomingLower": "upcoming",
-    "pastLower": "past"
+    "pastLower": "past",
+    "resultsHeading": "Events list"
   },
   "footer": {
     "legal": "Legal",
@@ -621,7 +624,9 @@
       "albums": "Albums",
       "articles": "Articles",
       "scientific": "Scientific",
-      "art": "Artworks"
+      "art": "Artworks",
+      "mainLabel": "Main navigation",
+      "subLabel": "Section categories"
     },
     "subtitle": "Tala DZ",
     "title": "Tala DZ",
@@ -634,7 +639,12 @@
       "myProfile": "My profile",
       "mySpace": "My space",
       "pendingValidations": "Pending validations",
-      "proDashboard": "Pro Dashboard"
+      "proDashboard": "Pro Dashboard",
+      "open": "My account menu"
+    },
+    "menu": {
+      "close": "Close menu",
+      "open": "Open menu"
     }
   },
   "home": {
@@ -643,7 +653,16 @@
       "subtitle": "Explore, preserve and share the cultural richness of Algeria",
       "explore": "Explore heritage",
       "contribute": "Contribute",
-      "addSite": "Add a site"
+      "addSite": "Add a site",
+      "slides": {
+        "timgad": "Roman ruins of Timgad",
+        "sahara": "Algerian Sahara",
+        "casbah": "Casbah of Algiers",
+        "grenier": "Traditional granary"
+      },
+      "goToSlide": "Image {{index}} of {{total}}: {{title}}",
+      "play": "Resume slideshow",
+      "pause": "Pause slideshow"
     },
     "explore": {
       "subtitle": "A digital platform dedicated to the preservation and promotion of Algerian culture in all its richness and diversity.",
@@ -998,7 +1017,8 @@
       "title": "Title A-Z"
     },
     "noResults": "No works found",
-    "noResultsDesc": "Try changing your search criteria"
+    "noResultsDesc": "Try changing your search criteria",
+    "resultsHeading": "Works list"
   },
   "verifyemailpage": {
     "vrification_russie": "Verification Successful!",
@@ -1574,7 +1594,10 @@
     "comments": "Comments",
     "artisanWorks": "Other works by this artisan",
     "noOtherWorks": "This artisan has no other works yet",
-    "similarCreations": "Similar creations"
+    "similarCreations": "Similar creations",
+    "removeFromFavorites": "Remove from favourites",
+    "addToFavorites": "Add to favourites",
+    "resultsHeading": "Crafts list"
   },
   "apropos": {
     "title_transmission": "Transmission",
@@ -2820,7 +2843,9 @@
       "error": "An error occurred during registration",
       "cancelTitle": "Cancel my registration",
       "cancelConfirm": "Are you sure you want to cancel your registration for this event? This action cannot be undone.",
-      "confirmCancel": "Confirm cancellation"
+      "confirmCancel": "Confirm cancellation",
+      "contactByEmail": "Email the organiser",
+      "contactByPhone": "Call the organiser"
     },
     "registrationDeadline": "Registration deadline",
     "relatedEvents": "Related events",
@@ -3362,7 +3387,8 @@
     "proService": "Are you a professional?",
     "addYourService": "Offer your services here",
     "backToList": "Back to list",
-    "notFound": "Site not found"
+    "notFound": "Site not found",
+    "playVideo": "Play video: {{title}}"
   },
   "toasts": {
     "error": "Error",
@@ -3523,7 +3549,9 @@
       "loadFailed": "Unable to load the craft product",
       "loadMetadataFailed": "Error loading materials and techniques",
       "prixMinMax": "The minimum price cannot be higher than the maximum price"
-    }
+    },
+    "addTag": "Add tag",
+    "removeTag": "Remove tag {{tag}}"
   },
   "service": {
     "addTitle": "Add my service",
@@ -3666,7 +3694,11 @@
     "generalInstructions": "General instructions",
     "installKeyboard": "Install a Tamazight keyboard from your device settings",
     "searchStore": "Search for \"Tifinagh\" or \"Tamazight Latin\" in your store",
-    "activateKeyboard": "Activate the keyboard in language settings"
+    "activateKeyboard": "Activate the keyboard in language settings",
+    "languagesGroup": "{{label}}: input language",
+    "requiredEmpty": "(required, not filled in)",
+    "filled": "(filled in)",
+    "hasError": "(error)"
   },
   "programme": {
     "form": {
@@ -4066,7 +4098,9 @@
     "empty": "No media available",
     "emptyDesc": "This event's gallery is empty for now",
     "all": "All",
-    "emptyDescOeuvre": "The gallery is empty for now"
+    "emptyDescOeuvre": "The gallery is empty for now",
+    "gridView": "Grid view",
+    "listView": "List view"
   },
   "gestionArtisanat": {
     "errors": {
@@ -4142,5 +4176,13 @@
     "success": "QR Code downloaded",
     "checkDownloads": "Check your downloads",
     "downloadError": "Unable to download the QR Code"
+  },
+  "rating": {
+    "value": "Rating: {{value}} out of {{max}}",
+    "label": "Rating",
+    "star": "{{count}} star(s) out of 5"
+  },
+  "a11y": {
+    "skipToContent": "Skip to main content"
   }
 }

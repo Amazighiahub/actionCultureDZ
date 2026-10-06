@@ -620,32 +620,30 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
                                 const Icon = getOeuvreTypeIcon(oeuvre.TypeOeuvre?.nom_type);
 
                                 return (
-                                  <div
+                                  <label
                                     key={oeuvre.id_oeuvre}
+                                    htmlFor={`oeuvre-select-${oeuvre.id_oeuvre}`}
                                     className={cn(
                                       "flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors",
                                       isSelected
                                         ? "bg-primary/10 border-2 border-primary"
                                         : "bg-muted/50 hover:bg-muted border-2 border-transparent"
                                     )}
-                                    onClick={() => toggleOeuvreSelection(oeuvre.id_oeuvre)}
-                                    role="button"
-                                    tabIndex={0}
-                                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleOeuvreSelection(oeuvre.id_oeuvre); } }}
                                   >
                                     <Checkbox
+                                      id={`oeuvre-select-${oeuvre.id_oeuvre}`}
                                       checked={isSelected}
                                       onCheckedChange={() => toggleOeuvreSelection(oeuvre.id_oeuvre)}
                                     />
                                     {oeuvre.image_url ? (
                                       <img
                                         src={oeuvre.image_url}
-                                        alt={td(oeuvre.titre)}
+                                        alt=""
                                         className="w-12 h-12 object-cover rounded"
                                       />
                                     ) : (
                                       <div className="w-12 h-12 bg-muted rounded flex items-center justify-center">
-                                        <Icon className="h-6 w-6 text-muted-foreground" />
+                                        <Icon className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
                                       </div>
                                     )}
                                     <div className="flex-1 min-w-0">
@@ -655,9 +653,9 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
                                       )}
                                     </div>
                                     {isSelected && (
-                                      <CheckCircle className="h-5 w-5 text-primary flex-shrink-0" />
+                                      <CheckCircle className="h-5 w-5 text-primary flex-shrink-0" aria-hidden="true" />
                                     )}
-                                  </div>
+                                  </label>
                                 );
                               })}
                             </div>
@@ -753,15 +751,21 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
             <div className="flex justify-center gap-2">
               {event.contact_email && (
                 <Button variant="ghost" size="sm" asChild>
-                  <a href={`mailto:${event.contact_email}`}>
-                    <Mail className="h-4 w-4" />
+                  <a
+                    href={`mailto:${event.contact_email}`}
+                    aria-label={t('event.registration.contactByEmail', "Contacter l'organisateur par e-mail")}
+                  >
+                    <Mail className="h-4 w-4" aria-hidden="true" />
                   </a>
                 </Button>
               )}
               {event.contact_telephone && (
                 <Button variant="ghost" size="sm" asChild>
-                  <a href={`tel:${event.contact_telephone}`}>
-                    <Phone className="h-4 w-4" />
+                  <a
+                    href={`tel:${event.contact_telephone}`}
+                    aria-label={t('event.registration.contactByPhone', "Appeler l'organisateur")}
+                  >
+                    <Phone className="h-4 w-4" aria-hidden="true" />
                   </a>
                 </Button>
               )}

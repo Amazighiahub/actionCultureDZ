@@ -2,8 +2,8 @@
  * Evenements.tsx - Page de listing des événements refactorisée
  * Avec lazy loading des images et composants séparés
  */
-import React, { Suspense, useState, useCallback, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import React, { Suspense, useState, useEffect } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -44,25 +44,27 @@ import { useFormatDate } from '@/hooks/useFormatDate';
 const EVENT_TYPE_VALUES = ['tous', 'exposition', 'concert', 'festival', 'conference', 'atelier', 'spectacle'];
 const STATUS_OPTION_VALUES = ['tous', 'a_venir', 'en_cours', 'termine'];
 
+// Lien « étiré » : le titre porte le lien, son ::after couvre toute la carte (cliquable + crawlable)
+const STRETCHED_LINK_CLASS =
+  'after:absolute after:inset-0 after:rounded-lg focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-inset focus-visible:after:ring-ring';
+
 // Composant carte d'événement
 interface EventCardProps {
   event: Record<string, unknown>;
-  onView: (id: number) => void;
 }
 
-const EventCard: React.FC<EventCardProps> = React.memo(({ event, onView }) => {
+const EventCard: React.FC<EventCardProps> = React.memo(({ event }) => {
   const { t } = useTranslation();
   const { formatDate } = useFormatDate();
+  const eventTitle = event.nom_evenement || event.titre;
+  const eventUrl = `/evenements/${event.id_evenement}`;
 
   const capacityPercentage = event.capacite_max
     ? Math.round((event.nombre_inscrits || 0) / event.capacite_max * 100)
     : 0;
 
   return (
-    <Card 
-      className="overflow-hidden hover:shadow-lg transition-all cursor-pointer group"
-      onClick={() => onView(event.id_evenement)}
-    >
+    <Card className="relative overflow-hidden hover:shadow-lg transition-all cursor-pointer group">
       {/* Image avec lazy loading */}
       <div className="relative h-48 overflow-hidden">
         <LazyImage
@@ -94,7 +96,9 @@ const EventCard: React.FC<EventCardProps> = React.memo(({ event, onView }) => {
 
       <CardContent className="p-4">
         <h3 className="font-semibold text-lg line-clamp-2 mb-2 group-hover:text-primary transition-colors">
-          {event.nom_evenement || event.titre}
+          <Link to={eventUrl} className={STRETCHED_LINK_CLASS}>
+            {eventTitle}
+          </Link>
         </h3>
 
         <div className="space-y-2 text-sm text-muted-foreground">
@@ -148,9 +152,15 @@ const EventCard: React.FC<EventCardProps> = React.memo(({ event, onView }) => {
             <span></span>
           )}
           
-          <Button variant="ghost" size="sm" className="group-hover:bg-primary group-hover:text-primary-foreground">
-            {t('common.viewDetails', 'Voir')}
-            <ArrowRight className="h-4 w-4 ml-1" />
+          <Button asChild variant="ghost" size="sm" className="group-hover:bg-primary group-hover:text-primary-foreground">
+            <Link
+              to={eventUrl}
+              tabIndex={-1}
+              aria-label={`${t('common.viewDetails', 'Voir les détails')} : ${eventTitle}`}
+            >
+              {t('common.viewDetails', 'Voir')}
+              <ArrowRight className="h-4 w-4 ml-1" aria-hidden="true" />
+            </Link>
           </Button>
         </div>
       </CardContent>
@@ -161,7 +171,6 @@ const EventCard: React.FC<EventCardProps> = React.memo(({ event, onView }) => {
 // Composant principal
 const Evenements: React.FC = () => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
   // États des filtres
@@ -194,11 +203,6 @@ const Evenements: React.FC = () => {
     statut: statusFilter !== 'tous' ? statusFilter : undefined,
     type: typeFilter !== 'tous' ? typeFilter : undefined
   });
-
-  // Navigation vers détail
-  const handleViewEvent = useCallback((id: number) => {
-    navigate(`/evenements/${id}`);
-  }, [navigate]);
 
   // Reset des filtres
   const resetFilters = () => {
@@ -236,8 +240,9 @@ const Evenements: React.FC = () => {
             <div className="flex flex-col md:flex-row gap-4">
               {/* Recherche */}
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
                 <Input
+                  aria-label={t('events.searchPlaceholder', 'Rechercher un événement...')}
                   placeholder={t('events.searchPlaceholder', 'Rechercher un événement...')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -247,7 +252,7 @@ const Evenements: React.FC = () => {
 
               {/* Filtre statut */}
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[150px]">
+                <SelectTrigger className="w-[150px]" aria-label={t('common.status', 'Statut')}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -263,7 +268,7 @@ const Evenements: React.FC = () => {
 
               {/* Filtre type */}
               <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-[180px]" aria-label={t('common.type', 'Type')}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -319,12 +324,12 @@ const Evenements: React.FC = () => {
               </div>
 
               {/* Grille des événements */}
+              <h2 className="sr-only">{t('events.resultsHeading', 'Liste des événements')}</h2>
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {evenements.map((event) => (
                   <EventCard
                     key={event.id_evenement}
                     event={event}
-                    onView={handleViewEvent}
                   />
                 ))}
               </div>

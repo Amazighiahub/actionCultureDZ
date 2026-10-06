@@ -14,6 +14,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import NotificationToastListener from '@/components/NotificationToastListener';
 import RTLManager from './components/RtlManager';
 import ScrollToTop from './components/ScrollToTop';
+import SkipLink from './components/SkipLink';
 import ErrorBoundary from './components/shared/ErrorBoundary';
 import { LanguagePersistenceManager } from '@/hooks/useLanguagePersistence';
 import { useToast } from '@/hooks/use-toast';
@@ -79,13 +80,18 @@ const NotificationPreferences = React.lazy(() => import('./pages/notifications/P
 // ============================================================================
 // Composant de chargement pour Suspense
 // ============================================================================
-const PageLoader = () => (
-  <div className="flex items-center justify-center min-h-[60vh]">
-    <div className="flex flex-col items-center gap-4">
-      <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+const PageLoader = () => {
+  const { t } = useTranslation();
+  // role="status" : le chargement est annoncé aux lecteurs d'écran
+  return (
+    <div className="flex items-center justify-center min-h-[60vh]" role="status">
+      <div className="flex flex-col items-center gap-4">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" aria-hidden="true" />
+        <span className="sr-only">{t('common.loading', 'Chargement...')}</span>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 
 // Composant pour router vers le bon dashboard selon le rôle
@@ -155,7 +161,9 @@ const App = () => (
            <LanguagePersistenceManager />
           {/* Gestionnaire RTL */}
           <RTLManager />
-          {/* Scroll en haut à chaque changement de page */}
+          {/* Lien d'évitement : premier arrêt clavier, saute vers le contenu */}
+          <SkipLink />
+          {/* Scroll en haut (et focus sur le contenu) à chaque changement de page */}
           <ScrollToTop />
           {/* Bannière offline */}
           <OfflineBanner />

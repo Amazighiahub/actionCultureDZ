@@ -414,7 +414,7 @@ const AjouterArtisanat: React.FC = () => {
                   {/* Materiau et Technique */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <RequiredLabel required>{t('ajouterArtisanat.materiau', 'Matériau')}</RequiredLabel>
+                      <RequiredLabel htmlFor="artisanat-materiau" required>{t('ajouterArtisanat.materiau', 'Matériau')}</RequiredLabel>
                       <Select
                         value={formData.id_materiau ? String(formData.id_materiau) : ''}
                         onValueChange={(value) => {
@@ -424,6 +424,8 @@ const AjouterArtisanat: React.FC = () => {
                         }}
                       >
                         <SelectTrigger
+                          id="artisanat-materiau"
+                          aria-required="true"
                           className={fieldErrors.id_materiau ? 'border-destructive' : ''}
                           aria-invalid={!!fieldErrors.id_materiau}
                           aria-describedby={fieldErrors.id_materiau ? 'materiau-error' : undefined}
@@ -444,7 +446,7 @@ const AjouterArtisanat: React.FC = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <RequiredLabel required>{t('ajouterArtisanat.technique', 'Technique')}</RequiredLabel>
+                      <RequiredLabel htmlFor="artisanat-technique" required>{t('ajouterArtisanat.technique', 'Technique')}</RequiredLabel>
                       <Select
                         value={formData.id_technique ? String(formData.id_technique) : ''}
                         onValueChange={(value) => {
@@ -454,6 +456,8 @@ const AjouterArtisanat: React.FC = () => {
                         }}
                       >
                         <SelectTrigger
+                          id="artisanat-technique"
+                          aria-required="true"
                           className={fieldErrors.id_technique ? 'border-destructive' : ''}
                           aria-invalid={!!fieldErrors.id_technique}
                           aria-describedby={fieldErrors.id_technique ? 'technique-error' : undefined}
@@ -487,8 +491,9 @@ const AjouterArtisanat: React.FC = () => {
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>{t('ajouterArtisanat.prixMin', 'Prix minimum (DA)')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span></Label>
+                      <Label htmlFor="artisanat-prix-min">{t('ajouterArtisanat.prixMin', 'Prix minimum (DA)')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span></Label>
                       <Input
+                        id="artisanat-prix-min"
                         type="number"
                         min={0}
                         max={100000000}
@@ -503,11 +508,13 @@ const AjouterArtisanat: React.FC = () => {
                         onBlur={() => validateFieldOnBlur('prix_min')}
                         placeholder="0.00"
                         aria-invalid={!!fieldErrors.prix}
+                        aria-describedby={fieldErrors.prix ? 'artisanat-prix-error' : undefined}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>{t('ajouterArtisanat.prixMax', 'Prix maximum (DA)')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span></Label>
+                      <Label htmlFor="artisanat-prix-max">{t('ajouterArtisanat.prixMax', 'Prix maximum (DA)')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span></Label>
                       <Input
+                        id="artisanat-prix-max"
                         type="number"
                         min={0}
                         max={100000000}
@@ -522,20 +529,22 @@ const AjouterArtisanat: React.FC = () => {
                         onBlur={() => validateFieldOnBlur('prix_max')}
                         placeholder="0.00"
                         aria-invalid={!!fieldErrors.prix}
+                        aria-describedby={fieldErrors.prix ? 'artisanat-prix-error' : undefined}
                       />
                     </div>
                   </div>
                   {fieldErrors.prix && (
-                    <p role="alert" className="text-sm text-destructive">{fieldErrors.prix}</p>
+                    <p id="artisanat-prix-error" role="alert" className="text-sm text-destructive">{fieldErrors.prix}</p>
                   )}
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label className="flex items-center gap-2">
-                        <Clock className="h-4 w-4" />
+                      <Label htmlFor="artisanat-delai" className="flex items-center gap-2">
+                        <Clock className="h-4 w-4" aria-hidden="true" />
                         {t('ajouterArtisanat.delaiFabrication', 'Délai de fabrication (jours)')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span>
                       </Label>
                       <Input
+                        id="artisanat-delai"
                         type="number"
                         min={1}
                         max={365}
@@ -551,11 +560,12 @@ const AjouterArtisanat: React.FC = () => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label className="flex items-center gap-2">
-                        <Package className="h-4 w-4" />
+                      <Label htmlFor="artisanat-stock" className="flex items-center gap-2">
+                        <Package className="h-4 w-4" aria-hidden="true" />
                         {t('ajouterArtisanat.enStock', 'Quantité en stock')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span>
                       </Label>
                       <Input
+                        id="artisanat-stock"
                         type="number"
                         min={0}
                         max={100000}
@@ -600,6 +610,8 @@ const AjouterArtisanat: React.FC = () => {
                 <CardContent>
                   <div className="flex gap-2 mb-4">
                     <Input
+                      id="artisanat-new-tag"
+                      aria-label={t('ajouterArtisanat.tagPlaceholder', 'Ajouter un tag...')}
                       value={newTag}
                       onChange={(e) => setNewTag(e.target.value)}
                       placeholder={t('ajouterArtisanat.tagPlaceholder', 'Ajouter un tag...')}
@@ -610,8 +622,8 @@ const AjouterArtisanat: React.FC = () => {
                         }
                       }}
                     />
-                    <Button type="button" onClick={addTag} variant="outline">
-                      <Plus className="h-4 w-4" />
+                    <Button type="button" onClick={addTag} variant="outline" aria-label={t('ajouterArtisanat.addTag', 'Ajouter le tag')}>
+                      <Plus className="h-4 w-4" aria-hidden="true" />
                     </Button>
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -622,8 +634,9 @@ const AjouterArtisanat: React.FC = () => {
                           type="button"
                           onClick={() => removeTag(tag)}
                           className="ms-2 hover:text-destructive"
+                          aria-label={t('ajouterArtisanat.removeTag', 'Supprimer le tag {{tag}}', { tag })}
                         >
-                          <X className="h-3 w-3" />
+                          <X className="h-3 w-3" aria-hidden="true" />
                         </button>
                       </Badge>
                     ))}

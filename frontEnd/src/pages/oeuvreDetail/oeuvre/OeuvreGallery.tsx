@@ -105,11 +105,18 @@ const Lightbox: React.FC<LightboxProps> = ({
 
   if (!currentMedia) return null;
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (medias.length <= 1) return;
+    const isRtl = document.dir === 'rtl';
+    if (e.key === 'ArrowLeft') { if (isRtl) onNext(); else onPrevious(); }
+    if (e.key === 'ArrowRight') { if (isRtl) onPrevious(); else onNext(); }
+  };
+
   const renderMedia = () => {
     switch (currentMedia.type_media) {
       case 'video':
         return (
-          <video src={getAssetUrl(currentMedia.url)} controls autoPlay className="max-h-[80vh] max-w-full rounded-lg">
+          <video src={getAssetUrl(currentMedia.url)} controls className="max-h-[80vh] max-w-full rounded-lg">
             Votre navigateur ne supporte pas la lecture vidéo.
           </video>
         );
@@ -147,15 +154,16 @@ const Lightbox: React.FC<LightboxProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 bg-black/95 border-0">
+      <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 bg-black/95 border-0" onKeyDown={handleKeyDown}>
         <DialogTitle className="sr-only">{currentMedia.titre || `Media ${currentIndex + 1}`}</DialogTitle>
         
         <Button
           variant="ghost" size="icon"
           className="absolute top-4 right-4 z-50 text-white hover:bg-white/20"
           onClick={onClose}
+          aria-label={t('common.close', 'Fermer')}
         >
-          <X className="h-6 w-6" />
+          <X className="h-6 w-6" aria-hidden="true" />
         </Button>
 
         {medias.length > 1 && (
@@ -164,15 +172,17 @@ const Lightbox: React.FC<LightboxProps> = ({
               variant="ghost" size="icon"
               className="absolute left-4 top-1/2 -translate-y-1/2 z-50 text-white hover:bg-white/20"
               onClick={onPrevious}
+              aria-label={t('common.previous', 'Précédent')}
             >
-              <ChevronLeft className="h-8 w-8" />
+              <ChevronLeft className="h-8 w-8" aria-hidden="true" />
             </Button>
             <Button
               variant="ghost" size="icon"
               className="absolute right-4 top-1/2 -translate-y-1/2 z-50 text-white hover:bg-white/20"
               onClick={onNext}
+              aria-label={t('common.next', 'Suivant')}
             >
-              <ChevronRight className="h-8 w-8" />
+              <ChevronRight className="h-8 w-8" aria-hidden="true" />
             </Button>
           </>
         )}
@@ -251,11 +261,23 @@ const OeuvreGallery: React.FC<OeuvreGalleryProps> = ({ medias }) => {
         </div>
 
         <div className="flex gap-1 border rounded-lg p-1">
-          <Button variant={viewMode === 'grid' ? 'secondary' : 'ghost'} size="sm" onClick={() => setViewMode('grid')}>
-            <Grid className="h-4 w-4" />
+          <Button
+            variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
+            size="sm"
+            onClick={() => setViewMode('grid')}
+            aria-label={t('gallery.gridView', 'Vue en grille')}
+            aria-pressed={viewMode === 'grid'}
+          >
+            <Grid className="h-4 w-4" aria-hidden="true" />
           </Button>
-          <Button variant={viewMode === 'list' ? 'secondary' : 'ghost'} size="sm" onClick={() => setViewMode('list')}>
-            <List className="h-4 w-4" />
+          <Button
+            variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+            size="sm"
+            onClick={() => setViewMode('list')}
+            aria-label={t('gallery.listView', 'Vue en liste')}
+            aria-pressed={viewMode === 'list'}
+          >
+            <List className="h-4 w-4" aria-hidden="true" />
           </Button>
         </div>
       </div>

@@ -311,7 +311,7 @@ const OeuvreSpecificFields: React.FC<OeuvreSpecificFieldsProps> = ({
           <Select
           value={formData.id_materiau?.toString() || ''}
           onValueChange={(value) => handleInputChange('id_materiau', value ? parseInt(value) : undefined)}>
-            <SelectTrigger>
+            <SelectTrigger id="id_materiau">
               <SelectValue placeholder={t("ajouteroeuvre.placeholder_slectionnez_matriau")} />
             </SelectTrigger>
             <SelectContent>
@@ -328,7 +328,7 @@ const OeuvreSpecificFields: React.FC<OeuvreSpecificFieldsProps> = ({
           <Select
           value={formData.id_technique?.toString() || ''}
           onValueChange={(value) => handleInputChange('id_technique', value ? parseInt(value) : undefined)}>
-            <SelectTrigger>
+            <SelectTrigger id="id_technique">
               <SelectValue placeholder={t("ajouteroeuvre.placeholder_slectionnez_une_technique")} />
             </SelectTrigger>
             <SelectContent>
