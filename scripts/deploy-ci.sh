@@ -38,6 +38,11 @@ wait_healthy() {
   return 1
 }
 
+# Config nginx montée fichier par fichier : git la remplace par un nouveau fichier, que le
+# conteneur en marche ne voit pas. Si elle change, le conteneur nginx doit être recréé.
+NGINX_CHANGED=0
+git diff --quiet "$PREV" "$SHA" -- nginx/ docker-compose.prod.yml || NGINX_CHANGED=1
+
 rollback() {
   warn "echec du deploiement de $SHA -> retour aux images precedentes ($PREV)"
   for s in backend frontend; do
@@ -45,9 +50,13 @@ rollback() {
       && docker tag "$PROJECT-$s:rollback" "$PROJECT-$s:latest" || true
   done
   $C up -d --no-deps backend frontend || true
-  $C exec -T nginx nginx -s reload || true
   # Le workflow a vérifié que le dépôt était propre avant le déploiement
   git reset --hard --quiet "$PREV" || true
+  if [ "$NGINX_CHANGED" = 1 ]; then
+    $C up -d --no-deps --force-recreate nginx || true
+  else
+    $C exec -T nginx nginx -s reload || true
+  fi
 }
 
 # 0. Configuration compose + .env lisibles
@@ -109,11 +118,20 @@ $C up -d --no-deps frontend
 wait_healthy eventculture-frontend 90
 
 # 8. nginx résout les upstreams au chargement : recharger après recréation des conteneurs
-$C exec -T nginx nginx -t
-$C exec -T nginx nginx -s reload
+if [ "$NGINX_CHANGED" = 1 ]; then
+  log "configuration nginx modifiee : validation puis recreation du conteneur nginx"
+  $C run --rm --no-deps -T nginx nginx -t
+  $C up -d --no-deps --force-recreate nginx
+  wait_healthy eventculture-nginx 60
+else
+  log "rechargement nginx"
+  $C exec -T nginx nginx -t
+  $C exec -T nginx nginx -s reload
+fi
 
 # 9. Vérification de bout en bout à travers nginx. Le certificat est contrôlé à part :
 #    un retour arrière des images ne réparerait pas un certificat expiré.
+log "verification de bout en bout"
 sleep 3
 curl -fsSk --max-time 10 --resolve "$DOMAIN:443:127.0.0.1" "https://$DOMAIN/health" | grep -q '"healthy"'
 curl -fsSk --max-time 10 --resolve "$DOMAIN:443:127.0.0.1" "https://$DOMAIN/" | grep -q 'id="root"'
