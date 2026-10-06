@@ -145,13 +145,17 @@ jobs:
           command_timeout: 30m
           script: |
             set -Eeuo pipefail
+            # Annotation lisible dans le résumé GitHub en cas d'échec avant deploy-ci.sh
+            trap 'echo "::error title=Deploiement VPS::echec de : $BASH_COMMAND"' ERR
             cd /home/actionCultureDZ
             # Refuser de déployer par-dessus des modifications locales du VPS
             if [ -n "$(sudo git status --porcelain --untracked-files=no)" ]; then
-              echo "Modifications locales sur le VPS : deploiement annule"; sudo git status --short; exit 1
+              echo "::error title=Deploiement VPS::modifications locales sur le VPS, deploiement annule : $(sudo git status --short --untracked-files=no | paste -sd ' ')"
+              sudo git status --short; exit 1
             fi
             PREV="$(sudo git rev-parse HEAD)"
             sudo git fetch --quiet origin main
             # Déployer exactement le commit testé par les jobs précédents
             sudo git merge --ff-only --quiet "$DEPLOY_SHA"
+            trap - ERR
             sudo bash scripts/deploy-ci.sh "$DEPLOY_SHA" "$PREV"
