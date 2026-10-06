@@ -33,6 +33,7 @@ class CreateUserDTO extends BaseDTO {
     this.commune = BaseDTO.cleanString(data.commune);
     // Commune de résidence (identifiant) : obligatoire pour un professionnel
     this.idCommune = BaseDTO.toInt(data.id_commune ?? data.communeId, null);
+    this.residesAbroad = data.wilaya_residence === null;
 
     // Consentements
     this.accepteConditions = BaseDTO.toBool(data.accepte_conditions || data.accepteConditions);
@@ -154,8 +155,9 @@ class CreateUserDTO extends BaseDTO {
       errors.push({ field: 'id_type_user', message: 'Type d\'utilisateur invalide' });
     }
 
-    // Professionnel : commune obligatoire (proximité avec les lieux et les autres pros)
-    if (this.idTypeUser !== 1 && !this.idCommune) {
+    // Professionnel : commune obligatoire (proximité avec les lieux et les autres pros),
+    // sauf résidence à l'étranger (wilaya explicitement nulle)
+    if (this.idTypeUser !== 1 && !this.idCommune && !this.residesAbroad) {
       errors.push({ field: 'id_commune', message: 'La commune est obligatoire pour un compte professionnel' });
     }
 

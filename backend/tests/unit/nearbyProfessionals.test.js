@@ -95,3 +95,13 @@ describe('commune de résidence', () => {
     expect(data.id_commune).toBeNull();
   });
 });
+
+describe('professionnel résidant à l\'étranger', () => {
+  it('commune non exigée quand la wilaya est explicitement nulle', () => {
+    const dto = new CreateUserDTO({
+      email: 'a@b.dz', password: 'Azerty123456!', nom: 'N', prenom: 'P', accepte_conditions: 'true',
+      id_type_user: 7, wilaya_residence: null
+    });
+    expect(dto.validate().errors.filter(e => e.field === 'id_commune')).toHaveLength(0);
+  });
+});

@@ -12,7 +12,10 @@ export interface RegisterVisitorData {
   email: string;
   mot_de_passe: string;
   confirmation_mot_de_passe: string;
-  wilaya_residence: number;
+  /** null = réside à l'étranger */
+  wilaya_residence: number | null;
+  /** Commune de résidence (obligatoire pour un professionnel résidant en Algérie) */
+  id_commune?: number;
   telephone?: string;
   accepte_conditions: boolean;
   accepte_newsletter?: boolean;

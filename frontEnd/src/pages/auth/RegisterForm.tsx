@@ -21,42 +21,11 @@ import { PasswordStrengthIndicator } from '@/components/auth/PasswordStrengthInd
 import { httpClient } from '@/services/httpClient';
 import { SECTEUR_TYPE_USER_MAP, SECTEUR_OPTIONS } from '@/types/models/auth.types';
 import { useWilayas } from '@/hooks/useGeographie';
+import GeoSelector from '@/components/shared/GeoSelector';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import { authLogger } from '@/utils/logger';
 import { PhoneInput } from '@/components/shared/PhoneInput';
 
-// Mapping complet des 58 wilayas ASCII → noms avec accents français
-const WILAYA_ACCENTS: Record<string, string> = {
-  'Adrar': 'Adrar', 'Chlef': 'Chlef', 'Laghouat': 'Laghouat',
-  'Oum El Bouaghi': 'Oum El Bouaghi', 'Batna': 'Batna', 'Bejaia': 'Béjaïa',
-  'Biskra': 'Biskra', 'Bechar': 'Béchar', 'Blida': 'Blida',
-  'Bouira': 'Bouira', 'Tamanrasset': 'Tamanrasset', 'Tebessa': 'Tébessa',
-  'Tlemcen': 'Tlemcen', 'Tiaret': 'Tiaret', 'Tizi Ouzou': 'Tizi Ouzou',
-  'Alger': 'Alger', 'Djelfa': 'Djelfa', 'Jijel': 'Jijel',
-  'Setif': 'Sétif', 'Saida': 'Saïda', 'Skikda': 'Skikda',
-  'Sidi Bel Abbes': 'Sidi Bel Abbès', 'Annaba': 'Annaba', 'Guelma': 'Guelma',
-  'Constantine': 'Constantine', 'Medea': 'Médéa', 'Mostaganem': 'Mostaganem',
-  'Msila': "M'sila", 'Mascara': 'Mascara', 'Ouargla': 'Ouargla',
-  'Oran': 'Oran', 'El Bayadh': 'El Bayadh', 'Illizi': 'Illizi',
-  'Bordj Bou Arreridj': 'Bordj Bou Arréridj', 'Boumerdes': 'Boumerdès',
-  'El Tarf': 'El Tarf', 'Tindouf': 'Tindouf', 'Tissemsilt': 'Tissemsilt',
-  'El Oued': 'El Oued', 'Khenchela': 'Khenchela', 'Souk Ahras': 'Souk Ahras',
-  'Tipaza': 'Tipaza', 'Mila': 'Mila', 'Ain Defla': 'Aïn Defla',
-  'Naama': 'Naâma', 'Ain Temouchent': 'Aïn Témouchent',
-  'Ghardaia': 'Ghardaïa', 'Relizane': 'Relizane',
-  'Timimoun': 'Timimoun', 'Bordj Badji Mokhtar': 'Bordj Badji Mokhtar',
-  'Ouled Djellal': 'Ouled Djellal', 'Beni Abbes': 'Béni Abbès',
-  'In Salah': 'In Salah', 'In Guezzam': 'In Guezzam',
-  'Touggourt': 'Touggourt', 'Djanet': 'Djanet',
-  'El Meghaier': "El M'Ghair", 'El Meniaa': 'El Ménéa',
-};
-
-const getWilayaName = (wilaya: any, lang: string): string => {
-  if (lang === 'ar' && wilaya.nom) return wilaya.nom;
-  // Toujours utiliser le mapping ASCII → accents français
-  const ascii = wilaya.wilaya_name_ascii || '';
-  return WILAYA_ACCENTS[ascii] || ascii;
-};
 
 interface RegisterFormProps {
   onSwitchToLogin: () => void;
@@ -66,7 +35,8 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
   const { t, i18n } = useTranslation();
   const { toast } = useToast();
   const { registerVisitor, registerProfessional, registerLoading } = useAuth();
-  const { wilayas, loading: wilayasLoading, error: wilayasError } = useWilayas();
+  // Liste des wilayas : chargée par GeoSelector ; on attend seulement son chargement
+  const { loading: wilayasLoading } = useWilayas();
 
   const [userType, setUserType] = useState<'visiteur' | 'professionnel'>('visiteur');
   const [registerForm, setRegisterForm] = useState({
@@ -77,7 +47,10 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
     email: '',
     mot_de_passe: '',
     confirmation_mot_de_passe: '',
-    wilaya_residence: 0,
+    wilaya_residence: 0 as number | null,
+    // Daïra / commune de résidence (commune obligatoire pour un professionnel)
+    dairaId: null as number | null,
+    id_commune: null as number | null,
     telephone: '',
     accepte_conditions: false,
     accepte_newsletter: false,
@@ -266,6 +239,10 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
     if (registerForm.wilaya_residence === 0) {
       errors.wilaya_residence = t('auth.errors.wilayaRequired');
     }
+    // Professionnel résidant en Algérie : commune obligatoire (proximité avec les lieux)
+    if (userType === 'professionnel' && registerForm.wilaya_residence !== null && !registerForm.id_commune) {
+      errors.id_commune = t('auth.errors.communeRequired', 'La commune est obligatoire pour un compte professionnel');
+    }
 
     if (registerForm.telephone && !/^\+\d{7,15}$/.test(registerForm.telephone.replace(/\s/g, ''))) {
       errors.telephone = t('auth.errors.phoneInvalid', 'Numéro de téléphone invalide');
@@ -371,6 +348,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
         mot_de_passe: registerForm.mot_de_passe,
         confirmation_mot_de_passe: registerForm.confirmation_mot_de_passe,
         wilaya_residence: registerForm.wilaya_residence !== null ? Number(registerForm.wilaya_residence) : null,
+        ...(registerForm.id_commune ? { id_commune: registerForm.id_commune } : {}),
         accepte_conditions: registerForm.accepte_conditions,
         accepte_newsletter: registerForm.accepte_newsletter || false
       };
@@ -437,6 +415,8 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
           mot_de_passe: '',
           confirmation_mot_de_passe: '',
           wilaya_residence: 0,
+          dairaId: null,
+          id_commune: null,
           telephone: '',
           accepte_conditions: false,
           accepte_newsletter: false,
@@ -743,36 +723,47 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <RequiredLabel htmlFor="wilaya" required>{t('auth.register.wilaya')}</RequiredLabel>
-                        <select
-                          id="wilaya"
-                          value={registerForm.wilaya_residence === null ? 'etranger' : registerForm.wilaya_residence || ''}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            setRegisterForm({
-                              ...registerForm,
-                              wilaya_residence: val === 'etranger' ? null : (parseInt(val) || 0)
-                            });
-                            setRegisterErrors({...registerErrors, wilaya_residence: ''});
-                          }}
-                          disabled={wilayasLoading}
-                          className={`w-full p-3 border rounded-lg bg-background hover:border-primary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 ${registerErrors.wilaya_residence ? 'border-destructive' : 'border-input'}`}
-                          aria-invalid={!!registerErrors.wilaya_residence}
-                          aria-describedby={registerErrors.wilaya_residence ? 'auth-wilaya-error' : undefined}
-                        >
-                          <option value="">{wilayasLoading ? t('common.loading') : t('auth.register.selectWilaya')}</option>
-                          {wilayas.map((wilaya) => (
-                            <option key={wilaya.id_wilaya} value={wilaya.id_wilaya}>
-                              {String(wilaya.codeW).padStart(2, '0')} - {getWilayaName(wilaya, i18n.language)}
-                            </option>
-                          ))}
-                          <option value="etranger">{t('auth.register.foreignResident', 'Étranger (hors Algérie)')}</option>
-                        </select>
+                        <label className="flex items-center gap-2 text-sm">
+                          <input
+                            type="checkbox"
+                            checked={registerForm.wilaya_residence === null}
+                            onChange={(e) => {
+                              setRegisterForm({
+                                ...registerForm,
+                                wilaya_residence: e.target.checked ? null : 0,
+                                dairaId: null,
+                                id_commune: null
+                              });
+                              setRegisterErrors({ ...registerErrors, wilaya_residence: '', id_commune: '' });
+                            }}
+                          />
+                          {t('auth.register.foreignResident', 'Étranger (hors Algérie)')}
+                        </label>
+                        {registerForm.wilaya_residence !== null && (
+                          <GeoSelector
+                            wilayaId={registerForm.wilaya_residence || null}
+                            dairaId={registerForm.dairaId}
+                            communeId={registerForm.id_commune}
+                            onWilayaChange={(id) => {
+                              setRegisterForm(prev => ({ ...prev, wilaya_residence: id || 0, dairaId: null, id_commune: null }));
+                              setRegisterErrors(prev => ({ ...prev, wilaya_residence: '' }));
+                            }}
+                            onDairaChange={(id) => setRegisterForm(prev => ({ ...prev, dairaId: id, id_commune: null }))}
+                            onCommuneChange={(id) => {
+                              setRegisterForm(prev => ({ ...prev, id_commune: id }));
+                              setRegisterErrors(prev => ({ ...prev, id_commune: '' }));
+                            }}
+                            requiredWilaya
+                            requiredDaira={userType === 'professionnel'}
+                            requiredCommune={userType === 'professionnel'}
+                            errors={{ wilaya: registerErrors.wilaya_residence, commune: registerErrors.id_commune }}
+                          />
+                        )}
                         {registerErrors.wilaya_residence && (
                           <p id="auth-wilaya-error" role="alert" className="text-sm text-destructive">{registerErrors.wilaya_residence}</p>
                         )}
-                        {wilayasError && (
-                          <p className="text-sm text-destructive">{t('auth.errors.wilayasLoadError')}</p>
+                        {registerErrors.id_commune && (
+                          <p role="alert" className="text-sm text-destructive">{registerErrors.id_commune}</p>
                         )}
                       </div>
                       <div className="space-y-2">
