@@ -43,19 +43,14 @@ export function getImageUrl(imagePath: string | undefined | null, fallback = '/i
 
 /**
  * Helper pour obtenir l'URL d'un avatar utilisateur
+ * Sans photo : avatar par défaut local (aucun nom envoyé à un service tiers).
+ * Pour des initiales, utiliser AvatarFallback (components/ui/avatar).
  * @param avatarPath Chemin de l'avatar
- * @param userName Nom de l'utilisateur pour générer un avatar par défaut
  * @returns URL de l'avatar
  */
-export function getAvatarUrl(avatarPath: string | undefined | null, userName?: string): string {
+export function getAvatarUrl(avatarPath: string | undefined | null): string {
   if (avatarPath) return getAssetUrl(avatarPath);
-  
-  // Si pas d'avatar, utiliser un service de génération d'avatars
-  if (userName) {
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=random`;
-  }
-  
-  return getAssetUrl('/images/default-avatar.png');
+  return getAssetUrl('/images/default-avatar.svg');
 }
 
 /**

@@ -45,12 +45,10 @@ const RTLManager = () => {
       case 'ar-DZ':
         document.documentElement.classList.add('font-arabic');
         initializeAlgerianSite();
-        loadArabicFonts();
         break;
         
       case 'tz-tfng':
         document.documentElement.classList.add('tifinagh-font');
-        loadTifinaghFonts();
         break;
         
       // Autres langues: pas de configuration spéciale
@@ -67,27 +65,7 @@ const RTLManager = () => {
   return null;
 };
 
-// Fonction pour charger les polices arabes
-const loadArabicFonts = () => {
-  if (!document.getElementById('arabic-fonts')) {
-    const link = document.createElement('link');
-    link.id = 'arabic-fonts';
-    link.href = 'https://fonts.googleapis.com/css2?family=Tajawal:wght@200;300;400;500;700;800;900&family=Cairo:wght@200;300;400;500;600;700;800;900&family=Noto+Kufi+Arabic:wght@100;200;300;400;500;600;700;800;900&display=swap';
-    link.rel = 'stylesheet';
-    document.head.appendChild(link);
-  }
-};
-
-// Fonction pour charger les polices Tifinagh
-const loadTifinaghFonts = () => {
-  if (!document.getElementById('tifinagh-fonts')) {
-    const link = document.createElement('link');
-    link.id = 'tifinagh-fonts';
-    link.href = 'https://fonts.googleapis.com/css2?family=Noto+Sans+Tifinagh&display=swap';
-    link.rel = 'stylesheet';
-    document.head.appendChild(link);
-  }
-};
+// Polices arabes et tifinagh : hébergées localement (src/styles/fonts.ts), plus de chargement Google Fonts
 
 // Fonction pour mettre à jour les métadonnées SEO
 const updateMetaTags = (language: string) => {
