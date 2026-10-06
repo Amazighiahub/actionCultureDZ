@@ -11,7 +11,9 @@
     "notImplemented": "Fonctionnalité non implémentée",
     "noDataToUpdate": "Aucune donnée à mettre à jour",
     "duplicateResource": "Cette ressource existe déjà",
-    "invalidReference": "Référence invalide vers une ressource inexistante"
+    "invalidReference": "Référence invalide vers une ressource inexistante",
+    "deleted": "Supprimé avec succès",
+    "errorCheckingProperty": "Erreur lors de la vérification de la propriété"
   },
   "auth": {
     "loginSuccess": "Connexion réussie",
@@ -109,7 +111,10 @@
     "photoUrlRequired": "URL de la photo requise",
     "preferencesUpdated": "Préférences mises à jour",
     "roleChanged": "Rôle changé en ${role}",
-    "searchTooShort": "Requête de recherche trop courte (min 2 caractères)"
+    "searchTooShort": "Requête de recherche trop courte (min 2 caractères)",
+    "invalidPhotoUrl": "URL de photo invalide",
+    "privacyUpdated": "Paramètres de confidentialité mis à jour",
+    "professionalRequestSubmitted": "Votre demande de compte professionnel a été envoyée"
   },
   "oeuvre": {
     "notFound": "Œuvre non trouvée",
@@ -186,7 +191,8 @@
     "removed": "Retiré des favoris avec succès",
     "useApi": "Utilisez /api/favoris",
     "serverErrorGet": "Erreur serveur lors de la récupération des favoris",
-    "serverErrorDelete": "Erreur serveur lors de la suppression du favori"
+    "serverErrorDelete": "Erreur serveur lors de la suppression du favori",
+    "alreadyExists": "Déjà dans vos favoris"
   },
   "notification": {
     "notFound": "Notification non trouvée",
@@ -202,7 +208,8 @@
     "markedReadCount": "${count} notifications marquées comme lues",
     "titleMessageRequired": "Titre et message requis",
     "titleMessageRecipientRequired": "titre, message et destinataire_id sont requis",
-    "titleAndMessageRequired": "titre et message sont requis"
+    "titleAndMessageRequired": "titre et message sont requis",
+    "broadcastQueued": "Notification en cours d'envoi en arrière-plan"
   },
   "signalement": {
     "notFound": "Signalement non trouvé",
@@ -284,7 +291,8 @@
     "typeOeuvreCreated": "Type d'œuvre créé",
     "categorieCreated": "Catégorie créée",
     "categoryCreated": "Catégorie créée",
-    "modelNotAvailable": "Modèle ${model} non disponible"
+    "modelNotAvailable": "Modèle ${model} non disponible",
+    "editeurCreated": "Éditeur créé"
   },
   "professionnel": {
     "notFound": "Professionnel non trouvé",
@@ -327,7 +335,10 @@
     "documentError": "Erreur lors de l'upload du document",
     "videoError": "Erreur lors de l'upload de la vidéo",
     "audioError": "Erreur lors de l'upload du fichier audio",
-    "mediaError": "Erreur lors de l'upload des médias"
+    "mediaError": "Erreur lors de l'upload des médias",
+    "emptyFile": "Fichier vide ou invalide",
+    "failed": "Échec de l'envoi, veuillez réessayer.",
+    "tooManyFiles": "Trop de fichiers"
   },
   "search": {
     "minLength": "Le terme de recherche doit contenir au moins ${min} caractères",
@@ -340,7 +351,8 @@
   },
   "vue": {
     "notFound": "Vue non trouvée",
-    "unauthorizedEdit": "Non autorisé à modifier cette vue"
+    "unauthorizedEdit": "Non autorisé à modifier cette vue",
+    "historyDeleted": "${count} vue(s) supprimée(s)"
   },
   "participant": {
     "notFound": "Participant non trouvé",
@@ -382,7 +394,9 @@
     "userSuspended": "Utilisateur suspendu avec succès",
     "cacheCleared": "Cache vidé avec succès",
     "onlyPendingCanCancel": "Seuls les signalements en attente peuvent être annulés",
-    "reportCancelled": "Signalement annulé avec succès"
+    "reportCancelled": "Signalement annulé avec succès",
+    "emailVerified": "Email vérifié avec succès",
+    "emailAlreadyVerified": "L'email est déjà vérifié"
   },
   "dashboard": {
     "statsError": "Erreur lors de la récupération des statistiques",
@@ -477,6 +491,26 @@
     "passwordRequirements": "Le mot de passe doit contenir au moins une majuscule, une minuscule, un chiffre et un caractère spécial",
     "invalidToken": "Token invalide",
     "passwordRequired": "Mot de passe requis",
-    "endAfterStart": "L'heure de fin doit être après l'heure de début"
+    "endAfterStart": "L'heure de fin doit être après l'heure de début",
+    "paginationTooDeep": "Pagination trop profonde (décalage maximal : 10000)",
+    "endDateAfterStart": "La date de fin doit être postérieure à la date de début",
+    "invalidPrice": "Le prix doit être supérieur ou égal à 0",
+    "invalidCapacity": "La capacité doit être comprise entre 0 et 100 000",
+    "fieldTooLong": "Le champ ${field} est trop long",
+    "invalidGPS": "Coordonnées GPS invalides (latitude : -90 à 90, longitude : -180 à 180)",
+    "searchMinLength": "La recherche doit contenir au moins 2 caractères"
+  },
+  "article": {
+    "blockCreated": "Bloc créé avec succès",
+    "blockUpdated": "Bloc mis à jour avec succès",
+    "blockDeleted": "Bloc supprimé avec succès",
+    "blockDuplicated": "Bloc dupliqué avec succès",
+    "blocksCreated": "${count} blocs créés avec succès",
+    "blockOrderUpdated": "Ordre des blocs mis à jour",
+    "blockIdsMustBeArray": "blockIds doit être un tableau",
+    "serverErrorGetBlocks": "Erreur serveur lors de la récupération des blocs"
+  },
+  "error": {
+    "checkingEntity": "Erreur lors de la vérification de l'entité"
   }
 }

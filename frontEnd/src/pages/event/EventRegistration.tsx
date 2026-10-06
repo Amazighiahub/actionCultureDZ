@@ -189,7 +189,7 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
     if (selectedOeuvres.length >= maxSoumissions) {
       toast({
         title: t('event.registration.limitTitle', 'Limite atteinte'),
-        description: t('event.registration.limitDesc', `Maximum ${maxSoumissions} œuvre(s) autorisée(s) pour cet événement`),
+        description: t('event.registration.limitDesc', 'Maximum {{max}} œuvre(s) autorisée(s) pour cet événement', { max: maxSoumissions }),
         variant: 'destructive',
       });
       return;

@@ -11,7 +11,9 @@
     "notImplemented": "Feature not implemented",
     "noDataToUpdate": "No data to update",
     "duplicateResource": "This resource already exists",
-    "invalidReference": "Invalid reference to a non-existent resource"
+    "invalidReference": "Invalid reference to a non-existent resource",
+    "deleted": "Deleted successfully",
+    "errorCheckingProperty": "Error while checking ownership"
   },
   "auth": {
     "loginSuccess": "Login successful",
@@ -109,7 +111,10 @@
     "photoUrlRequired": "Photo URL required",
     "preferencesUpdated": "Preferences updated",
     "roleChanged": "Role changed to ${role}",
-    "searchTooShort": "Search query too short (min 2 characters)"
+    "searchTooShort": "Search query too short (min 2 characters)",
+    "invalidPhotoUrl": "Invalid photo URL",
+    "privacyUpdated": "Privacy settings updated",
+    "professionalRequestSubmitted": "Your professional account request has been submitted"
   },
   "oeuvre": {
     "notFound": "Work not found",
@@ -127,7 +132,7 @@
     "removedFromEvent": "Work removed from event",
     "orderUpdated": "Works order updated",
     "invalidList": "Invalid works list",
-    "featured": "Œuvre mise en avant",
+    "featured": "Work featured",
     "unfeatured": "Work removed from featured"
   },
   "evenement": {
@@ -186,7 +191,8 @@
     "removed": "Removed from favorites successfully",
     "useApi": "Use /api/favoris",
     "serverErrorGet": "Server error while retrieving favorites",
-    "serverErrorDelete": "Server error while deleting favorite"
+    "serverErrorDelete": "Server error while deleting favorite",
+    "alreadyExists": "Already in your favorites"
   },
   "notification": {
     "notFound": "Notification not found",
@@ -202,7 +208,8 @@
     "markedReadCount": "${count} notifications marked as read",
     "titleMessageRequired": "Title and message required",
     "titleMessageRecipientRequired": "title, message and recipient_id are required",
-    "titleAndMessageRequired": "title and message are required"
+    "titleAndMessageRequired": "title and message are required",
+    "broadcastQueued": "Notification is being sent in the background"
   },
   "signalement": {
     "notFound": "Report not found",
@@ -284,7 +291,8 @@
     "typeOeuvreCreated": "Work type created",
     "categorieCreated": "Category created",
     "categoryCreated": "Category created",
-    "modelNotAvailable": "Model ${model} not available"
+    "modelNotAvailable": "Model ${model} not available",
+    "editeurCreated": "Publisher created"
   },
   "professionnel": {
     "notFound": "Professional not found",
@@ -327,7 +335,10 @@
     "documentError": "Error uploading document",
     "videoError": "Error uploading video",
     "audioError": "Error uploading audio file",
-    "mediaError": "Error uploading media"
+    "mediaError": "Error uploading media",
+    "emptyFile": "Empty or invalid file",
+    "failed": "Upload failed, please try again.",
+    "tooManyFiles": "Too many files"
   },
   "search": {
     "minLength": "Search term must contain at least ${min} characters",
@@ -340,7 +351,8 @@
   },
   "vue": {
     "notFound": "View not found",
-    "unauthorizedEdit": "Not authorized to edit this view"
+    "unauthorizedEdit": "Not authorized to edit this view",
+    "historyDeleted": "${count} view(s) deleted"
   },
   "participant": {
     "notFound": "Participant not found",
@@ -373,7 +385,7 @@
     "userReactivated": "User reactivated",
     "userUpdated": "User updated",
     "actionSuccess": "Action \"${action}\" completed successfully",
-    "visitorNoValidation": "Les visiteurs n'ont pas besoin de validation",
+    "visitorNoValidation": "Visitors do not need validation",
     "userAlreadyProcessed": "This user has already been processed (status: ${status})",
     "userValidated": "User validated successfully",
     "userRejected": "User rejected",
@@ -382,7 +394,9 @@
     "userSuspended": "User suspended successfully",
     "cacheCleared": "Cache cleared successfully",
     "onlyPendingCanCancel": "Only pending reports can be cancelled",
-    "reportCancelled": "Report cancelled successfully"
+    "reportCancelled": "Report cancelled successfully",
+    "emailVerified": "Email verified successfully",
+    "emailAlreadyVerified": "Email is already verified"
   },
   "dashboard": {
     "statsError": "Error retrieving statistics",
@@ -408,76 +422,83 @@
   },
   "validation": {
     "invalidPeriod": "Invalid period",
-    "invalidStatus": "Statut invalide",
-    "invalidUserType": "Type utilisateur invalide",
-    "searchRequired": "Terme de recherche requis",
-    "invalidSearchType": "Type de recherche invalide",
-    "invalidFormat": "Format invalide",
-    "invalidType": "Type invalide",
+    "invalidStatus": "Invalid status",
+    "invalidUserType": "Invalid user type",
+    "searchRequired": "Search term required",
+    "invalidSearchType": "Invalid search type",
+    "invalidFormat": "Invalid format",
+    "invalidType": "Invalid type",
     "invalidStartDate": "Invalid start date",
-    "invalidEndDate": "Date de fin invalide",
-    "invalidValidationValue": "Valeur de validation invalide",
-    "invalidReason": "Raison invalide",
-    "invalidName": "Nom invalide",
+    "invalidEndDate": "Invalid end date",
+    "invalidValidationValue": "Invalid validation value",
+    "invalidReason": "Invalid reason",
+    "invalidName": "Invalid name",
     "invalidFirstName": "Invalid first name",
-    "invalidEmail": "Email invalide",
+    "invalidEmail": "Invalid email",
     "invalidPhone": "Invalid phone number",
-    "invalidBiography": "Biographie invalide",
-    "invalidCompany": "Entreprise invalide",
-    "invalidWebsite": "URL du site web invalide",
-    "invalidWilaya": "Wilaya invalide",
-    "reasonRequired": "Raison requise",
+    "invalidBiography": "Invalid biography",
+    "invalidCompany": "Invalid company",
+    "invalidWebsite": "Invalid website URL",
+    "invalidWilaya": "Invalid wilaya",
+    "reasonRequired": "Reason required",
     "invalidDuration": "Invalid duration",
     "invalidRoleId": "Invalid role ID",
-    "userListRequired": "Liste d'utilisateurs requise",
-    "invalidUserId": "ID utilisateur invalide",
-    "invalidAction": "Action invalide",
-    "invalidContentType": "Type de contenu invalide",
-    "invalidLimit": "Limite invalide",
+    "userListRequired": "User list required",
+    "invalidUserId": "Invalid user ID",
+    "invalidAction": "Invalid action",
+    "invalidContentType": "Invalid content type",
+    "invalidLimit": "Invalid limit",
     "invalidPriority": "Invalid priority",
     "invalidEntityType": "Invalid entity type",
     "invalidEntityId": "Invalid entity ID",
     "invalidData": "Invalid data",
-    "actionRequired": "Action requise",
+    "actionRequired": "Action required",
     "entitiesMustBeArray": "Entities must be an array",
-    "invalidRejectReason": "Raison de rejet invalide",
+    "invalidRejectReason": "Invalid rejection reason",
     "invalidModerationAction": "Invalid moderation action",
-    "invalidNotes": "Notes invalides",
-    "invalidCohort": "Cohorte invalide",
+    "invalidNotes": "Invalid notes",
+    "invalidCohort": "Invalid cohort",
     "invalidMetric": "Invalid metric",
-    "invalidCacheType": "Type de cache invalide",
-    "titleRequired": "Titre requis",
-    "messageRequired": "Message requis",
-    "invalidTarget": "Cible invalide",
+    "invalidCacheType": "Invalid cache type",
+    "titleRequired": "Title required",
+    "messageRequired": "Message required",
+    "invalidTarget": "Invalid target",
     "invalidYear": "Invalid year",
-    "invalidMonth": "Mois invalide",
-    "descriptionTooLong": "Description trop longue",
-    "invalidSchedule": "Horaires invalides",
+    "invalidMonth": "Invalid month",
+    "descriptionTooLong": "Description too long",
+    "invalidSchedule": "Invalid opening hours",
     "booleanRequired": "Boolean value required",
-    "invalidMinPrice": "Prix minimum invalide",
+    "invalidMinPrice": "Invalid minimum price",
     "invalidDeliveryDelay": "Invalid delivery delay",
     "specialtiesMustBeArray": "Specialties must be an array",
     "certificationsMustBeArray": "Certifications must be an array",
-    "invalidExportType": "Type d'export invalide",
+    "invalidExportType": "Invalid export type",
     "invalidEventId": "Invalid event ID",
-    "invalidOffset": "Offset invalide",
+    "invalidOffset": "Invalid offset",
     "invalidRegion": "Invalid region",
     "invalidSpecialty": "Invalid specialty",
-    "titleTooLong": "Titre trop long",
-    "invalidOrder": "Ordre invalide",
-    "subjectRequired": "Sujet requis",
+    "titleTooLong": "Title too long",
+    "invalidOrder": "Invalid order",
+    "subjectRequired": "Subject required",
     "invalidCategory": "Invalid category",
-    "invalidAddress": "Adresse invalide",
-    "invalidLatitude": "Latitude invalide",
-    "invalidLongitude": "Longitude invalide",
-    "invalidRadius": "Rayon invalide",
-    "invalidId": "ID invalide",
-    "tokenRequired": "Token requis",
+    "invalidAddress": "Invalid address",
+    "invalidLatitude": "Invalid latitude",
+    "invalidLongitude": "Invalid longitude",
+    "invalidRadius": "Invalid radius",
+    "invalidId": "Invalid ID",
+    "tokenRequired": "Token required",
     "passwordTooShort": "Password must be at least 12 characters long",
     "passwordRequirements": "Password must contain at least one uppercase letter, one lowercase letter, one digit and one special character",
-    "invalidToken": "Token invalide",
-    "passwordRequired": "Mot de passe requis",
-    "endAfterStart": "End time must be after start time"
+    "invalidToken": "Invalid token",
+    "passwordRequired": "Password required",
+    "endAfterStart": "End time must be after start time",
+    "paginationTooDeep": "Pagination too deep (maximum offset: 10000)",
+    "endDateAfterStart": "End date must be after start date",
+    "invalidPrice": "Price must be greater than or equal to 0",
+    "invalidCapacity": "Capacity must be between 0 and 100,000",
+    "fieldTooLong": "The field ${field} is too long",
+    "invalidGPS": "Invalid GPS coordinates (latitude: -90 to 90, longitude: -180 to 180)",
+    "searchMinLength": "Search must contain at least 2 characters"
   },
   "article": {
     "blockCreated": "Block created successfully",
@@ -488,5 +509,8 @@
     "blockOrderUpdated": "Blocks order updated",
     "blockIdsMustBeArray": "blockIds must be an array",
     "serverErrorGetBlocks": "Server error while retrieving blocks"
+  },
+  "error": {
+    "checkingEntity": "Error while checking the entity"
   }
 }

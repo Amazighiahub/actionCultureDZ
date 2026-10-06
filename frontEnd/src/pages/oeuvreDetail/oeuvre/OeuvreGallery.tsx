@@ -216,7 +216,7 @@ const OeuvreGallery: React.FC<OeuvreGalleryProps> = ({ medias }) => {
       <EmptyState
         type="documents"
         title={t('gallery.empty', 'Aucun média disponible')}
-        description={t('gallery.emptyDesc', 'La galerie est vide pour le moment')}
+        description={t('gallery.emptyDescOeuvre', 'La galerie est vide pour le moment')}
       />
     );
   }

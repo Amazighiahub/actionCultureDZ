@@ -503,7 +503,7 @@ const DashboardUser = () => {
           <AlertDialogFooter>
             <AlertDialogCancel>{t('common.cancel', 'Annuler')}</AlertDialogCancel>
             <AlertDialogAction onClick={confirmRemoveFavorite} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              {t('common.remove', 'Retirer')}
+              {t('common.removeFrom', 'Retirer')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

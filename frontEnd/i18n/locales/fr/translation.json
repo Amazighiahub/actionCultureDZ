@@ -94,7 +94,12 @@
       "createAccount": "Créer mon compte",
       "requiredFieldsLegend": "* Champ obligatoire",
       "phoneHelper": "Saisissez votre numéro sans le code pays",
-      "portfolioHelper": "Exemple : https://monportfolio.com"
+      "portfolioHelper": "Exemple : https://monportfolio.com",
+      "day": "Jour",
+      "month": "Mois",
+      "year": "Année",
+      "passwordHint": "12 caractères min., 1 majuscule, 1 minuscule, 1 chiffre, 1 caractère spécial",
+      "min50chars": "(min 50 caractères)"
     },
     "errors": {
       "required": "Ce champ est requis",
@@ -150,7 +155,19 @@
       "emailNotVerified": "Email non vérifié",
       "pleaseVerifyEmail": "Veuillez vérifier votre email avant de vous connecter. Vérifiez votre boîte de réception.",
       "contactSupport": "Votre compte a été suspendu. Contactez le support pour plus d'informations.",
-      "passwordError": "Le mot de passe ne respecte pas les critères de sécurité (minimum 12 caractères)"
+      "passwordError": "Le mot de passe ne respecte pas les critères de sécurité (minimum 12 caractères)",
+      "checkEmail": "Vérifiez votre email",
+      "checkPassword": "Vérifiez votre mot de passe",
+      "passwordNeedUppercase": "Le mot de passe doit contenir au moins une majuscule",
+      "passwordNeedLowercase": "Le mot de passe doit contenir au moins une minuscule",
+      "passwordNeedDigit": "Le mot de passe doit contenir au moins un chiffre",
+      "passwordNeedSpecial": "Le mot de passe doit contenir au moins un caractère spécial",
+      "portfolioInvalidUrl": "URL invalide (doit commencer par http:// ou https://)",
+      "invalidDate": "Date invalide",
+      "futureDateNotAllowed": "La date ne peut pas être dans le futur",
+      "communeRequired": "La commune est obligatoire pour un compte professionnel",
+      "networkError": "Problème de connexion. Vérifiez votre connexion internet et réessayez.",
+      "timeout": "Le serveur met trop de temps à répondre. Veuillez réessayer."
     },
     "success": {
       "loginTitle": "Connexion réussie !",
@@ -217,8 +234,28 @@
       "invalidToken": "Le lien de réinitialisation est invalide ou a expiré.",
       "invalidTokenTitle": "Lien invalide",
       "invalidTokenDescription": "Ce lien de réinitialisation est invalide ou a expiré. Veuillez demander un nouveau lien.",
-      "requestNewLink": "Demander un nouveau lien"
-    }
+      "requestNewLink": "Demander un nouveau lien",
+      "tokenExpired": "Ce lien a expiré. Veuillez demander un nouveau lien de réinitialisation."
+    },
+    "idleWarning": "Session bientôt expirée",
+    "idleWarningDesc": "Vous serez déconnecté dans 2 minutes pour inactivité.",
+    "idleLogout": "Session expirée",
+    "idleLogoutDesc": "Vous avez été déconnecté pour inactivité.",
+    "hidePassword": "Masquer",
+    "showPassword": "Afficher",
+    "passwordRules": {
+      "uppercase": "Doit contenir une majuscule",
+      "lowercase": "Doit contenir une minuscule",
+      "digit": "Doit contenir un chiffre",
+      "special": "Doit contenir un caractère spécial"
+    },
+    "togglePassword": "Afficher/masquer le mot de passe",
+    "emailVerificationSent": "Email de vérification envoyé",
+    "emailVerificationMessage": "Un email de vérification a été envoyé à votre adresse.",
+    "professionalValidationNote": "Après vérification de votre email, votre compte sera soumis à validation par un administrateur.",
+    "backToLogin": "Retour à la connexion",
+    "sessionExpired": "Session expirée",
+    "pleaseReconnect": "Veuillez vous reconnecter"
   },
   "categories": {
     "heritageTypes": {
@@ -334,7 +371,81 @@
     "type": "Type",
     "more": "autres",
     "linkCopied": "Lien copié",
-    "linkCopiedDesc": "Le lien a été copié dans le presse-papier"
+    "linkCopiedDesc": "Le lien a été copié dans le presse-papier",
+    "add": "Ajouter",
+    "legalNotice": "Mentions légales",
+    "change": "Changer",
+    "copyLink": "Copier le lien",
+    "done": "Terminé",
+    "daira": "Daïra",
+    "selectWilayaFirst": "-- Choisir d'abord une wilaya --",
+    "selectDaira": "-- Choisir une daïra --",
+    "commune": "Commune",
+    "selectDairaFirst": "-- Choisir d'abord une daïra --",
+    "selectCommune": "-- Choisir une commune --",
+    "showAll": "Voir tous les services",
+    "dateUndefined": "Date non définie",
+    "status": "Statut",
+    "unnamed": "Sans nom",
+    "allTypes": "Tous les types",
+    "untitled": "Sans titre",
+    "undefined": "Non défini",
+    "validate": "Valider",
+    "reject": "Rejeter",
+    "noName": "Sans nom",
+    "validation": "Validation",
+    "allValidations": "Toutes validations",
+    "dropImageHere": "Déposez l'image ici",
+    "dragOrClickImage": "Glissez-déposez ou cliquez pour ajouter une image",
+    "changeImage": "Changer l'image",
+    "saving": "Enregistrement...",
+    "publishing": "Publication...",
+    "create": "Créer",
+    "unknownError": "Erreur inconnue",
+    "other": "Autre...",
+    "warning": "Attention",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "available": "Disponible",
+    "unavailable": "Indisponible",
+    "authRequired": "Connexion requise",
+    "remove": "Supprimer",
+    "upload": "Upload",
+    "submitting": "Envoi...",
+    "hide": "Masquer",
+    "show": "Afficher",
+    "characters": "caractères",
+    "loadError": "Erreur lors du chargement de l'article",
+    "deleted": "Supprimé",
+    "deletedDesc": "L'élément a été supprimé",
+    "deleteError": "Impossible de supprimer",
+    "backToList": "Retour à la liste",
+    "previousImage": "Image précédente",
+    "nextImage": "Image suivante",
+    "confirmDelete": "Confirmer la suppression",
+    "confirmDeleteDesc": "Êtes-vous sûr de vouloir supprimer cet élément ? Cette action est irréversible.",
+    "months": {
+      "jan": "Janvier",
+      "feb": "Février",
+      "mar": "Mars",
+      "apr": "Avril",
+      "may": "Mai",
+      "jun": "Juin",
+      "jul": "Juillet",
+      "aug": "Août",
+      "sep": "Septembre",
+      "oct": "Octobre",
+      "nov": "Novembre",
+      "dec": "Décembre"
+    },
+    "uncategorized": "Non catégorisé",
+    "heritage": "Patrimoine",
+    "unspecified": "Non spécifié",
+    "service": "Service",
+    "unspecifiedLocation": "Lieu non spécifié",
+    "removeFrom": "Retirer",
+    "notProvided": "Non renseigné",
+    "unknown": "Inconnu"
   },
   "contributors": {
     "addedCount": "{{count}} contributeurs ajoutés",
@@ -371,7 +482,12 @@
     "addedDesc": "Votre commentaire a été publié avec succès",
     "errorSubmit": "Erreur lors de l'envoi du commentaire",
     "errorEmpty": "Le commentaire ne peut pas être vide",
-    "loginRequired": "Connectez-vous pour commenter"
+    "loginRequired": "Connectez-vous pour commenter",
+    "reportSuccess": "Signalement envoyé. Merci.",
+    "reportError": "Erreur lors du signalement.",
+    "errorTooShort": "Le commentaire doit contenir au moins 3 caractères",
+    "successTitle": "Commentaire publié",
+    "successDesc": "Votre avis a été publié avec succès."
   },
   "errors": {
     "generic": {
@@ -380,7 +496,8 @@
     },
     "loadingCraftsError": "Échec du chargement des artisanats",
     "loadingError": "Erreur de chargement",
-    "partialDataLoad": "Données partiellement chargées"
+    "partialDataLoad": "Données partiellement chargées",
+    "loadingFailed": "Erreur lors du chargement"
   },
   "events": {
     "create": {
@@ -424,7 +541,33 @@
       "subtitle": "Créez un nouvel événement culturel",
       "title": "Ajouter un événement",
       "willBeAvailableSoon": "Sera disponible bientôt",
-      "locationRequired": "Veuillez sélectionner un lieu pour l'événement"
+      "locationRequired": "Veuillez sélectionner un lieu pour l'événement",
+      "loadWilayasFailed": "Erreur lors du chargement des wilayas",
+      "loadTypesFailed": "Erreur lors du chargement des types d'événements",
+      "loadOrgsFailed": "Erreur lors du chargement des organisations",
+      "startDateRequired": "La date de début est requise",
+      "endDateAfterStart": "La date de fin doit être après la date de début",
+      "draftNameRequired": "Le nom est requis même pour un brouillon (au moins une langue)",
+      "typeRequired": "Le type d'événement est requis",
+      "updateSuccess": "Événement mis à jour avec succès",
+      "success": "Événement créé avec succès!",
+      "error": "Erreur lors de la création",
+      "errorEvent": "Erreur lors de la création de l'événement",
+      "nameRequired": "Le nom de l'événement est requis (au moins en français ou arabe)",
+      "organisationRequired": "Une organisation est requise pour les événements en présentiel",
+      "virtualUrlRequired": "Le lien de l'événement virtuel est requis",
+      "imageRequired": "L'image de l'événement est requise",
+      "organisationRequiredShort": "Organisation requise",
+      "noOrganisation": "En tant que professionnel, vous devez créer une organisation pour organiser un événement en présentiel. Une organisation représente votre structure (association, entreprise, collectif, etc.).",
+      "createOrganisation": "Créer une organisation",
+      "switchToVirtual": "Créer un événement virtuel",
+      "createShort": "Créer",
+      "noOrganisationYet": "Vous n'avez pas encore d'organisation",
+      "virtualUrl": "Lien de l'événement",
+      "virtualUrlPlaceholder": "https://zoom.us/j/... ou https://meet.google.com/...",
+      "virtualUrlHint": "Lien Zoom, Google Meet, YouTube Live, etc.",
+      "availableAfterCreation": "Disponible après la création de l'événement",
+      "organisationRequiredMessage": "Vous devez d'abord créer une organisation pour publier un événement en présentiel."
     },
     "types": {
       "concert": "Concert",
@@ -442,7 +585,31 @@
     "participants": "participants",
     "full": "Complet",
     "free": "Gratuit",
-    "resultsCount": "événement(s) trouvé(s)"
+    "resultsCount": "événement(s) trouvé(s)",
+    "status": {
+      "draft": "Brouillon",
+      "planned": "Planifié",
+      "published": "Publié",
+      "upcoming": "À venir",
+      "ongoing": "En cours",
+      "finished": "Terminé",
+      "cancelled": "Annulé"
+    },
+    "cancel": "Annuler l'événement",
+    "almostFull": "Presque complet",
+    "title": "Événements culturels",
+    "subtitle": "Découvrez les événements culturels à travers l'Algérie — festivals, concerts, expositions, conférences.",
+    "subtitleShort": "Découvrez les événements culturels à travers l'Algérie",
+    "searchPlaceholder": "Rechercher un événement...",
+    "noResults": "Aucun événement trouvé",
+    "noResultsDesc": "Essayez de modifier vos critères de recherche",
+    "removeFromFavorites": "Retirer des favoris",
+    "addToFavorites": "Ajouter aux favoris",
+    "contact": "Contact",
+    "past": "Passé",
+    "upcoming": "À venir",
+    "upcomingLower": "à venir",
+    "pastLower": "passés"
   },
   "footer": {
     "legal": "Légal",
@@ -499,7 +666,8 @@
       "badge": "Découvrez le patrimoine culturel algérien",
       "subtitle": "Explorez, préservez et partagez la richesse culturelle de l'Algérie",
       "explore": "Explorer le patrimoine",
-      "contribute": "Contribuer"
+      "contribute": "Contribuer",
+      "addSite": "Ajouter un site"
     },
     "explore": {
       "subtitle": "Plateforme numérique dédiée à la préservation et à la valorisation de la culture algérienne dans toute sa richesse et sa diversité.",
@@ -522,7 +690,11 @@
       "createWork": "Créer une œuvre",
       "organizeEvent": "Organiser un événement",
       "subtitle": "Rejoignez notre communauté d'artistes et d'artisans",
-      "title": "Pour les professionnels"
+      "title": "Pour les professionnels",
+      "badge": "Espace Professionnels",
+      "visibility": "Visibilité accrue",
+      "tools": "Outils de gestion",
+      "community": "Communauté active"
     },
     "resources": {
       "access": "Accéder aux ressources",
@@ -590,9 +762,9 @@
       "noCrafts": "Aucun artisanat",
       "onOrder": "Sur commande",
       "price": {
-        "from": "À partir de",
+        "from": "À partir de {{min}} DA",
         "range": "{{min}} - {{max}}",
-        "upTo": "Jusqu'à"
+        "upTo": "Jusqu'à {{max}} DA"
       },
       "seeDetails": "Voir les détails",
       "stock": {
@@ -638,7 +810,8 @@
       "reviews": "Avis",
       "seeAll": "Voir tout",
       "subtitle": "Découvrez les trésors historiques et culturels de l'Algérie à travers une carte interactive",
-      "title": "Patrimoine culturel"
+      "title": "Patrimoine culturel",
+      "noDescription": "Description à venir..."
     },
     "works": {
       "actions": {
@@ -654,7 +827,7 @@
         "new": "Nouveauté",
         "popular": "Populaire"
       },
-      "createdIn": "Créé en",
+      "createdIn": "Créé en {{year}}",
       "details": "Détails",
       "empty": {
         "noFeatured": "Aucune œuvre mise en avant pour le moment.",
@@ -749,6 +922,9 @@
       "title": "Bienvenue sur",
       "titleHighlight": "Tamlilit Culture",
       "subtitle": "Plateforme numérique dédiée à la préservation et à la valorisation de la culture algérienne dans toute sa richesse et sa diversité."
+    },
+    "artisanat": {
+      "description": "Découvrez l'artisanat traditionnel algérien et ses créateurs passionnés"
     }
   },
   "works": {
@@ -760,7 +936,10 @@
       "readExcerpt": "Lire un extrait",
       "readNow": "Lire maintenant",
       "trailer": "Bande-annonce",
-      "watchNow": "Regarder maintenant"
+      "watchNow": "Regarder maintenant",
+      "addFavorite": "Favoris",
+      "addToFavorites": "Ajouter aux favoris",
+      "watchTrailer": "Voir la bande-annonce"
     },
     "album": {
       "tracksCount_one": "{{count}} piste",
@@ -768,7 +947,8 @@
     },
     "duration": {
       "minutes_one": "{{count}} minute",
-      "minutes_other": "{{count}} minutes"
+      "minutes_other": "{{count}} minutes",
+      "label": "Durée"
     },
     "fields": {
       "isbn": "ISBN",
@@ -787,14 +967,62 @@
       "readingTimeValue": "{{minutes}} minutes",
       "reviewsCount_one": "{{count}} avis",
       "reviewsCount_other": "{{count}} avis",
-      "views": "Vues"
+      "views": "Vues",
+      "listens": "écoutes",
+      "reviews": "avis",
+      "total": "Œuvres",
+      "new": "Nouveautés",
+      "types": "Types",
+      "classics": "Classiques"
     },
     "types": {
       "album": "Album",
       "book": "Livre",
       "film": "Film"
     },
-    "resultsCount": "œuvre(s) trouvée(s)"
+    "resultsCount": "œuvre(s) trouvée(s)",
+    "zoom": "Agrandir",
+    "noDescription": "Aucune description disponible pour cet album.",
+    "flipToFront": "Cliquez pour voir la pochette",
+    "viewCover": "Voir la pochette",
+    "viewDetails": "Voir les détails au dos",
+    "inFavorites": "Favori",
+    "artist": "Artiste",
+    "noAudio": "Aucun extrait audio disponible pour le moment",
+    "noCover": "Aucune pochette disponible",
+    "description": "Description",
+    "noSynopsisFilm": "Aucun synopsis disponible pour ce film.",
+    "directedBy": "Réalisateur",
+    "flipToFrontFilm": "Cliquez pour voir l'affiche",
+    "viewPoster": "Voir l'affiche",
+    "viewSynopsis": "Voir le synopsis au dos",
+    "noTrailer": "Aucune bande-annonce disponible pour le moment",
+    "noPoster": "Aucune affiche disponible",
+    "synopsis": "Synopsis",
+    "noDescriptionBook": "Aucune description disponible pour cet ouvrage.",
+    "flipToFrontBook": "Cliquez pour voir la couverture",
+    "viewCoverBook": "Voir la couverture",
+    "viewSummary": "Voir le résumé au dos",
+    "removeFromFavorites": "Retirer des favoris",
+    "excerpt": {
+      "title": "Extrait de",
+      "noContent": "Aucun contenu disponible pour cet ouvrage."
+    },
+    "noCoverBook": "Aucune couverture disponible",
+    "summary": "Résumé",
+    "title": "Œuvres culturelles",
+    "subtitle": "Explorez la richesse du patrimoine culturel algérien — littérature, cinéma, musique, peinture et arts.",
+    "subtitleShort": "Explorez la richesse du patrimoine culturel algérien",
+    "searchPlaceholder": "Rechercher une œuvre...",
+    "filterByType": "Type",
+    "sort": {
+      "recent": "Plus récents",
+      "popular": "Plus vus",
+      "rated": "Mieux notés",
+      "title": "Titre A-Z"
+    },
+    "noResults": "Aucune œuvre trouvée",
+    "noResultsDesc": "Essayez de modifier vos critères de recherche"
   },
   "verifyemailpage": {
     "vrification_russie": "Vérification Réussie !",
@@ -842,11 +1070,13 @@
     "placeholder_crivez_votre_commentaire": "Écrivez votre commentaire ici...",
     "annuler": "Annuler",
     "envoi": "Envoi...",
-    "envoyer": "Envoyer"
+    "envoyer": "Envoyer",
+    "partager_desc": "Partagez cette œuvre sur vos réseaux"
   },
   "notfound": {
     "oops_page_not": "Oops! Page not found",
-    "return_home": "Return to Home"
+    "return_home": "Return to Home",
+    "description": "La page que vous recherchez n'existe pas ou a été déplacée."
   },
   "eventdetailspage": {
     "erreur": "Erreur",
@@ -959,7 +1189,23 @@
     "membre_depuis": "Membre depuis",
     "vous_souhaitez_crer": "Vous souhaitez créer du contenu ?",
     "devenir_professionnel": "Devenir professionnel",
-    "modifier_profil": "Modifier le profil"
+    "modifier_profil": "Modifier le profil",
+    "markReadFailed": "Impossible de marquer la notification comme lue.",
+    "markAllReadFailed": "Impossible de marquer toutes les notifications comme lues.",
+    "actualiser": "Actualiser",
+    "loadFavorisFailed": "Erreur lors du chargement des favoris",
+    "markAllRead": "Tout marquer comme lu",
+    "loadNotifsFailed": "Erreur lors du chargement des notifications",
+    "confirm_remove_title": "Retirer des favoris",
+    "confirm_remove_favorite": "Voulez-vous retirer cet élément de vos favoris ?",
+    "profileUpdated": "Profil mis à jour",
+    "updateFailed": "Erreur lors de la mise à jour",
+    "photoUpdated": "Photo mise à jour",
+    "changePhoto": "Changer la photo",
+    "photoHelper": "JPG, PNG ou WebP. Max 5 MB.",
+    "emailReadOnly": "L'email ne peut pas être modifié",
+    "biographie": "Biographie",
+    "biographiePlaceholder": "Décrivez-vous en quelques lignes..."
   },
   "dashboardpro": {
     "participants": " participants",
@@ -1005,7 +1251,12 @@
     "sur_commande": "Sur commande",
     "indisponible": "Indisponible",
     "manage": "Gérer",
-    "manage_event": "Gérer programmes et œuvres"
+    "manage_event": "Gérer programmes et œuvres",
+    "loadOeuvresFailed": "Erreur lors du chargement des œuvres",
+    "loadEventsFailed": "Erreur lors du chargement des événements",
+    "loadServicesFailed": "Erreur lors du chargement des services",
+    "loadArtisanatsFailed": "Erreur lors du chargement des artisanats",
+    "loadPatrimoinesFailed": "Erreur lors du chargement des sites patrimoine"
   },
   "dashboardadmin": {
     "label_validation": "Validation",
@@ -1313,7 +1564,41 @@
       "textile": "Textile",
       "metal": "Métal",
       "bijoux": "Bijoux"
-    }
+    },
+    "title": "Artisanat Algérien",
+    "subtitle": "Découvrez les métiers d'art et les créations artisanales traditionnelles d'Algérie — poterie, tapis, bijoux, cuir.",
+    "subtitleShort": "Découvrez les métiers d'art et les créations artisanales traditionnelles d'Algérie",
+    "stats": {
+      "products": "Produits",
+      "materials": "Matériaux",
+      "techniques": "Techniques",
+      "artisans": "Artisans"
+    },
+    "searchPlaceholder": "Rechercher un produit artisanal...",
+    "filterByMaterial": "Matériau",
+    "filterByTechnique": "Technique",
+    "sort": {
+      "recent": "Plus récents",
+      "popular": "Populaires",
+      "priceAsc": "Prix croissant",
+      "priceDesc": "Prix décroissant"
+    },
+    "noResults": "Aucun produit artisanal trouvé",
+    "noResultsDesc": "Essayez de modifier vos critères de recherche",
+    "resultsCount": "produit(s) trouvé(s)",
+    "notFound": "Artisanat non trouvé",
+    "noDescription": "Aucune description disponible",
+    "dimensions": "Dimensions",
+    "weight": "Poids",
+    "material": "Matériau",
+    "technique": "Technique",
+    "craftsman": "L'artisan",
+    "biography": "Biographie",
+    "noArtisanInfo": "Informations sur l'artisan non disponibles",
+    "comments": "Commentaires",
+    "artisanWorks": "Autres œuvres de l'artisan",
+    "noOtherWorks": "Cet artisan n'a pas d'autres œuvres pour le moment",
+    "similarCreations": "Créations similaires"
   },
   "apropos": {
     "title_transmission": "Transmission",
@@ -1341,7 +1626,87 @@
     "envoyer_message": "Envoyer le message",
     "contact_direct": "Contact direct",
     "pour_toute_question": "Pour toute question ou collaboration :",
-    "contactculturealgeriedz": "contact@taladz.com"
+    "contactculturealgeriedz": "contact@taladz.com",
+    "champsRequis": "Champs requis",
+    "emailMessageRequis": "L'email et le message sont obligatoires.",
+    "messageEnvoye": "Message envoyé",
+    "messageEnvoyeDesc": "Nous avons bien reçu votre message. Nous vous répondrons rapidement.",
+    "erreurEnvoi": "Erreur lors de l'envoi.",
+    "erreurEnvoiMessage": "Erreur lors de l'envoi du message.",
+    "conditions": "Conditions d'utilisation",
+    "cgu": {
+      "objet": "1. Objet",
+      "objetText": "Les présentes conditions générales d'utilisation (CGU) régissent l'accès et l'utilisation de la plateforme Tala DZ (taladz.com), ci-après « la Plateforme ». En créant un compte ou en utilisant la Plateforme, vous acceptez sans réserve les présentes CGU ainsi que la Politique de confidentialité.",
+      "acces": "2. Accès et inscription",
+      "accesText": "L'accès à la Plateforme est gratuit pour les visiteurs. La création d'un compte est gratuite et ouverte aux personnes âgées d'au moins 13 ans. Les comptes professionnels sont soumis à validation par notre équipe de modération. Vous êtes responsable de la confidentialité de vos identifiants de connexion.",
+      "contenu": "3. Contenu publié",
+      "contenuText": "Vous conservez la propriété intellectuelle de vos contenus. En publiant sur la Plateforme, vous accordez à Tala DZ une licence non exclusive et gratuite pour afficher, distribuer et promouvoir vos contenus dans le cadre de la Plateforme. Le contenu publié doit respecter les lois en vigueur, les droits d'auteur et ne doit contenir aucun propos diffamatoire, discriminatoire ou illicite. Nous nous réservons le droit de modérer ou supprimer tout contenu inapproprié.",
+      "responsabilite": "4. Responsabilité",
+      "responsabiliteText": "Tala DZ met tout en œuvre pour assurer la disponibilité et la sécurité de la Plateforme, sans garantie d'un fonctionnement ininterrompu. Nous ne saurions être tenus responsables des contenus publiés par les utilisateurs. En cas de litige, le droit algérien est applicable.",
+      "modification": "5. Modification des CGU",
+      "modificationText": "Nous pouvons modifier les présentes CGU à tout moment. Les utilisateurs seront informés par notification sur la Plateforme. L'utilisation continue après modification vaut acceptation des nouvelles conditions."
+    },
+    "confidentialite": "Politique de confidentialité",
+    "privacy": {
+      "responsable": "1. Responsable du traitement",
+      "responsableText": "Le responsable du traitement des données personnelles est Tala DZ, accessible à l'adresse taladz.com. Pour toute question relative à la protection de vos données, vous pouvez nous contacter à l'adresse : contact@taladz.com.",
+      "donnees": "2. Données collectées",
+      "donneesIntro": "Nous collectons uniquement les données nécessaires au fonctionnement de la Plateforme :",
+      "donneesIdentite": "Données d'identité : nom, prénom, adresse email (obligatoires à l'inscription)",
+      "donneesOptionnelles": "Données optionnelles : date de naissance, sexe, téléphone, adresse, photo de profil, biographie",
+      "donneesPro": "Données professionnelles (si applicable) : entreprise, spécialités, certifications, site web",
+      "donneesNavigation": "Données de navigation : adresse IP (anonymisée), pages consultées, type d'appareil",
+      "pasDeVente": "Vos informations personnelles ne sont jamais vendues à des tiers.",
+      "finalites": "3. Finalités et base légale",
+      "finaliteCompte": "Gestion de votre compte et authentification — base légale : exécution du contrat (CGU)",
+      "finaliteContenu": "Publication et affichage de vos contenus culturels — base légale : exécution du contrat",
+      "finaliteStats": "Statistiques anonymisées de fréquentation — base légale : intérêt légitime",
+      "finaliteNewsletter": "Envoi de la newsletter (uniquement si vous l'avez acceptée) — base légale : consentement, retirable à tout moment via le lien présent dans chaque email ou la section « Mes données »",
+      "finaliteSecurite": "Sécurité de la Plateforme (prévention des abus) — base légale : intérêt légitime",
+      "conservation": "4. Durée de conservation",
+      "conservationCompte": "Données de compte : conservées tant que votre compte est actif",
+      "conservationNotifs": "Notifications : supprimées automatiquement après 90 jours",
+      "conservationLogs": "Journaux de connexion : 90 jours maximum",
+      "conservationSuppression": "En cas de suppression de compte : vos données personnelles sont effacées, vos contributions publiques sont anonymisées",
+      "conservationSauvegardes": "Sauvegardes de sécurité : conservées 7 jours ; les données d'un compte supprimé en disparaissent dans ce délai",
+      "droits": "5. Vos droits",
+      "droitsIntro": "Conformément à la législation en vigueur et au RGPD, vous disposez des droits suivants :",
+      "droitAcces": "Droit d'accès",
+      "droitAccesDesc": "— consulter et exporter toutes vos données depuis votre profil",
+      "droitRectification": "Droit de rectification",
+      "droitRectificationDesc": "— modifier vos informations personnelles à tout moment",
+      "droitSuppression": "Droit à l'effacement",
+      "droitSuppressionDesc": "— supprimer votre compte et toutes vos données personnelles",
+      "droitPortabilite": "Droit à la portabilité",
+      "droitPortabiliteDesc": "— exporter vos données dans un format lisible par machine (JSON)",
+      "droitOpposition": "Droit d'opposition",
+      "droitOppositionDesc": "— gérer vos préférences de notifications et de confidentialité",
+      "droitsExercice": "Pour exercer vos droits, rendez-vous dans la section « Mes données » de votre profil (export, suppression du compte, newsletter) ou contactez-nous à contact@taladz.com.",
+      "soustraitants": "6. Sous-traitants",
+      "soustraitantsIntro": "Pour assurer le fonctionnement de la Plateforme, nous faisons appel aux services suivants :",
+      "soustraitantCloudinary": "Cloudinary — hébergement des images et médias que vous publiez (serveurs situés hors d'Algérie)",
+      "soustraitantEmail": "Prestataire d'envoi d'emails (SMTP) — emails transactionnels et newsletter (votre adresse email)",
+      "soustraitantOSM": "OpenStreetMap / Nominatim — fonds de carte et géocodage : votre adresse IP est transmise à leurs serveurs lorsqu'une carte s'affiche",
+      "soustraitantUnsplash": "Unsplash — certaines images d'illustration : votre adresse IP est transmise lors de leur affichage",
+      "soustraitantsPas": "Aucune donnée personnelle n'est vendue, louée ou cédée à des fins commerciales. Les polices de caractères et icônes sont hébergées par la Plateforme elle-même.",
+      "cookies": "7. Cookies",
+      "cookiesText": "La Plateforme utilise uniquement des cookies strictement nécessaires au fonctionnement (authentification, préférence de langue, sécurité CSRF). Aucun cookie publicitaire ou de traçage tiers n'est utilisé.",
+      "reclamation": "8. Droit de réclamation",
+      "reclamationText": "Si vous estimez que le traitement de vos données ne respecte pas la réglementation, vous pouvez introduire une réclamation auprès de l'autorité de protection des données de votre pays (en France : CNIL — cnil.fr, en Algérie : ANPDP)."
+    },
+    "mentionsLegales": "Mentions légales",
+    "mentions": {
+      "editeur": "Éditeur de la Plateforme",
+      "editeurText": "Tala DZ — Plateforme collaborative de valorisation du patrimoine culturel algérien.",
+      "editeurContact": "Contact : contact@taladz.com",
+      "editeurSite": "Site web : taladz.com",
+      "hebergeur": "Hébergement",
+      "hebergeurText": "La Plateforme est hébergée sur un serveur VPS dédié sécurisé (HTTPS, certificat Let's Encrypt).",
+      "dpo": "Protection des données",
+      "dpoText": "Pour toute question relative à la protection de vos données personnelles, vous pouvez contacter notre délégué à la protection des données à l'adresse : contact@taladz.com."
+    },
+    "ressources": "Ressources",
+    "ressourcesText": "Culture Algérie met à disposition des ressources pour découvrir et promouvoir le patrimoine culturel algérien : événements, œuvres, artisanat, sites patrimoniaux et bien plus."
   },
   "ajouteroeuvre": {
     "chargement_des_catgories": "Chargement des catégories...",
@@ -1462,7 +1827,29 @@
     "succes": "Œuvre enregistrée",
     "oeuvre_creee_succes": "Votre œuvre a été soumise avec succès. Elle sera visible publiquement après validation par un administrateur.",
     "brouillon_sauvegarde": "Votre brouillon a été sauvegardé. Vous pourrez le modifier et le publier plus tard depuis votre tableau de bord.",
-    "article_cree_succes": "Votre article a été soumis avec succès. Il sera visible publiquement après validation par un administrateur."
+    "article_cree_succes": "Votre article a été soumis avec succès. Il sera visible publiquement après validation par un administrateur.",
+    "langueOriginale": "Langue originale de l'œuvre",
+    "choisirLangue": "-- Choisir la langue --",
+    "categoriesLoadError": "Impossible de charger les catégories",
+    "deselectAll": "Tout désélectionner",
+    "selectAll": "Tout sélectionner",
+    "preciserTechnique": "Précisez la technique...",
+    "choisirTechnique": "-- Choisir une technique --",
+    "preciserSupport": "Précisez le support...",
+    "choisirSupport": "-- Choisir un support --",
+    "isbnHelper": "Format : 978-2-1234-5678-9",
+    "doiHelper": "Format : 10.1234/example",
+    "erreur_upload": "Erreur lors de l'envoi des fichiers",
+    "articleCreateError": "Erreur lors de la création de l'article",
+    "articleSaveError": "Erreur lors de la sauvegarde de l'article",
+    "updatingOeuvre": "Mise à jour de l'oeuvre...",
+    "creatingOeuvre": "Création de l'oeuvre...",
+    "uploadingMedias": "Upload des médias...",
+    "updateError": "Erreur lors de la mise à jour",
+    "createError": "Erreur lors de la création de l'oeuvre",
+    "uploadingMedia": "Upload des médias...",
+    "verifyError": "Impossible de vérifier si l'oeuvre a été créée. Veuillez consulter votre tableau de bord ou réessayer.",
+    "saveError": "Une erreur est survenue lors de l'enregistrement"
   },
   "common_patrimoinesection": {
     "description_citadelle_historique_classe": "Citadelle historique classée au patrimoine mondial de l'UNESCO",
@@ -1603,7 +1990,15 @@
     "retour_aux_notifications": "Retour aux notifications",
     "enregistrement": "Enregistrement...",
     "enregistr": "Enregistré",
-    "enregistrer_les_prfrences": "Enregistrer les préférences"
+    "enregistrer_les_prfrences": "Enregistrer les préférences",
+    "errorLoad": "Impossible de charger les préférences",
+    "errorSave": "Impossible de sauvegarder les préférences",
+    "browserEnabled": "✓ Notifications activées",
+    "browserDisabled": "✗ Notifications désactivées",
+    "emailEnabled": "✓ Notifications par email activées",
+    "emailDisabled": "✗ Notifications par email désactivées",
+    "smsEnabled": "✓ Notifications SMS activées",
+    "smsDisabled": "✗ Notifications SMS désactivées"
   },
   "notifications_notifications": {
     "voir_plus": "Voir plus →",
@@ -1626,7 +2021,11 @@
     "tout_marquer_comme": "Tout marquer comme lu",
     "supprimer_les_lues": "Supprimer les lues",
     "chargement_des_notifications": "Chargement des notifications...",
-    "aucune_notification": "Aucune notification"
+    "aucune_notification": "Aucune notification",
+    "connected": "Connecté",
+    "disconnected": "Déconnecté",
+    "loading": "Chargement...",
+    "loadMore": "Charger plus"
   },
   "articles_articleviewpage": {
     "chargement_larticle": "Chargement de l'article...",
@@ -1702,7 +2101,10 @@
     "type": "type",
     "disponible": "disponible",
     "annuler": "Annuler",
-    "ajouter_lintervenant": "Ajouter l'intervenant"
+    "ajouter_lintervenant": "Ajouter l'intervenant",
+    "error_prenom_required": "Le prénom est obligatoire",
+    "error_nom_required": "Le nom est obligatoire",
+    "error_role_required": "Veuillez sélectionner un type de rôle"
   },
   "modals_editeurmodal": {
     "ajouter_diteur": "Ajouter un éditeur",
@@ -1714,7 +2116,10 @@
     "site_web": "Site web",
     "optionnel_lurl_doit": "Optionnel - L'URL doit commencer par http:// ou https://",
     "annuler": "Annuler",
-    "crer_lditeur": "Créer l'éditeur"
+    "crer_lditeur": "Créer l'éditeur",
+    "error_nom_required": "Le nom de l'éditeur est obligatoire",
+    "error_type_required": "Le type d'éditeur est obligatoire",
+    "error_url_invalid": "L'URL doit commencer par http:// ou https://"
   },
   "dashboard_dashboardfilters": {
     "type": "Type:",
@@ -1904,13 +2309,60 @@
       "notifications": "Notifications"
     },
     "users": {
-      "title": "Gestion des utilisateurs"
+      "title": "Gestion des utilisateurs",
+      "count": "{{count}} utilisateur(s)",
+      "notifyProfessionals": "Notifier les professionnels",
+      "searchPlaceholder": "Rechercher par nom, email...",
+      "selectAll": "Tout sélectionner",
+      "selectedCount": "{{count}} sélectionné(s)",
+      "bulkActivate": "Activer",
+      "bulkDeactivate": "Désactiver",
+      "clearSelection": "Désélectionner",
+      "noUsers": "Aucun utilisateur",
+      "noUsersDesc": "Aucun utilisateur ne correspond à vos critères de recherche",
+      "selectUser": "Sélectionner {{name}}",
+      "registeredOn": "Inscrit le {{date}}",
+      "sendEmail": "Envoyer un email",
+      "verifyEmail": "Vérifier l'email",
+      "reactivate": "Réactiver",
+      "suspend": "Suspendre",
+      "confirmDelete": "Supprimer cet utilisateur ?",
+      "confirmDeleteDesc": "Cette action est irréversible. Toutes les données de l'utilisateur seront supprimées.",
+      "confirmSuspend": "Suspendre cet utilisateur ?",
+      "confirmSuspendDesc": "L'utilisateur sera suspendu pendant 7 jours.",
+      "confirmBulkDelete": "Supprimer {{count}} utilisateur(s) ?",
+      "confirmBulkDeleteDesc": "Cette action est irréversible."
     },
     "oeuvres": {
-      "title": "Gestion des œuvres"
+      "title": "Gestion des œuvres",
+      "count": "{{count}} œuvre(s)",
+      "searchPlaceholder": "Rechercher par titre...",
+      "noOeuvres": "Aucune œuvre",
+      "noOeuvresDesc": "Aucune œuvre ne correspond à vos critères",
+      "table": {
+        "title": "Titre",
+        "type": "Type",
+        "author": "Auteur",
+        "status": "Statut",
+        "date": "Date",
+        "actions": "Actions"
+      },
+      "confirmDelete": "Supprimer cette œuvre ?",
+      "confirmDeleteDesc": "Cette action est irréversible."
     },
     "events": {
-      "title": "Gestion des événements"
+      "title": "Gestion des événements",
+      "count": "{{count}} événement(s)",
+      "searchPlaceholder": "Rechercher par nom...",
+      "noEvents": "Aucun événement",
+      "noEventsDesc": "Aucun événement ne correspond à vos critères",
+      "participants": "{{count}} participants",
+      "cancel": "Annuler",
+      "confirmCancel": "Annuler cet événement ?",
+      "confirmCancelDesc": "Les participants seront notifiés de l'annulation.",
+      "cancelEvent": "Annuler l'événement",
+      "confirmDelete": "Supprimer cet événement ?",
+      "confirmDeleteDesc": "Cette action est irréversible."
     },
     "services": {
       "title": "Gestion des services",
@@ -1921,7 +2373,9 @@
         "transport": "Transport",
         "accommodation": "Hébergement",
         "workshop": "Atelier"
-      }
+      },
+      "count": "{{count}} service(s)",
+      "noServicesDesc": "Aucun service ne correspond à vos critères"
     },
     "alerts": {
       "title": "Alertes",
@@ -1998,7 +2452,9 @@
       "sentCount_other": "Envoyé à {{count}} utilisateurs",
       "sentToUser": "Notification envoyée à {{name}}",
       "sentToGroup": "Notification envoyée au groupe {{group}}",
-      "sendError": "Erreur lors de l'envoi de la notification"
+      "sendError": "Erreur lors de l'envoi de la notification",
+      "titleRequired": "Le titre est requis",
+      "messageRequired": "Le message est requis"
     },
     "moderation": {
       "title": "Modération",
@@ -2030,8 +2486,19 @@
         "approve": "Approuver",
         "reject": "Rejeter",
         "warn": "Avertir",
-        "process": "Traiter"
-      }
+        "process": "Traiter",
+        "dismiss": "Rejeter le signalement",
+        "dismissShort": "Ignorer",
+        "removeContent": "Supprimer le contenu",
+        "removeContentShort": "Supprimer",
+        "suspend": "Suspendre l'utilisateur",
+        "suspendShort": "Suspendre"
+      },
+      "count": "{{count}} signalement(s) en attente",
+      "commentReports": "Commentaires",
+      "contentReports": "Contenus",
+      "searchPlaceholder": "Rechercher un signalement...",
+      "noReportsDesc": "Aucun signalement ne correspond à vos critères"
     },
     "patrimoine": {
       "title": "Gestion du patrimoine",
@@ -2051,7 +2518,11 @@
       "deleteDialog": {
         "title": "Supprimer le site patrimonial",
         "description": "Êtes-vous sûr de vouloir supprimer \"{{name}}\" ?"
-      }
+      },
+      "deleted": "Site supprimé avec succès",
+      "count": "{{count}} site(s)",
+      "noResults": "Aucun site trouvé",
+      "noResultsDesc": "Aucun site ne correspond à vos critères"
     },
     "overview": {
       "title": "Vue d'ensemble",
@@ -2084,7 +2555,9 @@
     "actions": {
       "reject": "Rejeter",
       "validate": "Valider"
-    }
+    },
+    "emailVerified": "Email vérifié avec succès",
+    "emailVerifyFailed": "Impossible de vérifier l'email"
   },
   "wilayas": {
     "alger": "Alger",
@@ -2214,7 +2687,64 @@
     "dimensions": "Dimensions",
     "weight": "Poids",
     "price": "Prix",
-    "verified": "Œuvre vérifiée et publiée"
+    "verified": "Œuvre vérifiée et publiée",
+    "yearCreation": "Année de création",
+    "materials": "Matériaux",
+    "pageCount": "Nombre de pages",
+    "publicationDate": "Date de publication",
+    "gallery": "Galerie",
+    "readOriginal": "Article original",
+    "abstract": "Abstract",
+    "viewOnDOI": "Voir sur DOI.org",
+    "backCover": "Dos de couverture",
+    "share": {
+      "text": "Découvrez \"{{title}}\" - {{type}}"
+    },
+    "errors": {
+      "loadMetadataFailed": "Impossible de charger les données nécessaires au formulaire.",
+      "loadRefFailed": "Impossible de charger les données de référence",
+      "connectionError": "Erreur de connexion au serveur. Veuillez réessayer.",
+      "titleRequired": "Le titre est requis (au moins en français ou arabe)",
+      "typeRequired": "Veuillez sélectionner un type d'œuvre",
+      "descriptionRequired": "La description est requise (au moins en français ou arabe)",
+      "categoryRequired": "Veuillez sélectionner au moins une catégorie",
+      "languageRequired": "Veuillez sélectionner la langue originale",
+      "invalidYear": "L'année doit être entre 1800 et {{max}}",
+      "invalidPrice": "Le prix ne peut pas être négatif",
+      "invalidIsbn": "ISBN invalide — 10 ou 13 chiffres attendus",
+      "invalidUrl": "URL invalide — utilisez le format https://exemple.com",
+      "formHasErrors": "Veuillez corriger les erreurs ci-dessous"
+    },
+    "scientificDetails": "Détails scientifiques",
+    "journal": "Journal / Revue",
+    "volume": "Volume",
+    "pages": "Pages",
+    "impactFactor": "Impact Factor",
+    "peerReviewed": "Évalué par les pairs (peer-reviewed)",
+    "articleDetails": "Détails de l'article",
+    "author": "Auteur",
+    "subtitle": "Sous-titre",
+    "source": "Source",
+    "readOriginalArticle": "Lire l'article original",
+    "bookDetails": "Détails du livre",
+    "format": "Format",
+    "collection": "Collection",
+    "filmDetails": "Détails du film",
+    "director": "Réalisateur",
+    "producer": "Producteur",
+    "studio": "Studio",
+    "albumDetails": "Détails de l'album",
+    "tracks": "Pistes",
+    "label": "Label",
+    "shareText": "Découvrez cette œuvre : {{title}}",
+    "seoDescription": "Découvrez {{title}} — œuvre culturelle algérienne",
+    "artistPresentation": "Présentation de l'artiste",
+    "authorBibliography": "Bibliographie de l'auteur",
+    "noAuthorInfo": "Aucune information sur l'auteur disponible.",
+    "discoverArtistWorks": "Découvrir d'autres œuvres de l'artiste",
+    "discoverAuthorWorks": "Découvrir d'autres œuvres de l'auteur",
+    "noOtherArtistWorks": "Aucune autre œuvre de cet artiste disponible.",
+    "noOtherAuthorWorks": "Aucune autre œuvre de cet auteur disponible."
   },
   "event": {
     "accessibility": "Accessibilité",
@@ -2287,7 +2817,14 @@
       "interestedVisitor": "Intéressé(e) par cet événement ?",
       "connectToParticipate": "Connectez-vous pour vous inscrire ou ajoutez aux favoris",
       "addToFavorites": "Ajouter aux favoris",
-      "removeFromFavorites": "Retirer des favoris"
+      "removeFromFavorites": "Retirer des favoris",
+      "successWithWorks": "Vous êtes inscrit avec {{count}} œuvre(s) soumise(s)",
+      "limitTitle": "Limite atteinte",
+      "limitDesc": "Maximum {{max}} œuvre(s) autorisée(s) pour cet événement",
+      "error": "Une erreur est survenue lors de l'inscription",
+      "cancelTitle": "Annuler mon inscription",
+      "cancelConfirm": "Êtes-vous sûr(e) de vouloir annuler votre inscription à cet événement ? Cette action est irréversible.",
+      "confirmCancel": "Confirmer l'annulation"
     },
     "registrationDeadline": "Date limite d'inscription",
     "relatedEvents": "Événements associés",
@@ -2296,7 +2833,10 @@
       "comments": "Commentaires",
       "gallery": "Galerie",
       "info": "Informations",
-      "program": "Programme"
+      "program": "Programme",
+      "participants": "Participants",
+      "services": "Services",
+      "metadata": "Métadonnées"
     },
     "roles": {
       "organisateur_principal": "Organisateur principal",
@@ -2308,9 +2848,41 @@
       "moderateur": "Modérateur",
       "animateur": "Animateur",
       "benevole": "Bénévole",
-      "staff": "Staff"
+      "staff": "Staff",
+      "participant": "Participant"
     },
-    "viewOnMap": "Voir sur la carte"
+    "viewOnMap": "Voir sur la carte",
+    "metadata": {
+      "title": "Informations complémentaires",
+      "type": "Type d'événement",
+      "registrationRequired": "Inscription requise",
+      "certificateDelivered": "Certificat délivré",
+      "free": "Gratuit",
+      "virtual": "Événement en ligne",
+      "capacity": "Capacité",
+      "acceptsSubmissions": "Accepte les soumissions",
+      "presentedWorks": "Oeuvres présentées",
+      "partners": "Partenaires"
+    },
+    "participants": {
+      "empty": "Aucun participant pour le moment",
+      "emptyDesc": "Soyez le premier à vous inscrire à cet événement !",
+      "title": "Participants",
+      "confirmed": "confirmé(s)"
+    },
+    "share": {
+      "title": "Partager l'événement"
+    },
+    "qrcode": {
+      "unavailable": "QR Code non disponible",
+      "title": "QR Code de l'événement",
+      "alt": "QR Code pour accéder à l'événement",
+      "description": "Scannez ce QR code pour accéder directement à la page de l'événement.",
+      "download": "Télécharger",
+      "copied": "Copié !",
+      "copyLink": "Copier le lien",
+      "share": "Partager"
+    }
   },
   "places": {
     "address": "Adresse",
@@ -2399,8 +2971,39 @@
       "nomRequired": "Le nom est requis",
       "materiauRequired": "Veuillez sélectionner un matériau",
       "techniqueRequired": "Veuillez sélectionner une technique",
-      "createFailed": "Erreur lors de la création du service"
-    }
+      "createFailed": "Erreur lors de la création du service",
+      "noLieuSelected": "Veuillez sélectionner un lieu",
+      "noServices": "Veuillez ajouter au moins un service",
+      "submitFailed": "Erreur lors de l'ajout des services"
+    },
+    "serviceAdded": "Service ajouté",
+    "serviceAddedDesc": "Le service a été ajouté à la liste",
+    "successTitle": "Succès",
+    "selectLieu": "1. Sélectionner un lieu",
+    "addServices": "2. Ajouter des services",
+    "filters": "Filtres",
+    "search": "Rechercher",
+    "searchPlaceholder": "Nom du lieu...",
+    "typePatrimoine": "Type de patrimoine",
+    "lieuxList": "Sites patrimoniaux",
+    "results": "résultats",
+    "noLieux": "Aucun lieu trouvé",
+    "changeLieu": "Changer de lieu",
+    "existingServices": "Services existants",
+    "existingServicesDesc": "Services déjà configurés pour ce lieu",
+    "noExistingServices": "Aucun service configuré",
+    "predefinedServices": "Services courants",
+    "predefinedServicesDesc": "Sélectionnez les services à ajouter",
+    "alreadyAdded": "déjà ajouté",
+    "customService": "Service personnalisé",
+    "customServiceDesc": "Ajoutez un service non listé",
+    "serviceName": "Nom du service",
+    "serviceNamePlaceholder": "Ex: Location de vélos",
+    "serviceDesc": "Description (optionnel)",
+    "available": "Service disponible",
+    "addToList": "Ajouter à la liste",
+    "servicesToAdd": "Services à ajouter:",
+    "servicesSelected": "service(s) à ajouter"
   },
   "ajouterPatrimoine": {
     "title": "Ajouter un site patrimonial",
@@ -2455,7 +3058,26 @@
       "submittedWorks": "Œuvres soumises pour cet événement",
       "portfolio": "Portfolio",
       "participationHistory": "Historique des participations",
-      "loadError": "Impossible de charger le profil"
+      "loadError": "Impossible de charger le profil",
+      "actions": {
+        "confirmSuccess": "Participation confirmée",
+        "confirmDesc": "Le participant a été notifié",
+        "rejectSuccess": "Participation refusée",
+        "rejectDesc": "Le participant a été notifié",
+        "presentSuccess": "Présence enregistrée",
+        "presentDesc": "Le participant est marqué présent",
+        "absentSuccess": "Absence enregistrée",
+        "absentDesc": "Le participant est marqué absent",
+        "error": "Une erreur est survenue",
+        "confirm": "Confirmer",
+        "reject": "Refuser",
+        "markPresent": "Présent",
+        "markAbsent": "Absent"
+      },
+      "workDetails": "Détails de l'œuvre",
+      "author": "Auteur / Artiste",
+      "presentationDesc": "Note pour cet événement",
+      "viewFullPage": "Voir page complète"
     }
   },
   "programmePages": {
@@ -2463,7 +3085,8 @@
       "backToEvents": "Retour aux événements",
       "backToEvent": "Retour à l'événement",
       "edit": "Modifier",
-      "delete": "Supprimer"
+      "delete": "Supprimer",
+      "duplicate": "Dupliquer"
     },
     "status": {
       "loadingProgram": "Chargement du programme..."
@@ -2479,7 +3102,9 @@
       "loadFailed": "Erreur lors du chargement du programme",
       "createFailed": "Erreur lors de la création du programme",
       "updateFailed": "Erreur lors de la mise à jour du programme",
-      "deleteFailed": "Erreur lors de la suppression du programme"
+      "deleteFailed": "Erreur lors de la suppression du programme",
+      "loadDataFailed": "Impossible de charger les données de l'événement. Vérifiez votre connexion.",
+      "duplicateFailed": "Erreur lors de la duplication"
     },
     "meta": {
       "eventNumber": "Événement #{{id}}",
@@ -2504,8 +3129,10 @@
       "confirmDelete": "Êtes-vous sûr de vouloir supprimer ce programme ?",
       "quickActions": {
         "editProgram": "Modifier ce programme",
-        "addAnotherProgram": "Ajouter un autre programme"
-      }
+        "addAnotherProgram": "Ajouter un autre programme",
+        "duplicateProgram": "Dupliquer ce programme"
+      },
+      "intervenants": "Intervenants"
     },
     "info": {
       "multiDayTitle": "Gestion multi-jours",
@@ -2527,7 +3154,8 @@
     "errorBoundary": {
       "title": "Une erreur est survenue",
       "unexpected": "Erreur inattendue",
-      "retry": "Réessayer"
+      "retry": "Réessayer",
+      "reload": "Recharger la page"
     },
     "lazyImage": {
       "unavailable": "Image non disponible"
@@ -2538,7 +3166,9 @@
     "programmes": "Programmes",
     "participants": "Participants",
     "oeuvres": "Œuvres",
-    "showOeuvres": "Présenter des œuvres"
+    "showOeuvres": "Présenter des œuvres",
+    "oeuvresDisabled": "La gestion des œuvres est désactivée pour cet événement.",
+    "oeuvresEnableHint": "Activez \"Présenter des œuvres\" si cet événement inclut des présentations d'œuvres."
   },
   "status": {
     "active": "Actif",
@@ -2559,7 +3189,9 @@
     "full": "Complet",
     "open": "Ouvert",
     "closed": "Fermé",
-    "unknown": "Inconnu"
+    "unknown": "Inconnu",
+    "present": "Présent",
+    "absent": "Absent"
   },
   "patrimoine": {
     "filters": {
@@ -2614,7 +3246,8 @@
       "photoRequired": "Au moins une photo est requise",
       "invalidFiles": "Certains fichiers sont invalides (images < 10 Mo)",
       "createFailed": "Erreur lors de la création",
-      "gpsRecommended": "Position GPS non définie. Le site sera placé au centre de l'Algérie."
+      "gpsRecommended": "Position GPS non définie. Le site sera placé au centre de l'Algérie.",
+      "gpsRequired": "Positionnez le site sur la carte (cliquez, cherchez une adresse ou utilisez la géolocalisation)"
     },
     "success": {
       "created": "Site créé !",
@@ -2637,7 +3270,9 @@
       "artisanat": "Artisanat local",
       "personnalites": "Personnalités",
       "infosPratiques": "Informations pratiques",
-      "references": "Références historiques"
+      "references": "Références historiques",
+      "cultureVivante": "Culture & Patrimoine vivant",
+      "cultureVivanteDesc": "Enrichissez ces sections avec vos connaissances"
     },
     "contribute": {
       "add": "Contribuer",
@@ -2645,7 +3280,10 @@
       "saved": "Contribution enregistrée !",
       "thanks": "Merci pour votre contribution",
       "contentRequired": "Veuillez saisir du contenu (au moins en français ou arabe)",
-      "saveFailed": "Erreur lors de la sauvegarde"
+      "saveFailed": "Erreur lors de la sauvegarde",
+      "addArticle": "Article",
+      "addQuick": "Texte rapide",
+      "writeArticle": "Écrire un article"
     },
     "gps": {
       "unavailable": "Géolocalisation non disponible",
@@ -2654,8 +3292,79 @@
       "denied": "Accès à la position refusé. Autorisez la géolocalisation.",
       "unavailablePos": "Position indisponible. Cliquez sur la carte.",
       "timeout": "Délai dépassé. Réessayez ou cliquez sur la carte.",
-      "error": "Erreur de géolocalisation"
-    }
+      "error": "Erreur de géolocalisation",
+      "noResults": "Aucun résultat",
+      "noResultsDesc": "Essayez un autre terme ou cliquez sur la carte.",
+      "searchFailed": "Erreur de recherche",
+      "invalidCoords": "Coordonnées invalides. Latitude: -90 à 90, Longitude: -180 à 180.",
+      "searchPlaceholder": "Rechercher une adresse, un lieu...",
+      "manual": "Saisie manuelle GPS"
+    },
+    "editor": {
+      "loadError": "Impossible de charger les blocs",
+      "contentRequired": "Le contenu est obligatoire",
+      "urlRequired": "L'URL est obligatoire",
+      "added": "Bloc ajoute",
+      "addError": "Impossible d'ajouter le bloc",
+      "confirmDelete": "Supprimer ce bloc ?",
+      "deleted": "Bloc supprime",
+      "deleteError": "Impossible de supprimer le bloc",
+      "title": "Articles enrichis : {{section}}",
+      "description": "Ajoutez du texte, des titres, des citations, des images et videos pour enrichir cette section.",
+      "existingBlocks": "Blocs existants ({{count}})",
+      "noBlocks": "Aucun bloc dans cette section pour le moment.",
+      "empty": "(vide)",
+      "addBlock": "Ajouter un bloc",
+      "blockType": "Type de bloc",
+      "headingLevel": "Niveau de titre",
+      "headingMain": "Principal",
+      "headingSub": "Secondaire",
+      "headingMinor": "Mineur",
+      "url": "URL",
+      "content": "Contenu",
+      "citationPlaceholder": "« Citation... »",
+      "textPlaceholder": "Saisir le texte...",
+      "headingPlaceholder": "Titre de section",
+      "author": "Auteur (optionnel)",
+      "authorPlaceholder": "Nom de l'auteur",
+      "alt": "Texte alternatif (accessibilite)",
+      "altPlaceholder": "Description de l'image",
+      "add": "Ajouter le bloc"
+    },
+    "addSite": "Ajouter un site",
+    "photos": "photos",
+    "gallery": "Galerie",
+    "description": "Description",
+    "noDescription": "Aucune description disponible.",
+    "toVisit": "À Visiter",
+    "monuments": "Monuments",
+    "vestiges": "Vestiges",
+    "services": "Services",
+    "programmes": "Programmes",
+    "parcours": "Parcours",
+    "history": "Histoire",
+    "museums": "Musées",
+    "collections": "Collections",
+    "wildlife": "Faune & Flore",
+    "viewEvent": "Voir l'événement",
+    "noProgrammes": "Aucun programme prévu pour le moment",
+    "noParcours": "Aucun parcours associé",
+    "noGallery": "Aucune photo disponible",
+    "noMuseums": "Aucun musée répertorié",
+    "noCollections": "Aucune collection disponible",
+    "noWildlife": "Informations sur la faune et flore à venir",
+    "practicalInfo": "Informations pratiques",
+    "hours": "Horaires",
+    "location": "Localisation",
+    "qrCode": "QR Code",
+    "scanQR": "Scannez pour accéder aux informations",
+    "stats": "Statistiques",
+    "discoverArea": "Découvrez les environs",
+    "planVisitDesc": "Créez un parcours personnalisé avec les sites à proximité",
+    "planVisit": "Planifier votre visite",
+    "proService": "Vous êtes professionnel ?",
+    "addYourService": "Proposez vos services ici",
+    "backToList": "Retour à la liste"
   },
   "toasts": {
     "error": "Erreur",
@@ -2766,7 +3475,19 @@
     "deleteFailed": "Erreur de suppression",
     "alreadyDeleted": "Élément déjà supprimé",
     "alreadyDeletedDesc": "La liste a été actualisée.",
-    "noPermission": "Vous n'avez pas les permissions nécessaires pour cette action"
+    "noPermission": "Vous n'avez pas les permissions nécessaires pour cette action",
+    "loadUsersFailed": "Erreur lors du chargement des utilisateurs",
+    "loadPendingUsersFailed": "Erreur lors du chargement des utilisateurs en attente",
+    "loadPendingOeuvresFailed": "Erreur lors du chargement des œuvres en attente",
+    "loadModerationFailed": "Erreur lors du chargement de la modération",
+    "eventCancelled": "Événement annulé avec succès",
+    "eventCancelFailed": "Erreur lors de l'annulation",
+    "serviceValidated": "Service validé",
+    "serviceRejected": "Service rejeté",
+    "serviceValidationFailed": "Erreur de validation",
+    "imageUploadFailed": "Échec de l'envoi de l'image (bloc {{index}})",
+    "notFoundDesc": "La ressource demandée est introuvable.",
+    "notFound": "Ressource introuvable"
   },
   "visit": {
     "title": "Planifier votre visite",
@@ -2937,9 +3658,34 @@
         "dateRequired": "La date est requise",
         "startTimeRequired": "L'heure de début est requise",
         "endTimeRequired": "L'heure de fin est requise",
-        "endTimeAfterStart": "L'heure de fin doit être après l'heure de début"
+        "endTimeAfterStart": "L'heure de fin doit être après l'heure de début",
+        "descriptionRequired": "La description est requise (au moins en français ou arabe)",
+        "intervenantUserRequired": "Chaque intervenant doit avoir un utilisateur sélectionné"
       }
-    }
+    },
+    "loadError": "Erreur lors du chargement des programmes",
+    "updated": "Programme mis à jour",
+    "created": "Programme créé",
+    "saveError": "Erreur lors de la sauvegarde",
+    "confirmDelete": "Êtes-vous sûr de vouloir supprimer ce programme ?",
+    "deleted": "Programme supprimé",
+    "deleteError": "Erreur lors de la suppression",
+    "list": "Liste des programmes",
+    "add": "Ajouter une activité",
+    "edit": "Modifier l'activité",
+    "create": "Créer une activité",
+    "formDesc": "Remplissez les informations de l'activité",
+    "empty": "Aucun programme pour cet événement",
+    "speakerCount": "intervenant(s)",
+    "speakers": "Intervenants",
+    "level": "Niveau",
+    "requiredMaterial": "Matériel requis",
+    "translationAvailable": "Traduction disponible",
+    "liveStreaming": "Diffusion en direct",
+    "digitalSupport": "Support numérique",
+    "noDate": "Date non définie",
+    "notAvailable": "Programme non disponible",
+    "emptyDesc": "Le programme de cet événement n'a pas encore été publié"
   },
   "emailChange": {
     "noTokenProvided": "Aucun jeton de confirmation fourni.",
@@ -3002,7 +3748,8 @@
       "techniqueRequired": "La technique est requise",
       "createFailed": "Erreur lors de la création",
       "loadFailed": "Impossible de charger l'artisanat",
-      "loadMetadataFailed": "Erreur lors du chargement des matériaux et techniques"
+      "loadMetadataFailed": "Erreur lors du chargement des matériaux et techniques",
+      "prixMinMax": "Le prix minimum ne peut pas être supérieur au prix maximum"
     }
   },
   "service": {
@@ -3060,7 +3807,8 @@
       "urlInvalid": "URL du site web invalide (doit commencer par http:// ou https://)",
       "phoneInvalid": "Numéro de téléphone invalide",
       "submitFailed": "Erreur lors de la soumission"
-    }
+    },
+    "editTitle": "Modifier mon service"
   },
   "organisations": {
     "create": {
@@ -3077,7 +3825,10 @@
       "website": "Site web",
       "submit": "Créer l'organisation",
       "success": "Organisation créée avec succès",
-      "error": "Erreur lors de la création"
+      "error": "Erreur lors de la création",
+      "urlInvalid": "URL du site web invalide (doit commencer par http:// ou https://)",
+      "typeLoadError": "Impossible de charger les types. Veuillez rafraîchir la page.",
+      "submitting": "Création en cours..."
     }
   },
   "validation": {
@@ -3086,7 +3837,8 @@
     "fixErrors": "Veuillez corriger les erreurs avant de soumettre",
     "invalidGPS": "Coordonnées GPS invalides",
     "fileTooLarge": "Le fichier est trop volumineux",
-    "invalidFileType": "Type de fichier non supporté"
+    "invalidFileType": "Type de fichier non supporté",
+    "maxFileSize": "Max 5 Mo"
   },
   "myData": {
     "title": "Mes données",
@@ -3109,5 +3861,282 @@
     "newsletterOn": "Vous êtes abonné(e) à la newsletter",
     "newsletterOff": "Vous êtes désabonné(e) de la newsletter",
     "newsletterFailed": "Modification impossible, réessayez"
+  },
+  "app": {
+    "offlineBanner": "Connexion réseau perdue — les données affichées peuvent ne plus être à jour."
+  },
+  "article": {
+    "imageTooLarge": "L'image est trop volumineuse (max 10MB)",
+    "mustBeImage": "Le fichier doit être une image",
+    "errors": {
+      "titreRequired": "Le titre est obligatoire (au moins dans une langue)",
+      "descriptionRequired": "La description est obligatoire (au moins dans une langue)",
+      "categoriesRequired": "Veuillez sélectionner au moins une catégorie"
+    },
+    "savedSuccess": "Article sauvegardé avec succès!",
+    "linkCopied": "Lien copié !",
+    "commentError": "Erreur lors de l'ajout du commentaire",
+    "notFound": "L'article demandé n'existe pas.",
+    "scientific": "Article Scientifique",
+    "article": "Article",
+    "volume": "Volume",
+    "numero": "Numéro",
+    "pages": "Pages",
+    "replyToComment": "Répondre au commentaire",
+    "addComment": "Ajouter un commentaire",
+    "updateSuccess": "Article mis à jour avec succès !"
+  },
+  "passwordStrength": {
+    "minLength": "12 caractères minimum",
+    "uppercase": "1 majuscule",
+    "lowercase": "1 minuscule",
+    "digit": "1 chiffre",
+    "special": "1 caractère spécial",
+    "weak": "Faible",
+    "fair": "Moyen",
+    "good": "Bon",
+    "strong": "Fort"
+  },
+  "map": {
+    "title": "Carte Interactive",
+    "points": "points",
+    "fullscreen": "Plein écran",
+    "exploration": "Exploration — Patrimoine, Services & Événements",
+    "parcours": "Parcours disponibles"
+  },
+  "oeuvres": {
+    "loadError": "Erreur lors du chargement des œuvres",
+    "addedToEvent": "Œuvre ajoutée à l'événement",
+    "addError": "Erreur lors de l'ajout",
+    "confirmRemove": "Voulez-vous vraiment retirer cette œuvre de l'événement ?",
+    "removedFromEvent": "Œuvre retirée de l'événement",
+    "removeError": "Erreur lors de la suppression",
+    "inEvent": "Œuvres présentées",
+    "addToEvent": "Ajouter une œuvre",
+    "selectToAdd": "Sélectionner une œuvre",
+    "selectDesc": "Choisissez parmi vos œuvres disponibles",
+    "select": "Œuvre",
+    "selectPlaceholder": "Sélectionner une œuvre",
+    "duration": "Durée de présentation (min)",
+    "presentationDesc": "Description de la présentation",
+    "presentationDescPlaceholder": "Notes sur la présentation de cette œuvre",
+    "noneInEvent": "Aucune œuvre ajoutée à cet événement",
+    "availableCount": "Vous avez {{count}} œuvre(s) disponible(s)",
+    "noAvailable": "Créez d'abord une œuvre pour pouvoir l'ajouter",
+    "available": "Œuvres disponibles"
+  },
+  "artisanatForm": {
+    "createTitle": "Ajouter un artisanat"
+  },
+  "artisanForm": {
+    "editTitle": "Modifier l'artisanat",
+    "viewTitle": "Détails de l'artisanat",
+    "verifyTitle": "Vérifier l'artisanat",
+    "title": "Artisanat",
+    "mode": {
+      "create": "Création",
+      "edit": "Modification",
+      "view": "Consultation",
+      "verify": "Vérification"
+    },
+    "success": "Opération réussie!",
+    "basicInfo": "Informations de base",
+    "basicInfoDescView": "Informations sur le produit artisanal",
+    "basicInfoDesc": "Décrivez votre produit artisanal",
+    "nom": "Nom du produit",
+    "nomPlaceholder": "Ex: Tapis berbère traditionnel",
+    "description": "Description",
+    "descriptionPlaceholder": "Décrivez votre produit, ses caractéristiques...",
+    "materiau": "Matériau",
+    "selectMateriau": "Sélectionner un matériau",
+    "technique": "Technique",
+    "selectTechnique": "Sélectionner une technique",
+    "pricingTitle": "Prix et disponibilité",
+    "prixMin": "Prix minimum (DA)",
+    "prixMax": "Prix maximum (DA)",
+    "delaiFabrication": "Délai de fabrication (jours)",
+    "delaiFabricationPlaceholder": "Nombre de jours",
+    "enStock": "Quantité en stock",
+    "surCommande": "Disponible sur commande",
+    "tagsTitle": "Tags / Mots-clés",
+    "tagPlaceholder": "Ajouter un tag...",
+    "verificationTitle": "Vérification administrative",
+    "verificationDesc": "Approuvez ou rejetez ce produit artisanal",
+    "motifRejet": "Motif du rejet",
+    "motifRejetPlaceholder": "Expliquez pourquoi ce produit est rejeté...",
+    "mediasTitle": "Photos",
+    "mediasDescView": "Photos du produit",
+    "mediasDesc": "Ajoutez des photos de votre produit",
+    "mediasUploadText": "Cliquez pour ajouter des photos",
+    "submitting": "En cours...",
+    "submit": "Créer l'artisanat",
+    "update": "Mettre à jour",
+    "verify": "Vérifier et sauvegarder"
+  },
+  "languageSelector": {
+    "chooseLanguage": "Choisir la langue"
+  },
+  "editeur": {
+    "types": {
+      "maisonEdition": "Maison d'édition",
+      "labelMusique": "Label musical",
+      "studioCinema": "Studio cinéma",
+      "galerieArt": "Galerie d'art",
+      "editeurScientifique": "Éditeur scientifique",
+      "presse": "Presse",
+      "editeurNumerique": "Éditeur numérique",
+      "autre": "Autre"
+    },
+    "errors": {
+      "createFailed": "Erreur lors de la création de l'éditeur"
+    }
+  },
+  "intervenant": {
+    "errors": {
+      "loadTypesFailed": "Erreur lors du chargement des types",
+      "loadTypesFailedDetail": "Impossible de charger les types d'intervenants"
+    },
+    "noRolesAvailable": "Aucun rôle disponible",
+    "selectRole": "Sélectionnez un rôle"
+  },
+  "emptyState": {
+    "default": {
+      "title": "Aucun élément",
+      "description": "Il n'y a rien à afficher pour le moment."
+    },
+    "search": {
+      "title": "Aucun résultat",
+      "description": "Essayez de modifier vos critères de recherche."
+    },
+    "documents": {
+      "title": "Aucun document",
+      "description": "Commencez par ajouter un document."
+    },
+    "events": {
+      "title": "Aucun événement",
+      "description": "Aucun événement n'est prévu pour le moment."
+    },
+    "users": {
+      "title": "Aucun utilisateur",
+      "description": "Aucun utilisateur ne correspond à vos critères."
+    },
+    "locations": {
+      "title": "Aucun lieu",
+      "description": "Aucun lieu n'a été trouvé."
+    },
+    "works": {
+      "title": "Aucune œuvre",
+      "description": "Aucune œuvre n'est disponible."
+    },
+    "products": {
+      "title": "Aucun produit",
+      "description": "Aucun produit n'est disponible."
+    }
+  },
+  "services": {
+    "none": "Aucun service disponible pour ce lieu",
+    "nearby": "Services à proximité",
+    "availableServices": "Services disponibles",
+    "count": "services",
+    "open": "● Disponible",
+    "closed": "● Indisponible",
+    "website": "Site web"
+  },
+  "favoris": {
+    "added": "Ajouté aux favoris",
+    "removed": "Retiré des favoris",
+    "addedDesc": "L'œuvre a été ajoutée à vos favoris",
+    "removedDesc": "L'œuvre a été retirée de vos favoris",
+    "toggle": "Ajouter/Retirer des favoris"
+  },
+  "stats": {
+    "views": "vues",
+    "favorites": "favoris",
+    "comments": "avis"
+  },
+  "upload": {
+    "fileTooLarge": "Fichier trop volumineux (max 5 MB)",
+    "uploadFailed": "Erreur upload"
+  },
+  "gallery": {
+    "empty": "Aucun média disponible",
+    "emptyDesc": "La galerie de cet événement est vide pour le moment",
+    "all": "Tous",
+    "emptyDescOeuvre": "La galerie est vide pour le moment"
+  },
+  "gestionArtisanat": {
+    "errors": {
+      "loadFailed": "Erreur lors du chargement",
+      "nomRequired": "Le nom est requis (au moins en français ou arabe)",
+      "materiauRequired": "Le matériau est requis",
+      "techniqueRequired": "La technique est requise",
+      "saveFailed": "Erreur lors de la sauvegarde"
+    },
+    "createTitle": "Ajouter un artisanat",
+    "editTitle": "Modifier mon artisanat",
+    "viewTitle": "Détails de l'artisanat",
+    "verifyTitle": "Vérifier l'artisanat",
+    "title": "Artisanat",
+    "verifySubtitle": "Vérifiez et approuvez les produits artisanaux",
+    "subtitle": "Gérez les produits artisanaux",
+    "successEdit": "Artisanat modifié avec succès !",
+    "successCreate": "Artisanat créé avec succès !",
+    "mode": {
+      "create": "Création",
+      "edit": "Modification",
+      "view": "Consultation",
+      "verify": "Vérification"
+    },
+    "basicInfo": "Informations de base",
+    "basicInfoDescView": "Informations sur le produit artisanal",
+    "basicInfoDesc": "Décrivez votre produit artisanal",
+    "nom": "Nom du produit",
+    "nomPlaceholder": "Ex: Tapis berbère traditionnel",
+    "description": "Description",
+    "descriptionPlaceholder": "Décrivez votre produit, ses caractéristiques...",
+    "materiau": "Matériau",
+    "selectMateriau": "Sélectionner un matériau",
+    "technique": "Technique",
+    "selectTechnique": "Sélectionner une technique",
+    "pricingTitle": "Prix et disponibilité",
+    "prixMin": "Prix minimum (DA)",
+    "prixMax": "Prix maximum (DA)",
+    "delaiFabrication": "Délai de fabrication (jours)",
+    "delaiFabricationPlaceholder": "Nombre de jours",
+    "enStock": "Quantité en stock",
+    "surCommande": "Disponible sur commande",
+    "tagsTitle": "Tags / Mots-clés",
+    "tagPlaceholder": "Ajouter un tag...",
+    "verificationTitle": "Vérification administrative",
+    "verificationDesc": "Approuvez ou rejetez ce produit artisanal",
+    "statutLabel": "Statut",
+    "selectStatut": "Sélectionner le statut",
+    "statut": {
+      "en_attente": "En attente",
+      "approuve": "Approuvé",
+      "rejete": "Rejeté"
+    },
+    "motifRejet": "Motif du rejet",
+    "motifRejetPlaceholder": "Expliquez pourquoi ce produit est rejeté...",
+    "mediasTitle": "Photos",
+    "mediasDescView": "Photos du produit",
+    "mediasDesc": "Ajoutez des photos de votre produit",
+    "mediasUploadText": "Cliquez pour ajouter des photos",
+    "submitting": "En cours...",
+    "submit": "Créer l'artisanat",
+    "update": "Mettre à jour",
+    "verify": "Vérifier et sauvegarder"
+  },
+  "nav": {
+    "home": "Accueil",
+    "oeuvres": "Œuvres"
+  },
+  "qrcode": {
+    "generating": "Génération du QR Code",
+    "pleaseWait": "Veuillez patienter...",
+    "downloading": "Téléchargement...",
+    "success": "QR Code téléchargé",
+    "checkDownloads": "Vérifiez vos téléchargements",
+    "downloadError": "Impossible de télécharger le QR Code"
   }
 }

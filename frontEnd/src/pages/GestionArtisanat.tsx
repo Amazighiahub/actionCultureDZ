@@ -744,7 +744,7 @@ const GestionArtisanat: React.FC = () => {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="space-y-2">
-                      <Label>{t('gestionArtisanat.statut', 'Statut')}</Label>
+                      <Label>{t('gestionArtisanat.statutLabel', 'Statut')}</Label>
                       <Select
                         value={formData.statut}
                         onValueChange={(value) => setFormData(prev => ({

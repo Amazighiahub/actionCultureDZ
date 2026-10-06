@@ -226,7 +226,7 @@ const Evenements: React.FC = () => {
             {t('events.title', 'Événements culturels')}
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            {t('events.subtitle', 'Découvrez les événements culturels à travers l\'Algérie')}
+            {t('events.subtitleShort', 'Découvrez les événements culturels à travers l\'Algérie')}
           </p>
         </div>
 

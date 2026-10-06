@@ -204,12 +204,12 @@ const OeuvreEvents: React.FC<OeuvreEventsProps> = ({ events }) => {
             <div className="flex items-center gap-2">
               {upcomingEvents.length > 0 && (
                 <Badge className="bg-green-100 text-green-800">
-                  {upcomingEvents.length} {t('events.upcoming', 'à venir')}
+                  {upcomingEvents.length} {t('events.upcomingLower', 'à venir')}
                 </Badge>
               )}
               {pastEvents.length > 0 && (
                 <Badge variant="secondary">
-                  {pastEvents.length} {t('events.past', 'passés')}
+                  {pastEvents.length} {t('events.pastLower', 'passés')}
                 </Badge>
               )}
             </div>

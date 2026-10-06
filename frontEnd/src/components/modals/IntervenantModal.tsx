@@ -112,7 +112,7 @@ const IntervenantModal: React.FC<IntervenantModalProps> = ({
         }
       } catch (err) {
         console.error('Erreur chargement types users:', err);
-        setTypesError(t('intervenant.errors.loadTypesFailed', 'Impossible de charger les types d\'intervenants'));
+        setTypesError(t('intervenant.errors.loadTypesFailedDetail', 'Impossible de charger les types d\'intervenants'));
         setTypesUsers([]);
       } finally {
         setLoadingTypes(false);

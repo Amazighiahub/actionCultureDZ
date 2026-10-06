@@ -94,7 +94,12 @@ vi.mock('react-router-dom', () => ({
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string, fallback?: string) => fallback ?? key,
+    // Remplace les variables {{x}} comme i18next
+    t: (key: string, fallback?: string | Record<string, unknown>, options?: Record<string, unknown>) => {
+      const text = typeof fallback === 'string' ? fallback : key;
+      const vars = typeof fallback === 'object' ? fallback : options;
+      return vars ? text.replace(/\{\{(\w+)\}\}/g, (_, name) => String(vars[name] ?? '')) : text;
+    },
     i18n: { language: 'fr', changeLanguage: vi.fn() },
   }),
 }));

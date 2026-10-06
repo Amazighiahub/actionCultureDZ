@@ -150,7 +150,7 @@ const EditArticle: React.FC = () => {
                   console.warn(`⚠️ Erreur upload image bloc ${index}:`, uploadErr);
                   toast({
                     title: t('toasts.warning'),
-                    description: t('toasts.imageUploadFailed', `Échec de l'upload de l'image (bloc ${index + 1})`),
+                    description: t('toasts.imageUploadFailed', "Échec de l'envoi de l'image (bloc {{index}})", { index: index + 1 }),
                     variant: 'destructive',
                   });
                 }
