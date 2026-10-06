@@ -213,7 +213,7 @@ jobs:
             fi
             sleep 2
           done
-          curl -fsS http://127.0.0.1:3001/health || (echo '==== backend.log ===='; cat backend.log; exit 1)
+          curl -fsS http://127.0.0.1:3001/health || { echo '==== backend.log ===='; cat backend.log; echo "::error title=Backend non demarre::$(tail -n 25 backend.log | sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}')"; exit 1; }
 
       - name: Install frontend (for cypress binary only)
         working-directory: ./frontEnd
@@ -336,7 +336,7 @@ jobs:
             fi
             sleep 2
           done
-          curl -fsS http://127.0.0.1:3001/health || (echo '==== backend.log ===='; cat backend.log; exit 1)
+          curl -fsS http://127.0.0.1:3001/health || { echo '==== backend.log ===='; cat backend.log; echo "::error title=Backend non demarre::$(tail -n 25 backend.log | sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}')"; exit 1; }
 
       # -------------------------------------------------------------------------
       # PRE-FLIGHT : le conteneur ZAP ne partage PAS le network namespace du
