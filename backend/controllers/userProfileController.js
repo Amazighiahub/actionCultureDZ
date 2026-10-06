@@ -16,6 +16,7 @@
 const BaseController = require('./baseController');
 const container = require('../services/serviceContainer');
 const BaseDTO = require('../dto/baseDTO');
+const { translateDeep } = require('../helpers/i18n');
 
 class UserProfileController extends BaseController {
   get userService() {
@@ -247,6 +248,31 @@ class UserProfileController extends BaseController {
   // ============================================================================
   // LISTING PUBLIC DES PROFESSIONNELS VALIDES
   // ============================================================================
+
+  /**
+   * GET /users/professionals/nearby?communeId=&wilayaId=&types=2,3,4,7&limit=
+   * Professionnels proches (commune, puis daïra, puis wilaya), profils publics uniquement.
+   */
+  async getNearbyProfessionals(req, res) {
+    try {
+      const toInt = (v) => (/^\d+$/.test(String(v || '')) ? parseInt(v, 10) : null);
+      const communeId = toInt(req.query.communeId);
+      const wilayaId = toInt(req.query.wilayaId);
+      if (!communeId && !wilayaId) {
+        return res.status(400).json({ success: false, error: req.t('common.badRequest') });
+      }
+      const types = String(req.query.types || '')
+        .split(',').map(toInt).filter(Boolean);
+      const data = await this.userService.findNearbyProfessionals({
+        communeId, wilayaId, types,
+        excludeUserId: req.user?.id_user,
+        limit: req.query.limit
+      });
+      res.json({ success: true, data: translateDeep(data, req.lang) });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
 
   async getProfessionals(req, res) {
     try {

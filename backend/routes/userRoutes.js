@@ -25,7 +25,7 @@ const { handleValidationErrors, validateStringLengths, validateId } = require('.
 
 const initUserRoutes = (models, authMiddleware) => {
   const router = express.Router();
-  const { authenticate, requireRole } = authMiddleware;
+  const { authenticate, optionalAuth, requireRole } = authMiddleware;
 
   // ============================================================================
   // ROUTES PUBLIQUES (authController)
@@ -76,6 +76,8 @@ const initUserRoutes = (models, authMiddleware) => {
   router.post('/verify-email/:token', asyncHandler((req, res) => authController.verifyEmail(req, res)));
   router.get('/types', asyncHandler((req, res) => authController.getTypes(req, res)));
   router.get('/professionals', asyncHandler((req, res) => userProfileController.getProfessionals(req, res)));
+  // Professionnels proches (suggestions de contributeurs, fiche lieu) — profils publics
+  router.get('/professionals/nearby', optionalAuth, asyncHandler((req, res) => userProfileController.getNearbyProfessionals(req, res)));
 
   // ============================================================================
   // ROUTES AUTHENTIFIÉES

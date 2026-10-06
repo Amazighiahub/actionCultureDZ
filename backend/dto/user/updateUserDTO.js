@@ -26,11 +26,15 @@ class UpdateUserDTO extends BaseDTO {
     if (data.site_web !== undefined || data.siteWeb !== undefined) {
       this.siteWeb = BaseDTO.cleanString(data.site_web || data.siteWeb);
     }
-    if (data.wilaya !== undefined) {
-      this.wilaya = BaseDTO.cleanString(data.wilaya);
+    // Wilaya et commune de résidence (identifiants) ; l'ancien champ "wilaya" écrivait
+    // dans une colonne inexistante et était ignoré
+    const wilaya = data.wilaya_residence ?? data.wilayaResidence ?? data.wilaya;
+    if (wilaya !== undefined) {
+      this.wilayaResidence = BaseDTO.toInt(wilaya, null);
     }
-    if (data.commune !== undefined) {
-      this.commune = BaseDTO.cleanString(data.commune);
+    const commune = data.id_commune ?? data.communeId;
+    if (commune !== undefined) {
+      this.idCommune = BaseDTO.toInt(commune, null);
     }
     if (data.photo_url !== undefined || data.photoUrl !== undefined) {
       this.photoUrl = BaseDTO.cleanString(data.photo_url || data.photoUrl);
@@ -68,8 +72,8 @@ class UpdateUserDTO extends BaseDTO {
     if (this.biographie !== undefined) entity.biographie = this.biographie;
     if (this.entreprise !== undefined) entity.entreprise = this.entreprise;
     if (this.siteWeb !== undefined) entity.site_web = this.siteWeb;
-    if (this.wilaya !== undefined) entity.wilaya = this.wilaya;
-    if (this.commune !== undefined) entity.commune = this.commune;
+    if (this.wilayaResidence !== undefined) entity.wilaya_residence = this.wilayaResidence;
+    if (this.idCommune !== undefined) entity.id_commune = this.idCommune;
     if (this.photoUrl !== undefined) entity.photo_url = this.photoUrl;
     if (this.accepteNewsletter !== undefined) entity.accepte_newsletter = this.accepteNewsletter;
     if (this.languePreferee !== undefined) entity.langue_preferee = this.languePreferee;

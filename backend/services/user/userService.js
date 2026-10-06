@@ -69,6 +69,7 @@ class UserService extends BaseService {
 
     // 5. Préparer les données pour la base
     const entityData = createDTO.toEntity();
+    await this._resolveCommune(entityData);
     entityData.password = hashedPassword;
 
     // 6. Créer l'utilisateur + refresh token dans une transaction
@@ -356,6 +357,7 @@ class UserService extends BaseService {
 
     // 6. Préparer les données
     const entityData = updateDTO.toEntity();
+    await this._resolveCommune(entityData, existingUser);
 
     // 7. Mettre à jour
     const updatedUser = await this.repository.update(id, entityData);
@@ -582,6 +584,13 @@ class UserService extends BaseService {
    * @param {Object} options
    * @returns {Promise<{data: Array<UserDTO>, pagination: Object}>}
    */
+  /**
+   * Professionnels proches d'une commune / wilaya (suggestions de contributeurs, fiche lieu)
+   */
+  async findNearbyProfessionals(params = {}) {
+    return this.repository.findNearbyProfessionals(params);
+  }
+
   async findValidatedProfessionals(options = {}) {
     const result = await this.repository.findValidatedProfessionals(options);
 
@@ -746,6 +755,36 @@ class UserService extends BaseService {
   // ============================================================================
   // HELPERS PRIVÉS
   // ============================================================================
+
+  /**
+   * Vérifie la commune et aligne la wilaya sur celle de la commune.
+   * - commune inconnue, ou wilaya différente de celle de la commune : erreur 400
+   * - wilaya modifiée sans commune : l'ancienne commune (autre wilaya) est retirée
+   * @param {object} entityData - données à enregistrer (modifiées en place)
+   * @param {object} [current] - utilisateur existant (mise à jour)
+   */
+  async _resolveCommune(entityData, current = null) {
+    const { Commune, Daira } = this.models || {};
+    if (entityData.id_commune) {
+      if (!Commune) return;
+      const commune = await Commune.findByPk(entityData.id_commune, {
+        attributes: ['id_commune', 'dairaId'],
+        include: Daira ? [{ model: Daira, attributes: ['id_daira', 'wilayaId'] }] : []
+      });
+      if (!commune) {
+        throw this._validationError('Commune inconnue', [{ field: 'id_commune', message: 'Commune inconnue' }]);
+      }
+      const wilayaId = commune.Daira?.wilayaId;
+      if (entityData.wilaya_residence && wilayaId && Number(entityData.wilaya_residence) !== Number(wilayaId)) {
+        throw this._validationError('La commune n\'appartient pas à la wilaya choisie',
+          [{ field: 'id_commune', message: 'La commune n\'appartient pas à la wilaya choisie' }]);
+      }
+      if (wilayaId) entityData.wilaya_residence = wilayaId;
+    } else if (current && entityData.wilaya_residence !== undefined && entityData.id_commune === undefined
+               && Number(entityData.wilaya_residence) !== Number(current.wilaya_residence)) {
+      entityData.id_commune = null;
+    }
+  }
 
   /** Hash bcrypt factice (même coût que les vrais) pour égaliser le temps de réponse du login */
   _getDummyHash() {

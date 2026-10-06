@@ -172,7 +172,7 @@ class IntervenantService extends BaseService {
         prix_distinctions: rest.prix_distinctions || [],
         actif: true,
         verifie: false,
-        ...this._pickFields(rest, ['date_naissance', 'lieu_naissance', 'titre_professionnel', 'organisation', 'telephone', 'photo_url', 'site_web', 'pays_origine', 'wikipedia_url'])
+        ...this._pickFields(rest, ['date_naissance', 'lieu_naissance', 'titre_professionnel', 'organisation', 'telephone', 'photo_url', 'site_web', 'pays_origine', 'wikipedia_url', 'id_commune'])
       }, { transaction });
 
       await transaction.commit();
@@ -239,7 +239,7 @@ class IntervenantService extends BaseService {
       }
 
       // Whitelist
-      const allowedFields = ['email', 'telephone', 'specialite', 'organisation', 'photo_url', 'site_web', 'id_user'];
+      const allowedFields = ['email', 'telephone', 'specialite', 'organisation', 'photo_url', 'site_web', 'id_user', 'id_commune'];
       const updates = {};
       allowedFields.forEach(f => { if (rest[f] !== undefined) updates[f] = rest[f]; });
 

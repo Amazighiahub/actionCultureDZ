@@ -31,6 +31,8 @@ class CreateUserDTO extends BaseDTO {
     this.wilaya = BaseDTO.cleanString(data.wilaya);
     this.wilayaResidence = BaseDTO.toInt(data.wilaya_residence || data.wilayaResidence || data.wilaya, null);
     this.commune = BaseDTO.cleanString(data.commune);
+    // Commune de résidence (identifiant) : obligatoire pour un professionnel
+    this.idCommune = BaseDTO.toInt(data.id_commune ?? data.communeId, null);
 
     // Consentements
     this.accepteConditions = BaseDTO.toBool(data.accepte_conditions || data.accepteConditions);
@@ -67,6 +69,7 @@ class CreateUserDTO extends BaseDTO {
       biographie: this.biographie,
       site_web: this.siteWeb,
       wilaya_residence: this.wilayaResidence,
+      id_commune: this.idCommune,
       adresse: this.commune,
       accepte_conditions: this.accepteConditions,
       accepte_newsletter: this.accepteNewsletter,
@@ -149,6 +152,11 @@ class CreateUserDTO extends BaseDTO {
     // Type d'utilisateur : uniquement les types inscriptibles (jamais administrateur)
     if (!REGISTRABLE_TYPE_USER_IDS.has(this.idTypeUser)) {
       errors.push({ field: 'id_type_user', message: 'Type d\'utilisateur invalide' });
+    }
+
+    // Professionnel : commune obligatoire (proximité avec les lieux et les autres pros)
+    if (this.idTypeUser !== 1 && !this.idCommune) {
+      errors.push({ field: 'id_commune', message: 'La commune est obligatoire pour un compte professionnel' });
     }
 
     // Conditions acceptées

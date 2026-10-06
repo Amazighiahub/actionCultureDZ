@@ -95,6 +95,12 @@ module.exports = (sequelize) => {
     pays_origine: {
       type: DataTypes.STRING(100)
     },
+    id_commune: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: { model: 'communes', key: 'id_commune' },
+      comment: 'Commune d\'origine (naissance)'
+    },
     langues_parlees: {
       type: DataTypes.JSON,
       defaultValue: ['ar'],
@@ -133,6 +139,9 @@ module.exports = (sequelize) => {
 
   // Associations
   Intervenant.associate = (models) => {
+    if (models.Commune) {
+      Intervenant.belongsTo(models.Commune, { foreignKey: 'id_commune', as: 'CommuneOrigine', onDelete: 'SET NULL' });
+    }
     Intervenant.belongsTo(models.User, {
       foreignKey: 'id_user',
       as: 'UserAccount',

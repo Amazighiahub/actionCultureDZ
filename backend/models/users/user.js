@@ -90,6 +90,15 @@ module.exports = (sequelize) => {
       },
       comment: 'Wilaya de résidence de l\'utilisateur'
     },
+    id_commune: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'communes',
+        key: 'id_commune'
+      },
+      comment: 'Commune de résidence (daïra et wilaya s\'en déduisent)'
+    },
     adresse: {
       type: DataTypes.STRING(255),
       allowNull: true,
@@ -442,6 +451,9 @@ module.exports = (sequelize) => {
   // ASSOCIATIONS
   // =============================================================================
   User.associate = (models) => {
+    if (models.Commune) {
+      User.belongsTo(models.Commune, { foreignKey: 'id_commune', as: 'Commune', onDelete: 'SET NULL' });
+    }
     User.belongsTo(models.TypeUser, {
       foreignKey: 'id_type_user',
       as: 'TypeUser',

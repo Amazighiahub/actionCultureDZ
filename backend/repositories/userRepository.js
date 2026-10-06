@@ -107,6 +107,71 @@ class UserRepository extends BaseRepository {
   }
 
   /**
+   * Professionnels proches d'une commune (ou d'une wilaya), classés par proximité :
+   * même commune, puis même daïra, puis même wilaya. Profils publics et actifs uniquement.
+   * @param {object} params
+   * @param {number} [params.communeId]
+   * @param {number} [params.wilayaId] - utilisé si aucune commune n'est fournie
+   * @param {number[]} [params.types] - métiers (id_type_user) à garder
+   * @param {number} [params.excludeUserId]
+   * @param {number} [params.limit]
+   * @returns {Promise<Array<object>>} objets simples avec un champ `proximite`
+   */
+  async findNearbyProfessionals({ communeId, wilayaId, types, excludeUserId, limit = 30 } = {}) {
+    const { Commune, Daira } = this.models;
+    let dairaId = null;
+    let targetWilaya = wilayaId || null;
+    if (communeId && Commune) {
+      const commune = await Commune.findByPk(communeId, {
+        attributes: ['id_commune', 'dairaId'],
+        include: Daira ? [{ model: Daira, attributes: ['id_daira', 'wilayaId'] }] : []
+      });
+      if (!commune) return [];
+      dairaId = commune.dairaId;
+      targetWilaya = commune.Daira?.wilayaId || targetWilaya;
+    }
+    if (!communeId && !targetWilaya) return [];
+
+    const typeIds = Array.isArray(types) && types.length
+      ? types.filter(t => PROFESSIONAL_TYPE_IDS.includes(t))
+      : PROFESSIONAL_TYPE_IDS;
+    if (!typeIds.length) return [];
+
+    const zone = [];
+    if (communeId) zone.push({ id_commune: communeId });
+    if (dairaId) zone.push({ '$Commune.dairaId$': dairaId });
+    if (targetWilaya) zone.push({ wilaya_residence: targetWilaya });
+
+    const rows = await this.model.findAll({
+      where: {
+        statut: 'actif',
+        profil_public: true,
+        id_type_user: { [Op.in]: typeIds },
+        ...(excludeUserId ? { id_user: { [Op.ne]: excludeUserId } } : {}),
+        [Op.or]: zone
+      },
+      attributes: PUBLIC_USER_PROFILE_ATTRIBUTES,
+      include: Commune ? [{ model: Commune, as: 'Commune', attributes: ['id_commune', 'nom', 'dairaId'], required: false }] : [],
+      limit: 200
+    });
+
+    const rank = (u) => {
+      if (communeId && Number(u.id_commune) === Number(communeId)) return 0;
+      if (dairaId && Number(u.Commune?.dairaId) === Number(dairaId)) return 1;
+      return 2;
+    };
+    const LABELS = ['commune', 'daira', 'wilaya'];
+    return rows
+      .map(stripPrivateContact)
+      .map(u => {
+        const plain = u.get ? u.get({ plain: true }) : u;
+        return { ...plain, proximite: LABELS[rank(plain)] };
+      })
+      .sort((a, b) => LABELS.indexOf(a.proximite) - LABELS.indexOf(b.proximite))
+      .slice(0, Math.min(Math.max(parseInt(limit, 10) || 30, 1), 50));
+  }
+
+  /**
    * Recherche d'utilisateurs
    */
   async searchUsers(query, options = {}, { includePrivate = false } = {}) {

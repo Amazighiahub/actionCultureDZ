@@ -13,7 +13,7 @@ const PUBLIC_USER_ATTRIBUTES = ['id_user', 'nom', 'prenom', 'photo_url'];
 const PUBLIC_USER_PROFILE_ATTRIBUTES = [
   ...PUBLIC_USER_ATTRIBUTES,
   'id_type_user', 'entreprise', 'specialites', 'site_web', 'biographie',
-  'wilaya_residence', 'reseaux_sociaux',
+  'wilaya_residence', 'id_commune', 'reseaux_sociaux',
   'email', 'telephone', 'email_public', 'telephone_public'
 ];
 
@@ -22,7 +22,7 @@ const PUBLIC_INTERVENANT_ATTRIBUTES = [
   'id_intervenant', 'nom', 'prenom', 'titre_professionnel', 'organisation',
   'biographie', 'photo_url', 'specialites', 'site_web', 'reseaux_sociaux',
   'pays_origine', 'langues_parlees', 'prix_distinctions', 'wikipedia_url',
-  'date_deces', 'lieu_deces', 'verifie'
+  'date_deces', 'lieu_deces', 'verifie', 'id_commune'
 ];
 
 /**
