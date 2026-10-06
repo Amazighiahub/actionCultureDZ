@@ -121,6 +121,12 @@ const errorMiddleware = {
       logger.error('Erreur: %o', error);
     }
 
+    // En production, ne jamais renvoyer le message technique d'une erreur 500
+    // (noms de tables, chemins, détails internes) : il est journalisé ci-dessus.
+    if (statusCode >= 500 && process.env.NODE_ENV === 'production') {
+      message = 'Erreur interne du serveur';
+    }
+
     res.status(statusCode).json({
       success: false,
       error: message,

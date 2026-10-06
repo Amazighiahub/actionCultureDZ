@@ -117,11 +117,19 @@ class UserService extends BaseService {
   async login(email, motDePasse) {
     // 1. Trouver l'utilisateur avec ses rôles (nécessaire pour détecter un admin)
     const user = await this.repository.findByEmail(email, { includeRoles: true, includeAuth: true });
-    if (!user) {
+
+    // 2. Vérifier le mot de passe AVANT tout message de statut, et toujours exécuter
+    //    bcrypt (hash factice si l'email est inconnu) : ni la réponse ni le temps de
+    //    réponse ne doivent révéler l'existence d'un compte.
+    const isValidPassword = await bcrypt.compare(
+      String(motDePasse || ''),
+      user?.password || await this._getDummyHash()
+    );
+    if (!user || !isValidPassword) {
       throw this._unauthorizedError('Email ou mot de passe incorrect');
     }
 
-    // 2. Vérifier le statut
+    // 3. Vérifier le statut (mot de passe prouvé : les messages précis sont légitimes)
     if (user.statut === 'inactif' || user.statut === 'banni') {
       throw this._forbiddenError('Votre compte est désactivé');
     }
@@ -143,12 +151,6 @@ class UserService extends BaseService {
 
     if (user.statut === 'rejete') {
       throw this._forbiddenError('Votre demande de compte professionnel a été refusée');
-    }
-
-    // 3. Vérifier le mot de passe
-    const isValidPassword = await bcrypt.compare(motDePasse, user.password);
-    if (!isValidPassword) {
-      throw this._unauthorizedError('Email ou mot de passe incorrect');
     }
 
     // 4. Mettre à jour la dernière connexion
@@ -743,6 +745,14 @@ class UserService extends BaseService {
   // ============================================================================
   // HELPERS PRIVÉS
   // ============================================================================
+
+  /** Hash bcrypt factice (même coût que les vrais) pour égaliser le temps de réponse du login */
+  _getDummyHash() {
+    if (!this._dummyHashPromise) {
+      this._dummyHashPromise = bcrypt.hash(crypto.randomBytes(16).toString('hex'), this.bcryptRounds);
+    }
+    return this._dummyHashPromise;
+  }
 
   /**
    * Efface un compte (RGPD art. 17) : transaction en base, puis fichiers et sessions.

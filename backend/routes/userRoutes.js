@@ -71,7 +71,8 @@ const initUserRoutes = (models, authMiddleware) => {
     endpointLimiters.refreshToken,
     asyncHandler((req, res) => authController.refreshToken(req, res)));
 
-  router.post('/check-email', strictLimiter, asyncHandler((req, res) => authController.checkEmail(req, res)));
+  // Réservé aux utilisateurs connectés : en public, elle permettait de tester si un email a un compte
+  router.post('/check-email', authenticate, strictLimiter, asyncHandler((req, res) => authController.checkEmail(req, res)));
   router.post('/verify-email/:token', asyncHandler((req, res) => authController.verifyEmail(req, res)));
   router.get('/types', asyncHandler((req, res) => authController.getTypes(req, res)));
   router.get('/professionals', asyncHandler((req, res) => userProfileController.getProfessionals(req, res)));
