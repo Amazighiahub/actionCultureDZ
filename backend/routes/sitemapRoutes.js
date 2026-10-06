@@ -96,9 +96,10 @@ const initSitemapRoutes = (models) => {
 
         // Seulement les creations dont l'oeuvre est publiee (comme la fiche publique)
         models.Artisanat ? safeQuery('artisanat', () => models.Artisanat.findAll({
-          include: [{ model: models.Oeuvre, attributes: [], where: { statut: 'publie' }, required: true }],
-          attributes: ['id_artisanat', 'updated_at'],
-          order: [['updated_at', 'DESC']],
+          // (artisanat n'a pas de colonne de mise a jour : date de modification de l'oeuvre liee)
+          include: [{ model: models.Oeuvre, attributes: ['date_modification'], where: { statut: 'publie' }, required: true }],
+          attributes: ['id_artisanat'],
+          order: [[models.Oeuvre, 'date_modification', 'DESC']],
           limit: SITEMAP_LIMIT, raw: true
         })) : [],
 
@@ -113,7 +114,7 @@ const initSitemapRoutes = (models) => {
       oeuvres.forEach(o => { urls += urlBlock(`/oeuvres/${o.id_oeuvre}`, 'weekly', '0.7', o.date_modification); });
       evenements.forEach(e => { urls += urlBlock(`/evenements/${e.id_evenement}`, 'daily', '0.8', e.date_modification); });
       lieux.forEach(l => { urls += urlBlock(`/patrimoine/${l.id_lieu}`, 'monthly', '0.7', l.updatedAt); });
-      artisanats.forEach(a => { urls += urlBlock(`/artisanat/${a.id_artisanat}`, 'weekly', '0.7', a.updated_at); });
+      artisanats.forEach(a => { urls += urlBlock(`/artisanat/${a.id_artisanat}`, 'weekly', '0.7', a['Oeuvre.date_modification']); });
       articles.forEach(a => { urls += urlBlock(`/articles/${a.id_oeuvre}`, 'weekly', '0.7', a.date_modification); });
 
       // ══════════════════════════════════════════
