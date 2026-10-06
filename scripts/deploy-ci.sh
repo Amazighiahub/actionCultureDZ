@@ -19,8 +19,12 @@ C="docker compose -f docker-compose.prod.yml"
 # Nom de projet compose = nom du dossier en minuscules (ex. actionculturedz)
 PROJECT="$(basename "$PWD" | tr '[:upper:]' '[:lower:]' | tr -cd 'a-z0-9_-')"
 
-log()  { echo "[deploy $(date +%T)] $*"; }
+STEP="preparation"
+log()  { STEP="$*"; echo "[deploy $(date +%T)] $*"; }
 warn() { echo "[deploy $(date +%T)] ATTENTION: $*" >&2; }
+# Annotation lisible dans le résumé GitHub (le journal complet demande un accès au dépôt)
+annotate() { echo "::error title=Deploiement ($STEP)::$*"; }
+trap 'annotate "echec de : $BASH_COMMAND"' ERR
 
 wait_healthy() {
   local container="$1" timeout="${2:-180}" status=""
@@ -71,6 +75,7 @@ log "verification du suivi des migrations"
 MIG_STATUS="$($C run --rm --no-deps -T backend npx --no-install sequelize-cli db:migrate:status 2>&1)"
 if ! grep -qE '^up ' <<<"$MIG_STATUS"; then
   warn "SequelizeMeta vide : deploiement arrete, prod inchangee. Initialiser la table une fois (voir docs/DEPLOYMENT.md)."
+  annotate "SequelizeMeta vide : deploiement arrete, prod inchangee"
   echo "$MIG_STATUS" | tail -n 30
   exit 1
 fi
@@ -81,7 +86,7 @@ log "sauvegarde de la base"
 $C exec -T backup /backup.sh
 
 # A partir d'ici on modifie la prod : retour arrière automatique en cas d'erreur
-trap rollback ERR
+trap 'annotate "echec de : $BASH_COMMAND (retour aux images precedentes)"; rollback' ERR
 
 # 6. Migrations (uniquement celles pas encore appliquées)
 log "migrations"
@@ -110,6 +115,7 @@ trap - ERR
 
 if ! curl -fsS -o /dev/null --max-time 10 --resolve "$DOMAIN:443:127.0.0.1" "https://$DOMAIN/health"; then
   warn "certificat HTTPS invalide ou expire pour $DOMAIN : verifier le conteneur certbot (docs/DEPLOYMENT.md)"
+  echo "::warning title=Certificat HTTPS::certificat invalide ou expire pour $DOMAIN (conteneur certbot)"
   docker logs --tail 20 eventculture-certbot 2>&1 || true
 fi
 docker image prune -f >/dev/null
