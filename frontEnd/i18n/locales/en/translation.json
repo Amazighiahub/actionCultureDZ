@@ -255,7 +255,8 @@
     "professionalValidationNote": "Once your email is verified, your account will be submitted to an administrator for approval.",
     "backToLogin": "Back to sign in",
     "sessionExpired": "Session expired",
-    "pleaseReconnect": "Please sign in again"
+    "pleaseReconnect": "Please sign in again",
+    "seoTitle": "Log in and sign up"
   },
   "categories": {
     "heritageTypes": {
@@ -1582,9 +1583,9 @@
     "description_rendre_culture_accessible": "Make culture accessible to all, without geographical or economic barriers.",
     "title_visibilit_locale_internationale": "Local & international visibility",
     "description_mettre_lumire_richesse": "Highlight Algerian cultural wealth on the world stage.",
-    "propos_culture_algrie": "About Culture Algeria",
+    "propos_culture_algrie": "About Tala DZ",
     "notre_mission": "Our Mission",
-    "culture_algrie_est": "Culture Algeria is an independent initiative led by enthusiasts \n                  of Algerian heritage, literature, cinema and art.",
+    "culture_algrie_est": "Tala DZ is an independent initiative led by enthusiasts \n                  of Algerian heritage, literature, cinema and art.",
     "notre_mission_mettre": "Our mission: to highlight our country's cultural richness, \n                  facilitate access to works, connect stakeholders and promote transmission \n                  to younger generations.",
     "nos_valeurs": "Our Values",
     "nous_contacter": "Contact Us",
@@ -1681,7 +1682,7 @@
       "dpoText": "For any question about the protection of your personal data, you can contact our data protection officer at: contact@taladz.com."
     },
     "ressources": "Resources",
-    "ressourcesText": "Culture Algérie provides resources to discover and promote Algerian cultural heritage: events, works, crafts, heritage sites and much more."
+    "ressourcesText": "Tala DZ provides resources to discover and promote Algerian cultural heritage: events, works, crafts, heritage sites and much more."
   },
   "ajouteroeuvre": {
     "chargement_des_catgories": "Loading categories...",
@@ -3143,7 +3144,8 @@
       "viewMultiDayDesc": "This program is part of a multi-day event. The system automatically groups activities by date.",
       "viewSpeakersDesc": "{{count}} speaker(s) take part in this activity. Each speaker has a specific role and their own settings.",
       "viewLocationOptionsDesc": "This activity takes place in a specific location with custom options for participants and organization."
-    }
+    },
+    "seoTitle": "Programme"
   },
   "shared": {
     "errorBoundary": {
@@ -3359,7 +3361,8 @@
     "planVisit": "Plan your visit",
     "proService": "Are you a professional?",
     "addYourService": "Offer your services here",
-    "backToList": "Back to list"
+    "backToList": "Back to list",
+    "notFound": "Site not found"
   },
   "toasts": {
     "error": "Error",
@@ -3884,7 +3887,8 @@
     "pages": "Pages",
     "replyToComment": "Reply to comment",
     "addComment": "Add a comment",
-    "updateSuccess": "Article updated successfully!"
+    "updateSuccess": "Article updated successfully!",
+    "notFoundTitle": "Article not found"
   },
   "passwordStrength": {
     "minLength": "12+ characters",

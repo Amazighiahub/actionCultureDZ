@@ -255,7 +255,8 @@
     "professionalValidationNote": "Deffir usenqed n yimayl-ik, amiḍan-ik ad yettwasentem sɣur anedbal.",
     "backToLogin": "Uɣal ɣer unekcum",
     "sessionExpired": "Tiɣimit temmut",
-    "pleaseReconnect": "Ttxil-k ales tuqqna"
+    "pleaseReconnect": "Ttxil-k ales tuqqna",
+    "seoTitle": "Tuqqna d ujerred"
   },
   "categories": {
     "heritageTypes": {
@@ -1698,7 +1699,7 @@
       "dpoText": "I yal asteqsi ɣef ummesten n yisefka-ik udmawanen, tzemreḍ ad tnermseḍ amagi-nneɣ n ummesten n yisefka deg tansa: contact@taladz.com."
     },
     "ressources": "Tiɣbula",
-    "ressourcesText": "Culture Algérie tefka-d tiɣbula i wakken ad tissineḍ, ad tessekreḍ tadelsa tazzayrit: tidyanin, ixeddimen, taẓuri tameɣradt, ismal n tdelsa d wayen-nniḍen."
+    "ressourcesText": "Tala DZ tefka-d tiɣbula i wakken ad tissineḍ, ad tessekreḍ tadelsa tazzayrit: tidyanin, ixeddimen, taẓuri tameɣradt, ismal n tdelsa d wayen-nniḍen."
   },
   "ajouteroeuvre": {
     "chargement_des_catgories": "Asali n tiggayin...",
@@ -3192,7 +3193,8 @@
       "viewMultiDayDesc": "Ahil-agi d aḥric n tedyant γef ddeqs n wussan. Anagraw yesgrew armud s wass.",
       "viewSpeakersDesc": "{{count}} n yimeskanen ttekkin deg urmud-agi. Yal ameskan yesɛa asureg-is.",
       "viewLocationOptionsDesc": "Armud deg udeg uslig s textiṛiyin n yimttekkiyen d tnudbelt."
-    }
+    },
+    "seoTitle": "Ahil"
   },
   "shared": {
     "errorBoundary": {
@@ -3376,7 +3378,8 @@
     "planVisit": "Heyyi tirza-k",
     "proService": "D amsadur i telliḍ?",
     "addYourService": "Sumer-d imeẓla-k da",
-    "backToList": "Uɣal ɣer tebdart"
+    "backToList": "Uɣal ɣer tebdart",
+    "notFound": "Asmel ulac-it"
   },
   "toasts": {
     "error": "Tuccḍa",
@@ -3879,7 +3882,8 @@
     "pages": "Isebtar",
     "replyToComment": "Err ɣef uwennit",
     "addComment": "Rnu awennit",
-    "updateSuccess": "Amagrad yettwaleqqem akken iwata!"
+    "updateSuccess": "Amagrad yettwaleqqem akken iwata!",
+    "notFoundTitle": "Amagrad ulac-it"
   },
   "passwordStrength": {
     "minLength": "12+ n yisekkilen",

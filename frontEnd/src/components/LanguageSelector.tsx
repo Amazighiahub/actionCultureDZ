@@ -19,6 +19,7 @@ import {
   LANGUAGE_FLAGS,
   LANGUAGE_DIRECTIONS,
   LANGUAGE_FONT_CLASSES,
+  toHtmlLang,
   type SupportedLanguage
 } from '@/types/common/multilingual.types';
 
@@ -47,7 +48,7 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
 
       // Mettre a jour la direction et la langue du document
       document.documentElement.dir = LANGUAGE_DIRECTIONS[lang] || 'ltr';
-      document.documentElement.lang = lang;
+      document.documentElement.lang = toHtmlLang(lang);
 
       // Gerer les classes de police (arabe, tifinagh)
       const allFontClasses = Object.values(LANGUAGE_FONT_CLASSES).filter(Boolean) as string[];
@@ -138,9 +139,10 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
           <DropdownMenuItem
             key={lang}
             onClick={() => handleLanguageChange(lang)}
+            aria-current={lang === currentLang ? 'true' : undefined}
             className={cn(
               "cursor-pointer py-2",
-              lang === currentLang && "bg-accent",
+              lang === currentLang && "bg-accent text-accent-foreground",
             )}
           >
             <div className={cn(
@@ -154,13 +156,13 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
                 "flex-1 min-w-0",
                 LANGUAGE_DIRECTIONS[lang] === 'rtl' && "text-right"
               )}>
-                <div className="font-medium text-sm truncate">{LANGUAGE_LABELS[lang]}</div>
-                <div className="text-xs text-muted-foreground">
-                  {LANGUAGE_DIRECTIONS[lang] === 'rtl' ? 'RTL' : 'LTR'}
+                {/* lang : chaque nom de langue est prononcé dans sa propre langue */}
+                <div className="font-medium text-sm truncate" lang={toHtmlLang(lang)} dir={LANGUAGE_DIRECTIONS[lang]}>
+                  {LANGUAGE_LABELS[lang]}
                 </div>
               </div>
               {lang === currentLang && (
-                <span className="text-primary flex-shrink-0">✓</span>
+                <span className="flex-shrink-0" aria-hidden="true">✓</span>
               )}
             </div>
           </DropdownMenuItem>

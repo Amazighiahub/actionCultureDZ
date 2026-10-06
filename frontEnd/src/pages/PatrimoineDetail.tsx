@@ -259,6 +259,8 @@ const PatrimoineDetail = () => {
   if (error || !site) {
     return (
       <div className="min-h-screen bg-background">
+        {/* Page introuvable : exclue de l'index (sinon page vide indexée) */}
+        <SEOHead title={t('patrimoine.notFound', 'Site non trouvé')} noindex />
         <Header />
         <main className="container py-8">
           <Card className="text-center py-12">

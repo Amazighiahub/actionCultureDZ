@@ -11,11 +11,12 @@ import { ArrowLeft, Eye, Calendar, Clock, Users, MapPin, Edit, Trash2, Copy, Use
 import ProgrammeForm, { ProgrammeFormData } from '@/components/forms/ProgrammeForm';
 import { programmeService, IntervenantUser } from '@/services/programme.service';
 import { useTranslation } from 'react-i18next';
+import SEOHead from '@/components/SEOHead';
 
 const ViewProgrammePage: React.FC = () => {
   const { eventId, programmeId } = useParams<{ eventId: string; programmeId: string }>();
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -194,8 +195,12 @@ const ViewProgrammePage: React.FC = () => {
     );
   }
 
+  const titres = (programmeData?.titre || {}) as Record<string, string | undefined>;
+  const programmeTitle = titres[i18n.language] || titres.fr || Object.values(titres).find(Boolean) || t('programmePages.seoTitle', 'Programme');
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
+      <SEOHead title={programmeTitle} />
       {/* En-tête */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">

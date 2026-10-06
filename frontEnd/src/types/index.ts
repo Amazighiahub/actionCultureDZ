@@ -2,7 +2,7 @@
 
 /**
  * Export principal de tous les types, interfaces et enums
- * Pour la plateforme Culture Algérie
+ * Pour la plateforme Tala DZ
  */
 
 // ============================================

@@ -608,6 +608,8 @@ const ArticleViewPage: React.FC = () => {
   if (error || !oeuvre) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
+        {/* Page introuvable : exclue de l'index (sinon page vide indexée) */}
+        <SEOHead title={t('article.notFoundTitle', 'Article introuvable')} noindex />
         <Card className="max-w-md w-full">
           <CardContent className="p-6 text-center">
             <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />

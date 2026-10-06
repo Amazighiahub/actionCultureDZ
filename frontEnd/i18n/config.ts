@@ -47,7 +47,13 @@ const getInitialLanguage = (): string => {
     return normalizeLanguage(stored);
   }
 
-  // 2. Utiliser le navigateur
+  // 2. Robots d'indexation : toujours le français (version de référence), sinon Google
+  //    indexerait l'interface dans la langue annoncée par son navigateur (anglais)
+  if (/bot|crawl|spider|slurp|facebookexternalhit|whatsapp|lighthouse/i.test(navigator.userAgent)) {
+    return 'fr';
+  }
+
+  // 3. Utiliser le navigateur
   const browserLang = navigator.language?.split('-')[0];
   return normalizeLanguage(browserLang);
 };

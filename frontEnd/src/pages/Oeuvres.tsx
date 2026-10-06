@@ -192,7 +192,8 @@ const Oeuvres: React.FC = () => {
   const [searchParams] = useSearchParams();
 
   // États des filtres
-  const [searchQuery, setSearchQuery] = useState('');
+  // ?q=... : recherche annoncée aux moteurs (SearchAction du JSON-LD WebSite)
+  const [searchQuery, setSearchQuery] = useState(() => searchParams.get('q') || '');
   const [typeFilter, setTypeFilter] = useState('tous');
   const [sortBy, setSortBy] = useState('recent');
 
