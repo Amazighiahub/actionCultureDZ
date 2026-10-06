@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import DOMPurify from 'dompurify';
 import { getAssetUrl } from '@/helpers/assetUrl';
+import { getAllowedEmbedUrl } from '@/utils/safeUrl';
 
 import type { ArticleBlock, ArticleFormData } from '@/types/models/articles.types';
 import { isListBlock, isTableBlock } from '@/types/models/articles.types';
@@ -45,11 +45,22 @@ const renderPreviewBlock = (block: ArticleBlock, index: number) => {
       ) : null;
 
     case 'video':
-      return block.contenu ? (
+    case 'embed': {
+      // URL validée (https, hôte autorisé) puis iframe isolée : aucun HTML du bloc n'est injecté
+      const src = getAllowedEmbedUrl(block.contenu);
+      return src ? (
         <div key={index} className="embed-container">
-          <iframe src={block.contenu} frameBorder="0" allowFullScreen title="Embedded content" />
+          <iframe
+            src={src}
+            frameBorder="0"
+            allowFullScreen
+            title="Embedded content"
+            sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
+            referrerPolicy="strict-origin-when-cross-origin"
+          />
         </div>
       ) : null;
+    }
 
     case 'citation':
       return (
@@ -89,30 +100,6 @@ const renderPreviewBlock = (block: ArticleBlock, index: number) => {
 
     case 'separator':
       return <hr key={index} />;
-
-    case 'embed':
-      if (block.contenu) {
-        const sanitizeEmbed = (html: string) => {
-          const temp = document.createElement('div');
-          temp.innerHTML = html;
-          const iframe = temp.querySelector('iframe');
-          if (iframe) {
-            const src = iframe.getAttribute('src') || '';
-            const allowedDomains = ['youtube.com', 'youtube-nocookie.com', 'vimeo.com', 'dailymotion.com', 'soundcloud.com'];
-            const isAllowed = allowedDomains.some(domain => src.includes(domain));
-            if (!isAllowed) return '';
-          }
-          return DOMPurify.sanitize(html, {
-            ALLOWED_TAGS: ['iframe', 'div', 'span'],
-            ALLOWED_ATTR: ['src', 'width', 'height', 'frameborder', 'allow', 'allowfullscreen', 'class', 'title']
-          });
-        };
-        const sanitizedContent = sanitizeEmbed(block.contenu);
-        return sanitizedContent ? (
-          <div key={index} className="embed-container" dangerouslySetInnerHTML={{ __html: sanitizedContent }} />
-        ) : null;
-      }
-      return null;
 
     default:
       return null;

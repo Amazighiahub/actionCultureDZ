@@ -41,3 +41,34 @@ export function safeExternalUrl(raw: unknown): string | undefined {
     return undefined;
   }
 }
+
+// Hôtes autorisés dans les blocs vidéo / embed (aligné sur backend utils/sanitizeArticle.js)
+const ALLOWED_EMBED_HOSTS = [
+  'youtube.com', 'youtube-nocookie.com', 'player.vimeo.com', 'vimeo.com',
+  'dailymotion.com', 'w.soundcloud.com', 'soundcloud.com'
+];
+
+/**
+ * URL d'iframe autorisée pour un bloc vidéo / embed : https et hôte exact (ou sous-domaine)
+ * de la liste, ou vidéo Cloudinary. Accepte une URL ou un code <iframe> (analysé dans un
+ * document inerte : aucun script ni gestionnaire d'événement n'est exécuté).
+ * @returns l'URL de l'iframe ou undefined
+ */
+export function getAllowedEmbedUrl(raw: unknown): string | undefined {
+  if (typeof raw !== 'string' || !raw.trim()) return undefined;
+  let src = raw.trim();
+  if (src.startsWith('<')) {
+    const doc = new DOMParser().parseFromString(src, 'text/html');
+    src = doc.querySelector('iframe')?.getAttribute('src') || '';
+  }
+  try {
+    const url = new URL(src);
+    if (url.protocol !== 'https:') return undefined;
+    const host = url.hostname.toLowerCase();
+    const allowed = host === 'res.cloudinary.com'
+      || ALLOWED_EMBED_HOSTS.some(d => host === d || host.endsWith('.' + d));
+    return allowed ? url.href : undefined;
+  } catch {
+    return undefined;
+  }
+}
