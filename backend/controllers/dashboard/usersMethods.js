@@ -2,6 +2,7 @@
 // User management methods for DashboardController
 
 const container = require('../../services/serviceContainer');
+const { csvRow } = require('../../utils/csv');
 
 const usersMethods = {
 
@@ -18,8 +19,9 @@ const usersMethods = {
 
   async getPendingUsers(req, res) {
     try {
-      const { page = 1, limit = 10 } = req.query;
-      const result = await container.userManagementService.getPendingUsers({ page: parseInt(page), limit: parseInt(limit) });
+      const page = Math.max(1, parseInt(req.query.page) || 1);
+      const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 10));
+      const result = await container.userManagementService.getPendingUsers({ page, limit });
       res.json({ success: true, data: { items: result.data, pagination: result.pagination } });
     } catch (error) {
       console.error('Erreur getPendingUsers:', error.message);
@@ -230,7 +232,7 @@ const usersMethods = {
       user.id_user, user.nom, user.prenom, user.email, user.id_type_user,
       user.statut, user.date_creation, user.Roles ? user.Roles.map(r => r.nom_role).join(';') : ''
     ]);
-    return [headers.join(','), ...rows.map(row => row.map(cell => `"${cell || ''}"`).join(','))].join('\n');
+    return [csvRow(headers), ...rows.map(csvRow)].join('\n');
   }
 };
 

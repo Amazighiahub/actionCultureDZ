@@ -96,6 +96,22 @@ vi.mock('@/hooks/useGeographie', () => ({
     loading: false,
     error: null,
   }),
+  // Sélecteur wilaya → daïra → commune (GeoSelector)
+  useGeographicSelection: () => ({
+    wilayas: [
+      { id_wilaya: 16, codeW: '16', wilaya_name_ascii: 'Alger' },
+      { id_wilaya: 31, codeW: '31', wilaya_name_ascii: 'Oran' },
+      { id_wilaya: 9, codeW: '9', wilaya_name_ascii: 'Blida' },
+    ],
+    dairas: [{ id_daira: 1, nom: 'Bab El Oued', daira_name_ascii: 'Bab El Oued' }],
+    communes: [{ id_commune: 100, nom: 'Bab El Oued', commune_name_ascii: 'Bab El Oued' }],
+    setSelectedWilaya: () => {},
+    setSelectedDaira: () => {},
+    setSelectedCommune: () => {},
+    wilayasLoading: false,
+    dairasLoading: false,
+    communesLoading: false,
+  }),
 }));
 
 vi.mock('@/services/media.service', () => ({
@@ -315,7 +331,9 @@ describe('Register — Formulaire d inscription', () => {
       expect(screen.getByText(/auth\.register\.email/)).toBeInTheDocument();
       expect(screen.getByText(/auth\.register\.birthDate/)).toBeInTheDocument();
       expect(screen.getByText(/auth\.register\.gender/)).toBeInTheDocument();
-      expect(screen.getByText(/auth\.register\.wilaya/)).toBeInTheDocument();
+      // Wilaya / daïra / commune via GeoSelector
+      expect(screen.getByLabelText(/^Wilaya/)).toBeInTheDocument();
+      expect(screen.getByLabelText(/^Commune/)).toBeInTheDocument();
 
       // Mot de passe + confirmation
       expect(getPasswordInput()).toBeInTheDocument();
@@ -344,6 +362,8 @@ describe('Register — Formulaire d inscription', () => {
         expect(screen.getByText(/auth\.register\.sector/)).toBeInTheDocument();
         expect(screen.getByText(/auth\.register\.biography/)).toBeInTheDocument();
         expect(screen.getByText(/auth\.register\.profilePhoto/)).toBeInTheDocument();
+        // Commune obligatoire pour un professionnel (astérisque dans le libellé)
+        expect(document.querySelector('label[for="geo-commune"]')?.textContent).toContain('*');
         expect(screen.getByText(/auth\.register\.portfolio/)).toBeInTheDocument();
       });
 

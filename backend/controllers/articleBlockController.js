@@ -1,13 +1,26 @@
 // controllers/articleBlockController.js
-const path = require('path');
-const crypto = require('crypto');
 const BaseController = require('./baseController');
 const container = require('../services/serviceContainer');
-const { sanitizeBlockContent } = require('../utils/sanitizeArticle');
+
+// Erreurs métier renvoyées par articleBlockService → statut HTTP + clé i18n
+const SERVICE_ERRORS = {
+  badRequest: { status: 400, key: 'common.badRequest' },
+  notFound: { status: 404, key: 'articleBlock.notFound' },
+  forbidden: { status: 403, key: 'common.forbidden' },
+  notBelongToArticle: { status: 400, key: 'articleBlock.notBelongToArticle' }
+};
 
 class ArticleBlockController extends BaseController {
   get articleBlockService() {
     return container.articleBlockService;
+  }
+
+  /** Renvoie true (et répond) si le service a signalé une erreur métier */
+  _sendServiceError(req, res, result) {
+    const mapped = result && SERVICE_ERRORS[result.error];
+    if (!mapped) return false;
+    res.status(mapped.status).json({ success: false, error: req.t(mapped.key) });
+    return true;
   }
 
   /**
@@ -34,18 +47,9 @@ class ArticleBlockController extends BaseController {
    */
   async createBlock(req, res) {
     try {
-      // Sanitiser le contenu selon le type de bloc (XSS prevention)
-      if (req.body.contenu && req.body.type_block) {
-        req.body.contenu = sanitizeBlockContent(req.body.type_block, req.body.contenu);
-      }
-      const result = await this.articleBlockService.createBlock(req.body);
-
-      if (result.error === 'badRequest') {
-        return res.status(400).json({
-          success: false,
-          error: req.t('common.badRequest')
-        });
-      }
+      // L'assainissement du contenu (XSS) est fait dans le service
+      const result = await this.articleBlockService.createBlock(req.body, req.user);
+      if (this._sendServiceError(req, res, result)) return;
 
       this._sendCreated(res, result.data, req.t('articleBlock.created'));
 
@@ -59,23 +63,8 @@ class ArticleBlockController extends BaseController {
    */
   async createMultipleBlocks(req, res) {
     try {
-      // Sanitiser chaque bloc du batch
-      if (Array.isArray(req.body.blocks)) {
-        req.body.blocks = req.body.blocks.map(block => {
-          if (block.contenu && block.type_block) {
-            block.contenu = sanitizeBlockContent(block.type_block, block.contenu);
-          }
-          return block;
-        });
-      }
-      const result = await this.articleBlockService.createMultipleBlocks(req.body);
-
-      if (result.error === 'badRequest') {
-        return res.status(400).json({
-          success: false,
-          error: req.t('common.badRequest')
-        });
-      }
+      const result = await this.articleBlockService.createMultipleBlocks(req.body, req.user);
+      if (this._sendServiceError(req, res, result)) return;
 
       res.json({
         success: true,
@@ -94,18 +83,8 @@ class ArticleBlockController extends BaseController {
   async updateBlock(req, res) {
     try {
       const { blockId } = req.params;
-      // Sanitiser le contenu si présent
-      if (req.body.contenu && req.body.type_block) {
-        req.body.contenu = sanitizeBlockContent(req.body.type_block, req.body.contenu);
-      }
-      const result = await this.articleBlockService.updateBlock(blockId, req.body);
-
-      if (result.error === 'notFound') {
-        return res.status(404).json({
-          success: false,
-          error: req.t('articleBlock.notFound')
-        });
-      }
+      const result = await this.articleBlockService.updateBlock(blockId, req.body, req.user);
+      if (this._sendServiceError(req, res, result)) return;
 
       res.json({
         success: true,
@@ -124,14 +103,8 @@ class ArticleBlockController extends BaseController {
   async deleteBlock(req, res) {
     try {
       const { blockId } = req.params;
-      const result = await this.articleBlockService.deleteBlock(blockId);
-
-      if (result.error === 'notFound') {
-        return res.status(404).json({
-          success: false,
-          error: req.t('articleBlock.notFound')
-        });
-      }
+      const result = await this.articleBlockService.deleteBlock(blockId, req.user);
+      if (this._sendServiceError(req, res, result)) return;
 
       this._sendMessage(res, req.t('articleBlock.deleted'));
 
@@ -147,55 +120,12 @@ class ArticleBlockController extends BaseController {
     try {
       const { articleId } = req.params;
       const { blockIds } = req.body;
+      const articleType = req.query.article_type || req.body.article_type || 'article';
 
-      const result = await this.articleBlockService.reorderBlocks(articleId, blockIds);
-
-      if (result.error === 'badRequest') {
-        return res.status(400).json({
-          success: false,
-          error: req.t('common.badRequest')
-        });
-      }
-
-      if (result.error === 'notBelongToArticle') {
-        return res.status(400).json({
-          success: false,
-          error: req.t('articleBlock.notBelongToArticle')
-        });
-      }
+      const result = await this.articleBlockService.reorderBlocks(articleId, blockIds, req.user, articleType);
+      if (this._sendServiceError(req, res, result)) return;
 
       this._sendMessage(res, req.t('articleBlock.reordered'));
-
-    } catch (error) {
-      this._handleError(res, error);
-    }
-  }
-
-  /**
-   * Uploader une image pour un bloc
-   */
-  async uploadBlockImage(req, res) {
-    try {
-      const { articleId } = req.params;
-
-      const result = await this.articleBlockService.uploadBlockImage(
-        articleId,
-        req.file,
-        { titre: req.body.titre, description: req.body.description }
-      );
-
-      if (result.error === 'noFile') {
-        return res.status(400).json({
-          success: false,
-          error: req.t('upload.noFile')
-        });
-      }
-
-      res.json({
-        success: true,
-        message: req.t('upload.imageSuccess'),
-        data: result.data
-      });
 
     } catch (error) {
       this._handleError(res, error);
@@ -208,14 +138,8 @@ class ArticleBlockController extends BaseController {
   async duplicateBlock(req, res) {
     try {
       const { blockId } = req.params;
-      const result = await this.articleBlockService.duplicateBlock(blockId);
-
-      if (result.error === 'notFound') {
-        return res.status(404).json({
-          success: false,
-          error: req.t('articleBlock.notFound')
-        });
-      }
+      const result = await this.articleBlockService.duplicateBlock(blockId, req.user);
+      if (this._sendServiceError(req, res, result)) return;
 
       res.json({
         success: true,
@@ -304,56 +228,6 @@ class ArticleBlockController extends BaseController {
     } catch (error) {
       this._handleError(res, error);
     }
-  }
-
-  /**
-   * Configuration Multer pour l'upload d'images
-   */
-  static getMulterConfig() {
-    const multer = require('multer');
-    const fsSync = require('fs');
-
-    const storage = multer.diskStorage({
-      destination: (req, file, cb) => {
-        const uploadDir = path.join(__dirname, '..', 'uploads', 'articles');
-
-        if (!fsSync.existsSync(uploadDir)) {
-          fsSync.mkdirSync(uploadDir, { recursive: true });
-        }
-
-        cb(null, uploadDir);
-      },
-      filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + crypto.randomBytes(8).toString('hex');
-        const ext = path.extname(file.originalname);
-        cb(null, `article-${uniqueSuffix}${ext}`);
-      }
-    });
-
-    const fileFilter = (req, file, cb) => {
-      const allowedMimes = [
-        'image/jpeg',
-        'image/jpg',
-        'image/png',
-        'image/gif',
-        'image/webp',
-        'image/svg+xml'
-      ];
-
-      if (allowedMimes.includes(file.mimetype)) {
-        cb(null, true);
-      } else {
-        cb(new Error(`Type de fichier non autorisé: ${file.mimetype}`));
-      }
-    };
-
-    return multer({
-      storage,
-      limits: {
-        fileSize: 10 * 1024 * 1024 // 10MB max
-      },
-      fileFilter
-    });
   }
 }
 

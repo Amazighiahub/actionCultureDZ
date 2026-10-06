@@ -317,6 +317,38 @@ class BaseDTO {
   }
 
   /**
+   * Média hébergé par la plateforme : chemin local (/uploads/, /images/) ou URL
+   * Cloudinary de notre compte. Empêche une photo de profil de pointer vers un
+   * hôte externe (pixel de suivi) ou vers un compte Cloudinary tiers.
+   */
+  static isOwnMediaUrl(url) {
+    if (typeof url !== 'string' || !url.trim()) return false;
+    const value = url.trim();
+    if (/^\/(uploads|images)\//.test(value)) return !value.includes('..');
+    try {
+      const { protocol, hostname, pathname } = new URL(value);
+      if (protocol !== 'https:' || hostname !== 'res.cloudinary.com') return false;
+      const cloud = process.env.CLOUDINARY_CLOUD_NAME;
+      return !cloud || pathname.startsWith('/' + cloud + '/');
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * URL web sûre (http/https uniquement) : refuse javascript:, data:, file:...
+   * qui s'exécuteraient dans un lien affiché à d'autres utilisateurs.
+   */
+  static isHttpUrl(url) {
+    if (typeof url !== 'string' || !url.trim()) return false;
+    try {
+      return ['http:', 'https:'].includes(new URL(url.trim()).protocol);
+    } catch {
+      return false;
+    }
+  }
+
+  /**
    * Nettoie une string (trim + null si vide)
    * @param {string} value
    * @returns {string|null}

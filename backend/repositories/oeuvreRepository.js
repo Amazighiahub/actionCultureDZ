@@ -134,9 +134,15 @@ class OeuvreRepository extends BaseRepository {
       prixMax,
       page = 1,
       limit = 20,
-      sortBy = 'date_creation',
-      sortOrder = 'DESC'
+      sortBy: rawSortBy = 'date_creation',
+      sortOrder: rawSortOrder = 'DESC'
     } = params;
+
+    const ALLOWED_SORT_FIELDS = ['date_creation', 'titre', 'prix', 'annee_creation', 'nb_vues'];
+    const ALLOWED_SORT_ORDERS = ['ASC', 'DESC'];
+    const sortBy = ALLOWED_SORT_FIELDS.includes(rawSortBy) ? rawSortBy : 'date_creation';
+    const sortOrder = ALLOWED_SORT_ORDERS.includes((rawSortOrder || '').toUpperCase())
+      ? rawSortOrder.toUpperCase() : 'DESC';
 
     const where = { statut: 'publie' };
     const include = [...this.getDefaultIncludes()];
@@ -401,24 +407,24 @@ class OeuvreRepository extends BaseRepository {
   /**
    * Valide une œuvre
    */
-  async validate(oeuvreId, validatorId) {
+  async validate(oeuvreId, validatorId, options = {}) {
     return this.update(oeuvreId, {
       statut: 'publie',
       date_validation: new Date(),
       validateur_id: validatorId
-    });
+    }, options);
   }
 
   /**
    * Refuse une œuvre
    */
-  async reject(oeuvreId, validatorId, motif) {
+  async reject(oeuvreId, validatorId, motif, options = {}) {
     return this.update(oeuvreId, {
       statut: 'rejete',
       date_validation: new Date(),
       validateur_id: validatorId,
       raison_rejet: motif
-    });
+    }, options);
   }
 
   /**

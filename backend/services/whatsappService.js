@@ -19,7 +19,7 @@ const logger = require('../utils/logger');
 
 class WhatsAppService {
   constructor() {
-    this.isPaused = process.env.WHATSAPP_PAUSED === 'true' || true;
+    this.isPaused = process.env.WHATSAPP_PAUSED === 'true';
     this.provider = process.env.WHATSAPP_PROVIDER || 'simulation';
     this.client = null;
     this.fromNumber = null;
@@ -125,9 +125,9 @@ class WhatsAppService {
 
     // Mode simulation
     if (this.isPaused) {
-      logger.info(`\n💬 [WHATSAPP SIMULATION] Envoi à: ${normalizedTo}`);
-      logger.info(`💬 [WHATSAPP SIMULATION] Message: ${message}`);
-      return { success: true, messageId: 'wa-simulated-' + Date.now() };
+      const maskedTo = normalizedTo.substring(0, 5) + '***';
+      logger.info(`[WHATSAPP SIMULATION] Envoi ignoré → ${maskedTo}`);
+      return { success: true, messageId: 'wa-simulated-' + normalizedTo.length };
     }
 
     try {

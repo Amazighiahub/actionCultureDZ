@@ -37,6 +37,7 @@ import { getMainImage } from '@/types/models/media-extended.types';
 import { useOeuvreDetails } from '@/hooks/useOeuvreDetails';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
 
 // Services
 import { oeuvreService } from '@/services/oeuvre.service';
@@ -47,6 +48,7 @@ import type { Oeuvre } from '@/types/models/oeuvre.types';
 import type { Evenement } from '@/types/models/evenement.types';
 import type { MediaExtended } from '@/types/models/media-extended.types';
 import type { Intervenant } from '@/types/models/intervenant.types';
+import { getSafeRedirectPath, safeExternalUrl } from '@/utils/safeUrl';
 
 /** Extended Oeuvre with API-injected properties not in the base type */
 interface OeuvreWithExtras extends Oeuvre {
@@ -96,14 +98,15 @@ const OeuvreDetailPage: React.FC = () => {
   const { t, i18n } = useTranslation();
   const { isAuthenticated } = useAuth();
   const { formatDate: hookFormatDate } = useFormatDate();
+  const { toast } = useToast();
   const lang = (i18n.language || 'fr') as SupportedLanguage;
 
-  const fromPath = typeof location.state?.from === 'string' ? location.state.from : null;
+  // Page d'origine transmise par la navigation : chemin interne uniquement
+  const fromPath = getSafeRedirectPath(location.state?.from);
 
   const handleBackNavigation = () => {
     if (fromPath) {
-      // Use window.location for maximum reliability
-      window.location.href = fromPath;
+      navigate(fromPath);
       return;
     }
 
@@ -275,6 +278,7 @@ const OeuvreDetailPage: React.FC = () => {
       }
     } catch (err) {
       console.error('Erreur ajout commentaire:', err);
+      toast({ title: t('common.error', 'Erreur'), description: t('comments.errorSubmit', 'Impossible d\'envoyer votre commentaire. Veuillez réessayer.'), variant: 'destructive' });
     } finally {
       setCommentLoading(false);
     }
@@ -303,7 +307,7 @@ const OeuvreDetailPage: React.FC = () => {
 
   // Lire un extrait
   const handleLireExtrait = () => {
-    const livreExtrait = (oeuvre?.Livre as unknown as { url_extrait?: string })?.url_extrait;
+    const livreExtrait = safeExternalUrl((oeuvre?.Livre as unknown as { url_extrait?: string })?.url_extrait);
     if (livreExtrait) {
       window.open(livreExtrait, '_blank', 'noopener,noreferrer');
     } else {

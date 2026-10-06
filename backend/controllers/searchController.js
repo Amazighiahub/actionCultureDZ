@@ -40,8 +40,8 @@ class SearchController extends BaseController {
 
       const results = await searchService.globalSearch(q.trim(), {
         types: types ? types.split(',') : undefined,
-        limit: limit ? parseInt(limit) : config.limits?.defaultPageSize || 20,
-        page: page ? parseInt(page) : 1,
+        limit: Math.min(100, Math.max(1, parseInt(limit) || config.limits?.defaultPageSize || 20)),
+        page: Math.max(1, parseInt(page) || 1),
         userId: req.user?.id_user,
         lang: req.lang
       });
@@ -67,7 +67,7 @@ class SearchController extends BaseController {
 
       const results = await searchService.getSuggestions(
         q.trim(),
-        limit ? parseInt(limit) : 5,
+        Math.min(20, Math.max(1, parseInt(limit) || 5)),
         req.lang
       );
 

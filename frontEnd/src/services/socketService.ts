@@ -438,10 +438,7 @@ class SocketService {
           ...this.config,
           // Token envoyé via cookie httpOnly (withCredentials: true)
           // Fallback: auth handshake si token disponible en JS
-          ...(authToken ? { auth: { token: authToken } } : {}),
-          query: {
-            userId: authService.getCurrentUserId() || undefined
-          }
+          ...(authToken ? { auth: { token: authToken } } : {})
         });
 
         this.setupSocketListeners(resolve, reject);

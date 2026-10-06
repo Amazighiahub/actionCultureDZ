@@ -55,6 +55,7 @@ module.exports = (sequelize) => {
         model: 'user',
         key: 'id_user'
       },
+      onDelete: 'SET NULL',
       comment: 'ID de l\'utilisateur qui a validé'
     },
     

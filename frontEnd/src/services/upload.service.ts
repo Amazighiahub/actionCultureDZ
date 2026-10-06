@@ -306,7 +306,7 @@ class UploadService {
     file: File, 
     options?: ServiceUploadOptions & { chunkSize?: number }
   ): Promise<ApiResponse<UploadResponse>> {
-    const chunkSize = options?.chunkSize || 5 * 1024 * 1024; // 5MB par défaut
+    const chunkSize = Math.min(options?.chunkSize || 5 * 1024 * 1024, 10 * 1024 * 1024); // 5MB défaut, 10MB max
     const totalChunks = Math.ceil(file.size / chunkSize);
     const uploadId = this.generateUploadId();
 
@@ -405,24 +405,13 @@ class UploadService {
       };
     }
 
-    // Vérifier le type MIME
+    // Vérifier le type MIME — pas de fallback extension (la validation réelle est côté serveur)
     const allowedTypes = allowedMimeTypes[type];
     if (!allowedTypes.includes(file.type)) {
-      // Vérifier aussi par extension comme fallback
-      const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
-      const allowedExtensions: Record<string, string[]> = {
-        image: ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'],
-        document: ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.txt', '.odt'],
-        video: ['.mp4', '.avi', '.mov', '.wmv', '.flv', '.mkv', '.webm'],
-        audio: ['.mp3', '.wav', '.ogg', '.aac', '.m4a', '.flac']
+      return {
+        valid: false,
+        error: `Type de fichier non autorisé. Types MIME acceptés: ${allowedTypes.join(', ')}`
       };
-      
-      if (!allowedExtensions[type].includes(fileExtension)) {
-        return { 
-          valid: false, 
-          error: `Type de fichier non autorisé. Types acceptés: ${allowedExtensions[type].join(', ')}` 
-        };
-      }
     }
 
     return { valid: true };

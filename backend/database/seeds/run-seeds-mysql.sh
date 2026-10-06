@@ -8,9 +8,16 @@
 #
 # Ce script:
 #   1. Attend que MySQL soit prêt
-#   2. Charge les données de référence
-#   3. Met DB_SYNC=false dans les .env (tables déjà créées)
-#   4. Redémarre le backend
+#   2. Charge les données de référence (nomenclatures, aucune donnée personnelle)
+#   3. Hors production : charge les données de démonstration fictives
+#   4. Crée l'administrateur (SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD) via scripts/create-admin.js
+#   5. Met DB_SYNC=false dans les .env (tables déjà créées)
+#   6. Redémarre le backend
+#
+# Variables :
+#   SEED_ADMIN_EMAIL, SEED_ADMIN_PASSWORD  administrateur à créer (obligatoires en production)
+#   SEED_DEMO_PASSWORD                     mot de passe des comptes de démo (@example.invalid),
+#                                          sinon ils ne peuvent pas se connecter
 # ============================================================
 
 set -e
@@ -19,6 +26,10 @@ CONTAINER="eventculture-mysql"
 BACKEND_CONTAINER="eventculture-backend"
 DB_NAME="${DB_NAME:-actionculture}"
 ROOT_PASSWORD="${MYSQL_ROOT_PASSWORD:-root}"
+
+# Administrateur à créer : aucun compte ni mot de passe n'est livré dans les seeds
+ADMIN_EMAIL="${SEED_ADMIN_EMAIL:-}"
+ADMIN_PASSWORD="${SEED_ADMIN_PASSWORD:-}"
 
 # Chemin absolu vers la racine du projet (2 niveaux au-dessus de seeds/)
 PROJECT_ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
@@ -124,9 +135,49 @@ echo "--- Chargement des données ---"
 # Données de référence: OBLIGATOIRES
 run_sql_required "${SEEDS_DIR}/seed-reference-data.sql" "Données de référence (catégories, genres, wilayas...)"
 
+# Données de démonstration fictives : jamais en production
+if [ "${NODE_ENV}" = "production" ]; then
+    echo ""
+    echo "ℹ️  Production : données de démonstration non chargées"
+else
+    run_sql_optional "${SEEDS_DIR}/seed-demo-data.sql" "Données de démonstration fictives"
+fi
+
 # NOTE: Les anciens seeds (artisanat-seeds.sql, users-exposition.sql,
 # exposition-art-contemporain.sql) utilisent des noms de tables incompatibles
 # avec les modèles Sequelize actuels. Ils ne sont pas chargés automatiquement.
+
+# --- Administrateur (REQUIS en production) ---
+echo ""
+if [ "${NODE_ENV}" = "production" ] && { [ -z "${ADMIN_EMAIL}" ] || [ -z "${ADMIN_PASSWORD}" ]; }; then
+    echo "❌ ERREUR: SEED_ADMIN_EMAIL et SEED_ADMIN_PASSWORD sont obligatoires en production."
+    echo "   Lancez: SEED_ADMIN_EMAIL='moi@domaine.dz' SEED_ADMIN_PASSWORD='<mot_de_passe_fort>' bash run-seeds-mysql.sh"
+    exit 1
+fi
+
+if [ -n "${ADMIN_EMAIL}" ] && [ -n "${ADMIN_PASSWORD}" ]; then
+    echo "🔐 Création / mise à jour de l'administrateur ${ADMIN_EMAIL}..."
+    docker exec \
+        -e "ADMIN_EMAIL=${ADMIN_EMAIL}" \
+        -e "ADMIN_PASSWORD=${ADMIN_PASSWORD}" \
+        "${BACKEND_CONTAINER}" \
+        node scripts/create-admin.js || { echo "   ❌ Création de l'administrateur impossible"; exit 1; }
+else
+    echo "ℹ️  Aucun administrateur créé (SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD non définis)"
+    echo "   Plus tard : docker exec -e ADMIN_EMAIL=... -e ADMIN_PASSWORD=... ${BACKEND_CONTAINER} node scripts/create-admin.js"
+fi
+
+# --- Mot de passe des comptes de démonstration (hors production) ---
+if [ "${NODE_ENV}" != "production" ] && [ -n "${SEED_DEMO_PASSWORD:-}" ]; then
+    echo "🔐 Mot de passe des comptes de démonstration (@example.invalid)..."
+    DEMO_HASH=$(docker exec -e "PW=${SEED_DEMO_PASSWORD}" "${BACKEND_CONTAINER}" \
+        node -e "require('bcrypt').hash(process.env.PW, 12).then(h => process.stdout.write(h))" 2>/dev/null)
+    if [ -n "${DEMO_HASH}" ]; then
+        printf "UPDATE user SET password='%s' WHERE email LIKE '%%@example.invalid';\n" "${DEMO_HASH}" | \
+            docker exec -i "${CONTAINER}" mysql -u root -p"${ROOT_PASSWORD}" "${DB_NAME}" 2>/dev/null \
+            && echo "   ✅ Comptes de démonstration utilisables"
+    fi
+fi
 
 # --- Résumé ---
 echo ""
@@ -199,16 +250,22 @@ done
 
 # --- Validation des identifiants admin ---
 if curl -sf http://localhost:3001/health > /dev/null 2>&1; then
-    echo ""
-    echo "🔐 Validation des identifiants admin..."
-    ADMIN_LOGIN_RESPONSE=$(curl -s -X POST http://localhost:3001/api/users/login \
-        -H "Content-Type: application/json" \
-        -d '{"email":"admin@actionculture.dz","password":"admin123"}')
-    if echo "$ADMIN_LOGIN_RESPONSE" | grep -q '"success":true'; then
-        echo "   ✅ Admin OK : admin@actionculture.dz / admin123"
+    if [ -n "$ADMIN_PASSWORD" ]; then
+        echo ""
+        echo "🔐 Validation des identifiants admin..."
+        ADMIN_LOGIN_RESPONSE=$(curl -s -X POST http://localhost:3001/api/users/login \
+            -H "Content-Type: application/json" \
+            -d "{\"email\":\"${ADMIN_EMAIL}\",\"password\":\"${ADMIN_PASSWORD}\"}")
+        if echo "$ADMIN_LOGIN_RESPONSE" | grep -q '"success":true'; then
+            echo "   ✅ Admin OK : ${ADMIN_EMAIL}"
+        else
+            echo "   ❌ Échec connexion admin (email/mot de passe invalides ou utilisateur absent)"
+            echo "      Vérifiez la sortie de scripts/create-admin.js ci-dessus."
+        fi
     else
-        echo "   ❌ Échec connexion admin (email/mot de passe invalides ou utilisateur absent)"
-        echo "      Vérifiez que seed-reference-data.sql a bien chargé l'utilisateur admin."
+        echo ""
+        echo "ℹ️  Validation admin ignorée (SEED_ADMIN_PASSWORD non défini)"
+        echo "   Pour valider: SEED_ADMIN_PASSWORD=<mdp> bash run-seeds-mysql.sh"
     fi
 fi
 
@@ -221,6 +278,6 @@ echo "  Frontend : http://localhost:3000"
 echo "  API      : http://localhost:3001"
 echo "  Health   : http://localhost:3001/health"
 echo ""
-echo "  Admin    : admin@actionculture.dz / admin123"
+echo "  Admin    : ${ADMIN_EMAIL:-aucun (voir scripts/create-admin.js)}"
 echo "  DB_SYNC  : false (tables déjà créées)"
 echo ""

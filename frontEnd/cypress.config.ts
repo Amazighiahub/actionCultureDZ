@@ -13,14 +13,16 @@ export default defineConfig({
     video: false,
     screenshotOnRunFailure: true,
     retries: { runMode: 2, openMode: 0 },
+    // Comptes de démonstration fictifs (seed-demo-data.sql). Aucun mot de passe n'est
+    // versionné : CYPRESS_DEMO_PASSWORD = la valeur de SEED_DEMO_PASSWORD utilisée au seed.
     env: {
-      apiUrl: 'http://localhost:3001/api',
-      adminEmail: 'admin@actionculture.dz',
-      adminPassword: 'admin123',
-      proEmail: 'm.benali@test.dz',
-      proPassword: 'password123',
-      visitorEmail: 'f.saidi@test.com',
-      visitorPassword: 'password123',
+      apiUrl: process.env.CYPRESS_API_URL || 'http://localhost:3001/api',
+      adminEmail: process.env.CYPRESS_ADMIN_EMAIL || 'admin@example.invalid',
+      adminPassword: process.env.CYPRESS_ADMIN_PASSWORD || process.env.CYPRESS_DEMO_PASSWORD || '',
+      proEmail: process.env.CYPRESS_PRO_EMAIL || 'demo9@example.invalid',
+      proPassword: process.env.CYPRESS_PRO_PASSWORD || process.env.CYPRESS_DEMO_PASSWORD || '',
+      visitorEmail: process.env.CYPRESS_VISITOR_EMAIL || 'demo10@example.invalid',
+      visitorPassword: process.env.CYPRESS_VISITOR_PASSWORD || process.env.CYPRESS_DEMO_PASSWORD || '',
     },
   },
 });

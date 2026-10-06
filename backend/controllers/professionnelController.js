@@ -8,6 +8,7 @@
 const BaseController = require('./baseController');
 const container = require('../services/serviceContainer');
 const { translateDeep } = require('../helpers/i18n');
+const { csvRow } = require('../utils/csv');
 
 class ProfessionnelController extends BaseController {
   get professionnelService() {
@@ -364,8 +365,8 @@ class ProfessionnelController extends BaseController {
           return res.status(404).json({ success: false, error: req.t('common.notFound') });
         }
 
-        const headers = Object.keys(data[0]).join(',');
-        const rows = data.map(row => Object.values(row).map(v => `"${v}"`).join(',')).join('\n');
+        const headers = csvRow(Object.keys(data[0]));
+        const rows = data.map(row => csvRow(Object.values(row))).join('\n');
         const csv = `${headers}\n${rows}`;
 
         const filenames = { oeuvres: 'mes_oeuvres', evenements: 'mes_evenements', artisanats: 'mes_artisanats' };

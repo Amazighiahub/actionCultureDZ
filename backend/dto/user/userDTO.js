@@ -53,8 +53,21 @@ class UserDTO extends BaseDTO {
 
     const data = entity.get ? entity.get({ plain: true }) : entity;
     const dto = new UserDTO(data);
-    // Strip sensitive fields from _raw to prevent password leaking in toJSON/translateRaw
-    const { password, ...safeData } = data;
+    // Supprimer tous les champs sensibles de _raw
+    const {
+      password,
+      refresh_token,
+      refresh_token_expires,
+      ip_inscription,
+      ip_acceptation_conditions,
+      siret,
+      suspendu_par,
+      suspension_motif,
+      raison_rejet,
+      documents_fournis,
+      rappel_verification_envoye,
+      ...safeData
+    } = data;
 
     // Rétro-compatibilité frontend : déduire statut_validation depuis statut
     if (!safeData.statut_validation && safeData.statut) {

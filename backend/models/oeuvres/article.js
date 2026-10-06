@@ -101,7 +101,7 @@ module.exports = (sequelize) => {
 
   // Associations
   Article.associate = (models) => {
-    Article.belongsTo(models.Oeuvre, { foreignKey: 'id_oeuvre' });
+    Article.belongsTo(models.Oeuvre, { foreignKey: 'id_oeuvre', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
     // NOUVELLE ASSOCIATION AJOUTÉE
     Article.hasMany(models.ArticleBlock, {
       foreignKey: 'id_article',

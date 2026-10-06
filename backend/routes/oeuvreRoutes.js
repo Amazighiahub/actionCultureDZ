@@ -4,16 +4,17 @@
  */
 
 const express = require('express');
+const { secureDiskUpload } = require('../middlewares/uploadSecurity');
+const { MEDIA_MIMES, MAX_MEDIA_SIZE } = require('../constants/uploadMimes');
 const { param, body } = require('express-validator');
 const oeuvreController = require('../controllers/oeuvreController');
 const { handleValidationErrors, validateId, validatePagination, validateWorkSubmission, validateStringLengths } = require('../middlewares/validationMiddleware');
 const { createContentLimiter } = require('../middlewares/rateLimitMiddleware');
 const asyncHandler = require('../utils/asyncHandler');
-const uploadService = require('../services/uploadService');
 
 const initOeuvreRoutes = (models, authMiddleware) => {
   const router = express.Router();
-  const { authenticate, requireRole, requireVerifiedEmail } = authMiddleware;
+  const { authenticate, optionalAuth, requireRole, requireVerifiedEmail } = authMiddleware;
 
   // Cache HTTP pour les listes publiques (données changent toutes les ~3 min)
   const cachePublic = (req, res, next) => {
@@ -52,7 +53,7 @@ const initOeuvreRoutes = (models, authMiddleware) => {
   // ROUTES AVEC :id (après les routes spécifiques)
   // ============================================================================
 
-  router.get('/:id', validateId(), asyncHandler((req, res) => oeuvreController.getById(req, res)));
+  router.get('/:id', optionalAuth, validateId(), asyncHandler((req, res) => oeuvreController.getById(req, res)));
   router.get('/:id/similar', validateId(), asyncHandler((req, res) => oeuvreController.getSimilar(req, res)));
   router.get('/:id/medias', validateId(), asyncHandler((req, res) => oeuvreController.getMedias(req, res)));
 
@@ -79,7 +80,7 @@ const initOeuvreRoutes = (models, authMiddleware) => {
 
   // Médias
   router.post('/:id/medias/upload', authenticate, requireVerifiedEmail, validateId(),
-    uploadService.uploadMedia().array('medias', 10),
+    ...secureDiskUpload({ field: 'medias', mimes: MEDIA_MIMES, maxFileSize: MAX_MEDIA_SIZE, maxFiles: 10 }),
     asyncHandler((req, res) => oeuvreController.uploadMedia(req, res)));
   router.put('/:id/medias/reorder', authenticate, requireVerifiedEmail, validateId(), asyncHandler((req, res) => oeuvreController.reorderMedias(req, res)));
   router.delete('/:id/medias/:mediaId', authenticate, requireVerifiedEmail, validateId(), validateId('mediaId'), asyncHandler((req, res) => oeuvreController.deleteMedia(req, res)));

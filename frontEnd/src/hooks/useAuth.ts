@@ -9,6 +9,8 @@ import type {
   RegisterProfessionalData 
 } from '@/services/auth.service';
 import type { UseAuthReturn, AuthResult } from '../types/models/auth.types';
+import { getSafeRedirectPath } from '@/utils/safeUrl';
+import { queryClient } from '@/lib/queryClient';
 
 export function useAuth(): UseAuthReturn {
   const navigate = useNavigate();
@@ -50,12 +52,11 @@ export function useAuth(): UseAuthReturn {
 
           const stateFrom = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname;
           const redirectFromQuery = new URLSearchParams(location.search).get('redirect');
-          const safeRedirect = (target?: string | null) => !!target && target.startsWith('/') && target !== '/auth';
+          // Chemins internes uniquement (pas de redirection ouverte vers un autre site)
+          const redirectTarget = getSafeRedirectPath(redirectFromQuery) ?? getSafeRedirectPath(stateFrom);
 
-          if (safeRedirect(redirectFromQuery)) {
-            navigate(redirectFromQuery as string, { replace: true });
-          } else if (safeRedirect(stateFrom)) {
-            navigate(stateFrom as string, { replace: true });
+          if (redirectTarget) {
+            navigate(redirectTarget, { replace: true });
           } else {
             // Redirection selon le rôle de l'utilisateur
             if (currentUser.Roles?.some(r => r.nom_role === 'Administrateur')) {
@@ -94,9 +95,13 @@ export function useAuth(): UseAuthReturn {
   const logout = useCallback(async (): Promise<void> => {
     try {
       await authService.logout();
-      await refreshPermissions();
-      navigate('/auth');
-    } catch (error) {
+    } catch {
+      // déconnexion locale même si l'appel réseau échoue
+    } finally {
+      // Vider le cache des requêtes : rien de l'utilisateur précédent ne doit
+      // réapparaître pour le suivant (poste partagé)
+      await queryClient.cancelQueries();
+      queryClient.clear();
       await refreshPermissions();
       navigate('/auth');
     }

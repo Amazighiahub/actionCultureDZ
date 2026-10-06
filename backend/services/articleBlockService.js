@@ -4,6 +4,12 @@
  */
 const BaseService = require('./core/baseService');
 const { Op } = require('sequelize');
+const { sanitizeBlockContent } = require('../utils/sanitizeArticle');
+
+// Types d'articles gérés par ce service (les blocs patrimoine ont leurs propres routes)
+const EDITABLE_ARTICLE_TYPES = ['article', 'article_scientifique'];
+// Champs qu'un client peut fixer sur un bloc
+const BLOCK_FIELDS = ['type_block', 'contenu', 'contenu_json', 'metadata', 'id_media', 'visible'];
 
 class ArticleBlockService extends BaseService {
   constructor(repository, options = {}) {
@@ -40,7 +46,7 @@ class ArticleBlockService extends BaseService {
   /**
    * Créer un nouveau bloc
    */
-  async createBlock(data) {
+  async createBlock(data, user) {
     const {
       id_article,
       article_type = 'article',
@@ -55,6 +61,9 @@ class ArticleBlockService extends BaseService {
       return { error: 'badRequest' };
     }
 
+    const access = await this._checkCanEdit(id_article, article_type, user);
+    if (access.error) return access;
+
     const transaction = await this.sequelize.transaction();
 
     try {
@@ -64,7 +73,7 @@ class ArticleBlockService extends BaseService {
         id_article,
         article_type,
         type_block,
-        contenu,
+        contenu: sanitizeBlockContent(type_block, contenu),
         contenu_json,
         id_media,
         ordre,
@@ -86,12 +95,15 @@ class ArticleBlockService extends BaseService {
   /**
    * Créer plusieurs blocs en batch (remplace les anciens)
    */
-  async createMultipleBlocks(data) {
+  async createMultipleBlocks(data, user) {
     const { id_article, article_type = 'article', blocks } = data;
 
     if (!id_article || !blocks || !Array.isArray(blocks)) {
       return { error: 'badRequest' };
     }
+
+    const access = await this._checkCanEdit(id_article, article_type, user);
+    if (access.error) return access;
 
     const transaction = await this.sequelize.transaction();
 
@@ -100,12 +112,12 @@ class ArticleBlockService extends BaseService {
       await this.repository.deleteByArticle(id_article, article_type, transaction);
 
       // Créer les nouveaux blocs
-      const allowedBlockFields = ['type', 'contenu', 'id_media', 'legende', 'alt_text', 'style', 'niveau'];
       const createdBlocks = [];
 
       for (let i = 0; i < blocks.length; i++) {
         const blockData = { id_article, article_type, ordre: i };
-        allowedBlockFields.forEach(f => { if (blocks[i][f] !== undefined) blockData[f] = blocks[i][f]; });
+        BLOCK_FIELDS.forEach(f => { if (blocks[i][f] !== undefined) blockData[f] = blocks[i][f]; });
+        blockData.contenu = sanitizeBlockContent(blockData.type_block, blockData.contenu);
 
         const block = await this.repository.create(blockData, { transaction });
         createdBlocks.push(block);
@@ -127,27 +139,25 @@ class ArticleBlockService extends BaseService {
   /**
    * Mettre à jour un bloc
    */
-  async updateBlock(blockId, updates) {
+  async updateBlock(blockId, updates, user) {
+    const block = await this.repository.findById(blockId);
+    if (!block) return { error: 'notFound' };
+
+    const access = await this._checkCanEdit(block.id_article, block.article_type, user);
+    if (access.error) return access;
+
     const transaction = await this.sequelize.transaction();
 
     try {
-      const block = await this.repository.findById(blockId);
-
-      if (!block) {
-        await transaction.rollback();
-        return { error: 'notFound' };
-      }
-
-      const allowedFields = [
-        'contenu', 'contenu_json', 'metadata',
-        'id_media', 'visible', 'type_block'
-      ];
-
-      allowedFields.forEach(field => {
+      BLOCK_FIELDS.forEach(field => {
         if (updates[field] !== undefined) {
           block[field] = updates[field];
         }
       });
+      // Toujours assainir selon le type effectif (celui envoyé, sinon celui en base)
+      if (updates.contenu !== undefined || updates.type_block !== undefined) {
+        block.contenu = sanitizeBlockContent(block.type_block, block.contenu);
+      }
 
       await block.save({ transaction });
       await transaction.commit();
@@ -164,19 +174,18 @@ class ArticleBlockService extends BaseService {
   /**
    * Supprimer un bloc
    */
-  async deleteBlock(blockId) {
+  async deleteBlock(blockId, user) {
+    const block = await this.repository.findById(blockId);
+    if (!block) return { error: 'notFound' };
+
+    const access = await this._checkCanEdit(block.id_article, block.article_type, user);
+    if (access.error) return access;
+
     const transaction = await this.sequelize.transaction();
 
     try {
-      const block = await this.repository.findById(blockId);
-
-      if (!block) {
-        await transaction.rollback();
-        return { error: 'notFound' };
-      }
-
       await block.destroy({ transaction });
-      await this._reorderAfterDelete(block.id_article, block.ordre, transaction);
+      await this._reorderAfterDelete(block.id_article, block.article_type, block.ordre, transaction);
       await transaction.commit();
 
       return { success: true };
@@ -190,10 +199,13 @@ class ArticleBlockService extends BaseService {
   /**
    * Réorganiser les blocs d'un article
    */
-  async reorderBlocks(articleId, blockIds) {
+  async reorderBlocks(articleId, blockIds, user, articleType = 'article') {
     if (!Array.isArray(blockIds)) {
       return { error: 'badRequest' };
     }
+
+    const access = await this._checkCanEdit(articleId, articleType, user);
+    if (access.error) return access;
 
     const transaction = await this.sequelize.transaction();
 
@@ -202,7 +214,8 @@ class ArticleBlockService extends BaseService {
       const blocks = await this.repository.model.findAll({
         where: {
           id_block: blockIds,
-          id_article: articleId
+          id_article: articleId,
+          article_type: articleType
         },
         transaction
       });
@@ -216,8 +229,8 @@ class ArticleBlockService extends BaseService {
       const cases = blockIds.map((id, i) => `WHEN ${parseInt(id, 10)} THEN ${i}`).join(' ');
       const ids = blockIds.map(id => parseInt(id, 10)).join(',');
       await this.sequelize.query(
-        `UPDATE article_blocks SET ordre = CASE id_block ${cases} END WHERE id_block IN (${ids}) AND id_article = :articleId`,
-        { replacements: { articleId: parseInt(articleId, 10) }, transaction }
+        `UPDATE article_block SET ordre = CASE id_block ${cases} END WHERE id_block IN (${ids}) AND id_article = :articleId AND article_type = :articleType`,
+        { replacements: { articleId: parseInt(articleId, 10), articleType }, transaction }
       );
 
       await transaction.commit();
@@ -230,51 +243,18 @@ class ArticleBlockService extends BaseService {
   }
 
   /**
-   * Uploader une image pour un bloc (créer l'entrée média)
-   */
-  async uploadBlockImage(articleId, file, meta = {}) {
-    if (!file) {
-      return { error: 'noFile' };
-    }
-
-    const transaction = await this.sequelize.transaction();
-
-    try {
-      const media = await this.models.Media.create({
-        id_oeuvre: articleId,
-        type_media: 'image',
-        url: `/uploads/articles/${file.filename}`,
-        titre: meta.titre || file.originalname,
-        description: meta.description,
-        nom_fichier: file.originalname,
-        taille_fichier: file.size,
-        mime_type: file.mimetype,
-        visible_public: true,
-        date_creation: new Date()
-      }, { transaction });
-
-      await transaction.commit();
-      return { data: media };
-
-    } catch (error) {
-      await transaction.rollback();
-      throw error;
-    }
-  }
-
-  /**
    * Dupliquer un bloc
    */
-  async duplicateBlock(blockId) {
+  async duplicateBlock(blockId, user) {
+    const originalBlock = await this.repository.findById(blockId);
+    if (!originalBlock) return { error: 'notFound' };
+
+    const access = await this._checkCanEdit(originalBlock.id_article, originalBlock.article_type, user);
+    if (access.error) return access;
+
     const transaction = await this.sequelize.transaction();
 
     try {
-      const originalBlock = await this.repository.findById(blockId);
-
-      if (!originalBlock) {
-        await transaction.rollback();
-        return { error: 'notFound' };
-      }
 
       const ordre = await this.repository.getNextOrdre(originalBlock.id_article, originalBlock.article_type);
 
@@ -306,14 +286,37 @@ class ArticleBlockService extends BaseService {
   // ============================================================================
 
   /**
+   * Vérifie que l'utilisateur peut modifier les blocs de cet article :
+   * propriétaire de l'œuvre parente (saisi_par) ou admin.
+   * @returns {Promise<{error?: string}>} error = 'badRequest' | 'notFound' | 'forbidden'
+   */
+  async _checkCanEdit(idArticle, articleType, user) {
+    if (!EDITABLE_ARTICLE_TYPES.includes(articleType)) return { error: 'badRequest' };
+    if (user?.isAdmin) return {};
+
+    const isScientifique = articleType === 'article_scientifique';
+    const Model = isScientifique ? this.models?.ArticleScientifique : this.models?.Article;
+    if (!Model || !this.models?.Oeuvre) return { error: 'forbidden' };
+
+    const parent = await Model.findByPk(idArticle, {
+      attributes: [isScientifique ? 'id_article_scientifique' : 'id_article', 'id_oeuvre'],
+      include: [{ model: this.models.Oeuvre, attributes: ['saisi_par'] }]
+    });
+    if (!parent) return { error: 'notFound' };
+    if (!user?.id_user || parent.Oeuvre?.saisi_par !== user.id_user) return { error: 'forbidden' };
+    return {};
+  }
+
+  /**
    * Réorganiser les ordres après suppression d'un bloc
    */
-  async _reorderAfterDelete(articleId, deletedOrdre, transaction) {
+  async _reorderAfterDelete(articleId, articleType, deletedOrdre, transaction) {
     await this.repository.model.update(
       { ordre: this.sequelize.literal('ordre - 1') },
       {
         where: {
           id_article: articleId,
+          article_type: articleType,
           ordre: { [Op.gt]: deletedOrdre }
         },
         transaction

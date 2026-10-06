@@ -43,7 +43,10 @@ class ViewCounter {
 
     if (redis) {
       try {
-        await redis.incr(key);
+        const multi = redis.multi();
+        multi.incr(key);
+        multi.expire(key, 300); // TTL sécurité : clé expire après 5 min si flush ne passe pas
+        await multi.exec();
         return;
       } catch (_) { /* fallback mémoire */ }
     }

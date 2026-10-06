@@ -93,10 +93,16 @@ class CommentaireService extends BaseService {
   // ========================================================================
 
   /**
-   * Soft delete d'un commentaire (via instance deja chargee par middleware)
-   * @param {object} commentaireInstance - Instance Sequelize du commentaire (req.resource)
+   * Soft delete d'un commentaire
+   * @param {object} commentaireInstance - Instance Sequelize du commentaire
+   * @param {number} [userId] - ID de l'utilisateur demandant la suppression (optionnel, vérifie ownership)
    */
-  async deleteCommentaire(commentaireInstance) {
+  async deleteCommentaire(commentaireInstance, userId) {
+    if (userId !== undefined && commentaireInstance.id_user !== userId) {
+      const err = new Error('Forbidden');
+      err.status = 403;
+      throw err;
+    }
     return this.repository.softDelete(commentaireInstance);
   }
 

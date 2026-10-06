@@ -3,6 +3,7 @@
  * Utilisé pour valider et transformer les données d'inscription
  */
 const BaseDTO = require('../baseDTO');
+const { REGISTRABLE_TYPE_USER_IDS } = require('../../constants/typeUserIds');
 
 class CreateUserDTO extends BaseDTO {
   constructor(data = {}) {
@@ -20,7 +21,9 @@ class CreateUserDTO extends BaseDTO {
     this.dateNaissance = BaseDTO.cleanString(data.date_naissance || data.dateNaissance) || null;
     this.telephone = BaseDTO.cleanString(data.telephone);
     this.typeUser = data.type_user || data.typeUser || 'visiteur';
-    this.idTypeUser = parseInt(data.id_type_user || data.idTypeUser) || 1;
+    // Absent ou non numerique => visiteur ; toute autre valeur est controlee dans validate()
+    const rawTypeUser = parseInt(data.id_type_user ?? data.idTypeUser, 10);
+    this.idTypeUser = Number.isInteger(rawTypeUser) ? rawTypeUser : 1;
     this.entreprise = BaseDTO.cleanString(data.entreprise);
     this.biographie = BaseDTO.normalizeMultilang(data.biographie);
     this.siteWeb = BaseDTO.cleanString(data.site_web || data.siteWeb);
@@ -28,6 +31,9 @@ class CreateUserDTO extends BaseDTO {
     this.wilaya = BaseDTO.cleanString(data.wilaya);
     this.wilayaResidence = BaseDTO.toInt(data.wilaya_residence || data.wilayaResidence || data.wilaya, null);
     this.commune = BaseDTO.cleanString(data.commune);
+    // Commune de résidence (identifiant) : obligatoire pour un professionnel
+    this.idCommune = BaseDTO.toInt(data.id_commune ?? data.communeId, null);
+    this.residesAbroad = data.wilaya_residence === null;
 
     // Consentements
     this.accepteConditions = BaseDTO.toBool(data.accepte_conditions || data.accepteConditions);
@@ -64,6 +70,7 @@ class CreateUserDTO extends BaseDTO {
       biographie: this.biographie,
       site_web: this.siteWeb,
       wilaya_residence: this.wilayaResidence,
+      id_commune: this.idCommune,
       adresse: this.commune,
       accepte_conditions: this.accepteConditions,
       accepte_newsletter: this.accepteNewsletter,
@@ -143,6 +150,17 @@ class CreateUserDTO extends BaseDTO {
       }
     }
 
+    // Type d'utilisateur : uniquement les types inscriptibles (jamais administrateur)
+    if (!REGISTRABLE_TYPE_USER_IDS.has(this.idTypeUser)) {
+      errors.push({ field: 'id_type_user', message: 'Type d\'utilisateur invalide' });
+    }
+
+    // Professionnel : commune obligatoire (proximité avec les lieux et les autres pros),
+    // sauf résidence à l'étranger (wilaya explicitement nulle)
+    if (this.idTypeUser !== 1 && !this.idCommune && !this.residesAbroad) {
+      errors.push({ field: 'id_commune', message: 'La commune est obligatoire pour un compte professionnel' });
+    }
+
     // Conditions acceptées
     if (!this.accepteConditions) {
       errors.push({ field: 'accepteConditions', message: 'Vous devez accepter les conditions' });
@@ -161,6 +179,11 @@ class CreateUserDTO extends BaseDTO {
     // Site web URL valide si fourni
     if (this.siteWeb && !this._isSafeUrl(this.siteWeb)) {
       errors.push({ field: 'site_web', message: 'URL de site web invalide' });
+    }
+
+    // Photo : uniquement un média hébergé par la plateforme (service d'upload)
+    if (this.photoUrl && !BaseDTO.isOwnMediaUrl(this.photoUrl)) {
+      errors.push({ field: 'photo_url', message: 'Photo invalide : utilisez le service d\'upload' });
     }
 
     return {
@@ -184,15 +207,7 @@ class CreateUserDTO extends BaseDTO {
   }
 
   _isSafeUrl(url) {
-    // Bloquer les schémas dangereux
-    const dangerous = /^(javascript|data|file|vbscript):/i;
-    if (dangerous.test(url.trim())) return false;
-    try {
-      const parsed = new URL(url);
-      return ['http:', 'https:'].includes(parsed.protocol);
-    } catch {
-      return false;
-    }
+    return BaseDTO.isHttpUrl(url);
   }
 }
 

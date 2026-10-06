@@ -3,11 +3,7 @@
    Version: 2.0 - Design System Professionnel
    ========================================================================== */
 
-/* ===== IMPORTS POLICES OPTIMISÉES ===== */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Tifinagh&display=swap');
+/* ===== POLICES : hébergées localement, voir src/styles/fonts.ts ===== */
 
 /* Import fichiers personnalisés */
 @import './styles/language-styles.css';

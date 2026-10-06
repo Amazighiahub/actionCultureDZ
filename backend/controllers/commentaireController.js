@@ -171,7 +171,7 @@ class CommentaireController extends BaseController {
    */
   async deleteCommentaire(req, res) {
     try {
-      await this.service.deleteCommentaire(req.resource);
+      await this.service.deleteCommentaire(req.resource, req.user?.id_user);
 
       return this._sendMessage(res, req.t('comment.deleted'));
     } catch (error) {

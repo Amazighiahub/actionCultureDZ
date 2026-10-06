@@ -90,8 +90,10 @@ function verifyAccessToken(token) {
         || err.message === 'jwt audience invalid. expected: ' + JWT_AUDIENCE
         || /jwt (issuer|audience) invalid/i.test(err.message || ''));
 
-    const strict = process.env.JWT_VERIFY_STRICT === 'true';
-    if (!strict && isIssAudErr) {
+    // Strict par défaut — opt-out uniquement en développement explicite
+    const strict = process.env.JWT_VERIFY_STRICT !== 'false';
+    const isDev = process.env.NODE_ENV !== 'production';
+    if (!strict && isDev && isIssAudErr) {
       try {
         return jwt.verify(token, JWT_SECRET, { algorithms: [JWT_ALGORITHM] });
       } catch (_) {
@@ -125,12 +127,33 @@ function readJti(token) {
  */
 function buildBlacklistKey({ jti, token } = {}) {
   if (jti) return `jwt:blacklist:jti:${jti}`;
-  if (token) return `jwt:blacklist:${token}`;
+  // Rétrocompat : hacher le token pour ne pas stocker le JWT brut dans Redis
+  if (token) {
+    const hash = require('crypto').createHash('sha256').update(token).digest('hex').slice(0, 16);
+    return `jwt:blacklist:legacy:${hash}`;
+  }
   return null;
+}
+
+/**
+ * Vrai si le token a été émis avant le dernier changement de mot de passe.
+ * Les tokens émis avant le premier changement n'ont pas de pwdAt : on se rabat
+ * alors sur leur date d'émission (iat), avec 1 s de tolérance car
+ * password_changed_at (DATETIME MySQL) est arrondi à la seconde.
+ * @param {{pwdAt?: number, iat?: number}} decoded
+ * @param {Date|string|null} passwordChangedAt
+ */
+function issuedBeforePasswordChange(decoded, passwordChangedAt) {
+  if (!passwordChangedAt || !decoded) return false;
+  const changedAtSec = Math.floor(new Date(passwordChangedAt).getTime() / 1000);
+  if (typeof decoded.pwdAt === 'number') return decoded.pwdAt < changedAtSec;
+  if (typeof decoded.iat === 'number') return decoded.iat < changedAtSec - 1;
+  return false;
 }
 
 module.exports = {
   signAccessToken,
+  issuedBeforePasswordChange,
   verifyAccessToken,
   readJti,
   buildBlacklistKey,

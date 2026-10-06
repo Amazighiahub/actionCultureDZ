@@ -458,6 +458,11 @@
     "location": "Lezzayer",
     "navigation": "Tunigin",
     "platform": "Tansa yettwafen i usiǧhed d uḥraz n ugla adelsan ameqqran n Lezzayer.",
+    "qrCode": {
+      "alt": "QR code — taladz.com",
+      "download": "Sider QR code",
+      "title": "QR code — taladz.com"
+    },
     "resources": "Tiɣbula"
   },
   "header": {

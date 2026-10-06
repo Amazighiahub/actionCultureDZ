@@ -47,7 +47,12 @@ class BaseSubtypeService {
     this._validateDTO(ds);
 
     const data = this._buildCreateData(oeuvreId, ds);
-    const record = await this.model.create(data, { transaction });
+    let record;
+    try {
+      record = await this.model.create(data, { transaction });
+    } catch (err) {
+      throw this._wrapUniqueConstraintError(err);
+    }
 
     this.logger.info(`${this.modelName} créé pour œuvre ${oeuvreId}`);
     return record;
@@ -75,7 +80,11 @@ class BaseSubtypeService {
     const data = this._buildUpdateData(detailsSpecifiques);
     if (Object.keys(data).length === 0) return existing;
 
-    await existing.update(data, { transaction });
+    try {
+      await existing.update(data, { transaction });
+    } catch (err) {
+      throw this._wrapUniqueConstraintError(err);
+    }
     this.logger.info(`${this.modelName} mis à jour pour œuvre ${oeuvreId}`);
     return existing;
   }
@@ -97,6 +106,34 @@ class BaseSubtypeService {
       err.statusCode = 400;
       throw err;
     }
+  }
+
+  /**
+   * Transforme une erreur de contrainte unique Sequelize en erreur explicite
+   * (champ concerné + statut 409) au lieu de laisser remonter une
+   * SequelizeUniqueConstraintError brute (500 générique côté client).
+   * Convention alignée sur errorMiddleware.js (statusCode 409, code UNIQUE_CONSTRAINT).
+   * @param {Error} err
+   * @returns {Error}
+   * @private
+   */
+  _wrapUniqueConstraintError(err) {
+    if (err.name !== 'SequelizeUniqueConstraintError') return err;
+
+    const isProduction = process.env.NODE_ENV === 'production';
+    const detail = err.errors?.[0];
+    const field = detail?.path || 'valeur';
+    const value = !isProduction ? detail?.value : undefined;
+
+    const wrapped = new Error(
+      value != null
+        ? `La valeur "${value}" du champ "${field}" est déjà utilisée par une autre œuvre`
+        : `Un(e) autre œuvre utilise déjà cette valeur pour le champ "${field}"`
+    );
+    wrapped.code = 'UNIQUE_CONSTRAINT';
+    wrapped.statusCode = 409;
+    wrapped.errors = [{ field, message: wrapped.message }];
+    return wrapped;
   }
 
   /**

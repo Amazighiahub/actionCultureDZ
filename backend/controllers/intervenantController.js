@@ -133,7 +133,7 @@ class IntervenantController extends BaseController {
         return res.status(400).json({ success: false, error: req.t('common.badRequest') });
       }
 
-      const intervenant = await this.intervenantService.createIntervenant(lang, req.body);
+      const intervenant = await this.intervenantService.createIntervenant(lang, req.body, { isAdmin: req.user?.isAdmin === true });
       this._sendCreated(res, translate(intervenant, lang), req.t('intervenant.created'));
     } catch (error) {
       if (error.code === 'USER_ALREADY_LINKED') {

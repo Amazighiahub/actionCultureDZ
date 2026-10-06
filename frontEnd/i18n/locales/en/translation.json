@@ -457,6 +457,11 @@
     "location": "Algeria",
     "navigation": "Navigation",
     "platform": "Platform dedicated to promoting and preserving Algeria's rich cultural heritage.",
+    "qrCode": {
+      "alt": "QR code linking to taladz.com",
+      "download": "Download the QR code",
+      "title": "Scan to visit the platform"
+    },
     "resources": "Resources"
   },
   "header": {
@@ -3092,5 +3097,27 @@
     "programmeDeleted": "Programme supprimé avec succès",
     "saveError": "Error saving",
     "deleteError": "Error deleting"
+  },
+  "myData": {
+    "title": "My data",
+    "description": "You can download a copy of your data or delete your account at any time.",
+    "exportHint": "JSON file with your profile, content, registrations, favourites and notifications.",
+    "export": "Export my data",
+    "exportDone": "Your data has been downloaded",
+    "exportFailed": "Export failed, please try again later",
+    "dangerZone": "Danger zone",
+    "deleteHint": "Deletion is permanent: your personal data is erased and your public contributions become anonymous.",
+    "delete": "Delete my account",
+    "confirmTitle": "Permanently delete your account?",
+    "confirmText": "This cannot be undone. Enter your password to confirm.",
+    "password": "Password",
+    "confirmDelete": "Delete permanently",
+    "deleteDone": "Your account has been deleted",
+    "deleteFailed": "Deletion failed: check your password",
+    "newsletter": "Newsletter",
+    "newsletterHint": "Receive new events and works by email every week.",
+    "newsletterOn": "You are subscribed to the newsletter",
+    "newsletterOff": "You have unsubscribed from the newsletter",
+    "newsletterFailed": "Could not update, please try again"
   }
 }

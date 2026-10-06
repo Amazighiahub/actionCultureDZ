@@ -89,6 +89,12 @@ module.exports = (sequelize) => {
         max: 5
       }
     },
+    nb_notations: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+      comment: 'Nombre de votes pour calculer la vraie moyenne pondérée'
+    },
     // Suivi des contributions
     id_dernier_contributeur: {
       type: DataTypes.INTEGER,

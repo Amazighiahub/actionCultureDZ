@@ -1,9 +1,12 @@
 // services/NotificationService.js - Orchestrateur des notifications
 const logger = require('../utils/logger');
+const { maskEmail } = require('../utils/maskPII');
+const { buildUnsubscribeUrl, unsubscribeHeaders, withUnsubscribeFooter } = require('../utils/newsletterUnsubscribe');
 const emailService = require('./emailService');
 const smsService = require('./smsService');
 const whatsappService = require('./whatsappService');
 const { Op } = require('sequelize');
+const { getClient: getRedisClient } = require('../utils/redisClient');
 
 class NotificationService {
   constructor(models, options = {}) {
@@ -88,6 +91,26 @@ class NotificationService {
     } catch (err) {
       logger.error(`⚠️ Erreur WhatsApp (${type}):`, err.message);
     }
+  }
+
+  /**
+   * Exécute asyncFn sur les items en batches pour éviter de saturer le serveur SMTP.
+   * @param {Array} items
+   * @param {Function} asyncFn - reçoit un item, retourne une Promise
+   * @param {number} batchSize
+   * @param {number} delayMs - pause entre batches (ms)
+   */
+  async _sendBatch(items, asyncFn, batchSize = 10, delayMs = 200) {
+    const results = [];
+    for (let i = 0; i < items.length; i += batchSize) {
+      const batch = items.slice(i, i + batchSize);
+      const batchResults = await Promise.all(batch.map(item => asyncFn(item).catch(err => ({ error: err.message }))));
+      results.push(...batchResults);
+      if (i + batchSize < items.length && delayMs > 0) {
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+      }
+    }
+    return results;
   }
 
   // ========================================================================
@@ -184,7 +207,17 @@ async envoyerRappelEvenement(evenementId) {
       }]
     });
 
-    await Promise.all(participants.map(async (participant) => {
+    const redis = getRedisClient();
+    await this._sendBatch(participants, async (participant) => {
+      // Déduplication : éviter d'envoyer le rappel plusieurs fois si le cron est relancé
+      if (redis) {
+        try {
+          const dedupeKey = `notif:rappel:${evenementId}:${participant.id_user}`;
+          const claimed = await redis.set(dedupeKey, '1', { NX: true, EX: 26 * 3600 });
+          if (!claimed) return; // rappel déjà envoyé à ce participant
+        } catch { /* si Redis indisponible, on continue sans déduplication */ }
+      }
+
       await this.emailService.sendEmail(
         participant.User.email,
         `🔔 Rappel : ${evenement.nom_evenement} demain !`,
@@ -204,7 +237,7 @@ async envoyerRappelEvenement(evenementId) {
         message: `L'événement "${evenement.nom_evenement}" est demain !`,
         id_evenement: evenementId
       });
-    }));
+    });
   } catch (error) {
     logger.error('Erreur rappel événement:', error);
   }
@@ -319,6 +352,10 @@ async notifierModeration(userId, type, raison) {
 
     // Email obligatoire pour les notifications importantes
     const user = await this.models.User.findByPk(userId);
+    if (!user?.email) {
+      logger.warn(`Impossible de notifier userId ${userId}: utilisateur introuvable`);
+      return;
+    }
     await this.emailService.sendEmail(
       user.email,
       `⚠️ ${messages[type]}`,
@@ -370,13 +407,15 @@ async planifierRappels() {
   const demain = new Date();
   demain.setDate(demain.getDate() + 1);
   
+  const debutDemain = new Date(demain);
+  debutDemain.setHours(0, 0, 0, 0);
+  const finDemain = new Date(demain);
+  finDemain.setHours(23, 59, 59, 999);
+
   const evenements = await this.models.Evenement.findAll({
     where: {
       date_debut: {
-        [Op.between]: [
-          new Date(demain.setHours(0, 0, 0, 0)),
-          new Date(demain.setHours(23, 59, 59, 999))
-        ]
+        [Op.between]: [debutDemain, finDemain]
       },
       statut: 'publie'
     },
@@ -402,7 +441,7 @@ async envoyerNewsletter(contenu, filtres = {}) {
     }
 
     if (filtres.type_user) {
-      whereClause.type_user = filtres.type_user;
+      whereClause.id_type_user = filtres.type_user;
     }
 
     const users = await this.models.User.findAll({
@@ -418,7 +457,16 @@ async envoyerNewsletter(contenu, filtres = {}) {
       const batch = users.slice(i, i + BATCH_SIZE);
       const batchResults = await Promise.all(
         batch.map(async (user) => {
-          const result = await this.emailService.sendEmail(user.email, contenu.sujet, contenu.texte, contenu.html);
+          // Ordre des arguments corrigé (html, pièces jointes, texte) + lien de désinscription signé
+          const unsubscribeUrl = buildUnsubscribeUrl(user.id_user);
+          const result = await this.emailService.sendEmail(
+            user.email,
+            contenu.sujet,
+            withUnsubscribeFooter(contenu.html || `<p>${contenu.texte || ''}</p>`, unsubscribeUrl),
+            null,
+            contenu.texte || null,
+            { headers: unsubscribeHeaders(unsubscribeUrl) }
+          );
           return { userId: user.id_user, success: result.success };
         })
       );
@@ -976,7 +1024,7 @@ async envoyerNewsletter(contenu, filtres = {}) {
         for (const user of usersToNotify) {
           if (user.email) {
             this.emailService.sendEmail(user.email, title, htmlBody, null, textBody)
-              ?.catch(err => logger.warn(`Broadcast email failed for ${user.email}:`, err.message));
+              ?.catch(err => logger.warn(`Broadcast email failed for ${maskEmail(user.email)}:`, err.message));
           }
         }
       }
@@ -1070,7 +1118,7 @@ async envoyerNewsletter(contenu, filtres = {}) {
   async getUserPreferences(userId) {
     const user = await this.userRepo.findById(userId, {
       attributes: [
-        'notifications_email', 'notifications_push', 'notifications_newsletter',
+        'notifications_email', 'notifications_push', 'accepte_newsletter',
         'notifications_commentaires', 'notifications_favoris', 'notifications_evenements'
       ]
     });
@@ -1079,7 +1127,8 @@ async envoyerNewsletter(contenu, filtres = {}) {
       global: {
         email: user.notifications_email ?? true,
         push: user.notifications_push ?? true,
-        newsletter: user.notifications_newsletter ?? true
+        // Consentement newsletter : même champ que celui utilisé pour l'envoi (défaut : non)
+        newsletter: user.accepte_newsletter === true
       },
       types: {
         commentaires: user.notifications_commentaires ?? true,
@@ -1097,7 +1146,7 @@ async envoyerNewsletter(contenu, filtres = {}) {
     if (global) {
       if (typeof global.email === 'boolean') updates.notifications_email = global.email;
       if (typeof global.push === 'boolean') updates.notifications_push = global.push;
-      if (typeof global.newsletter === 'boolean') updates.notifications_newsletter = global.newsletter;
+      if (typeof global.newsletter === 'boolean') updates.accepte_newsletter = global.newsletter;
     }
     if (types) {
       if (typeof types.commentaires === 'boolean') updates.notifications_commentaires = types.commentaires;

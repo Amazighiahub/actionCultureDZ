@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Separator } from '@/components/ui/separator';
-import { MapPin, Mail, Facebook, Instagram, Youtube, ExternalLink } from 'lucide-react';
+import { MapPin, Mail, Facebook, Instagram, Youtube, ExternalLink, Download } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useRTL } from '@/utils/rtl';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
@@ -87,6 +87,31 @@ const Footer = () => {
                   className="rtl-preserve hover:text-primary transition-colors"
                 >
                   {contactEmail}
+                </a>
+              </div>
+            </div>
+
+            {/* QR code de la plateforme (image statique : l'URL taladz.com ne change pas) */}
+            <div className="flex items-center gap-4">
+              <div className="rounded-lg bg-white p-1.5 border flex-shrink-0">
+                <img
+                  src="/images/qrcode-taladz.svg"
+                  alt={t('footer.qrCode.alt')}
+                  width={96}
+                  height={96}
+                  loading="lazy"
+                  className="h-24 w-24"
+                />
+              </div>
+              <div className="space-y-2 text-sm">
+                <p className="text-muted-foreground">{t('footer.qrCode.title')}</p>
+                <a
+                  href="/images/qrcode-taladz.png"
+                  download="qrcode-taladz.png"
+                  className="inline-flex items-center gap-1.5 hover:text-primary transition-colors min-h-[44px]"
+                >
+                  <Download className="h-4 w-4" />
+                  {t('footer.qrCode.download')}
                 </a>
               </div>
             </div>

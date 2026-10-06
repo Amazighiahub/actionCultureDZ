@@ -123,7 +123,7 @@ class IntervenantService extends BaseService {
   // CRÉATION / MODIFICATION / SUPPRESSION
   // ========================================================================
 
-  async createIntervenant(lang, data) {
+  async createIntervenant(lang, data, { isAdmin = false } = {}) {
     const { nom, prenom, biographie, email, ...rest } = data;
     const normalizedEmail = this._normalizeEmail(email);
 
@@ -142,7 +142,9 @@ class IntervenantService extends BaseService {
     const existingByName = await this._findByNameMatch(nom, prenom, lang);
     if (existingByName) return existingByName;
 
-    let idUserToSet = rest.id_user !== undefined && rest.id_user !== null ? rest.id_user : null;
+    // Lier une fiche à un compte choisi librement est réservé à l'admin (sinon usurpation
+    // ou blocage du rattachement d'un tiers) ; sinon seul le rattachement par email est utilisé.
+    let idUserToSet = isAdmin && rest.id_user !== undefined && rest.id_user !== null ? rest.id_user : null;
     if (idUserToSet !== null) {
       const conflict = await this._intervenantAlreadyLinkedToUser(idUserToSet, null);
       if (conflict) {
@@ -170,7 +172,7 @@ class IntervenantService extends BaseService {
         prix_distinctions: rest.prix_distinctions || [],
         actif: true,
         verifie: false,
-        ...this._pickFields(rest, ['date_naissance', 'lieu_naissance', 'titre_professionnel', 'organisation', 'telephone', 'photo_url', 'site_web', 'pays_origine', 'wikipedia_url'])
+        ...this._pickFields(rest, ['date_naissance', 'lieu_naissance', 'titre_professionnel', 'organisation', 'telephone', 'photo_url', 'site_web', 'pays_origine', 'wikipedia_url', 'id_commune'])
       }, { transaction });
 
       await transaction.commit();
@@ -237,7 +239,7 @@ class IntervenantService extends BaseService {
       }
 
       // Whitelist
-      const allowedFields = ['email', 'telephone', 'specialite', 'organisation', 'photo_url', 'site_web', 'id_user'];
+      const allowedFields = ['email', 'telephone', 'specialite', 'organisation', 'photo_url', 'site_web', 'id_user', 'id_commune'];
       const updates = {};
       allowedFields.forEach(f => { if (rest[f] !== undefined) updates[f] = rest[f]; });
 

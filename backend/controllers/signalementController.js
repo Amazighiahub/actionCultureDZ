@@ -32,11 +32,8 @@ class SignalementController extends BaseController {
    */
   async getMesSignalements(req, res) {
     try {
-      const { page = 1, limit = 10 } = req.query;
-      const result = await this.signalementService.getMesSignalements(
-        req.user.id_user,
-        { page: parseInt(page), limit: parseInt(limit) }
-      );
+      const { page, limit } = this._paginate(req, { limit: 10 });
+      const result = await this.signalementService.getMesSignalements(req.user.id_user, { page, limit });
 
       res.json({
         success: true,
@@ -54,13 +51,9 @@ class SignalementController extends BaseController {
    */
   async getModerationQueue(req, res) {
     try {
-      const { statut = 'en_attente', priorite, page = 1, limit = 20 } = req.query;
-      const result = await this.signalementService.getModerationQueue({
-        statut,
-        priorite,
-        page: parseInt(page),
-        limit: parseInt(limit)
-      });
+      const { statut = 'en_attente', priorite } = req.query;
+      const { page, limit } = this._paginate(req);
+      const result = await this.signalementService.getModerationQueue({ statut, priorite, page, limit });
 
       res.json({
         success: true,

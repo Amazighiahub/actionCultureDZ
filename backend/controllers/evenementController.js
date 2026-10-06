@@ -33,8 +33,9 @@ class EvenementController extends BaseController {
 
   async list(req, res) {
     try {
-      const { page = 1, limit = 20, upcoming } = req.query;
-      const options = { page: parseInt(page), limit: parseInt(limit) };
+      const { upcoming } = req.query;
+      const { page, limit } = this._paginate(req);
+      const options = { page, limit };
 
       let result;
       if (upcoming === 'true') {
@@ -55,11 +56,9 @@ class EvenementController extends BaseController {
 
   async search(req, res) {
     try {
-      const { q, page = 1, limit = 20 } = req.query;
-      const result = await this.evenementService.search(q, {
-        page: parseInt(page),
-        limit: parseInt(limit)
-      });
+      const { q } = req.query;
+      const { page, limit } = this._paginate(req);
+      const result = await this.evenementService.search(q, { page, limit });
 
       res.json({
         success: true,
@@ -74,6 +73,11 @@ class EvenementController extends BaseController {
   async getById(req, res) {
     try {
       const evenement = await this.evenementService.findWithFullDetails(parseInt(req.params.id));
+      // Brouillon : visible seulement par l'organisateur et la modération
+      const raw = evenement._raw || evenement;
+      if (raw.statut === 'brouillon' && !this._canSeeUnpublished(req, raw.id_user)) {
+        return res.status(404).json({ success: false, error: req.t('common.notFound') });
+      }
       res.json({
         success: true,
         data: this._serialize(evenement, 'toDetailJSON', req.lang)
@@ -85,11 +89,8 @@ class EvenementController extends BaseController {
 
   async getByWilaya(req, res) {
     try {
-      const { page = 1, limit = 20 } = req.query;
-      const result = await this.evenementService.findByWilaya(parseInt(req.params.wilayaId), {
-        page: parseInt(page),
-        limit: parseInt(limit)
-      });
+      const { page, limit } = this._paginate(req);
+      const result = await this.evenementService.findByWilaya(parseInt(req.params.wilayaId), { page, limit });
 
       res.json({
         success: true,
@@ -107,11 +108,8 @@ class EvenementController extends BaseController {
 
   async getMyEvenements(req, res) {
     try {
-      const { page = 1, limit = 20 } = req.query;
-      const result = await this.evenementService.findByOrganisateur(req.user.id_user, {
-        page: parseInt(page),
-        limit: parseInt(limit)
-      });
+      const { page, limit } = this._paginate(req);
+      const result = await this.evenementService.findByOrganisateur(req.user.id_user, { page, limit });
 
       res.json({
         success: true,
@@ -128,7 +126,7 @@ class EvenementController extends BaseController {
       if (req.file) {
         req.body.image_url = req.file.path;
       }
-      const evenement = await this.evenementService.create(req.body, req.user.id_user);
+      const evenement = await this.evenementService.create(req.body, req.user.id_user, { isAdmin: req.user.isAdmin });
       res.status(201).json({
         success: true,
         message: req.t('event.created'),
@@ -203,8 +201,9 @@ class EvenementController extends BaseController {
 
   async listAll(req, res) {
     try {
-      const { page = 1, limit = 20, statut } = req.query;
-      const options = { page: parseInt(page), limit: parseInt(limit) };
+      const { statut } = req.query;
+      const { page, limit } = this._paginate(req);
+      const options = { page, limit };
       if (statut) options.where = { statut };
 
       const result = await this.evenementService.findAll(options);
@@ -220,11 +219,8 @@ class EvenementController extends BaseController {
 
   async getPending(req, res) {
     try {
-      const { page = 1, limit = 20 } = req.query;
-      const result = await this.evenementService.findPending({
-        page: parseInt(page),
-        limit: parseInt(limit)
-      });
+      const { page, limit } = this._paginate(req);
+      const result = await this.evenementService.findPending({ page, limit });
       res.json({
         success: true,
         data: result.data.map(e => this._serialize(e, 'toAdminJSON', req.lang)),
@@ -408,7 +404,8 @@ class EvenementController extends BaseController {
         {
           description_presentation: req.body.description_presentation,
           duree_presentation: req.body.duree_presentation
-        }
+        },
+        { isAdmin: req.user.isAdmin }
       );
 
       res.status(201).json({

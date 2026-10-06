@@ -10,8 +10,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import {
   MessageCircle, Star, ThumbsUp, Reply, MoreVertical,
-  Send, AlertCircle, User, Clock
+  Send, AlertCircle, User, Clock, Loader2
 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -193,7 +194,8 @@ const EventComments: React.FC<EventCommentsProps> = ({
 }) => {
   const { t } = useTranslation();
   const { isAuthenticated } = useAuth();
-  
+  const { toast } = useToast();
+
   const [newComment, setNewComment] = useState('');
   const [rating, setRating] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -252,6 +254,7 @@ const EventComments: React.FC<EventCommentsProps> = ({
       if (success) {
         setNewComment('');
         setRating(0);
+        toast({ title: t('comments.successTitle', 'Commentaire publié'), description: t('comments.successDesc', 'Votre avis a été publié avec succès.') });
       } else {
         setError(t('comments.errorSubmit', 'Erreur lors de l\'envoi du commentaire'));
       }
@@ -350,7 +353,7 @@ const EventComments: React.FC<EventCommentsProps> = ({
               <div className="flex justify-end">
                 <Button type="submit" disabled={isSubmitting}>
                   {isSubmitting ? (
-                    <span className="animate-spin mr-2">⏳</span>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   ) : (
                     <Send className="h-4 w-4 mr-2" />
                   )}

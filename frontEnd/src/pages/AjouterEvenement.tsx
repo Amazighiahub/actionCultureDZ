@@ -120,6 +120,11 @@ const AjouterEvenement = () => {
       const saved = sessionStorage.getItem(DRAFT_KEY);
       if (saved) {
         const draft = JSON.parse(saved);
+        // Expirer les brouillons de plus de 5 minutes (réduction fenêtre d'exposition)
+        if (draft.savedAt && Date.now() - draft.savedAt > 5 * 60 * 1000) {
+          sessionStorage.removeItem(DRAFT_KEY);
+          return;
+        }
         if (draft.formData) setFormData(draft.formData);
         if (draft.selectedLieuId) setSelectedLieuId(draft.selectedLieuId);
         if (draft.selectedWilayaId) setSelectedWilayaId(draft.selectedWilayaId);
@@ -136,6 +141,7 @@ const AjouterEvenement = () => {
   const saveDraftAndNavigate = (path: string) => {
     try {
       sessionStorage.setItem(DRAFT_KEY, JSON.stringify({
+        savedAt: Date.now(),
         formData,
         selectedLieuId,
         selectedWilayaId,

@@ -14,6 +14,7 @@ import { LazyImage, StatusBadge } from '@/components/shared';
 import { useLocalizedDate } from '@/hooks/useLocalizedDate';
 import type { Oeuvre } from '@/types/models/oeuvre.types';
 import type { Media } from '@/types/models/media.types';
+import { safeExternalUrl } from '@/utils/safeUrl';
 
 interface OeuvreHeroProps {
   oeuvre: Oeuvre;
@@ -172,7 +173,7 @@ const OeuvreHero: React.FC<OeuvreHeroProps> = ({
                     asChild
                     className="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30"
                   >
-                    <a href={oeuvre.lien_externe} target="_blank" rel="noopener noreferrer">
+                    <a href={safeExternalUrl(oeuvre.lien_externe)} target="_blank" rel="noopener noreferrer">
                       <ExternalLink className="h-5 w-5 mr-2" />
                       {t('oeuvre.externalLink', 'Voir plus')}
                     </a>

@@ -7,6 +7,8 @@
  */
 const { Op } = require('sequelize');
 const emailService = require('./emailService');
+const logger = require('../utils/logger');
+const { invalidateUserSession } = require('../utils/sessionCache');
 
 class EmailVerificationService {
   constructor(models) {
@@ -154,11 +156,9 @@ class EmailVerificationService {
       'password_reset'
     );
 
+    // Lien déjà envoyé : réponse identique à celle d'un email inconnu (pas d'énumération)
     if (hasActive) {
-      const err = new Error('Reset already sent');
-      err.statusCode = 429;
-      err.code = 'RATE_LIMITED';
-      throw err;
+      return { rateLimited: true };
     }
 
     const verification = await this.models.EmailVerification.createVerificationToken(
@@ -168,7 +168,12 @@ class EmailVerificationService {
       ip
     );
 
-    await emailService.sendPasswordResetEmail(user, verification.token);
+    try {
+      await emailService.sendPasswordResetEmail(user, verification.token);
+    } catch (error) {
+      // Un échec d'envoi ne doit pas produire une erreur visible propre aux comptes existants
+      logger.error('Envoi email de réinitialisation échoué:', error.message);
+    }
 
     return { expiresIn: '2 heures' };
   }
@@ -237,10 +242,15 @@ class EmailVerificationService {
     const rounds = parseInt(process.env.BCRYPT_ROUNDS) || 12;
     const hashedPassword = await bcrypt.hash(newPassword, rounds);
 
+    // Nouveau mot de passe => toutes les sessions existantes sont coupées :
+    // refresh token effacé (plus de renouvellement) et cache de session invalidé.
     await result.user.update({
       password: hashedPassword,
-      password_changed_at: new Date()
+      password_changed_at: new Date(),
+      refresh_token: null,
+      refresh_token_expires: null
     });
+    await invalidateUserSession(result.user.id_user);
 
     await this.models.EmailVerification.invalidateUserTokens(result.user.id_user);
 

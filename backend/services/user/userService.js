@@ -17,6 +17,9 @@ const UpdateUserDTO = require('../../dto/user/updateUserDTO');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const { signAccessToken, verifyAccessToken } = require('../../utils/jwtHelper');
+const { invalidateUserSession } = require('../../utils/sessionCache');
+const { deleteUserFiles } = require('./userFileCleanup');
+const { TYPE_USER_IDS } = require('../../constants/typeUserIds');
 
 const REFRESH_TOKEN_EXPIRY_DAYS = 7;
 
@@ -66,6 +69,7 @@ class UserService extends BaseService {
 
     // 5. Préparer les données pour la base
     const entityData = createDTO.toEntity();
+    await this._resolveCommune(entityData);
     entityData.password = hashedPassword;
 
     // 6. Créer l'utilisateur + refresh token dans une transaction
@@ -113,12 +117,20 @@ class UserService extends BaseService {
    */
   async login(email, motDePasse) {
     // 1. Trouver l'utilisateur avec ses rôles (nécessaire pour détecter un admin)
-    const user = await this.repository.findByEmail(email, { includeRoles: true });
-    if (!user) {
+    const user = await this.repository.findByEmail(email, { includeRoles: true, includeAuth: true });
+
+    // 2. Vérifier le mot de passe AVANT tout message de statut, et toujours exécuter
+    //    bcrypt (hash factice si l'email est inconnu) : ni la réponse ni le temps de
+    //    réponse ne doivent révéler l'existence d'un compte.
+    const isValidPassword = await bcrypt.compare(
+      String(motDePasse || ''),
+      user?.password || await this._getDummyHash()
+    );
+    if (!user || !isValidPassword) {
       throw this._unauthorizedError('Email ou mot de passe incorrect');
     }
 
-    // 2. Vérifier le statut
+    // 3. Vérifier le statut (mot de passe prouvé : les messages précis sont légitimes)
     if (user.statut === 'inactif' || user.statut === 'banni') {
       throw this._forbiddenError('Votre compte est désactivé');
     }
@@ -127,10 +139,9 @@ class UserService extends BaseService {
       throw this._forbiddenError('Votre compte est suspendu');
     }
 
-    // 2b. Vérifier l'email (admins exemptés)
+    // 2b. Vérifier l'email (admins exemptés uniquement par rôle DB, pas par id_type_user hardcodé)
     const hasAdminRole = Array.isArray(user.Roles) && user.Roles.some(r => r.nom_role === 'Administrateur');
-    const isAdmin = hasAdminRole || user.id_type_user === 29;
-    if (!user.email_verifie && !isAdmin) {
+    if (!user.email_verifie && !hasAdminRole) {
       throw this._forbiddenError('Veuillez vérifier votre adresse email avant de vous connecter');
     }
 
@@ -141,12 +152,6 @@ class UserService extends BaseService {
 
     if (user.statut === 'rejete') {
       throw this._forbiddenError('Votre demande de compte professionnel a été refusée');
-    }
-
-    // 3. Vérifier le mot de passe
-    const isValidPassword = await bcrypt.compare(motDePasse, user.password);
-    if (!isValidPassword) {
-      throw this._unauthorizedError('Email ou mot de passe incorrect');
     }
 
     // 4. Mettre à jour la dernière connexion
@@ -180,31 +185,47 @@ class UserService extends BaseService {
     }
 
     const hashedToken = crypto.createHash('sha256').update(refreshToken).digest('hex');
-    const user = await this.repository.findByRefreshToken(hashedToken);
 
-    if (!user) {
-      throw this._unauthorizedError('Refresh token invalide');
-    }
+    const result = await this.repository.withTransaction(async (transaction) => {
+      const user = await this.repository.findByRefreshToken(hashedToken, {
+        transaction,
+        lock: transaction.LOCK.UPDATE
+      });
 
-    if (new Date() > new Date(user.refresh_token_expires)) {
-      await this._clearRefreshToken(user.id_user);
-      throw this._unauthorizedError('Refresh token expiré');
-    }
+      if (!user) {
+        this.logger.warn(`Refresh token invalide ou déjà consommé — possible réutilisation`);
+        throw this._unauthorizedError('Refresh token invalide');
+      }
 
-    if (user.statut === 'inactif' || user.statut === 'banni' || user.statut === 'suspendu') {
-      await this._clearRefreshToken(user.id_user);
-      throw this._forbiddenError('Compte désactivé ou suspendu');
-    }
+      // Invalider immédiatement le token avant tout traitement
+      await this.repository.update(user.id_user, {
+        refresh_token: '__consumed__',
+        refresh_token_expires: new Date()
+      }, { transaction });
 
-    const newAccessToken = this._generateToken(user);
-    const newRefreshToken = this._generateRefreshToken();
-    await this._saveRefreshToken(user.id_user, newRefreshToken);
+      if (new Date() > new Date(user.refresh_token_expires)) {
+        await this._clearRefreshToken(user.id_user, { transaction });
+        throw this._unauthorizedError('Refresh token expiré');
+      }
 
-    const userDTO = UserDTO.fromEntity(user);
+      if (user.statut === 'inactif' || user.statut === 'banni' || user.statut === 'suspendu') {
+        await this._clearRefreshToken(user.id_user, { transaction });
+        throw this._forbiddenError('Compte désactivé ou suspendu');
+      }
 
-    this.logger.info(`Token rafraîchi pour: ${user.id_user}`);
+      const newAccessToken = this._generateToken(user);
+      const newRefreshToken = this._generateRefreshToken();
+      await this._saveRefreshToken(user.id_user, newRefreshToken, transaction);
 
-    return { user: userDTO, token: newAccessToken, refreshToken: newRefreshToken };
+      return { user, newAccessToken, newRefreshToken };
+    });
+
+    this.logger.info(`Token rafraîchi pour: ${result.user.id_user}`);
+    return {
+      user: UserDTO.fromEntity(result.user),
+      token: result.newAccessToken,
+      refreshToken: result.newRefreshToken
+    };
   }
 
   /**
@@ -304,7 +325,7 @@ class UserService extends BaseService {
    * @param {number} currentUserId - ID de l'utilisateur faisant la modification
    * @returns {Promise<UserDTO>}
    */
-  async update(id, requestBody, currentUserId = null) {
+  async update(id, requestBody, currentUserId = null, isAdmin = false) {
     // 1. Vérifier que l'utilisateur existe
     const existingUser = await this.repository.findById(id);
     if (!existingUser) {
@@ -312,12 +333,9 @@ class UserService extends BaseService {
     }
 
     // 2. Vérifier les permissions (si currentUserId fourni)
-    if (currentUserId && currentUserId !== id) {
-      // Seul l'utilisateur lui-même ou un admin peut modifier
-      const currentUser = await this.repository.findById(currentUserId);
-      if (!currentUser || currentUser.id_type_user !== 29) {
-        throw this._forbiddenError('Vous ne pouvez pas modifier ce profil');
-      }
+    // Seul l'utilisateur lui-même ou un admin (calculé par authMiddleware) peut modifier
+    if (currentUserId && Number(currentUserId) !== Number(id) && !isAdmin) {
+      throw this._forbiddenError('Vous ne pouvez pas modifier ce profil');
     }
 
     // 3. Transformer en DTO
@@ -339,6 +357,7 @@ class UserService extends BaseService {
 
     // 6. Préparer les données
     const entityData = updateDTO.toEntity();
+    await this._resolveCommune(entityData, existingUser);
 
     // 7. Mettre à jour
     const updatedUser = await this.repository.update(id, entityData);
@@ -356,7 +375,7 @@ class UserService extends BaseService {
    * @returns {Promise<boolean>}
    */
   async changePassword(userId, ancienMotDePasse, nouveauMotDePasse) {
-    const user = await this.repository.findById(userId);
+    const user = await this.repository.findByIdWithAuth(userId);
     if (!user) {
       throw this._notFoundError(userId);
     }
@@ -368,6 +387,11 @@ class UserService extends BaseService {
     }
 
     // Valider le nouveau mot de passe (mêmes critères que l'inscription)
+    // Interdire la réutilisation du même mot de passe
+    const isSamePassword = await bcrypt.compare(nouveauMotDePasse, user.password);
+    if (isSamePassword) {
+      throw this._validationError('Le nouveau mot de passe doit être différent de l\'ancien');
+    }
     if (!nouveauMotDePasse || nouveauMotDePasse.length < 12) {
       throw this._validationError('Le nouveau mot de passe doit contenir au moins 12 caractères');
     }
@@ -397,17 +421,23 @@ class UserService extends BaseService {
    * @returns {Promise<boolean>}
    */
   async delete(id, adminId) {
-    const user = await this.repository.findById(id);
+    const user = await this.repository.findWithRoles(id);
     if (!user) {
       throw this._notFoundError(id);
     }
 
     // Empêcher la suppression de son propre compte admin
-    if (id === adminId) {
+    if (Number(id) === Number(adminId)) {
       throw this._forbiddenError('Vous ne pouvez pas supprimer votre propre compte');
     }
+    if (user.Roles?.some(r => r.nom_role === 'Administrateur')
+        || user.id_type_user === TYPE_USER_IDS.ADMINISTRATEUR) {
+      throw this._forbiddenError('Impossible de supprimer un compte administrateur');
+    }
 
-    await this.repository.delete(id);
+    // Suppression complète (données liées nettoyées) — un destroy direct échouait
+    // sur les clés étrangères RESTRICT et laissait les données personnelles liées.
+    await this._eraseAccount(id, { adminId, userEmail: user.email, userType: user.id_type_user });
 
     this.logger.info(`Utilisateur supprimé: ${id} par admin: ${adminId}`);
 
@@ -425,7 +455,7 @@ class UserService extends BaseService {
    * @param {string} password - Mot de passe pour confirmer l'identité
    */
   async deleteMyAccount(userId, password) {
-    const user = await this.repository.findById(userId);
+    const user = await this.repository.findByIdWithAuth(userId);
     if (!user) {
       throw this._notFoundError(userId);
     }
@@ -436,13 +466,8 @@ class UserService extends BaseService {
       throw this._validationError('Mot de passe incorrect');
     }
 
-    // Utiliser hardDeleteUser qui anonymise et nettoie tout
-    await this.repository.hardDeleteUser(userId, {
-      adminId: null,
-      userEmail: user.email,
-      userType: user.type_user,
-      userName: `${user.nom} ${user.prenom}`
-    });
+    // Suppression complète : données personnelles, liens, fichiers, sessions
+    await this._eraseAccount(userId, { adminId: null, userEmail: user.email, userType: user.id_type_user });
 
     this.logger.info(`RGPD: Compte supprimé par l'utilisateur lui-même: ${userId}`);
 
@@ -454,83 +479,65 @@ class UserService extends BaseService {
    * Retourne toutes les données associées à l'utilisateur au format JSON
    * @param {number} userId
    */
+  /**
+   * Retrait du consentement newsletter (lien de désinscription signé)
+   */
+  async unsubscribeNewsletter(userId) {
+    await this.repository.update(userId, { accepte_newsletter: false });
+    this.logger.info(`RGPD: désinscription newsletter: ${userId}`);
+    return true;
+  }
+
   async exportMyData(userId) {
-    const user = await this.repository.findById(userId);
+    const models = this.repository.models;
+    // unscoped : le defaultScope masque les IP de consentement, qui font partie des données à remettre
+    const user = await models.User.unscoped().findByPk(userId, {
+      attributes: { exclude: ['password', 'refresh_token', 'refresh_token_expires'] },
+      raw: true
+    });
     if (!user) {
       throw this._notFoundError(userId);
     }
 
     const data = {
       export_date: new Date().toISOString(),
-      export_format: 'RGPD Article 20 — Droit à la portabilité',
-      personal_info: {
-        nom: user.nom,
-        prenom: user.prenom,
-        email: user.email,
-        telephone: user.telephone,
-        entreprise: user.entreprise,
-        type_user: user.type_user,
-        statut: user.statut,
-        wilaya_residence: user.wilaya_residence,
-        date_creation: user.date_creation,
-        derniere_connexion: user.derniere_connexion,
-        photo_url: user.photo_url,
-      },
+      export_format: 'RGPD Article 15 / 20 — Droit d\'accès et à la portabilité',
+      // Profil complet : identité, coordonnées, préférences, consentements, statut
+      personal_info: user
     };
 
-    // Collecter les données liées
-    const models = this.repository.models;
-
     const EXPORT_LIMIT = 10000;
+    // [clé de l'export, modèle, condition, colonnes exclues]
+    const SECTIONS = [
+      ['oeuvres', models.Oeuvre, { saisi_par: userId }],
+      ['contributions_oeuvres', models.OeuvreUser, { id_user: userId }],
+      ['evenements_organises', models.Evenement, { id_user: userId }],
+      ['inscriptions_evenements', models.EvenementUser, { id_user: userId }],
+      ['commentaires', models.Commentaire, { id_user: userId }],
+      ['critiques', models.CritiqueEvaluation, { id_user: userId }],
+      ['notes_sites_patrimoine', models.LieuNotation, { id_user: userId }],
+      ['favoris', models.Favori, { id_user: userId }],
+      ['notifications', models.Notification, { id_user: userId }],
+      ['signalements_effectues', models.Signalement, { id_user_signalant: userId }],
+      ['organisations', models.UserOrganisation, { id_user: userId }],
+      ['roles', models.UserRole, { id_user: userId }],
+      ['fiche_intervenant', models.Intervenant, { id_user: userId }],
+      ['services', models.Service, { id_user: userId }],
+      ['lieux_crees', models.Lieu, { id_createur: userId }],
+      ['parcours', models.Parcours, { id_createur: userId }],
+      ['verifications_email', models.EmailVerification, { id_user: userId }, ['token']],
+      ['consultations', models.Vue, { id_user: userId }],
+      ['scans_qr', models.QRScan, { id_user: userId }]
+    ];
 
-    if (models.Oeuvre) {
-      const oeuvres = await models.Oeuvre.findAll({
-        where: { saisi_par: userId },
-        attributes: ['id_oeuvre', 'titre', 'description', 'date_creation', 'statut'],
+    for (const [key, Model, where, exclude = []] of SECTIONS) {
+      if (!Model) continue;
+      data[key] = await Model.findAll({
+        where,
+        attributes: exclude.length ? { exclude } : undefined,
         raw: true,
-        limit: EXPORT_LIMIT,
+        limit: EXPORT_LIMIT
       });
-      data.oeuvres = oeuvres;
-    }
-
-    if (models.Evenement) {
-      const evenements = await models.Evenement.findAll({
-        where: { id_user: userId },
-        attributes: ['id_evenement', 'nom_evenement', 'date_debut', 'date_fin', 'statut'],
-        raw: true,
-        limit: EXPORT_LIMIT,
-      });
-      data.evenements = evenements;
-    }
-
-    if (models.Commentaire) {
-      const commentaires = await models.Commentaire.findAll({
-        where: { id_user: userId },
-        attributes: ['id_commentaire', 'contenu', 'date_creation'],
-        raw: true,
-        limit: EXPORT_LIMIT,
-      });
-      data.commentaires = commentaires;
-    }
-
-    if (models.Favori) {
-      const favoris = await models.Favori.findAll({
-        where: { id_user: userId },
-        attributes: ['id_favori', 'type_entite', 'id_entite', 'date_creation'],
-        raw: true,
-        limit: EXPORT_LIMIT,
-      });
-      data.favoris = favoris;
-    }
-
-    if (models.Notification) {
-      const notifications = await models.Notification.findAll({
-        where: { id_user: userId },
-        attributes: ['id_notification', 'type_notification', 'message', 'lu', 'date_creation'],
-        raw: true,
-        limit: EXPORT_LIMIT,
-      });
-      data.notifications = notifications;
     }
 
     this.logger.info(`RGPD: Export de données demandé par l'utilisateur: ${userId}`);
@@ -548,8 +555,8 @@ class UserService extends BaseService {
    * @param {Object} options
    * @returns {Promise<{data: Array<UserDTO>, pagination: Object}>}
    */
-  async search(query, options = {}) {
-    const result = await this.repository.searchUsers(query, options);
+  async search(query, options = {}, { includePrivate = false } = {}) {
+    const result = await this.repository.searchUsers(query, options, { includePrivate });
 
     return {
       data: UserDTO.fromEntities(result.data),
@@ -577,6 +584,13 @@ class UserService extends BaseService {
    * @param {Object} options
    * @returns {Promise<{data: Array<UserDTO>, pagination: Object}>}
    */
+  /**
+   * Professionnels proches d'une commune / wilaya (suggestions de contributeurs, fiche lieu)
+   */
+  async findNearbyProfessionals(params = {}) {
+    return this.repository.findNearbyProfessionals(params);
+  }
+
   async findValidatedProfessionals(options = {}) {
     const result = await this.repository.findValidatedProfessionals(options);
 
@@ -616,11 +630,14 @@ class UserService extends BaseService {
       throw this._notFoundError(userId);
     }
 
-    if (user.statut === 'actif') {
-      throw this._conflictError('Cet utilisateur est déjà validé');
+    // Valider ne sert qu'à sortir un compte de l'attente : un compte suspendu/banni
+    // se réactive via reactivate (réservé à l'admin).
+    if (user.statut !== 'en_attente_validation') {
+      throw this._conflictError(`Seul un compte en attente peut être validé (statut: ${user.statut})`);
     }
 
     const updatedUser = await this.repository.validate(userId, validatorId);
+    await invalidateUserSession(userId);
 
     this.logger.info(`Utilisateur validé: ${userId} par: ${validatorId}`);
 
@@ -637,9 +654,20 @@ class UserService extends BaseService {
    * @returns {Promise<UserDTO>}
    */
   async rejectUser(userId, validatorId, motif) {
-    const user = await this.repository.findById(userId);
+    const user = await this.repository.findWithRoles(userId);
     if (!user) {
       throw this._notFoundError(userId);
+    }
+
+    if (Number(userId) === Number(validatorId)) {
+      throw this._forbiddenError('Vous ne pouvez pas refuser votre propre compte');
+    }
+    const STAFF_ROLES = ['Administrateur', 'Modérateur', 'Moderateur'];
+    if (user.Roles?.some(r => STAFF_ROLES.includes(r.nom_role))) {
+      throw this._forbiddenError('Impossible de refuser un compte administrateur ou modérateur');
+    }
+    if (user.statut !== 'en_attente_validation') {
+      throw this._conflictError(`Seul un compte en attente peut être refusé (statut: ${user.statut})`);
     }
 
     if (!motif || motif.trim().length === 0) {
@@ -647,6 +675,7 @@ class UserService extends BaseService {
     }
 
     const updatedUser = await this.repository.reject(userId, validatorId, motif);
+    await invalidateUserSession(userId);
 
     this.logger.info(`Utilisateur refusé: ${userId} par: ${validatorId}`);
 
@@ -678,6 +707,7 @@ class UserService extends BaseService {
     }
 
     const updatedUser = await this.repository.suspend(userId, adminId, duree, motif);
+    await invalidateUserSession(userId);
 
     this.logger.info(`Utilisateur suspendu: ${userId} par: ${adminId} pour ${duree} jours`);
 
@@ -703,6 +733,7 @@ class UserService extends BaseService {
     }
 
     const updatedUser = await this.repository.reactivate(userId, adminId);
+    await invalidateUserSession(userId);
 
     this.logger.info(`Utilisateur réactivé: ${userId} par: ${adminId}`);
 
@@ -724,6 +755,56 @@ class UserService extends BaseService {
   // ============================================================================
   // HELPERS PRIVÉS
   // ============================================================================
+
+  /**
+   * Vérifie la commune et aligne la wilaya sur celle de la commune.
+   * - commune inconnue, ou wilaya différente de celle de la commune : erreur 400
+   * - wilaya modifiée sans commune : l'ancienne commune (autre wilaya) est retirée
+   * @param {object} entityData - données à enregistrer (modifiées en place)
+   * @param {object} [current] - utilisateur existant (mise à jour)
+   */
+  async _resolveCommune(entityData, current = null) {
+    const { Commune, Daira } = this.models || {};
+    if (entityData.id_commune) {
+      if (!Commune) return;
+      const commune = await Commune.findByPk(entityData.id_commune, {
+        attributes: ['id_commune', 'dairaId'],
+        include: Daira ? [{ model: Daira, attributes: ['id_daira', 'wilayaId'] }] : []
+      });
+      if (!commune) {
+        throw this._validationError('Commune inconnue', [{ field: 'id_commune', message: 'Commune inconnue' }]);
+      }
+      const wilayaId = commune.Daira?.wilayaId;
+      if (entityData.wilaya_residence && wilayaId && Number(entityData.wilaya_residence) !== Number(wilayaId)) {
+        throw this._validationError('La commune n\'appartient pas à la wilaya choisie',
+          [{ field: 'id_commune', message: 'La commune n\'appartient pas à la wilaya choisie' }]);
+      }
+      if (wilayaId) entityData.wilaya_residence = wilayaId;
+    } else if (current && entityData.wilaya_residence !== undefined && entityData.id_commune === undefined
+               && Number(entityData.wilaya_residence) !== Number(current.wilaya_residence)) {
+      entityData.id_commune = null;
+    }
+  }
+
+  /** Hash bcrypt factice (même coût que les vrais) pour égaliser le temps de réponse du login */
+  _getDummyHash() {
+    if (!this._dummyHashPromise) {
+      this._dummyHashPromise = bcrypt.hash(crypto.randomBytes(16).toString('hex'), this.bcryptRounds);
+    }
+    return this._dummyHashPromise;
+  }
+
+  /**
+   * Efface un compte (RGPD art. 17) : transaction en base, puis fichiers et sessions.
+   */
+  async _eraseAccount(userId, { adminId, userEmail, userType }) {
+    const result = await this.repository.hardDeleteUser(userId, { adminId, userEmail, userType });
+    await invalidateUserSession(userId);
+    if (result.files?.length && this.models) {
+      await deleteUserFiles(this.models, result.files);
+    }
+    return result;
+  }
 
   /**
    * Révoque le refresh token d'un utilisateur (pour le logout)
@@ -748,9 +829,10 @@ class UserService extends BaseService {
         userId: user.id_user,
         email: user.email,
         typeUser: user.id_type_user,
-        pwdAt: user.password_changed_at
-          ? Math.floor(new Date(user.password_changed_at).getTime() / 1000)
-          : 0,
+        // Omettre pwdAt si null — 0 serait falsy et annulerait la vérification côté middleware
+        ...(user.password_changed_at ? {
+          pwdAt: Math.floor(new Date(user.password_changed_at).getTime() / 1000)
+        } : {}),
       },
       { expiresIn: this.jwtExpiration, subject: user.id_user }
     );
@@ -785,11 +867,11 @@ class UserService extends BaseService {
    * Efface le refresh token d'un utilisateur
    * @private
    */
-  async _clearRefreshToken(userId) {
+  async _clearRefreshToken(userId, options = {}) {
     await this.repository.update(userId, {
       refresh_token: null,
       refresh_token_expires: null
-    });
+    }, options);
   }
 }
 

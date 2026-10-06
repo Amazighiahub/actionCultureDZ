@@ -56,6 +56,9 @@ class ArticleDTO extends BaseSubtypeDTO {
     }
 
     // Validation URL source
+    if (this.urlSource && !BaseDTO.isHttpUrl(this.urlSource)) {
+      errors.push({ field: 'url_source', message: 'L\'URL source doit commencer par http:// ou https://' });
+    }
     if (this.urlSource && this.urlSource.length > 500) {
       errors.push({
         field: 'url_source',

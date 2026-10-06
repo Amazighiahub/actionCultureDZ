@@ -36,13 +36,9 @@ class UserAdminController extends BaseController {
 
   async list(req, res) {
     try {
-      const { page = 1, limit = 20, type, statut, search } = req.query;
-
-      const options = {
-        page: parseInt(page, 10),
-        limit: parseInt(limit, 10),
-        where: {}
-      };
+      const { type, statut, search } = req.query;
+      const { page, limit } = this._paginate(req);
+      const options = { page, limit, where: {} };
 
       if (type) options.where.type_user = type;
       if (statut) options.where.statut = statut;
@@ -52,7 +48,7 @@ class UserAdminController extends BaseController {
 
       res.json({
         success: true,
-        data: this._translateUsers(result.data, req.lang),
+        data: this._maskForModerator(req, this._translateUsers(result.data, req.lang)),
         pagination: result.pagination
       });
     } catch (error) {
@@ -60,17 +56,24 @@ class UserAdminController extends BaseController {
     }
   }
 
+  /**
+   * Les modérateurs ne voient pas les coordonnées personnelles (email, téléphone,
+   * adresse, date de naissance) ; les admins voient tout.
+   */
+  _maskForModerator(req, data) {
+    if (req.user?.isAdmin) return data;
+    const mask = (u) => {
+      if (!u) return u;
+      const { email: _e, telephone: _t, adresse: _a, date_naissance: _d, ...safe } = u;
+      return safe;
+    };
+    return Array.isArray(data) ? data.map(mask) : mask(data);
+  }
+
   async getById(req, res) {
     try {
       const user = await this.userService.findById(parseInt(req.params.id, 10));
-      let data = this._translateUser(user, req.lang);
-
-      // PII masking : les moderateurs ne voient pas email/telephone/adresse.
-      // Les admins (isAdmin = true) voient tout.
-      if (data && !req.user.isAdmin) {
-        const { email: _email, telephone: _telephone, adresse: _adresse, ...safeData } = data;
-        data = safeData;
-      }
+      const data = this._maskForModerator(req, this._translateUser(user, req.lang));
 
       res.json({ success: true, data });
     } catch (error) {
@@ -80,7 +83,7 @@ class UserAdminController extends BaseController {
 
   async search(req, res) {
     try {
-      const { q, page = 1, limit = 20 } = req.query;
+      const { q } = req.query;
 
       if (!q || q.length < 2) {
         return res.status(400).json({
@@ -89,9 +92,10 @@ class UserAdminController extends BaseController {
         });
       }
 
-      const result = await this.userService.search(q, {
-        page: parseInt(page, 10),
-        limit: parseInt(limit, 10)
+      const { page, limit } = this._paginate(req);
+      // Admin : recherche complète ; autres utilisateurs : profils publics actifs
+      const result = await this.userService.search(q, { page, limit }, {
+        includePrivate: req.user?.isAdmin === true
       });
 
       res.json({
@@ -113,7 +117,8 @@ class UserAdminController extends BaseController {
       const user = await this.userService.update(
         parseInt(req.params.id, 10),
         req.body,
-        req.user.id_user
+        req.user.id_user,
+        req.user.isAdmin === true
       );
       res.json({
         success: true,
@@ -146,16 +151,12 @@ class UserAdminController extends BaseController {
 
   async getPending(req, res) {
     try {
-      const { page = 1, limit = 20 } = req.query;
-
-      const result = await this.userService.findPendingValidation({
-        page: parseInt(page, 10),
-        limit: parseInt(limit, 10)
-      });
+      const { page, limit } = this._paginate(req);
+      const result = await this.userService.findPendingValidation({ page, limit });
 
       res.json({
         success: true,
-        data: this._translateUsers(result.data, req.lang),
+        data: this._maskForModerator(req, this._translateUsers(result.data, req.lang)),
         pagination: result.pagination
       });
     } catch (error) {
@@ -263,6 +264,10 @@ class UserAdminController extends BaseController {
 
   async updateUserTranslation(req, res) {
     try {
+      const ALLOWED_LANGS = ['fr', 'ar', 'en', 'tmz'];
+      if (!ALLOWED_LANGS.includes(req.params.lang)) {
+        return res.status(400).json({ success: false, error: 'Code langue invalide' });
+      }
       const user = await this.userService.updateTranslation(
         parseInt(req.params.id, 10),
         req.params.lang,

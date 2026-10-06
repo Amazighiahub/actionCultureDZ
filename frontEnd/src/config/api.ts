@@ -325,6 +325,9 @@ export const API_ENDPOINTS = {
     updatePhoto: '/users/profile/photo',
     deletePhoto: '/users/profile/photo',
     changePassword: '/users/change-password',
+    // RGPD : export (art. 15/20) et suppression du compte (art. 17)
+    exportData: '/users/profile/export',
+    deleteAccount: '/users/profile',
     
     // Professionnel
     submitProfessional: '/users/professional/submit',

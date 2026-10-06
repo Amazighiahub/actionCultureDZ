@@ -12,16 +12,22 @@
  * (`UPLOAD_INVALID_TYPE`, `UPLOAD_TOO_LARGE`, `UPLOAD_EMPTY`) pour le
  * frontend, sans divulguer d'info sensible.
  *
- * Les routes qui utilisent encore multer-storage-cloudinary (video/audio,
- * gros fichiers) ne peuvent pas beneficier de validateMagicBytesBuffer
- * car il n'y a pas de buffer local ; elles restent protegees par
- * FileValidator.uploadValidator qui fait un check MIME degrade.
+ * Gros fichiers (video/audio/medias mixtes) : secureDiskUpload ecrit le fichier
+ * dans un dossier temporaire local, valide sa signature binaire, PUIS l'envoie
+ * vers Cloudinary et supprime le fichier temporaire. Plus aucun fichier n'est
+ * pousse vers Cloudinary avant validation.
  */
 
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
+const crypto = require('crypto');
+const multer = require('multer');
 const FileValidator = require('../utils/fileValidator');
 const {
   uploadImageBuffer,
-  uploadDocumentBuffer
+  uploadDocumentBuffer,
+  uploadLocalFile
 } = require('../services/upload/cloudinaryUploader');
 const logger = require('../utils/logger');
 
@@ -51,6 +57,15 @@ function validateMagicBytesBuffer(allowedMimeTypes, opts = {}) {
 
     if (files.length === 0) {
       return next();
+    }
+
+    // Sanitiser originalname avant tout traitement (évite path traversal dans logs/stockage)
+    for (const file of files) {
+      file.originalname = (file.originalname || 'file')
+        .replace(/\x00/g, '')
+        .replace(/[/\\]/g, '_')
+        .replace(/\.\./g, '_')
+        .substring(0, 255);
     }
 
     for (const file of files) {
@@ -178,7 +193,118 @@ function pushBufferToCloudinary({ type = 'image', context = 'default' } = {}) {
   };
 }
 
+/**
+ * Intercepte les erreurs multer (LIMIT_FILE_SIZE, LIMIT_FILE_COUNT, fileFilter)
+ * et les convertit en reponses 400/413 sans leaker de message interne au client.
+ */
+function multerErrorGuard(uploader) {
+  return (req, res, next) => {
+    uploader(req, res, (err) => {
+      if (!err) return next();
+      logger.error('Upload multer error', { message: err.message, code: err.code, route: req.originalUrl });
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return sendRejection(res, 413, 'UPLOAD_TOO_LARGE', req.t ? req.t('upload.fileTooLarge') : 'Fichier trop volumineux');
+      }
+      if (err.code === 'LIMIT_FILE_COUNT' || err.code === 'LIMIT_UNEXPECTED_FILE') {
+        return sendRejection(res, 400, 'UPLOAD_TOO_MANY', req.t ? req.t('upload.tooManyFiles') : 'Trop de fichiers');
+      }
+      if (err.code === 'UPLOAD_INVALID_TYPE') {
+        return sendRejection(res, 400, 'UPLOAD_INVALID_TYPE', req.t ? req.t('upload.invalidFileType') : 'Type de fichier non autorise');
+      }
+      return sendRejection(res, 500, 'UPLOAD_FAILED', req.t ? req.t('upload.failed') : "Echec de l'upload, veuillez reessayer.");
+    });
+  };
+}
+
+const uploadedFiles = (req) => (req.files ? [].concat(...Object.values(req.files)) : (req.file ? [req.file] : []));
+
+async function removeTempFiles(files) {
+  await Promise.all(files.map(f => (f && f.path && !/^https?:/i.test(f.path)
+    ? fs.promises.unlink(f.path).catch(() => {})
+    : null)));
+}
+
+// Disque temporaire local (jamais servi) : chaque fichier y reste le temps de la validation
+const TEMP_DIR = path.join(os.tmpdir(), 'eventculture-uploads');
+
+/**
+ * Pipeline d'upload sur disque : multer (disque temporaire) → validation de la
+ * signature binaire → envoi Cloudinary → suppression du fichier temporaire.
+ * @param {object} opts
+ * @param {string} opts.field - nom du champ multipart
+ * @param {string[]} opts.mimes - types acceptés (vérifiés sur le contenu)
+ * @param {number} opts.maxFileSize - taille max par fichier (octets)
+ * @param {number} [opts.maxFiles] - > 1 : plusieurs fichiers (req.files)
+ * @returns {Function[]} middlewares Express
+ */
+function secureDiskUpload({ field, mimes, maxFileSize, maxFiles = 1 }) {
+  fs.mkdirSync(TEMP_DIR, { recursive: true });
+  const storage = multer.diskStorage({
+    destination: TEMP_DIR,
+    // nom aléatoire sans extension : rien d'exécutable ni de deviné
+    filename: (req, file, cb) => cb(null, crypto.randomBytes(16).toString('hex'))
+  });
+  const fileFilter = (req, file, cb) => {
+    if (mimes.includes(file.mimetype)) return cb(null, true);
+    const err = new Error('Type de fichier non autorise');
+    err.code = 'UPLOAD_INVALID_TYPE';
+    return cb(err);
+  };
+  const uploader = multer({ storage, fileFilter, limits: { fileSize: maxFileSize, files: maxFiles } });
+
+  const validate = async (req, res, next) => {
+    const files = uploadedFiles(req);
+    try {
+      for (const file of files) {
+        // Signature lue sur les premiers octets ; le nom d'origine sert à distinguer
+        // les formats Office (ZIP) — le fichier temporaire n'a pas d'extension
+        const handle = await fs.promises.open(file.path, 'r');
+        const header = Buffer.alloc(16);
+        const { bytesRead } = await handle.read(header, 0, 16, 0).finally(() => handle.close());
+        const result = FileValidator.validateBuffer(header.subarray(0, bytesRead), mimes, { originalname: file.originalname });
+        if (!result.valid) {
+          await removeTempFiles(files);
+          logger.warn('secureDiskUpload: fichier refuse', { route: req.originalUrl, detected: result.detected });
+          return sendRejection(res, 400, 'UPLOAD_INVALID_TYPE', req.t ? req.t('upload.invalidFileType') : 'Type de fichier non autorise');
+        }
+        file.mimetype = result.mimeType; // type réel détecté, pas celui déclaré
+      }
+      return next();
+    } catch (error) {
+      await removeTempFiles(files);
+      return next(error);
+    }
+  };
+
+  const push = async (req, res, next) => {
+    const files = uploadedFiles(req);
+    try {
+      for (const file of files) {
+        const tempPath = file.path;
+        const result = await uploadLocalFile(tempPath, { originalname: file.originalname, mimetype: file.mimetype });
+        await fs.promises.unlink(tempPath).catch(() => {});
+        // Même forme que l'ancien stockage direct : les contrôleurs lisent file.path = URL
+        file.path = result.secure_url;
+        file.secure_url = result.secure_url;
+        file.filename = result.public_id;
+        file.size = result.bytes || file.size;
+        file._cloudinary = { public_id: result.public_id, resource_type: result.resource_type, format: result.format };
+      }
+      return next();
+    } catch (error) {
+      await removeTempFiles(files);
+      logger.error('secureDiskUpload: Cloudinary push failed', { route: req.originalUrl, message: error?.message });
+      return sendRejection(res, 502, 'UPLOAD_STORAGE_FAILED', req.t ? req.t('upload.failed') : "Echec de l'upload, veuillez reessayer.");
+    }
+  };
+
+  const multerStep = maxFiles > 1 ? uploader.array(field, maxFiles) : uploader.single(field);
+  return [multerErrorGuard(multerStep), validate, push];
+}
+
 module.exports = {
   validateMagicBytesBuffer,
-  pushBufferToCloudinary
+  pushBufferToCloudinary,
+  multerErrorGuard,
+  secureDiskUpload
 };

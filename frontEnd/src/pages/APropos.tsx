@@ -245,7 +245,7 @@ const APropos = () => {
                   <li>{t("apropos.privacy.finaliteCompte", "Gestion de votre compte et authentification — base légale : exécution du contrat (CGU)")}</li>
                   <li>{t("apropos.privacy.finaliteContenu", "Publication et affichage de vos contenus culturels — base légale : exécution du contrat")}</li>
                   <li>{t("apropos.privacy.finaliteStats", "Statistiques anonymisées de fréquentation — base légale : intérêt légitime")}</li>
-                  <li>{t("apropos.privacy.finaliteNewsletter", "Envoi de la newsletter (uniquement si vous avez coché la case) — base légale : consentement")}</li>
+                  <li>{t("apropos.privacy.finaliteNewsletter", "Envoi de la newsletter (uniquement si vous l'avez acceptée) — base légale : consentement, retirable à tout moment via le lien présent dans chaque email ou la section « Mes données »")}</li>
                   <li>{t("apropos.privacy.finaliteSecurite", "Sécurité de la Plateforme (prévention des abus) — base légale : intérêt légitime")}</li>
                 </ul>
               </div>
@@ -257,6 +257,7 @@ const APropos = () => {
                   <li>{t("apropos.privacy.conservationNotifs", "Notifications : supprimées automatiquement après 90 jours")}</li>
                   <li>{t("apropos.privacy.conservationLogs", "Journaux de connexion : 90 jours maximum")}</li>
                   <li>{t("apropos.privacy.conservationSuppression", "En cas de suppression de compte : vos données personnelles sont effacées, vos contributions publiques sont anonymisées")}</li>
+                  <li>{t("apropos.privacy.conservationSauvegardes", "Sauvegardes de sécurité : conservées 7 jours ; les données d'un compte supprimé en disparaissent dans ce délai")}</li>
                 </ul>
               </div>
 
@@ -270,18 +271,19 @@ const APropos = () => {
                   <li><strong>{t("apropos.privacy.droitPortabilite", "Droit à la portabilité")}</strong> {t("apropos.privacy.droitPortabiliteDesc", "— exporter vos données dans un format lisible par machine (JSON)")}</li>
                   <li><strong>{t("apropos.privacy.droitOpposition", "Droit d'opposition")}</strong> {t("apropos.privacy.droitOppositionDesc", "— gérer vos préférences de notifications et de confidentialité")}</li>
                 </ul>
-                <p className="mt-2">{t("apropos.privacy.droitsExercice", "Pour exercer vos droits, rendez-vous dans les paramètres de votre profil ou contactez-nous à contact@taladz.com.")}</p>
+                <p className="mt-2">{t("apropos.privacy.droitsExercice", "Pour exercer vos droits, rendez-vous dans la section « Mes données » de votre profil (export, suppression du compte, newsletter) ou contactez-nous à contact@taladz.com.")}</p>
               </div>
 
               <div>
                 <h3 className="font-semibold text-foreground mb-2">{t("apropos.privacy.soustraitants", "6. Sous-traitants")}</h3>
                 <p className="mb-2">{t("apropos.privacy.soustraitantsIntro", "Pour assurer le fonctionnement de la Plateforme, nous faisons appel aux services suivants :")}</p>
                 <ul className="list-disc list-inside space-y-1 ml-2">
-                  <li>{t("apropos.privacy.soustraitantCloudinary", "Cloudinary — hébergement des images et médias")}</li>
-                  <li>{t("apropos.privacy.soustraitantBrevo", "Brevo (ex-Sendinblue) — envoi d'emails transactionnels et newsletters")}</li>
-                  <li>{t("apropos.privacy.soustraitantOSM", "OpenStreetMap / Nominatim — géocodage d'adresses (données publiques, aucune donnée personnelle transmise)")}</li>
+                  <li>{t("apropos.privacy.soustraitantCloudinary", "Cloudinary — hébergement des images et médias que vous publiez (serveurs situés hors d'Algérie)")}</li>
+                  <li>{t("apropos.privacy.soustraitantEmail", "Prestataire d'envoi d'emails (SMTP) — emails transactionnels et newsletter (votre adresse email)")}</li>
+                  <li>{t("apropos.privacy.soustraitantOSM", "OpenStreetMap / Nominatim — fonds de carte et géocodage : votre adresse IP est transmise à leurs serveurs lorsqu'une carte s'affiche")}</li>
+                  <li>{t("apropos.privacy.soustraitantUnsplash", "Unsplash — certaines images d'illustration : votre adresse IP est transmise lors de leur affichage")}</li>
                 </ul>
-                <p className="mt-2">{t("apropos.privacy.soustraitantsPas", "Aucune donnée personnelle n'est vendue, louée ou cédée à des fins commerciales.")}</p>
+                <p className="mt-2">{t("apropos.privacy.soustraitantsPas", "Aucune donnée personnelle n'est vendue, louée ou cédée à des fins commerciales. Les polices de caractères et icônes sont hébergées par la Plateforme elle-même.")}</p>
               </div>
 
               <div>

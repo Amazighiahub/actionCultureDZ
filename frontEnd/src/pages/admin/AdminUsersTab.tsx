@@ -3,7 +3,9 @@
  * Utilise useDashboardAdmin
  */
 import React, { useState } from 'react';
+import { Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/use-toast';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -27,7 +29,8 @@ import {
   LazyImage,
   EmptyState,
   LoadingSkeleton,
-  StatusBadge
+  StatusBadge,
+  ConfirmDialog
 } from '@/components/shared';
 
 import { useDashboardAdmin } from '@/hooks/useDashboardAdmin';
@@ -47,6 +50,8 @@ const AdminUsersTab: React.FC = () => {
   const { t } = useTranslation();
   const { toast } = useToast();
   const { formatDate } = useFormatDate();
+  const { isAdmin } = useAuth();
+  if (!isAdmin) return <Navigate to="/" replace />;
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('tous');
   const [typeFilter, setTypeFilter] = useState('tous');
@@ -54,6 +59,9 @@ const AdminUsersTab: React.FC = () => {
   const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]);
   const [bulkProcessing, setBulkProcessing] = useState(false);
   const [notifying, setNotifying] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<{ open: boolean; userId?: number }>({ open: false });
+  const [confirmSuspend, setConfirmSuspend] = useState<{ open: boolean; userId?: number }>({ open: false });
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
 
   const notifyProfessionals = async () => {
     setNotifying(true);
@@ -107,9 +115,24 @@ const AdminUsersTab: React.FC = () => {
 
   const handleBulkAction = async (action: string) => {
     if (selectedUserIds.length === 0) return;
+    if (action === 'delete') {
+      setConfirmBulkDelete(true);
+      return;
+    }
     setBulkProcessing(true);
     try {
       await bulkUserAction(selectedUserIds, action);
+      setSelectedUserIds([]);
+    } finally {
+      setBulkProcessing(false);
+    }
+  };
+
+  const executeBulkDelete = async () => {
+    setBulkProcessing(true);
+    setConfirmBulkDelete(false);
+    try {
+      await bulkUserAction(selectedUserIds, 'delete');
       setSelectedUserIds([]);
     } finally {
       setBulkProcessing(false);
@@ -412,7 +435,7 @@ const AdminUsersTab: React.FC = () => {
                           </DropdownMenuItem>
                         ) : (
                           <DropdownMenuItem
-                            onClick={() => suspendUser({ userId: user.id_user, duration: 7, reason: 'Suspension temporaire' })}
+                            onClick={() => setConfirmSuspend({ open: true, userId: user.id_user })}
                           >
                             <Shield className="h-4 w-4 mr-2" />
                             {t('admin.users.suspend', 'Suspendre')}
@@ -421,7 +444,7 @@ const AdminUsersTab: React.FC = () => {
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           className="text-destructive"
-                          onClick={() => deleteUser({ userId: user.id_user })}
+                          onClick={() => setConfirmDelete({ open: true, userId: user.id_user })}
                         >
                           <Trash2 className="h-4 w-4 mr-2" />
                           {t('common.delete', 'Supprimer')}
@@ -435,6 +458,41 @@ const AdminUsersTab: React.FC = () => {
           ))}
         </div>
       )}
+      <ConfirmDialog
+        open={confirmDelete.open}
+        onOpenChange={(open) => setConfirmDelete({ open })}
+        title={t('admin.users.confirmDelete', 'Supprimer cet utilisateur ?')}
+        description={t('admin.users.confirmDeleteDesc', 'Cette action est irréversible. Toutes les données de l\'utilisateur seront supprimées.')}
+        variant="destructive"
+        confirmLabel={t('common.delete', 'Supprimer')}
+        onConfirm={() => {
+          if (confirmDelete.userId) deleteUser({ userId: confirmDelete.userId });
+          setConfirmDelete({ open: false });
+        }}
+      />
+
+      <ConfirmDialog
+        open={confirmSuspend.open}
+        onOpenChange={(open) => setConfirmSuspend({ open })}
+        title={t('admin.users.confirmSuspend', 'Suspendre cet utilisateur ?')}
+        description={t('admin.users.confirmSuspendDesc', 'L\'utilisateur sera suspendu pendant 7 jours.')}
+        variant="warning"
+        confirmLabel={t('admin.users.suspend', 'Suspendre')}
+        onConfirm={() => {
+          if (confirmSuspend.userId) suspendUser({ userId: confirmSuspend.userId, duration: 7, reason: 'Suspension temporaire' });
+          setConfirmSuspend({ open: false });
+        }}
+      />
+
+      <ConfirmDialog
+        open={confirmBulkDelete}
+        onOpenChange={setConfirmBulkDelete}
+        title={t('admin.users.confirmBulkDelete', `Supprimer ${selectedUserIds.length} utilisateur(s) ?`)}
+        description={t('admin.users.confirmBulkDeleteDesc', 'Cette action est irréversible.')}
+        variant="destructive"
+        confirmLabel={t('common.delete', 'Supprimer')}
+        onConfirm={executeBulkDelete}
+      />
     </div>
   );
 };

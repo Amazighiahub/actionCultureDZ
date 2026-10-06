@@ -44,6 +44,21 @@ function isAllowedEmbedUrl(url) {
 }
 
 /**
+ * URL de vidéo acceptée pour un bloc "video" : https, domaine d'embed autorisé
+ * ou vidéo hébergée sur notre compte Cloudinary.
+ */
+function isAllowedVideoUrl(url) {
+  if (!url || typeof url !== 'string') return false;
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== 'https:') return false;
+    return isAllowedEmbedUrl(url) || parsed.hostname === 'res.cloudinary.com';
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Sanitise le contenu d'un bloc article selon son type
  *
  * @param {string} typeBlock - Type du bloc (text, heading, embed, code, etc.)
@@ -100,10 +115,17 @@ function sanitizeBlockContent(typeBlock, contenu) {
       return '';
     }
 
-    // Image/Video — le contenu est géré par id_media, pas par contenu texte
-    case 'image':
+    // Vidéo — le contenu est l'URL affichée dans un <iframe> : https + domaine autorisé uniquement
     case 'video':
-      return contenu;
+      return isAllowedVideoUrl(contenu.trim()) ? contenu.trim() : '';
+
+    // Image — URL ou légende : aucun tag, et pas de schéma autre que http(s)
+    case 'image': {
+      const text = sanitizeHtml(contenu, { allowedTags: [], allowedAttributes: {} }).trim();
+      const scheme = text.match(/^([a-z][a-z0-9+.-]*):/i);
+      if (scheme && !['http', 'https'].includes(scheme[1].toLowerCase())) return '';
+      return text;
+    }
 
     // Table — le contenu principal est dans contenu_json, pas contenu
     case 'table':
@@ -121,4 +143,4 @@ function sanitizeBlockContent(typeBlock, contenu) {
   }
 }
 
-module.exports = { sanitizeBlockContent, isAllowedEmbedUrl, ALLOWED_EMBED_DOMAINS };
+module.exports = { sanitizeBlockContent, isAllowedEmbedUrl, isAllowedVideoUrl, ALLOWED_EMBED_DOMAINS };

@@ -183,6 +183,17 @@ async function main() {
       ['materiau', 'id_materiau', ['nom']],
       ['technique', 'id_technique', ['nom']],
       ['langue', 'id_langue', ['nom']],
+      // Tables ajoutées — mêmes symptômes possibles sur tout texte accentué seedé
+      ['wilayas', 'id_wilaya', ['nom']],
+      ['dairas', 'id_daira', ['nom']],
+      ['communes', 'id_commune', ['nom']],
+      ['editeur', 'id_editeur', ['nom', 'description']],
+      ['tagmotcle', 'id_tag', ['nom']],
+      ['role', 'id_role', ['nom_role', 'description']],
+      ['type_user', 'id_type_user', ['nom_type', 'description']],
+      ['lieu', 'id_lieu', ['nom', 'adresse']],
+      ['organisation', 'id_organisation', ['nom', 'description']],
+      ['user', 'id_user', ['nom', 'prenom']],
     ];
 
     for (const [table, idCol, cols] of tablesToFix) {

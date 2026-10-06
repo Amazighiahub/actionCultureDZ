@@ -17,13 +17,9 @@ class ServiceController extends BaseController {
 
   async list(req, res) {
     try {
-      const { page = 1, limit = 20, type, lieu } = req.query;
-      const result = await this.serviceService.findValidated({
-        page: parseInt(page),
-        limit: parseInt(limit),
-        type,
-        lieuId: lieu
-      });
+      const { type, lieu } = req.query;
+      const { page, limit } = this._paginate(req);
+      const result = await this.serviceService.findValidated({ page, limit, type, lieuId: lieu });
 
       res.json({
         success: true,
@@ -37,11 +33,9 @@ class ServiceController extends BaseController {
 
   async search(req, res) {
     try {
-      const { q, page = 1, limit = 20 } = req.query;
-      const result = await this.serviceService.search(q, {
-        page: parseInt(page),
-        limit: parseInt(limit)
-      });
+      const { q } = req.query;
+      const { page, limit } = this._paginate(req);
+      const result = await this.serviceService.search(q, { page, limit });
 
       res.json({
         success: true,
@@ -56,6 +50,11 @@ class ServiceController extends BaseController {
   async getById(req, res) {
     try {
       const service = await this.serviceService.findWithFullDetails(parseInt(req.params.id));
+      // Service en attente ou rejeté : visible seulement par son propriétaire et la modération
+      const raw = service?._raw || service;
+      if (raw && raw.statut !== 'valide' && !this._canSeeUnpublished(req, raw.id_user)) {
+        return res.status(404).json({ success: false, error: req.t('common.notFound') });
+      }
       res.json({
         success: true,
         data: service.toDetailJSON(req.lang)
@@ -67,11 +66,8 @@ class ServiceController extends BaseController {
 
   async getByLieu(req, res) {
     try {
-      const { page = 1, limit = 20 } = req.query;
-      const result = await this.serviceService.findByLieu(parseInt(req.params.lieuId), {
-        page: parseInt(page),
-        limit: parseInt(limit)
-      });
+      const { page, limit } = this._paginate(req);
+      const result = await this.serviceService.findByLieu(parseInt(req.params.lieuId), { page, limit });
 
       res.json({
         success: true,
@@ -89,11 +85,8 @@ class ServiceController extends BaseController {
 
   async getMyServices(req, res) {
     try {
-      const { page = 1, limit = 20 } = req.query;
-      const result = await this.serviceService.findByProfessionnel(req.user.id_user, {
-        page: parseInt(page),
-        limit: parseInt(limit)
-      });
+      const { page, limit } = this._paginate(req);
+      const result = await this.serviceService.findByProfessionnel(req.user.id_user, { page, limit });
 
       res.json({
         success: true,
@@ -123,7 +116,8 @@ class ServiceController extends BaseController {
       const service = await this.serviceService.update(
         parseInt(req.params.id),
         req.body,
-        req.user.id_user
+        req.user.id_user,
+        req.user.isAdmin === true || req.user.isModerateur === true
       );
       res.json({
         success: true,
@@ -137,7 +131,11 @@ class ServiceController extends BaseController {
 
   async delete(req, res) {
     try {
-      await this.serviceService.delete(parseInt(req.params.id), req.user.id_user);
+      await this.serviceService.delete(
+        parseInt(req.params.id),
+        req.user.id_user,
+        req.user.isAdmin === true || req.user.isModerateur === true
+      );
       res.json({ success: true, message: req.t('service.deleted') });
     } catch (error) {
       this._handleError(res, error);
@@ -150,11 +148,8 @@ class ServiceController extends BaseController {
 
   async getPending(req, res) {
     try {
-      const { page = 1, limit = 20 } = req.query;
-      const result = await this.serviceService.findPending({
-        page: parseInt(page),
-        limit: parseInt(limit)
-      });
+      const { page, limit } = this._paginate(req);
+      const result = await this.serviceService.findPending({ page, limit });
 
       res.json({
         success: true,

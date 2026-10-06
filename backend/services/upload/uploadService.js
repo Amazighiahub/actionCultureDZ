@@ -30,24 +30,15 @@ class UploadService {
   _securePath(filePath) {
     if (!filePath || typeof filePath !== 'string') return null;
 
-    // Nettoyer le chemin - supprimer les protocoles et caracteres dangereux
-    let cleanPath = filePath
-      .replace(/^(https?:)?\/\/[^\/]+/, '') // Supprimer domaine
-      .replace(/^\/+/, '') // Supprimer les slashes initiaux
-      .replace(/\\/g, '/') // Normaliser les slashes
-      .replace(/\.{2,}/g, '.') // Supprimer les sequences de points
-      .replace(/[<>:"|?*]/g, ''); // Supprimer caracteres Windows interdits
+    const resolved = path.resolve(this.uploadsRoot, filePath.replace(/\\/g, '/'));
+    const realRoot = path.resolve(this.uploadsRoot);
 
-    // Resoudre le chemin absolu
-    const absolutePath = path.resolve(this.uploadsRoot, '..', cleanPath);
-
-    // Verifier que le chemin reste dans le dossier uploads
-    if (!absolutePath.startsWith(this.uploadsRoot)) {
-      logger.error('Path traversal detecte:', { original: filePath, resolved: absolutePath });
+    if (!resolved.startsWith(realRoot + path.sep) && resolved !== realRoot) {
+      logger.error('Path traversal detecte:', { original: filePath, resolved });
       return null;
     }
 
-    return absolutePath;
+    return resolved;
   }
 
   _getMediaVisibility(media) {
@@ -257,7 +248,13 @@ class UploadService {
         });
         mediaId = media.id_media;
       } catch (dbError) {
-        // Erreur enregistrement Media
+        // Nettoyage orphelin Cloudinary si l'enregistrement DB échoue
+        const publicId = fileData.filename;
+        if (publicId) {
+          const resourceType = cloudinarySvc.getResourceType(fileData.mimetype);
+          await cloudinarySvc.deleteAsset(publicId, resourceType).catch(() => {});
+        }
+        throw dbError;
       }
     }
 

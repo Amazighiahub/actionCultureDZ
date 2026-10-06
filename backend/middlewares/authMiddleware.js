@@ -2,9 +2,12 @@
 // Compatible avec: createAuthMiddleware(models) OU createAuthMiddleware(User)
 const logger = require('../utils/logger');
 const { getClient: getRedisClient } = require('../utils/redisClient');
+const { USER_SESSION_PREFIX, invalidateUserSession } = require('../utils/sessionCache');
+const { TYPE_USER_IDS } = require('../constants/typeUserIds');
 const {
   verifyAccessToken,
   buildBlacklistKey,
+  issuedBeforePasswordChange,
   JWT_BLACKLIST_FAIL_CLOSED,
 } = require('../utils/jwtHelper');
 
@@ -114,7 +117,7 @@ module.exports = (modelsOrUser) => {
 
   // TTL du cache session utilisateur (15 minutes)
   const USER_SESSION_TTL = 900;
-  const USER_CACHE_PREFIX = 'user:session:';
+  const USER_CACHE_PREFIX = USER_SESSION_PREFIX;
 
   // Types professionnels: tout sauf visiteur (1) et admin (29)
   const PROFESSIONAL_TYPE_IDS = new Set(
@@ -128,7 +131,8 @@ module.exports = (modelsOrUser) => {
 
     const isProfessionalByType = user.id_type_user && PROFESSIONAL_TYPE_IDS.has(user.id_type_user);
 
-    user.isAdmin = user.roleNames.includes('Administrateur') || user.id_type_user === 29;
+    user.isAdmin = user.roleNames.includes('Administrateur') || user.id_type_user === TYPE_USER_IDS.ADMINISTRATEUR;
+    user.isModerateur = user.roleNames.includes('Modérateur') || user.roleNames.includes('Moderateur');
     user.isProfessionnel = user.roleNames.includes('Professionnel') || isProfessionalByType;
     user.isUser = user.roleNames.includes('User') || user.id_type_user === 1 || user.roleNames.length === 0;
     user.hasOrganisation = Array.isArray(user.Organisations) && user.Organisations.length > 0;
@@ -137,14 +141,10 @@ module.exports = (modelsOrUser) => {
     return user;
   };
 
-  // Sérialiser l'utilisateur pour le cache Redis (données minimales)
+  // Sérialiser l'utilisateur pour le cache Redis — champs d'auth uniquement, sans PII
   const serializeForCache = (user) => {
     return JSON.stringify({
       id_user: user.id_user,
-      nom: user.nom,
-      prenom: user.prenom,
-      email: user.email,
-      photo_url: user.photo_url,
       id_type_user: user.id_type_user,
       statut: user.statut,
       email_verifie: user.email_verifie,
@@ -246,16 +246,7 @@ module.exports = (modelsOrUser) => {
 
   // Invalider le cache session d'un utilisateur
   // À appeler après : login, logout, changement de rôle, changement de mot de passe, changement de statut
-  const invalidateUserCache = async (userId) => {
-    const redis = getRedisClient();
-    if (redis) {
-      try {
-        await redis.del(`${USER_CACHE_PREFIX}${userId}`);
-      } catch (e) {
-        logger.debug('Auth cache invalidate skip:', e.message);
-      }
-    }
-  };
+  const invalidateUserCache = (userId) => invalidateUserSession(userId);
 
   // ====================
   // MIDDLEWARES PRINCIPAUX
@@ -322,14 +313,11 @@ module.exports = (modelsOrUser) => {
       }
 
       // Vérifier que le token n'a pas été émis avant un changement de mot de passe
-      if (user.password_changed_at && decoded.pwdAt) {
-        const pwdChangedAtSec = Math.floor(new Date(user.password_changed_at).getTime() / 1000);
-        if (decoded.pwdAt < pwdChangedAtSec) {
-          return res.status(401).json({
-            success: false,
-            message: req.t('auth.tokenInvalid')
-          });
-        }
+      if (issuedBeforePasswordChange(decoded, user.password_changed_at)) {
+        return res.status(401).json({
+          success: false,
+          message: req.t('auth.tokenInvalid')
+        });
       }
 
       // ✅ CORRIGÉ: Gestion des statuts avec les valeurs ENUM existantes

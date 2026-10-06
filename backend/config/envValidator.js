@@ -23,6 +23,8 @@ class EnvironmentValidator {
       'CLOUDINARY_CLOUD_NAME',
       'CLOUDINARY_API_KEY',
       'CLOUDINARY_API_SECRET',
+      'REDIS_HOST',
+      'REDIS_PORT',
       'REDIS_PASSWORD'
     ],
     development: []
@@ -33,7 +35,7 @@ class EnvironmentValidator {
     'DB_DIALECT': 'mysql',
     'PORT': '3001',
     'HOST': '0.0.0.0',
-    'JWT_EXPIRES_IN': '24h',
+    'JWT_EXPIRES_IN': '1h',
     'BCRYPT_ROUNDS': '12',
     'DB_POOL_MAX': '10',
     'DB_POOL_MIN': '0',

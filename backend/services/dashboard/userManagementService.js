@@ -6,7 +6,8 @@ const logger = require('../../utils/logger');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const { TYPE_USER_IDS } = require('../../constants/typeUserIds');
-const { getClient: getRedisClient } = require('../../utils/redisClient');
+const { invalidateUserSession } = require('../../utils/sessionCache');
+const { deleteUserFiles } = require('../user/userFileCleanup');
 
 class DashboardUserManagementService {
   constructor(models, repositories = {}) {
@@ -133,8 +134,11 @@ class DashboardUserManagementService {
       throw new Error('Utilisateur non trouvé');
     }
 
-    // Vérification métier : ne pas supprimer un admin
-    if (user.Roles && user.Roles.some(r => r.nom_role === 'Admin' || r.nom_role === 'Super Admin')) {
+    // Vérification métier : ne pas supprimer un admin (via Roles OU id_type_user=29)
+    if (
+      (user.Roles && user.Roles.some(r => r.nom_role === 'Admin' || r.nom_role === 'Super Admin' || r.nom_role === 'Administrateur'))
+      || user.id_type_user === TYPE_USER_IDS.ADMINISTRATEUR
+    ) {
       throw new Error('CANNOT_DELETE_ADMIN');
     }
 
@@ -144,13 +148,13 @@ class DashboardUserManagementService {
     }
 
     if (hardDelete) {
-      await this.userRepo.hardDeleteUser(userId, {
+      const result = await this.userRepo.hardDeleteUser(userId, {
         adminId,
         userEmail: user.email,
-        userType: user.type_user,
-        userName: `${user.nom} ${user.prenom}`
+        userType: user.id_type_user
       });
       await this._invalidateUserCache(userId);
+      if (result?.files?.length) await deleteUserFiles(this.models, result.files);
       return {
         deleted: true, type: 'hard',
         userId: parseInt(userId), deletedBy: adminId,
@@ -191,8 +195,14 @@ class DashboardUserManagementService {
     const role = await this.models.Role.findByPk(roleId);
     if (!role) throw new Error('Rôle non trouvé');
 
+    let previousRole = null;
     if (this.models.UserRole) {
       await this.userRepo.withTransaction(async (transaction) => {
+        const existing = await this.models.UserRole.findOne({ where: { id_user: userId }, transaction });
+        if (existing) {
+          const prevRole = await this.models.Role.findByPk(existing.id_role, { transaction });
+          previousRole = prevRole ? prevRole.nom_role : existing.id_role;
+        }
         await this.models.UserRole.destroy({ where: { id_user: userId }, transaction });
         await this.models.UserRole.create({
           id_user: userId, id_role: roleId,
@@ -200,6 +210,17 @@ class DashboardUserManagementService {
         }, { transaction });
       });
     }
+
+    logger.info('Role change', {
+      action: 'CHANGE_ROLE',
+      targetUserId: userId,
+      targetUserEmail: user.email,
+      previousRole,
+      newRole: role.nom_role,
+      newRoleId: roleId,
+      adminId,
+      timestamp: new Date().toISOString()
+    });
 
     await this._invalidateUserCache(userId);
     return { user, role };
@@ -219,6 +240,10 @@ class DashboardUserManagementService {
     await this.userRepo.update(userId, {
       password: hashedPassword,
       doit_changer_mdp: true,
+      // coupe les sessions existantes (contrôle pwdAt/iat + plus de refresh)
+      password_changed_at: new Date(),
+      refresh_token: null,
+      refresh_token_expires: null,
       date_modification: new Date()
     });
 
@@ -435,20 +460,11 @@ class DashboardUserManagementService {
   // ===========================================================================
 
   async _invalidateUserCache(userId) {
-    const redis = getRedisClient();
-    if (redis) {
-      try { await redis.del(`user:session:${userId}`); } catch (_) { /* best-effort */ }
-    }
+    await invalidateUserSession(userId);
   }
 
   async _invalidateUserCacheBulk(userIds) {
-    const redis = getRedisClient();
-    if (redis && userIds.length > 0) {
-      try {
-        const keys = userIds.map(id => `user:session:${id}`);
-        await redis.del(keys);
-      } catch (_) { /* best-effort */ }
-    }
+    await invalidateUserSession(userIds);
   }
 
 }

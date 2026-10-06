@@ -71,9 +71,6 @@ export async function doRefreshToken(): Promise<RefreshResult> {
           const expiresAt = new Date(Date.now() + body.data.expiresIn * 1000).toISOString();
           localStorage.setItem(AUTH_CONFIG.tokenExpiryKey, expiresAt);
         }
-        if (body.data.user) {
-          localStorage.setItem('user', JSON.stringify(body.data.user));
-        }
         apiLogger.debug('Token rafraichi avec succes');
         return { success: true, expiresIn: body.data.expiresIn, user: body.data.user };
       }
@@ -396,8 +393,9 @@ class HttpClient {
           return this.axiosInstance(originalRequest);
         }
         
-        // Gestion du 401 (non autorisé)
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        // Gestion du 401 (non autorisé) — exclure l'endpoint refresh lui-même pour éviter la boucle infinie
+        const isRefreshEndpoint = originalRequest.url?.includes('/users/refresh-token');
+        if (error.response?.status === 401 && !originalRequest._retry && !isRefreshEndpoint) {
           originalRequest._retry = true;
           
           // Vérifier si c'est une erreur de token expiré
@@ -607,9 +605,10 @@ class HttpClient {
     }, url, 'PATCH');
   }
 
-  async delete<T>(url: string): Promise<ApiResponse<T>> {
+  async delete<T>(url: string, body?: unknown): Promise<ApiResponse<T>> {
     return this.requestQueue.add(async () => {
-      const response = await this.axiosInstance.delete<ApiResponse<T>>(url);
+      // body optionnel : certaines suppressions exigent une confirmation (ex. mot de passe)
+      const response = await this.axiosInstance.delete<ApiResponse<T>>(url, body !== undefined ? { data: body } : undefined);
       return response.data;
     }, url, 'DELETE');
   }

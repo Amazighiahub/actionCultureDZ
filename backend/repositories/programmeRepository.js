@@ -3,6 +3,7 @@
  * Encapsule tous les accès Sequelize pour le modèle Programme
  */
 const BaseRepository = require('./baseRepository');
+const { PUBLIC_USER_ATTRIBUTES } = require('../constants/publicAttributes');
 const { Op } = require('sequelize');
 
 class ProgrammeRepository extends BaseRepository {
@@ -30,12 +31,13 @@ class ProgrammeRepository extends BaseRepository {
           model: this.models.ProgrammeIntervenant,
           attributes: ['role_intervenant', 'statut_confirmation', 'sujet_intervention', 'ordre_intervention', 'duree_intervention']
         },
-        attributes: ['id_intervenant', 'nom', 'prenom', 'email', 'telephone', 'photo_url', 'biographie', 'specialites', 'id_user'],
+        // id_user conservé : utilisé par le formulaire d'édition du programme
+        attributes: ['id_intervenant', 'nom', 'prenom', 'photo_url', 'biographie', 'specialites', 'id_user'],
         as: 'Intervenants',
         include: [{
           model: this.models.User,
           as: 'UserAccount',
-          attributes: ['id_user', 'nom', 'prenom', 'photo_url', 'email'],
+          attributes: PUBLIC_USER_ATTRIBUTES,
           required: false
         }]
       });
@@ -59,6 +61,8 @@ class ProgrammeRepository extends BaseRepository {
 
     return this.model.findAll({
       where,
+      // Route publique : pas de notes internes de l'organisateur
+      attributes: { exclude: ['notes_organisateur'] },
       include: this._defaultIncludes(),
       order: [['ordre', 'ASC'], ['heure_debut', 'ASC']]
     });

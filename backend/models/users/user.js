@@ -90,6 +90,15 @@ module.exports = (sequelize) => {
       },
       comment: 'Wilaya de résidence de l\'utilisateur'
     },
+    id_commune: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'communes',
+        key: 'id_commune'
+      },
+      comment: 'Commune de résidence (daïra et wilaya s\'en déduisent)'
+    },
     adresse: {
       type: DataTypes.STRING(255),
       allowNull: true,
@@ -101,7 +110,7 @@ module.exports = (sequelize) => {
     // =============================================================================
     statut: {
       type: DataTypes.ENUM('actif', 'en_attente_validation', 'inactif', 'suspendu', 'banni', 'rejete'),
-      defaultValue: 'actif',
+      defaultValue: 'en_attente_validation',
       allowNull: false,
       comment: 'État global du compte. Pro validé = actif, en attente = en_attente_validation, rejeté = rejete'
     },
@@ -366,7 +375,14 @@ module.exports = (sequelize) => {
     timestamps: true,
     createdAt: 'date_creation',
     updatedAt: 'date_modification',
-    
+
+    defaultScope: {
+      attributes: {
+        exclude: ['password', 'refresh_token', 'refresh_token_expires',
+                  'ip_inscription', 'ip_acceptation_conditions']
+      }
+    },
+
     indexes: [
       {
         name: 'id_index_email',
@@ -421,6 +437,10 @@ module.exports = (sequelize) => {
           user.date_validation = new Date();
         }
 
+        if (user.changed('password')) {
+          user.password_changed_at = new Date();
+        }
+
         // Le hachage du mot de passe est géré exclusivement par userService.changePassword().
         // Ne PAS hacher ici pour éviter un double hash.
       }
@@ -431,6 +451,9 @@ module.exports = (sequelize) => {
   // ASSOCIATIONS
   // =============================================================================
   User.associate = (models) => {
+    if (models.Commune) {
+      User.belongsTo(models.Commune, { foreignKey: 'id_commune', as: 'Commune', onDelete: 'SET NULL' });
+    }
     User.belongsTo(models.TypeUser, {
       foreignKey: 'id_type_user',
       as: 'TypeUser',
@@ -538,9 +561,15 @@ module.exports = (sequelize) => {
   
   User.prototype.toPublicJSON = function(lang = 'fr') {
     const values = this.toJSON();
-    delete values.password;
-    delete values.ip_inscription;
-    
+
+    const PRIVATE_FIELDS = [
+      'password', 'refresh_token', 'refresh_token_expires', 'password_changed_at',
+      'ip_inscription', 'ip_acceptation_conditions',
+      'raison_rejet', 'documents_fournis', 'suspension_motif',
+      'suspendu_par', 'suspendu_le', 'rappel_verification_envoye'
+    ];
+    PRIVATE_FIELDS.forEach(f => delete values[f]);
+
     // Traduire les champs
     values.nom_display = this.getNomComplet(lang);
     values.biographie_display = this.getBiographie(lang);

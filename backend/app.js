@@ -29,8 +29,10 @@ try {
 }
 
 const express = require('express');
+const { resolveTrustProxy } = require('./utils/trustProxy');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const { redactUrl } = require('./utils/maskPII');
 const compression = require('compression');
 const path = require('path');
 const { csrfTokenProvider, csrfVerifier } = require('./middlewares/csrfMiddleware');
@@ -101,8 +103,8 @@ class App {
 
   // Initialisation des middlewares de base
   initializeMiddlewares() {
-    // Trust proxy pour obtenir la vraie IP derrière un reverse proxy
-    this.app.set('trust proxy', 1);
+    // IP réelle des clients derrière nginx (voir utils/trustProxy.js)
+    this.app.set('trust proxy', resolveTrustProxy(process.env.TRUSTED_PROXY_IP));
 
     // Redirection HTTPS et HSTS en production
     this.app.use(httpsRedirect);
@@ -159,7 +161,9 @@ class App {
     if (this.config.server.environment === 'development') {
       this.app.use(morgan('dev'));
     } else {
-      this.app.use(morgan(':remote-addr - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent" - :response-time ms'));
+      // :safe-url : URL sans les jetons (vérification email, désinscription...) pour ne pas les conserver dans les logs
+      morgan.token('safe-url', (req) => redactUrl(req.originalUrl || req.url));
+      this.app.use(morgan(':remote-addr - :remote-user [:date[clf]] ":method :safe-url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent" - :response-time ms'));
     }
 
     // Cookie Parser (nécessaire pour langue)
@@ -593,6 +597,11 @@ class App {
     // Exempt tracking routes (non-destructive view counting)
     this.app.use('/api', (req, res, next) => {
       if (req.path.startsWith('/tracking/') && req.path.includes('/view')) {
+        return next();
+      }
+      // Désinscription one-click (RFC 8058) : POST envoyé par la messagerie, sans jeton CSRF ;
+      // protégé par la signature HMAC du lien.
+      if (req.path === '/users/newsletter/unsubscribe') {
         return next();
       }
       return csrfVerifier(req, res, next);

@@ -47,6 +47,8 @@ const errorMiddleware = {
       '/robots.txt'
     ].some(path => req.originalUrl.startsWith(path));
 
+    const isProduction = process.env.NODE_ENV === 'production';
+
     // AppError — format plat avec code
     if (error instanceof AppError) {
       logger.warn('AppError: %o', { code: error.code, message: error.message, statusCode: error.statusCode });
@@ -54,7 +56,7 @@ const errorMiddleware = {
         success: false,
         error: error.message,
         code: error.code,
-        ...(error.details && { details: error.details })
+        ...(error.details && !isProduction && { details: error.details })
       });
     }
 
@@ -70,7 +72,7 @@ const errorMiddleware = {
       const details = error.errors.map(err => ({
         field: err.path,
         message: err.message,
-        value: err.value
+        ...(isProduction ? {} : { value: err.value })
       }));
       return res.status(statusCode).json({ success: false, error: message, code, details });
     }
@@ -82,7 +84,7 @@ const errorMiddleware = {
       const details = error.errors.map(err => ({
         field: err.path,
         message: `${err.path} doit être unique`,
-        value: err.value
+        ...(isProduction ? {} : { value: err.value })
       }));
       return res.status(statusCode).json({ success: false, error: message, code, details });
     }
@@ -117,6 +119,12 @@ const errorMiddleware = {
       logger.error('Erreur serveur: %s | %s %s | %s', error.message, req.method, req.originalUrl, error.stack?.split('\n')[1]?.trim() || '');
     } else if (process.env.NODE_ENV === 'development') {
       logger.error('Erreur: %o', error);
+    }
+
+    // En production, ne jamais renvoyer le message technique d'une erreur 500
+    // (noms de tables, chemins, détails internes) : il est journalisé ci-dessus.
+    if (statusCode >= 500 && process.env.NODE_ENV === 'production') {
+      message = 'Erreur interne du serveur';
     }
 
     res.status(statusCode).json({

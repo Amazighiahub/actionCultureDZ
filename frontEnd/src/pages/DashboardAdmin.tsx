@@ -51,20 +51,24 @@ const DashboardAdmin: React.FC = () => {
   const navigate = useNavigate();
   
   // États — sync avec ?tab= dans l'URL (pour "Voir tout")
+  type AdminTabId = 'overview' | 'users' | 'oeuvres' | 'evenements' | 'patrimoine' | 'services' | 'moderation';
+  const VALID_TABS: AdminTabId[] = ['overview', 'users', 'oeuvres', 'evenements', 'patrimoine', 'services', 'moderation'];
+
   const [searchParams, setSearchParams] = useSearchParams();
-  const tabFromUrl = searchParams.get('tab') || 'overview';
-  const [activeTab, setActiveTabState] = useState(tabFromUrl);
+  const rawTab = searchParams.get('tab');
+  const tabFromUrl: AdminTabId = VALID_TABS.includes(rawTab as AdminTabId) ? (rawTab as AdminTabId) : 'overview';
+  const [activeTab, setActiveTabState] = useState<AdminTabId>(tabFromUrl);
 
   // Sync URL → state quand l'URL change (ex: clic "Voir tout")
   useEffect(() => {
     const t = searchParams.get('tab');
-    if (t && t !== activeTab) {
-      setActiveTabState(t);
+    if (t && VALID_TABS.includes(t as AdminTabId) && t !== activeTab) {
+      setActiveTabState(t as AdminTabId);
     }
   }, [searchParams]);
 
   // Wrapper pour mettre à jour state + URL ensemble
-  const setActiveTab = (tab: string) => {
+  const setActiveTab = (tab: AdminTabId) => {
     setActiveTabState(tab);
     setSearchParams(tab === 'overview' ? {} : { tab });
   };

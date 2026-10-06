@@ -137,10 +137,10 @@ const EventHero: React.FC<EventHeroProps> = ({
                 </div>
               )}
               <Button
-                variant={isFavorite ? "default" : "outline"}
+                variant="favorite"
+                data-active={isFavorite}
                 size="lg"
                 onClick={onToggleFavorite}
-                className={isFavorite ? "bg-red-500 hover:bg-red-600 border-0" : ""}
               >
                 <Heart className={`h-5 w-5 mr-2 ${isFavorite ? 'fill-current' : ''}`} />
                 {isFavorite
@@ -261,13 +261,11 @@ const EventHero: React.FC<EventHeroProps> = ({
                 )}
 
                 <Button
-                  variant={isFavorite ? "default" : "outline"}
+                  variant="favorite"
+                  data-active={isFavorite}
                   size="lg"
                   onClick={onToggleFavorite}
-                  className={isFavorite
-                    ? "bg-red-500 hover:bg-red-600 border-0"
-                    : "bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30"
-                  }
+                  className={!isFavorite ? "bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30" : undefined}
                 >
                   <Heart className={`h-5 w-5 mr-2 ${isFavorite ? 'fill-current' : ''}`} />
                   {isFavorite

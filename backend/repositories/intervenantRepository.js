@@ -3,6 +3,7 @@
  * Encapsule tous les accès Sequelize pour le modèle Intervenant
  */
 const BaseRepository = require('./baseRepository');
+const { PUBLIC_USER_ATTRIBUTES, PUBLIC_INTERVENANT_ATTRIBUTES } = require('../constants/publicAttributes');
 const { Op } = require('sequelize');
 const { buildMultiLangSearch, buildMultiLangOrder } = require('../utils/multiLangSearchBuilder');
 const { sanitizeLike } = require('../utils/sanitize');
@@ -35,7 +36,8 @@ class IntervenantRepository extends BaseRepository {
 
     if (organisation) where.organisation = { [Op.like]: `%${sanitizeLike(organisation)}%` };
     if (pays_origine) where.pays_origine = pays_origine;
-    if (actif !== undefined) where.actif = actif === 'true';
+    // Par défaut, seuls les intervenants actifs sont listés
+    where.actif = actif === undefined ? true : actif === 'true';
     if (verifie !== undefined) where.verifie = verifie === 'true';
 
     const safeDirection = direction?.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
@@ -51,13 +53,15 @@ class IntervenantRepository extends BaseRepository {
       include.push({
         model: this.models.User,
         as: 'UserAccount',
-        attributes: ['id_user', 'prenom', 'nom', 'email'],
+        attributes: PUBLIC_USER_ATTRIBUTES,
         required: false
       });
     }
 
+    // Route publique : fiche publique uniquement (ni email, ni téléphone, ni date de naissance)
     const { rows, count } = await this.model.findAndCountAll({
       where,
+      attributes: PUBLIC_INTERVENANT_ATTRIBUTES,
       include,
       limit: safeLimit,
       offset,
@@ -87,7 +91,7 @@ class IntervenantRepository extends BaseRepository {
       includes.push({
         model: this.models.User,
         as: 'UserAccount',
-        attributes: ['id_user', 'prenom', 'nom', 'email'],
+        attributes: PUBLIC_USER_ATTRIBUTES,
         required: false
       });
     }
@@ -101,7 +105,7 @@ class IntervenantRepository extends BaseRepository {
       });
     }
 
-    return this.model.findByPk(id, { include: includes });
+    return this.model.findByPk(id, { attributes: PUBLIC_INTERVENANT_ATTRIBUTES, include: includes });
   }
 
   /**

@@ -55,6 +55,10 @@ export interface Oeuvre {
   Artisanat?: Artisanat;
   OeuvreArt?: OeuvreArt;
   
+  // Champs virtuels
+  note_moyenne?: number;
+  nombre_evaluations?: number;
+
   // Relations one-to-many (hasMany)
   Media?: Media[];
   CritiquesEvaluations?: CritiqueEvaluation[];
@@ -80,12 +84,10 @@ export type UpdateOeuvreDTO = Partial<CreateOeuvreDTO> & {
   raison_rejet?: string;
 };
 
-// Type pour la validation d'une œuvre
-export interface ValidationOeuvreDTO {
-  statut: 'publie' | 'rejete';
-  validateur_id: number;
-  raison_rejet?: string; // Obligatoire si statut = 'rejete'
-}
+// Type pour la validation d'une œuvre — discriminated union pour forcer raison_rejet si rejete
+export type ValidationOeuvreDTO =
+  | { statut: 'publie'; validateur_id: number }
+  | { statut: 'rejete'; validateur_id: number; raison_rejet: string };
 
 // Helpers
 export function isOeuvrePubliee(oeuvre: Oeuvre): boolean {

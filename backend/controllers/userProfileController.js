@@ -15,6 +15,8 @@
 
 const BaseController = require('./baseController');
 const container = require('../services/serviceContainer');
+const BaseDTO = require('../dto/baseDTO');
+const { translateDeep } = require('../helpers/i18n');
 
 class UserProfileController extends BaseController {
   get userService() {
@@ -118,14 +120,10 @@ class UserProfileController extends BaseController {
           error: req.t('user.photoUrlRequired')
         });
       }
-      // Whitelist d'origines : on n'accepte que les URLs emises par notre
-      // pipeline d'upload (chemin relatif ou base API). Empeche le client
-      // de pointer vers un host externe arbitraire.
-      const allowedPrefixes = ['/uploads/', '/images/'];
-      const apiBase = process.env.API_URL || process.env.VITE_API_URL || '';
-      if (apiBase) allowedPrefixes.push(apiBase);
-      const isAllowed = allowedPrefixes.some(prefix => photo_url.startsWith(prefix));
-      if (!isAllowed) {
+      // Uniquement un média hébergé par la plateforme (chemin local ou notre
+      // Cloudinary) — l'ancien test startsWith(API_URL) acceptait
+      // "https://api.domaine.com.evil.tld/...".
+      if (!BaseDTO.isOwnMediaUrl(photo_url)) {
         return res.status(400).json({
           success: false,
           error: req.t
@@ -251,14 +249,35 @@ class UserProfileController extends BaseController {
   // LISTING PUBLIC DES PROFESSIONNELS VALIDES
   // ============================================================================
 
+  /**
+   * GET /users/professionals/nearby?communeId=&wilayaId=&types=2,3,4,7&limit=
+   * Professionnels proches (commune, puis daïra, puis wilaya), profils publics uniquement.
+   */
+  async getNearbyProfessionals(req, res) {
+    try {
+      const toInt = (v) => (/^\d+$/.test(String(v || '')) ? parseInt(v, 10) : null);
+      const communeId = toInt(req.query.communeId);
+      const wilayaId = toInt(req.query.wilayaId);
+      if (!communeId && !wilayaId) {
+        return res.status(400).json({ success: false, error: req.t('common.badRequest') });
+      }
+      const types = String(req.query.types || '')
+        .split(',').map(toInt).filter(Boolean);
+      const data = await this.userService.findNearbyProfessionals({
+        communeId, wilayaId, types,
+        excludeUserId: req.user?.id_user,
+        limit: req.query.limit
+      });
+      res.json({ success: true, data: translateDeep(data, req.lang) });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
   async getProfessionals(req, res) {
     try {
-      const { page = 1, limit = 20 } = req.query;
-
-      const result = await this.userService.findValidatedProfessionals({
-        page: parseInt(page, 10),
-        limit: parseInt(limit, 10)
-      });
+      const { page, limit } = this._paginate(req);
+      const result = await this.userService.findValidatedProfessionals({ page, limit });
 
       res.json({
         success: true,

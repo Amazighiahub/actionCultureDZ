@@ -4,15 +4,19 @@
  */
 
 const express = require('express');
+const { secureDiskUpload } = require('../middlewares/uploadSecurity');
+const { MEDIA_MIMES, MAX_MEDIA_SIZE } = require('../constants/uploadMimes');
 const { param, body } = require('express-validator');
 const patrimoineController = require('../controllers/patrimoineController');
 const { handleValidationErrors, validateId, validateStringLengths, validateGPS } = require('../middlewares/validationMiddleware');
 const { createContentLimiter } = require('../middlewares/rateLimitMiddleware');
-const uploadService = require('../services/uploadService');
+const logger = require('../utils/logger');
 
 const initPatrimoineRoutes = (models, authMiddleware) => {
   const router = express.Router();
   const { authenticate, requireRole, requireValidatedProfessional } = authMiddleware;
+  // Actions destructives sur un site (partagé) : réservées à la modération
+  const requireModeration = requireRole('Administrateur', 'Moderateur');
 
   // ============================================================================
   // ROUTES PUBLIQUES
@@ -24,7 +28,7 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
   router.get('/mobile/offline/:wilayaId', patrimoineController.wrap('getMobileOffline'));
 
   router.get('/', patrimoineController.wrap('list'));
-  router.get('/popular', (req, res, next) => { console.log('[DEBUG ROUTE] /popular hit'); next(); }, patrimoineController.wrap('popular'));
+  router.get('/popular', patrimoineController.wrap('popular'));
   router.get('/search', patrimoineController.wrap('search'));
   // Vérifier les doublons avant création (nom + commune)
   router.get('/check-duplicate', patrimoineController.wrap('checkDuplicate'));
@@ -49,7 +53,8 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
       });
       res.json({ success: true, data: intervenants });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      logger.error('patrimoineRoutes error', { message: error.message, stack: error.stack });
+      res.status(500).json({ success: false, error: 'Internal server error' });
     }
   });
 
@@ -65,10 +70,10 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
     patrimoineController.wrap('noter'));
   router.post('/:id/favoris', authenticate, validateId(), patrimoineController.wrap('ajouterFavoris'));
   router.delete('/:id/favoris', authenticate, validateId(), patrimoineController.wrap('retirerFavoris'));
-  router.post('/:id/medias', authenticate, validateId(),
-    uploadService.uploadMedia().array('medias', 10),
+  router.post('/:id/medias', authenticate, requireValidatedProfessional, validateId(),
+    ...secureDiskUpload({ field: 'medias', mimes: MEDIA_MIMES, maxFileSize: MAX_MEDIA_SIZE, maxFiles: 10 }),
     patrimoineController.wrap('uploadMedias'));
-  router.delete('/:id/medias/:mediaId', authenticate, validateId(), validateId('mediaId'), patrimoineController.wrap('deleteMedia'));
+  router.delete('/:id/medias/:mediaId', authenticate, requireModeration, validateId(), validateId('mediaId'), patrimoineController.wrap('deleteMedia'));
   router.put('/:id/horaires', authenticate, validateId(), patrimoineController.wrap('updateHoraires'));
 
   // Enrichir les détails culturels d'un site (contribution collaborative)
@@ -123,7 +128,8 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
         if (error.name === 'SequelizeUniqueConstraintError') {
           return res.status(409).json({ success: false, error: 'Cet intervenant est déjà associé à ce site' });
         }
-        res.status(500).json({ success: false, error: error.message });
+        logger.error('patrimoineRoutes error', { message: error.message, stack: error.stack });
+      res.status(500).json({ success: false, error: 'Internal server error' });
       }
     }
   );
@@ -141,7 +147,8 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
       await lien.destroy();
       res.json({ success: true, message: 'Intervenant retiré du site' });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      logger.error('patrimoineRoutes error', { message: error.message, stack: error.stack });
+      res.status(500).json({ success: false, error: 'Internal server error' });
     }
   });
 
@@ -152,7 +159,7 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
   router.post('/:id/monuments', authenticate, validateId(),
     [
       body('nom').isObject().withMessage('nom doit être un objet multilingue {fr, ar, en}'),
-      body('type').isIn(['Mosquée', 'Palais', 'Statue', 'Tour', 'Musée']).withMessage('Type de monument invalide'),
+      body('type').isIn(['Mosquée', 'Palais', 'Casbah', 'Ksar', 'Fort', 'Mausolée', 'Zaouia', 'Hammam', 'Fontaine', 'Statue', 'Tour', 'Minaret', 'Musée', 'Rempart', 'Borj', 'Pont', 'Théâtre', 'Église', 'Marché', 'Grenier collectif', 'Ancienne maison', 'Autre']).withMessage('Type de monument invalide'),
       body('description').optional().isObject(),
     ],
     handleValidationErrors,
@@ -183,12 +190,13 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
 
         res.status(201).json({ success: true, data: monument });
       } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        logger.error('patrimoineRoutes error', { message: error.message, stack: error.stack });
+      res.status(500).json({ success: false, error: 'Internal server error' });
       }
     }
   );
 
-  router.delete('/:id/monuments/:monumentId', authenticate, validateId(), async (req, res) => {
+  router.delete('/:id/monuments/:monumentId', authenticate, requireModeration, validateId(), async (req, res) => {
     try {
       const lieuId = parseInt(req.params.id);
       const monumentId = parseInt(req.params.monumentId);
@@ -203,9 +211,43 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
       await monument.destroy();
       res.json({ success: true, message: 'Monument supprimé' });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      logger.error('patrimoineRoutes error', { message: error.message, stack: error.stack });
+      res.status(500).json({ success: false, error: 'Internal server error' });
     }
   });
+
+  router.patch('/:id/monuments/:monumentId', authenticate, validateId(),
+    [
+      body('nom').optional().isObject(),
+      body('type').optional().isIn(['Mosquée', 'Palais', 'Casbah', 'Ksar', 'Fort', 'Mausolée', 'Zaouia', 'Hammam', 'Fontaine', 'Statue', 'Tour', 'Minaret', 'Musée', 'Rempart', 'Borj', 'Pont', 'Théâtre', 'Église', 'Marché', 'Grenier collectif', 'Ancienne maison', 'Autre']),
+      body('description').optional().isObject(),
+    ],
+    handleValidationErrors,
+    async (req, res) => {
+      try {
+        const lieuId = parseInt(req.params.id);
+        const monumentId = parseInt(req.params.monumentId);
+        if (isNaN(monumentId)) return res.status(400).json({ success: false, error: 'Identifiant invalide' });
+
+        const monument = await models.Monument.findOne({
+          where: { id: monumentId },
+          include: [{ model: models.DetailLieu, where: { id_lieu: lieuId }, required: true, attributes: [] }]
+        });
+        if (!monument) return res.status(404).json({ success: false, error: 'Monument non trouvé' });
+
+        const { nom, type, description } = req.body;
+        if (nom !== undefined) monument.nom = nom;
+        if (type !== undefined) monument.type = type;
+        if (description !== undefined) monument.description = description;
+        await monument.save();
+
+        res.json({ success: true, data: monument });
+      } catch (error) {
+        logger.error('patrimoineRoutes error', { message: error.message, stack: error.stack });
+      res.status(500).json({ success: false, error: 'Internal server error' });
+      }
+    }
+  );
 
   // ============================================================================
   // VESTIGES — ajout / suppression depuis la fiche enrichissement
@@ -214,7 +256,7 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
   router.post('/:id/vestiges', authenticate, validateId(),
     [
       body('nom').isObject().withMessage('nom doit être un objet multilingue {fr, ar, en}'),
-      body('type').isIn(['Ruines', 'Murailles', 'Site archéologique']).withMessage('Type de vestige invalide'),
+      body('type').isIn(['Ruines', 'Murailles', 'Vestiges numides', 'Tombeau numide', 'Inscriptions berbères', 'Gravures rupestres', 'Site archéologique', 'Dolmen', 'Théâtre antique', 'Thermes romains', 'Mosaïque', 'Aqueduc', 'Tombe', 'Autre']).withMessage('Type de vestige invalide'),
       body('description').optional().isObject(),
     ],
     handleValidationErrors,
@@ -245,12 +287,13 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
 
         res.status(201).json({ success: true, data: vestige });
       } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        logger.error('patrimoineRoutes error', { message: error.message, stack: error.stack });
+      res.status(500).json({ success: false, error: 'Internal server error' });
       }
     }
   );
 
-  router.delete('/:id/vestiges/:vestigeId', authenticate, validateId(), async (req, res) => {
+  router.delete('/:id/vestiges/:vestigeId', authenticate, requireModeration, validateId(), async (req, res) => {
     try {
       const lieuId = parseInt(req.params.id);
       const vestigeId = parseInt(req.params.vestigeId);
@@ -265,9 +308,43 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
       await vestige.destroy();
       res.json({ success: true, message: 'Vestige supprimé' });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      logger.error('patrimoineRoutes error', { message: error.message, stack: error.stack });
+      res.status(500).json({ success: false, error: 'Internal server error' });
     }
   });
+
+  router.patch('/:id/vestiges/:vestigeId', authenticate, validateId(),
+    [
+      body('nom').optional().isObject(),
+      body('type').optional().isIn(['Ruines', 'Murailles', 'Vestiges numides', 'Tombeau numide', 'Inscriptions berbères', 'Gravures rupestres', 'Site archéologique', 'Dolmen', 'Théâtre antique', 'Thermes romains', 'Mosaïque', 'Aqueduc', 'Tombe', 'Autre']),
+      body('description').optional().isObject(),
+    ],
+    handleValidationErrors,
+    async (req, res) => {
+      try {
+        const lieuId = parseInt(req.params.id);
+        const vestigeId = parseInt(req.params.vestigeId);
+        if (isNaN(vestigeId)) return res.status(400).json({ success: false, error: 'Identifiant invalide' });
+
+        const vestige = await models.Vestige.findOne({
+          where: { id: vestigeId },
+          include: [{ model: models.DetailLieu, where: { id_lieu: lieuId }, required: true, attributes: [] }]
+        });
+        if (!vestige) return res.status(404).json({ success: false, error: 'Vestige non trouvé' });
+
+        const { nom, type, description } = req.body;
+        if (nom !== undefined) vestige.nom = nom;
+        if (type !== undefined) vestige.type = type;
+        if (description !== undefined) vestige.description = description;
+        await vestige.save();
+
+        res.json({ success: true, data: vestige });
+      } catch (error) {
+        logger.error('patrimoineRoutes error', { message: error.message, stack: error.stack });
+      res.status(500).json({ success: false, error: 'Internal server error' });
+      }
+    }
+  );
 
   // Articles patrimoine (blocs éditeur riche liés à un lieu + section)
   router.get('/:id/articles', validateId(), async (req, res) => {
@@ -285,11 +362,12 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
 
       res.json({ success: true, data: blocks });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      logger.error('patrimoineRoutes error', { message: error.message, stack: error.stack });
+      res.status(500).json({ success: false, error: 'Internal server error' });
     }
   });
 
-  router.post('/:id/articles', authenticate, validateId(),
+  router.post('/:id/articles', authenticate, requireRole('Administrateur', 'Moderateur'), validateId(),
     [
       body('type_block').isIn(['text', 'heading', 'image', 'video', 'citation', 'code', 'list', 'table', 'separator', 'embed']).withMessage('Type de bloc invalide'),
       body('section_patrimoine').isIn(['histoire', 'architecture', 'traditions', 'gastronomie', 'artisanat_local', 'personnalites', 'infos_pratiques', 'referencesHistoriques']).withMessage('Section invalide'),
@@ -337,12 +415,13 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
 
         res.status(201).json({ success: true, data: block });
       } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        logger.error('patrimoineRoutes error', { message: error.message, stack: error.stack });
+      res.status(500).json({ success: false, error: 'Internal server error' });
       }
     }
   );
 
-  router.delete('/:id/articles/:blockId', authenticate, validateId(),
+  router.delete('/:id/articles/:blockId', authenticate, requireModeration, validateId(),
     async (req, res) => {
       try {
         // models déjà disponible via initPatrimoineRoutes(models, ...)
@@ -361,7 +440,8 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
         await block.destroy();
         res.json({ success: true, message: 'Bloc supprimé' });
       } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        logger.error('patrimoineRoutes error', { message: error.message, stack: error.stack });
+      res.status(500).json({ success: false, error: 'Internal server error' });
       }
     }
   );
@@ -372,7 +452,7 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
 
   router.get('/admin/stats', authenticate, requireRole(['Admin']), patrimoineController.wrap('getStats'));
   // Création de site (admin, modérateur ET professionnels validés)
-  router.post('/', authenticate,
+  router.post('/', authenticate, requireValidatedProfessional,
     createContentLimiter,
     validateStringLengths,
     validateGPS,
@@ -385,7 +465,7 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
     ],
     handleValidationErrors,
     patrimoineController.wrap('create'));
-  router.put('/:id', authenticate, validateId(),
+  router.put('/:id', authenticate, requireModeration, validateId(),
     validateStringLengths,
     validateGPS,
     patrimoineController.wrap('update'));

@@ -25,7 +25,7 @@ const { handleValidationErrors, validateStringLengths, validateId } = require('.
 
 const initUserRoutes = (models, authMiddleware) => {
   const router = express.Router();
-  const { authenticate, requireRole } = authMiddleware;
+  const { authenticate, optionalAuth, requireRole } = authMiddleware;
 
   // ============================================================================
   // ROUTES PUBLIQUES (authController)
@@ -71,10 +71,13 @@ const initUserRoutes = (models, authMiddleware) => {
     endpointLimiters.refreshToken,
     asyncHandler((req, res) => authController.refreshToken(req, res)));
 
-  router.post('/check-email', strictLimiter, asyncHandler((req, res) => authController.checkEmail(req, res)));
+  // Réservé aux utilisateurs connectés : en public, elle permettait de tester si un email a un compte
+  router.post('/check-email', authenticate, strictLimiter, asyncHandler((req, res) => authController.checkEmail(req, res)));
   router.post('/verify-email/:token', asyncHandler((req, res) => authController.verifyEmail(req, res)));
   router.get('/types', asyncHandler((req, res) => authController.getTypes(req, res)));
   router.get('/professionals', asyncHandler((req, res) => userProfileController.getProfessionals(req, res)));
+  // Professionnels proches (suggestions de contributeurs, fiche lieu) — profils publics
+  router.get('/professionals/nearby', optionalAuth, asyncHandler((req, res) => userProfileController.getNearbyProfessionals(req, res)));
 
   // ============================================================================
   // ROUTES AUTHENTIFIÉES
@@ -108,6 +111,9 @@ const initUserRoutes = (models, authMiddleware) => {
 
   // RGPD (gdprController)
   router.delete('/profile', authenticate, strictLimiter, asyncHandler((req, res) => gdprController.deleteMyAccount(req, res)));
+  // Désinscription newsletter : lien signé dans chaque email (GET) et bouton « Se désabonner » des messageries (POST, RFC 8058)
+  router.get('/newsletter/unsubscribe', asyncHandler((req, res) => gdprController.unsubscribeNewsletter(req, res)));
+  router.post('/newsletter/unsubscribe', asyncHandler((req, res) => gdprController.unsubscribeNewsletter(req, res)));
   router.get('/profile/export', authenticate, asyncHandler((req, res) => gdprController.exportMyData(req, res)));
 
   // Recherche utilisateurs (reservee aux connectes, userAdminController gere

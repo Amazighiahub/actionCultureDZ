@@ -16,7 +16,8 @@ module.exports = (sequelize) => {
       }
     },
     isbn: {
-      type: DataTypes.STRING(20)
+      type: DataTypes.STRING(20),
+      validate: { is: /^[0-9\-]{10,17}$/ }
     },
     nb_pages: {
       type: DataTypes.INTEGER
@@ -35,7 +36,7 @@ module.exports = (sequelize) => {
 
   // Associations
   Livre.associate = (models) => {
-    Livre.belongsTo(models.Oeuvre, { foreignKey: 'id_oeuvre' });
+    Livre.belongsTo(models.Oeuvre, { foreignKey: 'id_oeuvre', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
     Livre.belongsTo(models.Genre, { foreignKey: 'id_genre' });
   };
 

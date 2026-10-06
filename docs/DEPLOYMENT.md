@@ -439,3 +439,55 @@ git checkout <dernier-commit-stable>
 # Restaurer le backup DB correspondant
 ./scripts/deploy.sh --init
 ```
+
+---
+
+## Déploiement automatique (GitHub Actions → VPS)
+
+Un push sur `main` lance `.github/workflows/deploy.yml` :
+
+1. Tests backend et frontend (lint, tests, build, `npm audit` high) — bloquants.
+2. Connexion SSH au VPS, vérification que le dépôt n'a aucune modification locale,
+   avance rapide (`merge --ff-only`) sur **le commit testé**.
+3. `scripts/deploy-ci.sh` :
+   - build des images **pendant que l'ancien site reste en ligne** ;
+   - validation du `.env` avec la nouvelle image ;
+   - sauvegarde de la base (`backup.sh`) ;
+   - migrations (`sequelize-cli db:migrate`, uniquement les nouvelles) ;
+   - redémarrage du **seul** backend puis frontend (MySQL, Redis, backup, certbot ne bougent pas) ;
+   - rechargement de nginx et vérification de `https://<domaine>/health` et de la page d'accueil ;
+   - en cas d'échec après la bascule : retour automatique aux images précédentes.
+
+Les migrations ne sont jamais annulées automatiquement : une migration doit rester
+compatible avec la version précédente du code (ajouter avant de supprimer).
+
+### À faire une seule fois
+
+**1. Empreinte du serveur (protection contre l'usurpation du VPS)** — ajouter le secret
+GitHub `VPS_SSH_FINGERPRINT` avec la sortie de :
+
+```bash
+ssh-keyscan -t ed25519 <VPS_HOST> 2>/dev/null | ssh-keygen -lf - | awk '{print $2}'
+```
+
+**2. Initialiser le suivi des migrations** si `SequelizeMeta` est vide en production
+(le script de déploiement saute alors les migrations et l'indique dans les logs) :
+
+```bash
+# Sur une COPIE de la base de prod d'abord, puis en prod après sauvegarde
+docker exec eventculture-backend npx sequelize-cli db:migrate:status
+# Si tout est "down" alors que le schéma existe déjà : marquer comme appliquées
+# les migrations déjà présentes dans le schéma (INSERT INTO SequelizeMeta (name) VALUES ('<fichier>.js'), ...)
+```
+
+**3. Appliquer la configuration des services d'infrastructure** (logs bornés, certbot
+qui redémarre, rechargement nginx toutes les 6 h). Le déploiement automatique ne redémarre
+que backend et frontend : les autres services ne prennent ces réglages qu'une fois recréés.
+À faire à un moment calme (MySQL et Redis redémarrent quelques secondes) :
+
+```bash
+docker compose -f docker-compose.prod.yml up -d nginx certbot backup redis mysql
+```
+
+`make migrate` utilise désormais `sequelize-cli db:migrate` (n'exécute que les migrations
+non appliquées) ; `make migrate-status` affiche l'état.

@@ -27,7 +27,8 @@ import {
   LazyImage,
   EmptyState,
   LoadingSkeleton,
-  StatusBadge
+  StatusBadge,
+  ConfirmDialog
 } from '@/components/shared';
 
 import { useDashboardAdmin } from '@/hooks/useDashboardAdmin';
@@ -48,6 +49,9 @@ const AdminEvenementsTab: React.FC = () => {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('tous');
+  const [confirmCancel, setConfirmCancel] = useState<{ open: boolean; eventId?: number }>({ open: false });
+  const [confirmDelete, setConfirmDelete] = useState<{ open: boolean; eventId?: number }>({ open: false });
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const debouncedSearch = useDebouncedValue(searchQuery, 300);
 
@@ -241,7 +245,7 @@ const AdminEvenementsTab: React.FC = () => {
 
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" aria-label={t('common.moreOptions', 'Plus d\'options')}>
+                        <Button variant="ghost" size="icon" aria-label={t('common.moreOptions', 'Plus d\'options')} onClick={(e) => e.stopPropagation()}>
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
@@ -255,7 +259,7 @@ const AdminEvenementsTab: React.FC = () => {
                           {t('common.edit', 'Modifier')}
                         </DropdownMenuItem>
                         {event.statut !== 'brouillon' && event.statut !== 'annule' && (
-                          <DropdownMenuItem onClick={() => cancelEvenement(event.id_evenement)}>
+                          <DropdownMenuItem onClick={() => setConfirmCancel({ open: true, eventId: event.id_evenement })}>
                             <XCircle className="h-4 w-4 mr-2" />
                             {t('admin.events.cancel', 'Annuler')}
                           </DropdownMenuItem>
@@ -263,7 +267,7 @@ const AdminEvenementsTab: React.FC = () => {
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           className="text-destructive"
-                          onClick={() => deleteEvenement(event.id_evenement)}
+                          onClick={() => setConfirmDelete({ open: true, eventId: event.id_evenement })}
                         >
                           <Trash2 className="h-4 w-4 mr-2" />
                           {t('common.delete', 'Supprimer')}
@@ -277,6 +281,38 @@ const AdminEvenementsTab: React.FC = () => {
           })}
         </div>
       )}
+      <ConfirmDialog
+        open={confirmCancel.open}
+        onOpenChange={(open) => setConfirmCancel({ open })}
+        title={t('admin.events.confirmCancel', 'Annuler cet événement ?')}
+        description={t('admin.events.confirmCancelDesc', 'Les participants seront notifiés de l\'annulation.')}
+        variant="warning"
+        confirmLabel={t('admin.events.cancel', 'Annuler l\'événement')}
+        onConfirm={() => {
+          if (confirmCancel.eventId) cancelEvenement(confirmCancel.eventId);
+          setConfirmCancel({ open: false });
+        }}
+      />
+
+      <ConfirmDialog
+        open={confirmDelete.open}
+        onOpenChange={(open) => !isDeleting && setConfirmDelete({ open })}
+        title={t('admin.events.confirmDelete', 'Supprimer cet événement ?')}
+        description={t('admin.events.confirmDeleteDesc', 'Cette action est irréversible.')}
+        variant="destructive"
+        confirmLabel={t('common.delete', 'Supprimer')}
+        loading={isDeleting}
+        onConfirm={async () => {
+          if (!confirmDelete.eventId) return;
+          setIsDeleting(true);
+          try {
+            await deleteEvenement(confirmDelete.eventId);
+          } finally {
+            setIsDeleting(false);
+            setConfirmDelete({ open: false });
+          }
+        }}
+      />
     </div>
   );
 };

@@ -34,6 +34,8 @@ const PROD_BASE = {
   CLOUDINARY_CLOUD_NAME: 'real-cloud',
   CLOUDINARY_API_KEY: '123456789012345',
   CLOUDINARY_API_SECRET: 'aVeryLongCloudinarySecret12345',
+  REDIS_HOST: 'redis.internal',
+  REDIS_PORT: '6379',
   REDIS_PASSWORD: 'n2asNgyLIFfqRzd9lbyeP55KyqYNO6I4'
 };
 

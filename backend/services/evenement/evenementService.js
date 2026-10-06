@@ -129,7 +129,7 @@ class EvenementService extends BaseService {
   /**
    * Créer un événement
    */
-  async create(data, userId) {
+  async create(data, userId, options = {}) {
     if (!data.nom_evenement && !data.nom) {
       throw this._validationError('Le nom de l\'événement est requis');
     }
@@ -198,16 +198,18 @@ class EvenementService extends BaseService {
       id_user: userId
     };
 
-    const evenement = await this.repository.create(entityData);
-
-    // Attacher l'organisation si fournie
-    if (orgId && this.models?.EvenementOrganisation) {
-      await this.models.EvenementOrganisation.create({
-        id_evenement: evenement.id_evenement,
-        id_organisation: parseInt(orgId),
-        role: 'organisateur_principal'
-      });
-    }
+    const evenement = await this.withTransaction(async (transaction) => {
+      await this._assertOrganisationMember(orgId, userId, options.isAdmin, transaction);
+      const created = await this.repository.create(entityData, { transaction });
+      if (orgId && this.models?.EvenementOrganisation) {
+        await this.models.EvenementOrganisation.create({
+          id_evenement: created.id_evenement,
+          id_organisation: parseInt(orgId),
+          role: 'organisateur_principal'
+        }, { transaction });
+      }
+      return created;
+    });
 
     const full = await this.repository.findWithFullDetails(evenement.id_evenement);
 
@@ -220,72 +222,84 @@ class EvenementService extends BaseService {
   /**
    * Modifier un événement
    */
+  /**
+   * L'utilisateur doit être membre actif de l'organisation qu'il associe à un événement
+   * (sinon il pourrait publier au nom de n'importe quelle organisation).
+   */
+  async _assertOrganisationMember(orgId, userId, isAdmin, transaction) {
+    if (!orgId || isAdmin || !this.models?.UserOrganisation) return;
+    const membership = await this.models.UserOrganisation.findOne({
+      where: { id_user: userId, id_organisation: parseInt(orgId, 10) },
+      transaction
+    });
+    if (!membership || membership.actif === false) {
+      throw this._forbiddenError('Vous n\'êtes pas membre de cette organisation');
+    }
+  }
+
   async update(id, data, userId, options = {}) {
-    const existing = await this.repository.findById(id);
-    if (!existing) {
-      throw this._notFoundError(id);
-    }
+    await this.withTransaction(async (transaction) => {
+      const existing = await this.repository.findById(id, { transaction, lock: transaction.LOCK.UPDATE });
+      if (!existing) throw this._notFoundError(id);
 
-    // Seul le propriétaire peut modifier son événement
-    if (parseInt(existing.id_user) !== parseInt(userId)) {
-      throw this._forbiddenError('Vous ne pouvez modifier que vos propres événements');
-    }
+      if (parseInt(existing.id_user) !== parseInt(userId)) {
+        throw this._forbiddenError('Vous ne pouvez modifier que vos propres événements');
+      }
 
-    // Contrôle d'état : seuls les brouillons sont modifiables
-    if (existing.statut !== 'brouillon') {
-      throw this._validationError('Seuls les événements en brouillon peuvent être modifiés');
-    }
+      if (existing.statut !== 'brouillon') {
+        throw this._validationError('Seuls les événements en brouillon peuvent être modifiés');
+      }
 
-    const updateData = {};
-    if (data.nom_evenement || data.nom) updateData.nom_evenement = data.nom_evenement || data.nom;
-    if (data.description !== undefined) updateData.description = data.description;
-    if (data.date_debut || data.dateDebut) updateData.date_debut = data.date_debut || data.dateDebut;
-    if (data.date_fin || data.dateFin) updateData.date_fin = data.date_fin || data.dateFin;
-    if (data.id_lieu || data.lieuId) updateData.id_lieu = data.id_lieu || data.lieuId;
-    if (data.id_type_evenement || data.typeEvenementId) updateData.id_type_evenement = data.id_type_evenement || data.typeEvenementId;
-    // statut: non modifiable via update — utiliser les routes dédiées (/publish, /cancel)
-    if (data.capacite_max || data.capaciteMax) updateData.capacite_max = data.capacite_max || data.capaciteMax;
-    if (data.tarif !== undefined) updateData.tarif = data.tarif;
-    if (data.image_url || data.imageUrl) updateData.image_url = data.image_url || data.imageUrl;
-    if (data.contact_email || data.contactEmail) updateData.contact_email = data.contact_email || data.contactEmail;
-    if (data.contact_telephone || data.contactTelephone) updateData.contact_telephone = data.contact_telephone || data.contactTelephone;
-    if (data.url_virtuel !== undefined || data.urlVirtuel !== undefined) {
-      updateData.url_virtuel = data.url_virtuel ?? data.urlVirtuel ?? null;
-    }
+      const updateData = {};
+      if (data.nom_evenement || data.nom) updateData.nom_evenement = data.nom_evenement || data.nom;
+      if (data.description !== undefined) updateData.description = data.description;
+      if (data.date_debut || data.dateDebut) updateData.date_debut = data.date_debut || data.dateDebut;
+      if (data.date_fin || data.dateFin) updateData.date_fin = data.date_fin || data.dateFin;
+      if (data.id_lieu || data.lieuId) updateData.id_lieu = data.id_lieu || data.lieuId;
+      if (data.id_type_evenement || data.typeEvenementId) updateData.id_type_evenement = data.id_type_evenement || data.typeEvenementId;
+      // statut: non modifiable via update — utiliser les routes dédiées (/publish, /cancel)
+      if (data.capacite_max || data.capaciteMax) updateData.capacite_max = data.capacite_max || data.capaciteMax;
+      if (data.tarif !== undefined) updateData.tarif = data.tarif;
+      if (data.image_url || data.imageUrl) updateData.image_url = data.image_url || data.imageUrl;
+      if (data.contact_email || data.contactEmail) updateData.contact_email = data.contact_email || data.contactEmail;
+      if (data.contact_telephone || data.contactTelephone) updateData.contact_telephone = data.contact_telephone || data.contactTelephone;
+      if (data.url_virtuel !== undefined || data.urlVirtuel !== undefined) {
+        updateData.url_virtuel = data.url_virtuel ?? data.urlVirtuel ?? null;
+      }
 
-    // Validation présentiel → organisation requise (état final après merge)
-    const finalUrlVirtuel = updateData.url_virtuel !== undefined ? updateData.url_virtuel : existing.url_virtuel;
-    if (!finalUrlVirtuel) {
-      // Événement présentiel — vérifier qu'il a au moins une organisation
       const newOrgId = data.id_organisation || data.organisationId;
-      if (!newOrgId && this.models?.EvenementOrganisation) {
+
+      // Validation présentiel → organisation requise (état final après merge)
+      const finalUrlVirtuel = updateData.url_virtuel !== undefined ? updateData.url_virtuel : existing.url_virtuel;
+      if (!finalUrlVirtuel && !newOrgId && this.models?.EvenementOrganisation) {
         const existingOrgs = await this.models.EvenementOrganisation.count({
-          where: { id_evenement: id }
+          where: { id_evenement: id },
+          transaction
         });
         if (existingOrgs === 0) {
           throw this._validationError('Une organisation est requise pour les événements en présentiel');
         }
       }
-    }
 
-    await this.repository.update(id, updateData);
+      await this.repository.update(id, updateData, { transaction });
 
-    // Mettre à jour l'organisation si fournie
-    const newOrgId = data.id_organisation || data.organisationId;
-    if (newOrgId && this.models?.EvenementOrganisation) {
-      const existingOrg = await this.models.EvenementOrganisation.findOne({
-        where: { id_evenement: id, role: 'organisateur_principal' }
-      });
-      if (existingOrg) {
-        await existingOrg.update({ id_organisation: parseInt(newOrgId) });
-      } else {
-        await this.models.EvenementOrganisation.create({
-          id_evenement: id,
-          id_organisation: parseInt(newOrgId),
-          role: 'organisateur_principal'
+      if (newOrgId && this.models?.EvenementOrganisation) {
+        await this._assertOrganisationMember(newOrgId, userId, options.isAdmin, transaction);
+        const existingOrg = await this.models.EvenementOrganisation.findOne({
+          where: { id_evenement: id, role: 'organisateur_principal' },
+          transaction
         });
+        if (existingOrg) {
+          await existingOrg.update({ id_organisation: parseInt(newOrgId) }, { transaction });
+        } else {
+          await this.models.EvenementOrganisation.create({
+            id_evenement: id,
+            id_organisation: parseInt(newOrgId),
+            role: 'organisateur_principal'
+          }, { transaction });
+        }
       }
-    }
+    });
 
     const updated = await this.repository.findWithFullDetails(id);
 
@@ -336,22 +350,22 @@ class EvenementService extends BaseService {
    * Inscrire un participant
    */
   async registerParticipant(evenementId, userId) {
-    const evenement = await this.repository.findById(evenementId);
-    if (!evenement) {
-      throw this._notFoundError(evenementId);
-    }
-
-    // Seuls les événements publiés ou en cours acceptent les inscriptions
-    const openStatuses = ['publie', 'planifie', 'en_cours'];
-    if (!openStatuses.includes(evenement.statut)) {
-      throw this._validationError('Les inscriptions ne sont pas ouvertes pour cet événement');
-    }
-
-    if (evenement.date_limite_inscription && new Date() > new Date(evenement.date_limite_inscription)) {
-      throw this._validationError('La date limite d\'inscription est dépassée');
-    }
-
     const registration = await this.withTransaction(async (transaction) => {
+      const evenement = await this.repository.findById(evenementId, {
+        transaction,
+        lock: transaction.LOCK.UPDATE
+      });
+      if (!evenement) throw this._notFoundError(evenementId);
+
+      const openStatuses = ['publie', 'planifie', 'en_cours'];
+      if (!openStatuses.includes(evenement.statut)) {
+        throw this._validationError('Les inscriptions ne sont pas ouvertes pour cet événement');
+      }
+
+      if (evenement.date_limite_inscription && new Date() > new Date(evenement.date_limite_inscription)) {
+        throw this._validationError('La date limite d\'inscription est dépassée');
+      }
+
       if (evenement.capacite_max) {
         const count = await this.repository.countParticipants(evenementId, { transaction });
         if (count >= evenement.capacite_max) {
@@ -500,8 +514,26 @@ class EvenementService extends BaseService {
   /**
    * Ajoute une oeuvre à un événement
    */
-  async addOeuvreToEvent(evenementId, oeuvreId, userId, data = {}) {
-    // Vérifier ownership
+  async addOeuvreToEvent(evenementId, oeuvreId, userId, data = {}, options = {}) {
+    // L'événement doit exister et être encore ouvert
+    const evenement = await this.repository.findById(evenementId);
+    if (!evenement) throw this._notFoundError(evenementId);
+    if (['annule', 'termine'].includes(evenement.statut)) {
+      throw this._validationError('Cet événement n\'accepte plus de nouvelles œuvres');
+    }
+
+    // Seuls l'organisateur, un participant confirmé ou un admin peuvent y présenter une œuvre
+    const isOrganizer = Number(evenement.id_user) === Number(userId);
+    if (!isOrganizer && !options.isAdmin) {
+      const participation = this.models?.EvenementUser && await this.models.EvenementUser.findOne({
+        where: { id_evenement: evenementId, id_user: userId, statut_participation: ['confirme', 'present'] }
+      });
+      if (!participation) {
+        throw this._forbiddenError('Seuls l\'organisateur et les participants confirmés peuvent ajouter une œuvre');
+      }
+    }
+
+    // Vérifier ownership de l'œuvre
     const oeuvre = await this.repository.findOeuvreByOwner(oeuvreId, userId);
     if (!oeuvre) {
       throw this._notFoundError(oeuvreId);

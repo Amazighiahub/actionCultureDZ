@@ -218,13 +218,14 @@ Documentation API complete : [docs/API.md](docs/API.md)
 
 ## Comptes de test (apres seed)
 
-| Email | Mot de passe | Role |
-|-------|-------------|------|
-| `admin@actionculture.dz` | `admin123` | Admin |
-| `m.benali@test.dz` | `password123` | Professionnel |
-| `f.saidi@test.com` | `password123` | Visiteur |
+Aucun compte ni mot de passe n'est livré dans le dépôt.
 
-> Ne pas utiliser en production.
+- **Administrateur** : créé au seed avec vos propres identifiants
+  `SEED_ADMIN_EMAIL=moi@exemple.dz SEED_ADMIN_PASSWORD='<mot de passe fort>' make seed`
+  (ou plus tard : `docker exec -e ADMIN_EMAIL=... -e ADMIN_PASSWORD=... eventculture-backend node scripts/create-admin.js`).
+- **Comptes de démonstration** (développement uniquement, jamais chargés en production) :
+  `admin@example.invalid`, `demo9@example.invalid` (professionnel), `demo10@example.invalid` (visiteur)…
+  Leur mot de passe est celui passé dans `SEED_DEMO_PASSWORD` au moment du seed.
 
 ---
 

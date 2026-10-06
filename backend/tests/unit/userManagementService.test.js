@@ -28,6 +28,7 @@ describe('DashboardUserManagementService', () => {
     mockModels = {
       Role: { findByPk: jest.fn() },
       UserRole: {
+        findOne: jest.fn().mockResolvedValue(null),
         destroy: jest.fn(),
         create: jest.fn(),
         bulkCreate: jest.fn()

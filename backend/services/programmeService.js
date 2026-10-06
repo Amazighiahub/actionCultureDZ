@@ -5,8 +5,10 @@
  * Architecture: Controller → Service → Repository → Database
  */
 const BaseService = require('./core/baseService');
+const { PUBLIC_USER_ATTRIBUTES } = require('../constants/publicAttributes');
 const { Op } = require('sequelize');
 const { createMultiLang, mergeTranslations } = require('../helpers/i18n');
+const { csvCell } = require('../utils/csv');
 
 class ProgrammeService extends BaseService {
   constructor(repository, options = {}) {
@@ -328,7 +330,11 @@ class ProgrammeService extends BaseService {
   // INTERVENANTS
   // ========================================================================
 
-  async updateIntervenantStatus(programmeId, targetUserId, requestUserId, statut) {
+  /**
+   * @param {number} intervenantId - id_intervenant (et non id_user) de l'intervenant visé
+   */
+  async updateIntervenantStatus(programmeId, intervenantId, requestUserId, statut, isAdmin = false) {
+    const targetUserId = intervenantId;
     const validStatuts = ['en_attente', 'confirme', 'decline', 'annule'];
     if (!validStatuts.includes(statut)) {
       return { error: 'invalidStatus' };
@@ -340,8 +346,13 @@ class ProgrammeService extends BaseService {
 
     if (!programme) return { error: 'notFound' };
 
-    const isEventOwner = programme.Evenement.id_user === requestUserId;
-    const isIntervenant = targetUserId === requestUserId;
+    const isEventOwner = programme.Evenement.id_user === requestUserId || isAdmin === true;
+    // L'intervenant est la personne dont le compte est lié à la fiche intervenant
+    // (comparer id_intervenant à id_user donnait les droits à un autre utilisateur)
+    const intervenant = this.models.Intervenant
+      ? await this.models.Intervenant.findByPk(intervenantId, { attributes: ['id_intervenant', 'id_user'] })
+      : null;
+    const isIntervenant = intervenant?.id_user != null && Number(intervenant.id_user) === Number(requestUserId);
 
     if (!isEventOwner && !isIntervenant) {
       return { error: 'forbidden' };
@@ -374,19 +385,20 @@ class ProgrammeService extends BaseService {
 
   async _getProgrammeComplet(id) {
     return this.repository.model.findByPk(id, {
+      attributes: { exclude: ['notes_organisateur'] },
       include: [
-        { model: this.models.Lieu, as: 'Lieu' },
+        { model: this.models.Lieu, as: 'Lieu', attributes: ['id_lieu', 'nom', 'adresse', 'latitude', 'longitude'] },
         {
           model: this.models.Intervenant,
           as: 'Intervenants',
-          attributes: ['id_intervenant', 'nom', 'prenom', 'email', 'photo_url', 'biographie', 'id_user'],
+          attributes: ['id_intervenant', 'nom', 'prenom', 'photo_url', 'biographie', 'id_user'],
           through: {
             attributes: ['role_intervenant', 'statut_confirmation', 'sujet_intervention', 'ordre_intervention', 'duree_intervention', 'biographie_courte']
           },
           include: [{
             model: this.models.User,
             as: 'UserAccount',
-            attributes: ['id_user', 'nom', 'prenom', 'photo_url', 'email'],
+            attributes: PUBLIC_USER_ATTRIBUTES,
             required: false
           }]
         }
@@ -514,14 +526,7 @@ class ProgrammeService extends BaseService {
 
   formatProgrammesToCSV(programmes) {
     let csv = 'Date,Heure début,Heure fin,Titre,Description,Lieu,Type,Intervenants\n';
-    const escapeCsv = (field) => {
-      if (!field) return '';
-      const str = String(field);
-      if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-        return `"${str.replace(/"/g, '""')}"`;
-      }
-      return str;
-    };
+    const escapeCsv = (field) => (field ? csvCell(field) : '');
 
     programmes.forEach(p => {
       const date = p.heure_debut ? new Date(p.heure_debut).toLocaleDateString('fr-FR') : '';

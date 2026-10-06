@@ -117,7 +117,14 @@ function getResourceType(mimetype) {
  * Vérifier si une URL est hébergée sur Cloudinary
  */
 function isCloudinaryUrl(url) {
-  return typeof url === 'string' && url.includes('res.cloudinary.com');
+  // Nom d'hôte exact : "https://evil.tld/?res.cloudinary.com" n'est pas une URL Cloudinary
+  if (typeof url !== 'string') return false;
+  try {
+    const { protocol, hostname } = new URL(url);
+    return (protocol === 'https:' || protocol === 'http:') && hostname === 'res.cloudinary.com';
+  } catch {
+    return false;
+  }
 }
 
 module.exports = {

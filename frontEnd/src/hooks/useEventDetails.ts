@@ -289,7 +289,8 @@ export function useEventDetails(eventId: number, options: EventDetailsOptions = 
         prenom: event.Organisateur.prenom,
         photo_url: event.Organisateur.photo_url,
         role: 'organisateur_principal',
-        email: event.Organisateur.email,
+        // Le compte organisateur n'expose plus son email : contact public de l'événement
+        email: event.contact_email || undefined,
       });
     }
 

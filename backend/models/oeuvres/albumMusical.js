@@ -37,7 +37,7 @@ module.exports = (sequelize) => {
 
   // Associations
   AlbumMusical.associate = (models) => {
-    AlbumMusical.belongsTo(models.Oeuvre, { foreignKey: 'id_oeuvre' });
+    AlbumMusical.belongsTo(models.Oeuvre, { foreignKey: 'id_oeuvre', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
     AlbumMusical.belongsTo(models.Genre, { foreignKey: 'id_genre' });
   };
 

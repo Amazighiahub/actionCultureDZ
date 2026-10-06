@@ -1,6 +1,6 @@
 // hooks/useDashboardAdmin.ts - VERSION SIMPLIFIÉE
 import { httpClient } from '@/services/httpClient';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
 import { adminService } from '@/services/admin.service';
@@ -87,6 +87,12 @@ export const useDashboardAdmin = (activeTab: AdminTab = 'overview') => {
   const [loadingEvenements, setLoadingEvenements] = useState(false);
   const [loadingPatrimoine, setLoadingPatrimoine] = useState(false);
   const [loadingServices, setLoadingServices] = useState(false);
+
+  // Refs pour éviter les boucles infinies dans useCallback (ref-based guard)
+  const loadingOeuvresRef = useRef(false);
+  const loadingEvenementsRef = useRef(false);
+  const loadingPatrimoineRef = useRef(false);
+  const loadingServicesRef = useRef(false);
 
   // États d'erreur
   const [errorOverview, setErrorOverview] = useState<string | null>(null);
@@ -544,15 +550,14 @@ const validateUser = async ({ userId, validated }: { userId: number; validated: 
 
   
 const loadOeuvres = useCallback(async (filters?: OeuvreFilters) => {
-  if (loadingOeuvres) return;
-
+  if (loadingOeuvresRef.current) return;
+  loadingOeuvresRef.current = true;
   setLoadingOeuvres(true);
   setErrorOeuvres(null);
   try {
     const response = await adminService.getOeuvres(filters);
 
     if (response.success && response.data) {
-      // Le backend peut renvoyer un tableau direct ou un objet paginé
       const raw = response.data as any;
       const items = Array.isArray(raw) ? raw : (raw.items || raw.oeuvres || raw.data || []);
       setOeuvres({
@@ -573,13 +578,14 @@ const loadOeuvres = useCallback(async (filters?: OeuvreFilters) => {
 
     setOeuvres({ items: [], pagination: { total: 0, page: 1, limit: filters?.limit || 10, pages: 1 } });
   } finally {
+    loadingOeuvresRef.current = false;
     setLoadingOeuvres(false);
   }
-}, [loadingOeuvres, toast]);
+}, [toast]);
 
 const loadEvenements = useCallback(async (filters?: EvenementFilters) => {
-  if (loadingEvenements) return;
-
+  if (loadingEvenementsRef.current) return;
+  loadingEvenementsRef.current = true;
   setLoadingEvenements(true);
   setErrorEvenements(null);
   try {
@@ -603,13 +609,14 @@ const loadEvenements = useCallback(async (filters?: EvenementFilters) => {
 
     setEvenements({ items: [], pagination: { total: 0, page: 1, limit: filters?.limit || 10, pages: 1 } });
   } finally {
+    loadingEvenementsRef.current = false;
     setLoadingEvenements(false);
   }
-}, [loadingEvenements, toast]);
+}, [toast]);
 
 const loadPatrimoineItems = useCallback(async (filters?: PatrimoineFilters) => {
-  if (loadingPatrimoine) return;
-
+  if (loadingPatrimoineRef.current) return;
+  loadingPatrimoineRef.current = true;
   setLoadingPatrimoine(true);
   setErrorPatrimoine(null);
   try {
@@ -617,8 +624,6 @@ const loadPatrimoineItems = useCallback(async (filters?: PatrimoineFilters) => {
 
     if (response.success) {
       const raw = response.data as any;
-      // Le contrôleur GET /patrimoine retourne { data: [...], pagination: {...} }
-      // data est l'array directement, pagination est à la racine de la réponse
       const items = Array.isArray(raw) ? raw : (raw?.items || raw?.data || raw?.sites || []);
       const pagination = (response as any).pagination || raw?.pagination || { total: 0, page: 1, limit: 20, pages: 1 };
       setPatrimoineItems({ items, pagination });
@@ -636,13 +641,14 @@ const loadPatrimoineItems = useCallback(async (filters?: PatrimoineFilters) => {
 
     setPatrimoineItems({ items: [], pagination: { total: 0, page: 1, limit: filters?.limit || 10, pages: 1 } });
   } finally {
+    loadingPatrimoineRef.current = false;
     setLoadingPatrimoine(false);
   }
-}, [loadingPatrimoine, toast]);
+}, [toast]);
 
 const loadServices = useCallback(async (filters?: ServiceFilters) => {
-  if (loadingServices) return;
-
+  if (loadingServicesRef.current) return;
+  loadingServicesRef.current = true;
   setLoadingServices(true);
   setErrorServices(null);
   try {
@@ -665,9 +671,10 @@ const loadServices = useCallback(async (filters?: ServiceFilters) => {
 
     setServices({ items: [], pagination: { total: 0, page: 1, limit: filters?.limit || 10, pages: 1 } });
   } finally {
+    loadingServicesRef.current = false;
     setLoadingServices(false);
   }
-}, [loadingServices, toast]);
+}, [toast]);
 
 // Mettez aussi à jour les fonctions de suppression :
 const deleteOeuvre = async (oeuvreId: number) => {

@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const ArticleBlockController = require('../controllers/articleBlockController');
 const { body } = require('express-validator');
+const { createContentLimiter } = require('../middlewares/rateLimitMiddleware');
 
 const initArticleBlockRoutes = (models, authMiddleware) => {
   const articleBlockController = ArticleBlockController;
@@ -33,30 +34,6 @@ const initArticleBlockRoutes = (models, authMiddleware) => {
       });
     }
     next();
-  };
-
-  // Configuration upload via Cloudinary
-  const uploadService = require('../services/uploadService');
-
-  // Gestionnaire d'upload
-  const handleImageUpload = (req, res, next) => {
-    const upload = uploadService.uploadImage().single('image');
-    upload(req, res, (err) => {
-      if (err) {
-        console.error('Erreur upload article:', err.message);
-        if (err.code === 'LIMIT_FILE_SIZE') {
-          return res.status(400).json({
-            success: false,
-            error: req.t ? req.t('upload.fileTooLarge') : 'File too large (limit: 10MB)'
-          });
-        }
-        return res.status(400).json({
-          success: false,
-          error: req.t ? req.t('common.serverError') : 'Upload error: ' + err.message
-        });
-      }
-      next();
-    });
   };
 
   // Créer des wrappers sûrs pour l'authentification (fail-closed)
@@ -123,6 +100,10 @@ const initArticleBlockRoutes = (models, authMiddleware) => {
     body('id_article')
       .isInt()
       .withMessage((value, { req }) => req.t('validation.invalidId')),
+    body('article_type')
+      .optional()
+      .isIn(['article', 'article_scientifique'])
+      .withMessage((value, { req }) => req.t('validation.invalidType')),
     body('blocks')
       .isArray()
       .withMessage((value, { req }) => req.t('validation.invalidData')),
@@ -154,6 +135,7 @@ const initArticleBlockRoutes = (models, authMiddleware) => {
   router.post('/',
     safeAuth.authenticate,
     safeAuth.requireValidatedProfessional,
+    createContentLimiter,
     createBlockValidation,
     handleValidationErrors,
     (req, res) => articleBlockController.createBlock(req, res)
@@ -163,6 +145,7 @@ const initArticleBlockRoutes = (models, authMiddleware) => {
   router.post('/batch',
     safeAuth.authenticate,
     safeAuth.requireValidatedProfessional,
+    createContentLimiter,
     createMultipleValidation,
     handleValidationErrors,
     (req, res) => articleBlockController.createMultipleBlocks(req, res)
@@ -202,15 +185,6 @@ const initArticleBlockRoutes = (models, authMiddleware) => {
     safeAuth.requireValidatedProfessional,
     validateId('blockId'),
     (req, res) => articleBlockController.duplicateBlock(req, res)
-  );
-
-  // Upload d'image pour un bloc
-  router.post('/article/:articleId/upload-image',
-    safeAuth.authenticate,
-    safeAuth.requireValidatedProfessional,
-    validateId('articleId'),
-    handleImageUpload,
-    (req, res) => articleBlockController.uploadBlockImage(req, res)
   );
 
   // ========================================================================

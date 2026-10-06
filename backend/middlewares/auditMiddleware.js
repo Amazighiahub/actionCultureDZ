@@ -1,6 +1,7 @@
 // middleware/auditMiddleware.js - VERSION CORRIGÉE
 // Ne PAS importer directement les modèles ici !
 const logger = require('../utils/logger');
+const { redactForLog } = require('../utils/maskPII');
 
 // Variables pour stocker les références
 let models = null;
@@ -16,21 +17,9 @@ const getClientIp = (req) => {
          'unknown';
 };
 
-// Fonction pour nettoyer les données sensibles
-const sanitizeData = (data) => {
-  if (!data) return data;
-  
-  const sensitiveFields = ['password', 'token', 'secret', 'credit_card', 'cvv'];
-  const sanitized = { ...data };
-  
-  Object.keys(sanitized).forEach(key => {
-    if (sensitiveFields.some(field => key.toLowerCase().includes(field))) {
-      sanitized[key] = '***REDACTED***';
-    }
-  });
-  
-  return sanitized;
-};
+// Nettoyer les données sensibles : secrets (mot_de_passe compris) et données
+// personnelles, y compris dans les objets imbriqués
+const sanitizeData = (data) => (data ? redactForLog(data) : data);
 
 // Fonction helper pour extraire le type d'entité depuis le path
 const extractEntityType = (path) => {

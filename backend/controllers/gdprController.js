@@ -51,6 +51,27 @@ class GdprController extends BaseController {
   }
 
   // ============================================================================
+  // ART. 7.3 - RETRAIT DU CONSENTEMENT NEWSLETTER (lien signé, sans connexion)
+  // ============================================================================
+
+  async unsubscribeNewsletter(req, res) {
+    const { verifyUnsubscribe } = require('../utils/newsletterUnsubscribe');
+    const userId = req.query.u ?? req.body?.u;
+    const token = req.query.t ?? req.body?.t;
+    if (!verifyUnsubscribe(userId, token)) {
+      return res.status(400).json({ success: false, error: req.t('common.badRequest') });
+    }
+    try {
+      await this.userService.unsubscribeNewsletter(parseInt(userId, 10));
+      if (req.method === 'POST') return res.json({ success: true });
+      res.type('html').send('<!doctype html><meta charset="utf-8"><title>Désinscription</title>'
+        + '<p>Vous êtes désinscrit(e) de la newsletter. Vous pouvez vous réabonner depuis vos préférences.</p>');
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  // ============================================================================
   // ART. 20 - DROIT A LA PORTABILITE
   // ============================================================================
 

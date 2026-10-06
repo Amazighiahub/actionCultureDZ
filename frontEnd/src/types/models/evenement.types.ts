@@ -15,6 +15,9 @@ export interface Evenement {
   description?: { fr: string; ar: string; en: string; 'tz-ltn'?: string; 'tz-tfng'?: string };
   date_debut?: string;
   date_fin?: string;
+  heure_debut?: string;
+  heure_fin?: string;
+  id_organisation?: number;
   contact_email?: string;
   contact_telephone?: string;
   image_url?: string;

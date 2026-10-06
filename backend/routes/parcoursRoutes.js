@@ -18,7 +18,15 @@ const initParcoursRoutes = (models, authMiddleware) => {
 
   router.get('/', (req, res) => parcoursController.list(req, res));
   router.get('/search', (req, res) => parcoursController.search(req, res));
-  router.post('/personnalise', (req, res) => parcoursController.personnalise(req, res));
+  router.post('/personnalise',
+    [
+      body('latitude').isFloat({ min: -90, max: 90 }).withMessage('Latitude invalide'),
+      body('longitude').isFloat({ min: -180, max: 180 }).withMessage('Longitude invalide'),
+      body('interests').optional().isArray().withMessage('interests doit être un tableau'),
+      body('duration').optional().isInt({ min: 30, max: 1440 }).withMessage('Durée invalide (30-1440 min)'),
+    ],
+    handleValidationErrors,
+    (req, res) => parcoursController.personnalise(req, res));
   router.get('/:id', validateId(), (req, res) => parcoursController.getById(req, res));
   router.get('/:id/map', validateId(), (req, res) => parcoursController.getMap(req, res));
 

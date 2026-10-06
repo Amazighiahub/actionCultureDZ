@@ -28,7 +28,8 @@ import {
   LazyImage,
   EmptyState,
   LoadingSkeleton,
-  StatusBadge
+  StatusBadge,
+  ConfirmDialog
 } from '@/components/shared';
 
 import { useDashboardAdmin } from '@/hooks/useDashboardAdmin';
@@ -64,6 +65,8 @@ const AdminOeuvresTab: React.FC = () => {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('tous');
+  const [confirmDelete, setConfirmDelete] = useState<{ open: boolean; oeuvreId?: number }>({ open: false });
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const debouncedSearch = useDebouncedValue(searchQuery, 300);
 
@@ -272,7 +275,7 @@ const AdminOeuvresTab: React.FC = () => {
                               </Button>
                             </>
                           )}
-                          <Button type="button" variant="ghost" size="icon" title={t('common.delete', 'Supprimer')} className="text-destructive hover:text-destructive" onClick={() => deleteOeuvre(oeuvre.id_oeuvre)}>
+                          <Button type="button" variant="ghost" size="icon" title={t('common.delete', 'Supprimer')} className="text-destructive hover:text-destructive" onClick={() => setConfirmDelete({ open: true, oeuvreId: oeuvre.id_oeuvre })}>
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
@@ -285,6 +288,25 @@ const AdminOeuvresTab: React.FC = () => {
           </div>
         </Card>
       )}
+      <ConfirmDialog
+        open={confirmDelete.open}
+        onOpenChange={(open) => !isDeleting && setConfirmDelete({ open })}
+        title={t('admin.oeuvres.confirmDelete', 'Supprimer cette œuvre ?')}
+        description={t('admin.oeuvres.confirmDeleteDesc', 'Cette action est irréversible.')}
+        variant="destructive"
+        confirmLabel={t('common.delete', 'Supprimer')}
+        loading={isDeleting}
+        onConfirm={async () => {
+          if (!confirmDelete.oeuvreId) return;
+          setIsDeleting(true);
+          try {
+            await deleteOeuvre(confirmDelete.oeuvreId);
+          } finally {
+            setIsDeleting(false);
+            setConfirmDelete({ open: false });
+          }
+        }}
+      />
     </div>
   );
 };

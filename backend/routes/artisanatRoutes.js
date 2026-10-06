@@ -4,11 +4,12 @@
  */
 
 const express = require('express');
+const { secureDiskUpload } = require('../middlewares/uploadSecurity');
+const { MEDIA_MIMES, MAX_MEDIA_SIZE } = require('../constants/uploadMimes');
 const { param, body } = require('express-validator');
 const artisanatController = require('../controllers/artisanatController');
 const { handleValidationErrors, validateId, validateStringLengths } = require('../middlewares/validationMiddleware');
 const { createContentLimiter } = require('../middlewares/rateLimitMiddleware');
-const uploadService = require('../services/uploadService');
 const asyncHandler = require('../utils/asyncHandler');
 
 const initArtisanatRoutes = (models, authMiddleware) => {
@@ -69,7 +70,7 @@ const initArtisanatRoutes = (models, authMiddleware) => {
   router.post('/:id/medias', authenticate, requireVerifiedEmail,
     validateId(),
     createContentLimiter,
-    uploadService.uploadMedia().array('medias', 10),
+    ...secureDiskUpload({ field: 'medias', mimes: MEDIA_MIMES, maxFileSize: MAX_MEDIA_SIZE, maxFiles: 10 }),
     asyncHandler((req, res) => artisanatController.uploadMedias(req, res)));
 
   return router;

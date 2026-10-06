@@ -280,10 +280,11 @@ const initLieuRoutes = (models) => {
     lieuController.getDetailsLieu.bind(lieuController)
   );
 
-  // Mettre à jour les détails d'un lieu
+  // Mettre à jour les détails d'un lieu (réécriture complète : modération uniquement ;
+  // l'enrichissement collaboratif passe par PATCH /patrimoine/:id/detail)
   router.put('/:id/details',
     authMiddleware.authenticate,
-    authMiddleware.requireValidatedProfessional,
+    authMiddleware.requireRole(['Modérateur', 'Administrateur']),
     param('id').isInt().withMessage((value, { req }) => req.t('validation.invalidId')),
     validationMiddleware.handleValidationErrors,
     lieuController.updateDetailsLieu.bind(lieuController)
