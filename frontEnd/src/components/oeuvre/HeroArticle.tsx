@@ -15,6 +15,7 @@ import type { Oeuvre } from '@/types/models/oeuvre.types';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { useRTL } from '@/hooks/useRTL';
 import { cn } from '@/lib/Utils';
+import { safeExternalUrl } from '@/utils/safeUrl';
 
 interface HeroArticleProps {
   oeuvre: Oeuvre;
@@ -173,7 +174,7 @@ const HeroArticle: React.FC<HeroArticleProps> = ({
             )}
             {article?.url_source && (
               <a
-                href={article.url_source}
+                href={safeExternalUrl(article.url_source)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline"

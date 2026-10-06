@@ -53,6 +53,7 @@ import { useLocalizedDate } from '@/hooks/useLocalizedDate';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/Utils';
 import { getAssetUrl } from '@/helpers/assetUrl';
+import { safeExternalUrl } from '@/utils/safeUrl';
 
 interface ParticipantsManagerProps {
   evenementId: number;
@@ -618,7 +619,7 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
                     )}
                     {profilData.profil.site_web && (
                       <Button variant="ghost" size="sm" asChild>
-                        <a href={profilData.profil.site_web} target="_blank" rel="noopener noreferrer">
+                        <a href={safeExternalUrl(profilData.profil.site_web)} target="_blank" rel="noopener noreferrer">
                           <Globe className="h-4 w-4 mr-1" />
                           {t('common.website', 'Site web')}
                         </a>

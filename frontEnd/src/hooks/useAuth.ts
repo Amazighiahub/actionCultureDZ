@@ -9,6 +9,7 @@ import type {
   RegisterProfessionalData 
 } from '@/services/auth.service';
 import type { UseAuthReturn, AuthResult } from '../types/models/auth.types';
+import { getSafeRedirectPath } from '@/utils/safeUrl';
 
 export function useAuth(): UseAuthReturn {
   const navigate = useNavigate();
@@ -50,12 +51,11 @@ export function useAuth(): UseAuthReturn {
 
           const stateFrom = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname;
           const redirectFromQuery = new URLSearchParams(location.search).get('redirect');
-          const safeRedirect = (target?: string | null) => !!target && target.startsWith('/') && target !== '/auth';
+          // Chemins internes uniquement (pas de redirection ouverte vers un autre site)
+          const redirectTarget = getSafeRedirectPath(redirectFromQuery) ?? getSafeRedirectPath(stateFrom);
 
-          if (safeRedirect(redirectFromQuery)) {
-            navigate(redirectFromQuery as string, { replace: true });
-          } else if (safeRedirect(stateFrom)) {
-            navigate(stateFrom as string, { replace: true });
+          if (redirectTarget) {
+            navigate(redirectTarget, { replace: true });
           } else {
             // Redirection selon le rôle de l'utilisateur
             if (currentUser.Roles?.some(r => r.nom_role === 'Administrateur')) {

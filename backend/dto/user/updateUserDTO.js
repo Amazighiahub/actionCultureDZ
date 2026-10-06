@@ -119,12 +119,8 @@ class UpdateUserDTO extends BaseDTO {
   }
 
   _isValidUrl(url) {
-    try {
-      new URL(url);
-      return true;
-    } catch {
-      return false;
-    }
+    // http(s) uniquement : "javascript:..." était accepté et affiché comme lien du profil
+    return BaseDTO.isHttpUrl(url);
   }
 }
 

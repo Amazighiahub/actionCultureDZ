@@ -15,6 +15,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { lieuService } from '@/services/lieu.service';
+import { safeExternalUrl } from '@/utils/safeUrl';
 
 // Icônes et couleurs par type de service
 const SERVICE_CONFIG: Record<string, { icon: React.ElementType; color: string; bg: string; label: string }> = {
@@ -310,7 +311,7 @@ const ServicesProximite: React.FC<ServicesProximiteProps> = ({
                         </a>
                       )}
                       {service.site_web && (
-                        <a href={service.site_web} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-primary">
+                        <a href={safeExternalUrl(service.site_web)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-primary">
                           <Globe className="h-3 w-3" />
                           {t('services.website', 'Site web')}
                           <ExternalLink className="h-2.5 w-2.5" />

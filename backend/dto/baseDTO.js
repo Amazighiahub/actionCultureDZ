@@ -321,6 +321,19 @@ class BaseDTO {
    * @param {string} value
    * @returns {string|null}
    */
+  /**
+   * URL web sûre (http/https uniquement) : refuse javascript:, data:, file:...
+   * qui s'exécuteraient dans un lien affiché à d'autres utilisateurs.
+   */
+  static isHttpUrl(url) {
+    if (typeof url !== 'string' || !url.trim()) return false;
+    try {
+      return ['http:', 'https:'].includes(new URL(url.trim()).protocol);
+    } catch {
+      return false;
+    }
+  }
+
   static cleanString(value) {
     if (!value) return null;
     const cleaned = String(value).trim();

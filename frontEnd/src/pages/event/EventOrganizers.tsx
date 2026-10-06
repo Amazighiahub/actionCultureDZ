@@ -16,6 +16,7 @@ import { useTranslateData } from '@/hooks/useTranslateData';
 import { cn } from '@/lib/Utils';
 import type { Organisation } from '@/types/models/organisation.types';
 import type { User } from '@/types/models/user.types';
+import { safeExternalUrl } from '@/utils/safeUrl';
 
 // Type unifié pour les organisateurs (peut être User ou Organisation)
 interface Organizer {
@@ -212,7 +213,7 @@ const OrganizerCard: React.FC<OrganizerCardProps> = ({ organizer, variant = 'def
               
               {organizer.site_web && (
                 <Button variant="ghost" size="sm" asChild className="h-8 px-2">
-                  <a href={organizer.site_web} target="_blank" rel="noopener noreferrer">
+                  <a href={safeExternalUrl(organizer.site_web)} target="_blank" rel="noopener noreferrer">
                     <Globe className="h-4 w-4 mr-1" />
                     {t('common.website', 'Site web')}
                   </a>

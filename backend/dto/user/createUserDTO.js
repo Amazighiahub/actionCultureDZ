@@ -192,15 +192,7 @@ class CreateUserDTO extends BaseDTO {
   }
 
   _isSafeUrl(url) {
-    // Bloquer les schémas dangereux
-    const dangerous = /^(javascript|data|file|vbscript):/i;
-    if (dangerous.test(url.trim())) return false;
-    try {
-      const parsed = new URL(url);
-      return ['http:', 'https:'].includes(parsed.protocol);
-    } catch {
-      return false;
-    }
+    return BaseDTO.isHttpUrl(url);
   }
 }
 

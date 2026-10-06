@@ -13,6 +13,7 @@ import {
   Beaker, ExternalLink, CheckCircle, BookMarked, Film, Music
 } from 'lucide-react';
 import type { Oeuvre } from '@/types/models/oeuvre.types';
+import { safeExternalUrl } from '@/utils/safeUrl';
 
 // Helper pour extraire le texte d'un champ multilingue
 const getLocalizedText = (value: unknown, fallback: string = ''): string => {
@@ -388,7 +389,7 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false }) => {
                   {oeuvre.Article.url_source && (
                     <div className="sm:col-span-2">
                       <a
-                        href={oeuvre.Article.url_source}
+                        href={safeExternalUrl(oeuvre.Article.url_source)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-sm text-primary hover:underline flex items-center gap-1"
