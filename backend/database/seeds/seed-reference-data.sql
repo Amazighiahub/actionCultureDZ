@@ -1,5 +1,7 @@
 -- Données de référence (nomenclatures) — aucune donnée personnelle
 -- Généré à partir de l'ancien seed-reference-data.sql (voir README des seeds)
+-- Encodage explicite : sans cela, un import en latin1 abîme les accents (Ã‰cologie)
+SET NAMES utf8mb4;
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET FOREIGN_KEY_CHECKS = 0;
 
