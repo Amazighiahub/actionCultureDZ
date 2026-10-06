@@ -135,10 +135,17 @@ class EmailQueueService {
           const text = template.text ? interpolate(template.text, email.data) : '';
           const body = html || (text ? `<pre style="font-family:inherit">${text}</pre>` : '');
 
+          const headers = template.headers
+            ? Object.fromEntries(Object.entries(template.headers).map(([k, v]) => [k, interpolate(v, email.data)]))
+            : null;
+
           const result = await emailService.sendEmail(
             email.to,
             template.subject,
-            body
+            body,
+            null,
+            null,
+            headers ? { headers } : {}
           );
           
           results.push({ email: email.to, success: result.success });

@@ -596,6 +596,11 @@ class App {
       if (req.path.startsWith('/tracking/') && req.path.includes('/view')) {
         return next();
       }
+      // Désinscription one-click (RFC 8058) : POST envoyé par la messagerie, sans jeton CSRF ;
+      // protégé par la signature HMAC du lien.
+      if (req.path === '/users/newsletter/unsubscribe') {
+        return next();
+      }
       return csrfVerifier(req, res, next);
     });
 

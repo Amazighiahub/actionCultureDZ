@@ -6,14 +6,19 @@ const exportMyData = vi.fn();
 const deleteMyAccount = vi.fn();
 const logout = vi.fn();
 const toast = vi.fn();
+const updatePreferences = vi.fn();
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (_k: string, d?: string) => d ?? _k })
 }));
 vi.mock('@/services/user.service', () => ({
-  userService: { exportMyData: (...a: unknown[]) => exportMyData(...a), deleteMyAccount: (...a: unknown[]) => deleteMyAccount(...a) }
+  userService: {
+    exportMyData: (...a: unknown[]) => exportMyData(...a),
+    deleteMyAccount: (...a: unknown[]) => deleteMyAccount(...a),
+    updatePreferences: (...a: unknown[]) => updatePreferences(...a)
+  }
 }));
-vi.mock('@/hooks/useAuth', () => ({ useAuth: () => ({ logout }) }));
+vi.mock('@/hooks/useAuth', () => ({ useAuth: () => ({ logout, user: { accepte_newsletter: true } }) }));
 vi.mock('@/hooks/use-toast', () => ({ useToast: () => ({ toast }) }));
 
 import MesDonneesCard from '../MesDonneesCard';
@@ -49,5 +54,15 @@ describe('MesDonneesCard', () => {
     await userEvent.click(screen.getByRole('button', { name: /Supprimer définitivement/ }));
     await waitFor(() => expect(toast).toHaveBeenCalledWith(expect.objectContaining({ variant: 'destructive' })));
     expect(logout).not.toHaveBeenCalled();
+  });
+
+  test('retire le consentement newsletter', async () => {
+    updatePreferences.mockResolvedValue({ success: true });
+    render(<MesDonneesCard />);
+    const sw = screen.getByRole('switch');
+    expect(sw).toHaveAttribute('aria-checked', 'true');
+    await userEvent.click(sw);
+    await waitFor(() => expect(updatePreferences).toHaveBeenCalledWith({ newsletter: false }));
+    await waitFor(() => expect(sw).toHaveAttribute('aria-checked', 'false'));
   });
 });

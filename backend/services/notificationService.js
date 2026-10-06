@@ -1,5 +1,6 @@
 // services/NotificationService.js - Orchestrateur des notifications
 const logger = require('../utils/logger');
+const { buildUnsubscribeUrl, unsubscribeHeaders, withUnsubscribeFooter } = require('../utils/newsletterUnsubscribe');
 const emailService = require('./emailService');
 const smsService = require('./smsService');
 const whatsappService = require('./whatsappService');
@@ -439,7 +440,7 @@ async envoyerNewsletter(contenu, filtres = {}) {
     }
 
     if (filtres.type_user) {
-      whereClause.type_user = filtres.type_user;
+      whereClause.id_type_user = filtres.type_user;
     }
 
     const users = await this.models.User.findAll({
@@ -455,7 +456,16 @@ async envoyerNewsletter(contenu, filtres = {}) {
       const batch = users.slice(i, i + BATCH_SIZE);
       const batchResults = await Promise.all(
         batch.map(async (user) => {
-          const result = await this.emailService.sendEmail(user.email, contenu.sujet, contenu.texte, contenu.html);
+          // Ordre des arguments corrigé (html, pièces jointes, texte) + lien de désinscription signé
+          const unsubscribeUrl = buildUnsubscribeUrl(user.id_user);
+          const result = await this.emailService.sendEmail(
+            user.email,
+            contenu.sujet,
+            withUnsubscribeFooter(contenu.html || `<p>${contenu.texte || ''}</p>`, unsubscribeUrl),
+            null,
+            contenu.texte || null,
+            { headers: unsubscribeHeaders(unsubscribeUrl) }
+          );
           return { userId: user.id_user, success: result.success };
         })
       );
@@ -1107,7 +1117,7 @@ async envoyerNewsletter(contenu, filtres = {}) {
   async getUserPreferences(userId) {
     const user = await this.userRepo.findById(userId, {
       attributes: [
-        'notifications_email', 'notifications_push', 'notifications_newsletter',
+        'notifications_email', 'notifications_push', 'accepte_newsletter',
         'notifications_commentaires', 'notifications_favoris', 'notifications_evenements'
       ]
     });
@@ -1116,7 +1126,8 @@ async envoyerNewsletter(contenu, filtres = {}) {
       global: {
         email: user.notifications_email ?? true,
         push: user.notifications_push ?? true,
-        newsletter: user.notifications_newsletter ?? true
+        // Consentement newsletter : même champ que celui utilisé pour l'envoi (défaut : non)
+        newsletter: user.accepte_newsletter === true
       },
       types: {
         commentaires: user.notifications_commentaires ?? true,
@@ -1134,7 +1145,7 @@ async envoyerNewsletter(contenu, filtres = {}) {
     if (global) {
       if (typeof global.email === 'boolean') updates.notifications_email = global.email;
       if (typeof global.push === 'boolean') updates.notifications_push = global.push;
-      if (typeof global.newsletter === 'boolean') updates.notifications_newsletter = global.newsletter;
+      if (typeof global.newsletter === 'boolean') updates.accepte_newsletter = global.newsletter;
     }
     if (types) {
       if (typeof types.commentaires === 'boolean') updates.notifications_commentaires = types.commentaires;

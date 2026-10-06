@@ -339,10 +339,13 @@ class CronService {
       }) || []
     ]);
 
+    const { buildUnsubscribeUrl, unsubscribeHeaders, withUnsubscribeFooter } = require('../utils/newsletterUnsubscribe');
+    // {{unsubscribe_url}} est remplacé par le lien signé propre à chaque destinataire
     const template = {
       subject: '📰 Votre newsletter Action Culture',
       text: `Découvrez les nouveautés de la semaine sur Action Culture...`,
-      html: this.generateNewsletterHtml(newEvents, newOeuvres)
+      html: withUnsubscribeFooter(this.generateNewsletterHtml(newEvents, newOeuvres), '{{unsubscribe_url}}'),
+      headers: unsubscribeHeaders('{{unsubscribe_url}}')
     };
 
     // Pagination par batch pour éviter OOM sur grande base d'abonnés
@@ -364,7 +367,7 @@ class CronService {
 
       const emails = users.map(user => ({
         to: user.email,
-        data: { nom: user.nom, prenom: user.prenom }
+        data: { nom: user.nom, prenom: user.prenom, unsubscribe_url: buildUnsubscribeUrl(user.id_user) }
       }));
 
       await this.services.emailQueueService.addBulkEmails(emails, template);
@@ -575,16 +578,20 @@ class CronService {
    * Générer le HTML de la newsletter
    */
   generateNewsletterHtml(events, oeuvres) {
-    // Template HTML simple pour la newsletter
+    // Titres saisis par les utilisateurs : multilingues et échappés (pas de HTML injecté dans l'email)
+    const label = (v) => {
+      const text = v && typeof v === 'object' ? (v.fr || Object.values(v).find(Boolean) || '') : (v || '');
+      return String(text).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    };
     return `
       <h2>Les nouveautés de la semaine</h2>
       <h3>Nouveaux événements</h3>
       <ul>
-        ${events.map(e => `<li>${e.nom_evenement}</li>`).join('')}
+        ${events.map(e => `<li>${label(e.nom_evenement)}</li>`).join('')}
       </ul>
       <h3>Nouvelles œuvres</h3>
       <ul>
-        ${oeuvres.map(o => `<li>${o.titre}</li>`).join('')}
+        ${oeuvres.map(o => `<li>${label(o.titre)}</li>`).join('')}
       </ul>
     `;
   }

@@ -3113,6 +3113,11 @@
     "password": "Password",
     "confirmDelete": "Delete permanently",
     "deleteDone": "Your account has been deleted",
-    "deleteFailed": "Deletion failed: check your password"
+    "deleteFailed": "Deletion failed: check your password",
+    "newsletter": "Newsletter",
+    "newsletterHint": "Receive new events and works by email every week.",
+    "newsletterOn": "You are subscribed to the newsletter",
+    "newsletterOff": "You have unsubscribed from the newsletter",
+    "newsletterFailed": "Could not update, please try again"
   }
 }

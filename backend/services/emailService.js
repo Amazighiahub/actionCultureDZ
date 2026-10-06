@@ -120,9 +120,11 @@ class EmailService {
   /**
    * Méthode d'envoi d'email principale et générique.
    */
-  async sendEmail(to, subject, html, attachments = null, text = null) {
+  async sendEmail(to, subject, html, attachments = null, text = null, options = {}) {
+    const headers = options.headers || null;
     // Protection contre l'injection CRLF dans les en-têtes email
-    if (/[\r\n]/.test(to) || /[\r\n]/.test(subject)) {
+    if (/[\r\n]/.test(to) || /[\r\n]/.test(subject)
+        || (headers && Object.values(headers).some(v => /[\r\n]/.test(String(v))))) {
       logger.error(`Tentative d'injection email détectée — to: ${to?.substring(0, 50)}`);
       return { success: false, error: 'Invalid email headers' };
     }
@@ -139,6 +141,7 @@ class EmailService {
         subject,
         html,
         ...(text ? { text } : {}),
+        ...(headers ? { headers } : {}),
         attachments,
       };
 

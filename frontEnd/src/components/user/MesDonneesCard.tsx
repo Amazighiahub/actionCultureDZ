@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle
 } from '@/components/ui/dialog';
@@ -19,7 +20,12 @@ import { userService } from '@/services/user.service';
 export default function MesDonneesCard() {
   const { t } = useTranslation();
   const { toast } = useToast();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
+  // Consentement newsletter : retirable à tout moment (RGPD art. 7.3)
+  const [newsletter, setNewsletter] = useState<boolean>(
+    Boolean((user as { accepte_newsletter?: boolean } | null)?.accepte_newsletter)
+  );
+  const [savingNewsletter, setSavingNewsletter] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [password, setPassword] = useState('');
@@ -32,6 +38,20 @@ export default function MesDonneesCard() {
     toast(res.success
       ? { title: t('myData.exportDone', 'Vos données ont été téléchargées') }
       : { title: t('myData.exportFailed', 'Export impossible, réessayez plus tard'), variant: 'destructive' });
+  };
+
+  const handleNewsletter = async (checked: boolean) => {
+    setSavingNewsletter(true);
+    const res = await userService.updatePreferences({ newsletter: checked });
+    setSavingNewsletter(false);
+    if (res.success) {
+      setNewsletter(checked);
+      toast({ title: checked
+        ? t('myData.newsletterOn', 'Vous êtes abonné(e) à la newsletter')
+        : t('myData.newsletterOff', 'Vous êtes désabonné(e) de la newsletter') });
+    } else {
+      toast({ title: t('myData.newsletterFailed', 'Modification impossible, réessayez'), variant: 'destructive' });
+    }
   };
 
   const handleDelete = async () => {
@@ -67,6 +87,21 @@ export default function MesDonneesCard() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <Label htmlFor="newsletter-consent">{t('myData.newsletter', 'Newsletter')}</Label>
+            <p className="text-sm text-muted-foreground">
+              {t('myData.newsletterHint', 'Recevoir chaque semaine les nouveaux événements et œuvres par email.')}
+            </p>
+          </div>
+          <Switch
+            id="newsletter-consent"
+            checked={newsletter}
+            disabled={savingNewsletter}
+            onCheckedChange={handleNewsletter}
+          />
+        </div>
+
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-muted-foreground">
             {t('myData.exportHint', 'Fichier JSON contenant votre profil, vos contenus, inscriptions, favoris et notifications.')}

@@ -475,6 +475,15 @@ class UserService extends BaseService {
    * Retourne toutes les données associées à l'utilisateur au format JSON
    * @param {number} userId
    */
+  /**
+   * Retrait du consentement newsletter (lien de désinscription signé)
+   */
+  async unsubscribeNewsletter(userId) {
+    await this.repository.update(userId, { accepte_newsletter: false });
+    this.logger.info(`RGPD: désinscription newsletter: ${userId}`);
+    return true;
+  }
+
   async exportMyData(userId) {
     const models = this.repository.models;
     // unscoped : le defaultScope masque les IP de consentement, qui font partie des données à remettre

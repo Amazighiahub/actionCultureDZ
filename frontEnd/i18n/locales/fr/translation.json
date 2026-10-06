@@ -3103,6 +3103,11 @@
     "password": "Mot de passe",
     "confirmDelete": "Supprimer définitivement",
     "deleteDone": "Votre compte a été supprimé",
-    "deleteFailed": "Suppression impossible : vérifiez votre mot de passe"
+    "deleteFailed": "Suppression impossible : vérifiez votre mot de passe",
+    "newsletter": "Newsletter",
+    "newsletterHint": "Recevoir chaque semaine les nouveaux événements et œuvres par email.",
+    "newsletterOn": "Vous êtes abonné(e) à la newsletter",
+    "newsletterOff": "Vous êtes désabonné(e) de la newsletter",
+    "newsletterFailed": "Modification impossible, réessayez"
   }
 }

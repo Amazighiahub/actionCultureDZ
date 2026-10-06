@@ -108,6 +108,9 @@ const initUserRoutes = (models, authMiddleware) => {
 
   // RGPD (gdprController)
   router.delete('/profile', authenticate, strictLimiter, asyncHandler((req, res) => gdprController.deleteMyAccount(req, res)));
+  // Désinscription newsletter : lien signé dans chaque email (GET) et bouton « Se désabonner » des messageries (POST, RFC 8058)
+  router.get('/newsletter/unsubscribe', asyncHandler((req, res) => gdprController.unsubscribeNewsletter(req, res)));
+  router.post('/newsletter/unsubscribe', asyncHandler((req, res) => gdprController.unsubscribeNewsletter(req, res)));
   router.get('/profile/export', authenticate, asyncHandler((req, res) => gdprController.exportMyData(req, res)));
 
   // Recherche utilisateurs (reservee aux connectes, userAdminController gere
