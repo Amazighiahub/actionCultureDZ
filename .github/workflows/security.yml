@@ -24,6 +24,11 @@ permissions:
   # gitleaks-action lit la liste des commits de la PR
   pull-requests: read
 
+# redis-memory-server (outil de dev local) compile Redis a l installation :
+# inutile en CI (service Redis fourni) et source d echecs/lenteurs de npm ci
+env:
+  REDISMS_DISABLE_POSTINSTALL: "1"
+
 jobs:
   # ===========================================================================
   # Gitleaks PR : scan du diff uniquement (rapide, BLOQUANT).
