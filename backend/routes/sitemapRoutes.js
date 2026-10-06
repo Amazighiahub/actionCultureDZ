@@ -3,13 +3,37 @@
 
 const express = require('express');
 const { Op } = require('sequelize');
-const router = express.Router();
+const logger = require('../utils/logger');
+
+// Une rubrique lente ou en erreur ne doit jamais bloquer tout le sitemap (sinon 504)
+const QUERY_TIMEOUT_MS = 8000;
+function safeQuery(label, promiseFactory) {
+  const start = Date.now();
+  let timer;
+  const timeout = new Promise((resolve) => {
+    timer = setTimeout(() => {
+      logger.warn(`Sitemap: ${label} > ${QUERY_TIMEOUT_MS} ms, rubrique omise`);
+      resolve([]);
+    }, QUERY_TIMEOUT_MS);
+  });
+  const query = Promise.resolve()
+    .then(promiseFactory)
+    .then((rows) => {
+      const ms = Date.now() - start;
+      if (ms > 1000) logger.warn(`Sitemap: ${label} lent (${ms} ms)`);
+      return rows;
+    })
+    .catch((err) => { logger.warn(`Sitemap: erreur ${label}: ${err.message}`); return []; });
+  return Promise.race([query, timeout]).finally(() => clearTimeout(timer));
+}
 
 /**
  * Génère le sitemap XML dynamique
  * Inclut : pages statiques + toutes les pages détail (oeuvres, événements, patrimoine, artisanat)
  */
 const initSitemapRoutes = (models) => {
+  // Un routeur par initialisation (pas un singleton de module)
+  const router = express.Router();
   const FRONTEND_URL = (process.env.FRONTEND_URL || 'https://taladz.com').replace(/\/$/, '');
 
   // Helper : échappe les caractères spéciaux XML
@@ -28,6 +52,7 @@ const initSitemapRoutes = (models) => {
   };
 
   router.get('/', async (req, res) => {
+    const started = Date.now();
     try {
       let urls = '';
 
@@ -47,42 +72,42 @@ const initSitemapRoutes = (models) => {
       const SITEMAP_LIMIT = 50000;
       const [oeuvres, evenements, lieux, artisanats, articles] = await Promise.all([
         // Articles (types 4 et 5) exclus : ils ont leur propre adresse /articles/:id
-        models.Oeuvre ? models.Oeuvre.findAll({
+        models.Oeuvre ? safeQuery('oeuvres', () => models.Oeuvre.findAll({
           where: { statut: 'publie', id_type_oeuvre: { [Op.notIn]: [4, 5] } },
           attributes: ['id_oeuvre', 'date_modification'],
           order: [['date_modification', 'DESC']],
           limit: SITEMAP_LIMIT, raw: true
-        }).catch(err => { console.warn('⚠️ Sitemap: erreur oeuvres:', err.message); return []; }) : [],
+        })) : [],
 
-        models.Evenement ? models.Evenement.findAll({
+        models.Evenement ? safeQuery('evenements', () => models.Evenement.findAll({
           // Statuts visibles publiquement (memes regles que la liste et la fiche)
           where: { statut: ['publie', 'planifie', 'en_cours', 'termine'] },
           attributes: ['id_evenement', 'date_modification'],
           order: [['date_modification', 'DESC']],
           limit: SITEMAP_LIMIT, raw: true
-        }).catch(err => { console.warn('⚠️ Sitemap: erreur evenements:', err.message); return []; }) : [],
+        })) : [],
 
-        models.Lieu ? models.Lieu.findAll({
+        models.Lieu ? safeQuery('patrimoine', () => models.Lieu.findAll({
           where: { statut: 'publie' },
           attributes: ['id_lieu', 'updatedAt'],
           order: [['updatedAt', 'DESC']],
           limit: SITEMAP_LIMIT, raw: true
-        }).catch(err => { console.warn('⚠️ Sitemap: erreur patrimoine:', err.message); return []; }) : [],
+        })) : [],
 
         // Seulement les creations dont l'oeuvre est publiee (comme la fiche publique)
-        models.Artisanat ? models.Artisanat.findAll({
+        models.Artisanat ? safeQuery('artisanat', () => models.Artisanat.findAll({
           include: [{ model: models.Oeuvre, attributes: [], where: { statut: 'publie' }, required: true }],
           attributes: ['id_artisanat', 'updated_at'],
           order: [['updated_at', 'DESC']],
           limit: SITEMAP_LIMIT, raw: true
-        }).catch(err => { console.warn('⚠️ Sitemap: erreur artisanat:', err.message); return []; }) : [],
+        })) : [],
 
-        models.Oeuvre ? models.Oeuvre.findAll({
+        models.Oeuvre ? safeQuery('articles', () => models.Oeuvre.findAll({
           where: { statut: 'publie', id_type_oeuvre: [4, 5] },
           attributes: ['id_oeuvre', 'date_modification'],
           order: [['date_modification', 'DESC']],
           limit: SITEMAP_LIMIT, raw: true
-        }).catch(err => { console.warn('⚠️ Sitemap: erreur articles:', err.message); return []; }) : []
+        })) : []
       ]);
 
       oeuvres.forEach(o => { urls += urlBlock(`/oeuvres/${o.id_oeuvre}`, 'weekly', '0.7', o.date_modification); });
@@ -103,6 +128,7 @@ ${urls}</urlset>
       res.set('Content-Type', 'application/xml; charset=utf-8');
       res.set('Cache-Control', 'public, max-age=3600'); // Cache 1h
       res.send(xml);
+      logger.info(`Sitemap: ${(xml.match(/<loc>/g) || []).length} URL en ${Date.now() - started} ms`);
 
     } catch (error) {
       console.error('❌ Erreur génération sitemap:', error);
