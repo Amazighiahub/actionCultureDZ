@@ -39,8 +39,7 @@ const initUploadRoutes = (models, authMiddleware) => {
       message: 'API Upload - Action Culture',
       endpoints: {
         public: {
-          'POST /image/public': 'Upload public (inscription)',
-          'POST /document/public': 'Upload document public'
+          'POST /image/public': 'Upload public (inscription)'
         },
         authenticated: {
           'POST /image': 'Upload image generique',
@@ -78,14 +77,8 @@ const initUploadRoutes = (models, authMiddleware) => {
     (req, res) => uploadController.uploadPublicImage(req, res)
   );
 
-  router.post('/document/public',
-    ...rateLimitMiddleware.publicUpload,
-    multerErrorGuard(uploadService.uploadDocumentSafe(MAX_DOCUMENT_SIZE).single('document')),
-    validateMagicBytesBuffer(DOCUMENT_MIMES, { maxFileSize: MAX_DOCUMENT_SIZE }),
-    pushBufferToCloudinary({ type: 'document' }),
-    auditMiddleware.logAction('upload_document_public', { entityType: 'media' }),
-    (req, res) => uploadController.uploadPublicImage(req, res) // meme shape de reponse
-  );
+  // (pas d'upload public de documents : il permettait d'héberger des PDF anonymes sur notre
+  //  compte Cloudinary ; les documents passent par la route authentifiée /document)
 
   // ========================================================================
   // ROUTES AUTHENTIFIEES
