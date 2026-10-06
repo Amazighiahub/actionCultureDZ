@@ -3087,5 +3087,22 @@
     "invalidGPS": "Coordonnées GPS invalides",
     "fileTooLarge": "Le fichier est trop volumineux",
     "invalidFileType": "Type de fichier non supporté"
+  },
+  "myData": {
+    "title": "Mes données",
+    "description": "Vous pouvez à tout moment récupérer une copie de vos données ou supprimer votre compte.",
+    "exportHint": "Fichier JSON contenant votre profil, vos contenus, inscriptions, favoris et notifications.",
+    "export": "Exporter mes données",
+    "exportDone": "Vos données ont été téléchargées",
+    "exportFailed": "Export impossible, réessayez plus tard",
+    "dangerZone": "Zone de danger",
+    "deleteHint": "La suppression est définitive : vos données personnelles sont effacées et vos contributions publiques deviennent anonymes.",
+    "delete": "Supprimer mon compte",
+    "confirmTitle": "Supprimer définitivement votre compte ?",
+    "confirmText": "Cette action est irréversible. Saisissez votre mot de passe pour confirmer.",
+    "password": "Mot de passe",
+    "confirmDelete": "Supprimer définitivement",
+    "deleteDone": "Votre compte a été supprimé",
+    "deleteFailed": "Suppression impossible : vérifiez votre mot de passe"
   }
 }

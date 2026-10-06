@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import MesDonneesCard from '@/components/user/MesDonneesCard';
 import { useTranslation } from "react-i18next";
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useToast } from '@/components/ui/use-toast';
@@ -485,6 +486,7 @@ const DashboardUser = () => {
           {/* Onglet Profil */}
           <TabsContent value="profil" className="space-y-6">
             <ProfilEditableTab user={user} t={t} formatDate={formatDate} />
+            <MesDonneesCard />
           </TabsContent>
         </Tabs>
       </main>

@@ -92,6 +92,17 @@ class UserService extends BaseService<User> {
   }
 
   // Mot de passe et vérification
+  /** RGPD : télécharge toutes les données du compte au format JSON */
+  async exportMyData(): Promise<ApiResponse<Blob>> {
+    const date = new Date().toISOString().slice(0, 10);
+    return httpClient.download(API_ENDPOINTS.auth.exportData, `mes-donnees-${date}.json`);
+  }
+
+  /** RGPD : suppression définitive du compte, confirmée par le mot de passe */
+  async deleteMyAccount(password: string): Promise<ApiResponse<void>> {
+    return httpClient.delete<void>(API_ENDPOINTS.auth.deleteAccount, { password });
+  }
+
   async changePassword(data: ChangePasswordData): Promise<ApiResponse<void>> {
     return httpClient.post<void>(API_ENDPOINTS.auth.changePassword, data);
   }

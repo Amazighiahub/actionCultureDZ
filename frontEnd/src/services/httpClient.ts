@@ -608,9 +608,10 @@ class HttpClient {
     }, url, 'PATCH');
   }
 
-  async delete<T>(url: string): Promise<ApiResponse<T>> {
+  async delete<T>(url: string, body?: unknown): Promise<ApiResponse<T>> {
     return this.requestQueue.add(async () => {
-      const response = await this.axiosInstance.delete<ApiResponse<T>>(url);
+      // body optionnel : certaines suppressions exigent une confirmation (ex. mot de passe)
+      const response = await this.axiosInstance.delete<ApiResponse<T>>(url, body !== undefined ? { data: body } : undefined);
       return response.data;
     }, url, 'DELETE');
   }
