@@ -104,11 +104,7 @@ function buildRepository(models) {
     findById: jest.fn().mockResolvedValue(makeOeuvreInstance()),
     withTransaction: jest.fn().mockImplementation(async function(callback) {
       const tx = { commit: jest.fn(), rollback: jest.fn() };
-      try {
-        return await callback(tx);
-      } catch (e) {
-        throw e;
-      }
+      return callback(tx);
     }),
   };
 }
