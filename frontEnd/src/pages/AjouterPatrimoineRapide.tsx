@@ -146,7 +146,7 @@ const AjouterPatrimoineRapide: React.FC = () => {
     const validFiles = files.filter(f => f.type.startsWith('image/') && f.size <= 10 * 1024 * 1024);
 
     if (validFiles.length !== files.length) {
-      toast({ title: t('common.warning'), description: t('patrimoine.errors.invalidFiles', 'Certains fichiers sont invalides (images < 10 Mo)'), variant: 'destructive' });
+      toast({ title: t('common.warning', 'Attention'), description: t('patrimoine.errors.invalidFiles', 'Certains fichiers sont invalides (images < 10 Mo)'), variant: 'destructive' });
     }
 
     setMedias(prev => [...prev, ...validFiles]);

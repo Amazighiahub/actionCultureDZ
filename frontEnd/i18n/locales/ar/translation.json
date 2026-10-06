@@ -15,7 +15,7 @@
       "email": "البريد الإلكتروني",
       "password": "كلمة المرور",
       "tabTitle": "تسجيل الدخول",
-      "emailPlaceholder": "votre.email@exemple.com",
+      "emailPlaceholder": "name@example.com",
       "rememberMe": "تذكرني",
       "forgotPassword": "نسيت كلمة المرور؟",
       "loggingIn": "جاري تسجيل الدخول..."
@@ -79,7 +79,12 @@
       "hasAccount": "لديك حساب بالفعل؟",
       "login": "تسجيل الدخول",
       "loading": "جارٍ التسجيل...",
-      "submit": "إنشاء حسابي"
+      "submit": "إنشاء حسابي",
+      "day": "اليوم",
+      "month": "الشهر",
+      "year": "السنة",
+      "passwordHint": "12 حرفاً على الأقل، حرف كبير، حرف صغير، رقم، رمز خاص",
+      "min50chars": "(50 حرفاً على الأقل)"
     },
     "errors": {
       "fileMustBeImage": "يجب أن يكون الملف صورة",
@@ -136,7 +141,19 @@
       "accountSuspended": "حسابك معلق. اتصل بالمسؤول.",
       "accountBanned": "تم حظر حسابك",
       "tooManyAttempts": "محاولات تسجيل دخول كثيرة جداً. يرجى المحاولة لاحقاً.",
-      "confirmPasswordRequired": "يرجى تأكيد كلمة المرور"
+      "confirmPasswordRequired": "يرجى تأكيد كلمة المرور",
+      "checkEmail": "تحقق من بريدك الإلكتروني",
+      "checkPassword": "تحقق من كلمة المرور",
+      "passwordNeedUppercase": "يجب أن تحتوي كلمة المرور على حرف كبير واحد على الأقل",
+      "passwordNeedLowercase": "يجب أن تحتوي كلمة المرور على حرف صغير واحد على الأقل",
+      "passwordNeedDigit": "يجب أن تحتوي كلمة المرور على رقم واحد على الأقل",
+      "passwordNeedSpecial": "يجب أن تحتوي كلمة المرور على رمز خاص واحد على الأقل",
+      "portfolioInvalidUrl": "رابط غير صالح (يجب أن يبدأ بـ http:// أو https://)",
+      "invalidDate": "تاريخ غير صالح",
+      "futureDateNotAllowed": "لا يمكن أن يكون التاريخ في المستقبل",
+      "communeRequired": "البلدية إلزامية للحساب المهني",
+      "networkError": "مشكلة في الاتصال. تحقق من اتصالك بالإنترنت وأعد المحاولة.",
+      "timeout": "الخادم يستغرق وقتاً طويلاً للرد. يرجى إعادة المحاولة."
     },
     "success": {
       "loginTitle": "تم تسجيل الدخول بنجاح!",
@@ -188,7 +205,7 @@
       "title": "نسيت كلمة المرور",
       "description": "أدخل عنوان بريدك الإلكتروني وسنرسل لك رابطاً لإعادة تعيين كلمة المرور.",
       "emailLabel": "البريد الإلكتروني",
-      "emailPlaceholder": "votre.email@exemple.com",
+      "emailPlaceholder": "name@example.com",
       "submit": "إرسال الرابط",
       "sending": "جاري الإرسال...",
       "backToLogin": "العودة لتسجيل الدخول",
@@ -218,8 +235,28 @@
       "invalidToken": "رابط إعادة التعيين غير صالح أو منتهي الصلاحية.",
       "invalidTokenTitle": "رابط غير صالح",
       "invalidTokenDescription": "رابط إعادة التعيين غير صالح أو منتهي الصلاحية. يرجى طلب رابط جديد.",
-      "requestNewLink": "طلب رابط جديد"
-    }
+      "requestNewLink": "طلب رابط جديد",
+      "tokenExpired": "انتهت صلاحية هذا الرابط. يرجى طلب رابط جديد لإعادة التعيين."
+    },
+    "idleWarning": "الجلسة على وشك الانتهاء",
+    "idleWarningDesc": "سيتم تسجيل خروجك خلال دقيقتين بسبب عدم النشاط.",
+    "idleLogout": "انتهت الجلسة",
+    "idleLogoutDesc": "تم تسجيل خروجك بسبب عدم النشاط.",
+    "hidePassword": "إخفاء",
+    "showPassword": "إظهار",
+    "passwordRules": {
+      "uppercase": "يجب أن تحتوي على حرف كبير",
+      "lowercase": "يجب أن تحتوي على حرف صغير",
+      "digit": "يجب أن تحتوي على رقم",
+      "special": "يجب أن تحتوي على رمز خاص"
+    },
+    "togglePassword": "إظهار/إخفاء كلمة المرور",
+    "emailVerificationSent": "تم إرسال بريد التحقق",
+    "emailVerificationMessage": "تم إرسال بريد إلكتروني للتحقق إلى عنوانك.",
+    "professionalValidationNote": "بعد التحقق من بريدك الإلكتروني، سيخضع حسابك للمصادقة من قِبل أحد المشرفين.",
+    "backToLogin": "العودة إلى تسجيل الدخول",
+    "sessionExpired": "انتهت الجلسة",
+    "pleaseReconnect": "يرجى تسجيل الدخول مجدداً"
   },
   "categories": {
     "heritageTypes": {
@@ -330,7 +367,81 @@
     "clearSearch": "مسح البحث",
     "type": "النوع",
     "more": "أخرى",
-    "linkCopiedDesc": "تم نسخ الرابط إلى الحافظة"
+    "linkCopiedDesc": "تم نسخ الرابط إلى الحافظة",
+    "add": "إضافة",
+    "legalNotice": "الإشعارات القانونية",
+    "change": "تغيير",
+    "copyLink": "نسخ الرابط",
+    "done": "تم",
+    "daira": "الدائرة",
+    "selectWilayaFirst": "-- اختر الولاية أولًا --",
+    "selectDaira": "-- اختر الدائرة --",
+    "commune": "البلدية",
+    "selectDairaFirst": "-- اختر الدائرة أولًا --",
+    "selectCommune": "-- اختر البلدية --",
+    "showAll": "عرض جميع الخدمات",
+    "dateUndefined": "تاريخ غير محدد",
+    "status": "الحالة",
+    "unnamed": "بدون اسم",
+    "allTypes": "جميع الأنواع",
+    "untitled": "بدون عنوان",
+    "undefined": "غير محدد",
+    "validate": "مصادقة",
+    "reject": "رفض",
+    "noName": "بدون اسم",
+    "validation": "المصادقة",
+    "allValidations": "جميع حالات المصادقة",
+    "dropImageHere": "أفلت الصورة هنا",
+    "dragOrClickImage": "اسحب وأفلت أو انقر لإضافة صورة",
+    "changeImage": "تغيير الصورة",
+    "saving": "جارٍ الحفظ...",
+    "publishing": "جارٍ النشر...",
+    "create": "إنشاء",
+    "unknownError": "خطأ غير معروف",
+    "other": "أخرى...",
+    "warning": "تنبيه",
+    "next": "التالي",
+    "previous": "السابق",
+    "available": "متاح",
+    "unavailable": "غير متاح",
+    "authRequired": "تسجيل الدخول مطلوب",
+    "remove": "حذف",
+    "upload": "رفع",
+    "submitting": "جارٍ الإرسال...",
+    "hide": "إخفاء",
+    "show": "عرض",
+    "characters": "حرفاً",
+    "loadError": "خطأ في تحميل المقال",
+    "deleted": "تم الحذف",
+    "deletedDesc": "تم حذف العنصر",
+    "deleteError": "تعذّر الحذف",
+    "backToList": "العودة إلى القائمة",
+    "previousImage": "الصورة السابقة",
+    "nextImage": "الصورة التالية",
+    "confirmDelete": "تأكيد الحذف",
+    "confirmDeleteDesc": "هل أنت متأكد من رغبتك في حذف هذا العنصر؟ لا يمكن التراجع عن هذا الإجراء.",
+    "months": {
+      "jan": "جانفي",
+      "feb": "فيفري",
+      "mar": "مارس",
+      "apr": "أفريل",
+      "may": "ماي",
+      "jun": "جوان",
+      "jul": "جويلية",
+      "aug": "أوت",
+      "sep": "سبتمبر",
+      "oct": "أكتوبر",
+      "nov": "نوفمبر",
+      "dec": "ديسمبر"
+    },
+    "uncategorized": "غير مصنف",
+    "heritage": "التراث",
+    "unspecified": "غير محدد",
+    "service": "خدمة",
+    "unspecifiedLocation": "المكان غير محدد",
+    "removeFrom": "إزالة",
+    "notProvided": "غير مُدرج",
+    "unknown": "غير معروف"
   },
   "contributors": {
     "addedCount_one": "تمت إضافة مساهم واحد",
@@ -365,7 +476,8 @@
     },
     "loadingCraftsError": "فشل تحميل الحرف اليدوية",
     "loadingError": "خطأ في التحميل",
-    "partialDataLoad": "تم تحميل البيانات جزئياً"
+    "partialDataLoad": "تم تحميل البيانات جزئياً",
+    "loadingFailed": "حدث خطأ أثناء التحميل"
   },
   "events": {
     "create": {
@@ -414,25 +526,28 @@
       "loadTypesFailed": "خطأ أثناء تحميل أنواع الفعاليات",
       "loadOrgsFailed": "خطأ أثناء تحميل المنظمات",
       "startDateRequired": "تاريخ البداية مطلوب",
-      "endDateAfterStart": "تاريخ الانتهاء يجب أن يكون بعد تاريخ البداية",
-      "draftNameRequired": "الاسم مطلوب حتى للمسودة (لغة واحدة على الأقل)",
-      "typeRequired": "نوع الحدث مطلوب",
-      "updateSuccess": "تم تحديث الحدث بنجاح",
-      "success": "تم إنشاء الحدث بنجاح!",
+      "endDateAfterStart": "يجب أن يكون تاريخ النهاية بعد تاريخ البداية",
+      "draftNameRequired": "الاسم مطلوب حتى في المسودة (بلغة واحدة على الأقل)",
+      "typeRequired": "نوع الفعالية مطلوب",
+      "updateSuccess": "تم تحديث الفعالية بنجاح",
+      "success": "تم إنشاء الفعالية بنجاح!",
       "error": "خطأ أثناء الإنشاء",
-      "nameRequired": "اسم الحدث مطلوب (بالفرنسية أو العربية على الأقل)",
+      "nameRequired": "اسم الفعالية مطلوب (بالفرنسية أو العربية على الأقل)",
       "organisationRequired": "المنظمة مطلوبة للفعاليات الحضورية",
-      "virtualUrlRequired": "رابط الحدث الافتراضي مطلوب",
-      "imageRequired": "صورة الحدث مطلوبة",
-      "noOrganisation": "بصفتك محترفاً، يجب عليك إنشاء منظمة لتنظيم حدث حضوري. تمثل المنظمة هيكلك (جمعية، شركة، تعاونية، إلخ).",
+      "virtualUrlRequired": "رابط الفعالية الافتراضية مطلوب",
+      "imageRequired": "صورة الفعالية مطلوبة",
+      "noOrganisation": "بصفتك مهنيًا، يجب عليك إنشاء منظمة لتنظيم فعالية حضورية. تمثّل المنظمة هيكلك (جمعية، مؤسسة، تجمّع، إلخ).",
       "createOrganisation": "إنشاء منظمة",
-      "switchToVirtual": "إنشاء حدث افتراضي",
-      "noOrganisationYet": "ليس لديك منظمة بعد",
-      "virtualUrl": "رابط الحدث",
+      "switchToVirtual": "إنشاء فعالية افتراضية",
+      "noOrganisationYet": "ليست لديك منظمة بعد",
+      "virtualUrl": "رابط الفعالية",
       "virtualUrlPlaceholder": "https://zoom.us/j/... أو https://meet.google.com/...",
-      "virtualUrlHint": "رابط Zoom، Google Meet، YouTube Live، إلخ.",
-      "availableAfterCreation": "متاح بعد إنشاء الحدث",
-      "organisationRequiredMessage": "يجب عليك أولاً إنشاء منظمة لنشر حدث حضوري."
+      "virtualUrlHint": "رابط Zoom أو Google Meet أو YouTube Live، إلخ.",
+      "availableAfterCreation": "متاح بعد إنشاء الفعالية",
+      "organisationRequiredMessage": "يجب عليك أولًا إنشاء منظمة لنشر فعالية حضورية.",
+      "errorEvent": "خطأ أثناء إنشاء الفعالية",
+      "organisationRequiredShort": "المنظمة مطلوبة",
+      "createShort": "إنشاء"
     },
     "types": {
       "concert": "حفلة موسيقية",
@@ -450,7 +565,31 @@
     "participants": "مشاركين",
     "full": "مكتمل",
     "free": "مجاني",
-    "resultsCount": "حدث (أحداث) تم العثور عليها"
+    "resultsCount": "حدث (أحداث) تم العثور عليها",
+    "status": {
+      "draft": "مسودة",
+      "planned": "مُبرمجة",
+      "published": "منشورة",
+      "upcoming": "قادمة",
+      "ongoing": "جارية",
+      "finished": "منتهية",
+      "cancelled": "ملغاة"
+    },
+    "cancel": "إلغاء الفعالية",
+    "almostFull": "شبه مكتملة",
+    "title": "الفعاليات الثقافية",
+    "subtitle": "اكتشف الفعاليات الثقافية عبر الجزائر — مهرجانات، حفلات، معارض، محاضرات.",
+    "subtitleShort": "اكتشف الفعاليات الثقافية عبر الجزائر",
+    "searchPlaceholder": "ابحث عن فعالية...",
+    "noResults": "لم يتم العثور على أي فعالية",
+    "noResultsDesc": "حاول تعديل معايير البحث",
+    "removeFromFavorites": "إزالة من المفضلة",
+    "addToFavorites": "إضافة إلى المفضلة",
+    "contact": "اتصال",
+    "past": "سابقة",
+    "upcoming": "قادمة",
+    "upcomingLower": "قادمة",
+    "pastLower": "سابقة"
   },
   "footer": {
     "legal": "قانوني",
@@ -507,7 +646,8 @@
       "badge": "اكتشف التراث الثقافي الجزائري",
       "subtitle": "استكشف وحافظ وشارك الثراء الثقافي للجزائر",
       "explore": "استكشف التراث",
-      "contribute": "ساهم"
+      "contribute": "ساهم",
+      "addSite": "إضافة موقع"
     },
     "explore": {
       "subtitle": "اكتشف ثراء الثقافة الأمازيغية",
@@ -533,7 +673,11 @@
       "createWork": "أنشئ عملاً",
       "organizeEvent": "نظم فعالية",
       "subtitle": "انضم إلى مجتمعنا من الفنانين والحرفيين",
-      "title": "للمحترفين"
+      "title": "للمحترفين",
+      "badge": "فضاء المهنيين",
+      "visibility": "حضور أوسع",
+      "tools": "أدوات الإدارة",
+      "community": "مجتمع نشط"
     },
     "resources": {
       "access": "الوصول إلى الموارد",
@@ -613,9 +757,9 @@
       "noCrafts": "لا توجد حرف يدوية",
       "onOrder": "عند الطلب",
       "price": {
-        "from": "ابتداءً من",
+        "from": "ابتداءً من {{min}} دج",
         "range": "{{min}} - {{max}}",
-        "upTo": "حتى"
+        "upTo": "حتى {{max}} دج"
       },
       "seeDetails": "عرض التفاصيل",
       "stock": {
@@ -668,7 +812,8 @@
       "subtitle": "اكتشف الكنوز التاريخية والثقافية للجزائر من خلال خريطة تفاعلية",
       "title": "التراث الثقافي",
       "search": "البحث عن موقع...",
-      "tryDifferentSearch": "جرب بحثاً آخر أو أعد تعيين المرشحات"
+      "tryDifferentSearch": "جرب بحثاً آخر أو أعد تعيين المرشحات",
+      "noDescription": "الوصف قريباً..."
     },
     "works": {
       "actions": {
@@ -684,7 +829,7 @@
         "new": "جديد",
         "popular": "شائع"
       },
-      "createdIn": "أُنشئ في",
+      "createdIn": "أُنشئ في {{year}}",
       "details": "التفاصيل",
       "empty": {
         "noFeatured": "لا توجد أعمال مميزة حاليًا.",
@@ -815,6 +960,9 @@
       "title": "مرحباً بكم في",
       "titleHighlight": "تالا دي زد",
       "subtitle": "منصة رقمية مخصصة للحفاظ على التراث الثقافي الأمازيغي وتعزيزه"
+    },
+    "artisanat": {
+      "description": "اكتشف الحرف التقليدية الجزائرية وصنّاعها الشغوفين"
     }
   },
   "favorites": {
@@ -899,7 +1047,9 @@
       "sentCount_other": "أُرسل إلى {{count}} مستخدمين",
       "sentToUser": "تم إرسال الإشعار إلى {{name}}",
       "sentToGroup": "تم إرسال الإشعار إلى المجموعة {{group}}",
-      "sendError": "خطأ في إرسال الإشعار"
+      "sendError": "خطأ في إرسال الإشعار",
+      "titleRequired": "العنوان مطلوب",
+      "messageRequired": "الرسالة مطلوبة"
     },
     "moderation": {
       "title": "الإشراف",
@@ -931,8 +1081,19 @@
         "approve": "موافقة",
         "reject": "رفض",
         "warn": "تحذير",
-        "process": "معالجة"
-      }
+        "process": "معالجة",
+        "dismiss": "رفض البلاغ",
+        "dismissShort": "تجاهل",
+        "removeContent": "حذف المحتوى",
+        "removeContentShort": "حذف",
+        "suspend": "تعليق المستخدم",
+        "suspendShort": "تعليق"
+      },
+      "count": "{{count}} بلاغ(ات) قيد الانتظار",
+      "commentReports": "التعليقات",
+      "contentReports": "المحتويات",
+      "searchPlaceholder": "البحث عن بلاغ...",
+      "noReportsDesc": "لا يوجد بلاغ يطابق معاييرك"
     },
     "patrimoine": {
       "title": "إدارة التراث",
@@ -952,7 +1113,11 @@
       "deleteDialog": {
         "title": "حذف موقع تراثي",
         "description": "هل أنت متأكد من رغبتك في حذف \"{{name}}\"؟"
-      }
+      },
+      "deleted": "تم حذف الموقع بنجاح",
+      "count": "{{count}} موقع(مواقع)",
+      "noResults": "لم يتم العثور على أي موقع",
+      "noResultsDesc": "لا يوجد موقع يطابق معاييرك"
     },
     "overview": {
       "title": "نظرة عامة",
@@ -1005,13 +1170,60 @@
       "notifications": "الإشعارات"
     },
     "users": {
-      "title": "إدارة المستخدمين"
+      "title": "إدارة المستخدمين",
+      "count": "{{count}} مستخدم(ين)",
+      "notifyProfessionals": "إشعار المهنيين",
+      "searchPlaceholder": "البحث بالاسم أو البريد الإلكتروني...",
+      "selectAll": "اختر الكل",
+      "selectedCount": "{{count}} محدد(ة)",
+      "bulkActivate": "تفعيل",
+      "bulkDeactivate": "تعطيل",
+      "clearSelection": "إلغاء التحديد",
+      "noUsers": "لا يوجد مستخدمون",
+      "noUsersDesc": "لا يوجد مستخدم يطابق معايير البحث",
+      "selectUser": "تحديد {{name}}",
+      "registeredOn": "مسجّل منذ {{date}}",
+      "sendEmail": "إرسال بريد إلكتروني",
+      "verifyEmail": "التحقق من البريد الإلكتروني",
+      "reactivate": "إعادة التفعيل",
+      "suspend": "تعليق",
+      "confirmDelete": "حذف هذا المستخدم؟",
+      "confirmDeleteDesc": "هذا الإجراء لا يمكن التراجع عنه. سيتم حذف جميع بيانات المستخدم.",
+      "confirmSuspend": "تعليق هذا المستخدم؟",
+      "confirmSuspendDesc": "سيتم تعليق المستخدم لمدة 7 أيام.",
+      "confirmBulkDelete": "حذف {{count}} مستخدم(ين)؟",
+      "confirmBulkDeleteDesc": "هذا الإجراء لا يمكن التراجع عنه."
     },
     "oeuvres": {
-      "title": "إدارة الأعمال"
+      "title": "إدارة الأعمال",
+      "count": "{{count}} عمل(أعمال)",
+      "searchPlaceholder": "البحث بالعنوان...",
+      "noOeuvres": "لا توجد أعمال",
+      "noOeuvresDesc": "لا يوجد عمل يطابق معاييرك",
+      "table": {
+        "title": "العنوان",
+        "type": "النوع",
+        "author": "المؤلف",
+        "status": "الحالة",
+        "date": "التاريخ",
+        "actions": "الإجراءات"
+      },
+      "confirmDelete": "حذف هذا العمل؟",
+      "confirmDeleteDesc": "هذا الإجراء لا يمكن التراجع عنه."
     },
     "events": {
-      "title": "إدارة الفعاليات"
+      "title": "إدارة الفعاليات",
+      "count": "{{count}} فعالية(ات)",
+      "searchPlaceholder": "البحث بالاسم...",
+      "noEvents": "لا توجد فعاليات",
+      "noEventsDesc": "لا توجد فعالية تطابق معاييرك",
+      "participants": "{{count}} مشاركين",
+      "cancel": "إلغاء",
+      "confirmCancel": "إلغاء هذه الفعالية؟",
+      "confirmCancelDesc": "سيتم إشعار المشاركين بالإلغاء.",
+      "cancelEvent": "إلغاء الفعالية",
+      "confirmDelete": "حذف هذه الفعالية؟",
+      "confirmDeleteDesc": "هذا الإجراء لا يمكن التراجع عنه."
     },
     "services": {
       "title": "إدارة الخدمات",
@@ -1022,8 +1234,12 @@
         "transport": "نقل",
         "accommodation": "إقامة",
         "workshop": "ورشة"
-      }
-    }
+      },
+      "count": "{{count}} خدمة(خدمات)",
+      "noServicesDesc": "لا توجد خدمة تطابق معاييرك"
+    },
+    "emailVerified": "تم التحقق من البريد الإلكتروني بنجاح",
+    "emailVerifyFailed": "تعذّر التحقق من البريد الإلكتروني"
   },
   "works": {
     "actions": {
@@ -1034,7 +1250,10 @@
       "readExcerpt": "قراءة مقتطف",
       "readNow": "اقرأ الآن",
       "trailer": "المقطع الدعائي",
-      "watchNow": "شاهد الآن"
+      "watchNow": "شاهد الآن",
+      "addFavorite": "المفضلة",
+      "addToFavorites": "إضافة إلى المفضلة",
+      "watchTrailer": "مشاهدة الإعلان الترويجي"
     },
     "album": {
       "tracksCount_one": "مقطع واحد",
@@ -1050,7 +1269,8 @@
       "minutes_zero": "أقل من دقيقة",
       "minutes_two": "دقيقتان",
       "minutes_few": "{{count}} دقائق",
-      "minutes_many": "{{count}} دقيقة"
+      "minutes_many": "{{count}} دقيقة",
+      "label": "المدة"
     },
     "fields": {
       "isbn": "الرقم الدولي المعياري للكتاب",
@@ -1077,7 +1297,13 @@
       "reviewsCount_zero": "لا توجد تقييمات",
       "reviewsCount_two": "تقييمان",
       "reviewsCount_few": "{{count}} تقييمات",
-      "reviewsCount_many": "{{count}} تقييماً"
+      "reviewsCount_many": "{{count}} تقييماً",
+      "listens": "استماع",
+      "reviews": "تقييمات",
+      "total": "الأعمال",
+      "new": "الجديد",
+      "types": "الأنواع",
+      "classics": "الكلاسيكيات"
     },
     "types": {
       "album": "ألبوم",
@@ -1087,7 +1313,49 @@
     "create": {
       "success": "تم إنشاء العمل بنجاح! جاري التحويل..."
     },
-    "resultsCount": "عمل (أعمال) تم العثور عليها"
+    "resultsCount": "عمل (أعمال) تم العثور عليها",
+    "zoom": "تكبير",
+    "noDescription": "لا يوجد وصف متاح لهذا الألبوم.",
+    "flipToFront": "انقر لعرض الغلاف",
+    "viewCover": "عرض الغلاف",
+    "viewDetails": "عرض التفاصيل على الظهر",
+    "inFavorites": "في المفضلة",
+    "artist": "الفنان",
+    "noAudio": "لا يوجد مقطع صوتي متاح حاليًا",
+    "noCover": "لا يوجد غلاف متاح",
+    "description": "الوصف",
+    "noSynopsisFilm": "لا يوجد ملخص متاح لهذا الفيلم.",
+    "directedBy": "المخرج",
+    "flipToFrontFilm": "انقر لعرض الملصق",
+    "viewPoster": "عرض الملصق",
+    "viewSynopsis": "عرض الملخص على الظهر",
+    "noTrailer": "لا يوجد إعلان ترويجي متاح حاليًا",
+    "noPoster": "لا يوجد ملصق متاح",
+    "synopsis": "الملخص",
+    "noDescriptionBook": "لا يوجد وصف متاح لهذا الكتاب.",
+    "flipToFrontBook": "انقر لعرض الغلاف",
+    "viewCoverBook": "عرض الغلاف",
+    "viewSummary": "عرض الملخص على الظهر",
+    "removeFromFavorites": "إزالة من المفضلة",
+    "excerpt": {
+      "title": "مقتطف من",
+      "noContent": "لا يوجد محتوى متاح لهذا الكتاب."
+    },
+    "noCoverBook": "لا يوجد غلاف متاح",
+    "summary": "الملخص",
+    "title": "الأعمال الثقافية",
+    "subtitle": "استكشف ثراء التراث الثقافي الجزائري — الأدب، السينما، الموسيقى، الرسم والفنون.",
+    "subtitleShort": "استكشف ثراء التراث الثقافي الجزائري",
+    "searchPlaceholder": "ابحث عن عمل...",
+    "filterByType": "النوع",
+    "sort": {
+      "recent": "الأحدث",
+      "popular": "الأكثر مشاهدة",
+      "rated": "الأعلى تقييماً",
+      "title": "العنوان أ-ي"
+    },
+    "noResults": "لم يتم العثور على أي عمل",
+    "noResultsDesc": "حاول تعديل معايير البحث"
   },
   "verifyemailpage": {
     "vrification_russie": "تم التحقق بنجاح!",
@@ -1135,11 +1403,13 @@
     "placeholder_crivez_votre_commentaire": "اكتب تعليقك هنا...",
     "annuler": "إلغاء",
     "envoi": "جاري الإرسال...",
-    "envoyer": "إرسال"
+    "envoyer": "إرسال",
+    "partager_desc": "شارك هذا العمل على شبكاتك"
   },
   "notfound": {
     "oops_page_not": "عذراً! الصفحة غير موجودة",
-    "return_home": "العودة إلى الصفحة الرئيسية"
+    "return_home": "العودة إلى الصفحة الرئيسية",
+    "description": "الصفحة التي تبحث عنها غير موجودة أو تم نقلها."
   },
   "eventdetailspage": {
     "erreur": "خطأ",
@@ -1254,7 +1524,23 @@
     "membre_depuis": "عضو منذ",
     "vous_souhaitez_crer": "هل تريد إنشاء محتوى؟",
     "devenir_professionnel": "كن محترفًا",
-    "modifier_profil": "تعديل الملف الشخصي"
+    "modifier_profil": "تعديل الملف الشخصي",
+    "markReadFailed": "تعذّر تعليم الإشعار كمقروء.",
+    "markAllReadFailed": "تعذّر تعليم جميع الإشعارات كمقروءة.",
+    "actualiser": "تحديث",
+    "loadFavorisFailed": "حدث خطأ أثناء تحميل المفضلة",
+    "markAllRead": "تعليم الكل كمقروء",
+    "loadNotifsFailed": "حدث خطأ أثناء تحميل الإشعارات",
+    "confirm_remove_title": "إزالة من المفضلة",
+    "confirm_remove_favorite": "هل تريد إزالة هذا العنصر من مفضلتك؟",
+    "profileUpdated": "تم تحديث الملف الشخصي",
+    "updateFailed": "حدث خطأ أثناء التحديث",
+    "photoUpdated": "تم تحديث الصورة",
+    "changePhoto": "تغيير الصورة",
+    "photoHelper": "JPG أو PNG أو WebP. الحد الأقصى 5 MB.",
+    "emailReadOnly": "لا يمكن تعديل البريد الإلكتروني",
+    "biographie": "السيرة الذاتية",
+    "biographiePlaceholder": "عرّف بنفسك في بضعة أسطر..."
   },
   "dashboardpro": {
     "participants": "مشاركين",
@@ -1300,7 +1586,12 @@
     "sur_commande": "حسب الطلب",
     "indisponible": "غير متاح",
     "manage": "إدارة",
-    "manage_event": "إدارة البرامج والأعمال"
+    "manage_event": "إدارة البرامج والأعمال",
+    "loadOeuvresFailed": "حدث خطأ أثناء تحميل الأعمال",
+    "loadEventsFailed": "حدث خطأ أثناء تحميل الفعاليات",
+    "loadServicesFailed": "حدث خطأ أثناء تحميل الخدمات",
+    "loadArtisanatsFailed": "حدث خطأ أثناء تحميل المنتجات الحرفية",
+    "loadPatrimoinesFailed": "حدث خطأ أثناء تحميل المواقع التراثية"
   },
   "dashboardadmin": {
     "label_validation": "التحقق",
@@ -1608,7 +1899,41 @@
       "textile": "نسيج",
       "metal": "معدن",
       "bijoux": "مجوهرات"
-    }
+    },
+    "title": "الحرف التقليدية الجزائرية",
+    "subtitle": "اكتشف الحرف الفنية والإبداعات التقليدية في الجزائر — الفخار، الزرابي، الحلي، الجلود.",
+    "subtitleShort": "اكتشف الحرف الفنية والإبداعات التقليدية في الجزائر",
+    "stats": {
+      "products": "المنتجات",
+      "materials": "المواد",
+      "techniques": "التقنيات",
+      "artisans": "الحرفيون"
+    },
+    "searchPlaceholder": "ابحث عن منتج حرفي...",
+    "filterByMaterial": "المادة",
+    "filterByTechnique": "التقنية",
+    "sort": {
+      "recent": "الأحدث",
+      "popular": "الأكثر شعبية",
+      "priceAsc": "السعر تصاعدياً",
+      "priceDesc": "السعر تنازلياً"
+    },
+    "noResults": "لم يتم العثور على أي منتج حرفي",
+    "noResultsDesc": "حاول تعديل معايير البحث",
+    "resultsCount": "منتج (منتجات) تم العثور عليها",
+    "notFound": "المنتج الحرفي غير موجود",
+    "noDescription": "لا يوجد وصف متاح",
+    "dimensions": "الأبعاد",
+    "weight": "الوزن",
+    "material": "المادة",
+    "technique": "التقنية",
+    "craftsman": "الحرفي",
+    "biography": "السيرة الذاتية",
+    "noArtisanInfo": "معلومات الحرفي غير متوفرة",
+    "comments": "التعليقات",
+    "artisanWorks": "أعمال أخرى للحرفي",
+    "noOtherWorks": "لا توجد أعمال أخرى لهذا الحرفي حالياً",
+    "similarCreations": "إبداعات مشابهة"
   },
   "apropos": {
     "title_transmission": "النقل",
@@ -1636,7 +1961,87 @@
     "envoyer_message": "إرسال الرسالة",
     "contact_direct": "اتصال مباشر",
     "pour_toute_question": "لأي سؤال أو تعاون:",
-    "contactculturealgeriedz": "contact@taladz.com"
+    "contactculturealgeriedz": "contact@taladz.com",
+    "champsRequis": "حقول مطلوبة",
+    "emailMessageRequis": "البريد الإلكتروني والرسالة إلزاميان.",
+    "messageEnvoye": "تم إرسال الرسالة",
+    "messageEnvoyeDesc": "لقد استلمنا رسالتك. سنرد عليك في أقرب وقت.",
+    "erreurEnvoi": "حدث خطأ أثناء الإرسال.",
+    "erreurEnvoiMessage": "حدث خطأ أثناء إرسال الرسالة.",
+    "conditions": "شروط الاستخدام",
+    "cgu": {
+      "objet": "1. الموضوع",
+      "objetText": "تنظّم شروط الاستخدام العامة هذه الوصول إلى منصة Tala DZ (taladz.com) واستخدامها، والمشار إليها فيما يلي بـ«المنصة». بإنشائك حساباً أو استخدامك للمنصة، فإنك توافق دون تحفظ على شروط الاستخدام هذه وعلى سياسة الخصوصية.",
+      "acces": "2. الوصول والتسجيل",
+      "accesText": "الوصول إلى المنصة مجاني للزوار. إنشاء الحساب مجاني ومتاح للأشخاص البالغين 13 سنة على الأقل. تخضع الحسابات المهنية للمصادقة من قِبل فريق الإشراف لدينا. أنت مسؤول عن سرية بيانات تسجيل الدخول الخاصة بك.",
+      "contenu": "3. المحتوى المنشور",
+      "contenuText": "تحتفظ بحقوق الملكية الفكرية لمحتوياتك. بنشرك على المنصة، تمنح Tala DZ ترخيصاً غير حصري ومجانياً لعرض محتوياتك وتوزيعها والترويج لها في إطار المنصة. يجب أن يحترم المحتوى المنشور القوانين السارية وحقوق المؤلف، وألا يتضمن أي عبارات تشهيرية أو تمييزية أو غير مشروعة. نحتفظ بحق الإشراف على أي محتوى غير لائق أو حذفه.",
+      "responsabilite": "4. المسؤولية",
+      "responsabiliteText": "تبذل Tala DZ قصارى جهدها لضمان توفر المنصة وأمنها، دون ضمان تشغيلها دون انقطاع. لا نتحمل المسؤولية عن المحتويات التي ينشرها المستخدمون. في حال نشوء نزاع، يُطبَّق القانون الجزائري.",
+      "modification": "5. تعديل شروط الاستخدام",
+      "modificationText": "يمكننا تعديل شروط الاستخدام هذه في أي وقت. سيتم إعلام المستخدمين عبر إشعار على المنصة. ويُعدّ استمرار الاستخدام بعد التعديل قبولاً للشروط الجديدة."
+    },
+    "confidentialite": "سياسة الخصوصية",
+    "privacy": {
+      "responsable": "1. المسؤول عن المعالجة",
+      "responsableText": "المسؤول عن معالجة البيانات الشخصية هو Tala DZ، المتاحة على العنوان taladz.com. لأي سؤال يتعلق بحماية بياناتك، يمكنك التواصل معنا على العنوان: contact@taladz.com.",
+      "donnees": "2. البيانات المجمّعة",
+      "donneesIntro": "نجمع فقط البيانات الضرورية لتشغيل المنصة:",
+      "donneesIdentite": "بيانات الهوية: اللقب، الاسم، البريد الإلكتروني (إلزامية عند التسجيل)",
+      "donneesOptionnelles": "بيانات اختيارية: تاريخ الميلاد، الجنس، الهاتف، العنوان، صورة الملف الشخصي، السيرة الذاتية",
+      "donneesPro": "بيانات مهنية (عند الاقتضاء): المؤسسة، التخصصات، الشهادات، الموقع الإلكتروني",
+      "donneesNavigation": "بيانات التصفح: عنوان IP (مجهول الهوية)، الصفحات المطّلع عليها، نوع الجهاز",
+      "pasDeVente": "لا تُباع معلوماتك الشخصية أبداً لأطراف ثالثة.",
+      "finalites": "3. الأغراض والأساس القانوني",
+      "finaliteCompte": "إدارة حسابك والمصادقة — الأساس القانوني: تنفيذ العقد (شروط الاستخدام)",
+      "finaliteContenu": "نشر محتوياتك الثقافية وعرضها — الأساس القانوني: تنفيذ العقد",
+      "finaliteStats": "إحصائيات زيارات مجهولة الهوية — الأساس القانوني: المصلحة المشروعة",
+      "finaliteNewsletter": "إرسال النشرة الإخبارية (فقط إذا وافقت عليها) — الأساس القانوني: الموافقة، ويمكن سحبها في أي وقت عبر الرابط الموجود في كل بريد إلكتروني أو من قسم «بياناتي»",
+      "finaliteSecurite": "أمن المنصة (الوقاية من التجاوزات) — الأساس القانوني: المصلحة المشروعة",
+      "conservation": "4. مدة الاحتفاظ",
+      "conservationCompte": "بيانات الحساب: يُحتفظ بها ما دام حسابك نشطاً",
+      "conservationNotifs": "الإشعارات: تُحذف تلقائياً بعد 90 يوماً",
+      "conservationLogs": "سجلات الاتصال: 90 يوماً كحد أقصى",
+      "conservationSuppression": "في حال حذف الحساب: تُمحى بياناتك الشخصية، وتصبح مساهماتك العامة مجهولة الهوية",
+      "conservationSauvegardes": "النسخ الاحتياطية: يُحتفظ بها 7 أيام؛ وتختفي منها بيانات الحساب المحذوف خلال هذه المدة",
+      "droits": "5. حقوقك",
+      "droitsIntro": "وفقاً للتشريع الساري وللائحة العامة لحماية البيانات (RGPD)، تتمتع بالحقوق التالية:",
+      "droitAcces": "حق الاطلاع",
+      "droitAccesDesc": "— الاطلاع على جميع بياناتك وتصديرها من ملفك الشخصي",
+      "droitRectification": "حق التصحيح",
+      "droitRectificationDesc": "— تعديل معلوماتك الشخصية في أي وقت",
+      "droitSuppression": "حق المحو",
+      "droitSuppressionDesc": "— حذف حسابك وجميع بياناتك الشخصية",
+      "droitPortabilite": "حق نقل البيانات",
+      "droitPortabiliteDesc": "— تصدير بياناتك بصيغة قابلة للقراءة آلياً (JSON)",
+      "droitOpposition": "حق الاعتراض",
+      "droitOppositionDesc": "— إدارة تفضيلات الإشعارات والخصوصية",
+      "droitsExercice": "لممارسة حقوقك، توجّه إلى قسم «بياناتي» في ملفك الشخصي (التصدير، حذف الحساب، النشرة الإخبارية) أو راسلنا على contact@taladz.com.",
+      "soustraitants": "6. المعالجون من الباطن",
+      "soustraitantsIntro": "لضمان تشغيل المنصة، نستعين بالخدمات التالية:",
+      "soustraitantCloudinary": "Cloudinary — استضافة الصور والوسائط التي تنشرها (خوادم موجودة خارج الجزائر)",
+      "soustraitantEmail": "مزوّد خدمة إرسال البريد الإلكتروني (SMTP) — رسائل المعاملات والنشرة الإخبارية (عنوان بريدك الإلكتروني)",
+      "soustraitantOSM": "OpenStreetMap / Nominatim — خلفيات الخرائط والترميز الجغرافي: يُرسَل عنوان IP الخاص بك إلى خوادمهم عند عرض خريطة",
+      "soustraitantUnsplash": "Unsplash — بعض الصور التوضيحية: يُرسَل عنوان IP الخاص بك عند عرضها",
+      "soustraitantsPas": "لا تُباع أي بيانات شخصية ولا تُؤجَّر ولا يُتنازل عنها لأغراض تجارية. الخطوط والأيقونات مستضافة على المنصة نفسها.",
+      "cookies": "7. ملفات تعريف الارتباط (الكوكيز)",
+      "cookiesText": "تستخدم المنصة فقط ملفات تعريف الارتباط الضرورية تماماً لتشغيلها (المصادقة، تفضيل اللغة، أمان CSRF). لا تُستخدم أي ملفات تعريف ارتباط إعلانية أو تتبعية تابعة لأطراف ثالثة.",
+      "reclamation": "8. حق تقديم الشكوى",
+      "reclamationText": "إذا رأيت أن معالجة بياناتك لا تحترم التنظيم المعمول به، يمكنك تقديم شكوى لدى سلطة حماية البيانات في بلدك (في فرنسا: CNIL — cnil.fr، وفي الجزائر: ANPDP)."
+    },
+    "mentionsLegales": "الإشعارات القانونية",
+    "mentions": {
+      "editeur": "ناشر المنصة",
+      "editeurText": "Tala DZ — منصة تشاركية لتثمين التراث الثقافي الجزائري.",
+      "editeurContact": "للتواصل: contact@taladz.com",
+      "editeurSite": "الموقع الإلكتروني: taladz.com",
+      "hebergeur": "الاستضافة",
+      "hebergeurText": "المنصة مستضافة على خادم VPS مخصص ومؤمَّن (HTTPS، شهادة Let's Encrypt).",
+      "dpo": "حماية البيانات",
+      "dpoText": "لأي سؤال يتعلق بحماية بياناتك الشخصية، يمكنك التواصل مع مندوب حماية البيانات لدينا على العنوان: contact@taladz.com."
+    },
+    "ressources": "الموارد",
+    "ressourcesText": "توفر ثقافة الجزائر موارد لاكتشاف التراث الثقافي الجزائري والترويج له: الفعاليات، الأعمال، الحرف التقليدية، المواقع التراثية وغيرها الكثير."
   },
   "ajouteroeuvre": {
     "chargement_des_catgories": "جاري تحميل الفئات...",
@@ -1756,8 +2161,30 @@
     "producteur": "المنتج",
     "placeholder_producteur": "اسم المنتج",
     "studio": "استوديو الإنتاج",
-    "placeholder_studio": "Nom du studio",
-    "type_hint": "اختر النوع الذي يتوافق مع عملك. للمقالات والمقالات العلمية، يتيح المحرر المتقدم تنسيقاً غنياً بالكتل (عناوين، صور، اقتباسات، جداول)."
+    "placeholder_studio": "اسم الاستوديو",
+    "type_hint": "اختر النوع الذي يتوافق مع عملك. للمقالات والمقالات العلمية، يتيح المحرر المتقدم تنسيقاً غنياً بالكتل (عناوين، صور، اقتباسات، جداول).",
+    "langueOriginale": "اللغة الأصلية للعمل",
+    "choisirLangue": "-- اختر اللغة --",
+    "categoriesLoadError": "تعذّر تحميل الفئات",
+    "deselectAll": "إلغاء تحديد الكل",
+    "selectAll": "اختر الكل",
+    "preciserTechnique": "حدّد التقنية...",
+    "choisirTechnique": "-- اختر تقنية --",
+    "preciserSupport": "حدّد الحامل...",
+    "choisirSupport": "-- اختر حاملًا --",
+    "isbnHelper": "الصيغة: 978-2-1234-5678-9",
+    "doiHelper": "الصيغة: 10.1234/example",
+    "erreur_upload": "خطأ أثناء رفع الملفات",
+    "articleCreateError": "خطأ أثناء إنشاء المقال",
+    "articleSaveError": "خطأ أثناء حفظ المقال",
+    "updatingOeuvre": "جارٍ تحديث العمل...",
+    "creatingOeuvre": "جارٍ إنشاء العمل...",
+    "uploadingMedias": "جارٍ رفع الوسائط...",
+    "updateError": "خطأ أثناء التحديث",
+    "createError": "خطأ أثناء إنشاء العمل",
+    "uploadingMedia": "جارٍ رفع الوسائط...",
+    "verifyError": "تعذّر التحقق مما إذا تم إنشاء العمل. يرجى مراجعة لوحة التحكم أو إعادة المحاولة.",
+    "saveError": "حدث خطأ أثناء الحفظ"
   },
   "common_patrimoinesection": {
     "description_citadelle_historique_classe": "قلعة تاريخية مصنفة كتراث عالمي لليونسكو",
@@ -1898,7 +2325,15 @@
     "retour_aux_notifications": "العودة إلى الإشعارات",
     "enregistrement": "جاري الحفظ...",
     "enregistr": "تم الحفظ",
-    "enregistrer_les_prfrences": "حفظ التفضيلات"
+    "enregistrer_les_prfrences": "حفظ التفضيلات",
+    "errorLoad": "تعذّر تحميل التفضيلات",
+    "errorSave": "تعذّر حفظ التفضيلات",
+    "browserEnabled": "✓ الإشعارات مفعّلة",
+    "browserDisabled": "✗ الإشعارات معطّلة",
+    "emailEnabled": "✓ الإشعارات عبر البريد الإلكتروني مفعّلة",
+    "emailDisabled": "✗ الإشعارات عبر البريد الإلكتروني معطّلة",
+    "smsEnabled": "✓ إشعارات SMS مفعّلة",
+    "smsDisabled": "✗ إشعارات SMS معطّلة"
   },
   "notifications_notifications": {
     "voir_plus": "عرض المزيد ←",
@@ -1921,7 +2356,11 @@
     "tout_marquer_comme": "وضع علامة مقروء على الكل",
     "supprimer_les_lues": "حذف المقروءة",
     "chargement_des_notifications": "جاري تحميل الإشعارات...",
-    "aucune_notification": "لا توجد إشعارات"
+    "aucune_notification": "لا توجد إشعارات",
+    "connected": "متصل",
+    "disconnected": "غير متصل",
+    "loading": "جارٍ التحميل...",
+    "loadMore": "تحميل المزيد"
   },
   "articles_articleviewpage": {
     "chargement_larticle": "جاري تحميل المقال...",
@@ -1997,7 +2436,10 @@
     "type": "نوع",
     "disponible": "متاح",
     "annuler": "إلغاء",
-    "ajouter_lintervenant": "إضافة المتدخل"
+    "ajouter_lintervenant": "إضافة المتدخل",
+    "error_prenom_required": "الاسم الأول إلزامي",
+    "error_nom_required": "اللقب إلزامي",
+    "error_role_required": "يرجى اختيار نوع الدور"
   },
   "modals_editeurmodal": {
     "ajouter_diteur": "إضافة ناشر",
@@ -2009,7 +2451,10 @@
     "site_web": "الموقع الإلكتروني",
     "optionnel_lurl_doit": "اختياري - يجب أن يبدأ الرابط بـ http:// أو https://",
     "annuler": "إلغاء",
-    "crer_lditeur": "إنشاء الناشر"
+    "crer_lditeur": "إنشاء الناشر",
+    "error_nom_required": "اسم الناشر إلزامي",
+    "error_type_required": "نوع الناشر إلزامي",
+    "error_url_invalid": "يجب أن يبدأ الرابط بـ http:// أو https://"
   },
   "dashboard_dashboardfilters": {
     "type": "النوع:",
@@ -2209,7 +2654,12 @@
     "addedDesc": "تم نشر تعليقك بنجاح",
     "errorSubmit": "خطأ في إرسال التعليق",
     "errorEmpty": "لا يمكن أن يكون التعليق فارغاً",
-    "loginRequired": "سجل الدخول للتعليق"
+    "loginRequired": "سجل الدخول للتعليق",
+    "reportSuccess": "تم إرسال الإبلاغ. شكراً لك.",
+    "reportError": "حدث خطأ أثناء الإبلاغ.",
+    "errorTooShort": "يجب أن يحتوي التعليق على 3 أحرف على الأقل",
+    "successTitle": "تم نشر التعليق",
+    "successDesc": "تم نشر رأيك بنجاح."
   },
   "oeuvre": {
     "addToFavorites": "أضف إلى المفضلة",
@@ -2334,7 +2784,64 @@
     "dimensions": "الأبعاد",
     "weight": "الوزن",
     "price": "السعر",
-    "verified": "عمل موثق ومنشور"
+    "verified": "عمل موثق ومنشور",
+    "yearCreation": "سنة الإنشاء",
+    "materials": "المواد",
+    "pageCount": "عدد الصفحات",
+    "publicationDate": "تاريخ النشر",
+    "gallery": "المعرض",
+    "readOriginal": "المقال الأصلي",
+    "abstract": "الملخص",
+    "viewOnDOI": "عرض على DOI.org",
+    "backCover": "الغلاف الخلفي",
+    "share": {
+      "text": "اكتشف \"{{title}}\" - {{type}}"
+    },
+    "errors": {
+      "loadMetadataFailed": "تعذّر تحميل البيانات اللازمة للاستمارة.",
+      "loadRefFailed": "تعذّر تحميل البيانات المرجعية",
+      "connectionError": "خطأ في الاتصال بالخادم. يرجى إعادة المحاولة.",
+      "titleRequired": "العنوان مطلوب (بالفرنسية أو العربية على الأقل)",
+      "typeRequired": "يرجى اختيار نوع العمل",
+      "descriptionRequired": "الوصف مطلوب (بالفرنسية أو العربية على الأقل)",
+      "categoryRequired": "يرجى اختيار فئة واحدة على الأقل",
+      "languageRequired": "يرجى اختيار اللغة الأصلية",
+      "invalidYear": "يجب أن تكون السنة بين 1800 و{{max}}",
+      "invalidPrice": "لا يمكن أن يكون السعر سالبًا",
+      "invalidIsbn": "رقم ISBN غير صالح — يجب أن يتكون من 10 أو 13 رقمًا",
+      "invalidUrl": "رابط غير صالح — استخدم الصيغة https://exemple.com",
+      "formHasErrors": "يرجى تصحيح الأخطاء أدناه"
+    },
+    "scientificDetails": "التفاصيل العلمية",
+    "journal": "المجلة / الدورية",
+    "volume": "المجلد",
+    "pages": "الصفحات",
+    "impactFactor": "معامل التأثير (Impact Factor)",
+    "peerReviewed": "محكَّم من قِبل الأقران (peer-reviewed)",
+    "articleDetails": "تفاصيل المقال",
+    "author": "المؤلف",
+    "subtitle": "العنوان الفرعي",
+    "source": "المصدر",
+    "readOriginalArticle": "قراءة المقال الأصلي",
+    "bookDetails": "تفاصيل الكتاب",
+    "format": "الصيغة",
+    "collection": "السلسلة",
+    "filmDetails": "تفاصيل الفيلم",
+    "director": "المخرج",
+    "producer": "المنتج",
+    "studio": "الاستوديو",
+    "albumDetails": "تفاصيل الألبوم",
+    "tracks": "المقاطع",
+    "label": "شركة الإنتاج",
+    "shareText": "اكتشف هذا العمل: {{title}}",
+    "seoDescription": "اكتشف {{title}} — عمل ثقافي جزائري",
+    "artistPresentation": "تقديم الفنان",
+    "authorBibliography": "ببليوغرافيا المؤلف",
+    "noAuthorInfo": "لا تتوفر أي معلومات عن المؤلف.",
+    "discoverArtistWorks": "اكتشف أعمالاً أخرى للفنان",
+    "discoverAuthorWorks": "اكتشف أعمالاً أخرى للمؤلف",
+    "noOtherArtistWorks": "لا تتوفر أعمال أخرى لهذا الفنان.",
+    "noOtherAuthorWorks": "لا تتوفر أعمال أخرى لهذا المؤلف."
   },
   "event": {
     "accessibility": "إمكانية الوصول",
@@ -2407,7 +2914,14 @@
       "interestedVisitor": "مهتم بهذا الحدث؟",
       "connectToParticipate": "سجل دخولك للتسجيل أو أضف إلى المفضلة",
       "addToFavorites": "أضف إلى المفضلة",
-      "removeFromFavorites": "إزالة من المفضلة"
+      "removeFromFavorites": "إزالة من المفضلة",
+      "successWithWorks": "تم تسجيلك مع {{count}} عمل(أعمال) مقدَّم(ة)",
+      "limitTitle": "تم بلوغ الحد الأقصى",
+      "limitDesc": "الحد الأقصى المسموح به {{max}} عمل (أعمال) لهذه الفعالية",
+      "error": "حدث خطأ أثناء التسجيل",
+      "cancelTitle": "إلغاء تسجيلي",
+      "cancelConfirm": "هل أنت متأكد من رغبتك في إلغاء تسجيلك في هذه الفعالية؟ لا يمكن التراجع عن هذا الإجراء.",
+      "confirmCancel": "تأكيد الإلغاء"
     },
     "registrationDeadline": "الموعد النهائي للتسجيل",
     "relatedEvents": "الأحداث المرتبطة",
@@ -2416,7 +2930,10 @@
       "comments": "التعليقات",
       "gallery": "المعرض",
       "info": "المعلومات",
-      "program": "البرنامج"
+      "program": "البرنامج",
+      "participants": "المشاركون",
+      "services": "الخدمات",
+      "metadata": "البيانات الوصفية"
     },
     "roles": {
       "organisateur_principal": "المنظم الرئيسي",
@@ -2428,9 +2945,41 @@
       "moderateur": "مشرف",
       "animateur": "منشط",
       "benevole": "متطوع",
-      "staff": "فريق العمل"
+      "staff": "فريق العمل",
+      "participant": "مشارك"
     },
-    "viewOnMap": "عرض على الخريطة"
+    "viewOnMap": "عرض على الخريطة",
+    "metadata": {
+      "title": "معلومات إضافية",
+      "type": "نوع الفعالية",
+      "registrationRequired": "التسجيل مطلوب",
+      "certificateDelivered": "تُمنح شهادة",
+      "free": "مجاني",
+      "virtual": "فعالية عبر الإنترنت",
+      "capacity": "السعة",
+      "acceptsSubmissions": "تقبل المشاركات",
+      "presentedWorks": "الأعمال المعروضة",
+      "partners": "الشركاء"
+    },
+    "participants": {
+      "empty": "لا يوجد مشاركون حالياً",
+      "emptyDesc": "كن أول من يسجّل في هذه الفعالية!",
+      "title": "المشاركون",
+      "confirmed": "مؤكَّد"
+    },
+    "share": {
+      "title": "مشاركة الفعالية"
+    },
+    "qrcode": {
+      "unavailable": "رمز QR غير متوفر",
+      "title": "رمز QR للفعالية",
+      "alt": "رمز QR للوصول إلى الفعالية",
+      "description": "امسح رمز QR هذا للوصول مباشرة إلى صفحة الفعالية.",
+      "download": "تنزيل",
+      "copied": "تم النسخ!",
+      "copyLink": "نسخ الرابط",
+      "share": "مشاركة"
+    }
   },
   "places": {
     "address": "العنوان",
@@ -2519,8 +3068,39 @@
       "nomRequired": "الاسم مطلوب",
       "materiauRequired": "الرجاء اختيار مادة",
       "techniqueRequired": "الرجاء اختيار تقنية",
-      "createFailed": "خطأ أثناء إنشاء الخدمة"
-    }
+      "createFailed": "خطأ أثناء إنشاء الخدمة",
+      "noLieuSelected": "يرجى اختيار موقع",
+      "noServices": "يرجى إضافة خدمة واحدة على الأقل",
+      "submitFailed": "خطأ أثناء إضافة الخدمات"
+    },
+    "serviceAdded": "تمت إضافة الخدمة",
+    "serviceAddedDesc": "تمت إضافة الخدمة إلى القائمة",
+    "successTitle": "تمت العملية بنجاح",
+    "selectLieu": "1. اختر موقعًا",
+    "addServices": "2. أضف خدمات",
+    "filters": "الفلاتر",
+    "search": "بحث",
+    "searchPlaceholder": "اسم الموقع...",
+    "typePatrimoine": "نوع التراث",
+    "lieuxList": "المواقع التراثية",
+    "results": "نتائج",
+    "noLieux": "لم يتم العثور على أي موقع",
+    "changeLieu": "تغيير الموقع",
+    "existingServices": "الخدمات الموجودة",
+    "existingServicesDesc": "الخدمات المُعدّة مسبقًا لهذا الموقع",
+    "noExistingServices": "لا توجد خدمات مُعدّة",
+    "predefinedServices": "الخدمات الشائعة",
+    "predefinedServicesDesc": "اختر الخدمات المراد إضافتها",
+    "alreadyAdded": "مضافة مسبقًا",
+    "customService": "خدمة مخصصة",
+    "customServiceDesc": "أضف خدمة غير مدرجة",
+    "serviceName": "اسم الخدمة",
+    "serviceNamePlaceholder": "مثال: تأجير الدراجات",
+    "serviceDesc": "الوصف (اختياري)",
+    "available": "الخدمة متاحة",
+    "addToList": "إضافة إلى القائمة",
+    "servicesToAdd": "الخدمات المراد إضافتها:",
+    "servicesSelected": "خدمة (خدمات) للإضافة"
   },
   "ajouterPatrimoine": {
     "title": "إضافة موقع تراثي",
@@ -2575,7 +3155,26 @@
       "submittedWorks": "الأعمال المقدمة لهذا الحدث",
       "portfolio": "معرض الأعمال",
       "participationHistory": "سجل المشاركات",
-      "loadError": "تعذر تحميل الملف الشخصي"
+      "loadError": "تعذر تحميل الملف الشخصي",
+      "actions": {
+        "confirmSuccess": "تم تأكيد المشاركة",
+        "confirmDesc": "تم إشعار المشارك",
+        "rejectSuccess": "تم رفض المشاركة",
+        "rejectDesc": "تم إشعار المشارك",
+        "presentSuccess": "تم تسجيل الحضور",
+        "presentDesc": "تم تسجيل المشارك حاضرًا",
+        "absentSuccess": "تم تسجيل الغياب",
+        "absentDesc": "تم تسجيل المشارك غائبًا",
+        "error": "حدث خطأ",
+        "confirm": "تأكيد",
+        "reject": "رفض",
+        "markPresent": "حاضر",
+        "markAbsent": "غائب"
+      },
+      "workDetails": "تفاصيل العمل",
+      "author": "المؤلف / الفنان",
+      "presentationDesc": "ملاحظة لهذه الفعالية",
+      "viewFullPage": "عرض الصفحة كاملة"
     }
   },
   "programmePages": {
@@ -2583,7 +3182,8 @@
       "backToEvents": "العودة إلى الفعاليات",
       "backToEvent": "العودة إلى الفعالية",
       "edit": "تعديل",
-      "delete": "حذف"
+      "delete": "حذف",
+      "duplicate": "نسخ"
     },
     "status": {
       "loadingProgram": "جاري تحميل البرنامج..."
@@ -2599,7 +3199,9 @@
       "loadFailed": "خطأ أثناء تحميل البرنامج",
       "createFailed": "خطأ أثناء إنشاء البرنامج",
       "updateFailed": "خطأ أثناء تحديث البرنامج",
-      "deleteFailed": "خطأ أثناء حذف البرنامج"
+      "deleteFailed": "خطأ أثناء حذف البرنامج",
+      "loadDataFailed": "تعذّر تحميل بيانات الفعالية. تحقق من اتصالك.",
+      "duplicateFailed": "حدث خطأ أثناء النسخ"
     },
     "meta": {
       "eventNumber": "الفعالية #{{id}}",
@@ -2624,8 +3226,10 @@
       "confirmDelete": "هل أنت متأكد أنك تريد حذف هذا البرنامج؟",
       "quickActions": {
         "editProgram": "تعديل هذا البرنامج",
-        "addAnotherProgram": "إضافة برنامج آخر"
-      }
+        "addAnotherProgram": "إضافة برنامج آخر",
+        "duplicateProgram": "نسخ هذا البرنامج"
+      },
+      "intervenants": "المتدخلون"
     },
     "info": {
       "multiDayTitle": "إدارة متعددة الأيام",
@@ -2647,7 +3251,8 @@
     "errorBoundary": {
       "title": "حدث خطأ",
       "unexpected": "خطأ غير متوقع",
-      "retry": "إعادة المحاولة"
+      "retry": "إعادة المحاولة",
+      "reload": "إعادة تحميل الصفحة"
     },
     "lazyImage": {
       "unavailable": "الصورة غير متاحة"
@@ -2658,7 +3263,9 @@
     "programmes": "البرامج",
     "participants": "المشاركون",
     "oeuvres": "الأعمال",
-    "showOeuvres": "عرض الأعمال"
+    "showOeuvres": "عرض الأعمال",
+    "oeuvresDisabled": "إدارة الأعمال معطّلة لهذه الفعالية.",
+    "oeuvresEnableHint": "فعّل خيار \"عرض أعمال\" إذا كانت هذه الفعالية تتضمن عروضًا للأعمال."
   },
   "status": {
     "active": "نشط",
@@ -2679,7 +3286,9 @@
     "full": "مكتمل",
     "open": "مفتوح",
     "closed": "مغلق",
-    "unknown": "غير معروف"
+    "unknown": "غير معروف",
+    "present": "حاضر",
+    "absent": "غائب"
   },
   "patrimoine": {
     "filters": {
@@ -2730,7 +3339,8 @@
       "photoRequired": "صورة واحدة على الأقل مطلوبة",
       "createFailed": "خطأ أثناء الإنشاء",
       "gpsRecommended": "الموقع الجغرافي غير محدد.",
-      "invalidFiles": "بعض الملفات غير صالحة (صور < 10 ميجابايت)"
+      "invalidFiles": "بعض الملفات غير صالحة (صور < 10 ميجابايت)",
+      "gpsRequired": "حدّد موقع المعلم على الخريطة (انقر، أو ابحث عن عنوان، أو استخدم تحديد الموقع الجغرافي)"
     },
     "success": {
       "created": "تم إنشاء الموقع!",
@@ -2752,7 +3362,9 @@
       "artisanat": "الحرف المحلية",
       "personnalites": "الشخصيات",
       "infosPratiques": "معلومات عملية",
-      "references": "المراجع التاريخية"
+      "references": "المراجع التاريخية",
+      "cultureVivante": "الثقافة والتراث الحي",
+      "cultureVivanteDesc": "أثرِ هذه الأقسام بمعارفك"
     },
     "contribute": {
       "add": "ساهم",
@@ -2760,7 +3372,10 @@
       "saved": "تم تسجيل المساهمة!",
       "thanks": "شكراً لمساهمتك",
       "saveFailed": "خطأ أثناء الحفظ",
-      "contentRequired": "يرجى إدخال محتوى (على الأقل بالفرنسية أو العربية)"
+      "contentRequired": "يرجى إدخال محتوى (على الأقل بالفرنسية أو العربية)",
+      "addArticle": "مقال",
+      "addQuick": "نص سريع",
+      "writeArticle": "كتابة مقال"
     },
     "gps": {
       "found": "تم العثور على الموقع",
@@ -2769,13 +3384,84 @@
       "error": "خطأ في تحديد الموقع",
       "unavailable": "تحديد الموقع غير متاح",
       "unavailableDesc": "جهازك لا يدعم تحديد الموقع الجغرافي.",
-      "unavailablePos": "الموقع غير متاح. انقر على الخريطة."
+      "unavailablePos": "الموقع غير متاح. انقر على الخريطة.",
+      "noResults": "لا توجد نتائج",
+      "noResultsDesc": "جرّب مصطلحًا آخر أو انقر على الخريطة.",
+      "searchFailed": "خطأ في البحث",
+      "invalidCoords": "إحداثيات غير صالحة. خط العرض: من -90 إلى 90، خط الطول: من -180 إلى 180.",
+      "searchPlaceholder": "ابحث عن عنوان أو مكان...",
+      "manual": "إدخال إحداثيات GPS يدويًا"
     },
     "placeholders": {
       "nom": "مثال: قصبة الجزائر، جميلة...",
       "adresse": "مثال: وسط المدينة، طريق..."
     },
-    "checking": "جاري التحقق..."
+    "checking": "جاري التحقق...",
+    "editor": {
+      "loadError": "تعذّر تحميل الكتل",
+      "contentRequired": "المحتوى إلزامي",
+      "urlRequired": "الرابط إلزامي",
+      "added": "تمت إضافة الكتلة",
+      "addError": "تعذّرت إضافة الكتلة",
+      "confirmDelete": "حذف هذه الكتلة؟",
+      "deleted": "تم حذف الكتلة",
+      "deleteError": "تعذّر حذف الكتلة",
+      "title": "مقالات مُثراة: {{section}}",
+      "description": "أضف نصوصًا وعناوين واقتباسات وصورًا ومقاطع فيديو لإثراء هذا القسم.",
+      "existingBlocks": "الكتل الموجودة ({{count}})",
+      "noBlocks": "لا توجد كتل في هذا القسم حاليًا.",
+      "empty": "(فارغ)",
+      "addBlock": "إضافة كتلة",
+      "blockType": "نوع الكتلة",
+      "headingLevel": "مستوى العنوان",
+      "headingMain": "رئيسي",
+      "headingSub": "ثانوي",
+      "headingMinor": "فرعي",
+      "url": "الرابط (URL)",
+      "content": "المحتوى",
+      "citationPlaceholder": "« اقتباس... »",
+      "textPlaceholder": "أدخل النص...",
+      "headingPlaceholder": "عنوان القسم",
+      "author": "المؤلف (اختياري)",
+      "authorPlaceholder": "اسم المؤلف",
+      "alt": "النص البديل (إمكانية الوصول)",
+      "altPlaceholder": "وصف الصورة",
+      "add": "إضافة الكتلة"
+    },
+    "addSite": "إضافة موقع",
+    "photos": "صور",
+    "gallery": "المعرض",
+    "description": "الوصف",
+    "noDescription": "لا يوجد وصف متاح.",
+    "toVisit": "للزيارة",
+    "monuments": "المعالم",
+    "vestiges": "الآثار",
+    "services": "الخدمات",
+    "programmes": "البرامج",
+    "parcours": "المسارات",
+    "history": "التاريخ",
+    "museums": "المتاحف",
+    "collections": "المجموعات",
+    "wildlife": "الحيوانات والنباتات",
+    "viewEvent": "عرض الفعالية",
+    "noProgrammes": "لا توجد برامج مقررة حالياً",
+    "noParcours": "لا توجد مسارات مرتبطة",
+    "noGallery": "لا توجد صور متاحة",
+    "noMuseums": "لا توجد متاحف مُدرجة",
+    "noCollections": "لا توجد مجموعات متاحة",
+    "noWildlife": "معلومات عن الحيوانات والنباتات قريباً",
+    "practicalInfo": "معلومات عملية",
+    "hours": "أوقات العمل",
+    "location": "الموقع",
+    "qrCode": "رمز QR",
+    "scanQR": "امسح الرمز للوصول إلى المعلومات",
+    "stats": "الإحصائيات",
+    "discoverArea": "اكتشف المناطق المجاورة",
+    "planVisitDesc": "أنشئ مساراً مخصصاً مع المواقع القريبة",
+    "planVisit": "خطّط لزيارتك",
+    "proService": "هل أنت مهني؟",
+    "addYourService": "اعرض خدماتك هنا",
+    "backToList": "العودة إلى القائمة"
   },
   "toasts": {
     "error": "خطأ",
@@ -2886,7 +3572,19 @@
     "deleteFailed": "خطأ في الحذف",
     "alreadyDeleted": "العنصر محذوف مسبقاً",
     "alreadyDeletedDesc": "تم تحديث القائمة.",
-    "noPermission": "ليس لديك الصلاحيات اللازمة لهذا الإجراء"
+    "noPermission": "ليس لديك الصلاحيات اللازمة لهذا الإجراء",
+    "loadUsersFailed": "خطأ أثناء تحميل المستخدمين",
+    "loadPendingUsersFailed": "خطأ أثناء تحميل المستخدمين قيد الانتظار",
+    "loadPendingOeuvresFailed": "خطأ أثناء تحميل الأعمال قيد الانتظار",
+    "loadModerationFailed": "خطأ أثناء تحميل بيانات الإشراف",
+    "eventCancelled": "تم إلغاء الفعالية بنجاح",
+    "eventCancelFailed": "خطأ أثناء الإلغاء",
+    "serviceValidated": "تمت المصادقة على الخدمة",
+    "serviceRejected": "تم رفض الخدمة",
+    "serviceValidationFailed": "خطأ في المصادقة",
+    "imageUploadFailed": "فشل رفع الصورة (الكتلة {{index}})",
+    "notFoundDesc": "المورد المطلوب غير موجود.",
+    "notFound": "المورد غير موجود"
   },
   "ajouterArtisanat": {
     "title": "إضافة منتج حرفي",
@@ -2922,7 +3620,8 @@
       "techniqueRequired": "التقنية مطلوبة",
       "createFailed": "خطأ أثناء الإنشاء",
       "loadFailed": "تعذر تحميل المنتج الحرفي",
-      "loadMetadataFailed": "خطأ أثناء تحميل المواد والتقنيات"
+      "loadMetadataFailed": "خطأ أثناء تحميل المواد والتقنيات",
+      "prixMinMax": "لا يمكن أن يتجاوز السعر الأدنى السعر الأقصى"
     }
   },
   "service": {
@@ -2980,7 +3679,8 @@
       "urlInvalid": "رابط الموقع غير صالح (يجب أن يبدأ بـ http:// أو https://)",
       "phoneInvalid": "رقم هاتف غير صالح",
       "submitFailed": "خطأ أثناء الإرسال"
-    }
+    },
+    "editTitle": "تعديل خدمتي"
   },
   "organisations": {
     "create": {
@@ -2997,7 +3697,10 @@
       "website": "الموقع الإلكتروني",
       "submit": "إنشاء المنظمة",
       "success": "تم إنشاء المنظمة بنجاح",
-      "error": "خطأ أثناء الإنشاء"
+      "error": "خطأ أثناء الإنشاء",
+      "urlInvalid": "رابط الموقع الإلكتروني غير صالح (يجب أن يبدأ بـ http:// أو https://)",
+      "typeLoadError": "تعذّر تحميل الأنواع. يرجى تحديث الصفحة.",
+      "submitting": "جارٍ الإنشاء..."
     }
   },
   "validation": {
@@ -3006,7 +3709,8 @@
     "fixErrors": "يرجى تصحيح الأخطاء قبل الإرسال",
     "invalidGPS": "إحداثيات GPS غير صالحة",
     "fileTooLarge": "الملف كبير جدًا",
-    "invalidFileType": "نوع الملف غير مدعوم"
+    "invalidFileType": "نوع الملف غير مدعوم",
+    "maxFileSize": "الحد الأقصى 5 ميغابايت"
   },
   "category": {
     "form": {
@@ -3041,7 +3745,16 @@
     "openMaps": "فتح في الخرائط",
     "error": {
       "generation": "تعذر إنشاء المسار. يرجى المحاولة مرة أخرى."
-    }
+    },
+    "transport.walk": "سيرًا على الأقدام",
+    "transport.bike": "دراجة",
+    "transport.car": "سيارة",
+    "interests.history": "التاريخ",
+    "interests.architecture": "العمارة",
+    "interests.art": "الفن",
+    "interests.nature": "الطبيعة",
+    "interests.religion": "الدين",
+    "interests.gastronomy": "فن الطبخ"
   },
   "multilang": {
     "keyboardTifinaghNotDetected": "لوحة مفاتيح التيفيناغ غير مكتشفة",
@@ -3173,9 +3886,34 @@
         "dateRequired": "التاريخ مطلوب",
         "startTimeRequired": "وقت البداية مطلوب",
         "endTimeRequired": "وقت النهاية مطلوب",
-        "endTimeAfterStart": "وقت النهاية يجب أن يكون بعد وقت البداية"
+        "endTimeAfterStart": "وقت النهاية يجب أن يكون بعد وقت البداية",
+        "descriptionRequired": "الوصف مطلوب (بالفرنسية أو العربية على الأقل)",
+        "intervenantUserRequired": "يجب اختيار مستخدم لكل متدخل"
       }
-    }
+    },
+    "loadError": "خطأ أثناء تحميل البرامج",
+    "updated": "تم تحديث البرنامج",
+    "created": "تم إنشاء البرنامج",
+    "saveError": "خطأ أثناء الحفظ",
+    "confirmDelete": "هل أنت متأكد من رغبتك في حذف هذا البرنامج؟",
+    "deleted": "تم حذف البرنامج",
+    "deleteError": "خطأ أثناء الحذف",
+    "list": "قائمة البرامج",
+    "add": "إضافة نشاط",
+    "edit": "تعديل النشاط",
+    "create": "إنشاء نشاط",
+    "formDesc": "املأ معلومات النشاط",
+    "empty": "لا يوجد برنامج لهذه الفعالية",
+    "speakerCount": "متدخل (متدخلون)",
+    "speakers": "المتدخلون",
+    "level": "المستوى",
+    "requiredMaterial": "المعدات المطلوبة",
+    "translationAvailable": "الترجمة متوفرة",
+    "liveStreaming": "بث مباشر",
+    "digitalSupport": "دعامة رقمية",
+    "noDate": "التاريخ غير محدد",
+    "notAvailable": "البرنامج غير متوفر",
+    "emptyDesc": "لم يُنشر برنامج هذه الفعالية بعد"
   },
   "emailChange": {
     "noTokenProvided": "لم يتم تقديم رمز التأكيد.",
@@ -3225,5 +3963,282 @@
     "newsletterOn": "أنت مشترك في النشرة الإخبارية",
     "newsletterOff": "تم إلغاء اشتراكك في النشرة الإخبارية",
     "newsletterFailed": "تعذر التعديل، يرجى المحاولة مجددًا"
+  },
+  "app": {
+    "offlineBanner": "انقطع الاتصال بالشبكة — قد لا تكون البيانات المعروضة محدّثة."
+  },
+  "article": {
+    "imageTooLarge": "حجم الصورة كبير جدًا (الحد الأقصى 10MB)",
+    "mustBeImage": "يجب أن يكون الملف صورة",
+    "errors": {
+      "titreRequired": "العنوان إلزامي (بلغة واحدة على الأقل)",
+      "descriptionRequired": "الوصف إلزامي (بلغة واحدة على الأقل)",
+      "categoriesRequired": "يرجى اختيار فئة واحدة على الأقل"
+    },
+    "savedSuccess": "تم حفظ المقال بنجاح!",
+    "linkCopied": "تم نسخ الرابط!",
+    "commentError": "حدث خطأ أثناء إضافة التعليق",
+    "notFound": "المقال المطلوب غير موجود.",
+    "scientific": "مقال علمي",
+    "article": "مقال",
+    "volume": "المجلد",
+    "numero": "العدد",
+    "pages": "الصفحات",
+    "replyToComment": "الرد على التعليق",
+    "addComment": "إضافة تعليق",
+    "updateSuccess": "تم تحديث المقال بنجاح!"
+  },
+  "passwordStrength": {
+    "minLength": "12 حرفًا أو أكثر",
+    "uppercase": "حرف كبير واحد",
+    "lowercase": "حرف صغير واحد",
+    "digit": "رقم واحد",
+    "special": "رمز خاص واحد",
+    "weak": "ضعيفة",
+    "fair": "مقبولة",
+    "good": "جيدة",
+    "strong": "قوية"
+  },
+  "map": {
+    "title": "خريطة تفاعلية",
+    "points": "نقاط",
+    "fullscreen": "ملء الشاشة",
+    "exploration": "استكشاف — التراث والخدمات والفعاليات",
+    "parcours": "المسارات المتاحة"
+  },
+  "oeuvres": {
+    "loadError": "خطأ أثناء تحميل الأعمال",
+    "addedToEvent": "تمت إضافة العمل إلى الفعالية",
+    "addError": "خطأ أثناء الإضافة",
+    "confirmRemove": "هل تريد حقًا سحب هذا العمل من الفعالية؟",
+    "removedFromEvent": "تم سحب العمل من الفعالية",
+    "removeError": "خطأ أثناء الحذف",
+    "inEvent": "الأعمال المعروضة",
+    "addToEvent": "إضافة عمل",
+    "selectToAdd": "اختيار عمل",
+    "selectDesc": "اختر من بين أعمالك المتاحة",
+    "select": "العمل",
+    "selectPlaceholder": "اختر عملًا",
+    "duration": "مدة العرض (دقيقة)",
+    "presentationDesc": "وصف العرض",
+    "presentationDescPlaceholder": "ملاحظات حول عرض هذا العمل",
+    "noneInEvent": "لم تتم إضافة أي عمل إلى هذه الفعالية",
+    "availableCount": "لديك {{count}} عمل(أعمال) متاح(ة)",
+    "noAvailable": "أنشئ عملًا أولًا لتتمكن من إضافته",
+    "available": "الأعمال المتاحة"
+  },
+  "artisanatForm": {
+    "createTitle": "إضافة منتج حرفي"
+  },
+  "artisanForm": {
+    "editTitle": "تعديل المنتج الحرفي",
+    "viewTitle": "تفاصيل المنتج الحرفي",
+    "verifyTitle": "التحقق من المنتج الحرفي",
+    "title": "الحرف التقليدية",
+    "mode": {
+      "create": "إنشاء",
+      "edit": "تعديل",
+      "view": "عرض",
+      "verify": "تحقق"
+    },
+    "success": "تمت العملية بنجاح!",
+    "basicInfo": "المعلومات الأساسية",
+    "basicInfoDescView": "معلومات حول المنتج الحرفي",
+    "basicInfoDesc": "صف منتجك الحرفي",
+    "nom": "اسم المنتج",
+    "nomPlaceholder": "مثال: زربية أمازيغية تقليدية",
+    "description": "الوصف",
+    "descriptionPlaceholder": "صف منتجك وخصائصه...",
+    "materiau": "المادة",
+    "selectMateriau": "اختر مادة",
+    "technique": "التقنية",
+    "selectTechnique": "اختر تقنية",
+    "pricingTitle": "السعر والتوفر",
+    "prixMin": "السعر الأدنى (دج)",
+    "prixMax": "السعر الأقصى (دج)",
+    "delaiFabrication": "مدة الصنع (أيام)",
+    "delaiFabricationPlaceholder": "عدد الأيام",
+    "enStock": "الكمية المتوفرة في المخزون",
+    "surCommande": "متوفر حسب الطلب",
+    "tagsTitle": "الوسوم / الكلمات المفتاحية",
+    "tagPlaceholder": "إضافة وسم...",
+    "verificationTitle": "التحقق الإداري",
+    "verificationDesc": "وافق على هذا المنتج الحرفي أو ارفضه",
+    "motifRejet": "سبب الرفض",
+    "motifRejetPlaceholder": "اشرح سبب رفض هذا المنتج...",
+    "mediasTitle": "الصور",
+    "mediasDescView": "صور المنتج",
+    "mediasDesc": "أضف صورًا لمنتجك",
+    "mediasUploadText": "انقر لإضافة صور",
+    "submitting": "جارٍ المعالجة...",
+    "submit": "إنشاء المنتج الحرفي",
+    "update": "تحديث",
+    "verify": "تحقق واحفظ"
+  },
+  "languageSelector": {
+    "chooseLanguage": "اختر اللغة"
+  },
+  "editeur": {
+    "types": {
+      "maisonEdition": "دار نشر",
+      "labelMusique": "شركة إنتاج موسيقي",
+      "studioCinema": "استوديو سينمائي",
+      "galerieArt": "رواق فني",
+      "editeurScientifique": "ناشر علمي",
+      "presse": "صحافة",
+      "editeurNumerique": "ناشر رقمي",
+      "autre": "أخرى"
+    },
+    "errors": {
+      "createFailed": "خطأ أثناء إنشاء الناشر"
+    }
+  },
+  "intervenant": {
+    "errors": {
+      "loadTypesFailed": "خطأ أثناء تحميل الأنواع",
+      "loadTypesFailedDetail": "تعذّر تحميل أنواع المتدخلين"
+    },
+    "noRolesAvailable": "لا توجد أدوار متاحة",
+    "selectRole": "اختر دورًا"
+  },
+  "emptyState": {
+    "default": {
+      "title": "لا توجد عناصر",
+      "description": "لا يوجد ما يُعرض حاليًا."
+    },
+    "search": {
+      "title": "لا توجد نتائج",
+      "description": "حاول تعديل معايير البحث."
+    },
+    "documents": {
+      "title": "لا توجد وثائق",
+      "description": "ابدأ بإضافة وثيقة."
+    },
+    "events": {
+      "title": "لا توجد فعاليات",
+      "description": "لا توجد فعاليات مبرمجة حاليًا."
+    },
+    "users": {
+      "title": "لا يوجد مستخدمون",
+      "description": "لا يوجد مستخدم يطابق معاييرك."
+    },
+    "locations": {
+      "title": "لا توجد مواقع",
+      "description": "لم يتم العثور على أي موقع."
+    },
+    "works": {
+      "title": "لا توجد أعمال",
+      "description": "لا توجد أعمال متاحة."
+    },
+    "products": {
+      "title": "لا توجد منتجات",
+      "description": "لا توجد منتجات متاحة."
+    }
+  },
+  "services": {
+    "none": "لا توجد خدمات متاحة لهذا الموقع",
+    "nearby": "الخدمات القريبة",
+    "availableServices": "الخدمات المتاحة",
+    "count": "خدمات",
+    "open": "● متاح",
+    "closed": "● غير متاح",
+    "website": "الموقع الإلكتروني"
+  },
+  "favoris": {
+    "added": "تمت الإضافة إلى المفضلة",
+    "removed": "تمت الإزالة من المفضلة",
+    "addedDesc": "تمت إضافة العمل إلى مفضلتك",
+    "removedDesc": "تمت إزالة العمل من مفضلتك",
+    "toggle": "إضافة/إزالة من المفضلة"
+  },
+  "stats": {
+    "views": "مشاهدة",
+    "favorites": "مفضلة",
+    "comments": "تقييم"
+  },
+  "upload": {
+    "fileTooLarge": "الملف كبير جداً (5 MB كحد أقصى)",
+    "uploadFailed": "خطأ في الرفع"
+  },
+  "gallery": {
+    "empty": "لا توجد وسائط متاحة",
+    "emptyDesc": "معرض هذه الفعالية فارغ حالياً",
+    "all": "الكل",
+    "emptyDescOeuvre": "المعرض فارغ حالياً"
+  },
+  "gestionArtisanat": {
+    "errors": {
+      "loadFailed": "حدث خطأ أثناء التحميل",
+      "nomRequired": "الاسم مطلوب (بالفرنسية أو العربية على الأقل)",
+      "materiauRequired": "المادة مطلوبة",
+      "techniqueRequired": "التقنية مطلوبة",
+      "saveFailed": "حدث خطأ أثناء الحفظ"
+    },
+    "createTitle": "إضافة منتج حرفي",
+    "editTitle": "تعديل منتجي الحرفي",
+    "viewTitle": "تفاصيل المنتج الحرفي",
+    "verifyTitle": "التحقق من المنتج الحرفي",
+    "title": "الحرف التقليدية",
+    "verifySubtitle": "تحقق من المنتجات الحرفية ووافق عليها",
+    "subtitle": "إدارة المنتجات الحرفية",
+    "successEdit": "تم تعديل المنتج الحرفي بنجاح!",
+    "successCreate": "تم إنشاء المنتج الحرفي بنجاح!",
+    "mode": {
+      "create": "إنشاء",
+      "edit": "تعديل",
+      "view": "عرض",
+      "verify": "تحقق"
+    },
+    "basicInfo": "المعلومات الأساسية",
+    "basicInfoDescView": "معلومات عن المنتج الحرفي",
+    "basicInfoDesc": "صِف منتجك الحرفي",
+    "nom": "اسم المنتج",
+    "nomPlaceholder": "مثال: زربية أمازيغية تقليدية",
+    "description": "الوصف",
+    "descriptionPlaceholder": "صِف منتجك وخصائصه...",
+    "materiau": "المادة",
+    "selectMateriau": "اختر مادة",
+    "technique": "التقنية",
+    "selectTechnique": "اختر تقنية",
+    "pricingTitle": "السعر والتوفر",
+    "prixMin": "السعر الأدنى (دج)",
+    "prixMax": "السعر الأقصى (دج)",
+    "delaiFabrication": "مدة الصنع (بالأيام)",
+    "delaiFabricationPlaceholder": "عدد الأيام",
+    "enStock": "الكمية المتوفرة في المخزون",
+    "surCommande": "متوفر حسب الطلب",
+    "tagsTitle": "الوسوم / الكلمات المفتاحية",
+    "tagPlaceholder": "أضف وسماً...",
+    "verificationTitle": "التحقق الإداري",
+    "verificationDesc": "وافق على هذا المنتج الحرفي أو ارفضه",
+    "statutLabel": "الحالة",
+    "selectStatut": "اختر الحالة",
+    "statut": {
+      "en_attente": "قيد الانتظار",
+      "approuve": "مقبول",
+      "rejete": "مرفوض"
+    },
+    "motifRejet": "سبب الرفض",
+    "motifRejetPlaceholder": "اشرح سبب رفض هذا المنتج...",
+    "mediasTitle": "الصور",
+    "mediasDescView": "صور المنتج",
+    "mediasDesc": "أضف صوراً لمنتجك",
+    "mediasUploadText": "انقر لإضافة صور",
+    "submitting": "جارٍ المعالجة...",
+    "submit": "إنشاء المنتج الحرفي",
+    "update": "تحديث",
+    "verify": "التحقق والحفظ"
+  },
+  "nav": {
+    "home": "الرئيسية",
+    "oeuvres": "الأعمال"
+  },
+  "qrcode": {
+    "generating": "جارٍ إنشاء رمز QR",
+    "pleaseWait": "يرجى الانتظار...",
+    "downloading": "جارٍ التنزيل...",
+    "success": "تم تنزيل رمز QR",
+    "checkDownloads": "تحقق من مجلد التنزيلات",
+    "downloadError": "تعذّر تنزيل رمز QR"
   }
 }

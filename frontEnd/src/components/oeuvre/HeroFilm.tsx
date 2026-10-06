@@ -251,7 +251,7 @@ const HeroFilm: React.FC<HeroFilmProps> = ({
                         <div className="flex-1 overflow-hidden">
                           <Quote className="h-5 w-5 text-purple-500/50 mb-2" />
                           <p className="text-sm leading-relaxed text-purple-100/90 line-clamp-[8]">
-                            {gt(oeuvre.description) || t('works.noDescription', 'Aucun synopsis disponible pour ce film.')}
+                            {gt(oeuvre.description) || t('works.noSynopsisFilm', 'Aucun synopsis disponible pour ce film.')}
                           </p>
                         </div>
 
@@ -293,7 +293,7 @@ const HeroFilm: React.FC<HeroFilmProps> = ({
                         <div className="mt-4 text-center">
                           <span className="text-xs text-purple-400/60 flex items-center justify-center gap-1">
                             <RotateCcw className="h-3 w-3" />
-                            {t('works.flipToFront', 'Cliquez pour voir l\'affiche')}
+                            {t('works.flipToFrontFilm', 'Cliquez pour voir l\'affiche')}
                           </span>
                         </div>
                       </div>

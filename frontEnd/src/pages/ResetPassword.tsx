@@ -46,13 +46,13 @@ const ResetPassword = () => {
     } else if (password.length < 12) {
       newErrors.password = t('auth.errors.passwordMinLength', 'Minimum 12 caractères');
     } else if (!/[A-Z]/.test(password)) {
-      newErrors.password = t('auth.errors.passwordNeedUppercase', 'Doit contenir une majuscule');
+      newErrors.password = t('auth.passwordRules.uppercase', 'Doit contenir une majuscule');
     } else if (!/[a-z]/.test(password)) {
-      newErrors.password = t('auth.errors.passwordNeedLowercase', 'Doit contenir une minuscule');
+      newErrors.password = t('auth.passwordRules.lowercase', 'Doit contenir une minuscule');
     } else if (!/[0-9]/.test(password)) {
-      newErrors.password = t('auth.errors.passwordNeedDigit', 'Doit contenir un chiffre');
+      newErrors.password = t('auth.passwordRules.digit', 'Doit contenir un chiffre');
     } else if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
-      newErrors.password = t('auth.errors.passwordNeedSpecial', 'Doit contenir un caractère spécial');
+      newErrors.password = t('auth.passwordRules.special', 'Doit contenir un caractère spécial');
     }
 
     if (!confirmPassword) {
@@ -83,13 +83,13 @@ const ResetPassword = () => {
         } else if (password.length < 12) {
           setErrors((prev) => ({ ...prev, password: t('auth.errors.passwordMinLength', 'Minimum 12 caractères') }));
         } else if (!/[A-Z]/.test(password)) {
-          setErrors((prev) => ({ ...prev, password: t('auth.errors.passwordNeedUppercase', 'Doit contenir une majuscule') }));
+          setErrors((prev) => ({ ...prev, password: t('auth.passwordRules.uppercase', 'Doit contenir une majuscule') }));
         } else if (!/[a-z]/.test(password)) {
-          setErrors((prev) => ({ ...prev, password: t('auth.errors.passwordNeedLowercase', 'Doit contenir une minuscule') }));
+          setErrors((prev) => ({ ...prev, password: t('auth.passwordRules.lowercase', 'Doit contenir une minuscule') }));
         } else if (!/[0-9]/.test(password)) {
-          setErrors((prev) => ({ ...prev, password: t('auth.errors.passwordNeedDigit', 'Doit contenir un chiffre') }));
+          setErrors((prev) => ({ ...prev, password: t('auth.passwordRules.digit', 'Doit contenir un chiffre') }));
         } else if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
-          setErrors((prev) => ({ ...prev, password: t('auth.errors.passwordNeedSpecial', 'Doit contenir un caractère spécial') }));
+          setErrors((prev) => ({ ...prev, password: t('auth.passwordRules.special', 'Doit contenir un caractère spécial') }));
         }
         break;
       case 'confirmPassword':

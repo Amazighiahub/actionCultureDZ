@@ -289,7 +289,7 @@ const Oeuvres: React.FC = () => {
             {t('works.title', 'Œuvres culturelles')}
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            {t('works.subtitle', 'Explorez la richesse du patrimoine culturel algérien')}
+            {t('works.subtitleShort', 'Explorez la richesse du patrimoine culturel algérien')}
           </p>
         </div>
 

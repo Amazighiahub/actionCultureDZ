@@ -45,7 +45,7 @@ const APropos = () => {
         toast({ title: t('common.error', 'Erreur'), description: data.error || t('apropos.erreurEnvoi', 'Erreur lors de l\'envoi.'), variant: 'destructive' });
       }
     } catch {
-      toast({ title: t('common.error', 'Erreur'), description: t('apropos.erreurEnvoi', 'Erreur lors de l\'envoi du message.'), variant: 'destructive' });
+      toast({ title: t('common.error', 'Erreur'), description: t('apropos.erreurEnvoiMessage', 'Erreur lors de l\'envoi du message.'), variant: 'destructive' });
     } finally {
       setSending(false);
     }

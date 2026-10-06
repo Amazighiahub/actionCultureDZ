@@ -176,7 +176,7 @@ const HeroLivre: React.FC<HeroLivreProps> = ({
                             <h3 className="text-xl font-bold font-serif mb-3 text-amber-100">{titre}</h3>
                             <div className="flex-1 overflow-hidden">
                               <Quote className="h-5 w-5 text-amber-500/50 mb-2" />
-                              <p className="text-sm leading-relaxed text-amber-100/90 line-clamp-[8]">{description || t('works.noDescription', 'Aucune description disponible pour cet ouvrage.')}</p>
+                              <p className="text-sm leading-relaxed text-amber-100/90 line-clamp-[8]">{description || t('works.noDescriptionBook', 'Aucune description disponible pour cet ouvrage.')}</p>
                             </div>
                             <div className="my-4 flex items-center gap-2">
                               <div className="flex-1 h-px bg-amber-600/30" />
@@ -190,7 +190,7 @@ const HeroLivre: React.FC<HeroLivreProps> = ({
                               {oeuvre.annee_creation && (<div className="flex items-center gap-2 text-amber-200/80"><Calendar className="h-4 w-4" /><span>{oeuvre.annee_creation}</span></div>)}
                             </div>
                             <div className="mt-4 text-center">
-                              <span className="text-xs text-amber-400/60 flex items-center justify-center gap-1"><RotateCcw className="h-3 w-3" />{t('works.flipToFront', 'Cliquez pour voir la couverture')}</span>
+                              <span className="text-xs text-amber-400/60 flex items-center justify-center gap-1"><RotateCcw className="h-3 w-3" />{t('works.flipToFrontBook', 'Cliquez pour voir la couverture')}</span>
                             </div>
                           </div>
                         </div>
@@ -203,7 +203,7 @@ const HeroLivre: React.FC<HeroLivreProps> = ({
 
             <p className="text-center text-sm text-muted-foreground mt-6 flex items-center justify-center gap-2">
               <RotateCcw className="h-4 w-4" />
-              {isFlipped ? t('works.viewCover', 'Voir la couverture') : t('works.viewSummary', 'Voir le résumé au dos')}
+              {isFlipped ? t('works.viewCoverBook', 'Voir la couverture') : t('works.viewSummary', 'Voir le résumé au dos')}
             </p>
           </div>
 
@@ -211,7 +211,7 @@ const HeroLivre: React.FC<HeroLivreProps> = ({
           <div className="flex gap-2 mt-6 justify-center lg:justify-start">
             <Button size="lg" onClick={onToggleFavorite} disabled={favoriteLoading} variant="favorite" data-active={isFavorite}>
               <Heart className={cn("h-5 w-5 mr-2", isFavorite && "fill-current")} />
-              {isFavorite ? t('works.inFavorites', 'Retirer des favoris') : t('works.actions.addFavorite', 'Ajouter aux favoris')}
+              {isFavorite ? t('works.removeFromFavorites', 'Retirer des favoris') : t('works.actions.addToFavorites', 'Ajouter aux favoris')}
             </Button>
             {shareButton}
           </div>
@@ -286,7 +286,7 @@ const HeroLivre: React.FC<HeroLivreProps> = ({
                   {mainImage ? (
                     <img src={mainImage} alt={titre} className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl" />
                   ) : (
-                    <div className="flex flex-col items-center justify-center text-white/60"><BookOpen className="h-24 w-24 mb-4" /><p>{t('works.noCover', 'Aucune couverture disponible')}</p></div>
+                    <div className="flex flex-col items-center justify-center text-white/60"><BookOpen className="h-24 w-24 mb-4" /><p>{t('works.noCoverBook', 'Aucune couverture disponible')}</p></div>
                   )}
                 </div>
                 <div className="absolute bottom-4 left-0 right-0 text-center">
@@ -300,7 +300,7 @@ const HeroLivre: React.FC<HeroLivreProps> = ({
             {oeuvre.description && (
               <Card className="bg-card/50 backdrop-blur-sm">
                 <CardContent className="p-6">
-                  <h3 className="font-semibold mb-3 flex items-center gap-2"><FileText className="h-4 w-4 text-primary" />{t('works.synopsis', 'Résumé')}</h3>
+                  <h3 className="font-semibold mb-3 flex items-center gap-2"><FileText className="h-4 w-4 text-primary" />{t('works.summary', 'Résumé')}</h3>
                   <p className="leading-relaxed text-muted-foreground">{description}</p>
                 </CardContent>
               </Card>

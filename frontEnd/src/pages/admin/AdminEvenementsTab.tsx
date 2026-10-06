@@ -287,7 +287,7 @@ const AdminEvenementsTab: React.FC = () => {
         title={t('admin.events.confirmCancel', 'Annuler cet événement ?')}
         description={t('admin.events.confirmCancelDesc', 'Les participants seront notifiés de l\'annulation.')}
         variant="warning"
-        confirmLabel={t('admin.events.cancel', 'Annuler l\'événement')}
+        confirmLabel={t('admin.events.cancelEvent', 'Annuler l\'événement')}
         onConfirm={() => {
           if (confirmCancel.eventId) cancelEvenement(confirmCancel.eventId);
           setConfirmCancel({ open: false });

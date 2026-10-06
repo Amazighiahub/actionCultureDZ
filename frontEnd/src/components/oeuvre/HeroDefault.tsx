@@ -130,7 +130,7 @@ const HeroDefault: React.FC<HeroDefaultProps> = ({
             variant="favorite" data-active={isFavorite}
           >
             <Heart className={cn("h-5 w-5 mr-2", isFavorite && "fill-current")} />
-            {isFavorite ? t('works.inFavorites', 'Favori') : t('works.actions.addFavorite', 'Ajouter aux favoris')}
+            {isFavorite ? t('works.inFavorites', 'Favori') : t('works.actions.addToFavorites', 'Ajouter aux favoris')}
           </Button>
           {shareButton}
         </div>

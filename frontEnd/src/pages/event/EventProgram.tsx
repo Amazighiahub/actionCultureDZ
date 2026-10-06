@@ -353,7 +353,7 @@ const EventProgram: React.FC<EventProgramProps> = ({ programs }) => {
     return (
       <EmptyState
         type="events"
-        title={t('programme.empty', 'Programme non disponible')}
+        title={t('programme.notAvailable', 'Programme non disponible')}
         description={t('programme.emptyDesc', 'Le programme de cet événement n\'a pas encore été publié')}
       />
     );

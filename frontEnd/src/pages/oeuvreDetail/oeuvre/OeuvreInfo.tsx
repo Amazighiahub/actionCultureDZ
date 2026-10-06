@@ -395,7 +395,7 @@ const OeuvreInfo: React.FC<OeuvreInfoProps> = ({ oeuvre, compact = false }) => {
                         className="text-sm text-primary hover:underline flex items-center gap-1"
                       >
                         <ExternalLink className="h-3 w-3" />
-                        {t('oeuvre.readOriginal', 'Lire l\'article original')}
+                        {t('oeuvre.readOriginalArticle', 'Lire l\'article original')}
                       </a>
                     </div>
                   )}

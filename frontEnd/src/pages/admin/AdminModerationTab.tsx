@@ -268,7 +268,7 @@ const AdminModerationTab: React.FC = () => {
                         title={t('admin.moderation.actions.dismiss', 'Rejeter le signalement')}
                       >
                         <CheckCircle className="h-4 w-4 mr-1" />
-                        {t('admin.moderation.actions.dismiss', 'Ignorer')}
+                        {t('admin.moderation.actions.dismissShort', 'Ignorer')}
                       </Button>
                       <Button
                         size="sm"
@@ -286,7 +286,7 @@ const AdminModerationTab: React.FC = () => {
                         title={t('admin.moderation.actions.removeContent', 'Supprimer le contenu')}
                       >
                         <Trash2 className="h-4 w-4 mr-1" />
-                        {t('admin.moderation.actions.removeContent', 'Supprimer')}
+                        {t('admin.moderation.actions.removeContentShort', 'Supprimer')}
                       </Button>
                       <Button
                         size="sm"
@@ -295,7 +295,7 @@ const AdminModerationTab: React.FC = () => {
                         title={t('admin.moderation.actions.suspend', 'Suspendre l\'utilisateur')}
                       >
                         <Ban className="h-4 w-4 mr-1" />
-                        {t('admin.moderation.actions.suspend', 'Suspendre')}
+                        {t('admin.moderation.actions.suspendShort', 'Suspendre')}
                       </Button>
                     </div>
                   </div>

@@ -359,7 +359,7 @@ export function useAjouterOeuvre() {
       newMedias.push(media);
     });
     if (errors.length > 0) {
-      toast({ title: t('ajouteroeuvre.erreur_upload'), description: errors.join('\n'), variant: 'destructive' });
+      toast({ title: t('ajouteroeuvre.erreur_upload', "Erreur lors de l'envoi des fichiers"), description: errors.join('\n'), variant: 'destructive' });
     }
     if (newMedias.length > 0) {
       setMedias((prev) => [...prev, ...newMedias]);
@@ -676,7 +676,7 @@ export function useAjouterOeuvre() {
       if (formData.annee_creation) {
         const currentYear = new Date().getFullYear();
         if (formData.annee_creation < 1800 || formData.annee_creation > currentYear + 1) {
-          errors.annee_creation = t('oeuvre.errors.invalidYear', `L'année doit être entre 1800 et ${currentYear + 1}`);
+          errors.annee_creation = t('oeuvre.errors.invalidYear', "L'année doit être entre 1800 et {{max}}", { max: currentYear + 1 });
         }
       }
       if (formData.prix !== undefined && formData.prix !== null && formData.prix < 0) {

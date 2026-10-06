@@ -82,15 +82,15 @@ const EnhancedCTASection: React.FC = () => {
               <div className={`flex flex-wrap justify-center gap-6 text-sm text-muted-foreground pt-4`}>
                 <div className={`flex items-center gap-2 ${rtlClasses.flexRow}`}>
                   <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                  {t('home.professionals.benefits.visibility', 'Visibilité accrue')}
+                  {t('home.professionals.visibility', 'Visibilité accrue')}
                 </div>
                 <div className={`flex items-center gap-2 ${rtlClasses.flexRow}`}>
                   <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                  {t('home.professionals.benefits.tools', 'Outils de gestion')}
+                  {t('home.professionals.tools', 'Outils de gestion')}
                 </div>
                 <div className={`flex items-center gap-2 ${rtlClasses.flexRow}`}>
                   <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                  {t('home.professionals.benefits.community', 'Communauté active')}
+                  {t('home.professionals.community', 'Communauté active')}
                 </div>
               </div>
             </div>

@@ -457,7 +457,7 @@ const AjouterEvenement = () => {
     } catch (error: unknown) {
       toast({
         title: t('common.error', 'Erreur'),
-        description: isEditMode ? t('toasts.updateError') : t('events.create.error', 'Erreur lors de la création de l\'événement'),
+        description: isEditMode ? t('toasts.updateError') : t('events.create.errorEvent', 'Erreur lors de la création de l\'événement'),
         variant: 'destructive',
       });
     } finally {
@@ -565,7 +565,7 @@ const AjouterEvenement = () => {
                 <AlertDescription className="text-destructive">
                   <div className="flex flex-col gap-3">
                     <div className="font-semibold">
-                      {t('events.create.organisationRequired', 'Organisation requise')}
+                      {t('events.create.organisationRequiredShort', 'Organisation requise')}
                     </div>
                     <p>
                       {t('events.create.noOrganisation', 'En tant que professionnel, vous devez créer une organisation pour organiser un événement en présentiel. Une organisation représente votre structure (association, entreprise, collectif, etc.).')}
@@ -679,7 +679,7 @@ const AjouterEvenement = () => {
                           onClick={() => { loadOrgTypes(); setShowOrgDialog(true); }}
                         >
                           <Plus className="h-4 w-4 me-1" />
-                          {t('events.create.createOrganisation', 'Créer')}
+                          {t('events.create.createShort', 'Créer')}
                         </Button>
                       </div>
                       {fieldErrors.organisation && <p id="organisation-error" role="alert" className="text-sm text-destructive">{fieldErrors.organisation}</p>}

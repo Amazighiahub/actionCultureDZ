@@ -204,7 +204,7 @@ const SectionEnrichissable: React.FC<SectionEnrichissableProps> = ({
             {patrimoineSection && (
               <Button variant="default" onClick={openArticleEditor}>
                 <FileText className="h-4 w-4 mr-2" />
-                {t('patrimoine.contribute.addArticle', 'Écrire un article')}
+                {t('patrimoine.contribute.writeArticle', 'Écrire un article')}
               </Button>
             )}
           </div>

@@ -252,7 +252,7 @@ const Artisanat: React.FC = () => {
             {t('artisanat.title', 'Artisanat Algérien')}
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            {t('artisanat.subtitle', 'Découvrez les métiers d\'art et les créations artisanales traditionnelles d\'Algérie')}
+            {t('artisanat.subtitleShort', 'Découvrez les métiers d\'art et les créations artisanales traditionnelles d\'Algérie')}
           </p>
         </div>
 

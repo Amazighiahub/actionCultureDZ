@@ -79,7 +79,12 @@
       "hasAccount": "Already have an account?",
       "login": "Log in",
       "loading": "Registering...",
-      "submit": "Create my account"
+      "submit": "Create my account",
+      "day": "Day",
+      "month": "Month",
+      "year": "Year",
+      "passwordHint": "Min. 12 characters, 1 uppercase, 1 lowercase, 1 digit, 1 special character",
+      "min50chars": "(min. 50 characters)"
     },
     "errors": {
       "fileTooLarge": {
@@ -135,7 +140,19 @@
       "accountPending": "Your professional account is pending validation",
       "accountSuspended": "Your account is suspended. Contact the administrator.",
       "accountBanned": "Your account has been banned",
-      "tooManyAttempts": "Too many login attempts. Please try again later."
+      "tooManyAttempts": "Too many login attempts. Please try again later.",
+      "checkEmail": "Check your email",
+      "checkPassword": "Check your password",
+      "passwordNeedUppercase": "Password must contain at least one uppercase letter",
+      "passwordNeedLowercase": "Password must contain at least one lowercase letter",
+      "passwordNeedDigit": "Password must contain at least one digit",
+      "passwordNeedSpecial": "Password must contain at least one special character",
+      "portfolioInvalidUrl": "Invalid URL (must start with http:// or https://)",
+      "invalidDate": "Invalid date",
+      "futureDateNotAllowed": "The date cannot be in the future",
+      "communeRequired": "The commune is required for a professional account",
+      "networkError": "Connection problem. Check your internet connection and try again.",
+      "timeout": "The server is taking too long to respond. Please try again."
     },
     "success": {
       "loginTitle": "Login successful!",
@@ -202,7 +219,8 @@
       "invalidToken": "The reset link is invalid or has expired.",
       "invalidTokenTitle": "Invalid link",
       "invalidTokenDescription": "This reset link is invalid or has expired. Please request a new link.",
-      "requestNewLink": "Request a new link"
+      "requestNewLink": "Request a new link",
+      "tokenExpired": "This link has expired. Please request a new reset link."
     },
     "loginToComment": "Log in to comment",
     "loginToFavorite": "Log in to add to favorites",
@@ -218,7 +236,26 @@
       "biography": "Biography",
       "biographyPlaceholder": "Tell us about yourself, your work...",
       "photo": "Profile photo"
-    }
+    },
+    "idleWarning": "Session expiring soon",
+    "idleWarningDesc": "You will be logged out in 2 minutes due to inactivity.",
+    "idleLogout": "Session expired",
+    "idleLogoutDesc": "You have been logged out due to inactivity.",
+    "hidePassword": "Hide",
+    "showPassword": "Show",
+    "passwordRules": {
+      "uppercase": "Must contain an uppercase letter",
+      "lowercase": "Must contain a lowercase letter",
+      "digit": "Must contain a digit",
+      "special": "Must contain a special character"
+    },
+    "togglePassword": "Show/hide password",
+    "emailVerificationSent": "Verification email sent",
+    "emailVerificationMessage": "A verification email has been sent to your address.",
+    "professionalValidationNote": "Once your email is verified, your account will be submitted to an administrator for approval.",
+    "backToLogin": "Back to sign in",
+    "sessionExpired": "Session expired",
+    "pleaseReconnect": "Please sign in again"
   },
   "categories": {
     "heritageTypes": {
@@ -329,7 +366,81 @@
     "type": "Type",
     "more": "more",
     "linkCopied": "Link copied",
-    "linkCopiedDesc": "The link has been copied to the clipboard"
+    "linkCopiedDesc": "The link has been copied to the clipboard",
+    "add": "Add",
+    "legalNotice": "Legal notice",
+    "change": "Change",
+    "copyLink": "Copy link",
+    "done": "Done",
+    "daira": "Daïra",
+    "selectWilayaFirst": "-- Choose a wilaya first --",
+    "selectDaira": "-- Choose a daïra --",
+    "commune": "Commune",
+    "selectDairaFirst": "-- Choose a daïra first --",
+    "selectCommune": "-- Choose a commune --",
+    "showAll": "See all services",
+    "dateUndefined": "Date not set",
+    "status": "Status",
+    "unnamed": "Unnamed",
+    "allTypes": "All types",
+    "untitled": "Untitled",
+    "undefined": "Not set",
+    "validate": "Approve",
+    "reject": "Reject",
+    "noName": "Unnamed",
+    "validation": "Validation",
+    "allValidations": "All validation statuses",
+    "dropImageHere": "Drop the image here",
+    "dragOrClickImage": "Drag and drop or click to add an image",
+    "changeImage": "Change image",
+    "saving": "Saving...",
+    "publishing": "Publishing...",
+    "create": "Create",
+    "unknownError": "Unknown error",
+    "other": "Other...",
+    "warning": "Warning",
+    "next": "Next",
+    "previous": "Previous",
+    "available": "Available",
+    "unavailable": "Unavailable",
+    "authRequired": "Sign-in required",
+    "remove": "Remove",
+    "upload": "Upload",
+    "submitting": "Sending...",
+    "hide": "Hide",
+    "show": "Show",
+    "characters": "characters",
+    "loadError": "Error loading article",
+    "deleted": "Deleted",
+    "deletedDesc": "The item has been deleted",
+    "deleteError": "Unable to delete",
+    "backToList": "Back to list",
+    "previousImage": "Previous image",
+    "nextImage": "Next image",
+    "confirmDelete": "Confirm deletion",
+    "confirmDeleteDesc": "Are you sure you want to delete this item? This action cannot be undone.",
+    "months": {
+      "jan": "January",
+      "feb": "February",
+      "mar": "March",
+      "apr": "April",
+      "may": "May",
+      "jun": "June",
+      "jul": "July",
+      "aug": "August",
+      "sep": "September",
+      "oct": "October",
+      "nov": "November",
+      "dec": "December"
+    },
+    "uncategorized": "Uncategorised",
+    "heritage": "Heritage",
+    "unspecified": "Not specified",
+    "service": "Service",
+    "unspecifiedLocation": "Location not specified",
+    "removeFrom": "Remove",
+    "notProvided": "Not provided",
+    "unknown": "Unknown"
   },
   "contributors": {
     "addedCount_one": "{{count}} contributor added",
@@ -360,7 +471,8 @@
     },
     "loadingCraftsError": "Failed to load crafts",
     "loadingError": "Loading error",
-    "partialDataLoad": "Data partially loaded"
+    "partialDataLoad": "Data partially loaded",
+    "loadingFailed": "Error while loading"
   },
   "events": {
     "create": {
@@ -405,29 +517,32 @@
       "selectOrganisationPlaceholder": "Choose an organization",
       "location": "Location",
       "locationRequired": "Please select a location for the event",
-      "loadWilayasFailed": "Failed to load wilayas",
-      "loadTypesFailed": "Failed to load event types",
-      "loadOrgsFailed": "Failed to load organizations",
+      "loadWilayasFailed": "Error loading wilayas",
+      "loadTypesFailed": "Error loading event types",
+      "loadOrgsFailed": "Error loading organisations",
       "startDateRequired": "Start date is required",
-      "endDateAfterStart": "End date must be after start date",
-      "draftNameRequired": "Name is required even for a draft (at least one language)",
+      "endDateAfterStart": "End date must be after the start date",
+      "draftNameRequired": "A name is required even for a draft (in at least one language)",
       "typeRequired": "Event type is required",
       "updateSuccess": "Event updated successfully",
       "success": "Event created successfully!",
-      "error": "Error during creation",
+      "error": "Error while creating",
       "nameRequired": "Event name is required (at least in French or Arabic)",
-      "organisationRequired": "An organization is required for in-person events",
-      "virtualUrlRequired": "Virtual event link is required",
-      "imageRequired": "Event image is required",
-      "noOrganisation": "As a professional, you must create an organization to host an in-person event. An organization represents your structure (association, company, collective, etc.).",
-      "createOrganisation": "Create an organization",
+      "organisationRequired": "An organisation is required for in-person events",
+      "virtualUrlRequired": "The virtual event link is required",
+      "imageRequired": "The event image is required",
+      "noOrganisation": "As a professional, you must create an organisation to host an in-person event. An organisation represents your structure (association, company, collective, etc.).",
+      "createOrganisation": "Create an organisation",
       "switchToVirtual": "Create a virtual event",
-      "noOrganisationYet": "You don't have an organization yet",
+      "noOrganisationYet": "You don't have an organisation yet",
       "virtualUrl": "Event link",
       "virtualUrlPlaceholder": "https://zoom.us/j/... or https://meet.google.com/...",
       "virtualUrlHint": "Zoom, Google Meet, YouTube Live link, etc.",
-      "availableAfterCreation": "Available after event creation",
-      "organisationRequiredMessage": "You must first create an organization to publish an in-person event."
+      "availableAfterCreation": "Available once the event has been created",
+      "organisationRequiredMessage": "You must first create an organisation to publish an in-person event.",
+      "errorEvent": "Error creating the event",
+      "organisationRequiredShort": "Organisation required",
+      "createShort": "Create"
     },
     "types": {
       "concert": "Concert",
@@ -445,7 +560,31 @@
     "participants": "participants",
     "full": "Full",
     "free": "Free",
-    "resultsCount": "event(s) found"
+    "resultsCount": "event(s) found",
+    "status": {
+      "draft": "Draft",
+      "planned": "Planned",
+      "published": "Published",
+      "upcoming": "Upcoming",
+      "ongoing": "Ongoing",
+      "finished": "Finished",
+      "cancelled": "Cancelled"
+    },
+    "cancel": "Cancel event",
+    "almostFull": "Almost full",
+    "title": "Cultural events",
+    "subtitle": "Discover cultural events across Algeria — festivals, concerts, exhibitions, talks.",
+    "subtitleShort": "Discover cultural events across Algeria",
+    "searchPlaceholder": "Search for an event...",
+    "noResults": "No events found",
+    "noResultsDesc": "Try changing your search criteria",
+    "removeFromFavorites": "Remove from favourites",
+    "addToFavorites": "Add to favourites",
+    "contact": "Contact",
+    "past": "Past",
+    "upcoming": "Upcoming",
+    "upcomingLower": "upcoming",
+    "pastLower": "past"
   },
   "footer": {
     "legal": "Legal",
@@ -502,7 +641,8 @@
       "badge": "Discover Algerian cultural heritage",
       "subtitle": "Explore, preserve and share the cultural richness of Algeria",
       "explore": "Explore heritage",
-      "contribute": "Contribute"
+      "contribute": "Contribute",
+      "addSite": "Add a site"
     },
     "explore": {
       "subtitle": "A digital platform dedicated to the preservation and promotion of Algerian culture in all its richness and diversity.",
@@ -525,7 +665,11 @@
       "createWork": "Create a work",
       "organizeEvent": "Organize an event",
       "subtitle": "Join our community of artists and craftspeople",
-      "title": "For professionals"
+      "title": "For professionals",
+      "badge": "Professionals Area",
+      "visibility": "Greater visibility",
+      "tools": "Management tools",
+      "community": "Active community"
     },
     "resources": {
       "access": "Access resources",
@@ -641,7 +785,8 @@
       "subtitle": "Discover Algeria's historical and cultural treasures through an interactive map",
       "title": "Cultural Heritage",
       "search": "Search for a site...",
-      "tryDifferentSearch": "Try a different search or reset filters"
+      "tryDifferentSearch": "Try a different search or reset filters",
+      "noDescription": "Description coming soon..."
     },
     "works": {
       "actions": {
@@ -752,6 +897,9 @@
       "title": "Welcome to",
       "titleHighlight": "Tamlilit Culture",
       "subtitle": "Digital platform dedicated to preserving and promoting Amazigh cultural heritage"
+    },
+    "artisanat": {
+      "description": "Discover traditional Algerian crafts and their passionate makers"
     }
   },
   "works": {
@@ -763,7 +911,10 @@
       "readExcerpt": "Read excerpt",
       "readNow": "Read now",
       "trailer": "Trailer",
-      "watchNow": "Watch now"
+      "watchNow": "Watch now",
+      "addFavorite": "Favourites",
+      "addToFavorites": "Add to favourites",
+      "watchTrailer": "Watch trailer"
     },
     "album": {
       "tracksCount_one": "{{count}} track",
@@ -771,7 +922,8 @@
     },
     "duration": {
       "minutes_one": "{{count}} minute",
-      "minutes_other": "{{count}} minutes"
+      "minutes_other": "{{count}} minutes",
+      "label": "Duration"
     },
     "fields": {
       "isbn": "ISBN",
@@ -790,14 +942,62 @@
       "readingTimeValue": "{{value}} min",
       "reviewsCount_one": "{{count}} review",
       "reviewsCount_other": "{{count}} reviews",
-      "views": "Views"
+      "views": "Views",
+      "listens": "plays",
+      "reviews": "reviews",
+      "total": "Works",
+      "new": "New releases",
+      "types": "Types",
+      "classics": "Classics"
     },
     "types": {
       "album": "Album",
       "book": "Book",
       "film": "Film"
     },
-    "resultsCount": "work(s) found"
+    "resultsCount": "work(s) found",
+    "zoom": "Enlarge",
+    "noDescription": "No description available for this album.",
+    "flipToFront": "Click to see the cover",
+    "viewCover": "View cover",
+    "viewDetails": "View details on the back",
+    "inFavorites": "Favourite",
+    "artist": "Artist",
+    "noAudio": "No audio preview available yet",
+    "noCover": "No cover available",
+    "description": "Description",
+    "noSynopsisFilm": "No synopsis available for this film.",
+    "directedBy": "Director",
+    "flipToFrontFilm": "Click to see the poster",
+    "viewPoster": "View poster",
+    "viewSynopsis": "View synopsis on the back",
+    "noTrailer": "No trailer available yet",
+    "noPoster": "No poster available",
+    "synopsis": "Synopsis",
+    "noDescriptionBook": "No description available for this book.",
+    "flipToFrontBook": "Click to see the cover",
+    "viewCoverBook": "View cover",
+    "viewSummary": "View summary on the back",
+    "removeFromFavorites": "Remove from favourites",
+    "excerpt": {
+      "title": "Excerpt from",
+      "noContent": "No content available for this book."
+    },
+    "noCoverBook": "No cover available",
+    "summary": "Summary",
+    "title": "Cultural works",
+    "subtitle": "Explore the richness of Algerian cultural heritage — literature, cinema, music, painting and the arts.",
+    "subtitleShort": "Explore the richness of Algerian cultural heritage",
+    "searchPlaceholder": "Search for a work...",
+    "filterByType": "Type",
+    "sort": {
+      "recent": "Most recent",
+      "popular": "Most viewed",
+      "rated": "Top rated",
+      "title": "Title A-Z"
+    },
+    "noResults": "No works found",
+    "noResultsDesc": "Try changing your search criteria"
   },
   "verifyemailpage": {
     "vrification_russie": "Verification Successful!",
@@ -845,11 +1045,13 @@
     "placeholder_crivez_votre_commentaire": "Write your comment here...",
     "annuler": "Cancel",
     "envoi": "Sending...",
-    "envoyer": "Send"
+    "envoyer": "Send",
+    "partager_desc": "Share this work on your social networks"
   },
   "notfound": {
     "oops_page_not": "Oops! Page not found",
-    "return_home": "Return to Home"
+    "return_home": "Return to Home",
+    "description": "The page you are looking for does not exist or has been moved."
   },
   "eventdetailspage": {
     "erreur": "Error",
@@ -962,7 +1164,23 @@
     "membre_depuis": "Member since",
     "vous_souhaitez_crer": "Want to create content?",
     "devenir_professionnel": "Become a professional",
-    "modifier_profil": "Edit profile"
+    "modifier_profil": "Edit profile",
+    "markReadFailed": "Unable to mark the notification as read.",
+    "markAllReadFailed": "Unable to mark all notifications as read.",
+    "actualiser": "Refresh",
+    "loadFavorisFailed": "Error loading favourites",
+    "markAllRead": "Mark all as read",
+    "loadNotifsFailed": "Error loading notifications",
+    "confirm_remove_title": "Remove from favourites",
+    "confirm_remove_favorite": "Do you want to remove this item from your favourites?",
+    "profileUpdated": "Profile updated",
+    "updateFailed": "Error while updating",
+    "photoUpdated": "Photo updated",
+    "changePhoto": "Change photo",
+    "photoHelper": "JPG, PNG or WebP. Max 5 MB.",
+    "emailReadOnly": "Email cannot be changed",
+    "biographie": "Biography",
+    "biographiePlaceholder": "Describe yourself in a few lines..."
   },
   "dashboardpro": {
     "participants": "participants",
@@ -1008,7 +1226,12 @@
     "sur_commande": "Made to order",
     "indisponible": "Unavailable",
     "manage": "Manage",
-    "manage_event": "Manage programs and works"
+    "manage_event": "Manage programs and works",
+    "loadOeuvresFailed": "Error loading works",
+    "loadEventsFailed": "Error loading events",
+    "loadServicesFailed": "Error loading services",
+    "loadArtisanatsFailed": "Error loading crafts",
+    "loadPatrimoinesFailed": "Error loading heritage sites"
   },
   "dashboardadmin": {
     "label_validation": "Validation",
@@ -1316,7 +1539,41 @@
       "textile": "Textile",
       "metal": "Metal",
       "bijoux": "Jewelry"
-    }
+    },
+    "title": "Algerian Crafts",
+    "subtitle": "Discover Algeria's traditional arts, crafts and handmade creations — pottery, carpets, jewellery, leather.",
+    "subtitleShort": "Discover Algeria's traditional arts, crafts and handmade creations",
+    "stats": {
+      "products": "Products",
+      "materials": "Materials",
+      "techniques": "Techniques",
+      "artisans": "Artisans"
+    },
+    "searchPlaceholder": "Search for a craft product...",
+    "filterByMaterial": "Material",
+    "filterByTechnique": "Technique",
+    "sort": {
+      "recent": "Most recent",
+      "popular": "Popular",
+      "priceAsc": "Price: low to high",
+      "priceDesc": "Price: high to low"
+    },
+    "noResults": "No craft products found",
+    "noResultsDesc": "Try changing your search criteria",
+    "resultsCount": "product(s) found",
+    "notFound": "Craft not found",
+    "noDescription": "No description available",
+    "dimensions": "Dimensions",
+    "weight": "Weight",
+    "material": "Material",
+    "technique": "Technique",
+    "craftsman": "The artisan",
+    "biography": "Biography",
+    "noArtisanInfo": "Artisan information not available",
+    "comments": "Comments",
+    "artisanWorks": "Other works by this artisan",
+    "noOtherWorks": "This artisan has no other works yet",
+    "similarCreations": "Similar creations"
   },
   "apropos": {
     "title_transmission": "Transmission",
@@ -1344,7 +1601,87 @@
     "envoyer_message": "Send message",
     "contact_direct": "Direct contact",
     "pour_toute_question": "For any questions or collaboration:",
-    "contactculturealgeriedz": "contact@taladz.com"
+    "contactculturealgeriedz": "contact@taladz.com",
+    "champsRequis": "Required fields",
+    "emailMessageRequis": "Email and message are required.",
+    "messageEnvoye": "Message sent",
+    "messageEnvoyeDesc": "We have received your message. We will get back to you shortly.",
+    "erreurEnvoi": "Error while sending.",
+    "erreurEnvoiMessage": "Error while sending the message.",
+    "conditions": "Terms of use",
+    "cgu": {
+      "objet": "1. Purpose",
+      "objetText": "These general terms of use (Terms) govern access to and use of the Tala DZ platform (taladz.com), hereinafter \"the Platform\". By creating an account or using the Platform, you unreservedly accept these Terms and the Privacy Policy.",
+      "acces": "2. Access and registration",
+      "accesText": "Access to the Platform is free for visitors. Creating an account is free and open to people aged 13 and over. Professional accounts are subject to approval by our moderation team. You are responsible for keeping your login credentials confidential.",
+      "contenu": "3. Published content",
+      "contenuText": "You retain the intellectual property of your content. By publishing on the Platform, you grant Tala DZ a non-exclusive, royalty-free licence to display, distribute and promote your content within the Platform. Published content must comply with applicable laws and copyright, and must not contain any defamatory, discriminatory or unlawful statements. We reserve the right to moderate or remove any inappropriate content.",
+      "responsabilite": "4. Liability",
+      "responsabiliteText": "Tala DZ does its utmost to ensure the availability and security of the Platform, without guaranteeing uninterrupted operation. We cannot be held liable for content published by users. In the event of a dispute, Algerian law applies.",
+      "modification": "5. Changes to the Terms",
+      "modificationText": "We may amend these Terms at any time. Users will be informed by a notification on the Platform. Continued use after an amendment constitutes acceptance of the new terms."
+    },
+    "confidentialite": "Privacy policy",
+    "privacy": {
+      "responsable": "1. Data controller",
+      "responsableText": "The controller of personal data is Tala DZ, available at taladz.com. For any question about the protection of your data, you can contact us at: contact@taladz.com.",
+      "donnees": "2. Data collected",
+      "donneesIntro": "We only collect the data needed for the Platform to operate:",
+      "donneesIdentite": "Identity data: last name, first name, email address (required at registration)",
+      "donneesOptionnelles": "Optional data: date of birth, gender, phone, address, profile photo, biography",
+      "donneesPro": "Professional data (if applicable): company, specialities, certifications, website",
+      "donneesNavigation": "Browsing data: IP address (anonymised), pages viewed, device type",
+      "pasDeVente": "Your personal information is never sold to third parties.",
+      "finalites": "3. Purposes and legal basis",
+      "finaliteCompte": "Account management and authentication — legal basis: performance of the contract (Terms)",
+      "finaliteContenu": "Publishing and displaying your cultural content — legal basis: performance of the contract",
+      "finaliteStats": "Anonymised visitor statistics — legal basis: legitimate interest",
+      "finaliteNewsletter": "Sending the newsletter (only if you have opted in) — legal basis: consent, which can be withdrawn at any time via the link in every email or the \"My data\" section",
+      "finaliteSecurite": "Platform security (abuse prevention) — legal basis: legitimate interest",
+      "conservation": "4. Retention period",
+      "conservationCompte": "Account data: kept as long as your account is active",
+      "conservationNotifs": "Notifications: automatically deleted after 90 days",
+      "conservationLogs": "Login logs: 90 days maximum",
+      "conservationSuppression": "If your account is deleted: your personal data is erased and your public contributions are anonymised",
+      "conservationSauvegardes": "Security backups: kept for 7 days; data from a deleted account disappears from them within that period",
+      "droits": "5. Your rights",
+      "droitsIntro": "In accordance with applicable legislation and the GDPR, you have the following rights:",
+      "droitAcces": "Right of access",
+      "droitAccesDesc": "— view and export all your data from your profile",
+      "droitRectification": "Right to rectification",
+      "droitRectificationDesc": "— edit your personal information at any time",
+      "droitSuppression": "Right to erasure",
+      "droitSuppressionDesc": "— delete your account and all your personal data",
+      "droitPortabilite": "Right to data portability",
+      "droitPortabiliteDesc": "— export your data in a machine-readable format (JSON)",
+      "droitOpposition": "Right to object",
+      "droitOppositionDesc": "— manage your notification and privacy preferences",
+      "droitsExercice": "To exercise your rights, go to the \"My data\" section of your profile (export, account deletion, newsletter) or contact us at contact@taladz.com.",
+      "soustraitants": "6. Processors",
+      "soustraitantsIntro": "To operate the Platform, we use the following services:",
+      "soustraitantCloudinary": "Cloudinary — hosting of the images and media you publish (servers located outside Algeria)",
+      "soustraitantEmail": "Email delivery provider (SMTP) — transactional emails and newsletter (your email address)",
+      "soustraitantOSM": "OpenStreetMap / Nominatim — base maps and geocoding: your IP address is sent to their servers when a map is displayed",
+      "soustraitantUnsplash": "Unsplash — some illustration images: your IP address is sent when they are displayed",
+      "soustraitantsPas": "No personal data is sold, rented or transferred for commercial purposes. Fonts and icons are hosted by the Platform itself.",
+      "cookies": "7. Cookies",
+      "cookiesText": "The Platform only uses cookies that are strictly necessary for it to work (authentication, language preference, CSRF security). No advertising or third-party tracking cookies are used.",
+      "reclamation": "8. Right to lodge a complaint",
+      "reclamationText": "If you believe that the processing of your data does not comply with the regulations, you can lodge a complaint with the data protection authority in your country (in France: CNIL — cnil.fr, in Algeria: ANPDP)."
+    },
+    "mentionsLegales": "Legal notice",
+    "mentions": {
+      "editeur": "Platform publisher",
+      "editeurText": "Tala DZ — Collaborative platform promoting Algerian cultural heritage.",
+      "editeurContact": "Contact: contact@taladz.com",
+      "editeurSite": "Website: taladz.com",
+      "hebergeur": "Hosting",
+      "hebergeurText": "The Platform is hosted on a secure dedicated VPS server (HTTPS, Let's Encrypt certificate).",
+      "dpo": "Data protection",
+      "dpoText": "For any question about the protection of your personal data, you can contact our data protection officer at: contact@taladz.com."
+    },
+    "ressources": "Resources",
+    "ressourcesText": "Culture Algérie provides resources to discover and promote Algerian cultural heritage: events, works, crafts, heritage sites and much more."
   },
   "ajouteroeuvre": {
     "chargement_des_catgories": "Loading categories...",
@@ -1458,10 +1795,36 @@
     "nb_pistes": "Number of tracks",
     "placeholder_nb_pistes": "Ex: 12",
     "producteur": "Producer",
-    "placeholder_producteur": "Nom du producteur",
-    "studio": "Studio de production",
-    "placeholder_studio": "Nom du studio",
-    "type_hint": "Select the type that best matches your work. For articles and scientific articles, the advanced editor allows rich formatting with blocks (headings, images, quotes, tables)."
+    "placeholder_producteur": "Producer name",
+    "studio": "Production studio",
+    "placeholder_studio": "Studio name",
+    "type_hint": "Select the type that best matches your work. For articles and scientific articles, the advanced editor allows rich formatting with blocks (headings, images, quotes, tables).",
+    "langueOriginale": "Original language of the work",
+    "choisirLangue": "-- Choose a language --",
+    "categoriesLoadError": "Unable to load categories",
+    "deselectAll": "Deselect all",
+    "selectAll": "Select all",
+    "preciserTechnique": "Specify the technique...",
+    "choisirTechnique": "-- Choose a technique --",
+    "preciserSupport": "Specify the medium...",
+    "choisirSupport": "-- Choose a medium --",
+    "isbnHelper": "Format: 978-2-1234-5678-9",
+    "doiHelper": "Format: 10.1234/example",
+    "erreur_upload": "Error uploading files",
+    "articleCreateError": "Error creating the article",
+    "articleSaveError": "Error saving the article",
+    "updatingOeuvre": "Updating the work...",
+    "creatingOeuvre": "Creating the work...",
+    "uploadingMedias": "Uploading media...",
+    "updateError": "Error while updating",
+    "createError": "Error creating the work",
+    "uploadingMedia": "Uploading media...",
+    "verifyError": "Unable to verify whether the work was created. Please check your dashboard or try again.",
+    "saveError": "An error occurred while saving",
+    "succes": "Work saved",
+    "oeuvre_creee_succes": "Your work has been submitted successfully. It will be publicly visible once approved by an administrator.",
+    "brouillon_sauvegarde": "Your draft has been saved. You can edit and publish it later from your dashboard.",
+    "article_cree_succes": "Your article has been submitted successfully. It will be publicly visible once approved by an administrator."
   },
   "common_patrimoinesection": {
     "description_citadelle_historique_classe": "Historic citadel listed as UNESCO World Heritage Site",
@@ -1602,7 +1965,15 @@
     "retour_aux_notifications": "Back to notifications",
     "enregistrement": "Saving...",
     "enregistr": "Saved",
-    "enregistrer_les_prfrences": "Save preferences"
+    "enregistrer_les_prfrences": "Save preferences",
+    "errorLoad": "Unable to load preferences",
+    "errorSave": "Unable to save preferences",
+    "browserEnabled": "✓ Notifications enabled",
+    "browserDisabled": "✗ Notifications disabled",
+    "emailEnabled": "✓ Email notifications enabled",
+    "emailDisabled": "✗ Email notifications disabled",
+    "smsEnabled": "✓ SMS notifications enabled",
+    "smsDisabled": "✗ SMS notifications disabled"
   },
   "notifications_notifications": {
     "voir_plus": "See more →",
@@ -1625,7 +1996,11 @@
     "tout_marquer_comme": "Mark all as read",
     "supprimer_les_lues": "Delete read",
     "chargement_des_notifications": "Loading notifications...",
-    "aucune_notification": "No notifications"
+    "aucune_notification": "No notifications",
+    "connected": "Connected",
+    "disconnected": "Disconnected",
+    "loading": "Loading...",
+    "loadMore": "Load more"
   },
   "articles_articleviewpage": {
     "chargement_larticle": "Loading article...",
@@ -1701,7 +2076,10 @@
     "type": "type",
     "disponible": "available",
     "annuler": "Cancel",
-    "ajouter_lintervenant": "Add contributor"
+    "ajouter_lintervenant": "Add contributor",
+    "error_prenom_required": "First name is required",
+    "error_nom_required": "Last name is required",
+    "error_role_required": "Please select a role type"
   },
   "modals_editeurmodal": {
     "ajouter_diteur": "Add publisher",
@@ -1713,7 +2091,10 @@
     "site_web": "Website",
     "optionnel_lurl_doit": "Optional - URL must start with http:// or https://",
     "annuler": "Cancel",
-    "crer_lditeur": "Create publisher"
+    "crer_lditeur": "Create publisher",
+    "error_nom_required": "Publisher name is required",
+    "error_type_required": "Publisher type is required",
+    "error_url_invalid": "The URL must start with http:// or https://"
   },
   "dashboard_dashboardfilters": {
     "type": "Type:",
@@ -1959,7 +2340,9 @@
       "sentCount_other": "Sent to {{count}} users",
       "sentToUser": "Notification sent to {{name}}",
       "sentToGroup": "Notification sent to group {{group}}",
-      "sendError": "Error sending notification"
+      "sendError": "Error sending notification",
+      "titleRequired": "Title is required",
+      "messageRequired": "Message is required"
     },
     "moderation": {
       "title": "Moderation",
@@ -1991,8 +2374,19 @@
         "approve": "Approve",
         "reject": "Reject",
         "warn": "Warn",
-        "process": "Process"
-      }
+        "process": "Process",
+        "dismiss": "Dismiss report",
+        "dismissShort": "Dismiss",
+        "removeContent": "Remove content",
+        "removeContentShort": "Remove",
+        "suspend": "Suspend user",
+        "suspendShort": "Suspend"
+      },
+      "count": "{{count}} pending report(s)",
+      "commentReports": "Comments",
+      "contentReports": "Content",
+      "searchPlaceholder": "Search reports...",
+      "noReportsDesc": "No reports match your criteria"
     },
     "patrimoine": {
       "title": "Heritage Management",
@@ -2012,7 +2406,11 @@
       "deleteDialog": {
         "title": "Delete heritage site",
         "description": "Are you sure you want to delete \"{{name}}\"?"
-      }
+      },
+      "deleted": "Site deleted successfully",
+      "count": "{{count}} site(s)",
+      "noResults": "No sites found",
+      "noResultsDesc": "No sites match your criteria"
     },
     "overview": {
       "title": "Overview",
@@ -2065,13 +2463,60 @@
       "notifications": "Notifications"
     },
     "users": {
-      "title": "User Management"
+      "title": "User Management",
+      "count": "{{count}} user(s)",
+      "notifyProfessionals": "Notify professionals",
+      "searchPlaceholder": "Search by name, email...",
+      "selectAll": "Select all",
+      "selectedCount": "{{count}} selected",
+      "bulkActivate": "Activate",
+      "bulkDeactivate": "Deactivate",
+      "clearSelection": "Clear selection",
+      "noUsers": "No users",
+      "noUsersDesc": "No users match your search criteria",
+      "selectUser": "Select {{name}}",
+      "registeredOn": "Registered on {{date}}",
+      "sendEmail": "Send an email",
+      "verifyEmail": "Verify email",
+      "reactivate": "Reactivate",
+      "suspend": "Suspend",
+      "confirmDelete": "Delete this user?",
+      "confirmDeleteDesc": "This action cannot be undone. All of the user's data will be deleted.",
+      "confirmSuspend": "Suspend this user?",
+      "confirmSuspendDesc": "The user will be suspended for 7 days.",
+      "confirmBulkDelete": "Delete {{count}} user(s)?",
+      "confirmBulkDeleteDesc": "This action cannot be undone."
     },
     "oeuvres": {
-      "title": "Works Management"
+      "title": "Works Management",
+      "count": "{{count}} work(s)",
+      "searchPlaceholder": "Search by title...",
+      "noOeuvres": "No works",
+      "noOeuvresDesc": "No works match your criteria",
+      "table": {
+        "title": "Title",
+        "type": "Type",
+        "author": "Author",
+        "status": "Status",
+        "date": "Date",
+        "actions": "Actions"
+      },
+      "confirmDelete": "Delete this work?",
+      "confirmDeleteDesc": "This action cannot be undone."
     },
     "events": {
-      "title": "Events Management"
+      "title": "Events Management",
+      "count": "{{count}} event(s)",
+      "searchPlaceholder": "Search by name...",
+      "noEvents": "No events",
+      "noEventsDesc": "No events match your criteria",
+      "participants": "{{count}} participants",
+      "cancel": "Cancel",
+      "confirmCancel": "Cancel this event?",
+      "confirmCancelDesc": "Participants will be notified of the cancellation.",
+      "cancelEvent": "Cancel event",
+      "confirmDelete": "Delete this event?",
+      "confirmDeleteDesc": "This action cannot be undone."
     },
     "services": {
       "title": "Services Management",
@@ -2082,8 +2527,12 @@
         "transport": "Transport",
         "accommodation": "Accommodation",
         "workshop": "Workshop"
-      }
-    }
+      },
+      "count": "{{count}} service(s)",
+      "noServicesDesc": "No services match your criteria"
+    },
+    "emailVerified": "Email verified successfully",
+    "emailVerifyFailed": "Unable to verify the email"
   },
   "wilayas": {
     "alger": "Algiers",
@@ -2103,7 +2552,12 @@
     "addedDesc": "Your comment has been published successfully",
     "errorSubmit": "Error submitting comment",
     "errorEmpty": "Comment cannot be empty",
-    "loginRequired": "Log in to comment"
+    "loginRequired": "Log in to comment",
+    "reportSuccess": "Report sent. Thank you.",
+    "reportError": "Error while reporting.",
+    "errorTooShort": "The comment must contain at least 3 characters",
+    "successTitle": "Comment published",
+    "successDesc": "Your review has been published successfully."
   },
   "oeuvre": {
     "addToFavorites": "Add to favorites",
@@ -2228,7 +2682,64 @@
     "dimensions": "Dimensions",
     "weight": "Weight",
     "price": "Price",
-    "verified": "Verified and published artwork"
+    "verified": "Verified and published artwork",
+    "yearCreation": "Year of creation",
+    "materials": "Materials",
+    "pageCount": "Number of pages",
+    "publicationDate": "Publication date",
+    "gallery": "Gallery",
+    "readOriginal": "Original article",
+    "abstract": "Abstract",
+    "viewOnDOI": "View on DOI.org",
+    "backCover": "Back cover",
+    "share": {
+      "text": "Discover \"{{title}}\" - {{type}}"
+    },
+    "errors": {
+      "loadMetadataFailed": "Unable to load the data needed for the form.",
+      "loadRefFailed": "Unable to load reference data",
+      "connectionError": "Server connection error. Please try again.",
+      "titleRequired": "Title is required (at least in French or Arabic)",
+      "typeRequired": "Please select a work type",
+      "descriptionRequired": "Description is required (at least in French or Arabic)",
+      "categoryRequired": "Please select at least one category",
+      "languageRequired": "Please select the original language",
+      "invalidYear": "The year must be between 1800 and {{max}}",
+      "invalidPrice": "The price cannot be negative",
+      "invalidIsbn": "Invalid ISBN — 10 or 13 digits expected",
+      "invalidUrl": "Invalid URL — use the format https://example.com",
+      "formHasErrors": "Please correct the errors below"
+    },
+    "scientificDetails": "Scientific details",
+    "journal": "Journal / Review",
+    "volume": "Volume",
+    "pages": "Pages",
+    "impactFactor": "Impact Factor",
+    "peerReviewed": "Peer-reviewed",
+    "articleDetails": "Article details",
+    "author": "Author",
+    "subtitle": "Subtitle",
+    "source": "Source",
+    "readOriginalArticle": "Read the original article",
+    "bookDetails": "Book details",
+    "format": "Format",
+    "collection": "Collection",
+    "filmDetails": "Film details",
+    "director": "Director",
+    "producer": "Producer",
+    "studio": "Studio",
+    "albumDetails": "Album details",
+    "tracks": "Tracks",
+    "label": "Label",
+    "shareText": "Discover this work: {{title}}",
+    "seoDescription": "Discover {{title}} — an Algerian cultural work",
+    "artistPresentation": "About the artist",
+    "authorBibliography": "Author's bibliography",
+    "noAuthorInfo": "No information about the author available.",
+    "discoverArtistWorks": "Discover more works by the artist",
+    "discoverAuthorWorks": "Discover more works by the author",
+    "noOtherArtistWorks": "No other works by this artist available.",
+    "noOtherAuthorWorks": "No other works by this author available."
   },
   "event": {
     "accessibility": "Accessibility",
@@ -2301,7 +2812,14 @@
       "interestedVisitor": "Interested in this event?",
       "connectToParticipate": "Log in to register or add to favorites",
       "addToFavorites": "Add to favorites",
-      "removeFromFavorites": "Remove from favorites"
+      "removeFromFavorites": "Remove from favorites",
+      "successWithWorks": "You are registered with {{count}} work(s) submitted",
+      "limitTitle": "Limit reached",
+      "limitDesc": "Maximum {{max}} work(s) allowed for this event",
+      "error": "An error occurred during registration",
+      "cancelTitle": "Cancel my registration",
+      "cancelConfirm": "Are you sure you want to cancel your registration for this event? This action cannot be undone.",
+      "confirmCancel": "Confirm cancellation"
     },
     "registrationDeadline": "Registration deadline",
     "relatedEvents": "Related events",
@@ -2310,7 +2828,10 @@
       "comments": "Comments",
       "gallery": "Gallery",
       "info": "Information",
-      "program": "Program"
+      "program": "Program",
+      "participants": "Participants",
+      "services": "Services",
+      "metadata": "Metadata"
     },
     "roles": {
       "organisateur_principal": "Main Organizer",
@@ -2322,9 +2843,41 @@
       "moderateur": "Moderator",
       "animateur": "Facilitator",
       "benevole": "Volunteer",
-      "staff": "Staff"
+      "staff": "Staff",
+      "participant": "Participant"
     },
-    "viewOnMap": "View on map"
+    "viewOnMap": "View on map",
+    "metadata": {
+      "title": "Additional information",
+      "type": "Event type",
+      "registrationRequired": "Registration required",
+      "certificateDelivered": "Certificate issued",
+      "free": "Free",
+      "virtual": "Online event",
+      "capacity": "Capacity",
+      "acceptsSubmissions": "Accepts submissions",
+      "presentedWorks": "Works presented",
+      "partners": "Partners"
+    },
+    "participants": {
+      "empty": "No participants yet",
+      "emptyDesc": "Be the first to register for this event!",
+      "title": "Participants",
+      "confirmed": "confirmed"
+    },
+    "share": {
+      "title": "Share the event"
+    },
+    "qrcode": {
+      "unavailable": "QR Code not available",
+      "title": "Event QR Code",
+      "alt": "QR Code to access the event",
+      "description": "Scan this QR code to go directly to the event page.",
+      "download": "Download",
+      "copied": "Copied!",
+      "copyLink": "Copy link",
+      "share": "Share"
+    }
   },
   "places": {
     "address": "Address",
@@ -2413,8 +2966,39 @@
       "nomRequired": "Name is required",
       "materiauRequired": "Please select a material",
       "techniqueRequired": "Please select a technique",
-      "createFailed": "Error creating service"
-    }
+      "createFailed": "Error creating service",
+      "noLieuSelected": "Please select a site",
+      "noServices": "Please add at least one service",
+      "submitFailed": "Error adding services"
+    },
+    "serviceAdded": "Service added",
+    "serviceAddedDesc": "The service has been added to the list",
+    "successTitle": "Success",
+    "selectLieu": "1. Select a site",
+    "addServices": "2. Add services",
+    "filters": "Filters",
+    "search": "Search",
+    "searchPlaceholder": "Site name...",
+    "typePatrimoine": "Heritage type",
+    "lieuxList": "Heritage sites",
+    "results": "results",
+    "noLieux": "No sites found",
+    "changeLieu": "Change site",
+    "existingServices": "Existing services",
+    "existingServicesDesc": "Services already set up for this site",
+    "noExistingServices": "No services set up",
+    "predefinedServices": "Common services",
+    "predefinedServicesDesc": "Select the services to add",
+    "alreadyAdded": "already added",
+    "customService": "Custom service",
+    "customServiceDesc": "Add a service that isn't listed",
+    "serviceName": "Service name",
+    "serviceNamePlaceholder": "E.g. Bike rental",
+    "serviceDesc": "Description (optional)",
+    "available": "Service available",
+    "addToList": "Add to list",
+    "servicesToAdd": "Services to add:",
+    "servicesSelected": "service(s) to add"
   },
   "ajouterPatrimoine": {
     "title": "Add a heritage site",
@@ -2469,7 +3053,26 @@
       "submittedWorks": "Works submitted for this event",
       "portfolio": "Portfolio",
       "participationHistory": "Participation history",
-      "loadError": "Unable to load profile"
+      "loadError": "Unable to load profile",
+      "actions": {
+        "confirmSuccess": "Participation confirmed",
+        "confirmDesc": "The participant has been notified",
+        "rejectSuccess": "Participation declined",
+        "rejectDesc": "The participant has been notified",
+        "presentSuccess": "Attendance recorded",
+        "presentDesc": "The participant is marked as present",
+        "absentSuccess": "Absence recorded",
+        "absentDesc": "The participant is marked as absent",
+        "error": "An error occurred",
+        "confirm": "Confirm",
+        "reject": "Decline",
+        "markPresent": "Present",
+        "markAbsent": "Absent"
+      },
+      "workDetails": "Work details",
+      "author": "Author / Artist",
+      "presentationDesc": "Note for this event",
+      "viewFullPage": "View full page"
     }
   },
   "programmePages": {
@@ -2477,7 +3080,8 @@
       "backToEvents": "Back to events",
       "backToEvent": "Back to event",
       "edit": "Edit",
-      "delete": "Delete"
+      "delete": "Delete",
+      "duplicate": "Duplicate"
     },
     "status": {
       "loadingProgram": "Loading program..."
@@ -2493,7 +3097,9 @@
       "loadFailed": "Error loading program",
       "createFailed": "Error creating program",
       "updateFailed": "Error updating program",
-      "deleteFailed": "Error deleting program"
+      "deleteFailed": "Error deleting program",
+      "loadDataFailed": "Unable to load event data. Check your connection.",
+      "duplicateFailed": "Error while duplicating"
     },
     "meta": {
       "eventNumber": "Event #{{id}}",
@@ -2518,8 +3124,10 @@
       "confirmDelete": "Are you sure you want to delete this program?",
       "quickActions": {
         "editProgram": "Edit this program",
-        "addAnotherProgram": "Add another program"
-      }
+        "addAnotherProgram": "Add another program",
+        "duplicateProgram": "Duplicate this programme"
+      },
+      "intervenants": "Contributors"
     },
     "info": {
       "multiDayTitle": "Multi-day management",
@@ -2541,7 +3149,8 @@
     "errorBoundary": {
       "title": "An error occurred",
       "unexpected": "Unexpected error",
-      "retry": "Retry"
+      "retry": "Retry",
+      "reload": "Reload page"
     },
     "lazyImage": {
       "unavailable": "Image unavailable"
@@ -2552,7 +3161,9 @@
     "programmes": "Programs",
     "participants": "Participants",
     "oeuvres": "Works",
-    "showOeuvres": "Present works"
+    "showOeuvres": "Present works",
+    "oeuvresDisabled": "Work management is disabled for this event.",
+    "oeuvresEnableHint": "Enable \"Present works\" if this event includes presentations of works."
   },
   "status": {
     "active": "Active",
@@ -2573,7 +3184,9 @@
     "full": "Full",
     "open": "Open",
     "closed": "Closed",
-    "unknown": "Unknown"
+    "unknown": "Unknown",
+    "present": "Present",
+    "absent": "Absent"
   },
   "patrimoine": {
     "filters": {
@@ -2624,7 +3237,8 @@
       "photoRequired": "At least one photo is required",
       "createFailed": "Error during creation",
       "gpsRecommended": "GPS position not set.",
-      "invalidFiles": "Certains fichiers sont invalides (images < 10 Mo)"
+      "invalidFiles": "Certains fichiers sont invalides (images < 10 Mo)",
+      "gpsRequired": "Position the site on the map (click, search for an address or use geolocation)"
     },
     "success": {
       "created": "Site created!",
@@ -2646,7 +3260,9 @@
       "artisanat": "Local crafts",
       "personnalites": "Personalities",
       "infosPratiques": "Practical information",
-      "references": "Historical references"
+      "references": "Historical references",
+      "cultureVivante": "Culture & Living heritage",
+      "cultureVivanteDesc": "Enrich these sections with your knowledge"
     },
     "contribute": {
       "add": "Contribute",
@@ -2654,7 +3270,10 @@
       "saved": "Contribution saved!",
       "thanks": "Thank you for your contribution",
       "saveFailed": "Error saving",
-      "contentRequired": "Please enter content (at least in French or Arabic)"
+      "contentRequired": "Please enter content (at least in French or Arabic)",
+      "addArticle": "Article",
+      "addQuick": "Quick text",
+      "writeArticle": "Write an article"
     },
     "gps": {
       "found": "Position found",
@@ -2663,13 +3282,84 @@
       "error": "Geolocation error",
       "unavailable": "Geolocation unavailable",
       "unavailableDesc": "Your device does not support geolocation.",
-      "unavailablePos": "Position unavailable. Click on the map."
+      "unavailablePos": "Position unavailable. Click on the map.",
+      "noResults": "No results",
+      "noResultsDesc": "Try another term or click on the map.",
+      "searchFailed": "Search error",
+      "invalidCoords": "Invalid coordinates. Latitude: -90 to 90, Longitude: -180 to 180.",
+      "searchPlaceholder": "Search for an address, a place...",
+      "manual": "Manual GPS entry"
     },
     "placeholders": {
       "nom": "Ex: Casbah d'Alger, Djemila...",
-      "adresse": "Ex: Centre-ville, Route de..."
+      "adresse": "E.g.: Town centre, Road to..."
     },
-    "checking": "Checking..."
+    "checking": "Checking...",
+    "editor": {
+      "loadError": "Unable to load blocks",
+      "contentRequired": "Content is required",
+      "urlRequired": "URL is required",
+      "added": "Block added",
+      "addError": "Unable to add the block",
+      "confirmDelete": "Delete this block?",
+      "deleted": "Block deleted",
+      "deleteError": "Unable to delete the block",
+      "title": "Rich articles: {{section}}",
+      "description": "Add text, headings, quotes, images and videos to enrich this section.",
+      "existingBlocks": "Existing blocks ({{count}})",
+      "noBlocks": "No blocks in this section yet.",
+      "empty": "(empty)",
+      "addBlock": "Add a block",
+      "blockType": "Block type",
+      "headingLevel": "Heading level",
+      "headingMain": "Main",
+      "headingSub": "Secondary",
+      "headingMinor": "Minor",
+      "url": "URL",
+      "content": "Content",
+      "citationPlaceholder": "“Quote...”",
+      "textPlaceholder": "Enter text...",
+      "headingPlaceholder": "Section heading",
+      "author": "Author (optional)",
+      "authorPlaceholder": "Author's name",
+      "alt": "Alternative text (accessibility)",
+      "altPlaceholder": "Image description",
+      "add": "Add block"
+    },
+    "addSite": "Add a site",
+    "photos": "photos",
+    "gallery": "Gallery",
+    "description": "Description",
+    "noDescription": "No description available.",
+    "toVisit": "To Visit",
+    "monuments": "Monuments",
+    "vestiges": "Remains",
+    "services": "Services",
+    "programmes": "Programmes",
+    "parcours": "Routes",
+    "history": "History",
+    "museums": "Museums",
+    "collections": "Collections",
+    "wildlife": "Fauna & Flora",
+    "viewEvent": "View event",
+    "noProgrammes": "No programmes scheduled yet",
+    "noParcours": "No associated routes",
+    "noGallery": "No photos available",
+    "noMuseums": "No museums listed",
+    "noCollections": "No collections available",
+    "noWildlife": "Information on fauna and flora coming soon",
+    "practicalInfo": "Practical information",
+    "hours": "Opening hours",
+    "location": "Location",
+    "qrCode": "QR Code",
+    "scanQR": "Scan to access the information",
+    "stats": "Statistics",
+    "discoverArea": "Discover the surroundings",
+    "planVisitDesc": "Create a personalised route with nearby sites",
+    "planVisit": "Plan your visit",
+    "proService": "Are you a professional?",
+    "addYourService": "Offer your services here",
+    "backToList": "Back to list"
   },
   "toasts": {
     "error": "Error",
@@ -2780,7 +3470,19 @@
     "deleteFailed": "Deletion error",
     "alreadyDeleted": "Item already deleted",
     "alreadyDeletedDesc": "The list has been refreshed.",
-    "noPermission": "You do not have the required permissions for this action"
+    "noPermission": "You do not have the required permissions for this action",
+    "loadUsersFailed": "Error loading users",
+    "loadPendingUsersFailed": "Error loading pending users",
+    "loadPendingOeuvresFailed": "Error loading pending works",
+    "loadModerationFailed": "Error loading moderation",
+    "eventCancelled": "Event cancelled successfully",
+    "eventCancelFailed": "Error while cancelling",
+    "serviceValidated": "Service approved",
+    "serviceRejected": "Service rejected",
+    "serviceValidationFailed": "Validation error",
+    "imageUploadFailed": "Image upload failed (block {{index}})",
+    "notFoundDesc": "The requested resource could not be found.",
+    "notFound": "Resource not found"
   },
   "ajouterArtisanat": {
     "title": "Add a craft product",
@@ -2816,7 +3518,8 @@
       "techniqueRequired": "Technique is required",
       "createFailed": "Error during creation",
       "loadFailed": "Unable to load the craft product",
-      "loadMetadataFailed": "Error loading materials and techniques"
+      "loadMetadataFailed": "Error loading materials and techniques",
+      "prixMinMax": "The minimum price cannot be higher than the maximum price"
     }
   },
   "service": {
@@ -2874,7 +3577,8 @@
       "urlInvalid": "Invalid website URL (must start with http:// or https://)",
       "phoneInvalid": "Invalid phone number",
       "submitFailed": "Error during submission"
-    }
+    },
+    "editTitle": "Edit my service"
   },
   "organisations": {
     "create": {
@@ -2891,7 +3595,10 @@
       "website": "Website",
       "submit": "Create organization",
       "success": "Organization created successfully",
-      "error": "Error during creation"
+      "error": "Error during creation",
+      "urlInvalid": "Invalid website URL (must start with http:// or https://)",
+      "typeLoadError": "Unable to load types. Please refresh the page.",
+      "submitting": "Creating..."
     }
   },
   "validation": {
@@ -2900,7 +3607,8 @@
     "fixErrors": "Please fix the errors before submitting",
     "invalidGPS": "Invalid GPS coordinates",
     "fileTooLarge": "File is too large",
-    "invalidFileType": "Unsupported file type"
+    "invalidFileType": "Unsupported file type",
+    "maxFileSize": "Max 5 MB"
   },
   "category": {
     "form": {
@@ -2935,13 +3643,22 @@
     "openMaps": "Open in Maps",
     "error": {
       "generation": "Unable to generate itinerary. Please try again."
-    }
+    },
+    "transport.walk": "On foot",
+    "transport.bike": "Bike",
+    "transport.car": "Car",
+    "interests.history": "History",
+    "interests.architecture": "Architecture",
+    "interests.art": "Art",
+    "interests.nature": "Nature",
+    "interests.religion": "Religion",
+    "interests.gastronomy": "Gastronomy"
   },
   "multilang": {
-    "keyboardTifinaghNotDetected": "Clavier Tifinagh non détecté",
-    "keyboardTamazightNotDetected": "Clavier Tamazight Latin non détecté",
-    "installTifinagh": "Installez le clavier Tifinagh depuis les paramètres de votre appareil",
-    "installTamazight": "Installez le clavier Tamazight Latin depuis les paramètres de votre appareil",
+    "keyboardTifinaghNotDetected": "Tifinagh keyboard not detected",
+    "keyboardTamazightNotDetected": "Tamazight (Latin) keyboard not detected",
+    "installTifinagh": "Install the Tifinagh keyboard from your device's settings",
+    "installTamazight": "Install the Tamazight (Latin) keyboard from your device's settings",
     "seeInstructions": "See instructions",
     "generalInstructions": "General instructions",
     "installKeyboard": "Install a Tamazight keyboard from your device settings",
@@ -3067,9 +3784,34 @@
         "dateRequired": "Date is required",
         "startTimeRequired": "Start time is required",
         "endTimeRequired": "End time is required",
-        "endTimeAfterStart": "End time must be after start time"
+        "endTimeAfterStart": "End time must be after start time",
+        "descriptionRequired": "Description is required (at least in French or Arabic)",
+        "intervenantUserRequired": "Each contributor must have a selected user"
       }
-    }
+    },
+    "loadError": "Error loading programmes",
+    "updated": "Programme updated",
+    "created": "Programme created",
+    "saveError": "Error while saving",
+    "confirmDelete": "Are you sure you want to delete this programme?",
+    "deleted": "Programme deleted",
+    "deleteError": "Error while deleting",
+    "list": "Programme list",
+    "add": "Add an activity",
+    "edit": "Edit activity",
+    "create": "Create an activity",
+    "formDesc": "Fill in the activity details",
+    "empty": "No programme for this event",
+    "speakerCount": "contributor(s)",
+    "speakers": "Contributors",
+    "level": "Level",
+    "requiredMaterial": "Required equipment",
+    "translationAvailable": "Translation available",
+    "liveStreaming": "Live streaming",
+    "digitalSupport": "Digital materials",
+    "noDate": "Date not set",
+    "notAvailable": "Programme not available",
+    "emptyDesc": "This event's programme has not been published yet"
   },
   "emailChange": {
     "noTokenProvided": "No confirmation token provided.",
@@ -3094,7 +3836,7 @@
     "loadProgrammesError": "Error loading programs",
     "programmeUpdated": "Program updated successfully",
     "programmeCreated": "Program created successfully",
-    "programmeDeleted": "Programme supprimé avec succès",
+    "programmeDeleted": "Programme deleted successfully",
     "saveError": "Error saving",
     "deleteError": "Error deleting"
   },
@@ -3119,5 +3861,282 @@
     "newsletterOn": "You are subscribed to the newsletter",
     "newsletterOff": "You have unsubscribed from the newsletter",
     "newsletterFailed": "Could not update, please try again"
+  },
+  "app": {
+    "offlineBanner": "Network connection lost — the data shown may be out of date."
+  },
+  "article": {
+    "imageTooLarge": "The image is too large (max 10MB)",
+    "mustBeImage": "The file must be an image",
+    "errors": {
+      "titreRequired": "Title is required (in at least one language)",
+      "descriptionRequired": "Description is required (in at least one language)",
+      "categoriesRequired": "Please select at least one category"
+    },
+    "savedSuccess": "Article saved successfully!",
+    "linkCopied": "Link copied!",
+    "commentError": "Error adding the comment",
+    "notFound": "The requested article does not exist.",
+    "scientific": "Scientific article",
+    "article": "Article",
+    "volume": "Volume",
+    "numero": "Issue",
+    "pages": "Pages",
+    "replyToComment": "Reply to comment",
+    "addComment": "Add a comment",
+    "updateSuccess": "Article updated successfully!"
+  },
+  "passwordStrength": {
+    "minLength": "12+ characters",
+    "uppercase": "1 uppercase letter",
+    "lowercase": "1 lowercase letter",
+    "digit": "1 digit",
+    "special": "1 special character",
+    "weak": "Weak",
+    "fair": "Fair",
+    "good": "Good",
+    "strong": "Strong"
+  },
+  "map": {
+    "title": "Interactive Map",
+    "points": "points",
+    "fullscreen": "Full screen",
+    "exploration": "Explore — Heritage, Services & Events",
+    "parcours": "Available routes"
+  },
+  "oeuvres": {
+    "loadError": "Error loading works",
+    "addedToEvent": "Work added to the event",
+    "addError": "Error while adding",
+    "confirmRemove": "Do you really want to remove this work from the event?",
+    "removedFromEvent": "Work removed from the event",
+    "removeError": "Error while removing",
+    "inEvent": "Featured works",
+    "addToEvent": "Add a work",
+    "selectToAdd": "Select a work",
+    "selectDesc": "Choose from your available works",
+    "select": "Work",
+    "selectPlaceholder": "Select a work",
+    "duration": "Presentation length (min)",
+    "presentationDesc": "Presentation description",
+    "presentationDescPlaceholder": "Notes on how this work is presented",
+    "noneInEvent": "No works added to this event",
+    "availableCount": "You have {{count}} work(s) available",
+    "noAvailable": "Create a work first to be able to add it",
+    "available": "Available works"
+  },
+  "artisanatForm": {
+    "createTitle": "Add a craft item"
+  },
+  "artisanForm": {
+    "editTitle": "Edit craft item",
+    "viewTitle": "Craft item details",
+    "verifyTitle": "Verify craft item",
+    "title": "Crafts",
+    "mode": {
+      "create": "Create",
+      "edit": "Edit",
+      "view": "View",
+      "verify": "Verification"
+    },
+    "success": "Operation successful!",
+    "basicInfo": "Basic information",
+    "basicInfoDescView": "Information about the craft product",
+    "basicInfoDesc": "Describe your craft product",
+    "nom": "Product name",
+    "nomPlaceholder": "E.g. Traditional Berber rug",
+    "description": "Description",
+    "descriptionPlaceholder": "Describe your product and its features...",
+    "materiau": "Material",
+    "selectMateriau": "Select a material",
+    "technique": "Technique",
+    "selectTechnique": "Select a technique",
+    "pricingTitle": "Price and availability",
+    "prixMin": "Minimum price (DA)",
+    "prixMax": "Maximum price (DA)",
+    "delaiFabrication": "Production time (days)",
+    "delaiFabricationPlaceholder": "Number of days",
+    "enStock": "Quantity in stock",
+    "surCommande": "Available made to order",
+    "tagsTitle": "Tags / Keywords",
+    "tagPlaceholder": "Add a tag...",
+    "verificationTitle": "Administrative verification",
+    "verificationDesc": "Approve or reject this craft product",
+    "motifRejet": "Reason for rejection",
+    "motifRejetPlaceholder": "Explain why this product is rejected...",
+    "mediasTitle": "Photos",
+    "mediasDescView": "Product photos",
+    "mediasDesc": "Add photos of your product",
+    "mediasUploadText": "Click to add photos",
+    "submitting": "In progress...",
+    "submit": "Create craft item",
+    "update": "Update",
+    "verify": "Verify and save"
+  },
+  "languageSelector": {
+    "chooseLanguage": "Choose language"
+  },
+  "editeur": {
+    "types": {
+      "maisonEdition": "Publishing house",
+      "labelMusique": "Record label",
+      "studioCinema": "Film studio",
+      "galerieArt": "Art gallery",
+      "editeurScientifique": "Scientific publisher",
+      "presse": "Press",
+      "editeurNumerique": "Digital publisher",
+      "autre": "Other"
+    },
+    "errors": {
+      "createFailed": "Error creating the publisher"
+    }
+  },
+  "intervenant": {
+    "errors": {
+      "loadTypesFailed": "Error loading types",
+      "loadTypesFailedDetail": "Unable to load contributor types"
+    },
+    "noRolesAvailable": "No roles available",
+    "selectRole": "Select a role"
+  },
+  "emptyState": {
+    "default": {
+      "title": "No items",
+      "description": "There is nothing to display yet."
+    },
+    "search": {
+      "title": "No results",
+      "description": "Try adjusting your search criteria."
+    },
+    "documents": {
+      "title": "No documents",
+      "description": "Start by adding a document."
+    },
+    "events": {
+      "title": "No events",
+      "description": "No events are scheduled at the moment."
+    },
+    "users": {
+      "title": "No users",
+      "description": "No users match your criteria."
+    },
+    "locations": {
+      "title": "No places",
+      "description": "No places were found."
+    },
+    "works": {
+      "title": "No works",
+      "description": "No works are available."
+    },
+    "products": {
+      "title": "No products",
+      "description": "No products are available."
+    }
+  },
+  "services": {
+    "none": "No services available for this site",
+    "nearby": "Nearby services",
+    "availableServices": "Available services",
+    "count": "services",
+    "open": "● Available",
+    "closed": "● Unavailable",
+    "website": "Website"
+  },
+  "favoris": {
+    "added": "Added to favourites",
+    "removed": "Removed from favourites",
+    "addedDesc": "The work has been added to your favourites",
+    "removedDesc": "The work has been removed from your favourites",
+    "toggle": "Add to/Remove from favourites"
+  },
+  "stats": {
+    "views": "views",
+    "favorites": "favourites",
+    "comments": "reviews"
+  },
+  "upload": {
+    "fileTooLarge": "File too large (max 5 MB)",
+    "uploadFailed": "Upload error"
+  },
+  "gallery": {
+    "empty": "No media available",
+    "emptyDesc": "This event's gallery is empty for now",
+    "all": "All",
+    "emptyDescOeuvre": "The gallery is empty for now"
+  },
+  "gestionArtisanat": {
+    "errors": {
+      "loadFailed": "Error while loading",
+      "nomRequired": "The name is required (at least in French or Arabic)",
+      "materiauRequired": "The material is required",
+      "techniqueRequired": "The technique is required",
+      "saveFailed": "Error while saving"
+    },
+    "createTitle": "Add a craft",
+    "editTitle": "Edit my craft",
+    "viewTitle": "Craft details",
+    "verifyTitle": "Review craft",
+    "title": "Crafts",
+    "verifySubtitle": "Review and approve craft products",
+    "subtitle": "Manage craft products",
+    "successEdit": "Craft updated successfully!",
+    "successCreate": "Craft created successfully!",
+    "mode": {
+      "create": "Creation",
+      "edit": "Editing",
+      "view": "Viewing",
+      "verify": "Review"
+    },
+    "basicInfo": "Basic information",
+    "basicInfoDescView": "Information about the craft product",
+    "basicInfoDesc": "Describe your craft product",
+    "nom": "Product name",
+    "nomPlaceholder": "e.g. Traditional Berber carpet",
+    "description": "Description",
+    "descriptionPlaceholder": "Describe your product, its features...",
+    "materiau": "Material",
+    "selectMateriau": "Select a material",
+    "technique": "Technique",
+    "selectTechnique": "Select a technique",
+    "pricingTitle": "Price and availability",
+    "prixMin": "Minimum price (DA)",
+    "prixMax": "Maximum price (DA)",
+    "delaiFabrication": "Production time (days)",
+    "delaiFabricationPlaceholder": "Number of days",
+    "enStock": "Quantity in stock",
+    "surCommande": "Available to order",
+    "tagsTitle": "Tags / Keywords",
+    "tagPlaceholder": "Add a tag...",
+    "verificationTitle": "Administrative review",
+    "verificationDesc": "Approve or reject this craft product",
+    "statutLabel": "Status",
+    "selectStatut": "Select status",
+    "statut": {
+      "en_attente": "Pending",
+      "approuve": "Approved",
+      "rejete": "Rejected"
+    },
+    "motifRejet": "Reason for rejection",
+    "motifRejetPlaceholder": "Explain why this product is rejected...",
+    "mediasTitle": "Photos",
+    "mediasDescView": "Product photos",
+    "mediasDesc": "Add photos of your product",
+    "mediasUploadText": "Click to add photos",
+    "submitting": "In progress...",
+    "submit": "Create craft",
+    "update": "Update",
+    "verify": "Review and save"
+  },
+  "nav": {
+    "home": "Home",
+    "oeuvres": "Works"
+  },
+  "qrcode": {
+    "generating": "Generating QR Code",
+    "pleaseWait": "Please wait...",
+    "downloading": "Downloading...",
+    "success": "QR Code downloaded",
+    "checkDownloads": "Check your downloads",
+    "downloadError": "Unable to download the QR Code"
   }
 }

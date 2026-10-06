@@ -876,7 +876,7 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
                 )}
                 {selectedOeuvre.nombre_pages && (
                   <div className="p-3 bg-muted/30 rounded-lg">
-                    <p className="text-xs text-muted-foreground">{t('oeuvre.pages', 'Nombre de pages')}</p>
+                    <p className="text-xs text-muted-foreground">{t('oeuvre.pageCount', 'Nombre de pages')}</p>
                     <p className="font-medium">{selectedOeuvre.nombre_pages}</p>
                   </div>
                 )}

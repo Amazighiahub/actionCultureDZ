@@ -487,7 +487,7 @@ const AdminUsersTab: React.FC = () => {
       <ConfirmDialog
         open={confirmBulkDelete}
         onOpenChange={setConfirmBulkDelete}
-        title={t('admin.users.confirmBulkDelete', `Supprimer ${selectedUserIds.length} utilisateur(s) ?`)}
+        title={t('admin.users.confirmBulkDelete', 'Supprimer {{count}} utilisateur(s) ?', { count: selectedUserIds.length })}
         description={t('admin.users.confirmBulkDeleteDesc', 'Cette action est irréversible.')}
         variant="destructive"
         confirmLabel={t('common.delete', 'Supprimer')}
