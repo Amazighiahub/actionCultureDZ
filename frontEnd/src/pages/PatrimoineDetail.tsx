@@ -88,7 +88,7 @@ interface SitePatrimoineDetail {
     noteMoyenne?: number;
     nb_contributions?: number;
   };
-  medias?: Array<{ id: number; url: string; type: string; description?: string | MultilingualField }>;
+  medias?: Array<{ id: number; url: string; type: string; titre?: string | MultilingualField; legende?: string | MultilingualField; description?: string | MultilingualField }>;
   services?: Array<{ id: number; nom: string | MultilingualField; description?: string | MultilingualField; disponible: boolean }>;
   monuments?: Array<{ id: number; nom: string | MultilingualField; description?: string | MultilingualField; type: string }>;
   vestiges?: Array<{ id: number; nom: string | MultilingualField; description?: string | MultilingualField; type: string }>;
@@ -280,6 +280,18 @@ const PatrimoineDetail = () => {
     );
   }
 
+  // Libellé accessible d'un média (titre/légende sinon « Site – photo N »)
+  const siteDisplayName = translate(site.nom, lang);
+  const getMediaLabel = (media: NonNullable<SitePatrimoineDetail['medias']>[number], idx: number): string =>
+    translate(media.titre, lang) || translate(media.legende, lang)
+    || `${siteDisplayName} – ${t('common.photo', 'photo')} ${idx + 1}`;
+  const getVideoLabel = (media: NonNullable<SitePatrimoineDetail['medias']>[number], idx: number): string =>
+    t('patrimoine.playVideo', 'Lire la vidéo : {{title}}', { title: getMediaLabel(media, idx) });
+  const selectedMediaIndex = selectedImage ? (site.medias || []).findIndex(m => m.url === selectedImage) : -1;
+  const selectedImageAlt = selectedMediaIndex >= 0 && site.medias
+    ? getMediaLabel(site.medias[selectedMediaIndex], selectedMediaIndex)
+    : siteDisplayName;
+
   const seoKeywords = [
     translate(site?.nom, lang), site?.typePatrimoine,
     site?.Commune?.Daira?.Wilaya?.nom, 'patrimoine algérien', 'site historique', 'Algérie',
@@ -389,15 +401,16 @@ const PatrimoineDetail = () => {
                       role="button"
                       tabIndex={0}
                       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedImage(media.url); } }}
+                      aria-label={media.type === 'video' ? getVideoLabel(media, idx) : undefined}
                     >
                       {media.type === 'video' ? (
                         <div className="w-full h-full bg-muted flex items-center justify-center">
-                          <Play className="h-8 w-8" />
+                          <Play className="h-8 w-8" aria-hidden="true" />
                         </div>
                       ) : (
                         <img
                           src={getAssetUrl(media.url)}
-                          alt={`Photo ${idx + 1}`}
+                          alt={getMediaLabel(media, idx)}
                           className="w-full h-full object-cover hover:scale-105 transition-transform"
                         />
                       )}
@@ -633,10 +646,10 @@ const PatrimoineDetail = () => {
                             site.medias && site.medias.length > 0 ? (
                               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                                 {site.medias.map((media, idx) => (
-                                  <div key={idx} className="aspect-video cursor-pointer overflow-hidden rounded-lg" onClick={() => setSelectedImage(media.url)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter') setSelectedImage(media.url); }}>
+                                  <div key={idx} className="aspect-video cursor-pointer overflow-hidden rounded-lg" onClick={() => setSelectedImage(media.url)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedImage(media.url); } }} aria-label={media.type === 'video' ? getVideoLabel(media, idx) : undefined}>
                                     {media.type === 'video'
-                                      ? <div className="w-full h-full bg-muted flex items-center justify-center"><Play className="h-8 w-8" /></div>
-                                      : <img src={getAssetUrl(media.url)} alt={`Photo ${idx + 1}`} className="w-full h-full object-cover hover:scale-105 transition-transform" />}
+                                      ? <div className="w-full h-full bg-muted flex items-center justify-center"><Play className="h-8 w-8" aria-hidden="true" /></div>
+                                      : <img src={getAssetUrl(media.url)} alt={getMediaLabel(media, idx)} className="w-full h-full object-cover hover:scale-105 transition-transform" />}
                                   </div>
                                 ))}
                               </div>
@@ -847,10 +860,11 @@ const PatrimoineDetail = () => {
       {/* Dialog pour image en grand */}
       {selectedImage && (
         <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
-          <DialogContent className="max-w-4xl p-0">
+          <DialogContent className="max-w-4xl p-0" aria-describedby={undefined}>
+            <DialogTitle className="sr-only">{siteDisplayName}</DialogTitle>
             <img
               src={selectedImage}
-              alt="Image en grand"
+              alt={selectedImageAlt}
               className="w-full h-auto rounded-lg"
             />
           </DialogContent>

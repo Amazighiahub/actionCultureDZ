@@ -442,7 +442,9 @@
     "unspecifiedLocation": "المكان غير محدد",
     "removeFrom": "إزالة",
     "notProvided": "غير مُدرج",
-    "unknown": "غير معروف"
+    "unknown": "غير معروف",
+    "sortBy": "ترتيب حسب",
+    "photo": "صورة"
   },
   "contributors": {
     "addedCount_one": "تمت إضافة مساهم واحد",
@@ -590,7 +592,8 @@
     "past": "سابقة",
     "upcoming": "قادمة",
     "upcomingLower": "قادمة",
-    "pastLower": "سابقة"
+    "pastLower": "سابقة",
+    "resultsHeading": "قائمة الفعاليات"
   },
   "footer": {
     "legal": "قانوني",
@@ -626,7 +629,9 @@
       "albums": "ألبومات",
       "articles": "مقالات",
       "scientific": "علمية",
-      "art": "أعمال فنية"
+      "art": "أعمال فنية",
+      "mainLabel": "التنقل الرئيسي",
+      "subLabel": "فئات القسم"
     },
     "subtitle": "تالا دي زد",
     "title": "تالا دي زد",
@@ -639,7 +644,12 @@
       "myProfile": "ملفي الشخصي",
       "mySpace": "مساحتي",
       "pendingValidations": "التحققات المعلقة",
-      "proDashboard": "لوحة التحكم الاحترافية"
+      "proDashboard": "لوحة التحكم الاحترافية",
+      "open": "قائمة حسابي"
+    },
+    "menu": {
+      "close": "إغلاق القائمة",
+      "open": "فتح القائمة"
     }
   },
   "home": {
@@ -648,7 +658,16 @@
       "subtitle": "استكشف وحافظ وشارك الثراء الثقافي للجزائر",
       "explore": "استكشف التراث",
       "contribute": "ساهم",
-      "addSite": "إضافة موقع"
+      "addSite": "إضافة موقع",
+      "slides": {
+        "timgad": "الآثار الرومانية في تيمقاد",
+        "sahara": "الصحراء الجزائرية",
+        "casbah": "قصبة الجزائر",
+        "grenier": "مخزن تقليدي"
+      },
+      "goToSlide": "الصورة {{index}} من {{total}}: {{title}}",
+      "play": "استئناف العرض",
+      "pause": "إيقاف العرض مؤقتًا"
     },
     "explore": {
       "subtitle": "اكتشف ثراء الثقافة الأمازيغية",
@@ -1356,7 +1375,8 @@
       "title": "العنوان أ-ي"
     },
     "noResults": "لم يتم العثور على أي عمل",
-    "noResultsDesc": "حاول تعديل معايير البحث"
+    "noResultsDesc": "حاول تعديل معايير البحث",
+    "resultsHeading": "قائمة الأعمال"
   },
   "verifyemailpage": {
     "vrification_russie": "تم التحقق بنجاح!",
@@ -1934,7 +1954,10 @@
     "comments": "التعليقات",
     "artisanWorks": "أعمال أخرى للحرفي",
     "noOtherWorks": "لا توجد أعمال أخرى لهذا الحرفي حالياً",
-    "similarCreations": "إبداعات مشابهة"
+    "similarCreations": "إبداعات مشابهة",
+    "removeFromFavorites": "إزالة من المفضلة",
+    "addToFavorites": "إضافة إلى المفضلة",
+    "resultsHeading": "قائمة المنتجات الحرفية"
   },
   "apropos": {
     "title_transmission": "النقل",
@@ -2922,7 +2945,9 @@
       "error": "حدث خطأ أثناء التسجيل",
       "cancelTitle": "إلغاء تسجيلي",
       "cancelConfirm": "هل أنت متأكد من رغبتك في إلغاء تسجيلك في هذه الفعالية؟ لا يمكن التراجع عن هذا الإجراء.",
-      "confirmCancel": "تأكيد الإلغاء"
+      "confirmCancel": "تأكيد الإلغاء",
+      "contactByEmail": "مراسلة المنظم عبر البريد الإلكتروني",
+      "contactByPhone": "الاتصال بالمنظم"
     },
     "registrationDeadline": "الموعد النهائي للتسجيل",
     "relatedEvents": "الأحداث المرتبطة",
@@ -3464,7 +3489,8 @@
     "proService": "هل أنت مهني؟",
     "addYourService": "اعرض خدماتك هنا",
     "backToList": "العودة إلى القائمة",
-    "notFound": "الموقع غير موجود"
+    "notFound": "الموقع غير موجود",
+    "playVideo": "تشغيل الفيديو: {{title}}"
   },
   "toasts": {
     "error": "خطأ",
@@ -3625,7 +3651,9 @@
       "loadFailed": "تعذر تحميل المنتج الحرفي",
       "loadMetadataFailed": "خطأ أثناء تحميل المواد والتقنيات",
       "prixMinMax": "لا يمكن أن يتجاوز السعر الأدنى السعر الأقصى"
-    }
+    },
+    "addTag": "إضافة الوسم",
+    "removeTag": "حذف الوسم {{tag}}"
   },
   "service": {
     "addTitle": "إضافة خدمتي",
@@ -3768,7 +3796,11 @@
     "generalInstructions": "تعليمات عامة",
     "installKeyboard": "ثبّت لوحة مفاتيح أمازيغية من إعدادات جهازك",
     "searchStore": "ابحث عن \"تيفيناغ\" أو \"أمازيغية لاتينية\" في متجرك",
-    "activateKeyboard": "فعّل لوحة المفاتيح في إعدادات اللغة"
+    "activateKeyboard": "فعّل لوحة المفاتيح في إعدادات اللغة",
+    "languagesGroup": "{{label}}: لغة الإدخال",
+    "requiredEmpty": "(إلزامي، غير معبأ)",
+    "filled": "(معبأ)",
+    "hasError": "(خطأ)"
   },
   "programme": {
     "form": {
@@ -4168,7 +4200,9 @@
     "empty": "لا توجد وسائط متاحة",
     "emptyDesc": "معرض هذه الفعالية فارغ حالياً",
     "all": "الكل",
-    "emptyDescOeuvre": "المعرض فارغ حالياً"
+    "emptyDescOeuvre": "المعرض فارغ حالياً",
+    "gridView": "عرض شبكي",
+    "listView": "عرض قائمة"
   },
   "gestionArtisanat": {
     "errors": {
@@ -4244,5 +4278,13 @@
     "success": "تم تنزيل رمز QR",
     "checkDownloads": "تحقق من مجلد التنزيلات",
     "downloadError": "تعذّر تنزيل رمز QR"
+  },
+  "rating": {
+    "value": "التقييم: {{value}} من {{max}}",
+    "label": "التقييم",
+    "star": "{{count}} نجمة من 5"
+  },
+  "a11y": {
+    "skipToContent": "الانتقال إلى المحتوى الرئيسي"
   }
 }

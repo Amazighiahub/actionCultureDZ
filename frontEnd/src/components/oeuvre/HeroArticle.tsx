@@ -72,8 +72,9 @@ const HeroArticle: React.FC<HeroArticleProps> = ({
           size="icon"
           className="mb-6 hover:bg-slate-100 dark:hover:bg-slate-800"
           onClick={() => navigate(-1)}
+          aria-label={t('common.back', 'Retour')}
         >
-          <ChevronLeft className="h-5 w-5" />
+          <ChevronLeft className="h-5 w-5" aria-hidden="true" />
         </Button>
 
         {/* En-tête type publication académique */}
@@ -212,8 +213,9 @@ const HeroArticle: React.FC<HeroArticleProps> = ({
               onClick={onToggleFavorite}
               disabled={favoriteLoading}
               variant="favorite" data-active={isFavorite}
+              aria-label={isFavorite ? t('works.removeFromFavorites', 'Retirer des favoris') : t('works.actions.addToFavorites', 'Ajouter aux favoris')}
             >
-              <Heart className={cn("h-5 w-5 mr-2", isFavorite && "fill-current")} />
+              <Heart className={cn("h-5 w-5 mr-2", isFavorite && "fill-current")} aria-hidden="true" />
               {isFavorite ? t('works.inFavorites', 'Favori') : t('works.actions.addFavorite', 'Favoris')}
             </Button>
             {shareButton}

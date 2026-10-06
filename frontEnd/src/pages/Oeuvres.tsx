@@ -2,8 +2,8 @@
  * Oeuvres.tsx - Page de listing des œuvres refactorisée
  * Avec lazy loading des images et composants séparés
  */
-import React, { useState, useCallback, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/useAuth';
 import { favoriService } from '@/services/favori.service';
@@ -53,14 +53,17 @@ const TYPE_ICONS: Record<string, React.ElementType> = {
   default: Sparkles
 };
 
+// Lien « étiré » : le titre porte le lien, son ::after couvre toute la carte (cliquable + crawlable)
+const STRETCHED_LINK_CLASS =
+  'after:absolute after:inset-0 after:rounded-lg focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-inset focus-visible:after:ring-ring';
+
 // Composant carte d'œuvre
 interface OeuvreCardProps {
   oeuvre: Record<string, unknown>;
-  onView: (id: number) => void;
   onFavorite?: (id: number) => void;
 }
 
-const OeuvreCard: React.FC<OeuvreCardProps> = React.memo(({ oeuvre, onView }) => {
+const OeuvreCard: React.FC<OeuvreCardProps> = React.memo(({ oeuvre }) => {
   const { t } = useTranslation();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -70,6 +73,7 @@ const OeuvreCard: React.FC<OeuvreCardProps> = React.memo(({ oeuvre, onView }) =>
 
   const typeCode = oeuvre.TypeOeuvre?.code?.toLowerCase() || oeuvre.type?.toLowerCase() || 'default';
   const TypeIcon = TYPE_ICONS[typeCode] || TYPE_ICONS.default;
+  const oeuvreUrl = `/oeuvres/${oeuvre.id_oeuvre}`;
 
   const handleFavoriteClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -96,10 +100,7 @@ const OeuvreCard: React.FC<OeuvreCardProps> = React.memo(({ oeuvre, onView }) =>
   };
 
   return (
-    <Card 
-      className="overflow-hidden hover:shadow-lg transition-all cursor-pointer group"
-      onClick={() => onView(oeuvre.id_oeuvre)}
-    >
+    <Card className="relative overflow-hidden hover:shadow-lg transition-all cursor-pointer group">
       {/* Image avec lazy loading */}
       <div className="relative aspect-[4/3] overflow-hidden">
         <LazyImage
@@ -110,47 +111,60 @@ const OeuvreCard: React.FC<OeuvreCardProps> = React.memo(({ oeuvre, onView }) =>
         />
         
         {/* Overlay au survol */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity" aria-hidden="true" />
         
         {/* Badge type */}
         <div className="absolute top-3 left-3 bg-background/90 backdrop-blur-sm rounded-full p-2">
-          <TypeIcon className="h-4 w-4" />
+          <TypeIcon className="h-4 w-4" aria-hidden="true" />
         </div>
 
         {/* Bouton favori */}
         <button
+          type="button"
           onClick={handleFavoriteClick}
-          className="absolute top-3 right-3 bg-background/90 backdrop-blur-sm rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background"
+          aria-pressed={isFavorite}
+          aria-label={isFavorite
+            ? t('works.removeFromFavorites', 'Retirer des favoris')
+            : t('works.actions.addToFavorites', 'Ajouter aux favoris')}
+          className="absolute top-3 right-3 z-10 bg-background/90 backdrop-blur-sm rounded-full p-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-opacity hover:bg-background"
         >
-          <Heart className={`h-4 w-4 ${isFavorite ? 'fill-red-500 text-red-500' : ''}`} />
+          <Heart className={`h-4 w-4 ${isFavorite ? 'fill-red-500 text-red-500' : ''}`} aria-hidden="true" />
         </button>
 
         {/* Actions au survol */}
-        <div className="absolute bottom-3 left-3 right-3 flex justify-between items-center opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="absolute bottom-3 left-3 right-3 flex justify-between items-center opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
           <div className="flex items-center gap-3 text-white text-sm">
             {oeuvre.vues !== undefined && (
               <span className="flex items-center gap-1">
-                <Eye className="h-4 w-4" />
+                <Eye className="h-4 w-4" aria-hidden="true" />
                 {oeuvre.vues}
               </span>
             )}
             {oeuvre.note_moyenne !== undefined && (
               <span className="flex items-center gap-1">
-                <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" aria-hidden="true" />
                 {oeuvre.note_moyenne.toFixed(1)}
               </span>
             )}
           </div>
-          <Button size="sm" variant="secondary">
-            {t('common.view', 'Voir')}
-            <ArrowRight className="h-3 w-3 ml-1" />
+          <Button asChild size="sm" variant="secondary">
+            <Link
+              to={oeuvreUrl}
+              tabIndex={-1}
+              aria-label={`${t('common.view', 'Voir')} : ${oeuvre.titre}`}
+            >
+              {t('common.view', 'Voir')}
+              <ArrowRight className="h-3 w-3 ml-1" aria-hidden="true" />
+            </Link>
           </Button>
         </div>
       </div>
 
       <CardContent className="p-4">
         <h3 className="font-semibold line-clamp-2 mb-1 group-hover:text-primary transition-colors">
-          {oeuvre.titre}
+          <Link to={oeuvreUrl} className={STRETCHED_LINK_CLASS}>
+            {oeuvre.titre}
+          </Link>
         </h3>
         
         {/* Auteur / Saiseur */}
@@ -188,7 +202,6 @@ const OeuvreCard: React.FC<OeuvreCardProps> = React.memo(({ oeuvre, onView }) =>
 // Composant principal
 const Oeuvres: React.FC = () => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
   // États des filtres
@@ -260,11 +273,6 @@ const Oeuvres: React.FC = () => {
     return result;
   }, [oeuvres, debouncedSearch, typeFilter, sortBy]);
 
-  // Navigation vers détail
-  const handleViewOeuvre = useCallback((id: number) => {
-    navigate(`/oeuvres/${id}`);
-  }, [navigate]);
-
   // Reset des filtres
   const resetFilters = () => {
     setSearchQuery('');
@@ -322,8 +330,9 @@ const Oeuvres: React.FC = () => {
             <div className="flex flex-col md:flex-row gap-4">
               {/* Recherche */}
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
                 <Input
+                  aria-label={t('works.searchPlaceholder', 'Rechercher une œuvre...')}
                   placeholder={t('works.searchPlaceholder', 'Rechercher une œuvre...')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -333,7 +342,7 @@ const Oeuvres: React.FC = () => {
 
               {/* Filtre type */}
               <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-[180px]" aria-label={t('works.filterByType', 'Type')}>
                   <SelectValue placeholder={t('works.filterByType', 'Type')} />
                 </SelectTrigger>
                 <SelectContent>
@@ -348,7 +357,7 @@ const Oeuvres: React.FC = () => {
 
               {/* Tri */}
               <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-[150px]">
+                <SelectTrigger className="w-[150px]" aria-label={t('common.sortBy', 'Trier par')}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -401,12 +410,12 @@ const Oeuvres: React.FC = () => {
               </div>
 
               {/* Grille des œuvres */}
+              <h2 className="sr-only">{t('works.resultsHeading', 'Liste des œuvres')}</h2>
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {displayedOeuvres.map((oeuvre) => (
                   <OeuvreCard
                     key={oeuvre.id_oeuvre}
                     oeuvre={oeuvre}
-                    onView={handleViewOeuvre}
                   />
                 ))}
               </div>

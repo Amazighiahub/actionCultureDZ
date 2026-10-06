@@ -244,6 +244,8 @@ const CarteInteractiveUnifiee: React.FC<CarteInteractiveUnifieeProps> = ({
             key={marker.id}
             position={marker.position}
             icon={MARKER_ICONS[marker.category] || MARKER_ICONS.default}
+            title={marker.title}
+            alt={marker.title}
           >
             <Popup maxWidth={280}>
               <div className="p-1 max-w-[260px]">
@@ -269,7 +271,7 @@ const CarteInteractiveUnifiee: React.FC<CarteInteractiveUnifieeProps> = ({
                     href={marker.link}
                     className="text-xs text-blue-600 hover:underline mt-1 block"
                   >
-                    Voir détails →
+                    {t('common.viewDetails', 'Voir les détails')} <span aria-hidden="true">→</span>
                   </a>
                 )}
               </div>

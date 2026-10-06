@@ -87,7 +87,7 @@ const HeroDefault: React.FC<HeroDefaultProps> = ({
           className={`absolute top-4 ${rtlClasses.start(4)} bg-background/10 backdrop-blur-md hover:bg-background/20`}
           onClick={() => navigate(-1)}
         >
-          <ChevronLeft className="h-5 w-5" />
+          <ChevronLeft className="h-5 w-5" aria-hidden="true" />
         </Button>
 
         <div className="absolute bottom-0 left-0 right-0 p-6 lg:p-12">
@@ -128,8 +128,9 @@ const HeroDefault: React.FC<HeroDefaultProps> = ({
             onClick={onToggleFavorite}
             disabled={favoriteLoading}
             variant="favorite" data-active={isFavorite}
+            aria-label={isFavorite ? t('works.removeFromFavorites', 'Retirer des favoris') : t('works.actions.addToFavorites', 'Ajouter aux favoris')}
           >
-            <Heart className={cn("h-5 w-5 mr-2", isFavorite && "fill-current")} />
+            <Heart className={cn("h-5 w-5 mr-2", isFavorite && "fill-current")} aria-hidden="true" />
             {isFavorite ? t('works.inFavorites', 'Favori') : t('works.actions.addToFavorites', 'Ajouter aux favoris')}
           </Button>
           {shareButton}

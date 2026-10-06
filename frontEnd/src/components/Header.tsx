@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Menu, X, MapPin, Calendar, Palette, Hammer, Info, User, LogOut, Settings, Shield, UserCheck, BookOpen, Film, Music, FileText, Beaker, Landmark, Building2, Trees, Compass } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
@@ -23,6 +23,8 @@ const MadgacenLogo = ({ className = "" }: { className?: string }) => (
     viewBox="0 0 100 100"
     className={className}
     fill="none"
+    aria-hidden="true"
+    focusable="false"
   >
     <defs>
       {/* Gradient principal pour le monument */}
@@ -102,10 +104,50 @@ const Header = () => {
     canAccessProfessionalDashboard
   } = usePermissions();
 
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
+
+  // Rubrique de la page courante (aria-current="page" dans la navigation)
+  const isCurrentSection = (href: string) =>
+    location.pathname === href || location.pathname.startsWith(`${href}/`);
+
   // Fermer le menu mobile quand on change de page
   useEffect(() => {
     setIsMenuOpen(false);
   }, [location.pathname]);
+
+  // Menu mobile : le focus entre dans le menu à l'ouverture
+  useEffect(() => {
+    if (isMenuOpen) {
+      mobileMenuRef.current?.querySelector<HTMLElement>('a[href], button')?.focus();
+    }
+  }, [isMenuOpen]);
+
+  const closeMobileMenu = () => {
+    setIsMenuOpen(false);
+    menuButtonRef.current?.focus();
+  };
+
+  // Échap ferme le menu ; Tab boucle entre les éléments du menu et le bouton qui l'ouvre
+  const handleMobileMenuKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      closeMobileMenu();
+      return;
+    }
+    if (e.key !== 'Tab' || !mobileMenuRef.current) return;
+    const focusables = mobileMenuRef.current.querySelectorAll<HTMLElement>('a[href], button:not([disabled])');
+    if (focusables.length === 0) return;
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      menuButtonRef.current?.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      menuButtonRef.current?.focus();
+    }
+  };
 
   // ✅ Fermer le menu mobile quand on redimensionne vers desktop (3xl: 1600px)
   useEffect(() => {
@@ -173,9 +215,10 @@ const Header = () => {
                 <MadgacenLogo className="w-full h-full" />
               </div>
               <div className="flex flex-col">
-                <h1 className="text-sm sm:text-base font-bold text-stone-800 dark:text-stone-100 whitespace-nowrap">
+                {/* span et non h1 : le seul h1 de chaque page est celui de son contenu */}
+                <span className="text-sm sm:text-base font-bold text-stone-800 dark:text-stone-100 whitespace-nowrap">
                   {t('header.title')}
-                </h1>
+                </span>
                 <p className="text-[10px] sm:text-xs text-stone-500 dark:text-stone-400 hidden sm:block whitespace-nowrap">
                   {t('header.subtitle')}
                 </p>
@@ -183,15 +226,16 @@ const Header = () => {
             </Link>
 
             {/* Navigation desktop — visible dès lg (≥1024px) */}
-            <nav className="hidden lg:flex items-center">
+            <nav className="hidden lg:flex items-center" aria-label={t('header.nav.mainLabel', 'Navigation principale')}>
               <div className="flex items-center gap-1">
                 {navigationItems.map((item) => (
                   <Link
                     key={item.label}
                     to={item.href}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-colors hover:bg-stone-100 dark:hover:bg-stone-800 whitespace-nowrap"
+                    aria-current={isCurrentSection(item.href) ? 'page' : undefined}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-colors hover:bg-stone-100 dark:hover:bg-stone-800 whitespace-nowrap aria-[current=page]:bg-stone-100 dark:aria-[current=page]:bg-stone-800"
                   >
-                    <item.icon className="h-4 w-4 flex-shrink-0" />
+                    <item.icon className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
                     <span>{item.label}</span>
                   </Link>
                 ))}
@@ -214,6 +258,7 @@ const Header = () => {
                     <Button
                       variant="ghost"
                       className="relative h-8 w-8 sm:h-9 sm:w-9 rounded-full p-0"
+                      aria-label={t('header.userMenu.open', 'Menu de mon compte')}
                     >
                       <Avatar className="h-7 w-7 sm:h-8 sm:w-8">
                         <AvatarImage src={user.photo_url} alt={user.prenom} />
@@ -336,25 +381,29 @@ const Header = () => {
                 </DropdownMenu>
               ) : (
                 <>
-                  <Link to="/auth" className="hidden sm:block">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="border-stone-300 dark:border-stone-600 hover:bg-stone-50 dark:hover:bg-stone-800 min-h-[36px]"
-                    >
-                      <User className="h-4 w-4 sm:mr-2" />
-                      <span className="hidden md:inline">{t('common.login')}</span>
-                    </Button>
-                  </Link>
+                  {/* Liens stylés en bouton (asChild) : pas de <button> dans un <a> */}
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="sm"
+                    className="hidden sm:inline-flex border-stone-300 dark:border-stone-600 hover:bg-stone-50 dark:hover:bg-stone-800 min-h-[36px]"
+                  >
+                    <Link to="/auth">
+                      <User className="h-4 w-4 sm:mr-2" aria-hidden="true" />
+                      {/* masqué visuellement entre sm et md, mais toujours lu par les lecteurs d'écran */}
+                      <span className="sr-only md:not-sr-only">{t('common.login')}</span>
+                    </Link>
+                  </Button>
 
-                  <Link to="/auth">
-                    <Button
-                      size="sm"
-                      className="bg-gradient-to-r from-stone-700 to-stone-800 hover:from-stone-800 hover:to-stone-900 text-white shadow-sm min-h-[36px] px-3 sm:px-4"
-                    >
+                  <Button
+                    asChild
+                    size="sm"
+                    className="bg-gradient-to-r from-stone-700 to-stone-800 hover:from-stone-800 hover:to-stone-900 text-white shadow-sm min-h-[36px] px-3 sm:px-4"
+                  >
+                    <Link to="/auth">
                       <span className="text-xs sm:text-sm">{t('common.signup')}</span>
-                    </Button>
-                  </Link>
+                    </Link>
+                  </Button>
                 </>
               )}
 
@@ -363,11 +412,14 @@ const Header = () => {
                 variant="ghost"
                 size="sm"
                 className="lg:hidden min-w-[40px] min-h-[40px] p-0"
+                ref={menuButtonRef}
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                aria-label={isMenuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
+                onKeyDown={(e) => { if (e.key === 'Escape' && isMenuOpen) { e.preventDefault(); setIsMenuOpen(false); } }}
+                aria-label={isMenuOpen ? t('header.menu.close', 'Fermer le menu') : t('header.menu.open', 'Ouvrir le menu')}
                 aria-expanded={isMenuOpen}
+                aria-controls="mobile-menu"
               >
-                {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                {isMenuOpen ? <X className="h-5 w-5" aria-hidden="true" /> : <Menu className="h-5 w-5" aria-hidden="true" />}
               </Button>
             </div>
           </div>
@@ -376,7 +428,7 @@ const Header = () => {
 
       {/* Sous-nav bar — visible uniquement sur /oeuvres et /evenements */}
       {['/oeuvres', '/evenements', '/patrimoine', '/artisanat'].includes(location.pathname) && (
-        <nav className="fixed top-[52px] sm:top-[60px] left-0 right-0 z-40 w-full bg-stone-800 dark:bg-stone-900 border-b border-stone-700">
+        <nav className="fixed top-[52px] sm:top-[60px] left-0 right-0 z-40 w-full bg-stone-800 dark:bg-stone-900 border-b border-stone-700" aria-label={t('header.nav.subLabel', 'Catégories de la rubrique')}>
           <div className="w-full px-4 sm:px-6 lg:px-8 max-w-[1800px] mx-auto">
             <div className="flex items-center justify-center gap-1 overflow-x-auto scrollbar-hide py-1">
               {location.pathname === '/oeuvres' && (
@@ -499,19 +551,23 @@ const Header = () => {
       {/* Menu mobile déroulant — visible uniquement sur mobile (< lg) */}
       {isMenuOpen && (
         <div
+          id="mobile-menu"
+          ref={mobileMenuRef}
+          onKeyDown={handleMobileMenuKeyDown}
           className={`fixed inset-0 ${['/oeuvres', '/evenements', '/patrimoine', '/artisanat'].includes(location.pathname) ? 'top-[84px] sm:top-[92px]' : 'top-[52px] sm:top-[60px]'} z-40 bg-background lg:hidden overflow-y-auto`}
           style={{ height: ['/oeuvres', '/evenements', '/patrimoine', '/artisanat'].includes(location.pathname) ? 'calc(100dvh - 84px)' : 'calc(100dvh - 52px)' }}
         >
           <div className="px-4 py-4 space-y-3">
-            <nav className="space-y-1">
+            <nav className="space-y-1" aria-label={t('header.nav.mainLabel', 'Navigation principale')}>
               {navigationItems.map((item) => (
                 <Link
                   key={item.label}
                   to={item.href}
-                  className="flex items-center gap-3 rounded-lg p-3 text-base font-medium transition-colors hover:bg-stone-50 dark:hover:bg-stone-800 min-h-[48px]"
+                  aria-current={isCurrentSection(item.href) ? 'page' : undefined}
+                  className="flex items-center gap-3 rounded-lg p-3 text-base font-medium transition-colors hover:bg-stone-50 dark:hover:bg-stone-800 min-h-[48px] aria-[current=page]:bg-stone-100 dark:aria-[current=page]:bg-stone-800"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  <item.icon className="h-5 w-5 flex-shrink-0" />
+                  <item.icon className="h-5 w-5 flex-shrink-0" aria-hidden="true" />
                   <span>{item.label}</span>
                 </Link>
               ))}
@@ -562,16 +618,12 @@ const Header = () => {
                 </>
               ) : (
                 <div className="flex flex-col sm:flex-row gap-3">
-                  <Link to="/auth" className="flex-1" onClick={() => setIsMenuOpen(false)}>
-                    <Button variant="outline" className="w-full min-h-[48px] text-base">
-                      {t('common.login')}
-                    </Button>
-                  </Link>
-                  <Link to="/auth" className="flex-1" onClick={() => setIsMenuOpen(false)}>
-                    <Button className="w-full min-h-[48px] text-base bg-gradient-to-r from-stone-700 to-stone-800 hover:from-stone-800 hover:to-stone-900 text-white">
-                      {t('common.signup')}
-                    </Button>
-                  </Link>
+                  <Button asChild variant="outline" className="flex-1 w-full min-h-[48px] text-base">
+                    <Link to="/auth" onClick={() => setIsMenuOpen(false)}>{t('common.login')}</Link>
+                  </Button>
+                  <Button asChild className="flex-1 w-full min-h-[48px] text-base bg-gradient-to-r from-stone-700 to-stone-800 hover:from-stone-800 hover:to-stone-900 text-white">
+                    <Link to="/auth" onClick={() => setIsMenuOpen(false)}>{t('common.signup')}</Link>
+                  </Button>
                 </div>
               )}
             </div>

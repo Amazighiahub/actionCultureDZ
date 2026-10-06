@@ -446,7 +446,9 @@
     "unspecifiedLocation": "Lieu non spécifié",
     "removeFrom": "Retirer",
     "notProvided": "Non renseigné",
-    "unknown": "Inconnu"
+    "unknown": "Inconnu",
+    "sortBy": "Trier par",
+    "photo": "photo"
   },
   "contributors": {
     "addedCount": "{{count}} contributeurs ajoutés",
@@ -610,7 +612,8 @@
     "past": "Passé",
     "upcoming": "À venir",
     "upcomingLower": "à venir",
-    "pastLower": "passés"
+    "pastLower": "passés",
+    "resultsHeading": "Liste des événements"
   },
   "footer": {
     "legal": "Légal",
@@ -646,7 +649,9 @@
       "albums": "Albums",
       "articles": "Articles",
       "scientific": "Scientifiques",
-      "art": "Œuvres d'art"
+      "art": "Œuvres d'art",
+      "mainLabel": "Navigation principale",
+      "subLabel": "Catégories de la rubrique"
     },
     "subtitle": "Tala DZ",
     "title": "Tala DZ",
@@ -659,7 +664,12 @@
       "myProfile": "Mon profil",
       "mySpace": "Mon espace",
       "pendingValidations": "Validations en attente",
-      "proDashboard": "Tableau de bord Pro"
+      "proDashboard": "Tableau de bord Pro",
+      "open": "Menu de mon compte"
+    },
+    "menu": {
+      "close": "Fermer le menu",
+      "open": "Ouvrir le menu"
     }
   },
   "home": {
@@ -668,7 +678,16 @@
       "subtitle": "Explorez, préservez et partagez la richesse culturelle de l'Algérie",
       "explore": "Explorer le patrimoine",
       "contribute": "Contribuer",
-      "addSite": "Ajouter un site"
+      "addSite": "Ajouter un site",
+      "slides": {
+        "timgad": "Ruines romaines de Timgad",
+        "sahara": "Sahara algérien",
+        "casbah": "Casbah d'Alger",
+        "grenier": "Grenier traditionnel"
+      },
+      "goToSlide": "Image {{index}} sur {{total}} : {{title}}",
+      "play": "Reprendre le défilement",
+      "pause": "Mettre en pause le défilement"
     },
     "explore": {
       "subtitle": "Plateforme numérique dédiée à la préservation et à la valorisation de la culture algérienne dans toute sa richesse et sa diversité.",
@@ -1023,7 +1042,8 @@
       "title": "Titre A-Z"
     },
     "noResults": "Aucune œuvre trouvée",
-    "noResultsDesc": "Essayez de modifier vos critères de recherche"
+    "noResultsDesc": "Essayez de modifier vos critères de recherche",
+    "resultsHeading": "Liste des œuvres"
   },
   "verifyemailpage": {
     "vrification_russie": "Vérification Réussie !",
@@ -1599,7 +1619,10 @@
     "comments": "Commentaires",
     "artisanWorks": "Autres œuvres de l'artisan",
     "noOtherWorks": "Cet artisan n'a pas d'autres œuvres pour le moment",
-    "similarCreations": "Créations similaires"
+    "similarCreations": "Créations similaires",
+    "removeFromFavorites": "Retirer des favoris",
+    "addToFavorites": "Ajouter aux favoris",
+    "resultsHeading": "Liste des produits artisanaux"
   },
   "apropos": {
     "title_transmission": "Transmission",
@@ -2825,7 +2848,9 @@
       "error": "Une erreur est survenue lors de l'inscription",
       "cancelTitle": "Annuler mon inscription",
       "cancelConfirm": "Êtes-vous sûr(e) de vouloir annuler votre inscription à cet événement ? Cette action est irréversible.",
-      "confirmCancel": "Confirmer l'annulation"
+      "confirmCancel": "Confirmer l'annulation",
+      "contactByEmail": "Contacter l'organisateur par e-mail",
+      "contactByPhone": "Appeler l'organisateur"
     },
     "registrationDeadline": "Date limite d'inscription",
     "relatedEvents": "Événements associés",
@@ -3367,7 +3392,8 @@
     "proService": "Vous êtes professionnel ?",
     "addYourService": "Proposez vos services ici",
     "backToList": "Retour à la liste",
-    "notFound": "Site non trouvé"
+    "notFound": "Site non trouvé",
+    "playVideo": "Lire la vidéo : {{title}}"
   },
   "toasts": {
     "error": "Erreur",
@@ -3540,7 +3566,11 @@
     "generalInstructions": "Instructions générales",
     "installKeyboard": "Installez un clavier Tamazight depuis les paramètres de votre appareil",
     "searchStore": "Recherchez \"Tifinagh\" ou \"Tamazight Latin\" dans votre store",
-    "activateKeyboard": "Activez le clavier dans les paramètres de langue"
+    "activateKeyboard": "Activez le clavier dans les paramètres de langue",
+    "languagesGroup": "{{label}} : langue de saisie",
+    "requiredEmpty": "(obligatoire, non rempli)",
+    "filled": "(rempli)",
+    "hasError": "(erreur)"
   },
   "programme": {
     "form": {
@@ -3753,7 +3783,9 @@
       "loadFailed": "Impossible de charger l'artisanat",
       "loadMetadataFailed": "Erreur lors du chargement des matériaux et techniques",
       "prixMinMax": "Le prix minimum ne peut pas être supérieur au prix maximum"
-    }
+    },
+    "addTag": "Ajouter le tag",
+    "removeTag": "Supprimer le tag {{tag}}"
   },
   "service": {
     "addTitle": "Ajouter mon service",
@@ -4066,7 +4098,9 @@
     "empty": "Aucun média disponible",
     "emptyDesc": "La galerie de cet événement est vide pour le moment",
     "all": "Tous",
-    "emptyDescOeuvre": "La galerie est vide pour le moment"
+    "emptyDescOeuvre": "La galerie est vide pour le moment",
+    "gridView": "Vue en grille",
+    "listView": "Vue en liste"
   },
   "gestionArtisanat": {
     "errors": {
@@ -4142,5 +4176,13 @@
     "success": "QR Code téléchargé",
     "checkDownloads": "Vérifiez vos téléchargements",
     "downloadError": "Impossible de télécharger le QR Code"
+  },
+  "rating": {
+    "value": "Note : {{value}} sur {{max}}",
+    "label": "Note",
+    "star": "{{count}} étoile(s) sur 5"
+  },
+  "a11y": {
+    "skipToContent": "Aller au contenu principal"
   }
 }

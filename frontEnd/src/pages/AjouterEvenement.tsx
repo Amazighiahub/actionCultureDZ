@@ -746,7 +746,7 @@ const AjouterEvenement = () => {
                       onValueChange={(value) => { clearFieldError('type'); setFormData(prev => ({ ...prev, idTypeEvenement: value })); }}
                       required
                     >
-                      <SelectTrigger aria-invalid={!!fieldErrors.type} aria-describedby={fieldErrors.type ? 'type-error' : undefined}>
+                      <SelectTrigger id="type" aria-required="true" aria-invalid={!!fieldErrors.type} aria-describedby={fieldErrors.type ? 'type-error' : undefined}>
                         <SelectValue placeholder={t('common.selectType')} />
                       </SelectTrigger>
                       <SelectContent>
@@ -767,7 +767,7 @@ const AjouterEvenement = () => {
                         value={selectedWilayaId?.toString() ?? ''}
                         onValueChange={(value) => setSelectedWilayaId(parseInt(value))}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger id="wilaya">
                           <SelectValue placeholder={t('common.selectWilaya')} />
                         </SelectTrigger>
                         <SelectContent>
@@ -951,7 +951,7 @@ const AjouterEvenement = () => {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-2">
-                  <RequiredLabel htmlFor="affiche" required>{t('events.create.eventImage')}</RequiredLabel>
+                  <RequiredLabel htmlFor="affiche-upload" required>{t('events.create.eventImage')}</RequiredLabel>
                   <div
                     className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
                       isDragging ? 'border-primary bg-primary/10' : affichePreview ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
@@ -1016,7 +1016,7 @@ const AjouterEvenement = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="medias-post">{t('events.create.postEventMedia')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span></Label>
+                  <Label>{t('events.create.postEventMedia')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span></Label>
                   <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
                     <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
                     <p className="text-sm text-muted-foreground">

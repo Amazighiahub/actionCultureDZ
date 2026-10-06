@@ -441,7 +441,9 @@
     "unspecifiedLocation": "Adig ur yettwabder ara",
     "removeFrom": "Kkes",
     "notProvided": "Ur yettwaččar ara",
-    "unknown": "Arussin"
+    "unknown": "Arussin",
+    "sortBy": "Smizzwer s",
+    "photo": "tawlaft"
   },
   "contributors": {
     "addedCount_one": "{{count}} amarag yettwarna",
@@ -586,7 +588,8 @@
     "past": "Iɛedda",
     "upcoming": "Ad d-yas",
     "upcomingLower": "ad d-asent",
-    "pastLower": "iɛeddan"
+    "pastLower": "iɛeddan",
+    "resultsHeading": "Tabdart n tedyanin"
   },
   "footer": {
     "legal": "Azref",
@@ -622,7 +625,9 @@
       "albums": "Albums",
       "articles": "Articles",
       "scientific": "Scientifiques",
-      "art": "Ixeddimen n tẓuri"
+      "art": "Ixeddimen n tẓuri",
+      "mainLabel": "Tunigin tagejdant",
+      "subLabel": "Taggayin n tgezmi"
     },
     "subtitle": "Taɣect n Lezzayer",
     "title": "Timlilit Tadelsant",
@@ -635,7 +640,12 @@
       "myProfile": "Amaɣnu-w",
       "mySpace": "Tallunt-iw",
       "pendingValidations": "Iseɣbalen yettṛaǧun",
-      "proDashboard": "Tafelwit Pro"
+      "proDashboard": "Tafelwit Pro",
+      "open": "Umuɣ n umiḍan-iw"
+    },
+    "menu": {
+      "close": "Mdel umuɣ",
+      "open": "Ldi umuɣ"
     }
   },
   "home": {
@@ -686,7 +696,16 @@
       "subtitle": "Snirem, ḥrez, bḍu ayla adelsan n Lezzayer",
       "explore": "Snirem ayla",
       "contribute": "Ttekki",
-      "addSite": "Rnu asmel"
+      "addSite": "Rnu asmel",
+      "slides": {
+        "timgad": "Iɣerban irumaniyen n Tamugadi",
+        "sahara": "Taneẓruft tazzayrit",
+        "casbah": "Lqesba n Dzayer",
+        "grenier": "Agadir aqbur"
+      },
+      "goToSlide": "Tugna {{index}} seg {{total}}: {{title}}",
+      "play": "Kemmel askan",
+      "pause": "Seḥbes askan"
     }
   },
   "notifications": {
@@ -1015,7 +1034,8 @@
       "title": "Azwel A-Z"
     },
     "noResults": "Ulac axeddim i yettwafen",
-    "noResultsDesc": "Ɛreḍ ad tbeddleḍ tiwtilin n unadi-ik"
+    "noResultsDesc": "Ɛreḍ ad tbeddleḍ tiwtilin n unadi-ik",
+    "resultsHeading": "Tabdart n yixeddimen"
   },
   "verifyemailpage": {
     "vrification_russie": "Asenqed yedda!",
@@ -1591,7 +1611,10 @@
     "comments": "Iwenniten",
     "artisanWorks": "Ixeddimen-nniḍen n unaẓur",
     "noOtherWorks": "Anaẓur-a ur yesɛi ara ixeddimen-nniḍen akka tura",
-    "similarCreations": "Timeskar yemcabin"
+    "similarCreations": "Timeskar yemcabin",
+    "removeFromFavorites": "Kkes seg yismenyifen",
+    "addToFavorites": "Rnu ɣer yismenyifen",
+    "resultsHeading": "Tabdart n yifarisen n tẓuri"
   },
   "apropos": {
     "title_transmission": "Tawilt",
@@ -2837,7 +2860,9 @@
       "error": "Tella-d tuccḍa deg ujerred",
       "cancelTitle": "Sefsex ajerred-iw",
       "cancelConfirm": "Tebɣiḍ s tidet ad tesfesxeḍ ajerred-ik ɣer tedyant-a? Tigawt-a ur tettuɣal ara.",
-      "confirmCancel": "Sentem asefsex"
+      "confirmCancel": "Sentem asefsex",
+      "contactByEmail": "Nermes amsuddes s imayl",
+      "contactByPhone": "Siwel i umsuddes"
     },
     "registrationDeadline": "Talast tagejdant n ujerred",
     "relatedEvents": "Ineḍruyen icudden",
@@ -3379,7 +3404,8 @@
     "proService": "D amsadur i telliḍ?",
     "addYourService": "Sumer-d imeẓla-k da",
     "backToList": "Uɣal ɣer tebdart",
-    "notFound": "Asmel ulac-it"
+    "notFound": "Asmel ulac-it",
+    "playVideo": "Ssek tavidyut: {{title}}"
   },
   "toasts": {
     "error": "Tuccḍa",
@@ -3540,7 +3566,9 @@
       "loadFailed": "Ur yezmir ara ad d-yali umẓun asnufri",
       "loadMetadataFailed": "Tuccḍa deg usali n tɣawsiwin d tiqniyin",
       "prixMinMax": "Ssuma tadday ur tezmir ara ad tili tugar ssuma tafellay"
-    }
+    },
+    "addTag": "Rnu tabzimt",
+    "removeTag": "Kkes tabzimt {{tag}}"
   },
   "service": {
     "addTitle": "Rnu ameẓlu-w",
@@ -3683,7 +3711,11 @@
     "generalInstructions": "Iwellihen imatuten",
     "installKeyboard": "Sebded anasiw n Tmaziɣt seg yiɣewwaren n yibenk-ik",
     "searchStore": "Nadi \"Tifinagh\" neɣ \"Tamazight Latin\" deg tḥanut-ik",
-    "activateKeyboard": "Rmed anasiw deg yiɣewwaren n tutlayt"
+    "activateKeyboard": "Rmed anasiw deg yiɣewwaren n tutlayt",
+    "languagesGroup": "{{label}}: tutlayt n tira",
+    "requiredEmpty": "(ilaq, ur yeččur ara)",
+    "filled": "(yeččur)",
+    "hasError": "(tuccḍa)"
   },
   "programme": {
     "form": {
@@ -4061,7 +4093,9 @@
     "empty": "Ulac amidya yellan",
     "emptyDesc": "Tamidelt n tedyant-a d tilemt akka tura",
     "all": "Akk",
-    "emptyDescOeuvre": "Tamidelt d tilemt akka tura"
+    "emptyDescOeuvre": "Tamidelt d tilemt akka tura",
+    "gridView": "Askan s uẓeṭṭa",
+    "listView": "Askan s tebdart"
   },
   "gestionArtisanat": {
     "errors": {
@@ -4159,5 +4193,13 @@
     "newsletterOn": "Tjerrdeḍ ɣer tebrat n yisallen",
     "newsletterOff": "Tekkseḍ ajerred-ik seg tebrat n yisallen",
     "newsletterFailed": "Abeddel ur yeddi ara, ɛreḍ tikkelt-nniḍen"
+  },
+  "rating": {
+    "value": "Tazmilt: {{value}} seg {{max}}",
+    "label": "Tazmilt",
+    "star": "{{count}} n yitri seg 5"
+  },
+  "a11y": {
+    "skipToContent": "Ddu ɣer ugbur agejdan"
   }
 }

@@ -2,7 +2,7 @@
  * PatrimoineDynamique - Section patrimoine avec lazy loading des images
  */
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,10 @@ import { patrimoineService } from '@/services/patrimoine.service';
 import type { SitePatrimoine } from '@/services/patrimoine.service';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import ErrorMessage from './ErrorMessage';
+
+// Lien « étiré » : le titre porte le lien, son ::after couvre toute la carte (cliquable + crawlable)
+const STRETCHED_LINK_CLASS =
+  'after:absolute after:inset-0 after:rounded-lg focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-inset focus-visible:after:ring-ring';
 
 // Helper pour obtenir le nom de la wilaya
 const getWilayaName = (wilayaId: number, wilayasCache: any[]): string => {
@@ -33,7 +37,6 @@ interface PatrimoineDynamiqueProps {
 const EMPTY_WILAYAS_ARRAY: any[] = [];
 
 const PatrimoineDynamique: React.FC<PatrimoineDynamiqueProps> = ({ wilayasCache = EMPTY_WILAYAS_ARRAY }) => {
-  const navigate = useNavigate();
   const { t } = useTranslation();
   const { formatNumber } = useLocalizedNumber();
   const { rtlClasses } = useRTL();
@@ -103,7 +106,7 @@ const PatrimoineDynamique: React.FC<PatrimoineDynamiqueProps> = ({ wilayasCache 
           </div>
         ) : (
           sitesArray.map((site, index) => (
-            <Card key={site.id || site.id_lieu || `site-${index}`} className="overflow-hidden hover-lift group">
+            <Card key={site.id || site.id_lieu || `site-${index}`} className="relative overflow-hidden hover-lift group">
               <div className="relative h-48 overflow-hidden">
                 {site.medias && site.medias[0] ? (
                   <img
@@ -133,22 +136,32 @@ const PatrimoineDynamique: React.FC<PatrimoineDynamiqueProps> = ({ wilayasCache 
                   </Badge>
                 </div>
                 {/* Overlay au hover */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
-                  <Button 
-                    size="sm" 
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-within:opacity-100 transition-opacity duration-300 flex items-end p-4">
+                  <Button
+                    asChild
+                    size="sm"
                     variant="secondary"
                     className="w-full"
-                    onClick={() => navigate(`/patrimoine/${site.id || site.id_lieu}`)}
                   >
-                    {t('sections.heritage.discover')}
-                    <ArrowRight className={`h-4 w-4 ${rtlClasses.marginStart(2)}`} />
+                    <Link
+                      to={`/patrimoine/${site.id || site.id_lieu}`}
+                      tabIndex={-1}
+                      aria-label={`${t('sections.heritage.discover', 'Découvrir')} : ${site.nom}`}
+                    >
+                      {t('sections.heritage.discover')}
+                      <ArrowRight className={`h-4 w-4 ${rtlClasses.marginStart(2)}`} aria-hidden="true" />
+                    </Link>
                   </Button>
                 </div>
               </div>
               
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
-                  <CardTitle className="text-lg leading-tight">{site.nom}</CardTitle>
+                  <CardTitle className="text-lg leading-tight">
+                    <Link to={`/patrimoine/${site.id || site.id_lieu}`} className={STRETCHED_LINK_CLASS}>
+                      {site.nom}
+                    </Link>
+                  </CardTitle>
                   {site.note_moyenne && (
                     <div className={`flex items-center space-x-1 text-sm ${rtlClasses.flexRow}`}>
                       <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
@@ -180,9 +193,11 @@ const PatrimoineDynamique: React.FC<PatrimoineDynamiqueProps> = ({ wilayasCache 
       </div>
 
       <div className="text-center">
-        <Button size="lg" variant="outline" onClick={() => navigate('/patrimoine')} className="group">
-          {t('sections.heritage.seeAll')}
-          <ArrowRight className={`h-4 w-4 ${rtlClasses.marginStart(2)} group-hover:translate-x-1 transition-transform`} />
+        <Button asChild size="lg" variant="outline" className="group">
+          <Link to="/patrimoine">
+            {t('sections.heritage.seeAll')}
+            <ArrowRight className={`h-4 w-4 ${rtlClasses.marginStart(2)} group-hover:translate-x-1 transition-transform`} aria-hidden="true" />
+          </Link>
         </Button>
       </div>
     </div>

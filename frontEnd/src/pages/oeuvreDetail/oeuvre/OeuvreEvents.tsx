@@ -3,7 +3,7 @@
  * Liste des événements associés à l'œuvre
  */
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,8 +21,11 @@ interface OeuvreEventsProps {
   events: Evenement[];
 }
 
+// Classes du lien englobant une carte (carte entière cliquable, crawlable et focusable)
+const CARD_LINK_CLASS = 'block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2';
+
 // Carte d'événement
-const EventCard: React.FC<{ event: Evenement; onClick: () => void }> = ({ event, onClick }) => {
+const EventCard: React.FC<{ event: Evenement }> = ({ event }) => {
   const { t } = useTranslation();
   const { formatDate } = useLocalizedDate();
   const { formatPrice } = useLocalizedNumber();
@@ -32,114 +35,111 @@ const EventCard: React.FC<{ event: Evenement; onClick: () => void }> = ({ event,
   const isPast = event.date_fin ? new Date(event.date_fin) < new Date() : false;
 
   return (
-    <Card 
-      className="overflow-hidden hover:shadow-md transition-all cursor-pointer group"
-      onClick={onClick}
-    >
-      <div className="flex">
-        {/* Image */}
-        <div className="relative w-32 h-32 flex-shrink-0">
-          <LazyImage
-            src={event.image_url || '/images/placeholder-event.svg'}
-            alt={event.nom_evenement}
-            className="w-full h-full object-cover"
-            fallback="/images/placeholder-event.svg"
-          />
-          {/* Badge date */}
-          {event.date_debut && (
-            <div className="absolute bottom-1 left-1 bg-background/90 backdrop-blur-sm rounded px-2 py-1">
-              <div className="text-center">
-                <div className="text-sm font-bold leading-none">
-                  {new Date(event.date_debut).getDate()}
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  {formatDateLocale(new Date(event.date_debut), { month: 'short' })}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Contenu */}
-        <CardContent className="flex-1 p-4">
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <StatusBadge status={event.statut} />
-                {isPast && (
-                  <Badge variant="outline" className="text-xs">
-                    {t('events.past', 'Passé')}
-                  </Badge>
-                )}
-                {isUpcoming && (
-                  <Badge className="bg-green-100 text-green-800 text-xs">
-                    {t('events.upcoming', 'À venir')}
-                  </Badge>
-                )}
-              </div>
-              
-              <h4 className="font-semibold line-clamp-2 group-hover:text-primary transition-colors">
-                {event.nom_evenement}
-              </h4>
-            </div>
-          </div>
-
-          <div className="mt-2 space-y-1 text-sm text-muted-foreground">
-            {/* Date */}
+    <Link to={`/evenements/${event.id_evenement}`} className={CARD_LINK_CLASS}>
+      <Card className="overflow-hidden hover:shadow-md transition-all cursor-pointer group">
+        <div className="flex">
+          {/* Image */}
+          <div className="relative w-32 h-32 flex-shrink-0">
+            <LazyImage
+              src={event.image_url || '/images/placeholder-event.svg'}
+              alt={event.nom_evenement}
+              className="w-full h-full object-cover"
+              fallback="/images/placeholder-event.svg"
+            />
+            {/* Badge date */}
             {event.date_debut && (
-              <div className="flex items-center gap-2">
-                <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
-                <span>{formatDate(event.date_debut, { dateStyle: 'medium' })}</span>
-              </div>
-            )}
-
-            {/* Lieu */}
-            {event.Lieu && (
-              <div className="flex items-center gap-2">
-                <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
-                <span className="truncate">{event.Lieu.nom}</span>
+              <div className="absolute bottom-1 left-1 bg-background/90 backdrop-blur-sm rounded px-2 py-1">
+                <div className="text-center">
+                  <div className="text-sm font-bold leading-none">
+                    {new Date(event.date_debut).getDate()}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {formatDateLocale(new Date(event.date_debut), { month: 'short' })}
+                  </div>
+                </div>
               </div>
             )}
           </div>
 
-          {/* Prix et action */}
-          <div className="flex items-center justify-between mt-3 pt-2 border-t">
-            {event.tarif === 0 ? (
-              <Badge variant="secondary" className="text-xs">
-                {t('events.free', 'Gratuit')}
-              </Badge>
-            ) : (
-              <span className="text-sm font-medium text-primary">
-                {formatPrice(event.tarif)}
-              </span>
-            )}
+          {/* Contenu */}
+          <CardContent className="flex-1 p-4">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <StatusBadge status={event.statut} />
+                  {isPast && (
+                    <Badge variant="outline" className="text-xs">
+                      {t('events.past', 'Passé')}
+                    </Badge>
+                  )}
+                  {isUpcoming && (
+                    <Badge className="bg-green-100 text-green-800 text-xs">
+                      {t('events.upcoming', 'À venir')}
+                    </Badge>
+                  )}
+                </div>
+              
+                <h4 className="font-semibold line-clamp-2 group-hover:text-primary transition-colors">
+                  {event.nom_evenement}
+                </h4>
+              </div>
+            </div>
+
+            <div className="mt-2 space-y-1 text-sm text-muted-foreground">
+              {/* Date */}
+              {event.date_debut && (
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
+                  <span>{formatDate(event.date_debut, { dateStyle: 'medium' })}</span>
+                </div>
+              )}
+
+              {/* Lieu */}
+              {event.Lieu && (
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
+                  <span className="truncate">{event.Lieu.nom}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Prix et action */}
+            <div className="flex items-center justify-between mt-3 pt-2 border-t">
+              {event.tarif === 0 ? (
+                <Badge variant="secondary" className="text-xs">
+                  {t('events.free', 'Gratuit')}
+                </Badge>
+              ) : (
+                <span className="text-sm font-medium text-primary">
+                  {formatPrice(event.tarif)}
+                </span>
+              )}
             
-            <Button variant="ghost" size="sm" className="h-7 text-xs">
-              {t('common.viewDetails', 'Voir')}
-              <ArrowRight className="h-3 w-3 ml-1" />
-            </Button>
-          </div>
-        </CardContent>
-      </div>
-    </Card>
+              {/* Indicateur visuel uniquement : toute la carte est déjà un lien (pas de bouton dans un lien) */}
+              <Button asChild variant="ghost" size="sm" className="h-7 text-xs">
+                <span aria-hidden="true">
+                  {t('common.viewDetails', 'Voir')}
+                  <ArrowRight className="h-3 w-3 ml-1" />
+                </span>
+              </Button>
+            </div>
+          </CardContent>
+        </div>
+      </Card>
+    </Link>
   );
 };
 
 // Composant principal
 const OeuvreEvents: React.FC<OeuvreEventsProps> = ({ events }) => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
 
   // Séparer événements à venir et passés
   const now = new Date();
   const upcomingEvents = events.filter(e => e.date_debut && new Date(e.date_debut) >= now);
   const pastEvents = events.filter(e => e.date_fin && new Date(e.date_fin) < now);
 
-  const handleEventClick = (eventId: number) => {
-    navigate(`/evenements/${eventId}`);
-  };
-
-  if (!events || events.length === 0) {
+if (!events || events.length === 0) {
     return (
       <EmptyState
         type="events"
@@ -163,7 +163,6 @@ const OeuvreEvents: React.FC<OeuvreEventsProps> = ({ events }) => {
               <EventCard
                 key={event.id_evenement}
                 event={event}
-                onClick={() => handleEventClick(event.id_evenement)}
               />
             ))}
           </div>
@@ -182,10 +181,9 @@ const OeuvreEvents: React.FC<OeuvreEventsProps> = ({ events }) => {
               <EventCard
                 key={event.id_evenement}
                 event={event}
-                onClick={() => handleEventClick(event.id_evenement)}
               />
             ))}
-            {pastEvents.length > 5 && (
+            {pastEvents.length > 5&& (
               <Button variant="outline" className="w-full">
                 {t('common.showMore', 'Voir plus')} (+{pastEvents.length - 5})
               </Button>

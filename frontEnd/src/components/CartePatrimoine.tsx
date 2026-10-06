@@ -310,27 +310,37 @@ const CartePatrimoine: React.FC = () => {
             {parcours.map((p, index) => (
               <Card
                 key={index}
-                className={`cursor-pointer transition-all hover:shadow-md hover-lift ${
+                className={`relative cursor-pointer transition-all hover:shadow-md hover-lift ${
                   parcoursActif === index ? 'ring-2 ring-primary bg-primary/5' : ''
                 }`}
-                onClick={() => setParcoursActif(index)}
               >
                 <CardContent className="p-6">
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <h4 className="font-semibold font-serif">{p.nom}</h4>
+                      <h4 className="font-semibold font-serif">
+                        {/* Bouton « étiré » : son ::after couvre toute la carte (sélection au clic et au clavier) */}
+                        <button
+                          type="button"
+                          aria-pressed={parcoursActif === index}
+                          onClick={() => setParcoursActif(index)}
+                          className="text-start after:absolute after:inset-0 after:rounded-lg focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ring focus-visible:after:ring-offset-2"
+                        >
+                          {p.nom}
+                        </button>
+                      </h4>
                       <div
                         className="w-4 h-4 rounded-full"
                         style={{ backgroundColor: obtenirCouleurParcours(index) }}
+                        aria-hidden="true"
                       />
                     </div>
                     <div className="flex items-center justify-between text-sm text-muted-foreground">
                       <span className="flex items-center gap-1">
-                        <MapPin className="h-3 w-3" />
+                        <MapPin className="h-3 w-3" aria-hidden="true" />
                         <span>{p.monuments.length} {t("common_cartepatrimoine.sites")}</span>
                       </span>
                       <span className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
+                        <Clock className="h-3 w-3" aria-hidden="true" />
                         <span>{p.duree}</span>
                       </span>
                     </div>

@@ -1,7 +1,7 @@
 import React, { lazy, Suspense, useMemo, useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -97,7 +97,6 @@ interface SitePatrimoine {
 const Patrimoine = () => {
   const { t, i18n } = useTranslation();
   const { toast } = useToast();
-  const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const lang = i18n.language || 'fr';
 
@@ -194,8 +193,9 @@ const Patrimoine = () => {
         <div className="mb-8 space-y-4">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
               <Input
+                aria-label={t('sections.heritage.search', 'Rechercher un site...')}
                 placeholder={t('sections.heritage.search', 'Rechercher un site...')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -206,9 +206,11 @@ const Patrimoine = () => {
               <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
               {t('common.refresh', 'Actualiser')}
             </Button>
-            <Button onClick={() => navigate(isAuthenticated ? '/ajouter-patrimoine' : '/auth')}>
-              <MapPin className="h-4 w-4 mr-2" />
-              {isAuthenticated ? t('patrimoine.addSite', 'Ajouter un site') : t('patrimoine.contribute.add', 'Contribuer')}
+            <Button asChild>
+              <Link to={isAuthenticated ? '/ajouter-patrimoine' : '/auth'}>
+                <MapPin className="h-4 w-4 mr-2" aria-hidden="true" />
+                {isAuthenticated ? t('patrimoine.addSite', 'Ajouter un site') : t('patrimoine.contribute.add', 'Contribuer')}
+              </Link>
             </Button>
           </div>
 
@@ -386,15 +388,19 @@ const Patrimoine = () => {
                     )}
 
                     <div className="flex gap-2">
-                      <Link to={`/patrimoine/${site.id_lieu}`} className="flex-1">
-                        <Button className="w-full btn-hover">
-                          <Eye className="h-4 w-4 mr-2" />
+                      <Button asChild className="flex-1 w-full btn-hover">
+                        <Link
+                          to={`/patrimoine/${site.id_lieu}`}
+                          aria-label={`${t('sections.heritage.discover', 'Découvrir')} : ${translate(site.nom, lang)}`}
+                        >
+                          <Eye className="h-4 w-4 mr-2" aria-hidden="true" />
                           {t('sections.heritage.discover', 'Découvrir')}
-                        </Button>
-                      </Link>
+                        </Link>
+                      </Button>
                       <Button
                         variant="outline"
                         size="icon"
+                        aria-label={`${t('patrimoine.qrCode', 'QR Code')} : ${translate(site.nom, lang)}`}
                         onClick={() => {
                           toast({
                             title: t('qrcode.generating', 'Génération du QR Code'),
@@ -402,7 +408,7 @@ const Patrimoine = () => {
                           });
                         }}
                       >
-                        <QrCode className="h-4 w-4" />
+                        <QrCode className="h-4 w-4" aria-hidden="true" />
                       </Button>
                     </div>
                   </CardContent>
@@ -426,11 +432,11 @@ const Patrimoine = () => {
               <Button size="lg" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
                 {t('sections.heritage.planVisit.start', 'Commencer l\'exploration')}
               </Button>
-              <Link to="/a-propos">
-                <Button size="lg" variant="outline">
+              <Button asChild size="lg" variant="outline">
+                <Link to="/a-propos">
                   {t('sections.heritage.planVisit.guide', 'Guide pratique')}
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </div>
           </div>
         </Card>
