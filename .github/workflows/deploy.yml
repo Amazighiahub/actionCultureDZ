@@ -5,6 +5,15 @@ on:
     branches:
       - main
 
+# Lecture seule : le workflow n'a pas besoin d'écrire dans le dépôt
+permissions:
+  contents: read
+
+# Un seul déploiement à la fois, sans annuler celui en cours
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
 jobs:
   # ============================================
   # Job 1 : Tests backend (lint + unit + audit)
@@ -52,8 +61,8 @@ jobs:
       JWT_SECRET: ci-test-secret-not-used-in-prod
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 20
           cache: npm
@@ -81,8 +90,8 @@ jobs:
   test-frontend:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 20
           cache: npm
@@ -117,16 +126,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1
+        env:
+          DEPLOY_SHA: ${{ github.sha }}
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
+          # Empreinte SHA256 de la clé d'hôte du VPS (anti-MITM) :
+          #   ssh-keyscan -t ed25519 <host> | ssh-keygen -lf -
+          fingerprint: ${{ secrets.VPS_SSH_FINGERPRINT }}
+          envs: DEPLOY_SHA
+          command_timeout: 30m
           script: |
+            set -Eeuo pipefail
             cd /home/actionCultureDZ
-            sudo git pull origin main
-            sudo docker compose -f docker-compose.prod.yml stop frontend nginx
-            sudo docker volume rm -f actionculturedz_frontend_build
-            sudo docker compose -f docker-compose.prod.yml build --no-cache frontend backend
-            sudo docker compose -f docker-compose.prod.yml up -d --force-recreate
-            sudo docker image prune -f
+            # Refuser de déployer par-dessus des modifications locales du VPS
+            if [ -n "$(sudo git status --porcelain --untracked-files=no)" ]; then
+              echo "Modifications locales sur le VPS : deploiement annule"; sudo git status --short; exit 1
+            fi
+            PREV="$(sudo git rev-parse HEAD)"
+            sudo git fetch --quiet origin main
+            # Déployer exactement le commit testé par les jobs précédents
+            sudo git merge --ff-only --quiet "$DEPLOY_SHA"
+            sudo bash scripts/deploy-ci.sh "$DEPLOY_SHA" "$PREV"

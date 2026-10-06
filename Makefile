@@ -26,7 +26,7 @@ UNAME := $(shell uname -s 2>/dev/null || echo Windows)
 COMPOSE := $(shell command -v docker-compose 2>/dev/null || echo "docker compose")
 
 .PHONY: help setup up down seed reset build logs logs-backend status \
-        shell-backend shell-mysql enable-sync disable-sync migrate \
+        shell-backend shell-mysql enable-sync disable-sync migrate migrate-status \
         prod-up prod-down prod-build prod-logs prod-status \
         check-env check-duplicates
 
@@ -130,23 +130,11 @@ shell-mysql:
 # ============================================================
 
 migrate:
-	@echo "[migrate] Execution des migrations..."
-	docker exec eventculture-backend node -e " \
-		const fs = require('fs'); \
-		const path = require('path'); \
-		const { sequelize } = require('./models'); \
-		const dir = './migrations'; \
-		(async () => { \
-			const files = fs.readdirSync(dir).filter(f => f.endsWith('.js')).sort(); \
-			for (const f of files) { \
-				console.log('Running: ' + f); \
-				const m = require(path.join(process.cwd(), dir, f)); \
-				await m.up(sequelize.getQueryInterface(), sequelize.constructor); \
-			} \
-			console.log('Done.'); \
-			process.exit(0); \
-		})().catch(e => { console.error(e.message); process.exit(1); }); \
-	"
+	@echo "[migrate] Migrations non encore appliquees (suivi SequelizeMeta)..."
+	docker exec eventculture-backend npx --no-install sequelize-cli db:migrate
+
+migrate-status:
+	docker exec eventculture-backend npx --no-install sequelize-cli db:migrate:status
 
 # ============================================================
 # GESTION DB_SYNC
