@@ -12,6 +12,7 @@ import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { MemoryRouter } from 'react-router-dom';
 
 // ---------------------------------------------------------------------------
 // vi.hoisted — variables accessibles dans les factories vi.mock (hoisted)
@@ -136,6 +137,9 @@ vi.mock('@/components/shared', () => ({
   ),
   LoadingSkeleton: () => <div data-testid="loading-skeleton" />,
   StatusBadge: ({ status }: any) => <span data-testid="status-badge">{status}</span>,
+  ConfirmDialog: ({ open, onConfirm }: any) => (open ? (
+    <div data-testid="confirm-dialog"><button onClick={onConfirm}>confirm</button></div>
+  ) : null),
 }));
 
 // -- Radix Select -> native HTML for jsdom --
@@ -193,6 +197,11 @@ vi.mock('@/components/ui/dropdown-menu', () => ({
 // Import APRÈS les mocks
 // ---------------------------------------------------------------------------
 
+// AdminUsersTab redirige les non-admins : on simule un administrateur connecté
+vi.mock('@/hooks/useAuth', () => ({
+  useAuth: () => ({ isAdmin: true, isAuthenticated: true })
+}));
+
 import AdminUsersTab from '@/pages/admin/AdminUsersTab';
 
 // ---------------------------------------------------------------------------
@@ -211,7 +220,7 @@ describe('AdminUsersTab — Validation utilisateur', () => {
   });
 
   test('la liste des utilisateurs en attente se charge', () => {
-    render(<AdminUsersTab />);
+    render(<MemoryRouter><AdminUsersTab /></MemoryRouter>);
 
     // All 3 users should be visible
     expect(screen.getByText('Ali Boudiaf')).toBeInTheDocument();
@@ -228,7 +237,7 @@ describe('AdminUsersTab — Validation utilisateur', () => {
   });
 
   test('clic sur Valider change le statut et rafraîchit la liste', async () => {
-    render(<AdminUsersTab />);
+    render(<MemoryRouter><AdminUsersTab /></MemoryRouter>);
 
     // Find the card for Ali (en_attente user)
     const aliCard = screen.getByText('Ali Boudiaf').closest('[class*="CardContent"], [class*="p-4"]')!;
@@ -244,7 +253,7 @@ describe('AdminUsersTab — Validation utilisateur', () => {
   });
 
   test('clic sur Rejeter appelle validateUser avec validated: false', async () => {
-    render(<AdminUsersTab />);
+    render(<MemoryRouter><AdminUsersTab /></MemoryRouter>);
 
     // Find the card for Ali (en_attente user)
     const aliCard = screen.getByText('Ali Boudiaf').closest('[class*="CardContent"], [class*="p-4"]')!;
@@ -260,7 +269,7 @@ describe('AdminUsersTab — Validation utilisateur', () => {
   });
 
   test('bulk action sélectionne et valide plusieurs utilisateurs', async () => {
-    render(<AdminUsersTab />);
+    render(<MemoryRouter><AdminUsersTab /></MemoryRouter>);
 
     // Find user checkboxes by their aria-label (each user has "Sélectionner ...")
     const userCheckboxes = screen.getAllByRole('checkbox').filter(cb =>
