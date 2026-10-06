@@ -4,6 +4,13 @@
 # Usage: docker compose -f docker-compose.prod.yml up -d
 # ============================================
 
+# Logs Docker bornés (sinon json-file grossit sans limite et peut remplir le disque)
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
 services:
   # ==========================================
   # Nginx Reverse Proxy + SSL
@@ -12,6 +19,11 @@ services:
     image: nginx:alpine
     container_name: eventculture-nginx
     restart: unless-stopped
+    logging: *default-logging
+    security_opt:
+      - no-new-privileges:true
+    # Recharge la config toutes les 6 h pour prendre les certificats renouvelés par certbot
+    command: /bin/sh -c "while :; do sleep 6h & wait $${!}; nginx -s reload; done & exec nginx -g 'daemon off;'"
     ports:
       - "80:80"
       - "443:443"
@@ -53,6 +65,9 @@ services:
     env_file:
       - .env
     restart: unless-stopped
+    logging: *default-logging
+    security_opt:
+      - no-new-privileges:true
     expose:
       - "3001"
     environment:
@@ -121,6 +136,9 @@ services:
         - VITE_API_URL=${VITE_API_URL}
     container_name: eventculture-frontend
     restart: unless-stopped
+    logging: *default-logging
+    security_opt:
+      - no-new-privileges:true
     expose:
       - "80"
     volumes:
@@ -144,6 +162,7 @@ services:
     image: mysql:8.0
     container_name: eventculture-mysql
     restart: unless-stopped
+    logging: *default-logging
     # PAS de ports exposes a l'exterieur (securite)
     expose:
       - "3306"
@@ -182,6 +201,7 @@ services:
     image: redis:7-alpine
     container_name: eventculture-redis
     restart: unless-stopped
+    logging: *default-logging
     # PAS de ports exposes a l'exterieur (securite)
     expose:
       - "6379"
@@ -219,6 +239,9 @@ services:
     image: mysql:8.0
     container_name: eventculture-backup
     restart: unless-stopped
+    logging: *default-logging
+    security_opt:
+      - no-new-privileges:true
     volumes:
       - ./scripts/backup.sh:/backup.sh:ro
       - backup_data:/backups
@@ -263,6 +286,11 @@ services:
   certbot:
     image: certbot/certbot
     container_name: eventculture-certbot
+    # Sans restart, le renouvellement s'arrêtait définitivement après un reboot du VPS
+    restart: unless-stopped
+    logging: *default-logging
+    security_opt:
+      - no-new-privileges:true
     volumes:
       - certbot_webroot:/var/www/certbot
       - certbot_certs:/etc/letsencrypt

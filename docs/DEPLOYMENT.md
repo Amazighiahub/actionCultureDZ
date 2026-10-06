@@ -480,5 +480,14 @@ docker exec eventculture-backend npx sequelize-cli db:migrate:status
 # les migrations déjà présentes dans le schéma (INSERT INTO SequelizeMeta (name) VALUES ('<fichier>.js'), ...)
 ```
 
+**3. Appliquer la configuration des services d'infrastructure** (logs bornés, certbot
+qui redémarre, rechargement nginx toutes les 6 h). Le déploiement automatique ne redémarre
+que backend et frontend : les autres services ne prennent ces réglages qu'une fois recréés.
+À faire à un moment calme (MySQL et Redis redémarrent quelques secondes) :
+
+```bash
+docker compose -f docker-compose.prod.yml up -d nginx certbot backup redis mysql
+```
+
 `make migrate` utilise désormais `sequelize-cli db:migrate` (n'exécute que les migrations
 non appliquées) ; `make migrate-status` affiche l'état.
