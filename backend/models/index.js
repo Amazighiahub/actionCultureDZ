@@ -314,13 +314,13 @@ const initializeAssociations = (models) => {
 // 4. importData : import des wilayas/dairas/communes d'Algerie
 // ============================================================================
 //
-// Appele par insertDefaultData. Lit algeria_cities.json (dans ce repertoire)
+// Appele par insertDefaultData. Lit backend/algeria_cities.json
 // et cree les entites geographiques si elles n'existent pas.
 async function importData(models) {
   try {
     logger.info('Import des donnees geographiques d\'Algerie...');
 
-    const rawData = fs.readFileSync(path.join(__dirname, 'algeria_cities.json'), 'utf-8');
+    const rawData = fs.readFileSync(path.join(__dirname, '..', 'algeria_cities.json'), 'utf-8');
     const data = JSON.parse(rawData);
 
     const wilayaCache = new Map();

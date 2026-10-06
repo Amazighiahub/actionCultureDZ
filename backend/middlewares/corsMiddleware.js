@@ -216,7 +216,16 @@ const corsOptionsDelegate = (req, callback) => {
   return callback(new Error('Requetes sans origin non autorisees en production'));
 };
 
-module.exports = cors(corsOptionsDelegate);
+const corsHandler = cors(corsOptionsDelegate);
+
+// Origine refusée : requête bloquée avec un 403 explicite, au lieu d'une erreur 500
+// produite par le gestionnaire d'erreurs global
+module.exports = (req, res, next) => corsHandler(req, res, (err) => {
+  if (err) {
+    return res.status(403).json({ success: false, error: 'Origine non autorisee', code: 'CORS_FORBIDDEN' });
+  }
+  next();
+});
 module.exports.allowedOrigins = allowedOrigins;
 module.exports.validateOrigin = validateOrigin;
 module.exports._internal = {
