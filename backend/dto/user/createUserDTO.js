@@ -171,6 +171,11 @@ class CreateUserDTO extends BaseDTO {
       errors.push({ field: 'site_web', message: 'URL de site web invalide' });
     }
 
+    // Photo : uniquement un média hébergé par la plateforme (service d'upload)
+    if (this.photoUrl && !BaseDTO.isOwnMediaUrl(this.photoUrl)) {
+      errors.push({ field: 'photo_url', message: 'Photo invalide : utilisez le service d\'upload' });
+    }
+
     return {
       valid: errors.length === 0,
       errors

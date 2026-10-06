@@ -8,6 +8,7 @@ const BaseService = require('./core/baseService');
 const { PUBLIC_USER_ATTRIBUTES } = require('../constants/publicAttributes');
 const { Op } = require('sequelize');
 const { createMultiLang, mergeTranslations } = require('../helpers/i18n');
+const { csvCell } = require('../utils/csv');
 
 class ProgrammeService extends BaseService {
   constructor(repository, options = {}) {
@@ -525,14 +526,7 @@ class ProgrammeService extends BaseService {
 
   formatProgrammesToCSV(programmes) {
     let csv = 'Date,Heure début,Heure fin,Titre,Description,Lieu,Type,Intervenants\n';
-    const escapeCsv = (field) => {
-      if (!field) return '';
-      const str = String(field);
-      if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-        return `"${str.replace(/"/g, '""')}"`;
-      }
-      return str;
-    };
+    const escapeCsv = (field) => (field ? csvCell(field) : '');
 
     programmes.forEach(p => {
       const date = p.heure_debut ? new Date(p.heure_debut).toLocaleDateString('fr-FR') : '';

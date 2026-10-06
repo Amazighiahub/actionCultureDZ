@@ -15,6 +15,7 @@
 
 const BaseController = require('./baseController');
 const container = require('../services/serviceContainer');
+const BaseDTO = require('../dto/baseDTO');
 
 class UserProfileController extends BaseController {
   get userService() {
@@ -118,14 +119,10 @@ class UserProfileController extends BaseController {
           error: req.t('user.photoUrlRequired')
         });
       }
-      // Whitelist d'origines : on n'accepte que les URLs emises par notre
-      // pipeline d'upload (chemin relatif ou base API). Empeche le client
-      // de pointer vers un host externe arbitraire.
-      const allowedPrefixes = ['/uploads/', '/images/'];
-      const apiBase = process.env.API_URL || process.env.VITE_API_URL || '';
-      if (apiBase) allowedPrefixes.push(apiBase);
-      const isAllowed = allowedPrefixes.some(prefix => photo_url.startsWith(prefix));
-      if (!isAllowed) {
+      // Uniquement un média hébergé par la plateforme (chemin local ou notre
+      // Cloudinary) — l'ancien test startsWith(API_URL) acceptait
+      // "https://api.domaine.com.evil.tld/...".
+      if (!BaseDTO.isOwnMediaUrl(photo_url)) {
         return res.status(400).json({
           success: false,
           error: req.t

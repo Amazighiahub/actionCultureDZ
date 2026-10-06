@@ -2,6 +2,7 @@
 // User management methods for DashboardController
 
 const container = require('../../services/serviceContainer');
+const { csvRow } = require('../../utils/csv');
 
 const usersMethods = {
 
@@ -231,7 +232,7 @@ const usersMethods = {
       user.id_user, user.nom, user.prenom, user.email, user.id_type_user,
       user.statut, user.date_creation, user.Roles ? user.Roles.map(r => r.nom_role).join(';') : ''
     ]);
-    return [headers.join(','), ...rows.map(row => row.map(cell => `"${cell || ''}"`).join(','))].join('\n');
+    return [csvRow(headers), ...rows.map(csvRow)].join('\n');
   }
 };
 

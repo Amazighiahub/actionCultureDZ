@@ -106,6 +106,11 @@ class UpdateUserDTO extends BaseDTO {
       errors.push({ field: 'siteWeb', message: 'URL invalide' });
     }
 
+    // Photo : uniquement un média hébergé par la plateforme (null = suppression)
+    if (this.photoUrl && !BaseDTO.isOwnMediaUrl(this.photoUrl)) {
+      errors.push({ field: 'photo_url', message: 'Photo invalide : utilisez le service d\'upload' });
+    }
+
     return {
       valid: errors.length === 0,
       errors
