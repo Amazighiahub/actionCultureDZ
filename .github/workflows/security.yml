@@ -198,17 +198,15 @@ jobs:
       # services declaratifs (mysql/redis) atteignent health=healthy (via le
       # --health-cmd dans options:) avant de lancer le premier step.
 
-      - name: Run migrations
-        working-directory: ./backend
-        run: npx --yes -p sequelize-cli@6 sequelize db:migrate
-
       - name: Start backend in background
         working-directory: ./backend
         run: |
-          node server.js > backend.log 2>&1 &
+          # Base vide : schema cree depuis les modeles + donnees de reference (les migrations
+          # du depot supposent une base existante et ne peuvent pas partir de zero)
+          DB_SYNC=true DB_SEED=true node server.js > backend.log 2>&1 &
           echo $! > backend.pid
-          # Attente du port 3001 (jusqu'a 60s) : /health doit repondre 200
-          for i in {1..30}; do
+          # Attente du port 3001 (jusqu'a 180s : creation du schema + donnees de reference)
+          for i in {1..90}; do
             if curl -fsS http://127.0.0.1:3001/health >/dev/null 2>&1; then
               echo "Backend ready after ${i}x2s"
               break
@@ -326,21 +324,19 @@ jobs:
 
       # Services (mysql/redis) deja attendus par GitHub via health-cmd.
 
-      - name: Run migrations
-        working-directory: ./backend
-        run: npx --yes -p sequelize-cli@6 sequelize db:migrate
-
       - name: Start backend in background
         working-directory: ./backend
         run: |
-          node server.js > backend.log 2>&1 &
+          # Base vide : schema cree depuis les modeles + donnees de reference
+          DB_SYNC=true DB_SEED=true node server.js > backend.log 2>&1 &
           echo $! > backend.pid
-          for i in {1..30}; do
+          for i in {1..90}; do
             if curl -fsS http://127.0.0.1:3001/health >/dev/null 2>&1; then
               break
             fi
             sleep 2
           done
+          curl -fsS http://127.0.0.1:3001/health || (echo '==== backend.log ===='; cat backend.log; exit 1)
 
       # -------------------------------------------------------------------------
       # PRE-FLIGHT : le conteneur ZAP ne partage PAS le network namespace du
