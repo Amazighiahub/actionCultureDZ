@@ -64,24 +64,30 @@ $C build --pull backend frontend
 log "validation de l'environnement"
 $C run --rm --no-deps -T backend node -e "require('./config/envValidator').validate()"
 
-# 4. Sauvegarde de la base avant toute modification
+# 4. Suivi des migrations : si SequelizeMeta est vide, db:migrate rejouerait tout
+#    l'historique sur une base existante. Le nouveau code a besoin des nouvelles
+#    migrations : on s'arrête AVANT de toucher à la prod (l'ancien site reste en ligne).
+log "verification du suivi des migrations"
+MIG_STATUS="$($C run --rm --no-deps -T backend npx --no-install sequelize-cli db:migrate:status 2>&1)"
+if ! grep -qE '^up ' <<<"$MIG_STATUS"; then
+  warn "SequelizeMeta vide : deploiement arrete, prod inchangee. Initialiser la table une fois (voir docs/DEPLOYMENT.md)."
+  echo "$MIG_STATUS" | tail -n 30
+  exit 1
+fi
+log "migrations a appliquer : $(grep -cE '^down ' <<<"$MIG_STATUS" || true)"
+
+# 5. Sauvegarde de la base avant toute modification
 log "sauvegarde de la base"
 $C exec -T backup /backup.sh
 
 # A partir d'ici on modifie la prod : retour arrière automatique en cas d'erreur
 trap rollback ERR
 
-# 5. Migrations (uniquement si la table SequelizeMeta est déjà initialisée,
-#    sinon db:migrate rejouerait toutes les migrations sur une base existante)
+# 6. Migrations (uniquement celles pas encore appliquées)
 log "migrations"
-MIG_STATUS="$($C run --rm --no-deps -T backend npx --no-install sequelize-cli db:migrate:status 2>&1)"
-if grep -qE '^up ' <<<"$MIG_STATUS"; then
-  $C run --rm --no-deps -T backend npx --no-install sequelize-cli db:migrate
-else
-  warn "SequelizeMeta vide : migrations NON executees. Initialiser la table une fois a la main (voir docs/DEPLOYMENT.md)."
-fi
+$C run --rm --no-deps -T backend npx --no-install sequelize-cli db:migrate
 
-# 6. Bascule : uniquement backend puis frontend (MySQL, Redis, backup, certbot intacts)
+# 7. Bascule : uniquement backend puis frontend (MySQL, Redis, backup, certbot intacts)
 log "redemarrage backend"
 $C up -d --no-deps backend
 wait_healthy eventculture-backend 180
@@ -90,11 +96,11 @@ log "redemarrage frontend"
 $C up -d --no-deps frontend
 wait_healthy eventculture-frontend 90
 
-# 7. nginx résout les upstreams au chargement : recharger après recréation des conteneurs
+# 8. nginx résout les upstreams au chargement : recharger après recréation des conteneurs
 $C exec -T nginx nginx -t
 $C exec -T nginx nginx -s reload
 
-# 8. Vérification de bout en bout à travers nginx
+# 9. Vérification de bout en bout à travers nginx
 sleep 3
 curl -fsS --max-time 10 --resolve "$DOMAIN:443:127.0.0.1" "https://$DOMAIN/health" | grep -q '"healthy"'
 curl -fsS --max-time 10 --resolve "$DOMAIN:443:127.0.0.1" "https://$DOMAIN/" | grep -q 'id="root"'
