@@ -12,8 +12,7 @@ const crypto = require('crypto');
 const {
   cloudinary,
   FOLDERS,
-  IMAGE_TRANSFORMS,
-  VIDEO_TRANSFORMS
+  IMAGE_TRANSFORMS
 } = require('./cloudinaryService');
 
 class UploadService {
@@ -79,66 +78,6 @@ class UploadService {
   }
 
   // ============================================================
-  // Vidéos — compression 720p + 2Mbit/s via Cloudinary
-  // ============================================================
-  uploadVideo() {
-    const storage = new CloudinaryStorage({
-      cloudinary,
-      params: (req, file) => ({
-        folder:        FOLDERS.video,
-        public_id:     this.generatePublicId(file.originalname, 'vid'),
-        resource_type: 'video',
-        transformation: VIDEO_TRANSFORMS.default,
-        allowed_formats: ['mp4', 'avi', 'mov', 'wmv', 'flv', 'mkv', 'webm', 'mpeg']
-      })
-    });
-
-    const fileFilter = (req, file, cb) => {
-      const allowedMimes = [
-        'video/mp4', 'video/mpeg', 'video/quicktime',
-        'video/x-msvideo', 'video/x-ms-wmv', 'video/x-flv',
-        'video/x-matroska', 'video/webm'
-      ];
-      if (allowedMimes.includes(file.mimetype)) {
-        cb(null, true);
-      } else {
-        cb(new Error('Format de vidéo non supporté'));
-      }
-    };
-
-    return multer({ storage, limits: { fileSize: 100 * 1024 * 1024 }, fileFilter });
-  }
-
-  // ============================================================
-  // Audio — Cloudinary classe l'audio sous resource_type 'video'
-  // ============================================================
-  uploadAudio() {
-    const storage = new CloudinaryStorage({
-      cloudinary,
-      params: (req, file) => ({
-        folder:        FOLDERS.audio,
-        public_id:     this.generatePublicId(file.originalname, 'aud'),
-        resource_type: 'video', // Cloudinary: audio = video resource_type
-        allowed_formats: ['mp3', 'wav', 'ogg', 'm4a', 'aac', 'flac', 'wma']
-      })
-    });
-
-    const fileFilter = (req, file, cb) => {
-      const allowedMimes = [
-        'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/wave',
-        'audio/ogg', 'audio/m4a', 'audio/aac', 'audio/flac', 'audio/x-ms-wma'
-      ];
-      if (allowedMimes.includes(file.mimetype)) {
-        cb(null, true);
-      } else {
-        cb(new Error('Format audio non supporté'));
-      }
-    };
-
-    return multer({ storage, limits: { fileSize: 100 * 1024 * 1024 }, fileFilter });
-  }
-
-  // ============================================================
   // Documents — resource_type 'raw' sur Cloudinary
   // ============================================================
   uploadDocument() {
@@ -170,60 +109,6 @@ class UploadService {
     };
 
     return multer({ storage, limits: { fileSize: 50 * 1024 * 1024 }, fileFilter });
-  }
-
-  // ============================================================
-  // Médias mixtes pour les œuvres (image + vidéo + audio + doc)
-  // Chaque fichier est routé vers le bon dossier + resource_type
-  // ============================================================
-  uploadMedia() {
-    const storage = new CloudinaryStorage({
-      cloudinary,
-      params: (req, file) => {
-        const isImage = file.mimetype.startsWith('image/');
-        const isVideo = file.mimetype.startsWith('video/');
-        const isAudio = file.mimetype.startsWith('audio/');
-
-        const folder       = isImage ? FOLDERS.oeuvre  :
-                             isVideo ? FOLDERS.video   :
-                             isAudio ? FOLDERS.audio   : FOLDERS.document;
-        const resourceType = isImage ? 'image'  :
-                             (isVideo || isAudio) ? 'video' : 'raw';
-        const prefix       = isImage ? 'oeuvre-img' :
-                             isVideo ? 'oeuvre-vid' :
-                             isAudio ? 'oeuvre-aud' : 'oeuvre-doc';
-        const transformation = isImage ? IMAGE_TRANSFORMS.default :
-                               isVideo ? VIDEO_TRANSFORMS.default : undefined;
-
-        return {
-          folder,
-          public_id:     this.generatePublicId(file.originalname, prefix),
-          resource_type: resourceType,
-          ...(transformation && { transformation })
-        };
-      }
-    });
-
-    const fileFilter = (req, file, cb) => {
-      const allowedMimes = [
-        'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
-        'video/mp4', 'video/mpeg', 'video/quicktime', 'video/x-msvideo', 'video/webm',
-        'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/aac',
-        'application/pdf', 'application/msword',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-      ];
-      if (allowedMimes.includes(file.mimetype)) {
-        cb(null, true);
-      } else {
-        cb(new Error('Type de fichier non supporté'));
-      }
-    };
-
-    return multer({
-      storage,
-      limits: { fileSize: 500 * 1024 * 1024, files: 10 },
-      fileFilter
-    });
   }
 
   // ============================================================

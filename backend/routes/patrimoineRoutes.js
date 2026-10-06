@@ -4,11 +4,12 @@
  */
 
 const express = require('express');
+const { secureDiskUpload } = require('../middlewares/uploadSecurity');
+const { MEDIA_MIMES, MAX_MEDIA_SIZE } = require('../constants/uploadMimes');
 const { param, body } = require('express-validator');
 const patrimoineController = require('../controllers/patrimoineController');
 const { handleValidationErrors, validateId, validateStringLengths, validateGPS } = require('../middlewares/validationMiddleware');
 const { createContentLimiter } = require('../middlewares/rateLimitMiddleware');
-const uploadService = require('../services/uploadService');
 const logger = require('../utils/logger');
 
 const initPatrimoineRoutes = (models, authMiddleware) => {
@@ -70,7 +71,7 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
   router.post('/:id/favoris', authenticate, validateId(), patrimoineController.wrap('ajouterFavoris'));
   router.delete('/:id/favoris', authenticate, validateId(), patrimoineController.wrap('retirerFavoris'));
   router.post('/:id/medias', authenticate, requireValidatedProfessional, validateId(),
-    uploadService.uploadMedia().array('medias', 10),
+    ...secureDiskUpload({ field: 'medias', mimes: MEDIA_MIMES, maxFileSize: MAX_MEDIA_SIZE, maxFiles: 10 }),
     patrimoineController.wrap('uploadMedias'));
   router.delete('/:id/medias/:mediaId', authenticate, requireModeration, validateId(), validateId('mediaId'), patrimoineController.wrap('deleteMedia'));
   router.put('/:id/horaires', authenticate, validateId(), patrimoineController.wrap('updateHoraires'));

@@ -11,7 +11,7 @@
 
 const crypto = require('crypto');
 const path = require('path');
-const { cloudinary, FOLDERS, IMAGE_TRANSFORMS } = require('../cloudinaryService');
+const { cloudinary, FOLDERS, IMAGE_TRANSFORMS, VIDEO_TRANSFORMS } = require('../cloudinaryService');
 const { breakers } = require('../../utils/circuitBreaker');
 const logger = require('../../utils/logger');
 
@@ -137,9 +137,38 @@ async function uploadDocumentBuffer(buffer, { originalname = 'file' } = {}) {
   });
 }
 
+/**
+ * Envoie vers Cloudinary un fichier déjà écrit sur disque ET déjà validé
+ * (signature binaire contrôlée avant). Dossier, resource_type et transformations
+ * dépendent du type détecté — mêmes réglages que l'ancien stockage direct.
+ * upload_large découpe les gros fichiers (vidéos) en morceaux.
+ * @param {string} filePath - fichier temporaire local
+ * @param {{originalname?: string, mimetype: string}} meta
+ */
+async function uploadLocalFile(filePath, { originalname = 'file', mimetype = '' } = {}) {
+  const isImage = mimetype.startsWith('image/');
+  const isVideo = mimetype.startsWith('video/');
+  const isAudio = mimetype.startsWith('audio/');
+  const kind = isImage ? 'img' : isVideo ? 'vid' : isAudio ? 'aud' : 'doc';
+  const params = {
+    folder: isImage ? FOLDERS.oeuvre : isVideo ? FOLDERS.video : isAudio ? FOLDERS.audio : FOLDERS.document,
+    public_id: buildPublicId(originalname, kind),
+    // Cloudinary classe l'audio dans resource_type 'video'
+    resource_type: isImage ? 'image' : (isVideo || isAudio) ? 'video' : 'raw',
+    ...(isImage ? { transformation: IMAGE_TRANSFORMS.default } : {}),
+    ...(isVideo ? { transformation: VIDEO_TRANSFORMS.default } : {})
+  };
+
+  return breakers.cloudinary.execute(() => new Promise((resolve, reject) => {
+    const upload = isVideo || isAudio ? cloudinary.uploader.upload_large : cloudinary.uploader.upload;
+    upload.call(cloudinary.uploader, filePath, params, (error, result) => (error ? reject(error) : resolve(result)));
+  }));
+}
+
 module.exports = {
   buildPublicId,
   streamUpload,
   uploadImageBuffer,
-  uploadDocumentBuffer
+  uploadDocumentBuffer,
+  uploadLocalFile
 };

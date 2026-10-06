@@ -25,11 +25,14 @@ const MAGIC_NUMBERS = [
 
   // Vidéos supplémentaires
   { magic: '3026b275', type: 'video/x-ms-wmv', ext: '.wmv' }, // ASF (WMV/WMA)
+  { magic: '000001ba', type: 'video/mpeg', ext: '.mpg' }, // MPEG-PS
+  { magic: '000001b3', type: 'video/mpeg', ext: '.mpg' }, // MPEG-ES
 
   // Audio
   { magic: '494433', type: 'audio/mpeg', ext: '.mp3' },
   { magic: 'fffb', type: 'audio/mpeg', ext: '.mp3' },
   { magic: 'fff3', type: 'audio/mpeg', ext: '.mp3' },
+  { magic: 'fff2', type: 'audio/mpeg', ext: '.mp3' },
   { magic: 'fff1', type: 'audio/aac', ext: '.aac' },
   { magic: 'fff9', type: 'audio/aac', ext: '.aac' },
   { magic: '4f676753', type: 'audio/ogg', ext: '.ogg' },
@@ -106,7 +109,7 @@ class FileValidator {
         const riffType = header.subarray(8, 12).toString('ascii');
         const riffMap = {
           WEBP: { type: 'image/webp', ext: '.webp' },
-          'AVI ': { type: 'video/avi', ext: '.avi' },
+          'AVI ': { type: 'video/x-msvideo', ext: '.avi' },
           WAVE: { type: 'audio/wav', ext: '.wav' }
         };
         const info = riffMap[riffType];
@@ -274,7 +277,7 @@ class FileValidator {
       const riffType = header.subarray(8, 12).toString('ascii');
       const riffMap = {
         'WEBP': { type: 'image/webp', ext: '.webp' },
-        'AVI ': { type: 'video/avi', ext: '.avi' },
+        'AVI ': { type: 'video/x-msvideo', ext: '.avi' },
         'WAVE': { type: 'audio/wav', ext: '.wav' }
       };
       const info = riffMap[riffType];

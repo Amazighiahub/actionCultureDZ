@@ -1,13 +1,15 @@
 // routes/uploadRoutes.js
+const fs = require('fs');
 const express = require('express');
 const router = express.Router();
 const uploadService = require('../services/uploadService');
 const auditMiddleware = require('../middlewares/auditMiddleware');
 const rateLimitMiddleware = require('../middlewares/rateLimitMiddleware');
-const FileValidator = require('../utils/fileValidator');
 const {
   validateMagicBytesBuffer,
-  pushBufferToCloudinary
+  pushBufferToCloudinary,
+  multerErrorGuard,
+  secureDiskUpload
 } = require('../middlewares/uploadSecurity');
 const logger = require('../utils/logger');
 
@@ -18,68 +20,12 @@ const logger = require('../utils/logger');
 // RAM) avant que fileValidator ne le rejette. On veut que multer coupe des le
 // depassement.
 // ============================================================================
-const MAX_IMAGE_SIZE = 10 * 1024 * 1024;                                // 10 MB
-const MAX_DOCUMENT_SIZE = 50 * 1024 * 1024;                             // 50 MB
-const MAX_VIDEO_SIZE = parseInt(process.env.UPLOAD_VIDEO_MAX_SIZE, 10) || 100 * 1024 * 1024;  // 100 MB
-const MAX_AUDIO_SIZE = parseInt(process.env.UPLOAD_AUDIO_MAX_SIZE, 10) || 50 * 1024 * 1024;   // 50 MB
-const MAX_MEDIA_SIZE = MAX_VIDEO_SIZE;                                  // max attendu en media mixte
+const {
+  MAX_IMAGE_SIZE, MAX_DOCUMENT_SIZE, MAX_VIDEO_SIZE, MAX_AUDIO_SIZE, MAX_MEDIA_SIZE,
+  IMAGE_MIMES, DOCUMENT_MIMES, VIDEO_MIMES, AUDIO_MIMES, MEDIA_MIMES: OEUVRE_MEDIA_MIMES
+} = require('../constants/uploadMimes');
 const MAX_OEUVRE_FILES = 5;                                             // au lieu de 10
 
-const IMAGE_MIMES = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-const DOCUMENT_MIMES = [
-  'application/pdf',
-  'application/msword',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-];
-const VIDEO_MIMES = ['video/mp4', 'video/mpeg', 'video/quicktime', 'video/x-msvideo', 'video/webm'];
-const AUDIO_MIMES = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/aac'];
-const OEUVRE_MEDIA_MIMES = [
-  ...IMAGE_MIMES,
-  ...VIDEO_MIMES,
-  ...AUDIO_MIMES,
-  ...DOCUMENT_MIMES
-];
-
-/**
- * Intercepte les erreurs multer (LIMIT_FILE_SIZE, LIMIT_FILE_COUNT, fileFilter)
- * et les convertit en reponses 400/413 sans leaker stacktrace au client.
- * Le log complet (stack + http_code) reste cote serveur pour debug/Sentry.
- */
-function multerErrorGuard(uploader) {
-  return (req, res, next) => {
-    uploader(req, res, (err) => {
-      if (!err) return next();
-
-      logger.error('Upload multer error', {
-        message: err.message,
-        code: err.code,
-        http_code: err.http_code,
-        route: req.originalUrl
-      });
-
-      if (err.code === 'LIMIT_FILE_SIZE') {
-        return res.status(413).json({
-          success: false,
-          code: 'UPLOAD_TOO_LARGE',
-          error: req.t ? req.t('upload.fileTooLarge') : 'Fichier trop volumineux'
-        });
-      }
-      if (err.code === 'LIMIT_FILE_COUNT' || err.code === 'LIMIT_UNEXPECTED_FILE') {
-        return res.status(400).json({
-          success: false,
-          code: 'UPLOAD_TOO_MANY',
-          error: req.t ? req.t('upload.tooManyFiles') : 'Trop de fichiers'
-        });
-      }
-      // Defaut : 500 generique, pas de leak de message.
-      return res.status(500).json({
-        success: false,
-        code: 'UPLOAD_FAILED',
-        error: req.t ? req.t('upload.failed') : "Echec de l'upload, veuillez reessayer."
-      });
-    });
-  };
-}
 
 const initUploadRoutes = (models, authMiddleware) => {
   const uploadController = require('../controllers/uploadController');
@@ -196,26 +142,15 @@ const initUploadRoutes = (models, authMiddleware) => {
   // ========================================================================
   // ROUTES VIDEO / AUDIO / OEUVRE MEDIA
   // ----------------------------------------------------------------------------
-  // Ces routes continuent a passer par multer-storage-cloudinary (upload
-  // direct streamant vers Cloudinary). On ne peut pas facilement faire
-  // magic-bytes sur buffer sans encombrer la RAM (100+ MB).
-  // Protections appliquees :
-  //  - limits multer serrees (100 MB video / 50 MB audio)
-  //  - fileValidator.uploadValidator conserve le check MIME sur file.path
-  //    URL si possible, sinon sur file.mimetype en degrade
-  //  - rateLimit upload 30/h/user
+  // Gros fichiers : écriture sur disque temporaire (pas en RAM), validation de la
+  // signature binaire, PUIS envoi vers Cloudinary (secureDiskUpload).
+  // Auparavant le fichier partait sur Cloudinary avant toute validation.
   // ========================================================================
 
   router.post('/video',
     authMiddleware.authenticate,
     rateLimitMiddleware.upload,
-    multerErrorGuard(
-      (uploadService.uploadVideo
-        ? uploadService.uploadVideo()
-        : uploadService.uploadMedia()
-      ).single('video')
-    ),
-    FileValidator.uploadValidator(VIDEO_MIMES, MAX_VIDEO_SIZE),
+    ...secureDiskUpload({ field: 'video', mimes: VIDEO_MIMES, maxFileSize: MAX_VIDEO_SIZE }),
     auditMiddleware.logAction('upload_video', { entityType: 'video' }),
     (req, res) => uploadController.uploadVideo(req, res)
   );
@@ -223,61 +158,33 @@ const initUploadRoutes = (models, authMiddleware) => {
   router.post('/audio',
     authMiddleware.authenticate,
     rateLimitMiddleware.upload,
-    multerErrorGuard(
-      (uploadService.uploadAudio
-        ? uploadService.uploadAudio()
-        : uploadService.uploadMedia()
-      ).single('audio')
-    ),
-    FileValidator.uploadValidator(AUDIO_MIMES, MAX_AUDIO_SIZE),
+    ...secureDiskUpload({ field: 'audio', mimes: AUDIO_MIMES, maxFileSize: MAX_AUDIO_SIZE }),
     auditMiddleware.logAction('upload_audio', { entityType: 'audio' }),
     (req, res) => uploadController.uploadAudio(req, res)
   );
 
+  const [receiveOeuvreMedia, validateOeuvreMedia, pushOeuvreMedia] = secureDiskUpload({
+    field: 'medias', mimes: OEUVRE_MEDIA_MIMES, maxFileSize: MAX_MEDIA_SIZE, maxFiles: MAX_OEUVRE_FILES
+  });
   router.post('/oeuvre/media',
     authMiddleware.authenticate,
     authMiddleware.requireValidatedProfessional,
     rateLimitMiddleware.upload,
-    multerErrorGuard(uploadService.uploadMedia().array('medias', MAX_OEUVRE_FILES)),
+    receiveOeuvreMedia,
+    // Taille totale : empêche 5 fichiers de 100 MB = 500 MB par requête
     async (req, res, next) => {
-      try {
-        if (!req.files || req.files.length === 0) return next();
-
-        // Taille totale : empeche 5 fichiers de 100 MB = 500 MB par requete
-        const totalSize = req.files.reduce((sum, f) => sum + (f.size || 0), 0);
-        if (totalSize > MAX_MEDIA_SIZE * 2) {
-          const fs = require('fs');
-          req.files.forEach(f => { try { fs.unlinkSync(f.path); } catch (_) {} });
-          return res.status(413).json({
-            success: false,
-            code: 'UPLOAD_TOTAL_TOO_LARGE',
-            error: req.t ? req.t('upload.fileTooLarge') : 'Volume total trop important'
-          });
-        }
-
-        const results = await FileValidator.validateFilesBatch(
-          req.files.map(f => f.path),
-          OEUVRE_MEDIA_MIMES
-        );
-        const invalidFiles = results.filter(r => !r.valid);
-        if (invalidFiles.length > 0) {
-          const fs = require('fs');
-          req.files.forEach(f => { try { fs.unlinkSync(f.path); } catch (_) {} });
-          logger.warn('upload_oeuvre_media: invalid files rejected', {
-            count: invalidFiles.length,
-            details: invalidFiles
-          });
-          return res.status(400).json({
-            success: false,
-            code: 'UPLOAD_INVALID_TYPE',
-            error: req.t ? req.t('upload.invalidFileType') : 'Type de fichier non autorise'
-          });
-        }
-        next();
-      } catch (error) {
-        next(error);
-      }
+      const files = req.files || [];
+      const totalSize = files.reduce((sum, f) => sum + (f.size || 0), 0);
+      if (totalSize <= MAX_MEDIA_SIZE * 2) return next();
+      await Promise.all(files.map(f => fs.promises.unlink(f.path).catch(() => {})));
+      return res.status(413).json({
+        success: false,
+        code: 'UPLOAD_TOTAL_TOO_LARGE',
+        error: req.t ? req.t('upload.fileTooLarge') : 'Volume total trop important'
+      });
     },
+    validateOeuvreMedia,
+    pushOeuvreMedia,
     auditMiddleware.logAction('upload_oeuvre_media', { entityType: 'media' }),
     (req, res) => uploadController.uploadOeuvreMedia(req, res)
   );
