@@ -10,6 +10,7 @@ import type {
 } from '@/services/auth.service';
 import type { UseAuthReturn, AuthResult } from '../types/models/auth.types';
 import { getSafeRedirectPath } from '@/utils/safeUrl';
+import { queryClient } from '@/lib/queryClient';
 
 export function useAuth(): UseAuthReturn {
   const navigate = useNavigate();
@@ -94,9 +95,13 @@ export function useAuth(): UseAuthReturn {
   const logout = useCallback(async (): Promise<void> => {
     try {
       await authService.logout();
-      await refreshPermissions();
-      navigate('/auth');
-    } catch (error) {
+    } catch {
+      // déconnexion locale même si l'appel réseau échoue
+    } finally {
+      // Vider le cache des requêtes : rien de l'utilisateur précédent ne doit
+      // réapparaître pour le suivant (poste partagé)
+      await queryClient.cancelQueries();
+      queryClient.clear();
       await refreshPermissions();
       navigate('/auth');
     }

@@ -64,6 +64,8 @@ class AuthService {
     localStorage.removeItem(AUTH_CONFIG.tokenKey); // Legacy cleanup
     localStorage.removeItem(AUTH_CONFIG.refreshTokenKey); // Legacy cleanup
     localStorage.removeItem(AUTH_CONFIG.tokenExpiryKey);
+    // Ancienne copie de l'utilisateur (données personnelles) : jamais relue, effacée
+    localStorage.removeItem('user');
   }
 
   /**

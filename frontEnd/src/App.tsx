@@ -4,7 +4,8 @@ import '../i18n/config';
 import React, { Suspense } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { PermissionsProvider, usePermissionsContext } from "@/providers/PermissionsProvider";
 import { ProtectedRoute, AdminRoute, ProfessionalRoute } from "@/components/auth/ProtectedRoute";
@@ -85,23 +86,7 @@ const PageLoader = () => (
     </div>
   </div>
 );
-// Configuration optimisée du QueryClient
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 10 * 60 * 1000, // 10 minutes (anciennement cacheTime)
-      refetchOnWindowFocus: false,
-      refetchOnReconnect: true,
-      retry: 2,
-      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-    },
-    mutations: {
-      retry: 1,
-      retryDelay: 1000,
-    },
-  },
-});
+
 
 // Composant pour router vers le bon dashboard selon le rôle
 const DashboardRouter = () => {

@@ -71,9 +71,6 @@ export async function doRefreshToken(): Promise<RefreshResult> {
           const expiresAt = new Date(Date.now() + body.data.expiresIn * 1000).toISOString();
           localStorage.setItem(AUTH_CONFIG.tokenExpiryKey, expiresAt);
         }
-        if (body.data.user) {
-          localStorage.setItem('user', JSON.stringify(body.data.user));
-        }
         apiLogger.debug('Token rafraichi avec succes');
         return { success: true, expiresIn: body.data.expiresIn, user: body.data.user };
       }
