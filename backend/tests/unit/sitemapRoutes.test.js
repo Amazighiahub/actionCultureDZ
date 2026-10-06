@@ -15,7 +15,7 @@ function buildModels() {
     Oeuvre: model('Oeuvre', [{ id_oeuvre: 7, date_modification: '2026-10-01' }]),
     Evenement: model('Evenement', [{ id_evenement: 3, date_modification: '2026-10-02' }]),
     Lieu: model('Lieu', [{ id_lieu: 5, updatedAt: '2026-09-01' }]),
-    Artisanat: model('Artisanat', [{ id_artisanat: 9, updated_at: '2026-09-15' }]),
+    Artisanat: model('Artisanat', [{ id_artisanat: 9, 'Oeuvre.date_modification': '2026-09-15' }]),
   };
   return { models, calls };
 }
