@@ -14,6 +14,11 @@ concurrency:
   group: deploy-production
   cancel-in-progress: false
 
+# redis-memory-server (outil de dev local) compile Redis a l installation :
+# inutile en CI (service Redis fourni) et source d echecs/lenteurs de npm ci
+env:
+  REDISMS_DISABLE_POSTINSTALL: "1"
+
 jobs:
   # ============================================
   # Job 1 : Tests backend (lint + unit + audit)
