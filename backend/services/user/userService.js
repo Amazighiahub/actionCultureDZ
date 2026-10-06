@@ -476,82 +476,54 @@ class UserService extends BaseService {
    * @param {number} userId
    */
   async exportMyData(userId) {
-    const user = await this.repository.findById(userId);
+    const models = this.repository.models;
+    // unscoped : le defaultScope masque les IP de consentement, qui font partie des données à remettre
+    const user = await models.User.unscoped().findByPk(userId, {
+      attributes: { exclude: ['password', 'refresh_token', 'refresh_token_expires'] },
+      raw: true
+    });
     if (!user) {
       throw this._notFoundError(userId);
     }
 
     const data = {
       export_date: new Date().toISOString(),
-      export_format: 'RGPD Article 20 — Droit à la portabilité',
-      personal_info: {
-        nom: user.nom,
-        prenom: user.prenom,
-        email: user.email,
-        telephone: user.telephone,
-        entreprise: user.entreprise,
-        type_user: user.type_user,
-        statut: user.statut,
-        wilaya_residence: user.wilaya_residence,
-        date_creation: user.date_creation,
-        derniere_connexion: user.derniere_connexion,
-        photo_url: user.photo_url,
-      },
+      export_format: 'RGPD Article 15 / 20 — Droit d\'accès et à la portabilité',
+      // Profil complet : identité, coordonnées, préférences, consentements, statut
+      personal_info: user
     };
 
-    // Collecter les données liées
-    const models = this.repository.models;
-
     const EXPORT_LIMIT = 10000;
+    // [clé de l'export, modèle, condition, colonnes exclues]
+    const SECTIONS = [
+      ['oeuvres', models.Oeuvre, { saisi_par: userId }],
+      ['contributions_oeuvres', models.OeuvreUser, { id_user: userId }],
+      ['evenements_organises', models.Evenement, { id_user: userId }],
+      ['inscriptions_evenements', models.EvenementUser, { id_user: userId }],
+      ['commentaires', models.Commentaire, { id_user: userId }],
+      ['critiques', models.CritiqueEvaluation, { id_user: userId }],
+      ['favoris', models.Favori, { id_user: userId }],
+      ['notifications', models.Notification, { id_user: userId }],
+      ['signalements_effectues', models.Signalement, { id_user_signalant: userId }],
+      ['organisations', models.UserOrganisation, { id_user: userId }],
+      ['roles', models.UserRole, { id_user: userId }],
+      ['fiche_intervenant', models.Intervenant, { id_user: userId }],
+      ['services', models.Service, { id_user: userId }],
+      ['lieux_crees', models.Lieu, { id_createur: userId }],
+      ['parcours', models.Parcours, { id_createur: userId }],
+      ['verifications_email', models.EmailVerification, { id_user: userId }, ['token']],
+      ['consultations', models.Vue, { id_user: userId }],
+      ['scans_qr', models.QRScan, { id_user: userId }]
+    ];
 
-    if (models.Oeuvre) {
-      const oeuvres = await models.Oeuvre.findAll({
-        where: { saisi_par: userId },
-        attributes: ['id_oeuvre', 'titre', 'description', 'date_creation', 'statut'],
+    for (const [key, Model, where, exclude = []] of SECTIONS) {
+      if (!Model) continue;
+      data[key] = await Model.findAll({
+        where,
+        attributes: exclude.length ? { exclude } : undefined,
         raw: true,
-        limit: EXPORT_LIMIT,
+        limit: EXPORT_LIMIT
       });
-      data.oeuvres = oeuvres;
-    }
-
-    if (models.Evenement) {
-      const evenements = await models.Evenement.findAll({
-        where: { id_user: userId },
-        attributes: ['id_evenement', 'nom_evenement', 'date_debut', 'date_fin', 'statut'],
-        raw: true,
-        limit: EXPORT_LIMIT,
-      });
-      data.evenements = evenements;
-    }
-
-    if (models.Commentaire) {
-      const commentaires = await models.Commentaire.findAll({
-        where: { id_user: userId },
-        attributes: ['id_commentaire', 'contenu', 'date_creation'],
-        raw: true,
-        limit: EXPORT_LIMIT,
-      });
-      data.commentaires = commentaires;
-    }
-
-    if (models.Favori) {
-      const favoris = await models.Favori.findAll({
-        where: { id_user: userId },
-        attributes: ['id_favori', 'type_entite', 'id_entite', 'date_creation'],
-        raw: true,
-        limit: EXPORT_LIMIT,
-      });
-      data.favoris = favoris;
-    }
-
-    if (models.Notification) {
-      const notifications = await models.Notification.findAll({
-        where: { id_user: userId },
-        attributes: ['id_notification', 'type_notification', 'message', 'lu', 'date_creation'],
-        raw: true,
-        limit: EXPORT_LIMIT,
-      });
-      data.notifications = notifications;
     }
 
     this.logger.info(`RGPD: Export de données demandé par l'utilisateur: ${userId}`);
