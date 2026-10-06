@@ -8,20 +8,10 @@
  *   node scripts/fix-encoding-mojibake.js --dry-run    # Preview sans modifier
  *   node scripts/fix-encoding-mojibake.js              # Applique les corrections
  */
-require('dotenv').config();
 const Sequelize = require('sequelize');
 
-const sequelize = new Sequelize(
-  process.env.DB_NAME,
-  process.env.DB_USER,
-  process.env.DB_PASSWORD,
-  {
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
-    dialect: 'mysql',
-    logging: false
-  }
-);
+// Connexion créée dans main() : le module peut être chargé par les tests sans base
+let sequelize;
 
 // CP1252 special chars (0x80-0x9F qui ne sont pas dans latin1 pur)
 const CP1252_MAP = {
@@ -34,16 +24,17 @@ const CP1252_MAP = {
   '\u0153': 0x9C, '\u017E': 0x9E, '\u0178': 0x9F,
 };
 
+// Caractère de continuation UTF-8 (octet 0x80-0xBF) tel qu'il apparaît une fois relu en CP1252
+const CONT = '[\u0080-\u00BF' + Object.keys(CP1252_MAP).join('') + ']';
+// Ã+cont : lettres accentuées (é, É = Ã‰, À = Ã€...) ; Å+cont : Œ œ Š Ÿ ; Â+cont : « » ° espace insécable ;
+// â€+cont : ponctuation typographique (’ = â€™, … = â€¦, – = â€“)
+const MOJIBAKE_RE = new RegExp('Ã' + CONT + '|Å' + CONT + '|Â' + CONT + '|â€' + CONT);
+
 /**
- * Détecte si une string ressemble à du mojibake UTF-8 → latin1
+ * Détecte si une string ressemble à du mojibake UTF-8 → latin1/cp1252
  */
 function looksDoubleEncoded(str) {
-  if (typeof str !== 'string') return false;
-  // Patterns typiques de mojibake :
-  // - Ã suivi de caractère 0x80-0xBF (é, è, à, ô, etc.)
-  // - Å suivi de ' ou " (Œ, œ avec apostrophe)
-  // - â (souvent dans é, è)
-  return /Ã[\u0080-\u00BF]|Å['']|Ã©|Ã¨|Ã ©|Ã ¢|Ã ®|Ã ¯|Ã ª/.test(str);
+  return typeof str === 'string' && MOJIBAKE_RE.test(str);
 }
 
 /**
@@ -65,12 +56,9 @@ function fixMojibake(str) {
     }
   }
 
-  try {
-    const fixed = Buffer.from(bytes).toString('utf8');
-    return fixed;
-  } catch {
-    return str;
-  }
+  const fixed = Buffer.from(bytes).toString('utf8');
+  // Octets non décodables (U+FFFD) : ce n'était pas du mojibake, on laisse tel quel
+  return fixed.includes('�') ? str : fixed;
 }
 
 /**
@@ -166,6 +154,14 @@ async function main() {
   const dryRun = process.argv.includes('--dry-run');
   console.log(dryRun ? '🔍 MODE DRY-RUN (aucune modification)\n' : '🔧 MODE LIVE (modifications réelles)\n');
 
+  require('dotenv').config();
+  sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, process.env.DB_PASSWORD, {
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    dialect: 'mysql',
+    logging: false
+  });
+
   try {
     await sequelize.authenticate();
     console.log('✅ Connecté à la DB:', process.env.DB_NAME);
@@ -218,4 +214,8 @@ async function main() {
   }
 }
 
-main();
+if (require.main === module) {
+  main();
+}
+
+module.exports = { looksDoubleEncoded, fixMojibake };
