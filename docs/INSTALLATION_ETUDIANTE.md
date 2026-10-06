@@ -251,8 +251,16 @@ Vous devez voir les services :
 
 ### Étape 7 — Se connecter avec les comptes de test
 
-- **Admin** : `admin@actionculture.dz` / `admin123`
-- **Professionnel** : `pro.artiste@eventculture.dz` / `ProTest2024!`
+Aucun mot de passe n'est fourni dans le dépôt : choisissez-les au moment du seed.
+
+```bash
+SEED_ADMIN_EMAIL=moi@exemple.dz SEED_ADMIN_PASSWORD='MonMotDePasse!2026' \
+SEED_DEMO_PASSWORD='DemoMotDePasse!2026' make seed
+```
+
+- **Admin** : l'email et le mot de passe choisis ci-dessus
+- **Professionnel (démo)** : `demo9@example.invalid` / valeur de `SEED_DEMO_PASSWORD`
+- **Visiteur (démo)** : `demo10@example.invalid` / valeur de `SEED_DEMO_PASSWORD`
 
 ### Remarque importante sur les seeds / migrations
 

@@ -104,4 +104,11 @@ AUDIT_PRODUCTION.md
 backups/
 nginx/ssl/
 *.sql.gz
+# Dumps de base (données personnelles) : jamais versionnés
+backend/database/dumps/
+backend/database/init.sql
+*.sql
+# Seeds sans données personnelles (nomenclatures + démo fictive)
+!backend/database/seeds/*.sql
+!restore_data.sql
 *.pem
