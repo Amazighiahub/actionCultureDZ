@@ -51,3 +51,18 @@ describe('GET /sitemap.xml', () => {
     expect(oeuvresWhere.where.id_type_oeuvre[Op.notIn]).toEqual([4, 5]);
   });
 });
+
+describe('GET /sitemap.xml : résilience', () => {
+  it('répond quand une rubrique est en erreur (les autres restent listées)', async () => {
+    const { models } = buildModels();
+    models.Lieu.findAll = jest.fn(async () => { throw new Error('table indisponible'); });
+    const app = express();
+    app.use('/sitemap.xml', initSitemapRoutes(models));
+
+    const res = await request(app).get('/sitemap.xml');
+
+    expect(res.status).toBe(200);
+    expect(res.text).toContain('/evenements/3');
+    expect(res.text).not.toContain('/patrimoine/5');
+  });
+});
