@@ -256,6 +256,8 @@ const ArtisanatDetail: React.FC = () => {
   if (error || !artisanat) {
     return (
       <>
+        {/* Page introuvable : exclue de l'index (sinon page vide indexée) */}
+        <SEOHead title={t('artisanat.notFound', 'Artisanat non trouvé')} noindex />
         <Header />
         <main className="min-h-screen bg-background flex items-center justify-center">
           <div className="text-center">

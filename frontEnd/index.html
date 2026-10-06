@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="fr">
   <head>
@@ -13,28 +12,54 @@
     <meta property="og:description" content="Explorez, préservez et partagez la richesse culturelle de l'Algérie : événements, patrimoine, œuvres, artisanat traditionnel." />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://taladz.com/" />
-    <meta property="og:image" content="https://taladz.com/og-image.png" />
+    <meta property="og:image" content="https://taladz.com/og-image.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Tala DZ — ruines romaines de Timgad" />
     <meta property="og:locale" content="fr_DZ" />
     <meta property="og:locale:alternate" content="ar_DZ" />
     <meta property="og:locale:alternate" content="en_US" />
     <meta property="og:site_name" content="Tala DZ" />
 
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@taladz" />
     <meta name="twitter:title" content="Tala DZ - La source de la culture algérienne" />
     <meta name="twitter:description" content="Explorez, préservez et partagez la richesse culturelle de l'Algérie." />
-    <meta name="twitter:image" content="https://taladz.com/og-image.png" />
+    <meta name="twitter:image" content="https://taladz.com/og-image.jpg" />
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="apple-touch-icon" href="/favicon.svg" />
-    <!-- canonical sera injecté dynamiquement par SEOHead -->
-   
+    <!-- Pas de canonical ici : ce fichier sert toutes les pages ; SEOHead pose celui de chaque page -->
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "Tala DZ",
+        "url": "https://taladz.com/",
+        "logo": "https://taladz.com/favicon.svg",
+        "email": "contact@taladz.com",
+        "description": "Plateforme dédiée à la culture algérienne : événements, patrimoine, œuvres et artisanat traditionnel."
+      }
+    </script>
+
     <!-- Polices : hébergées localement (src/styles/fonts.ts) -->
   </head>
 
   <body>
     <div id="root"></div>
+    <noscript>
+      <h1>Tala DZ — La source de la culture algérienne</h1>
+      <p>Explorez, préservez et partagez la richesse culturelle de l'Algérie. Activez JavaScript pour utiliser le site.</p>
+      <ul>
+        <li><a href="/evenements">Événements culturels</a></li>
+        <li><a href="/patrimoine">Patrimoine et sites historiques</a></li>
+        <li><a href="/oeuvres">Œuvres : littérature, cinéma, musique, art</a></li>
+        <li><a href="/artisanat">Artisanat traditionnel</a></li>
+        <li><a href="/a-propos">À propos</a></li>
+      </ul>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

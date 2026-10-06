@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import SEOHead from '@/components/SEOHead';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LogIn, UserPlus } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
@@ -25,6 +26,8 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen bg-background" dir={direction}>
+      {/* Page de connexion : utile aux visiteurs, pas aux résultats de recherche */}
+      <SEOHead title={t('auth.seoTitle', 'Connexion et inscription')} noindex />
       <Header />
 
       <main className="container py-12">

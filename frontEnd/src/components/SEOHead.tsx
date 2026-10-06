@@ -1,11 +1,38 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import i18n from 'i18next';
 
 const SITE_NAME = 'Tala DZ';
-const SITE_URL = typeof window !== 'undefined' ? window.location.origin : 'https://taladz.com';
-const DEFAULT_IMAGE = `${SITE_URL}/og-image.png`;
+// Domaine de production fixe : un canonical ou une URL JSON-LD ne doit jamais pointer
+// vers localhost ou une préversion
+const SITE_URL = 'https://taladz.com';
+const DEFAULT_TITLE = 'Tala DZ - La source de la culture algérienne';
+const DEFAULT_IMAGE = `${SITE_URL}/og-image.jpg`;
 const DEFAULT_DESCRIPTION = 'Découvrez le riche patrimoine culturel algérien : événements, sites historiques, œuvres littéraires et artistiques, artisanat traditionnel.';
+
+/** Texte d'un champ multilingue ({ fr, ar, ... }) dans la langue courante, ou le texte tel quel */
+function text(value: unknown): string {
+  if (typeof value === 'string') return value;
+  if (value && typeof value === 'object') {
+    const v = value as Record<string, string | undefined>;
+    return v[i18n.language] || v.fr || v.ar || v.en || Object.values(v).find(Boolean) || '';
+  }
+  return '';
+}
+
+/** URL absolue d'image, exploitable par les réseaux sociaux (pas de SVG ni de chemin relatif) */
+function absoluteImage(src?: string): string {
+  if (!src || /\.svg(\?|$)/i.test(src)) return DEFAULT_IMAGE;
+  if (/^https?:\/\//.test(src)) return src;
+  return `${SITE_URL}${src.startsWith('/') ? '' : '/'}${src}`;
+}
+
+/** Adresse canonique : domaine de production, sans paramètres ni slash final */
+function canonicalUrl(pathname: string): string {
+  const path = pathname.length > 1 ? pathname.replace(/\/+$/, '') : '/';
+  return `${SITE_URL}${path}`;
+}
 
 interface SEOHeadProps {
   title?: string;
@@ -40,35 +67,8 @@ function setCanonical(url: string) {
   el.setAttribute('href', url);
 }
 
-// Langues supportées et leurs codes hreflang
-const SUPPORTED_HREFLANGS: Array<{ lang: string; hreflang: string }> = [
-  { lang: 'fr', hreflang: 'fr-DZ' },
-  { lang: 'ar', hreflang: 'ar-DZ' },
-  { lang: 'en', hreflang: 'en' },
-  { lang: 'tz-ltn', hreflang: 'tzm-Latn' },
-  { lang: 'tz-tfng', hreflang: 'tzm-Tfng' },
-];
-
-function setHreflangTags(url: string) {
-  // Nettoyer les anciennes balises hreflang
-  document.querySelectorAll('link[rel="alternate"][hreflang]').forEach(el => el.remove());
-
-  // Ajouter une balise pour chaque langue
-  for (const { hreflang } of SUPPORTED_HREFLANGS) {
-    const el = document.createElement('link');
-    el.setAttribute('rel', 'alternate');
-    el.setAttribute('hreflang', hreflang);
-    el.setAttribute('href', url);
-    document.head.appendChild(el);
-  }
-
-  // Ajouter x-default (français par défaut)
-  const xDefault = document.createElement('link');
-  xDefault.setAttribute('rel', 'alternate');
-  xDefault.setAttribute('hreflang', 'x-default');
-  xDefault.setAttribute('href', url);
-  document.head.appendChild(xDefault);
-}
+// Pas de balises hreflang : les langues partagent la même adresse (pas d'URL par langue),
+// et des hreflang pointant tous vers la même page sont ignorés par Google.
 
 function setJsonLd(data: Record<string, any> | Record<string, any>[]) {
   const id = 'seo-json-ld';
@@ -94,10 +94,10 @@ const SEOHead: React.FC<SEOHeadProps> = ({
   jsonLd,
 }) => {
   const location = useLocation();
-  const fullTitle = title ? `${title} | ${SITE_NAME}` : SITE_NAME;
-  const fullUrl = url || `${SITE_URL}${location.pathname}`;
+  const fullTitle = title ? `${title} | ${SITE_NAME}` : DEFAULT_TITLE;
+  const fullUrl = url || canonicalUrl(location.pathname);
   const desc = description || DEFAULT_DESCRIPTION;
-  const img = image || DEFAULT_IMAGE;
+  const img = absoluteImage(image);
 
   useEffect(() => {
     document.title = fullTitle;
@@ -118,8 +118,7 @@ const SEOHead: React.FC<SEOHeadProps> = ({
     setMeta('og:type', type === 'event' ? 'article' : type);
     setMeta('og:site_name', SITE_NAME);
     setMeta('og:locale', locale);
-    setMeta('og:locale:alternate', 'ar_DZ');
-    setMeta('og:locale:alternate', 'en_US');
+    // (les og:locale:alternate sont déclarées une fois pour toutes dans index.html)
 
     // Twitter Card
     setMeta('twitter:card', 'summary_large_image', true);
@@ -127,11 +126,9 @@ const SEOHead: React.FC<SEOHeadProps> = ({
     setMeta('twitter:description', desc, true);
     setMeta('twitter:image', img, true);
 
-    // Canonical
-    setCanonical(fullUrl);
-
-    // Hreflang — indique à Google les versions linguistiques de la page
-    setHreflangTags(fullUrl);
+    // Canonical (pas sur une page noindex : les deux signaux se contredisent)
+    if (noindex) document.querySelector('link[rel="canonical"]')?.remove();
+    else setCanonical(fullUrl);
 
     // JSON-LD
     if (jsonLd) {
@@ -139,10 +136,21 @@ const SEOHead: React.FC<SEOHeadProps> = ({
     }
 
     return () => {
-      const ldEl = document.getElementById('seo-json-ld');
-      if (ldEl) ldEl.remove();
-      // Nettoyer les hreflang
-      document.querySelectorAll('link[rel="alternate"][hreflang]').forEach(el => el.remove());
+      document.getElementById('seo-json-ld')?.remove();
+      // Retour aux valeurs par défaut : une page sans SEOHead ne garde pas
+      // le titre, la description ou le canonical de la page précédente
+      document.title = DEFAULT_TITLE;
+      setMeta('description', DEFAULT_DESCRIPTION, true);
+      setMeta('robots', 'index, follow', true);
+      setMeta('og:title', DEFAULT_TITLE);
+      setMeta('og:description', DEFAULT_DESCRIPTION);
+      setMeta('og:image', DEFAULT_IMAGE);
+      setMeta('og:url', `${SITE_URL}/`);
+      setMeta('og:type', 'website');
+      setMeta('twitter:title', DEFAULT_TITLE, true);
+      setMeta('twitter:description', DEFAULT_DESCRIPTION, true);
+      setMeta('twitter:image', DEFAULT_IMAGE, true);
+      document.querySelector('link[rel="canonical"]')?.remove();
     };
   }, [fullTitle, desc, img, fullUrl, type, locale, noindex, keywords, jsonLd]);
 
@@ -156,63 +164,73 @@ const SEOHead: React.FC<SEOHeadProps> = ({
 export function buildOeuvreJsonLd(oeuvre: any): Record<string, any> {
   return {
     '@context': 'https://schema.org',
-    '@type': 'CreativeWork',
-    name: oeuvre.titre || '',
-    description: oeuvre.description?.substring(0, 300) || '',
+    '@type': oeuvre.Livre ? 'Book' : 'CreativeWork',
+    name: text(oeuvre.titre),
+    description: text(oeuvre.description).substring(0, 300),
     author: oeuvre.Users?.[0]
-      ? { '@type': 'Person', name: `${oeuvre.Users[0].prenom || ''} ${oeuvre.Users[0].nom || ''}`.trim() }
+      ? { '@type': 'Person', name: `${text(oeuvre.Users[0].prenom)} ${text(oeuvre.Users[0].nom)}`.trim() }
       : undefined,
     datePublished: oeuvre.date_publication || oeuvre.date_creation,
-    genre: oeuvre.Genre?.nom || oeuvre.TypeOeuvre?.nom_type || '',
+    genre: text(oeuvre.Genre?.nom) || text(oeuvre.TypeOeuvre?.nom_type),
     inLanguage: oeuvre.langue || 'fr',
-    image: oeuvre.image_url || oeuvre.couverture_url || '',
+    image: absoluteImage(oeuvre.image_url || oeuvre.couverture_url),
     url: `${SITE_URL}/oeuvres/${oeuvre.id_oeuvre}`,
     ...(oeuvre.Livre ? {
-      '@type': 'Book',
       isbn: oeuvre.Livre.isbn || undefined,
       numberOfPages: oeuvre.Livre.nombre_pages || undefined,
     } : {}),
   };
 }
 
+const EVENT_STATUS: Record<string, string> = {
+  annule: 'https://schema.org/EventCancelled',
+  reporte: 'https://schema.org/EventPostponed',
+};
+
 export function buildEvenementJsonLd(event: any): Record<string, any> {
+  const online = !event.Lieu && !!event.url_virtuel;
   return {
     '@context': 'https://schema.org',
     '@type': 'Event',
-    name: event.nom_evenement || event.titre || '',
-    description: event.description?.substring(0, 300) || '',
+    name: text(event.nom_evenement) || text(event.titre),
+    description: text(event.description).substring(0, 300),
     startDate: event.date_debut,
     endDate: event.date_fin,
-    eventStatus: 'https://schema.org/EventScheduled',
-    eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-    location: event.Lieu ? {
-      '@type': 'Place',
-      name: event.Lieu.nom || '',
-      address: {
-        '@type': 'PostalAddress',
-        addressLocality: event.Lieu.Commune?.nom || event.lieu || '',
-        addressCountry: 'DZ',
-      },
-    } : undefined,
+    eventStatus: EVENT_STATUS[event.statut] || 'https://schema.org/EventScheduled',
+    eventAttendanceMode: online
+      ? 'https://schema.org/OnlineEventAttendanceMode'
+      : 'https://schema.org/OfflineEventAttendanceMode',
+    location: online
+      ? { '@type': 'VirtualLocation', url: event.url_virtuel }
+      : event.Lieu ? {
+        '@type': 'Place',
+        name: text(event.Lieu.nom),
+        address: {
+          '@type': 'PostalAddress',
+          addressLocality: text(event.Lieu.Commune?.nom) || text(event.lieu),
+          addressCountry: 'DZ',
+        },
+      } : undefined,
     organizer: event.Organisateur ? {
       '@type': 'Person',
-      name: `${event.Organisateur.prenom || ''} ${event.Organisateur.nom || ''}`.trim(),
+      name: `${text(event.Organisateur.prenom)} ${text(event.Organisateur.nom)}`.trim(),
     } : undefined,
-    image: event.image_url || event.couverture_url || '',
+    image: absoluteImage(event.image_url || event.couverture_url),
     url: `${SITE_URL}/evenements/${event.id_evenement}`,
   };
 }
 
 export function buildPatrimoineJsonLd(site: any): Record<string, any> {
+  const image = site.medias?.find((m: any) => m.type === 'image')?.url;
   return {
     '@context': 'https://schema.org',
     '@type': 'LandmarksOrHistoricalBuildings',
-    name: site.nom || '',
-    description: site.description?.substring(0, 300) || '',
+    name: text(site.nom),
+    description: (text(site.DetailLieu?.description) || text(site.description)).substring(0, 300),
     address: {
       '@type': 'PostalAddress',
-      addressLocality: site.Commune?.nom || site.localisation || '',
-      addressRegion: site.Commune?.Daira?.Wilaya?.nom || site.wilaya || '',
+      addressLocality: text(site.Commune?.nom),
+      addressRegion: text(site.Commune?.Daira?.Wilaya?.nom),
       addressCountry: 'DZ',
     },
     geo: site.latitude && site.longitude ? {
@@ -220,9 +238,8 @@ export function buildPatrimoineJsonLd(site: any): Record<string, any> {
       latitude: site.latitude,
       longitude: site.longitude,
     } : undefined,
-    image: site.image_url || site.photo_principale || '',
-    url: `${SITE_URL}/patrimoine/${site.id_site}`,
-    additionalType: site.type_patrimoine || '',
+    image: absoluteImage(image),
+    url: `${SITE_URL}/patrimoine/${site.id_lieu}`,
   };
 }
 
@@ -230,14 +247,14 @@ export function buildArtisanatJsonLd(artisanat: any): Record<string, any> {
   return {
     '@context': 'https://schema.org',
     '@type': 'Product',
-    name: artisanat.nom || artisanat.titre || '',
-    description: artisanat.description?.substring(0, 300) || '',
-    category: artisanat.type_artisanat || artisanat.categorie || '',
-    image: artisanat.images?.[0] || artisanat.image_url || '',
+    name: text(artisanat.nom) || text(artisanat.titre),
+    description: text(artisanat.description).substring(0, 300),
+    category: text(artisanat.type_artisanat) || text(artisanat.categorie),
+    image: absoluteImage(artisanat.images?.[0] || artisanat.image_url),
     url: `${SITE_URL}/artisanat/${artisanat.id_artisanat}`,
     manufacturer: artisanat.artisan ? {
       '@type': 'Person',
-      name: `${artisanat.artisan.prenom || ''} ${artisanat.artisan.nom || ''}`.trim(),
+      name: `${text(artisanat.artisan.prenom)} ${text(artisanat.artisan.nom)}`.trim(),
     } : undefined,
     offers: artisanat.prix ? {
       '@type': 'Offer',
@@ -252,14 +269,14 @@ export function buildArticleJsonLd(oeuvre: any): Record<string, any> {
   return {
     '@context': 'https://schema.org',
     '@type': 'Article',
-    headline: oeuvre.titre || '',
-    description: oeuvre.description?.substring(0, 300) || '',
+    headline: text(oeuvre.titre),
+    description: text(oeuvre.description).substring(0, 300),
     author: oeuvre.Users?.[0]
-      ? { '@type': 'Person', name: `${oeuvre.Users[0].prenom || ''} ${oeuvre.Users[0].nom || ''}`.trim() }
+      ? { '@type': 'Person', name: `${text(oeuvre.Users[0].prenom)} ${text(oeuvre.Users[0].nom)}`.trim() }
       : undefined,
     datePublished: oeuvre.date_publication || oeuvre.date_creation,
     dateModified: oeuvre.date_modification || oeuvre.date_publication || oeuvre.date_creation,
-    image: oeuvre.image_url || oeuvre.couverture_url || '',
+    image: absoluteImage(oeuvre.image_url || oeuvre.couverture_url),
     url: `${SITE_URL}/articles/${oeuvre.id_oeuvre}`,
     publisher: {
       '@type': 'Organization',
@@ -281,7 +298,7 @@ export function buildBreadcrumbJsonLd(items: Array<{ name: string; url: string }
     itemListElement: items.map((item, i) => ({
       '@type': 'ListItem',
       position: i + 1,
-      name: item.name,
+      name: text(item.name),
       item: item.url.startsWith('http') ? item.url : `${SITE_URL}${item.url}`,
     })),
   };

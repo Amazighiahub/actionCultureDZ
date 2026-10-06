@@ -255,7 +255,8 @@
     "professionalValidationNote": "Après vérification de votre email, votre compte sera soumis à validation par un administrateur.",
     "backToLogin": "Retour à la connexion",
     "sessionExpired": "Session expirée",
-    "pleaseReconnect": "Veuillez vous reconnecter"
+    "pleaseReconnect": "Veuillez vous reconnecter",
+    "seoTitle": "Connexion et inscription"
   },
   "categories": {
     "heritageTypes": {
@@ -1706,7 +1707,7 @@
       "dpoText": "Pour toute question relative à la protection de vos données personnelles, vous pouvez contacter notre délégué à la protection des données à l'adresse : contact@taladz.com."
     },
     "ressources": "Ressources",
-    "ressourcesText": "Culture Algérie met à disposition des ressources pour découvrir et promouvoir le patrimoine culturel algérien : événements, œuvres, artisanat, sites patrimoniaux et bien plus."
+    "ressourcesText": "Tala DZ met à disposition des ressources pour découvrir et promouvoir le patrimoine culturel algérien : événements, œuvres, artisanat, sites patrimoniaux et bien plus."
   },
   "ajouteroeuvre": {
     "chargement_des_catgories": "Chargement des catégories...",
@@ -3148,7 +3149,8 @@
       "viewMultiDayDesc": "Ce programme fait partie d'un événement sur plusieurs jours. Le système regroupe automatiquement les activités par date.",
       "viewSpeakersDesc": "{{count}} intervenant(s) participent à cette activité. Chaque intervenant a un rôle spécifique et ses propres paramètres.",
       "viewLocationOptionsDesc": "Activité se déroulant dans un lieu spécifique avec des options personnalisées pour les participants et l'organisation."
-    }
+    },
+    "seoTitle": "Programme"
   },
   "shared": {
     "errorBoundary": {
@@ -3364,7 +3366,8 @@
     "planVisit": "Planifier votre visite",
     "proService": "Vous êtes professionnel ?",
     "addYourService": "Proposez vos services ici",
-    "backToList": "Retour à la liste"
+    "backToList": "Retour à la liste",
+    "notFound": "Site non trouvé"
   },
   "toasts": {
     "error": "Erreur",
@@ -3884,7 +3887,8 @@
     "pages": "Pages",
     "replyToComment": "Répondre au commentaire",
     "addComment": "Ajouter un commentaire",
-    "updateSuccess": "Article mis à jour avec succès !"
+    "updateSuccess": "Article mis à jour avec succès !",
+    "notFoundTitle": "Article introuvable"
   },
   "passwordStrength": {
     "minLength": "12 caractères minimum",

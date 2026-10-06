@@ -2,6 +2,7 @@
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { initializeAlgerianSite } from '@/utils/rtl';
+import { toHtmlLang } from '@/types/common/multilingual.types';
 
 const RTLManager = () => {
   const { i18n, ready } = useTranslation();
@@ -21,7 +22,7 @@ const RTLManager = () => {
     
     // Définir la direction
     document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
-    document.documentElement.lang = currentLang;
+    document.documentElement.lang = toHtmlLang(currentLang);
     
     // Réinitialiser toutes les classes de langue
     const allLangClasses = [
@@ -31,7 +32,10 @@ const RTLManager = () => {
       'lang-tz-ltn',
       'lang-tz-tfng',
       'tifinagh-font',
-      'font-arabic'
+      'font-arabic',
+      // posées par initializeAlgerianSite() en arabe : à retirer en quittant l'arabe
+      'dir-rtl',
+      'locale-ar-dz'
     ];
     
     document.documentElement.classList.remove(...allLangClasses);
@@ -89,7 +93,7 @@ const updateMetaTags = (language: string) => {
   const localeMap: Record<string, string> = {
     'ar': 'ar_DZ',
     'ar-DZ': 'ar_DZ',
-    'fr': 'fr_FR',
+    'fr': 'fr_DZ',
     'en': 'en_US',
     'tz-ltn': 'ber_DZ',
     'tz-tfng': 'ber_DZ'

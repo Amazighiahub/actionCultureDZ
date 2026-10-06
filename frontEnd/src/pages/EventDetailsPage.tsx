@@ -94,6 +94,8 @@ const EventDetailsPage: React.FC = () => {
   if (error || !event) {
     return (
       <div className="min-h-screen bg-background">
+        {/* Page introuvable : exclue de l'index (sinon page vide indexée) */}
+        <SEOHead title={t('event.notFound', 'Événement non trouvé')} noindex />
         <Header />
         <main className="container py-8">
           <div className="text-center py-12">

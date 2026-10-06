@@ -256,7 +256,8 @@
     "professionalValidationNote": "بعد التحقق من بريدك الإلكتروني، سيخضع حسابك للمصادقة من قِبل أحد المشرفين.",
     "backToLogin": "العودة إلى تسجيل الدخول",
     "sessionExpired": "انتهت الجلسة",
-    "pleaseReconnect": "يرجى تسجيل الدخول مجدداً"
+    "pleaseReconnect": "يرجى تسجيل الدخول مجدداً",
+    "seoTitle": "تسجيل الدخول والتسجيل"
   },
   "categories": {
     "heritageTypes": {
@@ -3245,7 +3246,8 @@
       "viewMultiDayDesc": "هذا البرنامج جزء من فعالية متعددة الأيام. يقوم النظام تلقائيًا بتجميع الأنشطة حسب التاريخ.",
       "viewSpeakersDesc": "يشارك {{count}} متحدث(ون) في هذا النشاط. لكل متحدث دور محدد وإعداداته الخاصة.",
       "viewLocationOptionsDesc": "يُقام هذا النشاط في مكان محدد مع خيارات مخصصة للمشاركين والتنظيم."
-    }
+    },
+    "seoTitle": "البرنامج"
   },
   "shared": {
     "errorBoundary": {
@@ -3461,7 +3463,8 @@
     "planVisit": "خطّط لزيارتك",
     "proService": "هل أنت مهني؟",
     "addYourService": "اعرض خدماتك هنا",
-    "backToList": "العودة إلى القائمة"
+    "backToList": "العودة إلى القائمة",
+    "notFound": "الموقع غير موجود"
   },
   "toasts": {
     "error": "خطأ",
@@ -3986,7 +3989,8 @@
     "pages": "الصفحات",
     "replyToComment": "الرد على التعليق",
     "addComment": "إضافة تعليق",
-    "updateSuccess": "تم تحديث المقال بنجاح!"
+    "updateSuccess": "تم تحديث المقال بنجاح!",
+    "notFoundTitle": "المقال غير موجود"
   },
   "passwordStrength": {
     "minLength": "12 حرفًا أو أكثر",

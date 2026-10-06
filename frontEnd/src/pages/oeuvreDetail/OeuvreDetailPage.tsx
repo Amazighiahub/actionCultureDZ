@@ -351,6 +351,8 @@ const OeuvreDetailPage: React.FC = () => {
   if (error || !oeuvre) {
     return (
       <div className="min-h-screen bg-background">
+        {/* Page introuvable : exclue de l'index (sinon page vide indexée) */}
+        <SEOHead title={t('oeuvre.notFound', 'Œuvre non trouvée')} noindex />
         <Header />
         <main className="container py-8">
           <div className="text-center py-12">

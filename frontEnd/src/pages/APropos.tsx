@@ -74,8 +74,8 @@ const APropos = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
-        title={t("apropos.propos_culture_algrie", "À propos de Culture Algérie")}
-        description="Découvrez la mission de Culture Algérie : préserver, transmettre et rendre accessible le patrimoine culturel algérien à travers une plateforme numérique collaborative."
+        title={t("apropos.propos_culture_algrie", "À propos de Tala DZ")}
+        description="Découvrez la mission de Tala DZ : préserver, transmettre et rendre accessible le patrimoine culturel algérien à travers une plateforme numérique collaborative."
         keywords={['à propos', 'culture algérienne', 'mission', 'patrimoine', 'contact', 'équipe']}
         type="website"
       />
@@ -323,7 +323,7 @@ const APropos = () => {
           <Card className="p-8" id="ressources">
             <h2 className="text-2xl font-semibold mb-4 font-serif">{t("apropos.ressources", "Ressources")}</h2>
             <div className="text-sm text-muted-foreground space-y-3">
-              <p>{t("apropos.ressourcesText", "Culture Algérie met à disposition des ressources pour découvrir et promouvoir le patrimoine culturel algérien : événements, œuvres, artisanat, sites patrimoniaux et bien plus.")}</p>
+              <p>{t("apropos.ressourcesText", "Tala DZ met à disposition des ressources pour découvrir et promouvoir le patrimoine culturel algérien : événements, œuvres, artisanat, sites patrimoniaux et bien plus.")}</p>
             </div>
           </Card>
         </div>

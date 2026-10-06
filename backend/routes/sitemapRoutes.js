@@ -2,6 +2,7 @@
 // Génère un sitemap.xml dynamique avec toutes les pages publiques + détails
 
 const express = require('express');
+const { Op } = require('sequelize');
 const router = express.Router();
 
 /**
@@ -9,7 +10,7 @@ const router = express.Router();
  * Inclut : pages statiques + toutes les pages détail (oeuvres, événements, patrimoine, artisanat)
  */
 const initSitemapRoutes = (models) => {
-  const FRONTEND_URL = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '');
+  const FRONTEND_URL = (process.env.FRONTEND_URL || 'https://taladz.com').replace(/\/$/, '');
 
   // Helper : échappe les caractères spéciaux XML
   const escapeXml = (str) => str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
@@ -39,34 +40,38 @@ const initSitemapRoutes = (models) => {
       urls += urlBlock('/oeuvres', 'weekly', '0.9');
       urls += urlBlock('/artisanat', 'weekly', '0.9');
       urls += urlBlock('/a-propos', 'monthly', '0.6');
-      urls += urlBlock('/auth', 'monthly', '0.4');
 
       // ══════════════════════════════════════════
       // 2-6. Toutes les entités en parallèle
       // ══════════════════════════════════════════
       const SITEMAP_LIMIT = 50000;
       const [oeuvres, evenements, lieux, artisanats, articles] = await Promise.all([
+        // Articles (types 4 et 5) exclus : ils ont leur propre adresse /articles/:id
         models.Oeuvre ? models.Oeuvre.findAll({
-          where: { statut: 'publie' },
+          where: { statut: 'publie', id_type_oeuvre: { [Op.notIn]: [4, 5] } },
           attributes: ['id_oeuvre', 'date_modification'],
           order: [['date_modification', 'DESC']],
           limit: SITEMAP_LIMIT, raw: true
         }).catch(err => { console.warn('⚠️ Sitemap: erreur oeuvres:', err.message); return []; }) : [],
 
         models.Evenement ? models.Evenement.findAll({
-          where: { statut: ['planifie', 'en_cours', 'a_venir'] },
+          // Statuts visibles publiquement (memes regles que la liste et la fiche)
+          where: { statut: ['publie', 'planifie', 'en_cours', 'termine'] },
           attributes: ['id_evenement', 'date_modification'],
           order: [['date_modification', 'DESC']],
           limit: SITEMAP_LIMIT, raw: true
         }).catch(err => { console.warn('⚠️ Sitemap: erreur evenements:', err.message); return []; }) : [],
 
         models.Lieu ? models.Lieu.findAll({
+          where: { statut: 'publie' },
           attributes: ['id_lieu', 'updatedAt'],
           order: [['updatedAt', 'DESC']],
           limit: SITEMAP_LIMIT, raw: true
         }).catch(err => { console.warn('⚠️ Sitemap: erreur patrimoine:', err.message); return []; }) : [],
 
+        // Seulement les creations dont l'oeuvre est publiee (comme la fiche publique)
         models.Artisanat ? models.Artisanat.findAll({
+          include: [{ model: models.Oeuvre, attributes: [], where: { statut: 'publie' }, required: true }],
           attributes: ['id_artisanat', 'updated_at'],
           order: [['updated_at', 'DESC']],
           limit: SITEMAP_LIMIT, raw: true

@@ -1,35 +1,28 @@
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
-
+# Un seul groupe pour tous les robots : un robot qui a son propre groupe
+# (ex. "User-agent: Googlebot") ignore celui-ci, donc pas de groupe dédié.
+#
+# /api/ reste accessible : Google exécute le JavaScript du site et a besoin de
+# l'API pour voir le contenu des pages (événements, lieux, œuvres).
+# Les pages à exclure de l'index sans être bloquées (connexion, introuvable)
+# portent une balise noindex.
 User-agent: *
 Allow: /
 Disallow: /admin/
-Disallow: /dashboard-pro
-Disallow: /dashboard-user
-Disallow: /ajouter-*
-Disallow: /modifier-*
-Disallow: /editer-*
-Disallow: /gestion-*
+Disallow: /dashboard
+Disallow: /ajouter-
+Disallow: /modifier-
+Disallow: /editer-
+Disallow: /gestion-
 Disallow: /programme/creer
 Disallow: /programme/modifier/
-Disallow: /api/
+Disallow: /profile
+Disallow: /mes-favoris
 Disallow: /notifications
 Disallow: /forgot-password
 Disallow: /reset-password/
 Disallow: /verify-email/
 Disallow: /verification-email-envoyee
+Disallow: /confirm-email-change/
 
-# Sitemap statique (pages principales)
+# Sitemap complet (pages principales + toutes les pages de détail), généré par le backend
 Sitemap: https://taladz.com/sitemap.xml
-
-# Sitemap dynamique (toutes les pages détail, généré par le backend)
-Sitemap: https://taladz.com/api/sitemap.xml

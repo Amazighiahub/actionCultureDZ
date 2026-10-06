@@ -2,6 +2,7 @@
 import { useTranslation } from 'react-i18next';
 import { useCallback, useEffect, useState } from 'react';
 import { changeLanguage as changeLanguageConfig } from '../../i18n/config';
+import { toHtmlLang } from '@/types/common/multilingual.types';
 
 export interface Language {
   code: string;
@@ -55,7 +56,7 @@ export const useLanguage = () => {
       await changeLanguageConfig(normalizedCode);
       
       // Mettre à jour les attributs HTML
-      document.documentElement.lang = normalizedCode;
+      document.documentElement.lang = toHtmlLang(normalizedCode);
       document.documentElement.dir = normalizedCode === 'ar' ? 'rtl' : 'ltr';
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur inconnue');
@@ -71,7 +72,7 @@ export const useLanguage = () => {
   // Effet pour synchroniser la direction du texte
   useEffect(() => {
     document.documentElement.dir = currentLanguage.dir;
-    document.documentElement.lang = currentLanguage.code;
+    document.documentElement.lang = toHtmlLang(currentLanguage.code);
   }, [currentLanguage]);
   
   return {

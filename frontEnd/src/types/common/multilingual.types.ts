@@ -46,6 +46,17 @@ export const LANGUAGE_DIRECTIONS: Record<SupportedLanguage, 'ltr' | 'rtl'> = {
   'tz-tfng': 'ltr'
 };
 
+// Codes BCP 47 pour l'attribut lang du HTML ("tz-ltn" / "tz-tfng" ne sont pas des codes
+// valides : les synthèses vocales et les navigateurs ne reconnaîtraient pas le tamazight)
+const HTML_LANG_CODES: Record<string, string> = {
+  'tz-ltn': 'ber-Latn',
+  'tz-tfng': 'ber-Tfng',
+};
+
+export function toHtmlLang(lang: string): string {
+  return HTML_LANG_CODES[lang] || lang;
+}
+
 export const LANGUAGE_FONT_CLASSES: Partial<Record<SupportedLanguage, string>> = {
   ar: 'font-arabic',
   'tz-tfng': 'tifinagh-font'
