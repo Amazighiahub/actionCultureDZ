@@ -18,6 +18,8 @@ const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const { signAccessToken, verifyAccessToken } = require('../../utils/jwtHelper');
 const { invalidateUserSession } = require('../../utils/sessionCache');
+const { deleteUserFiles } = require('./userFileCleanup');
+const { TYPE_USER_IDS } = require('../../constants/typeUserIds');
 
 const REFRESH_TOKEN_EXPIRY_DAYS = 7;
 
@@ -415,17 +417,23 @@ class UserService extends BaseService {
    * @returns {Promise<boolean>}
    */
   async delete(id, adminId) {
-    const user = await this.repository.findById(id);
+    const user = await this.repository.findWithRoles(id);
     if (!user) {
       throw this._notFoundError(id);
     }
 
     // Empêcher la suppression de son propre compte admin
-    if (id === adminId) {
+    if (Number(id) === Number(adminId)) {
       throw this._forbiddenError('Vous ne pouvez pas supprimer votre propre compte');
     }
+    if (user.Roles?.some(r => r.nom_role === 'Administrateur')
+        || user.id_type_user === TYPE_USER_IDS.ADMINISTRATEUR) {
+      throw this._forbiddenError('Impossible de supprimer un compte administrateur');
+    }
 
-    await this.repository.delete(id);
+    // Suppression complète (données liées nettoyées) — un destroy direct échouait
+    // sur les clés étrangères RESTRICT et laissait les données personnelles liées.
+    await this._eraseAccount(id, { adminId, userEmail: user.email, userType: user.id_type_user });
 
     this.logger.info(`Utilisateur supprimé: ${id} par admin: ${adminId}`);
 
@@ -454,13 +462,8 @@ class UserService extends BaseService {
       throw this._validationError('Mot de passe incorrect');
     }
 
-    // Utiliser hardDeleteUser qui anonymise et nettoie tout
-    await this.repository.hardDeleteUser(userId, {
-      adminId: null,
-      userEmail: user.email,
-      userType: user.type_user,
-      userName: `${user.nom} ${user.prenom}`
-    });
+    // Suppression complète : données personnelles, liens, fichiers, sessions
+    await this._eraseAccount(userId, { adminId: null, userEmail: user.email, userType: user.id_type_user });
 
     this.logger.info(`RGPD: Compte supprimé par l'utilisateur lui-même: ${userId}`);
 
@@ -759,6 +762,18 @@ class UserService extends BaseService {
   // ============================================================================
   // HELPERS PRIVÉS
   // ============================================================================
+
+  /**
+   * Efface un compte (RGPD art. 17) : transaction en base, puis fichiers et sessions.
+   */
+  async _eraseAccount(userId, { adminId, userEmail, userType }) {
+    const result = await this.repository.hardDeleteUser(userId, { adminId, userEmail, userType });
+    await invalidateUserSession(userId);
+    if (result.files?.length && this.models) {
+      await deleteUserFiles(this.models, result.files);
+    }
+    return result;
+  }
 
   /**
    * Révoque le refresh token d'un utilisateur (pour le logout)

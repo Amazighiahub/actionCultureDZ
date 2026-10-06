@@ -4,6 +4,10 @@
  */
 const BaseRepository = require('./baseRepository');
 const { Op } = require('sequelize');
+const crypto = require('crypto');
+
+// Compte réservé « Utilisateur supprimé » (voir _getDeletedUserSentinel)
+const DELETED_USER_EMAIL = 'deleted-user@invalid.local';
 const { PUBLIC_USER_PROFILE_ATTRIBUTES, stripPrivateContact } = require('../constants/publicAttributes');
 
 // Types professionnels (2..28) : ni visiteur (1) ni administrateur (29)
@@ -364,92 +368,140 @@ class UserRepository extends BaseRepository {
   }
 
   /**
-   * Suppression définitive d'un utilisateur avec nettoyage transactionnel
-   * Anonymise les contenus liés, supprime les associations, crée un audit log
-   * @param {number} userId - ID de l'utilisateur à supprimer
-   * @param {Object} options - { adminId, userEmail, userType, userName }
-   * @returns {Promise<Object>} résultat de la suppression
+   * Compte réservé auquel sont rattachés les contenus qui exigent un auteur
+   * (événements, commentaires, parcours) quand leur auteur supprime son compte.
+   * Créé à la volée s'il n'existe pas ; inactif, il ne peut pas se connecter.
+   */
+  async _getDeletedUserSentinel(transaction) {
+    const User = this.model.unscoped();
+    let sentinel = await User.findOne({ where: { email: DELETED_USER_EMAIL }, transaction });
+    if (!sentinel) {
+      sentinel = await User.create({
+        email: DELETED_USER_EMAIL,
+        // mot de passe aléatoire jamais communiqué : connexion impossible
+        password: crypto.randomBytes(32).toString('hex'),
+        nom: { fr: 'Utilisateur', ar: 'مستخدم' },
+        prenom: { fr: 'supprimé', ar: 'محذوف' },
+        id_type_user: 1,
+        accepte_conditions: true,
+        profil_public: false
+      }, { transaction });
+    }
+    if (sentinel.statut !== 'inactif') {
+      await sentinel.update({ statut: 'inactif' }, { transaction });
+    }
+    return sentinel;
+  }
+
+  /**
+   * Suppression définitive d'un compte (RGPD art. 17) :
+   * - supprime les données personnelles et les liens propres à la personne ;
+   * - rattache au compte « Utilisateur supprimé » les contenus qui exigent un auteur ;
+   * - détache (NULL) les autres références.
+   * Tout ou rien (transaction). Les fichiers (photo, justificatifs) sont renvoyés
+   * pour être supprimés APRÈS la transaction par l'appelant.
+   * @returns {Promise<{deleted: boolean, type: string, files: string[]}>}
    */
   async hardDeleteUser(userId, options = {}) {
-    const { adminId, userEmail, userType, userName } = options;
+    const { adminId = null, userEmail, userType } = options;
+    const m = this.models;
+    // validate:false : on écrit des valeurs connues ; les validateurs de modèle
+    // (ex. Commentaire) exigent des champs absents d'un update partiel.
+    const UPDATE = { validate: false, hooks: false };
 
     return this.withTransaction(async (transaction) => {
-      const txOpts = { transaction };
+      const tx = { transaction };
+      const user = await this.model.unscoped().findByPk(userId, {
+        attributes: ['id_user', 'email', 'photo_url', 'documents_fournis'],
+        transaction
+      });
+      if (!user) return { deleted: false, type: 'hard', files: [] };
+      if (user.email === DELETED_USER_EMAIL) {
+        throw new Error('Le compte « Utilisateur supprimé » ne peut pas être supprimé');
+      }
 
-      // 1. Anonymiser les audit logs de cet admin
-      if (this.models.AuditLog) {
-        await this.models.AuditLog.update(
-          { id_admin: null },
-          { where: { id_admin: userId }, ...txOpts }
+      const sentinel = await this._getDeletedUserSentinel(transaction);
+      const SENTINEL_ID = sentinel.id_user;
+      const reassign = async (Model, column) => {
+        if (Model) await Model.update({ [column]: SENTINEL_ID }, { where: { [column]: userId }, ...tx, ...UPDATE });
+      };
+      const detach = async (Model, column) => {
+        if (Model) await Model.update({ [column]: null }, { where: { [column]: userId }, ...tx, ...UPDATE });
+      };
+      const destroy = async (Model, where) => {
+        if (Model) await Model.destroy({ where, ...tx });
+      };
+
+      // 1. Données et liens propres à la personne : supprimés
+      await destroy(m.UserRole, { id_user: userId });
+      await destroy(m.UserOrganisation, { id_user: userId });
+      await destroy(m.OeuvreUser, { id_user: userId });
+      await destroy(m.EvenementUser, { id_user: userId });
+      await destroy(m.Favori, { id_user: userId });
+      await destroy(m.Notification, { id_user: userId });
+      await destroy(m.EmailVerification, { id_user: userId });
+      // index uniques (oeuvre, user) / (entité, signalant) : suppression plutôt que réattribution
+      await destroy(m.CritiqueEvaluation, { id_user: userId });
+      await destroy(m.Signalement, { id_user_signalant: userId });
+      await destroy(m.Signalement, { type_entite: 'user', id_entite: userId });
+
+      // 2. Contenus qui exigent un auteur : rattachés au compte « Utilisateur supprimé »
+      await reassign(m.Evenement, 'id_user');
+      await reassign(m.Commentaire, 'id_user');
+      await reassign(m.Parcours, 'id_createur');
+
+      // 3. Autres références : détachées
+      await detach(m.AuditLog, 'id_admin');
+      await detach(m.Oeuvre, 'saisi_par');
+      await detach(m.Oeuvre, 'validateur_id');
+      await detach(m.Signalement, 'id_moderateur');
+      await detach(m.EvenementUser, 'valide_par');
+      await detach(m.EvenementOeuvre, 'id_presentateur');
+      await detach(m.DetailLieu, 'id_dernier_contributeur');
+      await detach(m.Lieu, 'id_createur');
+      await detach(m.LieuIntervenant, 'id_contributeur');
+      await detach(m.Service, 'id_user');
+      await detach(m.Vue, 'id_user');
+      await detach(m.QRScan, 'id_user');
+      await detach(m.UserOrganisation, 'id_superviseur');
+      await detach(this.model, 'id_user_validate');
+      // Fiche intervenant liée au compte : on retire le lien et les coordonnées personnelles
+      if (m.Intervenant) {
+        await m.Intervenant.update(
+          { id_user: null, email: null, telephone: null },
+          { where: { id_user: userId }, ...tx, ...UPDATE }
         );
       }
 
-      // 2. Supprimer les associations directes
-      if (this.models.UserRole) {
-        await this.models.UserRole.destroy({ where: { id_user: userId }, ...txOpts });
-      }
-      if (this.models.UserOrganisation) {
-        await this.models.UserOrganisation.destroy({ where: { id_user: userId }, ...txOpts });
-      }
-      if (this.models.OeuvreUser) {
-        await this.models.OeuvreUser.destroy({ where: { id_user: userId }, ...txOpts });
-      }
-      if (this.models.EvenementUser) {
-        await this.models.EvenementUser.destroy({ where: { id_user: userId }, ...txOpts });
-      }
-
-      // 3. Anonymiser les contenus créés/validés
-      if (this.models.Oeuvre) {
-        await this.models.Oeuvre.update({ saisi_par: null }, { where: { saisi_par: userId }, ...txOpts });
-        await this.models.Oeuvre.update({ validateur_id: null }, { where: { validateur_id: userId }, ...txOpts });
-      }
-      if (this.models.Evenement) {
-        await this.models.Evenement.update({ id_user: null }, { where: { id_user: userId }, ...txOpts });
-      }
-      if (this.models.Commentaire) {
-        await this.models.Commentaire.update({ id_user: null }, { where: { id_user: userId }, ...txOpts });
-      }
-      if (this.models.CritiqueEvaluation) {
-        await this.models.CritiqueEvaluation.update({ id_user: null }, { where: { id_user: userId }, ...txOpts });
-      }
-      if (this.models.Signalement) {
-        await this.models.Signalement.update({ id_user: null }, { where: { id_user: userId }, ...txOpts });
-        await this.models.Signalement.update({ id_moderateur: null }, { where: { id_moderateur: userId }, ...txOpts });
-      }
-
-      // 4. Supprimer les données personnelles
-      if (this.models.Favori) {
-        await this.models.Favori.destroy({ where: { id_user: userId }, ...txOpts });
-      }
-      if (this.models.Notification) {
-        await this.models.Notification.destroy({ where: { id_user: userId }, ...txOpts });
-      }
-      if (this.models.Session) {
-        await this.models.Session.destroy({ where: { id_user: userId }, ...txOpts });
-      }
-
-      // 5. Créer l'entrée d'audit
-      if (this.models.AuditLog && adminId) {
-        await this.models.AuditLog.create({
-          id_admin: adminId,
-          action: 'DELETE_USER',
-          type_entite: 'user',
-          id_entite: userId,
-          details: JSON.stringify({
+      // 4. Trace d'audit (sans l'email en clair : empreinte SHA-256)
+      if (m.AuditLog) {
+        await m.AuditLog.create({
+          id_admin: adminId || null,
+          action: adminId ? 'DELETE_USER' : 'SELF_DELETE_USER',
+          entity_type: 'user',
+          entity_id: userId,
+          details: {
             method: 'hard_delete',
-            user_email: userEmail,
-            user_type: userType,
-            user_name: userName,
+            email_sha256: crypto.createHash('sha256').update(String(userEmail || user.email || '')).digest('hex'),
+            user_type: userType ?? null,
             deleted_at: new Date().toISOString()
-          }),
+          },
           date_action: new Date()
-        }, txOpts);
+        }, tx);
       }
 
-      // 6. Supprimer l'utilisateur
-      await this.model.destroy({ where: { id_user: userId }, ...txOpts });
+      // 5. Suppression du compte
+      await this.model.unscoped().destroy({ where: { id_user: userId }, ...tx });
 
-      return { deleted: true, type: 'hard' };
+      let documents = user.documents_fournis;
+      if (typeof documents === 'string') {
+        try { documents = JSON.parse(documents); } catch { documents = []; }
+      }
+      const files = [user.photo_url, ...(Array.isArray(documents) ? documents : [])]
+        .map(f => (typeof f === 'string' ? f : f?.url))
+        .filter(Boolean);
+
+      return { deleted: true, type: 'hard', files };
     });
   }
 
@@ -524,3 +576,4 @@ class UserRepository extends BaseRepository {
 }
 
 module.exports = UserRepository;
+module.exports.DELETED_USER_EMAIL = DELETED_USER_EMAIL;

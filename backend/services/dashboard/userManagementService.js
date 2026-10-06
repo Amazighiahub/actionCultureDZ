@@ -7,6 +7,7 @@ const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const { TYPE_USER_IDS } = require('../../constants/typeUserIds');
 const { invalidateUserSession } = require('../../utils/sessionCache');
+const { deleteUserFiles } = require('../user/userFileCleanup');
 
 class DashboardUserManagementService {
   constructor(models, repositories = {}) {
@@ -147,13 +148,13 @@ class DashboardUserManagementService {
     }
 
     if (hardDelete) {
-      await this.userRepo.hardDeleteUser(userId, {
+      const result = await this.userRepo.hardDeleteUser(userId, {
         adminId,
         userEmail: user.email,
-        userType: user.type_user,
-        userName: `${user.nom} ${user.prenom}`
+        userType: user.id_type_user
       });
       await this._invalidateUserCache(userId);
+      if (result?.files?.length) await deleteUserFiles(this.models, result.files);
       return {
         deleted: true, type: 'hard',
         userId: parseInt(userId), deletedBy: adminId,
