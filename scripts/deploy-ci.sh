@@ -83,7 +83,14 @@ log "migrations a appliquer : $(grep -cE '^down ' <<<"$MIG_STATUS" || true)"
 
 # 5. Sauvegarde de la base avant toute modification
 log "sauvegarde de la base"
-$C exec -T backup /backup.sh
+# Conteneur neuf avec la configuration à jour : ne dépend pas de l'état du conteneur
+# "backup" en service (qui n'est pas recréé par le déploiement)
+if ! BACKUP_OUT="$($C run --rm --no-deps -T --entrypoint /bin/bash backup /backup.sh 2>&1)"; then
+  echo "$BACKUP_OUT" | tail -n 20
+  annotate "sauvegarde impossible, deploiement arrete, prod inchangee : $(echo "$BACKUP_OUT" | tail -n 4 | paste -sd ' ')"
+  exit 1
+fi
+echo "$BACKUP_OUT" | tail -n 4
 
 # A partir d'ici on modifie la prod : retour arrière automatique en cas d'erreur
 trap 'annotate "echec de : $BASH_COMMAND (retour aux images precedentes)"; rollback' ERR
