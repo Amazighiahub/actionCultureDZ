@@ -100,11 +100,17 @@ wait_healthy eventculture-frontend 90
 $C exec -T nginx nginx -t
 $C exec -T nginx nginx -s reload
 
-# 9. Vérification de bout en bout à travers nginx
+# 9. Vérification de bout en bout à travers nginx. Le certificat est contrôlé à part :
+#    un retour arrière des images ne réparerait pas un certificat expiré.
 sleep 3
-curl -fsS --max-time 10 --resolve "$DOMAIN:443:127.0.0.1" "https://$DOMAIN/health" | grep -q '"healthy"'
-curl -fsS --max-time 10 --resolve "$DOMAIN:443:127.0.0.1" "https://$DOMAIN/" | grep -q 'id="root"'
+curl -fsSk --max-time 10 --resolve "$DOMAIN:443:127.0.0.1" "https://$DOMAIN/health" | grep -q '"healthy"'
+curl -fsSk --max-time 10 --resolve "$DOMAIN:443:127.0.0.1" "https://$DOMAIN/" | grep -q 'id="root"'
 
 trap - ERR
+
+if ! curl -fsS -o /dev/null --max-time 10 --resolve "$DOMAIN:443:127.0.0.1" "https://$DOMAIN/health"; then
+  warn "certificat HTTPS invalide ou expire pour $DOMAIN : verifier le conteneur certbot (docs/DEPLOYMENT.md)"
+  docker logs --tail 20 eventculture-certbot 2>&1 || true
+fi
 docker image prune -f >/dev/null
 log "deploiement OK : $SHA"

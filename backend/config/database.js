@@ -172,6 +172,7 @@ const createDatabaseConnection = (env = 'development') => {
     dbConfig.password,
     {
       host: dbConfig.host,
+      port: parseInt(process.env.DB_PORT || '3306', 10),
       dialect: dbConfig.dialect,
       logging: dbConfig.logging,
       benchmark: dbConfig.benchmark || false,
@@ -217,6 +218,7 @@ const createDatabase = async (env = 'development') => {
   // Connexion sans spécifier de base de données
   const sequelize = new Sequelize('', dbConfig.username, dbConfig.password, {
     host: dbConfig.host,
+    port: parseInt(process.env.DB_PORT || '3306', 10),
     dialect: dbConfig.dialect,
     logging: false
   });

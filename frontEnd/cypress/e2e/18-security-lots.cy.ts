@@ -24,7 +24,8 @@ describe('Regression Lots securite', () => {
     // Origin valide dans tous les environnements (frontend courant ou localhost)
     // - en dev : http://localhost:3000
     // - en prod (CI eventuel) : https://taladz.com via FRONTEND_URL
-    const validOrigin = (Cypress.config('baseUrl') as string) || 'http://localhost:3000';
+    // (en CI le baseUrl pointe vers le backend : on ne peut pas s'en servir comme origine)
+    const validOrigin = (Cypress.env('frontendUrl') as string) || 'http://localhost:3000';
 
     it('accepte une origine whitelisted et renvoie ACAO', () => {
       cy.request({
@@ -93,6 +94,11 @@ describe('Regression Lots securite', () => {
   //   - ne PAS leak err.message dans la reponse (code generique)
   // ==========================================================================
   describe('Lot 7 — Upload magic bytes + limites', () => {
+    // POST protégés par CSRF (double-submit) : le jeton est renvoyé par toute réponse GET,
+    // le cookie correspondant est conservé par cy.request
+    const withCsrf = () =>
+      cy.request(`${API}/upload`).then((r) => ({ 'x-csrf-token': r.headers['x-csrf-token'] as string }));
+
     it('rejette un "jpg" qui est en fait un MP4 (magic bytes check)', () => {
       // Signature MP4 ftyp box : "\x00\x00\x00\x20ftypmp42"
       const mp4Signature = new Uint8Array([
@@ -104,20 +110,23 @@ describe('Regression Lots securite', () => {
       const formData = new FormData();
       formData.append('image', blob, 'disguised.jpg');
 
-      cy.request({
-        method: 'POST',
-        url: `${API}/upload/image/public`,
-        body: formData,
-        failOnStatusCode: false,
-      }).then((resp) => {
-        // On accepte 400 (validation magic bytes) ou 422 (semantic invalide)
-        expect(resp.status, 'fichier deguise doit etre rejete').to.be.oneOf([400, 422]);
-        // Le code doit etre generique (pas de stacktrace leak)
-        if (typeof resp.body === 'object' && resp.body !== null) {
-          const bodyStr = JSON.stringify(resp.body).toLowerCase();
-          expect(bodyStr, 'pas de leak interne').to.not.include('at function');
-          expect(bodyStr).to.not.include('/app/');
-        }
+      withCsrf().then((headers) => {
+        cy.request({
+          method: 'POST',
+          url: `${API}/upload/image/public`,
+          headers,
+          body: formData,
+          failOnStatusCode: false,
+        }).then((resp) => {
+          // On accepte 400 (validation magic bytes) ou 422 (semantic invalide)
+          expect(resp.status, 'fichier deguise doit etre rejete').to.be.oneOf([400, 422]);
+          // Le code doit etre generique (pas de stacktrace leak)
+          if (typeof resp.body === 'object' && resp.body !== null) {
+            const bodyStr = JSON.stringify(resp.body).toLowerCase();
+            expect(bodyStr, 'pas de leak interne').to.not.include('at function');
+            expect(bodyStr).to.not.include('/app/');
+          }
+        });
       });
     });
 
@@ -127,24 +136,30 @@ describe('Regression Lots securite', () => {
       const formData = new FormData();
       formData.append('image', blob, 'huge.jpg');
 
-      cy.request({
-        method: 'POST',
-        url: `${API}/upload/image/public`,
-        body: formData,
-        failOnStatusCode: false,
-      }).then((resp) => {
-        expect(resp.status).to.be.oneOf([400, 413, 422]);
+      withCsrf().then((headers) => {
+        cy.request({
+          method: 'POST',
+          url: `${API}/upload/image/public`,
+          headers,
+          body: formData,
+          failOnStatusCode: false,
+        }).then((resp) => {
+          expect(resp.status).to.be.oneOf([400, 413, 422]);
+        });
       });
     });
 
     it('rejette une image sans body', () => {
-      cy.request({
-        method: 'POST',
-        url: `${API}/upload/image/public`,
-        body: new FormData(), // vide
-        failOnStatusCode: false,
-      }).then((resp) => {
-        expect(resp.status).to.be.oneOf([400, 422]);
+      withCsrf().then((headers) => {
+        cy.request({
+          method: 'POST',
+          url: `${API}/upload/image/public`,
+          headers,
+          body: new FormData(), // vide
+          failOnStatusCode: false,
+        }).then((resp) => {
+          expect(resp.status).to.be.oneOf([400, 422]);
+        });
       });
     });
 
