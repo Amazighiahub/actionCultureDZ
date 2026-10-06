@@ -499,24 +499,43 @@ class PatrimoineService extends BaseService {
   /**
    * Noter un site patrimonial
    */
-  async noter(siteId, note) {
-    if (!note || note < 1 || note > 5) {
+  /**
+   * Note un site (1 à 5). Une note par utilisateur : un nouveau vote remplace le précédent,
+   * et la moyenne est recalculée à partir des votes enregistrés.
+   */
+  async noter(siteId, note, userId) {
+    const value = parseInt(note, 10);
+    if (!value || value < 1 || value > 5) {
       throw this._validationError('La note doit être entre 1 et 5');
     }
-    const { DetailLieu } = this.models || {};
-    if (!DetailLieu) throw this._validationError('Modèle DetailLieu non disponible');
+    const { DetailLieu, LieuNotation } = this.models || {};
+    if (!DetailLieu || !LieuNotation) throw this._validationError('Modèles de notation non disponibles');
 
-    const detailLieu = await DetailLieu.findOne({ where: { id_lieu: siteId } });
-    if (!detailLieu) {
-      throw this._notFoundError(siteId);
-    }
-    const currentNote = detailLieu.noteMoyenne || 0;
-    const currentCount = detailLieu.nb_notations || 0;
-    const newCount = currentCount + 1;
-    const newNote = (currentNote * currentCount + note) / newCount;
-    const rounded = Math.round(newNote * 10) / 10;
-    await detailLieu.update({ noteMoyenne: rounded, nb_notations: newCount });
-    return { noteMoyenne: rounded };
+    return this.repository.withTransaction(async (transaction) => {
+      const detailLieu = await DetailLieu.findOne({ where: { id_lieu: siteId }, transaction });
+      if (!detailLieu) {
+        throw this._notFoundError(siteId);
+      }
+
+      const existing = await LieuNotation.findOne({ where: { id_lieu: siteId, id_user: userId }, transaction });
+      if (existing) {
+        await existing.update({ note: value }, { transaction });
+      } else {
+        await LieuNotation.create({ id_lieu: siteId, id_user: userId, note: value }, { transaction });
+      }
+
+      const { fn, col } = require('sequelize');
+      const stats = await LieuNotation.findOne({
+        attributes: [[fn('AVG', col('note')), 'moyenne'], [fn('COUNT', col('id_lieu_notation')), 'total']],
+        where: { id_lieu: siteId },
+        raw: true,
+        transaction
+      });
+      const rounded = Math.round(Number(stats?.moyenne || 0) * 10) / 10;
+      const total = Number(stats?.total || 0);
+      await detailLieu.update({ noteMoyenne: rounded, nb_notations: total }, { transaction });
+      return { noteMoyenne: rounded, nb_notations: total, maNote: value };
+    });
   }
 
   /**

@@ -108,3 +108,42 @@ describe('PatrimoineService.deleteMedia - limité au site', () => {
     expect(models.LieuMedia.findOne).toHaveBeenCalledWith({ where: { id: 777, id_lieu: 1 } });
   });
 });
+
+describe('PatrimoineService.noter - une note par utilisateur', () => {
+  const makeRating = (existing) => {
+    const detail = { update: jest.fn() };
+    const created = [];
+    const models = {
+      DetailLieu: { findOne: jest.fn().mockResolvedValue(detail) },
+      LieuNotation: {
+        findOne: jest.fn()
+          .mockResolvedValueOnce(existing)                       // vote existant de l'utilisateur
+          .mockResolvedValueOnce({ moyenne: '4.0000', total: 3 }), // statistiques recalculées
+        create: jest.fn(async (v) => { created.push(v); return v; })
+      }
+    };
+    const repository = { withTransaction: jest.fn(async (cb) => cb({})) };
+    return { service: new PatrimoineService(repository, { models }), models, detail, created };
+  };
+
+  it('premier vote : enregistré et moyenne recalculée depuis les votes', async () => {
+    const { service, detail, created } = makeRating(null);
+    const res = await service.noter(12, 5, 7);
+    expect(created).toEqual([{ id_lieu: 12, id_user: 7, note: 5 }]);
+    expect(detail.update).toHaveBeenCalledWith({ noteMoyenne: 4, nb_notations: 3 }, expect.anything());
+    expect(res).toMatchObject({ noteMoyenne: 4, nb_notations: 3, maNote: 5 });
+  });
+
+  it('nouveau vote du même utilisateur : remplace l\'ancien au lieu de s\'ajouter', async () => {
+    const existing = { update: jest.fn() };
+    const { service, models } = makeRating(existing);
+    await service.noter(12, 2, 7);
+    expect(existing.update).toHaveBeenCalledWith({ note: 2 }, expect.anything());
+    expect(models.LieuNotation.create).not.toHaveBeenCalled();
+  });
+
+  it('note hors bornes : refusée', async () => {
+    const { service } = makeRating(null);
+    await expect(service.noter(12, 9, 7)).rejects.toMatchObject({ statusCode: 400 });
+  });
+});

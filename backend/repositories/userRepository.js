@@ -442,6 +442,7 @@ class UserRepository extends BaseRepository {
       await destroy(m.EmailVerification, { id_user: userId });
       // index uniques (oeuvre, user) / (entité, signalant) : suppression plutôt que réattribution
       await destroy(m.CritiqueEvaluation, { id_user: userId });
+      await destroy(m.LieuNotation, { id_user: userId });
       await destroy(m.Signalement, { id_user_signalant: userId });
       await destroy(m.Signalement, { type_entite: 'user', id_entite: userId });
 

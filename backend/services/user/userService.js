@@ -513,6 +513,7 @@ class UserService extends BaseService {
       ['inscriptions_evenements', models.EvenementUser, { id_user: userId }],
       ['commentaires', models.Commentaire, { id_user: userId }],
       ['critiques', models.CritiqueEvaluation, { id_user: userId }],
+      ['notes_sites_patrimoine', models.LieuNotation, { id_user: userId }],
       ['favoris', models.Favori, { id_user: userId }],
       ['notifications', models.Notification, { id_user: userId }],
       ['signalements_effectues', models.Signalement, { id_user_signalant: userId }],

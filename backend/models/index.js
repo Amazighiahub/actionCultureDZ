@@ -227,6 +227,8 @@ const loadModels = (sequelize) => {
 
   const lieuIntervenantModel = loadModelSafely('./associations/lieuIntervenant', 'LieuIntervenant', sequelize);
   if (lieuIntervenantModel) models.LieuIntervenant = lieuIntervenantModel;
+  const lieuNotationModel = loadModelSafely('./associations/lieuNotation', 'LieuNotation', sequelize);
+  if (lieuNotationModel) models.LieuNotation = lieuNotationModel;
 
   const userOrganisationModel = loadModelSafely('./associations/userOrganisation', 'UserOrganisation', sequelize);
   if (userOrganisationModel) models.UserOrganisation = userOrganisationModel;

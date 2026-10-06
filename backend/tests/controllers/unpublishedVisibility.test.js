@@ -13,15 +13,18 @@ jest.mock('../../utils/redisClient', () => ({
 
 const mockOeuvreService = { findWithFullDetails: jest.fn() };
 const mockEvenementService = { findWithFullDetails: jest.fn() };
+const mockServiceService = { findWithFullDetails: jest.fn() };
 
 jest.mock('../../services/serviceContainer', () => ({
   get oeuvreService() { return mockOeuvreService; },
   get evenementService() { return mockEvenementService; },
+  get serviceService() { return mockServiceService; },
   _initialized: true
 }));
 
 const oeuvreController = require('../../controllers/oeuvreController');
 const evenementController = require('../../controllers/evenementController');
+const serviceController = require('../../controllers/serviceController');
 
 const dto = (raw) => ({
   _raw: raw,
@@ -40,6 +43,7 @@ const buildApp = () => {
   });
   app.get('/oeuvres/:id', (req, res) => oeuvreController.getById(req, res));
   app.get('/evenements/:id', (req, res) => evenementController.getById(req, res));
+  app.get('/services/:id', (req, res) => serviceController.getById(req, res));
   return app;
 };
 
@@ -84,5 +88,17 @@ describe('Événement brouillon', () => {
   it('événement annulé reste visible (information des inscrits)', async () => {
     mockEvenementService.findWithFullDetails.mockResolvedValue(dto({ id_evenement: 3, statut: 'annule', id_user: 7 }));
     await request(buildApp()).get('/evenements/3').expect(200);
+  });
+});
+
+describe('Service non validé', () => {
+  beforeEach(() => mockServiceService.findWithFullDetails.mockResolvedValue(
+    dto({ id: 8, statut: 'en_attente', id_user: 7 })
+  ));
+  it('anonyme : 404', async () => {
+    await request(buildApp()).get('/services/8').expect(404);
+  });
+  it('propriétaire : 200', async () => {
+    await request(buildApp()).get('/services/8').set('x-user', OWNER).expect(200);
   });
 });

@@ -114,8 +114,10 @@ class ServiceRepository extends BaseRepository {
    * Recherche multilingue
    */
   async searchServices(query, options = {}) {
+    // Recherche publique : services validés uniquement
     return this.search(query, ['nom', 'description'], {
       ...options,
+      additionalWhere: { ...options.additionalWhere, statut: 'valide' },
       include: this._defaultIncludes()
     });
   }

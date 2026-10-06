@@ -369,7 +369,7 @@ class PatrimoineController extends BaseController {
   async noter(req, res) {
     const { note } = req.body;
     const siteId = parseInt(req.params.id);
-    const data = await this.patrimoineService.noter(siteId, note);
+    const data = await this.patrimoineService.noter(siteId, note, req.user.id_user);
     res.json({ success: true, data });
   }
 

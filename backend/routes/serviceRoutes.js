@@ -12,7 +12,7 @@ const asyncHandler = require('../utils/asyncHandler');
 
 const initServiceRoutes = (models, authMiddleware) => {
   const router = express.Router();
-  const { authenticate, requireRole } = authMiddleware;
+  const { authenticate, optionalAuth, requireRole } = authMiddleware;
 
   // ============================================================================
   // ROUTES PUBLIQUES
@@ -39,7 +39,7 @@ const initServiceRoutes = (models, authMiddleware) => {
   // ROUTES AVEC :id (après les routes spécifiques)
   // ============================================================================
 
-  router.get('/:id', validateId(), asyncHandler((req, res) => serviceController.getById(req, res)));
+  router.get('/:id', optionalAuth, validateId(), asyncHandler((req, res) => serviceController.getById(req, res)));
   router.post('/', authenticate,
     createContentLimiter,
     validateStringLengths,

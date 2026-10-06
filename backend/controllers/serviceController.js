@@ -50,6 +50,11 @@ class ServiceController extends BaseController {
   async getById(req, res) {
     try {
       const service = await this.serviceService.findWithFullDetails(parseInt(req.params.id));
+      // Service en attente ou rejeté : visible seulement par son propriétaire et la modération
+      const raw = service?._raw || service;
+      if (raw && raw.statut !== 'valide' && !this._canSeeUnpublished(req, raw.id_user)) {
+        return res.status(404).json({ success: false, error: req.t('common.notFound') });
+      }
       res.json({
         success: true,
         data: service.toDetailJSON(req.lang)
