@@ -69,6 +69,7 @@ const EventCard: React.FC<EventCardProps> = React.memo(({ event }) => {
       <div className="relative h-48 overflow-hidden">
         <LazyImage
           src={event.image_url || event.affiche_url || '/images/placeholder-event.svg'}
+          maxWidth={640}
           alt={event.nom_evenement}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           fallback="/images/placeholder-event.svg"

@@ -5,6 +5,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/Utils';
+import { optimizeImageUrl } from '@/helpers/assetUrl';
 
 interface LazyImageProps {
   src: string;
@@ -21,6 +22,10 @@ interface LazyImageProps {
   srcSet?: string;
   /** sizes pour images responsive ex: "(max-width: 768px) 100vw, 50vw" */
   sizes?: string;
+  /** Largeur d'affichage maximale : les images Cloudinary sont téléchargées à cette taille */
+  maxWidth?: number;
+  /** Image principale de la page (LCP) : chargée tout de suite, en priorité haute */
+  priority?: boolean;
   /** Largeur et hauteur intrinsèques (évite CLS - Cumulative Layout Shift) */
   width?: number;
   height?: number;
@@ -54,19 +59,24 @@ export const LazyImage: React.FC<LazyImageProps> = ({
   webpSrc,
   srcSet,
   sizes,
+  maxWidth,
+  priority = false,
   width,
   height,
   onLoad,
   onError
 }) => {
   const { t } = useTranslation();
+  // Images Cloudinary : format et compression automatiques (+ largeur limitée si maxWidth)
+  const imageSrc = optimizeImageUrl(src, maxWidth);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(false);
-  const [isInView, setIsInView] = useState(false);
+  const [isInView, setIsInView] = useState(priority);
   const imgRef = useRef<HTMLImageElement>(null);
 
-  // Intersection Observer pour le lazy loading
+  // Intersection Observer pour le lazy loading (inutile pour une image prioritaire)
   useEffect(() => {
+    if (priority) return;
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -85,7 +95,7 @@ export const LazyImage: React.FC<LazyImageProps> = ({
     }
 
     return () => observer.disconnect();
-  }, []);
+  }, [priority]);
 
   const handleLoad = () => {
     setLoaded(true);
@@ -126,16 +136,17 @@ export const LazyImage: React.FC<LazyImageProps> = ({
       )}
     >
       {renderPlaceholder()}
-      
+
       {isInView && (
         (webpSrc || srcSet) ? (
           <picture>
             {webpSrc && <source srcSet={error ? undefined : webpSrc} type="image/webp" />}
             {srcSet && <source srcSet={error ? undefined : srcSet} sizes={sizes} />}
             <img
-              src={error ? fallback : src}
+              src={error ? fallback : imageSrc}
               alt={alt}
-              loading="lazy"
+              loading={priority ? 'eager' : 'lazy'}
+              fetchPriority={priority ? 'high' : 'auto'}
               decoding="async"
               width={width}
               height={height}
@@ -151,9 +162,10 @@ export const LazyImage: React.FC<LazyImageProps> = ({
           </picture>
         ) : (
           <img
-            src={error ? fallback : src}
+            src={error ? fallback : imageSrc}
             alt={alt}
-            loading="lazy"
+            loading={priority ? 'eager' : 'lazy'}
+            fetchPriority={priority ? 'high' : 'auto'}
             decoding="async"
             width={width}
             height={height}

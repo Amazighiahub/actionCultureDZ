@@ -1,6 +1,7 @@
 // components/oeuvre/HeroDefault.tsx
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
+import { optimizeImageUrl } from '@/helpers/assetUrl';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
@@ -68,8 +69,9 @@ const HeroDefault: React.FC<HeroDefaultProps> = ({
         {mainImage ? (
           <>
             <img
-              src={mainImage}
+              src={optimizeImageUrl(mainImage, 1600)}
               alt={titre}
+              fetchPriority="high"
               className="w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />

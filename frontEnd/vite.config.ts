@@ -119,8 +119,9 @@ export default defineConfig(({ mode }) => ({
               return 'react-vendor';
             }
             
-            // UI Libraries
-            if (id.includes('@radix-ui') || id.includes('sonner') || id.includes('react-hot-toast')) {
+            // Notifications (toasts) : utilisées partout
+            // (@radix-ui n'est plus regroupé : chaque composant Radix suit la page qui l'utilise)
+            if (id.includes('sonner') || id.includes('react-hot-toast')) {
               return 'ui-vendor';
             }
             
@@ -155,15 +156,9 @@ export default defineConfig(({ mode }) => ({
             }
           }
           
-          // Services
-          if (id.includes('/services/')) {
-            return 'services';
-          }
-          
-          // Composants partagés
-          if (id.includes('/components/ui/')) {
-            return 'ui-components';
-          }
+          // Services et composants d'interface : pas de regroupement forcé (sinon tous
+          // — admin, upload, éditeurs... — étaient téléchargés dès la page d'accueil)
+          return undefined;
         },
         
         // Nommer les chunks de manière plus claire

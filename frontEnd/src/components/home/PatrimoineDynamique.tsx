@@ -1,7 +1,8 @@
 /**
  * PatrimoineDynamique - Section patrimoine avec lazy loading des images
  */
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -37,36 +38,22 @@ interface PatrimoineDynamiqueProps {
 const EMPTY_WILAYAS_ARRAY: any[] = [];
 
 const PatrimoineDynamique: React.FC<PatrimoineDynamiqueProps> = ({ wilayasCache = EMPTY_WILAYAS_ARRAY }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { formatNumber } = useLocalizedNumber();
   const { rtlClasses } = useRTL();
-  const [sites, setSites] = useState<SitePatrimoine[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    loadSites();
-  }, []);
-
-  const loadSites = async () => {
-    try {
-      setLoading(true);
-      setError(null);
+  // React Query : données gardées en cache (5 min) quand on revient sur l'accueil
+  const { data: sites = [], isLoading: loading, error: queryError, refetch } = useQuery({
+    queryKey: ['home', 'patrimoine', 'popular', 6, i18n.language],
+    queryFn: async (): Promise<SitePatrimoine[]> => {
       const response = await patrimoineService.getSitesPopulaires(6);
-      
       if (response.success && response.data) {
-        const sitesData = Array.isArray(response.data) ? response.data : [];
-        setSites(sitesData);
-      } else {
-        throw new Error(response.error || t('errors.loadingError'));
+        return (Array.isArray(response.data) ? response.data : []) as SitePatrimoine[];
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('errors.generic.message'));
-      setSites([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+      throw new Error(response.error || t('errors.loadingError'));
+    },
+  });
+  const error = queryError ? (queryError instanceof Error ? queryError.message : t('errors.generic.message')) : null;
+  const loadSites = () => { void refetch(); };
 
   if (error) {
     return <ErrorMessage message={error} onRetry={loadSites} />;
@@ -110,7 +97,7 @@ const PatrimoineDynamique: React.FC<PatrimoineDynamiqueProps> = ({ wilayasCache 
               <div className="relative h-48 overflow-hidden">
                 {site.medias && site.medias[0] ? (
                   <img
-                    src={getAssetUrl(site.medias[0].url)}
+                    src={getAssetUrl(site.medias[0].url, { width: 640 })}
                     alt={site.nom || 'Site patrimonial algérien'}
                     loading="lazy"
                     decoding="async"
@@ -154,7 +141,7 @@ const PatrimoineDynamique: React.FC<PatrimoineDynamiqueProps> = ({ wilayasCache 
                   </Button>
                 </div>
               </div>
-              
+
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <CardTitle className="text-lg leading-tight">
@@ -174,12 +161,12 @@ const PatrimoineDynamique: React.FC<PatrimoineDynamiqueProps> = ({ wilayasCache 
                   <span>{getWilayaName(site.wilaya_id, wilayasCache)}</span>
                 </div>
               </CardHeader>
-              
+
               <CardContent className="pt-0 space-y-4">
                 <p className="text-sm text-muted-foreground line-clamp-2">
                   {site.description}
                 </p>
-                
+
                 <div className="flex items-center justify-between">
                   <div className={`flex items-center space-x-1 text-xs text-muted-foreground ${rtlClasses.flexRow}`}>
                     <Eye className="h-3 w-3" />

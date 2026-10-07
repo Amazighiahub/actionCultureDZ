@@ -201,8 +201,8 @@ const Index: React.FC = () => {
               <Card className="bg-gradient-to-br from-primary/5 to-transparent hover-lift overflow-hidden group">
                 <div className={`absolute top-0 ${rtlClasses.end(0)} w-32 h-32 opacity-10`}>
                   <img
-                    src="https://images.unsplash.com/photo-1569163139394-de4798a9f0d5?w=400"
-                    alt="Patrimoine culturel algérien - Notre mission"
+                    src="/images/hero/ghardaia.webp"
+                    alt=""
                     loading="lazy"
                     className="w-full h-full object-cover rounded-full"
                   />
@@ -232,8 +232,8 @@ const Index: React.FC = () => {
               <Card className="bg-gradient-to-br from-accent/5 to-transparent hover-lift overflow-hidden group">
                 <div className={`absolute top-0 ${rtlClasses.end(0)} w-32 h-32 opacity-10`}>
                   <img
-                    src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400"
-                    alt="Ressources culturelles et artisanat algérien"
+                    src="/images/hero/kabylie.webp"
+                    alt=""
                     loading="lazy"
                     className="w-full h-full object-cover rounded-full"
                   />

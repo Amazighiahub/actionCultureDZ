@@ -3,6 +3,7 @@
  * Effet flip 3D couverture avant/arrière
  */
 import React, { useState } from 'react';
+import { optimizeImageUrl } from '@/helpers/assetUrl';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent } from '@/components/ui/card';
@@ -104,7 +105,7 @@ const HeroLivre: React.FC<HeroLivreProps> = ({
 
                     <div className="relative w-full h-full rounded-r-lg overflow-hidden shadow-2xl border-l-4 border-amber-700/30 dark:border-amber-500/30">
                       {mainImage ? (
-                        <img src={mainImage} alt={titre} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                        <img src={optimizeImageUrl(mainImage, 900)} alt={titre} fetchPriority="high" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                       ) : (
                         <div className="w-full h-full bg-gradient-to-br from-amber-800 via-amber-900 to-amber-950 dark:from-amber-900 dark:to-black flex flex-col items-center justify-center p-6 text-center">
                           <BookOpen className="h-12 w-12 text-amber-400/50 mb-4" />

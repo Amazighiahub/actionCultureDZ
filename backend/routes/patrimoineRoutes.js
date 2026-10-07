@@ -4,6 +4,7 @@
  */
 
 const express = require('express');
+const { publicHttpCache } = require('../middlewares/cacheMiddleware');
 const { secureDiskUpload } = require('../middlewares/uploadSecurity');
 const { MEDIA_MIMES, MAX_MEDIA_SIZE } = require('../constants/uploadMimes');
 const { param, body } = require('express-validator');
@@ -27,13 +28,16 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
   router.post('/mobile/qr-scan', patrimoineController.wrap('scanQRCode'));
   router.get('/mobile/offline/:wilayaId', patrimoineController.wrap('getMobileOffline'));
 
-  router.get('/', patrimoineController.wrap('list'));
-  router.get('/popular', patrimoineController.wrap('popular'));
-  router.get('/search', patrimoineController.wrap('search'));
+  // Cache HTTP des listes publiques (les sites changent rarement)
+  const cachePublic = publicHttpCache(300);
+
+  router.get('/', cachePublic, patrimoineController.wrap('list'));
+  router.get('/popular', cachePublic, patrimoineController.wrap('popular'));
+  router.get('/search', cachePublic, patrimoineController.wrap('search'));
   // Vérifier les doublons avant création (nom + commune)
   router.get('/check-duplicate', patrimoineController.wrap('checkDuplicate'));
-  router.get('/types', patrimoineController.wrap('getTypes'));
-  router.get('/map', patrimoineController.wrap('getMap'));
+  router.get('/types', cachePublic, patrimoineController.wrap('getTypes'));
+  router.get('/map', cachePublic, patrimoineController.wrap('getMap'));
   router.get('/monuments/:type', patrimoineController.wrap('getByType'));
   router.get('/vestiges/:type', patrimoineController.wrap('getByType'));
   router.get('/:id/galerie', validateId(), patrimoineController.wrap('getGalerie'));

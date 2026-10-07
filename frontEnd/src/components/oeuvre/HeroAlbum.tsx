@@ -4,6 +4,7 @@
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from 'react';
+import { optimizeImageUrl } from '@/helpers/assetUrl';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent } from '@/components/ui/card';
@@ -119,8 +120,9 @@ const HeroAlbum: React.FC<HeroAlbumProps> = ({
                     <div className="relative w-full h-full rounded-lg overflow-hidden shadow-2xl">
                       {mainImage ? (
                         <img
-                          src={mainImage}
+                          src={optimizeImageUrl(mainImage, 900)}
                           alt={titre}
+                          fetchPriority="high"
                           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                         />
                       ) : (

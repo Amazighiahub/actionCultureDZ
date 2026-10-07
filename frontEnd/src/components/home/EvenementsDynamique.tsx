@@ -2,6 +2,7 @@
  * EvenementsDynamique - Section événements avec lazy loading des images
  */
 import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -46,35 +47,25 @@ const EvenementsDynamique: React.FC = () => {
   const { formatNumber, formatPrice } = useLocalizedNumber();
   const { rtlClasses } = useRTL();
   const lang = (i18n.language || 'fr') as SupportedLanguage;
-  const [evenements, setEvenements] = useState<Evenement[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    loadEvenements();
     setIsAuthenticated(authService.isAuthenticated());
   }, []);
 
-  const loadEvenements = async () => {
-    try {
-      setLoading(true);
-      setError(null);
+  // React Query : données gardées en cache (5 min) quand on revient sur l'accueil
+  const { data: evenements = [], isLoading: loading, error: queryError, refetch } = useQuery({
+    queryKey: ['home', 'evenements', 'upcoming', 3, i18n.language],
+    queryFn: async (): Promise<Evenement[]> => {
       const response = await evenementService.getUpcoming({ limit: 3 });
-      
       if (response.success && response.data) {
-        const evenements = extractDataFromResponse<Evenement>(response.data);
-        setEvenements(evenements);
-      } else {
-        throw new Error(response.error || t('errors.loadingError'));
+        return extractDataFromResponse<Evenement>(response.data);
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('errors.generic.message'));
-      setEvenements([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+      throw new Error(response.error || t('errors.loadingError'));
+    },
+  });
+  const error = queryError ? (queryError instanceof Error ? queryError.message : t('errors.generic.message')) : null;
+  const loadEvenements = () => { void refetch(); };
 
   const getStatusColor = (statut: string) => {
     switch (statut) {
@@ -139,7 +130,7 @@ const EvenementsDynamique: React.FC = () => {
               <div className="relative h-48 overflow-hidden">
                 {event.Media && event.Media[0] ? (
                   <img
-                    src={getAssetUrl(event.Media[0].url)}
+                    src={getAssetUrl(event.Media[0].url, { width: 640 })}
                     alt={getTranslation(event.nom_evenement, lang) || 'Événement culturel'}
                     loading="lazy"
                     decoding="async"
@@ -149,7 +140,7 @@ const EvenementsDynamique: React.FC = () => {
                   />
                 ) : event.image_url ? (
                   <img
-                    src={getAssetUrl(event.image_url)}
+                    src={getAssetUrl(event.image_url, { width: 640 })}
                     alt={getTranslation(event.nom_evenement, lang) || 'Événement culturel'}
                     loading="lazy"
                     decoding="async"
@@ -177,20 +168,20 @@ const EvenementsDynamique: React.FC = () => {
                   </div>
                 )}
               </div>
-              
+
               <CardHeader className="pb-3">
                 <CardTitle className="line-clamp-2 leading-tight">
                   <Link to={`/evenements/${event.id_evenement}`} className={STRETCHED_LINK_CLASS}>
                     {getTranslation(event.nom_evenement, lang)}
                   </Link>
                 </CardTitle>
-                
+
                 <div className="space-y-2 text-sm text-muted-foreground">
                   <div className={`flex items-center space-x-2 ${rtlClasses.flexRow}`}>
                     <Calendar className="h-4 w-4" />
                     <span>
                       {event.date_debut ? formatDate(event.date_debut) : t('sections.events.dateToConfirm')}
-                      {event.date_fin && event.date_fin !== event.date_debut && 
+                      {event.date_fin && event.date_fin !== event.date_debut &&
                         ` - ${formatDate(event.date_fin)}`
                       }
                     </span>
@@ -203,12 +194,12 @@ const EvenementsDynamique: React.FC = () => {
                   )}
                 </div>
               </CardHeader>
-              
+
               <CardContent className="space-y-4">
                 <p className="text-sm text-muted-foreground line-clamp-2">
                   {(typeof event.description === 'object' ? getTranslation(event.description, lang) : event.description) || t('common.noDescription')}
                 </p>
-                
+
                 {event.capacite_max && (
                   <div className="space-y-3">
                     <div className="flex items-center justify-between text-sm">
@@ -222,7 +213,7 @@ const EvenementsDynamique: React.FC = () => {
                         </span>
                       )}
                     </div>
-                    
+
                     <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
                       <div
                         className="bg-gradient-to-r from-primary to-accent h-2 rounded-full transition-all duration-500"
@@ -233,7 +224,7 @@ const EvenementsDynamique: React.FC = () => {
                     </div>
                   </div>
                 )}
-                
+
                 {event.inscription_requise && (
                   <Button asChild className="relative z-10 w-full group" size="sm">
                     <Link

@@ -4,6 +4,7 @@
  */
 
 const express = require('express');
+const { publicHttpCache } = require('../middlewares/cacheMiddleware');
 const { param, body } = require('express-validator');
 const evenementController = require('../controllers/evenementController');
 const { handleValidationErrors, validateId, validatePagination, validateEventCreation, validateStringLengths } = require('../middlewares/validationMiddleware');
@@ -16,10 +17,7 @@ const initEvenementRoutes = (models, authMiddleware) => {
   const { authenticate, optionalAuth, requireRole, requireValidatedProfessional, requireVerifiedEmail } = authMiddleware;
 
   // Cache HTTP pour les listes publiques (données changent toutes les ~2 min)
-  const cachePublic = (req, res, next) => {
-    res.set('Cache-Control', 'public, max-age=120, stale-while-revalidate=30');
-    next();
-  };
+  const cachePublic = publicHttpCache(120);
 
   // ============================================================================
   // ROUTES PUBLIQUES (specific paths BEFORE :id catch-all)
