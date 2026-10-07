@@ -4201,5 +4201,12 @@
   },
   "a11y": {
     "skipToContent": "Ddu ɣer ugbur agejdan"
+  },
+  "profile": {
+    "socialLinks": "Asmel web d iẓeḍwan inmettiyen",
+    "socialOf": "{{network}} n {{name}}",
+    "socialInvalid": "Aseɣwen {{network}} ur ɣbin ara (amedya: {{example}})",
+    "socialTitle": "Asmel web d iẓeḍwan inmettiyen",
+    "socialHint": "Iseɣwan-a ad d-banen deg usebter-ik azayez (tidyanin i tessuddseḍ, amaɣnu)."
   }
 }

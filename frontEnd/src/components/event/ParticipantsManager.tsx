@@ -54,6 +54,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/Utils';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import { safeExternalUrl } from '@/utils/safeUrl';
+import SocialLinks, { type SocialLinksValue } from '@/components/shared/SocialLinks';
 
 interface ParticipantsManagerProps {
   evenementId: number;
@@ -114,10 +115,7 @@ interface ParticipantProfil {
     photo_profil?: string;
     site_web?: string;
     telephone?: string;
-    linkedin?: string;
-    facebook?: string;
-    twitter?: string;
-    instagram?: string;
+    reseaux_sociaux?: SocialLinksValue;
     TypeUser?: { nom_type: string };
     Organisations?: Array<{ id_organisation: number; nom: string; logo_url?: string }>;
   };
@@ -625,6 +623,10 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
                         </a>
                       </Button>
                     )}
+                    <SocialLinks
+                      links={profilData.profil.reseaux_sociaux}
+                      ownerName={`${profilData.profil.prenom} ${profilData.profil.nom}`}
+                    />
                   </div>
                 </div>
               </div>

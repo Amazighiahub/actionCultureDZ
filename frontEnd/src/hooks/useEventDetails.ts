@@ -32,6 +32,7 @@ interface Organizer {
   telephone?: string;
   site_web?: string;
   type_organisation?: string;
+  reseaux_sociaux?: Record<string, string> | string;
 }
 
 interface Comment {
@@ -288,6 +289,8 @@ export function useEventDetails(eventId: number, options: EventDetailsOptions = 
         nom: event.Organisateur.nom,
         prenom: event.Organisateur.prenom,
         photo_url: event.Organisateur.photo_url,
+        site_web: event.Organisateur.site_web,
+        reseaux_sociaux: event.Organisateur.reseaux_sociaux as Record<string, string> | undefined,
         role: 'organisateur_principal',
         // Le compte organisateur n'expose plus son email : contact public de l'événement
         email: event.contact_email || undefined,

@@ -17,6 +17,7 @@ import { cn } from '@/lib/Utils';
 import type { Organisation } from '@/types/models/organisation.types';
 import type { User } from '@/types/models/user.types';
 import { safeExternalUrl } from '@/utils/safeUrl';
+import SocialLinks, { type SocialLinksValue } from '@/components/shared/SocialLinks';
 
 // Type unifié pour les organisateurs (peut être User ou Organisation)
 interface Organizer {
@@ -35,6 +36,7 @@ interface Organizer {
   // Pour les users
   entreprise?: string;
   specialites?: string[];
+  reseaux_sociaux?: SocialLinksValue;
 }
 
 interface EventOrganizersProps {
@@ -219,6 +221,12 @@ const OrganizerCard: React.FC<OrganizerCardProps> = ({ organizer, variant = 'def
                   </a>
                 </Button>
               )}
+
+              {/* Réseaux sociaux du professionnel (le site web a son bouton ci-dessus) */}
+              <SocialLinks
+                links={organizer.reseaux_sociaux}
+                ownerName={[td(organizer.prenom), td(organizer.nom)].filter(Boolean).join(' ')}
+              />
             </div>
           </div>
         </div>

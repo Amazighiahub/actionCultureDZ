@@ -4184,5 +4184,12 @@
   },
   "a11y": {
     "skipToContent": "Aller au contenu principal"
+  },
+  "profile": {
+    "socialLinks": "Site web et réseaux sociaux",
+    "socialOf": "{{network}} de {{name}}",
+    "socialInvalid": "Lien {{network}} invalide (ex. : {{example}})",
+    "socialTitle": "Site web et réseaux sociaux",
+    "socialHint": "Ces liens apparaissent sur votre fiche publique (événements que vous organisez, profil)."
   }
 }

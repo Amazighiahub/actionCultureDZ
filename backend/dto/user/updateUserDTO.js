@@ -3,6 +3,16 @@
  */
 const BaseDTO = require('../baseDTO');
 
+// Réseaux sociaux qu'un professionnel peut afficher sur son profil, avec les domaines acceptés
+const SOCIAL_NETWORKS = {
+  facebook: ['facebook.com', 'fb.com'],
+  instagram: ['instagram.com'],
+  youtube: ['youtube.com', 'youtu.be'],
+  linkedin: ['linkedin.com'],
+  tiktok: ['tiktok.com'],
+  x: ['x.com', 'twitter.com'],
+};
+
 class UpdateUserDTO extends BaseDTO {
   constructor(data = {}) {
     super(data);
@@ -39,6 +49,9 @@ class UpdateUserDTO extends BaseDTO {
     if (data.photo_url !== undefined || data.photoUrl !== undefined) {
       this.photoUrl = BaseDTO.cleanString(data.photo_url || data.photoUrl);
     }
+    if (data.reseaux_sociaux !== undefined) {
+      this.reseauxSociaux = UpdateUserDTO.normalizeSocialLinks(data.reseaux_sociaux);
+    }
     if (data.accepte_newsletter !== undefined || data.accepteNewsletter !== undefined) {
       this.accepteNewsletter = BaseDTO.toBool(data.accepte_newsletter ?? data.accepteNewsletter);
     }
@@ -54,6 +67,24 @@ class UpdateUserDTO extends BaseDTO {
   /**
    * Crée depuis le body de la requête
    */
+  /**
+   * Garde uniquement les réseaux connus ; champ vide = lien retiré.
+   * Les adresses sont vérifiées par validate().
+   */
+  static normalizeSocialLinks(value) {
+    let links = value;
+    if (typeof links === 'string') {
+      try { links = JSON.parse(links); } catch { links = null; }
+    }
+    if (!links || typeof links !== 'object' || Array.isArray(links)) return {};
+    const out = {};
+    for (const network of Object.keys(SOCIAL_NETWORKS)) {
+      const url = BaseDTO.cleanString(links[network]);
+      if (url) out[network] = url;
+    }
+    return out;
+  }
+
   static fromRequest(body, options = {}) {
     return new UpdateUserDTO(body);
   }
@@ -75,6 +106,7 @@ class UpdateUserDTO extends BaseDTO {
     if (this.wilayaResidence !== undefined) entity.wilaya_residence = this.wilayaResidence;
     if (this.idCommune !== undefined) entity.id_commune = this.idCommune;
     if (this.photoUrl !== undefined) entity.photo_url = this.photoUrl;
+    if (this.reseauxSociaux !== undefined) entity.reseaux_sociaux = this.reseauxSociaux;
     if (this.accepteNewsletter !== undefined) entity.accepte_newsletter = this.accepteNewsletter;
     if (this.languePreferee !== undefined) entity.langue_preferee = this.languePreferee;
     if (this.themePrefere !== undefined) entity.theme_prefere = this.themePrefere;
@@ -110,6 +142,13 @@ class UpdateUserDTO extends BaseDTO {
       errors.push({ field: 'siteWeb', message: 'URL invalide' });
     }
 
+    // Réseaux sociaux : lien http(s) vers le site du réseau annoncé (pas de javascript:, pas d'autre domaine)
+    for (const [network, url] of Object.entries(this.reseauxSociaux || {})) {
+      if (!UpdateUserDTO.isSocialUrl(network, url)) {
+        errors.push({ field: `reseaux_sociaux.${network}`, message: 'Lien invalide pour ce réseau social' });
+      }
+    }
+
     // Photo : uniquement un média hébergé par la plateforme (null = suppression)
     if (this.photoUrl && !BaseDTO.isOwnMediaUrl(this.photoUrl)) {
       errors.push({ field: 'photo_url', message: 'Photo invalide : utilisez le service d\'upload' });
@@ -119,6 +158,12 @@ class UpdateUserDTO extends BaseDTO {
       valid: errors.length === 0,
       errors
     };
+  }
+
+  static isSocialUrl(network, url) {
+    if (!BaseDTO.isHttpUrl(url)) return false;
+    const host = new URL(url.trim()).hostname.toLowerCase();
+    return (SOCIAL_NETWORKS[network] || []).some((d) => host === d || host.endsWith(`.${d}`));
   }
 
   _isValidPhone(phone) {
@@ -134,3 +179,4 @@ class UpdateUserDTO extends BaseDTO {
 }
 
 module.exports = UpdateUserDTO;
+module.exports.SOCIAL_NETWORKS = SOCIAL_NETWORKS;
