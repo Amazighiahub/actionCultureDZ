@@ -2,14 +2,16 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
-// Import UNIQUEMENT le français (langue par défaut) — les autres sont lazy-loaded
-import frTranslation from './locales/fr/translation.json';
+import { toHtmlLang } from '../src/types/common/multilingual.types';
 
 // Liste des langues supportées
 const supportedLanguages = ['ar', 'fr', 'en', 'tz-ltn', 'tz-tfng'];
 
-// Chargeurs dynamiques pour les autres langues (code splitting)
+// Chargeurs dynamiques de TOUTES les langues, français compris (code splitting) :
+// le fichier principal ne contient plus ~155 Ko de traductions françaises, et un
+// visiteur arabophone ou tamazightophone ne télécharge que sa langue
 const lazyTranslations: Record<string, () => Promise<{ default: Record<string, unknown> }>> = {
+  fr: () => import('./locales/fr/translation.json'),
   ar: () => import('./locales/ar/translation.json'),
   en: () => import('./locales/en/translation.json'),
   'tz-ltn': () => import('./locales/tz-ltn/translation.json'),
@@ -62,9 +64,9 @@ const getInitialLanguage = (): string => {
 i18n
   .use(initReactI18next)
   .init({
-    resources: {
-      fr: { translation: frTranslation },
-    },
+    // Traductions ajoutées à la demande (loadLanguage), avant le premier affichage
+    resources: {},
+    partialBundledLanguages: true,
 
     lng: getInitialLanguage(),
     fallbackLng: 'fr',
@@ -107,8 +109,8 @@ i18n.changeLanguage = async (lng: string | undefined, callback?: any) => {
   // Sauvegarder la version normalisée
   localStorage.setItem('i18nextLng', normalized);
 
-  // Mettre à jour le DOM
-  document.documentElement.lang = normalized;
+  // Mettre à jour le DOM (code de langue valide : ber-Latn / ber-Tfng pour le tamazight)
+  document.documentElement.lang = toHtmlLang(normalized);
   document.documentElement.dir = normalized === 'ar' ? 'rtl' : 'ltr';
 
   // ⚡ AJOUT : Sync avec backend (optionnel - stocke en cookie)
@@ -149,18 +151,21 @@ export const getAvailableLanguages = () => [
 // Initialisation au démarrage
 const initialize = async () => {
   const currentLang = getCurrentLanguage();
-  document.documentElement.lang = currentLang;
+  document.documentElement.lang = toHtmlLang(currentLang);
   document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
 
-  // Si la langue initiale n'est pas FR, charger ses traductions dynamiquement
+  // Charger la langue du visiteur avant le premier affichage (pas de bascule visible)
+  await loadLanguage(currentLang);
+  await originalChangeLanguage(currentLang);
+
+  // Français = langue de secours (fallbackLng) : chargé ensuite, sans bloquer l'affichage
   if (currentLang !== 'fr') {
-    await loadLanguage(currentLang);
-    await originalChangeLanguage(currentLang);
+    loadLanguage('fr').catch(() => undefined);
   }
 };
 
-// Exécuter l'initialisation
-initialize();
+/** Résolue quand la langue du visiteur est prête : main.tsx attend avant d'afficher l'application */
+export const i18nReady: Promise<void> = initialize().catch(() => undefined);
 
 // Exposer globalement pour le debug (dev seulement)
 if (import.meta.env.DEV) {

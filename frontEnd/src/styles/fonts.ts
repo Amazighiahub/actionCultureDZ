@@ -4,12 +4,10 @@
  * Les fichiers arabes / tifinagh ne sont téléchargés que si ces caractères
  * sont affichés (unicode-range).
  */
-import '@fontsource/inter/300.css';
 import '@fontsource/inter/400.css';
 import '@fontsource/inter/500.css';
 import '@fontsource/inter/600.css';
 import '@fontsource/inter/700.css';
-import '@fontsource/playfair-display/500.css';
 import '@fontsource/playfair-display/600.css';
 import '@fontsource/playfair-display/700.css';
 import '@fontsource/noto-sans-arabic/400.css';

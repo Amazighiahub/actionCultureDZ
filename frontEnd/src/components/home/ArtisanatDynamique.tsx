@@ -1,7 +1,8 @@
 /**
  * ArtisanatDynamique - Section artisanat avec lazy loading des images
  */
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -37,42 +38,34 @@ function extractDataFromResponse<T>(responseData: any): T[] {
 }
 
 const ArtisanatDynamique: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { formatNumber, formatPrice } = useLocalizedNumber();
   const { rtlClasses } = useRTL();
-  const [artisanats, setArtisanats] = useState<Artisanat[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    loadArtisanats();
-  }, []);
-
-  const loadArtisanats = async () => {
-    try {
-      setLoading(true);
-      setError(null);
+  // React Query : données gardées en cache (5 min) quand on revient sur l'accueil
+  const { data: artisanats = [], isLoading: loading, error: queryError, refetch } = useQuery({
+    queryKey: ['home', 'artisanat', 6, i18n.language],
+    queryFn: async (): Promise<Artisanat[]> => {
       const response = await artisanatService.getAll({ limit: 6 });
-      
       if (response.success && response.data) {
-        const artisanats = extractDataFromResponse<Artisanat>(response.data);
-        setArtisanats(artisanats);
-      } else {
-        throw new Error(response.error || t('errors.loadingError'));
+        return extractDataFromResponse<Artisanat>(response.data);
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('errors.generic.message'));
-      setArtisanats([]);
-      toast({
-        title: t('errors.generic.title'),
-        description: t('errors.loadingCraftsError'),
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+      throw new Error(response.error || t('errors.loadingError'));
+    },
+  });
+  const error = queryError ? (queryError instanceof Error ? queryError.message : t('errors.generic.message')) : null;
+  const loadArtisanats = () => { void refetch(); };
+
+  // Une notification par échec (après les nouvelles tentatives), pas une par tentative
+  useEffect(() => {
+    if (!queryError) return;
+    toast({
+      title: t('errors.generic.title'),
+      description: t('errors.loadingCraftsError'),
+      variant: "destructive",
+    });
+  }, [queryError, toast, t]);
 
   if (error) {
     return <ErrorMessage message={error} onRetry={loadArtisanats} />;
@@ -115,7 +108,7 @@ const ArtisanatDynamique: React.FC = () => {
               <div className="relative h-48 overflow-hidden">
                 {artisanat.medias && artisanat.medias[0] ? (
                   <img
-                    src={getAssetUrl(artisanat.medias[0].url)}
+                    src={getAssetUrl(artisanat.medias[0].url, { width: 640 })}
                     alt={artisanat.nom || 'Artisanat algérien traditionnel'}
                     loading="lazy"
                     decoding="async"
@@ -136,7 +129,7 @@ const ArtisanatDynamique: React.FC = () => {
                   </div>
                 )}
 </div>
-              
+
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg">
                   <Link to={`/artisanat/${artisanat.id}`} className={STRETCHED_LINK_CLASS}>
@@ -147,9 +140,9 @@ const ArtisanatDynamique: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <span className="text-lg font-bold text-primary">
                       {artisanat.prix_min !== undefined && artisanat.prix_max !== undefined && artisanat.prix_max !== artisanat.prix_min ? (
-                        t('sections.crafts.price.range', { 
-                          min: formatPrice(artisanat.prix_min), 
-                          max: formatPrice(artisanat.prix_max) 
+                        t('sections.crafts.price.range', {
+                          min: formatPrice(artisanat.prix_min),
+                          max: formatPrice(artisanat.prix_max)
                         })
                       ) : artisanat.prix_min !== undefined ? (
                         t('sections.crafts.price.from', { min: formatPrice(artisanat.prix_min) })
@@ -160,17 +153,17 @@ const ArtisanatDynamique: React.FC = () => {
                   </div>
                 )}
               </CardHeader>
-              
+
               <CardContent className="space-y-4">
                 <p className="text-sm text-muted-foreground line-clamp-2">
                   {artisanat.description || t('common.noDescription')}
                 </p>
-                
+
                 <div className="flex items-center justify-between text-sm">
                   {artisanat.en_stock !== undefined && !artisanat.sur_commande && (
                     <span className={`text-muted-foreground ${artisanat.en_stock > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {artisanat.en_stock > 0 ? 
-                        t('sections.crafts.stock.inStock', { count: artisanat.en_stock }) : 
+                      {artisanat.en_stock > 0 ?
+                        t('sections.crafts.stock.inStock', { count: artisanat.en_stock }) :
                         t('sections.crafts.stock.outOfStock')}
                     </span>
                   )}
@@ -181,7 +174,7 @@ const ArtisanatDynamique: React.FC = () => {
                     </div>
                   )}
                 </div>
-                
+
                 <Button asChild size="sm" className="w-full group">
                   <Link
                     to={`/artisanat/${artisanat.id}`}

@@ -4,6 +4,7 @@
  */
 
 const express = require('express');
+const { publicHttpCache } = require('../middlewares/cacheMiddleware');
 const { secureDiskUpload } = require('../middlewares/uploadSecurity');
 const { MEDIA_MIMES, MAX_MEDIA_SIZE } = require('../constants/uploadMimes');
 const { param, body } = require('express-validator');
@@ -17,10 +18,7 @@ const initOeuvreRoutes = (models, authMiddleware) => {
   const { authenticate, optionalAuth, requireRole, requireVerifiedEmail } = authMiddleware;
 
   // Cache HTTP pour les listes publiques (données changent toutes les ~3 min)
-  const cachePublic = (req, res, next) => {
-    res.set('Cache-Control', 'public, max-age=180, stale-while-revalidate=30');
-    next();
-  };
+  const cachePublic = publicHttpCache(180);
 
   // ============================================================================
   // ROUTES PUBLIQUES

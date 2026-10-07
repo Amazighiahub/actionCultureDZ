@@ -105,6 +105,7 @@ const OeuvreCard: React.FC<OeuvreCardProps> = React.memo(({ oeuvre }) => {
       <div className="relative aspect-[4/3] overflow-hidden">
         <LazyImage
           src={oeuvre.image_principale || oeuvre.image_url || '/images/placeholder-oeuvre.svg'}
+          maxWidth={640}
           alt={oeuvre.titre}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           fallback="/images/placeholder-oeuvre.svg"

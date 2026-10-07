@@ -4,6 +4,7 @@
  */
 
 const express = require('express');
+const { publicHttpCache } = require('../middlewares/cacheMiddleware');
 const { secureDiskUpload } = require('../middlewares/uploadSecurity');
 const { MEDIA_MIMES, MAX_MEDIA_SIZE } = require('../constants/uploadMimes');
 const { param, body } = require('express-validator');
@@ -20,9 +21,12 @@ const initArtisanatRoutes = (models, authMiddleware) => {
   // ROUTES PUBLIQUES
   // ============================================================================
 
-  router.get('/', asyncHandler((req, res) => artisanatController.list(req, res)));
-  router.get('/search', asyncHandler((req, res) => artisanatController.search(req, res)));
-  router.get('/statistics', asyncHandler((req, res) => artisanatController.getStatistics(req, res)));
+  // Cache HTTP des listes publiques (~3 min)
+  const cachePublic = publicHttpCache(180);
+
+  router.get('/', cachePublic, asyncHandler((req, res) => artisanatController.list(req, res)));
+  router.get('/search', cachePublic, asyncHandler((req, res) => artisanatController.search(req, res)));
+  router.get('/statistics', cachePublic, asyncHandler((req, res) => artisanatController.getStatistics(req, res)));
   router.get('/region/:wilayaId/artisans', asyncHandler((req, res) => artisanatController.getArtisansByRegion(req, res)));
 
   // ============================================================================

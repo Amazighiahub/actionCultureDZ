@@ -1,7 +1,8 @@
 /**
  * OeuvresDynamique - Section œuvres avec lazy loading des images
  */
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,33 +25,19 @@ const OeuvresDynamique: React.FC = () => {
   const { t, i18n } = useTranslation();
   const { rtlClasses } = useRTL();
   const lang = (i18n.language || 'fr') as SupportedLanguage;
-  const [oeuvres, setOeuvres] = useState<Oeuvre[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    loadOeuvres();
-  }, []);
-
-  const loadOeuvres = async () => {
-    try {
-      setLoading(true);
-      setError(null);
+  // React Query : données gardées en cache (5 min) quand on revient sur l'accueil
+  const { data: oeuvres = [], isLoading: loading, error: queryError, refetch } = useQuery({
+    queryKey: ['home', 'oeuvres', 'recent', i18n.language],
+    queryFn: async (): Promise<Oeuvre[]> => {
       const response = await oeuvreService.getRecentOeuvres();
-      
       if (response.success && response.data) {
-        const oeuvresData = Array.isArray(response.data) ? response.data : [];
-        setOeuvres(oeuvresData as Oeuvre[]);
-      } else {
-        throw new Error(response.error || t('errors.loadingError'));
+        return (Array.isArray(response.data) ? response.data : []) as Oeuvre[];
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('errors.generic.message'));
-      setOeuvres([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+      throw new Error(response.error || t('errors.loadingError'));
+    },
+  });
+  const error = queryError ? (queryError instanceof Error ? queryError.message : t('errors.generic.message')) : null;
+  const loadOeuvres = () => { void refetch(); };
 
   if (error) {
     return <ErrorMessage message={error} onRetry={loadOeuvres} />;
@@ -94,7 +81,7 @@ const OeuvresDynamique: React.FC = () => {
               <div className="relative h-48 overflow-hidden">
                 {oeuvre.Media && oeuvre.Media[0] ? (
                   <img
-                    src={getAssetUrl(oeuvre.Media[0].url)}
+                    src={getAssetUrl(oeuvre.Media[0].url, { width: 640 })}
                     alt={getTranslation(oeuvre.titre, lang) || 'Oeuvre culturelle'}
                     loading="lazy"
                     decoding="async"
@@ -117,14 +104,14 @@ const OeuvresDynamique: React.FC = () => {
                 {/* Hover overlay (décoratif) */}
                 <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" aria-hidden="true" />
               </div>
-              
+
               <CardHeader className="pb-3">
                 <CardTitle className="line-clamp-1 text-lg">
                   <Link to={`/oeuvres/${oeuvre.id_oeuvre}`} className={STRETCHED_LINK_CLASS}>
                     {getTranslation(oeuvre.titre, lang)}
                   </Link>
                 </CardTitle>
-                
+
                 <div className="flex items-center justify-between">
                   {oeuvre.Saiseur && (
                     <p className="text-sm text-muted-foreground">
@@ -133,12 +120,12 @@ const OeuvresDynamique: React.FC = () => {
                   )}
                 </div>
               </CardHeader>
-              
+
               <CardContent className="space-y-4">
                 <p className="text-sm text-muted-foreground line-clamp-2">
                   {(typeof oeuvre.description === 'object' ? getTranslation(oeuvre.description, lang) : oeuvre.description) || t('common.noDescription')}
                 </p>
-                
+
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                   {oeuvre.annee_creation && (
                     <span>{t('sections.works.createdIn', { year: oeuvre.annee_creation })}</span>
@@ -149,7 +136,7 @@ const OeuvresDynamique: React.FC = () => {
                     </Badge>
                   )}
                 </div>
-                
+
                 <Button asChild size="sm" className="w-full group">
                   <Link
                     to={`/oeuvres/${oeuvre.id_oeuvre}`}

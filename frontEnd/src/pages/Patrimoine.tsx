@@ -5,6 +5,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { optimizeImageUrl } from '@/helpers/assetUrl';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -316,7 +317,7 @@ const Patrimoine = () => {
                 <Card key={site.id_lieu} className="overflow-hidden hover-lift group">
                   <div className="aspect-video relative overflow-hidden">
                     <img
-                      src={getMainImage(site)}
+                      src={optimizeImageUrl(getMainImage(site), 640)}
                       alt={translate(site.nom, lang)}
                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                       loading="lazy"

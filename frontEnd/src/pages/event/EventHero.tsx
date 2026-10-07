@@ -33,7 +33,7 @@ const EventHero: React.FC<EventHeroProps> = ({
   const { td, safe } = useTranslateData();
 
   // Calculer le pourcentage de remplissage
-  const capacityPercentage = event.capacite_max 
+  const capacityPercentage = event.capacite_max
     ? Math.round((event.nombre_inscrits || 0) / event.capacite_max * 100)
     : 0;
 
@@ -176,6 +176,8 @@ const EventHero: React.FC<EventHeroProps> = ({
           alt={td(event.nom_evenement)}
           className="w-full h-full object-cover"
           fallback="/images/placeholder-event.svg"
+          priority
+          maxWidth={1600}
         />
 
         {/* Overlay gradient */}

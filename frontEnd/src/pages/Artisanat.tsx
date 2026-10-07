@@ -102,6 +102,7 @@ const ArtisanatCard: React.FC<ArtisanatCardProps> = React.memo(({ artisanat }) =
       <div className="relative aspect-square overflow-hidden">
         <LazyImage
           src={imageUrl}
+          maxWidth={640}
           alt={titre}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           fallback="/images/placeholder-artisanat.svg"

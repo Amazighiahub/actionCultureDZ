@@ -6,6 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { ChevronRight, MapPin, Calendar, Palette, Users, Sparkles, Pause, Play } from 'lucide-react';
 import { useRTL } from '@/hooks/useRTL';
@@ -33,8 +34,6 @@ const HeroSection: React.FC = () => {
   // Images déjà montées : une image n'est téléchargée qu'au moment d'être affichée
   const [mountedSlides, setMountedSlides] = useState<Set<number>>(() => new Set([0]));
   const [paused, setPaused] = useState(false);
-  const [publicStats, setPublicStats] = useState<PublicStats | null>(null);
-  const [statsLoading, setStatsLoading] = useState(true);
 
   // Réglage système « réduire les animations » : pas de défilement automatique
   const [reduceMotion] = useState(
@@ -70,25 +69,15 @@ const HeroSection: React.FC = () => {
     }
   ];
 
-  // Charger les statistiques publiques depuis l'API
-  useEffect(() => {
-    const fetchPublicStats = async () => {
-      try {
-        setStatsLoading(true);
-        const response = await httpClient.get<PublicStats>('/stats/public');
-        if (response.success && response.data) {
-          setPublicStats(response.data);
-        }
-      } catch (error) {
-        console.error('Erreur chargement stats publiques:', error);
-        // Garder les valeurs par défaut en cas d'erreur
-      } finally {
-        setStatsLoading(false);
-      }
-    };
-
-    fetchPublicStats();
-  }, []);
+  // Statistiques publiques (React Query : en cache, pas rechargées à chaque retour sur l'accueil).
+  // En cas d'erreur, les valeurs par défaut ("...") restent affichées.
+  const { data: publicStats = null, isLoading: statsLoading } = useQuery({
+    queryKey: ['home', 'stats', 'public'],
+    queryFn: async (): Promise<PublicStats | null> => {
+      const response = await httpClient.get<PublicStats>('/stats/public');
+      return response.success && response.data ? response.data : null;
+    },
+  });
 
   useEffect(() => {
     setImagesLoaded(new Array(heroImages.length).fill(false));

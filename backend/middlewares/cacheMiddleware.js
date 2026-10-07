@@ -242,11 +242,24 @@ function createInvalidateCacheMiddleware(patterns = []) {
   };
 }
 
+/**
+ * Cache HTTP (navigateur) pour les listes publiques : évite de recharger les mêmes
+ * données à chaque visite. Les réponses restent par utilisateur (pas de cache partagé).
+ * @param {number} maxAgeSeconds durée pendant laquelle la réponse est réutilisée
+ */
+function publicHttpCache(maxAgeSeconds) {
+  return (req, res, next) => {
+    res.set('Cache-Control', `public, max-age=${maxAgeSeconds}, stale-while-revalidate=30`);
+    next();
+  };
+}
+
 // ============================================================
 // Exports
 // ============================================================
 const cacheMiddleware = {
   conditionalCache: createCacheMiddleware,
+  publicHttpCache,
   userCache: createUserCacheMiddleware,
   invalidateCache: createInvalidateCacheMiddleware,
 
