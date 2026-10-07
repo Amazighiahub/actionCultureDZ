@@ -491,6 +491,10 @@ class App {
     const initSitemapRoutes = require('./routes/sitemapRoutes');
     this.app.use('/sitemap.xml', initSitemapRoutes(this.models));
 
+    // Aperçus des pages de détail pour les réseaux sociaux (nginx y envoie leurs robots)
+    const initOgRoutes = require('./routes/ogRoutes');
+    this.app.use('/api/og', initOgRoutes(this.models));
+
     // ⚡ Route pour obtenir les langues supportées (i18n)
     this.app.get('/api/languages', (req, res) => {
       res.json({
