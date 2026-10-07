@@ -46,12 +46,18 @@ const STATUS_OPTIONS = ['tous', 'actif', 'en_attente_validation', 'inactif', 'su
 const VALIDATION_OPTIONS = ['tous', 'en_attente', 'valide', 'rejete'];
 const TYPE_OPTIONS = ['tous', 'visiteur', 'artiste', 'organisateur', 'guide', 'artisan'];
 
+// Contrôle d'accès séparé du contenu : un return avant les hooks du contenu faisait
+// varier leur nombre d'un rendu à l'autre (règle des hooks React, risque de plantage)
 const AdminUsersTab: React.FC = () => {
+  const { isAdmin } = useAuth();
+  if (!isAdmin) return <Navigate to="/" replace />;
+  return <AdminUsersTabContent />;
+};
+
+const AdminUsersTabContent: React.FC = () => {
   const { t } = useTranslation();
   const { toast } = useToast();
   const { formatDate } = useFormatDate();
-  const { isAdmin } = useAuth();
-  if (!isAdmin) return <Navigate to="/" replace />;
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('tous');
   const [typeFilter, setTypeFilter] = useState('tous');

@@ -331,7 +331,7 @@ const PatrimoineDetail = () => {
 
         {/* Image principale et galerie */}
         <div className="relative mb-8 rounded-xl overflow-hidden">
-          <img
+          <img fetchPriority="high"
             src={getMainImage()}
             alt={translate(site.nom, lang)}
             className="w-full h-[400px] object-cover"
@@ -408,7 +408,7 @@ const PatrimoineDetail = () => {
                           <Play className="h-8 w-8" aria-hidden="true" />
                         </div>
                       ) : (
-                        <img
+                        <img loading="lazy" decoding="async"
                           src={getAssetUrl(media.url)}
                           alt={getMediaLabel(media, idx)}
                           className="w-full h-full object-cover hover:scale-105 transition-transform"
@@ -593,12 +593,10 @@ const PatrimoineDetail = () => {
                                     <CardContent>
                                       <p className="text-sm text-muted-foreground">{translate(programme.description, lang) || t('common.noDescription', 'Aucune description')}</p>
                                       {programme.Evenement && (
-                                        <Link to={`/evenements/${programme.Evenement.id_evenement}`}>
-                                          <Button variant="link" className="p-0 mt-2">
+                                        <Button variant="link" className="p-0 mt-2" asChild><Link to={`/evenements/${programme.Evenement.id_evenement}`}>
                                             {t('patrimoine.viewEvent', "Voir l'événement")}
                                             <ChevronRight className="h-4 w-4 ml-1" />
-                                          </Button>
-                                        </Link>
+                                          </Link></Button>
                                       )}
                                     </CardContent>
                                   </Card>
@@ -649,7 +647,7 @@ const PatrimoineDetail = () => {
                                   <div key={idx} className="aspect-video cursor-pointer overflow-hidden rounded-lg" onClick={() => setSelectedImage(media.url)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedImage(media.url); } }} aria-label={media.type === 'video' ? getVideoLabel(media, idx) : undefined}>
                                     {media.type === 'video'
                                       ? <div className="w-full h-full bg-muted flex items-center justify-center"><Play className="h-8 w-8" aria-hidden="true" /></div>
-                                      : <img src={getAssetUrl(media.url)} alt={getMediaLabel(media, idx)} className="w-full h-full object-cover hover:scale-105 transition-transform" />}
+                                      : <img loading="lazy" decoding="async" src={getAssetUrl(media.url)} alt={getMediaLabel(media, idx)} className="w-full h-full object-cover hover:scale-105 transition-transform" />}
                                   </div>
                                 ))}
                               </div>

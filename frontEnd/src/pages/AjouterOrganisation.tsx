@@ -148,12 +148,10 @@ const AjouterOrganisation = () => {
       <main className="container py-12">
         <div className="max-w-2xl mx-auto">
           <div className={`flex items-center gap-4 mb-8 ${rtlClasses.flexRow}`}>
-            <Link to="/ajouter-evenement">
-              <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" asChild><Link to="/ajouter-evenement">
                 <ArrowLeft className={`h-4 w-4 ${rtlClasses.marginEnd(2)}`} />
                 {t('common.back', 'Retour')}
-              </Button>
-            </Link>
+              </Link></Button>
             <div>
               <h1 className="text-3xl font-bold tracking-tight font-serif text-gradient">
                 {t('organisations.create.title', 'Créer une organisation')}

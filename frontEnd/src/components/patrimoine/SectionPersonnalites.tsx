@@ -252,7 +252,7 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
                   return (
                     <div key={lien.id_lieu_intervenant} className="flex items-start gap-3 p-3 rounded-lg border bg-card">
                       {inv?.photo_url ? (
-                        <img src={inv.photo_url} alt={nomComplet} className="h-10 w-10 rounded-full object-cover flex-shrink-0" />
+                        <img loading="lazy" decoding="async" src={inv.photo_url} alt={nomComplet} className="h-10 w-10 rounded-full object-cover flex-shrink-0" />
                       ) : (
                         <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
                           <User className="h-5 w-5 text-muted-foreground" />
@@ -366,7 +366,7 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
                           className="w-full text-left px-3 py-2 hover:bg-muted transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {inv.photo_url ? (
-                            <img src={inv.photo_url} alt={nom} className="h-8 w-8 rounded-full object-cover" />
+                            <img loading="lazy" decoding="async" src={inv.photo_url} alt={nom} className="h-8 w-8 rounded-full object-cover" />
                           ) : (
                             <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
                               <User className="h-4 w-4 text-muted-foreground" />
@@ -394,7 +394,7 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
               <>
                 <div className="flex items-center gap-3 p-3 rounded-lg bg-muted">
                   {selected.photo_url ? (
-                    <img src={selected.photo_url} alt="" className="h-10 w-10 rounded-full object-cover" />
+                    <img loading="lazy" decoding="async" src={selected.photo_url} alt="" className="h-10 w-10 rounded-full object-cover" />
                   ) : (
                     <div className="h-10 w-10 rounded-full bg-background flex items-center justify-center">
                       <User className="h-5 w-5 text-muted-foreground" />

@@ -326,7 +326,7 @@ const ArtisanatDetail: React.FC = () => {
             <div className="space-y-4">
               <div className="relative aspect-square bg-muted rounded-xl overflow-hidden">
                 {currentMedia ? (
-                  <img
+                  <img fetchPriority="high"
                     src={getAssetUrl(currentMedia.url)}
                     alt={td(Oeuvre?.titre || '')}
                     className="w-full h-full object-cover"
@@ -395,7 +395,7 @@ const ArtisanatDetail: React.FC = () => {
                         index === currentImageIndex ? 'border-primary' : 'border-transparent'
                       )}
                     >
-                      <img
+                      <img loading="lazy" decoding="async"
                         src={getAssetUrl(media.thumbnail_url || media.url)}
                         alt={td(Oeuvre?.titre || '') + ` — photo ${index + 1}`}
                         className="w-full h-full object-cover"
@@ -644,7 +644,7 @@ const ArtisanatDetail: React.FC = () => {
                   >
                     <div className="aspect-square bg-muted rounded-lg overflow-hidden">
                       {oeuvre.Oeuvre?.Media?.[0] ? (
-                        <img
+                        <img loading="lazy" decoding="async"
                           src={getAssetUrl(oeuvre.Oeuvre.Media[0].url)}
                           alt={td(oeuvre.Oeuvre.titre)}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform"
@@ -685,7 +685,7 @@ const ArtisanatDetail: React.FC = () => {
                   >
                     <div className="aspect-square bg-muted rounded-lg overflow-hidden">
                       {item.Oeuvre?.Media?.[0] ? (
-                        <img
+                        <img loading="lazy" decoding="async"
                           src={item.Oeuvre?.Media?.[0]?.url || ''}
                           alt={td(item.Oeuvre?.titre || '')}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform"

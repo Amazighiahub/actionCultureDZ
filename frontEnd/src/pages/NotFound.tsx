@@ -59,12 +59,10 @@ const NotFound = () => {
                 {t("common.back", "Retour")}
               </Button>
               
-              <Link to="/">
-                <Button className="w-full sm:w-auto min-h-[44px]">
+              <Button className="w-full sm:w-auto min-h-[44px]" asChild><Link to="/">
                   <Home className="h-4 w-4 mr-2" />
                   {t("notfound.return_home", "Retour à l'accueil")}
-                </Button>
-              </Link>
+                </Link></Button>
             </div>
           </CardContent>
         </Card>
