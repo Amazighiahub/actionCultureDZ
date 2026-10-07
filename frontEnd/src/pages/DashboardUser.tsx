@@ -294,9 +294,7 @@ const DashboardUser = () => {
                           </p>
                         </div>
                         <div className="flex gap-2">
-                          <Link to={`/oeuvres/${oeuvre.id}`}>
-                            <Button variant="outline" size="sm">{t("dashboarduser.voir_2")}</Button>
-                          </Link>
+                          <Button variant="outline" size="sm" asChild><Link to={`/oeuvres/${oeuvre.id}`}>{t("dashboarduser.voir_2")}</Link></Button>
                           <Button
                             variant="ghost"
                             size="sm"
@@ -314,9 +312,7 @@ const DashboardUser = () => {
                 <Card className="p-8 text-center">
                   <Palette className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                   <p className="text-muted-foreground">{t("dashboarduser.aucune_uvre_favorite")}</p>
-                  <Link to="/oeuvres">
-                    <Button variant="outline" className="mt-4">{t("dashboarduser.explorer_les_uvres")}</Button>
-                  </Link>
+                  <Button variant="outline" className="mt-4" asChild><Link to="/oeuvres">{t("dashboarduser.explorer_les_uvres")}</Link></Button>
                 </Card>
               )}
             </div>
@@ -346,9 +342,7 @@ const DashboardUser = () => {
                           </p>
                         </div>
                         <div className="flex gap-2">
-                          <Link to={`/evenements/${event.id}`}>
-                            <Button variant="outline" size="sm">{t("dashboarduser.voir_2")}</Button>
-                          </Link>
+                          <Button variant="outline" size="sm" asChild><Link to={`/evenements/${event.id}`}>{t("dashboarduser.voir_2")}</Link></Button>
                           <Button
                             variant="ghost"
                             size="sm"
@@ -366,9 +360,7 @@ const DashboardUser = () => {
                 <Card className="p-8 text-center">
                   <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                   <p className="text-muted-foreground">{t("dashboarduser.aucun_vnement_suivi")}</p>
-                  <Link to="/evenements">
-                    <Button variant="outline" className="mt-4">{t("dashboarduser.dcouvrir_les_vnements")}</Button>
-                  </Link>
+                  <Button variant="outline" className="mt-4" asChild><Link to="/evenements">{t("dashboarduser.dcouvrir_les_vnements")}</Link></Button>
                 </Card>
               )}
             </div>
@@ -397,9 +389,7 @@ const DashboardUser = () => {
                           </p>
                         </div>
                         <div className="flex gap-2">
-                          <Link to={`/patrimoine/${site.id}`}>
-                            <Button variant="outline" size="sm">{t("dashboarduser.voir_2")}</Button>
-                          </Link>
+                          <Button variant="outline" size="sm" asChild><Link to={`/patrimoine/${site.id}`}>{t("dashboarduser.voir_2")}</Link></Button>
                           <Button
                             variant="ghost"
                             size="sm"
@@ -417,9 +407,7 @@ const DashboardUser = () => {
                 <Card className="p-8 text-center">
                   <MapPin className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                   <p className="text-muted-foreground">{t("dashboarduser.aucun_site_favori")}</p>
-                  <Link to="/patrimoine">
-                    <Button variant="outline" className="mt-4">{t("dashboarduser.explorer_patrimoine")}</Button>
-                  </Link>
+                  <Button variant="outline" className="mt-4" asChild><Link to="/patrimoine">{t("dashboarduser.explorer_patrimoine")}</Link></Button>
                 </Card>
               )}
             </div>
@@ -609,7 +597,7 @@ const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ u
         <div className="relative">
           <div className="w-24 h-24 rounded-full overflow-hidden bg-muted border-2 border-border">
             {user?.photo_url ? (
-              <img src={user.photo_url} alt="Photo de profil" className="w-full h-full object-cover" />
+              <img loading="lazy" decoding="async" src={user.photo_url} alt="Photo de profil" className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-3xl font-bold text-muted-foreground">
                 {displayName(user?.prenom)?.[0]?.toUpperCase() || '?'}

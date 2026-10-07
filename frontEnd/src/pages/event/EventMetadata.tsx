@@ -146,7 +146,7 @@ const EventMetadata: React.FC<EventMetadataProps> = ({ event }) => {
               {organisations.map((org: any) => (
                 <Badge key={org.id_organisation} variant="outline" className="gap-1.5 py-1.5">
                   {org.logo_url && (
-                    <img src={org.logo_url} alt="" className="w-4 h-4 rounded-full" />
+                    <img loading="lazy" decoding="async" src={org.logo_url} alt="" className="w-4 h-4 rounded-full" />
                   )}
                   {td(org.nom)}
                 </Badge>

@@ -152,9 +152,10 @@ const CartePatrimoine: React.FC = () => {
     const loadFromDb = async () => {
       try {
         const lang = i18n.language || 'fr';
-        const response = await patrimoineService.list({ limit: 50 });
+        // (appelait patrimoineService.list, qui n'existe pas : la carte restait sur les sites d'exemple)
+        const response = await patrimoineService.getCarte();
         if (response.success && response.data) {
-          const items = (response.data as any).sites || (response.data as any).lieux || [];
+          const items: any[] = Array.isArray(response.data) ? response.data : [];
           const mapped: Monument[] = items
             .filter((s: any) => s.latitude != null && s.longitude != null)
             .map((s: any) => ({
@@ -164,7 +165,7 @@ const CartePatrimoine: React.FC = () => {
               region: s.Commune?.nom || s.wilaya || '',
               type: s.typePatrimoine || 'monument',
               descriptionKey: '',
-              image: s.image_url || s.medias?.[0]?.url || '',
+              image: s.image_url || s.medias?.[0]?.url || '/images/placeholder-patrimoine.svg',
               visiteurs: '',
               duree: '',
               heritage: s.classement || '',
@@ -219,6 +220,9 @@ const CartePatrimoine: React.FC = () => {
           <Marker
             key={monument.id}
             position={monument.position}
+            // Nom du marqueur pour les lecteurs d'écran (sinon « Marker »)
+            title={monument.nom}
+            alt={monument.nom}
             eventHandlers={{ click: () => setMonumentSelectionne(monument) }}
           >
             <Popup>

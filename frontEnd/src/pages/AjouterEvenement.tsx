@@ -540,12 +540,10 @@ const AjouterEvenement = () => {
         <div className="max-w-4xl mx-auto">
           {/* En-tête */}
           <div className={`flex items-center gap-4 mb-8 ${rtlClasses.flexRow}`}>
-            <Link to="/dashboard-pro">
-              <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" asChild><Link to="/dashboard-pro">
                 <ArrowLeft className={`h-4 w-4 ${rtlClasses.marginEnd(2)}`} />
                 {t('common.backToDashboard')}
-              </Button>
-            </Link>
+              </Link></Button>
             <div>
               <h1 className="text-4xl font-bold tracking-tight font-serif text-gradient">
                 {t('events.create.title')}

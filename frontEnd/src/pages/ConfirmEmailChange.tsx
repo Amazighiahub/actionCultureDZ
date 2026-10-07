@@ -84,9 +84,7 @@ const ConfirmEmailChange = () => {
                     </Alert>
                   )}
                   <div className="text-center">
-                    <Link to="/auth">
-                      <Button>{t('emailChange.reconnect')}</Button>
-                    </Link>
+                    <Button  asChild><Link to="/auth">{t('emailChange.reconnect')}</Link></Button>
                   </div>
                 </CardContent>
               </>

@@ -539,6 +539,8 @@ categoriesForType: (typeId: number) => `/metadata/types-oeuvres/${typeId}/catego
     // Sites — aligné avec backend patrimoineRoutes.js
     sites: '/patrimoine',
     sitesPopulaires: '/patrimoine/popular',
+    // Sites géolocalisés pour la carte (id, nom, coordonnées, type)
+    carte: '/patrimoine/map',
     siteDetail: (id: number) => `/patrimoine/${id}`,
     recherche: '/patrimoine/search',
     types: '/patrimoine/types',

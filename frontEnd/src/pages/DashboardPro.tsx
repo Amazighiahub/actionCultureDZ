@@ -613,12 +613,10 @@ const DashboardPro = () => {
               <TabsContent value="oeuvres" className="p-6 m-0">
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-lg font-semibold">{t("dashboardpro.mes_uvres")} ({filterBySearch(mesOeuvres?.items || []).length})</h2>
-                  <Link to="/ajouter-oeuvre">
-                    <Button size="sm">
+                  <Button size="sm" asChild><Link to="/ajouter-oeuvre">
                       <Plus className="h-4 w-4 mr-2" />{t("dashboardpro.nouvelle_uvre")}
 
-                    </Button>
-                  </Link>
+                    </Link></Button>
                 </div>
 
                 <div>
@@ -651,12 +649,10 @@ const DashboardPro = () => {
                   <div className="text-center py-12">
                       <BookOpen className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                       <p className="text-muted-foreground">{t("dashboardpro.aucune_uvre_cre")}</p>
-                      <Link to="/ajouter-oeuvre">
-                        <Button className="mt-4" size="sm">
+                      <Button className="mt-4" size="sm" asChild><Link to="/ajouter-oeuvre">
                           <Plus className="h-4 w-4 mr-2" />{t("dashboardpro.crer_premire_uvre")}
 
-                      </Button>
-                      </Link>
+                      </Link></Button>
                     </div>
                   }
                 </div>
@@ -666,12 +662,10 @@ const DashboardPro = () => {
               <TabsContent value="evenements" className="p-6 m-0">
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-lg font-semibold">{t("dashboardpro.mes_vnements")} ({filterBySearch(mesEvenements?.items || []).length})</h2>
-                  <Link to="/ajouter-evenement">
-                    <Button size="sm">
+                  <Button size="sm" asChild><Link to="/ajouter-evenement">
                       <Plus className="h-4 w-4 mr-2" />{t("dashboardpro.nouvel_vnement")}
 
-                    </Button>
-                  </Link>
+                    </Link></Button>
                 </div>
 
                 <div>
@@ -775,12 +769,10 @@ const DashboardPro = () => {
                   <div className="text-center py-12">
                       <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                       <p className="text-muted-foreground">{t("dashboardpro.aucun_vnement")}</p>
-                      <Link to="/ajouter-evenement">
-                        <Button className="mt-4" size="sm">
+                      <Button className="mt-4" size="sm" asChild><Link to="/ajouter-evenement">
                           <Plus className="h-4 w-4 mr-2" />{t("dashboardpro.crer_mon_premier")}
 
-                      </Button>
-                      </Link>
+                      </Link></Button>
                     </div>
                   }
                 </div>
@@ -789,11 +781,9 @@ const DashboardPro = () => {
               <TabsContent value="services" className="p-6 m-0">
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-lg font-semibold">{t("dashboardpro.mes_services")} ({filterBySearch(mesServices?.items || []).length})</h2>
-                  <Link to="/ajouter-service">
-                    <Button size="sm">
+                  <Button size="sm" asChild><Link to="/ajouter-service">
                       <Plus className="h-4 w-4 mr-2" />{t("dashboardpro.nouveau_service")}
-                    </Button>
-                  </Link>
+                    </Link></Button>
                 </div>
 
                 <div>
@@ -826,11 +816,9 @@ const DashboardPro = () => {
                     <div className="text-center py-12">
                       <Briefcase className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                       <p className="text-muted-foreground">{t("dashboardpro.aucun_service")}</p>
-                      <Link to="/ajouter-service">
-                        <Button className="mt-4" size="sm">
+                      <Button className="mt-4" size="sm" asChild><Link to="/ajouter-service">
                           <Plus className="h-4 w-4 mr-2" />{t("dashboardpro.crer_mon_premier_1")}
-                        </Button>
-                      </Link>
+                        </Link></Button>
                     </div>
                   )}
                 </div>
@@ -839,11 +827,9 @@ const DashboardPro = () => {
               <TabsContent value="artisanat" className="p-6 m-0">
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-lg font-semibold">{t("dashboardpro.mes_artisanats", "Mes artisanats")} ({filterBySearch(mesArtisanats?.items || []).length})</h2>
-                  <Link to="/ajouter-artisanat">
-                    <Button size="sm">
+                  <Button size="sm" asChild><Link to="/ajouter-artisanat">
                       <Plus className="h-4 w-4 mr-2" />{t("dashboardpro.nouvel_artisanat", "Nouvel artisanat")}
-                    </Button>
-                  </Link>
+                    </Link></Button>
                 </div>
 
                 <div>
@@ -911,11 +897,9 @@ const DashboardPro = () => {
                   <div className="text-center py-12">
                       <Hammer className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                       <p className="text-muted-foreground">{t("dashboardpro.aucun_artisanat", "Aucun artisanat créé")}</p>
-                      <Link to="/ajouter-artisanat">
-                        <Button className="mt-4" size="sm">
+                      <Button className="mt-4" size="sm" asChild><Link to="/ajouter-artisanat">
                           <Plus className="h-4 w-4 mr-2" />{t("dashboardpro.creer_premier_artisanat", "Créer mon premier artisanat")}
-                      </Button>
-                      </Link>
+                      </Link></Button>
                     </div>
                   }
                 </div>
@@ -924,11 +908,9 @@ const DashboardPro = () => {
               <TabsContent value="patrimoine" className="p-6 m-0">
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-lg font-semibold">{t("dashboardpro.mon_patrimoine")} ({filterBySearch(mesPatrimoines?.items || []).length})</h2>
-                  <Link to="/ajouter-patrimoine">
-                    <Button size="sm">
+                  <Button size="sm" asChild><Link to="/ajouter-patrimoine">
                       <Plus className="h-4 w-4 mr-2" />{t("dashboardpro.nouveau_site")}
-                    </Button>
-                  </Link>
+                    </Link></Button>
                 </div>
 
                 <div>
@@ -961,12 +943,10 @@ const DashboardPro = () => {
                   <div className="text-center py-12">
                       <MapPin className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                       <p className="text-muted-foreground">{t("dashboardpro.aucun_site_patrimoine")}</p>
-                      <Link to="/ajouter-patrimoine">
-                        <Button className="mt-4" size="sm">
+                      <Button className="mt-4" size="sm" asChild><Link to="/ajouter-patrimoine">
                           <Plus className="h-4 w-4 mr-2" />{t("dashboardpro.ajouter_mon_premier")}
 
-                      </Button>
-                      </Link>
+                      </Link></Button>
                     </div>
                   }
                 </div>

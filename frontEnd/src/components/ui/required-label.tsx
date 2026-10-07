@@ -28,7 +28,7 @@ export const RequiredLabel: React.FC<RequiredLabelProps> = ({
     <Label htmlFor={htmlFor} className={cn('text-sm font-medium', className)}>
       {children}
       {required && <span className="text-destructive ml-1">*</span>}
-      {optional && <span className="text-muted-foreground font-normal ml-1">({t('common.optional', 'optionnel')})</span>}
+      {optional && <span className="text-muted-foreground font-normal ml-1">({t('common.optional', 'optionnel').toLocaleLowerCase()})</span>}
     </Label>
   );
 };

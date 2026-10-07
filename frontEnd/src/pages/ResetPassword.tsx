@@ -174,9 +174,7 @@ const ResetPassword = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="text-center">
-                <Link to="/forgot-password">
-                  <Button>{t('auth.resetPassword.requestNewLink')}</Button>
-                </Link>
+                <Button  asChild><Link to="/forgot-password">{t('auth.resetPassword.requestNewLink')}</Link></Button>
               </CardContent>
             </Card>
           </div>
@@ -212,11 +210,9 @@ const ResetPassword = () => {
                 </Alert>
 
                 <div className="text-center">
-                  <Link to="/auth">
-                    <Button>
+                  <Button  asChild><Link to="/auth">
                       {t('auth.resetPassword.goToLogin')}
-                    </Button>
-                  </Link>
+                    </Link></Button>
                 </div>
               </CardContent>
             </Card>

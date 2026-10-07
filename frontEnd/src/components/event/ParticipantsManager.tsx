@@ -676,7 +676,7 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
                           onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedOeuvre(oeuvre); setOeuvreAuteur({ nom: profilData.profil.nom, prenom: profilData.profil.prenom }); setProfilDialogOpen(false); setOeuvreDialogOpen(true); } }}
                         >
                           {oeuvre.image_url ? (
-                            <img src={oeuvre.image_url} alt={td(oeuvre.titre)} className="w-16 h-16 object-cover rounded" />
+                            <img loading="lazy" decoding="async" src={oeuvre.image_url} alt={td(oeuvre.titre)} className="w-16 h-16 object-cover rounded" />
                           ) : (
                             <div className="w-16 h-16 bg-muted rounded flex items-center justify-center">
                               <Icon className="h-8 w-8 text-muted-foreground" />
@@ -723,7 +723,7 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
                           onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedOeuvre(oeuvre); setOeuvreAuteur({ nom: profilData.profil.nom, prenom: profilData.profil.prenom }); setProfilDialogOpen(false); setOeuvreDialogOpen(true); } }}
                         >
                           {oeuvre.image_url ? (
-                            <img src={oeuvre.image_url} alt={td(oeuvre.titre)} className="w-28 h-28 object-cover rounded shadow-sm" />
+                            <img loading="lazy" decoding="async" src={oeuvre.image_url} alt={td(oeuvre.titre)} className="w-28 h-28 object-cover rounded shadow-sm" />
                           ) : (
                             <div className="w-28 h-28 bg-muted rounded flex items-center justify-center shadow-sm">
                               <Palette className="h-8 w-8 text-muted-foreground" />
@@ -783,7 +783,7 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
               {/* Image principale */}
               <div className="relative">
                 {selectedOeuvre.image_url ? (
-                  <img
+                  <img loading="lazy" decoding="async"
                     src={selectedOeuvre.image_url}
                     alt={td(selectedOeuvre.titre)}
                     className="w-full h-64 object-cover rounded-lg"
@@ -900,7 +900,7 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
                   <h4 className="font-semibold mb-2">{t('oeuvre.gallery', 'Galerie')}</h4>
                   <div className="grid grid-cols-3 gap-2">
                     {selectedOeuvre.Medias.map((media) => (
-                      <img
+                      <img loading="lazy" decoding="async"
                         key={media.id_media}
                         src={getAssetUrl(media.url)}
                         alt=""

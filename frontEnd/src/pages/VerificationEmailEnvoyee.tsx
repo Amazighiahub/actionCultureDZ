@@ -39,11 +39,9 @@ const VerificationEmailEnvoyee = () => {
           )}
 
           <div className="pt-4">
-            <Link to="/auth">
-              <Button variant="outline" className="w-full">
+            <Button variant="outline" className="w-full" asChild><Link to="/auth">
                 {t('auth.backToLogin', 'Retour à la connexion')}
-              </Button>
-            </Link>
+              </Link></Button>
           </div>
         </CardContent>
       </Card>

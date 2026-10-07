@@ -139,6 +139,11 @@ class PatrimoineService extends BaseService<SitePatrimoine, CreateSiteData, Upda
     });
   }
 
+  /** Sites géolocalisés pour la carte (id_lieu, nom, latitude, longitude, typePatrimoine) */
+  async getCarte(): Promise<ApiResponse<Array<Pick<SitePatrimoine, 'id_lieu' | 'nom' | 'latitude' | 'longitude'> & { typePatrimoine?: string }>>> {
+    return httpClient.get(API_ENDPOINTS.patrimoine.carte);
+  }
+
   async getSiteDetail(id: number): Promise<ApiResponse<SitePatrimoine>> {
     return httpClient.get<SitePatrimoine>(API_ENDPOINTS.patrimoine.siteDetail(id));
   }

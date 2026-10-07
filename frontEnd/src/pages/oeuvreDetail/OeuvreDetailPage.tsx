@@ -428,7 +428,7 @@ const OeuvreDetailPage: React.FC = () => {
                   {/* Image principale */}
                   <div className="aspect-[4/3] rounded-xl overflow-hidden bg-muted border">
                     {mainImg ? (
-                      <img
+                      <img fetchPriority="high"
                         src={getAssetUrl(mainImg)}
                         alt={getTranslation(oeuvre.titre, lang)}
                         className="w-full h-full object-contain"
@@ -451,7 +451,7 @@ const OeuvreDetailPage: React.FC = () => {
                             setActiveTab('description');
                           }}
                         >
-                          <img
+                          <img loading="lazy" decoding="async"
                             src={getAssetUrl(media.url)}
                             alt={media.titre || `Image ${idx + 1}`}
                             className="w-full h-full object-cover"
@@ -696,7 +696,7 @@ const OeuvreDetailPage: React.FC = () => {
                           <div className="flex items-start space-x-4 p-4 rounded-lg border hover:bg-muted transition-all duration-200">
                             <div className="w-24 h-24 rounded-lg overflow-hidden bg-muted flex-shrink-0">
                               {oeuvreAuteur.Media && oeuvreAuteur.Media.length > 0 ? (
-                                <img
+                                <img loading="lazy" decoding="async"
                                   src={oeuvreAuteur.Media[0]?.url || ''}
                                   alt={getTranslation(oeuvreAuteur.titre, lang)}
                                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
