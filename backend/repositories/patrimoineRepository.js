@@ -239,11 +239,11 @@ class PatrimoineRepository extends BaseRepository {
 
     const where = {
       [Op.or]: [
-        seqWhere(fn('JSON_EXTRACT', col('lieu.nom'), literal("'$.fr'")), { [Op.like]: pattern }),
-        seqWhere(fn('JSON_EXTRACT', col('lieu.nom'), literal("'$.ar'")), { [Op.like]: pattern }),
-        seqWhere(fn('JSON_EXTRACT', col('lieu.nom'), literal("'$.en'")), { [Op.like]: pattern }),
-        seqWhere(fn('JSON_EXTRACT', col('lieu.adresse'), literal("'$.fr'")), { [Op.like]: pattern }),
-        seqWhere(fn('JSON_EXTRACT', col('lieu.adresse'), literal("'$.ar'")), { [Op.like]: pattern })
+        seqWhere(fn('JSON_EXTRACT', col('Lieu.nom'), literal("'$.fr'")), { [Op.like]: pattern }),
+        seqWhere(fn('JSON_EXTRACT', col('Lieu.nom'), literal("'$.ar'")), { [Op.like]: pattern }),
+        seqWhere(fn('JSON_EXTRACT', col('Lieu.nom'), literal("'$.en'")), { [Op.like]: pattern }),
+        seqWhere(fn('JSON_EXTRACT', col('Lieu.adresse'), literal("'$.fr'")), { [Op.like]: pattern }),
+        seqWhere(fn('JSON_EXTRACT', col('Lieu.adresse'), literal("'$.ar'")), { [Op.like]: pattern })
       ]
     };
 
