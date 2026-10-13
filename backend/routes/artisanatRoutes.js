@@ -15,7 +15,7 @@ const asyncHandler = require('../utils/asyncHandler');
 
 const initArtisanatRoutes = (models, authMiddleware) => {
   const router = express.Router();
-  const { authenticate, requireRole, requireVerifiedEmail } = authMiddleware;
+  const { authenticate, optionalAuth, requireRole, requireVerifiedEmail } = authMiddleware;
 
   // ============================================================================
   // ROUTES PUBLIQUES
@@ -45,7 +45,8 @@ const initArtisanatRoutes = (models, authMiddleware) => {
   // ROUTES AVEC :id (après les routes spécifiques)
   // ============================================================================
 
-  router.get('/:id', validateId(), asyncHandler((req, res) => artisanatController.getById(req, res)));
+  // optionalAuth : l'auteur d'un produit non publié peut voir sa propre fiche
+  router.get('/:id', optionalAuth, validateId(), asyncHandler((req, res) => artisanatController.getById(req, res)));
   router.post('/', authenticate, requireVerifiedEmail,
     createContentLimiter,
     validateStringLengths,

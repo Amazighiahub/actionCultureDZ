@@ -15,7 +15,7 @@ const logger = require('../utils/logger');
 
 const initPatrimoineRoutes = (models, authMiddleware) => {
   const router = express.Router();
-  const { authenticate, requireRole, requireValidatedProfessional } = authMiddleware;
+  const { authenticate, optionalAuth, requireRole, requireValidatedProfessional } = authMiddleware;
   // Actions destructives sur un site (partagé) : réservées à la modération
   const requireModeration = requireRole('Administrateur', 'Moderateur');
 
@@ -40,8 +40,9 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
   router.get('/map', cachePublic, patrimoineController.wrap('getMap'));
   router.get('/monuments/:type', patrimoineController.wrap('getByType'));
   router.get('/vestiges/:type', patrimoineController.wrap('getByType'));
-  router.get('/:id/galerie', validateId(), patrimoineController.wrap('getGalerie'));
-  router.get('/:id/carte-visite', validateId(), patrimoineController.wrap('getCarteVisite'));
+  // optionalAuth : le créateur d'un site non publié peut voir sa propre fiche
+  router.get('/:id/galerie', optionalAuth, validateId(), patrimoineController.wrap('getGalerie'));
+  router.get('/:id/carte-visite', optionalAuth, validateId(), patrimoineController.wrap('getCarteVisite'));
   router.get('/:id/qrcode', validateId(), patrimoineController.wrap('getQRCode'));
 
   router.get('/:id/intervenants', validateId(), async (req, res) => {
@@ -62,7 +63,7 @@ const initPatrimoineRoutes = (models, authMiddleware) => {
     }
   });
 
-  router.get('/:id', validateId(), patrimoineController.wrap('getById'));
+  router.get('/:id', optionalAuth, validateId(), patrimoineController.wrap('getById'));
 
   // ============================================================================
   // ROUTES AUTHENTIFIÉES

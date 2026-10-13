@@ -86,9 +86,39 @@ describe('ArtisanatController', () => {
   // =========================================================================
 
   describe('getById', () => {
+    const draft = () => ({
+      _raw: { Oeuvre: { statut: 'en_attente', saisi_par: 7 } },
+      toDetailJSON: jest.fn(() => ({ id: 6, nom: 'Brouillon' })),
+    });
+
+    it.each([
+      ['un visiteur', undefined],
+      ['un autre utilisateur', { id_user: 99 }],
+    ])('cache un produit non publié à %s (404, rien de divulgué)', async (_, user) => {
+      req.params.id = '6';
+      req.user = user;
+      const item = draft();
+      mockArtisanatService.findWithFullDetails.mockResolvedValue(item);
+      await controller.getById(req, res);
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(item.toDetailJSON).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ['son auteur', { id_user: 7 }],
+      ['la modération', { id_user: 1, isModerateur: true }],
+    ])('montre un produit non publié à %s', async (_, user) => {
+      req.params.id = '6';
+      req.user = user;
+      mockArtisanatService.findWithFullDetails.mockResolvedValue(draft());
+      await controller.getById(req, res);
+      expect(res.status).toHaveBeenCalledWith(200);
+    });
+
     it('should return artisanat detail with toDetailJSON', async () => {
       req.params.id = '5';
       const mockItem = {
+        _raw: { Oeuvre: { statut: 'publie', saisi_par: 7 } },
         toDetailJSON: jest.fn(() => ({ id: 5, nom: 'Tapis', description: 'A rug' })),
       };
       mockArtisanatService.findWithFullDetails.mockResolvedValue(mockItem);
