@@ -25,13 +25,12 @@ class LieuRepository extends BaseRepository {
         include: this.models.Daira ? [{
           model: this.models.Daira,
           attributes: ['nom'],
-          include: this.models.Wilaya ? [{ model: this.models.Wilaya, attributes: ['nom', 'code'] }] : []
+          // (colonne codeW : « code » n'existe pas)
+          include: this.models.Wilaya ? [{ model: this.models.Wilaya, attributes: ['nom', 'codeW'] }] : []
         }] : []
       });
     }
-    if (this.models.Wilaya) {
-      includes.push({ model: this.models.Wilaya, attributes: ['nom', 'code'] });
-    }
+    // (plus d'include Wilaya direct : Lieu n'est relié à la wilaya que par Commune -> Daira)
     return includes;
   }
 

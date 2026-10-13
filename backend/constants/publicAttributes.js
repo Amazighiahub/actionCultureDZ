@@ -8,6 +8,9 @@
 // Identité minimale d'un utilisateur (auteur, organisateur, saisisseur...)
 const PUBLIC_USER_ATTRIBUTES = ['id_user', 'nom', 'prenom', 'photo_url'];
 
+// Organisateur d'un événement : identité + liens publics qu'il a choisi d'afficher
+const PUBLIC_ORGANIZER_ATTRIBUTES = [...PUBLIC_USER_ATTRIBUTES, 'site_web', 'reseaux_sociaux'];
+
 // Profil public d'un professionnel. email/telephone ne sont lus que pour être
 // filtrés par stripPrivateContact selon email_public / telephone_public.
 const PUBLIC_USER_PROFILE_ATTRIBUTES = [
@@ -40,6 +43,7 @@ function stripPrivateContact(user) {
 
 module.exports = {
   PUBLIC_USER_ATTRIBUTES,
+  PUBLIC_ORGANIZER_ATTRIBUTES,
   PUBLIC_USER_PROFILE_ATTRIBUTES,
   PUBLIC_INTERVENANT_ATTRIBUTES,
   stripPrivateContact

@@ -51,6 +51,13 @@ class ArtisanatController extends BaseController {
   async getById(req, res) {
     try {
       const artisanat = await this.artisanatService.findWithFullDetails(parseInt(req.params.id));
+
+      // Œuvre liée non publiée (brouillon, en attente, rejetée) : auteur et modération uniquement
+      const oeuvre = (artisanat?._raw || artisanat)?.Oeuvre;
+      if (!oeuvre || (oeuvre.statut !== 'publie' && !this._canSeeUnpublished(req, oeuvre.saisi_par))) {
+        return res.status(404).json({ success: false, error: req.t('common.notFound') });
+      }
+
       this._sendSuccess(res, artisanat.toDetailJSON(req.lang));
     } catch (error) {
       this._handleError(res, error);

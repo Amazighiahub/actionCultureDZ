@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Separator } from '@/components/ui/separator';
-import { MapPin, Mail, Facebook, Instagram, Youtube, ExternalLink, Download } from 'lucide-react';
+import { MapPin, Mail, ExternalLink, Download } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useRTL } from '@/utils/rtl';
 import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
@@ -39,12 +39,6 @@ const Footer = () => {
 
   const contactEmail = 'contact@taladz.com';
   const currentYear = new Date().getFullYear();
-
-  const socialLinks = [
-    { icon: Facebook, href: 'https://www.facebook.com/', label: 'Facebook' },
-    { icon: Instagram, href: 'https://www.instagram.com/', label: 'Instagram' },
-    { icon: Youtube, href: 'https://www.youtube.com/', label: 'YouTube' },
-  ];
 
   return (
     <footer className="bg-card border-t mt-auto">
@@ -150,26 +144,8 @@ const Footer = () => {
             © {currentYear} {t('header.title')}. {t('common.copyright')}
           </p>
           
-          {/* Réseaux sociaux - ✅ CORRECTION: Taille tactile */}
-          <div className="flex items-center gap-3 order-1 sm:order-2">
-            <span className="text-sm text-muted-foreground hidden sm:inline">
-              {t('common.followUs')}
-            </span>
-            <div className="flex items-center gap-1">
-              {socialLinks.map((social) => (
-                <a 
-                  key={social.label}
-                  href={social.href}
-                  className="p-2.5 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
-                  aria-label={social.label}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <social.icon className="h-5 w-5" />
-                </a>
-              ))}
-            </div>
-          </div>
+          {/* Pas de réseaux sociaux du site : Tala DZ n'a pas de comptes officiels. Les réseaux
+              sont ceux des professionnels, affichés sur leur fiche (components/shared/SocialLinks) */}
         </div>
       </div>
     </footer>

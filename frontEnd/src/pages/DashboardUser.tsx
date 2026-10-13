@@ -26,6 +26,8 @@ import {
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import MesDonneesCard from '@/components/user/MesDonneesCard';
+import SocialLinks, { SOCIAL_NETWORKS, isValidSocialUrl, parseSocialLinks } from '@/components/shared/SocialLinks';
+import { usePermissions } from '@/hooks/usePermissions';
 import { useTranslation } from "react-i18next";
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useToast } from '@/components/ui/use-toast';
@@ -510,12 +512,17 @@ const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ u
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const { isProfessional } = usePermissions();
   const [form, setForm] = useState({
     prenom: '',
     nom: '',
     telephone: '',
     biographie: '',
+    site_web: '',
+    reseaux_sociaux: {} as Record<string, string>,
   });
+  // Erreurs de saisie des liens (site web / réseaux), par champ
+  const [linkErrors, setLinkErrors] = useState<Record<string, string>>({});
 
   // Initialiser le formulaire quand user change
   const startEditing = useCallback(() => {
@@ -524,11 +531,30 @@ const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ u
       nom: typeof user?.nom === 'object' ? user?.nom?.fr || '' : user?.nom || '',
       telephone: user?.telephone || '',
       biographie: typeof user?.biographie === 'object' ? user?.biographie?.fr || '' : user?.biographie || '',
+      site_web: user?.site_web || '',
+      reseaux_sociaux: parseSocialLinks(user?.reseaux_sociaux),
     });
+    setLinkErrors({});
     setEditing(true);
   }, [user]);
 
+  // Liens des professionnels : vérifiés avant l'envoi (le serveur refait la même vérification)
+  const validateLinks = (): boolean => {
+    const errors: Record<string, string> = {};
+    if (form.site_web.trim() && !/^https?:\/\/.+\..+/.test(form.site_web.trim())) {
+      errors.site_web = t('service.errors.urlInvalid', 'URL du site web invalide (doit commencer par http:// ou https://)');
+    }
+    for (const network of SOCIAL_NETWORKS) {
+      if (!isValidSocialUrl(network.key, form.reseaux_sociaux[network.key] || '')) {
+        errors[network.key] = t('profile.socialInvalid', 'Lien {{network}} invalide (ex. : {{example}})', { network: network.label, example: network.placeholder });
+      }
+    }
+    setLinkErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleSave = async () => {
+    if (isProfessional && !validateLinks()) return;
     setSaving(true);
     try {
       const response = await httpClient.put('/users/profile', {
@@ -536,6 +562,7 @@ const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ u
         nom: form.nom,
         telephone: form.telephone,
         biographie: form.biographie,
+        ...(isProfessional ? { site_web: form.site_web.trim(), reseaux_sociaux: form.reseaux_sociaux } : {}),
       });
       if (response.success) {
         toast({ title: t('dashboarduser.profileUpdated', 'Profil mis à jour') });
@@ -676,6 +703,49 @@ const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ u
           </div>
         </div>
       </div>
+
+      {/* Site web et réseaux sociaux : affichés sur la fiche publique des professionnels */}
+      {isProfessional && (
+        <section className="mt-8 pt-6 border-t" aria-labelledby="profil-liens-titre">
+          <h3 id="profil-liens-titre" className="text-lg font-semibold">{t('profile.socialTitle', 'Site web et réseaux sociaux')}</h3>
+          <p className="text-sm text-muted-foreground mb-4">{t('profile.socialHint', 'Ces liens apparaissent sur votre fiche publique (événements que vous organisez, profil).')}</p>
+          {editing ? (
+            <div className="grid md:grid-cols-2 gap-4">
+              {[{ key: 'site_web', label: t('common.website', 'Site web'), placeholder: 'https://…' }, ...SOCIAL_NETWORKS].map((field) => {
+                const value = field.key === 'site_web' ? form.site_web : form.reseaux_sociaux[field.key] || '';
+                const error = linkErrors[field.key];
+                return (
+                  <div key={field.key}>
+                    <label htmlFor={`profil-lien-${field.key}`} className="block text-sm font-medium mb-2">{field.label}</label>
+                    <input
+                      id={`profil-lien-${field.key}`}
+                      type="url"
+                      inputMode="url"
+                      autoComplete="url"
+                      className="w-full p-3 border rounded-lg"
+                      placeholder={field.placeholder}
+                      value={value}
+                      aria-invalid={!!error}
+                      aria-describedby={error ? `profil-lien-${field.key}-erreur` : undefined}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setForm((f) => field.key === 'site_web'
+                          ? { ...f, site_web: v }
+                          : { ...f, reseaux_sociaux: { ...f.reseaux_sociaux, [field.key]: v } });
+                      }}
+                    />
+                    {error && <p id={`profil-lien-${field.key}-erreur`} role="alert" className="text-sm text-destructive mt-1">{error}</p>}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            user?.site_web || Object.keys(parseSocialLinks(user?.reseaux_sociaux)).length > 0
+              ? <SocialLinks links={user?.reseaux_sociaux} website={user?.site_web} />
+              : <p className="text-sm text-muted-foreground">{t('common.notProvided', 'Non renseigné')}</p>
+          )}
+        </section>
+      )}
 
       {/* Boutons */}
       <div className="flex justify-end gap-3 mt-8 pt-6 border-t">

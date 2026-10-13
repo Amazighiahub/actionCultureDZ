@@ -179,10 +179,27 @@ const createDatabaseConnection = (env = 'development') => {
       define: dbConfig.define || {},
       pool: dbConfig.pool || {},
       dialectOptions: dbConfig.dialectOptions || {},
+      // Relance UNIQUEMENT sur une connexion perdue ou indisponible. Sans `match`, Sequelize
+      // relançait toute erreur (colonne inconnue, syntaxe...) jusqu'à 10 fois avec un délai
+      // croissant : la requête dépassait 30 s et la page tombait en 408 au lieu d'une erreur claire.
       retry: {
-        max: parseInt(process.env.DB_RETRY_MAX || '10'),
-        backoffBase: 1000,
-        backoffExponent: 1.5
+        max: parseInt(process.env.DB_RETRY_MAX || '3'),
+        backoffBase: 500,
+        backoffExponent: 1.5,
+        match: [
+          /SequelizeConnectionError/,
+          /SequelizeConnectionRefusedError/,
+          /SequelizeConnectionAcquireTimeoutError/,
+          /SequelizeConnectionTimedOutError/,
+          /SequelizeHostNotReachableError/,
+          /ETIMEDOUT/,
+          /ECONNRESET/,
+          /ECONNREFUSED/,
+          /EHOSTUNREACH/,
+          /PROTOCOL_CONNECTION_LOST/,
+          /ER_LOCK_DEADLOCK/,
+          /Deadlock found/
+        ]
       }
     }
   );

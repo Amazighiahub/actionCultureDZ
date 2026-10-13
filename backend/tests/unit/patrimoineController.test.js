@@ -55,6 +55,49 @@ describe('PatrimoineController', () => {
     });
   });
 
+  describe('getById : sites non publiés', () => {
+    const draftSite = () => ({
+      _raw: { statut: 'brouillon', id_createur: 7 },
+      toDetailJSON: jest.fn(() => ({ id: 2, nom: 'Brouillon' })),
+    });
+
+    it.each([
+      ['un visiteur', undefined],
+      ['un autre utilisateur', { id_user: 99 }],
+    ])('404 pour %s (fiche, galerie, carte de visite)', async (_, user) => {
+      req.params = { id: '2' };
+      req.user = user;
+      for (const method of ['getById', 'getGalerie', 'getCarteVisite']) {
+        res.status.mockClear();
+        const site = draftSite();
+        mockPatrimoineService.findWithFullDetails.mockResolvedValue(site);
+        await controller[method](req, res);
+        expect(res.status).toHaveBeenCalledWith(404);
+        expect(site.toDetailJSON).not.toHaveBeenCalled();
+      }
+    });
+
+    it.each([
+      ['son créateur', { id_user: 7 }],
+      ['un administrateur', { id_user: 1, isAdmin: true }],
+    ])('visible pour %s', async (_, user) => {
+      req.params = { id: '2' };
+      req.user = user;
+      mockPatrimoineService.findWithFullDetails.mockResolvedValue(draftSite());
+      await controller.getById(req, res);
+      expect(res.status).not.toHaveBeenCalledWith(404);
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
+    });
+
+    it('site publié visible par tous', async () => {
+      req.params = { id: '3' };
+      req.user = undefined;
+      mockPatrimoineService.findWithFullDetails.mockResolvedValue({ ...draftSite(), _raw: { statut: 'publie', id_createur: 7 } });
+      await controller.getById(req, res);
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
+    });
+  });
+
   describe('getById', () => {
     it('doit retourner le détail d\'un site', async () => {
       mockPatrimoineService.findWithFullDetails.mockResolvedValue(mockSite);

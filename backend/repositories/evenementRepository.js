@@ -4,7 +4,7 @@
  */
 
 const BaseRepository = require('./baseRepository');
-const { PUBLIC_USER_ATTRIBUTES } = require('../constants/publicAttributes');
+const { PUBLIC_USER_ATTRIBUTES, PUBLIC_ORGANIZER_ATTRIBUTES } = require('../constants/publicAttributes');
 
 // Programme vu publiquement : tout sauf les notes internes de l'organisateur
 const PUBLIC_PROGRAMME_EXCLUDE = ['notes_organisateur'];
@@ -47,7 +47,7 @@ class EvenementRepository extends BaseRepository {
         model: this.models.User,
         as: 'Organisateur',
         // Pas d'email : le contact public de l'événement est contact_email
-        attributes: PUBLIC_USER_ATTRIBUTES
+        attributes: PUBLIC_ORGANIZER_ATTRIBUTES
       });
     }
 

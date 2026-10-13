@@ -64,9 +64,28 @@ class PatrimoineController extends BaseController {
     }
   }
 
+  /**
+   * Site chargé par son id, ou null s'il n'est pas public (brouillon, archivé) et que le
+   * visiteur n'en est ni le créateur ni modérateur : on répond alors 404, comme pour un
+   * site inexistant (taper un numéro ne doit pas révéler un site non publié).
+   */
+  async _findVisibleSite(req) {
+    const site = await this.patrimoineService.findWithFullDetails(parseInt(req.params.id));
+    const raw = site?._raw || site;
+    if (raw && raw.statut && raw.statut !== 'publie' && !this._canSeeUnpublished(req, raw.id_createur)) {
+      return null;
+    }
+    return site;
+  }
+
+  _notFound(req, res) {
+    return res.status(404).json({ success: false, error: req.t('common.notFound') });
+  }
+
   async getById(req, res) {
     try {
-      const site = await this.patrimoineService.findWithFullDetails(parseInt(req.params.id));
+      const site = await this._findVisibleSite(req);
+      if (!site) return this._notFound(req, res);
       res.json({ success: true, data: site.toDetailJSON(req.lang) });
     } catch (error) {
       this._handleError(res, error);
@@ -190,13 +209,15 @@ class PatrimoineController extends BaseController {
   }
 
   async getGalerie(req, res) {
-    const site = await this.patrimoineService.findWithFullDetails(parseInt(req.params.id));
+    const site = await this._findVisibleSite(req);
+    if (!site) return this._notFound(req, res);
     const data = site.toDetailJSON(req.lang);
     res.json({ success: true, data: data.Medias || data.medias || [] });
   }
 
   async getCarteVisite(req, res) {
-    const site = await this.patrimoineService.findWithFullDetails(parseInt(req.params.id));
+    const site = await this._findVisibleSite(req);
+    if (!site) return this._notFound(req, res);
     const data = site.toDetailJSON(req.lang);
     const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
     res.json({ success: true, data: { site: data, qr_code: `${baseUrl}/patrimoine/${req.params.id}`, url_partage: `${baseUrl}/patrimoine/${req.params.id}` } });
