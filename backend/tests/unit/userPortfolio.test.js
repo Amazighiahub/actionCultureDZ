@@ -20,7 +20,8 @@ describe('UserProfileController.getPortfolio', () => {
       oeuvres: [], artisanats: [], evenements: [], services: [],
     });
     await controller.getPortfolio(req, res);
-    expect(mockUserService.getPublicPortfolio).toHaveBeenCalledWith(17);
+    expect(mockUserService.getPublicPortfolio).toHaveBeenCalledWith(17, { includePrivate: false });
+    expect(res.set).toHaveBeenCalledWith('Cache-Control', expect.stringContaining('public'));
     expect(res.status).not.toHaveBeenCalled();
     const body = res.json.mock.calls[0][0];
     expect(body.success).toBe(true);
@@ -31,6 +32,23 @@ describe('UserProfileController.getPortfolio', () => {
   it('404 si le compte n\'a pas de profil public (visiteur, en attente, privé...)', async () => {
     mockUserService.getPublicPortfolio.mockResolvedValue(null);
     await controller.getPortfolio(req, res);
+    expect(res.status).toHaveBeenCalledWith(404);
+  });
+
+  it('le propriétaire connecté voit sa page même en profil privé, sans cache partagé', async () => {
+    req.user = { id_user: 17 };
+    mockUserService.getPublicPortfolio.mockResolvedValue({ profil: { id_user: 17, profil_public: false }, oeuvres: [], artisanats: [], evenements: [], services: [] });
+    await controller.getPortfolio(req, res);
+    expect(mockUserService.getPublicPortfolio).toHaveBeenCalledWith(17, { includePrivate: true });
+    expect(res.json.mock.calls[0][0].data.estProprietaire).toBe(true);
+    expect(res.set).toHaveBeenCalledWith('Cache-Control', 'private, no-store');
+  });
+
+  it('un autre utilisateur connecté ne voit pas un profil privé', async () => {
+    req.user = { id_user: 99 };
+    mockUserService.getPublicPortfolio.mockResolvedValue(null);
+    await controller.getPortfolio(req, res);
+    expect(mockUserService.getPublicPortfolio).toHaveBeenCalledWith(17, { includePrivate: false });
     expect(res.status).toHaveBeenCalledWith(404);
   });
 });

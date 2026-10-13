@@ -280,11 +280,18 @@ class UserProfileController extends BaseController {
    */
   async getPortfolio(req, res) {
     try {
-      const data = await this.userService.getPublicPortfolio(parseInt(req.params.id, 10));
+      const id = parseInt(req.params.id, 10);
+      // Le professionnel connecté voit sa propre page, même en profil privé
+      const isOwner = Number(req.user?.id_user) === id;
+      const data = await this.userService.getPublicPortfolio(id, { includePrivate: isOwner });
       if (!data) {
         return res.status(404).json({ success: false, error: req.t('common.notFound') });
       }
-      res.set('Cache-Control', 'public, max-age=120, stale-while-revalidate=30');
+      data.estProprietaire = isOwner;
+      // Réponse propre au visiteur connecté : pas de cache partagé pour le propriétaire
+      res.set('Cache-Control', isOwner ? 'private, no-store' : 'public, max-age=120, stale-while-revalidate=30');
+      // La réponse dépend de la session (vue propriétaire ou publique)
+      res.set('Vary', 'Cookie, Authorization');
       res.json({ success: true, data: translateDeep(data, req.lang) });
     } catch (error) {
       this._handleError(res, error);

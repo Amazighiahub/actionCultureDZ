@@ -666,7 +666,8 @@
       "mySpace": "Mon espace",
       "pendingValidations": "Validations en attente",
       "proDashboard": "Tableau de bord Pro",
-      "open": "Menu de mon compte"
+      "open": "Menu de mon compte",
+      "myPortfolio": "Mon portfolio"
     },
     "menu": {
       "close": "Fermer le menu",
@@ -4221,6 +4222,19 @@
     "edit": "Modifier mon profil",
     "bio": "Biographie",
     "works": "Réalisations",
-    "empty": "Aucun contenu publié pour le moment."
+    "empty": "Aucun contenu publié pour le moment.",
+    "privateNotice": "Votre profil est privé : vous seul voyez cette page. Rendez-le public pour la partager.",
+    "makePublic": "Rendre public"
+  },
+  "publicPage": {
+    "visible": "Page publique visible",
+    "visibleHint": "Si désactivé, vous seul voyez votre page ; elle disparaît des recherches.",
+    "showEmail": "Afficher mon e-mail",
+    "showEmailHint": "Les visiteurs peuvent vous écrire directement.",
+    "showPhone": "Afficher mon téléphone",
+    "showPhoneHint": "Les visiteurs peuvent vous appeler.",
+    "title": "Ma page publique",
+    "hint": "Votre portfolio : profil, biographie et contenus publiés.",
+    "view": "Voir mon portfolio"
   }
 }

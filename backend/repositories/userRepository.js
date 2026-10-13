@@ -108,10 +108,12 @@ class UserRepository extends BaseRepository {
    * Portfolio public d'un professionnel : profil + contenus PUBLIÉS uniquement.
    * Renvoie null si le compte n'est pas un professionnel actif à profil public
    * (visiteur, compte en attente, suspendu, profil privé, administrateur).
+   * Le propriétaire voit sa propre page même si son profil est privé (includePrivate).
    * @param {number} userId
+   * @param {{ includePrivate?: boolean }} [options]
    * @returns {Promise<object|null>}
    */
-  async findPublicPortfolio(userId) {
+  async findPublicPortfolio(userId, { includePrivate = false } = {}) {
     const { Commune, Daira, Wilaya, TypeUser, Oeuvre, OeuvreUser, Media, TypeOeuvre, Artisanat, Evenement, Service } = this.models;
     const LIMIT = 60;
 
@@ -119,10 +121,10 @@ class UserRepository extends BaseRepository {
       where: {
         id_user: userId,
         statut: 'actif',
-        profil_public: true,
+        ...(includePrivate ? {} : { profil_public: true }),
         id_type_user: { [Op.in]: PROFESSIONAL_TYPE_IDS }
       },
-      attributes: PUBLIC_USER_PROFILE_ATTRIBUTES,
+      attributes: [...PUBLIC_USER_PROFILE_ATTRIBUTES, 'profil_public'],
       include: [
         ...(TypeUser ? [{ model: TypeUser, as: 'TypeUser', attributes: ['id_type_user', 'nom_type'], required: false }] : []),
         ...(Commune ? [{

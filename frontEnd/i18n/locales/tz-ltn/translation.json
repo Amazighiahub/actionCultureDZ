@@ -642,7 +642,8 @@
       "mySpace": "Tallunt-iw",
       "pendingValidations": "Iseɣbalen yettṛaǧun",
       "proDashboard": "Tafelwit Pro",
-      "open": "Umuɣ n umiḍan-iw"
+      "open": "Umuɣ n umiḍan-iw",
+      "myPortfolio": "Akaram-iw"
     },
     "menu": {
       "close": "Mdel umuɣ",
@@ -4238,6 +4239,19 @@
     "edit": "Ẓreg amaɣnu-iw",
     "bio": "Tameddurt",
     "works": "Ixeddimen-is",
-    "empty": "Ulac agbur yettwasuffɣen akka tura."
+    "empty": "Ulac agbur yettwasuffɣen akka tura.",
+    "privateNotice": "Amaɣnu-ik d uslig: d kečč kan ara iwalin asebter-a. Err-it d azayez akken ad t-tebḍuḍ.",
+    "makePublic": "Err-it d azayez"
+  },
+  "publicPage": {
+    "visible": "Asebter azayez yettban",
+    "visibleHint": "Ma tsenseḍ-t, d kečč kan ara iwalin asebter-ik; ad yeɣli seg unadi.",
+    "showEmail": "Sken imayl-iw",
+    "showEmailHint": "Inerzafen zemren ad ak-d-arun srid.",
+    "showPhone": "Sken uṭṭun-iw n tiliɣri",
+    "showPhoneHint": "Inerzafen zemren ad ak-d-siwlen.",
+    "title": "Asebter-iw azayez",
+    "hint": "Akaram-ik: amaɣnu, tameddurt d igburen yettwasuffɣen.",
+    "view": "Wali akaram-iw"
   }
 }

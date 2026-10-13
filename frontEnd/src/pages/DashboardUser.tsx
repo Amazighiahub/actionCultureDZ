@@ -26,6 +26,7 @@ import {
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import MesDonneesCard from '@/components/user/MesDonneesCard';
+import PagePubliqueCard from '@/components/user/PagePubliqueCard';
 import SocialLinks, { SOCIAL_NETWORKS, isValidSocialUrl, parseSocialLinks } from '@/components/shared/SocialLinks';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useTranslation } from "react-i18next";
@@ -703,6 +704,9 @@ const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ u
           </div>
         </div>
       </div>
+
+      {/* Portfolio public et visibilité (professionnels) */}
+      {isProfessional && user?.id_user && <PagePubliqueCard user={user} />}
 
       {/* Site web et réseaux sociaux : affichés sur la fiche publique des professionnels */}
       {isProfessional && (

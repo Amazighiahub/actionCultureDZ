@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Menu, X, MapPin, Calendar, Palette, Hammer, Info, User, LogOut, Settings, Shield, UserCheck, BookOpen, Film, Music, FileText, Beaker, Landmark, Building2, Trees, Compass } from 'lucide-react';
+import { IdCard, Menu, X, MapPin, Calendar, Palette, Hammer, Info, User, LogOut, Settings, Shield, UserCheck, BookOpen, Film, Music, FileText, Beaker, Landmark, Building2, Trees, Compass } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -17,6 +17,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useRTL } from '@/utils/rtl';
 import LanguageSelector from '@/components/LanguageSelector';
+import { professionnelPath } from '@/utils/slug';
 
 const MadgacenLogo = ({ className = "" }: { className?: string }) => (
   <svg
@@ -197,6 +198,11 @@ const Header = () => {
     return null;
   };
 
+  // Portfolio public : professionnels validés uniquement
+  const portfolioLink = user && isProfessional && !needsValidation
+    ? professionnelPath(user.id_user, String(user.prenom || ''), String(user.nom || ''))
+    : null;
+
   const getDashboardLink = () => {
     if (isAdmin) return '/admin/dashboard';
     if (canAccessProfessionalDashboard()) return '/dashboard-pro';
@@ -312,6 +318,15 @@ const Header = () => {
                         )}
                       </Link>
                     </DropdownMenuItem>
+
+                    {portfolioLink && (
+                      <DropdownMenuItem asChild>
+                        <Link to={portfolioLink} className="flex items-center gap-2 min-h-[44px]">
+                          <IdCard className="h-4 w-4" aria-hidden="true" />
+                          <span>{t('header.userMenu.myPortfolio', 'Mon portfolio')}</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
 
                     {canCreateOeuvre() && (
                       <>
@@ -603,6 +618,17 @@ const Header = () => {
                       {isAdmin ? t('header.userMenu.administration') : isProfessional && !needsValidation ? t('header.userMenu.proDashboard') : t('header.userMenu.mySpace')}
                     </span>
                   </Link>
+
+                  {portfolioLink && (
+                    <Link
+                      to={portfolioLink}
+                      className="flex items-center gap-3 rounded-lg p-3 text-base font-medium transition-colors hover:bg-stone-50 dark:hover:bg-stone-800 min-h-[48px]"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      <IdCard className="h-5 w-5 flex-shrink-0" aria-hidden="true" />
+                      <span>{t('header.userMenu.myPortfolio', 'Mon portfolio')}</span>
+                    </Link>
+                  )}
 
                   <Button
                     variant="destructive"
