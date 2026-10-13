@@ -448,7 +448,8 @@
     "notProvided": "Non renseigné",
     "unknown": "Inconnu",
     "sortBy": "Trier par",
-    "photo": "photo"
+    "photo": "photo",
+    "backToHome": "Retour à l'accueil"
   },
   "contributors": {
     "addedCount": "{{count}} contributeurs ajoutés",
@@ -665,7 +666,8 @@
       "mySpace": "Mon espace",
       "pendingValidations": "Validations en attente",
       "proDashboard": "Tableau de bord Pro",
-      "open": "Menu de mon compte"
+      "open": "Menu de mon compte",
+      "myPortfolio": "Mon portfolio"
     },
     "menu": {
       "close": "Fermer le menu",
@@ -3843,7 +3845,16 @@
       "phoneInvalid": "Numéro de téléphone invalide",
       "submitFailed": "Erreur lors de la soumission"
     },
-    "editTitle": "Modifier mon service"
+    "editTitle": "Modifier mon service",
+    "types": {
+      "restaurant": "Restaurant",
+      "hotel": "Hôtel",
+      "guide": "Guide",
+      "transport": "Transport",
+      "artisanat": "Artisanat",
+      "location": "Location",
+      "autre": "Autre"
+    }
   },
   "organisations": {
     "create": {
@@ -4175,7 +4186,14 @@
     "downloading": "Téléchargement...",
     "success": "QR Code téléchargé",
     "checkDownloads": "Vérifiez vos téléchargements",
-    "downloadError": "Impossible de télécharger le QR Code"
+    "downloadError": "Impossible de télécharger le QR Code",
+    "title": "Mon QR code",
+    "error": "QR code indisponible pour le moment.",
+    "alt": "QR code du portfolio de {{name}}",
+    "hint": "Scanné avec un téléphone, il ouvre votre portfolio. Ajoutez-le à vos cartes de visite, affiches ou à votre stand.",
+    "downloadPng": "Télécharger (PNG)",
+    "downloadSvg": "Pour impression (SVG)",
+    "button": "QR code"
   },
   "rating": {
     "value": "Note : {{value}} sur {{max}}",
@@ -4191,5 +4209,35 @@
     "socialInvalid": "Lien {{network}} invalide (ex. : {{example}})",
     "socialTitle": "Site web et réseaux sociaux",
     "socialHint": "Ces liens apparaissent sur votre fiche publique (événements que vous organisez, profil)."
+  },
+  "share": {
+    "onMyPage": "Partager sur ma page :",
+    "on": "Partager sur {{network}}",
+    "copied": "Lien copié"
+  },
+  "portfolio": {
+    "notFound": "Profil introuvable",
+    "notFoundHint": "Ce profil n'existe pas ou n'est pas public.",
+    "tabs": {
+      "works": "Œuvres",
+      "articles": "Articles",
+      "crafts": "Artisanat",
+      "events": "Événements",
+      "services": "Services"
+    },
+    "seoDescription": "{{name}} — {{type}} sur Tala DZ",
+    "edit": "Modifier mon profil",
+    "bio": "Biographie",
+    "works": "Réalisations",
+    "empty": "Aucun contenu publié pour le moment."
+  },
+  "publicPage": {
+    "showEmail": "Afficher mon e-mail",
+    "showEmailHint": "Les visiteurs peuvent vous écrire directement.",
+    "showPhone": "Afficher mon téléphone",
+    "showPhoneHint": "Les visiteurs peuvent vous appeler.",
+    "title": "Ma page publique",
+    "hint": "Votre portfolio : profil, biographie et contenus publiés.",
+    "view": "Voir mon portfolio"
   }
 }

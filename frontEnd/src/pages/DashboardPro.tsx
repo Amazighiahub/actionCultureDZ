@@ -32,8 +32,11 @@ import {
   ChevronDown,
   AlertCircle,
   XCircle,
-  Bell
+  Bell,
+  IdCard
 } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { professionnelPath } from '@/utils/slug';
 import {
   Popover,
   PopoverContent,
@@ -163,6 +166,7 @@ const DashboardPro = () => {
   } = useDashboardPro();
 
   const { t } = useTranslation();
+  const { user: currentUser } = useAuth();
   const { td, safe } = useTranslateData();
   const { notifications, summary, markAsRead, markAllAsRead, requestNotificationPermission } = useNotifications();
   const [notifOpen, setNotifOpen] = useState(false);
@@ -413,6 +417,15 @@ const DashboardPro = () => {
             </div>
 
             <div className="flex gap-2">
+              {/* Page publique du professionnel */}
+              {currentUser && (
+                <Button asChild variant="outline">
+                  <Link to={professionnelPath(currentUser.id_user, String(currentUser.prenom || ''), String(currentUser.nom || ''))}>
+                    <IdCard className="h-4 w-4 me-2" aria-hidden="true" />
+                    {t('header.userMenu.myPortfolio', 'Mon portfolio')}
+                  </Link>
+                </Button>
+              )}
               {/* Cloche de notifications */}
               <Popover open={notifOpen} onOpenChange={setNotifOpen}>
                 <PopoverTrigger asChild>

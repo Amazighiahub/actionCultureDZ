@@ -16,6 +16,7 @@ function buildModels() {
     Evenement: model('Evenement', [{ id_evenement: 3, date_modification: '2026-10-02' }]),
     Lieu: model('Lieu', [{ id_lieu: 5, updatedAt: '2026-09-01' }]),
     Artisanat: model('Artisanat', [{ id_artisanat: 9, 'Oeuvre.date_modification': '2026-09-15' }]),
+    User: model('User', [{ id_user: 17, prenom: '{"fr":"Amina"}', nom: 'Bénali', date_modification: '2026-10-01' }]),
   };
   return { models, calls };
 }
@@ -39,6 +40,9 @@ describe('GET /sitemap.xml', () => {
     expect(res.text).toContain('<loc>https://taladz.com/patrimoine/5</loc>');
     expect(res.text).toContain('<loc>https://taladz.com/artisanat/9</loc>');
     expect(res.text).not.toContain('/auth');
+    // Portfolios : adresse lisible, professionnels actifs à profil public uniquement
+    expect(res.text).toContain('<loc>https://taladz.com/professionnels/17-amina-benali</loc>');
+    expect(calls.User[0].where).toMatchObject({ statut: 'actif' });
 
     // Événements : statuts publics réels (plus le statut inexistant "a_venir")
     expect(calls.Evenement[0].where.statut).toEqual(['publie', 'planifie', 'en_cours', 'termine']);

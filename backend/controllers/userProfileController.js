@@ -17,6 +17,8 @@ const BaseController = require('./baseController');
 const container = require('../services/serviceContainer');
 const BaseDTO = require('../dto/baseDTO');
 const { translateDeep } = require('../helpers/i18n');
+const QRCode = require('qrcode');
+const { professionnelPath } = require('../utils/slug');
 
 class UserProfileController extends BaseController {
   get userService() {
@@ -269,6 +271,64 @@ class UserProfileController extends BaseController {
         limit: req.query.limit
       });
       res.json({ success: true, data: translateDeep(data, req.lang) });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  /**
+   * GET /users/professionals/:id/portfolio : page publique d'un professionnel
+   * (profil, œuvres, artisanat, événements, services publiés). 404 si le profil n'est pas public.
+   */
+  async getPortfolio(req, res) {
+    try {
+      const id = parseInt(req.params.id, 10);
+      // Le professionnel connecté sur sa propre page voit en plus ses outils de partage
+      const isOwner = Number(req.user?.id_user) === id;
+      const data = await this.userService.getPublicPortfolio(id);
+      if (!data) {
+        return res.status(404).json({ success: false, error: req.t('common.notFound') });
+      }
+      data.estProprietaire = isOwner;
+      // Vue propriétaire : pas de cache partagé
+      res.set('Cache-Control', isOwner ? 'private, no-store' : 'public, max-age=120, stale-while-revalidate=30');
+      // La réponse dépend de la session (vue propriétaire ou publique)
+      res.set('Vary', 'Cookie, Authorization');
+      res.json({ success: true, data: translateDeep(data, req.lang) });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
+  /**
+   * GET /users/professionals/:id/qrcode : QR code menant au portfolio.
+   * ?format=png|svg -> fichier à télécharger ou imprimer ; sinon JSON { qr_data_url, portfolio_url }.
+   */
+  async getPortfolioQRCode(req, res) {
+    try {
+      const pro = await this.userService.getPublicProfessional(parseInt(req.params.id, 10));
+      if (!pro) {
+        return res.status(404).json({ success: false, error: req.t('common.notFound') });
+      }
+      const baseUrl = (process.env.FRONTEND_URL || 'https://taladz.com').replace(/\/$/, '');
+      const url = `${baseUrl}${professionnelPath(pro.id_user, pro.prenom, pro.nom)}`;
+      const width = Math.min(Math.max(parseInt(req.query.size, 10) || 400, 100), 1200);
+      // Niveau de correction élevé : le code reste lisible imprimé petit ou un peu abîmé
+      const options = { width, margin: 2, errorCorrectionLevel: 'H', color: { dark: '#1c1917', light: '#ffffff' } };
+      const filename = `taladz-portfolio-${pro.id_user}`;
+      res.set('Cache-Control', 'public, max-age=3600');
+
+      if (req.query.format === 'svg') {
+        res.set('Content-Type', 'image/svg+xml');
+        res.set('Content-Disposition', `attachment; filename="${filename}.svg"`);
+        return res.send(await QRCode.toString(url, { ...options, type: 'svg' }));
+      }
+      if (req.query.format === 'png') {
+        res.set('Content-Type', 'image/png');
+        res.set('Content-Disposition', `attachment; filename="${filename}.png"`);
+        return res.send(await QRCode.toBuffer(url, options));
+      }
+      res.json({ success: true, data: { qr_data_url: await QRCode.toDataURL(url, options), portfolio_url: url } });
     } catch (error) {
       this._handleError(res, error);
     }

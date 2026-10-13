@@ -8,10 +8,8 @@ const crypto = require('crypto');
 
 // Compte réservé « Utilisateur supprimé » (voir _getDeletedUserSentinel)
 const DELETED_USER_EMAIL = 'deleted-user@invalid.local';
-const { PUBLIC_USER_PROFILE_ATTRIBUTES, stripPrivateContact } = require('../constants/publicAttributes');
+const { PUBLIC_USER_PROFILE_ATTRIBUTES, PROFESSIONAL_TYPE_IDS, stripPrivateContact } = require('../constants/publicAttributes');
 
-// Types professionnels (2..28) : ni visiteur (1) ni administrateur (29)
-const PROFESSIONAL_TYPE_IDS = Array.from({ length: 27 }, (_, i) => i + 2);
 
 class UserRepository extends BaseRepository {
   constructor(models) {
@@ -104,6 +102,112 @@ class UserRepository extends BaseRepository {
     });
     result.data.forEach(stripPrivateContact);
     return result;
+  }
+
+  /**
+   * Professionnel validé (compte actif) : identité minimale, ou null.
+   * Sert au QR code du portfolio.
+   */
+  async findPublicProfessional(userId) {
+    return this.model.findOne({
+      where: { id_user: userId, statut: 'actif', id_type_user: { [Op.in]: PROFESSIONAL_TYPE_IDS } },
+      attributes: ['id_user', 'nom', 'prenom'],
+      raw: true
+    });
+  }
+
+  /**
+   * Portfolio public d'un professionnel : profil + contenus PUBLIÉS uniquement.
+   * Tout professionnel validé (compte actif) a un portfolio public. Renvoie null pour
+   * un visiteur, un compte en attente ou suspendu, ou un administrateur.
+   * @param {number} userId
+   * @returns {Promise<object|null>}
+   */
+  async findPublicPortfolio(userId) {
+    const { Commune, Daira, Wilaya, TypeUser, Oeuvre, OeuvreUser, Media, TypeOeuvre, Artisanat, Evenement, Service } = this.models;
+    const LIMIT = 60;
+
+    const user = await this.model.findOne({
+      where: {
+        id_user: userId,
+        statut: 'actif',
+        id_type_user: { [Op.in]: PROFESSIONAL_TYPE_IDS }
+      },
+      attributes: PUBLIC_USER_PROFILE_ATTRIBUTES,
+      include: [
+        ...(TypeUser ? [{ model: TypeUser, as: 'TypeUser', attributes: ['id_type_user', 'nom_type'], required: false }] : []),
+        ...(Commune ? [{
+          model: Commune,
+          as: 'Commune',
+          attributes: ['id_commune', 'nom'],
+          required: false,
+          include: Daira ? [{
+            model: Daira,
+            attributes: ['id_daira', 'nom'],
+            include: Wilaya ? [{ model: Wilaya, attributes: ['id_wilaya', 'nom'] }] : []
+          }] : []
+        }] : [])
+      ]
+    });
+    if (!user) return null;
+    stripPrivateContact(user);
+
+    // Œuvres dont il est l'auteur (saisie) ou un contributeur déclaré
+    const contributions = OeuvreUser
+      ? (await OeuvreUser.findAll({ where: { id_user: userId }, attributes: ['id_oeuvre'], raw: true })).map((r) => r.id_oeuvre)
+      : [];
+    const firstMedia = Media
+      ? [{ model: Media, attributes: ['id_media', 'url', 'type_media', 'id_oeuvre'], required: false, separate: true, order: [['id_media', 'ASC']] }]
+      : [];
+
+    const [oeuvres, artisanats, evenements, services] = await Promise.all([
+      Oeuvre ? Oeuvre.findAll({
+        where: {
+          statut: 'publie',
+          id_type_oeuvre: { [Op.ne]: 7 }, // l'artisanat a son propre onglet
+          [Op.or]: [{ saisi_par: userId }, ...(contributions.length ? [{ id_oeuvre: { [Op.in]: contributions } }] : [])]
+        },
+        attributes: ['id_oeuvre', 'titre', 'id_type_oeuvre', 'annee_creation', 'date_creation'],
+        include: [
+          ...(TypeOeuvre ? [{ model: TypeOeuvre, attributes: ['id_type_oeuvre', 'nom_type'], required: false }] : []),
+          ...firstMedia
+        ],
+        order: [['date_creation', 'DESC']],
+        limit: LIMIT
+      }) : [],
+      Artisanat && Oeuvre ? Artisanat.findAll({
+        attributes: ['id_artisanat', 'prix'],
+        include: [{
+          model: Oeuvre,
+          where: { statut: 'publie', saisi_par: userId },
+          required: true,
+          attributes: ['id_oeuvre', 'titre', 'date_creation'],
+          include: firstMedia
+        }],
+        order: [[Oeuvre, 'date_creation', 'DESC']],
+        limit: LIMIT
+      }) : [],
+      Evenement ? Evenement.findAll({
+        where: { id_user: userId, statut: { [Op.in]: ['publie', 'planifie', 'en_cours', 'termine', 'reporte', 'annule'] } },
+        attributes: ['id_evenement', 'nom_evenement', 'date_debut', 'date_fin', 'image_url', 'statut'],
+        order: [['date_debut', 'DESC']],
+        limit: LIMIT
+      }) : [],
+      Service ? Service.findAll({
+        where: { id_user: userId, statut: 'valide' },
+        attributes: ['id', 'nom', 'type_service', 'description', 'photo_url'],
+        limit: LIMIT
+      }) : []
+    ]);
+
+    const plain = (rows) => rows.map((r) => (r.get ? r.get({ plain: true }) : r));
+    return {
+      profil: user.get ? user.get({ plain: true }) : user,
+      oeuvres: plain(oeuvres),
+      artisanats: plain(artisanats),
+      evenements: plain(evenements),
+      services: plain(services)
+    };
   }
 
   /**

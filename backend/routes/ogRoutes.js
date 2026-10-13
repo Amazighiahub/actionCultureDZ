@@ -6,6 +6,8 @@
 
 const express = require('express');
 const logger = require('../utils/logger');
+const { professionnelPath } = require('../utils/slug');
+const { PROFESSIONAL_TYPE_IDS } = require('../constants/publicAttributes');
 
 const SITE_URL = (process.env.FRONTEND_URL || 'https://taladz.com').replace(/\/$/, '');
 const SITE_NAME = 'Tala DZ';
@@ -141,6 +143,22 @@ const initOgRoutes = (models) => {
       if (!a || !a.Oeuvre || a.Oeuvre.statut !== 'publie') return null;
       return { title: text(a.Oeuvre.titre), description: summary(a.Oeuvre.description) || undefined, image: firstImage(a.Oeuvre.Media), type: 'product' };
     },
+    // Portfolio d'un professionnel validé (compte actif)
+    async professionnels(id) {
+      const u = await models.User.findOne({
+        where: { id_user: id, statut: 'actif', id_type_user: PROFESSIONAL_TYPE_IDS },
+        attributes: ['id_user', 'nom', 'prenom', 'biographie', 'photo_url'],
+      });
+      if (!u) return null;
+      return {
+        title: `${text(u.prenom)} ${text(u.nom)}`.trim(),
+        description: summary(u.biographie) || undefined,
+        image: u.photo_url,
+        type: 'profile',
+        // Adresse canonique avec le nom (17-amina-benali)
+        path: professionnelPath(u.id_user, u.prenom, u.nom),
+      };
+    },
   };
   loaders.articles = loaders.oeuvres;
 
@@ -157,7 +175,7 @@ const initOgRoutes = (models) => {
       }
       // Les aperçus sont mis en cache par les réseaux sociaux eux-mêmes ; 10 min ici
       res.set('Cache-Control', 'public, max-age=600');
-      return res.send(buildOgHtml({ ...data, path }));
+      return res.send(buildOgHtml({ path, ...data }));
     } catch (err) {
       logger.warn(`Aperçu social ${path} : ${err.message}`);
       // En cas d'erreur, aperçu générique plutôt qu'une page d'erreur

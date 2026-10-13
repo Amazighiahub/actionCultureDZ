@@ -443,7 +443,8 @@
     "notProvided": "Not provided",
     "unknown": "Unknown",
     "sortBy": "Sort by",
-    "photo": "photo"
+    "photo": "photo",
+    "backToHome": "Back to home"
   },
   "contributors": {
     "addedCount_one": "{{count}} contributor added",
@@ -640,7 +641,8 @@
       "mySpace": "My space",
       "pendingValidations": "Pending validations",
       "proDashboard": "Pro Dashboard",
-      "open": "My account menu"
+      "open": "My account menu",
+      "myPortfolio": "My portfolio"
     },
     "menu": {
       "close": "Close menu",
@@ -3609,7 +3611,16 @@
       "phoneInvalid": "Invalid phone number",
       "submitFailed": "Error during submission"
     },
-    "editTitle": "Edit my service"
+    "editTitle": "Edit my service",
+    "types": {
+      "restaurant": "Restaurant",
+      "hotel": "Hotel",
+      "guide": "Guide",
+      "transport": "Transport",
+      "artisanat": "Crafts",
+      "location": "Rental",
+      "autre": "Other"
+    }
   },
   "organisations": {
     "create": {
@@ -4175,7 +4186,14 @@
     "downloading": "Downloading...",
     "success": "QR Code downloaded",
     "checkDownloads": "Check your downloads",
-    "downloadError": "Unable to download the QR Code"
+    "downloadError": "Unable to download the QR Code",
+    "title": "My QR code",
+    "error": "QR code unavailable at the moment.",
+    "alt": "QR code for {{name}}’s portfolio",
+    "hint": "Scanned with a phone, it opens your portfolio. Add it to your business cards, posters or stand.",
+    "downloadPng": "Download (PNG)",
+    "downloadSvg": "For printing (SVG)",
+    "button": "QR code"
   },
   "rating": {
     "value": "Rating: {{value}} out of {{max}}",
@@ -4191,5 +4209,35 @@
     "socialInvalid": "Invalid {{network}} link (e.g. {{example}})",
     "socialTitle": "Website and social media",
     "socialHint": "These links appear on your public page (events you organise, profile)."
+  },
+  "share": {
+    "onMyPage": "Share on my page:",
+    "on": "Share on {{network}}",
+    "copied": "Link copied"
+  },
+  "portfolio": {
+    "notFound": "Profile not found",
+    "notFoundHint": "This profile does not exist or is not public.",
+    "tabs": {
+      "works": "Works",
+      "articles": "Articles",
+      "crafts": "Crafts",
+      "events": "Events",
+      "services": "Services"
+    },
+    "seoDescription": "{{name}} — {{type}} on Tala DZ",
+    "edit": "Edit my profile",
+    "bio": "Biography",
+    "works": "Work",
+    "empty": "No published content yet."
+  },
+  "publicPage": {
+    "showEmail": "Show my email",
+    "showEmailHint": "Visitors can email you directly.",
+    "showPhone": "Show my phone number",
+    "showPhoneHint": "Visitors can call you.",
+    "title": "My public page",
+    "hint": "Your portfolio: profile, biography and published content.",
+    "view": "View my portfolio"
   }
 }

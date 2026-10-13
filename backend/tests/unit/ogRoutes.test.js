@@ -89,3 +89,29 @@ describe('outils', () => {
     expect(buildOgHtml({ path: '/' })).toContain('<title>Tala DZ</title>');
   });
 });
+
+describe('GET /api/og/professionnels/:id', () => {
+  it('aperçu du portfolio avec adresse lisible', async () => {
+    const m = models({
+      User: {
+        findOne: jest.fn(async () => ({
+          id_user: 17, prenom: { fr: 'Amina' }, nom: 'Bénali',
+          biographie: { fr: 'Céramiste à Tlemcen.' }, photo_url: '/uploads/p.jpg',
+        })),
+      },
+    });
+    const res = await request(app(m)).get('/api/og/professionnels/17');
+    expect(res.status).toBe(200);
+    expect(res.text).toContain('<meta property="og:title" content="Amina Bénali | Tala DZ">');
+    expect(res.text).toContain('<link rel="canonical" href="https://taladz.com/professionnels/17-amina-benali">');
+    expect(res.text).toContain('og:type" content="profile"');
+    // Seuls les profils publics actifs sont cherchés
+    expect(m.User.findOne.mock.calls[0][0].where).toMatchObject({ statut: 'actif' });
+  });
+
+  it('404 pour un compte qui n\'est pas un professionnel validé', async () => {
+    const m = models({ User: { findOne: jest.fn(async () => null) } });
+    const res = await request(app(m)).get('/api/og/professionnels/3');
+    expect(res.status).toBe(404);
+  });
+});

@@ -444,7 +444,8 @@
     "notProvided": "غير مُدرج",
     "unknown": "غير معروف",
     "sortBy": "ترتيب حسب",
-    "photo": "صورة"
+    "photo": "صورة",
+    "backToHome": "العودة إلى الصفحة الرئيسية"
   },
   "contributors": {
     "addedCount_one": "تمت إضافة مساهم واحد",
@@ -645,7 +646,8 @@
       "mySpace": "مساحتي",
       "pendingValidations": "التحققات المعلقة",
       "proDashboard": "لوحة التحكم الاحترافية",
-      "open": "قائمة حسابي"
+      "open": "قائمة حسابي",
+      "myPortfolio": "ملفي المهني"
     },
     "menu": {
       "close": "إغلاق القائمة",
@@ -3711,7 +3713,16 @@
       "phoneInvalid": "رقم هاتف غير صالح",
       "submitFailed": "خطأ أثناء الإرسال"
     },
-    "editTitle": "تعديل خدمتي"
+    "editTitle": "تعديل خدمتي",
+    "types": {
+      "restaurant": "مطعم",
+      "hotel": "فندق",
+      "guide": "مرشد",
+      "transport": "نقل",
+      "artisanat": "حرف تقليدية",
+      "location": "كراء",
+      "autre": "أخرى"
+    }
   },
   "organisations": {
     "create": {
@@ -4277,7 +4288,14 @@
     "downloading": "جارٍ التنزيل...",
     "success": "تم تنزيل رمز QR",
     "checkDownloads": "تحقق من مجلد التنزيلات",
-    "downloadError": "تعذّر تنزيل رمز QR"
+    "downloadError": "تعذّر تنزيل رمز QR",
+    "title": "رمز QR الخاص بي",
+    "error": "رمز QR غير متاح حاليًا.",
+    "alt": "رمز QR لملف {{name}} المهني",
+    "hint": "عند مسحه بالهاتف يفتح ملفك المهني. أضفه إلى بطاقات العمل أو الملصقات أو جناحك.",
+    "downloadPng": "تنزيل (PNG)",
+    "downloadSvg": "للطباعة (SVG)",
+    "button": "رمز QR"
   },
   "rating": {
     "value": "التقييم: {{value}} من {{max}}",
@@ -4293,5 +4311,35 @@
     "socialInvalid": "رابط {{network}} غير صالح (مثال: {{example}})",
     "socialTitle": "الموقع الإلكتروني وشبكات التواصل الاجتماعي",
     "socialHint": "تظهر هذه الروابط في صفحتك العامة (الفعاليات التي تنظمها، الملف الشخصي)."
+  },
+  "share": {
+    "onMyPage": "شارك في صفحتي:",
+    "on": "شارك على {{network}}",
+    "copied": "تم نسخ الرابط"
+  },
+  "portfolio": {
+    "notFound": "الملف الشخصي غير موجود",
+    "notFoundHint": "هذا الملف غير موجود أو غير عام.",
+    "tabs": {
+      "works": "الأعمال",
+      "articles": "المقالات",
+      "crafts": "الحرف التقليدية",
+      "events": "الفعاليات",
+      "services": "الخدمات"
+    },
+    "seoDescription": "{{name}} — {{type}} على Tala DZ",
+    "edit": "تعديل ملفي الشخصي",
+    "bio": "السيرة الذاتية",
+    "works": "الإنجازات",
+    "empty": "لا يوجد محتوى منشور حاليًا."
+  },
+  "publicPage": {
+    "showEmail": "إظهار بريدي الإلكتروني",
+    "showEmailHint": "يمكن للزوار مراسلتك مباشرة.",
+    "showPhone": "إظهار رقم هاتفي",
+    "showPhoneHint": "يمكن للزوار الاتصال بك.",
+    "title": "صفحتي العامة",
+    "hint": "ملفك المهني: الملف الشخصي والسيرة والمحتوى المنشور.",
+    "view": "عرض ملفي المهني"
   }
 }

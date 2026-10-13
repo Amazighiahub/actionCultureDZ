@@ -443,7 +443,8 @@
     "notProvided": "Ur yettwaččar ara",
     "unknown": "Arussin",
     "sortBy": "Smizzwer s",
-    "photo": "tawlaft"
+    "photo": "tawlaft",
+    "backToHome": "Uɣal ɣer usebter agejdan"
   },
   "contributors": {
     "addedCount_one": "{{count}} amarag yettwarna",
@@ -641,7 +642,8 @@
       "mySpace": "Tallunt-iw",
       "pendingValidations": "Iseɣbalen yettṛaǧun",
       "proDashboard": "Tafelwit Pro",
-      "open": "Umuɣ n umiḍan-iw"
+      "open": "Umuɣ n umiḍan-iw",
+      "myPortfolio": "Akaram-iw"
     },
     "menu": {
       "close": "Mdel umuɣ",
@@ -3626,7 +3628,16 @@
       "phoneInvalid": "Uṭṭun n tiliɣri d arameɣtu",
       "submitFailed": "Tuccḍa deg tuzna"
     },
-    "editTitle": "Ẓreg ameẓlu-iw"
+    "editTitle": "Ẓreg ameẓlu-iw",
+    "types": {
+      "restaurant": "Taneḥḥast",
+      "hotel": "Asensu",
+      "guide": "Amnir",
+      "transport": "Asiweḍ",
+      "artisanat": "Taẓuri n ufus",
+      "location": "Akraḍ",
+      "autre": "Nniḍen"
+    }
   },
   "organisations": {
     "create": {
@@ -4170,7 +4181,14 @@
     "downloading": "Asader...",
     "success": "QR Code yettwader",
     "checkDownloads": "Senqed isadaren-ik",
-    "downloadError": "D awezɣi ad yettwader QR Code"
+    "downloadError": "D awezɣi ad yettwader QR Code",
+    "title": "Tangalt-iw QR",
+    "error": "Tangalt QR ulac-itt akka tura.",
+    "alt": "Tangalt QR n ukaram n {{name}}",
+    "hint": "Ma tettwaḍeqqer s tiliɣri, ad teldi akaram-ik. Rnu-tt ɣer tkarḍiwin-ik, ɣer yiɣmisen neɣ ɣer tnaṣt-ik.",
+    "downloadPng": "Sider (PNG)",
+    "downloadSvg": "I usiggez (SVG)",
+    "button": "Tangalt QR"
   },
   "myData": {
     "title": "Isefka-inu",
@@ -4208,5 +4226,35 @@
     "socialInvalid": "Aseɣwen {{network}} ur ɣbin ara (amedya: {{example}})",
     "socialTitle": "Asmel web d iẓeḍwan inmettiyen",
     "socialHint": "Iseɣwan-a ad d-banen deg usebter-ik azayez (tidyanin i tessuddseḍ, amaɣnu)."
+  },
+  "share": {
+    "onMyPage": "Bḍu deg usebter-iw:",
+    "on": "Bḍu ɣef {{network}}",
+    "copied": "Aseɣwen yettwanɣel"
+  },
+  "portfolio": {
+    "notFound": "Amaɣnu ulac-it",
+    "notFoundHint": "Amaɣnu-a ulac-it neɣ mačči d azayez.",
+    "tabs": {
+      "works": "Ixeddimen",
+      "articles": "Imagraden",
+      "crafts": "Taẓuri n ufus",
+      "events": "Tidyanin",
+      "services": "Imeẓla"
+    },
+    "seoDescription": "{{name}} — {{type}} deg Tala DZ",
+    "edit": "Ẓreg amaɣnu-iw",
+    "bio": "Tameddurt",
+    "works": "Ixeddimen-is",
+    "empty": "Ulac agbur yettwasuffɣen akka tura."
+  },
+  "publicPage": {
+    "showEmail": "Sken imayl-iw",
+    "showEmailHint": "Inerzafen zemren ad ak-d-arun srid.",
+    "showPhone": "Sken uṭṭun-iw n tiliɣri",
+    "showPhoneHint": "Inerzafen zemren ad ak-d-siwlen.",
+    "title": "Asebter-iw azayez",
+    "hint": "Akaram-ik: amaɣnu, tameddurt d igburen yettwasuffɣen.",
+    "view": "Wali akaram-iw"
   }
 }
