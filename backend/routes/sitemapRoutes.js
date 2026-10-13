@@ -112,9 +112,9 @@ const initSitemapRoutes = (models) => {
           limit: SITEMAP_LIMIT, raw: true
         })) : [],
 
-        // Portfolios publics : professionnels actifs à profil public
+        // Portfolios publics : professionnels validés (compte actif)
         models.User ? safeQuery('professionnels', () => models.User.findAll({
-          where: { statut: 'actif', profil_public: true, id_type_user: { [Op.in]: PROFESSIONAL_TYPE_IDS } },
+          where: { statut: 'actif', id_type_user: { [Op.in]: PROFESSIONAL_TYPE_IDS } },
           attributes: ['id_user', 'nom', 'prenom', 'date_modification'],
           order: [['date_modification', 'DESC']],
           limit: SITEMAP_LIMIT, raw: true

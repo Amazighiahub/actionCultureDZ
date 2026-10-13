@@ -4181,7 +4181,14 @@
     "downloading": "Asader...",
     "success": "QR Code yettwader",
     "checkDownloads": "Senqed isadaren-ik",
-    "downloadError": "D awezɣi ad yettwader QR Code"
+    "downloadError": "D awezɣi ad yettwader QR Code",
+    "title": "Tangalt-iw QR",
+    "error": "Tangalt QR ulac-itt akka tura.",
+    "alt": "Tangalt QR n ukaram n {{name}}",
+    "hint": "Ma tettwaḍeqqer s tiliɣri, ad teldi akaram-ik. Rnu-tt ɣer tkarḍiwin-ik, ɣer yiɣmisen neɣ ɣer tnaṣt-ik.",
+    "downloadPng": "Sider (PNG)",
+    "downloadSvg": "I usiggez (SVG)",
+    "button": "Tangalt QR"
   },
   "myData": {
     "title": "Isefka-inu",
@@ -4239,13 +4246,9 @@
     "edit": "Ẓreg amaɣnu-iw",
     "bio": "Tameddurt",
     "works": "Ixeddimen-is",
-    "empty": "Ulac agbur yettwasuffɣen akka tura.",
-    "privateNotice": "Amaɣnu-ik d uslig: d kečč kan ara iwalin asebter-a. Err-it d azayez akken ad t-tebḍuḍ.",
-    "makePublic": "Err-it d azayez"
+    "empty": "Ulac agbur yettwasuffɣen akka tura."
   },
   "publicPage": {
-    "visible": "Asebter azayez yettban",
-    "visibleHint": "Ma tsenseḍ-t, d kečč kan ara iwalin asebter-ik; ad yeɣli seg unadi.",
     "showEmail": "Sken imayl-iw",
     "showEmailHint": "Inerzafen zemren ad ak-d-arun srid.",
     "showPhone": "Sken uṭṭun-iw n tiliɣri",

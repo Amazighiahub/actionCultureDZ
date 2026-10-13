@@ -106,10 +106,10 @@ describe('GET /api/og/professionnels/:id', () => {
     expect(res.text).toContain('<link rel="canonical" href="https://taladz.com/professionnels/17-amina-benali">');
     expect(res.text).toContain('og:type" content="profile"');
     // Seuls les profils publics actifs sont cherchés
-    expect(m.User.findOne.mock.calls[0][0].where).toMatchObject({ statut: 'actif', profil_public: true });
+    expect(m.User.findOne.mock.calls[0][0].where).toMatchObject({ statut: 'actif' });
   });
 
-  it('404 pour un profil non public', async () => {
+  it('404 pour un compte qui n\'est pas un professionnel validé', async () => {
     const m = models({ User: { findOne: jest.fn(async () => null) } });
     const res = await request(app(m)).get('/api/og/professionnels/3');
     expect(res.status).toBe(404);

@@ -143,10 +143,10 @@ const initOgRoutes = (models) => {
       if (!a || !a.Oeuvre || a.Oeuvre.statut !== 'publie') return null;
       return { title: text(a.Oeuvre.titre), description: summary(a.Oeuvre.description) || undefined, image: firstImage(a.Oeuvre.Media), type: 'product' };
     },
-    // Portfolio d'un professionnel actif à profil public
+    // Portfolio d'un professionnel validé (compte actif)
     async professionnels(id) {
       const u = await models.User.findOne({
-        where: { id_user: id, statut: 'actif', profil_public: true, id_type_user: PROFESSIONAL_TYPE_IDS },
+        where: { id_user: id, statut: 'actif', id_type_user: PROFESSIONAL_TYPE_IDS },
         attributes: ['id_user', 'nom', 'prenom', 'biographie', 'photo_url'],
       });
       if (!u) return null;

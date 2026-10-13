@@ -1,6 +1,7 @@
 /**
- * « Ma page publique » (professionnels) : lien vers le portfolio et réglages de visibilité.
- * Chaque interrupteur est enregistré immédiatement (PUT /users/privacy).
+ * « Ma page publique » (professionnels) : lien vers le portfolio (toujours public), QR code
+ * à partager, et choix d'afficher ou non l'e-mail et le téléphone (PUT /users/privacy,
+ * enregistré immédiatement).
  */
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -12,22 +13,21 @@ import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/components/ui/use-toast';
 import { httpClient } from '@/services/httpClient';
 import { professionnelPath } from '@/utils/slug';
+import PortfolioQRCode from '@/components/user/PortfolioQRCode';
 
 interface PagePubliqueCardProps {
   user: {
     id_user: number;
     prenom?: unknown;
     nom?: unknown;
-    profil_public?: boolean;
     email_public?: boolean;
     telephone_public?: boolean;
   };
 }
 
-type Setting = 'profil_public' | 'email_public' | 'telephone_public';
+type Setting = 'email_public' | 'telephone_public';
 // Noms attendus par l'API /users/privacy
 const API_FIELD: Record<Setting, string> = {
-  profil_public: 'profil_public',
   email_public: 'afficher_email',
   telephone_public: 'afficher_telephone',
 };
@@ -39,7 +39,6 @@ const PagePubliqueCard: React.FC<PagePubliqueCardProps> = ({ user }) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [values, setValues] = useState<Record<Setting, boolean>>({
-    profil_public: user.profil_public !== false,
     email_public: !!user.email_public,
     telephone_public: !!user.telephone_public,
   });
@@ -62,10 +61,9 @@ const PagePubliqueCard: React.FC<PagePubliqueCardProps> = ({ user }) => {
     }
   };
 
-  const rows: Array<{ key: Setting; label: string; hint: string; disabled?: boolean }> = [
-    { key: 'profil_public', label: t('publicPage.visible', 'Page publique visible'), hint: t('publicPage.visibleHint', 'Si désactivé, vous seul voyez votre page ; elle disparaît des recherches.') },
-    { key: 'email_public', label: t('publicPage.showEmail', 'Afficher mon e-mail'), hint: t('publicPage.showEmailHint', 'Les visiteurs peuvent vous écrire directement.'), disabled: !values.profil_public },
-    { key: 'telephone_public', label: t('publicPage.showPhone', 'Afficher mon téléphone'), hint: t('publicPage.showPhoneHint', 'Les visiteurs peuvent vous appeler.'), disabled: !values.profil_public },
+  const rows: Array<{ key: Setting; label: string; hint: string }> = [
+    { key: 'email_public', label: t('publicPage.showEmail', 'Afficher mon e-mail'), hint: t('publicPage.showEmailHint', 'Les visiteurs peuvent vous écrire directement.') },
+    { key: 'telephone_public', label: t('publicPage.showPhone', 'Afficher mon téléphone'), hint: t('publicPage.showPhoneHint', 'Les visiteurs peuvent vous appeler.') },
   ];
 
   return (
@@ -82,8 +80,14 @@ const PagePubliqueCard: React.FC<PagePubliqueCardProps> = ({ user }) => {
           </Link>
         </Button>
       </div>
+      {/* QR code du portfolio */}
+      <div className="mb-6 rounded-lg border p-4">
+        <h4 className="font-medium mb-3">{t('qrcode.title', 'Mon QR code')}</h4>
+        <PortfolioQRCode userId={user.id_user} name={`${text(user.prenom)} ${text(user.nom)}`.trim()} />
+      </div>
+
       <ul className="space-y-4">
-        {rows.map(({ key, label, hint, disabled }) => (
+        {rows.map(({ key, label, hint }) => (
           <li key={key} className="flex items-start justify-between gap-4">
             <div>
               <label htmlFor={`page-publique-${key}`} className="font-medium">{label}</label>
@@ -92,7 +96,7 @@ const PagePubliqueCard: React.FC<PagePubliqueCardProps> = ({ user }) => {
             <Switch
               id={`page-publique-${key}`}
               checked={values[key]}
-              disabled={disabled || saving === key}
+              disabled={saving === key}
               aria-describedby={`page-publique-${key}-aide`}
               onCheckedChange={(checked) => update(key, checked)}
             />

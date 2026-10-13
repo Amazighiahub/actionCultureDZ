@@ -7,7 +7,9 @@ import React, { useEffect, useMemo } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { MapPin, Mail, Phone, Pencil, BookOpen, FileText, Hammer, CalendarDays, Briefcase, UserX, EyeOff } from 'lucide-react';
+import { MapPin, Mail, Phone, Pencil, BookOpen, FileText, Hammer, CalendarDays, Briefcase, UserX, QrCode } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import PortfolioQRCode from '@/components/user/PortfolioQRCode';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import SEOHead, { SITE_URL } from '@/components/SEOHead';
@@ -50,7 +52,6 @@ interface Portfolio {
     reseaux_sociaux?: SocialLinksValue;
     email?: string | null;
     telephone?: string | null;
-    profil_public?: boolean;
     TypeUser?: { nom_type: string };
     Commune?: { nom: string; Daira?: { nom: string; Wilaya?: { nom: string } } } | null;
   };
@@ -204,15 +205,6 @@ const ProfessionnelPortfolio: React.FC = () => {
       <Header />
 
       <main id="main" className="container pt-24 pb-16 space-y-10">
-        {/* Profil privé : seul le propriétaire voit cette page */}
-        {isOwner && profil.profil_public === false && (
-          <div role="status" className="flex flex-wrap items-center gap-3 rounded-lg border border-amber-300 bg-amber-50 p-4 text-amber-900 dark:bg-amber-950 dark:text-amber-100">
-            <EyeOff className="h-5 w-5 shrink-0" aria-hidden="true" />
-            <p className="flex-1 text-sm">{t('portfolio.privateNotice', 'Votre profil est privé : vous seul voyez cette page. Rendez-le public pour la partager.')}</p>
-            <Button asChild size="sm" variant="outline"><Link to="/dashboard-user">{t('portfolio.makePublic', 'Rendre public')}</Link></Button>
-          </div>
-        )}
-
         {/* En-tête du profil */}
         <section className="flex flex-col gap-6 md:flex-row md:items-start">
           <Avatar className="h-28 w-28 shrink-0 text-2xl">
@@ -248,7 +240,20 @@ const ProfessionnelPortfolio: React.FC = () => {
               )}
             </div>
             <div className="flex flex-wrap items-center gap-3 pt-2">
-              <ShareButtons url={pageUrl} title={fullName} full={isOwner && profil.profil_public !== false} />
+              <ShareButtons url={pageUrl} title={fullName} full={isOwner} />
+              {isOwner && (
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <QrCode className="h-4 w-4 me-2" aria-hidden="true" />{t('qrcode.button', 'QR code')}
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-xl">
+                    <DialogHeader><DialogTitle>{t('qrcode.title', 'Mon QR code')}</DialogTitle></DialogHeader>
+                    <PortfolioQRCode userId={profil.id_user} name={fullName} />
+                  </DialogContent>
+                </Dialog>
+              )}
               {isOwner && (
                 <Button asChild variant="secondary" size="sm">
                   <Link to="/dashboard-user"><Pencil className="h-4 w-4 me-2" aria-hidden="true" />{t('portfolio.edit', 'Modifier mon profil')}</Link>

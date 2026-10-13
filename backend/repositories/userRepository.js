@@ -105,15 +105,25 @@ class UserRepository extends BaseRepository {
   }
 
   /**
+   * Professionnel validé (compte actif) : identité minimale, ou null.
+   * Sert au QR code du portfolio.
+   */
+  async findPublicProfessional(userId) {
+    return this.model.findOne({
+      where: { id_user: userId, statut: 'actif', id_type_user: { [Op.in]: PROFESSIONAL_TYPE_IDS } },
+      attributes: ['id_user', 'nom', 'prenom'],
+      raw: true
+    });
+  }
+
+  /**
    * Portfolio public d'un professionnel : profil + contenus PUBLIÉS uniquement.
-   * Renvoie null si le compte n'est pas un professionnel actif à profil public
-   * (visiteur, compte en attente, suspendu, profil privé, administrateur).
-   * Le propriétaire voit sa propre page même si son profil est privé (includePrivate).
+   * Tout professionnel validé (compte actif) a un portfolio public. Renvoie null pour
+   * un visiteur, un compte en attente ou suspendu, ou un administrateur.
    * @param {number} userId
-   * @param {{ includePrivate?: boolean }} [options]
    * @returns {Promise<object|null>}
    */
-  async findPublicPortfolio(userId, { includePrivate = false } = {}) {
+  async findPublicPortfolio(userId) {
     const { Commune, Daira, Wilaya, TypeUser, Oeuvre, OeuvreUser, Media, TypeOeuvre, Artisanat, Evenement, Service } = this.models;
     const LIMIT = 60;
 
@@ -121,10 +131,9 @@ class UserRepository extends BaseRepository {
       where: {
         id_user: userId,
         statut: 'actif',
-        ...(includePrivate ? {} : { profil_public: true }),
         id_type_user: { [Op.in]: PROFESSIONAL_TYPE_IDS }
       },
-      attributes: [...PUBLIC_USER_PROFILE_ATTRIBUTES, 'profil_public'],
+      attributes: PUBLIC_USER_PROFILE_ATTRIBUTES,
       include: [
         ...(TypeUser ? [{ model: TypeUser, as: 'TypeUser', attributes: ['id_type_user', 'nom_type'], required: false }] : []),
         ...(Commune ? [{

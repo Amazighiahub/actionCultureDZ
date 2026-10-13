@@ -42,7 +42,7 @@ describe('GET /sitemap.xml', () => {
     expect(res.text).not.toContain('/auth');
     // Portfolios : adresse lisible, professionnels actifs à profil public uniquement
     expect(res.text).toContain('<loc>https://taladz.com/professionnels/17-amina-benali</loc>');
-    expect(calls.User[0].where).toMatchObject({ statut: 'actif', profil_public: true });
+    expect(calls.User[0].where).toMatchObject({ statut: 'actif' });
 
     // Événements : statuts publics réels (plus le statut inexistant "a_venir")
     expect(calls.Evenement[0].where.statut).toEqual(['publie', 'planifie', 'en_cours', 'termine']);

@@ -4186,7 +4186,14 @@
     "downloading": "Downloading...",
     "success": "QR Code downloaded",
     "checkDownloads": "Check your downloads",
-    "downloadError": "Unable to download the QR Code"
+    "downloadError": "Unable to download the QR Code",
+    "title": "My QR code",
+    "error": "QR code unavailable at the moment.",
+    "alt": "QR code for {{name}}’s portfolio",
+    "hint": "Scanned with a phone, it opens your portfolio. Add it to your business cards, posters or stand.",
+    "downloadPng": "Download (PNG)",
+    "downloadSvg": "For printing (SVG)",
+    "button": "QR code"
   },
   "rating": {
     "value": "Rating: {{value}} out of {{max}}",
@@ -4222,13 +4229,9 @@
     "edit": "Edit my profile",
     "bio": "Biography",
     "works": "Work",
-    "empty": "No published content yet.",
-    "privateNotice": "Your profile is private: only you can see this page. Make it public to share it.",
-    "makePublic": "Make public"
+    "empty": "No published content yet."
   },
   "publicPage": {
-    "visible": "Public page visible",
-    "visibleHint": "If turned off, only you can see your page; it no longer appears in searches.",
     "showEmail": "Show my email",
     "showEmailHint": "Visitors can email you directly.",
     "showPhone": "Show my phone number",

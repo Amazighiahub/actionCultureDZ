@@ -4186,7 +4186,14 @@
     "downloading": "Téléchargement...",
     "success": "QR Code téléchargé",
     "checkDownloads": "Vérifiez vos téléchargements",
-    "downloadError": "Impossible de télécharger le QR Code"
+    "downloadError": "Impossible de télécharger le QR Code",
+    "title": "Mon QR code",
+    "error": "QR code indisponible pour le moment.",
+    "alt": "QR code du portfolio de {{name}}",
+    "hint": "Scanné avec un téléphone, il ouvre votre portfolio. Ajoutez-le à vos cartes de visite, affiches ou à votre stand.",
+    "downloadPng": "Télécharger (PNG)",
+    "downloadSvg": "Pour impression (SVG)",
+    "button": "QR code"
   },
   "rating": {
     "value": "Note : {{value}} sur {{max}}",
@@ -4222,13 +4229,9 @@
     "edit": "Modifier mon profil",
     "bio": "Biographie",
     "works": "Réalisations",
-    "empty": "Aucun contenu publié pour le moment.",
-    "privateNotice": "Votre profil est privé : vous seul voyez cette page. Rendez-le public pour la partager.",
-    "makePublic": "Rendre public"
+    "empty": "Aucun contenu publié pour le moment."
   },
   "publicPage": {
-    "visible": "Page publique visible",
-    "visibleHint": "Si désactivé, vous seul voyez votre page ; elle disparaît des recherches.",
     "showEmail": "Afficher mon e-mail",
     "showEmailHint": "Les visiteurs peuvent vous écrire directement.",
     "showPhone": "Afficher mon téléphone",
