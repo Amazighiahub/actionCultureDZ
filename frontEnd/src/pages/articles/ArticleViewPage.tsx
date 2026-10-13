@@ -760,18 +760,18 @@ const ArticleViewPage: React.FC = () => {
               }
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4" />
-                <span>{contentStats.readingTime}{t("articles_articleviewpage.min_lecture")}</span>
+                <span>{contentStats.readingTime} {t("articles_articleviewpage.min_lecture")}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Eye className="h-4 w-4" />
-                <span>{contentStats.wordCount}{t("articles_articleviewpage.mots")}</span>
+                <span>{contentStats.wordCount} {t("articles_articleviewpage.mots")}</span>
               </div>
             </div>
 
             {/* Source/Journal */}
             {(articleHelpers.getSource(articleData) || articleHelpers.getJournal(articleData)) &&
             <div className="pt-4 border-t">
-                <p className="text-sm text-muted-foreground">{t("articles_articleviewpage.publi_dans")}
+                <p className="text-sm text-muted-foreground">{t("articles_articleviewpage.publi_dans")}{' '}
                 <span className="font-medium text-foreground">
                     {articleHelpers.getJournal(articleData) || articleHelpers.getSource(articleData)}
                   </span>

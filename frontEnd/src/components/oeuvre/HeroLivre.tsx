@@ -207,15 +207,16 @@ const HeroLivre: React.FC<HeroLivreProps> = ({
               <RotateCcw className="h-4 w-4" />
               {isFlipped ? t('works.viewCoverBook', 'Voir la couverture') : t('works.viewSummary', 'Voir le résumé au dos')}
             </p>
-          </div>
 
-          {/* Actions sous le livre */}
-          <div className="flex gap-2 mt-6 justify-center lg:justify-start">
-            <Button size="lg" onClick={onToggleFavorite} disabled={favoriteLoading} variant="favorite" data-active={isFavorite}>
-              <Heart className={cn("h-5 w-5 mr-2", isFavorite && "fill-current")} aria-hidden="true" />
-              {isFavorite ? t('works.removeFromFavorites', 'Retirer des favoris') : t('works.actions.addToFavorites', 'Ajouter aux favoris')}
-            </Button>
-            {shareButton}
+            {/* Actions sous le livre (dans la colonne du livre : sinon elles formaient une
+                colonne étroite à part et repoussaient les informations sous la couverture) */}
+            <div className="flex flex-wrap gap-2 mt-6 justify-center">
+              <Button size="lg" className="shrink-0" onClick={onToggleFavorite} disabled={favoriteLoading} variant="favorite" data-active={isFavorite}>
+                <Heart className={cn("h-5 w-5 me-2", isFavorite && "fill-current")} aria-hidden="true" />
+                {isFavorite ? t('works.removeFromFavorites', 'Retirer des favoris') : t('works.actions.addToFavorites', 'Ajouter aux favoris')}
+              </Button>
+              {shareButton}
+            </div>
           </div>
 
           {/* INFORMATIONS DU LIVRE (DROITE) */}
