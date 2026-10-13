@@ -18,6 +18,8 @@ import type { Organisation } from '@/types/models/organisation.types';
 import type { User } from '@/types/models/user.types';
 import { safeExternalUrl } from '@/utils/safeUrl';
 import SocialLinks, { type SocialLinksValue } from '@/components/shared/SocialLinks';
+import { Link } from 'react-router-dom';
+import { professionnelPath } from '@/utils/slug';
 
 // Type unifié pour les organisateurs (peut être User ou Organisation)
 interface Organizer {
@@ -145,7 +147,17 @@ const OrganizerCard: React.FC<OrganizerCardProps> = ({ organizer, variant = 'def
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
               <div>
-                <h4 className="font-semibold">{displayName}</h4>
+                <h4 className="font-semibold">
+                  {organizer.type === 'user' ? (
+                    // Organisateur : son nom mène à son portfolio public
+                    <Link
+                      to={professionnelPath(organizer.id, td(organizer.prenom), td(organizer.nom))}
+                      className="hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+                    >
+                      {displayName}
+                    </Link>
+                  ) : displayName}
+                </h4>
                 
                 {organizer.type === 'user' && organizer.entreprise && (
                   <p className="text-sm text-muted-foreground">

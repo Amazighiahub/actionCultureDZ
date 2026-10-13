@@ -274,6 +274,23 @@ class UserProfileController extends BaseController {
     }
   }
 
+  /**
+   * GET /users/professionals/:id/portfolio : page publique d'un professionnel
+   * (profil, œuvres, artisanat, événements, services publiés). 404 si le profil n'est pas public.
+   */
+  async getPortfolio(req, res) {
+    try {
+      const data = await this.userService.getPublicPortfolio(parseInt(req.params.id, 10));
+      if (!data) {
+        return res.status(404).json({ success: false, error: req.t('common.notFound') });
+      }
+      res.set('Cache-Control', 'public, max-age=120, stale-while-revalidate=30');
+      res.json({ success: true, data: translateDeep(data, req.lang) });
+    } catch (error) {
+      this._handleError(res, error);
+    }
+  }
+
   async getProfessionals(req, res) {
     try {
       const { page, limit } = this._paginate(req);

@@ -36,6 +36,7 @@ const Oeuvres = React.lazy(() => import('./pages/Oeuvres'));
 const OeuvreDetail = React.lazy(() => import('./pages/oeuvreDetail/OeuvreDetailPage'));
 const Artisanat = React.lazy(() => import('./pages/Artisanat'));
 const ArtisanatDetail = React.lazy(() => import('./pages/ArtisanatDetail'));
+const ProfessionnelPortfolio = React.lazy(() => import('./pages/ProfessionnelPortfolio'));
 const APropos = React.lazy(() => import('./pages/APropos'));
 const ArticleViewPage = React.lazy(() => import('./pages/articles/ArticleViewPage'));
 
@@ -184,6 +185,7 @@ const App = () => (
             <Route path="/oeuvres/:id" element={<OeuvreDetail />} />
             <Route path="/artisanat" element={<Artisanat />} />
             <Route path="/artisanat/:id" element={<ErrorBoundary><ArtisanatDetail /></ErrorBoundary>} />
+            <Route path="/professionnels/:id" element={<ErrorBoundary><ProfessionnelPortfolio /></ErrorBoundary>} />
             <Route path="/a-propos" element={<ErrorBoundary><APropos /></ErrorBoundary>} />
             <Route path="/auth" element={<Auth />} />
             {/* Redirects SEO : anciennes URLs PascalCase → lowercase */}

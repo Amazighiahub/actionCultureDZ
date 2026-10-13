@@ -4,6 +4,8 @@
 const express = require('express');
 const { Op } = require('sequelize');
 const logger = require('../utils/logger');
+const { professionnelPath } = require('../utils/slug');
+const { PROFESSIONAL_TYPE_IDS } = require('../constants/publicAttributes');
 
 // Une rubrique lente ou en erreur ne doit jamais bloquer tout le sitemap (sinon 504)
 const QUERY_TIMEOUT_MS = 8000;
@@ -70,7 +72,7 @@ const initSitemapRoutes = (models) => {
       // 2-6. Toutes les entités en parallèle
       // ══════════════════════════════════════════
       const SITEMAP_LIMIT = 50000;
-      const [oeuvres, evenements, lieux, artisanats, articles] = await Promise.all([
+      const [oeuvres, evenements, lieux, artisanats, articles, professionnels] = await Promise.all([
         // Articles (types 4 et 5) exclus : ils ont leur propre adresse /articles/:id
         models.Oeuvre ? safeQuery('oeuvres', () => models.Oeuvre.findAll({
           where: { statut: 'publie', id_type_oeuvre: { [Op.notIn]: [4, 5] } },
@@ -108,6 +110,14 @@ const initSitemapRoutes = (models) => {
           attributes: ['id_oeuvre', 'date_modification'],
           order: [['date_modification', 'DESC']],
           limit: SITEMAP_LIMIT, raw: true
+        })) : [],
+
+        // Portfolios publics : professionnels actifs à profil public
+        models.User ? safeQuery('professionnels', () => models.User.findAll({
+          where: { statut: 'actif', profil_public: true, id_type_user: { [Op.in]: PROFESSIONAL_TYPE_IDS } },
+          attributes: ['id_user', 'nom', 'prenom', 'date_modification'],
+          order: [['date_modification', 'DESC']],
+          limit: SITEMAP_LIMIT, raw: true
         })) : []
       ]);
 
@@ -116,6 +126,7 @@ const initSitemapRoutes = (models) => {
       lieux.forEach(l => { urls += urlBlock(`/patrimoine/${l.id_lieu}`, 'monthly', '0.7', l.updatedAt); });
       artisanats.forEach(a => { urls += urlBlock(`/artisanat/${a.id_artisanat}`, 'weekly', '0.7', a['Oeuvre.date_modification']); });
       articles.forEach(a => { urls += urlBlock(`/articles/${a.id_oeuvre}`, 'weekly', '0.7', a.date_modification); });
+      professionnels.forEach(u => { urls += urlBlock(professionnelPath(u.id_user, u.prenom, u.nom), 'weekly', '0.6', u.date_modification); });
 
       // ══════════════════════════════════════════
       // Assembler le XML final

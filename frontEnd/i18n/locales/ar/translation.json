@@ -444,7 +444,8 @@
     "notProvided": "غير مُدرج",
     "unknown": "غير معروف",
     "sortBy": "ترتيب حسب",
-    "photo": "صورة"
+    "photo": "صورة",
+    "backToHome": "العودة إلى الصفحة الرئيسية"
   },
   "contributors": {
     "addedCount_one": "تمت إضافة مساهم واحد",
@@ -3711,7 +3712,16 @@
       "phoneInvalid": "رقم هاتف غير صالح",
       "submitFailed": "خطأ أثناء الإرسال"
     },
-    "editTitle": "تعديل خدمتي"
+    "editTitle": "تعديل خدمتي",
+    "types": {
+      "restaurant": "مطعم",
+      "hotel": "فندق",
+      "guide": "مرشد",
+      "transport": "نقل",
+      "artisanat": "حرف تقليدية",
+      "location": "كراء",
+      "autre": "أخرى"
+    }
   },
   "organisations": {
     "create": {
@@ -4293,5 +4303,26 @@
     "socialInvalid": "رابط {{network}} غير صالح (مثال: {{example}})",
     "socialTitle": "الموقع الإلكتروني وشبكات التواصل الاجتماعي",
     "socialHint": "تظهر هذه الروابط في صفحتك العامة (الفعاليات التي تنظمها، الملف الشخصي)."
+  },
+  "share": {
+    "onMyPage": "شارك في صفحتي:",
+    "on": "شارك على {{network}}",
+    "copied": "تم نسخ الرابط"
+  },
+  "portfolio": {
+    "notFound": "الملف الشخصي غير موجود",
+    "notFoundHint": "هذا الملف غير موجود أو غير عام.",
+    "tabs": {
+      "works": "الأعمال",
+      "articles": "المقالات",
+      "crafts": "الحرف التقليدية",
+      "events": "الفعاليات",
+      "services": "الخدمات"
+    },
+    "seoDescription": "{{name}} — {{type}} على Tala DZ",
+    "edit": "تعديل ملفي الشخصي",
+    "bio": "السيرة الذاتية",
+    "works": "الإنجازات",
+    "empty": "لا يوجد محتوى منشور حاليًا."
   }
 }

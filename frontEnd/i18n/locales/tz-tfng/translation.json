@@ -443,7 +443,8 @@
     "notProvided": "ⵓⵔ ⵢⴻⵜⵜⵡⴰⵞⵞⴰⵔ ⴰⵔⴰ",
     "unknown": "ⴰⵔⵓⵙⵙⵉⵏ",
     "sortBy": "ⵙⵎⵉⵣⵣⵡⴻⵔ ⵙ",
-    "photo": "ⵜⴰⵡⵍⴰⴼⵜ"
+    "photo": "ⵜⴰⵡⵍⴰⴼⵜ",
+    "backToHome": "ⵓⵖⴰⵍ ⵖⴻⵔ ⵓⵙⴻⴱⵜⴻⵔ ⴰⴳⴻⵊⴷⴰⵏ"
   },
   "contributors": {
     "addedCount_one": "{{count}} ⴰⵎⵓⵜⵜⴽ ⵉⵜⵜⵡⴰⵔⵏⴰ",
@@ -3626,7 +3627,16 @@
       "phoneInvalid": "ⵓⵟⵟⵓⵏ ⵏ ⵜⵉⵍⵉⵖⵔⵉ ⴷ ⴰⵔⴰⵎⴻⵖⵜⵓ",
       "submitFailed": "ⵜⵓⵛⵛⴹⴰ ⴷⴻⴳ ⵜⵓⵣⵏⴰ"
     },
-    "editTitle": "ⵥⵔⴻⴳ ⴰⵎⴻⵥⵍⵓ-ⵉⵡ"
+    "editTitle": "ⵥⵔⴻⴳ ⴰⵎⴻⵥⵍⵓ-ⵉⵡ",
+    "types": {
+      "restaurant": "ⵜⴰⵏⴻⵃⵃⴰⵙⵜ",
+      "hotel": "ⴰⵙⴻⵏⵙⵓ",
+      "guide": "ⴰⵎⵏⵉⵔ",
+      "transport": "ⴰⵙⵉⵡⴻⴹ",
+      "artisanat": "ⵜⴰⵥⵓⵔⵉ ⵏ ⵓⴼⵓⵙ",
+      "location": "ⴰⴽⵔⴰⴹ",
+      "autre": "ⵏⵏⵉⴹⴻⵏ"
+    }
   },
   "organisations": {
     "create": {
@@ -4208,5 +4218,26 @@
     "socialInvalid": "ⴰⵙⴻⵖⵡⴻⵏ {{network}} ⵓⵔ ⵖⴱⵉⵏ ⴰⵔⴰ (ⴰⵎⴻⴷⵢⴰ: {{example}})",
     "socialTitle": "ⴰⵙⵎⴻⵍ ⵡⴻⴱ ⴷ ⵉⵥⴻⴹⵡⴰⵏ ⵉⵏⵎⴻⵜⵜⵉⵢⴻⵏ",
     "socialHint": "ⵉⵙⴻⵖⵡⴰⵏ-ⴰ ⴰⴷ ⴷ-ⴱⴰⵏⴻⵏ ⴷⴻⴳ ⵓⵙⴻⴱⵜⴻⵔ-ⵉⴽ ⴰⵣⴰⵢⴻⵣ (ⵜⵉⴷⵢⴰⵏⵉⵏ ⵉ ⵜⴻⵙⵙⵓⴷⴷⵙⴻⴹ, ⴰⵎⴰⵖⵏⵓ)."
+  },
+  "share": {
+    "onMyPage": "ⴱⴹⵓ ⴷⴻⴳ ⵓⵙⴻⴱⵜⴻⵔ-ⵉⵡ:",
+    "on": "ⴱⴹⵓ ⵖⴻⴼ {{network}}",
+    "copied": "ⴰⵙⴻⵖⵡⴻⵏ ⵢⴻⵜⵜⵡⴰⵏⵖⴻⵍ"
+  },
+  "portfolio": {
+    "notFound": "ⴰⵎⴰⵖⵏⵓ ⵓⵍⴰⵛ-ⵉⵜ",
+    "notFoundHint": "ⴰⵎⴰⵖⵏⵓ-ⴰ ⵓⵍⴰⵛ-ⵉⵜ ⵏⴻⵖ ⵎⴰⵞⵞⵉ ⴷ ⴰⵣⴰⵢⴻⵣ.",
+    "tabs": {
+      "works": "ⵉⵅⴻⴷⴷⵉⵎⴻⵏ",
+      "articles": "ⵉⵎⴰⴳⵔⴰⴷⴻⵏ",
+      "crafts": "ⵜⴰⵥⵓⵔⵉ ⵏ ⵓⴼⵓⵙ",
+      "events": "ⵜⵉⴷⵢⴰⵏⵉⵏ",
+      "services": "ⵉⵎⴻⵥⵍⴰ"
+    },
+    "seoDescription": "{{name}} — {{type}} ⴷⴻⴳ Tala DZ",
+    "edit": "ⵥⵔⴻⴳ ⴰⵎⴰⵖⵏⵓ-ⵉⵡ",
+    "bio": "ⵜⴰⵎⴻⴷⴷⵓⵔⵜ",
+    "works": "ⵉⵅⴻⴷⴷⵉⵎⴻⵏ-ⵉⵙ",
+    "empty": "ⵓⵍⴰⵛ ⴰⴳⴱⵓⵔ ⵢⴻⵜⵜⵡⴰⵙⵓⴼⴼⵖⴻⵏ ⴰⴽⴽⴰ ⵜⵓⵔⴰ."
   }
 }

@@ -11,6 +11,8 @@ import { Users, Award, Star, ExternalLink } from 'lucide-react';
 import { LazyImage, EmptyState } from '@/components/shared';
 import { cn } from '@/lib/Utils';
 import { getLocalizedText } from '@/utils/getLocalizedText';
+import { Link } from 'react-router-dom';
+import { professionnelPath } from '@/utils/slug';
 
 interface Contributeur {
   id_user?: number;
@@ -66,6 +68,16 @@ const ContributeurCard: React.FC<ContributeurCardProps> = ({ contributeur, featu
     ? `${getLocalizedText(contributeur.prenom)} ${getLocalizedText(contributeur.nom)}`
     : getLocalizedText(contributeur.nom);
 
+  // Contributeur ayant un compte : son nom mène à son portfolio public
+  const nameNode = contributeur.id_user ? (
+    <Link
+      to={professionnelPath(contributeur.id_user, getLocalizedText(contributeur.prenom), getLocalizedText(contributeur.nom))}
+      className="hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+    >
+      {displayName}
+    </Link>
+  ) : displayName;
+
   const roleLabel = getLocalizedText(contributeur.TypeUser?.nom_type) || getLocalizedText(contributeur.type_user) || contributeur.role;
 
   return (
@@ -88,7 +100,7 @@ const ContributeurCard: React.FC<ContributeurCardProps> = ({ contributeur, featu
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <h4 className="font-semibold text-lg flex items-center gap-2">
-                    {displayName}
+                    {nameNode}
                     {contributeur.role_principal && (
                       <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
                     )}
@@ -133,7 +145,7 @@ const ContributeurCard: React.FC<ContributeurCardProps> = ({ contributeur, featu
             />
             <div className="flex-1 min-w-0">
               <p className="font-medium truncate flex items-center gap-1">
-                {displayName}
+                {nameNode}
                 {contributeur.role_principal && (
                   <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
                 )}

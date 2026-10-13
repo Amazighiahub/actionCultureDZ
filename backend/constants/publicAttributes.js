@@ -41,7 +41,11 @@ function stripPrivateContact(user) {
   return user;
 }
 
+// Types de compte professionnels (2..28) : ni visiteur (1) ni administrateur (29)
+const PROFESSIONAL_TYPE_IDS = Array.from({ length: 27 }, (_, i) => i + 2);
+
 module.exports = {
+  PROFESSIONAL_TYPE_IDS,
   PUBLIC_USER_ATTRIBUTES,
   PUBLIC_ORGANIZER_ATTRIBUTES,
   PUBLIC_USER_PROFILE_ATTRIBUTES,

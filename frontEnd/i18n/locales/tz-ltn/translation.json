@@ -443,7 +443,8 @@
     "notProvided": "Ur yettwaččar ara",
     "unknown": "Arussin",
     "sortBy": "Smizzwer s",
-    "photo": "tawlaft"
+    "photo": "tawlaft",
+    "backToHome": "Uɣal ɣer usebter agejdan"
   },
   "contributors": {
     "addedCount_one": "{{count}} amarag yettwarna",
@@ -3626,7 +3627,16 @@
       "phoneInvalid": "Uṭṭun n tiliɣri d arameɣtu",
       "submitFailed": "Tuccḍa deg tuzna"
     },
-    "editTitle": "Ẓreg ameẓlu-iw"
+    "editTitle": "Ẓreg ameẓlu-iw",
+    "types": {
+      "restaurant": "Taneḥḥast",
+      "hotel": "Asensu",
+      "guide": "Amnir",
+      "transport": "Asiweḍ",
+      "artisanat": "Taẓuri n ufus",
+      "location": "Akraḍ",
+      "autre": "Nniḍen"
+    }
   },
   "organisations": {
     "create": {
@@ -4208,5 +4218,26 @@
     "socialInvalid": "Aseɣwen {{network}} ur ɣbin ara (amedya: {{example}})",
     "socialTitle": "Asmel web d iẓeḍwan inmettiyen",
     "socialHint": "Iseɣwan-a ad d-banen deg usebter-ik azayez (tidyanin i tessuddseḍ, amaɣnu)."
+  },
+  "share": {
+    "onMyPage": "Bḍu deg usebter-iw:",
+    "on": "Bḍu ɣef {{network}}",
+    "copied": "Aseɣwen yettwanɣel"
+  },
+  "portfolio": {
+    "notFound": "Amaɣnu ulac-it",
+    "notFoundHint": "Amaɣnu-a ulac-it neɣ mačči d azayez.",
+    "tabs": {
+      "works": "Ixeddimen",
+      "articles": "Imagraden",
+      "crafts": "Taẓuri n ufus",
+      "events": "Tidyanin",
+      "services": "Imeẓla"
+    },
+    "seoDescription": "{{name}} — {{type}} deg Tala DZ",
+    "edit": "Ẓreg amaɣnu-iw",
+    "bio": "Tameddurt",
+    "works": "Ixeddimen-is",
+    "empty": "Ulac agbur yettwasuffɣen akka tura."
   }
 }

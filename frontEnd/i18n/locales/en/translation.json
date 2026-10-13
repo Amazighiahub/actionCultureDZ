@@ -443,7 +443,8 @@
     "notProvided": "Not provided",
     "unknown": "Unknown",
     "sortBy": "Sort by",
-    "photo": "photo"
+    "photo": "photo",
+    "backToHome": "Back to home"
   },
   "contributors": {
     "addedCount_one": "{{count}} contributor added",
@@ -3609,7 +3610,16 @@
       "phoneInvalid": "Invalid phone number",
       "submitFailed": "Error during submission"
     },
-    "editTitle": "Edit my service"
+    "editTitle": "Edit my service",
+    "types": {
+      "restaurant": "Restaurant",
+      "hotel": "Hotel",
+      "guide": "Guide",
+      "transport": "Transport",
+      "artisanat": "Crafts",
+      "location": "Rental",
+      "autre": "Other"
+    }
   },
   "organisations": {
     "create": {
@@ -4191,5 +4201,26 @@
     "socialInvalid": "Invalid {{network}} link (e.g. {{example}})",
     "socialTitle": "Website and social media",
     "socialHint": "These links appear on your public page (events you organise, profile)."
+  },
+  "share": {
+    "onMyPage": "Share on my page:",
+    "on": "Share on {{network}}",
+    "copied": "Link copied"
+  },
+  "portfolio": {
+    "notFound": "Profile not found",
+    "notFoundHint": "This profile does not exist or is not public.",
+    "tabs": {
+      "works": "Works",
+      "articles": "Articles",
+      "crafts": "Crafts",
+      "events": "Events",
+      "services": "Services"
+    },
+    "seoDescription": "{{name}} — {{type}} on Tala DZ",
+    "edit": "Edit my profile",
+    "bio": "Biography",
+    "works": "Work",
+    "empty": "No published content yet."
   }
 }
