@@ -66,6 +66,10 @@ interface CommentItemProps {
   onReport?: (id: number) => void;
 }
 
+/** Note d'un avis (le serveur la renvoie dans note_qualite) ; 0 si aucune */
+const noteOf = (c: { note?: number | null; note_qualite?: number | null }): number =>
+  Number(c.note_qualite ?? c.note) || 0;
+
 const CommentItem: React.FC<CommentItemProps> = ({
   comment,
   onLike,
@@ -101,8 +105,8 @@ const CommentItem: React.FC<CommentItemProps> = ({
                 {user ? `${td(user.prenom)} ${td(user.nom)}` : t('common.anonymous', 'Anonyme')}
               </span>
               
-              {comment.note && (
-                <StarRating value={comment.note} readonly size="sm" />
+              {noteOf(comment) > 0 && (
+                <StarRating value={noteOf(comment)} readonly size="sm" />
               )}
             </div>
             
@@ -216,16 +220,18 @@ const EventComments: React.FC<EventCommentsProps> = ({
   };
 
   // Calculer la moyenne des notes
-  const averageRating = comments.length > 0
-    ? comments.reduce((acc, c) => acc + (c.note || 0), 0) / comments.filter(c => c.note).length
+  // (protégé : sans aucune note, la division donnait NaN)
+  const rated = comments.filter(c => noteOf(c) > 0);
+  const averageRating = rated.length > 0
+    ? rated.reduce((acc, c) => acc + noteOf(c), 0) / rated.length
     : 0;
 
   // Distribution des notes
   const ratingDistribution = [5, 4, 3, 2, 1].map((star) => ({
     star,
-    count: comments.filter(c => c.note === star).length,
+    count: comments.filter(c => noteOf(c) === star).length,
     percentage: comments.length > 0 
-      ? (comments.filter(c => c.note === star).length / comments.length) * 100
+      ? (comments.filter(c => noteOf(c) === star).length / comments.length) * 100
       : 0
   }));
 

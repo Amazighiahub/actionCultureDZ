@@ -153,8 +153,10 @@ class ArtisanatService extends BaseService<Artisanat, CreateArtisanatData, Updat
     artisanatId: number, 
     files: File[]
   ): Promise<ApiResponse<MediaArtisanat[]>> {
-    // TODO: Implémenter l'upload des médias
-    return { success: false, error: 'Non implémenté' };
+    // POST /artisanat/:id/medias (champ « medias », 10 fichiers max) ; délai long pour les vidéos
+    const formData = new FormData();
+    files.forEach((file) => formData.append('medias', file));
+    return httpClient.postFormData<MediaArtisanat[]>(`/artisanat/${artisanatId}/medias`, formData);
   }
 
   // Œuvres d'un artisan

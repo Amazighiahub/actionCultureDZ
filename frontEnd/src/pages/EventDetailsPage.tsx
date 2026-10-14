@@ -313,7 +313,7 @@ const EventDetailsPage: React.FC = () => {
           <div className="mt-12">
             <ErrorBoundary>
               <Suspense fallback={<LoadingSkeleton type="card" count={3} />}>
-                <RelatedEvents eventId={event.id_evenement} />
+                <RelatedEvents eventId={event.id_evenement} typeEvenementId={event.id_type_evenement} />
               </Suspense>
             </ErrorBoundary>
           </div>

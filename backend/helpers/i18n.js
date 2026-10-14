@@ -151,9 +151,12 @@ const mergeTranslations = (existing, updates) => {
   // Filtrer les clés dangereuses (prototype pollution)
   const safeUpdates = {};
   for (const key of Object.keys(updatesObj)) {
-    if (key !== '__proto__' && key !== 'constructor' && key !== 'prototype') {
-      safeUpdates[key] = updatesObj[key];
-    }
+    if (key === '__proto__' || key === 'constructor' || key === 'prototype') continue;
+    // Une langue laissée vide ne remplace pas la traduction existante (un formulaire qui
+    // n'envoie que la langue saisie effaçait sinon les autres)
+    const value = updatesObj[key];
+    if (value === undefined || value === null || (typeof value === 'string' && value.trim() === '')) continue;
+    safeUpdates[key] = value;
   }
 
   return { ...existingObj, ...safeUpdates };

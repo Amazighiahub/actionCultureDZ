@@ -16,7 +16,6 @@ import {
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { patrimoineService } from '@/services/patrimoine.service';
-import { useToast } from '@/hooks/use-toast';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import SEOHead from '@/components/SEOHead';
 
@@ -97,7 +96,6 @@ interface SitePatrimoine {
 
 const Patrimoine = () => {
   const { t, i18n } = useTranslation();
-  const { toast } = useToast();
   const { isAuthenticated } = useAuth();
   const lang = i18n.language || 'fr';
 
@@ -397,19 +395,6 @@ const Patrimoine = () => {
                           <Eye className="h-4 w-4 mr-2" aria-hidden="true" />
                           {t('sections.heritage.discover', 'Découvrir')}
                         </Link>
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        aria-label={`${t('patrimoine.qrCode', 'QR Code')} : ${translate(site.nom, lang)}`}
-                        onClick={() => {
-                          toast({
-                            title: t('qrcode.generating', 'Génération du QR Code'),
-                            description: t('qrcode.pleaseWait', 'Veuillez patienter...')
-                          });
-                        }}
-                      >
-                        <QrCode className="h-4 w-4" aria-hidden="true" />
                       </Button>
                     </div>
                   </CardContent>

@@ -24,6 +24,7 @@ export interface RegisterVisitorData {
 export interface RegisterProfessionalData extends RegisterVisitorData {
   photo_url?: string;
   biographie: string;
+  site_web?: string;
   id_type_user: number;
 }
 

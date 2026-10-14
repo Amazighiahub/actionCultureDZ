@@ -350,7 +350,9 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
         wilaya_residence: registerForm.wilaya_residence !== null ? Number(registerForm.wilaya_residence) : null,
         ...(registerForm.id_commune ? { id_commune: registerForm.id_commune } : {}),
         accepte_conditions: registerForm.accepte_conditions,
-        accepte_newsletter: registerForm.accepte_newsletter || false
+        accepte_newsletter: registerForm.accepte_newsletter || false,
+        // Saisi et validé mais jamais envoyé auparavant
+        ...(registerForm.telephone.trim() ? { telephone: registerForm.telephone.replace(/\s/g, '') } : {})
       };
       
       authLogger.debug('ÉTAPE 2 - Inscription avec les données complètes');
@@ -373,6 +375,8 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
           ...baseData,
           photo_url: photoUrl || '', // Inclure la photo_url dans l'inscription
           biographie: registerForm.biographie.trim(),
+          // Portfolio en ligne = site web du profil (affiché sur la page publique)
+          ...(registerForm.portfolio.trim() ? { site_web: registerForm.portfolio.trim() } : {}),
           id_type_user: SECTEUR_TYPE_USER_MAP[registerForm.secteur] || 2
         };
 
@@ -840,7 +844,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
                                   className="w-full h-full object-cover rounded-lg border-2 border-border"
                                   onError={(e) => {
                                     console.error('Erreur chargement aperçu photo');
-                                    e.currentTarget.src = '/images/default-avatar.png';
+                                    e.currentTarget.src = '/images/default-avatar.svg';
                                   }}
                                 />
                                 <button

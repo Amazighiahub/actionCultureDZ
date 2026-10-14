@@ -127,7 +127,8 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
       } as InscriptionConfig);
 
       if (event.accepte_soumissions) {
-        loadMesOeuvres();
+        // Config passée directement : l'état inscriptionConfig n'est pas encore à jour ici
+        loadMesOeuvres(event.config_soumission?.type_oeuvre || []);
       }
     } catch (error) {
       // Silencieux
@@ -136,7 +137,7 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
     }
   };
 
-  const loadMesOeuvres = async () => {
+  const loadMesOeuvres = async (typesAcceptes: string[] = []) => {
     try {
       setOeuvresLoading(true);
       const response = await oeuvreService.getMyOeuvres({ limit: 50 });
@@ -144,8 +145,6 @@ const EventRegistration: React.FC<EventRegistrationProps> = ({
         // Récupérer les œuvres brutes
         const oeuvresRaw = response.data.oeuvres || [];
 
-        // Filtrer selon le type d'œuvre accepté si configuré
-        const typesAcceptes = inscriptionConfig?.config_soumission?.type_oeuvre || [];
 
         if (typesAcceptes.length > 0) {
           // Filtrer les œuvres dont le type correspond aux types acceptés

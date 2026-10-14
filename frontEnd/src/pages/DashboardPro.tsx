@@ -398,7 +398,9 @@ const DashboardPro = () => {
       oeuvre: item?.id_oeuvre,
       evenement: item?.id_evenement,
       patrimoine: item?.id_site || item?.id,
-      service: item?.id || item?.id_service
+      service: item?.id || item?.id_service,
+      // (manquait : la suppression envoyait DELETE /artisanat/undefined)
+      artisanat: item?.id_artisanat || item?.id
     };
     await deleteItem(type, ids[type]);
   };

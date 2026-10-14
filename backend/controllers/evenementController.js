@@ -33,9 +33,11 @@ class EvenementController extends BaseController {
 
   async list(req, res) {
     try {
-      const { upcoming } = req.query;
+      const { upcoming, q, statut } = req.query;
       const { page, limit } = this._paginate(req);
-      const options = { page, limit };
+      // Filtres de la page Événements (ignorés auparavant : recherche et listes déroulantes sans effet)
+      const type = req.query.type_evenement || req.query.type;
+      const options = { page, limit, filters: { q, statut, type } };
 
       let result;
       if (upcoming === 'true') {

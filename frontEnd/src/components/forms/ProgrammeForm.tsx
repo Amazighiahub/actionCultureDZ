@@ -2,7 +2,7 @@
  * ProgrammeForm - Formulaire pour ajouter/modifier un programme d'événement
  * Gère les événements sur plusieurs jours avec horaires, intervenants et options
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -214,11 +214,15 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
   const [newMateriel, setNewMateriel] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Initialiser avec les données existantes
+  // Initialiser avec les données existantes, une seule fois par programme édité : le parent
+  // recrée l'objet à chaque rendu, ce qui écrasait la saisie en cours
+  const appliedInitialData = useRef<string | null>(null);
   useEffect(() => {
-    if (initialData) {
-      setFormData(prev => ({ ...prev, ...initialData }));
-    }
+    if (!initialData) return;
+    const key = JSON.stringify(initialData);
+    if (appliedInitialData.current === key) return;
+    appliedInitialData.current = key;
+    setFormData(prev => ({ ...prev, ...initialData }));
   }, [initialData]);
 
   const handleChange = (field: keyof ProgrammeFormData, value: any) => {
@@ -510,9 +514,10 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
                         </SelectItem>
                       ))
                     ) : (
-                      <SelectItem value="" disabled>
+                      // Pas de SelectItem à valeur vide : interdit par Radix Select (plantage)
+                      <div className="px-2 py-1.5 text-sm text-muted-foreground">
                         {t('programme.form.schedule.noDateAvailable')}
-                      </SelectItem>
+                      </div>
                     )}
                   </SelectContent>
                 </Select>

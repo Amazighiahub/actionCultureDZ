@@ -282,13 +282,23 @@ const AjouterArtisanat: React.FC = () => {
       }
 
       if (response.success) {
-        // Upload medias if any (only for new items or new medias)
-        const itemId = (response.data as { id?: number } | undefined)?.id || editId;
+        // Envoi des photos (le serveur renvoie id_artisanat, pas id)
+        const created = response.data as { id_artisanat?: number; id?: number } | undefined;
+        const itemId = created?.id_artisanat || created?.id || editId;
         if (medias.length > 0 && itemId) {
+          let uploaded = false;
           try {
-            await artisanatService.uploadMedias(itemId, medias);
+            uploaded = !!(await artisanatService.uploadMedias(Number(itemId), medias)).success;
           } catch {
-            // L'artisanat est créé, l'upload des médias a échoué - non bloquant
+            uploaded = false;
+          }
+          if (!uploaded) {
+            // La création a réussi : on le dit, mais sans cacher l'échec des photos
+            toast({
+              title: t('ajouterArtisanat.mediasFailedTitle', 'Photos non envoyées'),
+              description: t('ajouterArtisanat.mediasFailed', "Votre création est enregistrée, mais les photos n'ont pas pu être envoyées. Ajoutez-les depuis votre tableau de bord."),
+              variant: 'destructive',
+            });
           }
         }
 

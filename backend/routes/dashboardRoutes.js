@@ -677,7 +677,8 @@ const initDashboardRoutes = (models) => {
     [
       body('title').notEmpty().withMessage((value, { req }) => req.t('validation.titleRequired')),
       body('message').notEmpty().withMessage((value, { req }) => req.t('validation.messageRequired')),
-      body('target').isIn(['all', 'professionals', 'visitors']).withMessage((value, { req }) => req.t('validation.invalidTarget')),
+      body('target').isIn(['all', 'professionals', 'visitors', 'user']).withMessage((value, { req }) => req.t('validation.invalidTarget')),
+      body('targetUserId').if(body('target').equals('user')).isInt({ min: 1 }).withMessage((value, { req }) => req.t('common.badRequest')),
       body('type').optional().isString().withMessage((value, { req }) => req.t('validation.invalidType')),
       body('sendEmail').optional().isBoolean()
     ],

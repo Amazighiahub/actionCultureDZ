@@ -508,7 +508,8 @@ const DashboardUser = () => {
 // Composant Profil Éditable
 const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ user, t, formatDate }) => {
   const { toast } = useToast();
-  const queryClient = useQueryClient();
+  // Recharge l'utilisateur connecté depuis le serveur après une modification
+  const { refreshUser } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -568,7 +569,7 @@ const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ u
       if (response.success) {
         toast({ title: t('dashboarduser.profileUpdated', 'Profil mis à jour') });
         setEditing(false);
-        queryClient.invalidateQueries({ queryKey: ['user-profile'] });
+        await refreshUser();
       } else {
         toast({ title: t('common.error'), description: response.error, variant: 'destructive' });
       }
@@ -582,23 +583,20 @@ const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ u
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      toast({ title: t('common.error'), description: t('upload.fileTooLarge', 'Fichier trop volumineux (max 5 MB)'), variant: 'destructive' });
+    // Même limite que le serveur (images : 10 Mo)
+    if (file.size > 10 * 1024 * 1024) {
+      toast({ title: t('common.error'), description: t('upload.fileTooLarge10', 'Fichier trop volumineux (max 10 Mo)'), variant: 'destructive' });
       return;
     }
     setUploadingPhoto(true);
     try {
       const formData = new FormData();
       formData.append('image', file);
-      const response = await fetch('/api/upload/profile-photo', {
-        method: 'POST',
-        body: formData,
-        credentials: 'include',
-      });
-      const data = await response.json();
+      // httpClient : jeton anti-CSRF, renouvellement de session et adresse de l'API (un fetch direct était refusé)
+      const data = await httpClient.upload('/upload/profile-photo', formData);
       if (data.success) {
         toast({ title: t('dashboarduser.photoUpdated', 'Photo mise à jour') });
-        queryClient.invalidateQueries({ queryKey: ['user-profile'] });
+        await refreshUser();
       } else {
         toast({ title: t('common.error'), description: data.error, variant: 'destructive' });
       }

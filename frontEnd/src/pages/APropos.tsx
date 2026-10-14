@@ -11,6 +11,7 @@ import { BookOpen, Users, Globe, Mail, Send, Loader2 } from 'lucide-react';
 import { useTranslation } from "react-i18next";
 import { useToast } from '@/components/ui/use-toast';
 import SEOHead from '@/components/SEOHead';
+import { httpClient } from '@/services/httpClient';
 
 const CONTACT_EMAIL = 'contact@taladz.com';
 
@@ -32,12 +33,8 @@ const APropos = () => {
     }
     setSending(true);
     try {
-      const response = await fetch('/api/contact', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      });
-      const data = await response.json();
+      // httpClient : jeton anti-CSRF exigé par l'API (un fetch direct était refusé : aucun message n'arrivait)
+      const data = await httpClient.post('/contact', formData);
       if (data.success) {
         toast({ title: t('apropos.messageEnvoye', 'Message envoyé'), description: t('apropos.messageEnvoyeDesc', 'Nous avons bien reçu votre message. Nous vous répondrons rapidement.') });
         setFormData({ prenom: '', nom: '', email: '', sujet: '', message: '' });
