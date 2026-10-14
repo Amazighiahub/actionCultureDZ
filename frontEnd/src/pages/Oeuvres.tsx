@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/select';
 import {
   Search, Star, Eye, Heart, ArrowRight, RefreshCw, X,
-  Book, Film, Music, Palette, FileText, Sparkles
+  Book, Film, Music, Palette, FileText, Sparkles, Loader2
 } from 'lucide-react';
 
 // Composants partagés
@@ -232,7 +232,10 @@ const Oeuvres: React.FC = () => {
     loading,
     error,
     stats,
-    loadOeuvres
+    loadOeuvres,
+    loadMore,
+    hasMore,
+    loadingMore
   } = useOeuvres();
 
   // Filtrage local supplémentaire
@@ -422,6 +425,15 @@ const Oeuvres: React.FC = () => {
                   />
                 ))}
               </div>
+
+              {hasMore && (
+                <div className="mt-8 flex justify-center">
+                  <Button variant="outline" size="lg" onClick={() => loadMore()} disabled={loadingMore}>
+                    {loadingMore && <Loader2 className="h-4 w-4 me-2 animate-spin" aria-hidden="true" />}
+                    {t('common.loadMore', 'Voir plus')}
+                  </Button>
+                </div>
+              )}
             </>
           )}
         </ErrorBoundary>
