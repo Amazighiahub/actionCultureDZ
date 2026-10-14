@@ -311,7 +311,7 @@ const HeroLivre: React.FC<HeroLivreProps> = ({
             )}
 
             {/* Vues et Avis */}
-            <div className="flex items-center gap-6 text-muted-foreground">
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-muted-foreground">
               <div className="flex items-center gap-2"><Eye className="h-5 w-5" /><span className="font-medium">{formatNumber(viewCount)}</span><span className="text-sm">{t('works.stats.views', 'vues')}</span></div>
               <div className="flex items-center gap-2"><MessageCircle className="h-5 w-5" /><span className="font-medium">{formatNumber(commentsCount)}</span><span className="text-sm">{t('works.stats.reviews', 'avis')}</span></div>
               {oeuvre.Livre?.nb_pages && (

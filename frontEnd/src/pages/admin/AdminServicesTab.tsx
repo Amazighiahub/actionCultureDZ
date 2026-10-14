@@ -6,6 +6,7 @@ import { getLocalizedText } from '@/utils/getLocalizedText';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -42,6 +43,7 @@ import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 
 const AdminServicesTab: React.FC = () => {
   const { t, i18n } = useTranslation();
+  const { formatPriceRange } = useLocalizedNumber();
   const navigate = useNavigate();
   const currentLang = i18n.language || 'fr';
 
@@ -211,7 +213,7 @@ const AdminServicesTab: React.FC = () => {
                         )}
                         {(service.tarif_min != null || service.tarif) && (
                           <span>
-                            {service.tarif || `${service.tarif_min ?? 0} - ${service.tarif_max ?? '?'} DZD`}
+                            {service.tarif || formatPriceRange(service.tarif_min, service.tarif_max)}
                           </span>
                         )}
                       </div>

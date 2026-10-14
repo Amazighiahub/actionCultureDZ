@@ -176,9 +176,9 @@ const ArticlePreview: React.FC<ArticlePreviewProps> = ({
             <>
               <h1>{formData.titre || 'Sans titre'}</h1>
               {formData.sous_titre && (
-                <p className="lead text-xl text-gray-600 mb-4">{formData.sous_titre}</p>
+                <p className="lead text-xl text-muted-foreground mb-4">{formData.sous_titre}</p>
               )}
-              <p className="lead text-lg text-gray-600 mb-6">{formData.description}</p>
+              <p className="lead text-lg text-muted-foreground mb-6">{formData.description}</p>
               {blocks.map((block, index) => renderPreviewBlock(block, index))}
             </>
           )}

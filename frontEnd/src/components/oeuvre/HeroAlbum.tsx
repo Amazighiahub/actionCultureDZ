@@ -298,7 +298,7 @@ const HeroAlbum: React.FC<HeroAlbumProps> = ({
             </div>
 
             {/* Actions sous la pochette */}
-            <div className="flex gap-2 mt-6 justify-center lg:justify-start">
+            <div className="flex flex-wrap gap-2 mt-6 justify-center lg:justify-start">
               <Button
                 size="lg"
                 onClick={onToggleFavorite}
@@ -455,7 +455,7 @@ const HeroAlbum: React.FC<HeroAlbumProps> = ({
             )}
 
             {/* Vues et Avis */}
-            <div className="flex items-center gap-6 text-muted-foreground">
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-muted-foreground">
               <div className="flex items-center gap-2">
                 <Headphones className="h-5 w-5" />
                 <span className="font-medium">{formatNumber(viewCount)}</span>

@@ -61,6 +61,7 @@ import type { Article, ArticleScientifique } from '@/types/models/oeuvres-specia
 
 // Helpers pour gérer les types d'articles
 import { useTranslation } from "react-i18next";
+import { useShare } from '@/hooks/useShare';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { getLocalizedText } from '@/utils/getLocalizedText';type ArticleData =
 {type: 'article';data: Article;} |
@@ -316,20 +317,8 @@ const ArticleViewPage: React.FC = () => {
     }
   };
 
-  const handleShare = () => {
-    const url = window.location.href;
-    const title = oeuvre?.titre || 'Article';
-
-    if (navigator.share) {
-      navigator.share({ title, url });
-    } else {
-      navigator.clipboard.writeText(url);
-      toast({
-        title: t('common.success', 'Succès'),
-        description: t('article.linkCopied', 'Lien copié !'),
-      });
-    }
-  };
+  const share = useShare();
+  const handleShare = () => share({ title: String(oeuvre?.titre || 'Article') });
 
   const handlePrint = () => {
     window.print();
@@ -665,6 +654,8 @@ const ArticleViewPage: React.FC = () => {
                 size="icon"
                 variant="ghost"
                 onClick={handleToggleFavorite}
+                aria-pressed={isFavorite}
+                aria-label={t("articles_articleviewpage.title_ajouter_aux_favoris")}
                 title={t("articles_articleviewpage.title_ajouter_aux_favoris")}>
                 
                 <Heart className={`h-4 w-4 ${isFavorite ? 'fill-red-500 text-red-500' : ''}`} />
@@ -945,7 +936,7 @@ const ArticleViewPage: React.FC = () => {
                           className={`h-4 w-4 ${
                           i < Math.floor(comment.note_qualite!) ?
                           'fill-yellow-400 text-yellow-400' :
-                          'text-gray-300'}`
+                          'text-muted-foreground/40'}`
                           } />
 
                         )}

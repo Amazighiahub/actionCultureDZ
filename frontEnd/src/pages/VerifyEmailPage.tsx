@@ -55,7 +55,7 @@ const VerifyEmailPage = () => {
 
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+    <div className="flex items-center justify-center min-h-screen bg-muted">
       <div className="p-8 max-w-md w-full">
         {status === 'loading' &&
           <div className="flex flex-col items-center text-center">

@@ -64,7 +64,7 @@ const EnhancedCTASection: React.FC = () => {
                 <Button 
                   size="lg" 
                   variant="outline"
-                  className="shadow-lg hover:shadow-xl transition-all bg-white hover:bg-gray-50"
+                  className="shadow-lg hover:shadow-xl transition-all bg-background hover:bg-muted"
                   onClick={() => {
                     if (isAuthenticated) {
                       navigate('/ajouter-evenement');

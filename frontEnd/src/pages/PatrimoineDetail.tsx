@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useShare } from '@/hooks/useShare';
 import { getDateLocale } from '@/hooks/useFormatDate';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -168,16 +169,8 @@ const PatrimoineDetail = () => {
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
 
   // Partager le site
-  const handleShareSite = async () => {
-    const siteName = translate(site?.nom, lang);
-    const url = window.location.href;
-    try {
-      await navigator.share({ title: siteName, text: `Découvrez ${siteName}`, url });
-    } catch {
-      navigator.clipboard.writeText(url);
-      toast({ title: t('common.linkCopied', 'Lien copié'), description: t('common.linkCopiedDesc', 'Le lien a été copié dans le presse-papier') });
-    }
-  };
+  const share = useShare();
+  const handleShareSite = () => share({ title: translate(site?.nom, lang) });
 
   // Charger les détails du site
   useEffect(() => {

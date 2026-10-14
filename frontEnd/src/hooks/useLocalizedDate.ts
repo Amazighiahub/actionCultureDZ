@@ -18,16 +18,16 @@ interface LocalizedDateOptions {
 const LOCALE_MAPPING: Record<string, string> = {
   'ar': 'ar-DZ',
   'ar-DZ': 'ar-DZ',
-  'fr': 'fr-DZ',
+  'fr': 'fr-FR', // fr-DZ affiche l'heure en 12 h (« 06:30 PM »)
   'en': 'en-US',
-  'tz-ltn': 'fr-DZ',  // Fallback vers français pour Tamazight Latin
-  'tz-tfng': 'ar-DZ', // Fallback vers arabe pour Tamazight Tifinagh
+  'tz-ltn': 'fr-FR',  // Fallback vers français pour Tamazight Latin
+  'tz-tfng': 'fr-FR', // Comme tz-ltn et useFormatDate (dates en français)
 };
 
 // Fonction pour obtenir une locale valide
 const getValidLocale = (language: string | undefined): string => {
-  if (!language) return 'fr-DZ';
-  return LOCALE_MAPPING[language] || 'fr-DZ';
+  if (!language) return 'fr-FR';
+  return LOCALE_MAPPING[language] || 'fr-FR';
 };
 
 // Calendriers locaux
@@ -175,8 +175,8 @@ export const useLocalizedDate = () => {
       try {
         return new Intl.DateTimeFormat(validLocale, options);
       } catch (error) {
-        // Fallback vers fr-DZ
-        return new Intl.DateTimeFormat('fr-DZ', options);
+        // Fallback vers fr-FR
+        return new Intl.DateTimeFormat('fr-FR', options);
       }
     };
     
@@ -353,7 +353,7 @@ export const useLocalizedDate = () => {
       );
     } catch {
       // Fallback vers les noms en français
-      const formatter = new Intl.DateTimeFormat('fr-DZ', { month: format });
+      const formatter = new Intl.DateTimeFormat('fr-FR', { month: format });
       return Array.from({ length: 12 }, (_, i) => 
         formatter.format(new Date(2000, i, 1))
       );
@@ -370,7 +370,7 @@ export const useLocalizedDate = () => {
       );
     } catch {
       // Fallback vers les noms en français
-      const formatter = new Intl.DateTimeFormat('fr-DZ', { weekday: format });
+      const formatter = new Intl.DateTimeFormat('fr-FR', { weekday: format });
       return Array.from({ length: 7 }, (_, i) => 
         formatter.format(new Date(2024, 0, i + 1))
       );

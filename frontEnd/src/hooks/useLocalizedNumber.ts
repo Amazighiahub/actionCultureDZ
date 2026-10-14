@@ -419,11 +419,20 @@ export const useLocalizedNumber = () => {
       }
     }
     
-    return formatNumber(value, { 
-      style: 'currency', 
+    return formatNumber(Number(value), {
+      style: 'currency',
       currency,
       maximumFractionDigits: currency === 'DZD' ? 0 : 2
     });
+  };
+
+  // Fourchette de prix « 500 – 1 500 DZD » ; une seule borne connue → ce prix seul
+  const formatPriceRange = (min?: number | string | null, max?: number | string | null): string => {
+    const lo = min != null && min !== '' ? Number(min) : null;
+    const hi = max != null && max !== '' ? Number(max) : null;
+    if (lo == null && hi == null) return '';
+    if (lo == null || hi == null || lo === hi) return formatPrice((lo ?? hi) as number, undefined, false);
+    return `${formatNumber(lo)} – ${formatPrice(hi, undefined, false)}`;
   };
 
   // Formater un pourcentage
@@ -516,6 +525,7 @@ export const useLocalizedNumber = () => {
     formatApproximateNumber,
     formatThreshold,
     formatPrice,
+    formatPriceRange,
     formatPercentage,
     formatDistance,
     formatDuration,

@@ -4,6 +4,7 @@
  */
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { parcoursIntelligentService } from '@/services/parcours.service';
 import {
   Dialog,
@@ -135,6 +136,7 @@ const VisitePlanner: React.FC<VisitePlannerProps> = ({
   siteType,
 }) => {
   const { t } = useTranslation();
+  const { formatPriceRange } = useLocalizedNumber();
 
   // États du formulaire
   const [step, setStep] = useState<'config' | 'loading' | 'result'>('config');
@@ -606,7 +608,7 @@ const VisitePlanner: React.FC<VisitePlannerProps> = ({
                             <p className="text-sm font-medium truncate">{r.nom}</p>
                             <p className="text-xs text-muted-foreground">
                               {r.distance.toFixed(1)} km
-                              {r.tarif_min != null && ` · ${r.tarif_min}${r.tarif_max ? '–' + r.tarif_max : ''} DA`}
+                              {r.tarif_min != null && ` · ${formatPriceRange(r.tarif_min, r.tarif_max)}`}
                             </p>
                           </div>
                         </CardContent>
@@ -620,7 +622,7 @@ const VisitePlanner: React.FC<VisitePlannerProps> = ({
                             <p className="text-sm font-medium truncate">{h.nom}</p>
                             <p className="text-xs text-muted-foreground">
                               {h.distance.toFixed(1)} km
-                              {h.tarif_min != null && ` · ${h.tarif_min}${h.tarif_max ? '–' + h.tarif_max : ''} DA`}
+                              {h.tarif_min != null && ` · ${formatPriceRange(h.tarif_min, h.tarif_max)}`}
                             </p>
                           </div>
                         </CardContent>

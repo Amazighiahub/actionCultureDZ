@@ -22,12 +22,17 @@ const STRETCHED_LINK_CLASS =
   'after:absolute after:inset-0 after:rounded-lg focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-inset focus-visible:after:ring-ring';
 
 // Helper pour obtenir le nom de la wilaya
-const getWilayaName = (wilayaId: number, wilayasCache: any[]): string => {
-  if (!wilayasCache || !Array.isArray(wilayasCache)) {
-    return `Wilaya ${wilayaId}`;
-  }
-  const wilaya = wilayasCache.find(w => w.id_wilaya === wilayaId);
-  return wilaya ? wilaya.wilaya_name : `Wilaya ${wilayaId}`;
+// L'API fournit site.wilaya ; le cache ne sert que de repli (l'ancien champ wilaya_id
+// n'existe pas → « Wilaya undefined » s'affichait)
+const getWilayaName = (
+  site: { wilaya?: { nom?: string; wilaya_name_ascii?: string }; wilaya_id?: number },
+  wilayasCache: any[],
+  lang: string
+): string => {
+  const wilaya = site.wilaya
+    || (Array.isArray(wilayasCache) && site.wilaya_id ? wilayasCache.find(w => w.id_wilaya === site.wilaya_id) : undefined);
+  if (!wilaya) return '';
+  return lang === 'ar' && wilaya.nom ? wilaya.nom : (wilaya.wilaya_name_ascii || wilaya.wilaya_name || wilaya.nom || '');
 };
 
 interface PatrimoineDynamiqueProps {
@@ -156,10 +161,12 @@ const PatrimoineDynamique: React.FC<PatrimoineDynamiqueProps> = ({ wilayasCache 
                     </div>
                   )}
                 </div>
-                <div className={`flex items-center space-x-2 text-sm text-muted-foreground ${rtlClasses.flexRow}`}>
-                  <MapPin className="h-4 w-4" />
-                  <span>{getWilayaName(site.wilaya_id, wilayasCache)}</span>
-                </div>
+                {getWilayaName(site, wilayasCache, i18n.language) && (
+                  <div className={`flex items-center space-x-2 text-sm text-muted-foreground ${rtlClasses.flexRow}`}>
+                    <MapPin className="h-4 w-4" />
+                    <span>{getWilayaName(site, wilayasCache, i18n.language)}</span>
+                  </div>
+                )}
               </CardHeader>
 
               <CardContent className="pt-0 space-y-4">

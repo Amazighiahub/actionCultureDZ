@@ -7,6 +7,7 @@ import React, { useEffect, useMemo } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { MapPin, Mail, Phone, Pencil, BookOpen, FileText, Hammer, CalendarDays, Briefcase, UserX, QrCode } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import PortfolioQRCode from '@/components/user/PortfolioQRCode';
@@ -91,6 +92,7 @@ const Grid: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 
 const ProfessionnelPortfolio: React.FC = () => {
   const { t, i18n } = useTranslation();
+  const { formatPrice } = useLocalizedNumber();
   const { id: param } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -306,7 +308,7 @@ const ProfessionnelPortfolio: React.FC = () => {
                 <Grid>
                   {data.artisanats.map((a) => (
                     <ItemCard key={a.id_artisanat} to={`/artisanat/${a.id_artisanat}`} title={a.Oeuvre.titre} image={firstImage(a.Oeuvre.Media)}
-                      subtitle={a.prix ? `${Number(a.prix).toLocaleString(i18n.language)} DA` : undefined} />
+                      subtitle={a.prix ? formatPrice(Number(a.prix), undefined, false) : undefined} />
                   ))}
                 </Grid>
               </TabsContent>

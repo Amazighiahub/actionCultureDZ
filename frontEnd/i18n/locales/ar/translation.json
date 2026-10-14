@@ -445,7 +445,8 @@
     "unknown": "غير معروف",
     "sortBy": "ترتيب حسب",
     "photo": "صورة",
-    "backToHome": "العودة إلى الصفحة الرئيسية"
+    "backToHome": "العودة إلى الصفحة الرئيسية",
+    "loadMore": "عرض المزيد"
   },
   "contributors": {
     "addedCount_one": "تمت إضافة مساهم واحد",
@@ -835,7 +836,8 @@
       "title": "التراث الثقافي",
       "search": "البحث عن موقع...",
       "tryDifferentSearch": "جرب بحثاً آخر أو أعد تعيين المرشحات",
-      "noDescription": "الوصف قريباً..."
+      "noDescription": "الوصف قريباً...",
+      "loadError": "تعذّر تحميل المواقع التراثية"
     },
     "works": {
       "actions": {

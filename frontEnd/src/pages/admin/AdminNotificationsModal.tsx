@@ -48,7 +48,7 @@ const NOTIFICATION_TYPES_CONFIG = [
   { value: 'info', key: 'admin.notifications.types.info', icon: Info, color: 'text-blue-600' },
   { value: 'validation', key: 'admin.notifications.types.validation', icon: CheckCircle, color: 'text-green-600' },
   { value: 'warning', key: 'admin.notifications.types.warning', icon: AlertTriangle, color: 'text-yellow-600' },
-  { value: 'custom', key: 'admin.notifications.types.custom', icon: Bell, color: 'text-gray-600' }
+  { value: 'custom', key: 'admin.notifications.types.custom', icon: Bell, color: 'text-muted-foreground' }
 ];
 
 // Groupes cibles — valeurs alignées sur le backend (all/professionals/visitors)

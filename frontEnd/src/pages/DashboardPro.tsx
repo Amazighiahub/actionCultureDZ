@@ -53,6 +53,7 @@ import {
 import { useToast } from '@/components/ui/use-toast';
 import { useDashboardPro } from '@/hooks/useDashboardPro';
 import { useTranslation } from "react-i18next";
+import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { useTranslateData } from '@/hooks/useTranslateData';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
@@ -169,6 +170,7 @@ const DashboardPro = () => {
   } = useDashboardPro();
 
   const { t } = useTranslation();
+  const { formatPriceRange } = useLocalizedNumber();
   const { user: currentUser } = useAuth();
   const { td, safe } = useTranslateData();
   const { notifications, summary, markAsRead, markAllAsRead, requestNotificationPermission } = useNotifications();
@@ -333,7 +335,7 @@ const DashboardPro = () => {
     };
 
     return (
-      <div className="py-4 border-b border-dashed border-gray-200 last:border-0">
+      <div className="py-4 border-b border-dashed border-border last:border-0">
         <div className="flex justify-between items-start">
           <div className="flex-1">
             <h3 className="text-base font-medium mb-1">{getItemTitle()}</h3>
@@ -703,7 +705,7 @@ const DashboardPro = () => {
                     </div> :
                   mesEvenements?.items && mesEvenements.items.length > 0 ?
                   filterBySearch(mesEvenements.items as DashboardItem[]).map((evenement) =>
-                  <div key={evenement.id_evenement} className="py-4 border-b border-dashed border-gray-200 last:border-0">
+                  <div key={evenement.id_evenement} className="py-4 border-b border-dashed border-border last:border-0">
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
                         <h3 className="text-base font-medium mb-1">{td(evenement.nom_evenement)}</h3>
@@ -867,16 +869,16 @@ const DashboardPro = () => {
                     </div> :
                   mesArtisanats?.items && mesArtisanats.items.length > 0 ?
                   filterBySearch(mesArtisanats.items as DashboardItem[]).map((item) =>
-                  <div key={item.id_artisanat || item.id} className="py-4 border-b border-dashed border-gray-200 last:border-0">
+                  <div key={item.id_artisanat || item.id} className="py-4 border-b border-dashed border-border last:border-0">
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
                         <h3 className="text-base font-medium mb-1">{td(item.nom) || td(item.titre)}</h3>
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
                           <span>{td(item.Materiau?.nom) || td(item.materiau) || t("dashboardpro.non_defini", "Non défini")}</span>
                           <span>{td(item.Technique?.nom) || td(item.technique) || ""}</span>
-                          {typeof item.prix_min === 'number' && typeof item.prix_max === 'number' && (
+                          {(item.prix_min != null || item.prix_max != null) && (
                             <span className="font-medium text-primary">
-                              {item.prix_min} - {item.prix_max} {t("dashboardpro.da", "DA")}
+                              {formatPriceRange(item.prix_min as number | string | null, item.prix_max as number | string | null)}
                             </span>
                           )}
                           <Badge variant={typeof item.en_stock === 'number' && item.en_stock > 0 ? 'default' : item.sur_commande ? 'secondary' : 'outline'}>

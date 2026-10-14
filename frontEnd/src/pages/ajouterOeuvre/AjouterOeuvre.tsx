@@ -287,7 +287,7 @@ const AjouterOeuvre: React.FC = () => {
                                 handleInputChange('id_oeuvre_originale', undefined);
                                 handleInputChange('oeuvre_originale_titre', undefined);
                               }
-                            }} className="h-4 w-4 rounded border-gray-300" />
+                            }} className="h-4 w-4 rounded border-input" />
                           <Label htmlFor="is_traduction" className="text-base cursor-pointer">
                             {t('ajouteroeuvre.isTraduction', 'Cette œuvre est une traduction')}
                           </Label>
@@ -361,7 +361,7 @@ const AjouterOeuvre: React.FC = () => {
                             className={`flex items-start gap-3 p-4 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors ${formData.je_suis_auteur === true ? 'border-primary bg-primary/5' : ''}`}
                             onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleInputChange('je_suis_auteur', true); }}
                             onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleInputChange('je_suis_auteur', true); } }}>
-                            <div className={`mt-1 h-4 w-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${formData.je_suis_auteur === true ? 'border-primary' : 'border-gray-300'}`}>
+                            <div className={`mt-1 h-4 w-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${formData.je_suis_auteur === true ? 'border-primary' : 'border-input'}`}>
                               {formData.je_suis_auteur === true && <div className="h-2 w-2 rounded-full bg-primary" />}
                             </div>
                             <div>
@@ -373,7 +373,7 @@ const AjouterOeuvre: React.FC = () => {
                             className={`flex items-start gap-3 p-4 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors ${formData.je_suis_auteur === false ? 'border-primary bg-primary/5' : ''}`}
                             onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleInputChange('je_suis_auteur', false); }}
                             onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleInputChange('je_suis_auteur', false); } }}>
-                            <div className={`mt-1 h-4 w-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${formData.je_suis_auteur === false ? 'border-primary' : 'border-gray-300'}`}>
+                            <div className={`mt-1 h-4 w-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${formData.je_suis_auteur === false ? 'border-primary' : 'border-input'}`}>
                               {formData.je_suis_auteur === false && <div className="h-2 w-2 rounded-full bg-primary" />}
                             </div>
                             <div>

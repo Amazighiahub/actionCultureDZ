@@ -316,7 +316,7 @@ const HeroFilm: React.FC<HeroFilmProps> = ({
             </div>
 
             {/* Actions sous l'affiche */}
-            <div className="flex gap-2 mt-6 justify-center lg:justify-start">
+            <div className="flex flex-wrap gap-2 mt-6 justify-center lg:justify-start">
               <Button
                 size="lg"
                 onClick={onToggleFavorite}
@@ -475,7 +475,7 @@ const HeroFilm: React.FC<HeroFilmProps> = ({
             )}
 
             {/* Vues et Avis */}
-            <div className="flex items-center gap-6 text-muted-foreground">
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-muted-foreground">
               <div className="flex items-center gap-2">
                 <Eye className="h-5 w-5" />
                 <span className="font-medium">{formatNumber(viewCount)}</span>

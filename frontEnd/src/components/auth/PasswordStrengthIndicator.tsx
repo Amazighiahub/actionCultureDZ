@@ -66,13 +66,13 @@ export const PasswordStrengthIndicator: React.FC<PasswordStrengthIndicatorProps>
     <div className="mt-2 space-y-2">
       {/* Progress bar */}
       <div className="flex items-center gap-2">
-        <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+        <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
           <div
             className={`h-full rounded-full transition-all duration-300 ${barColor}`}
             style={{ width: `${percent}%` }}
           />
         </div>
-        <span className="text-xs font-medium text-gray-600 whitespace-nowrap">
+        <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">
           {strengthLabel}
         </span>
       </div>
@@ -83,10 +83,10 @@ export const PasswordStrengthIndicator: React.FC<PasswordStrengthIndicatorProps>
           const met = rule.test(password);
           return (
             <li key={rule.key} className="flex items-center text-xs">
-              <span className={`me-2 ${met ? 'text-green-600' : 'text-gray-400'}`}>
+              <span className={`me-2 ${met ? 'text-green-600' : 'text-muted-foreground'}`}>
                 {met ? '\u2713' : '\u2717'}
               </span>
-              <span className={met ? 'text-green-700' : 'text-gray-500'}>
+              <span className={met ? 'text-green-700' : 'text-muted-foreground'}>
                 {rule.label}
               </span>
             </li>

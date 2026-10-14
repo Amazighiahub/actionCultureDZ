@@ -1,5 +1,7 @@
 import React, { lazy, Suspense, useMemo, useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
+import { httpClient } from '@/services/httpClient';
+import { API_ENDPOINTS } from '@/config/api';
 import { useTranslation } from 'react-i18next';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -12,7 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   MapPin, Clock, Star, QrCode, Compass, Building2, Landmark,
-  Trees, Search, RefreshCw, AlertCircle, Eye
+  Trees, Search, RefreshCw, AlertCircle, Eye, Loader2
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { patrimoineService } from '@/services/patrimoine.service';
@@ -21,6 +23,8 @@ import SEOHead from '@/components/SEOHead';
 
 // Lazy loading pour CartePatrimoine
 const CartePatrimoine = lazy(() => import('@/components/CartePatrimoine'));
+
+const SITES_PAGE_SIZE = 12;
 
 // Helper pour traduire les champs multilingues
 const translate = (value: string | { fr?: string; ar?: string; en?: string } | null | undefined, lang: string): string => {
@@ -120,15 +124,29 @@ const Patrimoine = () => {
     staleTime: 10 * 60 * 1000,
   });
 
-  // Sites — re-fetch automatique quand filterType change via queryKey
-  const { data: sites = [], isLoading: loading, error: queryError, refetch } = useQuery<SitePatrimoine[]>({
+  // Sites — liste paginée (12 par page, « Voir plus ») ; seuls les 12 premiers étaient accessibles
+  const {
+    data: sitesPages, isLoading: loading, error: queryError, refetch,
+    fetchNextPage, hasNextPage, isFetchingNextPage,
+  } = useInfiniteQuery({
     queryKey: ['patrimoine', 'sites', filterType],
-    queryFn: async () => {
-      const res = await patrimoineService.getSitesPopulaires(12, filterType || undefined);
-      if (res.success && res.data) return res.data as unknown as SitePatrimoine[];
-      throw new Error('Impossible de charger les sites patrimoniaux');
+    initialPageParam: 1,
+    queryFn: async ({ pageParam }) => {
+      const res = await httpClient.get<SitePatrimoine[]>(API_ENDPOINTS.patrimoine.sites, {
+        page: pageParam,
+        limit: SITES_PAGE_SIZE,
+        ...(filterType ? { typePatrimoine: filterType } : {}),
+      });
+      if (!res.success) throw new Error(t('sections.heritage.loadError', 'Impossible de charger les sites patrimoniaux'));
+      return { items: (res.data || []) as SitePatrimoine[], total: res.pagination?.total ?? 0 };
+    },
+    getNextPageParam: (last, all) => {
+      const loaded = all.reduce((n, p) => n + p.items.length, 0);
+      return last.items.length === SITES_PAGE_SIZE && loaded < last.total ? all.length + 1 : undefined;
     },
   });
+  const sites = useMemo(() => sitesPages?.pages.flatMap((p) => p.items) ?? [], [sitesPages]);
+  const totalSites = sitesPages?.pages[0]?.total ?? sites.length;
 
   const error = queryError ? (queryError as Error).message : null;
 
@@ -284,7 +302,7 @@ const Patrimoine = () => {
               {t('sections.heritage.otherSites', 'Sites patrimoniaux')}
             </h2>
             <Badge variant="secondary">
-              {filteredSites.length} {t('common.results', 'résultats')}
+              {debouncedSearch ? filteredSites.length : totalSites} {t('common.results', 'résultats')}
             </Badge>
           </div>
 
@@ -342,7 +360,7 @@ const Patrimoine = () => {
                         <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
                           <MapPin className="h-3 w-3" />
                           <span>
-                            {(site.wilaya as any)?.wilaya_name_ascii || (site.commune as any)?.commune_name_ascii || translate(site.adresse, lang)}
+                            {(lang === 'ar' && site.wilaya?.nom) || (site.wilaya as any)?.wilaya_name_ascii || (site.commune as any)?.commune_name_ascii || translate(site.adresse, lang)}
                           </span>
                         </div>
                       </div>
@@ -400,6 +418,15 @@ const Patrimoine = () => {
                   </CardContent>
                 </Card>
               ))}
+            </div>
+          )}
+
+          {hasNextPage && !loading && (
+            <div className="mt-8 flex justify-center">
+              <Button variant="outline" size="lg" onClick={() => fetchNextPage()} disabled={isFetchingNextPage}>
+                {isFetchingNextPage && <Loader2 className="h-4 w-4 me-2 animate-spin" aria-hidden="true" />}
+                {t('common.loadMore', 'Voir plus')}
+              </Button>
             </div>
           )}
         </div>

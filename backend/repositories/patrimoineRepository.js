@@ -139,7 +139,8 @@ class PatrimoineRepository extends BaseRepository {
    */
   async findPopular(options = {}) {
     const { limit = 6, typePatrimoine } = options;
-    const where = {};
+    // Public : brouillons et archives exclus (visibles seulement via la fiche, par l'auteur / la modération)
+    const where = { statut: 'publie' };
     if (typePatrimoine) where.typePatrimoine = typePatrimoine;
 
     const sites = await this.model.findAll({
@@ -160,7 +161,8 @@ class PatrimoineRepository extends BaseRepository {
     const { page = 1, limit = 20, typePatrimoine, wilayaId } = options;
     const p = parseInt(page);
     const l = parseInt(limit);
-    const where = {};
+    // Public : brouillons et archives exclus (visibles seulement via la fiche, par l'auteur / la modération)
+    const where = { statut: 'publie' };
     if (typePatrimoine) where.typePatrimoine = typePatrimoine;
 
     let include = this._defaultIncludes();
@@ -238,6 +240,7 @@ class PatrimoineRepository extends BaseRepository {
     const pattern = `%${this._sanitizeSearchQuery(query)}%`;
 
     const where = {
+      statut: 'publie',
       [Op.or]: [
         seqWhere(fn('JSON_EXTRACT', col('Lieu.nom'), literal("'$.fr'")), { [Op.like]: pattern }),
         seqWhere(fn('JSON_EXTRACT', col('Lieu.nom'), literal("'$.ar'")), { [Op.like]: pattern }),
@@ -261,7 +264,8 @@ class PatrimoineRepository extends BaseRepository {
    */
   async findForMap(options = {}) {
     const { typePatrimoine, wilayaId } = options;
-    const where = {};
+    // Public : brouillons et archives exclus (visibles seulement via la fiche, par l'auteur / la modération)
+    const where = { statut: 'publie' };
     if (typePatrimoine) where.typePatrimoine = typePatrimoine;
 
     const include = [];
