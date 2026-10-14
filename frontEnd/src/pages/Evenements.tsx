@@ -5,6 +5,7 @@
 import React, { Suspense, useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -55,6 +56,7 @@ interface EventCardProps {
 
 const EventCard: React.FC<EventCardProps> = React.memo(({ event }) => {
   const { t } = useTranslation();
+  const { formatPrice } = useLocalizedNumber();
   const { formatDate } = useFormatDate();
   const eventTitle = event.nom_evenement || event.titre;
   const eventUrl = `/evenements/${event.id_evenement}`;
@@ -148,7 +150,7 @@ const EventCard: React.FC<EventCardProps> = React.memo(({ event }) => {
           {event.gratuit ? (
             <Badge variant="secondary">{t('events.free', 'Gratuit')}</Badge>
           ) : event.tarif ? (
-            <span className="font-semibold text-primary">{event.tarif} DZD</span>
+            <span className="font-semibold text-primary">{formatPrice(Number(event.tarif))}</span>
           ) : (
             <span></span>
           )}

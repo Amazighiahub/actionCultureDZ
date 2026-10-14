@@ -449,7 +449,8 @@
     "unknown": "Inconnu",
     "sortBy": "Trier par",
     "photo": "photo",
-    "backToHome": "Retour à l'accueil"
+    "backToHome": "Retour à l'accueil",
+    "loadMore": "Voir plus"
   },
   "contributors": {
     "addedCount": "{{count}} contributeurs ajoutés",
@@ -833,7 +834,8 @@
       "seeAll": "Voir tout",
       "subtitle": "Découvrez les trésors historiques et culturels de l'Algérie à travers une carte interactive",
       "title": "Patrimoine culturel",
-      "noDescription": "Description à venir..."
+      "noDescription": "Description à venir...",
+      "loadError": "Impossible de charger les sites patrimoniaux"
     },
     "works": {
       "actions": {

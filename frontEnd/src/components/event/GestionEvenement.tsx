@@ -365,7 +365,7 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
               type="checkbox"
               checked={showOeuvresSection}
               onChange={(e) => setShowOeuvresSection(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+              className="h-4 w-4 rounded border-input text-primary focus:ring-primary cursor-pointer"
             />
           </div>
         </div>

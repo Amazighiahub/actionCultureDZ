@@ -36,7 +36,7 @@ const StarRating: React.FC<StarRatingProps> = ({
         "transition-colors",
         (hoverValue || value) >= star
           ? "fill-yellow-400 text-yellow-400"
-          : "text-gray-300"
+          : "text-muted-foreground/40"
       )}
     />
   );

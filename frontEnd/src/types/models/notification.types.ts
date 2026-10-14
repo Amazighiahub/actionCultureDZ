@@ -328,8 +328,8 @@ const NOTIF_RELATIVE_TIME: Record<string, {
 
 // Mapping des codes de langue vers des locales BCP 47 valides
 const NOTIFICATION_LOCALE_MAP: Record<string, string> = {
-  'ar': 'ar-DZ', 'fr': 'fr-DZ', 'en': 'en-US',
-  'tz-ltn': 'fr-DZ', 'tz-tfng': 'ar-DZ',
+  'ar': 'ar-DZ', 'fr': 'fr-FR', 'en': 'en-US',
+  'tz-ltn': 'fr-FR', 'tz-tfng': 'fr-FR',
 };
 
 // Vérifier si une notification est récente (moins de 24h)
@@ -397,7 +397,7 @@ export function formatNotificationDate(dateStr: string, language = 'fr'): string
   if (diffHours < 24) return t.hoursAgo(diffHours);
   if (diffDays < 7) return t.daysAgo(diffDays);
 
-  const locale = NOTIFICATION_LOCALE_MAP[language] || 'fr-DZ';
+  const locale = NOTIFICATION_LOCALE_MAP[language] || 'fr-FR';
   return date.toLocaleDateString(locale, {
     day: 'numeric',
     month: 'short',

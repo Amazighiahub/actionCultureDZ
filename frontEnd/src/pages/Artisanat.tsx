@@ -3,8 +3,10 @@
  * Avec lazy loading des images et composants partagés
  */
 import React, { useState, useMemo, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { httpClient } from '@/services/httpClient';
 import { useTranslation } from 'react-i18next';
+import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { useAuth } from '@/hooks/useAuth';
 import { favoriService } from '@/services/favori.service';
 import { useToast } from '@/hooks/use-toast';
@@ -52,6 +54,7 @@ interface ArtisanatCardProps {
 
 const ArtisanatCard: React.FC<ArtisanatCardProps> = React.memo(({ artisanat }) => {
   const { t } = useTranslation();
+  const { formatPrice, formatPriceRange } = useLocalizedNumber();
   const { toast } = useToast();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
@@ -190,7 +193,7 @@ const ArtisanatCard: React.FC<ArtisanatCardProps> = React.memo(({ artisanat }) =
         {/* Prix */}
         {prix && (
           <div className="mt-3 pt-3 border-t">
-            <span className="font-semibold text-primary">{prix} DZD</span>
+            <span className="font-semibold text-primary">{artisanat.prix ? formatPrice(Number(artisanat.prix), undefined, false) : formatPriceRange(artisanat.prix_min, artisanat.prix_max)}</span>
           </div>
         )}
       </CardContent>
@@ -198,9 +201,14 @@ const ArtisanatCard: React.FC<ArtisanatCardProps> = React.memo(({ artisanat }) =
   );
 });
 
+// Liens du menu (?materiau=bois…) : slug du nom français ; « bijoux » n'est pas un matériau
+const MATERIAU_ALIASES: Record<string, string> = { bijoux: 'argent' };
+const slugify = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+
 // Composant principal
 const Artisanat: React.FC = () => {
   const { t } = useTranslation();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // États des filtres locaux
   const [searchQuery, setSearchQueryLocal] = useState('');
@@ -224,6 +232,33 @@ const Artisanat: React.FC = () => {
     setSearchQuery
   } = useArtisanat();
 
+  // ?materiau=slug (menu) → identifiant du matériau ; noms comparés en français (langue de référence)
+  const materiauParam = searchParams.get('materiau');
+  useEffect(() => {
+    if (!materiauParam) return;
+    let cancelled = false;
+    const wanted = MATERIAU_ALIASES[slugify(materiauParam)] || slugify(materiauParam);
+    httpClient.get<{ id_materiau: number; nom: string }[]>('/metadata/materiaux', { lang: 'fr' })
+      .then((res) => {
+        if (cancelled) return;
+        const list = Array.isArray(res.data) ? res.data : [];
+        const found = list.find((m) => typeof m.nom === 'string' && slugify(m.nom) === wanted);
+        setSelectedMateriau(found ? String(found.id_materiau) : 'tous');
+      })
+      .catch(() => { /* filtre ignoré : la liste complète reste affichée */ });
+    return () => { cancelled = true; };
+  }, [materiauParam, setSelectedMateriau]);
+
+  // Choix manuel d'un matériau : le paramètre du menu ne doit plus l'écraser
+  const handleMateriauChange = (value: string) => {
+    setSelectedMateriau(value);
+    if (materiauParam) {
+      const next = new URLSearchParams(searchParams);
+      next.delete('materiau');
+      setSearchParams(next, { replace: true });
+    }
+  };
+
   // Mettre à jour la recherche dans le hook
   useEffect(() => {
     setSearchQuery(debouncedSearch);
@@ -237,7 +272,7 @@ const Artisanat: React.FC = () => {
   // Reset des filtres
   const resetFilters = () => {
     setSearchQueryLocal('');
-    setSelectedMateriau('tous');
+    handleMateriauChange('tous');
     setSelectedTechnique('tous');
     setSortBy('recent');
   };
@@ -314,7 +349,7 @@ const Artisanat: React.FC = () => {
               </div>
 
               {/* Filtre matériau */}
-              <Select value={selectedMateriau} onValueChange={setSelectedMateriau}>
+              <Select value={selectedMateriau} onValueChange={handleMateriauChange}>
                 <SelectTrigger className="w-[180px]" aria-label={t('artisanat.filterByMaterial', 'Matériau')}>
                   <SelectValue placeholder={t('artisanat.filterByMaterial', 'Matériau')} />
                 </SelectTrigger>

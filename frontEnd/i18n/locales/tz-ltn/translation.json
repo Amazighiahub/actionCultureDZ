@@ -444,7 +444,8 @@
     "unknown": "Arussin",
     "sortBy": "Smizzwer s",
     "photo": "tawlaft",
-    "backToHome": "Uɣal ɣer usebter agejdan"
+    "backToHome": "Uɣal ɣer usebter agejdan",
+    "loadMore": "Wali ugar"
   },
   "contributors": {
     "addedCount_one": "{{count}} amarag yettwarna",
@@ -812,7 +813,8 @@
       "title": "Agla adelsan",
       "search": "Nadi γef usit...",
       "tryDifferentSearch": "Ɛreḍ anadi-nniḍen neγ ales asbeddi n yimzizdigen",
-      "noDescription": "Aglam ad d-yas..."
+      "noDescription": "Aglam ad d-yas...",
+      "loadError": "Ur yezmir ara ad d-yali yideggen n tgemmi"
     },
     "works": {
       "actions": {

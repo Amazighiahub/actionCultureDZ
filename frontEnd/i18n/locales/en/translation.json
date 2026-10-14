@@ -444,7 +444,8 @@
     "unknown": "Unknown",
     "sortBy": "Sort by",
     "photo": "photo",
-    "backToHome": "Back to home"
+    "backToHome": "Back to home",
+    "loadMore": "Load more"
   },
   "contributors": {
     "addedCount_one": "{{count}} contributor added",
@@ -808,7 +809,8 @@
       "title": "Cultural Heritage",
       "search": "Search for a site...",
       "tryDifferentSearch": "Try a different search or reset filters",
-      "noDescription": "Description coming soon..."
+      "noDescription": "Description coming soon...",
+      "loadError": "Unable to load heritage sites"
     },
     "works": {
       "actions": {

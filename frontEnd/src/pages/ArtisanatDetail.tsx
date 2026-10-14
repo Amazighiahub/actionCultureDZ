@@ -4,6 +4,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useShare } from '@/hooks/useShare';
+import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -97,6 +99,7 @@ interface ArtisanatData {
 }
 
 const ArtisanatDetail: React.FC = () => {
+  const { formatPrice, formatPriceRange } = useLocalizedNumber();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -171,24 +174,9 @@ const ArtisanatDetail: React.FC = () => {
     }
   };
 
-  const handleShare = async () => {
-    const artisan = artisanat?.Oeuvre?.Saiseur;
-    const title = td(artisanat?.Oeuvre?.titre) || td(artisanat?.nom) || '';
-    const shareText = artisan
-      ? `Découvrez cette magnifique œuvre par ${td(artisan.prenom)} ${td(artisan.nom)}!`
-      : `Découvrez cet artisanat !`;
-    try {
-      await navigator.share({
-        title,
-        text: shareText,
-        url: window.location.href
-      });
-    } catch {
-      const shareUrl = encodeURIComponent(window.location.href);
-      const _encodedText = encodeURIComponent(shareText);
-      window.open(`https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`, '_blank', 'noopener,noreferrer');
-    }
-  };
+  // Annuler le partage ouvrait Facebook ; repli = copie du lien
+  const share = useShare();
+  const handleShare = () => share({ title: td(artisanat?.Oeuvre?.titre) || td(artisanat?.nom) || '' });
 
   const toggleFavorite = async () => {
     if (!isAuthenticated) {
@@ -368,6 +356,7 @@ const ArtisanatDetail: React.FC = () => {
                     variant="secondary"
                     size="icon"
                     onClick={toggleFavorite}
+                    aria-pressed={isFavorite}
                     aria-label={t('favoris.toggle', 'Ajouter/Retirer des favoris')}
                   >
                     <Heart className={cn('h-5 w-5', isFavorite && 'fill-red-500 text-red-500')} />
@@ -428,11 +417,11 @@ const ArtisanatDetail: React.FC = () => {
               {/* Prix */}
               {artisanat.prix_min && artisanat.prix_max ? (
                 <div className="text-2xl font-bold text-primary">
-                  {artisanat.prix_min.toLocaleString()} - {artisanat.prix_max.toLocaleString()} DA
+                  {formatPriceRange(artisanat.prix_min, artisanat.prix_max)}
                 </div>
               ) : artisanat.prix && (
                 <div className="text-2xl font-bold text-primary">
-                  {artisanat.prix.toLocaleString()} DA
+                  {formatPrice(Number(artisanat.prix), undefined, false)}
                 </div>
               )}
 
@@ -657,7 +646,7 @@ const ArtisanatDetail: React.FC = () => {
                     </div>
                     <p className="mt-2 text-sm font-medium truncate">{td(oeuvre.Oeuvre?.titre)}</p>
                     {oeuvre.prix && (
-                      <p className="text-sm text-primary font-semibold">{oeuvre.prix.toLocaleString()} DA</p>
+                      <p className="text-sm text-primary font-semibold">{formatPrice(Number(oeuvre.prix), undefined, false)}</p>
                     )}
                   </Link>
                 ))}
@@ -698,7 +687,7 @@ const ArtisanatDetail: React.FC = () => {
                     </div>
                     <p className="mt-2 text-sm font-medium truncate">{td(item.Oeuvre?.titre)}</p>
                     {item.prix && (
-                      <p className="text-sm text-primary font-semibold">{item.prix.toLocaleString()} DA</p>
+                      <p className="text-sm text-primary font-semibold">{formatPrice(Number(item.prix), undefined, false)}</p>
                     )}
                   </Link>
                 ))}

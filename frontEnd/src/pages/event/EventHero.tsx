@@ -4,6 +4,7 @@
  */
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useShare } from '@/hooks/useShare';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -37,26 +38,12 @@ const EventHero: React.FC<EventHeroProps> = ({
     ? Math.round((event.nombre_inscrits || 0) / event.capacite_max * 100)
     : 0;
 
-  // Partager l'événement
+  // Partager l'événement (copie du lien confirmée si pas de partage natif)
+  const share = useShare();
   const handleShare = async () => {
     const eventTitle = td(event.nom_evenement);
     const eventDesc = td(event.description);
-    const shareData = {
-      title: eventTitle,
-      text: eventDesc?.substring(0, 100) || '',
-      url: window.location.href
-    };
-
-    if (navigator.share) {
-      try {
-        await navigator.share(shareData);
-      } catch (err) {
-        // L'utilisateur a annulé le partage
-      }
-    } else {
-      // Fallback: copier le lien
-      navigator.clipboard.writeText(window.location.href);
-    }
+    await share({ title: eventTitle, text: eventDesc?.substring(0, 100) || '' });
   };
 
   const hasImage = !!(event.image_url || event.couverture_url);

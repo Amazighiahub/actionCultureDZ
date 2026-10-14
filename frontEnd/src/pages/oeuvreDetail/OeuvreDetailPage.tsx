@@ -5,6 +5,7 @@
 import React, { Suspense, useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, Link, useLocation, Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
@@ -92,6 +93,7 @@ const SectionFallback: React.FC = () => (
 // extractContributeurs supprimé — on utilise contributeurs du hook useOeuvreDetails
 
 const OeuvreDetailPage: React.FC = () => {
+  const { formatPrice } = useLocalizedNumber();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
@@ -299,9 +301,11 @@ const OeuvreDetailPage: React.FC = () => {
     const title = oeuvre?.titre || '';
     const url = window.location.href;
     try {
+      if (typeof navigator.share !== 'function') throw new Error('no-share');
       await navigator.share({ title: String(title), text: t('oeuvre.shareText', 'Découvrez cette œuvre : {{title}}', { title: String(title) }), url });
-    } catch {
-      setShowShareModal(true);
+    } catch (err) {
+      // Annulation de la feuille de partage : ne pas ouvrir la fenêtre de repli
+      if ((err as DOMException)?.name !== 'AbortError') setShowShareModal(true);
     }
   };
 
@@ -545,7 +549,7 @@ const OeuvreDetailPage: React.FC = () => {
                           <Tag className="h-5 w-5 text-muted-foreground mt-0.5" />
                           <div>
                             <p className="text-sm text-muted-foreground">{t('oeuvre.price', 'Prix')}</p>
-                            <p className="font-semibold text-xl text-primary">{(oeuvre.prix || artisanatData?.prix)?.toLocaleString('fr-DZ')} DZD</p>
+                            <p className="font-semibold text-xl text-primary">{formatPrice(Number(oeuvre.prix || artisanatData?.prix), undefined, false)}</p>
                           </div>
                         </div>
                       )}

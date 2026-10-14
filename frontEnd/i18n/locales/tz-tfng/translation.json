@@ -444,7 +444,8 @@
     "unknown": "ⴰⵔⵓⵙⵙⵉⵏ",
     "sortBy": "ⵙⵎⵉⵣⵣⵡⴻⵔ ⵙ",
     "photo": "ⵜⴰⵡⵍⴰⴼⵜ",
-    "backToHome": "ⵓⵖⴰⵍ ⵖⴻⵔ ⵓⵙⴻⴱⵜⴻⵔ ⴰⴳⴻⵊⴷⴰⵏ"
+    "backToHome": "ⵓⵖⴰⵍ ⵖⴻⵔ ⵓⵙⴻⴱⵜⴻⵔ ⴰⴳⴻⵊⴷⴰⵏ",
+    "loadMore": "ⵡⴰⵍⵉ ⵓⴳⴰⵔ"
   },
   "contributors": {
     "addedCount_one": "{{count}} ⴰⵎⵓⵜⵜⴽ ⵉⵜⵜⵡⴰⵔⵏⴰ",
@@ -812,7 +813,8 @@
       "title": "ⴰⴳⵍⴰ ⴰⴷⵍⵙⴰⵏ",
       "search": "ⵏⴰⴷⵉ ⵖⴻⴼ ⵓⵙⵉⵜ...",
       "tryDifferentSearch": "ⵄⵔⴻⴹ ⴰⵏⴰⴷⵉ-ⵏⵏⵉⴹⴻⵏ ⵏⴻⵖ ⴰⵍⴻⵙ ⴰⵙⴱⴻⴷⴷⵉ ⵏ ⵢⵉⵎⵣⵉⵣⴷⵉⴳⴻⵏ",
-      "noDescription": "ⴰⴳⵍⴰⵎ ⴰⴷ ⴷ-ⵢⴰⵙ..."
+      "noDescription": "ⴰⴳⵍⴰⵎ ⴰⴷ ⴷ-ⵢⴰⵙ...",
+      "loadError": "ⵓⵔ ⵢⴻⵣⵎⵉⵔ ⴰⵔⴰ ⴰⴷ ⴷ-ⵢⴰⵍⵉ ⵢⵉⴷⴻⴳⴳⴻⵏ ⵏ ⵜⴳⴻⵎⵎⵉ"
     },
     "works": {
       "actions": {

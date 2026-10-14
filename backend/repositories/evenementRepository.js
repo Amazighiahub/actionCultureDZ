@@ -131,7 +131,7 @@ class EvenementRepository extends BaseRepository {
       if (/^\d+$/.test(String(type))) {
         and.push({ id_type_evenement: Number(type) });
       } else {
-        const normalize = (v) => String(v || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+        const normalize = (v) => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
         const wanted = normalize(type);
         const types = await this.models.TypeEvenement.findAll({ attributes: ['id_type_evenement', 'nom_type'], raw: true });
         const ids = types

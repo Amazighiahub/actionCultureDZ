@@ -6,6 +6,7 @@ import { getLocalizedText } from '@/utils/getLocalizedText';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { getDateLocale } from '@/hooks/useFormatDate';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -229,7 +230,7 @@ const AdminOeuvresTab: React.FC = () => {
                   const auteur = oeuvre.Saiseur
                     ? `${getLocalizedText(oeuvre.Saiseur.prenom, currentLang)} ${getLocalizedText(oeuvre.Saiseur.nom, currentLang)}`
                     : '-';
-                  const date = oeuvre.date_creation ? new Date(oeuvre.date_creation).toLocaleDateString('fr-FR') : '-';
+                  const date = oeuvre.date_creation ? new Date(oeuvre.date_creation).toLocaleDateString(getDateLocale(i18n.language)) : '-';
 
                   return (
                     <tr key={oeuvre.id_oeuvre} className="border-b hover:bg-muted/30 transition-colors">

@@ -5,6 +5,7 @@
  */
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -68,6 +69,7 @@ const ServicesProximite: React.FC<ServicesProximiteProps> = ({
   maxItems,
 }) => {
   const { t, i18n } = useTranslation();
+  const { formatPriceRange } = useLocalizedNumber();
   const lang = i18n.language || 'fr';
   const [services, setServices] = useState<ServiceItem[]>(initialServices || []);
   const [loading, setLoading] = useState(!initialServices);
@@ -283,9 +285,7 @@ const ServicesProximite: React.FC<ServicesProximiteProps> = ({
                       </div>
                       {service.tarif_min != null && (
                         <Badge variant="secondary" className="text-xs">
-                          {service.tarif_min === service.tarif_max || !service.tarif_max
-                            ? `${service.tarif_min} DA`
-                            : `${service.tarif_min}–${service.tarif_max} DA`}
+                          {formatPriceRange(service.tarif_min, service.tarif_max)}
                         </Badge>
                       )}
                     </div>

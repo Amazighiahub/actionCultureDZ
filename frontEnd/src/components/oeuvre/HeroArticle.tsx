@@ -229,7 +229,7 @@ const HeroArticle: React.FC<HeroArticleProps> = ({
             )}
 
             {/* Stats */}
-            <div className="flex items-center gap-4 ml-auto text-sm text-muted-foreground">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 ms-auto text-sm text-muted-foreground">
               <div className="flex items-center gap-1.5">
                 <Eye className="h-4 w-4" />
                 <span>{formatNumber(viewCount)} {t('works.stats.views', 'vues')}</span>

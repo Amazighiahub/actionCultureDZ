@@ -455,14 +455,14 @@ const AjouterService: React.FC = () => {
                             className={`p-4 rounded-lg border cursor-pointer transition-all ${
                               isSelected
                                 ? 'border-primary bg-primary/5 ring-2 ring-primary'
-                                : 'border-gray-200 hover:border-primary/50 hover:bg-gray-50'
+                                : 'border-border hover:border-primary/50 hover:bg-muted/50'
                             }`}
                             role="button"
                             tabIndex={0}
                             onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSelectLieu(lieu); } }}
                           >
                             <div className="flex items-start gap-3">
-                              <div className={`p-2 rounded-lg ${isSelected ? 'bg-primary text-white' : 'bg-gray-100'}`}>
+                              <div className={`p-2 rounded-lg ${isSelected ? 'bg-primary text-white' : 'bg-muted'}`}>
                                 <Icon className="h-5 w-5" />
                               </div>
                               <div className="flex-1 min-w-0">
@@ -533,7 +533,7 @@ const AjouterService: React.FC = () => {
                     ) : (
                       <div className="space-y-2">
                         {existingServices.map((service, index) => (
-                          <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                          <div key={index} className="flex items-center justify-between p-2 bg-muted/50 rounded">
                             <span>{getLocalizedName(service, 'nom_service') || getLocalizedName(service)}</span>
                             <Badge variant={service.disponible ? 'default' : 'secondary'}>
                               {service.disponible ? t('common.available', 'Disponible') : t('common.unavailable', 'Indisponible')}

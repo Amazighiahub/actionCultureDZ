@@ -5,6 +5,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useLocalizedNumber } from '@/hooks/useLocalizedNumber';
 import { useAuth } from '@/hooks/useAuth';
 import { favoriService } from '@/services/favori.service';
 import { useToast } from '@/hooks/use-toast';
@@ -65,6 +66,7 @@ interface OeuvreCardProps {
 
 const OeuvreCard: React.FC<OeuvreCardProps> = React.memo(({ oeuvre }) => {
   const { t } = useTranslation();
+  const { formatPrice } = useLocalizedNumber();
   const { toast } = useToast();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
@@ -192,7 +194,7 @@ const OeuvreCard: React.FC<OeuvreCardProps> = React.memo(({ oeuvre }) => {
         {/* Prix */}
         {oeuvre.prix && (
           <div className="mt-3 pt-3 border-t">
-            <span className="font-semibold text-primary">{oeuvre.prix} DZD</span>
+            <span className="font-semibold text-primary">{formatPrice(Number(oeuvre.prix))}</span>
           </div>
         )}
       </CardContent>

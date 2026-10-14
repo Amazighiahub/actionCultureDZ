@@ -55,10 +55,13 @@ const GalleryItem: React.FC<GalleryItemProps> = ({ media, onClick }) => {
       {/* Image ou placeholder */}
       {media.type_media === 'image' || isVideo ? (
         <LazyImage
-          src={media.url || media.thumbnail_url || '/images/placeholder-media.svg'}
+          // Vidéo : le fichier vidéo n'est pas une image → vignette ou visuel vidéo par défaut
+          src={isVideo
+            ? (media.thumbnail_url || '/images/video-placeholder.svg')
+            : (media.url || media.thumbnail_url || '/images/placeholder-media.svg')}
           alt={td(media.titre) || td(media.description) || 'Media'}
           className="w-full h-full object-cover transition-transform group-hover:scale-105"
-          fallback="/images/placeholder-media.svg"
+          fallback={isVideo ? '/images/video-placeholder.svg' : '/images/placeholder-media.svg'}
         />
       ) : (
         <div className="w-full h-full flex items-center justify-center bg-muted">
@@ -68,7 +71,8 @@ const GalleryItem: React.FC<GalleryItemProps> = ({ media, onClick }) => {
 
       {/* Overlay au survol */}
       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-colors flex items-center justify-center">
-        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+        {/* Icône lecture toujours visible pour une vidéo (pas de survol sur mobile) */}
+        <div className={isVideo ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 transition-opacity'}>
           {isVideo ? (
             <div className="p-3 rounded-full bg-white/20 backdrop-blur-sm">
               <Play className="h-8 w-8 text-white" />
@@ -381,10 +385,12 @@ const EventGallery: React.FC<EventGalleryProps> = ({ medias }) => {
                 <div className="w-16 h-16 rounded overflow-hidden flex-shrink-0">
                   {media.type_media === 'image' || media.type_media === 'video' ? (
                     <LazyImage
-                      src={media.url || media.thumbnail_url}
+                      src={media.type_media === 'video'
+                        ? (media.thumbnail_url || '/images/video-placeholder.svg')
+                        : (media.url || media.thumbnail_url || '/images/placeholder-media.svg')}
                       alt={td(media.titre) || 'Media'}
                       className="w-full h-full object-cover"
-                      fallback="/images/placeholder-media.svg"
+                      fallback={media.type_media === 'video' ? '/images/video-placeholder.svg' : '/images/placeholder-media.svg'}
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-muted">
