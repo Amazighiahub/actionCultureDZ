@@ -23,6 +23,10 @@ export interface UseOeuvresReturn {
   setSelectedType: (type: string) => void;
   setSearchQuery: (query: string) => void;
   loadOeuvres: () => Promise<void>;
+  /** Page suivante (« Voir plus ») : seules les 50 premières œuvres étaient accessibles */
+  loadMore: () => Promise<void>;
+  hasMore: boolean;
+  loadingMore: boolean;
   
   // Statistiques
   stats: {
@@ -33,6 +37,30 @@ export interface UseOeuvresReturn {
   };
 }
 
+const PAGE_SIZE = 50;
+
+// Une page d'œuvres (sans artisanat) et l'indication d'une page suivante
+const fetchOeuvresPage = async (pageNumber: number) => {
+  const result = await oeuvreService.getOeuvres({ limit: PAGE_SIZE, page: pageNumber, statut: 'publie' });
+  if (!result.success || !result.data) {
+    throw new Error(result.error || 'Erreur lors du chargement des œuvres');
+  }
+  let items: Oeuvre[] = [];
+  let pagination: { totalPages?: number; pages?: number } | undefined;
+  if (Array.isArray(result.data)) {
+    items = result.data as Oeuvre[];
+  } else if (typeof result.data === 'object') {
+    const data = result.data as unknown as Record<string, unknown>;
+    const list = data.oeuvres || data.items || data.results || data.data;
+    items = Array.isArray(list) ? list as Oeuvre[] : [];
+    pagination = data.pagination as typeof pagination;
+  }
+  const totalPages = pagination?.totalPages ?? pagination?.pages;
+  const more = totalPages != null ? pageNumber < totalPages : items.length === PAGE_SIZE;
+  // Exclure l'artisanat (type 7)
+  return { items: items.filter((o) => o.id_type_oeuvre !== 7), more };
+};
+
 export function useOeuvres(): UseOeuvresReturn {
   const [oeuvres, setOeuvres] = useState<Oeuvre[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,6 +69,9 @@ export function useOeuvres(): UseOeuvresReturn {
   const [selectedType, setSelectedType] = useState<string>('tous');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [typesOeuvres, setTypesOeuvres] = useState<TypeOeuvre[]>([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   // Mode conservateur si rate limit récent
   useEffect(() => {
@@ -71,44 +102,41 @@ export function useOeuvres(): UseOeuvresReturn {
     }
   };
 
+  const loadMore = useCallback(async () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    try {
+      const next = page + 1;
+      const { items, more } = await fetchOeuvresPage(next);
+      setOeuvres((prev) => {
+        const seen = new Set(prev.map((o) => o.id_oeuvre));
+        return [...prev, ...items.filter((o) => !seen.has(o.id_oeuvre))];
+      });
+      setPage(next);
+      setHasMore(more);
+    } catch {
+      setError('Impossible de charger les œuvres');
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [page, hasMore, loadingMore]);
+
   // Charger les œuvres (sans artisanat)
   const loadOeuvres = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      
-      const params: Record<string, string | number | boolean | undefined> = {
-        limit: 50, // Plus d'œuvres pour compenser le filtrage
-        statut: 'publie'
-      };
-      
-      
-      const result = await oeuvreService.getOeuvres(params);
-      
-      if (result.success && result.data) {
-        let oeuvresData: Oeuvre[] = [];
 
-        if (Array.isArray(result.data)) {
-          oeuvresData = result.data as Oeuvre[];
-        } else if (result.data && typeof result.data === 'object') {
-          const data = result.data as unknown as Record<string, unknown>;
-          const items = data.oeuvres || data.items || data.results || data.data;
-          oeuvresData = Array.isArray(items) ? items as Oeuvre[] : [];
-        }
+      const { items: oeuvresData, more } = await fetchOeuvresPage(1);
+      setPage(1);
+      setHasMore(more);
+      setOeuvres(oeuvresData);
 
-        // Filtrer pour exclure l'artisanat (type 7)
-        oeuvresData = oeuvresData.filter((o) => o.id_type_oeuvre !== 7);
-
-        setOeuvres(oeuvresData);
-        
-        // Sauvegarder en localStorage
-        try {
-          localStorage.setItem('oeuvres_backup', JSON.stringify(oeuvresData));
-          localStorage.setItem('oeuvres_backup_time', Date.now().toString());
-        } catch (e) {
-        }
-      } else {
-        throw new Error(result.error || 'Erreur lors du chargement des œuvres');
+      // Sauvegarder en localStorage
+      try {
+        localStorage.setItem('oeuvres_backup', JSON.stringify(oeuvresData));
+        localStorage.setItem('oeuvres_backup_time', Date.now().toString());
+      } catch (e) {
       }
     } catch (err: unknown) {
       const errMessage = err instanceof Error ? err.message : '';
@@ -298,6 +326,9 @@ export function useOeuvres(): UseOeuvresReturn {
     setSelectedType,
     setSearchQuery,
     loadOeuvres,
+    loadMore,
+    hasMore,
+    loadingMore,
     stats
   };
 }

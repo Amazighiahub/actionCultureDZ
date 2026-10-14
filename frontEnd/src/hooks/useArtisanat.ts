@@ -48,10 +48,15 @@ export interface UseArtisanatReturn {
   setSearchQuery: (query: string) => void;
   setSortBy: (sort: string) => void;
   loadArtisanats: () => Promise<void>;
+  loadMore: () => Promise<void>;
+  hasMore: boolean;
+  loadingMore: boolean;
 
   // Statistiques
   stats: ArtisanatStatistics | null;
 }
+
+const PAGE_SIZE = 50;
 
 export function useArtisanat(): UseArtisanatReturn {
   const [artisanats, setArtisanats] = useState<Artisanat[]>([]);
@@ -64,6 +69,9 @@ export function useArtisanat(): UseArtisanatReturn {
   const [materiaux, setMateriaux] = useState<Materiau[]>([]);
   const [techniques, setTechniques] = useState<Technique[]>([]);
   const [stats, setStats] = useState<ArtisanatStatistics | null>(null);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   // Charger les matériaux
   const loadMateriaux = async () => {
@@ -102,39 +110,62 @@ export function useArtisanat(): UseArtisanatReturn {
     }
   };
 
+  // Une page d'artisanat et l'indication d'une page suivante
+  const fetchPage = useCallback(async (pageNumber: number) => {
+    const result = await artisanatService.getAll({ limit: PAGE_SIZE, page: pageNumber, sort: sortBy });
+    if (!result.success) {
+      throw new Error(result.error || 'Erreur lors du chargement des artisanats');
+    }
+    let items: Artisanat[] = [];
+    if (Array.isArray(result.data)) {
+      items = result.data;
+    } else if (result.data && typeof result.data === 'object') {
+      const responseData = result.data as unknown as ArtisanatResponseData;
+      items = responseData.artisanats || responseData.items || responseData.data || [];
+    }
+    items = Array.isArray(items) ? items : [];
+    const pagination = (result as { pagination?: { totalPages?: number; pages?: number } }).pagination;
+    const totalPages = pagination?.totalPages ?? pagination?.pages;
+    return { items, more: totalPages != null ? pageNumber < totalPages : items.length === PAGE_SIZE };
+  }, [sortBy]);
+
+  // Page suivante (« Voir plus ») : seuls les 50 premiers produits étaient accessibles
+  const loadMore = useCallback(async () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    try {
+      const next = page + 1;
+      const { items, more } = await fetchPage(next);
+      setArtisanats((prev) => {
+        const keyOf = (a: Artisanat) => (a as { id_artisanat?: number; id?: number }).id_artisanat ?? (a as { id?: number }).id;
+        const seen = new Set(prev.map(keyOf));
+        return [...prev, ...items.filter((a) => !seen.has(keyOf(a)))];
+      });
+      setPage(next);
+      setHasMore(more);
+    } catch {
+      setError('Impossible de charger les produits artisanaux');
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [page, hasMore, loadingMore, fetchPage]);
+
   // Charger les artisanats
   const loadArtisanats = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const params: Record<string, string | number | boolean | undefined> = {
-        limit: 50,
-        sort: sortBy
-      };
+      const { items: artisanatsData, more } = await fetchPage(1);
+      setPage(1);
+      setHasMore(more);
+      setArtisanats(artisanatsData);
 
-      const result = await artisanatService.getAll(params);
-
-      if (result.success) {
-        let artisanatsData: Artisanat[] = [];
-
-        if (Array.isArray(result.data)) {
-          artisanatsData = result.data;
-        } else if (result.data && typeof result.data === 'object') {
-          const responseData = result.data as unknown as ArtisanatResponseData;
-          artisanatsData = responseData.artisanats || responseData.items || responseData.data || [];
-        }
-
-        setArtisanats(Array.isArray(artisanatsData) ? artisanatsData : []);
-
-        // Sauvegarder en localStorage
-        try {
-          localStorage.setItem('artisanats_backup', JSON.stringify(artisanatsData));
-          localStorage.setItem('artisanats_backup_time', Date.now().toString());
-        } catch (e) {
-        }
-      } else {
-        throw new Error(result.error || 'Erreur lors du chargement des artisanats');
+      // Sauvegarder en localStorage
+      try {
+        localStorage.setItem('artisanats_backup', JSON.stringify(artisanatsData));
+        localStorage.setItem('artisanats_backup_time', Date.now().toString());
+      } catch (e) {
       }
     } catch (err: unknown) {
       // Gérer le rate limit
@@ -166,7 +197,7 @@ export function useArtisanat(): UseArtisanatReturn {
     } finally {
       setLoading(false);
     }
-  }, [sortBy]);
+  }, [fetchPage]);
 
   // Filtrer les artisanats
   const filteredArtisanats = useMemo(() => {
@@ -246,6 +277,9 @@ export function useArtisanat(): UseArtisanatReturn {
     setSearchQuery,
     setSortBy,
     loadArtisanats,
+    loadMore,
+    hasMore,
+    loadingMore,
     stats
   };
 }

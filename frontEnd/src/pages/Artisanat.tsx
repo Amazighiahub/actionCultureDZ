@@ -25,7 +25,7 @@ import {
 } from '@/components/ui/select';
 import {
   Search, Star, Eye, Heart, ArrowRight, RefreshCw, X,
-  Palette, Hammer, Package, ShoppingBag
+  Palette, Hammer, Package, ShoppingBag, Loader2
 } from 'lucide-react';
 
 // Composants partagés
@@ -223,6 +223,9 @@ const Artisanat: React.FC = () => {
     error,
     stats,
     loadArtisanats,
+    loadMore,
+    hasMore,
+    loadingMore,
     selectedMateriau,
     selectedTechnique,
     sortBy,
@@ -442,6 +445,15 @@ const Artisanat: React.FC = () => {
                   />
                 ))}
               </div>
+
+              {hasMore && (
+                <div className="mt-8 flex justify-center">
+                  <Button variant="outline" size="lg" onClick={() => loadMore()} disabled={loadingMore}>
+                    {loadingMore && <Loader2 className="h-4 w-4 me-2 animate-spin" aria-hidden="true" />}
+                    {t('common.loadMore', 'Voir plus')}
+                  </Button>
+                </div>
+              )}
             </>
           )}
         </ErrorBoundary>
