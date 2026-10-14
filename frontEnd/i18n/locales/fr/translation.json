@@ -1875,7 +1875,10 @@
     "createError": "Erreur lors de la création de l'oeuvre",
     "uploadingMedia": "Upload des médias...",
     "verifyError": "Impossible de vérifier si l'oeuvre a été créée. Veuillez consulter votre tableau de bord ou réessayer.",
-    "saveError": "Une erreur est survenue lors de l'enregistrement"
+    "saveError": "Une erreur est survenue lors de l'enregistrement",
+    "uploadingMediaN": "Envoi des médias ({{current}}/{{total}}) : {{percent}} %",
+    "mediasFailedTitle": "Médias non envoyés",
+    "mediasFailed": "{{count}} fichier(s) n'ont pas pu être envoyés. Ajoutez-les depuis votre tableau de bord."
   },
   "common_patrimoinesection": {
     "description_citadelle_historique_classe": "Citadelle historique classée au patrimoine mondial de l'UNESCO",
@@ -2401,7 +2404,8 @@
         "workshop": "Atelier"
       },
       "count": "{{count}} service(s)",
-      "noServicesDesc": "Aucun service ne correspond à vos critères"
+      "noServicesDesc": "Aucun service ne correspond à vos critères",
+      "confirmDelete": "Supprimer ce service ?"
     },
     "alerts": {
       "title": "Alertes",
@@ -2480,7 +2484,8 @@
       "sentToGroup": "Notification envoyée au groupe {{group}}",
       "sendError": "Erreur lors de l'envoi de la notification",
       "titleRequired": "Le titre est requis",
-      "messageRequired": "Le message est requis"
+      "messageRequired": "Le message est requis",
+      "noRecipient": "Choisissez un destinataire"
     },
     "moderation": {
       "title": "Modération",
@@ -2524,7 +2529,11 @@
       "commentReports": "Commentaires",
       "contentReports": "Contenus",
       "searchPlaceholder": "Rechercher un signalement...",
-      "noReportsDesc": "Aucun signalement ne correspond à vos critères"
+      "noReportsDesc": "Aucun signalement ne correspond à vos critères",
+      "confirmRemove": "Supprimer ce contenu ?",
+      "confirmRemoveDesc": "Le contenu signalé sera supprimé définitivement.",
+      "confirmSuspend": "Suspendre cet utilisateur ?",
+      "confirmSuspendDesc": "L'auteur du contenu ne pourra plus se connecter pendant la suspension."
     },
     "patrimoine": {
       "title": "Gestion du patrimoine",
@@ -3787,7 +3796,9 @@
       "prixMinMax": "Le prix minimum ne peut pas être supérieur au prix maximum"
     },
     "addTag": "Ajouter le tag",
-    "removeTag": "Supprimer le tag {{tag}}"
+    "removeTag": "Supprimer le tag {{tag}}",
+    "mediasFailedTitle": "Photos non envoyées",
+    "mediasFailed": "Votre création est enregistrée, mais les photos n'ont pas pu être envoyées. Ajoutez-les depuis votre tableau de bord."
   },
   "service": {
     "addTitle": "Ajouter mon service",
@@ -4103,7 +4114,9 @@
   },
   "upload": {
     "fileTooLarge": "Fichier trop volumineux (max 5 MB)",
-    "uploadFailed": "Erreur upload"
+    "uploadFailed": "Erreur upload",
+    "imageOnly10": "Photos uniquement, 10 Mo maximum par fichier",
+    "fileTooLarge10": "Fichier trop volumineux (max 10 Mo)"
   },
   "gallery": {
     "empty": "Aucun média disponible",
@@ -4239,5 +4252,9 @@
     "title": "Ma page publique",
     "hint": "Votre portfolio : profil, biographie et contenus publiés.",
     "view": "Voir mon portfolio"
+  },
+  "media": {
+    "videoNotSupported": "Votre navigateur ne supporte pas la lecture vidéo.",
+    "audioNotSupported": "Votre navigateur ne supporte pas la lecture audio."
   }
 }

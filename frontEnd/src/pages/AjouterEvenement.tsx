@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { prepareImageForUpload } from '@/utils/prepareImageForUpload';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from "react-i18next";
 import Header from '@/components/Header';
@@ -421,7 +422,7 @@ const AjouterEvenement = () => {
     if (!isVirtual && selectedOrganisationId) fd.append('id_organisation', selectedOrganisationId.toString());
     if (isVirtual && formData.urlVirtuel) fd.append('url_virtuel', formData.urlVirtuel);
     fd.append('statut', statut);
-    if (affiche) fd.append('affiche', affiche);
+    if (affiche) fd.append('affiche', await prepareImageForUpload(affiche));
 
     try {
       let response;

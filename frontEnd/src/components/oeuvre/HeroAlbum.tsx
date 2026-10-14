@@ -430,7 +430,7 @@ const HeroAlbum: React.FC<HeroAlbumProps> = ({
                       )}
                     </div>
                     {playableMedia && videoMedia ? (
-                      <video src={playableMedia.url} controls autoPlay className="w-full rounded-lg" style={{ maxHeight: '50vh' }} />
+                      <video src={playableMedia.url} controls autoPlay playsInline className="w-full rounded-lg" style={{ maxHeight: '50vh' }} />
                     ) : playableMedia ? (
                       <audio src={playableMedia.url} controls autoPlay className="w-full max-w-md" />
                     ) : null}

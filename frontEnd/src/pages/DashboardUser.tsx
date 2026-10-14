@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { prepareImageForUpload } from '@/utils/prepareImageForUpload';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Card } from '@/components/ui/card';
@@ -591,7 +592,7 @@ const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ u
     setUploadingPhoto(true);
     try {
       const formData = new FormData();
-      formData.append('image', file);
+      formData.append('image', await prepareImageForUpload(file));
       // httpClient : jeton anti-CSRF, renouvellement de session et adresse de l'API (un fetch direct était refusé)
       const data = await httpClient.upload('/upload/profile-photo', formData);
       if (data.success) {

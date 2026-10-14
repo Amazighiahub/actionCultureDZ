@@ -12,6 +12,7 @@ import { Oeuvre } from '@/types/models/oeuvre.types';
 import { Media } from '@/types/models/media.types';
 import { Evenement } from '@/types/models/evenement.types';
 import { httpClient } from './httpClient';
+import { prepareFilesForUpload } from '@/utils/prepareImageForUpload';
 import { API_ENDPOINTS, type ApiResponse } from '@/config/api';
 import { mediaService } from './media.service';
 import { CreateOeuvreBackendDTO } from '@/types/api/create-oeuvre-backend.dto';
@@ -282,7 +283,7 @@ class OeuvreService {
 
       // Ajouter les fichiers médias
       if (mediaFiles && mediaFiles.length > 0) {
-        mediaFiles.forEach((file) => {
+        (await prepareFilesForUpload(mediaFiles)).forEach((file) => {
           formData.append('medias', file);
         });
         if (mediaMetadata && mediaMetadata.length > 0) {

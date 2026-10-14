@@ -1,6 +1,7 @@
 // services/articleBlock.service.ts
 import { ApiResponse, API_ENDPOINTS } from '@/config/api';
 import { httpClient } from './httpClient';
+import { prepareImageForUpload } from '@/utils/prepareImageForUpload';
 import { Oeuvre } from '@/types/models/oeuvre.types';
 import { oeuvreService } from './oeuvre.service';
 import { CreateOeuvreBackendDTO } from '@/types/api/create-oeuvre-backend.dto';
@@ -307,7 +308,7 @@ async uploadBlockImage(
 }>> {
   try {
     const formData = new FormData();
-    formData.append('image', file);
+    formData.append('image', await prepareImageForUpload(file));
     formData.append('article_id', articleId.toString());
     formData.append('block_id', blockId.toString());
 

@@ -427,13 +427,13 @@ describe('AjouterArtisanat', () => {
       });
     });
 
-    test('accept accepte image, vidéo et pdf', async () => {
+    test('accept limite aux photos (aperçus en image)', async () => {
       render(<AjouterArtisanat />);
       await waitForDataLoad();
 
       const fileInput = document.getElementById('media-upload') as HTMLInputElement;
-      // Le formulaire accepte désormais images + vidéos + PDF (voir AjouterArtisanat.tsx).
-      expect(fileInput.getAttribute('accept')).toBe('image/*,video/*,.pdf');
+      // Photos uniquement : la carte « Photos » n'affiche que des aperçus <img>
+      expect(fileInput.getAttribute('accept')).toBe('image/*');
     });
   });
 

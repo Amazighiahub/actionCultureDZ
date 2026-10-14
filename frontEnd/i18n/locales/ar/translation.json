@@ -1071,7 +1071,8 @@
       "sentToGroup": "تم إرسال الإشعار إلى المجموعة {{group}}",
       "sendError": "خطأ في إرسال الإشعار",
       "titleRequired": "العنوان مطلوب",
-      "messageRequired": "الرسالة مطلوبة"
+      "messageRequired": "الرسالة مطلوبة",
+      "noRecipient": "اختر مستلمًا"
     },
     "moderation": {
       "title": "الإشراف",
@@ -1115,7 +1116,11 @@
       "commentReports": "التعليقات",
       "contentReports": "المحتويات",
       "searchPlaceholder": "البحث عن بلاغ...",
-      "noReportsDesc": "لا يوجد بلاغ يطابق معاييرك"
+      "noReportsDesc": "لا يوجد بلاغ يطابق معاييرك",
+      "confirmRemove": "حذف هذا المحتوى؟",
+      "confirmRemoveDesc": "سيتم حذف المحتوى المُبلَّغ عنه نهائيًا.",
+      "confirmSuspend": "تعليق هذا المستخدم؟",
+      "confirmSuspendDesc": "لن يتمكن صاحب المحتوى من تسجيل الدخول طوال مدة التعليق."
     },
     "patrimoine": {
       "title": "إدارة التراث",
@@ -1258,7 +1263,8 @@
         "workshop": "ورشة"
       },
       "count": "{{count}} خدمة(خدمات)",
-      "noServicesDesc": "لا توجد خدمة تطابق معاييرك"
+      "noServicesDesc": "لا توجد خدمة تطابق معاييرك",
+      "confirmDelete": "حذف هذه الخدمة؟"
     },
     "emailVerified": "تم التحقق من البريد الإلكتروني بنجاح",
     "emailVerifyFailed": "تعذّر التحقق من البريد الإلكتروني"
@@ -2210,7 +2216,10 @@
     "createError": "خطأ أثناء إنشاء العمل",
     "uploadingMedia": "جارٍ رفع الوسائط...",
     "verifyError": "تعذّر التحقق مما إذا تم إنشاء العمل. يرجى مراجعة لوحة التحكم أو إعادة المحاولة.",
-    "saveError": "حدث خطأ أثناء الحفظ"
+    "saveError": "حدث خطأ أثناء الحفظ",
+    "uploadingMediaN": "جارٍ إرسال الوسائط ({{current}}/{{total}}): {{percent}}٪",
+    "mediasFailedTitle": "لم يتم إرسال الوسائط",
+    "mediasFailed": "تعذّر إرسال {{count}} ملف(ات). أضفها من لوحة التحكم."
   },
   "common_patrimoinesection": {
     "description_citadelle_historique_classe": "قلعة تاريخية مصنفة كتراث عالمي لليونسكو",
@@ -3655,7 +3664,9 @@
       "prixMinMax": "لا يمكن أن يتجاوز السعر الأدنى السعر الأقصى"
     },
     "addTag": "إضافة الوسم",
-    "removeTag": "حذف الوسم {{tag}}"
+    "removeTag": "حذف الوسم {{tag}}",
+    "mediasFailedTitle": "لم يتم إرسال الصور",
+    "mediasFailed": "تم حفظ عملك، لكن تعذّر إرسال الصور. أضفها من لوحة التحكم."
   },
   "service": {
     "addTitle": "إضافة خدمتي",
@@ -4205,7 +4216,9 @@
   },
   "upload": {
     "fileTooLarge": "الملف كبير جداً (5 MB كحد أقصى)",
-    "uploadFailed": "خطأ في الرفع"
+    "uploadFailed": "خطأ في الرفع",
+    "imageOnly10": "صور فقط، 10 ميغابايت كحد أقصى لكل ملف",
+    "fileTooLarge10": "الملف كبير جدًا (10 ميغابايت كحد أقصى)"
   },
   "gallery": {
     "empty": "لا توجد وسائط متاحة",
@@ -4341,5 +4354,9 @@
     "title": "صفحتي العامة",
     "hint": "ملفك المهني: الملف الشخصي والسيرة والمحتوى المنشور.",
     "view": "عرض ملفي المهني"
+  },
+  "media": {
+    "videoNotSupported": "متصفحك لا يدعم تشغيل الفيديو.",
+    "audioNotSupported": "متصفحك لا يدعم تشغيل الصوت."
   }
 }

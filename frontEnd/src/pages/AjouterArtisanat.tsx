@@ -163,11 +163,12 @@ const AjouterArtisanat: React.FC = () => {
     if (files) {
       let newFiles = Array.from(files);
 
-      const MAX_SIZE = 5 * 1024 * 1024; // 5MB
-      const oversized = newFiles.filter(f => f.size > MAX_SIZE);
-      if (oversized.length > 0) {
-        toast({ title: t('common.error', 'Erreur'), description: t('validation.fileTooLarge', 'Fichier trop volumineux (max 5 Mo)'), variant: 'destructive' });
-        newFiles = newFiles.filter(f => f.size <= MAX_SIZE);
+      // Photos uniquement (aperçus en <img>), 10 Mo comme la limite image du serveur
+      const MAX_SIZE = 10 * 1024 * 1024;
+      const rejected = newFiles.filter(f => !f.type.startsWith('image/') || f.size > MAX_SIZE);
+      if (rejected.length > 0) {
+        toast({ title: t('common.error', 'Erreur'), description: t('upload.imageOnly10', 'Photos uniquement, 10 Mo maximum par fichier'), variant: 'destructive' });
+        newFiles = newFiles.filter(f => f.type.startsWith('image/') && f.size <= MAX_SIZE);
         if (newFiles.length === 0) return;
       }
 
@@ -175,17 +176,13 @@ const AjouterArtisanat: React.FC = () => {
       setIsDirty(true);
 
       // Create previews
-      newFiles.forEach(file => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setPreviews(prev => [...prev, reader.result as string]);
-        };
-        reader.readAsDataURL(file);
-      });
+      setPreviews(prev => [...prev, ...newFiles.map(file => URL.createObjectURL(file))]);
+      e.target.value = '';
     }
   };
 
   const removeMedia = (index: number) => {
+    if (previews[index]) URL.revokeObjectURL(previews[index]);
     setMedias(prev => prev.filter((_, i) => i !== index));
     setPreviews(prev => prev.filter((_, i) => i !== index));
   };
@@ -228,6 +225,7 @@ const AjouterArtisanat: React.FC = () => {
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading || success) return;
     setError(null);
 
     // Validation — collect all errors
@@ -670,7 +668,7 @@ const AjouterArtisanat: React.FC = () => {
                     <input
                       type="file"
                       multiple
-                      accept="image/*,video/*,.pdf"
+                      accept="image/*"
                       onChange={handleFileChange}
                       className="hidden"
                       id="media-upload"
@@ -699,7 +697,8 @@ const AjouterArtisanat: React.FC = () => {
                           <button
                             type="button"
                             onClick={() => removeMedia(index)}
-                            className="absolute -top-2 -right-2 bg-destructive text-white rounded-full p-1"
+                            aria-label={t('common.delete', 'Supprimer')}
+                            className="absolute -top-2 -end-2 bg-destructive text-white rounded-full p-1"
                           >
                             <X className="h-3 w-3" />
                           </button>
@@ -717,7 +716,7 @@ const AjouterArtisanat: React.FC = () => {
                     type="submit"
                     className="w-full"
                     size="lg"
-                    disabled={loading}
+                    disabled={loading || success}
                   >
                     {loading ? (
                       <>

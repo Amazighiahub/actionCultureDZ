@@ -448,6 +448,7 @@ const HeroFilm: React.FC<HeroFilmProps> = ({
                       src={playableMedia.url}
                       controls
                       autoPlay
+                      playsInline
                       className="w-full rounded-lg"
                       style={{ maxHeight: '70vh' }}
                     />

@@ -824,7 +824,7 @@ const ProgrammeForm: React.FC<ProgrammeFormProps> = ({
           </Button>
         )}
         {!isReadOnly && (
-          <Button type="submit" disabled={loading}>
+          <Button type="submit" disabled={loading || success}>
             {loading ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />

@@ -1867,7 +1867,10 @@
     "succes": "Axeddim yettwasekles",
     "oeuvre_creee_succes": "Axeddim-ik yettwazen akken iwata. Ad d-iban i medden mbeɛd ma yettwaqbel sɣur anedbal.",
     "brouillon_sauvegarde": "Arewway-ik yettwasekles. Tzemreḍ ad t-tbeddleḍ, ad t-tesuffɣeḍ ticki seg tfelwit-ik.",
-    "article_cree_succes": "Amagrad-ik yettwazen akken iwata. Ad d-iban i medden mbeɛd ma yettwaqbel sɣur anedbal."
+    "article_cree_succes": "Amagrad-ik yettwazen akken iwata. Ad d-iban i medden mbeɛd ma yettwaqbel sɣur anedbal.",
+    "uploadingMediaN": "Tuzna n yimidyaten ({{current}}/{{total}}): {{percent}} %",
+    "mediasFailedTitle": "Imidyaten ur ttwaznen ara",
+    "mediasFailed": "{{count}} n ifuyla ur ttwaznen ara. Rnu-ten seg tfelwit n usenqed."
   },
   "common_patrimoinesection": {
     "description_citadelle_historique_classe": "Tadist n uzal tettwakrez d tadelsa n umaḍal n UNESCO",
@@ -2385,7 +2388,8 @@
       "sentToGroup": "Alɣu yettwazen i ugraw {{group}}",
       "sendError": "Tuccḍa deg tuzna n ulɣu",
       "titleRequired": "Azwel yettwasra",
-      "messageRequired": "Izen yettwasra"
+      "messageRequired": "Izen yettwasra",
+      "noRecipient": "Fren yiwen n umeṭṭaf"
     },
     "moderation": {
       "title": "Asenqed",
@@ -2429,7 +2433,11 @@
       "commentReports": "Iwenniten",
       "contentReports": "Igburen",
       "searchPlaceholder": "Nadi aneqqis...",
-      "noReportsDesc": "Ulac aneqqis yemṣadan d tiwtilin-ik"
+      "noReportsDesc": "Ulac aneqqis yemṣadan d tiwtilin-ik",
+      "confirmRemove": "Ad tekkseḍ agbur-a?",
+      "confirmRemoveDesc": "Agbur yettwammlen ad yettwakkes i lebda.",
+      "confirmSuspend": "Ad tesḥebseḍ aseqdac-a?",
+      "confirmSuspendDesc": "Ameskar n ugbur ur yezmir ara ad yekcem deg tallit n uḥbas."
     },
     "patrimoine": {
       "title": "Asefrek n uẓar",
@@ -2572,7 +2580,8 @@
         "workshop": "Tanezduγt n umahil"
       },
       "count": "{{count}} n umeẓlu (imeẓla)",
-      "noServicesDesc": "Ulac ameẓlu yemṣadan d tiwtilin-ik"
+      "noServicesDesc": "Ulac ameẓlu yemṣadan d tiwtilin-ik",
+      "confirmDelete": "Ad tekkseḍ ameẓlu-a?"
     },
     "emailVerified": "Imayl yettwasenqed akken iwata",
     "emailVerifyFailed": "D awezɣi asenqed n yimayl"
@@ -3570,7 +3579,9 @@
       "prixMinMax": "Ssuma tadday ur tezmir ara ad tili tugar ssuma tafellay"
     },
     "addTag": "Rnu tabzimt",
-    "removeTag": "Kkes tabzimt {{tag}}"
+    "removeTag": "Kkes tabzimt {{tag}}",
+    "mediasFailedTitle": "Tiwlafin ur ttwaznent ara",
+    "mediasFailed": "Axeddim-ik yettwasekles, maca tiwlafin ur ttwaznent ara. Rnu-tent seg tfelwit n usenqed."
   },
   "service": {
     "addTitle": "Rnu ameẓlu-w",
@@ -4098,7 +4109,9 @@
   },
   "upload": {
     "fileTooLarge": "Afaylu meqqer aṭas (5 MB ma ugar)",
-    "uploadFailed": "Tuccḍa deg usali"
+    "uploadFailed": "Tuccḍa deg usali",
+    "imageOnly10": "Tiwlafin kan, 10 Mo s afellay i yal afaylu",
+    "fileTooLarge10": "Afaylu meqqer aṭas (10 Mo s afellay)"
   },
   "gallery": {
     "empty": "Ulac amidya yellan",
@@ -4256,5 +4269,9 @@
     "title": "Asebter-iw azayez",
     "hint": "Akaram-ik: amaɣnu, tameddurt d igburen yettwasuffɣen.",
     "view": "Wali akaram-iw"
+  },
+  "media": {
+    "videoNotSupported": "Iminig-ik ur yessefrak ara taɣuri n tvidyut.",
+    "audioNotSupported": "Iminig-ik ur yessefrak ara taɣuri n umeslaw."
   }
 }

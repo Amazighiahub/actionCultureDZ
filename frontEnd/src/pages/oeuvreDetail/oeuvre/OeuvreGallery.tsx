@@ -116,8 +116,8 @@ const Lightbox: React.FC<LightboxProps> = ({
     switch (currentMedia.type_media) {
       case 'video':
         return (
-          <video src={getAssetUrl(currentMedia.url)} controls className="max-h-[80vh] max-w-full rounded-lg">
-            Votre navigateur ne supporte pas la lecture vidéo.
+          <video src={getAssetUrl(currentMedia.url)} controls preload="metadata" playsInline className="max-h-[80vh] max-w-full rounded-lg">
+            {t('media.videoNotSupported', 'Votre navigateur ne supporte pas la lecture vidéo.')}
           </video>
         );
       case 'audio':
@@ -125,7 +125,7 @@ const Lightbox: React.FC<LightboxProps> = ({
           <div className="bg-muted p-8 rounded-lg text-center">
             <Music className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
             <p className="mb-4 font-medium">{currentMedia.titre || 'Audio'}</p>
-            <audio src={getAssetUrl(currentMedia.url)} controls className="w-full max-w-md" />
+            <audio src={getAssetUrl(currentMedia.url)} controls preload="metadata" className="w-full max-w-md" />
           </div>
         );
       case 'document':
