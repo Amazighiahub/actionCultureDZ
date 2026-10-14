@@ -360,7 +360,7 @@ const Patrimoine = () => {
                         <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
                           <MapPin className="h-3 w-3" />
                           <span>
-                            {(site.wilaya as any)?.wilaya_name_ascii || (site.commune as any)?.commune_name_ascii || translate(site.adresse, lang)}
+                            {(lang === 'ar' && site.wilaya?.nom) || (site.wilaya as any)?.wilaya_name_ascii || (site.commune as any)?.commune_name_ascii || translate(site.adresse, lang)}
                           </span>
                         </div>
                       </div>
