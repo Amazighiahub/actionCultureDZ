@@ -57,7 +57,7 @@ class ProfessionnelService {
       attributes: { exclude: ['password', 'reset_token'] },
       limit: parseInt(limit),
       offset,
-      order: [[this.sequelize.literal(`JSON_EXTRACT(\`User\`.\`nom\`, '$.${safeLang}')`), 'ASC']]
+      order: [[this.sequelize.literal(`JSON_EXTRACT(\`User\`.\`nom\`, '$."${safeLang}"')`), 'ASC']]
     });
 
     return {

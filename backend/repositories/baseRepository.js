@@ -194,7 +194,8 @@ class BaseRepository {
         [Op.or]: [
           seqWhere(qualifiedCol, { [Op.like]: searchPattern }),
           ...langs.map(lang =>
-            seqWhere(fn('JSON_EXTRACT', qualifiedCol, literal(`'$.${lang}'`)), { [Op.like]: searchPattern })
+            // Chemin entre guillemets (tiret de "tz-ltn") ; JSON_UNQUOTE + LOWER : recherche insensible à la casse
+            seqWhere(fn('LOWER', fn('JSON_UNQUOTE', fn('JSON_EXTRACT', qualifiedCol, literal(`'$."${lang}"'`)))), { [Op.like]: searchPattern.toLowerCase() })
           )
         ]
       };

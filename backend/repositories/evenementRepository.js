@@ -102,7 +102,7 @@ class EvenementRepository extends BaseRepository {
       and.push({
         [Op.or]: ['nom_evenement', 'description'].flatMap((field) => [
           seqWhere(col(`${alias}.${field}`), { [Op.like]: pattern }),
-          ...langs.map((l) => seqWhere(fn('JSON_EXTRACT', col(`${alias}.${field}`), literal(`'$.${l}'`)), { [Op.like]: pattern }))
+          ...langs.map((l) => seqWhere(fn('LOWER', fn('JSON_UNQUOTE', fn('JSON_EXTRACT', col(`${alias}.${field}`), literal(`'$."${l}"'`)))), { [Op.like]: pattern.toLowerCase() }))
         ])
       });
     }
