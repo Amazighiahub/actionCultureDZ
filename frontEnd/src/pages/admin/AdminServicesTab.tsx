@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 
 import {
+  ConfirmDialog,
   EmptyState,
   LoadingSkeleton,
   StatusBadge
@@ -46,6 +47,7 @@ const AdminServicesTab: React.FC = () => {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('tous');
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 
   const debouncedSearch = useDebouncedValue(searchQuery, 300);
 
@@ -249,7 +251,7 @@ const AdminServicesTab: React.FC = () => {
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           className="text-destructive"
-                          onClick={() => deleteService(service.id_service || service.id)}
+                          onClick={() => setConfirmDeleteId(service.id_service || service.id)}
                         >
                           <Trash2 className="h-4 w-4 mr-2" />
                           {t('common.delete', 'Supprimer')}
@@ -263,6 +265,21 @@ const AdminServicesTab: React.FC = () => {
           })}
         </div>
       )}
+
+      <ConfirmDialog
+        open={confirmDeleteId !== null}
+        onOpenChange={(open) => { if (!open) setConfirmDeleteId(null); }}
+        title={t('admin.services.confirmDelete', 'Supprimer ce service ?')}
+        description={t('admin.events.confirmDeleteDesc', 'Cette action est irréversible.')}
+        confirmLabel={t('common.delete', 'Supprimer')}
+        variant="destructive"
+        onConfirm={async () => {
+          if (confirmDeleteId === null) return;
+          const id = confirmDeleteId;
+          setConfirmDeleteId(null);
+          await deleteService(id);
+        }}
+      />
     </div>
   );
 };

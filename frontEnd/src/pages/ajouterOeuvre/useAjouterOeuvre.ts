@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { prepareImageForUpload } from '@/utils/prepareImageForUpload';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/useAuth';
 import { useRTL } from '@/hooks/useRTL';
@@ -341,7 +342,7 @@ export function useAjouterOeuvre() {
         : file.type.startsWith('video/') ? 'video'
         : file.type.startsWith('audio/') ? 'audio'
         : 'document';
-      const maxSizes: Record<string, number> = { image: 10, video: 100, audio: 100, document: 50 };
+      const maxSizes: Record<string, number> = { image: 10, video: 100, audio: 50, document: 50 };
       const maxSizeMB = maxSizes[fileType];
       const maxSize = maxSizeMB * 1024 * 1024;
       if (file.size > maxSize) {
@@ -600,7 +601,7 @@ export function useAjouterOeuvre() {
       }
 
       toast({ title: t('ajouteroeuvre.succes'), description: t('ajouteroeuvre.article_cree_succes') });
-      setTimeout(() => { navigate(`/articles/${oeuvreId}`); }, 1500);
+      navigate(`/articles/${oeuvreId}`);
 
     } catch (error: unknown) {
       console.error('❌ Erreur sauvegarde article avancé:', error);
@@ -609,7 +610,7 @@ export function useAjouterOeuvre() {
     } finally {
       submittingRef.current = false;
     }
-  }, [toast, t]);
+  }, [toast, t, navigate]);
 
   // ============================================================================
   // SOUMISSION DU FORMULAIRE
@@ -726,36 +727,35 @@ export function useAjouterOeuvre() {
       try {
         let oeuvreResponse;
         const mediaFiles = medias.map((m) => m.file);
+        // Envoi un par un avec progression ; les échecs sont comptés pour prévenir l'utilisateur
+        let failedMedias = 0;
+        const uploadMediaFiles = async (oeuvreId: number) => {
+          for (let i = 0; i < mediaFiles.length; i++) {
+            const progressLabel = (percent: number) => t('ajouteroeuvre.uploadingMediaN', 'Envoi des médias ({{current}}/{{total}}) : {{percent}} %', { current: i + 1, total: mediaFiles.length, percent });
+            setUploadProgress(progressLabel(0));
+            try {
+              const fd = new FormData();
+              fd.append('medias', await prepareImageForUpload(mediaFiles[i]));
+              const res = await httpClient.upload(`/oeuvres/${oeuvreId}/medias/upload`, fd, (p) => setUploadProgress(progressLabel(p)));
+              if (!res?.success) failedMedias++;
+            } catch (err) {
+              console.error('Erreur upload média:', err);
+              failedMedias++;
+            }
+          }
+        };
 
         if (isEditMode && editId) {
           oeuvreResponse = await oeuvreService.updateOeuvre(editId, oeuvreData);
           if (oeuvreResponse.success && mediaFiles.length > 0) {
-            setUploadProgress(t('ajouteroeuvre.uploadingMedias', 'Upload des médias...'));
-            for (const file of mediaFiles) {
-              try {
-                const fd = new FormData();
-                fd.append('medias', file);
-                await httpClient.upload(`/oeuvres/${editId}/medias/upload`, fd);
-              } catch (err) {
-                console.error('Erreur upload média:', err);
-              }
-            }
+            await uploadMediaFiles(Number(editId));
           }
         } else {
           oeuvreResponse = await oeuvreService.createOeuvre(oeuvreData);
 
           if (oeuvreResponse.success && mediaFiles.length > 0 && oeuvreResponse.data?.oeuvre?.id_oeuvre) {
             const oeuvreId = oeuvreResponse.data.oeuvre.id_oeuvre;
-            setUploadProgress(t('ajouteroeuvre.uploadingMedias', 'Upload des médias...'));
-            for (const file of mediaFiles) {
-              try {
-                const fd = new FormData();
-                fd.append('medias', file);
-                await httpClient.upload(`/oeuvres/${oeuvreId}/medias/upload`, fd);
-              } catch (err) {
-                console.error('Erreur upload média:', err);
-              }
-            }
+            await uploadMediaFiles(oeuvreId);
           }
         }
 
@@ -777,7 +777,14 @@ export function useAjouterOeuvre() {
           title: t('ajouteroeuvre.succes'),
           description: isEditMode ? t('toasts.oeuvreStatusUpdated') : (isDraft ? t('ajouteroeuvre.brouillon_sauvegarde') : t('ajouteroeuvre.oeuvre_creee_succes')),
         });
-        setTimeout(() => { navigate('/dashboard-pro'); }, 1500);
+        if (failedMedias > 0) {
+          toast({
+            title: t('ajouteroeuvre.mediasFailedTitle', 'Médias non envoyés'),
+            description: t('ajouteroeuvre.mediasFailed', "{{count}} fichier(s) n'ont pas pu être envoyés. Ajoutez-les depuis votre tableau de bord.", { count: failedMedias }),
+            variant: 'destructive',
+          });
+        }
+        navigate('/dashboard-pro');
 
       } catch (error: unknown) {
         const errorMessage = error instanceof Error ? error.message : '';
@@ -796,7 +803,7 @@ export function useAjouterOeuvre() {
               }
             }
             toast({ title: t('ajouteroeuvre.succes'), description: t('ajouteroeuvre.oeuvre_creee_succes') });
-            setTimeout(() => { navigate('/dashboard-pro'); }, 1500);
+            navigate('/dashboard-pro');
           } else {
             setSubmitError(t('ajouteroeuvre.verifyError', 'Impossible de vérifier si l\'oeuvre a été créée. Veuillez consulter votre tableau de bord ou réessayer.'));
           }

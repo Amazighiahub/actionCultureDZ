@@ -113,10 +113,10 @@ const EventMetadata: React.FC<EventMetadataProps> = ({ event }) => {
                   className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors text-left"
                 >
                   <LazyImage
-                    src={oeuvre.image_url || '/images/default-oeuvre.png'}
+                    src={oeuvre.image_url || '/images/default-oeuvre.svg'}
                     alt={td(oeuvre.titre) || ''}
                     className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
-                    fallback="/images/default-oeuvre.png"
+                    fallback="/images/default-oeuvre.svg"
                   />
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium truncate">{td(oeuvre.titre)}</p>

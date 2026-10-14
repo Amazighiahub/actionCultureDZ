@@ -54,6 +54,7 @@ const renderPreviewBlock = (block: ArticleBlock, index: number) => {
             src={src}
             frameBorder="0"
             allowFullScreen
+            loading="lazy"
             title="Embedded content"
             sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
             referrerPolicy="strict-origin-when-cross-origin"

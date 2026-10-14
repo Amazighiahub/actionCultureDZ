@@ -184,15 +184,18 @@ class BaseRepository {
     const sanitizedQuery = this._sanitizeSearchQuery(query);
     const searchPattern = `%${sanitizedQuery}%`;
 
-    const tableName = this.model.getTableName();
+    // Alias de la table dans la requête = nom du modèle (« Evenement »), pas le nom de table
+    // (« evenement ») : MySQL sous Linux distingue la casse, la recherche échouait en 500
+    const alias = this.model.name;
     const langs = ['fr', 'ar', 'en', 'tz-ltn', 'tz-tfng'];
     const searchConditions = fields.map(field => {
-      const qualifiedCol = col(`${tableName}.${field}`);
+      const qualifiedCol = col(`${alias}.${field}`);
       return {
         [Op.or]: [
           seqWhere(qualifiedCol, { [Op.like]: searchPattern }),
           ...langs.map(lang =>
-            seqWhere(fn('JSON_EXTRACT', qualifiedCol, literal(`'$.${lang}'`)), { [Op.like]: searchPattern })
+            // Chemin entre guillemets (tiret de "tz-ltn") ; JSON_UNQUOTE + LOWER : recherche insensible à la casse
+            seqWhere(fn('LOWER', fn('JSON_UNQUOTE', fn('JSON_EXTRACT', qualifiedCol, literal(`'$."${lang}"'`)))), { [Op.like]: searchPattern.toLowerCase() })
           )
         ]
       };

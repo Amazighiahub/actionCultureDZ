@@ -68,8 +68,9 @@ interface IntervenantData {
 }
 
 interface CreateProgrammeData {
-  titre: string;
-  description?: string;
+  // Texte (langue courante) ou objet multilingue { fr, ar, ... } : le serveur fusionne
+  titre: string | Partial<Record<string, string>>;
+  description?: string | Partial<Record<string, string>>;
   type_activite: string;
   heure_debut: string;
   heure_fin: string;

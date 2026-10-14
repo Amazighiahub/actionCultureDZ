@@ -89,7 +89,7 @@ const OrganizerCard: React.FC<OrganizerCardProps> = ({ organizer, variant = 'def
     ? `${td(organizer.prenom) || ''} ${td(organizer.nom)}`.trim()
     : td(organizer.nom);
 
-  const imageUrl = organizer.photo_url || organizer.logo_url || '/images/default-avatar.png';
+  const imageUrl = organizer.photo_url || organizer.logo_url || '/images/default-avatar.svg';
 
   if (variant === 'compact') {
     return (
@@ -99,7 +99,7 @@ const OrganizerCard: React.FC<OrganizerCardProps> = ({ organizer, variant = 'def
           alt={displayName}
           className="w-10 h-10 rounded-full"
           aspectRatio="square"
-          fallback="/images/default-avatar.png"
+          fallback="/images/default-avatar.svg"
         />
         <div className="flex-1 min-w-0">
           <p className="font-medium truncate">{displayName}</p>
@@ -126,7 +126,7 @@ const OrganizerCard: React.FC<OrganizerCardProps> = ({ organizer, variant = 'def
                     src={organizer.logo_url}
                     alt={displayName}
                     className="w-full h-full object-contain rounded-lg"
-                    fallback="/images/default-org.png"
+                    fallback="/images/default-org.svg"
                   />
                 ) : (
                   <OrgIcon className="h-8 w-8 text-muted-foreground" />
@@ -138,7 +138,7 @@ const OrganizerCard: React.FC<OrganizerCardProps> = ({ organizer, variant = 'def
                 alt={displayName}
                 className="w-16 h-16 rounded-full"
                 aspectRatio="square"
-                fallback="/images/default-avatar.png"
+                fallback="/images/default-avatar.svg"
               />
             )}
           </div>

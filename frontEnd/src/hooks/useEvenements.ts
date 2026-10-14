@@ -2,7 +2,7 @@
  * useEvenements - Hook pour la page de listing des événements
  * Gère la recherche, les filtres et la pagination
  */
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { evenementService } from '@/services/evenement.service';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
@@ -45,6 +45,11 @@ export function useEvenements(options: UseEvenementsOptions = {}) {
 
   // Debounce de la recherche
   const debouncedSearch = useDebouncedValue(search, 300);
+
+  // Retour à la page 1 quand un filtre change (sinon page 3 d'une liste plus courte = « aucun résultat »)
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, statut, type, wilayaId, dateDebut, dateFin]);
 
   // Construire les paramètres de requête
   const queryParams = useMemo(() => ({

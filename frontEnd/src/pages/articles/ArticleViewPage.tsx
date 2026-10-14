@@ -24,7 +24,6 @@ import {
   Clock,
   User,
   BookOpen,
-  Download,
   Share2,
   Bookmark,
   Heart,
@@ -348,7 +347,7 @@ const ArticleViewPage: React.FC = () => {
     try {
       const result = await commentaireService.createCommentaireOeuvre(oeuvre.id_oeuvre, {
         contenu: commentContent.trim(),
-        parent_id: replyToComment || undefined
+        commentaire_parent_id: replyToComment || undefined
       });
 
       if (result.success && result.data) {
@@ -685,13 +684,6 @@ const ArticleViewPage: React.FC = () => {
                 title={t("articles_articleviewpage.title_imprimer")}>
                 
                 <Printer className="h-4 w-4" />
-              </Button>
-              <Button
-                size="icon"
-                variant="ghost"
-                title={t("articles_articleviewpage.title_tlcharger_pdf")}>
-                
-                <Download className="h-4 w-4" />
               </Button>
             </div>
           </div>

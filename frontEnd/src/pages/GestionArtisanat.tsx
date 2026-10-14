@@ -71,7 +71,7 @@ const GestionArtisanat: React.FC = () => {
   // Déterminer le mode en fonction des paramètres et permissions
   const getMode = (): Mode => {
     if (id) {
-      if (isAdmin()) return 'verify';
+      if (isAdmin) return 'verify';
       if (user?.id_artisan === parseInt(id)) return 'edit';
       return 'view';
     }
@@ -295,7 +295,7 @@ const GestionArtisanat: React.FC = () => {
             sur_commande: formData.sur_commande,
             en_stock: formData.en_stock,
             tags: formData.tags,
-            statut: isAdmin() ? formData.statut : 'en_attente'
+            statut: isAdmin ? formData.statut : 'en_attente'
           } as CreateArtisanatData
         : {
             ...formData,
@@ -308,7 +308,7 @@ const GestionArtisanat: React.FC = () => {
         response = await artisanatService.create(submitData);
       } else if (mode === 'edit') {
         response = await artisanatService.update(parseInt(id!), submitData);
-      } else if (mode === 'verify' && isAdmin()) {
+      } else if (mode === 'verify' && isAdmin) {
         response = await artisanatService.update(parseInt(id!), { 
           statut: formData.statut 
         } as UpdateArtisanatData);
@@ -326,7 +326,7 @@ const GestionArtisanat: React.FC = () => {
 
         setSuccess(true);
         setTimeout(() => {
-          if (isAdmin()) {
+          if (isAdmin) {
             navigate('/gestion-artisanat');
           } else {
             navigate('/dashboard-pro');
@@ -365,7 +365,7 @@ const GestionArtisanat: React.FC = () => {
 
   // Vérifier si l'utilisateur peut vérifier
   const canVerify = () => {
-    return isAdmin() && mode === 'verify';
+    return isAdmin && mode === 'verify';
   };
 
   const getModeTitle = () => {
@@ -731,7 +731,7 @@ const GestionArtisanat: React.FC = () => {
               </Card>
 
               {/* Admin verification section */}
-              {isAdmin() && mode === 'verify' && (
+              {isAdmin && mode === 'verify' && (
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">

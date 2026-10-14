@@ -79,7 +79,7 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
   hideOeuvres = false,
   eventDates
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { td } = useTranslateData();
   const { toast } = useToast();
   const { formatTime: hookFormatTime } = useFormatDate();
@@ -192,8 +192,9 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
     try {
       // Transformer les données pour l'API (conforme à la base de données)
       const apiData = {
-        titre: data.titre.fr, // Base attend: string, on prend le français
-        description: data.description.fr, // Base attend: string?, on prend le français
+        // Toutes les langues saisies ; le serveur ignore les langues vides (pas d'effacement)
+        titre: data.titre,
+        description: data.description,
         type_activite: data.type_activite, // Conforme
         heure_debut: `${data.date_programme}T${data.heure_debut}:00`, // Format ISO pour la base
         heure_fin: `${data.date_programme}T${data.heure_fin}:00`, // Format ISO pour la base
@@ -397,20 +398,10 @@ const GestionEvenement: React.FC<GestionEvenementProps> = ({
                 <ProgrammeForm
                   eventId={evenementId}
                   initialData={editingProgramme ? {
-                    titre: {
-                      fr: editingProgramme.titre || '',
-                      ar: editingProgramme.titre || '',
-                      en: editingProgramme.titre || '',
-                      'tz-ltn': '',
-                      'tz-tfng': ''
-                    },
-                    description: {
-                      fr: editingProgramme.description || '',
-                      ar: editingProgramme.description || '',
-                      en: editingProgramme.description || '',
-                      'tz-ltn': '',
-                      'tz-tfng': ''
-                    },
+                    // Texte affiché = traduction dans la langue de l'interface : rangé sous cette
+                    // langue seulement (le recopier dans toutes écrasait les vraies traductions)
+                    titre: { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '', [i18n.language]: editingProgramme.titre || '' },
+                    description: { fr: '', ar: '', en: '', 'tz-ltn': '', 'tz-tfng': '', [i18n.language]: editingProgramme.description || '' },
                     date_programme: editingProgramme.heure_debut ? editingProgramme.heure_debut.split('T')[0] : '',
                     heure_debut: editingProgramme.heure_debut ? editingProgramme.heure_debut.split('T')[1]?.substring(0, 5) : '',
                     heure_fin: editingProgramme.heure_fin ? editingProgramme.heure_fin.split('T')[1]?.substring(0, 5) : '',

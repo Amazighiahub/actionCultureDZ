@@ -38,6 +38,25 @@ const monitoringMethods = {
     try {
       const { title, message, target, type = 'info', sendEmail = true } = req.body;
 
+      // Destinataire unique : notification à cette seule personne (auparavant le site
+      // remplaçait « un utilisateur » par « tous » et le message partait à tout le monde)
+      if (target === 'user') {
+        const userId = parseInt(req.body.targetUserId, 10);
+        if (!userId || !title || !message) {
+          return res.status(400).json({ success: false, error: req.t('common.badRequest') });
+        }
+        const notification = await container.notificationService.sendToUser(userId, {
+          titre: title,
+          message,
+          type_notification: 'message_admin',
+          metadata: { type, envoye_par: req.user.id_user }
+        });
+        if (!notification) {
+          return res.status(404).json({ success: false, error: req.t('common.notFound') });
+        }
+        return res.json({ success: true, data: { queued: false, target, type, notified: 1 } });
+      }
+
       // Compter les destinataires directement depuis les modèles
       let notified = 0;
       try {

@@ -16,7 +16,7 @@ import {
   Search, RefreshCw, X, Ban, Trash2
 } from 'lucide-react';
 
-import { EmptyState, LoadingSkeleton } from '@/components/shared';
+import { ConfirmDialog, EmptyState, LoadingSkeleton } from '@/components/shared';
 
 import { useDashboardAdmin } from '@/hooks/useDashboardAdmin';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
@@ -39,6 +39,8 @@ const AdminModerationTab: React.FC = () => {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('tous');
+  // Actions lourdes (suppression, suspension) : confirmation avant exécution
+  const [pendingAction, setPendingAction] = useState<{ id: number; action: 'suppression_contenu' | 'suspension_temporaire' } | null>(null);
 
   const debouncedSearch = useDebouncedValue(searchQuery, 300);
 
@@ -282,7 +284,7 @@ const AdminModerationTab: React.FC = () => {
                       <Button
                         size="sm"
                         variant="destructive"
-                        onClick={() => handleAction(signalement.id, 'suppression_contenu')}
+                        onClick={() => setPendingAction({ id: signalement.id, action: 'suppression_contenu' })}
                         title={t('admin.moderation.actions.removeContent', 'Supprimer le contenu')}
                       >
                         <Trash2 className="h-4 w-4 mr-1" />
@@ -291,7 +293,7 @@ const AdminModerationTab: React.FC = () => {
                       <Button
                         size="sm"
                         variant="destructive"
-                        onClick={() => handleAction(signalement.id, 'suspension_temporaire')}
+                        onClick={() => setPendingAction({ id: signalement.id, action: 'suspension_temporaire' })}
                         title={t('admin.moderation.actions.suspend', 'Suspendre l\'utilisateur')}
                       >
                         <Ban className="h-4 w-4 mr-1" />
@@ -305,6 +307,27 @@ const AdminModerationTab: React.FC = () => {
           })}
         </div>
       )}
+
+      <ConfirmDialog
+        open={pendingAction !== null}
+        onOpenChange={(open) => { if (!open) setPendingAction(null); }}
+        title={pendingAction?.action === 'suspension_temporaire'
+          ? t('admin.moderation.confirmSuspend', 'Suspendre cet utilisateur ?')
+          : t('admin.moderation.confirmRemove', 'Supprimer ce contenu ?')}
+        description={pendingAction?.action === 'suspension_temporaire'
+          ? t('admin.moderation.confirmSuspendDesc', "L'auteur du contenu ne pourra plus se connecter pendant la suspension.")
+          : t('admin.moderation.confirmRemoveDesc', 'Le contenu signalé sera supprimé définitivement.')}
+        confirmLabel={pendingAction?.action === 'suspension_temporaire'
+          ? t('admin.moderation.actions.suspendShort', 'Suspendre')
+          : t('admin.moderation.actions.removeContentShort', 'Supprimer')}
+        variant="destructive"
+        onConfirm={async () => {
+          if (!pendingAction) return;
+          const { id, action } = pendingAction;
+          setPendingAction(null);
+          await handleAction(id, action);
+        }}
+      />
     </div>
   );
 };

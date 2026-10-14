@@ -2,6 +2,7 @@
 import { API_ENDPOINTS, ApiResponse, PaginatedResponse, FilterParams } from '@/config/api';
 import { BaseService } from './base.service';
 import { httpClient } from './httpClient';
+import { prepareFilesForUpload } from '@/utils/prepareImageForUpload';
 
 interface SitePatrimoine {
   id: number;
@@ -239,7 +240,7 @@ class PatrimoineService extends BaseService<SitePatrimoine, CreateSiteData, Upda
 
   async uploadMedias(siteId: number, files: File[]): Promise<ApiResponse<MediaSite[]>> {
     const formData = new FormData();
-    files.forEach(file => formData.append('medias', file));
+    (await prepareFilesForUpload(files)).forEach(file => formData.append('medias', file));
     return httpClient.upload<MediaSite[]>(
       API_ENDPOINTS.patrimoine.uploadMedias(siteId),
       formData

@@ -150,15 +150,13 @@ const AjouterPatrimoineRapide: React.FC = () => {
     }
 
     setMedias(prev => [...prev, ...validFiles]);
-    validFiles.forEach(f => {
-      const reader = new FileReader();
-      reader.onload = (ev) => setMediaPreviews(prev => [...prev, ev.target?.result as string]);
-      reader.readAsDataURL(f);
-    });
+    setMediaPreviews(prev => [...prev, ...validFiles.map(f => URL.createObjectURL(f))]);
+    e.target.value = '';
     setErrors(prev => { const { medias: _, ...rest } = prev; return rest; });
   };
 
   const handleMediaRemove = (index: number) => {
+    if (mediaPreviews[index]) URL.revokeObjectURL(mediaPreviews[index]);
     setMedias(prev => prev.filter((_, i) => i !== index));
     setMediaPreviews(prev => prev.filter((_, i) => i !== index));
   };
@@ -203,7 +201,7 @@ const AjouterPatrimoineRapide: React.FC = () => {
           variant: uploadFailed ? 'destructive' : 'default',
         });
 
-        setTimeout(() => { navigate(`/patrimoine/${siteId}`); }, 1500);
+        navigate(`/patrimoine/${siteId}`);
       } else {
         // Gestion erreur 409 (doublon)
         const errMsg = response.error || '';
@@ -472,7 +470,7 @@ const AjouterPatrimoineRapide: React.FC = () => {
                   <input
                     id="media-upload"
                     type="file"
-                    accept="image/*,video/*,.pdf"
+                    accept="image/*"
                     multiple
                     className="hidden"
                     onChange={handleMediaAdd}

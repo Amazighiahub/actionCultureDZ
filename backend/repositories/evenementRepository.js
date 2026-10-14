@@ -8,7 +8,7 @@ const { PUBLIC_USER_ATTRIBUTES, PUBLIC_ORGANIZER_ATTRIBUTES } = require('../cons
 
 // Programme vu publiquement : tout sauf les notes internes de l'organisateur
 const PUBLIC_PROGRAMME_EXCLUDE = ['notes_organisateur'];
-const { Op } = require('sequelize');
+const { Op, col, fn, literal, where: seqWhere } = require('sequelize');
 
 class EvenementRepository extends BaseRepository {
   constructor(models) {
@@ -87,13 +87,85 @@ class EvenementRepository extends BaseRepository {
   }
 
   /**
-   * Trouve les événements publiés avec pagination
+   * Filtres de la liste publique : texte (toutes langues), statut d'affichage, type.
+   * @param {{ q?: string, statut?: string, type?: string }} filters
+   * @returns {Promise<object>} conditions Sequelize (à combiner avec le reste du where)
+   */
+  async _buildPublicFilters({ q, statut, type } = {}) {
+    const and = [];
+    const now = new Date();
+
+    if (q && String(q).trim().length >= 2) {
+      const pattern = `%${this._sanitizeSearchQuery(String(q).trim())}%`;
+      const alias = this.model.name;
+      const langs = ['fr', 'ar', 'en', 'tz-ltn', 'tz-tfng'];
+      and.push({
+        [Op.or]: ['nom_evenement', 'description'].flatMap((field) => [
+          seqWhere(col(`${alias}.${field}`), { [Op.like]: pattern }),
+          ...langs.map((l) => seqWhere(fn('LOWER', fn('JSON_UNQUOTE', fn('JSON_EXTRACT', col(`${alias}.${field}`), literal(`'$."${l}"'`)))), { [Op.like]: pattern.toLowerCase() }))
+        ])
+      });
+    }
+
+    // Statuts tels qu'affichés sur le site (calculés aussi depuis les dates)
+    if (statut === 'a_venir') {
+      and.push({ statut: { [Op.in]: ['publie', 'planifie'] }, date_debut: { [Op.gt]: now } });
+    } else if (statut === 'en_cours') {
+      and.push({
+        [Op.or]: [
+          { statut: 'en_cours' },
+          { statut: { [Op.in]: ['publie', 'planifie'] }, date_debut: { [Op.lte]: now }, date_fin: { [Op.gte]: now } }
+        ]
+      });
+    } else if (statut === 'termine') {
+      and.push({
+        [Op.or]: [
+          { statut: 'termine' },
+          { statut: { [Op.in]: ['publie', 'planifie', 'en_cours'] }, date_fin: { [Op.lt]: now } }
+        ]
+      });
+    }
+
+    // Type : identifiant, ou nom venant du site (« conference » pour « Conférence »)
+    if (type && this.models.TypeEvenement) {
+      if (/^\d+$/.test(String(type))) {
+        and.push({ id_type_evenement: Number(type) });
+      } else {
+        const normalize = (v) => String(v || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+        const wanted = normalize(type);
+        const types = await this.models.TypeEvenement.findAll({ attributes: ['id_type_evenement', 'nom_type'], raw: true });
+        const ids = types
+          .filter((tp) => {
+            let names = tp.nom_type;
+            if (typeof names === 'string') {
+              try { names = JSON.parse(names); } catch { names = { fr: names }; }
+            }
+            const values = names && typeof names === 'object' ? Object.values(names) : [names];
+            return values.some((n) => {
+              const name = normalize(n);
+              return name && (name === wanted || name.startsWith(wanted) || wanted.startsWith(name));
+            });
+          })
+          .map((tp) => tp.id_type_evenement);
+        // Type inconnu : aucun résultat (plutôt que tout afficher)
+        and.push({ id_type_evenement: { [Op.in]: ids.length ? ids : [-1] } });
+      }
+    }
+
+    return and;
+  }
+
+  /**
+   * Trouve les événements publiés avec pagination (et filtres de la liste publique)
    */
   async findPublished(options = {}) {
-    const { page = 1, limit = 20 } = options;
+    const { page = 1, limit = 20, filters = {} } = options;
     const p = parseInt(page);
     const l = parseInt(limit);
-    const where = { ...options.where, statut: { [Op.in]: ['publie', 'planifie', 'en_cours'] } };
+    const extra = await this._buildPublicFilters(filters);
+    // « Terminé » demandé explicitement : les événements terminés font partie des résultats
+    const visibleStatuts = filters.statut === 'termine' ? ['publie', 'planifie', 'en_cours', 'termine'] : ['publie', 'planifie', 'en_cours'];
+    const where = { ...options.where, statut: { [Op.in]: visibleStatuts }, ...(extra.length ? { [Op.and]: extra } : {}) };
 
     const [total, rows] = await Promise.all([
       this.model.count({ where }),

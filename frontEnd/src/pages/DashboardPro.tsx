@@ -13,6 +13,7 @@ import {
   DialogContent,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { ConfirmDialog } from '@/components/shared';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import {
   BookOpen,
@@ -136,6 +137,8 @@ const DashboardPro = () => {
   const [activeTab, setActiveTab] = useState('oeuvres');
   const [searchQuery, setSearchQuery] = useState('');
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; type: string; item: DashboardItem | null }>({ open: false, type: '', item: null });
+  // Annulation d'un événement publié : irréversible et notifiée aux participants
+  const [cancelEventId, setCancelEventId] = useState<number | null>(null);
 
   // État pour la gestion d'événement
   const [gestionEvenement, setGestionEvenement] = useState<{id: number; nom: string} | null>(null);
@@ -398,7 +401,9 @@ const DashboardPro = () => {
       oeuvre: item?.id_oeuvre,
       evenement: item?.id_evenement,
       patrimoine: item?.id_site || item?.id,
-      service: item?.id || item?.id_service
+      service: item?.id || item?.id_service,
+      // (manquait : la suppression envoyait DELETE /artisanat/undefined)
+      artisanat: item?.id_artisanat || item?.id
     };
     await deleteItem(type, ids[type]);
   };
@@ -756,7 +761,7 @@ const DashboardPro = () => {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => cancelEvent(evenement.id_evenement)}
+                            onClick={() => setCancelEventId(evenement.id_evenement ?? null)}
                             className="text-orange-500 hover:text-orange-600"
                             title={t('events.cancel', 'Annuler l\'événement')}
                           >
@@ -989,6 +994,21 @@ const DashboardPro = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={cancelEventId !== null}
+        onOpenChange={(open) => { if (!open) setCancelEventId(null); }}
+        title={t('admin.events.confirmCancel', 'Annuler cet événement ?')}
+        description={t('admin.events.confirmCancelDesc', "Les participants seront notifiés de l'annulation.")}
+        confirmLabel={t('admin.events.cancelEvent', "Annuler l'événement")}
+        variant="destructive"
+        onConfirm={async () => {
+          if (cancelEventId === null) return;
+          const id = cancelEventId;
+          setCancelEventId(null);
+          await cancelEvent(id);
+        }}
+      />
 
       {/* Dialog de confirmation de suppression */}
       <AlertDialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog(prev => ({ ...prev, open }))}>

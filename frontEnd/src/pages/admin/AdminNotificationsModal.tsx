@@ -122,11 +122,18 @@ const AdminNotificationsModal: React.FC<AdminNotificationsModalProps> = ({
     setSending(true);
 
     try {
-      const target = formData.target === 'user' ? 'all' : (formData.targetGroup as 'all' | 'professionals' | 'visitors');
+      // Un seul destinataire : jamais d'envoi à tout le monde à sa place
+      const toUser = formData.target === 'user';
+      if (toUser && !formData.targetUserId) {
+        toast({ title: t('common.error'), description: t('admin.notifications.noRecipient', 'Aucun destinataire sélectionné'), variant: 'destructive' });
+        return;
+      }
+      const target = toUser ? 'user' : (formData.targetGroup as 'all' | 'professionals' | 'visitors');
       const result = await adminService.broadcastNotification({
         title: formData.title,
         message: formData.message,
         target,
+        ...(toUser ? { targetUserId: formData.targetUserId } : {}),
         type: formData.type,
         sendEmail: formData.sendEmail
       });

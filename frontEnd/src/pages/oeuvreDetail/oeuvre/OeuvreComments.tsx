@@ -42,6 +42,10 @@ interface OeuvreCommentsProps {
 import StarRating from '@/components/shared/StarRating';
 
 // Item commentaire
+/** Note d'un avis (le serveur la renvoie dans note_qualite) ; 0 si aucune */
+const noteOf = (c: { note?: number | null; note_qualite?: number | null }): number =>
+  Number(c.note_qualite ?? c.note) || 0;
+
 const CommentItem: React.FC<{ comment: Comment }> = ({ comment }) => {
   const { formatDate } = useLocalizedDate();
   const user = comment.User;
@@ -61,7 +65,7 @@ const CommentItem: React.FC<{ comment: Comment }> = ({ comment }) => {
               <span className="font-medium">
                 {user ? `${getLocalizedText(user.prenom)} ${getLocalizedText(user.nom)}` : 'Anonyme'}
               </span>
-              {comment.note && <StarRating value={comment.note} readonly size="sm" />}
+              {noteOf(comment) > 0 && <StarRating value={noteOf(comment)} readonly size="sm" />}
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Clock className="h-3 w-3" />
@@ -87,17 +91,17 @@ const OeuvreComments: React.FC<OeuvreCommentsProps> = ({ comments, onAddComment,
   const [error, setError] = useState<string | null>(null);
 
   // Moyenne des notes
-  const commentsWithNote = comments.filter(c => c.note);
+  const commentsWithNote = comments.filter(c => noteOf(c) > 0);
   const averageRating = commentsWithNote.length > 0
-    ? commentsWithNote.reduce((acc, c) => acc + (c.note || 0), 0) / commentsWithNote.length
+    ? commentsWithNote.reduce((acc, c) => acc + noteOf(c), 0) / commentsWithNote.length
     : 0;
 
   // Distribution
   const ratingDistribution = [5, 4, 3, 2, 1].map((star) => ({
     star,
-    count: comments.filter(c => c.note === star).length,
+    count: comments.filter(c => noteOf(c) === star).length,
     percentage: commentsWithNote.length > 0 
-      ? (comments.filter(c => c.note === star).length / commentsWithNote.length) * 100
+      ? (comments.filter(c => noteOf(c) === star).length / commentsWithNote.length) * 100
       : 0
   }));
 

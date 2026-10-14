@@ -323,7 +323,9 @@ class AdminService {
   async broadcastNotification(data: {
     title: string;
     message: string;
-    target: 'all' | 'professionals' | 'visitors';
+    target: 'all' | 'professionals' | 'visitors' | 'user';
+    /** Obligatoire si target = 'user' */
+    targetUserId?: number;
     type?: string;
     sendEmail?: boolean;
   }): Promise<ApiResponse<{ notified: number; skipped: number; total_users: number }>> {

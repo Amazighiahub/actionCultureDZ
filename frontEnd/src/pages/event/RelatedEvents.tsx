@@ -241,7 +241,10 @@ const RelatedEvents: React.FC<RelatedEventsProps> = ({
 
       if (response.success && response.data) {
         // Filtrer pour exclure l'événement actuel si le backend ne le fait pas
-        return response.data.items.filter(e => e.id_evenement !== eventId).slice(0, limit);
+        // L'API renvoie un tableau dans data (lire data.items plantait : liste toujours vide)
+        const raw = response.data as unknown as Evenement[] | { items?: Evenement[] };
+        const list = Array.isArray(raw) ? raw : raw.items || [];
+        return list.filter(e => e.id_evenement !== eventId).slice(0, limit);
       }
       return [];
     },

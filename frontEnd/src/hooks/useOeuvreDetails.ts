@@ -168,7 +168,7 @@ export function useOeuvreDetails(oeuvreId: number, options: UseOeuvreDetailsOpti
   // Ajouter un commentaire
   const addCommentMutation = useMutation({
     mutationFn: async ({ contenu, note }: { contenu: string; note?: number }) => {
-      const response = await commentaireService.createCommentaireOeuvre(oeuvreId, { contenu });
+      const response = await commentaireService.createCommentaireOeuvre(oeuvreId, { contenu, ...(note ? { note_qualite: note } : {}) });
       if (!response.success) {
         throw new Error(response.error || 'Erreur lors de l\'ajout du commentaire');
       }

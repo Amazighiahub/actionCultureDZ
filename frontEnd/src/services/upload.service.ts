@@ -8,6 +8,7 @@ import {
   UploadOptions as ApiUploadOptions
 } from '@/config/api';
 import { httpClient } from './httpClient';
+import { prepareImageForUpload } from '@/utils/prepareImageForUpload';
 
 interface UploadResponse {
   url: string;
@@ -133,7 +134,7 @@ class UploadService {
 
     try {
       const formData = new FormData();
-      formData.append('image', file);
+      formData.append('image', await prepareImageForUpload(file));
       
       // Ajouter les options
       if (options?.generateThumbnail !== undefined) {
@@ -203,11 +204,8 @@ class UploadService {
 
   // Upload de vidéo
   async uploadVideo(file: File, options?: ServiceUploadOptions): Promise<ApiResponse<UploadResponse>> {
-    // Pour les vidéos volumineuses, utiliser l'upload par chunks
-    if (file.size > 50 * 1024 * 1024) { // Plus de 50MB
-      return this.uploadLargeFile(file, options);
-    }
-
+    // Envoi direct : le serveur n'a pas de route d'upload par morceaux (/upload/chunk
+    // répondait 404 au-delà de 50 Mo) et accepte jusqu'à 100 Mo en une requête
     try {
       const formData = new FormData();
       formData.append('video', file);
@@ -374,8 +372,8 @@ class UploadService {
     const maxSizes: Record<string, number> = {
       image: 10 * 1024 * 1024,      // 10MB
       document: 50 * 1024 * 1024,   // 50MB
-      video: 500 * 1024 * 1024,     // 500MB
-      audio: 100 * 1024 * 1024      // 100MB
+      video: 100 * 1024 * 1024,     // 100MB (limite serveur)
+      audio: 50 * 1024 * 1024       // 50MB (limite serveur)
     };
 
     const allowedMimeTypes: Record<string, string[]> = {

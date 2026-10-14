@@ -626,6 +626,7 @@ class HttpClient {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
+        timeout: 300000, // 5 minutes, comme postFormData
         onUploadProgress: (progressEvent) => {
           if (onProgress && progressEvent.total) {
             const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
@@ -699,6 +700,7 @@ class HttpClient {
     return this.requestQueue.add(async () => {
       const response = await this.axiosInstance.post<ApiResponse<T>>(url, formData, {
         headers,
+        timeout: 300000, // 5 minutes
         onUploadProgress: (progressEvent) => {
           if (options?.onProgress && progressEvent.total) {
             const percentage = Math.round((progressEvent.loaded * 100) / progressEvent.total);

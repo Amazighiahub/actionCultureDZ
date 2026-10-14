@@ -7,6 +7,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '@/hooks/useAuth';
 import { ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -38,6 +39,7 @@ const PagePubliqueCard: React.FC<PagePubliqueCardProps> = ({ user }) => {
   const { t } = useTranslation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { refreshUser } = useAuth();
   const [values, setValues] = useState<Record<Setting, boolean>>({
     email_public: !!user.email_public,
     telephone_public: !!user.telephone_public,
@@ -51,7 +53,7 @@ const PagePubliqueCard: React.FC<PagePubliqueCardProps> = ({ user }) => {
     try {
       const response = await httpClient.put('/users/privacy', { [API_FIELD[setting]]: value });
       if (!response.success) throw new Error(response.error);
-      queryClient.invalidateQueries({ queryKey: ['user-profile'] });
+      await refreshUser();
       queryClient.invalidateQueries({ queryKey: ['portfolio'] });
     } catch {
       setValues((v) => ({ ...v, [setting]: previous }));

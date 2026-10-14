@@ -116,6 +116,12 @@ vi.mock('@/components/shared', () => ({
     </div>
   ),
   LoadingSkeleton: () => <div data-testid="loading-skeleton" />,
+  ConfirmDialog: ({ open, title, confirmLabel, onConfirm }: any) => open ? (
+    <div role="dialog">
+      <p>{title}</p>
+      <button onClick={onConfirm}>{`confirmer ${confirmLabel}`}</button>
+    </div>
+  ) : null,
 }));
 
 // -- Radix Select -> native HTML for jsdom --
@@ -210,6 +216,10 @@ describe('AdminModerationTab — Modération des signalements', () => {
 
     // Click the second Supprimer button (signalement id: 11, the oeuvre)
     await user.click(supprimerButtons[1]);
+
+    // Action irréversible : rien n'est envoyé avant la confirmation
+    expect(mockModerateSignalement).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: /^confirmer/i }));
 
     expect(mockModerateSignalement).toHaveBeenCalledWith({
       signalementId: 11,

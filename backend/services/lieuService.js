@@ -96,7 +96,7 @@ class LieuService extends BaseService {
   _orderByName(lang) {
     const safeLang = (lang || 'fr').replace(/[^a-z-]/gi, '');
     try {
-      return [[this.sequelize.literal(`JSON_EXTRACT(\`Lieu\`.\`nom\`, '$.${safeLang}')`), 'ASC']];
+      return [[this.sequelize.literal(`JSON_EXTRACT(\`Lieu\`.\`nom\`, '$."${safeLang}"')`), 'ASC']];
     } catch {
       return [['id_lieu', 'ASC']];
     }
@@ -178,7 +178,7 @@ class LieuService extends BaseService {
     // Ordre
     let order = [['id_lieu', 'ASC']];
     try {
-      order = [[this.sequelize.literal(`JSON_EXTRACT(\`Lieu\`.\`nom\`, '$.${lang.replace(/[^a-z-]/gi, '')}')`), 'ASC']];
+      order = [[this.sequelize.literal(`JSON_EXTRACT(\`Lieu\`.\`nom\`, '$."${lang.replace(/[^a-z-]/gi, '')}"')`), 'ASC']];
     } catch {
       // Fallback sur l'ID
     }

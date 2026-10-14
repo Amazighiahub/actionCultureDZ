@@ -1850,7 +1850,10 @@
     "succes": "Work saved",
     "oeuvre_creee_succes": "Your work has been submitted successfully. It will be publicly visible once approved by an administrator.",
     "brouillon_sauvegarde": "Your draft has been saved. You can edit and publish it later from your dashboard.",
-    "article_cree_succes": "Your article has been submitted successfully. It will be publicly visible once approved by an administrator."
+    "article_cree_succes": "Your article has been submitted successfully. It will be publicly visible once approved by an administrator.",
+    "uploadingMediaN": "Uploading media ({{current}}/{{total}}): {{percent}}%",
+    "mediasFailedTitle": "Media not uploaded",
+    "mediasFailed": "{{count}} file(s) could not be uploaded. Add them from your dashboard."
   },
   "common_patrimoinesection": {
     "description_citadelle_historique_classe": "Historic citadel listed as UNESCO World Heritage Site",
@@ -2368,7 +2371,8 @@
       "sentToGroup": "Notification sent to group {{group}}",
       "sendError": "Error sending notification",
       "titleRequired": "Title is required",
-      "messageRequired": "Message is required"
+      "messageRequired": "Message is required",
+      "noRecipient": "Choose a recipient"
     },
     "moderation": {
       "title": "Moderation",
@@ -2412,7 +2416,11 @@
       "commentReports": "Comments",
       "contentReports": "Content",
       "searchPlaceholder": "Search reports...",
-      "noReportsDesc": "No reports match your criteria"
+      "noReportsDesc": "No reports match your criteria",
+      "confirmRemove": "Delete this content?",
+      "confirmRemoveDesc": "The reported content will be permanently deleted.",
+      "confirmSuspend": "Suspend this user?",
+      "confirmSuspendDesc": "The author will not be able to sign in during the suspension."
     },
     "patrimoine": {
       "title": "Heritage Management",
@@ -2555,7 +2563,8 @@
         "workshop": "Workshop"
       },
       "count": "{{count}} service(s)",
-      "noServicesDesc": "No services match your criteria"
+      "noServicesDesc": "No services match your criteria",
+      "confirmDelete": "Delete this service?"
     },
     "emailVerified": "Email verified successfully",
     "emailVerifyFailed": "Unable to verify the email"
@@ -3553,7 +3562,9 @@
       "prixMinMax": "The minimum price cannot be higher than the maximum price"
     },
     "addTag": "Add tag",
-    "removeTag": "Remove tag {{tag}}"
+    "removeTag": "Remove tag {{tag}}",
+    "mediasFailedTitle": "Photos not uploaded",
+    "mediasFailed": "Your item was saved, but the photos could not be uploaded. Add them from your dashboard."
   },
   "service": {
     "addTitle": "Add my service",
@@ -4103,7 +4114,9 @@
   },
   "upload": {
     "fileTooLarge": "File too large (max 5 MB)",
-    "uploadFailed": "Upload error"
+    "uploadFailed": "Upload error",
+    "imageOnly10": "Photos only, 10 MB maximum per file",
+    "fileTooLarge10": "File too large (max 10 MB)"
   },
   "gallery": {
     "empty": "No media available",
@@ -4239,5 +4252,9 @@
     "title": "My public page",
     "hint": "Your portfolio: profile, biography and published content.",
     "view": "View my portfolio"
+  },
+  "media": {
+    "videoNotSupported": "Your browser does not support video playback.",
+    "audioNotSupported": "Your browser does not support audio playback."
   }
 }

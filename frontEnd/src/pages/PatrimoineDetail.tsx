@@ -16,6 +16,7 @@ import {
   Compass, TreePine, Utensils, Hotel
 } from 'lucide-react';
 import { patrimoineService } from '@/services/patrimoine.service';
+import { httpClient } from '@/services/httpClient';
 import { useToast } from '@/hooks/use-toast';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -206,33 +207,27 @@ const PatrimoineDetail = () => {
   useEffect(() => {
     if (!site?.id_lieu) return;
     let mounted = true;
-    fetch(`/api/patrimoine/${site.id_lieu}/qrcode`)
-      .then(r => r.json())
+    // httpClient : adresse de l'API configurée (le fetch relatif l'ignorait)
+    httpClient.get<{ qr_data_url?: string }>(`/patrimoine/${site.id_lieu}/qrcode`)
       .then(d => { if (mounted && d.success && d.data?.qr_data_url) setQrDataUrl(d.data.qr_data_url); })
       .catch(() => {});
     return () => { mounted = false; };
   }, [site?.id_lieu]);
 
-  // Télécharger le QR Code
+  // Télécharger le QR Code : image déjà chargée (aucun aller-retour) ; échec signalé honnêtement
   const downloadQRCode = async () => {
     if (!site) return;
-    toast({
-      title: t('qrcode.downloading', 'Téléchargement...'),
-      description: t('qrcode.pleaseWait', 'Veuillez patienter...')
-    });
-    try {
-      await patrimoineService.getQRCode(site.id_lieu);
-      toast({
-        title: t('qrcode.success', 'QR Code téléchargé'),
-        description: t('qrcode.checkDownloads', 'Vérifiez vos téléchargements')
-      });
-    } catch (err) {
-      toast({
-        title: t('common.error', 'Erreur'),
-        description: t('qrcode.downloadError', 'Impossible de télécharger le QR Code'),
-        variant: 'destructive'
-      });
+    if (!qrDataUrl) {
+      toast({ title: t('common.error', 'Erreur'), description: t('qrcode.downloadError', 'Impossible de télécharger le QR Code'), variant: 'destructive' });
+      return;
     }
+    const link = document.createElement('a');
+    link.href = qrDataUrl;
+    link.download = `taladz-patrimoine-${site.id_lieu}-qrcode.png`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    toast({ title: t('qrcode.success', 'QR Code téléchargé'), description: t('qrcode.checkDownloads', 'Vérifiez vos téléchargements') });
   };
 
   // Obtenir l'image principale

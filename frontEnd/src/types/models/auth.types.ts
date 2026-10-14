@@ -23,7 +23,9 @@ export interface RegisterVisitorData {
   email: string;
   mot_de_passe: string;
   confirmation_mot_de_passe: string;
-  wilaya_residence: number;
+  /** null = réside à l'étranger */
+  wilaya_residence: number | null;
+  id_commune?: number;
   telephone?: string;
   accepte_conditions: boolean;
   accepte_newsletter?: boolean;
@@ -33,6 +35,7 @@ export interface RegisterVisitorData {
 export interface RegisterProfessionalData extends RegisterVisitorData {
   photo_url?: string;
   biographie: string;
+  site_web?: string;
   id_type_user: number;
 }
 

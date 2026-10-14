@@ -2,6 +2,7 @@
 import { API_ENDPOINTS, ApiResponse, PaginatedResponse, FilterParams } from '@/config/api';
 import { BaseService } from './base.service';
 import { httpClient } from './httpClient';
+import { prepareFilesForUpload } from '@/utils/prepareImageForUpload';
 import { Oeuvre } from '@/types/models/oeuvre.types';
 
 interface Artisanat {
@@ -153,8 +154,10 @@ class ArtisanatService extends BaseService<Artisanat, CreateArtisanatData, Updat
     artisanatId: number, 
     files: File[]
   ): Promise<ApiResponse<MediaArtisanat[]>> {
-    // TODO: Implémenter l'upload des médias
-    return { success: false, error: 'Non implémenté' };
+    // POST /artisanat/:id/medias (champ « medias », 10 fichiers max) ; délai long pour les vidéos
+    const formData = new FormData();
+    (await prepareFilesForUpload(files)).forEach((file) => formData.append('medias', file));
+    return httpClient.postFormData<MediaArtisanat[]>(`/artisanat/${artisanatId}/medias`, formData);
   }
 
   // Œuvres d'un artisan
