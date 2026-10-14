@@ -151,7 +151,7 @@ const ArticleMetadataTab: React.FC<ArticleMetadataTabProps> = ({
               {formData.tags.map((tag) => (
                 <Badge key={tag} variant="secondary">
                   {tag}
-                  <button type="button" onClick={() => handleRemoveTag(tag)} className="ml-1 hover:text-destructive">
+                  <button type="button" onClick={() => handleRemoveTag(tag)} className="ms-1 hover:text-destructive">
                     <X className="h-3 w-3" />
                   </button>
                 </Badge>
@@ -238,7 +238,7 @@ const ArticleMetadataTab: React.FC<ArticleMetadataTabProps> = ({
               </div>
               <div className="space-y-2 flex items-center">
                 <Checkbox id="peer_reviewed" checked={formData.peer_reviewed || false} onCheckedChange={(checked) => setFormData(prev => ({ ...prev, peer_reviewed: checked === true }))} />
-                <Label htmlFor="peer_reviewed" className="ml-2">{t("article_articleeditor.article_valu_par")}</Label>
+                <Label htmlFor="peer_reviewed" className="ms-2">{t("article_articleeditor.article_valu_par")}</Label>
               </div>
             </div>
           )}

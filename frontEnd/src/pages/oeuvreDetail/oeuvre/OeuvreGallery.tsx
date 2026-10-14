@@ -74,16 +74,16 @@ const GalleryItem: React.FC<{ media: Media; onClick: () => void }> = ({ media, o
       </div>
 
       {isVideo && (
-        <div className="absolute top-2 left-2">
+        <div className="absolute top-2 start-2">
           <Badge variant="secondary" className="bg-black/50 text-white border-0">
-            <Video className="h-3 w-3 mr-1" />
+            <Video className="h-3 w-3 me-1" />
             Vidéo
           </Badge>
         </div>
       )}
 
       {media.titre && (
-        <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/70 to-transparent">
+        <div className="absolute bottom-0 start-0 end-0 p-2 bg-gradient-to-t from-black/70 to-transparent">
           <p className="text-white text-sm truncate">{media.titre}</p>
         </div>
       )}
@@ -139,7 +139,7 @@ const Lightbox: React.FC<LightboxProps> = ({
             <p className="mb-4 font-medium">{currentMedia.titre || 'Document'}</p>
             <Button asChild>
               <a href={getAssetUrl(currentMedia.url)} target="_blank" rel="noopener noreferrer">
-                <Download className="h-4 w-4 mr-2" />
+                <Download className="h-4 w-4 me-2" />
                 {t('common.download', 'Télécharger')}
               </a>
             </Button>
@@ -163,7 +163,7 @@ const Lightbox: React.FC<LightboxProps> = ({
         
         <Button
           variant="ghost" size="icon"
-          className="absolute top-4 right-4 z-50 text-white hover:bg-white/20"
+          className="absolute top-4 end-4 z-50 text-white hover:bg-white/20"
           onClick={onClose}
           aria-label={t('common.close', 'Fermer')}
         >
@@ -174,19 +174,19 @@ const Lightbox: React.FC<LightboxProps> = ({
           <>
             <Button
               variant="ghost" size="icon"
-              className="absolute left-4 top-1/2 -translate-y-1/2 z-50 text-white hover:bg-white/20"
+              className="absolute start-4 top-1/2 -translate-y-1/2 z-50 text-white hover:bg-white/20"
               onClick={onPrevious}
               aria-label={t('common.previous', 'Précédent')}
             >
-              <ChevronLeft className="h-8 w-8" aria-hidden="true" />
+              <ChevronLeft className="h-8 w-8 rtl:-scale-x-100" aria-hidden="true" />
             </Button>
             <Button
               variant="ghost" size="icon"
-              className="absolute right-4 top-1/2 -translate-y-1/2 z-50 text-white hover:bg-white/20"
+              className="absolute end-4 top-1/2 -translate-y-1/2 z-50 text-white hover:bg-white/20"
               onClick={onNext}
               aria-label={t('common.next', 'Suivant')}
             >
-              <ChevronRight className="h-8 w-8" aria-hidden="true" />
+              <ChevronRight className="h-8 w-8 rtl:-scale-x-100" aria-hidden="true" />
             </Button>
           </>
         )}
@@ -195,7 +195,7 @@ const Lightbox: React.FC<LightboxProps> = ({
           {renderMedia()}
         </div>
 
-        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/70 to-transparent">
+        <div className="absolute bottom-0 start-0 end-0 p-4 bg-gradient-to-t from-black/70 to-transparent">
           <div className="flex items-center justify-between text-white">
             <div>
               {currentMedia.titre && <p className="font-medium">{currentMedia.titre}</p>}
@@ -257,7 +257,7 @@ const OeuvreGallery: React.FC<OeuvreGalleryProps> = ({ medias }) => {
                 size="sm"
                 onClick={() => setFilter(type)}
               >
-                <Icon className="h-4 w-4 mr-1" />
+                <Icon className="h-4 w-4 me-1" />
                 {type} ({count})
               </Button>
             );
@@ -320,7 +320,7 @@ const OeuvreGallery: React.FC<OeuvreGalleryProps> = ({ medias }) => {
                   {media.description && <p className="text-sm text-muted-foreground truncate">{media.description}</p>}
                 </div>
                 <Badge variant="outline">
-                  <Icon className="h-3 w-3 mr-1" />
+                  <Icon className="h-3 w-3 me-1" />
                   {media.type_media}
                 </Badge>
               </div>

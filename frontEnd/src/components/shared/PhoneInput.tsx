@@ -72,7 +72,7 @@ export function PhoneInput({
             className="w-[130px] flex-shrink-0 justify-between font-normal"
           >
             <span>{selectedCountry.flag} {selectedCountry.code}</span>
-            <ChevronsUpDown className="ml-1 h-4 w-4 shrink-0 opacity-50" />
+            <ChevronsUpDown className="ms-1 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[280px] p-0" align="start">
@@ -89,7 +89,7 @@ export function PhoneInput({
                   >
                     <Check
                       className={cn(
-                        'mr-2 h-4 w-4',
+                        'me-2 h-4 w-4',
                         selectedCountry.code === country.code && selectedCountry.nameEn === country.nameEn
                           ? 'opacity-100'
                           : 'opacity-0'

@@ -173,7 +173,7 @@ const DashboardUser = () => {
             disabled={loading}
             className="mb-4"
           >
-            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-4 w-4 me-2 ${loading ? 'animate-spin' : ''}`} />
             {t("dashboarduser.actualiser", "Actualiser")}
           </Button>
 
@@ -184,7 +184,7 @@ const DashboardUser = () => {
             <AlertDescription className="text-blue-700">{t("dashboarduser.tant_que_visiteur")}
 
 
-              <Link to="/auth" className="text-blue-800 underline ml-1 font-medium">{t("dashboarduser.inscrivezvous_comme_professionnel")}
+              <Link to="/auth" className="text-blue-800 underline ms-1 font-medium">{t("dashboarduser.inscrivezvous_comme_professionnel")}
 
               </Link>.
             </AlertDescription>
@@ -279,7 +279,7 @@ const DashboardUser = () => {
                   <AlertCircle className="h-12 w-12 mx-auto text-destructive mb-4" />
                   <p className="text-destructive mb-4">{t('dashboarduser.loadFavorisFailed', 'Erreur lors du chargement des favoris')}</p>
                   <Button onClick={refresh} variant="outline" size="sm">
-                    <RefreshCw className="h-4 w-4 mr-2" />{t('common.retry', 'Réessayer')}
+                    <RefreshCw className="h-4 w-4 me-2" />{t('common.retry', 'Réessayer')}
                   </Button>
                 </Card>
               ) : mesFavoris.oeuvres.length > 0 ? (
@@ -293,7 +293,7 @@ const DashboardUser = () => {
                             {oeuvre.type} {t("dashboarduser.par")} {oeuvre.auteur}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            <Clock className="h-3 w-3 inline mr-1" />{t("dashboarduser.ajout_2")}
+                            <Clock className="h-3 w-3 inline me-1" />{t("dashboarduser.ajout_2")}
                             {oeuvre.ajouteLe ? formatDate(oeuvre.ajouteLe) : '-'}
                           </p>
                         </div>
@@ -337,11 +337,11 @@ const DashboardUser = () => {
                         <div className="space-y-1">
                           <h3 className="font-semibold">{event.nom}</h3>
                           <p className="text-xs sm:text-sm text-muted-foreground truncate">
-                            <Calendar className="h-3 w-3 inline mr-1" />
+                            <Calendar className="h-3 w-3 inline me-1" />
                             {event.date ? formatDate(event.date) : '-'} • {event.lieu}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            <Clock className="h-3 w-3 inline mr-1" />{t("dashboarduser.ajout_2")}
+                            <Clock className="h-3 w-3 inline me-1" />{t("dashboarduser.ajout_2")}
                             {event.ajouteLe ? formatDate(event.ajouteLe) : '-'}
                           </p>
                         </div>
@@ -388,7 +388,7 @@ const DashboardUser = () => {
                             {site.type} • {site.wilaya}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            <Clock className="h-3 w-3 inline mr-1" />{t("dashboarduser.ajout_2")}
+                            <Clock className="h-3 w-3 inline me-1" />{t("dashboarduser.ajout_2")}
                             {site.ajouteLe ? formatDate(site.ajouteLe) : '-'}
                           </p>
                         </div>
@@ -424,7 +424,7 @@ const DashboardUser = () => {
                 <h2 className="text-2xl font-semibold font-serif">{t("dashboarduser.notifications_1")}</h2>
                 {notifications.some(n => !n.lu) && (
                   <Button variant="outline" size="sm" onClick={handleMarkAllRead}>
-                    <CheckCircle className="h-4 w-4 mr-2" />
+                    <CheckCircle className="h-4 w-4 me-2" />
                     {t('dashboarduser.markAllRead', 'Tout marquer comme lu')}
                   </Button>
                 )}
@@ -441,7 +441,7 @@ const DashboardUser = () => {
                     <AlertCircle className="h-12 w-12 mx-auto text-destructive mb-4" />
                     <p className="text-destructive mb-4">{t('dashboarduser.loadNotifsFailed', 'Erreur lors du chargement des notifications')}</p>
                     <Button onClick={() => refetchNotifs()} variant="outline" size="sm">
-                      <RefreshCw className="h-4 w-4 mr-2" />{t('common.retry', 'Réessayer')}
+                      <RefreshCw className="h-4 w-4 me-2" />{t('common.retry', 'Réessayer')}
                     </Button>
                   </div>
                 ) : notifications.length > 0 ? (
@@ -459,7 +459,7 @@ const DashboardUser = () => {
                       <AlertDescription>
                         <p>{notif.message}</p>
                         <p className="text-xs text-muted-foreground mt-1">
-                          <Clock className="h-3 w-3 inline mr-1" />
+                          <Clock className="h-3 w-3 inline me-1" />
                           {notif.date_creation ? formatDate(notif.date_creation, { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}
                         </p>
                       </AlertDescription>
@@ -756,7 +756,7 @@ const ProfilEditableTab: React.FC<{ user: any; t: any; formatDate: any }> = ({ u
           <>
             <Button variant="outline" onClick={() => setEditing(false)} disabled={saving}>{t('common.cancel', 'Annuler')}</Button>
             <Button onClick={handleSave} disabled={saving}>
-              {saving ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : null}
+              {saving ? <RefreshCw className="h-4 w-4 me-2 animate-spin" /> : null}
               {t('common.save', 'Enregistrer')}
             </Button>
           </>

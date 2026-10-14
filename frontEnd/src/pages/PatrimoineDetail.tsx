@@ -257,7 +257,7 @@ const PatrimoineDetail = () => {
               <h2 className="text-2xl font-semibold mb-2">{t('common.error', 'Erreur')}</h2>
               <p className="text-muted-foreground mb-4">{error || 'Site non trouvé'}</p>
               <Button onClick={() => navigate('/patrimoine')}>
-                <ArrowLeft className="h-4 w-4 mr-2" />
+                <ArrowLeft className="h-4 w-4 me-2 rtl:-scale-x-100" />
                 {t('common.back', 'Retour')}
               </Button>
             </CardContent>
@@ -310,10 +310,10 @@ const PatrimoineDetail = () => {
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 mb-6">
           <Button variant="ghost" size="sm" onClick={() => fromPath ? navigate(fromPath) : navigate('/patrimoine')} className="text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="h-4 w-4 mr-1" />
+            <ArrowLeft className="h-4 w-4 me-1 rtl:-scale-x-100" />
             {t('common.back', 'Retour')}
           </Button>
-          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          <ChevronRight className="h-4 w-4 text-muted-foreground rtl:-scale-x-100" />
           <span className="text-sm text-foreground">{translate(site.nom, lang)}</span>
         </div>
 
@@ -327,7 +327,7 @@ const PatrimoineDetail = () => {
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
 
           {/* Overlay info */}
-          <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+          <div className="absolute bottom-0 start-0 end-0 p-6 text-white">
             <div className="flex items-start justify-between">
               <div>
                 <h1 className="text-3xl md:text-4xl font-bold font-serif mb-2">
@@ -343,7 +343,7 @@ const PatrimoineDetail = () => {
               <div className="flex flex-col gap-2 items-end">
                 {site.stats?.noteMoyenne && (
                   <Badge className="bg-yellow-500/90 text-white">
-                    <Star className="h-4 w-4 mr-1 fill-current" />
+                    <Star className="h-4 w-4 me-1 fill-current" />
                     {site.stats.noteMoyenne.toFixed(1)}
                   </Badge>
                 )}
@@ -354,9 +354,9 @@ const PatrimoineDetail = () => {
                   site.typePatrimoine === 'site_archeologique' ? 'bg-amber-500/90 text-white' :
                   ''
                 }>
-                  {site.typePatrimoine === 'ville_village' && <Building2 className="h-3 w-3 mr-1" />}
-                  {site.typePatrimoine === 'site_naturel' && <TreePine className="h-3 w-3 mr-1" />}
-                  {site.typePatrimoine === 'monument' && <Landmark className="h-3 w-3 mr-1" />}
+                  {site.typePatrimoine === 'ville_village' && <Building2 className="h-3 w-3 me-1" />}
+                  {site.typePatrimoine === 'site_naturel' && <TreePine className="h-3 w-3 me-1" />}
+                  {site.typePatrimoine === 'monument' && <Landmark className="h-3 w-3 me-1" />}
                   {TYPE_LABELS[(site.typePatrimoine || 'autre') as TypePatrimoine]?.[lang as 'fr' | 'ar' | 'en'] || site.typeLieu || 'Site'}
                 </Badge>
               </div>
@@ -370,9 +370,9 @@ const PatrimoineDetail = () => {
                 <Button
                   variant="secondary"
                   size="sm"
-                  className="absolute top-4 right-4"
+                  className="absolute top-4 end-4"
                 >
-                  <Camera className="h-4 w-4 mr-2" />
+                  <Camera className="h-4 w-4 me-2" />
                   {site.medias.length} {t('patrimoine.photos', 'photos')}
                 </Button>
               </DialogTrigger>
@@ -484,7 +484,7 @@ const PatrimoineDetail = () => {
                               <Icon className="h-4 w-4 text-primary" />
                             </span>
                             <span className="font-medium text-sm">{meta.label}</span>
-                            <span className="ml-auto mr-2 shrink-0">
+                            <span className="ms-auto me-2 shrink-0">
                               {count > 0
                                 ? <Badge variant="secondary" className="text-xs font-normal">{count}</Badge>
                                 : <span className="text-xs text-muted-foreground/50 italic font-normal">vide</span>}
@@ -583,7 +583,7 @@ const PatrimoineDetail = () => {
                                       {programme.Evenement && (
                                         <Button variant="link" className="p-0 mt-2" asChild><Link to={`/evenements/${programme.Evenement.id_evenement}`}>
                                             {t('patrimoine.viewEvent', "Voir l'événement")}
-                                            <ChevronRight className="h-4 w-4 ml-1" />
+                                            <ChevronRight className="h-4 w-4 ms-1 rtl:-scale-x-100" />
                                           </Link></Button>
                                       )}
                                     </CardContent>
@@ -753,11 +753,11 @@ const PatrimoineDetail = () => {
                 </p>
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" className="flex-1" onClick={downloadQRCode}>
-                    <Download className="h-4 w-4 mr-2" />
+                    <Download className="h-4 w-4 me-2" />
                     {t('common.download', 'Télécharger')}
                   </Button>
                   <Button variant="outline" size="sm" className="flex-1" onClick={handleShareSite}>
-                    <Share2 className="h-4 w-4 mr-2" />
+                    <Share2 className="h-4 w-4 me-2" />
                     {t('common.share', 'Partager')}
                   </Button>
                 </div>
@@ -810,7 +810,7 @@ const PatrimoineDetail = () => {
                   className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-md hover:shadow-lg transition-all"
                   onClick={() => setShowVisitePlanner(true)}
                 >
-                  <Route className="h-5 w-5 mr-2" />
+                  <Route className="h-5 w-5 me-2" />
                   {t('patrimoine.planVisit', 'Planifier votre visite')}
                 </Button>
               </CardContent>
@@ -834,7 +834,7 @@ const PatrimoineDetail = () => {
             </Card>
             
             <Button variant="outline" className="w-full" onClick={() => navigate('/patrimoine')}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
+              <ArrowLeft className="h-4 w-4 me-2 rtl:-scale-x-100" />
               {t('patrimoine.backToList', 'Retour à la liste')}
             </Button>
           </div>

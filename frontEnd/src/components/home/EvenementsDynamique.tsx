@@ -177,7 +177,7 @@ const EvenementsDynamique: React.FC = () => {
                 </CardTitle>
 
                 <div className="space-y-2 text-sm text-muted-foreground">
-                  <div className={`flex items-center space-x-2 ${rtlClasses.flexRow}`}>
+                  <div className={`flex items-center space-x-2 rtl:space-x-reverse ${rtlClasses.flexRow}`}>
                     <Calendar className="h-4 w-4" />
                     <span>
                       {event.date_debut ? formatDate(event.date_debut) : t('sections.events.dateToConfirm')}
@@ -187,7 +187,7 @@ const EvenementsDynamique: React.FC = () => {
                     </span>
                   </div>
                   {event.Lieu && (
-                    <div className={`flex items-center space-x-2 ${rtlClasses.flexRow}`}>
+                    <div className={`flex items-center space-x-2 rtl:space-x-reverse ${rtlClasses.flexRow}`}>
                       <MapPin className="h-4 w-4" />
                       <span>{typeof event.Lieu.nom === 'object' ? getTranslation(event.Lieu.nom, lang) : event.Lieu.nom}</span>
                     </div>
@@ -203,7 +203,7 @@ const EvenementsDynamique: React.FC = () => {
                 {event.capacite_max && (
                   <div className="space-y-3">
                     <div className="flex items-center justify-between text-sm">
-                      <div className={`flex items-center space-x-1 ${rtlClasses.flexRow}`}>
+                      <div className={`flex items-center space-x-1 rtl:space-x-reverse ${rtlClasses.flexRow}`}>
                         <Users className="h-4 w-4 text-muted-foreground" />
                         <span>{formatNumber(event.nombre_participants || 0)}/{formatNumber(event.capacite_max)}</span>
                       </div>
@@ -234,7 +234,7 @@ const EvenementsDynamique: React.FC = () => {
                       aria-label={`${t('sections.events.register', "S'inscrire")} : ${getTranslation(event.nom_evenement, lang)}`}
                     >
                       {t('sections.events.register')}
-                      <ArrowRight className={`h-4 w-4 ${rtlClasses.marginStart(2)} group-hover:translate-x-1 transition-transform`} aria-hidden="true" />
+                      <ArrowRight className={`h-4 w-4 ${rtlClasses.marginStart(2)} group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform rtl:-scale-x-100`} aria-hidden="true" />
                     </Link>
                   </Button>
                 )}

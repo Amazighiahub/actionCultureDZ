@@ -309,7 +309,7 @@ const CarteInteractiveUnifiee: React.FC<CarteInteractiveUnifieeProps> = ({
                 <Dialog open={carteOuverte} onOpenChange={setCarteOuverte}>
                   <DialogTrigger asChild>
                     <Button variant="outline" size="sm">
-                      <Maximize2 className="h-4 w-4 mr-1" />
+                      <Maximize2 className="h-4 w-4 me-1" />
                       {t('map.fullscreen', 'Plein écran')}
                     </Button>
                   </DialogTrigger>

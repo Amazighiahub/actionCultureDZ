@@ -179,11 +179,11 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
               {isAuthenticated && (
                 <div className="flex gap-2">
                   <Button variant="ghost" size="sm" onClick={openEditor} className="text-muted-foreground hover:text-primary">
-                    <Pencil className="h-4 w-4 mr-1" />{t('common.edit', 'Modifier')}
+                    <Pencil className="h-4 w-4 me-1" />{t('common.edit', 'Modifier')}
                   </Button>
                   {patrimoineSection && (
                     <Button variant="ghost" size="sm" onClick={() => setIsArticleEditorOpen(true)} className="text-muted-foreground hover:text-primary">
-                      <FileText className="h-4 w-4 mr-1" />{t('patrimoine.contribute.addArticle', 'Article')}
+                      <FileText className="h-4 w-4 me-1" />{t('patrimoine.contribute.addArticle', 'Article')}
                     </Button>
                   )}
                 </div>
@@ -202,11 +202,11 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
             <p className="text-sm text-muted-foreground mb-4">Cette section n'est pas encore documentée.</p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Button variant="outline" onClick={openEditor}>
-                <Plus className="h-4 w-4 mr-2" />Texte rapide
+                <Plus className="h-4 w-4 me-2" />Texte rapide
               </Button>
               {patrimoineSection && (
                 <Button variant="default" onClick={() => setIsArticleEditorOpen(true)}>
-                  <FileText className="h-4 w-4 mr-2" />Écrire un article
+                  <FileText className="h-4 w-4 me-2" />Écrire un article
                 </Button>
               )}
             </div>
@@ -228,7 +228,7 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
               </CardTitle>
               {isAuthenticated && (
                 <Button size="sm" variant="outline" onClick={() => setIsAddOpen(true)}>
-                  <Plus className="h-4 w-4 mr-1" />Ajouter
+                  <Plus className="h-4 w-4 me-1" />Ajouter
                 </Button>
               )}
             </div>
@@ -264,7 +264,7 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
                           <p className="text-xs text-muted-foreground">{inv.titre_professionnel}</p>
                         )}
                         {lien.role_sur_site && (
-                          <span className="inline-block text-xs bg-primary/10 text-primary px-2 py-0.5 rounded mt-1 mr-1">
+                          <span className="inline-block text-xs bg-primary/10 text-primary px-2 py-0.5 rounded mt-1 me-1">
                             {lien.role_sur_site}
                           </span>
                         )}
@@ -314,7 +314,7 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setIsEditing(false)}>{t('common.cancel', 'Annuler')}</Button>
               <Button onClick={handleSaveText} disabled={saving}>
-                {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                {saving && <Loader2 className="h-4 w-4 me-2 animate-spin" />}
                 {t('common.save', 'Enregistrer')}
               </Button>
             </div>
@@ -337,12 +337,12 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
             {!selected ? (
               <>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder="Rechercher une personnalité (nom, prénom…)"
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
-                    className="pl-9"
+                    className="ps-9"
                     autoFocus
                   />
                 </div>
@@ -363,7 +363,7 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
                           key={inv.id_intervenant}
                           disabled={alreadyLinked}
                           onClick={() => setSelected(inv)}
-                          className="w-full text-left px-3 py-2 hover:bg-muted transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="w-full text-start px-3 py-2 hover:bg-muted transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {inv.photo_url ? (
                             <img loading="lazy" decoding="async" src={inv.photo_url} alt={nom} className="h-8 w-8 rounded-full object-cover" />
@@ -444,7 +444,7 @@ const SectionPersonnalites: React.FC<SectionPersonnalitesProps> = ({
               </Button>
               {selected && (
                 <Button onClick={handleAdd} disabled={adding}>
-                  {adding && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                  {adding && <Loader2 className="h-4 w-4 me-2 animate-spin" />}
                   Associer
                 </Button>
               )}

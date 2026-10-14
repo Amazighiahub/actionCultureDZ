@@ -263,7 +263,7 @@ const ResetPassword = () => {
                         setErrors({ ...errors, password: undefined });
                       }}
                       onBlur={() => validateField('password')}
-                      className={errors.password ? 'border-destructive pr-10' : 'pr-10'}
+                      className={errors.password ? 'border-destructive pe-10' : 'pe-10'}
                       disabled={loading}
                       aria-invalid={!!errors.password}
                       aria-describedby={errors.password ? 'reset-password-error' : undefined}
@@ -271,7 +271,7 @@ const ResetPassword = () => {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      className="absolute end-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                       aria-label={t('auth.togglePassword', 'Afficher/masquer le mot de passe')}
                     >
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -300,7 +300,7 @@ const ResetPassword = () => {
                         setErrors({ ...errors, confirmPassword: undefined });
                       }}
                       onBlur={() => validateField('confirmPassword')}
-                      className={errors.confirmPassword ? 'border-destructive pr-10' : 'pr-10'}
+                      className={errors.confirmPassword ? 'border-destructive pe-10' : 'pe-10'}
                       disabled={loading}
                       aria-invalid={!!errors.confirmPassword}
                       aria-describedby={errors.confirmPassword ? 'reset-confirm-error' : undefined}
@@ -308,7 +308,7 @@ const ResetPassword = () => {
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      className="absolute end-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                       aria-label={t('auth.togglePassword', 'Afficher/masquer le mot de passe')}
                     >
                       {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -335,7 +335,7 @@ const ResetPassword = () => {
 
                 <div className="text-center pt-4">
                   <Link to="/auth" className="text-primary hover:underline inline-flex items-center gap-1">
-                    <ArrowLeft className="h-4 w-4" />
+                    <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" />
                     {t('auth.resetPassword.backToLogin')}
                   </Link>
                 </div>

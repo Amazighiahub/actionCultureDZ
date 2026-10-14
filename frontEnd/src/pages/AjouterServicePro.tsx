@@ -535,7 +535,7 @@ const AjouterServicePro: React.FC = () => {
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
           <Button variant="ghost" onClick={() => navigate(-1)}>
-            <ArrowLeft className="h-5 w-5 me-2" />
+            <ArrowLeft className="h-5 w-5 me-2 rtl:-scale-x-100" />
             {t('common.back', 'Retour')}
           </Button>
           <div>
@@ -644,7 +644,7 @@ const AjouterServicePro: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => { setPhotoFile(null); setPhotoPreview(null); }}
-                          className="absolute -top-2 -right-2 bg-destructive text-white rounded-full p-1"
+                          className="absolute -top-2 -end-2 bg-destructive text-white rounded-full p-1"
                           aria-label={t('common.remove', 'Supprimer')}
                         >
                           <X className="h-4 w-4" />
@@ -765,7 +765,7 @@ const AjouterServicePro: React.FC = () => {
                                 key={lieu.id_lieu}
                                 type="button"
                                 onClick={() => handleSelectLieu(lieu)}
-                                className="w-full p-3 text-left hover:bg-muted flex items-center gap-3"
+                                className="w-full p-3 text-start hover:bg-muted flex items-center gap-3"
                               >
                                 <MapPin className="h-4 w-4 text-muted-foreground" />
                                 <div>

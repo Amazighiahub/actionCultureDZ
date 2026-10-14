@@ -116,17 +116,17 @@ export default function EventQRCode({ eventId, eventTitle }: EventQRCodeProps) {
 
         <div className="flex flex-wrap gap-2 justify-center">
           <Button variant="outline" size="sm" onClick={handleDownload}>
-            <Download className="h-4 w-4 mr-1" />
+            <Download className="h-4 w-4 me-1" />
             {t('event.qrcode.download', 'Télécharger')}
           </Button>
 
           <Button variant="outline" size="sm" onClick={handleCopyLink}>
-            {copied ? <Check className="h-4 w-4 mr-1 text-green-600" /> : <Copy className="h-4 w-4 mr-1" />}
+            {copied ? <Check className="h-4 w-4 me-1 text-green-600" /> : <Copy className="h-4 w-4 me-1" />}
             {copied ? t('event.qrcode.copied', 'Copié !') : t('event.qrcode.copyLink', 'Copier le lien')}
           </Button>
 
           <Button variant="outline" size="sm" onClick={handleShare}>
-            <Share2 className="h-4 w-4 mr-1" />
+            <Share2 className="h-4 w-4 me-1" />
             {t('event.qrcode.share', 'Partager')}
           </Button>
         </div>

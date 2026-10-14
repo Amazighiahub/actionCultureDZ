@@ -141,7 +141,7 @@ const AdminPatrimoineTab: React.FC = () => {
           </p>
         </div>
         <Button variant="outline" onClick={refreshAll}>
-          <RefreshCw className="h-4 w-4 mr-2" />
+          <RefreshCw className="h-4 w-4 me-2" />
           {t('common.refresh', 'Actualiser')}
         </Button>
       </div>
@@ -151,12 +151,12 @@ const AdminPatrimoineTab: React.FC = () => {
         <CardContent className="p-4">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder={t('admin.patrimoine.searchPlaceholder', 'Rechercher un site...')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
+                className="ps-9"
               />
             </div>
 
@@ -191,7 +191,7 @@ const AdminPatrimoineTab: React.FC = () => {
           <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
           <p className="text-destructive mb-4">{errorPatrimoine}</p>
           <Button onClick={refreshAll}>
-            <RefreshCw className="h-4 w-4 mr-2" />
+            <RefreshCw className="h-4 w-4 me-2" />
             {t('common.retry', 'Réessayer')}
           </Button>
         </Card>
@@ -223,7 +223,7 @@ const AdminPatrimoineTab: React.FC = () => {
                     className="w-full h-full object-cover"
                     fallback="/images/placeholder-patrimoine.svg"
                   />
-                  <div className="absolute top-2 left-2 flex gap-2">
+                  <div className="absolute top-2 start-2 flex gap-2">
                     <StatusBadge status={item.statut || 'en_attente'} size="sm" />
                     {item.est_unesco && (
                       <Badge className="bg-blue-500 text-white gap-1">
@@ -251,7 +251,7 @@ const AdminPatrimoineTab: React.FC = () => {
                       className="flex-1 h-8 text-xs"
                       onClick={() => handleView(item.id_patrimoine || item.id_lieu || item.id)}
                     >
-                      <Eye className="h-3 w-3 mr-1" />
+                      <Eye className="h-3 w-3 me-1" />
                       {t('common.view', 'Voir')}
                     </Button>
                     <Button
@@ -260,7 +260,7 @@ const AdminPatrimoineTab: React.FC = () => {
                       className="flex-1 h-8 text-xs"
                       onClick={() => navigate(`/patrimoine/${item.id_patrimoine || item.id_lieu || item.id}`, { state: { from: '/admin/dashboard?tab=patrimoine' } })}
                     >
-                      <Edit className="h-3 w-3 mr-1" />
+                      <Edit className="h-3 w-3 me-1" />
                       {t('common.edit', 'Modifier')}
                     </Button>
                     <Button

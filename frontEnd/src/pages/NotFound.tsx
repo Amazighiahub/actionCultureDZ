@@ -55,12 +55,12 @@ const NotFound = () => {
                 onClick={() => window.history.back()}
                 className="min-h-[44px]"
               >
-                <ArrowLeft className="h-4 w-4 mr-2" />
+                <ArrowLeft className="h-4 w-4 me-2 rtl:-scale-x-100" />
                 {t("common.back", "Retour")}
               </Button>
               
               <Button className="w-full sm:w-auto min-h-[44px]" asChild><Link to="/">
-                  <Home className="h-4 w-4 mr-2" />
+                  <Home className="h-4 w-4 me-2" />
                   {t("notfound.return_home", "Retour à l'accueil")}
                 </Link></Button>
             </div>

@@ -126,7 +126,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
             <DropdownMenuContent align="end">
               {onReport && (
                 <DropdownMenuItem onClick={() => onReport(commentId!)}>
-                  <AlertCircle className="h-4 w-4 mr-2" />
+                  <AlertCircle className="h-4 w-4 me-2" />
                   {t('common.report', 'Signaler')}
                 </DropdownMenuItem>
               )}
@@ -152,7 +152,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
               onClick={() => onLike(commentId!)}
             >
               <ThumbsUp className={cn(
-                "h-4 w-4 mr-1",
+                "h-4 w-4 me-1",
                 comment.is_liked && "fill-current"
               )} />
               {comment.likes_count || 0}
@@ -166,7 +166,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
               className="h-8 px-2"
               onClick={() => onReply(commentId!)}
             >
-              <Reply className="h-4 w-4 mr-1" />
+              <Reply className="h-4 w-4 me-1" />
               {t('common.reply', 'Répondre')}
             </Button>
           )}
@@ -174,7 +174,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
 
         {/* Réponses imbriquées */}
         {comment.replies && comment.replies.length > 0 && (
-          <div className="mt-4 pl-4 border-l-2 border-muted space-y-4">
+          <div className="mt-4 ps-4 border-s-2 border-muted space-y-4">
             {comment.replies.map((reply) => (
               <CommentItem
                 key={reply.id_commentaire || reply.id}
@@ -279,7 +279,7 @@ const EventComments: React.FC<EventCommentsProps> = ({
           <CardContent className="p-6">
             <div className="flex flex-col md:flex-row gap-6">
               {/* Note moyenne */}
-              <div className="text-center md:border-r md:pr-6">
+              <div className="text-center md:border-e md:pe-6">
                 <div className="text-4xl font-bold">
                   {averageRating.toFixed(1)}
                 </div>
@@ -342,7 +342,7 @@ const EventComments: React.FC<EventCommentsProps> = ({
                   aria-invalid={!!error}
                   aria-describedby={error ? 'event-comment-error' : undefined}
                 />
-                <p className="text-xs text-muted-foreground text-right mt-1">
+                <p className="text-xs text-muted-foreground text-end mt-1">
                   {newComment.length}/2000
                 </p>
               </div>
@@ -359,9 +359,9 @@ const EventComments: React.FC<EventCommentsProps> = ({
               <div className="flex justify-end">
                 <Button type="submit" disabled={isSubmitting}>
                   {isSubmitting ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    <Loader2 className="h-4 w-4 me-2 animate-spin" />
                   ) : (
-                    <Send className="h-4 w-4 mr-2" />
+                    <Send className="h-4 w-4 me-2" />
                   )}
                   {t('comments.submit', 'Publier')}
                 </Button>

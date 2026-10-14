@@ -110,7 +110,7 @@ const AdminServicesTab: React.FC = () => {
           </p>
         </div>
         <Button variant="outline" onClick={refreshAll}>
-          <RefreshCw className="h-4 w-4 mr-2" />
+          <RefreshCw className="h-4 w-4 me-2" />
           {t('common.refresh', 'Actualiser')}
         </Button>
       </div>
@@ -120,12 +120,12 @@ const AdminServicesTab: React.FC = () => {
         <CardContent className="p-4">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder={t('admin.services.searchPlaceholder', 'Rechercher un service...')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
+                className="ps-9"
               />
             </div>
 
@@ -164,7 +164,7 @@ const AdminServicesTab: React.FC = () => {
           <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
           <p className="text-destructive mb-4">{errorServices}</p>
           <Button onClick={refreshAll}>
-            <RefreshCw className="h-4 w-4 mr-2" />
+            <RefreshCw className="h-4 w-4 me-2" />
             {t('common.retry', 'Réessayer')}
           </Button>
         </Card>
@@ -235,17 +235,17 @@ const AdminServicesTab: React.FC = () => {
                           const lieuId = service.id_lieu || service.Lieu?.id_lieu;
                           if (lieuId) navigate(`/patrimoine/${lieuId}`, { state: { from: '/admin/dashboard?tab=services' } });
                         }}>
-                          <Eye className="h-4 w-4 mr-2" />
+                          <Eye className="h-4 w-4 me-2" />
                           {t('common.view', 'Voir le lieu')}
                         </DropdownMenuItem>
                         {service.statut === 'en_attente' && (
                           <>
                             <DropdownMenuItem onClick={() => validateService && validateService(service.id_service || service.id, true)}>
-                              <CheckCircle className="h-4 w-4 mr-2" />
+                              <CheckCircle className="h-4 w-4 me-2" />
                               {t('common.validate', 'Valider')}
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => validateService && validateService(service.id_service || service.id, false)}>
-                              <XCircle className="h-4 w-4 mr-2" />
+                              <XCircle className="h-4 w-4 me-2" />
                               {t('common.reject', 'Rejeter')}
                             </DropdownMenuItem>
                           </>
@@ -255,7 +255,7 @@ const AdminServicesTab: React.FC = () => {
                           className="text-destructive"
                           onClick={() => setConfirmDeleteId(service.id_service || service.id)}
                         >
-                          <Trash2 className="h-4 w-4 mr-2" />
+                          <Trash2 className="h-4 w-4 me-2" />
                           {t('common.delete', 'Supprimer')}
                         </DropdownMenuItem>
                       </DropdownMenuContent>

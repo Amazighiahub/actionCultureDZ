@@ -116,7 +116,7 @@ const AdminModerationTab: React.FC = () => {
           </p>
         </div>
         <Button variant="outline" onClick={refreshAll}>
-          <RefreshCw className="h-4 w-4 mr-2" />
+          <RefreshCw className="h-4 w-4 me-2" />
           {t('common.refresh', 'Actualiser')}
         </Button>
       </div>
@@ -167,12 +167,12 @@ const AdminModerationTab: React.FC = () => {
         <CardContent className="p-4">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder={t('admin.moderation.searchPlaceholder', 'Rechercher un signalement...')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
+                className="ps-9"
               />
             </div>
 
@@ -207,7 +207,7 @@ const AdminModerationTab: React.FC = () => {
           <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
           <p className="text-destructive mb-4">{errorModeration}</p>
           <Button onClick={refreshAll}>
-            <RefreshCw className="h-4 w-4 mr-2" />
+            <RefreshCw className="h-4 w-4 me-2" />
             {t('common.retry', 'Réessayer')}
           </Button>
         </Card>
@@ -228,7 +228,7 @@ const AdminModerationTab: React.FC = () => {
             const reasonKey = RAISONS_SIGNALEMENT_CONFIG[signalement.reason];
 
             return (
-              <Card key={signalement.id} className="border-l-4 border-l-yellow-500 hover:shadow-md transition-shadow">
+              <Card key={signalement.id} className="border-s-4 border-l-yellow-500 hover:shadow-md transition-shadow">
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
@@ -269,7 +269,7 @@ const AdminModerationTab: React.FC = () => {
                         onClick={() => handleAction(signalement.id, 'aucune')}
                         title={t('admin.moderation.actions.dismiss', 'Rejeter le signalement')}
                       >
-                        <CheckCircle className="h-4 w-4 mr-1" />
+                        <CheckCircle className="h-4 w-4 me-1" />
                         {t('admin.moderation.actions.dismissShort', 'Ignorer')}
                       </Button>
                       <Button
@@ -278,7 +278,7 @@ const AdminModerationTab: React.FC = () => {
                         onClick={() => handleAction(signalement.id, 'avertissement')}
                         title={t('admin.moderation.actions.warn', 'Avertir')}
                       >
-                        <AlertTriangle className="h-4 w-4 mr-1" />
+                        <AlertTriangle className="h-4 w-4 me-1" />
                         {t('admin.moderation.actions.warn', 'Avertir')}
                       </Button>
                       <Button
@@ -287,7 +287,7 @@ const AdminModerationTab: React.FC = () => {
                         onClick={() => setPendingAction({ id: signalement.id, action: 'suppression_contenu' })}
                         title={t('admin.moderation.actions.removeContent', 'Supprimer le contenu')}
                       >
-                        <Trash2 className="h-4 w-4 mr-1" />
+                        <Trash2 className="h-4 w-4 me-1" />
                         {t('admin.moderation.actions.removeContentShort', 'Supprimer')}
                       </Button>
                       <Button
@@ -296,7 +296,7 @@ const AdminModerationTab: React.FC = () => {
                         onClick={() => setPendingAction({ id: signalement.id, action: 'suspension_temporaire' })}
                         title={t('admin.moderation.actions.suspend', 'Suspendre l\'utilisateur')}
                       >
-                        <Ban className="h-4 w-4 mr-1" />
+                        <Ban className="h-4 w-4 me-1" />
                         {t('admin.moderation.actions.suspendShort', 'Suspendre')}
                       </Button>
                     </div>

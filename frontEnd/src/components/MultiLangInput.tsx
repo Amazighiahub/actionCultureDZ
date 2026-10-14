@@ -239,7 +239,7 @@ export const MultiLangInput: React.FC<MultiLangInputProps> = ({
                   KeyboardHelper.getInstallationGuide().slice(0, 2).map((guide: any, index: number) => (
                     <div key={index}>
                       <strong>{guide.platform}:</strong>
-                      <ul className="ml-4 list-disc text-xs">
+                      <ul className="ms-4 list-disc text-xs">
                         {guide.steps.map((step: any, stepIndex: number) => (
                           <li key={stepIndex}>{step}</li>
                         ))}
@@ -250,7 +250,7 @@ export const MultiLangInput: React.FC<MultiLangInputProps> = ({
                 {!KeyboardHelper && (
                   <div>
                     <strong>{t('multilang.generalInstructions', 'General instructions')}:</strong>
-                    <ul className="ml-4 list-disc text-xs">
+                    <ul className="ms-4 list-disc text-xs">
                       <li>{t('multilang.installKeyboard', 'Install a Tamazight keyboard from your device settings')}</li>
                       <li>{t('multilang.searchStore', 'Search for "Tifinagh" or "Tamazight Latin" in your store')}</li>
                       <li>{t('multilang.activateKeyboard', 'Activate the keyboard in language settings')}</li>

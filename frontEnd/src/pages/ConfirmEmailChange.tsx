@@ -101,7 +101,7 @@ const ConfirmEmailChange = () => {
                 </CardHeader>
                 <CardContent className="text-center">
                   <Link to="/" className="text-primary hover:underline inline-flex items-center gap-1">
-                    <ArrowLeft className="h-4 w-4" />
+                    <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" />
                     {t('emailChange.backToHome')}
                   </Link>
                 </CardContent>

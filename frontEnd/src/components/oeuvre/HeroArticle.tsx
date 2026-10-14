@@ -74,7 +74,7 @@ const HeroArticle: React.FC<HeroArticleProps> = ({
           onClick={() => navigate(-1)}
           aria-label={t('common.back', 'Retour')}
         >
-          <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+          <ChevronLeft className="h-5 w-5 rtl:-scale-x-100" aria-hidden="true" />
         </Button>
 
         {/* En-tête type publication académique */}
@@ -96,25 +96,25 @@ const HeroArticle: React.FC<HeroArticleProps> = ({
             </Badge>
             {articleSci?.peer_reviewed && (
               <Badge className="bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300 border border-green-200 dark:border-green-800">
-                <CheckCircle className="h-3 w-3 mr-1" />
+                <CheckCircle className="h-3 w-3 me-1" />
                 Peer-reviewed
               </Badge>
             )}
             {articleSci?.journal && (
               <Badge variant="outline" className="font-normal">
-                <BookMarked className="h-3 w-3 mr-1" />
+                <BookMarked className="h-3 w-3 me-1" />
                 {articleSci.journal}
               </Badge>
             )}
             {article?.source && (
               <Badge variant="outline" className="font-normal">
-                <BookMarked className="h-3 w-3 mr-1" />
+                <BookMarked className="h-3 w-3 me-1" />
                 {article.source}
               </Badge>
             )}
             {oeuvre.annee_creation && (
               <Badge variant="secondary">
-                <Calendar className="h-3 w-3 mr-1" />
+                <Calendar className="h-3 w-3 me-1" />
                 {oeuvre.annee_creation}
               </Badge>
             )}
@@ -134,7 +134,7 @@ const HeroArticle: React.FC<HeroArticleProps> = ({
                     {gt(contributeur.prenom)} {gt(contributeur.nom)}
                   </span>
                   {contributeur.role && contributeur.role !== 'Contributeur' && (
-                    <span className="text-sm text-muted-foreground ml-1">({contributeur.role})</span>
+                    <span className="text-sm text-muted-foreground ms-1">({contributeur.role})</span>
                   )}
                   {index < mainContributors.length - 1 && <span className="mx-1">,</span>}
                 </span>
@@ -215,14 +215,14 @@ const HeroArticle: React.FC<HeroArticleProps> = ({
               variant="favorite" data-active={isFavorite}
               aria-label={isFavorite ? t('works.removeFromFavorites', 'Retirer des favoris') : t('works.actions.addToFavorites', 'Ajouter aux favoris')}
             >
-              <Heart className={cn("h-5 w-5 mr-2", isFavorite && "fill-current")} aria-hidden="true" />
+              <Heart className={cn("h-5 w-5 me-2", isFavorite && "fill-current")} aria-hidden="true" />
               {isFavorite ? t('works.inFavorites', 'Favori') : t('works.actions.addFavorite', 'Favoris')}
             </Button>
             {shareButton}
             {articleSci?.doi && (
               <Button variant="outline" size="lg" asChild>
                 <a href={`https://doi.org/${articleSci.doi}`} target="_blank" rel="noopener noreferrer">
-                  <ExternalLink className="h-4 w-4 mr-2" />
+                  <ExternalLink className="h-4 w-4 me-2" />
                   {t('oeuvre.viewOnDOI', 'Voir sur DOI.org')}
                 </a>
               </Button>

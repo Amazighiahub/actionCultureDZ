@@ -343,10 +343,10 @@ const IntervenantModal: React.FC<IntervenantModalProps> = ({
                   placeholder={t("modals_intervenantmodal.placeholder_emailexemplecom")} />
 
                 {checkingEmail &&
-                <Loader2 className="absolute right-3 top-2.5 h-4 w-4 animate-spin" />
+                <Loader2 className="absolute end-3 top-2.5 h-4 w-4 animate-spin" />
                 }
                 {emailExists?.exists && !checkingEmail &&
-                <User className="absolute right-3 top-2.5 h-4 w-4 text-green-500" />
+                <User className="absolute end-3 top-2.5 h-4 w-4 text-green-500" />
                 }
               </div>
               {emailExists?.exists &&

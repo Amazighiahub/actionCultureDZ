@@ -60,7 +60,7 @@ const GeoSelector: React.FC<GeoSelectorProps> = ({
       <div className="space-y-2">
         <Label htmlFor="geo-wilaya">
           {t('common.wilaya', 'Wilaya')}
-          {requiredWilaya && <span className="text-destructive ml-1">*</span>}
+          {requiredWilaya && <span className="text-destructive ms-1">*</span>}
         </Label>
         <div className="relative">
           <select
@@ -82,7 +82,7 @@ const GeoSelector: React.FC<GeoSelectorProps> = ({
               </option>
             ))}
           </select>
-          {wilayasLoading && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />}
+          {wilayasLoading && <Loader2 className="absolute end-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />}
         </div>
         {errors.wilaya && <p role="alert" className="text-sm text-destructive">{errors.wilaya}</p>}
       </div>
@@ -91,7 +91,7 @@ const GeoSelector: React.FC<GeoSelectorProps> = ({
       <div className="space-y-2">
         <Label htmlFor="geo-daira">
           {t('common.daira', 'Daïra')}
-          {requiredDaira && <span className="text-destructive ml-1">*</span>}
+          {requiredDaira && <span className="text-destructive ms-1">*</span>}
         </Label>
         <div className="relative">
           <select
@@ -116,7 +116,7 @@ const GeoSelector: React.FC<GeoSelectorProps> = ({
               </option>
             ))}
           </select>
-          {dairasLoading && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />}
+          {dairasLoading && <Loader2 className="absolute end-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />}
         </div>
         {errors.daira && <p role="alert" className="text-sm text-destructive">{errors.daira}</p>}
       </div>
@@ -125,7 +125,7 @@ const GeoSelector: React.FC<GeoSelectorProps> = ({
       <div className="space-y-2">
         <Label htmlFor="geo-commune">
           {t('common.commune', 'Commune')}
-          {requiredCommune && <span className="text-destructive ml-1">*</span>}
+          {requiredCommune && <span className="text-destructive ms-1">*</span>}
         </Label>
         <div className="relative">
           <select
@@ -149,7 +149,7 @@ const GeoSelector: React.FC<GeoSelectorProps> = ({
               </option>
             ))}
           </select>
-          {communesLoading && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />}
+          {communesLoading && <Loader2 className="absolute end-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />}
         </div>
         {errors.commune && <p role="alert" className="text-sm text-destructive">{errors.commune}</p>}
       </div>

@@ -161,7 +161,7 @@ const DashboardAdmin: React.FC = () => {
             <WifiOff className="h-4 w-4 text-yellow-600" />
             <AlertDescription className="text-yellow-800">
               {t('admin.alerts.disconnected', 'Connexion temps réel perdue. Les données peuvent ne pas être à jour.')}
-              <Button variant="link" size="sm" onClick={reconnect} className="ml-2">
+              <Button variant="link" size="sm" onClick={reconnect} className="ms-2">
                 {t('common.reconnect', 'Reconnecter')}
               </Button>
             </AlertDescription>

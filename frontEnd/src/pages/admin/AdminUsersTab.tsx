@@ -206,14 +206,14 @@ const AdminUsersTabContent: React.FC = () => {
         <div className="flex gap-2">
           <Button variant="outline" onClick={notifyProfessionals} disabled={notifying}>
             {notifying ? (
-              <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+              <RefreshCw className="h-4 w-4 me-2 animate-spin" />
             ) : (
-              <Bell className="h-4 w-4 mr-2" />
+              <Bell className="h-4 w-4 me-2" />
             )}
             {notifying ? 'Envoi...' : t('admin.users.notifyProfessionals', 'Notifier les professionnels')}
           </Button>
           <Button variant="outline" onClick={refreshAll}>
-            <RefreshCw className="h-4 w-4 mr-2" />
+            <RefreshCw className="h-4 w-4 me-2" />
             {t('common.refresh', 'Actualiser')}
           </Button>
         </div>
@@ -224,12 +224,12 @@ const AdminUsersTabContent: React.FC = () => {
         <CardContent className="p-4">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute start-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder={t('admin.users.searchPlaceholder', 'Rechercher par nom, email...')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
+                className="ps-10"
               />
             </div>
             <AdminStatusFilter
@@ -330,7 +330,7 @@ const AdminUsersTabContent: React.FC = () => {
           <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
           <p className="text-destructive mb-4">{errorAllUsers}</p>
           <Button onClick={refreshAll}>
-            <RefreshCw className="h-4 w-4 mr-2" />
+            <RefreshCw className="h-4 w-4 me-2" />
             {t('common.retry', 'Réessayer')}
           </Button>
         </Card>
@@ -404,14 +404,14 @@ const AdminUsersTabContent: React.FC = () => {
                           variant="outline"
                           onClick={() => validateUser({ userId: user.id_user, validated: false })}
                         >
-                          <XCircle className="h-4 w-4 mr-1" />
+                          <XCircle className="h-4 w-4 me-1" />
                           {t('common.reject', 'Rejeter')}
                         </Button>
                         <Button
                           size="sm"
                           onClick={() => validateUser({ userId: user.id_user, validated: true })}
                         >
-                          <CheckCircle className="h-4 w-4 mr-1" />
+                          <CheckCircle className="h-4 w-4 me-1" />
                           {t('common.validate', 'Valider')}
                         </Button>
                       </>
@@ -425,25 +425,25 @@ const AdminUsersTabContent: React.FC = () => {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem>
-                          <Mail className="h-4 w-4 mr-2" />
+                          <Mail className="h-4 w-4 me-2" />
                           {t('admin.users.sendEmail', 'Envoyer un email')}
                         </DropdownMenuItem>
                         {!user.email_verifie && (
                           <DropdownMenuItem onClick={() => verifyEmailManually({ userId: user.id_user })}>
-                            <MailCheck className="h-4 w-4 mr-2" />
+                            <MailCheck className="h-4 w-4 me-2" />
                             {t('admin.users.verifyEmail', 'Vérifier l\'email')}
                           </DropdownMenuItem>
                         )}
                         {user.statut === 'suspendu' ? (
                           <DropdownMenuItem onClick={() => reactivateUser({ userId: user.id_user })}>
-                            <CheckCircle className="h-4 w-4 mr-2" />
+                            <CheckCircle className="h-4 w-4 me-2" />
                             {t('admin.users.reactivate', 'Réactiver')}
                           </DropdownMenuItem>
                         ) : (
                           <DropdownMenuItem
                             onClick={() => setConfirmSuspend({ open: true, userId: user.id_user })}
                           >
-                            <Shield className="h-4 w-4 mr-2" />
+                            <Shield className="h-4 w-4 me-2" />
                             {t('admin.users.suspend', 'Suspendre')}
                           </DropdownMenuItem>
                         )}
@@ -452,7 +452,7 @@ const AdminUsersTabContent: React.FC = () => {
                           className="text-destructive"
                           onClick={() => setConfirmDelete({ open: true, userId: user.id_user })}
                         >
-                          <Trash2 className="h-4 w-4 mr-2" />
+                          <Trash2 className="h-4 w-4 me-2" />
                           {t('common.delete', 'Supprimer')}
                         </DropdownMenuItem>
                       </DropdownMenuContent>

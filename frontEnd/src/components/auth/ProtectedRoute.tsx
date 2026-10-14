@@ -85,7 +85,7 @@ export function ProtectedRoute({
         <Card className="max-w-md w-full">
           <CardHeader>
             <CardTitle className="flex items-center text-destructive">
-              <Lock className="h-5 w-5 mr-2" />{t("auth_protectedroute.accs_professionnel_requis")}
+              <Lock className="h-5 w-5 me-2" />{t("auth_protectedroute.accs_professionnel_requis")}
 
             </CardTitle>
           </CardHeader>
@@ -93,7 +93,7 @@ export function ProtectedRoute({
             <p className="text-muted-foreground">{t("auth_protectedroute.cette_fonctionnalit_est")}
 
             </p>
-            <div className="flex space-x-2">
+            <div className="flex space-x-2 rtl:space-x-reverse">
               <Button onClick={() => window.history.back()} variant="outline" className="flex-1">{t("auth_protectedroute.retour_1")}
 
               </Button>
@@ -114,7 +114,7 @@ export function ProtectedRoute({
         <Card className="max-w-md w-full">
           <CardHeader>
             <CardTitle className="flex items-center text-amber-600">
-              <Clock className="h-5 w-5 mr-2" />{t("auth_protectedroute.validation_attente")}
+              <Clock className="h-5 w-5 me-2" />{t("auth_protectedroute.validation_attente")}
 
             </CardTitle>
           </CardHeader>
@@ -130,7 +130,7 @@ export function ProtectedRoute({
             </div>
             <div className="bg-amber-50 p-3 rounded-lg">
               <p className="text-sm text-amber-800 flex items-start">
-                <AlertCircle className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />{t("auth_protectedroute.attendant_vous_pouvez")}
+                <AlertCircle className="h-4 w-4 me-2 mt-0.5 flex-shrink-0" />{t("auth_protectedroute.attendant_vous_pouvez")}
 
               </p>
             </div>

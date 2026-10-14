@@ -252,7 +252,7 @@ const ArtisanatDetail: React.FC = () => {
             <Package className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
             <h1 className="text-2xl font-bold mb-2">{error || t('artisanat.notFound', 'Artisanat non trouvé')}</h1>
             <Button onClick={() => navigate(-1)}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
+              <ArrowLeft className="h-4 w-4 me-2 rtl:-scale-x-100" />
               {t('common.backToList', 'Retour à la liste')}
             </Button>
           </div>
@@ -305,7 +305,7 @@ const ArtisanatDetail: React.FC = () => {
             onClick={() => navigate(-1)}
             className="mb-6"
           >
-            <ArrowLeft className="h-4 w-4 mr-2" />
+            <ArrowLeft className="h-4 w-4 me-2 rtl:-scale-x-100" />
             {t('common.back', 'Retour')}
           </Button>
 
@@ -332,26 +332,26 @@ const ArtisanatDetail: React.FC = () => {
                     <Button
                       variant="secondary"
                       size="icon"
-                      className="absolute left-2 top-1/2 -translate-y-1/2"
+                      className="absolute start-2 top-1/2 -translate-y-1/2"
                       onClick={prevImage}
                       aria-label={t('common.previousImage', 'Image précédente')}
                     >
-                      <ChevronLeft className="h-5 w-5" />
+                      <ChevronLeft className="h-5 w-5 rtl:-scale-x-100" />
                     </Button>
                     <Button
                       variant="secondary"
                       size="icon"
-                      className="absolute right-2 top-1/2 -translate-y-1/2"
+                      className="absolute end-2 top-1/2 -translate-y-1/2"
                       onClick={nextImage}
                       aria-label={t('common.nextImage', 'Image suivante')}
                     >
-                      <ChevronRight className="h-5 w-5" />
+                      <ChevronRight className="h-5 w-5 rtl:-scale-x-100" />
                     </Button>
                   </>
                 )}
 
                 {/* Actions */}
-                <div className="absolute top-4 right-4 flex gap-2">
+                <div className="absolute top-4 end-4 flex gap-2">
                   <Button
                     variant="secondary"
                     size="icon"
@@ -406,7 +406,7 @@ const ArtisanatDetail: React.FC = () => {
                   )}
                   {Oeuvre?.annee_creation && (
                     <Badge variant="outline">
-                      <Calendar className="h-3 w-3 mr-1" />
+                      <Calendar className="h-3 w-3 me-1" />
                       {Oeuvre.annee_creation}
                     </Badge>
                   )}
@@ -536,7 +536,7 @@ const ArtisanatDetail: React.FC = () => {
                           {artisan.telephone && (
                             <Button variant="outline" size="sm" asChild>
                               <a href={`tel:${artisan.telephone}`}>
-                                <Phone className="h-4 w-4 mr-1" />
+                                <Phone className="h-4 w-4 me-1" />
                                 {t('common.call', 'Appeler')}
                               </a>
                             </Button>
@@ -544,7 +544,7 @@ const ArtisanatDetail: React.FC = () => {
                           {artisan.email && (
                             <Button variant="outline" size="sm" asChild>
                               <a href={`mailto:${artisan.email}`}>
-                                <Mail className="h-4 w-4 mr-1" />
+                                <Mail className="h-4 w-4 me-1" />
                                 {t('common.email', 'Email')}
                               </a>
                             </Button>

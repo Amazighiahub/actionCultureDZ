@@ -236,7 +236,7 @@ const EditArticle: React.FC = () => {
               onClick={() => navigate('/dashboard-pro')}
               className="mb-4">
               
-              <ArrowLeft className="h-4 w-4 mr-2" />{t("articles_editarticle.retour_dashboard")}
+              <ArrowLeft className="h-4 w-4 me-2 rtl:-scale-x-100" />{t("articles_editarticle.retour_dashboard")}
 
             </Button>
             

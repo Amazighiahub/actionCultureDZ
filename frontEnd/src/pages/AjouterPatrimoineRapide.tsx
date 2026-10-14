@@ -262,7 +262,7 @@ const AjouterPatrimoineRapide: React.FC = () => {
       <main className="container py-8 max-w-2xl mx-auto">
         {/* Retour */}
         <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="mb-6">
-          <ArrowLeft className="h-4 w-4 mr-1" />
+          <ArrowLeft className="h-4 w-4 me-1 rtl:-scale-x-100" />
           {t('common.back', 'Retour')}
         </Button>
 
@@ -306,7 +306,7 @@ const AjouterPatrimoineRapide: React.FC = () => {
               <div className="flex justify-end mt-6">
                 <Button onClick={nextStep} size="lg">
                   {t('common.next', 'Suivant')}
-                  <ArrowRight className="h-4 w-4 ml-2" />
+                  <ArrowRight className="h-4 w-4 ms-2 rtl:-scale-x-100" />
                 </Button>
               </div>
             </CardContent>
@@ -425,13 +425,13 @@ const AjouterPatrimoineRapide: React.FC = () => {
 
               <div className="flex justify-between mt-6">
                 <Button variant="outline" onClick={prevStep}>
-                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  <ArrowLeft className="h-4 w-4 me-2 rtl:-scale-x-100" />
                   {t('common.previous', 'Précédent')}
                 </Button>
                 <Button onClick={nextStep} size="lg" disabled={checkingDuplicate}>
-                  {checkingDuplicate ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+                  {checkingDuplicate ? <Loader2 className="h-4 w-4 me-2 animate-spin" /> : null}
                   {checkingDuplicate ? t('patrimoine.checking', 'Vérification...') : t('common.next', 'Suivant')}
-                  {!checkingDuplicate && <ArrowRight className="h-4 w-4 ml-2" />}
+                  {!checkingDuplicate && <ArrowRight className="h-4 w-4 ms-2 rtl:-scale-x-100" />}
                 </Button>
               </div>
             </CardContent>
@@ -445,7 +445,7 @@ const AjouterPatrimoineRapide: React.FC = () => {
               <CardTitle className="flex items-center gap-2">
                 <Camera className="h-5 w-5 text-primary" />
                 {t('patrimoine.create.step3', 'Ajoutez des photos')}
-                <span className="text-destructive ml-1">*</span>
+                <span className="text-destructive ms-1">*</span>
               </CardTitle>
               <CardDescription>
                 {t('patrimoine.create.step3Desc', 'Au moins une photo pour illustrer le site')}
@@ -488,7 +488,7 @@ const AjouterPatrimoineRapide: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => handleMediaRemove(index)}
-                        className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute top-1 end-1 bg-black/60 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         <X className="h-3 w-3" />
                       </button>
@@ -518,18 +518,18 @@ const AjouterPatrimoineRapide: React.FC = () => {
 
               <div className="flex justify-between mt-6">
                 <Button variant="outline" onClick={prevStep}>
-                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  <ArrowLeft className="h-4 w-4 me-2 rtl:-scale-x-100" />
                   {t('common.previous', 'Précédent')}
                 </Button>
                 <Button onClick={handleSubmit} size="lg" disabled={loading}>
                   {loading ? (
                     <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      <Loader2 className="h-4 w-4 me-2 animate-spin" />
                       {t('patrimoine.create.publishing', 'Publication en cours...')}
                     </>
                   ) : (
                     <>
-                      <CheckCircle2 className="h-4 w-4 mr-2" />
+                      <CheckCircle2 className="h-4 w-4 me-2" />
                       {t('patrimoine.create.publish', 'Publier le site')}
                     </>
                   )}

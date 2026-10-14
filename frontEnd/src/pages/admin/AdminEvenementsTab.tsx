@@ -119,7 +119,7 @@ const AdminEvenementsTab: React.FC = () => {
           </p>
         </div>
         <Button variant="outline" onClick={refreshAll}>
-          <RefreshCw className="h-4 w-4 mr-2" />
+          <RefreshCw className="h-4 w-4 me-2" />
           {t('common.refresh', 'Actualiser')}
         </Button>
       </div>
@@ -129,13 +129,13 @@ const AdminEvenementsTab: React.FC = () => {
         <CardContent className="p-4">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+              <Search className="absolute start-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
               <Input
                 aria-label={t('admin.events.searchPlaceholder', 'Rechercher par nom...')}
                 placeholder={t('admin.events.searchPlaceholder', 'Rechercher par nom...')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
+                className="ps-10"
               />
             </div>
             <AdminStatusFilter
@@ -168,7 +168,7 @@ const AdminEvenementsTab: React.FC = () => {
           <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
           <p className="text-destructive mb-4">{errorEvenements}</p>
           <Button onClick={refreshAll}>
-            <RefreshCw className="h-4 w-4 mr-2" />
+            <RefreshCw className="h-4 w-4 me-2" />
             {t('common.retry', 'Réessayer')}
           </Button>
         </Card>
@@ -205,12 +205,12 @@ const AdminEvenementsTab: React.FC = () => {
                     </div>
                   )}
                   {/* Badge date */}
-                  <div className="absolute top-2 left-2 bg-white/90 rounded px-2 py-1">
+                  <div className="absolute top-2 start-2 bg-white/90 rounded px-2 py-1">
                     <p className="text-xs font-bold text-primary">
                       {formatEventDate(event.date_debut)}
                     </p>
                   </div>
-                  <div className="absolute top-2 right-2">
+                  <div className="absolute top-2 end-2">
                     <StatusBadge status={event.statut || 'brouillon'} size="sm" />
                   </div>
                 </div>
@@ -261,16 +261,16 @@ const AdminEvenementsTab: React.FC = () => {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => navigate(`/evenements/${event.id_evenement}`, { state: { from: '/admin/dashboard?tab=evenements' } })}>
-                          <Eye className="h-4 w-4 mr-2" />
+                          <Eye className="h-4 w-4 me-2" />
                           {t('common.view', 'Voir')}
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => navigate(`/modifier-evenement/${event.id_evenement}`)}>
-                          <Edit className="h-4 w-4 mr-2" />
+                          <Edit className="h-4 w-4 me-2" />
                           {t('common.edit', 'Modifier')}
                         </DropdownMenuItem>
                         {event.statut !== 'brouillon' && event.statut !== 'annule' && (
                           <DropdownMenuItem onClick={() => setConfirmCancel({ open: true, eventId: event.id_evenement })}>
-                            <XCircle className="h-4 w-4 mr-2" />
+                            <XCircle className="h-4 w-4 me-2" />
                             {t('admin.events.cancel', 'Annuler')}
                           </DropdownMenuItem>
                         )}
@@ -279,7 +279,7 @@ const AdminEvenementsTab: React.FC = () => {
                           className="text-destructive"
                           onClick={() => setConfirmDelete({ open: true, eventId: event.id_evenement })}
                         >
-                          <Trash2 className="h-4 w-4 mr-2" />
+                          <Trash2 className="h-4 w-4 me-2" />
                           {t('common.delete', 'Supprimer')}
                         </DropdownMenuItem>
                       </DropdownMenuContent>

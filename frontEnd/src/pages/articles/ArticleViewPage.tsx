@@ -166,7 +166,7 @@ const ReadingProgress: React.FC = () => {
   }, []);
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-background">
+    <div className="fixed top-0 start-0 end-0 z-50 h-1 bg-background">
       <div
         className="h-full bg-primary transition-all duration-150"
         style={{ width: `${progress}%` }} />
@@ -501,9 +501,9 @@ const ArticleViewPage: React.FC = () => {
         return (
           <blockquote
             key={block.id_block || index}
-            className="relative my-8 pl-8 pr-4 py-4 border-l-4 border-primary bg-primary/5 rounded-r-lg">
+            className="relative my-8 ps-8 pe-4 py-4 border-s-4 border-primary bg-primary/5 rounded-e-lg">
             
-            <Quote className="absolute -left-3 -top-3 h-8 w-8 text-primary/20 bg-background rounded-full p-1" />
+            <Quote className="absolute -start-3 -top-3 h-8 w-8 text-primary/20 bg-background rounded-full p-1" />
             <p className="text-lg italic mb-2">{block.contenu}</p>
             {block.metadata?.author &&
             <cite className="text-sm text-muted-foreground not-italic">
@@ -517,13 +517,13 @@ const ArticleViewPage: React.FC = () => {
         return block.contenu_json ?
         <div key={block.id_block || index} className="my-6">
             {block.metadata?.listType === 'ordered' ?
-          <ol className="list-decimal list-inside space-y-2 ml-6 text-lg">
+          <ol className="list-decimal list-inside space-y-2 ms-6 text-lg">
                 {block.contenu_json.map((item: string, idx: number) =>
             <li key={idx} className="leading-relaxed">{item}</li>
             )}
               </ol> :
 
-          <ul className="list-disc list-inside space-y-2 ml-6 text-lg">
+          <ul className="list-disc list-inside space-y-2 ms-6 text-lg">
                 {block.contenu_json.map((item: string, idx: number) =>
             <li key={idx} className="leading-relaxed">{item}</li>
             )}
@@ -556,7 +556,7 @@ const ArticleViewPage: React.FC = () => {
               <thead>
                 <tr>
                   {block.contenu_json.headers.map((header: string, idx: number) =>
-                <th key={idx} className="border p-3 bg-muted font-semibold text-left">
+                <th key={idx} className="border p-3 bg-muted font-semibold text-start">
                       {header}
                     </th>
                 )}
@@ -645,7 +645,7 @@ const ArticleViewPage: React.FC = () => {
               onClick={() => navigate(-1)}
               className="gap-2">
               
-              <ArrowLeft className="h-4 w-4" />{t("articles_articleviewpage.retour")}
+              <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" />{t("articles_articleviewpage.retour")}
 
             </Button>
             
@@ -689,27 +689,27 @@ const ArticleViewPage: React.FC = () => {
             {/* Badges et métadonnées */}
             <div className="flex flex-wrap items-center gap-3">
               <Badge variant="outline">
-                <FileText className="h-3 w-3 mr-1" />
+                <FileText className="h-3 w-3 me-1" />
                 {isScientific ? t('article.scientific', 'Article Scientifique') : t('article.article', 'Article')}
               </Badge>
               
               {articleHelpers.isPeerReviewed(articleData) &&
               <Badge variant="secondary">
-                  <Award className="h-3 w-3 mr-1" />{t("articles_articleviewpage.valu_par_les")}
+                  <Award className="h-3 w-3 me-1" />{t("articles_articleviewpage.valu_par_les")}
 
               </Badge>
               }
               
               {articleHelpers.isOpenAccess(articleData) &&
               <Badge variant="secondary">
-                  <Globe className="h-3 w-3 mr-1" />{t("articles_articleviewpage.accs_libre")}
+                  <Globe className="h-3 w-3 me-1" />{t("articles_articleviewpage.accs_libre")}
 
               </Badge>
               }
               
               {articleHelpers.isFactChecked(articleData) &&
               <Badge variant="secondary">
-                  <CheckCircle className="h-3 w-3 mr-1" />{t("articles_articleviewpage.vrifi")}
+                  <CheckCircle className="h-3 w-3 me-1" />{t("articles_articleviewpage.vrifi")}
 
               </Badge>
               }
@@ -908,7 +908,7 @@ const ArticleViewPage: React.FC = () => {
             <div className="space-y-6">
                   {commentaires.map((comment) =>
               <div key={comment.id_commentaire} className="border-b last:border-0 pb-6 last:pb-0">
-                      <div className="flex items-start space-x-4">
+                      <div className="flex items-start space-x-4 rtl:space-x-reverse">
                         <Avatar>
                           <AvatarImage
                       src={comment.User?.photo_url}
@@ -929,7 +929,7 @@ const ArticleViewPage: React.FC = () => {
                               </p>
                             </div>
                             {comment.note_qualite &&
-                      <div className="flex items-center space-x-1">
+                      <div className="flex items-center space-x-1 rtl:space-x-reverse">
                                 {[...Array(5)].map((_, i) =>
                         <Star
                           key={i}
@@ -951,15 +951,15 @@ const ArticleViewPage: React.FC = () => {
                       className="mt-2 text-xs"
                       onClick={() => openCommentModal(comment.id_commentaire)}>
                       
-                            <MessageCircle className="h-3 w-3 mr-1" />{t("articles_articleviewpage.rpondre")}
+                            <MessageCircle className="h-3 w-3 me-1" />{t("articles_articleviewpage.rpondre")}
 
                     </Button>
 
                           {/* Afficher les réponses */}
                           {comment.Reponses && comment.Reponses.length > 0 &&
-                    <div className="mt-4 ml-8 space-y-4">
+                    <div className="mt-4 ms-8 space-y-4">
                               {comment.Reponses.map((reponse) =>
-                      <div key={reponse.id_commentaire} className="flex items-start space-x-3">
+                      <div key={reponse.id_commentaire} className="flex items-start space-x-3 rtl:space-x-reverse">
                                   <Avatar className="h-8 w-8">
                                     <AvatarImage src={reponse.User?.photo_url} />
                                     <AvatarFallback className="text-xs">
@@ -1038,7 +1038,7 @@ const ArticleViewPage: React.FC = () => {
       {/* Bouton retour en haut */}
       {scrollToTop &&
       <Button
-        className="fixed bottom-6 right-6 z-50 rounded-full shadow-lg"
+        className="fixed bottom-6 end-6 z-50 rounded-full shadow-lg"
         size="icon"
         onClick={scrollToTopFunc}>
         
@@ -1068,7 +1068,7 @@ const ArticleViewPage: React.FC = () => {
                 onChange={(e) => setCommentContent(e.target.value)}
                 disabled={commentLoading} />
               
-              <p className="text-xs text-muted-foreground text-right">
+              <p className="text-xs text-muted-foreground text-end">
                 {commentContent.length} / 500 {t('common.characters', 'caractères')}
               </p>
             </div>

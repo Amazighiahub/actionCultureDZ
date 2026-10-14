@@ -142,7 +142,7 @@ const AdminOeuvresTab: React.FC = () => {
           </p>
         </div>
         <Button variant="outline" onClick={refreshAll}>
-          <RefreshCw className="h-4 w-4 mr-2" />
+          <RefreshCw className="h-4 w-4 me-2" />
           {t('common.refresh', 'Actualiser')}
         </Button>
       </div>
@@ -152,12 +152,12 @@ const AdminOeuvresTab: React.FC = () => {
         <CardContent className="p-4">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute start-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder={t('admin.oeuvres.searchPlaceholder', 'Rechercher par titre...')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
+                className="ps-10"
               />
             </div>
             <AdminStatusFilter
@@ -190,7 +190,7 @@ const AdminOeuvresTab: React.FC = () => {
           <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
           <p className="text-destructive mb-4">{errorOeuvres}</p>
           <Button onClick={refreshAll}>
-            <RefreshCw className="h-4 w-4 mr-2" />
+            <RefreshCw className="h-4 w-4 me-2" />
             {t('common.retry', 'Réessayer')}
           </Button>
         </Card>
@@ -210,13 +210,13 @@ const AdminOeuvresTab: React.FC = () => {
             <table className="w-full">
               <thead>
                 <tr className="border-b bg-muted/50">
-                  <th className="text-left p-3 text-sm font-medium">#</th>
-                  <th className="text-left p-3 text-sm font-medium">{t('admin.oeuvres.table.title', 'Titre')}</th>
-                  <th className="text-left p-3 text-sm font-medium">{t('admin.oeuvres.table.type', 'Type')}</th>
-                  <th className="text-left p-3 text-sm font-medium">{t('admin.oeuvres.table.author', 'Auteur')}</th>
-                  <th className="text-left p-3 text-sm font-medium">{t('admin.oeuvres.table.status', 'Statut')}</th>
-                  <th className="text-left p-3 text-sm font-medium">{t('admin.oeuvres.table.date', 'Date')}</th>
-                  <th className="text-right p-3 text-sm font-medium">{t('admin.oeuvres.table.actions', 'Actions')}</th>
+                  <th className="text-start p-3 text-sm font-medium">#</th>
+                  <th className="text-start p-3 text-sm font-medium">{t('admin.oeuvres.table.title', 'Titre')}</th>
+                  <th className="text-start p-3 text-sm font-medium">{t('admin.oeuvres.table.type', 'Type')}</th>
+                  <th className="text-start p-3 text-sm font-medium">{t('admin.oeuvres.table.author', 'Auteur')}</th>
+                  <th className="text-start p-3 text-sm font-medium">{t('admin.oeuvres.table.status', 'Statut')}</th>
+                  <th className="text-start p-3 text-sm font-medium">{t('admin.oeuvres.table.date', 'Date')}</th>
+                  <th className="text-end p-3 text-sm font-medium">{t('admin.oeuvres.table.actions', 'Actions')}</th>
                 </tr>
               </thead>
               <tbody>

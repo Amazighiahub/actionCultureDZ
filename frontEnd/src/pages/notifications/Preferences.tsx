@@ -84,7 +84,7 @@ const PreferenceItem: React.FC<{
 }> = ({ label, description, checked, onChange, disabled = false }) => {const { t } = useTranslation();
   return (
     <label className={`flex items-start justify-between ${disabled ? 'opacity-60' : ''}`}>
-      <div className="flex-1 pr-4">
+      <div className="flex-1 pe-4">
         <span className="font-medium text-foreground">{label}</span>
         {description &&
         <p className="text-sm text-muted-foreground mt-1">{description}</p>
@@ -237,7 +237,7 @@ export default function NotificationPreferences() {
                 variant="ghost"
                 size="icon"
                 onClick={() => navigate('/notifications')}>
-                <ArrowLeft className="w-5 h-5" />
+                <ArrowLeft className="w-5 h-5 rtl:-scale-x-100" />
               </Button>
               <h1 className="text-2xl font-bold text-foreground">{t("notifications_preferences.prfrences_notifications")}</h1>
             </div>

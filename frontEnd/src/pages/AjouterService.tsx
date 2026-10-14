@@ -324,7 +324,7 @@ const AjouterService: React.FC = () => {
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
           <Button variant="ghost" onClick={() => navigate(-1)}>
-            <ArrowLeft className="h-5 w-5 me-2" />
+            <ArrowLeft className="h-5 w-5 me-2 rtl:-scale-x-100" />
             {t('common.back', 'Retour')}
           </Button>
           <div>
@@ -390,12 +390,12 @@ const AjouterService: React.FC = () => {
                   <div className="space-y-2">
                     <Label>{t('ajouterService.search', 'Rechercher')}</Label>
                     <div className="relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder={t('ajouterService.searchPlaceholder', 'Nom du lieu...')}
-                        className="pl-10"
+                        className="ps-10"
                       />
                     </div>
                   </div>
@@ -564,7 +564,7 @@ const AjouterService: React.FC = () => {
                         return (
                           <div
                             key={service.id}
-                            className={`flex items-center space-x-2 p-2 rounded ${isExisting ? 'opacity-50' : ''}`}
+                            className={`flex items-center space-x-2 rtl:space-x-reverse p-2 rounded ${isExisting ? 'opacity-50' : ''}`}
                           >
                             <Checkbox
                               id={service.id}
@@ -623,7 +623,7 @@ const AjouterService: React.FC = () => {
                       rows={2}
                     />
 
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-2 rtl:space-x-reverse">
                       <Checkbox
                         id="disponible"
                         checked={customService.disponible}

@@ -149,7 +149,7 @@ const AjouterOrganisation = () => {
         <div className="max-w-2xl mx-auto">
           <div className={`flex items-center gap-4 mb-8 ${rtlClasses.flexRow}`}>
             <Button variant="outline" size="sm" asChild><Link to="/ajouter-evenement">
-                <ArrowLeft className={`h-4 w-4 ${rtlClasses.marginEnd(2)}`} />
+                <ArrowLeft className={`h-4 w-4 ${rtlClasses.marginEnd(2)} rtl:-scale-x-100`} />
                 {t('common.back', 'Retour')}
               </Link></Button>
             <div>

@@ -211,7 +211,7 @@ const Header = () => {
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 py-2">
+      <header className="fixed top-0 start-0 end-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 py-2">
         <div className="w-full px-4 sm:px-6 lg:px-8 max-w-[1800px] mx-auto">
           <div className="flex items-center justify-between gap-2 sm:gap-4">
 
@@ -404,7 +404,7 @@ const Header = () => {
                     className="hidden sm:inline-flex border-stone-300 dark:border-stone-600 hover:bg-stone-50 dark:hover:bg-stone-800 min-h-[36px]"
                   >
                     <Link to="/auth">
-                      <User className="h-4 w-4 sm:mr-2" aria-hidden="true" />
+                      <User className="h-4 w-4 sm:me-2" aria-hidden="true" />
                       {/* masqué visuellement entre sm et md, mais toujours lu par les lecteurs d'écran */}
                       <span className="sr-only md:not-sr-only">{t('common.login')}</span>
                     </Link>
@@ -443,7 +443,7 @@ const Header = () => {
 
       {/* Sous-nav bar — visible uniquement sur /oeuvres et /evenements */}
       {['/oeuvres', '/evenements', '/patrimoine', '/artisanat'].includes(location.pathname) && (
-        <nav className="fixed top-[52px] sm:top-[60px] left-0 right-0 z-40 w-full bg-stone-800 dark:bg-stone-900 border-b border-stone-700" aria-label={t('header.nav.subLabel', 'Catégories de la rubrique')}>
+        <nav className="fixed top-[52px] sm:top-[60px] start-0 end-0 z-40 w-full bg-stone-800 dark:bg-stone-900 border-b border-stone-700" aria-label={t('header.nav.subLabel', 'Catégories de la rubrique')}>
           <div className="w-full px-4 sm:px-6 lg:px-8 max-w-[1800px] mx-auto">
             <div className="flex items-center justify-center gap-1 overflow-x-auto scrollbar-hide py-1">
               {location.pathname === '/oeuvres' && (
@@ -638,7 +638,7 @@ const Header = () => {
                       setIsMenuOpen(false);
                     }}
                   >
-                    <LogOut className="h-5 w-5 mr-2" />
+                    <LogOut className="h-5 w-5 me-2" />
                     {t('common.logout')}
                   </Button>
                 </>

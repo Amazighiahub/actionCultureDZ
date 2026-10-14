@@ -60,7 +60,7 @@ const InsertBlockBar: React.FC<InsertBlockBarProps> = ({ insertAt, onInsert }) =
           className="h-8 px-3 text-xs text-muted-foreground"
           onClick={() => setExpanded(false)}
         >
-          <X className="h-3.5 w-3.5 mr-1" />
+          <X className="h-3.5 w-3.5 me-1" />
           Annuler
         </Button>
       </div>

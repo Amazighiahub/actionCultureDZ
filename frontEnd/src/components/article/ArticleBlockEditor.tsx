@@ -144,7 +144,7 @@ const ArticleBlockEditor: React.FC<ArticleBlockEditorProps> = ({
                 <Button
                   size="icon"
                   variant="destructive"
-                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute top-2 end-2 opacity-0 group-hover:opacity-100 transition-opacity"
                   onClick={handleImageRemove}>
                   <X className="h-4 w-4" />
                 </Button>
@@ -207,7 +207,7 @@ const ArticleBlockEditor: React.FC<ArticleBlockEditorProps> = ({
             {block.contenu && (
               <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
                 <Film className="h-12 w-12 text-muted-foreground" />
-                <span className="ml-2 text-sm text-muted-foreground">{t("article_articleeditor.aperu_vido")}</span>
+                <span className="ms-2 text-sm text-muted-foreground">{t("article_articleeditor.aperu_vido")}</span>
               </div>
             )}
           </div>

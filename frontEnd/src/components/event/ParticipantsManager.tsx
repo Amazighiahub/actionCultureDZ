@@ -336,12 +336,12 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
         <div className="flex flex-wrap gap-3">
           <div className="flex-1 min-w-[200px]">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder={t('pro.participants.search', 'Rechercher un participant...')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
+                className="ps-10"
               />
             </div>
           </div>
@@ -427,7 +427,7 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
                       </div>
                       <p className="text-sm text-muted-foreground">{participant.User.email}</p>
                       <p className="text-xs text-muted-foreground mt-1">
-                        <Calendar className="inline h-3 w-3 mr-1" />
+                        <Calendar className="inline h-3 w-3 me-1" />
                         {t('pro.participants.registeredOn', 'Inscrit le')} {formatDate(participant.date_inscription, { dateStyle: 'medium' })}
                       </p>
 
@@ -435,7 +435,7 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
                       {participant.oeuvres_soumises && participant.oeuvres_soumises.length > 0 && (
                         <div className="mt-2">
                           <p className="text-xs font-medium text-muted-foreground mb-1">
-                            <Palette className="inline h-3 w-3 mr-1" />
+                            <Palette className="inline h-3 w-3 me-1" />
                             {participant.oeuvres_soumises.length} {t('pro.participants.worksSubmitted', 'œuvre(s) soumise(s)')}:
                           </p>
                           <div className="flex flex-wrap gap-1">
@@ -450,7 +450,7 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
                                   setOeuvreDialogOpen(true);
                                 }}
                               >
-                                <Eye className="h-3 w-3 mr-1" />
+                                <Eye className="h-3 w-3 me-1" />
                                 {td(oeuvre.titre)}
                               </Badge>
                             ))}
@@ -475,7 +475,7 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
                         size="sm"
                         onClick={() => loadParticipantProfil(participant.id_user)}
                       >
-                        <Eye className="h-4 w-4 mr-1" />
+                        <Eye className="h-4 w-4 me-1" />
                         {t('pro.participants.viewProfile', 'Voir profil')}
                       </Button>
 
@@ -493,7 +493,7 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
                               {actionLoading === participant.id_user ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
                               ) : (
-                                <UserCheck className="h-4 w-4 mr-1" />
+                                <UserCheck className="h-4 w-4 me-1" />
                               )}
                               {t('pro.participants.actions.confirm', 'Confirmer')}
                             </Button>
@@ -506,7 +506,7 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
                               {actionLoading === participant.id_user ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
                               ) : (
-                                <UserX className="h-4 w-4 mr-1" />
+                                <UserX className="h-4 w-4 me-1" />
                               )}
                               {t('pro.participants.actions.reject', 'Refuser')}
                             </Button>
@@ -525,7 +525,7 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
                               {actionLoading === participant.id_user ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
                               ) : (
-                                <CheckCircle className="h-4 w-4 mr-1" />
+                                <CheckCircle className="h-4 w-4 me-1" />
                               )}
                               {t('pro.participants.actions.markPresent', 'Présent')}
                             </Button>
@@ -538,7 +538,7 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
                               {actionLoading === participant.id_user ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
                               ) : (
-                                <XCircle className="h-4 w-4 mr-1" />
+                                <XCircle className="h-4 w-4 me-1" />
                               )}
                               {t('pro.participants.actions.markAbsent', 'Absent')}
                             </Button>
@@ -548,7 +548,7 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
                         {/* Si présent -> afficher badge */}
                         {participant.statut_participation === 'present' && (
                           <Badge className="bg-primary/15 text-primary">
-                            <CheckCircle className="h-3 w-3 mr-1" />
+                            <CheckCircle className="h-3 w-3 me-1" />
                             {t('status.present', 'Présent')}
                           </Badge>
                         )}
@@ -603,14 +603,14 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
                   <div className="flex flex-wrap gap-2 mt-3">
                     <Button variant="ghost" size="sm" asChild>
                       <a href={`mailto:${profilData.profil.email}`}>
-                        <Mail className="h-4 w-4 mr-1" />
+                        <Mail className="h-4 w-4 me-1" />
                         {profilData.profil.email}
                       </a>
                     </Button>
                     {profilData.profil.telephone && (
                       <Button variant="ghost" size="sm" asChild>
                         <a href={`tel:${profilData.profil.telephone}`}>
-                          <Phone className="h-4 w-4 mr-1" />
+                          <Phone className="h-4 w-4 me-1" />
                           {profilData.profil.telephone}
                         </a>
                       </Button>
@@ -618,7 +618,7 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
                     {profilData.profil.site_web && (
                       <Button variant="ghost" size="sm" asChild>
                         <a href={safeExternalUrl(profilData.profil.site_web)} target="_blank" rel="noopener noreferrer">
-                          <Globe className="h-4 w-4 mr-1" />
+                          <Globe className="h-4 w-4 me-1" />
                           {t('common.website', 'Site web')}
                         </a>
                       </Button>
@@ -921,7 +921,7 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
                 </Button>
                 <Button asChild>
                   <a href={`/oeuvres/${selectedOeuvre.id_oeuvre}`} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="h-4 w-4 mr-2" />
+                    <ExternalLink className="h-4 w-4 me-2" />
                     {t('pro.participants.viewFullPage', 'Voir page complète')}
                   </a>
                 </Button>

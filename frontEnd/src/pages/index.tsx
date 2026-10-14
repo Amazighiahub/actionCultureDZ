@@ -221,7 +221,7 @@ const Index: React.FC = () => {
                       </p>
                       <Button variant="link" className="p-0 group" onClick={() => navigate('/a-propos')}>
                         {t('home.mission.learnMore')}
-                        <ArrowRight className={`h-4 w-4 ${rtlClasses.marginStart(2)} group-hover:translate-x-1 transition-transform`} />
+                        <ArrowRight className={`h-4 w-4 ${rtlClasses.marginStart(2)} group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform rtl:-scale-x-100`} />
                       </Button>
                     </div>
                   </div>
@@ -263,7 +263,7 @@ const Index: React.FC = () => {
                       </ul>
                       <Button variant="link" className="p-0 mt-4 group" onClick={() => navigate('/a-propos#ressources')}>
                         {t('home.resources.access')}
-                        <ArrowRight className={`h-4 w-4 ${rtlClasses.marginStart(2)} group-hover:translate-x-1 transition-transform`} />
+                        <ArrowRight className={`h-4 w-4 ${rtlClasses.marginStart(2)} group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform rtl:-scale-x-100`} />
                       </Button>
                     </div>
                   </div>

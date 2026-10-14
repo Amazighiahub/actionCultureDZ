@@ -256,7 +256,7 @@ const EventInfo: React.FC<EventInfoProps> = ({ event }) => {
             {event.Lieu.latitude && event.Lieu.longitude && (
               <div className="flex gap-2">
                 <Button onClick={openInMaps} variant="outline" className="flex-1">
-                  <Navigation className="h-4 w-4 mr-2" />
+                  <Navigation className="h-4 w-4 me-2" />
                   {t('event.getDirections', 'Itinéraire')}
                 </Button>
                 <Button 
@@ -268,7 +268,7 @@ const EventInfo: React.FC<EventInfoProps> = ({ event }) => {
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    <ExternalLink className="h-4 w-4 mr-2" />
+                    <ExternalLink className="h-4 w-4 me-2" />
                     {t('event.viewOnMap', 'Voir sur la carte')}
                   </a>
                 </Button>

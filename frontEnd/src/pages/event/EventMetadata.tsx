@@ -101,7 +101,7 @@ const EventMetadata: React.FC<EventMetadataProps> = ({ event }) => {
             <CardTitle className="flex items-center gap-2">
               <BookOpen className="h-5 w-5 text-primary" />
               {t('event.metadata.presentedWorks', 'Oeuvres présentées')}
-              <Badge variant="secondary" className="ml-auto">{oeuvres.length}</Badge>
+              <Badge variant="secondary" className="ms-auto">{oeuvres.length}</Badge>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -110,7 +110,7 @@ const EventMetadata: React.FC<EventMetadataProps> = ({ event }) => {
                 <button
                   key={oeuvre.id_oeuvre}
                   onClick={() => navigate(`/oeuvres/${oeuvre.id_oeuvre}`)}
-                  className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors text-left"
+                  className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors text-start"
                 >
                   <LazyImage
                     src={oeuvre.image_url || '/images/default-oeuvre.svg'}
@@ -138,7 +138,7 @@ const EventMetadata: React.FC<EventMetadataProps> = ({ event }) => {
             <CardTitle className="flex items-center gap-2">
               <Building2 className="h-5 w-5 text-primary" />
               {t('event.metadata.partners', 'Partenaires')}
-              <Badge variant="secondary" className="ml-auto">{organisations.length}</Badge>
+              <Badge variant="secondary" className="ms-auto">{organisations.length}</Badge>
             </CardTitle>
           </CardHeader>
           <CardContent>
