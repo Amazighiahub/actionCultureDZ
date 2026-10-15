@@ -445,7 +445,9 @@
     "sortBy": "Sort by",
     "photo": "photo",
     "backToHome": "Back to home",
-    "loadMore": "Load more"
+    "loadMore": "Load more",
+    "yes": "Yes",
+    "no": "No"
   },
   "contributors": {
     "addedCount_one": "{{count}} contributor added",
@@ -2858,7 +2860,19 @@
       "cancelConfirm": "Are you sure you want to cancel your registration for this event? This action cannot be undone.",
       "confirmCancel": "Confirm cancellation",
       "contactByEmail": "Email the organiser",
-      "contactByPhone": "Call the organiser"
+      "contactByPhone": "Call the organiser",
+      "refused": "Not accepted",
+      "refusedDesc": "Your registration was not accepted by the organiser",
+      "pendingDesc": "Request sent: awaiting approval by the organiser",
+      "sentTitle": "Registration request sent",
+      "sentDesc": "The organiser will review your request. You will be notified by email.",
+      "form": {
+        "required": "Required",
+        "mustAccept": "Please tick this box",
+        "invalid": "Invalid answer",
+        "between": "Between {{min}} and {{max}}",
+        "incomplete": "Some answers are missing or invalid."
+      }
     },
     "registrationDeadline": "Registration deadline",
     "relatedEvents": "Related events",
@@ -3111,7 +3125,9 @@
       "workDetails": "Work details",
       "author": "Author / Artist",
       "presentationDesc": "Note for this event",
-      "viewFullPage": "View full page"
+      "viewFullPage": "View full page",
+      "answers": "Registration form answers",
+      "exportExcel": "Download as Excel"
     }
   },
   "programmePages": {

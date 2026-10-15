@@ -445,7 +445,9 @@
     "sortBy": "Smizzwer s",
     "photo": "tawlaft",
     "backToHome": "Uɣal ɣer usebter agejdan",
-    "loadMore": "Wali ugar"
+    "loadMore": "Wali ugar",
+    "yes": "Ih",
+    "no": "Ala"
   },
   "contributors": {
     "addedCount_one": "{{count}} amarag yettwarna",
@@ -2875,7 +2877,19 @@
       "cancelConfirm": "Tebɣiḍ s tidet ad tesfesxeḍ ajerred-ik ɣer tedyant-a? Tigawt-a ur tettuɣal ara.",
       "confirmCancel": "Sentem asefsex",
       "contactByEmail": "Nermes amsuddes s imayl",
-      "contactByPhone": "Siwel i umsuddes"
+      "contactByPhone": "Siwel i umsuddes",
+      "refused": "Ur tettwaqbel ara",
+      "refusedDesc": "Votre inscription n'a pas été retenue par l'organisateur",
+      "pendingDesc": "Demande envoyée : en attente de validation par l'organisateur",
+      "sentTitle": "Demande d'inscription envoyée",
+      "sentDesc": "L'organisateur va examiner votre demande. Vous serez prévenu(e) par e-mail.",
+      "form": {
+        "required": "Réponse obligatoire",
+        "mustAccept": "Veuillez cocher cette case",
+        "invalid": "Réponse invalide",
+        "between": "Entre {{min}} et {{max}}",
+        "incomplete": "Certaines réponses sont manquantes ou invalides."
+      }
     },
     "registrationDeadline": "Talast tagejdant n ujerred",
     "relatedEvents": "Ineḍruyen icudden",
@@ -3023,7 +3037,9 @@
       "workDetails": "Talqayt n uxeddim",
       "author": "Ameskar / Anaẓur",
       "presentationDesc": "Tazmilt i tedyant-a",
-      "viewFullPage": "Wali asebter meṛṛa"
+      "viewFullPage": "Wali asebter meṛṛa",
+      "answers": "Réponses au formulaire d'inscription",
+      "exportExcel": "Télécharger en Excel"
     }
   },
   "gestion": {

@@ -445,7 +445,9 @@
     "sortBy": "ⵙⵎⵉⵣⵣⵡⴻⵔ ⵙ",
     "photo": "ⵜⴰⵡⵍⴰⴼⵜ",
     "backToHome": "ⵓⵖⴰⵍ ⵖⴻⵔ ⵓⵙⴻⴱⵜⴻⵔ ⴰⴳⴻⵊⴷⴰⵏ",
-    "loadMore": "ⵡⴰⵍⵉ ⵓⴳⴰⵔ"
+    "loadMore": "ⵡⴰⵍⵉ ⵓⴳⴰⵔ",
+    "yes": "ⵉⵀ",
+    "no": "ⴰⵍⴰ"
   },
   "contributors": {
     "addedCount_one": "{{count}} ⴰⵎⵓⵜⵜⴽ ⵉⵜⵜⵡⴰⵔⵏⴰ",
@@ -2875,7 +2877,19 @@
       "cancelConfirm": "ⵜⴻⴱⵖⵉⴹ ⵙ ⵜⵉⴷⴻⵜ ⴰⴷ ⵜⴻⵙⴼⴻⵙⵅⴻⴹ ⴰⵊⴻⵔⵔⴻⴷ-ⵉⴽ ⵖⴻⵔ ⵜⴻⴷⵢⴰⵏⵜ-ⴰ? ⵜⵉⴳⴰⵡⵜ-ⴰ ⵓⵔ ⵜⴻⵜⵜⵓⵖⴰⵍ ⴰⵔⴰ.",
       "confirmCancel": "ⵙⴻⵏⵜⴻⵎ ⴰⵙⴻⴼⵙⴻⵅ",
       "contactByEmail": "ⵏⴻⵔⵎⴻⵙ ⴰⵎⵙⵓⴷⴷⴻⵙ ⵙ ⵉⵎⴰⵢⵍ",
-      "contactByPhone": "ⵙⵉⵡⴻⵍ ⵉ ⵓⵎⵙⵓⴷⴷⴻⵙ"
+      "contactByPhone": "ⵙⵉⵡⴻⵍ ⵉ ⵓⵎⵙⵓⴷⴷⴻⵙ",
+      "refused": "ⵓⵔ ⵜⴻⵜⵜⵡⴰⵇⴱⴻⵍ ⴰⵔⴰ",
+      "refusedDesc": "Votre inscription n'a pas été retenue par l'organisateur",
+      "pendingDesc": "Demande envoyée : en attente de validation par l'organisateur",
+      "sentTitle": "Demande d'inscription envoyée",
+      "sentDesc": "L'organisateur va examiner votre demande. Vous serez prévenu(e) par e-mail.",
+      "form": {
+        "required": "Réponse obligatoire",
+        "mustAccept": "Veuillez cocher cette case",
+        "invalid": "Réponse invalide",
+        "between": "Entre {{min}} et {{max}}",
+        "incomplete": "Certaines réponses sont manquantes ou invalides."
+      }
     },
     "registrationDeadline": "ⵜⴰⵍⴰⵙⵜ ⵜⴰⴳⴻⵊⴷⴰⵏⵜ ⵏ ⵓⵊⴻⵔⵔⴻⴷ",
     "relatedEvents": "ⵉⵏⴻⴹⵔⵓⵢⴻⵏ ⵉⵛⵓⴷⴷⴻⵏ",
@@ -3023,7 +3037,9 @@
       "workDetails": "ⵜⴰⵍⵇⴰⵢⵜ ⵏ ⵓⵅⴻⴷⴷⵉⵎ",
       "author": "ⴰⵎⴻⵙⴽⴰⵔ / ⴰⵏⴰⵥⵓⵔ",
       "presentationDesc": "ⵜⴰⵣⵎⵉⵍⵜ ⵉ ⵜⴻⴷⵢⴰⵏⵜ-ⴰ",
-      "viewFullPage": "ⵡⴰⵍⵉ ⴰⵙⴻⴱⵜⴻⵔ ⵎⴻⵕⵕⴰ"
+      "viewFullPage": "ⵡⴰⵍⵉ ⴰⵙⴻⴱⵜⴻⵔ ⵎⴻⵕⵕⴰ",
+      "answers": "Réponses au formulaire d'inscription",
+      "exportExcel": "Télécharger en Excel"
     }
   },
   "gestion": {

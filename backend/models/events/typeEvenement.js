@@ -34,6 +34,13 @@ module.exports = (sequelize) => {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
       comment: 'Indique si les participants peuvent soumettre des œuvres'
+    },
+    // Formulaire d'inscription propre au type (null = formulaire de base)
+    config_inscription: {
+      type: DataTypes.JSON,
+      allowNull: true,
+      defaultValue: null,
+      comment: 'Questions du formulaire d\'inscription { version, remplace_formulaire_base, sections: [{ titre, champs: [...] }] }'
     }
   }, {
     tableName: 'type_evenement',

@@ -175,9 +175,11 @@ class EvenementController extends BaseController {
 
   async register(req, res) {
     try {
+      const { nombre_personnes, commentaire, reponses } = req.body || {};
       await this.evenementService.registerParticipant(
         parseInt(req.params.id),
-        req.user.id_user
+        req.user.id_user,
+        { nombre_personnes, commentaire, reponses }
       );
       res.json({ success: true, message: req.t('event.registered') });
     } catch (error) {

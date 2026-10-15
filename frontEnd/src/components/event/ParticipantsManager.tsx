@@ -45,7 +45,8 @@ import {
   Loader2,
   UserCheck,
   UserX,
-  UserCog
+  UserCog,
+  Download
 } from 'lucide-react';
 import { httpClient } from '@/services/httpClient';
 import { useTranslateData } from '@/hooks/useTranslateData';
@@ -55,6 +56,9 @@ import { cn } from '@/lib/Utils';
 import { getAssetUrl } from '@/helpers/assetUrl';
 import { safeExternalUrl } from '@/utils/safeUrl';
 import SocialLinks, { type SocialLinksValue } from '@/components/shared/SocialLinks';
+import ReponsesInscription from '@/components/event/ReponsesInscription';
+import { professionnelService } from '@/services/professionnel.service';
+import type { ConfigInscription, Reponses } from '@/utils/formulaireInscription';
 
 interface ParticipantsManagerProps {
   evenementId: number;
@@ -119,12 +123,15 @@ interface ParticipantProfil {
     TypeUser?: { nom_type: string };
     Organisations?: Array<{ id_organisation: number; nom: string; logo_url?: string }>;
   };
-  inscription: {
+  participation: {
     statut_participation: string;
     role_participation: string;
     date_inscription: string;
     notes?: string;
+    reponses_inscription?: Reponses | null;
   };
+  /** Questions du formulaire du type d'événement (null = formulaire de base) */
+  formulaire?: ConfigInscription | null;
   oeuvres_soumises: OeuvreSoumise[];
   portfolio: OeuvreSoumise[];
   historique_participations: Array<{
@@ -160,6 +167,7 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
   const [profilData, setProfilData] = useState<ParticipantProfil | null>(null);
   const [profilLoading, setProfilLoading] = useState(false);
   const [profilDialogOpen, setProfilDialogOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   // État pour le dialogue de détails d'œuvre
   const [selectedOeuvre, setSelectedOeuvre] = useState<OeuvreSoumise | null>(null);
@@ -189,6 +197,20 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
       console.error('Erreur chargement participants:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Liste des inscrits avec leurs réponses au formulaire, au format Excel
+  const handleExport = async () => {
+    setExporting(true);
+    const response = await professionnelService.exportParticipants(evenementId, 'excel');
+    setExporting(false);
+    if (!response.success) {
+      toast({
+        title: t('toasts.exportFailed', 'Échec de l\'export'),
+        description: response.error,
+        variant: 'destructive'
+      });
     }
   };
 
@@ -369,6 +391,16 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
               <SelectItem value="benevole">{t('event.roles.benevole', 'Bénévole')}</SelectItem>
             </SelectContent>
           </Select>
+          <Button
+            variant="outline"
+            onClick={handleExport}
+            disabled={exporting || participants.length === 0}
+          >
+            {exporting
+              ? <Loader2 className="h-4 w-4 me-2 animate-spin" aria-hidden="true" />
+              : <Download className="h-4 w-4 me-2" aria-hidden="true" />}
+            {t('pro.participants.exportExcel', 'Télécharger en Excel')}
+          </Button>
         </div>
 
         {/* Statistiques rapides */}
@@ -640,17 +672,21 @@ const ParticipantsManager: React.FC<ParticipantsManagerProps> = ({
                   {t('pro.participants.eventRegistration', 'Inscription à cet événement')}
                 </h4>
                 <div className="flex gap-2 flex-wrap">
-                  {getStatusBadge(profilData.inscription.statut_participation)}
-                  {getRoleBadge(profilData.inscription.role_participation)}
+                  {getStatusBadge(profilData.participation.statut_participation)}
+                  {getRoleBadge(profilData.participation.role_participation)}
                   <span className="text-sm text-muted-foreground">
-                    {t('pro.participants.registeredOn', 'Inscrit le')} {formatDate(profilData.inscription.date_inscription, { dateStyle: 'long' })}
+                    {t('pro.participants.registeredOn', 'Inscrit le')} {formatDate(profilData.participation.date_inscription, { dateStyle: 'long' })}
                   </span>
                 </div>
-                {profilData.inscription.notes && (
+                {profilData.participation.notes && (
                   <p className="text-sm mt-2 p-2 bg-muted rounded">
-                    <strong>{t('common.notes', 'Notes')}:</strong> {profilData.inscription.notes}
+                    <strong>{t('common.notes', 'Notes')}:</strong> {profilData.participation.notes}
                   </p>
                 )}
+                <ReponsesInscription
+                  formulaire={profilData.formulaire}
+                  reponses={profilData.participation.reponses_inscription}
+                />
               </div>
 
               {/* Œuvres soumises pour cet événement */}

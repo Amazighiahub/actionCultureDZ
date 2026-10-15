@@ -4,6 +4,7 @@
  */
 
 const BaseRepository = require('./baseRepository');
+const AppError = require('../utils/appError');
 const { PUBLIC_USER_ATTRIBUTES, PUBLIC_ORGANIZER_ATTRIBUTES } = require('../constants/publicAttributes');
 
 // Programme vu publiquement : tout sauf les notes internes de l'organisateur
@@ -233,6 +234,15 @@ class EvenementRepository extends BaseRepository {
     // Use default includes (lightweight) + Programme, Media, Organisation
     const includes = this._defaultIncludes();
 
+    // Questions du formulaire d'inscription du type (page détail uniquement, pas les listes)
+    const typeIdx = includes.findIndex(i => i.as === 'TypeEvenement');
+    if (typeIdx !== -1) {
+      includes[typeIdx] = {
+        ...includes[typeIdx],
+        attributes: [...includes[typeIdx].attributes, 'config_inscription']
+      };
+    }
+
     if (this.models.Programme) {
       includes.push({
         model: this.models.Programme,
@@ -371,7 +381,7 @@ class EvenementRepository extends BaseRepository {
     if (existing) {
       // Un participant rejeté (annulé) ne peut pas se ré-inscrire
       if (existing.statut_participation === 'annule') {
-        throw new Error('Inscription refusée — participation annulée par l\'organisateur');
+        throw AppError.badRequest('Inscription refusée — participation annulée par l\'organisateur', 'REGISTRATION_REFUSED');
       }
       // Déjà inscrit/confirmé/présent → pas de changement
       return existing;
@@ -501,8 +511,8 @@ class EvenementRepository extends BaseRepository {
     return this.models.User.findByPk(userId, {
       attributes: { exclude: ['password'] },
       include: [
-        { model: this.models.TypeUser, required: false },
-        { model: this.models.Wilaya, required: false },
+        { model: this.models.TypeUser, as: 'TypeUser', required: false },
+        { model: this.models.Wilaya, as: 'Wilaya', required: false },
         {
           model: this.models.Oeuvre,
           as: 'OeuvresSaisies',

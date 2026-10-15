@@ -1,6 +1,7 @@
 // types/models/references.types.ts
 
 import { Oeuvre } from "./oeuvre.types";
+import type { ConfigInscription } from '@/utils/formulaireInscription';
 
 /**
  * Types pour les tables de référence
@@ -159,6 +160,8 @@ export interface TypeEvenement {
   id_type_evenement: number;
   nom_type: string;
   description?: string;
+  /** Formulaire d'inscription propre au type (absent = formulaire de base) */
+  config_inscription?: ConfigInscription | null;
   // Relations
   Evenements?: any[]; // Remplacer 'any' par le type Evenement quand disponible
 }

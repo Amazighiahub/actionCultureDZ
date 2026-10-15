@@ -6,7 +6,15 @@ import { Programme } from '@/types';
 import { mediaService } from './media.service';
 import { Evenement } from '@/types/models/evenement.types';
 import { Oeuvre } from '@/types/models/oeuvre.types';
+import type { Reponses } from '@/utils/formulaireInscription';
 
+/** Données d'inscription : formulaire de base et/ou réponses au formulaire du type d'événement */
+export interface InscriptionPayload {
+  nombre_personnes?: number;
+  commentaire?: string;
+  oeuvres?: number[];
+  reponses?: Reponses;
+}
 
 
 interface CreateEvenementData {
@@ -150,7 +158,7 @@ class EvenementService extends BaseService<Evenement, CreateEvenementData, Updat
   }
 
   // Participation
-  async inscription(eventId: number, data?: { nombre_personnes?: number; commentaire?: string; oeuvres?: number[]; notes?: string }): Promise<ApiResponse<{ inscription: { id: number; statut: string; date_inscription: string }; oeuvres_soumises: number; reference?: string }>> {
+  async inscription(eventId: number, data?: InscriptionPayload): Promise<ApiResponse<{ inscription: { id: number; statut: string; date_inscription: string }; oeuvres_soumises: number; reference?: string }>> {
     return httpClient.post<{ inscription: { id: number; statut: string; date_inscription: string }; oeuvres_soumises: number; reference?: string }>(API_ENDPOINTS.evenements.inscription(eventId), data);
   }
 

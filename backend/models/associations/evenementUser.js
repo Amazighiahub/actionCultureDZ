@@ -45,6 +45,12 @@ module.exports = (sequelize) => {
       type: DataTypes.TEXT,
       comment: 'Notes internes ou besoins spécifiques'
     },
+    reponses_inscription: {
+      type: DataTypes.JSON,
+      allowNull: true,
+      defaultValue: null,
+      comment: 'Réponses du participant au formulaire d\'inscription (de base ou du type d\'événement)'
+    },
     date_validation: {
       type: DataTypes.DATE,
       comment: 'Date de validation de la participation'

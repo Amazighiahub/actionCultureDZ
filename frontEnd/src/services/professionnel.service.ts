@@ -319,7 +319,7 @@ class ProfessionnelService {
   async exportParticipants(evenementId: number, format: 'excel' | 'csv' = 'excel'): Promise<ApiResponse<Blob>> {
     return httpClient.download(
       API_ENDPOINTS.professionnel.exportParticipants(evenementId) + `?format=${format}`,
-      `participants_event_${evenementId}.${format}`
+      `participants_evenement_${evenementId}.${format === 'excel' ? 'xlsx' : 'csv'}`
     );
   }
 

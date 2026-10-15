@@ -125,7 +125,7 @@ class NotificationService {
       // Récupérer les informations nécessaires
       const [professionnel, evenement] = await Promise.all([
         this.models.User.findByPk(userId, {
-          attributes: ['id_user', 'nom', 'prenom', 'email', 'telephone', 'type_user']
+          attributes: ['id_user', 'nom', 'prenom', 'email', 'telephone', 'id_type_user']
         }),
         this.models.Evenement.findByPk(evenementId, {
           include: [

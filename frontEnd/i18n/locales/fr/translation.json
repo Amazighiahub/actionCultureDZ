@@ -450,7 +450,9 @@
     "sortBy": "Trier par",
     "photo": "photo",
     "backToHome": "Retour à l'accueil",
-    "loadMore": "Voir plus"
+    "loadMore": "Voir plus",
+    "yes": "Oui",
+    "no": "Non"
   },
   "contributors": {
     "addedCount": "{{count}} contributeurs ajoutés",
@@ -2863,7 +2865,19 @@
       "cancelConfirm": "Êtes-vous sûr(e) de vouloir annuler votre inscription à cet événement ? Cette action est irréversible.",
       "confirmCancel": "Confirmer l'annulation",
       "contactByEmail": "Contacter l'organisateur par e-mail",
-      "contactByPhone": "Appeler l'organisateur"
+      "contactByPhone": "Appeler l'organisateur",
+      "refused": "Non retenue",
+      "refusedDesc": "Votre inscription n'a pas été retenue par l'organisateur",
+      "pendingDesc": "Demande envoyée : en attente de validation par l'organisateur",
+      "sentTitle": "Demande d'inscription envoyée",
+      "sentDesc": "L'organisateur va examiner votre demande. Vous serez prévenu(e) par e-mail.",
+      "form": {
+        "required": "Réponse obligatoire",
+        "mustAccept": "Veuillez cocher cette case",
+        "invalid": "Réponse invalide",
+        "between": "Entre {{min}} et {{max}}",
+        "incomplete": "Certaines réponses sont manquantes ou invalides."
+      }
     },
     "registrationDeadline": "Date limite d'inscription",
     "relatedEvents": "Événements associés",
@@ -3116,7 +3130,9 @@
       "workDetails": "Détails de l'œuvre",
       "author": "Auteur / Artiste",
       "presentationDesc": "Note pour cet événement",
-      "viewFullPage": "Voir page complète"
+      "viewFullPage": "Voir page complète",
+      "answers": "Réponses au formulaire d'inscription",
+      "exportExcel": "Télécharger en Excel"
     }
   },
   "programmePages": {

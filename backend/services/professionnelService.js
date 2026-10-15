@@ -6,6 +6,8 @@ const { Op } = require('sequelize');
 const { mergeTranslations } = require('../helpers/i18n');
 const { buildMultiLangSearch } = require('../utils/multiLangSearchBuilder');
 const { sanitizeLike } = require('../utils/sanitize');
+const logger = require('../utils/logger');
+const { listerChamps, libelle, valeurExport } = require('./evenement/formulaireInscription');
 
 class ProfessionnelService {
   constructor(models) {
@@ -491,6 +493,15 @@ class ProfessionnelService {
     if (notes) updates.notes = notes;
     await participation.update(updates);
 
+    // Acceptation / refus : e-mail, notification, SMS/WhatsApp
+    // (best effort, sans bloquer la réponse — comme evenementService.validateParticipation)
+    if ((action === 'confirmer' || action === 'rejeter') && this.models.Notification) {
+      const NotificationService = require('./notificationService');
+      new NotificationService(this.models)
+        .notifierValidationParticipation(evenementId, userId, action === 'confirmer' ? 'confirme' : 'refuse', notes || '')
+        .catch(err => logger.error('Erreur notification validation participation:', err));
+    }
+
     const participant = await this.models.User.findByPk(userId, {
       attributes: ['id_user', 'nom', 'prenom', 'email']
     });
@@ -518,9 +529,11 @@ class ProfessionnelService {
   // EXPORT
   // ========================================================================
 
-  async getExportData(userId, type) {
+  async getExportData(userId, type, { evenementId } = {}) {
     const EXPORT_LIMIT = 10000;
     switch (type) {
+      case 'participants':
+        return this._exportParticipants(userId, evenementId, EXPORT_LIMIT);
       case 'oeuvres':
         return this.models.Oeuvre.findAll({ where: { saisi_par: userId }, raw: true, limit: EXPORT_LIMIT });
       case 'evenements':
@@ -535,6 +548,49 @@ class ProfessionnelService {
       default:
         return null;
     }
+  }
+
+  /**
+   * Participants d'un événement de l'organisateur, une colonne par question du formulaire.
+   * Les en-têtes sont en français, comme les valeurs des choix.
+   */
+  async _exportParticipants(userId, evenementId, limit) {
+    const evenement = await this.models.Evenement.findOne({
+      where: { id_evenement: evenementId, id_user: userId },
+      attributes: ['id_evenement'],
+      include: [{ model: this.models.TypeEvenement, as: 'TypeEvenement', attributes: ['config_inscription'], required: false }]
+    });
+    if (!evenement) return [];
+
+    const participations = await this.models.EvenementUser.findAll({
+      where: { id_evenement: evenementId },
+      include: [{ model: this.models.User, as: 'User', attributes: ['nom', 'prenom', 'email', 'telephone'] }],
+      order: [['date_inscription', 'ASC']],
+      limit
+    });
+
+    const champs = listerChamps(evenement.TypeEvenement?.config_inscription);
+    const STATUTS = { inscrit: 'En attente', confirme: 'Confirmé', present: 'Présent', absent: 'Absent', annule: 'Refusé' };
+
+    return participations.map((p) => {
+      const reponses = p.reponses_inscription || {};
+      const ligne = {
+        'Nom': libelle(p.User?.nom),
+        'Prénom': libelle(p.User?.prenom),
+        'E-mail': p.User?.email || '',
+        'Téléphone (compte)': p.User?.telephone || '',
+        'Statut': STATUTS[p.statut_participation] || p.statut_participation,
+        'Date d\'inscription': p.date_inscription ? new Date(p.date_inscription).toISOString().slice(0, 10) : ''
+      };
+      if (champs.length) {
+        for (const champ of champs) ligne[libelle(champ.label)] = valeurExport(reponses[champ.cle]);
+      } else {
+        ligne['Nombre de personnes'] = reponses.nombre_personnes || 1;
+        ligne['Commentaire'] = reponses.commentaire || '';
+      }
+      ligne['Notes de l\'organisateur'] = p.notes || '';
+      return ligne;
+    });
   }
 
   // ========================================================================
