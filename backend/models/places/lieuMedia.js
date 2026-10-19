@@ -25,6 +25,11 @@ module.exports = (sequelize) => {
       type: DataTypes.STRING(255),
       allowNull: false
     },
+    // Langue d'un enregistrement audio (fr, ar, en, tz-ltn, tz-tfng) ; null pour une image
+    langue: {
+      type: DataTypes.STRING(10),
+      allowNull: true
+    },
     // ⚡ MODIFIÉ POUR I18N
     description: {
       type: DataTypes.JSON,

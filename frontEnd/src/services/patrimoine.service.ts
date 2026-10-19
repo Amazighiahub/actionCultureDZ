@@ -238,13 +238,20 @@ class PatrimoineService extends BaseService<SitePatrimoine, CreateSiteData, Upda
     return httpClient.delete<void>(API_ENDPOINTS.patrimoine.retirerFavoris(id));
   }
 
-  async uploadMedias(siteId: number, files: File[]): Promise<ApiResponse<MediaSite[]>> {
+  /** langue : celle des enregistrements audio envoyés (fr, ar, en, tz-ltn, tz-tfng) */
+  async uploadMedias(siteId: number, files: File[], langue?: string): Promise<ApiResponse<MediaSite[]>> {
     const formData = new FormData();
+    if (langue) formData.append('langue', langue);
     (await prepareFilesForUpload(files)).forEach(file => formData.append('medias', file));
     return httpClient.upload<MediaSite[]>(
       API_ENDPOINTS.patrimoine.uploadMedias(siteId),
       formData
     );
+  }
+
+  /** Nouvel ordre de visite des points d'un site (tous les points, dans l'ordre) */
+  async reordonnerPoints(siteId: number, ordre: number[]): Promise<ApiResponse<Array<{ id_lieu: number; ordre_visite: number }>>> {
+    return httpClient.put(API_ENDPOINTS.patrimoine.reordonnerPoints(siteId), { ordre });
   }
 
   async deleteMedia(siteId: number, mediaId: number): Promise<ApiResponse<void>> {

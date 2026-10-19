@@ -16,7 +16,8 @@ const DOCUMENT_MIMES = [
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
 ];
 const VIDEO_MIMES = ['video/mp4', 'video/mpeg', 'video/quicktime', 'video/x-msvideo', 'video/webm'];
-const AUDIO_MIMES = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/aac'];
+// m4a : format des enregistrements de téléphone (déclaré audio/mp4 ou audio/x-m4a, détecté audio/m4a)
+const AUDIO_MIMES = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/aac', 'audio/mp4', 'audio/x-m4a', 'audio/m4a'];
 const MEDIA_MIMES = [...IMAGE_MIMES, ...VIDEO_MIMES, ...AUDIO_MIMES, ...DOCUMENT_MIMES];
 
 module.exports = {

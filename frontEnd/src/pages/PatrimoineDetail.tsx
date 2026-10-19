@@ -14,7 +14,7 @@ import {
   MapPin, Clock, Star, QrCode, ArrowLeft, Landmark, Building2,
   Camera, Calendar, Route, ChevronRight, Download, Share2,
   CheckCircle2, XCircle, Info, History, Image as ImageIcon, Play,
-  Compass, TreePine, Utensils, Hotel
+  Compass, TreePine, Utensils, Hotel, Headphones, DoorOpen, ChevronLeft, Footprints
 } from 'lucide-react';
 import { patrimoineService } from '@/services/patrimoine.service';
 import { httpClient } from '@/services/httpClient';
@@ -27,6 +27,9 @@ import ServicesProximite from '@/components/shared/ServicesProximite';
 import SectionEnrichissable from '@/components/patrimoine/SectionEnrichissable';
 import SectionPersonnalites from '@/components/patrimoine/SectionPersonnalites';
 import SectionElements, { type PatrimoineElement } from '@/components/patrimoine/SectionElements';
+import PointsVisite, { type PointVisite } from '@/components/patrimoine/PointsVisite';
+import GuideAudio, { type MediaAudio } from '@/components/patrimoine/GuideAudio';
+import { usePermissions } from '@/hooks/usePermissions';
 import SEOHead, { buildPatrimoineJsonLd, buildBreadcrumbJsonLd } from '@/components/SEOHead';
 
 // Type multilingue réutilisé dans l'interface du site
@@ -74,6 +77,13 @@ interface SitePatrimoineDetail {
   longitude: number;
   typeLieu: string;
   typePatrimoine?: TypePatrimoine; // New field
+  id_createur?: number | null;
+  // Points de visite : site parent, chemin jusqu'au site principal, points du même site
+  id_lieu_parent?: number | null;
+  repere?: string | MultilingualField | null;
+  SousLieux?: PointVisite[];
+  Ancetres?: Array<{ id_lieu: number; nom: string | MultilingualField }>;
+  Voisins?: Array<{ id_lieu: number; nom: string | MultilingualField; ordre_visite?: number | null }>;
   Commune?: { id_commune: number; nom: string; Daira?: { id_daira: number; nom: string; Wilaya?: { id_wilaya: number; nom: string } } };
   DetailLieu?: {
     id_detailLieu: number;
@@ -90,7 +100,7 @@ interface SitePatrimoineDetail {
     noteMoyenne?: number;
     nb_contributions?: number;
   };
-  medias?: Array<{ id: number; url: string; type: string; titre?: string | MultilingualField; legende?: string | MultilingualField; description?: string | MultilingualField }>;
+  medias?: Array<{ id: number; url: string; type: string; langue?: string | null; titre?: string | MultilingualField; legende?: string | MultilingualField; description?: string | MultilingualField }>;
   services?: Array<{ id: number; nom: string | MultilingualField; description?: string | MultilingualField; disponible: boolean }>;
   monuments?: Array<{ id: number; nom: string | MultilingualField; description?: string | MultilingualField; type: string }>;
   vestiges?: Array<{ id: number; nom: string | MultilingualField; description?: string | MultilingualField; type: string }>;
@@ -160,6 +170,7 @@ const PatrimoineDetail = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const lang = i18n.language || 'fr';
+  const { isAdmin, isValidatedProfessional, hasRole, isOwner } = usePermissions();
 
   const [site, setSite] = useState<SitePatrimoineDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -268,6 +279,22 @@ const PatrimoineDetail = () => {
     );
   }
 
+  // Photos et vidéos d'un côté (galerie), enregistrements audio de l'autre (guide audio)
+  const visuels = (site.medias || []).filter(m => m.type === 'image' || m.type === 'video');
+  const audios = (site.medias || []).filter(m => m.type === 'audio') as MediaAudio[];
+
+  // Points de visite
+  const points = site.SousLieux || [];
+  const ancetres = site.Ancetres || [];
+  const siteParent = ancetres[ancetres.length - 1];
+  const voisins = site.Voisins || [];
+  const indexVoisin = voisins.findIndex(v => v.id_lieu === site.id_lieu);
+  const pointPrecedent = indexVoisin > 0 ? voisins[indexVoisin - 1] : null;
+  const pointSuivant = indexVoisin >= 0 && indexVoisin < voisins.length - 1 ? voisins[indexVoisin + 1] : null;
+  const repere = translate(site.repere, lang);
+  const canAddContent = isAdmin || isValidatedProfessional();
+  const canReorderPoints = isAdmin || hasRole('Moderateur') || (!!site.id_createur && isOwner(site.id_createur));
+
   // Libellé accessible d'un média (titre/légende sinon « Site – photo N »)
   const siteDisplayName = translate(site.nom, lang);
   const getMediaLabel = (media: NonNullable<SitePatrimoineDetail['medias']>[number], idx: number): string =>
@@ -275,9 +302,9 @@ const PatrimoineDetail = () => {
     || `${siteDisplayName} – ${t('common.photo', 'photo')} ${idx + 1}`;
   const getVideoLabel = (media: NonNullable<SitePatrimoineDetail['medias']>[number], idx: number): string =>
     t('patrimoine.playVideo', 'Lire la vidéo : {{title}}', { title: getMediaLabel(media, idx) });
-  const selectedMediaIndex = selectedImage ? (site.medias || []).findIndex(m => m.url === selectedImage) : -1;
-  const selectedImageAlt = selectedMediaIndex >= 0 && site.medias
-    ? getMediaLabel(site.medias[selectedMediaIndex], selectedMediaIndex)
+  const selectedMediaIndex = selectedImage ? visuels.findIndex(m => m.url === selectedImage) : -1;
+  const selectedImageAlt = selectedMediaIndex >= 0
+    ? getMediaLabel(visuels[selectedMediaIndex], selectedMediaIndex)
     : siteDisplayName;
 
   const seoKeywords = [
@@ -299,6 +326,7 @@ const PatrimoineDetail = () => {
           buildBreadcrumbJsonLd([
             { name: 'Accueil', url: '/' },
             { name: 'Patrimoine', url: '/patrimoine' },
+            ...ancetres.map(a => ({ name: translate(a.nom, lang), url: `/patrimoine/${a.id_lieu}` })),
             { name: translate(site?.nom, lang) || '', url: `/patrimoine/${site?.id_lieu}` },
           ]),
         ]}
@@ -313,8 +341,19 @@ const PatrimoineDetail = () => {
             <ArrowLeft className="h-4 w-4 me-1 rtl:-scale-x-100" />
             {t('common.back', 'Retour')}
           </Button>
-          <ChevronRight className="h-4 w-4 text-muted-foreground rtl:-scale-x-100" />
-          <span className="text-sm text-foreground">{translate(site.nom, lang)}</span>
+          {/* Chemin d'un point de visite : Timgad › Musée de Timgad › Salle 3 */}
+          <nav aria-label={t('patrimoine.points.breadcrumb', 'Emplacement dans le site')} className="flex flex-wrap items-center gap-2 min-w-0">
+            {ancetres.map(a => (
+              <React.Fragment key={a.id_lieu}>
+                <ChevronRight className="h-4 w-4 text-muted-foreground rtl:-scale-x-100" aria-hidden="true" />
+                <Link to={`/patrimoine/${a.id_lieu}`} className="text-sm text-muted-foreground hover:text-foreground hover:underline">
+                  {translate(a.nom, lang)}
+                </Link>
+              </React.Fragment>
+            ))}
+            <ChevronRight className="h-4 w-4 text-muted-foreground rtl:-scale-x-100" aria-hidden="true" />
+            <span className="text-sm text-foreground" aria-current="page">{translate(site.nom, lang)}</span>
+          </nav>
         </div>
 
         {/* Image principale et galerie */}
@@ -339,6 +378,12 @@ const PatrimoineDetail = () => {
                     {site.wilaya?.wilaya_name_ascii || site.commune?.commune_name_ascii || translate(site.adresse, lang)}
                   </span>
                 </div>
+                {repere && (
+                  <div className="flex items-center gap-2 text-white/90 -mt-2 mb-4">
+                    <DoorOpen className="h-4 w-4" aria-hidden="true" />
+                    <span>{repere}</span>
+                  </div>
+                )}
               </div>
               <div className="flex flex-col gap-2 items-end">
                 {site.stats?.noteMoyenne && (
@@ -364,7 +409,7 @@ const PatrimoineDetail = () => {
           </div>
 
           {/* Bouton galerie */}
-          {site.medias && site.medias.length > 1 && (
+          {visuels.length > 1 && (
             <Dialog>
               <DialogTrigger asChild>
                 <Button
@@ -373,7 +418,7 @@ const PatrimoineDetail = () => {
                   className="absolute top-4 end-4"
                 >
                   <Camera className="h-4 w-4 me-2" />
-                  {site.medias.length} {t('patrimoine.photos', 'photos')}
+                  {visuels.length} {t('patrimoine.photos', 'photos')}
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-4xl">
@@ -381,7 +426,7 @@ const PatrimoineDetail = () => {
                   <DialogTitle>{t('patrimoine.gallery', 'Galerie')}</DialogTitle>
                 </DialogHeader>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-h-[60vh] overflow-y-auto">
-                  {site.medias.map((media, idx) => (
+                  {visuels.map((media, idx) => (
                     <div
                       key={idx}
                       className="aspect-video cursor-pointer overflow-hidden rounded-lg"
@@ -430,6 +475,85 @@ const PatrimoineDetail = () => {
               </CardContent>
             </Card>
 
+            {/* Points de visite du site (Timgad : Arc de Trajan, Marché, Musée…) */}
+            {(points.length > 0 || canAddContent) && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Footprints className="h-5 w-5" />
+                    {t('patrimoine.points.title', 'Points à visiter')}
+                    {points.length > 0 && <Badge variant="secondary" className="font-normal">{points.length}</Badge>}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <PointsVisite
+                    site={site}
+                    points={points}
+                    lang={lang}
+                    canAdd={canAddContent}
+                    canReorder={canReorderPoints}
+                    onReordered={(nouveaux) => setSite(prev => prev ? { ...prev, SousLieux: nouveaux } : prev)}
+                  />
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Guide audio multilingue */}
+            {(audios.length > 0 || canAddContent) && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Headphones className="h-5 w-5" />
+                    {t('patrimoine.audio.title', 'Écouter')}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <GuideAudio
+                    lieuId={site.id_lieu}
+                    medias={audios}
+                    lang={lang}
+                    canUpload={canAddContent}
+                    onUploaded={(ajoutes) => setSite(prev => prev ? { ...prev, medias: [...(prev.medias || []), ...ajoutes] } : prev)}
+                  />
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Point d'un site : retour au site et point précédent / suivant de la visite */}
+            {siteParent && (
+              <Card className="bg-muted/30">
+                <CardContent className="p-4 space-y-3">
+                  <p className="text-sm">
+                    {t('patrimoine.points.partOf', 'Fait partie de :')}{' '}
+                    <Link to={`/patrimoine/${siteParent.id_lieu}`} className="font-medium hover:underline">{translate(siteParent.nom, lang)}</Link>
+                    {indexVoisin >= 0 && (
+                      <span className="text-muted-foreground"> · {t('patrimoine.points.position', 'point {{n}} sur {{total}}', { n: indexVoisin + 1, total: voisins.length })}</span>
+                    )}
+                  </p>
+                  {(pointPrecedent || pointSuivant) && (
+                    <div className="flex flex-wrap justify-between gap-2">
+                      {pointPrecedent ? (
+                        <Button variant="outline" size="sm" asChild>
+                          <Link to={`/patrimoine/${pointPrecedent.id_lieu}`}>
+                            <ChevronLeft className="h-4 w-4 me-1 rtl:-scale-x-100" />
+                            {translate(pointPrecedent.nom, lang)}
+                          </Link>
+                        </Button>
+                      ) : <span />}
+                      {pointSuivant && (
+                        <Button size="sm" asChild>
+                          <Link to={`/patrimoine/${pointSuivant.id_lieu}`}>
+                            {t('patrimoine.points.next', 'Point suivant :')} {translate(pointSuivant.nom, lang)}
+                            <ChevronRight className="h-4 w-4 ms-1 rtl:-scale-x-100" />
+                          </Link>
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
             {/* ─────────────────────────────────────────────────────────── */}
             {/* SECTIONS DÉPLIABLES — adaptées au type de patrimoine      */}
             {/* ─────────────────────────────────────────────────────────── */}
@@ -444,7 +568,7 @@ const PatrimoineDetail = () => {
                 services:    site.services?.length || 0,
                 programmes:  site.programmes?.length || 0,
                 parcours:    site.parcours?.length || 0,
-                galerie:     site.medias?.length || 0,
+                galerie:     visuels.length,
                 histoire:    site.DetailLieu?.histoire ? 1 : 0,
                 musees:      0,
                 collections: 0,
@@ -629,9 +753,9 @@ const PatrimoineDetail = () => {
 
                           {/* Galerie */}
                           {sectionKey === 'galerie' && (
-                            site.medias && site.medias.length > 0 ? (
+                            visuels.length > 0 ? (
                               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                                {site.medias.map((media, idx) => (
+                                {visuels.map((media, idx) => (
                                   <div key={idx} className="aspect-video cursor-pointer overflow-hidden rounded-lg" onClick={() => setSelectedImage(media.url)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedImage(media.url); } }} aria-label={media.type === 'video' ? getVideoLabel(media, idx) : undefined}>
                                     {media.type === 'video'
                                       ? <div className="w-full h-full bg-muted flex items-center justify-center"><Play className="h-8 w-8" aria-hidden="true" /></div>
@@ -713,6 +837,12 @@ const PatrimoineDetail = () => {
                     <p className="text-sm text-muted-foreground">
                       {translate(site.adresse, lang)}
                     </p>
+                    {repere && (
+                      <p className="text-sm text-muted-foreground flex items-center gap-1">
+                        <DoorOpen className="h-3.5 w-3.5" aria-hidden="true" />
+                        {repere}
+                      </p>
+                    )}
                     {site.commune && (
                       <p className="text-sm text-muted-foreground">
                         {site.commune.commune_name_ascii || site.commune.nom}, {site.daira?.daira_name_ascii || site.daira?.nom}, {site.wilaya?.wilaya_name_ascii || site.wilaya?.nom}

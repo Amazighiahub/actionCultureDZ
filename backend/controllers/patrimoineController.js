@@ -410,8 +410,17 @@ class PatrimoineController extends BaseController {
 
   async uploadMedias(req, res) {
     const siteId = parseInt(req.params.id);
-    const medias = await this.patrimoineService.uploadMedias(siteId, req.files);
+    // langue : celle des enregistrements audio envoyés (champ texte du formulaire)
+    const medias = await this.patrimoineService.uploadMedias(siteId, req.files, { langue: req.body?.langue || undefined });
     res.json({ success: true, data: medias });
+  }
+
+  async reordonnerPoints(req, res) {
+    const points = await this.patrimoineService.reordonnerPoints(parseInt(req.params.id), req.body.ordre, {
+      userId: req.user.id_user,
+      isModerator: req.user?.isAdmin === true || req.user?.isModerateur === true
+    });
+    res.json({ success: true, data: points });
   }
 
   async deleteMedia(req, res) {

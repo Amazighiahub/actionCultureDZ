@@ -1,5 +1,6 @@
 // models/Vestige.js - ⚡ MODIFIÉ POUR I18N
 const { DataTypes } = require('sequelize');
+const { VESTIGE_TYPES } = require('../../constants/patrimoineTypes');
 
 module.exports = (sequelize) => {
   const Vestige = sequelize.define('Vestige', {
@@ -31,7 +32,7 @@ module.exports = (sequelize) => {
       comment: 'Description en plusieurs langues'
     },
     type: {
-      type: DataTypes.ENUM('Ruines', 'Murailles', 'Site archéologique'),
+      type: DataTypes.ENUM(...VESTIGE_TYPES),
       allowNull: false,
       index: true
     }

@@ -89,6 +89,26 @@ module.exports = (sequelize) => {
       allowNull: false,
       defaultValue: 'publie',
       comment: 'Statut de publication du lieu'
+    },
+    // Points de visite : un lieu peut appartenir à un autre (Timgad › Musée › Salle 3)
+    id_lieu_parent: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'lieu',
+        key: 'id_lieu'
+      },
+      comment: 'Site auquel appartient ce point de visite (null = lieu principal)'
+    },
+    ordre_visite: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      comment: 'Ordre du point dans la visite de son site'
+    },
+    repere: {
+      type: DataTypes.JSON,
+      allowNull: true,
+      comment: 'Repère d\'un point intérieur sans GPS propre { fr: "1er étage, salle 3" }'
     }
   }, {
     tableName: 'lieu',
@@ -111,6 +131,10 @@ module.exports = (sequelize) => {
       },
       {
         fields: ['createdAt']
+      },
+      {
+        name: 'idx_lieu_parent',
+        fields: ['id_lieu_parent']
       }
     ]
   });
@@ -120,6 +144,10 @@ module.exports = (sequelize) => {
     Lieu.belongsTo(models.Commune, { foreignKey: 'communeId', onDelete: 'RESTRICT' });
     Lieu.belongsTo(models.Localite, { foreignKey: 'localiteId', onDelete: 'SET NULL' });
     Lieu.belongsTo(models.User, { as: 'Createur', foreignKey: 'id_createur', onDelete: 'SET NULL' });
+
+    // Points de visite (site › point › sous-point)
+    Lieu.belongsTo(models.Lieu, { as: 'Parent', foreignKey: 'id_lieu_parent', onDelete: 'SET NULL' });
+    Lieu.hasMany(models.Lieu, { as: 'SousLieux', foreignKey: 'id_lieu_parent', onDelete: 'SET NULL' });
     
     Lieu.hasOne(models.DetailLieu, { foreignKey: 'id_lieu', onDelete: 'CASCADE' });
     Lieu.hasMany(models.Service, { foreignKey: 'id_lieu', onDelete: 'CASCADE' });
@@ -160,6 +188,10 @@ module.exports = (sequelize) => {
   // ⚡ NOUVELLES MÉTHODES I18N
   Lieu.prototype.getNom = function(lang = 'fr') {
     return this.nom?.[lang] || this.nom?.fr || this.nom?.ar || '';
+  };
+
+  Lieu.prototype.getRepere = function(lang = 'fr') {
+    return this.repere?.[lang] || this.repere?.fr || this.repere?.ar || '';
   };
 
   Lieu.prototype.getAdresse = function(lang = 'fr') {
